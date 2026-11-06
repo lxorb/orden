@@ -1,16 +1,3 @@
-"""Send feedback (#548): the bug at the foot of the sidebar, the sheet it opens, and the
-report the real Worker keeps.
-
-On a desktop's screen and a phone's: the bug is beside the account and the settings;
-it opens Send feedback, whose Send is off until something is written; Cancel puts it
-away. Written and sent, signed out, the Worker keeps the words with the version, the
-platform and the app's recent log, and the sheet says the report was received, until Done
-puts it away. Shift Shift and "feedback" finds
-the same sheet.
-
-    python apps/desktop/test/e2e/feedback.py
-"""
-
 from __future__ import annotations
 
 import time
@@ -33,7 +20,6 @@ BUG = ".foot button[aria-label='Send feedback']"
 SHEET = "[role=dialog][aria-label='Send feedback']"
 SEND = f"{SHEET} button[type=submit]"
 
-
 def fresh(browser: Browser, finger: bool, scheme: str) -> Page:
     page = DRIVE.page(
         browser,
@@ -49,7 +35,6 @@ def fresh(browser: Browser, finger: bool, scheme: str) -> Page:
     wait_for(page, f"!!document.querySelector({BUG!r})", "the bug at the foot of the sidebar")
     return page
 
-
 def reports(worker: harness.Worker) -> list[dict]:
     until = time.monotonic() + 10
     while True:
@@ -59,7 +44,6 @@ def reports(worker: harness.Worker) -> list[dict]:
             if time.monotonic() > until:
                 raise
             time.sleep(0.3)
-
 
 def drive(browser: Browser, worker: harness.Worker) -> None:
     for label, finger, scheme in (
@@ -86,7 +70,6 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
             page.context.close()
             continue
 
-        # Written and sent, signed out.
         page.locator(BUG).click()
         wait_for(page, f"!!document.querySelector({SHEET!r})", "the sheet again")
         page.locator(f"{SHEET} textarea").fill("The tab strip lost its line under the tabs.")
@@ -116,7 +99,6 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
             if "page loaded" not in one["log"]:
                 wrong("the report carries no recent log")
 
-        # The palette finds the same sheet.
         page.locator("body").click(position={"x": 700, "y": 400})
         for _ in range(2):
             page.keyboard.down("Shift")
@@ -133,14 +115,12 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
         wait_for(page, f"!!document.querySelector({SHEET!r})", "the sheet from the palette")
         page.context.close()
 
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
         worker.start()
         drive(browser, worker)
     return DRIVE.verdict("Send feedback is at the foot of the sidebar and the Worker keeps what it sends")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

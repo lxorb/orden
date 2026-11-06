@@ -1,20 +1,3 @@
-"""The right side or the scratchpad, never both.
-
-Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". Since #1032
-the scratchpad is one of the right side's own tabs, so the two take turns in one place.
-What it walks: the outline open on the right, the scratchpad's tab pressed - the card
-takes the side and the outline goes under it - and the note's width read on every frame
-of that swap, so "no jump" is a number: the note never goes past either width. Then the
-outline's tab brings the outline back; the right side's one button with the card up
-shuts the side whole, and again opens it on the card; a reload with the card up comes
-back with the card alone; and on a phone, where the scratchpad is in the left drawer's
-foot (#1030), the right drawer and the card take the same turns.
-
-    python apps/desktop/test/e2e/side-or-scratch.py
-
-Shots go beside this file under `shots/side-or-scratch/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -24,7 +7,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-# What stands at the right edge: the side's panel showing, and the card's column.
 EDGE = """
 () => {
   const ws = window.nibApp.workspace
@@ -39,8 +21,6 @@ EDGE = """
 }
 """
 
-# The note's width on every frame for a while after the last button `press` names is
-# pressed.
 WIDTHS = """
 async (press) => {
   const panes = document.querySelector('[data-panes]')
@@ -59,18 +39,13 @@ async (press) => {
 }
 """
 
-#: The scratchpad's tab and the outline's on the right side, and the side's one button.
 PAD = '[data-tab="scratchpad"]'
 OUTLINE = '[data-tab="outline"]'
 RIGHT = 'header [data-side-toggle="right"]'
 PRESS_PAD = f"document.querySelector('{PAD}').click()"
-#: A phone's scratchpad, in the left drawer's foot.
 FOOT_PAD = '[data-region="foot"] button[aria-label="Scratchpad"]'
 
-
 def smooth(frames: list[list[int]], what: str) -> None:
-    """Eased from one width to the other: never further than the whole change in one
-    frame's worth of the slide, and never past either end."""
     widths = [width for _, width in frames]
     first, last = widths[0], widths[-1]
     say(f"{what}: {frames}")
@@ -78,10 +53,8 @@ def smooth(frames: list[list[int]], what: str) -> None:
     if any(width < low - 1 or width > high + 1 for width in widths):
         wrong(f"{what}: the note went past the widths it was easing between: {widths}")
 
-
 def edge(page: Page) -> dict:
     return page.evaluate(EDGE)
-
 
 def desktop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1440, "height": 900})
@@ -109,8 +82,6 @@ def desktop(browser: Browser) -> None:
         wrong(f"the outline did not come back as the card went: {now}")
     shot(page, "03-outline-back")
 
-    # The side's one button with the card up shuts the side whole, and again opens it
-    # on what it showed: the card (#1032).
     page.evaluate(f"() => {PRESS_PAD}")
     page.wait_for_timeout(400)
     widths = page.evaluate(WIDTHS, RIGHT)
@@ -147,7 +118,6 @@ def desktop(browser: Browser) -> None:
     shot(page, "04-after-a-reload")
     page.close()
 
-
 def phone(browser: Browser) -> None:
     page = DRIVE.page(
         browser,
@@ -168,7 +138,6 @@ def phone(browser: Browser) -> None:
     page.wait_for_timeout(500)
     shot(page, "05-phone-drawer")
 
-    # The scratchpad's glyph is in the left drawer's foot (#1030).
     page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
     wait_for(page, f"document.querySelector('{FOOT_PAD}')", "the drawer's foot")
     page.wait_for_timeout(400)
@@ -189,11 +158,9 @@ def phone(browser: Browser) -> None:
     shot(page, "07-phone-drawer-back")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     desktop(browser)
     phone(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the right side and the scratchpad take turns"))

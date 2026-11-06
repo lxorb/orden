@@ -1,28 +1,3 @@
-"""The three new lists in the one popup at the caret, seen: `[[##` for every
-heading in the space, `[[^^` for every block in it - named ones out of the index,
-the rest found by their own words - and `#` for the tags the space already uses,
-with the notes under each counted beside them.
-
-What each row writes is checked in the note afterwards, including the name the app
-writes into another note for a block that had none, and the places the `#` popup
-must stay out of: a fence, and a heading being typed.
-
-And then the space next door, which is the other half of "every heading in the
-space": a second space, opened, offers its own and none of the first one's, from
-the moment it is opened rather than from the moment it has been read.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/completions.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/completions/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,7 +12,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 
 PLAN = """---
 tags: [work/nib]
@@ -89,9 +63,6 @@ ROWS = """
 )
 """
 
-# A second space, opened, and what the index holds the moment it is. Reading a
-# space starts when its file list does and takes as long as the space is big, so
-# this is the state `[[` is offered out of for the whole of that second.
 ANOTHER_SPACE = """
 async () => {
   const ws = window.nibApp.workspace
@@ -118,8 +89,6 @@ TAGS = """
 () => (window.nibApp.links.index(null).tags ?? []).map((one) => `${one.tag} ${one.notes}`)
 """
 
-# The caret at the end of the note, on a line of its own, which is where a link or
-# a tag is about to be written.
 FRESH_LINE = """
 () => {
   const doc = window.nib.state.doc
@@ -131,20 +100,10 @@ FRESH_LINE = """
 }
 """
 
-
 def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
 
-
 def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
-    """Polls until a row says `holds`.
-
-    The index answers in the same breath as the keystroke, but the space's own
-    words are behind a worker that reads them off the store, and the first
-    question of a session waits for that. A question asked while it was cold can
-    also be answered with nothing rather than late, and nothing re-asks a popup
-    that has closed - so this asks again once, the way a reader would by typing
-    one more letter."""
     until = time.monotonic() + patience
     again = False
 
@@ -155,11 +114,6 @@ def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
 
         if not found and not again and time.monotonic() > until - patience + 4:
             say("[asked again] the popup came back empty; asking the space once more")
-            # The last character taken back and typed again, which is a reader typing
-            # one more letter without changing what was typed. Not Ctrl+Space, the
-            # library's own key for the popup: that is the space switcher now (Emil,
-            # 2026-10-04; completing.ts in the editor), and it took the keyboard away
-            # from the note, so every key after it went into the switcher.
             last = page.evaluate(
                 "() => { const s = window.nib.state, at = s.selection.main.head;"
                 " return s.doc.sliceString(at - 1, at) }"
@@ -172,14 +126,11 @@ def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
 
     return rows(page)
 
-
 def doc(page: Page) -> str:
     return page.evaluate("() => window.nib.state.doc.toString()")
 
-
 def note_text(page: Page, path: str) -> str:
     return page.evaluate("(path) => window.nibApp.workspace.noteText(path)", path)
-
 
 def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
     context = browser.new_context(
@@ -210,11 +161,8 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
 
-    # Again, after the launch has finished opening whatever it opens: the note
-    # this types in has to be the one the space was seeded with.
     open_note(page, paths[2])
     return page, paths
-
 
 def open_note(page: Page, path: str) -> None:
     page.evaluate(
@@ -223,25 +171,20 @@ def open_note(page: Page, path: str) -> None:
     )
     page.wait_for_timeout(800)
 
-
 def line(page: Page) -> None:
     page.evaluate(FRESH_LINE)
     page.wait_for_timeout(250)
 
-
 def name_of(path: str) -> str:
     return path.replace("\\", "/").split("/")[-1].removesuffix(".md")
 
-
 def headings_of(names: list[str]) -> list[tuple[str, str]]:
-    """Every heading the space was seeded with, as the note it is in and itself."""
     return [
         (names[0], "Today"),
         (names[0], "The plan for Monday"),
         (names[1], "Sparks"),
         (names[1], "Later"),
     ]
-
 
 def drive_headings(page: Page, names: list[str]) -> None:
     line(page)
@@ -252,18 +195,10 @@ def drive_headings(page: Page, names: list[str]) -> None:
     say(f"[[[##] {len(every)} rows: {json.dumps(every[:6])}")
     shot(page, "01-every-heading")
 
-    # Every heading the space was seeded with, each with the note it is in beside
-    # it: a row reads as the heading and then, muted, the note's name. Named rather
-    # than counted, because a count cannot tell a missing note from an extra one -
-    # the list used to lose a whole note's headings on about one launch in twenty
-    # and still have four rows in it, which is how long that went unseen. A fifth
-    # row for "Welcome to Orden" belongs here: the browser seeds every new space with
-    # a note of that name, and it is in this space like any other.
     for note, heading in headings_of(names):
         if not any(one.startswith(heading) and one.endswith(note) for one in every):
             wrong(f"the space's headings are not all offered: no {heading!r} in {note!r}: {every}")
 
-    # A few letters of the heading, wherever they fall in it.
     page.keyboard.type("pln", delay=60)
     page.wait_for_timeout(600)
     narrowed = rows(page)
@@ -282,7 +217,6 @@ def drive_headings(page: Page, names: list[str]) -> None:
     if "##" in written:
         wrong("the two hashes are still in the note")
 
-
 def drive_blocks(page: Page, names: list[str]) -> None:
     line(page)
     page.keyboard.type("[[^^", delay=40)
@@ -294,7 +228,6 @@ def drive_blocks(page: Page, names: list[str]) -> None:
     if not any("a1b2c3" in one for one in named):
         wrong(f"the blocks that already have a name are not offered: {named}")
 
-    # And the words of a block nobody has named, found through the app's search.
     page.keyboard.type("deepest", delay=60)
     found = rows_holding(page, "deepest kind of idea")
     say(f"[[[^^deepest] {json.dumps(found)}")
@@ -315,7 +248,6 @@ def drive_blocks(page: Page, names: list[str]) -> None:
         wrong(f"the link does not point at a named block: {json.dumps(written[-50:])}")
         return
 
-    # The name the app wrote is in the other note, at the end of that block.
     id = link[0].split("#^")[1].rstrip("]")
     body = note_text(page, page.evaluate("() => window.nibApp.workspace.notes.map((o) => o.path)")[1])
     say(f"[the other note] {json.dumps(body)}")
@@ -323,7 +255,6 @@ def drive_blocks(page: Page, names: list[str]) -> None:
         wrong(f"the block was never given the name the link points at: ^{id}")
     if "deepest kind of idea" not in (body or ""):
         wrong("the note the name was written into no longer says what it said")
-
 
 def drive_tags(page: Page) -> None:
     say(f"[the tag index] {json.dumps(page.evaluate(TAGS))}")
@@ -339,13 +270,9 @@ def drive_tags(page: Page) -> None:
         wrong(f"the space's tags are not offered: {every}")
     if not any("reading" in one for one in every):
         wrong(f"a tag only one note carries is missing: {every}")
-    # The count beside each is the notes under it, and `work` is carried by more
-    # than one: the note that wrote `#work`, the one that wrote `#work/nib`, and
-    # the one that said so in its front matter.
     if not any(one.endswith("3") for one in every):
         wrong(f"the rows do not count the notes under each tag: {every}")
 
-    # A slash narrows to the level under it.
     page.keyboard.type("work/", delay=60)
     page.wait_for_timeout(600)
     nested = rows(page)
@@ -362,9 +289,7 @@ def drive_tags(page: Page) -> None:
     if "#work/nib" not in written:
         wrong(f"the tag is not the whole tag: {json.dumps(written[-40:])}")
 
-
 def drive_quiet(page: Page) -> None:
-    """The places the popup has to stay out of."""
     line(page)
     page.keyboard.type("#", delay=40)
     page.wait_for_timeout(500)
@@ -378,7 +303,6 @@ def drive_quiet(page: Page) -> None:
     if rows(page):
         wrong("a heading being typed offered tags")
 
-    # Inside a fence, where a hash is a comment.
     line(page)
     page.keyboard.type("```py", delay=30)
     page.keyboard.press("Enter")
@@ -390,7 +314,6 @@ def drive_quiet(page: Page) -> None:
     if fenced:
         wrong(f"a hash in a fence offered tags: {fenced}")
 
-    # And in the middle of a word, which is not a tag at all.
     line(page)
     page.keyboard.type("written in C#", delay=30)
     page.wait_for_timeout(500)
@@ -399,16 +322,10 @@ def drive_quiet(page: Page) -> None:
     if inside:
         wrong(f"a hash in the middle of a word offered tags: {inside}")
 
-
 def drive_front_matter(page: Page, paths: list[str]) -> None:
-    """The one place a tag is written without a hash: a `tags:` list."""
-    # Front matter is hidden until a reader asks for it (31209a29), and a caret put
-    # inside hidden metadata is put at the first line that shows. The list is written
-    # where it is the YAML it is made of.
     page.evaluate("() => window.nibApp.modes.setProperties('source')")
     open_note(page, paths[2])
 
-    # The caret at the end of the `tags:` line of this note's own front matter.
     page.evaluate(
         """() => {
           const doc = window.nib.state.doc
@@ -439,7 +356,6 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
 
     page.evaluate("() => window.nibApp.modes.setProperties('hidden')")
 
-
 def drive_finger(browser: Browser) -> None:
     page, names = fresh(browser, finger=True)
     line(page)
@@ -466,16 +382,7 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_another_space(page: Page, names: list[str]) -> None:
-    """The space next door offers its own headings and none of this one's.
-
-    A space is read when it opens and the reading takes as long as the space is
-    big, so for the whole of that second the index is what `[[` is offered out of.
-    It used to be the *last* space's notes under this space's name, which is a list
-    that offers a note somebody cannot link to and a link that draws as resolved
-    when the space holds nothing of the sort. Empty is the honest answer until
-    there is one, and the panel already says the space is being read."""
     seen = page.evaluate(ANOTHER_SPACE)
     say(f"[another space] {json.dumps(seen)}")
 
@@ -488,7 +395,6 @@ def drive_another_space(page: Page, names: list[str]) -> None:
     if stale:
         wrong(f"a space still being read offered the last space's notes: {stale}")
 
-    # And what was written while it was being read is in it once it has been.
     if "Over here.md" not in seen["after"]:
         wrong(f"a note written while the space was read is not in it: {seen['after']}")
 
@@ -509,7 +415,6 @@ def drive_another_space(page: Page, names: list[str]) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
 
-
 def drive(browser: Browser) -> None:
     page, paths = fresh(browser)
     names = [name_of(one) for one in paths]
@@ -524,10 +429,8 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "the space's headings, blocks and tags all finish themselves")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

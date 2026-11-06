@@ -1,41 +1,3 @@
-"""A space of three thousand notes, with only the rows in view in the page.
-
-What the window has to answer for, driven rather than argued. The list mounts the
-rows a panel can show and a few either side; everything else is height. So every
-gesture that reaches a row somewhere else has to say so:
-
-    at rest             how many rows are in the page at all, and how far the list runs
-    scrolled            the same count, a long way down, with different rows in it
-    End, Home           the two keys that land on a row nobody can see
-    a spelled name      the same, by typing one
-    the arrows          a step from a row the window had to fetch
-    a twist             the rows it holds, sliding: the list's height, frame by frame
-    a note opened       its row comes back into view, from anywhere in the space
-    a rename            the field appears on a row six hundred rows down
-    a reload            the list comes back to the row it was left on
-    every note open     the list at its longest, which is every note in the space
-
-It prints what it saw and nothing else: a scratch drive, not a test. The window
-arithmetic itself is a test, in src/lib/row-window.test.ts, and what the flat list
-holds is src/lib/tree-flat.test.ts.
-
-The notes are seeded the way first-paint.py seeds them - straight into the
-browser's storage, three thousand of four kilobytes each - which is imported from
-there rather than copied.
-
-Build the web app with the app's own handle on the page, from apps/desktop:
-
-    NODE_ENV=development pnpm exec vite build --mode drive
-
-then, from the repository root:
-
-    python apps/desktop/test/e2e/big-list.py
-
-Set NIB_DIST to drive another build folder - `dist-before` for the build without
-the window, which printed 754 rows in the page where this prints 32, and 3,005 with
-every note in the space open where this prints 39.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -50,27 +12,15 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 APP = harness.APP
 
-
-# The seeding and the user agent are first-paint.py's; one space of three thousand
-# notes, written once and read by both drives. The file name has a dash in it, so
-# it is loaded by path rather than imported by name.
 _spec = importlib.util.spec_from_file_location("first_paint", Path(__file__).parent / "first-paint.py")
 assert _spec and _spec.loader
 first_paint = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(first_paint)
 
-#: How many notes the space holds.
 NOTES = 3000
 
-#: The panel, by the attribute F6 already walks it with rather than by a class a
-#: build is free to rename.
 LIST = 'aside [data-region="list"]'
 
-
-# What the list is: how many rows exist, which two are at the ends of them, and how
-# far the whole thing runs. The height is the number that says the window is
-# honest - a list of three thousand rows has to be as tall as three thousand rows
-# whether or not they are drawn.
 COUNT = """
 () => {
   const box = document.querySelector('aside [data-region="list"]')
@@ -87,9 +37,6 @@ COUNT = """
 }
 """
 
-# Where the keyboard is, and whether the row it is on is on screen. A focus inside a
-# row the window has taken away is a focus on nothing, so `tag` saying BODY is the
-# failure this drive is looking for.
 FOCUS = """
 () => {
   const on = document.activeElement
@@ -129,11 +76,6 @@ IN_VIEW = """
 }
 """
 
-# The slide itself, frame by frame: how tall the list is while the band comes out.
-# A twist over four hundred rows adds twelve thousand pixels in a hundred and ninety
-# milliseconds, so what there is to see is the easing, not a clipped row - the row
-# part way out is at the bottom edge of the band, a screen and a half below the view.
-# What a clipped row is is row-window.test.ts.
 SLIDE = """
 async (twist) => {
   const ul = document.querySelector('aside [data-region="list"] ul')
@@ -156,9 +98,6 @@ FIRST_FOLDER = """
 () => window.nibApp.workspace.tree.children.find((one) => one.is_dir).path
 """
 
-# Every note in the space open at once, which is the list at its longest: three
-# thousand rows of it, all of them rows the reader could scroll to and twenty of them
-# rows the reader can see.
 ALL_OPEN = """
 () => {
   const ws = window.nibApp.workspace
@@ -175,9 +114,6 @@ ALL_OPEN = """
 }
 """
 
-#: A note at the top of the space, far enough down the list to be nowhere near the
-#: view. A note inside a folder nobody has opened is no row at all, here or before
-#: the window: `startRenaming` opens no folders.
 FAR_NOTE = """
 () => {
   const ws = window.nibApp.workspace
@@ -186,16 +122,13 @@ FAR_NOTE = """
 }
 """
 
-
 def ready(page: Page, origin: str) -> None:
     page.goto(origin, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
-    # Past the launch: the link index is still reading every body behind the list.
     page.wait_for_timeout(2500)
-
 
 def main() -> int:
     origin = DRIVE.origin
@@ -220,9 +153,6 @@ def main() -> int:
 
         page.evaluate(SCROLL_TO, 0)
         page.wait_for_timeout(300)
-        # The keyboard put on the first row rather than a click on it: a click
-        # opens the note and the note takes the keyboard, which is the right
-        # thing and the wrong thing to measure the walk with.
         page.locator(f"{LIST} .row").first.focus()
         page.wait_for_timeout(300)
         say(f"the first row:  {page.evaluate(FOCUS)}")
@@ -281,7 +211,6 @@ def main() -> int:
         say(f"after a reload: {page.evaluate(COUNT)}")
         say(f"                panel = {page.evaluate('() => window.nibApp.workspace.panel')}")
 
-        # And the list at its longest: every note in the space open at once.
         say(f"every note open: {page.evaluate(ALL_OPEN)} rows in the list")
         page.wait_for_timeout(1200)
         say(f"                {page.evaluate(COUNT)}")
@@ -290,7 +219,6 @@ def main() -> int:
         say(f"  40,000px down: {page.evaluate(COUNT)}")
 
     return DRIVE.verdict()
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,22 +1,3 @@
-"""Todoist's keys, selection and swipes on a view's rows, in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * j and k walk the rows; e completes the one the keyboard is on, the toast says
-    Completed, and its Undo opens it again; Space completes it too.
-  * Shift+T takes a task's date away.
-  * Ctrl and a press selects rows, Shift and a press every row between; the bulk bar
-    says how many, and a priority key gives every one of them that priority in one undo.
-  * The bulk bar's Move to puts the selected tasks into a project, both notes in one
-    write; Escape lets the selection go.
-  * v opens the same list of projects for the row the keyboard is on.
-  * On a phone a row swiped to the right is completed.
-
-    python apps/desktop/test/e2e/task-keys.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/task-keys/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -27,11 +8,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 DAYS = """() => {
   const day = (n) => {
@@ -60,7 +39,6 @@ WRITE = """async ([files]) => {
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words) ?? null"
 
-
 def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
@@ -76,22 +54,18 @@ def seed(page: Page) -> dict[str, str]:
     )
     return days
 
-
 def open_today(page: Page) -> None:
     page.evaluate("window.tasks.openBuiltin('today')")
     wait_for(page, "document.querySelector('.view-tab .task')", "Today's rows")
     quiet(page)
 
-
 def row(words: str) -> str:
     return f".view-tab .task:has(.words:text-is('{words}'))"
-
 
 def focused(page: Page) -> str:
     return page.evaluate(  # type: ignore[no-any-return]
         "() => document.activeElement?.closest('.task')?.querySelector('.words')?.textContent?.trim() ?? ''"
     )
-
 
 def keys(page: Page, days: dict[str, str]) -> None:
     page.locator(row("Call the bank")).focus()
@@ -111,7 +85,6 @@ def keys(page: Page, days: dict[str, str]) -> None:
     page.locator(".toast .undo").click()
     wait_for(page, f"() => ({TASK})('Pay the dentist')?.task.done === false", "the toast's Undo")
 
-    # Space ticks the card the keyboard is on, as its box would (#1043).
     page.locator(row("Pay the dentist")).focus()
     page.keyboard.press(" ")
     wait_for(page, f"() => ({TASK})('Pay the dentist')?.task.done === true", "Space completing it")
@@ -125,7 +98,6 @@ def keys(page: Page, days: dict[str, str]) -> None:
     wait_for(
         page, f"() => ({TASK})('Buy stamps')?.task.due === '{days['today']}'", "the date back"
     )
-
 
 def selection(page: Page) -> None:
     open_today(page)
@@ -188,7 +160,6 @@ def selection(page: Page) -> None:
         wrong("v does not offer the Inbox and the projects")
     page.keyboard.press("Escape")
 
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -212,7 +183,6 @@ SWIPE = """([words, by, lift]) => {
   else window.lift = () => fire('touchend', start + by)
 }"""
 
-
 def phone(browser: Browser) -> None:
     page = DRIVE.page(
         browser,
@@ -234,7 +204,6 @@ def phone(browser: Browser) -> None:
     shot(page, "05-phone-swiped")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -244,7 +213,6 @@ def drive(browser: Browser) -> None:
     selection(page)
     page.close()
     phone(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the keys, the selection and the swipes held"))

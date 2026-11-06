@@ -1,26 +1,3 @@
-"""Stacked tabs, seen in the built app: a pane's notes as columns side by side.
-
-What this drives:
-
-  * Off by default. A pane opens as one document with a strip of names over it, which
-    is what a window is.
-  * Stacked, the pane lays its notes out as columns, each its own editor: several live
-    CodeMirror views in one pane, each with its own caret and its own words on screen.
-  * Every column keeps a spine of the note's name, and the spine stays put as the row
-    scrolls sideways. The active column is the widest, and pressing a spine makes that
-    column the active one.
-  * It is the pane's own answer: stacking one side of a split leaves the other as it
-    was, and it survives being written down and read back.
-  * A phone is offered none of it, because a handheld holds one document.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/stacked-tabs.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/stacked-tabs/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -35,16 +12,11 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 
-
 def shot(page: Page, name: str) -> None:
-    """A picture once the page has stopped moving; see settling.py."""
     quiet(page)
     DRIVE.shot(page, name)
 
 
-# Five, which is more than fits across the window this drive opens: a column is as wide
-# as a column of words wants to be rather than a share of the pane, so enough of them and
-# the row has to be scrolled through - which is the whole gesture.
 NAMES = ["First", "Second", "Third", "Fourth", "Fifth"]
 NOTES = [(f"{name}.md", f"# {name}\n\nThe words of the {name.lower()} note.\n") for name in NAMES]
 
@@ -67,12 +39,6 @@ async (notes) => {
 }
 """
 
-# What the pane is showing: how many columns, which is active, what each spine says,
-# and how many editors are alive in it.
-#: The pane's row of columns. Its class alone is not enough: the sidebar has a `.stack`
-#: of its own, the two panels crossing as a space switches (Sidebar.svelte), which comes
-#: first in the page and answered for the pane's, so a pane that was not stacked read
-#: as stacked and the columns as never scrolling.
 STACKED = '.stack[data-region="editor"]'
 
 STACK = """
@@ -93,8 +59,6 @@ STACK = """
 }
 """
 
-# Where a spine sits against the row it is in, before and after the row is scrolled: a
-# sticky spine keeps its distance from the left edge of the scroller.
 SPINE_AT = """
 (index) => {
   const STACKED = '.stack[data-region="editor"]'
@@ -170,8 +134,6 @@ def the_columns(page: Page) -> None:
         said["columns"] == len(NAMES),
         f"the pane drew {said['columns']} columns rather than {len(NAMES)}",
     )
-    # One editor per column, all of them alive at once: a column with a caret of its own
-    # is what makes this stacked tabs rather than a picture of them.
     is_true(
         said["editors"] == len(NAMES),
         f"{said['editors']} editors are alive rather than {len(NAMES)}",
@@ -181,7 +143,6 @@ def the_columns(page: Page) -> None:
         said["active"] == len(NAMES) - 1,
         f"column {said['active']} is the active one rather than the last",
     )
-    # The active one is the widest, which is what says which one is being written in.
     widest = max(said["widths"])
     is_true(
         said["widths"][said["active"]] == widest,
@@ -198,13 +159,10 @@ def the_spine(page: Page) -> None:
     after = page.evaluate(SPINE_AT, 0)
     say(f"[spine] the first spine was {before} from the edge and is now {after}")
 
-    # Sticky: it keeps its distance from the left edge of the scroller rather than being
-    # carried off with the words beside it.
     is_true(after is not None and after >= 0, f"the spine went off the edge: {after}")
     page.evaluate(f"() => {{ document.querySelector('{STACKED}').scrollLeft = 0 }}")
     quiet(page)
 
-    # And pressing one makes that column the active one, which is the press a tab is.
     page.locator(f"{STACKED} .column .spine").first.click()
     quiet(page)
     said = stack(page)
@@ -227,13 +185,10 @@ def a_pane_of_its_own(page: Page) -> None:
     )
     say(f"[split] the panes are {json.dumps(panes)} and say {json.dumps(stacks)}")
 
-    # The split carried the stacked pane's answer with it and left the new one as every
-    # pane starts: stacking is a pane's own arrangement, not the window's.
     is_true(len(panes) == 2, f"the split made {len(panes)} panes")
     is_true(stacks.count(True) == 1, f"both panes say {json.dumps(stacks)}")
     shot(page, "04-split")
 
-    # Written down and read back: the arrangement is what the window opens in.
     page.evaluate("() => window.nibApp.workspace.persist()")
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.nibApp", "the app again")
@@ -247,7 +202,6 @@ def a_pane_of_its_own(page: Page) -> None:
 
 
 def a_handheld(browser: Browser) -> None:
-    """A handheld holds one document, so there is nothing to put beside anything."""
     context, page = opened(browser, finger=True)
 
     is_true(

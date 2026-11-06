@@ -1,22 +1,4 @@
-"""What a shut drawer leaves at the left edge of the screen.
-
-Emil photographed a phone whose title bar had something of the panel's own header
-sitting in front of the sidebar button, partly cut off. This is the state that
-produces it: a handheld wide enough that the drawer slides *over* the note rather
-than becoming the whole screen, so the bar underneath stays put while the panel
-travels across it.
-
-It photographs the top left corner at each stage of the drawer going - open,
-part-way, and shut - so what is under the bar at each of them can be looked at
-rather than guessed.
-
-Build first, as for shell.py, then from the repository root:
-
-    python apps/desktop/test/e2e/drawer-edge.py
-"""
-
 from __future__ import annotations
-
 
 from harness import Drive
 from shell import PHONE_AGENT, SEED
@@ -26,8 +8,6 @@ say = DRIVE.say
 
 OUT = DRIVE.shots
 
-# What is actually painted over the bar: every element the top left corner of the
-# screen hits, from the front backwards, with the panel's own box beside it.
 CORNER = """
 () => {
   const at = document.elementsFromPoint(12, 28).map((one) => {
@@ -44,8 +24,6 @@ CORNER = """
 }
 """
 
-
-# A finger starting at the left edge and pulling right, a frame at a time.
 SWIPE = """
 async () => {
   const target = document.elementFromPoint(6, 200)
@@ -70,7 +48,6 @@ async () => {
   fire('touchend', 320)
 }
 """
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -103,11 +80,6 @@ def main() -> int:
         page.wait_for_timeout(700)
         corner("03-shut")
 
-        # And back, by the gesture rather than by a button: the drag measures
-        # the panel's own width, and with the column of spaces gone a shut
-        # drawer has no width at all to measure, so this is the path that had
-        # to keep working. Real touch events, dispatched in the page: the
-        # drawer listens for touches and a synthesised mouse is not one.
         page.evaluate(SWIPE)
         page.wait_for_timeout(800)
         say(f"dragged open: panel is {page.evaluate('() => window.nibApp.workspace.panel')}")
@@ -117,7 +89,6 @@ def main() -> int:
 
     say(f"shots in {OUT}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

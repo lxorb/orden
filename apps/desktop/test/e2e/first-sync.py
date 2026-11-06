@@ -1,37 +1,3 @@
-"""Signing in on a machine that holds none of the account's notes, over a slow line.
-
-The moment the app has the least to show and the most to do: a session, an account
-with a few hundred notes on it, and a connection that takes a third of a second to
-say anything. What is measured is when each of three things happens, from the
-navigation:
-
-    names       every note the account holds has a row in the file list
-    unblocked   the full-surface waiting state is gone and the app can be used
-    words       every body has come down
-
-Against the real Worker under `wrangler dev`, with its own database, so the pass is
-the pass; the slowness is Chrome's own network emulation over it, which is what a
-phone on a train has.
-
-Run it once for each build, from the repository root:
-
-    python apps/desktop/test/e2e/first-sync.py after
-
-It builds the app itself, because the app has to be built against the Worker's
-origin. Everything it leaves behind - the database, the Worker's state - it clears
-on the way in. It prints numbers and nothing else: a scratch drive, not a test.
-
-What it said on one laptop, two hundred notes on a three-hundred-millisecond line -
-before the names came first, and after:
-
-    every name on the tree           75695ms -> 5272ms
-    the app usable, the overlay gone 75823ms -> 5372ms
-    every body landed                75851ms -> 72588ms
-
-Which is the whole of it: the same half minute of fetching, and a reader who is
-reading their notes for all but five seconds of it instead of none of it.
-"""
-
 from __future__ import annotations
 
 import json
@@ -47,26 +13,18 @@ from harness import Drive
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
-#: The Worker's own address, which is also where the app it serves is loaded from.
 ORIGIN = harness.worker_origin()
-
 
 EMAIL = "first-sync@example.com"
 SPACE = "Account"
 
-#: How many notes the account holds. Enough that fetching them one at a time over a
-#: slow line is the half minute the waiting state exists for.
 NOTES = 200
 
-#: What the line is like: a third of a second each way, and a phone's share of a
-#: crowded cell. Chrome's own emulation rather than a delay in front of each route,
-#: because a route handler that sleeps also stops the drive watching the page.
 LATENCY = 300
 DOWN = 1_500_000 / 8
 UP = 750_000 / 8
 
 PATIENCE = 240
-
 
 def request(path: str, token: str | None = None, body: dict | None = None):
     data = None if body is None else json.dumps(body).encode()
@@ -80,9 +38,7 @@ def request(path: str, token: str | None = None, body: dict | None = None):
     with urllib.request.urlopen(call, timeout=30) as answer:
         return json.loads(answer.read() or b"null")
 
-
 class Worker(harness.Worker):
-    """The real Worker, with this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
         super().__init__(DRIVE)
@@ -90,9 +46,7 @@ class Worker(harness.Worker):
     def account(self) -> str:  # type: ignore[override]
         return super().account(EMAIL)
 
-
 def body(at: int) -> str:
-    """A note with everything in it the index reads, so the pass is a real pass."""
     return (
         "---\nicon: rocket\nicon-color: violet\naliases:\n"
         f"  - note {at} elsewhere\n---\n\n"
@@ -101,9 +55,6 @@ def body(at: int) -> str:
         "## What went in\n\n- Pressure on the pen\n- Slides out of a note\n"
     )
 
-
-#: Everything worth saying about where the app has got to, for a wait that ends in
-#: nothing rather than in the moment it was watching for.
 STATE = """
 () => {
   const ws = window.nibApp?.workspace
@@ -126,9 +77,7 @@ STATE = """
 }
 """
 
-
 def when(page: Page, script: str, what: str) -> float:
-    """The moment a page first agrees, in milliseconds since its navigation."""
     try:
         page.wait_for_function(script, timeout=PATIENCE * 1000)
     except Exception:
@@ -139,9 +88,7 @@ def when(page: Page, script: str, what: str) -> float:
     say(f"{what}: {taken:.0f}ms  {page.evaluate(STATE)}")
     return taken
 
-
 def slow(page: Page) -> None:
-    """A line like a phone's on a train, from here on."""
     session = page.context.new_cdp_session(page)
     session.send("Network.enable")
     session.send(
@@ -154,24 +101,15 @@ def slow(page: Page) -> None:
         },
     )
 
-
 def drive(browser, token: str) -> dict[str, float]:
     context = browser.new_context(viewport={"width": 1280, "height": 860})
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"page error: {error}"))
 
-    # A device with the file list open and nothing whatever in it: no space, no
-    # note, nothing of anybody's. That is the moment the whole waiting state exists
-    # for, and the one the app used to spend on a blank screen - a browser that has
-    # been introduced and then had its notes erased, which is what somebody who
-    # wants only what the account holds does before signing in.
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
-    # Each space deleted the way the space's own menu deletes it: the erase-everything
-    # answer that did this in one call went with the sign-in question it answered
-    # (be28f5e9), and a browser emptied by hand is the same browser.
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace;"
         " for (const one of [...ws.spaces]) await ws.deleteSpace(one.id) }"
@@ -179,7 +117,6 @@ def drive(browser, token: str) -> dict[str, float]:
     page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
     page.wait_for_timeout(1500)
 
-    # And now there is a session, and the line is what it is.
     page.evaluate(f"() => localStorage.setItem('nib:session', {json.dumps(token)})")
     slow(page)
 
@@ -187,11 +124,6 @@ def drive(browser, token: str) -> dict[str, float]:
 
     names = when(
         page,
-        # The list draws the rows that fit and no others, so counting the rows in the
-        # page counts the window rather than the names: two hundred names are thirty
-        # or so rows. `aria-setsize` is the tree's own word for how many rows stand beside
-        # a row, which with every note at the top of the space is the number this is
-        # about, and it is on every row. See Tree.svelte.
         "() => Number(document.querySelector('aside [aria-setsize]')"
         f"?.getAttribute('aria-setsize') ?? 0) >= {NOTES}",
         "every name on the tree",
@@ -201,9 +133,6 @@ def drive(browser, token: str) -> dict[str, float]:
         "() => !!window.nibApp && !document.querySelector('.arriving')",
         "the app to be usable",
     )
-    # The rows the build after the change draws for a note that has not landed are
-    # not files, so both halves are asked for: the files on the disk, and nothing
-    # still on its way. The build before the change has no second half.
     words = when(
         page,
         f"() => window.nibApp.workspace.notes.length >= {NOTES}"
@@ -213,7 +142,6 @@ def drive(browser, token: str) -> dict[str, float]:
 
     context.close()
     return {"names": names, "unblocked": unblocked, "words": words}
-
 
 def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
@@ -245,7 +173,6 @@ def main() -> int:
     print()
     print(json.dumps({key: round(value) for key, value in taken.items()}))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

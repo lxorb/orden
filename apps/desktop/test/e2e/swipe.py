@@ -1,34 +1,3 @@
-"""Two fingers sideways over a note, and over a page, in a real browser.
-
-What only a browser can answer about src/lib/back-swipe and src-tauri/src/web_swipe.js:
-
-  - a sweep to the right over a note brings the arrow in from the pane's side, and the
-    tab goes back to the note it showed before; one to the left goes forward again; a
-    short one goes nowhere; a sweep after a scroll down is a sweep of its own; the
-    setting turned off is a scroll and nothing else;
-  - the arrow, photographed half way and past the point where it goes, light and dark;
-    and close up at scales of 1, 1.25, 1.5 and 2, where it has to sit on whole pixels of
-    the screen to be drawn sharp (#209: "the animation and the icon itself look very
-    pixelated");
-  - a sweep over a wide table a little way from its edge scrolls the table and nothing
-    else - no arrow, no step, the note where it was - and the same sweep over the words
-    beside it goes back (#407);
-  - the page script in a site's page says each sideways scroll the page left over, and
-    says that the page took it where a scroller in the page could still move, where the
-    page keeps its overscroll (`overscroll-behavior-x: none`, Google Sheets' line), and
-    where the page's own handler took the wheel; and says a scroll down once, as the scroll
-    down it added up to - one that drifts sideways as it goes included - and a tilted
-    wheel's notch not at all.
-
-The sweeps are Chromium's own smooth scroll gestures from the protocol
-(`Input.synthesizeScrollGesture`), whose wheel events are trusted and precise - a pixel
-delta and no notch - the way a touchpad's are; `page.mouse.wheel` is the tilted wheel, a
-whole notch each. A touchpad's own report is a hand's alone; see scripts/swipe-probe.py
-for the native app, and gesture.test.ts for the numbers.
-
-    python apps/desktop/test/e2e/swipe.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -46,7 +15,6 @@ SCRIPT = (Path(__file__).resolve().parents[2] / "src-tauri" / "src" / "web_swipe
     encoding="utf-8"
 )
 
-#: The two notes the tab has shown, Alpha and then Beta: the trail a swipe walks.
 TRAIL = """async () => {
   const ws = window.nibApp.workspace
   const path = (starts) => ws.notes.find((one) => one.name.startsWith(starts)).path
@@ -54,8 +22,6 @@ TRAIL = """async () => {
   await ws.open(path('Beta'), { preview: true })
 }"""
 
-#: Keeps an arrow out for a picture: `across` thirty times, then a hair of scroll every
-#: 30 ms so the touchpad never goes quiet. Untrusted, which nib's own page does not mind.
 HOLD = """(across) => {
   const at = document.querySelector('.cm-content')
   const step = (dx) => at.dispatchEvent(new WheelEvent('wheel', { deltaX: dx, deltaMode: 0, bubbles: true }))
@@ -63,19 +29,13 @@ HOLD = """(across) => {
   window.__holding = setInterval(() => step(-0.001), 30)
 }"""
 
-
 def front(page: Page) -> str:
     return str(page.evaluate("window.nibApp.workspace.active?.note?.name ?? ''"))
-
 
 def on(page: Page, starts: str, what: str) -> None:
     wait_for(page, f"window.nibApp.workspace.active?.note?.name.startsWith({json.dumps(starts)})", what)
 
-
 def sweep(page: Page, x: float, y: float, across: float, down: float = 0) -> None:
-    """Two fingers moved `across` to the right (and `down`) at `x`, `y`: a scroll the
-    other way, a pixel delta at a time, as a touchpad reports one. Back is a sweep to the
-    right."""
     tools = page.context.new_cdp_session(page)
     tools.send(
         "Input.synthesizeScrollGesture",
@@ -91,13 +51,9 @@ def sweep(page: Page, x: float, y: float, across: float, down: float = 0) -> Non
     )
     tools.detach()
 
-
 def lifted(page: Page) -> None:
-    """Long enough after the last report for the fingers to count as lifted, and for
-    the arrow to play out."""
     time.sleep(0.6)
     DRIVE.settled(page)
-
 
 def opened(
     browser: Browser, scheme: str = "light", off: bool = False, scale: float = 1
@@ -110,18 +66,11 @@ def opened(
     )
     if off:
         page.add_init_script("localStorage.setItem('nib:swipe', 'off')")
-    # Room for every chunk the launch fetches in the page's list of them, which keeps
-    # 250 by default and drops the rest: what hears a swipe is among the last.
     page.add_init_script("performance.setResourceTimingBufferSize(10000)")
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nThe first note.\n", "# Beta\n\nThe second note.\n")
     page.evaluate(TRAIL)
     wait_for(page, "window.nibApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
-    # What hears a swipe is fetched at the very end of the launch, the last of its doors
-    # (`warmDoors` in surfaces.svelte.ts), and nothing on screen says when it is in. A
-    # sweep before it is a scroll nobody hears: the first arrow this drive asked for,
-    # straight after the seed, used to come out as no arrow at all, and only the second
-    # was drawn. So the chunk is waited for, and two frames for it to start listening.
     wait_for(
         page,
         "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",
@@ -133,11 +82,9 @@ def opened(
         raise SystemExit("no note on screen")
     return page, box["x"] + box["width"] / 2, box["y"] + 120
 
-
 def notes(browser: Browser, scheme: str) -> None:
     page, x, y = opened(browser, scheme)
 
-    # Half way, and past the point where it goes, each held there for its picture.
     for across, name in ((7, "half"), (14, "armed")):
         page.evaluate(HOLD, across)
         DRIVE.settled(page)
@@ -171,7 +118,6 @@ def notes(browser: Browser, scheme: str) -> None:
     on(page, "Beta", "forward on Beta")
     say(f"ok   {scheme}: a long sweep to the left goes forward")
 
-    # A scroll down first is a stream of its own; the sweep after it is a sweep.
     sweep(page, x, y, 0, -300)
     lifted(page)
     sweep(page, x, y, 700)
@@ -179,9 +125,6 @@ def notes(browser: Browser, scheme: str) -> None:
     on(page, "Alpha", "back on Alpha after a scroll down")
     page.close()
 
-
-#: Where the arrow's circle is drawn, in pixels of the screen: its corner and the
-#: arrow's own box inside it, which are sharp only on whole ones.
 WHERE = """() => {
   const circle = document.querySelector('.nib-swipe')
   const arrow = circle?.querySelector('.arrow')
@@ -190,13 +133,8 @@ WHERE = """() => {
   return { circle: at(circle.getBoundingClientRect()), arrow: at(arrow.getBoundingClientRect()) }
 }"""
 
-
 def close_up(browser: Browser, scale: float) -> None:
-    """The arrow held half way and armed, at a scale of the screen, photographed close:
-    on whole pixels of the screen, and its picture kept beside the others."""
     page, _, _ = opened(browser, scale=scale)
-    # Fingers on a precision touchpad come in fractions of a pixel, and so does a window
-    # at 125 or 150 per cent.
     for across, name in ((7.3, "half"), (14.3, "armed")):
         page.evaluate(HOLD, across)
         DRIVE.settled(page)
@@ -204,8 +142,6 @@ def close_up(browser: Browser, scale: float) -> None:
         if where is None:
             wrong(f"at {scale}x: no arrow {name} way along a sweep")
         else:
-            # The corner where it stopped; the size grows with `armed`, so only where the
-            # circle and the arrow start.
             off = [abs(value - round(value)) for value in where["circle"][:2] + where["arrow"][:2]]
             if name == "half" and max(off) > 0.01:
                 wrong(f"at {scale}x: the arrow sits between pixels of the screen: {where}")
@@ -230,9 +166,7 @@ def close_up(browser: Browser, scale: float) -> None:
         on(page, "Beta", "Beta again")
     page.close()
 
-
 def turned_off(browser: Browser) -> None:
-    """Off in the settings: a sweep is a scroll."""
     page, x, y = opened(browser, off=True)
     sweep(page, x, y, 700)
     lifted(page)
@@ -242,10 +176,6 @@ def turned_off(browser: Browser) -> None:
         say("ok   switched off, a sweep is a scroll")
     page.close()
 
-
-#: A site's page with the page script in it, as nib's world holds it, and the window
-#: names it asks under read into a list in the page. Three places to put the pointer: plain words, a scroller in the
-#: middle of its row, and a map that takes the wheel.
 PAGE = f"""<!doctype html>
 <meta charset="utf-8">
 <style>
@@ -273,7 +203,6 @@ PAGE = f"""<!doctype html>
 <script>{SCRIPT}</script>
 """
 
-
 def page_script(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 800, "height": 600})
     page.set_content(PAGE)
@@ -288,7 +217,6 @@ def page_script(browser: Browser) -> None:
             page.mouse.wheel(-across, -down)
         else:
             sweep(page, x, y, across, down)
-        # Past the page's own quiet, so the next gesture is a stream of its own.
         time.sleep(0.2)
         return list(page.evaluate("window.said"))
 
@@ -334,11 +262,6 @@ def page_script(browser: Browser) -> None:
         wrong(f"a page that keeps its overscroll did not keep it: {json.dumps(contained)}")
     else:
         say("ok   overscroll-behavior-x: none keeps the swipe out")
-    # A scroller with only a little way to go, which a passive listener hears from after
-    # the scroll that took it to its edge: the stream moved it, so it is the page's
-    # (#407), and nothing of it is said as left over. On a page of its own, because in
-    # headless Chromium a sideways sweep over the words leaves the next ones scrolling
-    # nothing at all.
     page.close()
     page = DRIVE.page(browser, viewport={"width": 800, "height": 600})
     page.set_content(PAGE)
@@ -355,8 +278,6 @@ def page_script(browser: Browser) -> None:
         say("ok   a stream that moved a scroller is the scroller's, to its edge and past it")
     page.close()
 
-
-#: The note's wide table, scrolled to a little way short of its left edge.
 SHORT_OF_THE_EDGE = """() => {
   const table = document.querySelector('.nib-table-scroll')
   if (!table) return null
@@ -364,7 +285,6 @@ SHORT_OF_THE_EDGE = """() => {
   return { left: table.scrollLeft, x: document.querySelector('.cm-content').getBoundingClientRect().x }
 }"""
 
-#: Whether the arrow is out, polled while a sweep goes on.
 ARROW_SEEN = """() => {
   window.__arrow = false
   const look = () => {
@@ -374,13 +294,7 @@ ARROW_SEEN = """() => {
   look()
 }"""
 
-
 def latched(browser: Browser) -> None:
-    """#407: a sideways scroll over something that scrolls sideways scrolls it, and the
-    pane does not go with it. A wide table a little way from its edge is scrolled to the
-    edge and past it in one sweep towards Back: the table moves, no arrow comes in at any
-    point, nothing steps, and the note stays where it was. Over the words beside it, which
-    do not scroll sideways, the same sweep brings the arrow in and goes back."""
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     page.add_init_script("performance.setResourceTimingBufferSize(10000)")
     DRIVE.open(page)
@@ -437,7 +351,6 @@ def latched(browser: Browser) -> None:
     say("ok   a table scrolled is the table's; the words beside it go back")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     page_script(browser)
     latched(browser)
@@ -446,7 +359,6 @@ def drive(browser: Browser) -> None:
     for scale in (1, 1.25, 1.5, 2):
         close_up(browser, scale)
     turned_off(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "swipes go back and forward, and only where they should"))

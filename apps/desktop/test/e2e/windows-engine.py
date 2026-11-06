@@ -19,16 +19,13 @@ ITEM = "both.md"
 
 wrong: list[str] = []
 
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
@@ -39,13 +36,11 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def type_at_end(page: Page, words: str) -> None:
     page.bring_to_front()
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
     page.keyboard.type(words, delay=5)
-
 
 def main() -> int:
     worker = Worker()
@@ -174,7 +169,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

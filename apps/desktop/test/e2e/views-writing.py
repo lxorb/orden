@@ -13,7 +13,6 @@ PHONE_AGENT = (
 
 counter = {"n": 0}
 
-
 def note(page, words):
     counter["n"] += 1
     title = f"T{counter['n']}x"
@@ -21,11 +20,9 @@ def note(page, words):
     DRIVE.open_note(page, title)
     page.wait_for_timeout(250)
 
-
 def body(page):
     whole = page.evaluate("() => window.nib.state.doc.toString()")
     return whole.split("\n\n", 1)[1]
-
 
 def caret(page, words, offset=0):
     page.evaluate(
@@ -38,7 +35,6 @@ def caret(page, words, offset=0):
     )
     page.wait_for_timeout(80)
 
-
 def select(page, words):
     page.evaluate(
         """(words) => {
@@ -50,7 +46,6 @@ def select(page, words):
         words,
     )
     page.wait_for_timeout(80)
-
 
 def paste(page, text="", html="", image=False):
     page.evaluate(
@@ -67,14 +62,12 @@ def paste(page, text="", html="", image=False):
     )
     page.wait_for_timeout(350)
 
-
 def holds(page, what, wanted):
     got = body(page)
     if got.rstrip("\n") != wanted.rstrip("\n"):
         wrong(f"{what}: {got!r}, wanted {wanted!r}")
     else:
         say(f"ok: {what}")
-
 
 def handle(page, words):
     caret(page, words)
@@ -102,11 +95,9 @@ def handle(page, words):
     page.mouse.click(grip["x"], grip["y"])
     page.wait_for_timeout(200)
 
-
 def choose(page, label):
     page.locator("[role=menu] [role=menuitem],[role=menu] button", has_text=label).first.click()
     page.wait_for_timeout(250)
-
 
 def pasting(page):
     table = "| a | b |\n| --- | --- |\n| c | d |"
@@ -142,7 +133,6 @@ def pasting(page):
     caret(page, "here: ", 6)
     paste(page, text="Name\tAge\nBob\t3", html="<table><tr><td>Name</td><td>Age</td></tr></table>", image=True)
     holds(page, "cells beside a picture of them", "here:\n\n| Name | Age |\n| --- | --- |\n| Bob | 3 |")
-
 
 def keys(page):
     note(page, "1. x\n2. y\n3. z\n")
@@ -188,12 +178,10 @@ def keys(page):
     if page.locator("table.nib-table").count() != 1:
         wrong("the table stopped being one")
 
-
 SECTION = (
     "# Head\n\npara\n\n- item a\n- [ ] task b\n\n> quoted\n\n```py\n# comment\n- dash\n```\n\n"
     "| a | b |\n| --- | --- |\n| 1 | 2 |\n\n## Sub\n\nunder\n\n# Next\n\nkeep\n"
 )
-
 
 def menus(page):
     for shape, line in (("Heading 2", "## Head"), ("Bullet", "- Head")):
@@ -231,12 +219,10 @@ def menus(page):
     if page.locator(".cm-content table.nib-table td", has_text="^").count():
         wrong("a table grew a cell with the name in it")
 
-
 def tap(page, locator):
     box = locator.bounding_box()
     page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.wait_for_timeout(350)
-
 
 def phone(browser):
     context = browser.new_context(
@@ -275,7 +261,6 @@ def phone(browser):
     say("ok: and so is one left by opening another")
     context.close()
 
-
 def drive(browser):
     page = DRIVE.page(
         browser,
@@ -287,7 +272,6 @@ def drive(browser):
     keys(page)
     menus(page)
     phone(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the writing holds"))

@@ -1,29 +1,3 @@
-"""Two browsers drawing on one canvas at the same time, against the real Worker.
-
-Everything in this test is the real thing: the built web app, the Worker running
-under `wrangler dev` on workerd, a Durable Object holding the room, two browser
-contexts with their own storage that know nothing about each other, and real pen
-events with pressure and tilt delivered through the debugging protocol.
-
-What it asserts is the promise a shared plane makes - both devices end up with
-every stroke, neither drawing is woven through the other, and each can see where
-the other's hand is while it is drawing. And it measures how long that takes.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/draw-together.py
-
-It builds the app, applies the migrations, starts the Worker, runs the browsers
-and stops everything again. Nothing it makes outlives it but the screenshots,
-which go beside it under `shots/`.
-
-The app is built `--mode drive` on purpose. That leaves the app's own stores
-reachable from the page, so the test opens a canvas by asking the workspace for it
-rather than by hunting for a row in a file list - which is a test of the sidebar,
-not of drawing together. Everything after that is real: real pen events into the
-real surface, and the plane read back out of the file every device writes.
-"""
-
 from __future__ import annotations
 
 import json
@@ -40,9 +14,7 @@ from harness import Drive
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
-#: The Worker's own address, which is also where the app it serves is loaded from.
 ORIGIN = harness.worker_origin()
-
 
 EMAIL = "drawing@example.com"
 SPACE = "Drawings"
@@ -50,22 +22,13 @@ CANVAS = "Board.canvas"
 PAGE = "Notes page.canvas"
 BIG = "Handwriting.canvas"
 
-# A plane with nothing on it, which is what a canvas made just now says.
 BLANK = '{\n\t"nodes": [],\n\t"edges": []\n}\n'
 
-# How long anything is waited for before the test gives up and says what it saw.
 PATIENCE = 40
 
-# What a stroke crossing has to stay under here. The budget the design is held to
-# is 150 ms on a normal connection; this is the ceiling past which something is
-# actually wrong rather than merely busy, on one laptop running the Worker's
-# emulated runtime and three browser contexts at once.
 CEILING = 1500
 
-# And what joining a plane of five thousand strokes has to stay under. The budget
-# is 500 ms; the same argument applies to the ceiling.
 JOIN_CEILING = 6000
-
 
 def request(
     path: str, token: str | None = None, body: dict | None = None, method: str | None = None
@@ -86,9 +49,7 @@ def request(
     with urllib.request.urlopen(call, timeout=60) as answer:
         return json.loads(answer.read() or b"null")
 
-
 class Worker(harness.Worker):
-    """The real Worker, with this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
         super().__init__(DRIVE)
@@ -97,9 +58,6 @@ class Worker(harness.Worker):
         return super().account(EMAIL)
 
     def kept(self) -> int:
-        """How many bytes the rooms are holding, as the runtime has them on disk.
-        Everything under the object storage, which after a settle is the plane's
-        snapshot and nothing else."""
         if self.state is None:
             return 0
         rooms = self.state / "v3" / "do"
@@ -108,9 +66,7 @@ class Worker(harness.Worker):
 
         return sum(path.stat().st_size for path in rooms.rglob("*") if path.is_file())
 
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
-    """Polls a page until the script answers with something truthy."""
     until = time.monotonic() + patience
     while time.monotonic() < until:
         answer = page.evaluate(script)
@@ -120,14 +76,11 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
 
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def note_console(label: str, message) -> None:
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {message.text[:200]}")
 
-
 def signed_in(browser: Browser, token: str, label: str) -> Page:
-    """A browser context with the session in its storage, on the app."""
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
 
@@ -139,9 +92,7 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
     return page
 
-
 def listed(path: str) -> str:
-    """A script that answers whether the open space's file list holds a path."""
     return (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
@@ -149,17 +100,12 @@ def listed(path: str) -> str:
         "}"
     )
 
-
 def opened(page: Page, label: str, name: str, note_id: str) -> None:
-    """Waits for the account's space to come down, opens the canvas in it, and
-    waits for that canvas to be in its room."""
     wait_for(
         page,
         f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
-    # The file list is the open space's, and a browser opens on whichever space it
-    # opened on last. Picking one is what a person does from the rail.
     page.evaluate(
         "async () => {"
         f"  const space = window.nibApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)});"
@@ -191,10 +137,7 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
         f"[{label}] the plane to join its room",
     )
 
-
 def plane(page: Page) -> dict:
-    """Where the plane is on screen, so the same point means the same place in
-    either browser."""
     return page.evaluate(
         """() => {
             const host = document.querySelector('div.canvas')
@@ -203,10 +146,7 @@ def plane(page: Page) -> dict:
         }"""
     )
 
-
 def strokes(page: Page) -> int:
-    """How many strokes the file this device writes holds. The plane itself is
-    pixels; the file is what every device agrees on and what the account keeps."""
     return page.evaluate(
         """() => {
             const text = window.nibApp.workspace.active?.doc ?? ''
@@ -218,19 +158,12 @@ def strokes(page: Page) -> int:
         }"""
     )
 
-
 def file_of(page: Page) -> str:
     return page.evaluate("() => window.nibApp.workspace.active?.doc ?? ''")
 
-
 PHONE = {"width": 390, "height": 844}
 
-
 def held_at_edge(page: Page, failures: list[str], label: str) -> None:
-    """Looks far away from the other hand, and checks it is held at the edge of the
-    screen with its name, pointing back the way to it, rather than gone. Then looks
-    back."""
-    # The tab's own camera, which is none at all until somebody moves it.
     before = page.evaluate("() => window.nibApp.workspace.active.camera ?? null")
     page.evaluate(
         "() => { const tab = window.nibApp.workspace.active;"
@@ -266,14 +199,11 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
             failures.append(f"[{label}] a hand held at the edge carried no name")
         if not held["inside"]:
             failures.append(f"[{label}] a hand held at the edge was drawn past it")
-        # Far to the right of it, so it is to the left: held at the left edge.
         if held["left"] > 40:
             failures.append(f"[{label}] a hand to the left was held {held['left']:.0f}px in, not at the left edge")
         if held["dot"]:
             failures.append(f"[{label}] a hand held at the edge was drawn where it is as well")
 
-    # Pressed, the arrow goes to them: the camera moves to the hand, which is drawn where
-    # it is again.
     if held:
         page.locator("svg.hands .held path").first.click(force=True)
         try:
@@ -290,10 +220,7 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
     page.evaluate("(camera) => { window.nibApp.workspace.active.camera = camera ?? undefined }", before)
     page.wait_for_timeout(200)
 
-
 def pen(page: Page):
-    """A pen, as the debugging protocol delivers one: pressure and tilt, and the
-    events a digitiser really sends rather than a mouse pretending to be one."""
     session = page.context.new_cdp_session(page)
 
     def down(x: float, y: float) -> None:
@@ -346,11 +273,7 @@ def pen(page: Page):
 
     return down, move, up, session
 
-
 def wave(box: dict, count: int, offset: float) -> list[tuple[float, float]]:
-    """A stroke of `count` points across the plane, `offset` pixels from its middle.
-    Every stroke this test draws is above the middle, because the floating bar sits
-    over the bottom of the plane and takes the pointer events there."""
     left = box["x"] + box["width"] / 2 - 150
     middle = box["y"] + box["height"] / 2 + offset
 
@@ -359,16 +282,7 @@ def wave(box: dict, count: int, offset: float) -> list[tuple[float, float]]:
         for index in range(count)
     ]
 
-
 def watches(page: Page, at: tuple[float, float]) -> None:
-    """Has a browser watch one patch of its own settled ink for the first pixel to
-    land there, and write down when it did.
-
-    Timed inside the page by the wall clock both browsers share, because asking a
-    page a question over the debugging protocol costs more than the thing being
-    measured. A small patch rather than the whole layer: reading a whole layer's
-    pixels every millisecond would be the most expensive thing in the test.
-    """
     page.evaluate(
         """([sx, sy]) => {
             window.__inked = null
@@ -399,19 +313,11 @@ def watches(page: Page, at: tuple[float, float]) -> None:
         [at[0], at[1]],
     )
 
-
 def main() -> int:
     worker = Worker()
     failures: list[str] = []
-    # The planes whose joining is timed: a name, how many strokes, and its id.
     joins: list[tuple[str, int, str]] = []
 
-    # One browser, two contexts: two devices as far as the app and the
-    # account are concerned, since a context has its own storage and its
-    # own session. The three throttling flags matter - a browser slows
-    # down a page it is not showing, and a page waiting to hear from the
-    # room is exactly that page - and the fourth is what lets the heap be
-    # measured honestly.
     with DRIVE.session(
         args=[
             "--disable-background-timer-throttling",
@@ -421,9 +327,6 @@ def main() -> int:
             "--js-flags=--expose-gc",
         ],
     ) as browser:
-        # Before the Worker, not after it: the runtime opens the local database on
-        # its own connection, and a row written into that file by another process
-        # while it is running is not one it is bound to see.
         token = worker.account()
         worker.start()
 
@@ -457,10 +360,6 @@ def main() -> int:
         one.keyboard.press("d")
         one.wait_for_timeout(150)
 
-        # A stroke of three hundred points, and how long it takes to reach
-        # the other browser. Five times, so what is reported is a normal
-        # crossing rather than the first one, and each on its own line so
-        # no two are looked for in the same patch of pixels.
         crossings: list[float] = []
         for turn in range(5):
             path = wave(box, 300, -280 + turn * 70)
@@ -471,10 +370,6 @@ def main() -> int:
             for point in path[1:]:
                 move(*point)
 
-            # Taken as the pen lifts, which is the moment the stroke exists.
-            # The three hundred points were in the browser already, and
-            # feeding them in one debugging-protocol round trip at a time is
-            # this test's cost rather than the room's.
             sent = one.evaluate("() => Date.now()")
             up(*path[-1])
 
@@ -499,16 +394,11 @@ def main() -> int:
         if crossing > CEILING:
             failures.append(f"a stroke took {crossing:.0f} ms to cross, past {CEILING} ms")
 
-        # The stroke under somebody else's pen, seen as it is drawn. The
-        # pen goes down and moves and is not lifted, and the other browser
-        # is photographed with the line and the hand on it.
         live = wave(box, 60, 40)
         down(*live[0])
         for point in live[1:]:
             move(*point)
 
-        # Waited for rather than slept on: a busy machine takes longer than a quarter of a
-        # second to carry it, and the check below says what the other browser shows.
         try:
             DRIVE.wait_for(two, "!!document.querySelector('svg.hands path')", "the stroke on the other device", 10)
         except SystemExit:
@@ -533,9 +423,6 @@ def main() -> int:
         if not drawing["named"]:
             failures.append("the other device's hand carried no name")
 
-        # And the pen lifts: the stroke settles into the plane's own ink, and the
-        # dot and the name both stay - somebody in the canvas is always somebody
-        # you can see (#386).
         up(*live[-1])
         two.wait_for_timeout(1900)
         two.locator("div.canvas").first.screenshot(path=str(SHOTS / "remote-pointer.png"))
@@ -549,7 +436,6 @@ def main() -> int:
             say(f"the hand that stopped is still named {still_named!r}")
 
         held_at_edge(two, failures, "desktop")
-        # The same on a phone's screen, where far less of the plane is in view.
         two.set_viewport_size(PHONE)
         two.wait_for_timeout(300)
         held_at_edge(two, failures, "phone")
@@ -557,7 +443,6 @@ def main() -> int:
         two.wait_for_timeout(300)
         say(f"the photographs are in {SHOTS}")
 
-        # And now both at once, neither having heard the other.
         second, moving, lifting, other_session = pen(two)
         two.click("div.canvas", position={"x": 40, "y": 40})
         two.keyboard.press("d")
@@ -573,8 +458,6 @@ def main() -> int:
         up(*mine[-1])
         lifting(*yours[-1])
 
-        # Every stroke that has been drawn: five crossings, one live one,
-        # and the two just now.
         wanted = len(crossings) + 1 + 2
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until:
@@ -591,7 +474,6 @@ def main() -> int:
         else:
             say("both browsers hold the same plane, byte for byte")
 
-        # What the account ends up holding, once the room has settled it.
         settled = ""
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until:
@@ -612,13 +494,6 @@ def main() -> int:
         session.detach()
         other_session.detach()
 
-        # A plane joining a room, cold: the object waking, reading the file
-        # out of the store, filling a map an entry to an object and saying
-        # what it holds. Twice, on two sizes: a page of notes with five
-        # hundred strokes on it, and a plane of five thousand, which is the
-        # largest a canvas can be and still be a note the account will take.
-        # Measured on canvases the browser has never opened, so nothing
-        # about either of them is warm.
         for name, count, per in ((PAGE, 500, 20), (BIG, 5000, 8)):
             written = big_canvas(count, per)
             say(f"a {len(written) // 1024} KB plane of {count} strokes is going up")
@@ -690,11 +565,7 @@ def main() -> int:
     print("\ntwo browsers drew on one plane and neither lost a stroke", flush=True)
     return 0
 
-
 def heap(page: Page) -> int:
-    """How much of the heap this page is using, once what can be collected has
-    been. Chromium only, and only with the flags this run launches with; zero
-    where it cannot be asked."""
     return page.evaluate(
         """() => {
             if (typeof gc === 'function') gc()
@@ -702,15 +573,7 @@ def heap(page: Page) -> int:
         }"""
     )
 
-
 def big_canvas(strokes: int, per: int) -> str:
-    """A canvas file with `strokes` strokes on it, written the way the format
-    writes one: flat points, six numbers each.
-
-    Eight points a stroke rather than the twenty a real pen leaves, because the
-    format writes a file with one number to a line and twenty would put a plane of
-    five thousand strokes past the four megabytes a note may be.
-    """
     ink = []
     for at in range(strokes):
         points: list[float] = []
@@ -733,7 +596,6 @@ def big_canvas(strokes: int, per: int) -> str:
         )
         + "\n"
     )
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,22 +1,3 @@
-"""A page note and a chat, each shared on its own by a link, to a guest (#386).
-
-The owner keeps a page note and a chat in a space of their own, and hands each out by
-an open link to write. A guest with no account follows each link. A file shared on its
-own has no path on the guest's side, so what it opens as is read off its name on the
-account: the page note opens on its paper, in a plane's room - a card put down on
-either side is on the other's - and the chat opens as the chat, where a message posted
-on either side is on the other. Both with none of the app round them, the way a guest
-who came for one file sees it.
-
-What broke: both opened as a note. The page note's JSON sat in a text editor in a room
-of words the service did not agree it had, and the chat's pointer was a note to read.
-
-The real thing: the built web app, the Worker under `wrangler dev`, three browser
-contexts. Run it from the repository root:
-
-    python apps/desktop/test/e2e/share-kinds.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -34,9 +15,7 @@ say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 PATIENCE = 40
-# How long a card or a message is given to cross to the other side.
 CROSSING = 15
-# How long a file made in the app is given to reach the account.
 SYNCED = 60
 
 OWNER = "owner-kinds@example.com"
@@ -46,11 +25,9 @@ CHAT = "Talk"
 
 wrong: list[str] = []
 
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: float = PATIENCE):
     until = time.monotonic() + patience
@@ -60,7 +37,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: f
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 
 def device(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
@@ -72,9 +48,7 @@ def device(browser: Browser, label: str, at: str, token: str | None = None) -> P
     wait_for(page, "() => !!window.nibApp", f"[{label}] the app")
     return page
 
-
 def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
-    """An open link to write in one file, as the owner's Share sheet makes it."""
     worker.request(
         f"/v1/spaces/{space}/share/link?item={note}",
         token=token,
@@ -87,9 +61,7 @@ def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
         raise SystemExit(f"that is not a join link: {link}")
     return f"{ORIGIN}/join/{found.group(1)}"
 
-
 def alone(page: Page, label: str) -> None:
-    """That the window is the one file: none of the app's chrome is drawn."""
     chrome = page.evaluate(
         "() => [...document.querySelectorAll('[data-chrome], .strip')]"
         ".map((one) => one.dataset.chrome ?? one.className)"
@@ -97,13 +69,10 @@ def alone(page: Page, label: str) -> None:
     if chrome:
         failed(f"[{label}] a guest with one file still sees the app round it: {chrome}")
 
-
-# The surface of the plane in front: what the room hands what arrives to.
 SURFACE = """() => {
   const key = window.nibApp.workspace.active?.note.key
   return key ? window.nibApp.rooms.planes.get(key) ?? null : null
 }"""
-
 
 def card_on(page: Page, card: str) -> bool:
     return bool(
@@ -111,7 +80,6 @@ def card_on(page: Page, card: str) -> bool:
             f"(id) => !!({SURFACE})()?.canvas.nodes.some((node) => node.id === id)", card
         )
     )
-
 
 def put_down(page: Page, label: str) -> str:
     return page.evaluate(
@@ -126,7 +94,6 @@ def put_down(page: Page, label: str) -> str:
         label,
     )
 
-
 def crosses(source: Page, label: str, other: Page, there: str) -> None:
     card = put_down(source, label)
     until = time.monotonic() + CROSSING
@@ -137,10 +104,7 @@ def crosses(source: Page, label: str, other: Page, there: str) -> None:
     else:
         say(f"a card put down on the {label}'s pages is on the {there}'s")
 
-
 def held_and_gone_to(owner: Page, guest: Page) -> None:
-    """The owner's hand on the paper, the guest looking far down the column from it:
-    the hand is held at the guest's edge, and pressing its arrow goes to it."""
     box = owner.locator(".pages").first.bounding_box()
     if not box:
         failed("the owner's pages are not on screen")
@@ -166,19 +130,16 @@ def held_and_gone_to(owner: Page, guest: Page) -> None:
     except SystemExit as gave_up:
         failed(str(gave_up))
 
-
 def has_row(words: str) -> str:
     return (
         "() => [...document.querySelectorAll('.chat-tab .main .message .body')]"
         f".some((one) => one.textContent.includes({json.dumps(words)}))"
     )
 
-
 def post(page: Page, words: str) -> None:
     page.click(".chat-tab .main .composer .cm-content")
     page.keyboard.type(words, delay=8)
     page.keyboard.press("Enter")
-
 
 def arrives(page: Page, words: str, what: str) -> None:
     try:
@@ -186,7 +147,6 @@ def arrives(page: Page, words: str, what: str) -> None:
         say(f"{what}: there")
     except SystemExit as gave_up:
         failed(str(gave_up))
-
 
 def main() -> int:
     worker = harness.Worker(DRIVE)
@@ -213,7 +173,6 @@ def main() -> int:
             patience=SYNCED,
         )
 
-        # ── A page note ─────────────────────────────────────────────
         owner.evaluate(
             "async ([root, name]) => { await window.nibApp.workspace.createPages(root, name) }",
             [root, DECK],
@@ -256,7 +215,6 @@ def main() -> int:
         alone(guest, "guest")
         guest.screenshot(path=str(SHOTS / "shared-pages.png"))
 
-        # ── A chat ──────────────────────────────────────────────────
         wait_for(owner, "async () => (await window.nibApp.chats()).chats.ready", "[owner] the chats")
         owner.evaluate(
             "async ([root, name]) => { const one = await window.nibApp.chats(); await one.makeChat(root, name) }",
@@ -273,8 +231,6 @@ def main() -> int:
         )
         wait_for(owner, "() => !!document.querySelector('.chat-tab .main .composer')", "[owner] the chat's tab")
 
-        # The pointer's own row is what a private chat is shared by, once the account
-        # has seen it arrive; see docs/chats.md 4.2.
         until = time.monotonic() + SYNCED
         pointer = None
         while time.monotonic() < until and not pointer:
@@ -298,7 +254,6 @@ def main() -> int:
                     "() => !!document.querySelector('.chat-tab .main .composer .cm-content')",
                     "[chatter] the chat, with somewhere to write",
                 )
-                # Its name in its head, though no pointer of it is on this device.
                 named = chatter.evaluate(
                     "() => document.querySelector('.chat-tab h2.name')?.textContent.trim() ?? null"
                 )
@@ -322,7 +277,6 @@ def main() -> int:
         return 1
     print("\na page note and a chat shared on their own each open as themselves, and carry", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

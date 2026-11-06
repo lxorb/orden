@@ -1,34 +1,3 @@
-"""Getting into a block that draws itself, with the four arrow keys.
-
-A formula, a diagram and a `[toc]` are drawn by replacing the lines they are
-written on, and a replacement is atomic: the caret cannot stand inside one, so
-every press that would put it there puts it past the whole block instead. What
-saves that from being a wall is that arriving at either edge of the block reveals
-it - the lines come back as text, and the next press is an ordinary press in
-ordinary text.
-
-So the rule this asks about, for each block and each of the four arrows: **one
-press opens it, it does not skip past it**. A reader coming down the note with the
-keyboard must be able to reach the inside of their own formula, which is what Emil
-reported of the horizontal case - *"if I'm for example at the right of it and press
-arrow to the left then it just skips the entire thing"* - and the vertical case was
-never asked. The table answers this with a navigation of its own; see
-table/keymap.ts. Everything else answers it by revealing, and revealing is what is
-measured here: after the press, the block's widget is gone and the caret is on one
-of the lines it was drawn from.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/caret-blocks.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run, which is what
-run-all.py sets. Screenshots go beside this file under `shots/caret-blocks/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -48,10 +17,7 @@ SHOTS = DRIVE.shots
 APP = harness.APP
 ROOT = harness.ROOT
 
-
-# How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 60
-
 
 def opened(context: BrowserContext) -> Page:
     page = context.pages[0] if context.pages else context.new_page()
@@ -59,12 +25,6 @@ def opened(context: BrowserContext) -> Page:
     DRIVE.open(page)
     return page
 
-
-# One note, with the three blocks that draw themselves and a paragraph above and
-# below each - so every press below has somewhere to come from and somewhere it
-# would land if it skipped. The headings are there for `[toc]` to have something to
-# list; a `[toc]` with nothing under it draws an empty shell and is a different row
-# of the same question.
 NOTE = """# Getting about
 
 above the formula
@@ -106,8 +66,6 @@ async (text) => {
 }
 """
 
-# Where each block stands in the document, read off the text rather than off the
-# decorations: the decorations are the thing being measured.
 SPANS = """
 () => {
   const doc = window.nib.state.doc
@@ -130,7 +88,6 @@ SPANS = """
 }
 """
 
-# What the editor is showing and where the caret is, in one reading.
 STATE = """
 () => ({
   head: window.nib.state.selection.main.head,
@@ -142,10 +99,6 @@ STATE = """
 })
 """
 
-#: Each block, the class of the widget drawn for it, and the four presses. A press
-#: is where the caret starts - a document position worked out from the block's own
-#: span - and the key. The two vertical ones start on the line above and the line
-#: below; the two horizontal ones start immediately beside it.
 BLOCKS = ["formula", "diagram", "contents"]
 
 PRESSES = [
@@ -155,20 +108,15 @@ PRESSES = [
     ("from behind", "ArrowLeft"),
 ]
 
-
 def caret_at(page: Page, at: int) -> None:
     page.evaluate(
         "(at) => window.nib.dispatch({ selection: { anchor: at }, scrollIntoView: true })", at
     )
     page.wait_for_timeout(120)
 
-
 def start_of(page: Page, span: dict, where: str) -> int:
-    """The position a press starts from, in the document as it stands."""
     doc_end = page.evaluate("() => window.nib.state.doc.length")
     if where == "from above":
-        # The end of the line before the block, which is where a reader coming down
-        # the note with the keyboard is standing.
         return page.evaluate(
             "(at) => window.nib.state.doc.lineAt(Math.max(0, at - 1)).to", span["from"]
         )
@@ -181,7 +129,6 @@ def start_of(page: Page, span: dict, where: str) -> int:
         return max(0, span["from"] - 1)
 
     return min(doc_end, span["to"] + 1)
-
 
 def drive(playwright, profile: Path) -> None:
     context = DRIVE.persistent(
@@ -196,8 +143,6 @@ def drive(playwright, profile: Path) -> None:
         say(f"wrote {made}")
 
         wait_for(page, "() => !!window.nib", "the editor")
-        # The diagram is drawn by a library fetched when the first one appears, so
-        # the three widgets are not all there on the first frame.
         wait_for(
             page,
             "() => document.querySelectorAll('.nib-math-block').length === 1"
@@ -217,9 +162,6 @@ def drive(playwright, profile: Path) -> None:
         for name in BLOCKS:
             span = spans[name]
             for where, key in PRESSES:
-                # Every press starts from the note as it was drawn, not from wherever
-                # the press before left the caret. Nothing here types, so the spans
-                # read above hold for the whole run.
                 caret_at(page, 0)
                 caret_at(page, start_of(page, span, where))
                 page.keyboard.press(key)
@@ -238,8 +180,6 @@ def drive(playwright, profile: Path) -> None:
                 elif not opened_up:
                     wrong(f"{key} {where} put the caret in the {name} without opening it")
 
-        # And the way out again: the block closes behind a caret that leaves it, or
-        # the note would open up block by block and never draw itself again.
         caret_at(page, 0)
         page.wait_for_timeout(200)
         closed = page.evaluate(STATE)
@@ -253,7 +193,6 @@ def drive(playwright, profile: Path) -> None:
     finally:
         context.close()
 
-
 def main() -> int:
     profile = Path(ROOT / "target" / "caret-blocks-profile")
     if profile.exists():
@@ -264,7 +203,6 @@ def main() -> int:
         drive(playwright, profile)
 
     return DRIVE.verdict("every block opens to an arrow rather than standing in its way")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

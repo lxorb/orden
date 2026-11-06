@@ -1,19 +1,3 @@
-"""Todos is one list of every space (#1153), in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * Two spaces, each with a task in a note. The Tasks panel on the right lists both from
-    either space, and a switch leaves the list as it was.
-  * A task from the panel's add row lands in the reader's one inbox, the first space's,
-    while the other space is open.
-  * A task of the first space, ticked in the panel while the second is open, is ticked in
-    its own note; opened from its place, it is shown in its own space.
-
-    python apps/desktop/test/e2e/global-todos.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/global-todos/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -40,10 +24,8 @@ ARRANGE = """async () => {
 
 LISTED = "() => [...document.querySelectorAll('.tasks .chosen .task .words')].map((one) => one.textContent.trim()).sort()"
 
-
 def listed(page: Page) -> list[str]:
     return page.evaluate(LISTED)  # type: ignore[no-any-return]
-
 
 def both(page: Page, where: str, more: list[str] | None = None) -> None:
     wanted = sorted(["Call the bank", "Water the plants", *(more or [])])
@@ -53,7 +35,6 @@ def both(page: Page, where: str, more: list[str] | None = None) -> None:
     say(f"[{where}] {json.dumps(words)}")
     if words != wanted:
         wrong(f"the panel lists {words} {where}, not {wanted}")
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -132,7 +113,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the panel lists {after} after opening the task, not the same list as before")
     DRIVE.shot(page, "04-opened")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "Todos is one list of every space"))

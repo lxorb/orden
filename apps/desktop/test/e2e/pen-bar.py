@@ -1,34 +1,3 @@
-"""The pen bar a finger gets, photographed on a tablet and on a phone.
-
-Everything here is the real thing: the built web app in a browser, a canvas made
-through the workspace, and a stroke drawn with real pen events carrying real
-pressure through the Chrome DevTools protocol. No Worker and no account: a plane
-is a file in this browser's own storage, which is all a drawing needs.
-
-What it photographs, in both themes and on both shapes of device:
-
-    the bar, the pen popover, the eraser popover, the bar folded to its handle,
-    the bar docked to the top edge, and a stroke drawn at a fifth of its opacity
-
-It also measures the popover's row of colours: the eight that are always in it are
-one row at whatever width the panel has, and each is still a round dot.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/pen-bar.py
-
-It builds the app, serves it, drives the browser and stops everything again.
-Nothing it makes outlives it but the screenshots, which go beside it under
-`shots/`.
-
-The app is built `--mode drive` on purpose, which is what leaves the app's
-own stores reachable from the page: the device class is settled from the window
-and there is no window on a desktop machine that is a tablet, so the test says
-so directly rather than pretending to be Android well enough to fool the whole
-Tauri bridge. Everything the bar itself does is real - real taps on real buttons,
-and the ink read back off the plane.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -42,9 +11,6 @@ say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 
-
-# What a phone and a tablet say about themselves, which is half of what decides
-# the device class; the other half is the pointer, emulated with the context.
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -54,14 +20,6 @@ TABLET_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-
-# Written before any of the app's own scripts run.
-#
-# The os plugin's globals are what `platform()` reads, so anything in the app that
-# asks which platform this is gets an answer; and the pen having been seen is what
-# puts the finger switch in the pen's popover, which is one of the things being
-# photographed. The device class itself is set from the page below: it is settled
-# from the window, and no window on this machine is a tablet.
 PREPARE = """
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android',
@@ -76,17 +34,6 @@ localStorage.setItem('nib:pen-seen', 'yes');
 localStorage.setItem('nib:finger-draws', 'yes');
 """
 
-# The row of colours in the pen's popover, measured as rows rather than looked at.
-#
-# Eight dots are always in it - the six the theme names, the bare dot that is the ink
-# of the page, and the wheel behind which every other colour is - and they are one
-# row at every width the panel takes. They were not: a dot was 40px in a row that
-# wrapped, and the panel is `min(21rem, 100%)` less its padding, which is 320px, so
-# seven fitted and the wheel went down alone - the one colour that is not one of the
-# theme's own, orphaned. See `.colours` in CanvasColours.svelte.
-#
-# The circle is read off the pseudo-element that draws it rather than off the button,
-# which is the cell: what has to stay round as the cells narrow is the dot.
 COLOUR_ROWS = """
 () => {
   const row = document.querySelector('.colours');
@@ -143,16 +90,12 @@ AS_PHONE = """
 }
 """
 
-
 def opened(page: Page, label: str, device: str) -> None:
-    """The app started, the device settled, and a fresh canvas open on it."""
     wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
     wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     page.evaluate(AS_TABLET if device == "tablet" else AS_PHONE)
 
-    # Asked more than once if it has to be. The space arrives a moment before the
-    # tree under it does, and a canvas asked for in that moment lands nowhere.
     opened_it = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
         page.evaluate("() => window.nibApp.workspace.createCanvas()")
@@ -161,32 +104,18 @@ def opened(page: Page, label: str, device: str) -> None:
             break
     else:
         raise SystemExit(f"[{label}] no canvas ever opened")
-    # The bar is what everything after this presses.
     page.wait_for_selector('[aria-label="Move the bar"]', timeout=15000)
     page.wait_for_timeout(400)
 
-
 def pen_at(page: Page, index: int):
-    """One of the pens in the row, by where it sits.
-
-    `pen`, not `pen-slot`: the bar was rewritten into one bar for every device
-    and the class went with it. See CanvasBar.svelte."""
     return page.locator(".cluster button.pen").nth(index)
 
-
 def kept_pens(page: Page) -> list[str]:
-    """Which pens the row holds, in the order it holds them."""
     return page.evaluate(
         "() => JSON.parse(localStorage.getItem('nib:pens')).pens.map((one) => one.tool)"
     )
 
-
 def drag(page: Page, one, onto) -> None:
-    """A pen held and then dragged onto another. The wait is the whole gesture:
-    a finger that sets off at once is scrolling.
-
-    Nothing should come of it now; it is driven so that the row going back to
-    something you arrange would be noticed."""
     here = one.bounding_box()
     there = onto.bounding_box()
     assert here and there
@@ -199,11 +128,7 @@ def drag(page: Page, one, onto) -> None:
     page.mouse.up()
     page.wait_for_timeout(250)
 
-
 def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
-    """A stroke drawn with a real stylus: pen events with pressure on them,
-    which is the only way the ink pipeline can be exercised for what it does
-    with pressure and with alpha."""
 
     def send(kind: str, x: float, y: float, force: float, buttons: int) -> None:
         cdp.send(
@@ -225,8 +150,6 @@ def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
     first = points[0]
     send("mousePressed", first[0], first[1], 0.4, 1)
     for at, (x, y) in enumerate(points[1:], start=1):
-        # Leaning on the middle of the stroke and lifting off, which is what a
-        # hand does and what a pen that thins with pressure is for.
         share = at / (len(points) - 1)
         send("mouseMoved", x, y, 0.35 + 0.6 * (1 - abs(0.5 - share) * 2), 1)
         page.wait_for_timeout(8)
@@ -235,21 +158,14 @@ def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
     send("mouseReleased", last[0], last[1], 0, 0)
     page.wait_for_timeout(250)
 
-
 INK = "() => JSON.parse(window.nibApp.workspace.active.note.latest).nib?.ink ?? []"
 
-
 def ink_of(page: Page) -> list[dict]:
-    """What the plane holds, read off the open canvas rather than guessed at: the
-    words as they stand, not as far as the last flush. A stroke reaches them a
-    moment after the pen lifts, later on a slower machine, so some is waited for a
-    while before the answer is that there is none."""
     try:
         wait_for(page, f"({INK})().length > 0", "the stroke to reach the note", 10)
     except SystemExit:
         pass
     return page.evaluate(INK)
-
 
 def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
     label = f"{device}/{theme}"
@@ -257,10 +173,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
 
     tablet = device == "tablet"
     size = {"width": 1180, "height": 820} if tablet else {"width": 412, "height": 900}
-    # The size alone is not a device: the class is decided from what the machine
-    # says about itself and from the pointer, with the width only telling a phone
-    # from a tablet. So each context carries the user agent that device sends; see
-    # `deviceFor` in apps/desktop/src/lib/viewport.svelte.ts.
     context = browser.new_context(
         viewport=size,
         user_agent=TABLET_AGENT if tablet else PHONE_AGENT,
@@ -280,20 +192,15 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         opened(page, label, device)
 
-        # The bar as it stands, with a pen in hand.
         pen_at(page, 0).click()
         page.wait_for_timeout(350)
         shot(page, f"pen-bar-{device}-{theme}")
 
-        # Pressing the pen that is already out opens its settings, and the line
-        # across the top of them is drawn with that pen.
         pen_at(page, 0).click()
         page.wait_for_selector('input[aria-label="Opacity"]', timeout=5000)
         page.wait_for_timeout(300)
         shot(page, f"pen-settings-{device}-{theme}")
 
-        # The row of colours in it: eight to a row, none of them orphaned, and every
-        # dot still round as the cells share whatever width the panel has.
         rows = page.evaluate(COLOUR_ROWS)
         say(f"[{label}] the colours: {rows}")
         if rows["none"]:
@@ -324,7 +231,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
                         f"{label}: the {one['name']!r} dot is down to {one['wide']}px"
                     )
 
-        # A colour and an alpha, set with the dials rather than from the console.
         page.locator('[aria-label="Colour 4"]').first.click()
         opacity = page.locator('input[aria-label="Opacity"]')
         opacity.fill("0.2")
@@ -339,9 +245,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         if '"opacity":0.2' not in (set_to or ""):
             failures.append(f"{label}: the pen did not remember its alpha ({set_to})")
 
-        # Out of the popover and draw with it. The pen is still the one in hand: a
-        # press on it would open the popover again, and a press on the plane would
-        # leave a dot that passes for the stroke.
         page.keyboard.press("Escape")
         opacity.wait_for(state="detached", timeout=5000)
 
@@ -363,7 +266,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(200)
         shot(page, f"pen-stroke-faint-{device}-{theme}")
 
-        # The eraser, and its own popover on a second press.
         eraser = page.locator('.cluster button[aria-label="Erase"]')
         eraser.click()
         page.wait_for_timeout(200)
@@ -372,7 +274,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(300)
         shot(page, f"eraser-settings-{device}-{theme}")
 
-        # Folded away to its handle, which is what a landscape tablet wants.
         page.keyboard.press("Escape")
         page.locator(".canvas").first.click(position={"x": 40, "y": 40})
         page.locator('[aria-label="Move the bar"]').click()
@@ -380,12 +281,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(350)
         shot(page, f"pen-bar-folded-{device}-{theme}")
 
-        # Unfolded again, and one pen dragged along the row past another, which
-        # must do nothing. The row used to be a row you arranged; it is three
-        # fixed slots now - something to write with, something to sketch with,
-        # something to mark with - because a row that grows is a row that
-        # overflows and then it needs managing, which is not what anybody opened
-        # a canvas to do. See PEN_SLOTS in canvas/pens.svelte.ts.
         page.locator('button[aria-label="The pens"]').click()
         page.wait_for_timeout(350)
 
@@ -399,7 +294,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         else:
             say(f"[{label}] the three slots stayed as they were: {now}")
 
-        # And the whole bar dragged by its grip to the other edge.
         grip = page.locator('[aria-label="Move the bar"]')
         box = grip.bounding_box()
         assert box
@@ -417,15 +311,11 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(400)
         shot(page, f"pen-bar-docked-top-{device}-{theme}")
 
-        # It comes back where it was left, which is the point of remembering.
         page.reload(wait_until="domcontentloaded")
         opened(page, label, device)
         if page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).dock") != "top":
             failures.append(f"{label}: the bar did not come back against the top edge")
 
-        # And the biro the dials were turned on is still the one they were turned
-        # to, wherever the drag left it in the row. That is the whole point of
-        # keeping a row of pens rather than one width the app shares.
         kept = page.evaluate(
             "() => JSON.parse(localStorage.getItem('nib:pens'))"
             "  .pens.find((one) => one.tool === 'pen')"
@@ -437,7 +327,6 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
     finally:
         context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         for device in ("tablet", "phone"):
@@ -445,7 +334,6 @@ def main() -> int:
                 photograph(browser, theme, device, DRIVE.failures)
 
     return DRIVE.verdict(f"all of it held. the pictures are under {SHOTS}")
-
 
 if __name__ == "__main__":
     sys.exit(main())

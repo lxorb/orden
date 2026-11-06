@@ -51,7 +51,6 @@ async () => {
 }
 """
 
-
 def drive(browser):
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -65,7 +64,6 @@ def drive(browser):
         wrong(f"delete beside a note of the folder's name: {got['t3']}")
     if got["up"] != 1.1:
         wrong(f"text size by key: {got['up']}")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

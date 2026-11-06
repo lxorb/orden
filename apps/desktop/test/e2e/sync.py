@@ -1,29 +1,3 @@
-"""The sync batch, against the real Worker: versions, conflicts, the log, a second
-factor, and a checkout from the command line.
-
-Everything here needs a server, so it brings one up: `wrangler dev` with its own
-database, the migrations applied to it, and the app built against its origin. Which
-also means the two new migrations are exercised the way a deploy would run them.
-
-What it drives, in order:
-
-    versions    a note written here, pushed, and its history read back off the
-                account with the device that wrote it beside each version
-    rollback    what the space said an hour ago, asked first and then put back
-    conflicts   the rule chosen in the pane and read back off the account
-    log         the passes the device wrote down
-    second      a second factor turned on with a code this script works out, the
-                recovery codes it hands back, and a session ended from the list
-    headless    scripts/nib-sync.mjs pulling the space into a folder with a token
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/sync.py
-
-Screenshots go beside this file under `shots/sync/`, which is ignored. A scratch
-drive rather than a test: it photographs the app and says what it saw.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -40,17 +14,14 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
-#: The Worker's own address, which is also where the app it serves is loaded from.
 ORIGIN = harness.worker_origin()
 ROOT = harness.ROOT
-
 
 EMAIL = "sync-drive@example.com"
 
@@ -62,7 +33,6 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 
 def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
     data = None if body is None else json.dumps(body).encode()
@@ -80,10 +50,7 @@ def request(path: str, token: str | None = None, body: object = None, method: st
         said = refused.read().decode()
         return {"status": refused.code, **(json.loads(said) if said else {})}
 
-
 def totp(secret_hex: str, at: float | None = None) -> str:
-    """The six digits a secret stands at, worked out here so the drive can answer
-    its own second factor. The same arithmetic as services/sync/src/second.ts."""
     step = int((at if at is not None else time.time()) // 30)
     digest = hmac.new(bytes.fromhex(secret_hex), struct.pack(">Q", step), hashlib.sha1).digest()
     offset = digest[19] & 15
@@ -91,17 +58,12 @@ def totp(secret_hex: str, at: float | None = None) -> str:
 
     return str(value % 1_000_000).zfill(6)
 
-
 class Worker(harness.Worker):
-    """The real Worker, with the secret the account's OpenAI key is kept under and
-    this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"OPENAI_KEY_SECRET": "a secret for the drive"})
 
     def account(self, device: str = "the drive") -> tuple[str, str]:  # type: ignore[override]
-        """An account with a live session, put straight into the database: the
-        emailed code is not what any of this is about."""
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
 
@@ -110,8 +72,6 @@ class Worker(harness.Worker):
         return self.session(user, device), user
 
     def session(self, user: str, device: str) -> str:
-        """One more device signed in as the same account, which is what the list
-        of sessions is about."""
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
@@ -124,15 +84,12 @@ class Worker(harness.Worker):
 
         return token
 
-
 def pane_rows(page) -> list[str]:
-    """Every row of the pane on screen, as a reader would read it."""
     return page.evaluate(
         """() => [...document.querySelectorAll('.pane .setting, .pane .action')]
              .map((one) => one.textContent.replace(/\\s+/g, ' ').trim())
              .filter(Boolean)"""
     )
-
 
 def opened(browser, name: str, width: int, height: int, agent: str, finger: bool, token: str):
     context = browser.new_context(
@@ -144,8 +101,6 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
         device_scale_factor=2,
     )
 
-    # Signed in before the first frame, the way a machine that has been signed in
-    # once is: the session is in storage and the app reads it on the way up.
     context.add_init_script(f"try {{ localStorage.setItem('nib:session', '{token}') }} catch {{}}")
 
     page = context.new_page()
@@ -163,7 +118,6 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
 
     return context, page
 
-
 def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, width, height, agent, finger):
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
@@ -173,7 +127,6 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
 
-    # ── A note, synced, and what the account remembers of it ───────────────
     page.wait_for_function(
         "() => window.nibApp.workspace.activeSpace && window.nibApp.sync.status !== 'off'",
         timeout=40000,
@@ -197,8 +150,6 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     held = request(f"/v1/notes/{tracked['id']}/versions", token)
     say(f"[{name}] the account holds {len(held.get('versions', []))} version(s): {held.get('versions')}")
 
-    # The note says something else, an hour of waiting is skipped, and the second
-    # version lands: the account keeps at most one every five minutes.
     worker.sql("update note_versions set at = at - 600000;")
     page.evaluate(
         """async (path) => {
@@ -216,7 +167,6 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     held = request(f"/v1/notes/{tracked['id']}/versions", token)
     say(f"[{name}] and now {len(held.get('versions', []))}, by {[one['by'] for one in held.get('versions', [])]}")
 
-    # ── The history sheet shows both sides ────────────────────────────────
     page.evaluate("() => (window.nibApp.settings.historyOpen = true)")
     page.wait_for_timeout(900)
     shot("history")
@@ -225,7 +175,6 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     page.evaluate("() => (window.nibApp.settings.historyOpen = false)")
     page.wait_for_timeout(400)
 
-    # ── The Sync pane: the rule, the log, and going back ──────────────────
     page.evaluate("() => window.nibApp.settings.show('sync')")
     page.wait_for_timeout(900)
     shot("pane")
@@ -235,15 +184,12 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     settings = request("/v1/settings", token)
     say(f"[{name}] the account's conflict rule is {settings.get('settings', {}).get('conflicts')!r}")
 
-    # ── How long the account keeps a note's history ───────────────────────
     say(f"[{name}] the pane offers: {pane_rows(page)}")
     page.evaluate("() => window.nibApp.modes.setKeepVersions(365)")
     page.wait_for_timeout(1200)
     kept = request("/v1/settings", token).get("settings", {}).get("keepVersions")
     say(f"[{name}] the account keeps versions for {kept} days")
 
-    # A year of history, at the ages the sweep's shelves are about: the sheet cuts
-    # it up by month once a year is what the account keeps.
     day = 24 * 60 * 60 * 1000
     for age in [2, 40, 70, 100, 200, 300]:
         worker.sql(
@@ -270,12 +216,9 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     )
     say(f"[{name}] sync is {passes}; the log says: {log[:3]}")
 
-    # ── The account: the second code, and the devices signed in ──────────
     page.evaluate("() => window.nibApp.settings.show('account')")
     page.wait_for_timeout(900)
 
-    # The first device turns it on the way somebody would: the app shows a
-    # secret, and the code for it is worked out here rather than read anywhere.
     turn = page.query_selector('button:has-text("Turn on")')
     if turn:
         turn.click()
@@ -291,8 +234,6 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     page.evaluate("() => window.nibApp.settings.show('sync')")
     page.wait_for_timeout(300)
 
-    # The space on the account is one the app made for this folder, so its id is
-    # asked for rather than assumed - and it is what the command line pulls below.
     remote = page.evaluate(
         "() => window.nibApp.sync.remoteIdFor(window.nibApp.workspace.activeSpace.root)"
     )
@@ -306,15 +247,12 @@ def drive(browser, worker: Worker, out: Path, token: str, user: str, name: str, 
     context.close()
     return remote
 
-
 def second_factor(worker: Worker, token: str) -> None:
-    """Turned on through the API the pane uses, with a code worked out here."""
     begun = request("/v1/second", token, {})
     if "secret" not in begun:
         say(f"the second factor could not be begun: {begun}")
         return
 
-    # The secret is handed to the app in base32; the arithmetic wants the bytes.
     padded = begun["secret"] + "=" * (-len(begun["secret"]) % 8)
     secret = base64.b32decode(padded).hex()
 
@@ -324,16 +262,13 @@ def second_factor(worker: Worker, token: str) -> None:
     state = request("/v1/second", token)
     say(f"and the pane would say: on={state.get('on')} codesLeft={state.get('codesLeft')}")
 
-    # And off again, which takes a code.
     refused = request("/v1/second", token, {"code": "000000"}, method="DELETE")
     say(f"a wrong code turning it off: {refused.get('status')} {refused.get('error')!r}")
 
     off = request("/v1/second", token, {"code": totp(secret)}, method="DELETE")
     say(f"the right one: on={off.get('on')}")
 
-
 def sessions(worker: Worker, token: str, user: str) -> None:
-    """What the account says is signed in, and one of them ended."""
     other = worker.session(user, "another laptop")
     listed = request("/v1/sessions", token)
     say(f"signed in on: {[(one['name'], one['current']) for one in listed.get('sessions', [])]}")
@@ -344,10 +279,7 @@ def sessions(worker: Worker, token: str, user: str) -> None:
         after = request("/v1/sessions", other)
         say(f"after ending it, that session answers {after.get('status', 200)}")
 
-
 def headless(worker: Worker, token: str, space: str) -> None:
-    """The script a CI job runs, against the same Worker. The space is named by its
-    id, which the script takes as readily as a name."""
     minted = request("/v1/mcp/token", token, {"readOnly": False})
     program = minted.get("token", "")
 
@@ -380,16 +312,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
             )
             say(f"nib-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")
 
-
 def page_note(browser, token: str, space: str) -> None:
-    """A page note, across two devices.
-
-    The mirror sends every file that is not a PDF up as a note, and the server's
-    list of endings left `.pages` out: every page note anybody wrote was refused,
-    on every pass, silently, and never left the machine it was written on. Both
-    halves are checked here - the account takes the file, and a second device that
-    has never seen it finds it in its tree.
-    """
     paper = (
         '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],'
         '"edges":[]}\n'
@@ -417,7 +340,6 @@ def page_note(browser, token: str, space: str) -> None:
     finally:
         context.close()
 
-
 def main() -> int:
     out = DRIVE.shots
     worker = Worker()
@@ -428,16 +350,11 @@ def main() -> int:
         token, user = worker.account()
         say("an account with nothing in it; the app makes its own space")
 
-        # Before the app is looked at, because the pane below turns the factor on
-        # for itself and these are the answers the API has to give first.
         say("--- the second factor ---")
         second_factor(worker, token)
 
-        # One more device signed in, so the pane has a list rather than a row.
         worker.session(user, "another laptop")
 
-        # Whichever space the app ended up syncing, which is the one the command
-        # line is then pointed at.
         remote = ""
 
         for one in [
@@ -452,7 +369,6 @@ def main() -> int:
 
     say(f"shots in {out}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

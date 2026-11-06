@@ -1,30 +1,3 @@
-"""The scratchpad and the quick question, driven with the keyboard.
-
-What it proves, in order:
-
-- the scratchpad: a tab of the right side (#1032); Ctrl+Shift+X shows its card with
-  its tab chosen, and what is typed into it is written down and there again after a
-  reload; the key takes the keyboard into it and then puts it away; the Search panel
-  finds its words from the space; its tab has no menu (issue #231), so no Move to
-  space. A card rather than a tab since 18255b29; scratchpad.py holds the card itself,
-  in both schemes;
-- the quick question: with no provider, Ctrl twice says the one line and links to
-  Settings > AI; with the fake provider, Ctrl twice over a selection opens the field
-  with the selection as its chip, Enter streams the answer in place and the request
-  carries the selection; a follow-up carries the turn before it; Add to note writes the
-  answer under the selection's line and puts the field away; a chip taken off sends
-  nothing of the note; Escape puts it away; with nothing in front, Add to note puts the
-  answer on the end of the scratchpad.
-
-A fake OpenAI-compatible server answers, streaming a word at a time. No key, no
-network, no bill.
-
-    python apps/desktop/test/e2e/quick-tools.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go under
-`shots/quick-tools/`.
-"""
-
 from __future__ import annotations
 
 import http.server
@@ -66,14 +39,10 @@ async () => {
 }
 """
 FOCUS_NOTE = "() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()"
-#: The scratchpad's tab on the right side, which is where it is on a desktop since #1032,
-#: and the card it shows there.
 PAD_TAB = '[data-tab="scratchpad"]'
 CARD = "[data-scratchpad-card] .cm-content"
 
-
 class Model(http.server.BaseHTTPRequestHandler):
-    """An OpenAI-compatible provider that streams what the drive tells it to."""
 
     words: list[str] = ["A ", "heron ", "waits."]
     seen: list[dict] = []
@@ -112,31 +81,21 @@ class Model(http.server.BaseHTTPRequestHandler):
         except OSError:
             return
 
-
-#: Where the fake provider answers, on a port of this run's own.
 MODEL_ORIGIN = DRIVE.side(Model)
-
 
 def wait_for(page: Page, expression: str, what: str) -> bool:
     return DRIVE.waited(page, expression, what)
 
-
 def twice_ctrl(page: Page) -> None:
-    """Ctrl pressed twice on its own, the quick question's key."""
     page.keyboard.press("Control")
     page.keyboard.press("Control")
 
-
-# The AI panel's chats, through the handle a drive has to them.
 CHATS = "() => window.nibApp.aiChats()"
 
-
 def last_messages() -> str:
-    """Everything the last request said, as one string to look for words in."""
     if not Model.seen:
         return ""
     return json.dumps(Model.seen[-1].get("messages", []))
-
 
 def scratchpad(page: Page) -> None:
     DRIVE.open_note(page, "Plan")
@@ -149,7 +108,6 @@ def scratchpad(page: Page) -> None:
     elif tab.get_attribute("aria-selected") != "true":
         wrong("the scratchpad's tab is not the one chosen while the scratchpad is up")
 
-    # The key leaves the keyboard in the card.
     page.keyboard.type("call Anna about the heron count")
     wait_for(page, f"async () => (await ({PAD_TEXT})()).includes('heron count')", "it written down")
     shot(page, "01-scratchpad")
@@ -161,9 +119,6 @@ def scratchpad(page: Page) -> None:
     if "heron count" not in after:
         wrong(f"the scratchpad lost its words over a reload: {after!r}")
 
-    # The reload put the card back up with the keyboard elsewhere, and the key then
-    # takes the keyboard in first, as VS Code's terminal key does (`toggleScratchpad`);
-    # with the keyboard in the card it puts the card away.
     wait_for(page, f"document.querySelector('{CARD}')", "its card put back")
     page.keyboard.press("Control+Shift+X")
     wait_for(page, "!!document.activeElement?.closest('[data-scratchpad-card]')", "the keyboard in the card")
@@ -185,14 +140,12 @@ def scratchpad(page: Page) -> None:
         wrong("the search does not find the scratchpad's words")
     page.keyboard.press("Escape")
 
-    # No menu of its own: it is in no space, so nothing to move to one (issue #231).
     page.keyboard.press("Control+Shift+X")
     wait_for(page, f"document.querySelector('{PAD_TAB}')", "the scratchpad's tab")
     page.locator(PAD_TAB).click(button="right")
     if page.locator(".menu").count():
         wrong("the scratchpad's tab has a menu")
         page.keyboard.press("Escape")
-
 
 def nothing_set_up(page: Page) -> None:
     page.evaluate(SETUP, "")
@@ -207,7 +160,6 @@ def nothing_set_up(page: Page) -> None:
     shot(page, "05-nothing-set-up")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.quick')", "it put away")
-
 
 def asked(page: Page) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
@@ -232,7 +184,6 @@ def asked(page: Page) -> None:
     open_before = page.evaluate(CHATS + ".then((chat) => chat.thread?.id ?? null)")
     page.keyboard.type("What is this?")
     page.keyboard.press("Enter")
-    # The panel's own chat (#1115): in its list the moment it is asked.
     listed = page.evaluate(
         "() => new Promise((done) => setTimeout(done, 50)).then(() => window.nibApp.aiChats())"
         ".then((chat) => chat.heads.some((one) => one.words.includes('What is this?')))"
@@ -241,15 +192,12 @@ def asked(page: Page) -> None:
         wrong("the quick question is not in the panel's list the moment it is asked")
     wait_for(page, "/heron waits/.test(document.querySelector('.quick .words')?.textContent ?? '')", "the answer")
     shot(page, "06-answered")
-    # The panel's agent's rules. Its tools are the desktop crate's, which a browser build
-    # has none of, for the panel's chat as for this one.
     request = Model.seen[-1] if Model.seen else {}
     rules = [one.get("content", "") for one in request.get("messages", []) if one.get("role") == "system"]
     if not rules or "agent inside nib" not in rules[0]:
         wrong(f"the quick question was not told the panel's rules: {rules[:1]}")
     if page.evaluate(CHATS + ".then((chat) => chat.thread?.id ?? null)") != open_before:
         wrong("the quick question took the panel's open chat away")
-    # The panel's own chat (#1115): the selection goes as the panel's chip of it does.
     said = last_messages()
     labelled = 'label=\\"selection\\"' in said or 'source=\\"selection\\"' in said
     if not labelled or "heron line" not in said:
@@ -283,7 +231,6 @@ def asked(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.quick')", "Escape putting it away")
 
-    # Nothing in front: the tab put down, and the answer goes on the scratchpad's end.
     page.evaluate(FOCUS_NOTE)
     page.keyboard.press("Control+D")
     wait_for(page, "!window.nibApp.workspace.active", "nothing in front")
@@ -301,7 +248,6 @@ def asked(page: Page) -> None:
     if "Jotted." not in pad:
         wrong(f"the answer did not go on the scratchpad's end: {pad!r}")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme="light")
     DRIVE.open(page)
@@ -312,7 +258,6 @@ def drive(browser: Browser) -> None:
     nothing_set_up(page)
     say("--- asked ---")
     asked(page)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the scratchpad keeps, finds and moves; the quick question answers in place"))

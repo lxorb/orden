@@ -39,10 +39,8 @@ TAB = """(name) => {
   return tab ? { path: tab.path, here: !!ws.panes.at(tab.paneId) } : null
 }"""
 
-
 def tab(page: Page, name: str) -> dict:
     return page.evaluate(TAB, name)
-
 
 def open_overview(page: Page) -> None:
     page.evaluate(
@@ -52,14 +50,12 @@ def open_overview(page: Page) -> None:
     page.wait_for_selector(".canvas .window", timeout=8000)
     page.wait_for_timeout(1200)
 
-
 def close_overview(page: Page) -> None:
     page.evaluate(
         "async () => { const { tabOverview } = await import('/src/lib/surfaces.svelte.ts');"
         " tabOverview.open = false }"
     )
     wait_for(page, "!document.querySelector('.canvas .window')", "the overview away")
-
 
 def box(page: Page, name: str) -> dict | None:
     return page.evaluate(
@@ -73,12 +69,10 @@ def box(page: Page, name: str) -> dict | None:
         name,
     )
 
-
 def keyboard(page: Page) -> str:
     return page.evaluate(
         "() => { const at = document.activeElement; return at.closest('.canvas') ? 'canvas ' + at.className : at.tagName + ' ' + at.className }"
     )
-
 
 def on_screen(page: Page) -> list[str]:
     return page.evaluate(
@@ -87,7 +81,6 @@ def on_screen(page: Page) -> list[str]:
           return r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight
         }).map((one) => one.getAttribute('aria-label'))"""
     )
-
 
 def drag(page: Page, start: dict, end: dict) -> None:
     page.mouse.move(start["x"], start["y"])
@@ -102,11 +95,9 @@ def drag(page: Page, start: dict, end: dict) -> None:
     page.mouse.up()
     page.wait_for_timeout(1000)
 
-
 def all_spaces(page: Page) -> None:
     page.get_by_role("button", name="Tidy up").click()
     page.wait_for_timeout(1200)
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 900})
@@ -227,7 +218,6 @@ def drive(browser: Browser) -> None:
     say(f"reopened: {back} in {space}")
     if space != ids["bee"] or not back or not back["here"]:
         wrong(f"a tab closed in Bee did not come back in Bee: {back} in {space}")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

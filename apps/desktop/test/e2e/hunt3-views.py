@@ -30,14 +30,12 @@ description regex matches /(a+)+$/
 
 FILLER = "\n\n".join(f"Filler paragraph {at}, long enough to take a line." for at in range(150))
 
-
 def shared(page: Page, name: str, text: str) -> None:
     page.evaluate(
         "([id, name, text]) => window.nibApp.workspace.openShared({ id, name, path: name }, text)",
         [name, name, text],
     )
     page.wait_for_timeout(900)
-
 
 BLOCK = """() => {
   const block = document.querySelector('.base-block')
@@ -50,12 +48,10 @@ BLOCK = """() => {
     : null
 }"""
 
-
 def base_block(page: Page) -> dict | None:
     DRIVE.waited(page, "document.querySelector('.base-block')", "the base block", 8)
     page.wait_for_timeout(700)
     return page.evaluate(BLOCK)
-
 
 def drive_shared(page: Page) -> None:
     DRIVE.seed(page, f"# Own base\n\n{RISKY_BASE}")
@@ -90,7 +86,6 @@ def drive_shared(page: Page) -> None:
         wrong(f"a tasks fence in a file shared on its own was not refused: {said!r}")
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
 
-
 def scroll_of(page: Page) -> dict:
     return page.evaluate(
         """() => {
@@ -100,7 +95,6 @@ def scroll_of(page: Page) -> dict:
           return { top, height: innerHeight, box: !!box }
         }"""
     )
-
 
 def drive_block_links(page: Page) -> None:
     DRIVE.seed(page, f"# Other block\n\n{FILLER}\n\nThe far one ^far\n")
@@ -166,7 +160,6 @@ def drive_block_links(page: Page) -> None:
     if "far one" not in str(shown["line"]):
         wrong(f"the link to a block of another note did not land on it: {shown}")
 
-
 def drive_ticks(page: Page) -> None:
     DRIVE.seed(page, "# Y note\n\n- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n")
     DRIVE.seed(page, "# Fence note\n\n```tasks\nnot done\n```\n")
@@ -201,7 +194,6 @@ def drive_ticks(page: Page) -> None:
         if not any(line.startswith("- [x] Alpha") for line in lines):
             wrong(f"the first box was put back by the second: {lines}")
 
-
 def drive_fixed(page: Page) -> None:
     fence = RISKY_BASE.replace("/(a+)+$/.matches(note.x)", "note.x")
     quoted = "\n".join(f"> {line}" for line in fence.strip().split("\n"))
@@ -225,7 +217,6 @@ def drive_fixed(page: Page) -> None:
         wrong(f"a fence in a quote can no longer add a note: {labels}")
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
 
-
 def drive(browser: Browser) -> None:
     page = browser.new_context(viewport={"width": 1180, "height": 900}).new_page()
     DRIVE.open(page)
@@ -240,10 +231,8 @@ def drive(browser: Browser) -> None:
     drive_fixed(page)
     page.context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "a shared fence is guarded, a block link lands, a row ticks its own task")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

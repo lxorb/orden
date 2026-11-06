@@ -1,32 +1,3 @@
-"""Publishing, against the real Worker: which notes, what will change, where a
-page lives, what its head says, what a reader is given besides the note, and a
-site behind a password.
-
-Two halves, because `wrangler dev` builds the URL the Worker sees from the origin
-it was given rather than from the request's Host header - so a run is either the
-API or one blog, and this restarts the Worker between the two. The database is the
-same either way, which is what makes that honest: the site the second half asks
-for is the site the first half published.
-
-    the sheet     a folder made private, and what the sheet says will change
-    the pages     what the hostname serves and what it does not
-    the paths     a permalink, an alias, and the redirect a rename leaves
-    the machines  the sitemap, both feeds, robots and the favicon
-    the way round the tree, the contents, what links here, previous and next
-    the searching a word, a phrase, a refusal, a tag, a folder, and a draft
-    the forms     an answer taken on the page and read back on the account
-    the diagrams  a mermaid fence the app drew, as a picture on the page
-    the dressing  publish.css, and a counter named in the policy
-    the browser   the graph painted, the slash, the theme, and a hover card
-    the password  the form, a wrong word, the right one, and the note behind it
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/site.py
-
-Screenshots go beside this file under `shots/site/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -39,19 +10,14 @@ import uuid
 from pathlib import Path
 from xml.etree import ElementTree
 
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
-#: The Worker's own address, which is also where the app it serves is loaded from.
 ORIGIN = harness.worker_origin()
 
-
-# Every browser resolves `*.localhost` itself, so a blog's own hostname needs no
-# hosts file: the Worker is told that this is the domain blogs are published under.
 BLOG_ROOT = "localhost"
 BLOG_HOST = f"field.{BLOG_ROOT}"
 BLOG = f"http://{BLOG_HOST}:{harness.worker_port()}"
@@ -68,8 +34,6 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-#: The notes the site is made of. Everything the rules and the front matter have
-#: to be right about, and nothing else.
 NOTES = {
     "Public/One.md": (
         "---\norder: 1\ntags:\n  - fieldwork\n---\n\n# One\n\n"
@@ -97,7 +61,6 @@ NOTES = {
     ),
 }
 
-
 def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
     data = None if body is None else json.dumps(body).encode()
     ask = urllib.request.Request(f"{ORIGIN}{path}", data=data, method=method)
@@ -114,22 +77,17 @@ def request(path: str, token: str | None = None, body: object = None, method: st
         said = refused.read().decode()
         return {"status": refused.code, **(json.loads(said) if said else {})}
 
-
 class Answer:
-    """One answer from the site: what it said, and how."""
 
     def __init__(self, status: int, text: str, headers) -> None:
         self.status = status
         self.text = text
         self.headers = headers
 
-
 class Straight(urllib.request.HTTPRedirectHandler):
-    """A redirect is an answer here rather than a step on the way to one."""
 
     def redirect_request(self, *_args):
         return None
-
 
 def site(
     path: str,
@@ -138,10 +96,6 @@ def site(
     follow: bool = True,
     cookie: str = "",
 ) -> Answer:
-    """The blog. Asked for on the loopback address, because a browser resolves
-    `*.localhost` by itself and Python does not - and it makes no difference:
-    `wrangler dev` was told which origin it is answering as, so the Worker sees
-    the blog's hostname whatever address the request arrived on."""
     ask = urllib.request.Request(f"{ORIGIN}{path}", data=data)
     if data is not None:
         ask.add_header("content-type", "application/x-www-form-urlencoded")
@@ -158,17 +112,12 @@ def site(
     except urllib.error.HTTPError as refused:
         return Answer(refused.code, refused.read().decode("utf-8", "replace"), refused.headers)
 
-
 class Worker(harness.Worker):
-    """The real Worker, told which domain blogs are published under, with a named
-    account in it; see harness.py."""
 
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"BLOG_ROOT": BLOG_ROOT})
 
     def account(self) -> str:  # type: ignore[override]
-        """An account with a live session, put straight into the database: signing
-        in is not what this is about."""
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
@@ -184,13 +133,10 @@ class Worker(harness.Worker):
 
         return token
 
-
-#: Every space on this device gone, one at a time, as Delete space does it.
 ERASE = """async () => {
   const ws = window.nibApp.workspace
   for (const one of [...ws.spaces]) await ws.deleteSpace(one.id)
 }"""
-
 
 def opened(browser, name: str, width: int, height: int, agent: str, finger: bool, token: str):
     context = browser.new_context(
@@ -208,18 +154,6 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
 
-    # A browser that has been introduced and then had its own notes erased, which
-    # is what somebody who wants only what the account holds arrives as. The same
-    # opening as first-sync.py, and the reason is the same: a device with a space
-    # of its own has two spaces after signing in, and which one is "the space" is
-    # then a question this drive should not have to ask. Each space deleted the way
-    # the space's own menu deletes it: the erase-everything answer that did this in
-    # one call went with the sign-in question it answered (be28f5e9).
-    #
-    # Erased before the session is handed over, as first-sync.py does it. That question
-    # used to hold syncing back until it was answered; with it gone, a session already
-    # in place starts the first pass at once, and in WebKit the account's spaces came
-    # down while the erasing went on, so the device never stood empty.
     page.evaluate(ERASE)
     page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
     page.evaluate("(token) => localStorage.setItem('nib:session', token)", token)
@@ -229,16 +163,13 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
 
     return context, page
 
-
 def sheet(browser, out: Path, token: str, name: str, width, height, agent, finger) -> None:
-    """The publish sheet: the rules, what they would change, and Publish."""
     context, page = opened(browser, name, width, height, agent, finger, token)
 
     def shot(tag: str) -> None:
         page.screenshot(path=str(out / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
 
-    # The space the account holds, once this device has it and its notes.
     try:
         page.wait_for_function(
             f"() => window.nibApp.workspace.notes.length >= {len(NOTES)}", timeout=60000
@@ -259,7 +190,6 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     page.evaluate("() => (window.nibApp.publish.confirmed = true)")
     page.evaluate("() => window.nibApp.publish.typeSubdomain('field')")
 
-    # Drafts out, which is the whole of what a folder rule is.
     page.evaluate("() => window.nibApp.publish.rule('exclude', 'Drafts', true)")
     page.evaluate("async () => await window.nibApp.publish.askChanges()")
     page.wait_for_timeout(500)
@@ -276,11 +206,6 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     say(f"[{name}] and shows {said} {rows}")
     shot("sheet")
 
-    # The one button the sheet exists for, in view rather than under the fold. The
-    # form is longer than the sheet on every screen, and it used to sit at the end
-    # of the body that scrolls: the sheet ended with a clean edge and nothing said
-    # there was a Publish below it. It is in the sheet's own foot now; see
-    # Sheet.svelte.
     where = page.evaluate(
         """() => {
           const sheet = document.querySelector('[role=dialog]')
@@ -300,8 +225,6 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
         say(f"FAILED: [{name}] the Publish button is not in view: {where}")
 
     page.evaluate("() => window.nibApp.publish.description = 'Notes from the field.'")
-    # The button rather than the store, because the icon the site wears is read
-    # off the mark the sheet has drawn; see site-icon.ts.
     page.click("button.go")
     page.wait_for_timeout(2500)
 
@@ -309,10 +232,6 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     say(f"[{name}] published: enabled={live['enabled']} at {live['subdomain']} rules={live['site']['rules']}")
     shot("published")
 
-    # And the diagrams, which the app draws with the real mermaid in this real
-    # browser and sends up as pictures: the Worker has no DOM to draw one in. What
-    # this device has already sent is written down under the space, so that is what
-    # says it happened; see apps/desktop/src/lib/site-diagrams.ts.
     drawn = []
     until = time.monotonic() + 40
     while time.monotonic() < until:
@@ -328,20 +247,13 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
 
     say(f"[{name}] the app drew and sent {len(drawn)} pictures for its one diagram")
 
-    # The two panes P10 left behind, on the way past: the design pass measured
-    # them and this is where they are looked at.
     for section in ["sync", "account"]:
         page.evaluate("() => window.nibApp.publish.close()")
         page.evaluate(f"() => window.nibApp.settings.show('{section}')")
-        # The sheet is fetched the first time it is asked for rather than carried into
-        # the first paint; what is measured below is what a thumb lands on, and a
-        # sheet that is not there yet has nothing to land on. See surfaces.svelte.ts.
         page.wait_for_selector(".nib-screen.sheet", timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
 
-        # And measured, on the phone, where the floor is a platform rule rather
-        # than a preference: everything a thumb lands on clears --touch-target.
         if finger:
             small = page.evaluate(
                 """() => {
@@ -360,9 +272,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
 
     context.close()
 
-
 def pages(worker: Worker, token: str, space: str) -> None:
-    """What the hostname serves, once the Worker is answering as the blog."""
     index = site("/")
     listed = sorted(set(re.findall(r"<span>([^<]+)</span>", index.text)))
     say(f"the index lists: {listed}")
@@ -383,7 +293,6 @@ def pages(worker: Worker, token: str, space: str) -> None:
     for what in ['<meta name="description"', 'property="og:image"', 'rel="canonical"', 'rel="alternate"']:
         say(f"the head of /public/one has {what}: {what in head}")
 
-    # A rename, through the API, and the path it used to live at.
     notes = request(f"/v1/spaces/{space}/changes?since=0", token).get("notes", [])
     moved = next((one for one in notes if one["path"] == "Moved.md"), None)
     if moved:
@@ -402,9 +311,6 @@ def pages(worker: Worker, token: str, space: str) -> None:
     say(f"the feed is {feed.headers.get('content-type')} and reads {order}")
     say(f"it carries the summaries: {'<summary>The second one.</summary>' in feed.text}")
 
-    # And the same writing as RSS, which is the word a reader pastes into a reader.
-    # Both parsed rather than grepped: a feed a reader cannot parse is a feed nobody
-    # has, and Python has an XML parser in the standard library.
     rss = site("/rss.xml")
     order = [one for one in ["<title>Two</title>", "<title>One</title>"] if one in rss.text]
     say(f"the RSS feed is {rss.headers.get('content-type')} and reads {order}")
@@ -433,9 +339,7 @@ def pages(worker: Worker, token: str, space: str) -> None:
     icon = site("/favicon.svg")
     say(f"the favicon is {icon.headers.get('content-type')}, {len(icon.text)} bytes")
 
-
 def furniture() -> None:
-    """The bar, the tree, the contents, what links here, and where to go next."""
     one = site("/public/one")
 
     for what, wanted in [
@@ -466,9 +370,7 @@ def furniture() -> None:
     nodes = re.findall(r'"name":"([^"]+)"', graph.text)
     say(f"the graph page names: {sorted(set(nodes))}")
 
-
 def searching() -> None:
-    """The box, answered by the index over the published pages only."""
     for query, what in [
         ("mycology", "a word two pages share"),
         ("%22first+words%22", "a phrase"),
@@ -483,9 +385,7 @@ def searching() -> None:
 
     say(f"a private note is never an answer: {'Three' not in site('/search?q=mycology').text}")
 
-
 def forms(token: str, space: str) -> None:
-    """A form on the page, answered by a reader and read back on the account."""
     page = site("/say-hello")
     action = re.search(r'action="/form/([^"]+)"', page.text)
     say(f"the form posts to the note that asked: {bool(action)}")
@@ -507,13 +407,7 @@ def forms(token: str, space: str) -> None:
     held = request(f"/v1/spaces/{space}/answers", token)
     say(f"the account holds: {[row['answers'] for row in held.get('answers', [])]}")
 
-
 def diagrams() -> list[str]:
-    """A mermaid fence as a picture on the page.
-
-    Nothing here draws anything: the app drew both pictures in the half above and
-    sent them up, and what the Worker does is write an `<img>` where the fence
-    stood. Answers the two addresses, for the browser pass below."""
     page = site("/public/diagram")
     figure = re.search(r'<figure class="diagram"[^>]*>(.*?)</figure>', page.text, re.S)
     say(f"the page carries a figure rather than a fence: {bool(figure)}")
@@ -543,9 +437,7 @@ def diagrams() -> list[str]:
 
     return sources
 
-
 def dressing(token: str, space: str) -> None:
-    """The author's own stylesheet, and a counter's script."""
     css = b"#write{--nib-drive:1}"
     digest = hashlib.sha256(css).hexdigest()
 
@@ -578,14 +470,7 @@ def dressing(token: str, space: str) -> None:
     say(f"and named in the policy: {'https://plausible.io' in policy}")
     say(f"the scripts are the site's own: {'script-src ' in policy}")
 
-
 def drawn(browser, out: Path) -> None:
-    """The diagram on the page, in a browser, both ways round.
-
-    The whole point of the design is here: a picture per scheme, and the one shown
-    follows both the reader's system and the button in the bar. And a page with a
-    diagram on it still asks nobody but this site for anything, which is why the
-    drawing is a blob of the author's rather than a library from a CDN."""
     context = browser.new_context(
         viewport={"width": 1000, "height": 900},
         user_agent=DESKTOP_AGENT,
@@ -597,7 +482,6 @@ def drawn(browser, out: Path) -> None:
     asked: list[str] = []
     page.on("request", lambda one: asked.append(one.url))
 
-    #: Which picture the browser is actually showing, and whether it arrived.
     SHOWING = """() => [...document.querySelectorAll('.diagram img')].map((one) => ({
       scheme: one.dataset.scheme ?? 'both',
       shown: getComputedStyle(one).display !== 'none',
@@ -614,9 +498,6 @@ def drawn(browser, out: Path) -> None:
         page.screenshot(path=str(out / f"site-diagram-{scheme}.png"))
         say(f"shot site-diagram-{scheme}.png")
 
-    # And the reader's own word, which is the case a `prefers-color-scheme` inside
-    # the picture could never have answered: the system says dark, the button says
-    # light, and the light picture is the one on the page.
     page.click("button.theme")
     page.wait_for_timeout(300)
     while page.evaluate("() => document.documentElement.dataset.theme") != "light":
@@ -632,9 +513,7 @@ def drawn(browser, out: Path) -> None:
 
     context.close()
 
-
 def looking(browser, out: Path) -> None:
-    """The site itself, in a browser, on a desktop and a phone."""
     for name, width, height, agent, finger in [
         ("site-desktop", 1440, 900, DESKTOP_AGENT, False),
         ("site-phone", 390, 844, PHONE_AGENT, True),
@@ -655,7 +534,6 @@ def looking(browser, out: Path) -> None:
         page.screenshot(path=str(out / f"{name}-page.png"))
         say(f"shot {name}-page.png")
 
-        # The graph, which is the app's own layout painting on a canvas.
         page.goto(f"{ORIGIN}/graph", wait_until="load")
         page.wait_for_timeout(2500)
         drawn = page.evaluate(
@@ -673,7 +551,6 @@ def looking(browser, out: Path) -> None:
         page.screenshot(path=str(out / f"{name}-graph.png"))
         say(f"shot {name}-graph.png")
 
-        # The search box, focused by the slash the way it is in the app.
         page.goto(f"{ORIGIN}/", wait_until="load")
         page.wait_for_timeout(600)
         page.keyboard.press("/")
@@ -690,9 +567,6 @@ def looking(browser, out: Path) -> None:
         page.screenshot(path=str(out / f"{name}-search.png"))
         say(f"shot {name}-search.png")
 
-        # The theme the reader chose, remembered for the site - and the colours
-        # of the page with it, since a button that only sets an attribute has
-        # changed nothing a reader can see.
         page.goto(f"{ORIGIN}/public/one", wait_until="load")
         page.wait_for_timeout(600)
         ground = "() => getComputedStyle(document.body).backgroundColor"
@@ -706,8 +580,6 @@ def looking(browser, out: Path) -> None:
         chosen = page.evaluate(themed)
         first = page.evaluate(ground)
 
-        # Twice, because the first press lands on whichever the system already
-        # said on one of the two screens: the second proves the other direction.
         page.click("button.theme")
         page.wait_for_timeout(400)
         say(f"[{name}] the theme button says: {chosen} then {page.evaluate(themed)}")
@@ -715,7 +587,6 @@ def looking(browser, out: Path) -> None:
         page.screenshot(path=str(out / f"{name}-theme.png"))
         say(f"shot {name}-theme.png")
 
-        # The card a link shows on hover, which a finger asks for differently.
         if not finger:
             page.hover('.pages a[href="/public/two"]')
             page.wait_for_timeout(1400)
@@ -728,9 +599,7 @@ def looking(browser, out: Path) -> None:
 
         context.close()
 
-
 def password(worker: Worker, token: str, space: str) -> None:
-    """The form, a wrong word, the right one, and the note behind it."""
     request(f"/v1/spaces/{space}/site", token, {"password": PASSWORD}, method="PUT")
 
     asked = site("/public/one")
@@ -749,15 +618,11 @@ def password(worker: Worker, token: str, space: str) -> None:
     ticket = (right.headers.get("set-cookie") or "").split(";")[0]
     say(f"the right one answers {right.status} to {right.headers.get('location')}, holding {ticket[:14]}…")
 
-    # Carried by hand rather than by a cookie jar: the ticket is set `Secure`, and
-    # a secure cookie is not sent back over the plain http a drive runs on. A
-    # browser on the real site is on https and sends it by itself.
     read = site("/public/one", cookie=ticket)
     say(f"behind it, the note: {'The first words of it' in read.text} ({read.status})")
 
     request(f"/v1/spaces/{space}/site", token, {"password": None}, method="PUT")
     say(f"with the password off, the page answers {site('/public/one').status} again")
-
 
 def main() -> int:
     worker = Worker()
@@ -772,8 +637,6 @@ def main() -> int:
         for path, content in NOTES.items():
             request(f"/v1/spaces/{space}/notes", token, {"path": path, "content": content})
 
-        # A space that wears an icon, because what a tab shows is that icon drawn
-        # by the app; a space with none gets its letter, which the Worker draws.
         worker.sql(f"update spaces set icon = 'FileText' where id = '{space}';")
         say(f"the account holds {len(NOTES)} notes in Field notes, marked FileText")
 
@@ -784,7 +647,6 @@ def main() -> int:
             say(f"--- the sheet, {one[0]} ---")
             sheet(browser, SHOTS, token, *one)
 
-        # And now as the blog itself, on the same database.
         worker.stop()
         worker.start(upstream=BLOG_HOST)
         say("--- what the hostname serves ---")
@@ -798,9 +660,6 @@ def main() -> int:
         say("--- a diagram the app drew ---")
         diagrams()
 
-        # In a browser before the counter is set below, so that "it asked nobody
-        # but this site" is the whole truth rather than the truth minus one script
-        # the author asked for.
         drawn(browser, SHOTS)
 
         say("--- the author's own dressing ---")
@@ -813,7 +672,6 @@ def main() -> int:
         password(worker, token, space)
 
     return DRIVE.verdict(f"shots in {SHOTS}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

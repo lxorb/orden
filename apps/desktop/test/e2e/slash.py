@@ -1,18 +1,3 @@
-"""The `/` menu, seen: typing a slash opens the blocks, typing narrows them,
-Enter inserts one and takes the slash with it, Escape leaves the slash where it
-was, and a slash in the middle of a word is a slash.
-
-Serves the built web app and drives it in Chromium, on a desktop
-and on a phone.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/slash.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/slash/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -23,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = "# Slash\n\nSomething already written.\n"
 
@@ -43,7 +27,6 @@ ROWS = """
   (one) => one.textContent,
 )
 """
-
 
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
@@ -68,7 +51,6 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.wait_for_timeout(700)
     return page
 
-
 def caret_at_end(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -81,7 +63,6 @@ def caret_at_end(page: Page) -> None:
         }"""
     )
     page.wait_for_timeout(300)
-
 
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
@@ -97,7 +78,6 @@ def drive(browser: Browser) -> None:
     if not any("Table" in one for one in rows):
         wrong("the blocks the Paragraph menu offers are not all here")
 
-    # Typing narrows it, on the words the rows show.
     page.keyboard.type("tab", delay=40)
     page.wait_for_timeout(600)
     narrowed = page.evaluate(ROWS)
@@ -106,7 +86,6 @@ def drive(browser: Browser) -> None:
     if not narrowed or not any("Table" in one for one in narrowed):
         wrong(f"typing did not narrow to the table: {narrowed}")
 
-    # Enter inserts it and the slash goes with it.
     page.keyboard.press("Enter")
     page.wait_for_timeout(700)
     doc = page.evaluate("() => window.nib.state.doc.toString()")
@@ -117,7 +96,6 @@ def drive(browser: Browser) -> None:
     if "|" not in doc:
         wrong(f"no table was written: {json.dumps(doc[-60:])}")
 
-    # Escape leaves the slash where it was typed.
     page.evaluate("() => window.nib.focus()")
     caret_at_end(page)
     page.keyboard.type("/quo", delay=40)
@@ -132,7 +110,6 @@ def drive(browser: Browser) -> None:
     if not kept.endswith("/quo"):
         wrong(f"Escape took the slash with it: {json.dumps(kept[-20:])}")
 
-    # And a slash that names nothing is a slash.
     page.keyboard.type("xyz", delay=30)
     page.wait_for_timeout(500)
     nothing = page.evaluate(ROWS)
@@ -148,7 +125,6 @@ def drive(browser: Browser) -> None:
         wrong(f"a slash in the middle of a word opened the menu: {inside}")
 
     page.context.close()
-
 
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
@@ -176,7 +152,6 @@ def finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
@@ -185,7 +160,6 @@ def main() -> int:
         finger(browser)
 
     return DRIVE.verdict("a slash offers the blocks, and a slash in a word is a slash")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

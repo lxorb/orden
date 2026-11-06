@@ -1,20 +1,3 @@
-"""A trackpad's pinch zooms a canvas and a page note with the fingers (#410).
-
-Chromium and WebView2 send a two-finger pinch as Ctrl and the wheel, in small steps that
-are a hundred times the log of how far the fingers moved apart; read as a wheel's notches,
-a pinch to twice the span zoomed an eighth, which under a hand is nothing happening. WebKit
-on a Mac sends the same pinch as `gesturestart`, `gesturechange` and `gestureend`, which
-nothing listened for. On both surfaces this pinches with the trackpad Chromium itself
-synthesises (`Input.synthesizePinchGesture` from a touchpad), sends the Ctrl-wheel steps
-of a pinch and WebKit's gestures by hand, and turns the wheel a notch with Ctrl held, and
-holds each to the zoom it should be, about the point between the fingers, with the
-window's own zoom - its page scale, its pixel ratio and the app's text size - untouched.
-
-    python apps/desktop/test/e2e/touchpad-pinch.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import math
@@ -49,8 +32,6 @@ SURFACES = {
     },
 }
 
-# The Ctrl-wheel steps of a pinch to `span` times the fingers' distance, as Chromium
-# sends them, dispatched on what is under the point.
 STEPS = """
 ([x, y, span, steps]) => {
   const at = document.elementFromPoint(x, y)
@@ -61,7 +42,6 @@ STEPS = """
 }
 """
 
-# WebKit's pinch on a Mac, to `span`.
 GESTURE = """
 ([x, y, span]) => {
   const at = document.elementFromPoint(x, y)
@@ -73,10 +53,8 @@ GESTURE = """
 }
 """
 
-
 def near(got: float, want: float, slack: float) -> bool:
     return abs(math.log(got / want)) <= math.log(1 + slack)
-
 
 def one(page: Page, cdp, name: str, how: dict) -> None:
     page.evaluate(how["make"])
@@ -117,7 +95,6 @@ def one(page: Page, cdp, name: str, how: dict) -> None:
     )
     step("a pinch's Ctrl-wheel steps out to half", 0.5, 0.02, lambda: page.evaluate(STEPS, [x, y, 0.5, 12]))
 
-    # About the point between the fingers: what was under it is under it still.
     pane = page.locator(how["element"]).first.bounding_box()
     assert pane
     sx, sy = x - pane["x"] - pane["width"] / 2, y - pane["y"] - pane["height"] / 2
@@ -134,7 +111,6 @@ def one(page: Page, cdp, name: str, how: dict) -> None:
         wrong(f"[{name}] the window's own zoom changed: {window} -> {page.evaluate(WINDOW)}")
     DRIVE.shot(page, name.replace(" ", "-"))
 
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 800})
     page = context.new_page()
@@ -147,7 +123,6 @@ def drive(browser: Browser) -> None:
             one(page, cdp, name, how)
     finally:
         context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a trackpad's pinch zooms a canvas and a page note with the fingers"))

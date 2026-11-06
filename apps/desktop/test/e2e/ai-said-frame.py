@@ -40,7 +40,6 @@ SHOWN = """([selector, how]) => {
   one.style.setProperty('visibility', how, 'important')
 }"""
 
-
 class Model(http.server.BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: object) -> None:
@@ -83,14 +82,12 @@ class Model(http.server.BaseHTTPRequestHandler):
         except OSError:
             return
 
-
 def look(page: Page, theme: str, scheme: str) -> None:
     page.evaluate(f"() => window.nibApp.theme.select('{theme}')")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     if theme == "wallpaper":
         wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
     page.wait_for_timeout(400)
-
 
 def framed(page: Page, name: str, selector: str) -> None:
     page.mouse.move(1, 1)
@@ -123,14 +120,12 @@ def framed(page: Page, name: str, selector: str) -> None:
     if apart < 0.9:
         wrong(f"{name}: the reader's message has no frame, {apart:.0%} of it stands apart from what is under it")
 
-
 def every_look(page: Page, where: str, selector: str) -> None:
     for theme in THEMES:
         for scheme in SCHEMES:
             look(page, theme, scheme)
             framed(page, f"{where}-{theme}-{scheme}", selector)
     look(page, "default", "light")
-
 
 def drive(browser: Browser) -> None:
     origin = DRIVE.side(Model)
@@ -169,7 +164,6 @@ def drive(browser: Browser) -> None:
     page.locator(".quick textarea").press("Enter")
     wait_for(page, "document.querySelector('.quick .acts')", "the quick answer")
     every_look(page, "quick", ".quick .said")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

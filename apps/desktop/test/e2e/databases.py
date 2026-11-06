@@ -1,25 +1,3 @@
-"""A base doing the work of a database, in the built app (docs/tasks.md 4, 5.12, 5.13).
-
-What this drives, against the real rows store, the real files and the real runner:
-
-  * A rollup counts: a projects base shows, on each project, how many task notes link
-    to it through their `project` property (a reverse relation, counted).
-  * A button sets a property: pressing Done on a row writes `status: Done` into the
-    note, and the base's automation (status becomes Done -> finished is today) writes
-    its date beside it, once.
-  * One Ctrl+Z takes the press and what the automation wrote back together.
-  * A form makes a note: a name and a status typed into the form's fields and sent
-    make a note in the base's folder with that status, and the form empties itself.
-  * The table wears the base's colour, row height and frozen column.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/databases.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/databases/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -32,11 +10,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 THESIS = "---\nstatus: Doing\n---\n# Thesis\n"
 GARDEN = "---\nstatus: To do\n---\n# Garden\n"
@@ -83,10 +59,8 @@ WRITE = """async ([files]) => {
 
 ROW = "(path) => window.tasks.rows.of().find((one) => one.path === path)"
 
-
 def note(page: Page, path: str) -> dict[str, object]:
     return page.evaluate(f"({ROW})({json.dumps(path)})?.note ?? null")  # type: ignore[no-any-return]
-
 
 def seed(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
@@ -106,7 +80,6 @@ def seed(page: Page) -> None:
         "the seeded rows",
     )
 
-
 def open_view(page: Page, view: str) -> None:
     page.evaluate(
         """async (view) => {
@@ -124,7 +97,6 @@ def open_view(page: Page, view: str) -> None:
     )
     quiet(page)
 
-
 def cell(page: Page, row: str, column: int) -> str:
     return page.evaluate(  # type: ignore[no-any-return]
         """([row, column]) => {
@@ -133,7 +105,6 @@ def cell(page: Page, row: str, column: int) -> str:
         }""",
         [row, column],
     )
-
 
 def the_rollup(page: Page) -> None:
     open_view(page, "All")
@@ -150,7 +121,6 @@ def the_rollup(page: Page) -> None:
     if not page.evaluate("!!document.querySelector('.view-tab .table.wraps .head.stuck')"):
         wrong("the table is not two lines tall with its first column frozen")
     shot(page, "01-rollup")
-
 
 def the_button(page: Page) -> None:
     page.locator(".view-tab .line:has-text('Thesis') .press").click()
@@ -171,7 +141,6 @@ def the_button(page: Page) -> None:
         wrong("the row that is Done is not in its conditional colour")
     shot(page, "02-button")
 
-    # One undo for the press and what it set off.
     page.locator(".view-tab .line:has-text('Garden') .cell").first.click()
     page.keyboard.press("Control+z")
     if DRIVE.waited(
@@ -184,20 +153,14 @@ def the_button(page: Page) -> None:
             wrong("the automation's write stayed after the undo: it was not one undo with the press")
         say(f"[undo] {json.dumps(after, ensure_ascii=False)}")
 
-
 def menu_row(page: Page, label: str) -> None:
     page.locator(f".menu [role=menuitem]:has-text({json.dumps(label)})").first.click()
 
-
 def more_row(page: Page, label: str) -> None:
-    """A row of the view's settings, under ⋯ in its head, Notion's."""
     page.locator(".view-tab .head [aria-label=Settings]").first.click()
     page.locator(f".view-tab .settings .nib-row:has-text({json.dumps(label)})").first.click()
 
-
 def the_builders(page: Page) -> None:
-    """The layers lane 7 adds over a view, each opened from where a reader finds it,
-    and a locked view turning a change away."""
     open_view(page, "All")
     page.locator(".view-tab .heads .head:has-text('status')").first.click(button="right")
     menu_row(page, "Options")
@@ -231,7 +194,6 @@ def the_builders(page: Page) -> None:
     page.locator(".view-tab .lock").click()
     wait_for(page, "!document.querySelector('.view-tab .lock')", "the view unlocked")
 
-
 def the_form(page: Page) -> None:
     open_view(page, "New")
     wait_for(page, "document.querySelector('.view-tab form.form')", "the form")
@@ -250,7 +212,6 @@ def the_form(page: Page) -> None:
     DRIVE.waited(page, "document.querySelector('.view-tab form.form .title')?.value === ''", "the form to empty itself after sending")
     shot(page, "11-form-sent")
 
-
 def drive(browser) -> None:  # type: ignore[no-untyped-def]
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -260,7 +221,6 @@ def drive(browser) -> None:  # type: ignore[no-untyped-def]
     the_builders(page)
     the_form(page)
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))

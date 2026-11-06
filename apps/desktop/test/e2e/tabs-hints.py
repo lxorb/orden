@@ -1,36 +1,3 @@
-"""Tooltips with keys, tab hover cards and several tabs at once, driven.
-
-Three things a unit test cannot see because they happen between a pointer and a
-screen:
-
-  - every icon-only control says its key in its tooltip, the key the registry holds
-    now: rebinding one shows at once (lib/titled.ts);
-  - a card hangs under a tab the pointer rests on after Chrome's wait, slides across
-    to the next tab at once, and goes when the pointer leaves the strip, on a press,
-    and never over a menu (lib/tab-strip/hover-card.svelte.ts);
-  - three tabs picked with Ctrl, dragged along the strip together, carried to the
-    other pane together, closed together, and brought back by one Reopen closed tab
-    (lib/tab-strip/picking.svelte.ts);
-  - a Ctrl press on a tab adds it to the pick and, held, drags the whole pick, and a
-    picked tab wears the picked fill, which the frame can be told from in the light and
-    the dark;
-  - each tab's number while Alt is held, in the light and the dark: on screen within a
-    frame or two of Alt going down, kept through Alt and three digits, gone at Alt+F4
-    and once Alt is let go of (lib/tab-strip/numbers.svelte.ts).
-
-Serves the built web app and drives it headless in the machine's own Chrome. The
-build has to be one a drive may steer - `--mode drive` - or `window.nibApp` is not
-there. A still of a web page in a card is the native app's alone (the web build has
-no way to photograph a site's frame), so that half is left to the probe.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tabs-hints.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/tabs-hints/`.
-"""
-
 from __future__ import annotations
 
 import functools
@@ -53,13 +20,11 @@ APP = HERE.parent.parent
 DIST = APP / "dist"
 SHOTS = HERE / "shots" / "tabs-hints"
 
-# Where this drive listens; see docs/conventions.md.
 PORT = 23911
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 NAMES = ["Alpha", "Beta", "Gamma", "Delta"]
 
-# Four notes in the space, each in a tab of its own, the first in front.
 SEED = """
 async (names) => {
   const ws = window.nibApp.workspace
@@ -83,7 +48,6 @@ async (names) => {
 }
 """
 
-# The strip of the pane in front, by name, and which of them are picked.
 STRIP = """
 () => {
   const ws = window.nibApp.workspace
@@ -100,11 +64,6 @@ STRIP = """
 failures: list[str] = []
 
 
-
-#: When a number was first on screen, from the Alt that brought it: armed before the
-#: press, it takes the keydown's own time and then looks every frame for a number whose
-#: fade has begun to show, so what it answers is the key to the first visible pixel, less
-#: the one frame the compositor still takes to put that frame up.
 SHOWN = """
 () => {
   window.__numeral = null
@@ -124,7 +83,6 @@ SHOWN = """
 }
 """
 
-#: The tab in front, by name.
 FRONT = "() => window.nibApp.workspace.tabs.find((one) => one.id === window.nibApp.workspace.activeTabId)?.shown"
 
 def say(words: str) -> None:
@@ -167,9 +125,6 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 
 
 class Strict(socketserver.ThreadingTCPServer):
-    """Never reuses the address, so a run cannot photograph the last one; answers the
-    page's modules side by side, with a queue long enough for all of them at once - the
-    default five is refused connections on a busy machine."""
 
     allow_reuse_address = False
     daemon_threads = True
@@ -246,8 +201,6 @@ def tooltips(page: Page) -> None:
     keyed(page, '[data-region="panels"] [role="tab"]', "Files", "Ctrl+Shift+E")
     keyed(page, '.foot button[aria-label="Settings"]', "Settings", "Ctrl+,")
 
-    # A key given another key shows the new one at once, and a key taken away takes
-    # the brackets with it.
     page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', 'Mod-Alt-j')")
     page.wait_for_timeout(60)
     keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Alt+J")
@@ -257,15 +210,11 @@ def tooltips(page: Page) -> None:
         wrong("a key taken away still shows in the sidebar toggle's tooltip")
     page.evaluate("() => window.nibApp.shortcuts.reset('app.sidebar')")
 
-    # The format bar, over a word picked in the note. Before the find bar: a word picked
-    # after the find bar has been up overflows the editor's update listener on main as
-    # it stands (reported), and the bar never comes.
     page.locator('.cm-line:has-text("Words about")').first.dblclick()
     if wait_for(page, "document.querySelector('.nib-bar-at')", "the format bar", 10):
         keyed(page, '.nib-bar-at button[aria-label="Bold"]', "Bold", "Ctrl+B")
     page.keyboard.press("ArrowRight")
 
-    # The find bar's steps, over the note in front.
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+f")
     if wait_for(page, "document.querySelector('.findbar')", "the find bar", 10):
@@ -275,7 +224,6 @@ def tooltips(page: Page) -> None:
         keyed(page, '.findbar button[aria-label="Close"]', "Close", "Esc")
         page.keyboard.press("Escape")
 
-    # A web tab's bar: back, forward and reload say Chrome's keys.
     page.evaluate("() => window.nibApp.workspace.openPage('https://example.com/', 'plain')")
     if wait_for(page, "document.querySelector('.webbar')", "a web tab's bar", 15):
         keyed(page, '.webbar button[aria-label="Back"]', "Back", "Alt+←")
@@ -287,7 +235,6 @@ def tooltips(page: Page) -> None:
             say(reload)
     page.evaluate("() => window.nibApp.workspace.closeActive()")
 
-    # The canvas bar's tools say the plane's own keys.
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
     )
@@ -324,7 +271,6 @@ def hover_cards(page: Page) -> None:
         wrong(f"the card under Beta says {words!r}")
     shot(page, "02-card")
 
-    # One card up, the next tab's comes at once and the card slides across.
     x, y = centre(page, tab("Gamma"))
     page.mouse.move(x, y, steps=3)
     page.wait_for_timeout(120)
@@ -333,13 +279,11 @@ def hover_cards(page: Page) -> None:
     page.wait_for_timeout(300)
     shot(page, "03-card-slid")
 
-    # Off the strip and into the note: gone.
     page.mouse.move(640, 500, steps=4)
     page.wait_for_timeout(400)
     if card_up(page):
         wrong("the card stayed after the pointer left the strip")
 
-    # A press on the tab puts it away, and it does not come back for that tab.
     x, y = centre(page, tab("Delta"))
     page.mouse.move(x, y, steps=3)
     wait_for(page, "document.querySelector('.card')", "a card under Delta", 3)
@@ -351,7 +295,6 @@ def hover_cards(page: Page) -> None:
     page.mouse.move(640, 500, steps=3)
     page.wait_for_timeout(400)
 
-    # Never over a menu.
     x, y = centre(page, tab("Alpha"))
     page.mouse.click(x, y, button="right")
     page.wait_for_timeout(200)
@@ -381,7 +324,6 @@ def several(page: Page) -> None:
         wrong(f"Ctrl and a click picked {now['picked']}")
     shot(page, "04-picked")
 
-    # Its menu is about all three.
     page.locator(tab("Gamma")).click(button="right")
     menu = page.locator('[role="menu"]')
     menu.wait_for(state="visible", timeout=5000)
@@ -391,7 +333,6 @@ def several(page: Page) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # Dragged along the strip, all three go together, to the end.
     sx, sy = centre(page, tab("Gamma"))
     end = page.locator(".tabs .new").first.bounding_box()
     page.mouse.move(sx, sy)
@@ -409,7 +350,6 @@ def several(page: Page) -> None:
     if sorted(now["picked"]) != ["Alpha", "Delta", "Gamma"]:
         wrong(f"the pick did not survive its drag: {now['picked']}")
 
-    # Carried to the other pane together.
     page.evaluate("() => window.nibApp.workspace.split('row', window.nibApp.workspace.tabs.find((one) => one.shown === 'Beta').id)")
     page.wait_for_timeout(500)
     page.locator(tab("Alpha")).first.click()
@@ -433,7 +373,6 @@ def several(page: Page) -> None:
     if not any(one["tabs"][-3:] == ["Alpha", "Gamma", "Delta"] for one in panes):
         wrong(f"the three did not arrive in the other pane together: {panes}")
 
-    # Closed together, and back with one Reopen closed tab.
     before = [one["tabs"] for one in strip(page)]
     page.keyboard.press("Control+w")
     page.wait_for_timeout(500)
@@ -450,7 +389,6 @@ def several(page: Page) -> None:
     shot(page, "08-reopened")
 
 
-# What a picked tab's body is filled with, and what the frame behind it is.
 FILLS = """
 () => {
   const one = document.querySelector('.tab.chosen:not(.active)')
@@ -473,7 +411,6 @@ FILLS = """
 
 
 def ctrl_drag(browser, scheme: str) -> None:
-    """Chrome's Ctrl press: it adds the tab to the pick and, held, drags the whole pick."""
     say(f"[{scheme}] a Ctrl press drags the pick")
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     page = context.new_page()
@@ -488,8 +425,6 @@ def ctrl_drag(browser, scheme: str) -> None:
     page.wait_for_timeout(300)
     fills = page.evaluate(FILLS)
     say(f"[{scheme}] the picked fill {fills}")
-    # The fill, not its fade: a headless page only moves a transition on when something
-    # asks for a frame, and the picture below is the one that does.
     if fills["shown"] is None or fills["picked"] == fills["frame"]:
         wrong(f"[{scheme}] a picked tab cannot be told from the frame: {fills}")
     shot(page, f"10-picked-{scheme}")
@@ -517,7 +452,6 @@ def ctrl_drag(browser, scheme: str) -> None:
 def alt_numbers(page: Page, scheme: str) -> None:
     say(f"[{scheme}] the numbers while Alt is held")
     page.emulate_media(color_scheme=scheme)
-    # One pane again, with every tab in its strip.
     page.evaluate('() => window.nibApp.workspace.collapsePanes()')
     page.wait_for_timeout(400)
     page.mouse.move(640, 500)
@@ -525,9 +459,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.wait_for_timeout(300)
     count = len(strip(page)[0]["tabs"])
 
-    # Emil, 2026-10-01: "It should always display, even if I press and hold Alt and then
-    # press a number. The only condition should be Alt held." And: "currently it just
-    # feels a bit delayed till the numbers appear when holding alt."
     page.evaluate(SHOWN)
     page.keyboard.down("Alt")
     if not wait_for(page, "window.__numeral !== null", f"[{scheme}] the numbers after Alt", 3):
@@ -547,7 +478,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     if SCRATCH:
         shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
 
-    # Three digits with Alt still down: each goes to its tab, and the numbers stay.
     for digit in ("2", "3", "0"):
         page.keyboard.press(digit)
         page.wait_for_timeout(120)
@@ -559,7 +489,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     if page.evaluate(FRONT) != strip(page)[0]["tabs"][-1]:
         wrong(f"[{scheme}] Alt+0 did not bring the last tab to the front")
 
-    # Alt+F4 is a chord of its own: they go, and the held Alt does not bring them back.
     page.keyboard.press("F4")
     page.wait_for_timeout(200)
     if page.locator(".numeral").count():
@@ -567,7 +496,6 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.keyboard.up("Alt")
     page.wait_for_timeout(200)
 
-    # Held and let go of: gone.
     page.keyboard.down("Alt")
     page.wait_for_timeout(150)
     if page.locator(".numeral").count() != len(wanted):

@@ -1,29 +1,3 @@
-"""Making things from the tree: from the empty stretch, and from inside a row.
-
-Every gesture ends the same way: a row goes into the tree already in its name
-field, a name is typed, Enter commits, and the file is there. This drives all four
-- a note and a canvas from the empty stretch under the last row, a note inside a
-folder nobody has written a note in, and a note inside a note, which nests the
-note it was asked on - and checks the file list afterwards.
-
-No New folder anywhere, because nothing in the interface is a folder: a note
-inside a note is how a space is organised. See docs/tree.md.
-
-What it is guarding is the keyboard. The menu that was pressed hands focus back
-to whatever had it when the menu opened, and the field the menu entry opened is
-what has it now; a hand-back that ignored that blurred the field, and a blurred
-empty field is a row for something that was never made. See trap.ts.
-
-Builds the web app, serves `dist` statically on a port of its own, drives, and
-stops everything again. A shot of the row mid-name goes beside it under `shots/`.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tree-create.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -39,9 +13,7 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
 PATIENCE = 40
-
 
 def fresh(browser: Browser, scheme: str = "light") -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760}, color_scheme=scheme)
@@ -50,9 +22,6 @@ def fresh(browser: Browser, scheme: str = "light") -> Page:
     DRIVE.open(page)
     return page
 
-
-# One note at the top of the space and a folder with a note in it, so there is a
-# folder row to ask and an empty stretch under the last row to ask on.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -75,23 +44,15 @@ NAMES = """
 }
 """
 
-
 def entry(page: Page, label: str) -> None:
-    """Presses one entry of the menu that is open, by the words on it."""
     row = page.locator(".menu .nib-row", has_text=label).first
     row.wait_for(state="visible", timeout=PATIENCE * 1000)
     row.click()
 
-
 def named(page: Page, what: str, name: str, shot: str | None = None) -> None:
-    """Types a name into the row that is waiting for one, and commits it.
-
-    The field is the whole check: a row that never arrived, or one that arrived
-    and lost the keyboard again, has no field to type in."""
     field = page.locator("aside .row .naming input")
     field.wait_for(state="visible", timeout=PATIENCE * 1000)
 
-    # Past the menu's own fade, which is when the keyboard used to be taken back.
     page.wait_for_timeout(400)
     still = page.evaluate("() => document.activeElement?.closest('.naming') !== null")
     if not still:
@@ -105,26 +66,14 @@ def named(page: Page, what: str, name: str, shot: str | None = None) -> None:
     field.press("Enter")
     say(f"{what}: typed {name}")
 
-
 def rest(page: Page) -> None:
-    """The empty stretch under the last row, which is the space itself."""
     page.locator("aside .rest").click(button="right", position={"x": 20, "y": 8})
 
-
 def quiet_row(page: Page) -> None:
-    """The row of a folder nobody has written a note in - `Reading` here, which the
-    seed made by writing a note inside it. Quiet is how the list says so."""
     page.locator("aside .row.is-quiet").first.click(button="right")
 
-
 def note_row(page: Page, name: str) -> None:
-    """A row that is a note holding nothing yet, which is the other row that can
-    take a note inside it: the note becomes a folder note as the new one arrives.
-
-    Named, because every row in the list is a note now and the first of them is
-    whichever the sort put at the top."""
     page.locator(f"aside .row[data-path$='{name}']").first.click(button="right")
-
 
 def drive(browser: Browser) -> None:
     page = fresh(browser)
@@ -148,7 +97,6 @@ def drive(browser: Browser) -> None:
         entry(page, "New note inside")
         named(page, "a note inside a note", "Inside the note")
 
-        # The listing, once every write has been through the store.
         wait_for(
             page,
             "() => window.nibApp.workspace.tree.children.length >= 4",
@@ -168,8 +116,6 @@ def drive(browser: Browser) -> None:
         if missing:
             raise SystemExit(f"nothing was made for {missing}; the list holds {names}")
 
-        # Each inside the row the menu was asked on: the folder that already was
-        # one, and the note that became one by being asked.
         held = page.evaluate(
             """() => {
               const walk = (entry) => entry.children.flatMap((one) =>
@@ -182,9 +128,6 @@ def drive(browser: Browser) -> None:
         if "Inside the folder.md" not in held.get("Reading", []):
             raise SystemExit(f"the note was not made inside Reading; it holds {held}")
 
-        # The note the menu was asked on is `Deep work.md`, which is now the folder
-        # `Deep work/` holding its own note and the new one. That is the
-        # folder-note layout, made by asking for a note inside a note.
         under = held.get("Deep work", [])
         for one in ("Deep work.md", "Inside the note.md"):
             if one not in under:
@@ -192,13 +135,11 @@ def drive(browser: Browser) -> None:
     finally:
         page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict("four things made: two on the ground, and two inside rows")
-
 
 if __name__ == "__main__":
     sys.exit(main())

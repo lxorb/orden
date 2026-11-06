@@ -1,20 +1,3 @@
-"""A page note's paper goes wherever the note goes (#551).
-
-Emil: "The pdf is part of the pages note, right? Cause if I open it after it was shared
-it says that there was some mistake and the page couldn't load." A page note made from
-a PDF holds the PDF; on another device, or through a link, it opened without it.
-
-So, once on sync v1 and once on sync v2: a PDF is imported on one device and becomes a
-page note. A second device signed in to the same account opens the note and every page
-of the paper is drawn on its sheet; a guest who follows an open link to the note sees
-the same. Counted in pixels, not taken on trust.
-
-The real thing: the built web app, the Worker under `wrangler dev`, three browser
-contexts per version. Run it from the repository root:
-
-    python apps/desktop/test/e2e/paper-travels.py
-"""
-
 from __future__ import annotations
 
 import base64
@@ -33,18 +16,15 @@ say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
 PATIENCE = 40
-# How long a file made in the app is given to reach the account, and the other side.
 SYNCED = 90
 
 NOTE = "Lecture.pages"
 
 wrong: list[str] = []
 
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: float = PATIENCE):
     until = time.monotonic() + patience
@@ -55,10 +35,7 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: f
         page.wait_for_timeout(200)
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def paper_bytes(sizes: list[tuple[float, float]]) -> str:
-    """A PDF of `sizes` pages, each with a black block on it, as base64; see
-    paper-note.py, which makes its paper the same way."""
     objects: list[str] = []
     kids = " ".join(f"{3 + at * 2} 0 R" for at in range(len(sizes)))
     objects.append("1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj")
@@ -75,7 +52,6 @@ def paper_bytes(sizes: list[tuple[float, float]]) -> str:
         ["%PDF-1.4", *objects, f"trailer<</Root 1 0 R/Size {2 + len(sizes) * 2 + 1}>>", "%%EOF"]
     )
     return base64.b64encode(body.encode("latin-1")).decode("ascii")
-
 
 PAPER = paper_bytes([(595.28, 841.89), (612.0, 792.0)])
 
@@ -94,7 +70,6 @@ async ({ base64, name, root }) => {
 }
 """
 
-# How much of each sheet is not the colour of the sheet; see pages.py.
 DARK_ON_SHEETS = """
 () => [...document.querySelectorAll('.sheet canvas')].map((sheet) => {
   const context = sheet.getContext('2d', { willReadFrequently: true })
@@ -108,8 +83,6 @@ DARK_ON_SHEETS = """
 })
 """
 
-
-# Whether the browser's store holds a file's bytes: where the web app keeps a PDF.
 KEPT = """
 async (path) => {
   const open = indexedDB.open('nib')
@@ -137,7 +110,6 @@ ENGINE = """() => {
   }))
 }"""
 
-
 def device(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900})
     if token:
@@ -147,7 +119,6 @@ def device(browser: Browser, label: str, at: str, token: str | None = None) -> P
     page.goto(at, wait_until="domcontentloaded")
     wait_for(page, "() => !!window.nibApp", f"[{label}] the app")
     return page
-
 
 def space_root(page: Page, label: str, space: str) -> str:
     return wait_for(
@@ -160,9 +131,7 @@ def space_root(page: Page, label: str, space: str) -> str:
         patience=SYNCED,
     )
 
-
 def drawn(page: Page, label: str, pages: int) -> None:
-    """Every page of the paper is on its sheet."""
     try:
         wait_for(
             page,
@@ -175,9 +144,7 @@ def drawn(page: Page, label: str, pages: int) -> None:
         failed(f"{gave_up}: {page.evaluate(DARK_ON_SHEETS)}")
     page.screenshot(path=str(SHOTS / f"{label}.png"))
 
-
 def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
-    """An open link to write in one file, as the owner's Share sheet makes it."""
     worker.request(
         f"/v1/spaces/{space}/share/link?item={note}",
         token=token,
@@ -189,7 +156,6 @@ def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
     if not found:
         raise SystemExit(f"that is not a join link: {link}")
     return f"{ORIGIN}/join/{found.group(1)}"
-
 
 def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     say(f"--- sync v{version} ---")
@@ -229,13 +195,11 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
         raise
     say(f"[v{version}] the owner holds {NOTE} as {note}")
     if version == 2:
-        # One thing in the tree, the note: its paper goes as part of it, not as a file.
         tree = owner.evaluate(ENGINE)
         files = [one[1] for space in tree for one in space["entries"] if one[0] == "file" and not one[3]]
         if files:
             failed(f"[v2] the paper is a file of the tree beside its note: {files}")
 
-    # ── The same account on a second device ───────────────────────
     second = device(browser, f"v{version}-second", ORIGIN, token)
     there = space_root(second, f"v{version}-second", space["id"])
     wait_for(
@@ -247,7 +211,6 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     )
     second.evaluate("(path) => window.nibApp.workspace.openEntry(path)", there + inside)
     drawn(second, f"v{version}-second", 2)
-    # And kept there, so the note opens with its paper with no account in reach.
     try:
         wait_for(
             second,
@@ -259,7 +222,6 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     except SystemExit as gave_up:
         failed(str(gave_up))
 
-    # ── A guest, by an open link to the note ──────────────────────
     guest = device(browser, f"v{version}-guest", link_to(worker, token, space["id"], note))
     try:
         wait_for(guest, "() => !!window.nibApp.workspace.active?.note.shared", f"[v{version}-guest] the shared tab")
@@ -269,7 +231,6 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
 
     for page in (owner, second, guest):
         page.context.close()
-
 
 def main() -> int:
     worker = harness.Worker(DRIVE)
@@ -294,7 +255,6 @@ def main() -> int:
         return 1
     print("\na page note's paper goes with it, to another device and to a guest", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

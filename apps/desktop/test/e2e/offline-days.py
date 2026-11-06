@@ -1,28 +1,3 @@
-"""Days away: one machine offline while forty notes are written on both sides.
-
-Sync v2's promise (docs/sync-v2.md sections 4, 5.4 and 12): a device that comes back
-after days away merges what it wrote with what everybody else did, character by
-character, and asks only where two people wrote the same sentence two ways. So this
-plants exactly those, among forty notes, and checks that the question comes up on
-exactly them:
-
-    0  both machines write, in different paragraphs      merged, nothing asked
-    1  only the machine that is away writes              taken, nothing asked
-    2  only the machine that stayed writes               taken, nothing asked
-    3  both rewrite the same paragraph, a sentence each  held for the question
-    4  both change one word of the same paragraph        the newer word, nothing asked
-
-and then that no `(from another device` file exists anywhere, that every merged note
-says the same on both machines and on the account, that every word typed is in a note
-- or, for the held ones, on the machine that typed it - and that answering "Keep
-mine" sends the away machine's sentence up.
-
-The real thing: the built web app, the Worker under `wrangler dev`, two browser
-contexts. Run it from the repository root:
-
-    python apps/desktop/test/e2e/offline-days.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -35,7 +10,6 @@ import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
-#: Forty notes opened and written on two machines, and a pass over all of them.
 BUDGET = 1200
 say = DRIVE.say
 SHOTS = DRIVE.shots
@@ -49,16 +23,13 @@ COPY = "(from another device"
 
 wrong: list[str] = []
 
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
@@ -68,7 +39,6 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
@@ -80,15 +50,12 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     wait_for(page, "() => !!window.nibApp?.account.user", f"[{label}] the account")
     return page
 
-
 def settled(page: Page, what: str) -> None:
     wait_for(page, "() => window.nibApp.sync.status !== 'syncing'", f"{what} to settle")
     page.wait_for_timeout(1200)
 
-
 def name(index: int) -> str:
     return f"Day {index:02d}.md"
-
 
 def opening(index: int) -> str:
     return (
@@ -98,18 +65,13 @@ def opening(index: int) -> str:
         f"Paragraph C of day {index}, about the evening walk home.\n"
     )
 
-
 def rewrite(index: int, who: str) -> str:
-    """A sentence long enough that two of them over one paragraph are a question."""
     return (
         f"Paragraph B of day {index} rewritten on machine {who}: the meeting moved, the "
         f"agenda changed and everyone agreed on something else entirely, marker {who}{index}z."
     )
 
-
 def edit(page: Page, note: str, old: str, new: str) -> bool:
-    """Opens a note, replaces `old` with `new` through the editor, and writes it down
-    the way a pause does."""
     opened = page.evaluate(
         """async ([space, name]) => {
           const ws = window.nibApp.workspace
@@ -144,7 +106,6 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
     page.evaluate("async () => { await window.nibApp.workspace.writeNow() }")
     return bool(done)
 
-
 def notes_here(page: Page) -> dict[str, str]:
     return page.evaluate(
         """async (space) => {
@@ -157,10 +118,8 @@ def notes_here(page: Page) -> dict[str, str]:
         SPACE,
     )
 
-
 def held_here(page: Page) -> list[str]:
     return page.evaluate("() => (window.nibApp.sync.engine?.heldNotes ?? []).map((one) => one.name)")
-
 
 def notes_there(worker: Worker, token: str, space_id: str) -> dict[str, str]:
     listed = worker.request(f"/v1/spaces/{space_id}/changes?since=0", token=token)
@@ -171,7 +130,6 @@ def notes_there(worker: Worker, token: str, space_id: str) -> dict[str, str]:
         held = worker.request(f"/v1/notes/{one['id']}", token=token)
         out[one["path"]] = held.get("content", "")
     return out
-
 
 def main() -> int:
     worker = Worker()
@@ -264,7 +222,6 @@ def main() -> int:
         stays.evaluate("() => window.nibApp.sync.nudge()")
         settled(stays, "the machine that stayed")
 
-        # Back after days away.
         began = time.monotonic()
         away.context.set_offline(False)
         away.wait_for_timeout(1500)
@@ -306,7 +263,6 @@ def main() -> int:
                 if words not in (there.get(note) or ""):
                     failed(f"{note}: lost {words!r}")
 
-        # Keep mine, on every held note: the away machine's sentence goes up.
         for note in held:
             away.evaluate(
                 """(name) => {
@@ -339,7 +295,6 @@ def main() -> int:
         return 1
     print("\nthe question came up on exactly the planted overlaps, and nothing was lost", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

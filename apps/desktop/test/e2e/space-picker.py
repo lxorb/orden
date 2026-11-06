@@ -1,18 +1,3 @@
-"""Ctrl+Space: every space in the middle of the window, a digit away.
-
-Emil, 2026-10-04: Ctrl+Space opens it, as Ctrl+Shift+Space still does, and no row wears a
-number until a digit is typed or Alt is held. Emil, 2026-10-03: a key opens a centred
-modal just for switching to another space; a digit switches as soon as only one space can be meant, without
-Enter; letters find a space by its name and need Enter; there is no visible field, the
-typed letters are the hits in the rows; the key again closes it, and the tabs' Alt
-numbers never show beside it. What this presses and looks at, in the light and the dark,
-with twelve spaces so a `1` has to wait for a second digit.
-
-    python apps/desktop/test/e2e/space-picker.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/space-picker/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -32,21 +17,17 @@ ROWS = """() => [...document.querySelectorAll('.picker .nib-row')].map((one) => 
   one.querySelector('.nib-row-label b')?.textContent ?? null,
 ])"""
 
-
 def key(page: Page, chord: str = "Control+Space") -> None:
     page.keyboard.press(chord)
-
 
 def opened(page: Page, scheme: str, what: str, chord: str = "Control+Space") -> None:
     key(page, chord)
     wait_for(page, UP, f"[{scheme}] the switcher for {what}")
     page.wait_for_timeout(250)
 
-
 def gone(page: Page, scheme: str, what: str) -> None:
     wait_for(page, f"!({UP})", f"[{scheme}] the switcher gone {what}")
     page.wait_for_timeout(250)
-
 
 def switching(page: Page, scheme: str) -> None:
     page.emulate_media(color_scheme=scheme)
@@ -86,8 +67,6 @@ def switching(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] the tabs' Alt numbers showed beside the space numbers")
     if [one[0] for one in rows] != [str(at + 1) for at in range(len(names))]:
         wrong(f"[{scheme}] Alt did not number the rows 1 to {len(names)}: {rows}")
-    # The numbers fade out over frames, and a frame of WebKit's on a busy machine can
-    # be most of a second: waited for, and then held to it (#384).
     try:
         page.wait_for_function(f"!({ROWS})().some((one) => one[0] != null)", timeout=3000, polling=50)
     except Exception:  # noqa: BLE001 - still there, which the check below says
@@ -95,7 +74,6 @@ def switching(page: Page, scheme: str) -> None:
     if any(one[0] is not None for one in page.evaluate(ROWS)):
         wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
 
-    # Letters: the name is found, its letters bold, and nothing happens until Enter.
     page.keyboard.type("re")
     page.wait_for_timeout(300)
     rows = page.evaluate(ROWS)
@@ -116,14 +94,12 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != "Recipes":
         wrong(f"[{scheme}] Enter on 'rci' went to {page.evaluate(HERE)!r}, not Recipes")
 
-    # A digit only one number starts with goes at once.
     opened(page, scheme, "a digit")
     page.keyboard.press("3")
     gone(page, scheme, "on 3")
     if page.evaluate(HERE) != names[2]:
         wrong(f"[{scheme}] 3 went to {page.evaluate(HERE)!r}, not {names[2]}")
 
-    # `1` with twelve spaces waits for a second digit, and goes by itself after.
     opened(page, scheme, "a digit that waits")
     page.keyboard.press("1")
     page.wait_for_timeout(150)
@@ -143,7 +119,6 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] 12 went to {page.evaluate(HERE)!r}, not {names[11]}")
 
-    # Alt and a digit goes too.
     opened(page, scheme, "Alt and a digit")
     page.keyboard.press("Alt+4")
     gone(page, scheme, "on Alt+4")
@@ -154,7 +129,6 @@ def switching(page: Page, scheme: str) -> None:
     page.keyboard.press("2")
     gone(page, scheme, "on 12 again")
 
-    # The key again puts it away, both keys; so does Escape.
     opened(page, scheme, "the key again")
     key(page)
     gone(page, scheme, "on the key again")
@@ -167,26 +141,17 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] closing it changed the space")
 
-    # With the panel shut, where the title bar holds no space of its own: the key is
-    # the way to another space there, and it is the same switcher.
     page.evaluate("() => { window.nibApp.workspace.panel = null }")
     opened(page, scheme, "with the panel shut")
     page.keyboard.press("Escape")
     gone(page, scheme, "with the panel shut")
 
-
-#: The name on the row the keyboard is on, or None where it is on no row of the switcher.
 STANDING = """() => {
   const at = document.activeElement
   return at?.closest?.('.picker') ? (at.querySelector('.nib-row-label')?.textContent ?? '') : null
 }"""
 
-
 def walking(page: Page, scheme: str) -> None:
-    """The arrows walk the rows from the space on screen, Enter goes to the row the
-    keyboard is on and Escape puts the switcher away where it was, on a Mac's keys as
-    on every other system's, with the key that opened it let go of or still held (#1123). A switch from here leaves both sides of the window
-    as they were: the left shut stays shut, the right open stays open on its panel."""
     names = page.evaluate("() => window.nibApp.workspace.shownSpaces.map((one) => one.name)")
     here = page.evaluate(HERE)
     at = names.index(here)
@@ -229,7 +194,6 @@ def walking(page: Page, scheme: str) -> None:
     if after != before:
         wrong(f"[{scheme}] the switch changed the sides of the window: {before} -> {after}")
 
-    # Walked with the key's modifiers still down, Cmd and Shift on a Mac, as Cmd+Tab is.
     names = page.evaluate("() => window.nibApp.workspace.shownSpaces.map((one) => one.name)")
     at = names.index(page.evaluate(HERE))
     opened(page, scheme, "the arrows with the key held")
@@ -246,7 +210,6 @@ def walking(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != two:
         wrong(f"[{scheme}] the arrows with the key held went to {page.evaluate(HERE)!r}, not {two!r}")
 
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 800})
@@ -254,7 +217,6 @@ def drive(browser: Browser) -> None:
         switching(page, scheme)
         walking(page, scheme)
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "Ctrl+Space switches space by number and by name"))

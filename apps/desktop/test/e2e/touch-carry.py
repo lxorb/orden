@@ -44,17 +44,14 @@ OPEN_VIEW = """async (view) => {
   window.tasks.openBaseFile(`${root}/Items.base`, {}, view)
 }"""
 
-
 def touch(cdp, kind, points):
     cdp.send(
         "Input.dispatchTouchEvent",
         {"type": kind, "touchPoints": [{"x": x, "y": y} for x, y in points]},
     )
 
-
 def carried(page):
     return page.evaluate("() => !!document.querySelector('.is-carried')")
-
 
 def box(page, selector, words):
     return page.evaluate(
@@ -68,7 +65,6 @@ def box(page, selector, words):
         [selector, words],
     )
 
-
 def in_column(page, words):
     return page.evaluate(
         """(words) => {
@@ -80,7 +76,6 @@ def in_column(page, words):
         }""",
         words,
     )
-
 
 def setup(browser, width, height):
     context = DRIVE.context(
@@ -104,7 +99,6 @@ def setup(browser, width, height):
     page.evaluate(WRITE, [files])
     page.wait_for_timeout(800)
     return context, page, context.new_cdp_session(page)
-
 
 def board_on(browser, width, height, name):
     context, page, cdp = setup(browser, width, height)
@@ -254,7 +248,6 @@ def board_on(browser, width, height, name):
                 wrong(f"[{name}] a thumb up the column did not scroll it")
     context.close()
 
-
 def task_row_on_phone(browser):
     context, page, cdp = setup(browser, 390, 844)
     today = datetime.date.today().isoformat()
@@ -292,7 +285,6 @@ def task_row_on_phone(browser):
     touch(cdp, "touchEnd", [])
     page.wait_for_timeout(500)
     context.close()
-
 
 def timeline_on(browser, width, height):
     context, page, cdp = setup(browser, width, height)
@@ -341,13 +333,11 @@ def timeline_on(browser, width, height):
         wrong("[timeline] a bar held and dragged did not move")
     context.close()
 
-
 def drive(browser):
     board_on(browser, 1000, 760, "tablet")
     board_on(browser, 390, 844, "phone")
     task_row_on_phone(browser)
     timeline_on(browser, 1000, 760)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

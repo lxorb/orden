@@ -1,30 +1,3 @@
-"""Pictures, in a browser: the one thing the web build could not do.
-
-A note-relative `pictures/x.png` in an `<img>` is asked of the page's own origin,
-where nothing answers, so a picture pasted into the web app or into the phone's
-PWA never drew - while the desktop drew it through the asset protocol. The fix is
-one resolver for every surface and one address behind it, answered by
-public/sw.js out of the same IndexedDB the notes are in.
-
-So this drive is about a picture being *there*: pasted into a note and drawn in the
-editor, drawn the same in the reading view, drawn again after a reload - because an
-address that survives a reload is the whole reason it is an address rather than a
-`blob:` - named three ways in one note, brought in from a Notion export through the
-Import sheet, and dropped onto a plane. On a pointer and on a finger, because the
-claim is that the two are one design.
-
-The worker itself is asked directly as well: what it says a picture is, how long it
-may be kept, what a picture that is not there gets, and that it does not answer for
-the app's own chunks.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/pictures.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/pictures/`.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -43,11 +16,7 @@ DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 
-
 def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
-    """A picture big enough to see in a screenshot, written here rather than kept
-    as a fixture: what is under test is that bytes pasted into the app come back
-    out of storage, and these are bytes."""
 
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
@@ -73,21 +42,14 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
         + chunk(b"IEND", b"")
     )
 
-
 PASTED = base64.b64encode(png(220, 150, (250, 120, 60))).decode()
 DROPPED = base64.b64encode(png(180, 180, (70, 170, 250))).decode()
 IMPORTED = png(200, 130, (120, 220, 130))
 
-# The ids Notion sticks on the end of every name it writes; the same shape
-# test/e2e/import.py builds its fixture in.
 PLAN = "1a2b3c4d5e6f78901a2b3c4d5e6f7890"
 KIT = "aaaabbbbccccddddeeeeffff00001111"
 
-
 def notion_zip(into: Path) -> Path:
-    """A Notion export with a picture in it: a page, a page under it, and the
-    picture beside that one. Written here rather than kept in the repository, for
-    the same reason the pasted picture is."""
     path = into / "Export-4b7c1d2e.zip"
 
     with zipfile.ZipFile(path, "w") as zip_file:
@@ -102,7 +64,6 @@ def notion_zip(into: Path) -> Path:
         zip_file.writestr(f"Plan {PLAN}/tent {KIT}.png", IMPORTED)
 
     return path
-
 
 NOTE = """# Pictures
 
@@ -121,9 +82,6 @@ async (note) => {
 }
 """
 
-# A paste of a picture, as the clipboard hands one over: a File in a DataTransfer
-# on a `paste` event. The editor's own handler takes it from there; see
-# packages/editor/src/images.ts.
 PASTE = """
 ([base64, name, selector]) => {
   const binary = atob(base64)
@@ -168,9 +126,6 @@ DROP = """
 }
 """
 
-# Every picture on the page that is being asked of the asset store, and whether it
-# arrived. `naturalWidth` is the honest question: an `<img>` that 404s is still an
-# `<img>`, and only the decoded bytes have a width.
 DRAWN = """
 () => {
   const seen = []
@@ -208,9 +163,6 @@ async (path) => {
 }
 """
 
-# The app's own chunks live under `/assets/`, one letter away from the route the
-# worker owns. If it ever answered for those it would be serving the app out of the
-# picture store.
 OWN_CHUNK = """
 async () => {
   const found = [...document.querySelectorAll('script[src]')]
@@ -223,10 +175,7 @@ async () => {
 }
 """
 
-
-# Where the Notion export is written for the run, set by `main`.
 FIXTURES = Path(tempfile.gettempdir())
-
 
 def started(page: Page) -> dict:
     wait_for(page, "window.nibApp", "the app")
@@ -234,10 +183,8 @@ def started(page: Page) -> dict:
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     return page.evaluate("() => ({ root: window.nibApp.workspace.activeSpace.root })")
 
-
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
-        # The asset worker is what this drive is about; see WEBKIT_WORKERS in harness.py.
         service_workers="allow",
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
         color_scheme="light",
@@ -264,9 +211,7 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.wait_for_timeout(600)
     return page
 
-
 def paste_into_note(page: Page, where: str) -> str:
-    """Pastes the picture and answers with the path the note now carries."""
     page.evaluate(PASTE, [PASTED, "pasted.png", ".cm-content"])
     wait_for(
         page,
@@ -283,7 +228,6 @@ def paste_into_note(page: Page, where: str) -> str:
 
     page.wait_for_timeout(700)
     return written
-
 
 def expect_drawn(page: Page, where: str, most: int, wide: int | None = None) -> dict:
     state = page.evaluate(DRAWN)
@@ -303,7 +247,6 @@ def expect_drawn(page: Page, where: str, most: int, wide: int | None = None) -> 
             wrong(f"{where}: {image['src']} runs off a {wide}px screen: {image}")
 
     return state
-
 
 THREE = """
 (relative) => {
@@ -331,17 +274,7 @@ THREE = """
 }
 """
 
-
 def three_ways(page: Page, where: str, relative: str) -> None:
-    """The same picture named three ways in one note: a path beside the note, a
-    bare name looked for anywhere in the space, and an `<img>` the note wrote
-    itself. All three go through the one resolver, and this is what says so.
-
-    The space is read again first, and waited on: a bare name is found through the
-    link index, which is built when a space opens, and a picture pasted a moment
-    ago is not in it yet. A reader meets this the other way round - the pictures a
-    `![[…]]` names came with the space - so the drive asks for the reading rather
-    than the app doing it per paste."""
     name = relative.split("/")[-1]
     page.evaluate("() => window.nibApp.workspace.loadTree()")
     page.evaluate("() => window.nibApp.links.build(window.nibApp.workspace.activeSpace.root)")
@@ -349,7 +282,6 @@ def three_ways(page: Page, where: str, relative: str) -> None:
 
     page.evaluate(THREE, relative)
     page.wait_for_timeout(1200)
-
 
 OPEN_NAMED = """
 async (stem) => {
@@ -362,15 +294,7 @@ async (stem) => {
 }
 """
 
-
 def imported(page: Page, where: str, zip_path: Path) -> None:
-    """A Notion export brought in through the Import sheet, and the picture it
-    carried drawn in the note that names it.
-
-    An import writes a picture through `write_bytes` under a path it chose, rather
-    than through the app's own naming: a name somebody else picked and not a hash,
-    which is the other half of the addressing this drive is about."""
-    # Fetched after the space opens rather than with the app; see App.svelte.
     page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
     page.evaluate("() => window.nibApp.importing.show()")
     page.wait_for_selector("button.drop", timeout=20000)
@@ -395,12 +319,10 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
     page.wait_for_timeout(1200)
     say(f"[{where}] {opened} says {page.evaluate('() => window.nibApp.workspace.active.doc')!r}")
 
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
     root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
 
-    # One picture, pasted, drawn in the editor's live preview.
     relative = paste_into_note(page, "editor")
     shot(page, "01-editor-pasted")
     expect_drawn(page, "editor", 1)
@@ -414,8 +336,6 @@ def drive(browser: Browser) -> None:
     shot(page, "03-reading-three-ways")
     expect_drawn(page, "reading", 3)
 
-    # The address is the point: it survives a reload, which a `blob:` would not.
-    # A reload comes back in the editor, so both faces are asked again.
     page.reload(wait_until="domcontentloaded")
     started(page)
     page.wait_for_timeout(1400)
@@ -427,7 +347,6 @@ def drive(browser: Browser) -> None:
     shot(page, "05-reading-after-reload")
     expect_drawn(page, "reading after a reload", 3)
 
-    # The worker, asked the questions directly.
     space = root.strip("/")
     name = relative.split("/")[-1]
     hit = page.evaluate(ASKED, f"/asset/{space}/{relative}")
@@ -438,8 +357,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the worker called a PNG {hit['type']!r}")
     if hit["bytes"] < 100:
         wrong(f"the worker answered with {hit['bytes']} bytes")
-    # Named by the hash of its own bytes, so the address can never mean anything
-    # else and is worth keeping for good.
     if "immutable" not in (hit["cache"] or ""):
         wrong(f"a picture named {name} was not offered for keeping: {hit['cache']!r}")
 
@@ -458,9 +375,6 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
 
-    # A Notion export, through the Import sheet. The picture in it arrives under a
-    # name somebody else chose rather than a hash of its bytes, which is the other
-    # half of the addressing: it draws, and it is not offered for keeping for good.
     imported(page, "import", notion_zip(FIXTURES))
     shot(page, "06-editor-imported")
     expect_drawn(page, "the imported note", 1)
@@ -482,8 +396,6 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
-    # A plane: a picture dropped on it is a card of its own, drawn through the same
-    # resolver the note's pictures go through.
     opened = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
         page.evaluate("() => window.nibApp.workspace.createCanvas()")
@@ -524,7 +436,6 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
 
@@ -538,7 +449,6 @@ def finger(browser: Browser) -> None:
     shot(page, "11-phone-reading")
     expect_drawn(page, "phone reading", 3, wide=420)
 
-    # The PWA's own case: the app is opened again and the pictures are still there.
     page.reload(wait_until="domcontentloaded")
     started(page)
     page.wait_for_timeout(1400)
@@ -552,8 +462,6 @@ def finger(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
-    # And a Notion export through the sheet on a phone, which is where somebody
-    # moving off another app actually does it.
     imported(page, "phone import", notion_zip(FIXTURES))
     shot(page, "14-phone-imported")
     expect_drawn(page, "the imported note on a phone", 1, wide=420)
@@ -564,7 +472,6 @@ def finger(browser: Browser) -> None:
     expect_drawn(page, "the imported note read on a phone", 1, wide=420)
 
     page.context.close()
-
 
 def main() -> int:
     global FIXTURES
@@ -578,7 +485,6 @@ def main() -> int:
             finger(browser)
 
     return DRIVE.verdict("a picture pasted, named, imported and dropped draws everywhere")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -47,7 +47,6 @@ async () => {
 }
 """
 
-
 def drive(browser):
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -59,7 +58,6 @@ def drive(browser):
         wrong(f"rewound: {got['rewound']!r}")
     if got["redone"] != "# S4 new\n\nFRESH words\n":
         wrong(f"redone: {got['redone']!r}")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

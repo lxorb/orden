@@ -1,78 +1,3 @@
-"""How long the file list takes to appear, and how long until the note can be typed in.
-
-A space of three thousand notes, with links, tags and front matter in every one of
-them, written straight into the browser's storage; then the app is launched against
-it and the launch is timed from the navigation to three moments:
-
-    tree     the first row of the file list on screen
-    note     the open note's editor on screen
-    index    the link index landed, which is the pass that reads every body
-
-then two numbers that are not moments - the longest gap between animation frames
-and the longest single task, both taken from the moment the tree appears, which
-together are the keystrokes a reader would lose to whatever the launch is still
-doing behind their note - and four more taken warm, with the launch out of the way:
-what one listing of the space costs, what one read of every body costs, how many
-rows of the file list are in the page at all, and the longest frame gap while the
-list is flicked from the top of the space to the bottom.
-
-Two builds at once, each on its own port, turn and turn about. A laptop's own load
-moves by more than this change does, so five launches of one build followed by five
-of the other measures the afternoon rather than the code.
-
-Build both, with the app's own handle on the page - a production build hides the
-stores this reads. From the repository root, with the change in place:
-
-    cd apps/desktop
-    NODE_ENV=development pnpm exec vite build --mode drive
-
-and then the same again from the commit before it, into a folder of its own. A
-worktree rather than a stash: the stash stack belongs to the whole repository, so a
-`git stash pop` in one worktree can restore whatever another one pushed last, and two
-sets of changes swap owners with nothing said. `git worktree add <path> <sha>` gives
-the other build a checkout of its own and costs nothing but disk.
-
-    NODE_ENV=development pnpm exec vite build --mode drive --outDir dist-before
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/first-paint.py
-
-Either folder on its own is fine; the one that is there is the one that is driven.
-It prints numbers and nothing else: a scratch drive, not a test. The ordering
-itself is a test, in src/lib/startup-order.test.ts.
-
-What it said on one laptop, nine launches each, over three thousand notes of four
-kilobytes - before the file list was painted first, and after:
-
-    time to tree                      1943ms ->  341ms
-    time to the open note             2479ms ->  460ms
-    link index landed                 2554ms -> 1447ms
-    worst frame gap after the tree     383ms ->  200ms
-    listing the space, warm            188ms ->   97ms
-
-and what it said for the window over the rows - the change after that one, which
-left every row exactly as it was and stopped drawing the ones nobody can see. A
-slower machine than the one above, so read the ratios rather than the numbers; 754
-is how many rows this space shows with its folders shut, and 3,005 with them open:
-
-    rows of the list in the page       754    ->   40
-    longest single task after the tree 550ms  ->  136ms
-    worst frame gap after the tree     633ms  ->  117ms
-    longest single task in that scan   543ms  ->   57ms
-    time to tree                      2551ms -> 1930ms
-
-The last of those is the pass that reads every body, and the row that asks the index
-for its icon is in it: that number is the two hundred milliseconds a reader used to
-lose to the index landing behind their note, because every row in the space asked it
-for a mark and now only the forty on screen do.
-
-Flicking the list is the same either way, and that is worth knowing: a page of seven
-hundred rows nobody is changing scrolls perfectly well. What the window is for is the
-work - painting them in the first place, and answering the index for every one of
-them - not the scrolling.
-"""
-
 from __future__ import annotations
 
 import json
@@ -88,22 +13,14 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 APP = harness.APP
 
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-#: How many notes the space holds.
 NOTES = 3000
-#: How many launches each number is the middle of.
 ROUNDS = 9
 
-
-# Three thousand notes into IndexedDB, written the way the app's own store writes
-# them: rows keyed by path in `files`, and - where the build has one - the listing
-# beside them in `stats`. Which stores exist is read off the database rather than
-# assumed, so the same drive seeds the build before the change and the one after.
 SEED = """
 async (count) => {
   const open = () => new Promise((go, no) => {
@@ -203,11 +120,6 @@ async (count) => {
 }
 """
 
-# Installed before the app's first script runs, so the marks are taken against the
-# navigation rather than against whenever a poll got round to looking. A single
-# observer for the two surfaces, and a frame counter that runs the whole time: the
-# gap between two frames is the length of the task that sat between them, which is
-# what a keystroke would have waited behind.
 MARKS = """
 window.__marks = { tree: null, note: null, worst: 0, frames: 0, task: 0 }
 
@@ -248,13 +160,8 @@ const tick = (at) => {
 requestAnimationFrame(tick)
 """
 
-#: How long to watch for jank after the list appears.
 WATCHING = 4000
 
-# The listing on its own, with the launch out of the way: how long it takes to ask
-# the storage what spaces there are and what is in the open one. This is the part
-# the store change is about, and measuring it warm keeps the bundle, the editor and
-# the fonts out of the number.
 LISTING = """
 async (rounds) => {
   const ws = window.nibApp.workspace
@@ -271,10 +178,6 @@ async (rounds) => {
 }
 """
 
-# And the pass that reads every body, warm, for the same reason - with the longest
-# single task it spent doing it, which is the one that would have swallowed a
-# keystroke. The first row asking for its icon is in there too: that is what walks
-# the whole index, and it is the tree's own read of it.
 SCAN = """
 async (rounds) => {
   const links = window.nibApp.links
@@ -304,12 +207,6 @@ async (rounds) => {
 }
 """
 
-
-# How many rows of the file list are in the page, and what it costs to read the
-# whole space down. A row is a button, a mark and a read of the link index, so the
-# count is the work; the frame gap is what a flick feels like. The panel says which
-# box it is in - `data-region="list"` - rather than a class, since a scoped class is
-# the build's to name.
 LIST = """
 async () => {
   const box = document.querySelector('aside [data-region="list"]')
@@ -350,16 +247,10 @@ async () => {
 }
 """
 
-
 def numbers(page: Page) -> dict[str, float]:
     return page.evaluate("() => window.__marks")
 
-
 def warm(page: Page, origin: str) -> None:
-    """One launch whose only job is to leave a session behind: which space was open,
-    which note, and that the file list was the panel showing. Every launch measured
-    after this one is a launch of an app somebody has used before, which is the
-    launch that happens every day."""
     page.goto(origin, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
@@ -368,18 +259,13 @@ def warm(page: Page, origin: str) -> None:
         "() => !!document.querySelector('aside .row') && !!document.querySelector('.cm-content')",
         timeout=60000,
     )
-    # The session is written as things settle, so give it the moment it takes.
     page.wait_for_timeout(2000)
 
-
 def launch(page: Page, origin: str) -> dict[str, float]:
-    """One measured launch."""
     page.goto(origin, wait_until="commit")
     page.wait_for_function("() => window.__marks && window.__marks.tree !== null", timeout=60000)
     page.wait_for_function("() => window.__marks.note !== null", timeout=60000)
 
-    # The index is the pass that reads every body, and its own store says when it
-    # has landed.
     page.wait_for_function(
         "() => window.nibApp && window.nibApp.links.rootOf() && !window.nibApp.links.scanning",
         timeout=120000,
@@ -391,14 +277,9 @@ def launch(page: Page, origin: str) -> dict[str, float]:
     taken["index"] = index
     return taken
 
-
 def middle(rounds: list[dict[str, float]], key: str) -> float:
     return statistics.median(one[key] for one in rounds)
 
-
-#: The numbers, in the order they are worth reading, and what each is counted in.
-#: Most are milliseconds; two are not, and a count of rows printed as a duration is
-#: a number nobody can read.
 SAID = [
     ("tree", "time to tree (first row painted)", "ms"),
     ("note", "time to the open note (editor painted)", "ms"),
@@ -413,11 +294,7 @@ SAID = [
     ("height", "how far the list runs", "px"),
 ]
 
-
 class Lane:
-    """One build, served and driven. Two of these run interleaved, because this
-    machine's own load moves by more than the change does: five launches of one
-    build and then five of the other measures the afternoon, not the code."""
 
     def __init__(self, tag: str, folder: Path) -> None:
         self.tag = tag
@@ -438,10 +315,6 @@ class Lane:
             self.server.close()
 
     def ready(self, browser) -> None:
-        """A seeded store, and a session as an app somebody has used before leaves
-        one. A context of its own, which is a port of its own, which is storage of
-        its own: the two builds cannot be given one database, since the one after
-        the change keeps a listing beside the notes and the one before it does not."""
         context = browser.new_context(
             viewport={"width": 1440, "height": 900},
             user_agent=DESKTOP_AGENT,
@@ -459,8 +332,6 @@ class Lane:
         say(f"{self.tag}: session written")
 
     def park(self) -> None:
-        """Off the app and onto nothing, so a lane that is not being measured is not
-        an app running beside the one that is."""
         if self.page:
             self.page.goto("about:blank", wait_until="domcontentloaded")
 
@@ -480,16 +351,11 @@ class Lane:
         )
 
     def measure(self) -> None:
-        """The two warm numbers. A launch first, since the lane may have been parked
-        while the other one was measured, and then the app is asked to do the two
-        things again with nothing else happening."""
         page = self.page
         if not page:
             return
 
         warm(page, self.origin)
-        # The list first, before the index is asked to run again: what is being
-        # counted is the panel as a reader finds it, not as a scan leaves it.
         listed = page.evaluate(LIST) or {}
         scanning = page.evaluate(SCAN, 3)
         self.warm = {
@@ -505,10 +371,7 @@ class Lane:
             **self.warm,
         }
 
-
 def main() -> int:
-    # A folder per build. The one before the change is built into `dist-before`;
-    # see the note at the top of this file.
     if harness.OWN_BUILD:
         harness.build()
     wanted = [
@@ -528,8 +391,6 @@ def main() -> int:
             for lane in lanes:
                 lane.ready(browser)
 
-            # Turn and turn about, so whatever the machine is doing is done to both,
-            # and one at a time, so neither is what the machine is doing.
             for _ in range(ROUNDS):
                 for lane in lanes:
                     for other in lanes:
@@ -558,7 +419,6 @@ def main() -> int:
     print()
     print(json.dumps({tag: {key: round(value) for key, value in one.items()} for tag, one in found.items()}))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

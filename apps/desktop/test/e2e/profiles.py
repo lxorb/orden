@@ -1,22 +1,3 @@
-"""A face, set in one browser and seen in another, against the real Worker.
-
-The owner of a shared space opens Settings > Account, presses Change, picks a
-picture, and keeps the round window the avatar sheet offers: the browser crops it
-and makes the two WebP faces, uploads them and wears them. Then the owner's own
-Share sheet draws that face on the owner's row, and somebody else in the space,
-in a browser of their own with the same note open, sees it in front of the
-owner's name on the caret and on the tab. And the hub has written down that the
-owner is here, which the other person reads.
-
-Everything is the real thing: the built web app, the Worker under `wrangler dev`
-on workerd, the account's hub and the note's room as Durable Objects, and the D1
-migrations including the profiles one (0048).
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/profiles.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -44,15 +25,11 @@ OPENING = "# Plan\n\nWhat we are doing.\n"
 
 PATIENCE = 40
 
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
 
-
 def picture() -> Path:
-    """A small PNG to be somebody's face: a gradient, so a crop of it is a picture
-    rather than a flat square, written by hand so the drive needs nothing installed."""
     width, height = 96, 72
     rows = b"".join(
         b"\x00" + bytes(value for x in range(width) for value in (x * 2, y * 3, 160))
@@ -77,7 +54,6 @@ def picture() -> Path:
     path.write_bytes(png)
     return path
 
-
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -86,7 +62,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
@@ -103,9 +78,7 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     wait_for(page, "() => !!window.nibApp && window.nibApp.account.signedIn", f"[{label}] the session")
     return page
 
-
 def folder_for(page: Page, label: str, space_id: str) -> str:
-    """What the folder mirroring the space is called on this machine."""
     return wait_for(
         page,
         "() => {"
@@ -115,7 +88,6 @@ def folder_for(page: Page, label: str, space_id: str) -> str:
         "}",
         f"[{label}] a folder for the shared space",
     )
-
 
 def open_note(page: Page, label: str, folder: str, note_id: str) -> None:
     listed = (
@@ -130,15 +102,12 @@ def open_note(page: Page, label: str, folder: str, note_id: str) -> None:
         folder,
     )
     wait_for(page, listed, f"[{label}] the note to arrive")
-    # Opened again while it waits: a note opened in the turn its space's pairing with the
-    # account lands is a file the rooms have not yet been told is the account's.
     opening = (
         "(name) => { const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
         f" void window.nibApp.workspace.open(space.root + '/{NOTE}');"
         f" return window.nibApp.rooms.carries({json.dumps(note_id)}) }}"
     )
     wait_for(page, opening, f"[{label}] the room", folder, patience=PATIENCE * 2)
-
 
 def main() -> int:
     worker = Worker()
@@ -168,7 +137,6 @@ def main() -> int:
         worker.request(f"/v1/join/{link}", member_token, {})
         say(f"{MEMBER} is in {SPACE}")
 
-        # ── The owner sets a face ──────────────────────────────────────
         owner = signed_in(browser, owner_token, "owner")
         owner.evaluate("() => window.nibApp.settings.show('account')")
         change = owner.get_by_role("button", name="Change", exact=True)
@@ -180,7 +148,6 @@ def main() -> int:
         sheet = owner.get_by_role("dialog", name="Profile picture")
         sheet.wait_for(timeout=10_000)
         owner.wait_for_selector(".window canvas", timeout=10_000)
-        # Zoomed in and dragged, so the face is a crop rather than the whole picture.
         owner.locator(".zoom").fill("1.6")
         window = owner.locator(".window")
         box = window.bounding_box()
@@ -214,7 +181,6 @@ def main() -> int:
         owner.keyboard.press("Escape")
         owner.wait_for_timeout(300)
 
-        # ── The owner's Share sheet draws it ───────────────────────────
         owner.evaluate(
             "(name) => { const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
             " return window.nibApp.share.show(space) }",
@@ -235,7 +201,6 @@ def main() -> int:
         owner.keyboard.press("Escape")
         owner.wait_for_timeout(300)
 
-        # ── Somebody else sees it on a caret ───────────────────────────
         member = signed_in(browser, member_token, "member")
         theirs = folder_for(member, "member", space["id"])
         open_note(member, "member", theirs, note["id"])
@@ -261,7 +226,6 @@ def main() -> int:
             member.locator(".strip").first.screenshot(path=str(SHOTS / "tab-face.png"))
             say("and on the tab")
 
-        # ── And that the owner is here ──────────────────────────────────
         owner_id = owner.evaluate("() => window.nibApp.account.user.id")
         until = time.monotonic() + PATIENCE
         state = None
@@ -283,7 +247,6 @@ def main() -> int:
 
     print("\na face set in one browser is on the Share sheet, a caret and a tab in another", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,30 +1,4 @@
-"""The swap, watched frame by frame.
-
-A screenshot cannot show a movement, and a screenshot taken from outside the page
-cannot even be aimed at the middle of one: the round trip is longer than the
-movement. So this samples from inside the page instead - it asks for the panel to
-change and then reads, on each of the next fourteen frames, where the segmented
-control's raised surface has got to and how far through their fades the outgoing
-and incoming panels are.
-
-What it is checking, on a desktop and on a phone:
-
-- the raised surface moves rather than jumping, over `--dur-fast`;
-- two panels exist while they cross, one fading out and slipping up, the other
-  fading in from below;
-- nothing but `opacity` and `transform` ever differs between two frames;
-- and for a reader who has asked for as little movement as possible, every one of
-  those is finished on the first frame after the press.
-
-Build first, as for shell.py, then from the repository root:
-
-    python apps/desktop/test/e2e/swapping.py
-
-It prints what it saw, and photographs the space switcher standing open.
-"""
-
 from __future__ import annotations
-
 
 from harness import Drive
 from shell import DESKTOP_AGENT, PHONE_AGENT, SEED
@@ -34,10 +8,6 @@ say = DRIVE.say
 
 OUT = DRIVE.shots
 
-# Fourteen frames, from inside the page, so the reading is of the frame and not
-# of a round trip. Every property the swap is allowed to touch is read on each,
-# and nothing else is: if a width or a height ever moved, it would have to be
-# added here to be seen, which is the point.
 FRAMES = """
 async () => {
   const seen = []
@@ -68,7 +38,6 @@ async () => {
 }
 """
 
-
 def drive(browser, name: str, width: int, height: int, agent: str, finger: bool, still: bool):
 
     context = browser.new_context(
@@ -96,11 +65,9 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool,
         say(f"[{name}]   surface {one['thumb']}, panels {one['panels']}")
 
     if still:
-        # Nothing may still be moving after the frame the press was answered on.
         moving = [one for one in frames[2:] if one["thumb"] != places[-1]]
         say(f"[{name}] frames still moving after the first: {len(moving)}")
 
-    # The switcher standing open, which is the one part of this a picture shows.
     page.locator("aside .name").first.click(force=True)
     page.wait_for_timeout(350)
     page.screenshot(
@@ -111,7 +78,6 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool,
 
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, "desktop", 1440, 900, DESKTOP_AGENT, False, False)
@@ -119,7 +85,6 @@ def main() -> int:
         drive(browser, "phone", 390, 844, PHONE_AGENT, True, False)
 
     return DRIVE.verdict(f"shots in {OUT}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,26 +1,3 @@
-"""The Share sheet, in every state it has.
-
-Serves the built web app and photographs the sheet with nobody in the space, with
-people in it, with an invitation waiting and somebody asking to be let in, and
-with the link off, on, and on with approval - on a desktop in both schemes and on
-a phone.
-
-The states are put into the store rather than arranged through a real Worker: what
-is being judged here is the surface, and `share.who` is exactly the shape the
-Worker answers with. Sharing end to end, against the real thing, is `share.py`
-beside this.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/share-sheet.py
-
-Screenshots go beside this file under `shots/share-sheet/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import json
@@ -32,7 +9,6 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
 
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -42,7 +18,6 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-# name, width, height, agent, finger, scheme
 DEVICES = [
     ("desktop-light", 1440, 900, DESKTOP_AGENT, False, "light"),
     ("desktop-dark", 1440, 900, DESKTOP_AGENT, False, "dark"),
@@ -54,14 +29,11 @@ OWNER = {"email": "emil@example.com", "name": "Emil"}
 
 LINK = {"url": "https://orden.so/join/8f2c1d5ab9", "role": "read", "mode": "open"}
 
-
 def member(email, role="write", pending=False, name=None, guest=None):
     return {"email": email, "guest": guest, "name": name, "role": role, "pending": pending}
 
-
 def request(email, name, role="write", guest=None):
     return {"email": email, "guest": guest, "name": name, "role": role, "at": 0}
-
 
 PEOPLE = [
     member("ada@example.com", "write", name="Ada Lovelace"),
@@ -69,7 +41,6 @@ PEOPLE = [
     member(None, "write", name="Windows wren", guest="g1"),
 ]
 
-# name, what the store is handed
 STATES = [
     ("empty", {"owner": OWNER, "members": [], "requests": [], "link": None}),
     ("people", {"owner": OWNER, "members": PEOPLE, "requests": [], "link": None}),
@@ -98,7 +69,6 @@ STATES = [
     ),
 ]
 
-
 SHOW = """
 (who) => {
   const app = window.nibApp
@@ -112,7 +82,6 @@ SHOW = """
   app.share.open = true
 }
 """
-
 
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     out.mkdir(parents=True, exist_ok=True)
@@ -132,9 +101,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
 
-    # The space wears an icon, so the badge in the sheet's head is drawn by the
-    # same component every other icon in the app is: a Lucide stroke in the
-    # space's own tint. See SpaceMark.svelte and Icon.svelte.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -148,7 +114,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         say(f"shot {name}-{tag}.png")
 
     def sheet(tag: str) -> None:
-        """The sheet on its own, which is what is being judged."""
         box = page.locator(".sheet").first.bounding_box()
         if not box:
             shot(tag)
@@ -166,7 +131,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         )
         say(f"shot {name}-{tag}.png")
 
-    # Waiting on the answer, which is the shape of the rows before they land.
     page.evaluate(
         """() => {
           const app = window.nibApp
@@ -184,7 +148,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.wait_for_timeout(450)
         sheet(tag)
 
-    # Something typed in, which is when the send button is there at all.
     page.evaluate(SHOW, STATES[1][1])
     page.wait_for_timeout(300)
     field = page.locator(".compose input").first
@@ -193,14 +156,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(300)
     sheet("typing")
 
-    # And what it says about something that is not an address.
     field.fill("nonsense")
     page.wait_for_timeout(100)
     page.keyboard.press("Enter")
     page.wait_for_timeout(400)
     sheet("wrong")
 
-    # What somebody may do, open: the whole of it in one menu.
     page.evaluate(SHOW, STATES[2][1])
     page.wait_for_timeout(400)
     picks = page.locator(".person .pick button")
@@ -211,8 +172,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
 
-        # And somebody who has not opened their invitation, whose menu holds the
-        # invitation again as well.
         picks.last.click(force=True)
         page.wait_for_timeout(400)
         shot("invitedmenu")
@@ -221,7 +180,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     page.evaluate("() => window.nibApp.share.close()")
     context.close()
-
 
 def main() -> int:
     out = DRIVE.shots
@@ -232,7 +190,6 @@ def main() -> int:
 
     say(json.dumps(sorted(p.name for p in out.glob('*.png'))))
     return DRIVE.verdict(f"shots in {out}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

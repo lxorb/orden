@@ -1,19 +1,3 @@
-"""The registry's themes, over the new tokens.
-
-A theme from the store is an ordinary stylesheet that restates tokens, so a pass
-over the shell's tokens is exactly the kind of change that can break one. This
-reads the catalogue the service serves, says how many themes are in it, and
-drops two of them onto the built app the same way installing does - into a
-`<style id="nib-user-theme">` on the page; see theme.svelte.ts - then photographs
-the shell wearing each.
-
-Run it from the repository root, after building:
-
-    python apps/desktop/test/e2e/shell-themes.py
-
-Screenshots go beside this file under `shots/shell-themes/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import json
@@ -29,10 +13,8 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
 REGISTRY = "https://orden.so/themes"
 
-# Two that push in opposite directions: one dark and cool, one warm paper.
 WORN = ["github", "newsprint"]
 
 DESKTOP_AGENT = (
@@ -52,14 +34,10 @@ async () => {
 }
 """
 
-
 def fetch(url: str) -> str:
-    # The edge in front of the registry refuses a request with no user agent,
-    # which is what urllib sends by default.
     ask = urllib.request.Request(url, headers={"user-agent": DESKTOP_AGENT})
     with urllib.request.urlopen(ask, timeout=30) as answer:
         return answer.read().decode("utf8")
-
 
 def main() -> int:
     try:
@@ -92,7 +70,6 @@ def main() -> int:
                 page.evaluate(SEED)
                 page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
-                # What installing does: the theme's stylesheet, on the page.
                 page.add_style_tag(content=sheet)
                 page.wait_for_timeout(900)
 
@@ -101,7 +78,6 @@ def main() -> int:
                 context.close()
 
     return DRIVE.verdict()
-
 
 if __name__ == "__main__":
     sys.exit(main())

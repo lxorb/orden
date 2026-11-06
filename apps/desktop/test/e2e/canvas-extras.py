@@ -1,22 +1,3 @@
-"""A canvas from somebody's Obsidian vault, edited in Orden, keeps what Orden does not read
-(#780).
-
-The vault's canvas holds a node of a plugin's own type (`excalidraw`), the edge to it, a
-field Advanced Canvas keeps on a card (`styleAttributes`) and a key beside the lists
-(`metadata`). A card put down on it with a double press used to write the file back
-without all four. What this does, on the built web app:
-
-    the canvas opened, and a card put down with a double press on the plane
-    the file read back: the plugin's node, its edge, the card's field and the key are
-    there, beside the new card
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/canvas-extras.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import json
@@ -71,7 +52,6 @@ async (text) => {
 }
 """
 
-# The file as the store holds it now.
 READ = """
 async (path) => {
   await window.nibApp.workspace.writeNow?.()
@@ -86,11 +66,9 @@ async (path) => {
 }
 """
 
-
 def file_of(page: Page, path: str) -> dict:
     text = page.evaluate(READ, path)
     return json.loads(text) if text else {}
-
 
 def kept(found: dict, what: str, cards: list[str]) -> None:
     ids = sorted(one.get("id") for one in found.get("nodes", []))
@@ -103,7 +81,6 @@ def kept(found: dict, what: str, cards: list[str]) -> None:
         if card not in ids:
             wrong(f"[{what}] the card {card} is not in the file")
 
-
 def drive(browser: Browser) -> None:
     page = browser.new_page(viewport={"width": 1280, "height": 800})
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
@@ -113,7 +90,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "() => !!document.querySelector('.canvas')", "the canvas")
     page.wait_for_timeout(600)
 
-    # A card, put down the way a reader puts one down: a double press on the plane.
     box = page.locator(".canvas").bounding_box()
     if not box:
         raise SystemExit("the plane is not on screen")
@@ -135,7 +111,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the edge to the plugin's node is gone: {after.get('edges')}")
     DRIVE.shot(page, "01-a-card-down")
     page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "an Obsidian canvas edited here keeps what this app does not read"))

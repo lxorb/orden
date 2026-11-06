@@ -1,24 +1,3 @@
-"""Every frame of the tab overview's way in and home, one at a time: none flashes, and no
-web page is drawn anywhere but in its window (#1136).
-
-Reported on Windows: the overview flashed for the whole of its way in, and a web tab's
-page stood behind it. A web tab's window was the page's photograph alone, drawn over its
-pane's bar as it left and as it came home, while the pane stayed behind it with its bar
-and its page: a style scoped to the pane never reached the web tab inside it. Its pane
-now moves as its window, as a note's does.
-
-The clock the overview moves by is stepped by hand, a sixtieth of a second at a time, and
-the window photographed after each step, so every frame is seen whatever the machine:
-
-    no frame is far from both of its neighbours while they are near each other, on the
-      way in, the way home, and through a zoom in and out a notch at a time (Emil: a
-      zoom made the bubbles and the windows flash)
-    no frame draws a web tab's pane anywhere but where its window is, nor a picture in
-      the window of a pane that is its window
-
-    python apps/desktop/test/e2e/overview-frames.py
-"""
-
 from __future__ import annotations
 
 import io
@@ -41,7 +20,6 @@ async () => {
 }
 """
 
-#: The overview's clock in the drive's hand: a frame is run when the drive says so.
 CLOCK = """
 () => {
   let now = performance.now()
@@ -59,8 +37,6 @@ CLOCK = """
 }
 """
 
-#: What of a web tab is drawn twice: its pane away from its window, but for the pane's
-#: strip, and a picture in the window of the tab in front of its pane, which is that pane.
 WEB_DRAWN = """
 () => {
   if (!document.querySelector('.canvas')) return null
@@ -94,14 +70,11 @@ WEB_DRAWN = """
 }
 """
 
-
 def small(png: bytes) -> Image.Image:
     return Image.open(io.BytesIO(png)).convert("L").resize((160, 100))
 
-
 def apart(one: Image.Image, other: Image.Image) -> float:
     return ImageStat.Stat(ImageChops.difference(one, other)).mean[0]
-
 
 def filmed(page, label: str, act, each=None) -> None:
     frames = [small(page.screenshot())]
@@ -124,13 +97,11 @@ def filmed(page, label: str, act, each=None) -> None:
         if min(before, after) > 3 and across < min(before, after) / 2:
             wrong(f"[{label}] frame {i} flashes: {before:.1f} and {after:.1f} from its neighbours, {across:.1f} between them")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800})
     DRIVE.open(page)
     page.evaluate(SEED)
     DRIVE.settled(page)
-    # Once to fetch the overview, so the run looked at is not waiting on a download.
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
     wait_for(page, "document.querySelectorAll('.window').length >= 3", "the windows")
@@ -151,7 +122,6 @@ def drive(browser: Browser) -> None:
     def notch(index: int) -> None:
         if index % 6 == 0:
             page.mouse.wheel(0, -120 if index < 36 else 120)
-        # Now and then still for longer than a zoom takes to come to rest.
         if index % 18 == 17:
             page.wait_for_timeout(300)
 
@@ -160,7 +130,6 @@ def drive(browser: Browser) -> None:
     filmed(page, "home", lambda: page.keyboard.press("Escape"))
     shot(page, "home")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the overview's frames: none flashes, a web tab drawn once"))

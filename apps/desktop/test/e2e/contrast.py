@@ -1,30 +1,3 @@
-"""Contrast, measured: the contrast theme the app ships with, on both of its sides.
-
-Contrast was a switch beside the mode, and what it did was restate the palette over
-whichever theme was in force. It is a theme now - one of the two the app ships with,
-`Contrast` in the Style row and `contrast` in the palette - so what is measured
-here is a theme: every colour that has to be read, against the page it is read on, in
-the dark and in the light, plus the syntax inside a code fence, which no theme could
-reach at all until the four `--syntax-*` tokens existed and which is the reason the
-switch existed in the first place.
-
-The theme is chosen through the app itself, `theme.select('contrast')`, because it is
-built in: nothing is fetched, nothing is installed, and a first launch with no network
-at all is answered with it. It is the only Contrast: the copy lxorb/orden-themes had
-is gone, and one still installed is read as this one. See contrast.css in @orden/themes.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/contrast.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/contrast/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -38,7 +11,6 @@ from settling import LANDED, UNLANDED
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
-
 
 NOTE = """# What contrast is for
 
@@ -67,14 +39,6 @@ async ([note]) => {
 }
 """
 
-# Every colour that has to be read, against the page it is read on. Measured
-# through a probe element so a token written as a hex, an rgb() or a color-mix()
-# all come back as the colour the eye gets.
-#
-# Nothing until every sheet is in force, in one go with the reading so that none can be
-# asked for between the two: see `LANDED`. Read before that the tokens are nothing, so each
-# is the same colour as the page and every ratio is 1:1; or, with the built-in's sheets
-# in, they are the built-in's (#443).
 RATIOS = """
 (names) => {
   if (!(LANDED)) return null
@@ -113,8 +77,6 @@ RATIOS = """
 }
 """.replace("LANDED", LANDED)
 
-# What a fence is coloured in. The four `--syntax-*` tokens reach these and
-# nothing else does, so this is the assertion the tokens exist for.
 CODE = """
 () => {
   const found = {}
@@ -138,7 +100,6 @@ WANTED = [
     "--success",
 ]
 
-# The floors the theme has to clear, each against the page the colour is read on.
 FLOORS = {
     "--text": 15,
     "--text-strong": 15,
@@ -151,19 +112,10 @@ FLOORS = {
     "--success": 4.5,
 }
 
-# The catalogue is behind the service and this run is not about reaching it. A
-# console error that is the browser reporting a request nobody could answer is not
-# the app going wrong.
 TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
-# The chunks the app fetches once it is up are cancelled by a reload, and WebKit reports
-# each one, and each import waiting on it, from the page being left. It is the drive's
-# reload rather than the app; see `reload` in bookmark-tiles.py, which met it first. Only
-# until the new page is the page: a chunk it fails to fetch itself is a failure, and so is
-# what the app does about one, which is to offer Reload.
 CANCELLED = ("Importing a module script failed", "due to access control checks")
 LEAVING: set[Page] = set()
-
 
 def listen(page: Page, label: str) -> None:
     def cancelled(said: str) -> bool:
@@ -192,9 +144,7 @@ def listen(page: Page, label: str) -> None:
         lambda frame: LEAVING.discard(page) if frame == page.main_frame else None,
     )
 
-
 def launched(browser: Browser, label: str, forced: bool = False) -> Page:
-    """A window, up, with nothing in it yet. What a first launch looks like."""
     context = browser.new_context(
         viewport={"width": 1180, "height": 820},
         color_scheme="dark",
@@ -208,9 +158,7 @@ def launched(browser: Browser, label: str, forced: bool = False) -> Page:
     wait_for(page, "window.nibApp", f"[{label}] the app")
     return page
 
-
 def fresh(browser: Browser, label: str, forced: bool = False) -> Page:
-    """A window with a note in it, open, which is what the colours are read on."""
     page = launched(browser, label, forced)
 
     wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
@@ -227,7 +175,6 @@ def fresh(browser: Browser, label: str, forced: bool = False) -> Page:
     page.wait_for_timeout(600)
     return page
 
-
 def ratios(page: Page) -> dict:
     try:
         return page.wait_for_function(RATIOS, arg=WANTED, timeout=30_000, polling=50).json_value()
@@ -235,25 +182,18 @@ def ratios(page: Page) -> dict:
         wrong(f"a sheet never landed, so the colours cannot be read: {page.evaluate(UNLANDED)}")
         return {}
 
-
 def wear_the_theme(page: Page) -> None:
-    """Chooses the built-in contrast theme, which is all it takes: the palette
-    ships with the app, so nothing is fetched and nothing is installed."""
     page.evaluate("() => window.nibApp.theme.select('contrast')")
     page.wait_for_timeout(400)
 
     if page.evaluate("() => window.nibApp.theme.id") != "contrast":
         wrong("the built-in contrast theme could not be chosen")
 
-
 def scheme(page: Page, which: str) -> None:
     page.evaluate("(which) => window.nibApp.theme.setScheme(which)", which)
     page.wait_for_timeout(400)
 
-
 def check(page: Page, label: str, floors: dict) -> dict:
-    """Every colour against the page it is read on, with the floors the theme has
-    to clear."""
     said = ratios(page)
     say(f"[{label}] {json.dumps(said)}")
 
@@ -263,13 +203,9 @@ def check(page: Page, label: str, floors: dict) -> dict:
 
     return said
 
-
 def unmarked(page: Page, label: str) -> None:
-    """The attribute the switch used to set. Nothing sets it any more, and a theme
-    that needed the app's help would be a theme the app was drawing over."""
     if page.evaluate("() => document.documentElement.getAttribute('data-contrast')"):
         wrong(f"[{label}] the page still says it is drawn with more contrast from outside")
-
 
 def drive_scheme(browser: Browser, which: str, at: int) -> None:
     page = fresh(browser, which)
@@ -299,16 +235,9 @@ def drive_scheme(browser: Browser, which: str, at: int) -> None:
 
     page.context.close()
 
-
 def drive_settings(browser: Browser) -> None:
-    """The Appearance pane asks two questions: which theme, and which side of it.
-    Contrast was a third row, and is a theme in the store instead."""
     page = fresh(browser, "settings")
     page.evaluate("() => window.nibApp.settings.show('appearance')")
-    # The sheet is fetched the first time it is asked for rather than carried into the
-    # first paint, so it arrives a moment after the store says it is open. Waited for,
-    # because every question below is about what the pane does not say and a pane that
-    # is not there yet says nothing at all. See surfaces.svelte.ts.
     page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(600)
     shot(page, "20-appearance")
@@ -321,8 +250,6 @@ def drive_settings(browser: Browser) -> None:
 
     if not rows:
         wrong("the appearance pane is empty, so what it offers cannot be read")
-    # Still not a third row: contrast is one of the answers to "which theme", which is
-    # the first of the two questions rather than a question of its own.
     if page.get_by_role("switch", name="More contrast").count():
         wrong("the More contrast switch is back")
 
@@ -333,17 +260,12 @@ def drive_settings(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_offered(browser: Browser) -> None:
-    """A first launch on a system that asks for more contrast is answered with the
-    theme that answers it: chosen, with nothing fetched, and shown where it was chosen
-    from so putting it back is one press. Once, and never asked again."""
     page = launched(browser, "offered", forced=True)
     page.wait_for_timeout(800)
 
     if not page.evaluate("() => window.nibApp.theme.offerContrast"):
         wrong("a system asking for more contrast was not answered")
-    # The theme itself, not a card to fetch one from: it ships with the app.
     if page.evaluate("() => window.nibApp.theme.id") != "contrast":
         wrong("the launch did not choose the contrast theme")
     if page.evaluate("() => localStorage.getItem('nib:theme')") != "contrast":
@@ -352,7 +274,6 @@ def drive_offered(browser: Browser) -> None:
         wrong("Appearance did not open on the row the theme was chosen from")
     if page.evaluate("() => localStorage.getItem('nib:contrast-offered')") != "yes":
         wrong("the answer was not written down, so it would be given again")
-    # And the palette is really on the page, offline, on the first frame there was one.
     said = ratios(page)
     say(f"[offered] {json.dumps(said)}")
     for token, floor in FLOORS.items():
@@ -360,10 +281,6 @@ def drive_offered(browser: Browser) -> None:
             wrong(f"[offered] {token} is {said.get(token)}:1 against the page, under {floor}:1")
     shot(page, "30-answered")
 
-    # The same machine, launched again. Still asking for more contrast, and this
-    # time it is not asked back.
-    # Through the launch's last turn, which fetches the palette among the rest, and until
-    # the fetching is over, for `listen` to have heard how each chunk went.
     LEAVING.add(page)
     with page.expect_request("**/assets/Palette-*.js", timeout=30_000):
         page.reload(wait_until="domcontentloaded")
@@ -380,7 +297,6 @@ def drive_offered(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- dark ---")
@@ -393,7 +309,6 @@ def main() -> int:
         drive_offered(browser)
 
     return DRIVE.verdict("contrast is a theme, and it measures up on both of its sides")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

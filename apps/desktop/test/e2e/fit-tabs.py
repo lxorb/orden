@@ -1,18 +1,3 @@
-"""Tabs as wide as their names (#1114), and as wide as each other with the switch off.
-
-Emil: an active "Orden" tab beside one icon tab was far wider than its name needs, every
-tab taking the standard width while the strip had the room. With Settings > General >
-Tabs as wide as their names on, which it is out of the box, a short name's tab is as
-wide as its mark, its name and its cross, and its whole name is still there to read; a
-long one stops at the standard width. Off, every tab is the standard width again.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/fit-tabs.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser
@@ -34,10 +19,8 @@ TABS = """() => [...document.querySelectorAll('.tab')].map((one) => {
   }
 })"""
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1600, "height": 800})
-    # Every tab with its name, so both are measured by it.
     page.add_init_script("localStorage.setItem('nib:icon-tabs', 'no')")
     DRIVE.open(page)
     long = "A note whose name is far longer than any tab is wide"
@@ -72,7 +55,6 @@ def drive(browser: Browser) -> None:
     say(f"off: {[round(one) for one in widths]}")
     if any(abs(one - STANDARD) > 1 for one in widths):
         wrong(f"with the switch off the tabs are {widths}, not all the standard width")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "tabs as wide as their names"))

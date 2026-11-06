@@ -1,33 +1,6 @@
-"""The theme picker, driven the way a person uses it, and photographed.
-
-Emil asked for a theme chooser that opens from a right click on the light and dark
-switch or from the palette, tries a theme on the whole app while it is pointed at,
-and keeps it on a click. This installs six themes from the store the way the
-gallery does, then checks each of those promises in Chromium:
-
-  - a right click on the switch opens the picker beside it;
-  - pointing at a card puts that theme on the app and writes nothing down;
-  - leaving the cards, Escape, and a press outside each put back what was there;
-  - the arrows try each theme, Enter keeps one;
-  - a click keeps a theme and closes;
-  - the palette's row opens it where the palette stands;
-  - typing narrows the cards and tries the first that answers;
-
-and says in how many frames a theme is on the page once it is pointed at.
-
-Run it from the repository root, after building (`npx vite build --mode drive` in
-apps/desktop):
-
-    python apps/desktop/test/e2e/theme-picker.py
-
-Shots go beside this file under `shots/theme-picker/`, which is ignored, or into
-NIB_SHOTS when that names a folder. Exits non-zero when a promise is not kept.
-"""
-
 from __future__ import annotations
 
 import sys
-
 
 from settling import HIDE_CARET, steady
 
@@ -41,9 +14,6 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
-#: Two with both sides, one dark only, one light only, and two more pairs, so the
-#: grid holds every shape a card comes in.
 INSTALL = ["github", "rose", "solar", "graphite", "newsprint", "mono"]
 
 SEED = """
@@ -75,7 +45,6 @@ async (ids) => {
 }
 """
 
-#: What is on the page and what is written down, which the promises are about.
 STATE = """
 () => ({
   id: window.nibApp.theme.id,
@@ -86,11 +55,6 @@ STATE = """
 })
 """
 
-#: How many frames pointing takes to become paint: the move is dispatched, and each
-#: frame after it asks for the colour the window resolved to, until it is the new
-#: theme's. A frame is the unit because it is what a person sees; how many
-#: milliseconds one takes is the machine's and its load's (#1121). The milliseconds
-#: are said beside it.
 TIMED = """
 async (name) => {
   const card = [...document.querySelectorAll('[role="option"]')].find((one) => one.textContent.includes(name))
@@ -113,12 +77,10 @@ async (name) => {
 }
 """
 
-
 def check(what: str, ok: bool) -> None:
     say(f"{'ok  ' if ok else 'FAIL'} {what}")
     if not ok:
         failures.append(what)
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -148,11 +110,9 @@ def main() -> int:
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         installed = page.evaluate(INSTALLING, INSTALL)
         say(f"installed {', '.join(installed)}")
-        # Beside the given ones a launch puts in by itself (#1110), as it reaches the store.
         check("the store installed the six themes", {f"file:{one}" for one in INSTALL} <= set(installed))
         page.wait_for_timeout(300)
 
-        # A right click on the switch in the panel's foot.
         switch = page.locator(".foot .acts button[aria-disabled]").first
         switch.click(button="right")
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
@@ -167,7 +127,6 @@ def main() -> int:
         )
         shot("1-open-from-switch")
 
-        # Pointing at a card puts it on the whole app and writes nothing down.
         card("GitHub").hover()
         now = state()
         check("pointing at GitHub puts it on the app", now["id"] == "file:github")
@@ -193,7 +152,6 @@ def main() -> int:
         )
         check("a theme is on the page within two frames", timing["frames"] <= 2)
 
-        # Leaving the cards gives the kept one back.
         page.mouse.move(1200, 60)
         now = state()
         check(
@@ -201,7 +159,6 @@ def main() -> int:
             now["id"] == "default" and now["scheme"] == "dark" and now["open"],
         )
 
-        # Escape, after trying a theme with the keys.
         page.keyboard.press("ArrowRight")
         check("the arrows try a theme", state()["id"] == "contrast")
         page.keyboard.press("ArrowDown")
@@ -214,7 +171,6 @@ def main() -> int:
             now["id"] == "default" and now["kept"] == "default" and not now["open"],
         )
 
-        # A press outside.
         switch.click(button="right")
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         card("Graphite").hover()
@@ -222,7 +178,6 @@ def main() -> int:
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         check("a press outside puts back the kept theme", state()["id"] == "default")
 
-        # The scheme, tried from its mark.
         switch.click(button="right")
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         page.locator('[role="radiogroup"] button[aria-label="Light"]').hover()
@@ -235,7 +190,6 @@ def main() -> int:
         card("Solar").hover()
         shot("6-pointing-solar")
 
-        # A click keeps.
         card("Solar").click()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         now = state()
@@ -245,7 +199,6 @@ def main() -> int:
         )
         shot("7-kept-solar")
 
-        # The palette's row, which opens it where the palette stands.
         page.keyboard.press("Control+Shift+P")
         page.wait_for_selector('input[role="combobox"]')
         page.keyboard.type("Switch theme")
@@ -259,7 +212,6 @@ def main() -> int:
         )
         shot("8-open-from-palette")
 
-        # Typing narrows the cards and tries the first that answers.
         page.keyboard.type("gra")
         now = state()
         check("typing narrows to Graphite and tries it", now["id"] == "file:graphite")
@@ -268,7 +220,6 @@ def main() -> int:
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         check("and Enter keeps it", state()["kept"] == "file:graphite")
 
-        # Back to the built-in, in the light, for the last picture.
         page.evaluate(
             "() => { window.nibApp.theme.select('default'); window.nibApp.theme.setScheme('light') }"
         )
@@ -283,7 +234,6 @@ def main() -> int:
 
     say("every promise kept")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

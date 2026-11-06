@@ -1,32 +1,3 @@
-"""The right side: where its panels live, and the Ask panel against a provider of our
-own. A note's front matter is the strip in the note now (#1120); test/e2e/properties.py
-drives it.
-
-What it proves, in order:
-
-- a window opens with the note in front's panels homed on the right and the right
-  side shut, its button in the bar; Ctrl+Alt+B opens it on its first panel and shuts
-  it again; Ctrl+Shift+O opens the Outline there and puts the keyboard in it, and
-  the same key gives the note the keyboard back;
-- with no provider the Ask panel says one line and links to Settings > AI, which the
-  link opens;
-- with the fake provider a question is asked from the field with Enter, streams in,
-  and the request carries the note in front and the matching passage of another note
-  and nothing of an archived one; a citation opens its note at its passage, and the
-  sources row names it; Stop keeps what arrived; Insert puts the answer at the caret
-  with the citation written as a wikilink; the pen starts the conversation again;
-- on a phone the right side is a drawer with no Ask in it, and asking for the panel opens
-  nothing (#403).
-
-A fake OpenAI-compatible server answers, streaming a word at a time. No key, no
-network, no bill.
-
-    python apps/desktop/test/e2e/ask-panel.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go under
-`shots/ask-panel/`.
-"""
-
 from __future__ import annotations
 
 import http.server
@@ -43,21 +14,15 @@ DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = DRIVE.origin
 
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 45) -> bool:
-    """Whether it came in time; a failure counted, and the drive carries on, if not."""
     return DRIVE.waited(page, expression, what, patience)
 
-
 def landed(page: Page, expression: str, patience: float = 5) -> bool:
-    """Whether the keyboard got where the expression says within `patience` seconds,
-    without counting it as a failure: the caller says what was wrong."""
     try:
         page.wait_for_function(expression, timeout=patience * 1000, polling=50)
     except Exception:  # noqa: BLE001 - not there in time, which the caller says
         return False
     return True
-
 
 MODEL = "fake-small"
 
@@ -130,9 +95,7 @@ LINE = """
 }
 """
 
-
 class Model(http.server.BaseHTTPRequestHandler):
-    """An OpenAI-compatible provider that streams what the drive tells it to."""
 
     words: list[str] = ["Still."]
     pause: float = 0.0
@@ -152,7 +115,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
-        # The panel asks for the model list as it opens; the one model is the list.
         raw = json.dumps({"data": [{"id": MODEL}]}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -186,10 +148,7 @@ class Model(http.server.BaseHTTPRequestHandler):
         except OSError:
             return
 
-
-#: Where the fake provider answers, on a port of this run's own.
 MODEL_ORIGIN = DRIVE.side(Model)
-
 
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme="light")
@@ -206,7 +165,6 @@ def fresh(browser: Browser) -> Page:
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
     return page
-
 
 def the_sides(page: Page) -> None:
     sides = page.evaluate(SIDES)
@@ -238,7 +196,6 @@ def the_sides(page: Page) -> None:
     if page.evaluate(WHERE)["region"] != "editor":
         wrong(f"the Outline's key did not give the note the keyboard back: {page.evaluate(WHERE)}")
 
-
 def nothing_set_up(page: Page) -> None:
     page.evaluate("() => { for (const one of [...window.nibApp.ai.providers]) window.nibApp.ai.remove(one.id) }")
     page.keyboard.press("Control+Shift+A")
@@ -262,7 +219,6 @@ def nothing_set_up(page: Page) -> None:
     page.evaluate("() => { window.nibApp.settings.open = false }")
     page.wait_for_timeout(300)
 
-
 def asked(page: Page) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
@@ -272,9 +228,6 @@ def asked(page: Page) -> None:
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Shift+A")
     wait_for(page, "document.querySelector('.ask textarea')", "the field")
-    # The keyboard goes in once the panel has been drawn, which is frames after the
-    # field is in the page; a frame of WebKit's on a busy machine can be half a second,
-    # so this waits for it rather than for a third of one (#384).
     if not landed(page, "document.activeElement?.matches('.ask textarea')"):
         wrong(f"Ctrl+Shift+A did not put the keyboard in the field: {page.evaluate(WHERE)}")
 
@@ -312,7 +265,6 @@ def asked(page: Page) -> None:
     if line < 6:
         wrong(f"the citation did not land at its passage: line {line}")
 
-    # Stopped half way: what arrived stays, and nothing says it failed.
     Model.words = [f"word{one} " for one in range(40)]
     Model.pause = 0.15
     page.locator(".ask textarea").click()
@@ -331,7 +283,6 @@ def asked(page: Page) -> None:
     if page.locator(".ask .wrong").count():
         wrong("stopping was reported as a failure")
 
-    # The first answer, into the note at the caret, its citation a link.
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(300)
     page.evaluate(
@@ -351,16 +302,12 @@ def asked(page: Page) -> None:
         wrong("the pen did not start the conversation again")
     shot(page, "05-new-chat")
 
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-
 def on_a_phone(browser: Browser) -> None:
-    """The right side as a drawer, its button in the bar, and no Ask in it: a phone has
-    no AI panel, and asking for one opens nothing (#403)."""
     context = browser.new_context(
         viewport={"width": 390, "height": 844},
         user_agent=PHONE_AGENT,
@@ -394,7 +341,6 @@ def on_a_phone(browser: Browser) -> None:
         wrong("[phone] asking for the AI panel drew it")
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         page = fresh(browser)
@@ -408,7 +354,6 @@ def main() -> int:
         on_a_phone(browser)
 
     return DRIVE.verdict("the right side opens where it should; Ask cites and opens")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

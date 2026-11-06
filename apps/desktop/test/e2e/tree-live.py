@@ -19,16 +19,13 @@ NOTES = [f"Note {index:02d}.md" for index in range(1, 61)]
 
 wrong: list[str] = []
 
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: int = PATIENCE):
     until = time.monotonic() + patience
@@ -38,7 +35,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 
 LISTED = """(path) => {
   const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : [])
@@ -79,7 +75,6 @@ WATCH = (
 
 FRAMES = "() => { cancelAnimationFrame(window.__raf); return window.__frames }"
 
-
 def window_for(context, label: str, paths: list[str] | None = None) -> Page:
     page = context.new_page()
     page.set_default_timeout(30000)
@@ -111,7 +106,6 @@ def window_for(context, label: str, paths: list[str] | None = None) -> Page:
     wait_for(page, "() => !!document.querySelector('[role=tree] .row')", f"[{label}] the file list")
     return page
 
-
 def scroll_to(page: Page, path: str) -> None:
     page.evaluate(
         f"""async (path) => {{
@@ -131,7 +125,6 @@ def scroll_to(page: Page, path: str) -> None:
     )
     page.wait_for_timeout(300)
 
-
 def state(page: Page) -> dict:
     return page.evaluate(
         """() => ({
@@ -141,13 +134,11 @@ def state(page: Page) -> dict:
         })"""
     )
 
-
 def heard(a: Page, path: str, what: str, started: float) -> float:
     wait_for(a, LISTED, what, path)
     took = time.monotonic() - started
     a.wait_for_timeout(500)
     return took
-
 
 def jumps(frames: list[dict], index: int, height: float) -> list[str]:
     out = []
@@ -162,10 +153,8 @@ def jumps(frames: list[dict], index: int, height: float) -> list[str]:
         last = one["top"]
     return out
 
-
 def tops(frames: list[dict], index: int) -> list[float]:
     return [frame["rows"][index]["top"] for frame in frames if frame["rows"][index] is not None]
-
 
 def main() -> int:
     worker = Worker()
@@ -319,7 +308,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

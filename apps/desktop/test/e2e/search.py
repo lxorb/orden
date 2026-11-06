@@ -1,27 +1,3 @@
-"""The space search: the operators, the rows, the papers, and how long it takes.
-
-Three runs in one. The first is a small space photographed on a desktop and on a
-phone: the field finishing an operator, tasks found and ticked from the rows, front
-matter held against a number, the order menu, a folder left out of the search and
-dimmed in the tree, and a ` ```query ` fence answered in the editor and in the
-reading view. The second is the papers: one opened and searched, the page reloaded,
-and the same search answered out of what was written down - plus a paper nobody
-ever opened, which the idle pass reads by itself. The third is five thousand notes,
-timed, to say what a query costs against the hundred milliseconds a keystroke has.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/search.py
-
-Screenshots go beside this file under `shots/search/`, which is ignored. This is a
-scratch drive rather than a test: it photographs the app, times it, and says what
-it saw.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -33,7 +9,6 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
 
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -43,15 +18,11 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-# name, width, height, agent, finger, scheme
 DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
 ]
 
-# A space with something for every operator to find: tasks in both states, front
-# matter holding a number and a date, tags, an archive to leave out, and a note
-# with a query fence in it.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -79,10 +50,6 @@ async () => {
 }
 """
 
-# Five thousand notes with words in them, written straight into the browser's own
-# store: `noteFrom` writes a file, loads the tree and finds a free name for each
-# one, which is nineteen seconds a thousand and worse as it goes. The search reads
-# the store, so this is the space it would read.
 SEED_MANY = """
 async ({ count, root }) => {
   // No version: the app has already opened the database at whichever one it is at,
@@ -155,9 +122,6 @@ async ({ count, root }) => {
 }
 """
 
-# Two PDFs, written straight into the browser's own store the way the notes are.
-# A paper is an asset row and a listing row, which is what `save_asset` writes and
-# what the file tree draws a `.pdf` from.
 SEED_PAPERS = """
 async ({ root, papers }) => {
   const open = indexedDB.open('nib')
@@ -187,9 +151,6 @@ async ({ root, papers }) => {
 }
 """
 
-# How long a query takes, from the keystroke to the last note having answered.
-# The field waits `WAIT` milliseconds before it asks anything - a word typed at
-# speed is one search - so that is taken off: what is left is the search.
 TIMED = """
 async ({ source, wait }) => {
   const search = window.nibApp.search
@@ -211,18 +172,13 @@ async ({ source, wait }) => {
 }
 """
 
-
 def searching(page) -> None:
-    """The search panel showing, whether it already was or not."""
     page.evaluate("() => window.nibApp.workspace.showPanel('search')")
 
-
 def held_text(page) -> str:
-    """What the search says it is holding, off the panel's own diagnostics."""
     return str(
         page.evaluate("() => document.querySelector('.find')?.getAttribute('data-search')")
     )
-
 
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
@@ -248,7 +204,6 @@ def opened(browser, width, height, agent, finger, scheme, name):
     page.wait_for_timeout(200)
     return context, page
 
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
@@ -269,8 +224,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(500)
     shot("panel")
 
-    # The field finishing an operator, which is the whole of the hint: what is typed
-    # could still become one, so the names it could become are offered.
     ask("ta", 500)
     shot("operators")
     say(
@@ -278,7 +231,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f" {page.evaluate('() => [...document.querySelectorAll(String.raw`aside .suggest button`)].map((one) => one.textContent.trim())')}"
     )
 
-    # Tasks, with their boxes live.
     ask("task-todo:")
     shot("tasks")
     boxes = page.locator("aside .hit input[type=checkbox]")
@@ -296,7 +248,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         )
         shot("ticked")
 
-    # Front matter held against a number, and a date.
     ask("[pages:>200]")
     shot("pages")
     say(f"[{name}] [pages:>200] found {page.evaluate('() => window.nibApp.search.hits.length')}")
@@ -307,11 +258,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f" {page.evaluate('() => window.nibApp.search.hits.length')}"
     )
 
-    # The order the results are read in, behind the Sort glyph at the end of the
-    # panel's row. It used to be the menu of the search's own tab, and the search has
-    # had no tab since 6de7fcf4 (a bar over the file list instead): the third tab is
-    # another panel's, and on a phone the press on it and the Escape after it put the
-    # drawer away with the field in it.
     ask("plan")
     tab = page.locator("aside .tools button[aria-label=Sort]")
     if tab.count():
@@ -321,7 +267,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
 
-    # A folder left out of the search, and what the tree says about it.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -347,9 +292,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(600)
     shot("tree-dimmed")
 
-    # And the row's own menu, which is the way in. The archive by name rather than
-    # by a class: a row that holds notes is a note like any other now, and what says
-    # this one holds the thing being left out is its name. See folder-notes.ts.
     rows = page.locator("aside .row").filter(has_text="Archive")
     if rows.count():
         rows.first.click(button="right", force=True)
@@ -365,8 +307,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         }"""
     )
 
-    # A query fence, answered where it stands: in the editor, and in the reading
-    # view of the same note.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -392,9 +332,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f" {page.evaluate('() => document.querySelectorAll(String.raw`.nib-query .nib-row`).length')} rows"
     )
 
-    # A box in a fence, pressed: the note is written where it stands, so the fence
-    # answers again with one row fewer. This is the one path `pressRow` takes that
-    # a test under node cannot: it reads the markup with `closest`.
     box = page.locator(".nib-query input[data-task]")
     if box.count():
         was = box.count()
@@ -410,9 +347,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     context.close()
 
-
 def measure(browser, out: Path, count: int) -> None:
-    """Five thousand notes, and what a query costs against the budget."""
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     name = "many"
@@ -429,8 +364,6 @@ def measure(browser, out: Path, count: int) -> None:
     page.evaluate("() => window.nibApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
 
-    # The budget a keystroke has. The field waits this long before asking, so it is
-    # taken off every figure below: what is reported is the search.
     wait = 140
     asked = [
         "quarter",
@@ -445,16 +378,9 @@ def measure(browser, out: Path, count: int) -> None:
         "zzzqx",
     ]
 
-    # What the search is holding before a word has been typed: the worker reads the
-    # space at the search stage of the launch, so the first query is already warm.
-    # See search/warmth.ts for what the line says.
     say(f"[{name}] holding {held_text(page)}")
 
     for source in asked:
-        # The first run and the best of several. A clock only ever says what the
-        # machine was doing at the time, so the best run is the one where it was
-        # doing this; the first is kept beside it because a cache that only looked
-        # good on the second ask would not be worth having.
         runs = [page.evaluate(TIMED, {"source": source, "wait": wait}) for _ in range(5)]
         best = min(runs, key=lambda one: one["ms"])
         first = runs[0]
@@ -468,7 +394,6 @@ def measure(browser, out: Path, count: int) -> None:
     page.screenshot(path=str(shots / f"{name}-searched.png"))
     say(f"shot {name}-searched.png")
 
-    # And with a third of the space left out, which is what leaving it out is for.
     page.evaluate(
         """({ root }) => {
           const ws = window.nibApp.workspace
@@ -484,14 +409,7 @@ def measure(browser, out: Path, count: int) -> None:
 
     context.close()
 
-
 def paper(words: str) -> str:
-    """A one page PDF with `words` printed on it, as base64.
-
-    Written out here rather than kept as a fixture: it is a dozen objects, and a
-    drive that makes its own paper cannot drift from the paper it opens. Real
-    enough that pdf.js reads the words back out of it, which is the whole point.
-    """
     import base64
 
     stream = f"BT /F1 18 Tf 20 100 Td ({words}) Tj ET"
@@ -514,9 +432,7 @@ def paper(words: str) -> str:
 
     return base64.b64encode(body.encode("latin-1")).decode("ascii")
 
-
 def kept_papers(page) -> int:
-    """How many papers the store is holding words for."""
     return page.evaluate(
         """async () => {
           const open = indexedDB.open('nib')
@@ -535,14 +451,7 @@ def kept_papers(page) -> int:
         }"""
     )
 
-
 def papers(browser, out: Path) -> None:
-    """The papers: a paper opened answers, and it still answers after a restart.
-
-    Two of them, and only one is ever opened. The other is what the idle pass at the
-    search stage reads by itself, which is what makes a space of papers answerable
-    without anybody having opened any of them.
-    """
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     name = "papers"
@@ -561,16 +470,10 @@ def papers(browser, out: Path) -> None:
     )
     say(f"[{name}] the space holds {listed} papers")
 
-    # One of them read, the way a reader reads one: opened, and its pages drawn.
     page.evaluate(
         "(path) => window.nibApp.workspace.openPdf(path, 1)",
         f"{root}/Kestrel study.pdf",
     )
-    # A paper opens the page note made beside it, whose pages wear the paper's own
-    # (`openPdf` in the workspace); the viewer of its own it used to open is gone. The
-    # page surface is fetched the first time rather than carried into the first paint,
-    # so the pane is empty until it lands. Waited for, and then the pages it draws. See
-    # surfaces.svelte.ts.
     page.wait_for_selector(".pages", timeout=20000)
     page.wait_for_timeout(2500)
     searching(page)
@@ -590,7 +493,6 @@ def papers(browser, out: Path) -> None:
 
     say(f"[{name}] 'kestrel' finds {ask('kestrel')}")
 
-    # The restart. The store is the same store; nothing is in memory.
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=20000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
@@ -601,14 +503,12 @@ def papers(browser, out: Path) -> None:
     say(f"[{name}] holding {held_text(page)}")
     page.screenshot(path=str(shots / f"{name}-after-restart.png"))
 
-    # And the paper nobody has ever opened, which the idle pass reads by itself.
     page.wait_for_timeout(4000)
     say(f"[{name}] the paper nobody opened: 'ink' finds {ask('ink')}")
     say(f"[{name}] the store keeps {kept_papers(page)} papers, holding {held_text(page)}")
     page.screenshot(path=str(shots / f"{name}-unopened.png"))
 
     context.close()
-
 
 def main() -> int:
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
@@ -625,7 +525,6 @@ def main() -> int:
         measure(browser, out, count)
 
     return DRIVE.verdict(f"shots in {out}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

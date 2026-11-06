@@ -1,21 +1,3 @@
-"""Todoist's inline editor, in the built app: adding where Add task is pressed, and
-changing a task in its own field.
-
-What this drives, against the real files:
-
-  * Add task at the end of a project's section opens quick add's field there, and what
-    is typed lands under that section's heading, read for its fields; the field stays
-    up for the next.
-  * Several lines pasted ask whether they are one task or one each; one each writes them
-    all.
-  * The pencil, and Ctrl+E, change a task in its own field: new words and a day are
-    written to its line, as one edit.
-
-    python apps/desktop/test/e2e/inline-edit.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/inline-edit/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -26,11 +8,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 HOME = """- [ ] Fix the tap
 
@@ -47,16 +27,11 @@ WRITE = """async ([files]) => {
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words) ?? null"
 
-
 def found(page: Page, words: str) -> dict[str, object] | None:
     return page.evaluate(TASK, words)  # type: ignore[no-any-return]
 
-
 def day(task: dict) -> object:
-    """The day a task's words were read for: its start date since a date typed is one
-    (7f8ffd4e), and a deadline or a scheduled day as before."""
     return task.get("start") or task.get("scheduled") or task.get("due")
-
 
 def seed(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
@@ -66,7 +41,6 @@ def seed(page: Page) -> None:
     page.evaluate("window.tasks.openProject(window.nibApp.workspace.activeSpace.name, 'Projects/Home.md')")
     wait_for(page, "document.querySelector('.view-tab .task')", "the project's tasks")
     quiet(page)
-
 
 def add_in_place(page: Page) -> None:
     adders = page.locator(".view-tab .add-row .adder")
@@ -86,7 +60,6 @@ def add_in_place(page: Page) -> None:
         wrong("the field went away after a task was added")
     shot(page, "01-added")
 
-    # Several lines pasted at once.
     page.evaluate(
         """() => {
           const field = document.querySelector('.view-tab .editor .quick input.field')
@@ -106,7 +79,6 @@ def add_in_place(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.view-tab .editor')", "the field put away")
 
-
 def edit_in_place(page: Page) -> None:
     tap = ".view-tab .task:has(.words:text-is('Fix the tap'))"
     page.locator(tap).hover()
@@ -125,14 +97,12 @@ def edit_in_place(page: Page) -> None:
         wrong("the day typed into the field was not written")
     wait_for(page, "!document.querySelector('.view-tab .editor')", "the field put away after saving")
 
-    # Ctrl+E on the row the keyboard is on.
     lawn = ".view-tab .task:has(.words:text-is('Mow the lawn'))"
     page.locator(lawn).focus()
     page.keyboard.press("Control+e")
     wait_for(page, "document.activeElement?.matches('.view-tab .editor .quick input.field')", "Ctrl+E's field")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.view-tab .editor')", "Escape putting it away")
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -141,7 +111,6 @@ def drive(browser: Browser) -> None:
     add_in_place(page)
     edit_in_place(page)
     shot(page, "04-done")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the inline editor held"))

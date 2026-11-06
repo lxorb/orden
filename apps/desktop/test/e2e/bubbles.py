@@ -1,25 +1,3 @@
-"""Every bubble hung from something is drawn whole, over the window (#1129).
-
-The sentence behind a `?`, and the reason a name cannot be taken, were placed
-`position: absolute` against what they are about, so each was drawn inside every box
-holding that and cut by the first one that clips: in Settings > AI the sentence after
-*Keep this browser's keys in the vault* was a strip the height of the name, cut by a row
-that keeps its names to one line. They are hung over the window now (lib/portal.ts).
-
-For every `?` in the Settings panes, signed out and in, left to right and right to
-left, the sentence is opened and has to be: whole, with no box holding it that cuts any
-of it; inside the window; on the rung of the settings or over it; and under the glyph,
-3px before it in the reading direction - or over it where there is no room under it.
-Then a `?` scrolled to the foot of its pane has its sentence turned over above it, and
-one scrolled out of sight has none to see. And a name typed into a row of the file list
-that cannot be one says why in a bubble under the field, drawn whole even on the last
-row, and the one that leads to a setting is as wide as the row.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/bubbles.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -29,10 +7,8 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: How far a bubble may stand from where it is meant to, in CSS pixels.
 NEAR = 1.0
 
-#: What of a bubble is cut, out of the window, or under the layer it was opened in.
 WHOLE = """
 (bubble) => {
   const box = bubble.getBoundingClientRect()
@@ -57,12 +33,9 @@ WHOLE = """
 }
 """
 
-#: Every `?` in the open pane, by its place in the list.
 GLYPHS = "() => [...document.querySelectorAll('[role=\"dialog\"] .explain button')].length"
 
-
 def sentence_of(page: Page, index: int) -> dict | None:
-    """Opens the index-th `?` of the pane by the keyboard and measures its sentence."""
     return page.evaluate(
         """async ([index, whole]) => {
           const glyph = document.querySelectorAll('[role="dialog"] .explain button')[index]
@@ -92,9 +65,7 @@ def sentence_of(page: Page, index: int) -> dict | None:
         [index, WHOLE],
     )
 
-
 def placed(one: dict, gap: float, inset: float) -> str | None:
-    """Where the bubble is against where it is meant to be, or None where it is right."""
     box, mark = one["box"], one["mark"]
     top = mark["bottom"] + gap if one["side"] != "above" else mark["top"] - gap - box["height"]
     if abs(box["top"] - top) > NEAR:
@@ -105,9 +76,7 @@ def placed(one: dict, gap: float, inset: float) -> str | None:
         return f"its left is {box['left']:.1f}, not {clamped:.1f}"
     return None
 
-
 DRIVE_WIDTH = 1280
-
 
 def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
     counted = 0
@@ -138,9 +107,7 @@ def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
     say(f"[{tag}] {counted} sentences opened whole")
     return counted
 
-
 def the_vault_row(page: Page, tag: str) -> None:
-    """The one #1129 was found on: a name in a pane that keeps its names to one line."""
     page.evaluate("() => window.nibApp.settings.show('ai')")
     page.wait_for_timeout(500)
     glyph = page.locator("[role=switch]", has_text="vault").first.locator(".explain button")
@@ -154,9 +121,7 @@ def the_vault_row(page: Page, tag: str) -> None:
     shot(page, f"{tag}-vault")
     page.mouse.move(5, 5)
 
-
 def at_the_foot(page: Page, tag: str) -> None:
-    """A `?` at the foot of its pane turns its sentence over; one scrolled away has none."""
     page.evaluate("() => window.nibApp.settings.show('general')")
     page.wait_for_timeout(500)
     one = page.evaluate(
@@ -193,14 +158,10 @@ def at_the_foot(page: Page, tag: str) -> None:
     if away["shown"]:
         wrong(f"[{tag}] the sentence of a ? scrolled out of sight is still drawn")
 
-
 def names(page: Page, tag: str) -> None:
-    """A name that cannot be one says why under the field, whole, on the last row."""
     DRIVE.seed(page, *[f"# Note {one}\n" for one in range(1, 4)])
-    # The list open, and a hint's card that would sit over its top rows put away.
     page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
     page.wait_for_timeout(400)
-    # The last row renamed, as its menu's Rename does.
     page.evaluate(
         """() => { const ws = window.nibApp.workspace
           const last = document.querySelector("aside .row[data-path$='/Note 3.md']").dataset.path
@@ -235,7 +196,6 @@ def names(page: Page, tag: str) -> None:
         shot(page, f"{tag}-reason-{'held' if held else 'plain'}")
     field.press("Escape")
 
-
 def look(browser: Browser, tag: str, language: str = "en") -> None:
     page = DRIVE.page(browser, viewport={"width": DRIVE_WIDTH, "height": 860})
     page.context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
@@ -254,11 +214,9 @@ def look(browser: Browser, tag: str, language: str = "en") -> None:
         wrong(f"[{tag}] only {counted} sentences were opened")
     page.context.close()
 
-
 def drive(browser: Browser) -> None:
     look(browser, "light")
     look(browser, "rtl", language="ar")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "every bubble is drawn whole, under what it is about"))

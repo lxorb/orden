@@ -1,20 +1,3 @@
-"""A note that says nothing yet wears the empty page, and the folder where it holds
-notes (#1042).
-
-In the built app, in Chromium, in the file list and on the tab:
-
-  * a note that is only its own name as a heading wears the empty page;
-  * a note with words in it wears the page with writing on;
-  * a note that is only its name and holds another note wears the folder;
-  * typing words into the empty one turns its row into the written page once it is
-    saved, and taking them away turns it back - without the row being told;
-  * the tab wears what the row wears.
-
-    python apps/desktop/test/e2e/empty-note-mark.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/empty-note-mark/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -24,8 +7,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-# Which drawing a mark is, told apart by a stroke only it has: the folder's outline,
-# the lines written on the page, and the page itself.
 WORN = """
 (name) => {
   const row = [...document.querySelectorAll('.row[data-path]')]
@@ -41,10 +22,8 @@ WORN = """
 }
 """
 
-
 def worn(page: Page, name: str) -> str:
     return page.evaluate(WORN, name)
-
 
 def expect(page: Page, name: str, mark: str, what: str) -> None:
     try:
@@ -53,7 +32,6 @@ def expect(page: Page, name: str, mark: str, what: str) -> None:
         wrong(f"{what}: the row of {name} wears {worn(page, name)}, not {mark}")
     else:
         say(f"{name} wears {mark}")
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -66,7 +44,6 @@ def drive(browser: Browser) -> None:
     expect(page, "Box", "folder", "a note that is only its name and holds a note")
     shot(page, "list")
 
-    # Live: words typed into the empty note, then taken away again.
     DRIVE.open_note(page, "Empty one")
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
@@ -76,7 +53,6 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Backspace")
     expect(page, "Empty one", "file", "the note emptied again")
 
-    # The tab wears what the row wears.
     tab = page.evaluate(
         """() => {
           const svg = document.querySelector('[data-tab][aria-current=page] svg')
@@ -88,7 +64,6 @@ def drive(browser: Browser) -> None:
     shot(page, "emptied")
 
     page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a note that says nothing wears the empty page, or the folder"))

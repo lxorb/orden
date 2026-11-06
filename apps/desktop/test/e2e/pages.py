@@ -1,49 +1,3 @@
-"""Page notes driven for real: the paper, the pen on it, the navigator and the column.
-
-Everything here is the real thing - the built web app in Chromium, a
-page note made through the workspace, and strokes sent as real pen events with pressure
-through the DevTools protocol. No Worker and no account: a page note is a file in this
-browser's own storage, which is all writing on paper needs.
-
-What it checks and photographs:
-
-    a new page note opens on one A4 page, fitted across the pane
-    the paper stays across the pane when the sidebar narrows it, and a zoom the reader
-      asked for is theirs until they ask for the paper back
-    a stroke drawn with a pen lands on the page it was drawn on, in the file
-    a finger draws on glass that has never seen a pen, and stops once one has - which
-      is the palm rejection, and the one rule a page note must not have its own copy of
-    a second finger landing while the nib is down leaves no mark at all
-    the four rulings, photographed, in both themes
-    the three papers, chosen from the page's own menu, and the paper a new page note
-      starts on, which is a setting rather than A4 for everybody
-    adding, reordering and deleting a page, and what reordering does to the ink on it
-    a long page growing past A4 when writing reaches the bottom of it
-    ink caught by the lasso dragged where the hand takes it, and no Add on the bar
-    the canvas's bar over lassoed ink, and the paper's own menu on a right click and
-      on a finger held still
-    printing: one picture per page of the PDF, handed to the print engine
-    the lasso's key held: the lasso until it comes up, then the pen again (#349)
-    the paper upright under two fingers turned, with the canvas's turning on (#351)
-    the page counter in the status bar, and the thumbnails in the outline panel's slot
-    a PDF imported as a page note: every page drawn, on the sheet and in the panel,
-      counted in pixels rather than taken on trust, and a page whose paper has gone
-      saying so rather than coming out blank
-    the file on disk: JSON Canvas, a group node per page, the ink under `nib`
-    the same note renamed to `.canvas` still reading as the same pages
-    the phone: the same bar, the pages in a column, no second interface
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/pages.py
-
-It builds the app, serves it, drives the browser and stops everything again. Nothing it
-makes outlives it but the screenshots, which go beside it under `shots/`.
-
-The app is built `--mode drive` on purpose, which is what leaves the app's own
-stores reachable from the page; see canvas-arrange.py, whose harness this is.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -57,33 +11,21 @@ say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
-#: The page navigator in the left sidebar, the panel this drive opens. The right side
-#: shows the outline of the note in front as well, with a navigator of its own, so a
-#: bare `.navigator` is two of them.
 NAVIGATOR = "aside:not(.right) .navigator"
-
 
 def fail(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
 
-
-# What the page is allowed to say into the console without it being a failure. One entry,
-# and it is about the app's own `index.html` rather than about anything here: Chrome
-# ignores `frame-ancestors` in a `<meta>` policy and says so on every load. The directive
-# is there for the header the published site serves; see the content policy commit.
 FORGIVEN = ("frame-ancestors",)
 
-
 def complain(label: str, message) -> None:
-    """Every error the page reports is a failure but the ones above."""
     if message.type != "error":
         return
     if any(one in message.text for one in FORGIVEN):
         return
 
     fail(f"[{label}] console error: {message.text}")
-
 
 PREPARE = """
 // What is handed to the print engine, kept where the drive can read it: printing goes
@@ -133,16 +75,12 @@ AS_PHONE = """
 }
 """
 
-# A glass that has never had a pen on it, which is where a finger draws. Written before
-# the app starts, because the store reads it once on the way up; see hand.svelte.ts.
 NO_PEN_YET = """
 try { localStorage.setItem('nib:pen-seen', 'no') } catch {}
 try { localStorage.setItem('nib:finger-draws', 'no') } catch {}
 """
 
-
 def opened(page: Page, label: str, device: str | None = None) -> None:
-    """The app started and a fresh page note open on it."""
     wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
     wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
@@ -151,8 +89,6 @@ def opened(page: Page, label: str, device: str | None = None) -> None:
     elif device == "phone":
         page.evaluate(AS_PHONE)
 
-    # Asked more than once if it has to be: the space arrives a moment before the tree
-    # under it does, and a note asked for in that moment lands nowhere.
     there = "window.nibApp.workspace.active?.path?.endsWith('.pages')"
     for _try in range(4):
         page.evaluate("() => window.nibApp.workspace.createPages()")
@@ -165,33 +101,20 @@ def opened(page: Page, label: str, device: str | None = None) -> None:
     page.wait_for_selector(".pages", timeout=15000)
     page.wait_for_timeout(400)
 
-
 def surface(page: Page) -> dict:
     box = page.locator(".pages").first.bounding_box()
     assert box
     return box
 
-
 def settled(page: Page) -> None:
-    """Everything owing, written into the document now.
-
-    The surface writes the file a pause after the changes stop - serialising the whole
-    plane per stroke is the one thing it cannot afford - so a drive that reads the words
-    straight after an edit reads the words from before it. `part` is the same call the
-    surface makes when its tab closes."""
     page.evaluate("() => window.nibApp.pages.current?.store.part()")
     page.wait_for_timeout(250)
 
-
 def file_of(page: Page) -> dict:
-    """The note as the file holds it, read off the open note rather than guessed."""
     settled(page)
     return page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
 
-
 def pages_of(page: Page) -> list[dict]:
-    """The pages as the surface has them, which is the file read back through the
-    format: what the app is drawing, not what the JSON happens to say."""
     return page.evaluate(
         """() => {
           const held = window.nibApp.pages?.current
@@ -208,28 +131,19 @@ def pages_of(page: Page) -> list[dict]:
         }"""
     )
 
-
 def panel_of(page: Page) -> str | None:
-    """Which panel is open, so a check that wanted one can say what it got."""
     return page.evaluate("() => window.nibApp.workspace.panel")
 
-
 def store_call(page: Page, call: str) -> None:
-    """Something asked of the open note's own store, which is what a thumbnail, a menu
-    row and a key all end up doing."""
     page.evaluate(f"() => {{ const s = window.nibApp.pages.current.store; {call} }}")
     page.wait_for_timeout(350)
 
-
 def tool(page: Page, key: str) -> None:
-    """A tool taken with its own key. The surface has to have the keyboard for a bare
-    letter to reach it, and a press on the paper is what gives it."""
     page.keyboard.press("Escape")
     box = surface(page)
     page.mouse.click(box["x"] + 30, box["y"] + 30)
     page.keyboard.press(key)
     page.wait_for_timeout(120)
-
 
 def stroke(
     page: Page,
@@ -238,12 +152,6 @@ def stroke(
     kind: str = "pen",
     buttons: int = 1,
 ) -> None:
-    """A stroke drawn with a real stylus, with pressure on it.
-
-    `Input.dispatchMouseEvent` carries a `pointerType` of `mouse` or `pen` and nothing
-    else, which is why a finger has a function of its own below: asking this one for a
-    touch gets a mouse, and a mouse is allowed to draw where a palm is not - so the check
-    would pass for the wrong reason."""
     if kind == "touch":
         finger(page, cdp, points)
         return
@@ -275,10 +183,7 @@ def stroke(
     send("mouseReleased", last[0], last[1], 0, buttons)
     page.wait_for_timeout(300)
 
-
 def finger(page: Page, cdp, points: list[tuple[float, float]]) -> None:
-    """A stroke drawn with a real finger, through the protocol's own touch events - which
-    is the only way to get a `pointerType` of `touch` into the page."""
 
     def send(what: str, at: list[tuple[float, float]]) -> None:
         cdp.send(
@@ -299,13 +204,10 @@ def finger(page: Page, cdp, points: list[tuple[float, float]]) -> None:
     send("touchEnd", [])
     page.wait_for_timeout(300)
 
-
 def ink_count(page: Page) -> int:
     return page.evaluate("() => window.nibApp.pages.current.store.canvas.ink.length")
 
-
 def check_opens(page: Page, label: str) -> None:
-    """Item 1: a new page note is one A4 page, fitted across the pane."""
     say("--- the first page ---")
 
     pages = pages_of(page)
@@ -321,7 +223,6 @@ def check_opens(page: Page, label: str) -> None:
     if one["y"] != 0:
         fail(f"[{label}] the first page starts at y={one['y']} rather than the origin")
 
-    # Fitted across the paper with a margin, which is what a page note opens as.
     scale = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
     box = surface(page)
     wanted = (box["width"] - 56) / 794
@@ -333,14 +234,7 @@ def check_opens(page: Page, label: str) -> None:
 
     shot(page, f"{label}-one-page")
 
-
 def check_refits(page: Page, label: str) -> None:
-    """The paper stays across the pane when the pane changes width, until somebody zooms.
-
-    This is what a sheet of paper means and what every PDF viewer does. It is also the
-    bug this check was written for: the sidebar opening narrowed the pane by three
-    hundred pixels and the page kept the scale it had been fitted at, so a third of the
-    paper was off the side of the view with no way to know it was there."""
     say("--- the paper stays across the pane ---")
 
     was = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
@@ -354,7 +248,6 @@ def check_refits(page: Page, label: str) -> None:
         }"""
     )
 
-    # The paper, plus its two margins, inside the pane it is now in.
     across = narrowed["widest"] * narrowed["scale"]
     if across > narrowed["width"]:
         fail(
@@ -364,7 +257,6 @@ def check_refits(page: Page, label: str) -> None:
 
     shot(page, f"{label}-refitted")
 
-    # And a zoom the reader asked for is theirs: the pane changing must not take it away.
     store_call(page, "s.zoomBy(2)")
     theirs = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
     page.evaluate("() => { window.nibApp.workspace.panel = null }")
@@ -374,7 +266,6 @@ def check_refits(page: Page, label: str) -> None:
     if abs(still - theirs) > 0.001:
         fail(f"[{label}] a zoom the reader chose was taken away by a resize ({theirs} -> {still})")
 
-    # Until they ask for the paper back, which hands the fitting over again.
     store_call(page, "s.fitAgain()")
     page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(800)
@@ -391,9 +282,7 @@ def check_refits(page: Page, label: str) -> None:
     page.evaluate("() => { window.nibApp.workspace.panel = null }")
     page.wait_for_timeout(500)
 
-
 def check_pen(page: Page, cdp, label: str) -> None:
-    """Item 2: a stroke drawn with a pen lands on the page, in the file."""
     say("--- a stroke on the paper ---")
 
     tool(page, "d")
@@ -412,7 +301,6 @@ def check_pen(page: Page, cdp, label: str) -> None:
         fail(f"[{label}] a pen stroke left {after - before} strokes rather than one")
         return
 
-    # And it is on the first page, which is what the format has to be able to say.
     first = pages_of(page)[0]
     on = page.evaluate(
         """(box) => {
@@ -427,7 +315,6 @@ def check_pen(page: Page, cdp, label: str) -> None:
     if not on:
         fail(f"[{label}] the stroke did not land on the page it was drawn on")
 
-    # Pressure reached the file, which is the whole reason a pen is not a mouse.
     varied = page.evaluate(
         """() => {
           const ink = window.nibApp.pages.current.store.canvas.ink
@@ -440,15 +327,11 @@ def check_pen(page: Page, cdp, label: str) -> None:
 
     shot(page, f"{label}-a-stroke")
 
-
 def check_lasso(page: Page, cdp, label: str) -> None:
-    """Writing caught by the lasso is dragged where the hand takes it, and the bar
-    offers nothing a press on paper would not put down (#350)."""
     say("--- the lasso, and what the bar offers ---")
 
     if page.locator(".cluster .bar button[aria-label='Add']").count():
         fail(f"[{label}] a page note's bar offers Add, and nothing on paper answers to it")
-    # Nor a zoom: a pinch, the wheel, the keys and the paper's menu do it (#401).
     if page.locator(".cluster .bar button[aria-label^='Zoom']").count():
         fail(f"[{label}] a page note's bar still has its zoom buttons")
 
@@ -456,8 +339,6 @@ def check_lasso(page: Page, cdp, label: str) -> None:
     box = surface(page)
     x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 320
     stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
-    # The stroke just drawn, found again by its id: the file is free to keep its ink
-    # in whatever order it likes.
     drawn = page.evaluate(
         "() => { const ink = window.nibApp.pages.current.store.canvas.ink;"
         " return ink[ink.length - 1].id }"
@@ -484,7 +365,6 @@ def check_lasso(page: Page, cdp, label: str) -> None:
     page.wait_for_timeout(400)
 
     now = page.evaluate(first, drawn)
-    # A hundred pixels right and down, in the paper's own units.
     wanted = 100 / was["scale"]
     moved = (now["x"] - was["x"], now["y"] - was["y"])
     if abs(moved[0] - wanted) > 4 or abs(moved[1] - wanted) > 4:
@@ -493,8 +373,6 @@ def check_lasso(page: Page, cdp, label: str) -> None:
         say(f"[{label}] the lassoed ink moved by {tuple(round(v) for v in moved)}")
     shot(page, f"{label}-lasso-moved")
 
-    # The canvas's bar over what is picked, on paper: colour, copy and delete with a
-    # finger as well as a key (#350).
     bar = page.evaluate("() => [...document.querySelectorAll('.over button')].map((b) => b.getAttribute('aria-label'))")
     for wanted in ("Colour", "Duplicate", "Delete", "More"):
         if wanted not in bar:
@@ -523,14 +401,11 @@ def check_lasso(page: Page, cdp, label: str) -> None:
         if ink_count(page) != count or page.evaluate(picked):
             fail(f"[{label}] Delete on the bar did not take the copy away")
     say(f"[{label}] the bar over lassoed ink colours, copies and deletes it")
-    # The stroke itself, gone too, so the checks after this start from the paper they
-    # had before it.
     page.evaluate("(id) => window.nibApp.pages.current.store.pick(id)", drawn)
     page.locator(".pages").first.focus()
     page.keyboard.press("Delete")
     page.wait_for_timeout(200)
 
-    # A right click on the paper: what this note can do, and nothing greyed.
     page.mouse.click(x0 + 300, y0 + 260, button="right")
     page.wait_for_timeout(400)
     rows = [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
@@ -544,11 +419,7 @@ def check_lasso(page: Page, cdp, label: str) -> None:
     page.wait_for_timeout(200)
     tool(page, "v")
 
-
 def check_print(page: Page, label: str) -> None:
-    """Printing a page note: the print engine is handed one picture per page of the
-    PDF the export writes (#350). Read off the frame the print goes through, which is
-    the page the system's dialog prints."""
     say("--- printing ---")
 
     count = len(pages_of(page))
@@ -567,11 +438,7 @@ def check_print(page: Page, label: str) -> None:
     else:
         say(f"[{label}] printing hands the print engine all {count} pages")
 
-
 def check_lasso_held(page: Page, cdp, label: str) -> None:
-    """The lasso's key held is the lasso until it comes up, on paper as on a plane: a
-    loop drawn while it is down catches the writing, and letting go gives the pen back
-    with the writing still caught (#349)."""
     say("--- the lasso, held on its key ---")
 
     tool(page, "d")
@@ -598,8 +465,6 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
         "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
     )
     say(f"[{label}] held: in hand {back} again after, picked {len(picked)}")
-    # Glass has no cursor to show, so the mouse's is asked after with the device a
-    # desktop for the moment: the key, held again, over the same paper.
     page.evaluate("() => { window.nibApp.viewport.device = 'desktop' }")
     page.keyboard.down("q")
     page.wait_for_timeout(400)
@@ -620,10 +485,7 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     page.wait_for_timeout(200)
     tool(page, "v")
 
-
 def check_upright(page: Page, cdp, label: str) -> None:
-    """Paper is read upright: two fingers turning it, with the canvas's turning on,
-    turn nothing (#351)."""
     import math
 
     say("--- paper stays upright ---")
@@ -651,9 +513,7 @@ def check_upright(page: Page, cdp, label: str) -> None:
         say(f"[{label}] two fingers turning the paper leave it upright")
     store_call(page, "s.fitAgain()")
 
-
 def check_gutter(page: Page, cdp, label: str) -> None:
-    """A press between two pages writes nothing: there is no paper there."""
     say("--- the gutter ---")
 
     pages = pages_of(page)
@@ -661,13 +521,9 @@ def check_gutter(page: Page, cdp, label: str) -> None:
         say("only one page: the gutter check needs two, skipped")
         return
 
-    # The middle of the gutter put at the middle of the view, which is what the camera
-    # names: a stroke drawn across the middle of the pane is then a stroke on no paper.
     middle_of_gutter = pages[0]["height"] + 20
     store_call(page, f"s.camera = s.held({{ ...s.camera, y: {middle_of_gutter} }})")
 
-    # And only if the view is close enough in that the gutter fills the middle of it: at a
-    # zoom where a whole page is on screen there is paper either side of the nib.
     fits = page.evaluate(
         """(gutter) => {
           const s = window.nibApp.pages.current.store
@@ -703,10 +559,7 @@ def check_gutter(page: Page, cdp, label: str) -> None:
 
     shot(page, f"{label}-gutter")
 
-
 def check_palm(page: Page, cdp, label: str) -> None:
-    """The one rule a page note must not have its own copy of: a finger draws on glass
-    that has never seen a pen, and stops being a nib once one has been on it."""
     say("--- two hands and a pen ---")
 
     seen = page.evaluate("() => window.nibApp.canvasHand?.penSeen ?? null")
@@ -717,7 +570,6 @@ def check_palm(page: Page, cdp, label: str) -> None:
     box = surface(page)
     middle = box["x"] + box["width"] / 2
 
-    # A pen has already been on this glass in this drive, so the finger must not draw.
     before = ink_count(page)
     stroke(
         page,
@@ -728,7 +580,6 @@ def check_palm(page: Page, cdp, label: str) -> None:
     if ink_count(page) != before:
         fail(f"[{label}] a finger drew on glass that has had a pen on it")
 
-    # And a finger landing while the nib is down leaves nothing at all.
     cdp.send(
         "Input.dispatchMouseEvent",
         {
@@ -765,16 +616,12 @@ def check_palm(page: Page, cdp, label: str) -> None:
     )
     page.wait_for_timeout(300)
 
-    # The pen's own dot is allowed; the palm's stroke is not, so at most one arrived.
     if ink_count(page) > was + 1:
         fail(f"[{label}] a palm left a mark while the nib was down")
 
     shot(page, f"{label}-palm")
 
-
 def check_finger_draws(browser, label: str) -> None:
-    """And the other half: on glass that has never had a pen, the finger is the nib,
-    because on a phone nothing else can be."""
     say("--- a finger on glass with no pen ---")
 
     context = browser.new_context(
@@ -809,9 +656,7 @@ def check_finger_draws(browser, label: str) -> None:
     finally:
         context.close()
 
-
 def check_rulings(page: Page, label: str) -> None:
-    """The four rulings, drawn on real sheets, photographed."""
     say("--- the four rulings ---")
 
     for pattern in ("blank", "lines", "grid", "dots"):
@@ -836,15 +681,11 @@ def check_rulings(page: Page, label: str) -> None:
 
         shot(page, f"{label}-ruling-{pattern}")
 
-
 def check_adding(page: Page, label: str) -> None:
-    """Adding, reordering and deleting a page, and what reordering does to the ink."""
     say("--- adding, reordering, deleting ---")
 
     was = len(pages_of(page))
 
-    # The navigator's own Add a page, which is the row somebody presses. The panel is
-    # opened through the workspace's own setter, then waited for: it slides in.
     page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(700)
 
@@ -862,7 +703,6 @@ def check_adding(page: Page, label: str) -> None:
         fail(f"[{label}] Add a page made {len(pages) - was} pages")
         return
 
-    # The column: the second page starts a gutter below the first.
     if pages[1]["y"] != pages[0]["height"] + 40:
         fail(f"[{label}] the second page sits at y={pages[1]['y']}, not one gutter down")
 
@@ -872,8 +712,6 @@ def check_adding(page: Page, label: str) -> None:
 
     shot(page, f"{label}-navigator")
 
-    # Ink onto the second page, then the second page moved to the front: the ink has to
-    # go with it, which is what makes this a reorder and not a shuffle of empty sheets.
     second = pages[1]
     page.evaluate(
         """(page) => {
@@ -903,8 +741,6 @@ def check_adding(page: Page, label: str) -> None:
         "() => window.nibApp.pages.current.store.canvas.ink.find((o) => o.id === 'driven').points[0].y"
     )
 
-    # The drag's own drop: the second thumbnail dragged above the first, which is the
-    # gesture, through the navigator's own handlers rather than round them.
     rows = page.locator(f"{NAVIGATOR} .page")
     if rows.count() < 2:
         fail(f"[{label}] fewer than two thumbnails to drag between")
@@ -925,23 +761,9 @@ def check_adding(page: Page, label: str) -> None:
 
     shot(page, f"{label}-reordered")
 
-
 def check_papers(page: Page, label: str) -> None:
-    """The three papers, chosen from the page's own menu, and the one a new note starts on.
-
-    Through the menu rather than the store, because a row somebody can press is the whole
-    of what was missing: `reshaped` could always change a page's paper and nothing in the
-    app ever asked it to. The row for the paper the page already wears is disabled, the
-    way the rulings are.
-
-    A page note used to start on A4 whatever anybody said, which is wrong in North
-    America and wrong for anybody taking notes in a lecture, so the setting is driven
-    too: it is set, a note is made, and the note is the size it asked for.
-    """
     say("--- the three papers ---")
 
-    # A page note of its own, so this check does not care what the ones above left open
-    # and they do not care what it makes.
     page.evaluate("async () => window.nibApp.workspace.createPages(undefined, 'Papers.pages')")
     page.wait_for_timeout(900)
     page.wait_for_selector(".pages", timeout=15000)
@@ -976,8 +798,6 @@ def check_papers(page: Page, label: str) -> None:
             fail(f"[{label}] a {paper} page is {held['width']} wide rather than {width}")
         say(f"[{label}] {wanted}: {held['width']}x{held['height']}, called {held['paper']}")
 
-        # The row for the paper it now wears says so by being disabled, which is this
-        # menu's way of showing what is already on.
         again = paper_menu(page, 0, disabled=True)
         if wanted not in again:
             fail(f"[{label}] the {wanted!r} row is offered again on a page that is {paper}")
@@ -987,7 +807,6 @@ def check_papers(page: Page, label: str) -> None:
 
     shot(page, f"{label}-papers")
 
-    # And what a new page note starts on, which is a setting rather than A4 for everyone.
     made = page.evaluate(
         """async (paper) => {
           const app = window.nibApp
@@ -1013,13 +832,7 @@ def check_papers(page: Page, label: str) -> None:
     shot(page, f"{label}-new-on-letter")
     page.evaluate("() => window.nibApp.modes.setPagesPaper('a4')")
 
-
 def paper_menu(page: Page, at: int, disabled: bool = False) -> list[str]:
-    """The rows of the menu on one thumbnail, by label.
-
-    `disabled` asks for the greyed-out ones instead, which is how this menu says a row
-    would do nothing: there are no ticks in it.
-    """
     page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(500)
 
@@ -1037,9 +850,7 @@ def paper_menu(page: Page, at: int, disabled: bool = False) -> list[str]:
     page.wait_for_timeout(200)
     return out
 
-
 def press_menu(page: Page, label: str) -> bool:
-    """One row of the page menu, pressed the way somebody presses it."""
     thumb = page.locator(f"{NAVIGATOR} .page").first
     thumb.click(button="right")
     page.wait_for_timeout(350)
@@ -1053,19 +864,12 @@ def press_menu(page: Page, label: str) -> bool:
     page.wait_for_timeout(450)
     return True
 
-
 def check_counter(page: Page, label: str) -> None:
-    """The page counter in the status bar, which shows unasked."""
     say("--- the page counter ---")
 
     count = len(pages_of(page))
     store_call(page, "s.turnTo(1)")
 
-    # The bar itself first. It was once left out over a page note - the kind was
-    # put in with the graph and a canvas, which have nothing for a bar to say -
-    # and the counter went with it, silently: this is the only place it is drawn,
-    # and a reader scrolling a stack of paper cannot guess which page they are on.
-    # See hasStatusBar in regions.ts.
     bar = page.evaluate(
         """() => {
           const bar = document.querySelector('footer[data-region="status"], footer')
@@ -1102,9 +906,7 @@ def check_counter(page: Page, label: str) -> None:
 
     shot(page, f"{label}-counter")
 
-
 def check_long_page(page: Page, label: str) -> None:
-    """A long page grows past A4 when writing reaches the bottom of it; A4 never does."""
     say("--- the page that grows ---")
 
     page.evaluate(
@@ -1123,7 +925,6 @@ def check_long_page(page: Page, label: str) -> None:
 
     tall = pages_of(page)[0]["height"]
 
-    # A stroke near the bottom of it, which is what makes it grow.
     page.evaluate(
         """(tall) => {
           const s = window.nibApp.pages.current.store
@@ -1150,9 +951,7 @@ def check_long_page(page: Page, label: str) -> None:
 
     shot(page, f"{label}-long-page")
 
-
 def check_file(page: Page, label: str) -> None:
-    """The file on disk: JSON Canvas, a spec node per page, the ink under `nib`."""
     say("--- the file ---")
 
     written = file_of(page)
@@ -1182,14 +981,7 @@ def check_file(page: Page, label: str) -> None:
 
     say(f"the file holds {len(records)} pages and {len(written['nodes'])} nodes")
 
-
 def check_as_canvas(page: Page, label: str) -> None:
-    """The same file opened as a canvas: the escape hatch this format is for.
-
-    A page note renamed to `.canvas` is what Obsidian opens, so the app has to agree:
-    the very same bytes, opened by the canvas surface, have to come up with the same
-    cards and the same ink rather than with nothing. Driven by writing the note's own
-    text into a `.canvas` file and opening it."""
     say("--- the same file as a canvas ---")
 
     held = page.evaluate(
@@ -1202,7 +994,6 @@ def check_as_canvas(page: Page, label: str) -> None:
     settled(page)
     before = file_of(page)
 
-    # Renamed through the app's own rename, which is what somebody would do.
     renamed = page.evaluate(
         """async () => {
           const workspace = window.nibApp.workspace
@@ -1221,8 +1012,6 @@ def check_as_canvas(page: Page, label: str) -> None:
 
     kind = page.evaluate("() => window.nibApp.workspace.active?.kind ?? null")
     if kind != "canvas":
-        # The tab may still be the page note's until it is reopened, which is itself
-        # worth knowing rather than worth hiding.
         say(f"the renamed file is still open as {kind!r}; reopening it")
         page.evaluate("async (path) => window.nibApp.workspace.openEntry(path)", renamed)
         page.wait_for_timeout(800)
@@ -1238,7 +1027,6 @@ def check_as_canvas(page: Page, label: str) -> None:
     else:
         say(f"the same bytes either way: {held['pages']} pages, {held['ink']} strokes")
 
-    # And the canvas surface has the cards and the ink, not an empty plane.
     drawn = page.evaluate(
         """() => {
           const written = JSON.parse(window.nibApp.workspace.active.doc)
@@ -1251,16 +1039,7 @@ def check_as_canvas(page: Page, label: str) -> None:
     page.wait_for_selector(".canvas", timeout=10000)
     shot(page, f"{label}-as-a-canvas")
 
-
 def paper_bytes(sizes: list[tuple[float, float]]) -> str:
-    """A PDF of `sizes` pages, each with a black block on it, as base64.
-
-    Written out here rather than kept as a fixture, the way search.py writes its own:
-    a drive that makes its own paper cannot drift from the paper it opens. The block is
-    what the checks below count - a page that drew is a page with dark pixels on it -
-    and it is inset from the edge so the count is about the paper and not about the
-    sheet's own border.
-    """
     import base64
 
     objects: list[str] = []
@@ -1283,12 +1062,6 @@ def paper_bytes(sizes: list[tuple[float, float]]) -> str:
 
     return base64.b64encode(body.encode("latin-1")).decode("ascii")
 
-
-# A PDF handed to the app's own import, which is the road a reader takes: File ▸ Import,
-# one paper picked. The import makes a folder of its own named after the paper, so the
-# note and the paper land one folder down from the space's root - which is exactly the
-# case that was broken, because a page's `file` is the paper's bare name and nothing
-# above resolved it against the note's own folder.
 IMPORT_PAPER = """
 async ({ base64, name }) => {
   const binary = atob(base64)
@@ -1312,11 +1085,6 @@ async ({ base64, name }) => {
 }
 """
 
-# How much of a sheet is not the colour of the sheet.
-#
-# Read off the canvas the page draws its paper onto, at the size the canvas holds
-# rather than at the size it is shown: what is asked is whether the paper was drawn at
-# all, and a blank sheet answers nought however big it is on screen.
 DARK_ON_SHEETS = """
 () => {
   const out = []
@@ -1341,8 +1109,6 @@ DARK_ON_SHEETS = """
 }
 """
 
-# And the same question of the thumbnails in the outline panel, which draw the paper
-# through the same one reader.
 DARK_ON_THUMBS = """
 () => {
   const out = []
@@ -1362,28 +1128,9 @@ DARK_ON_THUMBS = """
 }
 """
 
-
 def check_paper(page: Page, label: str) -> None:
-    """A PDF imported as a page note draws, page by page, on the sheet and in the panel.
-
-    The bug this is here for: the note was written correctly - one `file` node per page,
-    at the paper's own size, with `#page=N` in the subpath - and every page came out
-    blank, on the web build and in the app alike, while the PDF viewer drew the same
-    file. The paper's path in the note is relative, and it was handed to the reader as
-    it stood; nothing in the app can read `Lecture 4.pdf`.
-
-    So this counts pixels rather than trusting the file: a page that drew has a black
-    block on it, and a page that did not is the colour of the sheet. Both places the
-    paper is drawn are asked - the sheet in the pane and the thumbnail in the panel -
-    because they used to fail together and would fail together again.
-
-    A Letter page is in there as well, because a page out of a Letter paper used to
-    call itself A4: the size was right and the name was wrong, so changing its ruling
-    snapped it to A4's size.
-    """
     say("--- a paper imported as pages ---")
 
-    # A4 and Letter, in the points a PDF measures in.
     made = page.evaluate(
         IMPORT_PAPER,
         {"base64": paper_bytes([(595.28, 841.89), (612.0, 792.0)]), "name": "Lecture 4.pdf"},
@@ -1407,8 +1154,6 @@ def check_paper(page: Page, label: str) -> None:
         fail(f"[{label}] the import wrote no page note for the paper")
         return
 
-    # One thing in the list, the page note: the paper is the note's, not a row beside
-    # it (#400).
     beside = page.evaluate(
         "() => window.nibApp.workspace.files.filter((one) => one.name.startsWith('Lecture 4')).map((one) => one.name)"
     )
@@ -1417,8 +1162,6 @@ def check_paper(page: Page, label: str) -> None:
 
     say(f"[{label}] the note the import made: {opened_note}")
     page.wait_for_selector(".pages", timeout=15000)
-    # The reader is fetched the first time a paper is asked for - it brings pdf.js with
-    # it - and then every page is rasterised.
     page.wait_for_timeout(3500)
 
     held = pages_of(page)
@@ -1426,7 +1169,6 @@ def check_paper(page: Page, label: str) -> None:
         fail(f"[{label}] the paper became {len(held)} pages rather than two")
         return
 
-    # The sizes are the paper's own, and so are the names now.
     if [one["paper"] for one in held] != ["a4", "letter"]:
         fail(f"[{label}] the pages call themselves {[one['paper'] for one in held]}")
     if (held[0]["width"], held[0]["height"]) != (794, 1123):
@@ -1444,9 +1186,6 @@ def check_paper(page: Page, label: str) -> None:
 
     shot(page, f"{label}-paper")
 
-    # And the panel, which draws the same paper through the same reader. Opened the way
-    # the checks above open it, then waited for: it slides in, and the thumbnails are
-    # drawn a pause after the last change rather than on every stroke.
     page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
     page.wait_for_timeout(3000)
     thumbs = page.evaluate(DARK_ON_THUMBS)
@@ -1458,13 +1197,6 @@ def check_paper(page: Page, label: str) -> None:
 
     shot(page, f"{label}-paper-thumbnails")
 
-    # A page whose paper is not there says so rather than coming out blank, which is
-    # the other half of the bug: a silent blank sheet is what hid it.
-    # A page whose paper is not there says so rather than coming out blank, which is
-    # the other half of the bug: a silent blank sheet is what hid it. Pointed at a paper
-    # that was never there, through the store's own edit, which is what changing a page
-    # amounts to anywhere else - and the paper the note holds taken away first, since
-    # that is the first place a page's paper is looked for (pages/held.ts).
     page.evaluate(
         """async (paper) => {
           const open = indexedDB.open('nib')
@@ -1500,7 +1232,6 @@ def check_paper(page: Page, label: str) -> None:
 
     shot(page, f"{label}-paper-missing")
 
-
 def drive(browser, theme: str) -> None:
     say(f"=== {theme} ===")
     context = browser.new_context(
@@ -1535,21 +1266,14 @@ def drive(browser, theme: str) -> None:
             check_long_page(page, theme)
             check_file(page, theme)
             check_as_canvas(page, theme)
-            # After those three, because it makes a page note of its own: everything
-            # above is about the note this drive started with.
             check_papers(page, theme)
-        # Last, because it imports a paper and opens the note the import made: every
-        # check above is about the note this drive started with.
         check_paper(page, theme)
-        # And printing that note, paper and ink together.
         if theme == "light":
             check_print(page, theme)
     finally:
         context.close()
 
-
 def drive_phone(browser) -> None:
-    """The phone: the same bar, the pages in a column, no second interface."""
     say("=== phone ===")
     context = browser.new_context(
         viewport={"width": 412, "height": 915},
@@ -1570,14 +1294,11 @@ def drive_phone(browser) -> None:
 
         check_opens(page, "phone")
 
-        # The same bar and no other: one `.canvas-bar` on the page, which is the
-        # component the canvas uses.
         bars = page.locator(".canvas-bar, .bar").count()
         if bars < 1:
             fail("[phone] the pen bar is not on the page")
         shot(page, "phone-bar")
 
-        # A finger writes here, because this glass has never had a pen on it.
         tool(page, "d")
         box = surface(page)
         before = ink_count(page)
@@ -1592,7 +1313,6 @@ def drive_phone(browser) -> None:
 
         shot(page, "phone-a-stroke")
 
-        # A finger held still on the paper is the paper's menu, as a right click is.
         tool(page, "v")
         hold = (box["x"] + box["width"] / 2, box["y"] + 420)
         cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": hold[0], "y": hold[1], "id": 1}]})
@@ -1608,13 +1328,11 @@ def drive_phone(browser) -> None:
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
 
-        # And the pages are still a column: the same layout, not a second one.
         pages = pages_of(page)
         if len(pages) >= 2 and pages[1]["y"] <= pages[0]["y"]:
             fail("[phone] the pages are not in a column")
     finally:
         context.close()
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -1624,7 +1342,6 @@ def main() -> int:
         drive_phone(browser)
 
     return DRIVE.verdict("everything the drive checked was right")
-
 
 if __name__ == "__main__":
     sys.exit(main())

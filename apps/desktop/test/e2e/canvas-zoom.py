@@ -1,14 +1,3 @@
-"""A canvas back at 100%, and a pen fine enough when zoomed in (#369).
-
-Emil: "canvas is missing a button to reset magnification to 100%" and "at higher
-magnifications the pencils are not small enough in their thickness". The bar keeps no zoom
-buttons (#401); at the end of it, a small reading of the zoom stands while the plane is at
-anything but 100%, and pressed puts it back. Zoomed in, a pen writes as wide as it shows on
-the screen.
-
-    python apps/desktop/test/e2e/canvas-zoom.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -23,11 +12,9 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ACTUAL = '.cluster button.actual'
 SCALE = "() => window.nibApp.workspace.active?.camera?.scale ?? null"
 
-
 def reading(page: Page) -> str | None:
     found = page.locator(ACTUAL)
     return found.first.inner_text().strip() if found.count() else None
-
 
 def wheel_in(page: Page, times: int) -> None:
     box = page.locator(".canvas").first.bounding_box()
@@ -39,7 +26,6 @@ def wheel_in(page: Page, times: int) -> None:
         page.wait_for_timeout(60)
     page.keyboard.up("Control")
     page.wait_for_timeout(400)
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
@@ -56,7 +42,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
     page.wait_for_timeout(600)
 
-    # At the actual size, nothing of the zoom on the bar.
     if abs((page.evaluate(SCALE) or 1) - 1) < 0.005 and reading(page) is not None:
         wrong(f"[100%] the bar reads the zoom at the actual size: {reading(page)}")
 
@@ -75,7 +60,6 @@ def drive(browser: Browser) -> None:
     else:
         say("ok   [back] pressed, the plane is at 100% and the reading is gone")
 
-    # Zoomed in four times over, a pen writes as fine as it shows.
     page.evaluate(
         "() => { const tab = window.nibApp.workspace.active; tab.camera = { ...tab.camera, scale: 4 } }"
     )
@@ -96,7 +80,6 @@ def drive(browser: Browser) -> None:
     if not ink:
         wrong(f"[pen] no stroke was written: {json.dumps(written)[:200]}")
     else:
-        # The first pen as it comes, three units wide: three pixels at 100%.
         pen = 3
         drawn = ink[-1].get("size")
         say(f"[pen] a pen of {pen} wrote a stroke {drawn} wide at 400%")
@@ -105,7 +88,6 @@ def drive(browser: Browser) -> None:
         else:
             say("ok   [pen] zoomed in, the stroke is as wide as it shows")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the plane goes back to 100% from the bar, and a pen is fine when zoomed in"))

@@ -1,31 +1,3 @@
-"""The two things a phone has that a desktop does not: the bar over the keyboard,
-and pulling a list down past its top.
-
-What it proves: the bar draws the reader's own list of commands rather than nine
-hard-coded ones; a button presses the same command its key presses, so the note
-changes; the Mobile pane adds, orders, removes and resets it; the default set is
-the nine the bar has always had, so nothing changed for anybody who never opens
-the pane; and a pull past the top of the note runs the command the pane says,
-draws a mark that grows, does nothing when it is a scroll or a sideways drag, and
-never reloads the page.
-
-The keyboard is stood in for. A headless run has no soft keyboard and nothing in
-a browser window can shrink the visual viewport, so the two fields the platform
-writes are written directly - they are the whole of what the page ever sees of a
-keyboard. The arithmetic that gets them there is measured in
-src/lib/viewport.test.ts.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/phone-bar.py
-
-Screenshots go beside this file under `shots/phone-bar/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -38,7 +10,6 @@ say = DRIVE.say
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -55,7 +26,6 @@ async () => {
 }
 """
 
-# The keyboard, stood in for; see the note at the top.
 KEYS = """
 (pixels) => {
   const seen = window.nibApp.viewport
@@ -65,8 +35,6 @@ KEYS = """
 }
 """
 
-# What the strip over the keyboard is holding: the mark on every button, and the
-# name behind it.
 BAR = """
 () => {
   const bar = document.querySelector('.nib-bar.docked')
@@ -84,7 +52,6 @@ BAR = """
 }
 """
 
-# The caret at the end of the first line, so a command has somewhere to act.
 CARET = """
 () => {
   const view = window.nib
@@ -100,18 +67,10 @@ LINES = """
 () => window.nib.state.doc.toString().split('\\n').slice(0, 4)
 """
 
-
-# The marks on the bar are characters rather than words - a bullet, a box, a
-# sum - and a console that is not UTF-8 would stop the drive on one of them
-# rather than showing it.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-
 def pulling(page, down: int, across: int = 0, hold: bool = False):
-    """One pull, and how far the mark came. Held, the finger stays down until
-    `LIFT`, which is how a screenshot catches the mark."""
     return page.evaluate(PULL, {"down": down, "across": across, "hold": hold})
-
 
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -158,7 +117,6 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "chosen.png"))
     say("shot chosen.png")
 
-    # A command that is not the editor's at all, pressed from the bar.
     page.evaluate(CARET)
     page.click('.nib-bar.docked button[aria-label="Reading"]')
     page.wait_for_timeout(400)
@@ -172,8 +130,6 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "pane.png"))
     say("shot pane.png")
 
-    # Put one on the bar by pressing its row, the way a reader would. A command
-    # that is not on it already, which is the only kind the list offers.
     page.fill(".sheet .search input", "Footnote")
     page.wait_for_timeout(400)
     say(f"the list offers: {page.evaluate(OFFERS)}")
@@ -183,7 +139,6 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "added.png"))
     say("shot added.png")
 
-    # And the two arrows, which are what a thumb has instead of a drag.
     page.click('button[aria-label="Move down"]')
     page.wait_for_timeout(300)
     say(f"after one press of Move down: {page.evaluate('() => window.nibApp.toolbar.ids')}")
@@ -197,9 +152,6 @@ def drive(browser) -> None:
     page.wait_for_timeout(500)
     say(f"the pull runs {page.evaluate('() => window.nibApp.pull.id')}")
 
-    # A finger, dispatched as the touch events the handler listens for: a
-    # headless run has no finger, and these three events are the whole of what
-    # the page ever sees of one.
     say(f"a short pull: {pulling(page, 40)}")
     say(f"a long pull:  {pulling(page, 200, hold=True)}")
     page.wait_for_timeout(200)
@@ -226,21 +178,16 @@ def drive(browser) -> None:
 
     context.close()
 
-
-# What the list under the box is offering, once something has been typed into it.
 OFFERS = """
 () => [...document.querySelectorAll('.sheet .setting.button')]
   .map((one) => one.getAttribute('aria-label') ?? (one.querySelector('.name')?.textContent ?? '').trim())
   .slice(-4)
 """
 
-# Which panel the sidebar is holding, which is what the pull's own command opens.
 PANEL = """
 () => window.nibApp.workspace.panel
 """
 
-# One pull, as the three touch events a finger sends. The mark's distance is read
-# at the furthest point, before the finger lifts.
 PULL = """
 async ({ down, across, hold }) => {
   const view = window.nib
@@ -290,7 +237,6 @@ LIFT = """
 }
 """
 
-# What the pane is showing: the rows on the bar, and how many commands it offers.
 PANE = """
 () => {
   const sheet = document.querySelector('.sheet')
@@ -309,13 +255,11 @@ PANE = """
 }
 """
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict(f"shots in {SHOTS}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

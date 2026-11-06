@@ -1,24 +1,3 @@
-"""Todoist's task row and its scheduler, in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * A task in Today is Todoist's card (#1043): rounded, on a ground raised off the
-    list's, its words, the first line of its description, and a meta line: the day in
-    the colour of how near it is, the sub-tasks done of all, the comments, the labels
-    in their own colours, the deadline, and where it lives; ⋯ shows on the focus.
-  * The row's calendar opens the scheduler beside it; Tomorrow writes tomorrow's date.
-  * A phrase typed into the scheduler is read with quick add's grammar, shown, and
-    written on Enter.
-  * Overdue's Reschedule moves every overdue task at once, as one undo.
-  * The row's menu duplicates a task, copies its link (a block name written once) and
-    deletes it.
-  * The scheduler is a sheet at phone width.
-
-    python apps/desktop/test/e2e/task-rows.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/task-rows/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -31,11 +10,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 DAYS = """() => {
   const day = (n) => {
@@ -71,10 +48,8 @@ WRITE = """async ([files]) => {
 
 TASK = "(words) => window.tasks.rows.of().find((one) => one.task?.text === words)?.task ?? null"
 
-
 def task(page: Page, words: str) -> dict[str, object] | None:
     return page.evaluate(TASK, words)  # type: ignore[no-any-return]
-
 
 def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
@@ -88,16 +63,13 @@ def seed(page: Page) -> dict[str, str]:
     )
     return days
 
-
 def open_today(page: Page) -> None:
     page.evaluate("window.tasks.openBuiltin('today')")
     wait_for(page, "document.querySelector('.view-tab .task')", "Today's rows")
     quiet(page)
 
-
 def row(page: Page, words: str) -> str:
     return f".view-tab .task:has(.words:text-is('{words}'))"
-
 
 def the_row(page: Page) -> None:
     bank = row(page, "Call the bank")
@@ -106,8 +78,6 @@ def the_row(page: Page) -> None:
     for wanted in ["Their number is on the back", "1/2", "admin", "Errands", "Calls"]:
         if wanted not in text:
             wrong(f"the bank's row does not say {wanted}")
-    # Its start date has come, so it says nothing of it; its deadline, past, is said in the
-    # danger tone (#371).
     if page.locator(f"{bank} .meta .bit").count() < 3:
         wrong("the bank's meta line is missing its deadline, sub-tasks or comments")
     late = page.locator(f"{bank} .meta .bit").first.evaluate("(bit) => getComputedStyle(bit).color")
@@ -119,7 +89,6 @@ def the_row(page: Page) -> None:
     if late != danger:
         wrong("a deadline past is not drawn in the danger tone")
     shot(page, "01-today")
-
 
 CARD = """(card) => {
   const list = card?.closest('.view-tab')
@@ -169,7 +138,6 @@ CARD = """(card) => {
   }
 }"""
 
-
 def the_card(page: Page) -> None:
     for scheme in ("light", "dark"):
         page.emulate_media(color_scheme=scheme)
@@ -204,7 +172,6 @@ def the_card(page: Page) -> None:
         shot(page, f"01-card-{scheme}")
     page.emulate_media(color_scheme="light")
 
-
 def scheduler(page: Page, days: dict[str, str]) -> None:
     plants = row(page, "Water the plants")
     page.locator(plants).hover()
@@ -226,7 +193,6 @@ def scheduler(page: Page, days: dict[str, str]) -> None:
     if page.locator(".scheduler").count():
         wrong("the scheduler stayed up after a day was picked")
 
-    # A phrase, typed.
     page.evaluate("window.tasks.openBuiltin('upcoming')")
     plants = row(page, "Water the plants")
     page.locator(plants).wait_for()
@@ -246,12 +212,10 @@ def scheduler(page: Page, days: dict[str, str]) -> None:
     if found.get("recurrence") is None:
         wrong("scheduling a repeating task took its repeat away")
 
-
 def reschedule(page: Page, days: dict[str, str]) -> None:
     open_today(page)
     page.locator(".view-tab .head .act", has_text="Reschedule").click()
     wait_for(page, "document.querySelector('.scheduler')", "the scheduler for what is overdue")
-    # Overdue is a deadline past, so Reschedule moves the deadline (#371).
     page.locator(".scheduler .quick .nib-row", has_text="Today").click()
     wait_for(
         page,
@@ -264,7 +228,6 @@ def reschedule(page: Page, days: dict[str, str]) -> None:
         f"() => ['Call the bank', 'Pay the dentist'].every((words) => ({TASK})(words)?.deadline === '{days['yesterday']}')",
         "one undo taking all of them back",
     )
-
 
 def menu(page: Page) -> None:
     open_today(page)
@@ -298,9 +261,7 @@ def menu(page: Page) -> None:
         "one dentist deleted",
     )
 
-
 def repeating(page: Page, days: dict[str, str]) -> None:
-    """A repeating task skipped from the scheduler, and one done for good from its menu."""
     open_today(page)
     vitamins = row(page, "Take the vitamins")
     page.locator(vitamins).hover()
@@ -326,9 +287,7 @@ def repeating(page: Page, days: dict[str, str]) -> None:
         "Stretch done for good, with no next one",
     )
 
-
 def comment_button(page: Page) -> None:
-    """The row's comment button opens its view with the comment field ready."""
     open_today(page)
     bank = row(page, "Call the bank")
     page.locator(bank).hover()
@@ -339,14 +298,10 @@ def comment_button(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.sheet')", "the view put away")
 
-
-# A phone says it is one in its user agent and under a finger (deviceFor in
-# viewport.svelte.ts); the width alone is a narrow desktop window.
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 
 def phone(browser: Browser) -> None:
     page = DRIVE.page(
@@ -367,7 +322,6 @@ def phone(browser: Browser) -> None:
     shot(page, "06-phone-scheduler")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -382,7 +336,6 @@ def drive(browser: Browser) -> None:
     comment_button(page)
     page.close()
     phone(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the task row and its scheduler held"))

@@ -1,23 +1,3 @@
-"""Icons on everything that can wear one, and the picker they are chosen in.
-
-What the run is for: a note, a canvas and a folder each keep an icon in a
-different place - front matter, the canvas's own `nib` key, the space's map - and
-the only place that shows whether all three arrived is the tree. The picker is the
-other half: three sets behind one search field, and the grid is virtualised, so a
-screenshot is the only thing that says the cells are actually drawn.
-
-No Worker and no account: the browser build seeds its own space. Builds the web
-app, serves `dist` on a port of its own, shoots the tree and the picker on a
-desktop and on a phone, and stops everything again.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/icons.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/icons/`.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -34,26 +14,18 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
-# How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 40
 
-# A desktop, and a phone at the size the app calls one.
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
 
-
-# What a row wears may be an emoji, and this console is code page 1252. Said in
-# UTF-8 rather than left to fail on the one line that carries a picture.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
@@ -62,10 +34,6 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     DRIVE.open(page)
     return page
 
-
-# What makes the window a phone. A headless browser has no touch screen for the
-# app to recognise, so the device is set the way touch-scale.py sets it, along with
-# the attributes the tokens read for the touch scale.
 AS_PHONE = """
 () => {
   const app = window.nibApp
@@ -81,9 +49,6 @@ AS_PHONE = """
 }
 """
 
-# Four notes, a folder, and a canvas. The notes say what they wear the way a note
-# always does: in their own front matter, which is also what a vault out of
-# Obsidian's Iconize carries in.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -113,7 +78,6 @@ async () => {
 }
 """
 
-# What each row wears, so the shot is not the only record of it.
 ROWS = """
 () => [...document.querySelectorAll('aside .row')].map((row) => {
   const mark = row.querySelector('.mark')
@@ -135,24 +99,14 @@ CANVAS_ICON = """
 }
 """
 
-
 def pick(page: Page, label: str, words: str) -> None:
-    """Types into the picker's one search field and clicks the cell it finds.
-
-    By the words the cell is called rather than by the name it writes: a cell says
-    what it is for a reader who cannot see it, and an emoji's name is the picture."""
     page.locator(".sheet input.nib-field").fill(words)
-    # The line one: a search over every set finds the emoji of the same name too, and
-    # an emoji is a character where a line is a drawing.
     cell = page.locator(f'.sheet button[aria-label="{words}"]:has(svg)').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     cell.click()
     say(f"[{label}] picked {words}")
 
-
 def sets(page: Page, label: str, where: str) -> None:
-    """The one list, shot once its cells are drawn, and a search over every set (#1096):
-    no tabs, and a search finds a line, an emoji and a brand alike."""
     page.locator(".sheet input.nib-field").fill("")
     wait_for(
         page,
@@ -162,8 +116,6 @@ def sets(page: Page, label: str, where: str) -> None:
     page.wait_for_timeout(250)
     page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{where}.png"))
     say(f"[{label}] wrote picker-{where}.png")
-    # The one control of two halves there is says how the emoji are drawn (#1097), not
-    # which set is shown.
     check(
         page.locator(".sheet .nib-segmented:not(.variant)").count() == 0,
         f"[{label}] the picker has no tabs",
@@ -179,10 +131,6 @@ def sets(page: Page, label: str, where: str) -> None:
         page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{words}-{where}.png"))
     page.locator(".sheet input.nib-field").fill("")
 
-
-# Where the marks on a cell are against what the cell draws (#1116): the box of the
-# glyph and of the character in an emoji cell, against the cell's own box, and a
-# group's heading against the glyphs under it. Read off the layout, in pixels.
 GEOMETRY = """
 () => {
   const sheet = document.querySelector('.sheet')
@@ -214,7 +162,6 @@ GEOMETRY = """
 }
 """
 
-# How a cell looks hovered and walked to, which are two different things (#1116).
 LOOKS = """
 (which) => {
   const cell = document.querySelector(which)
@@ -224,10 +171,7 @@ LOOKS = """
 }
 """
 
-
 def aligned(page: Page, label: str) -> None:
-    """Every mark on a cell is the cell's own box, the glyph centred in it, and the
-    arrows' mark shows only once the arrows are used, unlike a hover (#1116)."""
     page.locator(".sheet input.nib-field").fill("")
     wait_for(page, "() => document.querySelectorAll('.sheet .grid .emoji').length > 8", f"[{label}] the emoji")
     page.wait_for_timeout(250)
@@ -259,17 +203,13 @@ def aligned(page: Page, label: str) -> None:
     check(page.locator(".sheet .cell.at").count() == 0, f"[{label}] a new search starts unmarked")
     field.fill("")
 
-
 CANVAS_WORN = (
     "() => { const ws = window.nibApp.workspace;"
     " const c = ws.files.find((one) => one.name === 'Roadmap.canvas');"
     " return c ? [window.nibApp.links.iconOf(c.path), window.nibApp.links.tintOf(c.path)] : null }"
 )
 
-
 def outline(page: Page, label: str, where: str) -> None:
-    """An emoji in one colour (#1097): the same search finds it, the pair under the grid
-    says which drawing a pick is, and a colour paints it as it paints a line."""
     say(f"[{label}] choosing again for {page.evaluate(CANVAS_ICON)}")
     sheet = page.locator(".sheet")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
@@ -278,7 +218,6 @@ def outline(page: Page, label: str, where: str) -> None:
     sheet.locator(".tint").nth(3).click()
     cell = sheet.locator('button.cell[aria-label="thinking face"]:has(svg.drawn)').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
-    # A colour painted while the sheet is up keeps what was typed.
     page.wait_for_timeout(400)
     check(
         sheet.locator("input.nib-field").input_value() == "thinking face",
@@ -308,7 +247,6 @@ def outline(page: Page, label: str, where: str) -> None:
     page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-outline-{where}.png"))
     say(f"[{label}] wrote tree-outline-{where}.png")
 
-    # Back in colour, the same cell writes the emoji itself.
     say(f"[{label}] and once more for {page.evaluate(CANVAS_ICON)}")
     sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
     check(
@@ -326,17 +264,12 @@ def outline(page: Page, label: str, where: str) -> None:
     check(worn is not None and worn[0] == "\U0001F914", f"[{label}] in colour it is the emoji: `{worn}`")
     check(worn is not None and worn[1] is None, f"[{label}] which takes no colour")
 
-
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     label = where
     page = fresh(browser, label, viewport)
     try:
         say(f"[{label}] the space holds {page.evaluate(SEED)}")
 
-        # A phone is a phone because the app says so, and on one the list is a
-        # drawer over the note rather than a column beside it. Told rather than
-        # inferred, the way touch-scale.py tells it: a headless window has no
-        # touch screen to be recognised by.
         if where == "phone":
             page.evaluate(AS_PHONE)
             page.evaluate(
@@ -351,7 +284,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             ".length >= 5",
             f"[{label}] a mark on every row",
         )
-        # Past the row transitions, the folder's slide, and the sets arriving.
         page.wait_for_timeout(700)
 
         for one in page.evaluate(ROWS):
@@ -373,7 +305,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] a note with a colour on its icon is drawn in it",
         )
 
-        # The picker, on the canvas, which is the one row that had nothing yet.
         say(f"[{label}] choosing for {page.evaluate(CANVAS_ICON)}")
         page.locator(".sheet").wait_for(state="visible", timeout=PATIENCE * 1000)
         sets(page, label, where)
@@ -398,7 +329,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     finally:
         page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         shoot(browser, "desktop", DESKTOP)
@@ -407,7 +337,6 @@ def main() -> int:
     return DRIVE.verdict(
         "icons on a note, a canvas and a folder, the picker over every set, its cells' marks, and an emoji's outline"
     )
-
 
 if __name__ == "__main__":
     sys.exit(main())

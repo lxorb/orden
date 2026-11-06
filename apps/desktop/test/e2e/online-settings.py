@@ -1,32 +1,3 @@
-"""Settings > Online terminal, for a machine in the cloud and for a server of its own, at
-three widths of a window, in light and dark, and on a phone.
-
-Issue 245: the machine's Start, Stop or Restart was the card's full-width action rather
-than the small one at the end of a row, so it took the whole row and left the row's name
-no width at all - `Machine`, its state and its server drawn one letter to a line, down
-past the bottom of the window, with `Restart` floating half way down beside them.
-
-The account is answered here: `GET /v2/online/machine` with each of the two machines, and
-everything else the app would ask of the service refused. What it checks, at every
-width and in every look, and fails on:
-
-  - the machine's row is one row: its name as wide as its words, the row no taller than
-    its name, its state and its server's line;
-  - the action is the small one at the row's end, not a line across it;
-  - every meter's name and numbers share a line, and the bar is as wide as the card;
-  - nothing in the pane is wider than the pane;
-  - every session on the machine is a row of its own, called by what runs in it, in the
-    order they last printed, with End the small action at its end; and End, once asked
-    and said yes to, ends that session on the account and takes its row away.
-
-From the repository root; the harness builds the app with its handle on the page the
-first time and serves it (see harness.py):
-
-    python apps/desktop/test/e2e/online-settings.py
-
-Screenshots go beside this file under `shots/online-settings/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import json
@@ -52,13 +23,9 @@ PHONE_AGENT = (
 GB = 1_000_000_000
 HOUR = 3600
 
-#: The month, as the Worker counts it, a little over half way through.
 ALLOWANCE = {"awakeS": 20 * HOUR, "cpuS": 10 * HOUR, "homeBytes": 5 * GB, "egressBytes": 20 * GB}
 USED = {"awakeS": 17 * HOUR, "cpuS": 2 * HOUR, "homeBytes": int(1.4 * GB), "egressBytes": 3 * GB}
 
-#: The two machines a person can have: one in the cloud that sleeps, and a server of its
-#: own that is always on (docs/online-terminal.md 4.15), the one the issue's screenshot
-#: was taken of.
 MACHINES = {
     "cloud": {
         "id": "m-cloud",
@@ -86,8 +53,6 @@ MACHINES = {
     },
 }
 
-#: The machine's sessions, as `GET /v2/online/terms` answers them: an agent at work, an
-#: editor, and a shell no file names any more, each with what the machine says of it.
 SESSIONS = [
     {
         "term": "note-agent",
@@ -130,11 +95,8 @@ SESSIONS = [
     },
 ]
 
-#: Their rows' names, in the order the pane lists them.
 NAMES = ["Fix the flaky upload test and the build that goes with it", "vim", "Terminal"]
 
-#: Every session's row: its name, how tall the row is, and its actions, the last of which
-#: should sit at the row's end.
 ROWS = """
 () => {
   const box = (one) => one.getBoundingClientRect()
@@ -158,9 +120,7 @@ ROWS = """
 }
 """
 
-
 class Account:
-    """The account's sessions, kept as the routes change them: `DELETE` ends one."""
 
     def __init__(self) -> None:
         self.sessions = [dict(one) for one in SESSIONS]
@@ -175,8 +135,6 @@ class Account:
             return
         route.fulfill(status=200, content_type="application/json", body=json.dumps({"terms": self.sessions}))
 
-
-#: Every look: what the window is, how wide, and in which scheme.
 LOOKS = [
     ("desktop", 1280, 860, "light"),
     ("desktop", 960, 760, "light"),
@@ -186,8 +144,6 @@ LOOKS = [
     ("phone", 390, 844, "dark"),
 ]
 
-# A session, put straight into the store, as recording.py does: signing in properly is
-# signin.py's drive, and the pane only asks that there is an account.
 SIGNED_IN = """
 () => {
   const app = window.nibApp
@@ -198,8 +154,6 @@ SIGNED_IN = """
 }
 """
 
-#: What the pane draws, measured: the machine's row and what is in it, every meter, and
-#: whether anything in the pane runs past its side.
 MEASURE = """
 () => {
   const box = (one) => one ? one.getBoundingClientRect() : null
@@ -247,16 +201,13 @@ MEASURE = """
 }
 """
 
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
 
-
 def answering(machine: dict[str, object]):
-    """The account's answer about its machine and its month."""
 
     def answer(route: Route) -> None:
         route.fulfill(
@@ -275,7 +226,6 @@ def answering(machine: dict[str, object]):
 
     return answer
 
-
 def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> None:
     finger = kind == "phone"
     page = DRIVE.page(
@@ -288,7 +238,6 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
         reduced_motion="reduce",
         device_scale_factor=2,
     )
-    # Playwright tries the newest route first, so the refusal goes in before the answer.
     page.route("https://orden.so/**", lambda route: route.abort())
     account = Account()
     page.route("**/v2/online/terms**", account.answer)
@@ -349,10 +298,7 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
 
     page.context.close()
 
-
 def ending(page: Page, account: Account) -> None:
-    """End on the session no file names: asked first, nothing ended when the question is
-    put away, and ended on the account by its own id once said yes to, its row gone."""
     danger = "document.querySelector('button.nib-button.is-danger')"
     last = page.locator(".online .nib-setting").last
     last.get_by_role("button", name="End").click()
@@ -368,15 +314,12 @@ def ending(page: Page, account: Account) -> None:
     DRIVE.wait_for(page, "document.querySelectorAll('.online .nib-setting').length === 3", "its row gone")
     check("End ends the session no file names, by its own id", account.ended == ["s_orphan"])
     shot(page, "end-ended")
-    # Every look after this one lists all three again.
     account.sessions = [dict(one) for one in SESSIONS]
     account.ended.clear()
-
 
 def drive(browser: Browser) -> None:
     for kind, width, height, scheme in LOOKS:
         look(browser, kind, width, height, scheme)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "Settings > Online terminal is laid out in every look"))

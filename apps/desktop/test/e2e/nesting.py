@@ -1,26 +1,3 @@
-"""A note that holds notes, seen: nesting one, the row it becomes, and the way back.
-
-What the run is for. Dropping a note onto a note is one gesture with three
-outcomes on disk - a folder is made, the note moves inside it under its own name,
-and the note that was dropped lands beside it - and the tree then draws all three
-as one row. A unit test can say the model is right; only a screenshot can say the
-row reads as the note it is rather than as a folder that happens to hold one.
-
-The way back is the other half: drag the last child out and the row is a plain
-note again, with no empty folder left behind.
-
-No Worker and no account: the browser build seeds its own space. Builds the web
-app, serves `dist` on a port of its own, shoots the tree on a desktop and on a
-phone, and stops everything again.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/nesting.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/nesting/`.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -37,22 +14,18 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
 PATIENCE = 40
 
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
 
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
@@ -60,7 +33,6 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
     return page
-
 
 AS_PHONE = """
 () => {
@@ -77,9 +49,6 @@ AS_PHONE = """
 }
 """
 
-# A note to nest into, one to nest, and a third to put in after it. The parent
-# wears an icon of its own, because the row a nested note becomes has to keep it:
-# it is drawn from the note's path, not from the folder's.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -96,9 +65,6 @@ async () => {
 }
 """
 
-# The drop, as the tree makes it: what a note dropped on a note does. `moveMany`
-# is the one call the drop handler makes, so this is that gesture and not a
-# second way of doing it.
 NEST = """
 async () => {
   const ws = window.nibApp.workspace
@@ -114,8 +80,6 @@ async () => {
 }
 """
 
-# And out again: the last child dragged back to the root leaves a note behind,
-# not a folder holding one.
 UNNEST = """
 async () => {
   const ws = window.nibApp.workspace
@@ -134,7 +98,6 @@ ROWS = """
 () => [...document.querySelectorAll('aside .row')].map((row) =>
   [row.className.replace(/svelte-\\w+/, '').trim(), row.textContent.trim().slice(0, 30)].join(' | '))
 """
-
 
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     label = where
@@ -162,8 +125,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"nested-{where}.png"))
         say(f"[{label}] wrote nested-{where}.png")
 
-        # The note is inside its own folder under its own name, which is what
-        # Obsidian's folder-note plugins look for.
         check(
             page.evaluate(
                 "() => window.nibApp.workspace.notes.some((one) =>"
@@ -179,13 +140,10 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             page.locator('aside .row[aria-expanded] .mark svg[viewBox="0 0 24 24"]').count() == 1,
             f"[{label}] wearing the note's own icon",
         )
-        # Not quiet: the note is written, so the row is a note to read rather than
-        # a name nobody has put words under. See docs/tree.md.
         check(
             page.locator("aside .row[aria-expanded].is-quiet").count() == 0,
             f"[{label}] at full strength, because the note has words in it",
         )
-        # Once as the row, never again as a child of itself.
         check(
             page.evaluate(
                 "() => [...document.querySelectorAll('aside .row')]"
@@ -214,14 +172,12 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     finally:
         page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         shoot(browser, "desktop", DESKTOP)
         shoot(browser, "phone", PHONE)
 
     return DRIVE.verdict("a note held notes, and stopped holding them again")
-
 
 if __name__ == "__main__":
     sys.exit(main())

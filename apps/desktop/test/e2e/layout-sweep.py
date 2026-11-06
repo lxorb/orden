@@ -1,53 +1,3 @@
-"""Whether anything on the app's big surfaces is laid out so a person cannot read it.
-
-Settings > Account > Status drew "Clear after" one letter to a line, and it was not
-the first time: Settings > Online terminal had done it with Restart, and Glasses with
-the OpenAI key (issue 245). Each was a control at the end of a row of settings that
-left the name beside it no width, and each passed every gate there is, because jsdom
-has no layout - vitest.config.ts says so - and the one drive a push runs, smoke.py,
-asks about a note and nothing else. They were found by Emil.
-
-So this opens every pane of the settings, and every surface a person spends time on,
-in a real browser at the widths people have, and holds what is drawn to the handful
-of facts a layout has to keep whatever is on it:
-
-  - no word is broken across lines: a box that splits "Clear" into "C l e a r" is a
-    box too narrow for its words, which is the bug every one of these was
-  - nothing reaches past the window's edge, and the page never scrolls sideways
-  - nothing spills out of the box it is in, and no words are cut off at its edge
-  - no two things side by side in a row are drawn over each other
-  - no control is drawn at no size at all, and no empty field is invisible: a box
-    with no border, no ground and no words in it is a row with nothing to press
-  - a box to tick is drawn as a box, with its few words on one line beside it
-  - a row of settings keeps a name a person can read beside its control
-
-Every pane of the settings and every page behind one, signed out and with an
-account, at 1280, 960 and 720 on a desktop and 390 on a phone, light and dark; and
-beside them the new tab, the palette, the theme picker, the theme store, a question,
-the question with a box under its answers (Ctrl+N in a terminal), the sync question, the quick question, the icon picker, the sign-in sheet, a row's menu, every panel of
-the sidebars, the file list and the empty space.
-
-The account is the browser's own: the session is a word in storage and every request
-the app makes to the service is answered here, by `ACCOUNT`, the way the service
-would answer an account that has just been made. Nothing leaves the machine, so the
-drive needs no Worker and no network, and is cheap enough to run on every push.
-
-A failure names the surface, the width, the scheme and the element, so it can be
-found without running anything:
-
-    [desktop 720 dark, signed in] settings/Account: "Clear" is broken across 5 lines
-        in span.name < div.nib-setting.setting < div.card (8px wide)
-
-From the repository root; the harness builds the app with its handle on the page the
-first time and serves it (see harness.py):
-
-    python apps/desktop/test/e2e/layout-sweep.py [--shots]
-
-With `--shots`, every surface is photographed too, under `shots/layout-sweep/`. The
-four kinds of browser - desktop and phone, signed out and in - are four pages of one
-browser, run side by side.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -76,20 +26,13 @@ PHONE_AGENT = (
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-#: The widths a desktop window is held at, and the one phone. A desktop is resized in
-#: place, which is what a person dragging the window's edge does; a phone is a device
-#: of its own, which the app settles once from the machine (lib/viewport.svelte.ts).
 DESKTOP_WIDTHS = (1280, 960, 720)
 DESKTOP_HEIGHT = 800
 PHONE = {"width": 390, "height": 844}
 SCHEMES = ("light", "dark")
 
-#: How long one wait for the app is given.
 PATIENCE = 30
 
-#: The account the service answers with, and what it answers for each route it is
-#: asked; anything else is a refusal the app already has words for. Shaped after
-#: lib/api/routes.ts.
 NOW = int(time.time() * 1000)
 USER = {
     "id": "sweep",
@@ -133,9 +76,6 @@ async () => {
 }
 """
 
-#: Every fact this drive holds a surface to, asked of whatever is drawn under `scope`
-#: in one pass, and answered as a list of sentences. Written to be read without the
-#: drive: each check says what it is about where it starts.
 CHECK = r"""
 (scope) => {
   const roots = scope ? [...document.querySelectorAll(scope)] : [document.body]
@@ -406,21 +346,15 @@ CHECK = r"""
 }
 """
 
-#: The panes of the settings by the names their list gives them, as drawn now.
 PANES = """
 () => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] nav .item')]
   .map((one) => one.textContent.trim()).filter(Boolean)
 """
 
 SETTINGS = '[role="dialog"][aria-label="Settings"]'
-#: The palette: the layer with the line typed into, and not the address field of a web
-#: tab, which is a combobox too.
 PALETTE = '[role="dialog"]:has(input[role="combobox"])'
 
-
 class Browser:
-    """One kind of browser - a desktop or a phone, signed out or with an account - and
-    what it has found."""
 
     def __init__(self, kind: str, signed_in: bool) -> None:
         self.kind = kind
@@ -429,7 +363,6 @@ class Browser:
         self.found: list[str] = []
         self.surfaces = 0
         self.errors: list[str] = []
-        #: The last surface checked, which is where a walk-out or a page error happened.
         self.at = "the launch"
 
     async def open(self, browser: Any) -> Any:
@@ -442,14 +375,10 @@ class Browser:
             device_scale_factor=2 if phone else 1,
             color_scheme="light",
             reduced_motion="reduce",
-            # The account here is the routes', and in WebKit a page the asset worker
-            # controls sends its fetches past them; see WEBKIT_WORKERS in harness.py.
             service_workers="block" if ENGINE == "webkit" else "allow",
         )
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('nib:session', 'sweep') } catch {}")
-        # Everything but the app's own origin, which is a name below `.localhost` in
-        # Chromium and the loopback address itself in WebKit (see harness.py).
         own = re.escape(urlsplit(DRIVE.origin).netloc)
         await context.route(re.compile(rf"^https?://(?!{own}/)"), self.answer)
         with_sockets = getattr(context, "route_web_socket", None)
@@ -481,8 +410,6 @@ class Browser:
             say(f"  {self.label} threw after {self.at}: {(error.stack or '')[:2500]}")
 
     async def answer(self, route: Any) -> None:
-        """The service, for an account that has just been made: what `ACCOUNT` has for
-        the route, and a refusal for anything else. Nothing goes out."""
         url = route.request.url
         path = re.sub(r"^https?://[^/]+", "", url).split("?", 1)[0]
         if self.signed_in and path in ACCOUNT:
@@ -506,8 +433,6 @@ class Browser:
             await self.photograph(page, f"{width}-{scheme}-{surface}")
 
     async def through(self, page: Any, surface: str, width: int, scheme: str, scope: str, scroller: str) -> None:
-        """A surface longer than the window, a window's height at a time: a row below the
-        fold is a row somebody scrolls to, and is held to the same facts."""
         await self.check(page, surface, width, scheme, scope)
         for _ in range(12):
             moved = await page.evaluate(
@@ -524,24 +449,14 @@ class Browser:
             await self.check(page, surface, width, scheme, scope)
 
     async def photograph(self, page: Any, name: str) -> None:
-        """The window, in this drive's shots: every surface with `--shots`, and every
-        one that found something whether or not, which is what CI keeps of a run."""
         slug = re.sub(r"[^a-z0-9]+", "-", f"{self.kind}-{'in' if self.signed_in else 'out'}-{name}".lower())
         DRIVE.shots.mkdir(parents=True, exist_ok=True)
         await page.screenshot(path=str(DRIVE.shots / f"{slug.strip('-')}.png"))
 
-
 async def given_back(page: Any) -> None:
-    """A phone's layer gives its history entry back as it closes, a turn later; the
-    next layer waits for that, the way a person's next tap does. See backstack.svelte.ts."""
     await page.wait_for_timeout(150)
 
-
 async def settle(page: Any) -> None:
-    """Two painted frames and a beat: whatever the last step changed is drawn, and the
-    sheets' short entrances - motion is reduced - are over. Or a fifth of a second,
-    whichever is first: four pages share one browser here, and a page nobody is
-    looking at can go without a frame for as long as it likes."""
     await page.evaluate(
         """() => new Promise((go) => {
           setTimeout(go, 200)
@@ -549,14 +464,11 @@ async def settle(page: Any) -> None:
         })"""
     )
 
-
 async def scheme_of(page: Any, scheme: str) -> None:
     await page.evaluate("(scheme) => window.nibApp.theme.setScheme(scheme)", scheme)
     await settle(page)
 
-
 async def settings(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """Every pane, by the list's own names, and on a phone the list itself first."""
     phone = one.kind == "phone"
     await page.evaluate("() => window.nibApp.settings.show('general')")
     await page.wait_for_selector(SETTINGS)
@@ -572,9 +484,7 @@ async def settings(one: Browser, page: Any, width: int, scheme: str) -> None:
     await page.evaluate("() => { window.nibApp.settings.open = false }")
     await page.wait_for_selector(SETTINGS, state="detached")
 
-
 async def layer(one: Browser, page: Any, surface: str, width: int, scheme: str, opened: str, selector: str, closed: str) -> None:
-    """A layer over the app: opened by the app's own call, checked, and put away."""
     try:
         await page.evaluate(opened)
         await page.wait_for_selector(selector, timeout=8000)
@@ -587,7 +497,6 @@ async def layer(one: Browser, page: Any, surface: str, width: int, scheme: str, 
     await page.wait_for_selector(selector, state="detached", timeout=8000)
     await given_back(page)
 
-
 async def palette(one: Browser, page: Any, width: int, scheme: str, typed: str = "") -> None:
     await page.keyboard.press("Control+Shift+P")
     await page.wait_for_selector(PALETTE)
@@ -596,10 +505,7 @@ async def palette(one: Browser, page: Any, width: int, scheme: str, typed: str =
     await one.check(page, f"palette{' / ' + typed if typed else ''}", width, scheme, PALETTE)
     await shut(page, PALETTE)
 
-
 async def shut(page: Any, selector: str) -> None:
-    """Escape until the layer is gone: a palette with words in it takes one to clear
-    them and one to close."""
     for _ in range(3):
         await page.keyboard.press("Escape")
         try:
@@ -609,7 +515,6 @@ async def shut(page: Any, selector: str) -> None:
         except Exception:  # noqa: BLE001 - one more press
             continue
     raise RuntimeError(f"{selector} did not close")
-
 
 async def through_palette(one: Browser, page: Any, command: str, surface: str, selector: str, width: int, scheme: str) -> None:
     await page.keyboard.press("Control+Shift+P")
@@ -626,15 +531,9 @@ async def through_palette(one: Browser, page: Any, command: str, surface: str, s
     await one.check(page, surface, width, scheme, selector)
     await shut(page, selector)
 
-
-#: Every panel a browser has: the agents' needs the installed app's crate, and its tab is
-#: not drawn here (see Sidebar.svelte).
 PANELS = ("tree", "outline", "search", "tasks", "chats", "links", "ask")
 
-
 async def panels(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """Every panel of the sidebars, each shown the way its tab shows it, and the
-    window around it."""
     for panel in PANELS:
         try:
             await page.evaluate("(panel) => window.nibApp.workspace.showPanel(panel)", panel)
@@ -643,7 +542,6 @@ async def panels(one: Browser, page: Any, width: int, scheme: str) -> None:
         await page.wait_for_timeout(60)
         await one.check(page, f"panel/{panel}", width, scheme)
     await page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
-
 
 MENU = """
 (selector) => {
@@ -655,9 +553,7 @@ MENU = """
 }
 """
 
-
 async def menus(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """A row's own menu in the file list, and a tab's."""
     for surface, selector in (("menu/file", ".nib-row:has(.nib-row-label)"), ("menu/tab", '[role="tab"]')):
         if not await page.evaluate(MENU, selector):
             continue
@@ -668,7 +564,6 @@ async def menus(one: Browser, page: Any, width: int, scheme: str) -> None:
         await one.check(page, surface, width, scheme, '[role="menu"]')
         await page.keyboard.press("Escape")
         await page.wait_for_timeout(80)
-
 
 HOLD = """
 (path) => {
@@ -682,16 +577,9 @@ HOLD = """
 }
 """
 
-
-#: How long one surface is given, from opening it to putting it away. A step that
-#: takes longer is said and the walk goes on to the next, so one surface that will
-#: not open costs a line and not the run.
 STEP = 45
 
-
 async def step(one: Browser, page: Any, name: str, width: int, scheme: str, work: Any) -> None:
-    """One surface's walk, held to `STEP`; a surface that stalls or throws is said,
-    and whatever it left open is put away before the next."""
     try:
         await asyncio.wait_for(work, STEP)
     except Exception as error:  # noqa: BLE001 - said, and the walk goes on
@@ -706,9 +594,7 @@ async def step(one: Browser, page: Any, name: str, width: int, scheme: str, work
         )
         await settle(page)
 
-
 async def new_tab(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """The new tab, and the tab it replaced back afterwards."""
     before = await page.evaluate("() => { const ws = window.nibApp.workspace; const was = ws.active?.id; ws.newTab(); return was }")
     await page.wait_for_timeout(120)
     await one.check(page, "new tab", width, scheme)
@@ -724,11 +610,8 @@ async def new_tab(one: Browser, page: Any, width: int, scheme: str) -> None:
     )
     await page.wait_for_timeout(60)
 
-
 async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> None:
     if one.kind == "phone":
-        # Either side is a drawer over the note on a phone, and the question waits for
-        # the note to be in view.
         await page.evaluate("() => window.nibApp.workspace.closePanel('left')")
         await given_back(page)
         await page.evaluate("() => window.nibApp.workspace.closePanel('right')")
@@ -740,9 +623,6 @@ async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> Non
         "() => { window.__held?.stop() }",
     )
 
-
-#: A provider the quick question can be asked of, and nothing that answers: nothing is
-#: asked here, and the layer only draws its field once there is somebody to ask.
 PROVIDER = """
 () => {
   const ai = window.nibApp.ai
@@ -755,13 +635,8 @@ PROVIDER = """
 
 QUICK = '[role="dialog"][aria-label="Quick question"]'
 
-
 async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """Ctrl twice: the quick question, with the open note along as a chip and then on
-    its own once the chip is taken off, which is where its field met the sheet's foot
-    (#360)."""
     await page.evaluate(PROVIDER)
-    # Through the palette's row: a built app has no path to the module to call.
     await page.keyboard.press("Control+Shift+P")
     await page.wait_for_selector(PALETTE)
     await page.keyboard.type("Quick question")
@@ -776,9 +651,7 @@ async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> No
         await one.check(page, "quick question / alone", width, scheme, QUICK)
     await shut(page, QUICK)
 
-
 async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """Everything but the settings, at one width in one scheme."""
     walks = [
         ("the window", one.check(page, "the window", width, scheme)),
         ("panels", panels(one, page, width, scheme)),
@@ -800,8 +673,6 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
             "() => { window.nibApp.iconChoice.close() }",
         )),
         ("sync question", sync_question(one, page, width, scheme)),
-        # A key that is both the terminal's and the app's, asked about with a box under
-        # its answers (#317); only a terminal raises it, so it is raised here by hand.
         ("terminal question", layer(
             one, page, "terminal question", width, scheme,
             "() => { void window.nibApp.prompt.chooseTicking({ title: 'Ctrl+N in a terminal',"
@@ -823,9 +694,7 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
     for name, work in walks:
         await step(one, page, name, width, scheme, work)
 
-
 async def empty(one: Browser, page: Any, width: int, scheme: str) -> None:
-    """A space with nothing in it: the file list's and the window's empty states."""
     made = await page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -838,7 +707,6 @@ async def empty(one: Browser, page: Any, width: int, scheme: str) -> None:
         return
     await page.wait_for_timeout(200)
     await one.check(page, "an empty space", width, scheme)
-
 
 async def sweep_one(one: Browser, browser: Any) -> None:
     page = await one.open(browser)
@@ -856,19 +724,14 @@ async def sweep_one(one: Browser, browser: Any) -> None:
     await empty(one, page, widths[-1], SCHEMES[-1])
     await page.context.close()
 
-
 async def sweep() -> list[Browser]:
     from playwright.async_api import async_playwright
 
     kinds = [Browser(kind, signed_in) for kind in ("desktop", "phone") for signed_in in (False, True)]
-    # `--only desktop-out` and the like, for a run at one desk: the four are
-    # desktop-out, desktop-in, phone-out and phone-in.
     if "--only" in sys.argv:
         wanted = sys.argv[sys.argv.index("--only") + 1].split(",")
         kinds = [one for one in kinds if f"{one.kind}-{'in' if one.signed_in else 'out'}" in wanted]
     async with async_playwright() as play:
-        # The engine the run is in, as every other drive's (`NIB_ENGINE` in harness.py):
-        # the sweep is a question about how an engine lays the app out.
         if ENGINE == "webkit":
             browser = await play.webkit.launch()
         else:
@@ -882,7 +745,6 @@ async def sweep() -> list[Browser]:
             wrong(f"[{one.label}] the sweep stopped after {one.at}: {type(result).__name__}: {str(result).splitlines()[0]}")
     return kinds
 
-
 def main() -> int:
     started = time.monotonic()
     with DRIVE.session(browser=False):
@@ -891,8 +753,6 @@ def main() -> int:
     for one in kinds:
         say(f"{one.label}: {one.surfaces} surfaces, {len(one.found)} faults")
         for error in dict.fromkeys(one.errors):
-            # Signed in, the service is this drive's stand-in and its refusals are its
-            # own; signed out, a page error is the app's.
             if one.signed_in:
                 say(f"  page error (stand-in service): {error.splitlines()[0]}")
             else:
@@ -901,7 +761,6 @@ def main() -> int:
             wrong(fault)
     say(f"swept in {time.monotonic() - started:.0f}s")
     return DRIVE.verdict()
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

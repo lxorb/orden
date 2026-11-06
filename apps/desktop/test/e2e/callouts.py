@@ -1,19 +1,3 @@
-"""Callouts, seen: the thirteen looks and every other word for them, the icons
-they wear, a title of the writer's own, a type nothing knows dressed by a theme's
-own rule, and the same note as it reads.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/callouts.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/callouts/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -26,14 +10,6 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 SHOTS = DRIVE.shots
 
-
-# Every word the first note writes, and the look it comes out wearing. Thirteen
-# looks, and `important` and `caution` are not two more of them: nib drew those as
-# GitHub alert kinds of its own until 5d93b5a4, where they folded into `tip` and
-# `warning` the way Obsidian has them - a note that reads one way here and another
-# way over there is a note this app got wrong. The word itself survives in
-# `data-callout`, which is what still lets a theme colour one of them apart; see
-# packages/markdown/src/callouts.ts.
 LOOKS = {
     "note": "note",
     "abstract": "abstract",
@@ -54,8 +30,6 @@ LOOKS = {
 
 KINDS = list(LOOKS)
 
-# The other words for the same looks, which is Obsidian's list of aliases minus the
-# two above: a callout written in either app is the same callout in both.
 ALIASES = {
     "summary": "abstract",
     "tldr": "abstract",
@@ -99,12 +73,10 @@ async (notes) => {
 }
 """
 
-
 def shot(page: Page, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SHOTS / f"{name}.png"), full_page=True)
     say(f"shot {name}.png")
-
 
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme=scheme)
@@ -121,7 +93,6 @@ def fresh(browser: Browser, scheme: str) -> Page:
     page.wait_for_timeout(400)
     return page
 
-
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -133,7 +104,6 @@ def open_note(page: Page, starts: str) -> None:
     )
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
-
 
 WRITTEN = """
 () => {
@@ -167,12 +137,7 @@ READ = """
 }
 """
 
-
 def swept(page: Page) -> dict:
-    """Everything the editor marked, gathered a screenful at a time.
-
-    The live preview only decorates what is in view, so a note longer than the
-    window has to be read through rather than read once."""
     found: dict = {}
     seen = -1
 
@@ -192,7 +157,6 @@ def swept(page: Page) -> dict:
         if at == seen:
             return found
         seen = at
-
 
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
@@ -216,7 +180,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if len(set(accents.values())) < 6:
         wrong(f"the looks barely differ: {sorted(set(accents.values()))}")
 
-    # The odd ones: a title of the writer's own, and a type nothing knows.
     open_note(page, "The odd ones")
     odd = swept(page)
     say(f"[{scheme}] the odd ones: {json.dumps(odd)}")
@@ -236,7 +199,6 @@ def drive(browser: Browser, scheme: str) -> None:
     elif (titled["words"] or "").strip():
         wrong(f"a callout with a title of its own also shows the type: {titled['words']!r}")
 
-    # A theme's own rule, which is the whole of "custom callout types".
     page.evaluate(
         """() => {
           const sheet = document.createElement('style')
@@ -253,7 +215,6 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong(f"a theme could not reach an unknown type through data-callout: {dressed}")
     shot(page, f"03-theme-dressed-{scheme}")
 
-    # The other names for the same looks.
     open_note(page, "Other names")
     others = swept(page)
     say(f"[{scheme}] other names: {json.dumps({k: v['look'] for k, v in others.items()})}")
@@ -262,7 +223,6 @@ def drive(browser: Browser, scheme: str) -> None:
         if others.get(name, {}).get("look") != f"nib-callout-{look}":
             wrong(f"{name} does not wear nib-callout-{look}: {others.get(name)}")
 
-    # And the same notes as they read.
     open_note(page, "Callouts")
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
@@ -295,7 +255,6 @@ def drive(browser: Browser, scheme: str) -> None:
     fold(page, scheme)
     page.context.close()
 
-
 FOLDED = """
 () => ({
   marks: document.querySelectorAll('.nib-folded').length,
@@ -316,9 +275,7 @@ DISCLOSED = """
 }))
 """
 
-
 def fold(page: Page, scheme: str) -> None:
-    """The `-` and `+` a writer puts in the file, in both faces of the note."""
     open_note(page, "Folding")
     written = page.evaluate(FOLDED)
     say(f"[{scheme}] written: {written['marks']} marks")
@@ -330,7 +287,6 @@ def fold(page: Page, scheme: str) -> None:
     if not any("In front of the sign" in one for one in written["shown"]):
         wrong("a plus shut a callout it should have left open")
 
-    # And the chevron opens it, like anything else that folds.
     page.locator(".cm-line[data-callout] .nib-fold-hinge").first.click()
     page.wait_for_timeout(500)
     opened = page.evaluate(FOLDED)
@@ -339,7 +295,6 @@ def fold(page: Page, scheme: str) -> None:
     if opened["marks"]:
         wrong("the chevron did not open a callout the note said was shut")
 
-    # As it reads: a sign makes it a details, and no sign makes it a plain box.
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, f"09-fold-reading-{scheme}")
@@ -361,14 +316,12 @@ def fold(page: Page, scheme: str) -> None:
     if not plain or plain["tag"] != "div" or plain["chevron"]:
         wrong(f"a callout with no sign was made foldable anyway: {json.dumps(plain)}")
 
-    # And it opens where it is read, with nothing running behind it.
     page.locator("details.callout > summary").first.click()
     page.wait_for_timeout(500)
     after = page.evaluate(DISCLOSED)
     shot(page, f"10-fold-reading-opened-{scheme}")
     if next((one for one in after if one["type"] == "warning"), {}).get("open") is not True:
         wrong("a press on the title did not open the callout in the reading view")
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -377,7 +330,6 @@ def main() -> int:
             drive(browser, scheme)
 
     return DRIVE.verdict("every kind of callout is drawn, named and coloured")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,39 +1,3 @@
-"""The shell's own pixels: the row across the top, and both ends of the panel.
-
-All of it is a pixel or a glyph rather than a behaviour, so the run measures rather
-than clicks:
-
-  - every mark in a badge is centred in it, optically, emoji and stroke alike;
-  - a shared space and a shared note wear a shared mark, not a dot;
-  - the sidebar button is one glyph whichever state it is in - the same shapes in
-    the same places, measured as they are drawn rather than as they are written,
-    because the two states differing by a transform is exactly what an audit of the
-    markup cannot see;
-  - the space switcher spans the panel, less whatever else is in its head;
-  - the two switches at the foot of the panel each have their mark centred, are the
-    same square, and sit on the row's own centre line;
-  - the formatting bar on a phone sits on the keyboard, follows it, and leaves with
-    it - nothing of it is left in the middle of the screen;
-  - and every mark on that bar reads on one line, measured as ink rather than as the
-    cell it sits in: a quotation mark is cut for running text and draws at the top of
-    its em box, which a rule that centres the cell cannot see;
-  - the bar is one row: the menu, the button, the space label and the first tab
-    all sit on one centre line, inside `--header-height`;
-  - the segmented control's chosen half reads raised in both schemes - lighter than
-    the groove it sits in, with the shadow that says so - which one pair of the
-    palette's surfaces cannot say on both sides.
-
-Builds the web app, serves `dist` on a port of its own, measures and shoots on a
-desktop 1180 wide and a phone 420 wide, each in both schemes, and stops everything
-again. Screenshots go beside this file under `shots/shell-polish/`.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/shell-polish.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import io
@@ -51,18 +15,12 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
 PATIENCE = 40
 
-# How far off centre a mark may sit before it is a mark that looks wrong. Half a
-# pixel is what rounding costs; anything past one is visible.
 SLACK = 1.0
 
-
-# A badge may hold an emoji, and this console is code page 1252.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 
 def check(fine: bool, what: str) -> None:
     if fine:
@@ -71,26 +29,14 @@ def check(fine: bool, what: str) -> None:
         failures.append(what)
         say(f"WRONG {what}")
 
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme=scheme)
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
-    # A first visit in a browser is given a welcome note, and the app opens it
-    # after the space is there rather than with it; see `restore` in
-    # workspace.svelte.ts. A panel opened before that has happened is shut again
-    # underneath whatever was about to be photographed.
     wait_for(page, "() => !!window.nibApp.workspace.active", f"[{label}] the app's own note")
     return page
 
-
-# Three spaces, so the switcher has rows to compare: the one that is open wearing
-# a stroked mark, one wearing an emoji, and one shared with somebody.
-#
-# Sharing is an account fact, and this build has no account, so the two things the
-# app reads are stood in for: `sync.remoteIdFor` and `account.spaces`. That is the
-# only way a drive with no Worker behind it can see a shared row at all.
 SEED = """
 async () => {
   const app = window.nibApp
@@ -112,7 +58,6 @@ async () => {
 }
 """
 
-# A second and a third space in the list, and one of them shared.
 MORE_SPACES = """
 () => {
   const app = window.nibApp
@@ -166,9 +111,6 @@ MORE_SPACES = """
 }
 """
 
-# Where each of the marks in the switcher sits inside its badge, and where each
-# thing in the title bar sits inside the bar. Boxes rather than a screenshot,
-# because a pixel of drift is not something an eye reads off a picture.
 BADGES = """
 () => {
   const centre = (box) => box.top + box.height / 2
@@ -245,16 +187,6 @@ BAR = """
 }
 """
 
-# The sidebar button's glyph, in both states: the same shapes in the same places,
-# or two drawings.
-#
-# The rendered box of each shape, and not only its `d`, because the markup being
-# identical is what an audit reads and is not what an eye reads: the edge was
-# being slid three and a half units into the frame's own border while the markup
-# said one rect and one path either way, and a shut panel came out as a window
-# with a thick left side - a different icon. Each box is measured against the
-# button's own, so a button that moved between the two states does not read as a
-# glyph that did.
 TOGGLE = """
 () => {
   // Wherever it is drawn: the title bar on a desktop, the drawer's own head under
@@ -282,14 +214,6 @@ TOGGLE = """
 }
 """
 
-# The head of the panel: how much of the row the switcher takes.
-#
-# The list of spaces is the width of the panel, so the control that opens it is
-# too. Measured as the room left on either side of it rather than as a width
-# against a width: the row also holds the drawer's own button and, under a thumb,
-# the plus, and what is asked is that nothing but those and the row's own gap is
-# left over. An empty spacer holding the plus at the end is exactly what that
-# catches - it is room the switcher is not taking.
 HEAD = """
 () => {
   const head = document.querySelector('aside .head')
@@ -337,14 +261,6 @@ HEAD = """
 }
 """
 
-# The foot of the panel: the two switches, the glyph inside each, and the row.
-#
-# Three things in one measurement, because they fail together: the mark centred in
-# its button, the buttons the same size, and both of them on the row's own centre
-# line. A component rule written as `button` out-specifies the shared `.nib-glyph`
-# - a scoped selector is a class and an element - and when it did, the grid that
-# centres a mark lost to a flex row and both marks sat against the left of their
-# button.
 FOOT = """
 () => {
   const foot = document.querySelector('aside .foot')
@@ -376,8 +292,6 @@ FOOT = """
 }
 """
 
-# The formatting bar on a phone, wherever it is: the strip over the keyboard, or
-# the callout that belongs to a pointer.
 FORMAT_BAR = """
 () => {
   const docked = document.querySelector('.nib-bar.docked')
@@ -400,13 +314,6 @@ FORMAT_BAR = """
 }
 """
 
-# The keyboard, stood in for.
-#
-# A headless run has no soft keyboard, and what the page reads is the visual
-# viewport, which nothing in a browser window can shrink. So the two fields the
-# platform writes are written here instead - they are the whole of what the page
-# ever sees of a keyboard - and the arithmetic that gets them there from the visual
-# viewport, in a browser and in the app, is measured in src/lib/viewport.test.ts.
 KEYS = """
 (pixels) => {
   const seen = window.nibApp.viewport
@@ -416,8 +323,6 @@ KEYS = """
 }
 """
 
-# A few words held, so the bar has something to be about - and so the callout that
-# used to be left behind has every reason to appear.
 SELECT = """
 () => {
   const view = window.nib
@@ -430,8 +335,6 @@ SELECT = """
 }
 """
 
-# What says a space is shared: a bare dot, or a mark. Both are looked for, so a
-# run says which of the two it found rather than only whether it found one.
 SHARED = """
 () => {
   const seen = []
@@ -455,10 +358,6 @@ SHARED = """
 }
 """
 
-
-# What makes the window a phone. A headless browser has no touch screen for the
-# app to recognise, so the device is set the way the other drives set it, along
-# with the attributes the tokens read for the touch scale.
 AS_PHONE = """
 () => {
   const app = window.nibApp
@@ -474,10 +373,6 @@ AS_PHONE = """
 }
 """
 
-
-# Somebody else in the open note, which is what puts the shared mark on its row
-# in the file list. There is no second device behind this run, so the count the
-# rooms keep is written by hand; the mark and the rule that draws it are real.
 WITH_SOMEBODY = """
 () => {
   const app = window.nibApp
@@ -489,7 +384,6 @@ WITH_SOMEBODY = """
 }
 """
 
-# Which rows in the file list wear it.
 TREE_MARKS = """
 () => [...document.querySelectorAll('aside .row')].map((row) => ({
   row: row.textContent.trim(),
@@ -497,17 +391,6 @@ TREE_MARKS = """
 }))
 """
 
-
-# The segmented control, read as light rather than looked at: the surface of the
-# half that is chosen, the surface of the groove it sits in, and how far apart the
-# two are. Raised means lighter than what it sits in, and it has to mean that on
-# both sides of the palette.
-#
-# It could not. The surfaces step away from the page - lighter as they go in the
-# dark scheme, darker in the light one - so the thumb at `--surface` inside a
-# `--surface-2` track was a step up out of a light card and a step down into a dark
-# one: 1.075 the wrong way round in the dark, against 1.067 the right way in the
-# light. See `--segment-raised` in base.css.
 SEGMENTED = """
 () => {
   const track = document.querySelector('.nib-segmented')
@@ -543,20 +426,6 @@ SEGMENTED = """
 }
 """
 
-
-# Every mark on the formatting bar, and where its ink sits in the button.
-#
-# The bar is a row of one-character marks read across the middle, and a quotation
-# mark is not cut for that: it is set where quotes go in running text, hard against
-# the top of its own em box, so it sat high in its cell while every letter beside it
-# was level. What is measured is the ink rather than the line box - the box is
-# centred either way, which is exactly why an audit of the rule could not see this -
-# and each mark is compared with the others rather than with an absolute, so whatever
-# this font's metrics are, the row either reads as one row or it does not.
-#
-# `measureText` gives both: `fontBoundingBox*` is the em box the text was laid out in,
-# which is what puts the baseline on screen, and `actualBoundingBox*` is what the
-# glyph actually covers.
 FORMAT_MARKS = """
 () => {
   const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
@@ -615,8 +484,6 @@ FORMAT_MARKS = """
 }
 """
 
-
-# The format bar's buttons, where they are, to read their ink off the screen.
 FORMAT_BOXES = """
 () => {
   const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
@@ -629,15 +496,7 @@ FORMAT_BOXES = """
 }
 """
 
-
 def drawn_off(page: Page) -> dict[str, float]:
-    """How far below each button's middle the middle of its ink is, read off the
-    pixels it is drawn in: what a reader sees, in whatever engine drew it.
-
-    The letters' places are estimated from the font's metrics in `FORMAT_MARKS`, and
-    for a letter moved by a transform that estimate is the engine's to get wrong:
-    WebKit put Quote 2px low by its metrics and drew it 1px high, in line with the
-    rest (#384). So the check reads the pixels where it can and says both."""
     from PIL import Image
 
     off: dict[str, float] = {}
@@ -654,8 +513,6 @@ def drawn_off(page: Page) -> dict[str, float]:
             off[box["name"]] = round((rows[0] + rows[-1] + 1) / 2 - height / 2, 1)
     return off
 
-
-# Where the drawer is, so a shot of nothing is a reading rather than a puzzle.
 ASIDE_AT = """
 () => {
   const aside = document.querySelector('aside')
@@ -666,11 +523,7 @@ ASIDE_AT = """
 }
 """
 
-
 def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
-    """The sidebar button, measured in both states: the same shapes, in the same
-    places, at the same size. One glyph means one drawing, and the state is said in
-    words - `aria-pressed` and the tooltip - rather than by redrawing the mark."""
     if not shut or not opened:
         check(False, f"[{label}] there is a sidebar button to measure")
         return
@@ -692,8 +545,6 @@ def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
             f" (moved {moved}px: {one} then {other})",
         )
 
-    # The shut state is the one that has twice come out as a different icon: first
-    # the edge was faded away, then it was slid into the frame's own border.
     for state, seen in (("shut", shut), ("open", opened)):
         faint = [one for one in seen["shapes"] if float(one["opacity"]) < 0.95]
         check(
@@ -701,18 +552,12 @@ def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
             f"[{label}] every part of the sidebar button is drawn while it is {state} ({faint})",
         )
 
-
 def panel_ends(page: Page, label: str) -> None:
-    """The two ends of the panel: the switcher across the head, and the two
-    switches centred in the foot. One function, because the answer has to be the
-    same on a desktop and under a thumb."""
     head = page.evaluate(HEAD)
     say(f"[{label}] the head: {head}")
     if not head:
         check(False, f"[{label}] the panel has a head to measure")
     else:
-        # One gap on each side of it, at most, and nothing else: the gap is the
-        # row's own, between the switcher and whatever it stands beside.
         room = 2 * head["gap"] + SLACK
         check(
             head["spare"] <= room,
@@ -730,9 +575,6 @@ def panel_ends(page: Page, label: str) -> None:
         check(False, f"[{label}] the panel has a foot to measure")
         return
 
-    # The web app adds one more, the app to download (SidebarFoot.svelte), which the
-    # desktop app has no use for; the three every build has are Send feedback (#548),
-    # the theme and Settings.
     kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
     check(
         len(kept) == 3 and kept[0] == "Send feedback" and kept[2] == "Settings",
@@ -759,11 +601,7 @@ def panel_ends(page: Page, label: str) -> None:
             f"[{label}] and the account row is on that line too (off by {foot['who']}px)",
         )
 
-
 def on_phone(browser: Browser, scheme: str = "light") -> None:
-    """The same two surfaces under a thumb. The bar says the note's name there
-    rather than the space's, so what is checked is the drawer's own head: the
-    same switcher, the same badges, at the touch scale."""
     label = f"phone {scheme}"
     width = 420
     page = fresh(browser, label, {"width": width, "height": 880}, scheme)
@@ -778,18 +616,10 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         page.locator("header").first.screenshot(path=str(SHOTS / f"bar-phone-{scheme}.png"))
         say(f"[{label}] wrote bar-phone-{scheme}.png")
 
-        # The screen, which at this width is the note with the bar over it: the
-        # list is a drawer behind it, and the note is the layer a thumb slides
-        # aside to uncover it. A headless run has no thumb, so what the phone pass
-        # is really for is the numbers below - the badges are drawn at the touch
-        # scale whether or not a picture can be taken of them.
         page.screenshot(path=str(SHOTS / f"screen-phone-{scheme}.png"))
         say(f"[{label}] wrote screen-phone-{scheme}.png")
         say(f"[{label}] the drawer sits at {page.evaluate(ASIDE_AT)}")
 
-        # The drawer's own button, in both states, measured the way the desktop's
-        # is. The drawer itself slides, so each shape is measured against its own
-        # button and the layer's transform comes out in the wash.
         opened_button = page.evaluate(TOGGLE)
         say(f"[{label}] the drawer's own button, open: {opened_button}")
         page.evaluate("() => window.nibApp.workspace.showPanel(null)")
@@ -801,19 +631,15 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
 
-        # Both ends of the drawer: the switcher across its head, the two switches in
-        # its foot. The same two measurements the desktop's panel gets.
         panel_ends(page, label)
         page.locator("aside .head").first.screenshot(path=str(SHOTS / f"head-phone-{scheme}.png"))
         page.locator("aside .foot").first.screenshot(path=str(SHOTS / f"foot-phone-{scheme}.png"))
         say(f"[{label}] wrote head-phone-{scheme}.png and foot-phone-{scheme}.png")
 
-        # ── The formatting bar, which rides the keyboard ──
         page.evaluate("() => window.nibApp.workspace.showPanel(null)")
         page.wait_for_timeout(400)
         say(f"[{label}] holding {page.evaluate(SELECT)!r}")
 
-        # Up: the strip sits on the keys and spans the screen.
         say(f"[{label}] the keys come up: {page.evaluate(KEYS, 320)}")
         page.wait_for_timeout(400)
         up = page.evaluate(FORMAT_BAR)
@@ -825,8 +651,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                 abs(up["bottom"] - (up["page"] - 320)) <= SLACK,
                 f"[{label}] and it sits on them ({up['bottom']}px of {up['page']}px)",
             )
-            # And every mark in it reads on one line: the ink of each, measured, not
-            # the cell it is centred in - which was centred all along.
             found = page.evaluate(FORMAT_MARKS)
             inked = drawn_off(page)
             for one in found.get("marks", []):
@@ -856,8 +680,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                 f"[{label}] and spans the screen ({up['left']} to {up['right']} of {width})",
             )
 
-        # Half way: a keyboard of another height, because a bar placed once is a bar
-        # that only looks right on the keyboard it was placed for.
         page.evaluate(KEYS, 180)
         page.wait_for_timeout(300)
         lower = page.evaluate(FORMAT_BAR)
@@ -867,9 +689,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             f"[{label}] the bar follows the keys rather than staying where it was put",
         )
 
-        # Down: nothing is left. This is what was reported - the strip goes with the
-        # keyboard and the callout meant for a pointer caught what fell through,
-        # leaving a bar in the middle of the screen with a selection still held.
         say(f"[{label}] the keys go down: {page.evaluate(KEYS, 0)}")
         page.wait_for_timeout(400)
         down = page.evaluate(FORMAT_BAR)
@@ -883,9 +702,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.wait_for_timeout(500)
 
-        # The drawer is a layer that slides, so the button in it is only a target
-        # once it has arrived. Pressed through the page rather than aimed at, for
-        # the same reason: a headless run has no finger to open the drawer with.
         page.evaluate("() => document.querySelector('aside .name')?.click()")
         page.wait_for_timeout(600)
         page.locator(".spaces").first.screenshot(path=str(SHOTS / f"switcher-phone-{scheme}.png"))
@@ -909,7 +725,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
     finally:
         page.context.close()
 
-
 def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> None:
     page = fresh(browser, label, viewport, scheme)
     try:
@@ -917,7 +732,6 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         say(f"[{label}] {page.evaluate(MORE_SPACES)}")
         page.wait_for_timeout(400)
 
-        # ── The bar, with the panel shut, which is when it carries the label ──
         page.evaluate("() => window.nibApp.workspace.showPanel(null)")
         page.wait_for_timeout(400)
 
@@ -954,13 +768,11 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
 
         same_glyph(label, shut, opened)
 
-        # ── Both ends of the panel: the switcher, and the two switches ──
         panel_ends(page, label)
         page.locator("aside .head").first.screenshot(path=str(SHOTS / f"head-{label}.png"))
         page.locator("aside .foot").first.screenshot(path=str(SHOTS / f"foot-{label}.png"))
         say(f"[{label}] wrote head-{label}.png and foot-{label}.png")
 
-        # ── The switcher, open, which is where the badges are ──
         page.locator("aside .name").first.click()
         page.wait_for_timeout(500)
         page.locator(".spaces").first.screenshot(path=str(SHOTS / f"switcher-{label}.png"))
@@ -980,7 +792,6 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         page.evaluate("() => document.querySelector('.catch')?.click()")
         page.wait_for_timeout(400)
 
-        # The file list's half of the same mark: a note somebody else is in.
         say(f"[{label}] somebody else joined {page.evaluate(WITH_SOMEBODY)}")
         page.wait_for_timeout(400)
         rows = page.evaluate(TREE_MARKS)
@@ -1005,9 +816,6 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 f"[{label}] and says it in a word too ({one['label']!r})",
             )
 
-        # ── The segmented control, where a raised surface has to read raised ──
-        # Appearance, because it is the pane that has one in it, and because which
-        # scheme is in force is chosen on exactly this control.
         page.evaluate("() => window.nibApp.settings.show()")
         page.wait_for_timeout(600)
         page.evaluate(
@@ -1040,7 +848,6 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
     finally:
         page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, "light", {"width": 1180, "height": 760}, "light")
@@ -1049,7 +856,6 @@ def main() -> int:
         on_phone(browser, "dark")
 
     return DRIVE.verdict("the bar is one row and every mark is centred")
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,35 +1,3 @@
-"""How big the layers in the middle of the window are, at the windows people have.
-
-Emil, 2026-10-01, on a window of about 2000 by 1125: "settings have a strange size for
-this screen size". The sheet was 56rem wide and 76vh tall, so a big window made it
-taller and not wider - a portrait slab with Appearance's eight rows at the top of it -
-and the Frame control broke "nibeditor's own" (now "Orden's own") over two lines.
-
-So this opens Settings at four windows (1280x720, 1920x1080, 2560x1440, 2000x1125) at
-three system scales each (100, 125 and 150 per cent, which is a window of the same
-pixels with fewer CSS pixels in it), walks every pane, and fails on:
-
-  - a pane that makes the sheet a different size from the one before it;
-  - a sheet taller than `--screen-tall`, or taller than it is wide where the window is
-    wider than it is tall;
-  - a sheet closer to the window's edge than `--screen-gutter`;
-  - a control's words - a segmented half, a key, a button, a setting's name, a pane in
-    the list - on more than one line, or cut off;
-  - the same, for the other layers in the middle of the window: the palette, the
-    theme picker, a question, the sync question, the icon picker, and
-    the theme store, which has to stand inside the settings it is opened over.
-
-With `--shots`, it photographs Settings and those layers at 1280x720 and 2000x1125 in
-light and dark too.
-
-From the repository root; the harness builds the app with its handle on the page the
-first time and serves it (see harness.py):
-
-    python apps/desktop/test/e2e/modal-size.py [--shots]
-
-Screenshots go beside this file under `shots/modal-size/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -45,11 +13,8 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-#: The windows, in the screen's own pixels.
 WINDOWS = [(1280, 720), (1920, 1080), (2560, 1440), (2000, 1125)]
-#: The system's scale: the same window holds fewer CSS pixels at 150 per cent.
 SCALES = [1, 1.25, 1.5]
-#: The two the shots are taken at.
 PHOTOGRAPHED = [(1280, 720), (2000, 1125)]
 
 SHOTS_TOO = "--shots" in sys.argv
@@ -65,10 +30,6 @@ async () => {
 }
 """
 
-#: Every piece of words in a layer that is a control or names one, and how many lines
-#: each takes: a word broken onto a second line, or cut off at the edge, is what this
-#: drive is about. Counted off the text's own boxes, so a padded button with one line
-#: of words in it is one line whatever its height.
 WRAPPED = """
 (selector) => {
   const root = document.querySelector(selector)
@@ -125,7 +86,6 @@ WRAPPED = """
 }
 """
 
-#: Where the layer is and how big, with the window and the tokens it is held to.
 BOX = """
 (selector) => {
   const root = document.querySelector(selector)
@@ -153,10 +113,6 @@ BOX = """
 
 SETTINGS = '[role="dialog"][aria-label="Settings"]'
 
-#: Appearance's Frame row, which only a desktop build draws: a browser tab has no frame
-#: of its own. Its two words are the longest a segmented setting holds in English and
-#: the ones Emil saw broken, so where the build leaves it out the Mode row stands in for
-#: it, copied with the component's own classes and given Frame's two halves.
 FRAME = """
 () => {
   const body = document.querySelector('[role="dialog"][aria-label="Settings"] .body')
@@ -180,7 +136,6 @@ FRAME = """
 }
 """
 
-#: Whether the list of panes has to be scrolled to reach its last row.
 NAV_SCROLLS = """
 () => {
   const nav = document.querySelector('[role="dialog"][aria-label="Settings"] nav')
@@ -193,16 +148,13 @@ PANES = """
   .map((one) => one.textContent.trim())
 """
 
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
 
-
 def inside(name: str, box: dict | None) -> None:
-    """The layer is in the window with the gutter round it."""
     if box is None:
         wrong(f"{name}: not there")
         return
@@ -216,7 +168,6 @@ def inside(name: str, box: dict | None) -> None:
         and box["y"] + box["height"] <= box["vh"] - room,
     )
 
-
 def unwrapped(page, name: str, selector: str) -> None:
     said = page.evaluate(WRAPPED, selector)
     if said["missing"]:
@@ -224,10 +175,7 @@ def unwrapped(page, name: str, selector: str) -> None:
         return
     check(f"{name}: no control's words wrap{': ' + '; '.join(said['wrapped']) if said['wrapped'] else ''}", not said["wrapped"])
 
-
 def settings(page, label: str) -> None:
-    """Every pane, one after another: the same size, and nothing in any of them on two
-    lines."""
     page.evaluate("() => window.nibApp.settings.show('general')")
     page.wait_for_selector(SETTINGS)
     quiet(page)
@@ -271,7 +219,6 @@ def settings(page, label: str) -> None:
     page.keyboard.press("Escape")
     page.wait_for_selector(SETTINGS, state="detached")
 
-
 def palette(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector('input[role="combobox"]')
@@ -282,7 +229,6 @@ def palette(page, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-palette")
     page.keyboard.press("Escape")
     page.wait_for_selector('input[role="combobox"]', state="detached")
-
 
 def picker(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Control+Shift+P")
@@ -300,9 +246,7 @@ def picker(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Escape")
     page.wait_for_selector(selector, state="detached")
 
-
 def question(page, label: str, photograph: str | None) -> None:
-    """Convert syntax asks where, in the one small modal every question is asked in."""
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector('input[role="combobox"]')
     page.keyboard.type("Convert syntax")
@@ -318,10 +262,7 @@ def question(page, label: str, photograph: str | None) -> None:
     page.keyboard.press("Escape")
     page.wait_for_selector(selector, state="detached")
 
-
 def store(page, label: str, photograph: str | None) -> None:
-    """The theme store over the settings: a gutter inside them on every side, and the
-    same middle, so the sheet underneath is still visibly there."""
     page.evaluate("() => { window.nibApp.settings.show('appearance'); window.nibApp.themeStore.open = true }")
     selector = '[role="dialog"][aria-label="Themes"]'
     page.wait_for_selector(selector)
@@ -342,7 +283,6 @@ def store(page, label: str, photograph: str | None) -> None:
     page.evaluate("() => { window.nibApp.themeStore.open = false; window.nibApp.settings.open = false }")
     page.wait_for_selector(SETTINGS, state="detached")
 
-
 def icons(page, path: str, label: str, photograph: str | None) -> None:
     page.evaluate("(path) => window.nibApp.iconChoice.file(path)", path)
     selector = '[role="dialog"][aria-label="Choose an icon"]'
@@ -354,7 +294,6 @@ def icons(page, path: str, label: str, photograph: str | None) -> None:
         shot(page, f"{photograph}-icons")
     page.evaluate("() => window.nibApp.iconChoice.close()")
     page.wait_for_selector(selector, state="detached")
-
 
 HOLD = """
 (path) => {
@@ -377,7 +316,6 @@ HOLD = """
 }
 """
 
-
 def diverged(page, path: str, label: str, photograph: str | None) -> None:
     page.evaluate(HOLD, path)
     selector = '[role="dialog"][aria-label="Plan.md"]'
@@ -394,7 +332,6 @@ def diverged(page, path: str, label: str, photograph: str | None) -> None:
     page.keyboard.press("Escape")
     page.evaluate("() => window.__held?.stop()")
     page.wait_for_timeout(300)
-
 
 def drive(browser) -> None:
     for scale in SCALES:
@@ -451,7 +388,6 @@ def drive(browser) -> None:
             page.evaluate("() => window.nibApp.theme.setScheme('light')")
 
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

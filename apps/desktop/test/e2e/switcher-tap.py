@@ -1,21 +1,3 @@
-"""The space switcher opened and closed by its own button, by finger and by mouse (#411).
-
-Emil: "when I press on the space select on mobile then it won't close, even tho it already
-is open." The list lays a catch over the window to take the press past it; a tap's way
-down closed the list and took the catch with it, and the click the tap went on to make
-landed on the button under the finger and opened it again. See `clicked` in overlays.ts.
-
-What it checks, on the built web app in Chromium:
-
-    on a phone (its drawer) and a tablet, by finger: a tap opens the list, a second tap on
-      the button closes it, and a tap past it closes it too - and does nothing else: a
-      row of the file list under that tap is not opened, as a mouse's press past it
-      never opened one
-    on a desktop, by mouse: the same, as it always was
-
-    python apps/desktop/test/e2e/switcher-tap.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -38,8 +20,6 @@ BUTTON = '[data-space-drop="switcher"]'
 EXPANDED = f"document.querySelector('{BUTTON}')?.getAttribute('aria-expanded') === 'true'"
 LIST = "!!document.querySelector('[data-spaces-open]')"
 
-
-#: The middle of a row of the file list below the open list, or null.
 ROW_BELOW = """() => {
   const list = document.querySelector('[data-spaces-open]')?.getBoundingClientRect()
   if (!list) return null
@@ -52,14 +32,10 @@ ROW_BELOW = """() => {
   return null
 }"""
 
-
 def is_open(page: Page) -> bool:
     return bool(page.evaluate(f"() => {EXPANDED} && {LIST}"))
 
-
 def press(page: Page, x: float, y: float, touch: bool) -> None:
-    """A finger's tap, or a mouse's click, where a reader would put it: at a point, not
-    at an element, so whatever is over the button there is what is pressed."""
     if touch:
         page.touchscreen.tap(x, y)
     else:
@@ -67,12 +43,9 @@ def press(page: Page, x: float, y: float, touch: bool) -> None:
     DRIVE.settled(page)
     page.wait_for_timeout(300)
 
-
 def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     page = DRIVE.page(browser, **options)
     DRIVE.open(page)
-    # Somewhere to switch to, so the list has two rows: the space made, and the one the
-    # app opened in, which is the one in front again.
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace; const first = ws.activeSpaceId;"
         " await ws.addSpace('Second'); if (ws.activeSpaceId !== first) await ws.showSpace(first) }"
@@ -102,8 +75,6 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     press(page, x, y, touch)
     if not is_open(page):
         wrong(f"[{label}] a third press did not open it again")
-    # Past it: on a row of the file list below the list, where there is one, else well
-    # below the list in the panel.
     size = page.viewport_size or {"width": 800, "height": 800}
     row = page.evaluate(ROW_BELOW)
     at = (row["x"], row["y"]) if row else (x, size["height"] - 40)
@@ -119,7 +90,6 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     elif row:
         say(f"ok   [{label}] and the row of the file list under it was not opened")
     page.close()
-
 
 def drive(browser: Browser) -> None:
     check(
@@ -141,7 +111,6 @@ def drive(browser: Browser) -> None:
         is_mobile=True,
     )
     check(browser, "desktop", False, viewport={"width": 1280, "height": 820})
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the switcher's button opens and closes it, by finger and by mouse"))

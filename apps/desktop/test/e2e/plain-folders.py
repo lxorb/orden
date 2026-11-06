@@ -1,31 +1,3 @@
-"""A vault's own folders, seen: rows for notes nobody has written yet.
-
-What the run is for. nib has no folders in it any more - a note that holds notes
-is the whole of how a space is organised - but the folders on disk are still
-there, and an Obsidian vault is full of them. So a folder with no note of its own
-is drawn as the row it is: the folder's name, the plain page mark, quiet, with a
-twist for what it holds. Opening it opens the empty page it would be and writes
-nothing; the first words are what make the file.
-
-The other convention is read on the way in: a folder holding an `index.md` is
-drawn as that note, under the folder's own name, and the index is not listed a
-second time inside itself.
-
-A unit test can say the model is right. Only a screenshot can say the quiet row
-reads as a name waiting for words rather than as a row that failed to load.
-
-No Worker and no account: the browser build seeds its own space. Builds the web
-app, serves `dist` on a port of its own, shoots the tree on a desktop and on a
-phone, and stops everything again.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/plain-folders.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/plain-folders/`.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -42,22 +14,18 @@ ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
 
-
 PATIENCE = 40
 
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
 
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
@@ -65,7 +33,6 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
     return page
-
 
 AS_PHONE = """
 () => {
@@ -82,10 +49,6 @@ AS_PHONE = """
 }
 """
 
-# A vault as one arrives: `Projects/` holding notes and nothing of its own, and
-# `Handbook/` whose own page is the other convention's `index.md`. Neither folder
-# is made on purpose - they are here because notes were written into them, which
-# is the only way a folder appears at all.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -119,34 +82,26 @@ ROWS = """
   ].join(' | '))
 """
 
-# What the row's menu offers, in the words it offers them in.
 MENU = """
 () => [...document.querySelectorAll('[role="menuitem"]')].map((one) => one.textContent.trim())
 """
 
-
 def row(page: Page, path_ends: str):
     return page.locator(f'aside .row[data-path$="{path_ends}"]').first
 
-
 def relist(page: Page, where: str) -> None:
-    """A phone's drawer goes as a note opens, which is right - the note is what was
-    asked for. A shot of the list needs it back."""
     if where != "phone":
         return
 
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(350)
 
-
 def unlist(page: Page, where: str) -> None:
-    """And out of the way again, so a finger reaches the note under it."""
     if where != "phone":
         return
 
     page.evaluate("() => { window.nibApp.workspace.panel = null }")
     page.wait_for_timeout(350)
-
 
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     label = where
@@ -169,7 +124,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"vault-{where}.png"))
         say(f"[{label}] wrote vault-{where}.png")
 
-        # ── The folder with no note of its own ─────────────────────────────
         quiet = row(page, "Projects")
         check(quiet.count() == 1, f"[{label}] the folder is one row, named after itself")
         check(
@@ -185,7 +139,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] and a mark of the same family as every other row",
         )
 
-        # ── Its menu is a note's menu, and says nothing about folders ──────
         quiet.click(button="right")
         page.wait_for_selector('[role="menu"]:visible', timeout=5000)
         offered = page.evaluate(MENU)
@@ -201,7 +154,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
 
-        # ── Opening it opens the empty page it would be, and writes nothing ─
         quiet.click()
         wait_for(
             page,
@@ -223,7 +175,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"opened-{where}.png"))
         say(f"[{label}] wrote opened-{where}.png")
 
-        # ── Writing in it is what makes the file ───────────────────────────
         unlist(page, where)
         page.locator(".cm-content").first.click()
         page.keyboard.type("The two of them")
@@ -243,11 +194,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"written-{where}.png"))
         say(f"[{label}] wrote written-{where}.png")
 
-        # ── The Move sheet offers rows and spaces, and no folders ──────────
-        # A note from inside one of them, so the space itself is a place to move to:
-        # a note already at the top of the space is not offered the space it is in.
-        # A pointer's row menu has no Move since #303: the palette's Move this note asks,
-        # for the note that is open.
         row(page, "Loft.md").click()
         wait_for(
             page,
@@ -259,9 +205,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.keyboard.type("Move this note")
         page.wait_for_timeout(400)
         page.keyboard.press("Enter")
-        # The sheet, by what it is. It was told apart from the menu by having no role
-        # at all until the sheets were given one; now it says it is a dialog, that it
-        # is modal, and what it is called. See PromptSheet.svelte.
         page.locator('div.sheet[role="dialog"]').wait_for(state="visible", timeout=5000)
         page.wait_for_timeout(300)
         page.screenshot(path=str(SHOTS / f"move-{where}.png"))
@@ -269,9 +212,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
 
         offered = [one.strip() for one in page.locator(".found-row").all_inner_texts()]
         say(f"[{label}] the sheet offers {offered}")
-        # The space's row reads as its letter and then its name, because the mark a
-        # space wears is the switcher's own; `Projects` is not offered, since that
-        # is where the note already sits.
         check(
             "Handbook" in offered and any(one.endswith("Notes") for one in offered),
             f"[{label}] a row that holds notes is a place, and so is the space",
@@ -284,7 +224,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.wait_for_timeout(250)
         relist(page, where)
 
-        # ── The other convention, read and not rewritten ───────────────────
         book = row(page, "Handbook")
         check(
             book.inner_text().strip().startswith("Handbook"),
@@ -301,14 +240,12 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     finally:
         page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         shoot(browser, "desktop", DESKTOP)
         shoot(browser, "phone", PHONE)
 
     return DRIVE.verdict("a vault's folders read as notes nobody has written yet")
-
 
 if __name__ == "__main__":
     sys.exit(main())

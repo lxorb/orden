@@ -1,40 +1,3 @@
-"""The glass theme: what it stands on, and whether every word still reads.
-
-Glass is the theme that wears the platform's material - Mica Alt on Windows 11,
-Acrylic on Windows 10 - through the chrome, while every pane keeps its own paper. A translucent theme is the classic way to make an editor
-unreadable, so every colour that has to be read is measured against the surface it is
-read on, composited over what the window could be standing on.
-
-Two kinds of material, measured two ways (see glass.css):
-
-  - Acrylic is the desk itself, blurred. Measured over the worst
-    desks there are: a white one under the dark side, a black one under the light,
-    and a busy one that holds both under the same panel. Unblurred, which is worse
-    than any material a platform composites.
-  - Mica keeps its own brightness and takes only the wallpaper's colour. Measured over
-    the band Mica can be: its own flat colours (the tint it falls back to when the
-    window is not in front, #202020 and #0a0a0a dark, #f3f3f3 and #dadada light) and
-    twenty-six levels past each of them either way for the colour a wallpaper lends it.
-
-A browser has no window for a platform to composite anything behind, so the desk is
-painted on `html` and `data-translucent` is said by hand, exactly as material.ts says
-it once the crate has answered. What the real Mica looks like behind a real window is
-scripts/glass-probe.py, which photographs the probe build.
-
-And the rest of what the theme promises: the paper under the note is opaque, the tab
-that is open runs down into it, the reader's accent is still the reader's, and
-Appearance has no Translucency row left, since glass is what it meant. And it is what a
-new reader opens in, in green and following the system (`FIRST_LOOK` in
-theme.svelte.ts), which every other drive is kept off by harness.py's `BUILT_IN`.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/glass.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/glass/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import re
@@ -47,7 +10,6 @@ DRIVE = Drive(__file__)
 say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
-
 
 NOTE = """# A window with a desk behind it
 
@@ -72,14 +34,9 @@ async ([note, name]) => {
 }
 """
 
-
 def grey(level: int) -> str:
     return f"rgb({level}, {level}, {level})"
 
-
-# What the window can be standing on, per material and per side. `paint` is what the
-# screenshot shows behind the window; `under` is every backdrop the readings are
-# composited over.
 DESKS = {
     "acrylic": {
         "dark": {"paint": "#ffffff", "under": [grey(255), grey(0)]},
@@ -92,8 +49,6 @@ DESKS = {
         ),
     },
     "mica": {
-        # Its own two flat colours on this side and the band round them, plus a
-        # wallpaper's colour at the brightest end of the band.
         "dark": {
             "paint": "linear-gradient(120deg, #1d2338, #2a1c26)",
             "under": [grey(0), grey(10), grey(32), grey(58), "rgb(22, 30, 72)", "rgb(64, 24, 24)"],
@@ -105,9 +60,6 @@ DESKS = {
     },
 }
 
-# What is read, and every layer it is read through, top first. The chrome stands on
-# the shell's ground, which is where the wash is; the list adds a layer of its own; a
-# row under the pointer adds one more. The paper is a surface of its own and says nothing about the desk.
 READINGS = [
     ("text in the bar", "--text", ["--shell-ground"]),
     ("quiet text in the bar", "--muted", ["--shell-ground"]),
@@ -123,14 +75,8 @@ READINGS = [
     ("quiet text on the paper", "--muted", ["--bg"]),
 ]
 
-# The floor for a word somebody has to read: WCAG's AA for body text, the one the
-# app's own palettes are measured against; see the muted rows in tokens.css.
 FLOOR = 4.5
 
-# Every layer composited over a backdrop, top last, and the ratio of the ink over
-# that. A token may be a hex, an rgb() or a color-mix() with transparent in it, so
-# each is read through a probe element; what comes back off `getComputedStyle` is
-# `rgb()`, `rgba()` or - for anything that went through color-mix - `color(srgb …)`.
 MEASURE = """
 ([readings, backdrop]) => {
   const probe = document.createElement('span')
@@ -183,9 +129,6 @@ MEASURE = """
 }
 """
 
-# What a translucent window does to the page, done by hand: the desk is painted where
-# the material would be composited, and the page is told what it stands on the way
-# material.ts tells it once the crate has answered.
 STAND_ON = """
 ([desk, material]) => {
   document.getElementById('nib-desk')?.remove()
@@ -198,9 +141,6 @@ STAND_ON = """
 }
 """
 
-# A long note, scrolled, with the frames counted: what a theme costs while somebody
-# reads is the one thing a screenshot cannot answer. Frames rather than milliseconds
-# of work, so the paint is in it.
 SCROLL = """
 () => new Promise((done) => {
   const scroller = document.querySelector('.cm-scroller')
@@ -234,7 +174,6 @@ SCROLL = """
 })
 """
 
-# Every filter that repaints what is behind it on every frame. Glass spends none.
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -244,10 +183,6 @@ FILTERS = """
   .map((one) => one.tagName.toLowerCase() + '.' + [...one.classList].join('.'))
 """
 
-# Whether the first frame that has the app in it already wears glass's sheet, which
-# is fetched after the launch has started: the sheet worn last time is put on as the
-# launch paints and the fetched one replaces it (`SHEET_KEY` in theme.svelte.ts). An
-# init script, so it is listening before any of the app has run.
 FIRST_FRAME = """
 (() => {
   const look = () => {
@@ -264,15 +199,11 @@ TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
 finished: set[object] = set()
 
-
 def channels(said: str) -> tuple[int, ...]:
-    """A computed colour as its four channels, however the engine spelled it: the
-    paper is `rgb()` until a dial mixes it, and `color(srgb …)` after."""
     parts = [float(one) for one in re.findall(r"[\d.]+", said)]
     scale = 255 if said.startswith("color(") else 1
     alpha = parts[3] if len(parts) > 3 else 1
     return (*(round(one * scale) for one in parts[:3]), round(alpha * 255))
-
 
 def shows(what: str, saw: object, wanted: object) -> None:
     if saw == wanted:
@@ -282,7 +213,6 @@ def shows(what: str, saw: object, wanted: object) -> None:
     failures.append(what)
     say(f"NOT  {what}: {saw!r}, wanted {wanted!r}")
 
-
 def holds(what: str, ratio: float, floor: float = FLOOR) -> None:
     if ratio >= floor:
         say(f"ok   {what}: {ratio}:1")
@@ -291,11 +221,9 @@ def holds(what: str, ratio: float, floor: float = FLOOR) -> None:
     failures.append(what)
     say(f"NOT  {what}: {ratio}:1, under {floor}")
 
-
 def done_with(page: Page) -> None:
     finished.add(page)
     page.context.close()
-
 
 def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window") -> Page:
     context = browser.new_context(
@@ -332,7 +260,6 @@ def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window
     page.wait_for_timeout(400)
     return page
 
-
 def choose(page: Page, theme: str) -> None:
     page.evaluate(f"() => window.nibApp.theme.select('{theme}')")
     if theme == "glass":
@@ -343,11 +270,7 @@ def choose(page: Page, theme: str) -> None:
         )
     page.wait_for_timeout(300)
 
-
 def stand(page: Page, desk: str, material: str | None) -> None:
-    """The desk and the material, and the paper as it always was over them, which is
-    what this drive measures; how far the material reaches the note is
-    theme-options.py's."""
     page.evaluate(STAND_ON, [desk, material])
     page.wait_for_timeout(300)
     page.evaluate(
@@ -356,10 +279,7 @@ def stand(page: Page, desk: str, material: str | None) -> None:
     )
     page.wait_for_timeout(100)
 
-
 def read_over(page: Page, where: str, unders: list[str]) -> None:
-    # Where the frame is glass's own pair the shell is a blend, not a colour: every word
-    # on it is read over each of its two corners instead.
     paired = page.evaluate("() => document.documentElement.hasAttribute('data-paired')")
     grounds = ["--glass-from", "--glass-to"] if paired else ["--shell-ground"]
     readings = [
@@ -371,7 +291,6 @@ def read_over(page: Page, where: str, unders: list[str]) -> None:
         for what, ratio in page.evaluate(MEASURE, [readings, under]):
             holds(f"[{where} over {under}] {what}", ratio)
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("dark", "light"):
@@ -381,10 +300,7 @@ def main() -> int:
 
     return DRIVE.verdict("every reading held")
 
-
 def first_look(browser: Browser, scheme: str) -> None:
-    """A browser that has never opened nib: glass, the green accent, the system's
-    scheme, with glass's sheet worn and the theme not yet written down as a choice."""
     context = browser.new_context(
         viewport={"width": 1240, "height": 760},
         color_scheme=scheme,
@@ -414,8 +330,6 @@ def first_look(browser: Browser, scheme: str) -> None:
     shot(page, f"{scheme}-first-look")
     done_with(page)
 
-    # An install an older build left on the built-in, with an accent of its own: moved to
-    # glass once, keeping the accent, and left alone after that.
     context = browser.new_context(color_scheme=scheme, first_look=True)
     context.add_init_script(
         "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
@@ -434,8 +348,6 @@ def first_look(browser: Browser, scheme: str) -> None:
     shows(f"[{scheme}] and Classic chosen again stays", page.evaluate(read), ["default", "teal"])
     done_with(page)
 
-    # An install the day's first look gave yellow, the theme never written down: green
-    # once, and a yellow picked after that stays.
     context = browser.new_context(color_scheme=scheme, first_look=True)
     context.add_init_script(
         "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
@@ -453,25 +365,19 @@ def first_look(browser: Browser, scheme: str) -> None:
     shows(f"[{scheme}] and a yellow picked after stays", page.evaluate(read), ["glass", "yellow"])
     done_with(page)
 
-
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
 
-    # The built-in first, over the same desk, for the pair of pictures the change is
-    # judged by.
     shot(page, f"{scheme}-default")
 
     choose(page, "glass")
     shows(f"[{scheme}] glass is worn", page.evaluate("() => window.nibApp.theme.id"), "glass")
-    # Glass is a window and not a palette: the reader's accent stays theirs.
     shows(
         f"[{scheme}] the accent is still the reader's to choose",
         page.evaluate("() => window.nibApp.theme.accentIsTheme"),
         False,
     )
 
-    # With nothing to stand on - a browser, which is where glass is not offered - it is
-    # a palette like any other, and every word is read on its own ground.
     read_over(page, f"{scheme}, nothing behind", ["rgb(255, 0, 255)"])
 
     for material, desks in DESKS.items():
@@ -480,13 +386,9 @@ def drive(browser: Browser, scheme: str) -> None:
         read_over(page, f"{scheme} on {material}", side["under"])
         shot(page, f"{scheme}-glass-{material}")
 
-    # The busiest desk there is, on the material that shows it: what somebody on
-    # Windows 10 or a Mac with a photograph behind the window sees.
     stand(page, DESKS["acrylic"]["busy"], "acrylic")
     shot(page, f"{scheme}-glass-busy")
 
-    # The paper: opaque under the note, and the tab that is open is that same paper
-    # running up into the bar.
     stand(page, DESKS["mica"][scheme]["paint"], "mica")
     shows(
         f"[{scheme}] the note stands on paper of its own",
@@ -510,8 +412,6 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shows(f"[{scheme}] nothing repaints what is behind it on every frame", page.evaluate(FILTERS), [])
 
-    # Appearance: Style, Mode, the accent under them, and no Translucency row in the
-    # Window group any more.
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     rows = page.evaluate(
@@ -524,9 +424,6 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shot(page, f"{scheme}-glass-settings")
 
-    # Glass's own pair, chosen in its row: the pairs it offers, the accent, and two dots
-    # for two colours of one's own, each the platform's picker. One picked is kept with
-    # the other as the row showed it, and the frame wears the two at once.
     row = page.locator(".nib-setting", has_text="Tint colour")
     shows(f"[{scheme}] the pair row offers seven and two of one's own", row.locator(".swatch").count(), 9)
     row.scroll_into_view_if_needed()
@@ -553,10 +450,6 @@ def drive(browser: Browser, scheme: str) -> None:
     shot(page, f"{scheme}-glass-own-pair")
     page.evaluate("() => window.nibApp.theme.set('pair', 'dawn')")
 
-    # A launch that opens on glass wears it from its first frame rather than the
-    # built-in's for a moment first. And without the sheet it wore last time it would
-    # not, which is said rather than gated: it is what makes the first reading mean
-    # something.
     page.add_init_script(FIRST_FRAME)
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.__glassFirstFrame !== undefined", "the first frame")
@@ -575,12 +468,7 @@ def drive(browser: Browser, scheme: str) -> None:
 
     done_with(page)
 
-
 def scrolling(browser: Browser) -> None:
-    """A long note, scrolled, on the built-in theme and then on glass on a busy desk.
-    Said rather than gated: what a frame costs is the machine's business as well as
-    the theme's, and a number that fails on somebody's laptop is a number nobody
-    trusts. The gate is FILTERS above: no surface asks for a blur."""
     long_note = "# A long note\n\n" + "\n\n".join(
         f"## Section {one}\n\nA paragraph of ordinary words, long enough to wrap and be"
         " read rather than glanced at, which is what a note is mostly made of."
@@ -601,7 +489,6 @@ def scrolling(browser: Browser) -> None:
         )
 
     done_with(page)
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,34 +1,3 @@
-"""One mark per open tab, measured.
-
-Emil asked for an icon on every window: the file's own, for a note, a canvas, a
-page note and a PDF, the space's own picture for the graph, and for a website the
-site's own favicon. A PDF no longer has a tab of its own: it opens as its page note,
-which wears the page note's mark, so a window holds six tabs here - a note, a canvas, a
-page note, the graph and two websites. What a unit test cannot say is whether the six
-of them come out as one strip - the same box, in the same place inside the tab, at the same
-weight - so that is what this measures, in a real browser, and photographs.
-
-The proof that a tab and a row are one answer: `Plan.md` says `icon: rocket` in
-its front matter, and the drive reads the row in the file list and the tab in the
-strip out of the same window and holds them against each other. Emil, 2026-09-17:
-*"for all note types, the tab icon and the explorer icon should always be the
-same."* Then it chooses one in the picker, on a canvas that had none, and holds the
-two against each other again - nothing tells the tab. And because the icon is the
-whole of a tab drawn as an icon (#1041), the dressed note is put behind another tab
-and measured again as a chip.
-
-Serves the built web app and drives it in Chromium, and serves one
-picture of its own for a website's favicon to point at. The build has to be one a
-drive may steer - `--mode drive` - or `window.nibApp` is not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tab-icons.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/tab-icons/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -45,23 +14,15 @@ DIST = harness.DIST
 
 
 def shot(page: Page, name: str, selector: str | None = None) -> None:
-    """The window, or the one part of it `selector` names."""
     DRIVE.shot(page.locator(selector) if selector else page, name)
 
 
-
-# The picture a website points its `Nib-Icon` at, served from the app's own icon so
-# the drive needs nothing off the network.
 MARK = "/mark.png"
 
-# A note that chose an icon of its own. The row in the list wears the rocket and so
-# does the tab, because they are the same file and a file wears one mark.
 DRESSED = "---\nicon: rocket\n---\n\n# Plan\n\nA note that chose an icon.\n"
 
 
 def shortcut(url: str, title: str, icon: str | None) -> str:
-    """A website as its file: the Windows Internet Shortcut the app writes, with nib's
-    own keys in the same block. See packages/scan/src/shortcut.ts."""
 
     rows = [f"URL={url}", f"Title={title}", "Nib-Added=2026-09-13T08:00:00.000Z"]
     if icon:
@@ -70,8 +31,6 @@ def shortcut(url: str, title: str, icon: str | None) -> str:
     return "[InternetShortcut]\r\n" + "\r\n".join(rows) + "\r\n"
 
 
-# The space these tabs come out of. A `.url` is written by renaming a note onto the
-# extension: the words are the file, and the name is what the app reads the kind off.
 SEED = """
 async (site) => {
   const ws = window.nibApp.workspace
@@ -97,10 +56,6 @@ async (site) => {
 }
 """
 
-# Six tabs, one of every kind a window can hold, in the order the strip keeps them. A
-# PDF is not one of them any more: it opens as its page note (workspace.openPdf), the
-# kind `Lecture.pages` already is, and a renamed note is no paper pdf.js can read the
-# pages of, so it would open nothing at all.
 OPEN = """
 async (where) => {
   const ws = window.nibApp.workspace
@@ -127,12 +82,6 @@ async (where) => {
 }
 """
 
-# The strip, as the reader sees it: one mark per tab, its box, where it sits inside the
-# tab, and the hairline it is drawn at.
-#
-# A stroke is in the units of the grid the drawing was made on, so the number in the
-# stylesheet says nothing on its own: what reaches the screen is that number times the
-# box over the viewBox, and that is the figure every mark has to agree on.
 STRIP = """
 () => {
   const hairline = (svg) => {
@@ -179,9 +128,6 @@ STRIP = """
 }
 """
 
-# The note that chose an icon, behind another tab. Emil asked for both of these in one
-# breath, and they are one thing: a tab not in front is reduced to its icon (#1041), so
-# the icon it is reduced to had better be the one the file chose.
 PIN = """
 () => {
   const ws = window.nibApp.workspace
@@ -190,8 +136,6 @@ PIN = """
 }
 """
 
-# The picker, on the canvas, which is the one open file that chose nothing. A row's
-# menu is what opens it in the app and a drive cannot reach that; see App.svelte.
 CHOOSE = """
 () => {
   const ws = window.nibApp.workspace
@@ -201,7 +145,6 @@ CHOOSE = """
 }
 """
 
-# The mark the file list draws for the same file, which is where a chosen icon belongs.
 ROWS = """
 () =>
   Object.fromEntries(
@@ -215,14 +158,6 @@ ROWS = """
 
 @DRIVE.answers
 def marks(request: harness.Files) -> bool:
-    """A picture for each of the two addresses a mark is looked for at.
-
-    `MARK` is where a website file points its `Nib-Icon`, which is what the tab strip
-    reads. `/favicon.ico` is where the card under a page guesses, in a browser build
-    that cannot frame the site until it is asked - a guess the built app has nothing to
-    answer with, so without this the run is full of a 404 that says nothing about the
-    strip. See web-tab/WebTab.svelte, which does the same thing in scripts/web-tab-e2e.py.
-    """
     if request.path not in {MARK, "/favicon.ico"}:
         return False
     return request.reply((DIST / "icon-256.png").read_bytes(), "image/png")
@@ -231,8 +166,6 @@ def marks(request: harness.Files) -> bool:
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     page = context.new_page()
-    # Nothing on the console is allowed. There used to be one exception, a renamed note
-    # opened as a PDF that pdf.js refused; there is no PDF here any more.
     page.on("pageerror", lambda error: wrong(f"[{scheme}] page error: {error}"))
     page.on(
         "console",
@@ -240,9 +173,6 @@ def fresh(browser: Browser, scheme: str) -> Page:
         if message.type == "error"
         else None,
     )
-    # A mark that was asked for and never came is the one failure this drive exists to
-    # catch, and "404" on the console does not say which address it was: so the address
-    # is read off the answer itself.
     page.on(
         "response",
         lambda answer: wrong(f"[{scheme}] nothing at {answer.url}")
@@ -259,10 +189,6 @@ def website(path: str) -> str:
 
 
 def iconned(page: Page, scheme: str) -> None:
-    """The dressed note, behind another: a chip with the icon it chose in it and nothing
-    else. A tab drawn as an icon is its mark alone, so this is the one tab where the mark
-    is the whole of what the reader has to go on - and the two things Emil asked for meet
-    here."""
 
     page.evaluate(PIN)
     page.wait_for_timeout(700)
@@ -284,9 +210,6 @@ def iconned(page: Page, scheme: str) -> None:
     if chip["tab"] > 48:
         wrong(f"[{scheme}] a tab drawn as its icon is as wide as a named one: {chip['tab']}px")
 
-    # The mark it is reduced to: the one the row wears, in the box every other tab
-    # keeps. A chip whose icon is not the file's own would be a chip nothing can be
-    # told apart by.
     row = page.evaluate(ROWS).get("Plan", "")
     if chip["drawing"] != row:
         wrong(f"[{scheme}] the icon chip wears {chip['drawing']!r} where the row wears {row!r}")
@@ -295,11 +218,6 @@ def iconned(page: Page, scheme: str) -> None:
 
 
 def chooses(page: Page, scheme: str) -> None:
-    """An icon chosen the way somebody chooses one, and both surfaces taking it.
-
-    Emil: *"if we set an explorer icon for a note, then it should also be the tab
-    icon."* Nothing tells the tab - the row and the tab ask one reader the same
-    question about one file, so the strip changes when the list does."""
 
     say(f"[{scheme}] choosing an icon for {page.evaluate(CHOOSE)}")
     page.locator(".sheet").wait_for(state="visible", timeout=30_000)
@@ -341,7 +259,6 @@ def drive(page: Page, scheme: str) -> list[dict]:
     say(f"[{scheme}] the tabs: {json.dumps(opened, ensure_ascii=False)}")
     page.wait_for_timeout(2000)
 
-    # The file list, so the rows and the tabs can be read against each other.
     page.keyboard.press("Control+Shift+e")
     page.wait_for_timeout(900)
 
@@ -361,8 +278,6 @@ def drive(page: Page, scheme: str) -> list[dict]:
         if one["kind"] == "nothing":
             wrong(f"[{scheme}] {one['name']} wears no mark at all")
 
-    # One box, and one place in the tab: which is what makes six kinds read as a strip
-    # and every name in it start at the same place.
     boxes = {(one["width"], one["height"]) for one in strip}
     seats = {(one["at"], one["middle"]) for one in strip}
     if len(boxes) != 1:
@@ -371,18 +286,15 @@ def drive(page: Page, scheme: str) -> list[dict]:
         wrong(f"[{scheme}] the marks do not sit in one place: {sorted(seats)}")
     say(f"[{scheme}] one box {boxes.pop()} at one place {seats.pop()}")
 
-    # One weight, across the two grids the drawings come off.
     hairlines = {one["hairline"] for one in strip if one["hairline"] is not None}
     if max(hairlines) - min(hairlines) > 0.02:
         wrong(f"[{scheme}] the strokes are not one weight: {sorted(hairlines)}")
     say(f"[{scheme}] one hairline: {sorted(hairlines)}")
 
-    # And no two kinds wear the same drawing.
     drawings = [one["drawing"] for one in strip if one["drawing"]]
     if len(set(drawings)) != len(drawings):
         wrong(f"[{scheme}] two tabs wear the same drawing: {drawings}")
 
-    # A website with a mark shows the picture, and it really arrived.
     marked = next((one for one in strip if "with a mark" in (one["name"] or "")), None)
     plain = next((one for one in strip if "with no mark" in (one["name"] or "")), None)
     if not marked or marked["kind"] != "picture":
@@ -394,7 +306,6 @@ def drive(page: Page, scheme: str) -> list[dict]:
     if not plain or plain["kind"] != "stroke":
         wrong(f"[{scheme}] the site with no mark does not fall back to the globe: {plain}")
 
-    # And the one that says a tab and a row are one answer: the same file, one mark.
     rows = page.evaluate(ROWS)
     tab = next((one for one in strip if one["name"] == "Plan"), None)
     row = rows.get("Plan", "")
@@ -420,8 +331,6 @@ def main() -> int:
             finally:
                 page.context.close()
 
-    # The same strip in both schemes, to the pixel: a scheme paints a mark and never
-    # moves it.
     if len(measured) == 2:
         shapes = [
             [(one["name"], one["width"], one["at"], one["tab"]) for one in rows]

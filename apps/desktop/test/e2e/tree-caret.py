@@ -1,23 +1,3 @@
-"""The twist at the end of a row is easy to hit: a press a few pixels off it still
-shows or hides what the row holds, and opens nothing (#402).
-
-A folder of two notes, shut. Pressed a few pixels before the mark, a few after it,
-near the top of the row and near its foot, each press turns the row and leaves the
-note in front as it was; a double press on it opens nothing either. Pressed on its
-name, the row opens. And under a thumb, the strip is never narrower than the touch
-target, and the mark and the row are where they were: the strip is drawn nowhere.
-
-The tag tree under an empty search draws the same twist in front of a tag that holds
-tags, as a button of its own: pressed a few pixels either side of it, it turns, and
-nothing is searched for; pressed on the tag's name, the tag is searched for.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tree-caret.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import json
@@ -49,7 +29,6 @@ async () => {
 
 ROW = "aside .row[data-path$='/Work']"
 
-# The row, its mark and the strip round the mark, in the page's pixels.
 BOXES = f"""
 () => {{
   const row = document.querySelector("{ROW}")
@@ -65,10 +44,7 @@ BOXES = f"""
 OPEN = f"() => document.querySelector(\"{ROW}\")?.getAttribute('aria-expanded')"
 FRONT = "() => window.nibApp.workspace.active?.path ?? null"
 
-
 def settled(page: Page, what: str) -> dict:
-    """The row's boxes once the panel has stopped sliding in: the same twice running."""
-    # Under its own sheet: see `tags` below.
     wait_for(page, LANDED, "the sheets")
     seen = None
     for _ in range(40):
@@ -80,16 +56,10 @@ def settled(page: Page, what: str) -> dict:
     wrong(f"{what}: the row never stood still")
     return seen or {}
 
-
 def landing_on(page: Page, at: tuple[float, float], what: str, said: str) -> None:
-    """Until a press at `at` lands on `what`. A sidebar that has slid in stands where its
-    boxes say a moment before WebKit's presses find it: they went through to the note
-    under it, on the first press of a launch, and the note took the click."""
     wait_for(page, f"() => !!document.elementFromPoint({at[0]}, {at[1]})?.closest({what!r})", f"{said}: the press to land there")
 
-
 def turned(page: Page, at: tuple[float, float], what: str) -> None:
-    """A press at `at` turns the row, and the note in front stays the one it was."""
     was = page.evaluate(OPEN)
     front = page.evaluate(FRONT)
     landing_on(page, at, ".twist", what)
@@ -102,7 +72,6 @@ def turned(page: Page, at: tuple[float, float], what: str) -> None:
     if page.evaluate(FRONT) != front:
         wrong(f"{what}: it opened {page.evaluate(FRONT)} as well")
     say(f"{what}: {was} -> {page.evaluate(OPEN)}")
-
 
 def desk(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
@@ -126,7 +95,6 @@ def desk(browser: Browser) -> None:
         turned(page, (mark["x"] + mark["w"] / 2, row["y"] + 2), "at the top of the row")
         turned(page, (mark["x"] + mark["w"] / 2, row["y"] + row["h"] - 2), "at the foot of the row")
 
-        # Two presses, one after the other: turned and back, and still nothing opened.
         front = page.evaluate(FRONT)
         was = page.evaluate(OPEN)
         page.mouse.dblclick(mark["x"] - 2, middle)
@@ -136,12 +104,10 @@ def desk(browser: Browser) -> None:
         if page.evaluate(OPEN) != was:
             wrong("a double press on the twist did not turn the row there and back")
 
-        # The strip changed nothing that is drawn: the row and the mark are where they were.
         after = page.evaluate(BOXES)
         if after["row"] != row or after["mark"] != mark:
             wrong(f"the row or its mark moved: {after}")
 
-        # Well clear of the strip, on the name: the row opens what it is.
         page.locator(f"{ROW} .nib-row-label").click()
         try:
             wait_for(page, "() => (window.nibApp.workspace.active?.path ?? '').includes('/Work')", "the folder opened", 10)
@@ -150,7 +116,6 @@ def desk(browser: Browser) -> None:
         DRIVE.shot(page, "tree-caret", clip={"x": row["x"], "y": row["y"] - 4, "width": row["w"], "height": row["h"] + 8})
     finally:
         context.close()
-
 
 def thumb(browser: Browser) -> None:
     context = browser.new_context(
@@ -181,7 +146,6 @@ def thumb(browser: Browser) -> None:
     finally:
         context.close()
 
-
 TAGS = """
 async () => {
   const ws = window.nibApp.workspace
@@ -195,7 +159,6 @@ TAG = "aside .line:has(.twist) .twist"
 TAG_OPEN = f"() => document.querySelector(\"{TAG}\")?.getAttribute('aria-expanded')"
 SEARCHED = "() => window.nibApp.search.text"
 
-
 def tags(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
@@ -205,8 +168,6 @@ def tags(browser: Browser) -> None:
         DRIVE.open(page)
         page.evaluate(TAGS)
         wait_for(page, f"() => !!document.querySelector(\"{TAG}\")", "the tag that holds tags")
-        # Measured under its own sheet: WebKit keeps a page's sheets back while one is on
-        # its way, and until then the mark in the twist stood 200 px tall, twice running.
         wait_for(page, LANDED, "the sheets")
         seen = None
         for _ in range(40):
@@ -237,12 +198,10 @@ def tags(browser: Browser) -> None:
     finally:
         context.close()
 
-
 def drive(browser: Browser) -> None:
     desk(browser)
     thumb(browser)
     tags(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a press a few pixels off the twist turns the row and opens nothing"))

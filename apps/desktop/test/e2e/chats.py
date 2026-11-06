@@ -1,28 +1,3 @@
-"""A chat, against a store in memory, in light and dark and at a phone's width.
-
-The chats' client store is another lane's (docs/chats.md 6.2, lane 4); until a Worker
-drive of two browsers stands on it, the surfaces are driven against the store in memory
-(lib/chats/view/fixture.svelte.ts), which applies every event with the same reducer the
-account does. The drive opens a team's chat seeded with every kind of message and:
-
-- photographs the chat: the head, day lines, groups, the New line, markdown, code, a
-  poll, a pin, a gallery, a voice message, a file, a preview, reactions, receipts;
-- sends a message with a mention and checks it lands, drawn as a mention;
-- puts a reaction on through the hover bar's picker and takes it back;
-- opens a message's replies, and replies;
-- opens the lightbox and walks it;
-- hears an arrival at the bottom;
-- opens a chat of 100,000 messages and scrolls through it, counting frames;
-- draws all of it again at a phone's width.
-
-Serves the app from a Vite dev server of its own, since the modules are imported by
-their paths, and drives it in headless Chromium.
-
-    python apps/desktop/test/e2e/chats.py
-
-Screenshots go beside this file under `shots/chats/`.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -56,24 +31,19 @@ async (path) => {
 }
 """
 
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     return DRIVE.waited(page, expression, what, patience)
-
 
 def shot(page: Page, name: str) -> None:
     DRIVE.settled(page)
     DRIVE.shot(page, name)
 
-
 def rows(page: Page) -> int:
     return page.evaluate("() => document.querySelectorAll('.chat-tab .message').length")  # type: ignore[no-any-return]
-
 
 def composer_type(page: Page, words: str) -> None:
     page.click(".chat-tab .composer .cm-content")
     page.keyboard.type(words, delay=10)
-
 
 def desktop(page: Page, scheme: str) -> None:
     DRIVE.open(page)
@@ -87,7 +57,6 @@ def desktop(page: Page, scheme: str) -> None:
     wait_for(page, "document.querySelector('.chats .entry')", "the Chats panel's rows")
     shot(page, f"{scheme}-01-chat")
 
-    # Up through the history: the gallery, the poll, the code.
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = 0 }")
     DRIVE.settled(page)
     page.wait_for_timeout(300)
@@ -101,7 +70,6 @@ def desktop(page: Page, scheme: str) -> None:
         if not page.query_selector(selector):
             wrong(f"no {what} in the chat")
 
-    # A message with a mention.
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = box.scrollHeight }")
     composer_type(page, "Thanks @Lu")
     wait_for(page, "document.querySelector('.mentions')", "the mention menu")
@@ -126,7 +94,6 @@ def desktop(page: Page, scheme: str) -> None:
             wrong("the markdown was not drawn")
     wait_for(page, "!document.querySelector('.chat-tab .message.pending')", "the post to be placed")
 
-    # The hover bar, and a reaction through the picker.
     last = page.query_selector_all(".chat-tab .message")[-1]
     last.hover()
     wait_for(page, "document.querySelector('.chat-tab .bar[role=toolbar]')", "the hover bar")
@@ -150,7 +117,6 @@ def desktop(page: Page, scheme: str) -> None:
         "the rocket taken back",
     )
 
-    # Replies.
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = 0 }")
     DRIVE.settled(page)
     if wait_for(page, "document.querySelector('.chat-tab .message .replies')", "a message with replies"):
@@ -167,7 +133,6 @@ def desktop(page: Page, scheme: str) -> None:
         page.keyboard.press("Escape")
         wait_for(page, "!document.querySelector('aside.replies')", "the replies to close")
 
-    # The lightbox.
     if wait_for(page, "document.querySelector('.chat-tab .grid .cell')", "a gallery"):
         page.query_selector(".chat-tab .grid .cell").scroll_into_view_if_needed()
         page.click(".chat-tab .grid .cell")
@@ -177,7 +142,6 @@ def desktop(page: Page, scheme: str) -> None:
         page.keyboard.press("Escape")
         wait_for(page, "!document.querySelector('.lightbox')", "the lightbox to close")
 
-    # An arrival at the bottom.
     page.evaluate("() => { const box = document.querySelector('.chat-tab .scroller'); box.scrollTop = box.scrollHeight }")
     DRIVE.settled(page)
     page.evaluate(
@@ -193,7 +157,6 @@ def desktop(page: Page, scheme: str) -> None:
         )
         if bottom > 8:
             wrong(f"an arrival at the bottom left the reader {bottom}px above it")
-
 
 BIG = """
 async () => {
@@ -238,7 +201,6 @@ async () => {
 }
 """
 
-
 def big(page: Page) -> None:
     DRIVE.open(page)
     took = page.evaluate(BIG)
@@ -247,11 +209,8 @@ def big(page: Page) -> None:
     say(f"scrolling: {measured}")
     if measured["rows"] > 120:
         wrong(f"{measured['rows']} rows in the page; the window should hold about sixty")
-    # A frame's length is the painter's, and Playwright's WebKit outside a Mac paints in
-    # software, which says nothing of what a Mac draws (#384): said there, held here.
     if measured["median"] > 20 and not WEBKIT:
         wrong(f"a median frame of {measured['median']:.1f} ms while scrolling")
-
 
 def phone(page: Page, scheme: str) -> None:
     DRIVE.open(page)
@@ -266,7 +225,6 @@ def phone(page: Page, scheme: str) -> None:
         page.click(".chat-tab .message .replies")
         wait_for(page, "document.querySelectorAll('aside.replies .message').length >= 3", "the replies")
         shot(page, f"{scheme}-09-phone-replies")
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -295,7 +253,6 @@ def main() -> int:
         big(page)
         page.context.close()
     return DRIVE.verdict("all good")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

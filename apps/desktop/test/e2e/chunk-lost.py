@@ -1,31 +1,3 @@
-"""A piece of the app that did not arrive.
-
-hunt-7, 2026-09-30: one chunk lost - to a deploy under a tab that stayed open, or to
-a flaky network - and the palette, the right-click menu, the prompt sheet, sign-in and
-the format bar were dead for the rest of the session, without a word. The doors kept
-the failed fetch, and Chromium keeps it too: a module that did not arrive is never
-fetched from that address again while the page lives, which the unit suite cannot
-show because Node has no module map of this kind. So this drive asks the real browser.
-
-The palette's chunk is refused while the launch fetches it, which is the whole of the
-simulated failure. Then two stories, each on a page of its own:
-
-  - The same build: the site answers with the page that is running. The notices row
-    offers Reload, Ctrl+O still does nothing (Chromium will not fetch that chunk
-    again), and a press on Reload brings a page whose Ctrl+O opens the palette.
-  - A newer build: the site answers with a page whose entry is another file. The page
-    reloads itself once the hands are off it, and without anybody pressing anything
-    the next Ctrl+O opens the palette.
-
-And nothing is thrown on the way: a failure the page answers is not an error in it.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/chunk-lost.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import re
@@ -35,39 +7,26 @@ from playwright.sync_api import Browser, Page, Route
 
 from harness import Drive
 
-#: The loss is staged by refusing the chunk at Playwright's route, and WebKit keeps the
-#: refusal as the address's answer for the life of the browser, across Reload and into
-#: every context after it, without asking the route again (#384): the chunk is never
-#: fetched a second time, so neither story can be told there. Whether Safari itself
-#: holds on to a real network failure that way is a question for a Mac.
 NEEDS = ("chromium",)
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: The palette's own chunk, whatever the build hashed it to.
 PALETTE = re.compile(r"/assets/Palette-[^/]+\.js$")
 
-#: The entry script's address in the page, which is what a deploy changes.
 ENTRY = re.compile(r'(<script type="module"[^>]*src="[^"]+\.js)"')
 
-#: Whether the palette is on screen.
 PALETTE_OPEN = "() => !!document.querySelector('.palette[role=dialog]')"
 
-#: Something only this page load has, so a reload is seen as the page losing it.
 MARK = "() => { window.__beforeReload = true }"
 SAME_PAGE = "() => window.__beforeReload === true"
 
-#: Whether this page came from the index a deploy changed; see `newer_build`.
 RELOADED = "() => document.querySelector('script[type=module][src]')?.getAttribute('src').includes('deploy=2')"
 
-
 def lose_the_palette(page: Page) -> dict[str, int]:
-    """Refuses the palette's chunk for as long as the drive says, and counts asks."""
     asked = {"palette": 0, "deployed": 0}
 
     def refuse(route: Route) -> None:
-        # The deploy is the one that has the chunk: a page reloaded for it is not refused.
         if asked["deployed"]:
             route.continue_()
             return
@@ -77,9 +36,7 @@ def lose_the_palette(page: Page) -> dict[str, int]:
     page.route(PALETTE, refuse)
     return asked
 
-
 def press_for_palette(page: Page) -> bool:
-    """Ctrl+O over the note, and whether the palette came up."""
     page.mouse.click(600, 400)
     page.keyboard.press("Control+O")
     try:
@@ -89,7 +46,6 @@ def press_for_palette(page: Page) -> bool:
     page.keyboard.press("Escape")
     page.wait_for_function(f"() => !({PALETTE_OPEN})()", timeout=4000, polling=50)
     return True
-
 
 def same_build(browser: Browser) -> None:
     say("--- the same build: the network lost the piece ---")
@@ -121,7 +77,6 @@ def same_build(browser: Browser) -> None:
         wrong("the palette does not open after Reload")
     page.context.close()
 
-
 def newer_build(browser: Browser) -> None:
     say("--- a newer build: the site moved on under the tab ---")
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -129,8 +84,6 @@ def newer_build(browser: Browser) -> None:
     served = {"root": 0}
 
     def deployed(route: Route) -> None:
-        """The first page is the build; every page after it names another entry, which
-        is what a deploy does to the index."""
         served["root"] += 1
         response = route.fetch()
         body = response.text()
@@ -143,9 +96,6 @@ def newer_build(browser: Browser) -> None:
     DRIVE.open(page)
     say(f"    the palette's chunk was asked for {asked['palette']} time(s) and refused")
 
-    # The site is asked as the chunk fails; the hands are off, so the page goes. By the
-    # entry it names, which is what a deploy changes: a mark made on the page here missed
-    # it where the page had gone already, 3 s of no hands after the chunk failed.
     page.unroute(PALETTE)
     if not DRIVE.waited(page, RELOADED, "the page to reload by itself", patience=30):
         shot(page, "newer-build-stuck")
@@ -166,11 +116,9 @@ def newer_build(browser: Browser) -> None:
         wrong("the palette does not open after the reload")
     page.context.close()
 
-
 def drive(browser: Browser) -> None:
     same_build(browser)
     newer_build(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a lost chunk comes back, by Reload or by itself"))

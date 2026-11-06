@@ -1,18 +1,3 @@
-"""Todoist's Display menu and its Upcoming, in the built app.
-
-What this drives, against the real files:
-
-  * A view of tasks wears Todoist's head: its name, the search, Display and the plus,
-    and none of a database's tools.
-  * Display groups Today by priority, keeps done tasks in it, and narrows it to a label.
-  * Upcoming has what is overdue on top, then every day from today, an empty one too,
-    each with its head and its add row; a day pressed on the strip is scrolled to.
-
-    python apps/desktop/test/e2e/display.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/display/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -25,11 +10,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 DAYS = """() => {
   const day = (n) => {
@@ -60,7 +43,6 @@ WRITE = """async ([files]) => {
 WORDS = "() => [...document.querySelectorAll('.view-tab .task .words')].map((one) => one.textContent.trim())"
 HEADS = "() => [...document.querySelectorAll('.view-tab .head .fold:not(.display .fold)')].map((one) => one.textContent.trim())"
 
-
 def seed(page: Page) -> dict[str, str]:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
@@ -72,7 +54,6 @@ def seed(page: Page) -> dict[str, str]:
         "the seeded rows",
     )
     return days
-
 
 def display(page: Page) -> None:
     page.evaluate("window.tasks.openBuiltin('today')")
@@ -102,7 +83,6 @@ def display(page: Page) -> None:
     shot(page, "02-narrowed")
     page.keyboard.press("Escape")
 
-
 def upcoming(page: Page, days: dict[str, str]) -> None:
     page.evaluate("window.tasks.openBuiltin('upcoming')")
     wait_for(page, "document.querySelector('.view-tab .upcoming .task')", "Upcoming")
@@ -117,7 +97,6 @@ def upcoming(page: Page, days: dict[str, str]) -> None:
         wrong(f"the empty days have no add row ({adds})")
     shot(page, "03-upcoming")
 
-    # Shift and an arrow walk the strip a week at a time.
     first = "() => document.querySelector('.view-tab .strip .day .number')?.textContent"
     before = page.evaluate(first)
     page.locator(".view-tab .upcoming .task").first.focus()
@@ -126,9 +105,7 @@ def upcoming(page: Page, days: dict[str, str]) -> None:
     page.keyboard.press("Shift+ArrowLeft")
     wait_for(page, f"() => ({first})() === '{before}'", "the strip back")
 
-
 COLUMNS = "() => [...document.querySelectorAll('.view-tab .board .column .head .name')].map((one) => one.textContent.trim())"
-
 
 def upcoming_board(page: Page, days: dict[str, str]) -> None:
     page.locator(".view-tab [aria-label='Display']").click()
@@ -144,15 +121,12 @@ def upcoming_board(page: Page, days: dict[str, str]) -> None:
         wrong(f"the board does not have a column for each of two weeks ({len(columns)})")
     shot(page, "04-upcoming-board")
 
-    # A card carried to the column of the day after tomorrow is given that day.
     water = page.locator(".view-tab .board .card", has_text="Water the plants").bounding_box()
     third = page.locator(".view-tab .board .column").nth(3).bounding_box()
     if water and third:
         page.mouse.move(water["x"] + 20, water["y"] + 10)
         page.mouse.down()
         page.mouse.move(water["x"] + 40, water["y"] + 20, steps=4)
-        # Into the column's head end: an empty column is only as tall as its head and
-        # its add row, so a fixed depth below its top can miss it.
         page.mouse.move(third["x"] + 60, third["y"] + min(60, third["height"] / 2), steps=10)
         page.mouse.up()
         wait_for(
@@ -168,7 +142,6 @@ def upcoming_board(page: Page, days: dict[str, str]) -> None:
     say(f"[after forward] {json.dumps(page.evaluate(COLUMNS)[:3], ensure_ascii=False)} strip {strip}")
     wait_for(page, f"() => ({COLUMNS})()[1] !== {json.dumps(before)}", "the columns a week on")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -176,7 +149,6 @@ def drive(browser: Browser) -> None:
     display(page)
     upcoming(page, days)
     upcoming_board(page, days)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the Display menu and Upcoming held"))

@@ -1,23 +1,3 @@
-"""A space's AGENTS.md: a file on the disk, a field in the space's settings, and a name
-no note takes.
-
-The owner's request: AGENTS.md is not shown as a note in the space, it is edited in the
-space's settings, the name AGENTS is not allowed for notes, and a hint you can click goes
-to the field. So this writes the file as an agent would, sees it has no row, types AGENTS
-on a new row, presses the hint, finds the caret in the field with the file's words in it,
-edits them, closes at once and reads the file back. Then the same with the keyboard, and
-the palette's row for the name, and a nested AGENTS.md that stays an ordinary note.
-
-Builds the web app, serves `dist` statically on a port of its own, drives, and stops
-everything again. Shots of the bubble and the field go beside it under `shots/`.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/agents-md.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -30,14 +10,12 @@ DRIVE = Drive(__file__)
 say, wait_for = DRIVE.say, DRIVE.wait_for
 SHOTS = DRIVE.shots
 
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"page error: {error}"))
     DRIVE.open(page)
     return page
-
 
 SEED = """
 async () => {
@@ -55,15 +33,12 @@ async () => {
 }
 """
 
-
 def new_row(page: Page, name: str) -> None:
-    """A new note's row, with `name` typed on it and the field still up."""
     page.evaluate(
         "() => { const ws = window.nibApp.workspace; ws.startNaming('note', ws.activeSpace.root) }"
     )
     page.wait_for_selector(".naming input")
     page.fill(".naming input", name)
-
 
 def drive(browser: Browser) -> None:
     page = fresh(browser)
@@ -83,7 +58,6 @@ def drive(browser: Browser) -> None:
         )
         say("the tree shows no root AGENTS.md")
 
-        # The refusal, the bubble, the press.
         new_row(page, "agents")
         hint = page.locator(".naming button")
         hint.wait_for()
@@ -116,7 +90,6 @@ def drive(browser: Browser) -> None:
         page.screenshot(path=str(SHOTS / "agents-md-field.png"))
         say("the hint lands in the field")
 
-        # Typed and closed at once: nothing waits on the pause.
         page.keyboard.press("Control+End")
         page.keyboard.type("- tea\n")
         page.keyboard.press("Escape")
@@ -132,7 +105,6 @@ def drive(browser: Browser) -> None:
         if names.count("AGENTS.md") != 2 or any(n.lower().startswith("agents ") for n in names):
             raise SystemExit(f"the refused name wrote something: {names}")
 
-        # The keyboard: Tab to the hint, Enter through it.
         new_row(page, "AGENTS")
         page.wait_for_selector(".naming button")
         page.keyboard.press("Tab")
@@ -150,7 +122,6 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Escape")
         say("the keyboard reaches the hint and goes through it")
 
-        # Enter on the name: nothing written, the toast takes the way over.
         new_row(page, "AGENTS")
         page.wait_for_selector(".naming button")
         page.keyboard.press("Enter")
@@ -169,7 +140,6 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Escape")
         say("Enter refuses, and the toast goes to the field")
 
-        # The palette names it and goes there too.
         page.keyboard.press("Control+o")
         page.wait_for_selector(".palette input")
         page.keyboard.type("Folder/AGENTS.md")
@@ -179,7 +149,6 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Escape")
         say("the palette's row goes to the field")
 
-        # A note in a folder is a note: it has its row, and opens as a tab.
         nested = f"{root}/Folder/AGENTS.md"
         page.evaluate("(path) => window.nibApp.workspace.open(path)", nested)
         wait_for(
@@ -188,7 +157,6 @@ def drive(browser: Browser) -> None:
             "the nested note in a tab",
         )
 
-        # The root file, opened by path, is the field and no tab.
         page.evaluate("(path) => window.nibApp.workspace.open(path)", agents)
         page.locator(".nib-setting textarea").wait_for()
         if page.evaluate(
@@ -199,13 +167,11 @@ def drive(browser: Browser) -> None:
     finally:
         page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict("AGENTS.md is a field, the name is refused, and the hint goes there")
-
 
 if __name__ == "__main__":
     sys.exit(main())

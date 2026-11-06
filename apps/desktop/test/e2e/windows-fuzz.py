@@ -25,7 +25,6 @@ TYPE = """([word, where]) => {
   return true
 }"""
 
-
 def drive(browser: Browser) -> None:
     rand = random.Random(SEED)
     ctx = DRIVE.context(browser, viewport={"width": 900, "height": 600})
@@ -96,7 +95,6 @@ def drive(browser: Browser) -> None:
     if missing or doubled:
         say("file " + json.dumps(file)[:1500])
         wrong(f"seed {SEED}: missing {missing}, doubled {doubled}")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

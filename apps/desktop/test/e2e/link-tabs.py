@@ -1,39 +1,4 @@
-"""A link in a note opens in nib, and the modifier says where.
-
-nib holds pages, so a link in somebody's words has no business handing them to
-another browser. What this drives, in order:
-
-* **Ctrl+click in a note opens a tab behind it.** The page is in the strip, the note
-  is still the one being read, and nothing left the app.
-* **The middle button does the same with a different finger**, which is what it does
-  in every browser and what it did in none of nib before this.
-* **Ctrl+Shift+click opens it in front**, which is the browser's own way of saying
-  "and take me there".
-* **A locked note follows a plain click**, and follows it into a tab in front - the
-  reading case, where there is no caret for a click to be about.
-* **The reading view answers the same three gestures**, because it draws the same
-  words through a different renderer.
-* **Shift+click is a tab in front too**, since Chrome's new window has no nib
-  equivalent; see docs/web-tabs.md.
-* **A right click on a link offers the browser**, which is the way out to the system
-  browser - and it is not offered on words that are not a link.
-* **A `mailto:` link is never a tab.** No modifier turns an email address into a
-  page, and nothing local is reachable from a note at all.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode development
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/link-tabs.py
-
-Screenshots go beside this file under `shots/link-tabs/`, which is ignored. It fails
-loudly: anything wrong is printed at the end and the exit code says so.
-"""
-
 from __future__ import annotations
-
 
 
 from harness import Drive
@@ -65,8 +30,6 @@ async () => {{
 }}
 """
 
-# What the window is holding: every tab, which one is in front, and where the web
-# ones point. `address` is what a tab opened from a link is put on.
 STATE = """
 () => {
   const ws = window.nibApp.workspace
@@ -77,9 +40,6 @@ STATE = """
 }
 """
 
-# Every page this window would have handed to the system browser, caught rather than
-# opened: a drive has no system browser, and a popup would be a window it never
-# closed. What matters is which addresses arrive here and which do not.
 CATCH = """
 () => {
   window.__left = []
@@ -100,7 +60,6 @@ def web_tabs(state: dict) -> list[str]:
 
 
 def close_pages(page) -> None:
-    """Back to one note, so each gesture is read against a clean strip."""
     page.evaluate(
         """
         () => {
@@ -118,8 +77,6 @@ def press(page, selector: str, *, modifiers=(), button="left") -> None:
 
 
 def in_the_note(page) -> None:
-    """The writing surface, where a plain click is the caret's and the modifier's is
-    the link's."""
     say("--- a link in a note ---")
 
     link = ".nib-link[data-href]"
@@ -159,7 +116,6 @@ def in_the_note(page) -> None:
 
 
 def an_email(page) -> None:
-    """No modifier turns an email address into a page."""
     say("--- what is not a page ---")
 
     mail = '.nib-link[data-href^="mailto:"]'
@@ -183,7 +139,6 @@ def an_email(page) -> None:
 
 
 def the_menu(page) -> None:
-    """The way out to the system browser, which is a row of the link's menu."""
     say("--- a right click on a link ---")
 
     page.locator(".nib-link[data-href^='https']").first.click(button="right")
@@ -199,8 +154,6 @@ def the_menu(page) -> None:
     else:
         say("right click           -> 'Open in the browser' at the top")
 
-    # And reachable, which the editor's menu was not: it is longer than a laptop
-    # screen, and used to hang its first rows above the top of the window.
     box = page.locator('.menu [role="menuitem"]').first.bounding_box()
     if box is None or box["y"] < 0 or box["y"] + box["height"] > 900:
         wrong(f"the first row of the menu is off the window: {box}")
@@ -211,7 +164,6 @@ def the_menu(page) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # And not on plain words, where there is no link for it to be about.
     page.locator(".cm-content p, .cm-line").first.click(button="right")
     page.wait_for_timeout(400)
     rows = page.evaluate(
@@ -229,8 +181,6 @@ def the_menu(page) -> None:
 
 
 def a_locked_note(page) -> None:
-    """With the doors locked there is no caret to place, so the plain click is the
-    link's - and it opens the page in front, the way a press on a page does."""
     say("--- a locked note ---")
 
     page.evaluate("() => window.nibApp.modes.toggleReadOnly(undefined)")
@@ -249,7 +199,6 @@ def a_locked_note(page) -> None:
 
 
 def the_reading_view(page) -> None:
-    """The same words through the renderer, answering the same three gestures."""
     say("--- the reading view ---")
 
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
@@ -289,9 +238,6 @@ def the_reading_view(page) -> None:
         say("middle-click          -> the same, with a different finger")
     close_pages(page)
 
-    # Shift alone is Chrome's new window, and a nib window is a second workspace
-    # rather than one page, so it is a tab in front and nothing leaves the app: the
-    # rule since d68541d7, in docs/web-tabs.md. The way out is the link's menu row.
     page.evaluate(CATCH)
     press(page, anchor, modifiers=["Shift"])
     state = page.evaluate(STATE)

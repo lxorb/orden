@@ -1,41 +1,3 @@
-"""The note behind a link, glanced at: modifier and hover over a `[[wikilink]]`
-and the card that opens is that note - coloured fences with their captions,
-callouts with their icons and their fold, tables, maths, task boxes, the note's own
-metadata as rows, footnotes, the picture it embeds, the heading a link names.
-
-Emil: "Some things don't render properly in the hover preview, e.g. code blocks."
-The card was a second, thinner rendering of the note then. It is not any more: the
-card is a small editor on the linked note's own words, drawn by the same live
-preview the pane behind it is drawn by and editable for the same reason Obsidian's
-is - see hover.ts and preview-card.ts. So the card is compared block for block
-against a **pane** showing the same note, not against the reading view: one surface
-said twice is the thing worth holding to, and which of the app's two faces it is
-comes from what the card is for.
-
-Two faults this file is here to keep from coming back, both of them a card being
-almost the pane and not quite. The editor was built with no image resolver, so a
-picture the note embedded asked the page for `/shot.png` - the space serves it at
-`/asset/<space>/...` - and every picture in every glance was a broken one. And the
-card put the caret at character nought, which in a note with metadata is inside the
-front matter: an editor shows the block the caret is in as the markdown it is, so a
-glance opened on three lines of raw YAML while every block below it drew perfectly.
-It read as a renderer that had lost its extensions and was a caret in the wrong
-place. CodeMirror also hangs a tooltip off the editor rather than inside its
-content, so the card carries `#write` itself - the one scope every prose rule is
-written against - and that is checked here too.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/hover-preview.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/hover-preview/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -48,8 +10,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-
-# Every kind of block a note is made of, in the note a link points at.
 TARGET = """---
 title: Everything
 tags:
@@ -106,10 +66,6 @@ async ([target, source]) => {
 }
 """
 
-# Everything a surface drawing a note draws, by the names the live preview gives
-# them, and what the browser computed for each. Written once and asked of two
-# element trees - the card, and a pane showing the same note - because the whole
-# question is whether the card is that surface or a thinner copy of it.
 BLOCKS = """
 (root) => {
   if (!root) return null
@@ -163,9 +119,6 @@ BLOCKS = """
 }
 """
 
-# What the card holds, and the card itself: where it is and how it arrives. The
-# reading above is written once and spliced into both of the two below, so the card
-# and a pane are asked exactly the same question; see `asking`.
 INSIDE = """
 () => {
   const card = document.querySelector('.nib-note-preview')
@@ -211,7 +164,6 @@ INSIDE = """
 }
 """
 
-# The same note in a pane of its own, which is the surface the card claims to be.
 PANE_BLOCKS = """
 () => {
   const pane = document.querySelector('.cm-content')
@@ -219,18 +171,9 @@ PANE_BLOCKS = """
 }
 """
 
-
 def asking(reading: str) -> str:
-    """The reading above, spliced into a page function that calls it.
-
-    One definition of what a surface draws, asked of two element trees. Spliced
-    rather than passed in, because a function cannot cross into the page: what
-    crosses is the text of one, and building it back up in there is `new Function`,
-    which is a thing a test should not teach a page to do."""
     return reading.replace("BLOCKS(", f"({BLOCKS.strip()})(")
 
-
-# What the pane is doing, for when the links in a note are not drawn.
 PANE = """
 () => {
   const content = document.querySelector('.cm-content')
@@ -246,15 +189,7 @@ PANE = """
 }
 """
 
-
-# The note names a picture on purpose - `![[shot.png]]` is one of the things a
-# glance has to draw - and nothing seeds the file, so whatever answers for an
-# asset answers 404 for it. That the address was asked for at all is the point:
-# the embed resolved, and the drive reads the `src` off the element rather than
-# asking the picture to exist. Either responder's words, and the address itself,
-# because which of them answers depends on what the page has loaded.
 EXCUSED = ("/asset/", "no such file in the space")
-
 
 def complain(label: str, message: object) -> None:
     if getattr(message, "type", "") != "error":
@@ -266,7 +201,6 @@ def complain(label: str, message: object) -> None:
         return
 
     wrong(f"[{label}] console error: {text} ({where})")
-
 
 def fresh(
     browser: Browser,
@@ -295,13 +229,8 @@ def fresh(
     page.on("console", lambda message: complain(label, message))
     DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [TARGET, SOURCE])}")
-    # The rows, which this drive reads; hidden is where a reader starts.
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
-    # Opened, and asked for again until the note asked for is the note in the
-    # pane. Making a note opens it, so the two seeded notes are already opening
-    # while this runs, and whichever open lands last is the one that shows; a
-    # cold page is slow enough for that to be either of them.
     wait_for(page, "window.nibApp.workspace.notes.length > 1", f"[{label}] the notes")
     for _ in range(6):
         page.evaluate(
@@ -323,13 +252,7 @@ def fresh(
 
     raise SystemExit(f"[{label}] {open_note} never arrived in the pane")
 
-
 def glance(page: Page, label: str, which: int = 0) -> dict | None:
-    """Holds the modifier and rests on a link, which is what opens the card."""
-    # Waited for rather than slept past. Two things have to be true before there
-    # is anything to rest a pointer on: the pane has to have a size, because
-    # CodeMirror decorates what is in view and a surface of no height has nothing
-    # in view; and the links in the note have to be drawn.
     wait_for(
         page,
         "document.querySelector('.cm-content').getBoundingClientRect().height > 0",
@@ -353,23 +276,13 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
 
     page.keyboard.down("Control")
     for attempt in range(3):
-        # Away first, then onto the link: the card opens on the pointer coming to
-        # rest, and a pointer already sitting where it is asked to go sends no
-        # move at all. The second touch is what makes it a rest rather than a
-        # crossing, which is what a reader's hand does anyway.
         page.mouse.move(4, 4)
         page.wait_for_timeout(120)
         link.hover()
         page.wait_for_timeout(120)
-        # The second touch is what makes it a rest rather than a crossing, which is
-        # what a reader's hand does anyway. Forced, because by now the card may
-        # already be up and a card stands over the link it was opened from.
         link.hover(position={"x": 3, "y": 3}, force=True)
 
         try:
-            # The frame goes up at once and the note arrives into it; the render
-            # is a round trip of its own, so the words are waited for rather than
-            # the card.
             page.wait_for_selector(".nib-note-preview-body > *", timeout=10_000)
             break
         except Exception:
@@ -382,7 +295,6 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
     inside = page.evaluate(asking(INSIDE))
     page.keyboard.up("Control")
     return inside
-
 
 def drive_desktop(browser: Browser) -> None:
     page = fresh(browser, "desktop")
@@ -400,14 +312,11 @@ def drive_desktop(browser: Browser) -> None:
     if card["name"] != "Everything":
         wrong(f"the card does not name the note: {card['name']!r}")
 
-    # The card is the note, not a picture of it: a word of it can be fixed from
-    # here. See hover.ts and preview-card.ts.
     if not card["editor"] or card["written"] != "yes":
         wrong(f"the card is a reading of the note rather than the note: {card}")
     if card["editable"] != "true":
         wrong(f"the note in the card cannot be written in: {card['editable']!r}")
 
-    # The blocks Emil could not see.
     if not card["fence"]:
         wrong("a fenced code block came out unframed")
     if card["caption"] != "pipeline.ts":
@@ -430,8 +339,6 @@ def drive_desktop(browser: Browser) -> None:
         wrong(f"the task boxes are {card['tasks']}, not two")
     if card["ticked"] != 1:
         wrong(f"the ticked task is not marked done: {card['ticked']} of them")
-    # The one thing a glance must not do to a picture: ask the page for it. The
-    # space serves what a note embeds at an address of its own.
     if card["picture"] is None:
         wrong("the embedded picture drew no element at all")
     elif "/asset/" not in card["picture"]:
@@ -443,7 +350,6 @@ def drive_desktop(browser: Browser) -> None:
     if not card["footnotes"]:
         wrong("the footnotes were not drawn")
 
-    # It arrives rather than appearing, and it stays on the screen.
     if card["animation"] != "settle-in":
         wrong(f"the card does not settle in: {card['animation']!r}")
     if card["duration"] in ("0s", "0ms"):
@@ -454,9 +360,6 @@ def drive_desktop(browser: Browser) -> None:
     if rect["top"] < 0 or rect["bottom"] > window["height"] + 1:
         wrong(f"the card runs off the bottom: {rect} in {window}")
 
-    # And the same note in a pane of its own, which is the surface the card says it
-    # is. Everything the two draw is drawn by one live preview, so a difference here
-    # is a card that was built with something the pane has and it has not.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -492,17 +395,12 @@ def drive_desktop(browser: Browser) -> None:
         if card[what] != pane[what]:
             wrong(f"{what} differs: the card says {card[what]!r}, a pane {pane[what]!r}")
 
-    # The picture is the one thing the two cannot say the same way - a pane resolves
-    # it against the note it has open, and that is the same note here - so it is
-    # compared rather than skipped.
     if card["picture"] != pane["picture"]:
         wrong(f"the picture differs: the card {card['picture']!r}, a pane {pane['picture']!r}")
 
     page.context.close()
 
-
 def drive_section(browser: Browser) -> None:
-    """`[[Everything#Later]]`: the heading's own section and not the note."""
     page = fresh(browser, "section")
     card = glance(page, "section", which=1)
     if card is None:
@@ -513,9 +411,6 @@ def drive_section(browser: Browser) -> None:
     say(f"[section] the card is showing {card['showing']!r}")
     shot(page, "10-section")
 
-    # The whole note is in the card - what is typed there goes back to the file, and
-    # a section spliced in at an offset nobody can check is a note rewritten wrong -
-    # opened at the part the link named. See `PreviewNote` in hover.ts.
     if "Only this much" not in card["showing"]:
         wrong(f"the card did not open on the heading the link names: {card['showing']!r}")
     if card["raw"]:
@@ -523,9 +418,7 @@ def drive_section(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_still(browser: Browser) -> None:
-    """A reader who asked for no motion gets the card without any."""
     page = fresh(browser, "still", still=True)
     card = glance(page, "still")
     if card is None:
@@ -545,12 +438,7 @@ def drive_still(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_finger(browser: Browser) -> None:
-    """A phone: there is no modifier and no hover, so there is nothing to open -
-    what matters is that nothing breaks and that a card, if one is ever opened,
-    stays on a screen this size. Driven with a pointer anyway, which is what a
-    phone plugged into a keyboard has."""
     page = fresh(browser, "phone", finger=True)
     card = glance(page, "phone")
     shot(page, "30-phone")
@@ -571,7 +459,6 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a glance at a note ---")
@@ -584,7 +471,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("the note behind a link reads exactly as the note does")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

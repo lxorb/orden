@@ -1,18 +1,3 @@
-"""Comments, seen: `%%like this%%` goes where an HTML comment goes, and comes
-back the moment the caret is inside it, in the editor and in the reading view.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/comments.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/comments/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -23,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = (
     "# Comments\n\n"
@@ -55,7 +39,6 @@ WRITTEN = """
 })
 """
 
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     page = context.new_page()
@@ -81,7 +64,6 @@ def fresh(browser: Browser) -> Page:
     page.wait_for_timeout(700)
     return page
 
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
 
@@ -100,17 +82,13 @@ def drive(browser: Browser) -> None:
     if "A line with  inside it." not in written["shown"]:
         wrong("the words around a comment did not stay")
 
-    # A comment across lines is shown, faded, rather than hidden: the editor may not
-    # hide a line break from a plugin, and doing so once crashed it (#524).
     for across in ("written across", "broken over a line"):
         if across not in written["shown"]:
             wrong(f"a comment across lines is not on the page: {across}")
 
-    # And the note itself is untouched: what is written is what is in the file.
     if "%%a note to myself%%" not in written["doc"]:
         wrong("the comment was rewritten in the note")
 
-    # The caret inside it brings it back.
     at = written["doc"].index("a note to myself") + 4
     page.evaluate(
         """(at) => {
@@ -125,7 +103,6 @@ def drive(browser: Browser) -> None:
     if "a note to myself" not in revealed["shown"]:
         wrong("the comment did not come back with the caret inside it")
 
-    # Typing after it lands where it was typed, on the page and in the note.
     page.evaluate(
         """() => {
           const end = window.nib.state.doc.length
@@ -139,7 +116,6 @@ def drive(browser: Browser) -> None:
     if "TYPED" not in typed["shown"]:
         wrong("what was typed is not on the page")
 
-    # And the reading view, which is what anybody else would see.
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, "03-reading")
@@ -162,10 +138,8 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "a note to yourself stays one, whichever way it is written")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,32 +1,3 @@
-"""The recorder, driven: a microphone, a file beside the note, and words under it.
-
-Three things are being claimed and none of them can be shown by a unit test, because
-all three are the browser's own machinery:
-
-1. **Record** opens the microphone, writes a file into the space beside where a pasted
-   picture goes, and puts `![[recording-….weba]]` at the caret - which draws as the
-   audio player the note already draws for `![[take.mp3]]`. The pill in the status bar
-   is the whole of what is said while it runs: a red dot, the time, a stop.
-2. **Transcribe**, on the embed's own menu, sends that very file through the Worker's
-   Whisper route and writes the transcript under the player as a callout.
-3. **A meeting note made before 2026-10-03**, when Meeting notes went, opens as the
-   plain note it always was, and nothing anywhere offers to make another.
-
-Chromium is given a microphone that plays a file: `--use-fake-device-for-media-stream`
-with `--use-file-for-fake-audio-capture`, so `getUserMedia` answers with real samples
-and `MediaRecorder` writes a real Opus file. The Worker is not: `/v1/ask/heard` is
-answered here, because what is under test is what the app does
-with an answer rather than what Whisper makes of a sine wave. The route itself is held
-to its own contract in services/sync/test/ask.test.ts.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/recording.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/recording/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -42,14 +13,9 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-
-# What the fake Whisper route answers with. German, so the language the route reports
-# has somewhere to show up: the callout is headed with it.
 HEARD = "Guten Morgen, wir fangen an."
 LANGUAGE = "de"
 
-# A meeting note exactly as the recorder wrote one until 2026-10-03: front matter, its
-# own recording, a summary, and the transcript under its heading.
 OLD_MEETING = """---
 date: 2026-09-12
 duration: 4:09
@@ -89,9 +55,6 @@ async (note) => {
 }
 """
 
-# A session, put straight into the store. Signing in properly is signin.py's drive;
-# what is wanted here is only the one thing transcribing asks for - an account token -
-# and the model the account would have chosen for the glasses.
 SIGNED_IN = """
 () => {
   const app = window.nibApp
@@ -103,9 +66,6 @@ SIGNED_IN = """
 }
 """
 
-# Every player in the note, and whether it actually has sound behind it. `duration` is
-# the honest question: an `<audio>` pointed at nothing is still an `<audio>`, and only a
-# decoded file has a length.
 PLAYERS = """
 () => {
   const out = []
@@ -125,18 +85,12 @@ PLAYERS = """
 }
 """
 
-
 def wav(seconds: float, path: Path) -> Path:
-    """A microphone, as a file: sixteen bit mono at 48 kHz, which is what Chromium's
-    fake capture takes. Speech would not survive being read by Whisper here anyway -
-    the route is answered locally - so this is a tone that rises, which is something
-    every part of the chain can carry and nothing can mistake for silence."""
     rate = 48_000
     count = int(rate * seconds)
     frames = bytearray()
 
     for at in range(count):
-        # A slow sweep, so a file that is looped does not click at the seam.
         turn = at / rate
         value = math.sin(2 * math.pi * (220 + 40 * math.sin(turn)) * turn)
         frames += struct.pack("<h", int(value * 12_000))
@@ -148,16 +102,7 @@ def wav(seconds: float, path: Path) -> Path:
     path.write_bytes(head + bytes(frames))
     return path
 
-
 class Byok:
-    """A transcriber of the reader's own, answered here.
-
-    The same route OpenAI serves and every OpenAI-compatible one serves under the same
-    name, which is the whole point of the shape: `POST /v1/audio/transcriptions`, a
-    multipart body with the sound in it, and words back. What this watches for is that
-    the app asked *it* and not the account - a reader who set up a whisper server on
-    their own machine did that so nothing would leave it.
-    """
 
     def __init__(self) -> None:
         self.asked = 0
@@ -170,9 +115,6 @@ class Byok:
         body = route.request.post_data_buffer or b""
         self.bytes.append(len(body))
 
-        # The multipart body, read for the two fields that say what was asked for. Read
-        # off the raw bytes rather than through a parser: the fields are short and the
-        # boundary is whatever the browser chose.
         said = body.decode("latin-1")
         for name, into in (("model", self.models), ("response_format", self.formats)):
             mark = f'name="{name}"'
@@ -186,9 +128,7 @@ class Byok:
             body=json.dumps({"text": HEARD, "language": LANGUAGE}),
         )
 
-
 class Whisper:
-    """The Worker's listening route, answered here."""
 
     def __init__(self) -> None:
         self.heard = 0
@@ -207,10 +147,8 @@ class Whisper:
             body=json.dumps({"said": HEARD, "language": LANGUAGE}),
         )
 
-
 def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     context = browser.new_context(
-        # The asset worker is what this drive is about; see WEBKIT_WORKERS in harness.py.
         service_workers="allow",
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
         color_scheme="light",
@@ -230,19 +168,11 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     whisper = Whisper()
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    # The account's own routes, answered here. Everything else the app would ask of
-    # The service is refused rather than answered: syncing is not what is under test,
-    # and it is written to carry on when the service cannot be reached.
-    #
-    # The refusal is registered first on purpose: Playwright tries the newest route
-    # first, so the one that answers has to be added after the one that refuses.
     page.route("https://orden.so/**", lambda route: route.abort())
     page.route("**/v1/ask/heard*", whisper.listen)
 
     DRIVE.open(page)
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
-    # The worker in front of the page is what answers for a file in the space; without
-    # it a player is pointed at an address nothing serves.
     wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
 
     seeded = page.evaluate(SEED, NOTE)
@@ -251,10 +181,6 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     page.wait_for_timeout(500)
     return page, whisper
 
-
-# The row whose words are exactly these, pressed. Exactly, because a palette narrowed by
-# "Record" holds `Recently deleted` and every recent note as well, and a drive that
-# pressed whatever came first would be testing the sorting.
 PRESS_ROW = """
 ([label]) => {
   const rows = [...document.querySelectorAll('[role=option]')]
@@ -272,20 +198,10 @@ PRESS_ROW = """
 }
 """
 
-
 def run_command(page: Page, words: str) -> None:
-    """Through the palette, which is how a reader with a keyboard reaches any of this.
-    The same rows the Paragraph menu and the phone's plus show, out of one list."""
     page.keyboard.press("Control+O")
-    # Typed once the field is there and has the keyboard, not after a guess at how long
-    # that takes: a `>` pressed before it lands goes into the note behind, and the
-    # palette then answers `Record` with the note called Recordings. Pressed into, the
-    # way a thumb does, because under a thumb a field does not take the keyboard by
-    # itself; see trap.ts.
     wait_for(page, "document.querySelector('.palette input')", "the palette's field")
     page.locator(".palette input").click()
-    # The palette answers with notes until the words open with `>`, which is what turns
-    # it into the command palette; see Palette.svelte.
     page.keyboard.type(f">{words}")
     page.wait_for_timeout(400)
 
@@ -294,12 +210,8 @@ def run_command(page: Page, words: str) -> None:
         wrong(f"the palette would not run {words!r}: {json.dumps(answered)}")
     page.wait_for_timeout(200)
 
-
 def trouble(page: Page) -> str:
-    """Whatever the app is complaining about, which is where a recording that could not
-    start says so."""
     return page.evaluate("() => window.nibApp.settings.error ?? ''")
-
 
 def pill(page: Page) -> dict:
     return page.evaluate(
@@ -316,15 +228,12 @@ def pill(page: Page) -> dict:
     }"""
     )
 
-
 def note_says(page: Page) -> str:
     return page.evaluate("() => window.nibApp.workspace.active?.doc ?? ''")
-
 
 def drive(browser: Browser) -> None:
     page, whisper = fresh(browser)
 
-    # ── A recording, with no account at all ────────────────────────────────
     say("--- a recording ---")
     page.click(".cm-content")
     page.keyboard.press("Control+End")
@@ -344,7 +253,6 @@ def drive(browser: Browser) -> None:
     if ticking["clock"] in {"", "0:00"}:
         wrong(f"the clock never moved: {ticking['clock']!r}")
 
-    # The pill's own button, which is the same command the row ran.
     page.click(".recording button")
     wait_for(page, "!document.querySelector('.recording')", "the pill to go")
     wait_for(page, "window.nibApp.workspace.active.doc.includes('![[recording-')", "the embed")
@@ -355,9 +263,6 @@ def drive(browser: Browser) -> None:
     if not embed.endswith(".weba]]") and not embed.endswith(".m4a]]"):
         wrong(f"the recording is named {embed}, which is not a sound file")
 
-    # The caret is left after what was written, and the live preview leaves the markup
-    # a caret is standing in as markup. So the caret goes back to the top, which is what
-    # a reader does next anyway, and the player draws.
     page.keyboard.press("Control+Home")
     page.wait_for_timeout(1400)
     players = page.evaluate(PLAYERS)
@@ -365,8 +270,6 @@ def drive(browser: Browser) -> None:
     if len(players) != 1:
         wrong(f"{len(players)} players in the note, not one")
     for player in players:
-        # Two is HAVE_CURRENT_DATA: the browser has decoded the file rather than merely
-        # been pointed at it, which is the honest question about an address.
         if player["ready"] < 2:
             wrong(f"the player never read the file: {player}")
         if not player["src"].startswith("/asset/"):
@@ -375,7 +278,6 @@ def drive(browser: Browser) -> None:
             wrong(f"the player is drawn {player['wide']}px wide")
     shot(page, "player")
 
-    # ── The transcript, off the embed's own menu ───────────────────────────
     say("--- transcribing it ---")
     if not page.evaluate(SIGNED_IN):
         wrong("the drive could not put a session in the store")
@@ -416,16 +318,12 @@ def drive(browser: Browser) -> None:
         wrong("nothing was ever sent to the transcriber")
     else:
         say(f"{whisper.heard} piece(s) sent, {whisper.sizes} bytes each")
-        # A WAV of 16 kHz mono is 32 kB a second; three seconds is about a hundred.
         for size in whisper.sizes:
             if size < 44:
                 wrong(f"a piece of {size} bytes is not a WAV at all")
 
     page.context.close()
 
-
-# A transcriber of the reader's own, set up the way the AI pane sets one up: a
-# compatible provider with an address on this machine. No account anywhere near it.
 OWN_TRANSCRIBER = """
 async (base) => {
   const ai = window.nibApp.ai
@@ -437,22 +335,12 @@ async (base) => {
 }
 """
 
-
 def byok(browser: Browser) -> None:
-    """A recording turned into words by the reader's own transcriber, with no account.
-
-    The gap this is here for: transcribing asked for a nib account and nothing else, so
-    somebody with their own OpenAI key - or a whisper server on their own machine - was
-    told to sign in to turn their own recording into words. The Transcribe row was not
-    even in the menu.
-    """
     say("=== a transcriber of the reader's own ===")
     page, whisper = fresh(browser)
     own = Byok()
     page.route("**/v1/audio/transcriptions", own.listen)
 
-    # The providers' store joins the drive's handle a moment after the space opens,
-    # fetched rather than carried; see the end of the handle in App.svelte.
     wait_for(page, "window.nibApp.ai", "the AI providers")
     made = page.evaluate(OWN_TRANSCRIBER, "http://127.0.0.1:23305/v1")
     say(f"the provider is set up: {json.dumps(made)}")
@@ -502,7 +390,6 @@ def byok(browser: Browser) -> None:
     said = note_says(page)
     if HEARD not in said:
         wrong(f"the words the provider heard are not in the note:\n{said}")
-    # The note says which model wrote it, and it is the reader's own rather than Whisper.
     if "> *Written by whisper-1*" not in said:
         wrong(f"the transcript does not name the model that wrote it:\n{said}")
     if "> [!quote] Transcript (German)" not in said:
@@ -522,19 +409,15 @@ def byok(browser: Browser) -> None:
         if size < 44:
             wrong(f"a piece of {size} bytes is not a WAV at all")
 
-    # And the account's route was never touched, which is the point of having one's own.
     if whisper.heard:
         wrong(f"{whisper.heard} piece(s) went to the account as well")
 
     page.context.close()
 
-
-# What the palette offers for the words in its field, read rather than pressed.
 OFFERED = """
 () => [...document.querySelectorAll('[role=option] .nib-row-label')].map((one) => one.textContent.trim())
 """
 
-# A note put on the disk the way an earlier version left it, and opened.
 OPEN_OLD = """
 async (text) => {
   const ws = window.nibApp.workspace
@@ -544,10 +427,7 @@ async (text) => {
 }
 """
 
-
 def old_meeting(browser: Browser) -> None:
-    """A meeting note from before 2026-10-03 opens as a plain note, untouched, and the
-    palette offers nothing that would make another."""
     say("--- an old meeting note ---")
     page, _whisper = fresh(browser)
 
@@ -573,18 +453,10 @@ def old_meeting(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.context.close()
 
-
 def phone(browser: Browser) -> None:
-    """The same command on a phone, and the same pill on a screen with no hover on it:
-    the numbers in the status bar are a pointer's, the pill is not. Not from the space's
-    menu of kinds: a recording is not a kind of note, and Emil took it off the plus on
-    2026-09-27 (ee9f9005, docs/mobile.md), so that menu offers only what makes a note and
-    the recording goes into the note being written."""
     say("--- a finger ---")
     page, _whisper = fresh(browser, finger=True)
 
-    # The kinds are the space's own menu, under the last row of the list panel, which is
-    # a drawer on a phone and is shut until it is asked for.
     page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(450)
 
@@ -611,8 +483,6 @@ def phone(browser: Browser) -> None:
 
     run_command(page, "Record")
     wait_for(page, "document.querySelector('.recording')", "the pill on a phone")
-    # The pill arrives from below, so where it *is* is only true once it has
-    # stopped moving; measured mid-animation it reads as sitting on the edge.
     page.wait_for_timeout(600)
 
     state = page.evaluate(
@@ -636,7 +506,6 @@ def phone(browser: Browser) -> None:
         wrong("the pill is hidden on a phone, where it is the only thing that says so")
     if state["above"] < 8:
         wrong(f"the pill sits on the bottom edge of the screen: {state}")
-    # A thumb's target, which `.nib-bar` sizes from the touch row scale.
     if state["tall"] < 40:
         wrong(f"the pill is only {state['tall']}px tall under a thumb: {state}")
     shot(page, "phone-pill")
@@ -648,9 +517,6 @@ def phone(browser: Browser) -> None:
         "window.nibApp.workspace.active?.doc.includes('![[recording-')",
         "the embed on a phone",
     )
-    # A player is a block, and the caret in a note the app has just opened is at
-    # the very top of it: the embed has to take a line of its own rather than
-    # weld itself onto the heading that was there.
     said = note_says(page)
     first = said.split("\n")[0]
     say(f"the recording landed in the note being written, which now opens {first!r}")
@@ -659,7 +525,6 @@ def phone(browser: Browser) -> None:
     shot(page, "phone-note")
 
     page.context.close()
-
 
 def main() -> int:
     with tempfile.TemporaryDirectory() as made:
@@ -678,7 +543,6 @@ def main() -> int:
             phone(browser)
 
     return DRIVE.verdict("a recording, a transcript and an old meeting note, on a pointer and a finger")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

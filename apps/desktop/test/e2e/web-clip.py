@@ -1,21 +1,3 @@
-"""A web tab saved as a note, from the dots (#405).
-
-Emil: "und entferne bitte diese komische schere um browser tabs als note zu speichern".
-The scissors are off the web tab's bar on every platform, and the clipper they pressed
-is Save as a note behind the dots, in Chrome's place for Save page. See docs/web-tabs.md,
-"Clipping the page".
-
-What it checks, on the built web app in Chromium:
-
-    the bar has back, forward, reload, the address and the dots, and no scissors
-    the dots hold Save as a note, and pressing it writes the page into the space as a
-      note with the page's address as its `source:`
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/web-clip.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser
@@ -27,7 +9,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 URL = "https://example.com/clipped"
 
-# The notes in the space that say they came from somewhere, by path and front matter.
 SOURCED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -40,7 +21,6 @@ async () => {
   return out
 }
 """
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
@@ -75,8 +55,6 @@ def drive(browser: Browser) -> None:
         return
 
     row.click()
-    # Asked of the space until the note is there: the clip writes it a round trip or
-    # two after the press, and a busy machine takes longer.
     after = before
     for _ in range(60):
         after = page.evaluate(SOURCED)
@@ -88,7 +66,6 @@ def drive(browser: Browser) -> None:
     if not any(URL in matter for _path, matter in fresh):
         wrong(f"no note says it came from {URL}")
     shot(page, "03-saved")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the scissors are gone and the dots save the page as a note"))

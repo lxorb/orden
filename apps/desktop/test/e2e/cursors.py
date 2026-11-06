@@ -1,20 +1,3 @@
-"""Several cursors, seen: Alt and a click puts another one down, Alt+Shift and a
-drag takes a column of them, Ctrl+D grows to the word and then to the next one
-like it, every range draws its own smoothed block, typing reaches all of them,
-and Escape leaves one.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/cursors.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/cursors/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -26,8 +9,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-
-#: Ctrl+D as the VS Code keyboard has it; see `VSCODE` in src/lib/shortcuts/presets.ts.
 CTRL_D = {"edit.select-word": "Mod-d", "app.deselect-tab": None}
 
 NOTE = (
@@ -59,11 +40,8 @@ STATE = """
 })
 """
 
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
-    # Ctrl+D is Deselect tab in nib's own keyboard; the word and the next one like it
-    # is the VS Code keyboard's, and those two of its keys are what this drive needs.
     context.add_init_script(f"localStorage.setItem('nib:shortcuts', {json.dumps(json.dumps(CTRL_D))})")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
@@ -88,12 +66,9 @@ def fresh(browser: Browser) -> Page:
     page.wait_for_timeout(700)
     return page
 
-
 def at(page: Page, offset: int) -> tuple[float, float]:
-    """Where a document offset sits on the screen."""
     box = page.evaluate("(at) => window.nib.coordsAtPos(at)", offset)
     return (box["left"] + 1, (box["top"] + box["bottom"]) / 2)
-
 
 def place(page: Page, offset: int) -> None:
     page.evaluate(
@@ -104,16 +79,13 @@ def place(page: Page, offset: int) -> None:
         offset,
     )
 
-
 def state(page: Page) -> dict:
     return page.evaluate(STATE)
-
 
 def drive(browser: Browser) -> None:
     page = fresh(browser)
     doc = page.evaluate("() => window.nib.state.doc.toString()")
 
-    # Alt and a click puts a second cursor down.
     place(page, doc.index("alpha one"))
     page.wait_for_timeout(200)
     x, y = at(page, doc.index("gamma one"))
@@ -130,7 +102,6 @@ def drive(browser: Browser) -> None:
     if two["carets"] < 2:
         wrong(f"only {two['carets']} carets are drawn for {len(two['ranges'])} cursors")
 
-    # And typing reaches both of them.
     page.keyboard.type("X")
     page.wait_for_timeout(400)
     typed = state(page)
@@ -140,7 +111,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Control+z")
     page.wait_for_timeout(300)
 
-    # Escape leaves one.
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     one = state(page)
@@ -148,7 +118,6 @@ def drive(browser: Browser) -> None:
     if len(one["ranges"]) != 1:
         wrong(f"Escape left {len(one['ranges'])} cursors, not one")
 
-    # Ctrl+D: the word, then the next one like it.
     place(page, doc.index("one") + 1)
     page.wait_for_timeout(200)
     page.keyboard.press("Control+d")
@@ -175,7 +144,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # Alt+Shift and a drag takes a column.
     top = at(page, doc.index("alpha one") + 6)
     bottom = at(page, doc.index("delta one") + 6)
     page.keyboard.down("Alt")
@@ -196,7 +164,6 @@ def drive(browser: Browser) -> None:
     if column["blocks"] != len([one for one in column["text"] if one]):
         wrong(f"{len(column['ranges'])} ranges drew {column['blocks']} blocks")
 
-    # The crosshair, which is the hint that Alt is doing something.
     page.keyboard.down("Alt")
     page.wait_for_timeout(300)
     pointer = page.evaluate(
@@ -216,10 +183,8 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "several cursors, a column of them, and one again on Escape")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

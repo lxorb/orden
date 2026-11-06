@@ -1,27 +1,3 @@
-"""The import sheet: a Notion zip and an Evernote file, read through the sheet.
-
-What it photographs, on a desktop and on a phone: the drop zone, the preview of
-what a Notion export would make, the notes after they have arrived, and the same
-for an `.enex` with a picture and a checkbox list in it. Then it takes the import
-back with one undo, which is the claim worth checking by machine rather than by
-eye.
-
-The fixtures are written here rather than kept in the repository: an export is
-somebody's own notes, and a small one that a script writes says the same thing
-about the reader as a large one that a person exported.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/import.py
-
-Screenshots go beside this file under `shots/import/`, which is ignored. This is a
-scratch drive rather than a test: it photographs the app and says what it saw.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -35,7 +11,6 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
 
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -45,26 +20,21 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-# name, width, height, agent, finger, scheme
 DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
 ]
 
-# The ids Notion sticks on the end of every name it writes.
 PLAN = "1a2b3c4d5e6f78901a2b3c4d5e6f7890"
 KIT = "aaaabbbbccccddddeeeeffff00001111"
 TASKS = "99998888777766665555444433332222"
 ROW = "11112222333344445555666677778888"
 
-# A 1x1 PNG, so the picture in the Evernote note is a picture a browser can draw.
 PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=="
 )
 
-
 def notion_zip(into: Path) -> Path:
-    """A Notion export: a page with a page under it, a database, and a picture."""
     path = into / "Export-9f1c2d3e.zip"
 
     with zipfile.ZipFile(path, "w") as zip_file:
@@ -91,9 +61,7 @@ def notion_zip(into: Path) -> Path:
 
     return path
 
-
 def enex(into: Path) -> Path:
-    """An Evernote notebook: a note with a picture, a note with checkboxes."""
     path = into / "Travel.enex"
     hashed = __import__("hashlib").md5(PNG).hexdigest()
     encoded = base64.b64encode(PNG).decode()
@@ -129,7 +97,6 @@ def enex(into: Path) -> Path:
 
     return path
 
-
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -150,13 +117,10 @@ def opened(browser, width, height, agent, finger, scheme, name):
         else None,
     )
     DRIVE.open(page)
-    # The import sheet's store is fetched after the space opens, not with the app;
-    # see the end of the drive handle in App.svelte.
     page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
-
 
 NAMES = """
 () => window.nibApp.workspace.files.map((one) => one.path.split('/').slice(-2).join('/'))
@@ -170,13 +134,9 @@ async (ending) => {
 }
 """
 
-
 def bring_in(page, shot, tag: str, path: Path) -> dict:
-    """One import, from the drop zone to the count that says it arrived."""
     page.evaluate("() => window.nibApp.importing.show()")
     page.wait_for_selector("button.drop")
-    # After the sheet has flown in rather than during: on a phone it comes up from
-    # the bottom, and a shot taken on the first frame is a shot of the motion.
     page.wait_for_timeout(450)
     shot(f"{tag}-waiting")
 
@@ -204,7 +164,6 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
     page.wait_for_timeout(300)
     return said
 
-
 def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
@@ -214,7 +173,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
 
-    # ── Notion ─────────────────────────────────────────────────────────────
     said = bring_in(page, shot, "notion", notion_zip(fixtures))
     say(f"[{name}] Notion: {said['format']}, {said['counts']}, into {said['folder']!r}")
     for line in said["lost"]:
@@ -236,7 +194,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     table = page.evaluate(TEXT_OF, "Tasks.md")
     say(f"[{name}] the database reads: {[line for line in (table or '').splitlines() if '|' in line]}")
 
-    # ── Evernote ───────────────────────────────────────────────────────────
     said = bring_in(page, shot, "enex", enex(fixtures))
     say(f"[{name}] Evernote: {said['format']}, {said['counts']}, into {said['folder']!r}")
 
@@ -246,7 +203,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     packing = page.evaluate(TEXT_OF, "Packing.md")
     say(f"[{name}] the boxes: {[line for line in (packing or '').splitlines() if '- [' in line]}")
 
-    # The picture really arrived, which is what an `<img>` in the reading view says.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -257,10 +213,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     page.wait_for_timeout(700)
     shot("enex-note")
 
-    # The bytes are in the browser's own asset store, which is where a pasted
-    # picture goes too. Drawing one in the browser build is another matter: an
-    # `<img>` beside a note resolves to a path on the page's own origin there,
-    # which is a 404 for a pasted picture as much as for an imported one.
     held = page.evaluate(
         """async () => {
           // No version asked for: the page's own store decides which it is on, and
@@ -280,7 +232,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     )
     say(f"[{name}] the asset store holds: {held}")
 
-    # ── A bare table, which is the one choice the sheet offers ─────────────
     books = fixtures / "Books.csv"
     books.write_text(
         "Name,Status,Pages,Created\n"
@@ -299,9 +250,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     shot("table-preview")
 
     say(f"[{name}] as a table: {page.evaluate('() => window.nibApp.importing.counts')}")
-    # By index rather than by position in the markup: the groove draws a thumb of
-    # its own as a child, so the second button is not the second child.
-    # Inside the sheet: the shell has grooves of its own, and the class is shared.
     choices = page.locator('[role="dialog"] .nib-segmented button')
     say(f"[{name}] the groove has {choices.count()} choices")
     choices.nth(1).click()
@@ -320,7 +268,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     row = page.evaluate(TEXT_OF, "Dune.md")
     say(f"[{name}] a row reads: {[line for line in (row or '').splitlines() if line][:6]}")
 
-    # ── One undo ───────────────────────────────────────────────────────────
     before = len(page.evaluate(NAMES))
     label = page.evaluate("() => window.nibApp.workspace.undoLabel")
     page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
@@ -331,7 +278,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
 
     context.close()
 
-
 def main() -> int:
     out = DRIVE.shots
     with tempfile.TemporaryDirectory(prefix="nib-import-") as held, DRIVE.session() as browser:
@@ -341,7 +287,6 @@ def main() -> int:
             drive(browser, out, fixtures, *one)
 
     return DRIVE.verdict(f"shots in {out}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

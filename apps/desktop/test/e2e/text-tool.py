@@ -1,14 +1,3 @@
-"""Words typed straight onto a canvas and a page note, with the bar's Text button (#421).
-
-Emil: "no button to create some text on page note / canvas (similar to the one you have
-in miro board / chrome pdf)". The bar of a canvas and of a page note has a Text button:
-pressed, or W, and the plane or the paper pressed, the words are typed in at once where the
-press was, with no card round them, and the arrow is in hand after. The file keeps them
-as a card Obsidian reads, listed under `nib.words`.
-
-    python apps/desktop/test/e2e/text-tool.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -22,9 +11,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 BUTTON = '.cluster button[aria-label="Text"]'
 
-#: The words node the surface in front holds, as the file has it after a settle.
 FILE = """() => JSON.parse(window.nibApp.workspace.active.doc)"""
-
 
 def typed(page: Page, label: str, surface: str, settle: str) -> None:
     button = page.locator(BUTTON).first
@@ -44,7 +31,6 @@ def typed(page: Page, label: str, surface: str, settle: str) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
     page.evaluate(settle)
-    # A canvas writes its file a pause after the changes stop.
     page.wait_for_timeout(2500)
 
     written = page.evaluate(FILE)
@@ -66,7 +52,6 @@ def typed(page: Page, label: str, surface: str, settle: str) -> None:
         wrong(f"[{label}] the Text tool is still in hand after the words")
     shot(page, f"{label}-written")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -76,7 +61,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(600)
     typed(page, "canvas", ".canvas", "() => null")
 
-    # And by its key: W, the arrow in hand again after the words.
     box = page.locator(".canvas").first.bounding_box()
     assert box
     page.mouse.click(box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.8)
@@ -98,7 +82,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(600)
     typed(page, "page note", ".pages", "() => window.nibApp.pages.current?.store.part()")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "words are typed straight onto a canvas and a page note"))

@@ -1,24 +1,3 @@
-"""Embeds, seen: a recording and a film as players, a paper and a plane as cards,
-a video from the web as a card that loads nothing until it is clicked, and a
-` ```chart ` fence drawn.
-
-The same note in the editor and in the reading view, on a desktop and on a phone,
-because the whole claim of this batch is that the two are one design.
-
-The media files themselves are not in the space, so the players draw with nothing
-to play: what is under test is that the player is there, the right way round, and
-takes the room it should. The web card is checked twice - before a click, that
-nothing has been fetched from anybody, and after one, that the frame arrived with
-the provider's own sandbox on it.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/embeds.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/embeds/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -30,7 +9,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = """# Embeds
 
@@ -88,9 +66,6 @@ async (note) => {
 }
 """
 
-# What is on the page, whichever surface it is: the editor writes `nib-` classes
-# for the widgets it builds itself and the renderer's own classes for the markup
-# it reuses, so both spellings are counted.
 COUNTS = """
 () => {
   const count = (selector) => document.querySelectorAll(selector).length
@@ -135,10 +110,7 @@ BOXES = """
 }
 """
 
-
 def scroll_to(page: Page, selector: str) -> None:
-    """The app scrolls inside a pane rather than the window, so a screenshot of
-    the charts has to be asked for by name."""
     page.evaluate(
         """(selector) => {
           document.querySelector(selector)?.scrollIntoView({ block: 'center' })
@@ -146,7 +118,6 @@ def scroll_to(page: Page, selector: str) -> None:
         selector,
     )
     page.wait_for_timeout(500)
-
 
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
@@ -163,9 +134,6 @@ def fresh(browser: Browser, finger: bool) -> Page:
             else {}
         ),
     )
-    # The provider's player is not under test, only the frame the card puts it in. And
-    # WebKit hands the errors its scripts throw in their own frame to the page, as the
-    # page's (#384), so there it is a page of nothing.
     if harness.WEBKIT:
         context.route(
             "https://www.youtube-nocookie.com/**",
@@ -179,16 +147,13 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.wait_for_timeout(900)
     return page
 
-
 def asked_for(page: Page) -> list[str]:
-    """Every address the page has asked anybody else for."""
     return page.evaluate(
         """() => performance
           .getEntriesByType('resource')
           .map((one) => one.name)
           .filter((name) => !name.startsWith(location.origin))"""
     )
-
 
 def expect(counts: dict[str, int], where: str) -> None:
     if counts["audio"] != 1:
@@ -210,7 +175,6 @@ def expect(counts: dict[str, int], where: str) -> None:
     if counts["code"] < 1:
         wrong(f"{where}: the fence that is not a chart did not stay code")
 
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
 
@@ -230,7 +194,6 @@ def drive(browser: Browser) -> None:
     if outside:
         wrong(f"opening the note fetched from outside: {outside[:4]}")
 
-    # The reading view: the same note, the same design.
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(900)
     read = page.evaluate(COUNTS)
@@ -244,7 +207,6 @@ def drive(browser: Browser) -> None:
     if read["frames"] != 0:
         wrong(f"the reading view loaded {read['frames']} frames before anybody asked")
 
-    # A click on the card, and only then a frame.
     page.click(".embed-web")
     page.wait_for_timeout(900)
     frame = page.evaluate(
@@ -269,7 +231,6 @@ def drive(browser: Browser) -> None:
     else:
         if "youtube-nocookie.com/embed/dQw4w9WgXcQ" not in (frame["src"] or ""):
             wrong(f"the frame points at {frame['src']}")
-        # WebKit has no Presentation API, and is not asked for its flag; see web-frame.ts.
         asked = "allow-scripts allow-same-origin" + ("" if harness.WEBKIT else " allow-presentation")
         if frame["sandbox"] != asked:
             wrong(f"the frame's sandbox is {frame['sandbox']!r}")
@@ -281,7 +242,6 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
     page.context.close()
-
 
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
@@ -318,7 +278,6 @@ def finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
@@ -327,7 +286,6 @@ def main() -> int:
         finger(browser)
 
     return DRIVE.verdict("media plays, files are cards, a chart draws, and nothing loads unasked")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

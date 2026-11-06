@@ -1,19 +1,3 @@
-"""What a swap costs, in milliseconds, so a decision about one is a measurement.
-
-Three of them: the panel tabs in the list, a pane in the settings sheet, and a
-tab in the strip over the note. Each is pressed many times and timed from the
-press to the frame the browser paints after it, which is the whole of what
-somebody waiting for it experiences. Then the same again with something being
-typed into the note throughout, because the question that matters about the tab
-strip is whether animating it slows down writing.
-
-Build first, as for shell.py, then from the repository root:
-
-    python apps/desktop/test/e2e/swap-cost.py
-
-It prints numbers and nothing else: it is a scratch drive, not a test.
-"""
-
 from __future__ import annotations
 
 import statistics
@@ -24,9 +8,6 @@ from shell import DESKTOP_AGENT, SEED
 DRIVE = Drive(__file__)
 say = DRIVE.say
 
-# How long a press takes to reach the screen: the click, then the first frame
-# painted after it. `requestAnimationFrame` twice, because the first fires
-# before the paint of the frame it belongs to.
 TIMED = """
 async (script) => {
   const started = performance.now()
@@ -38,10 +19,8 @@ async (script) => {
 
 ROUNDS = 24
 
-
 def press(page, script: str) -> float:
     return page.evaluate(TIMED, script)
-
 
 def run(page, name: str, scripts: list[str]) -> None:
     times = []
@@ -51,7 +30,6 @@ def run(page, name: str, scripts: list[str]) -> None:
     times.sort()
     worst = times[int(len(times) * 0.95) - 1]
     say(f"{name}: median {statistics.median(times):.1f}ms, 95th {worst:.1f}ms, worst {times[-1]:.1f}ms")
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -75,9 +53,6 @@ def main() -> int:
         )
 
         page.evaluate("() => window.nibApp.settings.show()")
-        # The sheet is fetched the first time it is asked for rather than carried
-        # into the first paint, and what is timed below is swapping between its
-        # panes, not waiting for the sheet. See surfaces.svelte.ts.
         page.wait_for_selector(".nib-screen.sheet", timeout=15000)
         page.wait_for_timeout(500)
         run(
@@ -98,8 +73,6 @@ def main() -> int:
         switches = [f"window.nibApp.workspace.activate('{one}')" for one in tabs]
         run(page, "note tab     ", switches)
 
-        # And with the keyboard busy, which is the case the tab strip has to
-        # be judged on: nothing about switching may slow down writing.
         page.click(".cm-content")
         page.keyboard.type("measuring while typing ")
         run(page, "note tab, typing", switches)
@@ -114,7 +87,6 @@ def main() -> int:
         context.close()
 
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

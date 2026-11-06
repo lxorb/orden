@@ -1,27 +1,3 @@
-"""What the reader sees of an agent, against a crate in memory, in light and dark.
-
-The browser build has no crate, so a fake one (lib/agents/ui/fake.ts) stands in and says
-exactly the news the real one does (docs/agent-native.md 13.1). The drive opens a web
-tab, lets an agent act in it, and photographs and checks:
-
-- the frame round the page in the agent's colour, and the agent's spark on the tab,
-  turning; both muted once the reader takes the tab, and back on a press on the mark;
-- the agent as a row at the top of the Ask panel's chat list (#1120), connected and
-  saying what it asks, and its session opened from there: the agent, what it is doing
-  now, its own tab by name, the session, and a question with Don't allow, Always on this
-  site, Allow - and Allow sends the answer and takes the question away;
-- a takeover's line and Done under the tab's bar;
-- the pairing bubble for a client asking to connect.
-
-Serves the app from a Vite dev server of its own on its own origin, so it builds
-nothing and leaves apps/desktop/dist alone, and drives it in headless Chromium. The
-activity UI is imported by its module path, which only a dev server answers.
-
-    python apps/desktop/test/e2e/agent-activity.py
-
-Screenshots go beside this file under `shots/agent-activity/`.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -37,14 +13,12 @@ ORIGIN = DRIVE.origin
 
 
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
-    """Whether it came in time; a failure counted, and the drive carries on, if not."""
     return DRIVE.waited(page, expression, what, patience)
 
 
 def shot(page: Page, name: str) -> None:
     settle(page)
     DRIVE.shot(page, name)
-
 
 
 AGENT = "claude-code"
@@ -81,7 +55,6 @@ def drive(page: Page, scheme: str) -> None:
     wait_for(page, "document.querySelector('.web .card')", "the web tab's card")
     page.evaluate(START)
 
-    # The agent connects and acts in the reader's tab.
     fake(page, f"connect('{AGENT}', 'Claude Code')")
     fake(page, f"act('{AGENT}', '{tab}', 'browser_open', {{ url: 'https://shop.example/' }})")
     fake(page, f"act('{AGENT}', '{tab}', 'browser_click')")
@@ -94,7 +67,6 @@ def drive(page: Page, scheme: str) -> None:
     wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the turning mark")
     shot(page, f"{scheme}-01-acting")
 
-    # The reader stops the agent: both go muted, and a press on the mark resumes it.
     fake(page, f"stop('{AGENT}')")
     wait_for(page, "document.querySelector('.web .card.acted.resting')", "the muted frame")
     wait_for(page, "document.querySelector('.tab .mark.agent.resting')", "the still mark")
@@ -103,8 +75,6 @@ def drive(page: Page, scheme: str) -> None:
     if not wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the mark resumed"):
         say(f"asked: {page.evaluate('() => window.__fake.asked.slice(-3)')}")
 
-    # The chat list: an agent tab of its own, a question, and the agent's row over the
-    # chats, which opens its session.
     own = page.evaluate(
         f"() => window.__fake.open('{AGENT}', 'https://flights.example/', 'Flights to Lisbon').id"
     )
@@ -164,7 +134,6 @@ def drive(page: Page, scheme: str) -> None:
     if not answered or answered[-1]["args"][1] is not True:
         wrong(f"Allow sent {answered}")
 
-    # A step asked of the reader: the agent's line under the tab's bar, and Done.
     fake(
         page,
         f"ask('{AGENT}', 'takeover', 'Sign in to finish the order', 'https://shop.example/', '{tab}')",
@@ -174,7 +143,6 @@ def drive(page: Page, scheme: str) -> None:
     page.click(".takeover .nib-button")
     wait_for(page, "!document.querySelector('.takeover')", "the step said done")
 
-    # A client asking to connect.
     fake(page, "pair('Codex')")
     wait_for(page, "document.querySelector('.pairing')", "the pairing bubble")
     words = page.evaluate("() => document.querySelector('.pairing').textContent")

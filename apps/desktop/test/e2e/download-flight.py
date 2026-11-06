@@ -1,23 +1,3 @@
-"""A download seen going (#1048): the file flies from the control that asked for it to
-where downloads are reachable, and is said through the live region; for a reader who
-asked for less movement, nothing flies and it is still said.
-
-What it proves, and photographs:
-
-* **An export from the palette**: a note exported as plain text. A file card leaves
-  from where the press was, moves along its way, takes no press, and is gone again
-  within the flight's 600 ms; the live region says "Downloading <name>".
-* **Again**: three exports one after the other each get a flight of their own.
-* **Reduced motion**: the same export flies nothing and is still said.
-
-From the repository root:
-
-    python apps/desktop/test/e2e/download-flight.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/download-flight/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -40,8 +20,6 @@ async (note) => {
 }
 """
 
-# Every card in the air, sampled on each frame for as long as any is: where it is drawn,
-# whether it takes a press, and how many there were at once.
 WATCH = """
 () => {
   window.__flights = { seen: 0, most: 0, places: [], pressable: false }
@@ -63,13 +41,11 @@ WATCH = """
 
 SAID = "() => document.querySelector('p.nib-said[aria-live]')?.textContent ?? ''"
 
-
 def is_true(claim: bool, what: str) -> None:
     if claim:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 
 def export(page: Page) -> None:
     page.keyboard.press("Control+o")
@@ -78,7 +54,6 @@ def export(page: Page) -> None:
     page.wait_for_timeout(700)
     with page.expect_download(timeout=40000):
         page.keyboard.press("Enter")
-
 
 def opened(browser: Browser, reduced: bool) -> tuple[object, Page]:
     context = browser.new_context(
@@ -100,7 +75,6 @@ def opened(browser: Browser, reduced: bool) -> tuple[object, Page]:
     )
     page.evaluate(WATCH)
     return context, page
-
 
 def flying(browser: Browser) -> None:
     context, page = opened(browser, reduced=False)
@@ -130,7 +104,6 @@ def flying(browser: Browser) -> None:
 
     context.close()
 
-
 def still(browser: Browser) -> None:
     context, page = opened(browser, reduced=True)
 
@@ -143,14 +116,12 @@ def still(browser: Browser) -> None:
 
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         flying(browser)
         still(browser)
 
     return DRIVE.verdict("a download flies to where downloads are, and is said")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

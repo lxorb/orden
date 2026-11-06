@@ -1,20 +1,3 @@
-"""The room a strip makes for an essential dragged into it is the tab it becomes (#1110).
-
-An essential dragged into the tab strip is kept there as a tab, in front, where it is let
-go of (#1051). While it is carried over the strip the tabs make way for it - and they
-made way by a tab of the standard width, whatever tab it became: with Icon tabs on, and
-with tabs as wide as their names (#1114), the gap stood far wider than the tab let go
-into it. This carries an essential's tile to the start of the strip, measures the room
-the tabs made for it, lets go, and holds that room to the tab that arrived - and every
-other tab to where it stood under the carried one.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/essential-gap.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser
@@ -36,7 +19,6 @@ BOXES = """() => Object.fromEntries([...document.querySelectorAll('.tabs .tab')]
   const r = one.getBoundingClientRect()
   return [one.dataset.box, { x: r.x, width: r.width, name: one.querySelector('.label')?.textContent.trim() }]
 }))"""
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 800})
@@ -63,7 +45,6 @@ def drive(browser: Browser) -> None:
     page.mouse.move(tile["x"] + tile["width"] / 2, tile["y"] + tile["height"] / 2)
     page.mouse.down()
     page.mouse.move(tile["x"] + 30, tile["y"] + 10, steps=4)
-    # Over the front of the first tab: the strip's first place.
     page.mouse.move(first["x"] + 4, 20, steps=10)
     for nudge in (1, 2, 3):
         page.mouse.move(first["x"] + 4 + nudge, 20)
@@ -88,7 +69,6 @@ def drive(browser: Browser) -> None:
         now = after.get(key)
         if now and abs(now["width"] - one["width"]) > 2:
             wrong(f"{one['name']} was {one['width']:.0f} wide under the carried tab and {now['width']:.0f} after")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "an essential carried into the strip is given its own room"))

@@ -1,21 +1,3 @@
-"""The task view, Todoist's way, in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * A task pressed in Today opens its view: where it lives, its words, its
-    description in the note's own editor, its sub-tasks, and a column of its day,
-    deadline, priority, labels and reminders.
-  * Its words changed there are written into its line, and the view follows them.
-  * Its description typed there is written under its line, indented to be its own.
-  * A sub-task added there is written at the end of what it holds.
-  * Its priority and a label are set from the column; the arrows walk to the next task.
-  * The same view is a page at phone width.
-
-    python apps/desktop/test/e2e/task-view.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/task-view/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -26,11 +8,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 DAYS = """() => {
   const day = (n) => {
@@ -72,7 +52,6 @@ PHONE_AGENT = (
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-
 def seed(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
@@ -83,16 +62,12 @@ def seed(page: Page) -> None:
     wait_for(page, "document.querySelector('.view-tab .task')", "Today's rows")
     quiet(page)
 
-
 def row(words: str) -> str:
     return f".view-tab .task:has(.words:text-is('{words}'))"
-
 
 def note(page: Page) -> str:
     return page.evaluate(NOTE)  # type: ignore[no-any-return]
 
-
-# Where the comment field's words sit, and the Add sub-task row's above it.
 FIELDS = """() => {
   const composer = document.querySelector('.sheet .composer')
   const label = document.querySelector('.sheet .adder .nib-row-label')
@@ -111,11 +86,7 @@ FIELDS = """() => {
   }
 }"""
 
-
 def the_comment_field(page: Page) -> None:
-    """The comment field is a quiet row like Add sub-task above it, its words on the
-    row's line and in line with that row's (#667): it was an outlined box with its
-    placeholder at the top."""
     fields = page.evaluate(FIELDS)
     say(f"[comment field] {fields}")
     if not fields:
@@ -130,14 +101,12 @@ def the_comment_field(page: Page) -> None:
     if fields["border"] not in ("0px", ""):
         wrong(f"the comment field is still a box: border {fields['border']}")
 
-
 BORDER = """() => {
   const row = document.querySelector('.sheet .composer').closest('.nib-row')
   row.getAnimations().forEach((one) => one.finish())
   return getComputedStyle(row).borderTopColor
 }"""
 
-# What the comment field's focus draws: on the words, on the row, and what clips it.
 RING = """() => {
   const composer = document.querySelector('.sheet .composer')
   const row = composer.closest('.nib-row')
@@ -164,17 +133,13 @@ RING = """() => {
   }
 }"""
 
-
 def the_comment_ring(page: Page) -> None:
-    """The ring of the comment field goes round the row it is drawn as, not round the
-    words inside that row, which drew a square halo inside the rounded row (#667)."""
     composer = page.locator(".sheet .composer")
     composer.hover()
     rest = page.evaluate(BORDER)
     if rest != "rgba(0, 0, 0, 0)":
         wrong(f"the comment row is a box under the pointer: {rest}")
     composer.focus()
-    # Past the box-shadow's own transition.
     page.evaluate("""() => document.querySelector('.sheet .composer').closest('.nib-row').getAnimations().forEach((one) => one.finish())""")
     ring = page.evaluate(RING)
     say(f"[comment ring] {ring}")
@@ -193,7 +158,6 @@ def the_comment_ring(page: Page) -> None:
         wrong(f"the comment row's ring is cut off by {ring['clips']}")
     composer.blur()
 
-
 def the_view(page: Page) -> None:
     page.locator(f"{row('Call the bank')} .words").click()
     wait_for(page, "document.querySelector('.sheet .title')", "the task view")
@@ -206,14 +170,12 @@ def the_view(page: Page) -> None:
     the_comment_field(page)
     the_comment_ring(page)
 
-    # Its words, changed.
     page.locator(".sheet .title").fill("Call the bank again")
     page.keyboard.press("Enter")
     wait_for(page, f"() => !!({TASK})('Call the bank again')", "the new words in the line")
     if page.locator(".sheet .title").input_value() != "Call the bank again":
         wrong("the view lost the task when its words changed")
 
-    # Its description, typed.
     page.locator(".sheet .description .cm-content").click()
     page.keyboard.press("Control+End")
     page.keyboard.type(" Ask for Sam.", delay=10)
@@ -225,7 +187,6 @@ def the_view(page: Page) -> None:
         say(note(page))
         wrong("the description lost its indent under the task")
 
-    # A sub-task.
     page.locator(".sheet .adder").click()
     page.keyboard.type("Ask about fees tomorrow", delay=10)
     page.keyboard.press("Enter")
@@ -233,17 +194,14 @@ def the_view(page: Page) -> None:
     sub = page.evaluate("() => window.tasks.rows.of().find((one) => one.task?.text === 'Ask about fees')")
     if not sub or sub["task"].get("parent") is None:
         wrong("the new task is not a sub-task")
-    # The day said is the day it starts (#371).
     if not sub or not sub["task"].get("start"):
         wrong("the sub-task's words were not read for a day")
     shot(page, "02-edited")
 
-    # Priority from the column.
     page.locator(".sheet .side .nib-row", has_text="p4").click()
     page.locator(".menu [role=menuitem]", has_text="1").first.click()
     wait_for(page, f"() => ({TASK})('Call the bank again')?.priority === 1", "priority 1 written")
 
-    # Its comments: the one there, and one more written from the field, stamped.
     wait_for(page, "document.querySelector('.sheet .comment')?.textContent.includes('Called once')", "the comment")
     page.locator(".sheet").focus()
     page.keyboard.press("c")
@@ -265,7 +223,6 @@ def the_view(page: Page) -> None:
     page.locator(".sheet .comment .gone").first.click()
     wait_for(page, "document.querySelectorAll('.sheet .comment').length === 1", "a comment deleted")
 
-    # In the note itself the stamp is a quiet chip, not the field's raw words.
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.sheet')", "the view put away")
     page.evaluate(
@@ -282,13 +239,11 @@ def the_view(page: Page) -> None:
     page.locator(f"{row('Call the bank again')} .words").click()
     wait_for(page, "document.querySelector('.sheet .title')", "the task view again")
 
-    # The next task.
     page.locator(".sheet").focus()
     page.keyboard.press("j")
     wait_for(page, "document.querySelector('.sheet .title')?.value === 'Water the plants'", "the next task")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.sheet')", "the view put away")
-
 
 def phone(browser: Browser) -> None:
     page = DRIVE.page(
@@ -305,7 +260,6 @@ def phone(browser: Browser) -> None:
     shot(page, "03-phone")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -313,7 +267,6 @@ def drive(browser: Browser) -> None:
     the_view(page)
     page.close()
     phone(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the task view held"))

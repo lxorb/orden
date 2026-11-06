@@ -1,26 +1,3 @@
-"""The panel tabs, measured: one pill as wide as its tabs, and the panel's tools after it.
-
-Emil's right panel at its widest drew six marks a hundred and thirty pixels apart
-across the whole row, and the Ask panel's Chats beside them looking like a seventh
-tab outside the pill. Measured here rather than clicked:
-
-  - every tab is inside the one tablist, and the tablist inside its row;
-  - the pill is no wider than its tabs (it is not a share of the row);
-  - the panel's tools sit after the pill and never over it;
-  - a tab is never narrower than its mark and a little air - where the row is too
-    narrow for that, the last tabs go behind More, which lists them;
-  - the tab showing is always drawn.
-
-On the right side at its narrowest, at 300 and at its widest, with the panels it
-starts with and again with two more moved over, in both schemes. Shots under `shots/panel-tabs/`.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/panel-tabs.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import json
@@ -34,7 +11,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 NOTE = "# Tabs\n\n## A heading\n\nWords.[^1]\n\n[^1]: a footnote\n"
 
-# The right side's row, as drawn.
 MEASURE = """
 () => {
   const aside = document.querySelector('aside.right')
@@ -67,7 +43,6 @@ MEASURE = """
 }
 """
 
-
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1400, "height": 760}, color_scheme=scheme)
     page = context.new_page()
@@ -85,11 +60,7 @@ def fresh(browser: Browser, scheme: str) -> Page:
     DRIVE.open_note(page, "Tabs")
     return page
 
-
 def width(page: Page, pixels: int) -> None:
-    """The right side to a width, by its own edge: Home is the narrowest, and on the
-    right side's edge every left arrow is a step wider."""
-    # The resize edge, not the edge drawn in the sidebar's own button (#1038).
     edge = page.locator("aside.right [role=separator].edge")
     edge.focus()
     if pixels >= 520:
@@ -100,7 +71,6 @@ def width(page: Page, pixels: int) -> None:
             edge.press("ArrowLeft")
     edge.blur()
     page.wait_for_timeout(400)
-
 
 def judge(at: str, row: dict) -> None:
     tabs, pill, tools = row["tabs"], row["pill"], row["tools"]
@@ -123,19 +93,15 @@ def judge(at: str, row: dict) -> None:
         if one["box"]["right"] > row["row"]["right"] + 0.5:
             wrong(f"[{at}] {one['label']} past the row's end")
 
-    # Not a share of the row: no tab wider than its mark and the view switch's air,
-    # whatever the width.
     widest = max(one["box"]["width"] for one in tabs)
     if widest > tabs[0]["mark"] + 16 + 1:
         wrong(f"[{at}] the tabs are stretched to {widest:.0f} pixels each")
     if not any(one["on"] for one in tabs):
         wrong(f"[{at}] the panel showing has no tab drawn")
 
-
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
 
-    # Emil's row: the right side's own panels, Ask showing with its two tools.
     page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
     page.wait_for_timeout(500)
     for pixels in (180, 300, 520):
@@ -143,17 +109,10 @@ def drive(browser: Browser, scheme: str) -> None:
         at = f"{scheme} {pixels} own"
         judge(at, page.evaluate(MEASURE))
         shot(page, f"{scheme}-{pixels}-own", clip=strip_clip(page))
-    # Both sides at once, the left one's three tabs as well.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     shot(page, f"{scheme}-window")
 
-    # Two more panels on the one side: at its narrowest some go behind More. The file
-    # list and the tasks moved over to the side's own; not the search, which has had no
-    # tab since 6de7fcf4 (a search bar over the file list instead), and not the chats,
-    # whose tab waits for an account. How many the side then has is counted at its
-    # widest, where every one is drawn: which panels a side offers is the tab in front's
-    # to say (#1120), so the count is the strip's, not a number written here.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -197,14 +156,12 @@ def drive(browser: Browser, scheme: str) -> None:
 
     page.context.close()
 
-
 def strip_clip(page: Page) -> dict:
     box = page.evaluate(
         "() => { const r = document.querySelector('aside.right').getBoundingClientRect();"
         " return { x: r.left, y: r.top, width: r.width, height: 120 } }"
     )
     return box
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -213,7 +170,6 @@ def main() -> int:
             drive(browser, scheme)
 
     return DRIVE.verdict("every panel tab is in one pill, sized to its tabs, at every width")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

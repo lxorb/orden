@@ -1,24 +1,3 @@
-"""The AI panel's chat rows laid out, at a narrow side and a wide one, at rest, pointed
-at, and on a touch screen (#1101).
-
-What it proves, for every row of the list:
-
-- the title takes what is left and gives way to the end group, ellipsized where long;
-- the end group is the state, then the time, at the row's own gap;
-- pointed at, Pin and Archive (and the list's "...") stand right after the state at that
-  gap, in the time's place - no gap the width of three buttons as there was - and end at
-  the row's own padding;
-- the state does not move between rest and pointing;
-- on a touch screen, which points at nothing, the actions are there and the time is not.
-
-The chats are put in the panel's list directly: what is under test is their row, not the
-provider that would have made them.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/chat-rows.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser
@@ -55,13 +34,10 @@ MEASURE = """() => [...document.querySelectorAll('.threads .item')].map((item) =
   }
 })"""
 
-#: A pixel either way, for rounding.
 NEAR = 1.0
-
 
 def near(one: float, other: float) -> bool:
     return abs(one - other) <= NEAR
-
 
 def drive(browser: Browser) -> None:
     for width in (240, 420):
@@ -71,8 +47,6 @@ def drive(browser: Browser) -> None:
         DRIVE.open(page)
         page.keyboard.press("Control+Shift+A")
         page.locator('button[aria-label="Chats"]').last.click()
-        # The list reads the chats the panel keeps as it opens, which would put back the
-        # ones seeded before it had: seeded once it has.
         wait_for(page, "document.querySelector('.threads')", "the list of chats")
         page.wait_for_timeout(1000)
         page.evaluate(SEED)
@@ -104,14 +78,12 @@ def drive(browser: Browser) -> None:
                 wrong(f"{name}: pointed at, the actions do not take the time's place")
             if pointed["acts"]["right"] > pointed["row"]["right"]:
                 wrong(f"{name}: the actions run past the row")
-        # The list orders its rows itself, so the long one is found by its title.
         long = [one for one in rest if one["id"].startswith("A very long")]
         if not long or not long[0]["ellipsized"]:
             wrong(f"{width}px: the long title is not cut short")
         say(f"{width}px: {len(rest)} rows, the end group tight at rest and pointed at")
         DRIVE.shot(page, f"pointed-{width}")
 
-        # A touch screen points at nothing: the actions are there and the time is not.
         page.evaluate("() => document.documentElement.setAttribute('data-touch', '')")
         page.mouse.move(700, 400)
         page.wait_for_timeout(250)
@@ -122,7 +94,6 @@ def drive(browser: Browser) -> None:
                 wrong(f"{width}px, {touched['id']!r}: on a touch screen the actions leave a gap")
         say(f"{width}px: on a touch screen the actions stand in the time's place")
         context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the chat rows keep their end group tight, at rest, pointed at and touched"))

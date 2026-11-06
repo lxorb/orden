@@ -1,30 +1,3 @@
-"""Sync v2's one question, photographed: a note two devices rewrote while apart, held,
-with the question over it once it is in front.
-
-The engine is the fake one the effect tests use (sync2/fake-engine.svelte.ts), which a
-drivable build puts on `window.nibApp.sync2`; everything else is the built app. What it
-photographs and checks:
-
-  - the sheet in light and dark, at a desktop's width and a phone's, and in Arabic,
-    where the interface reads the other way and this device's card is on the right;
-  - a canvas held, with the two versions of its contested cards drawn;
-  - the keyboard on the newer version's Keep, Escape changing nothing, and the mark
-    the held note wears on its row and its tab once the question is closed;
-  - the toast a note that came back says itself in;
-  - and axe-core on the sheet, which may report nothing serious that access.py does not
-    already excuse.
-
-Serves the built web app and drives it in Chromium, headless. The build
-has to be one a drive may steer - `--mode drive` - or `window.nibApp` is not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/diverged.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/diverged/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -44,7 +17,6 @@ APP = harness.APP
 
 AXE = APP / "node_modules" / "axe-core" / "axe.min.js"
 
-
 DESKTOP = {"width": 1280, "height": 820}
 PHONE = {"width": 390, "height": 844}
 PHONE_AGENT = (
@@ -52,7 +24,6 @@ PHONE_AGENT = (
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-# The rules access.py already reports and says why; see KNOWN there.
 KNOWN = {
     "scrollable-region-focusable": "the note is reached by being written in",
     "color-contrast": "the ink on an accent fill is a palette decision",
@@ -80,7 +51,6 @@ async () => {
 }
 """
 
-# One held note, the way the engine hands it over, for whatever is in front.
 HOLD = """
 ([path, name, kind, rtl]) => {
   const hour = 60 * 60 * 1000
@@ -122,16 +92,12 @@ HOLD = """
 
 axe_table: dict[str, dict] = {}
 
-
 def shot(page: Page, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     (SHOTS / f"{name}.png").write_bytes(steady(page, page.screenshot, say, name))
     say(f"shot {name}.png")
 
-
 def axe(page: Page, name: str) -> None:
-    """axe-core on the page with the sheet up: nothing serious or critical that
-    access.py does not already excuse by name."""
     DRIVE.inject(page, AXE)
     found = page.evaluate(
         """async () => {
@@ -152,7 +118,6 @@ def axe(page: Page, name: str) -> None:
     for one in found["named"]:
         if one["impact"] in ("serious", "critical") and one["id"] not in KNOWN:
             wrong(f"axe on {name}: {one['impact']} {one['id']} x{one['nodes']} {one['where']}")
-
 
 def window(browser: Browser, scheme: str, size: dict, phone: bool = False, language: str = "") -> Page:
     context = browser.new_context(
@@ -180,22 +145,17 @@ def window(browser: Browser, scheme: str, size: dict, phone: bool = False, langu
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     return page
 
-
 def held_up(page: Page, path: str, name: str, kind: str = "note", rtl: bool = False) -> None:
     page.evaluate(HOLD, [path, name, kind, rtl])
     wait_for(page, "document.querySelector('[role=dialog] .sides')", f"the question about {name}")
 
-
 def sheet(page: Page, name: str, phone: bool = False) -> None:
-    """The plain case: a note held, in front, the question over it, photographed."""
     path = page.evaluate(SEED)
     if phone:
-        # The list is a drawer over the note on a phone, and the question waits for it.
         page.evaluate("() => window.nibApp.workspace.closePanel()")
     held_up(page, path, "Plan")
     shot(page, name)
     axe(page, name)
-
 
 def desktop(browser: Browser) -> None:
     page = window(browser, "light", DESKTOP)
@@ -205,7 +165,6 @@ def desktop(browser: Browser) -> None:
     shot(page, "desktop-light")
     axe(page, "desktop-light")
 
-    # The keyboard is on the newer version: the other device wrote an hour after this one.
     focused = page.evaluate(
         "() => [...document.querySelectorAll('.keep')].indexOf(document.activeElement)"
     )
@@ -219,7 +178,6 @@ def desktop(browser: Browser) -> None:
         wrong(f"Left did not go to the other card: {moved}")
     shot(page, "desktop-light-keyboard")
 
-    # Escape: nothing answered, and the note wears the mark on its row and its tab.
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=dialog] .sides')", "the question to close")
     answered = page.evaluate("() => window.__held.engine.held.answered")
@@ -236,25 +194,20 @@ def desktop(browser: Browser) -> None:
         wrong(f"the held note does not wear its mark on both its row and its tab: {marks}")
     shot(page, "desktop-light-marked")
 
-    # A note this device deleted that another was writing in.
     page.evaluate(
         "() => window.__held.engine.emit('resurrected', { id: 'held', name: 'Plan', device: 'iPhone' })"
     )
     wait_for(page, "[...document.querySelectorAll('.toast p')].some((one) => one.textContent.includes('is back'))", "the toast")
-    # Held under the pointer, as a reader half way through it holds it, so the shot is
-    # not raced by its six seconds.
     page.locator(".toast", has_text="is back").hover()
     shot(page, "desktop-light-toast")
 
     page.evaluate("() => { window.__held.stop() }")
     page.context.close()
 
-
 def dark(browser: Browser) -> None:
     page = window(browser, "dark", DESKTOP)
     sheet(page, "desktop-dark")
     page.context.close()
-
 
 def phone(browser: Browser) -> None:
     for scheme in ("light", "dark"):
@@ -269,7 +222,6 @@ def phone(browser: Browser) -> None:
         if not stacked:
             wrong(f"phone-{scheme}: the two cards are not one over the other")
         page.context.close()
-
 
 def arabic(browser: Browser) -> None:
     page = window(browser, "light", DESKTOP, language="ar")
@@ -288,7 +240,6 @@ def arabic(browser: Browser) -> None:
         wrong(f"arabic: this device's card is not on the right: {order}")
     page.context.close()
 
-
 def canvas(browser: Browser) -> None:
     page = window(browser, "light", DESKTOP)
     page.evaluate(SEED)
@@ -297,7 +248,6 @@ def canvas(browser: Browser) -> None:
     wait_for(page, "document.querySelectorAll('.side .plane svg').length === 2", "both cards drawn")
     shot(page, "desktop-canvas")
     page.context.close()
-
 
 def main() -> int:
     if not AXE.exists():
@@ -312,7 +262,6 @@ def main() -> int:
     (SHOTS / "axe.json").write_text(json.dumps(axe_table, indent=2), encoding="utf-8")
 
     return DRIVE.verdict("the question comes up over the held note, reads either way, and says nothing it need not")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

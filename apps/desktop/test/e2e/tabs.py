@@ -1,19 +1,3 @@
-"""Tabs that remember, seen: the trail a tab leaves as it moves from note to note,
-walked with the two arrows. The strip has no pinning since #1041; how its tabs are
-drawn is tab-icons.py's question.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tabs.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/tabs/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -27,7 +11,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 
 NOTES = {
     "Daily": "# Daily\n\nThe note that stays open.\n",
@@ -46,7 +29,6 @@ async (notes) => {
 }
 """
 
-# The strip, as the reader sees it.
 STRIP = """
 () => ({
   tabs: [...document.querySelectorAll('.tab')].map((tab) => ({
@@ -58,7 +40,6 @@ STRIP = """
   at: window.nibApp.workspace.active?.at ?? null,
 })
 """
-
 
 def fresh(browser: Browser, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme="light")
@@ -75,9 +56,7 @@ def fresh(browser: Browser, label: str) -> Page:
     page.wait_for_timeout(300)
     return page
 
-
 def peek(page: Page, name: str) -> None:
-    """A single click in the file list: the preview tab takes the note on."""
     page.evaluate(
         """async (starts) => {
           const ws = window.nibApp.workspace
@@ -88,15 +67,12 @@ def peek(page: Page, name: str) -> None:
     )
     page.wait_for_timeout(500)
 
-
 def strip(page: Page) -> dict:
     return page.evaluate(STRIP)
-
 
 def drive_trail(browser: Browser) -> None:
     page = fresh(browser, "trail")
 
-    # One tab, walked from note to note the way a single click walks it.
     peek(page, "First")
     peek(page, "Second")
     peek(page, "Third")
@@ -110,7 +86,6 @@ def drive_trail(browser: Browser) -> None:
     if walked["steps"] != [False, True]:
         wrong(f"the arrows do not say where it can go: {walked['steps']}")
 
-    # Back, and back again.
     page.locator(".step").first.click()
     page.wait_for_timeout(600)
     once = strip(page)
@@ -130,7 +105,6 @@ def drive_trail(browser: Browser) -> None:
     if twice["steps"] != [True, False]:
         wrong(f"the far end of the trail is not the far end: {twice['steps']}")
 
-    # Forward again, by key this time.
     page.locator(".cm-content").click()
     page.keyboard.press("Alt+ArrowRight")
     page.wait_for_timeout(600)
@@ -140,13 +114,6 @@ def drive_trail(browser: Browser) -> None:
     if on["showing"] != "Second.md":
         wrong(f"Alt and an arrow did not go forward: {on['showing']}")
 
-    # A note opened from halfway along drops what was ahead - as long as it is not
-    # already open in another tab, because a note that is gets brought forward instead
-    # and the trail read below would be that tab's rather than this one's. It can be:
-    # a window with no sitting behind it opens the first file of the space once the
-    # list is on screen, the seed hands it these four while that read is still out,
-    # and `Daily` is the first of them. So the strip is cleared back to the tab that
-    # was walked. See `open` in workspace.svelte.ts.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -162,7 +129,6 @@ def drive_trail(browser: Browser) -> None:
     if turned["trail"] != ["First.md", "Second.md", "Daily.md"]:
         wrong(f"the road not taken was kept: {turned['trail']}")
 
-    # The trail itself, behind the back arrow.
     page.locator(".step").first.click(button="right")
     page.wait_for_timeout(400)
     rows = page.evaluate(
@@ -177,14 +143,12 @@ def drive_trail(browser: Browser) -> None:
     page.wait_for_timeout(300)
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a tab that remembers ---")
         drive_trail(browser)
 
     return DRIVE.verdict("a tab can go back where it came from")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

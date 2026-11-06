@@ -1,19 +1,3 @@
-"""Bookmarks in groups, and a bookmark of one block, seen: a named group that
-opens and shuts, a note inside it stepped in under its twist, and a block
-bookmark that opens its note and says where it landed.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/bookmarks.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/bookmarks/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -24,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 PLAN = """# The plan
 
@@ -66,9 +49,7 @@ ROWS = """
 })
 """
 
-
 TILES = "() => [...document.querySelectorAll('.tiles .tile')].map((one) => one.getAttribute('aria-label'))"
-
 
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
@@ -108,11 +89,9 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     page.wait_for_timeout(600)
     return page
 
-
 def drive_groups(browser: Browser) -> None:
     page = fresh(browser, "groups")
 
-    # Two notes bookmarked, and a group made from the row's own menu.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -132,8 +111,6 @@ def drive_groups(browser: Browser) -> None:
     say(f"[groups] the list: {json.dumps(rows, ensure_ascii=False)}")
     shot(page, "01-a-group")
 
-    # A note at the top of the list is a tile above the rows; one in a group is a row
-    # of the group. See bookmark-tiles.py.
     names = [row["label"] for row in rows]
     if names != ["Work", "The plan"]:
         wrong(f"the list does not read as a group holding a note: {names}")
@@ -147,7 +124,6 @@ def drive_groups(browser: Browser) -> None:
     if inside["left"] <= group["left"]:
         wrong(f"what is in the group does not step in: {inside['left']} vs {group['left']}")
 
-    # Shut, and what is in it goes with it.
     page.locator(".body .twist").first.click()
     page.wait_for_timeout(400)
     shut = page.evaluate(ROWS)
@@ -156,7 +132,6 @@ def drive_groups(browser: Browser) -> None:
     if [row["label"] for row in shut] != ["Work"]:
         wrong(f"shutting the group left its rows behind: {[row['label'] for row in shut]}")
 
-    # And the group is remembered as shut on this machine, not on the account.
     kept = page.evaluate(
         """() => ({
           groups: JSON.parse(localStorage.getItem('nib:expanded-groups') ?? '{}'),
@@ -167,7 +142,6 @@ def drive_groups(browser: Browser) -> None:
     if json.dumps(kept["list"]).find("parent") < 0:
         wrong("the group a bookmark is in did not travel with the bookmark")
 
-    # Taking the group out keeps what was in it.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -184,11 +158,9 @@ def drive_groups(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_block(browser: Browser) -> None:
     page = fresh(browser, "block")
 
-    # The block's own mark, and the row it offers.
     line = page.locator(".cm-line", has_text="The paragraph that gets a bookmark").first
     line.hover()
     page.wait_for_timeout(250)
@@ -222,8 +194,6 @@ def drive_block(browser: Browser) -> None:
     if "^" not in page.evaluate("() => window.nib.state.doc.toString()"):
         wrong("the block was not given a name to point at")
 
-    # Away to another note, then back through the bookmark: it lands on the block
-    # and says so.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -262,9 +232,7 @@ def drive_block(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_finger(browser: Browser) -> None:
-    """A group under a thumb: the rows are a thumb tall and a tap opens one."""
     page = fresh(browser, "phone", finger=True)
 
     page.evaluate(
@@ -308,7 +276,6 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- groups ---")
@@ -319,7 +286,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("bookmarks can be sorted into groups, and one can point at a block")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

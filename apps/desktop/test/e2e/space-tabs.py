@@ -1,29 +1,3 @@
-"""A space's own tabs, driven in the built app: two spaces, each with its own.
-
-Emil, 2026-10-01: "Only for the space means the whole open configuration is saved for that
-space, and it changes automatically when you switch to another space." Since #674 every
-space does, with no choice to make. What this presses and looks at:
-
-  * **No row**: the space's menu has no Tabs row any more. Photographed in the light and
-    in the dark.
-  * **Its own**: Notes has a split of two notes, and Home is put on screen: Home's strip
-    holds Home's tabs and nothing of Notes'.
-  * **Back and forth**: Notes comes back split as it was, the same tab in front of each
-    pane; Home comes back with its own; every frame between shows one set or the other,
-    never both and never neither.
-  * **A restart**: the page loaded again comes back on Notes' split, and Home still has
-    its own.
-  * **Deleted on screen** (#786): Home deleted while it shows a web tab takes that tab with
-    it, and it does not come back with the restart.
-
-Pausing a page out of sight is a native engine's, so that half is
-`scripts/space-tabs-probe.py`.
-
-    python apps/desktop/test/e2e/space-tabs.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/space-tabs/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -38,8 +12,6 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SIZE = {"width": 1280, "height": 800}
 
-# Notes holds Plan and Ideas, Home holds Food; Notes is on screen with Plan and Ideas
-# split side by side and the file list open.
 ARRANGE = """
 async () => {
   const ws = window.nibApp.workspace
@@ -61,7 +33,6 @@ async () => {
 }
 """
 
-# What is on screen: the space, each pane's strip and the tab in front of it.
 LOOK = """
 () => {
   const ws = window.nibApp.workspace
@@ -77,7 +48,6 @@ LOOK = """
 }
 """
 
-# Every frame's strip, from now until it is asked for: what a reader saw during a switch.
 WATCH = """
 () => {
   window.__frames = []
@@ -92,14 +62,9 @@ WATCH = """
 
 FRAMES = "() => { cancelAnimationFrame(window.__watching); return window.__frames }"
 
-
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
 
-
-#: Every hint card already put away, as on a device that has seen them. The palette's
-#: comes up under the space's name a few seconds into a session (hints.svelte.ts) and
-#: lies over the first rows of the list of spaces, which is where this drive presses.
 HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
 def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page, dict]:
@@ -114,24 +79,18 @@ def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page,
     quiet(page)
     return page, ids
 
-
 def switcher(page: Page) -> None:
-    """The list of spaces, open: it stays open behind a space's own menu."""
     if not page.locator(".nib-layer.spaces").count():
         page.locator("aside button.name").first.click()
     wait_for(page, "document.querySelector('.nib-layer.spaces')", "the list of spaces")
 
-
 def space_menu(page: Page, name: str) -> None:
-    """The space's own menu, from the three dots on its row in the switcher."""
     switcher(page)
     row = page.locator(".spaces .line").filter(has_text=name)
     row.locator(".more").click()
     wait_for(page, "document.querySelector('[role=menu].menu')", "the space's menu")
 
-
 def no_row(page: Page, scheme: str) -> None:
-    """The space's menu, with no Tabs row: every space keeps its own (#674)."""
     space_menu(page, "Notes")
     rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
     say(f"[{scheme}] the space's menu: {rows}")
@@ -142,19 +101,16 @@ def no_row(page: Page, scheme: str) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=menu].menu')", "the menu to close")
 
-
 def switch(page: Page, name: str) -> None:
     switcher(page)
     page.locator(".spaces .line .nib-row").filter(has_text=name).click()
     wait_for(page, f"window.nibApp.workspace.activeSpace?.name === {json.dumps(name)}", f"{name} on screen")
     DRIVE.settled(page)
 
-
 def drive(browser: Browser) -> None:
     page, ids = opened(browser, "light")
     no_row(page, "light")
 
-    # Notes keeps the split it has.
     before = look(page)
     say(f"Notes, its own: {json.dumps(before)}")
 
@@ -184,7 +140,6 @@ def drive(browser: Browser) -> None:
     if [pane["tabs"] for pane in look(page)["panes"]] != [["Food"]]:
         wrong(f"Home did not keep its own: {look(page)}")
 
-    # A restart.
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
     wait_for(page, "window.nibApp.workspace.restored", "the session")
@@ -200,7 +155,6 @@ def drive(browser: Browser) -> None:
         wrong(f"Notes' split did not come back after the restart: {again}")
     page.context.close()
 
-    # Every frame of a switch, with the motion on: one set or the other, never both.
     page, ids = opened(browser, "light", motion="no-preference")
     switch(page, "Home")
     page.evaluate(
@@ -222,7 +176,6 @@ def drive(browser: Browser) -> None:
             break
     page.context.close()
 
-    # The space on screen deleted: its web tab, which no file closes, goes with it.
     page, ids = opened(browser, "light")
     switch(page, "Home")
     page.evaluate("() => window.nibApp.workspace.openWebsite()")
@@ -245,11 +198,9 @@ def drive(browser: Browser) -> None:
         wrong("a web tab of the deleted space came back with the restart")
     page.context.close()
 
-    # The menu in the dark.
     page, _ids = opened(browser, "dark")
     no_row(page, "dark")
     page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "each space's own tabs swap in, and come back after a restart"))

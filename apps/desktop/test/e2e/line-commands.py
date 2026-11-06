@@ -1,27 +1,3 @@
-"""The editor's line and text commands, pressed in a real browser.
-
-What only a browser can answer about them: that each key reaches its command
-through the app's own keymap, that the palette rows run, that a paste event
-carrying an address makes a link of the selected words and nothing else, and that
-Alt+Enter in the find bar puts a cursor on every match.
-
-  - an address pasted over selected words is `[words](address)`; in inline code it
-    goes in as it stands;
-  - Shift+Alt+Right grows the selection a step at a time, Shift+Alt+Left shrinks it;
-  - Ctrl+Enter makes a task of a plain line, and ticks it on the next press;
-  - Ctrl+Shift+Enter opens a line above, Ctrl+J joins the next line on;
-  - Sort the lines, Upper case and Delete the line from the palette;
-  - Alt+Enter in the find bar selects every match;
-  - none of it reaches into front matter that is hidden.
-
-Builds the web app, serves `dist` on an origin of its own, drives it, and stops
-everything again. Run it from the repository root:
-
-    python apps/desktop/test/e2e/line-commands.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -38,13 +14,10 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 APP = harness.APP
 
-
 PATIENCE = 40
-
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 
 def check(fine: bool, what: str, got: object = None) -> None:
     if fine:
@@ -52,7 +25,6 @@ def check(fine: bool, what: str, got: object = None) -> None:
     else:
         failures.append(what)
         say(f"WRONG {what}: {got!r}")
-
 
 def wait_for(page: Page, script: str, what: str, arg: object = None):
     until = time.monotonic() + PATIENCE
@@ -63,9 +35,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None):
         page.wait_for_timeout(50)
     raise SystemExit(f"gave up waiting for {what}")
 
-
-#: A note of the drive's own, made the only tab and the active one, asked again
-#: until the app's own sitting has been read back and left it so.
 OPEN = """
 async (text) => {
   const ws = window.nibApp.workspace
@@ -86,8 +55,6 @@ async (text) => {
 }
 """
 
-#: The note as the editor holds it, with `|` for the caret and `«»` round a
-#: selection, and how many selections there are.
 MARKED = """
 () => {
   const view = window.nib
@@ -100,7 +67,6 @@ MARKED = """
 }
 """
 
-#: Puts the selection at the offsets `[from, to]` and gives the editor the keyboard.
 SELECT = """
 ([from, to]) => {
   const view = window.nib
@@ -109,7 +75,6 @@ SELECT = """
 }
 """
 
-#: A paste event carrying text, as the browser raises one for Ctrl+V.
 PASTE = """
 (text) => {
   const data = new DataTransfer()
@@ -122,20 +87,16 @@ PASTE = """
 }
 """
 
-
 def marked(page: Page) -> str:
     return page.evaluate(MARKED)["marked"]
-
 
 def open_note(page: Page, text: str) -> None:
     wait_for(page, OPEN, "the drive's note to be the one open", text)
     page.wait_for_timeout(150)
 
-
 def select(page: Page, doc: str, words: str, caret_only: bool = False) -> None:
     at = doc.index(words)
     page.evaluate(SELECT, [at, at if caret_only else at + len(words)])
-
 
 def palette(page: Page, label: str) -> None:
     page.keyboard.press("Control+Shift+p")
@@ -145,18 +106,13 @@ def palette(page: Page, label: str) -> None:
     page.keyboard.press("Enter")
     page.wait_for_timeout(200)
 
-
 def landed(page: Page, address: str) -> None:
-    """Until the pasted address is in the note. What handles a paste is fetched the
-    first time one arrives, so the frame after the event can still be the words as
-    they were - and a drive that moved on then saw the address land in the next note."""
     wait_for(
         page,
         "(address) => window.nib.state.doc.toString().includes(address)",
         f"the pasted {address} to land",
         address,
     )
-
 
 def pasting(page: Page) -> None:
     doc = "# Paste drive\n\nRead the docs first, and run `npm test` too.\n"
@@ -181,7 +137,6 @@ def pasting(page: Page) -> None:
         marked(page),
     )
 
-
 def growing(page: Page) -> None:
     doc = "# Grow drive\n\nSome **bold words** here.\n\nNext.\n"
     open_note(page, doc)
@@ -202,7 +157,6 @@ def growing(page: Page) -> None:
     page.keyboard.press("Shift+Alt+ArrowLeft")
     page.wait_for_timeout(60)
     check("«**bold words**»" in marked(page), "Shift+Alt+Left shrinks a step", marked(page))
-
 
 def tasks_and_lines(page: Page) -> None:
     doc = "# Lines drive\n\nmilk\ncheese\n  two\nfirst\nsecond\n"
@@ -228,7 +182,6 @@ def tasks_and_lines(page: Page) -> None:
     page.wait_for_timeout(60)
     check("first| second" in marked(page), "Ctrl+J joins the next line on", marked(page))
 
-
 def from_the_palette(page: Page) -> None:
     doc = "# Palette drive\n\n- pear\n- apple\n- fig\n\nshout this\n\ngone\nstays\n"
     open_note(page, doc)
@@ -251,7 +204,6 @@ def from_the_palette(page: Page) -> None:
     palette(page, "Delete the line")
     check("\n|stays" in marked(page) and "gone" not in marked(page), "Delete the line", marked(page))
 
-
 def every_match(page: Page) -> None:
     doc = "# Match drive\n\nwind and wind and more wind.\n"
     open_note(page, doc)
@@ -269,11 +221,7 @@ def every_match(page: Page) -> None:
     check(state["ranges"] == 3, "Alt+Enter in the find bar selects every match", state)
     check(not bar, "and the bar goes", bar)
 
-
 def slash_menu(page: Page) -> None:
-    """The `/` menu's rows are the command list's, handed over at the launch's last
-    turn rather than carried into the first paint; a `/` typed after it still offers
-    them."""
     doc = "# Slash drive\n\n"
     open_note(page, doc)
     page.evaluate(SELECT, [len(doc), len(doc)])
@@ -286,7 +234,6 @@ def slash_menu(page: Page) -> None:
     check(any("Quote" in one for one in shown), "the / menu still offers the blocks", shown)
     page.keyboard.press("Escape")
 
-
 def hidden_front_matter(page: Page) -> None:
     doc = "---\nicon: list-checks\n---\n# Hidden drive\nwords\n"
     open_note(page, doc)
@@ -298,7 +245,6 @@ def hidden_front_matter(page: Page) -> None:
     palette(page, "Delete the line")
     text = page.evaluate("() => window.nib.state.doc.toString()")
     check(text.startswith("---\nicon: list-checks\n---\n"), "hidden front matter stays whole", text)
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -318,7 +264,6 @@ def main() -> int:
         hidden_front_matter(page)
 
     return DRIVE.verdict("the line and text commands answer their keys, the palette and a paste")
-
 
 if __name__ == "__main__":
     sys.exit(main())

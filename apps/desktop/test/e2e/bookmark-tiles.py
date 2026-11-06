@@ -1,24 +1,3 @@
-"""Bookmarks as Zen's Essentials, and called that: the files kept at the top of the
-sidebar are a grid of soft cards wearing their faces, the open one lifted, and
-everything that is only words stays a row under them.
-
-Pressed, a tile shows its file where a tab shows, with no tab in the strip, and comes
-back to the same view after another tab has been in front. Seen at four widths of the
-sidebar, in the built-in theme and in glass, light and dark,
-and under a thumb; and used: a tile pressed opens its note, one dragged among the
-others moves, a row of the file list dragged onto the grid is bookmarked where it was
-let go of, a tab carried out of the strip onto the grid is too, the arrows walk the
-grid, and the list comes back from Settings - a search for the old word, bookmarks,
-finds it - and goes again.
-
-Serves the built web app and drives it in Chromium. Run it from the repository root:
-
-    python apps/desktop/test/e2e/bookmark-tiles.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/bookmark-tiles/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -30,7 +9,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-# A favicon the drive brings, so the web note wears a picture with no network.
 FAVICON = (
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E"
     "%3Crect width='16' height='16' rx='3' fill='%23ff3e00'/%3E%3C/svg%3E"
@@ -75,8 +53,6 @@ async (files) => {
 }
 """
 
-# After a launch, which is when a space's notes are read for what they say about
-# themselves: the icon in the front matter, the favicon in the shortcut.
 SHOW = """
 async () => {
   const ws = window.nibApp.workspace
@@ -106,21 +82,13 @@ ROWS = """
 
 ORDER = "() => window.nibApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
 
-
-#: The pages being reloaded right now; see `reload`.
 RELOADING: set[Page] = set()
 
-
 def page_error(page: Page, error: Exception) -> None:
-    """A script error is a failure, but for the one a reload makes: the chunks the app
-    fetches once it is up are cancelled by the reload, and WebKit reports each import
-    that was waiting on one as `Importing a module script failed` from the page being
-    left. Chromium says nothing. It is the drive's reload, not the app."""
     if page in RELOADING and "Importing a module script failed" in str(error):
         say(f"(a reload cancelled an import: {error})")
         return
     wrong(f"page error: {error}")
-
 
 def reload(page: Page) -> None:
     RELOADING.add(page)
@@ -129,7 +97,6 @@ def reload(page: Page) -> None:
         DRIVE.ready(page)
     finally:
         RELOADING.discard(page)
-
 
 def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = False) -> Page:
     options = (
@@ -159,9 +126,6 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     page.locator(".tiles .tile").first.click()
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     wait_for(page, "document.querySelectorAll('.tiles .tile').length === 5", f"[{label}] the tiles")
-    # The press opens Plan in place, which is a module fetched the first time an
-    # essential opens (essentials.svelte.ts) and so can take longer than the half a
-    # second below; its tile is lifted once it has.
     wait_for(
         page,
         "/Plan\\.md$/.test(window.nibApp.workspace.active?.essential ?? '')",
@@ -170,12 +134,10 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     page.wait_for_timeout(500)
     return page
 
-
 def sidebar(page: Page, name: str) -> None:
     box = page.locator("aside").first.bounding_box()
     if box:
         shot(page, name, clip={"x": 0, "y": 0, "width": box["width"] + 1, "height": 320})
-
 
 def widen(page: Page, width: int) -> None:
     page.evaluate(
@@ -183,7 +145,6 @@ def widen(page: Page, width: int) -> None:
         width,
     )
     page.wait_for_timeout(450)
-
 
 def drive_look(browser: Browser) -> None:
     page = fresh(browser, "look")
@@ -218,7 +179,6 @@ def drive_look(browser: Browser) -> None:
         sidebar(page, f"01-width-{width}")
     widen(page, 252)
 
-    # Under the pointer, and pressed.
     page.locator(".tiles .tile").nth(1).hover()
     page.wait_for_timeout(250)
     sidebar(page, "02-hover")
@@ -234,7 +194,6 @@ def drive_look(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.theme.setScheme('light')")
     page.wait_for_timeout(300)
 
-    # Pressed, it opens its note, and the lift moves with it.
     page.locator(".tiles .tile", has=page.locator(".nib-tile-letter", has_text="I")).click()
     page.wait_for_timeout(500)
     if page.evaluate("() => window.nibApp.workspace.active?.name") != "Inbox.md":
@@ -244,8 +203,6 @@ def drive_look(browser: Browser) -> None:
         wrong(f"the lift did not follow the open note: {lifted}")
     sidebar(page, "04-opened")
 
-    # In place, as Zen's Essentials are: no tab in the strip for it, and a tab opened
-    # after it leaves it loaded, so pressing the tile again comes back to the same view.
     if page.locator(".tab", has_text="Inbox").count():
         wrong("pressing a tile put a tab in the strip")
     shown = page.evaluate("() => window.nibApp.workspace.active?.id")
@@ -258,7 +215,6 @@ def drive_look(browser: Browser) -> None:
         wrong("pressing the tile again made a new view rather than coming back to its own")
     shot(page, "05-in-place")
 
-    # A modifier asks for a tab of its own, as on any row.
     page.locator(".tiles .tile", has=page.locator(".nib-tile-letter", has_text="P")).click(modifiers=["Control"])
     page.wait_for_timeout(500)
     if not page.locator(".tab", has_text="Plan").count():
@@ -266,11 +222,9 @@ def drive_look(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_hands(browser: Browser) -> None:
     page = fresh(browser, "hands")
 
-    # A tile dragged past the middle of the third lands after it.
     third = page.locator(".tiles .tile").nth(2).bounding_box()
     assert third
     page.locator(".tiles .tile").first.drag_to(
@@ -283,7 +237,6 @@ def drive_hands(browser: Browser) -> None:
     if order[:3] != ["Rocket.md", "Svelte docs.url", "Plan.md"]:
         wrong(f"the dragged tile did not land after the third: {order}")
 
-    # A row of the file list dragged onto the front of the grid is bookmarked there.
     loose = page.locator(".body [data-path$='Loose.md']").first
     loose.drag_to(page.locator(".tiles .tile").first, target_position={"x": 4, "y": 10})
     page.wait_for_timeout(400)
@@ -293,7 +246,6 @@ def drive_hands(browser: Browser) -> None:
         wrong(f"the note dragged from the file list was not kept where it landed: {order}")
     sidebar(page, "10-dragged-in")
 
-    # The arrows: right along the grid, down a row of it.
     page.locator(".tiles .tile").first.focus()
     page.keyboard.press("ArrowRight")
     along = page.evaluate("() => document.activeElement?.getAttribute('aria-label')")
@@ -308,7 +260,6 @@ def drive_hands(browser: Browser) -> None:
     if below != expected:
         wrong(f"ArrowDown did not walk down the grid: {below}, not {expected}")
 
-    # The list, from Settings, found by the word it went by before, and back.
     page.evaluate("() => window.nibApp.settings.show()")
     page.wait_for_timeout(600)
     page.fill(".sheet .search input", "bookmarks")
@@ -338,7 +289,6 @@ def drive_hands(browser: Browser) -> None:
     if page.locator("p.nib-section", has_text="Essentials").count() != 1:
         wrong("the rows under the tiles are not headed Essentials")
 
-    # A tab carried out of the strip onto the grid is bookmarked where it was let go.
     page.evaluate("() => window.nibApp.workspace.bookmarks.toggle(window.nibApp.workspace.bookmarks.list[0])")
     page.locator(".body [data-path$='Loose.md']").first.dblclick()
     page.wait_for_timeout(500)
@@ -364,13 +314,8 @@ def drive_hands(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
-    # The press that opened Plan put the drawer away, as a press on a phone does - once
-    # the note has opened, which can be after the press. Asked for before then, the file
-    # list is still the panel showing, so showing it again is nothing, and then the
-    # drawer goes.
     wait_for(page, "window.nibApp.workspace.panel === null", "the drawer put away")
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
@@ -387,7 +332,6 @@ def drive_finger(browser: Browser) -> None:
         say("[phone] a tap on the web tile opened something else (a web build cannot open a site)")
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the look ---")
@@ -398,7 +342,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("bookmarks are tiles, the open one lifted, and they move by hand")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

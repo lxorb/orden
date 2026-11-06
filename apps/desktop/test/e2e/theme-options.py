@@ -1,32 +1,3 @@
-"""Glass and Wallpaper, every dial: what each one does, and every word still read.
-
-The two translucent themes offer a dial for everything a reader asked for - a sharp
-picture, a desk with no blur, a frame all the way to opaque, a note and a terminal the
-material shows through - and every one of them stops where words would stop reading.
-So the drive turns each dial to its ends, over the worst pictures and desks there are,
-in both schemes, and reads the result back off the screenshots rather than off the
-app's own opinion of what it painted:
-
-  - the quietest word on the frame, `--muted`, against the frame where no word is:
-    four and a half to one, over a sharp picture six;
-  - body text, `--text`, against the note's paper where no word is: seven to one, and
-    `--muted` four and a half - at Opaque, Tinted and Clear alike.
-
-And what the dials promise besides: Opaque is the paper as it always was, a dial being
-dragged shows at once and keeps nothing until it is let go of, the Opacity dial's track
-is grey below its floor, a web page paints its own page, and nothing filters anything on
-a frame. Then the cost: a long note scrolled and typed into on the built-in theme, on
-glass and on the wallpaper with the note see-through.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/theme-options.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/theme-options/`, which is ignored; set NIB_SHOTS_TOO to a folder to copy them
-there as well.
-"""
-
 from __future__ import annotations
 
 import io
@@ -67,8 +38,6 @@ LONG = "# A long note\n\n" + "\n\n".join(
     f"of ordinary width, so that scrolling has something to lay out and paint." for n in range(400)
 )
 
-# The worst pictures there are, drawn in the page: a bright one with white in it, a dark
-# one with a white moon in it, and a sharp checkerboard of black and white.
 PICTURES = {
     "bright": """
       const g = c.createLinearGradient(0, 0, 0, h)
@@ -106,8 +75,6 @@ async ([paint, side]) => {
 }
 """
 
-# A desk behind a translucent window, done by hand as glass.py does it: painted where
-# the material would be composited, and the root told what it stands on.
 STAND_ON = """
 ([desk, material]) => {
   document.getElementById('nib-desk')?.remove()
@@ -120,9 +87,6 @@ STAND_ON = """
 }
 """
 
-# Each desk with both of its worst corners in it, the way a photograph has them. Mica
-# keeps its own brightness, so on Mica the desk is the band that side's Mica can be
-# (glass.py measures the same band): its two flat colours and a wallpaper's tint of it.
 DESKS = {
     "white": "#ffffff",
     "black": "#000000",
@@ -133,7 +97,6 @@ MICA = {
     "light": "linear-gradient(90deg, #c0c0c0 0 33%, #fff 33% 66%, #d9dde8 66%)",
 }
 
-# Every filter that repaints what is behind it on every frame. Neither theme spends one.
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -143,8 +106,6 @@ FILTERS = """
   .map((one) => one.tagName.toLowerCase() + '.' + [...one.classList].join('.'))
 """
 
-# Where no word is: a strip of the title bar, the foot of the list, and the paper under
-# the last line of the note. And the inks, as the page resolves them.
 BOXES = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
@@ -180,11 +141,9 @@ BOXES = """
 }
 """
 
-
 def channels(said: str) -> tuple[int, int, int]:
     parts = [float(one) for one in said[said.index("(") + 1 : said.index(")")].replace(",", " ").split()[:3]]
     return (round(parts[0]), round(parts[1]), round(parts[2]))
-
 
 def luminance(rgb: tuple[int, int, int]) -> float:
     def linear(c: float) -> float:
@@ -194,18 +153,14 @@ def luminance(rgb: tuple[int, int, int]) -> float:
     r, g, b = (linear(one) for one in rgb)
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
-
 def ratio(one: tuple[int, int, int], two: tuple[int, int, int]) -> float:
     light, dark = sorted((luminance(one), luminance(two)), reverse=True)
     return round((light + 0.05) / (dark + 0.05), 2)
 
-
 def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> float:
-    """The lowest ratio of the ink against any pixel in the box."""
     region = image.crop(tuple(round(one) for one in box)).convert("RGB")
     colours = {colour for _count, colour in region.getcolors(maxcolors=1 << 20) or []}
     return min(ratio(ink, colour) for colour in colours) if colours else 0.0
-
 
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
@@ -214,13 +169,10 @@ def keep_shot(page: Any, name: str) -> None:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
 
-
 def holds(what: str, found: float, floor: float) -> None:
     (say if found >= floor else wrong)(f"{what}: {found}:1 (at least {floor})")
 
-
 def measure(page: Any, name: str, frame: float = 4.5, opaque: bool = False) -> None:
-    """Every word on the frame and the paper, worst pixel by worst pixel."""
     boxes = page.evaluate(BOXES)
     image = Image.open(io.BytesIO(page.screenshot()))
     muted, text = channels(boxes["muted"]), channels(boxes["text"])
@@ -239,19 +191,12 @@ def measure(page: Any, name: str, frame: float = 4.5, opaque: bool = False) -> N
         bg = channels(boxes["bg"])
         (say if colours == {bg} else wrong)(f"{name}: Opaque is the paper as it was {bg}: {sorted(colours)[:3]}")
 
-
 def dial(page: Any, id: str, value: Any) -> None:
     page.evaluate(f"() => window.nibApp.theme.set({json.dumps(id)}, {json.dumps(value)})")
     page.wait_for_timeout(700)
 
-
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
-    # Every hint already put away. A session's one hint comes up a few seconds in, and
-    # a card in the panel (hints.svelte.ts, after this drive was written) sat in the
-    # stretch of the side measured for the quiet ink, which then met its own colour, and
-    # its blur counted as a filter on the frame. The card is not part of the frame either
-    # theme draws, so it is kept out of this.
     page.add_init_script("localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette']))")
     DRIVE.open(page)
     DRIVE.seed(page, note)
@@ -259,7 +204,6 @@ def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a pict
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     return page
-
 
 def wallpaper(browser: Any, scheme: str) -> None:
     page = fresh(browser, scheme)
@@ -277,7 +221,6 @@ def wallpaper(browser: Any, scheme: str) -> None:
             keep_shot(page, f"wallpaper-{scheme}-{picture}-{level}")
             measure(page, f"wallpaper {scheme} {picture} {level}", opaque=level == "opaque")
 
-        # The ends of every dial, one at a time, back where it started after.
         if picture != "checks":
             continue
         for id, ends, start in (
@@ -301,7 +244,6 @@ def wallpaper(browser: Any, scheme: str) -> None:
             measure(page, f"wallpaper {scheme} fit {fit}")
         dial(page, "fit", "fill")
 
-    # A dial being dragged is shown at once and kept nowhere until it is let go of.
     before = page.evaluate("() => localStorage.getItem('nib:theme-settings')")
     page.evaluate("() => window.nibApp.theme.try('dim', 70)")
     page.wait_for_timeout(200)
@@ -312,15 +254,12 @@ def wallpaper(browser: Any, scheme: str) -> None:
     )
     page.evaluate("() => window.nibApp.theme.set('dim', 10)")
 
-    # The dark side's own picture: the light side keeps the one it had.
     page.evaluate(TAKE, [PICTURES["dark"], "dark"])
     page.wait_for_timeout(600)
     sheet = page.evaluate("() => document.getElementById('nib-user-theme')?.textContent ?? ''")
     (say if ":root[data-theme='dark']" in sheet else wrong)(f"wallpaper {scheme}: the dark side has a picture of its own")
     keep_shot(page, f"wallpaper-{scheme}-own-dark")
 
-    # The pictures the Appearance pane shows, and the dials under them; a drag on a
-    # thumbnail moves its picture's focal point and a press without one keeps it.
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     page.evaluate("() => document.querySelector('.sheet .pictures')?.scrollIntoView({ block: 'start' })")
@@ -351,7 +290,6 @@ def wallpaper(browser: Any, scheme: str) -> None:
     (wrong if filters else say)(f"wallpaper {scheme}: filters on a frame: {filters[:5]}")
     page.context.close()
 
-
 def glass(browser: Any, scheme: str) -> None:
     page = fresh(browser, scheme)
     page.evaluate("() => window.nibApp.theme.select('glass')")
@@ -372,7 +310,6 @@ def glass(browser: Any, scheme: str) -> None:
                     opaque=level == "opaque",
                 )
 
-    # The ends of the frame's own dials, over the busy desk on Acrylic.
     page.evaluate(STAND_ON, [DESKS["busy"], "acrylic"])
     page.wait_for_timeout(400)
     for id, value in (("opacity", 0), ("opacity", 100), ("tint", 0), ("follow", False), ("tab", False)):
@@ -382,8 +319,6 @@ def glass(browser: Any, scheme: str) -> None:
     for id, value in (("opacity", 50), ("tint", 100), ("follow", True), ("tab", True)):
         dial(page, id, value)
 
-    # The Opacity dial over a desk that needs most of a wash: its track is grey below the
-    # floor, and the knob cannot be put there.
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     floored = page.evaluate(
@@ -400,9 +335,6 @@ def glass(browser: Any, scheme: str) -> None:
     (wrong if filters else say)(f"glass {scheme}: filters on a frame: {filters[:5]}")
     page.context.close()
 
-
-# Frames while a long note scrolls by itself, and while it is typed into: what a
-# see-through note costs is the one thing a screenshot cannot answer.
 SCROLL = """
 () => new Promise((done) => {
   const scroller = document.querySelector('.cm-scroller')
@@ -426,7 +358,6 @@ def summary(frames: list[float]) -> str:
     ordered = sorted(frames)
     median = ordered[len(ordered) // 2]
     return f"{len(frames)} frames, median {median:.1f} ms, p95 {ordered[int(len(ordered) * 0.95)]:.1f} ms, worst {ordered[-1]:.1f} ms"
-
 
 def cost(browser: Any) -> None:
     results: dict[str, dict[str, str]] = {}
@@ -463,13 +394,11 @@ def cost(browser: Any) -> None:
         with open(os.path.join(out, "cost.json"), "w", encoding="utf-8") as file:
             json.dump(results, file, indent=2)
 
-
 def drive(browser: Any) -> None:
     for scheme in ("dark", "light"):
         wallpaper(browser, scheme)
         glass(browser, scheme)
     cost(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

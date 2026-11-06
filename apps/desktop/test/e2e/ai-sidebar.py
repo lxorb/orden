@@ -1,50 +1,3 @@
-"""The AI panel, driven against a provider of our own, in the light and in the dark.
-
-What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
-
-- Ctrl+Shift+A opens the panel with the keyboard in its field, Approve first;
-- a message streams in with its thinking folded into one row, the ring fills from
-  the provider's own count against the model's window, and the request carries the
-  note in front;
-- Escape stops an answer and keeps what arrived;
-- Enter while an answer runs queues the message, and it goes once the answer is done;
-- Ctrl+Enter sends words into the running answer, drawn as a steered message;
-- Alt+P opens the model popover with the provider's list and its windows, a second
-  model is picked by key and answers the next request; Alt+T steps the effort, which
-  the chip says and the request carries; Shift+Tab steps the mode;
-- `@` lists the space's notes and a chosen one goes along as a chip;
-- `/` lists the commands, `/status` writes its lines into the thread, `/goal` puts its
-  chip over the field and the chip's cross clears it, and `/new` starts a new thread;
-- Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
-  with Enter, and archives with Delete;
-- the ring's tray lists the bands;
-- and the whole of it in one thread: Approve answers, Auto mode edits a note as the
-  provider's agent while its answer runs, the changes bar keeps one edit and undoes the
-  other, the clock on a message rewinds notes and conversation to before it, and Up
-  on the empty field sends an edited message again, which leaves arrows between the
-  two branches.
-
-And the Codex sidebar's shape, which the panel copies (docs/ai-sidebar.md 4.1), in the
-light and the dark: no greeting, the composer at the foot from the start with "+", the
-mode, the ring, the model and the round button in its row; the reader's words a bubble
-at the end of the line and the answer across the width; Back to the home and its latest
-chats; "+" holds what goes along and the modes their own menu; Ask again asks another
-model; a run's steps fold into "Worked for" over the answer once it is in, a command
-opens to its output, and what the run changed is a card under it, drawn only once it is
-done; a write that asks is a card with Approve, Always and Deny; the round arrow goes
-back down a long thread; "Open in new tab" puts the conversation in a pane with the
-threads down its left, and a new thread there is the home; and the quick question's
-Continue carries it on in the panel.
-
-A fake OpenAI-compatible server answers, a word at a time, with reasoning before the
-words and its counts at the end. No key, no network, no bill.
-
-    python apps/desktop/test/e2e/ai-sidebar.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go under
-`shots/ai-sidebar/`.
-"""
-
 from __future__ import annotations
 
 import http.server
@@ -56,8 +9,6 @@ from playwright.sync_api import Browser, Page
 
 from harness import Drive
 
-# A dev server of its own, since the flow below edits a note as the provider's agent
-# through the window's own interface, which only a dev server answers by its path.
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
@@ -66,10 +17,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 HERONS = "# Herons\n\nA heron stands still in the shallows for a long time.\n\nThen it strikes.\n"
 HOVERING = "# Hovering\n\nA kestrel hovers facing the wind over the verge.\n"
 
-
 class Model(http.server.BaseHTTPRequestHandler):
-    """An OpenAI-compatible provider: two models with their windows, reasoning before
-    the words, and the counts at the end of every stream."""
 
     words: list[str] = ["Still."]
     thoughts: list[str] = []
@@ -149,7 +97,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         except OSError:
             return
 
-
 MODEL_ORIGIN = DRIVE.side(Model)
 
 SETUP = """
@@ -183,41 +130,28 @@ WHERE = """
 
 FIELD = ".ask textarea"
 
-
 def last_sent() -> str:
     return json.dumps(Model.seen[-1] if Model.seen else {})
-
 
 def waited(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     return DRIVE.waited(page, expression, what, patience)
 
-
 def keyboard_in_the_list(page: Page) -> bool:
-    """Until the thread list's field has the keyboard. It takes it a frame after the
-    list is drawn (Threads.svelte), so a key pressed the moment the list is there went
-    to the composer instead, now and then on a busy machine: the search typed nowhere,
-    and a Delete archived nothing."""
     return waited(page, "document.activeElement?.closest('.ask .threads')", "the list's field to take the keyboard")
-
 
 def idle(page: Page) -> bool:
     return waited(page, "!document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the answer to end")
-
 
 def type_and_send(page: Page, words: str, key: str = "Enter") -> None:
     page.locator(FIELD).click()
     page.keyboard.type(words)
     page.keyboard.press(key)
 
-
 def switched(page: Page) -> None:
-    """Another model in a chat with turns sends the conversation again, which the panel
-    asks about first (#1089): Switch."""
     switch = page.locator('.nib-screen button:has-text("Switch")')
     switch.wait_for(state="visible", timeout=10_000)
     switch.click()
     switch.wait_for(state="hidden", timeout=10_000)
-
 
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
@@ -227,7 +161,6 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.open_note(page, "Herons")
     tag = f"{scheme}/"
 
-    # The panel, on its key, with the keyboard in its field.
     page.evaluate("() => window.nib.focus()")
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
@@ -240,7 +173,6 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong(f"a new thread does not start in Approve: {mode!r}")
     shot(page, f"{tag}01-empty")
 
-    # A message: thinking folded, words streamed, the ring from the provider's count.
     Model.seen.clear()
     Model.thoughts = ["Looking ", "at the note."]
     Model.words = ["A heron ", "waits, ", "then ", "strikes ", "[1]."]
@@ -266,13 +198,11 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong(f"the ring did not fill from the provider's count: {used!r}")
     shot(page, f"{tag}02-answered")
 
-    # The thinking row opens to what the provider said of it.
     page.locator(".ask .row .line").first.click()
     page.wait_for_timeout(250)
     if "at the note" not in (page.locator(".ask .row .detail").first.text_content() or ""):
         wrong("the thinking row does not open to the summary")
 
-    # Escape stops an answer; what arrived stays.
     Model.thoughts = []
     Model.words = [f"word{one} " for one in range(60)]
     Model.pause = 0.08
@@ -286,7 +216,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if "Stopped" not in kept:
         wrong("a stopped answer does not say it stopped")
 
-    # Enter while it runs queues; the queued message goes once the answer is done.
     Model.words = [f"slow{one} " for one in range(20)]
     Model.pause = 0.08
     before = len(Model.seen)
@@ -301,7 +230,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if len(Model.seen) - before != 2 or "Second of two" not in last_sent():
         wrong(f"the queued message was not sent after the answer: {len(Model.seen) - before}")
 
-    # Ctrl+Enter sends into the running answer.
     Model.words = [f"long{one} " for one in range(30)]
     Model.pause = 0.08
     type_and_send(page, "Tell me about kestrels")
@@ -314,7 +242,6 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong("the steered words did not reach the model")
     shot(page, f"{tag}04-steered")
 
-    # Alt+P: the provider's list, a second model taken by key.
     page.locator(FIELD).click()
     page.keyboard.press("Alt+p")
     waited(page, "document.querySelectorAll('.ask .pop .model').length === 2", "the model list")
@@ -340,7 +267,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if page.locator(".ask .notice.model").count() < 1:
         wrong("a model switch is not marked between the messages")
 
-    # Back to the small one, whose effort Alt+T steps.
     page.locator(FIELD).click()
     page.keyboard.press("Alt+p")
     waited(page, "document.querySelector('.ask .pop')", "the model popover")
@@ -358,7 +284,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if Model.seen[-1].get("reasoning_effort") != "minimal":
         wrong(f"the effort did not go with the request: {Model.seen[-1].get('reasoning_effort')}")
 
-    # Shift+Tab steps the mode.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     page.wait_for_timeout(150)
@@ -371,8 +296,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if page.locator(".ask .controls .mode").text_content().strip() != "Approve":
         wrong("Shift+Tab went into Full permissions instead of back to Approve")
 
-    # The mode's own menu: the three permission modes and Plan, Full permissions a row like
-    # the others, and choosing it says so in the button's tooltip and never in red (#372).
     page.locator(".ask .controls .mode").click()
     waited(page, "document.querySelector('.menu [role=menuitem]')", "the mode menu")
     rows = page.locator(".menu [role=menuitem]").all_inner_texts()
@@ -403,7 +326,6 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(".menu [role=menuitem]", has_text="Approve").click()
     waited(page, f"!({full})", "Approve again")
 
-    # The ring's tray.
     page.locator(".ask .knob").click()
     waited(page, "document.querySelector('.ask .tray')", "the tray")
     bands = page.locator(".ask .tray .band .what").all_inner_texts()
@@ -413,7 +335,6 @@ def drive(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}06-tray")
     page.keyboard.press("Escape")
 
-    # `@` and a note as a chip that goes along.
     page.locator(FIELD).click()
     page.keyboard.type("Compare @Hov")
     waited(page, "document.querySelector('.ask .suggest .row')", "the mention list")
@@ -431,7 +352,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if "facing the wind over the verge" not in last_sent():
         wrong("the mentioned note did not go with the message")
 
-    # A command's own lines, and a goal's chip that its cross clears.
     page.locator(FIELD).click()
     page.keyboard.type("/status")
     page.keyboard.press("Enter")
@@ -447,7 +367,6 @@ def drive(browser: Browser, scheme: str) -> None:
     waited(page, "!document.querySelector('.ask .goal')", "the goal cleared")
     idle(page)
 
-    # Ctrl+Shift+A again: the thread list.
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelector('.ask .threads')", "the thread list")
@@ -457,7 +376,6 @@ def drive(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}09-threads")
     page.keyboard.press("Escape")
 
-    # `/new` starts a thread of its own; the list then holds both.
     page.locator(FIELD).click()
     page.keyboard.type("/ne")
     waited(page, "document.querySelector('.ask .suggest .row')", "the command list")
@@ -486,7 +404,6 @@ def drive(browser: Browser, scheme: str) -> None:
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
     keyboard_in_the_list(page)
     page.keyboard.press("Delete")
-    # Archived chats wait behind one press since #1089, with their count.
     waited(page, "document.querySelector('.ask .threads .shown-archived')", "the archived chats' row")
     page.locator(".ask .threads .shown-archived").click()
     waited(page, "document.querySelector('.ask .threads .group.archived')", "the archived group")
@@ -494,13 +411,10 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Escape")
     page.context.close()
 
-
 def running(page: Page) -> bool:
     return waited(page, "document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the answer to start")
 
-
 def flow(browser: Browser) -> None:
-    """Approve answers, then an agent's edits kept and undone, a rewind, and a message sent again."""
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme="light")
     DRIVE.open(page)
     DRIVE.seed(page, HERONS)
@@ -510,7 +424,6 @@ def flow(browser: Browser) -> None:
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
 
-    # Approve answers with citations, as Ask did.
     Model.thoughts = []
     Model.words = ["It ", "stands ", "still ", "[1]."]
     Model.pause = 0
@@ -518,7 +431,6 @@ def flow(browser: Browser) -> None:
     waited(page, "document.querySelector('.ask .answer a[href=\"#cite-1\"]')", "a cited answer")
     idle(page)
 
-    # Auto mode, and two edits made as the provider's agent while the answer runs.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     if page.locator(".ask .controls .mode").text_content().strip() != "Auto":
@@ -547,7 +459,6 @@ def flow(browser: Browser) -> None:
         wrong(f"one change was not kept and the other undone: {kept}")
     waited(page, "!document.querySelector('.ask .bar .what')", "the bar to empty")
 
-    # A third edit, then the clock on that message rewinds notes and conversation.
     Model.words = [f"loud{one} " for one in range(20)]
     type_and_send(page, "Name the bird loudly")
     running(page)
@@ -565,12 +476,10 @@ def flow(browser: Browser) -> None:
     if "A HERON" in page.evaluate(NOTE_TEXT):
         wrong("the rewind did not take the note's edit back")
 
-    # The rewound message is back in the field, to send again or let go.
     back = page.locator(FIELD).input_value()
     if back != "Name the bird loudly":
         wrong(f"the rewound message is not back in the field: {back!r}")
 
-    # Up on the empty field: the last message, changed, and sent again.
     Model.words = ["Again."]
     Model.pause = 0
     page.locator(FIELD).fill("")
@@ -592,7 +501,6 @@ def flow(browser: Browser) -> None:
     shot(page, "flow/04-resent")
     page.context.close()
 
-
 BOX = """
 (selector) => {
   const box = document.querySelector(selector)?.getBoundingClientRect()
@@ -602,14 +510,9 @@ BOX = """
 
 QUICK = "() => import('/src/lib/ai/quick-door.ts').then((door) => door.askQuickly())"
 
-
 def menu_row(page: Page, words: str):
     return page.locator(".menu [role=menuitem]").filter(has_text=words).first
 
-
-# A run as an agent leaves one, written into the open thread's last answer: thinking,
-# two reads, words between, a command with its output and an edit, and how long it all
-# took. The fake provider streams words only, so the steps are put in by hand.
 STEPS = """
 async () => {
   const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
@@ -630,7 +533,6 @@ async () => {
 }
 """
 
-# A write that asks first, as Approve leaves one waiting in the thread.
 ASKING = """
 async () => {
   const { chat } = await import('/src/lib/ai/sidebar/chat.svelte.ts')
@@ -643,10 +545,7 @@ async () => {
 }
 """
 
-
 def shape(browser: Browser, scheme: str) -> None:
-    """The Codex extension's sidebar, at the side's width and a tab's, with the shots to
-    hold it to (docs/ai-sidebar.md 4.1)."""
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     DRIVE.open(page)
     DRIVE.seed(page, HERONS, HOVERING)
@@ -657,8 +556,6 @@ def shape(browser: Browser, scheme: str) -> None:
     waited(page, f"document.querySelector('{FIELD}')", "the field")
     tag = f"shape/{scheme}/"
 
-    # Empty: no greeting, and the composer at the foot from the start, the mode at the
-    # start of its row as Codex's permissions are.
     page.wait_for_timeout(400)
     panel = page.evaluate(BOX, ".ask")
     foot = page.evaluate(BOX, ".ask .composer")
@@ -673,7 +570,6 @@ def shape(browser: Browser, scheme: str) -> None:
         wrong(f"the composer's row is not +, the mode, then the model: {plus} {mode} {model}")
     shot(page, f"{tag}01-empty-side")
 
-    # The first message: the words a bubble at the end, the answer across the width.
     Model.thoughts = ["Reading ", "the note."]
     Model.words = ["A heron ", "waits.\n\n", "```py\n", "print('strike')\n", "```\n"]
     Model.pause = 0.02
@@ -691,10 +587,8 @@ def shape(browser: Browser, scheme: str) -> None:
         wrong(f"the code block wears no bar with its language and copy: {language!r}")
     shot(page, f"{tag}02-answered-side")
 
-    # Back: Codex's home, the latest chats, and the thread again from there.
     page.locator('.ask .top button[aria-label="Back"]').click()
     waited(page, "document.querySelector('.ask .home .recent')", "the home with its chats")
-    # A chat's row is ChatRow.svelte's since #1089: its model's logo, its title, its age.
     recent = page.locator(".ask .home .recent .row .title").all_inner_texts()
     if recent[:1] != ["What does a heron do?"]:
         wrong(f"the home does not list the latest chat: {recent}")
@@ -703,7 +597,6 @@ def shape(browser: Browser, scheme: str) -> None:
     page.locator(".ask .home .recent .row", has_text="What does a heron do?").click()
     waited(page, "document.querySelector('.ask .said')", "the chat open again")
 
-    # "+" holds what goes along; the modes have their own menu beside it.
     page.locator(".ask .plus").click()
     waited(page, "document.querySelector('.menu [role=menuitem]')", "the + menu")
     rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
@@ -723,7 +616,6 @@ def shape(browser: Browser, scheme: str) -> None:
     page.locator(".ask .controls .mode").click()
     menu_row(page, "Auto").click()
 
-    # Ask again, with another model from its menu.
     Model.thoughts = []
     Model.words = ["Large ", "answers."]
     page.locator('.ask .answer.last .acts button[aria-label="Ask again"]').click()
@@ -734,8 +626,6 @@ def shape(browser: Browser, scheme: str) -> None:
     if Model.seen[-1].get("model") != "fake-large":
         wrong(f"Ask again did not ask the model picked: {Model.seen[-1].get('model')}")
 
-    # A run: its steps as they come, then folded into "Worked for" over the answer, and
-    # what it changed as a card under it.
     Model.words = [f"Shouted {one} " for one in range(4)] + ["both verbs."]
     Model.pause = 0.12
     type_and_send(page, "Shout the heron's verbs")
@@ -760,8 +650,6 @@ def shape(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}04-worked-side")
     page.locator(".ask .answer.last .worked .line").click()
     waited(page, "document.querySelector('.ask .answer.last .work')", "the steps")
-    # Read as text rather than as what is drawn: WebKit draws nothing of a row while it
-    # is still sliding open, and innerText is only what is drawn.
     verbs = page.locator(".ask .answer.last .work .verb").all_text_contents()
     if verbs != ["Thought", "Explored", "Ran", "Edited"]:
         wrong(f"the steps are not Codex's rows: {verbs}")
@@ -777,7 +665,6 @@ def shape(browser: Browser, scheme: str) -> None:
     page.locator(".ask .card .bar .nib-chip:not(.is-quiet)").click()
     waited(page, "!document.querySelector('.ask .card')", "the card gone once kept")
 
-    # A write that asks: a card in its step, with the change and the three answers.
     page.evaluate(ASKING)
     waited(page, "document.querySelector('.ask .approval')", "the question")
     answers = page.locator(".ask .approval .answers button").all_inner_texts()
@@ -786,7 +673,6 @@ def shape(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(500)
     shot(page, f"{tag}06-approval-side")
 
-    # A long thread: scrolled up, the round arrow goes back down.
     page.evaluate(
         "() => { const t = document.querySelector('.ask .talk'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')) }"
     )
@@ -794,7 +680,6 @@ def shape(browser: Browser, scheme: str) -> None:
     page.locator(".ask .down").click()
     waited(page, "!document.querySelector('.ask .down')", "the end again")
 
-    # Open in new tab: the conversation in a pane, the threads down its left.
     page.locator(".ask .title").click()
     menu_row(page, "Open in new tab").click()
     waited(page, "document.querySelector('.ask.wide .shelf .threads')", "the conversation in a tab")
@@ -813,7 +698,6 @@ def shape(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(400)
     shot(page, f"{tag}08-tab-empty")
 
-    # The quick question, carried on in the panel.
     page.evaluate(QUICK)
     waited(page, "document.querySelector('.quick textarea')", "the quick question")
     Model.words = ["Herons ", "fish."]
@@ -834,7 +718,6 @@ def shape(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}09-continued")
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -848,7 +731,6 @@ def main() -> int:
         "the AI panel is the Codex sidebar's shape, and sends, stops, queues, steers, switches, lists,"
         " reviews, rewinds and resends"
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

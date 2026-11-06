@@ -1,31 +1,3 @@
-"""Every mark after words sits on them, the same way everywhere (#1052, #1061).
-
-The `?` after a setting's name was centred on the name's line box, which is not where
-the letters are: a line box is the font's ascent and descent and the line gap around
-them, so the glyph stood a little off the words, by an amount that changed with the
-face, the size and the platform. The arrow after a link that leaves the app was the
-same fault (#1061): set beside the link's words in a flex row, it was centred on all
-of their lines at once when they wrapped. Both are `.nib-mark` now, and here each is
-measured against the letters themselves.
-
-For every mark in the Settings panes a person reaches - the `?` after a name, the
-arrow after a caption that links out, the arrow after the link to Claude's connectors
-- the centre of the drawn glyph has to be within a pixel of the middle of the words'
-x-height - the font's own `x`, measured on a canvas in the words' font, independently
-of how the page placed the glyph - on the line of the last word, inside the box the
-words are in, and the same distance after that word wherever that kind of mark is.
-That is checked at four text sizes and in several faces, at one and two device
-pixels per CSS pixel, on a touch screen, in the light and the dark theme, in Arabic
-(right to left) and Spanish (whose catalogues say they were machine-translated, in a
-caption that links to them), and on names and captions squeezed until they wrap,
-where the mark has to stay with the last word rather than drop onto a line of its
-own or stand in the middle of all the lines.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/help-mark.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -35,24 +7,16 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: The panes with a mark on them that need no account.
 PANES = ("general", "editor", "markdown", "appearance", "ai", "spelling")
 
-#: And the ones only somebody signed in is shown, with the steps to Claude's
-#: connectors on the AI pane.
 SIGNED_IN = ("sync", "account", "ai")
 
-#: How far the glyph's centre may stand from the middle of the x-height, how far one
-#: row's gap may differ from another's, and how far a glyph may stand out of the box
-#: of the words it follows, in CSS pixels.
 OFF_CENTRE = 0.75
 GAP_SPREAD = 0.5
 OUTSIDE = 0.5
 
-#: The marks there are, by the class that says which one it is.
 KINDS = {"nib-hint": "?", "nib-outward": "arrow"}
 
-#: Where every visible mark stands against the letters before it.
 MEASURE = """
 (kinds) => {
   const canvas = document.createElement('canvas').getContext('2d')
@@ -116,9 +80,6 @@ MEASURE = """
 }
 """
 
-#: The text sizes and faces a pane is checked at, set on the rows themselves: faces
-#: whose ascent, descent and x-height stand in different proportions to each other,
-#: which is what a platform's own UI font does to a line box.
 LOOKS = (
     (None, None),
     (11, None),
@@ -130,7 +91,6 @@ LOOKS = (
     (None, "Loma"),
     (22, "Loma"),
 )
-
 
 def styled(page: Page, size: int | None, face: str | None) -> None:
     page.evaluate(
@@ -148,7 +108,6 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
         }""",
         [size, face],
     )
-
 
 def check(page: Page, where: str, kinds: tuple[str, ...] = ("?",)) -> int:
     rows = page.evaluate(MEASURE, KINDS)
@@ -179,9 +138,7 @@ def check(page: Page, where: str, kinds: tuple[str, ...] = ("?",)) -> int:
             wrong(f"{where}: the gap before the {kind} runs from {min(gaps):.2f} to {max(gaps):.2f}px")
     return len(rows)
 
-
 def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ...] = ()) -> None:
-    """Every pane at every look; `arrows` names the panes that have to show an arrow."""
     counted = 0
     for section in sections:
         page.evaluate("(id) => window.nibApp.settings.show(id)", section)
@@ -197,15 +154,9 @@ def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ..
     if counted < 6 * len(sections):
         wrong(f"[{tag}] only {counted} marks were measured")
 
-
-#: How narrow the words are squeezed: the names, and the captions and the links, which
-#: break only between words, never below a width that holds the longest one.
 WIDTHS = (60, 80, 110, 144, 177, 210, 250, 300)
 
-
 def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
-    """Names, captions and links squeezed until they wrap: the mark stays with the last
-    word, on that line, and inside the box the words are in."""
     page.evaluate("(id) => window.nibApp.settings.show(id)", section)
     page.wait_for_timeout(500)
     for width in WIDTHS:
@@ -228,7 +179,6 @@ def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
         shot(page, f"{tag}-{section}-wrapped-{width}")
     page.evaluate("() => document.getElementById('help-mark-wrap')?.remove()")
 
-
 def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch: bool = False,
          scheme: str = "light") -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860}, device_scale_factor=scale)
@@ -245,7 +195,6 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
     say(f"[{tag}] direction {direction}")
     if language == "ar" and direction != "rtl":
         wrong(f"[{tag}] Arabic is drawn {direction}")
-    # A language nobody has read yet says so under its row, in a caption linking out.
     machine = language in ("ar", "es")
     panes(page, tag, PANES, ("general",) if machine else ())
     wrapped(page, tag, "general", ("?", "arrow") if machine else ("?",))
@@ -253,7 +202,6 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
     panes(page, tag, SIGNED_IN, ("ai",))
     wrapped(page, tag, "ai", ("?", "arrow"))
     page.context.close()
-
 
 def drive(browser: Browser) -> None:
     look(browser, "light")
@@ -263,7 +211,6 @@ def drive(browser: Browser) -> None:
     look(browser, "rtl", language="ar")
     look(browser, "german", language="de")
     look(browser, "spanish", language="es")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))

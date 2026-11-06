@@ -1,25 +1,3 @@
-"""Settings > Agents, over the crate's stand-in, in light, dark and Arabic.
-
-A browser has no crate, so the drive puts `agents/settings/fake.ts` in front of the
-pane (`window.nibApp.agents.standIn()`), filled the way a week of use would be: two
-of the reader's own clients and a script given a token. Then, in each of the three
-looks, it opens the pane and photographs the list, one agent from the top to the
-foot, and one session opened as its calls.
-
-What it checks on the way, and fails on: the trifecta line is on the agent that reads
-notes and browses, and not on the one that does not; a switch pressed is in the
-crate's grant, and so is what it needs; a site typed as an address is kept as its
-site; the browser's memory has no limit until one is set, and one set is in the grant
-(#333); a right-to-left language turns the pane round.
-
-From the repository root; the harness builds the app with its handle on the page
-the first time and serves it (see harness.py):
-
-    python apps/desktop/test/e2e/agents-settings.py
-
-Screenshots go beside this file under `shots/agents-settings/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 from harness import Drive
@@ -33,7 +11,6 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-# The three looks: the scheme, and the language the interface is in.
 LOOKS = [("light", "en"), ("dark", "en"), ("light", "ar")]
 
 OPEN = """
@@ -53,10 +30,6 @@ def check(what: str, held: bool) -> None:
     else:
         wrong(what)
 
-
-#: Where to press a row: its middle, once that has stood still for a few looks and is the
-#: row a press there finds. Null after five seconds without that: a row covered, or still
-#: moving, is a failure rather than something to press anyway.
 STANDING = """
 (one) => new Promise((done) => {
   const started = Date.now()
@@ -76,14 +49,7 @@ STANDING = """
 })
 """
 
-
 def press(page, row) -> None:
-    """A press on what is in the middle of the column, once it stands there. A click
-    scrolls what it presses into view by itself in Chromium; in WebKit it did not reach
-    into the sheet's column, or read the place off the column as it moved, and the column
-    does move: it is taken back to what the list's height allows a frame or two after
-    the list replaces an agent's page. The press landed below the window, on nothing, or
-    went down on one row and up on another, which is no click at all (#446)."""
     row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
     quiet(page)
     at = row.evaluate(STANDING)
@@ -91,20 +57,14 @@ def press(page, row) -> None:
         raise SystemExit(f"nothing to press: {row} never stood still with nothing over it")
     page.mouse.click(*at)
 
-
 def choose(page, name: str) -> None:
-    """Opens the agent of that name from the list, and it is that agent that opens."""
     press(page, page.locator(".agents .agent", has_text=name))
     page.wait_for_function(
         "(name) => document.querySelector('.agents .who input.title')?.value === name",
         arg=name,
     )
 
-
 def switch(page, name: str) -> None:
-    """Presses the switch of that name. Then until the switch says it moved, which is the
-    grant written back through the crate's stand-in and drawn again: on a busy runner
-    in WebKit that was now and then more than the 200 ms the drive used to give it."""
     row = page.locator(".agents [role=switch]", has_text=name)
     was = row.get_attribute("aria-checked")
     press(page, row)
@@ -117,9 +77,7 @@ def switch(page, name: str) -> None:
     if not moved:
         say(f"     the switch {name!r} did not move when pressed")
 
-
 def body_to(page, where: str) -> None:
-    """Scrolls the pane's column to the top, the middle or the foot."""
     page.evaluate(
         """(where) => {
           const body = document.querySelector('.sheet .body')
@@ -130,7 +88,6 @@ def body_to(page, where: str) -> None:
         where,
     )
     quiet(page)
-
 
 MEMORY = ".agents .nib-setting.sliding:has-text('Browser memory limit')"
 
@@ -146,16 +103,10 @@ SLIDE = """
 }
 """
 
-
 def memory_limit(page, name: str) -> None:
-    """#333: there was a 3 GB ceiling on the browser for every agent. The row starts at
-    Off, which is no ceiling, and a limit the reader sets is in the grant, and can be
-    taken away again."""
     row = page.locator(MEMORY)
     row.scroll_into_view_if_needed()
     quiet(page)
-    # The words in the row, not what is drawn of them: WebKit has no innerText for a
-    # row its scroller has not drawn yet, and Chromium does (#384).
     said = lambda: (row.locator(".value").text_content() or "").strip()  # noqa: E731
     check(f"[{name}] the memory limit starts Off", said() == "Off")
     check(f"[{name}] and the grant holds no ceiling", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
@@ -168,7 +119,6 @@ def memory_limit(page, name: str) -> None:
     page.evaluate(SLIDE, ["Browser memory limit", 0])
     page.wait_for_timeout(200)
     check(f"[{name}] and taken away again", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
-
 
 def look(browser, scheme: str, language: str) -> None:
     name = f"{scheme}-{language}"
@@ -209,7 +159,6 @@ def look(browser, scheme: str, language: str) -> None:
     )
     photograph("list")
 
-    # Codex was granted no browser: no trifecta.
     choose(page, "Codex")
     quiet(page)
     check(f"[{name}] no trifecta line on an agent with no browser", page.locator(".trifecta").count() == 0)
@@ -228,21 +177,15 @@ def look(browser, scheme: str, language: str) -> None:
     quiet(page)
     photograph("session")
     page.locator(".agents .session").first.click()
-    # Until the calls have slid away: the rows below rise as they go, and in WebKit a
-    # press made while they rose went down on one row and up on another, which is no
-    # click at all (#384).
     page.wait_for_selector(".agents .calls", state="detached")
     quiet(page)
 
     if language == "en":
-        # A switch pressed is in the crate, with what it needs: scripts need a browser,
-        # and Claude Code's is on, so scripts alone come on.
         switch(page, "Run scripts in pages")
         page.wait_for_timeout(200)
         grant = page.evaluate(GRANT, "claude-code")
         check(f"[{name}] a switch pressed is in the crate's grant", "browser.script" in grant["scopes"])
 
-        # Turning the reader's tabs off takes their cookies with them.
         switch(page, "Read your cookies")
         page.wait_for_timeout(200)
         switch(page, "Act in your tabs")
@@ -253,9 +196,6 @@ def look(browser, scheme: str, language: str) -> None:
             "browser.reader" not in grant["scopes"] and "browser.storage" not in grant["scopes"],
         )
 
-        # A site typed as an address from the bar is kept as its site. The Sites card's
-        # own field, named by its heading: counting fields found the terminal's list of
-        # programs instead, once the agent's terminal was on and drew it above.
         field = page.locator(".agents h3:text-is('Sites') + .card .add")
         field.press_sequentially("https://login.bank2.example/sign-in?next=/")
         field.press("Enter")
@@ -274,15 +214,12 @@ def look(browser, scheme: str, language: str) -> None:
 
     context.close()
 
-
 def drive(browser) -> None:
     for scheme, language in LOOKS:
         look(browser, scheme, language)
 
-
 def main() -> int:
     return DRIVE.run(drive, "Settings > Agents held in all three looks")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -19,16 +19,13 @@ NOTES = [f"{ROOT}/Note {index:02d}.md" for index in range(1, 61)]
 
 wrong: list[str] = []
 
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: int = PATIENCE):
     until = time.monotonic() + patience
@@ -40,11 +37,9 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
     failed(f"gave up waiting for {what}")
     return None
 
-
 MISSING = "(paths) => paths.filter((one) => !window.nibApp.workspace.entryAt(one))"
 
 ROW = """(path) => document.querySelector(`.row[data-path="${CSS.escape(path)}"]`)"""
-
 
 def window_for(context, label: str) -> Page:
     page = context.new_page()
@@ -74,7 +69,6 @@ def window_for(context, label: str) -> Page:
     wait_for(page, "() => !!document.querySelector('[role=tree] .row')", f"[{label}] the file list")
     return page
 
-
 def scroll_to(page: Page, path: str) -> None:
     page.evaluate(
         f"""async (path) => {{
@@ -94,13 +88,11 @@ def scroll_to(page: Page, path: str) -> None:
     )
     page.wait_for_timeout(300)
 
-
 def kept_away(page: Page, path: str) -> bool:
     return page.evaluate(
         "(path) => window.nibApp.sync.engine.engine.awayFiles().some((one) => one.path === path)",
         path,
     )
-
 
 def main() -> int:
     worker = Worker()
@@ -164,7 +156,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,17 +1,3 @@
-"""The Tasks panel chooses, and opens a tab only when asked (#374), in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * A press on Tasks, on a favourite and on a label chooses that row: it is marked, its
-    list is drawn in the panel under the rows, and the number of tabs stays as it was.
-  * Ctrl and a press, the middle button, and the row's menu's Open in new tab each open
-    the row in a tab of its own, kept rather than a preview.
-
-    python apps/desktop/test/e2e/tasks-panel.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/tasks-panel/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -40,27 +26,22 @@ WRITE = """async ([files]) => {
 
 TABS = "() => window.nibApp.workspace.tabs.length"
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 def panel_words(page: Page) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
         "() => [...document.querySelectorAll('.tasks .chosen .task .words')].map((one) => one.textContent.trim())"
     )
 
-
 def chosen(page: Page) -> str:
     return page.evaluate(  # type: ignore[no-any-return]
         "() => document.querySelector('.tasks .nib-row[aria-pressed=true] .nib-row-label')?.textContent.trim() ?? ''"
     )
 
-
 def row(page: Page, name: str):  # type: ignore[no-untyped-def]
     return page.locator(".tasks > .nib-row", has=page.locator(f".nib-row-label:text-is('{name}')")).first
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -92,9 +73,6 @@ def drive(browser: Browser) -> None:
             wrong(f"the panel's list for {name} is {words}, not {sorted(wanted)}")
     shot(page, "01-chosen")
 
-    # The panel's rows select as a tab's view's do: Ctrl or Cmd and a press anywhere on a
-    # card, past its controls, and Shift and a press for every row between; a press past
-    # them lets them go (#1110).
     card = page.locator(".tasks .chosen .task:has(.words:text-is('Call the bank'))")
     box = card.bounding_box()
     if box is None:
@@ -130,7 +108,6 @@ def drive(browser: Browser) -> None:
     DRIVE.waited(page, f"() => ({TABS})() === {tabs + 3}", "Open in new tab opening a tab")
     shot(page, "02-opened")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the Tasks panel chooses, and opens a tab only when asked"))

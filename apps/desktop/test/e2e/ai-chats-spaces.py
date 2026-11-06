@@ -1,34 +1,9 @@
-"""The AI panel's chats across spaces (#332), in a real browser, light and dark.
-
-Emil, 2026-10-13: *"Switching spaces swaps the agent chats in the right sidebar. They
-should stay the same across spaces: one list of chats, and the open chat stays open when
-the space changes."*
-
-What it proves, and photographs:
-
-* **One list**: a chat kept in each of two spaces, both in the panel's list whichever
-  space is in front.
-* **The open chat stays**: a long chat open and scrolled to its middle, words typed in
-  the field and not sent; the space switched; the same chat is open, at the same place,
-  with the same words in the field. And back again.
-* **A new chat starts where you are**: New chat in the second space is kept there.
-
-No provider is asked anything: the chats are written into the store as the panel would
-have written them, so nothing here needs a network or a key.
-
-    python apps/desktop/test/e2e/ai-chats-spaces.py
-
-Set NIB_SKIP_BUILD=1 to reuse the dev server's last build. Screenshots go beside this
-file under `shots/ai-chats-spaces/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
 
-# A dev server, so the drive can write chats through the store's own module.
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
@@ -82,13 +57,11 @@ STATE = """
 }
 """
 
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 
 def drive(browser: Browser, scheme: str) -> None:
     page: Page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
@@ -118,7 +91,6 @@ def drive(browser: Browser, scheme: str) -> None:
     check(f"[{scheme}] the words in the field are still there", after["field"] == "and the budget for the second quarter")
     check(f"[{scheme}] at the same place: {before['scroll']} and {after['scroll']}", before["scroll"] and abs((after["scroll"] or 0) - before["scroll"]) <= 2)
 
-    # The list holds both spaces' chats.
     page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
     DRIVE.waited(page, "document.querySelectorAll('.ask .threads .row, .ask .list .row').length >= 2", "the list")
     titles = page.evaluate("() => [...document.querySelectorAll('.ask .list .row .title')].map((one) => one.textContent.trim())")
@@ -133,13 +105,11 @@ def drive(browser: Browser, scheme: str) -> None:
     back = page.evaluate(STATE)
     check(f"[{scheme}] and back again, still the same: {back['title']!r}", back["title"] == "Quarterly plan" and back["field"] == "and the budget for the second quarter" and back["seen"])
 
-    # A new chat starts in the space in front.
     page.evaluate("(id) => window.nibApp.workspace.selectSpace(id)", made["home"])
     DRIVE.waited(page, "window.nibApp.workspace.activeSpace?.name === 'Home'", "the other space")
     space = page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => { chat.newThread(); return chat.thread?.space })")
     check(f"[{scheme}] a new chat starts in the space in front", space == made["home"])
     page.context.close()
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -147,7 +117,6 @@ def main() -> int:
             say(f"--- {scheme} ---")
             drive(browser, scheme)
     return DRIVE.verdict("the AI panel's chats are one list, and the open one stays as the space changes")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

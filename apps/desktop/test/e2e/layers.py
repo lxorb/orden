@@ -1,25 +1,3 @@
-"""The two layers Emil found dead: the space switcher, and a note's own menu.
-
-Both are opened by a gesture and both are a `.nib-layer` over the panel, and on
-2026-09-12 neither answered on an installed app signed in to the account. So this
-drives exactly those two gestures - on a desktop and on a phone, against a real
-Worker with an account that owns two spaces - and says for each whether the layer
-arrived, whether it can be seen, and what the console said while it was asked.
-
-It drives whatever build it is handed, so the same two gestures can be put to the
-app that shipped and to the one on main against the same server: that is the whole
-question when a client is older than the service it is talking to.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/layers.py
-
-    # and, to put an older build to the same server:
-    python apps/desktop/test/e2e/layers.py --also <path to a built dist>
-
-Screenshots go beside this file under `shots/layers/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -31,17 +9,14 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
-#: The Worker's own address, which is also where the app it serves is loaded from.
 ORIGIN = harness.worker_origin()
 APP = harness.APP
-
 
 EMAIL = "layers-drive@example.com"
 
@@ -53,7 +28,6 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 
 def request(path: str, token: str | None = None, body: object = None, method: str | None = None):
     data = None if body is None else json.dumps(body).encode()
@@ -71,10 +45,7 @@ def request(path: str, token: str | None = None, body: object = None, method: st
         said = refused.read().decode()
         return {"status": refused.code, **(json.loads(said) if said else {})}
 
-
 class Worker(harness.Worker):
-    """The real Worker, with the secret the account's OpenAI key is kept under and
-    this drive's account in it; see harness.py."""
 
     def __init__(self) -> None:
         super().__init__(DRIVE, variables={"OPENAI_KEY_SECRET": "a secret for the drive"})
@@ -93,23 +64,15 @@ class Worker(harness.Worker):
 
         return token, user
 
-
 def look(page, name: str, tag: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SHOTS / f"{name}-{tag}.png"))
 
-
 def panel(page) -> None:
-    """The file list, open. A phone opens on the note with the drawer shut, and a
-    desktop remembers whichever it was left on, so this is asked for rather than
-    assumed."""
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .name", timeout=30000)
 
-
 def held(page, row) -> None:
-    """A finger held still on a row, which is what a right click is on a touch
-    screen. Real touch points, because `longPress` reads `event.touches`."""
     row.scroll_into_view_if_needed()
     box = row.bounding_box()
     at = {"x": box["x"] + box["width"] / 2, "y": box["y"] + box["height"] / 2}
@@ -135,12 +98,9 @@ def held(page, row) -> None:
         }""",
         at,
     )
-    # `HOLD` in longpress.ts is 500ms; the menu opens on its own from there.
     page.wait_for_timeout(900)
 
-
 def drive(browser, origin: str, name: str, width, height, agent, finger, token: str) -> list[str]:
-    """The two gestures, on one shape of screen. Answers what went wrong."""
     wrong: list[str] = []
 
     context = browser.new_context(
@@ -173,7 +133,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         "() => window.nibApp.workspace.activeSpace && window.nibApp.sync.status !== 'off'",
         timeout=60000,
     )
-    # Two spaces, so the switcher has a list rather than one row.
     page.wait_for_function("() => window.nibApp.workspace.spaces.length >= 2", timeout=60000)
 
     page.evaluate(
@@ -183,8 +142,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
           await ws.loadTree()
         }"""
     )
-    # A note written is a note opened, and on a phone opening one shuts the
-    # drawer: the panel is asked for after that has settled, not before.
     page.wait_for_timeout(1500)
     panel(page)
     page.wait_for_timeout(900)
@@ -194,7 +151,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         f" panel is {page.evaluate('() => window.nibApp.workspace.panel')!r}"
     )
 
-    # ── The space switcher ────────────────────────────────────────────────
     switcher = page.locator("aside .name")
     if not switcher.count():
         hurt("no switcher on the panel at all")
@@ -211,15 +167,11 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         if box and (box["width"] < 40 or box["height"] < 20):
             hurt(f"the switcher opened with nothing to see: {box}")
         look(page, name, "switcher")
-        # And it acts: the space it names is the one that is open. Chosen on the
-        # row for the space already showing, so what the list holds after this is
-        # still the space the notes were written into.
         page.locator(".spaces .nib-row.is-on").first.click()
         page.wait_for_timeout(700)
         if page.locator(".spaces").count():
             hurt("the switcher did not close on a choice")
 
-    # ── A note's own menu ─────────────────────────────────────────────────
     panel(page)
     page.wait_for_timeout(600)
     rows = page.locator("aside .nib-row.row[data-path]")
@@ -241,7 +193,6 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
             hurt("THE NOTE'S MENU DID NOT OPEN")
         look(page, name, "menu")
 
-        # And it acts: the first row is Open, and it opens the note.
         if there and items:
             page.locator("[role=menu].menu [role=menuitem]").first.click()
             page.wait_for_timeout(800)
@@ -251,12 +202,10 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
     context.close()
     return wrong
 
-
 SHAPES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False),
     ("phone", 390, 844, PHONE_AGENT, True),
 ]
-
 
 def main() -> int:
     parse = argparse.ArgumentParser()
@@ -264,10 +213,6 @@ def main() -> int:
     said = parse.parse_args()
 
     worker = Worker()
-    # The build on main first, and then whatever build was handed in, both put to
-    # the same Worker and the same account. The Worker hands each out itself, which
-    # is what makes the app and the API one origin - the only arrangement the app's
-    # own content policy allows: `connect-src` names `'self'` and no second port.
     builds: list[tuple[str, Path | None]] = [("main", None)]
     if said.also:
         builds.append(("shipped", said.also.resolve()))
@@ -281,9 +226,6 @@ def main() -> int:
             try:
                 if token is None:
                     token, _user = worker.account()
-                    # Two spaces on the account, so the switcher has a list
-                    # rather than one row. The app adopts both on its first
-                    # reconcile.
                     for label in ("Field notes", "Ledger"):
                         made = request("/v1/spaces", token, {"name": label}, "POST")
                         say(f"the account holds {made.get('space', {}).get('name')!r}")
@@ -302,7 +244,6 @@ def main() -> int:
 
     say("both layers opened on every shape, and the console stayed quiet")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

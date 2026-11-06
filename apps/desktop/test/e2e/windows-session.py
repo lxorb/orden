@@ -9,7 +9,6 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 TABS = "()=>window.nibApp.workspace.tabs.map(t=>t.note.latest)"
 
-
 def drive(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -64,7 +63,6 @@ def drive(browser: Browser) -> None:
     if many != 2:
         wrong(f"a reload left {many} tabs of the two drafts")
     c.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

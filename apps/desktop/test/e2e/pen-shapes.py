@@ -1,40 +1,3 @@
-"""Every pen out there, driven for real: the five shapes a browser reports a stylus in.
-
-The ink was built with an S Pen on a Samsung tablet, because that is the pen there was
-to hold. This drive is the other four: an Apple Pencil on an iPad, a Surface Pen on
-Windows, a Wacom on a desktop, and a USI pen on a Chromebook - each of them emulated as
-the numbers its own platform sends, against the built web app in the machine's own
-Chrome. The table it is drawn from is in `docs/canvas.md`.
-
-What it checks and photographs, one context per pen so each carries its platform's own
-user agent and the app's own profile detection is exercised:
-
-    a Pencil: the pressure gain, the lean reported as an altitude and an azimuth,
-      and a stroke drawn with neither `getCoalescedEvents` nor `getPredictedEvents`
-    a Surface Pen: the barrel button rubbing out, the eraser end rubbing out, a nib
-      held still opening no menu, and a barrel held while hovering doing nothing
-    a Wacom: the pen lifted, moved right across the tablet and put down again, with
-      no line from where it was last hovering, and the middle button panning
-    a USI pen: a pressure that never changes, ignored rather than drawn as a hairline
-    a finger on glass that has seen a pen: the page moves and nothing is drawn
-
-Two of the shapes cannot come down the DevTools protocol at all. `Input.dispatchMouseEvent`
-carries the five buttons a mouse has, so the eraser end - button 5, bit 32 - is
-unsendable, and it has no field for the spherical angles Safari reports a lean in. Those
-two are dispatched as `PointerEvent`s from inside the page instead, which is the same
-handlers, the same reducer and the same ink; everything else here is the protocol.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/pen-shapes.py
-
-It builds the app, serves it, drives the browser and stops everything again. Nothing it
-makes outlives it but the screenshots, which go beside it under `shots/`.
-
-The app is built `--mode drive` on purpose, which is what leaves the app's own
-stores reachable from the page; see the other drives beside this one.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -49,14 +12,10 @@ say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
-
 def fail(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
 
-
-# The real user agents, because the profile is read off one and that is the only thing
-# about this which can be wrong.
 AGENTS = {
     "pencil": (
         "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15"
@@ -76,9 +35,6 @@ AGENTS = {
     ),
 }
 
-# Safari has neither of the two calls, and a stroke that needed either of them would be a
-# stroke that only draws properly on Chromium. Taken off the prototype before any of the
-# app's own scripts run, so its feature detection sees what an iPad's would.
 NO_COALESCING = """
 delete PointerEvent.prototype.getCoalescedEvents;
 delete PointerEvent.prototype.getPredictedEvents;
@@ -97,17 +53,13 @@ AS_TABLET = """
 }
 """
 
-
 def opened(page: Page, label: str, tablet: bool = False) -> None:
-    """The app started and a fresh canvas open on it."""
     wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
     wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     if tablet:
         page.evaluate(AS_TABLET)
 
-    # Asked more than once if it has to be: the space arrives a moment before the tree
-    # under it does, and a canvas asked for in that moment lands nowhere.
     opened_it = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
         page.evaluate("() => window.nibApp.workspace.createCanvas()")
@@ -120,21 +72,15 @@ def opened(page: Page, label: str, tablet: bool = False) -> None:
     page.wait_for_selector(".canvas", timeout=15000)
     page.wait_for_timeout(400)
 
-
 def plane(page: Page) -> dict:
     box = page.locator(".canvas").first.bounding_box()
     assert box
     return box
 
-
 def ink_of(page: Page) -> list[dict]:
-    """What the plane holds, read off the open canvas rather than guessed at."""
     return page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc).nib?.ink ?? []")
 
-
 def points_of(stroke: dict) -> list[dict]:
-    """A stroke's points, out of the flat six-a-point run the file keeps them in; see
-    `packed` in packages/markdown/src/canvas.ts."""
     flat = stroke["points"]
 
     return [
@@ -149,47 +95,27 @@ def points_of(stroke: dict) -> list[dict]:
         for at in range(0, len(flat) - 5, 6)
     ]
 
-
 def camera_of(page: Page) -> dict:
-    """Where the plane is under the pane. A tab that has never been moved has no camera
-    of its own yet, and the plane it is showing is the one at the origin."""
     return page.evaluate(
         "() => ({ x: 0, y: 0, scale: 1, ...(window.nibApp.workspace.active.camera ?? {}) })"
     )
 
-
 def profile_of(page: Page) -> str:
-    """What the app decided this device's pen is; see canvas/contacts.ts."""
     said = page.locator("[data-pointer]").first.inner_text()
     return said.split("//")[0].strip()
 
-
 def tool(page: Page, key: str) -> None:
-    """A tool taken with its own key. The plane has to have the keyboard for a bare
-    letter to reach it, and a press on the plane is what gives it."""
     page.keyboard.press("Escape")
     page.locator(".canvas").first.click(position={"x": 30, "y": 30})
     page.keyboard.press(key)
     page.wait_for_timeout(120)
 
-
 ERASE_ALL = 'button[aria-label="Erase everything drawn"]'
 
-
 def wipe(page: Page) -> None:
-    """Everything drawn, gone, through the eraser's own popover.
-
-    Not select-all and Delete, which is what the other drives use: the key for select-all
-    is Cmd on an Apple platform and Ctrl everywhere else, and this drive is four platforms
-    at once. And not by writing an empty canvas into the file either, which does not work:
-    a plane somebody has been drawing on is merged with words that arrive under it rather
-    than replaced by them, so the stroke comes straight back. See `follow` in
-    canvas/store.svelte.ts."""
     page.keyboard.press("Escape")
     eraser = page.locator('.cluster button[aria-label="Erase"]').first
 
-    # The first press may only be taking the eraser; pressing the tool you are already
-    # holding is what opens its options.
     for _try in range(3):
         if page.locator(ERASE_ALL).count() > 0:
             break
@@ -207,42 +133,28 @@ def wipe(page: Page) -> None:
 
     fail("the plane would not empty")
 
-
 def settled(page: Page) -> None:
-    """Long enough for a gesture that edits as it goes to be written down; see
-    WRITE_DELAY in store.svelte.ts."""
     page.wait_for_timeout(1600)
 
-
 def span_of(stroke: dict) -> float:
-    """How far across the plane a stroke reaches. A stroke that took a phantom line
-    with it from where the pen was last hovering is several times as wide as it should
-    be, and that is the whole of what a hover must not do."""
     xs = [point["x"] for point in points_of(stroke)]
 
     return max(xs) - min(xs)
 
-
 def line(page: Page, steps: int = 24, span: float = 240, down: float = 60) -> list[tuple[float, float]]:
-    """A line across the middle of the plane, wobbling a little the way a hand does."""
     box = plane(page)
     x = box["x"] + box["width"] / 2 - span / 2
     y = box["y"] + box["height"] / 2 - down
 
     return [(x + span * at / (steps - 1), y + (at % 4) * 12) for at in range(steps)]
 
-
 def pressed(buttons: int) -> str:
-    """Which button the protocol should say changed, from the mask of what is held. The
-    barrel button is the right one, the driver's lower button is often the middle one,
-    and the nib is the left one - and the protocol has a name rather than a bit for it."""
     if buttons & 2:
         return "right"
     if buttons & 4:
         return "middle"
 
     return "left" if buttons else "none"
-
 
 def pen_stroke(
     page: Page,
@@ -255,12 +167,6 @@ def pen_stroke(
     kind: str = "pen",
     pause: int = 8,
 ) -> None:
-    """A stroke drawn with a real stylus, through the DevTools protocol.
-
-    `pressure` fixed is what a pen with nothing to say about pressure reports; left out,
-    the hand leans on the middle of the stroke and lifts off, which is what a hand does.
-    `halfway` is what the buttons change to partway through - the gesture a hand makes
-    when it presses the barrel while it is already writing."""
 
     def send(what: str, x: float, y: float, force: float, held: int, changed: str = "") -> None:
         cdp.send(
@@ -269,8 +175,6 @@ def pen_stroke(
                 "type": what,
                 "x": x,
                 "y": y,
-                # Which button changed, which is not the same question as what is held: a
-                # release holds nothing and still has to say what came up.
                 "button": changed or pressed(held),
                 "buttons": held,
                 "clickCount": 1,
@@ -295,15 +199,10 @@ def pen_stroke(
         page.wait_for_timeout(pause)
 
     last = points[-1]
-    # Nothing held any more, and the button that came up named: a release that says
-    # "none" changed nothing, and the browser sends no `pointerup` for it at all.
     send("mouseReleased", last[0], last[1], 0, 0, pressed(held))
     page.wait_for_timeout(250)
 
-
 def hover(page: Page, cdp, points: list[tuple[float, float]], buttons: int = 0) -> None:
-    """A pen over the glass rather than on it: moves with nothing pressed, which every
-    pen on the list reports and none of them means as ink."""
     for x, y in points:
         cdp.send(
             "Input.dispatchMouseEvent",
@@ -321,11 +220,6 @@ def hover(page: Page, cdp, points: list[tuple[float, float]], buttons: int = 0) 
         )
         page.wait_for_timeout(16)
 
-
-# The two shapes the protocol cannot send, dispatched from inside the page: the eraser
-# end, whose button is 5 and whose bit is 32, and a lean reported as an altitude and an
-# azimuth, which is the only way WebKit reports one. Everything the page does with them
-# after this line is the app's own.
 RAW = """
 ([kind, points, over]) => {
   const host = document.querySelector('.canvas');
@@ -352,17 +246,13 @@ RAW = """
 }
 """
 
-
 def raw_stroke(page: Page, points: list[tuple[float, float]], over: dict, what: str) -> None:
-    """A stroke of pointer events made in the page, for a shape the protocol has no
-    field for. Same handlers, same reducer, same ink."""
     inside = plane(page)
     page.evaluate(
         RAW,
         [what, [(x - inside["x"], y - inside["y"]) for x, y in points], over],
     )
     page.wait_for_timeout(250)
-
 
 def context_for(browser, shape: str, tablet: bool):
     context = browser.new_context(
@@ -378,10 +268,7 @@ def context_for(browser, shape: str, tablet: bool):
 
     return context
 
-
 def drive_pencil(browser) -> None:
-    """An Apple Pencil on an iPad: a gain of its own, a lean in radians, and a browser
-    with neither of Chromium's two calls for getting more samples out of one event."""
     say("--- an Apple Pencil on an iPad ---")
 
     context = context_for(browser, "pencil", tablet=True)
@@ -394,8 +281,6 @@ def drive_pencil(browser) -> None:
         opened(page, "pencil", tablet=True)
         tool(page, "d")
 
-        # Coarse on purpose: a tenth of the samples an S Pen reports, which is what a
-        # browser with no coalescing hands over for the same word.
         pen_stroke(page, cdp, line(page, steps=9, span=300), pause=24)
         settled(page)
 
@@ -413,8 +298,6 @@ def drive_pencil(browser) -> None:
             say(f"a coarse Pencil stroke landed, {len(points_of(drawn[0]))} samples long")
         shot(page, "pen-shape-pencil-stroke")
 
-        # The lean, in the only language WebKit has for it: radians up from the glass and
-        # radians round it. It has to arrive on the plane as the degrees the format keeps.
         wipe(page)
         tool(page, "d")
         raw_stroke(
@@ -450,11 +333,8 @@ def drive_pencil(browser) -> None:
             say(f"the profile says: {said}")
         shot(page, "pen-shape-pencil-lean")
 
-        # Hovering, which every M2 iPad's Pencil does. Nothing may appear, and the stroke
-        # that follows must begin where the nib landed rather than where the pen was.
         check_hover(page, cdp, "pencil")
 
-        # And the eraser, which a Pencil can only reach from the bar: it has no button.
         tool(page, "d")
         pen_stroke(page, cdp, line(page, steps=12, span=200))
         settled(page)
@@ -471,13 +351,7 @@ def drive_pencil(browser) -> None:
     finally:
         context.close()
 
-
 def check_hover(page: Page, cdp, label: str) -> None:
-    """A pen over the glass leaves nothing, and takes nothing with it when it lands.
-
-    The two strokes are compared with each other rather than with a number, so the check
-    holds at whatever zoom the canvas happens to be at: a stroke that dragged a phantom
-    line in from where the pen was last hovering is several times as wide as its twin."""
     wipe(page)
     tool(page, "d")
     box = plane(page)
@@ -492,7 +366,6 @@ def check_hover(page: Page, cdp, label: str) -> None:
     wipe(page)
     tool(page, "d")
 
-    # Right across the plane with nothing pressed, then down where the other stroke was.
     hover(
         page,
         cdp,
@@ -524,10 +397,7 @@ def check_hover(page: Page, cdp, label: str) -> None:
 
     shot(page, f"pen-shape-{label}-after-hover")
 
-
 def drive_surface(browser) -> None:
-    """A Surface Pen, and every other pen on Windows: a barrel button, an eraser end, and
-    a platform that reads a nib held still as a right click."""
     say("--- a Surface Pen on Windows ---")
 
     context = context_for(browser, "surface", tablet=True)
@@ -559,8 +429,6 @@ def drive_surface(browser) -> None:
             say("a Surface Pen stroke landed")
         shot(page, "pen-shape-surface-stroke")
 
-        # The barrel button, pressed while the nib is already writing: the line that had
-        # been laid down goes with it, so the plane is left as it was.
         wipe(page)
         tool(page, "d")
         pen_stroke(page, cdp, line(page), buttons=1, halfway=3)
@@ -570,8 +438,6 @@ def drive_surface(browser) -> None:
         else:
             say("a barrel button pressed halfway through a line rubs out")
 
-        # And the eraser end, turned over: button 5, bit 32. Unsendable down the protocol,
-        # so the events are made in the page.
         wipe(page)
         tool(page, "d")
         pen_stroke(page, cdp, line(page))
@@ -592,8 +458,6 @@ def drive_surface(browser) -> None:
             say("a pen turned over onto its eraser end rubs out")
         shot(page, "pen-shape-surface-erased")
 
-        # A nib held still. Windows waits half a second and then asks for a right click;
-        # no menu may open, and the stroke must carry on being a stroke.
         wipe(page)
         tool(page, "d")
         points = line(page, steps=10, span=160)
@@ -604,7 +468,6 @@ def drive_surface(browser) -> None:
         else:
             say("a nib held still opens no menu")
 
-        # A barrel button held while hovering, which Windows also answers with a menu.
         hover(page, cdp, [(points[0][0] + 30, points[0][1] + 30)], buttons=2)
         page.wait_for_timeout(400)
         if page.locator(".menu-sheet, [role='menu']").count() > 0:
@@ -616,10 +479,7 @@ def drive_surface(browser) -> None:
     finally:
         context.close()
 
-
 def drive_wacom(browser) -> None:
-    """A graphics tablet on a desktop: absolute, so the pen can be lifted and put down
-    anywhere, and buttons the driver may have mapped to a mouse's."""
     say("--- a Wacom on a desktop ---")
 
     context = context_for(browser, "wacom", tablet=False)
@@ -631,12 +491,8 @@ def drive_wacom(browser) -> None:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         opened(page, "wacom")
 
-        # The gesture only an absolute tablet makes: the nib lifted at one corner, moved
-        # right across the tablet in the air, and put down at the other.
         check_hover(page, cdp, "wacom")
 
-        # The middle button, which is what a driver puts the lower barrel button on out of
-        # the box. It pans, with a pen in hand as much as with anything else.
         tool(page, "d")
         before = camera_of(page)
         box = plane(page)
@@ -658,8 +514,6 @@ def drive_wacom(browser) -> None:
             say("the middle button pans the plane with a pen in hand")
         shot(page, "pen-shape-wacom-panned")
 
-        # And the same pen right-clicking, which is the other thing a driver does with a
-        # barrel button. It rubs out.
         wipe(page)
         tool(page, "d")
         pen_stroke(page, cdp, line(page))
@@ -676,10 +530,7 @@ def drive_wacom(browser) -> None:
     finally:
         context.close()
 
-
 def drive_usi(browser) -> None:
-    """A USI pen on a Chromebook: a pressure that never changes, which handed to a nib
-    that thins with pressure would draw everything as a hairline."""
     say("--- a USI pen on a Chromebook ---")
 
     context = context_for(browser, "usi", tablet=True)
@@ -692,7 +543,6 @@ def drive_usi(browser) -> None:
         opened(page, "usi")
         tool(page, "d")
 
-        # A fixed sliver near nought, which is the shape that draws a hairline.
         pen_stroke(page, cdp, line(page, steps=30, span=280), pressure=0.03)
         settled(page)
 
@@ -708,8 +558,6 @@ def drive_usi(browser) -> None:
             fail(f"a USI pen did not draw one stroke ({len(drawn)})")
         else:
             felt = {point["pressure"] for point in points_of(drawn[0])}
-            # Not the sliver the pen reported: the middle of the range, which is the width
-            # the nib is set to.
             if felt == {0.03}:
                 fail("a pen's fixed sliver of pressure was drawn as pressure")
             else:
@@ -718,10 +566,7 @@ def drive_usi(browser) -> None:
     finally:
         context.close()
 
-
 def drive_finger(browser) -> None:
-    """A finger on glass that has seen a pen: the page moves and nothing is drawn, with
-    an ink tool in hand. The rule every stylus app has and nobody has to be told."""
     say("--- a finger, on glass a pen has been on ---")
 
     context = context_for(browser, "surface", tablet=True)
@@ -773,7 +618,6 @@ def drive_finger(browser) -> None:
     finally:
         context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive_pencil(browser)
@@ -783,7 +627,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("every pen the drive could emulate behaves")
-
 
 if __name__ == "__main__":
     sys.exit(main())

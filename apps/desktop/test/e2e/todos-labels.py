@@ -41,18 +41,15 @@ LAID_OUT = """(type) => {
   tab.note.replace(JSON.stringify(spec), false)
 }"""
 
-
 def handles(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
-
 
 def texts(page: Page, selector: str) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
         "(selector) => [...document.querySelectorAll(selector)].map((one) => one.textContent.trim())",
         selector,
     )
-
 
 def display(page: Page, label: str, option: str) -> None:
     page.locator(".view-tab .display-button").first.click()
@@ -62,7 +59,6 @@ def display(page: Page, label: str, option: str) -> None:
     quiet(page)
     page.keyboard.press("Escape")
 
-
 def under_both(page: Page, where: str) -> None:
     words = texts(page, f"{where} .task .words")
     say(f"[{where}] {json.dumps(words)}")
@@ -71,7 +67,6 @@ def under_both(page: Page, where: str) -> None:
     for one in ("Beta", "Gamma", "Bare"):
         if one not in words:
             wrong(f"{where} lost {one}")
-
 
 def carry(page: Page, source, target) -> None:  # type: ignore[no-untyped-def]
     one = source.bounding_box()
@@ -86,7 +81,6 @@ def carry(page: Page, source, target) -> None:  # type: ignore[no-untyped-def]
     page.mouse.move(two["x"] + two["width"] / 2, two["y"] + two["height"] / 2, steps=12)
     page.mouse.up()
     quiet(page)
-
 
 def the_grouping(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
@@ -105,7 +99,6 @@ def the_grouping(page: Page) -> None:
     page.keyboard.press("Escape")
     quiet(page)
 
-
 def after_a_reload(page: Page) -> None:
     page.reload()
     wait_for(page, "window.nibApp?.workspace?.activeSpace", "the app again")
@@ -116,7 +109,6 @@ def after_a_reload(page: Page) -> None:
     under_both(page, ".view-tab")
     under_both(page, ".tasks .chosen")
     DRIVE.shot(page, "02-reloaded")
-
 
 def carried(page: Page) -> None:
     rows = page.locator(".view-tab [data-item^='row:']:has-text('Alpha')")
@@ -130,7 +122,6 @@ def carried(page: Page) -> None:
     page.evaluate(WRITE, ["Errands.md", NOTE.format(today=page.evaluate(TODAY))])
     wait_for(page, f"() => ({TAGS})()?.join() === 'a,b'", "both labels back")
     quiet(page)
-
 
 def the_layouts(page: Page) -> None:
     for layout, selector, count in (
@@ -147,7 +138,6 @@ def the_layouts(page: Page) -> None:
         if drawn < 1 or (layout in ("table", "cards", "kanban") and drawn != count):
             wrong(f"the {layout} draws Alpha {drawn} times, not {count}")
         DRIVE.shot(page, f"03-{layout}")
-
 
 def renamed(page: Page) -> None:
     page.evaluate(LAID_OUT, "list")
@@ -183,7 +173,6 @@ def renamed(page: Page) -> None:
         wrong(f"what was kept for Todos is under {kept}, not every space's")
     DRIVE.shot(page, "04-renamed")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -196,7 +185,6 @@ def drive(browser: Browser) -> None:
     the_layouts(page)
     renamed(page)
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "A task under each of its labels, and a space renamed under it, held"))

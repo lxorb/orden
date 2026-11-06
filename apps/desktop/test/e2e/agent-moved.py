@@ -13,7 +13,6 @@ AGENT = "{ id: 'nib-moved', name: 'Fake' }"
 DOCS = "await import('/src/lib/agents/docs/index.ts')"
 TOUCHED = "await import('/src/lib/agents/docs/touched.ts')"
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -41,7 +40,6 @@ def drive(browser: Browser) -> None:
     say(f"undone {undone}, words {json.dumps(words)}")
     if undone != {"undone": 1} or "strikes" not in words:
         wrong(f"the edit stayed: {undone}, {words!r}")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

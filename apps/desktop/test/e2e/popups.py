@@ -1,23 +1,3 @@
-"""Every kind of popup the app opens from a button closes the ways a menu does (#382).
-
-Each is opened with a real press, and has to be there afterwards: the press that opened
-it is not the press that closes it. Then it is closed three ways, opened again before
-each: a press somewhere past it, Escape, and the window losing the focus - which is the
-one word a press into a web page sends, a page being a native webview whose presses
-never reach the app. A list dropped by a control inside the settings is closed by a
-press on the settings around it, and the settings stay.
-
-The popups are the context menu, the space switcher, the canvas bar's
-panels, the colours of what is picked, the graph's controls, a dropdown in the settings,
-a web tab's site and downloads bubbles and a guest's corner; every one of them, and the
-rest that need an account or a web page to be opened at all, closes through the one
-rule in lib/overlays.ts.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/popups.py
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -29,10 +9,8 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
-
 def shown(page: Page, selector: str) -> bool:
     return bool(page.evaluate("(selector) => !!document.querySelector(selector)", selector))
-
 
 def gone(page: Page, selector: str, what: str) -> bool:
     try:
@@ -41,12 +19,8 @@ def gone(page: Page, selector: str, what: str) -> bool:
     except SystemExit:
         return False
 
-
 def blurred(page: Page) -> None:
-    """The window losing the focus, as it does when the keyboard goes into a web page
-    or to another program."""
     page.evaluate("() => window.dispatchEvent(new FocusEvent('blur'))")
-
 
 def check(
     page: Page,
@@ -57,23 +31,15 @@ def check(
     still: str | None = None,
     toggles: bool | Callable[[], None] = True,
 ) -> None:
-    """Opens it and closes it each way. A press past it lands in `area`, wherever the
-    popup and the bar it hangs from are not. `still`, where given, is what a press past
-    the popup must leave standing: the layer the popup was dropped from."""
     closers: list[tuple[str, Callable[[], None]]] = [
         ("a press past it", area if callable(area) else lambda: press_past(page, area, popup)),
         ("Escape", lambda: page.keyboard.press("Escape")),
         ("the window losing the focus", lambda: blurred(page)),
     ]
-    # And the button that opened it, pressed again: the press is that button's own,
-    # rather than a press past the popup that the button then opens it again from.
     if toggles:
         closers.append(("its own button", opening if toggles is True else toggles))
     for how, close in closers:
         opening()
-        # The first menu is fetched if the launch has not got round to it, and opens as
-        # it lands: late is no fault, and it was read as one at 250 ms on a busy runner
-        # (#442). Up, it has to stay up.
         try:
             DRIVE.wait_for(page, f"!!document.querySelector({popup!r})", f"{name} to open", 15)
         except SystemExit:
@@ -88,7 +54,6 @@ def check(
 
         close()
         if not gone(page, popup, f"{name} to close on {how}"):
-            # What was on the stack, and what the press landed on, for whoever reads why.
             said = page.evaluate(
                 "() => ({ depth: window.nibApp.overlays.depth, pressed: window.__pressed ?? [],"
                 " layers: [...document.querySelectorAll('.nib-layer, .nib-bubble, .nib-scrim')]"
@@ -102,14 +67,8 @@ def check(
             wrong(f"{name}: a press past it closed what it was dropped from as well")
         say(f"{name}: closed by {how}")
 
-
-# Where in an area a press past a popup may land, tried in turn: the first that is clear
-# of the popup and of the bars a popup hangs from. Fixed points were not enough: a panel
-# measures itself as it opens, and once in a while it was still standing where the press
-# meant to be past it.
 SPOTS = ((0.5, 0.5), (0.2, 0.3), (0.8, 0.3), (0.2, 0.75), (0.8, 0.75), (0.5, 0.1), (0.5, 0.9))
 FLOATING = (".cluster", ".over", ".nib-bubble", "[role=listbox]", ".canvas [data-id]")
-
 
 def press_past(page: Page, area: str, popup: str) -> None:
     clear = page.evaluate(
@@ -131,9 +90,7 @@ def press_past(page: Page, area: str, popup: str) -> None:
         raise SystemExit(f"nowhere in {area} is clear of {popup}")
     page.mouse.click(clear[0], clear[1])
 
-
 def empty_spot(page: Page, selector: str, dx: float = 0.5, dy: float = 0.5) -> Callable[[], None]:
-    """A press somewhere in an element, by fractions of its box."""
 
     def press() -> None:
         box = page.locator(selector).first.bounding_box()
@@ -144,10 +101,8 @@ def empty_spot(page: Page, selector: str, dx: float = 0.5, dy: float = 0.5) -> C
 
     return press
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
-    # The last few presses, as the window heard them, for a popup that stays open.
     page.add_init_script(
         """for (const type of ['pointerdown', 'pointerup', 'click']) addEventListener(type, (event) => {
           const one = event.target
@@ -160,8 +115,6 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Plan")
     page.wait_for_timeout(300)
 
-
-    # ── The context menu ───────────────────────────────────────────
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     row = page.locator('.row[data-path$="/Other.md"]').first
     row.wait_for(state="visible", timeout=10_000)
@@ -174,7 +127,6 @@ def drive(browser: Browser) -> None:
         toggles=False,
     )
 
-    # ── The space switcher ─────────────────────────────────────────
     switcher = page.locator('[data-space-drop="switcher"]').first
     check(
         page,
@@ -182,11 +134,9 @@ def drive(browser: Browser) -> None:
         lambda: switcher.click(),
         "[data-spaces-open]",
         ".cm-content",
-        # Where the header is: the list's own catch is over it while the list is open.
         toggles=lambda: empty_spot(page, '[data-space-drop="switcher"]')(),
     )
 
-    # ── A dropdown in the settings, over the settings ──────────────
     page.evaluate("() => window.nibApp.settings.show('general')")
     DRIVE.wait_for(page, "!!document.querySelector('.sheet button[role=combobox]')", "a dropdown in the settings")
     dropdown = page.locator(".sheet button[role=combobox]").first
@@ -201,7 +151,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     DRIVE.wait_for(page, "!document.querySelector('.sheet')", "the settings to close")
 
-    # ── The canvas bar's panels ────────────────────────────────────
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace;"
         " await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
@@ -213,8 +162,6 @@ def drive(browser: Browser) -> None:
     if put.count():
         check(page, "the canvas's things to add", lambda: put.click(), ".cluster .panel", ".canvas")
 
-    # ── The colours of what is picked on the plane ─────────────────
-    # A card, written and stepped out of, which leaves it picked and its own bar over it.
     plane = page.locator(".canvas").first.bounding_box()
     if plane:
         page.mouse.dblclick(plane["x"] + plane["width"] * 0.55, plane["y"] + plane["height"] * 0.45)
@@ -231,7 +178,6 @@ def drive(browser: Browser) -> None:
     picked = page.locator('.over button[aria-label="Colour"]').first
 
     def pick_and_open() -> None:
-        # Escape and a press on the plane let go of the card as well: picked again first.
         if not shown(page, ".over"):
             page.locator(".canvas [data-id]").first.click()
             page.wait_for_timeout(300)
@@ -249,15 +195,11 @@ def drive(browser: Browser) -> None:
     else:
         wrong("no card was picked to open its colours on")
 
-    # ── The graph's controls ───────────────────────────────────────
     page.evaluate("() => window.nibApp.workspace.openGraph()")
     DRIVE.wait_for(page, "!!document.querySelector('.graph .corner > button')", "the graph")
     controls = page.locator(".graph .corner > button").last
     check(page, "the graph controls", lambda: controls.click(), ".graph .corner .card", ".graph")
 
-    # ── A web tab's bubbles ─────────────────────────────────────────
-    # Over a page, whose presses never reach the app: on a desktop the bubble is closed
-    # by the window losing the focus as the page takes it, which is the blur above.
     page.evaluate("() => window.nibApp.workspace.openWebsite()")
     DRIVE.wait_for(page, "!!document.querySelector('.web')", "a web tab")
     field = page.locator(".web input").first
@@ -269,7 +211,6 @@ def drive(browser: Browser) -> None:
         check(page, "a site's information", lambda: site.click(), ".site.nib-bubble", ".web")
     else:
         say("a site's information: this build has no page to say anything about")
-    # One download, said the way the crate says one, which is what puts the button up.
     page.evaluate(
         "async () => (await window.nibApp.downloads()).heard({ id: 1, tab: '', url:"
         " 'https://example.com/a.pdf', name: 'a.pdf', state: 'done', received: 9, total: 9 })"
@@ -281,10 +222,6 @@ def drive(browser: Browser) -> None:
     else:
         say("the downloads: nothing has been downloaded in this build")
 
-    # ── A guest's corner ────────────────────────────────────────────
-    # A guest alone in the one file a link gave them, said to the app the way a link
-    # leaves it: a guest, and a file somebody shared open on its own. The rest of a
-    # guest's way in is share.py's, against the real Worker.
     page.evaluate(
         """() => {
           window.nibApp.account.guest = { id: 'g1', name: 'Chromium wren' }
@@ -297,7 +234,6 @@ def drive(browser: Browser) -> None:
     DRIVE.wait_for(page, "!!document.querySelector('.guest-corner .who')", "a guest's corner")
     face = page.locator(".guest-corner .who").first
     check(page, "a guest's corner", lambda: face.click(), ".guest-corner .pop", ".canvas")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "every popup closes past itself, on Escape and on a blur, and not on its own press"))

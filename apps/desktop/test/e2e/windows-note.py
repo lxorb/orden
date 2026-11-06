@@ -9,13 +9,11 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 LIVE = "()=>window.nibApp.workspace.active.note.latest"
 
-
 def type_in(page, words: str) -> None:
     page.bring_to_front()
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
     page.keyboard.type(words, delay=3)
-
 
 def drive(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
@@ -78,7 +76,6 @@ def drive(browser: Browser) -> None:
     kept = b.evaluate("()=>window.nibApp.workspace.tabs.some(t=>t.note.latest.includes('LATE-B'))")
     if not kept:
         wrong("the words B had unwritten went with the note")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

@@ -1,23 +1,3 @@
-"""Every surface a thumb lands on, measured on a phone, on a tablet and on a
-desktop, and photographed light and dark.
-
-The touch scale in `tokens.css` says what a row, its words, its marks and its
-gaps are on a touch screen. The unit test says every component reads it; this
-says what that comes to in pixels on a real screen, which is the only place a
-row is either comfortable or not. It also proves the other half of the bargain:
-that a desktop is untouched, which is a number-for-number comparison of the same
-run against the same build before the change.
-
-Run it from the repository root, twice, with the change in between:
-
-    python apps/desktop/test/e2e/touch-scale.py before
-    python apps/desktop/test/e2e/touch-scale.py after
-
-Each writes `shots/<label>.json` beside the screenshots and prints the table;
-the second prints both columns side by side. `NIB_SKIP_BUILD=1` reuses
-`apps/desktop/dist` from the last run.
-"""
-
 from __future__ import annotations
 
 import json
@@ -32,13 +12,8 @@ say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 
-
-# How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 40
 
-
-# The os plugin's globals, so anything asking which platform this is gets an
-# answer, and Android's own bars, so a sheet's bottom inset is a real number.
 PREPARE = """
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android', family: 'unix', os_type: 'android',
@@ -114,9 +89,6 @@ MEASURE = """(specs) => {
   })
 }"""
 
-# A phone the size of the one this was asked for, a tablet held both ways, and a
-# desktop window: the name, the window, the pixel ratio, and the device class
-# the app is told to be, since no window on this machine is a tablet.
 PROFILES = [
     ("phone", 390, 844, 3, "phone", True, True),
     ("tablet-portrait", 820, 1180, 2, "tablet", True, False),
@@ -130,8 +102,6 @@ CHROME = [
     ["sidebar panel tab", "aside .switch button"],
     ["sidebar tab icon", "aside .switch button svg"],
     ["sidebar body", "aside .body"],
-    # Every row of the file list is one row: a note, and a note that holds notes
-    # wearing a twist at the far end of it. See docs/tree.md.
     ["tree row", "aside .row"],
     ["tree row twist", "aside .row .twist"],
     ["tree file mark", "aside .row .mark"],
@@ -173,8 +143,6 @@ PALETTE = [
     ["palette row", ".palette ul li button"],
 ]
 
-# The palette with nothing typed, a menu to browse, which holds what the app menu
-# did (#304); see palette/browse.ts.
 BROWSE = [
     ["palette browse row", ".palette ul li button"],
     ["palette browse head", ".palette .nib-section"],
@@ -215,34 +183,24 @@ PRESS = """
 }
 """
 
-
 def measure(page: Page, specs) -> dict:
     return dict(page.evaluate(MEASURE, specs))
-
 
 def open_drawer(page: Page) -> None:
     page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(350)
 
-
 def shut_drawer(page: Page) -> None:
-    """Both drawers away, and the one scrim they share with them.
-
-    On a phone that scrim is over the whole window, the titlebar included, so
-    anything in the bar has to be reached with the drawers shut."""
     page.evaluate(
         "() => { const ws = window.nibApp.workspace; ws.closePanel(); ws.closePanel('right') }"
     )
     page.wait_for_timeout(400)
-
 
 def run(label: str) -> int:
     found: dict[str, dict] = {}
 
     with DRIVE.session() as browser:
         for name, width, height, scale, device, portrait, narrow in PROFILES:
-            # Both schemes, because the run photographs both; the measurements are
-            # the same either way, so the dark pass is the one that is kept.
             for scheme in ("dark", "light"):
                 say(f"[{name}] {width}x{height} at {scale}x, a {device}, {scheme}")
                 seen = one(
@@ -265,7 +223,6 @@ def run(label: str) -> int:
     report(label)
     return DRIVE.verdict()
 
-
 def one(
     browser: Browser, label, name, width, height, scale, device, portrait, narrow, scheme
 ) -> dict:
@@ -281,17 +238,11 @@ def one(
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     context.add_init_script(PREPARE)
     DRIVE.open(page)
-    # Every layer that opens over the note takes a history entry and gives it
-    # back on closing; see backstack.svelte.ts. A tab opened straight onto the
-    # app has one entry behind it, so a run that opens and shuts a dozen layers
-    # can walk off the end of its own history and out of the page. These are the
-    # floor under that, and nothing but the browser's own history sees them.
     page.evaluate("() => { for (let i = 0; i < 8; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(AS_DEVICE, [device, portrait, narrow])
     page.wait_for_timeout(200)
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.evaluate(AS_DEVICE, [device, portrait, narrow])
-    # Opening a note shuts the drawer on a phone, so the tree is asked for again.
     open_drawer(page)
     wait_for(page, "() => document.querySelectorAll('aside .row').length >= 2", "the rows")
     page.wait_for_timeout(500)
@@ -322,8 +273,6 @@ def one(
         page.evaluate("(p) => window.nibApp.workspace.showPanel(p)", panel)
         page.wait_for_timeout(500)
         if panel == "search":
-            # An empty search offers the space's own tags, which is the only
-            # place the tag rows are ever drawn.
             rows.update(measure(page, TAGS))
             page.evaluate("() => { window.nibApp.search.replacing = true }")
             page.evaluate("() => window.nibApp.search.ask('the')")
@@ -343,9 +292,6 @@ def one(
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # The search in the titlebar, which opens the palette to browse; see Titlebar.svelte.
-    # With the drawer shut first, because on a phone the drawer's scrim lies over the
-    # whole row and a press on a scrim is a press that shuts the drawer.
     shut_drawer(page)
     page.click("header .search")
     page.wait_for_timeout(600)
@@ -370,9 +316,6 @@ def one(
     page.wait_for_timeout(300)
 
     page.evaluate("() => window.nibApp.settings.show()")
-    # The sheet is fetched the first time it is asked for rather than carried into the
-    # first paint; measuring before it lands measures nothing and reads as a pass. See
-    # surfaces.svelte.ts.
     page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(900)
     rows.update(measure(page, SETTINGS))
@@ -383,22 +326,15 @@ def one(
     context.close()
     return rows
 
-
-# What is not a measurement of a surface, and so is not a row of the table.
 ASIDE = {"device", "touch", "tokens", "tree indent step"}
 
-
 def cell(seen) -> str:
-    """One surface in one profile: its box, its type, its icon and its gaps."""
     if not seen:
         return "-"
     icon = f" i{seen['icon']:g}" if seen.get("icon") is not None else ""
     return f"{seen['w']:g}x{seen['h']:g} f{seen['font']:g}{icon} g{seen['gap']:g} p{seen['pl']:g}"
 
-
 def report(label: str) -> None:
-    """The run just finished, beside the other one if it is there. Two columns
-    is the whole point: what a surface was, and what it is."""
     runs = {label: json.loads((SHOTS / f"{label}.json").read_text(encoding="utf8"))}
     other = "after" if label == "before" else "before"
     if (SHOTS / f"{other}.json").exists():
@@ -429,7 +365,6 @@ def report(label: str) -> None:
             print(f"{column:<18} {name:<8} {seen.get('device')} {kind}, indent {seen.get('tree indent step')}")
     for name, one_run in runs.items():
         print(name, json.dumps(one_run["phone"]["tokens"]))
-
 
 if __name__ == "__main__":
     sys.exit(run(sys.argv[1] if len(sys.argv) > 1 else "before"))

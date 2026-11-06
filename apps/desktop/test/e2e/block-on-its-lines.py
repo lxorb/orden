@@ -33,7 +33,6 @@ CASES = {
     ),
 }
 
-
 def run_row(page: Page, row: str) -> None:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector(".palette input")
@@ -45,7 +44,6 @@ def run_row(page: Page, row: str) -> None:
     page.keyboard.press("Enter")
     page.wait_for_selector(".palette input", state="detached")
 
-
 def put(page: Page, anchor: int, head: int) -> None:
     page.evaluate(
         """([doc, anchor, head]) => {
@@ -55,7 +53,6 @@ def put(page: Page, anchor: int, head: int) -> None:
         }""",
         [DOC, anchor, head],
     )
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -92,7 +89,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_function("() => window.nib.hasFocus")
     page.keyboard.press("Control+z")
     DRIVE.wait_for(page, f"() => window.nib.state.doc.toString() === {WORDS!r}", "the words as they were")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

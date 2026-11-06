@@ -1,16 +1,3 @@
-"""Settings offers the Mobile section on a phone, and not on a laptop that has never been
-on one (#769).
-
-A reader on a NixOS laptop: *"I am on the laptop but I see mobile tab, should it be
-hidden?"* The section is the bar over a phone's keyboard and the pull past the top of a
-list, which only a phone and a tablet draw. A laptop gets it once the account says a
-handheld has been on it, which is said here the way the account's answer leaves it.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/mobile-pane.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -26,21 +13,17 @@ PHONE_AGENT = (
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-#: The sections the settings list, by name.
 LISTED = """
 () => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] nav button.item')]
   .map((one) => one.innerText.trim())
 """
 
-
 def listed(page: Page) -> list[str]:
-    # On a phone the list is a screen of its own, before any section is opened.
     page.evaluate("() => { window.nibApp.settings.show('general'); window.nibApp.settings.listing = true }")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Settings\"] nav button')",
              "the settings' sections")
     wait_for(page, f"() => {LANDED}", "the settings' sheets")
     return page.evaluate(LISTED)
-
 
 def laptop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
@@ -61,7 +44,6 @@ def laptop(browser: Browser) -> None:
         wrong("[laptop] no Mobile section once the account has been on a phone")
     page.context.close()
 
-
 def phone(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 390, "height": 844},
@@ -78,11 +60,9 @@ def phone(browser: Browser) -> None:
     DRIVE.shot(page, "phone")
     context.close()
 
-
 def drive(browser: Browser) -> None:
     laptop(browser)
     phone(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the Mobile section is a phone's, and a laptop's once there is one"))

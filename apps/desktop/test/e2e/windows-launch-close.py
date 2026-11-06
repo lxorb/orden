@@ -48,14 +48,12 @@ WATCH = """
 })();
 """
 
-
 def type_draft(page: Page, words: str) -> None:
     page.evaluate(f"()=>{WS}.openBlank()")
     page.wait_for_selector(".cm-content")
     page.locator(".cm-content").first.click()
     page.keyboard.type(words, delay=2)
     wait_for(page, f"()=>{WS}.active?.note.latest.includes({words!r})", "typed")
-
 
 def through_reload(page: Page, ask: Callable[[], object]) -> None:
     for _ in range(100):
@@ -67,7 +65,6 @@ def through_reload(page: Page, ask: Callable[[], object]) -> None:
                 raise
             page.wait_for_timeout(100)
     wrong("the page never came back from its reload")
-
 
 def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     page.evaluate(f"()=>{WS}.persist()")
@@ -96,7 +93,6 @@ def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     if tabs != total:
         wrong(f"{armed}: {tabs} tabs came back, not {total}")
 
-
 def drive(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     ctx.add_init_script(WATCH)
@@ -124,7 +120,6 @@ def drive(browser: Browser) -> None:
     kept_through(page, "persist", False, total)
     kept_through(page, "list up", True, total)
     kept_through(page, "set building", True, total)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

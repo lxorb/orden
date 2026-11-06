@@ -1,41 +1,3 @@
-"""Glass following the page in front, read off the screen.
-
-Emil, 2026-10-01: "glass theme is pretty ass right now, it should be based on what's
-currently open, e.g. the website." Under glass the frame takes the colour of the page
-in front - its theme colour, else what it paints along its top - and the open tab and
-the bar run down into the page as one surface, with the words on them in whichever
-scheme reads on that colour. See lib/glass in the app and glass.css.
-
-Six pages, the four the brief names and two from issue #238, served from this drive's
-own origin so the browser build can read them (a page of another origin wears its
-favicon's colour):
-
-  - white, like Google, with nothing to say about its colour;
-  - black, like YouTube;
-  - red, with a `theme-color` and a red header;
-  - yellow, with a yellow header and no `theme-color`;
-  - black with a near-white `theme-color`, which is YouTube in the dark;
-  - white with a near-black one, which is react.dev in the light;
-  - Proton's "Thank you for installing Proton Pass", which names its deep violet and paints
-    its gradient only once its script has run, after the page has loaded - the owner's
-    own example of a frame left grey over a coloured page.
-
-The last two used to give the frame the colour the page named rather than the one it
-paints, so a dark site wore a light frame. Over the four greys the frame has to be as
-dark or as light as the page is.
-
-For each, under the light scheme and the dark, a picture, and the contrast of the
-quietest word on each part of the frame measured against what the picture shows there:
-the title bar, the list down the side, and the bar over the page. And whether the bar
-and the top of the page are one colour where the page's own colour reads.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/glass-pages.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Pictures go under `shots/glass-pages/`.
-"""
-
 from __future__ import annotations
 
 import io
@@ -52,7 +14,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 FLOOR = 4.5
 
-
 def site(ground: str, header: str, theme: str | None, title: str) -> str:
     meta = f'<meta name="theme-color" content="{theme}">' if theme else ""
     ink = "#ffffff" if ground in ("#0f0f0f",) or header in ("#d32f2f",) else "#111111"
@@ -66,9 +27,6 @@ def site(ground: str, header: str, theme: str | None, title: str) -> str:
 <main><p>A page standing on a colour of its own, for the frame to take.</p></main>
 </body></html>"""
 
-
-#: Proton's page as it arrives: nothing named and nothing painted, then, once its script
-#: has run, its violet named and its gradient down the page.
 PROTON = """<!doctype html><html><head><meta charset="utf-8"><title>Thank you for installing Proton Pass</title>
 <style>html, body { margin: 0; min-height: 100vh; color: #ffffff; font: 15px/1.5 system-ui, sans-serif; }
 main { padding: 48px; }</style></head><body><main><h1>Welcome to your new password manager!</h1></main>
@@ -90,7 +48,6 @@ PAGES = {
     "proton": PROTON,
 }
 
-#: What each page's top is, which the bar should be wherever the page's own colour reads.
 TOPS = {
     "white": (255, 255, 255),
     "black": (15, 15, 15),
@@ -101,19 +58,14 @@ TOPS = {
     "proton": (27, 19, 64),
 }
 
-#: Pages whose frame has to be dark, and pages whose frame has to be light.
 DARK = {"black", "darkstale", "proton"}
 
-#: Pages that name their colour only once their script has run, and the colour.
 LATE = {"proton": "#1b1340"}
 
-#: Pages whose frame has to wear their hue, not a grey: blue over red by at least this.
 HUED = {"proton": 12}
 LIGHT = {"white", "lightstale"}
 
-#: Where black ink and white ink read equally well.
 MIDDLE = 0.179
-
 
 @DRIVE.answers
 def pages(request: harness.Files) -> bool:
@@ -124,8 +76,6 @@ def pages(request: harness.Files) -> bool:
         return request.reply(b"", "image/x-icon", 404)
     return False
 
-
-# The ink the quietest word on an element is written in, as that element's scope has it.
 INK = """
 (selector) => {
   const one = document.querySelector(selector)
@@ -141,7 +91,6 @@ INK = """
 }
 """
 
-# A point inside an element where nothing is drawn but its ground: its own padding.
 POINT = """
 ([selector, where]) => {
   const one = document.querySelector(selector)
@@ -155,7 +104,6 @@ POINT = """
 }
 """
 
-
 def luminance(colour: tuple[float, ...]) -> float:
     def channel(one: float) -> float:
         value = one / 255
@@ -164,15 +112,12 @@ def luminance(colour: tuple[float, ...]) -> float:
     r, g, b = colour[:3]
     return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
 
-
 def ratio(one: tuple[float, ...], two: tuple[float, ...]) -> float:
     high, low = sorted((luminance(one), luminance(two)), reverse=True)
     return round((high + 0.05) / (low + 0.05), 2)
 
-
 def near(one: tuple[int, ...], two: tuple[int, ...], by: int = 6) -> bool:
     return all(abs(a - b) <= by for a, b in zip(one[:3], two[:3]))
-
 
 def fresh(browser: Browser, scheme: str) -> Page:
     page = DRIVE.page(
@@ -190,7 +135,6 @@ def fresh(browser: Browser, scheme: str) -> Page:
     DRIVE.settled(page)
     return page
 
-
 def open_site(page: Page, name: str) -> None:
     address = f"{DRIVE.origin}/glass/{name}.html"
     page.evaluate("(address) => window.nibApp.workspace.openPage(address)", address)
@@ -198,8 +142,6 @@ def open_site(page: Page, name: str) -> None:
     page.click(".web .card .nib-button")
     wait_for(page, f"document.querySelector('iframe[data-web-tab]')?.src?.endsWith('/glass/{name}.html')", "the frame")
     wait_for(page, "document.querySelector('.webbar.grounded')", f"the {name} page's colour on its bar")
-    # A page that paints itself after it has loaded is read again a moment later; the
-    # frame is white with the page until then, and its colour after.
     if name in LATE:
         wait_for(
             page,
@@ -208,7 +150,6 @@ def open_site(page: Page, name: str) -> None:
         )
     page.wait_for_timeout(300)
     DRIVE.settled(page)
-
 
 def measure(page: Page, picture: Image.Image, where: str, selector: str, at: str = "middle") -> None:
     point = page.evaluate(POINT, [selector, at])
@@ -223,7 +164,6 @@ def measure(page: Page, picture: Image.Image, where: str, selector: str, at: str
     else:
         wrong(f"{where}: quiet words {seen}:1 on {ground[:3]}, under {FLOOR}")
 
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = fresh(browser, scheme)
@@ -237,7 +177,6 @@ def drive(browser: Browser) -> None:
             measure(page, picture, f"{label} the list down the side", ".panels[data-chrome='start']", "foot")
             measure(page, picture, f"{label} the bar over the page", ".webbar", "start")
 
-            # The frame as dark or as light as the page.
             frame = page.evaluate(POINT, ["header[data-chrome='top'] .drag", "middle"])
             if frame and name in DARK | LIGHT:
                 seen = picture.getpixel((frame[0], frame[1]))
@@ -254,7 +193,6 @@ def drive(browser: Browser) -> None:
                 else:
                     wrong(f"{label} the frame {seen[:3]} is a grey over a coloured page")
 
-            # The bar and the top of the page: one surface where the page's colour reads.
             bar = page.evaluate(POINT, [".webbar", "start"])
             below = page.evaluate(POINT, [".webbar", "below"])
             if bar and below:
@@ -269,7 +207,6 @@ def drive(browser: Browser) -> None:
                     wrong(f"{label} the bar {upper[:3]} is not the page's top {lower[:3]}")
 
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "glass takes every page's colour and every word on it reads"))

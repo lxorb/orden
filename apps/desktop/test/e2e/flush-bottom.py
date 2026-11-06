@@ -1,12 +1,3 @@
-"""Square bottom edge: the panes on the window's bottom run into it, square (#1152).
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/flush-bottom.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -37,11 +28,9 @@ LOOK = """() => [...document.querySelectorAll('[data-pane]')].map((pane) => {
 CARD = 10.0
 INSET = 6.0
 
-
 def panes(page: Page) -> dict[str, dict]:
     page.wait_for_timeout(500)
     return {one["id"]: one for one in page.evaluate(LOOK)}
-
 
 def grounded(label: str, one: dict) -> None:
     say(f"[{label}] {one}")
@@ -50,7 +39,6 @@ def grounded(label: str, one: dict) -> None:
     if abs(one["bottom"] - one["height"]) > 0.5:
         wrong(f"[{label}] the card ends at {one['bottom']}, not at the window's bottom {one['height']}")
 
-
 def rounded(label: str, one: dict, inset: bool) -> None:
     say(f"[{label}] {one}")
     if one["footStart"] != CARD or one["footEnd"] != CARD:
@@ -58,12 +46,10 @@ def rounded(label: str, one: dict, inset: bool) -> None:
     if inset and abs(one["height"] - one["bottom"] - INSET) > 0.5:
         wrong(f"[{label}] the card ends {one['height'] - one['bottom']}px above the bottom, not {INSET}px")
 
-
 def same_top_and_sides(label: str, before: dict, after: dict) -> None:
     for side in ("top", "left", "right", "topStart", "topEnd"):
         if abs(before[side] - after[side]) > 0.5:
             wrong(f"[{label}] the {side} moved from {before[side]} to {after[side]}")
-
 
 def opened(browser: Browser, on: bool) -> Page:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 760})
@@ -74,20 +60,16 @@ def opened(browser: Browser, on: bool) -> Page:
     DRIVE.open_note(page, "Alpha")
     return page
 
-
 def split(page: Page, along: str, count: int) -> None:
     page.evaluate(f"() => window.nibApp.workspace.split('{along}')")
     wait_for(page, f"document.querySelectorAll('[data-pane]').length === {count}", f"the {along} split")
 
-
 def ids(page: Page) -> list[str]:
     return page.evaluate("() => window.nibApp.workspace.panes.all.map((one) => one.id)")
-
 
 def toggle(page: Page, want: bool) -> None:
     page.evaluate("() => window.nibApp.modes.toggleFlushBottom()")
     wait_for(page, f"window.nibApp.modes.flushBottom === {'true' if want else 'false'}", "the setting")
-
 
 def drive(browser: Browser) -> None:
     page = opened(browser, on=False)
@@ -179,7 +161,6 @@ def drive(browser: Browser) -> None:
     split(page, "row", 2)
     DRIVE.shot(page, "off-row")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the panes on the window's bottom run into it, square"))

@@ -1,40 +1,3 @@
-"""What the phone hands the page, driven in a browser at a phone's size.
-
-Everything on the Android side of this - the share intent, the quick settings
-tiles, the widget, the speech recogniser - is Kotlin, and the Kotlin is compiled
-by the `android-check` job in check.yml because an emulator does not run on this
-machine. What is left is the half that decides anything: the page reading what the
-activity handed over, and what it writes.
-
-So the activity is stood in for. One object on the window, answering exactly what
-`MainActivity.Bridge` answers and recording what it is told, and the page cannot
-tell the difference: it looks for methods by name and there is nothing else to
-find. See apps/desktop/src/lib/mobile/bridge.ts.
-
-What this drive holds:
-
-- a share of a link and a picture, at a cold start, landing as a note with the
-  address and the day in its front matter and the picture beside it
-- a share arriving while the app is open, and the sheet that asks whether it goes
-  into the note in front of you - both answers, and dismissing it, which means do
-  nothing
-- a quick settings tile, which is a command id and nothing else, and a widget row,
-  which is a path
-- what the widget is told to draw, and a pinned note going to the top of it
-- the camera row: that it is only offered where there is a camera, that it opens a
-  `capture` input, and that the photograph lands beside a pasted picture with the
-  embed at the caret
-- dictation through the web's own recogniser, the line that says it is listening,
-  and the same row turning it off
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/handed.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/handed/`.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -51,18 +14,13 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
-
 PHONE = {"width": 420, "height": 880}
 AGENT = (
     "Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-
 def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
-    """A picture big enough to see in a screenshot, written here rather than kept
-    as a fixture: what is under test is that bytes handed over by the activity come
-    back out of storage, and these are bytes."""
 
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
@@ -88,22 +46,9 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
         + chunk(b"IEND", b"")
     )
 
-
 SHARED_PICTURE = png(240, 160, (250, 120, 60))
 TAKEN_PHOTO = png(200, 200, (90, 180, 250))
 
-# The activity, as the page finds it: the ten methods of MainActivity.Bridge this
-# drive is about, answering out of `window.__android` and writing down what it is
-# told. The three about an AI key are the same shape and nothing here asks for them.
-# The slices are honest - `sharedBytes` decodes, cuts and re-encodes - because the
-# loop that asks for them is one of the things under test.
-#
-# The word is honest too. `addJavascriptInterface` puts the bridge in every frame of
-# the webview and tells the activity nothing about which of them called, so since
-# 837d689d the calls that matter want a word the activity says only into the main
-# frame, and the real one refuses anybody who says the wrong thing. This one refuses
-# too: a page that stopped asking for the word would be a framed page's microphone,
-# and a stand-in that let it through would never say so. See mobile/bridge.ts.
 ACTIVITY = """
 () => {
   const held = {
@@ -155,9 +100,6 @@ ACTIVITY = """
 }
 """
 
-# The web's own recogniser, stood in for the same way. Chrome has one; a headless
-# run of it will not open a microphone, and what is under test is what the page
-# does with the words rather than whether Google heard them.
 SPEECH = """
 () => {
   class Fake {
@@ -191,9 +133,6 @@ SPEECH = """
 }
 """
 
-# Every file input the page opens, so the camera row can be asked what kind of
-# chooser it asked for. The click still happens, so Playwright still sees the
-# chooser and can answer it.
 PICKERS = """
 () => {
   window.__pickers = []
@@ -252,12 +191,10 @@ STATE = """
 }
 """
 
-
 def started(page: Page) -> None:
     wait_for(page, "window.nibApp", "the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
-
 
 def fresh(
     browser: Browser,
@@ -265,14 +202,7 @@ def fresh(
     share: dict | None = None,
     activity: bool = True,
 ) -> Page:
-    """A page with the activity behind it, and a share already waiting where one is
-    asked for - which is the cold start a share actually is.
-
-    `activity` off is a plain browser: no bridge to find, which is what a desktop, a
-    phone browser and the PWA all are. Dictation there is the web's own recogniser
-    rather than the phone's, and that is the only difference the page ever sees."""
     context = browser.new_context(
-        # The asset worker is what this drive is about; see WEBKIT_WORKERS in harness.py.
         service_workers="allow",
         viewport=PHONE if finger else {"width": 1180, "height": 900},
         color_scheme="light",
@@ -280,9 +210,6 @@ def fresh(
         is_mobile=finger,
         **({"user_agent": AGENT} if finger else {}),
     )
-    # Each of these is written as a function and run as one: an init script is
-    # source that is evaluated, so an arrow function on its own would be evaluated
-    # and thrown away.
     for one in ((ACTIVITY,) if activity else ()) + (SPEECH, PICKERS):
         context.add_init_script(f"({one})()")
 
@@ -301,8 +228,6 @@ def fresh(
     page = context.new_page()
     DRIVE.choosers(page)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    # The app writes its own failures to the console through `log`, and a share
-    # that could not be written would otherwise be a silent nothing.
     page.on(
         "console",
         lambda message: say(f"console {message.type}: {message.text}")
@@ -313,14 +238,11 @@ def fresh(
     started(page)
     return page
 
-
 def palette(page: Page, words: str) -> None:
-    """A command, from the palette, which is where every row has to be reachable."""
     page.keyboard.press("Control+o")
     page.wait_for_timeout(350)
     page.keyboard.type(f"> {words}")
     page.wait_for_timeout(450)
-
 
 def rows(page: Page) -> list[dict]:
     return page.evaluate(
@@ -330,14 +252,7 @@ def rows(page: Page) -> list[dict]:
            }))"""
     )
 
-
 def shared_at_a_cold_start(page: Page) -> str:
-    """A link and a picture, shared into an app that was not running.
-
-    The app comes back up where it was left, which on a phone means a note on
-    screen, so the sheet asks here as well - there is a note this could go into.
-    One rule and no hidden state: the question is asked whenever both answers are
-    possible, whether the app was already running or not."""
     page.wait_for_selector(".sheet .nib-button", timeout=20000)
     page.wait_for_timeout(500)
     shot(page, "01-the-sheet-asks-at-a-cold-start")
@@ -350,8 +265,6 @@ def shared_at_a_cold_start(page: Page) -> str:
     if "New note" not in labels:
         wrong(f"the sheet does not offer a note of its own: {labels}")
 
-    # Scoped to the sheet: the phone's own plus over the note is called the same
-    # thing, which is the point of both of them.
     page.locator(".sheet").get_by_role("button", name="New note", exact=True).click()
 
     wait_for(
@@ -380,10 +293,6 @@ def shared_at_a_cold_start(page: Page) -> str:
     if done != 1:
         wrong(f"the activity was told {done} times that the copies may go, not once")
 
-    # The whole picture crossed in slices and is in storage under the address the
-    # note carries. Asked after a reload, because in a browser the worker that
-    # answers for a picture only takes the page over on the second load - which is
-    # every load but the very first, and is the same question pictures.py asks.
     page.reload(wait_until="domcontentloaded")
     started(page)
     wait_for(page, "navigator.serviceWorker.controller", "the worker to take the page over")
@@ -427,15 +336,11 @@ def shared_at_a_cold_start(page: Page) -> str:
 
     return state["open"]
 
-
 def shared_while_it_is_open(page: Page) -> None:
-    """The same thing again, with a note in front of somebody: the sheet asks, and
-    both of its answers are answers."""
     page.evaluate(SEED, NOTE)
     wait_for(page, "window.nib", "the editor")
     page.wait_for_timeout(500)
 
-    # The caret at the end, which is where somebody writing would have left it.
     page.evaluate(
         "() => { const view = window.nib; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
@@ -467,7 +372,6 @@ def shared_while_it_is_open(page: Page) -> None:
     if state["doc"].count("one more thing") != 1:
         wrong(f"the words landed more than once: {state['doc']!r}")
 
-
 def dismissing_it_does_nothing(page: Page) -> None:
     before = page.evaluate(STATE)
     hand(page, SHARE_WORDS)
@@ -487,10 +391,7 @@ def dismissing_it_does_nothing(page: Page) -> None:
     if not page.evaluate("() => window.__android.said.done >= 3"):
         wrong("the activity was never told it could let the dismissed share go")
 
-
 def hand(page: Page, share: dict) -> None:
-    """A share arriving at an app that is already open, which is `onNewIntent` and
-    then one line run in the page."""
     page.evaluate(
         """([shared, bytes]) => {
              window.__android.shared = shared
@@ -501,10 +402,7 @@ def hand(page: Page, share: dict) -> None:
     )
     page.wait_for_timeout(300)
 
-
 def tile(page: Page, command: str) -> None:
-    """A quick settings tile pressed: the id of a row in the app's own registry,
-    arriving the way a share does."""
     page.evaluate(
         """(command) => {
              window.__android.handed = JSON.stringify({ command, open: '' })
@@ -513,27 +411,16 @@ def tile(page: Page, command: str) -> None:
         command,
     )
 
-
 def a_tile_and_a_widget_row(page: Page, note: str) -> None:
-    """A quick settings tile is a command id; a widget row is a path. Both arrive
-    the same way a share does."""
     before = page.evaluate(STATE)
 
     tile(page, "new")
     page.wait_for_timeout(900)
     after = page.evaluate(STATE)
     say(f"[tile] new note: {json.dumps(after)}")
-    # The row the tile carries is `new`, which opens a blank note - in the tab that
-    # was previewing one, the way the same row does from the palette.
     if after["open"] is not None or after["doc"] != "" or after["name"] == before["name"]:
         wrong(f"the tile did not open a blank note: {json.dumps(after)}")
 
-    # The recorder's tile, which was the id nothing answered to until the recorder
-    # landed and now reaches the same row the palette offers: the press makes the
-    # recording's note. The row is read first, because a row the palette greys out
-    # does nothing from a tile either - which is the rule this whole file is about -
-    # and a machine with no way to record greys this one out. Pressed again after, so
-    # the run leaves nothing listening.
     palette(page, "Record")
     offered = next((one for one in rows(page) if one["label"] == "Record"), None)
     page.keyboard.press("Escape")
@@ -553,8 +440,6 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     elif started != quiet:
         wrong(f"a greyed Record row did something from a tile anyway: {json.dumps(started)}")
 
-    # And an id nothing answers to, which is what keeps a tile from a newer build
-    # inert in an older one.
     quiet = page.evaluate(STATE)
     tile(page, "not-a-command")
     page.wait_for_timeout(700)
@@ -575,7 +460,6 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     if landed["open"] != note:
         wrong(f"the widget row opened {landed['open']!r} rather than {note!r}")
 
-
 def what_the_widget_draws(page: Page) -> None:
     said = page.evaluate("() => window.__android.said.widgets")
     if not said:
@@ -592,9 +476,6 @@ def what_the_widget_draws(page: Page) -> None:
     if any(".md" in one["name"] for one in last["notes"]):
         wrong(f"the widget names notes by their files: {last['notes']}")
 
-    # A note among the space's Essentials is the one being kept to hand, and it goes to
-    # the top. These were the pinned tabs until the strip lost its pinning (#1041). The
-    # one taken is the widget's last row, so it can only be first for being kept.
     page.evaluate(
         """(row) => {
              const ws = window.nibApp.workspace
@@ -614,11 +495,7 @@ def what_the_widget_draws(page: Page) -> None:
     if first != kept.replace(".md", ""):
         wrong(f"the kept note is not at the top of the widget: {first!r} rather than {kept!r}")
 
-
 def the_camera_row(page: Page) -> None:
-    """A photograph into the note: the row is only offered where there is a camera,
-    it opens a `capture` input, and what comes back lands beside a pasted picture
-    with the embed at the caret."""
     page.evaluate(
         """() => {
              const ws = window.nibApp.workspace
@@ -666,14 +543,7 @@ def the_camera_row(page: Page) -> None:
     if "assets/" not in state["doc"].split("![photo](")[-1]:
         wrong(f"the photograph did not land beside the note: {state['doc']!r}")
 
-
 def dictation(page: Page, phone: bool) -> None:
-    """Saying a note instead of typing it.
-
-    Two recognisers behind one row: the phone's own where there is an activity, and
-    the web's where there is not. Everything but the recogniser is the same, and
-    that is the whole point of the row - so this runs twice and only the three
-    lines about who is listening differ."""
     where = "phone" if phone else "browser"
     palette(page, "Dictate")
     listed = rows(page)
@@ -690,8 +560,6 @@ def dictation(page: Page, phone: bool) -> None:
     page.wait_for_timeout(600)
 
     if phone:
-        # The activity was asked to listen, and the web's recogniser was left
-        # alone: a phone has one of its own and the page prefers it.
         asked = page.evaluate("() => window.__android.said.listen")
         say(f"[{where}] the activity was told {json.dumps(asked)}")
         if asked != [True]:
@@ -715,10 +583,6 @@ def dictation(page: Page, phone: bool) -> None:
         if not heard["lang"]:
             wrong("the recogniser was not told which language to listen in")
 
-    # The quiet mark: the line across the top, saying what it is doing, which is
-    # the one the app already uses for work that takes a moment.
-    # The line the app draws over the document, and not whatever else on the page
-    # wears a status role: what is under test is that sweep saying this word.
     listening = page.evaluate(
         """() => {
              const found = document.querySelector('.track[role=status]')
@@ -732,9 +596,6 @@ def dictation(page: Page, phone: bool) -> None:
 
     before = page.evaluate(STATE)["doc"]
     if not phone:
-        # Only the web's recogniser offers half-heard words at all, and they are
-        # turned off; a sentence rewritten under the caret while somebody is
-        # talking is the caret jumping about.
         page.evaluate("() => window.__speech.hear('and then we left', false)")
         page.wait_for_timeout(300)
         if page.evaluate(STATE)["doc"] != before:
@@ -753,8 +614,6 @@ def dictation(page: Page, phone: bool) -> None:
     shot(page, f"09-dictated-{where}")
     if "and then we left" not in state["doc"]:
         wrong(f"{where}: what it heard is not in the note: {state['doc']!r}")
-    # A sentence after a sentence is given the space the recogniser did not; see
-    # src/lib/mobile/dictation.test.ts.
     if before and not before.endswith((" ", "\n")) and " and then we left" not in state["doc"]:
         wrong(f"{where}: the sentence was glued onto the last word: {state['doc']!r}")
 
@@ -780,15 +639,7 @@ def dictation(page: Page, phone: bool) -> None:
     if quiet == "Listening":
         wrong(f"{where}: the line still says it is listening")
 
-
 def on_a_desktop(browser: Browser) -> None:
-    """A plain browser, with no activity behind it at all.
-
-    Two things about it. The camera row is offered where there is a camera behind
-    the glass, and a desktop's `capture` is ignored by every browser, so the row
-    there would be the Picture row under another name. Dictation is offered, because
-    the browser has a recogniser of its own, and it is the same row doing the same
-    thing to the same note."""
     page = fresh(browser, finger=False, activity=False)
     page.evaluate(SEED, NOTE)
     page.wait_for_timeout(600)
@@ -805,8 +656,6 @@ def on_a_desktop(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # And nothing here has an activity to ask, so the widget and the share are not
-    # asked about either.
     if page.evaluate("() => '__NIB_SYSTEM__' in window"):
         wrong("the drive left an activity behind on a desktop")
 
@@ -816,7 +665,6 @@ def on_a_desktop(browser: Browser) -> None:
     dictation(page, phone=False)
 
     page.context.close()
-
 
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=True, share=SHARE_LINK)
@@ -829,7 +677,6 @@ def drive(browser: Browser) -> None:
     dictation(page, phone=True)
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a phone ---")
@@ -838,7 +685,6 @@ def main() -> int:
         on_a_desktop(browser)
 
     return DRIVE.verdict("what the phone hands over becomes a note, a command or a photograph")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

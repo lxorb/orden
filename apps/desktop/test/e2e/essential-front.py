@@ -1,19 +1,3 @@
-"""An essential says its note's tab in the strip is the one in front (#1110).
-
-An essential kept as a tab in the strip (a double click on its tile, #1051) is that tab
-from then on, and while that tab is in front the tile in the sidebar wears a ring of the
-accent around it - another state than the open one's lift, which is the essential
-shown where a tab shows. This keeps an essential as a tab, holds its tile to the bar
-while the tab is in front and to none once another tab is, and to the lift without the
-bar while the essential itself is shown.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/essential-front.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser
@@ -35,7 +19,6 @@ TILE = """() => {
   const tile = document.querySelector('.tiles .tile')
   return { on: tile.classList.contains('is-on'), front: tile.classList.contains('is-front') && getComputedStyle(tile).outlineStyle === 'solid' }
 }"""
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 800})
@@ -60,7 +43,6 @@ def drive(browser: Browser) -> None:
     say(f"another tab in front: {behind}")
     if behind["front"]:
         wrong("the essential's tile still says its tab is in front with another one there")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "an essential says its tab is in front"))

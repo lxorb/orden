@@ -1,29 +1,3 @@
-"""Dictation into a field, driven (#1128): the AI panel's composer and quick add.
-
-What a unit test cannot show, because it is the browser's own machinery: the page opens
-the microphone, reads its samples at 16 kHz through Web Audio, hears the voice in them,
-and the words arrive in the field while it goes on, under the live words' wash, then
-once more as plain text when it is finished.
-
-- The microphone beside the round button; the first press asks where the voice goes,
-  says a server on this machine keeps it here, and records nothing until it is answered.
-- Live words while the voice goes on, drawn under a wash, with the button wearing the
-  accent and the meter; the final words in their place once it is pressed again, heard
-  whole, as plain text, at the caret after what was typed.
-- Escape while dictating puts the field back; Alt+V held is push-to-talk.
-- Quick add draws the same microphone, and its words land in its line.
-
-Chromium is given a microphone that plays a file (`--use-fake-device-for-media-stream`
-with `--use-file-for-fake-audio-capture`): a tone in bursts with pauses between them, so
-the voice detector has something to hear and somewhere to end a stretch. The reader's own
-transcriber is answered here, at the route OpenAI-compatible servers serve, with words
-that say how long the sound it was sent was.
-
-    python apps/desktop/test/e2e/dictation.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go under `shots/dictation/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -39,8 +13,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: What the transcriber says for a short stretch and for a long one: the live words, and
-#: the whole utterance once it is heard at the end.
 LIVE = "Kannst du"
 WHOLE = "Kannst du bitte den Pull Request reviewen?"
 
@@ -57,11 +29,7 @@ async (base) => {
 
 COMPOSER = ".foot textarea"
 
-
 def bursts(path: Path) -> Path:
-    """A microphone, as a file: four seconds of a voice-loud tone, then a second and a
-    half of a quiet room, at 48 kHz mono, which Chromium loops. The pause is longer than
-    the 0.8 s that ends a stretch of live words."""
     rate = 48_000
     frames = bytearray()
     for at in range(int(rate * 5.5)):
@@ -75,10 +43,7 @@ def bursts(path: Path) -> Path:
     path.write_bytes(head + bytes(frames))
     return path
 
-
 class Transcriber:
-    """The reader's own, answered here: words by how long the sound was, and every
-    request kept, so what was asked can be read back."""
 
     def __init__(self) -> None:
         self.asked: list[dict] = []
@@ -91,7 +56,6 @@ class Transcriber:
             mark = f'name="{name}"'
             if mark in said:
                 fields[name] = said.split(mark, 1)[1].split("\r\n\r\n", 1)[1].split("\r\n", 1)[0]
-        # A WAV of 16 kHz mono is 32 kB a second, after its 44-byte header.
         seconds = max(0, len(body) - 400) / 32_000
         self.asked.append({**fields, "seconds": round(seconds, 2)})
         route.fulfill(
@@ -99,7 +63,6 @@ class Transcriber:
             content_type="application/json",
             body=json.dumps({"text": WHOLE if seconds > 3 else LIVE}),
         )
-
 
 FIELD = """
 (where) => {
@@ -118,10 +81,8 @@ FIELD = """
 }
 """
 
-
 def field(page: Page, where: str = COMPOSER) -> dict:
     return page.evaluate(FIELD, where)
-
 
 def opened(browser: Browser, dark: bool = False) -> tuple[Page, Transcriber]:
     context = browser.new_context(
@@ -142,7 +103,6 @@ def opened(browser: Browser, dark: bool = False) -> tuple[Page, Transcriber]:
     wait_for(page, f"document.activeElement === document.querySelector('{COMPOSER}')", "the composer")
     return page, heard
 
-
 def composer(browser: Browser) -> None:
     say("=== the composer ===")
     page, heard = opened(browser)
@@ -153,7 +113,6 @@ def composer(browser: Browser) -> None:
         return
     shot(page, "01-composer")
 
-    # The first press asks, and nothing is recorded while it does.
     page.click(".foot button.mic")
     wait_for(page, "document.querySelector('.foot [role=dialog]')", "the chooser")
     rows = page.evaluate("() => [...document.querySelectorAll('.foot [role=dialog] button')].map((one) => one.textContent.trim())")
@@ -196,7 +155,6 @@ def composer(browser: Browser) -> None:
         wrong(f"a server on this machine was asked for {final.get('model')!r}")
     shot(page, "04-final")
 
-    # Escape puts the field back as it was.
     say("--- Escape ---")
     before = field(page)["value"]
     page.keyboard.press("Alt+V")
@@ -206,7 +164,6 @@ def composer(browser: Browser) -> None:
     if field(page)["value"] != before:
         wrong(f"Escape did not put the field back: {field(page)['value']!r}")
 
-    # Held, the key is push-to-talk: letting go finishes.
     say("--- held ---")
     page.keyboard.down("Alt")
     page.keyboard.down("v")
@@ -218,7 +175,6 @@ def composer(browser: Browser) -> None:
     if not field(page)["value"].endswith(WHOLE):
         wrong(f"push-to-talk did not write its words: {field(page)['value']!r}")
     page.context.close()
-
 
 def dark(browser: Browser) -> None:
     say("=== the composer in the dark ===")
@@ -234,7 +190,6 @@ def dark(browser: Browser) -> None:
     shot(page, "05-live-dark")
     page.keyboard.press("Escape")
     page.context.close()
-
 
 def quick_add(browser: Browser) -> None:
     say("=== quick add ===")
@@ -262,7 +217,6 @@ def quick_add(browser: Browser) -> None:
         wrong("quick add's dictation never reached the transcriber")
     page.context.close()
 
-
 def main() -> int:
     with tempfile.TemporaryDirectory() as made:
         sound = bursts(Path(made) / "microphone.wav")
@@ -278,7 +232,6 @@ def main() -> int:
             quick_add(browser)
 
     return DRIVE.verdict("dictation into the composer and quick add, live words and final")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,23 +1,3 @@
-"""The small things a writer notices in the first hour, seen in the built app.
-
-  * `#tags` drawn as tags: a pill in the live preview and in the reading view, in
-    both schemes and the contrast theme; never in code or in a link's words; the
-    source again while the caret is in one; a modifier-click in the editor and a
-    click in the reading view ask the space's search about it.
-  * The pointer hides while somebody types in a note and comes back on the first
-    move. Web pages are other processes and cannot be reached from here, which is the
-    point: what this proves is that the app's own page hides it and shows it again.
-  * A quoted comma in a flow list stays one chip through an edit in the rows.
-  * The format bar goes when the tab it was over turns into the reading view.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/writing-feel.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/writing-feel/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -32,9 +12,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 
-
 def shot(page: Page, name: str) -> None:
-    """A picture once the page has stopped moving; see settling.py."""
     quiet(page)
     DRIVE.shot(page, name)
 
@@ -67,7 +45,6 @@ async (note) => {
 
 SAID = "() => window.nibApp.workspace.active?.doc ?? ''"
 
-# Every tag drawn in a surface: its words, its classes, and whether it wears a wash.
 PILLS = """
 (scope) => [...document.querySelectorAll(`${scope} .tag`)].map((one) => {
   const look = getComputedStyle(one)
@@ -158,7 +135,6 @@ def pressing_a_tag(page: Page) -> None:
     page.locator("article#write a.tag[data-tag='reading']").click()
     wait_for(page, "window.nibApp.search.text === 'tag:reading'", "the reading view's press")
 
-    # A real anchor, so the keyboard reaches it and Enter presses it.
     page.evaluate("() => window.nibApp.search.ask('')")
     page.locator("article#write a.tag[data-tag='item']").focus()
     page.keyboard.press("Enter")
@@ -192,7 +168,6 @@ def the_schemes(page: Page) -> None:
 
 
 def the_pointer(page: Page) -> None:
-    # Asked of the page's own answer rather than of the class that gives it.
     hidden = "() => getComputedStyle(document.body).cursor === 'none'"
     under = """
     () => {
@@ -209,7 +184,6 @@ def the_pointer(page: Page) -> None:
     quiet(page)
     is_true(not page.evaluate(hidden), "the pointer was hidden before anything was typed")
 
-    # A shortcut and an arrow are not typing.
     page.keyboard.press("ArrowLeft")
     page.keyboard.press("Control+b")
     page.keyboard.press("Control+b")
@@ -224,7 +198,6 @@ def the_pointer(page: Page) -> None:
     wait_for(page, f"!({hidden.replace('() => ', '')})", "the pointer to come back", patience=3)
     is_true(page.evaluate(under) != "none", "the pointer did not come back after a move")
 
-    # A button held is somebody using the mouse.
     page.mouse.down()
     page.keyboard.type("x")
     is_true(not page.evaluate(hidden), "typing with a button held hid the pointer")

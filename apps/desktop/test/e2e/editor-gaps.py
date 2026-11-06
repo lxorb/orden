@@ -1,34 +1,3 @@
-"""The editor gaps an audit found, driven in the built app.
-
-Seven of them, each one a thing the app claimed and did not do:
-
-- the Links setting reaches the `[[` popup, so a picked link is spelled the way
-  every other link the app writes is - in a nested space, where the three markdown
-  spellings are three different links
-- the card over a `[[link]]` is the linked note, written in where it stands
-- an indented block folds, chevron and all
-- a block of the note's own HTML that runs draws its click-to-load card in the
-  editor, where it used to draw nothing
-- a web card on a canvas is the card it is everywhere else, and pressing it loads
-  the frame there
-- a selection across blocks offers every bulk action, not two
-- `[!important]` and `[!caution]` wear Obsidian's looks, and a callout gets its fold
-  sign from a row rather than by hand
-- a chart asking for a radar gets a radar, and one asking for a kind nib does not
-  draw keeps its own characters
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/editor-gaps.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/editor-gaps/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -41,7 +10,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
-
 
 DEEP = """# Deep note
 
@@ -122,8 +90,6 @@ ROWS = """
 )
 """
 
-# The caret on a line of its own at the end of the note, which is where a link is
-# about to be written.
 FRESH_LINE = """
 () => {
   const doc = window.nib.state.doc
@@ -135,14 +101,11 @@ FRESH_LINE = """
 }
 """
 
-
 def doc(page: Page) -> str:
     return page.evaluate("() => window.nib.state.doc.toString()")
 
-
 def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
-
 
 def rows_holding(page: Page, holds: str, patience: float = 12) -> list[str]:
     until = time.monotonic() + patience
@@ -154,7 +117,6 @@ def rows_holding(page: Page, holds: str, patience: float = 12) -> list[str]:
 
     return rows(page)
 
-
 def open_note(page: Page, path: str) -> None:
     page.evaluate(
         "(path) => window.nibApp.workspace.openEntry(path, { activate: true })",
@@ -162,20 +124,11 @@ def open_note(page: Page, path: str) -> None:
     )
     page.wait_for_timeout(900)
 
-
 def line(page: Page) -> None:
     page.evaluate(FRESH_LINE)
     page.wait_for_timeout(250)
 
-
 def heard(message: object) -> None:
-    """A console error the app said, and not one somebody else's page did.
-
-    This drive presses a card that loads a real provider's page into a sandboxed
-    frame, and that page complains about the permissions it was not granted -
-    `compute-pressure is not allowed in this document`, which is the sandbox
-    working. A frame's document is not this app's, so what it says on the console is
-    the frame's business; anything from the app's own origin is this drive's."""
     if message.type != "error":  # type: ignore[attr-defined]
         return
 
@@ -185,7 +138,6 @@ def heard(message: object) -> None:
         return
 
     wrong(f"console error: {message.text}")  # type: ignore[attr-defined]
-
 
 def fresh(browser: Browser) -> tuple[Page, dict[str, str]]:
     context = browser.new_context(
@@ -204,18 +156,11 @@ def fresh(browser: Browser) -> tuple[Page, dict[str, str]]:
     open_note(page, paths["monday"])
     return page, paths
 
-
-# ── The Links setting, in a nested space ──────────────────────────────
-
-
 def format_to(page: Page, spelling: str) -> None:
     page.evaluate("(one) => window.nibApp.modes.setLinkFormat(one)", spelling)
     page.wait_for_timeout(250)
 
-
 def picked_link(page: Page, typed: str, label: str) -> str:
-    """Types into a fresh line, picks the row whose label matches, and answers with
-    the line that was left behind."""
     line(page)
     page.keyboard.type(typed, delay=35)
     page.wait_for_timeout(500)
@@ -225,7 +170,6 @@ def picked_link(page: Page, typed: str, label: str) -> str:
         wrong(f"[{typed}] offered no row for {label}: {found}")
         return ""
 
-    # The row is not always the first: an alias and a note can both match.
     for _ in range(len(found)):
         if label in (rows(page)[0] if rows(page) else ""):
             break
@@ -235,7 +179,6 @@ def picked_link(page: Page, typed: str, label: str) -> str:
     page.keyboard.press("Enter")
     page.wait_for_timeout(700)
     return doc(page).rstrip("\n").split("\n")[-1]
-
 
 def drive_links(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["monday"])
@@ -262,7 +205,6 @@ def drive_links(page: Page, paths: dict[str, str]) -> None:
     if len(three) != 3:
         wrong(f"the three markdown spellings are not three different links: {three}")
 
-    # A heading picked out of the space-wide list, in the spelling in force.
     format_to(page, "relative")
     heading = picked_link(page, "[[##Next", "Next steps")
     say(f"[[[## relative] {json.dumps(heading)}")
@@ -276,9 +218,6 @@ def drive_links(page: Page, paths: dict[str, str]) -> None:
 
     shot(page, "02-links-heading-and-block")
     format_to(page, "wikilink")
-
-
-# ── The card over a link is the note, editable ────────────────────────
 
 CARD = """
 () => {
@@ -300,13 +239,7 @@ CARD = """
 }
 """
 
-
 def drive_hover(page: Page, paths: dict[str, str]) -> None:
-    """The note behind a link, and a word of it fixed without opening it.
-
-    The pointer has to rest on the link with the modifier down, which is what says
-    "I mean this link"; the card is opened by the editor's own hover, so the drive
-    holds the key and puts the pointer where CodeMirror says the link is."""
     away(page)
     open_note(page, paths["monday"])
 
@@ -355,7 +288,6 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
     if "Something to point at" not in card["said"]:
         wrong(f"the card does not hold what the note says: {card['said']}")
 
-    # The caret into the card, which is what keeps it up.
     page.mouse.click(where["x"], where["y"] + 90)
     page.wait_for_timeout(500)
     page.keyboard.up("Control")
@@ -371,7 +303,6 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
     page.keyboard.type(" and a word more", delay=25)
     page.wait_for_timeout(400)
 
-    # The pointer somewhere else entirely: a card with a caret in it stays up.
     page.mouse.move(40, 600)
     page.wait_for_timeout(900)
     stayed = page.evaluate(CARD)
@@ -399,9 +330,6 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
     if "and a word more" not in (said or ""):
         wrong(f"what was typed in the card never reached the note: {json.dumps(said)}")
 
-
-# ── An indented block folds ───────────────────────────────────────────
-
 INDENTED = """
 () => {
   const doc = window.nib.state.doc
@@ -420,7 +348,6 @@ CHEVRONS = """
   fold: !!line.querySelector('.nib-fold'),
 }))
 """
-
 
 def drive_fold(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["monday"])
@@ -461,9 +388,6 @@ def drive_fold(page: Page, paths: dict[str, str]) -> None:
     if not any("an indented" in one for one in folded):
         wrong("folding took the line that owns the fold with it")
 
-
-# ── A block of the note's own HTML ────────────────────────────────────
-
 CARDS = """
 () => [...document.querySelectorAll('#write .embed-web')].map((one) => {
   const box = one.getBoundingClientRect()
@@ -476,7 +400,6 @@ CARDS = """
   }
 })
 """
-
 
 def drive_html(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["html"])
@@ -507,9 +430,6 @@ def drive_html(page: Page, paths: dict[str, str]) -> None:
     if not loaded or not loaded["frame"]:
         wrong("pressing the card loaded no frame")
 
-
-# ── A web card on a canvas ────────────────────────────────────────────
-
 CANVAS_CARDS = """
 () => [...document.querySelectorAll('.card .embed-web')].map((one) => {
   const box = one.getBoundingClientRect()
@@ -523,13 +443,7 @@ CANVAS_CARDS = """
 })
 """
 
-
 def drive_canvas(page: Page) -> None:
-    """A card on a canvas holding a web embed: the same card, and a press that
-    loads it.
-
-    The plane is written through the workspace rather than drawn by hand, because a
-    canvas is a file and what is being checked is the card inside one."""
     away(page)
     page.evaluate(
         """() => {
@@ -578,31 +492,24 @@ def drive_canvas(page: Page) -> None:
     if not after or not after[0]["frame"]:
         wrong("pressing the card on the canvas loaded no frame")
 
-
-# ── Bulk actions over several blocks ──────────────────────────────────
-
 MENU = """
 () => [...document.querySelectorAll('.nib-layer .nib-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
 
-# The sheet a menu row opens: a field over a list that narrows as it is typed into.
 SHEET = """
 () => [...document.querySelectorAll('.nib-screen.sheet .found-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
 
-# Whatever is over the app, gone: a sheet left open puts a scrim over everything
-# under it, and the next right-click would land on the scrim.
 AWAY = """
 () => {
   document.activeElement instanceof HTMLElement && document.activeElement.blur()
   return document.querySelectorAll('.nib-scrim').length
 }
 """
-
 
 def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["monday"])
@@ -645,7 +552,6 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     if not any("blocks" in one for one in offered):
         wrong(f"the menu does not say how many blocks it is about: {offered}")
 
-    # Turn into, through the sheet the row opens.
     press_row(page, "Turn into")
     page.wait_for_timeout(900)
     choices = page.evaluate(SHEET)
@@ -656,7 +562,6 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
         if not any(wanted in one for one in choices):
             wrong(f"Turn into does not offer {wanted}: {choices}")
 
-    # Typed into rather than pointed at, because narrowing is what the list is for.
     page.keyboard.type("numbered", delay=35)
     page.wait_for_timeout(500)
     narrowed = page.evaluate(SHEET)
@@ -673,7 +578,6 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     if "1. one" not in written or "2. two" not in written or "3. three" not in written:
         wrong(f"turning three blocks into a numbered list wrote {json.dumps(written)}")
 
-    # Indent and Move, over the same three.
     page.mouse.click(box["x"], box["y"], button="right")
     page.wait_for_timeout(500)
     press_row(page, "Indent")
@@ -683,9 +587,6 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     shot(page, "12-bulk-indented")
     if not indented.startswith(" ") and not indented.startswith("\t"):
         wrong(f"Indent over three blocks indented nothing: {json.dumps(indented)}")
-
-
-# ── Callouts ──────────────────────────────────────────────────────────
 
 CALLOUT_LOOKS = """
 () => [...document.querySelectorAll('.cm-line')]
@@ -697,9 +598,7 @@ CALLOUT_LOOKS = """
   }))
 """
 
-
 def press_row(page: Page, label: str) -> None:
-    """Presses the row of the menu that is on screen whose words are exactly these."""
     page.evaluate(
         """(label) => {
           const row = [...document.querySelectorAll('.nib-layer .nib-row')].find(
@@ -709,10 +608,7 @@ def press_row(page: Page, label: str) -> None:
         label,
     )
 
-
 def away(page: Page) -> None:
-    """Whatever is over the app, gone. A sheet left open lays a scrim over
-    everything under it, and the next press would land on the scrim."""
     for _ in range(3):
         if page.evaluate(AWAY) == 0:
             return
@@ -722,7 +618,6 @@ def away(page: Page) -> None:
     left = page.evaluate(AWAY)
     if left:
         wrong(f"{left} scrims are still over the app")
-
 
 def drive_callouts(page: Page, paths: dict[str, str]) -> None:
     away(page)
@@ -749,7 +644,6 @@ def drive_callouts(page: Page, paths: dict[str, str]) -> None:
     if tip and important["accent"] != tip["accent"]:
         wrong("[!important] is not the colour tip is")
 
-    # And the fold sign, from a row rather than by hand.
     page.evaluate(
         """() => {
           const text = window.nib.state.doc.toString()
@@ -791,9 +685,6 @@ def drive_callouts(page: Page, paths: dict[str, str]) -> None:
     if "[!important]-" not in written:
         wrong(f"the fold sign was not written: {json.dumps(written[:80])}")
 
-
-# ── Charts ────────────────────────────────────────────────────────────
-
 CHART_SHAPES = """
 () => ({
   figures: [...document.querySelectorAll('#write .chart')].map((one) => one.dataset.kind),
@@ -803,7 +694,6 @@ CHART_SHAPES = """
     one.textContent.includes('bubble')).length,
 })
 """
-
 
 def drive_charts(page: Page, paths: dict[str, str]) -> None:
     away(page)
@@ -822,7 +712,6 @@ def drive_charts(page: Page, paths: dict[str, str]) -> None:
         wrong("a kind nib does not draw came out as a bar chart")
     if found["fences"] == 0:
         wrong("the fence asking for a kind nib does not draw shows nothing at all")
-
 
 def drive(browser: Browser) -> None:
     page, paths = fresh(browser)
@@ -846,10 +735,8 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "every gap the audit found is closed in the built app")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

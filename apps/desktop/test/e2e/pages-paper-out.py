@@ -152,7 +152,6 @@ async (src) => {
 }
 """
 
-
 def exported(page: Page, row: str) -> bytes:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector(".palette input")
@@ -164,7 +163,6 @@ def exported(page: Page, row: str) -> bytes:
     with page.expect_download(timeout=30000) as asked:
         page.keyboard.press("Enter")
     return asked.value.path().read_bytes()
-
 
 def opened_with_ink(page: Page, name: str, paper: str) -> None:
     page.evaluate(IMPORT, {"base64": paper, "name": name})
@@ -181,13 +179,11 @@ def opened_with_ink(page: Page, name: str, paper: str) -> None:
     page.keyboard.press("v")
     page.wait_for_timeout(300)
 
-
 def looked_at(page: Page, name: str, mime: str, body: bytes) -> int:
     src = f"data:{mime};base64,{base64.b64encode(body).decode()}"
     dark = page.evaluate(DARK, src)
     say(f"{name}: {dark} dark pixels")
     return dark
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
@@ -224,7 +220,6 @@ def drive(browser: Browser) -> None:
     for name in sorted(one for one in pictures.namelist() if one.endswith(".png")):
         if looked_at(page, name, "image/png", pictures.read(name)) > 5000:
             wrong(f"the locked paper's page came out in {name}")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

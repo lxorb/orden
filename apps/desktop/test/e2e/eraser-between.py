@@ -8,7 +8,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
-
 def strokes(page: Page) -> list[list[float]]:
     return page.evaluate(
         """async () => {
@@ -17,7 +16,6 @@ def strokes(page: Page) -> list[list[float]]:
           return (JSON.parse(words).nib?.ink ?? []).map((one) => one.points)
         }"""
     )
-
 
 def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     say(f"a {kind} pass across the middle of a line, on a {maker}, cuts a hole in it")
@@ -64,7 +62,6 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
         "the line whole again after one undo",
     )
 
-
 def scrolled_under(page: Page) -> None:
     say("a page scrolled under a held eraser cuts nothing it did not touch")
     page.evaluate("async () => { const ws = window.nibApp.workspace; await ws.createPages(ws.activeSpace.root, 'scrolled') }")
@@ -92,7 +89,6 @@ def scrolled_under(page: Page) -> None:
     if len(left) != 1:
         wrong(f"a held eraser cut {len(left)} pieces out of ink it never touched")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -101,7 +97,6 @@ def drive(browser: Browser) -> None:
     pass_over(page, "slow", "createPages")
     pass_over(page, "quick", "createPages")
     scrolled_under(page)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

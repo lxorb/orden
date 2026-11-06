@@ -1,12 +1,3 @@
-"""The first tab with nothing ahead of it stands at its pane's edge (#1139).
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/first-tab-edge.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -36,15 +27,12 @@ LOOK = """() => [...document.querySelectorAll('.tabs')].map((strip) => {
   }
 })"""
 
-
 def strips(page: Page) -> dict[str, dict]:
     page.wait_for_timeout(600)
     return {one["id"]: one for one in page.evaluate(LOOK)}
 
-
 def pane_ids(page: Page) -> list[str]:
     return page.evaluate("() => window.nibApp.workspace.panes.all.map((one) => one.id)")
-
 
 def flush(label: str, one: dict, squared: bool) -> None:
     say(f"[{label}] {one}")
@@ -57,7 +45,6 @@ def flush(label: str, one: dict, squared: bool) -> None:
     if squared and one["corner"] != 0:
         wrong(f"[{label}] the pane's corner under the tab is {one['corner']}px round, not square")
 
-
 def flared(label: str, one: dict, corner: float | None = None) -> None:
     say(f"[{label}] {one}")
     if not (one["ahead"] and one["behind"]):
@@ -66,7 +53,6 @@ def flared(label: str, one: dict, corner: float | None = None) -> None:
         wrong(f"[{label}] the tab in front stands at the pane's edge though something is ahead of it")
     if corner is not None and one["corner"] != corner:
         wrong(f"[{label}] the pane's corner is {one['corner']}px, not its card's {corner}px")
-
 
 def opened(browser: Browser, *scripts: str) -> Page:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 700})
@@ -77,12 +63,10 @@ def opened(browser: Browser, *scripts: str) -> Page:
     DRIVE.open_note(page, "Alpha")
     return page
 
-
 def split(page: Page, along: str) -> list[str]:
     page.evaluate(f"() => window.nibApp.workspace.split('{along}')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "the split")
     return pane_ids(page)
-
 
 def drive(browser: Browser) -> None:
     for mode, scripts in (("fit", ()), ("uniform", ("localStorage.setItem('nib:fit-tabs', 'no')",))):
@@ -128,7 +112,6 @@ def drive(browser: Browser) -> None:
     flush("right to left, row, the second strip", strips(page)[second], squared=True)
     DRIVE.shot(page, "rtl-row")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the first tab with nothing ahead of it stands at its pane's edge"))

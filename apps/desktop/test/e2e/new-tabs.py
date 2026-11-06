@@ -1,38 +1,3 @@
-"""A new tab: what kind, where it comes from, and what it costs on disk.
-
-What it proves, in order:
-
-* **Ctrl+Shift+P** opens the palette already on the commands - a `>` in the field with
-  the caret after it - from a note and from the file list alike, and a second press puts
-  the mark in front of whatever is typed, once. Escape closes it.
-* **Paragraph needs no chord**: Ctrl+1 on a line that is already a first-level heading
-  turns it back into prose, and again makes it a heading. That is what freed
-  Ctrl+Shift+P for the palette.
-* **Ctrl+T is a new tab** (Emil, issue #213), called New tab (issue #241): a web tab
-  whose address field has the keyboard, and under it the kinds a tab can be, in three lines, each with its letter.
-  A letter typed is the address field's; once Escape has let go of the field, the letter
-  makes its kind, in the new tab's place. The plus makes the same tab, and hangs no menu.
-* **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
-  website open with no file in the space and no row in the list.
-* **A new tab waits for a place**: a new note typed into is still a tab with no file and a
-  dot after its name; Ctrl+S asks where, in the layer under the tab, and Enter writes it
-  there under its first line; Ctrl+S on a note with a file asks nothing; a web tab wears no
-  dot, and Ctrl+S and Enter write its shortcut.
-* **A pane with nothing open** shows those same kinds as cards, with the keyboard on
-  the first, and pressing one or its letter makes that kind; Ctrl+T over it is a new tab.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/new-tabs.py
-
-Screenshots go beside this file under `shots/new-tabs/`, which is ignored. It fails
-loudly: anything wrong is printed at the end and the exit code says so.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
@@ -43,7 +8,6 @@ DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 SHOTS = DRIVE.shots
-
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -60,7 +24,6 @@ async () => {
 }
 """
 
-# What the app is showing, as plainly as it can be asked.
 STATE = """
 () => {
   const ws = window.nibApp.workspace
@@ -72,7 +35,6 @@ STATE = """
 }
 """
 
-# Whether the tab in front wears the dot a tab with no file wears; see UnsavedDot.svelte.
 DOTTED = """
 () => {
   const id = window.nibApp.workspace.active?.id
@@ -80,7 +42,6 @@ DOTTED = """
 }
 """
 
-# The line the caret is in, so a key that is the editor's can be seen to have been.
 LINE = """
 () => {
   const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
@@ -90,7 +51,6 @@ LINE = """
 }
 """
 
-# The palette's field and where the caret is in it, which is the whole of the design.
 FIELD = """
 () => {
   const input = document.querySelector('.palette input')
@@ -98,8 +58,6 @@ FIELD = """
 }
 """
 
-# The new tab in front: whether it is one, where the keyboard is, and the cards under it,
-# line by line.
 NEW_TAB = """
 () => {
   const ws = window.nibApp.workspace
@@ -119,7 +77,6 @@ NEW_TAB = """
 }
 """
 
-# What the tab in front is called, in the strip and on the window.
 CALLED = """
 () => {
   const id = window.nibApp.workspace.active?.id
@@ -153,22 +110,13 @@ HERE = """
 """
 
 def settles(page, condition: str, patience: int = 2000) -> bool:
-    """Whether `condition` comes true within `patience` milliseconds.
-
-    A layer on its way out is still in the page while it plays its way out
-    (`LAYER.rise`, 190 ms, in src/lib/motion.ts), so a flat sleep a little longer than
-    that races it: the palette measured 218 to 235 ms from Escape to gone on an idle
-    machine, and a busy one lost to the 260 ms this used to sleep about one run in
-    three. So the drive waits for the thing itself, as settling.py says."""
     try:
         page.wait_for_function(condition, timeout=patience)
     except PlaywrightTimeout:
         return False
     return True
 
-
 def palette(page) -> None:
-    """Ctrl+Shift+P, from a note and from the file list."""
     say("--- Ctrl+Shift+P ---")
 
     page.keyboard.press("Control+Shift+KeyP")
@@ -194,8 +142,6 @@ def palette(page) -> None:
     if not settles(page, f"() => ({FIELD})() === null"):
         wrong("Escape did not close the palette")
 
-    # The file list is a surface with keys of its own, and this chord is the app's: it
-    # is read off the window, so it answers there too.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     row = page.locator(".nib-row").first
@@ -214,9 +160,7 @@ def palette(page) -> None:
     if not settles(page, f"() => ({FIELD})() === null"):
         wrong("Escape did not close the palette over the file list")
 
-
 def heading_key(page) -> None:
-    """The key that made a heading unmakes it, which is why Paragraph needs no chord."""
     say("--- the heading key undoes itself ---")
 
     page.evaluate(
@@ -243,18 +187,13 @@ def heading_key(page) -> None:
     else:
         say(f"Control+1 again        -> {page.evaluate(LINE)!r}")
 
-
-# The kinds a browser build offers, line by line: no shell of its own, so the middle line
-# is the online terminal and an application (docs/apps.md), and no private tab.
 LINES = [
     ["New note", "New canvas", "New page note"],
     ["Online terminal", "New application"],
     ["New web note"],
 ]
 
-
 def chooser(page) -> None:
-    """Ctrl+T, a new tab: its address field, and the kinds under it (issue #213)."""
     say("--- Ctrl+T ---")
 
     before = len(page.evaluate(STATE)["tabs"])
@@ -277,7 +216,6 @@ def chooser(page) -> None:
         say(f"the lines              -> {new['lines']}")
     if new["letters"] != ["N", "C", "P", "O", "A", "W"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
-    # Issue #241: called what it is, in the strip and on the window, as a browser's is.
     settles(page, f"() => ({CALLED})().title === 'New tab'")
     called = page.evaluate(CALLED)
     if called != {"label": "New tab", "title": "New tab"}:
@@ -286,7 +224,6 @@ def chooser(page) -> None:
         say("its name               -> New tab, in the strip and on the window")
     page.screenshot(path=str(SHOTS / "new-tab.png"))
 
-    # A letter typed is the address's, and makes nothing.
     page.keyboard.press("KeyC")
     page.wait_for_timeout(300)
     new = page.evaluate(NEW_TAB)
@@ -296,8 +233,6 @@ def chooser(page) -> None:
         say("C in the field         -> the address's, nothing made")
     page.keyboard.press("Backspace")
 
-    # Escape lets go of the field, and the letter is then the card's: a plane, in the new
-    # tab's place, with no empty web tab left behind it.
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     page.keyboard.press("KeyC")
@@ -309,7 +244,6 @@ def chooser(page) -> None:
     else:
         say("Escape, C              -> a plane, where the new tab was")
 
-    # The plus: the same new tab, and no menu hung from it.
     say("--- the plus ---")
     before = len(page.evaluate(STATE)["tabs"])
     page.locator(".strip button.new").first.click()
@@ -323,10 +257,6 @@ def chooser(page) -> None:
     else:
         say("the plus               -> a new tab, no menu")
 
-    # A press on a card is the same as its letter: a web note lands on the search
-    # engine this device chose, in this new tab's place, as a browser's new tab does.
-    # Emil, #354; see the web row in new-kinds.ts. It used to make a fresh new tab, the
-    # same card again, which was a press that answered nothing.
     page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
     settles(page, f"() => window.nibApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
     state = page.evaluate(STATE)
@@ -342,9 +272,7 @@ def chooser(page) -> None:
     page.keyboard.press("Control+KeyW")
     page.wait_for_timeout(300)
 
-
 def unsaved(page) -> None:
-    """Each kind, as a tab with nothing behind it."""
     say("--- a tab of each kind, and nothing on disk ---")
 
     files = page.evaluate(STATE)["files"]
@@ -353,7 +281,6 @@ def unsaved(page) -> None:
         ("pages", "New page note"),
         ("web", "New web note"),
     ):
-        # A new tab, and the card pressed on it.
         page.keyboard.press("Control+KeyT")
         page.locator(f'[data-new-here] .kind:has-text("{row}")').first.click()
         page.wait_for_timeout(800)
@@ -369,15 +296,9 @@ def unsaved(page) -> None:
     say(f"the strip              -> {[one['shown'] for one in page.evaluate(STATE)['tabs']]}")
     page.screenshot(path=str(SHOTS / "unsaved-tabs.png"))
 
-
 def saving(page) -> None:
-    """A new tab waits for a place: typed into, it is still a tab with a dot; Ctrl+S asks
-    where, Enter writes it; a note with a file asks nothing; a web tab wears no dot and
-    is saved the same way."""
     say("--- saving: a place for a new tab, Ctrl+S, a web tab ---")
 
-    # Ctrl+S on a plane nobody has drawn on: the layer that asks where, and nothing
-    # written until it is answered. Escape leaves it as it was.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -397,7 +318,6 @@ def saving(page) -> None:
     else:
         say("Control+S on a plane   -> asked where, nothing written")
 
-    # A new note, typed into: still a tab, with the dot after its name.
     page.evaluate("() => window.nibApp.workspace.openBlank()")
     page.wait_for_timeout(400)
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
@@ -432,7 +352,6 @@ def saving(page) -> None:
     else:
         say("Control+S on a note    -> nothing asked")
 
-    # A web tab: no dot, and Ctrl+S and Enter write its shortcut.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -453,9 +372,7 @@ def saving(page) -> None:
     )
     say(f"Control+S on a web tab -> {page.evaluate(STATE)['active']['path']}")
 
-
 def nothing_open(page) -> None:
-    """Closing everything, and the buttons that answer."""
     say("--- nothing open ---")
 
     page.evaluate(
@@ -482,18 +399,11 @@ def nothing_open(page) -> None:
     else:
         say("the keyboard           -> on New note, the first")
 
-    # One set, at one size. Emil, 2026-09-17: *"the icons in these buttons are not
-    # properly aligned"* - and every one of them was centred: what differed was how
-    # much of its grid each drawing filled, which at this size reads as the canvas
-    # sitting oddly. A width may differ, because a page is a portrait shape; the
-    # height and where it starts may not. See file-mark.ts.
     marks = here["marks"]
     say(f"the marks              -> {marks}")
     if any(one is None for one in marks):
         wrong(f"a button wears no mark at all: {marks}")
     else:
-        # The file marks, which is what file-mark.ts holds to one height: the online
-        # terminal wears a drawing of its own (a cloud is wider than it is tall).
         files = [one for one, name in zip(marks, here["buttons"]) if name != "Online terminal"]
         sizes = {(one["top"], one["tall"]) for one in files}
         if len(sizes) != 1:
@@ -526,10 +436,7 @@ def nothing_open(page) -> None:
 
     held_over_the_buttons(page)
 
-
 def held_over_the_buttons(page) -> None:
-    """Ctrl+T over a pane with nothing open: a new tab, as anywhere, and a letter on the
-    empty pane's own cards makes its kind straight away."""
     say("--- Ctrl+T over an empty pane ---")
 
     page.evaluate(
@@ -540,7 +447,6 @@ def held_over_the_buttons(page) -> None:
     )
     page.wait_for_timeout(800)
 
-    # The keyboard is on the first card already, so a letter is the card's.
     page.keyboard.press("KeyP")
     if not settles(page, "() => window.nibApp.workspace.active?.kind === 'pages'"):
         wrong(f"P over an empty pane made no page note: {page.evaluate(STATE)['active']}")
@@ -560,7 +466,6 @@ def held_over_the_buttons(page) -> None:
     else:
         say("Control+T              -> a new tab, as anywhere")
     page.screenshot(path=str(SHOTS / "over-nothing-open.png"))
-
 
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -592,13 +497,11 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "after.png"))
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict("everything the drive checked was right")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

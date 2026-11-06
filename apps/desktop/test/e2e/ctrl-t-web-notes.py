@@ -1,23 +1,3 @@
-"""Ctrl+T's address field offers the space's web notes (#1059), light and dark.
-
-What it proves, and photographs:
-
-* **Found by name**: a few letters of a web note's name list it under the field, marked
-  Saved, with the letters typed drawn stronger.
-* **Found by address, with a slip**: a word of its address, typed with a letter wrong,
-  finds it too.
-* **Opened as the note**: Enter on it asks for the note in the new tab's place. (The
-  browser build opens no web note in a tab of its own, so the store's answer is the
-  desktop's, and web-notes.test.ts holds the switch to one already open.)
-
-From the repository root:
-
-    python apps/desktop/test/e2e/ctrl-t-web-notes.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/ctrl-t-web-notes/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -69,7 +49,6 @@ STATE = """
 }
 """
 
-# What the field asks of the store, written down rather than done.
 SPY = """
 () => {
   const ws = window.nibApp.workspace
@@ -87,25 +66,21 @@ ROWS = """
 }))
 """
 
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
 
-
 def new_tab(page: Page) -> None:
     page.keyboard.press("Control+KeyT")
     wait_for(page, f"({STATE})().newTab", "a new tab")
     page.wait_for_timeout(300)
 
-
 def typed(page: Page, letters: str) -> list[dict]:
     page.keyboard.type(letters, delay=20)
     page.wait_for_timeout(300)
     return page.evaluate(ROWS)
-
 
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, color_scheme=scheme, viewport={"width": 1180, "height": 760})
@@ -133,9 +108,6 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shot(page, f"{scheme}-by-address")
 
-    # A web note opens only in the desktop app, which has pages to open it in; the
-    # browser build hands a website to the browser. So what the field asks of the store
-    # is what is checked here: the note, in the new tab's place.
     page.evaluate(SPY)
     page.keyboard.press("ArrowDown")
     page.keyboard.press("Enter")
@@ -148,14 +120,12 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, "light")
         drive(browser, "dark")
 
     return DRIVE.verdict("Ctrl+T finds the space's web notes and opens them")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

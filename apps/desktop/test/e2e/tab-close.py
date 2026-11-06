@@ -1,33 +1,3 @@
-"""A tab closed with its cross, frame by frame.
-
-Emil, 2026-10-03: *"the tab close animation is a bit buggy."* Chrome's close is the one
-held to (docs/chrome-tabs.md, Closing and Motion): the closed tab shrinks to nothing where
-it stood, the tabs after it slide in at the same pace, and while the pointer stays on the
-strip every other tab keeps its width, so the next cross is already under it. What was
-wrong was the closed tab going on being drawn as the one in front - two fills and two pairs
-of feet for the whole shrink, the flash - with its lit cross riding the shrinking edge.
-
-What this watches, every frame from the press to the end, in the light and the dark, with
-the tabs drawn as their marks and as Chrome draws them:
-
-  - never two tabs drawn in front, and the closed one never with a fill;
-  - the closed tab's trailing edge and the next tab's leading edge together within a
-    pixel or two the whole way, so nothing jumps and no gap opens;
-  - every other tab's width the same from the first frame to the last - but, where every
-    tab not in front is its mark alone (#1041, on out of the box), the one that comes in
-    front and the one the pointer comes to rest on, which open out to their names;
-  - drawn as Chrome draws them, a second press where the first one was closes the next
-    tab, which is what holding the widths is for. Drawn as marks there is no next cross
-    under the pointer: the closed tab was the wide one in front, and what slides under
-    the pointer is a mark, which opens out to its name as any mark under it does.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tab-close.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/tab-close/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -39,16 +9,8 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 NAMES = [f"Note {letter}" for letter in "ABCDEFGHIJKL"]
 
-#: How far apart the closed tab's edge and the next one's may be read in any frame. Both
-#: move by the strip's one transition, the closed tab's width and the next tab's
-#: transform, and Chromium reads them together to the pixel (#384).
 PARTED = 3
 
-# Twelve notes in the space, each in a tab of its own: narrower than they would like in a
-# window this size, which is when a close holds the widths - and still wide enough for an
-# inactive tab to draw its cross (68 of contents, docs/chrome-tabs.md), which in the 1000
-# this was written for they no longer were once the window's top row took the strip's
-# ends for its own buttons (#1037).
 SEED = """
 async (names) => {
   const ws = window.nibApp.workspace
@@ -63,8 +25,6 @@ async (names) => {
 }
 """
 
-# Every frame from now: each tab's box, whether it is drawn in front or on its way out, and
-# whether its body is filled.
 WATCH = """
 () => {
   window.__frames = []
@@ -87,15 +47,12 @@ WATCH = """
 }
 """
 
-
 def tab(name: str) -> str:
     return f'.tab:has(.label:text-is("{name}"))'
-
 
 def frames(page: Page) -> list[list[dict]]:
     wait_for(page, "window.__frames && window.__frames.length >= 40", "forty frames")
     return page.evaluate("() => window.__frames")
-
 
 def closing(page: Page, look: str, icons: bool) -> None:
     page.emulate_media(color_scheme=look)  # type: ignore[arg-type]
@@ -118,8 +75,6 @@ def closing(page: Page, look: str, icons: bool) -> None:
     seen = frames(page)
 
     first = {one["name"]: one["width"] for one in seen[0] if one["name"] != "Note D"}
-    # The tab that comes in front of the closed one. Drawn as Chrome draws tabs, it holds
-    # its width like the rest; drawn as marks, it opens out to its name.
     front = next((one["name"] for one in seen[-1] if one["active"]), None)
     say(f"[{scheme}] in front after the close: {front}")
     if icons and front in first:
@@ -149,9 +104,6 @@ def closing(page: Page, look: str, icons: bool) -> None:
                 wrong(f"[{scheme}] frame {at}: {one['name']} went from {held} to {one['width']} wide")
                 return
     say(f"[{scheme}] the closed tab's edge and the next one's: at most {worst:.1f} px apart")
-    # Said and not held in WebKit, which draws the transform on its compositor, on a
-    # clock of its own: what the page reads of it mid-flight is the page's idea of it,
-    # anywhere from 0.3 to 5 px off the width read beside it in the same frame (#384).
     if worst > PARTED and not WEBKIT:
         wrong(f"[{scheme}] the closed tab and the next one parted by {worst:.1f} px")
 
@@ -159,7 +111,6 @@ def closing(page: Page, look: str, icons: bool) -> None:
         page.mouse.move(x, y + 300)
         return
 
-    # The next cross is where this one was: a second press closes Note E.
     page.mouse.down()
     page.mouse.up()
     wait_for(page, "!window.nibApp.workspace.tabs.some((one) => one.shown === 'Note E')", "Note E to close")
@@ -171,7 +122,6 @@ def closing(page: Page, look: str, icons: bool) -> None:
     page.wait_for_timeout(500)
     DRIVE.shot(page, f"{scheme}-02-let-out")
 
-
 def drive(browser: Browser) -> None:
     for icons in (True, False):
         for scheme in ("light", "dark"):
@@ -182,7 +132,6 @@ def drive(browser: Browser) -> None:
             DRIVE.open(page)
             closing(page, scheme, icons)
             page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a closed tab shrinks out of the way, and the rest hold still"))

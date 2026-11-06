@@ -1,18 +1,3 @@
-"""Settings > AI with several accounts of a provider, and the palette's switch.
-
-Seeds the accounts a reader with two Claude Code sign-ins, a work key and an OpenAI key
-would have (in a browser they are this tab's own storage, `nib:ai-accounts`; see
-src/lib/ai/accounts-file.ts), opens Settings > AI, and checks what docs/ai.md says the
-page is: every account a card of its own under its provider's name and logo (#1150), the one of
-Claude's in use marked on its card; a press on Use moving the provider and the mark to
-another account; the palette offering `AI account: Claude · ...` with the one in use ticked; and
-Access under the accounts, where an old link to Agents lands.
-
-    python apps/desktop/test/e2e/ai-accounts.py
-
-Screenshots go beside this file under `shots/ai-accounts/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,13 +22,11 @@ ACCOUNTS = {
     "uses": {},
 }
 
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 
 def drive(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 860}, reduced_motion="reduce")
@@ -99,9 +82,6 @@ def drive(browser) -> None:
     check("the account in use is marked on its card", "using" in (in_use.get_attribute("class") or "") and in_use.get_by_text("In use", exact=True).count() == 1)
     check("only one card is marked", sheet.locator(".card.using").count() == 1)
     check("the other can be switched to", sheet.locator('.card[data-account="anthropic-2"]').get_by_role("button", name="Use", exact=True).count() == 1)
-    # Access is fetched as the page opens (`{#await import(...)}` in SettingsPanel.svelte),
-    # so it is waited for: counted at once it was missing whenever the fetch took longer
-    # than the page took to settle, which WebKit's did now and then (#446).
     try:
         sheet.get_by_text("Access", exact=True).first.wait_for(timeout=10_000)
         access = True
@@ -130,7 +110,6 @@ def drive(browser) -> None:
     page.evaluate("window.nibApp.settings.show('agents')")
     quiet(page)
     check("an old link to Agents lands on AI", page.locator(".sheet").get_by_text("Accounts", exact=True).count() == 1)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "settings > ai holds several accounts of a provider"))

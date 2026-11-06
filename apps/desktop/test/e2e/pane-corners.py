@@ -1,25 +1,3 @@
-"""What floats in a note's corners stays inside the note's pane (#1076).
-
-A page note's page counter sat in the window's bottom-right corner, measured against the
-document beside the sidebars rather than against the pane, so the right side, once open,
-was drawn over it. The status bar - the counter, the word count, the vim mode - and on a
-touch screen the round new-note button are now the focused pane's (pane-corners.svelte.ts).
-What this checks, in the built web app:
-
-  * a page note with the right side open: the counter's box is inside the pane and
-    touches nothing of the right side
-  * the same with the left side open as well, and in a narrow window
-  * two panes side by side: the counter is in the pane with the keyboard, and follows the
-    keyboard to the other pane
-  * a word note: its bar's box inside the pane with the right side open
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/pane-corners.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -29,8 +7,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-# The boxes that matter: the focused pane, the right side, the left side, the bar and the
-# counter in it.
 LOOK = """
 () => {
   const box = (one) => {
@@ -53,7 +29,6 @@ LOOK = """
 }
 """
 
-
 def inside(inner: dict, outer: dict) -> bool:
     return (
         inner["left"] >= outer["left"] - 0.5
@@ -62,7 +37,6 @@ def inside(inner: dict, outer: dict) -> bool:
         and inner["bottom"] <= outer["bottom"] + 0.5
     )
 
-
 def meets(one: dict, other: dict) -> bool:
     return not (
         one["right"] <= other["left"]
@@ -70,7 +44,6 @@ def meets(one: dict, other: dict) -> bool:
         or one["bottom"] <= other["top"]
         or other["bottom"] <= one["top"]
     )
-
 
 def checked(page: Page, label: str, what: str = "counter") -> dict:
     said = page.evaluate(LOOK)
@@ -89,7 +62,6 @@ def checked(page: Page, label: str, what: str = "counter") -> dict:
         wrong(f"[{label}] the {what} {thing} is under the left side {said['left']}")
     return said
 
-
 def page_note(page: Page) -> None:
     there = "window.nibApp.workspace.active?.path?.endsWith('.pages')"
     for _try in range(4):
@@ -102,7 +74,6 @@ def page_note(page: Page) -> None:
     page.wait_for_selector(".pages", timeout=15000)
     wait_for(page, "!!document.querySelector('footer[data-region=\"status\"] .page')", "the counter")
 
-
 def right_open(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -113,7 +84,6 @@ def right_open(page: Page) -> None:
     )
     wait_for(page, "!!document.querySelector('.panels.right.open')", "the right side open")
     page.wait_for_timeout(400)
-
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 800}, reduced_motion="reduce")
@@ -135,7 +105,6 @@ def drive(browser: Browser) -> None:
     page.set_viewport_size({"width": 1280, "height": 800})
     page.wait_for_timeout(400)
 
-    # Split: the page note beside a copy of it, the keyboard first in one, then the other.
     page.evaluate("() => window.nibApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "the split")
     for at in (0, 1):
@@ -145,7 +114,6 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(400)
         checked(page, f"split, pane {at + 1} focused")
 
-    # A word note, whose bar holds the counts: hovered so they show.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -159,7 +127,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(400)
     checked(page, "a word note, the right side open", "bar")
     context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the note's corners stay inside its pane"))

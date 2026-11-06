@@ -23,7 +23,6 @@ SETUP = """(base) => {
 IDLE = "() => !document.querySelector('.ask .go[aria-label=\"Stop\"]')"
 PANEL = "document.querySelector('.ask')?.innerText ?? ''"
 
-
 class Model(http.server.BaseHTTPRequestHandler):
 
     mode = "whole"
@@ -78,18 +77,15 @@ class Model(http.server.BaseHTTPRequestHandler):
         except OSError:
             return
 
-
 def send(page: Page, words: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.type(words, delay=1)
     page.keyboard.press("Enter")
 
-
 def panel_says(page: Page, *words: str) -> None:
     page.wait_for_function(
         f"(words) => words.every((one) => ({PANEL}).includes(one))", arg=list(words), timeout=30000
     )
-
 
 def drive(browser: Browser) -> None:
     origin = DRIVE.side(Model)
@@ -149,7 +145,6 @@ def drive(browser: Browser) -> None:
     Model.words = ["Going ", "on."]
     send(page, "go on")
     panel_says(page, "a long one", "Going on.")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

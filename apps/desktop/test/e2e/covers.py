@@ -1,26 +1,3 @@
-"""Page covers, seen in the built app: the band of picture across the top of a note.
-
-Four claims, each checked against the real editor, the real reading view and the
-real export rather than against a string:
-
-  * A note that says `cover:` in its front matter is drawn with a banner at the top
-    of it in the editor's live preview, above the properties, and the banner stays
-    there while the caret is inside the front matter - which is where the rows give
-    way to the YAML.
-  * Dragging the band writes `cover-position:` back into the note, as one whole
-    number and one thing to undo.
-  * The same note read rather than written draws the same banner.
-  * And a note that names no cover is drawn exactly as it was before any of this:
-    the same pixels, byte for byte, in the editor and in the reading view.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/covers.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/covers/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -35,12 +12,6 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 SHOTS = DRIVE.shots
 
-
-# A real picture, small enough to write into a note as a `data:` URL and wide enough
-# to have a top and a bottom worth dragging between: a 4 by 8 PNG of two colours.
-# Built by hand so nothing here depends on a file in the repository; the drive checks
-# the browser decoded it, because the bytes that were here for a while were not a PNG
-# at all and every shot showed a broken-picture icon in the band without a word said.
 WIDE = (
     "data:image/png;base64,"
     "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAICAYAAADeM14FAAAAGklEQVR42mPQyt/wHxkzkCHwoMvmPzImQwAAFNxO0ZYNS9QAAAAASUVORK5CYII="
@@ -68,15 +39,11 @@ async (starts) => {
 }
 """
 
-# Whether the band's picture is one the browser decoded, rather than a broken one.
 DECODED = (
     "(() => { const one = document.querySelector('#write .nib-cover img');"
     " return !!one && one.complete && one.naturalWidth > 0 })()"
 )
 
-
-# What the page says about the band: whether there is one, where its picture's band
-# sits, and whether it is above the properties and the first heading.
 BANNER = """
 () => {
   const host = document.querySelector('#write')
@@ -98,11 +65,9 @@ BANNER = """
 
 SAID = "() => window.nibApp.workspace.active?.doc ?? ''"
 
-
 def is_true(claim: bool, what: str) -> None:
     if not claim:
         wrong(what)
-
 
 def shot(page: Page, name: str) -> bytes:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -111,20 +76,13 @@ def shot(page: Page, name: str) -> bytes:
     say(f"shot {name}.png")
     return bytes_
 
-
 def note_shot(page: Page, name: str) -> bytes:
-    """The note itself, and nothing of the app around it.
-
-    Which is what the pixel proof has to compare: the tab strip and the file list
-    grow as a drive opens notes, and a proof about a note being unchanged should not
-    be able to fail because a second tab appeared over it."""
     SHOTS.mkdir(parents=True, exist_ok=True)
     where = SHOTS / f"{name}.png"
     surface = page.locator("#write").first
     bytes_ = steady(page, lambda: surface.screenshot(path=str(where)))
     say(f"shot {name}.png")
     return bytes_
-
 
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(OPEN, starts)
@@ -135,7 +93,6 @@ def open_note(page: Page, starts: str) -> None:
         f"the {starts} note to be open",
     )
     quiet(page)
-
 
 def the_editor(page: Page) -> None:
     open_note(page, "Covered")
@@ -154,8 +111,6 @@ def the_editor(page: Page) -> None:
     )
     shot(page, "01-editor")
 
-    # The caret into the front matter: the rows give way to the YAML and the band
-    # stays, which is the whole reason it is not a replacement like the rest.
     page.evaluate(
         "() => { const at = window.nib.state.doc.toString().indexOf('cover:') + 3;"
         " window.nib.dispatch({ selection: { anchor: at } }); window.nib.focus() }"
@@ -165,7 +120,6 @@ def the_editor(page: Page) -> None:
     say(f"[editor, caret in the metadata] {json.dumps(inside)}")
     is_true(inside["there"], "the banner went away when the caret entered the front matter")
     shot(page, "02-editor-source")
-
 
 def the_drag(page: Page) -> None:
     open_note(page, "Covered")
@@ -193,14 +147,12 @@ def the_drag(page: Page) -> None:
     is_true(number != "50", "the drag left the band where it found it")
     shot(page, "03-dragged")
 
-    # One thing to undo, which is what a gesture should be.
     page.keyboard.press("Control+z")
     quiet(page)
     is_true(
         "cover-position:" not in page.evaluate(SAID),
         "undoing the drag left part of it behind",
     )
-
 
 def the_reading_view(page: Page) -> None:
     open_note(page, "Covered")
@@ -220,9 +172,7 @@ def the_reading_view(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     quiet(page)
 
-
 def a_note_with_no_cover(page: Page, round_: str) -> tuple[bytes, bytes]:
-    """The pixel proof: a note that names no cover is drawn exactly as it was."""
     open_note(page, "Plain")
     banner = page.evaluate(BANNER)
     is_true(not banner["there"], "a note with no cover was given a banner anyway")
@@ -241,7 +191,6 @@ def a_note_with_no_cover(page: Page, round_: str) -> tuple[bytes, bytes]:
     quiet(page)
     return written, read
 
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820},
@@ -254,12 +203,8 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [COVERED, PLAIN])}")
-    # The rows, which this drive reads; hidden is where a reader starts.
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
-    # The note with no cover, before anything has touched a cover at all, and again
-    # at the end: the same pixels either side is the proof that a note without one is
-    # untouched by all of this.
     before = a_note_with_no_cover(page, "05")
 
     the_editor(page)
@@ -272,10 +217,8 @@ def drive(browser: Browser) -> None:
 
     context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "a note's cover is drawn where a note is drawn")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

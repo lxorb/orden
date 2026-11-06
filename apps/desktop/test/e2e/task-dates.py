@@ -1,27 +1,3 @@
-"""A to-do's date is the day it can be started, and only a deadline is late (#371).
-
-In the built app, in a space of nib's own:
-
-  * A start date still to come keeps a task out of Today and the Inbox, and in Upcoming
-    on that day.
-  * A start date that has come puts the task in Today and says nothing under it - an
-    old `📅` included, which a space of nib's own wrote as its date and reads as a start.
-  * Only a deadline past makes a task overdue: it is the one in Today's Overdue, with its
-    deadline said under it in the danger tone, and the panel's Tasks count turns red.
-  * A date picked for a task with none is written as `🛫`; one picked for an old `📅`
-    moves that `📅` in place.
-  * With Settings' "Show tasks without a start date in Today" on, a task with no start
-    date is in the open Today, and one whose start is
-    still to come is not; off, which is where it starts, it is out again (#408).
-
-A vault's `📅`, which is a deadline, is the rows' and the editor's unit tests: the web
-app this drives has no `.obsidian` to find.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/task-dates.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -72,20 +48,15 @@ def words_in(page: Page, selector: str = ".view-tab .task .words") -> list[str]:
         selector,
     )
 
-
 def open_builtin(page: Page, name: str) -> None:
     page.evaluate(f"window.tasks.openBuiltin('{name}')")
     wait_for(page, "document.querySelector('.view-tab .list, .view-tab .upcoming')", f"the {name} view")
     quiet(page)
 
-
 def row(words: str) -> str:
     return f".view-tab .task:has(.words:text-is('{words}'))"
 
-
 def meta_of(page: Page, words: str) -> list[str]:
-    """What a row says under its words: each bit of its meta line, `late` before one in
-    the danger tone."""
     return page.evaluate(  # type: ignore[no-any-return]
         """(words) => {
           const task = [...document.querySelectorAll('.view-tab .task')]
@@ -95,7 +66,6 @@ def meta_of(page: Page, words: str) -> list[str]:
         }""",
         words,
     )
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -112,7 +82,6 @@ def drive(browser: Browser) -> None:
         "the seeded rows",
     )
 
-    # ── Today ────────────────────────────────────────────────────────
     open_builtin(page, "today")
     today = words_in(page)
     say(f"[today] {json.dumps(today)}")
@@ -144,7 +113,6 @@ def drive(browser: Browser) -> None:
         wrong(f"a deadline past is not said in the danger tone: {under_late}")
     DRIVE.shot(page, "01-today")
 
-    # ── Upcoming, and the Inbox ──────────────────────────────────────
     open_builtin(page, "upcoming")
     upcoming = words_in(page)
     say(f"[upcoming] {json.dumps(upcoming)}")
@@ -158,13 +126,11 @@ def drive(browser: Browser) -> None:
     if "Inbox now" not in inbox or "Inbox later" in inbox:
         wrong(f"the Inbox is {inbox}: a start date to come should keep a task out of it")
 
-    # ── The panel ────────────────────────────────────────────────────
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
     if not page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')"):
         wrong("the Tasks count is not in the danger tone while a deadline has passed")
 
-    # ── The tasks with no start date, by the setting ─────────────────
     open_builtin(page, "today")
     if page.evaluate("window.nibApp.modes.undatedInToday"):
         wrong("Today starts out holding the tasks with no start date")
@@ -195,7 +161,6 @@ def drive(browser: Browser) -> None:
         10,
     )
 
-    # ── A date picked ────────────────────────────────────────────────
     open_builtin(page, "today")
     for words, field in (("Late deadline", "start"), ("Old date", "due")):
         page.locator(row(words)).hover()
@@ -217,7 +182,6 @@ def drive(browser: Browser) -> None:
     late_one = page.evaluate(TASK, "Late deadline") or {}
     if late_one.get("due") is not None:
         wrong("a date picked for a task with a deadline only was written as a 📅")
-
 
 if __name__ == "__main__":
     raise SystemExit(

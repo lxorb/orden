@@ -1,33 +1,3 @@
-"""Full window, driven in the built app: the tab alone in nib's window, and back.
-
-Emil, 2026-09-30: "a shortcut to make the current tab full screen (to toggle that). I mean
-by full screen the full window of nib, not F11 behaviour." What this presses and looks at:
-
-  * **Shift+F11 in**, with the keyboard in a note of a split window: the file list, both
-    strips, the other pane and the status bar go; the note takes the window's whole width
-    and height, and the keyboard is still in it.
-  * **The bar at the top edge**: the pointer at the top of the window brings the window's
-    bar down over the tab, with the filled pane's own tabs in it, and it goes up again
-    once the pointer has left it.
-  * **Ctrl+Tab keeps it filled**, on the next tab of the same pane.
-  * **Escape** in the note is the note's; with the keyboard on nothing it gives the window
-    back.
-  * **Shift+F11 out**: the list, the strips and the other pane back exactly as they were.
-  * **A web tab** fills the window with its own bar kept and its page's room reaching every
-    edge but the bar's.
-  * **Flush in every full mode** (#1103): Shift+F11 and F11's full screen, over a note and
-    a web tab - the pane is the window's box, square, with no edge or shadow round it,
-    and the corner a web page is given is nothing.
-  * The same, photographed in light and in dark.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/full-window.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/full-window/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -42,8 +12,6 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SIZE = {"width": 1280, "height": 800}
 
-# Two notes in the left pane, a copy of the second in a pane to its right, the file list
-# open, and the keyboard in the left pane's note.
 ARRANGE = """
 async () => {
   const ws = window.nibApp.workspace
@@ -66,8 +34,6 @@ async () => {
 }
 """
 
-# What a reader sees of the window: which chrome is on screen, which panes, where the
-# note is and where the keyboard is.
 LOOK = """
 () => {
   const box = (one) => {
@@ -95,12 +61,6 @@ LOOK = """
 }
 """
 
-# The arrangement, as it is written down: what must come back exactly. The list as it is
-# drawn - its words, and the row that is on - rather than the size of its markup: the
-# sidebar is taken down while the window is filled and drawn afresh after, and a fresh
-# one differs in what nobody sees, the framework's empty anchors, the order of a row's
-# attributes and which row holds the keyboard's place, so its markup's length came
-# back a few dozen characters off on every run.
 LAYOUT = """
 () => JSON.stringify({
   frame: window.nibApp.workspace.panes.frame,
@@ -115,8 +75,6 @@ LAYOUT = """
 })
 """
 
-# What stands round the pane in front: its box, its corner, its edge and shadow, and the
-# corner a web tab's page is given (`cardCorner` in pages.svelte.ts reads the same token).
 FLUSH = """
 () => {
   const pane = [...document.querySelectorAll('[data-pane]')].find((one) => one.getClientRects().length)
@@ -137,10 +95,8 @@ FLUSH = """
 FILLED = "window.nibApp.workspace.panes.fills !== null && !document.querySelector('aside')"
 BACK = "window.nibApp.workspace.panes.fills === null && !!document.querySelector('aside')"
 
-
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
-
 
 def opened(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport=SIZE, color_scheme=scheme, reduced_motion="reduce")
@@ -154,11 +110,9 @@ def opened(browser: Browser, scheme: str) -> Page:
     quiet(page)
     return page
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.steady(page, name)
-
 
 def key_in(page: Page, scheme: str) -> str:
     before = page.evaluate(LAYOUT)
@@ -186,7 +140,6 @@ def key_in(page: Page, scheme: str) -> str:
     shot(page, f"{scheme}-02-filled")
     return before
 
-
 def the_bar(page: Page, scheme: str) -> None:
     page.mouse.move(640, 300)
     page.mouse.move(640, 2)
@@ -204,7 +157,6 @@ def the_bar(page: Page, scheme: str) -> None:
     wait_for(page, "!document.querySelector('.bar')?.classList.contains('shown')", "the bar to go up again")
     if look(page)["fills"] is None:
         wrong("the pointer at the top edge gave the window back")
-
 
 def tabs_and_escape(page: Page, scheme: str) -> None:
     page.locator("[data-pane] .cm-content").first.click()
@@ -227,7 +179,6 @@ def tabs_and_escape(page: Page, scheme: str) -> None:
     wait_for(page, BACK, "Escape on nothing to give the window back")
     say(f"[{scheme}] Escape: the note's in the note, the fill's on nothing")
 
-
 def key_out(page: Page, scheme: str, before: str) -> None:
     page.locator("[data-pane] .cm-content").first.click()
     page.keyboard.press("Shift+F11")
@@ -242,11 +193,7 @@ def key_out(page: Page, scheme: str, before: str) -> None:
         say(f"[{scheme}] back exactly as it was")
     shot(page, f"{scheme}-04-back")
 
-
 def web_tab(page: Page, scheme: str) -> None:
-    """A new web tab, the address field holding the keyboard: in the browser build the page
-    itself is a card until asked for, so what is measured is the tab - its own bar across
-    the top, and the room under it that the page is placed over on a desktop."""
     page.evaluate("() => window.nibApp.workspace.openWebsite()")
     wait_for(page, "document.querySelector('.web .webbar')", "the web tab's bar")
     quiet(page)
@@ -279,9 +226,7 @@ def web_tab(page: Page, scheme: str) -> None:
     page.keyboard.press("Shift+F11")
     wait_for(page, BACK, "Shift+F11 out of the web tab")
 
-
 def flush(page: Page, scheme: str, mode: str) -> None:
-    """Nothing of the app's round the pane: the window's box, square, bare (#1103)."""
     said = page.evaluate(FLUSH)
     say(f"[{scheme}] {mode}: {json.dumps(said)}")
     if not said:
@@ -298,9 +243,7 @@ def flush(page: Page, scheme: str, mode: str) -> None:
     if said["corner"]:
         wrong(f"[{mode}] a web page here would be given a corner of {said['corner']}px")
 
-
 def every_full_mode(page: Page, scheme: str) -> None:
-    """Shift+F11 and F11, over a note and over a web tab: flush in each (#1103)."""
     for kind in ("note", "web tab"):
         if kind == "web tab":
             page.evaluate("() => window.nibApp.workspace.openWebsite()")
@@ -320,7 +263,6 @@ def every_full_mode(page: Page, scheme: str) -> None:
         page.evaluate("() => window.nibApp.fullscreen.leave()")
         wait_for(page, "!window.nibApp.fullscreen.on && !!document.querySelector('aside')", "full screen left")
 
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = opened(browser, scheme)
@@ -331,7 +273,6 @@ def drive(browser: Browser) -> None:
         web_tab(page, scheme)
         every_full_mode(page, scheme)
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the tab fills the window and gives it back"))

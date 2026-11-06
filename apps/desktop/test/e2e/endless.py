@@ -1,27 +1,3 @@
-"""Code that never ends, run from a note, and the app around it (#525).
-
-A ` ```js ` fence of `while (true) {}` run with Ctrl+Enter, and a block of the note's
-own HTML whose script never ends, pressed. In WebKit a sandboxed frame shares the
-page's process and its main thread, so either one used to freeze the whole app for
-good: no keystroke, no click, not even the timer meant to take the run down.
-
-What it checks, in Chromium and in Playwright's WebKit, which is what a Mac, an iPhone
-and Safari run the app in:
-
-    while the fence runs, the app answers and a keystroke lands in the note, and the
-      run is stopped and said to have timed out once its time is up
-    a block whose script never ends is stopped, the app answers throughout, and what
-      the block did before the loop is on its card
-
-Served with the app's own Content-Security-Policy as a header, as frames.py is, so the
-runner is tried under the policy the app ships.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/endless.py
-    python apps/desktop/test/e2e/endless.py --engine webkit   # one of the two
-"""
-
 from __future__ import annotations
 
 import json
@@ -75,10 +51,8 @@ ENGINES = ("chrome", "webkit")
 engine = ENGINES[0]
 ORIGIN: str | None = None
 
-
 def wrong(what: str) -> None:
     DRIVE.wrong(f"[{engine}] {what}")
-
 
 def policy() -> str:
     html = (DIST / "index.html").read_text(encoding="utf-8")
@@ -87,10 +61,7 @@ def policy() -> str:
         raise SystemExit("the built index.html declares no policy to serve")
     return re.sub(r"\s+", " ", found.group(1)).strip()
 
-
 def answers(page: Page, what: str, patience: float = 3) -> bool:
-    """Whether the app's page runs a line of script within `patience` seconds: a page
-    whose main thread is taken never does."""
     try:
         page.wait_for_function("() => true", timeout=patience * 1000)
         return True
@@ -98,9 +69,7 @@ def answers(page: Page, what: str, patience: float = 3) -> bool:
         wrong(f"the app stopped answering {what}")
         return False
 
-
 def typed_lands(page: Page, words: str) -> bool:
-    """A keystroke's worth of words into the note, read back."""
     try:
         page.wait_for_function(
             """(words) => {
@@ -116,7 +85,6 @@ def typed_lands(page: Page, words: str) -> bool:
         wrong(f"typing {words!r} did not land")
         return False
 
-
 def fence(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -129,7 +97,6 @@ def fence(page: Page) -> None:
     page.keyboard.press("Control+Enter")
     began = time.monotonic()
 
-    # Well inside the run's own time: the loop is going, and the app goes on.
     page.wait_for_timeout(3000)
     if not answers(page, "while the fence ran"):
         return
@@ -139,7 +106,6 @@ def fence(page: Page) -> None:
     if not any("started" in (line or "") for line in lines):
         wrong("the fence printed nothing before its loop")
 
-    # And it is taken down once its time is up: said to have timed out, its frame gone.
     try:
         DRIVE.wait_for(
             page,
@@ -153,7 +119,6 @@ def fence(page: Page) -> None:
         wrong(str(gave_up))
     DRIVE.shot(page, f"{engine}/01-fence", caret="initial")
 
-
 def block_frame(page: Page) -> Frame | None:
     for frame in page.frames:
         if frame is page.main_frame:
@@ -164,7 +129,6 @@ def block_frame(page: Page) -> Frame | None:
         except Error:
             continue
     return None
-
 
 def block(page: Page) -> None:
     page.evaluate("() => document.querySelector('.embed-html')?.scrollIntoView({ block: 'center' })")
@@ -182,7 +146,6 @@ def block(page: Page) -> None:
         wrong(f"the block did not run up to its loop: the dial says {said!r}")
     DRIVE.shot(page, f"{engine}/02-block", caret="initial")
 
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="light")
     page = context.new_page()
@@ -195,7 +158,6 @@ def drive(browser: Browser) -> None:
     fence(page)
     block(page)
     context.close()
-
 
 def main() -> int:
     global engine, ORIGIN
@@ -211,7 +173,6 @@ def main() -> int:
         DRIVE.header("Content-Security-Policy", policy())
         for engine in engines:
             say(f"-- {engine} --")
-            # On the loopback address in WebKit, as frames.py says why.
             if engine != "chrome" and DRIVE.server is not None:
                 ORIGIN = DRIVE.server.origin("127.0.0.1")
             browser = DRIVE.browser(play) if engine == "chrome" else harness.answering(play.webkit.launch())
@@ -221,7 +182,6 @@ def main() -> int:
                 browser.close()
 
     return DRIVE.verdict("code that never ends never takes the app with it")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

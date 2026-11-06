@@ -1,30 +1,3 @@
-"""The other side of the window.
-
-What it shows, in order: the note in front's panels have their home on the right
-and the side is shut until asked for, so the left side, the foot row and the tab
-strip are where they were; a panel that lives on the left - the Search - moved over
-joins the right side's strip and takes its open state with it; the panel comes back
-on the right after a restart, because the side a panel sits on is part of what the
-window remembers; F6 reaches it as one region and leaves it again; and on a phone it
-is a drawer from the right with the same scrim, which the left drawer is not
-disturbed by.
-
-The measurements are taken twice: once as the window opens, and once with the
-Search moved back. Both are compared against the first, so "moving a panel over and
-back leaves the window as it was" is a number rather than a promise. The drive that
-checks the right side's homes and keys is ask-panel.py.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/right-side.py
-
-Screenshots go beside this file under `shots/right-side/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -37,7 +10,6 @@ say = DRIVE.say
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -61,8 +33,6 @@ async () => {
 }
 """
 
-# The three things that must not move: the left column, the row under it, and the
-# strip of notes. To the pixel, as the page reports them.
 MEASURED = """
 () => {
   const box = (what) => {
@@ -85,7 +55,6 @@ MEASURED = """
 }
 """
 
-# Which panels are where, and which of them is open on each side.
 SIDES = """
 () => {
   const ws = window.nibApp.workspace
@@ -93,7 +62,6 @@ SIDES = """
 }
 """
 
-# What the two tab strips hold, by the names on their buttons.
 STRIPS = """
 () => [...document.querySelectorAll('.panels')].map((one) => ({
   side: one.classList.contains('right') ? 'right' : 'left',
@@ -118,7 +86,6 @@ WHERE = """
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-
 def started(browser, name: str, width: int, height: int, agent: str, finger: bool):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -137,7 +104,6 @@ def started(browser, name: str, width: int, height: int, agent: str, finger: boo
 
     return context, page
 
-
 def onDesktop(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     context, page = started(browser, "desktop", 1440, 900, DESKTOP_AGENT, False)
@@ -146,7 +112,6 @@ def onDesktop(browser) -> None:
         page.screenshot(path=str(SHOTS / f"desktop-{tag}.png"))
         say(f"    shot desktop-{tag}.png")
 
-    # The sidebar open, on the left, the way it has always been.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
 
@@ -168,7 +133,6 @@ def onDesktop(browser) -> None:
     say(f"the note is now {moved['editor']} (it was {before['editor']})")
     shot("search-on-the-right")
 
-    # Both sides at once, which is the arrangement the whole thing is for.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
     say(f"both sides open: {page.evaluate(SIDES)}")
@@ -209,7 +173,6 @@ def onDesktop(browser) -> None:
 
     context.close()
 
-
 def onPhone(browser) -> None:
     context, page = started(browser, "phone", 390, 844, PHONE_AGENT, True)
 
@@ -222,7 +185,6 @@ def onPhone(browser) -> None:
     page.wait_for_timeout(500)
     say(f"the sides say: {page.evaluate(SIDES)}")
 
-    # The side's own button, which is in the bar on a phone as well.
     toggle = page.locator("button.toggle.right").first
     say(f"the right side's button is there: {toggle.count() == 1}")
     toggle.click(force=True)
@@ -231,15 +193,11 @@ def onPhone(browser) -> None:
     say(f"and the drawer is over the note: {page.evaluate(DRAWER)}")
     shot("drawer-open")
 
-    # The scrim dismisses it, the way it dismisses the left one. Pressed on the
-    # strip of note the drawer leaves showing, which is where a thumb would
-    # land: the middle of the scrim is behind the drawer itself.
     page.mouse.click(40, 400)
     page.wait_for_timeout(700)
     say(f"after the scrim: {page.evaluate(SIDES)}")
     shot("drawer-shut")
 
-    # And the left drawer still opens, unbothered.
     page.evaluate("() => window.nibApp.workspace.toggleSidebar()")
     page.wait_for_timeout(700)
     say(f"the left drawer still opens: {page.evaluate(SIDES)}")
@@ -249,32 +207,24 @@ def onPhone(browser) -> None:
     page.wait_for_timeout(700)
 
     say("--- and a thumb drags it out ---")
-    # A finger in from the right edge, stopped half way across with the finger
-    # still down: the panel has to be part way out, not waiting for the lift.
     held = page.evaluate(DRAG, {"from": 380, "to": 200, "y": 420, "steps": 9, "hold": True})
     for one in held[::3]:
         say(f"    at x={one['x']}: right edge {one['right']}, scrim {one['scrim']:.2f}")
     say(f"the sides mid-drag: {page.evaluate(SIDES)}")
     shot("drag-half-way")
 
-    # The rest of the way and off: past halfway it settles open.
     page.evaluate(DRAG, {"from": 200, "to": 60, "y": 420, "steps": 6, "hold": False})
     page.wait_for_timeout(700)
     say(f"after the drag: {page.evaluate(SIDES)}")
     say(f"and where it landed: {page.evaluate(DRAWER)}")
     shot("drag-open")
 
-    # Back the other way, which is how a thumb puts it away.
     back = page.evaluate(DRAG, {"from": 120, "to": 380, "y": 420, "steps": 9, "hold": False})
     say(f"pushing it back: {[one['right'] for one in back]}")
     page.wait_for_timeout(700)
     say(f"after pushing it back: {page.evaluate(SIDES)}")
     shot("drag-shut")
 
-    # The left drawer's own drag, with the note it moves at the narrow end: the
-    # numbers here are what "the left drawer is untouched" is measured against, so
-    # both sides are put back to shut first and the run is comparable against a
-    # build without any of this in it.
     say("--- the left drawer's drag is what it was ---")
     page.evaluate("() => window.nibApp.workspace.closePanel()")
     page.evaluate("() => window.nibApp.workspace.closePanel('right')")
@@ -290,14 +240,6 @@ def onPhone(browser) -> None:
 
     context.close()
 
-
-# A thumb, dragged across the glass a frame at a time, answering where both
-# drawers are at every step of it.
-#
-# Real touch events dispatched in the page: the drag listens for touches and a
-# synthesised mouse is not one. The frames matter as much as the ends - what is
-# under test is that the panel follows the finger rather than arriving when it
-# lifts - so every move reports both layers and the scrim with it.
 DRAG = """
 async (plan) => {
   const target = document.elementFromPoint(plan.from, plan.y) ?? document.body
@@ -341,9 +283,6 @@ async (plan) => {
 }
 """
 
-
-# Where the right drawer is, and whether it is over the note rather than beside
-# it.
 DRAWER = """
 () => {
   const one = document.querySelector('.panels.right')
@@ -361,14 +300,12 @@ DRAWER = """
 }
 """
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         onDesktop(browser)
         onPhone(browser)
 
     return DRIVE.verdict(f"shots in {SHOTS}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

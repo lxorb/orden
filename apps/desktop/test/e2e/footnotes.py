@@ -1,22 +1,3 @@
-"""A footnote read where it is used, seen in the built app (#1120).
-
-What this drives:
-
-  * Resting the pointer on a footnote's mark shows a card with what the footnote
-    says, drawn the way the reading view draws it.
-  * Pressing the mark goes to the definition at the foot of the note, and pressing the
-    definition's number comes back to the mark the reader left - the second of two
-    marks of the same footnote, not the first.
-  * The Outline ends on a Footnotes group, and a row of it goes to the mark.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/footnotes.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/footnotes/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -27,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = (
     "# Where the words came from\n"
@@ -63,14 +43,11 @@ LINE = """
 
 NUMBERS = "#write .cm-line .nib-footnote-number"
 
-
 def is_true(claim: bool, what: str) -> None:
     if not claim:
         wrong(what)
 
-
 def the_card(page: Page) -> None:
-    # Somewhere else first, so every mark is drawn as its number.
     page.locator("#write .cm-line", has_text="Where the words").click()
     quiet(page)
     page.locator(NUMBERS).first.hover()
@@ -87,9 +64,7 @@ def the_card(page: Page) -> None:
     page.mouse.move(5, 5)
     quiet(page)
 
-
 def the_jump(page: Page) -> None:
-    # The second mark of `one`, which is the third number in the words.
     marks = page.locator(NUMBERS)
     marks.nth(2).click()
     quiet(page)
@@ -108,7 +83,6 @@ def the_jump(page: Page) -> None:
     )
     shot(page, "03-back")
 
-
 def the_outline(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
     quiet(page)
@@ -122,7 +96,6 @@ def the_outline(page: Page) -> None:
     said = page.evaluate(LINE)
     is_true(said.startswith("The second part"), f"the Outline's row went to {said!r}")
     shot(page, "04-outline")
-
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1240, "height": 860}, color_scheme="light")
@@ -140,10 +113,8 @@ def drive(browser: Browser) -> None:
     the_outline(page)
     context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "a footnote is read and followed where it is used")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

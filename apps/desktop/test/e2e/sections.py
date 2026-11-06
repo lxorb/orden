@@ -1,22 +1,3 @@
-"""A project's head and its sections, Todoist's way, in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * A project's view says what its note says about it under the head, and its note's
-    title is no section: the tasks under it have no head.
-  * Add section at the end of the list writes a heading; a section's menu renames it,
-    moves it down and deletes it with its tasks (asked first), and one undo brings it
-    back.
-  * A folded section is still folded when the project is opened again.
-  * As a board, a project's columns are its sections, with Add section at the end, and
-    the project opens as a board again the next time.
-  * Renamed from its head, the project's note is renamed and the open view follows it.
-
-    python apps/desktop/test/e2e/sections.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/sections/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -27,11 +8,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 HOME = """# Home
 The flat, and the garden.
@@ -61,10 +40,8 @@ READ = """async (name) => {
 OPEN = """([path, layout]) => window.tasks.openProject(
   window.nibApp.workspace.activeSpace.name, path, layout ?? undefined)"""
 
-
 def note(page: Page, name: str = "Home.md") -> str:
     return page.evaluate(READ, name) or ""
-
 
 def seed(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
@@ -76,12 +53,10 @@ def seed(page: Page) -> None:
         "the seeded project",
     )
 
-
 def open_home(page: Page, layout: str | None = None) -> None:
     page.evaluate(OPEN, ["Projects/Home.md", layout])
     wait_for(page, "document.querySelector('.view-tab .task, .view-tab .card')", "the project")
     quiet(page)
-
 
 def head_and_about(page: Page) -> None:
     open_home(page)
@@ -96,7 +71,6 @@ def head_and_about(page: Page) -> None:
     if not any("kitchen" in one for one in names):
         wrong("the Kitchen section has no head")
     shot(page, "01-project")
-
 
 def sections(page: Page) -> None:
     page.locator(".view-tab .add-section").click()
@@ -152,7 +126,6 @@ def sections(page: Page) -> None:
     )
     say(f"[note] {note(page)!r}")
 
-
 def folds(page: Page) -> None:
     page.locator(".view-tab .head .fold", has_text="Galley").click()
     wait_for(page, "!document.querySelector('.view-tab .task:has(.words)') || ![...document.querySelectorAll('.view-tab .task .words')].some((one) => one.textContent.trim() === 'Fix the tap')", "Galley folded")
@@ -166,7 +139,6 @@ def folds(page: Page) -> None:
         wrong("the folded section opened again")
     page.locator(".view-tab .head .fold", has_text="Galley").click()
 
-
 def board(page: Page) -> None:
     open_home(page, "kanban")
     wait_for(page, "document.querySelector('.view-tab .board .column')", "the board")
@@ -178,7 +150,6 @@ def board(page: Page) -> None:
         wrong("the board has no Add section")
     shot(page, "04-board")
 
-    # The Attic's column carried by its head to before Garden's: its section moves up the note.
     attic = page.locator(".view-tab .board .column[data-section='Attic'] .head").bounding_box()
     garden = page.locator(".view-tab .board .column[data-section='Garden']").bounding_box()
     if not attic or not garden:
@@ -203,7 +174,6 @@ def board(page: Page) -> None:
         wrong("the project did not open as the board it was left as")
     page.evaluate(OPEN, ["Projects/Home.md", "list"])
     wait_for(page, "document.querySelector('.view-tab .list')", "the list again")
-
 
 def rename(page: Page) -> None:
     page.locator(".view-tab .name").first.click()
@@ -231,7 +201,6 @@ def rename(page: Page) -> None:
     )
     shot(page, "05-renamed")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -242,7 +211,6 @@ def drive(browser: Browser) -> None:
     board(page)
     rename(page)
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the project's head and its sections held"))

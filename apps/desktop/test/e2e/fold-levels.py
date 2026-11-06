@@ -1,19 +1,3 @@
-"""Fold more and Fold less, seen: the palette rows that run them, one level of the
-note going at a time from the deepest thing open, the same number of presses back
-the other way, and a press that has nothing left to fold answering with nothing.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/fold-levels.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/fold-levels/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -25,9 +9,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-
-# Three levels of one chapter, and a second chapter to prove a level is every
-# block of that level and not the one the caret is near.
 NOTE = """# Chapter one
 
 The first words of the chapter.
@@ -76,7 +57,6 @@ ROWS = """
 )
 """
 
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(
         viewport={"width": 1180, "height": 900},
@@ -96,15 +76,10 @@ def fresh(browser: Browser) -> Page:
     page.wait_for_timeout(800)
     return page
 
-
 def heads(folds: list[list[int]]) -> list[int]:
-    """The line each fold hangs from, which says which blocks a press folded."""
     return sorted(fold[0] for fold in folds)
 
-
 def run_row(page: Page, label: str, at: str) -> None:
-    """Runs a command by its name in the palette, which is where a command with no
-    chord has to be reachable."""
     page.locator(".cm-content").click()
     page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
@@ -120,7 +95,6 @@ def run_row(page: Page, label: str, at: str) -> None:
     page.keyboard.press("Enter")
     page.wait_for_timeout(900)
 
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
 
@@ -130,8 +104,6 @@ def drive(browser: Browser) -> None:
     if start["marks"]:
         wrong("something is folded in a note nobody has folded")
 
-    # Every level of the note, from the deepest thing open. The walk is read out of
-    # what is written down, which is the folds as lines.
     walk: list[list[list[int]]] = []
     for step in range(4):
         run_row(page, "Fold more", f"{2 + step * 2:02d}")
@@ -141,9 +113,6 @@ def drive(browser: Browser) -> None:
         say(f"[fold more {step + 1}] on screen: {json.dumps(now['shown'])}")
         shot(page, f"{3 + step * 2:02d}-fold-more-{step + 1}")
 
-    # The deepest section first, then the level above it - which is the `##` and
-    # the list item in the other chapter, because a level is every block of that
-    # level - then the two chapters, and then nothing left to fold.
     if heads(walk[0]) != [9]:
         wrong(f"the first press did not fold the deepest level alone: {walk[0]}")
     if heads(walk[1]) != [5, 9, 15]:
@@ -159,7 +128,6 @@ def drive(browser: Browser) -> None:
     if outline["marks"] != 2:
         wrong(f"the outline is not one mark per chapter: {outline['marks']}")
 
-    # And the same number of presses back the other way, shallowest first.
     back: list[list[list[int]]] = []
     for step in range(4):
         run_row(page, "Fold less", f"{10 + step * 2:02d}")
@@ -185,10 +153,8 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "a note folds one level at a time, and comes back the same way")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,27 +1,3 @@
-"""Deleting the account, end to end, against the real Worker.
-
-An account with the second factor on signs in with both codes, opens Settings,
-Account, and deletes itself: the mailed code and the app's code, the last question,
-and signed out. Then the Worker is asked whether the account is gone and the mailbox
-whether the receipt came.
-
-It also photographs the pane at the moment hunt-7 found it confusing, 2026-09-30:
-with the factor on and the account being deleted, the Signing in card and the delete
-flow each ask for the authenticator's code, and both fields were called "Code from the
-app". Each is named for what it does now; the pane is checked for both names.
-
-hunt-7 could not finish this run because the mail's subject had changed under its
-script; the subject is read here the way the Worker writes it (see `leavingMessage`
-in services/sync/src/email.ts).
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/delete-account.py
-
-It builds the app the Worker serves, starts the Worker under `wrangler dev --local`
-with a database of its own, and stops everything again.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -41,23 +17,16 @@ ORIGIN = harness.worker_origin()
 
 PERSON = "leaving@example.com"
 
-#: The authenticator's step, which is also how long a code lives.
 STEP = 30
 
-
 def totp(secret: str, step: int) -> str:
-    """The six digits a base32 secret stands at in one step: SHA-1, thirty seconds,
-    six digits, as services/sync/src/second.ts reads them."""
     key = base64.b32decode(secret + "=" * (-len(secret) % 8))
     digest = hmac.new(key, struct.pack(">Q", step), hashlib.sha1).digest()
     offset = digest[19] & 15
     value = struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF
     return str(value % 1_000_000).zfill(6)
 
-
 class Authenticator:
-    """The phone: a fresh code each time it is asked, because the Worker spends a
-    code once it has been used and a second use in the same step is refused."""
 
     def __init__(self, secret: str) -> None:
         self.secret = secret
@@ -70,9 +39,7 @@ class Authenticator:
         self.used.add(step)
         return totp(self.secret, step)
 
-
 def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
-    """Both codes, typed for real: the mailed one, then the app's."""
     page.evaluate("() => (window.nibApp.account.open = true)")
     page.locator("input[type=email]").fill(PERSON)
     already = len(worker.written())
@@ -86,7 +53,6 @@ def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
     page.locator(".digits input").first.fill(phone.code())
     DRIVE.wait_for(page, "() => !!window.nibApp.account.accountToken", "the session")
 
-    # A browser that held the welcome note is asked what becomes of it.
     keep = page.get_by_role("button", name="Keep them")
     try:
         keep.wait_for(timeout=8_000)
@@ -94,7 +60,6 @@ def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
     except Exception:  # noqa: BLE001 - nothing here to ask about is an answer too
         pass
     say("signed in with the mailed code and the app's")
-
 
 def drive(browser: Browser) -> None:
     worker = harness.Worker(DRIVE, variables={"SECOND_FACTOR_SECRET": "a secret for the drive"})
@@ -152,14 +117,12 @@ def drive(browser: Browser) -> None:
         else:
             say("the Worker holds no account for that address, and the receipt came")
         page.context.close()
-        # The dark shot is of the same pane, so the account is made again for it.
         token = worker.account(PERSON)
         begun = worker.request("/v1/second", token, {})
         phone = Authenticator(begun["secret"])
         worker.request(
             "/v1/second/confirm", token, {"holding": begun["holding"], "code": phone.code()}
         )
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "an account with a second factor deletes itself"))

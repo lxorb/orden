@@ -37,26 +37,20 @@ from PIL import Image, ImageChops
 
 SHOTS = Path(__file__).resolve().parent / "shots"
 
-
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
-
 def pixels(one: Path, other: Path) -> tuple[int, int, int]:
-    """How many pixels differ, out of how many, and by how much at the worst."""
     a = Image.open(one).convert("RGB")
     b = Image.open(other).convert("RGB")
     if a.size != b.size:
         return (a.size[0] * a.size[1], a.size[0] * a.size[1], 255)
 
-    # A histogram rather than the pixels themselves: one pass in C over four million
-    # of them instead of four million values through Python.
     counted = ImageChops.difference(a, b).convert("L").histogram()
     whole = a.size[0] * a.size[1]
     worst = max((value for value, held in enumerate(counted) if held), default=0)
 
     return (whole - counted[0], whole, worst)
-
 
 def main() -> int:
     if len(sys.argv) != 3:
@@ -87,7 +81,6 @@ def main() -> int:
 
     print(f"{same} identical, {differ} differ, {missing} in one run only, of {len(names)}")
     return 1 if differ or missing else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

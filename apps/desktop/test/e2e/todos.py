@@ -1,24 +1,3 @@
-"""Todos: one view of a space's tasks with Todoist's Display over it (#1046), in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * The Tasks panel has one row for the space's tasks; Ctrl and a press opens Todos, grouped
-    by when each task is due - Overdue, Today, Tomorrow, Later, No date - with a task
-    waiting for its start date and a done one left out.
-  * Display says how many of its settings differ from the view as it came; Completed
-    tasks brings the done one back and counts one.
-  * Grouping by priority and the Board layout make GitHub's columns: a status circle, the
-    name and a count badge. A card carried from one column to another writes its priority.
-  * Closed and opened again from the panel, Todos comes back as it was left in the space.
-  * Reset all puts it back as it came.
-  * At phone width Display is a sheet, and a swipe across the board turns to the next
-    column.
-
-    python apps/desktop/test/e2e/todos.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/todos/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -31,11 +10,9 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 DAYS = """() => {
   const day = (n) => {
@@ -72,7 +49,6 @@ PHONE_AGENT = (
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-
 def seed(page: Page) -> None:
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
     page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
@@ -80,32 +56,26 @@ def seed(page: Page) -> None:
     page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
     wait_for(page, f"() => !!({TASK})('Read a book')", "the seeded rows")
 
-
 def texts(page: Page, selector: str) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
         "(selector) => [...document.querySelectorAll(selector)].map((one) => one.textContent.trim())",
         selector,
     )
 
-
 def open_from_panel(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
-    # A plain press only chooses the row (#374); Ctrl and a press asks for its tab.
     page.locator(".tasks .nib-row", has_text="Tasks").first.click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab .task, .view-tab .card')", "Todos")
     quiet(page)
 
-
 def display_label(page: Page) -> str:
     return page.locator(".view-tab .display-button").first.get_attribute("aria-label") or ""
-
 
 def choose(page: Page, label: str, option: str) -> None:
     page.locator(f".pop [role=combobox][aria-label='{label}']").click()
     page.locator("[role=listbox] [role=option]", has_text=option).first.click()
     quiet(page)
-
 
 def carry(page: Page, source: str, target: str) -> None:
     one = page.locator(source).first.bounding_box()
@@ -118,7 +88,6 @@ def carry(page: Page, source: str, target: str) -> None:
     page.mouse.move(one["x"] + one["width"] / 2 + 8, one["y"] + one["height"] / 2 + 8, steps=3)
     page.mouse.move(two["x"] + two["width"] / 2, two["y"] + min(60, two["height"] / 2), steps=12)
     page.mouse.up()
-
 
 def the_one_view(page: Page) -> None:
     open_from_panel(page)
@@ -139,7 +108,6 @@ def the_one_view(page: Page) -> None:
     if display_label(page) != "Display":
         wrong(f"Display says {display_label(page)!r} on the view as it came")
     shot(page, "01-todos")
-
 
 def the_display(page: Page) -> None:
     page.locator(".view-tab .display-button").first.click()
@@ -167,7 +135,6 @@ def the_display(page: Page) -> None:
     if len(columns) < 3 or len(badges) != len(columns):
         wrong("the board's columns have no names or no count badges")
     shot(page, "03-board")
-    # From the column of no priority to the first one: priority 1.
     carry(
         page,
         ".view-tab .card:has-text('Read a book')",
@@ -175,7 +142,6 @@ def the_display(page: Page) -> None:
     )
     if DRIVE.waited(page, f"() => ({TASK})('Read a book')?.priority === 1", "the card carried to p1"):
         shot(page, "04-carried")
-    # A card is its words and its meta, nothing under them.
     gap = page.evaluate(
         "(() => { const card = document.querySelector('.view-tab .card'); const face = card?.querySelector('.face');"
         " const meta = face?.querySelector('.line.meta') ?? face?.querySelector('.title');"
@@ -184,7 +150,6 @@ def the_display(page: Page) -> None:
     say(f"[card room under the meta] {gap:.0f}px")
     if gap > 14:
         wrong(f"a task's card leaves {gap:.0f}px empty under its meta line")
-
 
 def kept(page: Page) -> None:
     page.evaluate(
@@ -203,7 +168,6 @@ def kept(page: Page) -> None:
     if display_label(page) != "Display":
         wrong(f"Reset all left Display saying {display_label(page)!r}")
     shot(page, "05-reset")
-
 
 def at_phone_width(browser: Browser) -> None:
     page = DRIVE.page(
@@ -245,7 +209,6 @@ def at_phone_width(browser: Browser) -> None:
     shot(page, "07-phone-board")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -255,7 +218,6 @@ def drive(browser: Browser) -> None:
     kept(page)
     page.close()
     at_phone_width(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "Todos, its Display, its board and its phone pages held"))

@@ -1,47 +1,4 @@
-"""Is anything of nib's own drawn over the rectangle a web page fills?
-
-Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else.
-For example when I switched to a note, there was still the browser open."*
-
-A web tab's page is a native child webview placed over the pane, and a native
-webview draws above every pixel of HTML in the window. So the app keeps one rule:
-whatever the app puts over the page, the page is hidden and a still picture of it
-stands in. That rule is why the app's own furniture may not be over a page's
-rectangle *at all* - a card in the corner is not a menu somebody opened and will
-close again, it is a card that hides the page for as long as it is up, and the
-reader is then pressing a photograph.
-
-Two of them were: the update notice, which floated in the bottom corner over the
-pane, and full screen, which put a layer on the overlay stack for the whole time it
-was on and so hid the page it exists to fill the screen with. Measured on
-2026-09-18 by asking the pane's own hit test what it found: `['hole' x 8,
-'DIV.notice']`.
-
-The notices then took a row of their own under the panes, and every toast shoved
-every tab up by its height (#218). Since a page is cut round a layer rather than
-hidden for it (web-tab/covers.ts), the row floats over the foot of the panes again,
-and each card in it is a layer the page knows the shape of. So the drive now asks
-that the page keeps its height while a notice is up, and that nothing over it is
-something the page does not know the shape of.
-
-This drive asks the same question the pane asks, of the same nine points, in a real
-browser with a real layout - because nothing in the unit suite can: jsdom has no
-layout, so a card drawn over a pane and a card drawn beside it are the same object
-graph there. It is a browser build, where the page is a card rather than a webview,
-and that changes nothing about the question: the rectangle the card fills is the
-rectangle the webview would fill.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/notices.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run, or NIB_ORIGIN
-to drive a server somebody else is already running. Screenshots go beside this file
-under `shots/notices/`, which is ignored.
-"""
-
 from __future__ import annotations
-
 
 from playwright.sync_api import Browser, Page
 
@@ -50,9 +7,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: Where the page goes: everything in the web surface under its bar. On a desktop
-#: this is the hole the webview is placed over, and the two are the same box - the
-#: bar and what hangs under it are the app's, and the page is the rest.
 PAGE_RECT = """
 () => {
   const box = (el) => {
@@ -69,9 +23,6 @@ PAGE_RECT = """
 }
 """
 
-#: What is on top at each of those nine points, named the way the pane's own hit
-#: test would name it. Anything that is not the web surface is something drawn over
-#: the page, which on a desktop is something drawn *behind* it.
 WHAT_IS_OVER = """
 (rect) => {
   const web = document.querySelector('.web')
@@ -94,7 +45,6 @@ WHAT_IS_OVER = """
 }
 """
 
-#: Where a piece of the app's furniture is, or null when it is not up.
 BOX = """
 (selector) => {
   const el = document.querySelector(selector)
@@ -105,10 +55,6 @@ BOX = """
 }
 """
 
-#: Everything in the web tab's own bar that can be pressed, and where. The bar is the
-#: one piece of the app that is still on screen over a page in full screen, and it
-#: carries the dots - Chrome's rows, and the row full screen was turned on from. A way
-#: out drawn on top of it would take the menu with it.
 BAR_CONTROLS = """
 () => {
   const head = document.querySelector('.web > .head')
@@ -127,9 +73,7 @@ BAR_CONTROLS = """
 }
 """
 
-
 def overlaps(one: dict[str, float], other: dict[str, float]) -> bool:
-    """Whether two rectangles share a pixel."""
     return (
         one["x"] < other["x"] + other["width"]
         and other["x"] < one["x"] + one["width"]
@@ -137,9 +81,7 @@ def overlaps(one: dict[str, float], other: dict[str, float]) -> bool:
         and other["y"] < one["y"] + one["height"]
     )
 
-
 def clear_over_the_page(page: Page, when: str) -> dict[str, float]:
-    """The page's rectangle, with the nine points over it checked and reported."""
     rect = page.evaluate(PAGE_RECT)
     if not rect:
         raise SystemExit(f"there is no web surface on screen {when}")
@@ -151,7 +93,6 @@ def clear_over_the_page(page: Page, when: str) -> dict[str, float]:
         say(f"{when}, all nine points over the page are the page's own")
 
     return rect
-
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
@@ -167,10 +108,8 @@ def drive(browser: Browser) -> None:
 
     clear = clear_over_the_page(page, "with nothing up")
 
-    # ── The update notice ────────────────────────────────────────────────
     page.evaluate("() => { window.nibApp.updates.ready = '9.9.9' }")
     wait_for(page, "document.querySelector('.notice')", "the update notice")
-    # The notice flies in over a fifth of a second.
     page.wait_for_timeout(500)
     shot(page, "02-notice")
 
@@ -186,8 +125,6 @@ def drive(browser: Browser) -> None:
     else:
         say("the update notice is clear of the page")
 
-    # It floats rather than taking room, which is the whole of #218: a card coming or
-    # going moves nothing under it.
     shorter = clear["height"] - noticed["height"]
     if abs(shorter) > 1:
         wrong(
@@ -197,7 +134,6 @@ def drive(browser: Browser) -> None:
     else:
         say("the page kept its height under the notice")
 
-    # ── And the room comes back ──────────────────────────────────────────
     page.evaluate("() => window.nibApp.updates.dismiss()")
     page.wait_for_timeout(500)
     back = page.evaluate(PAGE_RECT)
@@ -209,10 +145,6 @@ def drive(browser: Browser) -> None:
     else:
         say("the page has its room back")
 
-    # ── Full screen, which is the page and nothing else ──────────────────
-    # It used to put a layer on the overlay stack for the whole time it was on, and
-    # that stack is what the pane reads to decide whether the page may be seen - so
-    # F11 on a web tab hid the page it is meant to fill the screen with.
     page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
     page.wait_for_timeout(500)
     shot(page, "03-fullscreen")
@@ -226,10 +158,6 @@ def drive(browser: Browser) -> None:
     else:
         say(f"the page fills {filling['height']:.0f}px of the screen, up from {clear['height']:.0f}")
 
-    # Over a web page nothing of the app's is drawn, not even the way out: the corner
-    # button full screen keeps over a note would be drawn behind the webview, so over
-    # a page F11 and Escape are the way out, as in Chrome (docs/keyboard.md, "Full
-    # screen"). This used to ask for the button, from before the rule.
     if page.evaluate(BOX, ".leave"):
         wrong("the way out of full screen is drawn over a web page, which is behind it")
     else:
@@ -247,13 +175,11 @@ def drive(browser: Browser) -> None:
     shot(page, "04-back")
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict("nothing of the app's is over the page")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,21 +1,3 @@
-"""Which kinds a new tab offers, chosen in Settings › Note types (#355).
-
-Emil: "user should be able to configure which items of the Ctrl + T menu should be shown /
-hidden in settings". Each kind a device can make has a switch in Settings › Note types; a
-kind switched off is offered nowhere - not under Ctrl+T, not in a pane with nothing open -
-and the last one still offered cannot be switched off. The choice is kept on the account
-(`hiddenKinds`; see lib/kind-choice.ts).
-
-What it checks, on the built web app in Chromium, on a desktop and on a phone:
-
-    Ctrl+T (the plus on a phone) offers the canvas
-    the canvas switched off in Settings › Note types, the new tab does not offer it
-    switched back on, it does again
-    every kind but the note switched off, the note's switch cannot be switched off
-
-    python apps/desktop/test/e2e/tab-kinds.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -25,14 +7,9 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: The kinds the new tab in front offers, by `data-kind`.
 OFFERED = """() => [...document.querySelectorAll('.here[role=group] [data-kind]')]
   .map((one) => one.getAttribute('data-kind'))"""
 
-#: The switches of Settings › Note types, by what they are called, and whether each is on
-#: and whether it may be turned at all.
-#: A phone, as pages.py makes one: the viewport store told so, which is what decides
-#: which kinds a device has (a phone has no website; see `kindsHere`).
 AS_PHONE = """
 () => {
   const app = window.nibApp
@@ -52,9 +29,7 @@ SWITCHES = """() => [...document.querySelectorAll('[role=switch]')].map((one) =>
   locked: one.getAttribute('aria-disabled') === 'true',
 }))"""
 
-
 def new_tab(page: Page, label: str, phone: bool) -> list[str]:
-    """A new tab, the way a reader makes one, and what it offers."""
     if phone:
         page.evaluate("() => window.nibApp.workspace.newTab()")
     else:
@@ -66,23 +41,17 @@ def new_tab(page: Page, label: str, phone: bool) -> list[str]:
     page.evaluate("() => window.nibApp.workspace.closeActive()")
     return offered
 
-
 def settings(page: Page) -> None:
     page.evaluate("() => window.nibApp.settings.show('kinds')")
     wait_for(page, "document.querySelectorAll('[role=switch]').length > 1", "Settings › Note types")
-
 
 def closed(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=switch]')", "Settings to close")
 
-
 def press(page: Page, name: str) -> None:
-    """The switch called exactly `name`, pressed; forced, so a locked one is pressed too
-    rather than waited on."""
     names = [one["name"] for one in page.evaluate(SWITCHES)]
     page.locator("[role=switch]").nth(names.index(name)).click(force=True)
-
 
 def drive_on(browser: Browser, label: str, phone: bool) -> None:
     options = {"viewport": {"width": 412, "height": 915}, "has_touch": True, "is_mobile": True} if phone else {
@@ -120,7 +89,6 @@ def drive_on(browser: Browser, label: str, phone: bool) -> None:
     if "canvas" not in new_tab(page, label, phone):
         wrong(f"[{label}] a canvas switched back on is not offered")
 
-    # Every kind but the note off: the note's switch cannot be turned off.
     settings(page)
     for one in page.evaluate(SWITCHES):
         if one["on"] and one["name"] != "Note":
@@ -140,11 +108,9 @@ def drive_on(browser: Browser, label: str, phone: bool) -> None:
         wrong(f"[{label}] with the note alone left, the new tab offers something else")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     drive_on(browser, "desktop", False)
     drive_on(browser, "phone", True)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a kind switched off is offered nowhere, and back on, it is again"))

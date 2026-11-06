@@ -1,32 +1,3 @@
-"""The size of the text, changed with Ctrl and the wheel.
-
-What it proves: Ctrl and a notch over the note steps `--zoom` and says so with a
-badge that goes on its own; a notch without Ctrl scrolls and changes nothing; a
-notch over the panel changes nothing; and nothing here touches the browser's own
-zoom - the page's own scale stays 1, which is the whole point of the app owning the
-gesture.
-
-And the keys, which are the three every browser uses: **Ctrl+=**, **Ctrl+-** and
-**Ctrl+0** are the size and nothing else, Ctrl+0 answers to the key underneath so it
-reads the same on a keyboard where the nought needs Shift, and Heading up and heading
-down are one modifier over on Ctrl+Shift+= and Ctrl+Shift+-, where they change the line
-and not the size. Paragraph has no key of its own: Ctrl+1 on a line that is already a
-first-level heading turns it back into prose, and Ctrl+Shift+P - which Paragraph used to
-hold - opens the palette on the commands.
-
-It fails loudly: anything wrong is printed at the end and the exit code says so.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/text-size.py
-
-Screenshots go beside this file under `shots/text-size/`, which is ignored.
-"""
-
 from __future__ import annotations
 
 import harness
@@ -38,7 +9,6 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -55,7 +25,6 @@ async () => {
 }
 """
 
-# The one number the whole thing is about, and the badge beside it.
 SIZE = """
 () => {
   const root = document.documentElement
@@ -71,9 +40,7 @@ SIZE = """
 }
 """
 
-
 def wheel(page, where: str, ctrl: bool, up: bool) -> None:
-    """One notch, over whatever `where` names, with or without Ctrl."""
     box = page.locator(where).first.bounding_box()
     if not box:
         raise SystemExit(f"nothing at {where}")
@@ -85,7 +52,6 @@ def wheel(page, where: str, ctrl: bool, up: bool) -> None:
     if ctrl:
         page.keyboard.up("Control")
     page.wait_for_timeout(260)
-
 
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -120,8 +86,6 @@ def drive(browser) -> None:
         wheel(page, "#write", ctrl=True, up=False)
     say(f"three notches out: {page.evaluate(SIZE)}")
 
-    # The badge says the size and then goes, which is what makes it a badge
-    # rather than a thing to close.
     page.wait_for_timeout(1200)
     say(f"a moment later: {page.evaluate(SIZE)}")
 
@@ -130,7 +94,6 @@ def drive(browser) -> None:
     wheel(page, "#write", ctrl=False, up=True)
     say(f"a notch without Ctrl: {before} -> {page.evaluate('() => window.nibApp.modes.zoom')}")
 
-    # Over the panel, which a fresh profile starts without.
     page.keyboard.press("Control+Shift+L")
     page.wait_for_timeout(500)
     wheel(page, "[data-region='list']", ctrl=True, up=True)
@@ -153,14 +116,10 @@ def drive(browser) -> None:
         page.keyboard.press(key)
         page.wait_for_timeout(260)
 
-    # Inside the note, because that is where somebody is when they want bigger words -
-    # and because it is the one place a key of the editor's could take it instead.
     focus()
     page.evaluate("() => window.nibApp.modes.resetZoom()")
     page.wait_for_timeout(300)
 
-    # The caret onto the heading, so a key that is the editor's can be seen to have
-    # been the editor's.
     page.evaluate(
         """() => {
           const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
@@ -199,10 +158,6 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "reset-badge.png"))
     say("shot reset-badge.png")
 
-    # The layout case. On AZERTY the nought is the shifted character of the top row, so
-    # what a French reader presses for Ctrl+0 has Shift down - and Shift and the nought
-    # key is exactly what this sends. The chord is matched by the key underneath, which
-    # is what every browser does with its own Ctrl+0; see keys.ts.
     pressed("Control+Equal")
     if size() <= 1:
         wrong("Ctrl+= would not step, so the layout case cannot be told apart")
@@ -229,8 +184,6 @@ def drive(browser) -> None:
     else:
         say(f"Control+Shift+-        -> {line()!r}")
 
-    # Paragraph has no chord, because a heading key undoes itself: the level a line
-    # already is turns it back into prose, which is what every other format key does.
     pressed("Control+Digit1")
     if line().startswith("#"):
         wrong(f"Ctrl+1 on a first-level heading did not make it prose: {line()!r}")
@@ -245,8 +198,6 @@ def drive(browser) -> None:
     else:
         say(f"Control+1              -> {line()!r}")
 
-    # And the chord Paragraph held is the palette, opened on the commands: a `>` in the
-    # field with the caret after it. See Palette.svelte.
     pressed("Control+Shift+KeyP")
     field = page.evaluate("() => document.querySelector('.palette input')?.value ?? null")
     if field != ">":
@@ -261,9 +212,6 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "commands.png"))
     say("shot commands.png")
     pressed("Escape")
-    # Gone once its closing has played, which is the palette's 190 ms (LAYER in
-    # motion.ts) and in WebKit on a busy runner more than the 260 the press waits: so
-    # waited for, rather than looked for once and called open.
     try:
         page.wait_for_function("() => !document.querySelector('.palette input')", timeout=3000, polling=50)
     except Exception:
@@ -273,9 +221,6 @@ def drive(browser) -> None:
     say("shot after.png")
     context.close()
 
-
-# The line the caret is in, so a key that is the editor's can be seen to have
-# been the editor's.
 LINE = """
 () => {
   const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
@@ -285,13 +230,11 @@ LINE = """
 }
 """
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict("everything the drive checked was right")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

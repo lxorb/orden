@@ -1,25 +1,3 @@
-"""The wallpaper theme: a picture of the reader's own behind the frame, and every word
-on the frame still read at four and a half to one.
-
-A picture behind text is the classic way to make an app unreadable, so the drive puts
-the worst ones there are under it - a bright one with white in it and a dark one with
-a white moon in it - on both sides of the theme, and reads the result back off the
-screenshot rather than off the app's own opinion of what it painted: the quietest ink
-the chrome writes in, against the lightest (dark side) or darkest (light side) pixel
-of the frame where no word is.
-
-And the rest of what the theme promises: the note keeps its paper with Content at
-Opaque (theme-options.py drives the other levels), nothing filters anything on a frame, the Blur dial makes the picture again, the picture is on the
-first frame of the next launch, and the theme with no picture wears its accent field.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/wallpaper.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/wallpaper/`, which is ignored; set NIB_SHOTS_TOO to a folder to copy them there.
-"""
-
 from __future__ import annotations
 
 import io
@@ -42,9 +20,6 @@ on the note's own paper whatever is behind the frame.
 > A quote, in the muted colour.
 """
 
-# Two pictures, drawn in the page and handed to the store as a file would be. Each has
-# the extremes a photograph has: the bright one a white sun and clouds, the dark one a
-# white moon and stars, so the floor is earned rather than given.
 PICTURES = {
     "bright": """
       const g = c.createLinearGradient(0, 0, 0, h)
@@ -82,7 +57,6 @@ async ([paint]) => {
 
 SHEET = "document.getElementById('nib-user-theme')?.textContent ?? ''"
 
-# Every filter that repaints what is behind it on every frame. The wallpaper spends none.
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -92,8 +66,6 @@ FILTERS = """
   .map((one) => one.tagName.toLowerCase() + '.' + [...one.classList].join('.'))
 """
 
-# The boxes on the frame where no word is, in CSS pixels: a strip of the title bar
-# between the tabs and the window's end, and the foot of the list under its rows.
 EMPTY = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
@@ -119,11 +91,9 @@ EMPTY = """
 }
 """
 
-
 def channels(said: str) -> tuple[int, int, int]:
     parts = [float(one) for one in said[said.index("(") + 1 : said.index(")")].replace(",", " ").split()[:3]]
     return (round(parts[0]), round(parts[1]), round(parts[2]))
-
 
 def luminance(rgb: tuple[int, int, int]) -> float:
     def linear(c: float) -> float:
@@ -133,21 +103,15 @@ def luminance(rgb: tuple[int, int, int]) -> float:
     r, g, b = (linear(one) for one in rgb)
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
-
 def ratio(one: tuple[int, int, int], two: tuple[int, int, int]) -> float:
     light, dark = sorted((luminance(one), luminance(two)), reverse=True)
     return round((light + 0.05) / (dark + 0.05), 2)
 
-
 def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> float:
-    """The lowest ratio of the ink against any pixel in the box."""
     region = image.crop(tuple(round(one) for one in box)).convert("RGB")
     colours = {colour for _count, colour in region.getcolors(maxcolors=1 << 20) or []}
     return min(ratio(ink, colour) for colour in colours) if colours else 0.0
 
-
-# The end of a row under the pointer, past its words: the ground a quiet word on a
-# hovered row stands on.
 HOVERED = """
 () => {
   const row = [...document.querySelectorAll('aside .nib-row')].find((one) => !one.classList.contains('is-on'))
@@ -156,7 +120,6 @@ HOVERED = """
   return { x: box.left + box.width / 2, y: box.top + box.height / 2, box: [box.right - 30, box.top + 3, box.right - 6, box.bottom - 3] }
 }
 """
-
 
 def measure(page: Any, name: str) -> None:
     boxes = page.evaluate(EMPTY)
@@ -186,14 +149,12 @@ def measure(page: Any, name: str) -> None:
         else:
             say(f"{name}: the note keeps its paper {bg}")
 
-
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
     also = os.environ.get("NIB_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
-
 
 def drive(browser: Any) -> None:
     for scheme in ("dark", "light"):
@@ -207,8 +168,6 @@ def drive(browser: Any) -> None:
 
         page.evaluate("() => window.nibApp.theme.select('wallpaper')")
         wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
-        # The paper as it always was, which is what this drive measures; how far the
-        # picture reaches the note is theme-options.py's.
         wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "the theme's dials")
         page.evaluate("() => window.nibApp.theme.set('content', 'opaque')")
         page.wait_for_timeout(300)
@@ -226,7 +185,6 @@ def drive(browser: Any) -> None:
             keep_shot(page, f"{picture}-{scheme}")
             measure(page, f"{scheme}, {picture}")
 
-        # A pane with nothing open shows the picture, as a browser's new tab does.
         page.evaluate("() => window.nibApp.workspace.closeMany(window.nibApp.workspace.tabs.map((tab) => tab.id))")
         page.wait_for_timeout(500)
         keep_shot(page, f"empty-{scheme}")
@@ -238,7 +196,6 @@ def drive(browser: Any) -> None:
         else:
             say(f"{scheme}: nothing filters anything on a frame")
 
-        # The dial: the picture is made again at another blur, and kept once it rests.
         if scheme == "dark":
             before = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")
             page.evaluate("() => window.nibApp.theme.set('blur', 56)")
@@ -253,7 +210,6 @@ def drive(browser: Any) -> None:
             keep_shot(page, "dark-blur-56")
             measure(page, "dark, dark picture at blur 56")
 
-            # The next launch: its first frame with the app in it already has the picture.
             page.add_init_script(
                 """
                 (() => {
@@ -275,7 +231,6 @@ def drive(browser: Any) -> None:
                 wrong("the next launch's first frame did not wear the picture")
 
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

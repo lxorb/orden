@@ -51,9 +51,7 @@ HANDHELDS = [
     ("tablet", 820, 1180, TABLET_AGENT, {"top": 24}),
 ]
 
-
 JITTER = 50
-
 
 def through(shown: Image.Image, bare: Image.Image, corner: int) -> int:
     difference = ImageChops.difference(shown.convert("RGB"), bare.convert("RGB"))
@@ -66,7 +64,6 @@ def through(shown: Image.Image, bare: Image.Image, corner: int) -> int:
             if max(difference.getpixel((x, y))) > 32:
                 changed += 1
     return changed
-
 
 def compare(page: Any, name: str, selector: str) -> None:
     quiet(page)
@@ -84,12 +81,10 @@ def compare(page: Any, name: str, selector: str) -> None:
     if changed > JITTER:
         wrong(f"{name}: what is under the sidebar shows through it, {changed} pixels")
 
-
 def wallpaper(page: Any) -> None:
     wait_for(page, "window.nibApp.wallpaper", "the wallpaper store on the handle")
     page.evaluate("() => window.nibApp.theme.select('wallpaper')")
     wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
-
 
 def handheld(browser: Any, name: str, width: int, height: int, agent: str, insets: dict, theme: str, side: str) -> None:
     page = DRIVE.page(
@@ -119,7 +114,6 @@ def handheld(browser: Any, name: str, width: int, height: int, agent: str, inset
     compare(page, f"{name}-{side}-{theme}", selector)
     page.context.close()
 
-
 def desktop(browser: Any, theme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 800}, color_scheme="light")
     page.context.add_init_script(HIDE_CARET)
@@ -142,14 +136,12 @@ def desktop(browser: Any, theme: str) -> None:
     compare(page, f"desktop-peek-{theme}", ".panels .column.floating aside")
     page.context.close()
 
-
 def drive(browser: Any) -> None:
     for theme in ("plain", "wallpaper"):
         for name, width, height, agent, insets in HANDHELDS:
             for side in ("left", "right"):
                 handheld(browser, name, width, height, agent, insets, theme, side)
         desktop(browser, theme)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

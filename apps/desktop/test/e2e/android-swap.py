@@ -19,7 +19,6 @@ CONTEXT = """() => {
 }"""
 WORDS = "() => window.nibApp.workspace.active.note.latest"
 
-
 def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
     phone = browser.new_context(
         viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
@@ -68,7 +67,6 @@ def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
         wrong(f"{label}: threw {thrown[:2]} ({len(thrown)} in all)")
     phone.close()
 
-
 def composing(browser: Browser) -> None:
     phone = browser.new_context(
         viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
@@ -106,7 +104,6 @@ def composing(browser: Browser) -> None:
         wrong(f"the composition did not stay in its own note: {first!r}")
     phone.close()
 
-
 def drive(browser: Browser) -> None:
     composing(browser)
     pane(browser, "note, then +", [("open", "Longer"), ("keys", "XAX"), ("blank",), ("keys", "one")])
@@ -117,7 +114,6 @@ def drive(browser: Browser) -> None:
         [("open", "Longer"), ("keys", "XAX"), ("open", "Bbb"), ("compose", "word"), ("open", "Longer"), ("keys", "ZZ")],
     )
     pane(browser, "draft to note", [("blank",), ("keys", "one"), ("open", "Bbb"), ("keys", "YBY")])
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

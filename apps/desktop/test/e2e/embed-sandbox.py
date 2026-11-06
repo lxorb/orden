@@ -1,54 +1,3 @@
-"""What an embed still does without `allow-same-origin`, measured against the real
-providers.
-
-The question this answers is not a regression: it is a decision. Every one of the nine
-hand-written provider rows in packages/markdown/src/providers.ts asks for
-`allow-same-origin`, and the comment beside it says why that is not the hole it reads
-as - with a cross-origin `src` the token grants the frame *its own* origin rather than
-the page's. The broad list behind those nine asks for no such thing: a row nobody has
-driven gets `allow-scripts` and nothing else, which is what this drive is the argument
-for. That is true, and it
-leaves one case: a frame whose address is the app's own origin. On the web app,
-`https://<the app's own host>/anything` is a card a note can write, and a frame that
-is same-origin with the page *and* holds `allow-scripts allow-same-origin` is not
-sandboxed at all - it can reach the app's DOM, its storage and its session.
-
-There are two ways out and they cost different things. Refusing a frame whose origin
-is the app's own costs nothing and no provider notices. Dropping the token costs
-whatever the providers need it for, which nobody has measured - hence this drive.
-
-So: the four subjects, twice each.
-
-    YouTube     provider card, allow-scripts allow-same-origin allow-presentation
-    Vimeo       the same sandbox
-    CodePen     allow-scripts allow-same-origin
-    example.com an `<iframe>` the note wrote by hand, which already gets
-                allow-scripts and nothing else - the control, and the proof that
-                this drive can tell a frame that loaded from one that did not
-
-The first pass is the app exactly as it ships. The second is the same app with one
-token taken out of every frame on its way to the DOM, before it loads: nothing in
-`dist` is edited, and the drive reads the attribute back off each frame so a pass
-that did not actually remove anything says so rather than reporting a result.
-
-What is measured, per frame: whether the document inside loaded at all, what it
-says, whether a `<video>` reached a playing state after the provider's own play
-button was pressed, and every console message the frame logged - which is where an
-opaque origin shows up, as a SecurityError about storage.
-
-This drive talks to YouTube, Vimeo and CodePen over the network. It is not part of
-`run-all.py` for that reason: it is evidence for a decision, run when the decision
-is being made.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/embed-sandbox.py
-
-The harness builds and serves the app (see harness.py), in the machine's own Chrome
-because Playwright's Chromium plays none of the providers' video. Screenshots go
-beside this file under `shots/embed-sandbox/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -62,8 +11,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
-# A video that has been the example in every embed test since embeds were invented,
-# a Vimeo staff pick that has been up for a decade, and a pen of Chris Coyier's.
 YOUTUBE = "https://www.youtube.com/watch?v=aqz-KE-bpKQ"
 VIMEO = "https://vimeo.com/76979871"
 CODEPEN = "https://codepen.io/chriscoyier/pen/gfdDu"
@@ -91,9 +38,6 @@ async (note) => {
 }
 """
 
-# One token out of every frame, before the browser loads it. Patched on the
-# prototypes rather than in the app, so what runs is the built app: an element the
-# app hands a sandbox to is an element the app built, whichever way it sets it.
 WITHOUT_SAME_ORIGIN = """
 (() => {
   const drop = (value) =>
@@ -130,7 +74,6 @@ WITHOUT_SAME_ORIGIN = """
 })()
 """
 
-# Whatever is inside the frame, as far as the frame will say.
 INSIDE = """
 () => {
   const video = document.querySelector('video')
@@ -176,7 +119,6 @@ SUBJECTS = [
 ]
 
 def opened(browser: Browser, same_origin: bool, logs: list[str]) -> Page:
-    """The app, with the note in it, either as it ships or one token short."""
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="light")
     page = context.new_page()
 
@@ -194,20 +136,15 @@ def opened(browser: Browser, same_origin: bool, logs: list[str]) -> Page:
     page.evaluate(SEED, NOTE)
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
 
-    # The reading view, where all four cards are laid out at once.
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     return page
 
-
 def frame_of(page: Page, provider: str) -> Frame | None:
-    """The frame a card holds, found by the element it was built into."""
     handle = page.query_selector(f'.embed-web[data-provider="{provider}"] iframe')
     return handle.content_frame() if handle else None
 
-
 def measure(page: Page, provider: str, name: str, play: str | None, logs: list[str]) -> dict:
-    """One card: pressed, framed, and asked what it managed to do."""
     card = f'.embed-web[data-provider="{provider}"]'
     if not page.query_selector(card):
         wrong(f"{name}: the note has no card for it")
@@ -248,8 +185,6 @@ def measure(page: Page, provider: str, name: str, play: str | None, logs: list[s
         out["loaded"] = False
         return out
 
-    # The document inside, once it has had time to be one. A cross-origin frame is
-    # still a frame Playwright can ask, whatever its origin is.
     try:
         inner.wait_for_load_state("domcontentloaded", timeout=20000)
     except Exception as error:  # noqa: BLE001 - what is wanted is the reason, as words
@@ -257,9 +192,6 @@ def measure(page: Page, provider: str, name: str, play: str | None, logs: list[s
 
     before = len(logs)
     if play:
-        # The provider's own button, which is what a reader presses. A frame that
-        # will not play at all is a frame where this finds nothing, and that is an
-        # answer rather than a failure of the drive.
         try:
             inner.wait_for_selector(play, timeout=15000, state="visible")
             inner.click(play, timeout=5000)
@@ -278,7 +210,6 @@ def measure(page: Page, provider: str, name: str, play: str | None, logs: list[s
     out["said"] = logs[before:][:6]
     return out
 
-
 def pass_over(browser: Browser, same_origin: bool) -> list[dict]:
     logs: list[str] = []
     page = opened(browser, same_origin, logs)
@@ -290,10 +221,6 @@ def pass_over(browser: Browser, same_origin: bool) -> list[dict]:
         seen = measure(page, provider, name, play, logs)
         found.append(seen)
 
-        # What arrived against what the card asked for: the shipped pass must change
-        # nothing, and the other must differ by exactly one token. A card that never
-        # asked for `allow-same-origin` - a page nobody vouched for - is the same
-        # sandbox in both passes, which is the control this drive needs.
         if seen.get("sandbox") is not None:
             asked = (seen.get("asked") or "").split()
             want = asked if same_origin else [one for one in asked if one != "allow-same-origin"]
@@ -311,9 +238,7 @@ def pass_over(browser: Browser, same_origin: bool) -> list[dict]:
     page.context.close()
     return found
 
-
 def plays(seen: dict) -> str:
-    """One line for what the frame managed, read off what it said."""
     if not seen.get("frame"):
         return "no frame"
     if not seen.get("title") and not seen.get("words"):
@@ -332,7 +257,6 @@ def plays(seen: dict) -> str:
         return f"the document, no player built, {store}"
 
     return f"loaded: {(seen.get('title') or '')[:40]}, {store}"
-
 
 def main() -> int:
     with DRIVE.session(channel="chrome") as browser:
@@ -356,7 +280,6 @@ def main() -> int:
         "\n  anything at all."
     )
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

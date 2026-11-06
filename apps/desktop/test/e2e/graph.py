@@ -1,25 +1,3 @@
-"""The picture of a space, and the card that asks it things.
-
-Two runs in one. The first is a small space, photographed on a desktop and on a
-phone: the graph as it arrives, the card folded away and open, a filter narrowing
-it, a colour group, arrowheads, the orphans switch, and the space arriving in the
-order it was written. The second is five thousand notes, panned, to say what the
-frame rate actually is and to prove that hiding a note does not lay the
-arrangement out again - which is what a filter does.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/graph.py
-
-Screenshots go beside this file under `shots/graph/`, which is ignored. This is a
-scratch drive rather than a test: it photographs the app, times it, and says what
-it saw.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -31,7 +9,6 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
 
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -41,15 +18,11 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-# name, width, height, agent, finger, scheme
 DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
 ]
 
-# A space with a shape worth drawing: a hub everything points at, two clusters
-# that share nothing, a pair that link both ways, a note nothing links to, a link
-# to a note that is not there, and tags to colour by.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -71,9 +44,6 @@ async () => {
 }
 """
 
-# The notes were all written in the same second, so there is nothing to play. Their
-# dates are spread out a day apart here, which is what a space written over a
-# fortnight looks like.
 SPREAD_DATES = """
 async () => {
   const day = 24 * 60 * 60 * 1000
@@ -105,10 +75,6 @@ async () => {
 }
 """
 
-# Five thousand notes, straight into the link index: `noteFrom` writes a file,
-# loads the tree and finds a free name for each one, which is nineteen seconds a
-# thousand and worse as it goes. The index is what the graph reads, and this fills
-# it with the same shape a real space has - a chain, a stride of seven, and a hub.
 SEED_MANY = """
 async (count) => {
   const links = window.nibApp.links
@@ -131,15 +97,6 @@ async (count) => {
 }
 """
 
-# The frame rate while the view is being dragged. The graph asks for a frame per
-# pointer move and nothing else, so a loop of its own here would measure the
-# browser rather than the drawing: this counts the frames the page actually gets
-# while the pointer is moving across it, which is the number a reader feels.
-#
-# The press starts in a corner, not in the middle, and that matters: a press that
-# lands on a note drags the note instead of the view, which warms the arrangement
-# and makes the number a settle rather than a pan. A settled graph is a disc in the
-# middle of the pane, so a corner is empty.
 PAN = """
 async ({ steps }) => {
   const canvas = document.querySelector('.graph canvas')
@@ -203,11 +160,6 @@ async ({ steps }) => {
 }
 """
 
-# Why a link is drawn one pixel of the screen wide rather than one of the page's,
-# which is the difference between two frames a second and sixty at five thousand
-# notes. On a canvas of this drive's own, in the page and at the device's ratio, so
-# the card's own work is in the number: an off-screen canvas leaves it out and says
-# half a millisecond for all of it. See EDGE_PIXELS in graph-paint.ts.
 RASTER = """
 async ({ ratio, width, height }) => {
   const graph = window.nibApp.links.graph
@@ -333,8 +285,6 @@ async ({ ratio, width, height }) => {
 }
 """
 
-# A patch of the middle of the picture, as one number: enough to say whether
-# anything moved, and far cheaper than reading the whole canvas back off the card.
 PATCH = """
 const patch = () => {
   const canvas = document.querySelector('.graph canvas')
@@ -367,10 +317,6 @@ PATCH_ONCE = (
 """
 )
 
-# How long a switch in the card takes to reach the screen: from the change to the
-# frame after the one that drew it. A rebuilt arrangement over five thousand notes
-# is seconds of arithmetic, so this number is what says a hidden note is hidden
-# rather than laid out again.
 SWITCH = """
 async ({ orphans }) => {
   const painted = () =>
@@ -383,8 +329,6 @@ async ({ orphans }) => {
 }
 """
 
-# A colour group, and a filter, over the whole space: each is one query run once
-# per note, and then one frame.
 PAINTED = """
   const painted = () =>
     new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
@@ -418,8 +362,6 @@ async () => {
 """
 )
 
-
-# What the picture is set to, which is what a bookmarked view carries.
 VIEW = """
 () => {
   const one = window.nibApp.workspace.graphSettings.here
@@ -427,8 +369,6 @@ VIEW = """
 }
 """
 
-# Keeps the view under a name, the way the card's own row does, and answers what
-# the bookmarks hold afterwards.
 KEEP_VIEW = """
 (name) => {
   const ws = window.nibApp.workspace
@@ -437,11 +377,9 @@ KEEP_VIEW = """
 }
 """
 
-# Which kind of document the tab in front is.
 TAB = """
 () => window.nibApp.workspace.active?.note?.kind ?? 'none'
 """
-
 
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
@@ -467,7 +405,6 @@ def opened(browser, width, height, agent, finger, scheme, name):
     page.wait_for_timeout(200)
     return context, page
 
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
@@ -481,12 +418,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     say(f"[{name}] dates spread over {page.evaluate(SPREAD_DATES)} files")
     page.wait_for_timeout(500)
 
-    # The picture of the whole space, as a tab.
     page.evaluate("() => window.nibApp.workspace.openGraph()")
-    # The surface is fetched the first time a tab of its kind is opened rather than
-    # carried into the first paint, so the pane is empty for as long as that takes:
-    # waited for, or the card this run goes on to open is looked for before there is
-    # anything to open it on. See surfaces.svelte.ts.
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(1400)
     shot("arrived")
@@ -497,7 +429,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     say(f"[{name}] {counts['nodes']} nodes and {counts['edges']} edges")
 
-    # The card, folded away and open.
     tab = page.locator(".graph .corner > button").last
     if not tab.count():
         say(f"[{name}] no card to open")
@@ -508,7 +439,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(500)
     shot("card")
 
-    # And the Forces group let out, which is what the card is quiet without.
     forces = page.locator('.graph .corner .card button:has-text("Forces")').first
     if forces.count():
         forces.click(force=True)
@@ -519,7 +449,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     else:
         say(f"[{name}] no Forces row on the card")
 
-    # Colour a group, which is what the six colours are for.
     page.evaluate(
         "() => window.nibApp.workspace.graphSettings.set({"
         " groups: [{ query: 'tag:work', colour: 4 }, { query: 'tag:later', colour: 6 }] })"
@@ -527,9 +456,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(700)
     shot("groups")
 
-    # The files the notes embed, as nodes of their own. Off in the picture above, so
-    # what this says is how many nodes the switch adds and that they say what they
-    # are: the drawing takes a square for one where a note is a dot.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ attachments: true })")
     page.wait_for_timeout(1600)
     shot("attachments")
@@ -550,8 +476,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ attachments: false })")
     page.wait_for_timeout(1400)
 
-    # How wide a link is drawn: the dial's three steps, thin and thick photographed
-    # either side of the look the picture arrives with.
     for step, what in ((1, "thin"), (3, "thick")):
         page.evaluate(
             f"() => window.nibApp.workspace.graphSettings.set({{ lines: {step} }})"
@@ -561,8 +485,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ lines: 2 })")
     page.wait_for_timeout(400)
 
-    # Where the names fade in, at each end of the dial: they arrive while the space is
-    # still small, or wait until the view is in among the notes.
     for fade, what in ((0.25, "soon"), (4, "late")):
         page.evaluate(
             f"() => window.nibApp.workspace.graphSettings.set({{ fade: {fade} }})"
@@ -572,12 +494,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ fade: 1 })")
     page.wait_for_timeout(400)
 
-    # Arrowheads, which say which note reached for which.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: true })")
     page.wait_for_timeout(600)
     shot("arrows")
 
-    # A filter, in the search's own language.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ filter: 'tag:later' })")
     page.wait_for_timeout(800)
     shot("filtered")
@@ -586,14 +506,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     say(f"[{name}] the filter reads {shown!r}")
 
-    # And the orphans switch, on the whole space again.
     page.evaluate(
         "() => window.nibApp.workspace.graphSettings.set({ filter: '', orphans: false })"
     )
     page.wait_for_timeout(800)
     shot("no-orphans")
 
-    # The space arriving in the order it was written.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ orphans: true })")
     page.wait_for_timeout(400)
     played = page.locator(".graph .corner .time button")
@@ -606,15 +524,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     else:
         say(f"[{name}] no time row, so no dates to play")
 
-    # Wider apart, and gathered or not.
     page.evaluate(
         "() => window.nibApp.workspace.graphSettings.set({ spread: 3, gather: false })"
     )
     page.wait_for_timeout(2000)
     shot("spread")
 
-    # And the other two the Forces group holds: what a link means, and how hard the
-    # notes push. Both lay the arrangement out again, which is what they are.
     page.evaluate(
         "() => window.nibApp.workspace.graphSettings.set("
         " { spread: 1, gather: true, distance: 96, push: 40 })"
@@ -631,11 +546,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(1600)
     shot("reset")
 
-    # The picture beside a note, and the stepper that says how far it reaches. The note
-    # is asked for and then waited for by the app's own word, rather than awaited inside
-    # the evaluation: the graph going from under that await had DevTools report its
-    # promise collected about one run in two (measured 2026-10-01, the note open and the
-    # page fine after it), which failed the drive and nothing else.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -666,9 +576,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
                 f"{page.evaluate('() => window.nibApp.workspace.graphSettings.here.depth')}"
             )
 
-            # The card's own slider reaches five, and the stepper follows it: one
-            # setting, so the two cannot disagree. Written the way the slider writes
-            # it, since the card is on the graph tab rather than on this panel.
             page.evaluate("() => window.nibApp.workspace.graphSettings.set({ depth: 5 })")
             page.wait_for_timeout(1600)
             shot("panel-depth-5")
@@ -683,8 +590,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     else:
         say(f"[{name}] no picture switch in the panel")
 
-    # A view of this space, kept and come back to. The card writes it; the row
-    # above the file list opens it again.
     say(f"[{name}] --- a bookmarked view ---")
     page.evaluate("() => window.nibApp.workspace.openGraph()")
     page.wait_for_timeout(800)
@@ -702,9 +607,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(600)
     say(f"[{name}] after a reset: {page.evaluate(VIEW)}")
 
-    # And pressing the row puts the whole view back.
-    # The bookmarks live over the file tree, which is the panel they are drawn
-    # in; see Sidebar.svelte.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
 
@@ -720,16 +622,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     context.close()
 
-
 def measure(browser, out: Path, count: int) -> None:
-    """Five thousand notes, panned, and a switch turned.
-
-    In this order for a reason. Reading pixels back off the canvas is what says
-    whether anything moved, and it is also what makes Chrome stop drawing that
-    canvas with the graphics card - measured at sixty frames a second before the
-    first read and thirty after it. So every frame rate here is taken before any
-    pixel is, and the picture is compared at the end.
-    """
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     name = "many"
@@ -738,19 +631,10 @@ def measure(browser, out: Path, count: int) -> None:
     seeded = page.evaluate(SEED_MANY, count)
     say(f"[{name}] {seeded['nodes']} nodes and {seeded['edges']} edges in {seeded['ms']} ms")
 
-    # Why a link is a hairline of the screen rather than of the page, before the app
-    # itself is measured: the two are a factor of thirty apart and everything below
-    # rests on it.
     for line in page.evaluate(RASTER, {"ratio": 2, "width": 1440, "height": 860}):
         say(f"[{name}] {line}")
 
     page.evaluate("() => window.nibApp.workspace.openGraph()")
-    # The surface itself first, which is fetched when a tab of its kind is opened; see
-    # surfaces.svelte.ts. Then the arrangement, which takes as many ticks as each frame has
-    # room for, so a space this size settles over a few seconds of animation -
-    # measured at 4.9 seconds for five thousand notes, watched by the picture
-    # stopping; see graph-still.py. Waited out here rather than watched, because
-    # watching means reading pixels.
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(10000)
 
@@ -768,9 +652,6 @@ def measure(browser, out: Path, count: int) -> None:
     pan("panned")
     pan("panned again")
 
-    # A switch in the card. A rebuilt arrangement over five thousand notes is
-    # seconds of arithmetic, so these numbers are what say a hidden note is hidden
-    # rather than laid out again.
     say(
         f"[{name}] orphans off in {page.evaluate(SWITCH, {'orphans': False})} ms,"
         f" on again in {page.evaluate(SWITCH, {'orphans': True})} ms"
@@ -785,10 +666,6 @@ def measure(browser, out: Path, count: int) -> None:
     page.wait_for_timeout(1200)
     pan("panned with arrowheads")
 
-    # And the Lines dial, at each of its three steps. The whole reason the thick one
-    # is one hairline brushed three times rather than a wider stroke: above one of
-    # the screen's own pixels the graphics stack tessellates every line, and ten
-    # thousand shapes is seconds a frame. See `LINES` in graph-paint.ts.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: false })")
     for step, what in ((1, "thin"), (2, "normal"), (3, "thick")):
         page.evaluate(
@@ -807,19 +684,6 @@ def measure(browser, out: Path, count: int) -> None:
     page.screenshot(path=str(shots / f"{name}-settled.png"))
     say(f"shot {name}-settled.png")
 
-    # And the last word: the same picture has to come back when a switch goes off and
-    # on again. A rebuilt arrangement starts from the spiral and settles over five
-    # seconds, so an identical frame a moment later is what says the notes that
-    # stayed did not move.
-    #
-    # Photographed rather than read off the canvas. Reading the canvas is what makes
-    # Chrome draw it on the processor from then on, and the processor's antialiasing
-    # is not the card's to the last bit; a screenshot comes from the compositor and
-    # leaves the drawing alone.
-    #
-    # And panned first, because until the view has been taken over it keeps whatever
-    # is showing framed: hiding a note then moves the camera, honestly, and the
-    # question here is about the arrangement rather than the framing.
     pan("panned after the reset")
 
     def picture() -> bytes:
@@ -838,7 +702,6 @@ def measure(browser, out: Path, count: int) -> None:
 
     context.close()
 
-
 def main() -> int:
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
     out = DRIVE.shots
@@ -851,7 +714,6 @@ def main() -> int:
         measure(browser, out, count)
 
     return DRIVE.verdict(f"shots in {out}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

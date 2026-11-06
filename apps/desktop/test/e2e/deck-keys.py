@@ -46,6 +46,5 @@ def drive(browser: Browser) -> None:
         wrong(f"the print frame's script was refused: {refused[0][:160]}")
     say(f"policy refusals: {len(refused)}")
 
-
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

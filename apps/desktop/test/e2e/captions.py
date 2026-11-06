@@ -1,19 +1,3 @@
-"""What a code block says it is, seen: the words after the language in a fence's
-own line, drawn on the block's top row in the editor and over the block on a
-rendered page, with the language still doing the language's job.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/captions.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/captions/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -24,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = """# Blocks that say what they are
 
@@ -52,8 +35,6 @@ async ([note]) => {
 }
 """
 
-# Every caption on the page, against the block it belongs to: where it starts,
-# whether it is on the block's first row, and what it says.
 CAPTIONS = """
 () => [...document.querySelectorAll('.cm-line.nib-code-open')].map((line) => {
   const box = line.getBoundingClientRect()
@@ -80,7 +61,6 @@ READ = """
   first: figure.firstElementChild?.tagName ?? null,
 }))
 """
-
 
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
@@ -119,10 +99,8 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     page.wait_for_timeout(600)
     return page
 
-
 def source(page: Page) -> str:
     return page.evaluate("() => window.nib.state.doc.toString()")
-
 
 def drive_editor(browser: Browser) -> None:
     page = fresh(browser, "desktop")
@@ -152,8 +130,6 @@ def drive_editor(browser: Browser) -> None:
         if one["into"] is None or not 0 <= one["into"] <= 40:
             wrong(f"a caption is not on the block's top row: {one['into']}px into it")
 
-    # The caret in the block brings the fence's own line back, and the caption
-    # steps aside rather than being drawn over it.
     page.evaluate(
         """() => {
           const at = window.nib.state.doc.toString().indexOf('const answer')
@@ -172,7 +148,6 @@ def drive_editor(browser: Browser) -> None:
     if inside[1]["text"] != "setup.js":
         wrong("a caret in one block took the caption off another")
 
-    # And away again.
     page.evaluate(
         """() => {
           window.nib.dispatch({ selection: { anchor: 0 } })
@@ -185,7 +160,6 @@ def drive_editor(browser: Browser) -> None:
         wrong(f"the caption did not come back: {back[0]['text']!r}")
     shot(page, "03-caret-away-again")
 
-    # Line numbers take room at the left of the block; the caption keeps clear.
     page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
     page.wait_for_timeout(500)
     numbered = page.evaluate(CAPTIONS)
@@ -197,8 +171,6 @@ def drive_editor(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
     page.wait_for_timeout(300)
 
-    # Retyping the language leaves the caption where it was: what a block is and
-    # which language it is in are two things.
     page.locator(".nib-fence-language").first.click()
     page.wait_for_timeout(300)
     page.keyboard.type("tsx")
@@ -211,7 +183,6 @@ def drive_editor(browser: Browser) -> None:
         wrong("retyping the language took the caption with it")
 
     page.context.close()
-
 
 def drive_reading(browser: Browser) -> None:
     page = fresh(browser, "reading")
@@ -232,7 +203,6 @@ def drive_reading(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     blocks = page.evaluate(CAPTIONS)
@@ -244,7 +214,6 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the editor ---")
@@ -255,7 +224,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("a code block says what it is, in the editor and on the page")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

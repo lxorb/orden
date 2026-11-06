@@ -1,19 +1,3 @@
-"""A side panel held on one note, seen: the outline of the note on the left while
-the note on the right is being written in, the name of the note it is held on,
-and the row press that takes the reader back to it.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/panels.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/panels/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -24,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 LEFT = """# The left note
 
@@ -55,13 +38,7 @@ async ([left, right]) => {
 }
 """
 
-# What the sidebar is showing, and which note it says it is about.
-#: The side the note's panels are on. The outline and the links panel start on the
-#: right since 4a5f7ddc, and the left side keeps the file list's own tools (the order
-#: of the files) in the same row, in the page even while that side is shut, so a bare
-#: `.tools .tool` is the file list's rather than the panel's.
 SIDE = "aside.right"
-#: The hold button itself, by what it says, wherever it is drawn.
 HOLD = (
     '.tools .tool[aria-label="Stay on this note"], .tools .tool[aria-label="Follow the open note"]'
 )
@@ -77,7 +54,6 @@ PANEL = """
   active: window.nibApp.workspace.active?.name ?? null,
 })
 """
-
 
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
@@ -107,7 +83,6 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     page.wait_for_timeout(300)
     return page
 
-
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -119,10 +94,8 @@ def open_note(page: Page, starts: str) -> None:
     )
     page.wait_for_timeout(500)
 
-
 def panel(page: Page) -> dict:
     return page.evaluate(PANEL, [SIDE, HOLD])
-
 
 def drive_holding(browser: Browser) -> None:
     page = fresh(browser, "desktop")
@@ -142,7 +115,6 @@ def drive_holding(browser: Browser) -> None:
     if following["holding"] is not None:
         wrong("a panel that follows says it is holding something")
 
-    # Held, and then a second note opened beside it in another pane.
     page.locator(HOLD).first.click()
     page.wait_for_timeout(400)
     page.evaluate("() => window.nibApp.workspace.split('row')")
@@ -162,7 +134,6 @@ def drive_holding(browser: Browser) -> None:
     if holding["holding"] != "The left note":
         wrong(f"the panel does not say which note it is held on: {holding['holding']!r}")
 
-    # A row in a held panel takes the reader to the note it is about.
     page.locator(f"{SIDE} .body .row.heading", has_text="Second part").first.click()
     page.wait_for_timeout(600)
     landed = page.evaluate(
@@ -176,7 +147,6 @@ def drive_holding(browser: Browser) -> None:
     if landed["note"] != "The left note.md":
         wrong(f"pressing a row in a held panel did not go to its note: {landed['note']}")
 
-    # And it follows again when the hold comes off.
     page.locator(HOLD).first.click()
     page.wait_for_timeout(300)
     page.evaluate("() => window.nibApp.workspace.panes.focusNext()")
@@ -190,7 +160,6 @@ def drive_holding(browser: Browser) -> None:
         wrong(f"the outline did not follow the pane again: {freed['rows']}")
 
     page.context.close()
-
 
 def drive_links(browser: Browser) -> None:
     page = fresh(browser, "links")
@@ -206,7 +175,6 @@ def drive_links(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     open_note(page, "The left note")
@@ -221,7 +189,6 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the outline, held ---")
@@ -232,7 +199,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("a panel can be held on one note while another is written in")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

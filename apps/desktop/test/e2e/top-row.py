@@ -1,28 +1,3 @@
-"""The window's one top row (#1037).
-
-Split, the window had two rows at its top: the bar, holding the search and the window's
-buttons at its ends and nothing between them, and under it each pane's own strip. Now the
-strips of the panes along the top are the bar, each over its pane, and a pane under
-another one keeps its strip on its own card.
-
-What this measures, in every shape the panes take - one pane, two side by side, with each
-side open, three, a 2x2, a narrow window, and with the words running right to left:
-
-  - one row: every pane along the top starts where the bar ends, and none of them carries
-    a strip of its own; a pane under another one does;
-  - every strip in the bar is as wide as its pane and over it, edge for edge;
-  - the strips leave the bar's ends to what is the window's - the search and the overview
-    at one end, the window's buttons at the other - and never run under them;
-  - there is something to drag the window by in every strip, at least the sliver wide,
-    and the room between two strips is the bar's, which the window is dragged by.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/top-row.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/top-row/`.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -32,10 +7,8 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
-#: The sliver's width, `--space-5`: what the window can always be dragged by.
 SLIVER = 24
 
-#: Everything the row says about itself, and the panes under it.
 MEASURE = """
 () => {
   const box = (one) => {
@@ -79,7 +52,6 @@ MEASURE = """
   }
 }
 """
-
 
 def check(page: Any, state: str) -> None:
     DRIVE.settled(page)
@@ -130,7 +102,6 @@ def check(page: Any, state: str) -> None:
 
     shot(page, state, clip={"x": 0, "y": 0, "width": page.viewport_size["width"], "height": 120})
 
-
 def drive(browser: Any) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 760})
     DRIVE.open(page)
@@ -166,7 +137,6 @@ def drive(browser: Any) -> None:
     DRIVE.open_note(rtl, "Plan")
     rtl.evaluate(f"() => {ws}.split('row')")
     check(rtl, "08-right-to-left")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

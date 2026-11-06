@@ -1,20 +1,3 @@
-"""The palette shows a scrollbar only where there is something to scroll to (#775).
-
-A reader on a NixOS laptop: *"There is scrollbar even though there is nothing to scroll
-through"*, over the palette as Ctrl+O opens it. Its list is capped at 46vh, and a window
-whose cap fell a few pixels short of the list - its own padding, a pixel of a row - wore
-the platform's bar the whole length of the list, over nothing left to scroll. The list is
-cut between two rows now, so what is out of sight is a row or nothing.
-
-The window is stepped through every height at which the list is cut, two pixels at a
-time: what is out of sight is never a sliver, the bar is there over a row or more and
-not over nothing, and the platform's is never there at all.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/palette-scrollbar.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -35,7 +18,6 @@ STATE = """() => {
   }
 }"""
 
-
 def opened(page: Page, keys: str, height: int) -> dict:
     page.set_viewport_size({"width": 1600, "height": height})
     page.wait_for_timeout(200)
@@ -47,13 +29,11 @@ def opened(page: Page, keys: str, height: int) -> dict:
     page.wait_for_timeout(300)
     return page.evaluate(STATE)
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1600, "height": 1100}, color_scheme="dark")
     DRIVE.open(page)
     page.wait_for_timeout(1000)
 
-    # How tall the list is when it fits, which says where its cap has to fall.
     full = opened(page, "Control+o", 1300)
     tall = page.evaluate("() => document.querySelector('.palette ul').scrollHeight")
     page.keyboard.press("Escape")
@@ -65,7 +45,6 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(150)
         if not state["own"]:
             wrong(f"{height}px: the list wears the platform's bar")
-        # Cut between two rows, so what is out of sight is a row or nothing at all.
         if 0 < state["over"] < 20:
             wrong(f"{height}px: the list runs {state['over']}px past its room, a sliver of a row")
             DRIVE.shot(page, f"sliver-{height}")
@@ -73,13 +52,11 @@ def drive(browser: Browser) -> None:
             wrong(f"{height}px: no bar over {state['over']}px to scroll")
         say(f"{height}px: {state}")
 
-    # Every command at once, which runs well past the cap.
     commands = opened(page, "Control+Shift+P", 900)
     say(f"every command: {commands}")
     if not (commands["needed"] and commands["lit"]):
         wrong(f"no bar over the list of every command: {commands}")
     DRIVE.shot(page, "commands")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the palette's bar is there only over something to scroll to"))

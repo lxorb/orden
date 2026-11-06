@@ -51,13 +51,9 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 
-#: A note with one of everything this drive asks about, and long enough that it
-#: cannot fit in the window: the filler is what makes the scroll question real.
 FILLER = "\n\n".join(f"Paragraph {n} of the body, here to make the note tall." for n in range(60))
 FIRST = f"# Smoke\n\nA line with **stout** in it, and *slanted* too.\n\n{FILLER}\n"
 
-#: The second note. Its marker never appears in the first, which is what makes
-#: "the wrong note's words are on screen" a question with a yes or no answer.
 SECOND = "# Second\n\nThe second note says quinine and nothing else.\n"
 
 SEED = """
@@ -73,9 +69,6 @@ async ([first, second]) => {
 }
 """
 
-#: Which tab is in front, by the name of the note in it. The drive switches by
-#: asking the workspace rather than by clicking a strip whose shape is another
-#: drive's business.
 SHOW = """
 async (start) => {
   const ws = window.nibApp.workspace
@@ -86,10 +79,7 @@ async (start) => {
 }
 """
 
-
 def show(page: Page, start: str) -> None:
-    """Brings the tab on the note whose name starts with `start` to the front,
-    and waits for the editor to be showing it."""
     if not page.evaluate(SHOW, start):
         raise SystemExit(f"there is no tab on a note called {start}")
 
@@ -98,28 +88,14 @@ def show(page: Page, start: str) -> None:
         f"window.nibApp.workspace.active?.note?.name?.startsWith({json.dumps(start)})",
         f"the {start} tab to come forward",
     )
-    # A switch is a state swap inside one view; the words are there in the frame
-    # it happens in, and this is the frame after it.
     page.wait_for_timeout(120)
-    # To the top, so what is drawn is the start of the note whatever place the
-    # switch put back. The editor only draws the part of a note that is on
-    # screen, and reading it is how this drive sees what a person sees.
     page.evaluate("() => { const s = document.querySelector('.cm-scroller'); if (s) s.scrollTop = 0 }")
     page.wait_for_timeout(60)
 
-
 def rows_now(page: Page) -> int:
-    """How many rows the file list is drawing."""
     return page.evaluate("() => document.querySelectorAll('.nib-row').length")
 
-
 def weight_of(page: Page, words: str) -> float:
-    """The heaviest font-weight any element covering `words` is drawn at.
-
-    Asked of the painted element rather than of the decoration behind it: what
-    Emil reported is that bold is not bold on screen, and only the computed style
-    answers that. The heaviest, because the word sits inside nested spans and
-    only one of them carries the weight."""
     return page.evaluate(
         """
         (words) => {
@@ -140,28 +116,20 @@ def weight_of(page: Page, words: str) -> float:
         words,
     )
 
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    # A first visit is given a welcome note and the app opens it after the space
-    # is there rather than with it, so seeding before that wins the tab for a
-    # moment and loses it again. See `restore` in workspace.svelte.ts.
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [FIRST, SECOND])} notes")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface")
-    # Which code this actually is. Printed rather than checked: the drive's job is
-    # to say what it drove, so a passing run against the wrong build cannot be
-    # mistaken for a passing run against the right one. See main.ts.
     stamp = page.evaluate("() => window.nibBuild || 'unstamped'")
     say(f"driving build {stamp}")
 
     show(page, "Smoke")
     shot(page, "01-smoke")
 
-    # ── The words render as the markdown says ────────────────────────────
     stout = weight_of(page, "stout")
     plain = weight_of(page, "A line with")
     if stout < 600:
@@ -188,11 +156,6 @@ def drive(browser: Browser) -> None:
     else:
         say(f"the heading is {heading}px against {body}px")
 
-    # ── And bold as it is typed, which is what was reported ──────────────
-    # The measurement above is of bold that was already in the file. What Emil
-    # said is "when I put stuff in ** it doesn't get displayed bold", which is
-    # the live preview answering a keystroke - a different code path, and the one
-    # a person actually uses. So this types it.
     typed = page.evaluate(
         """
         () => {
@@ -211,8 +174,6 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Enter")
         page.keyboard.type("Typed **marzipan** here.")
         page.wait_for_timeout(250)
-        # The caret is still in the line it was typed on, where a live preview
-        # shows the markers. Moving it away is what asks the question.
         page.keyboard.press("Home")
         page.keyboard.press("ArrowUp")
         page.wait_for_timeout(300)
@@ -223,7 +184,6 @@ def drive(browser: Browser) -> None:
             say(f"bold typed into the note came out at {weight}")
         shot(page, "01b-typed")
 
-    # ── A note longer than the window scrolls ────────────────────────────
     room = page.evaluate(
         """
         () => {
@@ -252,11 +212,6 @@ def drive(browser: Browser) -> None:
         else:
             say(f"the note has {room['over']}px to scroll and went to {moved}px")
 
-        # And with a wheel, which is how a person scrolls. Setting scrollTop only
-        # says the scroller CAN move; a wheel says nothing between the pointer and
-        # the scroller swallows the gesture, which is a different question and the
-        # one Emil asked. The pointer is put over the writing first, because a
-        # wheel lands wherever it is.
         page.evaluate("() => { document.querySelector('.cm-scroller').scrollTop = 0 }")
         page.wait_for_timeout(60)
         box = page.evaluate(
@@ -277,21 +232,13 @@ def drive(browser: Browser) -> None:
             say(f"a 600px wheel moved the note {wheeled}px")
         shot(page, "02-scrolled")
 
-    # ── A tab switch shows the note the tab names, and nothing before it ──
-    # There and back, because a swap that leaks does it on the way back as often
-    # as on the way out, and twice because the second switch is the one that has
-    # a previous note to leak.
     for name, mine, theirs in [
         ("Second", "quinine", "stout"),
         ("Smoke", "stout", "quinine"),
         ("Second", "quinine", "stout"),
     ]:
         show(page, name)
-        # What is on screen, read off the surface rather than out of the view:
-        # `window.nib` is only there in a development build and this drive has to
-        # say the same thing about the build that ships.
         drawn = page.evaluate("() => document.querySelector('.cm-content')?.innerText ?? ''")
-        # And what the app believes the tab holds, which is what would be saved.
         held = page.evaluate(
             "() => window.nibApp.workspace.active?.note?.live?.text?.toString() ?? ''"
         )
@@ -317,34 +264,16 @@ def drive(browser: Browser) -> None:
     say(f"the tabs kept their own words; the space holds {json.dumps(held)}")
     shot(page, "03-switched")
 
-    # The file list, opened so the reload below has something to lose. Cheap, and
-    # it is the surface a full drive run found empty after a reload of a large
-    # space - so a floor that reloads without it open is a floor that would not
-    # have noticed.
     page.evaluate("() => { window.nibApp.workspace.showPanel('tree') }")
     page.wait_for_timeout(350)
     before_rows = rows_now(page)
 
-    # ── And all of it again after a reload ───────────────────────────────
-    # A person's app is not a fresh page. It is reopened, reloaded, restored from
-    # a session that was written the last time they closed it, and that is the
-    # path where a full drive run found the file list not drawing, the pictures
-    # of a note gone and the folds lost. Everything above this line passed on a
-    # page that had just been opened for the first time, which is the easy case
-    # and the one nobody's day is spent in.
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.nibApp", "the app after a reload")
     wait_for(page, "window.nibApp.workspace.activeSpace", "the space after a reload")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface after a reload")
     page.wait_for_timeout(400)
 
-    # The file list, which is the one thing on screen that says the app came back
-    # with the space in it rather than merely came back. Counted before the reload
-    # as well, so a selector that never matched is told apart from a list that did
-    # not draw - the difference between finding a bug and inventing one.
-    # Which panel the app came back with, asked before the rows are counted: a
-    # panel that simply closed is not a file list that failed to draw, and telling
-    # those two apart is the difference between finding a bug and inventing one.
     panel = page.evaluate("() => window.nibApp.workspace.panel")
     if before_rows and panel != "tree":
         say(f"the app came back with panel {json.dumps(panel)}; not asking about rows")
@@ -355,8 +284,6 @@ def drive(browser: Browser) -> None:
     else:
         say("no file list rows before the reload either; not asking about them")
 
-    # The long note, brought forward by name: a reload restores whichever tab was
-    # in front, and asking the short one whether it scrolls proves nothing.
     show(page, "Smoke")
     again = page.evaluate(
         """
@@ -377,7 +304,6 @@ def drive(browser: Browser) -> None:
     shot(page, "04-reloaded")
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
@@ -388,7 +314,6 @@ def main() -> int:
 
     say("the floor holds")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

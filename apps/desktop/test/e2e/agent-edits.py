@@ -1,29 +1,3 @@
-"""An agent editing the note somebody is typing in, and nothing of theirs lost.
-
-The reader types without stopping at the end of a paragraph while an agent makes
-fifty anchored edits through the window's own interface (lib/agents/docs): most of
-them in the paragraphs around it, many in the very paragraph being typed in, and the
-last one right beside the caret, which waits for the typing to pause. Then:
-
-- every keystroke is in the note, in order, where it was typed, and the caret is
-  right after the last one: it never jumped;
-- every edit landed, and the agent's caret was drawn where it wrote;
-- Ctrl+Z walks back one step at a time, each step either one agent edit or some of
-  the reader's typing and never both, newest first, down to the note as it was, and
-  Ctrl+Y walks forward again;
-- "Undo edits by" the agent takes back all fifty and keeps every character typed.
-
-Serves the app from a Vite dev server of its own on its own origin, so it builds
-nothing and leaves apps/desktop/dist alone, and drives it in headless Chromium. The
-agents' interface is imported by its module path, which only a dev server answers.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/agent-edits.py
-
-Screenshots go beside this file under `shots/agent-edits/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -42,14 +16,11 @@ AROUND = 20
 MINE = 30
 TYPED = " the quick brown fox jumps over the lazy dog" * 5
 
-
 def tokens(prefix: str, count: int) -> str:
     return " ".join(f"{prefix}{at:02d}" for at in range(count))
 
-
 NOTE = f"# Drive\n\n{tokens('a', AROUND)}\n\n{tokens('w', MINE)}\n\n{tokens('b', AROUND)}\n"
 
-# Fifty edits, interleaved across the three paragraphs, the last one beside the caret.
 EDITS: list[str] = []
 for at in range(AROUND):
     EDITS += [f"a{at:02d}", f"w{at:02d}"] + ([f"b{at:02d}"] if at < 9 else [])
@@ -87,17 +58,13 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> No
         page.wait_for_timeout(50)
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def text(page: Page) -> str:
     return page.evaluate(f"() => {VIEW}.state.doc.toString()")
-
 
 def caret(page: Page) -> int:
     return page.evaluate(f"() => {VIEW}.state.selection.main.head")
 
-
 def expected(upper: set[str]) -> str:
-    """The note with these words made capitals and the typing where it was typed."""
 
     def paragraph(prefix: str, count: int) -> str:
         words = [f"{prefix}{at:02d}" for at in range(count)]
@@ -108,18 +75,13 @@ def expected(upper: set[str]) -> str:
         f"\n\n{paragraph('b', AROUND)}\n"
     )
 
-
 def capitals(words: str) -> set[str]:
     return set(re.findall(r"\b[AWB]\d\d\b", words))
-
 
 def lowered(words: str) -> str:
     return re.sub(r"\b([AWB])(\d\d)\b", lambda found: found.group(0).lower(), words)
 
-
 def one_step(before: str, after: str) -> tuple[str, list[str]]:
-    """What one Ctrl+Z took - one agent edit, some of the reader's typing, or both at
-    once, which is the thing that must never happen - and which agent edits."""
     agent = sorted(word.lower() for word in capitals(before) - capitals(after))
     reader = lowered(before) != lowered(after)
     if len(agent) == 1 and not reader:
@@ -127,7 +89,6 @@ def one_step(before: str, after: str) -> tuple[str, list[str]]:
     if not agent and reader:
         return "reader", agent
     return f"mixed ({len(agent)} agent edits, reader {reader})", agent
-
 
 def drive(page: Page) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
@@ -145,7 +106,6 @@ def drive(page: Page) -> None:
     )
     wait_for(page, f"{VIEW} && {VIEW}.state.doc.toString().startsWith('# Drive')", "the note")
 
-    # The caret at the end of the middle paragraph, and the editor focused.
     end_of_mine = NOTE.index(f"w{MINE - 1:02d}") + 3
     page.evaluate(
         f"""(at) => {{
@@ -182,7 +142,6 @@ def drive(page: Page) -> None:
         wrong(f"the caret is at {caret(page)}, not after the last keystroke")
     shot(page, "02-all-landed")
 
-    # One more of the agent's, then Ctrl+Z all the way down, one step at a time.
     page.evaluate(
         """async (agent) => {
           await window.__agent.docs.notes.editNote(agent, { path: 'Drive.md' }, [
@@ -227,7 +186,6 @@ def drive(page: Page) -> None:
     if before != full:
         wrong("Ctrl+Y did not bring everything back")
 
-    # And "Undo edits by" the agent: all of them, every keystroke kept.
     undone_all = page.evaluate(
         """async (agent) => window.__agent.docs.notes.undoAgent(agent, { path: 'Drive.md' })""",
         AGENT,
@@ -237,14 +195,12 @@ def drive(page: Page) -> None:
         wrong(f"undoing the agent did not leave exactly the note and the typing:\n{text(page)!r}")
     shot(page, "03-agent-undone")
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
         drive(page)
 
     return DRIVE.verdict("all good")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

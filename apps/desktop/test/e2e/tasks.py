@@ -1,30 +1,3 @@
-"""The Tasks panel and the views over the rows, in the built app (docs/tasks.md 5.5, 5.9).
-
-What this drives, against the real rows store and the real files:
-
-  * The Tasks panel lists the space's one Todos view with its count, and the labels; the
-    engine's Today and Upcoming, opened by name, still answer as they did; the projects
-    and the labels; Today's count is in the danger tone while something is overdue.
-  * Today holds what is overdue and what is due today and nothing later; Upcoming
-    holds what is later and nothing of today.
-  * A card carried to another column of a base's board writes the property the
-    board is grouped by into the note.
-  * A row carried to another day of the calendar writes its date.
-  * A table cell edited writes the note, and Ctrl+Z in the view takes it back.
-  * A ` ```base ` fence and an `![[Bugs.base#Board]]` embed are drawn as views inside
-    the note.
-  * The same at phone width: the list, the board and the calendar as an agenda.
-  * A board of two thousand cards scrolled, measured: the frames it took and how many
-    cards were ever mounted at once.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tasks.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/tasks/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,14 +10,10 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
 
-
-# Every date is worked out in the page, on its own calendar: the views count days on
-# the reader's wall clock, and so does this.
 DAYS = """() => {
   const day = (n) => {
     const at = new Date()
@@ -144,13 +113,11 @@ def seed(page: Page) -> dict[str, str]:
     )
     return days
 
-
 def texts(page: Page, selector: str) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
         "(selector) => [...document.querySelectorAll(selector)].map((one) => one.textContent.trim())",
         selector,
     )
-
 
 def the_panel(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
@@ -158,26 +125,21 @@ def the_panel(page: Page) -> None:
     quiet(page)
     rows = texts(page, ".tasks .nib-row")
     say(f"[panel] {json.dumps(rows, ensure_ascii=False)}")
-    # One view of the space's tasks and the labels (#1046): no Inbox, Upcoming,
-    # Completed, filters, projects or notes of its own any more.
     for wanted in ["Tasks", "admin"]:
         if not any(one.startswith(wanted) for one in rows):
             wrong(f"the panel has no {wanted} row")
     for gone in ["Inbox", "Upcoming", "Completed", "Thesis"]:
         if any(one.startswith(gone) for one in rows):
             wrong(f"the panel still has a {gone} row")
-    # Overdue is a deadline past (#371): the passport's.
     late = page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')")
     if not late:
         wrong("Todos' count is not in the danger tone while something is overdue")
     shot(page, "01-panel")
 
-
 def open_builtin(page: Page, name: str) -> None:
     page.evaluate(f"window.tasks.openBuiltin('{name}')")
     wait_for(page, "document.querySelector('.view-tab .list, .view-tab .upcoming')", f"the {name} view")
     quiet(page)
-
 
 def today_and_upcoming(page: Page) -> None:
     open_builtin(page, "today")
@@ -194,12 +156,10 @@ def today_and_upcoming(page: Page) -> None:
     open_builtin(page, "upcoming")
     words = texts(page, ".view-tab .task .words")
     say(f"[upcoming] {json.dumps(words, ensure_ascii=False)}")
-    # Todoist's Upcoming: every day from today on, today's tasks first.
     for wanted in ["Water the plants", "Milk", "Draft the talk"]:
         if wanted not in words:
             wrong(f"Upcoming does not hold {wanted}")
     shot(page, "03-upcoming")
-
 
 def open_base(page: Page, view: str) -> None:
     page.evaluate(
@@ -218,9 +178,7 @@ def open_base(page: Page, view: str) -> None:
     )
     quiet(page)
 
-
 def carry(page: Page, source: str, target: str, steps: int = 12) -> None:
-    """The pointer down on one thing, moved across in steps, and let go on another."""
     one = page.locator(source).first.bounding_box()
     two = page.locator(target).first.bounding_box()
     if not one or not two:
@@ -231,7 +189,6 @@ def carry(page: Page, source: str, target: str, steps: int = 12) -> None:
     page.mouse.move(one["x"] + one["width"] / 2 + 8, one["y"] + one["height"] / 2 + 8, steps=3)
     page.mouse.move(two["x"] + two["width"] / 2, two["y"] + min(60, two["height"] / 2), steps=steps)
     page.mouse.up()
-
 
 def the_board(page: Page) -> None:
     open_base(page, "Board")
@@ -249,7 +206,6 @@ def the_board(page: Page) -> None:
         return
     shot(page, "05-board-dropped")
 
-
 def the_calendar(page: Page, days: dict[str, str]) -> None:
     open_base(page, "Due")
     target = days["today"]
@@ -265,7 +221,6 @@ def the_calendar(page: Page, days: dict[str, str]) -> None:
         "the event dropped on a day to write that due date",
     )
     shot(page, "06-calendar")
-
 
 def the_table(page: Page) -> None:
     open_base(page, "All")
@@ -288,7 +243,6 @@ def the_table(page: Page) -> None:
         "Ctrl+Z to take the cell back",
     )
 
-
 def the_note(page: Page) -> None:
     page.evaluate(
         """async () => {
@@ -310,10 +264,7 @@ def the_note(page: Page) -> None:
         wrong("the base in the note shows no rows")
     shot(page, "08-note")
 
-
 def the_big_board(browser: Browser) -> None:
-    """Two thousand cards in one column, scrolled for a second: the frames it took and
-    the most cards that were ever in the page at once."""
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     wait_for(page, "window.nibApp.tasks", "the views on the handle")
@@ -363,14 +314,10 @@ def the_big_board(browser: Browser) -> None:
     shot(page, "09-big-board")
     page.close()
 
-
-# A phone says it is one in its user agent and under a finger; the width alone is a
-# narrow desktop window (deviceFor in viewport.svelte.ts).
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 
 def at_phone_width(browser: Browser) -> None:
     page = DRIVE.page(
@@ -388,13 +335,11 @@ def at_phone_width(browser: Browser) -> None:
         wrong(f"Today at phone width holds {words}")
     shot(page, "10-phone-today")
     open_base(page, "Board")
-    # One column at the whole width, the groups as pills above it to switch between.
     if not page.evaluate(
         "document.querySelectorAll('.view-tab .strip .switch').length >= 3"
         " && document.querySelectorAll('.view-tab .column').length === 1"
     ):
         wrong("the board at phone width is not one column under its groups' pills")
-    # The head's tools stay on screen: the tabs scroll, the settings do not leave.
     edge = page.evaluate(
         "(() => { const one = document.querySelector('.view-tab .head [aria-label=Settings]')?.getBoundingClientRect();"
         " const bar = document.querySelector('.view-tab .head .bar')?.getBoundingClientRect();"
@@ -418,7 +363,6 @@ def at_phone_width(browser: Browser) -> None:
     shot(page, "12-phone-agenda")
     page.close()
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -432,7 +376,6 @@ def drive(browser: Browser) -> None:
     page.close()
     at_phone_width(browser)
     the_big_board(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(

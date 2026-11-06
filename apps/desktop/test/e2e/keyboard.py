@@ -1,29 +1,3 @@
-"""The whole app, reached with nothing but a keyboard.
-
-Every step below is `page.keyboard`. Nothing is clicked, hovered, tapped or
-scrolled, and the drive says at each step which element holds the focus, so a
-region that cannot be reached shows up as a name that did not change rather than
-as a screenshot somebody has to squint at.
-
-What it proves, in order: F6 walks the regions and comes back round; Tab stops
-once per list rather than once per row; the arrows walk a list and Enter opens a
-note; the panel tabs and the strip of notes are each one stop with arrows inside
-them; the four panels answer their own chords; every sheet and menu traps the
-keyboard and hands it back to whatever opened it; and the focus ring is drawn in
-both schemes.
-
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @orden/desktop exec vite build --mode drive
-
-Then, from the repository root:
-
-    python apps/desktop/test/e2e/keyboard.py
-
-Screenshots go beside this file under `shots/keyboard/`, which is ignored. This is
-a scratch drive rather than a test: it drives the app and says what it saw.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -34,7 +8,6 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
 
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
@@ -44,16 +17,12 @@ TABLET_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-# name, width, height, agent, finger, scheme
 DEVICES = [
     ("desktop-light", 1440, 900, DESKTOP_AGENT, False, "light"),
     ("desktop-dark", 1440, 900, DESKTOP_AGENT, False, "dark"),
-    # A tablet with a keyboard, which is a touch screen that still has to answer
-    # every one of these.
     ("tablet-keys", 1194, 834, TABLET_AGENT, True, "light"),
 ]
 
-# The same space every other drive reads, small enough to walk by name.
 SEED = """
 async () => {
   const ws = window.nibApp.workspace
@@ -85,8 +54,6 @@ async () => {
 }
 """
 
-# What has the keyboard, as one line: the region it is in, the element, and enough
-# of its words to tell one row from another.
 WHERE = """
 () => {
   const at = document.activeElement
@@ -105,8 +72,6 @@ WHERE = """
 }
 """
 
-# Whether a ring is actually being drawn on what holds the keyboard, which is the
-# one thing a screenshot is for and the one thing it cannot be asked about.
 RING = """
 () => {
   const at = document.activeElement
@@ -117,7 +82,6 @@ RING = """
   return `${visible ? 'ring' : 'no ring'}: ${style.outlineWidth} ${style.outlineStyle} ${style.outlineColor}`
 }
 """
-
 
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     out.mkdir(parents=True, exist_ok=True)
@@ -156,14 +120,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         return page.evaluate("() => document.activeElement?.closest('[data-region]')?.dataset.region ?? '-'")
 
     def open_panel() -> None:
-        """The sidebar, which a fresh profile starts without."""
         if not page.evaluate("() => !!window.nibApp.workspace.panel"):
             page.keyboard.press("Control+Shift+L")
             page.wait_for_timeout(400)
 
     say(f"[{name}] --- the regions, walked with F6 ---")
     open_panel()
-    # From the note outwards, which is where a reader starts.
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
     say(f"    the note has it     -> {page.evaluate(WHERE)}")
@@ -186,18 +148,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     say("    (four presses of Tab; a space of six notes did not eat them)")
 
     def into_tree() -> None:
-        """The file tree, which is the second list in the panel: the bookmarks above
-        it are a composite of their own and one Tab away from it.
-
-        The chord is only pressed from outside the list, because inside it the same
-        chord is the way back to the note."""
         if region() != "list":
             page.keyboard.press("Control+Shift+E")
             page.wait_for_timeout(450)
         for _ in range(3):
-            # A row of the file list and of no other list in the panel: every row
-            # there is a note, and the path it stands for is written on it. See
-            # docs/tree.md.
             if page.evaluate("() => !!document.activeElement?.matches('.row[data-path]')"):
                 return
             page.keyboard.press("Tab")
@@ -245,7 +199,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     ]:
         page.keyboard.press(chord)
         page.wait_for_timeout(500)
-        # On whichever side the panel lives: the Outline and the Links are the right's.
         showing = page.evaluate(
             "(one) => window.nibApp.workspace.openOn(window.nibApp.workspace.sideOf(one))", panel
         )
@@ -282,7 +235,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     if not finger:
         say(f"[{name}] --- the strip: one stop, arrows inside it ---")
-        # Round the regions until the strip has it, which is what F6 is for.
         for _ in range(8):
             if region() == "tabs":
                 break
@@ -318,7 +270,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.wait_for_timeout(600)
         inside = page.evaluate(WHERE)
         depth = page.evaluate("() => window.nibApp.overlays?.depth ?? -1")
-        # Tab has to stay inside it.
         page.keyboard.press("Tab")
         page.wait_for_timeout(200)
         held = page.evaluate(
@@ -355,7 +306,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     context.close()
 
-
 def main() -> int:
     out = DRIVE.shots
     with DRIVE.session() as browser:
@@ -364,7 +314,6 @@ def main() -> int:
             drive(browser, out, *one)
 
     return DRIVE.verdict(f"shots in {out}")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

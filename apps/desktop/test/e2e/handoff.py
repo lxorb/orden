@@ -1,25 +1,3 @@
-"""Whether the browser build's notes come over from the old address to the new one.
-
-The web build moved from nibeditor.com to orden.so, and a browser keeps each origin's
-storage apart: notes written at the old address and never synced are not visible at
-the new one (see src/lib/web/handoff.ts). On the new address's first visit, Settings >
-Import - where the welcome note's last line goes - offers one row, "Notes from
-nibeditor.com", which opens the old address's /handoff page as a popup; that page hands
-over everything its origin holds, and the new address starts again from it.
-
-Both addresses are played by one build on two local origins, `rebrand-old.localhost`
-and `rebrand-new.localhost` on this drive's port, which the build is told about
-(`VITE_NIB_LEGACY_WEB`, `VITE_NIB_WEB`). Checked:
-
-- the old address offers nothing of the kind, and a note written there is a note;
-- at the new address the row is there, and pressing it brings the note, the session
-  and the settings over, signed in as before, and the first visit is over;
-- a browser that never used the old address is told "Nothing there";
-- a page on any other origin that opens /handoff is handed nothing.
-
-    python apps/desktop/test/e2e/handoff.py
-"""
-
 from __future__ import annotations
 
 import os
@@ -40,31 +18,19 @@ OLD = f"http://rebrand-old.localhost:{PORT}"
 NEW = f"http://rebrand-new.localhost:{PORT}"
 ELSEWHERE = f"http://rebrand-elsewhere.localhost:{PORT}"
 
-#: The row, by the words it shows.
 ROW = '.nib-setting:has-text("Notes from nibeditor.com")'
 
-#: This drive is about the first visit, so whatever a context remembers of one is taken
-#: back - on a tab's first page only, so what the handoff writes outlives the page
-#: starting again.
 UNANSWERED = (
     "try { if (!sessionStorage.getItem('drive-unanswered')) {"
     " sessionStorage.setItem('drive-unanswered', '1');"
     " localStorage.removeItem('nib:first-visit') } } catch {}"
 )
 
-#: A session token as the app keeps one (lib/account.svelte.ts). Nothing behind it
-#: answers, which is the point: what is checked is that it arrives.
 SESSION = "handed-over-token"
 
-
-#: Which two origins the build in FOLDER was told about, written beside it. They carry
-#: this run's port, so a build left by another run names origins nobody serves: the
-#: new address was then not the new address, and offered nothing.
 ORIGINS = FOLDER / ".handoff-origins"
 
-
 def built() -> None:
-    """The drive build, told which two origins play the old address and the new."""
     said = ORIGINS.read_text(encoding="utf-8") if ORIGINS.exists() else ""
     if os.environ.get("NIB_SKIP_BUILD") and (FOLDER / "index.html").exists() and said == f"{OLD} {NEW}":
         say(f"reusing the build in {FOLDER.name}")
@@ -88,31 +54,20 @@ def built() -> None:
         raise SystemExit(f"the build failed:\n{done.stdout}\n{done.stderr}")
     ORIGINS.write_text(f"{OLD} {NEW}", encoding="utf-8")
 
-
 @DRIVE.answers
 def handoff_page(request: Files) -> bool:
-    """`/handoff` is `handoff.html`, the way the assets router answers it."""
     if request.path.split("?", 1)[0] != "/handoff":
         return False
     return request.reply((FOLDER / "handoff.html").read_bytes())
 
-
 def context(browser: Browser) -> Any:
-    # A new reader's browser: nothing in it but what the harness answers for every
-    # drive, which is taken back below.
-    # No service worker: a request the page's worker answers is not handed to the
-    # routes below, so the session the handoff brings over went to the real orden.so,
-    # which said no in its own words - a 401 the page had no leave to read, which WebKit
-    # reports as an error the page threw.
     made = browser.new_context(
         viewport={"width": 1100, "height": 760}, first_look=True, service_workers="block"
     )
     made.add_init_script(UNANSWERED)
-    # The service is somebody else's; nothing here asks it anything that matters.
     made.route("https://orden.so/**", lambda route: route.abort())
     made.route("https://nibeditor.com/**", lambda route: route.abort())
     return made
-
 
 def opened(made: Any, origin: str) -> Page:
     page = made.new_page()
@@ -120,18 +75,14 @@ def opened(made: Any, origin: str) -> Page:
     DRIVE.open(page, origin=origin)
     return page
 
-
 def import_pane(page: Page) -> None:
-    """Settings > Import."""
     page.evaluate("window.nibApp.settings.show('import')")
     wait_for(page, "!!document.querySelector('[role=dialog]')", "Settings > Import")
-
 
 def files(page: Page) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
         "async () => { await window.nibApp.workspace.loadTree(); return window.nibApp.workspace.notes.map((one) => one.name) }"
     )
-
 
 def brought(browser: Browser) -> None:
     made = context(browser)
@@ -153,10 +104,6 @@ def brought(browser: Browser) -> None:
     say("the new address: the row, pressed")
     new = opened(made, NEW)
     import_pane(new)
-    # Waited for rather than counted at once: the pane is drawn as the dialog opens,
-    # and the row joins it only once this visit has written its welcome note and so
-    # knows it is a first one (first-visit.svelte.ts). Counted at once, it was missed
-    # by a frame and the picture taken after showed it there.
     row = new.locator(ROW)
     try:
         row.first.wait_for(timeout=10_000)
@@ -166,8 +113,6 @@ def brought(browser: Browser) -> None:
         return
     shot(new, "01-row")
 
-    # The page as it is before the press, marked, so the page it starts again as is
-    # the one without the mark.
     new.evaluate("() => { window.driveBefore = true }")
     with new.expect_popup() as asked:
         row.locator("button").click()
@@ -175,10 +120,6 @@ def brought(browser: Browser) -> None:
     if not popup.url.startswith(f"{OLD}/handoff"):
         wrong(f"the popup went to {popup.url}")
 
-    # The page starts again once the notes are written. Waited for as a page without
-    # the mark rather than as one without the app's handle: the new page has its handle
-    # back within moments, and a runner that looked a little late missed the moment
-    # between and waited for it to the end (WebKit, 2026-10-20 and 10-27).
     wait_for(new, "localStorage.getItem('nib:font-size') === '19' && !window.driveBefore", "the page to start again")
     DRIVE.ready(new)
 
@@ -198,7 +139,6 @@ def brought(browser: Browser) -> None:
     shot(new, "02-brought")
     made.close()
 
-
 def nothing(browser: Browser) -> None:
     say("a browser that never used the old address")
     made = context(browser)
@@ -215,12 +155,10 @@ def nothing(browser: Browser) -> None:
     shot(new, "03-nothing")
     made.close()
 
-
 def elsewhere(browser: Browser) -> None:
     say("a page on another origin opens /handoff")
     made = context(browser)
 
-    # Something at the old address worth taking.
     old = opened(made, OLD)
     old.evaluate("(session) => localStorage.setItem('nib:session', session)", SESSION)
     old.close()
@@ -247,12 +185,10 @@ def elsewhere(browser: Browser) -> None:
         wrong(f"a page on another origin was handed the old address's storage: {heard}")
     made.close()
 
-
 def drive(browser: Browser) -> None:
     brought(browser)
     nothing(browser)
     elsewhere(browser)
-
 
 if __name__ == "__main__":
     built()

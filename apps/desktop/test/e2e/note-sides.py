@@ -1,15 +1,3 @@
-"""The note's front and sides, seen: front matter as rows, the count of what is
-selected, dragging a section by its heading, the footnotes under the outline, and
-a word added to the reader's own dictionary.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/note-sides.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/note-sides/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -20,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = """---
 title: A plan
@@ -68,7 +55,6 @@ ROWS = """
 }))
 """
 
-
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
         viewport={"width": 420, "height": 880} if finger else {"width": 1240, "height": 880},
@@ -88,12 +74,10 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    # The rows, which this drive reads; hidden is where a reader starts.
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
-
 
 def properties(page: Page) -> None:
     rows = page.evaluate(ROWS)
@@ -110,7 +94,6 @@ def properties(page: Page) -> None:
     if not tags or tags["chips"] != 2:
         wrong(f"a list did not draw as chips: {tags}")
 
-    # nib's own page setup is a shape the reader knows, so the block still draws.
     nested = next((one for one in rows if one["key"] == "export"), None)
     if not nested or "paper: A4" not in (nested["value"] or ""):
         wrong(f"the export map did not draw: {nested}")
@@ -118,11 +101,6 @@ def properties(page: Page) -> None:
     if page.evaluate("() => document.querySelectorAll('.nib-property-add').length") != 1:
         wrong("there is no way to add a property")
 
-    # A click on a row's key puts the caret on the line it was drawn from, which is
-    # what shows the source. On the key and not the middle of the row: the value cell
-    # takes three quarters of the width, and a press inside a control belongs to the
-    # control - that is where a value is changed without going near the YAML. See the
-    # widget's own `mousedown` in live-preview/properties.ts.
     page.click('.property[data-key="title"] .property-key')
     page.wait_for_timeout(500)
     caret = page.evaluate("() => window.nib.state.selection.main.head")
@@ -135,7 +113,6 @@ def properties(page: Page) -> None:
         wrong("the caret in the block did not show its source")
     if "title" not in line:
         wrong(f"the caret did not land on the row's own line: {line!r}")
-
 
 def selection(page: Page) -> None:
     page.evaluate(
@@ -160,7 +137,6 @@ def selection(page: Page) -> None:
     if not said.startswith("3/"):
         wrong(f"the selected words are not counted first: {said!r}")
 
-
 def outline(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
     page.wait_for_timeout(600)
@@ -176,7 +152,6 @@ def outline(page: Page) -> None:
     if len(notes) != 1 or "where the words came from" not in notes[0]:
         wrong(f"the footnotes section does not list the note's one footnote: {notes}")
 
-    # The footnote row jumps to the mark in the words, not to the definition.
     page.click(".note")
     page.wait_for_timeout(400)
     line = page.evaluate("() => window.nib.state.doc.lineAt(window.nib.state.selection.main.head).text")
@@ -184,7 +159,6 @@ def outline(page: Page) -> None:
     if "The first part" not in line:
         wrong(f"a footnote row did not go to its mark: {line!r}")
 
-    # Dragging the last heading onto the first moves the whole section.
     before = page.evaluate("() => window.nib.state.doc.toString()")
     page.locator(".heading").nth(2).drag_to(page.locator(".heading").first)
     page.wait_for_timeout(700)
@@ -200,12 +174,10 @@ def outline(page: Page) -> None:
     if after.count("## Under one") != 1:
         wrong("the nested heading was copied rather than moved")
 
-
 def dictionary(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.closePanel()")
     page.wait_for_timeout(400)
 
-    # A right click on the word "nib" in the words.
     place = page.evaluate(
         """() => {
           const at = window.nib.state.doc.toString().indexOf('nib and Zug')
@@ -254,7 +226,6 @@ def dictionary(page: Page) -> None:
     elif quiet[0]["spellcheck"] != "false":
         wrong(f"the mark does not turn the checker off: {quiet[0]}")
 
-
 def reading(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(800)
@@ -269,7 +240,6 @@ def reading(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
     properties(page)
@@ -278,7 +248,6 @@ def drive(browser: Browser) -> None:
     dictionary(page)
     reading(page)
     page.context.close()
-
 
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
@@ -309,7 +278,6 @@ def finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
@@ -318,7 +286,6 @@ def main() -> int:
         finger(browser)
 
     return DRIVE.verdict("properties read, a selection counts, a section moves, a word is a word")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,18 +1,3 @@
-"""Shift Shift opens the palette, and Shift Shift again puts it away.
-
-Emil, 2026-10-03: *"Shift Shift while the palette is open closes it, and focus returns to
-where it was."* The press that opened a layer closes it again, the way a menu's own key
-does; Escape and a tap outside still do too. What this presses and looks at, in the light
-and the dark: the palette up over a note with the caret in it, Shift twice with words typed
-in its field, the palette gone and the caret back in the note, and the field empty the next
-time it opens - put away is the same as Escape. A row with a key wears it: Deselect all
-tabs says Ctrl+Shift+D.
-
-    python apps/desktop/test/e2e/palette-toggle.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/palette-toggle/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -25,7 +10,6 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 UP = "!!document.querySelector('.palette input')"
 
-# Where the keyboard is: in a note's words, in the palette's field, or elsewhere.
 WHERE = """
 () => {
   const at = document.activeElement
@@ -35,13 +19,11 @@ WHERE = """
 }
 """
 
-
 def shift_twice(page: Page) -> None:
     for _ in range(2):
         page.keyboard.down("Shift")
         page.keyboard.up("Shift")
         page.wait_for_timeout(60)
-
 
 def toggling(page: Page, scheme: str) -> None:
     page.emulate_media(color_scheme=scheme)
@@ -60,8 +42,6 @@ def toggling(page: Page, scheme: str) -> None:
         "() => [...document.querySelectorAll('.palette .nib-row')].find((one) => one.textContent.includes('Deselect all tabs'))?.querySelector('kbd')?.textContent ?? null"
     )
     say(f"[{scheme}] the Deselect all tabs row wears {hint!r}")
-    # In WebKit the drive is a Mac (`NIB_ENGINE` in harness.py), and a Mac's palette
-    # writes the same key the way a Mac does.
     key = "⇧⌘D" if harness.WEBKIT else "Ctrl+Shift+D"
     if hint != key:
         wrong(f"[{scheme}] the Deselect all tabs row wears {hint!r}, not its key {key!r}")
@@ -84,14 +64,12 @@ def toggling(page: Page, scheme: str) -> None:
     page.keyboard.press("Escape")
     wait_for(page, f"!({UP})", f"[{scheme}] Escape to close it")
 
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 800})
         DRIVE.open(page)
         toggling(page, scheme)
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "Shift twice opens the palette and puts it away"))

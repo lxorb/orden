@@ -1,29 +1,3 @@
-"""A real properties UI, seen in the built app: every row of a note's front matter
-edited in the control its own shape asks for, and the three-way choice above it.
-
-What this drives, all of it against the real editor and the real file:
-
-  * The strip at the top of the note starts folded, one line with the keys and what
-    they say, and opens into the rows on a press (#1120).
-
-  * A field for a word, a number field for a number, a date picker for a date, a real
-    checkbox for a `true`, chips with an `x` and a field to add one for a list, and a
-    menu where the key is one the app has a fixed set of answers for.
-  * Each of them writes plain front matter back into the note - `tags: [one, two]`,
-    `done: true` - and one gesture is one thing to undo.
-  * `Add a property` writes a new key.
-  * The Front matter setting has three answers, and the editor and the reading view
-    read the same one: Properties draws the rows, Source draws the YAML, Hidden draws
-    neither.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/properties.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots go
-beside this file under `shots/properties/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -38,9 +12,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 
-
 def shot(page: Page, name: str) -> None:
-    """A picture once the page has stopped moving; see settling.py."""
     quiet(page)
     DRIVE.shot(page, name)
 
@@ -71,12 +43,8 @@ async (note) => {
 }
 """
 
-# The words as the editor holds them this moment. `doc` is the words as far as the last
-# flush, which trails an edit by a pause, so on a slower machine it still said what the
-# row said before.
 SAID = "() => window.nibApp.workspace.active?.note?.latest ?? ''"
 
-# What controls the rows are drawn with, by key.
 CONTROLS = """
 () => {
   const out = {}
@@ -138,9 +106,6 @@ def a_word_and_a_number(page: Page) -> None:
     page.fill("#write .property[data-key='title'] .property-field", "Another name")
     page.locator("#write .property[data-key='count'] .property-field").click()
     quiet(page)
-    # The rows are still rows: a caret nobody chose sat at 0, which is inside the
-    # block, and the first thing written used to swap the table for the YAML under the
-    # control being used.
     is_true(bool(page.evaluate(ROWS)), "writing a row turned the rows back into source")
     is_true(line(page, "title") == "title: Another name", f"the title is {line(page, 'title')!r}")
 
@@ -149,9 +114,6 @@ def a_word_and_a_number(page: Page) -> None:
     quiet(page)
     is_true(line(page, "count") == "count: 42", f"the count is {line(page, 'count')!r}")
 
-    # One gesture, one undo step: a field rewritten per keystroke would be one undo
-    # step per letter. Asked of the editor, which is where undo lives - a key pressed
-    # inside a field is the field's.
     page.locator("#write .cm-line", has_text="Words under the metadata").click()
     page.keyboard.press("Control+z")
     quiet(page)
@@ -175,7 +137,6 @@ def a_list(page: Page) -> None:
     quiet(page)
     is_true(line(page, "tags") == "tags: [one, two, three]", f"adding wrote {line(page, 'tags')!r}")
 
-    # The `x` on the first chip.
     page.locator("#write .property[data-key='tags'] .property-chip-off").first.click()
     quiet(page)
     is_true(line(page, "tags") == "tags: [two, three]", f"removing wrote {line(page, 'tags')!r}")
@@ -198,7 +159,6 @@ def adding_a_property(page: Page) -> None:
 
     said = page.evaluate(SAID)
     is_true("property" in said.split("---")[1], "Add a property wrote no new key")
-    # The caret lands on the new key, so the block is showing its source now.
     is_true(not page.evaluate(ROWS), "the block did not give way to its source")
     page.keyboard.press("Escape")
     page.keyboard.press("Control+z")
@@ -212,9 +172,6 @@ def the_three_answers(page: Page) -> None:
         quiet(page)
         drawn = page.evaluate(ROWS)
         is_true(bool(drawn) == rows, f"{mode} drew rows: {json.dumps(drawn)}")
-        # The editor shows the source as the document itself, so there is no `<pre>`
-        # in it; what matters here is that the rows are gone and the YAML is not
-        # replaced by anything.
         shot(page, f"03-editor-{mode}")
 
         page.evaluate("() => window.nibApp.workspace.toggleReading()")
@@ -233,7 +190,6 @@ def the_three_answers(page: Page) -> None:
 
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     quiet(page)
-    # The strip comes back, folded or open as the note was left; open, it is the rows.
     is_true(
         page.evaluate("() => !!document.querySelector('#write .nib-properties-head')"),
         "the strip did not come back",
@@ -260,7 +216,6 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    # The strip, which is where a reader starts: folded, one line.
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     wait_for(page, "document.querySelector('#write .nib-properties-head')", "the strip")
     quiet(page)

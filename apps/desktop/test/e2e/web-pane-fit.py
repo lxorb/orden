@@ -1,28 +1,3 @@
-"""A web tab's page fits its pane's card exactly, under a bar with no empty line (#1118).
-
-A web tab beside a note in a narrow pane: the page stood under an empty dark band below
-the address, because the bar had wrapped its last glyph, the dots, alone onto a second
-line. And the page is a webview of its own, placed over the room the tab leaves under its
-bar (`.hole` in web-tab/WebTab.svelte, measured and handed to the crate as it is): that
-room is the one rectangle the page is put in, so it has to be the card's content box and
-nothing else. What this measures, in the built web app, where the same room holds the
-page's card instead of the hole:
-
-  * **The room is the card under the bar**: its left, right and bottom are the pane's
-    own, and its top is the bar's bottom - no gap, nothing over the card's edge - in one
-    pane, beside the right side, in two and three panes, filling the window, with the
-    words larger, and at every width of a sweep that crosses the bar's wrapping.
-  * **The bar never holds a line of glyphs alone beside a field on another**: on one
-    line, or the glyphs on the first and the field alone across the whole of the second.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/web-pane-fit.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/web-pane-fit/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -35,7 +10,6 @@ from settling import quiet
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-# A note and a web tab, the web tab in front, nothing else open.
 ARRANGE = """
 async () => {
   const ws = window.nibApp.workspace
@@ -49,8 +23,6 @@ async () => {
 }
 """
 
-# Every web tab on screen: its pane, its bar and the room under the bar, and the bar's
-# items line by line.
 LOOK = """
 () => {
   const box = (one) => {
@@ -76,9 +48,7 @@ LOOK = """
 }
 """
 
-
 def lines_of(items: list[dict]) -> list[list[dict]]:
-    """The bar's items by the line they are on, top to bottom."""
     lines: list[list[dict]] = []
     for one in sorted(items, key=lambda item: (item["top"], item["left"])):
         middle = (one["top"] + one["bottom"]) / 2
@@ -87,7 +57,6 @@ def lines_of(items: list[dict]) -> list[list[dict]]:
         else:
             lines.append([one])
     return lines
-
 
 def checked(page: Page, label: str) -> None:
     tabs = page.evaluate(LOOK)
@@ -123,7 +92,6 @@ def checked(page: Page, label: str) -> None:
             shape = [["field" if one["field"] else "glyph" for one in line] for line in lines]
             wrong(f"{where} the bar wrapped into {shape}, not the glyphs over the field alone")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -139,7 +107,6 @@ def drive(browser: Browser) -> None:
     quiet(page)
     checked(page, "beside the right side")
 
-    # Narrower, a pixel at a time across where the bar wraps: the issue's narrow pane.
     for width in range(760, 459, -1):
         page.set_viewport_size({"width": width, "height": 820})
         page.wait_for_timeout(30)
@@ -185,7 +152,6 @@ def drive(browser: Browser) -> None:
     quiet(page)
     checked(page, "filling the window")
     DRIVE.steady(page, "05-filling-the-window")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

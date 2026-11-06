@@ -1,32 +1,3 @@
-"""The AI accounts on two devices of one nib account, against the real Worker.
-
-A laptop and a phone are two browsers signed in to the same account, each with its own
-storage, so its own secret store and its own device key. A browser keeps its keys in the
-vault only once told to, so both are; a third browser, not told, stays out. Docs/ai.md,
-"Every device":
-
-- the laptop adds an Anthropic key, and opens the vault without a word as the account's
-  first device;
-- a browser not told to keep its keys in the vault never asks for them;
-- the phone signs in and waits; once the laptop has answered it, it shows six digits in
-  Settings > AI;
-- the laptop shows the bubble with the same six digits, and Allow gives the phone the key;
-- the phone then says the laptop offers it the vault, and takes nothing until Join;
-- after Join it has the account and its key, and the account holds no key in the clear;
-- a change on the phone reaches the laptop within seconds, through the hub;
-- the phone, reloaded, opens at once without asking;
-- signing out on the phone asks whether it leaves the vault too, and Sign out alone keeps
-  it in (#389);
-- the laptop lists both devices in Settings > AI, and Remove on the phone's row changes the
-  vault key: the vault sealed again, a new token's hash on the account, the laptop's key
-  wrapped again and the phone's place gone.
-
-Everything is the real thing: the built web app, the Worker under `wrangler dev`, each
-account's hub as a Durable Object and D1 with every migration.
-
-    python apps/desktop/test/e2e/ai-vault.py
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -48,16 +19,13 @@ ORIGIN = harness.worker_origin()
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
 
 KEY = "sk-ant-drive-" + uuid.uuid4().hex
-#: How long anything live is given to arrive on the other device.
 LIVE = 20
-
 
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 
 def wait(page: Page, script: str, what: str, patience: float = LIVE) -> Any:
     until = time.monotonic() + patience
@@ -68,14 +36,12 @@ def wait(page: Page, script: str, what: str, patience: float = LIVE) -> Any:
         page.wait_for_timeout(150)
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def signed_in(
     browser: Browser, token: str, label: str, vault: bool = True
 ) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760}, reduced_motion="reduce")
     context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
     if vault:
-        # What Settings > AI's switch writes; see browserVault in ai/vault/start.svelte.ts.
         context.add_init_script("localStorage.setItem('nib:ai-vault-browser', 'yes')")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
@@ -84,11 +50,8 @@ def signed_in(
     wait(page, "() => !!window.nibApp.aiVault", f"[{label}] the AI vault handle", 40)
     return context, page
 
-
 def standing(word: str) -> str:
-    """A script answering whether the page's vault stands as `word`."""
     return f"async () => (await window.nibApp.aiVault()).vault.standing === {json.dumps(word)}"
-
 
 def main() -> int:
     worker = harness.Worker(DRIVE)
@@ -182,7 +145,6 @@ def main() -> int:
         wait(phone, standing("open"), "the phone open after a reload", 40)
         check("the phone, reloaded, opens without asking", True)
 
-        # Signing out asks whether the phone leaves the vault too; Sign out alone keeps it.
         phone.keyboard.press("Control+Shift+KeyP")
         phone.wait_for_selector(".palette input")
         phone.keyboard.type("Sign out")
@@ -196,11 +158,9 @@ def main() -> int:
         approved = worker.query("select id from ai_devices where approved_at is not null")
         check("Sign out alone keeps the phone in the vault", len(approved) == 2)
 
-        # The laptop lets the phone go from its list: the key changes under it.
         held = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
         laptop.evaluate("window.nibApp.settings.show('ai')")
         laptop.wait_for_selector("text=Devices with your AI vault")
-        # Both browsers go by the same name; the phone's is the row that is not this one.
         rows = laptop.locator('.card[data-device]:not(:has-text("This device"))')
         shot(laptop, "06-laptop-devices")
         check("the laptop lists both devices, itself marked", laptop.locator("text=This device").count() >= 1)
@@ -221,7 +181,6 @@ def main() -> int:
         wait(laptop, standing("open"), "the laptop still open", LIVE)
         shot(laptop, "07-laptop-alone")
     return DRIVE.verdict("the AI accounts carried from one device to another, end to end")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

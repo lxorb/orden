@@ -39,7 +39,6 @@ async (encoded) => {
 }
 """
 
-
 def exported(page: Page, row: str) -> tuple[bytes, str]:
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector(".palette input")
@@ -53,19 +52,15 @@ def exported(page: Page, row: str) -> tuple[bytes, str]:
     path = asked.value.path()
     return path.read_bytes(), asked.value.suggested_filename
 
-
 def looked_at(page: Page, row: str) -> dict:
     bytes_, _name = exported(page, row)
     return page.evaluate(READ, base64.b64encode(bytes_).decode())
 
-
 def light(rgb: list[int]) -> bool:
     return min(rgb) > 230
 
-
 def dark(rgb: list[int]) -> bool:
     return max(rgb) < 60
-
 
 def note_pictures(browser: Browser) -> None:
     say("a note's PNG and JPG are light paper with dark words, in a light app and a dark one")
@@ -96,7 +91,6 @@ def note_pictures(browser: Browser) -> None:
         if not dark(seen["corner"]):
             wrong(f"a dark export has paper of {seen['corner']}")
         context.close()
-
 
 def canvas_pictures(browser: Browser) -> None:
     say("a canvas from a dark app follows Appearance: light, then as the app is")
@@ -156,7 +150,6 @@ def canvas_pictures(browser: Browser) -> None:
 
     context.close()
 
-
 def page_note_at_once(browser: Browser) -> None:
     say("a page note exported straight after a stroke has the stroke")
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
@@ -176,12 +169,10 @@ def page_note_at_once(browser: Browser) -> None:
     if len(drawn) < 800:
         wrong(f"the PDF is from before the stroke: {len(drawn)} bytes")
 
-
 def drive(browser: Browser) -> None:
     note_pictures(browser)
     canvas_pictures(browser)
     page_note_at_once(browser)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

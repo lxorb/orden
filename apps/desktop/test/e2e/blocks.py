@@ -1,18 +1,3 @@
-"""The mark beside every block, seen: where it stands, what it says when it is
-pressed, and what happens when it is dragged.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/blocks.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/blocks/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -23,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = """# A note of blocks
 
@@ -48,7 +32,6 @@ async ([note]) => {
 }
 """
 
-# Every mark on the page, against the block it belongs to.
 MARKS = """
 () => [...document.querySelectorAll('.nib-block-handle')].map((mark) => {
   const line = mark.closest('.cm-line')
@@ -70,7 +53,6 @@ ROWS = """
   off: row.disabled,
 }))
 """
-
 
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
@@ -110,33 +92,25 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     page.wait_for_timeout(600)
     return page
 
-
 def source(page: Page) -> str:
     return page.evaluate("() => window.nib.state.doc.toString()")
 
-
 def line_of(page: Page, words: str):
-    """The line holding those words, as something to hover and press."""
     return page.locator(".cm-line", has_text=words).first
 
-
 def press_mark(page: Page, words: str) -> None:
-    """Opens the menu the mark beside a block offers."""
     line_of(page, words).hover()
     page.wait_for_timeout(250)
     line_of(page, words).locator(".nib-block-handle").click()
     page.wait_for_timeout(400)
 
-
 def choose(page: Page, label: str) -> None:
     page.locator(".rows .nib-row", has_text=label).first.click()
     page.wait_for_timeout(500)
 
-
 def drive_marks(browser: Browser) -> None:
     page = fresh(browser, "desktop")
 
-    # Nothing until the pointer is on a line.
     resting = page.evaluate("() => getComputedStyle(document.querySelector('.nib-block-handle')).opacity")
     say(f"[desktop] a mark nobody is pointing at: opacity {resting}")
     if resting != "0":
@@ -166,7 +140,6 @@ def drive_marks(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_menu(browser: Browser) -> None:
     page = fresh(browser, "menu")
 
@@ -186,22 +159,18 @@ def drive_menu(browser: Browser) -> None:
         if wanted not in labels:
             wrong(f"the menu offers no {wanted!r}")
 
-    # Duplicate.
     choose(page, "Duplicate")
     text = source(page)
     shot(page, "11-duplicated")
     if text.count("The first paragraph, which has seven words here.") != 2:
         wrong("the block was not duplicated")
 
-    # And the copy is deleted again, which puts the note back.
     press_mark(page, "The first paragraph")
     choose(page, "Delete")
     if source(page).count("The first paragraph") != 1:
         wrong("the block was not deleted")
     shot(page, "12-deleted")
 
-    # A link to a block names the block in the note and puts the link on the
-    # clipboard.
     press_mark(page, "The second paragraph")
     choose(page, "Copy link")
     text = source(page)
@@ -215,7 +184,6 @@ def drive_menu(browser: Browser) -> None:
     if f"shorter. ^{name}" not in text:
         wrong(f"the block was not given the name the link points at: {name!r}")
 
-    # A heading is linked by its words, and nothing is written into the note.
     before = source(page)
     press_mark(page, "A note of blocks")
     choose(page, "Copy link")
@@ -228,11 +196,9 @@ def drive_menu(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_selection(browser: Browser) -> None:
     page = fresh(browser, "selection")
 
-    # A selection lying across two paragraphs is two blocks.
     page.evaluate(
         """() => {
           const text = window.nib.state.doc.toString()
@@ -258,7 +224,6 @@ def drive_selection(browser: Browser) -> None:
         wrong("deleting what a selection covers left one of the blocks behind")
 
     page.context.close()
-
 
 def drive_drag(browser: Browser) -> None:
     page = fresh(browser, "drag")
@@ -302,7 +267,6 @@ def drive_drag(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
 
@@ -316,7 +280,6 @@ def drive_finger(browser: Browser) -> None:
         wrong("a screen with no pointer draws a mark nobody can hover")
 
     page.context.close()
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -332,7 +295,6 @@ def main() -> int:
         drive_finger(browser)
 
     return DRIVE.verdict("a block can be taken hold of, moved, copied and pointed at")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

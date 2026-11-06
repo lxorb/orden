@@ -1,15 +1,3 @@
-"""A note hard wrapped in the file, exported: one paragraph, not the lines it was
-typed on, and the break the writer asked for still a break.
-
-Drives a real export out of the built app and reads the file that comes back.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/wrapping.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
 
 import json
@@ -21,7 +9,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 SHOTS = DRIVE.shots
-
 
 NOTE = (
     "# Wrapping\n\n"
@@ -42,7 +29,6 @@ async (note) => {
 }
 """
 
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820},
@@ -52,15 +38,8 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    # A first visit in a browser is given a welcome note, and the app opens it
-    # after the space is there rather than with it; see `restore` in
-    # workspace.svelte.ts. Seeding before that has happened wins the tab for a
-    # moment and then loses it again, and the export below would be an export of
-    # the welcome note. So the app is let finish opening its own note first.
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    # And the note this is about is the one showing, which is the condition the
-    # export needs rather than a length of time.
     wait_for(
         page,
         "window.nib && document.querySelector('.cm-content')"
@@ -69,11 +48,7 @@ def drive(browser: Browser) -> None:
     )
     shot(page, "01-written")
 
-    # The palette, which is how an export is reached without a menu bar.
     page.keyboard.press("Control+o")
-    # Its field holding the keyboard, not a length of time: the palette is fetched
-    # the first time it is asked for, and keys typed before it is there go into the
-    # note instead.
     wait_for(page, "document.activeElement?.matches('.palette input')", "the palette's field")
     page.keyboard.type("> Plain text")
     wait_for(
@@ -100,10 +75,8 @@ def drive(browser: Browser) -> None:
 
     context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "a wrapped paragraph exports as a paragraph")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,24 +1,3 @@
-"""The AI block and the four rewrites, driven against a provider of our own.
-
-A fake OpenAI-compatible server answers here, deterministically, streaming its
-answer a word at a time: so the block, the line over the answer, the two marks
-around it, a second press replacing the first answer, a stop keeping what
-arrived, a refused key writing nothing, `@note` carrying the note, and a rewrite
-accepted from its diff are all facts rather than hopes. No key, no network, no
-bill.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/ai.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/ai/`.
-"""
-
 from __future__ import annotations
 
 import http.server
@@ -33,9 +12,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-
-# The model's own name, as the fake server reports it and as the line over an
-# answer has to say.
 MODEL = "fake-small"
 
 NOTE = """# Herons
@@ -75,8 +51,6 @@ async (name) => {
 }
 """
 
-# The provider, set up the way the pane sets one up: a compatible kind, the fake
-# server's address, no key, and the model it answers with.
 SETUP = """
 async (base) => {
   const ai = window.nibApp.ai
@@ -88,9 +62,6 @@ async (base) => {
 }
 """ % MODEL
 
-# What the editor shows and what the note says. The glyph is read off the fence's
-# own header row, so "a triangle" and "a square" are the two states of one button
-# rather than two buttons.
 STATE = """
 () => {
   const text = window.nib?.state.doc.toString() ?? ''
@@ -122,22 +93,11 @@ PRESS = """
 }
 """
 
-
 class Model(http.server.BaseHTTPRequestHandler):
-    """An OpenAI-compatible provider that answers the same way every time.
 
-    Three routes, which are the three the app uses: the model list, a streamed
-    completion, and whatever the drive has told it to refuse. What it answers is
-    a function of what it was asked, so every assertion below is about nib.
-    """
-
-    #: What the next request is answered with. Set by the drive between steps.
     words: list[str] = ["Herons ", "stand ", "still."]
-    #: How long between pieces, so a stop has something to interrupt.
     pause: float = 0.0
-    #: Set to refuse every request with this sentence.
     refuse: str | None = None
-    #: Every request body seen, so the drive can check what was sent.
     seen: list[dict] = []
 
     def log_message(self, format: str, *args: object) -> None:
@@ -198,8 +158,6 @@ class Model(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(f"data: {json.dumps(event)}\n\n".encode())
                 self.wfile.flush()
             except (BrokenPipeError, ConnectionAbortedError, OSError):
-                # The reader let go, which is a stop. Nothing to report: that is
-                # what the drive asked for.
                 return
             if Model.pause:
                 time.sleep(Model.pause)
@@ -210,26 +168,12 @@ class Model(http.server.BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionAbortedError, OSError):
             return
 
-
-#: Where the fake provider answers, on a port of this run's own.
 MODEL_ORIGIN = DRIVE.side(Model)
-
 
 def state(page: Page) -> dict:
     return page.evaluate(STATE)
 
-
-# Console lines that are not the app saying anything went wrong: a request the fake
-# provider deliberately refused, since the browser logs one for every failed fetch,
-# whoever made it and however well it was handled. The app's own answer is the line
-# across the top of the window, which every step below reads instead.
-#
-# The policy's own complaint used to be excused here as well - `frame-ancestors` in
-# a `<meta>`, said once on every page load. It is fixed rather than excused now:
-# the policy is written in the two forms its carriers can hold, so the line cannot
-# be said. See src/csp.ts.
 NOT_OURS = re.compile(r"Failed to load resource.*\b(401|403|404|500)\b")
-
 
 def fresh(browser: Browser, label: str) -> Page:
     context = browser.new_context(
@@ -249,15 +193,11 @@ def fresh(browser: Browser, label: str) -> Page:
     page.wait_for_timeout(400)
     return page
 
-
 def answered(text: str) -> str | None:
-    """What sits between the two marks, or None where there is no answer."""
     found = re.search(r"<!--nib:ai-->\n(.*?)\n<!--/nib:ai-->", text, re.S)
     return found.group(1) if found else None
 
-
 def drive_block(browser: Browser) -> None:
-    """A question asked from the fence's own header, and the answer under it."""
     page = fresh(browser, "block")
     say(f"[block] the provider: {json.dumps(page.evaluate(SETUP, MODEL_ORIGIN))}")
     page.evaluate(OPEN, "Herons")
@@ -299,8 +239,6 @@ def drive_block(browser: Browser) -> None:
     if "After the block." not in after["text"]:
         wrong("[block] the answer ate the prose that was under the fence")
 
-    # The prompt said `@note`, so the note itself had to go with it. And nothing
-    # else: the question is one message, the note is another.
     sent = Model.seen[-1] if Model.seen else {}
     carried = json.dumps(sent.get("messages", []))
     if "A heron stands still in the shallows" not in carried:
@@ -310,7 +248,6 @@ def drive_block(browser: Browser) -> None:
     if sent.get("model") != MODEL:
         wrong(f"[block] the request named the wrong model: {sent.get('model')!r}")
 
-    # Asked again: one answer, the new one.
     Model.words = ["Quite ", "different."]
     page.evaluate(PRESS)
     page.wait_for_timeout(1200)
@@ -329,9 +266,7 @@ def drive_block(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_stop(browser: Browser) -> None:
-    """A stream stopped halfway keeps what arrived, and the glyph says so."""
     page = fresh(browser, "stop")
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Plain")
@@ -371,9 +306,7 @@ def drive_stop(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_refusal(browser: Browser) -> None:
-    """A refused key writes nothing into the note and says why."""
     page = fresh(browser, "refusal")
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Plain")
@@ -397,9 +330,7 @@ def drive_refusal(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_no_provider(browser: Browser) -> None:
-    """With nothing set up, a press says where to go rather than doing nothing."""
     page = fresh(browser, "empty")
     page.evaluate("() => { const ai = window.nibApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
     page.evaluate(OPEN, "Plain")
@@ -423,15 +354,12 @@ def drive_no_provider(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_rewrite(browser: Browser) -> None:
-    """A selection rewritten: the diff, and the note once it is kept."""
     page = fresh(browser, "rewrite")
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
 
-    # The sentence about the heron, selected the way a pointer would select it.
     picked = page.evaluate(
         """() => {
           const text = window.nib.state.doc.toString()
@@ -490,7 +418,6 @@ def drive_rewrite(browser: Browser) -> None:
     if "# Herons" in carried:
         wrong("[rewrite] a rewrite sent the whole note rather than the selection")
 
-    # Nothing is in the note until it is kept.
     midway = state(page)
     if "A heron waits." in midway["text"]:
         wrong("[rewrite] the rewrite was written before it was accepted")
@@ -511,9 +438,7 @@ def drive_rewrite(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_discard(browser: Browser) -> None:
-    """Thrown away, the note is exactly as it was."""
     page = fresh(browser, "discard")
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
@@ -546,16 +471,10 @@ def drive_discard(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_pane(browser: Browser) -> None:
-    """Settings > AI: a provider added, its models listed, a key set and taken."""
     page = fresh(browser, "pane")
     page.evaluate("() => { const ai = window.nibApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
     page.evaluate("() => window.nibApp.settings.show('ai')")
-    # The sheet is fetched the first time it is asked for rather than carried into the
-    # first paint, so it arrives a moment after the store says it is open; waited for
-    # rather than slept through, or the rows below are counted before there are any.
-    # See surfaces.svelte.ts.
     page.wait_for_selector(".nib-screen.sheet", timeout=15000)
     page.wait_for_timeout(400)
     shot(page, "60-pane-empty")
@@ -567,7 +486,6 @@ def drive_pane(browser: Browser) -> None:
     if len(adds) != 3:
         wrong(f"[pane] three kinds were expected, not {len(adds)}: {adds}")
 
-    # The compatible one, which is the one a fake server can stand in for.
     page.locator(".nib-action").last.click()
     page.wait_for_timeout(300)
 
@@ -584,8 +502,6 @@ def drive_pane(browser: Browser) -> None:
     page.wait_for_timeout(900)
     shot(page, "61-models-listed")
 
-    # The first of what the server offered, which is sorted: a provider that has
-    # just been set up is usable without a second decision.
     chosen = page.evaluate("() => window.nibApp.ai.providers[0].model")
     offered = page.evaluate(
         "() => [...document.querySelectorAll('.pick button, .pick select option')]"
@@ -597,9 +513,6 @@ def drive_pane(browser: Browser) -> None:
     if not page.evaluate("() => window.nibApp.ai.ready"):
         wrong("[pane] the provider is not usable after being set up")
 
-    # A key, and the one thing the pane may say about it afterwards. In a browser
-    # the store is IndexedDB, so this is also what proves the browser row of the
-    # table in docs/ai.md.
     key_field = page.locator("input[type=password]")
     if key_field.count():
         key_field.first.fill("sk-not-a-real-key")
@@ -620,7 +533,6 @@ def drive_pane(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the block ---")
@@ -639,7 +551,6 @@ def main() -> int:
         drive_pane(browser)
 
     return DRIVE.verdict("a block is asked, answered, replaced and stopped; a selection is rewritten")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

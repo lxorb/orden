@@ -1,18 +1,4 @@
-"""A file dragged from the file list into the Essentials, and a tile dragged back out (#412).
-
-A note dragged onto the Essentials leaves the list and is a tile; a tile dragged onto a
-folder's row leaves the Essentials and lands in that folder, the folder opened to show
-it. Two picked at once go together. Each is one Ctrl+Z, and Ctrl+Shift+Z does it again.
-And it moves: right after a drop the page has animations running - the tiles' and the
-rows' - unless the reader asked for less motion, when it has none.
-
-    python apps/desktop/test/e2e/essentials-drag.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
-
 from __future__ import annotations
-
 
 from playwright.sync_api import Browser, Page
 
@@ -38,7 +24,6 @@ async () => {
 }
 """
 
-# What is kept, and which rows the list draws, by name.
 STATE = """
 () => {
   const ws = window.nibApp.workspace
@@ -51,8 +36,6 @@ STATE = """
 }
 """
 
-# Every animation the page starts, counted as it is asked for: the tiles' FLIP and
-# their scale in and out, and the rows' slide, all go through `Element.animate`.
 COUNTING = """
 (() => {
   window.__animated = 0
@@ -74,10 +57,8 @@ COUNTING = """
 """
 MOVING = "() => { const n = window.__animated; window.__animated = 0; return n }"
 
-
 def row(page: Page, at: str):
     return page.locator(f"aside .row[data-path$='/{at}']").first
-
 
 def until(page: Page, check: str, what: str) -> bool:
     try:
@@ -87,10 +68,7 @@ def until(page: Page, check: str, what: str) -> bool:
         wrong(f"{what}: {page.evaluate(STATE)}")
         return False
 
-
 def moved(page: Page, what: str, want: bool = True) -> None:
-    """Whether the page started animating after a drop: within a second, the tiles' and
-    the rows' animations begin a frame or two after the change they show."""
     running = 0
     for _ in range(10):
         page.wait_for_timeout(100)
@@ -103,19 +81,16 @@ def moved(page: Page, what: str, want: bool = True) -> None:
     if not want and running:
         wrong(f"{what}: {running} animations ran for a reader who asked for less motion")
 
-
 def drag(page: Page, source, target, what: str) -> None:
     source.drag_to(target)
     say(f"dragged: {what}")
     page.wait_for_timeout(40)
-
 
 def keys(page: Page, chord: str) -> None:
     marked = "() => { window.__mark = window.nibApp.workspace.undone.last }"
     page.evaluate(marked)
     page.keyboard.press(chord)
     wait_for(page, "() => window.nibApp.workspace.undone.last !== window.__mark", f"{chord} landed", PATIENCE)
-
 
 def walk(browser: Browser, reduced: bool) -> None:
     context = browser.new_context(
@@ -133,12 +108,9 @@ def walk(browser: Browser, reduced: bool) -> None:
         wait_for(page, "() => !!document.querySelector(\"aside .row[data-path$='/Work/Gamma.md']\")", "the rows")
         page.wait_for_timeout(500)
 
-        # Into the Essentials: the grid offers an empty place once a file is carried up past
-        # the list - not before, or it would push the list under a row being reordered.
         page.evaluate(MOVING)
         row(page, "Alpha.md").hover()
         page.mouse.down()
-        # Up out of the list, over the panel's tabs, which is when the grid makes room.
         tabs = page.locator("aside:not(.right) .switch").first.bounding_box()
         assert tabs
         page.mouse.move(tabs["x"] + 40, tabs["y"] + tabs["height"] / 2, steps=6)
@@ -161,7 +133,6 @@ def walk(browser: Browser, reduced: bool) -> None:
         keys(page, "Control+Shift+z")
         until(page, "s.kept.includes('Alpha.md') && !s.rows.includes('Alpha.md')", f"{tag}done again")
 
-        # Back out, onto the folder's row: into the folder, the folder open.
         page.wait_for_timeout(300)
         page.evaluate(MOVING)
         drag(page, page.locator(".tiles [data-at]").first, row(page, "Work"), "Alpha's tile onto Work")
@@ -170,7 +141,6 @@ def walk(browser: Browser, reduced: bool) -> None:
         keys(page, "Control+z")
         until(page, "s.kept.includes('Alpha.md') && !s.rows.includes('Work/Alpha.md')", f"{tag}undone, the tile back")
 
-        # Two picked at once: one drag, both tiles, one undo.
         row(page, "Beta.md").click()
         row(page, "Work/Gamma.md").click(modifiers=["Alt"])
         drag(page, row(page, "Beta.md"), page.locator(".tiles"), "Beta and Gamma onto the Essentials")
@@ -181,11 +151,9 @@ def walk(browser: Browser, reduced: bool) -> None:
     finally:
         context.close()
 
-
 def drive(browser: Browser) -> None:
     walk(browser, reduced=False)
     walk(browser, reduced=True)
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "files dragged into the Essentials and tiles back out, each one undo"))

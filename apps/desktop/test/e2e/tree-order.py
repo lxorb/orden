@@ -1,27 +1,3 @@
-"""The order the file list is read in: all seven of them, and the drag that makes
-the seventh.
-
-A space of sixty files in nested folders, photographed in each order, then
-rearranged by hand - once with a mouse, which is the drag the platform starts, and
-once with a finger at phone width, which is the only gesture a touch screen has.
-The browser is relaunched against the same profile afterwards, so the order
-somebody arranged is proved to have survived being closed rather than merely
-redrawn.
-
-No Worker and no account: the browser build seeds its own space, and the rows are
-written through `window.nibApp.workspace`. Builds the web app, serves `dist`
-statically on a port of its own, shoots the panel, and stops everything again.
-Nothing it makes outlives it but the screenshots, which go beside it under
-`shots/`.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/tree-order.py
-
-`NIB_SKIP_BUILD=1` reuses whatever is in `apps/desktop/dist`, which is what
-run-all.py sets.
-"""
-
 from __future__ import annotations
 
 import json
@@ -42,12 +18,8 @@ SHOTS = DRIVE.shots
 APP = harness.APP
 ROOT = harness.ROOT
 
-
-# How long anything is waited for before the run gives up and says what it saw.
 PATIENCE = 60
 
-# What the seven rows of the order menu are called, in the order the menu offers
-# them, and the word the store keeps each under.
 ORDERS = [
     ("Name, A to Z", "name"),
     ("Name, Z to A", "name-desc"),
@@ -58,7 +30,6 @@ ORDERS = [
     ("Manual", "manual"),
 ]
 
-
 def opened(context: BrowserContext, label: str) -> Page:
     page = context.pages[0] if context.pages else context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
@@ -66,11 +37,6 @@ def opened(context: BrowserContext, label: str) -> Page:
     page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     return page
 
-
-# Sixty files in five folders, written in an order that is not their names' so that
-# "created, oldest first" and "Name, A to Z" cannot be the same answer by accident.
-# `Note 2` and `Note 10` are in there for the one thing a name order has to get
-# right: the digits are counted, not spelled.
 SEED = """
 async (many) => {
   const ws = window.nibApp.workspace
@@ -98,9 +64,6 @@ async (many) => {
 }
 """
 
-# Which notes get written in again, so that the last-modified order is not the
-# order they were made in. Through the document the editor writes, which is the
-# only path that touches a file the way typing in it does.
 TOUCH = """
 async (names) => {
   const ws = window.nibApp.workspace
@@ -126,9 +89,6 @@ async (names) => {
 }
 """
 
-# The whole order, which is the app's own answer rather than the rows that happen to
-# be mounted: the window draws twenty of sixty. Names only, and only the top of the
-# space, which is what the shots show.
 TOP_NAMES = """
 () => {
   const ws = window.nibApp.workspace
@@ -137,7 +97,6 @@ TOP_NAMES = """
 }
 """
 
-# And the rows actually in the page, so a shot is never the only record.
 DRAWN = """
 () => [...document.querySelectorAll('aside .row[data-path]')].map((row) =>
   row.querySelector('.nib-row-label')?.textContent?.trim() ?? '')
@@ -154,18 +113,13 @@ WHAT_IS_KEPT = """
 }
 """
 
-
 GLYPH = "aside button[aria-label='Order of the files']"
-
 
 def open_menu(page: Page) -> None:
     page.locator(GLYPH).first.click()
     page.wait_for_selector("[role=menu] [role=menuitem]", timeout=PATIENCE * 1000)
 
-
 def chosen(page: Page, label: str, mode: str) -> None:
-    """Presses the glyph at the end of the panel's header and then the row for one
-    order, which is the control a reader uses rather than the store behind it."""
     open_menu(page)
     page.locator("[role=menu] [role=menuitem]", has_text=label).first.click()
     page.wait_for_timeout(250)
@@ -174,21 +128,15 @@ def chosen(page: Page, label: str, mode: str) -> None:
     if now != mode:
         wrong(f"pressing {label!r} left the order as {now!r} rather than {mode!r}")
 
-
 def ticked(page: Page) -> list[str]:
-    """The rows of the open menu, with a mark against the one in force."""
     return page.evaluate(
         """() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((row) =>
              `${row.querySelector('.nib-row-label')?.textContent?.trim()}`
              + (row.querySelector('.tick') ? ' [tick]' : ''))"""
     )
 
-
 def row(page: Page, name: str):
-    """One row, by the path written on it. Never by the words in it: `Note 1` is a
-    substring of `Note 10`, and the label may be the name without its ending."""
     return page.locator(f'aside .row[data-path$="/{name}"]').first
-
 
 def rowbox(page: Page, name: str):
     box = row(page, name).bounding_box()
@@ -196,9 +144,7 @@ def rowbox(page: Page, name: str):
         raise SystemExit(f"no row on screen for {name}")
     return box
 
-
 def desktop(playwright, profile: Path) -> list[str]:
-    """The seven orders photographed, and one row dragged with a mouse."""
     context = DRIVE.persistent(
         playwright,
         profile,
@@ -216,8 +162,6 @@ def desktop(playwright, profile: Path) -> list[str]:
                 "Work": ["Q3 plan", "Budget", "Hiring", "Retro", "Offsite", "Standup"],
                 "Work/Q3": ["Week 2", "Week 10", "Week 1", "Week 20"],
                 "Archive": ["Last year", "Older still", "Oldest of all"],
-                # Enough to fill the window and then some: a panel shows about twenty
-                # rows, so what is measured is a list the window is a slice of.
                 "Archive/2025": [f"Day {index + 1}" for index in range(28)],
             },
         )
@@ -228,8 +172,6 @@ def desktop(playwright, profile: Path) -> list[str]:
         written = page.evaluate(TOUCH, ["Note 12", "Alpha"])
         say(f"written in again, so the modified order is not the created one: {written}")
 
-        # The menu itself, with the tick against the order in force. The default,
-        # which Emil asked for by name.
         open_menu(page)
         for one in ticked(page):
             say(f"menu: {one}")
@@ -246,7 +188,6 @@ def desktop(playwright, profile: Path) -> list[str]:
             say(f"{mode}: {' | '.join(names)}")
             page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"order-{mode}.png"))
 
-        # The one thing a name order has to get right.
         by_name = orders["name"]
         if by_name.index("Note 2.md") > by_name.index("Note 10.md"):
             wrong("Note 10 sorted before Note 2, so the digits were spelled rather than counted")
@@ -256,8 +197,6 @@ def desktop(playwright, profile: Path) -> list[str]:
             if sorted(names[:deep]) != sorted(FOLDERS):
                 wrong(f"{mode} did not put the folders first: {names[:deep]}")
 
-        # The folders are first in both name orders, so each group reverses rather
-        # than the whole list.
         if orders["name-desc"][:deep] != list(reversed(by_name[:deep])) or orders["name-desc"][
             deep:
         ] != list(reversed(by_name[deep:])):
@@ -273,7 +212,6 @@ def desktop(playwright, profile: Path) -> list[str]:
         if orders["manual"] != by_name:
             wrong("Manual did not start out as name order for a space nobody has arranged")
 
-        # And the drag. Manual is in force from the loop above.
         before = page.evaluate(TOP_NAMES)
         moving, onto = "Roadmap.canvas", "Note 1.md"
         say(f"dragging {moving} above {onto}")
@@ -295,15 +233,9 @@ def desktop(playwright, profile: Path) -> list[str]:
         if kept["stored"] is None or "manual" not in json.dumps(kept["stored"]):
             wrong(f"the chosen order was not written down per space: {kept['stored']}")
 
-        # The list only runs as far as the drag reached.
         for folder, names in kept["arranged"].items():
             say(f"arranged {folder!r}: {names}")
 
-        # And a folder dragged down among the notes, which is the one thing Manual
-        # allows and the other six do not. Emil: "for the manual ordering mode in
-        # explorer, it should not be enforced that directories display above files".
-        # The bottom edge of a row is the space under it; the middle would be a move
-        # into the note, which is a different gesture.
         held, under = FOLDERS[-1], "Note 1.md"
         tall = int(rowbox(page, under)["height"])
         say(f"dragging the folder {held} below {under}")
@@ -323,10 +255,7 @@ def desktop(playwright, profile: Path) -> list[str]:
     finally:
         context.close()
 
-
 def relaunched(playwright, profile: Path, want: list[str]) -> None:
-    """The same profile again, opened from cold: the order somebody arranged is a
-    fact about the space rather than a redraw."""
     context = DRIVE.persistent(
         playwright,
         profile,
@@ -352,10 +281,7 @@ def relaunched(playwright, profile: Path, want: list[str]) -> None:
     finally:
         context.close()
 
-
 def phone(playwright, profile: Path) -> None:
-    """The same design at phone width, through the only gesture a touch screen has:
-    a press, a short hold, and a move."""
     context = DRIVE.persistent(
         playwright,
         profile,
@@ -372,8 +298,6 @@ def phone(playwright, profile: Path) -> None:
         )
         say(f"[phone] the space holds {held} files")
 
-        # The drawer, so the list is on screen at all at this width; the same call
-        # every other phone drive opens it with.
         page.evaluate(
             "() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }"
         )
@@ -402,8 +326,6 @@ def phone(playwright, profile: Path) -> None:
         end_y = target["y"] + 2
 
         touch("touchStart", start_x, start_y)
-        # Past the short hold that lifts the row, and not past the half second the
-        # row's own menu waits.
         page.wait_for_timeout(320)
         if not page.evaluate("() => !!document.querySelector('.row.carried')"):
             wrong("[phone] the hold did not lift the row")
@@ -412,9 +334,6 @@ def phone(playwright, profile: Path) -> None:
         for step in range(1, steps + 1):
             touch("touchMove", start_x, start_y + (end_y - start_y) * step / steps)
             page.wait_for_timeout(20)
-            # Half way, which is where a picture of a lift is worth taking: the copy is
-            # under the finger, the row it came from is hollow where it was, and the gap
-            # has opened where it would land.
             if step == steps // 2:
                 page.wait_for_timeout(220)
                 page.screenshot(path=str(SHOTS / "order-phone-lifted.png"))
@@ -445,9 +364,7 @@ def phone(playwright, profile: Path) -> None:
     finally:
         context.close()
 
-
 FOLDERS: list[str] = []
-
 
 def main() -> int:
     global FOLDERS
@@ -460,7 +377,6 @@ def main() -> int:
     desk.mkdir(parents=True, exist_ok=True)
     hand.mkdir(parents=True, exist_ok=True)
 
-    # The five folders the seed makes, which every order has to put first.
     FOLDERS = sorted(["Archive", "Reading", "Work"])
 
     with DRIVE.session(playwright=True) as playwright:
@@ -469,7 +385,6 @@ def main() -> int:
         phone(playwright, hand)
 
     return DRIVE.verdict("the seven orders read as they should, and Manual held a drag")
-
 
 if __name__ == "__main__":
     sys.exit(main())

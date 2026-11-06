@@ -102,7 +102,6 @@ import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
-#: Eleven parts over two spaces, several rounds each: thirteen minutes on a busy machine.
 BUDGET = 1800
 say = DRIVE.say
 APP = harness.APP
@@ -112,45 +111,20 @@ DESKTOP_AGENT = (
     " Chrome/140.0.0.0 Safari/537.36"
 )
 
-#: How many notes the big space holds.
 NOTES = 5000
-#: How many lines the big note holds.
 LINES = 20000
-#: How many ink strokes the canvas holds.
 STROKES = 10000
-#: How many points each of them went through.
 POINTS = 10
 
-#: How long to watch for jank while a gesture runs.
 GESTURE = 1500
 
-#: How many launches a lane gets before any of them is timed; see `ready`.
 WARMING = 3
 
-#: How long the machine is left alone between one lane's round and the next.
 SETTLING = 2000
 
-
-#: Served the way this file used to serve, for showing that the way it serves now is
-#: what fixed the lane bias: HTTP/1.0, no caching headers, and the build's own
-#: mtimes. `--as-was` sets it. Nothing but the proof should ever want it.
 AS_WAS = False
 
-
 class AsWas(harness.Files):
-    """The build served the way this file used to serve it, which measured the rig
-    rather than the app.
-
-    HTTP/1.0, which closes the connection after every response: a page of thirty
-    assets was thirty TCP connections and thirty Python threads, taking the
-    interpreter's lock turn and turn about with the thread driving the measurement.
-    No `Cache-Control`, so Chrome guessed how long a file was good for - a tenth of
-    the file's own age - and the two lanes, two folders written at two different
-    times, got two different lifetimes: the older folder came out of the browser's
-    cache and the newer one revalidated every asset. That was the lane bias; it
-    followed the folder's timestamp, not the code in it, which is why it survived
-    byte-identical builds. harness.Files is the server that fixed it, and counts the
-    same way, so the two runs can be read side by side."""
 
     protocol_version = "HTTP/1.0"
 
@@ -162,13 +136,6 @@ class AsWas(harness.Files):
     def end_headers(self) -> None:
         http.server.SimpleHTTPRequestHandler.end_headers(self)
 
-
-# --------------------------------------------------------------------------- seed
-
-# The notes, the big note and the canvas, written the way the app's own store
-# writes them: a row per path in `files`, and the listing beside it in `stats`.
-# Which stores exist is read off the database rather than assumed, so the same
-# drive seeds a build from before a store was added.
 SEED = r"""
 async (plan) => {
   const { notes, lines, strokes, points, space } = plan
@@ -349,17 +316,6 @@ async (plan) => {
 }
 """
 
-# --------------------------------------------------------------------------- marks
-
-# Installed before the app's first script runs, so every moment is taken against
-# the navigation rather than against whenever a poll got round to looking.
-#
-# Four moments and two counters. The moments are the first paint the browser
-# reports, the first row of the file list, the editor, and - worked out at the end -
-# the first half second after the editor in which no task ran long enough to eat a
-# frame, which is the first moment typing would have appeared in the frame it
-# happened in. The counters are every long task and every long animation frame,
-# kept with the scripts the browser blames for them, which is the profile.
 MARKS = r"""
 window.__marks = { paint: null, tree: null, editor: null, tasks: [], loaf: [] }
 const marks = window.__marks
@@ -445,22 +401,14 @@ window.__since = () => {
 window.__painted = () => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(() => go(performance.now()))))
 """
 
-#: How long after the editor to look for a quiet stretch, and how long a stretch
-#: has to be to count as one.
 SETTLED_WITHIN = 8000
 QUIET = 500
 
-# --------------------------------------------------------------------------- steps
-
 LAUNCHED = "() => !!window.nibApp && !!window.nibApp.workspace.activeSpace"
 
-#: The note every launch opens, and the one beside it for the tab switch.
 FIRST = "first.md"
 SECOND = "second.md"
 
-# The launch, once the app is up and has stopped moving: the four moments, the
-# longest task after the editor, and the heap. `settled` is worked out here rather
-# than watched for, because it is a property of the list of tasks.
 LAUNCH = r"""
 (quiet) => {
   const marks = window.__marks
@@ -493,10 +441,6 @@ LAUNCH = r"""
 }
 """
 
-# One note opened by path, timed from the call to the frame the editor's own
-# document is that note in. The editor is asked rather than the DOM: a long note is
-# drawn a viewport at a time, so the rows on screen say nothing about whether the
-# document has landed.
 OPEN_NOTE = r"""
 async (path) => {
   const ws = window.nibApp.workspace
@@ -512,8 +456,6 @@ async (path) => {
 }
 """
 
-# The other tab shown: the store is told, and the frame after it is when the words
-# are on screen.
 SWITCH = r"""
 async (id) => {
   const ws = window.nibApp.workspace
@@ -524,8 +466,6 @@ async (id) => {
 }
 """
 
-# The settings sheet. Opened through its own store rather than through a pointer,
-# because what is being timed is the sheet being built and not the click.
 SHEET = r"""
 async () => {
   const started = window.__since()
@@ -541,10 +481,6 @@ async () => {
 
 SHUT_SHEET = "() => { window.nibApp.settings.open = false }"
 
-# One query, from the word being typed to the last note having answered, less the
-# wait the field keeps before it asks at all - which is a decision about typing
-# rather than a cost. The counter the worker keeps is read either side of it: rows
-# read out of storage, which is what "the notes are kept between searches" means.
 QUERY = r"""
 async (plan) => {
   const { text, wait } = plan
@@ -568,7 +504,6 @@ async (plan) => {
 }
 """
 
-# A gesture watched: frames while it runs, and the frames the browser called long.
 WATCH_START = "() => { window.__t0 = window.__since(); window.__frames.on = true }"
 WATCH_STOP = r"""
 () => {
@@ -587,22 +522,7 @@ WATCH_STOP = r"""
 }
 """
 
-
 def pick(rounds: list[dict[str, float]], key: str, unit: str) -> float:
-    """One number out of several rounds, chosen by what the row is.
-
-    For anything in milliseconds: the smallest. Noise on a machine only ever adds
-    time - a round is slow because something else ran, never because the code got
-    faster - so the least disturbed round is the one that is about the code, and it
-    is the only one that repeats. The same build in both lanes agreed to within
-    seven milliseconds on every launch row by its minimum while its medians were a
-    hundred and fifty apart, because a median of eight rounds carries whatever the
-    machine did in four of them.
-
-    For frames a second: the largest, for the same reason the other way up. For a
-    count or a heap: the middle, because those do not drift, and a count that came
-    out low is a round that did less rather than a round that was left alone.
-    """
     found = [one[key] for one in rounds if key in one]
     if not found:
         return 0.0
@@ -612,24 +532,7 @@ def pick(rounds: list[dict[str, float]], key: str, unit: str) -> float:
         return max(found)
     return statistics.median(found)
 
-
 def floor(rounds: list[dict[str, float]], key: str, unit: str) -> float:
-    """How far this row would move if the whole run were done again.
-
-    Two ways of asking, and the larger answer, because each catches what the other
-    misses.
-
-    The rounds split down the middle and the same number taken from each half: two
-    goes at the same question on the same machine, so the gap between them is what
-    this row is worth to nobody.
-
-    And how far the round that was picked sits from the one that nearly matched it -
-    the second smallest of a time, the second largest of a rate. A row read as its
-    best round is only worth what its next best round agrees it is worth: four
-    rounds split two and two can happen to agree closely while every round is ten
-    per cent from the last, and that read as a floor of one millisecond called four
-    rows on this machine a difference when the two folders held the same build.
-    """
     found = [one[key] for one in rounds if key in one]
     if len(found) < 4:
         return 0.0
@@ -647,9 +550,7 @@ def floor(rounds: list[dict[str, float]], key: str, unit: str) -> float:
 
     return max(halves, nearly)
 
-
 def blame(entries: list[dict]) -> list[str]:
-    """The scripts the browser blamed for the long frames, worst first, as lines."""
     worst: dict[str, dict[str, float]] = {}
     for frame in entries:
         for script in frame.get("scripts", []):
@@ -668,49 +569,30 @@ def blame(entries: list[dict]) -> list[str]:
 
     return lines
 
-
-# --------------------------------------------------------------------------- parts
-
-
 def part_launch(lane: Lane, page: Page) -> dict[str, object]:
-    """One measured launch: the navigation, the four moments, and the heap."""
     page.goto(lane.origin, wait_until="commit")
     page.wait_for_function("() => window.__marks.editor !== null", timeout=120000)
     page.wait_for_function(LAUNCHED, timeout=120000)
     page.wait_for_timeout(SETTLED_WITHIN)
-    # Swept first, or the heap is whatever the collector had not got round to: the
-    # same build read 123MB one round and 215MB the next without it.
     lane.sweep()
     found = page.evaluate(LAUNCH, QUIET)
     lane.profile("launch", found.pop("loaf"))
     return found
 
-
 def part_note(lane: Lane, page: Page) -> dict[str, object]:
-    """The big note opened, and a key pressed at the end of it."""
     if lane.space == "empty":
         return {}
 
     ready(page, lane)
-    # The launch's own reads have to be out of the way first. This part is about the
-    # editor, and a keystroke measured while the space is still being scanned measures
-    # the scan: the browser blamed `IDBRequest.onsuccess` for eight hundred
-    # milliseconds inside the typing window, in both builds alike.
     settled(page)
     opened = page.evaluate(OPEN_NOTE, f"{lane.root}/long.md")
     lane.profile("big note opened", opened["loaf"])
 
-    # The end of it, which is where a note this long is slowest: every line above
-    # the caret is a line the editor has to have measured to know where it is.
     page.click(".cm-content")
     page.keyboard.press("Control+End")
     page.wait_for_timeout(400)
 
     page.evaluate(TYPING_READY)
-    # One key at a time, each waited for: a key pressed while the frame of the last
-    # one is still being laid out is a key whose wait is the one before it as well,
-    # and twelve of those measure the queue rather than the keystroke. A key that
-    # never lands at all is given up on after a second and the rest still go.
     for at in range(12):
         page.keyboard.press("x")
         try:
@@ -723,8 +605,6 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
     latency = page.evaluate(TYPING)
     lane.profile("typing at the end of the big note", latency.pop("loaf"))
 
-    # A round where the keys never reached the editor says nothing about typing, and
-    # its noughts would read as "no wait at all".
     if not latency.pop("keys"):
         lane.note("the keystrokes went nowhere; that round is not in the typing numbers")
         latency = {}
@@ -736,11 +616,6 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
 
     return {"note-open": opened["ms"], **latency, **reading}
 
-
-# The keystrokes, taken from the browser's own event timing rather than from a
-# clock around `press`: what a reader feels is the key going down to the frame that
-# shows the letter, which is exactly what this entry measures. Eight millisecond
-# buckets, which is the browser rounding and not this drive.
 TYPING_READY = r"""
 () => {
   window.__keys = []
@@ -829,9 +704,7 @@ async () => {
 }
 """
 
-
 def part_shell(lane: Lane, page: Page) -> dict[str, object]:
-    """The two tabs, the palette and the settings sheet."""
     ready(page, lane)
 
     page.evaluate(OPEN_NOTE, f"{lane.root}/{FIRST}")
@@ -842,7 +715,6 @@ def part_shell(lane: Lane, page: Page) -> dict[str, object]:
     back = page.evaluate(SWITCH, tabs[-1])
     del back
 
-    # The palette, driven by its own key so the keystroke is in the number.
     page.evaluate(WATCH_START)
     page.keyboard.press("Control+o")
     page.wait_for_selector(".palette, .quick, [role=listbox]", timeout=20000)
@@ -858,7 +730,6 @@ def part_shell(lane: Lane, page: Page) -> dict[str, object]:
 
     return {"tab-switch": switched["ms"], **palette, "settings": sheet["ms"]}
 
-
 PALETTE = r"""
 async () => {
   const started = window.__t0 ?? performance.now()
@@ -869,28 +740,18 @@ async () => {
 }
 """
 
-
 def part_search(lane: Lane, page: Page) -> dict[str, object]:
-    """Four queries over the space, and what the worker was holding either side."""
     if lane.space == "empty":
         return {}
 
     ready(page, lane)
-    # Opening the panel is a cost of its own: it asks the space for its tags, which
-    # is the one thing on this surface that reads every note there is.
     panel = page.evaluate(PANEL)
     lane.profile("search panel opened", panel.pop("loaf"))
-    # Attached rather than visible: the line is a data attribute on a row that a
-    # theme may give no size at all, and what is being read is the attribute.
     try:
         page.wait_for_selector("[data-search]", state="attached", timeout=30000)
     except Exception:
-        # Which panel the sidebar is actually on, so a run that ends here says what
-        # it found rather than only which selector it was waiting for.
         say(f"{lane.name}: no search panel; the window says {page.evaluate(SIDEBAR)}")
         raise
-    # The pass that reads the space into the worker is part of the launch, not part
-    # of a query: wait for it to say it is warm before asking anything.
     page.wait_for_function(
         "() => /warm=1/.test(document.querySelector('[data-search]')?.dataset.search ?? '')",
         timeout=180000,
@@ -907,10 +768,6 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
 
     return found
 
-
-#: What the window says about its sidebar, for a run that did not find a panel it
-#: asked for. Read off the app and off the page, because the two disagreeing is the
-#: interesting answer.
 SIDEBAR = r"""
 () => ({
   panel: window.nibApp?.workspace?.panel ?? null,
@@ -960,8 +817,6 @@ async () => {
 }
 """
 
-
-#: The four questions, and what each is about.
 QUERIES = [
     ("hit", "marker-4242"),
     ("none", "zzqqxxnothing"),
@@ -969,9 +824,7 @@ QUERIES = [
     ("task", "task:pressure"),
 ]
 
-
 def part_graph(lane: Lane, page: Page) -> dict[str, object]:
-    """The picture of the space, opened and panned."""
     if lane.space == "empty":
         return {}
 
@@ -979,12 +832,6 @@ def part_graph(lane: Lane, page: Page) -> dict[str, object]:
     opened = page.evaluate(OPEN_GRAPH)
     lane.profile("graph opened", opened.pop("loaf"))
 
-    # The picture's own surface, by the one class only it wears. `canvas` was in this
-    # selector as well, and a page that has been through the parts above has canvases
-    # in it that are nothing to do with the graph and are not on screen: the first of
-    # those in the page is what both of these lines then waited on, which is a wait
-    # that never ends. See surfaces.svelte.ts, which is also why the surface is not there the
-    # moment the tab is opened.
     page.wait_for_selector(".graph", state="visible", timeout=90000)
     box = page.locator(".graph").first.bounding_box()
     if not box:
@@ -1000,7 +847,6 @@ def part_graph(lane: Lane, page: Page) -> dict[str, object]:
         "hover-worst": hovered["worst"],
     }
 
-
 OPEN_GRAPH = r"""
 async () => {
   const ws = window.nibApp.workspace
@@ -1015,9 +861,7 @@ async () => {
 }
 """
 
-
 def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
-    """Ten thousand strokes: opened, panned, zoomed and drawn on."""
     if lane.space == "empty":
         return {}
 
@@ -1027,9 +871,6 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
     if not opened.get("ms"):
         return {}
 
-    # The element, and a size for it. A plane of ten thousand strokes is still
-    # laying itself out when the div arrives, and a locator asked for a box before
-    # then waits its own thirty seconds and gives up.
     page.wait_for_selector(".canvas", state="visible", timeout=90000)
     box = page.locator(".canvas").first.bounding_box()
     if not box:
@@ -1037,10 +878,6 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
 
     filling = fill_in(lane, page)
     panned = drag(lane, page, box, "canvas panned")
-    # Drawn on and rubbed out with the whole plane in view, which is where a stroke
-    # lands on a tile holding hundreds of others: the plane opens framed to fit, and
-    # nothing has zoomed it yet. Both taken back afterwards, so every round is the
-    # same plane.
     whole = draw(lane, page, box, "stroke drawn on the whole plane")
     rubbed = rub(lane, page, box)
     for _ in range(2):
@@ -1063,21 +900,14 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
         "draw-worst": drawn["worst"],
     }
 
-
 def fill_in(lane: Lane, page: Page) -> dict:
-    """The seconds after a plane is opened, with nothing touched: the cards are on
-    screen and the ink arrives behind them, a slice a frame. What a reader waits
-    through is the longest of those frames."""
     page.evaluate(WATCH_START)
     page.wait_for_timeout(3000)
     found = page.evaluate(WATCH_STOP)
     lane.profile("ink filling in", found["loaf"])
     return found
 
-
 def rub(lane: Lane, page: Page, box: dict) -> dict:
-    """The eraser across the middle of the plane, which takes strokes out of the
-    plane on every move it crosses one."""
     page.keyboard.press("e")
     page.wait_for_timeout(300)
     start = (box["x"] + box["width"] / 2 - 150, box["y"] + box["height"] / 2)
@@ -1093,7 +923,6 @@ def rub(lane: Lane, page: Page, box: dict) -> dict:
     page.keyboard.press("Escape")
     return found
 
-
 OPEN_CANVAS = r"""
 async (path) => {
   const ws = window.nibApp.workspace
@@ -1108,12 +937,7 @@ async (path) => {
 }
 """
 
-
 def drag(lane: Lane, page: Page, box: dict, what: str, button: str = "middle") -> dict:
-    """A pan: the middle of the surface dragged, with the frames counted.
-
-    The canvas pans with the middle button, over a card as readily as over the
-    paper; the graph pans with the left one, from anywhere no node is."""
     middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.mouse.move(*middle)
     page.evaluate(WATCH_START)
@@ -1126,10 +950,7 @@ def drag(lane: Lane, page: Page, box: dict, what: str, button: str = "middle") -
     lane.profile(what, found["loaf"])
     return found
 
-
 def hover(lane: Lane, page: Page, box: dict) -> dict:
-    """The pointer moved across the picture with nothing held down, which is the
-    gesture that asks what is under it - once per event rather than once a frame."""
     start = (box["x"] + 60, box["y"] + box["height"] / 2)
     page.mouse.move(*start)
     page.evaluate(WATCH_START)
@@ -1140,9 +961,7 @@ def hover(lane: Lane, page: Page, box: dict) -> dict:
     lane.profile("graph hovered", found["loaf"])
     return found
 
-
 def wheel(lane: Lane, page: Page, box: dict) -> dict:
-    """A zoom: the wheel with the modifier down, which is how both surfaces zoom."""
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.evaluate(WATCH_START)
     for _ in range(30):
@@ -1154,9 +973,7 @@ def wheel(lane: Lane, page: Page, box: dict) -> dict:
     lane.profile("canvas zoomed", found["loaf"])
     return found
 
-
 def draw(lane: Lane, page: Page, box: dict, what: str = "stroke drawn") -> dict:
-    """One more stroke on a plane that already holds ten thousand."""
     page.keyboard.press("d")
     page.wait_for_timeout(300)
     start = (box["x"] + 80, box["y"] + box["height"] - 80)
@@ -1172,15 +989,7 @@ def draw(lane: Lane, page: Page, box: dict, what: str = "stroke drawn") -> dict:
     page.keyboard.press("Escape")
     return found
 
-
 def part_scan(lane: Lane, page: Page) -> dict[str, object]:
-    """A launch, watched until the space has been read for the link index.
-
-    The read is chunks of the space with the thread let go of between them, so what
-    a reader feels is the longest of those chunks: the keystroke that lands during
-    one waits for all of it. Counted from the file list, which is on screen before
-    the scan is let start, to the index having the space - and not from the editor,
-    which a launch that reopens on a canvas never draws."""
     if lane.space == "empty":
         return {}
 
@@ -1193,7 +1002,6 @@ def part_scan(lane: Lane, page: Page) -> dict[str, object]:
     found = page.evaluate(SCAN)
     lane.profile("the space read for the index", found.pop("loaf"))
     return found
-
 
 SCAN = r"""
 () => {
@@ -1210,15 +1018,11 @@ SCAN = r"""
 }
 """
 
-
 def part_links(lane: Lane, page: Page) -> dict[str, object]:
-    """The note a thousand others point at, and the panel that says who."""
     if lane.space == "empty":
         return {}
 
     ready(page, lane)
-    # The index has to have read the space before what points here is answerable,
-    # and that read is part of the launch rather than part of this.
     settled(page)
 
     found = page.evaluate(LINKS, f"{lane.root}/hub.md")
@@ -1229,13 +1033,6 @@ def part_links(lane: Lane, page: Page) -> dict[str, object]:
     page.wait_for_timeout(200)
     return found
 
-
-# The note opened and the panel asked for, timed to the frame the rows are on.
-#
-# What points here is answered off the index, so this is that answer and the rows it
-# comes to. What merely *mentions* the name is a search of every note in the space
-# and lands later; it is not timed here, because the only thing on the page saying it
-# has landed is a heading in whatever language the window is in.
 LINKS = r"""
 async (path) => {
   const ws = window.nibApp.workspace
@@ -1265,7 +1062,6 @@ async (path) => {
 }
 """
 
-
 PARTS = {
     "launch": part_launch,
     "note": part_note,
@@ -1277,38 +1073,23 @@ PARTS = {
     "canvas": part_canvas,
 }
 
-
 def settled(page: Page) -> None:
-    """The launch's own passes finished: the index scanned, and a quiet moment after
-    it. What is measured after this is the thing being measured."""
     page.wait_for_function(
         "() => !!window.nibApp && !window.nibApp.links.scanning && !!window.nibApp.links.rootOf()",
         timeout=180000,
     )
     page.wait_for_timeout(2500)
 
-
 def ready(page: Page, lane: Lane) -> None:
-    """The app up, on the space, with the file list showing."""
     if not page.evaluate("() => !!window.nibApp"):
         page.goto(lane.origin, wait_until="domcontentloaded")
 
     page.wait_for_function(LAUNCHED, timeout=120000)
-    # A moment before anything is asked of the window. The app says it has a space
-    # and paints the file list part way through reading its sitting back, and the
-    # rest of that read writes the sidebar down again: a panel asked for inside that
-    # window is undone by `applyLayout`, which is why this drive used to lose a whole
-    # lane's search rounds to a panel that never opened.
     page.wait_for_timeout(600)
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
 
-
-# --------------------------------------------------------------------------- lanes
-
-
 class Lane:
-    """One build over one space, served and driven."""
 
     def __init__(self, tag: str, folder: Path, space: str) -> None:
         self.tag = tag
@@ -1326,9 +1107,6 @@ class Lane:
         self.cdp = None
 
     def start(self) -> None:
-        """A server and an origin of the lane's own. One per build and per space: two
-        builds cannot share one database, and a space of five thousand notes in the
-        same database as the empty one would make the empty launch a launch of both."""
         if AS_WAS:
             self.server = harness.Served(handler=type("Lane", (AsWas,), {"folder": str(self.folder)}))
         else:
@@ -1349,10 +1127,6 @@ class Lane:
             self.profiles.setdefault(f"{self.name} - {what}", []).extend(lines)
 
     def ready(self, browser) -> None:
-        """A seeded store, and a session as an app somebody has used before leaves
-        one: which space was open, which note, and that the file list was the panel
-        showing. Every launch measured after this is a launch of an app somebody has
-        used before, which is the launch that happens every day."""
         context = browser.new_context(
             viewport={"width": 1440, "height": 900},
             user_agent=DESKTOP_AGENT,
@@ -1374,39 +1148,25 @@ class Lane:
         seeded = page.evaluate(SEED, plan)
         say(f"{self.name}: {seeded['rows']} rows seeded into {seeded['stores']}")
 
-        # Three launches before anything is timed, not one. Chrome keeps a compiled
-        # copy of a script and writes it on the second or third visit, so the build
-        # that has been served all afternoon comes up faster than the one built five
-        # minutes ago - by three hundred milliseconds to the file list, which is more
-        # than most changes worth making. Every asset of both builds is under a hash
-        # of its own, so each needs its own warming.
         for _ in range(WARMING):
             page.goto(self.origin, wait_until="domcontentloaded")
             page.wait_for_function(LAUNCHED, timeout=180000)
-            # Said every time: a first visit has no session behind it and opens on
-            # whichever panel the app starts with.
             page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
             page.wait_for_selector("aside .row", timeout=60000)
 
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")
-        # The session is written as things settle, so give it the moment it takes.
         page.wait_for_timeout(2500)
         say(f"{self.name}: session written")
 
     def quiet(self) -> None:
-        """A moment with nothing happening, before something is timed."""
         if self.page:
             self.page.wait_for_timeout(SETTLING)
 
     def sweep(self) -> None:
-        """The collector, asked. A heap read with garbage still in it is a number
-        about when the collector last ran."""
         if self.cdp:
             self.cdp.send("HeapProfiler.collectGarbage")
 
     def park(self) -> None:
-        """Off the app and onto nothing, so a lane that is not being measured is
-        not an app running beside the one that is."""
         if self.page:
             self.page.goto("about:blank", wait_until="domcontentloaded")
 
@@ -1418,10 +1178,6 @@ class Lane:
         try:
             found = PARTS[part](self, page)
         except PlaywrightError as wrong:
-            # One round that could not reach the thing it measures is one round
-            # missing, said out loud, and not forty minutes of driving thrown away.
-            # The rounds this does finish are still a number; a part that loses most
-            # of them is said again at the end, where it cannot be missed.
             self.lost.setdefault(part, 0)
             self.lost[part] += 1
             self.note(f"{part} could not be reached: {str(wrong).splitlines()[0]}")
@@ -1442,7 +1198,6 @@ class Lane:
         return out
 
     def floors(self) -> dict[str, float]:
-        """The same rows, as what each of them would be worth on another run."""
         out: dict[str, float] = {}
         for rounds in self.rounds.values():
             for key in rounds[0]:
@@ -1450,17 +1205,6 @@ class Lane:
         return out
 
     def middles(self) -> dict[str, float]:
-        """The same rows, as their middle round.
-
-        Beside the best because the two answer different questions, and a row where
-        they disagree is the interesting kind. The best round says what the code
-        costs when the machine leaves it alone, which is what two builds can be
-        compared by. The middle round says what somebody actually waits for - and a
-        wait that is sometimes four times its own best is a wait that comes and
-        goes, which is worse to use than a slower one that never varies. The reading
-        view read 258ms at best on both sides of a change that took its middle round
-        from 683ms to 268ms: a change worth making that the best round could not see.
-        """
         out: dict[str, float] = {}
         for rounds in self.rounds.values():
             for key in rounds[0]:
@@ -1469,17 +1213,10 @@ class Lane:
         return out
 
     def served(self) -> dict[str, int]:
-        """What this lane's server was asked for over the whole run: how many
-        requests, how many of them were answered out of the folder rather than with a
-        "you already have it", and how many bytes went down the socket. A lane that
-        fetches its assets while the other lane reads them out of the browser's cache
-        is not the same launch, and this is the counter that says so."""
         if not self.server:
             return {"asked": 0, "sent": 0, "again": 0, "bytes": 0}
         return self.server.tally
 
-
-#: The numbers, in the order they are worth reading, and what each is in.
 SAID = [
     ("paint", "launch: first paint", "ms"),
     ("tree", "launch: file list on screen", "ms"),
@@ -1531,10 +1268,7 @@ SAID = [
     ("draw-worst", "canvas: worst drawing frame", "ms"),
 ]
 
-
-#: What each row is in, so `pick` knows which way is better. One list of rows.
 UNIT = {key: unit for key, _, unit in SAID}
-
 
 def waits(
     found: dict[str, dict[str, float]],
@@ -1542,13 +1276,6 @@ def waits(
     moved: dict[str, dict[str, float]],
     names: list[str],
 ) -> None:
-    """The rows whose middle round is well above their best.
-
-    A row that reads the same every round is a wait somebody learns; a row that is
-    sometimes four times itself is one they never stop noticing. The table above is
-    best rounds, so this is where that shows - and it is where a change can be worth
-    making without the table above moving at all. See `middles`.
-    """
     loud = []
     for key, words, unit in SAID:
         if unit != "ms":
@@ -1560,8 +1287,6 @@ def waits(
 
             best = found[name][key]
             mid = middle[name].get(key, best)
-            # Twice its best and clear of what the row is worth to nobody, so an
-            # eight millisecond row that read sixteen once is not news.
             if mid > best * 2 and mid - best > max(moved[name].get(key, 0.0), 20.0):
                 loud.append(f"{words:44} {name:>14} best {best:5.0f}ms  middle {mid:5.0f}ms")
 
@@ -1573,21 +1298,11 @@ def waits(
         say(line)
     print()
 
-
 def prove(
     found: dict[str, dict[str, float]],
     moved: dict[str, dict[str, float]],
     names: list[str],
 ) -> None:
-    """Whether a difference between two lanes is a difference at all.
-
-    A row is worth something to nobody whatever the code is; how much is `floor`,
-    which is the two halves of this run asked the same question. A gap between two
-    lanes smaller than the floor is the machine, not the build. With the same build
-    in both folders every row should read `same` - that is what makes this drive
-    worth reading, and a row that says `differs` with identical builds is a fault in
-    the rig rather than a number about the app.
-    """
     if len(names) < 2:
         return
 
@@ -1604,8 +1319,6 @@ def prove(
         values = [found[name][key] for name in seen]
         gap = max(values) - min(values)
         sill = max(moved[name].get(key, 0.0) for name in seen)
-        # A row that never moves at all still gets a millisecond, or an integer count
-        # that is off by one reads as a difference.
         how = "same" if gap <= max(sill, 1.0) else "differs"
         if how == "differs":
             loud.append(f"{words} ({gap:.0f}{unit} on a floor of {sill:.0f})")
@@ -1619,30 +1332,12 @@ def prove(
     else:
         say("every row agrees within what it is worth to nobody")
 
-
-#: The two files whose one wall-clock bound is nobody's to assert but this drive's.
 CLOCKED = [
     "src/lib/search/fuzzy.perf.test.ts",
     "src/lib/search/match.perf.test.ts",
 ]
 
-
 def clocked() -> str:
-    """The two search walks, timed rather than only counted.
-
-    Both files count what the code did - lines folded, regions asked about, needles
-    looked for - and those counts are the test: each is the same number on a machine
-    running thirty files at once as on an idle one. Each also keeps one clock on its
-    worst case, and that one is not: a walk descheduled halfway through says nothing
-    about the walk, and one of them failed a gate at 3.9 seconds with every count
-    right.
-
-    So they ask for `NIB_PERF=1` before they believe their own clock, and this is the
-    only thing in the repository that sets it. `pnpm test` never does, which is why
-    a loaded machine cannot fail on it; a speed run does, because a speed run is
-    somebody measuring rather than checking - and it is run first, before a browser
-    is started, which is the quietest this machine gets.
-    """
     npx = shutil.which("npx")
     if not npx:
         return "no npx, so the clocked bounds were not asked"
@@ -1661,8 +1356,6 @@ def clocked() -> str:
     if asked.returncode == 0:
         return "the clocked bounds hold"
 
-    # The lines that say which bound, so a failure here reads as a number rather
-    # than as "something in a file".
     said = [
         line.strip()
         for line in (asked.stdout + asked.stderr).splitlines()
@@ -1670,16 +1363,11 @@ def clocked() -> str:
     ]
     return "; ".join(["the clocked bounds do not hold", *said[:6]])
 
-
 def main() -> int:
     ask = argparse.ArgumentParser(description=__doc__)
     ask.add_argument("parts", nargs="*", default=[], help=f"any of {', '.join(PARTS)}")
     ask.add_argument("--rounds", type=int, default=5)
     ask.add_argument("--space", default="", help="big or empty, for one of them alone")
-    # Four lanes in one browser served by one Python process do not leave each other
-    # alone: the launch moments in a four-lane run came out two and three times what
-    # they are, and by lane rather than by turn. So a number that is about the launch
-    # itself is taken one build at a time, and the two runs compared.
     ask.add_argument("--build", default="", help="before or after, for one of them alone")
     ask.add_argument(
         "--no-clock",
@@ -1718,15 +1406,10 @@ def main() -> int:
         say("nothing built")
         return 1
 
-    # A whole number of rotations, so every lane goes first equally often; see the
-    # rotation in the loop below.
     rounds = told.rounds + (-told.rounds % len(lanes))
     if rounds != told.rounds:
         say(f"{told.rounds} rounds over {len(lanes)} lanes is not a whole turn; {rounds} rounds")
 
-    # The two timed search bounds first, before a browser exists: this is the
-    # quietest the machine gets in a speed run, and they are the only thing that
-    # asks for `NIB_PERF=1`. See `clocked`.
     clock = "" if told.no_clock else clocked()
     if clock:
         say(clock)
@@ -1735,41 +1418,19 @@ def main() -> int:
         lane.start()
 
     try:
-        # The heap, honestly: without the flag the number is bucketed into steps too
-        # coarse to compare two builds by.
         with DRIVE.session(args=["--enable-precise-memory-info"]) as browser:
 
             for lane in lanes:
                 lane.ready(browser)
 
-            # Turn and turn about, so whatever the machine is doing is done to all
-            # of them, and one at a time, so none of them is what the machine is
-            # doing - and in a different order every round, because the lane that
-            # goes first pays for the browser waking up. Two identical builds driven
-            # one after the other differed by half on a single round, which is more
-            # than most changes worth making do.
             for part in parts:
                 for turn_at in range(rounds):
-                    # Rotated, not reversed. Reversing gives two orders however many
-                    # lanes there are, so with four lanes the two on the ends took
-                    # every turn at going first and the two in the middle took none -
-                    # and going first is what pays for the browser waking up. Rotating
-                    # by one a round, over a round count that is a whole number of
-                    # rotations, puts every lane in every position the same number of
-                    # times. With two lanes and five rounds the old order gave one of
-                    # them three turns at going first and the other two, which is a
-                    # lane bias in the median of a row that never moved.
                     at = turn_at % len(lanes)
                     turn = [*lanes[at:], *lanes[:at]]
                     for lane in turn:
                         for other in lanes:
                             if other is not lane:
                                 other.park()
-                        # Parking three pages tears three renderers down, and a
-                        # launch measured in the same breath wore it: whichever lane
-                        # went second in a round paid the best part of a second, and
-                        # it flipped with the order. So the machine is given a moment
-                        # to be quiet again before anything is timed.
                         lane.quiet()
                         lane.round(part)
     finally:
@@ -1814,9 +1475,6 @@ def main() -> int:
             f"{lane.name}: {held['asked']} requests, {held['sent']} sent,"
             f" {held['again']} already had, {held['bytes'] / 1e6:.1f}MB"
         )
-    # Two lanes that fetched different amounts were not two launches of the same
-    # shape, whatever the code in them was; this is the first thing to read when a
-    # row looks like a change and is not one.
     counts = {(one["asked"], one["sent"]) for one in (lane.served() for lane in lanes)}
     if len(counts) > 1:
         say("the lanes were not served alike; the launch rows are not comparable")
@@ -1838,7 +1496,6 @@ def main() -> int:
     print()
     print(json.dumps({name: {key: round(value, 1) for key, value in one.items()} for name, one in found.items()}))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

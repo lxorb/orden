@@ -1,23 +1,3 @@
-"""A `nib://` link, followed: a note opened by path, a heading landed on, a note
-made with words in it, one appended to, a search opened on its query, and the three
-things a link is not allowed to do refused.
-
-Drives the browser build, which is the one place the whole router can be exercised
-without an installer: a browser hands `web+nib://` back as `?nib=`, and that is the
-same string the crate hands over on a desktop. See docs/automation.md.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/automation.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/automation/`.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -32,7 +12,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
-
 
 PLAN = """# The plan
 
@@ -56,12 +35,6 @@ async ([plan, other]) => {
 }
 """
 
-# What the app is showing, and whatever it had to say about a link.
-#
-# The caret comes off the editor rather than off `workspace.goto`, which is the ask
-# rather than the answer: the window takes the ask down as soon as it has jumped, so
-# a moment later there is nothing there to read. Where the caret ended up is the
-# thing that was being asked about anyway.
 STATE = """
 () => {
   const caretLine = () => {
@@ -86,18 +59,9 @@ STATE = """
 }
 """
 
-
-# What the browser says about the app's policy rather than about the app. The policy
-# is delivered as a `<meta>` in the page because the web app has no server of ours
-# to set a header, and `frame-ancestors` is meaningless there and deliberately left
-# in for the header the installed app is served with. Chrome logs that at error
-# level on every load; see apps/desktop/src/csp.ts.
 EXPECTED = ["'frame-ancestors' is ignored when delivered via a <meta> element"]
 
-
 def heard(kind: str, text: str) -> None:
-    """A line the page wrote. Anything the browser calls an error is a failure,
-    except what it says about the policy rather than about the app."""
     if kind != "error":
         return
     if any(one in text for one in EXPECTED):
@@ -105,16 +69,11 @@ def heard(kind: str, text: str) -> None:
 
     wrong(f"console error: {text}")
 
-
 def ready(page: Page, label: str) -> None:
     wait_for(page, "window.nibApp", f"[{label}] the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
 
-
 def fresh(browser: Browser) -> Page:
-    """A context with two notes in it. Every link below is followed by reloading
-    this same context with `?nib=`, which is exactly what a browser does when it
-    hands a `web+nib://` link back to the page that registered it."""
     context = browser.new_context(
         viewport={"width": 1280, "height": 820},
         color_scheme="light",
@@ -129,25 +88,14 @@ def fresh(browser: Browser) -> Page:
     page.wait_for_timeout(300)
     return page
 
-
 def follow(page: Page, uri: str, label: str) -> dict:
-    """Opens the app with one link in the address, the way the protocol handler
-    does, and answers what the app is showing once it has settled.
-
-    The page before is let finish fetching first: the app fetches its later chunks
-    after its first paint, and a load that cuts one short is reported by WebKit as an
-    import that failed in the page being left - which is the drive's doing, not the
-    app's, and Chromium says nothing of it (#384)."""
     with contextlib.suppress(Exception):
         page.wait_for_load_state("networkidle", timeout=10_000)
     page.goto(f"{ORIGIN}/?nib={quote(uri, safe='')}", wait_until="domcontentloaded")
     ready(page, label)
-    # Read once the launch has got as far as the link, which comes off the address as
-    # it is read: later than the launch's last mark in a slower engine.
     DRIVE.waited(page, "() => !location.search.includes('nib=')", f"[{label}] the link to be read")
     page.wait_for_timeout(900)
     return page.evaluate(STATE)
-
 
 def drive_opening(page: Page) -> None:
     state = follow(page, "nib://open?path=The plan.md", "open")
@@ -156,12 +104,10 @@ def drive_opening(page: Page) -> None:
 
     if state["active"] != "The plan.md":
         wrong(f"a link to a note did not open it: {state['active']}")
-    # The link comes off the address, so a reload does not follow it again.
     if "nib=" in state["address"]:
         wrong(f"the link is still in the address: {state['address']!r}")
     if state["trouble"]:
         wrong(f"a link that worked said something went wrong: {state['trouble']!r}")
-
 
 def drive_heading(page: Page) -> None:
     state = follow(page, "nib://open?path=The plan.md&heading=Later", "heading")
@@ -170,10 +116,8 @@ def drive_heading(page: Page) -> None:
 
     if state["active"] != "The plan.md":
         wrong(f"the note did not open: {state['active']}")
-    # `## Later` is the fifth line of the note, counting from zero.
     if state["caret"] != 4:
         wrong(f"the link did not land on the heading: line {state['caret']}")
-
 
 def drive_making(page: Page) -> None:
     made = follow(page, "nib://new?name=From a link&content=# From a link%0A%0AWords.", "new")
@@ -199,14 +143,7 @@ def drive_making(page: Page) -> None:
     if "Words." not in (added["text"] or ""):
         wrong(f"appending lost what the note already said: {added['text']!r}")
 
-
 def drive_appending(page: Page) -> None:
-    """`nib://append`, which is what a shortcut filing a line into today's note asks for.
-
-    Two roads and both of them matter: the note that is there is added to, and the note
-    that is not is made. A caller with a link in a watch face has no way of knowing
-    which of the two it is, which is the whole reason the action exists.
-    """
     added = follow(
         page,
         "nib://append?path=From a link.md&content=A line from a link.",
@@ -225,8 +162,6 @@ def drive_appending(page: Page) -> None:
     if added["trouble"]:
         wrong(f"appending said something went wrong: {added['trouble']!r}")
 
-    # And the note that is not there yet, which is the day's note on the first morning
-    # somebody uses the link.
     fresh_note = follow(
         page,
         "nib://append?path=inbox/Not there yet.md&content=The first line.",
@@ -238,7 +173,6 @@ def drive_appending(page: Page) -> None:
         wrong(f"appending did not make the note: {fresh_note['active']}")
     if "The first line." not in (fresh_note["text"] or ""):
         wrong(f"the made note is missing the words: {fresh_note['text']!r}")
-
 
 def drive_searching(page: Page) -> None:
     state = follow(page, "nib://search?query=happens", "search")
@@ -252,11 +186,7 @@ def drive_searching(page: Page) -> None:
     if state["hits"] < 1:
         wrong("the search found nothing in a space that says the word")
 
-
 def drive_refusals(page: Page) -> None:
-    """The three noes: a path that leaves the space, a verb a link may not ask for,
-    and an address that is not ours at all. Each has to say so rather than doing
-    nothing, and none of them may touch a note."""
     before = page.evaluate("() => window.nibApp.workspace.notes.length")
 
     outside = follow(page, "nib://open?path=../../secrets.md", "outside")
@@ -279,7 +209,6 @@ def drive_refusals(page: Page) -> None:
     if not written["trouble"]:
         wrong("a link asking to write over a note said nothing at all")
 
-    # And a note that is already there is not written over by `new` either.
     again = follow(page, "nib://new?path=Other.md&content=gone", "again")
     if "A second note" not in (page.evaluate(READ_OTHER) or ""):
         wrong("`new` wrote over a note that was already there")
@@ -292,7 +221,6 @@ def drive_refusals(page: Page) -> None:
 
     say(f"[refusals] {after} notes, untouched")
 
-
 READ_OTHER = """
 async () => {
   const ws = window.nibApp.workspace
@@ -300,7 +228,6 @@ async () => {
   return found ? await ws.noteText(found.path) : null
 }
 """
-
 
 def main() -> int:
     with DRIVE.session() as browser:
@@ -320,7 +247,6 @@ def main() -> int:
         page.context.close()
 
     return DRIVE.verdict("a nib:// link opens, makes, appends and searches, and is refused where it should be")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

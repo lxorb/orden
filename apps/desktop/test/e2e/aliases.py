@@ -1,17 +1,3 @@
-"""The other names a note gives itself, seen: `[[Roadmap]]` reaching the note
-whose front matter declares it, the completion offering an alias under the
-note's real name, and the Links panel counting an alias link as a backlink.
-
-Serves the built web app and drives it in headless Chromium.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/aliases.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/aliases/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,7 +23,6 @@ async ([plan, other]) => {
 }
 """
 
-
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -50,14 +35,12 @@ def open_note(page: Page, starts: str) -> None:
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
 
-
 LINKS = """
 () => [...document.querySelectorAll('.cm-content .nib-link')].map((one) => ({
   words: one.textContent,
   missing: one.classList.contains('nib-link-missing'),
 }))
 """
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820}, color_scheme="light")
@@ -79,7 +62,6 @@ def drive(browser: Browser) -> None:
     if by_words.get("Nothing") is not True:
         wrong("a name nothing answers to is no longer drawn as one")
 
-    # The panel: an alias link is a backlink of the note that declared it.
     open_note(page, "Plan")
     page.evaluate("() => window.nibApp.workspace.showPanel('links')")
     page.wait_for_timeout(900)
@@ -91,7 +73,6 @@ def drive(browser: Browser) -> None:
     if "Other" not in panel:
         wrong(f"the note linking by an alias is not among the backlinks: {panel}")
 
-    # And the completion offers the alias, under the note's real name.
     open_note(page, "Other")
     page.evaluate(
         """() => {
@@ -129,7 +110,6 @@ def drive(browser: Browser) -> None:
     shot(page, "04-written")
 
     page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a note answers to the names it gave itself"))

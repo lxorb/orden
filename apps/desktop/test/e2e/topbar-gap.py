@@ -1,28 +1,3 @@
-"""The buttons at the right end of the top bar, one step apart.
-
-Emil, issue #1060: *"I don't understand this gap."* With a note in front the bar ended
-in the note's `⋯`, the scratchpad's switch and the right side's switch, and between the
-`⋯` and the scratchpad there was a stretch as wide as another button. It was the strip of
-window the bar is dragged by, put after the strip of tabs and so after the strip's own
-buttons too: room with nothing in it, in the middle of a row of buttons.
-
-What this measures, in every state the row has:
-
-  - the buttons from the strip's last one to the window's own are one group, every one
-    against the next with the same step, nothing between them;
-  - the right side's button - the scratchpad's switch until it became one of the right
-    side's tabs (#1032) - is in the same place whether the note's `⋯` is there or not,
-    so nothing jumps as a web tab and a note change places;
-  - there is always a stretch to drag the window by, at least the sliver wide, ahead of
-    that group, however many tabs there are.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/topbar-gap.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/topbar-gap/`.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -32,11 +7,8 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: The sliver's width, `--space-5`: what the window can always be dragged by.
 SLIVER = 24
 
-#: The row's end, as the page draws it: each button of the group, and the widest stretch
-#: to drag the window by ahead of it.
 MEASURE = """
 () => {
   const bar = document.querySelector('header[data-chrome="top"]')
@@ -62,7 +34,6 @@ MEASURE = """
 }
 """
 
-
 def row(page: Any, state: str) -> dict[str, Any]:
     DRIVE.settled(page)
     page.wait_for_timeout(400)
@@ -76,7 +47,6 @@ def row(page: Any, state: str) -> dict[str, Any]:
         wrong(f"[{state}] nothing to drag the window by ahead of the buttons: {seen['drag']}px")
     shot(page, state, clip={"x": 0, "y": 0, "width": page.viewport_size["width"], "height": 44})
     return seen
-
 
 def drive(browser: Any) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 760})
@@ -121,10 +91,6 @@ def drive(browser: Any) -> None:
     page.evaluate("() => window.nibApp.workspace.split('row')")
     row(page, "07-split")
 
-    # The same note in both panes, and one of them filling the window: the strip is up
-    # here again, with the chain that links the two panes' scrolling ahead of the `⋯`.
-    # The bar itself is out of sight until the pointer reaches the top, so it is
-    # measured and not looked at.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -133,7 +99,6 @@ def drive(browser: Any) -> None:
     )
     wait_for(page, "document.querySelector('header[data-chrome=\"top\"] .strip .link')", "the chain")
     row(page, "08-filled-twinned")
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

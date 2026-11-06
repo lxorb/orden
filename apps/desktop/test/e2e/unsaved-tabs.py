@@ -1,37 +1,3 @@
-"""A tab with no file, in a real browser, in the light and in the dark.
-
-Emil, 2026-09-30: *"When I open a new tab or note on nib it should be in an unsaved
-state (with no saving location) and there should be a dot behind it (indicating that).
-For web tabs there should not be the dot behind them if they're unsaved."* And: *"it
-should NEVER be possible that we have the same web note open multiple times within one
-nib session."*
-
-What it proves, in order, and photographs:
-
-* **The dot**: a new note typed into is still a tab with no file, and wears the dot; a
-  web tab with no file wears none.
-* **Save**: Ctrl+S puts the layer under the tab, with the name its first line offers and
-  the root of the space to put it in; another place is picked by typing, and Enter
-  writes the file there. The dot goes.
-* **Dropped on the list**: a tab carried off its strip and let go of below the file
-  list's rows is saved at the root of the space, under its first line - even where the
-  code that follows a carried tab arrives only after the hand has stopped moving.
-* **Close and reopen**: a new note with words asks before it closes (#359): Cancel keeps
-  it, Don't save closes it with its words in Recently deleted, and Ctrl+Shift+T brings
-  the tab back with them - and out of the trash again. Save asks where, in the layer
-  Ctrl+S puts under the tab, and closes it once it has its file.
-* **A restart**: the page loaded again brings a tab with no file back, words, dot and all.
-* **One tab per web note**: a split of a web note is an unsaved web tab beside it, never a
-  second tab of the file.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/unsaved-tabs.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/unsaved-tabs/`.
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page, Route
@@ -43,8 +9,6 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 LAYER = "() => !!document.querySelector('[role=\"dialog\"] form input')"
 
-#: The question a tab with unsaved words asks before it closes; see
-#: workspace/closing-unsaved.ts.
 SHEET = '[role="dialog"][aria-label^="Save changes to"]'
 QUESTION = "() => !!document.querySelector('[role=\"dialog\"][aria-label^=\"Save changes to\"]')"
 
@@ -61,18 +25,10 @@ STATE = """
 }
 """
 
-
 def state(page: Page) -> dict:
     return page.evaluate(STATE)  # type: ignore[no-any-return]
 
-
-#: How late the code that follows a carried tab (tab-strip/carrying.ts) is let arrive.
-#: It is fetched with the first press on a tab, and the drag below is this drive's first;
-#: a hand that had stopped over the list before it arrived found nothing lit, and the tab
-#: let go of there went home unsaved. Seen on a busy runner as a drop that never came, in
-#: WebKit, on 2026-10-20 and 10-27; held open here so it is seen every time.
 LATE = 400
-
 
 def late(page: Page) -> None:
     def held(route: Route) -> None:
@@ -81,15 +37,12 @@ def late(page: Page) -> None:
 
     page.route("**/assets/carrying-*.js", held)
 
-
 def typed(page: Page, words: str) -> None:
-    """A new note, with words typed into it the way a hand types them."""
     page.evaluate("() => window.nibApp.workspace.openBlank()")
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.type(words)
     page.wait_for_timeout(900)
-
 
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
@@ -131,7 +84,6 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong(f"the name offered is {offered!r}")
     DRIVE.shot(page, f"{scheme}-02-save")
 
-    # Another place: the folder row, a word typed, the row it finds.
     page.locator('[role="dialog"] .where').click()
     page.keyboard.type("Trips")
     wait_for(page, "document.querySelector('[role=\"dialog\"] .nib-row')", "the places")
@@ -186,7 +138,6 @@ def drive(browser: Browser, scheme: str) -> None:
     wait_for(page, QUESTION, "the question again")
     page.locator(f"{SHEET} button", has_text="Don’t save").click()
     wait_for(page, f"!({QUESTION})()", "the question answered")
-    # Its words in Recently deleted, as a note deleted from the root of the space.
     page.evaluate(
         """() => {
           const { settings } = window.nibApp
@@ -264,13 +215,11 @@ def drive(browser: Browser, scheme: str) -> None:
         say("split of a web note    -> the note once, an unsaved web tab beside it")
     page.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             drive(browser, scheme)
     return DRIVE.verdict("a tab with no file waits for a place, and a web note is open once")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

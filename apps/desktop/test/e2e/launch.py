@@ -67,30 +67,20 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from probe_app import close_app, main_window, run_probe  # noqa: E402
 
-#: The identifier the default build carries; see the module's docs.
 IDENTIFIER = "ch.emilvinu.nib.launch"
 
-#: Where that build puts the binary.
 EXE = APP / "src-tauri" / "target" / "release" / "nib.exe"
 
-#: How long a launch is given to finish its launch order and hand its trace over,
-#: which it does `SETTLE` after the order finishes; see lib/trace.ts.
 PATIENCE = 45
 
-#: How often to ask Windows whether the window is up, in seconds.
 PEEK = 0.002
 
-#: The step the poll is written into the trace as.
 SHOWN = "window shown, as Windows reports it"
 
-#: The step whose arrival means the window has handed its trace over.
 LAST = "window: launch order finished"
 
-#: The note a warm launch has open, in the five thousand note space.
 OPENED = "note-0000.md"
 
-#: The phases the table in docs/conventions.md is made of, in order: the name the
-#: trace gives each and the name the table does.
 PHASES = [
     (SHOWN, "window shown"),
     ("window: page requested", "webview up, page requested"),
@@ -102,22 +92,16 @@ PHASES = [
     (LAST, "launch order finished"),
 ]
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def roaming(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
 
-
 def local(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
 
-
 def wipe(identifier: str) -> None:
-    """Everything the identifier keeps, for a cold launch. Refused for any identifier
-    that is not a launch probe's, so this can never take the reader's own nib."""
 
     if ".launch" not in identifier:
         raise SystemExit(f"{identifier} is not a launch probe's identifier; nothing is wiped")
@@ -126,19 +110,12 @@ def wipe(identifier: str) -> None:
             shutil.rmtree(folder, ignore_errors=True)
             if not folder.exists():
                 break
-            # The webview's processes can outlive the app by a moment and hold a file.
             time.sleep(0.25)
-
 
 def trace_file(identifier: str) -> pathlib.Path:
     return local(identifier) / "logs" / "startup-trace.log"
 
-
 def load() -> str:
-    """What else the machine was doing: its processor load over one second, in per cent,
-    and the memory it had free. Both, because a machine out of memory pages the webview
-    in from disk and a launch there takes seconds at a low processor load - measured on
-    2026-09-30 at five seconds to a page, with 0.8 GB of 32 free and the load at 35%."""
 
     try:
         import psutil
@@ -160,9 +137,7 @@ def load() -> str:
         )
         return f"load {answer.stdout.strip() or '?'}%"
 
-
 def machine() -> str:
-    """The machine a table was measured on, in one line."""
 
     name = platform.processor() or platform.machine()
     try:
@@ -199,10 +174,7 @@ def machine() -> str:
             continue
     return f"{name}, {cores} threads{memory}, Windows {platform.version()}, WebView2 {webview}"
 
-
 def corpus(kind: str, into: pathlib.Path) -> None:
-    """The notes a launch reads: one empty space, or the five thousand note fixture
-    speed.py seeds into a browser, on the disk this time."""
 
     space = into / ("Big" if kind == "big" else "Notes")
     space.mkdir(parents=True, exist_ok=True)
@@ -210,7 +182,6 @@ def corpus(kind: str, into: pathlib.Path) -> None:
         return
     for at in range(5000):
         (space / f"note-{at:04d}.md").write_text(note(at), encoding="utf-8")
-
 
 def note(at: int) -> str:
     tag = ["#wind", "#ink", "#paper", "#kestrel", "#plan"][at % 5]
@@ -247,9 +218,7 @@ def note(at: int) -> str:
         part += 1
     return "\n".join(lines)
 
-
 def endpoint(identifier: str, patience: float = 20) -> tuple[int, str] | None:
-    """The running app's automation port and secret, once it has written them."""
 
     path = roaming(identifier) / "automation.json"
     until = time.monotonic() + patience
@@ -262,7 +231,6 @@ def endpoint(identifier: str, patience: float = 20) -> tuple[int, str] | None:
             pass
         time.sleep(0.2)
     return None
-
 
 def asked(identifier: str, verb: str, args: dict) -> dict:
     found = endpoint(identifier)
@@ -277,7 +245,6 @@ def asked(identifier: str, verb: str, args: dict) -> dict:
     with urllib.request.urlopen(request, timeout=30) as answer:
         return json.loads(answer.read().decode())
 
-
 def last_line(path: pathlib.Path) -> dict | None:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -285,7 +252,6 @@ def last_line(path: pathlib.Path) -> dict | None:
         return None
     lines = [one for one in text.splitlines() if one.startswith("{")]
     return json.loads(lines[-1]) if lines else None
-
 
 def launched(
     exe: pathlib.Path,
@@ -296,11 +262,6 @@ def launched(
     then=None,
     args: dict | None = None,
 ) -> dict | None:
-    """One launch, watched off the screen, and the line it left behind.
-
-    `then` runs against the app once its launch order has finished and before it is
-    closed - the primed launch opens a note in it, the throttled one reloads it slowed.
-    Closed the way a person closes it, so what the session keeps is written."""
 
     if cold:
         wipe(identifier)
@@ -345,12 +306,7 @@ def launched(
         read["steps"].append({"step": SHOWN, "at": shown})
     return read
 
-
 def settled(identifier: str, patience: float = 30) -> None:
-    """Waits for the webview's own processes to go after the app has. They outlive it
-    by anything from a moment to seconds, holding the profile, and the next launch's
-    webview waits for them: two launches of twenty seconds and forty on a first run of
-    this drive were that and nothing else."""
 
     try:
         import psutil
@@ -373,23 +329,17 @@ def settled(identifier: str, patience: float = 30) -> None:
             return
         time.sleep(0.2)
 
-
 def opened_note(identifier: str):
     def run(_app, read: dict) -> dict:
         answer = asked(identifier, "open", {"path": f"Big/{OPENED}"})
         if not answer.get("ok"):
             say(f"the note would not open: {answer.get('error')}")
-        # Long enough for the session to be written as it would be by somebody who
-        # opened a note and read it.
         time.sleep(3)
         return read
 
     return run
 
-
 def throttled(identifier: str, rate: float):
-    """Reloads the page inside a warm launch with its main thread slowed `rate` times,
-    and reads the page's own marks off its timeline."""
 
     def run(_app, read: dict) -> dict:
         from playwright.sync_api import sync_playwright
@@ -437,9 +387,7 @@ def throttled(identifier: str, rate: float):
 
     return run
 
-
 def table(runs: list[dict], what: str) -> dict[str, float]:
-    """The median of each step, in the order they happened, and the medians by name."""
 
     names: list[str] = []
     for run in runs:
@@ -465,12 +413,10 @@ def table(runs: list[dict], what: str) -> dict[str, float]:
         last = middle
     return {name: middle for middle, name, _spent, _count in rows}
 
-
 def phases(medians: dict[str, float]) -> list[str]:
     return [
         f"{label} {medians[name]:.0f}" if name in medians else f"{label} -" for name, label in PHASES
     ]
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -514,7 +460,6 @@ def main() -> int:
                     summary.append(f"cold {kind}: " + ", ".join(phases(medians)))
 
             if told.only != "cold":
-                # Primed: a profile that has run once, with a note open in the big space.
                 launched(
                     told.exe,
                     told.identifier,
@@ -576,7 +521,6 @@ def main() -> int:
     if told.json:
         told.json.write_text(json.dumps(kept, indent=1), encoding="utf-8")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

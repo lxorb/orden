@@ -1,20 +1,3 @@
-"""Folding, seen: the chevron in the margin, the mark a fold leaves behind, the
-caret revealing a heading's source without the fold letting go, folding
-everything down to the outline, and a fold that is still there when the note is
-opened again.
-
-Serves the built web app and drives it in Chromium. The build has
-to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
-are not there.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/fold.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
-go beside this file under `shots/fold/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -25,7 +8,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 
 NOTE = """# Chapter one
 
@@ -123,8 +105,6 @@ MOTION = """
 }
 """
 
-# Presses the chevron and reads the answer back without waiting a frame, so what
-# a movement does at its very first moment is a fact rather than a race.
 PRESS = """
 (selector) => {
   const hinge = document.querySelector(selector).querySelector('.nib-fold-hinge')
@@ -147,18 +127,13 @@ PRESS = """
 }
 """ % MOTION.strip()
 
-
 def state(page: Page) -> dict:
     return page.evaluate(STATE)
 
-
 def folds(page: Page) -> list[list[int]]:
-    """What the app has written down about this tab, which is the fold state."""
     return page.evaluate("() => window.nibApp.workspace.active?.folds ?? []")
 
-
 def audit_placement(page: Page, label: str, what: str) -> None:
-    """Where every chevron on the page sits, against the block it belongs to."""
     rows = page.evaluate(PLACEMENT)
     say(f"[{label}] the chevrons {what}:")
     for one in rows:
@@ -188,9 +163,7 @@ def audit_placement(page: Page, label: str, what: str) -> None:
                 f" first row: {one['into']}px into a {one['row']}px row"
             )
 
-
 def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
-    """A fold as a movement: the lines go, and only then does the fold land."""
     say(f"[{label}] folding {selector} as a movement")
     page.locator(selector).first.hover()
     page.wait_for_timeout(250)
@@ -208,8 +181,6 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
     if pressed["tall"] < start["tall"] - 2:
         wrong(f"the words below jumped up: {start['tall']}px became {pressed['tall']}px at once")
 
-    # Until it has shrunk, rather than 70 ms on: a busy runner had not drawn the first frame
-    # of the movement by then.
     shrunk = f"() => ({MOTION})({json.dumps(selector)}).tall < {start['tall']}"
     DRIVE.waited(page, shrunk, "the block to shrink while it was shutting", 5)
     midway = page.evaluate(MOTION, selector)
@@ -224,8 +195,6 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
     if landed["marks"] != 1:
         wrong("the fold never landed")
 
-    # And back the other way: the fold comes off first, so what has to not happen
-    # is the whole block arriving in one frame.
     opened = page.evaluate(PRESS, selector)
     say(f"[{label}] opening: {json.dumps(opened)}")
     if opened["marks"]:
@@ -245,7 +214,6 @@ def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
     if back["tall"] < start["tall"] - 2:
         wrong(f"the lines did not grow all the way back: {back['tall']} of {start['tall']}px")
     shot(page, f"{at + 2}-open-after-moving")
-
 
 def fresh(browser: Browser, label: str, finger: bool, still: bool = False) -> Page:
     context = browser.new_context(
@@ -276,7 +244,6 @@ def fresh(browser: Browser, label: str, finger: bool, still: bool = False) -> Pa
     page.wait_for_timeout(400)
     return page
 
-
 def open_chapter(page: Page, label: str) -> None:
     page.evaluate(
         """async () => {
@@ -287,7 +254,6 @@ def open_chapter(page: Page, label: str) -> None:
     )
     wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
-
 
 def drive_pointer(browser: Browser) -> None:
     page = fresh(browser, "desktop", finger=False)
@@ -301,7 +267,6 @@ def drive_pointer(browser: Browser) -> None:
     if before["marks"]:
         wrong("something is folded in a note nobody has folded")
 
-    # The chevron: nothing until the pointer is on the line.
     heading = page.locator(".cm-line.nib-h1").first
     hidden = page.evaluate(
         "() => getComputedStyle(document.querySelector('.nib-fold-hinge')).opacity"
@@ -320,7 +285,6 @@ def drive_pointer(browser: Browser) -> None:
         wrong(f"the chevron does not come when the pointer is on the line: opacity {shown}")
     shot(page, "02-hover")
 
-    # Folding by pointer.
     page.locator(".nib-fold-hinge").first.click()
     page.wait_for_timeout(600)
     after = state(page)
@@ -331,8 +295,6 @@ def drive_pointer(browser: Browser) -> None:
     if any("first words" in one.lower() for one in after["shown"]):
         wrong("the folded section is still on the page")
 
-    # The fold has to survive the caret coming to the heading, which is what
-    # brings the `#` back into view.
     page.evaluate(
         """() => {
           window.nib.dispatch({ selection: { anchor: 2 } })
@@ -348,15 +310,12 @@ def drive_pointer(browser: Browser) -> None:
     if not any(one.startswith("# Chapter one") for one in revealed["shown"]):
         wrong("the heading did not show its own source with the caret on it")
 
-    # And unfolding by pointer again.
     page.locator(".nib-fold-hinge").first.click()
     page.wait_for_timeout(500)
     if state(page)["marks"]:
         wrong("a second click did not open the fold")
     shot(page, "05-open-again")
 
-    # The keyboard: the caret deep inside a section, and the chord folds the
-    # section it is in without taking the caret out of sight.
     page.evaluate(
         """() => {
           const at = window.nib.state.doc.toString().indexOf('Something nested here')
@@ -366,8 +325,6 @@ def drive_pointer(browser: Browser) -> None:
     )
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Alt+BracketLeft")
-    # The fold is drawn on the editor's next measure, a frame on; a frame of WebKit's on
-    # a busy machine can be most of a second, so this waits for the mark (#384).
     try:
         page.wait_for_function("document.querySelectorAll('.nib-folded').length > 0", timeout=5000, polling=50)
     except Exception:  # noqa: BLE001 - nothing folded, which the check below says
@@ -386,8 +343,6 @@ def drive_pointer(browser: Browser) -> None:
     if caret["text"].strip() not in ("## Under one", "Under one"):
         wrong(f"the caret was not brought up to the line that owns the fold: {caret['text']!r}")
 
-    # Fold everything, from the palette, which is where a command with no chord
-    # has to be reachable.
     page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type("> Fold everything")
@@ -395,8 +350,6 @@ def drive_pointer(browser: Browser) -> None:
     shot(page, "07-palette")
     page.keyboard.press("Enter")
 
-    # Every section that is on screen goes at once, on one clock; the ones below
-    # the window simply fold, which nobody is there to see.
     together = page.evaluate(MOTION, ".cm-line.nib-h1")
     say(f"[desktop] folding everything: {json.dumps(together)}")
     if together["moving"] < 1:
@@ -419,7 +372,6 @@ def drive_pointer(browser: Browser) -> None:
     if written != sorted(written):
         wrong(f"the folds were written down out of document order: {written}")
 
-    # Away to another note and back: the folds are this note's, on this device.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -436,7 +388,6 @@ def drive_pointer(browser: Browser) -> None:
     if back["marks"] != 2:
         wrong(f"the folds did not come back with the note: {back['marks']} marks")
 
-    # A reload, which is the session coming off the disk.
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "[desktop] the reload")
     page.wait_for_timeout(1200)
@@ -446,7 +397,6 @@ def drive_pointer(browser: Browser) -> None:
     if restarted["marks"] != 2:
         wrong(f"the folds did not survive a reload: {restarted['marks']} marks")
 
-    # Unfold everything, on its chord.
     page.locator(".cm-content").click()
     page.keyboard.press("Control+Alt+BracketRight")
 
@@ -462,8 +412,6 @@ def drive_pointer(browser: Browser) -> None:
     if opened["marks"]:
         wrong("unfold everything left something folded")
 
-    # And the block that a fold has to be able to cover without either of them
-    # breaking: a rendered diagram and a table inside a folded chapter.
     page.evaluate(
         """() => {
           window.nib.dispatch({ selection: { anchor: 2 } })
@@ -478,8 +426,6 @@ def drive_pointer(browser: Browser) -> None:
     if over["marks"] != 1:
         wrong("folding over a rendered diagram did not hold")
 
-    # Where the chevrons stand. Everything open again first, so every kind of
-    # foldable block on the page has one to compare.
     page.keyboard.press("Control+Alt+BracketRight")
     page.wait_for_timeout(700)
     audit_placement(page, "desktop", "beside their blocks")
@@ -487,8 +433,6 @@ def drive_pointer(browser: Browser) -> None:
     page.wait_for_timeout(300)
     shot(page, "14-chevron-beside-a-fence")
 
-    # Line numbers push a fence's text further in, and the chevron keeps out of
-    # that column too.
     page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
     page.wait_for_timeout(500)
     audit_placement(page, "desktop", "with line numbers on")
@@ -496,13 +440,10 @@ def drive_pointer(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
     page.wait_for_timeout(400)
 
-    # A fence, which is small, and a whole chapter, which is most of a screen:
-    # both move, and neither jumps.
     drive_motion(page, "desktop", ".cm-line.nib-code-open", 16)
     drive_motion(page, "desktop", ".cm-line.nib-h1", 19)
 
     page.context.close()
-
 
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
@@ -535,10 +476,7 @@ def drive_finger(browser: Browser) -> None:
 
     page.context.close()
 
-
 def drive_still(browser: Browser) -> None:
-    """Somebody who asked their system for as little movement as possible: the
-    fold simply happens, with nothing moving at all."""
     page = fresh(browser, "still", finger=False, still=True)
     open_chapter(page, "still")
 
@@ -553,7 +491,6 @@ def drive_still(browser: Browser) -> None:
 
     page.context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a pointer ---")
@@ -564,7 +501,6 @@ def main() -> int:
         drive_still(browser)
 
     return DRIVE.verdict("a note folds, stays folded, and comes back folded")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,13 +1,3 @@
-"""Where a page note and a canvas were left, kept (#421).
-
-Emil: "zoom + scroll not saved for page notes". A page note zoomed in and scrolled down
-the paper - and a canvas panned and zoomed - comes back where it was left: after another
-tab and back, after its tab is closed and it is opened again, and after the app is
-started again (a reload of the page, which is a quit as far as the page knows).
-
-    python apps/desktop/test/e2e/page-view.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -17,30 +7,24 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: The camera of the surface in front: a page note's, or a canvas's.
 CAMERA = """() => {
   const tab = window.nibApp.workspace.active
   return tab?.camera ? { ...tab.camera } : null
 }"""
 
-
 def camera(page: Page) -> dict | None:
     return page.evaluate(CAMERA)
-
 
 def near(one: dict | None, other: dict | None) -> bool:
     if not one or not other:
         return False
     return all(abs(one[k] - other[k]) <= max(2, abs(other[k]) * 0.02) for k in ("x", "y", "scale"))
 
-
 def open_path(page: Page, path: str) -> None:
     page.evaluate("async (path) => { await window.nibApp.workspace.openEntry(path, { activate: true }) }", path)
     page.wait_for_timeout(900)
 
-
 def moved(page: Page, surface: str) -> dict:
-    """Zoomed in with Ctrl and the wheel, and scrolled down, over the middle of it."""
     box = page.locator(surface).first.bounding_box()
     assert box
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
@@ -56,7 +40,6 @@ def moved(page: Page, surface: str) -> dict:
     left = camera(page)
     assert left
     return left
-
 
 def check(page: Page, label: str, path: str, surface: str, other: str) -> None:
     left = moved(page, surface)
@@ -87,7 +70,6 @@ def check(page: Page, label: str, path: str, surface: str, other: str) -> None:
     else:
         wrong(f"[{label}] the app started again: {camera(page)}, left at {left}")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -105,8 +87,6 @@ def drive(browser: Browser) -> None:
     pages = page.evaluate("() => window.nibApp.workspace.active.path")
     check(page, "page note", pages, ".pages", other)
 
-    # Scrolled and not zoomed: the paper stays fitted across the pane, and the place
-    # down it is kept.
     page.evaluate("() => window.nibApp.pages.current?.store.fitAgain()")
     page.wait_for_timeout(300)
     box = page.locator(".pages").first.bounding_box()
@@ -136,7 +116,6 @@ def drive(browser: Browser) -> None:
     board = page.evaluate("() => window.nibApp.workspace.active.path")
     check(page, "canvas", board, ".canvas", other)
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "a page note and a canvas come back where they were left"))

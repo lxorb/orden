@@ -1,82 +1,3 @@
-"""The one harness under every drive in this folder.
-
-Not a drive. Sixty-one of the drives here each carried a server, a port, a build, a
-browser and a way of waiting of their own, and nothing ran them: a CI job had never
-once started one but `smoke.py`. Each of those copies was written beside the batch
-that needed it and each drifted on its own - a port two drives both picked, a
-server that let the browser guess how long an asset was good for, a Worker drive
-that rebuilt `dist` under the drive after it, a sleep where the app had a signal to
-wait on. So what goes round a drive's steps is here, once, and a drive is its steps:
-
-    from harness import Drive
-
-    DRIVE = Drive(__file__)
-    say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
-
-    def drive(browser):
-        page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
-        DRIVE.open(page)
-        DRIVE.seed(page, "# Plan\\n\\nWhat we are doing.\\n")
-        DRIVE.open_note(page, "Plan")
-        ...
-        if something_is_off:
-            wrong("what a person would have seen")
-        shot(page, "01-plan")
-
-
-    if __name__ == "__main__":
-        raise SystemExit(DRIVE.run(drive))
-
-What that one import does, in the order a run meets it:
-
-  - **One build.** `vite build --mode drive`: the release shape with the two handles
-    a drive steers by, `window.nibApp` and `window.nib`, left on the page. A drive
-    run by hand builds; `NIB_SKIP_BUILD=1` reuses `apps/desktop/dist`, which is how
-    run-all.py hands every drive the one build it made. A drive against the real
-    Worker loads a build of its own, `apps/desktop/dist-worker`, which asks its own
-    origin for the API, so one build serves a Worker on any port and `dist` is never
-    replaced under a drive that is still fetching from it.
-  - **Its own origin.** The build is served on a port nobody picked - the system
-    hands out a free one - under `http://<drive>.localhost:<port>`, so no two drives
-    share storage, a service worker or a cookie, and none shares them with the dev
-    server on 1420. Chrome resolves every `*.localhost` to the loopback itself.
-  - **Served the way a deploy serves it.** HTTP/1.1 with the connection kept, a
-    hashed asset good for ever and everything else checked every time, one fixed
-    `Last-Modified`, and the types written out rather than read from the Windows
-    registry, which has been known to call a script `text/plain`. See `Files`. A
-    route of the drive's own is `DRIVE.answers`, a header `DRIVE.header`, a second
-    server - a fake provider - `DRIVE.side`. A drive that imports the app's modules
-    by their paths asks for a Vite dev server instead: `Drive(__file__, dev=True)`.
-  - **The browser CI has.** Playwright's own Chromium, headless, so a drive says the
-    same thing here as on the nightly run; `NIB_BROWSER=chrome` for the machine's
-    own Chrome. `NIB_ENGINE=webkit` drives Playwright's WebKit instead, which is what
-    a Mac runs the app in: the drive's keys are pressed the way a Mac presses them
-    (`mac_key`), on the loopback address rather than a name below `.localhost`.
-  - **The app's own signals.** `open` waits for the handle, the space and the last
-    mark of the launch order (`nib: launch order finished`, lib/startup.svelte.ts),
-    which is the app saying it is up, instead of a number of milliseconds.
-  - **One verdict.** `wrong` counts, a page error counts, and the exit status is
-    non-zero when anything did. `wait_for` walks out at once with `gave up waiting
-    for`, which says the app never got there; `waited` counts that and carries on,
-    for a step the rest of the drive does not stand on.
-  - **A Worker when the drive wants one**, `Worker(DRIVE)`: `wrangler dev --local`
-    with a database of this run's own in a temp folder, torn down with every
-    process under it. `--local` switches the remote bindings off, so the Worker
-    starts without a Cloudflare token: nothing a drive does reaches Workers AI.
-  - **A native probe when the drive wants one**, `Native(DRIVE, exe)`: through
-    scripts/probe_app.py's `run_probe`, off the screen, with `NIB_SPACES_DIR` in a
-    temp folder, never the reader's own notes. Never the reader's own nib either:
-    a build under the release identifier, or the installed one, is refused before
-    it is launched, and nothing is ever ended by its name (see `refused`).
-
-A drive says what it needs that a machine may not have with `NEEDS` at the top of
-its file - `NEEDS = ("native",)` - and run-all.py lists it as skipped, with the
-reason, wherever that is missing; and how long an honest run of it takes, where that
-is longer than any drive is given, with `BUDGET = <seconds>`. See
-docs/conventions.md, "Drives".
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -107,45 +28,19 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 APP = ROOT / "apps" / "desktop"
-#: The build every drive serves. `NIB_DIST` names another folder - the other half of
-#: a before-and-after - which was built by hand and is never rebuilt here.
 DIST = APP / os.environ.get("NIB_DIST", "dist")
 OWN_BUILD = "NIB_DIST" not in os.environ
-#: The build a Worker serves, asking its own origin for the API; see `Worker`.
 WORKER_DIST = APP / os.environ.get("NIB_WORKER_DIST", "dist-worker")
 SERVICE = ROOT / "services" / "sync"
-#: The online machine's bundle, which the Worker carries inside itself to hand a
-#: machine at its boot (`services/sync/src/machines/entry.ts` imports it). It is built
-#: by `services/machine/build.ts` and is in no checkout until something builds it, and
-#: `wrangler dev` will not bundle the Worker without it: every drive against the
-#: Worker failed on a fresh runner with `ENOENT ... services/machine/dist/machine.bin`.
 MACHINE = ROOT / "services" / "machine"
 MACHINE_BUNDLE = MACHINE / "dist" / "machine.bin"
 SHOTS = HERE / "shots"
 
-#: Which of the two builds a folder holds, written beside it, so a run can tell
-#: whether it may reuse what is there: the plain one, or the one a Worker serves.
 POINTED = ".nib-build"
 
-#: A page on the app's own origin that is not the app: somewhere to write its storage
-#: before the app is up to read it. Every build made here carries it, and the server
-#: answers it for a folder built by hand.
 SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 
-#: The look every browser a drive opens has chosen, written into the page's storage
-#: before the app reads it: the built-in theme (Classic), unless it has chosen another
-#: since, having been moved off it to glass once already. Guarded, because a page with
-#: no storage of its own (`about:blank`, a `data:` frame) refuses the setter. A first launch is glass in green
-#: (`FIRST_LOOK` in src/lib/theme.svelte.ts), and every drive but the one about that look
-#: photographs and measures the built-in palette. A context made with `first_look=True`
-#: is a new reader's.
-#:
-#: And the app's new name taken as already said. Settings under `nib:` written before
-#: the app is up are what an install from before the rename looks like, so these very
-#: lines made every drive's window an old reader's, and every one of them opened with
-#: "nibeditor is now Orden" over the foot of the note for six seconds - over the paper
-#: theme-options measures, among others. See renamed.svelte.ts.
 BUILT_IN = (
     "try { if (localStorage.getItem('nib:theme') === null) {"
     " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') }"
@@ -153,15 +48,6 @@ BUILT_IN = (
     " catch {}"
 )
 
-#: And the first run's questions taken as already answered. A first visit puts up the
-#: "All set / Personalize" card in the corner beside the welcome note (Personalize.svelte),
-#: and every drive's window is a first visit: the card took clicks meant for what was
-#: under it, answered `.card`, `[role=dialog]` and `button.nib-button`, covered a phone's
-#: bar and sat on paper being measured. Nothing is written down for it to read - the card
-#: is up once, on the visit that wrote the welcome note (`seed` in web/commands.ts), and a
-#: later visit is not seeded again - so a returning reader is the handle's: as the app
-#: puts `window.nibApp` up, the "all set" (-1) it opens the card on is not taken, and every
-#: other step still is. A drive about the card is a new reader's, `first_look=True`.
 ANSWERED = (
     "Object.defineProperty(window, 'nibApp', { configurable: true, set(app) {"
     " Object.defineProperty(window, 'nibApp', { value: app, writable: true, configurable: true, enumerable: true });"
@@ -170,18 +56,11 @@ ANSWERED = (
     " set: (at) => { if (at !== -1) held.set.call(app.settings, at) } }) } })"
 )
 
-#: What a Mac's WebKit says its platform is. Playwright's WebKit says it is a Mac in its
-#: agent wherever it runs, and on Windows says `Win32` here, so CodeMirror - which asks
-#: this - and the app - which asks the agent - would disagree about which key is `Mod`,
-#: which no Mac ever does. Only where the agent is a Mac's: a phone's stays a phone's.
 MAC_PLATFORM = (
     "if (/Macintosh/.test(navigator.userAgent) && navigator.platform !== 'MacIntel')"
     " Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'MacIntel' })"
 )
 
-#: And a clipboard that answers: Playwright's WebKit grants no permission to read it,
-#: where a Mac asks the reader once. So in WebKit what the page wrote is what a read
-#: hands back when the engine refuses, as a reader who allowed it would see.
 WEBKIT_CLIPBOARD = (
     "(() => { const c = navigator.clipboard; if (!c) return; let kept = '';"
     " const write = c.writeText.bind(c), read = c.readText.bind(c);"
@@ -189,11 +68,6 @@ WEBKIT_CLIPBOARD = (
     " c.readText = () => read().catch(() => kept) })()"
 )
 
-#: And Cmd+A selecting the words of a field, which on a Mac is the system's and not the
-#: page's: Playwright's WebKit outside a Mac has no such command, so a field asked for
-#: all of its words with the Mac's key kept them unselected and the next words typed
-#: went on the end (#384). Heard first and done once the key has been through the page,
-#: and only where nothing on the page took it.
 MAC_SELECT_ALL = (
     "addEventListener('keydown', (event) => { const at = event.target;"
     " if (!event.metaKey || event.ctrlKey || event.altKey || event.key.toLowerCase() !== 'a') return;"
@@ -201,9 +75,6 @@ MAC_SELECT_ALL = (
     " setTimeout(() => { if (!event.defaultPrevented) at.select() }) }, true)"
 )
 
-#: Every socket a page opens, kept where `_offline_as_chromium` can close it. WebKit's
-#: offline leaves a socket that is already open carrying messages both ways, where
-#: Chromium's stops it, so a page "offline" in WebKit went on syncing live (#384).
 WEBKIT_SOCKETS = (
     "(() => { const Native = window.WebSocket; if (!Native || window.__nibSockets) return;"
     " const open = new Set(); window.__nibSockets = open; window.__nibOffline = false;"
@@ -212,124 +83,64 @@ WEBKIT_SOCKETS = (
     " open.add(this); this.addEventListener('close', () => open.delete(this)) } } })()"
 )
 
-#: Whether a WebKit context lets the page's service worker in, unless the drive says.
-#: In WebKit a page the asset worker controls sends its fetches past the routes a drive
-#: answers them with - every one, not only the asset worker's own - so a drive's stand-in
-#: for the account went unasked and the page reached the real one (#384). Chromium
-#: routes them all the same. The drives about the worker itself say `allow`.
 WEBKIT_WORKERS = "block"
 
-#: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
 
-#: The one error an engine reports that is not the app's: a resize observer whose
-#: callback changed the size of what it watches has the rest delivered on the next
-#: frame, and the engine says so on the window. WebKit hands it to Playwright as an
-#: uncaught page error and Chromium does not, so in WebKit drives went red on it
-#: (#384). The app treats it the same way: said once and not counted (`RESIZE_LOOP` in
-#: src/lib/log.ts). Matched on its exact words, so nothing else is let through.
 HARMLESS = (
     "ResizeObserver loop completed with undelivered notifications.",
     "ResizeObserver loop limit exceeded",
 )
 
-
-#: WebKit's words for a fetch it did not let finish. A fetch of the page's own origin
-#: started while the page is going - a reload, a navigation - is called off with
-#: exactly these, and WebKit hands them to Playwright as an uncaught page error even
-#: where the page caught the failure, which Chromium does not: canvas-paste went red on
-#: the app asking its own `/` (reload-when.ts) as a reload cancelled the chunk it was
-#: fetching. Only for the page's own origin: across origins the same words are a CORS
-#: refusal, which stays an error.
 CANCELLED = re.compile(r"^Fetch API cannot load (\w+):/*(\S+) due to access control checks\.$")
 
-
 def harmless(error: Any, origin: str | None = None) -> bool:
-    """Whether a page error is the engine's notice about a resize observer, which is
-    not a failure of the app's; see `HARMLESS`. Or, given the page's origin, WebKit's
-    word for a fetch of that origin called off as the page went; see `CANCELLED`."""
     said = str(getattr(error, "message", None) or error).strip()
     if said.startswith(HARMLESS):
         return True
     if not (WEBKIT and origin):
         return False
-    # Playwright reads the words up to the first colon as the error's name, which here
-    # is the middle of the address, and drops a slash after it; put back together.
     name = getattr(error, "name", None)
     cancelled = CANCELLED.match(f"{name}:{said}" if name else said)
     if not cancelled:
         return False
     return _origin(f"{cancelled.group(1)}://{cancelled.group(2)}") == _origin(origin)
 
-
 def _origin(url: str) -> str:
     parts = urllib.parse.urlsplit(url)
     return f"{parts.scheme}://{parts.netloc}"
 
-
-#: Which engine a drive's browser is: Playwright's Chromium, which is what WebView2
-#: is, or with `NIB_ENGINE=webkit` its WebKit, which is what a Mac, an iPhone and
-#: Linux run the app in. Every drive runs on either; one whose question only Chromium
-#: can answer - a DevTools session, a GPU flag - says `NEEDS = ("chromium",)`.
 ENGINE = os.environ.get("NIB_ENGINE", "chromium")
 WEBKIT = ENGINE == "webkit"
 
-#: The modifier a drive's `Mod` is: WebKit says it is a Mac, and the app believes it.
 MOD = "Meta" if WEBKIT else "Control"
 
-#: How long a Worker is given to answer, and a build to finish.
 WORKER_PATIENCE = 90
 BUILD_PATIENCE = 600
 
-#: How long closing may take once a drive's steps are done - the browser, Playwright,
-#: the servers, the Worker. Playwright Test gives a worker's teardown a fixed time and
-#: then ends it. Here the time is longer, because closing a browser on a busy Windows
-#: machine is mostly its profile being deleted and has been measured at forty seconds;
-#: but a browser has also been seen to go and leave Playwright waiting for it for
-#: fifteen minutes, so a close that outlasts this is ended, and the drive's own
-#: verdict stands.
 TEARDOWN = 90
 
-#: The drive's needs this harness knows how to answer, and what each wants. Read by
-#: run-all.py off the drive's source, which is why it is a word and not a function.
 NEEDS = {
     "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
     "chromium": "Chromium's own DevTools, flags or routing, which WebKit does not have",
     "tab-stops": "Tab stopping at buttons, which a Mac leaves to Keyboard navigation, off on a runner",
 }
 
-#: The identifier every release is built under, which is the nib the reader is using
-#: (Emil, 2026-09-30). A build under it shares that nib's single-instance lock, so
-#: launching one hands the launch to the running nib, and its folders are his.
 RELEASE_IDENTIFIER = "ch.emilvinu.nib"
 
-#: The last mark the launch order makes, on the page's own timeline; see mark() in
-#: lib/trace.ts and run() in lib/startup.svelte.ts. Every stage behind the first
-#: paint has had its turn by then, which is what "the app is up" means.
 LAUNCHED = "nib: launch order finished"
-
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
-
-# A drive that hangs says where, all its threads, a little before run-all.py gives up
-# on it - which is the difference between "it timed out" and a line to look at.
 if os.environ.get("NIB_HANG_AFTER"):
     faulthandler.dump_traceback_later(float(os.environ["NIB_HANG_AFTER"]), exit=False)
 
-# A drive says what it saw, arrows and all, and a Windows console that cannot draw a
-# character is no reason for the drive to stop: such a character is written as its
-# escape instead.
 for _stream in (sys.stdout, sys.stderr):
     with contextlib.suppress(AttributeError, ValueError):
         _stream.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
 
-
 def answering(browser: Any) -> Any:
-    """The browser, with every context it makes from now on - a drive's own
-    `new_context` and `new_page` included - carrying `BUILT_IN`. On the browser rather
-    than in `context`, because most drives make their contexts themselves."""
     made_context = browser.new_context
     made_page = browser.new_page
 
@@ -353,7 +164,6 @@ def answering(browser: Any) -> Any:
     def new_page(*args: Any, first_look: bool = False, **options: Any) -> Any:
         if WEBKIT:
             options.setdefault("service_workers", WEBKIT_WORKERS)
-        # Nothing is loaded in the page yet, so a script added now runs before the app.
         page = made_page(*args, **options)
         answered(page.context, first_look)
         return page
@@ -362,11 +172,6 @@ def answering(browser: Any) -> Any:
     browser.new_page = new_page
     return browser
 
-
-# ------------------------------------------------------------- a Mac's keys
-
-#: Where the app's keys are written, each with the Mac's own where it has one: the
-#: app's, and the editor's.
 REGISTRIES = (
     APP / "src" / "lib" / "shortcuts" / "registry.ts",
     ROOT / "packages" / "editor" / "src" / "keymap.ts",
@@ -374,7 +179,6 @@ REGISTRIES = (
 
 _MODIFIERS = ("Control", "Meta", "Alt", "Shift")
 
-#: Playwright's names for the keys the registry writes as the character they carry.
 _CHARACTERS = {
     "Backquote": "`",
     "BracketLeft": "[",
@@ -391,7 +195,6 @@ _CHARACTERS = {
     **{f"Key{chr(letter)}": chr(letter).lower() for letter in range(65, 91)},
 }
 
-#: Ctrl and a key that moves through text, as a Mac presses it: the modifier and the key.
 TEXT_KEYS = {
     "ArrowLeft": ("Alt", "ArrowLeft"),
     "ArrowRight": ("Alt", "ArrowRight"),
@@ -401,10 +204,7 @@ TEXT_KEYS = {
     "End": ("Meta", "ArrowDown"),
 }
 
-
 def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
-    """A combination as its modifiers and its key, from either spelling: the
-    registry's `Mod-Shift-k` or Playwright's `Control+Shift+K`. `Mod` is `mod`."""
     parts = re.split(r"[-+](?!$)", written)
     named = {"mod": mod, "ctrl": "Control", "control": "Control", "cmd": "Meta", "meta": "Meta"}
     named |= {"alt": "Alt", "option": "Alt", "shift": "Shift"}
@@ -412,42 +212,28 @@ def _chord(written: str, mod: str) -> tuple[frozenset[str], str]:
     key = _CHARACTERS.get(parts[-1], parts[-1])
     return held, key.lower() if len(key) == 1 else key
 
-
 def _written(held: frozenset[str], key: str) -> str:
     return "+".join([*(one for one in _MODIFIERS if one in held), key])
 
-
 @functools.cache
 def mac_bindings() -> dict[tuple[frozenset[str], str], str]:
-    """Every key the registry gives a Mac of its own, by the key everywhere else:
-    Back is Alt+ArrowLeft off a Mac and Ctrl+[ on one. A Mac with none (`mac: null`)
-    is left out, and the key everywhere else then reaches nothing there either."""
     found: dict[tuple[frozenset[str], str], str] = {}
     source = "".join(one.read_text(encoding="utf-8") for one in REGISTRIES)
     for entry in re.finditer(r"\{[^{}]*?\bkey: '([^']+)',[^{}]*?\bmac: '([^']+)'", source):
         held, key = _chord(entry.group(1), "Control")
-        # A bare Delete or Backspace a drive presses is a character taken out of a
-        # field, not the file list's Move to trash, which is Cmd's on a Mac.
         if not held and key in ("Delete", "Backspace"):
             continue
         found[held, key] = _written(*_chord(entry.group(2), "Meta"))
-    # Redo, which the editor takes over from CodeMirror's own keymap with its Mac key.
     found[frozenset({"Control"}), "y"] = "Meta+Shift+z"
     return found
 
-
 def mac_key(pressed: str) -> str:
-    """What a Mac presses for what a drive wrote for Windows: the registry's own Mac
-    key where it has one, and otherwise Cmd for Ctrl."""
-    # Ctrl held down on its own, for a press or a hover that wants it.
     if pressed in ("Control", "ControlOrMeta"):
         return "Meta"
     chord = _chord(pressed, "Control")
     if chord in mac_bindings():
         return mac_bindings()[chord]
     held, key = chord
-    # Moving through text, which a Mac does with other keys: a word at a time is
-    # Option's, and the top and the bottom of a note are Cmd and an arrow.
     if "Control" in held and key in TEXT_KEYS:
         moved, to = TEXT_KEYS[key]
         return _written((held - {"Control"}) | {moved}, to)
@@ -455,19 +241,12 @@ def mac_key(pressed: str) -> str:
         return pressed
     return _written((held - {"Control"}) | {"Meta"}, pressed.rsplit("+", 1)[-1])
 
-
 def _mac_modifiers(modifiers: Sequence[str] | None) -> list[str] | None:
     if modifiers is None:
         return None
     return ["Meta" if one in ("Control", "ControlOrMeta") else one for one in modifiers]
 
-
 def _press_as_a_mac() -> None:
-    """Every key a drive presses, pressed the way a Mac would: a drive is written once,
-    with Windows' keys, and in WebKit - which says it is a Mac, so the app reads Cmd as
-    its `Mod` - each chord is the Mac's. A held Ctrl on a click is Cmd as well. Not in a
-    context the drive gave an agent of its own, a phone's say, where the app reads the
-    keys of whatever that agent names."""
     import weakref
 
     from playwright.sync_api import (
@@ -480,13 +259,11 @@ def _press_as_a_mac() -> None:
         Page,
     )
 
-    #: The keyboards and contexts whose page says it is a Mac, by the object.
     other: weakref.WeakSet[Any] = weakref.WeakSet()
 
     def noted(method: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(method)
         def making(*args: Any, **kwargs: Any) -> Any:
-            # WebKit has no permission to write the clipboard: a page may, unasked.
             if "permissions" in kwargs:
                 kwargs["permissions"] = [one for one in kwargs["permissions"] if one != "clipboard-write"]
             made = method(*args, **kwargs)
@@ -545,16 +322,10 @@ def _press_as_a_mac() -> None:
         for name in ("click", "dblclick", "hover", "tap"):
             setattr(kind, name, modified(getattr(kind, name)))
 
-
 if WEBKIT:
     _press_as_a_mac()
 
-
 def _offline_as_chromium() -> None:
-    """A context set offline in WebKit cut off as Chromium's is: the sockets its pages
-    have open are closed, and one opened while it is offline is refused - pointed at a
-    port nothing answers on - so the app sees the connection go and come back as it
-    does on a machine that lost it. See `WEBKIT_SOCKETS`."""
     from playwright.sync_api import BrowserContext
 
     went = BrowserContext.set_offline
@@ -573,15 +344,10 @@ def _offline_as_chromium() -> None:
 
     BrowserContext.set_offline = set_offline  # type: ignore[method-assign]
 
-
 if WEBKIT:
     _offline_as_chromium()
 
-
 def _hear_no_harmless() -> None:
-    """Every `pageerror` listener a drive adds hears nothing `harmless` lets through:
-    one place for every drive, most of which listen for page errors themselves rather
-    than through `Drive.page`, and for every page however it was made."""
     from playwright.sync_api import Page
 
     listen = Page.on
@@ -598,32 +364,15 @@ def _hear_no_harmless() -> None:
 
     Page.on = on  # type: ignore[method-assign]
 
-
 _hear_no_harmless()
 
-
-# ---------------------------------------------------------------------- the build
-
-
 def tool(package: Path, name: str) -> list[str]:
-    """A command from a package's own node_modules: its bin shim directly, which is
-    a second or two quicker per call than asking npx to find it, and npx otherwise."""
     shim = package / "node_modules" / ".bin" / (f"{name}.cmd" if os.name == "nt" else name)
     if shim.exists():
         return [str(shim)]
     return [shutil.which("npx") or "npx", name]
 
-
 def build(into: Path = DIST, served_by_worker: bool = False) -> None:
-    """The drive build, into `into`, reused when `NIB_SKIP_BUILD` says so and the
-    folder holds the same kind of build.
-
-    `--mode drive` and nothing else: a release in every respect but the handles, which
-    is the shape that ships and so the shape worth driving. The build a Worker serves
-    asks its own origin for the API - an empty `VITE_NIB_API` - which is how the web
-    app at orden.so talks to its Worker, and which makes one build good for a
-    Worker on any port: every drive against one runs a Worker of its own, beside the
-    others."""
     kind = "worker" if served_by_worker else "plain"
     if os.environ.get("NIB_SKIP_BUILD") and built(into, kind):
         say(f"reusing the build in {into.name}")
@@ -659,11 +408,7 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     if served_by_worker:
         machine_bundle(fresh=True)
 
-
 def machine_bundle(fresh: bool) -> None:
-    """The bundle the Worker imports, built beside the build it serves: afresh with it,
-    and otherwise only when there is none yet, so drives reusing one build - the way
-    run-all.py runs them, several at once - never write it under each other."""
     if not fresh and MACHINE_BUNDLE.exists():
         return
     say("building the online machine's bundle the Worker carries")
@@ -680,23 +425,13 @@ def machine_bundle(fresh: bool) -> None:
     if done.returncode != 0:
         raise SystemExit(f"the machine's bundle failed:\n{done.stdout}\n{done.stderr}")
 
-
 def built(into: Path, kind: str) -> bool:
-    """Whether `into` holds a build of this kind. A folder with no word on it was made
-    by hand or by an older runner, and is taken to be the plain one."""
     if not (into / "index.html").exists():
         return False
     pointed = into / POINTED
     said = pointed.read_text(encoding="utf-8").strip() if pointed.exists() else "plain"
     return said == kind
 
-
-# ------------------------------------------------------------------ the server
-
-
-#: The types a build is made of, written out: Python otherwise asks the Windows
-#: registry, where an installed program can have made `.js` anything at all, and a
-#: module script served as `text/plain` is an app that never starts.
 TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -721,32 +456,16 @@ TYPES = {
     "": "application/octet-stream",
 }
 
-#: One date for every file. A build's own mtimes are the time it was made, and a
-#: browser left to guess how long a file is good for guesses a tenth of its age - so
-#: two builds made minutes apart were served as two different launches.
 STAMP = "Mon, 01 Jan 2024 00:00:00 GMT"
 
-#: What a drive may answer a request with itself, ahead of the folder: a page of its
-#: own, a mark, a header. Returns whether it answered.
 Answer = Callable[["Files"], bool]
 
-
 class Files(http.server.SimpleHTTPRequestHandler):
-    """The folder, served the way a deploy serves it.
-
-    HTTP/1.1, so a page of thirty assets is one connection rather than thirty - each
-    a thread taking the interpreter's lock from the drive that is measuring. Then a
-    `Cache-Control` on everything: a file under a hash of its contents is good for
-    ever, and the page that names them is asked about every time, so a rebuild is
-    never missed and an unchanged asset is never fetched twice. That is what the
-    Worker sends for the same files."""
 
     protocol_version = "HTTP/1.1"
     extensions_map = TYPES
-    #: A kept connection holds a thread; this is how long an idle one keeps it.
     timeout = 10
 
-    #: Set per server; see `Served`.
     folder = str(DIST)
     answer: Answer | None = None
     extra: Mapping[str, str] = {}
@@ -790,8 +509,6 @@ class Files(http.server.SimpleHTTPRequestHandler):
         super().send_header(keyword, value)
 
     def end_headers(self) -> None:
-        # `_headers_buffer` is where http.server keeps what this response has said so
-        # far; an answer that chose its own caching keeps it.
         said = b"".join(getattr(self, "_headers_buffer", [])).lower()
         if b"cache-control:" not in said:
             name = self.path.split("?", 1)[0]
@@ -804,8 +521,6 @@ class Files(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def reply(self, body: bytes | str, kind: str = "text/html; charset=utf-8", code: int = 200) -> bool:
-        """A whole answer of a drive's own, in one call. True, so an `Answer` can end
-        with `return request.reply(...)`."""
         data = body.encode("utf-8") if isinstance(body, str) else body
         self.send_response(code)
         self.send_header("Content-Type", kind)
@@ -816,33 +531,20 @@ class Files(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(data)
         return True
 
-
 class _Loopback(http.server.ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
-    #: The page asks for every chunk it preloads at once, a hundred and fifty of them,
-    #: and the default backlog of five turned some away on Windows: the app then never
-    #: came up, one run in two - which reads as the app being broken.
     request_queue_size = 256
 
     def handle_error(self, request: Any, client_address: Any) -> None:
-        """A browser that closed a connection it no longer wanted - a page reloaded,
-        a context closed - is not an error worth a traceback in the run."""
         if isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):
             return
         super().handle_error(request, client_address)
 
-
 class _Loopback6(_Loopback):
     address_family = socket.AF_INET6
 
-
 class Served:
-    """A folder on a free port of both loopback addresses.
-
-    Both, because Chrome asks `::1` first for a `*.localhost` name and a server on
-    `127.0.0.1` alone costs every connection the wait before it falls back - a third
-    of a second a page, measured. The same port on each, so one origin reaches both."""
 
     def __init__(
         self,
@@ -869,8 +571,6 @@ class Served:
             try:
                 second: _Loopback | None = _Loopback6(("::1", first.server_address[1]), handler)
             except OSError as error:
-                # Somebody else on this port's `::1` is a reason to take another port;
-                # a machine with no IPv6 is not, and Chrome then only asks the one.
                 if error.errno in (errno.EADDRINUSE, getattr(errno, "WSAEADDRINUSE", -1)):
                     first.server_close()
                     continue
@@ -894,28 +594,15 @@ class Served:
             one.shutdown()
             one.server_close()
 
-
 def side(handler: type[http.server.BaseHTTPRequestHandler]) -> Served:
-    """A server of a drive's own on a free port - a fake OpenAI-compatible provider, a
-    page the app is pointed at - stopped with the drive when it is started through
-    `Drive.side`."""
     return Served(handler=handler)
 
-
 def free_port() -> int:
-    """A port nothing holds right now, for a process that binds it itself."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
         probe.bind(("127.0.0.1", 0))
         return int(probe.getsockname()[1])
 
-
-# ----------------------------------------------------------------- processes
-
-
 def spawn(command: Sequence[str], **options: Any) -> subprocess.Popen[bytes]:
-    """A process in a group of its own, so `end` can take everything under it: a
-    `wrangler dev` is a node inside a node around a workerd, and ending only the
-    outermost leaves the runtime holding the port."""
     if os.name == "nt":
         options.setdefault("creationflags", subprocess.CREATE_NEW_PROCESS_GROUP)
     else:
@@ -924,14 +611,9 @@ def spawn(command: Sequence[str], **options: Any) -> subprocess.Popen[bytes]:
     SPAWNED.add(process)
     return process
 
-
-#: Every process `spawn` started and `end` has not ended yet.
 SPAWNED: set[subprocess.Popen[Any]] = set()
 
-
 def end(process: subprocess.Popen[Any] | None, grace: float = 10) -> None:
-    """The process and every process under it, by its own number and never by name:
-    somebody else's node on this machine is not this drive's to end."""
     SPAWNED.discard(process)  # type: ignore[arg-type]
     if process is None or process.poll() is not None:
         return
@@ -951,32 +633,19 @@ def end(process: subprocess.Popen[Any] | None, grace: float = 10) -> None:
         process.kill()
         process.wait(timeout=grace)
 
-
 def _driver(play: Any) -> int | None:
-    """The process number of Playwright's own driver under this `sync_playwright`.
-    Read off Playwright's internals, and nothing is lost when they move: the closing
-    watch then only has the processes it started itself to end."""
     with contextlib.suppress(AttributeError, TypeError):
         return int(play.stop.__self__._connection._transport._proc.pid)
     return None
 
-
 def _kill(pid: int) -> None:
-    """One process of Playwright's, and on Windows everything under it."""
     if os.name == "nt":
         subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True, check=False)
     else:
         with contextlib.suppress(ProcessLookupError, PermissionError):
             os.kill(pid, signal.SIGKILL)
 
-
 class _Closing:
-    """A watch over a drive's closing, armed once its steps are done.
-
-    A close still going after `TEARDOWN` seconds says so with every thread's stack and
-    ends Playwright's driver, which is what a stuck call is waiting on and whose going
-    wakes it. One still stuck after that ends every process this drive started and
-    leaves with the drive's own verdict."""
 
     def __init__(self, drive: Drive) -> None:
         self.drive = drive
@@ -986,8 +655,6 @@ class _Closing:
         self.clean = True
 
     def start(self) -> None:
-        # Called in the `finally` after the drive's steps: whether they walked out is
-        # whether an exception is on its way through.
         self.clean = sys.exc_info()[1] is None
         threading.Thread(target=self._watch, name="closing watch", daemon=True).start()
 
@@ -1007,16 +674,7 @@ class _Closing:
         sys.stdout.flush()
         os._exit(code)
 
-
-# ---------------------------------------------------------------------- a drive
-
-
 class Drive:
-    """One drive's run: its name, its origin, its shots and its verdict.
-
-    Made at the top of the drive's file, so the rest of it can name `ORIGIN` and
-    `SHOTS` the way it always did. The port is bound here, which costs a socket; the
-    build and the browser wait for `run` or `session`."""
 
     def __init__(
         self,
@@ -1030,26 +688,15 @@ class Drive:
         known: Mapping[str, str] | None = None,
     ) -> None:
         self.name = Path(file).stem
-        #: A Vite dev server rather than the build, for a drive that imports the app's
-        #: own modules by their paths, which only a dev server answers. It builds
-        #: nothing and leaves `dist` alone.
         self.dev = dev
         self.dev_port = free_port() if dev else 0
         self.shots = SHOTS / (shots or self.name)
-        #: Whether a run starts from an empty shots folder. A drive that compares
-        #: this run with the one before it keeps what that one wrote.
         self.fresh = fresh
-        #: Failures already found and handed on, each by words it says and who has it:
-        #: the run goes past them and names them every time, the way Chromium's own
-        #: harness keeps a failure it expects with the bug that owns it. One that no
-        #: longer happens is said too, so the entry is taken off rather than left.
         self.known = dict(known or {})
         self._cleared = False
         self.failures: list[str] = []
         self.folder = folder
         self._stack = contextlib.ExitStack()
-        #: Somebody else's server to drive instead of a build of this run's own: the
-        #: dev server on 1420, or whatever a desktop build is loading from.
         self.borrowed = os.environ.get("NIB_ORIGIN", "").rstrip("/")
         self.served = served and not self.borrowed and not dev
         self.server = Served(folder) if self.served else None
@@ -1058,40 +705,27 @@ class Drive:
         elif dev:
             self.origin = f"http://{self.name}.localhost:{self.dev_port}"
         elif self.server:
-            # WebKit is driven on the loopback address: under a name below `.localhost`
-            # it is not a secure context, where the app in a Mac's WKWebView is, and it
-            # never runs a sandboxed frame there. The port is the drive's own either way.
             self.origin = self.server.origin("127.0.0.1" if WEBKIT else f"{self.name}.localhost")
         else:
             self.origin = ""
 
     def header(self, name: str, value: str) -> None:
-        """A header on every answer from now on - the app's own policy, say, which is
-        only known once the build it is read out of has been made."""
         if self.server is not None:
             self.server.handler.extra[name] = value  # type: ignore[attr-defined]
 
     def answers(self, answer: Answer) -> Answer:
-        """A request the drive answers itself, ahead of the build: a page of its own,
-        a picture, a header. Used as a decorator; the answer returns whether it did."""
         if self.server is not None:
             self.server.handler.answer = staticmethod(answer)  # type: ignore[attr-defined]
         return answer
-
-    # -- what a drive says
 
     def say(self, words: str) -> None:
         say(words)
 
     def wrong(self, what: str) -> None:
-        """Something a person would have seen, counted; the drive carries on so one
-        run says everything that is off rather than the first thing."""
         say(f"FAILED: {what}")
         self.failures.append(what)
 
     def shot(self, page: Any, name: str, **options: Any) -> Path:
-        """The page - or a locator - as a picture in this drive's shots folder. A name
-        with a slash in it is a folder inside that one."""
         path = self.shots / f"{name}.png"
         path.parent.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(path), **options)
@@ -1099,7 +733,6 @@ class Drive:
         return path
 
     def steady(self, page: Any, name: str, **options: Any) -> Path:
-        """A shot kept only once two in a row match; see settling.py."""
         from settling import steady
 
         self.shots.mkdir(parents=True, exist_ok=True)
@@ -1109,12 +742,7 @@ class Drive:
         return path
 
     def wait_for(self, page: Any, expression: str, what: str, patience: float = PATIENCE) -> Any:
-        """Until the expression is true in the page - an expression, or a function
-        the page calls - and what it came to; or out with `gave up waiting for`, which
-        says the app never got there rather than that it is wrong."""
         try:
-            # On a timer rather than on frames: a page in a context nobody is
-            # looking at can go without a frame for as long as it likes.
             came = page.wait_for_function(expression, timeout=patience * 1000, polling=50)
         except Exception as error:
             if "Timeout" not in type(error).__name__ and "Timeout" not in str(error):
@@ -1123,9 +751,6 @@ class Drive:
         return came.json_value()
 
     def waited(self, page: Any, expression: str, what: str, patience: float = PATIENCE) -> bool:
-        """Whether the expression came true in time. When it did not, that is counted
-        as a failure and the drive carries on, for a step that the rest of the run
-        does not stand on."""
         try:
             self.wait_for(page, expression, what, patience)
         except SystemExit:
@@ -1133,12 +758,7 @@ class Drive:
             return False
         return True
 
-    # -- the browser
-
     def browser(self, play: Any, **options: Any) -> Any:
-        """Playwright's own Chromium, new headless, which is what the nightly run has;
-        the machine's Chrome with `NIB_BROWSER=chrome`; Playwright's WebKit with
-        `NIB_ENGINE=webkit`, where a Chromium switch is no option at all."""
         if WEBKIT:
             options.pop("channel", None)
             options.pop("args", None)
@@ -1151,8 +771,6 @@ class Drive:
         return browser.new_context(**options)
 
     def persistent(self, play: Any, profile: Path, **options: Any) -> Any:
-        """A browser with its profile on disk, for a drive whose question is what
-        survives the browser being closed and opened again."""
         if WEBKIT:
             options.pop("channel", None)
             options.pop("args", None)
@@ -1170,9 +788,6 @@ class Drive:
         return context
 
     def page(self, browser: Any, errors: bool = True, **options: Any) -> Any:
-        """A page in a context of its own. A script error the page throws is a
-        failure unless `errors` is false, because an app that threw is an app that
-        broke whether or not the drive's own question noticed."""
         page = self.context(browser, **options).new_page()
         if errors:
             page.on("pageerror", lambda error: self.wrong(f"page error: {error}"))
@@ -1181,16 +796,10 @@ class Drive:
     def open(
         self, page: Any, path: str = "/", origin: str | None = None, patience: float = PATIENCE
     ) -> None:
-        """The app, at this drive's origin - or a Worker's - and up. Given the same
-        patience as the rest of the wait, whatever the drive set its own steps to: a
-        page of a hundred and fifty chunks on a busy machine is a page that takes a
-        while, and that is not the app being wrong."""
         page.goto(f"{origin or self.origin}{path}", wait_until="domcontentloaded", timeout=patience * 1000)
         self.ready(page, patience)
 
     def ready(self, page: Any, patience: float = PATIENCE) -> None:
-        """The app is up by its own word: the handle, a space, and the last turn of the
-        launch order."""
         self.wait_for(page, "window.nibApp", "the app", patience)
         self.wait_for(page, "window.nibApp.workspace.activeSpace", "a space", patience)
         self.wait_for(
@@ -1201,39 +810,13 @@ class Drive:
         )
 
     def choosers(self, page: Any) -> None:
-        """Every file chooser the page opens is Playwright's to answer, from now on.
-
-        `expect_file_chooser` turns Playwright's interception on as it starts waiting,
-        without waiting for the browser to hear it, and off again after. On a busy
-        machine the key that opens the chooser then gets there first, the chooser opens
-        with nobody intercepting it, and headless Chromium drops it without a word. So a
-        drive that answers choosers says so once, when its page is made: a listener that
-        stays keeps the interception on, and the round trip after it is the browser
-        having heard before the drive does anything else."""
         page.on("filechooser", lambda _chooser: None)
         page.evaluate("0")
 
     def inject(self, page: Any, script: Path) -> None:
-        """A script the drive brings - axe-core, say - run in the page past the app's
-        own policy, which refuses every inline script and so every script tag a
-        drive could add. Evaluated through the browser's own protocol, which no policy
-        governs: the measuring stick is the drive's, not the app's."""
         page.evaluate(script.read_text(encoding="utf-8"))
 
     def preload(self, page: Any, folder: Path | None = None) -> int:
-        """Every chunk of the build in the page's module map, fetched and parsed and
-        not run, so a drive that takes the network away takes only the network.
-
-        The installed app carries its chunks on the disk, so a desktop that loses
-        its connection still opens every sheet it has not opened yet. A page served
-        over the loopback does not: a chunk first asked for while the context is
-        offline fails, and a failed module import is remembered for the rest of the
-        page's life. `modulepreload` is how the page is handed them all beforehand -
-        the same links the build puts in front of its own first paint. The
-        stylesheets a chunk brings are fetched too, as `preload` and not applied: a
-        lazy sheet asks for its CSS as it arrives, and WebKit, offline, fails that
-        request where Chromium answered it from its cache (#384). Answers how many
-        there were."""
         assets = (folder or self.folder) / "assets"
         chunks = sorted(f"/assets/{one.name}" for one in assets.glob("*.js"))
         sheets = sorted(f"/assets/{one.name}" for one in assets.glob("*.css"))
@@ -1254,9 +837,6 @@ class Drive:
         return len(chunks) + len(sheets)
 
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
-        """The note in front as it reads, once the reading view has drawn it: the view is
-        fetched the first time it is asked for, so the frame after the press can still
-        be the editor, or nothing at all."""
         page.evaluate("() => window.nibApp.workspace.toggleReading()")
         self.wait_for(
             page, "document.querySelector('article.nib-write')?.childElementCount", "the reading view", patience
@@ -1264,14 +844,11 @@ class Drive:
         self.settled(page)
 
     def settled(self, page: Any) -> None:
-        """Two painted frames: whatever the last step changed is on screen."""
         page.evaluate(
             "() => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(() => go())))"
         )
 
     def seed(self, page: Any, *texts: str, folder: str | None = None) -> list[str]:
-        """Notes in the open space, each named from its first line the way a new note
-        is, and the tree read again. Answers every note's name."""
         return page.evaluate(  # type: ignore[no-any-return]
             """
             async ([texts, folder]) => {
@@ -1287,7 +864,6 @@ class Drive:
         )
 
     def open_note(self, page: Any, starts: str, patience: float = PATIENCE) -> None:
-        """The note whose name starts with `starts`, in front, with its words drawn."""
         page.evaluate(
             """async (starts) => {
               const ws = window.nibApp.workspace
@@ -1306,25 +882,16 @@ class Drive:
         )
         self.settled(page)
 
-    # -- a run
-
     def side(self, handler: type[http.server.BaseHTTPRequestHandler]) -> str:
-        """A server of the drive's own for as long as the run lasts; its origin."""
         server = side(handler)
         self._stack.callback(server.close)
         return server.origin()
 
     def later(self, callback: Callable[[], object]) -> None:
-        """Something to undo when the run ends, however it ends."""
         self._stack.callback(callback)
 
     @contextlib.contextmanager
     def session(self, browser: bool = True, playwright: bool = False, **launch: Any) -> Iterator[Any]:
-        """The build, the server and the browser, for as long as the block runs, and
-        nothing of any of them afterwards - a drive that walks out half way still
-        closes its browser and its Worker. `playwright` hands over Playwright itself
-        instead, for a drive that launches its own (see `persistent`); no browser at
-        all, for one that only talks to a Worker."""
         from playwright.sync_api import sync_playwright
 
         self.clear()
@@ -1335,8 +902,6 @@ class Drive:
                     say(f"driving {self.origin}, which somebody else is serving")
                 if self.server:
                     self._stack.callback(self.server.close)
-                    # A folder other than `dist` is one the drive was handed built - the
-                    # other half of a before-and-after, say - and is not rebuilt here.
                     if self.folder == DIST and OWN_BUILD:
                         build()
                     elif not (self.folder / "index.html").exists():
@@ -1365,14 +930,11 @@ class Drive:
                         closing.start()
                         opened.close()
         except SystemExit as walked:
-            # A walk-out that is a known failure is that failure, said in the verdict;
-            # the steps after it did not run, and the verdict is what says so.
             said = str(walked.code) if walked.code is not None else ""
             if not any(words in said for words in self.known):
                 raise
             self.failures.append(said)
         except Exception:
-            # What the watch ended is not the drive going wrong: its steps had all run.
             if not (closing.fired and closing.clean):
                 raise
             say("closing was ended from outside; the drive's steps had all run")
@@ -1380,7 +942,6 @@ class Drive:
             closing.done.set()
 
     def _develop(self) -> None:
-        """The dev server on this drive's port, answering, and ended with the run."""
         say(f"serving the app from a dev server on {self.origin}")
         server = spawn(
             [
@@ -1409,8 +970,6 @@ class Drive:
         raise SystemExit("the dev server never answered")
 
     def clear(self) -> None:
-        """The shots folder, emptied once a run - before the first thing is written
-        into it, which is the session or a Worker's log, whichever comes first."""
         if not self._cleared:
             self._cleared = True
             if self.fresh:
@@ -1418,8 +977,6 @@ class Drive:
         self.shots.mkdir(parents=True, exist_ok=True)
 
     def verdict(self, passed: str = "") -> int:
-        """The drive's exit status: non-zero for any failure that is not a known one,
-        each named either way. Every line run-all.py reads starts `KNOWN`."""
         known = [one for one in self.failures if any(words in one for words in self.known)]
         new = [one for one in self.failures if one not in known]
         for words, owner in self.known.items():
@@ -1437,37 +994,18 @@ class Drive:
         return 0
 
     def run(self, steps: Callable[[Any], object], passed: str = "", **launch: Any) -> int:
-        """The whole of a drive's `main`: its steps, in a session, and the verdict."""
         with self.session(**launch) as browser:
             steps(browser)
         return self.verdict(passed)
 
-
-# ---------------------------------------------------------------------- the Worker
-
-
 @functools.cache
 def worker_port() -> int:
-    """The port this drive's Worker answers on: one nothing holds, asked for once, so
-    the drive's `ORIGIN` and its Worker agree."""
     return free_port()
 
-
 def worker_origin() -> str:
-    """Where this drive's Worker - and the app it serves - answers."""
     return f"http://127.0.0.1:{worker_port()}"
 
-
 class Worker:
-    """The real Worker under `wrangler dev --local`, with a database of its own.
-
-    Everything a Worker drive used to carry, once: the build pointed at it, the
-    migrations the way a deploy runs them, the process and its log, SQL straight into
-    its database, an account with a live session, and the mail it would have sent.
-    The state is a temp folder per drive rather than `services/sync/.wrangler/state`,
-    so a run starts from nothing and no two worktrees share a database; it outlives a
-    `stop` and a `start`, which is how a drive restarts the Worker as a blog's host,
-    and goes when the drive does."""
 
     def __init__(self, drive: Drive, variables: Mapping[str, str] | None = None) -> None:
         self.drive = drive
@@ -1492,11 +1030,6 @@ class Worker:
         )
 
     def prepare(self) -> None:
-        """The build pointed at this Worker and a database of this run's own with every
-        migration applied, once. `start` asks for it; so does `sql`, which is how a
-        drive writes its accounts before the Worker runs - the runtime opens the
-        database on a connection of its own, and a row written into the file by
-        another process while it is running is not one it is bound to see."""
         if self.state is not None:
             return
         build(WORKER_DIST, served_by_worker=True)
@@ -1510,11 +1043,6 @@ class Worker:
             raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
 
     def start(self, upstream: str | None = None, assets: Path | None = None) -> None:
-        """Built, migrated and answering, or out with what it said. `upstream` is the
-        hostname the Worker answers as - a blog's, say - since `wrangler dev` builds
-        the URL the Worker sees from it rather than from the request's own Host.
-        `assets` is another build for it to hand out, such as the app that shipped,
-        put to the same server as the one on main."""
         self.prepare()
 
         say(f"starting the Worker on {self.origin}" + (f" as {upstream}" if upstream else ""))
@@ -1529,7 +1057,6 @@ class Worker:
             "127.0.0.1",
             "--persist-to",
             str(self.state),
-            # Its own, since several Workers run at once and the default is one port.
             "--inspector-port",
             str(free_port()),
             "--assets",
@@ -1540,12 +1067,7 @@ class Worker:
         ]
         for key, value in self.variables.items():
             command += ["--var", f"{key}:{value}"]
-        # A second go for a Worker that dies before it ever answers: workerd on a busy
-        # Windows machine now and then ends at its start with 0xC0000409, a crash of
-        # its own rather than anything the drive did.
         for last in (False, True):
-            # Its output to a file rather than a pipe: a pipe nobody reads fills, and a
-            # Worker with nowhere to write stops answering.
             self.process = spawn(command, cwd=SERVICE, stdout=self._output, stderr=subprocess.STDOUT)
             until = time.monotonic() + WORKER_PATIENCE
             while time.monotonic() < until:
@@ -1563,8 +1085,6 @@ class Worker:
                 raise SystemExit(f"the Worker never answered:\n{self.said()}")
 
     def answering(self) -> bool:
-        """Whether anything answers yet. Any answer at all counts: a Worker acting as a
-        blog serves `/health` as a note nobody published, and is up all the same."""
         try:
             urllib.request.urlopen(f"{self.origin}/health", timeout=5).read()
             return True
@@ -1574,7 +1094,6 @@ class Worker:
             return False
 
     def stop(self) -> None:
-        """The Worker and every process under it; its database stays for a restart."""
         if self.process is not None:
             say("stopping the Worker")
             end(self.process)
@@ -1590,17 +1109,14 @@ class Worker:
             self.state = None
 
     def said(self, lines: int = 40) -> str:
-        """The end of what the Worker wrote."""
         if not self.log.exists():
             return "(nothing)"
         return "\n".join(self.log.read_text("utf-8", errors="replace").splitlines()[-lines:])
 
     def written(self) -> str:
-        """Everything the Worker wrote."""
         return self.log.read_text("utf-8", errors="replace") if self.log.exists() else ""
 
     def sql(self, statement: str) -> str:
-        """What running the statement printed, which is its rows as a table."""
         self.prepare()
         done = self.wrangler(
             "d1", "execute", "nib", "--local", "--persist-to", str(self.state), f"--command={statement}"
@@ -1610,7 +1126,6 @@ class Worker:
         return done.stdout
 
     def query(self, statement: str) -> list[dict[str, Any]]:
-        """The rows a statement reads."""
         self.prepare()
         done = self.wrangler(
             "d1",
@@ -1635,7 +1150,6 @@ class Worker:
         method: str | None = None,
         timeout: float = 20,
     ) -> Any:
-        """The Worker's answer to one call, as JSON; an `HTTPError` for a refusal."""
         data = None if body is None else json.dumps(body).encode()
         headers = {"content-type": "application/json"} if data is not None else {}
         if token:
@@ -1650,9 +1164,6 @@ class Worker:
             return json.loads(answer.read() or b"null")
 
     def account(self, email: str) -> str:
-        """An account with a live session, written straight into the database: signing
-        in needs an emailed code, and the sign-in is signin.py's question, not this
-        drive's. Everything after this goes through the API the app uses."""
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
@@ -1665,9 +1176,6 @@ class Worker:
         return token
 
     def mail_to(self, address: str, after: int = 0) -> str:
-        """The last message the Worker handed its mail binding for this address: the
-        subject and the words. `after` skips what the log already held, so an older
-        message to the same person is never read as the answer to a newer request."""
         lines = self.written()[after:].splitlines()
         found = [at for at, line in enumerate(lines) if line.strip() == f"To: {address}"]
         if not found:
@@ -1696,14 +1204,7 @@ class Worker:
             f"{self.mail_to(address, after)!r}"
         )
 
-
-# ---------------------------------------------------------------- a native probe
-
-
 def identifier_of(exe: Path, given: str | None = None) -> str | None:
-    """The identifier a probe build was made under: the one the drive was given, then
-    `NIB_PROBE_IDENTIFIER`, then a `nib-probe-identifier.json` beside the exe (see
-    `identifier_of` in scripts/probe_app.py); None when nothing says."""
     said = given or os.environ.get("NIB_PROBE_IDENTIFIER")
     if said:
         return said
@@ -1712,15 +1213,8 @@ def identifier_of(exe: Path, given: str | None = None) -> str | None:
         return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
     return None
 
-
 def refused(exe: Path, identifier: str | None) -> str:
-    """Why a drive may not launch this build, or nothing when it may.
-
-    The reader's own nib is never a drive's: not the installed exe, and not any build
-    under the release identifier, whose launch the running nib would take. A build
-    whose identifier nobody said is refused too, since it may be either."""
     local = os.environ.get("LOCALAPPDATA")
-    # The folders an install from before a rename keeps, and a fresh install's.
     for installed in ("Nib", "nibeditor", "Orden"):
         if local and exe.resolve().is_relative_to((Path(local) / installed).resolve()):
             return f"{exe} is the installed nib"
@@ -1730,17 +1224,7 @@ def refused(exe: Path, identifier: str | None) -> str:
         return f"{exe} is built under {identifier}, not one of its own like {RELEASE_IDENTIFIER}.probe.<name>"
     return ""
 
-
 class Native:
-    """A probe build of the desktop app, started the one way every probe is.
-
-    Through scripts/probe_app.py's `run_probe`, which refuses a build that would
-    update itself, opens every window off the screen without the keyboard, and ends
-    the drive the moment one is ever in front of anybody. The spaces folder is a temp
-    folder of this run's own, never the reader's Documents/Nib, and goes with it.
-
-    The reader's own nib is refused before anything is started (`refused`), and the
-    probe is ended by its own process number, never by a name that is also his."""
 
     def __init__(
         self, drive: Drive, exe: Path, env: Mapping[str, str] | None = None, identifier: str | None = None
@@ -1771,19 +1255,11 @@ class Native:
         self.app = None
         shutil.rmtree(self.spaces, ignore_errors=True)
 
-
 def needs_of(source: str) -> tuple[str, ...]:
-    """What a drive says it needs, read off its source the way run-all.py reads it. A
-    drive that launches the desktop app needs a native build whether or not it says
-    so, which is how a drive written before `NEEDS` is still skipped where it cannot
-    run rather than failed."""
     found = re.search(r"^NEEDS = \(([^)]*)\)", source, re.MULTILINE)
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
     if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"nib\.exe\"", source):
         said = (*said, "native")
-    # A DevTools session is Chromium's alone, so a drive that opens one needs it too; and
-    # so are a microphone that plays a file and a finger made in the page, which a
-    # desktop's WebKit has no constructor for.
     chromium_only = (
         r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream|new Touch\("
     )
@@ -1791,10 +1267,7 @@ def needs_of(source: str) -> tuple[str, ...]:
         said = (*said, "chromium")
     return said
 
-
 def missing(needs: Sequence[str]) -> str:
-    """Which of a drive's needs this machine cannot meet, as the reason it is skipped;
-    empty when it can run."""
     for one in needs:
         if one == "native" and not (sys.platform == "win32" and os.environ.get("NIB_PROBE_EXE")):
             return f"needs {NEEDS['native']}"

@@ -1,11 +1,3 @@
-"""The sync light becoming words, and what that does to the page.
-
-App.svelte turns `sync.status` into a line in the live region. This flips the
-status the way a pass does and then asks the page to do something: if the region
-has run away with the effect that feeds it, Svelte has thrown by now and nothing
-on the page answers again.
-"""
-
 from __future__ import annotations
 
 import harness
@@ -15,12 +7,10 @@ DRIVE = Drive(__file__)
 say = DRIVE.say
 APP = harness.APP
 
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 
 def main() -> int:
     trouble: list[str] = []
@@ -54,13 +44,10 @@ def main() -> int:
         page.wait_for_timeout(1000)
         say(f"switcher before: {page.locator('aside .name').count()}")
 
-        # One pass, as the loop reports it.
         page.evaluate("() => (window.nibApp.sync.status = 'syncing')")
         page.wait_for_timeout(1500)
         say(f"said: {page.evaluate('''() => document.querySelector('p[role=status]')?.textContent''')!r}")
 
-        # And now something has to happen on the page. A switcher that does
-        # not open is a page whose updates have stopped.
         page.locator("aside .name").first.click()
         page.wait_for_timeout(800)
         spaces = page.locator(".spaces")
@@ -71,7 +58,6 @@ def main() -> int:
         page.keyboard.press("Escape")
         page.wait_for_timeout(400)
 
-        # A pass that failed, twice, which is the same words twice.
         page.evaluate(
             """() => {
               const sync = window.nibApp.sync
@@ -105,7 +91,6 @@ def main() -> int:
 
     say("the page still answers after the sync light has spoken")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,14 +1,3 @@
-"""The web app's two builds, and the row in Settings that moves between them (#424).
-
-Both builds put together the way the deploy does (scripts/web-channels.sh) and handed out
-by the real Worker, which picks one by a cookie that `?channel=` sets. On the release:
-no mark, and Settings says Stable. Unstable chosen there: the page comes back as the
-edge, says so with the mark in the bar at the top, and Settings says Unstable. The
-mark opens Settings, Stable chosen there brings the release back, and the mark goes.
-
-    python apps/desktop/test/e2e/web-channel.py
-"""
-
 from __future__ import annotations
 
 import os
@@ -32,7 +21,6 @@ ROOT = harness.APP.parent.parent
 MARK = "header .channel"
 ROW = ".sheet .nib-segmented[aria-label='Web version']"
 
-
 def wait(page: Page, script: str, what: str) -> object:
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -42,9 +30,7 @@ def wait(page: Page, script: str, what: str) -> object:
         page.wait_for_timeout(250)
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def both_builds(worker: harness.Worker) -> Path:
-    """The release and the edge in one folder, as the deploy leaves them."""
     worker.prepare()
     edge = Path(tempfile.mkdtemp(prefix="nib-web-edge-")) / "dist"
     DRIVE.later(lambda: shutil.rmtree(edge.parent, ignore_errors=True))
@@ -73,15 +59,12 @@ def both_builds(worker: harness.Worker) -> Path:
     say(done.stdout.strip())
     return folder
 
-
 def settled(page: Page) -> None:
     page.wait_for_load_state("domcontentloaded")
     wait(page, "() => !!window.nibApp?.workspace", "the app")
     page.wait_for_timeout(800)
 
-
 def row(page: Page) -> str:
-    """Which of the two the Web version row says, Settings open on General."""
     page.evaluate("() => window.nibApp.settings.show('general')")
     page.wait_for_timeout(500)
     found = page.locator(ROW)
@@ -91,19 +74,15 @@ def row(page: Page) -> str:
     found.scroll_into_view_if_needed()
     return found.locator("[aria-checked='true']").inner_text().strip()
 
-
 def choose(page: Page, label: str) -> None:
-    """One of the two pressed, and the page the Worker answers with."""
     with page.expect_navigation(timeout=PATIENCE * 1000):
         page.locator(ROW).get_by_role("radio", name=label, exact=True).click()
     settled(page)
-
 
 def drive(page: Page) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     settled(page)
 
-    # The release: no mark, and the row says so.
     if page.locator(MARK).count():
         wrong("the release shows the Unstable mark")
     said = row(page)
@@ -112,7 +91,6 @@ def drive(page: Page) -> None:
         wrong(f"on the release the row says {said!r}")
     shot(page, "1-release-settings")
 
-    # To the edge, through the Worker.
     choose(page, "Unstable")
     cookies = {one["name"]: one["value"] for one in page.context.cookies()}
     say(f"[edge] cookie {cookies.get('orden-channel')!r}, at {page.url}")
@@ -130,7 +108,6 @@ def drive(page: Page) -> None:
         wrong(f"on the edge the row says {said!r}")
     shot(page, "3-edge-settings")
 
-    # The mark opens Settings, where the release is chosen again.
     page.evaluate("() => (window.nibApp.settings.open = false)")
     page.wait_for_timeout(400)
     if page.locator(MARK).count():
@@ -151,7 +128,6 @@ def drive(page: Page) -> None:
         wrong(f"back on the release the row says {said!r}")
     shot(page, "4-release-again")
 
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     folder = both_builds(worker)
@@ -163,7 +139,6 @@ def main() -> int:
         drive(page)
         context.close()
     return DRIVE.verdict("the web app moves between its two builds from Settings")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

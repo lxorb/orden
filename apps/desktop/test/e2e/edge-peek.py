@@ -1,23 +1,3 @@
-"""The file list brought out by the pointer at the window's edge (#1034), driven in the
-built app and timed a frame at a time.
-
-What it presses and measures, with the left sidebar shut and two notes open:
-
-  * **At once.** The pointer reaching the edge: how long from that move to the first
-    frame the list has moved on, and how long until it is all the way in. Then the
-    pointer leaving it: how long until it starts back, and until it is gone.
-  * **Nothing under it moves.** The pane's box on every frame of both slides.
-  * **A card.** Out, the list stands in from the window's edges with rounded corners
-    and a shadow, over the note.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/edge-peek.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Screenshots go beside this file under
-`shots/edge-peek/`.
-"""
-
 from __future__ import annotations
 
 import json
@@ -48,9 +28,6 @@ async () => {
 }
 """
 
-# Watches every frame from now on: how far the list reaches into the window - nothing
-# while it is hidden - and where the pane's box is, with the moment the pointer moved
-# that the drive asks about.
 WATCH = """
 () => {
   const frames = []
@@ -71,7 +48,6 @@ WATCH = """
 }
 """
 
-# The list out: its box, its corner and its shadow, and the pane's box.
 SHAPE = """
 () => {
   const aside = document.querySelector('.panels aside')
@@ -87,9 +63,7 @@ SHAPE = """
 }
 """
 
-
 def timed(page: Page, x: int, settled: str, what: str) -> dict:
-    """The pointer to `x`, then frames until the list has stopped where `settled` says."""
     page.evaluate("() => { window.__peek.frames.length = 0; window.__peek.moved = null }")
     page.wait_for_timeout(100)
     page.mouse.move(x, 400)
@@ -117,7 +91,6 @@ def timed(page: Page, x: int, settled: str, what: str) -> dict:
     if len(panes) != 1:
         wrong(f"{what}: the pane moved under it: {sorted(panes)}")
     return result
-
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport=SIZE, color_scheme="light")
@@ -175,7 +148,6 @@ def drive(browser: Browser) -> None:
     quiet(page)
     DRIVE.shot(page, "03-out-dark")
     context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

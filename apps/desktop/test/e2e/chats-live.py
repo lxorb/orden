@@ -1,33 +1,3 @@
-"""A chat between people, in browsers of their own, against the real Worker.
-
-Emil owns a space and shares it: Lucile may write in it and Mia may only read. In
-three browsers, each signed in as one of them:
-
-- Emil makes a chat in the space, with the Chats panel's own road: named in the file list;
-- it arrives on Lucile's and Mia's devices by its pointer, and opens;
-- Emil posts, Lucile replies in the message's replies, Lucile reacts, Emil edits and
-  deletes - and each is seen live on the other side, timed;
-- Lucile leaves the chat, Emil calls her by name, and her Chats panel shows the chat
-  unread with a mention badge;
-- Lucile goes offline, posts, comes back: the message is placed exactly once, and Emil
-  sees it once;
-- Mia's chat has no composer, and the account refuses her post;
-- Emil finds a message in the palette and with the chat's own Ctrl+F, makes a task of
-  one whose link in the inbox opens it again, and sends a note to the chat, where it is
-  drawn as a live card;
-- Emil deletes a second chat's pointer: it leaves his Chats panel at once and Lucile's
-  once the delete has synced, the account lists it for nobody, and after a reload it is
-  still gone - no row with no name anywhere (#375).
-
-Everything is the real thing: the built web app, the Worker under `wrangler dev` on
-workerd, the chat's `ChatLog` and each account's hub as Durable Objects, D1 with every
-migration, and each browser's own outbox, socket and store.
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/chats-live.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -50,22 +20,14 @@ OWNER, MEMBER, READER = "emil@example.com", "lucile@example.com", "mia@example.c
 NAMES = {OWNER: "Emil", MEMBER: "Lucile", READER: "Mia"}
 SPACE = "Team"
 
-#: How long anything live is given to arrive on the other side.
 LIVE = 15
-#: How long a pointer is given to sync to another device.
 SYNCED = 60
-
 
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
 
-
-# ---------------------------------------------------------------- in a page
-
-
 def wait(page: Page, script: str, what: str, arg: object = None, patience: float = LIVE) -> Any:
-    """Until the script answers something, polled; what it answered, or out."""
     until = time.monotonic() + patience
     while time.monotonic() < until:
         answer = page.evaluate(script, arg)
@@ -74,10 +36,7 @@ def wait(page: Page, script: str, what: str, arg: object = None, patience: float
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
 
-
 def came(page: Page, script: str, what: str, arg: object = None, patience: float = LIVE) -> float | None:
-    """How many seconds it took the script to answer something, or None, counted as a
-    failure, when it never did."""
     start = time.monotonic()
     try:
         wait(page, script, what, arg, patience)
@@ -85,7 +44,6 @@ def came(page: Page, script: str, what: str, arg: object = None, patience: float
         wrong(f"gave up waiting for {what}")
         return None
     return time.monotonic() - start
-
 
 def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
@@ -102,9 +60,7 @@ def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext,
     wait(page, "() => !!window.nibApp && window.nibApp.account.signedIn", f"[{label}] the session", patience=40)
     return context, page
 
-
 def show_space(page: Page, label: str, space_id: str) -> str:
-    """The space shown, by its account id; answers its folder's name on this device."""
     name = wait(
         page,
         "(id) => { const space = window.nibApp.workspace.spaces.find("
@@ -116,7 +72,6 @@ def show_space(page: Page, label: str, space_id: str) -> str:
     )
     return str(name)
 
-
 CHAT_PATH = """
 async (name) => {
   const { chats } = await window.nibApp.chats()
@@ -127,9 +82,7 @@ async (name) => {
 
 OPEN = "async (path) => { const one = await window.nibApp.chats(); one.openChat(path) }"
 
-
 def open_chat(page: Page, label: str, name: str) -> dict[str, str]:
-    """The chat, found by its pointer once that has synced here, and opened."""
     try:
         found = wait(page, CHAT_PATH, f"[{label}] the chat's pointer", name, patience=SYNCED)
     except SystemExit:
@@ -151,7 +104,6 @@ def open_chat(page: Page, label: str, name: str) -> dict[str, str]:
     wait(page, "() => !!document.querySelector('.chat-tab .timeline, .chat-tab .waiting, .chat-tab .main')", f"[{label}] the chat's tab")
     return found  # type: ignore[no-any-return]
 
-
 def rows_with(page: Page, words: str) -> int:
     return page.evaluate(  # type: ignore[no-any-return]
         "(words) => [...document.querySelectorAll('.chat-tab .main .message .body')]"
@@ -159,27 +111,21 @@ def rows_with(page: Page, words: str) -> int:
         words,
     )
 
-
 def has_row(words: str) -> str:
     return (
         "() => [...document.querySelectorAll('.chat-tab .main .message .body')]"
         f".some((one) => one.textContent.includes({json.dumps(words)}))"
     )
 
-
 def type_in(page: Page, words: str, where: str = ".chat-tab .main .composer .cm-content") -> None:
     page.click(where)
     page.keyboard.type(words, delay=8)
     page.keyboard.press("Enter")
 
-
 def row_of(page: Page, words: str):  # noqa: ANN201 - a locator
     return page.locator(".chat-tab .main .message", has=page.locator(".body", has_text=words)).first
 
-
 def everywhere(owner: Page, chat: dict[str, str]) -> None:
-    """Emil finds a message with the palette and with the chat's own search, makes a task
-    of it whose link opens it again, and sends a note to the chat as a live card."""
     owner.keyboard.press("Escape")
     owner.keyboard.press("Control+o")
     owner.keyboard.type("second draft", delay=10)
@@ -212,7 +158,6 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.keyboard.press("Enter")
     came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the hit flashed")
 
-    # A message made a task, with its link back.
     row_of(owner, "could you look at the figures").click(button="right")
     owner.get_by_role("menuitem", name="Add as task").click()
     came(
@@ -230,14 +175,12 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     )
     link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("nib://chat/")), "")
     say(f"the task landed in the inbox: {inbox.strip().splitlines()[-2:]}")
-    # Quick add stays up for the next task, as Todoist's does.
     owner.keyboard.press("Escape")
     came(owner, "() => !document.querySelector('.nib-scrim')", "[Emil] quick add put away")
     owner.evaluate("() => window.nibApp.workspace.closeActive()")
     owner.evaluate("async (link) => (await window.nibApp.chats()).openChatLink(link)", link)
     came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the task's link, opening the message")
 
-    # A note sent to the chat, drawn as a live card.
     owner.evaluate(
         "async () => { const { writeFile } = await window.nibApp.tasks();"
         " await writeFile('/Team/Plan.md', '# Plan\\n\\nThe figures go in on Friday.\\n');"
@@ -253,7 +196,6 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     plan = owner.locator(".row[data-path$='Plan.md']").first
     plan.wait_for(timeout=10_000)
-    # Through the palette: the row's menu leaves sending to a drag (#416).
     plan.click()
     owner.keyboard.press("Control+Shift+P")
     owner.keyboard.type("Send to chat", delay=10)
@@ -276,10 +218,6 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     )
     DRIVE.shot(owner, "emil-note-card")
 
-
-# ---------------------------------------------------------------- the drive
-
-
 LISTED = """
 async (id) => {
   const { chats } = await window.nibApp.chats()
@@ -287,16 +225,12 @@ async (id) => {
 }
 """
 
-#: The Chats panel's rows, as drawn: how many say nothing but their mark.
 BLANK_ROWS = """
 () => [...document.querySelectorAll('.nib-row.entry .nib-row-label')]
   .filter((one) => !one.textContent.trim()).length
 """
 
-
 def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> None:
-    """A second chat made, seen on Lucile's device, and its pointer deleted by Emil: gone
-    from both lists, the account's included, and still gone after a reload (#375)."""
     owner.evaluate("async () => (await window.nibApp.chats()).makeChat()")
     field = owner.locator("input[aria-label='Name']")
     field.fill("Doomed")
@@ -338,7 +272,6 @@ def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> N
     DRIVE.shot(member, "deleted-chat-gone")
     say("the deleted chat is listed nowhere, after a reload too")
 
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session(
@@ -366,10 +299,8 @@ def main() -> int:
         member_context, member = signed_in(browser, tokens[MEMBER], "Lucile")
         _, reader = signed_in(browser, tokens[READER], "Mia")
 
-        # ── Emil makes a chat ────────────────────────────────────────────
         show_space(owner, "Emil", space["id"])
         wait(owner, "async () => (await window.nibApp.chats()).chats.ready", "[Emil] the chats' store", patience=40)
-        # Named in the file list first, as every new chat is: it has its place before its tab.
         owner.evaluate("async () => (await window.nibApp.chats()).makeChat()")
         field = owner.locator("input[aria-label='Name']")
         field.fill("Chat")
@@ -386,14 +317,12 @@ def main() -> int:
         open_chat(reader, "Mia", "Chat")
         say("the chat is on all three devices")
 
-        # ── Emil posts, Lucile sees it ───────────────────────────────────
         type_in(owner, "Hello **team**, the draft is up")
         took = came(member, has_row("Hello team, the draft is up"), "[Lucile] Emil's message")
         if took is not None:
             say(f"Lucile saw Emil's message after {took:.2f}s")
         came(reader, has_row("Hello team, the draft is up"), "[Mia] Emil's message")
 
-        # ── Lucile replies, Emil sees the count ──────────────────────────
         row_of(member, "Hello team").hover()
         member.locator(".chat-tab [role=toolbar] button[aria-label='Reply']").click()
         wait(member, "() => !!document.querySelector('.chat-tab .replies .composer .cm-content')", "[Lucile] the replies pane")
@@ -408,7 +337,6 @@ def main() -> int:
             say(f"Emil saw the reply after {took:.2f}s")
         DRIVE.shot(member, "lucile-replies")
 
-        # ── Lucile reacts, Emil sees it ──────────────────────────────────
         row_of(member, "Hello team").hover()
         emoji = member.locator(".chat-tab [role=toolbar] button.emoji").first
         picked = emoji.get_attribute("aria-label") or ""
@@ -423,7 +351,6 @@ def main() -> int:
         if took is not None:
             say(f"Emil saw {picked} after {took:.2f}s")
 
-        # ── Emil edits, Lucile sees it ───────────────────────────────────
         owner.click(".chat-tab .main .composer .cm-content")
         owner.keyboard.press("ArrowUp")
         wait(owner, "() => !!document.querySelector('.chat-tab .main .composer .box.editing')", "[Emil] the edit")
@@ -439,7 +366,6 @@ def main() -> int:
         if took is not None:
             say(f"Lucile saw the edit after {took:.2f}s")
 
-        # ── Emil deletes, Lucile sees it go ──────────────────────────────
         type_in(owner, "this one was a mistake")
         came(member, has_row("this one was a mistake"), "[Lucile] the mistake")
         row_of(owner, "this one was a mistake").click(button="right")
@@ -455,7 +381,6 @@ def main() -> int:
         DRIVE.shot(owner, "emil-chat")
         DRIVE.shot(member, "lucile-chat")
 
-        # ── Unread and a mention, in Lucile's Chats panel ───────────────
         member.evaluate("() => window.nibApp.workspace.closeActive()")
         member.evaluate("() => window.nibApp.workspace.showPanel('chats')")
         wait(member, "() => !!document.querySelector('.chats .entry')", "[Lucile] the Chats panel")
@@ -470,7 +395,6 @@ def main() -> int:
             say(f"Lucile's panel showed the mention after {took:.2f}s")
         DRIVE.shot(member, "lucile-panel-mention")
 
-        # ── Lucile offline, then back ────────────────────────────────────
         open_chat(member, "Lucile", "Chat")
         came(member, has_row("could you look at the figures"), "[Lucile] the mention, in the chat")
         member.bring_to_front()
@@ -515,7 +439,6 @@ def main() -> int:
             if rows_with(page, "Sent while offline") != 1:
                 wrong(f"[{label}] draws the offline message {rows_with(page, 'Sent while offline')} times")
 
-        # ── Mia only reads ───────────────────────────────────────────────
         came(reader, has_row("Sent while offline"), "[Mia] the conversation")
         if reader.locator(".chat-tab .main .composer").count():
             wrong("[Mia] has a composer in a chat she may only read")
@@ -534,14 +457,11 @@ def main() -> int:
             say(f"the account refused Mia's post: {result['refused']}")
         DRIVE.shot(reader, "mia-reads")
 
-        # ── Everywhere: the palette, a task, a note sent to the chat ────
         everywhere(owner, chat)
 
-        # ── A chat deleted is listed nowhere ─────────────────────────────
         deleted(worker, tokens, owner, member)
 
     return DRIVE.verdict("a chat made, written in, reacted to, edited and deleted live between three browsers")
-
 
 if __name__ == "__main__":
     sys.exit(main())
