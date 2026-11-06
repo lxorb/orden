@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A theme Chrome or Firefox wears, kept as one of Orden's.
-   *
-   *  A row of Appearance with a button per browser, and the window a press opens:
-   *  every theme that browser has installed, each on the card the theme picker draws,
-   *  already in Orden's own tokens (themes/browser.ts). A card pressed is named and
-   *  kept as a file in the themes folder, where any other theme is. Both lists are
-   *  read as the row appears, so a browser with nothing to bring is a button that
-   *  says so by being out of reach. */
   import tokens from '@orden/themes/tokens.css?raw'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -32,7 +24,6 @@
   }
 
   const found = $state<Record<string, Found[]>>({ Chrome: [], Firefox: [] })
-  /** The browser whose themes are up, or null. */
   let shown = $state<string | null>(null)
 
   for (const browser of BROWSERS) {
@@ -53,7 +44,6 @@
 
   $effect(() => (shown ? overlays.show(() => (shown = null)) : undefined))
 
-  /** Named, then written under the name as an id no installed theme has yet. */
   async function keep(one: Found, browser: string) {
     const name = (
       await prompt.ask({ title: t('Name this'), value: one.name, confirmLabel: t('Save') })
@@ -100,12 +90,10 @@
 {/if}
 
 <style>
-  /* Over Settings and under the question that names a theme; see the theme store. */
   .scrim {
     --scrim-z: var(--z-store);
   }
 
-  /* The theme picker's grid and its cards, three across, on `.nib-screen`. */
   .themes {
     z-index: var(--z-store);
     display: grid;

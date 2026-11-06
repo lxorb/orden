@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { GIVES_UP_AFTER, InstructionsField, SETTLES_AFTER } from './instructions-field.svelte'
 
-/** The field a space's AGENTS.md is edited in: what it writes, when, and what it never
- *  writes. Stands in for the disk; the write path itself is workspace/note-text.ts. */
-
 const PATH = '/space/AGENTS.md'
 
 function disk(start: string | null) {

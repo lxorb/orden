@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The spelling pane on Orden's own Chromium, which is every Linux desktop: a switch per
- *  dictionary, any number of them on, and what is on said to the engine (#771). */
-
 const told = vi.hoisted(() => ({ lists: [] as string[][] }))
 
 vi.mock('../spell-languages', async (original) => ({

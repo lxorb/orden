@@ -1,9 +1,3 @@
-/** Everything the settings file may set (#673), as fields: each row of the panes that
- *  has a key, and what has a key but no row of its own to carry it - the settings of
- *  every theme the app ships with, not only the one worn; each command's key; the search
- *  engine. The schema is made from these (file-schema.ts) and the file is put in force
- *  through them (file.ts). Fetched with the file, never at the launch. */
-
 import type { EditorView } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
@@ -16,7 +10,6 @@ import { shortcutKey } from './declared.svelte'
 import type { Field } from './fields'
 import { part } from './hold'
 
-/** Every command's key, by the command's id; one that cannot be moved has none. */
 function shortcutFields(): Field[] {
   return [
     {
@@ -43,14 +36,12 @@ function shortcutFields(): Field[] {
   ]
 }
 
-/** Where words typed in a web tab's address bar go. */
 function searchFields(): Field[] {
   return [
     {
       kind: 'select',
       key: 'general.searchEngine',
       store: part(searchEngine, 'choice', 'id'),
-      // The list is the reader's region's; `custom` is the address below.
       open: true,
       label: t('Search engine'),
       hint: t('Where words typed into a web tab’s address bar are searched.'),
@@ -75,15 +66,12 @@ function searchFields(): Field[] {
   ]
 }
 
-/** Every field the file may set, the first of any key twice: a theme's row in
- *  Appearance before the same setting declared for every theme. */
 export async function declarations(view?: EditorView): Promise<Field[]> {
   const rows = declaredPanes(view).flatMap((pane) => pane.groups.flatMap((group) => group.fields))
   const all = [...rows, ...(await themeDeclarations()), ...shortcutFields(), ...searchFields()]
   const seen = new Set<string>()
   return all.filter((one) => {
     if (!one.key) return false
-    // A list's members share its key.
     const name = one.member === undefined ? one.key : `${one.key}\u0000${one.member}`
     if (seen.has(name)) return false
     seen.add(name)

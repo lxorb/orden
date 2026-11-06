@@ -4,16 +4,8 @@ import { settings } from '../settings.svelte'
 import type { Pane } from './fields'
 import { part } from './hold'
 
-/** Settings › Export; see `preferences` in ../preferences.ts. */
 export function exportPane(): Pane {
   return {
-    // The page an export is laid out on. The ways of exporting are beside it on
-    // the pane and are commands rather than settings; see `exportExtras` in
-    // SettingsPanel.svelte.
-    //
-    // None of these says what it started as, so the pane offers no reset: a
-    // margin somebody typed is a decision about their printer, and one button
-    // that quietly replaced six of those is not worth having.
     id: 'export',
     label: t('Export'),
     groups: [
@@ -51,8 +43,6 @@ export function exportPane(): Pane {
             get: () => settings.page.margin,
             set: (value) => settings.setPage({ margin: value }),
           },
-          // Running text on every sheet. `${title}`, `${date}` and `${year}` are
-          // filled in; the placeholder shows the shape.
           {
             kind: 'text',
             key: 'export.header',

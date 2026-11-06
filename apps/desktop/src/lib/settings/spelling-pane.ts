@@ -13,9 +13,6 @@ import {
 import type { Field, Group, Pane } from './fields'
 import { among } from './hold'
 
-/** The dictionaries, a switch apiece, where the engine has a list to give them to; and
- *  where it has not, a line saying whose languages it checks in (#771). See
- *  spell-languages.ts. */
 function dictionaryGroups(view: EditorView | undefined): Group[] {
   if (!choosable) return []
 
@@ -25,7 +22,6 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
       title: t('Dictionary'),
       fields: DICTIONARIES.map((one): Field => ({
         kind: 'switch',
-        // One member of the list the settings file gives (#673).
         key: 'spelling.languages',
         member: one.id,
         store: among(modes, 'spellLanguages', one.id),
@@ -49,7 +45,6 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
   ]
 }
 
-/** Settings › Spelling; see `preferences` in ../preferences.ts. */
 export function spellingPane(view: EditorView | undefined): Pane {
   return {
     id: 'spelling',

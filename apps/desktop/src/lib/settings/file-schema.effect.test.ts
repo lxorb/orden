@@ -1,13 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The settings file's schema (#673), which packaging/nix/settings-schema.json holds
- *  for Home Manager to make `programs.orden.settings` from. Made here from the fields
- *  that declare it (declarations.ts) as each desktop builds them, Linux, macOS and
- *  Windows, and merged into one, each setting that is not on all three saying where it
- *  is. A field given a key, or a key's choices changed, without the file following fails
- *  here, and `vitest -u` writes it again. In the jsdom project because the themes'
- *  settings are worked out against the page. */
-
 import type { Field } from './fields'
 import type { Platform, Schema } from './file-schema'
 
@@ -20,8 +12,6 @@ vi.stubGlobal('localStorage', {
 })
 Object.defineProperty(navigator, 'language', { configurable: true, value: 'en-US' })
 
-/** The fields one desktop declares, built afresh for it. The DNS row is offered, and
- *  its provider's too, as they are once somebody picks another provider. */
 async function fieldsOn(platform: Platform): Promise<{ fields: Field[]; schema: Schema }> {
   vi.resetModules()
   held.clear()
@@ -87,7 +77,6 @@ describe('the settings file’s schema', () => {
   })
 
   test('says which platforms a setting is on, where it is not on all of them', () => {
-    // Glass's material is what Windows draws behind the window.
     expect(schema['themes.glass.material']?.platforms).toEqual(['windows'])
     expect(schema['editor.textSize']?.platforms).toBeUndefined()
   })

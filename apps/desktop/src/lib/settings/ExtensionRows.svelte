@@ -1,14 +1,3 @@
-<!-- The extensions, in Settings > General > Browser: one row each, with its switch, and
-     what it may do and the way to take it away a press on its name away.
-
-     chrome://extensions in Orden's rows. A row is the extension's picture, its name, its
-     version, and the switch; pressing the name opens the row, which lists what the
-     extension asks to be allowed in Chromium's own words and holds Options and Remove.
-     Under the rows, the field a store link is pasted into. What the engine said when an
-     extension did not load is the one line that is not asked for; a Firefox add-on's row
-     also says what of it does not run in Orden, and on Linux, where the engine loads one
-     only as it starts, that it starts with the next launch. The list and every
-     press are lib/web-tab/extensions.svelte.ts's. -->
 <script lang="ts">
   import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
@@ -20,7 +9,6 @@
   import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'
   import { extensions } from '../web-tab/extensions.svelte'
 
-  /** The row that is open, if any. */
   let opened = $state<string | null>(null)
   let link = $state('')
 

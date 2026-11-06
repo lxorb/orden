@@ -3,19 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** Every button in Settings is one of the app's own (#1057).
- *
- *  Settings > Import answered each source with a dialog's button - `.nib-button
- *  is-quiet is-soft`, heavy type on a fill of its own that did not change under the
- *  pointer - where every other row answers with `.nib-chip`. And four more panes
- *  had drawn their own 26px square for a mark that is pressed (reset a shortcut,
- *  move a host, take a rule away, go back), three their own removable word, and the
- *  shortcut clash its own pair of buttons. Each is a shape in the themes package
- *  now; these read every component that draws a setting's row and refuse a button
- *  that is not one of them unless it is named below with its reason.
- *
- *  Read out of the sources rather than measured, for the reason Editor.test.ts gives. */
-
 const LIB = fileURLToPath(new URL('..', import.meta.url))
 
 function svelteFiles(dir: string): string[] {
@@ -26,27 +13,18 @@ function svelteFiles(dir: string): string[] {
   })
 }
 
-/** Every component that draws a setting's row, outside the views' own settings. */
 const PANES = svelteFiles(LIB)
   .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))
   .filter((one) => one.source.includes('nib-setting') && !one.path.startsWith('views/'))
 
-/** The app's own buttons, in the themes package. */
 const SHARED = /\b(nib-chip|nib-button|nib-action|nib-glyph|nib-tag|nib-row|nib-setting)\b/
 
-/** Buttons that are not a button of the app's kind, each for a reason of its own. */
 const OWN: Record<string, RegExp> = {
-  // A colour, which is the whole of what it shows.
   'Swatches.svelte': /class="swatch/,
-  // A wallpaper, shown as itself; the key being recorded; a link inside a sentence.
   'SettingsPanel.svelte': /class="(thumb|key|link)"/,
-  // A half of a segmented control, drawn by `.nib-segmented`.
   '*': /role="(radio|tab)"/,
-  // A row that opens itself, and the switch at its end.
   'settings/ExtensionRows.svelte': /class="(name|toggle)"/,
-  // A host's row that opens it; a link to the config.
   'remote/RemotePane.svelte': /class="(open|link)"/,
-  // A theme, shown as a little window of itself.
   'settings/BrowserThemes.svelte': /class="card"/,
 }
 

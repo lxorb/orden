@@ -6,7 +6,6 @@ import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../note-id'
 import { settings } from '../settings.svelte'
 import type { Pane } from './fields'
 
-/** Settings › Editor; see `preferences` in ../preferences.ts. */
 export function editorPane(view: EditorView | undefined, moment: Date): Pane {
   return {
     id: 'editor',
@@ -98,10 +97,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             set: () => modes.toggleFocus(view),
           },
           {
-            // `->` drawn as an arrow, and its kind. A scope rather than a
-            // switch: an arrow is welcome where it is an operator and a
-            // surprise in the middle of a sentence, so code can have it on
-            // its own.
             kind: 'select',
             key: 'editor.ligatures',
             store: { on: modes, name: 'ligatures', shared: 'ligatures' },
@@ -118,9 +113,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             set: (value) => modes.setLigatures(value, view),
           },
           {
-            // Where a pasted or dropped picture lands. What the note says
-            // stays relative to the note either way, so the choice changes
-            // nothing about notes already written.
             kind: 'select',
             key: 'editor.attachments',
             store: { on: modes, name: 'attachments', shared: 'attachments' },
@@ -139,9 +131,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
         ],
       },
       {
-        // Two fingers on a canvas move it and zoom it; with this on they turn it as
-        // well, as Concepts does (#351). On, with the snap holding it upright until a turn
-        // is plainly meant (#487). On the account; a page note never turns.
         title: t('Canvas'),
         fields: [
           {
@@ -169,9 +158,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
         ],
       },
       {
-        // The paper a page note starts on. A page already written on is changed from
-        // its own menu in the panel, which is where somebody looking at a page is;
-        // this is only what a new one is given. See PagesNavigator.svelte.
         title: t('Page notes'),
         fields: [
           {
@@ -192,8 +178,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
         ],
       },
       {
-        // What "New unique note" names a note. Each option is labelled with
-        // what it would produce right now, which says more than the tokens do.
         title: t('Unique note names'),
         fields: [
           {
@@ -213,9 +197,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
         ],
       },
       {
-        // How a link to another note is written. Not what is read: both
-        // spellings are read whatever this says, so a space may hold both and
-        // nothing already written changes.
         title: t('Links'),
         fields: [
           {

@@ -1,11 +1,3 @@
-/** What the hand-written panes of the settings show, so a search can land on those
- *  too: a storage meter, a sign-in row, the switch for Vim keys.
- *
- *  Two searches read it - the box at the top of the settings, and the palette, which
- *  finds a setting wherever it is typed for - so it is written once, here. The
- *  generated panes are `preferences.ts`, which both read as well; see
- *  settings-search.ts and palette/settings.ts. */
-
 import { account } from '../account.svelte'
 import { reach } from '../agents/settings/reach.svelte'
 import { t } from '../i18n.svelte'
@@ -44,8 +36,6 @@ export function places(): Place[] {
       : [{ section: 'space' as const, label: t('Agent instructions'), text: ['AGENTS.md'] }]),
     { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
     { section: 'editor', label: t('Reset to defaults'), text: [] },
-    // Modal editing sits with the keyboard rather than with the editor, so
-    // this is where searching for it lands.
     { section: 'shortcuts', label: t('Vim keys'), text: ['vim'] },
     { section: 'markdown', label: t('Reset to defaults'), text: [] },
   ]
@@ -59,8 +49,6 @@ export function places(): Place[] {
     all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
   }
 
-  // The agents on this machine, in AI's Access: a desktop's alone. See
-  // agents/settings/reach.svelte.ts and access/Access.svelte.
   if (!__EVEN_PLUGIN__ && reach.offered) {
     all.push({
       section: 'ai',
@@ -69,7 +57,6 @@ export function places(): Place[] {
     })
   }
 
-  // The machines a remote terminal reaches; see remote/RemotePane.svelte.
   if (!__EVEN_PLUGIN__ && isDesktop) {
     all.push({
       section: 'remote',
@@ -78,7 +65,6 @@ export function places(): Place[] {
     })
   }
 
-  // The account's machine; see online/OnlinePane.svelte.
   if (!__EVEN_PLUGIN__ && account.user) {
     all.push({
       section: 'online',
@@ -87,7 +73,6 @@ export function places(): Place[] {
     })
   }
 
-  // The apps connected through the account, in AI's Access too.
   if (account.user) {
     all.push({
       section: 'ai',

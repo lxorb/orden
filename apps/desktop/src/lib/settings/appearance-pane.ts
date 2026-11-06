@@ -11,8 +11,6 @@ import { workspace } from '../workspace.svelte'
 import type { PictureSide, PairField, Field, Group, Pane } from './fields'
 import { part } from './hold'
 
-/** The three places a face can be chosen for, each with the app's own face as what its
- *  field shows while it is empty. */
 const FONT_FIELDS: readonly {
   place: FontPlace
   label: string
@@ -43,29 +41,13 @@ const FONT_FIELDS: readonly {
   },
 ]
 
-/** A control hands its value back as a string, because that is what a control
- *  holds. Following the system is what anything else reads as. */
 function asChoice(value: string): SchemeChoice {
   return value === 'dark' || value === 'light' ? value : 'system'
 }
 
-/** One of the theme's own settings, as a row of the pane.
- *
- *  The whole of what Appearance knows about what a theme offers. A theme declares
- *  a kind and the app already has a control for each: a colour is a row of
- *  swatches, a number in a range is the dial every other measurement in the app
- *  uses, a switch is a switch, and a choice of two or three short words is the
- *  segmented control - past three it is a dropdown, because a row of six words is
- *  a row nobody can read at a glance.
- *
- *  The label goes through `t()` on its way in: a theme the app ships with declares
- *  words the catalogues carry, and a theme file declares its author's own, which
- *  `t()` hands back unchanged. */
 function themeField(setting: ThemeSetting, owner = theme.id): Field {
   const label = t(setting.label)
   const worn = () => owner === theme.id
-  // A theme not worn is read and written in its drawer: what the settings file says
-  // for it (#673), and the row of the one worn is the same setting.
   const drawer = setting.shared === true ? SHARED : owner
   const get = () => (worn() ? theme.values[setting.id] : theme.keptFor(drawer, setting.id))
   const put = (value: ThemeValue) =>
@@ -74,8 +56,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
     label,
     hint: t(setting.hint),
     initial: setting.initial,
-    // The app's own, which every theme shares, under Appearance; a theme's own under
-    // its name.
     key: drawer === SHARED ? `appearance.${setting.id}` : `themes.${owner}.${setting.id}`,
     store: {
       on: theme,
@@ -156,9 +136,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
   }
 }
 
-/** Every setting of every theme the app ships with, worn or not, and the app's own
- *  that every theme shares: what the settings file may say about any of them (#673),
- *  which Appearance shows only for the theme worn. */
 export async function themeDeclarations(): Promise<Field[]> {
   const fields = appSettings().map((one) => themeField(one, SHARED))
   for (const one of builtIns()) {
@@ -169,8 +146,6 @@ export async function themeDeclarations(): Promise<Field[]> {
   return fields
 }
 
-/** The wallpaper's pictures, light first: the side the app is not in shows what it
- *  would wear, which is this side's picture until it is given one of its own. */
 function pictureField(): Field {
   const sides = (['light', 'dark'] as const).map((scheme): PictureSide => ({
     label: t(SCHEME_NAMES[scheme]),
@@ -198,14 +173,12 @@ function pictureField(): Field {
   }
 }
 
-/** A built-in theme's own rows that are there right now. */
 function ownFields(): Field[] {
   return theme.settings
     .filter((one) => one.own === true && (one.when?.() ?? true))
     .map((one) => themeField(one))
 }
 
-/** Settings › Appearance; see `preferences` in ../preferences.ts. */
 export function appearancePane(): Pane {
   const zooms = isDesktop && platform() === 'linux'
   if (zooms) void modes.askInterfaceZoom().catch(() => undefined)
@@ -217,15 +190,6 @@ export function appearancePane(): Pane {
         title: t('Theme'),
         fields: [
           {
-            // The theme, and nothing else. A theme has a dark side or a light
-            // one or both; which of them the app is showing is the row below.
-            //
-            // Named for what it picks rather than for the group it is in: the
-            // group is the theme and both rows are about it, so a row called
-            // Theme under a heading called Theme read as "Theme / Theme / Mode"
-            // and said nothing about which of the two was which. This one picks
-            // the look - the palette and the type a theme sets - and the one
-            // below picks which side of it the app is showing.
             kind: 'select',
             key: 'appearance.style',
             store: { on: theme, name: 'id' },
@@ -238,14 +202,6 @@ export function appearancePane(): Pane {
             set: (value) => theme.select(value),
           },
           {
-            // Following the system is where everybody starts and the only one
-            // of the three that changes with the hour, so it stays a segment
-            // of its own rather than being something to arrive back at.
-            //
-            // Neither row says what it started as, so the pane offers no reset:
-            // a look chosen from a gallery is not a default anybody drifted
-            // away from, and the accent below is drawn by hand where a reset
-            // could not reach it.
             kind: 'segmented',
             key: 'appearance.mode',
             store: { on: theme, name: 'scheme' },
@@ -260,20 +216,10 @@ export function appearancePane(): Pane {
             get: () => theme.shown,
             set: (value) => theme.setScheme(asChoice(value)),
           },
-          // And whatever the theme in force offers of its own, under the two
-          // rows that chose it and with no heading between: they are the
-          // theme's, and where they sit is what says so. A theme with nothing
-          // to offer adds nothing, so the group is the same two rows it has
-          // always been. See themes/settings.ts.
           ...theme.settings.filter((one) => one.own !== true).map((one) => themeField(one)),
         ],
       },
 
-      // A built-in's own dials - glass's material, the wallpaper's picture - in a
-      // card of the theme's name: there are more of them than a row under Style can
-      // carry, and the name is the heading they already have. The picture first,
-      // which is what the wallpaper is about; the thumbnails are the pictures, so
-      // the row needs no more words.
       ...(theme.settings.some((one) => one.own === true)
         ? [
             {
@@ -283,10 +229,6 @@ export function appearancePane(): Pane {
           ]
         : []),
 
-      // The Essentials as Zen's grid of tiles, or as the list of names they were;
-      // found by the word they went by before, in English and in the reader's own.
-      // The faces to read in (#772): any installed on this machine, by its name, in
-      // front of the app's own, which still draws what the chosen one has not got.
       {
         title: t('Fonts'),
         fields: FONT_FIELDS.map((one): Field => ({
@@ -354,8 +296,6 @@ export function appearancePane(): Pane {
         title: t('Pointer'),
         fields: [
           {
-            // A desktop app's arrow over its buttons, or a web page's hand. The
-            // arrow stays the default; the Claude app offers the same switch.
             kind: 'switch',
             key: 'appearance.pointingHand',
             store: { on: modes, name: 'hand' },
@@ -367,8 +307,6 @@ export function appearancePane(): Pane {
             set: () => modes.toggleHand(),
           },
           {
-            // The pane under the pointer is the one Alt and a digit counts in and a new
-            // tab opens in, as in a tiling window manager (#1033); see pane-moves.ts.
             kind: 'switch',
             key: 'appearance.paneFollowsPointer',
             store: { on: workspace.device, name: 'paneFollowsPointer' },
@@ -386,8 +324,6 @@ export function appearancePane(): Pane {
         title: t('Tabs'),
         fields: [
           {
-            // The tab overview (Alt Alt) on Orden's own ground, or over the app blurred,
-            // as it was drawn first (issue #331).
             kind: 'switch',
             key: 'appearance.overviewBlur',
             store: { on: modes, name: 'overviewBlur' },
@@ -401,16 +337,6 @@ export function appearancePane(): Pane {
         ],
       },
 
-      // The window itself: who draws its frame. Desktop only, because a browser tab
-      // has none - and on a phone the system draws everything. Orden's own frame stays
-      // the default: the bar it draws holds the menu, the sidebar toggle, the tabs
-      // and the window's three buttons, and it is the shape the whole shell is
-      // measured from. See appearance.rs.
-      //
-      // Whether the desk shows through the window is not here: that is the glass
-      // theme, chosen under Style above. A row of its own was a switch that took the
-      // window's ground away and showed next to nothing, since every surface painted
-      // over the ground; see material.ts.
       ...(isDesktop
         ? ([
             {
@@ -447,7 +373,6 @@ export function appearancePane(): Pane {
                 ...(zooms
                   ? ([
                       {
-                        // A list and not a slider: this moves the control under the pointer.
                         kind: 'select',
                         label: t('Zoom'),
                         hint: t('How large all of Orden is drawn on this device.'),

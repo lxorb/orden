@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** A face chosen from what is installed, or typed by its name (#772).
-   *
-   *  A field and a list under it, Chrome's font settings and a combobox in one: typing
-   *  narrows the list, the arrows walk it, Enter or a press takes a row, Escape puts it
-   *  away. Each row is set in its own face, which is how a reader looking for a face
-   *  tells one from another; a face for code lists the monospaced ones first. A name
-   *  nothing on this machine draws is said to be so under the row, rather than drawn in
-   *  the app's own face without a word. See font-families.ts. */
-
   import { t } from '../i18n.svelte'
   import { type Family, installedFamilies, isInstalled, offered } from '../font-families'
   import { overlays } from '../overlays'
@@ -20,9 +11,7 @@
     onchange,
   }: {
     value: string
-    /** The app's own face, which an empty field is. */
     placeholder: string
-    /** Whether the face is for code, which lists the monospaced families first. */
     mono: boolean
     label: string
     onchange: (family: string) => void
@@ -37,8 +26,6 @@
   let active = $state(-1)
   let families = $state<Family[]>([])
 
-  /** At most this many rows: a machine with three thousand faces is a list nobody reads
-   *  to the end, and what is typed narrows it to what they meant. */
   const MOST = 200
 
   const shown = $derived(offered(families, typed ?? '', mono).slice(0, MOST))
@@ -144,8 +131,6 @@
 {/if}
 
 <style>
-  /* In the value column, and the box is the one every setting's value is: see
-     `.nib-field.is-value` in the themes package. */
   .picker {
     position: relative;
   }
@@ -181,7 +166,6 @@
     color: var(--text-strong);
   }
 
-  /* Under the row, across it, in the colour the app says no in. */
   .missing {
     flex-basis: 100%;
     color: var(--danger);

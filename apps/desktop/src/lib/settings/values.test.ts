@@ -3,19 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** The value at the end of a setting's row is one box in one column (#1056).
- *
- *  Settings > Account had a name drawn as plain text, an address in grey, two empty
- *  boxes and a dropdown of another height, each ending at its own x, because every
- *  pane carried its own copy of the field: a borderless `.inline` at 12rem in four of
- *  them and 14rem in a fifth, and a `.pick` of 14rem for the dropdown in four more.
- *  The box is `.nib-field.is-value` in the themes package and the column is
- *  `--setting-value`; these read every component that draws a setting's row and
- *  refuse the shapes that let them drift again.
- *
- *  Read out of the sources rather than measured, for the reason Editor.test.ts gives.
- *  What it looks like is the drives' question. */
-
 const LIB = fileURLToPath(new URL('..', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../../../packages/themes/src/', import.meta.url))
 
@@ -27,16 +14,12 @@ function svelteFiles(dir: string): string[] {
   })
 }
 
-/** Every component that draws a setting's row. */
 const PANES = svelteFiles(LIB)
   .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))
   .filter((one) => one.source.includes('nib-setting'))
 
 const styleOf = (source: string) => /<style>([\s\S]*)<\/style>/.exec(source)?.[1] ?? ''
 
-/** The fields in a row that are not the value box, each for a reason of its own: the
- *  three searches are inside a `.nib-field` wrapper, a header's name is a title
- *  rather than a value, and a space's instructions are a page of text. */
 const NOT_VALUES = [
   /placeholder=\{t\('Search (settings|shortcuts|commands)'\)\}/,
   /class="title"/,
@@ -68,7 +51,6 @@ describe('a setting', () => {
         (hit) => `${path}: ${hit[0]}`,
       ),
     )
-    // The one left is a clash's sentence beside its two answers, which is words.
     expect(widths).toEqual(['SettingsPanel.svelte: min-width: 12rem'])
   })
 
@@ -81,7 +63,6 @@ describe('a setting', () => {
         .filter((tag) => !NOT_VALUES.some((reason) => reason.test(tag)))
         .map((tag) => `${path}: ${tag.trim().split(/\s+/).slice(0, 3).join(' ')}`),
     )
-    // The status's words, which stand in the value box beside its emoji.
     expect(bare).toEqual([expect.stringMatching(/^people\/ProfileRows\.svelte: value=\{status/)])
   })
 })

@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Choosing a key for a shortcut: what one keystroke does to the row that is
- *  listening. The registry underneath is the real one, so what counts as a
- *  refusal or a clash is what the app itself thinks. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -26,12 +22,8 @@ let Rebind: typeof import('./rebind.svelte').Rebind
 let shortcuts: typeof import('../shortcuts.svelte').shortcuts
 let rebind: InstanceType<typeof Rebind>
 
-/** The registry reaches most of the app: loaded here rather than by whichever
- *  `beforeEach` runs first, which was ten seconds of it against a hook's budget
- *  of thirty. See docs/conventions.md. */
 await Promise.all([import('./rebind.svelte'), import('../shortcuts.svelte')])
 
-/** A keystroke, as the window would hand one over. */
 function press(key: string, held: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
   return {
     key,
@@ -99,7 +91,6 @@ describe('a row that is listening', () => {
 describe('a key that cannot be taken', () => {
   test('is turned down with a reason, and nothing is written', () => {
     rebind.listen('format.bold')
-    // A bare letter would fire while typing.
     rebind.record(press('j'))
 
     expect(rebind.turnedDown).toMatchObject({ id: 'format.bold' })
@@ -112,12 +103,10 @@ describe('a key that cannot be taken', () => {
 describe('a key something else already answers to', () => {
   test('is held back until it is answered', () => {
     rebind.listen('format.bold')
-    // Ctrl+O is the palette's third key.
     rebind.record(press('o', { ctrl: true }))
 
     expect(rebind.clash?.key).toBe('Mod-o')
     expect(rebind.clash?.holders.map((one) => one.id)).toContain('app.palette.open')
-    // Nothing written while the question stands.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
     expect(shortcuts.keyFor('app.palette.open')).toBe('Mod-o')
   })

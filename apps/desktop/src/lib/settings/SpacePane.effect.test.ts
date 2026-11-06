@@ -1,10 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The field on the page: loaded, focused when asked for, read-only for a reader, and
- *  nothing unwritten left behind when the settings close. The disk is stood in for; the
- *  store's own rules are instructions-field.test.ts. */
-
 const disk = vi.hoisted(() => ({
   files: new Map<string, string>(),
   writable: true,
@@ -45,8 +41,6 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 vi.mock('../workspace/note-text', () => ({
-  // A note's text is read off what is open, which is reactive in the real store: the
-  // pane must not follow it. `settings.section` stands in for the tabs changing.
   noteText: (_: unknown, path: string) => {
     disk.reads++
     if (disk.reactive) void disk.tabs?.()

@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The version, said and copied (#490): beside the channel a desktop or the web app
- *  follows, alone on a phone, and the version alone on the clipboard. */
-
 type Channel = 'stable' | 'unstable'
 
 const world = vi.hoisted(() => {
@@ -64,7 +61,6 @@ describe('the version', () => {
     expect(version.said()).toBe('under test (c0ffee1) · Stable')
   })
 
-  /** #1112: the edge carries the release's number, so only its commit tells it is stale. */
   test("says the edge's commit, which its number does not", () => {
     world.web = 'unstable'
     expect(version.said()).toBe('under test (c0ffee1) · Unstable')

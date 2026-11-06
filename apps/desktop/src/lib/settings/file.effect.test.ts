@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The settings file (#673): what it names is put in force at launch and held there,
- *  and a file that is wrong says so without taking anything else down. In the jsdom
- *  project because what it sets reaches the page: the text size is a style on it. */
-
 const held = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => held.get(key) ?? null,
@@ -12,7 +8,6 @@ vi.stubGlobal('localStorage', {
 })
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', language: 'en' })
 
-/** What the settings folder holds: a file, none, or one that cannot be read. */
 let file: { path: string; text: string } | null | Error = null
 const notices: { title: string; body: string }[] = []
 
@@ -29,7 +24,6 @@ vi.mock('../tauri', async (actual) => ({
     return new Promise(() => undefined)
   },
 }))
-/** Every command the window sent the crate. */
 const asked: string[] = []
 const confirms = vi.fn(() => Promise.resolve(false))
 vi.mock('../prompt.svelte', async (actual) => {
@@ -41,7 +35,6 @@ vi.mock('../prompt.svelte', async (actual) => {
     }),
   }
 })
-/** What the account says its settings are, when asked. */
 let account: Record<string, unknown> = {}
 vi.mock('../api', async (actual) => ({
   ...(await actual<typeof import('../api')>()),
@@ -133,7 +126,6 @@ describe('a settings file', () => {
     typewriter.set(false)
     expect(modes.typewriter).toBe(true)
 
-    // A row it does not name is the reader's, as ever.
     const spacing = row('editor.lineSpacing')
     expect(spacing.declared).toBeUndefined()
   })
@@ -143,7 +135,6 @@ describe('a settings file', () => {
     expect(modes.zoom).toBe(1.1)
     await launch(JSON.stringify({ editor: { textSize: 0.9 } }))
     expect(modes.zoom).toBe(0.9)
-    // And a setting taken out of it is the reader's again.
     await launch(JSON.stringify({}))
     expect(row('editor.textSize').declared).toBeUndefined()
   })
@@ -196,7 +187,6 @@ describe('a settings file', () => {
   })
 
   test('finds a row that is there only once another is', async () => {
-    // The terminal's rows are Developer mode's.
     modes.setDeveloper(false)
     await launch(JSON.stringify({ general: { terminalTextSize: 15 } }))
     expect(declared.problems).toEqual([
@@ -212,12 +202,10 @@ describe('what the settings file holds', () => {
   test('stays as it says when its key is pressed, as when its row is', async () => {
     await launch(JSON.stringify({ editor: { focusMode: true } }))
     expect(modes.focus).toBe(true)
-    // F8: the command the keyboard, the palette and the View menu all run.
     BY_ID.get('app.focus')?.run?.({ view: undefined } as never)
     expect(modes.focus).toBe(true)
     modes.toggleFocus()
     expect(modes.focus).toBe(true)
-    // And a setting the file does not name is the keyboard's as ever.
     const typewriter = modes.typewriter
     BY_ID.get('app.typewriter')?.run?.({ view: undefined } as never)
     expect(modes.typewriter).toBe(!typewriter)
@@ -230,7 +218,6 @@ describe('what the settings file holds', () => {
     await modes.adopt('token')
     expect(modes.hardBreaks).toBe(false)
     expect(modes.properties).toBe('source')
-    // What the file does not name is the account's.
     expect(modes.canvasTurns).toBe(!turns)
   })
 
@@ -293,8 +280,6 @@ describe('what is the reader’s own while the file holds a setting', () => {
     )
     expect(declared.problems).toEqual([])
     expect(modes.hardBreaks).toBe(!mine)
-    // What each store would send - the file's value, since that is what it reads - goes
-    // up as the reader's own.
     expect(shareable({ hardBreaks: modes.hardBreaks, silent: modes.silent })).toEqual({
       hardBreaks: mine,
       silent: modes.silent,
@@ -318,7 +303,6 @@ describe('what is the reader’s own while the file holds a setting', () => {
     const mine = modes.typewriter
     await launch(JSON.stringify({ editor: { typewriterMode: !mine } }))
     expect(modes.typewriter).toBe(!mine)
-    // The next launch: the store restored the file's value, and the file says nothing.
     await launch(JSON.stringify({}))
     expect(modes.typewriter).toBe(mine)
     await launch(JSON.stringify({}))

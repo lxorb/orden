@@ -1,14 +1,3 @@
-<!-- Whether Orden is the default browser, and the press that asks the system to make it
-     one: the control on the Default browser row. Chrome's and Edge's shape - a button
-     while it is not, the tick the app's menus mark a choice with once it is - and
-     nothing at all until the system has answered, so a button never turns into a tick
-     in front of somebody.
-
-     How each system asks is src-tauri/src/default_browser.rs. None of them answers
-     the press itself: Windows opens its own page and a Mac puts up its own question.
-     So the row asks again whenever the window gets the keyboard back, which is the
-     moment somebody returns from either, and once more as the press answers, which is
-     all Linux needs. -->
 <script lang="ts">
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
@@ -17,7 +6,6 @@
   import { settings } from '../settings.svelte'
   import { invoke } from '../tauri'
 
-  /** What the system said last: yes, no, or nothing yet. */
   let is = $state<boolean | null>(null)
 
   async function check() {
@@ -49,8 +37,6 @@
         if (gone) unlisten()
         else stop = unlisten
       })
-      // Without the window's own events the row still says what was true when it
-      // opened, and reopening the settings asks again.
       .catch(() => undefined)
 
     return () => {
@@ -77,7 +63,6 @@
 {/if}
 
 <style>
-  /* The tick Select.svelte marks the chosen row with, at the size of a chip's words. */
   .tick {
     flex: none;
     width: 14px;

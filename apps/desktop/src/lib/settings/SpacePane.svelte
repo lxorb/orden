@@ -2,8 +2,6 @@
   import { owes, writing } from '../parting'
   import type { InstructionsField } from './instructions-field.svelte'
 
-  /** The field on the page. A window closing runs no teardown, so what it still owes is
-   *  written from here and waited for, as a scratchpad's is; see parting.ts. */
   let current: InstructionsField | null = null
   owes(() => {
     if (current) writing(current.flush())
@@ -11,13 +9,6 @@
 </script>
 
 <script lang="ts">
-  /** Settings > Space: what belongs to a space rather than to whoever is reading it.
-   *
-   *  One field so far, the space's agent instructions: the `AGENTS.md` at its top, which
-   *  stays a file there for agents, CLIs and sync, and which the app shows here instead
-   *  of as a note. ChatGPT's and Claude's projects keep their instructions the same way,
-   *  a box in the project's settings. See instructions-field.svelte.ts for what it writes
-   *  and reserved-name.svelte.ts for the way here from a refused name. */
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
@@ -40,7 +31,6 @@
     sync.nudge()
   }
 
-  /** Whether a space is one the window has, and its folder is there. */
   const listed = (at: string) => workspace.spaces.some((one) => samePath(one.root, at))
 
   const hands: FieldHands = {
@@ -72,11 +62,8 @@
     const one = new Field(path, hands, () => !listed(at) || !canWriteAt(path))
     field = one
     current = one
-    // A root's field, and nothing else's: the read goes past what is open, and following
-    // that would read the file again and put it over the words for every tab changed.
     untrack(() => void one.load())
 
-    // Written elsewhere, by sync, an agent or a pane; a CLI's write is seen on coming back.
     const stop = links.hearSaves((saved, words) => {
       if (samePath(saved, path)) one.heard(words)
     })
@@ -91,7 +78,6 @@
     }
   })
 
-  // The hint on a refused name lands here, with the caret in the words.
   $effect(() => {
     if (!settings.landsOnField || !box) return
     settings.landsOnField = false
@@ -118,8 +104,6 @@
 {/if}
 
 <style>
-  /* The settings pane's own shapes, carried here the way ProfileRows.svelte carries them:
-     the pane's are scoped to it. */
   .card {
     display: flex;
     flex-direction: column;
