@@ -6,13 +6,9 @@ import * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'
 import { HAND, handsIn, saidHand } from './hands'
 
-/** Two devices on one plane, each with its own awareness. What is measured is
- *  whether one can say where its hand is and what it is drawing, and the other can
- *  read it back as something to draw. */
 function pair() {
   const one = new Y.Doc()
   const two = new Y.Doc()
-  // The plane itself, so both documents have the same root and neither is empty.
   planeOf(one)
   planeOf(two)
 
@@ -22,7 +18,6 @@ function pair() {
   }
 }
 
-/** What one device says, reaching the other, over the wire both ends really use. */
 function tell(
   from: { doc: Y.Doc; awareness: Awareness },
   to: { doc: Y.Doc; awareness: Awareness },
@@ -85,10 +80,8 @@ describe('whose hand is on the plane', () => {
     expect(present).toBe(1)
     expect(hands).toHaveLength(1)
     expect(hands[0]).toMatchObject({ id: one.doc.clientID, name: 'Android' })
-    // Rounded to a tenth of a plane unit, which is finer than any hand is steady.
     expect(hands[0]?.at).toEqual({ x: 12.3, y: -8.7 })
 
-    // Teal, in the shade a dark background needs; the light one is another value.
     expect(hands[0]?.colour).toBe('#33c7ba')
     expect(handsIn(two.awareness, two.doc, 'light').hands[0]?.colour).not.toBe('#33c7ba')
   })
@@ -101,8 +94,6 @@ describe('whose hand is on the plane', () => {
 
     expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.opacity).toBe(0.3)
 
-    // And a pen nobody turned the dial on says nothing about it, exactly as a
-    // file written before there was a dial says nothing.
     one.awareness.setLocalStateField(HAND, saidHand({ x: 0, y: 0 }, stroke(4)))
     tell(one, two)
     expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.opacity).toBeUndefined()
@@ -127,8 +118,6 @@ describe('whose hand is on the plane', () => {
     one.awareness.setLocalStateField(HAND, saidHand({ x: 0, y: 0 }, stroke(4)))
     tell(one, two)
 
-    // Named after the hand rather than after the stroke: it is not on the plane, so
-    // it must not share an id with anything that is.
     expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.id).toBe(
       `hand:${one.doc.clientID}`,
     )
@@ -164,7 +153,6 @@ describe('whose hand is on the plane', () => {
   test('a stroke that does not read as one is left out rather than drawn wrong', () => {
     const { one, two } = pair()
     one.awareness.setLocalStateField('who', { name: 'Windows', accent: 'blue' })
-    // A tool this build has never heard of, and a stroke of one point.
     one.awareness.setLocalStateField(HAND, {
       x: 1,
       y: 2,
@@ -180,9 +168,6 @@ describe('whose hand is on the plane', () => {
   test('a stroke is held to what a stroke in a file is held to', () => {
     const { one, two } = pair()
     one.awareness.setLocalStateField('who', { name: 'Windows', accent: 'blue' })
-    // A pen no dial in this app can be turned to: what arrives over awareness was
-    // written by another machine, and a size the paint cannot use or an opacity
-    // past one are the same thing here as they are in a file.
     one.awareness.setLocalStateField(HAND, {
       x: 1,
       y: 2,
@@ -207,11 +192,9 @@ describe('whose hand is on the plane', () => {
     one.awareness.setLocalStateField(HAND, saidHand({ x: 0, y: 0 }, null))
     tell(one, two)
 
-    // Two of one person's own machines: the machine is the answer.
     two.awareness.setLocalStateField('who', { name: 'Windows', accent: 'blue', person: 'Emil' })
     expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.name).toBe('Android')
 
-    // Two people: the person is.
     two.awareness.setLocalStateField('who', { name: 'Windows', accent: 'blue', person: 'Ada' })
     expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.name).toBe('Emil')
   })

@@ -14,24 +14,12 @@ import { ordered } from '../canvas/arrange'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from '../canvas/shared'
 import { PlaneBinding } from './plane-bind'
 
-/** A device drawing on one plane: the surface, the room's copy of the plane, and
- *  the binding between them. Which is the whole of the client apart from the
- *  socket, so what these tests measure is whether two devices end up agreeing
- *  rather than whether a WebSocket works.
- *
- *  The surface is the little of `CanvasStore` a binding touches, written out here
- *  so that a test measures the binding and not a store: it holds the plane, takes
- *  on what the room says, and stamps every edit the way the real one does. */
 class Device implements PlaneSurface {
   readonly doc = new Y.Doc()
   canvas: Canvas = emptyCanvas()
   shared: SharedPlane | null = null
   hands: readonly Hand[] = []
-  /** What the binding last said there is to take back, which is what the bar's two
-   *  arrows are drawn from. */
   reachable: Reachable = { undo: false, redo: false }
-  /** How many times the surface has been handed a whole plane. What says whether a
-   *  stroke arriving cost the plane or cost the stroke. */
   arrivals = 0
 
   private readonly binding: PlaneBinding
@@ -39,13 +27,9 @@ class Device implements PlaneSurface {
 
   private constructor(file: Canvas) {
     this.canvas = file
-    // One canvas the whole way through here: a plane the surface has moved on from is
-    // plane.test.ts.
     this.binding = new PlaneBinding(this.doc, this, () => true)
   }
 
-  /** The first device into a room. The Worker has already seeded the room from the
-   *  file the account holds, so the room opens on the same plane the file does. */
   static opening(file: Canvas): Device {
     const device = new Device(file)
     device.doc.transact(() => seedPlane(device.doc, file), 'room')
@@ -53,8 +37,6 @@ class Device implements PlaneSurface {
     return device
   }
 
-  /** A device joining a room that already holds a plane, with `file` on its own
-   *  disk. Everything of both is kept, which is the promise a canvas makes. */
   static joining(room: Device, file: Canvas = emptyCanvas()): Device {
     const device = new Device(file)
     Y.applyUpdate(device.doc, Y.encodeStateAsUpdate(room.doc), 'room')
@@ -75,8 +57,6 @@ class Device implements PlaneSurface {
     this.reachable = reachable
   }
 
-  /** An edit made here, the way the store makes one: stamped, then whatever changed
-   *  written into the room. */
   edit(next: Canvas) {
     const before = this.canvas
     const after = stamped(before, next, (this.clock += 1000))
@@ -96,8 +76,6 @@ class Device implements PlaneSurface {
     return this.reachable.undo
   }
 
-  /** The plane as the room holds it. The same as `canvas` at every moment the
-   *  binding is doing its job. */
   get inRoom(): Canvas {
     return readPlane(this.doc)
   }
@@ -117,8 +95,6 @@ class Device implements PlaneSurface {
   }
 }
 
-/** Everything one device holds, handed to another, the way a room passes an update
- *  on. */
 function carry(from: Device, to: Device) {
   Y.applyUpdate(to.doc, Y.encodeStateAsUpdate(from.doc, Y.encodeStateVector(to.doc)), 'room')
 }
@@ -199,8 +175,6 @@ describe('a plane bound to a room', () => {
   })
 
   test('whichever order two strokes arrive in, both devices hold one plane', () => {
-    /** The same pair of strokes, drawn in the order the two names give. Answers the
-     *  file each device ends up with. */
     function run(order: 'here-first' | 'there-first'): [string, string] {
       const one = Device.opening(drawn(stroke('base')))
       const two = Device.joining(one)
@@ -234,8 +208,6 @@ describe('a plane bound to a room', () => {
     const one = Device.opening(drawn(stroke('shared')))
     one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('while-away-here')]))
 
-    // A device whose file holds the shared stroke and one of its own, joining the
-    // room for the first time.
     const away = Device.joining(one, drawn(stroke('shared'), stroke('while-away-there')))
     carry(away, one)
 
@@ -348,8 +320,6 @@ describe('undo on a shared plane', () => {
     carry(two, one)
     expect(one.canvas.ink.map((held) => held.id)).toEqual(['theirs'])
 
-    // Nothing of this device's own, so there is nothing to take back and the other
-    // device's stroke stays exactly where it is.
     expect(one.canUndo).toBe(false)
     expect(one.undo()).toBe(false)
     expect(one.canvas.ink.map((held) => held.id)).toEqual(['theirs'])
@@ -370,8 +340,6 @@ describe('undo on a shared plane', () => {
   })
 
   test('joining is not a step to take back', () => {
-    // The merge that brings the room and the file together is not something a
-    // person did, so the first press of undo must not empty the plane.
     const one = Device.opening(drawn(stroke('from-the-file')))
 
     expect(one.canUndo).toBe(false)
@@ -390,8 +358,6 @@ describe('undo on a shared plane', () => {
 })
 
 describe('what a stroke costs the plane it lands on', () => {
-  /** A plane with `count` strokes already on it, seeded rather than drawn, which is
-   *  what opening a file that has been drawn on for a year looks like. */
   function plane(count: number): Canvas {
     return {
       ...emptyCanvas(),
@@ -401,7 +367,6 @@ describe('what a stroke costs the plane it lands on', () => {
   }
 
   test('puts the stroke on the wire and never the plane', () => {
-    /** How many bytes a stroke drawn on a plane of this size costs the room. */
     function sent(strokes: number): number {
       const device = Device.opening(plane(strokes))
       const before = Y.encodeStateVector(device.doc)
@@ -412,9 +377,6 @@ describe('what a stroke costs the plane it lands on', () => {
     const one = sent(50)
     const forty = sent(2000)
 
-    // Forty times the plane and the same stroke: what crosses is the three hundred
-    // points and the handful of bytes that say where they go. Counted rather than
-    // timed, because a clock measures the machine and this measures the design.
     expect(forty).toBeLessThan(one * 1.1)
     expect(one).toBeGreaterThan(1000)
   })
@@ -427,15 +389,12 @@ describe('what a stroke costs the plane it lands on', () => {
     one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('fresh', 40)]))
     carry(one, two)
 
-    // The identity is what keeps a traced outline cached, which is the difference
-    // between a stroke arriving and the whole plane being repainted.
     expect(two.canvas.ink[0]).toBe(before[0])
     expect(two.canvas.ink[199]).toBe(before[199])
     expect(two.canvas.ink[200]?.id).toBe('fresh')
   })
 })
 
-/** Which strokes a written canvas holds, by id. */
 function strokesOf(file: string): string[] {
   const held: string[] = []
   for (const match of file.matchAll(/"id": "([^"]+)"/g)) held.push(match[1] ?? '')

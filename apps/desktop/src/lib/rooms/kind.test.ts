@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { roomKind, roomKindOf } from './kind'
 
-/** The shape of room a file wants is its name, on both ends of the wire. A file shared
- *  on its own has no name here - no path - and asking the missing one took every shared
- *  canvas for words: the guest's plane was in a room of text, and nothing drawn on either
- *  side reached the other (#386). */
 describe('roomKindOf', () => {
   test('a file on this machine is asked by its name, whatever the tab was opened as', () => {
     expect(roomKindOf({ path: '/Boards/board.canvas', shared: null, kind: 'canvas' })).toBe('plane')

@@ -14,13 +14,6 @@ import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { Carrying } from './carried'
 
-/** Sync v2's room carrying the engine's own document (docs/sync-v2.md 5.2 to 5.4), with
- *  the socket stood in for and the test playing the room in the Worker with the same
- *  protocol module both ends use. What matters: a document with nothing pending meets
- *  the room the ordinary way; one with pending edits opens with its confirmed state,
- *  reads the room's words without applying them until the engine has classified, sends
- *  nothing it typed meanwhile, and on a hold stays out and sends nothing at all. */
-
 const sockets = vi.hoisted(() => {
   interface Wire {
     opened: () => void
@@ -86,7 +79,6 @@ vi.mock('./socket', () => ({ RoomSocket: sockets.FakeSocket }))
 
 const { CarriedRoom, CarriedPlaneRoom } = await import('./carried')
 
-/** The room in the Worker, as far as the protocol is concerned. */
 class Server {
   readonly doc = new Y.Doc()
   private readonly awareness = new Awareness(this.doc)
@@ -100,7 +92,6 @@ class Server {
   }
 }
 
-/** One account's document, seeded once and handed to both ends. */
 function seeded(words: string): Uint8Array {
   const doc = new Y.Doc()
   doc.clientID = 1
@@ -128,7 +119,6 @@ function carrying(device: Device): Carrying {
     confirmedSv: () => Y.encodeStateVectorFromUpdate(device.confirmed),
     met: (update) => {
       device.met.push(update)
-      // The engine takes the room's words into the document when it goes ahead.
       if (device.verdict === 'go') Y.applyUpdate(device.doc, update, 'pulled')
       return Promise.resolve(device.verdict)
     },
@@ -157,7 +147,6 @@ function join(device: Device) {
   return { room, socket }
 }
 
-/** A device holding the account's seed, and optionally its own words on top. */
 function device(account: Uint8Array, typed?: string): Device {
   const doc = new Y.Doc()
   Y.applyUpdate(doc, account)
@@ -176,8 +165,6 @@ function device(account: Uint8Array, typed?: string): Device {
   }
 }
 
-/** Plays the room's side of the greeting: its own question, and the answer to the
- *  device's. */
 async function greet(server: Server, socket: InstanceType<typeof sockets.FakeSocket>) {
   socket.wire.heard(syncStep1(server.doc))
   for (const message of socket.take()) {
@@ -222,7 +209,6 @@ describe('a room carrying the engine’s document', () => {
       ...Y.encodeStateVectorFromUpdate(account),
     ])
 
-    // Typed while the room was being met: not sent yet.
     one.doc.getText(TEXT).insert(0, '>')
     expect(socket.take()).toEqual([])
     socket.wire.heard(syncStep1(server.doc))
@@ -230,7 +216,6 @@ describe('a room carrying the engine’s document', () => {
     if (answer) socket.wire.heard(answer)
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    // The room's words came to the engine as an update; nothing of the device's own.
     expect(one.met).toHaveLength(1)
     for (const message of socket.take()) server.answer(message)
     expect(server.words).toBe('>Room: We ship on Monday. Laptop.')
@@ -268,8 +253,6 @@ describe('a room carrying the engine’s document', () => {
     const one = device(seeded('We ship.'))
     const { room, socket } = join(one)
 
-    // The room in the Worker, passing on what it hears and taking a closed socket's
-    // caret away, and somebody else who stays in it throughout.
     const hall = new Awareness(new Y.Doc())
     unattended(hall)
     const stayed = new Awareness(new Y.Doc())

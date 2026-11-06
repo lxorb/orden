@@ -1,21 +1,3 @@
-/** Switching between notes while their rooms are live.
- *
- *  One document, two notes. A single click in the file list does not open a tab: it
- *  reuses the one preview tab, and the document in it takes the new note on rather
- *  than being swapped for another - see `adopt` in workspace/documents.svelte.ts.
- *  So the words a room is joined to can become another file's words between one
- *  frame and the next, while the pairing of documents to rooms is an effect and
- *  catches up a beat later.
- *
- *  That beat is what these tests are about. Everything in it is real: the document,
- *  the shared text every pane is a window onto, the room, the meeting when it
- *  answers, and the binding between the two. Only the socket is stood in for, and
- *  the other end of it is the room in the Worker driven by the very same protocol
- *  module both ends use.
- *
- *  What every one of them asserts is the same sentence, which is the one thing that
- *  must never fail: each note's room holds that note's words and nobody else's. */
-
 import { describe, expect, test, vi } from 'vitest'
 import { EditorState } from '@orden/editor'
 import { receive, syncUpdate, TEXT } from '@orden/rooms'
@@ -81,13 +63,6 @@ vi.mock('./socket', () => ({ RoomSocket: sockets.FakeSocket }))
 const { Room } = await import('./room')
 const { NoteDoc } = await import('../workspace/documents.svelte')
 
-/** The room in the Worker, as far as the protocol is concerned, and the file it
- *  settles into.
- *
- *  `file` is what the Durable Object would write into the account a moment after
- *  the typing stops: `fileOf` of the document it holds, under the path of the note
- *  the room is about. Which is why reading it is the whole test - a room that has
- *  taken another note's words on has already lost this note's. */
 class Server {
   readonly doc = new Y.Doc()
   private readonly awareness = new Awareness(this.doc)
@@ -103,33 +78,22 @@ class Server {
     return receive(message, this.doc, this.awareness, 'socket')
   }
 
-  /** Somebody else writing in this note, on their own device, and the room passing
-   *  it on to this one. */
   elsewhere(at: number, words: string, socket: InstanceType<typeof sockets.FakeSocket>) {
     const before = Y.encodeStateVector(this.doc)
     this.doc.getText(TEXT).insert(at, words)
     socket.wire.heard(syncUpdate(Y.encodeStateAsUpdate(this.doc, before)))
   }
 
-  /** What a settle would write into this note's file. */
   get file(): string {
     return this.doc.getText(TEXT).toJSON()
   }
 }
 
-/** The words of a document as anything that writes them down reads them: brought
- *  up to what the panes hold first, which is what `flush` is for. */
 function words(note: InstanceType<typeof NoteDoc>): string {
   note.flush()
   return note.text
 }
 
-/** A pane looking at a document, as far as undo is concerned.
- *
- *  A pane's view is a state that has joined the document, and while it is joined
- *  its own history is kept empty on purpose: the document's is the one that
- *  answers Ctrl+Z, and that is what these tests press. So this is a state and a
- *  dispatch and nothing else - what `undoEdit` reaches when the key is struck. */
 function paneOn(note: InstanceType<typeof NoteDoc>) {
   const view = {
     state: EditorState.create({ doc: note.live.text }),
@@ -152,12 +116,10 @@ function socketOf(): InstanceType<typeof sockets.FakeSocket> {
   return socket
 }
 
-/** Long enough for the hash and the greeting to have been answered. */
 function settled(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-/** The one preview tab's document, holding a note out of a space. */
 function previewing(path: string, words: string): InstanceType<typeof NoteDoc> {
   return new NoteDoc(
     { kind: 'note', path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
@@ -165,12 +127,6 @@ function previewing(path: string, words: string): InstanceType<typeof NoteDoc> {
   )
 }
 
-/** One note in a room, as the app joins it: the document's words, the id the room
- *  is named by, and the account's hash of the file as of the last sync.
- *
- *  `holds` is what `rooms.svelte.ts` hands over: whether the document is still on
- *  the file this room was joined for. The pairing is worked out in an effect, so it
- *  cannot be synchronous with a click; this is how a room finds out at once. */
 function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: string | null) {
   const arrivals = note.arrivals
 
@@ -183,8 +139,6 @@ function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: strin
     scheme: 'dark',
     onPeers: () => undefined,
     digest: (text: string) => Promise.resolve(text),
-    // How many notes the document has held, and nothing about its path: a rename
-    // moves a note, it does not make it another one. See `join` in rooms.svelte.ts.
     holds: () => note.arrivals === arrivals,
     gone: () => undefined,
     refused: () => undefined,
@@ -194,8 +148,6 @@ function joining(note: InstanceType<typeof NoteDoc>, server: Server, hash: strin
   return { room, socket: socketOf() }
 }
 
-/** Everything the device has said, into the room, and everything the room says
- *  back into the device. What the network does, done by hand. */
 function carry(socket: InstanceType<typeof sockets.FakeSocket>, server: Server) {
   for (const message of socket.take()) {
     const back = server.answer(message)
@@ -203,12 +155,7 @@ function carry(socket: InstanceType<typeof sockets.FakeSocket>, server: Server) 
   }
 }
 
-/** A document joined to its room and caught up with it: the greeting answered, the
- *  file met against what the room held, and every keystroke from here going both
- *  ways. Where every test below starts. */
 async function inTheRoom(note: InstanceType<typeof NoteDoc>, server: Server) {
-  // The hash the account holds is the file itself; see `digest` above. So the note
-  // reads as untouched, which is a note with nothing of its own to offer.
   const held = joining(note, server, note.text)
   held.socket.arrive()
   carry(held.socket, server)
@@ -224,13 +171,9 @@ describe('a single click moving the preview tab on to another note', () => {
     const a = new Server('/space/a.md', '# A\n')
     const held = await inTheRoom(note, a)
 
-    // The click. The document takes the other note on, in the same tab and in the
-    // same document, which is what the preview tab is.
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
     carry(held.socket, a)
 
-    // The room for a.md is about a.md. Nothing that happened to the tab is an edit
-    // to it, and a settle now would write this into the account.
     expect(a.file).toBe('# A\n')
 
     held.room.leave()
@@ -242,7 +185,6 @@ describe('a single click moving the preview tab on to another note', () => {
     const held = await inTheRoom(note, a)
 
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
-    // Emil carries on typing before the pairing has caught up.
     note.live.replace('# B\nwritten in b\n')
     carry(held.socket, a)
 
@@ -258,8 +200,6 @@ describe('a single click moving the preview tab on to another note', () => {
 
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
 
-    // Another device writes in a.md in that same beat. It is not this document's
-    // note any more, so nothing it says belongs in these words.
     a.elsewhere(3, ' from elsewhere', held.socket)
     carry(held.socket, a)
 
@@ -277,8 +217,6 @@ describe('a single click moving the preview tab on to another note', () => {
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
     carry(first.socket, a)
 
-    // The effect catches up: the room for the note the document was on is left,
-    // and the room for the one it is on now is joined.
     first.room.leave()
     const b = new Server('/space/b.md', '# B\n')
     const second = await inTheRoom(note, b)
@@ -303,8 +241,6 @@ describe('a single click moving the preview tab on to another note', () => {
     carry(held.socket, a)
     for (const message of held.socket.take()) a.answer(message)
 
-    // Five clicks, alternating, each one a document taking another note on with
-    // the room it was in still joined.
     for (const [at, next] of [b, a, b, a, b].entries()) {
       const other = next === a ? '# A\nwritten in a\n' : '# B\n'
       note.adopt({ path: next.path, name: next.path, text: other })
@@ -317,7 +253,6 @@ describe('a single click moving the preview tab on to another note', () => {
       for (const message of held.socket.take()) next.answer(message)
     }
 
-    // Whatever was typed last in each note, and never a word of the other.
     expect(a.file).not.toContain('# B')
     expect(b.file).not.toContain('# A')
 
@@ -330,8 +265,6 @@ describe('a room answering after the tab has moved on', () => {
     const note = previewing('/space/a.md', '# A\n')
     const a = new Server('/space/a.md', '# A\n')
 
-    // The room is joined and the greeting is in the air. The hash is answered
-    // asynchronously, which is the moment the click lands in.
     const held = joining(note, a, '# A\n')
     held.socket.arrive()
     carry(held.socket, a)
@@ -342,7 +275,6 @@ describe('a room answering after the tab has moved on', () => {
 
     expect(a.file).toBe('# A\n')
 
-    // And the room it was left for is the one the keystrokes reach.
     held.room.leave()
     const b = new Server('/space/b.md', '# B\n')
     const second = await inTheRoom(note, b)
@@ -365,8 +297,6 @@ describe('a room answering after the tab has moved on', () => {
     held.socket.arrive()
     carry(held.socket, a)
 
-    // Signing out, the last tab closing: the room goes while its greeting is in
-    // the air, and what it was about to do must not happen behind it.
     held.room.leave()
     note.live.replace('# A\nwritten after leaving\n')
     await settled()
@@ -386,14 +316,12 @@ describe('two devices in one note', () => {
     carry(first.socket, b)
     for (const message of first.socket.take()) b.answer(message)
 
-    // A phone opening the same note, its own copy of the file a sync left behind.
     const there = previewing('/space/b.md', '# B\n')
     const second = await inTheRoom(there, b)
 
     expect(words(there)).toBe('# B\nwritten here\n')
     expect(b.file).toBe('# B\nwritten here\n')
 
-    // And the phone switching notes does not put b.md's words into a.md either.
     const a = new Server('/space/a.md', '# A\n')
     there.adopt({ path: '/space/a.md', name: 'a.md', text: '# A\n' })
     carry(second.socket, b)
@@ -406,16 +334,6 @@ describe('two devices in one note', () => {
   })
 })
 
-/** Ctrl+Z after a switch.
- *
- *  Emil, on the edge build: *"I pressed Ctrl+Z (to go back) but then it just
- *  inserted contents of a past note into the currently open one."*
- *
- *  The preview tab moving on is one document taking another note's words, and the
- *  words go in as an edit so that every pane keeps its caret. An edit is the thing
- *  undo takes back - so the first Ctrl+Z after a click took the switch back, and
- *  the note the tab came from was suddenly the text of the note the tab is on,
- *  under that note's name, dirty, on its way to disk and to the account. */
 describe('pressing undo after the tab has moved on', () => {
   test('cannot reach the note the document came from', () => {
     const note = previewing('/space/a.md', '# A\n')
@@ -424,15 +342,12 @@ describe('pressing undo after the tab has moved on', () => {
     note.live.replace('# A\nwritten in a\n')
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
 
-    // Nothing of this note's has been undone, because nothing of this note's has
-    // been done: the switch is not an edit anybody made.
     expect(note.live.undoable).toBe(0)
     expect(note.live.undo(pane)).toBe(false)
 
     expect(words(note)).toBe('# B\n')
     expect(pane.words).toBe('# B\n')
     expect(note.path).toBe('/space/b.md')
-    // And nothing to write: undoing nothing leaves the note in step with its file.
     expect(note.dirty).toBe(false)
   })
 
@@ -447,8 +362,6 @@ describe('pressing undo after the tab has moved on', () => {
     expect(words(note)).toBe('# B\n')
     expect(pane.words).toBe('# B\n')
 
-    // And that is the whole of it: the note it came from is not one step further
-    // back.
     expect(note.live.undo(pane)).toBe(false)
     expect(words(note)).toBe('# B\n')
   })
@@ -464,7 +377,6 @@ describe('pressing undo after the tab has moved on', () => {
     expect(note.live.redo(pane)).toBe(false)
     expect(words(note)).toBe('# B\n')
 
-    // Undo and redo of this note's own typing still work, both ways.
     note.live.replace('# B\nwritten in b\n')
     expect(note.live.undo(pane)).toBe(true)
     expect(words(note)).toBe('# B\n')
@@ -481,7 +393,6 @@ describe('pressing undo after the tab has moved on', () => {
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
     note.live.replace('# B\nwritten in b\n')
 
-    // Held down, the way somebody reaching for something they lost holds it down.
     for (let press = 0; press < 6; press++) note.live.undo(pane)
 
     expect(words(note)).toBe('# B\n')
@@ -492,10 +403,6 @@ describe('pressing undo after the tab has moved on', () => {
     const note = previewing('/space/a.md', '# A\n')
     const pane = paneOn(note)
 
-    // What the watcher does when the file changed under a note nobody has edited,
-    // and what a rename's re-read of every open note does: the note becomes the
-    // file, and is as saved afterwards as it was before. Nobody typed it, so it is
-    // not a step for undo to stop at.
     note.replace('# A, changed by another program\n', false)
 
     expect(note.live.undoable).toBe(0)
@@ -508,8 +415,6 @@ describe('pressing undo after the tab has moved on', () => {
     const note = previewing('/space/a.md', '# A, as it is now\n')
     const pane = paneOn(note)
 
-    // The history sheet's Restore. Its own comment: putting an old version back is
-    // one more version, and undoable like any.
     note.replace('# A, as it was\n')
     expect(note.dirty).toBe(true)
 
@@ -524,9 +429,6 @@ describe('pressing undo after the tab has moved on', () => {
     note.live.replace('# A\nwritten in a\n')
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
 
-    // Renaming anything in the space brings every open note up to what is now on
-    // disk, and the rename rewrites the heading of a note that still wears its own
-    // name. Neither is an edit anybody made.
     note.replace('# B\nas the file now reads\n', false)
     note.path = '/space/renamed.md'
     note.name = 'renamed.md'
@@ -545,8 +447,6 @@ describe('pressing undo after the tab has moved on', () => {
     note.live.replace('# A\nwritten in a\n')
     note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B, as it is now\n' })
 
-    // Restore, from the history sheet. That one is somebody asking, so it is a step
-    // to go back to - one step, and no further.
     note.replace('# B, as it was\n')
     expect(note.live.undo(pane)).toBe(true)
     expect(words(note)).toBe('# B, as it is now\n')
@@ -561,7 +461,6 @@ describe('pressing undo after the tab has moved on', () => {
 
     note.live.arrived([{ from: 3, to: 3, insert: ' from the phone' }])
 
-    // Undo takes back what you wrote, never what somebody else did.
     expect(note.live.undoable).toBe(0)
     expect(note.live.undo(pane)).toBe(false)
     expect(words(note)).toBe('# B from the phone\n')

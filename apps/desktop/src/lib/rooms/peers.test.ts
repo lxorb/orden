@@ -4,9 +4,6 @@ import { awarenessUpdate, receive, TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { peersIn, relative } from './peers'
 
-/** Two devices, each with its own copy of the same words and its own awareness.
- *  What is measured is whether one can say where its caret is and the other can
- *  put it in the right place - including after the words underneath have moved. */
 function pair(words: string) {
   const one = new Y.Doc()
   const two = new Y.Doc()
@@ -60,7 +57,6 @@ describe('who else is in a note', () => {
     expect(carets).toHaveLength(1)
     expect(carets[0]).toMatchObject({ id: one.doc.clientID, name: 'Android', anchor: 4, head: 7 })
 
-    // Teal, in the shade a dark background needs; the light one is another value.
     expect(carets[0]?.colour).toBe('#33c7ba')
     expect(peersIn(two.awareness, two.doc, 'light').carets[0]?.colour).toBe('#0d8277')
   })
@@ -76,16 +72,12 @@ describe('who else is in a note', () => {
 
     expect(peersIn(two.awareness, two.doc, 'dark').carets[0]?.head).toBe(4)
 
-    // The other device writes a line above the caret, and says nothing new about
-    // where its caret is. A number would have gone stale; a relative position has
-    // not, because it names a character rather than an offset.
     two.text.insert(0, 'nought\n')
     expect(peersIn(two.awareness, two.doc, 'dark').carets[0]?.head).toBe(11)
   })
 
   test('leaves out a caret that says nothing readable', () => {
     const { two } = pair('words\n')
-    // A state from a build that said something else, or from nothing at all.
     two.awareness.setLocalState({ who: 'Mac' })
     const other = new Y.Doc()
     const theirs = new Awareness(other)
@@ -97,7 +89,6 @@ describe('who else is in a note', () => {
 })
 
 describe('what a caret is labelled with', () => {
-  /** A device announcing itself with a caret at the front of the note. */
   function announce(
     end: { doc: Y.Doc; text: Y.Text; awareness: Awareness },
     who: { name: string; accent: string; person?: string },
@@ -110,8 +101,6 @@ describe('what a caret is labelled with', () => {
   }
 
   test('is the device, when the room holds one person’s machines', () => {
-    // The question two carets raise here is which of my machines that is, and
-    // "Emil" on both of them answers nothing.
     const { one, two } = pair('words\n')
     announce(one, { name: 'Android', accent: 'teal', person: 'Emil' })
     announce(two, { name: 'Windows', accent: 'blue', person: 'Emil' })
@@ -130,9 +119,6 @@ describe('what a caret is labelled with', () => {
   })
 
   test('is the person for everybody, including the reader’s own other machine', () => {
-    // Three ends: this reader on two machines, and somebody else on one. Every
-    // caret drawn here carries a person, because that is now the useful
-    // difference between them.
     const { one, two } = pair('words\n')
     const third = new Y.Doc()
     Y.applyUpdate(third, Y.encodeStateAsUpdate(one.doc))
@@ -162,7 +148,6 @@ describe('what a caret is labelled with', () => {
   })
 
   test('falls back to the device for whoever did not send a person', () => {
-    // An older build, still saying only which machine it is.
     const { one, two } = pair('words\n')
     announce(one, { name: 'Android', accent: 'teal' })
     announce(two, { name: 'Windows', accent: 'blue', person: 'Emil' })
@@ -184,10 +169,6 @@ describe('what a caret is labelled with', () => {
 })
 
 describe('a caret nothing in this app would have sent', () => {
-  /** One other device in the room, saying whatever it likes about where its
-   *  caret is. What arrives over awareness is JSON from somebody else's machine:
-   *  a build that speaks something else, or a guest a link let in who has read
-   *  the protocol. */
   function saying(caret: unknown) {
     const { two } = pair('one\ntwo\n')
     const other = new Y.Doc()
@@ -212,13 +193,10 @@ describe('a caret nothing in this app would have sent', () => {
     expect(name.length).toBeLessThan(100)
   })
 
-  /** A position that is a record but not one of Yjs's own: reading it is a
-   *  lookup for a client nobody has heard of. */
   test('leaves the note with a peer and no caret rather than throwing', () => {
     const two = saying({ anchor: null, head: { item: 5 } })
     const found = peersIn(two.awareness, two.doc, 'dark')
 
-    // Still somebody in the note - they are in it - with nothing to draw.
     expect(found.present).toBe(1)
     expect(found.carets).toEqual([])
   })
@@ -238,7 +216,6 @@ describe('a caret nothing in this app would have sent', () => {
 describe('an unreadable presence', () => {
   test('is left out', () => {
     const { two } = pair('words\n')
-    // A state from a build that said something else, or from nothing at all.
     two.awareness.setLocalState({ who: 'Mac' })
     const other = new Y.Doc()
     const theirs = new Awareness(other)
@@ -252,7 +229,6 @@ describe('an unreadable presence', () => {
 describe('the faces of who else is in a note', () => {
   const FACE = 'f'.repeat(64)
 
-  /** One device saying who it is, heard by another that is somebody else. */
   function heard(who: Record<string, unknown>, mine: Record<string, unknown>) {
     const { one, two } = pair('words\n')
     one.awareness.setLocalStateField('who', who)

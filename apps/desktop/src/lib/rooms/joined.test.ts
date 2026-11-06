@@ -1,10 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** What a note's room and a canvas's room share about being joined: the scheme the
- *  others are drawn in and whether the room is still about its file. The meeting
- *  itself is each kind's own and has tests of its own, in room.test.ts and
- *  plane.test.ts; the socket is stood in for, since nothing here goes over it. */
-
 vi.mock('./socket', () => ({
   RoomSocket: class {
     start() {
@@ -21,7 +16,6 @@ vi.mock('./socket', () => ({
 
 const { JoinedRoom } = await import('./joined')
 
-/** A room of no particular kind, that writes down each time it draws the others. */
 class Probe extends JoinedRoom {
   readonly drawn: string[] = []
 

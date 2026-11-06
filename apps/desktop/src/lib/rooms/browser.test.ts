@@ -1,14 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { browserName } from './browser'
 
-/** What a caret in a shared note calls the browser it belongs to.
- *
- *  The brand lists and the user agents below are the real ones, copied from the
- *  browsers rather than written to suit the code: what is under test is that a
- *  name arrives out of what a browser actually says about itself, greased brands
- *  and a Chrome in every Chromium user agent included. */
-
-/** A brand list as `navigator.userAgentData` hands it over. */
 const brands = (...names: string[]) => ({
   userAgentData: { brands: names.map((brand) => ({ brand, version: '140' })) },
 })
