@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { readBase } from '@orden/bases'
+import { builtinView, groupName, readBase, WHEN_GROUPS } from '@orden/bases'
+import { answer } from '@orden/bases/answer'
+import { rowsOfText } from '@orden/bases/rows'
 import { freePath } from '@orden/markdown/paths'
 
 const { added, written, taken, on, held } = vi.hoisted(() => ({
@@ -202,7 +204,7 @@ describe('a task added in a group of Todos', () => {
   })
 
   test('of every space narrowed to one goes to that space’s inbox (#1153)', () => {
-    expect(prefillOf({ builtin: 'todos' }, today, undefined, 'Mine')).toEqual({
+    expect(prefillOf({ builtin: 'todos' }, today, undefined, { space: 'Mine' })).toEqual({
       root: '/s/Private',
     })
   })
@@ -234,5 +236,51 @@ describe('a task added in a group of Todos', () => {
     await addTyped('Pay', prefillOf({ builtin: 'label', tag: 'x', space: 'Mine' }, today))
     expect(added).toEqual(['/s/Private/Inbox.md'])
     expect(prefillOf({ builtin: 'label', tag: 'x' }, today)).toEqual({ tags: ['x'] })
+  })
+})
+
+describe('a task added from the add row of a group of Todos or Upcoming (#1248)', () => {
+  const today = '2026-10-13'
+  const context = { today, now: `${today}T10:00:00` }
+
+  const landsIn = (view: 'todos' | 'upcoming', prefill: ReturnType<typeof prefillOf>) => {
+    const line = [
+      '- [ ] New',
+      prefill.due ? `📅 ${prefill.due}` : '',
+      prefill.deadline ? `[deadline:: ${prefill.deadline}]` : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+    const rows = rowsOfText('Mine', 'Inbox.md', `${line}\n`)
+    const groups = answer(builtinView(view), 0, rows, context).groups
+    const key = groups.find((group) => group.rows.length)?.key
+    return key === undefined ? 'gone' : groupName(key)
+  }
+
+  test('in Todos stays in its group, and under Overdue is due today', () => {
+    const at = (key: string) =>
+      landsIn('todos', prefillOf({ builtin: 'todos' }, today, { property: 'formula.when', key }))
+    expect(WHEN_GROUPS.map(at)).toEqual(['today', 'today', 'tomorrow', 'later'])
+  })
+
+  test('in Upcoming stays in its day, and under Overdue is for today, so it never vanishes', () => {
+    const at = (key: string) =>
+      landsIn(
+        'upcoming',
+        prefillOf({ builtin: 'upcoming' }, today, { property: 'formula.day', key }),
+      )
+    expect(['overdue', today, '2026-10-20'].map(at)).toEqual([today, today, '2026-10-20'])
+  })
+
+  test('in Todos narrowed by Display wears what the view asks for, so it is not filtered out', () => {
+    on.root = '/s/Private'
+    const only = { label: 'home', priority: 1 as const, date: 'today' as const, assignee: 'Emil' }
+    expect(
+      prefillOf({ builtin: 'todos' }, today, { property: 'task.tags', key: 'work' }, only),
+    ).toEqual({ tags: ['home', 'work'], priority: 1, due: today, assignee: 'Emil' })
+    expect(
+      prefillOf({ builtin: 'todos' }, today, undefined, { project: 'Mine//Errands.md' }),
+    ).toEqual({ root: '/s/Private', path: '/s/Private/Errands.md' })
+    expect(prefillOf({ builtin: 'todos' }, today, undefined, { assignee: ':none' })).toEqual({})
   })
 })

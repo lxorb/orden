@@ -25,6 +25,7 @@ import { bare, isNoteProperty } from './columns'
 import { isPriority } from './drop'
 import type { ViewSpec } from './spec'
 import { dayIn } from './values'
+import type { Only } from './display'
 
 export interface Prefill {
   path?: string
@@ -35,6 +36,7 @@ export interface Prefill {
   tags?: string[]
   priority?: Priority
   status?: string
+  assignee?: string
 }
 
 export function openQuickAdd(prefill: Prefill = {}): boolean {
@@ -43,7 +45,8 @@ export function openQuickAdd(prefill: Prefill = {}): boolean {
     prefill.heading !== undefined ||
     prefill.priority !== undefined ||
     prefill.status !== undefined ||
-    prefill.deadline !== undefined
+    prefill.deadline !== undefined ||
+    prefill.assignee !== undefined
   )
     return false
   const root = workspace.activeSpace?.root ?? null
@@ -59,16 +62,36 @@ export function openQuickAdd(prefill: Prefill = {}): boolean {
   return true
 }
 
+const WHEN_DAYS: Record<string, number> = { overdue: 0, today: 0, tomorrow: 1, later: 2 }
+
+function placed(out: Prefill, key: string, spec: ViewSpec) {
+  const place = placeOfKey(key)
+  const named = place.space ?? spec.space
+  const [space, other] = workspace.spaces.filter((one) => one.name === named)
+  if (space && !other) {
+    out.path = insideSpace(space.root, place.path)
+    if (place.space !== null) out.root = space.root
+  }
+}
+
+function narrowedBy(out: Prefill, only: Only, today: string, spec: ViewSpec) {
+  if (only.label !== undefined) out.tags = [...new Set([...(out.tags ?? []), only.label])]
+  if (only.priority !== undefined) out.priority = only.priority
+  if (only.date === 'today' || only.date === 'week' || only.date === 'overdue') out.due = today
+  if (only.project !== undefined) placed(out, only.project, spec)
+  if (only.assignee !== undefined && !only.assignee.startsWith(':')) out.assignee = only.assignee
+}
+
 export function prefillOf(
   spec: ViewSpec,
   today: string,
   group?: { property: string; key: Value },
-  narrowed?: string,
+  only: Only = {},
 ): Prefill {
   const out: Prefill = {}
   if (spec.builtin === 'today') out.due = today
   if (spec.builtin === 'label' && spec.tag) out.tags = [spec.tag]
-  const named = spec.space ?? narrowed
+  const named = spec.space ?? only.space
   if ((spec.builtin === 'todos' || spec.builtin === 'label') && named !== undefined) {
     const [space, other] = workspace.spaces.filter((one) => one.name === named)
     if (space && !other) out.root = space.root
@@ -78,25 +101,21 @@ export function prefillOf(
     if (space) out.path = insideSpace(space.root, spec.path)
     if (space && space.root !== workspace.activeSpace?.root) out.root = space.root
   }
+  narrowedBy(out, only, today, spec)
   if (!group) return out
 
   const { property, key } = group
   if (property === 'task.section' && typeof key === 'string') out.heading = key
   else if (property === 'task.priority' && isPriority(key)) out.priority = key
   else if (property === 'task.status' && typeof key === 'string') out.status = key
-  else if (property === 'task.tags' && typeof key === 'string' && key) out.tags = [key]
-  else if (isWhen(property) && (key === 'today' || key === 'tomorrow')) {
-    out.deadline = key === 'today' ? today : addDays(today, 1)
+  else if (property === 'task.tags' && typeof key === 'string' && key) {
+    out.tags = [...new Set([...(out.tags ?? []), key])]
+  } else if (isWhen(property) && typeof key === 'string' && Object.hasOwn(WHEN_DAYS, key)) {
+    out.deadline = addDays(today, WHEN_DAYS[key] ?? 0)
   } else if (property === 'file.path' && typeof key === 'string' && key) {
-    const place = placeOfKey(key)
-    const named = place.space ?? spec.space
-    const [space, other] = workspace.spaces.filter((one) => one.name === named)
-    if (space && !other) {
-      out.path = insideSpace(space.root, place.path)
-      if (place.space !== null) out.root = space.root
-    }
+    placed(out, key, spec)
   } else if (property === 'formula.day' || /^task\.(due|date|scheduled)$/.test(property)) {
-    const day = dayIn(key)
+    const day = key === 'overdue' ? today : dayIn(key)
     if (day) out.due = day
   }
   return out
@@ -116,6 +135,7 @@ export async function addTyped(words: string, prefill: Prefill): Promise<boolean
       ...(prefill.tags ? { tags: prefill.tags } : {}),
       ...(prefill.priority ? { priority: prefill.priority } : {}),
       ...(prefill.status ? { status: prefill.status } : {}),
+      ...(prefill.assignee ? { assignee: prefill.assignee } : {}),
     },
     prefill.heading,
   )
