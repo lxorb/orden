@@ -93,6 +93,19 @@ describe('a file explorer', () => {
     expect(view.chosen).toEqual(['/home/me/Pictures'])
   })
 
+  test('chooses only what is picked: a row let go of, or a click beside the rows, leaves nothing to delete', async () => {
+    const view = viewOf(tabWith('{"folder":"/home/me","back":[],"ahead":[]}') as never)
+    await view.appear()
+    view.pick('notes.txt', 'one')
+    expect(view.chosen).toEqual(['/home/me/notes.txt'])
+    view.pick('notes.txt', 'toggle')
+    expect(view.picked.cursor).toBe('notes.txt')
+    expect(view.chosen).toEqual([])
+    view.pick('Music', 'one')
+    view.pickNone()
+    expect(view.chosen).toEqual([])
+  })
+
   test('stays where it was, saying why, when a folder will not list', async () => {
     const tab = tabWith('')
     const view = viewOf(tab as never)
