@@ -169,7 +169,9 @@
       (padDocked && pad.on) ||
       (startup.reached('right') && (workspace.nextRight !== null || padDocked))),
   )
+  const NOTICE_ROOM = 360
   let panesWide = $state(0)
+  const noticesOver = $derived(viewport.drawer || (panesWide > 0 && panesWide < NOTICE_ROOM))
   let palette = $state(false)
   let paletteScreen = $state<{ showCommands(): void; dismiss(): void }>()
   let formatBar = $state<{ follow(view: EditorView): void }>()
@@ -816,7 +818,7 @@
           bind:clientWidth={panesWide}
         >
           <Progress />
-          {#if !viewport.drawer}
+          {#if !noticesOver}
             {@render notices()}
           {/if}
           <PaneTree frame={workspace.panes.frame} />
@@ -864,7 +866,7 @@
     </div>
   </div>
 
-  {#if viewport.drawer}
+  {#if noticesOver}
     {@render notices()}
   {/if}
 </main>
@@ -890,7 +892,7 @@
     class="notices"
     data-notices
     data-region="notices"
-    class:over={viewport.drawer}
+    class:over={noticesOver}
     class:above={tabOverview.open}
   >
     <StorageWarning />
@@ -922,6 +924,11 @@
     {#if renamed.showing && renameNotice.asked}
       {#await renameNotice.asked then RenameNotice}
         <RenameNotice />
+      {/await}
+    {/if}
+    {#if !__EVEN_PLUGIN__ && settings.setup !== null}
+      {#await import('./lib/Personalize.svelte') then Personalize}
+        <Personalize.default />
       {/await}
     {/if}
     {#if updates.ready}
@@ -963,11 +970,6 @@
 {#if paletteDoor.asked}
   {#await paletteDoor.asked then Palette}
     <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
-  {/await}
-{/if}
-{#if !__EVEN_PLUGIN__ && settings.setup !== null}
-  {#await import('./lib/Personalize.svelte') then Personalize}
-    <Personalize.default />
   {/await}
 {/if}
 {#if quickAddSheet.asked}

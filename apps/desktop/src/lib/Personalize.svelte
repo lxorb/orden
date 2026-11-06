@@ -6,6 +6,7 @@
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { dur } from './motion'
+  import { overlays } from './overlays'
   import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
@@ -25,6 +26,10 @@
   $effect(() => {
     if (account.signedIn) finish()
   })
+
+  let covered = $state(overlays.depth > 0)
+
+  $effect(() => overlays.watch(() => (covered = overlays.depth > 0)))
 
   interface Asked {
     label: string
@@ -68,7 +73,7 @@
   }
 </script>
 
-{#if settings.setup !== null}
+{#if settings.setup !== null && !covered}
   {@const question = QUESTIONS[settings.setup] ?? null}
   <div
     class="card"
@@ -131,15 +136,12 @@
 
 <style>
   .card {
-    position: fixed;
-    inset-inline-end: var(--space-4);
-    bottom: calc(var(--space-4) + var(--inset-bottom, 0px));
-    z-index: var(--z-float);
+    grid-column: 1 / -1;
+    justify-self: end;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    width: 18rem;
-    max-width: calc(100vw - 2 * var(--space-4));
+    width: min(18rem, 100%);
     padding: var(--space-3);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-md);
@@ -151,6 +153,7 @@
 
   .row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-2);
