@@ -1,11 +1,3 @@
-/** Opening a note by the name a link wrote, and where the judging happens.
- *
- *  `nib://open?path=Plan` names no path: it names a note, and the app's own file
- *  index answers with the path it holds under. That answer is a path like any
- *  other by the time it reaches `insideSpace`, so it goes through the judge too -
- *  resolve first, then judge, in that order and in one place, so a caller that
- *  hands a name and a caller that hands a path cannot come to different ends. */
-
 import { describe, expect, test, vi } from 'vitest'
 import { frontMatterValue } from '@orden/markdown/front-matter'
 
@@ -28,27 +20,16 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const space = { id: 'work', name: 'Work', root: '/Work' }
 
-/** What the index answers for a bare name, which each test sets.
- *
- *  `named` is what the note resolver answers - the road a `[[wikilink]]` takes -
- *  and `beside` is what the list of files beside the notes answers. They are two
- *  different questions and the index keeps them apart: a note is in `notes` and a
- *  picture is in `files`, so asking the file list for a note is asking the wrong
- *  half and always answers nothing. */
 let named: string | null = null
 let beside: string | null = null
 
-/** The scan in flight, and how many times it was waited for. */
 let scanning: Promise<void> = Promise.resolve()
 let scans = 0
 
-/** Every path the workspace was asked to open. */
 const opened: string[] = []
 
-/** What the space holds, by path, which `noteText` answers out of. */
 const held = new Map<string, string>()
 
-/** The replacements the workspace was handed, and the notes it was asked to make. */
 const written: { path: string; before: string; after: string }[] = []
 const made: { folder: string; name: string }[] = []
 
@@ -57,9 +38,6 @@ vi.mock('../link-index.svelte', () => ({
     fileNamed: () => beside,
     targetOf: (_from: string | null, link: { target: string }) =>
       link.target.includes('/') ? null : named,
-    // The scan the index does off the launch's critical path. A link that starts
-    // the app is followed while it is still in flight, so what it answers before
-    // it lands is nothing at all.
     scanned: () => {
       scans += 1
       return scanning
@@ -115,8 +93,6 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-/** The rows the registry answers with, and which of them were run. A row that says
- *  `byHand` is one only somebody at the keyboard may press; see commands.ts. */
 const rows = [
   { id: 'files', label: 'File list', run: () => ran.push('files') },
   { id: 'record', label: 'Record', byHand: true, run: () => ran.push('record') },
@@ -127,12 +103,8 @@ const ran: string[] = []
 
 vi.mock('../commands', () => ({ appCommands: () => rows }))
 vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
-// A note the append action makes is said to sync as one that may be merged with the day's
-// note another device made; nothing here is about syncing.
 vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
-/** The spaces shared with this account to be read, by root. What may be written where
- *  is sharing.svelte.ts's, which wants an account a unit test has none of. */
 const readOnly = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) =>
@@ -164,10 +136,6 @@ describe('a note named rather than pathed', () => {
   })
 
   test('and an index answer no space would take is refused like any other path', async () => {
-    // Nothing in the app writes such a row, which is exactly why the judge is
-    // here: the index is a map somebody's own notes filled in, and a caller of
-    // this that skipped the judge because the index answered would be a hole
-    // somewhere nobody is looking.
     named = '../../outside.md'
     opened.length = 0
 
@@ -175,12 +143,6 @@ describe('a note named rather than pathed', () => {
     expect(opened).toEqual([])
   })
 
-  /** The index keeps notes and the files beside them apart, and a name is looked
-   *  up among the notes: `nib://open?path=Plan` is documented as finding the note
-   *  the way a `[[wikilink]]` does. It used to ask the file list, which holds the
-   *  pictures and the PDFs and never a note, so the answer was always nothing and
-   *  every link written by hand with a name in it said it could not be followed.
-   *  A path was never affected, which is why it went unseen. */
   test('asks the notes rather than the files beside them', async () => {
     named = 'notes/Plan.md'
     beside = null
@@ -194,10 +156,6 @@ describe('a note named rather than pathed', () => {
     expect(opened).toEqual(['/Work/notes/Plan.md'])
   })
 
-  /** The index is built off the launch's critical path, so a link that starts the
-   *  app is followed while the scan is still in flight. Asking it then is asking an
-   *  empty index: the note is there, the name is right, and the answer is nothing.
-   *  So the name waits for the scan, which answers at once when none is running. */
   test('waits for the scan the launch started before asking it anything', async () => {
     named = null
     opened.length = 0
@@ -233,9 +191,6 @@ describe('a note named rather than pathed', () => {
   })
 })
 
-/** `nib://command?id=…` is the one action a link may ask for that is a whole list
- *  rather than one act, and a few of those rows reach for a microphone or a camera
- *  or sign the machine out. A link is written by anybody and followed by a click. */
 describe('a row of the palette', () => {
   test('runs for the command line and for a link alike', () => {
     ran.length = 0
@@ -251,13 +206,10 @@ describe('a row of the palette', () => {
     expect(() => runCommand({ id: 'record' }, 'link')).toThrow(/not something a link may run/)
     expect(ran).toEqual([])
 
-    // The command line is this machine, behind a secret only this user can read.
     expect(runCommand({ id: 'record' }, 'here')).toEqual({ id: 'record', label: 'Record' })
     expect(ran).toEqual(['record'])
   })
 
-  /** A shell on this machine is not something another program may open, and a verb
-   *  that opened one would be a way to type into it; see docs/terminal.md. */
   test('and never one that opens a shell, on either road', () => {
     ran.length = 0
 
@@ -278,13 +230,6 @@ describe('a row of the palette', () => {
   })
 })
 
-/** Words onto the end of a note, which is `nib://append` and `nib append`.
- *
- *  The point of the action is that a caller does not have to know whether the note is
- *  there: a shortcut that files a line into today's note is the same shortcut on the
- *  first of the month. So both roads are checked - the note that is there is added to,
- *  the note that is not is made - along with the path being judged exactly as every
- *  other path a link writes is. */
 describe('words appended to a note', () => {
   test('go onto the end of the one that is there, once', async () => {
     held.set('/Work/Daily.md', '# Monday\n\nA kestrel.')
@@ -299,8 +244,6 @@ describe('words appended to a note', () => {
     expect(made).toEqual([])
     expect(written).toHaveLength(1)
     expect(written[0]?.after).toBe('# Monday\n\nA kestrel.\n\nAnd a buzzard.\n')
-    // One blank line between them however the first ended, and the words that were
-    // there are still there.
     expect(written[0]?.before).toBe('# Monday\n\nA kestrel.')
   })
 
@@ -334,8 +277,6 @@ describe('words appended to a note', () => {
     held.set('/Work/Daily.md', 'Already here.')
     written.length = 0
 
-    // `prepend` is `new`'s to offer. A link that asked this action for the top of the
-    // note gets the end of it, which is what the action is called.
     await appendNote({ path: 'Daily.md', content: 'Added.', prepend: true })
     expect(written[0]?.after).toBe('Already here.\n\nAdded.\n')
   })
@@ -343,8 +284,6 @@ describe('words appended to a note', () => {
 
 describe('a property an automation sets', () => {
   test('lands as the words it was given, whatever YAML would read them as bare', async () => {
-    // Each of these, written bare after the colon, is a mapping, a comment, a list, a
-    // boolean, a number or a reserved indicator to YAML rather than the words.
     const values = ['Meeting: notes', '#tag', '- item', 'yes', '@home', '012', 'a #b', '1e3']
 
     for (const value of values) {
@@ -383,15 +322,12 @@ describe('a property an automation sets', () => {
       ['3', 'status: 3'],
       ['-1.5', 'status: -1.5'],
       ['[work, home]', 'status: [work, home]'],
-      // Each member typed the way a chip typed into the list is: bare where YAML reads
-      // it back as what was said, words where it was quoted or would read as other.
       ['[1, true, x]', 'status: [1, true, x]'],
       ['[-2.5, false, 10]', 'status: [-2.5, false, 10]'],
       [`['1', "true", x]`, "status: ['1', 'true', x]"],
       ['[007, 1e3, null, True]', "status: ['007', '1e3', 'null', 'True']"],
       ['[]', 'status: []'],
       ["['a, b', yes]", "status: ['a, b', 'yes']"],
-      // A link is not a list of one, and links said with commas are a list of links.
       ['[[Project X]]', "status: '[[Project X]]'"],
       ['[[A]], [[B]]', "status: ['[[A]]', '[[B]]']"],
       ['[[[A]], [[B]]]', "status: ['[[A]]', '[[B]]']"],
@@ -431,12 +367,6 @@ describe('a property an automation sets', () => {
   })
 })
 
-/** A space shared with this account to be read is one nothing may be written in: the
- *  copy here would stop being the space's, and the sync would refuse the change on
- *  every pass. A link and the command line can only do what somebody at the keyboard
- *  could, and they could not write there either. */
-/** Front matter is Markdown's. `properties.set` over a canvas, a board, a chat or
- *  any other file put a block of YAML on top of its JSON and broke it. */
 describe('properties.set over a file that is not Markdown', () => {
   test('is refused, and writes nothing', async () => {
     held.clear()

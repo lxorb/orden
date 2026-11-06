@@ -1,17 +1,7 @@
-/** Which note a verb is about when the caller named none: the one on screen, and
- *  only while the one on screen is the space's.
- *
- *  A note is opened from anywhere - a file the shell handed over, something in a
- *  downloads folder - and the two roads in here are somebody else's: a `nib://`
- *  link can be written by any page, and the local endpoint answers whatever asks.
- *  So "the note that is open" is the one thing a caller can name without naming a
- *  path, and it has to be bounded by the space like every path is. */
-
 import { describe, expect, test, vi } from 'vitest'
 
 const space = { id: 'work', name: 'Work', root: '/Work' }
 
-/** What the app is showing, which each test sets. */
 let open: { path: string | null; doc: string } | null = null
 let flushed = 0
 
@@ -33,12 +23,10 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-// Nothing here writes; what a space shared to be read refuses is acts.test.ts's.
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 const { noteFor, relativeIn } = await import('./space')
 
-/** The error a verb refused with, so its words can be read. */
 async function refusal(run: Promise<unknown>): Promise<Error> {
   const caught = await run.then(() => null).catch((error: unknown) => error)
   expect(caught).toBeInstanceOf(Error)
@@ -56,7 +44,6 @@ describe('the note on screen', () => {
     expect(note.relative).toBe('notes/Plan.md')
     expect(note.path).toBe('/Work/notes/Plan.md')
     expect(note.text).toBe('# Plan')
-    // What is being read has to be what is on screen, unsaved words and all.
     expect(flushed).toBe(before + 1)
   })
 
@@ -65,8 +52,6 @@ describe('the note on screen', () => {
 
     const error = await refusal(noteFor({}))
 
-    // Said without the path in it: where that file is on this disk is this
-    // machine's own layout, and the caller is whoever wrote the link.
     expect(error.message).toBe('no note of this space is open, so say which path')
     expect(error.message).not.toContain('Downloads')
   })

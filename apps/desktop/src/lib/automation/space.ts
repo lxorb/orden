@@ -1,10 +1,3 @@
-/** Which space and which note a verb is about.
- *
- *  Every verb that names a file goes through here, so the two questions that can
- *  go wrong - is that a space, and is that a path inside it - are asked in one
- *  place for both roads in. See inside.ts, which is the half that judges the path
- *  without knowing anything about spaces. */
-
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, withinSpace } from '../space-paths'
 import type { Space } from '../workspace.svelte'
@@ -12,22 +5,12 @@ import { workspace } from '../workspace.svelte'
 import { said, type Said } from './args'
 import { insideOnly } from './inside'
 
-/** A note a verb is working on: how the space speaks of it, where it is on this
- *  disk, and what it says. */
 export interface Note {
-  /** Relative to the space, `/` separators, which is how a link names it. */
   relative: string
   path: string
   text: string
 }
 
-/** The space a verb is about: the one it named, by name or by id, or the one that
- *  is open.
- *
- *  Naming one switches to it, because the verbs work on what is open. A link that
- *  wrote a note into a space the app was not showing would be a link whose result
- *  nobody can see, and showing the result is the whole of how an automated write
- *  stays honest. */
 export async function spaceFor(args: Said): Promise<Space> {
   const wanted = said(args, 'space')
   if (!wanted) {
@@ -48,11 +31,6 @@ export async function spaceFor(args: Said): Promise<Space> {
   return found
 }
 
-/** The space a verb is about, for a verb that writes in it: refused where the space
- *  is shared with this account to be read. The copy here would stop being the
- *  space's, and the sync refuses the change on every pass; somebody at the keyboard
- *  is offered nothing that writes there, and a link and the command line can do no
- *  more than they could. */
 export async function spaceToWrite(args: Said): Promise<Space> {
   const space = await spaceFor(args)
   if (!canWriteAt(space.root)) throw new Error(`${space.name} is shared with you to read`)
@@ -60,8 +38,6 @@ export async function spaceToWrite(args: Said): Promise<Space> {
   return space
 }
 
-/** A path the caller named, as the space speaks of it. Throws for a path that is
- *  not inside the space, which is the one thing a caller may not ask for. */
 export function relativeIn(args: Said, name = 'path'): string {
   const asked = said(args, name)
   if (!asked) throw new Error(`say which ${name}`)
@@ -69,11 +45,6 @@ export function relativeIn(args: Said, name = 'path'): string {
   return insidePath(asked)
 }
 
-/** One path, judged. Whatever a verb worked out that a path might be, this is what
- *  makes it one: `openNote` asks the file index what a bare note name is and hands
- *  the answer here, so a name and a path come to the same judge rather than the
- *  index's answer being trusted for being the index's. Resolve first, then judge -
- *  nothing between this and `insideSpace`. */
 export function insidePath(asked: string): string {
   const safe = insideOnly(asked)
   if (safe === null) throw new Error(`${asked} is not a path inside the space`)
@@ -81,13 +52,6 @@ export function insidePath(asked: string): string {
   return safe
 }
 
-/** The note a verb is about: the one it named, or the one on screen when it named
- *  none and the space holds that one. Reading what is open is what makes `nib
- *  words` and `nib outline` answer about the thing in front of the reader.
- *
- *  Throws when the note is not there, because every caller of this is about to
- *  read or count its words and there is nothing honest to answer with. `writing`
- *  is for a caller about to change it, which a space shared to be read refuses. */
 export async function noteFor(args: Said, name = 'path', writing = false): Promise<Note> {
   const space = await (writing ? spaceToWrite : spaceFor)(args)
 
@@ -96,16 +60,6 @@ export async function noteFor(args: Said, name = 'path', writing = false): Promi
     const path = open?.path
     if (!open || !path) throw new Error('no note is open, so say which path')
 
-    // And it has to be this space's note. A note is opened from anywhere - a file
-    // the shell handed over, something in a downloads folder - and a caller that
-    // names no path is otherwise handed whatever that is: read by `notes.read`,
-    // and written by `properties.set`, which is the only verb here that changes a
-    // note it did not have to name. The reach of a link is the space or nothing.
-    //
-    // Refused without the path in the sentence, for the same reason the answer
-    // carries `relative` rather than `path`: where a file outside the space sits
-    // on this disk is this machine's own layout, and the caller is whoever wrote
-    // the link.
     const relative = withinSpace(space.root, path)
     if (relative === null) throw new Error('no note of this space is open, so say which path')
 

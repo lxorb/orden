@@ -2,8 +2,6 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test, vi } from 'vitest'
 
-/** The stores read the browser's storage and ask what kind of machine this is, and
- *  there is neither under node; see app-menu.test.ts, which does the same. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -22,12 +20,8 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** Loaded once, at module scope: the table reaches half the app through the
- *  workspace and the command registry, and compiling that belongs to no one test.
- *  See docs/conventions.md. */
 const { dispatch, isVerb, linkHearsFrom, verbForAction } = await import('./verbs')
 
-/** Every verb the app has, asked of the app. */
 async function verbs(): Promise<string[]> {
   const answered = await dispatch('verbs', {})
   expect(answered.ok).toBe(true)
@@ -52,8 +46,6 @@ describe('the table', () => {
   })
 
   test('joins a verb written as two words, which is how a terminal sends one', async () => {
-    // The space is what stops it: there is no workspace under node, and reaching
-    // that refusal is the proof the two words became `files.list` and ran it.
     expect(await dispatch('files', {}, ['list'])).toEqual({
       ok: false,
       error: 'there is no space open',
@@ -83,9 +75,6 @@ describe('the table', () => {
 })
 
 describe('what a link may ask for', () => {
-  /** The whole security surface of the scheme, pinned. A link can be written by
-   *  anybody and sent to anybody, so this list growing is a decision rather than a
-   *  side effect of adding a verb. */
   test('is these six actions and nothing else', async () => {
     const actions = [...(await verbs()), 'command', 'add-task', 'nonsense']
     const allowed = actions.filter((one) => verbForAction(one) !== null)
@@ -95,22 +84,14 @@ describe('what a link may ask for', () => {
 
   test('reads `command` as the row the palette runs', () => {
     expect(verbForAction('command')).toBe('commands.run')
-    // And not by its command-line name, which a link has no business knowing.
     expect(verbForAction('commands.run')).toBeNull()
   })
 
   test('and hears how it went only from the verbs that changed something', async () => {
     const heard = (await verbs()).filter((verb) => linkHearsFrom(verb))
 
-    // `new` and `append` were told the path by the caller, so saying it back tells the
-    // caller nothing it did not write - only whether the note was made or added to.
-    // Every other link verb answers a question about the space - `open` answers the
-    // path it landed on - and a link's outcome goes to an address the link itself
-    // chose; see `byLink` in verbs.ts.
     expect(heard).toEqual(['append', 'new', 'tasks.add'])
     expect(linkHearsFrom('open')).toBe(false)
-    // Not even the verbs no link may ask for, so widening one column cannot quietly
-    // widen the other.
     expect(linkHearsFrom('files.read')).toBe(false)
   })
 
@@ -122,17 +103,12 @@ describe('what a link may ask for', () => {
 })
 
 describe('the command line', () => {
-  /** The one thing `nib.mjs` says about the verbs is its usage text, so this is
-   *  what keeps it from going stale: a verb added to the table and not to the help
-   *  is a verb nobody can find. */
   test('names every verb in its help, in the spelling a terminal takes', async () => {
     const usage = readFileSync(
       fileURLToPath(new URL('../../../../cli/nib.mjs', import.meta.url)),
       'utf8',
     )
 
-    // Not an agent's verbs, nor the crate's questions for them, which are spelt the
-    // Model Context Protocol's way and listed by `nib mcp` rather than by this help.
     const missing = (await verbs())
       .filter((verb) => !verb.includes('_') && !verb.startsWith('agent.'))
       .filter((verb) => !usage.includes(`  ${verb.replace('.', ' ')}`))

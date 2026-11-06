@@ -1,7 +1,3 @@
-/** An agent at the dispatcher: which rows reach it, the scope each row names checked
- *  before anything of the verb runs, and the reader's own secret meaning everything.
- *  See docs/agent-native.md 9.1 and 13.1. */
-
 import { describe, expect, test, vi } from 'vitest'
 import { AGENT_WINDOW_VERBS } from '../agents/verbs'
 import { callerOf, READER } from './caller'
@@ -24,7 +20,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** Every verb that reached the agents' module, and what it was told. */
 const reached: { name: string; agent: string | null }[] = []
 
 vi.mock('../agents/workspace', () => ({
@@ -68,7 +63,6 @@ describe('an agent at the dispatcher', () => {
       } else {
         expect(refused, verb).toMatchObject({ ok: false, status: 'error', code: 'not_granted' })
         expect(refused, verb).toMatchObject({ message: expect.stringContaining(scope) })
-        // Refused before anything of the verb was fetched, let alone run.
         expect(reached, verb).toEqual([])
       }
 
@@ -129,7 +123,6 @@ describe('an agent at the dispatcher', () => {
     expect(reached).toEqual([{ name: 'bookmarks', agent: 'claude-code' }])
 
     reached.length = 0
-    // The reader's, with no space open under node, fails in the command line's words.
     expect(await dispatch('bookmarks', {})).toEqual({ ok: false, error: 'there is no space open' })
     expect(reached).toEqual([])
   })

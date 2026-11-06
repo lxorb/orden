@@ -1,7 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The stores read the browser's storage and ask what kind of machine this is, and
- *  there is neither under node; see verbs.test.ts, which does the same. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -19,7 +17,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** What the agent's verbs were asked, and as whom. */
 const asked: { name: string; args: unknown; agent: unknown }[] = []
 
 vi.mock('../agents/workspace', () => ({

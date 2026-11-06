@@ -47,7 +47,6 @@ describe('a path a link may be joined to a space by', () => {
     expect(insideOnly('aux.markdown')).toBeNull()
     expect(insideOnly('notes/COM¹.md')).toBeNull()
     expect(insideOnly('CONOUT$.md')).toBeNull()
-    // A name that merely starts with one is a name.
     expect(insideOnly('console.md')).toBe('console.md')
     expect(insideOnly('notes/COM10.md')).toBe('notes/COM10.md')
   })

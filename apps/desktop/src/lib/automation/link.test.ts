@@ -28,9 +28,6 @@ describe('a link to a note', () => {
     expect(linkTo('Work', 'Plan.md', null)).not.toContain('heading')
   })
 
-  /** The two halves have to agree, so the link the app writes is read back here
-   *  rather than only looked at. A space with a space in its name and a folder with
-   *  an ampersand are exactly what a hand-written link gets wrong. */
   test('reads back as what it was written from', () => {
     const link = readUri(linkTo('Day job', 'reading & notes/Plan B.md', 'Q&A'))
 

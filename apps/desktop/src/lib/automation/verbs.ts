@@ -1,37 +1,3 @@
-/** Every verb the app answers, and the one place both roads in go through.
- *
- *  There is one table because there was nearly two. A `nib://` link and the `nib`
- *  command ask for the same things in the same words, and two lists of them would
- *  have drifted the first time one of them grew a verb - which is also how one of
- *  them would have ended up with a check the other did not have. So the link
- *  router and the endpoint both call `dispatch`, and the only difference between
- *  them is what the table says each is allowed to ask for.
- *
- *  What the columns mean:
- *
- *  - `takes` names the arguments a caller may give without naming them, in order,
- *    which is what the command line's positional words become. The verbs
- *    themselves only ever read named arguments, so the command line does not have
- *    to know the shape of anything.
- *  - `byLink` is whether a `nib://` link may ask for it, and whether it answers one.
- *    Off by default, and off for everything that writes or reads the window: a link
- *    can be written by anybody and sent to anybody, so the most one can do is what a
- *    person clicking about in the app could undo in a moment. `'quiet'` means a link
- *    may ask and hears nothing back; `'back'` means the outcome goes to the link's
- *    own `x-success`, which only a verb that changed something says.
- *  - `confirms` is whether the caller has to say `yes` first. In the table rather
- *    than in the command line, so the app refuses whoever asks rather than
- *    trusting a flag somebody else's script did or did not pass.
- *  - `agent` is the scope an agent needs to call it (docs/agent-native.md 9.1), or
- *    null for one any agent may call. Only these rows reach an agent at all: the
- *    command line's own verbs predate agents and check nothing about them, and the
- *    crate refuses them too. The reader's own secret holds every scope. What an
- *    agent's row does is lib/agents/workspace, fetched with the first of them.
- *
- *  The names are the command line's spelling, dots and all, because that is the
- *  surface somebody reads in a terminal. The six link actions map onto them; see
- *  `BY_LINK` below. */
-
 import {
   appendNote,
   deleteFile,
@@ -65,68 +31,25 @@ import type { Scope } from '../agents/verbs'
 import { said as wordsOf, type Road, type Said, yes } from './args'
 import { type AgentAnswer, type Caller, holds, READER, refusal } from './caller'
 
-/** One verb, whole. */
 interface Verb {
-  /** The arguments a caller may give in order without naming them. */
   takes?: readonly string[]
-  /** Whether a `nib://` link may ask for it, and what it tells one afterwards.
-   *
-   *  `'quiet'` is the answer for every verb that only moves the window about, and it
-   *  is not politeness. A link carries the address its outcome goes to, so whatever
-   *  a verb answers a link is an answer the writer of the link has read - and
-   *  `nib://open?path=Plan` answers the path it landed on. Said back, that is a
-   *  question about the space: send somebody a hundred of these, each with an
-   *  `x-success` of your own, and what comes back is a list of what they keep notes
-   *  about, from a scheme that was only ever allowed to move a window.
-   *
-   *  `'back'` is for a verb the caller already knows the answer to, because the
-   *  caller is the one who changed it: `nib://new` was told the name it made. That is
-   *  the shape x-callback-url exists for, a shortcut that files something and carries
-   *  on, and it is the only shape that says anything. */
   byLink?: 'quiet' | 'back'
-  /** Whether it has to be confirmed before it runs. */
   confirms?: boolean
-  /** What it answers. A verb that has nothing to wait for is written without a
-   *  promise, and `dispatch` awaits whatever comes back either way.
-   *
-   *  The road is handed to every verb and read by one: a command's row may say it
-   *  is only for somebody at the keyboard. It is a parameter rather than an
-   *  argument because an argument is something a link can write.
-   *
-   *  Absent for a verb that is an agent's alone: what it does is lib/agents/workspace,
-   *  which answers the reader's command line too. */
   run?: (args: Said, road: Road) => unknown
-  /** The scope an agent needs to call it; see the columns above. */
   agent?: Scope | null
 }
 
-/** An agent's verb, and only an agent's: the scope it needs. */
 function needs(scope: Scope | null): Verb {
   return { agent: scope }
 }
 
 const VERBS: Record<string, Verb> = {
-  // Five of the six a link can ask for (`tasks.add` is the sixth, below). Opening,
-  // searching and running a command change nothing a person could not change back;
-  // making a note never writes over one, and appending only ever adds to the end of
-  // one. See acts.ts.
-  //
-  // None of them confirms, and that is not an oversight: a link writes its own query
-  // string, so it would write the `yes` as well. What keeps a link out is `byLink`
-  // being absent, which is how every verb that could overwrite, move or delete a note
-  // is out of reach.
   open: { takes: ['path'], byLink: 'quiet', run: openNote },
   new: { takes: ['name'], byLink: 'back', run: newNote },
   append: { takes: ['path', 'content'], byLink: 'back', run: appendNote },
   search: { takes: ['query'], byLink: 'quiet', run: searchSpace },
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
 
-  // The to-dos (docs/tasks.md 5.15): the agent's own verbs, asked by the reader's
-  // command line, so a list, a tick and a new line are worked out once. `nib://add-task`
-  // is the sixth thing a link may ask, and the least of them: one line, into a space's
-  // inbox and nowhere else, which is `append` with less room. It hears its anchor back,
-  // which is the line the link itself wrote. Ticking is what `tasks done` is named for
-  // and one undo takes it back, so it asks no `--yes`, as `append` asks none.
   'tasks.list': { takes: ['filter'], run: (args) => asReader('list_tasks', args) },
   'tasks.add': { takes: ['text'], byLink: 'back', run: addTask },
   'tasks.done': {
@@ -135,9 +58,6 @@ const VERBS: Record<string, Verb> = {
   },
   'base.query': { takes: ['path'], run: (args) => asReader('query_base', args) },
 
-  // Questions. None of them changes anything, and none is answered to a link
-  // either: a link cannot read the answer, so the only thing it could do with one
-  // is put somebody else's note into an `x-success` address.
   'files.list': { run: listFiles },
   'files.read': { takes: ['path'], run: readFile },
   'commands.list': { run: listCommands },
@@ -147,38 +67,24 @@ const VERBS: Record<string, Verb> = {
   tags: { run: listTags },
   'properties.read': { takes: ['path'], run: readNoteProperties },
   outline: { takes: ['path'], run: readOutline },
-  // The command line's list, and an agent's list, add and remove; see `agent` above.
   bookmarks: { run: listBookmarks, agent: 'workspace' },
   words: { takes: ['path'], run: countWords },
   'sync.status': { run: syncStatus },
   'publish.status': { run: publishStatus },
   window: { run: windowRect },
 
-  // What the app calls itself every twenty seconds, asked for now. Nothing to
-  // confirm: a pass is what the app is already doing, and neither verb can lose
-  // anything - a clash keeps both copies, as it does on every other pass.
   'sync.now': { run: syncNow },
   'publish.now': { run: publishNow },
 
-  // Its own name for its own list, so the command line's help can be the app's
-  // answer rather than a second copy of it that goes stale.
   verbs: { run: () => ({ verbs: verbNames() }) },
 
-  // Changes. Every one of them is out of a link's reach and behind a confirmation.
   'files.write': { takes: ['path', 'content'], confirms: true, run: writeFile },
   'files.move': { takes: ['path', 'to'], confirms: true, run: moveFile },
   'files.delete': { takes: ['path'], confirms: true, run: deleteFile },
   'properties.set': { takes: ['key', 'value'], confirms: true, run: setProperty },
 
-  // Running whatever it is sent inside the window. The endpoint refuses it before
-  // it reaches here unless this installation's own file says otherwise, and a link
-  // can never ask for it at all; see src-tauri/src/endpoint.rs and eval.ts.
   eval: { takes: ['code'], confirms: true, run: runEval },
 
-  // An agent's verbs (docs/agent-native.md 5.1, 5.3, 5.4), each with the scope it needs
-  // at the least; lib/agents/verbs.ts holds the same list to the crate's, and a test
-  // holds this one to that. What a row does beyond its scope - another space, which op,
-  // what asks the reader first - the verb itself decides with the grant in hand.
   get_context: needs('context'),
   list_spaces: needs(null),
   list_notes: needs('notes.read'),
@@ -230,66 +136,37 @@ const VERBS: Record<string, Verb> = {
   run_agent: needs('agents'),
   agent_result: needs('agents'),
 
-  // What the crate asks the window on an agent's behalf, each optional: the crate has
-  // an answer of its own when the window gives none (docs/agent-native.md 13.1). The
-  // crate asks as the installation and never as an agent, so no agent reaches these.
   'agent.reader_tabs': { run: (args) => fromTheCrate('agent.reader_tabs', args) },
   'agent.lend': { run: (args) => fromTheCrate('agent.lend', args) },
   'agent.store_for': { run: (args) => fromTheCrate('agent.store_for', args) },
   'agent.markdown': { run: (args) => fromTheCrate('agent.markdown', args) },
 }
 
-/** What each `nib://` action is called in the table. Only where the two differ:
- *  `nib://command` is the link spelling of the row the palette runs. */
 const BY_LINK: Record<string, string> = { command: 'commands.run', 'add-task': 'tasks.add' }
 
-/** The verb a link action names, or null for one no link may ask for - which
- *  includes every name that is not a verb at all. */
 export function verbForAction(action: string): string | null {
-  // A verb with a link spelling of its own is asked for by that spelling and no
-  // other: two names for one action, on a surface anybody can write, is one name
-  // too many. The dotted one stays the command line's.
   if (Object.values(BY_LINK).includes(action)) return null
 
   const name = BY_LINK[action] ?? action
   return VERBS[name]?.byLink === undefined ? null : name
 }
 
-/** Whether a link hears how the verb went, which is whether the verb changed
- *  something the link itself asked for; see `byLink`. Read by the road in start.ts,
- *  so the rule lives in the table with the rest of what a link may do. */
 export function linkHearsFrom(verb: string): boolean {
   return VERBS[verb]?.byLink === 'back'
 }
 
-/** Whether a link action names a verb at all, whether or not a link may ask for
- *  it. What tells "the app will not do that from a link" apart from "there is no
- *  such thing", which are two different things to answer a link with. */
 export function isVerb(action: string): boolean {
   return (BY_LINK[action] ?? action) in VERBS
 }
 
-/** Every verb by name. Read out of the table, so a verb cannot exist without
- *  being listed or be listed without existing. */
 function verbNames(): string[] {
   return Object.keys(VERBS).sort()
 }
 
-/** What a verb answers the command line and a link. */
 export type Plain = { ok: true; value: unknown } | { ok: false; error: string }
 
-/** What a verb answers: the command line's two shapes, or the contract's for an
- *  agent; see `AgentAnswer`. */
 export type Answered = Plain | AgentAnswer
 
-/** Runs one verb.
- *
- *  Answers rather than throws: both callers have to say something either way, and
- *  a shape they both read is what lets the endpoint hand the answer straight on
- *  without an opinion of its own.
- *
- *  `caller` is who asked, which is never an argument for the same reason the road is
- *  not: the endpoint says it beside the verb, from the token the request carried. */
 export async function dispatch(
   verb: string,
   args: Said,
@@ -315,8 +192,6 @@ export async function dispatch(
   const found = VERBS[name]
   if (!found) return { ok: false, error: `there is no verb called ${name}` }
 
-  // An agent's row answers every agent, and the reader too where it is the agent's
-  // alone; a row with a command line answer of its own keeps that for the reader.
   const run = found.run
   if (found.agent !== undefined && (caller.agent !== null || run === undefined)) {
     return agentVerb(name, found.agent, args, caller)
@@ -338,9 +213,6 @@ export async function dispatch(
   }
 }
 
-/** One of an agent's verbs, checked against the scope its row names before anything
- *  of it runs, then answered by lib/agents/workspace. The reader's command line may
- *  ask them too, and is answered in its own two shapes. */
 async function agentVerb(
   name: string,
   scope: Scope | null,
@@ -359,8 +231,6 @@ async function agentVerb(
   return { ok: false, error: answer.status === 'error' ? answer.message : answer.summary }
 }
 
-/** One of an agent's verbs asked by the reader's own command line or a link, answered
- *  in the command line's shape: the value, or the refusal's sentence thrown. */
 async function asReader(name: string, args: Said): Promise<unknown> {
   const { runAgentVerb } = await import('../agents/workspace')
   const answer = await runAgentVerb(name, args, READER)
@@ -368,28 +238,17 @@ async function asReader(name: string, args: Said): Promise<unknown> {
   throw new Error(answer.status === 'error' ? answer.message : answer.summary)
 }
 
-/** `tasks add`, and `nib://add-task`: from a link, the words and the space and nothing
- *  else, so the line can only land in an inbox. */
 function addTask(args: Said, road: Road): Promise<unknown> {
   if (road !== 'link') return asReader('add_task', args)
   const space = wordsOf(args, 'space')
   return asReader('add_task', { text: args.text, ...(space === null ? {} : { space }) })
 }
 
-/** One of the questions the crate asks the window for an agent. */
 async function fromTheCrate(name: string, args: Said): Promise<unknown> {
   const { answerTheCrate } = await import('../agents/workspace')
   return answerTheCrate(name, args)
 }
 
-/** Half the verbs are written as two words - `files read`, `sync now` - and a
- *  terminal hands them over as two words. Joining them is done here rather than in
- *  the command line, so that the one thing which knows what the verbs are called is
- *  the table: the command line sends the words as typed and never has a list of its
- *  own to fall out of step.
- *
- *  A first word that is already a verb wins, so nothing can be turned into a
- *  two-word name by a value that happens to follow it. */
 function twoWords(verb: string, rest: readonly string[]): [string, readonly string[]] {
   const [next, ...after] = rest
   if (verb in VERBS || next === undefined) return [verb, rest]
@@ -397,9 +256,6 @@ function twoWords(verb: string, rest: readonly string[]): [string, readonly stri
   return `${verb}.${next}` in VERBS ? [`${verb}.${next}`, after] : [verb, rest]
 }
 
-/** The words a caller gave in order, under the names the verb reads them by.
- *  Anything past the names it takes is ignored rather than refused: a verb that
- *  grows an argument should not break a script that was passing one too many. */
 function withPositions(verb: Verb, rest: readonly string[]): Said {
   const out: Said = {}
   for (const [at, name] of (verb.takes ?? []).entries()) {
@@ -410,15 +266,6 @@ function withPositions(verb: Verb, rest: readonly string[]): Said {
   return out
 }
 
-/** Running JavaScript inside the window.
- *
- *  In a module of its own, reached only from here and only after the check above,
- *  because the module is the one place in the app that turns a string into code.
- *  The Even Realities plugin must not carry it at all - the store's review reads
- *  the bundle for exactly that and has refused a build over it - so the guard is
- *  the first thing in the function, which is what takes the import and the whole
- *  chunk behind it out of that build. See vite.even.config.ts and
- *  src/lib/even/bundle.test.ts. */
 async function runEval(args: Said): Promise<unknown> {
   if (__EVEN_PLUGIN__) throw new Error('the plugin does not run code')
 

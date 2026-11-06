@@ -1,20 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The road a link comes in by, and what it says back.
- *
- *  Driven through the browser's road, which is the one road that needs no crate: the
- *  app reads the link out of its own address. Everything a link can reach beyond
- *  `dispatch` is stood in for, because what is under test is the answering. */
-
 interface World {
-  /** The address the app is sitting at, which is where the link arrives. */
   here: string
-  /** What `dispatch` answers, and which verb it was asked for. */
   asked: string[]
   answer: { ok: true; value: unknown } | { ok: false; error: string }
-  /** Every address the app left through, in order. */
   went: string[]
-  /** What the reader was told, which is a different question from what a link hears. */
   said: string[]
 }
 
@@ -35,9 +25,6 @@ vi.stubGlobal('window', {
   history: { replaceState: () => undefined },
 })
 
-/** The table itself, with only the running of a verb stood in: which verbs a link
- *  may ask for and which of them answers one is the thing being tested, so it is read
- *  off the real rows. */
 vi.mock('./verbs', async () => {
   const real = await vi.importActual<typeof import('./verbs')>('./verbs')
 
@@ -60,8 +47,6 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-/** The stores the table pulls in read the browser's storage and ask what kind of
- *  machine this is, and there is neither under node; see verbs.test.ts. */
 vi.stubGlobal('localStorage', {
   length: 0,
   key: () => null,
@@ -74,15 +59,11 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 const { startAutomation } = await import('./start')
 
-/** The line across the top of the document, which is a different audience from a
- *  link: what it is told is counted, not read. The store itself is the real one, so
- *  what this watches is the call the road actually makes. */
 const { busy } = await import('../busy.svelte')
 vi.spyOn(busy, 'failed').mockImplementation((words: string) => {
   world.said.push(words)
 })
 
-/** Follows one link, the way a browser hands it over. */
 async function arrives(uri: string): Promise<void> {
   const at = new URL('https://nib.example/')
   at.searchParams.set('nib', uri)
@@ -105,21 +86,15 @@ describe('a link that changed nothing', () => {
     world.answer = { ok: true, value: { path: 'reading/Divorce.md', heading: null } }
     await arrives(`nib://open?path=Divorce&x-success=${encodeURIComponent(BACK)}`)
 
-    // It opened: the verb ran and the reader is looking at the note.
     expect(world.asked).toEqual(['open'])
-    // And whoever wrote the link learns none of that. A path said back is an answer
-    // about what this person keeps notes about, from a scheme that may move a window.
     expect(world.went).toEqual([])
   })
 
   test('and tells it nothing when the note was not there either', async () => {
-    // Two answers that cannot be told apart are one answer. Told apart, a hundred
-    // links are a listing of somebody's space.
     world.answer = { ok: false, error: 'there is no note at reading/Divorce.md' }
     await arrives(`nib://open?path=Divorce&x-error=${encodeURIComponent(BACK)}`)
 
     expect(world.went).toEqual([])
-    // The person at the keyboard is told, which is a different audience.
     expect(world.said.length).toBe(1)
   })
 

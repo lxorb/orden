@@ -1,57 +1,28 @@
-/** Who is asking: the reader's own command line, or an agent with its grant.
- *
- *  The endpoint hands the window an agent's grant beside the verb (see
- *  src-tauri/src/endpoint.rs and docs/agent-native.md 13.1), and nothing beside the
- *  verb for the installation's own secret, which keeps meaning everything. The grant
- *  crossed a boundary, so it is read here once, and what cannot be read as one is an
- *  agent holding nothing: a grant this window does not understand never becomes the
- *  reader.
- *
- *  Here rather than in lib/agents because the dispatcher reads it on every request,
- *  and the dispatcher is loaded on every launch; lib/agents is fetched by the first
- *  agent request and not before (docs/agent-native.md 11). */
-
 import type { Scope } from '../agents/verbs'
 
-/** What the window needs of an agent's grant. The crate holds the rest. */
 interface Agent {
   id: string
   builtIn: boolean
   name: string
   scopes: readonly string[]
-  /** The spaces it may reach, by name; a space it may not reach does not exist to it. */
   spaces: 'all' | readonly string[]
-  /** `autonomous` is the AI sidebar's Agent mode, laid over its grant for one call:
-   *  nothing the window asks about is asked. */
   mode: 'unsupervised' | 'confirm' | 'autonomous'
-  /** The programs `run_terminal` starts without asking. */
   programs: readonly string[]
-  /** What it says about each site (9.2): a denied one is opened in no tab of the
-   *  reader's either. */
   sites: Readonly<Record<string, string>>
 }
 
-/** The reader, or an agent: an agent of the AI panel's says which thread it runs for, so
- *  a helper it starts is that thread's (src-tauri/src/mcp/link.rs). */
 export type Caller = { agent: null } | { agent: Agent; thread?: string }
 
-/** The space an AI panel thread works in, by the thread's id: the panel's to say, since it
- *  holds the threads (ai/sidebar/chat.svelte.ts). Nothing until the panel is loaded. */
 let threadSpaces: (thread: string) => string | null = () => null
 
-/** How the panel says which space each of its threads works in. */
 export function answerThreadSpaces(lookup: (thread: string) => string | null): void {
   threadSpaces = lookup
 }
 
-/** The space the caller's panel thread works in, by id: where a call of it that names no
- *  space is about (docs/ai-sidebar.md 4.11). Null for the reader, an outside agent and a
- *  thread the panel does not hold. */
 export function threadSpaceOf(caller: Caller): string | null {
   return caller.agent && caller.thread ? threadSpaces(caller.thread) : null
 }
 
-/** The reader's own command line and the crate asking on an agent's behalf. */
 export const READER: Caller = { agent: null }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -62,9 +33,6 @@ function texts(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
 
-/** The caller a request names: the reader when it names nobody, an agent otherwise. A
- *  thread is the AI panel's to say: an outside agent naming one would run its helper in
- *  that thread's mode, and read in that thread's space. */
 export function callerOf(told: unknown, thread?: unknown): Caller {
   if (told === undefined || told === null) return READER
 
@@ -80,7 +48,6 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
       name: typeof grant.name === 'string' && grant.name ? grant.name : id,
       scopes: texts(grant.scopes),
       spaces: grant.spaces === 'all' ? 'all' : texts(grant.spaces),
-      // Anything but the words that ask for less is the mode that asks for more.
       mode: grant.mode === 'unsupervised' || grant.mode === 'autonomous' ? grant.mode : 'confirm',
       programs: texts(grant.programs),
       sites: isRecord(grant.sites)
@@ -95,20 +62,15 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
   }
 }
 
-/** Whether a caller reaches a scope. The reader reaches every one. */
 export function holds(caller: Caller, scope: Scope): boolean {
   return caller.agent === null || caller.agent.scopes.includes(scope)
 }
 
-/** A verb's answer as an agent reads it: the contract's three shapes
- *  (src-tauri/src/agents/verbs.rs `Answer`), with `ok` beside them for the endpoint,
- *  which files the call in the audit log by it. */
 export type AgentAnswer =
   | { ok: true; status: 'ok'; result: unknown; untrusted?: string }
   | { ok: true; status: 'needs_approval'; approval: string; summary: string }
   | { ok: false; status: 'error'; code: string; message: string; error: string }
 
-/** A refusal in the contract's shape. */
 export function refusal(code: string, message: string): AgentAnswer {
   return { ok: false, status: 'error', code, message, error: message }
 }

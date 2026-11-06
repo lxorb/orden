@@ -45,12 +45,9 @@ describe('reading a link', () => {
     expect(readUri('https://example.com')).toBeNull()
     expect(readUri('obsidian://open?vault=x')).toBeNull()
     expect(readUri('javascript:alert(1)')).toBeNull()
-    // A scheme of ours has to be the whole scheme, not the start of another one.
     expect(readUri('nibble://open')).toBeNull()
   })
 
-  /** So that a link naming a verb the app declines is declined by name rather than
-   *  read as a broken address; see the cancel callback in start.ts. */
   test('reads an action written with a dot in it', () => {
     expect(readUri('nib://files.delete?path=A.md')?.action).toBe('files.delete')
   })
