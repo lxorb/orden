@@ -20,16 +20,22 @@
   import { faceOf, nameOf } from './people'
   import { saved } from './saved.svelte'
   import { store } from './source.svelte'
+  import { connected } from '../connected.svelte'
+  import { ORDEN } from '../providers/orden'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
   let activity = $state.raw<Hit[]>([])
 
-  const chats = $derived(
-    store()
-      .list.filter((one) => (one.name ?? '').toLowerCase().includes(query.trim().toLowerCase()))
-      .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0)),
-  )
+  const chats = $derived.by(() => {
+    const byId = new Map(store().list.map((one) => [one.id, one]))
+    const asked = query.trim().toLowerCase()
+    return connected
+      .rows()
+      .filter((row) => row.provider === ORDEN)
+      .flatMap((row) => byId.get(row.conversation.id) ?? [])
+      .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
+  })
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
   const now = Date.now()
 

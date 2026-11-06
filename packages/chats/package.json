@@ -13,6 +13,7 @@
     "./mentions": "./src/mentions.ts",
     "./notify": "./src/notify.ts",
     "./pointer": "./src/pointer.ts",
+    "./provider": "./src/provider.ts",
     "./reduce": "./src/reduce.ts",
     "./roles": "./src/roles.ts",
     "./search": "./src/search.ts",
