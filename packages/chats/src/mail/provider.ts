@@ -165,6 +165,7 @@ class MailConnection {
   private main: Imap | null = null
   private opening: Promise<Imap> | null = null
   private selected: string | null = null
+  private turn: Promise<unknown> = Promise.resolve()
   private sent: string | null = null
   private readonly last = new Map<string, number>()
   private readonly hearers = new Set<(event: ProviderEvent) => void>()
@@ -195,6 +196,21 @@ class MailConnection {
     return this.opening
   }
 
+  /** A command reads whichever mailbox is selected when it runs, so choosing one and
+   *  reading from it are one turn of the main connection. */
+  private held<T>(run: (imap: Imap) => Promise<T>): Promise<T> {
+    const turn = this.turn.then(async () => run(await this.connect()))
+    this.turn = turn.catch(() => undefined)
+    return turn
+  }
+
+  private inBox<T>(box: string, run: (imap: Imap) => Promise<T>): Promise<T> {
+    return this.held(async (imap) => {
+      if (this.selected !== box) await this.select(box, imap)
+      return run(imap)
+    })
+  }
+
   private async select(box: string, imap?: Imap): Promise<{ imap: Imap; exists: number }> {
     const held = imap ?? (await this.connect())
     const lines = await held.command(`SELECT ${quoted(box)}`)
@@ -204,18 +220,18 @@ class MailConnection {
   }
 
   /** Reads the boxes once: the inbox and the sent mail, newest first. */
-  async begin(): Promise<void> {
-    const imap = await this.connect()
-    const boxes = await imap.command('LIST "" "*"')
-    this.sent = sentBox(boxes)
-    for (const box of ['INBOX', ...(this.sent ? [this.sent] : [])]) {
-      const { exists } = await this.select(box, imap)
-      if (exists) await this.fetch(imap, box, `${Math.max(1, exists - NEWEST + 1)}:*`, false)
-    }
+  begin(): Promise<void> {
+    return this.held(async (imap) => {
+      const boxes = await imap.command('LIST "" "*"')
+      this.sent = sentBox(boxes)
+      for (const box of ['INBOX', ...(this.sent ? [this.sent] : [])]) {
+        const { exists } = await this.select(box, imap)
+        if (exists) await this.fetch(imap, box, `${Math.max(1, exists - NEWEST + 1)}:*`, false)
+      }
+    })
   }
 
   private async fetch(imap: Imap, box: string, range: string, byUid: boolean): Promise<Mail[]> {
-    if (this.selected !== box) await this.select(box, imap)
     const lines = await imap.command(
       `${byUid ? 'UID ' : ''}FETCH ${range} (UID FLAGS ENVELOPE BODY.PEEK[HEADER.FIELDS (REFERENCES)])`,
     )
@@ -312,9 +328,9 @@ class MailConnection {
   private async body(mail: Mail): Promise<Read> {
     const held = this.bodies.get(mail.key)
     if (held) return held
-    const imap = await this.connect()
-    if (this.selected !== mail.box) await this.select(mail.box, imap)
-    const lines = await imap.command(`UID FETCH ${mail.uid} (BODY.PEEK[])`)
+    const lines = await this.inBox(mail.box, (imap) =>
+      imap.command(`UID FETCH ${mail.uid} (BODY.PEEK[])`),
+    )
     const line = lines.find(
       (one) => one.kind === 'FETCH' && Number(text(itemsOf(one.values).get('UID'))) === mail.uid,
     )
@@ -442,11 +458,11 @@ class MailConnection {
   async markRead(conversation: string): Promise<void> {
     const unseen = this.inThread(conversation).filter((mail) => !mail.seen && mail.uid)
     if (!unseen.length) return
-    const imap = await this.connect()
     for (const box of new Set(unseen.map((mail) => mail.box))) {
-      if (this.selected !== box) await this.select(box, imap)
       const uids = unseen.filter((mail) => mail.box === box).map((mail) => mail.uid)
-      await imap.command(`UID STORE ${uids.join(',')} +FLAGS.SILENT (\\Seen)`)
+      await this.inBox(box, (imap) =>
+        imap.command(`UID STORE ${uids.join(',')} +FLAGS.SILENT (\\Seen)`),
+      )
     }
     for (const mail of unseen) mail.seen = true
     const list = this.inThread(conversation)
@@ -461,12 +477,13 @@ class MailConnection {
   /** New mail in the inbox since the newest one held: told as messages and the
    *  conversations they are in. */
   private async look(): Promise<void> {
-    const imap = await this.connect()
     const after = (this.last.get('INBOX') ?? 0) + 1
-    await this.select('INBOX', imap)
-    const found = (await this.fetch(imap, 'INBOX', `${after}:*`, true)).filter(
-      (mail) => mail.uid >= after,
-    )
+    const found = (
+      await this.held(async (imap) => {
+        await this.select('INBOX', imap)
+        return this.fetch(imap, 'INBOX', `${after}:*`, true)
+      })
+    ).filter((mail) => mail.uid >= after)
     if (!found.length) return
     const threads = this.threads()
     const touched = new Set<string>()

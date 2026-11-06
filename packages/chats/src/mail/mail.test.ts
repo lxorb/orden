@@ -340,6 +340,42 @@ describe('a mailbox, end to end against a server', () => {
     await connection.close()
   })
 
+  test('reads asked at once each come from their own mailbox', async () => {
+    const connection = await mailProvider.connect(config(), host)
+    const [news, lunch] = await Promise.all([
+      connection.history('news@shop.example', { limit: 5 }),
+      connection.history('lunch@example.org', { limit: 5 }),
+    ])
+    expect(news.messages.map((one) => one.text)).toEqual(['Buy'])
+    expect(lunch.messages.map((one) => one.text)).toEqual(['At noon?', 'Yes!'])
+    await connection.close()
+  })
+
+  test('a mail read while another mailbox is being chosen is read from its own', async () => {
+    server.deliver(
+      'Sent',
+      [
+        'From: Emil <emil@example.org>',
+        'To: Shop <news@shop.example>',
+        'Subject: Unsubscribe',
+        'Date: Wed, 4 Nov 2026 08:00:00 +0000',
+        'Message-ID: <stop@example.org>',
+        '',
+        'Stop',
+      ].join('\n'),
+    )
+    const connection = await mailProvider.connect(config(), host)
+    await connection.history('lunch@example.org', { limit: 1 })
+    const [, stop] = await Promise.all([
+      connection.markRead?.('news@shop.example', ''),
+      connection.history('stop@example.org', { limit: 5 }),
+    ])
+    expect(stop.messages.map((one) => one.text)).toEqual(['Stop'])
+    expect([...(server.boxes.get('INBOX')?.[1]?.flags ?? [])]).toContain('\\Seen')
+    expect([...(server.boxes.get('Sent')?.[1]?.flags ?? [])]).not.toContain('\\Seen')
+    await connection.close()
+  })
+
   test('the files of a mail, by their place in it', async () => {
     server.deliver(
       'INBOX',
