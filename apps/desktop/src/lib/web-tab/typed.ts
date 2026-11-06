@@ -1,4 +1,5 @@
 import { isWebAddress } from './address'
+import { isOwnPage } from './own-pages'
 import { TOP_LEVEL_DOMAINS } from './tlds'
 
 export const SEARCH = 'https://www.google.com/search?q=%s'
@@ -168,6 +169,15 @@ export function webAddress(typed: string, engine = SEARCH): string | null {
   if (isLocalFile(said) || mayBeSecret(said)) return null
 
   return searchOn(engine, said)
+}
+
+export type Unopened = 'nothing' | 'own page' | 'file' | 'link'
+
+export function unopened(typed: string): Unopened {
+  const said = typed.trim()
+  if (!said) return 'nothing'
+  if (isOwnPage(said.toLowerCase())) return 'own page'
+  return isLocalFile(said) ? 'file' : 'link'
 }
 
 export function dotCom(typed: string): string | null {
