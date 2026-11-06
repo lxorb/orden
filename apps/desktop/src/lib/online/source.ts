@@ -55,7 +55,8 @@ const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 async function termIdOf(path: string, until: number): Promise<string | null> {
   const { runner } = await import('../sync2/runner.svelte')
   for (;;) {
-    const id = runner.engine?.entryAt(path)?.id ?? null
+    const found = await runner.idAt(path)
+    const id = 'id' in found ? found.id : null
     if (id || Date.now() >= until) return id
     await pause(LOOK_EVERY)
   }

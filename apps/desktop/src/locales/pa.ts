@@ -2405,8 +2405,19 @@ export const pa: Dictionary = {
   'Waiting for {device}': '{device} ਦੀ ਉਡੀਕ',
   'Sign in to use this application.': 'ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਵਰਤਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Waiting for this application’s file to sync…': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਦੇ ਸਿੰਕ ਹੋਣ ਦੀ ਉਡੀਕ…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਅਜੇ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਨਹੀਂ ਹੈ: ਇਸਦੀ ਸਪੇਸ ਦਾ ਸਿੰਕ ਹੋਣਾ ਜ਼ਰੂਰੀ ਹੈ।',
+  'This application’s file has not reached your account yet. Still trying…':
+    'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਅਜੇ ਤੁਹਾਡੇ ਖਾਤੇ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚੀ। ਅਜੇ ਵੀ ਕੋਸ਼ਿਸ਼ ਜਾਰੀ ਹੈ…',
+  'Sync has not started on this device yet. Still trying…':
+    'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਸਿੰਕ ਅਜੇ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋਇਆ। ਅਜੇ ਵੀ ਕੋਸ਼ਿਸ਼ ਜਾਰੀ ਹੈ…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'ਸਿੰਕ ਨੇ ਅਜੇ ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਨਹੀਂ ਲਈ। ਅਜੇ ਵੀ ਕੋਸ਼ਿਸ਼ ਜਾਰੀ ਹੈ…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਇੱਕ ਅਜਿਹੀ ਸਪੇਸ ਵਿੱਚ ਹੈ ਜੋ ਤੁਹਾਡੇ ਖਾਤੇ ਨਾਲ ਸਿੰਕ ਨਹੀਂ ਹੁੰਦੀ।',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'ਤੁਹਾਡਾ ਖਾਤਾ ਅਜੇ ਵੀ ਪੁਰਾਣੇ ਸਿੰਕ ’ਤੇ ਹੈ, ਜੋ ਐਪਲੀਕੇਸ਼ਨਾਂ ਨਹੀਂ ਲੈ ਜਾ ਸਕਦਾ।',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'ਐਪਲੀਕੇਸ਼ਨ ਸਿਰਫ਼ ਤੁਹਾਡੀ ਆਪਣੀ ਸਪੇਸ ਤੋਂ ਚੱਲਦੀ ਹੈ: ਇਹ ਸਪੇਸ ਤੁਹਾਡੇ ਨਾਲ ਸਾਂਝੀ ਕੀਤੀ ਗਈ ਹੈ।',
+  'Sync settings': 'ਸਿੰਕ ਸੈਟਿੰਗਾਂ',
   'Your account’s server does not run applications yet.':
     'ਤੁਹਾਡੇ ਖਾਤੇ ਦਾ ਸਰਵਰ ਅਜੇ ਐਪਲੀਕੇਸ਼ਨਾਂ ਨਹੀਂ ਚਲਾਉਂਦਾ।',
   'Cannot reach your account’s server. Still trying…':

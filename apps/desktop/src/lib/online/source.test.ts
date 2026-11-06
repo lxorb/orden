@@ -19,7 +19,7 @@ vi.mock('../account.svelte', () => ({
 vi.mock('../sync.svelte', () => ({ sync: { version: 2 } }))
 vi.mock('../sync2/runner.svelte', () => ({
   runner: {
-    engine: { entryAt: () => ({ id: 'file-1' }) },
+    idAt: () => Promise.resolve({ id: 'file-1', own: true }),
     kick: () => undefined,
     passNow: () => {
       seen.passes += 1

@@ -2491,8 +2491,19 @@ export const ru: Dictionary = {
   'Waiting for {device}': 'Ожидание {device}',
   'Sign in to use this application.': 'Войдите, чтобы использовать это приложение.',
   'Waiting for this application’s file to sync…': 'Ожидание синхронизации файла этого приложения…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Файла этого приложения ещё нет в вашей учётной записи: его пространство должно синхронизироваться.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Файл этого приложения ещё не дошёл до вашей учётной записи. Попытки продолжаются…',
+  'Sync has not started on this device yet. Still trying…':
+    'Синхронизация на этом устройстве ещё не началась. Попытки продолжаются…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Синхронизация ещё не взяла файл этого приложения. Попытки продолжаются…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Файл этого приложения находится в пространстве, которое не синхронизируется с вашей учётной записью.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Ваша учётная запись всё ещё на старой синхронизации, которая не умеет переносить приложения.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Приложение запускается только из вашего собственного пространства: это пространство вам открыли.',
+  'Sync settings': 'Настройки синхронизации',
   'Your account’s server does not run applications yet.':
     'Сервер вашей учётной записи пока не запускает приложения.',
   'Cannot reach your account’s server. Still trying…':

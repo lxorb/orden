@@ -2403,8 +2403,19 @@ export const mr: Dictionary = {
   'Waiting for {device}': '{device} ची वाट पाहत आहे',
   'Sign in to use this application.': 'हे ॲप्लिकेशन वापरण्यासाठी साइन इन करा.',
   'Waiting for this application’s file to sync…': 'या ॲप्लिकेशनची फाइल सिंक होण्याची वाट पाहत आहे…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'या ॲप्लिकेशनची फाइल अद्याप तुमच्या खात्यात नाही: तिचा स्पेस सिंक व्हायला हवा.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'या ॲप्लिकेशनची फाइल अद्याप तुमच्या खात्यापर्यंत पोहोचलेली नाही. अजूनही प्रयत्न सुरू आहे…',
+  'Sync has not started on this device yet. Still trying…':
+    'या डिव्हाइसवर सिंक अद्याप सुरू झालेले नाही. अजूनही प्रयत्न सुरू आहे…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'सिंकने अद्याप या ॲप्लिकेशनची फाइल घेतलेली नाही. अजूनही प्रयत्न सुरू आहे…',
+  'This application’s file is in a space that does not sync to your account.':
+    'या ॲप्लिकेशनची फाइल अशा स्पेसमध्ये आहे जो तुमच्या खात्याशी सिंक होत नाही.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'तुमचे खाते अजूनही जुन्या सिंकवर आहे, जे ॲप्लिकेशन वाहून नेऊ शकत नाही.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'ॲप्लिकेशन फक्त तुमच्या स्वतःच्या स्पेसमधून चालते: हा स्पेस तुमच्याशी शेअर केलेला आहे.',
+  'Sync settings': 'सिंक सेटिंग्ज',
   'Your account’s server does not run applications yet.':
     'तुमच्या खात्याचा सर्व्हर अद्याप ॲप्लिकेशन्स चालवत नाही.',
   'Cannot reach your account’s server. Still trying…':

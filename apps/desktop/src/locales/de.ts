@@ -2446,8 +2446,19 @@ export const de: Dictionary = {
   'Sign in to use this application.': 'Melde dich an, um diese Anwendung zu nutzen.',
   'Waiting for this application’s file to sync…':
     'Warte auf die Synchronisierung der Datei dieser Anwendung…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Die Datei dieser Anwendung ist noch nicht in deinem Konto: Ihr Space muss synchronisiert werden.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Die Datei dieser Anwendung ist noch nicht in deinem Konto angekommen. Versuche es weiter…',
+  'Sync has not started on this device yet. Still trying…':
+    'Die Synchronisierung hat auf diesem Gerät noch nicht begonnen. Versuche es weiter…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Die Synchronisierung hat die Datei dieser Anwendung noch nicht aufgenommen. Versuche es weiter…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Die Datei dieser Anwendung liegt in einem Space, der nicht mit deinem Konto synchronisiert wird.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Dein Konto nutzt noch die alte Synchronisierung, die keine Anwendungen übertragen kann.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Eine Anwendung läuft nur aus einem eigenen Space: Dieser Space ist mit dir geteilt.',
+  'Sync settings': 'Sync-Einstellungen',
   'Your account’s server does not run applications yet.':
     'Der Server deines Kontos führt noch keine Anwendungen aus.',
   'Cannot reach your account’s server. Still trying…':

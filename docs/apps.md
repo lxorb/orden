@@ -52,7 +52,12 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   `UNKNOWN_APP` for a file not on the account yet, and a plain 404 where the account serves no
   applications (an older server, or the switch off). Each is its own line in the tab: sign in, the
   file still syncing (looked at again by itself), the server not running applications yet, or not
-  reached (tried again). A socket that does not open within 12 s says it cannot reach the server
+  reached (tried again). Before that, sync's id for the file (`idAt` in sync2/runner.svelte.ts,
+  asked of the window running sync where this one does not) comes with the reason it is missing,
+  each its own line: sync not started here yet, the file not taken in yet (both looked for again
+  by itself), the file in a space that does not sync (with Sync settings), or the account still on
+  sync v1. A file in a space shared with the reader says an application runs only from a space of
+  their own, since the door answers only its owner. A socket that does not open within 12 s says it cannot reach the server
   and looks again; a host the account no longer lists is said to be gone; Start, Stop or Restart
   the host does not answer within 15 s is said too. A host makes no socket to an account that
   serves none, and a computer that cannot run an application at all says so before anybody

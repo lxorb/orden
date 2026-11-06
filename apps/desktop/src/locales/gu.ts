@@ -2392,8 +2392,19 @@ export const gu: Dictionary = {
   'Sign in to use this application.': 'આ એપ્લિકેશન વાપરવા માટે સાઇન ઇન કરો.',
   'Waiting for this application’s file to sync…':
     'આ એપ્લિકેશનની ફાઇલ સિંક થવાની રાહ જોઈ રહ્યા છીએ…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'આ એપ્લિકેશનની ફાઇલ હજી તમારા એકાઉન્ટમાં નથી: તેની સ્પેસ સિંક થવી જોઈએ.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'આ એપ્લિકેશનની ફાઇલ હજી તમારા એકાઉન્ટ સુધી પહોંચી નથી. હજી પ્રયાસ ચાલુ છે…',
+  'Sync has not started on this device yet. Still trying…':
+    'આ ઉપકરણ પર સિંક હજી શરૂ થયું નથી. હજી પ્રયાસ ચાલુ છે…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'સિંકે હજી આ એપ્લિકેશનની ફાઇલ લીધી નથી. હજી પ્રયાસ ચાલુ છે…',
+  'This application’s file is in a space that does not sync to your account.':
+    'આ એપ્લિકેશનની ફાઇલ એવી સ્પેસમાં છે જે તમારા એકાઉન્ટ સાથે સિંક થતી નથી.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'તમારું એકાઉન્ટ હજી જૂના સિંક પર છે, જે એપ્લિકેશન લઈ જઈ શકતું નથી.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'એપ્લિકેશન ફક્ત તમારી પોતાની સ્પેસમાંથી ચાલે છે: આ સ્પેસ તમારી સાથે શેર કરેલી છે.',
+  'Sync settings': 'સિંક સેટિંગ્સ',
   'Your account’s server does not run applications yet.':
     'તમારા એકાઉન્ટનું સર્વર હજી એપ્લિકેશન ચલાવતું નથી.',
   'Cannot reach your account’s server. Still trying…':

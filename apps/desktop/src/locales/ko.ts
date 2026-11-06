@@ -2365,8 +2365,19 @@ export const ko: Dictionary = {
   'Sign in to use this application.': '이 애플리케이션을 사용하려면 로그인하세요.',
   'Waiting for this application’s file to sync…':
     '이 애플리케이션의 파일이 동기화되기를 기다리는 중…',
-  'This application’s file is not on your account yet: its space must sync.':
-    '이 애플리케이션의 파일이 아직 계정에 없습니다. 해당 스페이스가 동기화되어야 합니다.',
+  'This application’s file has not reached your account yet. Still trying…':
+    '이 애플리케이션의 파일이 아직 계정에 도착하지 않았습니다. 계속 시도하는 중…',
+  'Sync has not started on this device yet. Still trying…':
+    '이 기기에서 동기화가 아직 시작되지 않았습니다. 계속 시도하는 중…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    '동기화가 아직 이 애플리케이션의 파일을 가져가지 않았습니다. 계속 시도하는 중…',
+  'This application’s file is in a space that does not sync to your account.':
+    '이 애플리케이션의 파일은 계정과 동기화되지 않는 스페이스에 있습니다.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    '계정이 아직 이전 동기화를 사용 중이며, 이 방식으로는 애플리케이션을 옮길 수 없습니다.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    '애플리케이션은 내 스페이스에서만 실행됩니다. 이 스페이스는 공유받은 것입니다.',
+  'Sync settings': '동기화 설정',
   'Your account’s server does not run applications yet.':
     '계정의 서버가 아직 애플리케이션을 실행하지 않습니다.',
   'Cannot reach your account’s server. Still trying…':

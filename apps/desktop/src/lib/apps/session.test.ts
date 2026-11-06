@@ -5,6 +5,7 @@ import type { AppHeard } from './link'
 import {
   ANSWER_WITHIN,
   AppSession,
+  type Found,
   type Linked,
   type Look,
   lookOf,
@@ -23,12 +24,13 @@ const FILE = JSON.stringify({
 const VIEW: View = { width: 800, height: 600, dpr: 1, hz: 60 }
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
-function world(options: { token?: string | null; id?: string | null; looks?: Look[] } = {}) {
+function world(options: { token?: string | null; found?: Found; looks?: Look[] } = {}) {
   let clock = 0
   let timers: { at: number; run: () => void }[] = []
   const state = {
     token: options.token === undefined ? 'tok' : options.token,
-    id: options.id === undefined ? 'app-1' : options.id,
+    found: options.found ?? { id: 'app-1', own: true },
+    finds: 0,
     looks: [...(options.looks ?? ['open'])],
     looked: 0,
     devices: [{ id: 'device-desktop', name: 'Desktop' }] as { id: string; name: string }[],
@@ -36,7 +38,10 @@ function world(options: { token?: string | null; id?: string | null; looks?: Loo
   const links: { heard: (what: AppHeard) => void; said: unknown[]; closed: boolean }[] = []
   const made: SessionWorld = {
     read: () => Promise.resolve(FILE),
-    idOf: () => Promise.resolve(state.id),
+    find: () => {
+      state.finds += 1
+      return Promise.resolve(state.found)
+    },
     token: () => state.token,
     devices: () => Promise.resolve(state.devices),
     look: () => {
@@ -126,14 +131,50 @@ describe('an application tab connecting', () => {
     expect(session.status).toEqual({ is: 'connecting' })
   })
 
-  test('a file sync never gave an id says so, and tries again when asked', async () => {
-    const { session, links, state } = world({ id: null })
+  test('a tab opened before sync runs says so, and connects by itself once sync gives the id', async () => {
+    const { session, links, state, pass } = world({ found: { none: 'not-running' } })
     await session.start(VIEW)
-    expect(session.status).toEqual({ is: 'unsynced' })
-    state.id = 'app-1'
-    session.retry()
-    await tick()
+    expect(session.status).toEqual({ is: 'not-running' })
+    state.found = { id: 'app-1', own: true }
+    await pass(3_000)
     expect(links).toHaveLength(1)
+    expect(session.status).toEqual({ is: 'connecting' })
+  })
+
+  test('a file sync has not taken in yet keeps its reason while it is looked for again', async () => {
+    const { session, links, state, pass } = world({ found: { none: 'untaken' } })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'untaken' })
+    await pass(3_000)
+    expect(state.finds).toBe(2)
+    expect(session.status).toEqual({ is: 'untaken' })
+    expect(links).toEqual([])
+  })
+
+  test('a file in a space sync does not keep says so, and is looked for again', async () => {
+    const { session, links, state, pass } = world({ found: { none: 'outside' } })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'outside' })
+    state.found = { id: 'app-1', own: true }
+    await pass(3_000)
+    expect(links).toHaveLength(1)
+  })
+
+  test('an account still on the old sync says so, and is not asked again by itself', async () => {
+    const { session, links, state, pass } = world({ found: { none: 'old-sync' } })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'old-sync' })
+    await pass(120_000)
+    expect(state.finds).toBe(1)
+    expect(links).toEqual([])
+  })
+
+  test('a file in a space shared with the reader says it runs only from their own', async () => {
+    const { session, links, state } = world({ found: { id: 'app-1', own: false } })
+    await session.start(VIEW)
+    expect(session.status).toEqual({ is: 'shared' })
+    expect(state.looked).toBe(0)
+    expect(links).toEqual([])
   })
 
   test('a file the account does not have yet is looked at again by itself until it does', async () => {

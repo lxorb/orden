@@ -2383,8 +2383,19 @@ export const ja: Dictionary = {
   'Sign in to use this application.': 'このアプリケーションを使うにはサインインしてください。',
   'Waiting for this application’s file to sync…':
     'このアプリケーションのファイルの同期を待っています…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'このアプリケーションのファイルはまだアカウントにありません。スペースを同期する必要があります。',
+  'This application’s file has not reached your account yet. Still trying…':
+    'このアプリケーションのファイルはまだアカウントに届いていません。再試行しています…',
+  'Sync has not started on this device yet. Still trying…':
+    'このデバイスでは同期がまだ始まっていません。再試行しています…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    '同期はまだこのアプリケーションのファイルを取り込んでいません。再試行しています…',
+  'This application’s file is in a space that does not sync to your account.':
+    'このアプリケーションのファイルは、アカウントと同期しないスペースにあります。',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'お使いのアカウントはまだ旧い同期のままで、アプリケーションを運べません。',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'アプリケーションは自分のスペースからしか実行できません。このスペースは共有されたものです。',
+  'Sync settings': '同期の設定',
   'Your account’s server does not run applications yet.':
     'お使いのアカウントのサーバーはまだアプリケーションを実行していません。',
   'Cannot reach your account’s server. Still trying…':

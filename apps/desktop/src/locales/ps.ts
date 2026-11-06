@@ -2402,8 +2402,19 @@ export const ps: Dictionary = {
   'Waiting for {device}': 'د {device} په تمه',
   'Sign in to use this application.': 'د دې اپلېکېشن کارولو لپاره ننوځئ.',
   'Waiting for this application’s file to sync…': 'د دې اپلېکېشن د فایل د همغږۍ په تمه…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'د دې اپلېکېشن فایل تر اوسه ستاسو په حساب کې نشته: د هغه فضا باید همغږې شي.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'د دې اپلېکېشن فایل تر اوسه ستاسو حساب ته نه دی رسېدلی. لا هم هڅه کېږي…',
+  'Sync has not started on this device yet. Still trying…':
+    'په دې وسیله همغږي تر اوسه نه ده پیل شوې. لا هم هڅه کېږي…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'همغږۍ تر اوسه د دې اپلېکېشن فایل نه دی اخیستی. لا هم هڅه کېږي…',
+  'This application’s file is in a space that does not sync to your account.':
+    'د دې اپلېکېشن فایل په داسې فضا کې دی چې ستاسو له حساب سره همغږې نه کېږي.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'ستاسو حساب لا هم په زړې همغږۍ دی، چې اپلېکېشنونه نه شي لېږدولی.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'اپلېکېشن یوازې ستاسو له خپلې فضا څخه چلېږي: دا فضا له تاسو سره شریکه شوې ده.',
+  'Sync settings': 'د همغږۍ امستنې',
   'Your account’s server does not run applications yet.':
     'ستاسو د حساب سرور تر اوسه اپلېکېشنونه نه چلوي.',
   'Cannot reach your account’s server. Still trying…':

@@ -2437,8 +2437,19 @@ export const ta: Dictionary = {
   'Sign in to use this application.': 'இந்தப் பயன்பாட்டைப் பயன்படுத்த உள்நுழையவும்.',
   'Waiting for this application’s file to sync…':
     'இந்தப் பயன்பாட்டின் கோப்பு ஒத்திசைக்கக் காத்திருக்கிறது…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'இந்தப் பயன்பாட்டின் கோப்பு இன்னும் உங்கள் கணக்கில் இல்லை: அதன் ஸ்பேஸ் ஒத்திசைக்கப்பட வேண்டும்.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'இந்தப் பயன்பாட்டின் கோப்பு இன்னும் உங்கள் கணக்கை அடையவில்லை. இன்னும் முயற்சிக்கிறது…',
+  'Sync has not started on this device yet. Still trying…':
+    'இந்தச் சாதனத்தில் ஒத்திசைவு இன்னும் தொடங்கவில்லை. இன்னும் முயற்சிக்கிறது…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'ஒத்திசைவு இன்னும் இந்தப் பயன்பாட்டின் கோப்பை எடுக்கவில்லை. இன்னும் முயற்சிக்கிறது…',
+  'This application’s file is in a space that does not sync to your account.':
+    'இந்தப் பயன்பாட்டின் கோப்பு உங்கள் கணக்குடன் ஒத்திசைக்கப்படாத ஸ்பேஸில் உள்ளது.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'உங்கள் கணக்கு இன்னும் பழைய ஒத்திசைவில் உள்ளது, அது பயன்பாடுகளைக் கொண்டு செல்ல முடியாது.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'பயன்பாடு உங்கள் சொந்த ஸ்பேஸிலிருந்து மட்டுமே இயங்கும்: இந்த ஸ்பேஸ் உங்களுடன் பகிரப்பட்டது.',
+  'Sync settings': 'ஒத்திசைவு அமைப்புகள்',
   'Your account’s server does not run applications yet.':
     'உங்கள் கணக்கின் சேவையகம் இன்னும் பயன்பாடுகளை இயக்குவதில்லை.',
   'Cannot reach your account’s server. Still trying…':

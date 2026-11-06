@@ -2459,8 +2459,19 @@ export const ptPT: Dictionary = {
   'Sign in to use this application.': 'Inicie sessão para utilizar esta aplicação.',
   'Waiting for this application’s file to sync…':
     'À espera de que o ficheiro desta aplicação seja sincronizado…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'O ficheiro desta aplicação ainda não está na sua conta: o respetivo espaço tem de ser sincronizado.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'O ficheiro desta aplicação ainda não chegou à sua conta. A tentar novamente…',
+  'Sync has not started on this device yet. Still trying…':
+    'A sincronização ainda não começou neste dispositivo. A tentar novamente…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'A sincronização ainda não recolheu o ficheiro desta aplicação. A tentar novamente…',
+  'This application’s file is in a space that does not sync to your account.':
+    'O ficheiro desta aplicação está num espaço que não sincroniza com a sua conta.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'A sua conta ainda usa a sincronização antiga, que não consegue levar aplicações.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Uma aplicação só corre a partir de um espaço seu: este espaço foi partilhado consigo.',
+  'Sync settings': 'Definições de sincronização',
   'Your account’s server does not run applications yet.':
     'O servidor da sua conta ainda não executa aplicações.',
   'Cannot reach your account’s server. Still trying…':

@@ -2333,8 +2333,18 @@ export const yue: Dictionary = {
   'Waiting for {device}': '等緊 {device}',
   'Sign in to use this application.': '登入嚟用呢個應用程式。',
   'Waiting for this application’s file to sync…': '等緊呢個應用程式嘅檔案同步…',
-  'This application’s file is not on your account yet: its space must sync.':
-    '呢個應用程式嘅檔案仲未喺你個帳戶入面：佢個空間要先同步。',
+  'This application’s file has not reached your account yet. Still trying…':
+    '呢個應用程式嘅檔案仲未到你個帳戶。仲試緊…',
+  'Sync has not started on this device yet. Still trying…': '呢部裝置仲未開始同步。仲試緊…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    '同步仲未收咗呢個應用程式嘅檔案。仲試緊…',
+  'This application’s file is in a space that does not sync to your account.':
+    '呢個應用程式嘅檔案喺一個唔會同你個帳戶同步嘅空間度。',
+  'Your account is still on the old sync, which cannot carry applications.':
+    '你個帳戶仲用緊舊嘅同步，佢運唔到應用程式。',
+  'An application runs only from a space of your own: this space is shared with you.':
+    '應用程式只可以喺你自己嘅空間度運行：呢個空間係人哋分享畀你嘅。',
+  'Sync settings': '同步設定',
   'Your account’s server does not run applications yet.': '你帳戶嘅伺服器仲未支援執行應用程式。',
   'Cannot reach your account’s server. Still trying…': '連唔到你帳戶嘅伺服器。仲試緊…',
   'The computer this application runs on is no longer signed in to your account.':

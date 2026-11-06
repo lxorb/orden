@@ -2400,8 +2400,19 @@ export const hi: Dictionary = {
   'Sign in to use this application.': 'इस एप्लिकेशन का उपयोग करने के लिए साइन इन करें।',
   'Waiting for this application’s file to sync…':
     'इस एप्लिकेशन की फ़ाइल के सिंक होने की प्रतीक्षा…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'इस एप्लिकेशन की फ़ाइल अभी आपके खाते में नहीं है: इसका स्पेस सिंक होना ज़रूरी है।',
+  'This application’s file has not reached your account yet. Still trying…':
+    'इस एप्लिकेशन की फ़ाइल अभी आपके खाते तक नहीं पहुँची है। अब भी कोशिश जारी है…',
+  'Sync has not started on this device yet. Still trying…':
+    'इस डिवाइस पर सिंक अभी शुरू नहीं हुआ है। अब भी कोशिश जारी है…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'सिंक ने अभी इस एप्लिकेशन की फ़ाइल नहीं ली है। अब भी कोशिश जारी है…',
+  'This application’s file is in a space that does not sync to your account.':
+    'इस एप्लिकेशन की फ़ाइल ऐसे स्पेस में है जो आपके खाते से सिंक नहीं होता।',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'आपका खाता अभी पुराने सिंक पर है, जो एप्लिकेशन नहीं ले जा सकता।',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'एप्लिकेशन सिर्फ़ आपके अपने स्पेस से चलता है: यह स्पेस आपके साथ साझा किया गया है।',
+  'Sync settings': 'सिंक सेटिंग्स',
   'Your account’s server does not run applications yet.':
     'आपके खाते का सर्वर अभी एप्लिकेशन नहीं चलाता।',
   'Cannot reach your account’s server. Still trying…':

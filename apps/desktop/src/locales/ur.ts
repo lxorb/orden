@@ -2400,8 +2400,19 @@ export const ur: Dictionary = {
   'Waiting for {device}': '{device} کا انتظار',
   'Sign in to use this application.': 'اس ایپلیکیشن کو استعمال کرنے کے لیے سائن ان کریں۔',
   'Waiting for this application’s file to sync…': 'اس ایپلیکیشن کی فائل کے سنک ہونے کا انتظار…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'اس ایپلیکیشن کی فائل ابھی آپ کے اکاؤنٹ میں نہیں ہے: اس کی اسپیس کا سنک ہونا ضروری ہے۔',
+  'This application’s file has not reached your account yet. Still trying…':
+    'اس ایپلیکیشن کی فائل ابھی آپ کے اکاؤنٹ تک نہیں پہنچی۔ اب بھی کوشش جاری ہے…',
+  'Sync has not started on this device yet. Still trying…':
+    'اس آلے پر سنک ابھی شروع نہیں ہوا۔ اب بھی کوشش جاری ہے…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'سنک نے ابھی اس ایپلیکیشن کی فائل نہیں لی۔ اب بھی کوشش جاری ہے…',
+  'This application’s file is in a space that does not sync to your account.':
+    'اس ایپلیکیشن کی فائل ایسی اسپیس میں ہے جو آپ کے اکاؤنٹ سے سنک نہیں ہوتی۔',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'آپ کا اکاؤنٹ ابھی پرانے سنک پر ہے، جو ایپلیکیشنز نہیں لے جا سکتا۔',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'ایپلیکیشن صرف آپ کی اپنی اسپیس سے چلتی ہے: یہ اسپیس آپ کے ساتھ شیئر کی گئی ہے۔',
+  'Sync settings': 'سنک کی ترتیبات',
   'Your account’s server does not run applications yet.':
     'آپ کے اکاؤنٹ کا سرور ابھی ایپلیکیشنز نہیں چلاتا۔',
   'Cannot reach your account’s server. Still trying…':

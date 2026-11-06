@@ -2400,8 +2400,19 @@ export const bn: Dictionary = {
   'Waiting for {device}': '{device}-এর অপেক্ষায়',
   'Sign in to use this application.': 'এই অ্যাপ্লিকেশন ব্যবহার করতে সাইন ইন করুন।',
   'Waiting for this application’s file to sync…': 'এই অ্যাপ্লিকেশনের ফাইল সিঙ্ক হওয়ার অপেক্ষায়…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'এই অ্যাপ্লিকেশনের ফাইল এখনও আপনার অ্যাকাউন্টে নেই: এর স্পেস সিঙ্ক হতে হবে।',
+  'This application’s file has not reached your account yet. Still trying…':
+    'এই অ্যাপ্লিকেশনের ফাইল এখনও আপনার অ্যাকাউন্টে পৌঁছায়নি। এখনও চেষ্টা চলছে…',
+  'Sync has not started on this device yet. Still trying…':
+    'এই ডিভাইসে সিঙ্ক এখনও শুরু হয়নি। এখনও চেষ্টা চলছে…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'সিঙ্ক এখনও এই অ্যাপ্লিকেশনের ফাইল নেয়নি। এখনও চেষ্টা চলছে…',
+  'This application’s file is in a space that does not sync to your account.':
+    'এই অ্যাপ্লিকেশনের ফাইল এমন একটি স্পেসে আছে যা আপনার অ্যাকাউন্টে সিঙ্ক হয় না।',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'আপনার অ্যাকাউন্ট এখনও পুরনো সিঙ্কে আছে, যা অ্যাপ্লিকেশন বহন করতে পারে না।',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'অ্যাপ্লিকেশন শুধু আপনার নিজের স্পেস থেকে চলে: এই স্পেসটি আপনার সাথে শেয়ার করা।',
+  'Sync settings': 'সিঙ্ক সেটিংস',
   'Your account’s server does not run applications yet.':
     'আপনার অ্যাকাউন্টের সার্ভার এখনও অ্যাপ্লিকেশন চালায় না।',
   'Cannot reach your account’s server. Still trying…':

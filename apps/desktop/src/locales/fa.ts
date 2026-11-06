@@ -2403,8 +2403,19 @@ export const fa: Dictionary = {
   'Waiting for {device}': 'در انتظار {device}',
   'Sign in to use this application.': 'برای استفاده از این برنامه وارد شوید.',
   'Waiting for this application’s file to sync…': 'در انتظار همگام‌سازی فایل این برنامه…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'فایل این برنامه هنوز در حساب شما نیست: فضای آن باید همگام شود.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'فایل این برنامه هنوز به حساب شما نرسیده است. هنوز در حال تلاش…',
+  'Sync has not started on this device yet. Still trying…':
+    'همگام‌سازی هنوز در این دستگاه شروع نشده است. هنوز در حال تلاش…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'همگام‌سازی هنوز فایل این برنامه را برنداشته است. هنوز در حال تلاش…',
+  'This application’s file is in a space that does not sync to your account.':
+    'فایل این برنامه در فضایی است که با حساب شما همگام نمی‌شود.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'حساب شما هنوز روی همگام‌سازی قدیمی است که نمی‌تواند برنامه‌ها را منتقل کند.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'برنامه فقط از فضای خودتان اجرا می‌شود: این فضا با شما هم‌رسانی شده است.',
+  'Sync settings': 'تنظیمات همگام‌سازی',
   'Your account’s server does not run applications yet.':
     'سرور حساب شما هنوز برنامه‌ها را اجرا نمی‌کند.',
   'Cannot reach your account’s server. Still trying…':

@@ -2370,8 +2370,19 @@ export const am: Dictionary = {
   'Waiting for {device}': '{device}ን በመጠበቅ ላይ',
   'Sign in to use this application.': 'ይህን መተግበሪያ ለመጠቀም ይግቡ።',
   'Waiting for this application’s file to sync…': 'የዚህ መተግበሪያ ፋይል እስኪመሳሰል በመጠበቅ ላይ…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'የዚህ መተግበሪያ ፋይል እስካሁን በመለያዎ ላይ የለም፦ ቦታው መመሳሰል አለበት።',
+  'This application’s file has not reached your account yet. Still trying…':
+    'የዚህ መተግበሪያ ፋይል እስካሁን መለያዎ ላይ አልደረሰም። አሁንም እየሞከረ ነው…',
+  'Sync has not started on this device yet. Still trying…':
+    'ማመሳሰል በዚህ መሣሪያ ላይ እስካሁን አልጀመረም። አሁንም እየሞከረ ነው…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'ማመሳሰል የዚህን መተግበሪያ ፋይል እስካሁን አልወሰደም። አሁንም እየሞከረ ነው…',
+  'This application’s file is in a space that does not sync to your account.':
+    'የዚህ መተግበሪያ ፋይል ከመለያዎ ጋር በማይመሳሰል ቦታ ውስጥ ነው።',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'መለያዎ አሁንም በአሮጌው ማመሳሰል ላይ ነው፤ እሱ መተግበሪያዎችን መሸከም አይችልም።',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'መተግበሪያ የሚሠራው ከራስዎ ቦታ ብቻ ነው፦ ይህ ቦታ ከእርስዎ ጋር የተጋራ ነው።',
+  'Sync settings': 'የማመሳሰል ቅንብሮች',
   'Your account’s server does not run applications yet.': 'የመለያዎ አገልጋይ እስካሁን መተግበሪያዎችን አያስኬድም።',
   'Cannot reach your account’s server. Still trying…': 'የመለያዎን አገልጋይ ማግኘት አልተቻለም። አሁንም በመሞከር ላይ…',
   'The computer this application runs on is no longer signed in to your account.':

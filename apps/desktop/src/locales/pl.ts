@@ -2491,8 +2491,19 @@ export const pl: Dictionary = {
   'Waiting for {device}': 'Czekam na {device}',
   'Sign in to use this application.': 'Zaloguj się, aby korzystać z tej aplikacji.',
   'Waiting for this application’s file to sync…': 'Czekam na synchronizację pliku tej aplikacji…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Plik tej aplikacji nie jest jeszcze na Twoim koncie: jego przestrzeń musi się zsynchronizować.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Plik tej aplikacji nie dotarł jeszcze na Twoje konto. Próbuję dalej…',
+  'Sync has not started on this device yet. Still trying…':
+    'Synchronizacja nie ruszyła jeszcze na tym urządzeniu. Próbuję dalej…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Synchronizacja nie przejęła jeszcze pliku tej aplikacji. Próbuję dalej…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Plik tej aplikacji jest w przestrzeni, która nie synchronizuje się z Twoim kontem.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Twoje konto wciąż korzysta ze starej synchronizacji, która nie przenosi aplikacji.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Aplikacja działa tylko z Twojej własnej przestrzeni: ta przestrzeń jest Ci udostępniona.',
+  'Sync settings': 'Ustawienia synchronizacji',
   'Your account’s server does not run applications yet.':
     'Serwer Twojego konta nie uruchamia jeszcze aplikacji.',
   'Cannot reach your account’s server. Still trying…':

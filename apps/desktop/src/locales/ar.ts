@@ -2520,8 +2520,19 @@ export const ar: Dictionary = {
   'Waiting for {device}': 'في انتظار {device}',
   'Sign in to use this application.': 'سجّل الدخول لاستخدام هذا التطبيق.',
   'Waiting for this application’s file to sync…': 'في انتظار مزامنة ملف هذا التطبيق…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ملف هذا التطبيق ليس في حسابك بعد: يجب مزامنة مساحته.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'لم يصل ملف هذا التطبيق إلى حسابك بعد. لا تزال المحاولة جارية…',
+  'Sync has not started on this device yet. Still trying…':
+    'لم تبدأ المزامنة على هذا الجهاز بعد. لا تزال المحاولة جارية…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'لم تأخذ المزامنة ملف هذا التطبيق بعد. لا تزال المحاولة جارية…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ملف هذا التطبيق في مساحة لا تُزامَن مع حسابك.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'لا يزال حسابك على المزامنة القديمة، وهي لا تستطيع نقل التطبيقات.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'لا يعمل التطبيق إلا من مساحة خاصة بك: هذه المساحة مشارَكة معك.',
+  'Sync settings': 'إعدادات المزامنة',
   'Your account’s server does not run applications yet.': 'خادم حسابك لا يشغّل التطبيقات بعد.',
   'Cannot reach your account’s server. Still trying…':
     'تعذّر الوصول إلى خادم حسابك. لا تزال المحاولة جارية…',

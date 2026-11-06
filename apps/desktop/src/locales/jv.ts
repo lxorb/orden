@@ -2380,8 +2380,19 @@ export const jv: Dictionary = {
   'Waiting for {device}': 'Ngenteni {device}',
   'Sign in to use this application.': 'Mlebua kanggo nggunakake aplikasi iki.',
   'Waiting for this application’s file to sync…': 'Ngenteni berkas aplikasi iki disinkronake…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Berkas aplikasi iki durung ana ing akunmu: spasine kudu disinkronake.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Berkas aplikasi iki durung tekan akunmu. Isih nyoba…',
+  'Sync has not started on this device yet. Still trying…':
+    'Sinkronisasi durung diwiwiti ing piranti iki. Isih nyoba…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Sinkronisasi durung njupuk berkas aplikasi iki. Isih nyoba…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Berkas aplikasi iki ana ing spasi sing ora disinkronake karo akunmu.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Akunmu isih nganggo sinkronisasi lawas, sing ora bisa nggawa aplikasi.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Aplikasi mung mlaku saka spasimu dhéwé: spasi iki dibagi karo kowé.',
+  'Sync settings': 'Setelan sinkronisasi',
   'Your account’s server does not run applications yet.': 'Server akunmu durung mbukak aplikasi.',
   'Cannot reach your account’s server. Still trying…':
     'Ora bisa nyambung menyang server akunmu. Isih nyoba…',

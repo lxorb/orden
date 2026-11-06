@@ -2353,8 +2353,19 @@ export const th: Dictionary = {
   'Waiting for {device}': 'กำลังรอ {device}',
   'Sign in to use this application.': 'ลงชื่อเข้าใช้เพื่อใช้แอปพลิเคชันนี้',
   'Waiting for this application’s file to sync…': 'กำลังรอให้ไฟล์ของแอปพลิเคชันนี้ซิงก์…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ไฟล์ของแอปพลิเคชันนี้ยังไม่อยู่ในบัญชีของคุณ: ต้องซิงก์สเปซของไฟล์ก่อน',
+  'This application’s file has not reached your account yet. Still trying…':
+    'ไฟล์ของแอปพลิเคชันนี้ยังไปไม่ถึงบัญชีของคุณ กำลังลองต่อ…',
+  'Sync has not started on this device yet. Still trying…':
+    'การซิงก์ยังไม่เริ่มบนอุปกรณ์นี้ กำลังลองต่อ…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'การซิงก์ยังไม่ได้รับไฟล์ของแอปพลิเคชันนี้ กำลังลองต่อ…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ไฟล์ของแอปพลิเคชันนี้อยู่ในสเปซที่ไม่ซิงก์กับบัญชีของคุณ',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'บัญชีของคุณยังใช้การซิงก์แบบเก่า ซึ่งพาแอปพลิเคชันไปไม่ได้',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'แอปพลิเคชันทำงานได้จากสเปซของคุณเองเท่านั้น: สเปซนี้มีคนแชร์ให้คุณ',
+  'Sync settings': 'การตั้งค่าการซิงก์',
   'Your account’s server does not run applications yet.':
     'เซิร์ฟเวอร์ของบัญชีคุณยังไม่รันแอปพลิเคชัน',
   'Cannot reach your account’s server. Still trying…':

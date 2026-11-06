@@ -18,6 +18,7 @@ import { account } from '../account.svelte'
 import { BASE } from '../api'
 import { pageWorld } from '../online/link'
 import type { Holder } from '../online/arrival.svelte'
+import type { IdAt } from '../sync2/runner.svelte'
 import { untrack } from 'svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
@@ -62,6 +63,8 @@ export type AppStatus =
   /** Sync has not given the file its id yet, or the account does not have it yet. */
   | { is: 'syncing' }
   | { is: 'unsynced' }
+  | { is: Unfound }
+  | { is: 'shared' }
   /** The account answers that it serves no applications. */
   | { is: 'unserved' }
   | { is: 'connecting' }
@@ -81,7 +84,12 @@ export type AppStatus =
     }
 
 /** Why the tab is not connected, where that is not just a socket being made. */
-type Blocked = 'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable'
+type Blocked =
+  'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable' | Unfound | 'shared'
+
+export type Found = IdAt | { none: 'old-sync' }
+
+type Unfound = Extract<Found, { none: string }>['none']
 
 /** One of the account's devices, as `/v2/devices` lists it. */
 interface Device {
@@ -102,8 +110,8 @@ export interface Linked {
 /** What a tab's session reads of the world, so a test can hand in its own. */
 export interface SessionWorld {
   read(path: string): Promise<string | null>
-  /** The id sync gave the file, waited for until `until`; null if it has none. */
-  idOf(path: string, until: number): Promise<string | null>
+  /** The id sync gave the file, waited for until `until`, or why it has none. */
+  find(path: string, until: number): Promise<Found>
   token(): string | null
   /** The account's devices, or null where they could not be asked. */
   devices(token: string): Promise<Device[] | null>
@@ -118,7 +126,7 @@ const sessionWorld: SessionWorld = {
     const { invoke } = await import('../tauri')
     return invoke<string>('read_note', { path }).catch(() => null)
   },
-  idOf: (path, until) => idOf(path, until),
+  find: (path, until) => find(path, until),
   token: () => account.accountToken,
   async devices(token) {
     const { request } = await import('../api')
@@ -255,14 +263,19 @@ export class AppSession {
       return
     }
     if (!this.id) {
-      this.blocked = 'syncing'
-      const id = await this.world.idOf(path, this.world.now() + WAIT)
+      if (this.blocked === null || this.blocked === 'signed-out') this.blocked = 'syncing'
+      const found = await this.world.find(path, this.world.now() + WAIT)
       if (turn !== this.turn || this.over()) return
-      if (!id) {
-        this.blocked = 'unsynced'
+      if ('none' in found) {
+        this.blocked = found.none
+        if (found.none !== 'old-sync') this.later(turn, () => void this.connect())
         return
       }
-      this.id = id
+      if (!found.own) {
+        this.blocked = 'shared'
+        return
+      }
+      this.id = found.id
     }
     await this.lookIn(turn)
   }
@@ -297,16 +310,16 @@ export class AppSession {
     this.closeLink()
     if (look === 'unknown') this.blocked = 'unsynced'
     else this.blocked = look
-    if (look === 'unknown' || look === 'unreachable') this.lookLater(turn)
+    if (look === 'unknown' || look === 'unreachable') this.later(turn, () => void this.lookIn(turn))
   }
 
-  private lookLater(turn: number): void {
+  private later(turn: number, again: () => void): void {
     this.cancelLook?.()
     const wait = LOOK_AGAIN[Math.min(this.tries, LOOK_AGAIN.length - 1)] ?? 30_000
     this.tries += 1
     this.cancelLook = this.world.after(wait, () => {
       this.cancelLook = null
-      if (turn === this.turn) void this.lookIn(turn)
+      if (turn === this.turn) again()
     })
   }
 
@@ -441,11 +454,12 @@ export class AppSession {
 }
 
 /** The id sync gave the file at `path`, waited for while a new one is taken in. */
-export async function idOf(path: string, until: number): Promise<string | null> {
+export async function find(path: string, until: number): Promise<Found> {
+  if (account.user && account.user.syncVersion !== 2) return { none: 'old-sync' }
   const { runner } = await import('../sync2/runner.svelte')
   for (;;) {
-    const id = runner.engine?.entryAt(path)?.id ?? null
-    if (id || Date.now() >= until) return id
+    const found = await runner.idAt(path)
+    if ('id' in found || Date.now() >= until) return found
     await pause(LOOK_EVERY)
   }
 }

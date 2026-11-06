@@ -2412,8 +2412,19 @@ export const te: Dictionary = {
   'Waiting for {device}': '{device} కోసం వేచి ఉంది',
   'Sign in to use this application.': 'ఈ అప్లికేషన్‌ను ఉపయోగించడానికి సైన్ ఇన్ చేయండి.',
   'Waiting for this application’s file to sync…': 'ఈ అప్లికేషన్ ఫైల్ సింక్ అయ్యే వరకు వేచి ఉంది…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ఈ అప్లికేషన్ ఫైల్ ఇంకా మీ ఖాతాలో లేదు: దాని స్పేస్ సింక్ కావాలి.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'ఈ అప్లికేషన్ ఫైల్ ఇంకా మీ ఖాతాకు చేరలేదు. ఇంకా ప్రయత్నిస్తోంది…',
+  'Sync has not started on this device yet. Still trying…':
+    'ఈ పరికరంలో సింక్ ఇంకా మొదలవలేదు. ఇంకా ప్రయత్నిస్తోంది…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'సింక్ ఇంకా ఈ అప్లికేషన్ ఫైల్‌ను తీసుకోలేదు. ఇంకా ప్రయత్నిస్తోంది…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ఈ అప్లికేషన్ ఫైల్ మీ ఖాతాతో సింక్ కాని స్పేస్‌లో ఉంది.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'మీ ఖాతా ఇంకా పాత సింక్‌లోనే ఉంది, అది అప్లికేషన్‌లను తీసుకెళ్లలేదు.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'అప్లికేషన్ మీ సొంత స్పేస్ నుంచే నడుస్తుంది: ఈ స్పేస్ మీతో పంచుకున్నది.',
+  'Sync settings': 'సింక్ సెట్టింగ్‌లు',
   'Your account’s server does not run applications yet.':
     'మీ ఖాతా సర్వర్ ఇంకా అప్లికేషన్‌లను నడపడం లేదు.',
   'Cannot reach your account’s server. Still trying…':

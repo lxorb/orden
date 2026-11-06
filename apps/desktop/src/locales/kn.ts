@@ -2426,8 +2426,19 @@ export const kn: Dictionary = {
   'Waiting for {device}': '{device} ಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ',
   'Sign in to use this application.': 'ಈ ಅಪ್ಲಿಕೇಶನ್ ಬಳಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Waiting for this application’s file to sync…': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಸಿಂಕ್ ಆಗಲು ಕಾಯಲಾಗುತ್ತಿದೆ…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಇಲ್ಲ: ಅದರ ಸ್ಪೇಸ್ ಸಿಂಕ್ ಆಗಬೇಕು.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಯನ್ನು ತಲುಪಿಲ್ಲ. ಇನ್ನೂ ಪ್ರಯತ್ನಿಸುತ್ತಿದೆ…',
+  'Sync has not started on this device yet. Still trying…':
+    'ಈ ಸಾಧನದಲ್ಲಿ ಸಿಂಕ್ ಇನ್ನೂ ಆರಂಭವಾಗಿಲ್ಲ. ಇನ್ನೂ ಪ್ರಯತ್ನಿಸುತ್ತಿದೆ…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'ಸಿಂಕ್ ಇನ್ನೂ ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಅನ್ನು ತೆಗೆದುಕೊಂಡಿಲ್ಲ. ಇನ್ನೂ ಪ್ರಯತ್ನಿಸುತ್ತಿದೆ…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ನಿಮ್ಮ ಖಾತೆಗೆ ಸಿಂಕ್ ಆಗದ ಸ್ಪೇಸ್‌ನಲ್ಲಿದೆ.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'ನಿಮ್ಮ ಖಾತೆ ಇನ್ನೂ ಹಳೆಯ ಸಿಂಕ್‌ನಲ್ಲಿದೆ, ಅದು ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಸಾಗಿಸಲಾರದು.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'ಅಪ್ಲಿಕೇಶನ್ ನಿಮ್ಮದೇ ಸ್ಪೇಸ್‌ನಿಂದ ಮಾತ್ರ ಚಲಿಸುತ್ತದೆ: ಈ ಸ್ಪೇಸ್ ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಲಾಗಿದೆ.',
+  'Sync settings': 'ಸಿಂಕ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು',
   'Your account’s server does not run applications yet.':
     'ನಿಮ್ಮ ಖಾತೆಯ ಸರ್ವರ್ ಇನ್ನೂ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಚಲಾಯಿಸುತ್ತಿಲ್ಲ.',
   'Cannot reach your account’s server. Still trying…':

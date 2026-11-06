@@ -2388,8 +2388,19 @@ export const id: Dictionary = {
   'Waiting for {device}': 'Menunggu {device}',
   'Sign in to use this application.': 'Masuk untuk menggunakan aplikasi ini.',
   'Waiting for this application’s file to sync…': 'Menunggu file aplikasi ini disinkronkan…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'File aplikasi ini belum ada di akun Anda: spacenya harus disinkronkan.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'File aplikasi ini belum sampai di akun Anda. Masih mencoba…',
+  'Sync has not started on this device yet. Still trying…':
+    'Sinkronisasi belum dimulai di perangkat ini. Masih mencoba…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Sinkronisasi belum mengambil file aplikasi ini. Masih mencoba…',
+  'This application’s file is in a space that does not sync to your account.':
+    'File aplikasi ini ada di space yang tidak disinkronkan ke akun Anda.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Akun Anda masih memakai sinkronisasi lama, yang tidak dapat membawa aplikasi.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Aplikasi hanya berjalan dari space milik Anda sendiri: space ini dibagikan dengan Anda.',
+  'Sync settings': 'Pengaturan sinkronisasi',
   'Your account’s server does not run applications yet.':
     'Server akun Anda belum menjalankan aplikasi.',
   'Cannot reach your account’s server. Still trying…':

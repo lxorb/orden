@@ -2375,8 +2375,19 @@ export const vi: Dictionary = {
   'Waiting for {device}': 'Đang chờ {device}',
   'Sign in to use this application.': 'Đăng nhập để sử dụng ứng dụng này.',
   'Waiting for this application’s file to sync…': 'Đang chờ tệp của ứng dụng này đồng bộ…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Tệp của ứng dụng này chưa có trong tài khoản của bạn: không gian của nó cần được đồng bộ.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Tệp của ứng dụng này chưa tới tài khoản của bạn. Vẫn đang thử…',
+  'Sync has not started on this device yet. Still trying…':
+    'Đồng bộ chưa bắt đầu trên thiết bị này. Vẫn đang thử…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Đồng bộ chưa nhận tệp của ứng dụng này. Vẫn đang thử…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Tệp của ứng dụng này nằm trong một không gian không đồng bộ với tài khoản của bạn.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Tài khoản của bạn vẫn dùng cách đồng bộ cũ, vốn không mang được ứng dụng.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Ứng dụng chỉ chạy từ không gian của riêng bạn: không gian này được chia sẻ với bạn.',
+  'Sync settings': 'Cài đặt đồng bộ',
   'Your account’s server does not run applications yet.':
     'Máy chủ của tài khoản bạn chưa chạy ứng dụng.',
   'Cannot reach your account’s server. Still trying…':

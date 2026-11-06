@@ -27,6 +27,7 @@
   import { account } from '../account.svelte'
   import { t } from '../i18n.svelte'
   import { heldLine } from '../online/arrival.svelte'
+  import { settings } from '../settings.svelte'
   import Sweep from '../Sweep.svelte'
   import type { Tab } from '../workspace.svelte'
   import { appSessionOf } from './session.svelte'
@@ -165,7 +166,19 @@
       case 'syncing':
         return t('Waiting for this application’s file to sync…')
       case 'unsynced':
-        return t('This application’s file is not on your account yet: its space must sync.')
+        return t('This application’s file has not reached your account yet. Still trying…')
+      case 'not-running':
+        return t('Sync has not started on this device yet. Still trying…')
+      case 'untaken':
+        return t('Sync has not taken in this application’s file yet. Still trying…')
+      case 'outside':
+        return t('This application’s file is in a space that does not sync to your account.')
+      case 'old-sync':
+        return t('Your account is still on the old sync, which cannot carry applications.')
+      case 'shared':
+        return t(
+          'An application runs only from a space of your own: this space is shared with you.',
+        )
       case 'unserved':
         return t('Your account’s server does not run applications yet.')
       case 'unreachable':
@@ -361,7 +374,14 @@
   )
   /** What the reader can do about a tab that is not connected: sign in, or try again. */
   const again = $derived(
-    status.is === 'unsynced' || status.is === 'unserved' || status.is === 'unreachable',
+    status.is === 'unsynced' ||
+      status.is === 'unserved' ||
+      status.is === 'unreachable' ||
+      status.is === 'not-running' ||
+      status.is === 'untaken' ||
+      status.is === 'outside' ||
+      status.is === 'old-sync' ||
+      status.is === 'shared',
   )
   // Signed in again: the tab connects without being asked.
   $effect(() => {
@@ -448,6 +468,11 @@
     {#if status.is === 'signed-out'}
       <button type="button" class="nib-button" onclick={() => account.ask()}>{t('Sign in')}</button>
     {:else if again}
+      {#if status.is === 'outside'}
+        <button type="button" class="nib-button" onclick={() => settings.show('sync')}
+          >{t('Sync settings')}</button
+        >
+      {/if}
       <button type="button" class="nib-button is-quiet" onclick={() => session.retry()}
         >{t('Try again')}</button
       >

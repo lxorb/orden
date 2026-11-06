@@ -2415,8 +2415,19 @@ export const gsw: Dictionary = {
   'Sign in to use this application.': 'Aamelde, zum die Aawändig z bruche.',
   'Waiting for this application’s file to sync…':
     'Warte, bis s Datei vo dere Aawändig synchronisiert isch…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'S Datei vo dere Aawändig isch no nöd i dim Konto: Ihre Space muess synchronisiere.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'D Datei vo dere Aawändig isch no nöd i dim Konto aachoo. Probiere wiiter…',
+  'Sync has not started on this device yet. Still trying…':
+    'D Synchronisierig het uf dem Grät no nöd aagfange. Probiere wiiter…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'D Synchronisierig het d Datei vo dere Aawändig no nöd uufgnoo. Probiere wiiter…',
+  'This application’s file is in a space that does not sync to your account.':
+    'D Datei vo dere Aawändig isch imene Space, wo nöd mit dim Konto synchronisiert wird.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Dis Konto bruucht no di alt Synchronisierig, wo kei Aawändige cha träge.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'E Aawändig lauft nur us emne eigete Space: dä Space isch mit dir teilt.',
+  'Sync settings': 'Sync-Iistellige',
   'Your account’s server does not run applications yet.':
     'De Server vo dim Konto füehrt no kei Aawändige uus.',
   'Cannot reach your account’s server. Still trying…':

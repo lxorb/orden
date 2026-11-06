@@ -2485,8 +2485,19 @@ export const uk: Dictionary = {
   'Sign in to use this application.': 'Увійдіть, щоб користуватися цим застосунком.',
   'Waiting for this application’s file to sync…':
     'Очікування синхронізації файлу цього застосунку…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Файлу цього застосунку ще немає у вашому обліковому записі: його простір має синхронізуватися.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Файл цього застосунку ще не дійшов до вашого облікового запису. Спроби тривають…',
+  'Sync has not started on this device yet. Still trying…':
+    'Синхронізація на цьому пристрої ще не почалася. Спроби тривають…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Синхронізація ще не взяла файл цього застосунку. Спроби тривають…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Файл цього застосунку лежить у просторі, який не синхронізується з вашим обліковим записом.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Ваш обліковий запис досі на старій синхронізації, яка не переносить застосунки.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Застосунок запускається лише з вашого власного простору: цей простір вам надали.',
+  'Sync settings': 'Налаштування синхронізації',
   'Your account’s server does not run applications yet.':
     'Сервер вашого облікового запису ще не запускає застосунки.',
   'Cannot reach your account’s server. Still trying…':

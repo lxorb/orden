@@ -2413,8 +2413,19 @@ export const tr: Dictionary = {
   'Sign in to use this application.': 'Bu uygulamayı kullanmak için oturum aç.',
   'Waiting for this application’s file to sync…':
     'Bu uygulamanın dosyasının eşitlenmesi bekleniyor…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Bu uygulamanın dosyası henüz hesabında yok: alanının eşitlenmesi gerekiyor.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Bu uygulamanın dosyası henüz hesabına ulaşmadı. Hâlâ deneniyor…',
+  'Sync has not started on this device yet. Still trying…':
+    'Eşitleme bu cihazda henüz başlamadı. Hâlâ deneniyor…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Eşitleme bu uygulamanın dosyasını henüz almadı. Hâlâ deneniyor…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Bu uygulamanın dosyası, hesabınla eşitlenmeyen bir alanda.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Hesabın hâlâ uygulama taşıyamayan eski eşitlemede.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Bir uygulama yalnızca kendi alanından çalışır: bu alan seninle paylaşılmış.',
+  'Sync settings': 'Eşitleme ayarları',
   'Your account’s server does not run applications yet.':
     'Hesabının sunucusu henüz uygulama çalıştırmıyor.',
   'Cannot reach your account’s server. Still trying…':

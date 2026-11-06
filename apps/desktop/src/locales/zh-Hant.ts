@@ -2337,8 +2337,18 @@ export const zhHant: Dictionary = {
   'Waiting for {device}': '正在等待 {device}',
   'Sign in to use this application.': '請登入以使用此應用程式。',
   'Waiting for this application’s file to sync…': '正在等待此應用程式的檔案同步…',
-  'This application’s file is not on your account yet: its space must sync.':
-    '此應用程式的檔案尚未在你的帳號中：其空間必須先同步。',
+  'This application’s file has not reached your account yet. Still trying…':
+    '此應用程式的檔案尚未抵達你的帳號。仍在重試…',
+  'Sync has not started on this device yet. Still trying…': '此裝置上的同步尚未開始。仍在重試…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    '同步尚未收錄此應用程式的檔案。仍在重試…',
+  'This application’s file is in a space that does not sync to your account.':
+    '此應用程式的檔案位於不與你的帳號同步的空間中。',
+  'Your account is still on the old sync, which cannot carry applications.':
+    '你的帳號仍在使用舊版同步，無法傳送應用程式。',
+  'An application runs only from a space of your own: this space is shared with you.':
+    '應用程式只能從你自己的空間執行：此空間是別人分享給你的。',
+  'Sync settings': '同步設定',
   'Your account’s server does not run applications yet.': '你帳號的伺服器尚未支援執行應用程式。',
   'Cannot reach your account’s server. Still trying…': '無法連線到你帳號的伺服器。仍在重試…',
   'The computer this application runs on is no longer signed in to your account.':

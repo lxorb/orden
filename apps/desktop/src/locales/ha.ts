@@ -2433,8 +2433,19 @@ export const ha: Dictionary = {
   'Sign in to use this application.': 'Shiga domin amfani da wannan aikace-aikacen.',
   'Waiting for this application’s file to sync…':
     'Ana jiran fayil ɗin wannan aikace-aikacen ya yi sync…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Fayil ɗin wannan aikace-aikacen bai riga ya shiga asusunka ba: dole ne a yi sync na sararinsa.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Fayil ɗin wannan aikace-aikacen bai riga ya isa asusunka ba. Ana ci gaba da ƙoƙari…',
+  'Sync has not started on this device yet. Still trying…':
+    'Sync bai riga ya fara a wannan na’urar ba. Ana ci gaba da ƙoƙari…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Sync bai riga ya ɗauki fayil ɗin wannan aikace-aikacen ba. Ana ci gaba da ƙoƙari…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Fayil ɗin wannan aikace-aikacen yana cikin sararin da ba ya yin sync da asusunka.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Asusunka har yanzu yana kan tsohon sync, wanda ba zai iya ɗaukar aikace-aikace ba.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Aikace-aikace yana gudana ne kawai daga sararinka na kanka: an raba wannan sararin da kai.',
+  'Sync settings': 'Saitunan sync',
   'Your account’s server does not run applications yet.':
     'Sabar asusunka ba ta fara gudanar da aikace-aikace ba tukuna.',
   'Cannot reach your account’s server. Still trying…':

@@ -1293,6 +1293,13 @@ class Runner {
     }
   }
 
+  async idAt(path: string): Promise<IdAt> {
+    if (this.engine) return idIn(this.engine, path, this.reconciledAt > 0)
+    if (!this.accountId || !this.leaderId) return { none: 'not-running' }
+    const said = await this.ask('id-at', { path })
+    return isIdAt(said) ? said : { none: 'not-running' }
+  }
+
   /** Whether the account holds what is at a path on this disk now, so a delete can be
    *  left to it; see `holds` in sync.svelte.ts.
    *
@@ -1539,6 +1546,7 @@ class Runner {
       return moved
     }
     if (said.what === 'holds') return await this.holds(args.path ?? '')
+    if (said.what === 'id-at') return await this.idAt(args.path ?? '')
     if (said.what === 'forget') {
       await this.forget(args.root ?? '')
       this.sayRows()
@@ -1756,6 +1764,23 @@ type On = { note: NoteDoc } | { surface: PlaneSurface }
 function unreachable(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 429 || error.status >= 500
   return error instanceof TypeError
+}
+
+export type IdAt = { id: string; own: boolean } | { none: 'not-running' | 'outside' | 'untaken' }
+
+export function idIn(engine: Engine, path: string, paired: boolean): IdAt {
+  const placed = engine.placed(path)
+  if (!placed) return { none: paired ? 'outside' : 'not-running' }
+  const entry = engine.entryAt(path)
+  if (!entry) return { none: 'untaken' }
+  const role = placed.space.row.role
+  return { id: entry.id, own: role === null || role === 'owner' }
+}
+
+function isIdAt(value: unknown): value is IdAt {
+  if (!isRecord(value)) return false
+  if (typeof value.id === 'string') return typeof value.own === 'boolean'
+  return value.none === 'not-running' || value.none === 'outside' || value.none === 'untaken'
 }
 
 export const runner = new Runner()

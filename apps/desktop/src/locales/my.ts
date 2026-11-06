@@ -2383,8 +2383,19 @@ export const my: Dictionary = {
   'Waiting for {device}': '{device} ကို စောင့်နေသည်',
   'Sign in to use this application.': 'ဤအပလီကေးရှင်းကို အသုံးပြုရန် အကောင့်ဝင်ပါ။',
   'Waiting for this application’s file to sync…': 'ဤအပလီကေးရှင်း၏ ဖိုင် ထပ်တူကျစေရန် စောင့်နေသည်…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ဤအပလီကေးရှင်း၏ ဖိုင်သည် သင့်အကောင့်တွင် မရှိသေးပါ- ၎င်း၏ နေရာကို ထပ်တူကျရမည်။',
+  'This application’s file has not reached your account yet. Still trying…':
+    'ဤအပလီကေးရှင်း၏ ဖိုင်သည် သင့်အကောင့်သို့ မရောက်သေးပါ။ ဆက်၍ ကြိုးစားနေသည်…',
+  'Sync has not started on this device yet. Still trying…':
+    'ဤစက်ပေါ်တွင် ထပ်တူကျခြင်း မစသေးပါ။ ဆက်၍ ကြိုးစားနေသည်…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'ထပ်တူကျခြင်းသည် ဤအပလီကေးရှင်း၏ ဖိုင်ကို မယူရသေးပါ။ ဆက်၍ ကြိုးစားနေသည်…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ဤအပလီကေးရှင်း၏ ဖိုင်သည် သင့်အကောင့်နှင့် ထပ်တူမကျသော နေရာတွင် ရှိသည်။',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'သင့်အကောင့်သည် အပလီကေးရှင်းများကို မသယ်နိုင်သော ထပ်တူကျခြင်း အဟောင်းပေါ်တွင် ရှိနေသေးသည်။',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'အပလီကေးရှင်းသည် သင့်ကိုယ်ပိုင်နေရာမှသာ အလုပ်လုပ်သည်- ဤနေရာကို သင်နှင့် မျှဝေထားသည်။',
+  'Sync settings': 'ထပ်တူကျခြင်း ဆက်တင်များ',
   'Your account’s server does not run applications yet.':
     'သင့်အကောင့်၏ ဆာဗာသည် အပလီကေးရှင်းများကို မလုပ်ဆောင်သေးပါ။',
   'Cannot reach your account’s server. Still trying…':

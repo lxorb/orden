@@ -2447,8 +2447,19 @@ export const fil: Dictionary = {
   'Sign in to use this application.': 'Mag-sign in para magamit ang application na ito.',
   'Waiting for this application’s file to sync…':
     'Hinihintay na mag-sync ang file ng application na ito…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Wala pa sa account mo ang file ng application na ito: kailangang mag-sync ang space nito.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Hindi pa nakakarating sa account mo ang file ng application na ito. Sinusubukan pa rin…',
+  'Sync has not started on this device yet. Still trying…':
+    'Hindi pa nagsisimula ang sync sa device na ito. Sinusubukan pa rin…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Hindi pa nakukuha ng sync ang file ng application na ito. Sinusubukan pa rin…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Nasa space na hindi nagsi-sync sa account mo ang file ng application na ito.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Nasa lumang sync pa ang account mo, na hindi kayang magdala ng mga application.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Tumatakbo lang ang application mula sa sarili mong space: ibinahagi sa iyo ang space na ito.',
+  'Sync settings': 'Mga setting ng sync',
   'Your account’s server does not run applications yet.':
     'Hindi pa nagpapatakbo ng mga application ang server ng account mo.',
   'Cannot reach your account’s server. Still trying…':

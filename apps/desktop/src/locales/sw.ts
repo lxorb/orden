@@ -2432,8 +2432,19 @@ export const sw: Dictionary = {
   'Waiting for {device}': 'Inasubiri {device}',
   'Sign in to use this application.': 'Ingia ili utumie programu hii.',
   'Waiting for this application’s file to sync…': 'Inasubiri faili la programu hii lilandanishwe…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Faili la programu hii bado haliko kwenye akaunti yako: nafasi yake lazima ilandanishwe.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Faili la programu hii bado halijafika kwenye akaunti yako. Bado inajaribu…',
+  'Sync has not started on this device yet. Still trying…':
+    'Ulandanishaji bado haujaanza kwenye kifaa hiki. Bado inajaribu…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Ulandanishaji bado haujachukua faili la programu hii. Bado inajaribu…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Faili la programu hii liko kwenye nafasi isiyolandanishwa na akaunti yako.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Akaunti yako bado iko kwenye ulandanishaji wa zamani, ambao hauwezi kubeba programu.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Programu huendeshwa tu kutoka kwenye nafasi yako mwenyewe: nafasi hii imeshirikiwa nawe.',
+  'Sync settings': 'Mipangilio ya ulandanishaji',
   'Your account’s server does not run applications yet.':
     'Seva ya akaunti yako bado haiendeshi programu.',
   'Cannot reach your account’s server. Still trying…':

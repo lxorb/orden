@@ -2433,8 +2433,19 @@ export const ml: Dictionary = {
   'Sign in to use this application.': 'ഈ ആപ്ലിക്കേഷൻ ഉപയോഗിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'Waiting for this application’s file to sync…':
     'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ സിങ്ക് ആകുന്നതിനായി കാത്തിരിക്കുന്നു…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ ഇതുവരെ നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇല്ല: അതിന്റെ സ്പേസ് സിങ്ക് ആകണം.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ ഇതുവരെ നിങ്ങളുടെ അക്കൗണ്ടിൽ എത്തിയിട്ടില്ല. ഇപ്പോഴും ശ്രമിക്കുന്നു…',
+  'Sync has not started on this device yet. Still trying…':
+    'ഈ ഉപകരണത്തിൽ സിങ്ക് ഇതുവരെ തുടങ്ങിയിട്ടില്ല. ഇപ്പോഴും ശ്രമിക്കുന്നു…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'സിങ്ക് ഇതുവരെ ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ എടുത്തിട്ടില്ല. ഇപ്പോഴും ശ്രമിക്കുന്നു…',
+  'This application’s file is in a space that does not sync to your account.':
+    'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ നിങ്ങളുടെ അക്കൗണ്ടുമായി സിങ്ക് ആകാത്ത ഒരു സ്പേസിലാണ്.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'നിങ്ങളുടെ അക്കൗണ്ട് ഇപ്പോഴും പഴയ സിങ്കിലാണ്, അതിന് ആപ്ലിക്കേഷനുകൾ കൊണ്ടുപോകാൻ കഴിയില്ല.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'ആപ്ലിക്കേഷൻ നിങ്ങളുടെ സ്വന്തം സ്പേസിൽ നിന്ന് മാത്രമേ പ്രവർത്തിക്കൂ: ഈ സ്പേസ് നിങ്ങളുമായി പങ്കിട്ടതാണ്.',
+  'Sync settings': 'സിങ്ക് ക്രമീകരണങ്ങൾ',
   'Your account’s server does not run applications yet.':
     'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ സെർവർ ഇതുവരെ ആപ്ലിക്കേഷനുകൾ പ്രവർത്തിപ്പിക്കുന്നില്ല.',
   'Cannot reach your account’s server. Still trying…':

@@ -40,7 +40,7 @@ import {
 } from '@orden/online/apps'
 import { untrack } from 'svelte'
 import { Channel, type LinkWorld, type Opened } from '../online/link'
-import { idOf } from './session.svelte'
+import { find } from './session.svelte'
 
 /** The view a display is made at until a holder has said its own. */
 export const FIRST_VIEW: View = { width: 1280, height: 800, dpr: 1, hz: 60 }
@@ -422,7 +422,10 @@ async function appWorld(): Promise<{
       cannot: platform() === 'linux' || platform() === 'windows' ? null : 'isolation',
       files: () => applicationFiles(untrack(() => workspace.tree)),
       read: (path) => native.invoke<string>('read_note', { path }).catch(() => null),
-      idOf: (path) => idOf(path, Date.now() + 20_000),
+      idOf: async (path) => {
+        const found = await find(path, Date.now() + 20_000)
+        return 'id' in found ? found.id : null
+      },
       runner,
       link: (app, heard) => new HostLink(app, linkWorld, heard),
     },

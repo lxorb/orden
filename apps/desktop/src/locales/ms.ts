@@ -2389,8 +2389,19 @@ export const ms: Dictionary = {
   'Waiting for {device}': 'Menunggu {device}',
   'Sign in to use this application.': 'Log masuk untuk menggunakan aplikasi ini.',
   'Waiting for this application’s file to sync…': 'Menunggu fail aplikasi ini disegerakkan…',
-  'This application’s file is not on your account yet: its space must sync.':
-    'Fail aplikasi ini belum ada dalam akaun anda: ruangnya mesti disegerakkan.',
+  'This application’s file has not reached your account yet. Still trying…':
+    'Fail aplikasi ini belum sampai ke akaun anda. Masih mencuba…',
+  'Sync has not started on this device yet. Still trying…':
+    'Penyegerakan belum bermula pada peranti ini. Masih mencuba…',
+  'Sync has not taken in this application’s file yet. Still trying…':
+    'Penyegerakan belum mengambil fail aplikasi ini. Masih mencuba…',
+  'This application’s file is in a space that does not sync to your account.':
+    'Fail aplikasi ini berada dalam ruang yang tidak disegerakkan dengan akaun anda.',
+  'Your account is still on the old sync, which cannot carry applications.':
+    'Akaun anda masih menggunakan penyegerakan lama, yang tidak dapat membawa aplikasi.',
+  'An application runs only from a space of your own: this space is shared with you.':
+    'Aplikasi hanya berjalan daripada ruang anda sendiri: ruang ini dikongsi dengan anda.',
+  'Sync settings': 'Tetapan penyegerakan',
   'Your account’s server does not run applications yet.':
     'Pelayan akaun anda belum menjalankan aplikasi.',
   'Cannot reach your account’s server. Still trying…':
