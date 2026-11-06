@@ -75,6 +75,8 @@ const FRAME_PAUSE: Duration = Duration::from_millis(2);
 /// The least time between two whole pictures the viewer asks for: it asks again while the
 /// first is on its way.
 const WHOLE_AT_MOST: Duration = Duration::from_millis(500);
+/// The most timeouts already due that are handled in a row before `str0m` is asked again.
+const DUE_AT_ONCE: usize = 4;
 
 /// What the holder says, as `data` of its `signal` frames.
 #[derive(Debug, Deserialize)]
@@ -509,7 +511,7 @@ fn usable_address(ip: IpAddr) -> bool {
 /// due. Answers whether the connection goes on.
 fn drive(shared: &mut Shared) -> bool {
     loop {
-        match shared.rtc.poll_output() {
+        match next_output(&mut shared.rtc) {
             Ok(Output::Timeout(at)) => {
                 shared.next = at;
                 return shared.rtc.is_alive();
@@ -536,6 +538,21 @@ fn drive(shared: &mut Shared) -> bool {
             }
         }
     }
+}
+
+/// What `str0m` has to say next, a timeout already due handled first: media written is
+/// only made into packets at a timeout, which is due at once, so a frame goes out as it
+/// is written rather than at the timers' next look, up to `LONGEST_WAIT` later.
+fn next_output(rtc: &mut Rtc) -> Result<Output, str0m::RtcError> {
+    for _ in 0..DUE_AT_ONCE {
+        match rtc.poll_output()? {
+            Output::Timeout(at) if at <= Instant::now() => {
+                rtc.handle_input(Input::Timeout(Instant::now()))?;
+            }
+            other => return Ok(other),
+        }
+    }
+    rtc.poll_output()
 }
 
 /// One event of the connection; answers whether it goes on.
@@ -1217,6 +1234,117 @@ mod tests {
         );
     }
 
+    /// A frame written goes out at once, on the thread that wrote it, and not at the
+    /// timers' next look (issue 1163): two connections of `str0m`'s own, the datagrams
+    /// between them handed over here.
+    #[test]
+    fn a_frame_written_goes_out_at_once() {
+        use str0m::change::SdpAnswer;
+        use str0m::media::Direction;
+
+        let new = || {
+            RtcConfig::new()
+                .clear_codecs()
+                .enable_vp8(true)
+                .set_crypto_provider(provider())
+                .build(Instant::now())
+        };
+        let (mut host, mut viewer) = (new(), new());
+        let host_at: SocketAddr = "10.0.0.1:5000".parse().unwrap();
+        let viewer_at: SocketAddr = "10.0.0.2:5000".parse().unwrap();
+        host.add_local_candidate(Candidate::host(host_at, "udp").unwrap());
+        viewer.add_local_candidate(Candidate::host(viewer_at, "udp").unwrap());
+        let mut change = viewer.sdp_api();
+        change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
+        let (offer, pending) = change.apply().unwrap();
+        let answer = host.sdp_api().accept_offer(offer).unwrap();
+        viewer
+            .sdp_api()
+            .accept_answer(
+                pending,
+                SdpAnswer::from_sdp_string(&answer.to_sdp_string()).unwrap(),
+            )
+            .unwrap();
+        host.add_remote_candidate(Candidate::host(viewer_at, "udp").unwrap());
+        viewer.add_remote_candidate(Candidate::host(host_at, "udp").unwrap());
+
+        // Both run until the host is connected and its video can be written to.
+        let (mut video, mut connected) = (None, false);
+        let until = Instant::now() + Duration::from_secs(10);
+        while !(connected && video.is_some()) && Instant::now() < until {
+            for (index, to) in [(0, viewer_at), (1, host_at)] {
+                let (one, other) = if index == 0 {
+                    (&mut host, &mut viewer)
+                } else {
+                    (&mut viewer, &mut host)
+                };
+                loop {
+                    match one.poll_output().unwrap() {
+                        Output::Timeout(at) => {
+                            if at <= Instant::now() {
+                                one.handle_input(Input::Timeout(Instant::now())).unwrap();
+                            }
+                            break;
+                        }
+                        Output::Transmit(sent) => hand_over(other, &sent, to),
+                        Output::Event(Event::MediaAdded(added)) if index == 0 => {
+                            video = Some(added.mid);
+                        }
+                        Output::Event(Event::Connected) if index == 0 => connected = true,
+                        Output::Event(_) => {}
+                    }
+                }
+            }
+        }
+        let mid = video.expect("the host's video");
+        assert!(connected);
+        // Nothing of the host's is due now, so whatever it sends next is the frame.
+        loop {
+            if let Output::Timeout(at) = next_output(&mut host).unwrap() {
+                if at > Instant::now() {
+                    break;
+                }
+            }
+        }
+        let writer = host.writer(mid).unwrap();
+        let pt = writer
+            .payload_params()
+            .find(|params| params.spec().codec == Codec::Vp8)
+            .unwrap()
+            .pt();
+        writer
+            .write(
+                pt,
+                Instant::now(),
+                MediaTime::from_90khz(0),
+                vec![0x10, 0, 0],
+            )
+            .unwrap();
+        let mut sent = 0;
+        while let Output::Transmit(datagram) = next_output(&mut host).unwrap() {
+            sent += 1;
+            hand_over(&mut viewer, &datagram, viewer_at);
+        }
+        assert!(sent > 0, "the frame was not sent");
+        let mut arrived = false;
+        loop {
+            match next_output(&mut viewer).unwrap() {
+                Output::Timeout(_) => break,
+                Output::Event(Event::MediaData(_)) => arrived = true,
+                _ => {}
+            }
+        }
+        assert!(arrived, "the frame did not arrive");
+    }
+
+    /// A datagram one connection sent, handed to the other as come in on `to`.
+    fn hand_over(other: &mut Rtc, sent: &str0m::net::Transmit, to: SocketAddr) {
+        let came = Receive::new(Protocol::Udp, sent.source, to, &sent.contents).unwrap();
+        other
+            .handle_input(Input::Receive(Instant::now(), came))
+            .unwrap();
+    }
+
     /// What the answer to a viewer's offer says: a video it sends in a codec it encodes,
     /// or no video, which `Peer::answer` refuses.
     #[test]
@@ -1325,9 +1453,6 @@ mod tests {
             let until = Instant::now() + within;
             let mut buffer = vec![0_u8; 2000];
             while Instant::now() < until {
-                if done() {
-                    return true;
-                }
                 loop {
                     match self.rtc.poll_output().unwrap() {
                         Output::Timeout(_) => break,
@@ -1339,6 +1464,10 @@ mod tests {
                         }
                         Output::Event(event) => heard(&mut self.rtc, event),
                     }
+                }
+                // Before the socket is waited on, so what was just heard is not held back.
+                if done() {
+                    return true;
                 }
                 let input = match self.socket.recv_from(&mut buffer) {
                     Ok((length, from)) => Input::Receive(
@@ -1651,9 +1780,33 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
+    /// A sound server started for a test, in a folder of its own: ended when dropped,
+    /// and by the kernel once the thread that started it ends, as every thread does
+    /// when the test process is killed, so none is left behind.
+    struct SoundServer {
+        server: std::process::Child,
+        folder: std::path::PathBuf,
+    }
+
+    #[cfg(target_os = "linux")]
+    impl Drop for SoundServer {
+        fn drop(&mut self) {
+            let _ = self.server.kill();
+            let _ = self.server.wait();
+            let _ = std::fs::remove_dir_all(&self.folder);
+        }
+    }
+
+    #[cfg(target_os = "linux")]
     /// A sound server for the test: the one there is, or one started for it where
-    /// `pulseaudio` is installed (CI installs it), in a folder of its own.
-    fn sound_server() -> Option<std::process::Child> {
+    /// `pulseaudio` is installed (CI installs it).
+    #[allow(
+        unsafe_code,
+        reason = "the server is tied to this thread with prctl(2) before it runs"
+    )]
+    fn sound_server() -> Option<SoundServer> {
+        use std::os::unix::process::CommandExt as _;
+
         let up = || {
             Command::new("pactl")
                 .arg("info")
@@ -1670,7 +1823,9 @@ mod tests {
         // The `pactl` and `parec` this process starts find the server by it; no other
         // test asks for a sound server.
         std::env::set_var("PULSE_RUNTIME_PATH", &folder);
-        let server = Command::new("pulseaudio")
+        let parent = libc::pid_t::try_from(std::process::id()).ok()?;
+        let mut command = Command::new("pulseaudio");
+        command
             .args([
                 "-n",
                 "--daemonize=no",
@@ -1681,11 +1836,32 @@ mod tests {
                 "-L",
                 "module-null-sink sink_name=orden_test_default",
             ])
+            // Off the session bus: a server that holds its name there, as one left over
+            // does, makes another exit as it starts.
+            .env(
+                "DBUS_SESSION_BUS_ADDRESS",
+                "unix:path=/nonexistent/orden-no-bus",
+            )
             .stdin(Stdio::null())
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .ok()?;
+            .stderr(Stdio::null());
+        // SAFETY: only prctl(2) and getppid(2) run between fork and exec, both
+        // async-signal-safe; a parent already gone is an error, not a server left over.
+        unsafe {
+            command.pre_exec(move || {
+                if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) == -1 {
+                    return Err(io::Error::last_os_error());
+                }
+                if libc::getppid() != parent {
+                    return Err(io::Error::from(io::ErrorKind::BrokenPipe));
+                }
+                Ok(())
+            });
+        }
+        let server = SoundServer {
+            server: command.spawn().ok()?,
+            folder,
+        };
         let until = Instant::now() + Duration::from_secs(10);
         while !up() && Instant::now() < until {
             std::thread::sleep(Duration::from_millis(50));
@@ -1710,7 +1886,7 @@ mod tests {
                 );
                 return;
             }
-            let server = sound_server();
+            let _server = sound_server();
             let sink = audio::Sink::make(std::process::id() % 100_000 + 400_000);
             assert!(
                 sink.is_some() || std::env::var_os("CI").is_none(),
@@ -1756,10 +1932,6 @@ mod tests {
             let _ = playing.kill();
             let _ = playing.wait();
             drop(sink);
-            if let Some(mut server) = server {
-                let _ = server.kill();
-                let _ = server.wait();
-            }
         });
     }
 
