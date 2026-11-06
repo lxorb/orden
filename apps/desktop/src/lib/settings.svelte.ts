@@ -185,8 +185,22 @@ export function kindsHere(): KindName[] {
   return here
 }
 
+const OFF_UNTIL_SHOWN: readonly KindName[] = ['explorer']
+
+export function offUntilShown(kind: KindName): boolean {
+  return OFF_UNTIL_SHOWN.includes(kind)
+}
+
+export function choiceWord(kind: KindName): string {
+  return offUntilShown(kind) ? `shown-${kind}` : kind
+}
+
+export function chosenOn(kind: KindName, hidden: readonly string[]): boolean {
+  return hidden.includes(choiceWord(kind)) === offUntilShown(kind)
+}
+
 export function shownOf(here: readonly KindName[], hidden: readonly string[]): KindName[] {
-  const shown = here.filter((kind) => !hidden.includes(kind))
+  const shown = here.filter((kind) => chosenOn(kind, hidden))
   return shown.length ? shown : here.slice(0, 1)
 }
 

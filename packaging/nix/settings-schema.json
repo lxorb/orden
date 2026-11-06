@@ -500,7 +500,7 @@
   },
   "kinds.explorer": {
     "type": "boolean",
-    "default": true,
+    "default": false,
     "description": "Offers this type when you make something new; off only takes it out of that list."
   },
   "kinds.note": {
