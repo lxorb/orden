@@ -10,7 +10,6 @@ describe("an Essential's letter", () => {
     expect(given).toEqual({ '/space/Notes.md': 'N', '/space/Next.md': 'E', '/space/Ne.md': 'A' })
   })
 
-  /** Emil, #1051: letters are stable, so muscle memory works. */
   test('stays where it was when another is put in front of it', () => {
     const first = lettersFor([essential('Notes')], {}, NONE)
     const after = lettersFor([essential('Nine'), essential('Notes')], first, NONE)

@@ -1,7 +1,5 @@
 import { beforeAll, expect, test } from 'vitest'
 
-/** No page here to decode a picture in: every still falls back to the photograph, which
- *  is what a window that cannot draw one does too. */
 class Undecodable {
   src = ''
   decode(): Promise<void> {

@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { AltHold, numerals, type Stroke } from './numbers'
 
-/** The keys as they ship on Windows: Alt and a digit for the first nine places, and
- *  Alt+0 for the last. */
 const SHIPPED: Record<string, string> = {
   ...Object.fromEntries(
     Array.from({ length: 8 }, (_, at) => [`app.note-${at + 1}.alt`, `Alt-${at + 1}`]),
@@ -46,7 +44,6 @@ describe('the numbers on the tabs', () => {
   test('follow the keys as they are bound now', () => {
     const rebound = (id: string) =>
       id === 'app.note-2.alt' ? 'Alt-x' : id === 'app.note-3.alt' ? 'Mod-Alt-3' : shipped(id)
-    // A key under Alt alone is its character; one held with more than Alt says nothing.
     expect(numerals(4, rebound, 'win')).toEqual(['1', 'X', null, '0'])
   })
 
@@ -55,7 +52,6 @@ describe('the numbers on the tabs', () => {
   })
 })
 
-/** A key pressed with Alt down, as a browser says it: Alt itself has `altKey` too. */
 const stroke = (key: string, more: Partial<Stroke> = {}): Stroke => ({
   key,
   code: /^\d$/.test(key) ? `Digit${key}` : key,
@@ -76,7 +72,6 @@ describe('Alt held', () => {
     expect(hold.holding).toBe(true)
   })
 
-  /** Alt Alt is the tab overview's key (#331): its second tap is no hold to show them for. */
   test('a tap of Alt right after a tap shows nothing, and one long after shows them again', () => {
     const hold = new AltHold()
     expect(hold.down(stroke('Alt'), 1000)).toBe(true)
@@ -84,17 +79,13 @@ describe('Alt held', () => {
     expect(hold.down(stroke('Alt'), 1200)).toBe(false)
     expect(hold.holding).toBe(false)
     hold.released(1260)
-    // Alt Alt again at once, which puts the overview away: as quiet.
     expect(hold.down(stroke('Alt'), 1380)).toBe(false)
     hold.released(1440)
     expect(hold.down(stroke('Alt'), 3000)).toBe(true)
-    // A hold let go of is no tap: Alt after it is a hold again.
     hold.released(4000)
     expect(hold.down(stroke('Alt'), 4100)).toBe(true)
   })
 
-  /** A held key repeats, and a repeat an engine does not flag as one is the same hold:
-   *  it must not begin it again. */
   test('a repeat not flagged as one is the same hold, not a new one', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
@@ -102,8 +93,6 @@ describe('Alt held', () => {
     expect(hold.holding).toBe(true)
   })
 
-  /** Emil, 2026-10-01: *"It should always display, even if I press and hold Alt and then
-   *  press a number. The only condition should be Alt held."* */
   test('keeps them through Alt and a digit, and puts them where the new tab is', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
@@ -111,7 +100,6 @@ describe('Alt held', () => {
       expect(hold.down(stroke(digit)), digit).toBe(true)
       expect(hold.holding, digit).toBe(true)
     }
-    // A digit held down repeats, and is still the hold.
     expect(hold.down(stroke('2', { repeat: true }))).toBe(true)
     expect(hold.holding).toBe(true)
   })
@@ -125,18 +113,13 @@ describe('Alt held', () => {
   test('a digit is known by its place on a keyboard whose top row types something else', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
-    // AZERTY's 1.
     expect(hold.down(stroke('&', { code: 'Digit1' }))).toBe(true)
     expect(hold.holding).toBe(true)
-    // The number pad's digits type a character by its code with Alt on Windows: no
-    // hold begins at one, though one that is up stays up through it.
     const unheard = new AltHold()
     expect(unheard.down(stroke('1', { code: 'Numpad1' }))).toBe(false)
     expect(unheard.holding).toBe(false)
   })
 
-  /** #1053: the numbers are up exactly while Alt is held. Any other key keeps them, and
-   *  puts them where what is in front is now; only Alt let go of puts them away. */
   test('stay through any other key held with Alt, and go only as Alt is let go of', () => {
     for (const key of ['F4', 'ArrowLeft', 'd', 'Unidentified']) {
       const hold = new AltHold()
@@ -152,8 +135,6 @@ describe('Alt held', () => {
     }
   })
 
-  /** A release the window never heard - Alt let go of in another program after Alt+Tab,
-   *  or inside a page - is put right by the next key, which says Alt is up. */
   test('a key without Alt ends a hold whose release was not heard', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
@@ -164,11 +145,9 @@ describe('Alt held', () => {
 
   test('AltGr never shows them, however a keyboard names it, nor with a digit', () => {
     const hold = new AltHold()
-    // Windows says AltGr as Ctrl and Alt; a browser may name it apart.
     hold.down(stroke('Control', { ctrlKey: true, altKey: false }))
     expect(hold.down(stroke('Alt', { ctrlKey: true }))).toBe(false)
     expect(hold.holding).toBe(false)
-    // AltGr and 2 is a Swiss `@`.
     expect(hold.down(stroke('@', { code: 'Digit2', ctrlKey: true }))).toBe(false)
     expect(hold.holding).toBe(false)
     hold.released()
@@ -186,26 +165,21 @@ describe('Alt held', () => {
     expect(hold.holding).toBe(false)
     hold.released()
 
-    // Shift pressed once Alt is held is a key like any other: Alt is still held.
     hold.down(stroke('Alt'))
     hold.down(stroke('Shift', { shiftKey: true }))
     expect(hold.holding).toBe(true)
   })
 
-  /** #1053: the pointer is no reason to put them away; what it says of Alt is. */
   test('a press or move of the pointer keeps them, and corrects what was not heard', () => {
     const hold = new AltHold()
     hold.down(stroke('Alt'))
     expect(hold.sense(true)).toBe(false)
     expect(hold.holding).toBe(true)
-    // Let go of where the window did not hear it.
     expect(hold.sense(false)).toBe(false)
     expect(hold.holding).toBe(false)
-    // Held where the window did not hear it go down: up at once.
     expect(hold.sense(true)).toBe(true)
     expect(hold.holding).toBe(true)
     hold.released()
-    // But never for AltGr.
     expect(hold.sense(true, true)).toBe(false)
     expect(hold.holding).toBe(false)
   })
@@ -226,8 +200,6 @@ describe('Alt held', () => {
     expect(hold.down(stroke('Alt'))).toBe(true)
   })
 
-  /** Alt and an Essential's letter goes to it (#1051), and begins a hold as a digit
-   *  does where the Alt was not heard; a letter no Essential wears does not. */
   test("an Essential's letter begins a hold where Alt was not heard, another letter not", () => {
     const hold = new AltHold()
     expect(hold.down(stroke('f', { code: 'KeyF' }))).toBe(false)

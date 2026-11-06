@@ -50,7 +50,6 @@ describe('where the card says a file lives', () => {
   })
 })
 
-/** Emil, 2026-10-03: a web tab's card says which space it is from. */
 describe('the space a web tab is from', () => {
   const spaces = [
     { id: 'work', name: 'Work', root: '/spaces/Work' },

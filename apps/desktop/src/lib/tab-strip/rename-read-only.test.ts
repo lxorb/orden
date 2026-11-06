@@ -1,9 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** F2 on an online terminal's tab in a space shared to be read. Its name is its file's,
- *  which the space keeps, so the rename is refused; opening the name field first only
- *  lost what was typed into it. The field is not opened at all. */
-
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../sharing.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../sharing.svelte')>()),

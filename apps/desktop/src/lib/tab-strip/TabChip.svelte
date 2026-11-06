@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A tab carried out over the panes: the tab itself, lifted off its strip and held
-   *  where it was grabbed. At the end of the page, so nothing clips it and nothing is
-   *  drawn over it. Only ever on screen during a drag, so it is fetched with the first
-   *  press on a tab rather than carried into the first paint; see Tabs.svelte. */
-
   import TabMark from '../TabMark.svelte'
   import type { Tab } from '../workspace.svelte'
 
@@ -28,8 +23,6 @@
 </div>
 
 <style>
-  /* Its body, lifted - rounded all round, since it is off the bar it would have
-     flared into, with the small shadow of a thing held just above the page. */
   .chip {
     position: fixed;
     top: 0;
@@ -58,7 +51,6 @@
     background: var(--surface);
   }
 
-  /* The name fades out at its end as it does on the tab, Chrome's FADE_TAIL. */
   .label {
     flex: 1 1 0;
     min-width: 0;

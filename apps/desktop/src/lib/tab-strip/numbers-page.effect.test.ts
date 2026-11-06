@@ -1,13 +1,8 @@
 import { expect, test, vi } from 'vitest'
 
-/** The keyboard going into a web page on Windows (#1053), where `WebView2` tells the
- *  window of Alt in the page (web_keys.rs): the document hears its own blur, which says
- *  nothing of Alt, so the numbers stay; the window losing the keyboard puts them away. */
-
 const opened = vi.hoisted(() => [] as string[])
 
 vi.mock('../tauri', () => ({ isDesktop: true, invoke: () => Promise.resolve(true) }))
-/** The window's own word of losing the keyboard, which the test says. */
 const focus = vi.hoisted(() => ({ changed: (_payload: boolean): void => undefined }))
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({

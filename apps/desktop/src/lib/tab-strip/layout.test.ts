@@ -24,8 +24,6 @@ import {
   worthKeeping,
 } from './layout'
 
-/** A strip written as letters: `a` an inactive tab, `A` the active one, `p` a tab
- *  drawn as its mark alone (#1041) and `P` an active one drawn so. */
 function strip(shape: string) {
   return Array.from({ length: shape.length }, (_, at) => shape.charAt(at)).map((letter) => ({
     icon: letter === 'p' || letter === 'P',
@@ -47,7 +45,6 @@ describe('how wide the tabs are', () => {
   test('short of room they share it out evenly and fill it exactly', () => {
     const widths = widthsFor(strip('aAaa'), 601)
     expect(total(widths)).toBe(601)
-    // One apart at most: the rounding goes one pixel each to the first tabs.
     expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1)
     expect(widths[0]).toBeGreaterThanOrEqual(widths[3] ?? 0)
   })
@@ -107,7 +104,6 @@ describe('what fits in a tab', () => {
   })
 
   test('an inactive tab drops its close button first', () => {
-    // 68 of contents is the line: 22 of it is the tab's own padding.
     expect(partsFor(90, inactive).close).toBe(true)
     expect(partsFor(89, inactive).close).toBe(false)
     expect(partsFor(89, inactive).mark).toBe(true)
@@ -139,7 +135,6 @@ describe('what fits in a tab', () => {
   })
 
   test('a tab drawn as an icon is its mark at its leading edge, and never a cross', () => {
-    // Not centred, so the mark stays put as the tab opens out under the pointer.
     expect(partsFor(WIDTH.icon, { icon: true, active: true })).toEqual({
       mark: true,
       close: false,
@@ -164,7 +159,6 @@ describe('a tab drawn as its mark, opened out under the pointer (#1041)', () => 
   test('opens far enough to read even with no room, pushing the rest along', () => {
     const widths = [46, 238, 46, 46]
     expect(widened(widths, 0, 376)[0]).toBe(OPENED_LEAST)
-    // Every tab in front of it, and so it, starts where it did.
     expect(placed(widened(widths, 2, 376))[2]?.x).toBe(placed(widths)[2]?.x)
   })
 
@@ -202,8 +196,6 @@ describe('where a dragged tab belongs', () => {
   })
 
   test('with tabs of different widths it measures the slot, not the tab', () => {
-    // The narrow first tab, as a tab drawn as its mark is: moving the wide one to the front puts
-    // it at 0, and leaving it second puts it at 40.
     expect(nearestSlot([40, 200, 100], 1, 19)).toBe(0)
     expect(nearestSlot([40, 200, 100], 1, 21)).toBe(1)
   })
@@ -289,7 +281,6 @@ describe('closing tabs with the pointer', () => {
     expect(near(rect, 400, 38 + 41, 1)).toBe(false)
     expect(near(rect, 860, 20, 1)).toBe(true)
     expect(near(rect, 861, 20, 1)).toBe(false)
-    // Above the strip is the edge of the window: leaving that way leaves.
     expect(near(rect, 400, -1, 1)).toBe(false)
   })
 
@@ -310,9 +301,6 @@ describe('the hairlines between tabs', () => {
   })
 })
 
-/** #1041: a click thrown at a tab drawn as its mark opened it out and, in the same press,
- *  landed on its cross, which stands against the tab's trailing edge - under the pointer
- *  until the tab has opened. So the cross takes no press until then. */
 describe("a tab's cross as it opens out under the pointer", () => {
   test('takes no press until the tab has opened, and does then', () => {
     expect(crossTakes('a', 'a', null)).toBe(false)
@@ -334,8 +322,6 @@ describe("a tab's cross as it opens out under the pointer", () => {
   })
 })
 
-/** #1114: with the switch on, a tab is as wide as its contents, not every tab the
- *  standard width while there is room. Emil's "Orden" tab beside one icon tab. */
 describe('tabs as wide as their contents', () => {
   const orden = fitted(38)
   const tabs = [
@@ -344,7 +330,6 @@ describe('tabs as wide as their contents', () => {
   ]
 
   test('is the mark, the name, the close button and the insets', () => {
-    // 11 in from either edge, 16 of mark, 6 of gap, the name, 20 of cross.
     expect(orden).toBe(11 + 16 + 6 + 38 + 20 + 11)
   })
 

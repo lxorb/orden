@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The Essentials' letters by the tabs' numbers (#1051): shown by the same hold, and Alt
- *  and a letter taken from whatever is focused to show its Essential. In the jsdom
- *  project, because the keys and the badges are the DOM's own; what a letter is, and the
- *  hold, are letters.test.ts and numbers.test.ts. */
-
 const opened = vi.hoisted(() => [] as string[])
 
 vi.mock('../tauri', () => ({ isDesktop: false }))
@@ -49,7 +44,6 @@ function tile(letter: string, box = { left: 10, right: 40, top: 10, bottom: 40 }
 
 beforeEach(() => {
   up()
-  // A key between, so the last test's Alt and this one's are no Alt Alt.
   key({ key: 'a', code: 'KeyA' })
   document.body.replaceChildren()
   opened.length = 0
@@ -106,7 +100,6 @@ describe("an Essential's letter", () => {
   })
 })
 
-/** #1053: up exactly while Alt is held, whatever else the hand does. */
 describe('Alt held', () => {
   const pointer = (name: string, altKey: boolean) =>
     dispatchEvent(new PointerEvent(name, { altKey, bubbles: true }))

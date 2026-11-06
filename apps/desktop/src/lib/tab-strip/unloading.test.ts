@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Unloading a tab from its menu (#1127): the rows the menu offers with the setting on,
- *  which tabs they take, and what is left of a tab once it is unloaded. The store is the
- *  real one; the disk and the pages behind the web tabs are stand-ins. */
-
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   invoke: () => Promise.resolve(undefined),
@@ -35,7 +31,6 @@ const { mayUnload, unload, unloadEntries, unloadTabs, unloadsAround } =
 type Tab = import('../workspace.svelte').Tab
 type TabKind = import('../workspace/tab-kinds').TabKind
 
-/** A tab of `kind` at the end of the focused pane's strip. */
 function add(kind: TabKind, name: string): Tab {
   const doc = new NoteDoc({ kind, path: null, name, text: '', dirty: false }, () => undefined)
   const tab = new Tab(doc, workspace.panes.focusedId)
@@ -43,7 +38,6 @@ function add(kind: TabKind, name: string): Tab {
   return tab
 }
 
-/** Three tabs, the last of them in front. */
 function three(kind: TabKind = 'note'): [Tab, Tab, Tab] {
   const tabs: [Tab, Tab, Tab] = [add(kind, 'One'), add(kind, 'Two'), add(kind, 'Three')]
   for (const one of tabs) workspace.activate(one.id)

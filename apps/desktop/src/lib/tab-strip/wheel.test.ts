@@ -20,8 +20,6 @@ describe('the wheel over a strip too full to show every tab', () => {
     expect(wheelAlong(turn(1, { deltaMode: 2 }), 600)).toBe(600)
   })
 
-  /** A trackpad or a tilted wheel already scrolls the strip sideways, and Ctrl with
-   *  the wheel is somebody zooming. */
   test('leaves a sideways turn and a zoom alone', () => {
     expect(wheelAlong(turn(10, { deltaX: 40 }), 600)).toBe(0)
     expect(wheelAlong(turn(100, { ctrlKey: true }), 600)).toBe(0)

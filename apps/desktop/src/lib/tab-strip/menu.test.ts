@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A tab's own menu, read as labels. The store reads storage the moment it is
- *  made, so that is stood in for before it is imported. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -23,9 +20,7 @@ const { tabMenu } = await import('./menu')
 const { workspace } = await import('../workspace.svelte')
 type Tab = import('../workspace.svelte').Tab
 
-/** Only what the menu reads of a tab. */
 function tab(path: string | null, kind: Tab['kind'] = 'note'): Tab {
-  // A stand-in, because a real tab is built round a document read off a disk.
   const note = { path, kind, shared: null }
   return { id: 'one', path, kind, pinned: false, reading: false, note } as unknown as Tab
 }

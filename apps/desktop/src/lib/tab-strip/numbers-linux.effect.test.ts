@@ -1,10 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** The keyboard going into a web page on Linux (#1053), where Orden's own Chromium tells
- *  the window of Alt in the page once the crate says it can (`web_keys_take` in
- *  web_keys.rs): the Essentials' letters are said to the crate to be taken from a page,
- *  and the document's own blur, which says nothing of Alt, leaves the numbers up. */
-
 const opened = vi.hoisted(() => [] as string[])
 const asked = vi.hoisted(() => [] as { command: string; args: unknown }[])
 
@@ -15,7 +10,6 @@ vi.mock('../tauri', () => ({
     return Promise.resolve(true)
   },
 }))
-/** The window's own word of losing the keyboard, which the test says. */
 const focus = vi.hoisted(() => ({ changed: (_payload: boolean): void => undefined }))
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({
@@ -30,7 +24,6 @@ vi.mock('../viewport.svelte', () => ({ viewport: { touch: false } }))
 vi.mock('../i18n.svelte', () => ({ i18n: { factor: 1 } }))
 vi.mock('../shortcuts.svelte', () => ({
   shortcuts: {
-    // The panes' four ways, bound as they ship (#1033), and Alt+K rebound to Ctrl+Alt+K.
     keyFor: (id: string) =>
       ({ 'pane.focus-left': 'Alt-h', 'pane.focus-up': 'Mod-Alt-k', 'pane.focus-right': 'Alt-l' })[
         id
@@ -78,21 +71,17 @@ test("the letters and the panes' keys are said to the crate, and a page that tel
         chords: [
           { code: 'KeyN', ctrl: false, shift: false, alt: true },
           { code: 'KeyH', ctrl: false, shift: false, alt: true },
-          // A key rebound with Ctrl and Alt is AltGr's on half of Europe's keyboards, and
-          // the page's: never asked for.
           { code: 'KeyL', ctrl: false, shift: false, alt: true },
         ],
       },
     },
   ])
-  // The answer lands after the import: until then, the blur still puts them away.
   await Promise.resolve()
   tile('N')
   key({ key: 'Alt', altKey: true })
   dispatchEvent(new FocusEvent('blur'))
   expect(numbers.worn).toHaveLength(1)
 
-  // Alt and the letter, played from the page as the crate says it, opens the Essential.
   key({ key: 'n', code: 'KeyN', altKey: true })
   await vi.waitFor(() => expect(opened).toEqual(['/space/Notes.md']))
 

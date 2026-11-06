@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { streamLine, usageLine } from './facts'
 
-/** What a tab's hover card says it uses, in developer mode (issue 1063, step 10;
- *  facts.ts): only what is known, a GPU nobody could read left out rather than 0. */
-
 const size = (bytes: number) => `${bytes / 1024} KB`
 
 describe('a tab’s usage', () => {

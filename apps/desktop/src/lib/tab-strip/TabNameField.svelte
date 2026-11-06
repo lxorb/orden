@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** A tab's name, typed where it is written: Windows Terminal's rename, over the name
-   *  in the strip, with the mark still beside it.
-   *
-   *  NameField's shape - the tab's own font, colour and ground, no box but the halo every
-   *  field with a caret wears - and not NameField itself, because what that one guards
-   *  is a file's name: a slash, a reserved word, a name taken beside it. A terminal's
-   *  name is no file's, so anything typed goes, and nothing typed is a name given back:
-   *  the tab is called by whatever runs in it again. What a commit means is the tab's
-   *  kind's; see terminal/rename.ts.
-   *
-   *  Enter commits and so does a blur; Escape leaves the name as it was. The keyboard goes
-   *  back to the pane after either, which is where somebody renaming a terminal is about
-   *  to type. Fetched with the first rename; see Tabs.svelte. */
-
   import { focusEditor } from '../focus'
   import { t } from '../i18n.svelte'
   import { selectAll } from '../select-all'
@@ -20,13 +6,10 @@
 
   const { tab }: { tab: Tab } = $props()
 
-  /** What the field starts with: the name the tab is showing. Taken once, so a program
-   *  retitling the tab mid-word does not put its title under the caret. */
   // svelte-ignore state_referenced_locally
   const was = tab.shown
   let typed = $state(was)
 
-  /** Once: Enter takes the field away, and a field on its way out still blurs. */
   let settled = false
 
   function leave(commit: boolean) {
@@ -34,11 +17,6 @@
     settled = true
     tab.naming = false
 
-    // The name it was showing, typed back unchanged, is not a name of its own: a
-    // program's title would otherwise be frozen by a press of Enter.
-    // Not dropped once the field is gone, which it is the moment the name is settled: the
-    // rename is the terminal's, not the field's (while-here.ts is for what a component
-    // does with what it fetched).
     if (commit && typed.trim() !== was.trim()) {
       void import('../terminal/rename').then(({ renameTerminal }) => renameTerminal(tab, typed))
     }
@@ -74,8 +52,6 @@
 />
 
 <style>
-  /* Where the name is: after the mark, before the room the close button keeps, at the
-     height the name is set at - the tab's own padding, restated. */
   .field {
     position: absolute;
     top: var(--tab-top, 5px);

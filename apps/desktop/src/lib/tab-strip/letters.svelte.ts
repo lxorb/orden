@@ -1,11 +1,3 @@
-/** The letter each Essential of the open space wears, kept from one launch to the next so
- *  a letter once learned stays (#1051); which letter is letters.ts. Bookmarks.svelte says
- *  them to a screen reader on the tiles, and numbers.svelte.ts shows them while Alt is
- *  held and goes to an Essential on Alt and its letter.
- *
- *  None on a Mac, where Option and a letter types a character - as Option and a digit
- *  does, which is why the tabs have no Alt numbers there either. */
-
 import { defaultKeyFor } from '@orden/editor'
 import { rowName } from '../note-name'
 import { FIXED_ENTRIES, SHORTCUTS } from '../shortcuts/registry'
@@ -27,11 +19,8 @@ function readKept(): Record<string, string> {
 }
 
 class EssentialLetters {
-  /** Every letter given so far, by the Essential's path, in this space and the others. */
   private kept = readKept()
 
-  /** The open space's Essentials and their letters, by path, each written down as it is
-   *  first given so that it stays. */
   get given(): Record<string, string> {
     const given = this.reckoned
     this.remember(given)
@@ -60,7 +49,6 @@ class EssentialLetters {
     return lettersFor(essentials, this.kept, taken)
   })
 
-  /** The path of the Essential wearing a letter, or null. */
   pathOf(letter: string): string | null {
     for (const [path, worn] of Object.entries(this.given)) if (worn === letter) return path
     return null

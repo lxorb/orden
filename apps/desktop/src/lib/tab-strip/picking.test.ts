@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Several tabs at once: picked with Ctrl and Shift, acted on by the tab's menu and by
- *  Ctrl+W together, carried together, and closed as one thing to take back. */
-
 const notes = new Map<string, string>()
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -42,17 +39,14 @@ const { workspace } = await import('../workspace.svelte')
 const { runEntry } = await import('../shortcuts/registry')
 const { picks } = await import('./drag.svelte')
 
-// What the first click that picks does in the strip: the pick is fetched and held.
 picks.loaded = await import('./picking.svelte')
 
 const NAMES = ['A', 'B', 'C', 'D']
 
-/** The strip, by the names its tabs show. */
 const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((one) => one.shown)
 const idOf = (name: string) => workspace.tabs.find((one) => one.shown === name)?.id ?? ''
 const pickedNames = () => chosen.of(workspace.panes.focusedId).map((one) => one.shown)
 
-/** A click with a modifier, the way the strip answers it. */
 function click(name: string, how: 'toggle' | 'run' | 'add-run') {
   const front = pick(workspace.panes.focusedId, idOf(name), how)
   if (front) workspace.activate(front)
@@ -206,7 +200,6 @@ describe('several tabs carried as one', () => {
 
   test('and go along the strip by the rules one tab goes by', () => {
     const block = gathered(tabs, widths, ['b', 'd'], 'b')
-    // Past the middle of the tab after it: the block is one slot on.
     expect(nearestSlot(block.widths, block.from, 160)).toBe(2)
     expect(moved(block.order, block.from, 2).map((one) => one.id)).toEqual(['a', 'c', 'b', 'e'])
   })

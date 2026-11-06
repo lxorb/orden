@@ -1,9 +1,3 @@
-/** What a tab's own menu does to a tab beyond closing it: a second tab on the same
- *  thing, the tab carried to another pane, and its name changed. Here rather than in
- *  the store because none of it is needed before somebody asks, and a tab's menu is
- *  fetched as the launch ends; see `warmDoors`. Whether each can happen is the
- *  store's to answer, since the palette greys its rows on it. */
-
 import { folderNote } from '../folder-notes'
 import { canWriteAt } from '../sharing.svelte'
 import { folderOf } from '../space-paths'
@@ -12,9 +6,6 @@ import { workspace } from '../workspace.svelte'
 import { Tab } from '../workspace/documents.svelte'
 import { nextPane } from '../workspace/pane-tree'
 
-/** Chrome's and Obsidian's duplicate: right after the tab and in front, a second view
- *  of the one document, where the tab was in it - the caret, the trail, the page of a
- *  site. A split makes the same kind of copy. */
 export function duplicateTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
   if (!tab || !workspace.canDuplicateTab(tab)) return
@@ -48,8 +39,6 @@ export function duplicateTab(id: string) {
   workspace.moveTab(copy.id, tab.paneId, at + 1)
 }
 
-/** VS Code's "move editor into next group": to the next pane round, or into a new
- *  pane beside its own where there is no other yet - the drag's two landings. */
 export function moveToOtherPane(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
   if (!tab || !workspace.canMoveToOtherPane(id)) return
@@ -59,24 +48,12 @@ export function moveToOtherPane(id: string) {
   else workspace.dropTab(id, { kind: 'pane', paneId: tab.paneId, zone: 'right' })
 }
 
-/** A tab's Rename, and F2 on it: the name field on the file's row in the file list,
- *  with the list brought out and the folders down to it opened. One place a file is
- *  renamed, so the links, a folder that is also a note and a name already taken are
- *  what they are everywhere else. A folder's own note is the folder's row.
- *
- *  A terminal has no row and no file: its name is typed where it is written, in the
- *  strip, as Windows Terminal's is. See `nameInStrip`. */
-/** Whether a tab's name can be changed from the tab: a terminal's, or a file's with a
- *  row in the file list, and never one in a space shared to be read, whose names are
- *  the space's to keep. The rename itself refuses it as well. */
 export function renamesFromTab(tab: Tab): boolean {
   return workspace.canRenameFromTab(tab) && (tab.path === null || canWriteAt(tab.path))
 }
 
 export function renameFromTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
-  // Asked before the terminal's name field opens: an online terminal's name is its
-  // file's, and in a space shared to be read the field would only lose what was typed.
   if (!tab || !renamesFromTab(tab)) return
   if (tab.kind === 'terminal') {
     nameInStrip(tab)
@@ -94,9 +71,6 @@ export function renameFromTab(id: string) {
   workspace.startRenaming(row)
 }
 
-/** The field over a terminal's name in the strip, the tab brought to the front so its
- *  name is on it - in front, a tab is never drawn as its mark alone. See
- *  TabNameField.svelte and terminal/rename.ts. */
 function nameInStrip(tab: Tab) {
   for (const one of workspace.tabs) one.naming = one === tab
   workspace.activate(tab.id)

@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { mayCarryAddress } from '../drag-paths'
 import { droppedAddress } from './dropped'
 
-/** A drop, as the types it was written under and what each holds. */
 const drop = (data: Record<string, string>) => (type: string) => data[type] ?? ''
 
 describe('a link dragged onto the strip from another app', () => {
@@ -11,7 +10,6 @@ describe('a link dragged onto the strip from another app', () => {
     expect(mayCarryAddress(['text/plain'])).toBe(true)
   })
 
-  /** A file out of Explorer, and the app's own drags, are somebody else's. */
   test('is not a file, nor one of the app s own drags', () => {
     expect(mayCarryAddress(['Files', 'text/uri-list'])).toBe(false)
     expect(mayCarryAddress(['text/nib-path', 'text/plain'])).toBe(false)
@@ -29,7 +27,6 @@ describe('a link dragged onto the strip from another app', () => {
     )
   })
 
-  /** Only a page: the test every web tab is held to. */
   test('opens nothing that is not a page on the web', () => {
     expect(droppedAddress(drop({ 'text/plain': 'a sentence out of a note' }))).toBeNull()
     expect(droppedAddress(drop({ 'text/uri-list': 'file:///C:/notes/a.md' }))).toBeNull()

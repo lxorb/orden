@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The strip's own menu, on its empty stretch: Emil, 2026-09-30, *"when you click on
- *  the bar here there should be the option: reopen closed tab"*. The store reads
- *  storage the moment it is made, so that is stood in for before it is imported. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -63,8 +59,6 @@ describe("the empty strip's menu", () => {
 })
 
 describe('New tab', () => {
-  /** Which pane it was asked for is the whole of what this menu decides about it; what a
-   *  new tab is, is `newTab`'s. */
   test("is a new tab, in the strip's own pane", () => {
     const asked: (string | undefined)[] = []
     vi.spyOn(workspace, 'newTab').mockImplementation((paneId) => void asked.push(paneId))
@@ -118,7 +112,6 @@ describe('Close all tabs', () => {
 
   test("closes around the tab in front of this strip's pane", () => {
     vi.spyOn(workspace.panes, 'at').mockImplementation((id) =>
-      // Only what the menu reads of a pane.
       id === PANE ? ({ activeTabId: 'mine' } as ReturnType<typeof workspace.panes.at>) : null,
     )
     vi.spyOn(workspace, 'closesAround').mockReturnValue(2)
