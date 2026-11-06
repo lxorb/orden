@@ -107,7 +107,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
             { property: 'task.priority', direction: 'ASC' },
           ],
           groupBy: { property: 'formula.day', direction: 'ASC' },
-          nib: { rows: 'tasks', groupOrder: 'rows', kept: {} },
+          nib: { rows: 'tasks', groups: ['overdue'], kept: {} },
         },
         {
           day: 'if(task.deadline < today(), "overdue", if(task.date < today(), today(), task.date))',

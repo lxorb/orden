@@ -111,6 +111,17 @@ describe('the built-in views', () => {
     ])
   })
 
+  test('Upcoming: what is overdue is first even when its day is later than the rest', () => {
+    const late = [
+      taskRow('Late.md', '- [ ] Soon 🛫 2026-10-05', 0),
+      taskRow('Late.md', '- [ ] Put off [deadline:: 2026-10-01] 🛫 2026-10-09', 1),
+    ]
+    expect(keyed(answer(builtinView('upcoming'), 0, late, context))).toEqual([
+      ['overdue', ['Put off']],
+      [{ kind: 'date', iso: '2026-10-05' }, ['Soon']],
+    ])
+  })
+
   test('Completed: done and cancelled, newest day first', () => {
     expect(keyed(answer(builtinView('logbook'), 0, rows, context))).toEqual([
       [{ kind: 'date', iso: '2026-10-03' }, ['Water']],
