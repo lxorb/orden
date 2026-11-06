@@ -309,7 +309,7 @@ function adderField(view: EditorView, property: Property): HTMLElement {
     event.preventDefault()
     add()
   })
-  input.addEventListener('blur', add)
+  input.addEventListener('blur', () => queueMicrotask(add))
 
   return input
 }
@@ -323,7 +323,8 @@ function field(view: EditorView, property: Property): HTMLElement {
     box.setAttribute('aria-label', property.key)
 
     box.addEventListener('change', () => {
-      write(view, property, box.checked ? 'true' : 'false')
+      const checked = box.checked
+      queueMicrotask(() => write(view, property, checked ? 'true' : 'false'))
     })
 
     return box
@@ -342,7 +343,7 @@ function field(view: EditorView, property: Property): HTMLElement {
 
   input.addEventListener('change', () => {
     const said = input.type === 'datetime-local' ? input.value.replace('T', ' ') : input.value
-    write(view, property, said === '' ? null : said)
+    queueMicrotask(() => write(view, property, said === '' ? null : said))
   })
 
   return input
@@ -363,7 +364,8 @@ function menu(view: EditorView, property: Property, choices: readonly string[]):
 
   select.value = said
   select.addEventListener('change', () => {
-    write(view, property, select.value === '' ? null : select.value)
+    const chosen = select.value
+    queueMicrotask(() => write(view, property, chosen === '' ? null : chosen))
   })
 
   return select
