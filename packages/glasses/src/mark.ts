@@ -97,22 +97,40 @@ class Locator {
     private at = 0,
   ) {}
 
+  private last = 0
+
   take(raw: string): number {
-    const from = this.find(raw)
-    if (from !== null) this.at = from + raw.length
-    return from ?? this.at
+    const found = this.find(raw)
+    if (found) this.at = found.to
+    return this.gave(found?.from)
   }
 
   peek(raw: string): number {
-    return this.find(raw) ?? this.at
+    return this.gave(this.find(raw)?.from)
   }
 
-  private find(raw: string): number | null {
+  private gave(from: number | undefined): number {
+    this.last = Math.max(this.last, from ?? this.at)
+    return this.last
+  }
+
+  private find(raw: string): { from: number; to: number } | null {
     if (!raw) return null
 
     const found = this.source.indexOf(raw, this.at)
     work.searched += (found < 0 ? this.source.length : found + raw.length) - this.at
-    return found < 0 ? null : found
+    if (found >= 0) return { from: found, to: found + raw.length }
+
+    const nested = new RegExp(
+      raw
+        .split('\n')
+        .map((line) => line.trimStart().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('\\r?\\n[ \\t>]*'),
+      'g',
+    )
+    nested.lastIndex = this.at
+    const loose = nested.exec(this.source)
+    return loose ? { from: loose.index, to: loose.index + loose[0].length } : null
   }
 }
 
@@ -357,12 +375,14 @@ class Sheet {
     const lead =
       QUOTE.repeat(nest.quote) + STEP.repeat(this.stepsAt(nest.depth, nest.listed === true))
     let hang = ''
-    const first = this.where.at(from)
+    let above = this.lines.at(-1)?.from ?? 0
+    const first = this.where.at(Math.max(from, above))
     for (const [at, part] of text.split('\n').entries()) {
       const whole = fold(at === 0 ? `${lead}${part.trimEnd()}` : `${hang}${part.trim()}`)
       if (at === 0) hang = hangOf(whole)
 
-      const began = at === 0 ? from : (this.where.startOf(first + at) ?? from)
+      const began = Math.max(above, at === 0 ? from : (this.where.startOf(first + at) ?? from))
+      above = began
 
       work.lines += 1
       work.folded += whole.length
@@ -379,7 +399,15 @@ class Sheet {
 
   blank(from: number, line: number): void {
     work.lines += 1
-    this.lines.push({ text: '', from, at: line, glued: false, level: 0, under: false })
+    const above = this.lines.at(-1)
+    this.lines.push({
+      text: '',
+      from: Math.max(from, above?.from ?? 0),
+      at: Math.max(line, above?.at ?? 0),
+      glued: false,
+      level: 0,
+      under: false,
+    })
   }
 
   lineAt(from: number): number {
@@ -513,7 +541,8 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const caption = captionIn(info)
   const raw = rawOf(token)
   const code = textOf(token)
-  const from = where.take(raw)
+  const found = where.take(raw)
+  const from = sheet.startOf(sheet.lineAt(found)) ?? found
 
   const drawn = language.toLowerCase() === 'chart' ? readChart(code) : null
   const called = drawn?.title ?? caption
@@ -524,16 +553,19 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
   if (caption) sheet.add(caption, from, nest)
 
-  let inside = from + Math.max(0, raw.indexOf(code))
+  const indented = 'codeBlockStyle' in token && token.codeBlockStyle === 'indented'
+  const lines = code.split('\n')
+  const top = sheet.lineAt(from) + (indented ? 0 : 1)
+  const rowAt = (at: number) => sheet.startOf(top + at) ?? from
 
   const marked = sheet.marks.fence
   if (marked) sheet.add(`${FENCE}${language}`, from, nest, { glued: caption !== '' })
-  for (const [at, line] of code.split('\n').entries()) {
-    sheet.add(line, inside, nest, { glued: marked || at > 0 })
-    inside += line.length + 1
+  for (const [at, line] of lines.entries()) {
+    sheet.add(line, rowAt(at), nest, { glued: marked || at > 0 })
   }
   if (marked) {
-    sheet.add(FENCE, from + raw.trimEnd().lastIndexOf('\n') + 1, nest, { glued: true })
+    const closed = !indented && raw.trimEnd().split('\n').length >= lines.length + 2
+    sheet.add(FENCE, rowAt(closed ? lines.length : lines.length - 1), nest, { glued: true })
   }
 }
 

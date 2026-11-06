@@ -486,6 +486,51 @@ describe('where a line came from', () => {
     }
   })
 
+  test.each([
+    ['fenced', 'Intro\n\n```\ncode one\ncode two\n```\n\nAfter\n'],
+    ['indented', 'Intro\n\n    code one\n    code two\n\nAfter\n'],
+    ['fenced in a list', '- a\n\n  ```\n  code one\n  code two\n  ```\n\nAfter\n'],
+    ['indented in a list', '- a\n\n        code one\n        code two\n\nAfter\n'],
+    ['with a blank line', '- a\n\n  ```\n  code one\n\n  code two\n  ```\n\nAfter\n'],
+  ])('puts each line of a %s code block where it stands in the note', (_what, note) => {
+    const marked = markLines(note, { inner: BODY_INNER })
+    const at = (text: string) => marked.find((line) => line.text.trim() === text)
+
+    for (const text of ['code one', 'code two', 'After']) {
+      expect(at(text)?.from).toBe(note.lastIndexOf('\n', note.indexOf(text)) + 1)
+      expect(at(text)?.at).toBe(note.slice(0, note.indexOf(text)).split('\n').length)
+    }
+    let last = -1
+    for (const line of marked) {
+      expect(line.from).toBeGreaterThanOrEqual(last)
+      last = line.from
+    }
+  })
+
+  test('never places a line before the one above it, however a list or quote swallows lines', () => {
+    const note =
+      '- a\n\n  ```\n  <b> ' +
+      'x'.repeat(80) +
+      '\n  ```\r\na .. b\r\n###### c\r\n\r\n\r\n$$\nd\n$$\n' +
+      '```\n```\n> <b>' +
+      'x'.repeat(80) +
+      '|\n        - .. <b> ' +
+      'x'.repeat(80) +
+      '\n![[pic.png]] <b> ' +
+      'x'.repeat(80) +
+      '\n'
+    const fences = '  ```\n  ```\n  ```\n  ```\n- a\n  ```\n\n'
+    for (const source of [note, fences]) {
+      for (const compaction of ['none', 'collapse', 'aggressive'] as const) {
+        let last = -1
+        for (const line of markLines(source, { inner: BODY_INNER, compaction })) {
+          expect(line.from).toBeGreaterThanOrEqual(last)
+          last = line.from
+        }
+      }
+    }
+  })
+
   test('glues what must not be parted from the line above it', () => {
     const marked = markLines('```\nalpha\n```\n', { inner: BODY_INNER })
 
