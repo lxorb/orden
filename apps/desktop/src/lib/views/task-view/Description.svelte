@@ -87,7 +87,6 @@
     flush()
   }}
   onkeydown={(event) => {
-    // Escape is the view's own, once the editor has had no use for it.
     if (event.key === 'Escape') view?.contentDOM.blur()
   }}
 >

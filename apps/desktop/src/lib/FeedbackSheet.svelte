@@ -146,7 +146,6 @@
           disabled={sending}
           onpaste={pasted}
           onkeydown={(event) => {
-            // Ctrl or Cmd with Enter sends, as a message box does; Enter alone is a line.
             if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
               event.preventDefault()
               void send()

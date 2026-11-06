@@ -36,8 +36,6 @@
   onblur={() => leave(true)}
   onpointerdown={(event) => event.stopPropagation()}
   onkeydown={(event) => {
-    // The strip's own keys - the arrows along it, Delete closing a tab - are the
-    // field's while it is up.
     event.stopPropagation()
     if (event.key === 'Enter') {
       event.preventDefault()

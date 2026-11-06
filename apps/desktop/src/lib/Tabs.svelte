@@ -825,7 +825,6 @@
       open: (row) => {
         const inFront = row.dataset.tab === activeId
         row.click()
-        // Nothing arrives for the caret rule to act on, and Enter means the note (#523).
         const showing = workspace.showing(paneId)
         if (inFront && showing?.kind === 'note' && !showing.reading) views.of(paneId)?.focus()
       },
@@ -909,7 +908,6 @@
             onblur={() => card(tab, null)}
             onclick={(event) => {
               resumes(tab.id)
-              // A click with Ctrl or Shift was a pick, and its press answered it.
               if (event.detail > 0 && picksWith(event)) return
               workspace.activate(tab.id)
               if (event.target instanceof Element && event.target.closest('.nib-unsaved')) {

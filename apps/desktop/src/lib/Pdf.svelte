@@ -666,7 +666,6 @@
         aria-label={t('Highlight')}
         disabled={frozen(sheet)}
         onmousedown={(event: MouseEvent) => {
-          // The selection has to survive the press, or there is nothing to mark.
           event.preventDefault()
         }}
         onclick={() => void highlight()}

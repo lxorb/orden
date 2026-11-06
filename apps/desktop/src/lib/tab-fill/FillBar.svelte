@@ -99,15 +99,11 @@
   inert={!shown}
   bind:this={bar}
   onpointerleave={() => {
-    // Off the window altogether, or onto a web page, which is a window of its own that
-    // the page is told nothing about.
     pointer = false
     letGo()
   }}
   onfocusin={(event: FocusEvent) => {
     within = true
-    // A key's, not a click's: a tab pressed with the pointer takes the focus too, and
-    // the bar would then stay down after the pointer had gone.
     keyboard = event.target instanceof Element && event.target.matches(':focus-visible')
     if (keyboard) hold()
   }}

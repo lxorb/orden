@@ -1050,9 +1050,6 @@
     </div>
 
     {@render row({
-      // Modal editing, under the keyboard it belongs with rather than in the
-      // editor: choosing the Vim preset turns it on, and this is how it is on
-      // over the Obsidian or the Notion map instead.
       kind: 'switch',
       key: 'shortcuts.vim',
       label: t('Vim keys'),

@@ -588,14 +588,12 @@
               : item.label}
             aria-selected={showing === item.id}
             onclick={(event) => {
-              // The first press of a double one chooses; the second is the double's.
               if (event.detail > 1) return
               firstPress = item.id
               choose(item.id)
             }}
             ondblclick={() => {
               const id = firstPress ?? item.id
-              // Fetched with the press, as the tab's menu is.
               void import('./panel-tab').then(({ openAsTab }) => openAsTab(id))
             }}
             oncontextmenu={(event) => {
@@ -820,8 +818,6 @@
                   current: '.is-on',
                   open: (row) => jump(Number(row.dataset.line ?? 0)),
                   peek: (row) => {
-                    // Going to a heading hands the note the keyboard, so Space takes
-                    // it straight back: the point of Space is to stay here.
                     jump(Number(row.dataset.line ?? 0))
                     row.focus()
                   },

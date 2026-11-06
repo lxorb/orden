@@ -22,15 +22,11 @@
     type="button"
     aria-label={text}
     onclick={(event) => {
-      // The row behind this is a control of its own; asking what a setting means
-      // is not asking to change it.
       event.stopPropagation()
       open = !open
     }}
     onpointerenter={() => (open = true)}
     onpointerleave={(event) => {
-      // A finger reports itself as a pointer entering and never leaving, so only
-      // a real hover puts it away again; a tap is the click above.
       if (event.pointerType === 'mouse') open = false
     }}
     onfocus={() => (open = true)}
@@ -40,9 +36,6 @@
         event.stopPropagation()
         open = false
       }
-      // The keys that press this button press only this button: a row that is a
-      // switch as a whole would otherwise hear them too and turn its setting over,
-      // as it would a click (#522).
       if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
     }}
   >

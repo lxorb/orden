@@ -44,7 +44,6 @@
       role="option"
       aria-selected={index === lit}
       onpointerdown={(event) => {
-        // Taken before the editor loses the caret to the press.
         event.preventDefault()
         onpick(row.choice)
       }}

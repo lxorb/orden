@@ -126,14 +126,11 @@
         event.preventDefault()
         leave()
       } else if (event.key === 'Escape') {
-        // Kept off the window, where Escape closes whatever is open over the
-        // note: what is open here is a name being typed.
         event.preventDefault()
         event.stopPropagation()
         escape()
       } else if (event.key === 'Tab') {
         event.preventDefault()
-        // The one bubble with something to press, and Tab is how the keyboard presses it.
         hint?.focus()
       }
     }}
@@ -159,7 +156,6 @@
           if (event.relatedTarget !== field) leave()
         }}
         onkeydown={(event) => {
-          // Kept off the list around it, whose own keys these are otherwise.
           event.stopPropagation()
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()

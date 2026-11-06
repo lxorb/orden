@@ -915,7 +915,6 @@
             }
           }}
           onblur={(event) => {
-            // Escape has let it go already, and what it holds is not a group.
             if (naming) addGroup(event.currentTarget.value)
           }}
           use:focusSoon

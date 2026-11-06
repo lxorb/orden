@@ -180,8 +180,6 @@
               class="card"
               onclick={() => {
                 store.opened = one.id
-                // Each theme is looked at from the side the app is on, whatever
-                // side the last one was being looked at from.
                 previewing = null
               }}
               onmouseenter={() => (hovered = one.id)}

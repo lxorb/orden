@@ -140,7 +140,6 @@
       autocomplete="off"
       onchange={(event) => {
         const name = event.currentTarget.value
-        // A name cleared is the name it had: an agent is never nobody.
         if (!name.trim()) event.currentTarget.value = grant.name
         else change((one) => withName(one, name))
       }}

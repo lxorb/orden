@@ -339,8 +339,6 @@
   aria-label={view?.name ?? ''}
   onkeydown={keydown}
   onfocus={(event) => {
-    // The keyboard coming in, by Tab, lands on the first row; a press in the list's own
-    // room is a press past the rows, which selects none (#1110).
     if (event.target !== event.currentTarget || !rows[0]) return
     if (event.currentTarget.matches(':focus-visible')) select(rows[0].id)
   }}

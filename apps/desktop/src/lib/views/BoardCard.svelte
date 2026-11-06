@@ -157,8 +157,6 @@
     aria-label={t('More')}
     title={t('More')}
     onmousedown={(event) => {
-      // The keyboard stays on the card, which says it is the one: the button is no
-      // stop of its own, and holding the keyboard drew a ring round it (#1110).
       if (event.button !== 0) return
       event.preventDefault()
       event.currentTarget.parentElement?.querySelector<HTMLElement>('[data-card]')?.focus({

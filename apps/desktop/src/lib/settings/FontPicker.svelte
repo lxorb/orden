@@ -96,7 +96,6 @@
       if (!open) show()
     }}
     onblur={(event) => {
-      // Left with something typed: that is the face, picked from the list or not.
       if (typed !== null) choose(event.currentTarget.value)
       else close()
     }}
@@ -113,7 +112,6 @@
           class:cursor={at === active}
           style:font-family={`"${one.name}", var(--font-ui)`}
           onpointerdown={(event) => {
-            // Taken on the press, before the field hears that it lost the keyboard.
             event.preventDefault()
             choose(one.name)
           }}
