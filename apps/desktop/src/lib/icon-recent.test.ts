@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The icons last chosen, across a launch, and the tab the picker used to remember,
- *  which went with the tabs (#1096). Each test reads the store as a launch would. */
-
 const store = new Map<string, string>()
 
 vi.stubGlobal('localStorage', {

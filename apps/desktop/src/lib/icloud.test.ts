@@ -1,7 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** The file list is read again once a note has arrived; that read is stood in for,
- *  so what is checked is that it is asked for. */
 const loadTree = vi.fn(() => Promise.resolve())
 vi.mock('./workspace.svelte', () => ({ workspace: { loadTree } }))
 

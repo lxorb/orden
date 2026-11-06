@@ -1,16 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Every file operation said once, and everything kept by path following it.
- *
- *  What is under test is the promise workspace/file-ops.ts makes: an operation says
- *  what it did, once, and a store that keeps files by path follows every operation
- *  without a call to it written into any of them. So a store is made here that the
- *  app has never heard of, and it keeps up with a rename, a move into a folder note,
- *  an undo and a delete; and each store the app does have hears each operation
- *  exactly once.
- *
- *  The disk is a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -58,8 +47,6 @@ beforeEach(async () => {
 })
 
 describe('a store the app has never heard of', () => {
-  /** What a store keeping something by path is: a label per file. It is told nothing
-   *  by any operation; it only follows what is said. */
   function labels() {
     const kept = new Map<string, string>()
     const store = {
@@ -96,12 +83,10 @@ describe('a store the app has never heard of', () => {
       await workspace.rename(`${ROOT}/Plan.md`, 'Goal.md')
       expect(kept.get(`${ROOT}/Goal.md`)).toBe('plan')
 
-      // Onto a note, which becomes the folder it is drawn as: two moves, each said.
       await workspace.moveMany([`${ROOT}/Idea.md`], `${ROOT}/Goal`)
       expect(kept.get(`${ROOT}/Goal/Goal.md`)).toBe('plan')
       expect(kept.get(`${ROOT}/Goal/Idea.md`)).toBe('idea')
 
-      // A folder that moves takes what is kept of everything in it.
       await workspace.rename(`${ROOT}/Work`, 'Desk')
       expect(kept.get(`${ROOT}/Desk/Notes.md`)).toBe('notes')
 
@@ -148,8 +133,6 @@ describe('a store the app has never heard of', () => {
 })
 
 describe('a write in the air while a file moves', () => {
-  /** Words typed and on their way down, the write asked for and held open until
-   *  `land` is called: the round trip a write is, with a move landing inside it. */
   async function typedAndWriting(words: string) {
     const one = disk.current
     const original = one?.invoke
@@ -188,9 +171,6 @@ describe('a write in the air while a file moves', () => {
     await Promise.all([writing, moving])
     await workspace.writesSettled()
 
-    // The move used to go ahead under the write: the file went, the write put the
-    // newest words back at the old path, and the document was told the old path
-    // back after it had followed the move - two files, and the tab on the stale one.
     expect(note?.path).toBe(`${ROOT}/Work/Plan.md`)
     expect(disk.current?.files.has(`${ROOT}/Plan.md`)).toBe(false)
     expect(disk.current?.files.get(`${ROOT}/Work/Plan.md`)).toBe('# Plan\ntyped before the move\n')
@@ -219,8 +199,6 @@ describe('a write in the air while a file moves', () => {
     const note = workspace.active?.note
     const { land, writing } = await typedAndWriting('# Plan\ntyped before the undo\n')
 
-    // The undo is fetched before it runs, so the write is let go a moment later:
-    // long enough for a move back that did not wait to have happened.
     const undoing = workspace.undoFileAction()
     await new Promise((resolve) => setTimeout(resolve, 20))
     land()
@@ -235,8 +213,6 @@ describe('a write in the air while a file moves', () => {
 
 describe('a note renamed while its heading is still its name', () => {
   test('has the new heading written to the file, not only shown', async () => {
-    // With no file list on screen a new note is written at once under its
-    // placeholder name, rather than waiting in a row for one.
     workspace.panel = null
     await workspace.createNote(ROOT)
     await workspace.writesSettled()
@@ -248,9 +224,6 @@ describe('a note renamed while its heading is still its name', () => {
     await workspace.rename(made, 'Groceries.md')
     await workspace.writesSettled()
 
-    // The heading was rewritten quietly into a note with nothing waiting to be
-    // written, which left it clean: the tab said `# Groceries` and the file kept
-    // `# Untitled` until something else was typed.
     const shown = workspace.documentAt(`${ROOT}/Groceries.md`)?.text ?? ''
     expect(shown.startsWith('# Groceries\n')).toBe(true)
     expect(disk.current?.files.get(`${ROOT}/Groceries.md`)).toBe(shown)
@@ -261,12 +234,8 @@ describe('a link rewritten in a note with typing not yet written', () => {
   test('keeps both the typing and the new link', async () => {
     disk.current?.files.set(`${ROOT}/Other.md`, 'see [[Plan]]\n')
     await workspace.loadTree()
-    // The index waits its turn behind the first frame, which a test has to say has
-    // been drawn; see startup.svelte.ts.
     void startup.shown()
     await links.build(ROOT)
-    // This disk answers no scan, so the index hears of the two notes the way it
-    // hears of a note written.
     links.noteSaved(`${ROOT}/Plan.md`, '# Plan\n')
     links.noteSaved(`${ROOT}/Other.md`, 'see [[Plan]]\n')
     await workspace.open(`${ROOT}/Other.md`)
@@ -276,8 +245,6 @@ describe('a link rewritten in a note with typing not yet written', () => {
     await workspace.rename(`${ROOT}/Plan.md`, 'Goal.md')
     await workspace.writesSettled()
 
-    // The rewrite went to the file and skipped the document, which had words of
-    // its own; the typing then went down with the old link in it, over the new.
     expect(note?.text).toBe('see [[Goal]]\ntyped and waiting\n')
     expect(disk.current?.files.get(`${ROOT}/Other.md`)).toBe('see [[Goal]]\ntyped and waiting\n')
   })
@@ -296,8 +263,6 @@ describe('a note open on screen that links to itself, renamed', () => {
     await workspace.rename(`${ROOT}/Groceries.md`, 'Shopping.md')
     await workspace.writesSettled()
 
-    // The rewrite read the open document's words and wrote them to the path it
-    // had, which the rename had just emptied: the note came back there.
     expect(disk.current?.files.has(`${ROOT}/Groceries.md`)).toBe(false)
     expect(disk.current?.files.get(`${ROOT}/Shopping.md`)).toBe('see [[Shopping#Produce]]\n')
     expect(note?.text).toBe('see [[Shopping#Produce]]\n')
@@ -332,7 +297,6 @@ describe('a note open on screen that links to itself, merged into another', () =
     await workspace.mergeInto(`${ROOT}/A.md`, `${ROOT}/B.md`)
     await workspace.writesSettled()
 
-    // The rewrite took the merge for a move, and wrote A's own words over B.
     const b = disk.current?.files.get(`${ROOT}/B.md`) ?? ''
     expect(b).toContain('kept in B')
     expect(b).toContain('[[B#Goals]]')
@@ -357,20 +321,12 @@ describe('a note open on screen that links to itself, merged into another', () =
     await workspace.undoFileAction()
     await workspace.writesSettled()
 
-    // B is open after the merge; taken for the note that moved, its words went
-    // over the A just put back.
     expect(disk.current?.files.get(`${ROOT}/A.md`)).toBe('only A\n')
     expect(disk.current?.files.get(`${ROOT}/B.md`)).toBe('see [[B#Goals]]\n')
-    // The link the merge pointed at B goes back to A; one that always named B
-    // was pointed at A as well.
     expect(disk.current?.files.get(`${ROOT}/C.md`)).toBe('to [[A]]\n')
     expect(disk.current?.files.get(`${ROOT}/D.md`)).toBe('to [[B]]\n')
   })
 
-  /** The merge points the links that came to A at B, and B's own are among them. So
-   *  what B says once the merge is done is the joined words with that link rewritten,
-   *  and an undo comparing against the joined words alone took that for typing and
-   *  refused. */
   test('and undone, where the note it went into linked to it', async () => {
     disk.current?.files.set(`${ROOT}/A.md`, 'only A\n')
     disk.current?.files.set(`${ROOT}/B.md`, 'see [[A]]\n')
@@ -411,7 +367,6 @@ describe('a move into another space', () => {
     expect(workspace.archive.keysOf(ROOT).size).toBe(0)
   })
 
-  /** Two spaces, `Work` in the first, every store kept by path holding something in it. */
   async function twoSpaces() {
     const HOME = '/home'
     disk.current?.folders.add(HOME)
@@ -507,7 +462,6 @@ describe('a move into another space', () => {
 })
 
 describe('the stores the app keeps by path', () => {
-  /** Each follower, by the call it answers an operation with. */
   function counted() {
     return {
       bookmarks: vi.spyOn(workspace.bookmarks, 'moved'),
@@ -670,8 +624,6 @@ describe('a folder moved into another, with a note open inside it', () => {
   })
 })
 
-/** The space read the way these tests read one: this disk answers no scan, so the
- *  index hears of every file it holds the way it hears of a file written. */
 async function indexed() {
   await workspace.loadTree()
   void startup.shown()
@@ -700,8 +652,6 @@ describe('a canvas showing a file that moves', () => {
     await workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
     await workspace.writesSettled()
 
-    // A card is a path from the top of the space, and `Plan.md` was taken for a
-    // wikilink that still reaches `Work/Plan.md` by its name.
     expect(cards()).toEqual(['Work/Plan.md'])
   })
 
@@ -749,7 +699,6 @@ describe('a note renamed while a canvas showing it is open and drawn on', () => 
     if (!tab) throw new Error('no tab')
     const store = new CanvasStore(tab)
 
-    // A card moved: a step to undo, so what arrives under the plane is merged.
     store.edit({
       ...store.canvas,
       nodes: store.canvas.nodes.map((one) => (one.id === 'a' ? { ...one, x: 40 } : one)),
@@ -763,8 +712,6 @@ describe('a note renamed while a canvas showing it is open and drawn on', () => 
     await workspace.writeNow()
     await workspace.writesSettled()
 
-    // The rewrite kept the card's old time, the merge took the two for one edit and
-    // broke the tie by the words, and `Plan.md` sorts before `Road.md`.
     const card = (nodes: readonly { id: string }[]) =>
       (nodes.find((one) => one.id === 'f') as { file?: string } | undefined)?.file
     const saved = JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
@@ -816,7 +763,6 @@ describe('a note renamed while a canvas showing it is drawn on and not yet writt
     await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
     await settled(store)
 
-    // Merged from the file, the card took the rewrite whole and its drag was lost.
     const shown = store.canvas.nodes.find((one) => one.id === 'f') as { file?: string; x: number }
     expect([shown.file, shown.x]).toEqual(['Road.md', 40])
     expect(saved().map((one) => [one.file, one.x])).toEqual([['Road.md', 40]])
@@ -838,7 +784,6 @@ describe('a note renamed while a canvas showing it is drawn on and not yet writt
     await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
     await settled(store)
 
-    // Both sides had no time for the card, and the tie went to `Plan.md`.
     const shown = store.canvas.nodes.find((one) => one.id === 'f') as { file?: string }
     expect(shown.file).toBe('Road.md')
     expect(saved().map((one) => one.file)).toEqual([undefined, 'Road.md'])
@@ -913,9 +858,7 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
       nib: { version: 1, at: { f: 1 } },
     })
     const back = new CanvasStore(tab)
-    // Taken down with the tab still open; the plane stopped following the document.
     back.part()
-    // Another device's card arrives, and the open document takes it.
     tab.note.replace(
       JSON.stringify({
         nodes: [
@@ -929,13 +872,10 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
     )
 
     await workspace.rename(`${ROOT}/Plan.md`, 'Road.md')
-    // Written by the rewrite, so not owed again by the document.
     expect(tab.note.dirty).toBe(false)
     await workspace.writeNow()
     await workspace.writesSettled()
 
-    // The rename went through the plane as it was when the tab went back, and wrote
-    // it over the document: the other device's card was gone, here and for them.
     expect(saved().map((one) => [one.id, one.file])).toEqual([
       ['f', 'Road.md'],
       ['n', undefined],

@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Listed } from './seed-space'
 
-/** A fresh start: the first space, made without a question, open on the welcome note.
- *
- *  Emil, 2026-10-13: "rather welcome note instead of the where do your notes come
- *  from". The note is the one the browser build has always given a first visit, once
- *  per device by the same rule: a reader who has been introduced is not introduced
- *  again, and an untouched welcome never travels to an account. See welcome.ts. */
-
 const notes = new Map<string, string>()
 const made: { name: string; path: string }[] = []
 
@@ -52,7 +45,6 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-// A pass is nudged once a space is made; nothing here is about syncing.
 vi.mock('./sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
 function memoryStorage(): Storage {
@@ -76,7 +68,6 @@ const { insideFolder, pickedFolder } = await import('./import/sources')
 const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('./welcome')
 const { AGENTS_NAME, AGENTS_SEED, isUntouchedAgents } = await import('./agents-seed')
 
-/** A desktop with no space, nothing open and nobody signed in. */
 const FRESH = {
   native: true,
   plugin: false,
@@ -109,7 +100,6 @@ describe('a fresh start', () => {
     expect(workspace.active?.path).toBe(welcome)
   })
 
-  /** The page the app was opened for is taken while the space is still being made. */
   test('leaves a page the app was opened with in front, the note behind it', async () => {
     const starting = firstSpace.start(FRESH)
     const page = workspace.openPage('https://example.com/', 'front')
@@ -147,8 +137,6 @@ describe('a fresh start', () => {
     expect(notes.has(welcome)).toBe(false)
   })
 
-  /** Every space made from here starts with the few lines an assistant working in it
-   *  is to read; see agents-seed.ts. */
   test('and the space gets its AGENTS.md', async () => {
     await firstSpace.start(FRESH)
 
@@ -170,8 +158,6 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${WELCOME}mine\n`)).toBe(false)
   })
 
-  /** A browser seeded before the words stopped saying "browser" still has the old
-   *  ones, and they are no more the reader's writing now than they were then. */
   test('nor is the one an earlier version wrote', () => {
     const earlier = [
       '# Welcome to Nib',
@@ -197,8 +183,6 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
   })
 
-  /** Every device seeded before the app was called Orden holds one of these, under
-   *  either earlier name, and they are still the app's, not the reader's. */
   test.each(['Nib', 'nibeditor'])('nor the one written while it was called %s', (name) => {
     const earlier = [
       `# Welcome to ${name}`,
@@ -225,8 +209,6 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
 
-  /** The seeds of 2026-10-13 to 2026-10-20 ended in a link to Settings > Import, and
-   *  are no more the reader's writing for it. */
   test('nor the one that linked to Import', () => {
     const linked = `${WELCOME}\n[Import from Obsidian or Notion](nib://settings/import)\n`
 
@@ -234,7 +216,6 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${linked}mine\n`)).toBe(false)
   })
 
-  /** Issue #322: a newcomer offered imports was offered too much. */
   test('suggests no import', () => {
     expect(WELCOME).not.toMatch(/import/i)
   })
@@ -269,8 +250,6 @@ describe('a folder brought in as a space', () => {
   })
 })
 
-/** #1077: the space a fresh start made is the default one signing in can tell from the
- *  reader's own, by where it was made and what it still holds. */
 const { seedSpaceRoot } = await import('./seeded')
 const { untouchedSeedSpace } = await import('./seed-space')
 const { madeSpace } = await import('./space-actions')

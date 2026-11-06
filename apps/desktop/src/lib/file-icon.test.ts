@@ -1,19 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { readCanvas } from '@orden/markdown/canvas'
 
-/** Choosing an icon writes the file's own words, which means it goes through
- *  everything a write goes through: the version before it is kept, a note open in
- *  a pane takes the words in its editor rather than off the disk, and the lot is
- *  one thing to undo. So this stands a disk and a browser store in for the ones
- *  under node, and imports the workspace after them - the same way workspace.test
- *  does, and for the same reason.
- *
- *  A canvas takes the same path, with one difference: its icon sits in JSON under
- *  the `nib` key rather than in front matter. That difference is file-icon.ts's to
- *  answer, and nothing else in the app has to know about it. */
-
-/** The two canvases, written the way `writeCanvas` writes one: tabs and a closing
- *  newline, so a file that has not changed is written back byte for byte. */
 const BOARD = `${JSON.stringify({ nodes: [], edges: [] }, null, '\t')}\n`
 const MARKED_BOARD = `${JSON.stringify(
   { nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } },
@@ -21,12 +8,8 @@ const MARKED_BOARD = `${JSON.stringify(
   '\t',
 )}\n`
 
-/** A chat's id, as the account makes one. */
 const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
-/** The space as it stands at the start of every test: a note with no metadata at
- *  all, one with a key of its own, two already wearing an icon, and two canvases -
- *  one bare, one already marked. */
 const SPACE: Record<string, string> = {
   '/space/plain.md': '# Plain\n\nwords\n',
   '/space/titled.md': '---\ntitle: Titled\n---\n\n# Titled\n',
@@ -41,13 +24,10 @@ const SPACE: Record<string, string> = {
   '/space/Damaged.chat': 'Team\n',
 }
 
-/** The disk, which every test writes to and every test starts over with. */
 let notes: Record<string, string> = { ...SPACE }
 
 const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'string' ? args.path : '')
 
-/** Every command that was sent, so a test can say what was written and what was
- *  kept before it. */
 const sent: { command: string; path: string; content: string }[] = []
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -89,7 +69,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { setFileIcon } = await import('./file-icon')
 const { workspace } = await import('./workspace.svelte')
 
-/** What was written to a note, or null where nothing was. */
 function written(path: string): string | null {
   const write = sent.filter((one) => one.command === 'write_note' && one.path === path).pop()
   return write?.content ?? null
@@ -113,7 +92,6 @@ describe('the icon a note is given', () => {
 
   test('an emoji YAML would read as something else is quoted', async () => {
     fresh()
-    // The keycap `#` bare after the colon would be a comment, and the icon nothing.
     await setFileIcon('/space/plain.md', '#\uFE0F\u20E3')
 
     expect(written('/space/plain.md')).toBe("---\nicon: '#\uFE0F\u20E3'\n---\n# Plain\n\nwords\n")
@@ -148,8 +126,6 @@ describe('the icon a note is given', () => {
     await setFileIcon('/space/marked.md', 'compass')
 
     const touched = sent.filter((one) => one.path === '/space/marked.md')
-    // Read for the change, and again just before it is written; see `writeClosed`
-    // in workspace/note-text.ts.
     expect(touched.map((one) => one.command)).toEqual([
       'read_note',
       'read_note',
@@ -176,8 +152,6 @@ describe('the icon a note is given', () => {
   })
 })
 
-/** #1098: a web note keeps its chosen icon in its `.url`, over the site's mark, and
- *  "Reset to site icon" takes it away again; nothing else the file says changes. */
 describe('the icon a web note is given', () => {
   test('is written into its file, and taken away again', async () => {
     fresh()
@@ -194,9 +168,6 @@ describe('the icon a web note is given', () => {
   })
 })
 
-/** An open web note's tab holds its `.url` as the file says it, `\r\n` and all, while
- *  its document's editor counts each line ending as one character: the icon went into
- *  the file two characters early, inside its date, while the tab was open (#1110). */
 describe('the icon an open web note is given', () => {
   test('is written where it belongs, and the tab holds what the file says', async () => {
     fresh()
@@ -213,7 +184,6 @@ describe('the icon an open web note is given', () => {
   })
 })
 
-/** An online terminal keeps it in its file, over what runs in it (#1110). */
 describe('the icon an online terminal is given', () => {
   test('is written into its file, and taken away again', async () => {
     fresh()
@@ -258,10 +228,6 @@ describe('taking a note s icon away', () => {
   })
 })
 
-/** The half of it that a file on disk cannot show: a note somebody is reading
- *  while the icon changes. The words have to arrive in the editor, and the note
- *  has to stay saved - the front matter block on screen is the note's, not a
- *  version of it the disk has and the pane does not. */
 describe('a note that is open while its icon changes', () => {
   test('takes the change in its own document, and stays saved', async () => {
     fresh()
@@ -285,9 +251,6 @@ describe('a note that is open while its icon changes', () => {
   })
 })
 
-/** A canvas is JSON and has no front matter, so its icon goes under the `nib` key
- *  the ink already lives under - and everything else stays the same, which is the
- *  point: one function, one write, one undo step, whichever file it is. */
 describe('the icon a canvas is given', () => {
   const board = (path: string) => readCanvas(written(path) ?? '')
 
@@ -319,8 +282,6 @@ describe('the icon a canvas is given', () => {
     await setFileIcon('/space/Marked.canvas', 'compass')
 
     const touched = sent.filter((one) => one.path === '/space/Marked.canvas')
-    // Read for the change, and again just before it is written; see `writeClosed`
-    // in workspace/note-text.ts.
     expect(touched.map((one) => one.command)).toEqual([
       'read_note',
       'read_note',
@@ -345,8 +306,6 @@ describe('the icon a canvas is given', () => {
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 
-  /** A canvas open on screen is a plane drawn out of the file's words, so the words
-   *  have to change under it rather than the file being rewritten behind it. */
   test('reaches a canvas that is open, without leaving it unsaved', async () => {
     fresh()
     await workspace.open('/space/Board.canvas')
@@ -358,9 +317,6 @@ describe('the icon a canvas is given', () => {
   })
 })
 
-/** An emoji and a coloured drawing are written as themselves; a line icon may carry a
- *  colour, on a key of its own so that another app reading the file still finds the
- *  icon. One write either way, since one gesture chose both. */
 describe('what each kind of icon is written as', () => {
   test('an emoji, as the character it is', async () => {
     fresh()
@@ -414,9 +370,6 @@ describe('what each kind of icon is written as', () => {
   })
 })
 
-/** A chat's one file is its pointer, so the icon goes there beside the id: the same
- *  write a note's takes, a version kept and one thing to undo, and a reader of the
- *  pointer that knows nothing of icons still finds the chat. See docs/icons.md. */
 describe('the icon a chat is given', () => {
   test('goes into its pointer after the id, with its colour', async () => {
     fresh()
@@ -432,8 +385,6 @@ describe('the icon a chat is given', () => {
     await setFileIcon('/space/Team.chat', '🚀')
 
     const touched = sent.filter((one) => one.path === '/space/Team.chat')
-    // Read for the change, and again just before it is written; see `writeClosed`
-    // in workspace/note-text.ts.
     expect(touched.map((one) => one.command)).toEqual([
       'read_note',
       'read_note',

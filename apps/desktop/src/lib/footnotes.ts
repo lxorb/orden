@@ -1,49 +1,17 @@
-/** The footnotes of a note: what each one says, and where it is written.
- *
- *  Read off the text the way the headings are, and for the same three reasons:
- *  the panel is about the note the workspace holds rather than whichever note an
- *  editor view happens to show, it can be tested without a document, and the walk
- *  is in one place. See outline.ts, which this sits beside.
- *
- *  A footnote is two things in two places - a `[^1]` in the middle of a sentence
- *  and a `[^1]: …` at the bottom. A row of the Outline's Footnotes group carries both
- *  lines: the one the mark is on in the words above, which is where pressing the row
- *  goes, and the one the definition is written on, which pressing the mark in the note
- *  goes to (live-preview/footnotes.ts in @orden/editor, #1120). Reading the note is what
- *  you were doing, so the mark is what a press on the row answers. */
-
 import { lines } from '@orden/markdown/links'
 
 export interface Footnote {
-  /** The label between the brackets, which is what the note shows as a raised
-   *  number: `1`, or `why` for somebody who names them. */
   id: string
-  /** What the definition says, as written. Empty for one written nowhere. */
   text: string
-  /** The line the first `[^id]` in the words is on, or the definition's own line
-   *  for a footnote nothing refers to. */
   line: number
-  /** The line the definition is written on, or null for a mark nothing defines -
-   *  which is a real thing to find in a note and the reason this is not simply the
-   *  line above. */
   defined: number | null
-  /** Whether anything in the note actually points at it. */
   used: boolean
 }
 
-/** `[^id]: what it says`, at the start of a line. */
 const DEFINITION = /^\[\^([^\]\s]+)\]:[ \t]*(.*)$/
 
-/** Every `[^id]` on a line, definitions included; the one at the start of a
- *  definition is filtered out by where it sits. */
 const REFERENCE = /\[\^([^\]\s]+)\]/g
 
-/** Every footnote the note holds, in the order the note refers to them, with
- *  the ones nothing refers to after. A definition written twice is read once,
- *  the way the renderer reads it.
- *
- *  Code is skipped as the page reads it (`lines` in @orden/markdown/links): a block
- *  closes on its own mark only, and a fence in a quote or a list item is code too. */
 export function scanFootnotes(text: string): Footnote[] {
   if (!text.includes('[^')) return []
 
@@ -58,8 +26,6 @@ export function scanFootnotes(text: string): Footnote[] {
     const defined = DEFINITION.exec(row)
     if (defined) {
       const id = defined[1] ?? ''
-      // The first definition wins, which is how the renderer reads a label
-      // written twice.
       if (!said.has(id)) {
         said.set(id, (defined[2] ?? '').trim())
         definedAt.set(id, line)
@@ -68,8 +34,6 @@ export function scanFootnotes(text: string): Footnote[] {
 
     for (const found of row.matchAll(REFERENCE)) {
       const id = found[1] ?? ''
-      // The `[^1]` that opens a definition is the definition, not a mention
-      // of it.
       if (defined && found.index === 0) continue
       if (!usedAt.has(id)) {
         usedAt.set(id, line)
@@ -78,9 +42,6 @@ export function scanFootnotes(text: string): Footnote[] {
     }
   }
 
-  // Referred to first, in the order the words reach them; then the ones defined
-  // and never used, which are worth seeing precisely because nothing points at
-  // them.
   const unused = [...said.keys()].filter((id) => !usedAt.has(id))
 
   return [...order, ...unused].map((id) => ({

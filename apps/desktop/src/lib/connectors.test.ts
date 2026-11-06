@@ -1,21 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The connector pane's store: what it does when the service says no.
- *
- *  Every one of these reaches the account over the network, and each is drawn as
- *  a button that does one thing. A refusal that nobody is told about is the
- *  worst of the three outcomes: the row goes away and comes back, or the token
- *  stays alive, and the reader is left to guess which. */
-
 const server = vi.hoisted(() => ({
-  /** Set to make every call refuse. */
   refuse: false,
-  /** Set to make only the taking-off refuse, so the refresh behind it still
-   *  answers - which is the ordinary shape of one being turned down. */
   refuseDelete: false,
-  /** The clients the account answers with. */
   clients: [] as { id: string; name: string }[],
-  /** What was asked of the service, in order. */
   asked: [] as string[],
 }))
 
@@ -57,8 +45,6 @@ vi.mock('./api', () => ({
   },
 }))
 
-// The session is the one thing this store reads from outside itself, and only for
-// the token; what happens to a session is account.test.ts's subject.
 vi.mock('./account.svelte', () => ({
   account: { accountToken: 'session', forgetWithSession: () => undefined },
 }))
@@ -88,8 +74,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 let connectors: typeof import('./connectors.svelte').connectors
 
-/** The graph, loaded once here rather than by whichever hook runs first; see
- *  docs/conventions.md. */
 await import('./connectors.svelte')
 
 beforeEach(async () => {
@@ -118,9 +102,6 @@ describe('taking a client off the account', () => {
 
     await connectors.disconnect('c1')
 
-    // The row was taken away optimistically, so a refusal has to undo that as
-    // well as explain itself: what the account says is still there is still
-    // there.
     expect(connectors.error).toBe('the service said no')
     expect(connectors.clients.map((one) => one.id)).toEqual(['c1'])
   })
@@ -146,8 +127,6 @@ describe('the pasted token', () => {
 
     await connectors.revokeToken()
 
-    // Saying nothing here is the worst of it: the pane would read as revoked
-    // while the token went on reaching the notes.
     expect(connectors.error).toBe('the service said no')
     expect(connectors.freshToken).toBe('mcp-secret')
     expect(connectors.busy).toBe(false)

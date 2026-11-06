@@ -48,11 +48,6 @@ interface Context {
   onhistory(): void
 }
 
-/** The export rows, with a rule wherever the kind of row changes: the formats
- *  this document goes out as, then the variants of two of them, then the paper
- *  and whatever else the machine can do. The list itself is the command list, so
- *  the submenu, the palette and the shortcut settings show the same rows in the
- *  same order, and all three follow what is open; see export/offer.ts. */
 function exportRows(): MenuRow[] {
   const formats = new Set<string>(
     [...EXPORT_FORMATS, ...EXPORT_EXTRAS].map((one) => `export-${one.id}`),
@@ -71,8 +66,6 @@ function exportRows(): MenuRow[] {
       label: command.label,
       hint: command.hint,
       asks: true,
-      // The export's own id is `export-pdf`; the registry's for the same row is
-      // `export.pdf`, which is the one a key is bound to.
       command: command.id.replace(/^export-/, 'export.'),
       disabled: !!command.disabled,
       run: command.run,
@@ -82,41 +75,23 @@ function exportRows(): MenuRow[] {
   return rows
 }
 
-/** A row's key, both ways it is read: written for a reader as the hint, and as
- *  the registry id the Mac's menu bar makes a key equivalent of. One call, so the
- *  two can never name different commands; see `command` in menu-item.ts. */
 function keyed(id: string): Pick<MenuItem, 'hint' | 'command'> {
   return { hint: shortcuts.hint(id), command: id }
 }
 
-/** Runs an editor command against whichever view is on screen. */
 function run(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
 
-  // The view rather than a pair made out of it, so a command that can do more
-  // with one does: folding moves the lines it hides before it hides them, which
-  // needs something that can measure them. See fold-motion.ts in @orden/editor.
   command(view)
   view.focus()
 }
 
-/** Everything the app can do, arranged the way a menu bar arranges it.
- *
- *  Built fresh each time it opens so the ticks and the greying-out describe
- *  the moment rather than whenever the app started. Every row here calls the
- *  same code the keyboard and the command palette already call - the menu is
- *  another way in, not a second implementation. */
 export function appMenu(context: Context): MenuGroup[] {
   const { view } = context
   const hasNote = !!workspace.active
   const selected = !!view && !view.state.selection.main.empty
-  /** Whether the editor takes an edit at all. Read-only mode says no, and every
-   *  row that would write says so by greying out rather than by doing nothing
-   *  when it is pressed. */
   const writable = !!view && !view.state.readOnly
 
-  /** A row that edits the note, named by the shortcut it carries so the key and
-   *  the row can never say different things. */
   const edit = (id: string, label: string, command: StateCommand): MenuItem => ({
     label,
     ...keyed(id),
@@ -124,15 +99,10 @@ export function appMenu(context: Context): MenuGroup[] {
     run: () => run(view, command),
   })
 
-  /** A row that runs a command against the view itself rather than against its
-   *  state: whether it did anything is its own answer and no business of a row's. */
   const onView = (command: (one: EditorView) => boolean) => () => {
     if (view) command(view)
   }
 
-  /** Rows for the blocks named, in the order they are named, out of the one list
-   *  the palette and the editor's `/` menu read too. A `Command` is a `MenuItem`
-   *  with an id on it, so only the id comes off. */
   const written = blockCommands(view)
   const blocks = (...ids: string[]): MenuItem[] =>
     ids.flatMap((id) => {
@@ -143,7 +113,6 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: found.label,
           ...(found.hint === undefined ? {} : { hint: found.hint }),
-          // The one block that asks for something first: which picture.
           ...(found.id === 'picture' ? { asks: true } : {}),
           command: found.id,
           ...(found.disabled === undefined ? {} : { disabled: found.disabled }),
@@ -156,21 +125,7 @@ export function appMenu(context: Context): MenuGroup[] {
     {
       id: 'file',
       label: t('File'),
-      // What a document goes out as and what it was, and nothing more. Making,
-      // opening and closing are on the keys every editor has them on, the
-      // strip's plus, a tab's own menu and the palette, and Settings is the gear in
-      // the panel's foot; a row for each here was a second list to read past. Emil,
-      // 2026-09-30: *"I would like to remove some options here: everything till
-      // (exclusive) export. and also close note, close window, reopen closed tab"*,
-      // *"and settings"*. A Mac's menu bar keeps its File rows, because there a key
-      // reaches a web tab only as a row; see `fileRows` in native-menu-bar.svelte.ts.
       rows: [
-        // Export is one word here and a dozen rows behind it. It used to be a
-        // menu of its own beside File, which put the formats a note goes out as
-        // in the same strip as File, Edit and View - and a person looking for
-        // "export" looks under File, because that is where every other editor
-        // keeps it. The rows are the export list itself, greyed where the thing
-        // on screen does not go out that way.
         { label: t('Export'), rows: exportRows() },
         ...(canPrint
           ? [
@@ -222,9 +177,6 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !selected,
           run: copySelection,
         },
-        // Paste, which reads the clipboard rather than riding on a paste event -
-        // a menu row has none. Rich by default and plain on the row below it, the
-        // same two the keyboard offers.
         {
           label: t('Paste'),
           ...keyed('fixed.paste'),
@@ -259,8 +211,6 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: onView(openReplace),
         },
-        // The keys every editor walks its matches with, as rows where there is a
-        // keyboard to learn them from. A Mac's menu bar puts the four in a submenu.
         ...(viewport.touch
           ? []
           : [
@@ -288,9 +238,6 @@ export function appMenu(context: Context): MenuGroup[] {
     {
       id: 'paragraph',
       label: t('Paragraph'),
-      // Every row of it comes from `blockCommands`, which the palette and the
-      // editor's `/` menu read as well: one list, three ways in. Only the rules
-      // between the groups are the menu's own.
       rows: [
         ...blocks('paragraph.heading-1', 'paragraph.heading-2', 'paragraph.heading-3'),
         ...blocks('paragraph.heading-4', 'paragraph.heading-5', 'paragraph.heading-6'),
@@ -308,16 +255,12 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         ...blocks(
           'picture',
-          // The microphone, beside the picture: both put something of the reader's own
-          // into the note. See recorder/commands.ts.
           'record',
           'paragraph.footnote',
           'paragraph.toc',
           'paragraph.front-matter',
         ),
         DIVIDER,
-        // A new slide is a rule with a blank line above it, which is what breaks
-        // a deck into its next one; see packages/markdown/src/slides.ts.
         ...blocks('paragraph.rule', 'slide-break', 'page-break'),
       ],
     },
@@ -351,12 +294,6 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => run(view, highlightSelection),
         },
         {
-          // The colours, behind the one word that names them, because six rows in
-          // front of the list would be six rows about one thing. Picking one
-          // highlights the selection and sticks: the row above, the bar's own
-          // button and the shortcut all write that colour from then on. Five
-          // colours, which is what Obsidian encodes in the markdown, plus the
-          // plain highlight; see highlights.ts in @orden/markdown.
           label: t('Highlight colour'),
           disabled: !writable,
           rows: HIGHLIGHT_COLOURS.map((colour) => ({
@@ -445,16 +382,12 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: modes.focus,
           run: () => modes.toggleFocus(view),
         },
-        // The document and nothing else: the file list and both bars
-        // leave. The same command the key is bound to; see fullscreen.svelte.ts.
         {
           label: t('Fullscreen'),
           ...keyed('app.fullscreen'),
           checked: fullscreen.on,
           run: () => void fullscreen.toggle(workspace.panes),
         },
-        // The tab alone in the window, which stays a window; see lib/tab-fill. A phone
-        // and a tablet show one document already.
         ...(viewport.touch
           ? []
           : [
@@ -466,8 +399,6 @@ export function appMenu(context: Context): MenuGroup[] {
                 run: () => void toggleFill(),
               },
             ]),
-        // A window that stays over everything else, for writing beside whatever is
-        // being written about. Only a desktop has a window of its own to raise.
         ...(isDesktop
           ? [
               {
@@ -478,7 +409,6 @@ export function appMenu(context: Context): MenuGroup[] {
             ]
           : []),
         DIVIDER,
-        // The panes. Left out on a phone, which shows one note at a time.
         ...(viewport.touch
           ? []
           : [
@@ -525,8 +455,6 @@ export function appMenu(context: Context): MenuGroup[] {
           ? []
           : [{ label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
         DIVIDER,
-        // Folding is a view operation, so these rows stand whether the note can
-        // be written in or not.
         { label: t('Fold'), ...keyed('view.fold'), run: () => run(view, toggleFold) },
         {
           label: t('Fold everything'),
@@ -582,12 +510,9 @@ export function appMenu(context: Context): MenuGroup[] {
               : (account.open = true),
         },
         DIVIDER,
-        // Through the store, so what it finds is offered rather than downloaded
-        // in silence; see updates.svelte.ts.
         ...(isDesktop
           ? [{ label: t('Check for updates'), asks: true, run: () => void updates.check() }]
           : []),
-        // In a browser, the app itself, which nothing else in the page offers.
         ...(isNative
           ? []
           : [{ label: t('Download the app'), run: () => void openExternal(DOWNLOAD_URL) }]),

@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Settings › Note types: which kinds anything offers to make, and the account that
- *  carries the choice. Emil, 2026-10-12: *"if they're disabled they won't be shown e.g.
- *  in the Ctrl + T menu BUT when they exist already they are ofc still fully usable"*. */
-
 const store = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => store.get(key) ?? null,
@@ -11,7 +7,6 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-/** The account, writing down what it was told. */
 const saved = vi.hoisted(() => [] as [string, unknown][])
 vi.mock('./api', async (actual) => ({
   ...(await actual<typeof import('./api')>()),
@@ -30,7 +25,6 @@ const { newFileRows } = await import('./row-menu')
 const { account } = await import('./account.svelte')
 const { viewport } = await import('./viewport.svelte')
 
-/** Who is signed in, which the account works out for itself; held here instead. */
 let token: string | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })
 
@@ -58,8 +52,6 @@ describe('the kinds offered', () => {
     expect(shownOf(here, ['canvas', 'web'])).toEqual(['note', 'pages'])
   })
 
-  /** Turned off on a desktop that had a shell, leaving only the shell; on a page in a
-   *  browser there is none, and a chooser with nothing in it is not one. */
   test('keep the first when another device turned all of these off', () => {
     expect(shownOf(here, ['note', 'canvas', 'pages', 'web'])).toEqual(['note'])
   })
@@ -68,7 +60,6 @@ describe('the kinds offered', () => {
     expect(mayHide('canvas', here, [])).toBe(true)
     expect(mayHide('note', here, ['canvas', 'pages'])).toBe(true)
     expect(mayHide('note', here, ['canvas', 'pages', 'web'])).toBe(false)
-    // One already off is not turned off again.
     expect(mayHide('web', here, ['web'])).toBe(false)
   })
 })
@@ -78,8 +69,6 @@ describe('a stored list of kinds turned off', () => {
     expect(hiddenOf(['canvas', 'web', 'canvas'])).toEqual(['canvas', 'web'])
   })
 
-  /** A kind a newer build has, turned off there, stays off when this one writes the
-   *  list back. */
   test('keeps a kind this version has never heard of', () => {
     expect(hiddenOf(['something-new'])).toEqual(['something-new'])
   })
@@ -106,7 +95,6 @@ describe('the kinds a device has', () => {
     expect(kindsHere()).not.toContain('web')
   })
 
-  /** A tablet hands every page to the system's browser too (#206). */
   test('and on a tablet', () => {
     viewport.device = 'tablet'
     expect(kindsHere()).not.toContain('web')
@@ -130,7 +118,6 @@ describe('turning a kind off', () => {
       'New web note',
       'New database',
     ])
-    // Settings still lists it, so it can be turned back on.
     expect(newKinds().map((one) => one.kind)).toContain('canvas')
   })
 

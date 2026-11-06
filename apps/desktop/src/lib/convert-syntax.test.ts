@@ -1,18 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { syntaxChanges } from './convert-syntax'
 
-/** What the Convert syntax command would write, before it writes any of it.
- *
- *  The count the reader is shown and the edits that are then applied come from one
- *  call, which is the whole point of `syntaxChanges` being pure: a sheet that said
- *  "rewrite 3 things" and then wrote four would be a sheet nobody could trust. So
- *  what is held here is that the two agree, that a note needing nothing is not in the
- *  list at all, and that every change carries the way back - it is one thing to undo
- *  however many notes it touched.
- *
- *  Which spelling becomes what is import/convert.test.ts; this is about the command
- *  around it. */
-
 const note = (path: string, text: string) => ({ path, text })
 
 describe('what Convert syntax would rewrite', () => {
@@ -60,8 +48,6 @@ describe('what Convert syntax would rewrite', () => {
       [],
     )
 
-    // The box becomes a task with its marker, the highlight becomes the one
-    // everything else reads, and the block reference is left as it was.
     expect(said.changes[0]?.after).toBe('- [ ] Buy ==milk==\n\nAs ((abc123)) said.\n')
     expect(said.rewrites).toBe(2)
   })
@@ -75,15 +61,10 @@ describe('what Convert syntax would rewrite', () => {
     expect(change?.back.length).toBeGreaterThan(0)
   })
 
-  /** A note whose rewrite comes out the same text has nothing to apply, and a change
-   *  with no edit in it would be a row in the undo stack that undid nothing. */
   test('and a rewrite that changes no character is not a change', () => {
     expect(syntaxChanges([note('One.md', '')], []).changes).toEqual([])
   })
 
-  /** The open tab and the space's list both hold files that are not notes: a
-   *  canvas, a chat, a base, a stylesheet. Their words are not markdown, and a
-   *  rewrite of them is a file spoiled. */
   test('and a file that is not a note is never one to rewrite', () => {
     const said = syntaxChanges(
       [note('Board.canvas', '{"text":"#two words# here"}'), note('Team.chat', '#two words#')],

@@ -2,13 +2,6 @@ import { describe, expect, test } from 'vitest'
 
 import { agoShort, relativeStep } from './ago'
 
-/** How long ago something happened, as a number and a unit for
- *  `Intl.RelativeTimeFormat`.
- *
- *  The pane it is written for says when a note was deleted, and a reader most
- *  often opens it in the moment after deleting one. It used to floor everything
- *  at a minute, so a note deleted two seconds ago was "deleted 1 minute ago" -
- *  a sentence that is not true, on the one row somebody is looking at. */
 describe('how long ago, as a step', () => {
   const SECOND = 1000
   const MINUTE = 60 * SECOND
@@ -34,9 +27,6 @@ describe('how long ago, as a step', () => {
     expect(relativeStep(13 * DAY)).toEqual({ value: -13, unit: 'day' })
   })
 
-  /** The trash holds rows from the account as well as from this device, and two
-   *  machines do not agree about the time to the second. A stamp from a minute in
-   *  the future is not a thing that will happen; it is now. */
   test('and a stamp from the future is now rather than a promise', () => {
     expect(relativeStep(-1)).toEqual({ value: 0, unit: 'second' })
     expect(relativeStep(-5 * MINUTE)).toEqual({ value: 0, unit: 'second' })

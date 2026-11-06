@@ -3,10 +3,6 @@ import { carriedNothing, carriedRows, carry } from './drag-paths'
 import { linkedFiles } from './folder-notes'
 import type { Entry } from './workspace.svelte'
 
-/** A row of the file list dragged into a note's words: which rows the drag carries,
- *  and the file a link to each of them names. The editor's half, the link at the
- *  drop, is wikilink/note-links.test.ts in @orden/editor. */
-
 function note(path: string): Entry {
   return {
     name: path.split('/').pop() ?? path,
@@ -35,7 +31,6 @@ const tree = folder('/s', [
   note('/s/paper.pdf'),
 ])
 
-/** A transfer as a `dragover` sees it: the types, and no data. */
 function hidden() {
   const types: string[] = []
   return {
@@ -55,7 +50,6 @@ describe('the file a link to a row names', () => {
     expect(linkedFiles(tree, '/s', ['/s/A/B.md', '/s/paper.pdf'])).toEqual(['A/B.md', 'paper.pdf'])
   })
 
-  /** What opening the row opens, written or not. */
   test('is the note a folder is drawn as, or the one it will be', () => {
     expect(linkedFiles(tree, '/s', ['/s/A', '/s/Trips'])).toEqual(['A/A.md', 'Trips/Trips.md'])
   })
@@ -66,8 +60,6 @@ describe('the file a link to a row names', () => {
 })
 
 describe('what a drag carries over a note', () => {
-  /** A browser hides the transfer until the drop, so the rows are the ones this
-   *  window remembers carrying. */
   test('is the rows the list said it was carrying', () => {
     const transfer = hidden() as unknown as DataTransfer
     carry(transfer, ['/s/A', '/s/paper.pdf'])

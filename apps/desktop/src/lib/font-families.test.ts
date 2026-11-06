@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { isInstalled, offered } from './font-families'
 
-/** The families a font picker offers, and in what order (#772). */
 const FAMILIES = [
   { name: 'DejaVu Sans', mono: false },
   { name: 'DejaVu Sans Mono', mono: true },
@@ -38,8 +37,6 @@ describe('the families offered', () => {
 })
 
 describe('a name this machine is asked to draw', () => {
-  /** Where nothing can be measured there is nothing to say, rather than a false "not
-   *  installed" under every name. */
   test('is taken as installed where there is no canvas to measure it on', () => {
     expect(isInstalled('Anything At All')).toBe(true)
     expect(isInstalled('')).toBe(true)

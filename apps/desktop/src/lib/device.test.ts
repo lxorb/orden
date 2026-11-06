@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The iOS build, whose WebKit calls an iPad a Mac. */
 vi.mock('./tauri', () => ({ isNative: true, isMobile: true, platform: () => 'ios' }))
 
 function memoryStorage(): Storage {
@@ -21,7 +20,6 @@ function memoryStorage(): Storage {
 const IPAD_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
 
-/** A fresh module each time, since the name is worked out once and then held. */
 async function named(width: number, height: number): Promise<string> {
   vi.stubGlobal('screen', { width, height })
   vi.stubGlobal('navigator', { userAgent: IPAD_AGENT })

@@ -1,5 +1,3 @@
-/** A guest's one shared file, with no chrome; see docs/sharing.md. */
-
 import { account } from './account.svelte'
 import { joining } from './joining.svelte'
 import { workspace } from './workspace.svelte'

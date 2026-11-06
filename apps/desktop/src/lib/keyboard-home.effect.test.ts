@@ -2,24 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../App.svelte?raw'
 import crateSide from '../../src-tauri/src/keyboard.rs?raw'
 
-/** A site taking the keyboard is the one handoff out of the app's own page (#1036).
- *
- *  A web tab's page is a native view beside the app's: a press into it never reaches the
- *  app's HTML. The address field stayed focused with its whole address selected while the
- *  page was in use, because the only word the app's page had was its window's `blur`,
- *  which CEF on Linux sometimes never sent, and which on every engine left the element
- *  focused for the engine to focus again - selection and all - the next time the app's
- *  page got the keyboard. These hold the handoff for any control at all: none of them
- *  knows a page exists, so a control added later is let go of the same way.
- *
- *  In the jsdom project, because focus, selection and events are the DOM's own. The crate
- *  is stood in for: `keyboard_went` answers whether a page of the window has the keyboard,
- *  and `IN_PAGE` is the word it sends as one takes it. */
-
 const crate = vi.hoisted(() => ({
-  /** Whether a page of this window has the keyboard, as `keyboard_went` answers. */
   inPage: true,
-  /** An answer held back, for a word that arrives late. */
   hold: null as Promise<void> | null,
   heard: new Map<string, () => void>(),
 }))
@@ -43,29 +27,22 @@ const { IN_PAGE } = await import('./keyboard-home')
 const { overlays } = await import('./overlays')
 const { IN_A_PAGE } = await import('./trap')
 
-/** A turn for the crate's answer, and a frame for anything that waits one. */
 async function settled() {
   await new Promise((done) => setTimeout(done, 40))
 }
 
-/** The crate saying a page of this window took the keyboard, and no `blur` from the engine:
- *  CEF on Linux, as it was. */
 async function pageTookIt() {
   await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
   crate.heard.get(IN_PAGE)?.()
   await settled()
 }
 
-/** The engine's own word: the window's `blur`, after which it says the page has no
- *  keyboard. */
 async function windowBlurred() {
   focused = false
   window.dispatchEvent(new FocusEvent('blur'))
   await settled()
 }
 
-/** The app's page getting the keyboard back without anything in it chosen: a press on an
- *  empty part of it, or a layer of its own given it. */
 async function windowFocused() {
   focused = true
   window.dispatchEvent(new FocusEvent('focus'))
@@ -73,7 +50,6 @@ async function windowFocused() {
 }
 
 let blurs = 0
-/** What the engine says `document.hasFocus()` is. */
 let focused = true
 const counted = () => (blurs += 1)
 
@@ -97,7 +73,6 @@ beforeEach(() => {
 
 afterEach(async () => {
   window.removeEventListener('blur', counted)
-  // The app's page has the keyboard again for the next test, by a press in it.
   window.dispatchEvent(new Event('pointerdown'))
   await windowFocused()
   ;(document.activeElement as HTMLElement | null)?.blur()
@@ -119,7 +94,6 @@ describe('a site taking the keyboard', () => {
     expect(document.activeElement).toBe(document.body)
     expect(lost).toHaveBeenCalledTimes(1)
     expect(document.documentElement.hasAttribute(IN_A_PAGE)).toBe(true)
-    // Whatever listens for the window going heard it, once, though the engine never sent it.
     expect(blurs).toBe(1)
   })
 
@@ -156,7 +130,6 @@ describe('a site taking the keyboard', () => {
     const closed = vi.fn()
     const off = overlays.show(closed, () => [menu])
     menu.querySelector('button')?.focus()
-    // What App.svelte puts on the window, read off it so the two cannot part.
     expect(app).toContain('onblur={() => overlays.away()}')
     const away = () => overlays.away()
     window.addEventListener('blur', away)
@@ -175,17 +148,14 @@ describe('a site taking the keyboard', () => {
 
     await windowBlurred()
     expect(document.activeElement).toBe(document.body)
-    // And the crate's word after it changes nothing more.
     await pageTookIt()
     expect(blurs).toBe(1)
   })
 
   test('plays the window s blur once each time the keyboard goes', async () => {
     await pageTookIt()
-    // The X server says it twice, as focus moves inside the page's window.
     await pageTookIt()
     expect(blurs).toBe(1)
-    // A press on the bar's menu button, and a press back into the page: the menu hears it.
     window.dispatchEvent(new Event('pointerdown'))
     await pageTookIt()
     expect(blurs).toBe(2)
@@ -225,7 +195,6 @@ describe('the keyboard going anywhere else', () => {
 
     await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
     crate.heard.get(IN_PAGE)?.()
-    // Back in the field before the crate answered.
     window.dispatchEvent(new Event('pointerdown'))
     field.focus()
     answer()

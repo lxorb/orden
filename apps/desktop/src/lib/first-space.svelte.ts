@@ -1,19 +1,3 @@
-/** A fresh start: the first space, made without a question, open on the welcome note.
- *
- *  Emil, 2026-10-13, on the first screen that asked where somebody's notes come from:
- *  "rather welcome note instead". Bringing notes over from Obsidian or Notion is
- *  Settings > Import, and the note does not point there: a newcomer offered imports
- *  was offered too much (#322).
- *
- *  What the browser build has always opened on, on every build: a space called what the
- *  browser's is, with the note in it, open, and the file list beside it where there is
- *  room - which is where Obsidian lands after creating a vault. When it happens is
- *  fresh-start.ts; the window asks for this only then, see App.svelte.
- *
- *  The welcome note goes in once per device, the rule the browser build keeps, so
- *  somebody who deleted it and later their last space is given a space again and not
- *  the note; an untouched welcome never travels to an account. See welcome.ts. */
-
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeedSpace, markSeeded, wasSeeded } from './seeded'
 import { settings } from './settings.svelte'
@@ -25,30 +9,23 @@ import { writeFile } from './workspace/write-file'
 import { type Space, workspace } from './workspace.svelte'
 
 class FirstSpace {
-  /** Set while the space is being made, so a second ask in that moment does not make
-   *  a second space. */
   private working = false
 
-  /** Makes the space, if `now` is a fresh start; see fresh-start.ts. */
   async start(now: Moment) {
     if (!startsFresh(now) || this.working || workspace.spaces.length) return
     this.working = true
     try {
       const space = await madeSpace(WELCOME_SPACE)
       if (!space) return
-      // The default space, so signing in can tell it from one the reader made (#1077).
       markSeedSpace(space.root)
       const note = await this.welcome(space)
       await this.arrive(space, note)
-      // The first time on this device: the optional questions beside the note.
       if (note) settings.setup = -1
     } finally {
       this.working = false
     }
   }
 
-  /** The welcome note, into the space, once per device. Answers where it was written,
-   *  or null. */
   private async welcome(space: Space): Promise<string | null> {
     if (await wasSeeded()) return null
 
@@ -59,13 +36,8 @@ class FirstSpace {
     return path
   }
 
-  /** In the new space: the note open where there is one, and the file list beside it
-   *  where there is room. On a phone the list is a drawer over the note, and opening
-   *  it would hide the very note the space opened on. */
   private async arrive(space: Space, note: string | null) {
     if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
-    // A page or a link the app was opened with lands while the space is being made,
-    // and is what somebody asked to see: the note goes in behind it (#392).
     if (note) await workspace.openEntry(note, { activate: !workspace.tabs.length })
     if (!viewport.drawer) workspace.showPanel('tree')
   }

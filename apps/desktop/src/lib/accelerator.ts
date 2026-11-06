@@ -1,14 +1,5 @@
-/** A key from any app as the system is handed it - the agents' stop, quick add's key:
- *  the keyboard registry writes `Mod-Alt-Shift-k`, the system's global shortcut reads
- *  `Control+Alt+Shift+K`.
- *
- *  One key chosen in one list, so a reader who moves a key moves it everywhere; the
- *  registry's notation is resolved for this platform here, where `Mod` is Cmd on a Mac
- *  and Ctrl everywhere else, and handed over already resolved. */
-
 import { parseCombination, type Platform } from './keys'
 
-/** The system's names for the keys the registry writes by `KeyboardEvent.key`. */
 const NAMED: Readonly<Record<string, string>> = {
   ' ': 'Space',
   Escape: 'Escape',
@@ -37,13 +28,9 @@ const NAMED: Readonly<Record<string, string>> = {
   '`': 'Backquote',
 }
 
-/** The accelerator for a written combination, or null for one the system cannot hold:
- *  none at all, or a key other than a function key with no modifier, which would take a
- *  letter from every app. */
 export function accelerator(written: string | null, platform: Platform): string | null {
   const combination = parseCombination(written ?? '', platform)
   if (!combination) return null
-  // Never the Windows key outside a Mac; see `refuse` in shortcuts.svelte.ts.
   if (combination.meta && platform !== 'mac') return null
   const key = combination.key
   const chord = combination.ctrl || combination.meta || combination.alt

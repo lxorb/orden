@@ -1,11 +1,3 @@
-/** The Essentials, Zen's (Emil, 2026-10-13), as they are used rather than drawn:
- *  where something carried over them lands, how the arrows walk the grid, and which
- *  tab an essential is. A press shows the file where a tab shows, with no tab in the strip: an ordinary
- *  tab that says which file it was made for (`Tab.essential`), which the strip leaves
- *  out. Per space, as the bookmarks are. Fetched with the first drag, key or press,
- *  never in front of the first paint; what a tile draws is BookmarkTile.svelte's. See
- *  docs/tree.md. */
-
 import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag } from './drag-paths'
 import { chorded } from './keys'
 import { reading } from './direction'
@@ -21,12 +13,8 @@ import {
 } from './workspace/bookmarks.svelte'
 import { workspace, type Entry } from './workspace.svelte'
 
-/** Where something carried over the bookmarks would land: the bookmark it is beside,
- *  by its place in the list, and which edge. Bookmarks.svelte draws the line; a tab
- *  carried out of the strip says where it is from tab-strip/bookmark-drop.ts. */
 class Landing {
   at = $state<number | null>(null)
-  /** After the tile, under the row. */
   after = $state(false)
 
   over(at: number, after: boolean) {
@@ -35,7 +23,6 @@ class Landing {
     this.after = after
   }
 
-  /** Beside the bookmark in `zone` nearest the pointer; false where it holds none. */
   near(zone: HTMLElement, x: number, y: number): boolean {
     const spot = landingNear(zone, x, y)
     if (spot) this.over(spot.at, spot.after)
@@ -49,7 +36,6 @@ class Landing {
 
 export const landing = new Landing()
 
-/** Whether the bookmarks take a drag: one of their own, or rows of the file list. */
 export function takes(event: DragEvent): boolean {
   const transfer = event.dataTransfer
   if (!isBookmarkDrag(transfer) && !isTreeDrag(transfer)) return false
@@ -59,8 +45,6 @@ export function takes(event: DragEvent): boolean {
   return true
 }
 
-/** Over the grid: beside the tile nearest, gaps and the empty end of the last row
- *  included; at the end of the list over a grid with no tile yet (#412). */
 export function overGrid(event: DragEvent) {
   if (!takes(event)) return
   if (!landing.near(event.currentTarget as HTMLElement, event.clientX, event.clientY)) {
@@ -68,7 +52,6 @@ export function overGrid(event: DragEvent) {
   }
 }
 
-/** Out of the grid altogether, not onto the next tile. */
 export function leaving(event: DragEvent) {
   const into = event.relatedTarget
   if (!(into instanceof Node) || !(event.currentTarget as HTMLElement).contains(into)) {
@@ -76,7 +59,6 @@ export function leaving(event: DragEvent) {
   }
 }
 
-/** The rows of the file list a drag carried, kept at `at` - false for any other drag. */
 export function keepCarried(
   event: DragEvent,
   at: number,
@@ -88,7 +70,6 @@ export function keepCarried(
   return true
 }
 
-/** Rows of the file list kept at `at`: a drop's, read while the drop could still be. */
 export function keepRows(
   rows: readonly string[],
   at: number,
@@ -102,7 +83,6 @@ export function keepRows(
   place(marks, at)
 }
 
-/** Let go of over the grid: where the line was, out of any group. */
 export function dropOnGrid(event: DragEvent, entry: (path: string) => Entry | undefined) {
   event.preventDefault()
 
@@ -118,9 +98,6 @@ export function dropOnGrid(event: DragEvent, entry: (path: string) => Entry | un
   workspace.bookmarks.move(from, slotFor(from, at, after))
 }
 
-/** The list with `marks` kept in front of whatever is at `at`, out of any group: one
- *  already kept moves rather than being kept twice, and what does not fit stays out
- *  rather than pushing the last bookmarks off the end. */
 export function placed(held: readonly Bookmark[], marks: readonly Bookmark[], at: number) {
   const coming = (one: Bookmark) => marks.some((mark) => sameBookmark(one, mark))
   const rest = held.filter((one) => !coming(one))
@@ -135,7 +112,6 @@ export function placed(held: readonly Bookmark[], marks: readonly Bookmark[], at
   return [...rest.slice(0, ahead), ...come, ...rest.slice(ahead)]
 }
 
-/** Rows let go of over the bookmarks, kept where they were let go of. */
 export function place(marks: readonly Bookmark[], at: number) {
   const root = workspace.activeSpace?.root
   if (!marks.length || root === undefined) return
@@ -143,17 +119,12 @@ export function place(marks: readonly Bookmark[], at: number) {
   keepAs(root, placed(workspace.bookmarks.of(root), marks, at))
 }
 
-/** A space's bookmarks as they become, the rows of the file list sliding out of the way
- *  or into it, and one step to undo (#412). */
 function keepAs(root: string, after: Bookmark[]) {
   const before = [...workspace.bookmarks.of(root)]
   moving(() => workspace.bookmarks.put(root, after))
   workspace.undone.record({ kind: 'keep', root, before, after })
 }
 
-/** An essential's tile let go of over the file list (#412): out of the Essentials, which
- *  puts its row back in the list, and into the folder it was let go of in, opened to
- *  show it. One step to undo, both halves. */
 export async function unkeepInto(at: number, folder: string) {
   const root = workspace.activeSpace?.root
   const held = root === undefined ? [] : workspace.bookmarks.of(root)
@@ -162,8 +133,6 @@ export async function unkeepInto(at: number, folder: string) {
 
   const path = insideSpace(root, mark.path)
   const moves = !samePath(folderOf(path), folder)
-  // Refused before the tile goes: the move would be, and the note then had neither its
-  // tile nor its new folder.
   if (moves && !(canWriteAt(path) && canWriteAt(folder))) return
   if (moves && workspace.refusedAsInstructions([path], folder)) return
   await workspace.undone.batch(async () => {
@@ -176,7 +145,6 @@ export async function unkeepInto(at: number, folder: string) {
   if (!samePath(folder, root)) workspace.device.expand(folder)
 }
 
-/** Left and right along the grid: the tile before and after, the way they read. */
 export function along(key: string, tile: HTMLElement): boolean {
   if (key !== 'ArrowRight' && key !== 'ArrowLeft') return false
 
@@ -186,8 +154,6 @@ export function along(key: string, tile: HTMLElement): boolean {
   return next !== undefined
 }
 
-/** Up and down the grid by its rows, off its foot onto the rows under it: heard on the
- *  grid before the list's own walk, which steps one at a time. */
 export function gridKey(event: KeyboardEvent) {
   if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
   if (chorded(event) || event.shiftKey) return
@@ -206,22 +172,16 @@ export function gridKey(event: KeyboardEvent) {
   else if (down) grid.parentElement?.querySelector<HTMLElement>('.row')?.focus()
 }
 
-/** Where a bookmark let go of in front of (or `after`) the one at `target` lands, as
- *  `move` takes it: in the list without the bookmark itself, when it is moved from
- *  `from`. */
 export function slotFor(from: number | null, target: number, after: boolean): number {
   const at = from !== null && target > from ? target - 1 : target
   return at + (after ? 1 : 0)
 }
 
-/** Whether `x` is in the far half of `left` to `right`, the way the page reads. */
 export function pastMiddle(x: number, left: number, right: number, rtl: boolean): boolean {
   const middle = (left + right) / 2
   return rtl ? x < middle : x > middle
 }
 
-/** The tile a step up or down the grid lands on, or null off its top or its foot. A
- *  last row too short for the column takes the step on its last tile. */
 export function stepInGrid(
   at: number,
   count: number,
@@ -235,7 +195,6 @@ export function stepInGrid(
   return down && row < Math.floor((count - 1) / columns) ? count - 1 : null
 }
 
-/** How many tiles are in a row: as many as start on the first one's line. */
 export function columnsOf(tops: readonly number[]): number {
   const [first] = tops
   return first === undefined ? 1 : Math.max(1, tops.filter((top) => top === first).length)
@@ -248,8 +207,6 @@ interface Box {
   bottom: number
 }
 
-/** The tile nearest a pointer, or -1 with none: the nearest row first, then along it,
- *  so a gap or the empty end of the last row is beside the tile it is next to. */
 export function nearestTile(boxes: readonly Box[], x: number, y: number): number {
   let best = -1
   let nearest = { down: Infinity, across: Infinity }
@@ -266,8 +223,6 @@ export function nearestTile(boxes: readonly Box[], x: number, y: number): number
   return best
 }
 
-/** Where a drop at `x`, `y` over the bookmarks drawn in `zone` lands: beside the one
- *  nearest, across for a tile and down for a row. Null where the zone holds none. */
 function landingNear(
   zone: HTMLElement,
   x: number,
@@ -291,7 +246,6 @@ interface Held {
   paneId: string
 }
 
-/** The tab an essential is: one on screen before one in a set put aside. */
 export function essentialTab<T extends Held>(
   tabs: readonly T[],
   path: string,
@@ -301,35 +255,21 @@ export function essentialTab<T extends Held>(
   return all.find((one) => shown(one.paneId)) ?? all[0]
 }
 
-/** The essentials whose file is no longer kept, which go back to their strip, as a tab
- *  taken out of Zen's Essentials does. */
 export function released<T extends Held>(tabs: readonly T[], kept: readonly string[]): T[] {
   return tabs.filter(
     (one) => one.essential !== null && !kept.some((path) => samePath(path, one.essential)),
   )
 }
 
-/** A press on an essential's tile: its own tab, which the strip leaves out, brought
- *  forward as it was left; else a view of its own of a file already open - for a web
- *  note, which is open in one tab only (`secondWebTabs`), that tab, its page and its web
- *  data with it - or the file opened with its tab an essential as it lands. One view an
- *  essential.
- *
- *  While the window is split it is kept as a tab instead, as a double click keeps it
- *  (#1110): the essential's own view takes the place of whatever one pane showed, and
- *  which pane that was is not something a press in the sidebar says. */
 export function openEssential(path: string): Promise<void> {
   opening = split() ? keepAsTab(path).then(() => undefined) : showEssential(path)
   return opening
 }
 
-/** Whether more than one pane is in sight: split, and none of them filling the window. */
 function split(): boolean {
   return workspace.panes.count > 1 && workspace.panes.fills === null
 }
 
-/** The last press of a tile, still landing: a double click's second press waits for the
- *  first one's tab. */
 let opening: Promise<void> = Promise.resolve()
 
 async function showEssential(path: string) {
@@ -360,10 +300,6 @@ async function showEssential(path: string) {
   }
 }
 
-/** An essential kept as a tab of the strip, on a double click of its tile or its tile
- *  dragged into a strip (#1051): the essential's own tab, as it is - its place in the
- *  note, its page - goes into the strip and is in front, and the tile's next press gives
- *  the essential a view of its own. Answers that tab, to be put where it was let go. */
 export async function keepAsTab(path: string): Promise<string | null> {
   await opening.catch(() => undefined)
   const ws = workspace
@@ -377,8 +313,6 @@ export async function keepAsTab(path: string): Promise<string | null> {
   return held.id
 }
 
-/** An essential asked for in the strip: the strip's tab of it, or a view of its own,
- *  since every opener would answer with the essential itself. */
 export async function openInStrip(path: string, how: OpenHow) {
   const ws = workspace
   const open = ws.opened.at(path)
@@ -389,7 +323,6 @@ export async function openInStrip(path: string, how: OpenHow) {
   else await ws.openEntry(path, how)
 }
 
-/** Essentials taken out of the list back in their strips: heard on every change. */
 export function kept() {
   const root = workspace.activeSpace?.root
   if (root === undefined) return

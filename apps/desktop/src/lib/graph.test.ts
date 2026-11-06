@@ -3,12 +3,9 @@ import { buildGraph, type NoteGraph, without } from './graph'
 import { neighbourhood, neighbours, signature } from './graph-walk'
 import { scanNote, type ScannedNote } from '@orden/scan/note'
 
-/** A folder of notes, read the way the index reads one. */
 const scan = (notes: Record<string, string>) =>
   Object.entries(notes).map(([path, content]) => scanNote(path, content))
 
-/** The graph of already-read notes. The resolver is the index's, in its simplest
- *  honest form: a target names a note by its file name, or it names nothing. */
 function graphOf(scanned: ScannedNote[]): NoteGraph {
   const byName = new Map(
     scanned.map((note) => [note.name.toLowerCase(), note.path] as const).reverse(),
@@ -26,8 +23,6 @@ const space = (notes: Record<string, string>) => graphOf(scan(notes))
 
 const named = (graph: NoteGraph) => graph.nodes.map((node) => node.name)
 
-/** Every edge as the pair of names it joins, sorted, so a test can say what is
- *  connected without knowing the order the nodes came out in. */
 function joins(graph: NoteGraph): string[] {
   return graph.edges
     .map((edge) => [graph.nodes[edge.a]?.name ?? '', graph.nodes[edge.b]?.name ?? ''].sort())
@@ -145,9 +140,6 @@ describe('the space as a graph', () => {
   })
 })
 
-/** What the Attachments switch asks for: the files the notes embed, in the picture
- *  as nodes of their own. A second graph rather than a mask, because a picture the
- *  notes have to make room for is a different arrangement; see `GraphOptions`. */
 describe('the files a space embeds', () => {
   const withFiles = (notes: Record<string, string>) =>
     buildGraph(scan(notes), () => null, { attachments: true })
@@ -173,8 +165,6 @@ describe('the files a space embeds', () => {
       'One.md': '![[shot.png]] ![[paper.pdf]] ![[voice.m4a]] ![[clip.mp4]] ![[Board.canvas]]',
     })
 
-    // The canvas is a note to the index and always was a node, so it is not one of
-    // these; it is in the picture either way, here as the one this space has not got.
     expect(named(graph).sort()).toEqual([
       'Board.canvas',
       'One',
@@ -191,8 +181,6 @@ describe('the files a space embeds', () => {
     ).toEqual(['clip.mp4', 'paper.pdf', 'shot.png', 'voice.m4a'])
   })
 
-  /** A file is named by its own name in a vault, so two notes reaching for it by
-   *  different paths are reaching for the one picture. */
   test('one node per file, however many notes embed it and by whatever path', () => {
     const graph = withFiles({
       'One.md': '![[shot.png]]',
@@ -218,8 +206,6 @@ describe('the files a space embeds', () => {
   })
 })
 
-/** A line of five notes, each linking to the next: One - Two - Three - Four -
- *  Five, plus one note off to the side of Two. */
 const line = () =>
   space({
     'One.md': '[[Two]]',
@@ -241,7 +227,6 @@ describe('the neighbourhood of one note', () => {
   test('at depth two, their neighbours as well', () => {
     const around = neighbourhood(line(), 'Two.md', 2)
 
-    // Four is two links out, through Three. Five is three, so it stays out.
     expect(named(around).sort()).toEqual(['Aside', 'Four', 'One', 'Three', 'Two'])
     expect(joins(around)).toEqual(['Aside - Two', 'Four - Three', 'One - Two', 'Three - Two'])
   })
@@ -257,8 +242,6 @@ describe('the neighbourhood of one note', () => {
   })
 
   test('degrees are counted within the slice, not the space', () => {
-    // Three is linked to Two and to Four in the space, but at depth one from Two
-    // only the one edge is in the picture.
     const around = neighbourhood(line(), 'Two.md', 1)
 
     expect(around.nodes.find((node) => node.name === 'Three')?.degree).toBe(1)
@@ -278,11 +261,6 @@ describe('the neighbourhood of one note', () => {
 })
 
 describe('a space of two thousand notes and four thousand links', () => {
-  /** The space the graph is measured on: two thousand notes in twenty folders,
-   *  each linking to the next note and to one seven along, and every fifth one to
-   *  a hub as well. That is a little over four thousand links, in a shape that has
-   *  both a hub and long chains in it, which is what a space of notes looks
-   *  like. */
   function many(): Record<string, string> {
     const built: Record<string, string> = { 'Plan.md': '# Plan' }
 
@@ -296,12 +274,8 @@ describe('a space of two thousand notes and four thousand links', () => {
   }
 
   test('builds the whole space', () => {
-    // Read outside the timing: reading a space is the index's one pass over it,
-    // and the graph is what is being measured here.
     const scanned = scan(many())
 
-    // Measured by hand at 8 ms here and 60 ms in the browser; a clock in a
-    // test only reports the machine's mood, so the shape is what is checked.
     const graph = graphOf(scanned)
 
     expect(graph.nodes).toHaveLength(2008)
@@ -316,8 +290,6 @@ describe('a space of two thousand notes and four thousand links', () => {
   })
 })
 
-/** The notes a space leaves out are not in the picture at all, rather than hidden
- *  in it: the space has said they are not part of what it says about itself. */
 describe('a space with notes left out of it', () => {
   const held = () =>
     space({
@@ -363,14 +335,6 @@ describe('a space with notes left out of it', () => {
   })
 })
 
-/** What set of notes and links a graph is, as one number.
- *
- *  The view is handed a fresh graph whenever anything in the space is saved, and it
- *  has to know whether that is really another graph before it lays the arrangement
- *  out again. It used to ask by joining every id and every pair into one string:
- *  three hundred kilobytes over five thousand notes, per save. So what matters is
- *  that the answer still tells the graphs apart, and that asking twice costs
- *  nothing. */
 describe('the signature of a graph', () => {
   const notes = { 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink', 'Alone.md': '# Alone' }
 
@@ -382,8 +346,6 @@ describe('the signature of a graph', () => {
     const graph = space(notes)
     let walked = 0
 
-    // Counted through the nodes themselves: the walk reads every id, so a getter
-    // that counts says how many walks there were. One, for six asks.
     const counting = {
       ...graph,
       nodes: graph.nodes.map((node) => ({
@@ -406,7 +368,6 @@ describe('the signature of a graph', () => {
   test('differs when a note is added, taken away, or renamed', () => {
     const whole = signature(space(notes))
 
-    // One more note, one fewer, and one under another name.
     expect(signature(space({ ...notes, 'More.md': '# More' }))).not.toBe(whole)
     expect(signature(space({ 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink' }))).not.toBe(whole)
     expect(
@@ -419,17 +380,10 @@ describe('the signature of a graph', () => {
 
     expect(signature(space({ ...notes, 'Alone.md': 'now see [[Ink]]' }))).not.toBe(whole)
     expect(signature(space({ ...notes, 'Plan.md': '# Plan' }))).not.toBe(whole)
-    // The same notes and the same links, with more written in one of them: the
-    // arrangement must not be laid out again for this, which is the whole point.
     expect(signature(space({ ...notes, 'Plan.md': 'a line, and see [[Ink]]' }))).toBe(whole)
   })
 })
 
-/** Who a node is joined to.
- *
- *  Lighting up what the pointer is over walked every edge in the space, on every
- *  pointer move that changed which note was under it - ten thousand of them over five
- *  thousand notes. The list per node is built once for a graph and kept with it. */
 describe('the neighbours of a node', () => {
   const held = () =>
     space({
@@ -457,8 +411,6 @@ describe('the neighbours of a node', () => {
 
     const counting = {
       ...graph,
-      // The build walks the edges; a getter that counts says how many walks there
-      // were. The old way walked them once per question.
       get edges() {
         walked += 1
         return graph.edges

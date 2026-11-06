@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { linkPieces } from './link-line'
 
-/** What the Links panel quotes under a row: the line as the reading view reads it.
- *  Found by hunt-7, which saw `[[Kestrel notes]]` in the panel, brackets and all. */
-
 const shown = (line: string) =>
   linkPieces(line)
     .map((one) => (one.link ? `<${one.text}>` : one.text))

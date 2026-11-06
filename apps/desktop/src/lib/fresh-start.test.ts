@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Moment, startsFresh } from './fresh-start'
 
-/** When a launch starts fresh, on the welcome note, which is Obsidian's rule: no
- *  vault, a fresh start. One moment that is one, and every reason that is not, one
- *  at a time. */
-
 const FRESH: Moment = {
   native: true,
   plugin: false,

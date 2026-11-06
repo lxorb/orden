@@ -44,8 +44,6 @@ describe('the footnotes of a note', () => {
   })
 
   test('a definition is not a mention of itself', () => {
-    // Without this the row would jump to the bottom of the note rather than to
-    // the sentence the mark is in.
     expect(scanFootnotes('Words.\n\n[^1]: said')[0]?.used).toBe(false)
   })
 
@@ -67,9 +65,6 @@ describe('the footnotes of a note', () => {
   })
 })
 
-/** A footnote is two things in two places, and the Outline's Footnotes group is a screen
- *  that offers both: the mark in the words, and the definition at the bottom. So a row
- *  carries both lines rather than one of them with the other as a fallback. */
 describe('where the definition is', () => {
   test('is the line the definition is written on', () => {
     const note = 'Words[^1] and more.\n\nMore words.\n\n[^1]: what it says\n'

@@ -1,15 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Following a link, from this side of the wire: which of the join page's states
- *  each kind of link ends in, and what the page asks for on the way.
- *
- *  What is under test is that almost nothing is asked. A mailed invitation and an
- *  open link both land in the space with no page at all; the only link that shows
- *  anything is the one that asks the owner first, and the only line the app ever
- *  has to write is for a link that has stopped opening anything. */
-
 interface World {
-  /** What the peek answers, or null for a link that opens nothing. */
   about: {
     kind: 'invite' | 'link'
     space: string
@@ -19,32 +10,18 @@ interface World {
     from: string | null
     note?: string | null
   } | null
-  /** What walking through it answers. */
   through: Record<string, unknown>
-  /** Set to make walking through it fail, the way a link that has run out does. */
   refuse: string | null
-  /** Set to make the request never arrive, which says nothing about the link. */
   unreachable: boolean
-  /** Every call that was made, in order, and what it carried. */
   asked: { key: string; options: Record<string, unknown> }[]
-  /** Which space the app was shown, if any. */
   shown: string | null
-  /** How many passes syncing was asked for. */
   passes: number
-  /** What the address bar holds. */
   path: string
-  /** The files shared with this session on their own. */
   shared: Record<string, unknown>[]
-  /** Which shared files were opened in a tab, and whether the link was still
-   *  held as each one opened. */
   opened: { id: string; holding: boolean }[]
-  /** Whether the link is still held, asked of this test's own store. */
   holding: () => boolean
-  /** The links whose request was withdrawn, and with which session. */
   withdrawn: { key: string; token: string | undefined }[]
-  /** Set to hold every walk through until it is let go, the way a slow network does. */
   gate: Promise<void> | null
-  /** Set to make withdrawing fail: a dropped request, or the service's own status. */
   withdrawFails: 'network' | number | null
 }
 
@@ -131,8 +108,6 @@ vi.mock('./i18n.svelte', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-// A device names itself for the guest a link hands out; what it is called is the
-// rooms' business and is stood in for here.
 vi.mock('./rooms/who', () => ({ deviceName: () => 'Windows' }))
 
 function memoryStorage(): Storage {
@@ -165,14 +140,10 @@ vi.stubGlobal('window', {
 let joining: typeof import('./joining.svelte').joining
 let account: typeof import('./account.svelte').account
 
-/** The store graph, loaded once here rather than by whichever hook runs first;
- *  see docs/conventions.md. */
 await import('./joining.svelte')
 
-/** The token in a link, as the address bar carries it. */
 const TOKEN = 'a'.repeat(64)
 
-/** A space, with only the fields any of this reads. */
 const space = { id: 'space-1', name: 'Plans', role: 'write' }
 
 beforeEach(async () => {
@@ -197,11 +168,8 @@ beforeEach(async () => {
   world.holding = () => !!joining.invitation
 })
 
-// Waiting on the owner asks again on a timer, and a timer left running would
-// still be asking while the next test counted what was asked.
 afterEach(() => joining.dismiss())
 
-/** What the peek says about each kind of link. */
 const invite = {
   kind: 'invite' as const,
   space: 'Plans',
@@ -252,8 +220,6 @@ describe('a mailed invitation', () => {
   test('settles the notes already here before the space arrives', async () => {
     await joining.start()
 
-    // The answer to that question can be to erase what is here, so it is asked
-    // before the space comes down rather than after; see settling.ts.
     expect(account.settling).toBe(false)
     expect(account.syncable).toBe(true)
   })
@@ -307,8 +273,6 @@ describe('a link anybody may follow', () => {
 
   test('is never asked to erase the notes already on this machine', async () => {
     await joining.start()
-    // Nothing to join and nothing to erase: a guest has no account for the
-    // writing already here to become part of.
     expect(account.settling).toBe(false)
     expect(account.syncable).toBe(true)
   })
@@ -400,8 +364,6 @@ describe('a link that asks first', () => {
   })
 
   test('picks the wait back up on the next launch', async () => {
-    // A launch where the address bar holds nothing: the link was taken out of it
-    // when it was followed, and the guest session came back with the app.
     localStorage.setItem('nib:session', 'guest-session')
     localStorage.setItem('nib:waiting', TOKEN)
     world.path = '/'
@@ -412,10 +374,7 @@ describe('a link that asks first', () => {
     await joining.start()
     expect(joining.step).toBe('waiting')
     expect(world.asked[0]?.key).toBe(TOKEN)
-    // Asking again, so a request that ran out while the app was closed is not
-    // made anew and the owner is not mailed about it a second time.
     expect(world.asked[0]?.options.again).toBe(true)
-    // Out of sight: a wait the reader already left does not cover the app again.
     expect(joining.shown).toBe(false)
   })
 
@@ -441,13 +400,6 @@ describe('a link that asks first', () => {
   })
 })
 
-/** The wait is the one state that lasts, and it asks again every three seconds.
- *
- *  The bug these are about: every failure used to read as a link that had run
- *  out, so one dropped request in the three seconds before the owner pressed
- *  Accept ended the wait, forgot the link, and told somebody to ask for another
- *  one. The same reasoning as restoring a session in account.svelte.ts: only the
- *  service refusing it says anything about the credential. */
 describe('waiting on the owner', () => {
   beforeEach(async () => {
     world.about = approval
@@ -463,7 +415,6 @@ describe('waiting on the owner', () => {
     await joining.walkThrough()
 
     expect(joining.step).toBe('waiting')
-    // Still remembered, so the next launch picks the wait back up.
     expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
     expect(joining.error).toBe('the network is not there')
   })
@@ -582,9 +533,6 @@ describe('waiting on the owner', () => {
   })
 
   test('asks once at a time, however often it is asked', async () => {
-    // The timer and the button reach the same method, and two asks in flight
-    // together would land twice: two sessions handed out, and the second answer
-    // applied over the first.
     const asks = world.asked.length
     await Promise.all([joining.walkThrough(), joining.walkThrough()])
 
@@ -592,9 +540,6 @@ describe('waiting on the owner', () => {
   })
 })
 
-/** Asking on a timer that slows down: quick while the owner is likely looking, then
- *  down to the pace syncing keeps, so a wait nobody answers is not a request every
- *  three seconds for a month. */
 describe('the asking behind a wait', () => {
   beforeEach(async () => {
     vi.useFakeTimers()
@@ -608,14 +553,12 @@ describe('the asking behind a wait', () => {
 
   afterEach(() => {
     vi.useRealTimers()
-    // Only this file's own stand-in: the storage and the window stay stubbed.
     Reflect.deleteProperty(globalThis, 'document')
   })
 
   test('asks at once when the tab is back on screen', async () => {
     const page = Object.assign(new EventTarget(), { visibilityState: 'hidden' })
     Object.defineProperty(globalThis, 'document', { value: page, configurable: true })
-    // Into the slow pace, which a hidden tab keeps for minutes at a time.
     await vi.advanceTimersByTimeAsync(10 * 60_000)
 
     const asks = world.asked.length
@@ -708,7 +651,6 @@ describe('a link in an address bar that has none', () => {
   })
 })
 
-/** One canvas out of somebody's space, as the listing and the link name it. */
 const board = {
   id: 'note-1',
   path: '/board.canvas',
@@ -733,8 +675,6 @@ describe('a link to one file, followed with no account', () => {
   test('opens the file, and holds the link until it has', async () => {
     await joining.start()
 
-    // Held while the tab opened, because the link is what keeps the app's chrome
-    // away until the file is there; see alone.svelte.ts. Let go of after.
     expect(world.opened).toEqual([{ id: 'note-1', holding: true }])
     expect(joining.invitation).toBeNull()
     expect(joining.step).toBeNull()

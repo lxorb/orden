@@ -27,12 +27,6 @@ import {
 } from './icon-sets'
 import { FILLS_ITS_BOX } from './outline-names'
 
-/** The three sets, loaded for real. Each is a chunk of its own in the app and a plain
- *  import here, which is the point of the test: the data has to be the shape the picker
- *  and the marks expect, and only reading it can say so.
- *
- *  Slow-ish, and worth it: a set whose names or groups came out wrong is a picker full
- *  of blank cells, and nothing else in the app would notice. */
 describe('the sets an icon can come from', () => {
   test('are the six the picker offers, each with an id nothing else uses', () => {
     expect(ICON_SETS.map((one) => one.id)).toEqual([
@@ -50,9 +44,6 @@ describe('the sets an icon can come from', () => {
     for (const set of ICON_SETS) expect(set.label, set.id).toBeTruthy()
   })
 
-  /** Somebody else's drawings are somebody else's: the credit is what the Help panel
-   *  names them by. The emoji are the platform's own font, so there is nothing of
-   *  anybody's here to credit. */
   test('a set of drawings says who drew it and under what licence', () => {
     expect(setNamed(LUCIDE)?.credit).toContain('ISC')
     expect(setNamed(FLAT_COLOUR)?.credit).toContain('MIT')
@@ -79,7 +70,6 @@ describe('the emoji', () => {
       'Symbols',
       'Flags',
     ])
-    // Every one of them is in a group, and every group holds only its own.
     expect(held.groups.reduce((count, one) => count + one.names.length, 0)).toBe(
       held.entries.length,
     )
@@ -94,9 +84,6 @@ describe('the emoji', () => {
     expect(rankIcons(held.entries, 'calendar', 8)).toContain('📅')
   })
 
-  /** Unicode names an emoji and says nothing about what it is for: 🚀 is called
-   *  "rocket", and nothing in that is the word "launch". The keywords close that gap,
-   *  and `:date:` is what Slack has taught a lot of people to call the calendar. */
   test('and by keywords that are nowhere in their names', async () => {
     const held = await setNamed(EMOJI_SET)!.load()
 
@@ -106,9 +93,6 @@ describe('the emoji', () => {
     expect(rankIcons(held.entries, 'payment', 8)).toContain('💰')
   })
 
-  /** The keywords sit behind the name rather than in it, because the name is also the
-   *  cell's tooltip and what a screen reader says. Nine keywords read out is not a
-   *  name. */
   test('and are called what Unicode calls them, once and no more', async () => {
     const held = await setNamed(EMOJI_SET)!.load()
     const rocket = held.entries.find((one) => one.name === '🚀')
@@ -117,8 +101,6 @@ describe('the emoji', () => {
     expect(rocket?.terms).toContain('launch')
   })
 
-  /** One entry per emoji rather than five for five skin tones, which is the folding
-   *  that keeps a picker of two thousand pictures usable. */
   test('and hold one entry per emoji, with no skin tone spelled out', async () => {
     const held = await setNamed(EMOJI_SET)!.load()
     const tones = ['🏻', '🏼', '🏽', '🏾', '🏿']
@@ -140,11 +122,8 @@ describe('a coloured set', () => {
     expect(shape?.kind).toBe('drawn')
     if (shape?.kind !== 'drawn') return
 
-    // The elements as the file holds them, and the box they were drawn in: putting
-    // one in an `<svg>` of that box is the whole of drawing it.
     expect(shape.body).toContain('<')
     expect(shape.box).toMatch(/^0 0 \d+ \d+$/)
-    // Its own colours, which is the reason for the set.
     expect(shape.body).toMatch(/fill="#/)
   })
 
@@ -156,9 +135,6 @@ describe('a coloured set', () => {
     expect(rankIcons(held.entries, 'calendar', 4)).toContain('calendar')
   })
 
-  /** An Iconify collection carries no keywords of its own - this one's metadata file is
-   *  an empty object - so Lucide's are lent to the drawings both sets have. A folder is
-   *  a directory in either set, and this is 53 of the 329 answered for nothing. */
   test('and by what Lucide says the same drawing is for', async () => {
     const held = await setNamed(FLAT_COLOUR)!.load()
 
@@ -188,9 +164,6 @@ describe('the stroked set', () => {
     expect(rankIcons(held.entries, 'book open', 4)).toContain('BookOpen')
   })
 
-  /** Emil: the search matched names only, so "math" found nothing while "function"
-   *  found one icon. Lucide's own tags are what it reads now: the angle is tagged
-   *  "math", the bin is tagged "garbage", and neither word is in either name. */
   test('and by what Lucide says each icon is for', async () => {
     const held = await setNamed(LUCIDE)!.load()
 
@@ -199,9 +172,6 @@ describe('the stroked set', () => {
     expect(rankIcons(held.entries, 'function', 4)).toContain('SquareFunction')
   })
 
-  /** 2,053 names over 1,799 drawings: `AlertCircle` and `CircleAlert` are one picture
-   *  under two, and each of those names is a word somebody might look for the other by.
-   *  An alias is a free synonym, and it comes with the library. */
   test('and by the other name the same drawing answers to', async () => {
     const held = await setNamed(LUCIDE)!.load()
     const alias = held.entries.find((one) => one.name === 'CircleAlert')
@@ -210,8 +180,6 @@ describe('the stroked set', () => {
     expect(alias?.words).toBe('circle alert')
   })
 
-  /** A grid somebody is typing at rather than a command line, so a dropped letter
-   *  still finds the icon - and only after everything that was spelled right. */
   test('and forgives a mistyped one without promoting it', async () => {
     const held = await setNamed(LUCIDE)!.load()
 
@@ -219,8 +187,6 @@ describe('the stroked set', () => {
     expect(rankIcons(held.entries, 'book', 4)[0]).toBe('Book')
   })
 
-  /** Nothing typed is nothing to rank: the tab opens on the library as it comes, which
-   *  is alphabetical, and the tags and aliases behind it change none of that. */
   test('and an empty query is still the library s own order', async () => {
     const held = await setNamed(LUCIDE)!.load()
 
@@ -229,11 +195,8 @@ describe('the stroked set', () => {
   })
 })
 
-/** One search over every set, and no tabs (#1096). */
 describe('the sets the picker searches', () => {
   test('are every set, each once, the brands waiting for a search', () => {
-    // The emoji's outlines are drawn in the emoji's own cells, not as cells of their own,
-    // and the Web icons are the account's, a section the picker draws first (#1054).
     expect([...PICKER_SETS, EMOJI_OUTLINE, SITE_ICONS].sort()).toEqual(
       ICON_SETS.map((one) => one.id).sort(),
     )
@@ -254,7 +217,6 @@ describe('the sets the picker searches', () => {
 
     expect(labels.slice(-2)).toEqual(['Line', 'Brands'])
     expect(new Set(held.entries.map((one) => one.name)).size).toBe(held.entries.length)
-    // A search ranks across the sets: a rocket is a line, an emoji and a drawing.
     const found = rankIcons(held.entries, 'rocket', 20)
     expect(found).toContain('rocket')
     expect(found).toContain('🚀')
@@ -300,17 +262,13 @@ describe('the picture tab', () => {
       (await setNamed(EMOJI_SET)!.load()).groups.map((one) => one.label),
     )
     expect(new Set(names).size).toBe(names.length)
-    // The order the arrows walk is the order the groups show.
     expect(names).toEqual(held.groups.flatMap((one) => one.names))
   })
 
-  /** By topic rather than in two blocks: the pie chart sits after the bar chart, the
-   *  SIM card after the phone. */
   test('puts a drawing beside what it is about', async () => {
     const objects = (await merged()).groups.find((one) => one.label === 'Objects')!.names
     const at = (name: string) => objects.indexOf(name)
 
-    // Straight after it, in the set's own order, and before the next emoji.
     const run = (emoji: string) => {
       const from = at(emoji) + 1
       let to = from
@@ -320,13 +278,10 @@ describe('the picture tab', () => {
 
     expect(run('📊')).toContain(`${FLAT_COLOUR}:pie-chart`)
     expect(run('📱')).toContain(`${FLAT_COLOUR}:sim-card`)
-    // And the ones with no neighbour at the end of their group.
     const loose = LOOSE.Objects!.split(' ').map((name) => `${FLAT_COLOUR}:${name}`)
     expect([...objects.slice(-loose.length)].sort()).toEqual([...loose].sort())
   })
 
-  /** The same calendar twice is one too many. The emoji stays, because the tab is two
-   *  thousand of those, and takes the drawing's words with it. */
   test('shows a picture both sets draw once, as the emoji', async () => {
     const held = await merged()
     const names = new Set(held.entries.map((one) => one.name))
@@ -344,8 +299,6 @@ describe('the picture tab', () => {
     expect(rankIcons(held.entries, 'directory', 8)).toContain('📁')
   })
 
-  /** A drawing chosen before the tabs were merged keeps drawing: what it wrote is
-   *  still what its set draws, even when the grid shows its twin instead. */
   test('leaves a drawing already chosen drawable', async () => {
     const flat = await setNamed(FLAT_COLOUR)!.load()
     expect(flat.shape('calendar')?.kind).toBe('drawn')
@@ -359,8 +312,6 @@ describe('merging sets', () => {
     shape: () => null,
   })
 
-  /** A drawing whose place names nothing the frame holds is still shown, in a group
-   *  of its own, rather than dropped. */
   test('keeps an icon whose place is nowhere', () => {
     const frame = set(['a', 'b'], [{ label: 'Letters', names: ['a', 'b'] }])
     const extra = {
@@ -387,7 +338,6 @@ describe('merging sets', () => {
   })
 })
 
-/** #1082: the logos of products and companies, Simple Icons' whole set. */
 describe('the brands', () => {
   const brands = () => setNamed(BRANDS)!.load()
 
@@ -417,9 +367,6 @@ describe('the brands', () => {
     }
   })
 
-  /** Drawn in the colour of the text around them, which is what keeps GitHub's black
-   *  mark from vanishing into a dark theme: nothing in any logo names a colour of its
-   *  own. */
   test('and are drawn in the colour of the text around them, in either theme', async () => {
     const held = await brands()
 
@@ -430,8 +377,6 @@ describe('the brands', () => {
     }
   })
 
-  /** A slug squashes a name - `visualstudiocode` - so the brands people reach for most
-   *  are found by what they are called, and by what else they go by. */
   test('are found by name, and by the other words a brand goes by', async () => {
     const held = await brands()
 
@@ -445,13 +390,11 @@ describe('the brands', () => {
     )
   })
 
-  /** For code that wants a company's mark by name: an AI chat's provider (#1089). */
   test('and code asks for one by its slug', () => {
     expect(brandIcon('claude')).toBe('simple-icons:claude')
     expect(readIcon(brandIcon('openai'))).toEqual({ kind: 'set', set: BRANDS, name: 'openai' })
   })
 
-  /** Simple Icons gives the drawings away and says the marks are still their owners'. */
   test('credit the set, its licence and the owners of the marks', () => {
     const credit = setNamed(BRANDS)!.credit
 
@@ -461,7 +404,6 @@ describe('the brands', () => {
     expect(pickerCredit()).toContain(credit)
   })
 
-  /** #1096: Orden's own mark is a brand like the rest, one colour, found by its name. */
   test('hold Orden s own mark, drawn in the text s colour', async () => {
     const brands = await setNamed(BRANDS)!.load()
 
@@ -473,13 +415,10 @@ describe('the brands', () => {
   })
 })
 
-/** Every emoji drawn again in one colour (#1097), offered in the emoji's own cells. */
 describe('the emoji in one colour', () => {
   let held: LoadedSet | null = null
   const outlines = async () => (held ??= await setNamed(EMOJI_OUTLINE)!.load())
 
-  /** Every emoji of every group, the flags, the newest and the families among them: the
-   *  ones the set does not draw are drawn out of Noto at build time (emoji-outlines.ts). */
   test('draw every emoji, each by its own character', async () => {
     const set = await outlines()
     const emoji = await setNamed(EMOJI_SET)!.load()
@@ -489,19 +428,14 @@ describe('the emoji in one colour', () => {
     for (const one of every) expect(set.shape(set.twin?.(one) ?? '')?.kind, one).toBe('drawn')
     expect(set.twin?.('🤔')).toBe('thinking-face')
     expect(set.twin?.('❤️')).toBe('red-heart')
-    // Filed under another name than its character.
     expect(set.twin?.('👉')).toBe('backhand-index-pointing-right')
-    // Filed under `0023-20e3`, four digits a code point.
     expect(set.twin?.('#️⃣')).toBe('keycap-hashtag')
-    // Drawn out of Noto, under the emoji's slug.
     expect(set.twin?.('🫩')).toBe('face-with-bags-under-eyes')
     expect(set.twin?.('🇨🇭')).toBe('flag-switzerland')
     expect(set.twin?.('👨‍👩‍👧‍👦')).toBe('family-man-woman-girl-boy')
     expect(set.twin?.('rocket')).toBeNull()
   })
 
-  /** An alias is its parent's drawing as the alias says to draw it: 👉 is 👈 turned over,
-   *  and was drawn pointing left. */
   test('draw an alias turned the way it says', async () => {
     const set = await outlines()
     const left = set.shape('backhand-index-pointing-left') as { body: string }
@@ -510,7 +444,6 @@ describe('the emoji in one colour', () => {
     expect(right.body).toBe(`<g transform="translate(32 0) scale(-1 1)">${left.body}</g>`)
   })
 
-  /** The set's 😶‍🌫️ is clouds to every edge of its box, a square of noise in a cell. */
   test('draw again out of Noto what fills its box', async () => {
     const set = await outlines()
 
@@ -519,7 +452,6 @@ describe('the emoji in one colour', () => {
     }
   })
 
-  /** Each glyph is fitted to the set's box, a unit inside its edges, as the set's own are. */
   test('fit what Noto draws into the box', () => {
     const drawn = Object.entries(notoOutlines())
 
@@ -532,8 +464,6 @@ describe('the emoji in one colour', () => {
     }
   })
 
-  /** A mask and a clip path are drawn in black and white to say what shows, which is no
-   *  colour on screen; everything else is the text's. */
   test('are drawn in the text s colour alone, so a tint paints them', async () => {
     const set = await outlines()
 
@@ -545,8 +475,6 @@ describe('the emoji in one colour', () => {
     }
   })
 
-  /** Every drawing is inline in the one page, so an id two of them share is one
-   *  drawing's mask cutting another. */
   test('keep the ids of their masks to themselves', async () => {
     const set = await outlines()
     const owners = new Map<string, string>()
@@ -556,7 +484,6 @@ describe('the emoji in one colour', () => {
       if (shape?.kind !== 'drawn') continue
       for (const [, id] of shape.body.matchAll(/\bid="([^"]+)"/g)) {
         const owner = owners.get(id!)
-        // An alias is the same drawing under a second name.
         if (owner && set.shape(owner) !== shape) {
           if (shape.body !== (set.shape(owner) as { body: string }).body)
             throw new Error(`${id} in ${owner} and ${name}`)

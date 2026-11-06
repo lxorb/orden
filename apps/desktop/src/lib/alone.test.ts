@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** When the window is a guest's one shared file and nothing else (#386): only for
- *  somebody with no account, only for a link to one file, and only while that file
- *  is in front of them - or on its way. */
-
 const world = vi.hoisted(() => ({
   user: null as { id: string } | null,
   guest: null as { id: string; name: string } | null,

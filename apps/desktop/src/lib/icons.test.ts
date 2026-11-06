@@ -71,16 +71,11 @@ describe('searching the library', () => {
     expect(search(NAMES, 'journal')).toContain('NotebookPen')
   })
 
-  /** One key per word rather than one per spelling: the query is tried without its
-   *  plural, so the list says "note" once and answers both. */
   test('understands a plural of one of them', () => {
     expect(search(NAMES, 'notes')).toContain('NotebookPen')
     expect(search(NAMES, 'maths')).toEqual(search(NAMES, 'math'))
   })
 
-  /** Somebody typing two words is describing one icon, and both words are worth
-   *  asking about: nothing is called "work journal" and the briefcase and the notebook
-   *  are both fair answers to it. */
   test('and one written inside a longer query', () => {
     const found = search(NAMES, 'work journal')
 
@@ -88,16 +83,11 @@ describe('searching the library', () => {
     expect(found).toContain('NotebookPen')
   })
 
-  /** A dropped letter is the commonest way to mistype a word, and the picker is a grid
-   *  somebody is typing at rather than a command line. */
   test('forgives a letter left out', () => {
     expect(search(NAMES, 'calndar')[0]).toBe('Calendar')
     expect(search(NAMES, 'grduation')).toContain('GraduationCap')
   })
 
-  /** The loose matches sit under every real one, which is what keeps forgiveness from
-   *  becoming noise: "bug" is a subsequence of "building2" too, and nobody typing it
-   *  meant that. */
   test('and never puts a near miss ahead of a name that matches', () => {
     const entries = [
       { name: 'Building2', words: 'building2' },
@@ -124,13 +114,6 @@ describe('searching the library', () => {
   })
 })
 
-/** What a space in the switcher actually draws.
- *
- *  Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
- *  plugin right now."* The cause was elsewhere - the storage the chosen name is read
- *  from; see lib/even/first.ts - but the rule the switcher follows is here, and the half
- *  of it that matters is the last test: a space always shows something.
- */
 describe('the mark a space wears', () => {
   const CAP: IconNode = [['path', { d: 'M21 10l-9-4-9 4 9 4z' }]]
   const library: Record<string, IconNode> = { GraduationCap: CAP }
@@ -146,9 +129,6 @@ describe('the mark a space wears', () => {
     expect(initial('ubung')).toBe('U')
   })
 
-  /** Three different things a reader cannot tell apart: no icon, an icon this build
-   *  has never heard of, and a library that has not loaded yet. All three draw a
-   *  letter, and none of them draws an empty square. */
   test('is never nothing, whatever went wrong', () => {
     expect(shapeFor(library, 'NoSuchIcon')).toBeNull()
     expect(shapeFor({}, 'GraduationCap')).toBeNull()
@@ -156,12 +136,6 @@ describe('the mark a space wears', () => {
   })
 })
 
-/** What a note says it wears, and how a written name finds its icon.
- *
- *  The value lives in the note's own front matter, so it is read as well as
- *  written: a vault that comes from Obsidian carries whatever the Iconize plugin
- *  wrote there, and those icons keep working here without anybody choosing them
- *  again. */
 describe('the icon a note names', () => {
   const shapes: Record<string, IconNode> = {
     FileText: [['path', { d: 'M4 2h9l5 5v15H4z' }]],
@@ -226,8 +200,6 @@ describe('the icon a note names', () => {
     expect(iconValue('Smile')).toBe('smile')
   })
 
-  /** Whatever is written has to read back as the icon it was chosen for, which is
-   *  the round trip that keeps an icon from disappearing on the next open. */
   test('and reads back as the icon it was written for', () => {
     for (const key of Object.keys(shapes)) {
       expect(keyNamed(shapes, iconValue(key)), key).toBe(key)
@@ -235,8 +207,6 @@ describe('the icon a note names', () => {
   })
 })
 
-/** A library standing in for Lucide's, for the blocks below: the names they name, and
- *  nothing else, so a test says what it depends on. */
 const LIBRARY: Record<string, IconNode> = {
   FileText: [['path', { d: 'M4 2h9l5 5v15H4z' }]],
   Rocket: [['path', { d: 'M4 20l6-6' }]],
@@ -244,10 +214,6 @@ const LIBRARY: Record<string, IconNode> = {
   List: [['path', { d: 'M8 6h13' }]],
 }
 
-/** One string says which of three sets an icon came from and which icon it is. What
- *  is written has to read back as the icon it was chosen for, or an icon disappears
- *  on the next open - and it has to stay something Obsidian's Iconize can show, which
- *  is why a Lucide name has no prefix in front of it. */
 describe('what each kind of icon is written as', () => {
   test('an emoji is the character, and nothing is added to it', () => {
     expect(writtenIcon(EMOJI_SET, '🚀')).toBe('🚀')
@@ -268,9 +234,6 @@ describe('what each kind of icon is written as', () => {
     })
   })
 
-  /** A set this build has never heard of is a value a newer Orden wrote. It reads as
-   *  what it says rather than as a Lucide name, so the row falls back to its kind's
-   *  mark instead of drawing the wrong picture. */
   test('a set nothing here knows is still read as a set', () => {
     expect(readIcon('some-future-set:thing')).toEqual({
       kind: 'set',
@@ -283,8 +246,6 @@ describe('what each kind of icon is written as', () => {
     expect(readIcon('lucide:rocket')).toEqual({ kind: 'lucide', name: 'rocket' })
   })
 
-  /** A colon in a name that is not a set's - a Windows path somebody pasted, a word
-   *  with a colon in it - is not a prefix: a set's id is lowercase letters. */
   test('a value that only looks prefixed is a name', () => {
     expect(readIcon('C:/notes/rocket')).toEqual({ kind: 'lucide', name: 'C:/notes/rocket' })
     expect(readIcon('Note: a rocket')).toEqual({ kind: 'lucide', name: 'Note: a rocket' })
@@ -307,9 +268,6 @@ describe('what each kind of icon is written as', () => {
   })
 })
 
-/** Obsidian's Iconize puts a two-letter pack prefix in front of every name it writes.
- *  Nib ships one stroked set, so a name out of any pack is looked up in Lucide without
- *  its prefix, which is the right answer far more often than nothing at all. */
 describe('a name a vault brought in from Iconize', () => {
   test('finds the same icon whichever pack it came from', () => {
     for (const name of ['LiRocket', 'FaRocket', 'RiRocket', 'BxRocket']) {
@@ -323,8 +281,6 @@ describe('a name a vault brought in from Iconize', () => {
   })
 })
 
-/** Two spellings of one icon are one icon, which is what lets the picker show the one
- *  already worn as chosen however it was written. */
 describe('telling two written values apart', () => {
   test('the same icon spelled three ways is the same icon', () => {
     expect(sameIcon('FileText', 'file-text')).toBe(true)
@@ -349,9 +305,6 @@ describe('telling two written values apart', () => {
   })
 })
 
-/** The colour a stroked icon may be drawn in: one of the accents the app already
- *  offers, by its own id, so a file that names one still means something in next
- *  year's palette. */
 describe('the colour an icon is drawn in', () => {
   test('is one of the accents, however it was capitalised', () => {
     expect(readTint('violet')).toBe('violet')
@@ -368,7 +321,6 @@ describe('the colour an icon is drawn in', () => {
   })
 })
 
-/** One search field over three sets that name things three different ways. */
 describe('searching a set whose names are already words', () => {
   const emoji = [
     { name: '🚀', words: 'rocket rocket' },
@@ -394,10 +346,6 @@ describe('searching a set whose names are already words', () => {
   })
 })
 
-/** What an icon is *for*, as its own set files it: Lucide's tags, the emoji's
- *  keywords, and nib's synonyms behind both. Which is the whole of Emil's complaint -
- *  "math" found nothing and "function" found one icon, because the picker knew every
- *  name and no meaning. */
 describe('searching by what an icon is for rather than what it is called', () => {
   const entries = [
     { name: 'Angle', words: 'angle', terms: 'degree corner geometry measure math' },
@@ -412,22 +360,14 @@ describe('searching by what an icon is for rather than what it is called', () =>
     expect(rankIcons(entries, 'geometry')).toEqual(['Angle'])
   })
 
-  /** A name is what an icon is; a keyword is what it is about. Where both answer, the
-   *  name answers first. */
   test('and puts what is named that ahead of what is filed under it', () => {
     expect(rankIcons(entries, 'math')[0]).toBe('Mathematician')
   })
 
-  /** And the other way where the name only happens to contain the letters: the word
-   *  "date" is what a calendar is for, and it is a fragment of "update". */
   test('and a whole keyword ahead of a fragment of a name', () => {
     expect(rankIcons(entries, 'date')).toEqual(['Calendar', 'Update'])
   })
 
-  /** Keywords are searched by their words rather than loosely. An icon carries a line
-   *  of them, nearly every short query is a subsequence of a line of English, and a
-   *  search that answered with every icon that has tags would be worse than the one
-   *  that could not find "math". */
   test('and does not find one by a scattering of letters in its keywords', () => {
     expect(rankIcons(entries, 'dgm')).toEqual([])
   })

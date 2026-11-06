@@ -1,11 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
 
-/** A note of one space open while another is active (B385). Tabs are shared across
- *  spaces, so `A/Note.md` stays open after switching to B. Its `[[Plan]]` is A's Plan,
- *  not B's: resolved against the active space, a link opened B's note of the same name,
- *  and one to a note only A has was drawn as a link to nothing. */
-
 const disk = new Map<string, string>()
 const sent: { command: string; path: string; folder?: unknown }[] = []
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -42,7 +37,6 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The space search, as the `[[^^` popup asks it: which root, and one block found. */
 const searched: string[] = []
 vi.mock('./search/space', () => ({
   searchSpace: (
@@ -114,7 +108,6 @@ test("a note of another space is handed that space's notes, and its own place in
     expect(index.notes.map((one) => one.path).sort()).toEqual(['Note.md', 'Only A.md', 'Plan.md'])
   })
 
-  // The active space's own index is as it was.
   expect(links.index('/home/me/B/Plan.md').notes.map((one) => one.path)).toEqual(['Plan.md'])
 })
 
@@ -225,9 +218,6 @@ test('a note a message of another space links opens in that space', async () => 
   await vi.waitFor(() => expect(workspace.active?.path).toBe('/home/me/A/Plan.md'))
 })
 
-/** A link is followed in the space of the note it sits in, which is not always the tab
- *  in front (B408): a scratchpad resolves its links in the active space whatever tab is
- *  in front, and a task's description in the task view is read in the task's space. */
 test("a link from the scratchpad opens the active space's note, whatever tab is in front", async () => {
   await workspace.open('/home/me/A/Note.md')
 

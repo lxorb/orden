@@ -16,8 +16,6 @@ describe('loading parsers', () => {
     expect(parsers.size).toBe(0)
   })
 
-  /** The exporter reads the editor's own language list, so a fence that was
-   *  coloured on screen is coloured in the file that leaves. */
   test('knows the languages the editor knows', async () => {
     const parsers = await loadParsers(['makefile', 'tf', 'mermaid'])
     expect(parsers.size).toBe(3)
@@ -37,9 +35,6 @@ describe('highlighting', () => {
     expect(html).not.toContain('<span class="hl-punctuation">&lt;</span><')
   })
 
-  /** The two an exported diff used to lose: added and removed carry the
-   *  document's own green and red rather than a palette entry, because that is
-   *  what the fence means - see code-theme.ts. */
   test('colours a diff added and removed', async () => {
     const parsers = await loadParsers(['diff'])
     const html = highlightCode(
@@ -51,8 +46,6 @@ describe('highlighting', () => {
     expect(html).toContain('<span class="hl-deleted">-old line</span>')
   })
 
-  /** The key of a key=value file, which the palette reached past until the
-   *  definition tag was painted. */
   test('colours the key of an env fence', async () => {
     const parsers = await loadParsers(['env'])
     const html = highlightCode('API_KEY=secret', parsers.get('env')!)

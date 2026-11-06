@@ -1,26 +1,3 @@
-/** Where each of the coloured drawings sits among the emoji, now that the two are one
- *  tab (#1071).
- *
- *  By hand, because nothing in either file says it. The drawings carry no groups and
- *  no keywords, and matching their names against the emoji's by machine put the USB
- *  plug beside the pause button: most of the set is the furniture of an office and a
- *  phone, which Unicode files under words a matcher does not find.
- *
- *  Three lists, and every drawing is in exactly one of them; icon-sets.test.ts says so.
- *
- *  - `SAME`: the drawings that are an emoji over again - a calendar, a briefcase, a
- *    padlock. Shown once, as the emoji, because the tab is two thousand of those and
- *    a calendar drawn in another hand stands out of the row it sits in. The drawing's
- *    words are lent to the emoji, so a search for either finds it, and a drawing
- *    already chosen from here keeps drawing as itself.
- *  - `BESIDE`: drawings with no twin but a neighbour, placed straight after it - the
- *    pie chart after 📊, the SIM card after 📱 - which is what puts the two sources
- *    in one order by topic rather than in two blocks. The emoji says which group.
- *  - `LOOSE`: drawings with no neighbour at all, at the end of the group they belong
- *    to: the logos of other people's products, and the arrows and filters of a
- *    toolbar. */
-
-/** Drawing to the emoji that already is it. */
 export const SAME: Readonly<Record<string, string>> = {
   'alarm-clock': '⏰',
   'bar-chart': '📊',
@@ -84,7 +61,6 @@ export const SAME: Readonly<Record<string, string>> = {
   'video-projector': '📽️',
 }
 
-/** Emoji to the drawings that follow it, which follow it in the set's own order. */
 export const BESIDE: Readonly<Record<string, string>> = {
   '👍': 'like-placeholder approve approval',
   '👎': 'disapprove',
@@ -172,7 +148,6 @@ export const BESIDE: Readonly<Record<string, string>> = {
   '🚇': 'light-at-the-end-of-tunnel',
 }
 
-/** Group to the drawings at its end. */
 export const LOOSE: Readonly<Record<string, string>> = {
   'Travel & Places': 'entering-heaven-alive',
   Objects:

@@ -1,17 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { retargetCanvas, rewriteCanvasLinks } from './canvas-rewrite'
 
-/** A note renamed, and a canvas another app wrote that links it (B416). The rename
- *  changes the paths that named the note and nothing else: the canvas was read as
- *  Orden reads a plane and written back the way Orden writes one, which left out the
- *  nodes, edges and keys this build does not know, rounded a position and reordered
- *  every key - in canvases nobody had open (#501). */
-
 const move = { from: 'Old.md', to: 'New.md' }
-/** Whether a link names the note that moved, as the index answers it. */
 const namesOld = (link: { target: string }) => link.target === 'Old' || link.target === 'Old.md'
 
-/** An Obsidian canvas with what Orden does not read in it. */
 const obsidian = JSON.stringify(
   {
     nodes: [

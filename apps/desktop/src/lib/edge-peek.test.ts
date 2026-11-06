@@ -2,12 +2,7 @@ import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EDGE, EdgePeek, GRACE, type Room } from './edge-peek.svelte'
 
-/** The file list, shut, brought out by the pointer reaching the window's edge, and
- *  gone again once it has left (#1034); see edge-peek.svelte.ts. Played on a clock this
- *  test turns, in a window it describes. */
-
 const WIDTH = 1200
-/** Where the list is once it is out: the first 250 pixels of the window. */
 const LIST = 250
 
 let room: Room & { allowed: boolean; busied: boolean; rightToLeft: boolean }
@@ -156,7 +151,6 @@ describe('the list out over the note', () => {
 describe('the right side, at the other edge (#1038)', () => {
   let end: EdgePeek
   let off: () => void
-  /** The bar's height: the right side stands under it. */
   const BAR = 38
 
   beforeEach(() => {
@@ -210,8 +204,6 @@ describe('the right side, at the other edge (#1038)', () => {
   })
 })
 
-/** What the left side asks before the list comes out, and what it is once it is: read
- *  out of Sidebar.svelte, which is where the window is described to it. */
 describe('each side', () => {
   const sidebar = readFileSync(new URL('./Sidebar.svelte', import.meta.url), 'utf8')
 
@@ -241,15 +233,12 @@ describe('each side', () => {
     expect(sidebar).toMatch(/\.column\.shut\.floating aside \{\s*position: absolute;/)
   })
 
-  /** The rule of the block, by its selector, out of the component's stylesheet. */
   const rule = (selector: string) => {
     const at = sidebar.indexOf(`${selector} {`)
     expect(at, selector).toBeGreaterThan(-1)
     return sidebar.slice(at, sidebar.indexOf('}', at))
   }
 
-  /** #1034, the class of #1050: nothing waits a frame or plays slowly between the
-   *  pointer reaching the edge and the list following it. */
   test('slides in on the style change that floats it: shut, it already stands past the edge', () => {
     expect(
       rule(
@@ -292,8 +281,6 @@ describe('each side', () => {
     )
   })
 
-  /** The bar a filled window brings down at its top edge is the same gesture, and keeps
-   *  the same rules: at once, and gone after the same grace. */
   test("a filled window's top bar comes at once too, and goes after the same grace", () => {
     const bar = readFileSync(new URL('./tab-fill/FillBar.svelte', import.meta.url), 'utf8')
     expect(bar).toContain('const GOES_AFTER = GRACE')

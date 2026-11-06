@@ -10,12 +10,6 @@ import {
   writtenAs,
 } from './feedback-pictures'
 
-/** The pictures a report carries (#1087): drawn afresh no larger than the service takes,
- *  as a PNG where they came without loss and as a JPEG otherwise, and made smaller until
- *  they fit. */
-
-/** A canvas that writes `bytes(width, height, type)` bytes for each try, and says what
- *  it was asked. */
 function fake(
   size: { width: number; height: number } | null,
   bytes: (width: number, height: number, type: string) => number,

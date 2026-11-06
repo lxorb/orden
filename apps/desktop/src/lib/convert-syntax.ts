@@ -1,17 +1,3 @@
-/** Convert syntax: another app's spellings, rewritten in notes that are already
- *  here.
- *
- *  A note that arrived some other way than through the import sheet - a folder
- *  copied across, a space synced out of Bear, a note pasted from a friend - can
- *  hold a tag or a link nib does not read the way the app it came from did. This
- *  is the same two rewrites the import does, run on demand; see import/convert.ts
- *  for which two and why those two.
- *
- *  It asks twice, because it writes to files without opening them: once for where,
- *  and once with the count, which is what says whether it is about to do what the
- *  reader thinks. Then it is one thing to undo, however many notes it touched -
- *  the same road a replacement across the space takes. */
-
 import { oneEdit } from '@orden/markdown/edits'
 
 import { plural, t } from './i18n.svelte'
@@ -21,8 +7,6 @@ import { changeOf } from './search/replace'
 import { isMarkdownPath } from './space-paths'
 import { workspace } from './workspace.svelte'
 
-/** Every change the conversion would make. Pure, so the count the reader is shown
- *  is worked out by the same code that writes it. */
 export function syntaxChanges(
   notes: readonly { path: string; text: string }[],
   names: readonly string[],
@@ -31,7 +15,6 @@ export function syntaxChanges(
   let rewrites = 0
 
   for (const note of notes) {
-    // A canvas, a chat, a base or a stylesheet holds words that are not markdown.
     if (!isMarkdownPath(note.path)) continue
 
     const said = converted(note.text, names)
@@ -52,7 +35,6 @@ export async function convertSyntax() {
   const open = workspace.active
   const names = workspace.notes.map((one) => one.name)
 
-  // Only a note is one to convert in; any other tab in front is as good as none.
   const where =
     !open?.path || !isMarkdownPath(open.path)
       ? 'space'
@@ -90,8 +72,6 @@ export async function convertSyntax() {
   if (sure) await workspace.replaceInNotes(changes)
 }
 
-/** Every note of the space with its words, the open ones as they stand rather
- *  than as they were last saved. */
 async function everyNote(): Promise<{ path: string; text: string }[]> {
   workspace.flush()
   const found: { path: string; text: string }[] = []

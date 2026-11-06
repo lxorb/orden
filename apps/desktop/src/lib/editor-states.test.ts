@@ -11,16 +11,12 @@ import {
 import { describe, expect, test } from 'vitest'
 import { EditorStates, type NoteTab } from './editor-states'
 
-/** Stands in for a scroll snapshot; see held.test.ts in the editor package. */
 const scrolledTo = StateEffect.define<number>({ map: (at, changes) => changes.mapPos(at) })
 
-/** A pane's view without a DOM: the state it holds, and where it is scrolled. */
 class Surface implements StateView {
   state = EditorState.create({})
   at = 0
-  /** The element that scrolls, as far as a swap looks at it. */
   readonly scrollDOM = { scrollTop: 0 }
-  /** How many transactions it has been handed. A switch should cost one. */
   transactions = 0
 
   setState(next: EditorState) {
@@ -40,8 +36,6 @@ class Surface implements StateView {
     return scrolledTo.of(this.at)
   }
 
-  /** What the editor does with a keystroke: applies it, then hands the change to
-   *  the document this view is on. See the update listener in editor.ts. */
   type(insert: string) {
     const at = this.state.doc.length
     const made = this.state.update({ changes: { from: at, insert }, userEvent: 'input.type' })
@@ -51,8 +45,6 @@ class Surface implements StateView {
   }
 }
 
-/** A tab, as much of one as a pane's states read: the document it is a view of,
- *  and how many notes that document has held. */
 class Tab implements NoteTab {
   note: { live: SharedDoc; arrivals: number }
 
@@ -60,21 +52,16 @@ class Tab implements NoteTab {
     this.note = { live: new SharedDoc(text), arrivals: 0 }
   }
 
-  /** The one tab that previews a note, moving on to another one; see
-   *  `NoteDoc.adopt` in workspace/documents.svelte.ts. */
   adopt(text: string) {
     this.note.arrivals++
     this.note.live.takeOn(text)
   }
 
-  /** The state a pane builds the first time it shows this tab. */
   state(): HeldState {
     return HeldState.waiting(this.note.live, editorState({ shared: this.note.live }))
   }
 }
 
-/** The invariant, asked after every gesture: the view is on exactly one note, and
- *  what it is holding is that note's words. */
 function shows(view: Surface, tab: Tab) {
   expect(documentOf(view)).toBe(tab.note.live)
   expect(view.state.doc.toString()).toBe(tab.note.live.text.toString())
@@ -121,7 +108,6 @@ describe('the states a pane keeps', () => {
     states.show(view, alpha, () => alpha.state())
     states.show(view, beta, () => beta.state())
 
-    // A rename rewrites the title of a note nobody is looking at.
     alpha.note.live.replace('Alpha renamed')
     states.show(view, alpha, () => alpha.state())
 
@@ -168,8 +154,6 @@ describe('the states a pane keeps', () => {
     states.show(view, beta, () => beta.state())
     states.keepOnly([beta])
 
-    // Reopened, the tab is a new tab, so nothing of the old one is in the way;
-    // where it was being read is the app's to remember.
     const again = new Tab('one\ntwo\nthree')
     view.at = 0
     expect(states.show(view, again, () => again.state())).toBe(true)
@@ -192,7 +176,6 @@ describe('the states a pane keeps', () => {
     states.show(view, beta, () => beta.state())
     states.keepOnly([beta])
 
-    // The tab has gone, and everything remembered about it with it.
     expect(states.fitted(alpha)).toBeUndefined()
   })
 
@@ -200,7 +183,6 @@ describe('the states a pane keeps', () => {
     const states = new EditorStates()
     const view = new Surface()
     const alpha = new Tab('one\ntwo\nthree')
-    // What `createEditor` does: the view is built on the note and joins it.
     view.setState(editorState({ shared: alpha.note.live }))
     alpha.note.live.join(view)
     view.transactions = 0
@@ -210,8 +192,6 @@ describe('the states a pane keeps', () => {
     expect(view.at).toBe(8)
     expect(view.transactions).toBe(1)
 
-    // A reader who has scrolled on since is not dragged back to where they came
-    // in by an effect running again.
     view.at = 40
     states.show(view, alpha, () => alpha.state())
 
@@ -236,14 +216,6 @@ describe('the states a pane keeps', () => {
   })
 })
 
-/** What a state is kept under, and why it has to be the tab and the note rather
- *  than a name spelled out of the two.
- *
- *  A pane used to key its states by `${tab.id} ${tab.note.arrivals}`, a string
- *  built afresh by whoever was asking. Two callers spelling it differently - or
- *  one of them reading it a moment after the other - meant the pane looking for a
- *  state under a name nothing had put anything under, and the note the view was
- *  actually holding was then nobody's to take back. */
 describe('which note a state is a state of', () => {
   test('a note renamed is still the same note', () => {
     const states = new EditorStates()
@@ -251,8 +223,6 @@ describe('which note a state is a state of', () => {
     const tab = new Tab('# Draft')
 
     states.show(view, tab, () => tab.state())
-    // Renaming rewrites the title and moves the file; the tab and the document
-    // are the ones that were there before.
     tab.note.live.replace('# Named')
 
     expect(states.shows(tab)).toBe(true)
@@ -270,19 +240,13 @@ describe('which note a state is a state of', () => {
     view.at = 4
     states.show(view, kept, () => kept.state())
 
-    // A click in the file list: the same tab, another note.
     preview.adopt('Second')
-    // Half way down whatever was last in the scroller, which the note arriving
-    // has to undo: nobody has read this one.
     view.scrollDOM.scrollTop = 1200
     expect(states.show(view, preview, () => preview.state())).toBe(true)
 
     shows(view, preview)
     expect(view.state.doc.toString()).toBe('Second')
-    // The place the note it came from was being read at does not follow it here.
     expect(view.scrollDOM.scrollTop).toBe(0)
-    // And the state that was the note it came from's is gone, rather than left
-    // holding the document.
     expect(states.count).toBe(2)
     expect(preview.note.live.panes).toBe(1)
   })
@@ -303,14 +267,6 @@ describe('which note a state is a state of', () => {
     expect(preview.note.live.panes).toBe(1)
   })
 
-  /** The other way a tab changes note, and the one a count of arrivals cannot see.
-   *
-   *  Walking back along a tab's trail to a note another pane already has open makes
-   *  the tab a second view of that open document - one file is one document, so
-   *  there is nothing else for it to be. The tab is the same tab and the new
-   *  document has held exactly as many notes as the old one, so a state kept under
-   *  the pair of them looked current, and the view stayed on the note it came from
-   *  while the tab named another. See `walk` in workspace.svelte.ts. */
   test('a tab pointed at another document is another note', () => {
     const states = new EditorStates()
     const view = new Surface()
@@ -342,15 +298,6 @@ describe('which note a state is a state of', () => {
   })
 })
 
-/** The sequences a reader actually makes, with the invariant asked after each
- *  one: the view is on the note its tab names, and on nothing else.
- *
- *  Emil, on the desktop app: *"I switch to a different note and then for some
- *  reason it gets some random useless content ... switched from a web note tab to
- *  a normal note tab and then it had some strange web note tab content in it."*
- *  A web tab's words are its shortcut file, and the file is rewritten as the
- *  reading moves on - so a view left on it is a note wearing `[InternetShortcut]`
- *  and saving it under its own name. */
 describe('a pane switching between notes', () => {
   test('a website and a note, back and forth', () => {
     const states = new EditorStates()
@@ -367,7 +314,6 @@ describe('a pane switching between notes', () => {
     states.show(view, note, () => note.state())
     shows(view, note)
 
-    // The reading moved on, so the shortcut is rewritten under the website's name.
     site.note.live.replace('[InternetShortcut]\nURL=https://b.example\n', false)
 
     shows(view, note)
@@ -385,7 +331,6 @@ describe('a pane switching between notes', () => {
     left.show(here, alpha, () => alpha.state())
     left.show(here, beta, () => beta.state())
 
-    // Beta is dragged across, and the pane it came from falls back to Alpha.
     left.show(here, alpha, () => alpha.state())
     left.keepOnly([alpha])
     right.show(there, beta, () => beta.state())
@@ -414,20 +359,9 @@ describe('a pane switching between notes', () => {
     shows(there, two)
   })
 
-  /** Nothing owns "one document per file".
-   *
-   *  `workspace.open` looks for a tab already on the path, then awaits the file
-   *  before it makes the document, and nothing says an open is in flight - so two
-   *  opens of one path a moment apart make two documents of it, each with its own
-   *  words, its own history and its own saver. `openWeb` has the same shape.
-   *
-   *  A pane cannot put that right and does not pretend to: what is asserted here is
-   *  what the reader is left looking at, so that whoever holds the open documents
-   *  can see what it has to guarantee. */
   test('two documents over one file are two notes wearing one name', () => {
     const states = new EditorStates()
     const view = new Surface()
-    // Both from the same file, read twice.
     const first = new Tab('# The note\n')
     const second = new Tab('# The note\n')
 
@@ -440,14 +374,10 @@ describe('a pane switching between notes', () => {
     states.show(view, second, () => second.state())
     view.type('and written there\n')
 
-    // The pane is honest about both: each tab holds its own document's words, and
-    // the view is only ever on one of them.
     expect(documentOf(view)).toBe(second.note.live)
     expect(first.note.live.text.toString()).toBe('# The note\nwritten here\n')
     expect(second.note.live.text.toString()).toBe('# The note\nand written there\n')
 
-    // And that is the damage: one file, two sets of words, each reported as the
-    // file's own, and whichever is written last is what the file ends up saying.
     expect(written).toEqual(['# The note\nwritten here\n', '# The note\nand written there\n'])
   })
 
@@ -459,7 +389,6 @@ describe('a pane switching between notes', () => {
 
     states.show(view, alpha, () => alpha.state())
     states.show(view, beta, () => beta.state())
-    // Beta closes, so the pane falls back to Alpha and lets Beta's state go.
     states.show(view, alpha, () => alpha.state())
     states.keepOnly([alpha])
 

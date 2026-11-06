@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A file dragged from the file list into the Essentials, and a tile dragged back out
- *  into a folder of the list (#412): each one step to undo and to do again. The store is
- *  the real one; the disk is a stand-in that records what it was asked. */
-
 const sent: { command: string; from?: unknown; to?: unknown }[] = []
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -30,7 +26,6 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** The roots of the spaces shared with this account to be read. */
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('./sharing.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sharing.svelte')>()),

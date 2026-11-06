@@ -1,13 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** Closing the window from the keyboard and the palette.
- *
- *  Cmd+W closes the note, which is what it does in every tabbed editor. On a Mac it
- *  did nothing at all once the last note was closed, where Safari and VS Code close
- *  the window with it; and the window had no command of its own to close it by, which
- *  every Mac app's File menu has under Shift+Cmd+W. Both go the way the window's
- *  close button does, so an unsaved note is asked about first; see start.ts. */
-
 const closed = vi.fn(() => Promise.resolve())
 let os = 'macos'
 
@@ -25,14 +17,12 @@ const { appCommands } = await import('./commands')
 
 const context = { onpalette: () => undefined, onhistory: () => undefined }
 
-/** The command a key runs, pressed the way the shortcut handler presses it. */
 function press(id: string) {
   const entry = SHORTCUTS.find((one) => one.id === id)
   if (!entry?.run) throw new Error(`${id} runs nothing`)
   entry.run(context as never)
 }
 
-/** A window with one note open, or with none. */
 function showing(tab: string | null) {
   vi.spyOn(workspace, 'activeTabId', 'get').mockReturnValue(tab)
   return vi.spyOn(workspace, 'closeActive').mockResolvedValue(undefined)
@@ -61,8 +51,6 @@ describe('Cmd+W', () => {
     expect(closing).not.toHaveBeenCalled()
   })
 
-  /** Ctrl+D leaves nothing in front and every tab open, and a window with tabs in it
-   *  is not a window with nothing left in it. */
   test('but not while the tabs are only put down', () => {
     showing(null)
     const was = workspace.tabs

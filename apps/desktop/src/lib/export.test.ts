@@ -1,8 +1,5 @@
 import { type DOMWindow, JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
-// Both heavy libraries handed over outright. In the app a formula is set by a render
-// that has awaited them - `prepareFences` and `runExport` do - and these render
-// synchronously; see @orden/markdown/engines.
 import '@orden/markdown/eager'
 import {
   buildHtml,
@@ -15,7 +12,6 @@ import {
 import { titleOf } from './export/document'
 import { EXPORT_FORMATS } from './export/formats'
 
-/** One of everything the renderer knows. */
 const NOTE = `---
 title: Meta
 author: Ada Lovelace
@@ -97,10 +93,6 @@ describe('a styled export', () => {
     expect(buildHtml(NOTE, 'x.md', { accent: 'teal' })).toContain('--accent: #0d8277')
   })
 
-  /** WebKit, which a Mac prints with, does not honour `break-after: avoid`, and a
-   *  heading ended a page with its section on the next. The room a heading keeps
-   *  under it is WebKit's alone, and never the last heading's, which has nothing to
-   *  keep with. */
   test('keeps a heading with its section on paper in WebKit as well', () => {
     const print = html.slice(html.indexOf('@media print'))
     const webkit = print.slice(print.indexOf('@supports (hanging-punctuation: first)'))
@@ -195,10 +187,6 @@ describe('a styled export', () => {
   })
 })
 
-/** A document that has left the app takes the colours with it: the class the
- *  renderer writes and the rules that dress it are both in the sheet baked into
- *  the page, so a highlight is the same colour on paper as on screen. See
- *  highlights.ts in @orden/markdown and `--mark-*` in tokens.css. */
 describe('a coloured highlight in an exported document', () => {
   const html = buildHtml('Be ==\u{1F534} careful== here.\n', 'x.md')
 
@@ -214,9 +202,6 @@ describe('a coloured highlight in an exported document', () => {
   })
 })
 
-/** An exported document as a browser would hold it, less its paper. An `@page`
- *  rule has no selector, which jsdom reads as one that matches every element and
- *  then cannot rank; the size of the paper has no say in what is printed on it. */
 function opened(html: string): DOMWindow {
   const { window } = new JSDOM(html)
   for (const sheet of window.document.styleSheets) {
@@ -227,10 +212,6 @@ function opened(html: string): DOMWindow {
   return window
 }
 
-/** A column's side is the renderer's `align` attribute, and any `text-align` a
- *  sheet declares outranks one of those, so the theme has to hand it back. jsdom
- *  runs the cascade, specificity and all, over the sheets baked into the page:
- *  the same sheets the reading view wears and a published page is served. */
 describe('an aligned table column in an exported document', () => {
   const window = opened(
     buildHtml(
@@ -269,9 +250,6 @@ describe('a bare export', () => {
   })
 })
 
-/** An export is the same question the reading view asks: whose words these are.
- *  A collaborator's `<img onerror>` in a shared space is their markup, and a PDF
- *  of it is drawn in a window of the app's own. */
 describe('an export of somebody else\u2019s note', () => {
   const NOTE = '# Plan\n\n<img src=x onerror="alert(1)">\n'
 
@@ -287,10 +265,6 @@ describe('an export of somebody else\u2019s note', () => {
   })
 })
 
-/** Whatever the trust answer, nothing in an exported page runs: it is printed in
- *  a hidden window off a file, and opened later in whatever browser the reader
- *  has. Everything it needs is inline - styles, fonts, pictures - so the policy
- *  can say no to script outright and still let the page draw. */
 describe('the content policy an exported page carries', () => {
   const policyOf = (html: string) =>
     /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/.exec(html)?.[1] ?? ''
@@ -309,9 +283,6 @@ describe('the content policy an exported page carries', () => {
     }
   })
 
-  /** Every picture is a `data:` address by the time the page is written, the
-   *  maths fonts are too, and the styles are one inline sheet; a bare page keeps
-   *  the paths the note wrote. None of them may stop drawing. */
   test('still lets the page draw what it carries', () => {
     const policy = policyOf(buildHtml(NOTE, 'Handbook.md'))
 
@@ -444,10 +415,6 @@ describe('pandoc formats', () => {
     }
   })
 
-  /** Orden writes its own Word, RTF and ePub, with the diagrams drawn, the code
-   *  coloured and the pictures carried. Offering pandoc's as well would mean one
-   *  format came out two ways depending on the machine, and a row that appeared
-   *  only where pandoc happened to be installed. */
   test('leave out the three Nib writes itself', () => {
     const ids = PANDOC_FORMATS.map((format) => format.id)
     for (const own of ['docx', 'rtf', 'epub']) {
@@ -506,8 +473,6 @@ describe('a note that reaches for a file on the disk', () => {
     'the words of the note',
   ].join('\n')
 
-  /** Every tag of the page's body that the engine would act on: as characters, a tag is
-   *  `&lt;iframe`, and is none of these. */
   const live = (html: string) => {
     const body = new JSDOM(html).window.document.body
     return {

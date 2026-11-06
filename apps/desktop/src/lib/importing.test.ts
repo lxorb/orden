@@ -56,11 +56,6 @@ describe('the folder an import makes for itself', () => {
   })
 })
 
-/** A folder picked whole, the way the sheet's button and a drop both hand one over:
- *  every file's path starts with the folder's own name. The import's folder is named
- *  after it, so the files inside must not carry that name again - a folder called
- *  Vault became Vault/Vault/Home.md, and one called Bear, Bear/Bear. Settings' Import
- *  takes the name off for the same reason; see `pickedFolder` in import/sources.ts. */
 describe('a folder picked whole', () => {
   function inFolder(path: string, words: string): Picked {
     const bytes = new TextEncoder().encode(words)

@@ -14,11 +14,6 @@ import { rewriteLinks } from './link-rewrite'
 import { noteName } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
-/** A note that holds notes, read as paths: what nesting one makes on disk, what
- *  the tree draws once it is made, what renaming the row renames, the way back
- *  out, and the one thing all of it is for - that `[[A]]` goes on meaning the
- *  same note afterwards. */
-
 function note(path: string): Entry {
   return {
     name: path.split(/[\\/]/).pop() ?? path,
@@ -51,8 +46,6 @@ describe('the folder a note would become', () => {
     expect(folderFor('C:\\Nib\\Notes\\A.md')).toBe('C:\\Nib\\Notes\\A')
   })
 
-  /** Which is what lets every row ask: a PDF becomes no folder, and no folder is
-   *  ever called `paper.pdf`, so nothing lights and nothing nests. */
   test('and a file that is not a note answers itself back', () => {
     expect(folderFor('/s/paper.pdf')).toBe('/s/paper.pdf')
     expect(folderFor('/s/Board.canvas')).toBe('/s/Board.canvas')
@@ -69,8 +62,6 @@ describe('the note a folder would be drawn as', () => {
     expect(folderNotePath('C:\\Nib\\Notes\\A')).toBe('C:\\Nib\\Notes\\A\\A.md')
   })
 
-  /** The question a rename, an icon and a drop all ask about a path, with no
-   *  listing to hand. */
   test('and a note sitting in the folder it names is that note', () => {
     expect(isFolderNote('/s/A/A.md')).toBe(true)
     expect(isFolderNote('C:\\Nib\\A\\A.markdown')).toBe(true)
@@ -90,8 +81,6 @@ describe('the note a folder is drawn as', () => {
     expect(folderNote(entry)?.path).toBe('/s/A/A.md')
   })
 
-  /** The other convention in the wild, read so a vault that uses it reads as
-   *  nested here too. Orden never writes one. */
   test('or the index note a vault or a site generator put there', () => {
     expect(folderNote(folder('/s/A', [note('/s/A/index.md')]))?.path).toBe('/s/A/index.md')
     expect(folderNote(folder('/s/A', [note('/s/A/INDEX.md')]))?.path).toBe('/s/A/INDEX.md')
@@ -108,8 +97,6 @@ describe('the note a folder is drawn as', () => {
     expect(folderNote(folder('/s/Empty'))).toBeNull()
   })
 
-  /** Two filesystems disagree about capitals, and folding `Notes/notes.md` into
-   *  one row because of it would hide a note somebody meant to keep. */
   test('nor a note whose name differs only in case', () => {
     expect(folderNote(folder('/s/Notes', [note('/s/Notes/notes.md')]))).toBeNull()
   })
@@ -153,9 +140,6 @@ describe('nesting a note in a note', () => {
     expect(noteToNest(tree, folderFor('/s/A.md'))).toBe('/s/A.md')
   })
 
-  /** The folder is there, so the drop is an ordinary move into it and the note
-   *  has nowhere to go. A vault written the other way round - `A.md` beside `A/` -
-   *  reads like this, and the note becomes the folder note by arriving. */
   test('and nothing when a folder of that name already exists', () => {
     const beside = folder('/s', [folder('/s/A', [note('/s/A/x.md')]), note('/s/A.md')])
     expect(noteToNest(beside, '/s/A')).toBeNull()
@@ -193,9 +177,6 @@ describe('the way back out', () => {
     expect(unnesting(folder('/s/A'))).toBeNull()
   })
 
-  /** Orden undoes what Orden did. A folder whose note is an `index.md` is somebody
-   *  else's layout, and taking it apart because a reader moved the last note out
-   *  of it would be rearranging a vault Orden was asked to show. */
   test('and a folder holding only an index note is left exactly as it is', () => {
     expect(unnesting(folder('/s/A', [note('/s/A/index.md')]))).toBeNull()
   })
@@ -226,8 +207,6 @@ describe('renaming the row', () => {
     })
   })
 
-  /** The field is prefilled without one, but somebody may type it back on, and a
-   *  folder called `B.md` is not what they meant. */
   test('and taking a name typed with the extension on it', () => {
     expect(renameSteps('/s/A/A.md', 'B.md')).toEqual([
       { path: '/s/A/A.md', name: 'B.md' },
@@ -246,19 +225,12 @@ describe('renaming the row', () => {
     expect(renameSteps('/s/A/A.md', '   ')).toEqual([])
   })
 
-  /** An index note is named after its place rather than after itself, so the name
-   *  that was typed is the folder's and the note keeps the name its convention
-   *  gave it. Renaming it would convert a vault by renaming a row in it. */
   test('and renames only the folder where the note inside is an index', () => {
     expect(renameSteps('/s/A/index.md', 'B')).toEqual([{ path: '/s/A', name: 'B' }])
     expect(renameSteps('/s/A/_index.md', 'B')).toEqual([{ path: '/s/A', name: 'B' }])
   })
 })
 
-/** What the whole convention is for. A link resolves by name, and the name is
- *  the file's own, so `[[A]]` finds `A/A.md` for the same reason it found `A.md`:
- *  the name ends the path. Nothing to rewrite, and nothing that was pointing at
- *  the note stops. */
 describe('the links to a note that has just been nested', () => {
   const index = (paths: string[], from: string | null = null) => ({
     notes: paths.map((path) => ({
@@ -285,8 +257,6 @@ describe('the links to a note that has just been nested', () => {
     expect(resolveNote(index(['A/A.md', 'A/B.md'], 'A/B.md'), 'A')?.path).toBe('A/A.md')
   })
 
-  /** So the rewrite that follows every move leaves a bare wikilink exactly as it
-   *  was written: a link keeps its own spelling, and this one is already right. */
   test('so the rewrite the move runs changes no bare wikilink', () => {
     const text = 'See [[A]] and [[A|the plan]] and [[A#Why]].\n'
     const move = { from: 'A.md', to: 'A/A.md' }

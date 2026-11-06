@@ -1,13 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The icon a file chose, asked by the space the file is in.
- *
- *  Emil, 2026-10-03: a note's custom icon only showed while its own space was the open
- *  one. The link index is a scan of the open space, so a tab from another space asked
- *  it and got nothing. Here are two spaces with a tab each, and both tabs wear their
- *  own icons whichever space is open - the open one's out of the index, the other's
- *  out of its file. See chosen-icon.ts and marks-elsewhere.svelte.ts. */
-
 const FILES: Record<string, string> = {
   '/Work/Plan.md': '---\nicon: rocket\nicon-color: violet\n---\n# Plan\n',
   '/Home/Plan.md': '---\nicon: house\n---\n# Plan\n',
@@ -24,13 +16,9 @@ const FILES: Record<string, string> = {
   '/Home/Written.md': '# Written\n\nWords.\n',
 }
 
-/** The papers on the disk: a page note made from a PDF holds one beside it. */
 const PAPERS = new Set(['/Home/Lecture.pages.pdf'])
-/** Every path the disk was asked whether anything is at. */
 const asked: string[] = []
 
-/** What the open space's index says, by the path as that space speaks it - which
- *  is all the index ever holds. */
 const index: {
   root: string
   icons: Record<string, string>
@@ -73,7 +61,6 @@ vi.mock('./link-index.svelte', () => ({
   },
 }))
 
-/** The marks open tabs' pages show, by tab. */
 const live: Record<string, string> = {}
 
 vi.mock('./web-tab/pages.svelte', () => ({
@@ -82,7 +69,6 @@ vi.mock('./web-tab/pages.svelte', () => ({
     shown ?? written ?? null,
 }))
 
-/** A file in the listing, and a folder holding what it is given. */
 const file = (path: string) => ({
   name: path.split('/').pop() ?? path,
   path,
@@ -96,9 +82,6 @@ const folder = (path: string, ...children: ReturnType<typeof file>[]) => ({
   children,
 })
 
-/** The folders of the open space's listing: a note holding another, a note holding
- *  nothing, a folder out of a vault with no note of its own and things in it, and one
- *  with nothing at all. */
 const FOLDERS: Record<string, ReturnType<typeof folder>> = {
   '/Work/Box': folder('/Work/Box', file('/Work/Box/Box.md'), file('/Work/Box/Inside.md')),
   '/Work/Lone': folder('/Work/Lone', file('/Work/Lone/Lone.md')),
@@ -106,7 +89,6 @@ const FOLDERS: Record<string, ReturnType<typeof folder>> = {
   '/Work/Hollow': folder('/Work/Hollow'),
 }
 
-/** The tabs open in the window. */
 const tabs: { kind: string; path: string | null; id: string }[] = []
 
 vi.mock('./workspace.svelte', () => ({
@@ -120,7 +102,6 @@ vi.mock('./workspace.svelte', () => ({
     },
     folderIcons: { iconOf: () => null, tintOf: () => null },
     tabs,
-    /** The open space's listing: what tree.rs says of each file it lists. */
     entryAt: (path: string) =>
       path === '/Work/Made.pages'
         ? { path, paper: true }
@@ -142,7 +123,6 @@ function tabAt(path: string) {
   return new Tab(doc, 'pane')
 }
 
-/** The open space, as the index would be built for it. */
 function open(root: string) {
   index.root = root
   index.icons = root === '/Work' ? { 'Plan.md': 'rocket' } : { 'Plan.md': 'house' }
@@ -150,7 +130,6 @@ function open(root: string) {
   elsewhere.clear()
 }
 
-/** Asked once, read, and asked again: what a mark redrawn by the read lands on. */
 async function settled<T>(ask: () => T): Promise<T> {
   ask()
   await vi.waitFor(() => expect(ask()).not.toBeNull())
@@ -171,7 +150,6 @@ describe('two spaces with a tab each', () => {
     expect(chosenIcon(work.path ?? '')).toBe('rocket')
     expect(chosenTint(work.path ?? '')).toBe('violet')
     expect(await settled(() => chosenIcon(home.path ?? ''))).toBe('house')
-    // Out of the file, never out of the open space's note of the same name.
     expect(reads).toEqual(['/Home/Plan.md'])
   })
 
@@ -199,13 +177,11 @@ describe('two spaces with a tab each', () => {
     expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,AA')
   })
 
-  /** #1098: an icon the reader chose for a web note is worn over the site's mark. */
   test('a website wears the icon chosen for it over its own mark', async () => {
     open('/Work')
 
     expect(await settled(() => chosenIcon('/Home/Chosen.url'))).toBe('rocket')
     expect(faviconFor('/Home/Chosen.url')).toBeNull()
-    // And one nobody chose an icon for still wears the site's.
     expect(await settled(() => faviconFor('/Home/Docs.url'))).toBe('data:image/png;base64,AA')
   })
 
@@ -229,8 +205,6 @@ describe('two spaces with a tab each', () => {
   })
 })
 
-/** A chat keeps what it wears in its `.chat` pointer, which no scan of a space reads: so
- *  it is read on its own, in the open space as in any other. See chosen-icon.ts. */
 describe('a chat', () => {
   test('wears the icon and the colour its pointer says, in the open space too', async () => {
     open('/Work')
@@ -261,9 +235,6 @@ describe('a chat', () => {
   })
 })
 
-/** #676: a page note made from a PDF wears the PDF's mark, and the open space's listing
- *  says which those are only for its own files. A tab, a bookmark or a search hit from
- *  another space wore the page note's mark, though it was the same note. */
 describe('a page note made from a PDF', () => {
   test('in the open space is known from its listing, with nothing asked of the disk', () => {
     open('/Work')
@@ -295,8 +266,6 @@ describe('a page note made from a PDF', () => {
     expect(holdsPaper('/Home/Sketch.pages')).toBe(false)
   })
 
-  /** The one answer every list draws by (#676): the PDF's mark for a page note made
-   *  from one, and the kind's own for everything else. */
   test('wears the PDF s mark, and nothing else does', () => {
     open('/Work')
 
@@ -308,8 +277,6 @@ describe('a page note made from a PDF', () => {
     expect(sourceMark('pages', '/Work/Made.pages').icon).toBeNull()
   })
 
-  /** #1082: a website wears its brand's logo where its favicon has not come, by the
-   *  address it is at; nothing else wears one. */
   test('a website wears its brand s logo by its address, and nothing else does', () => {
     open('/Work')
 
@@ -322,9 +289,6 @@ describe('a page note made from a PDF', () => {
     expect(sourceMark('note', '/Work/Plan.md', 'https://github.com/').icon).toBeNull()
   })
 
-  /** #1042: a note that says nothing yet - whitespace, or its own name as a heading -
-   *  wears the empty page, and the folder where it holds notes; so does a folder that
-   *  has no note of its own. Whatever the reader chose is worn over it, by FileMark. */
   test('a note that says nothing yet wears the empty page, or the folder', () => {
     open('/Work')
 
@@ -334,7 +298,6 @@ describe('a page note made from a PDF', () => {
     expect(sourceMark('note', '/Work/Lone/Lone.md').mark).toBe('file')
     expect(sourceMark('file', '/Work/Vault').mark).toBe('folder')
     expect(sourceMark('file', '/Work/Hollow').mark).toBe('file')
-    // A file that is a file is no empty page, and holds nothing.
     expect(sourceMark('file', '/Work/Notes.md.bak').mark).toBe('file')
     expect(sourceMark('note', undefined).mark).toBe('note')
     expect(sourceMark('canvas', '/Work/Empty.md').mark).toBe('canvas')

@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The hint store: which card goes up, when, and that one put away stays away. */
-
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
 
@@ -26,11 +24,8 @@ vi.stubGlobal('document', {
   },
 })
 
-/** Loaded once here rather than in the first test, which would spend its budget
- *  compiling; see docs/conventions.md. */
 await import('./hints.svelte')
 
-/** The store and the modes it reads, as a fresh start of the app finds them. */
 async function restarted() {
   vi.resetModules()
   const { hints } = await import('./hints.svelte')

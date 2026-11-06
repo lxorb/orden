@@ -3,8 +3,6 @@ import type { MenuGroup, MenuRow } from './menu-item'
 import type { MenuItem } from './menu-item'
 import { de } from '../locales/de'
 
-/** The stores write to the browser's storage and ask the browser what kind of
- *  machine this is, and there is neither under node. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -23,8 +21,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** Loaded once, at module scope: the menu and the command list reach half the app,
- *  and compiling that belongs to no one test. See docs/conventions.md. */
 const { appMenu } = await import('./app-menu')
 const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./links')
 const { isSubmenu, walkableRows } = await import('./menu-item')
@@ -40,7 +36,6 @@ function group(id: string): MenuGroup {
   return found
 }
 
-/** The rows of a group, rules left out. */
 function rows(id: string): MenuRow[] {
   return group(id).rows.filter((row) => row !== null)
 }
@@ -63,9 +58,6 @@ describe('the shape of the menu', () => {
     ])
   })
 
-  /** Export was a group of its own beside File, which put the formats a note goes
-   *  out as in the same strip as File, Edit and View. A person looking for "export"
-   *  looks under File, because that is where every other editor keeps it. */
   test('keeps Export under File, as one row with rows of its own', () => {
     const submenus = rows('file').filter(isSubmenu)
 
@@ -85,15 +77,10 @@ describe('the shape of the menu', () => {
 
 describe('File', () => {
   test('offers printing', () => {
-    // Only where the machine has a print dialog at all; under node it has none,
-    // so the row is absent and that is the row doing its job.
     const printing = labels('file').includes('Print')
     expect(printing).toBe(typeof window !== 'undefined' && typeof window.print === 'function')
   })
 
-  /** Emil, 2026-09-30: what a document goes out as and what it was, and nothing
-   *  more. The rest was a second list of what the keys, the strip's plus, a tab's
-   *  own menu, the gear and the palette already reach. */
   test('is Export, Print and Version history, and nothing else', () => {
     const read = group('file').rows.map((row) => (row === null ? '---' : row.label))
     const printing = typeof window !== 'undefined' && typeof window.print === 'function'
@@ -101,7 +88,6 @@ describe('File', () => {
     expect(read).toEqual(['Export', ...(printing ? ['Print'] : []), '---', 'Version history'])
   })
 
-  /** Every row that left is still a command: in the palette, and on its key. */
   test('and every row it gave up is still in the palette and on its key', () => {
     const offered = new Set(appCommands().map((one) => one.id))
     const commands = ['new', 'import', 'space', 'settings']
@@ -116,8 +102,6 @@ describe('File', () => {
       expect(offered.has(id), id).toBe(true)
     }
 
-    // New window gave Ctrl+Shift+N to the private tab (docs/backlog.md, Q3) and keeps
-    // its row in the palette without a key.
     const keys = [
       'app.new',
       'app.close',
@@ -129,8 +113,6 @@ describe('File', () => {
     for (const id of keys) expect(BY_ID.get(id)?.key, id).toBeTruthy()
   })
 
-  /** The rows the menu in the window was the only way in to, before it went (#304).
-   *  Always on top too, which only a desktop offers. */
   test('and every row only the menu had is in the palette now', () => {
     const offered = appCommands().map((one) => one.label)
     for (const label of [
@@ -142,10 +124,6 @@ describe('File', () => {
     }
   })
 
-  /** Emil, 2026-09-30: *"I don't want there to be any manual saving anymore. Only
-   *  autosaving, that's it."* Every note writes itself, so there is no Save and no
-   *  Save as to offer anywhere; Ctrl+S is the chord's default and nobody's row. See
-   *  `writeKey` in shortcuts.svelte.ts. */
   test('and there is no Save anywhere: not in the palette and not on a key', () => {
     const offered = appCommands().map((one) => one.id)
     expect(offered).not.toContain('save')
@@ -175,8 +153,6 @@ describe('Edit', () => {
     ])
   })
 
-  /** The keys every editor walks its matches with were nowhere to be read: Cmd+G
-   *  worked, and no row said so. */
   test('and the rows that walk from one match to the next, on their keys', () => {
     const edit = menu().find((group) => group.id === 'edit')?.rows ?? []
     const commands = edit.flatMap((row) => (row && 'command' in row ? [row.command] : []))
@@ -208,8 +184,6 @@ describe('Paragraph and Format', () => {
 })
 
 describe('View and Help', () => {
-  /** A page in a browser has no window of its own to raise, and this is not a
-   *  desktop build, so the row is not there. */
   test('leaves Always on top to the desktop', () => {
     expect(labels('view')).not.toContain('Always on top')
   })
@@ -222,9 +196,6 @@ describe('View and Help', () => {
   })
 })
 
-/** A row in a menu, a row in the palette and a row in the shortcut settings are
- *  three ways to the same thing, and a person who knows what it is called should
- *  not have to know which of the three to look in. */
 describe('the menu, the palette and the shortcut settings agree', () => {
   const shared = [
     ['paragraph.task-list', 'Task list'],
@@ -251,8 +222,6 @@ describe('the menu, the palette and the shortcut settings agree', () => {
 
   test('every block the Paragraph and Format menus offer is in the palette too', () => {
     const offered = new Set(appCommands().map((one) => one.label))
-    // Replace is a row of Edit rather than a block, and Print is only there on a
-    // machine that has a print dialog; both are their own tests above.
     const elsewhere = new Set(['Replace', 'Print'])
 
     for (const [, label] of shared) {
@@ -265,21 +234,13 @@ describe('the menu, the palette and the shortcut settings agree', () => {
     for (const one of menu()) {
       for (const row of actions(one.id)) {
         if (!row.hint) continue
-        // A hint is only ever `shortcuts.hint(id)`, so any hint at all means the
-        // registry answered; an id that is not in it answers undefined.
         expect(row.hint.length, `${one.id}: ${row.label}`).toBeGreaterThan(0)
       }
     }
   })
 })
 
-/** The palette is the way in for somebody who has not learned the menus, so
- *  every row of it has to read in the language the app is set to. A row built by
- *  pasting a name onto an English word reads as English in all four. */
 describe('the palette in another language', () => {
-  /** The catalogue is fetched when a language is chosen, so the reading happens
-   *  once it has landed. Through `choice` and `load()` rather than `select()`,
-   *  which writes to storage a test has none of. */
   const inGerman = async <T>(read: () => T): Promise<T> => {
     const was = i18n.choice
     i18n.choice = 'de'
@@ -293,8 +254,6 @@ describe('the palette in another language', () => {
   }
 
   test('says nothing in English', async () => {
-    // The words that used to be pasted on: `Theme: Sepia`, `Code theme: One`,
-    // `Mode: Dark`, `Recent: Note`. Each is a key with a `{name}` in it now.
     const english = await inGerman(() =>
       appCommands()
         .map((one) => one.label)
@@ -305,9 +264,6 @@ describe('the palette in another language', () => {
   })
 
   test('leaves no row standing in its English wording', async () => {
-    // A label that is still an English key the German dictionary translates to
-    // something else never went through `t()`. A word German keeps as it is -
-    // Graph, Code - is its own translation and is not one of these.
     const unchanged = await inGerman(() =>
       appCommands()
         .map((one) => one.label)
@@ -317,8 +273,6 @@ describe('the palette in another language', () => {
     expect(unchanged).toEqual([])
   })
 
-  /** The one already in force is marked, not described: a word in the key's
-   *  place would be a word to read where a shape says it. */
   test('ticks the theme in use rather than writing a word beside it', () => {
     const themes = appCommands().filter((one) => one.id.startsWith('theme:'))
     expect(themes.length).toBeGreaterThan(0)
@@ -327,8 +281,6 @@ describe('the palette in another language', () => {
     expect(themes.filter((one) => one.checked).length).toBe(1)
   })
 
-  /** The scheme is its own choice, so it is its own three rows: the keyboard
-   *  reaches the same ones the Appearance pane offers. */
   test('offers the three the scheme can be, one of them ticked', () => {
     const modes = appCommands().filter((one) => one.id.startsWith('scheme:'))
 
@@ -352,8 +304,6 @@ describe('where a key may stand in a menu', () => {
     expect(walkableRows([act('one'), null, act('two')])).toEqual([0, 2])
   })
 
-  /** A greyed row does nothing when it is clicked, so landing on it would be a
-   *  press that went nowhere and a cursor that looked stuck. */
   test('is never a row that is greyed out', () => {
     expect(walkableRows([act('one'), act('two', true), act('three')])).toEqual([0, 2])
   })
@@ -372,9 +322,6 @@ describe('where a key may stand in a menu', () => {
     expect(walkableRows(group('file').rows).length).toBeGreaterThan(0)
   })
 
-  /** A group whose every row is greyed - Paragraph, with no note in front - has
-   *  nowhere for a key to stand at all, which is why the cursor starts on
-   *  nothing rather than on the first row. */
   test('is nowhere in a group where every row is greyed out', () => {
     const paragraph = group('paragraph')
     expect(paragraph.rows.length).toBeGreaterThan(0)

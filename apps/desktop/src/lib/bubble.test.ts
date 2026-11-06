@@ -4,20 +4,9 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
 
-/** The small card a sentence appears in, and the three that hold buttons.
- *
- *  `.nib-bubble` lets every press through it, because the sentence it holds sits over
- *  the row it is about. That is inherited, so a bubble with a button in it that did not
- *  say otherwise drew the button and gave it nothing: a site's question under a web
- *  tab's bar showed Allow and Don't allow, and every press on either fell through to
- *  the page's hole behind them. Emil, 2026-09-28: *"and this thing here is not
- *  clickable."* So every bubble that holds something to press is `is-pressable`, and
- *  this reads every component to hold them to it. See `.nib-bubble` in the themes. */
-
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const BASE = fileURLToPath(new URL('../../../../packages/themes/src/base.css', import.meta.url))
 
-/** What a hand can press, by element. */
 const PRESSED = new Set(['button', 'a', 'input', 'select', 'textarea', 'summary'])
 
 interface Node {
@@ -36,7 +25,6 @@ function components(dir: string): string[] {
   })
 }
 
-/** The static half of an element's `class`, which is where a bubble says what it is. */
 function classOf(node: Node): string {
   const found = node.attributes?.find((one) => one.type === 'Attribute' && one.name === 'class')
   if (!found || !Array.isArray(found.value)) return ''
@@ -46,7 +34,6 @@ function classOf(node: Node): string {
     .join(' ')
 }
 
-/** Every element under a node, through blocks as well as elements. */
 function* elements(node: unknown): Generator<Node> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -69,7 +56,6 @@ function holdsAPress(bubble: Node): boolean {
   return false
 }
 
-/** Each bubble in the app: which file, whether it holds a press, and what it says it is. */
 const bubbles = components(SRC).flatMap((file) => {
   const tree = parse(readFileSync(file, 'utf8'), { modern: true })
   return [...elements(tree.fragment)]
@@ -83,7 +69,6 @@ const bubbles = components(SRC).flatMap((file) => {
 
 describe('a bubble', () => {
   test('is found where the app draws one, sentences and buttons both', () => {
-    // Guards the reading itself: a parse that found nothing would pass everything.
     expect(bubbles.filter((one) => one.presses).map((one) => one.file)).toEqual(
       expect.arrayContaining([
         'lib/web-tab/WebAsk.svelte',

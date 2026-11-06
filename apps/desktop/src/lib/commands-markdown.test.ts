@@ -1,9 +1,5 @@
 import { describe, expect, test } from 'vitest'
 
-/** "Tidy up this note" rewrites the whole document as markdown. The editor opens
- *  more than notes - a stylesheet, a snippet list, a text file - and tidying one of
- *  those as markdown is the file spoiled, so it is only offered for a note. */
-
 const { tidies } = await import('./commands')
 
 describe('tidying up', () => {

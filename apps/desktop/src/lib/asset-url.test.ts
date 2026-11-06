@@ -1,21 +1,7 @@
-/** The one resolver, on both builds.
- *
- *  `assetUrl` is what every surface that draws a picture goes through - the
- *  editor's widget, the reading view, a hover preview, a card on a plane, a slide
- *  - and the whole point of it is that none of them can tell which build it is in.
- *  So it is asked here twice over, as the app and as a page in a browser, and the
- *  journey back is asked the same way: a document full of addresses has to be
- *  readable as paths again on either.
- *
- *  Which build it is is decided when the module is loaded, from the window, so
- *  each side loads it again with a window of its own. */
-
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 type Tauri = typeof import('./tauri')
 
-/** How Tauri hands out a file: a host under http where the platform will not give
- *  a webview a scheme of its own, and a scheme where it will. */
 const underHttp = (path: string) => `http://asset.localhost/${encodeURIComponent(path)}`
 const underScheme = (path: string) => `asset://localhost/${encodeURIComponent(path)}`
 
@@ -27,9 +13,6 @@ async function inBrowser(): Promise<Tauri> {
 
 async function inApp(convertFileSrc: (path: string) => string): Promise<Tauri> {
   vi.resetModules()
-  // The os plugin's global as well as the crate's, because that is what a Tauri page
-  // has: a page with the one and not the other is the failure tauri.test.ts is about,
-  // and it says so in the console rather than answering quietly.
   ;(globalThis as { window?: unknown }).window = {
     __TAURI_INTERNALS__: { convertFileSrc },
     __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'windows' },
@@ -57,8 +40,6 @@ describe('a picture, addressed', () => {
   })
 
   test('neither build hands back the bare path, which is the bug', async () => {
-    // A note-relative path in an `<img>` is asked of the page's own origin, and
-    // that is what never drew: whatever comes out here, it is an address.
     const browser = await inBrowser()
     expect(browser.assetUrl('/Work/assets/pic.png')).not.toBe('/Work/assets/pic.png')
 
@@ -107,8 +88,6 @@ describe('a picture a note names', () => {
     delete (globalThis as { window?: unknown }).window
     const { imageUrl } = await import('./images')
     expect(imageUrl('assets/pic.png', '/Work/Q1.md')).toBe('/asset/Work/assets/pic.png')
-    // One folder down, pointing at the space's own assets folder, which is what
-    // the Attachments setting writes.
     expect(imageUrl('../assets/pic.png', '/Work/notes/Q1.md')).toBe('/asset/Work/assets/pic.png')
   })
 

@@ -3,7 +3,6 @@ import type { GraphNode } from './graph'
 import { graphFilter } from './graph-filter'
 import { parseQuery } from '@orden/scan/search/query'
 
-/** One node of a picture, as much of it as a filter reads. */
 const node = (id: string, tags: string[] = []): GraphNode => ({
   id,
   name: (id.split('/').pop() ?? id).replace(/\.md$/, ''),
@@ -79,9 +78,6 @@ describe('a query over the picture of a space', () => {
   })
 })
 
-/** What the picture cannot hear, it does not answer with an empty picture: a
- *  filter that emptied the view over an operator it cannot read would look like
- *  the truth about the space. */
 describe('an operator the picture cannot answer', () => {
   test('front matter narrows nothing', () => {
     expect(kept('[status:done]')).toEqual(['Plan', 'Diary', 'Shopping list'])
@@ -92,9 +88,6 @@ describe('an operator the picture cannot answer', () => {
     expect(kept('line:(plan diary)')).toEqual([])
   })
 
-  /** A task is a line of a note rather than a distance between words, so the
-   *  terms in it are not about the note either: keeping every note whose name says
-   *  plan would answer a different question from the one asked. */
   test('and a task narrows nothing, terms and all', () => {
     expect(kept('task-todo:plan')).toEqual(['Plan', 'Diary', 'Shopping list'])
     expect(kept('task:')).toEqual(['Plan', 'Diary', 'Shopping list'])

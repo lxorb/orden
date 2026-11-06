@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Ctrl+S, which means one thing: put it on the disk. For a file, a silent write of
- *  what is owed - never a question, never a file picker, and never the browser's own
- *  Save page as; for a tab with no file, where it goes. See `writeKey` in
- *  shortcuts.svelte.ts. */
-
 const writeNow = vi.fn(() => Promise.resolve())
-/** The tab in front: a note with a file unless a test says otherwise. */
 const front = {
   active: { id: 'tab', note: { path: '/s/a.md' as string | null, shared: null, kind: 'note' } },
 }
@@ -23,7 +17,6 @@ vi.mock('./workspace.svelte', () => ({
 const askPlace = vi.fn()
 vi.mock('./save-place/ask', () => ({ askPlace }))
 
-/** The store asks the browser what kind of machine this is, and reads its storage. */
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 vi.stubGlobal('localStorage', {
   getItem: () => null,
@@ -33,7 +26,6 @@ vi.stubGlobal('localStorage', {
 
 const { shortcuts } = await import('./shortcuts.svelte')
 
-/** A press as the window hears it. */
 function press(key: string, held: { ctrl?: boolean; meta?: boolean; shift?: boolean } = {}) {
   let prevented = false
   const event = {
@@ -50,7 +42,6 @@ function press(key: string, held: { ctrl?: boolean; meta?: boolean; shift?: bool
       prevented = true
     },
   }
-  // A keystroke is all the chord reads; the rest of the DOM's event is not needed.
   return event as unknown as KeyboardEvent
 }
 
@@ -70,13 +61,11 @@ describe('Ctrl+S', () => {
     expect(event.defaultPrevented).toBe(true)
   })
 
-  /** Nothing is on Ctrl+Shift+S any more; it is left to whatever somebody puts there. */
   test('and not with Shift, which is not the chord', () => {
     expect(shortcuts.writeKey(press('S', { ctrl: true, shift: true }))).toBe(false)
     expect(writeNow).not.toHaveBeenCalled()
   })
 
-  /** A command somebody put on Ctrl+S answered first; this is only the default. */
   test('and nothing where something else already answered the press', () => {
     const event = press('s', { ctrl: true })
     event.preventDefault()
@@ -85,8 +74,6 @@ describe('Ctrl+S', () => {
     expect(writeNow).not.toHaveBeenCalled()
   })
 
-  /** VS Code's Ctrl+S on an untitled editor, without its file dialog: the one thing
-   *  about a new tab nobody has said is where it goes. */
   test('asks where a tab with no file goes, and writes nothing', async () => {
     front.active.note.path = null
 

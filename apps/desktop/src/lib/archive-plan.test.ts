@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { standing, toArchive, toRestore } from './archive-plan'
 
-/** Which entries one gesture touches: the two rules the archive's promises rest on. */
-
 describe('archiving a selection', () => {
   test('puts each row away once, in the order it was picked', () => {
     expect(toArchive(['b.md', 'a.md', 'b.md'], new Set())).toEqual(['b.md', 'a.md'])
@@ -53,7 +51,6 @@ describe('taking a row back', () => {
 
     expect(toRestore(keys, 'Old/2019/Taxes.md', childrenOf)).toEqual({
       restore: ['Old', 'Old/2019', 'Old/2019/Taxes.md'],
-      // What was archived on its own already stays archived without a new entry.
       archive: ['Old/Notes.md', 'Old/2019/Trip.md'],
     })
   })

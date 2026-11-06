@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import type { FoundLink } from '@orden/markdown/links'
 import { rewriteLinks } from './link-rewrite'
 
-/** Rewrites every link whose target names `wanted`, which is what the index
- *  decides for real; here it is a string comparison so the rewriting itself is
- *  what is under test. */
 const pointsAt = (wanted: string) => (link: FoundLink) =>
   link.target
     .replace(/\.(md|markdown)$/i, '')
@@ -125,7 +122,6 @@ describe('rewriting a markdown link', () => {
   })
 })
 
-/** The page draws these as code, so a rename leaves them as they were written. */
 describe('code the page draws is never rewritten', () => {
   test('a fence in a callout, indented code, and code in a list item', () => {
     for (const note of [

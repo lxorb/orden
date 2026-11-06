@@ -60,7 +60,6 @@ describe('the letter on a tile', () => {
   test('is one whole character, wherever it is written', () => {
     expect(initialOf('東京')).toBe('東')
     expect(initialOf('ﻣﺸﺮﻭﻉ')).toHaveLength(1)
-    // A letter with its mark written after it, which is one character to a reader.
     expect(initialOf('été')).toBe('É')
   })
 
@@ -77,7 +76,6 @@ describe('where a tile let go of lands', () => {
   })
 
   test('moved down the list, in the list as it is once it has left', () => {
-    // a b c d: a let go of in front of c lands between b and c.
     expect(slotFor(0, 2, false)).toBe(1)
     expect(slotFor(0, 2, true)).toBe(2)
   })
@@ -95,7 +93,6 @@ describe('where a tile let go of lands', () => {
 })
 
 describe('a step up or down the grid', () => {
-  // Four to a row and seven tiles: a full row, and a row of three under it.
   test('goes to the tile in the same column', () => {
     expect(stepInGrid(1, 7, 4, true)).toBe(5)
     expect(stepInGrid(5, 7, 4, false)).toBe(1)
@@ -121,7 +118,6 @@ describe('how many tiles there are to a row', () => {
 })
 
 describe('the tile a pointer between tiles is nearest', () => {
-  // Two to a row, 50 wide with a gap of 4, and one tile under them.
   const boxes = [
     { left: 0, right: 50, top: 0, bottom: 40 },
     { left: 54, right: 104, top: 0, bottom: 40 },
@@ -205,7 +201,6 @@ describe('rows let go of over the bookmarks', () => {
   })
 
   test('move one already kept rather than keeping it twice', () => {
-    // In front of c, which is where c is once a has left the front.
     expect(paths(placed(three, [note('a.md')], 2))).toEqual(['b.md', 'a.md', 'c.md'])
   })
 

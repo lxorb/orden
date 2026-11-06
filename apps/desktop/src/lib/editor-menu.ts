@@ -55,13 +55,6 @@ import { isMarkdownPath, noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'
 import { viewport } from './viewport.svelte'
 
-/** The editor's own context menu, so the browser's never appears.
- *
- *  Everything here calls the same commands the keyboard and the app menu call;
- *  what differs is how much of it is offered. A phone gets the clipboard alone,
- *  and a locked note gets the clipboard plus the way back out - a menu of things
- *  that cannot happen is worse than a short one. */
-
 function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
 
@@ -78,9 +71,6 @@ async function paste(view: EditorView) {
   view.focus()
 }
 
-/** What a block is called, in the reader's own language. The editor answers with
- *  a word of its own and never with one anybody reads; this is where that word
- *  becomes one. */
 function blockName(kind: BlockKind): string {
   switch (kind) {
     case 'heading':
@@ -106,31 +96,10 @@ function blockName(kind: BlockKind): string {
   }
 }
 
-/** The note a link to a block points into, or null where the block cannot have one:
- *  in a note nobody has saved, which has no path, or in a file that is not a note.
- *  Copying the link names the block first, ` ^id` on its last line, and in a
- *  stylesheet, a snippet list or a text file that is a line spoiled. */
 export function blockLinkName(path: string | null | undefined): string | null {
   return path && isMarkdownPath(path) ? noteName(path) : null
 }
 
-/** The rows about the block a press landed in: what it is, and what can be done
- *  to it.
- *
- *  To it, or to every block a selection covers: a selection in Orden is a selection
- *  of text and never a mode, so the blocks it lies across are simply the blocks it
- *  lies across. The first row is not a row to press - it says which block the rest
- *  of them are about, and how much of the note that is, which is the only place
- *  the app counts anything smaller than a note.
- *
- *  Nothing at all in a note nobody can write in: every one of these writes, and a
- *  row that cannot happen is worse than no row.
- *
- *  Every row acts on all of them. A reader holding four blocks wants what they would
- *  want holding one - turn these into a list, take them a step in, move them, link to
- *  them - and the editor answers each of those for a run of blocks as readily as for
- *  one; see block/commands.ts in @orden/editor. What the rows say changes with the
- *  count and what they do does not. */
 function blockEntries(
   view: EditorView | undefined,
   at: number | null,
@@ -160,9 +129,6 @@ function blockEntries(
       disabled: true,
       run: () => undefined,
     },
-    // Behind one word rather than in front of seven: a row's own menu has no room
-    // for a list, and the sheet the app already asks its short questions with reads
-    // the same on a phone as under a pointer. See prompt.svelte.ts.
     { label: t('Turn into'), run: () => void turnInto(view, at) },
     DIVIDER,
     { label: t('Indent'), run: () => indentBlocks(view, at) },
@@ -173,25 +139,12 @@ function blockEntries(
     DIVIDER,
     { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
     {
-      // A link to a block needs the block to have a name, and giving it one is a
-      // change to the note; see blockTarget in @orden/editor/menu. A note nobody has
-      // saved yet has no path and so nothing to point at: the row is there and
-      // says it cannot happen, which is shorter than explaining why.
-      //
-      // One link per block, each on its own line, which is a list of links a note
-      // can be pasted into. The row says the same word for one block or four
-      // because it is the same thing: the link to what is in hand.
       label: t('Copy link'),
       disabled: !name,
       run: () => {
         const targets = name ? blockTargets(view, at) : []
         if (!name || !targets.length) return
 
-        // Through `linkTo` like every other link the app writes, so a space set
-        // to markdown links gets one here too; see composer.ts. The block's own
-        // path and the note it is written from are both this note, which is what
-        // makes a relative link to it the bare file name.
-        // The note's own space, which a note still open from another one is not.
         const root = path ? workspace.rootHolding(path) : null
         const relative = root !== null && path?.startsWith(root) ? relativeTo(root, path) : null
         void copyText(
@@ -211,16 +164,6 @@ function blockEntries(
   ]
 }
 
-/** The fold sign on the callout the caret is in, as two switches.
- *
- *  Nothing at all anywhere else, because two greyed rows in every menu would be two
- *  rows about something that is not there.
- *
- *  A callout folds in Orden whatever it says - the chevron in the margin folds any
- *  block - so what these write is what the file carries, which is the half Obsidian
- *  reads and the half Orden reads on the way in: `+` says the callout may be folded,
- *  `-` says it opens shut. Written here rather than typed by hand, which is the whole
- *  reason for the rows; see callouts.ts in @orden/markdown and fold.ts in @orden/editor. */
 function calloutEntries(view: EditorView): MenuEntry[] {
   const sign = calloutSign(view.state)
   if (sign === null) return []
@@ -240,14 +183,6 @@ function calloutEntries(view: EditorView): MenuEntry[] {
   ]
 }
 
-/** What the blocks in hand could become, in the order a note is written in: the
- *  three heading levels anybody uses, plain words, the three kinds of list, and a
- *  quote. Obsidian and Notion offer the same handful, because it is the handful
- *  markdown has.
- *
- *  The labels are the app's own words for these, already written: the heading rows
- *  are the row the palette offers for each level, and the rest are the words the
- *  slash menu and the format menu use. */
 const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
   { shape: 'heading1', label: () => t('Heading {level}', { level: 1 }) },
   { shape: 'heading2', label: () => t('Heading {level}', { level: 2 }) },
@@ -259,16 +194,6 @@ const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
   { shape: 'quote', label: () => t('Quote') },
 ]
 
-/** Asks which, and turns them into it.
- *
- *  The sheet is fetched rather than imported: it is the app's short-question surface
- *  and carries its own drawing, and the menu row is already a press by the time this
- *  runs. The same shape the rewrite sheet is opened with; see `rewrite` below.
- *
- *  A list with a field over it rather than a row of buttons, which is what the sheet
- *  offers for a question with more than a handful of answers: eight buttons across a
- *  sheet is a row nobody reads, and three letters reach any of these. It is also the
- *  same list under a thumb as under a pointer. */
 async function turnInto(view: EditorView, at: number) {
   const { prompt } = await import('./prompt.svelte')
   const chosen = await prompt.find({
@@ -280,9 +205,6 @@ async function turnInto(view: EditorView, at: number) {
   if (shape) turnBlocksInto(view, at, shape.shape)
 }
 
-/** The first words of a block, which is what a list of them can be read by: the
- *  line it opens with, without the markup that opens it. A name of the block's
- *  own is what `^a1b2c3` is not. */
 function firstWords(text: string): string {
   const line = text.split('\n')[0] ?? ''
   return line
@@ -291,11 +213,6 @@ function firstWords(text: string): string {
     .slice(0, 60)
 }
 
-/** Keeping this block in the bookmarks above the file list.
- *
- *  The same naming a link to it uses - a heading by its words, anything else by a
- *  name written into the note; see blockTarget in @orden/editor/menu - so the row and
- *  the link point at the same thing and neither has a way of its own. */
 function blockBookmark(view: EditorView, at: number, path: string | null | undefined): MenuEntry[] {
   const root = workspace.activeSpace?.root
   if (!path || root === undefined || !path.startsWith(root)) return []
@@ -314,13 +231,8 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
     held
       ? { label: t('Remove from Essentials'), run: () => workspace.bookmarks.toggle(held) }
       : {
-          // One bookmark per block, each under its own first words, so a run of them
-          // arrives in the list as the blocks they are rather than as one row standing
-          // for several.
           label: spans.length > 1 ? t('Add blocks to Essentials') : t('Add block to Essentials'),
           run: () => {
-            // The words are read before any naming: giving a block a name writes into
-            // the note and moves every offset after it.
             const said = blocksFor(view, at).map((one) =>
               firstWords(view.state.doc.sliceString(one.from, one.to)),
             )
@@ -334,20 +246,11 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
   ]
 }
 
-/** The rewrite sheet, opened on what is selected.
- *
- *  Fetched rather than imported: the four rewrites carry everything the app knows about
- *  talking to a model, and a menu that only has to draw one row has no use for any of
- *  it. The row is already a press on an open menu by the time this runs, so the fetch
- *  happens under the sheet's own way in. See ai/rewriting.svelte.ts. */
 async function rewrite(view: EditorView) {
   const { rewriting } = await import('./ai/rewriting.svelte')
   rewriting.show(view)
 }
 
-/** The selection, quoted into a chat the reader picks (docs/chats.md 4.13). A row only
- *  for a note with a file and somebody signed in to an account, whose chats these are;
- *  never in the glasses' plugin, which carries none. */
 function sendEntry(view: EditorView): MenuEntry[] {
   const tab = workspace.active
   const note = tab?.kind === 'note' ? tab.path : null
@@ -389,14 +292,8 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
     },
   ]
 
-  // On a phone a press on the text is for the clipboard, the way it is in
-  // every other app there. The formatting lives in the bar above the
-  // keyboard and in the app menu, and sixteen rows would cover the text
-  // they are about.
   if (viewport.touch) return [...clipboard, ...block]
 
-  // A locked note leaves the clipboard rows and the way back out. The rest of
-  // this menu writes.
   if (locked) {
     return [
       ...clipboard,
@@ -412,17 +309,8 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
   return [
     ...clipboard,
     ...block,
-    // One row for the four rewrites, on a selection and only on one: what they do is
-    // replace what is selected, and four rows here would be four rows greyed out in
-    // every menu opened anywhere else. See ai/rewriting.svelte.ts.
     ...(selected
-      ? [
-          DIVIDER,
-          // `selected` is what says there is a view: it is false without one, which
-          // is why nothing here has to ask again.
-          { label: t('Rewrite…'), run: () => void rewrite(view) },
-          ...sendEntry(view),
-        ]
+      ? [DIVIDER, { label: t('Rewrite…'), run: () => void rewrite(view) }, ...sendEntry(view)]
       : []),
     DIVIDER,
     { label: t('Bold'), hint: shortcuts.hint('format.bold'), run: run(toggleWrap('**')) },
@@ -446,8 +334,6 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
       hint: shortcuts.hint('paragraph.ordered-list'),
       run: run(toggleOrderedList),
     },
-    // Not through `run`: the new table takes the focus into its first cell,
-    // and focusing the editor afterwards would take it straight back out.
     {
       label: t('Table'),
       hint: shortcuts.hint('paragraph.table'),
@@ -467,9 +353,6 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
     },
     { label: t('Page break'), run: run(insertPageBreak) },
     DIVIDER,
-    // Moving text between notes. Here rather than only in the palette because
-    // what they act on is the caret and the selection, which is what a right
-    // click is already about.
     ...composerEntries(view),
     DIVIDER,
     {
@@ -480,12 +363,6 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
   ]
 }
 
-/** The word a right click landed on, or null where it landed on none.
- *
- *  This is as close as a page can get to "the misspelled word": no browser will
- *  say which words its checker thinks are wrong, on any platform. It does not
- *  need to - the wavy line is under the word, the pointer is on the word, and
- *  the word is what the reader means. See spelling.ts in the editor package. */
 function wordUnder(view: EditorView, event: MouseEvent): string | null {
   const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
   if (at === null) return null
@@ -497,14 +374,9 @@ function wordUnder(view: EditorView, event: MouseEvent): string | null {
   return isSpellWord(word) ? word : null
 }
 
-/** Adding the word under the pointer to the reader's own list, or taking it out
- *  again. Only while the checker is on: with it off there is no wavy line to
- *  take away, and a row that does nothing visible is a row that lies. */
 function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
   if (!view || !modes.spellcheck) return []
 
-  // A press on the mark in the margin is about the block and not about a word:
-  // the nearest word to the margin is only the first one on the line.
   const on = event.target
   if (on instanceof Element && on.closest('.nib-block-handle')) return []
 
@@ -523,16 +395,6 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
   ]
 }
 
-/** The row a recording in the note offers: turning it into words.
- *
- *  On the embed's own menu because that is where it is about something: the file the
- *  press landed on, rather than a row in the palette that would have to guess which of
- *  the recordings in a note was meant. The words go under the player; see
- *  recorder/commands.ts.
- *
- *  Only where there is something to ask - a provider of the reader's own, or an
- *  account. Left out rather than greyed out: somebody with neither has nothing to press
- *  it for. See recorder/transcribe.ts, which is what knows. */
 function recordingEntries(view: EditorView | undefined, at: number | null): MenuEntry[] {
   if (!view || at === null || view.state.readOnly || !canTranscribe()) return []
   if (!recordingAt(view, at)) return []
@@ -540,21 +402,6 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
   return [DIVIDER, { label: t('Transcribe'), run: () => void transcribeEmbed(view, at) }]
 }
 
-/** The rows a right click on a link offers: where it goes, and changing it.
- *
- *  The way out to the real browser first. Pressing a link opens the page here now,
- *  which is what Orden holding pages means - so the deliberate "not here, over there" has
- *  to be somewhere a hand can find it, and this is where every browser keeps it. It is
- *  the only one: Shift+click is a tab in front, as in the rest of the app; see
- *  new-tab.ts. Only over a web address: a `mailto:` leaves for the system on a plain
- *  press already, and a row offering to open an email address "in the browser" would be
- *  a row that lied.
- *
- *  Then Chrome's Copy link address, and what every editor offers on a link it holds:
- *  pointing it somewhere else, and taking it away with its words kept. The address is
- *  read off the decoration under the pointer rather than out of the document, because
- *  that decoration is what the press landed on; the document says where the link is
- *  written, which is what the two edits change. See link-edit.ts in @orden/editor. */
 function linkEntries(
   view: EditorView | undefined,
   event: MouseEvent,
@@ -587,11 +434,6 @@ function linkEntries(
   ]
 }
 
-/** Where else a link to a note can take it, as Obsidian's link menu offers: a tab of
- *  its own behind this one, which is the middle button's answer, and a pane to the
- *  right, which is Ctrl+Alt+click's. Not on a phone, which has no pane to put beside
- *  another. And the link itself, written the way the space writes links and from
- *  nowhere in particular, so it reads the same wherever it is pasted; see `linkTo`. */
 function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
   return [
     { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind', from) },
@@ -607,8 +449,6 @@ function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
   ]
 }
 
-/** The link a followed jump would take, written afresh. A note the space has not got
- *  is named as the link names it, since there is no path to spell. */
 function linkOf(jump: NoteJump): string {
   const fragment =
     jump.block !== null
@@ -621,11 +461,6 @@ function linkOf(jump: NoteJump): string {
   })
 }
 
-/** The rows a right click on a picture offers, which are the ones Chrome, Typora and
- *  Obsidian all put there: the picture itself on the clipboard, the picture on its own,
- *  and the picture gone. Open is the full-window view a double click opens, and Delete
- *  is the bin on the picture's toolbar: it takes the picture out of the note and leaves
- *  the file, which another note may be showing. See image/pressed.ts in @orden/editor. */
 function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
   const picture = view ? pressedPicture(view, event.target) : null
   if (!view || !picture) return []
@@ -633,7 +468,6 @@ function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEn
   return [
     {
       label: t('Copy picture'),
-      // A picture that will not load has nothing to copy, and the menu is gone by then.
       run: () => void copyPicture(pictureUrl(view.state, picture)).catch(() => undefined),
     },
     { label: t('Open picture'), run: () => showPicture(view, picture) },
@@ -650,18 +484,11 @@ function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEn
   ]
 }
 
-/** Opens it at the pointer. One place, so the two things a right click on the
- *  text has to do - build the menu for this moment and place it - stay
- *  together. */
 export function showEditorMenu(
   event: MouseEvent,
   view: EditorView | undefined,
-  // Null and not only absent: a note that has never been saved has no path, and
-  // that is a note like any other until it is written down.
   path?: string | null,
 ) {
-  // Never the precise position: a press on the mark in the margin lands beside
-  // the text rather than in it, and that press is about the block it stands by.
   const at = view ? view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : null
 
   menu.show(

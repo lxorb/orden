@@ -1,12 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** The palette's rows that make a file, in a space shared to be read.
- *
- *  Each of them writes a new file into the space in front, and a space shared with
- *  this account to be read is one nothing may be written in: the copy here would stop
- *  being the space's, and the sync would refuse the change on every pass. So they are
- *  not offered there, exactly as the file list's menu offers nothing to make there. */
-
 const readOnly = new Set<string>()
 
 vi.mock('./sharing.svelte', async (importOriginal) => ({
@@ -48,8 +41,6 @@ describe('making a file from the palette', () => {
   })
 })
 
-/** The palette's rows about the note in front, in a space shared to be read: renaming
- *  it and moving it both write there, so neither is offered (B273). */
 describe('the note in front', () => {
   const NOTE = `${SPACE}/Plan.md`
 
@@ -98,8 +89,6 @@ describe('the note in front', () => {
   })
 })
 
-/** Convert syntax rewrites notes of the space in front, which one shared to be read
- *  refuses (B274). */
 describe('converting syntax', () => {
   const offers = () => {
     vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
@@ -117,8 +106,6 @@ describe('converting syntax', () => {
   })
 })
 
-/** Converting a space's old website notes writes a shortcut beside each and puts the
- *  note in the trash, so a space shared to be read is not offered it (B288). */
 describe('converting website notes', () => {
   async function offers(): Promise<boolean> {
     const { links } = await import('./link-index.svelte')

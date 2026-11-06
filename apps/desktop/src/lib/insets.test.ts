@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { edgesOf, startInsets, tintSystemBars, writeEdges } from './insets'
 
-/** The window's own edges arriving from the activity. Everything that crosses
- *  is a string, so the only interesting question is which strings become four
- *  numbers and which are refused - a page that took a bad one would put its
- *  toolbar under the clock and never say why. */
-
-/** The document root as the page writes insets to it. */
 function root() {
   const written = new Map<string, string>()
 
@@ -67,7 +61,6 @@ describe('what the page does with them', () => {
 
     startInsets()
     expect(page.written.size).toBe(0)
-    // And the bars are left to whoever else draws them.
     expect(() => tintSystemBars(true)).not.toThrow()
   })
 
@@ -87,7 +80,6 @@ describe('what the page does with them', () => {
     startInsets()
     expect(page.written.get('--inset-top')).toBe('24px')
 
-    // Turned on its side: the cutout moves to one edge and the activity nudges.
     edges = '{"top":0,"right":48,"bottom":0,"left":48}'
     const again = window.__nibInsets
     expect(typeof again).toBe('function')

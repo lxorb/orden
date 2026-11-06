@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { arriving } from './arriving.svelte'
 
-/** The surface an account's first sync holds, on its own. What raises it is the
- *  loop next door and is covered in sync.test.ts; this is the state machine:
- *  waiting, counting, done, and the way out that keeps a bad connection from
- *  being a trap. */
-
 beforeEach(() => {
   vi.useFakeTimers()
   arriving.reset()
@@ -25,8 +20,6 @@ describe('waiting for the account', () => {
     arriving.begin()
 
     expect(arriving.showing).toBe(true)
-    // Null rather than nought: the state says a word while the number is
-    // unknown, and "0 of 0" would be a lie about a pass that has not asked yet.
     expect(arriving.total).toBe(null)
     expect(arriving.done).toBe(0)
   })
@@ -72,7 +65,6 @@ describe('a pass nobody is waiting on', () => {
     arriving.settled()
 
     expect(arriving.showing).toBe(false)
-    // And nothing was counted either: a later pass is the sync light's business.
     expect(arriving.done).toBe(0)
     expect(arriving.total).toBe(null)
   })
@@ -83,7 +75,6 @@ describe('the way out', () => {
     arriving.begin()
     arriving.expect(400)
 
-    // Slower than the patience, but moving the whole way.
     for (let landed = 0; landed < 4; landed++) {
       vi.advanceTimersByTime(5000)
       arriving.arrived()
@@ -100,7 +91,6 @@ describe('the way out', () => {
     vi.advanceTimersByTime(6000)
 
     expect(arriving.stuck).toBe(true)
-    // Offered, not taken: what is on its way may still land.
     expect(arriving.showing).toBe(true)
   })
 
@@ -140,9 +130,6 @@ describe('the names, before the writing', () => {
     arriving.listing(['/space/one.md', '/space/two.md'])
     arriving.arrived()
 
-    // The body landed and was counted, and the row is still the row: the folder is
-    // read again when the pass is through, and a row that went the moment its note
-    // landed would blink out until then.
     expect([...arriving.coming]).toEqual(['/space/one.md', '/space/two.md'])
     expect(arriving.done).toBe(1)
 
@@ -164,8 +151,6 @@ describe('the names, before the writing', () => {
     arriving.listing(['/space/one.md', '/space/two.md'])
     arriving.settled()
 
-    // The pass ended and the count went; what has not landed is still coming, and
-    // the rows for it stay on the tree until it does.
     expect(arriving.showing).toBe(false)
     expect(arriving.coming.size).toBe(2)
   })
@@ -174,7 +159,6 @@ describe('the names, before the writing', () => {
     arriving.listing(['/space/late.md'])
 
     expect([...arriving.coming]).toEqual(['/space/late.md'])
-    // And says nothing: a pass nobody is waiting on is the sync light's business.
     expect(arriving.showing).toBe(false)
   })
 

@@ -1,16 +1,10 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A query or a tasks fence in a note of one space, read while another is in front
- *  (B439). Tabs are shared across spaces; the fence is a question about the note's own
- *  space, so its rows, the note a row opens and the box a row ticks are that space's.
- *  Answered from the space in front, A's note listed B's notes and ticked B's tasks. */
-
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: () => Promise.resolve(undefined),
 }))
 
-/** Which root the space search was asked of. */
 const searched: string[] = []
 vi.mock('./search/space', () => ({
   searchSpace: (
@@ -27,7 +21,6 @@ vi.mock('./search/space', () => ({
   },
 }))
 
-/** Which space's rows a tasks fence was answered from. */
 const rowsOf: (string | undefined)[] = []
 vi.mock('./rows/rows.svelte', () => ({
   rows: {

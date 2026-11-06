@@ -2,18 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import type { NoteGraph } from './graph'
 import { paint } from './graph-paint'
 
-/** What the Lines dial actually asks the card for.
- *
- *  Nothing here is a picture: what is asserted is the width of a stroke and how many
- *  of them there are, which is the one thing about the drawing that decides whether
- *  a space of ten thousand links pans at sixty frames a second. A stroke wider than
- *  one of the screen's own pixels leaves Skia's hairline path and is tessellated into
- *  geometry - 23 ms a frame against 4.0 seconds, measured in test/e2e/graph.py - so
- *  the thick step is the same hairline drawn three times a pixel apart instead, and
- *  what it costs is three passes rather than a tessellation. See `LINES` in
- *  graph-paint.ts, which states both numbers. */
-
-/** The path, which only has to remember that something was written into it. */
 class FakePath {
   readonly steps: string[] = []
   moveTo() {
@@ -35,27 +23,19 @@ class FakePath {
 
 vi.stubGlobal('Path2D', FakePath)
 
-/** One stroke, as the context was asked for it: how wide, in what colour, and how
- *  far the brush had been moved when it landed. */
 interface Stroke {
   wide: number
   colour: string
   dx: number
   dy: number
-  /** The shapes in the path it stroked, so an empty path reads as the nothing it
-   *  is: the drawing hands the card one path per kind whether that kind is in the
-   *  picture or not. */
   shapes: string[]
 }
 
-/** One fill, as the context was asked for it: in what colour, and what shapes were
- *  in the path it filled. */
 interface Fill {
   colour: string
   shapes: string[]
 }
 
-/** One name drawn: what it said, and how far up the fade it was. */
 interface Label {
   text: string
   alpha: number
@@ -115,7 +95,6 @@ function context(): {
   return { strokes, fills, labels, context: fake as unknown as CanvasRenderingContext2D }
 }
 
-/** Two notes and the link between them, which is all a width needs. */
 const GRAPH: NoteGraph = {
   nodes: [
     { id: 'A.md', name: 'A', path: 'A.md', degree: 1, tags: [] },
@@ -127,7 +106,6 @@ const GRAPH: NoteGraph = {
 const EDGE = '#111'
 const LIT_EDGE = '#222'
 
-/** Everything the drawing asked for, at one line width and one device ratio. */
 function painted(
   lines: number,
   ratio: number,
@@ -171,8 +149,6 @@ function painted(
 const all = (lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] =>
   painted(lines, ratio, over).strokes
 
-/** The strokes of the links themselves, told apart from the node rings by the colour
- *  they are drawn in: the drawing hands the card one path per kind. */
 function drawn(lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] {
   return all(lines, ratio, over).filter((one) => one.colour === EDGE)
 }
@@ -188,9 +164,6 @@ describe('how wide a link is drawn', () => {
     expect(drawn(1, 2).map((one) => one.wide)).toEqual([0.3])
   })
 
-  /** The whole of why the thick step exists in this shape: a stroke wider than a
-   *  device pixel is tessellated, and ten thousand tessellated lines are two frames
-   *  a second. */
   test('and never wider than one of the screen’s pixels, at any step', () => {
     for (const step of [1, 2, 3]) {
       for (const ratio of [1, 2, 3]) {
@@ -213,8 +186,6 @@ describe('how wide a link is drawn', () => {
   })
 
   test('and the brush is put back, so nothing after it is drawn offset', () => {
-    // The ring a node the space has not got wears is the stroke after the links,
-    // and it lands where the picture is rather than a pixel over.
     expect(all(3, 2).at(-1)?.dx).toBe(0)
     expect(all(3, 2).at(-1)?.dy).toBe(0)
   })
@@ -229,8 +200,6 @@ describe('how wide a link is drawn', () => {
     expect(drawn(99, 2)).toHaveLength(3)
   })
 
-  /** The handful around whatever the pointer is on: a dozen lines rather than ten
-   *  thousand, so they can afford the shape the card is handed for them. */
   test('the lit links are wider, which they can afford', () => {
     const lit = all(2, 2, { hovered: 0, lit: Uint8Array.from([2, 1]) })
 
@@ -238,9 +207,6 @@ describe('how wide a link is drawn', () => {
   })
 })
 
-/** A file a note embeds is a square rather than a dot, which is how the picture
- *  already says a thing is not what its neighbours are: a note the space has not got
- *  is a ring. See `attachment` in graph.ts. */
 describe('a file a note embeds', () => {
   const EMBEDS: NoteGraph = {
     nodes: [
@@ -261,8 +227,6 @@ describe('a file a note embeds', () => {
     const { strokes } = painted(2, 2, { graph: EMBEDS })
     const rings = strokes.filter((one) => one.colour === '#444')
 
-    // The path for those is handed over whether anything is in it or not, so what
-    // says the square was not one is that it holds no shape at all.
     expect(rings.flatMap((one) => one.shapes)).toEqual([])
   })
 
@@ -273,15 +237,11 @@ describe('a file a note embeds', () => {
   })
 })
 
-/** Where the names fade in. A threshold that follows the zoom, with one dial for
- *  where it sits: one is the zoom the picture has always shown them at, so a dial
- *  nobody has touched changes nothing. See `LABELS_FROM` in graph-paint.ts. */
 describe('the names', () => {
   const named = (scale: number, fade: number) =>
     painted(2, 2, { camera: { x: 0, y: 0, scale }, fade }).labels
 
   test('arrive at the zoom they always have when the dial is untouched', () => {
-    // 0.55 is where they start and 0.85 is where they are fully there.
     expect(named(0.5, 1)).toEqual([])
     expect(named(0.6, 1).map((one) => one.text)).toEqual(['A', 'B'])
     expect(named(0.9, 1).map((one) => one.alpha)).toEqual([1, 1])
@@ -296,7 +256,6 @@ describe('the names', () => {
   })
 
   test('sooner where the dial asks for it', () => {
-    // Half the threshold: a zoom that showed none of them now shows them all.
     expect(named(0.5, 0.5).map((one) => one.alpha)).toEqual([1, 1])
     expect(named(0.3, 0.5).map((one) => one.text)).toEqual(['A', 'B'])
     expect(named(0.2, 0.5)).toEqual([])

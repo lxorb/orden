@@ -1,15 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { longPress } from './longpress'
 
-/** A finger held on a row, and the rule that decides whether it was a press or
- *  the start of something else.
- *
- *  The rule matters more than it looks: a press that opened the menu while the
- *  finger was on its way somewhere is a menu nobody asked for, and it is the
- *  reason the file list and the space switcher offer a Move of their own rather
- *  than relying on a drag a touch screen cannot start. */
-
-/** What the action listens on, with only the parts it reads. */
 interface Node {
   listeners: Map<string, (event: never) => void>
   dispatchEvent(event: Event): boolean
@@ -32,7 +23,6 @@ function node(): Node {
   }
 }
 
-/** A touch at a point, in the shape the action reads. */
 function at(x: number, y: number): unknown {
   return {
     touches: [{ clientX: x, clientY: y }],
@@ -41,9 +31,6 @@ function at(x: number, y: number): unknown {
   }
 }
 
-/** The two events the action builds. Node has neither, and what they carry is
- *  the menu's business rather than this rule's: all that is under test here is
- *  whether one is built at all. */
 class Event_ {
   constructor(
     readonly type: string,
@@ -73,7 +60,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-/** Sends one of the four touch events the action listens on. */
 function touch(kind: 'touchstart' | 'touchmove' | 'touchend', event: unknown) {
   host.listeners.get(kind)?.(event as never)
 }
@@ -103,7 +89,6 @@ describe('a finger that moves first', () => {
     touch('touchstart', at(100, 100))
     vi.advanceTimersByTime(200)
 
-    // Past the slop, which is what dragging or scrolling looks like.
     touch('touchmove', at(100, 118))
     vi.advanceTimersByTime(5000)
 

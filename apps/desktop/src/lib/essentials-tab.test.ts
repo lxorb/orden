@@ -1,10 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** An essential kept as a tab of the strip by a double click of its tile, and the
- *  letters the Essentials wear while Alt is held (#1051). The store is the real one; the
- *  disk is a stand-in. */
-
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: (command: string) => Promise.resolve(command === 'read_note' ? '# a' : undefined),
@@ -72,8 +68,6 @@ describe('an essential double clicked', () => {
   })
 })
 
-/** #1110: a press of an essential's tile in a split window took the place of whatever
- *  one of the panes showed. It is kept as a tab there, as a double click keeps it. */
 describe('an essential pressed while the window is split', () => {
   test('is kept as a tab of the strip in front, and no pane loses what it showed', async () => {
     workspace.panes.collapse()
@@ -89,7 +83,6 @@ describe('an essential pressed while the window is split', () => {
     expect(strip()).toContain('/space/Notes.md')
     expect(workspace.active?.essential).toBeNull()
     expect(workspace.active?.path).toBe('/space/Notes.md')
-    // Every tab there was is still there, with what it showed.
     for (const id of showing) expect(workspace.tabs.some((one) => one.id === id)).toBe(true)
     workspace.panes.collapse()
   })
@@ -118,7 +111,6 @@ describe('an essential dragged into a strip', () => {
     const id = await droppedEssential(0, pane, 1)
     expect(id).toBe(shown?.id)
     expect(shown?.essential).toBeNull()
-    // Where it was let go of, between the two, and the same tab with its place kept.
     expect(strip()).toEqual([null, '/space/Notes.md', null])
     expect(workspace.active).toBe(shown)
     expect(shown?.scroll).toBe(240)

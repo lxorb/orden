@@ -81,9 +81,6 @@ describe('the three markdown spellings', () => {
     )
   })
 
-  /** A caller that knows only a name cannot say where the note is, so the shortest
-   *  spelling is the closest true answer - and it is a working link either way,
-   *  since a bare name resolves against the note it is written in. */
   test('fall back to the name where nothing knows the path', () => {
     expect(formatLink({ name: 'Plan' }, 'relative')).toBe('[Plan](Plan.md)')
     expect(formatLink({ name: 'Plan' }, 'absolute')).toBe('[Plan](Plan.md)')
@@ -113,8 +110,6 @@ describe('the setting itself', () => {
   })
 })
 
-/** Every writer goes through `linkTo`, so the setting is answered once. These are
- *  the writers, each with the setting on. */
 describe('every writer in the app', () => {
   test('writes what the setting asks for, and a wikilink by default', () => {
     expect(linkTo('Plan')).toBe('[[Plan]]')
@@ -159,18 +154,10 @@ describe('every writer in the app', () => {
   })
 })
 
-/** The `[[` popup is a writer of the app's too, and it was the one that ignored the
- *  setting: every row wrote `[[Deep note]]` whatever it said.
- *
- *  Which facts each kind of row hands over is pinned in the editor's own test - see
- *  complete.test.ts in @orden/editor, where the rows are picked for real - and these
- *  are those facts, spelled in all four. A nested space, because a flat one cannot
- *  tell the three markdown spellings apart: all three say `Deep note.md` there. */
 describe('the `[[` popup, in a nested space', () => {
   const HERE = 'journal/2026/Monday.md'
   const DEEP = { path: 'ideas/deep/Deep note.md', from: HERE }
 
-  /** One row's target in all four spellings, in the order the setting offers them. */
   function spellings(target: Parameters<typeof pickedLink>[0]): string[] {
     return LINK_FORMATS.map((format) => {
       setLinkWriting(format)
@@ -224,7 +211,6 @@ describe('the `[[` popup, in a nested space', () => {
     ])
   })
 
-  /** `[[#Heading]]`: a link into the note it is written in, which names no file. */
   test('a heading of this very note is an anchor on its own', () => {
     expect(spellings({ name: '', path: null, from: HERE, fragment: 'Today' })).toEqual([
       '[[#Today]]',

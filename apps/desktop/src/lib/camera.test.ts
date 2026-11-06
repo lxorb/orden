@@ -27,8 +27,6 @@ const HEIGHT = 300
 
 const at = (...values: number[]) => new Float64Array(values)
 
-/** The transform the paint uses, so a test can say where a node is drawn without
- *  the canvas being there. */
 function screenPoint(camera: Camera, x: number, y: number): { x: number; y: number } {
   return {
     x: (x - camera.x) * camera.scale + WIDTH / 2,
@@ -119,12 +117,6 @@ describe('scrolling to zoom', () => {
   })
 })
 
-/** One notch, everywhere.
- *
- *  The bar's own comment said the buttons and the wheel agree, and they did not:
- *  the buttons stepped by a fifth, the plane's wheel by two fifths and a page
- *  note's by a quarter, so a reader who zoomed with one and then the other felt
- *  three different surfaces. `wheelZoom` is what both of them ask now. */
 describe('one notch of a zoom', () => {
   test('is the same for a wheel notch as for a button', () => {
     expect(wheelZoom(-100)).toBeCloseTo(NOTCH, 10)
@@ -135,9 +127,6 @@ describe('one notch of a zoom', () => {
     expect(wheelZoom(0)).toBe(1)
   })
 
-  /** A trackpad sends dozens of small deltas where a wheel sends one notch, which
-   *  is the whole reason this is an exponential: the same distance travelled comes
-   *  to the same zoom however it arrived. */
   test('so a trackpad’s many small ones multiply up to the same thing', () => {
     let scale = 1
     for (let step = 0; step < 20; step++) scale *= wheelZoom(-5)
@@ -152,7 +141,6 @@ describe('one notch of a zoom', () => {
 })
 
 describe('what is under the pointer', () => {
-  // Three nodes: two well apart, and one right beside the first.
   const x = at(0, 100, 4)
   const y = at(0, 0, 0)
   const radii = at(6, 6, 6)
@@ -170,8 +158,6 @@ describe('what is under the pointer', () => {
   })
 
   test('the nearer of two that overlap', () => {
-    // A point three to the right of the first node is nearer it than the one at
-    // four, and both circles cover it.
     expect(hit(WIDTH / 2 + 1, HEIGHT / 2)).toBe(0)
     expect(hit(WIDTH / 2 + 6, HEIGHT / 2)).toBe(2)
   })
@@ -183,8 +169,6 @@ describe('what is under the pointer', () => {
 
   test('a node is a smaller target the further out the view is', () => {
     const far: Camera = { x: 0, y: 0, scale: 0.1 }
-    // The second node is drawn ten units from the first at this scale, and its
-    // circle is under a pixel across, so a point between them hits neither.
     expect(nodeAt(x, y, radii, far, WIDTH, HEIGHT, WIDTH / 2 + 5, HEIGHT / 2, 0)).toBe(-1)
     expect(nodeAt(x, y, radii, far, WIDTH, HEIGHT, WIDTH / 2 + 10, HEIGHT / 2, 0)).toBe(1)
   })

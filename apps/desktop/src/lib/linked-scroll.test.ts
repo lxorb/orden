@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { linkScroll, type ScrollEnd } from './linked-scroll'
 
-/** One end of the link, without a browser: a position in the note, and the
- *  listeners that would be the editor's scroll events. */
 class End implements ScrollEnd {
   private at = 0
   private listeners: (() => void)[] = []
 
-  /** Everywhere this end was told to go, in order. */
   readonly shown: number[] = []
 
   top(): number {
@@ -17,8 +14,6 @@ class End implements ScrollEnd {
   show(position: number) {
     this.shown.push(position)
     this.at = position
-    // Being scrolled is being scrolled, whoever did it: the browser reports it
-    // the same way, which is the echo the link has to recognise.
     for (const run of this.listeners) run()
   }
 
@@ -29,7 +24,6 @@ class End implements ScrollEnd {
     }
   }
 
-  /** A reader scrolling this end by hand. */
   scrollTo(position: number) {
     this.at = position
     for (const run of this.listeners) run()
@@ -52,7 +46,6 @@ describe('two panes scrolling together', () => {
 
     left.scrollTo(420)
 
-    // By document position, not by pixels: the same place in the text.
     expect(right.shown).toEqual([420])
     expect(right.top()).toBe(420)
   })
@@ -64,8 +57,6 @@ describe('two panes scrolling together', () => {
 
     left.scrollTo(100)
 
-    // The right end reported the scroll the link gave it, and answering that
-    // would push the left end about; the two would walk down the note together.
     expect(left.shown).toEqual([])
   })
 

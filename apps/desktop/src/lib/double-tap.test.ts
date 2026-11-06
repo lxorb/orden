@@ -2,10 +2,6 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import { DoubleTap, type Modifier, type Stroke, tapOf, WITHIN, writeTap } from './double-tap'
 
-/** Plays a script of keys at the times given and answers every tap that came of it.
- *  `+Shift` is a press, `-Shift` a release, a bare number a wait in milliseconds;
- *  `!` is the pointer pressed. A press of Shift says Shift is held, as the browser
- *  does, so `+a` while it is held is a capital. */
 function play(...script: (string | number)[]): Modifier[] {
   const taps = new DoubleTap()
   const heard: Modifier[] = []
@@ -54,7 +50,6 @@ describe('Shift pressed twice on its own', () => {
   })
 
   test('from either Shift key, one after the other', () => {
-    // The browser names both `Shift`; which side is `code`, and does not matter here.
     expect(play('+Shift', '-Shift', '+Shift', '-Shift')).toEqual(['Shift'])
   })
 
@@ -65,7 +60,6 @@ describe('Shift pressed twice on its own', () => {
   })
 
   test('is heard at the edge of the window, and not past it', () => {
-    // Each step itself takes 20 ms, so the second press lands at WITHIN - 20 + 20.
     expect(play('+Shift', '-Shift', WITHIN - 20, '+Shift', '-Shift')).toEqual(['Shift'])
     expect(play('+Shift', '-Shift', WITHIN - 19, '+Shift', '-Shift')).toEqual([])
   })
@@ -148,7 +142,6 @@ describe('the other modifiers', () => {
   test('answer every second tap, with no burst to wait out', () => {
     const twice = ['+Alt', '-Alt', '+Alt', '-Alt']
     expect(play(...twice, 40, ...twice)).toEqual(['Alt', 'Alt'])
-    // Three taps are one double tap and the start of the next.
     expect(play(...twice, '+Alt', '-Alt')).toEqual(['Alt'])
   })
 
@@ -160,8 +153,6 @@ describe('the other modifiers', () => {
 })
 
 describe('a web page', () => {
-  /** The page's own copy of these rules waits as long as this one does: a double
-   *  Shift is the same gesture over a page as over a note. */
   test('waits as long for the second tap', () => {
     const script = readFileSync(
       new URL('../../src-tauri/src/web_opens.rs', import.meta.url),

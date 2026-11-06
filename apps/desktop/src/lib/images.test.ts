@@ -9,8 +9,6 @@ describe('where a picture a note points at lives', () => {
   })
 
   test("is the space's own folder when the note climbs to it", () => {
-    // What the default attachment folder writes from a note one level down. The
-    // path is folded, so nothing further along has to work the climb out.
     expect(imagePath('../assets/pic.png', NOTE)).toBe('/Notes/assets/pic.png')
     expect(imagePath('../../assets/pic.png', '/Notes/Work/2026/Q1.md')).toBe(
       '/Notes/assets/pic.png',
@@ -18,8 +16,6 @@ describe('where a picture a note points at lives', () => {
   })
 
   test('is a folder whose name has a space in it, however the note spells it', () => {
-    // A note writes a link as a URL, so the space arrives encoded. The folder on
-    // disk is named with the space.
     expect(imagePath('Read%20me/pic.png', '/Notes/Read me.md')).toBe('/Notes/Read me/pic.png')
     expect(imagePath('Read me/pic.png', '/Notes/Read me.md')).toBe('/Notes/Read me/pic.png')
   })

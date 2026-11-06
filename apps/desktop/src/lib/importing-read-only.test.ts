@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The import sheet while a space somebody shared with this account to be read is
- *  open, or one of the spaces there are (B280). An import written there would stop the
- *  copy here being the space's, and the sync refuses it on every pass: so the sheet
- *  lands where the reader may write, and does not offer that space as a place. */
-
 const readOnly = new Set<string>()
 vi.mock('./sharing.svelte', () => ({
   canWriteAt: (path: string) =>
@@ -20,9 +15,7 @@ const held = vi.hoisted(
     spaces: [],
   }),
 )
-/** The space `draftHome` makes when there is none yet. */
 const NOTES = { id: 'notes', name: 'Notes', root: '/notes' }
-/** Each note the sheet opened: its name, its words, the space it is to land in. */
 const opened = vi.hoisted((): [string, string, string | null][] => [])
 vi.mock('./workspace.svelte', () => ({
   workspace: {
@@ -49,13 +42,11 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-/** What the sheet said went wrong. */
 const failed = vi.hoisted((): string[] => [])
 vi.mock('./busy.svelte', () => ({ busy: { failed: (said: string) => failed.push(said) } }))
 
 vi.mock('./surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
 
-/** The places the picker offered, by id. */
 const offered: string[] = []
 vi.mock('./prompt.svelte', () => ({
   prompt: {
@@ -66,7 +57,6 @@ vi.mock('./prompt.svelte', () => ({
   },
 }))
 
-/** A Word file with one picture, as pandoc hands it back. */
 vi.mock('./export', () => ({
   importDocument: () =>
     Promise.resolve({
@@ -76,7 +66,6 @@ vi.mock('./export', () => ({
     }),
 }))
 
-/** The note path each picture was stored for. */
 const storedFor = vi.hoisted((): string[] => [])
 vi.mock('./assets', () => ({
   storeBeside: (_: ArrayBuffer, notePath: string, name: string) => {
@@ -143,7 +132,6 @@ describe('a document read by pandoc while a space shared to be read is open', ()
 
     expect(storedFor).toEqual([])
     expect(opened).toEqual([['Report.md', '![a dot](media/rId20.png)\n', null]])
-    // And says so, rather than dropping the picture without a word.
     expect(failed).toHaveLength(1)
   })
 

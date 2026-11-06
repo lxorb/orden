@@ -43,8 +43,6 @@ describe('what the pane says about a domain', () => {
     expect(notice?.text).toBe('This server does not hand out certificates yet.')
   })
 
-  /** The records are on the screen with a button under them, so there is nothing
-   *  to add until somebody presses it and the record is not there. */
   test('nothing at all while a domain is waiting to be proved', () => {
     expect(domainNotice(status('unproved'))).toBeNull()
   })

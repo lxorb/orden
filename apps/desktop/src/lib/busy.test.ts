@@ -33,8 +33,6 @@ describe('the line across the top of the document', () => {
     vi.restoreAllMocks()
   })
 
-  /** Counted rather than flagged: two exports at once, and the first to finish
-   *  is not the one that turns the line off. */
   test('stays on until the last of them finishes', async () => {
     let letGo: () => void = () => {
       throw new Error('the held promise was never taken up')
@@ -53,8 +51,6 @@ describe('the line across the top of the document', () => {
   })
 })
 
-/** Work that fails silently and carries on another way is the worst of both: the
- *  wait happened, the result is not what was asked for, and nothing says so. */
 describe('what the line says went wrong', () => {
   test('is nothing, until something does', () => {
     expect(busy.trouble).toBeNull()
@@ -86,8 +82,6 @@ describe('what the line says went wrong', () => {
     expect(busy.trouble).toBe('The second')
   })
 
-  /** A sentence about an export from a minute ago, over the top of one running
-   *  now, is a sentence about the wrong thing. */
   test('goes when the next piece of work starts', async () => {
     busy.failed('That went to the print dialog')
     await busy.run('Exporting', () => Promise.resolve())
@@ -95,8 +89,6 @@ describe('what the line says went wrong', () => {
     expect(busy.trouble).toBeNull()
   })
 
-  /** But not when a second job starts beside one already running: that one is
-   *  what the sentence is about. */
   test('stays while work that is already running fails', async () => {
     await busy.run('Exporting', async () => {
       busy.failed('That went to the print dialog')

@@ -1,11 +1,3 @@
-/** The three ways to move text between notes, as things the app can be asked to
- *  do: from the palette and from the editor's own menu.
- *
- *  Each needs the caret or the selection, so each is built against the live view;
- *  each is offered only where it could work, because a menu of things that cannot
- *  happen is worse than a short one. The arithmetic is in composer.ts and the
- *  files are workspace's; this is only the asking. */
-
 import type { EditorView } from '@orden/editor'
 import type { Command } from './commands'
 import { t } from './i18n.svelte'
@@ -16,18 +8,10 @@ import { isMarkdownPath } from './space-paths'
 import { carvable, mergeable } from './workspace/composing'
 import { workspace } from './workspace.svelte'
 
-/** The notes the one at `exclude` may be merged into: the other markdown notes.
- *  `workspace.notes` leaves out the files a tab of their own opens, but not a
- *  chat's pointer, and not a picture either; words appended to a chat's pointer
- *  would leave the chat unreachable. The merge refuses those itself, so this is
- *  only so the sheet offers nothing it would refuse. */
 function mergeTargets(exclude: string) {
   return workspace.notes.filter((note) => note.path !== exclude && isMarkdownPath(note.path))
 }
 
-/** The note to merge into, found by typing its name in the prompt sheet - which
- *  is the same sheet every other question uses, and the only shape that works
- *  for a space holding thousands of answers. */
 async function askForNote(exclude: string): Promise<string | null> {
   const { prompt } = await import('./prompt.svelte')
   const options = mergeTargets(exclude).map((note) => ({
@@ -40,38 +24,26 @@ async function askForNote(exclude: string): Promise<string | null> {
   return prompt.find({ title: t('Merge into'), options, placeholder: t('Note') })
 }
 
-/** Whether there is a selection to lift out of the note. */
 function hasSelection(view?: EditorView): boolean {
   return !!view && !view.state.selection.main.empty && !view.state.readOnly
 }
 
-/** Whether there is anything after the caret to make a note of. */
 function hasRest(view?: EditorView): boolean {
   if (!view || view.state.readOnly) return false
   const at = view.state.selection.main.head
   return view.state.doc.sliceString(at).trim().length > 0
 }
 
-/** Whether the note in front of the reader may be merged into another: a
- *  markdown note the open space holds and that may be written, in an editor that
- *  may be typed in.
- *  The note it goes into is asked the same by the merge itself. */
 function canMerge(path: string | null, view?: EditorView): boolean {
   if (!path || !mergeTargets(path).length || !typable(view)) return false
   return mergeable(workspace.activeSpace?.root ?? null, path, canWriteAt)
 }
 
-/** Whether the file in front of the reader is a markdown note that may be written,
- *  in an editor that may be typed in. A split and an extraction each write a `.md`
- *  beside the file and a `[[link]]` into it, which in `snippets.json`, `custom.css`
- *  or a code file breaks the file and leaves a stray note beside it. A note of a
- *  space not on screen is fine: the new note goes beside it, in its own space. */
 function canWrite(path: string | null, view?: EditorView): path is string {
   if (!path || !typable(view)) return false
   return carvable(path, canWriteAt)
 }
 
-/** An editor that may be typed in, showing a note that may be written. */
 function typable(view?: EditorView): boolean {
   return !view?.state.readOnly && canWriteIn(workspace.active?.note)
 }
@@ -114,8 +86,6 @@ async function merge(path: string) {
   if (into) await workspace.mergeInto(path, into)
 }
 
-/** The same three for the editor's context menu, which takes labels and a `run`
- *  rather than commands with ids. */
 export function composerEntries(view?: EditorView): MenuEntry[] {
   return composerCommands(view).map((command) => ({
     label: command.label,

@@ -19,12 +19,10 @@ describe('how often syncing looks for changes', () => {
   })
 
   test('goes much slower when nobody is looking', () => {
-    // Coming back to the window syncs at once, so this staleness is never seen.
     expect(pollDelay(99, true)).toBe(600 * SECOND)
   })
 
   test('is still quick when hidden if something just moved', () => {
-    // A backgrounded window that is mid-sync should not stall on the first pass.
     expect(pollDelay(0, true)).toBe(20 * SECOND)
   })
 
@@ -39,10 +37,6 @@ describe('how often syncing looks for changes', () => {
   })
 })
 
-/** A nudge exists to bring the next pass forward. It used to re-plan one for its own
- *  delay whatever was already planned, so a note saved in the first instant of a
- *  launch pushed the pass that was due at once two seconds out - and a hand that kept
- *  typing kept pushing it, because every write ends in a nudge. */
 describe('how long a nudge leaves before the next pass', () => {
   test('is its own delay when the pass was further off than that', () => {
     expect(nudgeDelay(20 * SECOND)).toBe(NUDGE_DELAY)
@@ -55,7 +49,6 @@ describe('how long a nudge leaves before the next pass', () => {
   })
 
   test('is nought for a pass that is already due, rather than a wait of its own', () => {
-    // A launch plans the first pass for now; this is the case that was broken.
     expect(nudgeDelay(-1)).toBe(0)
     expect(nudgeDelay(-10 * SECOND)).toBe(0)
   })
@@ -63,7 +56,6 @@ describe('how long a nudge leaves before the next pass', () => {
 
 describe('how long a room waits before trying again', () => {
   test('tries again almost at once the first time', () => {
-    // A network that came back a moment later is the usual reason a socket went.
     expect(roomDelay(1, 0.5)).toBe(400)
   })
 
@@ -101,8 +93,6 @@ describe('how long an online terminal waits before trying again', () => {
     ])
   })
 
-  /** Issue 208: a room's twenty seconds left a terminal waiting long after the network
-   *  and the service were back. */
   test('never waits more than five seconds while it is on screen', () => {
     expect(linkDelay(6, false, 0.5)).toBe(5 * SECOND)
     expect(linkDelay(400, false, 0.5)).toBe(5 * SECOND)

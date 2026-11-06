@@ -3,16 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { opensAt, spelled, type Walk, walk } from './list-keys'
 
-/** Walking a dropdown with the keyboard.
- *
- *  The rule the whole file exists for is the last block: a keystroke chooses the
- *  row the keyboard walked to and never one the pointer passed over. The pointer
- *  does not appear here at all, which is the point - it cannot move this. */
-
 const KEYBOARDS = ['Default', 'Notion', 'Obsidian', 'Vim']
 
-/** A keystroke, at a moment. The timestamps only matter to typing letters in a
- *  row, so everything else is handed the same one. */
 const at = (from: Walk, key: string, moment = 1000) => walk(key, moment, KEYBOARDS, from)
 
 describe('opening the list', () => {
@@ -20,8 +12,6 @@ describe('opening the list', () => {
     expect(opensAt(2)).toEqual({ cursor: 2, typed: '', typedAt: 0 })
   })
 
-  /** A value the list does not hold - a preset a newer build named - leaves the
-   *  keyboard on no row, so Enter cannot commit the first one instead. */
   test('puts it on no row at all where the list does not hold the value', () => {
     expect(opensAt(-1).cursor).toBeNull()
   })
@@ -52,7 +42,6 @@ describe('walking it', () => {
     const first = at(opensAt(0), 'o')
     expect(first.walk.cursor).toBe(2)
 
-    // `ob` within the moment, so still Obsidian rather than back to nothing.
     const second = walk('b', 1300, KEYBOARDS, first.walk)
     expect(second.walk.cursor).toBe(2)
     expect(second.walk.typed).toBe('ob')
@@ -103,16 +92,8 @@ describe('leaving it', () => {
   })
 })
 
-/** The bug this file was pulled out of the component for.
- *
- *  One cursor was shared between the pointer and the keys, and a hover moved it.
- *  So reading the keyboard list with the mouse and then pressing Space chose
- *  whatever the pointer had last crossed - the bottom row, which is Vim - and
- *  choosing Vim turns modal editing on for every device on the account. */
 describe('a keystroke chooses nothing the keyboard did not walk to', () => {
   test('a list opened and left alone chooses the value it already had', () => {
-    // Which is the same as choosing nothing: the component only tells anybody
-    // when the value actually changes.
     expect(at(opensAt(0), 'Enter').chose).toBe(0)
   })
 
@@ -128,8 +109,6 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
     expect(at(walked.walk, ' ').chose).toBe(2)
   })
 
-  /** Read off the source, because the accident was one line of markup: the
-   *  pointer gets a highlight of its own and never the keyboard's cursor. */
   test('and the pointer has a highlight of its own to move', () => {
     const source = readFileSync(fileURLToPath(new URL('./Select.svelte', import.meta.url)), {
       encoding: 'utf8',
@@ -137,19 +116,13 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
 
     expect(source).toContain('onmouseenter={() => (hovered = index)}')
     expect(source).not.toMatch(/onmouseenter=\{\(\) => \(walking/)
-    // And what the keyboard is on is what a screen reader is told is active.
     expect(source).toContain('aria-activedescendant={open && walking.cursor !== null')
   })
 })
 
-/** The same spelling every list in the app uses. A dropdown reads it through
- *  `walk` above; the file tree, the outline, the strip of tabs and the rest read it
- *  straight, because there the row lives in the page rather than in state. See
- *  roving.ts. */
 describe('spelling a name', () => {
   const NAMES = ['Groceries', 'Journal', 'Notes on Kant', 'notes.md', 'Work']
 
-  /** Letters typed one after another, `gap` apart. */
   function say(letters: string, gap = 100) {
     let state = { typed: '', typedAt: 0 }
     let found = -1
@@ -181,9 +154,6 @@ describe('spelling a name', () => {
     expect(say('GRO').found).toBe(0)
   })
 
-  /** A pause is how a hand says it has stopped spelling one name and started
-   *  another: "j", then a second later "w", is two names asked for and not a word
-   *  spelled "jw". */
   test('starts a fresh word after a pause', () => {
     expect(say('jw', 900).found).toBe(4)
     expect(say('jw', 900).typed).toBe('w')

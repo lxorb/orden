@@ -1,17 +1,9 @@
-/** Settings > General > Chats: what pings for every chat at once (docs/chats.md 4.11),
- *  apart from preferences.ts so the glasses' plugin, which has no chats, can stand a twin
- *  in its place (chats-settings.even.ts). */
-
 import { EVERY_DAY, hush, WEEKDAYS, WORKING_HOURS } from './chats/hush.svelte'
 import { priorities } from './chats/priorities.svelte'
 import { LEVELS, type Level } from '@orden/chats/priority'
 import { i18n, t } from './i18n.svelte'
 import type { Field, Group } from './preferences'
 
-/** What pings for every chat at once (docs/chats.md 4.11): the reader's keywords, the
- *  hours pings are let through, and whether a notification shows the words and makes a
- *  sound. A chat's own level and mute are the bell in its head (chats/Bell.svelte), and
- *  Do not disturb is the reader's status. On the account; see chats/hush.svelte.ts. */
 export function chatsGroups(): Group[] {
   const days = hush.hours?.days.join() ?? ''
   const hoursOf = (value: string) =>

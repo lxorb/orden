@@ -66,12 +66,8 @@ describe('extracting a selection', () => {
     const to = doc.indexOf(' after')
 
     const carved = extracted(doc, from, to, 'Untitled')
-    // The name is the passage as a filename: what a filesystem would refuse
-    // goes, and the sentence's full stop with it. See note-name.ts.
     expect(carved?.name).toBe('The whole idea, written out')
     expect(carved?.taken).toBe('The whole idea, written out.\n')
-    // And the link is left plain, because the words it would show are the name
-    // with a full stop after it.
     expect(carved?.kept).toBe('before [[The whole idea, written out]] after')
   })
 

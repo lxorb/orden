@@ -1,9 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Where a picture the account keeps is loaded from (#364). The web app's API is its own
- *  origin, so what the account answers is `/i/…`, and a canvas opened anywhere else -
- *  the desktop app, another tab's origin - has to be handed the whole address. */
-
 const api = vi.hoisted(() => ({ BASE: '' }))
 vi.mock('./api', () => ({
   api: {},

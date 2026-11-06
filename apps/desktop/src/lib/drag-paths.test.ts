@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { carry, isFileDrop, isLinkDrop, landing } from './drag-paths'
 
-/** A transfer as a browser hands one over: the types while the drag is under way,
- *  the data once it lands. */
 function transfer(types: string[] = []): DataTransfer {
   const data = new Map<string, string>()
   const held = {
@@ -39,7 +37,6 @@ describe('a drop on the file list', () => {
     expect(landing(drop(rows, { ctrlKey: true }), 'win')).toBe('copy')
     expect(landing(drop(rows, { ctrlKey: true }), 'linux')).toBe('copy')
     expect(landing(drop(rows, { altKey: true }), 'mac')).toBe('copy')
-    // Ctrl on a Mac is the right click, not a copy.
     expect(landing(drop(rows, { ctrlKey: true }), 'mac')).toBe('move')
   })
 
@@ -50,7 +47,6 @@ describe('a drop on the file list', () => {
     expect(landing(drop(files), 'win')).toBe('copy')
   })
 
-  /** A link out of a page becomes a web note; a picture out of a page is a file. */
   test('keeps a link dragged out of a page, and a picture as the file it carries', () => {
     const link = transfer(['text/uri-list', 'text/html', 'text/plain'])
     expect(isLinkDrop(link)).toBe(true)
@@ -60,7 +56,6 @@ describe('a drop on the file list', () => {
     expect(isLinkDrop(picture)).toBe(false)
     expect(isFileDrop(picture)).toBe(true)
 
-    // A sentence carries no link list, and leaves the page as nothing.
     expect(isLinkDrop(transfer(['text/plain', 'text/html']))).toBe(false)
   })
 
@@ -70,7 +65,6 @@ describe('a drop on the file list', () => {
   })
 })
 
-/** An essential's tile is a file the list takes back (#412); any other bookmark is not. */
 describe('a bookmark carried over the file list', () => {
   test('is a move where it is a tile, and nothing otherwise', async () => {
     const { carryBookmark, carriedNothing } = await import('./drag-paths')

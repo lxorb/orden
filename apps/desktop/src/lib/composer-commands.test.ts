@@ -1,13 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** When the palette offers to merge the note in front of the reader into another.
- *
- *  Split and extract are offered only where they could be carried out; merge writes
- *  one note and deletes another, so it asks the same: that the note may be written,
- *  and that it is one of the open space's, since the notes it offers to merge into
- *  are the open space's. The workspace and the account are stood in for by hand. */
-
 const readOnly = new Set<string>()
 const writable = (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`))
 
@@ -31,8 +24,6 @@ const workspace = vi.hoisted(() => ({
 
 vi.mock('./workspace.svelte', () => ({ workspace }))
 
-/** The prompt sheet, which answers with whatever is put in `answer` and keeps the
- *  ids of the notes it was asked to offer. */
 const asked = vi.hoisted(() => ({ offered: [] as string[], answer: null as string | null }))
 vi.mock('./prompt.svelte', () => ({
   prompt: {
@@ -47,8 +38,6 @@ const { composerCommands } = await import('./composer-commands')
 
 const SPACE = '/space'
 
-/** An editor that will not be typed in, as a pane in reading mode is; as much of
- *  one as the commands read. */
 const reading = {
   state: {
     readOnly: true,
@@ -57,7 +46,6 @@ const reading = {
   },
 } as unknown as EditorView
 
-/** The note at `path` open, in the open space holding a and b. */
 function openAt(path: string) {
   workspace.activeSpace = { id: 's1', name: 'space', root: SPACE }
   workspace.active = { path, note: { path, shared: null } }
@@ -102,8 +90,6 @@ describe('merge into another note', () => {
   })
 
   test('is not offered for a page note, whose paper merging would delete', () => {
-    // A page note is JSON beside the PDF it annotates, and deleting it takes the
-    // PDF with it: a merge is for notes of words only.
     openAt(`${SPACE}/Lecture.pages`)
     expect(mergeOffered()).toBe(false)
   })
@@ -117,8 +103,6 @@ describe('merge into another note', () => {
 })
 
 describe('the notes offered to merge into', () => {
-  /** A chat's pointer is JSON the chat is found by; words appended to it would
-   *  leave the chat unreachable, and sync would carry the broken pointer. */
   const CHAT = `${SPACE}/Team.chat`
 
   function withChat() {
@@ -130,7 +114,6 @@ describe('the notes offered to merge into', () => {
     composerCommands()
       .find((command) => command.id === 'merge-into')
       ?.run()
-    // The sheet is imported, then asked, then answered.
     await vi.waitFor(() => expect(asked.offered.length).toBeGreaterThan(0))
     await new Promise((settle) => setTimeout(settle, 0))
   }
@@ -158,8 +141,6 @@ describe('the notes offered to merge into', () => {
   })
 })
 
-/** An editor that may be typed in, with words selected and words after the caret:
- *  everything a split or an extraction asks of the view. */
 const typing = {
   state: {
     readOnly: false,
@@ -172,9 +153,6 @@ function offered(id: string, view?: EditorView): boolean {
   return !composerCommands(view).find((command) => command.id === id)?.disabled
 }
 
-// A split or an extraction writes a `.md` beside the file and a `[[link]]` into it,
-// which only a markdown note of the open space that may be written can take: in
-// `snippets.json` or `custom.css` the link breaks the file it is written into.
 describe.each(['split-at-caret', 'extract-selection'])('%s', (id) => {
   test('is offered for a note of the open space', () => {
     openAt(`${SPACE}/a.md`)

@@ -1,79 +1,24 @@
-/** Where the nodes of a graph end up: a force layout that settles and then
- *  stops.
- *
- *  Three forces, the usual ones. Linked notes are held a fixed distance apart,
- *  every note pushes every other away, and a weak pull towards the middle keeps
- *  the notes nothing links to from drifting off for ever. All three are the reader's,
- *  from one Forces group on the graph's card: how far apart a link holds two notes,
- *  how hard the notes push, how much more of that push than the arrangement does
- *  unasked, and whether the middle pulls at all. A cooling factor shrinks all three
- *  by the same amount each tick, so the picture arrives at an arrangement and holds
- *  it: once the factor is spent, `tick` does nothing at all, which is what keeps a
- *  graph nobody is touching off the processor.
- *
- *  Pushing every note away from every other is the expensive half - two thousand
- *  notes are four million pairs a tick, which no frame has room for. So the
- *  notes are sorted into a quadtree each tick and a square far enough away is
- *  answered as one body at its centre of mass, the Barnes-Hut approximation.
- *  That turns the tick into n log n: measured at 1.3 ms for two thousand notes
- *  and four thousand links, against 17 ms for the honest sum. The view spends
- *  what a frame has to spare on ticks and no more, so a large space settles over
- *  about a second of animation without ever dropping a frame.
- *
- *  Written here rather than taken from d3-force: the forces are forty lines of
- *  it, the quadtree another hundred, and this way the layout is seeded rather
- *  than random, which is what lets a test say a graph lays out the same way
- *  twice. No dependency, and nothing in it that the app does not use. */
-
 import type { NoteGraph } from './graph'
 
-/** How far apart two linked notes want to sit, in graph units, where the card has
- *  not said. The card's Link distance dial starts here. */
 const DISTANCE = 36
-/** How hard notes push each other apart, before the reader's own spread is
- *  applied, where the card has not said. Negative, being a repulsion; the dial on the
- *  card says the same number the other way up, because a reader asking for more push
- *  is asking for a bigger number. */
 const REPULSION = -150
-/** The pull towards the middle, as a fraction of the distance from it. */
 const GRAVITY = 0.055
-/** How much of its speed a node keeps between ticks. Friction, so the
- *  arrangement comes to rest rather than oscillating around it. */
 const KEPT_SPEED = 0.6
-/** Where the cooling factor counts as spent. */
 const COLD = 0.001
-/** How many ticks a settle from cold to spent takes, which is what the cooling
- *  rate is derived from. Three hundred is a little over a third of a second of
- *  animation at eight ticks a frame. */
 const TICKS = 300
 const COOLING = 1 - Math.pow(COLD, 1 / TICKS)
 
-/** How many ticks `settle` takes between looks at the clock. Small enough that a
- *  budget is kept to on a space large enough for one tick to be milliseconds, large
- *  enough that the clock is not most of the work on a small one. */
 const SETTLING_TICKS = 4
-/** How warm a drag makes the layout again: enough for the neighbours of the node
- *  being moved to follow it, not enough to rearrange the picture. */
 const DRAG_WARMTH = 0.3
 
-/** How far a square may be, as a fraction of its width, before it is answered as
- *  one body rather than looked into. Barnes-Hut's theta. */
 const THETA_SQUARED = 0.81
-/** Two notes in the same place would push each other infinitely hard. */
 const NEAREST_SQUARED = 1
-/** How deep the quadtree may go. A thousand notes written at the same position
- *  would otherwise divide for ever. */
 const DEEPEST = 24
-/** How many notes a square holds before it divides. */
 const IN_A_LEAF = 4
 
-/** The phyllotactic spiral d3 starts a simulation from: no two notes in the same
- *  place, and no direction preferred. */
 const SPIRAL = Math.PI * (3 - Math.sqrt(5))
 const SPIRAL_STEP = 12
 
-/** Small, fast, and the same sequence for the same seed. Only the starting
- *  arrangement asks for it, so nothing here needs more than that. */
 function random(seed: number): () => number {
   let state = seed | 0
   return () => {
@@ -85,31 +30,10 @@ function random(seed: number): () => number {
 }
 
 export interface LayoutOptions {
-  /** Which starting arrangement to lay out from. The same seed lays the same
-   *  graph out the same way, every run and on every machine. */
   seed?: number
-  /** How hard the notes push each other away, as a multiple of what they do on
-   *  their own. One is the arrangement the layout arrives at unasked; below it the
-   *  picture balls up, above it the clusters come apart and the links stretch.
-   *
-   *  The repulsion alone rather than the link distance with it: scaling both would
-   *  blow the whole arrangement up by the same amount, and a view that frames what
-   *  it is given would draw the identical picture. What a reader wants from a dial
-   *  called spread is for the clumps to separate, and that is this ratio. */
   spread?: number
-  /** Whether the pull towards the middle is on. Off, the notes nothing links to
-   *  drift out as far as the cooling lets them rather than sitting in a ring, which
-   *  is what a reader looking at the connected middle of a space wants. */
   gather?: boolean
-  /** How far apart two linked notes want to sit, in graph units. `DISTANCE` where
-   *  nothing says: what a link means, which used to be the one force nobody could
-   *  ask about. A short distance draws the clusters tight and a long one lets a chain
-   *  of notes read as a chain. */
   distance?: number
-  /** How hard every note pushes every other away, as the positive number the card's
-   *  dial says: the layout turns it round, being a repulsion. `spread` is still a
-   *  multiple of it, so the two compose - this is what the arrangement does unasked,
-   *  and that is how much more of it the reader wants. */
   push?: number
 }
 
@@ -119,14 +43,10 @@ export class Layout {
 
   private readonly vx: Float64Array
   private readonly vy: Float64Array
-  /** Where a node is being held, for one under the pointer. */
   private readonly held: Uint8Array
   private readonly heldX: Float64Array
   private readonly heldY: Float64Array
 
-  /** Edge ends, and the two numbers the spring between them is scaled by:
-   *  `pull` shares the correction out so a hub is not dragged around by each of
-   *  its many links, and `bias` gives the less connected end more of the move. */
   private readonly from: Int32Array
   private readonly to: Int32Array
   private readonly pull: Float64Array
@@ -134,9 +54,6 @@ export class Layout {
 
   private readonly count: number
   private warmth = 1
-  /** The forces a reader can ask about, settled at construction: the layout is built
-   *  afresh when any of them changes, since an arrangement half laid out under one
-   *  spread and half under another is neither. */
   private readonly repulsion: number
   private readonly gravity: number
   private readonly distance: number
@@ -144,8 +61,6 @@ export class Layout {
   constructor(graph: NoteGraph, options: LayoutOptions = {}) {
     const count = graph.nodes.length
     this.count = count
-    // The card says how hard the notes push as a positive number, and the spread is
-    // still a multiple of it: one is what the arrangement does unasked.
     this.repulsion = -Math.abs(options.push ?? -REPULSION) * (options.spread ?? 1)
     this.gravity = options.gather === false ? 0 : GRAVITY
     this.distance = options.distance ?? DISTANCE
@@ -160,8 +75,6 @@ export class Layout {
 
     const next = random(options.seed ?? 1)
     for (let one = 0; one < count; one++) {
-      // The spiral gives the arrangement its shape; the seed turns it, so two
-      // seeds settle differently and one seed settles the same way twice.
       const radius = SPIRAL_STEP * Math.sqrt(0.5 + one)
       const angle = one * SPIRAL + next() * 2 * Math.PI
       this.x[one] = radius * Math.cos(angle)
@@ -193,13 +106,10 @@ export class Layout {
     this.growCells(Math.max(8, 4 * Math.ceil(count / IN_A_LEAF) + 8))
   }
 
-  /** Whether the arrangement has arrived. Nothing moves after this, so the view
-   *  can stop asking for frames. */
   get settled(): boolean {
     return this.warmth < COLD || this.count === 0
   }
 
-  /** Advances the arrangement, or does nothing once it has arrived. */
   tick(times = 1) {
     for (let step = 0; step < times && !this.settled; step++) {
       this.warmth -= this.warmth * COOLING
@@ -210,16 +120,6 @@ export class Layout {
     }
   }
 
-  /** Ticks towards the arrangement for as long as `budget` milliseconds allow, and
-   *  answers whether it has arrived. For a reader who has asked not to see things
-   *  move: the view calls this a frame at a time and draws nothing until it says
-   *  yes, so the picture appears already laid out.
-   *
-   *  It used to be a `while` loop with no way out, which on five thousand notes is
-   *  three hundred ticks and a second and a half of a thread that answers nothing -
-   *  so the readers who asked for less movement were the only ones who got a freeze.
-   *  A budget rather than a count of ticks, because a tick is as long as the space
-   *  is large and only a clock knows what a frame has left. */
   settle(budget: number): boolean {
     const until = performance.now() + budget
     while (!this.settled && performance.now() < until) this.tick(SETTLING_TICKS)
@@ -227,9 +127,6 @@ export class Layout {
     return this.settled
   }
 
-  /** Holds a node where the pointer put it, and warms the layout so its
-   *  neighbours come along. A held node stays held: dragging a note somewhere is
-   *  saying it belongs there. */
   hold(node: number, x: number, y: number) {
     if (node < 0 || node >= this.count) return
 
@@ -241,9 +138,6 @@ export class Layout {
     if (this.warmth < DRAG_WARMTH) this.warmth = DRAG_WARMTH
   }
 
-  /** One spring per link, pulling the two ends towards `distance` apart. Reads
-   *  the speeds as well as the positions, the way Verlet integration wants: the
-   *  correction is against where the two ends are about to be. */
   private spring(warmth: number) {
     const { x, y, vx, vy, from, to, pull, bias, distance } = this
 
@@ -267,8 +161,6 @@ export class Layout {
     }
   }
 
-  /** The pull towards the middle, which is what gives the notes nothing links to
-   *  a ring to sit in rather than an escape. */
   private gather(warmth: number) {
     const { x, y, vx, vy, count } = this
 
@@ -299,14 +191,6 @@ export class Layout {
     }
   }
 
-  // ── The quadtree ───────────────────────────────────────────────────
-  //
-  // Rebuilt every tick, since the notes have all moved. Top down: the notes are
-  // sorted into the four quadrants of a square, then each quadrant into its own
-  // four, and a square holding few enough notes stops dividing. `order` holds
-  // the notes so that every square owns one unbroken run of it, which is what
-  // lets a square be a pair of numbers rather than a list.
-
   private readonly order: Int32Array
   private readonly scratch: Int32Array
   private readonly stack: Int32Array
@@ -320,9 +204,6 @@ export class Layout {
   private width = new Float64Array(0)
   private squares = 0
 
-  /** Room for more squares, keeping what is already in them: this is called from
-   *  the middle of a build, where the squares above the one being divided have
-   *  already been written. */
   private growCells(wanted: number) {
     if (this.first.length >= wanted) return
 
@@ -347,8 +228,6 @@ export class Layout {
     this.width = widerFloat(this.width)
   }
 
-  /** Every note pushes every other away, with a whole square standing in for the
-   *  notes in it once it is far enough off. */
   private push(warmth: number) {
     const { x, y, vx, vy, count, order, stack, child, first, inside, mass } = this
     if (count < 2) return
@@ -374,7 +253,6 @@ export class Layout {
         const side = this.width[square] ?? 0
         const base = child[square] ?? -1
 
-        // Near enough to matter in detail: look into it.
         if (base >= 0 && side * side >= THETA_SQUARED * far) {
           stack[top++] = base
           stack[top++] = base + 1
@@ -384,8 +262,6 @@ export class Layout {
         }
 
         if (base < 0) {
-          // A leaf: every note in it, one at a time, so a note is not pushed by
-          // a square it is itself part of the centre of.
           const start = first[square] ?? 0
           const held = inside[square] ?? 0
 
@@ -416,7 +292,6 @@ export class Layout {
     }
   }
 
-  /** Sorts the notes into a fresh quadtree over where they are now. */
   private divide() {
     const { x, y, count, order } = this
 
@@ -435,15 +310,11 @@ export class Layout {
       if (py > highest) highest = py
     }
 
-    // A square, so the halving is the same in both directions, and a hair wider
-    // than the notes so the ones on its edge fall inside it.
     const side = Math.max(most - least, highest - lowest, 1) * 1.01
     this.squares = 1
     this.build(0, 0, count, least, lowest, side, 0)
   }
 
-  /** Fills in one square and, unless it is a leaf, the four under it. Answers
-   *  nothing: what the caller needs is left in the arrays. */
   private build(
     square: number,
     low: number,
@@ -487,9 +358,6 @@ export class Layout {
     const midX = x0 + half
     const midY = y0 + half
 
-    // Counting sort into the four quadrants, so each child owns one run of
-    // `order`. Four counters rather than an array of them, which keeps the
-    // innermost loop in the space this walks over anyway.
     let inTopLeft = 0
     let inTopRight = 0
     let inBottomLeft = 0
@@ -540,7 +408,6 @@ export class Layout {
       )
     }
 
-    // The centre of mass of a square is where its children's are, weighted.
     let sumX = 0
     let sumY = 0
     for (let which = 0; which < 4; which++) {
@@ -555,8 +422,6 @@ export class Layout {
   }
 }
 
-/** Which of a square's four quadrants a point falls in: top left, top right,
- *  bottom left, bottom right. */
 function quadrant(px: number, py: number, midX: number, midY: number): number {
   return (px >= midX ? 1 : 0) + (py >= midY ? 2 : 0)
 }

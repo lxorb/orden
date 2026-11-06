@@ -48,9 +48,7 @@ describe('WCAG’s sums', () => {
   })
 
   test('agree with the numbers tokens.css was measured at', () => {
-    // The dark side's muted on its own page: the comment there says over 4.5.
     expect(ratio(rgbOf('#878f9d')!, rgbOf('#0e1013')!)).toBeGreaterThan(AA)
-    // And the light side's accent ink on its accent.
     expect(ratio(WHITE, rgbOf('#5b4be0')!)).toBeGreaterThan(AA)
   })
 
@@ -86,7 +84,6 @@ describe('the least scrim', () => {
   const INK = rgbOf('#b6bec9')!
   const SCRIM = rgbOf('#151a21')!
 
-  /** Whether the ink clears the floor over a colour under that much scrim. */
   const reads = (alpha: number, under: Rgb) => ratio(INK, over(SCRIM, alpha, under)) >= AA
 
   test('is nothing where the picture already reads', () => {
@@ -127,7 +124,6 @@ describe('the least scrim', () => {
   })
 
   test('never lets a picture through that is lighter than the words on one side and darker on the other', () => {
-    // A grey ink sitting between the corners: each corner clears it, from opposite sides.
     const ink: Rgb = [118, 118, 118]
     const span = { least: BLACK, most: WHITE }
     const floor = scrimFloor(ink, BLACK, span, [], 1.5)

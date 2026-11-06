@@ -10,9 +10,6 @@ describe('what a row stands for when something is dropped on it', () => {
     expect(targetFor('/s/Work', true)).toBe('/s/Work')
   })
 
-  /** Dropping onto a note nests what was dropped under it, the way a page nests
-   *  under a page: the note becomes the folder and what came takes its place
-   *  beside it. See folder-notes.ts. */
   test('a note stands for the folder it is about to become', () => {
     expect(targetFor('/s/Work/plan.md', false)).toBe('/s/Work/plan')
   })
@@ -21,9 +18,6 @@ describe('what a row stands for when something is dropped on it', () => {
     expect(targetFor('/s/Read me.md', false)).toBe('/s/Read me')
   })
 
-  /** Neither can hold a note, so neither becomes a folder, and dropping on one
-   *  still means "in here, beside it" - which is what makes a folder holding a
-   *  single PDF something a drag can get back out of. */
   test('a PDF or a canvas stands for the folder it sits in', () => {
     expect(targetFor('/s/Work/paper.pdf', false)).toBe('/s/Work')
     expect(targetFor('/s/Work/Board.canvas', false)).toBe('/s/Work')
@@ -49,8 +43,6 @@ describe('the folder a drop would land in', () => {
     expect(dropTarget.lit('/s')).toBe(false)
   })
 
-  /** The same answer wherever it is asked: the list is a component per folder,
-   *  and the row that lights for a PDF is one another component drew. */
   test('is the PDF row own folder, so the folder lights and the row does not', () => {
     dropTarget.over(targetFor('/s/Work/paper.pdf', false))
 
@@ -58,11 +50,6 @@ describe('the folder a drop would land in', () => {
     expect(dropTarget.lit('/s/Work/paper.pdf')).toBe(false)
   })
 
-  /** A note's row lights for itself, because the folder it stands for is the one
-   *  the drop is about to make out of it: the note's own path without the
-   *  extension, which is what the row compares against; see `nesting` in
-   *  Tree.svelte. Neither the folder it sits in nor the note's own file name is
-   *  the answer. */
   test('is the folder a note is about to become, which is that note own row', () => {
     dropTarget.over(targetFor('/s/Work/plan.md', false))
 
@@ -87,8 +74,6 @@ describe('the folder a drop would land in', () => {
     expect(dropTarget.lit('/s/Work')).toBe(false)
   })
 
-  /** An empty path is not a folder, so a row whose own answer came out empty
-   *  must not light because the two emptinesses matched. */
   test('lights nothing for an empty answer', () => {
     dropTarget.over('')
     expect(dropTarget.lit('')).toBe(false)

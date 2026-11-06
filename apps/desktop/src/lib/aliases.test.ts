@@ -1,13 +1,3 @@
-/** The other names a note gives itself.
- *
- *  `aliases:` in the front matter is Obsidian's, and a link may use any of them.
- *  Read on the same pass as the icon, resolved only once nothing in the space is
- *  actually called that, and deliberately not followed when a rename rewrites
- *  links: a name the writer chose is not a filename to be replaced.
- *
- *  The index is the app's half; the resolver's own half is tested in
- *  packages/editor/src/wikilink/wikilink.test.ts. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -47,10 +37,6 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The space search, stood in for: the real one is behind the Rust crate on a
- *  desktop and inside a worker in a browser, and neither is here. The matcher the
- *  app actually uses runs over the notes this file holds, so what is tested is the
- *  answer the app would get. */
 vi.mock('./search/space', () => ({
   searchSpace: async (
     _root: string,
@@ -79,7 +65,6 @@ vi.mock('./search/space', () => ({
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 
-// A space is scanned once its file list is on screen; see startup.svelte.ts.
 void startup.shown()
 
 async function space(contents: Record<string, string>) {
@@ -143,9 +128,6 @@ describe('a note that declares other names', () => {
 
     const [out] = links.outgoing(at('Other.md'))
     expect(out?.to).not.toBeNull()
-    // The row reads as the note it found rather than as the words that were
-    // written, which is how a reader learns which note the alias meant. The file's
-    // own name; the row shows `shownName` of it.
     expect(out?.name).toBe('Plan.md')
   })
 
@@ -160,7 +142,6 @@ describe('a note that declares other names', () => {
 
     expect(touched).toBe(1)
     expect(notes['ByName.md']).toBe('See [[Programme]].\n')
-    // A name the writer chose is not a filename, so a rename leaves it alone.
     expect(notes['ByAlias.md']).toBe('See [[Roadmap]].\n')
   })
 

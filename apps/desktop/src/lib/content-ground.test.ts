@@ -10,7 +10,6 @@ import {
 } from './content-ground'
 import { AA, luminance, over, ratio, type Rgb, type Span } from './legibility'
 
-/** The paper's own inks on each side, as glass and the wallpaper write them. */
 const INKS: Record<'dark' | 'light', PaperInks> = {
   dark: {
     bg: [14, 16, 19],
@@ -26,7 +25,6 @@ const INKS: Record<'dark' | 'light', PaperInks> = {
   },
 }
 
-/** What can be under a note: the worst there is, and some ordinary grounds. */
 const SPANS: Record<string, Span> = {
   white: { least: [255, 255, 255], most: [255, 255, 255] },
   black: { least: [0, 0, 0], most: [0, 0, 0] },
@@ -36,7 +34,6 @@ const SPANS: Record<string, Span> = {
   'a sunset': { least: [60, 10, 20], most: [255, 140, 60] },
 }
 
-/** The ground the paper makes at an alpha over each corner of a span. */
 function grounds(inks: PaperInks, alpha: number, span: Span): Rgb[] {
   return [span.least, span.most].map((under) => over(inks.bg, alpha, under))
 }
@@ -85,7 +82,6 @@ describe('the terminal', () => {
     expect(layered(1, 0.5)).toBe(1)
     expect(layered(0.75, 0.5)).toBe(0.5)
     expect(layered(0.4, 1)).toBe(1)
-    // Two layers at p and l are one at p + (1 - p) l, which is never under the floor.
     for (const [total, under] of [
       [0.83, 0.41],
       [0.9, 0.12],
@@ -101,7 +97,6 @@ describe('the terminal', () => {
       for (const [name, span] of Object.entries(SPANS)) {
         const floor = paperFloor(inks, span, true)
         const paper = luminance(inks.bg)
-        // The colour xterm.js leaves closest to the paper: exactly its aim from it.
         const nearest =
           paper < 0.5
             ? (paper + 0.05) * TERMINAL_CONTRAST - 0.05

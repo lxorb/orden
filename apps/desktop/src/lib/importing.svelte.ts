@@ -1,16 +1,3 @@
-/** The one import: what was picked, what it would make, and where it goes.
- *
- *  One sheet for every format, because importing is one thing somebody does once
- *  and there is nothing about it worth asking twice. What was picked says which
- *  app it came from, so there is no format to choose; the counts say how much is
- *  about to arrive, so there is nothing to find out afterwards; and the target is
- *  the same picker moving a note uses, so it is a place the reader already knows
- *  how to choose.
- *
- *  Held here rather than in the sheet because the reading is the slow part: a
- *  zip of six thousand notes takes a moment, and a sheet that is closed and
- *  opened again should not read it twice. */
-
 import { busy } from './busy.svelte'
 import { message, t } from './i18n.svelte'
 import { applyImport } from './import/apply'
@@ -34,14 +21,8 @@ import { importSheet } from './surfaces.svelte'
 import { invoke, isDesktop, joinPath, platform } from './tauri'
 import { workspace } from './workspace.svelte'
 
-/** What the sheet is doing, which is what it draws. */
 export type Stage = 'waiting' | 'reading' | 'ready' | 'writing' | 'done'
 
-/** Names an exporter gives a file that say nothing about what is in it, so the
- *  import's folder is named after the app instead. `AppleJournalEntries` is the
- *  name Journal's own export has, for everybody, every time. Only a whole word:
- *  `Keepsakes` and `Graphic Design` are names somebody chose, and the start of
- *  them is not an exporter's. */
 const MACHINE_MADE =
   /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
 
@@ -52,46 +33,28 @@ class Importing {
   plan = $state<ImportPlan | null>(null)
   error = $state<string | null>(null)
 
-  /** Where it lands: a space's root, and the folder inside it. */
   root = $state<string | null>(null)
-  /** The folder the import makes for itself, inside the target. Empty puts the
-   *  files straight into it. */
   folder = $state('')
-  /** Which folder of the space the import's own folder goes in. */
   under = $state('')
 
-  /** What a bare table becomes; the one question a format asks. */
   rows = $state<Rows>('table')
 
-  /** How many files have been written, for the progress line. */
   written = $state(0)
 
-  /** How many names were taken, once it has been written. */
   stepped = $state(0)
 
-  /** Set when macOS refuses the folder Notes keeps its notes in, which is what it
-   *  does until the app has Full Disk Access. */
   noAccess = $state(false)
 
-  /** The files behind the plan. Not state: they hold the whole export, and
-   *  nothing draws them. */
   private sources: Source[] = []
 
   readonly counts = $derived<Counts>(
     this.plan ? counts(this.plan) : { notes: 0, files: 0, folders: 0, bytes: 0 },
   )
 
-  /** The space it would land in, by name, for the target row. */
   readonly spaceName = $derived(
     workspace.spaces.find((space) => space.root === this.root)?.name ?? '',
   )
 
-  /** Opens the sheet, and asks for the sheet.
-   *
-   *  The knock is here rather than at the call sites because this is the one way in,
-   *  whichever of them ran: the row in File, and a drive reaching the store by name.
-   *  App.svelte mounts the sheet off that door rather than off `open`, so the shell
-   *  carries neither this nor the readers behind it. See surfaces.svelte.ts. */
   show() {
     void importSheet.ask()
     this.open = true
@@ -100,7 +63,6 @@ class Importing {
 
   close() {
     this.open = false
-    // A finished import has nothing left to say, so the next one starts clean.
     if (this.stage === 'done' || this.stage === 'reading') this.forget()
   }
 
@@ -117,7 +79,6 @@ class Importing {
     this.rows = 'table'
   }
 
-  /** What the reader picked, read as far as knowing what it would make. */
   async take(picked: readonly Picked[]) {
     if (!picked.length) return
 
@@ -126,8 +87,6 @@ class Importing {
     this.root ??= landing()
 
     try {
-      // A folder picked whole is the import's own folder, named after it below, so
-      // what is read is what was inside it; see `insideFolder`.
       this.sources = await sourcesFrom(insideFolder(picked))
       this.format = await detect(this.sources)
 
@@ -145,19 +104,12 @@ class Importing {
     }
   }
 
-  /** Apple Notes on this Mac, read out of the database Notes keeps.
-   *
-   *  The one import with no file in it, because Notes has no export: what a reader
-   *  would otherwise be told is to install something else first. Only in the
-   *  desktop app on a Mac, which is where that database is. */
   async readMac() {
     this.stage = 'reading'
     this.error = null
     this.noAccess = false
     this.sources = []
 
-    // Imported the way every other reader is, so the module that reads a Mac's
-    // own notes is not in the bundle of a build with no Mac under it.
     const apple = await import('./import/apple')
 
     try {
@@ -168,9 +120,6 @@ class Importing {
       this.plan = plan
       this.stage = 'ready'
     } catch (error) {
-      // Two of these the crate answers as a mark rather than a sentence, because
-      // what to say about a permission is the sheet's business and not the
-      // crate's.
       const answered = saidBy(error)
 
       this.stage = 'waiting'
@@ -186,9 +135,6 @@ class Importing {
     }
   }
 
-  /** Todoist, read out of the account with the token the reader pasted. The token is
-   *  this call's and nobody else's: it is handed to the reader and dropped with it,
-   *  never kept, never logged (docs/tasks.md 5.17). */
   async readTodoist(token: string, completed: boolean) {
     const said = token.trim()
     if (!said) return
@@ -210,13 +156,10 @@ class Importing {
     }
   }
 
-  /** Opens Full Disk Access in System Settings, since a sheet that names a
-   *  permission and leaves the reader to find the pane has asked twice. */
   async openAccess() {
     await invoke('open_full_disk_access').catch(() => undefined)
   }
 
-  /** The plan again, for a choice that changes what would be made. */
   async reread() {
     if (!this.format) return
 
@@ -230,23 +173,13 @@ class Importing {
     }
   }
 
-  /** Whether what was picked is one of the kinds pandoc reads and nothing here
-   *  does: a Word file, an ODT, an ePub, a LaTeX paper. */
   readonly needsPandoc = $derived(this.format === 'pandoc')
 
-  /** Hands the document to pandoc, which reads it off the disk itself.
-   *
-   *  Which is why it asks for the file again: pandoc is a program on the machine
-   *  rather than a reader in here, and a program takes a path where the drop zone
-   *  took bytes. One press, and the sheet says why before it.  */
   async readWithPandoc() {
     const { importDocument } = await import('./export')
     const imported = await importDocument()
     if (!imported) return
 
-    // Where the note lands, which is where its pictures go: the space the sheet
-    // would import into, and never one shared with this account to be read, where
-    // the pictures would be stray files and the note would not be placed at all.
     const root = await this.pandocRoot()
     const home = workspace.spaces.find((one) => one.root === root)?.id ?? null
     if (root === null && imported.pictures.length) busy.failed(t('That picture could not be read.'))
@@ -259,10 +192,6 @@ class Importing {
     this.forget()
   }
 
-  /** The space a document pandoc read lands in: the sheet's, while it is still a
-   *  space the reader may write in, else the one `landing` picks. With no space at
-   *  all yet, the one the note would be placed in, which `draftHome` makes. None
-   *  where every space is one shared to be read. */
   private async pandocRoot(): Promise<string | null> {
     const asked = this.root
     const known = workspace.spaces.some((one) => one.root === asked)
@@ -275,12 +204,6 @@ class Importing {
     return made !== null && canWriteAt(made) ? made : null
   }
 
-  /** The words of a document pandoc read, with its pictures written where a
-   *  pasted picture of the note at `notePath` would go and the links pointed there.
-   *
-   *  `openBlank` places the note at the top of its space under its name, so that
-   *  is the path the pictures are kept for; a name already taken there steps aside
-   *  in the same folder, where the links still resolve. */
   private async withPictures(
     imported: { markdown: string; pictures: PandocPicture[] },
     notePath: string,
@@ -293,8 +216,6 @@ class Importing {
       (bytes, name) => storeBeside(bytes.slice().buffer, notePath, name),
     )
     void workspace.loadTree()
-    // Rare enough - the disk refused a write - that one sentence the app already
-    // says for a picture serves.
     if (lost) busy.failed(t('That picture could not be read.'))
     return markdown
   }
@@ -305,16 +226,12 @@ class Importing {
     void this.reread()
   }
 
-  /** Where it goes, through the picker that moving a note already uses. */
   async chooseTarget() {
-    // Nothing is moving, so every note of the space and every other space is
-    // offered: the same list, asked with nothing in hand.
     const targets = moveTargets({
       moving: '',
       tree: workspace.tree,
       spaces: workspace.spaces,
       here: workspace.activeSpace?.root ?? null,
-      // Not a space shared to be read, nor a folder of it, which take no import.
     }).filter((target) => canWriteAt(target.id))
 
     const { prompt } = await import('./prompt.svelte')
@@ -328,7 +245,6 @@ class Importing {
     this.under = space && into !== space.root ? relativeTo(space.root, into) : ''
   }
 
-  /** Writes it. */
   async run() {
     const plan = this.plan
     const root = this.root
@@ -355,19 +271,12 @@ class Importing {
   }
 }
 
-/** Where an import lands until the reader picks: the open space, or where that is
- *  one shared with this account to be read, which takes no import, the first space
- *  that is their own to write in. None where there is no such space, and the sheet
- *  writes nothing. */
 function landing(): string | null {
   const open = workspace.activeSpace?.root ?? null
   if (open !== null && canWriteAt(open)) return open
   return workspace.spaces.find((space) => canWriteAt(space.root))?.root ?? null
 }
 
-/** Todoist's Inbox, written, as the space's inbox where the space has none of its own
- *  yet: the notes land under the import's folder, and the inbox is named rather than
- *  moved (rows/inbox.ts), so nothing the reader wrote is touched. */
 async function inboxFrom(plan: ImportPlan, root: string, paths: readonly string[]) {
   const at = plan.inbox === undefined ? -1 : plan.files.findIndex((one) => one.path === plan.inbox)
   const path = paths[at]
@@ -380,46 +289,26 @@ async function inboxFrom(plan: ImportPlan, root: string, paths: readonly string[
   if (kept === INBOX && there === null) setInbox(root, relativeTo(root, path))
 }
 
-/** Whether this machine is the one platform that can be read without an export:
- *  a Mac, in the desktop app. `platform()` reads what the os plugin left in the
- *  page before the first script ran, so this is known without waiting. */
 export function onMac(): boolean {
   return isDesktop && platform() === 'macos'
 }
 
-/** What an error answered, whether it came back as one or as a word.
- *
- *  A command that answers `Err(String)` rejects with that string rather than with
- *  an `Error`, and the two marks the Apple Notes reader uses are exactly that: a
- *  word the sheet reads rather than a sentence it shows. */
 function saidBy(error: unknown): string {
   if (typeof error === 'string') return error
   return error instanceof Error ? error.message : ''
 }
 
-/** What the import's own folder is called: after the file that was picked, since
- *  that is the name the reader recognises, and after the app it came out of when
- *  the file's name is one an exporter made up. */
 export function folderNameFor(picked: readonly Picked[], format: FormatId): string {
-  // Todoist's projects go where the Tasks panel lists projects, so its plan is written
-  // from the top of the space (import/todoist.ts).
   if (format === 'todoist') return ''
   const first = picked[0]
   const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
-  // Obsidian makes no exports, so a vault's name is always one its owner gave it:
-  // `Graph Theory` keeps its first word.
   const stripped = (format === 'obsidian' ? named : named.replace(MACHINE_MADE, '')).trim()
 
-  // `Export-9f1c2d3e.zip` leaves `9f1c2d3e`, which is the export's id rather than
-  // a name anybody would give a folder, and `backup.zip` leaves nothing at all. A
-  // name has a word in it, in whatever script it is written: `Заметки`, `笔记` and
-  // `AI` are all names somebody gave their notes.
   const wordy = /\p{L}{2,}/u.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
 
   return wordy ? safeName(stripped) : nameOfFormat(format)
 }
 
-/** The folder a name-less export lands in, which is the app it came out of. */
 function nameOfFormat(format: FormatId): string {
   switch (format) {
     case 'notion':
@@ -457,8 +346,6 @@ function nameOfFormat(format: FormatId): string {
   }
 }
 
-/** A file picked on its own, named without its extension. A folder is named by
- *  `pickedFolder` instead. */
 function stemOf(picked: Picked): string {
   return picked.name.replace(/\.[^.]+$/, '')
 }

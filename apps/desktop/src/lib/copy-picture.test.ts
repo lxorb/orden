@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { copyPicture } from './copy-picture'
 
-/** What the clipboard was handed: the kinds of each item, and the bytes behind them. */
 function clipboard() {
   const written: Record<string, Promise<Blob>>[] = []
 

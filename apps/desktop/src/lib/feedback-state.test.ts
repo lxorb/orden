@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Send feedback says a report was received only once the service has said it kept it,
- *  and gives the address of the report's page it answered with (#1087). A report the
- *  service did not keep is never received. */
-
 interface Service {
   answer: unknown
   fails: Error | null
