@@ -262,14 +262,50 @@ pub(crate) fn add_child<R: Runtime>(
     size: impl Into<tauri::Size>,
 ) -> tauri::Result<tauri::Webview<R>> {
     #[cfg(not(feature = "cef"))]
-    let built = window.add_child(builder, position, size);
+    let built = one_at_a_time(|| window.add_child(builder, position, size));
     #[cfg(feature = "cef")]
-    let built = window.add_child(builder.position(position).size(size));
+    let built = one_at_a_time(|| window.add_child(builder.position(position).size(size)));
     #[cfg(all(windows, not(feature = "cef")))]
     if let Ok(view) = &built {
         crate::web_visual::host_page(view);
     }
     built
+}
+
+#[cfg(desktop)]
+thread_local! {
+    static BUILDING: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+    static AFTER: std::cell::RefCell<Vec<Box<dyn FnOnce()>>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+#[cfg(desktop)]
+pub(crate) fn one_at_a_time<T>(build: impl FnOnce() -> tauri::Result<T>) -> tauri::Result<T> {
+    if BUILDING.get() > 0 {
+        return Err(tauri::Error::FailedToReceiveMessage);
+    }
+    BUILDING.set(1);
+    let made = build();
+    BUILDING.set(0);
+    loop {
+        let waiting = AFTER.with_borrow_mut(std::mem::take);
+        if waiting.is_empty() {
+            break;
+        }
+        for one in waiting {
+            one();
+        }
+    }
+    made
+}
+
+#[cfg(desktop)]
+pub(crate) fn once_built(then: impl FnOnce() + 'static) {
+    if BUILDING.get() > 0 {
+        AFTER.with_borrow_mut(|after| after.push(Box::new(then)));
+    } else {
+        then();
+    }
 }
 
 #[cfg(desktop)]
@@ -456,6 +492,37 @@ mod tests {
             heard.try_recv().expect("handed"),
             (2, std::thread::current().id())
         );
+    }
+
+    #[cfg(desktop)]
+    #[test]
+    fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_it() {
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        let order = Rc::new(RefCell::new(Vec::new()));
+        let seen = Rc::clone(&order);
+        let built = super::one_at_a_time(|| {
+            seen.borrow_mut().push("outer begins");
+            let inner = Rc::clone(&seen);
+            super::once_built(move || {
+                let nested = super::one_at_a_time(|| {
+                    inner.borrow_mut().push("waited");
+                    Ok(())
+                });
+                assert!(nested.is_ok());
+            });
+            assert!(super::one_at_a_time(|| Ok(())).is_err());
+            seen.borrow_mut().push("outer ends");
+            Ok(7)
+        });
+        assert_eq!(built.ok(), Some(7));
+        assert_eq!(*order.borrow(), ["outer begins", "outer ends", "waited"]);
+
+        let now = Rc::new(RefCell::new(false));
+        let ran = Rc::clone(&now);
+        super::once_built(move || *ran.borrow_mut() = true);
+        assert!(*now.borrow());
     }
 
     #[test]
