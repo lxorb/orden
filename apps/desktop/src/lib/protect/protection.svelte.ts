@@ -1,6 +1,6 @@
 import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
 import { isRecord, keepJson, stored } from '../stored'
-import { type Folded, readSpaces, without } from '../records'
+import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, moving } from '../workspace/file-ops'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
@@ -23,6 +23,7 @@ export interface Lock {
 export interface Hashed extends Cost {
   salt: string
   hash: string
+  at?: number
 }
 
 const MOST_N = 1 << 20
@@ -35,7 +36,15 @@ export function hashedOf(value: unknown): Hashed | null {
   if (!whole(n, MOST_N) || (n & (n - 1)) !== 0 || !whole(r, 32) || !whole(p, 16)) return null
   if (typeof salt !== 'string' || typeof hash !== 'string') return null
   if (!/^[A-Za-z0-9+/=]{4,64}$/.test(salt) || !/^[A-Za-z0-9+/=]{4,128}$/.test(hash)) return null
-  return { n, r, p, salt, hash }
+  const at = (value as Record<string, unknown>).at
+  return {
+    n,
+    r,
+    p,
+    salt,
+    hash,
+    ...(typeof at === 'number' && whole(at, Number.MAX_SAFE_INTEGER) ? { at } : {}),
+  }
 }
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
@@ -52,11 +61,30 @@ export function protectedMap(value: unknown): Record<string, Way> {
 
 interface Kept extends Folded {
   ways: Record<string, Way>
+  sent: boolean
 }
 
 function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({ ways: protectedMap(one.ways) }))
+  return readSpaces(STORAGE_KEY, (one) => ({
+    ways: protectedMap(one.ways),
+    sent: one.sent !== false,
+  }))
 }
+
+function same(one: Record<string, Way>, other: Record<string, Way>): boolean {
+  const keys = Object.keys(one)
+  return keys.length === Object.keys(other).length && keys.every((key) => one[key] === other[key])
+}
+
+const WAYS: Folding<Record<string, Way>> = {
+  fold: (theirs, mine) => ({ ...theirs, ...mine }),
+  same,
+}
+
+const synced = () =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
+    : import('./synced')
 
 function covers(key: string, at: string, root: string): boolean {
   return key === SPACE || within(key, at, root) !== null
@@ -91,8 +119,41 @@ export class Protection {
   }
 
   setPassword(hashed: Hashed | null): void {
-    this.hashed = hashed
-    keepJson(PASSWORD_KEY, hashed)
+    this.hashed = hashed && { ...hashed, at: Date.now() }
+    keepJson(PASSWORD_KEY, this.hashed)
+    if (this.hashed)
+      void synced()
+        .then((one) => one.pushPassword())
+        .catch(() => undefined)
+  }
+
+  adoptPassword(theirs: Hashed | null): boolean {
+    const mine = this.hashed
+    if (theirs && (!mine || (mine.at ?? 0) < (theirs.at ?? 0))) {
+      this.hashed = theirs
+      keepJson(PASSWORD_KEY, theirs)
+      return false
+    }
+    return !!mine && (!theirs || (mine.at ?? 0) > (theirs.at ?? 0))
+  }
+
+  adopt(root: string, theirs: Record<string, Way>, accountId: string): boolean {
+    const held = this.spaces[root]
+    const met = meet(held, accountId, held?.ways ?? {}, protectedMap(theirs), WAYS)
+    if (!met) return false
+    this.spaces = {
+      ...this.spaces,
+      [root]: { ways: met.value, account: accountId, sent: !met.tell },
+    }
+    this.write()
+    return met.tell
+  }
+
+  said(root: string, landed: boolean): void {
+    const held = this.spaces[root]
+    if (!held || held.sent === landed) return
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    keepJson(STORAGE_KEY, this.spaces)
   }
 
   covering(path: string): Lock[] {
@@ -182,8 +243,12 @@ export class Protection {
   }
 
   private put(root: string, ways: Record<string, Way>): void {
-    this.spaces = { ...this.spaces, [root]: { ways, account: this.spaces[root]?.account ?? null } }
+    const account = this.spaces[root]?.account ?? null
+    this.spaces = { ...this.spaces, [root]: { ways, account, sent: false } }
     this.write()
+    void synced()
+      .then((one) => one.pushWays(root))
+      .catch(() => undefined)
   }
 
   private write(): void {

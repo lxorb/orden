@@ -45,6 +45,7 @@ import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
 import { siteIcons } from './site-icons'
 import { settings } from './settings'
+import { protectedRoutes } from './protected'
 import { v2Docs, v2Spaces } from './sync2'
 import { syncAdmin } from './sync2/admin'
 import { sweepMisnamed, v2Blobs, v2Files } from './sync2/files'
@@ -213,6 +214,7 @@ app.route('/v1/shared', sharedWithMe)
 app.route('/v1/spaces', spaces)
 app.route('/v1/trash', trash)
 app.route('/v1/settings', settings)
+app.route('/v1/protected', protectedRoutes)
 app.route('/v2/site-icons', siteIcons)
 app.route('/v1/mcp', mcpAdmin)
 app.route('/v1/sessions', sessions)

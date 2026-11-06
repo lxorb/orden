@@ -118,5 +118,13 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     }
   }
 
+  if (accountId !== null && !__EVEN_PLUGIN__) {
+    const pairs = paired()
+    void import('./protect/synced').then(
+      (one) => one.pulled(token, accountId, pairs),
+      () => undefined,
+    )
+  }
+
   workspace.applySpaceOrder(account.spaces.map((space) => space.name))
 }

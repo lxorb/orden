@@ -55,7 +55,7 @@ describe('protecting', () => {
   test('is kept as the space speaks of it, and read back after a restart', () => {
     protection.set(ROOT, at('Inside'), 'password')
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toEqual({
-      [ROOT]: { ways: { Inside: 'password' }, account: null },
+      [ROOT]: { ways: { Inside: 'password' }, account: null, sent: false },
     })
     expect(keys(new Protection())).toEqual(['Inside'])
   })
@@ -108,5 +108,34 @@ describe('a protected path that moves', () => {
     protection.set(ROOT, at('Inside'), 'password')
     protection.spaceMoved(ROOT, '/renamed')
     expect(keys(protection, '/renamed')).toEqual(['Inside'])
+  })
+})
+
+describe('what the account holds of it', () => {
+  test('is folded with this machine’s the first time, and taken after that', () => {
+    protection.set(ROOT, at('Mine'), 'password')
+    expect(protection.adopt(ROOT, { Theirs: 'device' }, 'u1')).toBe(true)
+    expect(protection.ways(ROOT)).toEqual({ Theirs: 'device', Mine: 'password' })
+
+    protection.said(ROOT, true)
+    expect(protection.adopt(ROOT, { Theirs: 'device' }, 'u1')).toBe(false)
+    expect(protection.ways(ROOT)).toEqual({ Theirs: 'device' })
+  })
+
+  test('does not take back what this machine changed and has not sent yet', () => {
+    protection.adopt(ROOT, {}, 'u1')
+    protection.set(ROOT, at('Mine'), 'password')
+    expect(protection.adopt(ROOT, {}, 'u1')).toBe(true)
+    expect(protection.ways(ROOT)).toEqual({ Mine: 'password' })
+  })
+
+  test('keeps the newer of two passwords', () => {
+    const older = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'b2xkZXI=', at: 1 }
+    const newer = { ...older, hash: 'bmV3ZXI=', at: Date.now() + 1000 }
+    protection.setPassword(older)
+    expect(protection.adoptPassword(newer)).toBe(false)
+    expect(protection.password?.hash).toBe('bmV3ZXI=')
+    expect(protection.adoptPassword({ ...older, at: 2 })).toBe(true)
+    expect(protection.password?.hash).toBe('bmV3ZXI=')
   })
 })

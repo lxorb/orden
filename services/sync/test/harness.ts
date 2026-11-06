@@ -353,6 +353,7 @@ export interface Reply {
   user: UserView
   resendIn: number
   settings: Record<string, unknown>
+  password: { hash: string } | null
 
   key: { set: boolean; tail: string }
   set: boolean
