@@ -1157,6 +1157,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             crate::downloads::listen(&platform, asking.clone(), window.clone());
             crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
+            crate::pinch::web_page(&platform, &asking, &label);
             ask::listen(&platform, asking, named, window);
 
             #[cfg(not(feature = "cef"))]

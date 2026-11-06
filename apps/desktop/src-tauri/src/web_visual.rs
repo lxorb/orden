@@ -3,14 +3,14 @@ use std::collections::{BTreeSet, HashMap};
 use std::sync::{Mutex, PoisonError};
 
 use tauri::{Manager, Runtime, Webview};
-use webview2_com::CursorChangedEventHandler;
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2CompositionController, ICoreWebView2CompositionController3,
-    ICoreWebView2Controller, ICoreWebView2Environment3, ICoreWebView2PointerInfo,
-    COREWEBVIEW2_MOUSE_EVENT_KIND, COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,
+    ICoreWebView2Controller, ICoreWebView2Controller3, ICoreWebView2Environment3,
+    ICoreWebView2PointerInfo, COREWEBVIEW2_MOUSE_EVENT_KIND, COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,
     COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS, COREWEBVIEW2_POINTER_EVENT_KIND,
 };
-use windows_com::core::Interface;
+use webview2_com::{CallDevToolsProtocolMethodCompletedHandler, CursorChangedEventHandler};
+use windows_com::core::{w, Interface, HSTRING};
 use windows_com::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows_com::Win32::Graphics::DirectComposition::{
     DCompositionCreateDevice2, IDCompositionDesktopDevice, IDCompositionRectangleClip,
@@ -22,7 +22,8 @@ use windows_com::Win32::System::Ole::{
 };
 use windows_com::Win32::UI::Accessibility::{UiaReturnRawElementProvider, UiaRootObjectId};
 use windows_com::Win32::UI::Input::KeyboardAndMouse::{
-    GetCapture, ReleaseCapture, SetCapture, TrackMouseEvent, TME_LEAVE, TRACKMOUSEEVENT,
+    GetAsyncKeyState, GetCapture, ReleaseCapture, SetCapture, TrackMouseEvent, TME_LEAVE,
+    TRACKMOUSEEVENT, VK_CONTROL,
 };
 use windows_com::Win32::UI::Input::Pointer::{
     GetPointerDeviceRects, GetPointerInfo, GetPointerPenInfo, GetPointerTouchInfo, GetPointerType,
@@ -30,13 +31,13 @@ use windows_com::Win32::UI::Input::Pointer::{
 };
 use windows_com::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
 use windows_com::Win32::UI::WindowsAndMessaging::{
-    GetAncestor, GetClientRect, GetCursorPos, SetCursor, WindowFromPoint, GA_ROOT, HCURSOR,
-    HTCLIENT, POINTER_INPUT_TYPE, PT_PEN, PT_TOUCH, WM_GETOBJECT, WM_LBUTTONDBLCLK, WM_LBUTTONDOWN,
-    WM_LBUTTONUP, WM_MBUTTONDBLCLK, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE,
-    WM_MOUSEWHEEL, WM_NCDESTROY, WM_POINTERACTIVATE, WM_POINTERDOWN, WM_POINTERENTER,
-    WM_POINTERLEAVE, WM_POINTERUP, WM_POINTERUPDATE, WM_RBUTTONDBLCLK, WM_RBUTTONDOWN,
-    WM_RBUTTONUP, WM_SETCURSOR, WM_WINDOWPOSCHANGED, WM_XBUTTONDBLCLK, WM_XBUTTONDOWN,
-    WM_XBUTTONUP,
+    GetAncestor, GetClientRect, GetCursorPos, GetMessageExtraInfo, SetCursor, WindowFromPoint,
+    GA_ROOT, HCURSOR, HTCLIENT, POINTER_INPUT_TYPE, PT_PEN, PT_TOUCH, WM_GETOBJECT,
+    WM_LBUTTONDBLCLK, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDBLCLK, WM_MBUTTONDOWN, WM_MBUTTONUP,
+    WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_NCDESTROY, WM_POINTERACTIVATE, WM_POINTERDOWN,
+    WM_POINTERENTER, WM_POINTERLEAVE, WM_POINTERUP, WM_POINTERUPDATE, WM_RBUTTONDBLCLK,
+    WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SETCURSOR, WM_WINDOWPOSCHANGED, WM_XBUTTONDBLCLK,
+    WM_XBUTTONDOWN, WM_XBUTTONUP,
 };
 
 pub(crate) fn pages_drawn_under() -> bool {
@@ -85,6 +86,7 @@ struct Composed {
 
 thread_local! {
     static COMPOSED: RefCell<Composed> = RefCell::new(Composed::default());
+    static PINCHES: RefCell<HashMap<isize, crate::pinch::Owed>> = RefCell::new(HashMap::new());
 }
 
 fn composed<T>(with: impl FnOnce(&mut Composed) -> T) -> T {
@@ -435,6 +437,10 @@ unsafe extern "system" fn page_window_heard(
     };
 
     match message {
+        WM_MOUSEWHEEL if pinched(wparam) => {
+            pinch_page(key, window, wparam, lparam, &controller);
+            LRESULT(0)
+        }
         WM_MOUSEMOVE | WM_LBUTTONDOWN | WM_LBUTTONUP | WM_LBUTTONDBLCLK | WM_RBUTTONDOWN
         | WM_RBUTTONUP | WM_RBUTTONDBLCLK | WM_MBUTTONDOWN | WM_MBUTTONUP | WM_MBUTTONDBLCLK
         | WM_XBUTTONDOWN | WM_XBUTTONUP | WM_XBUTTONDBLCLK | WM_MOUSEWHEEL | WM_MOUSEHWHEEL => {
@@ -574,6 +580,98 @@ fn mouse_to_page(
     }
 }
 
+const FROM_TOUCH: u32 = 0xFF51_5700;
+
+#[allow(
+    unsafe_code,
+    reason = "the keys held and the message's origin are read through user32"
+)]
+fn pinched(wparam: WPARAM) -> bool {
+    let (held, extra) = unsafe {
+        (
+            GetAsyncKeyState(i32::from(VK_CONTROL.0)) < 0,
+            GetMessageExtraInfo().0,
+        )
+    };
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let from_touch = (extra as u32) & 0xFFFF_FF00 == FROM_TOUCH;
+    crate::pinch::is_pinch(
+        low_word(wparam.0),
+        held,
+        crate::touchpad::fingers(),
+        from_touch,
+    )
+}
+
+#[allow(
+    unsafe_code,
+    reason = "the point is moved into the page's window through Win32 and the page's scale read through WebView2's COM interface"
+)]
+fn pinch_page(
+    key: isize,
+    window: HWND,
+    wparam: WPARAM,
+    lparam: LPARAM,
+    controller: &ICoreWebView2Controller,
+) {
+    #[allow(clippy::cast_possible_wrap)]
+    let turn = high_word(wparam.0) as i16;
+    let mut point = point_of(lparam);
+    let (mut raster, mut zoom) = (1.0_f64, 1.0_f64);
+    unsafe {
+        let _ = ScreenToClient(window, &raw mut point);
+        if let Ok(three) = controller.cast::<ICoreWebView2Controller3>() {
+            let _ = three.RasterizationScale(&raw mut raster);
+        }
+        let _ = controller.ZoomFactor(&raw mut zoom);
+    }
+    let ratio = (raster * zoom).max(f64::EPSILON);
+    let at = (f64::from(point.x) / ratio, f64::from(point.y) / ratio);
+    let asked = PINCHES.with_borrow_mut(|all| {
+        let owed = all.entry(key).or_default();
+        owed.gather(crate::pinch::scale_of_turn(turn), at);
+        owed.take()
+    });
+    if let Some(asked) = asked {
+        send_pinch(key, controller, asked);
+    }
+}
+
+#[allow(
+    unsafe_code,
+    reason = "the pinch is asked of the page through WebView2's DevTools Protocol, a COM interface"
+)]
+fn send_pinch(key: isize, controller: &ICoreWebView2Controller, asked: crate::pinch::Asked) {
+    let next_owed = move || {
+        PINCHES.with_borrow_mut(|all| {
+            all.get_mut(&key).and_then(|owed| {
+                owed.landed();
+                owed.take()
+            })
+        })
+    };
+    let Ok(core) = (unsafe { controller.CoreWebView2() }) else {
+        let _ = next_owed();
+        return;
+    };
+    let done = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |_, _| {
+        if let Some(next) = next_owed() {
+            let page = composed(|all| all.pages.get(&key).map(|page| page.controller.clone()));
+            if let Some(controller) = page {
+                send_pinch(key, &controller, next);
+            }
+        }
+        Ok(())
+    }));
+    let params = HSTRING::from(asked.params().to_string());
+    let sent = unsafe {
+        core.CallDevToolsProtocolMethod(w!("Input.synthesizePinchGesture"), &params, &done)
+    };
+    if sent.is_err() {
+        let _ = next_owed();
+    }
+}
+
 #[allow(
     unsafe_code,
     reason = "a visual is taken out of its tree through DirectComposition"
@@ -600,6 +698,7 @@ fn visual_gone(key: isize) {
         }
     });
     let _ = ENVIRONMENTS.with_borrow_mut(|all| all.remove(&key));
+    let _ = PINCHES.with_borrow_mut(|all| all.remove(&key));
     reading::forget(key);
 }
 

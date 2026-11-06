@@ -50,6 +50,14 @@ pub fn start(app: &tauri::AppHandle) {
 }
 
 #[cfg(windows)]
+static ON_THE_PAD: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+#[cfg(windows)]
+pub fn fingers() -> u32 {
+    ON_THE_PAD.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a touchpad's own reports reach a program only as raw input, read through user32 and hid.dll"
@@ -230,6 +238,7 @@ mod raw {
             }
             let now = telling(kept.told, fingers?, in_front())?;
             kept.told = now;
+            super::ON_THE_PAD.store(now, std::sync::atomic::Ordering::Relaxed);
             Some(now)
         });
         if let (Some(fingers), Some(app)) = (said, APP.get()) {

@@ -12,6 +12,7 @@ on:
       - apps/desktop/src/lib/outside-drops.ts
       - scripts/web-tab-drive.py
       - scripts/outside-drop-drive.py
+      - scripts/pinch-drive.py
       - .github/workflows/web-tab.yml
   workflow_dispatch:
 
@@ -88,6 +89,39 @@ jobs:
           drive=(scripts/web-tab-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
           case "$RUNNER_OS" in
             Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
+            Windows) python "${drive[@]}" ;;
+            *) python3 "${drive[@]}" ;;
+          esac
+
+      - name: A pinch magnifies the page and leaves its zoom
+        if: ${{ !cancelled() && env.EXE != '' }}
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/pinch-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Linux)
+              sudo apt-get install -y xserver-xorg-core xserver-xorg-video-dummy xserver-xorg-input-libinput
+              python3 -m pip install --quiet --break-system-packages evdev python-xlib
+              sudo modprobe uinput || true
+              sudo chmod 666 /dev/uinput
+              conf="$RUNNER_TEMP/pinch-xorg.conf"
+              printf '%s\n' \
+                'Section "ServerFlags"' '  Option "AutoAddDevices" "true"' '  Option "AllowEmptyInput" "true"' 'EndSection' \
+                'Section "Device"' '  Identifier "dummy"' '  Driver "dummy"' '  VideoRam 256000' 'EndSection' \
+                'Section "Screen"' '  Identifier "screen"' '  Device "dummy"' '  DefaultDepth 24' \
+                '  SubSection "Display"' '    Depth 24' '    Virtual 1600 1000' '  EndSubSection' 'EndSection' \
+                'Section "InputClass"' '  Identifier "pads"' '  MatchIsTouchpad "on"' '  Driver "libinput"' 'EndSection' >"$conf"
+              sudo Xorg :7 -noreset -config "$conf" -logfile "$RUNNER_TEMP/xorg.log" &
+              xorg=$!
+              sleep 4
+              said=0
+              DISPLAY=:7 dbus-run-session -- python3 "${drive[@]}" || said=$?
+              sudo kill "$xorg" || true
+              if [ "$said" != 0 ]; then
+                sudo grep -i -E "touchpad|libinput|gesture|error" "$RUNNER_TEMP/xorg.log" | tail -40
+                exit "$said"
+              fi
+              ;;
             Windows) python "${drive[@]}" ;;
             *) python3 "${drive[@]}" ;;
           esac
