@@ -47,10 +47,44 @@ function pressed(change: { from: number; to?: number; insert?: string }): Promis
   return new Promise((resolve) => setTimeout(() => resolve(view.state.doc.toString()), 50))
 }
 
-test('a line written above is kept and no box is broken', async () => {
-  expect(await pressed({ from: 0, insert: 'new line\n' })).toBe(`new line\n${NOTE}`)
+test('a line written above is kept, and the boxes still tick where they went', async () => {
+  expect(await pressed({ from: 0, insert: 'new line\n' })).toBe(
+    'new line\n- [x] one\n- [x] two\n- [ ] plain',
+  )
 })
 
-test('a line taken away above does not throw', async () => {
-  expect(await pressed({ from: 0, to: 10 })).toBe('- [ ] two\nplain')
+test('a line taken away meanwhile is not ticked, and the others still are', async () => {
+  expect(await pressed({ from: 0, to: 10 })).toBe('- [x] two\n- [ ] plain')
+})
+
+test('a line changed meanwhile is left as it now is', async () => {
+  expect(await pressed({ from: 6, insert: 'very ' })).toBe('- [ ] very one\n- [x] two\n- [ ] plain')
+})
+
+test('two boxes pressed one after the other, before the first is written, are both ticked', async () => {
+  const view = new EditorView({
+    state: EditorState.create({
+      doc: NOTE,
+      extensions: [
+        markdown({ base: markdownLanguage }),
+        noteIndex.of({
+          notes: [],
+          files: [],
+          path: null,
+          read: () => Promise.resolve(null),
+          tasks: HELP,
+        }),
+      ],
+    }),
+    parent: document.body,
+  })
+  open.push(view)
+
+  view.dispatch({ selection: EditorSelection.cursor(3) })
+  toggleTask(view)
+  view.dispatch({ selection: EditorSelection.cursor(13) })
+  toggleTask(view)
+  await new Promise((resolve) => setTimeout(resolve, 50))
+
+  expect(view.state.doc.toString()).toBe('- [x] one\n- [x] two\nplain')
 })
