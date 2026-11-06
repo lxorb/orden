@@ -54,6 +54,7 @@ async function opened(device: 'phone' | 'tablet' = 'phone', right: string[] = []
     panel: null as string | null,
     rightPanel: null as string | null,
     right,
+    reopens: 'tree',
     get nextRight(): string | null {
       return this.rightPanel ?? this.right[0] ?? null
     },
@@ -326,5 +327,15 @@ describe('where a tablet lets the drag begin', () => {
 
     expect(swipe(prose, 500, 900).pulled).toBeGreaterThan(0)
     expect(workspace.panel).toBe('tree')
+  })
+})
+
+describe('the drawer on a phone', () => {
+  test('opens on the tab last shown, the way back does', async () => {
+    const { drawer, workspace } = await opened('phone')
+    Object.assign(workspace, { reopens: 'tasks' })
+
+    drawer.open()
+    expect(workspace.panel).toBe('tasks')
   })
 })

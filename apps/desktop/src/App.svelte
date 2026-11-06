@@ -732,6 +732,7 @@
   class:focus={modes.focus}
   class:full={bare}
   class:flush
+  class:tabbed={viewport.device === 'phone' && !!workspace.panel && !bare && !__EVEN_PLUGIN__}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
 >
@@ -1154,6 +1155,10 @@
   .notices:has(> :global(*)) {
     padding: var(--space-2) max(var(--space-4), var(--inset-end))
       calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-start));
+  }
+
+  main.tabbed .notices:has(> :global(*)) {
+    padding-bottom: calc(var(--space-3) + var(--inset-bottom) + var(--touch-row));
   }
 
   main:has(:global(.fab)) .notices:has(> :global(*)) {

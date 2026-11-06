@@ -125,3 +125,15 @@ export function splitTabs<T>(items: readonly T[], shown: number, isOn: (item: T)
 
   return { drawn, behind: items.filter((item) => !drawn.includes(item)) }
 }
+
+export const PHONE_TABS = ['tree', 'tasks', 'chats', 'search'] as const satisfies readonly Panel[]
+
+export type PhoneTab = (typeof PHONE_TABS)[number]
+
+function isPhoneTab(panel: Panel | null | undefined): panel is PhoneTab {
+  return PHONE_TABS.some((one) => one === panel)
+}
+
+export function phoneRight(right: readonly Panel[]): Panel[] {
+  return right.filter((one) => !isPhoneTab(one))
+}

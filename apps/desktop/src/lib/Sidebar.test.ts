@@ -8,14 +8,18 @@ vi.mock('./surfaces.svelte', () => ({
   linksPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
   searchPanel: () => new Promise(() => undefined),
+  tasksPanel: () => new Promise(() => undefined),
+  phoneTabsBar: () => new Promise(() => undefined),
   showFeedback: () => undefined,
   toggleTabOverview: () => undefined,
+  tabOverview: { open: false },
 }))
 
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
+const PhoneTabs = (await import('./phone/PhoneTabs.svelte')).default
 
 function open(text: string) {
   workspace.tabs = []
@@ -391,5 +395,69 @@ describe('the AI panel on a phone and a tablet', () => {
     viewport.device = 'phone'
     expect(appCommands().some((one) => one.id === 'ask-panel')).toBe(false)
     viewport.device = 'desktop'
+  })
+})
+
+describe('the tab bar on a phone', () => {
+  function bar(panel: Parameters<typeof workspace.showPanel>[0]) {
+    viewport.device = 'phone'
+    workspace.panel = panel
+    const html = render(PhoneTabs).body
+    viewport.device = 'desktop'
+    return {
+      tabs: [...html.matchAll(/data-tab="([a-z]+)"/g)].map(([, one]) => one ?? ''),
+      on: /data-tab="([a-z]+)"[^>]*aria-current="page"/.exec(html)?.[1] ?? null,
+    }
+  }
+
+  const strip = (device: typeof viewport.device) => {
+    const html = drawn('tree', device)
+    viewport.device = 'desktop'
+    return html.includes('role="tablist"')
+  }
+
+  test('stands in for the panel strip on a phone, and only there', () => {
+    open('# Head\n')
+
+    expect(bar('tree')).toEqual({ tabs: ['tree', 'tasks', 'search'], on: 'tree' })
+    expect(strip('phone')).toBe(false)
+    expect(strip('desktop')).toBe(true)
+    expect(strip('tablet')).toBe(true)
+  })
+
+  test('shows tasks full screen on the left, where a desktop keeps them on the right', () => {
+    open('# Head\n')
+    workspace.panel = null
+    workspace.rightPanel = null
+
+    viewport.device = 'phone'
+    workspace.showPanel('tasks')
+    expect([workspace.panel, workspace.rightPanel]).toEqual(['tasks', null])
+    expect(workspace.sideOf('tasks')).toBe('left')
+    expect(bar('tasks').on).toBe('tasks')
+
+    viewport.device = 'desktop'
+    workspace.panel = null
+    workspace.showPanel('tasks')
+    expect([workspace.panel, workspace.rightPanel]).toEqual([null, 'tasks'])
+    expect(workspace.right).toContain('tasks')
+    workspace.rightPanel = null
+  })
+
+  test('and back from a note returns to the tab it was opened from', () => {
+    open('# Head\n')
+    viewport.device = 'phone'
+    workspace.showPanel('search')
+    workspace.closePanel()
+    expect(workspace.panel).toBeNull()
+
+    workspace.toggleSidebar()
+    expect(workspace.panel).toBe('search')
+
+    viewport.device = 'desktop'
+    workspace.closePanel()
+    workspace.toggleSidebar()
+    expect(workspace.panel).toBe('tree')
+    workspace.panel = null
   })
 })

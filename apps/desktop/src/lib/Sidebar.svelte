@@ -39,6 +39,7 @@
     chatsPanel,
     linksPanel,
     pagesNavigator,
+    phoneTabsBar,
     scratchpadCard,
     searchPanel,
     tasksPanel,
@@ -117,6 +118,8 @@
     'M2 6.5a4.5 4.5 0 1 0 4.5-4.5 4.9 4.9 0 0 0-3.4 1.4L2 4.5M2 2v2.5h2.5M6.5 4v2.5l2 1'
 
   const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
+
+  const phoneTabs = $derived(side === 'left' && viewport.device === 'phone' && !__EVEN_PLUGIN__)
 
   const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
 
@@ -562,74 +565,76 @@
     {/if}
 
     <div class="switch" bind:clientWidth={rowWidth}>
-      <div
-        bind:this={tablist}
-        class="nib-segmented panels"
-        data-region={side === 'left' ? 'panels' : undefined}
-        use:roving={{
-          across: true,
-          rows: '[role=tab]',
-          current: '[aria-selected=true]',
-          wrap: true,
-          follow: (tab) => {
-            if (!tab.classList.contains('behind')) tab.click()
-          },
-        }}
-        role="tablist"
-        aria-label={t('Panels')}
-        use:segmented
-      >
-        {#each strip.drawn as item (item.id)}
-          <button
-            class:on={showing === item.id}
-            data-tab={item.id}
-            role="tab"
-            title={shortcuts.tooltip(item.label, commandOf(item.id))}
-            aria-label={item.id === 'ask' && chatsUnread.any
-              ? t('{title}, unread', { title: item.label })
-              : item.label}
-            aria-selected={showing === item.id}
-            onclick={(event) => {
-              if (event.detail > 1) return
-              firstPress = item.id
-              choose(item.id)
-            }}
-            ondblclick={() => {
-              const id = firstPress ?? item.id
-              void import('./panel-tab').then(({ openAsTab }) => openAsTab(id))
-            }}
-            oncontextmenu={(event) => {
-              if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
-            }}
-            use:longPress={(event) => {
-              if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
-            }}
-          >
-            <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
-            {#if item.id === 'ask' && agentMarks.waiting}
-              <span class="waiting" transition:fade={{ duration: dur(140) }}>
-                {agentMarks.waiting}
-              </span>
-            {/if}
-            {#if item.id === 'ask' && chatsUnread.any}
-              <UnreadDot corner />
-            {/if}
-          </button>
-        {/each}
-        {#if strip.behind.length}
-          <button
-            class="behind"
-            role="tab"
-            aria-selected="false"
-            aria-haspopup="menu"
-            title={t('More')}
-            aria-label={t('More')}
-            onclick={showBehind}
-          >
-            <svg viewBox="0 0 13 13"><path d={MORE_MARK} /></svg>
-          </button>
-        {/if}
-      </div>
+      {#if !phoneTabs}
+        <div
+          bind:this={tablist}
+          class="nib-segmented panels"
+          data-region={side === 'left' ? 'panels' : undefined}
+          use:roving={{
+            across: true,
+            rows: '[role=tab]',
+            current: '[aria-selected=true]',
+            wrap: true,
+            follow: (tab) => {
+              if (!tab.classList.contains('behind')) tab.click()
+            },
+          }}
+          role="tablist"
+          aria-label={t('Panels')}
+          use:segmented
+        >
+          {#each strip.drawn as item (item.id)}
+            <button
+              class:on={showing === item.id}
+              data-tab={item.id}
+              role="tab"
+              title={shortcuts.tooltip(item.label, commandOf(item.id))}
+              aria-label={item.id === 'ask' && chatsUnread.any
+                ? t('{title}, unread', { title: item.label })
+                : item.label}
+              aria-selected={showing === item.id}
+              onclick={(event) => {
+                if (event.detail > 1) return
+                firstPress = item.id
+                choose(item.id)
+              }}
+              ondblclick={() => {
+                const id = firstPress ?? item.id
+                void import('./panel-tab').then(({ openAsTab }) => openAsTab(id))
+              }}
+              oncontextmenu={(event) => {
+                if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
+              }}
+              use:longPress={(event) => {
+                if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
+              }}
+            >
+              <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
+              {#if item.id === 'ask' && agentMarks.waiting}
+                <span class="waiting" transition:fade={{ duration: dur(140) }}>
+                  {agentMarks.waiting}
+                </span>
+              {/if}
+              {#if item.id === 'ask' && chatsUnread.any}
+                <UnreadDot corner />
+              {/if}
+            </button>
+          {/each}
+          {#if strip.behind.length}
+            <button
+              class="behind"
+              role="tab"
+              aria-selected="false"
+              aria-haspopup="menu"
+              title={t('More')}
+              aria-label={t('More')}
+              onclick={showBehind}
+            >
+              <svg viewBox="0 0 13 13"><path d={MORE_MARK} /></svg>
+            </button>
+          {/if}
+        </div>
+      {/if}
 
       {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
         {#await import('./HintCard.svelte') then card}
@@ -917,6 +922,11 @@
 
     {#if side === 'left'}
       <SidebarFoot />
+    {/if}
+    {#if phoneTabs}
+      {#await phoneTabsBar() then PhoneTabs}
+        <PhoneTabs />
+      {/await}
     {/if}
   </aside>
 </div>
