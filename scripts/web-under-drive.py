@@ -21,6 +21,7 @@ from typing import Any
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
 from probe_app import main_window, refuse_updating  # noqa: E402
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -65,11 +66,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
+        page = CARRY_PAGE if self.path.startswith("/carry") else PAGE
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
-        self.send_header("content-length", str(len(PAGE)))
+        self.send_header("content-length", str(len(page)))
         self.end_headers()
-        self.wfile.write(PAGE)
+        self.wfile.write(page)
 
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
@@ -138,7 +140,7 @@ def typed(text: str) -> None:
         time.sleep(0.05)
     time.sleep(0.4)
 
-def dragged(start: tuple[int, int], end: tuple[int, int]) -> None:
+def dragged(start: tuple[int, int], end: tuple[int, int], midway: Any = None) -> None:
     user32.SetCursorPos(*start)
     time.sleep(0.2)
     user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
@@ -150,6 +152,8 @@ def dragged(start: tuple[int, int], end: tuple[int, int]) -> None:
         user32.SetCursorPos(x, y)
         time.sleep(0.03)
     time.sleep(0.3)
+    if midway:
+        midway()
     user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
     time.sleep(0.6)
 
@@ -346,6 +350,50 @@ def stacks(pid: int, out: pathlib.Path) -> None:
             return
     print("no debugger on this machine", flush=True)
 
+def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str, str], url: str, out: pathlib.Path) -> list[str]:
+
+    said = open(out / "carry-app.log", "wb")
+    process = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent), stdout=said, stderr=subprocess.STDOUT)
+    try:
+        app = endpoint(identifier, process.pid, secret)
+        until = time.monotonic() + 90
+        while time.monotonic() < until and app.eval("!!nib.workspace") is not True:
+            time.sleep(1)
+        hwnd = 0
+        while time.monotonic() < until and not hwnd:
+            hwnd = main_window(process.pid)
+            time.sleep(0.25)
+        if not hwnd:
+            return ["[carry under] no window"]
+        user32.ShowWindow(hwnd, 9)
+        desk = wintypes.RECT()
+        user32.SystemParametersInfoW(0x30, 0, ctypes.byref(desk), 0)
+        user32.SetWindowPos(hwnd, None, desk.left, desk.top, min(WIDTH, desk.right - desk.left), min(HEIGHT, desk.bottom - desk.top), 0x0004)
+        forward(hwnd)
+        time.sleep(3)
+        scale = float(app.eval("devicePixelRatio") or 1)
+        left, top, _, _ = client_box(hwnd)
+
+        def screen(x: float, y: float) -> tuple[int, int]:
+            return left + round(x * scale), top + round(y * scale)
+
+        def dragged_to(start: tuple[float, float], end: tuple[float, float], midway: Any = None) -> None:
+            dragged((round(start[0]), round(start[1])), (round(end[0]), round(end[1])), midway)
+            if midway:
+                print(f"carry: under the pointer as it was let go: {window_at(round(end[0]), round(end[1]))}", flush=True)
+
+        missed, unsure = carried(app.eval, screen, dragged_to, url, "under")
+        ImageGrab.grab().save(out / "carried.png")
+        for one in unsure:
+            print(f"::warning::{one}", flush=True)
+        return missed
+    finally:
+        process.terminate()
+        try:
+            process.wait(20)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -530,6 +578,14 @@ def main() -> int:
         time.sleep(1)
         for by_keys in (False, True):
             wrong += overview(app, hwnd, hole, args.out, by_keys)
+
+        if not args.windowed:
+            process.terminate()
+            try:
+                process.wait(20)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            wrong += carried_alone(args.exe, args.identifier, secret, env, url.replace("/under", "/carry"), args.out)
     finally:
         process.terminate()
         try:

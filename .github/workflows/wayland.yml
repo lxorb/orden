@@ -225,6 +225,15 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - name: A note let go of on a site in a web tab is a file there, under sway
+        if: always()
+        env:
+          OUT: wayland-out/carry
+          CARRY: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib" "$HOME/.cache/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A web tab's page in the app's scheme, under sway
         if: always()
         env:

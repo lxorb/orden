@@ -235,6 +235,13 @@ if [ "${DOWNLOAD:-0}" = 1 ]; then
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
+if [ "${CARRY:-0}" = 1 ]; then
+  mkdir -p "$out/site"
+  python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); from carry_page import PAGE; open(sys.argv[2], "wb").write(PAGE)' "$here" "$out/site/carry.html"
+  python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
+  site_pid=$!
+  endpoint
+fi
 if [ "${WATCH:-0}" = 1 ]; then
   mkdir -p "$out/spaces"
   NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
@@ -289,7 +296,7 @@ if [ "${CERT:-0}" = 1 ]; then
   endpoint
   set -- "$@" "https://${CERT_HOST:-example.com}/"
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${OPENS:-0}" = 1 ] || [ "${CHOOSING:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${OPENS:-0}" = 1 ] || [ "${CHOOSING:-0}" = 1 ] || [ "${CARRY:-0}" = 1 ]; then
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
     export KEY_MAP="$out/keymap.txt"
@@ -557,6 +564,11 @@ fi
 if [ "$status" = 0 ] && [ "${PDFMARK:-0}" = 1 ]; then
   sleep 3
   python3 "$here/pdf-mark-drive.py" "$out" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${CARRY:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/carry-drive.py" "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
