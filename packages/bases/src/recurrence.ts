@@ -70,6 +70,19 @@ function ordinal(word: string): number | null {
   return named === -1 ? null : named + 1
 }
 
+function yearlyDate(words: readonly string[]): { month: number; day: number } | null {
+  const [one = '', two = '', three = ''] = words
+  const read = (month: number | undefined, day: number | null) =>
+    month !== undefined && day !== null && day >= 1 && day <= daysInMonth(2024, month)
+      ? { month, day }
+      : null
+  if (words.length === 2) {
+    return read(MONTH_NAMES[one], ordinal(two)) ?? read(MONTH_NAMES[two], ordinal(one))
+  }
+  if (words.length === 3 && two === 'of') return read(MONTH_NAMES[three], ordinal(one))
+  return null
+}
+
 function readUntil(words: string): string | null {
   const text = words.trim().replace(/,/g, ' ').replace(/\s+/g, ' ')
   if (civil(text)) return text
@@ -122,6 +135,9 @@ export function parseRule(written: string): Rule | null {
 
   const words = text.replace(/,/g, ' , ').split(' ').filter(Boolean)
   if (words.shift() !== 'every') return null
+
+  const date = yearlyDate(words)
+  if (date) return { ...rule, unit: 'year', months: [date.month], monthDays: [date.day] }
 
   let at = 0
   const peek = () => words[at] ?? ''

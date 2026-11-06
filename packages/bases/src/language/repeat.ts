@@ -1,3 +1,4 @@
+import { daysInMonth } from '../dates'
 import { type Rule, parseRule } from '../recurrence'
 import type { Grammar } from './grammar'
 import { type Clock, dayAt, timeInPart } from './when'
@@ -128,6 +129,13 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
       index++
     } else if (last && g.units[word()] === 'day') {
       rule.monthDays = [-1]
+      index++
+    } else if (!last && g.months[word()] !== undefined) {
+      const month = g.months[word()] ?? 1
+      if (count > daysInMonth(2024, month)) return null
+      rule.unit = 'year'
+      rule.months = [month]
+      rule.monthDays = [count]
       index++
     } else if (!last) {
       rule.monthDays = [count]

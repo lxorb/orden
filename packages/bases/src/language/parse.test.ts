@@ -390,6 +390,32 @@ describe('what a person types in a hurry', () => {
   })
 
   test.each([
+    ['Birthday every feb 14'],
+    ['Birthday every February 14th'],
+    ['Birthday every 14 feb'],
+    ['Birthday every 14th of February'],
+    ['Birthday every year on feb 14'],
+  ])('%s is once a year on that day', (text) => {
+    expect(said(en(text))).toEqual({
+      text: 'Birthday',
+      recurrence: 'every February on the 14th',
+      due: '2027-02-14',
+    })
+  })
+
+  test('Geburtstag jeden 14. Februar is once a year on that day', () => {
+    expect(said(de('Geburtstag jeden 14. Februar'))).toEqual({
+      text: 'Geburtstag',
+      recurrence: 'every February on the 14th',
+      due: '2027-02-14',
+    })
+  })
+
+  test('a day the month never has is no yearly date', () => {
+    expect(said(en('Birthday every feb 30')).recurrence).not.toContain('30')
+  })
+
+  test.each([
     ['Present every first monday', 'en'],
     ['Present every 1st monday', 'en'],
     ['Present jeden ersten Montag', 'de'],
