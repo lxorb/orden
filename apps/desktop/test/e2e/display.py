@@ -58,7 +58,7 @@ WRITE = """async ([files]) => {
 }"""
 
 WORDS = "() => [...document.querySelectorAll('.view-tab .task .words')].map((one) => one.textContent.trim())"
-HEADS = "() => [...document.querySelectorAll('.view-tab .head .fold')].map((one) => one.textContent.trim())"
+HEADS = "() => [...document.querySelectorAll('.view-tab .head .fold:not(.display .fold)')].map((one) => one.textContent.trim())"
 
 
 def seed(page: Page) -> dict[str, str]:
@@ -91,6 +91,7 @@ def display(page: Page) -> None:
     page.locator(".view-tab .display [role=switch]").click()
     wait_for(page, f"() => ({WORDS})().includes('Bread')", "the done task kept in the view")
 
+    page.locator(".view-tab .display .fold", has_text="Filter").click()
     page.locator(".view-tab .display .pair", has_text="Label").locator("button").first.click()
     page.locator("[role=option]", has_text="#admin").first.click()
     wait_for(
