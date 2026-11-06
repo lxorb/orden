@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { StringStream } from '@codemirror/language'
 import { graphqlParser } from './graphql'
 
-/** The tokens a document produces, as `[text, type]` pairs, whitespace left
- *  out. The state carries from line to line, as a block string does. */
 function tokens(document: string): [string, string | null][] {
   const state = graphqlParser.startState!(2)
   const out: [string, string | null][] = []

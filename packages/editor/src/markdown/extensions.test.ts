@@ -35,7 +35,6 @@ function tree(doc: string): string {
   return treeOf(stateFor(doc))
 }
 
-/** Every node the parser produced, flat, for presence checks. */
 function namesOf(state: EditorState): string[] {
   return treeOf(state)
     .split('\n')
@@ -145,7 +144,6 @@ describe('inline math', () => {
     expect(names('a $ b')).not.toContain('InlineMath')
   })
 
-  // #498: Pandoc's rule, so the editor marks what the page draws.
   test('ignores a range of prices, whose second dollar is before a digit', () => {
     expect(names('from $5-$10 a head')).not.toContain('InlineMath')
     expect(names('$x$1 is not')).not.toContain('InlineMath')
@@ -163,9 +161,6 @@ describe('block math', () => {
     `)
   })
 
-  /** The way a formula is usually typed, and the way the renderer reads it. The
-   *  live preview and the page have to agree, or the note changes shape when it
-   *  is exported. */
   test('parses a whole line of $$…$$', () => {
     expect(tree('$$E = mc^2$$\n')).toMatchInlineSnapshot(`
       "Document "$$E = mc^2$$\\n"
@@ -176,7 +171,6 @@ describe('block math', () => {
   })
 
   test('leaves $$ part way along a line alone', () => {
-    // "Costs $$5 and $$6 in total" is prose about money, not a formula.
     expect(names('Costs $$5 and $$6 in total.')).not.toContain('BlockMath')
     expect(names('The sum $$E = mc^2$$ sits here.')).not.toContain('BlockMath')
   })
@@ -185,28 +179,12 @@ describe('block math', () => {
     expect(names('$$$$')).not.toContain('BlockMath')
   })
 
-  /** A formula ends the paragraph above it, the way a fence and a heading do.
-   *
-   *  It used not to, and so a formula written straight under a line of prose was
-   *  not a formula at all: the `$$` line joined the paragraph and the maths came
-   *  out as two literal dollars around an inline formula. A blank line above it
-   *  was the difference, and nothing said so. Emil: *"is it possible that `$$`
-   *  only renders properly if we do two line breaks?"*
-   *
-   *  It is not a convention. CommonMark lets fenced code and an ATX heading
-   *  interrupt a paragraph, @lezer/markdown gives both of them an `endLeaf` for
-   *  it, and the renderer this package has to agree with already had the same
-   *  rule - see `blockMath` in @orden/markdown's blocks.ts, whose `start` hook is
-   *  marked's way of saying the same thing. So the note read one way while it was
-   *  written and another way once it was published, which is worse than either. */
   test('ends the paragraph above it, in both shapes', () => {
     expect(names('Text above\n$$x + y$$\nText below\n')).toContain('BlockMath')
     expect(names('Text above\n$$\nx + y\n$$\nText below\n')).toContain('BlockMath')
   })
 
   test('which is what the two constructs either side of it already did', () => {
-    // The company it now keeps, asserted here so the rule is read as one rule
-    // rather than as a special case for maths.
     expect(names('Text above\n```js\nlet x = 1\n```\nText below\n')).toContain('FencedCode')
     expect(names('Text above\n# A heading\nText below\n')).toContain('ATXHeading1')
   })
@@ -222,8 +200,6 @@ describe('block math', () => {
   })
 
   test('but prose about money is left where it is', () => {
-    // The rule that keeps it so is that `$$` has to be the whole line: a line
-    // with words before the marks is somebody's sentence, wherever it sits.
     for (const doc of [
       'I paid\nCosts $$5 and $$6 in total.\n',
       'I paid\nThe sum $$E = mc^2$$ sits here.\n',
@@ -370,8 +346,6 @@ describe('fenced code', () => {
     )
   })
 
-  // CommonMark would end the item's fence where the item ends and make
-  // `code` part of it; here a fence nothing closes is not a fence at all.
   test('does not let a list item close a fence for it', () => {
     const found = names('- ```\n  code\n\nafter')
     expect(found).not.toContain('FencedCode')
@@ -407,27 +381,20 @@ describe('fenced code', () => {
   })
 
   test('is what Enter after an opening fence produces', () => {
-    // commands.ts closes the fence on Enter; the result must parse as one.
     expect(names('```\n\n```')).toContain('FencedCode')
   })
 })
 
-// The parser reuses blocks of an earlier parse that lie clear of an edit,
-// and it only does so for stretches of some length - hence the padding.
 describe('fenced code while editing', () => {
   const padding =
     '# Heading\n\nA paragraph of prose, long enough for the parse to keep it around.\n\n'.repeat(2)
 
-  /** The nodes after editing a document that was parsed before. */
   function edited(doc: string, from: number, to: number, insert: string): string[] {
     const state = stateFor(doc)
     syntaxTree(state)
     return namesOf(parsed(state.update({ changes: { from, to, insert } }).state))
   }
 
-  /** The nodes after a run of edits, each parsed before the next arrives -
-   *  which is what typing is, and the only way the parse of an earlier tree
-   *  gets to be reused several times over. */
   function typed(doc: string, inserts: string[]): string[] {
     let state = stateFor(doc)
     for (const insert of inserts) {
@@ -452,10 +419,6 @@ describe('fenced code while editing', () => {
     expect(found).toContain('ATXHeading1')
   })
 
-  // Nothing about the fence lines changes here: the item used to end at `x`,
-  // and without it the item reaches the closer. (Lezer never reuses a list
-  // that sits right before an edit, so this holds without help; it is here
-  // so that a fence in a container is known to follow the container.)
   test('becomes a fence once the line ending its list item is removed', () => {
     const item = '- ```\n  ' + 'a'.repeat(200) + '\n'
     const doc = item + '\nx\n  ```'
@@ -463,10 +426,6 @@ describe('fenced code while editing', () => {
     expect(edited(doc, item.length + 1, item.length + 3, '')).toContain('FencedCode')
   })
 
-  // The blocks a keystroke leaves alone come back from the tree before it, and
-  // the fence line above is the one that must not: these type the closer a
-  // character at a time, so the same paragraph is carried forward and looked
-  // at again on every one of them.
   test('becomes a fence on the third backtick of a closer typed key by key', () => {
     const doc = '```js\n\n' + padding
     expect(typed(doc, ['`', '`'])).not.toContain('FencedCode')
@@ -498,18 +457,11 @@ describe('fenced code while editing', () => {
     const doc = '```js\n\n' + padding + '~~~\n\ntail\n'
     const found = typed(doc, ['```\n'])
     expect(found).toContain('FencedCode')
-    // The tildes are inside the fence the backticks just closed.
     expect(found.filter((name) => name === 'FencedCode')).toHaveLength(1)
   })
 })
 
 describe('a long paragraph', () => {
-  /** A pasted log is one paragraph, and a paragraph is parsed in one go. Each `[INFO]`
-   *  that closed a link, and each address that asked whether a link was open, walked
-   *  back over everything before it in the paragraph: forty thousand lines took
-   *  twenty seconds. See patches/@lezer__markdown@1.7.2.patch. A clock's limit failed on
-   *  a busy runner, so the test asks how the time grows instead: four times the lines
-   *  take about four times as long, where walking back took sixteen. */
   test('parses in time that grows with its length', () => {
     const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
       .parser
@@ -520,7 +472,6 @@ describe('a long paragraph', () => {
       }
       return doc
     }
-    // The quicker of two parses, so a pause on a busy machine is not counted.
     const timed = (doc: string) => {
       const found = { Link: 0, URL: 0 }
       let least = Infinity

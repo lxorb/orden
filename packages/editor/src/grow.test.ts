@@ -25,7 +25,6 @@ function press(state: EditorState, command: StateCommand): EditorState {
   return next
 }
 
-/** What each press of Expand selects, in order, until the note is all there is. */
 function steps(doc: string, caret: number): string[] {
   const seen: string[] = []
   let state = stateOf(doc, caret)

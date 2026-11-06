@@ -16,14 +16,9 @@ import {
 } from './notes'
 import { parsed } from '../../test/parsed'
 
-/** What the space offers, and what it was asked for: every test below counts the
- *  work as well as reading the rows, because the whole promise of the two
- *  space-wide lists is that neither of them reads a space. */
 interface Asked {
   index: NoteIndex
-  /** One entry per note read, in order. */
   reads: string[]
-  /** One entry per search of the space. */
   searches: string[]
 }
 
@@ -64,9 +59,6 @@ function space(
   return asked
 }
 
-/** A writer that spells out every fact the row handed over rather than only the
- *  ones a wikilink keeps, so a test can see what the popup knew. The app's own
- *  writer makes a markdown link out of the same four facts; see link-format.ts. */
 function spelled(target: LinkWrite): string {
   return `[${target.name}](${target.path ?? ''}|${target.from ?? ''}|${target.fragment ?? ''})`
 }
@@ -91,7 +83,6 @@ function state(
   )
 }
 
-/** The rows for a document whose caret is at its end. */
 async function rowsFor(doc: string, asked: Asked): Promise<CompletionResult | null> {
   const built = state(doc, asked.index)
   return await wikilinkCompletions(new CompletionContext(built, doc.length, false))
@@ -105,9 +96,6 @@ function details(found: CompletionResult | null): (string | undefined)[] {
   return (found?.options ?? []).map((one) => one.detail)
 }
 
-/** Picks one row, and answers with the document it left behind and where the
- *  caret went. No DOM: a completion's `apply` reads the document and dispatches,
- *  which is all of a view it ever touches. */
 async function picked(
   doc: string,
   asked: Asked,
@@ -129,7 +117,6 @@ async function picked(
   } as unknown as EditorView
 
   row.apply(view, row, found.from, doc.length)
-  // The block namer answers in a microtask, so the link it writes lands in one.
   await Promise.resolve()
   await Promise.resolve()
 
@@ -198,14 +185,12 @@ describe('every heading of the space, behind `[[##`', () => {
 
     expect(asked.reads).toEqual([])
     expect(asked.searches).toEqual([])
-    // A list and not a thousand rows.
     expect(found?.options.length).toBe(40)
   })
 
   test('leaves the popup to filter what came back rather than asking again', async () => {
     const found = await rowsFor('[[##p', space(SPACE))
 
-    // What is typed next still matches, so the source is not asked a second time.
     expect(found?.validFor).toBeInstanceOf(RegExp)
     expect((found?.validFor as RegExp).test('plan for')).toBe(true)
   })
@@ -218,7 +203,6 @@ describe('every block of the space, behind `[[^^`', () => {
 
     expect(labels(found)).toEqual(['^a1b2c3'])
     expect(details(found)).toEqual(['Plan'])
-    // One character is not a question worth asking a space.
     expect(asked.searches).toEqual([])
     expect(asked.reads).toEqual([])
   })
@@ -228,8 +212,6 @@ describe('every block of the space, behind `[[^^`', () => {
     const written = await picked('[[^^a1b', asked, '^a1b2c3')
 
     expect(written.doc).toBe('[[Plan#^a1b2c3]]')
-    // The rows came from the index; the search that ran beside them read no note
-    // and found nothing to add.
     expect(asked.reads).toEqual([])
   })
 
@@ -244,11 +226,7 @@ describe('every block of the space, behind `[[^^`', () => {
 
     expect(asked.searches).toEqual(['plan'])
     expect(asked.reads).toEqual([])
-    expect(labels(found)).toEqual([
-      // The named ones first, then what the words found.
-      'the second half of the plan',
-      'a plan already named',
-    ])
+    expect(labels(found)).toEqual(['the second half of the plan', 'a plan already named'])
     expect(details(found)).toEqual(['Spark', 'Plan'])
   })
 
@@ -288,8 +266,6 @@ describe('every block of the space, behind `[[^^`', () => {
     const built = state('[[^^plan', alone)
     const found = await wikilinkCompletions(new CompletionContext(built, '[[^^plan'.length, false))
 
-    // The named blocks the index knows, and nothing found by words: there is
-    // nothing here that could search a space.
     expect(labels(found)).toEqual([])
   })
 })
@@ -312,20 +288,11 @@ describe('the lists that were already there', () => {
   })
 })
 
-/** A note a Mac tool named with a decomposed `Ü` is offered for the `Ü` a keyboard
- *  types, and under the composed name, so the link it writes is the one typed. */
 test('a decomposed name is offered for what a keyboard types', async () => {
   const found = await rowsFor('[[Über', space([note('U\u0308bersicht.md'), note('Plan.md')]))
   expect(labels(found)).toEqual(['Übersicht'])
 })
 
-/** The Links setting is the app's, and the app answers it in one writer; the popup
- *  hands that writer what it knows and puts back whatever comes out. Every kind of
- *  row here, because the whole of the bug was that one of them wrote a wikilink
- *  whatever the setting said - and all of them did.
- *
- *  What the four spellings actually look like is the app's own test, over a nested
- *  space: see link-format.test.ts. */
 describe('every row writes the link the app spells', () => {
   const ALIASED: NoteRef[] = [
     { ...note('ideas/Spark.md', ['Sparks'], ['b2c3d4']), aliases: ['The spark'] },
@@ -411,8 +378,6 @@ describe('every row writes the link the app spells', () => {
     )
   })
 
-  /** A link into the note it is written in has no name to write, which is exactly
-   *  what `[[#Heading]]` is - and what the app spells as an anchor on its own. */
   test('a heading of this very note hands over no name at all', async () => {
     const asked = space([note('Plan.md', ['Today'])], { path: 'Plan.md' })
 

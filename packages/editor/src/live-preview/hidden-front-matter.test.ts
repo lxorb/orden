@@ -25,17 +25,9 @@ import {
   propertiesMode,
 } from './hidden-front-matter'
 
-/** A note's front matter kept off the page, and everything that has to hold for
- *  "off the page" to be true: the caret stays out of it, nothing typed lands in it,
- *  nothing deleted takes it with it, a search does not find it, and the file keeps it
- *  byte for byte. State-level throughout; the three answers are photographed by
- *  apps/desktop/test/e2e/properties.py. */
-
 const META = '---\nicon: list-checks\n---\n'
 const NOTE = `${META}# Groceries\n\nMilk and eggs.\n`
-/** The first position the reader can see: the start of the heading. */
 const PAGE = META.length
-/** The end of the closing fence's own line. */
 const FENCE_END = META.length - 1
 
 const shown = new Compartment()
@@ -71,8 +63,6 @@ function updated(state: EditorState, spec: TransactionSpec): EditorState {
   return parsed(state.update(spec).state)
 }
 
-/** The block replacements, as the text each stands over and whether it draws a
- *  widget. */
 function drawn(state: EditorState): string[] {
   const out: string[] = []
   state.field(blockDecorations).decorations.between(0, state.doc.length, (from, to, value) => {
@@ -106,8 +96,6 @@ describe('front matter nobody asked to see', () => {
   })
 
   test('is not a block whose closing fence is still to be written', () => {
-    // The parser reads an unclosed block to the end of the note, and hiding that
-    // would hide the note.
     const open = '---\ntitle: half\n\nwords\n'
     expect(drawn(stateOf(open))).toEqual([])
     expect(hiddenFrontMatter(stateOf(open))).toBeNull()
@@ -149,8 +137,6 @@ describe('the caret', () => {
   })
 
   test('is left at 0 on open, and by a transaction that only carries it', () => {
-    // A note opens with the caret at 0 and the folds it asks for restate it. Moved,
-    // it would stand on the first line and reveal whatever that line hides.
     const state = stateOf(NOTE)
     const carried = updated(state, { selection: state.selection })
     expect(carried.selection.main.head).toBe(0)
@@ -261,7 +247,6 @@ describe('inserting front matter while it is hidden', () => {
     expect(drawn(state)).toEqual([])
     expect(hiddenFrontMatter(state)).toBeNull()
 
-    // Typed into, it stays up.
     const written = typed(state, 's')
     expect(written.doc.toString()).toBe(NOTE.replace('list-checks', 'list-checkss'))
     expect(drawn(written)).toEqual([])
@@ -329,9 +314,6 @@ describe('find', () => {
   })
 })
 
-/** Filters run last-registered first, and `sharing` comes before the modes, so this
- *  guard hears an edit before `wholeCharacters` in shared.ts mends it: asked of a real
- *  editor's state, since the order is what is in question. */
 describe('hidden front matter beside a character in two halves', () => {
   const grin = '\u{1f600}'
   const beside = `${META}${grin} Groceries\n`

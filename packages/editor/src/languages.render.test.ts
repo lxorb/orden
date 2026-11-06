@@ -5,9 +5,6 @@ import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
 import { fenceLanguages } from './languages'
 import { nibMarkdownExtensions } from './markdown/extensions'
 
-/** The groups `code-theme.ts` paints, as names rather than colours. If a token
- *  comes back from here it has a colour on screen; if it comes back bare, it
- *  is grey text whatever the palette. */
 const highlighter = tagHighlighter([
   { tag: tags.keyword, class: 'keyword' },
   { tag: [tags.string, tags.special(tags.string)], class: 'string' },
@@ -22,15 +19,6 @@ const highlighter = tagHighlighter([
   { tag: tags.deleted, class: 'deleted' },
 ])
 
-/** What the editor makes of one fence: which of those groups it found, and how
- *  much of the code they cover.
- *
- *  The fence is parsed inside a real markdown document, through the same
- *  `markdown({ codeLanguages })` the editor is built with, so this is the
- *  whole path - the info word, the lookup, the nested parser - and not just
- *  the tokenizer on its own. The language is loaded first because a fence
- *  whose language is still arriving is parsed as plain text and filled in
- *  afterwards. */
 async function colouring(word: string, code: string) {
   const languages = await fenceLanguages()
   const description = LanguageDescription.matchLanguageName(languages, word, true)
@@ -62,7 +50,6 @@ async function colouring(word: string, code: string) {
   return { groups: [...groups].sort(), share: coloured / code.length }
 }
 
-/** One fence per mechanism, each written the way someone would write it. */
 const fences: [string, string, string[]][] = [
   [
     'py',
@@ -102,9 +89,6 @@ const fences: [string, string, string[]][] = [
   ['jsonc', '{\n  "name": "nib"\n}', ['property', 'string']],
   ['helm', 'metadata:\n  name: nib\n  replicas: 3', ['property']],
   ['proto', 'message Note {\n  string id = 1;\n}', ['keyword', 'number']],
-  // The three the palette used to leave grey. A key=value file says its key
-  // the way a language says a name it is defining, and a diff says added and
-  // removed rather than keyword and string; see code-theme.ts.
   ['env', 'API_KEY=secret\n# a note\nPORT=8080', ['comment', 'property']],
   ['ini', '[server]\nhost = localhost\nport = 8080', ['property']],
   ['diff', '--- a/file\n+++ b/file\n@@ -1 +1 @@\n-old line\n+new line', ['deleted', 'inserted']],
@@ -120,9 +104,6 @@ describe('a fence, coloured the way the editor colours it', () => {
     })
   }
 
-  /** A fence that names nothing anyone has a language for is plain code, and
-   *  saying so must not cost an error - the parser simply has nothing to
-   *  attach. */
   test('a fence in a language nobody knows is left plain', async () => {
     const { groups, share } = await colouring('no-such-language', 'a b c\n"d"')
 

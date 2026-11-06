@@ -45,7 +45,6 @@ describe('what an agent does to an editor (#1078)', () => {
       { anchor: { line: 1, ch: 4 }, head: { line: 1, ch: 7 }, text: 'two' },
       { anchor: { line: 2, ch: 0 }, head: { line: 2, ch: 5 }, text: 'three' },
     ])
-    // A place past the note is the note's end, never an error.
     select(view, [{ anchor: { line: 99, ch: 99 }, head: { line: 99, ch: 99 } }])
     expect(selectionsOf(view)[0]?.head).toEqual({ line: 3, ch: 0 })
   })

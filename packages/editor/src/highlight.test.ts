@@ -13,7 +13,6 @@ const PLAIN = highlightTone(null)
 const RED = highlightTone(1)
 const GREEN = highlightTone(4)
 
-/** A document with the selection written into it: `[` and `]` are its ends. */
 function run(command: StateCommand, marked: string): string {
   const doc = marked.replace(/[[\]]/g, '')
   const state = EditorState.create({

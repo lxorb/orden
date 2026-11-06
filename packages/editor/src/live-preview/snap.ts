@@ -4,28 +4,8 @@ import type { SyntaxNode, Tree } from '@lezer/common'
 import { concealable } from './conceal'
 import { revealed } from './reveal'
 
-/** Where a click lands next to concealed syntax.
- *
- *  Hidden marks have no width on screen, so a click at the right edge of the
- *  visible `code` maps to the document position just before its closing
- *  backtick - inside the span. The reveal then paints the backtick to the
- *  right of the caret, which reads as the caret having missed. Typora puts the
- *  caret outside: after the closing mark, before the opening one. This does
- *  the same for every inline construct whose marks vanish, and only for
- *  pointer selections - keyboard motion already steps over hidden syntax one
- *  atom at a time and needs no help.
- *
- *  Judged against the state before the click, because that is what was on
- *  screen: a mark that was already showing is a real character the click
- *  could aim at, and stays where it was clicked. */
-
-/** Constructs whose marks open a whole line, like `#` does. Leaving the caret
- *  before them would put the next keystroke outside the block, so they keep
- *  the heading rule: the caret stays with the text. */
 const BLOCK_PARENTS = new Set(['FrontMatter', 'FootnoteDef', 'DefinitionDetail', 'AbbrevDef'])
 
-/** Marks that conceal themselves per construct (see conceal.ts). A fence's
- *  backticks sit on their own lines and never neighbour a click this way. */
 function inlineMark(node: SyntaxNode): boolean {
   const parent = node.parent?.name ?? ''
   if (BLOCK_PARENTS.has(parent)) return false
@@ -41,9 +21,6 @@ function blank(state: EditorState, from: number, to: number): boolean {
   return from >= to || /^\s*$/.test(state.doc.sliceString(from, to))
 }
 
-/** The far end of the run of hidden siblings that starts with `mark`, walking
- *  `forward` or back. A link's target is several marks with a space before the
- *  title, so whitespace between two hidden siblings does not break the run. */
 function runEnd(state: EditorState, mark: SyntaxNode, forward: boolean): number {
   let end = forward ? mark.to : mark.from
   for (
@@ -59,16 +36,12 @@ function runEnd(state: EditorState, mark: SyntaxNode, forward: boolean): number 
 }
 
 function step(state: EditorState, tree: Tree, pos: number): number {
-  // A hidden mark ending at the caret is the tail of an opening run.
   const before = tree.resolveInner(pos, -1)
   const opening = before.parent
   if (opening && before.to === pos && concealed(state, before)) {
-    // Not when the caret is already at the construct's far edge: a construct
-    // hidden wholesale (an image) has the caret outside on both sides.
     if (pos < opening.to && runEnd(state, before, false) === opening.from) return opening.from
   }
 
-  // A hidden mark starting at the caret is the head of a closing run.
   const after = tree.resolveInner(pos, 1)
   const closing = after.parent
   if (closing && after.from === pos && concealed(state, after)) {
@@ -78,9 +51,6 @@ function step(state: EditorState, tree: Tree, pos: number): number {
   return pos
 }
 
-/** The position a pointer selection at `pos` should settle on. Nested
- *  constructs are left one at a time, so the edge of `code` inside bold ends
- *  up past the bold's closing marks as well. */
 export function snapOutward(state: EditorState, pos: number): number {
   const tree = syntaxTree(state)
   for (;;) {
@@ -95,20 +65,15 @@ export const pointerSnap = EditorState.transactionFilter.of((transaction) => {
   if (!selection || transaction.docChanged || !transaction.isUserEvent('select.pointer')) {
     return transaction
   }
-  // Only clicks. A dragged range keeps the text the pointer actually covered.
   if (selection.ranges.some((range) => !range.empty)) return transaction
 
   const state = transaction.startState
   const ranges = selection.ranges.map((range) => {
     const pos = snapOutward(state, range.head)
     if (pos === range.head) return range
-    // Lean towards the text the caret just crossed, so a wrapped line keeps
-    // it on the same visual row as the click.
     return EditorSelection.cursor(pos, pos > range.head ? -1 : 1)
   })
 
-  // Compared against what came in, rather than a flag set inside the callback:
-  // the compiler cannot see a callback run, and reads such a flag as never set.
   if (ranges.every((range, index) => range === selection.ranges[index])) return transaction
   return [transaction, { selection: EditorSelection.create(ranges, selection.mainIndex) }]
 })

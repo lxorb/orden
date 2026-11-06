@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { StringStream } from '@codemirror/language'
 import { mermaidParser } from './mermaid'
 
-/** The tokens one line produces, as `[text, type]` pairs, skipping whitespace. */
 function tokens(line: string): [string, string | null][] {
   const streamParser = mermaidParser
   const state = streamParser.startState!(2)

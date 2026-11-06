@@ -8,10 +8,6 @@ import { nibMarkdownExtensions } from '../markdown/extensions'
 import { trustedMarkup } from '../markup'
 import { livePreview } from '.'
 
-/** Live preview in a real view, where a decoration that replaces a line break is
- *  not merely wrong but thrown on (#524): the view is left drawing the old note
- *  while its state holds the new one, and every keystroke after lands in the gap. */
-
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()

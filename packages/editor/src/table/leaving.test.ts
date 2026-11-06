@@ -4,10 +4,6 @@ import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import { createEditor } from '../editor'
 
-/** A cell being typed in when its table leaves the document. Chromium sends the blur
- *  while the editor is still taking the cell out of the page, as jsdom does not;
- *  emulated here, the way the image alt field's test does. */
-
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
 const errors: unknown[] = []
 const open: EditorView[] = []
@@ -36,13 +32,11 @@ function typedCell(): EditorView {
     selection: { anchor: TABLE.length },
   })
   open.push(view)
-  // A cold worker on a busy machine can miss the first parse, and no table is drawn before it.
   forceParsing(view, TABLE.length, 10_000)
   const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
     (one) => one.textContent === '1',
   )
   if (!cell) throw new Error('the table drew no cell holding 1')
-  // jsdom focuses nothing for being contenteditable alone.
   cell.tabIndex = 0
   cell.focus()
   cell.textContent = '1x'
@@ -54,8 +48,6 @@ test('a table taken away with a cell mid-edit throws nothing and writes nothing'
   const view = typedCell()
   const asked = vi.spyOn(view, 'posAtDOM')
   view.dispatch({ changes: { from: TABLE.indexOf('|'), to: TABLE.indexOf('\n\nend'), insert: '' } })
-  // The widget is destroyed before its DOM comes out, which drops the edit, so the
-  // blur has nothing to write and never asks a view in mid-update where the table is.
   expect(asked).not.toHaveBeenCalled()
   expect(errors).toEqual([])
   expect(view.state.doc.toString()).toBe('words\n\n\n\nend')

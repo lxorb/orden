@@ -47,8 +47,6 @@ describe('parsing', () => {
   })
 
   test('keeps an escaped pipe that ends a row', () => {
-    // A row need not be closed with a pipe, so the last one on the line is
-    // either the closing pipe or part of a cell - and a `\|` is the cell's.
     expect(parseTable('| a | b\\|\n| - | - |\n| 1 | 2 |')?.header).toEqual(['a', 'b\\|'])
     expect(parseTable('| a | b |\n| - | - |\n| 1 | 2\\|')?.rows).toEqual([['1', '2\\|']])
   })
@@ -116,8 +114,6 @@ describe('editing', () => {
   })
 
   test('does not escape a pipe that is escaped already', () => {
-    // A focused cell shows its markdown, so the value comes back with the
-    // backslash in it. Escaping again added one per visit to the cell.
     expect(setCell(model, 0, 0, 'x\\|y').rows[0]?.[0]).toBe('x\\|y')
     const twice = setCell(setCell(model, 0, 0, 'x|y'), 0, 0, 'x\\|y')
     expect(twice.rows[0]?.[0]).toBe('x\\|y')
@@ -138,8 +134,6 @@ describe('editing', () => {
   })
 
   test('refuses an index that is not a row or a column', () => {
-    // `splice` reads a negative index from the end, so -1 used to mean "the
-    // last one" - and -1 is what the column bar holds while it is hidden.
     expect(removeColumn(model, -1)).toEqual(model)
     expect(removeColumn(model, 2)).toEqual(model)
     expect(removeRow(model, -1)).toEqual(model)
@@ -201,7 +195,6 @@ describe('sorting by a column', () => {
   })
 
   test('numbers as numbers, not as words', () => {
-    // Sorted as words, 9 comes after 10 and 100.
     expect(sorted('| n |\n| - |\n| 9 |\n| 10 |\n| 100 |', 0)).toEqual(['9', '10', '100'])
     expect(sorted('| n |\n| - |\n| -3 |\n| 2 |\n| 0.5 |', 0)).toEqual(['-3', '0.5', '2'])
   })
@@ -214,18 +207,11 @@ describe('sorting by a column', () => {
     ])
   })
 
-  // Only a currency mark comes off the front: a word in front of a number makes a
-  // name of it, and `Room 5` read as 5 sorted the rooms by their numbers and put
-  // a room without one after all of them that have one.
   test('a name with a number in it is a name', () => {
     const source = '| r |\n| - |\n| Room 5 |\n| Hall 1 |\n| Attic 3 |\n| Basement |'
     expect(sorted(source, 0)).toEqual(['Attic 3', 'Basement', 'Hall 1', 'Room 5'])
   })
 
-  // A column of numbers with a word or two in it has to come out in one order
-  // whatever order it went in, which it cannot if 5x is less than 999 and 1,000 is
-  // less than 5x as words while 999 is less than 1,000 as numbers. The numbers come
-  // first and the words after them.
   test('a column of numbers and words sorts the same from any order', () => {
     const cells = ['1,000', '999', '5x']
     const orders = [
@@ -252,8 +238,6 @@ describe('sorting by a column', () => {
   })
 
   test('an empty cell is last whichever way the column runs', () => {
-    // A gap is not a small value, and a column with three blanks in it should
-    // not open with the blanks.
     const source = '| a |\n| - |\n| b |\n|  |\n| a |'
     expect(sorted(source, 0, 'up')).toEqual(['a', 'b', ''])
     expect(sorted(source, 0, 'down')).toEqual(['b', 'a', ''])
@@ -281,8 +265,6 @@ describe('sorting by a column', () => {
     const one = parseTable('| a |\n| - |\n| only |')!
     expect(sortRows(one, 0, 'up')).toBe(one)
 
-    // Already in order: the same object back, so the view writes no document
-    // change and the note is not touched.
     const already = parseTable('| a |\n| - |\n| a |\n| b |')!
     expect(sortRows(already, 0, 'up')).toBe(already)
 

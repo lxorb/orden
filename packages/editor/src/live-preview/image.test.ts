@@ -34,7 +34,6 @@ function state(doc: string, selection: { anchor: number; head?: number } = { anc
   )
 }
 
-/** Runs a command and returns the selection it left, or null when it declined. */
 function run(command: StateCommand, from: EditorState): { anchor: number; head: number } | null {
   const states: EditorState[] = []
   const handled = command({
@@ -76,9 +75,6 @@ describe('parsing an img tag', () => {
   })
 
   test('lets a zoom win over a width', () => {
-    // The two are different ways of saying one size, and a zoom is what this
-    // editor writes. A tag carrying both would otherwise be drawn at the
-    // width and written back at the zoom.
     const spec = parseHtmlImage('<img src="a.png" width="320" style="zoom:50%;">')
     expect(spec).toEqual({ src: 'a.png', alt: '', title: '', zoom: 50 })
   })
@@ -136,10 +132,6 @@ describe('writing an image back', () => {
     expect(parseHtmlImage(imageMarkup(spec))).toEqual(spec)
   })
 
-  /** An address with a space in it has to be written between angle brackets:
-   *  bare, markdown reads the second word as a title and the picture comes out
-   *  as four words of prose. It is what a paste writes for such an address, and
-   *  what this has to write back. */
   test('an address with a space is written between brackets', () => {
     expect(imageMarkup({ src: 'a picture.png', alt: 'x', title: '', zoom: 100 })).toBe(
       '![x](<a picture.png>)',
@@ -165,13 +157,11 @@ describe('resizing', () => {
   })
 
   test('turns a drag into a percentage of the natural width', () => {
-    // 400px natural, drawn at 200px, dragged 40px wider: 240px is 60%.
     expect(resizeTo(200, 40, 400, 1000)).toBe(60)
   })
 
   test('never exceeds the natural size or the line', () => {
     expect(resizeTo(200, 900, 400, 1000)).toBe(100)
-    // A 1000px image in a 500px line cannot grow past the line.
     expect(resizeTo(400, 900, 1000, 500)).toBe(50)
   })
 
@@ -181,10 +171,6 @@ describe('resizing', () => {
 })
 
 describe('finding images by position', () => {
-  /** Markdown's own way of writing an address that holds a space, and the way
-   *  a pasted page writes one. The brackets are the markup, not the address:
-   *  read as part of it, the picture pointed at a file of that name and drew
-   *  nothing. */
   test('reads an address written between angle brackets', () => {
     expect(imageAt(state('![x](<a picture.png>)'), 0)?.src).toBe('a picture.png')
     expect(imageAt(state('![x](<a.png>)'), 0)?.src).toBe('a.png')
@@ -278,7 +264,6 @@ describe('keys beside an image', () => {
   })
 
   test('give way while the markup is showing', () => {
-    // A second caret inside the image reveals it; the first sits after it.
     const revealed = parsed(
       EditorState.create({
         doc,

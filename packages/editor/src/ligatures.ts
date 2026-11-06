@@ -10,20 +10,8 @@ import {
 import { inCode } from './code'
 import { enclosingNamed } from './nodes'
 
-/** How much of a note the glyphs are drawn over: nothing, the code in it, or
- *  all of it. Code only is the setting for somebody who wants `->` to be an
- *  arrow where it is an operator and two characters where it is prose. */
 export type LigatureScope = 'off' | 'code' | 'all'
 
-/** Runs of plain characters and the glyph each stands for. The glyph is what
- *  is shown; the characters are what is kept, so the file reads the same in
- *  any other editor. The fonts here have no ligatures of their own, and this
- *  way the arrows come out in prose as well as in code.
- *
- *  Drawn the way a font would draw a ligature: the characters stay in place,
- *  made invisible, and the glyph is painted over the room they take. So a
- *  run keeps its width - columns in code still line up - and reading it as
- *  typed, when the caret goes in, shifts nothing. */
 export const LIGATURES: Record<string, string> = {
   '->': '→',
   '<-': '←',
@@ -47,9 +35,6 @@ export const LIGATURES: Record<string, string> = {
   '...': '…',
 }
 
-/** Each run beside its glyph, longest first, so `<=>` is one arrow and not
- *  `<=` and a stray `>`. Paired rather than looked up again by key: the run
- *  that matched already knows what it stands for. */
 const RUNS: readonly (readonly [run: string, glyph: string])[] = Object.entries(LIGATURES).sort(
   ([a], [b]) => b.length - a.length,
 )
@@ -61,13 +46,9 @@ export interface Ligature {
   glyph: string
 }
 
-/** Every run in `text` that has a glyph, with positions counted from
- *  `offset`. Pure: the syntax around a run is the caller's business. */
 export function findLigatures(text: string, offset = 0): Ligature[] {
   const out: Ligature[] = []
   for (let at = 0; at < text.length;) {
-    // Most characters open nothing, so the set answers for them before the
-    // list is walked at all.
     const found = OPENERS.has(text.charAt(at))
       ? RUNS.find(([run]) => text.startsWith(run, at))
       : undefined
@@ -82,8 +63,6 @@ export function findLigatures(text: string, offset = 0): Ligature[] {
   return out
 }
 
-/** Where the characters mean something else: an address, a tag, a comment
- *  whose `-->` is its closing, or maths that is rendered on its own. */
 const LEFT_ALONE = new Set([
   'URL',
   'Autolink',
@@ -99,9 +78,6 @@ const LEFT_ALONE = new Set([
   'BlockMath',
 ])
 
-/** Whether the run at `from`..`to` is text of one node that has no other use
- *  for it. A run that straddles a syntax mark - the `>` of a quote, the `==`
- *  of a highlight - is not one thing, and is left as it is. */
 function standsAlone(state: EditorState, from: number, to: number): boolean {
   const tree = syntaxTree(state)
   const head = tree.resolveInner(from, 1)
@@ -111,9 +87,6 @@ function standsAlone(state: EditorState, from: number, to: number): boolean {
   return enclosingNamed(head, LEFT_ALONE) === null
 }
 
-/** The runs in `ranges` that are shown as glyphs: not the one the caret is
- *  inside, which reads as typed so it can be edited, none that syntax has a
- *  claim on, and under the `code` scope none that sits in prose. */
 export function ligaturesIn(
   state: EditorState,
   ranges: readonly { from: number; to: number }[] = [{ from: 0, to: state.doc.length }],
@@ -132,7 +105,6 @@ export function ligaturesIn(
   return out
 }
 
-/** One mark per glyph; the stylesheet paints the glyph over the run. */
 const marks = new Map<string, Decoration>()
 
 function markFor(glyph: string): Decoration {
@@ -156,19 +128,7 @@ function buildLigatures(
   return Decoration.set(out, true)
 }
 
-/** Shows `->`, `<=` and their kind as the arrow or sign they stand for, over as
- *  much of the note as the scope says. Ahead of every other mark so that its
- *  span is the innermost one: the glyph then takes the colour of the token it
- *  sits in, and a code span or a bold run around it stays in one piece.
- *
- *  The scope is fixed for the life of the plugin, which is why it is a closure
- *  rather than a facet: the compartment holding this is reconfigured when the
- *  setting changes, and that is the only time it can change. Called once per
- *  scope; see `once` in modes.ts. */
 export function ligatures(scope: Exclude<LigatureScope, 'off'>): Extension {
-  // The caret steps into a run one character at a time, and the run reads as
-  // typed while it is there - the way a font ligature opens up under the caret
-  // in an editor that has them.
   return Prec.high(
     ViewPlugin.fromClass(
       class {
@@ -179,7 +139,6 @@ export function ligatures(scope: Exclude<LigatureScope, 'off'>): Extension {
         }
 
         update(update: ViewUpdate) {
-          // The parse catches up after a big paste in a transaction of its own.
           const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
           if (update.docChanged || update.viewportChanged || update.selectionSet || reparsed) {
             this.decorations = buildLigatures(update.view.state, scope, update.view.visibleRanges)

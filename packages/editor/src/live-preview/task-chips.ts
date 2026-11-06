@@ -1,17 +1,3 @@
-/** A task line drawn as its words and a row of quiet chips (docs/tasks.md 5.7).
- *
- *    ◯ Call the bank about the card   Mon 16:00 · 🔔 · ⏫
- *
- *  A task's fields are marks the way `**` is: written so another app can read them,
- *  and not what the reader wants to look at. So every field the Tasks plugin or Orden
- *  writes is hidden like a mark, and comes back with the caret on its line, dimmed the
- *  way marks are; a chip after the words says what they said. Tags stay where they
- *  were written: they are words, and already wear their own pill. An inline field Orden
- *  has no name for stays too, because nothing would say what it held.
- *
- *  A chip pressed opens its field's choices as the app draws them (`taskHelp.pick`),
- *  and the pick is one edit of exactly the characters that change (`writeTask`). */
-
 import type { EditorView } from '@codemirror/view'
 import { writeTask } from '@orden/markdown/task-edits'
 import {
@@ -27,16 +13,13 @@ import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
 import { noteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 
-/** One chip: what it shows, and which field a press on it picks. */
 export interface TaskChip {
   field:
     'date' | 'recurrence' | 'priority' | 'remind' | 'duration' | 'deadline' | 'assignee' | 'done'
   text: string
-  /** `overdue` in the danger tone, `p1` to `p3` in the priorities'. */
   tone?: 'overdue' | 'p1' | 'p2' | 'p3'
 }
 
-/** The fields hidden from the line while the caret is elsewhere. */
 const HIDDEN = new Set<FieldToken['field']>([
   'due',
   'scheduled',
@@ -56,8 +39,6 @@ const HIDDEN = new Set<FieldToken['field']>([
   'assignee',
 ])
 
-/** The spans of a task line its fields are written in, each with the blank before it,
- *  offsets into the line. */
 function fieldSpans(line: string, parsed: ParsedTask): { from: number; to: number }[] {
   const out: { from: number; to: number }[] = []
   for (const token of parsed.tokens) {
@@ -69,7 +50,6 @@ function fieldSpans(line: string, parsed: ParsedTask): { from: number; to: numbe
   return out
 }
 
-/** A priority's chip: the Tasks plugin's own mark, in its tone; p4 has none. */
 const PRIORITY: Record<Priority, Pick<TaskChip, 'text' | 'tone'> | null> = {
   1: { text: '🔺', tone: 'p1' },
   2: { text: '⏫', tone: 'p2' },
@@ -85,9 +65,6 @@ const minutes = (count: number) => {
   return hours ? (rest ? `${hours}h${rest}m` : `${hours}h`) : `${rest}m`
 }
 
-/** The chips a task's fields make, in the order 5.7 draws them. The day it starts is
- *  said while that is still to come and never as late; once it has come only its time
- *  is; only a deadline is late (#371). `due` is what a `📅` means in the note's space. */
 export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'start'): TaskChip[] {
   const day = (iso: string, time?: string) => dayWords(iso, today, time)
   const out: TaskChip[] = []
@@ -117,10 +94,7 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
   return out
 }
 
-/** The row of chips after a task's words. */
 export class TaskChipsWidget extends NibWidget {
-  /** No place of its own: a chip pressed finds its task by where the row is drawn, so a
-   *  pick lands on that task after the lines above it changed while it was being made. */
   constructor(private readonly chips: readonly TaskChip[]) {
     super()
   }
@@ -145,7 +119,6 @@ export class TaskChipsWidget extends NibWidget {
       const target = event.target instanceof Element ? event.target.closest('[data-field]') : null
       const help = view.state.facet(noteIndex).tasks
       if (!(target instanceof HTMLElement) || !help || view.state.readOnly) return
-      // The caret stays where it was: a press on a chip is a pick, not a place to type.
       event.preventDefault()
       const line = view.state.doc.lineAt(view.posAtDOM(row))
       const parsed = parseTask(line.text)
@@ -156,7 +129,6 @@ export class TaskChipsWidget extends NibWidget {
         target.getBoundingClientRect(),
         view.state.facet(noteIndex).dueReads ?? 'start',
         (change) => {
-          // Gone with its task, or with the task taken up to be written: no pick for it.
           if (!row.isConnected) return
           const now = view.state.doc.lineAt(view.posAtDOM(row))
           const edits = writeTask(now.text, change)
@@ -182,8 +154,6 @@ export class TaskChipsWidget extends NibWidget {
   }
 }
 
-/** What a task line wants drawn: its fields hidden and the chips after it. Null for a
- *  line that is not a task. Offsets into the line. */
 export function taskDrawing(
   line: string,
   due: DueReads = 'start',
@@ -193,15 +163,10 @@ export function taskDrawing(
   return { hide: fieldSpans(line, parsed), chips: chipsOf(parsed.fields, todayHere(), due) }
 }
 
-/** A comment's own fields (\`[at:: 2026-10-13T09:30]\`, \`[by:: Lu]\`), written by the task
- *  view's composer under a task: hidden like a mark, and said after its words as a
- *  quiet chip - when, and by whom. Nothing to pick, so nothing to press. */
 const COMMENT_FIELD = /[ \t]*\[(at|by)::[ \t]*([^\]]*?)[ \t]*\]/g
 
-/** A list item that is a task, which draws its own fields. */
 const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
 
-/** What a comment's line hides and says again, or null for a line with no such field. */
 export function commentDrawing(
   line: string,
   today = todayHere(),
@@ -222,7 +187,6 @@ export function commentDrawing(
   return hide.length ? { hide, chips } : null
 }
 
-/** The when and the who after a comment's words, in the task chips' quiet ink. */
 export class CommentChipsWidget extends NibWidget {
   constructor(readonly chips: readonly string[]) {
     super()

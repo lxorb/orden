@@ -6,7 +6,6 @@ import { nibMarkdownExtensions } from './markdown/extensions'
 import { GAP, mathsAtCaret, mathsInText, place } from './maths-preview'
 import { parsed } from '../test/parsed'
 
-/** A note with the caret where the `|` is, or the selection between two of them. */
 function at(written: string, ...extensions: Extension[]) {
   const first = written.indexOf('|')
   const second = written.indexOf('|', first + 1)
@@ -120,10 +119,8 @@ describe('where the preview goes', () => {
   })
 
   test('stays on its side while it still fits there', () => {
-    // Room for it above now, but it was below a keystroke ago: no jump.
     expect(place(row(160), 180, visible, size, false)?.above).toBe(false)
     expect(place(row(160), 180, visible, size, null)?.above).toBe(true)
-    // And back above once it no longer fits below.
     expect(place(row(670), 180, visible, size, false)?.above).toBe(true)
   })
 

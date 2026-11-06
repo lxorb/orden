@@ -7,7 +7,6 @@ import { inCodeSpan, keepsStraightQuotes, smartReplacement, typingBreak } from '
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
-/** Applies the rule the way the editor would, so tests read as typed text. */
 function type(line: string, character: string): string {
   const before = line + character
   const replacement = smartReplacement(before)
@@ -58,9 +57,6 @@ describe('dashes', () => {
 })
 
 describe('a line that is a break rather than a sentence', () => {
-  /** The whole of a line, typed one character at a time through the rule, which
-   *  is the only way to catch a conversion that happens mid-word: `---` used to
-   *  come out as an em dash because the second hyphen had already gone. */
   const typed = (line: string) => line.split('').reduce((so, character) => type(so, character), '')
 
   test('three hyphens on their own line stay a rule', () => {
@@ -73,8 +69,6 @@ describe('a line that is a break rather than a sentence', () => {
   })
 
   test('the second hyphen is the one that had to be spared', () => {
-    // By the third there is no run of hyphens left to recognise, so the guard
-    // has to hold on the second: `--` is a rule halfway typed.
     expect(type('-', '-')).toBe('--')
     expect(type('--', '-')).toBe('---')
   })
@@ -98,8 +92,6 @@ describe('a line that is a break rather than a sentence', () => {
   })
 
   test('the rule a deck is broken on, typed rather than commanded', () => {
-    // What the bug cost: every break in a deck came out as an em dash, so the
-    // note stopped being a deck at all. The detector is the judge.
     const note = `# One
 
 ${typed('---')}
@@ -155,8 +147,6 @@ describe('code spans', () => {
   })
 })
 
-/** A document with `|` where the caret is, so a test reads as the place it is
- *  asking about. */
 function at(marked: string): boolean {
   const caret = marked.indexOf('|')
   const doc = marked.slice(0, caret) + marked.slice(caret + 1)
@@ -171,7 +161,6 @@ function at(marked: string): boolean {
 
 describe('what keeps its straight quotes', () => {
   test('the body of a fenced block, which is not prose at all', () => {
-    // The line on its own reads as ordinary text, so only the tree can say.
     expect(at('```js\nconst s = "a|\n```\n')).toBe(true)
     expect(at('```\nwait..|\n```\n')).toBe(true)
   })
@@ -207,8 +196,6 @@ describe('what keeps its straight quotes', () => {
   })
 
   test('and not a fence that nothing closes, which is a paragraph', () => {
-    // The parser only calls a closed fence a fence; see markdown/fences.ts. The
-    // line test still holds the fence line itself.
     expect(at('```js\nhe said| something\n')).toBe(false)
   })
 })

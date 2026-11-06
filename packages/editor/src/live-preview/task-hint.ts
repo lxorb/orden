@@ -1,38 +1,17 @@
-/** A date typed in words at the end of a task, offered as the field it could be
- *  (docs/tasks.md 5.7): `- [ ] Call mum tomorrow`, and after the caret, quietly,
- *  `🛫 Tomorrow ⇥`. Tab takes it - the words go and the day the task starts, `🛫
- *  2026-10-08`, is written where the Tasks plugin reads it (or where the line already
- *  holds that day; #371), one edit - and anything else leaves the words as typed.
- *
- *  A hint after the caret rather than the completion menu, because a menu answers
- *  Enter, and Enter at the end of a task is the next task: a menu would turn every
- *  "tomorrow" somebody ended a line with into a date they did not ask for. The source is
- *  never rewritten without the reader asking.
- *
- *  Arrives with the completions (completing.ts), and carries no reader of its own:
- *  whether a line is a task is the box's one regex, the words are read by the app
- *  (`tasks.dayAtEnd` on the note index), and the writer that puts the field where it
- *  belongs is fetched by the Tab that asks for it. */
-
 import { type EditorState, StateField, type Transaction } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { taskAt } from '@orden/markdown/tasks'
 import { type DayTyped, noteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 
-/** What the caret is after: the date, and where its words are in the document. */
 interface Hint {
   day: DayTyped
-  /** The words that said it, as a span of the document. */
   from: number
   to: number
 }
 
-/** A day or a time the line already has, which a second one would fight with. */
 const DATED = /[📅📆🗓⏳⌛]|\[(?:due|scheduled|time)::/u
 
-/** The hint the caret stands after, or null: a single caret at the very end of an
- *  open task with no day of its own yet. */
 function hintAt(state: EditorState): Hint | null {
   const help = state.facet(noteIndex).tasks
   const { main } = state.selection
@@ -78,7 +57,6 @@ const hinted = StateField.define<Hint | null>({
     }),
 })
 
-/** The words out and the field in, as the edit of the characters that change. */
 async function write(view: EditorView, hint: Hint) {
   const [{ appliedEdits, oneEdit }, { writeTask }, { readTask }, { startField }] =
     await Promise.all([
@@ -87,7 +65,6 @@ async function write(view: EditorView, hint: Hint) {
       import('@orden/markdown/task-line'),
       import('@orden/markdown/task-dates'),
     ])
-  // Typed over while the writer was on its way: the hint it was is gone.
   if (view.state.field(hinted, false) !== hint) return
 
   const line = view.state.doc.lineAt(hint.to)
@@ -109,8 +86,6 @@ async function write(view: EditorView, hint: Hint) {
   })
 }
 
-/** Tab with a hint up takes it; without one, Tab is whatever it always was. Bound by
- *  completing.ts, beside the rest of the keys the completions bring. */
 export function takeHint(view: EditorView): boolean {
   const hint = view.state.field(hinted, false)
   if (!hint) return false
@@ -118,5 +93,4 @@ export function takeHint(view: EditorView): boolean {
   return true
 }
 
-/** The hint itself; the app's note index decides whether there is ever one. */
 export const taskHint = hinted

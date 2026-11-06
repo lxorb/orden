@@ -12,9 +12,6 @@ import {
   setPeers,
 } from './carets'
 
-/** A state with the carets extension in it and nothing else, which is all the
- *  extension needs: the decorations are worked out from the state, so nothing here
- *  wants a DOM. */
 function stateOn(doc: string): EditorState {
   return EditorState.create({ doc, extensions: [remoteCarets()] })
 }
@@ -26,8 +23,6 @@ function withPeers(doc: string, peers: readonly Peer[]): EditorState {
 const MAC: Peer = { id: 1, name: 'Mac', colour: '#3584e4', head: 4, anchor: 4 }
 const PHONE: Peer = { id: 2, name: 'iPhone', colour: '#33c7ba', head: 9, anchor: 5 }
 
-/** A caret, or the wash over what somebody has selected. Read off the decoration's
- *  own description, which is untyped, so it is checked rather than trusted. */
 function kindOf(decoration: Decoration): string {
   const spec: unknown = decoration.spec
   if (typeof spec !== 'object' || spec === null) return ''
@@ -37,15 +32,10 @@ function kindOf(decoration: Decoration): string {
   return typeof named.class === 'string' ? named.class : ''
 }
 
-/** Everything the state is drawing, as plain ranges. The field the carets live in
- *  is private, so they are read the way a view reads them: off the facet the
- *  extension provides into. */
 function marks(state: EditorState): { from: number; to: number; kind: string }[] {
   const found: { from: number; to: number; kind: string }[] = []
 
   for (const given of state.facet(EditorView.decorations)) {
-    // A set given as a function of a view is one only a view can read. The carets
-    // are not given that way.
     if (typeof given === 'function') continue
 
     const cursor = given.iter()
@@ -58,14 +48,12 @@ function marks(state: EditorState): { from: number; to: number; kind: string }[]
   return found.sort((one, two) => one.from - two.from || one.kind.localeCompare(two.kind))
 }
 
-/** Where each caret sits. */
 function carets(state: EditorState): number[] {
   return marks(state)
     .filter((one) => one.kind === 'caret')
     .map((one) => one.from)
 }
 
-/** What each of them has selected. */
 function ranges(state: EditorState): { from: number; to: number }[] {
   return marks(state)
     .filter((one) => one.kind === 'cm-nib-caret-range')
@@ -101,8 +89,6 @@ describe('the other people in a note', () => {
   })
 
   test('past the end of the note, are kept inside it, and typing still lands (#542)', () => {
-    // A room's words longer than the note, and somebody's caret at their end: mapping
-    // that place threw on every keystroke, and the keystroke never reached the note.
     const far: Peer = { id: 3, name: 'iPad', colour: '#e66100', head: 40, anchor: 38 }
     const state = withPeers('one\n', [far])
 
@@ -128,8 +114,6 @@ describe('the other people in a note', () => {
   })
 
   test('are never drawn outside the note', () => {
-    // A caret past the end - a position from a copy of the note that had more in
-    // it - lands at the end rather than throwing.
     const state = withPeers('short\n', [{ ...MAC, head: 400, anchor: 400 }])
 
     expect(carets(state)).toEqual([6])
@@ -152,8 +136,6 @@ describe('the other people in a note', () => {
   })
 
   test('cost nothing at all while there are none', () => {
-    // Guards the tests above: a doc change with no peers must not rebuild
-    // anything, and the field says so by being the very same object.
     const state = stateOn('one\ntwo\n')
     const after = state.update({ changes: { from: 0, to: 0, insert: 'x' } }).state
 
@@ -162,9 +144,6 @@ describe('the other people in a note', () => {
   })
 })
 
-/** An agent's caret, which the app makes up for it: drawn beside the room's carets,
- *  told by a list of its own so neither wipes the other out, and moved by typing
- *  the same way. See docs/agent-native.md 8.4. */
 describe('an agent in the note', () => {
   const AGENT: Peer = { id: -1, name: 'Claude Code', colour: '#7c6bf5', head: 2, anchor: 2 }
 
@@ -196,11 +175,6 @@ describe('an agent in the note', () => {
   })
 })
 
-/** Whose caret is held at an edge of the page: a line out of sight above, or below,
- *  and nobody whose line shows at all (#386). */
-
-/** Lines twenty pixels high, one per ten characters, with the page scrolled to show
- *  from 200 to 400. */
 const lineAt = (at: number) => {
   const top = Math.floor(at / 10) * 20
   return { top, bottom: top + 20 }
@@ -218,8 +192,6 @@ describe('a caret out of sight', () => {
   })
 
   test('on a line that only just shows is in sight, either way', () => {
-    // The line from 180 to 200 ends where the page begins, and the one from 400 starts
-    // where it ends: both out of sight. The one from 380 to 400 is the last that shows.
     expect(outOfSight([at(90)], lineAt, seen).above).toHaveLength(1)
     expect(outOfSight([at(195)], lineAt, seen)).toEqual({ above: [], below: [] })
     expect(outOfSight([at(200)], lineAt, seen).below).toHaveLength(1)

@@ -12,8 +12,6 @@ const BLOCKS = [
   { label: 'Callout', run: () => undefined },
 ]
 
-/** A context the source can be asked about without a view. `matchBefore` is the
- *  one thing a real one needs a view for, and nothing here uses it. */
 function completionsFor(doc: string, at = doc.length) {
   const state = parsed(
     EditorState.create({
@@ -93,7 +91,6 @@ describe('choosing a block', () => {
     const apply = option?.apply
     if (typeof apply !== 'function') throw new Error('a row has to do something')
 
-    // `from` is past the slash, as the source reports it; `to` is the caret.
     apply(view as never, option as never, 'Words\n/'.length, 'Words\n/tab'.length)
 
     expect(changes).toEqual([{ from: 'Words\n'.length, to: 'Words\n/tab'.length }])

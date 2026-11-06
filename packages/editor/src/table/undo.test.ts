@@ -4,11 +4,6 @@ import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { createEditor } from '../editor'
 import { SharedDoc } from '../shared'
 
-/** Undo and redo pressed inside a cell, in a real view: the cell's edits are
- *  the note's, so they come back out the way the note's own do.
- *
- *  jsdom lays nothing out, so a range has no rectangles to measure. */
-
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
@@ -33,7 +28,6 @@ function note(on: { shared?: SharedDoc } = {}): EditorView {
   return view
 }
 
-/** The cell holding `1`, with `XYZ` typed after it and not yet written out. */
 function typeInCell(view: EditorView): HTMLElement {
   const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
     (one) => one.textContent === '1',

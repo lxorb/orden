@@ -4,12 +4,6 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { NibWidget } from '../src/live-preview/widget'
 
-/** Orden's widgets hold timers, listeners on the editor's own content element,
- *  and live view objects. `NibWidget` is where giving those back lives, so a
- *  widget that extends `WidgetType` directly has to remember the teardown for
- *  itself and, going by the ones that used to, will not. That is checked here
- *  rather than remembered. */
-
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
 function sourceFiles(dir: string): string[] {
@@ -24,10 +18,6 @@ function sourceFiles(dir: string): string[] {
   return out
 }
 
-/** A widget that registers whatever it is told to, so what is under test is the
- *  base class's own bookkeeping rather than any real widget's drawing. The
- *  teardown map only ever uses the element as a key, so a bare object stands in
- *  for one and these tests need no DOM. */
 class Example extends NibWidget {
   toDOM() {
     return {} as HTMLElement
@@ -82,7 +72,6 @@ describe('every widget', () => {
 
   test('extends NibWidget rather than WidgetType', () => {
     const offenders = sourceFiles(SOURCE)
-      // The base class is the one place that may, and must, extend it.
       .filter((path) => !path.endsWith(join('live-preview', 'widget.ts')))
       .filter((path) => /class\s+\w+\s+extends\s+WidgetType\b/.test(readFileSync(path, 'utf8')))
       .map((path) => path.slice(SOURCE.length).replace(/\\/g, '/'))
@@ -91,8 +80,6 @@ describe('every widget', () => {
   })
 
   test('reaches the base class from its own destroy', () => {
-    // A widget with work of its own to do at the end still has to let the base
-    // do its part, and only the source can say whether it does.
     const offenders = sourceFiles(SOURCE)
       .filter((path) => !path.endsWith(join('live-preview', 'widget.ts')))
       .filter((path) => {
@@ -105,7 +92,6 @@ describe('every widget', () => {
   })
 
   test('the scan actually reaches the widget files', () => {
-    // Guards the test above: a broken path would make it pass on nothing.
     const files = sourceFiles(SOURCE)
     expect(files.some((path) => path.endsWith('widgets.ts'))).toBe(true)
     expect(files.length).toBeGreaterThan(10)

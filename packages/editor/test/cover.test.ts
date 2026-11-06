@@ -4,21 +4,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@codemirror/view'
 import { CoverWidget } from '../src/live-preview/cover'
 
-/** A click under a note's cover lands on the line it was made on.
- *
- *  CodeMirror finds the line under a click from the heights it measured, and it
- *  measures a block by its border box. The band's room below it is a margin
- *  (document.css), outside that box, so when the band itself was the block every
- *  line under it sat that margin lower on the screen than CodeMirror had it, and a
- *  click on a word put the caret on the empty line below. So the band is handed to
- *  the editor inside a block that holds its margin, and that block tells the editor
- *  to measure again whenever its height changes by itself - a picture arriving
- *  late, the text size under an `em`. The clicks are cover-click.py's; this is the
- *  shape that makes them land.
- *
- *  No DOM: the widget only makes elements, appends them and names them, so a
- *  stand-in that remembers that much is the whole of what is read. */
-
 interface StandIn {
   tag: string
   className: string
@@ -51,8 +36,6 @@ function standIn(tag: string): StandIn {
   }
 }
 
-/** Every resize observer the widget makes: what it watches, whether it was let go,
- *  and a way to say the watched box changed size. */
 const observers: { watched: unknown[]; disconnected: boolean; resize: () => void }[] = []
 
 class Observer {
@@ -86,7 +69,6 @@ function drawn() {
     requestMeasure,
   } as unknown as EditorView
   const widget = new CoverWidget({ src: 'assets/sky.png', position: 50 })
-  // The widget builds its elements through the stand-in `document` above.
   const block = widget.toDOM(view) as unknown as StandIn
   return { widget, block, requestMeasure }
 }
@@ -122,7 +104,6 @@ describe("the cover's stylesheets", () => {
       'utf8',
     ).replace(/\/\*[\s\S]*?\*\//g, '')
 
-  /** The declarations under exactly this selector. */
   function body(css: string, selector: string): string {
     const found = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(
       (match) => (match[1] ?? '').trim() === selector,

@@ -1,8 +1,3 @@
-/** The browser's own caret, inside a cell. Cells are contenteditable, so the
- *  caret in them is the DOM selection rather than the editor's. */
-
-/** Where the selection's ends sit in an element, as distances into its text.
- *  Null when the selection is somewhere else. */
 export function selectionIn(element: HTMLElement): { from: number; to: number } | null {
   const selection = window.getSelection()
   if (!selection || selection.rangeCount === 0) return null
@@ -27,7 +22,6 @@ function offsetOf(element: HTMLElement, node: Node, offset: number): number {
   return measured.toString().length
 }
 
-/** Puts the selection at distances into an element's text. */
 export function selectIn(element: HTMLElement, from: number, to = from) {
   const range = document.createRange()
   range.setStart(...pointAt(element, from))
@@ -35,19 +29,11 @@ export function selectIn(element: HTMLElement, from: number, to = from) {
   apply(range)
 }
 
-/** The two ways a browser turns a point on screen into a place in the text.
- *
- *  Neither is on every engine this runs in - WebKitGTK has the older one,
- *  WebView2 the newer - while the DOM types say both are always there. So the
- *  pair is described here and asked for, rather than called blind. The older one
- *  is tried first because it is the one more of these engines have; it is also
- *  the deprecated one, which is why it is named here and not in a call. */
 interface CaretFromPoint {
   caretRangeFromPoint?: (x: number, y: number) => Range | null
   caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
 }
 
-/** Puts the caret at the spot in an element nearest to a point on screen. */
 export function selectAtPoint(element: HTMLElement, x: number, y: number) {
   const finder: CaretFromPoint = document
   let range = finder.caretRangeFromPoint?.(x, y) ?? null
@@ -69,8 +55,6 @@ export function selectAtPoint(element: HTMLElement, x: number, y: number) {
   apply(range)
 }
 
-/** The caret's own rectangle, when the browser can say where it is. It
- *  cannot for a caret in an empty text node. */
 export function caretRect(): DOMRect | null {
   const selection = window.getSelection()
   if (!selection || selection.rangeCount === 0) return null
@@ -80,17 +64,12 @@ export function caretRect(): DOMRect | null {
   return rect.height > 0 ? rect : null
 }
 
-/** The boxes an element's text is laid out in, in reading order. Text that
- *  wraps has several; the first is on the top row and the last on the bottom. */
 export function textRows(element: HTMLElement): DOMRect[] {
   const range = document.createRange()
   range.selectNodeContents(element)
   return Array.from(range.getClientRects()).filter((rect) => rect.height > 0)
 }
 
-/** Whether the caret is on the top (or bottom) row of an element's text, past
- *  which an arrow key should leave the element rather than move within it.
- *  What cannot be measured counts as an edge, so the key always does something. */
 export function caretAtEdge(element: HTMLElement, edge: 'top' | 'bottom'): boolean {
   const rows = textRows(element)
   const caret = caretRect()
@@ -98,13 +77,10 @@ export function caretAtEdge(element: HTMLElement, edge: 'top' | 'bottom'): boole
 
   const y = (caret.top + caret.bottom) / 2
   const row = edge === 'top' ? rows[0] : rows.at(-1)
-  // The length check above means there is one, and a missing row would count as
-  // an edge for the same reason a missing measurement does.
   if (!row) return true
   return y >= row.top - 1 && y <= row.bottom + 1
 }
 
-/** The text node and offset a distance into an element's text falls in. */
 function pointAt(element: HTMLElement, offset: number): [Node, number] {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
   let remaining = offset

@@ -20,33 +20,8 @@ import {
   PERCENT,
 } from './syntax'
 
-/** The constructs Typora writes that CommonMark and GFM do not have: a
- *  highlight, inline and display maths, footnotes, YAML front matter, a
- *  definition list, an abbreviation definition, and Obsidian's wikilinks.
- *
- *  Each is a `MarkdownConfig` naming the nodes it defines and one parser for
- *  them, which is all lezer-markdown needs to be taught a construct. Fenced code
- *  is the only one with enough machinery to want a file of its own, and has one:
- *  fences.ts.
- *
- *  Read alongside live-preview/decorate.ts, which decides what each of these
- *  nodes looks like once it is parsed. */
-
-// Lezer pairs opening and closing delimiters by object identity, so this has
-// to be one shared instance rather than a literal built per call.
 const COMMENT_DELIMITER = { resolve: 'PercentComment', mark: 'PercentCommentMark' }
 
-/** `%%a note to yourself%%`, Obsidian's comment.
- *
- *  The editor's half of it. What takes it out of everything anybody else reads
- *  is `withoutComments` in @orden/markdown, which reads both spellings; this is
- *  only so the writer sees it go the way an HTML comment does, and gets it back
- *  the moment the caret is inside it.
- *
- *  A pair of delimiters, so one holds only as far as the paragraph it opened in.
- *  A comment with a blank line inside it is still taken out of the page, and is
- *  still its own words in the editor: what would buy the rest is a block parser
- *  for a construct almost nobody writes that way. */
 const PercentComment: MarkdownConfig = {
   defineNodes: [
     { name: 'PercentComment', style: tags.comment },
@@ -55,7 +30,6 @@ const PercentComment: MarkdownConfig = {
   parseInline: [
     {
       name: 'PercentComment',
-      // Ahead of emphasis, so nothing inside a comment is read as anything.
       before: 'Emphasis',
       parse(cx, next, pos) {
         if (next !== PERCENT || cx.char(pos + 1) !== PERCENT) return -1
@@ -67,7 +41,6 @@ const PercentComment: MarkdownConfig = {
 
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }
 
-/** `==marked==`, Typora's highlight syntax. */
 const Highlight: MarkdownConfig = {
   defineNodes: [
     { name: 'Highlight', style: markTags.highlight },
@@ -85,23 +58,11 @@ const Highlight: MarkdownConfig = {
   ],
 }
 
-/** `[[Note]]`, `[[Note|shown text]]`, `[[Note#Heading]]`, `[[Note#^blockid]]`,
- *  and `![[Note]]` for the note's content rather than a link to it.
- *
- *  Two marks and nothing between them, on purpose: the first covers everything
- *  ahead of the words a reader sees - the brackets, the target and the bar of an
- *  aliased link - and the second covers everything after. So the preview hides
- *  both the way it hides any other syntax mark, the text left showing is exactly
- *  what the link says, and a click beside it snaps outside the whole link
- *  (see live-preview/snap.ts). Where the shown part starts and ends is decided
- *  by `shownSpan`, which is also what the renderer reads: one grammar. */
 const Wikilink: MarkdownConfig = {
   defineNodes: [{ name: 'Wikilink' }, { name: 'WikilinkMark', style: tags.processingInstruction }],
   parseInline: [
     {
       name: 'Wikilink',
-      // Ahead of `Link` and of `Image`, either of which would otherwise claim
-      // the brackets and leave a link inside a link.
       before: 'Link',
       parse(cx, next, pos) {
         const embed = next === BANG
@@ -112,8 +73,6 @@ const Wikilink: MarkdownConfig = {
 
         for (let i = open + 2; i < cx.end; i++) {
           const code = cx.char(i)
-          // A link holds one line and no brackets of its own, which is where
-          // Obsidian ends one too.
           if (code === NEWLINE || code === BRACKET_OPEN) return -1
           if (code !== BRACKET_CLOSE) continue
           if (cx.char(i + 1) !== BRACKET_CLOSE) return -1
@@ -139,11 +98,6 @@ const Wikilink: MarkdownConfig = {
   ],
 }
 
-/** `#work/nib`, by the grammar in @orden/markdown's tags.ts that the renderer reads
- *  too. A parser node rather than a pattern over the lines: code, maths, comments,
- *  addresses and HTML claim their characters first, a heading's `# ` is the
- *  block's, and the tree is parsed incrementally, so a keystroke never costs a pass
- *  over the note. */
 const Hashtag: MarkdownConfig = {
   defineNodes: [{ name: 'Hashtag', style: markTags.hashtag }],
   parseInline: [
@@ -152,7 +106,6 @@ const Hashtag: MarkdownConfig = {
       parse(cx, next, pos) {
         if (next !== HASH) return -1
 
-        // Nothing before the section's first character: a paragraph opening on a tag.
         const name = tagAt(cx.text, pos - cx.offset)
         if (name === null) return -1
 
@@ -162,8 +115,6 @@ const Hashtag: MarkdownConfig = {
   ],
 }
 
-/** `$x$`. Requires non-space just inside the delimiters, so prices survive, and no
- *  digit after the closing one, Pandoc's rule: `$5-$10` is two prices (#498). */
 const InlineMath: MarkdownConfig = {
   defineNodes: [
     { name: 'InlineMath', style: markTags.math },
@@ -200,30 +151,16 @@ const InlineMath: MarkdownConfig = {
   ],
 }
 
-/** A whole line of `$$…$$`, which is how a formula is usually typed. Anywhere
- *  else on a line it is left alone, because "Costs $$5 and $$6" is prose. */
 const ONE_LINE = /^\$\$(?![\s$])[^\n]*?(?<![\s$])\$\$$/
 
-/** The line as the block parser sees it: past whatever indent or quote marker it
- *  sits behind, and without the spaces somebody left at the end of it. */
 const restOf = (line: Line) => line.text.slice(line.pos).trimEnd()
 
-/** Whether a line opens a display formula, in either of the two shapes.
- *
- *  One question, asked twice - by `parse`, which takes the line, and by `endLeaf`
- *  below, which says a paragraph in progress stops above it. They have to be the
- *  same question: a line that ended a paragraph and was then turned down by
- *  `parse` would have cut the paragraph in two and left a stray one in its place.
- *
- *  A whole line either way, which is the rule that keeps prose about money out of
- *  it: "Costs $$5 and $$6 in total" has words before the marks, wherever it sits. */
 function opensBlockMath(rest: string): boolean {
   return ONE_LINE.test(rest) || rest.trim() === '$$'
 }
 
 const CLOSES_MATH = /^\$\$(?:[ \t]+\^[A-Za-z0-9-]+)?\s*$/
 
-/** A `$$` fence on its own line closed by another, or a whole line of `$$…$$`. */
 const BlockMath: MarkdownConfig = {
   defineNodes: [{ name: 'BlockMath', block: true, style: markTags.math }],
   parseBlock: [
@@ -231,32 +168,12 @@ const BlockMath: MarkdownConfig = {
       name: 'BlockMath',
       before: 'HorizontalRule',
 
-      /** A formula ends the paragraph above it, the way a fence and a heading do.
-       *
-       *  Without this a formula written straight under a line of prose was not a
-       *  formula at all - the `$$` line joined the paragraph, and what should have
-       *  been display maths came out as two literal dollars around an inline
-       *  formula. A blank line above it was the whole difference, and nothing on
-       *  the page said so. Emil: *"is it possible that `$$` only renders properly
-       *  if we do two line breaks?"*
-       *
-       *  It is not a convention anybody chose. CommonMark lets fenced code and an
-       *  ATX heading interrupt a paragraph, @lezer/markdown gives each of them one
-       *  of these, and the renderer this parser has to agree with already had the
-       *  same rule - `blockMath` in @orden/markdown's blocks.ts carries a `start`
-       *  hook, which is marked's way of saying it. So a note said one thing while
-       *  it was being written and another once it was read back, exported or
-       *  published, which is worse than either answer on its own. */
-      // Asked of every line of every paragraph in the note, so the dollar is
-      // checked first: a line that does not start with one is dismissed without
-      // being copied out of the document, which is all but a handful of them.
       endLeaf: (_cx: BlockContext, line: Line) =>
         line.next === DOLLAR && opensBlockMath(restOf(line)),
 
       parse(cx: BlockContext, line: Line) {
         const rest = restOf(line)
 
-        // The one-line shape is the whole element: two marks and no scanning.
         if (ONE_LINE.test(rest)) {
           const at = cx.lineStart + line.pos
           const end = at + rest.length
@@ -294,7 +211,6 @@ const BlockMath: MarkdownConfig = {
   ],
 }
 
-/** `[^id]` in the text and `[^id]: …` at the bottom. */
 const Footnote: MarkdownConfig = {
   defineNodes: [
     { name: 'FootnoteRef', style: markTags.footnote },
@@ -352,7 +268,6 @@ const Footnote: MarkdownConfig = {
   ],
 }
 
-/** YAML metadata fenced by `---`, only at the very top of a document. */
 const FrontMatter: MarkdownConfig = {
   defineNodes: [
     { name: 'FrontMatter', block: true, style: markTags.frontMatter },
@@ -364,14 +279,6 @@ const FrontMatter: MarkdownConfig = {
       before: 'HorizontalRule',
       parse(cx: BlockContext, line: Line) {
         if (cx.lineStart !== 0 || line.text.trim() !== '---') return false
-        // A document may legitimately open with a horizontal rule. Require the
-        // block to be one the readers of a note take for front matter before
-        // committing, since a block parser cannot rewind once it has consumed lines.
-        // `frontMatterBlock` rather than a look for a word and a colon: `Priorität: hoch`
-        // is a key, and read as a rule and a heading it was drawn as one and rewritten by
-        // Format.
-        // The context holds its input but does not type it, and offers no other way to
-        // look further than the next line; the tests of this construct would catch it going.
         const { input } = cx as unknown as { input: Input }
         const block = frontMatterBlock(input.read(0, input.length))
         if (!block) return false
@@ -396,7 +303,6 @@ const FrontMatter: MarkdownConfig = {
   ],
 }
 
-/** `: a meaning` under the term it belongs to. */
 const DefinitionList: MarkdownConfig = {
   defineNodes: [
     { name: 'DefinitionDetail', block: true },
@@ -406,8 +312,6 @@ const DefinitionList: MarkdownConfig = {
     {
       name: 'DefinitionDetail',
       before: 'SetextHeading',
-      // The term above is a paragraph, and a paragraph swallows the lines that
-      // follow it. This ends it so the definition can be parsed on its own.
       endLeaf(_cx: BlockContext, line: Line) {
         return /^:[ \t]+\S/.test(line.text.slice(line.pos))
       },
@@ -428,7 +332,6 @@ const DefinitionList: MarkdownConfig = {
   ],
 }
 
-/** `*[HTML]: HyperText Markup Language` - a definition, never shown as prose. */
 const Abbreviation: MarkdownConfig = {
   defineNodes: [
     { name: 'AbbrevDef', block: true },

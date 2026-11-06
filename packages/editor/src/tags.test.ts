@@ -30,7 +30,6 @@ function state(doc: string, at: number, space = index()): EditorState {
   return built.update({}).state
 }
 
-/** The rows at a position, which is the end of the document unless it is said. */
 function rowsAt(doc: string, at = doc.length, space = index()): CompletionResult | null {
   return tagCompletions(new CompletionContext(state(doc, at, space), at, false))
 }
@@ -117,8 +116,6 @@ describe('where the characters are not prose', () => {
     expect(rowsAt('[a](note.md#work', 16)).toBeNull()
   })
 
-  /** The one place two sources of the same popup could both answer: a hash
-   *  between brackets names a heading of a note, and the wikilink source owns it. */
   test('not inside a wikilink, where a hash means a heading', () => {
     expect(rowsAt('[[Plan#')).toBeNull()
     expect(rowsAt('[[Plan#wo')).toBeNull()
@@ -134,7 +131,6 @@ describe('the front matter', () => {
     const found = rowsAt(FRONT, at)
 
     expect(labels(found)).toEqual(['work', 'work/nib', 'work/nib/canvas'])
-    // Past the key and its space: what is written is the name alone.
     expect(found?.from).toBe(FRONT.indexOf('tags: work') + 'tags: '.length)
   })
 

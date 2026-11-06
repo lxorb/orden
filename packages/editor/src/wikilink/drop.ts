@@ -2,19 +2,15 @@ import { EditorSelection, type Extension, Facet } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { linkWriter, noteIndex } from './notes'
 
-/** A row of the app's file list let go over the words: a link to it at the drop, as
- *  in Obsidian. The app says which notes a drag carries, as paths in the space. */
 export const noteCarrier = Facet.define<
   (transfer: DataTransfer | null) => readonly string[],
   (transfer: DataTransfer | null) => readonly string[]
 >({ combine: (values) => values[0] ?? (() => []) })
 
-/** The writer, fetched by the first drop. */
 const noteLinksCode = () => import('./note-links')
 
 export const noteDrops: Extension = EditorView.domEventHandlers({
   dragover(event, view) {
-    // Read-only says nothing, which leaves the drop to the pane: it opens the row.
     if (view.state.readOnly || !carried(event, view).length) return false
 
     event.preventDefault()

@@ -5,15 +5,10 @@ import { editorState } from './editor'
 import { loadFind } from './find'
 import { nibKeymap, selectWord, unclaimedKeymap } from './keymap'
 
-// The library's "select the next one like it" is the search engine's, and the engine is
-// fetched rather than carried: awaited once here, where the second press is read in the
-// same breath as the first. See find.ts.
 beforeAll(async () => {
   await loadFind()
 })
 
-/** A state with several ranges in it, which is only possible once the editor
- *  says it is. */
 function ranged(doc: string, ...spans: [number, number][]): EditorState {
   return editorState({ doc }).update({
     selection: EditorSelection.create(spans.map(([from, to]) => EditorSelection.range(from, to))),
@@ -31,7 +26,6 @@ function ran(command: StateCommand, from: EditorState): EditorState {
   return next
 }
 
-/** Every range, as the text it covers. */
 function spans(one: EditorState): string[] {
   return one.selection.ranges.map((range) => one.doc.sliceString(range.from, range.to))
 }
@@ -43,9 +37,6 @@ describe('an editor that allows several cursors', () => {
   })
 
   test('draws a caret for each of them', () => {
-    // Empty ranges are carets; the smoothed block layer skips them and the
-    // library's own cursor layer draws one for every range. What this checks is
-    // that the state keeps all three rather than the first.
     const carets = ranged('one two three', [0, 0], [4, 4], [8, 8])
     expect(carets.selection.ranges.length).toBe(3)
   })
@@ -71,8 +62,6 @@ describe('the word under the caret', () => {
   })
 
   test('goes back to growing when the selection is not a word', () => {
-    // Two words and the space between them is not a word, so the press means
-    // the word under the head rather than the next span like this one.
     const grown = ran(selectWord, ranged('one two three', [0, 7]))
     expect(spans(grown)).toEqual(['two'])
   })
@@ -96,14 +85,10 @@ describe('the keys these are on', () => {
 
     expect(keys).toContain('Mod-Alt-Shift-ArrowUp')
     expect(keys).toContain('Mod-Alt-Shift-ArrowDown')
-    // Selecting the word ships with none: Ctrl+D is the app's Deselect tab, and the VS
-    // Code keyboard gives it back.
     expect(keys).not.toContain('Mod-d')
   })
 
   test('leave the library nothing of its own to fire underneath them', () => {
-    // The four the library binds for the same commands are claimed, so none of
-    // them is left as a key that does something nobody can find in the list.
     const keys = unclaimedKeymap.map((binding) => binding.key)
 
     expect(keys).not.toContain('Mod-d')

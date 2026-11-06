@@ -7,7 +7,6 @@ import { fenceCaption, fenceCode, fenceCodeAt, fenceLanguage } from './fence'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
-/** The first fenced block of a document, and the state it is in. */
 function fence(doc: string): { state: EditorState; node: SyntaxNode } {
   const state = parsed(
     EditorState.create({
@@ -46,8 +45,6 @@ describe('what a fence says', () => {
   })
 
   test('a language is one word however the caption is written', () => {
-    // What the header, the run button, the highlighter and every parser lookup
-    // read: a fence that says more than its language is still that language.
     expect(said('```js title="setup.js"\nlet a = 1\n```')).toEqual({
       language: 'js',
       caption: 'setup.js',
@@ -65,8 +62,6 @@ describe('what a fence says', () => {
 })
 
 describe('the code at a place in the document', () => {
-  /** What the header on a block's top line asks for when copy or run is pressed:
-   *  it keeps the place and not the code. */
   const doc = '# One\n\n```ts\nlet a = 1\nlet b = 2\n```\n\nWords.\n'
   const at = doc.indexOf('```ts')
 

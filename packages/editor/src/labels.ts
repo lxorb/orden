@@ -1,8 +1,5 @@
-/** The few words the editor's own widgets show. The app hands over translated
- *  ones at startup; on their own they read as English. */
 const DEFAULTS = {
   setLanguage: 'Set the language',
-  /** The empty field on a fence with no language on it yet. */
   fenceLanguage: 'language',
   copy: 'Copy',
   copyCode: 'Copy code',
@@ -10,9 +7,6 @@ const DEFAULTS = {
   run: 'Run',
   runCode: 'Run the code',
   running: 'Running…',
-  /** The glyph on an `ai` fence, and the line it writes over the answer. The line
-   *  is file content rather than interface: it is written in the language the app
-   *  is set to and then left alone, so a note keeps whatever it was written in. */
   ask: 'Ask',
   askModel: 'Ask the model',
   aiAnswered: 'answered by {model}, {date}',
@@ -22,13 +16,10 @@ const DEFAULTS = {
   timedOut: 'Timed out after {seconds} s',
   outputTruncated: 'Only the first {count} lines are kept',
   dismiss: 'Dismiss',
-  /** Over a change an agent made, which the reader has not kept yet. */
   keep: 'Keep',
   undo: 'Undo',
-  /** The chevron in the margin, and the mark a fold leaves behind. */
   fold: 'Fold',
   unfold: 'Unfold',
-  /** The mark in the margin beside every block. */
   blockHandle: 'Move this block',
   dragToResize: 'Drag to resize',
   describeImage: 'Describe the image',
@@ -47,7 +38,6 @@ const DEFAULTS = {
   searchTag: 'Ctrl+Click to search the tag',
   searchTagMac: '⌘-click to search the tag',
   noteNotFound: 'Note not found',
-  /** Beside a note `[[` offers although it has been put away. */
   archived: 'Archived',
   loadingNote: 'Loading…',
   alignLeft: 'Align left',
@@ -62,23 +52,14 @@ const DEFAULTS = {
   insertRow: 'Insert row',
   deleteRow: 'Delete row',
   sortColumn: 'Sort by this column',
-  /** The row at the foot of a note's properties that adds another one, and the
-   *  word a new key is named with until it is given a name of its own. */
   addProperty: 'Add a property',
   property: 'property',
-  /** The strip a note's front matter is drawn as, folded or open. */
   properties: 'Properties',
-  /** The field at the end of a list property, and the `x` on one of its chips. */
   addToList: 'Add',
   removeFromList: 'Remove',
-  /** The handle on a note's cover, which drags the band up and down the picture. */
   dragCover: 'Drag to reposition',
-  /** A task's box. The box says whether it is ticked, so its name is what the
-   *  tick means: a reader hears "Done, checkbox, not checked". */
   taskDone: 'Done',
-  /** The chip after a ticked task: the day it was done. */
   taskDoneOn: 'done {date}',
-  /** A task's day, said as a word where it is one; see task-days.ts. */
   today: 'Today',
   tomorrow: 'Tomorrow',
   yesterday: 'Yesterday',
@@ -86,15 +67,12 @@ const DEFAULTS = {
 
 export type LabelKey = keyof typeof DEFAULTS
 
-/** Every key, so the app knows what to translate without repeating the list. */
 export const LABEL_KEYS = Object.keys(DEFAULTS) as LabelKey[]
 
-/** The English wording, which doubles as the lookup key on the app's side. */
 export const englishLabel = (key: LabelKey): string => DEFAULTS[key]
 
 let current: Record<LabelKey, string> = { ...DEFAULTS }
 
-/** Replaces the labels. Anything not given keeps its English wording. */
 export function setLabels(labels: Partial<Record<LabelKey, string>>) {
   current = { ...DEFAULTS, ...labels }
 }

@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { StringStream } from '@codemirror/language'
 import { prismaParser } from './prisma'
 
-/** The tokens a schema produces, as `[text, type]` pairs, whitespace left out.
- *  Each line is read with the state the last one left behind. */
 function tokens(schema: string): [string, string | null][] {
   const state = prismaParser.startState!(2)
   const out: [string, string | null][] = []
@@ -49,9 +47,6 @@ describe('highlighting a prisma fence', () => {
     expect(typeOf('  @@unique([a, b])', '@@unique')).toBe('variableName.function')
   })
 
-  /** `url = env("DATABASE_URL")` is a setting, not a field: what follows the
-   *  `=` is a value, and reading it as a type coloured half the datasource
-   *  block wrong. */
   test('a setting is a name, an equals and a value', () => {
     const block = 'datasource db {\n  provider = "postgresql"\n  url = env("DB_URL")\n}'
 

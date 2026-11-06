@@ -7,7 +7,6 @@ import { nibMarkdownExtensions } from './markdown/extensions'
 import { tagOpener, tagTitle } from './tag-press'
 import { parsed } from '../test/parsed'
 
-/** Somewhere to park the caret that is outside every tag under test. */
 const PARK = '\n\nx'
 
 function state(
@@ -26,7 +25,6 @@ function state(
   )
 }
 
-/** The words the parser read as tags. */
 function parsedTags(doc: string): string[] {
   const out: string[] = []
   syntaxTree(state(doc)).iterate({
@@ -37,7 +35,6 @@ function parsedTags(doc: string): string[] {
   return out
 }
 
-/** Every tag the preview drew, with its class and the name it carries. */
 function pills(doc: string, at?: number, more: Extension[] = []) {
   const full = at === undefined ? doc + PARK : doc
   const out: { text: string; className: string; tag: string; title?: string }[] = []
@@ -140,12 +137,6 @@ describe('a tag in the preview', () => {
 
 describe('the preview’s work on tags', () => {
   test('is the viewport’s, however long the note', () => {
-    // A note of two thousand tagged lines and a window onto thirty of them: the
-    // decorations are built for what is on screen, so the pills counted are the
-    // visible ones and nothing is spent on the rest. The same pass over a note twenty
-    // times shorter draws exactly as many. Twenty times shows a count that grows with
-    // the note as well as a hundred did; ten thousand lines made into a state were
-    // seconds of a machine running three gates, against the five this test has.
     const line = (n: number) => `Line ${n} is filed under #work/n${n} and #reading.`
     const long = Array.from({ length: 2_000 }, (_, n) => line(n)).join('\n')
     const short = Array.from({ length: 100 }, (_, n) => line(n)).join('\n')
@@ -156,8 +147,6 @@ describe('the preview’s work on tags', () => {
       return { from, to }
     }
 
-    // Parsed as far as the window, which is all a viewport's pass reads: parsing the
-    // whole note was most of this test's time, twice, and nothing it asks about.
     const counted = (doc: string) => {
       const shown = window(doc)
       const built = buildDecorations(state(doc, 0, [], shown.to), [shown])
@@ -170,7 +159,6 @@ describe('the preview’s work on tags', () => {
 
     const drawn = counted(long)
     expect(drawn).toBe(counted(short))
-    // Lines 40 to 69, two tags each: the window ends where line 70 starts.
     expect(drawn).toBe(30 * 2)
   })
 })

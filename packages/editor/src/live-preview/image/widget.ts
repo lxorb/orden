@@ -15,24 +15,6 @@ import {
 import { resizeTo } from './size'
 import { selectedImage, selectionOver } from './selection'
 
-/** What a picture looks like on screen: the frame, the corner handles, the
- *  toolbar, and the drag that resizes it.
- *
- *  Nothing here edits the DOM to change the document. Every action is a
- *  `view.dispatch` with a `userEvent` naming it (`select.image`,
- *  `input.image.resize`, `input.image.alt`, `delete.image`).
- *
- *  CodeMirror reuses a widget's DOM when `eq` matches, and attaches the newer
- *  widget instance to the old DOM. So handlers never remember a document
- *  position: they ask the view where their element is and read the image from
- *  the syntax tree at that moment. `eq` can then ignore positions, which keeps a
- *  picture from being rebuilt - and re-animated - whenever the text above it
- *  changes. Whether it is selected is not part of the widget either; frame.ts
- *  marks that after each update, so clicking a picture never rebuilds the
- *  toolbar that was just clicked. */
-
-/** Natural sizes of images seen so far, by resolved URL, so a rebuilt widget
- *  takes its room before the picture has loaded again. */
 const NATURAL = new Map<string, { width: number; height: number }>()
 
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
@@ -46,7 +28,6 @@ function sizeLabel(zoom: number, natural: number | undefined): string {
   return `${zoom}%${pixels}`
 }
 
-/** An icon drawn rather than written, so the buttons match in any language. */
 function icon(paths: string[]): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   svg.setAttribute('viewBox', '0 0 14 14')
@@ -67,13 +48,10 @@ const ICONS = {
   missing: ['M2 3.5h10v7H2z', 'M4 9l2.5-3 2 2 1.5-1.5L11.5 9', 'M4.5 5.5h.01'],
 }
 
-/** The pieces of a frame that the handlers reach for. */
 export interface Parts {
   frame: HTMLElement
-  /** The picture and everything drawn over it: what the toolbar is placed against. */
   box: HTMLElement
   image: HTMLImageElement
-  /** Holds the path of a picture that would not load. */
   missing: HTMLElement
   alt: HTMLInputElement
   size: HTMLButtonElement
@@ -81,18 +59,12 @@ export interface Parts {
   tools: HTMLElement
 }
 
-/** Each frame's pieces, kept when the frame is built rather than searched for
- *  again. Looking them up meant claiming each one was there, which no
- *  `querySelector` can promise; this way the reference is the one that was
- *  created, and a frame this class did not build says so by being absent. */
 const PARTS = new WeakMap<HTMLElement, Parts>()
 
 export function partsOf(frame: HTMLElement): Parts | null {
   return PARTS.get(frame) ?? null
 }
 
-/** The image this frame stands for right now, read from the document. Null
- *  for a frame the editor has already let go of. */
 export function imageOfFrame(view: EditorView, frame: HTMLElement): ImageSpan | null {
   if (!view.contentDOM.contains(frame)) return null
   return imageAt(view.state, view.posAtDOM(frame))
@@ -108,7 +80,6 @@ function select(view: EditorView, image: ImageSpan, extend = false) {
   view.focus()
 }
 
-/** Replaces an image's markup, keeping it selected if it was. */
 function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
   const insert = imageMarkup(next)
   const wasSelected = selectedImage(view.state)?.from === image.from
@@ -122,8 +93,6 @@ function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent:
   })
 }
 
-/** Focus goes to the editor before the change, not after: the change takes
- *  the widget - and whatever inside it held focus - out of the DOM. */
 function remove(view: EditorView, image: ImageSpan) {
   view.focus()
   view.dispatch({
@@ -189,8 +158,6 @@ export class ImageWidget extends NibWidget {
     const toolbar = this.toolbar(view, frame)
     box.append(toolbar.tools)
 
-    // Written down before anything reads them, since `sync` below is one of the
-    // things that does.
     PARTS.set(frame, {
       frame,
       box,
@@ -212,16 +179,9 @@ export class ImageWidget extends NibWidget {
     }
 
     image.addEventListener('load', () => {
-      // Filed under the resolved path, which is what the lookups use. Reading
-      // `image.src` back instead would give the browser's absolute form of it,
-      // and a relative path would never be found again.
       NATURAL.set(src, { width: image.naturalWidth, height: image.naturalHeight })
-      // A picture arriving for the first time develops into view; one whose
-      // size was already known simply appears where its room was kept.
       if (!known) frame.classList.add('is-fresh')
       frame.classList.remove('is-loading', 'is-broken')
-      // The size is known only now, and the document may have moved on since
-      // this widget was made: a newer one may have been applied to the frame.
       this.sync(frame, imageOfFrame(view, frame) ?? this.spec)
     })
     image.addEventListener('error', () => {
@@ -229,10 +189,6 @@ export class ImageWidget extends NibWidget {
       frame.classList.add('is-broken')
     })
 
-    // Selecting on press, not release, so a drag that starts on the picture
-    // still leaves it selected. Focus and the native drag of an image are
-    // both prevented: the editor is what should have focus, and it is told
-    // so explicitly.
     frame.addEventListener('pointerdown', (event) => {
       if (event.button !== 0 || this.inToolbar(event)) return
       event.preventDefault()
@@ -255,16 +211,11 @@ export class ImageWidget extends NibWidget {
     return frame
   }
 
-  /** A changed alt or size is applied to the picture that is already there,
-   *  rather than loading it again. A different picture is rebuilt. */
   override updateDOM(frame: HTMLElement, view: EditorView): boolean {
     if (frame.dataset.src !== view.state.facet(imageResolver)(this.spec.src)) return false
     return this.sync(frame, this.spec)
   }
 
-  /** Writes what a spec says onto the frame's parts, and says whether it could.
-   *  Never asks the view where the frame is: `toDOM` runs before the view has
-   *  finished building. */
   private sync(frame: HTMLElement, image: ImageSpec): boolean {
     const parts = partsOf(frame)
     if (!parts) return false
@@ -278,9 +229,6 @@ export class ImageWidget extends NibWidget {
 
     if (document.activeElement !== parts.alt) parts.alt.value = image.alt
     parts.size.textContent = sizeLabel(image.zoom, natural)
-    // A pixel `width` is a size too, so an image carrying one has something to
-    // reset even at 100%: leaving the button disabled there was the one way to
-    // reach an `<img width="...">` and not be able to undo it.
     const plain = image.zoom === 100 && !image.width
     parts.size.disabled = plain
     parts.size.title = plain ? '' : uiLabel('resetSize')
@@ -288,13 +236,10 @@ export class ImageWidget extends NibWidget {
   }
 
   private inToolbar(event: Event): boolean {
-    // A press can land on a text node rather than an element, so the target is
-    // asked what it is rather than assumed to be one.
     const target = event.target
     return target instanceof Element && target.closest('.nib-image-tools') !== null
   }
 
-  /** The toolbar, and the two of its controls the frame reads back later. */
   private toolbar(
     view: EditorView,
     frame: HTMLElement,
@@ -328,11 +273,7 @@ export class ImageWidget extends NibWidget {
         view.focus()
       }
     })
-    // Chromium blurs the field while the editor is still taking its picture out of the
-    // page, mid-update, so the alt is written once that has settled - to the picture
-    // if it is still there.
     alt.addEventListener('blur', () => queueMicrotask(commitAlt))
-    // The frame would otherwise take the press as a click on the picture.
     alt.addEventListener('pointerdown', (event) => event.stopPropagation())
     tools.append(alt)
 
@@ -352,10 +293,6 @@ export class ImageWidget extends NibWidget {
       control.title = title
       control.setAttribute('aria-label', title)
       control.append(content)
-      // Pressing a button must not take focus from the editor - or from the
-      // alt field, whose blur would commit before the button acted. Both
-      // events are cancelled: a cancelled pointerdown does not stop the
-      // mousedown that follows it from focusing the button.
       control.addEventListener('pointerdown', (event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -397,14 +334,10 @@ export class ImageWidget extends NibWidget {
             copy.replaceChildren(icon(ICONS.link))
           }, 1400)
         })
-        // A clipboard the browser refuses leaves the button as it was, which
-        // says the copy did not happen. Caught rather than dropped: nothing
-        // else would answer for the rejection.
         .catch(() => undefined)
     })
 
     button('nib-image-source', uiLabel('editMarkdown'), icon(ICONS.source), (image) => {
-      // Focus first, for the same reason as in `remove`.
       view.focus()
       view.dispatch({
         selection: EditorSelection.cursor(sourceCaret(view.state, image)),
@@ -420,8 +353,6 @@ export class ImageWidget extends NibWidget {
     return { tools, alt, size }
   }
 
-  /** A corner drag. The picture follows the pointer live; the document is
-   *  written once, when the pointer is released. */
   private startResize(
     event: PointerEvent,
     view: EditorView,
@@ -436,8 +367,6 @@ export class ImageWidget extends NibWidget {
     const parts = partsOf(frame)
     if (!image || !parts) return
 
-    // A remembered width of zero is no width at all - a picture that loaded with
-    // no size of its own - so the element is asked instead.
     const remembered = NATURAL.get(frame.dataset.src ?? '')?.width ?? 0
     const natural = remembered > 0 ? remembered : parts.image.naturalWidth
     if (!natural) return
@@ -447,15 +376,12 @@ export class ImageWidget extends NibWidget {
     const startX = event.clientX
     const startWidth = parts.image.getBoundingClientRect().width
     const lineWidth = frame.closest('.cm-line')?.getBoundingClientRect().width ?? natural
-    // Pulling a left-hand corner outwards is a pull to the left.
     const sign = handle.dataset.corner?.endsWith('e') ? 1 : -1
     let zoom = image.zoom
 
     frame.classList.add('is-resizing')
     frame.dataset.corner = handle.dataset.corner
     parts.badge.textContent = sizeLabel(zoom, natural)
-    // Capture keeps the drag alive past the edge of the editor. A pointer
-    // that cannot be captured - a synthetic one, in a test - still drags.
     try {
       handle.setPointerCapture(event.pointerId)
     } catch {

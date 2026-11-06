@@ -7,16 +7,10 @@ import { nibMarkdownExtensions } from './markdown/extensions'
 import { modeExtensions } from './modes'
 import { parsed } from '../test/parsed'
 
-// The library's own `closeBrackets` is what wraps a selection in a bracket, and it is
-// fetched rather than carried now: an editor on screen has it a frame after it is
-// built, and a state built here has it once this has resolved. See completion.ts.
 beforeAll(async () => {
   await loadCompletion()
 })
 
-/** Types one character the way the editor does: every input handler in turn,
- *  and the plain insertion when nobody claimed it. All of the modes are on, so
- *  the marks are tested beside closeBrackets rather than on their own. */
 function type(
   doc: string,
   selection: { anchor: number; head: number },
@@ -49,15 +43,12 @@ function type(
     if (handler(view, from, to, character, () => state.update({}))) return state
   }
 
-  // What CodeMirror itself does with a character nothing claimed.
   return state.update({
     changes: { from, to, insert: character },
     selection: EditorSelection.cursor(from + character.length),
   }).state
 }
 
-/** The document with the selection written into it as `|`, or `«…»` when it
- *  covers something, so a test reads the way the screen looks. */
 function shown(state: EditorState): string {
   const { from, to } = state.selection.main
   const text = state.doc.toString()
@@ -66,7 +57,6 @@ function shown(state: EditorState): string {
     : `${text.slice(0, from)}«${text.slice(from, to)}»${text.slice(to)}`
 }
 
-/** Typing a character over `word`, wherever it is in the document. */
 function typeOver(doc: string, word: string, character: string): string {
   const at = doc.indexOf(word)
   return shown(type(doc, { anchor: at, head: at + word.length }, character))
@@ -74,7 +64,6 @@ function typeOver(doc: string, word: string, character: string): string {
 
 const MARKS = ['`', '*', '_', '~', '=']
 
-/** The marks that have a doubled meaning in markdown, and what it is. */
 const DOUBLING = [
   ['*', 'strong'],
   ['_', 'strong'],
@@ -121,8 +110,6 @@ describe('in code a mark is a character', () => {
     expect(typeOver('run `one two` now', 'one', '*')).toBe('run `*| two` now')
   })
 
-  // Which is also what a second backtick does to the span the first one made:
-  // by then the words are code, and in code a backtick is a backtick.
   test('a backtick does not double into a longer span', () => {
     expect(typeOver('a `word` b', 'word', '`')).toBe('a ``|` b')
   })

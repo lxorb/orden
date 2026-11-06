@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Inline, parseInline } from './inline'
 
-/** The shape as compact markup, so a failure reads like the cell it came from.
- *  Lives here rather than in the renderer: the app builds elements, not text. */
 function html(source: string): string {
   const show = (nodes: Inline[]): string =>
     nodes
@@ -66,8 +64,6 @@ describe('a table cell', () => {
   })
 
   test('shows it inside code as well, where the grammar has no escapes', () => {
-    // A pipe has to be written `\|` wherever it is in a cell, code span or not,
-    // and showing the backslash would be showing syntax.
     expect(html('`a \\| b`')).toBe('<code>a | b</code>')
     expect(html('`x` and \\| and `y \\| z`')).toBe('<code>x</code> and | and <code>y | z</code>')
   })
@@ -83,7 +79,6 @@ describe('links in a cell', () => {
   })
 
   test('refuse a scheme that could run something', () => {
-    // The label still shows; only the address is dropped.
     expect(html('[tap](javascript:alert(1))')).toBe('<a>tap</a>')
   })
 })

@@ -12,21 +12,13 @@ import { makefileParser } from './makefile'
 import { mermaidParser } from './mermaid'
 import { prismaParser } from './prisma'
 
-/** The list, in hand. The app fetches it with the first fence that names a language;
- *  every test here is about what is in it, so it is awaited once and read as an array
- *  throughout. */
 const languages = await fenceLanguages()
 
-/** What a fence saying this word opens, the way `markdown()` asks it. */
 const languageFor = (word: string) =>
   LanguageDescription.matchLanguageName(languages, word, true)?.name ?? null
 
 describe('the word a fence is opened with', () => {
-  /** The spellings people type, and what each has to come out as. Every one of
-   *  these is a fence somebody has written; the point of the list is that the
-   *  short spelling and the long one land in the same place. */
   const expected: Record<string, string> = {
-    // Two or three ways to say the same everyday language.
     js: 'JavaScript',
     javascript: 'JavaScript',
     mjs: 'JavaScript',
@@ -77,7 +69,6 @@ describe('the word a fence is opened with', () => {
     delphi: 'Pascal',
     raku: 'Perl',
 
-    // Shells, and the transcripts people paste out of one.
     sh: 'Shell',
     bash: 'Shell',
     zsh: 'Shell',
@@ -88,7 +79,6 @@ describe('the word a fence is opened with', () => {
     powershell: 'PowerShell',
     pwsh: 'PowerShell',
 
-    // Markup and the web.
     html: 'HTML',
     htm: 'HTML',
     hbs: 'HTML',
@@ -100,7 +90,6 @@ describe('the word a fence is opened with', () => {
     markdown: 'Markdown',
     scss: 'SCSS',
 
-    // Data, configuration and the files a repository is full of.
     yml: 'YAML',
     yaml: 'YAML',
     helm: 'YAML',
@@ -132,21 +121,18 @@ describe('the word a fence is opened with', () => {
     wat: 'WebAssembly',
     asm: 'Gas',
 
-    // SQL, which is a family rather than a language.
     sql: 'SQL',
     psql: 'PostgreSQL',
     postgres: 'PostgreSQL',
     tsql: 'MS SQL',
     sqlite3: 'SQLite',
 
-    // Languages added here for want of a maintained grammar anywhere else.
     zig: 'Zig',
     bicep: 'Bicep',
     awk: 'AWK',
     glsl: 'GLSL',
     solidity: 'Solidity',
 
-    // A fence that says it is not code.
     plaintext: 'Plain Text',
     text: 'Plain Text',
     txt: 'Plain Text',
@@ -167,10 +153,6 @@ describe('the word a fence is opened with', () => {
     expect(languageFor('Dockerfile')).toBe('Dockerfile')
   })
 
-  /** The near-match rule reads a word that merely *contains* a language's
-   *  name as that language, so a spelling added here can quietly swallow one
-   *  nobody has a grammar for. These three have none, and have to stay that
-   *  way rather than be coloured as something they are not. */
   test('a word nobody has a language for stays plain code', () => {
     expect(languageFor('notalanguage')).toBeNull()
     expect(languageFor('')).toBeNull()
@@ -197,8 +179,6 @@ describe('the list itself', () => {
     }
   })
 
-  /** A spelling filed against a name the stock list does not use is a line
-   *  that quietly does nothing, which is the one way this file can rot. */
   test('every spelling is filed against a language that exists', () => {
     for (const [name, spellings] of Object.entries(SPELLINGS)) {
       expect(
@@ -219,10 +199,6 @@ describe('the list itself', () => {
 })
 
 describe('what a fence is besides code', () => {
-  /** Mermaid, flow and sequence fences are drawn as pictures rather than
-   *  coloured as code, and the Run button reads the same word again. Both look
-   *  the fence's language up their own way, so neither is protected by the
-   *  list above. */
   test('the fences drawn as pictures still are', () => {
     expect([...DIAGRAM_LANGUAGES]).toEqual(['mermaid', 'flow', 'sequence'])
     expect(languageFor('mermaid')).toBe('mermaid')
@@ -237,17 +213,6 @@ describe('what a fence is besides code', () => {
     for (const word of ['ts', 'python', 'node']) expect(isRunnableLanguage(word)).toBe(false)
   })
 
-  /** A clipped page chooses its own fence languages, and two of the app's own are
-   *  not blocks that show something: a `query` fence searches the reader's space as
-   *  the note renders, and an `ai` fence reads its body as a prompt. The converter
-   *  refuses those two by name - it cannot import this package, which is its
-   *  dependent - so this is where the two lists are held to each other.
-   *
-   *  What is deliberately not refused: the drawn fences and the runnable ones. A
-   *  clipped page of documentation is the commonest clip there is and its fences say
-   *  `js` and `mermaid`; the Run glyph wants a press and runs in a frame sandboxed
-   *  with `allow-scripts` alone. See `THE_APP_S_OWN` in @orden/markdown's from-html.ts,
-   *  which carries the whole of the reasoning. */
   test('the two a clipped page may not choose are the two that need no press', () => {
     const fenced = (language: string) =>
       htmlToMarkdown(`<pre data-language="${language}"><code>x</code></pre>`)
@@ -257,7 +222,6 @@ describe('what a fence is besides code', () => {
     expect(fenced('query')).toBe(block(''))
     expect(fenced('ai')).toBe(block(''))
 
-    // And every other language the app does something with keeps its name.
     for (const word of [...DIAGRAM_LANGUAGES, 'chart', 'js', 'javascript', 'mjs', 'cjs']) {
       expect(fenced(word), word).toBe(block(word))
     }
@@ -265,9 +229,6 @@ describe('what a fence is besides code', () => {
 })
 
 describe('loading a language', () => {
-  /** One of each mechanism: a stock description that was given more
-   *  spellings, a CodeMirror 5 mode, a language described by its vocabulary,
-   *  a package written for CodeMirror 6, and one of this repo's own. */
   const sample = [
     'py',
     'rs',
@@ -297,9 +258,6 @@ describe('loading a language', () => {
 })
 
 describe('the token types this repo names itself', () => {
-  /** A token type CodeMirror has no tag for is not an error. It is one
-   *  `console.warn` at startup and a token with no colour for ever after,
-   *  which is exactly the kind of thing that goes unnoticed for a year. */
   const known = (type: string) =>
     type
       .split('.')

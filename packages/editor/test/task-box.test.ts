@@ -3,11 +3,6 @@ import type { EditorView } from '@codemirror/view'
 import { setLabels } from '../src/labels'
 import { CheckboxWidget } from '../src/live-preview/widgets'
 
-/** A task's box is a form control in the middle of a line, and a control with no
- *  name is read out as "checkbox, not checked" with nothing to say what ticking it
- *  means. These tests need no DOM: the widget only makes one element and names
- *  it, so a stand-in that remembers its attributes is the whole of what is read. */
-
 interface StandIn {
   type: string
   className: string

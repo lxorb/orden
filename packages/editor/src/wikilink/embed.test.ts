@@ -5,15 +5,6 @@ import type { LinkSpan } from './at'
 import { EmbedFileWidget, embedWidget } from './embed'
 import { type NoteIndex, noteIndex } from './notes'
 
-/** What `![[paper.pdf#page=3]]` and `![[Board.canvas]]` ask the app to draw.
- *
- *  The drawing itself is the app's - pdf.js and the canvas painter both are - and
- *  it reaches the card through the index, so what the editor owns is the question
- *  rather than the answer: which file, which page of it, and whether the space
- *  holds it at all. That is what is asserted here, because it is the whole of the
- *  editor's side of this and because the drawn surface is DOM, which this
- *  package's tests have no window to build one in. */
-
 function link(inner: string): LinkSpan {
   const parsed = parseWikilink(inner, true)
   if (!parsed) throw new Error(`${inner} is not a link`)
@@ -47,8 +38,6 @@ describe('an embedded paper', () => {
   })
 
   test('whose link names no page asks for none, and is drawn at its first', () => {
-    // Which page that is belongs to whatever asks pdf.js for one, so the ask says
-    // what the link said and no more.
     expect(card('paper.pdf').drawing()).toEqual({
       kind: 'pdf',
       path: 'reading/paper.pdf',

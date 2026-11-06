@@ -49,39 +49,24 @@ import {
 } from './edits'
 import { inlineShortcut, runInCell } from './shortcuts'
 
-/** What a table's widget knows: the text it renders, and where that text is. */
 export interface TableSource {
   source: string
   from: number
   to: number
 }
 
-/** Where the caret goes in a cell it has just been moved into: an end of the
- *  text, all of it, or the spot on the top or bottom row nearest to an x. */
 export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bottom' }
 
-/** Where the caret goes when it steps out: an end of the line, or the spot
- *  nearest to where it was. */
 export type Landing = 'start' | 'end' | { x: number }
 
-/** How long a cell may sit untouched before its edit is written out anyway.
- *  Blur is the primary trigger; this is the safety net for when focus never
- *  leaves the cell. */
 const IDLE_COMMIT = 700
 
-/** The table currently holding an uncommitted cell edit. Rewriting the source
- *  on every keystroke would be a document change per character, so edits
- *  land when the cell is left - or when this is flushed. */
 let active: TableView | null = null
 
-/** Writes any in-progress cell edit into the document. Call before saving. */
 export function flushTableEdits() {
   active?.flush()
 }
 
-/** Remembers which table holds an uncommitted edit, so the flush above can find
- *  it. Named rather than assigned in place: handing an object's own `this` out
- *  to something that outlives it is worth being able to see. */
 function holdsEdit(table: TableView) {
   active = table
 }
@@ -98,9 +83,6 @@ const ALIGN_LABELS = {
   right: 'alignRight',
 } as const
 
-/** The live DOM of one rendered table. Built once and then kept up to date
- *  with the document, so that column widths, the caret and the controls
- *  survive each edit instead of being rebuilt around it. */
 export class TableView {
   readonly dom: HTMLElement
 
@@ -113,37 +95,21 @@ export class TableView {
   private model: TableModel
   private source: string
 
-  /** The focused cell's text, not yet in the document. */
   private pending: { at: CellAddress; value: string } | null = null
   private idle: number | undefined
 
-  /** The cell to put the caret in once the next redraw has happened. */
   private focusAfter: Focus | null = null
 
-  /** Column widths set by dragging; markdown records none, so they are the
-   *  view's to keep. */
   private widths: (number | null)[]
 
-  /** The column whose controls are up. */
   private barColumn = -1
 
-  /** The row whose controls are up. */
   private barRow = -1
 
-  /** Which column this table was last sorted by, and which way, so pressing the
-   *  button again turns it round. The view's own and never the note's: the order
-   *  is written into the rows, and how it got there is not a fact about the file.
-   *  A table read again tomorrow sorts upwards first, which is where anybody
-   *  starts. */
   private sortedAs: { column: number; order: Order } | null = null
 
-  /** How to end a column drag that is still going, so the document listeners it
-   *  put down come off even if the table goes first. */
   private dragging: (() => void) | null = null
 
-  /** Whether the cells were drawn as fields. Reading mode takes that away, and
-   *  the table has to be redrawn for it: a cell is contenteditable in the DOM,
-   *  which no stylesheet can undo. */
   private editable: boolean
 
   constructor(
@@ -157,9 +123,6 @@ export class TableView {
     this.editable = !editor.state.readOnly
 
     this.dom = element('div', 'nib-table-wrap')
-    // Outside the editor's editable region: the cells opt back in one by one.
-    // Without this the whole table is part of what CodeMirror believes is
-    // document text, and the caret can be placed into DOM that maps to nothing.
     this.dom.contentEditable = 'false'
 
     this.scroller = element('div', 'nib-table-scroll')
@@ -186,33 +149,15 @@ export class TableView {
     this.render()
   }
 
-  /** Where this table's text is in the document, right now, or null when the
-   *  editor has let go of the widget.
-   *
-   *  Asked of the view rather than remembered, for the same reason image.ts
-   *  gives: prose typed elsewhere in the note moves the table's text without
-   *  redrawing anything. The block field maps the decoration along and hands
-   *  the very same widget back, so nothing here is told that anything happened.
-   *  A remembered offset then points at the wrong text - and since `commit`
-   *  checks the text before writing, a cell edit made after such a keystroke
-   *  was quietly thrown away. */
   span(): TableSpan | null {
     const { editor, dom } = this
     if (!editor.contentDOM.contains(dom)) return null
 
-    // `posAtDOM` gives the start of the block the widget replaces, which is the
-    // start of the table's first line. The end of that line is inside the node
-    // whatever the indent, which is what the tree can be asked about.
     const at = Math.min(editor.posAtDOM(dom), editor.state.doc.length)
     return tableAt(editor.state, editor.state.doc.lineAt(at).to)
   }
 
-  /** Points the DOM at a newer version of the source. Redrawn only when the
-   *  document says something the cells do not already show - after an edit
-   *  made here, it never does. */
   adopt(text: TableSource, model: TableModel) {
-    // Compared in canonical form: a table typed by hand is rarely aligned
-    // the way the serializer writes it, and that is not a difference.
     const shown = serializeTable(model) === serializeTable(this.current())
     this.source = text.source
     this.model = model
@@ -235,7 +180,6 @@ export class TableView {
     if (this.pending) this.commit(this.current())
   }
 
-  /** Walks the caret in from the line above or below. */
   enter(side: Side, where: Landing): boolean {
     if (where === 'start') return this.focusCell(firstCell, 'start')
     if (where === 'end') return this.focusCell(lastCell(this.model), 'end')
@@ -248,16 +192,9 @@ export class TableView {
     )
   }
 
-  /** Puts the caret in a cell. The cell swaps to its markdown as it takes
-   *  focus, so the caret is placed after that, into the source text. */
   focusCell(at: CellAddress, placement: Placement | number): boolean {
-    // A rendered table is something to read like any other block while the note
-    // is read-only; its cells are not fields. The key that asked to walk in gets
-    // its answer back and steps over the table instead.
     if (this.editor.state.readOnly) return false
 
-    // The cell may be gone - an undo can take the column it was in - so the
-    // nearest one that exists takes the caret instead.
     const { model } = this
     const cell = this.cellAt({
       row: Math.min(at.row, model.rows.length - 1),
@@ -284,12 +221,10 @@ export class TableView {
     return true
   }
 
-  /** Hands the caret back to the editor, on the line above or below. */
   leave(side: Side, where: Landing) {
     this.flush()
 
     const { editor } = this
-    // Read after the flush, since that may have rewritten the table.
     const span = this.span()
     if (!span) return
 
@@ -300,8 +235,6 @@ export class TableView {
       else if (typeof where === 'object') pos = posOnRow(editor, line, side, where.x)
     }
 
-    // A vertical step out carries its column on, the way it does between
-    // lines, so the next arrow press continues in the same column.
     const goal =
       typeof where === 'object'
         ? where.x - editor.contentDOM.getBoundingClientRect().left
@@ -314,18 +247,12 @@ export class TableView {
     editor.focus()
   }
 
-  /** The model including whatever the focused cell currently reads. */
   private current(): TableModel {
     const { pending, model } = this
     return pending ? setCell(model, pending.at.row, pending.at.column, pending.value) : model
   }
 
-  /** Writes a model into the document. The new widget then adopts this DOM,
-   *  which is where `focusAfter` is acted on. */
   private commit(next: TableModel, focus?: Focus) {
-    // Every edit a table makes comes through here, so this is where read-only
-    // mode stops them - the buttons in the margins and the idle timer of a
-    // cell that was being typed in when the mode came on, both.
     if (this.editor.state.readOnly) {
       this.clearPending()
       return
@@ -335,16 +262,11 @@ export class TableView {
     this.focusAfter = focus ?? null
 
     const text = serializeTable(next)
-    // The document may have moved on without this table, in which case the
-    // widget is about to be dropped and the edit with it. Better than writing
-    // over whatever took its place.
     const { editor } = this
     const span = this.span()
     const current = span && editor.state.doc.sliceString(span.from, span.to) === this.source
 
     if (text !== this.source && span && current) {
-      // The edit stays pending through the dispatch: the new widget compares
-      // the document against what the cells show, and the edit is part of it.
       editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
     }
 
@@ -360,7 +282,6 @@ export class TableView {
 
   private render() {
     const { model } = this
-    // A redraw pulls the caret out of the cell it is in; note where it was.
     const focus = this.focusAfter ?? this.focusedCell()
     this.focusAfter = null
 
@@ -372,8 +293,6 @@ export class TableView {
       const at = { row: -1, column }
       const th = this.cell(text, at, 'th', sameCell(at, focus?.at))
 
-      // Markdown records no column widths, so a resize is a view-level nicety,
-      // exactly as it is in Typora.
       const grip = element('span', 'nib-table-resize')
       grip.contentEditable = 'false'
       grip.title = label('dragToResize')
@@ -398,19 +317,12 @@ export class TableView {
 
     this.table.replaceChildren(head, body)
 
-    // The row the bar was put beside is gone. It stays where it was, for the row
-    // that has that place now, which is the one under a pointer that has not
-    // moved - as it was when every row had controls of its own - and the caret's
-    // row takes it back as soon as the caret is in again.
     if (this.rowBar.classList.contains('is-shown')) {
       const tr = this.bodyRow(this.barRow)
       if (tr) this.showRowBar(tr)
       else this.hideRowBar()
     }
 
-    // The editor is still mid-update while it adopts the DOM; the caret goes
-    // in once that has settled - unless the editor itself has taken it by
-    // then, which means the caret was on its way out of the table.
     if (focus) {
       queueMicrotask(() => {
         if (document.activeElement === this.editor.contentDOM) return
@@ -426,10 +338,6 @@ export class TableView {
     cell.dataset.row = String(at.row)
     cell.dataset.column = String(at.column)
 
-    // The cell is its own little source editor, so its text has to be the
-    // markdown while the caret is in it. Everywhere else it shows the result,
-    // which is the same bargain the rest of the editor makes with syntax. A
-    // cell about to take the caret starts as source, so it does not flash.
     cell.dataset.source = text
     if (editing) showSource(cell)
     else showRendered(cell)
@@ -437,13 +345,7 @@ export class TableView {
     const align = this.model.align[at.column]
     if (align) cell.style.textAlign = align
 
-    // The browser places the caret from the click, but the text under the
-    // click changes as the cell takes focus and shows its markdown. So the
-    // caret is placed by hand, once the markdown is up.
     cell.addEventListener('mousedown', (event) => {
-      // Not a caret to place while the note is read-only, and not
-      // preventDefault either:
-      // dragging a selection across the table is how a reader copies it.
       if (this.editor.state.readOnly) return
       if (event.button !== 0 || document.activeElement === cell) return
       event.preventDefault()
@@ -453,8 +355,6 @@ export class TableView {
 
     cell.addEventListener('focus', () => showSource(cell))
     cell.addEventListener('blur', () => this.left(cell, at))
-    // What an input method has not committed yet is not the cell's text: it is
-    // written once the composition ends.
     cell.addEventListener('input', (event) => {
       if (!(event as InputEvent).isComposing) this.edited(cell, at)
     })
@@ -467,9 +367,6 @@ export class TableView {
   }
 
   private edited(cell: HTMLElement, at: CellAddress) {
-    // Reading mode can arrive with the caret already in a cell. What is typed
-    // after that has nowhere to go, so the cell hands the caret back and shows
-    // the document again.
     if (this.editor.state.readOnly) {
       cell.blur()
       return
@@ -483,12 +380,8 @@ export class TableView {
   }
 
   private left(cell: HTMLElement, at: CellAddress) {
-    // A redraw blurs the old cell; its text is already in the document.
     if (!attached(cell)) return
     this.flush()
-    // Which may have rewritten the table and taken this cell with it. Asked
-    // through a function, since the compiler holds the answer to the first
-    // question and would otherwise call the second one pointless.
     if (!attached(cell)) return
 
     cell.dataset.source = this.textOf(at)
@@ -496,9 +389,6 @@ export class TableView {
   }
 
   private keyInCell(event: KeyboardEvent, cell: HTMLElement, at: CellAddress) {
-    // While an input method composes, its keys are its own: the Enter that picks
-    // a candidate is not a step to the cell below. Safari ends the composition
-    // before that Enter arrives, so only its key code still says so.
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- the one sign Safari gives
     if (event.isComposing || event.keyCode === 229) return
     const mod = event.ctrlKey || event.metaKey
@@ -507,16 +397,12 @@ export class TableView {
     if (key === 'Tab' && !mod && !event.altKey) {
       event.preventDefault()
       const next = event.shiftKey ? cellBefore(this.model, at) : cellAfter(this.model, at)
-      // Tab past the last cell grows the table; Shift-Tab out of the first one
-      // hands the caret to the line above, the way ArrowLeft there does. It used
-      // to do nothing at all, having already swallowed the key.
       if (next === 'below') this.growBelow(0)
       else if (next === 'above') this.leave('above', 'end')
       else this.focusCell(next, event.shiftKey ? 'end' : 'start')
       return
     }
 
-    // A cell holds one line, so no kind of Enter makes a new one inside it.
     if (key === 'Enter') {
       event.preventDefault()
       const next = cellBelow(this.model, at)
@@ -541,7 +427,6 @@ export class TableView {
         this.history(event, redoEdit, cell, at)
         return
       }
-      // The browser's select-all reaches past the cell to the whole document.
       if (lower === 'a' && !event.shiftKey) {
         event.preventDefault()
         selectIn(cell, 0, cell.textContent.length)
@@ -588,8 +473,6 @@ export class TableView {
     }
   }
 
-  /** Up or down: into the cell in the same column, at the same x - or out of
-   *  the table when there is no such cell. */
   private stepVertically(step: CellAddress | Side, cell: HTMLElement, side: Side) {
     const x = (caretRect() ?? cell.getBoundingClientRect()).left
     if (typeof step === 'string') this.leave(side, { x })
@@ -601,8 +484,6 @@ export class TableView {
     this.apply(insertedRow(this.current(), rows - 1, column))
   }
 
-  /** Undo and redo are the editor's, not the browser's: a cell's edits live
-   *  in the document. The caret stays in the cell through the redraw. */
   private history(event: Event, command: Command, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
     this.flush()
@@ -625,8 +506,6 @@ export class TableView {
 
   private inputInCell(event: InputEvent, cell: HTMLElement, at: CellAddress) {
     const type = event.inputType
-    // The browser's own formatting would put HTML in the cell, and its line
-    // breaks would split the row.
     if (type.startsWith('format') || type === 'insertParagraph' || type === 'insertLineBreak') {
       event.preventDefault()
     } else if (type === 'historyUndo') {
@@ -641,10 +520,6 @@ export class TableView {
     const text = (event.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n/g, ' ')
     if (!text) return
 
-    // Goes through the browser's own editing so that it fires `input` like
-    // typing does, and so the cell's undo stack knows about the paste. Nothing
-    // has replaced `execCommand` for that; the branch below is what happens
-    // where it is gone.
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- no replacement reaches the browser's own undo stack
     if (document.execCommand('insertText', false, text)) return
 
@@ -660,10 +535,6 @@ export class TableView {
     this.apply(alignedColumn(this.current(), column, align, this.focusedCell() ?? undefined))
   }
 
-  /** Sorts by this column, and again the other way. One button rather than two:
-   *  a column is sorted one way or the other, and which way it is showing is the
-   *  mark on the button. Written into the note, because the rows really are in
-   *  that order now; see `sortRows`. */
   private sortBy(column: number) {
     const order = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
     const edit = sortedColumn(this.current(), column, order, this.focusedCell() ?? undefined)
@@ -677,7 +548,6 @@ export class TableView {
     const edit = movedColumn(this.current(), column, step, this.focusedCell() ?? undefined)
     if (edit.next === this.current()) return
 
-    // A width is the view's own, so it travels with the column here.
     const [width] = this.widths.splice(column, 1)
     this.widths.splice(column + step, 0, width ?? null)
     this.apply(edit)
@@ -708,20 +578,10 @@ export class TableView {
     this.apply(removedRow(this.current(), row, this.focusedCell() ?? undefined))
   }
 
-  /** Writes what one of the margin controls decided; see edits.ts. */
   private apply(edit: Edit) {
     this.commit(edit.next, edit.focus)
   }
 
-  /** One set of row controls for the whole table, beside whichever row is
-   *  hovered or holds the caret, the way the column bar is over a header cell.
-   *
-   *  It used to be one set per row, drawn inside the row's first cell because a
-   *  positioned <td> still reserves a table column. But a cell swaps what it holds
-   *  as it takes the caret and gives it back, and the controls went with it: the
-   *  row whose first cell was being written in was the one row without any, until
-   *  the table was drawn again. Out here nothing a cell does can reach them, and
-   *  they stay put when a wide table is scrolled sideways. */
   private buildRowBar(): HTMLElement {
     const bar = element('div', 'nib-table-rows')
     bar.contentEditable = 'false'
@@ -736,9 +596,6 @@ export class TableView {
     return bar
   }
 
-  /** One set of column controls for the whole table, shown over whichever
-   *  header cell is hovered or holds the caret. Kept outside the scrolling
-   *  part so it can hang above the table without the table making room. */
   private buildColumnBar(): HTMLElement {
     const bar = element('div', 'nib-table-columns')
     bar.contentEditable = 'false'
@@ -752,8 +609,6 @@ export class TableView {
       this.columnButton('moveColumnRight', 'M4 1l4 4-4 4', (column) =>
         this.moveColumnBy(column, 1),
       ),
-      // An arrow down a stack of lines, which is what sorting is: the rows put
-      // in the order this column says.
       this.columnButton('sortColumn', 'M2 2h6M2 5h4M2 8h2', (column) => this.sortBy(column)),
       this.columnButton('insertColumn', 'M5 1v8M1 5h8', (column) => this.insertColumnAfter(column)),
       this.columnButton(
@@ -778,11 +633,6 @@ export class TableView {
     return button(className, key, path, () => onPress(this.barColumn))
   }
 
-  /** Both bars come up under a mouse as it passes, and for a finger or a pen
-   *  only once a cell has the caret. A tap on an iPhone or an iPad is announced
-   *  as a mouse passing first, and when what that shows is new on the screen,
-   *  WebKit takes the tap to have been for looking: the cell never got the
-   *  caret, and it took a second tap to write in any cell of the table. */
   private watchColumnHover() {
     this.dom.addEventListener('pointerover', (event) => {
       if (event.pointerType !== 'mouse') return
@@ -805,15 +655,12 @@ export class TableView {
       else this.hideColumnBar()
     })
 
-    // The bar sits outside the scrolling part, so it has to follow by hand.
     this.scroller.addEventListener('scroll', () => {
       const th = this.headerCell(this.barColumn)
       if (th && this.columnBar.classList.contains('is-shown')) this.showColumnBar(th)
     })
   }
 
-  /** Under a mouse as it passes, and otherwise with the caret; see
-   *  `watchColumnHover`. */
   private watchRowHover() {
     this.dom.addEventListener('pointerover', (event) => {
       if (event.pointerType !== 'mouse') return
@@ -832,14 +679,12 @@ export class TableView {
     })
     this.table.addEventListener('focusout', (event) => {
       const next = event.relatedTarget as Element | null
-      // Onto one of the bar's own buttons, which act on the row it is up for.
       if (next && this.rowBar.contains(next)) return
       const tr = next?.closest('td')?.closest('tr')
       if (tr && this.table.contains(tr)) this.showRowBar(tr)
       else this.hideRowBar()
     })
 
-    // A row grows a line as its words wrap, and the bar is put by its middle.
     this.table.addEventListener('input', (event) => {
       const tr = (event.target as Element).closest('td')?.closest('tr')
       if (tr) this.showRowBar(tr)
@@ -860,7 +705,6 @@ export class TableView {
     bar.style.top = `${row.top - wrap.top + row.height / 2}px`
   }
 
-  /** Unless a body cell holds the caret: its row's controls stay reachable. */
   private hideRowBar() {
     const focused = document.activeElement?.closest('td')?.closest('tr')
     if (focused && this.table.contains(focused)) this.showRowBar(focused)
@@ -884,20 +728,12 @@ export class TableView {
     }
   }
 
-  /** Unless a header cell holds the caret: its controls stay reachable. */
   private hideColumnBar() {
     const focused = document.activeElement?.closest('th')
     if (focused && this.table.contains(focused)) this.showColumnBar(focused)
     else this.columnBar.classList.remove('is-shown')
   }
 
-  /** Drags the boundary between two columns. Width lives on the header cell,
-   *  and the rest of the column follows because the table is laid out from it.
-   *
-   *  The handle sits on the column's own end edge, which is its left in a note
-   *  that reads right to left, so there a drag to the left is the one that makes
-   *  the column wider. The note's direction is read once, at the press: a note
-   *  cannot turn round half way through a drag. */
   private startResize(event: MouseEvent, header: HTMLTableCellElement, column: number) {
     event.preventDefault()
     const startX = event.clientX
@@ -916,10 +752,6 @@ export class TableView {
     }
     document.addEventListener('mousemove', move)
     document.addEventListener('mouseup', finish)
-    // A drag can outlive its table: an edit elsewhere in the note, or a sync
-    // arriving, takes the widget away without a mouseup. Both listeners are on
-    // the document, so nothing else would ever take them off it, and the next
-    // pointer move would go on sizing a column of a table that is gone.
     this.dragging = finish
   }
 
@@ -944,8 +776,6 @@ export class TableView {
     }
   }
 
-  /** The column under an x coordinate, in a given row; the nearest one past
-   *  the table's edges. */
   private columnAt(row: number, x: number): number {
     const columns = this.model.header.length
     for (let column = 0; column < columns; column++) {

@@ -17,9 +17,6 @@ function state(doc: string, cursor = 0) {
       selection: EditorSelection.cursor(cursor),
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-        // The field reads whether a pointer drag is in progress, and a state
-        // without it behaves as though none ever is - which is every test here
-        // but the drag ones below.
         dragFreeze,
         blockDecorations,
       ],
@@ -27,7 +24,6 @@ function state(doc: string, cursor = 0) {
   )
 }
 
-/** Moving the caret to `to` from `from`, and what the field did about it. */
 function afterMove(doc: string, from: number, to: number) {
   const before = state(doc, from)
   const was = before.field(blockDecorations)
@@ -35,20 +31,16 @@ function afterMove(doc: string, from: number, to: number) {
   return { was, is: now.field(blockDecorations) }
 }
 
-/** Where the field found something, as text. */
 function spans(doc: string, cursor = 0): string[] {
   return state(doc, cursor)
     .field(blockDecorations)
     .spans.map((span) => doc.slice(span.from, span.to))
 }
 
-/** The compartment the app holds the answer in; see `modeExtensions` in modes.ts. */
 const asked = new Compartment()
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
 const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
-/** More prose than the parser covers on its way into a note: what it has not
- *  reached lands in transactions of its own, later. */
 const FILLER = 'prose with **emphasis** and a [link](x).\n\n'.repeat(200)
 
 describe('block decorations', () => {
@@ -64,18 +56,11 @@ describe('block decorations', () => {
   })
 
   test('every fence is a place worth looking at again, whatever its language', () => {
-    // A plain fence draws nothing, but the language *decides* whether it draws
-    // anything - and a language is letters, which the prose shortcut below maps
-    // past. Recording the span is what makes typing `mermaid` into a plain fence
-    // reach the walk instead of being read as prose typed nowhere in particular.
     const fence = '```js\nlet x = 1\n```'
     expect(spans(`${PROSE}${fence}`)).toEqual([fence])
   })
 
   test('a table with something before its pipes is left as source', () => {
-    // The widget replaces whole lines and the table model knows nothing of an
-    // indent or a quote mark, so writing an edit back would drop the prefix and
-    // lift the table out of the list item or blockquote it was in.
     const indented = `- item\n\n  ${TABLE.split('\n').join('\n  ')}\n`
     expect(spans(indented)).toEqual([])
     expect(state(indented).field(blockDecorations).decorations.size).toBe(0)
@@ -90,9 +75,6 @@ describe('block decorations', () => {
   })
 
   test('an equation or a diagram with something before it is left as source too', () => {
-    // The replacement covers whole lines, and neither the equation nor the
-    // diagram knows a prefix exists: a quoted `$$` handed `> x` to the renderer
-    // as if the marker were part of the maths.
     for (const doc of [
       '> $$\n> x = 1\n> $$\n',
       '- item\n\n  $$\n  x = 1\n  $$\n',
@@ -103,23 +85,10 @@ describe('block decorations', () => {
     }
   })
 
-  /** The shape a formula is actually typed in, and the one that shipped broken.
-   *
-   *  `$$…$$` on one line was parsed, decorated and drawn - and drawn empty, because
-   *  the formula was read as the text BETWEEN the opening line and the closing line,
-   *  which for one line is a range that runs backwards and comes back as nothing. The
-   *  block took its room on the page and held no formula. Emil, of a page of lecture
-   *  notes written entirely this way: *"I see no formulas with $$ ... the space is
-   *  just empty where it should be."*
-   *
-   *  Asserted as the words the widget was given rather than as a count, because the
-   *  count was right the whole time. */
   test('a formula written on one line is handed to the renderer, not an empty string', () => {
     for (const [doc, tex] of [
       ['$$x + y = z$$\n\ntail\n', 'x + y = z'],
-      // The shape that always worked, so the fix is not a swap of one for the other.
       ['$$\nx + y = z\n$$\n\ntail\n', 'x + y = z'],
-      // A single character, which is where an off-by-two would show.
       ['$$x$$\n\ntail\n', 'x'],
     ] as const) {
       const found = state(doc, doc.length - 1).field(blockDecorations).decorations
@@ -134,9 +103,6 @@ describe('block decorations', () => {
   })
 
   test('nothing is revealed by the caret a document opens with', () => {
-    // A state is created with a caret at 0 unless someone says otherwise, and 0
-    // is the start of the first block - so a note beginning with one of these
-    // used to open showing its markdown, every time.
     for (const doc of [
       `${TABLE}\n\ntail\n`,
       '$$\nx = 1\n$$\n\ntail\n',
@@ -148,8 +114,6 @@ describe('block decorations', () => {
   })
 
   test('nor by the caret that arrives with a note being opened', () => {
-    // Which is the path that matters: the app replaces the whole document for
-    // each note, and the caret it maps to is 0 again.
     const opened = parsed(
       state('x\n').update({
         changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
@@ -161,20 +125,12 @@ describe('block decorations', () => {
   })
 
   test('nor by the parse of a long note catching up with it', () => {
-    // A note longer than the parser's first pass is opened with a partial tree,
-    // and the rest of it arrives in transactions that move neither the caret nor
-    // the text. The caret is still the one the open left, so a first block drawn
-    // on opening has to stay drawn - it used to turn back into markdown as soon
-    // as the parse reached the end, on every note over a few thousand letters.
     const long = `${TABLE}\n\n${FILLER}`
 
     expect(state(long).field(blockDecorations).decorations.size).toBe(1)
   })
 
   test('nor by a caret a long note is reopened well inside', () => {
-    // The caret a note is reopened at is nobody's decision either, and this one
-    // is past what the parse reaches on the way in: nothing has been found for it
-    // to be clear of, which is not the same as being put clear of everything.
     const long = `${FILLER}${TABLE}\n\ntail\n`
     const inside = long.indexOf('| a')
 
@@ -182,14 +138,6 @@ describe('block decorations', () => {
   })
 
   test('nor by a transaction that states the caret it already had', () => {
-    // A note opens with the folds it asks for, and those go in with
-    // `selection: state.selection` beside them so the library keeps a fold the caret
-    // would otherwise have covered; see `withFolds` in fold.ts. Carrying the caret is
-    // not moving it. Counted as a choice, it left a note whose first block is its
-    // front matter, a table, an equation or a `[toc]` opening on the markdown of it -
-    // but only when the note also held a callout written shut, which is what puts any
-    // folds in at all. It showed in the card over a `[[link]]`, whose editor is built
-    // this way every time it opens.
     const doc = `${TABLE}\n\ntail\n`
     const held = state(doc)
     const again = held.update({ selection: held.selection }).state
@@ -224,38 +172,12 @@ describe('block decorations', () => {
   })
 })
 
-/** Getting into a block that is drawn rather than written.
- *
- *  A rendered block replaces its own source, so the only way to edit one is to
- *  put the caret in it - and every position the replacement covers has to bring
- *  that source back, or the caret is standing somewhere nobody can see it. Worse
- *  than invisible: a replacement is atomic, so from such a position the next
- *  arrow key is thrown clear to the far edge of the block, and the whole thing
- *  has gone by in two presses without ever showing a character of itself.
- *
- *  Which is what a single trailing space after `$$x = 1$$` did. The reveal was
- *  asked of the syntax node, which ends at the closing `$$`; the replacement
- *  covers whole lines, which includes the space after it. Measured in a browser
- *  before the fix, from the line below: one ArrowLeft put the caret on the
- *  formula's line with the formula still drawn over it, and the second threw it
- *  to the line's start, past the lot. Emil: *"if I'm for example at the right of
- *  it and press arrow to the left then it just skips the entire thing."*
- *
- *  So these ask it of every position rather than of a count: a count was right
- *  the whole time. The arrow keys themselves belong to CodeMirror and need a
- *  laid-out browser to run, so what is asserted here is the thing the motion
- *  lands on - which position reveals what. */
 describe('a caret put where a block is drawn', () => {
-  /** A caret PUT at `at`, rather than a document opened with one there: a caret
-   *  nobody chose reveals nothing, which is what `state` alone gives. */
   function caretAt(doc: string, at: number) {
     const parked = state(doc, at === 0 ? doc.length : 0)
     return parsed(parked.update({ selection: EditorSelection.cursor(at) }).state)
   }
 
-  /** What is still drawn over the caret, as the text it stands for. The cover is
-   *  passed over: it is inserted above the front matter rather than replacing any
-   *  of it, so it stands over nothing. */
   function overCaret(doc: string, at: number): string[] {
     const found: string[] = []
     caretAt(doc, at)
@@ -287,9 +209,6 @@ describe('a caret put where a block is drawn', () => {
     expect(drawn(out.field(blockDecorations), doc)).toEqual(['$$x = 1$$ '])
   })
 
-  /** Every block here is drawn by replacing whole lines, so every one of them had
-   *  the same hole in it. Walked position by position, because the hole was one
-   *  character wide. */
   const blocks: [string, string][] = [
     ['a formula on one line', '$$x = 1$$'],
     ['a formula with a space after it', '$$x = 1$$ '],
@@ -318,8 +237,6 @@ describe('a caret put where a block is drawn', () => {
       const doc = `intro\n\n${block}\n\n# One\n\ntail\n`
       const from = doc.indexOf(block)
 
-      // A caret either side of it, which is where the reveal has to stop: the
-      // block is its own lines and nothing further.
       for (const at of [from - 2, doc.indexOf('tail')]) {
         const still = drawn(caretAt(doc, at).field(blockDecorations), doc)
         expect(still, `${what} from ${at}`).toContain(block)
@@ -328,13 +245,8 @@ describe('a caret put where a block is drawn', () => {
   }
 })
 
-/** The other way in, which is the one a person reaches for first. */
 describe('a press on a block that is drawn', () => {
   test('a rendered formula hands the press to the editor', () => {
-    // CodeMirror treats a widget as opaque unless it says otherwise, and a block
-    // widget is the whole row: with nowhere on it to aim at, clicking a formula
-    // did nothing at all. Measured in a browser - the press did not even take the
-    // focus off the page body.
     expect(new MathWidget('x = 1', true).ignoreEvent()).toBe(false)
   })
 
@@ -348,7 +260,6 @@ describe('a press on a block that is drawn', () => {
   })
 })
 
-/** What the field made of typing `insert` at `at`, and what it had before. */
 function afterTyping(doc: string, at: number, insert: string, to = at) {
   const before = state(doc, at)
   const was = before.field(blockDecorations)
@@ -361,7 +272,6 @@ function afterTyping(doc: string, at: number, insert: string, to = at) {
   return { was, is: now.field(blockDecorations), state: now }
 }
 
-/** Where the field says a construct is, as text of the state it belongs to. */
 function drawn(blocks: { decorations: { between: unknown } }, doc: string): string[] {
   const out: string[] = []
   ;(blocks.decorations as import('@codemirror/view').DecorationSet).between(
@@ -401,8 +311,6 @@ describe('prose typed away from every construct', () => {
   })
 
   test('dollars are not prose either', () => {
-    // An unclosed `$$` runs to the end of the note; closing it has to shorten
-    // the equation, which only looking again can do.
     const opened = `${PROSE}$$\nx\n\nmore prose after it\n`
     const at = opened.indexOf('\n\nmore')
     const { was, is } = afterTyping(opened, at + 1, '$$\n')
@@ -423,11 +331,6 @@ describe('prose typed away from every construct', () => {
   })
 
   test('a language written into a plain fence is not prose written nowhere', () => {
-    // Written by the fence header's own language field, which dispatches the
-    // change and leaves the caret where it was - so nothing reveals the block and
-    // the diagram is what should appear. `mermaid` is letters, so it read as prose
-    // typed far from anything, and the fence lost its diagram and, since the
-    // viewport plugin steps aside for one, every other decoration with it.
     const plain = 'intro\n\n```\ngraph TD\n```\n\ntail\n'
     const at = plain.indexOf('```') + 3
     const after = parsed(state(plain).update({ changes: { from: at, insert: 'mermaid' } }).state)
@@ -438,16 +341,11 @@ describe('prose typed away from every construct', () => {
   })
 
   test('an equation uncovered by deleting the word in front of it is found', () => {
-    // A letter deleted at the head of a line is a prose deletion, and what it leaves
-    // there can open a block: here `$$`, which was inline behind the `x` and is a
-    // display equation without it.
     const covered = `${PROSE}x$$E = mc^2$$\n\ntail\n`
     const at = covered.indexOf('x$$')
     const { was, is, state: after } = afterTyping(covered, at, '', at + 1)
     const text = after.doc.toString()
 
-    // The caret is in it, so it shows its source - and is a place the caret changes
-    // something, which is what the walk records.
     expect(was.spans).toEqual([])
     expect(is.spans.map((span) => text.slice(span.from, span.to))).toEqual(['$$E = mc^2$$'])
   })
@@ -458,8 +356,6 @@ describe('prose typed away from every construct', () => {
   })
 
   test('but punctuation at the head of a line is looked at properly', () => {
-    // A third dash at the very top of a note opens its front matter, which the line
-    // under it closes: a block that was a heading a keystroke ago.
     const top = '--\ntitle: x\n---\n\nbody\n'
     const { was, is } = afterTyping(top, 0, '-')
     expect(was.decorations.size).toBe(0)
@@ -467,9 +363,6 @@ describe('prose typed away from every construct', () => {
   })
 
   test('a toc completed by deleting the words after it is drawn', () => {
-    // A construct is decided by what remains, not by what moved: deleting `draft`
-    // is a prose deletion, and it makes the line a toc. Written the way the search
-    // panel's replace-all writes it, with the caret left alone.
     const draft = 'intro\n\n[toc] draft\n\n# One\n'
     const from = draft.indexOf('[toc]') + '[toc]'.length
     const after = parsed(
@@ -480,32 +373,11 @@ describe('prose typed away from every construct', () => {
   })
 })
 
-/** A selection dragged out with the pointer, over a block that is drawn rather
- *  than written.
- *
- *  The reveal and the pointer used to answer each other. A rendered table is not
- *  the height of the three lines of markdown behind it, so the moment the
- *  selection touched it and the source came back, everything from there down
- *  moved by rows - and the next pointer event, read against the new layout,
- *  landed on the other side of the table's edge. That took the selection off the
- *  table again, the table was drawn again, the text moved back, and the two went
- *  round as fast as the events arrived: a table flickering between itself and its
- *  markdown for as long as the button was held.
- *
- *  So that is what these drive: a pointer standing still, and a document position
- *  under it that depends on which of the two states is drawn. */
 describe('a selection dragged over a rendered block', () => {
-  /** Whether the block is still drawn rather than shown as its source. */
   function shown(state: EditorState): boolean {
     return state.field(blockDecorations).decorations.size > 0
   }
 
-  /** A drag: the button goes down, `events` pointer reads follow, the button
-   *  comes up. Each read lands on `inside` while the block is drawn and on
-   *  `outside` once its source is showing, which is the loop above.
-   *
-   *  Answers with what was drawn at every step, and what is drawn once the button
-   *  is up. */
   function dragged(doc: string, inside: number, outside: number, events = 6) {
     let now = state(doc, 0).update({ effects: setDragging.of(true) }).state
     const steps = [shown(now)]
@@ -530,8 +402,6 @@ describe('a selection dragged over a rendered block', () => {
 
   for (const [what, block] of blocks) {
     const doc = `${PROSE}${block}`
-    // A read that reaches the block, and one that falls short of it in the prose
-    // above - the two positions one point on the screen stood for.
     const inside = PROSE.length + 2
     const outside = 4
 
@@ -540,24 +410,17 @@ describe('a selection dragged over a rendered block', () => {
     })
 
     test(`${what} settles once, on the way up`, () => {
-      // Held all the way, so the selection ends where the pointer was rather than
-      // where a reflow put it - and then, once, the source comes back.
       expect(dragged(doc, inside, outside).settled).toBe(false)
     })
   }
 
   test('a caret moved by the keyboard still reveals as it goes', () => {
-    // Nothing here is a general freeze: only the pointer holds the reveal, and
-    // only while its button is down.
     const doc = `${PROSE}${TABLE}`
     const { is } = afterMove(doc, 0, doc.length - 2)
     expect(is.decorations.size).toBe(0)
   })
 
   test('a drag interrupted anywhere leaves nothing held', () => {
-    // The window losing focus, or the selection being carried off as a drag and
-    // drop, ends a drag without a mouseup; dragging.ts listens for both. What
-    // matters here is that the release rebuilds however it arrives.
     const doc = `${PROSE}${TABLE}`
     const held = state(doc, 0)
       .update({ effects: setDragging.of(true) })
@@ -572,9 +435,6 @@ describe('a selection dragged over a rendered block', () => {
   })
 
   test('a note swapped in under a held pointer is still drawn for its reader', () => {
-    // Content from outside is not the pointer's doing and does not wait for it: a
-    // sync arriving, or a version restored, brings a caret nobody chose, and what
-    // it brings has to be drawn rather than left as markdown.
     const held = state('x\n', 0).update({ effects: setDragging.of(true) }).state
     const opened = parsed(
       held.update({
@@ -587,13 +447,6 @@ describe('a selection dragged over a rendered block', () => {
   })
 })
 
-/** A note's cover, drawn across the top of it while it is being written.
- *
- *  Not a replacement like everything else here: it stands for two keys of front
- *  matter rather than for a run of the document, so it is inserted before the block
- *  and stays drawn whether or not the metadata is showing its own source. A band of
- *  picture that vanished whenever somebody put the caret in the YAML under it would
- *  be the one thing on the page that flickers. */
 describe('a note cover', () => {
   const COVERED = '---\ntitle: Wide\ncover: assets/wide.jpg\n---\n\n# Wide\n\nWords.\n'
 
@@ -616,14 +469,10 @@ describe('a note cover', () => {
   })
 
   test('stays drawn while the caret is inside the front matter', () => {
-    // Which is where the rows give way to the YAML: the properties go, the band
-    // stays.
     expect(covers(COVERED, COVERED.indexOf('cover:') + 3)).toBe(1)
   })
 })
 
-/** The three answers a reader can give about a note's front matter, asked once in
- *  Settings and read here; see properties.ts in @orden/markdown. */
 describe('what the front matter is drawn as', () => {
   const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
 
@@ -655,13 +504,10 @@ describe('what the front matter is drawn as', () => {
 
   test('is the source, always, where the reader asked for the source', () => {
     expect(widgets('source')).toEqual([])
-    // And the caret being elsewhere does not bring the rows back.
     expect(widgets('source', 0)).toEqual([])
   })
 
   test('is nothing at all where the reader asked for nothing', () => {
-    // A replacement with no widget in it: the block is still in the file and still
-    // read, it is simply not on the page.
     expect(widgets('hidden')).toEqual([null])
   })
 

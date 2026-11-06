@@ -11,8 +11,6 @@ import {
 } from './edits'
 import { parseTable, type TableModel } from './model'
 
-/** Three columns and two rows, so a caret can sit before, on, or after
- *  whichever one an edit is about. */
 const MODEL: TableModel = parseTable(
   ['| a | b | c |', '| - | :-: | - |', '| 1 | 2 | 3 |', '| 4 | 5 | 6 |'].join('\n'),
 )!

@@ -14,7 +14,6 @@ function state(doc: string) {
   )
 }
 
-/** What it would take to open a line under whatever ends this note. */
 function tail(doc: string) {
   return tailOf(state(doc))
 }
@@ -40,9 +39,6 @@ describe('a note that ends in a block', () => {
     expect(tail(doc)).toEqual({ at: doc.length, insert: '\n' })
   })
 
-  /** Words written straight under `![a](b.png)` are the same paragraph as the
-   *  picture in markdown, so a note that gained a line but not a blank one would
-   *  have gained a caption. */
   test('a picture on a line of its own gets a blank line as well', () => {
     const doc = 'words\n\n![a](b.png)'
     expect(tail(doc)).toEqual({ at: doc.length, insert: '\n\n' })
@@ -76,8 +72,6 @@ describe('a note the caret can already get out of', () => {
     expect(tail('see ![a](b.png) there')).toBeNull()
   })
 
-  /** A fence with a paragraph after it is a note whose last block is the
-   *  paragraph, and the caret is already at the end of it. */
   test('ends in words under a fence', () => {
     expect(tail('```\ncode\n```\n\nafter')).toBeNull()
   })

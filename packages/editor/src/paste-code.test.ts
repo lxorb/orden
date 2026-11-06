@@ -8,15 +8,12 @@ import { nibMarkdownExtensions } from './markdown/extensions'
 import { loadLineCommands } from './line-door'
 import { richPaste } from './paste'
 
-// The converter a page's HTML goes through, fetched before any paste waits on it. jsdom
-// lays nothing out, so a range has no rectangles for a measure the view schedules.
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   return import('@orden/markdown/from-html')
 })
 
-/** The note after `text` (and `html`, where there is some) is pasted at the `|`. */
 async function pasted(marked: string, text: string, html = ''): Promise<string> {
   const caret = marked.indexOf('|')
   const view = new EditorView({
@@ -39,7 +36,6 @@ async function pasted(marked: string, text: string, html = ''): Promise<string> 
     value: { files: [], getData: (type: string) => flavours[type] ?? '' },
   })
   view.contentDOM.dispatchEvent(event)
-  // A page's HTML is written once the converter answers, and a sheet's as its rule lands.
   await loadLineCommands()
   await new Promise((done) => setTimeout(done))
 
@@ -48,7 +44,6 @@ async function pasted(marked: string, text: string, html = ''): Promise<string> 
   return note
 }
 
-/** Code takes a paste as its words, not as a table or as markdown made of HTML. */
 describe('a paste into code', () => {
   test('of comma-separated lines inside a fence stays those lines', async () => {
     const csv = 'name,size,kind\nfoo,1,a\nbar,2,b'

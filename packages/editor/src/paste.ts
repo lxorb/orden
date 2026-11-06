@@ -11,27 +11,10 @@ import { wordsBesidePicture } from './images'
 import { loadLineCommands } from './line-door'
 import { documentOf } from './shared'
 
-/** The converter, fetched the first time a web page is pasted.
- *
- *  Turndown and the GFM rules over it are what turn HTML into the markdown this app
- *  writes, and a window that opens on a note has no use for either: most pastes carry
- *  no HTML at all, and the ones that do are a page somebody went and copied. So it
- *  arrives with the first such paste. One promise, kept, so only that paste ever
- *  waits - and it waits for a fetch from the cache, which is a beat rather than a
- *  round trip.
- *
- *  Everything a paste decides without it stays where it was: a spreadsheet's tabs are
- *  read here, and a clipboard holding nothing but plain text is handed straight back
- *  to CodeMirror. See `richPaste`.
- *
- *  Nothing held on the side: a module is fetched once and kept by the loader, so every
- *  paste after the first is answered out of the cache in the turn that asked. */
 function converter(): Promise<(html: string) => string> {
   return import('@orden/markdown/from-html').then((one) => one.htmlToMarkdown)
 }
 
-/** Spreadsheet cells arrive as tab-separated lines; Typora turns them into a
- *  table, which is nearly always what was meant. */
 export function delimitedToTable(text: string): string | null {
   const lines = text
     .replace(/\r\n?/g, '\n')
@@ -40,21 +23,14 @@ export function delimitedToTable(text: string): string | null {
   const [firstLine] = lines
   if (firstLine === undefined || lines.length < 2) return null
 
-  // A tab on the first line settles it: nothing but a spreadsheet puts tabs on
-  // the clipboard. A comma has to be on every line *twice* - `Hello, world` and
-  // `Goodbye, world` are two sentences, and one comma each was enough to turn
-  // them into a two-column table.
   const separator = firstLine.includes('\t')
     ? '\t'
     : lines.every((line) => line.split(',').length > 2)
       ? ','
       : null
-  // An empty first cell on every line is code indented with tabs, not a sheet.
   if (!separator || lines.every((line) => line.startsWith(separator))) return null
 
   const rows = lines.map((line) => line.split(separator).map((cell) => cell.trim()))
-  // An empty header falls out below on the column count, so the default needs
-  // no check of its own.
   const [header = [], ...body] = rows
   const columns = header.length
   if (columns < 2 || rows.some((row) => row.length !== columns)) return null
@@ -76,25 +52,10 @@ export function delimitedToTable(text: string): string | null {
   ].join('\n')
 }
 
-/** The note's own markdown, where a copy out of this app is what filled the
- *  clipboard, and null for a page from anywhere else.
- *
- *  A clipboard carries the same words twice and a paste picks one of them. For a
- *  web page the HTML is the richer of the two by far - the headings, the lists and
- *  the links are in it and not in the text - which is what a rich paste is for. For
- *  a note it is the poorer: the markdown beside it is the source, and the HTML is
- *  one rendering of it with everything markdown says and HTML does not already
- *  spent. Reading that back guessed at the source and landed beside it, most
- *  visibly at a formula: `$$\left\{ y \in \mathbb{R}^n \right\}$$` copied out of a
- *  note came back as `{y∈Rn}`, the symbols it had been drawn as.
- *
- *  So the words a copy took are the words a paste puts back, character for
- *  character. See `OURS` in copy.ts, which is the mark being read. */
 function copiedHere(html: string, text: string): string | null {
   return text && ourOwn(html) ? text : null
 }
 
-/** Words put in over the selection, with the caret after them. */
 export function inserted(state: EditorState, text: string): TransactionSpec {
   const range = state.selection.main
   return {
@@ -112,15 +73,6 @@ function insert(view: EditorView, text: string) {
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
-/** Where a paste goes that is written a moment after it was made, because what writes
- *  it - the link rule, the page converter - is fetched with the first one: the note it
- *  was made in, whatever the view shows by then. drive-harness found a pane switched in
- *  that moment given the words at the first note's offsets, and the first note never
- *  given them; see test/effects/paste-race.effect.test.ts in the app.
- *
- *  `write` answers the change for a state, or null for none. Answers whether the paste
- *  was dealt with, which a note that has changed under it since also counts as: there
- *  is no telling any more where in it the words were meant to go. */
 function later(
   view: EditorView,
 ): (write: (state: EditorState) => TransactionSpec | null) => boolean {
@@ -144,25 +96,12 @@ function later(
   }
 }
 
-/** One address and nothing else: what a browser's address bar puts on the clipboard.
- *  The schemes somebody pastes over a word to link it, and a bare `www.`, and no
- *  others - `C:\notes` is a path, and `nib:` a word followed by a colon as often as
- *  an address. */
 export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
 
-/** What a clipboard's two flavours come to, as markdown. Null where there is
- *  nothing worth inserting, which leaves the paste to whoever asked.
- *
- *  Answered rather than returned, because turning HTML into markdown means fetching
- *  the converter. Only the HTML flavour does: a spreadsheet and a clipboard of plain
- *  text are both settled before anything is asked for. */
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
-  // A note this app copied, which is the one clipboard whose plain text is already
-  // the answer.
   const ours = copiedHere(html, text)
   if (ours) return ours
 
-  // A spreadsheet puts both on the clipboard; the plain text is the table.
   const table = delimitedToTable(text)
   if (table) return table
 
@@ -172,13 +111,9 @@ export async function pastedMarkdown(html: string, text: string): Promise<string
   return htmlToMarkdown(html) || null
 }
 
-/** Pasting a web page gives markdown, the way Typora does it. */
 export function richPaste(): Extension {
   return EditorView.domEventHandlers({
     paste(event, view) {
-      // Handed back to CodeMirror, which refuses it too while the document is
-      // read-only. Turning a web page into markdown first would be work done
-      // for a change that is not going to land.
       if (view.state.readOnly) return false
 
       const data = event.clipboardData
@@ -188,11 +123,6 @@ export function richPaste(): Extension {
       const text = data.getData('text/plain')
       if (data.files.length && !wordsBesidePicture(html, text)) return false
 
-      // An address over selected words, which makes a link of them. Before anything
-      // reads the HTML: a browser puts a link's markup beside the address it copies.
-      // Answered now and written as the rule lands, which is the next few milliseconds
-      // at most; see paste-link.ts. Where the words turn out not to be linkable - in
-      // code, say - the address goes in as it stands.
       if (ADDRESS.test(text.trim()) && view.state.selection.ranges.some((one) => !one.empty)) {
         event.preventDefault()
         const land = later(view)
@@ -202,12 +132,8 @@ export function richPaste(): Extension {
         return true
       }
 
-      // Code takes the words as they are, and CodeMirror puts the plain text in: no
-      // table made of a CSV, and no markdown made of the HTML an editor copies too.
       if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
 
-      // A list on an empty item, from this app or as plain text. Whatever else those
-      // two come to, CodeMirror's plain paste below would nest its first line alone.
       if (
         view.state.selection.ranges.length === 1 &&
         (copiedHere(html, text) || !html.trim()) &&
@@ -220,13 +146,8 @@ export function richPaste(): Extension {
         return true
       }
 
-      // A note this app copied: handed back to CodeMirror, which puts the plain
-      // text in as it stands - and the plain text is the note's own markdown. See
-      // `copiedHere`.
       if (copiedHere(html, text)) return false
 
-      // A spreadsheet puts both flavours on the clipboard and the plain text is the
-      // table, so that paste is worked out here and lands in the frame it happened in.
       const table = delimitedToTable(text)
       if (table) {
         event.preventDefault()
@@ -235,20 +156,12 @@ export function richPaste(): Extension {
         return true
       }
 
-      // Nothing but plain text: handed back to CodeMirror, exactly as before.
       if (!html.trim()) return false
 
-      // A web page. The event has to be answered now - a paste the browser has
-      // already carried out cannot be taken back - and the converter may still be on
-      // its way, so the words are inserted when it lands. That is one beat, on the
-      // first page pasted in a run of the app and on no other.
       event.preventDefault()
       const land = later(view)
       void Promise.all([converter(), loadLineCommands()])
         .then(([htmlToMarkdown, { placed }]) => {
-          // A page that comes to nothing - all chrome and no prose - is pasted as the
-          // plain text beside it, which is what handing the paste back would have
-          // done with it.
           const words = htmlToMarkdown(html) || text
           if (words) land((state) => placed(state, words))
         })
@@ -261,16 +174,6 @@ export function richPaste(): Extension {
   })
 }
 
-/** The Paste row in the menu, which has no paste event to ride on.
- *
- *  `Ctrl+V` never comes through here: the browser raises a paste event and
- *  `richPaste` above answers it, which is the only way to see a picture on the
- *  clipboard at all. A menu row has to go and ask instead, and asking gives the
- *  same two flavours read the same way, so a page pasted from the menu is the
- *  page pasted with the keyboard.
- *
- *  A clipboard the browser will not hand over - no permission, or not a secure
- *  context - pastes nothing, and says so by pasting nothing. */
 export const pasteHere: Command = (view) => {
   if (view.state.readOnly) return false
 
@@ -290,11 +193,6 @@ export const pasteHere: Command = (view) => {
   return true
 }
 
-/** The clipboard's HTML and its text, as far as this browser will say.
- *
- *  `read` is the one that sees HTML and the one a webview is most likely to
- *  refuse; `readText` is the fallback, and a paste of plain text is a great deal
- *  better than a paste of nothing. */
 async function readClipboard(): Promise<{ html: string; text: string } | null> {
   try {
     const items = await navigator.clipboard.read()
@@ -318,12 +216,6 @@ async function readClipboard(): Promise<{ html: string; text: string } | null> {
   return text ? { html: '', text } : null
 }
 
-/** `Ctrl+Shift+V` - take the clipboard exactly as it is.
- *
- *  A clipboard the browser will not hand over - no permission, or not a secure
- *  context - pastes nothing, and says so by pasting nothing. The rejection is
- *  caught rather than dropped: nothing else would answer for it, and an
- *  unhandled one is noise at best. */
 export const pastePlain: Command = (view) => {
   if (view.state.readOnly) return false
 

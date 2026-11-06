@@ -5,26 +5,14 @@ import { sizedAlt } from '@orden/markdown/links'
 import { attributeValue } from '../../attributes'
 import { enclosing } from '../../nodes'
 
-/** Reading an image out of the document and writing one back.
- *
- *  A picture is written two ways. Plain markdown says everything a picture
- *  without a size needs, and is what the note holds while it has none; a resized
- *  picture becomes the `<img>` tag Typora writes, because markdown has no way to
- *  say how big something is. Both are read here and both come back out of
- *  `imageMarkup`, which picks whichever can say what the spec holds. */
-
 export interface ImageSpec {
   src: string
   alt: string
-  /** The `"title"` after the path, or an `<img>` tag's title attribute. */
   title: string
-  /** Percentage of natural width, as Typora's `style="zoom:N%"` stores it. */
   zoom: number
-  /** A `width` attribute, in pixels. Kept until the image is resized here. */
   width?: number
 }
 
-/** An image and where it is in the document. */
 export interface ImageSpan extends ImageSpec {
   from: number
   to: number
@@ -47,7 +35,6 @@ function attribute(tag: string, name: string): string | undefined {
   return value === undefined ? undefined : unescapeAttr(value)
 }
 
-/** What an `<img>` tag says, or null for any other HTML. */
 export function parseHtmlImage(tag: string): ImageSpec | null {
   if (!/<img\b/i.test(tag)) return null
   const src = attribute(tag, 'src')
@@ -62,26 +49,14 @@ export function parseHtmlImage(tag: string): ImageSpec | null {
     title: attribute(tag, 'title') ?? '',
     zoom: zoom?.[1] === undefined ? 100 : Number(zoom[1]),
   }
-  // A zoom is what this editor writes, so it wins: an old tag carrying both
-  // would otherwise be shown at one size and written back at the other.
   if (!zoom && width?.[1] !== undefined) spec.width = Number(width[1])
   return spec
 }
 
-/** The same image at a new zoom, with any pixel `width` dropped. The two are
- *  different ways of saying one thing, and a resize records the zoom, so
- *  leaving the old width behind would make the markup contradict itself. */
 export function withZoom(image: ImageSpec, zoom: number): ImageSpec {
   return { src: image.src, alt: image.alt, title: image.title, zoom }
 }
 
-/** An address as markdown writes it, and as it is read back.
- *
- *  Markdown puts an address that holds a space between angle brackets, because
- *  bare it would read as an address and a title. The brackets are markup rather
- *  than part of the address, so they come off on the way in and go back on when
- *  they are needed: a picture whose file has a space in its name was pointing at
- *  a name with the brackets in it, and drew nothing. */
 function bareAddress(url: string): string {
   return url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
 }
@@ -102,7 +77,6 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   const url = node.getChild('URL')
   if (!url) return null
 
-  // The parser leaves alt text as bare text between `![` and `]`.
   const [open, close] = node.getChildren('LinkMark')
   const { alt: written, size } = sizedAlt(
     open && close ? state.doc.sliceString(open.to, close.from) : '',
@@ -119,7 +93,6 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   }
 }
 
-/** The image a syntax node describes, if it is one. */
 export function imageOfNode(state: EditorState, node: SyntaxNode): ImageSpan | null {
   const spec =
     node.name === 'Image'
@@ -137,20 +110,16 @@ function imageNode(state: EditorState, pos: number, side: -1 | 1): SyntaxNode | 
   return null
 }
 
-/** The image starting exactly at `pos`. */
 export function imageAt(state: EditorState, pos: number): ImageSpan | null {
   const node = imageNode(state, pos, 1)
   return node && imageOfNode(state, node)
 }
 
-/** The image ending exactly at `pos`. */
 export function imageEndingAt(state: EditorState, pos: number): ImageSpan | null {
   const node = imageNode(state, pos, -1)
   return node && imageOfNode(state, node)
 }
 
-/** The markup for an image: markdown when nothing but markdown can say it,
- *  otherwise the `<img>` tag Typora writes. */
 export function imageMarkup(spec: ImageSpec): string {
   const zoomed = spec.zoom !== 100
   if (!zoomed && !spec.width) {
@@ -164,8 +133,6 @@ export function imageMarkup(spec: ImageSpec): string {
   return `<img ${attrs.join(' ')} />`
 }
 
-/** Where the caret goes to edit the markup: right after the alt text, which is
- *  the part most worth changing by hand. */
 export function sourceCaret(state: EditorState, image: ImageSpan): number {
   const text = state.doc.sliceString(image.from, image.to)
   if (text.startsWith('![')) return image.from + 2 + writtenAlt(image.alt).length

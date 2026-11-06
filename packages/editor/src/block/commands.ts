@@ -1,21 +1,3 @@
-/** What can be done to a block, as the things a menu row can call.
- *
- *  The menu itself is the app's, because every other row in it is: these are the
- *  editor's half, which is knowing which block a press landed in and changing the
- *  text. Each takes a document position rather than a block, so the caller never
- *  has to hold one across an edit.
- *
- *  Every one of them works on the whole selection when there is one, so a selection
- *  lying across four paragraphs duplicates, deletes, indents, moves, turns or links
- *  to all four. A selection in Orden is a selection of text and never a mode; the
- *  blocks it touches are simply the blocks it touches, and this is where that is
- *  read off.
- *
- *  Which is the reason there are this many. A reader holding four blocks wants what
- *  they would want holding one, and a menu that offered two of the things and not
- *  the rest would be a menu saying that a selection across blocks is a lesser kind
- *  of selection. */
-
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
@@ -28,8 +10,6 @@ import { verbatimLines } from './verbatim'
 import { type BlockShape, shaped, wordsOf } from './shape'
 import { blockAt, type BlockKind, blocksIn, type BlockSpan, writtenLine } from './span'
 
-/** The blocks a press acted on: everything the selection covers when it covers
- *  more than the block that was pressed, and that one block otherwise. */
 export function blocksFor(view: EditorView, pos: number): BlockSpan[] {
   const range = view.state.selection.main
   const pressed = blockAt(view.state, pos)
@@ -43,10 +23,6 @@ export function blocksFor(view: EditorView, pos: number): BlockSpan[] {
   return covered.length ? covered : pressed ? [pressed] : []
 }
 
-/** The blocks a press acted on as one run of lines, from the first one's start to
- *  wherever the last of them ends. The furthest end rather than the last block's,
- *  because a heading early in the run holds its whole section, and a run that
- *  stopped short of it would take the heading and leave its words. */
 function runOf(spans: BlockSpan[]): BlockSpan | null {
   const first = spans[0]
   if (!first) return null
@@ -54,13 +30,10 @@ function runOf(spans: BlockSpan[]): BlockSpan | null {
   return { from: first.from, to: Math.max(...spans.map((span) => span.to)), kind: first.kind }
 }
 
-/** Every one of them again, under itself. */
 export function duplicateBlocks(view: EditorView, pos: number): boolean {
   const spans = blocksFor(view, pos)
   if (!spans.length) return false
 
-  // Bottom up, so a copy made below one block does not move the block above it
-  // out from under its own offsets.
   const changes: ChangeSpec[] = []
   let caret: number | null = null
 
@@ -79,7 +52,6 @@ export function duplicateBlocks(view: EditorView, pos: number): boolean {
   return true
 }
 
-/** Every one of them, gone. */
 export function deleteBlocks(view: EditorView, pos: number): boolean {
   const run = runOf(blocksFor(view, pos))
   if (!run) return false
@@ -95,11 +67,6 @@ export function deleteBlocks(view: EditorView, pos: number): boolean {
   return true
 }
 
-/** Three of them again, for a key rather than a menu row: the block the caret is in,
- *  or every block the selection lies across, which is what `blocksFor` reads off a
- *  press at the caret's end of it. None has a key out of the box - the grip's menu is
- *  where they live - and the Notion keyboard puts them on Notion's own. A note nobody
- *  may write in is left alone, and the press goes on to whatever else holds the key. */
 const atCaret =
   (act: (view: EditorView, pos: number) => boolean): Command =>
   (view) =>
@@ -109,13 +76,6 @@ export const duplicateBlock = atCaret(duplicateBlocks)
 export const moveBlockUp = atCaret((view, pos) => moveBlocks(view, pos, -1))
 export const moveBlockDown = atCaret((view, pos) => moveBlocks(view, pos, 1))
 
-/** What a link into this note would point at: `#A heading` for a heading, since
- *  that is what a heading is already called, and `#^name` for anything else.
- *
- *  A block that has no name is given one, which is a change to the note: the name
- *  is a marker Obsidian reads the same way, it is written at the end of the block
- *  where Obsidian writes it, and nothing shows it - see withoutBlockIds in
- *  @orden/markdown. Null when there is no block to point at. */
 export function blockTarget(view: EditorView, pos: number): string | null {
   const span = blockAt(view.state, pos)
   if (!span) return null
@@ -176,14 +136,6 @@ function ownEnd(state: EditorState, span: BlockSpan): number {
   return before ? before.to : span.to
 }
 
-/** Which kinds of block hold prose, and so have a line of words that could be a
- *  heading or an item instead.
- *
- *  A fence, a table, an equation and front matter are typed exactly as they stand:
- *  a hash put in front of a line of code is a line of code with a hash in it, and a
- *  rule has no words at all. Those are left alone rather than refused, so a
- *  selection that happens to cross a code block still turns the paragraphs either
- *  side of it. */
 const PROSE = new Set<BlockKind>(['heading', 'paragraph', 'list', 'quote'])
 
 function underlineOf(state: EditorState, from: number): number | null {
@@ -217,20 +169,6 @@ function numberedLine(text: string, counting: Counting[]): string {
   return ' '.repeat(level.at) + mark + words
 }
 
-/** Every block a press acted on, as the shape that was asked for.
- *
- *  A heading's block is its whole section, and only its own line turns: the section
- *  holds what the reader did not press. A list or a quote may hold code or a table,
- *  which keep every character.
- *
- *  A heading is one line in markdown, so a block turning into one puts its first
- *  line under the hashes and leaves the rest of it as the words beneath - which is
- *  what a reader means by turning a paragraph into a heading. Every other shape is
- *  a mark in front of each line, and a numbered list counts from one across the
- *  whole run rather than starting again at every block.
- *
- *  Sets rather than toggles; see shape.ts for why this is not the keyboard's own
- *  command with a selection laid over it. */
 export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape): boolean {
   const spans = blocksFor(view, pos).filter((span) => PROSE.has(span.kind))
   if (!spans.length) return false
@@ -257,8 +195,6 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       if (verbatim.has(number) || seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
-      // A blank line is what makes two paragraphs two paragraphs, and a marker in
-      // front of nothing is an item nobody asked for.
       if (!wordsOf(line.text).words.trim()) continue
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
@@ -280,15 +216,6 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
   return true
 }
 
-/** Runs one of the editor's own commands over every line of the blocks a press
- *  acted on.
- *
- *  The keyboard already indents and outdents, and it does it to the selection. A
- *  menu row over four blocks is that same question asked of four blocks' lines, so
- *  the selection goes over them and the command is asked - rather than a second
- *  implementation of indenting written here that could come to a different answer
- *  from the key. The selection is left over the blocks, which is what the reader
- *  had in hand. */
 function overBlocks(view: EditorView, pos: number, command: StateCommand): boolean {
   const spans = blocksFor(view, pos)
   const first = spans[0]
@@ -307,7 +234,6 @@ function overBlocks(view: EditorView, pos: number, command: StateCommand): boole
   return ran
 }
 
-/** One step further in, and one step back out. */
 export function indentBlocks(view: EditorView, pos: number): boolean {
   return overBlocks(view, pos, indentItems)
 }
@@ -316,21 +242,17 @@ export function outdentBlocks(view: EditorView, pos: number): boolean {
   return overBlocks(view, pos, outdentItems)
 }
 
-/** The nearest line with something on it above or below a position, or null at the
- *  end of the note it is walking towards. */
 function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | null {
   const doc = state.doc
   const line = doc.lineAt(Math.max(0, Math.min(from, doc.length)))
   return writtenLine(state, line.number + delta, delta)?.from ?? null
 }
 
-/** The block above a run of them, or the one below it. */
 function beside(state: EditorState, run: BlockSpan, delta: -1 | 1): BlockSpan | null {
   const at = nextWritten(state, delta < 0 ? run.from : run.to, delta)
   return at === null ? null : blockAt(state, at)
 }
 
-/** How deep a heading that begins at `pos` is, or null where none does. */
 function levelAt(state: EditorState, pos: number): number | null {
   const node = syntaxTree(state).resolveInner(pos, 1)
   for (const found of enclosing(node)) {
@@ -341,10 +263,6 @@ function levelAt(state: EditorState, pos: number): number | null {
   return null
 }
 
-/** The section a heading steps over going up: the nearest heading above it that is
- *  as deep or shallower. The paragraph right above it belongs to that heading, and
- *  stepping over only the paragraph would slip the heading's section in between
- *  that heading and its own words. */
 function sectionAbove(state: EditorState, run: BlockSpan): BlockSpan | null {
   const level = levelAt(state, run.from)
   if (level === null) return null
@@ -364,17 +282,6 @@ function sectionAbove(state: EditorState, run: BlockSpan): BlockSpan | null {
   return nearest === undefined ? null : blockAt(state, nearest)
 }
 
-/** Where a run of blocks lands when it steps over its neighbour.
- *
- *  Going up, that is the neighbour's own first character. Going down, it is where
- *  the block after the neighbour begins - or the end of the note, which is what
- *  `moveBlock` reads as "after everything". Null when there is no neighbour to step
- *  over, which is a press that does nothing rather than one that reshuffles the
- *  note.
- *
- *  A heading is its section, so it steps over sections. Anything else steps over a
- *  heading's line going down, into the top of its section, the way it steps out of
- *  the top of one going up. */
 function landingFor(state: EditorState, run: BlockSpan, delta: -1 | 1): number | null {
   if (delta < 0) {
     const heading = run.kind === 'heading' ? sectionAbove(state, run) : null
@@ -392,13 +299,6 @@ function landingFor(state: EditorState, run: BlockSpan, delta: -1 | 1): number |
   return after ? after.from : state.doc.length
 }
 
-/** Every block a press acted on, one step up or one step down.
- *
- *  One run and not each block in turn: four blocks moved one at a time would each
- *  step over a different neighbour and the run would come apart. The run is cut
- *  whole and put back whole, through the same `moveBlock` a block dragged by its
- *  mark in the margin goes through - so the blank lines around it are settled by
- *  the one piece of code that knows what a blank line means in markdown. */
 export function moveBlocks(view: EditorView, pos: number, delta: -1 | 1): boolean {
   const run = runOf(blocksFor(view, pos))
   if (!run) return false
@@ -418,13 +318,6 @@ export function moveBlocks(view: EditorView, pos: number, delta: -1 | 1): boolea
   return true
 }
 
-/** What a link into this note would point at, for every block a press acted on, in
- *  document order.
- *
- *  Bottom up, because naming a block writes into the note: a name written into one
- *  block moves every offset after it, so the blocks below are named first and the
- *  ones above are still where they were when their turn comes. Answered in document
- *  order all the same, because that is the order they are read in. */
 export function blockTargets(view: EditorView, pos: number): string[] {
   const found: string[] = []
 

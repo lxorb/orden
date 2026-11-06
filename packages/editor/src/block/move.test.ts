@@ -10,20 +10,6 @@ import { blockAt } from './span'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-/** A block moved keeps being the block it was.
- *
- *  Markdown has no walls between blocks: a paragraph written straight under a list
- *  item is more of that item, a line straight under a table is another row of it,
- *  and a numbered item that does not start at one, straight under a bullet, is more
- *  of the bullet's words. So a move that got the blank lines wrong did not put a
- *  block somewhere else, it put it inside something else - the presets agent found a
- *  paragraph moved up past a tight list land as the last item's second line.
- *
- *  Every case here goes through one of the ways in: the keys and the grip's rows are
- *  `moveBlockUp`, `moveBlockDown` and `moveBlocks`, a drag is `moveBlock` at the
- *  line it was dropped on. And every case reads the result twice: as text, and as
- *  what the parser makes of it, because the text looking right is not the bug. */
-
 function viewOf(doc: string, caret: number) {
   let state = parsed(
     EditorState.create({
@@ -49,7 +35,6 @@ function viewOf(doc: string, caret: number) {
   return { view, said: () => view.state.doc.toString() }
 }
 
-/** The caret in the block that starts with `words`, and one step up or down. */
 function moved(doc: string, words: string, delta: -1 | 1) {
   const { view, said } = viewOf(doc, doc.indexOf(words) + 1)
   const ran = (delta < 0 ? moveBlockUp : moveBlockDown)(view)
@@ -59,8 +44,6 @@ function moved(doc: string, words: string, delta: -1 | 1) {
 const up = (doc: string, words: string) => moved(doc, words, -1).text
 const down = (doc: string, words: string) => moved(doc, words, 1).text
 
-/** What the parser makes of a note, a word for each top-level block and a count of
- *  the items in each list. */
 function read(doc: string): string[] {
   const state = parsed(
     EditorState.create({
@@ -78,8 +61,6 @@ function read(doc: string): string[] {
   return found
 }
 
-/** A drop, as the grip makes one: the block under `words`, put in front of the line
- *  that starts `before` - or after everything, when that is null. */
 function dropped(doc: string, words: string, before: string | null): string | null {
   const state = parsed(
     EditorState.create({
@@ -155,8 +136,6 @@ describe('a numbered list', () => {
   })
 
   test('a bullet moved in does not take the next numbered item as its own words', () => {
-    // `2.` cannot start a list straight under a bullet's words, so without a blank
-    // line it would be read as more of them.
     const into = down('- bullet\n\n1. one\n2. two\n', 'bullet')
     expect(into).toBe('1. one\n- bullet\n\n2. two\n')
     expect(read(into)).toEqual(['OrderedList 1', 'BulletList 1', 'OrderedList 1'])

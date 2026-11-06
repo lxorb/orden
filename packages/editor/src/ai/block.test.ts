@@ -9,7 +9,6 @@ import {
   mentionsNote,
 } from './block'
 
-/** The lines of a note, as `answerSpan` wants them. */
 const lines = (note: string) => note.split('\n')
 
 describe('the ai fence language', () => {

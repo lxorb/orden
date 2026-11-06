@@ -19,7 +19,6 @@ function state(doc: string, readOnly = false) {
   )
 }
 
-/** What a command leaves: the text, and what is selected in it. */
 function after(doc: string, command: StateCommand, readOnly = false) {
   let current = state(doc, readOnly)
   const ran = command({
@@ -30,7 +29,6 @@ function after(doc: string, command: StateCommand, readOnly = false) {
   return { ran, doc: current.doc.toString(), selected: current.doc.sliceString(from, to) }
 }
 
-/** The position inside the first occurrence of `words`. */
 const inside = (doc: string, words: string) => doc.indexOf(words) + 1
 
 describe('the link a press landed on', () => {
@@ -76,7 +74,6 @@ describe('editing it', () => {
 })
 
 describe('editing a link by its label', () => {
-  /** What typing an address over the selection leaves, which has to be a link to it. */
   function typed(doc: string) {
     let current = state(doc)
     editLink(inside(doc, 'words'))({
@@ -130,8 +127,6 @@ describe('editing a link by a label, in a long note', () => {
 
   const body = 'some words and a [link](https://x.dev) with *marks*\n\n'.repeat(2000)
   const long = `[words][ref]\n\n${body}[ref]: https://r.dev\n`
-  /** As the note stands before the parser has reached its end: the link is read, the
-   *  definition is not. */
   const unparsed = () =>
     parsed(
       EditorState.create({
@@ -144,7 +139,6 @@ describe('editing a link by a label, in a long note', () => {
   test('finds a definition the parser had not reached, whatever the clock says', () => {
     let current = unparsed()
     expect(syntaxTree(current).length).toBeLessThan(long.length)
-    // Every read of the clock is past any budget, so nothing here depends on a machine.
     let now = 0
     vi.spyOn(Date, 'now').mockImplementation(() => (now += 300))
     const ran = editLink(1)({
@@ -159,7 +153,6 @@ describe('editing a link by a label, in a long note', () => {
 
   test('building the menu parses nothing', () => {
     const current = unparsed()
-    // A parse is the one thing here that reads the clock, to know when to stop.
     const clock = vi.spyOn(Date, 'now')
     expect(linkPartsAt(current, 1)?.words).toBe('words')
     expect(clock).not.toHaveBeenCalled()
@@ -183,7 +176,6 @@ describe('what counts as a label being defined', () => {
 })
 
 describe('a label left behind by an edit nobody finished', () => {
-  /** Whether the text reads as one link with an address of its own. */
   const linksOut = (doc: string) => {
     const parts = linkPartsAt(state(doc), 1)
     return parts?.to === doc.length && parts.label === undefined

@@ -1,7 +1,5 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 
-/** Abbreviation → replacement. Loaded from the user's `snippets.json`, and
- *  read at completion time so an edit takes effect without a restart. */
 let table: Record<string, string> = {}
 
 export function setSnippets(next: Record<string, string>) {
@@ -12,7 +10,6 @@ export function snippets(): Record<string, string> {
   return table
 }
 
-/** The first line, trimmed, for the completion list's second column. */
 function summarise(body: string): string {
   const first = (body.split('\n')[0] ?? '').trim()
   return first.length > 48 ? `${first.slice(0, 47)}…` : first

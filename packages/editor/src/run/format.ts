@@ -1,31 +1,9 @@
-/** Turns the values a console call or a result carries into the one line the
- *  output panel shows.
- *
- *  This function is special: its source text is embedded verbatim into the
- *  sandbox document (see protocol.ts), because the values it describes only
- *  exist inside the sandbox. Nothing else can cross the boundary anyway, since
- *  postMessage refuses functions, symbols and DOM nodes, and a note that logs
- *  an object expects to read the object, not `[object Object]`.
- *
- *  So it has to stand alone: everything it needs is declared inside it, and it
- *  refers to nothing in this module or any other. A bundler renaming the
- *  outside world cannot reach in, and a test evaluates the embedded copy in an
- *  empty scope to make sure that stays true.
- *
- *  It also joins its strings with `+` rather than interpolating them, and turns
- *  numbers into strings by name. The document it goes into is built as a
- *  template literal, so one backtick in here would end that literal and take
- *  the rest of the runner with it. */
 export function formatRunValues(values: unknown[], quoteStrings = false): string {
-  // A console line is read, not parsed, so the caps are about keeping one line
-  // legible rather than about safety. The sandbox is what keeps things safe.
   const MAX_DEPTH = 3
   const MAX_ITEMS = 100
   const MAX_KEYS = 40
   const MAX_TEXT = 400
 
-  // Added on the way down and taken off on the way back up, so a value that
-  // appears twice side by side reads twice and only a real cycle is a cycle.
   const seen = new Set<object>()
 
   const clip = (text: string): string =>
@@ -45,14 +23,11 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
   const describe = (value: unknown, depth: number): string => {
     if (value === null) return 'null'
 
-    // Narrowed on `typeof value` itself rather than on a saved copy of it, so
-    // each branch knows what it is holding and can say so without a cast.
     if (value === undefined) return 'undefined'
     if (typeof value === 'string') return quote(value)
     if (typeof value === 'bigint') return String(value) + 'n'
     if (typeof value === 'symbol') return String(value)
     if (typeof value === 'boolean') return String(value)
-    // Only -0 needs saying out loud; String() spells it as 0.
     if (typeof value === 'number') return Object.is(value, -0) ? '-0' : String(value)
 
     if (typeof value === 'function') {
@@ -64,12 +39,9 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
       return name ? '[Function: ' + name + ']' : '[Function (anonymous)]'
     }
 
-    // Everything else has been answered for above, so this is an object.
     const object = value
     if (seen.has(object)) return '[Circular]'
 
-    // An error is worth reading as a sentence rather than as an object with a
-    // stack in it.
     if (object instanceof Error) {
       const name = object.name || 'Error'
       return object.message ? name + ': ' + clip(object.message) : name
@@ -136,8 +108,6 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
     }
   }
 
-  // `console.log('a', 'b')` means the words a and b, not two quoted strings.
-  // A result value is a value, so there the quotes say what it is.
   return values
     .map((value) => (typeof value === 'string' && !quoteStrings ? value : describe(value, 0)))
     .join(' ')

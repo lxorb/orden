@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { selectionBlocks, type SelectionRect } from './shape'
 
-/** A line of text, as the view measures it: 28 pixels tall, and the text column
- *  from 60 to 500. */
 const TOP = 100
 const LINE = 28
 const LEFT = 60
@@ -13,9 +11,6 @@ function rect(left: number, top: number, width: number, height = LINE): Selectio
   return { left, top, width, height }
 }
 
-/** The rows a selection over several lines is measured as: the first line from
- *  where it started to the right edge, one band for everything between, and the
- *  last line up to where it ended. */
 function overLines(from: number, to: number, lines = 3): SelectionRect[] {
   const middle = TOP + LINE
   const last = TOP + LINE * (lines - 1)
@@ -32,8 +27,6 @@ interface Command {
   numbers: number[]
 }
 
-/** A path read back as the commands in it, so a test can ask what shape it is
- *  rather than compare strings. */
 function commands(path: string): Command[] {
   const found: Command[] = []
 
@@ -48,14 +41,12 @@ function commands(path: string): Command[] {
   return found
 }
 
-/** Every arc in a path, as its radius and which way it bends. */
 function arcs(path: string): { radius: number; sweep: number }[] {
   return commands(path)
     .filter((one) => one.name === 'A')
     .map((one) => ({ radius: one.numbers[0] ?? 0, sweep: one.numbers[4] ?? 0 }))
 }
 
-/** Every point a path names, in order. */
 function points(path: string): { x: number; y: number }[] {
   const at: { x: number; y: number }[] = []
 
@@ -68,7 +59,6 @@ function points(path: string): { x: number; y: number }[] {
   return at
 }
 
-/** The only block a set of rectangles adds up to. */
 function only(rects: SelectionRect[], radius = RADIUS) {
   const blocks = selectionBlocks(rects, radius)
   expect(blocks).toHaveLength(1)
@@ -94,7 +84,6 @@ describe('one row', () => {
 
     expect(path.startsWith('M ')).toBe(true)
     expect(path.endsWith('Z')).toBe(true)
-    // Lines and arcs, and nothing a browser has to guess at.
     expect(path).not.toMatch(/[^MLAZ0-9.\-\s]/)
     expect(path).not.toMatch(/NaN|Infinity|undefined/)
   })
@@ -112,8 +101,6 @@ describe('one row', () => {
   })
 
   test('a single letter is as round as it can be', () => {
-    // Half the shorter side: what is left is a pill rather than a box with
-    // corners bitten out of it.
     expect(arcs(only([rect(120, TOP, 9, 28)]).path).map((arc) => arc.radius)).toEqual([
       4.5, 4.5, 4.5, 4.5,
     ])
@@ -156,8 +143,6 @@ describe('several rows', () => {
   })
 
   test('an arc is held to half the side it sits on', () => {
-    // The last line ends four pixels past the left edge, so the bottom of the
-    // block is four pixels wide and the two corners on it are two.
     const block = only(overLines(180, LEFT + 4))
     const held = arcs(block.path).filter((arc) => arc.radius < RADIUS)
 
@@ -166,8 +151,6 @@ describe('several rows', () => {
   })
 
   test('left edges that differ are a fillet of their own', () => {
-    // A list: the first line starts inside the indent, the block below it at the
-    // margin, and nothing between them is a straight side.
     const block = only([rect(120, TOP, RIGHT - 120), rect(LEFT, TOP + LINE, RIGHT - LEFT)])
     const bends = arcs(block.path)
 
@@ -201,8 +184,6 @@ describe('what is not there', () => {
   })
 
   test('a row of no width is dropped, and the block starts below it', () => {
-    // A selection that ends where a line begins: the view reports the last row
-    // as a rectangle of no width at the margin.
     const rects = [...overLines(180, 260), rect(LEFT, TOP + LINE * 3, 0)]
     const block = only(rects)
 
@@ -242,8 +223,6 @@ describe('more than one block', () => {
   })
 
   test('a line reading both ways keeps the block and puts its far run beside it', () => {
-    // The selection is in one place in the text and in two on the screen. The
-    // run under the one above it carries the block on; the other is its own.
     const blocks = selectionBlocks(
       [
         rect(LEFT, TOP, RIGHT - LEFT),
@@ -255,7 +234,6 @@ describe('more than one block', () => {
     )
 
     expect(blocks).toHaveLength(2)
-    // The block runs all three lines; what is left is the one run beside it.
     expect(blocks.map((block) => block.height)).toEqual([LINE * 3, LINE])
     expect(blocks.map((block) => block.left)).toEqual([LEFT, 300])
   })

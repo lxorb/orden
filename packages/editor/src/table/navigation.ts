@@ -4,50 +4,28 @@ import { enclosingNamed } from '../nodes'
 import { overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
 
-/** The lines a rendered table stands in for. */
 export interface TableSpan {
   from: number
   to: number
 }
 
-/** A cell by position. The header is row -1, so a body row's number is its
- *  index in the model. */
 export interface CellAddress {
   row: number
   column: number
 }
 
-/** Which way the caret goes when it steps out of a table. */
 export type Side = 'above' | 'below'
 
-/** Where a step from a cell ends up: another cell, or out of the table. */
 export type Step = CellAddress | Side
 
-/** The whole-line span of a Table node - what its widget replaces. */
 function tableSpan(state: EditorState, from: number, to: number): TableSpan {
   return { from: state.doc.lineAt(from).from, to: state.doc.lineAt(to).to }
 }
 
-/** Whether a block construct's lines hold the construct and nothing else.
- *
- *  A table, a display equation or a diagram fence indented into a list item, or
- *  sitting in a blockquote, has a prefix before its own first character on every
- *  line - the item's indent, or the quote's `> `. Every one of these is drawn by
- *  replacing whole lines, and none of the three knows a prefix exists: a table
- *  would write its edit back without one and lift itself out of the list item, a
- *  quoted equation would hand `> x` to the renderer as if the marker were part of
- *  the maths, and a diagram would do the same with its source.
- *
- *  So those stay as source, which reads well enough - a table with its pipes
- *  dimmed, an equation and a diagram with their fences shown.
- *
- *  Lives here because navigation is the other thing that has to agree: a table
- *  nothing rendered is not a table the arrow keys walk into. */
 export function standsAlone(state: EditorState, from: number): boolean {
   return state.doc.lineAt(from).from === from
 }
 
-/** Every table the caret is not in, which are the ones shown rendered. */
 export function renderedTables(state: EditorState): TableSpan[] {
   const spans: TableSpan[] = []
   syntaxTree(state).iterate({
@@ -63,15 +41,11 @@ export function renderedTables(state: EditorState): TableSpan[] {
   return spans
 }
 
-/** The table whose text holds a position, rendered or not. */
 export function tableAt(state: EditorState, pos: number): TableSpan | null {
   const node = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'Table')
   return node && tableSpan(state, node.from, node.to)
 }
 
-/** The rendered table a caret move from one position to another would pass
- *  over or land in. The editor's own motions skip a block widget whole, or
- *  stop at the edge of its text; either way the table lies between the two. */
 export function tableCrossed(state: EditorState, from: number, to: number): TableSpan | null {
   const low = Math.min(from, to)
   const high = Math.max(from, to)
@@ -82,17 +56,10 @@ export function tableCrossed(state: EditorState, from: number, to: number): Tabl
   )
 }
 
-/** The line the caret lands on when it leaves a table. A table that is the
- *  first or last thing in the document has no such line, so one is made:
- *  otherwise there would be no way to write above or below it. */
 export interface LineBeside {
   from: number
   to: number
-  /** Whether the line had to be made. A made line is empty, so the caret can
-   *  only go to its start, and there is no column on it to aim for. */
   made: boolean
-  /** Always a change set the caller can dispatch; empty when the line was
-   *  already there. */
   changes: ChangeSpec
 }
 
@@ -125,7 +92,6 @@ export function lastCell(model: TableModel): CellAddress {
   return { row: model.rows.length - 1, column: model.header.length - 1 }
 }
 
-/** Reading order: along the row, then on to the next. */
 export function cellAfter(model: TableModel, at: CellAddress): Step {
   if (at.column + 1 < model.header.length) return { row: at.row, column: at.column + 1 }
   if (at.row + 1 < model.rows.length) return { row: at.row + 1, column: 0 }

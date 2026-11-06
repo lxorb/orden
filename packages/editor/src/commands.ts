@@ -20,12 +20,6 @@ import { headingLevel } from './headings'
 import { showFrontMatter } from './live-preview/hidden-front-matter'
 import { enclosing, enclosingNamed } from './nodes'
 
-/** Wraps the selection, or unwraps it when the markers are already there -
- *  so the same shortcut turns emphasis on and off.
- *
- *  The space and the line break at either edge of a selection stay outside the
- *  markers, as they do in Obsidian and Typora: Select All takes the break at the
- *  end of a note, and `**word` on one line with `**` on the next is nothing bold. */
 export function toggleWrap(before: string, after = before): StateCommand {
   const italic = before === '*' && after === '*'
   const across = before === after ? marksAcross(before) : null
@@ -48,7 +42,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
         ? (/\*+$/u.exec(line.text.slice(0, from - line.from))?.[0].length ?? 0)
         : 1
 
-      // Markers sit just outside the selection.
       if (leading === before && trailing === after && stars % 2 === 1) {
         return {
           changes: [
@@ -61,7 +54,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
 
       const text = doc.sliceString(from, to)
 
-      // Markers are part of the selection.
       const held = italic ? (/^\*+/u.exec(text)?.[0].length ?? 0) : 1
       if (
         text.length >= before.length + after.length &&
@@ -91,8 +83,6 @@ function spansLines(state: EditorState, range: SelectionRange): boolean {
   return state.doc.lineAt(from).number !== state.doc.lineAt(to).number
 }
 
-/** A selection without the space at its edges, or as it is where that is all it
- *  holds, and without a block name at its end: `**a ^abc123**` names nothing. */
 export function inside(state: EditorState, from: number, to: number): { from: number; to: number } {
   const text = state.doc.sliceString(from, to)
   const kept = text.trim()
@@ -108,15 +98,11 @@ export function inside(state: EditorState, from: number, to: number): { from: nu
   return { from: start, to: words ? start + words.length : end }
 }
 
-/** A run of whole lines, by number. */
 export interface Lines {
   first: number
   last: number
 }
 
-/** The lines a range covers. A selection that ends at the very start of a line - a
- *  run of lines selected with Shift and the arrows - does not take that line: the
- *  caret is in front of it, not in it. */
 export function linesOf(state: EditorState, from: number, to: number): Lines {
   const first = state.doc.lineAt(from).number
   const end = state.doc.lineAt(to)
@@ -137,10 +123,6 @@ export function selectedLines(state: Parameters<StateCommand>[0]['state']) {
 
 const HEADING = /^(#{1,6})\s+/
 
-/** What the `#` run at the head of a line says, and how much of the line it
- *  takes with the whitespace after it. Level zero is a line that is not a
- *  heading, and then there is nothing to replace. Both commands below want
- *  exactly this, so it is decided in one place. */
 function headingOf(text: string): { level: number; length: number } {
   const match = HEADING.exec(text)
   const hashes = match?.[1]
@@ -148,14 +130,6 @@ function headingOf(text: string): { level: number; length: number } {
   return { level: hashes.length, length: match[0].length }
 }
 
-/** Level 0 turns the line back into a paragraph, and so does the level a line
- *  already is: the key that made a heading unmakes it, the way every other format
- *  key on the keyboard already reads. That is why Paragraph has no chord of its own
- *  - there is nothing left for one to do; see keymap.ts.
- *
- *  All of them or none, over a selection of several lines, which is the rule
- *  `toggleLinePrefix` already follows: a run where one line is short of the level
- *  becomes headings, and a run that is already all of that level becomes prose. */
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
@@ -192,13 +166,6 @@ export function shiftHeading(delta: number): StateCommand {
   }
 }
 
-/** Adds the prefix to every selected line, or strips it if all lines have it.
- *
- *  The whitespace a match starts with is the line's indent, which is what nests a
- *  list item under the one above it, so it stays where it is either way: only the
- *  marker after it is traded or taken off. And a task's box goes with the bullet
- *  when the list is taken off, since `[ ]` left in front of the words is neither a
- *  task nor prose; see tasks.ts in @orden/markdown for where the box ends. */
 function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
@@ -225,20 +192,11 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
 export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
 export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
 
-/** Whatever marker a line already carries, task or plain list. */
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
 
-/** The `>` of a quote, as many as it is nested, with the space after each. */
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
 
-/** The selected lines as tasks, or back to plain lines when all of them already
- *  are. A line that is a bullet or a number keeps its indentation and trades its
- *  marker for a box; a line that is neither gets both.
- *
- *  A line in a quote is read from after its `>`, which says where the line is and
- *  is not part of what the line says: the box goes inside the quote, as `> - [ ]`,
- *  because one in front of the `>` would take the line out of it. */
 export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state).map((line) => {
     const quote = (QUOTED.exec(line.text)?.[0] ?? '').length
@@ -266,10 +224,6 @@ export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** Where a line is something other than prose a box could be put in front of: code,
- *  a table, a heading, a quote, a formula, markup or metadata. Ctrl+Enter gives way
- *  there, so a fence of JavaScript still runs and the library's line below still
- *  opens under a heading. */
 const NO_TASK_HERE = new Set([
   'Table',
   'Blockquote',
@@ -289,16 +243,9 @@ function taskable(state: EditorState, line: Line): boolean {
   return true
 }
 
-/** Obsidian's Ctrl+Enter, line by line: a task is ticked or cleared, and any other
- *  line - words, a bullet, a number, nothing yet - becomes a task, so the next press
- *  ticks it. Shares its key with running a code fence and gives way wherever a box
- *  cannot go, a fence among them; see `taskable`. */
 export const toggleTask: StateCommand = (target) => {
   const { state, dispatch } = target
   const changes: ChangeSpec[] = []
-  // With the app behind the editor, a box is ticked the way every box is - the done
-  // date, the sub-tasks, a recurring task's next line - which is the app's to work out;
-  // see task-tick.ts. Only from a view, which can take the answer when it comes.
   const help = target instanceof EditorView ? state.facet(noteIndex).tasks : undefined
   const ticking: number[] = []
 
@@ -311,14 +258,11 @@ export const toggleTask: StateCommand = (target) => {
       continue
     }
     if (task) {
-      // One character, inside the brackets: see tasks.ts in @orden/markdown, which
-      // is what says where they are.
       const at = line.from + task.box + 1
       changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
       continue
     }
 
-    // The same box Task list puts there: the indent kept, a marker traded for it.
     const indent = (INDENT.exec(line.text)?.[0] ?? '').length
     const marker = MARKER.exec(line.text)?.[0].length ?? indent
     changes.push({ from: line.from + indent, to: line.from + marker, insert: '- [ ] ' })
@@ -339,11 +283,6 @@ export const toggleTask: StateCommand = (target) => {
   return true
 }
 
-/** Ticks the task the caret is on, or clears it, and does nothing on any other line:
- *  Enter in Vim's normal mode (vim-mode.ts), where a press anywhere else is still
- *  Vim's line down. A line that is not a task yet stays what it is, because making
- *  one is Ctrl+Enter's and Enter on a paragraph should not grow it a box. One caret
- *  on one line; a selection is something else being done. */
 export const tickTaskAtCaret: StateCommand = (target) => {
   const { state } = target
   const { main } = state.selection
@@ -463,9 +402,6 @@ export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3
   },
 })
 
-/** A fence line: up to three spaces, then three or more backticks or tildes,
- *  then whatever names the language. A backtick fence may not have backticks
- *  in that part, or it would be inline code. */
 const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
 
 function fenceOf(text: string): { mark: string; info: string } | null {
@@ -477,21 +413,8 @@ function fenceOf(text: string): { mark: string; info: string } | null {
   return { mark, info: info.trim() }
 }
 
-/** A line that is quote marks and nothing else, with each mark captured so the
- *  levels can be counted. Up to three spaces of indent, which is as far as
- *  CommonMark lets a block be pushed in before it is code. */
 const EMPTY_QUOTE = /^ {0,3}((?:> ?)+)$/
 
-/** Enter on an empty quoted line leaves the quote, one level per press.
- *
- *  The same thing the writer means by pressing Enter on an empty list item, and
- *  the same thing it means in Typora, in Obsidian and in GitHub's own editor.
- *  CodeMirror's markup command ends a quote only once there are two empty quoted
- *  lines in a row, so the press that should have finished the quote wrote
- *  another `>` instead and the writer had to press again and then delete a line.
- *
- *  Only where the line holds nothing but the marks: a quote with words on it is
- *  a quote being written, and its next line is quoted too. */
 export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
@@ -502,8 +425,6 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   const marks = EMPTY_QUOTE.exec(line.text)?.[1]
   if (marks === undefined) return false
 
-  // One level goes; what is left is the quote this line was nested inside, or
-  // an empty line when there was nothing outside it.
   const levels = marks.split('>').length - 1
   const kept = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
 
@@ -518,14 +439,6 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** Enter at the end of an opening fence closes the fence as well, with the
- *  caret on the blank line between. The parser treats a fence nothing closes
- *  as plain text (see `FencedCode` in markdown/fences.ts), so this is
- *  what turns a typed ``` into a code block: typing it does nothing, Enter
- *  makes the block. Only a fence nothing later closes gets this; Enter on a
- *  closed one, or on the closing line of a block, is left to the ordinary
- *  handler. This reads the lines, not the tree, so it does not wait on a
- *  parse. */
 export const closeFence: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
@@ -536,7 +449,6 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   const fence = fenceOf(line.text)
   if (!fence) return false
 
-  // Whether this line opens a block or ends one depends on everything above.
   let open: string | null = null
   for (let number = 1; number < line.number; number++) {
     const text = state.doc.line(number).text
@@ -566,35 +478,17 @@ export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }
   wrap: (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
 })
 
-/** A ` ```chart ` fence with a chart already in it.
- *
- *  Filled in rather than blank, because the shape is the one thing about a chart
- *  nobody guesses: three keys, one of them a list of lists. An empty fence would
- *  send the writer to the documentation, and a chart with numbers in it is a
- *  chart they can edit into theirs. The caret lands on the title, which is the
- *  first thing they will want to change. See chart.ts in @orden/markdown. */
 export const insertChart = insertBlock(() => ({
   text: '```chart\ntype: bar\ntitle: \nlabels: [one, two, three]\nseries:\n  - data: [1, 2, 3]\n```\n',
   caret: 26,
 }))
 
-/** An ` ```ai ` fence with nothing in it and the caret inside.
- *
- *  Empty, unlike a chart: what goes in is a question in somebody's own words, and
- *  a question written for them would be a question to delete. The answer goes
- *  under the fence when it is asked; see ai/block.ts. */
 export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 6 }))
 
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }), {
   above: true,
 })
 
-/** A GitHub alert, which is the callout the renderer draws and the editor marks.
- *  `NOTE` because it is the one that says nothing beyond "read this"; the other
- *  twelve are a word away. No fold sign, because most callouts are not folded and a
- *  sign written into every one of them would be a note full of punctuation nobody
- *  asked for; the two rows below are how one gets its sign without being typed by
- *  hand. See `callouts` in @orden/markdown. */
 export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }), {
   below: true,
   wrap: (selected) => {
@@ -606,16 +500,6 @@ export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 
   },
 })
 
-/** The callout the caret is in: its marker line, where in that line the brackets
- *  start, and what the line says.
- *
- *  Walked up from the caret's own line, because a callout is a blockquote and every
- *  line of one carries the quote marks: the first line going up that also carries a
- *  `[!type]` is the line that opened it. Nothing above a line that is not quoted at
- *  all, which is where the callout ends.
- *
- *  Read by the one grammar, with the quote marks taken off the front the way every
- *  other reader of a callout takes them off; see callouts.ts in @orden/markdown. */
 function calloutAt(state: EditorState): { line: Line; at: number; callout: Callout } | null {
   const doc = state.doc
 
@@ -633,12 +517,6 @@ function calloutAt(state: EditorState): { line: Line; at: number; callout: Callo
   return null
 }
 
-/** Whether the callout the caret is in carries a fold sign, and which one - or null
- *  when the caret is not in a callout at all.
- *
- *  What the two rows in the menu are ticked by. A callout folds in Orden whatever it
- *  says, because the chevron in the margin folds any block; the sign is what the file
- *  carries, which is what Obsidian reads and what says the callout opens shut. */
 export function calloutSign(state: EditorState): '+' | '-' | '' | null {
   const found = calloutAt(state)
   if (!found) return null
@@ -646,13 +524,6 @@ export function calloutSign(state: EditorState): '+' | '-' | '' | null {
   return found.callout.foldable ? (found.callout.folded ? '-' : '+') : ''
 }
 
-/** Writes a fold sign on the callout the caret is in, or takes the one that is
- *  there off again - `+` for a callout that may be folded, `-` for one that opens
- *  shut. Asking for the sign that is already there takes it off, which is what makes
- *  each of the two rows a switch rather than a one-way door.
- *
- *  The sign goes directly after the `]`, which is where Obsidian writes it and where
- *  the grammar reads it. Nothing else about the line is touched, title and all. */
 export function setCalloutSign(sign: '+' | '-'): StateCommand {
   return ({ state, dispatch }) => {
     const found = calloutAt(state)
@@ -671,17 +542,8 @@ export function setCalloutSign(sign: '+' | '-'): StateCommand {
   }
 }
 
-/** Typora's `[toc]`: a table of contents that follows the headings. */
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
 
-/** The note's own metadata, at the top where every parser looks for it. A note
- *  that already has some gets the caret in it rather than a second block, since
- *  two front matters are one front matter and a paragraph of colons.
- *
- *  Either way the block is shown while the caret is in it, where the reader's answer
- *  is to hide it: a command that wrote something nobody could see, or put the caret
- *  somewhere invisible, would look like a command that did nothing. See
- *  hidden-front-matter.ts. */
 export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
   if (opensFrontMatter(state.doc.toString())) {
     const inside = state.doc.line(Math.min(2, state.doc.lines))
@@ -708,11 +570,6 @@ export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** A footnote: the mark where the caret is, the definition at the end of the
- *  note, and the caret in the definition ready to write it.
- *
- *  Numbered by what the note already uses rather than by counting what is there:
- *  `[^3]` may well be the only footnote in it. */
 export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   const text = state.doc.toString()
   const used = new Set([...text.matchAll(/\[\^([^\]\s]+)\]/g)].map((found) => found[1]))
@@ -721,16 +578,10 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   while (used.has(String(number))) number++
   const label = `[^${number}]`
 
-  // The definition goes after the last of the note's words, not after the blank
-  // lines under them, so a note is not slowly pushed down its own file.
   const end = text.replace(/\s+$/, '').length
   const at = Math.min(state.selection.main.to, end)
   const definition = `\n\n${label}: `
 
-  // The mark is an insert and never a replacement: a footnote is something added
-  // to what is selected, not instead of it. Where the caret is already at the end
-  // of the words, both inserts land on the same offset and are one change - two
-  // at one offset is not a change set.
   const changes: ChangeSpec[] =
     at === end
       ? [{ from: end, to: state.doc.length, insert: label + definition }]
@@ -750,20 +601,8 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** An HTML comment around the selection. Markdown has no comment of its own, and
- *  this is the one every editor uses for one; it is hidden wherever the note is
- *  read, so what it holds is between the writer and the file. See comments.ts in
- *  @orden/markdown. */
 export const insertComment = toggleWrap('<!-- ', ' -->')
 
-/** A new slide: the rule that breaks a deck, and the caret on the empty slide
- *  after it.
- *
- *  Not through `insertBlock`, because the blank line above the rule is what makes
- *  it a break at all: a line of dashes directly under a line of text is the
- *  underline of a heading in CommonMark, so a rule written without it would turn
- *  the writer's last line into a heading and break nothing. See
- *  packages/markdown/src/slides.ts. */
 export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
   const at = state.selection.main.to
   const line = state.doc.lineAt(at)
@@ -771,8 +610,6 @@ export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
   const above = line.number > 1 ? state.doc.line(line.number - 1) : null
   const emptyAbove = above === null || above.text.trim() === ''
 
-  // Nothing to add where the caret already stands under a blank line; one break
-  // where the caret is on an empty line under words; two where it is in them.
   const lead = emptyHere ? (emptyAbove ? '' : '\n') : '\n\n'
   const insert = `${lead}---\n\n`
 
@@ -787,7 +624,6 @@ export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** Markdown has no page break, so this is the HTML every exporter understands. */
 export const insertPageBreak = insertBlock(() => ({
   text: '<div style="page-break-after: always;"></div>\n',
   caret: 45,
@@ -812,8 +648,6 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
   }
 }
 
-/** Wraps the selection as a link, or with `!` as a picture, putting the caret in
- *  the empty target. */
 function wrapped(bang: '' | '!'): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
@@ -832,7 +666,3 @@ function wrapped(bang: '' | '!'): StateCommand {
 
 export const insertLink = wrapped('')
 export const insertImage = wrapped('!')
-
-// Find, Replace and the steps through the matches are next door in find.ts.
-// Undo and redo are in shared.ts, which is where the history of a note open in
-// two panes lives.

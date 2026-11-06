@@ -10,7 +10,6 @@ export interface Heading {
   from: number
 }
 
-/** Every heading in the document, in order. */
 export function headings(state: EditorState): Heading[] {
   const found: Heading[] = []
 
@@ -27,16 +26,11 @@ export function headings(state: EditorState): Heading[] {
   return found
 }
 
-/** Typora's `[toc]`: a live table of contents that follows the headings. */
 export class TocWidget extends NibWidget {
   constructor(private readonly entries: Heading[]) {
     super()
   }
 
-  /** `from` counts, not only the text: each entry's link carries the position
-   *  it scrolls to, so a heading that moved needs a new one. Without that, a
-   *  paragraph typed above a heading leaves every entry below it pointing at
-   *  where the heading used to be. */
   override eq(other: TocWidget) {
     if (other.entries.length !== this.entries.length) return false
     return this.entries.every((mine, index) => {

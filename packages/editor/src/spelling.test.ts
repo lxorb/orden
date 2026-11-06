@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { isSpellWord, knownRanges, LONGEST_WORD } from './spelling'
 
-/** The words the checker would be turned off over. */
 const quiet = (text: string, words: readonly string[]) =>
   knownRanges(text, words).map((one) => text.slice(one.from, one.to))
 
@@ -38,8 +37,6 @@ describe('the checker turned off over a known word', () => {
   })
 
   test('but never inside a longer word', () => {
-    // Otherwise adding "nib" would quieten "nibble", and a real typo would be
-    // hidden by a word that merely starts the same way.
     expect(quiet('nibble', ['nib'])).toEqual([])
     expect(quiet('unnib', ['nib'])).toEqual([])
   })
@@ -58,8 +55,6 @@ describe('the checker turned off over a known word', () => {
   })
 
   test('and nothing for a word that is not a word', () => {
-    // A list that arrived from an older build or from the account cannot put a
-    // pattern into the one this builds.
     expect(quiet('anything at all', ['.*'])).toEqual([])
     expect(quiet('a|b', ['a|b'])).toEqual([])
   })

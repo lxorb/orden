@@ -1,22 +1,3 @@
-/** Growing the selection outwards a step at a time, and back in again.
- *
- *  VS Code's Shift+Alt+Right and Shift+Alt+Left. Each press takes the next thing
- *  out that holds what is selected: the word, then what the markup around it says
- *  - the words inside the stars, then the stars too - then the line's block, the
- *  list it is in, the heading's section, the sections around that, and the note.
- *  The library has one of these, `selectParentSyntax`, but it knows nothing of
- *  words, of what is between the marks, or of sections, and its key is Italic here.
- *
- *  Shrinking goes back down the same steps rather than guessing new ones, so each
- *  press undoes one grow exactly. Anything else that moves the selection or changes
- *  the note forgets the steps, which is what VS Code does as well.
- *
- *  Fetched behind the door in line-door.ts, and so is the field the steps are kept
- *  in: the first grow in an editor brings it in, already holding the step it took.
- *
- *  Each press reads the nodes around the selection and the lines above it up to
- *  the heading it is under, never the whole note. */
-
 import { foldable, syntaxTree } from '@codemirror/language'
 import {
   EditorSelection,
@@ -39,7 +20,6 @@ interface Span {
 const grew = StateEffect.define<EditorSelection>()
 const shrank = StateEffect.define()
 
-/** The selections each grow started from, the last one on top. */
 const growing = StateField.define<readonly EditorSelection[]>({
   create: () => [],
   update(taken, transaction) {
@@ -51,9 +31,6 @@ const growing = StateField.define<readonly EditorSelection[]>({
   },
 })
 
-/** Inline markup whose words sit between two marks: the stars of emphasis, the
- *  backticks of code, a link's brackets. Its words are one step, and the words
- *  with the marks the next. */
 const BETWEEN_MARKS = new Set([
   'Emphasis',
   'StrongEmphasis',
@@ -66,15 +43,12 @@ const BETWEEN_MARKS = new Set([
   'Wikilink',
 ])
 
-/** A block whose words come after one mark at its front: a heading's hashes, a
- *  task's box. */
 function afterLeadingMark(node: SyntaxNode): boolean {
   return headingLevel(node.name) !== null || node.name === 'Task'
 }
 
 const isMark = (node: SyntaxNode) => node.name.endsWith('Mark') || node.name === 'TaskMarker'
 
-/** The words a node's marks stand around, or null where it has none. */
 function inside(state: EditorState, node: SyntaxNode): Span | null {
   const marks: SyntaxNode[] = []
   for (let child = node.firstChild; child; child = child.nextSibling) {
@@ -90,8 +64,6 @@ function inside(state: EditorState, node: SyntaxNode): Span | null {
   return { from, to: Math.max(from, first.to + words.trimEnd().length) }
 }
 
-/** The heading sections a range sits in, innermost first, up to the first one that
- *  holds it with room to spare - which is all the smallest step needs. */
 function sections(state: EditorState, range: Span, top: number): Span[] {
   const doc = state.doc
   const found: Span[] = []
@@ -111,7 +83,6 @@ function sections(state: EditorState, range: Span, top: number): Span[] {
   return found
 }
 
-/** Everything a range could grow to, in no order. */
 function outwards(state: EditorState, range: SelectionRange, top: number): Span[] {
   const found: Span[] = []
   if (range.empty) {
@@ -136,8 +107,6 @@ function outwards(state: EditorState, range: SelectionRange, top: number): Span[
   return found
 }
 
-/** The smallest of those that holds the range and more, kept out of hidden
- *  metadata: the note's top is the first line that shows. */
 function grown(state: EditorState, range: SelectionRange, top: number): SelectionRange {
   let best: Span | null = null
   for (const span of outwards(state, range, top)) {
@@ -159,9 +128,6 @@ export const expandSelection: StateCommand = ({ state, dispatch }) => {
   )
   if (next.eq(state.selection)) return false
 
-  // An editor that has not grown a selection before is given the field by the same
-  // transaction, and a field that arrives in a transaction is handed that transaction
-  // as well, so the step is counted all the same.
   const effects: StateEffect<unknown>[] = [grew.of(state.selection)]
   if (state.field(growing, false) === undefined) {
     effects.unshift(StateEffect.appendConfig.of(growing))

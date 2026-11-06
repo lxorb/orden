@@ -40,44 +40,14 @@ import {
 import { headings, TocWidget } from './toc'
 import { WebEmbedWidget } from './web'
 
-/** CodeMirror only accepts block-level replacements from a state field, so the
- *  constructs that occupy whole lines live here rather than in the
- *  viewport-scoped plugin. A field has no viewport to scope to, so the walk
- *  is kept cheap two other ways: it steps over everything that is not a block
- *  (a paragraph's emphasis and links cannot hold one of these), and a
- *  transaction that only moved the caret rebuilds nothing unless the caret
- *  crossed one of the constructs found last time. */
-/** Whether display equations carry a number on the right. */
 export const numberEquations = Facet.define<boolean, boolean>({
   combine: (values) => values[0] ?? false,
 })
 
-/** The longest a `[toc]` line can be, so paragraphs are dismissed on their
- *  length before their first line is read out of the document. */
 const TOC_MAX = 16
 
-/** The kinds of embed that are drawn where they stand rather than as a block of
- *  their own: decorate.ts draws these inline, whether or not the line holds
- *  anything else. */
 const MEDIA: ReadonlySet<EmbedKind | null> = new Set<EmbedKind>(['image', 'audio', 'video'])
 
-/** The formula inside a `$$` block, whichever of the two shapes it was written in.
- *
- *  Two shapes, and only one of them used to work. `$$` on a line of its own with the
- *  formula under it and a closing `$$` beneath that is read by taking everything
- *  between the two lines. The other shape is a whole line of `$$…$$`, which is how a
- *  formula is usually typed and how every other editor reads it - and there the two
- *  ends are the SAME line, so "between the lines" asks for the text from the end of a
- *  line to its own start. That is a backwards range, which is the empty string, so
- *  KaTeX was handed nothing and drew an empty box: the block took its room on the page
- *  and showed nothing in it. Emil, of a page of lecture notes written entirely in the
- *  one-line shape: *"I see no formulas with $$ ... the space is just empty where it
- *  should be."*
- *
- *  So the one-line shape is read between its own marks instead. The marks are two
- *  characters at each end; the parser puts a `MathMark` on each and this agrees with
- *  it by arithmetic rather than by asking the tree for children it would then have to
- *  trust. See `BlockMath` in markdown/constructs.ts. */
 function mathIn(doc: Text, node: { from: number; to: number }): string {
   const first = doc.lineAt(node.from)
   const last = doc.lineAt(node.to)
@@ -86,8 +56,6 @@ function mathIn(doc: Text, node: { from: number; to: number }): string {
   return doc.sliceString(first.to, last.from)
 }
 
-/** Labels have to be known before any `\eqref` renders, so equations are
- *  counted in a first pass over the document. */
 function collectEquationLabels(state: EditorState): Map<number, number> {
   const numbers = new Map<number, number>()
   let counter = 0
@@ -106,34 +74,13 @@ function collectEquationLabels(state: EditorState): Map<number, number> {
   return numbers
 }
 
-/** What the field keeps: the decorations, and the lines every construct it
- *  considered sits on. The spans are what makes a caret move cheap - see
- *  `crosses` below. */
 interface Blocks {
   decorations: DecorationSet
   spans: readonly { from: number; to: number }[]
-  /** Whether a `[toc]` is among them. What one shows is every heading in the
-   *  note, so it is the one construct that changes when a line far from it
-   *  does, and the one that rules out the shortcut below. */
   toc: boolean
-  /** Whether the caret is where somebody put it, which is what decides whether
-   *  it reveals; see `buildBlocks`. A caret nobody chose counts as chosen once
-   *  it is clear of every construct in a note that is parsed to the end, since
-   *  from there on it can reveal nothing whatever the answer. Which is also why
-   *  an unchosen caret always crosses one of `spans`, the invariant the
-   *  caret-move shortcut in `update` leans on. */
   chosen: boolean
 }
 
-/** Builds every block decoration a state gets.
- *
- *  `reveals` is false while nobody has put the caret where it is. A state is
- *  created with a caret at 0 unless someone says otherwise, and 0 is the start of
- *  the document's first block - so a note whose first thing is a table, a display
- *  equation, a diagram or a `[toc]` opened showing its markdown, on every open and
- *  every switch between notes. Nobody put the caret there on purpose, so nothing
- *  is revealed for it, and it stays that way until a transaction moves the caret
- *  or changes the note: see `chosen`. */
 function buildBlocks(state: EditorState, reveals = true): Blocks {
   const ranges: Range<Decoration>[] = []
   const spans: { from: number; to: number }[] = []
@@ -141,9 +88,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
   const doc = state.doc
   const numbered = state.facet(numberEquations)
   const shown = drawnAs(state)
-  // The labels belong to this document, so they are dropped whether or not
-  // numbering is on. With it off there is nothing for `\eqref` to resolve to,
-  // and it must not answer with a number left over from another note.
   resetEquationLabels()
   const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
 
@@ -152,24 +96,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     to: doc.lineAt(to).to,
   })
 
-  /** Where a construct is, and whether the caret is in it. Recorded so a later
-   *  caret move knows this is a place worth looking at again; see `crosses`.
-   *
-   *  The two answers come out of one range because they have to be the same
-   *  range. Every construct here is drawn by replacing whole LINES, and what used
-   *  to decide whether it showed its source instead was the syntax node - which
-   *  ends at the closing mark. Those two part company the moment anything follows
-   *  that mark on its line, and a single trailing space after `$$x = 1$$` is
-   *  enough: the widget stood over a position the reveal knew nothing about, so
-   *  the caret arriving there brought nothing back, and since a replacement is
-   *  atomic the press after that was thrown clear to the far edge of the block.
-   *  Two presses, and the formula had gone by without ever showing its source.
-   *  Emil: *"if I'm for example at the right of it and press arrow to the left
-   *  then it just skips the entire thing."*
-   *
-   *  So the question is asked of the lines the reader sees the block standing on,
-   *  which is what `[toc]` below and the table's own navigation already ask; see
-   *  `renderedTables` in table/navigation.ts. */
   const found = (from: number, to: number) => {
     const span = wholeLines(from, to)
     spans.push(span)
@@ -180,9 +106,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     enter: (node) => {
       switch (node.name) {
         case 'BlockMath': {
-          // Quoted or indented, the `> ` or the indent would be swallowed by the
-          // replacement and handed to the renderer as if it were maths; see
-          // `standsAlone`.
           if (!standsAlone(state, node.from)) return true
 
           const span = found(node.from, node.to)
@@ -197,19 +120,10 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           return false
         }
 
-        // The note's own metadata, as the rows it says. A block like any other:
-        // the caret in it shows the YAML, which is the only editor it needs.
-        // A block holding a shape @orden/markdown cannot read stays source, whole;
-        // see properties.ts there and beside this file.
         case 'FrontMatter': {
           const span = found(node.from, node.to)
           const source = doc.sliceString(node.from, node.to)
 
-          // The cover, first: a band of picture across the top of the note, drawn
-          // above the metadata whether or not the metadata is showing its source.
-          // Inserted rather than replacing anything, because it stands for two keys
-          // of front matter and not for a run of the document; see cover.ts beside
-          // this file.
           const cover = coverOf(source)
           if (cover) {
             ranges.push(
@@ -221,18 +135,11 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
             )
           }
 
-          // Hidden: the metadata is still in the file and still read, it is simply
-          // not on the page. Whatever the caret is doing - a block that came back
-          // because somebody clicked past it would not be hidden; the caret is kept
-          // out of it by hidden-front-matter.ts. Not a block whose closing fence is
-          // still to be written, which the parser reads to the end of the note.
           if (shown === 'hidden' && node.node.getChildren('FrontMatterMark').length > 1) {
             ranges.push(Decoration.replace({ block: true }).range(span.from, span.to))
             return false
           }
 
-          // Source: the block is the YAML, always, which is what somebody with a
-          // Dataview query in their metadata asked for.
           if (shown !== 'properties') return false
 
           if (span.revealed) return false
@@ -248,11 +155,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
         }
 
         case 'FencedCode': {
-          // Recorded before the language is looked at, because the language is
-          // what decides whether this is drawn - and a language typed into a
-          // plain fence is letters, which `onlyProse` below reads as prose and
-          // maps past. Without a span here the fence lost its diagram *and* its
-          // code styling, and stayed that way until something else rebuilt.
           if (!standsAlone(state, node.from)) return true
           const span = found(node.from, node.to)
 
@@ -262,16 +164,10 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
 
           const code = fenceCode(state, node.node)
 
-          // A chart fence with no chart in it stays code, which is how Orden says
-          // it could not read one. Asked here rather than inside the widget so
-          // the fence keeps its colouring instead of becoming an empty box.
           if (language === 'chart' && readChart(code) === null) return false
 
-          // And a query fence stays code wherever there is no space to search: the
-          // editor on its own, an export, a page somebody else is reading.
           const index = state.facet(noteIndex)
           if (ANSWERED.has(language) && !index.query) return false
-          // A base fence too: its rows are the app's to answer.
           if (language === 'base' && !index.mountBase) return false
 
           ranges.push(
@@ -284,13 +180,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
         }
 
         case 'Paragraph': {
-          // `![[Note]]` alone between blank lines shows the note itself. Asked
-          // first because such a paragraph is nothing else, and asked of the
-          // paragraph rather than of the link inside it: walking into every
-          // one-line paragraph of a note to find the link would cost more than
-          // every other construct here put together. Anywhere but on a line of
-          // its own an embed stays a link, and a picture, a recording or a film
-          // is drawn where it stands whichever it is; decorate.ts draws those.
           const embed = embedOfBlock(state, node.from, node.to)
           if (embed && !MEDIA.has(embedKind(embed.target))) {
             const span = found(node.from, node.to)
@@ -305,17 +194,10 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
             return false
           }
 
-          // `[toc]` on its own line renders the document's headings. Anything
-          // longer than that cannot be one, and is dismissed without reading
-          // the line out of the document at all.
           if (node.to - node.from > TOC_MAX) return false
           const line = doc.lineAt(node.from)
           if (!/\[toc\]/i.test(line.text)) return false
 
-          // Recorded whether or not the line reads as a toc *right now*. A line
-          // of `[toc] draft` becomes one by deleting the word after it, and a
-          // deletion of letters is prose to `onlyProse` below - so without a span
-          // here that edit mapped past and the contents were never drawn.
           const span = found(line.from, line.to)
           if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
 
@@ -331,21 +213,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           return false
         }
 
-        // A block of the note's own HTML that runs rather than shows: a `<div>` and
-        // the `<script>` that fills it in. The same click-to-load card the reading
-        // view draws for it, out of the same markup - see html-block.ts - and
-        // nothing at all for HTML that only shows something, which goes on through
-        // as the markup it is.
-        //
-        // Here rather than with the inline tags in decorate.ts, which is where the
-        // `<iframe>` card is drawn, for one reason: CodeMirror accepts a
-        // replacement covering a line break only from a state field, and a block
-        // like this is two lines or twenty. It is a whole-line construct like the
-        // maths and the diagrams above it, and this is where those live.
-        //
-        // Only where the app says this document's HTML is markup. What runs, runs
-        // in a frame with an opaque origin and never in the app; see markup.ts and
-        // web-frame.ts.
         case 'HTMLBlock': {
           if (!standsAlone(state, node.from) || !trustsMarkup(state)) return false
 
@@ -365,13 +232,8 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
         }
 
         case 'Table': {
-          // A table with something before its pipes - indented into a list item,
-          // or inside a blockquote - is left as source; see `standsAlone`.
           if (!standsAlone(state, node.from)) return true
 
-          // Clicks inside the widget do not move CodeMirror's selection, so the
-          // rendered table stays up while its cells are edited. Source only
-          // shows while the caret is genuinely in the table's text.
           const span = found(node.from, node.to)
           if (span.revealed) return true
 
@@ -390,17 +252,11 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
         }
 
         default:
-          // Every construct above occupies whole lines, so only blocks are
-          // worth descending into: a paragraph's emphasis, links and code
-          // spans cannot hold one, and skipping them is most of the document.
           return node.type.is('Block')
       }
     },
   })
 
-  // Only once the note is parsed to the end is a caret clear of every construct
-  // clear for good: until then the block it sits in may still be missing from the
-  // tree, which is how a first block longer than the parser's first pass looks.
   const wholeNoteParsed = syntaxTree(state).length === doc.length
 
   return {
@@ -411,17 +267,12 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
   }
 }
 
-/** Exposed for tests: the block decorations a state would get. */
 export function buildBlockDecorations(state: EditorState): DecorationSet {
   return buildBlocks(state).decorations
 }
 
-/** The fences the space answers: a search (`query`), and the Tasks plugin's own query
- *  block (`tasks`), answered by the rows engine as a list of live boxes. */
 const ANSWERED = new Set(['query', 'tasks'])
 
-/** Which widget a drawn fence gets. One place, so the three of them read as the
- *  three kinds they are rather than as a nested question. */
 function widgetFor(language: string, code: string, index: NoteIndex) {
   if (language === 'chart') return new ChartWidget(code)
   if (ANSWERED.has(language)) return new QueryWidget(code, index, language)
@@ -429,11 +280,6 @@ function widgetFor(language: string, code: string, index: NoteIndex) {
   return new DiagramWidget(code, language)
 }
 
-/** Whether a selection touches any of the constructs found last time. Only
- *  those care where the caret is - one hides its source while the caret is in
- *  it and shows it again on the way out - so a caret that stays clear of all
- *  of them leaves the decorations exactly as they were. Compared the way
- *  `overlaps` does, edges included. */
 function crosses(
   spans: readonly { from: number; to: number }[],
   ranges: readonly SelectionRange[],
@@ -443,37 +289,16 @@ function crosses(
   )
 }
 
-/** Characters no block construct here is made of: not a fence's backtick or
- *  tilde, not a table's bar, not a display equation's dollar, not the brackets
- *  of `[toc]`, and not a line break. Writing these into a line that is not
- *  part of one of those constructs cannot make one, unmake one, or move an end
- *  of one - it can only shift what comes after, which the decorations follow
- *  on their own. Deliberately a short list rather than a list of what to
- *  distrust: anything unaccounted for is looked at properly. */
 const PROSE = /^[\p{L}\p{N} ,;'"?]*$/u
 
-/** The punctuation a sentence is written with, beside the prose above: a full stop, a
- *  colon, a bracket, a dash, a quote, a star. Each of these opens a block at the head
- *  of a line - `1.` a list, `#` a heading, `---` the front matter at the top of a note
- *  - and none of them can anywhere else, so they are prose wherever a word stands
- *  before them on their line; see `insideALine`. Still not the characters the
- *  constructs here are made of, which are never prose. */
 const PUNCTUATION = /^[\p{L}\p{N}\p{P}\p{S} ]*$/u
 const BLOCK_MARKS = /[`~|$[\]<>]/
 
-/** Whether a line has a word in it before `at`, which is what puts a position past
- *  the marks any block opens with. */
 function insideALine(doc: Text, at: number): boolean {
   const line = doc.lineAt(at)
   return /\p{L}/u.test(line.text.slice(0, at - line.from))
 }
 
-/** Whether `transaction` is prose typed clear of every construct found last
- *  time - the ordinary case, and the one worth not walking the note for.
- *
- *  Measured where a note is long enough for the walk to matter: in a note of 450 kB,
- *  a full stop typed mid-sentence was a state update of 2.5-3.3 ms (median) while it
- *  walked and is 1.4-1.6 ms now, which is the parse and nothing of ours. */
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
   if (value.toc) return false
 
@@ -484,8 +309,6 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
 
   changes.iterChanges((fromA, toA, fromB, _toB, inserted) => {
     if (!ordinary) return
-    // A line either side, so a change that ends where a construct begins is
-    // still looked at properly.
     const from = before.doc.lineAt(fromA).from - 1
     const to = before.doc.lineAt(Math.min(toA, before.doc.length)).to + 1
     if (value.spans.some((span) => from <= span.to && to >= span.from)) {
@@ -497,8 +320,6 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
     const added = inserted.toString()
     const written = removed + added
     if (PROSE.test(added) && (removed === '' || PROSE.test(removed))) {
-      // Letters only, and still a removal that leaves the head of a line bare is
-      // looked at: `x$$…$$` loses its `x` and is a display equation.
       ordinary = removed === '' || insideALine(after, fromB)
     } else {
       ordinary =
@@ -509,7 +330,6 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
   return ordinary
 }
 
-/** The same spans, where the change left them. */
 function mapSpans(spans: readonly { from: number; to: number }[], changes: ChangeDesc) {
   return spans.map((span) => ({
     from: changes.mapPos(span.from, 1),
@@ -517,10 +337,6 @@ function mapSpans(spans: readonly { from: number; to: number }[], changes: Chang
   }))
 }
 
-/** Whether a facet that decides what is drawn, rather than where the caret is,
- *  has changed. Such a transaction moves neither the document nor the selection,
- *  so it has to say so itself or the shortcuts below would return the old
- *  decorations and the setting would appear to do nothing until the next edit. */
 function settingsChanged(transaction: Transaction): boolean {
   const before = transaction.startState
   const after = transaction.state
@@ -530,61 +346,26 @@ function settingsChanged(transaction: Transaction): boolean {
     before.facet(propertiesMode) !== after.facet(propertiesMode) ||
     shownChanged(before, after) ||
     openedChanged(before, after) ||
-    // An embed shows another note, so what that note says decides what is drawn
-    // here even though nothing in this document moved.
     before.facet(noteIndex) !== after.facet(noteIndex) ||
-    // And whether this note's own HTML is markup, which decides whether a block of
-    // it draws its card: a page pasted in or a peer arriving takes the card away
-    // again, and neither touches the document or the caret.
     trustChanged(before, after)
   )
 }
 
 export const blockDecorations = StateField.define<Blocks>({
-  // Nothing revealed on the first build; see `buildBlocks`.
   create: (state) => buildBlocks(state, false),
 
   update(value, transaction) {
-    // Moving the caret is choosing where it goes, and so is writing at it. A
-    // transaction that does neither - a setting, or the parse arriving - leaves
-    // the caret as unchosen as it found it.
-    //
-    // Carrying the selection is not moving it. A transaction may state the caret it
-    // already had, and one does on every open: the folds a note asks for go in with
-    // `selection: state.selection` beside them, so that the library keeps a fold the
-    // caret would otherwise have covered - see `withFolds` in fold.ts. Counted as a
-    // choice, that left a note whose first block is its front matter, a table, a
-    // display equation or a `[toc]` opening on the markdown of it, but only when the
-    // note also held a callout written shut.
     const moved =
       transaction.selection !== undefined &&
       !transaction.startState.selection.eq(transaction.state.selection)
     const chosen = value.chosen || transaction.docChanged || moved
 
-    // Reading mode holds every reveal shut, and equation numbering changes what
-    // every display equation says. Either way the transaction changes neither
-    // the document nor the selection.
     if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
 
-    // Content from outside - a note being opened, a version restored, a sync
-    // arriving - brings a caret with it that nobody chose: whatever the old
-    // selection mapped to, which for a note opened from the top is 0. And 0 is
-    // the start of the document's first block, so a note beginning with a table,
-    // an equation, a diagram or a `[toc]` used to open showing its markdown.
     if (isExternal(transaction)) return buildBlocks(transaction.state, false)
 
-    // The parse of a note just opened finishes in transactions of its own;
-    // a block it found late has to be drawn then, not at the next click. Such a
-    // transaction rebuilds with `chosen` as it was, or the caret the note opened
-    // with would reveal the first block the moment the parse caught up - which
-    // for a note longer than the parser's first pass is every time it is opened.
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
 
-    // A drag that has just ended. The reveal was held still for as long as the
-    // button was down, so this is where it catches up with where the selection
-    // finally landed - one settle rather than one per pointer event. Asked
-    // before the shortcuts below, because releasing the button moves neither the
-    // document nor the caret and every one of them would return the held value.
     const held = transaction.state.field(dragging, false) === true
     if (transaction.startState.field(dragging, false) === true && !held) {
       return buildBlocks(transaction.state, chosen)
@@ -592,11 +373,6 @@ export const blockDecorations = StateField.define<Blocks>({
 
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
 
-    // A selection being dragged out with the pointer. Swapping a rendered block
-    // for its source moves the text under the pointer by whole rows, so the next
-    // pointer event reads a position on the other side of the block's edge and
-    // the reveal changes its mind again - which is the flicker. Nothing about
-    // what is drawn changes until the button comes up; see dragging.ts.
     if (held && !transaction.docChanged && !reparsed) {
       return chosen === value.chosen ? value : { ...value, chosen }
     }
@@ -608,9 +384,6 @@ export const blockDecorations = StateField.define<Blocks>({
       if (!crosses(value.spans, was) && !crosses(value.spans, now)) return value
     }
 
-    // Prose typed away from every construct: the same constructs, further
-    // along. The parse has to be no further along than the document, or a
-    // block it has only just reached would be missed.
     const parsedOn =
       syntaxTree(transaction.state).length - syntaxTree(transaction.startState).length ===
       transaction.state.doc.length - transaction.startState.doc.length

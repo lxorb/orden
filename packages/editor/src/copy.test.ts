@@ -2,8 +2,6 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { copiedFlavours, readyToCopy } from './copy'
 
-// The renderer a copy writes its HTML with is fetched by the first selection; a test
-// has none, so it waits for it here.
 beforeAll(() => readyToCopy())
 
 function state(doc: string, from: number, to: number, readOnly = false) {
@@ -36,8 +34,6 @@ describe('what a copy leaves on the clipboard', () => {
     expect(flavours?.html).toContain('two')
   })
 
-  /** A comment is hidden wherever a note is read, and a copy into a word processor
-   *  is a note being read; see comments.ts in @orden/markdown. */
   test('a comment is in the markdown and not in the HTML', () => {
     const doc = 'words <!-- to myself --> more'
     const flavours = copiedFlavours(state(doc, 0, doc.length))
@@ -48,8 +44,6 @@ describe('what a copy leaves on the clipboard', () => {
 })
 
 describe('when CodeMirror’s own copy is the better one', () => {
-  /** It copies the caret's line and remembers that it did, so that a paste puts
-   *  the line back as a line. Nothing here improves on that. */
   test('nothing is selected', () => {
     expect(copiedFlavours(state('words', 3, 3))).toBeNull()
   })
@@ -58,7 +52,6 @@ describe('when CodeMirror’s own copy is the better one', () => {
     const many = EditorState.create({
       doc: 'one\ntwo\nthree',
       selection: EditorSelection.create([EditorSelection.range(0, 3), EditorSelection.range(4, 7)]),
-      // Said out loud, because a state keeps only the first range without it.
       extensions: [EditorState.allowMultipleSelections.of(true)],
     })
 
@@ -67,7 +60,6 @@ describe('when CodeMirror’s own copy is the better one', () => {
 
   test('a cut out of a note nothing may be written into', () => {
     expect(copiedFlavours(state('one two', 0, 3, true), true)).toBeNull()
-    // A copy out of the same note is fine: it takes nothing away.
     expect(copiedFlavours(state('one two', 0, 3, true))?.text).toBe('one')
   })
 })

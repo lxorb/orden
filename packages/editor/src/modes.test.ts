@@ -31,8 +31,6 @@ import {
 import { reformatDocument } from './reformat'
 import { parsed } from '../test/parsed'
 
-/** A view is a DOM thing and these tests are not, so this is all the setters
- *  under test actually touch: a state to dispatch into. */
 function surface(doc: string, cursor = doc.length) {
   let state = EditorState.create({
     doc,
@@ -52,15 +50,12 @@ function surface(doc: string, cursor = doc.length) {
   return { view: view as unknown as EditorView }
 }
 
-/** The class the stylesheet works from, as the editor itself will write it
- *  onto its element - not put there by hand; see readOnlyExtensions. */
 function readOnlyClass(state: EditorState): boolean {
   return state
     .facet(EditorView.editorAttributes)
     .some((attrs) => typeof attrs === 'object' && attrs.class === 'nib-read-only')
 }
 
-/** Text the reader never sees: syntax the preview has concealed. */
 function concealed(state: EditorState): string[] {
   const out: string[] = []
   buildDecorations(state).atomic.between(0, state.doc.length, (from, to) => {
@@ -69,9 +64,6 @@ function concealed(state: EditorState): string[] {
   return out
 }
 
-/** What is drawn as a rendered block. Read off the state's own field rather
- *  than built fresh, because reaching that field is half of what turning the
- *  mode on has to do: its transaction moves neither text nor caret. */
 function rendered(state: EditorState): string[] {
   const out: string[] = []
   state.field(blockDecorations).decorations.between(0, state.doc.length, (from, to) => {
@@ -80,12 +72,10 @@ function rendered(state: EditorState): string[] {
   return out
 }
 
-/** The document a change leaves behind, filters and all. */
 function afterChange(state: EditorState, spec: TransactionSpec): string {
   return state.update(spec).state.doc.toString()
 }
 
-/** The document a command leaves behind, against a state that may refuse it. */
 function afterCommand(state: EditorState, command: StateCommand): string {
   let written = state.doc.toString()
   command({ state, dispatch: (transaction) => (written = transaction.state.doc.toString()) })
@@ -147,9 +137,6 @@ describe('what the reader sees', () => {
   })
 
   test('turning equation numbers on takes effect at once', () => {
-    // The transaction moves neither the document nor the caret, so the block
-    // field has to be told that what it draws has changed. Without that the
-    // setting did nothing until the next edit or click.
     const { view } = surface('$$\nx = 1\n$$\n\ntail\n')
     const before = view.state.field(blockDecorations)
 
@@ -165,8 +152,6 @@ describe('what the reader sees', () => {
     const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |'
     const { view } = surface(doc)
 
-    // Moved in rather than started there: a state is built with nothing revealed,
-    // because the caret it opens with is nobody's decision. See blocks.ts.
     view.dispatch({ selection: { anchor: 3 } })
     expect(rendered(view.state)).toEqual([])
 
@@ -202,8 +187,6 @@ describe('what may still change the document', () => {
   })
 
   test('and not a widget dispatching straight at the view either', () => {
-    // A checkbox, a table cell, the language on a fence: none of them carries
-    // a user event, which is why the filter does not look for one.
     expect(afterChange(locked(), { changes: { from: 2, to: 6, insert: 'Read' } })).toBe('# Note')
   })
 
@@ -234,7 +217,6 @@ describe('what may still change the document', () => {
 })
 
 describe('source mode and read-only mode', () => {
-  /** Whether the live preview is up - which is what source mode takes away. */
   const preview = (state: EditorState) => state.field(blockDecorations, false) !== undefined
 
   test('are never both on: read-only takes source off', () => {
@@ -258,9 +240,6 @@ describe('source mode and read-only mode', () => {
   })
 })
 
-/** Every class a mode puts on the editor, as the editor itself writes them. */
-/** Every mode at its default, which is the note a reader opens. Module scope
- *  because two suites below apply the modes to a state. */
 const DEFAULTS: ModeSettings = {
   source: false,
   readOnly: false,
@@ -294,19 +273,10 @@ function direction(state: EditorState): string | undefined {
     .at(-1)
 }
 
-/** A mode that is on and cannot be seen is off in every way that counts.
- *
- *  CodeMirror rewrites its element's class attribute from these facets on
- *  every focus change, so a class put there with `classList` was gone at the
- *  next click somewhere else - the mode stayed on, its styling did not. Reading
- *  mode was written the right way round from the start; these five were not,
- *  and this is what keeps them that way. */
 describe('the classes the stylesheet works from', () => {
   const modes: [string, (view: EditorView, on: boolean) => void, string][] = [
     ['focus mode', setFocusMode, 'nib-focus-mode'],
     ['typewriter mode', setTypewriterMode, 'nib-typewriter-mode'],
-    // The ligature setting is a scope rather than a switch, and the class is on
-    // for every scope that draws a glyph anywhere.
     ['ligatures', (view, on) => setLigatures(view, on ? 'all' : 'off'), 'nib-ligatures'],
     ['numbered headings', setHeadingNumbers, 'nib-numbered'],
     ['code line numbers', setCodeLineNumbers, 'nib-line-numbers'],
@@ -352,19 +322,7 @@ describe('the classes the stylesheet works from', () => {
   })
 })
 
-/** Re-applying the modes has to be free.
- *
- *  The app dresses every editor on the page whenever anything about the page
- *  changes, and resizing a pane changes the page on every pointer move. A
- *  reconfiguration that hands a compartment an equal value built again is not
- *  free: a second `markdown()` is a different parser as far as
- *  @codemirror/language is concerned, so it drops the parse of the whole
- *  document and starts over from the top of it with a twenty millisecond
- *  budget. Everything past that has no tree, and a decoration built off no tree
- *  is no decoration - which is how a note went raw for a frame at a time while
- *  the divider between two panes was being dragged. */
 describe('applying every mode again', () => {
-  /** Longer than one state's parse budget, so a parse thrown away shows. */
   function long(): string {
     const sections: string[] = []
     for (let at = 0; at < 400; at++) {
@@ -403,20 +361,7 @@ describe('applying every mode again', () => {
   })
 })
 
-/** The parse, left out of a document too long to be worth it.
- *
- *  Markdown is parsed from the top, so showing the end of a note of twenty thousand
- *  lines means parsing all twenty thousand of them - and `@codemirror/language` does
- *  it in idle slices that ran back to back at a hundred milliseconds each. The ten
- *  keystrokes after such a note opened were all painted together, two seconds after
- *  the first of them was typed.
- *
- *  So past `PARSED_AT_MOST` the language goes and the note is shown as plain text.
- *  What is counted here is the parse: whether there is a tree at all, and over how
- *  much of the document - which is the work, where a clock would be the machine. */
 describe('a document too long to parse', () => {
-  /** A document of `characters`, in lines of prose with syntax in them, so a parse
-   *  would have something to do. */
   function note(characters: number): string {
     const lines: string[] = []
     let held = 0
@@ -433,11 +378,7 @@ describe('a document too long to parse', () => {
   const SHORT = note(64 * 1024)
   const LONG = note(1024 * 1024)
 
-  /** A state as the app makes one: created, then dressed by the modes, which is the
-   *  transaction every pane sends when it takes a note on. */
   function opened(doc: string): EditorState {
-    // Told the length, the way editor.ts tells it: a note already too long is built
-    // without the language rather than losing it a transaction later.
     const made = EditorState.create({ doc, extensions: modeExtensions(doc.length) })
     return made.update({ effects: modeEffects(DEFAULTS) }).state
   }
@@ -448,9 +389,6 @@ describe('a document too long to parse', () => {
   })
 
   test('and is built that way rather than turned plain a transaction later', () => {
-    // The one that matters: a note opened and read rather than typed in sends no
-    // transaction at all, so a guard that waited for one would let the parse run its
-    // whole two seconds first.
     const made = EditorState.create({ doc: LONG, extensions: modeExtensions(LONG.length) })
 
     expect(parsedFully(made)).toBe(false)
@@ -460,11 +398,9 @@ describe('a document too long to parse', () => {
 
   test('so nothing of it is walked, however long the parse is given', () => {
     const long = opened(LONG)
-    // Ten seconds offered and no tree built: there is no parser to build one.
     ensureSyntaxTree(long, long.doc.length, 10_000)
     expect(syntaxTree(long).length).toBe(0)
 
-    // Against the same measurement on a note under the size, which is parsed.
     const short = opened(SHORT)
     ensureSyntaxTree(short, short.doc.length, 10_000)
     expect(syntaxTree(short).length).toBeGreaterThan(0)
@@ -476,7 +412,6 @@ describe('a document too long to parse', () => {
     expect(long.doc.toString()).toBe(LONG)
     expect(long.doc.lines).toBe(LONG.split('\n').length)
 
-    // And it takes an edit like any other document.
     const typed = long.update({ changes: { from: long.doc.length, insert: 'x' } }).state
     expect(typed.doc.sliceString(typed.doc.length - 1)).toBe('x')
     expect(parsedFully(typed)).toBe(false)
@@ -500,8 +435,6 @@ describe('a document too long to parse', () => {
   })
 
   test('a mode set on a long document does not put the parse back', () => {
-    // `modeEffects` reconfigures the language whenever a pane takes a note on, and
-    // it is not told how long the note is; the guard has the last word.
     const long = opened(LONG)
     const again = long.update({ effects: modeEffects({ ...DEFAULTS, numbers: true }) }).state
 
@@ -515,7 +448,6 @@ describe('a document too long to parse', () => {
     }).state
 
     expect(parsedFully(strict)).toBe(true)
-    // Strict markdown has no tables, which is the one thing to see from here.
     expect(tooLongToParse(strict.doc.length)).toBe(false)
   })
 })

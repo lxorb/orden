@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { formatRunValues } from './format'
 
-/** How a console line reads: the strings as written, everything else described. */
 const line = (...values: unknown[]) => formatRunValues(values)
 
-/** How a result value reads, where a string is a value and says so. */
 const value = (held: unknown) => formatRunValues([held], true)
 
 describe('formatting what the sandbox says', () => {
@@ -70,7 +68,6 @@ describe('formatting what the sandbox says', () => {
   })
 
   test('names functions and classes without printing their bodies', () => {
-    // Bodies on purpose: what is under test is the name, not what is inside.
     function named() {
       return undefined
     }
@@ -112,9 +109,6 @@ describe('formatting what the sandbox says', () => {
   })
 
   test('needs nothing from outside itself', () => {
-    // The sandbox gets this function as source text, so anything it referred to
-    // in this module would be undefined by the time it runs there. Evaluating
-    // the same text in an empty scope is the check.
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- evaluating the embedded copy in an empty scope is the whole test
     const build = new Function(
       `return (${String(formatRunValues)})`,

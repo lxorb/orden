@@ -11,28 +11,18 @@ import { pressedByKey } from '../press'
 import { NibWidget } from '../live-preview/widget'
 import type { RunLine } from './protocol'
 
-/** Where a run got to. `stopped` is the reader pressing Stop, `timeout` is the
- *  time limit running out. */
 export type RunStatus = 'running' | 'done' | 'stopped' | 'timeout'
 
-/** How many lines one panel keeps. A note that logs in a loop should not be
- *  able to grow the editor state without end. */
 export const MAX_RUN_LINES = 500
 
 export interface RunPanel {
-  /** Which run this is showing, so output from a replaced run can be ignored. */
   readonly run: number
-  /** Start of the fence's opening line, moved along by every edit above it. */
   readonly from: number
-  /** End of the fence's closing line, which is where the panel is drawn. */
   readonly to: number
   readonly status: RunStatus
   readonly lines: readonly RunLine[]
-  /** When the run began, as milliseconds, so the panel can count while it runs. */
   readonly startedAt: number
-  /** How long it took, once it is over. */
   readonly elapsed: number
-  /** Set once output stopped being kept, so the panel can say so. */
   readonly truncated: boolean
 }
 
@@ -45,26 +35,10 @@ export const openRun = StateEffect.define<{
 
 export const addRunLines = StateEffect.define<{ run: number; lines: readonly RunLine[] }>()
 
-/** Ends a run. `done` is the code finishing on its own, and leaves the sandbox
- *  standing for whatever the code left running; the other two are the run being
- *  cut short, and the sandbox goes with them (see run.ts). */
 export const closeRun = StateEffect.define<{ run: number; status: RunStatus; elapsed: number }>()
 
-/** Takes the panel away, and the sandbox with it. */
 export const dropRun = StateEffect.define<number>()
 
-/** A line that opens a fence, whatever comes before it.
- *
- *  Used to notice that the block a panel belongs to is no longer a code block:
- *  positions can be mapped through any edit, but a fence whose backticks were
- *  deleted should not keep an output panel hanging under it.
- *
- *  Whitespace and `>` are allowed ahead of the backticks because `panel.from` is
- *  the start of the *line*, and a fence indented into a list item or sitting in
- *  a blockquote has the item's indent or the quote's mark there. Matching only
- *  CommonMark's three spaces dropped the panel of every such fence on the next
- *  keystroke anywhere in the note. Read from the line rather than from the tree
- *  on purpose: the answer has to hold while a parse is still catching up. */
 const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
 
 function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPanel[] {
@@ -72,17 +46,8 @@ function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPa
   const changes = transaction.changes
 
   for (const panel of panels) {
-    // A change that swallows the whole block takes its panel with it.
     if (changes.touchesRange(panel.from, panel.to) === 'cover') continue
 
-    // The start leans right and the end leans left, so text typed at either
-    // edge of the block reads as text outside it and the panel stays put.
-    // Then back to the start of whatever line that landed on: `from` is what
-    // says which block this panel belongs to, and it is compared against a line
-    // start every time it is used. Text typed at the very start of the fence
-    // line would otherwise push it one character along, after which a second
-    // run of the same block was read as a different block - two panels, and two
-    // sandboxes running at once.
     const from = transaction.state.doc.lineAt(changes.mapPos(panel.from, 1)).from
     const to = changes.mapPos(panel.to, -1)
     if (to <= from) continue
@@ -101,7 +66,6 @@ function stillFenced(state: EditorState, panel: RunPanel): boolean {
 function applyEffect(panels: readonly RunPanel[], effect: StateEffect<unknown>): RunPanel[] | null {
   if (effect.is(openRun)) {
     const { run, from, to, startedAt } = effect.value
-    // One panel per block: starting a run replaces whatever the last one left.
     const others = panels.filter((panel) => panel.from !== from)
     return [
       ...others,
@@ -137,9 +101,6 @@ function applyEffect(panels: readonly RunPanel[], effect: StateEffect<unknown>):
   return null
 }
 
-/** The output panels on screen. Nothing here is ever written to the document:
- *  the field is the whole of it, so the panels are gone when the note is saved,
- *  exported, or simply reopened. */
 export const runPanels = StateField.define<readonly RunPanel[]>({
   create: () => [],
 
@@ -160,8 +121,6 @@ export const runPanels = StateField.define<readonly RunPanel[]>({
     return panels
   },
 
-  // Provided as a facet value rather than through a view function, which is
-  // what lets it be a block widget: see blocks.ts for the same restriction.
   provide: (field) =>
     EditorView.decorations.compute([field], (state) => runDecorations(state, state.field(field))),
 })
@@ -170,8 +129,6 @@ function runDecorations(state: EditorState, panels: readonly RunPanel[]): Decora
   const ranges: Range<Decoration>[] = []
 
   for (const panel of panels) {
-    // A block widget has to sit on a line boundary, and the mapped end of the
-    // block is not always one any more.
     const line = state.doc.lineAt(Math.min(panel.to, state.doc.length))
     ranges.push(
       Decoration.widget({ widget: new RunPanelWidget(panel), block: true, side: 1 }).range(line.to),
@@ -181,13 +138,11 @@ function runDecorations(state: EditorState, panels: readonly RunPanel[]): Decora
   return Decoration.set(ranges, true)
 }
 
-/** `48 ms`, `1.4 s`. Numbers and their units, which read the same everywhere. */
 export function formatElapsed(ms: number): string {
   if (ms < 1000) return `${Math.max(0, Math.round(ms))} ms`
   return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`
 }
 
-/** Fills in the one placeholder the editor's labels use. */
 function fill(text: string, name: string, value: string | number): string {
   return text.replace(`{${name}}`, String(value))
 }
@@ -205,7 +160,6 @@ class RunPanelWidget extends NibWidget {
       theirs.status === mine.status &&
       theirs.elapsed === mine.elapsed &&
       theirs.truncated === mine.truncated &&
-      // Lines are only ever appended, so the count is the whole difference.
       theirs.lines.length === mine.lines.length
     )
   }
@@ -238,8 +192,6 @@ class RunPanelWidget extends NibWidget {
     tick()
 
     if (panel.status === 'running') {
-      // The count is the widget's own business: driving it through the editor
-      // would mean a transaction every tenth of a second.
       const ticker = window.setInterval(tick, 100)
       this.onDestroy(host, () => window.clearInterval(ticker))
 
@@ -309,7 +261,6 @@ class RunPanelWidget extends NibWidget {
     return host
   }
 
-  /** The widget runs its own buttons; CodeMirror should not read the clicks. */
   override ignoreEvent() {
     return true
   }

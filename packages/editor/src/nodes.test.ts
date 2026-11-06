@@ -15,7 +15,6 @@ function state(doc: string): EditorState {
   )
 }
 
-/** Every node around a position, innermost first, by name. */
 function around(doc: string, at: number, side: -1 | 1 = -1): string[] {
   const found = syntaxTree(state(doc)).resolveInner(at, side)
   return [...enclosing(found)].map((node) => node.name)
@@ -36,11 +35,6 @@ describe('the walk up from a position', () => {
     expect(around(doc, doc.indexOf('let') + 1)).toContain('FencedCode')
   })
 
-  /** The two loops that stopped at `node.parent` never looked at the last node of
-   *  the chain. This is why that was invisible rather than wrong: the last node is
-   *  the document, whatever the position is in, and no caller asks about it. Were
-   *  a construct ever to be the outermost node, those two would have missed it -
-   *  which is the reason they are on this walk now. */
   test('and the last node is always the document, whatever the position is in', () => {
     const docs = [
       '',

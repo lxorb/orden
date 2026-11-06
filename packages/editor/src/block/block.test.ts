@@ -37,7 +37,6 @@ function state(doc = NOTE): EditorState {
   )
 }
 
-/** A block as what it is and what it says, which is what a test can read. */
 function said(one: EditorState, span: BlockSpan | null): [string, string] | null {
   return span ? [span.kind, one.doc.sliceString(span.from, span.to)] : null
 }
@@ -76,7 +75,6 @@ describe('the blocks a note is made of', () => {
     const at = (needle: string, into = 2) => said(one, blockAt(one, NOTE.indexOf(needle) + into))
 
     expect(at('First words')).toEqual(['paragraph', 'First words.'])
-    // A nested item answers for itself rather than for the item it sits in.
     expect(at('nested')).toEqual(['list', '  - nested'])
     expect(at('item one')).toEqual(['list', '- item one\n  - nested'])
     expect(at('code()')).toEqual(['code', '```js\ncode()\n```'])
@@ -149,7 +147,6 @@ describe('copying and cutting a block', () => {
     const copied = copyBlock(one, quote)
 
     expect(after(one, copied)).toContain('> A quote\n> goes on\n\n> A quote\n> goes on\n')
-    // The caret goes into the copy, which is what a copy is made for.
     const next = one.update({ changes: copied.changes }).state
     expect(next.doc.lineAt(copied.caret ?? 0).text).toBe('> A quote')
   })

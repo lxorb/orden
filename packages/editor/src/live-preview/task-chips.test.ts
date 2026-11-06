@@ -21,16 +21,10 @@ import { dayWords } from '../task-days'
 import { takeHint, taskHint } from './task-hint'
 import { livePreview } from '.'
 
-/** A task line in a note: its fields hidden like marks and said again as chips, the
- *  source back with the caret on its line (docs/tasks.md 5.7); a box ticked the way the
- *  engine ticks, as one undo; and a date typed at the end offered for Tab. */
-
 beforeAll(async () => {
   await loadTaskChips()
 })
 
-/** A stand-in for the app's help: a recurring task's tick written by hand, the way
- *  occurrence.ts in @orden/bases writes it, and `tomorrow` read as a day. */
 const HELP: TaskHelp = {
   tick(note, line) {
     const lines = note.split('\n')
@@ -78,7 +72,6 @@ function stateOf(doc: string, cursor: number, help: TaskHelp | null = null) {
   )
 }
 
-/** The words the reader does not see. */
 function hidden(state: EditorState): string[] {
   const out: string[] = []
   buildDecorations(state).atomic.between(0, state.doc.length, (from, to) => {
@@ -87,7 +80,6 @@ function hidden(state: EditorState): string[] {
   return out
 }
 
-/** Whether chips are drawn after the line. */
 function chipsDrawn(state: EditorState): boolean {
   let found = false
   buildDecorations(state).decorations.between(0, state.doc.length, (_from, _to, value) => {
@@ -96,13 +88,11 @@ function chipsDrawn(state: EditorState): boolean {
   return found
 }
 
-/** A view that is only a state and a dispatch, which is all the tick and the hint use. */
 function viewOf(state: EditorState) {
   const view = {
     state,
     sent: [] as Transaction[],
     dispatch(spec: Transaction | TransactionSpec) {
-      // A command hands a transaction, the tick and the hint a spec, as a view takes both.
       const transaction = spec instanceof Transaction ? spec : view.state.update(spec)
       view.sent.push(transaction)
       view.state = transaction.state
@@ -189,15 +179,12 @@ describe('the chips', () => {
       dependsOn: [],
       fields: {},
     }
-    // A `📅` is the start date in a space of Orden's own: come, it says nothing, and is
-    // never late. In a vault it is the deadline, and late once past (#371).
     expect(chipsOf(base, '2026-10-01')).toEqual([])
     expect(chipsOf(base, '2026-10-01', 'deadline')[0]).toMatchObject({
       field: 'deadline',
       tone: 'overdue',
     })
     expect(chipsOf({ ...base, done: true }, '2026-10-01', 'deadline')[0]?.tone).toBeUndefined()
-    // Still to come, the start date is said, in no tone.
     expect(chipsOf({ ...base, due: '2026-10-05' }, '2026-10-01')[0]).toEqual({
       field: 'date',
       text: expect.any(String) as string,
@@ -242,9 +229,7 @@ describe('a date typed at the end of a task', () => {
 
     const view = viewOf(state)
     expect(takeHint(view as unknown as EditorView)).toBe(true)
-    // The writer is fetched by the Tab that asks for it.
     await new Promise((resolve) => setTimeout(resolve, 50))
-    // A day typed is the day it starts: `🛫` (#371).
     expect(view.state.doc.toString()).toBe('- [ ] Call mum 🛫 2026-10-08')
     undo(view)
     expect(view.state.doc.toString()).toBe(note)

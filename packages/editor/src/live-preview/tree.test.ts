@@ -4,8 +4,6 @@ import { syntaxTree } from '@codemirror/language'
 import { expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
 
-/** Snapshots the parse tree so the decoration walker is written against the
- *  parser's real node names, and regressions in parser upgrades show up here. */
 function dump(doc: string): string {
   const state = parsed(
     EditorState.create({ doc, extensions: [markdown({ base: markdownLanguage })] }),

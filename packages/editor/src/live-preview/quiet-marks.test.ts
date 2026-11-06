@@ -7,7 +7,6 @@ import { quietMarks } from './reveal'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-/** What the reader cannot see with the caret at `cursor`, the marks kept quiet or not. */
 function concealed(doc: string, cursor: number, quiet: boolean): string[] {
   const state = parsed(
     EditorState.create({

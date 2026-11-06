@@ -20,7 +20,6 @@ import {
 } from './notes'
 import { parsed } from '../../test/parsed'
 
-/** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
 function note(
@@ -73,7 +72,6 @@ function state(doc: string, cursor: number, notes = SPACE) {
   )
 }
 
-/** Every node of one name in a document, as the text it covers. */
 function nodes(doc: string, name: string): string[] {
   const out: string[] = []
   const tree = syntaxTree(state(doc, 0))
@@ -100,7 +98,6 @@ describe('the parser sees a wikilink', () => {
     expect(nodes('[[Note|shown]]', 'WikilinkMark')).toEqual(['[[Note|', ']]'])
     expect(nodes('![[Note]]', 'WikilinkMark')).toEqual(['![[', ']]'])
     expect(nodes('[[ Note ]]', 'WikilinkMark')).toEqual(['[[ ', ' ]]'])
-    // An alias that is only space is no alias, so the target is what shows.
     expect(nodes('[[Note| ]]', 'WikilinkMark')).toEqual(['[[', '| ]]'])
   })
 
@@ -126,8 +123,6 @@ describe('the parser sees a wikilink', () => {
   })
 })
 
-/** The link marks a document gets: the words shown, the target, and whether the
- *  space could answer for it. */
 function linkMarks(doc: string, cursor?: number, notes = SPACE) {
   const full = cursor === undefined ? doc + PARK : doc
   const out: { text: string; note: string | null; missing: boolean }[] = []
@@ -150,7 +145,6 @@ function linkMarks(doc: string, cursor?: number, notes = SPACE) {
   return out
 }
 
-/** Text the reader never sees. */
 function concealed(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const out: string[] = []
@@ -167,7 +161,6 @@ function concealed(doc: string, cursor?: number): string[] {
 describe('a link into a note the space has archived', () => {
   const archived = index([{ ...note('Plan.md'), archived: true }, note('Spark.md')], null)
 
-  /** The classes each link wears, by the words it shows. */
   function looks(doc: string): Record<string, string> {
     const full = doc + PARK
     const out: Record<string, string> = {}
@@ -266,7 +259,6 @@ describe('the name a block carries', () => {
   })
 
   test('a caret inside code is code', () => {
-    // The fence's own backticks hide as usual; nothing on the line inside does.
     expect(concealed('```\nxor eax ^abc\n```')).toEqual(['```', '```'])
   })
 
@@ -299,8 +291,6 @@ describe('which note a name means', () => {
     expect(resolveNote(top, 'Plan')?.path).toBe('Plan.md')
   })
 
-  /** The one spelling that reaches a note at the top of the space from beside a
-   *  namesake, which a rename writes where nothing shorter does (B543). */
   test('a path from the top of the space, written with a leading slash, means that path', () => {
     const here = index([note('Road.md'), note('B/Road.md'), note('X/B/Road.md')], 'B/x.md')
     expect(resolveNote(here, 'Road')?.path).toBe('B/Road.md')
@@ -322,10 +312,6 @@ describe('which note a name means', () => {
     expect(resolveNote(SPACE, '   ')).toBeNull()
   })
 
-  /** A website is a shortcut file, and it is a document of the space like a note:
-   *  `[[Svelte docs]]` points at it without the extension, the way `[[Plan]]` points
-   *  at `Plan.md`, and with the extension as well for anyone who writes it that way.
-   *  See `OWN` in notes.ts. */
   test('a website answers to its name, with the extension or without', () => {
     const space = index([note('Svelte docs.url'), note('Plan.md')])
     expect(resolveNote(space, 'Svelte docs')?.path).toBe('Svelte docs.url')
@@ -338,8 +324,6 @@ describe('which note a name means', () => {
     expect(resolveNote(space, 'Plan')?.path).toBe('Plan.md')
   })
 
-  /** `Ü` as one letter, which a keyboard types, and as `U` with a combining mark,
-   *  which is how some Mac tools name a file. Neither side is ever renamed. */
   test('a name matches however its letters are composed', () => {
     const decomposed = 'U\u0308bersicht'
     const space = index([note(`ideas/${decomposed}.md`)], null, {}, [`${decomposed}.pdf`])
@@ -368,8 +352,6 @@ describe('which note a name means', () => {
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
   })
 
-  /** A slash names one path, and a note somewhere else whose path ends the same
-   *  is not it: `[About](/about)` from a website is no `C/about.md`. */
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()
@@ -384,8 +366,6 @@ describe('which note a name means', () => {
   })
 })
 
-/** A name a note gave itself in its own front matter. A file always wins: the
- *  aliases are only looked at when nothing in the space is called that. */
 describe('a name a note answers to', () => {
   test('finds the note that declared it', () => {
     const notes = [note('Plan.md', [], [], ['Roadmap', 'The plan'])]
@@ -550,7 +530,6 @@ describe('the link under a position', () => {
   })
 })
 
-/** Whole-line constructs replaced by a rendered block. */
 function blocks(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const out: string[] = []
@@ -603,7 +582,6 @@ describe('an embed', () => {
   test('a paper and a plane are cards of their own, which needs a line to itself', () => {
     expect(blocks('one\n\n![[paper.pdf#page=3]]\n\ntwo')).toEqual(['![[paper.pdf#page=3]]'])
     expect(blocks('one\n\n![[Board.canvas]]\n\ntwo')).toEqual(['![[Board.canvas]]'])
-    // In a sentence there is no room for a card, so it reads as a link.
     expect(blocks('see ![[paper.pdf]] here')).toEqual([])
   })
 

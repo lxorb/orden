@@ -46,14 +46,6 @@ import {
   RuleWidget,
 } from './widgets'
 
-/** Nodes whose own lines carry a class, and which one.
- *
- *  A table rather than a pattern per node: the walk asks about every node it
- *  meets, so reading a heading's level off its name with a pattern was the
- *  most-run line in the preview - a thousand-line note spent nearly four thousand
- *  matches a keystroke on it, which a lookup does not. The heading rows are built
- *  from headings.ts rather than written out again, so the one list of heading node
- *  names serves the preview, the table of contents and the block handles. */
 const LINE_CLASS: Record<string, string> = {
   Table: 'nib-table',
   FrontMatter: 'nib-frontmatter',
@@ -64,18 +56,13 @@ const LINE_CLASS: Record<string, string> = {
 
 for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `nib-h${level}`
 
-/** Where a tag is a link's words, and a press means the link. */
 const LINKED = new Set(['Link', 'Image', 'Wikilink'])
 
 class Decorator {
   private readonly marks: Range<Decoration>[] = []
   private readonly hidden: Range<Decoration>[] = []
   private readonly lineClasses = new Map<number, Set<string>>()
-  /** What a line carries besides its classes, keyed the same way: the code line
-   *  numbers and their column width, and the type a callout was written with. */
   private readonly lineAttrs = new Map<number, Record<string, string>>()
-  /** Spans already replaced wholesale. Nested syntax inside them must not be
-   *  decorated again, or the two replacements would overlap and throw. */
   private readonly claimed: { from: number; to: number }[] = []
 
   constructor(private readonly state: EditorState) {}
@@ -85,7 +72,6 @@ class Decorator {
       syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) })
     }
 
-    // After the walk, because whether a line is code is settled by it.
     for (const { from, to } of ranges) this.blockNames(from, to)
 
     const lines: Range<Decoration>[] = []
@@ -99,11 +85,6 @@ class Decorator {
       )
     }
 
-    // A view plugin may not replace a line break: CodeMirror throws, and a note that
-    // opened with one left the old note on screen and the new one in the state, every
-    // keystroke after that landing in the wrong words (#524). A comment, a tag or a
-    // picture written across lines is shown instead - the syntax faded the way a
-    // revealed one is, the picture as what was written.
     const doc = this.state.doc
     const oneLine = (range: Range<Decoration>) =>
       doc.lineAt(range.from).number === doc.lineAt(range.to).number
@@ -114,22 +95,13 @@ class Decorator {
 
     return {
       decorations: Decoration.set([...lines, ...this.marks, ...faded, ...hidden], true),
-      // Only concealed text is atomic, so the caret steps over hidden syntax
-      // instead of landing inside it. Visible marks stay freely editable.
       atomic: Decoration.set(hidden, true),
     }
   }
 
-  /** Whether the walk should go on into this node's children. False for a node
-   *  that was replaced wholesale: the syntax inside it is part of what the
-   *  replacement stands for, and decorating it again would overlap. */
   private visit(node: SyntaxNode): boolean {
     const name = node.name
 
-    // Front matter drawn as rows is a block replacement, which only a state
-    // field may provide - see blocks.ts. Step aside so nothing decorates the
-    // lines underneath it; a block whose shape cannot be read is still source,
-    // and source is styled here.
     if (
       name === 'FrontMatter' &&
       !overlaps(this.state, node.from, node.to) &&
@@ -151,8 +123,6 @@ class Decorator {
       case 'FencedCode':
         return this.fence(node)
       case 'CodeBlock':
-        // Indented code: every line of it is code, so every line is numbered,
-        // and its own first line is where the numbering starts again.
         this.markLines(node, 'nib-code')
         this.numberLines(node.from, node.to, false)
         return true
@@ -162,14 +132,9 @@ class Decorator {
         return true
       case 'HeaderMark':
       case 'QuoteMark':
-        // Block marks follow the caret's line, and swallow the space after them
-        // so hiding `# ` does not indent the heading by one column.
         this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
         return true
       case 'CodeMark':
-        // Both of a fence's ``` show together whenever the caret is anywhere in
-        // the block, so its extent is never in doubt while it is being edited.
-        // Inline backticks follow their own span.
         this.conceal(node.from, node.to, revealed(this.state, node))
         return true
       case 'ListMark':
@@ -179,9 +144,6 @@ class Decorator {
         this.taskMarker(node)
         return true
       case 'HorizontalRule':
-        // Where a deck breaks into its next slide. The line is marked either way
-        // and the stylesheet shows the mark only while the note is a deck, so
-        // nothing about an ordinary note changes. Two lines read, not a scan.
         if (this.slideBreak(node)) this.markLines(node, 'nib-slide-break', true)
         this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
         return true
@@ -193,10 +155,6 @@ class Decorator {
       case 'Comment':
       case 'CommentBlock':
       case 'PercentComment':
-        // A note to the writer rather than to the reader. Hidden here the way it
-        // is hidden in the reading view, in every export and on a published page
-        // - see `withoutComments` in @orden/markdown - and shown again the moment
-        // the caret is inside it, so it stays as editable as anything else.
         this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
         return false
       case 'Emoji':
@@ -206,26 +164,15 @@ class Decorator {
       case 'BlockMath':
         return this.blockMath(node)
       case 'CodeInfo':
-        // Shown alongside the fences it belongs to, not on its own schedule.
         this.conceal(node.from, node.to, revealed(this.state, node))
         return true
       case 'Escape':
-        // `\*` is a marker saying the next character is a character. The
-        // backslash is syntax like any other, so it goes the way `*` does and
-        // comes back when the caret is on it. What is escaped stays: only the
-        // first of the two characters is hidden. A page pasted into a note
-        // writes its tags this way - see `from-html` in @orden/markdown - and
-        // reading it back with a backslash in front of every one of them is
-        // reading the markup rather than the words.
         this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to))
         return true
       case 'TableDelimiter':
         this.tableDelimiter(node)
         return true
       case 'InlineCode':
-        // The mono face alone is a weak signal at this size, so inline code
-        // gets the same box the exported HTML gives it. Pushed before the walk
-        // reaches the backticks inside, which conceal themselves as usual.
         this.marks.push(Decoration.mark({ class: 'nib-inline-code' }).range(node.from, node.to))
         return true
       case 'Link':
@@ -238,9 +185,6 @@ class Decorator {
         return false
       case 'URL':
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
-        // A bare address, or one between the `<` `>` of an autolink: shown as
-        // itself, and it is the link. A bare one is followed without its escapes,
-        // as the reading view follows it; see `bareTarget` in links.ts.
         else {
           const written = this.state.doc.sliceString(node.from, node.to)
           const bare = node.parent?.name !== 'Autolink'
@@ -263,13 +207,6 @@ class Decorator {
     }
   }
 
-  /** The label of `[label](target)` reads as a link: coloured, underlined, and
-   *  the target in its tooltip, which a modifier-click follows (see links.ts).
-   *  The marks around it conceal themselves as usual on the walk below.
-   *
-   *  A target that names a note in the space rather than a page on the web is a
-   *  link between notes, and reads as one: `[the plan](ideas/Plan.md)` follows
-   *  and previews exactly as `[[ideas/Plan]]` does. */
   private link(node: SyntaxNode) {
     const open = node.firstChild
     const close = open?.nextSibling
@@ -286,12 +223,6 @@ class Decorator {
     this.linkText(open.to, close.from, target)
   }
 
-  /** `[[Note]]` reads as a link to the note, with its brackets - and the target
-   *  of an aliased link - concealed like any other syntax.
-   *
-   *  An embed alone on its line is drawn as the note's content instead, by
-   *  blocks.ts; inline, or while the caret is inside it, it stays a link, so the
-   *  markup is always reachable. */
   private wikilink(node: SyntaxNode): boolean {
     const link = wikilinkOfNode(this.state, node)
     if (!link) return true
@@ -299,9 +230,6 @@ class Decorator {
     const shown = overlaps(this.state, node.from, node.to)
 
     if (link.embed && !shown) {
-      // A picture, a recording and a film are what they are wherever they are
-      // written; a note and a document are drawn by blocks.ts, and only when
-      // they have a line to themselves.
       const kind = embedKind(link.target)
       if (kind === 'image') {
         this.inlineWidget(node, new EmbedImageWidget(link), false)
@@ -311,7 +239,6 @@ class Decorator {
         this.inlineWidget(node, new EmbedMediaWidget(link, kind), false)
         return false
       }
-      // Its own marks are part of what blocks.ts replaces.
       if (embedOfBlock(this.state, node.from, node.to)) return false
     }
 
@@ -323,14 +250,9 @@ class Decorator {
     this.conceal(close.from, close.to, shown)
     this.noteLink(link, open.to, close.from)
 
-    // Its marks are decorated here; the walk has nothing left to visit.
     return false
   }
 
-  /** A link to another note, however it was written. Coloured like any link,
-   *  muted when the space holds no such note - a click on that one makes it - faded
-   *  when it is archived, and marked `data-note` so follow.ts and the hover preview
-   *  know what it is. */
   private noteLink(link: LinkSpan, from: number, to: number) {
     if (from >= to) return
 
@@ -349,13 +271,9 @@ class Decorator {
     )
   }
 
-  /** `#work/nib` as a pill, hash inside. With the caret in it, it is being written
-   *  and reads as its source: the wash goes, the words stay put (editor.css). It
-   *  carries its name for the press that searches it; see tag-press.ts. */
   private tag(node: SyntaxNode) {
     if (enclosingNamed(node, LINKED)) return
 
-    // A name, not a word the checker should underline.
     const said = {
       'data-tag': this.state.doc.sliceString(node.from + 1, node.to),
       spellcheck: 'false',
@@ -371,8 +289,6 @@ class Decorator {
 
   private linkText(from: number, to: number, target: string) {
     if (from >= to) return
-    // A target the browser cannot follow - a relative path, a `#heading` -
-    // still reads as a link, but carries no `data-href` for links.ts to open.
     const href = hrefOf(target)
     const spec = href
       ? { class: 'nib-link', attributes: { 'data-href': href, title: linkTitle(href) } }
@@ -380,17 +296,8 @@ class Decorator {
     this.marks.push(Decoration.mark(spec).range(from, to))
   }
 
-  /** Lines whose text is not prose, and where a `^word` at the end is therefore
-   *  a `^word` and not the name of a block. */
   private static readonly VERBATIM = ['nib-code', 'nib-frontmatter', 'nib-math-source']
 
-  /** `^abc123` at the end of a line names the block, so a link can point at it.
-   *  It is a marker rather than a word, so it hides like any other syntax and
-   *  comes back while the caret is on its line.
-   *
-   *  Read off the lines rather than out of the tree, because the parser has no
-   *  node for it: it is Obsidian's construct, not markdown's. Only the visible
-   *  lines are looked at, which is what the caller hands over. */
   private blockNames(from: number, to: number) {
     const doc = this.state.doc
 
@@ -414,23 +321,12 @@ class Decorator {
     return this.claimed.some((range) => from >= range.from && to <= range.to)
   }
 
-  /** Hidden when inactive; tagged `.md-meta` when shown so it bleeds back in. */
   private conceal(from: number, to: number, show: boolean) {
     if (from >= to || this.isClaimed(from, to)) return
     if (show) this.marks.push(meta.range(from, to))
     else this.hidden.push(hide.range(from, to))
   }
 
-  /** `==🔴 careful==` reads as the words, washed in the colour it named.
-   *
-   *  The emoji is the colour, not a word of the note, so it goes the way the `==`
-   *  around it goes: hidden until the caret is inside, and atomic while it is
-   *  hidden so the caret steps over it rather than into it. The `==` themselves
-   *  are `HighlightMark` nodes and conceal themselves on the walk below.
-   *
-   *  A highlight with no colour of its own is left entirely to the syntax theme,
-   *  which is what has always drawn it - and which is also what draws it in source
-   *  mode, where there is no preview at all. */
   private highlight(node: SyntaxNode) {
     const open = node.firstChild
     const close = node.lastChild
@@ -455,33 +351,21 @@ class Decorator {
     this.markLines(node, 'nib-quote')
 
     const first = this.state.doc.lineAt(node.from)
-    // The quote marks are the editor's own to take off; what is left is the
-    // line as `calloutOf` reads it everywhere else. See @orden/markdown/callouts.
     const opened = first.text.indexOf('[!')
     const found = opened < 0 ? null : calloutOf(first.text.slice(opened))
     if (!found) return
 
-    // Every line needs the look, not just the header, so the accent runs the
-    // full height of the callout. The type as written rides along as an
-    // attribute, so a theme can dress a type Orden has never heard of.
     this.markLines(node, 'nib-callout')
     if (found.look) this.markLines(node, `nib-callout-${found.look}`)
     this.markLines(node, '', false, { 'data-callout': found.type })
 
     const from = first.from + opened
-    // The fold sign belongs to the marker: it says how the callout opens, and
-    // it is not a word of the note.
     const to = first.from + first.text.indexOf(']', opened) + 1 + (found.foldable ? 1 : 0)
 
-    // `[!NOTE]` also parses as a link label, so claim it before the walk reaches
-    // the LinkMarks inside it.
     this.claimed.push({ from, to })
 
     if (lineRevealed(this.state, first.from)) this.marks.push(meta.range(from, to))
     else {
-      // A title of the writer's own is words on the line already, so the widget
-      // only carries what is not written down: the icon, and the type's own
-      // name where no title was given.
       const widget = new CalloutWidget(found.type, found.look, found.title ? '' : found.label)
       this.hidden.push(Decoration.replace({ widget }).range(from, to))
     }
@@ -490,10 +374,6 @@ class Decorator {
   private fence(node: SyntaxNode): boolean {
     const language = fenceLanguage(this.state, node)
 
-    // A drawn fence is a block replacement, which only a state field may provide
-    // - see blocks.ts. Skip the subtree so nothing double-decorates it. Except
-    // for a chart nobody can read, which blocks.ts leaves alone: that one is
-    // still code, and code is decorated here.
     const drawn =
       RENDERED_LANGUAGES.has(language) &&
       (language !== 'chart' || readChart(fenceCode(this.state, node)) !== null)
@@ -506,8 +386,6 @@ class Decorator {
     this.addLineClass(doc.lineAt(node.to).from, 'nib-code-close')
     this.numberLines(node.from, node.to, true)
 
-    // The opening line reads as empty once its fence is hidden, which leaves
-    // room for what the block is, the language, and a copy button.
     const info = node.getChild('CodeInfo')
     const mark = node.firstChild
     const infoFrom = info ? info.from : (mark?.to ?? open.to)
@@ -516,16 +394,10 @@ class Decorator {
       Decoration.widget({
         widget: new FenceHeaderWidget(
           language,
-          // The caption steps aside while the fence shows its own text: the same
-          // words are on the line then, and both would be drawn in one place.
           overlaps(this.state, node.from, node.to) ? '' : fenceCaption(this.state, node),
           infoFrom,
-          // The language's own end, not the info string's, so retyping the
-          // language leaves the caption after it alone.
           infoFrom + language.length,
           open.from,
-          // Only an `ai` fence can be waiting on anything; asked of every fence
-          // because the answer is a lookup in a list that is nearly always empty.
           askingAt(this.state, open.from),
         ),
         side: 1,
@@ -534,10 +406,6 @@ class Decorator {
     return true
   }
 
-  /** Its own range and not its parent's, unlike a syntax mark: `revealed` looks
-   *  at the parent because a mark's construct is what owns it, and maths *is* a
-   *  construct - so asking about its parent asked about the whole paragraph, and
-   *  a caret anywhere in a paragraph turned every equation in it back to source. */
   private inlineMath(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) return true
 
@@ -551,12 +419,10 @@ class Decorator {
       this.markLines(node, 'nib-math-source')
       return true
     }
-    // Rendered by the block state field; see blocks.ts.
     return false
   }
 
   private listMark(node: SyntaxNode) {
-    // A task item renders a checkbox instead, and hides this mark with it.
     if (node.parent?.getChild('Task')) return
 
     const ordered = /\d/.test(this.state.doc.sliceString(node.from, node.to))
@@ -585,8 +451,6 @@ class Decorator {
     this.taskFields(this.state.doc.lineAt(node.from))
   }
 
-  /** A task's fields hidden the way marks are and said again as chips after its words,
-   *  the source back with the caret on its line; see task-chips.ts. */
   private taskFields(line: Line) {
     const drawn = chipsFor(line.text)?.taskDrawing(
       line.text,
@@ -605,8 +469,6 @@ class Decorator {
     )
   }
 
-  /** A task's comment (`[at::]`, `[by::]`) drawn as its words and a quiet chip of when
-   *  and by whom, the fields back with the caret on its line; see task-chips.ts. */
   private commentFields(line: Line) {
     if (!line.text.includes('::')) return
     const drawn = chipsFor(line.text)?.commentDrawing(line.text)
@@ -621,17 +483,12 @@ class Decorator {
     )
   }
 
-  /** A picture stays a picture while the caret is beside it, or selects it;
-   *  only a caret inside the markup shows the markup. image.ts has the rest. */
   private image(node: SyntaxNode): boolean {
     if (imageRevealed(this.state, node.from, node.to)) return true
 
     const image = imageOfNode(this.state, node)
     if (!image) return true
 
-    // An address a provider answers for is that page, not a picture. Asked here
-    // rather than in image.ts because it is the same question the renderer asks:
-    // what did the note point at?
     const card = webCard(image.src)
     if (card) {
       this.inlineWidget(node, new WebEmbedWidget(card), false)
@@ -639,15 +496,9 @@ class Decorator {
     }
 
     this.inlineWidget(node, new ImageWidget(image), false)
-    // Its marks live inside the replacement now; decorating them would overlap.
     return false
   }
 
-  /** `<u>text</u>` is how markdown underlines, and Ctrl+U writes it. The
-   *  pair reads as the underline it means: tags hidden until the caret is
-   *  between them, the text between drawn underlined. The parser hands out
-   *  each tag on its own, so the closer is looked for among the siblings,
-   *  minding nested pairs, and claimed so its own visit leaves it alone. */
   private underline(node: SyntaxNode): boolean {
     if (!/^<u\s*>$/i.test(this.state.doc.sliceString(node.from, node.to))) return false
 
@@ -665,7 +516,6 @@ class Decorator {
       const shown = overlaps(this.state, node.from, next.to)
       this.conceal(node.from, node.to, shown)
       this.conceal(next.from, next.to, shown)
-      // Claimed after its own concealment, which the claim would otherwise skip.
       this.claimed.push({ from: next.from, to: next.to })
       if (node.to < next.from) {
         this.marks.push(Decoration.mark({ class: 'nib-underline' }).range(node.to, next.from))
@@ -675,33 +525,20 @@ class Decorator {
     return false
   }
 
-  /** Three pieces of HTML get rendered rather than shown: a resized image, which
-   *  is how a size is recorded, a page break, which has no markdown form, and an
-   *  `<iframe>`, which is a page somewhere else. */
   private htmlImage(node: SyntaxNode): boolean {
-    // A closing tag already paired up by its opener.
     if (this.isClaimed(node.from, node.to)) return true
     if (node.name === 'HTMLTag' && this.underline(node)) return true
 
     const tag = this.state.doc.sliceString(node.from, node.to)
 
     if (/page-break-(after|before)\s*:\s*always/i.test(tag)) {
-      // Its own range, not its parent's: a block-level tag's parent is the
-      // whole document, which the caret always overlaps.
       if (overlaps(this.state, node.from, node.to)) return true
       this.inlineWidget(node, new PageBreakWidget(), false)
       return false
     }
 
-    // The same card the reading view and a published page show for it, and the
-    // same one a provider's address gets: nothing is fetched until it is pressed.
-    // See web-embed.ts.
     const framed = iframeCard(tag)
     if (framed) {
-      // Written on a line of its own the tag is one node, closing half and all.
-      // Written inside a sentence it is two, and the card stands for both - so
-      // the closer is found first, because the caret being in either half is the
-      // caret being in the markup.
       const closer = node.name === 'HTMLTag' ? this.closingIframe(node) : null
       if (overlaps(this.state, node.from, closer?.to ?? node.to)) return true
 
@@ -716,10 +553,6 @@ class Decorator {
     return this.image(node)
   }
 
-  /** The `</iframe>` belonging to an inline `<iframe>`, or null when the note
-   *  never wrote one. The next tag along or nothing: a frame inside a frame is
-   *  not a thing anybody writes, and a closer further away than that belongs to
-   *  something else. */
   private closingIframe(node: SyntaxNode): SyntaxNode | null {
     for (let next = node.nextSibling; next; next = next.nextSibling) {
       if (next.name !== 'HTMLTag') continue
@@ -729,7 +562,6 @@ class Decorator {
     return null
   }
 
-  /** Its own range, for the same reason as `inlineMath` above. */
   private emoji(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) return true
 
@@ -741,8 +573,6 @@ class Decorator {
     return false
   }
 
-  /** Only reached while the caret is in the table's source; blocks.ts renders
-   *  the real table otherwise. Dimming the pipes keeps the source readable. */
   private tableDelimiter(node: SyntaxNode) {
     this.marks.push(Decoration.mark({ class: 'nib-table-pipe' }).range(node.from, node.to))
   }
@@ -775,22 +605,6 @@ class Decorator {
     else this.lineAttrs.set(pos, { ...attrs })
   }
 
-  /** What line-number mode needs from a code block: which number each of its
-   *  lines is, counting from one per block, and how many digits the last of
-   *  them has - which is what the gutter is as wide as.
-   *
-   *  Both are written onto the lines rather than left to a CSS counter, because
-   *  only the lines in the viewport are in the DOM: a counter would start again
-   *  at one wherever the reader happened to have scrolled to, and could not know
-   *  how wide a column the block needs before reaching the end of it. The width
-   *  goes on every line of the block, the fences included, so the code keeps one
-   *  left edge whether or not the line it is on carries a number.
-   *
-   *  `fenced` leaves the ``` lines unnumbered: they are the block's markup
-   *  rather than code, and the first of them carries the language and the copy
-   *  button. Nothing here depends on the mode - only the stylesheet draws any of
-   *  it, and only while the mode is on, so turning the numbers on and off
-   *  rebuilds no decorations at all. See editor.css in @orden/themes. */
   private numberLines(from: number, to: number, fenced: boolean) {
     const doc = this.state.doc
     const opening = doc.lineAt(from).number
@@ -807,13 +621,6 @@ class Decorator {
     }
   }
 
-  /** Whether this rule is the one that breaks a deck into its next slide.
-   *
-   *  The same reading `deckOf` does, so the mark and the deck never disagree: an
-   *  unbroken run of hyphens or asterisks, and a blank line above it - which is
-   *  what stops CommonMark taking the dashes for the underline of a heading. A
-   *  rule of underscores, or one written with spaces between the marks, is an
-   *  ordinary rule. See packages/markdown/src/slides.ts. */
   private slideBreak(node: SyntaxNode): boolean {
     const line = this.state.doc.lineAt(node.from)
     if (!/^(?:-{3,}|\*{3,})[ \t]*$/.test(line.text)) return false
@@ -821,7 +628,6 @@ class Decorator {
     return line.number === 1 || this.state.doc.line(line.number - 1).text.trim() === ''
   }
 
-  /** `firstOnly` keeps a nested list item from restyling its children's lines. */
   private markLines(
     node: SyntaxNode,
     className: string,
@@ -838,10 +644,6 @@ class Decorator {
   }
 }
 
-/** The task chips (task-chips.ts), fetched the first time a line on screen has a
- *  task's field on it: the Tasks plugin's whole grammar is behind them, and a note
- *  rarely has one. A note drawn before they land is drawn again when they do, the way a
- *  `:shortcode:` is when the emoji table arrives. */
 let chips: typeof import('./task-chips') | null = null
 const chipsLanded = new Set<() => void>()
 const fetchChips = door(async () => {
@@ -849,11 +651,8 @@ const fetchChips = door(async () => {
   for (const landed of [...chipsLanded]) landed()
 })
 
-/** Fetches the task chips now: what a test that builds one pass of decorations, with no
- *  frame after it to draw them in, says first. */
 export const loadTaskChips: () => Promise<void> = fetchChips
 
-/** A field's emoji or a bracket field's `::`: a glance, not a reading. */
 const FIELD = /[📅📆🗓⏳⌛🛫➕✅❌🔺⏫🔼🔽⏬🔁🏁🆔⛔]|::/u
 
 function chipsFor(line: string): typeof chips {
@@ -862,11 +661,6 @@ function chipsFor(line: string): typeof chips {
   return chips
 }
 
-/** Every line from `from` to `to`, both ends included.
- *
- *  Written once because two walks here want it, and because the end of it is
- *  where the loop goes wrong: the last line of a document has no newline after it
- *  to step over, so a loop that only watches `to` never finishes. */
 function* linesBetween(doc: Text, from: number, to: number): Generator<Line> {
   for (let pos = from; pos <= to;) {
     const line = doc.lineAt(pos)
@@ -876,7 +670,6 @@ function* linesBetween(doc: Text, from: number, to: number): Generator<Line> {
   }
 }
 
-/** Exposed for tests: builds the same decorations a view would, without a DOM. */
 export function buildDecorations(
   state: EditorState,
   ranges: readonly { from: number; to: number }[] = [{ from: 0, to: state.doc.length }],
@@ -884,11 +677,6 @@ export function buildDecorations(
   return new Decorator(state).build(ranges)
 }
 
-/** Said when a library a decoration needs has arrived, so the note is drawn again
- *  with it. The emoji table is the one that needs this: a `:shortcode:` with no table
- *  behind it is left as the characters it was written with and gets no widget at all,
- *  so there is nothing on screen to fill in later the way a formula's box is filled.
- *  See @orden/markdown/engines. */
 const enginesLanded = StateEffect.define()
 
 export const livePreviewDecorations = ViewPlugin.fromClass(
@@ -903,7 +691,6 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       this.atomic = built.atomic
       const landed = () => view.dispatch({ effects: enginesLanded.of(null) })
       const stopEngines = onEngines(landed)
-      // The task chips arrive the same way: a note drawn before them is drawn again.
       chipsLanded.add(landed)
       this.stopWaiting = () => {
         stopEngines()
@@ -919,36 +706,14 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       const held = update.state.field(dragging, false)
       const released = update.startState.field(dragging, false) && !held
 
-      // Selection decides what is revealed, so it rebuilds as often as edits do
-      // - except mid-drag, when reflowing the line would move the text out from
-      // under the pointer.
       const settled = update.selectionSet && !held
-      // A note just opened is parsed a little at a time, and the rest of the
-      // tree arrives in updates of its own. Without this the part that was
-      // not parsed yet stays raw until something else - a click - rebuilds.
       const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
-      // Reading mode holds every reveal shut, and it comes on in a transaction
-      // that moves neither the document nor the caret - so it has to say so
-      // itself, or the syntax around the caret would stay showing.
-      // Numbering is here as well as in blocks.ts: an inline `\eqref` resolves to
-      // the number a display equation was given, so turning the numbers off has
-      // to redraw the references too.
-      //
-      // The note index belongs here for the same reason: whether a `[[link]]`
-      // points at a note that exists is what decides how it is drawn, and the
-      // answer changes when a note is saved, made or renamed - none of which
-      // touches this document.
-      // A question being asked or stopped changes only the glyph on one fence's
-      // header, and nothing else in the document; see ai/run.ts.
       const asked = asksMoved(update.startState, update.state)
       const sealed =
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
         update.startState.facet(quietMarks) !== update.state.facet(quietMarks) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
         update.startState.facet(noteIndex) !== update.state.facet(noteIndex) ||
-        // Whether the note's own HTML is markup. Only an inline tag reads it here -
-        // a block of it is drawn by blocks.ts, which asks the same question - and a
-        // paste or a peer arriving is a transaction that moves nothing else.
         trustChanged(update.startState, update.state)
       const landed = update.transactions.some((one) =>
         one.effects.some((effect) => effect.is(enginesLanded)),

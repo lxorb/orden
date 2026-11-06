@@ -3,11 +3,6 @@ import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { createEditor } from '../editor'
 
-/** Chinese typed into a cell through an input method: the pinyin is the input
- *  method's until it commits, and so is the Enter that picks the characters.
- *
- *  jsdom lays nothing out, so a range has no rectangles to measure. */
-
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()

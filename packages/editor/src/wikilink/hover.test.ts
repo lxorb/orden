@@ -2,11 +2,6 @@ import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { previewNoteOf } from './hover'
 
-/** What the card over a `[[link]]` hands the app to write in.
- *
- *  The bug this pins: the card was an editor whatever the note it was opened over
- *  allowed, so in a note that could only be read the card under it could still be
- *  typed in, and the app had no way to know it should not have been. */
 describe('the note a card hands over', () => {
   const NOTE = '# Top\n\nWords.\n\n## Part\n\nMore.\n'
 

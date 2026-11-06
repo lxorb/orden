@@ -2,10 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { StringStream } from '@codemirror/language'
 import { makefileParser } from './makefile'
 
-/** The tokens a makefile produces, as `[text, type]` pairs, whitespace left
- *  out. The state carries over from line to line the way it does in the
- *  editor, because in a makefile the previous line is what decides whether
- *  this one is shell. */
 function tokens(makefile: string): [string, string | null][] {
   const state = makefileParser.startState!(2)
   const out: [string, string | null][] = []
@@ -60,9 +56,6 @@ describe('highlighting a makefile fence', () => {
     expect(typeOf('build: # the default', '# the default')).toBe('comment')
   })
 
-  /** The tab is the whole difference between make and the shell it calls, and
-   *  a recipe read as make turns every `:` and `=` in a command line into
-   *  punctuation that is not there. */
   test('leaves a recipe line to the shell', () => {
     const recipe = 'build:\n\t$(CC) -o app main.c\n'
 

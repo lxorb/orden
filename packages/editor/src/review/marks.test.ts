@@ -9,7 +9,6 @@ import {
   setReviewSource,
 } from './marks'
 
-/** A pane without a DOM, joined to a note the way an editor is. */
 class Pane implements DocView {
   state: EditorState
 
@@ -40,7 +39,6 @@ describe('the review’s marks', () => {
     pane.type(0, '> ')
     expect(reviewMarksOf(pane.state)).toEqual([{ ...change, from: 6, to: 9 }])
 
-    // Typing right after the agent's words is not the agent's.
     pane.type(9, '!')
     expect(reviewMarksOf(pane.state)).toEqual([{ ...change, from: 6, to: 9 }])
 

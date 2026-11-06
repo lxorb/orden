@@ -4,15 +4,9 @@ import { DIAGRAM_LANGUAGES } from '@orden/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@orden/markdown/engines'
 import type { BaseAsk, NoteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
-// The engine itself, chemistry pack and all, is loaded when a note turns out to have
-// a formula in it; see @orden/markdown/engines, which is the one holder for it. Its
-// stylesheet stays here and stays eager: a rule is not a module, the faces inside it
-// are fetched only once something on the page wears one, and a formula appearing
-// before the CSS that sets it would be a formula in the wrong font for a frame.
 import 'katex/dist/katex.min.css'
 import { sequenceToMermaid } from './sequence'
 
-/** Equation labels seen in this document, in order, so `\eqref` can resolve. */
 const equationNumbers = new Map<string, number>()
 
 export function resetEquationLabels() {
@@ -24,8 +18,6 @@ export function recordEquationLabel(tex: string, number: number) {
   if (label !== undefined) equationNumbers.set(label, number)
 }
 
-/** `\label` is TeX bookkeeping, not something KaTeX renders; `\eqref` becomes
- *  the number the label was given. */
 export function prepare(tex: string): string {
   return tex
     .replace(/\\label\s*\{[^}]*\}/g, '')
@@ -35,18 +27,6 @@ export function prepare(tex: string): string {
     })
 }
 
-/** A picture the note draws and nobody presses: a formula, a diagram, a chart.
- *
- *  CodeMirror treats a widget as opaque, so a press inside one never reaches the
- *  editor and the caret stays wherever it was. For a block that replaces its whole
- *  source that leaves nothing to aim at: the picture is the entire row, there is
- *  no text on it to click, and pressing a rendered formula did nothing whatever.
- *  These three hold nothing of their own to press, so the press is the editor's -
- *  it lands on the line the picture stands on, and the source comes back with it.
- *
- *  A widget that DOES hold something to press stays opaque, because there a press
- *  already means something: a table's cells, a `[toc]`'s entries, a query's rows,
- *  the card an embed offers, a picture's own handles. */
 abstract class PictureWidget extends NibWidget {
   override ignoreEvent() {
     return false
@@ -57,7 +37,6 @@ export class MathWidget extends PictureWidget {
   constructor(
     private readonly tex: string,
     private readonly block: boolean,
-    /** Shown to the right of a display equation when numbering is on. */
     private readonly number?: number,
   ) {
     super()
@@ -67,8 +46,6 @@ export class MathWidget extends PictureWidget {
     return other.tex === this.tex && other.block === this.block && other.number === this.number
   }
 
-  /** Only the display shape. Inline maths sits in a row with words either side,
-   *  where a press already lands beside it and reveals the `$…$` around it. */
   override ignoreEvent() {
     return !this.block
   }
@@ -80,10 +57,6 @@ export class MathWidget extends PictureWidget {
     const body = this.number ? document.createElement('span') : host
     if (this.number) host.append(body)
 
-    // The same bargain a diagram strikes below: the engine is heavy, so it does not
-    // load until a document has a formula, and the first formula of a session appears
-    // a moment after the rest of the note rather than with it. Every one after that
-    // is drawn in the frame it was decorated in, because the engine is already here.
     const engine = mathsEngine()
     if (engine) this.draw(engine, body)
     else void loadMaths().then(() => body.isConnected && this.draw(mathsEngine(), body))
@@ -103,11 +76,6 @@ export class MathWidget extends PictureWidget {
   }
 }
 
-/** How a formula is drawn into a note: one place, so the preview over the source
- *  (maths-preview.ts) draws exactly what the note will once the caret leaves.
- *
- *  `strict` throws KaTeX's own parse error rather than drawing the source in red,
- *  which is what the preview needs to keep its last good picture up. */
 export function drawMaths(
   engine: NonNullable<ReturnType<typeof mathsEngine>>,
   tex: string,
@@ -120,28 +88,14 @@ export function drawMaths(
     throwOnError: strict,
     errorColor: 'var(--danger)',
     output: 'html',
-    // Typora enables these packages by default; matching keeps documents portable.
     trust: false,
     strict: false,
-    // The same ceiling the renderer uses, and for the same reason: a note is
-    // not always the reader's own, and `\rule{99999em}{99999em}` is one line
-    // of TeX that leaves nothing else on screen. See @orden/markdown.
     maxSize: MOST_EMS,
   })
 }
 
-/** Fence languages Typora renders as pictures rather than code. The list itself
- *  is @orden/markdown's, because a published page has to know it too - it decides
- *  which fences the app drew a picture for; see packages/markdown/src/diagrams.ts. */
 export { DIAGRAM_LANGUAGES }
 
-/** Every fence drawn rather than coloured, which is the wider question two places
- *  ask: the block field, deciding whether to replace the fence, and the walk in
- *  decorate.ts, which has to step aside for exactly the same ones or the two
- *  decorate the same range twice and CodeMirror throws.
- *
- *  A chart is here and not in `DIAGRAM_LANGUAGES` because that set is also the
- *  list of what the two heavy diagram renderers draw; a chart needs neither. */
 export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([
   ...DIAGRAM_LANGUAGES,
   'chart',
@@ -172,7 +126,6 @@ export class DiagramWidget extends PictureWidget {
     return host
   }
 
-  /** Both renderers are heavy, so neither loads until a document has one. */
   private async draw(host: HTMLElement) {
     try {
       if (this.language === 'flow') await drawFlowchart(host, this.code)
@@ -185,13 +138,6 @@ export class DiagramWidget extends PictureWidget {
   }
 }
 
-/** A ` ```chart ` fence, drawn. No library and nothing to wait for: the picture is
- *  built from the numbers as a string, by the same code that draws one into an
- *  exported document and onto a published page. So unlike a diagram this appears
- *  with the keystroke that finishes it rather than a moment later.
- *
- *  A fence whose body is not a chart gets no widget at all - blocks.ts asks first
- *  - and stays code, which is what says Orden could not read it. */
 export class ChartWidget extends PictureWidget {
   constructor(private readonly code: string) {
     super()
@@ -204,29 +150,15 @@ export class ChartWidget extends PictureWidget {
   toDOM() {
     const host = document.createElement('div')
     host.className = 'nib-chart'
-    // The renderer's own markup, built out of escaped text and numbers this
-    // package never sees; see chart.ts.
     host.innerHTML = chartFigure(this.code) ?? ''
     return host
   }
 }
 
-/** A ` ```query ` fence: a search written into a note, answered where it stands.
- *
- *  The rows come from the app as HTML, because what a search finds is the app's to
- *  know and the Search panel's rows are the ones to draw. This draws the frame
- *  first and fills it in when the answer lands, the way an embed does: reading a
- *  space is a round trip, and a fence that waited for it would be a blank line
- *  where a paragraph is.
- *
- *  It answers again whenever the space changes, and the index is what says so: the
- *  app hands over a new one each time a note is saved, and a widget holding the old
- *  one is not equal to a widget holding the new. */
 export class QueryWidget extends NibWidget {
   constructor(
     private readonly code: string,
     private readonly index: NoteIndex,
-    /** `query` for a search, `tasks` for the Tasks plugin's query block. */
     private readonly language = 'query',
   ) {
     super()
@@ -242,15 +174,9 @@ export class QueryWidget extends NibWidget {
     const host = document.createElement('div')
     host.className = 'nib-query-block'
 
-    // A press on a row opens the note it found, and one on a box ticks it. One
-    // listener on the host rather than one per row, because the rows are replaced
-    // when the answer lands, and the app reads the press because the app wrote the
-    // rows.
     host.addEventListener('mousedown', (event) => {
       if (this.index.pressRow?.(event.target) !== true) return
 
-      // The press goes no further: otherwise the editor takes it as a click in the
-      // document and puts the caret inside the fence this row is drawn over.
       event.preventDefault()
     })
 
@@ -260,16 +186,12 @@ export class QueryWidget extends NibWidget {
 
   private async draw(host: HTMLElement) {
     const html = await this.index.query?.(this.code, this.language)
-    // The widget may be gone by the time the space has answered.
     if (!host.isConnected || html === null || html === undefined) return
 
     host.innerHTML = html
   }
 }
 
-/** A base where a note holds one, a ` ```base ` fence or `![[Bugs.base#Board]]`: a box
- *  the app draws the view into (`mountBase`, docs/tasks.md 5.11). Equal while it asks
- *  for the same thing from the same note, so a save elsewhere does not build it again. */
 export class BaseWidget extends NibWidget {
   constructor(
     private readonly ask: BaseAsk,
@@ -297,7 +219,6 @@ export class BaseWidget extends NibWidget {
   }
 }
 
-/** A diagram as standalone SVG, for an export that has no editor around it. */
 export async function diagramSvg(code: string, language: string): Promise<string> {
   const host = document.createElement('div')
 
@@ -325,10 +246,7 @@ async function drawMermaid(host: HTMLElement, code: string) {
   host.innerHTML = svg
 }
 
-/** Typora's legacy ` ```flow ` fences, drawn by flowchart.js. Without the hooks
- *  and the links a note may not have, whoever wrote it; see flow.ts. */
 async function drawFlowchart(host: HTMLElement, code: string) {
-  // What a fence may make flowchart.js do is asked with it, never before a note has one.
   const [{ default: flowchart }, { flowSource, keepSafeLinks }] = await Promise.all([
     import('flowchart.js'),
     import('./flow'),

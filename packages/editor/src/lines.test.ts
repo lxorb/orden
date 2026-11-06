@@ -7,10 +7,6 @@ import { hiddenFrontMatterGuard } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { deleteLine, insertLineAbove, joinLines, reverseLines, sortLines } from './lines'
 
-/** A note with the selection written into it - `|` is the caret, `«` and `»` are
- *  the ends of a selection - and what a command makes of it, written the same way.
- *  With the guard that keeps hidden metadata whole, so every test is also a test
- *  that none of these reaches into it. */
 function run(command: StateCommand, marked: string): { took: boolean; note: string } {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[|«»]/g, '')
@@ -128,7 +124,6 @@ describe('deleting a line', () => {
 
   test('never leaves the caret inside an emoji on the line that comes up', () => {
     expect(note(deleteLine, 'a|bc\n😀x')).toBe('|😀x')
-    // Typed as view commands, but they take a state and a dispatch as well.
     for (const key of [deleteCharBackward, deleteCharForward] as unknown as StateCommand[]) {
       expect(note(key, note(deleteLine, 'zz\na|bc\n😀x'))).not.toMatch(/\p{Cs}/u)
     }

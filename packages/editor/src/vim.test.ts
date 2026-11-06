@@ -13,14 +13,8 @@ import { type DocView, SharedDoc, sharing } from './shared'
 import { loadVim, setVim } from './vim'
 import { plainNormalEnter, takeBackNibKeys } from './vim-mode'
 
-// The library is loaded the first time modal editing is asked for; these tests turn
-// the mode on and read the state in the same breath, which in the app is a keymap
-// arriving in the next frame and here would be a keymap that never arrived. Once, for
-// the file: it is the library's own keymap and there is one of it. See vim.ts.
 beforeAll(() => loadVim())
 
-/** A view is a DOM thing and these tests are not, so this is all the setter
- *  under test actually touches: a state to dispatch into. */
 function surface() {
   let state = EditorState.create({
     doc: 'hello',
@@ -40,8 +34,6 @@ function surface() {
   return { view: view as unknown as EditorView, current: () => state }
 }
 
-/** The class the stylesheet and the tests work from, as the editor itself will
- *  write it onto its element rather than as something put there by hand. */
 function modal(state: EditorState): boolean {
   return state
     .facet(EditorView.editorAttributes)
@@ -72,13 +64,8 @@ describe('modal editing', () => {
   })
 })
 
-/** `unmap` is declared as needing a context, and a binding that names none is
- *  matched by passing none; the same reading vim.ts makes. */
 const unmap = Vim.unmap as (keys: string, context?: string) => boolean | undefined
 
-/** A view without a DOM that has joined a shared document, which is what every
- *  pane in the app is: the text and the history live beside it, and its own
- *  history is deliberately left empty. See shared.ts. */
 class Pane implements DocView {
   private held: EditorState
 
@@ -103,7 +90,6 @@ class Pane implements DocView {
     return this.held.doc.toString()
   }
 
-  /** What the editor does with an edit: applies it, then hands it over. */
   type(at: number, insert: string) {
     this.edit({ from: at, insert }, at + insert.length)
   }
@@ -121,9 +107,6 @@ class Pane implements DocView {
 }
 
 describe("Vim's undo", () => {
-  /** The bug this is here for: `u` went to the view's own history, which is
-   *  empty on purpose, so nothing happened. A note open in two panes is one
-   *  note with one history, and undo has to mean the same thing in both. */
   test('goes to the history of the note rather than of the pane', () => {
     const note = new SharedDoc('alpha')
     const first = new Pane(note)
@@ -153,25 +136,13 @@ describe("Vim's undo", () => {
 })
 
 describe('the keys Orden keeps for itself', () => {
-  /** `unmap` answers true while it is still finding a binding to remove, so a
-   *  second sweep finding nothing is the proof that the first one was
-   *  complete. This is what catches a Ctrl chord the library adds in a later
-   *  version, before it starts swallowing somebody's Ctrl+P.
-   *
-   *  Both halves in one test, in this order, because the second takes a key
-   *  off the library's own table and there is one of it. */
   test('are gone from Vim by the time anything imports it, and Ctrl+Q is not one', () => {
     expect(takeBackNibKeys()).toEqual([])
 
-    // Vim binds Ctrl+Q because a terminal eats Ctrl+V, and Orden spends Ctrl+V
-    // the same way: the settings say the clipboard belongs to the system. So
-    // that one is left alone, and visual block lives there.
     expect(unmap('<C-q>')).toBe(true)
   })
 })
 
-/** Enter on a task in normal mode ticks it; vim-mode.ts asks this first, and
- *  `tickTaskAtCaret` in commands.ts answers whether the line is a task. */
 describe('Enter, as normal mode reads it', () => {
   const enter = {
     key: 'Enter',

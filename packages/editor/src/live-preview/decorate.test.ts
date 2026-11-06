@@ -1,9 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-// The emoji table handed over outright: in the app it is fetched the first time a note
-// turns out to have a `:shortcode:` in it, and what is being built here is one pass of
-// decorations with no frame after it to fill anything in. See @orden/markdown/engines.
 import '@orden/markdown/eager'
 import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
@@ -13,7 +10,6 @@ import { trustedMarkup } from '../markup'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-/** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
 function state(doc: string, cursor: number, trusted = false) {
@@ -24,15 +20,12 @@ function state(doc: string, cursor: number, trusted = false) {
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         trustedMarkup(trusted),
-        // The rows, which is what the front matter cases below are about; hidden,
-        // the default, is hidden-front-matter.test.ts.
         propertiesMode.of('properties'),
       ],
     }),
   )
 }
 
-/** Text the reader never sees. Without a cursor, the caret parks off the sample. */
 function concealed(doc: string, cursor?: number, trusted = false): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const pos = cursor ?? full.length
@@ -45,8 +38,6 @@ function concealed(doc: string, cursor?: number, trusted = false): string[] {
   return out
 }
 
-/** Whole-line constructs replaced by a rendered block: math, diagrams, and the card
- *  a block of the note's own HTML becomes. */
 function blocks(doc: string, cursor?: number, trusted = false): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const pos = cursor ?? full.length
@@ -58,7 +49,6 @@ function blocks(doc: string, cursor?: number, trusted = false): string[] {
   return out
 }
 
-/** Syntax shown as characters, tagged for the ink-bleed animation. */
 function revealedMeta(doc: string, cursor: number): string[] {
   const { decorations } = buildDecorations(state(doc, cursor))
   const out: string[] = []
@@ -68,7 +58,6 @@ function revealedMeta(doc: string, cursor: number): string[] {
   return out
 }
 
-/** Ranges carrying a given decoration class. */
 function marked(doc: string, className: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const pos = cursor ?? full.length
@@ -80,16 +69,12 @@ function marked(doc: string, className: string, cursor?: number): string[] {
   return out
 }
 
-/** What a decoration's spec carries that these tests read. CodeMirror types
- *  `spec` as whatever the caller passed, so the two fields are named here rather
- *  than reached for blind. */
 interface Spec {
   class?: string
   widget?: unknown
   attributes?: Record<string, string>
 }
 
-/** The `data-callout` every line carries, in document order. */
 function lineAttrs(doc: string): string[] {
   const full = doc + PARK
   const out: string[] = []
@@ -105,7 +90,6 @@ function lineAttrs(doc: string): string[] {
   return out
 }
 
-/** Every class given to a whole line, in document order. */
 function lineClasses(doc: string): string[] {
   const full = doc + PARK
   const out: string[] = []
@@ -114,7 +98,6 @@ function lineClasses(doc: string): string[] {
     full.length,
     (from, to, value) => {
       const spec = value.spec as Spec
-      // Line decorations are the only empty ranges that carry no widget.
       if (from === to && !spec.widget && spec.class) out.push(...spec.class.split(' '))
     },
   )
@@ -174,8 +157,6 @@ describe('code', () => {
     expect(concealed('```js\nlet x\n```')).toEqual(['```', 'js', '```'])
   })
 
-  // Both delimiters come back together, so the block's extent stays obvious
-  // wherever in it the caret happens to be.
   test('reveals both fence markers when the caret is on the opening line', () => {
     expect(revealedMeta('```js\nlet x\n```\n', 2)).toEqual(['```', 'js', '```'])
   })
@@ -198,12 +179,7 @@ describe('code', () => {
   })
 })
 
-/** The gutter beside a code block. What the stylesheet draws is a pseudo-element
- *  per line reading these, so the numbers are never text of the document; the
- *  rules are in editor.css in @orden/themes. */
 describe('code line numbers', () => {
-  /** Each line of code, as the number it is given and the width of the column
-   *  it is drawn in. A line with no number is one of the block's own fences. */
   function gutter(doc: string): { number: string | null; digits: string | undefined }[] {
     const full = doc + PARK
     const out: { number: string | null; digits: string | undefined }[] = []
@@ -246,8 +222,6 @@ describe('code line numbers', () => {
   })
 
   test('the column is as wide as the block needs and no wider', () => {
-    // Nine lines of code want one digit; ten want two. Read off the block's own
-    // count, not the note's - a fence far down a long note still starts at one.
     const nine = `\`\`\`\n${'a\n'.repeat(9)}\`\`\``
     expect(gutter(nine).map((line) => line.digits)).toEqual(
       Array.from({ length: 11 }, () => '--code-digits:1'),
@@ -256,13 +230,10 @@ describe('code line numbers', () => {
     const ten = `\`\`\`\n${'a\n'.repeat(10)}\`\`\``
     expect(new Set(gutter(ten).map((line) => line.digits))).toEqual(new Set(['--code-digits:2']))
 
-    // The fences carry the width as well, so the code keeps one left edge.
     expect(gutter('x\n\n```\na\n```').every((line) => line.digits === '--code-digits:1')).toBe(true)
   })
 
   test('the number rides on the line, so nothing selects or copies it', () => {
-    // Not a widget and not text: a line decoration carrying an attribute, which
-    // only a pseudo-element reads. A selection over the block takes the code.
     const doc = '```\nlet a = 1\n```'
     const full = doc + PARK
     let carried = 0
@@ -287,9 +258,6 @@ describe('code line numbers', () => {
   })
 })
 
-/** A tag pointing at a page somewhere else is that page's card here, the same one
- *  the reading view and a published page show. Nothing is fetched for it: the card
- *  is markup, and the frame arrives when it is pressed. See web-embed.ts. */
 describe('an <iframe> in the text', () => {
   const TAG = '<iframe src="https://field.example.test/plan"></iframe>'
 
@@ -302,8 +270,6 @@ describe('an <iframe> in the text', () => {
   })
 
   test('inside a sentence the closing half goes with it', () => {
-    // Two nodes there rather than one, and the card stands for both: a card
-    // followed by a visible `</iframe>` would be the markup half shown.
     expect(concealed(`See ${TAG} here.`)).toEqual([TAG.slice(0, -9), '</iframe>'])
   })
 
@@ -318,11 +284,6 @@ describe('an <iframe> in the text', () => {
   })
 })
 
-/** A backslash before a character is how markdown says "this one is a
- *  character, not a marker". It is a marker itself, so it is hidden the way
- *  every other marker is, and shown again when the caret is on it. A pasted tag
- *  arrives written this way - see `from-html` in @orden/markdown - so a page
- *  copied into a note used to read back with a backslash in front of every tag. */
 describe('escapes', () => {
   test('hides the backslash and keeps the character', () => {
     expect(concealed('a \\* b')).toEqual(['\\'])
@@ -423,14 +384,12 @@ describe('images', () => {
   test('draws a chart fence, and leaves one holding no chart as code', () => {
     const chart = '```chart\nseries:\n  - data: [1, 2]\n```'
     expect(blocks(chart)).toEqual([chart])
-    // Nothing to draw: it stays code, which is how Orden says it could not read one.
     expect(blocks('```chart\nnot a chart\n```')).toEqual([])
   })
 
   test('an address a provider answers for is that page, not a picture', () => {
     const written = '![](https://youtu.be/dQw4w9WgXcQ)'
     expect(concealed(written)).toEqual([written])
-    // And the markup is reachable, like every other rendered thing.
     expect(concealed(written, 4)).toEqual([])
   })
 
@@ -480,15 +439,11 @@ describe('extensions', () => {
 
   test('draws front matter as its rows, and shows the source with the caret in it', () => {
     const note = '---\ntitle: Hi\n---\n\nbody'
-    // The whole block is one replacement now, so there are no fences left to
-    // conceal one at a time; see live-preview/properties.ts.
     expect(blocks(note)).toEqual(['---\ntitle: Hi\n---'])
     expect(blocks(note, 6)).toEqual([])
   })
 
   test('and hides the fences of a block it cannot draw as rows', () => {
-    // A shape @orden/markdown will not guess at stays source, and source is
-    // decorated here the way it always was.
     const note = '---\njust some words\n---\n\nbody'
     expect(blocks(note)).toEqual([])
     expect(concealed(note)).toEqual(['---', '---'])
@@ -522,8 +477,6 @@ describe('extensions', () => {
     expect(lineClasses('> just a quote')).not.toContain('nib-callout')
   })
 
-  /** A note to the writer, hidden here the way it is hidden in the reading view,
-   *  in every export and on a published page; see comments.ts in @orden/markdown. */
   test('hides an HTML comment, block or inline', () => {
     expect(concealed('<!-- a note -->')).toEqual(['<!-- a note -->'])
     expect(concealed('words <!-- aside --> more')).toEqual(['<!-- aside -->'])
@@ -538,8 +491,6 @@ describe('extensions', () => {
     expect(concealed('%% a note %%\n\nbody', 4)).toEqual([])
   })
 
-  /** A view plugin may not replace a line break; CodeMirror throws, and the editor
-   *  is left showing one note while holding another (#524). */
   test('shows a comment written across lines rather than hiding it', () => {
     for (const doc of [
       '%%\nmulti\nline\n%%',
@@ -715,9 +666,6 @@ describe('links', () => {
     ])
   })
 
-  /** A conversion escapes the brackets and backticks in a bare address, because
-   *  the same words can be a link's text; the reading view takes the escapes back
-   *  off, and so does the link here, so both open the page the address names. */
   test('a bare address is followed without the escapes written into it', () => {
     expect(linkMarks('see https://a.test/?b=\\[1\\] now')).toEqual([
       { text: 'https://a.test/?b=\\[1\\]', href: 'https://a.test/?b=[1]' },
@@ -727,15 +675,12 @@ describe('links', () => {
     ])
   })
 
-  /** The escape after an address is the words' after it, not the address's. */
   test('a bare address is followed without an escape that comes right after it', () => {
     expect(linkMarks('(see https://a.test/a_b\\_) now')).toEqual([
       { text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' },
     ])
   })
 
-  /** Between angle brackets nothing is an escape, in CommonMark and in the
-   *  reading view alike: the address is every character written. */
   test('an autolink keeps its backslashes', () => {
     expect(linkMarks('see <https://a.test/\\[1\\]> now')).toEqual([
       { text: 'https://a.test/\\[1\\]', href: 'https://a.test/\\[1\\]' },
@@ -759,7 +704,6 @@ describe('links', () => {
   })
 
   test('a target inside the space is a link between notes, not a browser link', () => {
-    // Which is `data-note` rather than `data-href`; see the wikilink tests.
     expect(linkMarks('see [other](notes/other.md) now')).toEqual([])
   })
 })
@@ -790,12 +734,9 @@ describe('underline', () => {
   })
 })
 
-/** Ten blocks of a thousand characters each, which is an ordinary page of notes
- *  about code and is rebuilt on every keystroke. */
 const BODY = 'const x = 1 // padding to make this line long enough to matter\n'.repeat(16)
 const MANY_FENCES = Array.from({ length: 10 }, () => `\`\`\`js\n${BODY}\`\`\`\n\n`).join('')
 
-/** The headers drawn on the top line of each block. */
 function headers(doc: string, cursor: number): FenceHeaderWidget[] {
   const { decorations } = buildDecorations(state(doc, cursor))
   const found: FenceHeaderWidget[] = []
@@ -808,8 +749,6 @@ function headers(doc: string, cursor: number): FenceHeaderWidget[] {
   return found
 }
 
-/** How many characters of the document get sliced out of it while the decorations
- *  are built. Counted on the document itself, so every reader of it is counted. */
 function slicedWhileBuilding(doc: string, cursor: number): number {
   const built = state(doc, cursor)
   const text = built.doc
@@ -830,17 +769,11 @@ function slicedWhileBuilding(doc: string, cursor: number): number {
 
 describe('what a keystroke in a note full of code costs', () => {
   test('the headers read none of the code they sit on', () => {
-    // The header used to be built with the block's code in hand, so every
-    // keystroke sliced all ten bodies out of the document - ten thousand
-    // characters - to draw ten rows that show a language and two buttons.
     expect(headers(MANY_FENCES, MANY_FENCES.length)).toHaveLength(10)
     expect(slicedWhileBuilding(MANY_FENCES, MANY_FENCES.length)).toBeLessThan(BODY.length)
   })
 
   test('and typing inside a block leaves its header as it was', () => {
-    // Which is what the widget comparison decides. Comparing the code meant the
-    // whole of every visible body, character by character, on each keystroke -
-    // and then a row rebuilt for a change that never showed in it.
     const one = headers('```js\nlet a = 1\n```\n\nx', 22)[0]
     const other = headers('```js\nlet a = 12\n```\n\nx', 23)[0]
 
@@ -855,14 +788,6 @@ describe('what a keystroke in a note full of code costs', () => {
   })
 })
 
-/** A block of the note's own HTML that runs rather than shows: a `<div>` and the
- *  `<script>` that fills it in.
- *
- *  The reading view has drawn the sandboxed click-to-load card for one of these all
- *  along and the editor drew nothing at all, so half a note was invisible while it
- *  was being written. The same card here, out of the same markup - see
- *  html-block.ts - and only where the app says this document's HTML is markup;
- *  markup.ts is what carries that answer in. */
 describe('an interactive block of HTML', () => {
   const BLOCK = '<div id="here"></div>\n<script>document.body.textContent = 1</script>'
 
@@ -878,8 +803,6 @@ describe('an interactive block of HTML', () => {
     expect(blocks(BLOCK)).toEqual([])
   })
 
-  /** HTML that only shows something needs no card and never did: it goes through the
-   *  renderer as markup, and in the editor it is the markup it is. */
   test('leaves a block that only shows something alone', () => {
     expect(blocks('<div class="card">\n  <p>Wind.</p>\n</div>', undefined, true)).toEqual([])
   })
@@ -890,9 +813,6 @@ describe('an interactive block of HTML', () => {
     expect(blocks(inline, undefined, true)).toEqual([inline])
   })
 
-  /** A block of it is a whole-line construct and is drawn by the block pass, not the
-   *  inline one: CodeMirror accepts a replacement covering a line break only from a
-   *  state field, and a `<div>` with a `<script>` under it is two lines. */
   test('is not an inline replacement, which the library would refuse', () => {
     expect(concealed(BLOCK, undefined, true)).toEqual([])
   })

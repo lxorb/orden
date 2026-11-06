@@ -2,8 +2,6 @@ import { EditorSelection, EditorState, type StateCommand } from '@codemirror/sta
 import { describe, expect, test } from 'vitest'
 import { lowerCase, titleCase, upperCase } from './case'
 
-/** What a command makes of the words from `from` to `to`, and what it leaves
- *  selected. */
 function run(command: StateCommand, doc: string, from: number, to = from) {
   let state = EditorState.create({ doc, selection: EditorSelection.range(from, to) })
   const took = command({ state, dispatch: (transaction) => (state = transaction.state) })

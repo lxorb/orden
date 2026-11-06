@@ -5,7 +5,6 @@ import { pointerSnap, snapOutward } from './snap'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-/** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
 function state(doc: string, cursor: number) {
@@ -21,8 +20,6 @@ function state(doc: string, cursor: number) {
   )
 }
 
-/** Where the caret ends up after a click that CodeMirror mapped to `pos`,
- *  with the caret previously parked away from the sample. */
 function click(doc: string, pos: number, parkedAt?: number): number {
   const full = parkedAt === undefined ? doc + PARK : doc
   const before = state(full, parkedAt ?? full.length)
@@ -35,7 +32,6 @@ function click(doc: string, pos: number, parkedAt?: number): number {
 
 describe('inline code', () => {
   const doc = 'a `code` b'
-  // a=0 ' '=1 `=2 code=3..6 `=7 ' '=8 b=9
 
   test('a click at the right edge lands after the closing backtick', () => {
     expect(click(doc, 7)).toBe(8)
@@ -55,7 +51,6 @@ describe('inline code', () => {
   })
 
   test('visible marks are not stepped over', () => {
-    // Caret already in the span, so its backticks are shown and unambiguous.
     expect(click(doc, 7, 4)).toBe(7)
     expect(click(doc, 3, 4)).toBe(3)
   })
@@ -76,16 +71,12 @@ describe('emphasis', () => {
 
   test('nested constructs snap all the way out', () => {
     const doc = '**bold `code`** x'
-    // Closing backtick starts at 12; the bold ends at 15.
     expect(click(doc, 12)).toBe(15)
-    // Opening backtick ends at 8; bold starts at 0 but the caret is not at
-    // the bold's own edge, so it stops before the backtick.
     expect(click(doc, 8)).toBe(7)
   })
 
   test('adjacent constructs meet between their marks', () => {
     const doc = '**a**`b`'
-    // Between the visible a and b, whichever side the browser picked.
     expect(click(doc, 3)).toBe(5)
     expect(click(doc, 6)).toBe(5)
   })
@@ -124,10 +115,8 @@ describe('constructs that are not applicable', () => {
   })
 
   test('marks that open a whole line are block marks too', () => {
-    // Front matter: a click on the concealed opening line stays there.
     const front = '---\ntitle: Hi\n---\n\nbody'
     expect(click(front, 3)).toBe(3)
-    // Definition detail, footnote definition, abbreviation definition.
     expect(click('Term\n: a meaning', 6)).toBe(6)
     expect(click('[^1]: the note', 4)).toBe(4)
     expect(click('*[HTML]: Markup', 2)).toBe(2)

@@ -1,19 +1,3 @@
-/** The search engine, as `@codemirror/search` provides it.
- *
- *  Its own module because of what that package weighs: fifteen kilobytes of built
- *  JavaScript for the query, the cursor that walks it, what a `$1` in a replacement
- *  means, and the highlighter that marks other occurrences of the selection - none of
- *  which a window has any use for until somebody presses Control+F or selects a word.
- *  So the whole of it is behind this one import, fetched at the last turn of the launch
- *  order rather than before the window is on screen; see find.ts, which is the door,
- *  and open-views.ts for how it reaches the editors already up.
- *
- *  Nothing here is the bar. The bar is the app's - a row of the pane, in Orden's own
- *  fields, translated - and the seam between the two is find.ts: the effect that asks
- *  for it, the field that says it is up, and the term the caret was on. Those are what
- *  every editor carries, because a key pressed before this module lands has to put the
- *  bar up all the same. */
-
 import {
   findNext as libraryNext,
   findPrevious as libraryPrevious,
@@ -46,12 +30,6 @@ import {
 import { type FindSpec, type FindTally, findShown, MOST_COUNTED, NO_TALLY } from './find'
 import { onThePage } from './live-preview/hidden-front-matter'
 
-/** Every match, up to the cap, and which of them the selection is sitting on.
- *
- *  One pass, because the two answers come from the same walk. A zero-width
- *  match - `a*` over a line of b's - would otherwise be walked forever, so the
- *  cursor's own end is what stops it and a match that does not advance is
- *  counted once and left. */
 export function tally(state: EditorState): FindTally {
   const query = getSearchQuery(state)
   if (!query.valid) return NO_TALLY
@@ -70,11 +48,6 @@ export function tally(state: EditorState): FindTally {
   return { count, current, capped: false }
 }
 
-/** The marks under the matches: the library's own two class names, so the
- *  colours in the editor's theme are the ones that were already there.
- *
- *  Only the visible stretch is walked, the way the library's own does, and only
- *  while the bar is up. */
 const findMarks = Decoration.mark({ class: 'cm-searchMatch' })
 const findHere = Decoration.mark({ class: 'cm-searchMatch cm-searchMatch-selected' })
 
@@ -132,27 +105,14 @@ const findHighlighter = ViewPlugin.fromClass(
   { decorations: (plugin) => plugin.decorations },
 )
 
-/** Everything the editor needs to be searchable, once this module is here.
- *
- *  `search()` is what holds the query as a field. The highlighter draws the marks,
- *  because the library's own draws nothing unless the library's own panel is open and
- *  that panel is gone. `highlightSelectionMatches` is the other occurrences of whatever
- *  is selected, which is the one thing in here that happens without anybody asking -
- *  and the reason this module is fetched at the launch's last turn rather than at the
- *  first Control+F. */
 export function searching(): Extension {
   return [search(), findHighlighter, highlightSelectionMatches()]
 }
 
-/** Only what is on the page: a match in metadata the reader asked to hide would be a
- *  place the bar takes them to and cannot show them, and a replacement made there one
- *  they never saw. One function rather than one per query, because the library tells
- *  two queries apart by it. */
 function onPage(_match: string, state: EditorState, from: number): boolean {
   return onThePage(state, from)
 }
 
-/** What the bar is looking for, as the library's own query. */
 export function queryFor(spec: FindSpec): SearchQuery {
   return new SearchQuery({
     search: spec.query,
@@ -168,7 +128,6 @@ export function setQuery(view: EditorView, spec: FindSpec) {
   view.dispatch({ effects: setSearchQuery.of(queryFor(spec)) })
 }
 
-/** Whether there is anything to step through or replace. */
 export function asked(state: EditorState): boolean {
   return getSearchQuery(state).valid
 }

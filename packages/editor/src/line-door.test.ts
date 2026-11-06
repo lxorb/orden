@@ -3,10 +3,6 @@ import type { EditorView } from '@codemirror/view'
 import { expect, test } from 'vitest'
 import { joinLines, loadLineCommands, sortLines } from './line-door'
 
-/** A press in front of the fetch. The commands are fetched once per process and kept,
- *  so this file is its own: a test that needs them absent cannot share a file with
- *  one that needs them here. The commands themselves are lines.test.ts and the rest. */
-
 function standIn(doc: string, caret: number) {
   let state = EditorState.create({ doc, selection: EditorSelection.cursor(caret) })
   const view = {

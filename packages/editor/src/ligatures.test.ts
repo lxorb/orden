@@ -5,7 +5,6 @@ import { findLigatures, ligaturesIn } from './ligatures'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
-/** Somewhere to park the caret that is outside every run under test. */
 const PARK = '\n\nx'
 
 function state(doc: string, cursor: number) {
@@ -18,8 +17,6 @@ function state(doc: string, cursor: number) {
   )
 }
 
-/** What is shown as a glyph, as `text→glyph`, with the caret parked off the
- *  sample unless a position is given. */
 function shown(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   return ligaturesIn(state(full, cursor ?? full.length)).map(
@@ -27,7 +24,6 @@ function shown(doc: string, cursor?: number): string[] {
   )
 }
 
-/** The same, under the scope that draws in code and nowhere else. */
 function shownInCode(doc: string): string[] {
   const full = doc + PARK
   return ligaturesIn(state(full, full.length), undefined, 'code').map(
@@ -72,7 +68,6 @@ describe('what is shown', () => {
 
   test('the run under the caret reads as typed', () => {
     expect(shown('a -> b', 3)).toEqual([])
-    // At either end the caret is beside the run, not in it.
     expect(shown('a -> b', 2)).toEqual(['->→'])
     expect(shown('a -> b', 4)).toEqual(['->→'])
   })

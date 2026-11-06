@@ -1,26 +1,12 @@
-/** What an agent does to a note's editor beside writing in it (#1078; the desktop's
- *  docs/agent-native.md 8.15), the way a VS Code extension uses a `TextEditor`: its
- *  selections, the marks it draws, its folds.
- *
- *  **Marks** are the agent's diagnostics: an underline with a message over a range, as
- *  `languages.createDiagnosticCollection` draws one, kept per agent and moved with the
- *  words they are on as the note is edited. Drawn by a field added to a view the first
- *  time one is set there, so a view no agent marked carries nothing.
- *
- *  Pure of the app: positions are a line (from 1) and a character on it (from 0), which
- *  is what an agent reading a note counts in, and are clamped to the note. */
-
 import { foldable, foldedRanges, foldEffect, unfoldEffect } from '@codemirror/language'
 import { EditorSelection, type EditorState, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, EditorView } from '@codemirror/view'
 
-/** A place in a note: a line from 1, a character on it from 0. */
 export interface Place {
   line: number
   ch: number
 }
 
-/** A stretch of a note, from `anchor` to `head`, where a selection's caret is. */
 export interface Stretch {
   anchor: Place
   head: Place
@@ -28,7 +14,6 @@ export interface Stretch {
 
 export type Severity = 'error' | 'warning' | 'info'
 
-/** One mark: where, what it says, how much it matters, and whose it is. */
 export interface AgentMark {
   agent: string
   from: Place
@@ -37,7 +22,6 @@ export interface AgentMark {
   severity: Severity
 }
 
-/** A mark as the field keeps it, at offsets that move with the words. */
 interface Held {
   agent: string
   from: number
@@ -46,7 +30,6 @@ interface Held {
   severity: Severity
 }
 
-/** An agent's marks replaced by these. */
 const setMarks = StateEffect.define<{ agent: string; marks: Held[] }>()
 
 const marks = StateField.define<Held[]>({
@@ -93,20 +76,17 @@ const look = EditorView.baseTheme({
   '.cm-agent-mark-info': { textDecorationColor: 'var(--accent, #66f)' },
 })
 
-/** An offset for a place, clamped to the note. */
 export function offsetOf(state: EditorState, place: Place): number {
   const doc = state.doc
   const line = doc.line(Math.min(Math.max(1, Math.floor(place.line)), doc.lines))
   return line.from + Math.min(Math.max(0, Math.floor(place.ch)), line.length)
 }
 
-/** The place an offset is at. */
 export function placeOf(state: EditorState, offset: number): Place {
   const line = state.doc.lineAt(Math.min(Math.max(0, offset), state.doc.length))
   return { line: line.number, ch: offset - line.from }
 }
 
-/** An agent's marks in a view: these, in place of the ones it had. */
 export function setAgentMarks(view: EditorView, agent: string, given: AgentMark[]): void {
   const held: Held[] = given
     .map((one) => ({
@@ -124,7 +104,6 @@ export function setAgentMarks(view: EditorView, agent: string, given: AgentMark[
   view.dispatch({ effects })
 }
 
-/** The marks in a view, an agent's or everybody's, where they are now. */
 export function agentMarksIn(view: EditorView, agent?: string): AgentMark[] {
   return (view.state.field(marks, false) ?? [])
     .filter((one) => agent === undefined || one.agent === agent)
@@ -137,7 +116,6 @@ export function agentMarksIn(view: EditorView, agent?: string): AgentMark[] {
     }))
 }
 
-/** The selections in a view, the main one first. */
 export function selectionsOf(view: EditorView): (Stretch & { text: string })[] {
   const { ranges, main } = view.state.selection
   return [main, ...ranges.filter((one) => one !== main)].map((one) => ({
@@ -147,8 +125,6 @@ export function selectionsOf(view: EditorView): (Stretch & { text: string })[] {
   }))
 }
 
-/** The view's selection set to these stretches, several carets where there are several;
- *  the first is the main one. Not scrolled: where the reader is looking stays theirs. */
 export function select(view: EditorView, stretches: Stretch[]): void {
   if (!stretches.length) return
   const ranges = stretches.map((one) =>
@@ -157,7 +133,6 @@ export function select(view: EditorView, stretches: Stretch[]): void {
   view.dispatch({ selection: EditorSelection.create(ranges, 0) })
 }
 
-/** The block a line opens folded, as the fold arrow would. Answers whether there was one. */
 export function foldLine(view: EditorView, line: number): boolean {
   const at = view.state.doc.line(Math.min(Math.max(1, line), view.state.doc.lines))
   const range = foldable(view.state, at.from, at.to)
@@ -166,7 +141,6 @@ export function foldLine(view: EditorView, line: number): boolean {
   return true
 }
 
-/** Every fold on a line opened. Answers whether there was one. */
 export function unfoldLine(view: EditorView, line: number): boolean {
   const at = view.state.doc.line(Math.min(Math.max(1, line), view.state.doc.lines))
   const effects: StateEffect<unknown>[] = []

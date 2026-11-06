@@ -24,17 +24,6 @@ import { shaped, wordsOf } from './shape'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-/** What a selection across several blocks can be told to do.
- *
- *  Emil asked for bulk actions, and what the menu had was two: duplicate and
- *  delete. Everything a reader would want to do to one block they want to do to
- *  four - turn them into a list, indent them, move them, link to them - and a menu
- *  that stopped at two was a menu saying a selection across blocks is a lesser kind
- *  of selection.
- *
- *  No DOM here: every one of these reads the document and dispatches, which is all
- *  of a view they touch. */
-
 const NOTE = [
   'First words.',
   '',
@@ -50,8 +39,6 @@ const NOTE = [
   '',
 ].join('\n')
 
-/** A view that is a state and somewhere to put a transaction. `focus` is called by
- *  every one of these and does nothing anywhere without a screen. */
 function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
   let state = parsed(
     EditorState.create({
@@ -68,11 +55,6 @@ function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
     get state() {
       return state
     },
-    // Parsed to the end after every change, not only at the start. Creating or
-    // updating a state parses for a fixed number of milliseconds and no longer, and
-    // every one of these reads the syntax tree to find its blocks: a machine busy
-    // enough to spend that budget would hand the next command a tree with no blocks
-    // in it yet, and the command would correctly do nothing. See test/parsed.ts.
     dispatch: (spec: TransactionSpec) => {
       state = parsed(state.update(spec).state)
     },
@@ -82,9 +64,6 @@ function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
   return { view, said: () => view.state.doc.toString() }
 }
 
-/** A view whose selection lies across the first three paragraphs, and the position
- *  the press landed at - inside that selection, which is what makes the rest of
- *  them act on all three. */
 function overThree(doc = NOTE) {
   const from = doc.indexOf('First')
   const to = doc.indexOf('Third words.') + 'Third words.'.length
@@ -159,8 +138,6 @@ describe('turning several blocks into something else', () => {
     expect(said().startsWith('First words.\n\nSecond words.\n\nThird words.')).toBe(true)
   })
 
-  /** Sets rather than toggles: asking for bullets twice leaves bullets, where the
-   *  key the keyboard has would have taken them off again. */
   test('asked for twice, leaves them as they are', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'bullet')
@@ -178,8 +155,6 @@ describe('turning several blocks into something else', () => {
     expect(said()).toContain('### Third words.')
   })
 
-  /** A heading is one line in markdown, so the rest of a block that becomes one is
-   *  the words under it. */
   test('and a block of several lines keeps its first line as the heading', () => {
     const doc = 'One line\nand another\n'
     const { view, said } = viewOf(doc, 0, doc.length - 1)
@@ -246,9 +221,7 @@ describe('a link to several blocks', () => {
 
     expect(targets.length).toBe(3)
     for (const target of targets) expect(target).toMatch(/^#\^[a-z0-9]+$/)
-    // Each name is written into the note, at the end of its own block.
     for (const target of targets) expect(said()).toContain(` ${target.slice(1)}`)
-    // Three different names, and the note still says what it said.
     expect(new Set(targets).size).toBe(3)
     expect(said()).toContain('First words. ')
     expect(said()).toContain('Third words. ')
@@ -400,8 +373,6 @@ describe('the two that were already there', () => {
   })
 })
 
-/** The same three from a key, which has no press position of its own: the caret is
- *  where it landed, and a selection still means every block it lies across. */
 describe('from a key', () => {
   test('duplicates the block the caret is in', () => {
     const doc = 'a\n\nb\n\nc\n'

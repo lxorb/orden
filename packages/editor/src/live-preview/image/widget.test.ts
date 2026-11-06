@@ -8,9 +8,6 @@ import { parsed } from '../../../test/parsed'
 import { nibMarkdownExtensions } from '../../markdown/extensions'
 import { livePreview } from '..'
 
-/** A picture's alt field, written on blur - which Chromium sends while the editor is
- *  still taking the field out of the page, as jsdom does not; emulated here. */
-
 const DOC = 'words\n\n![A cat](cat.png)\n\nend'
 const errors: unknown[] = []
 

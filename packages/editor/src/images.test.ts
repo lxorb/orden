@@ -3,12 +3,8 @@ import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { imageHandling, type ImageSink, receiveImages, wordsBesidePicture } from './images'
 
-/** A picture the sink is handed. Its contents are never read. */
 const PICTURE = [new File([new Uint8Array([1])], 'a.png', { type: 'image/png' })]
 
-/** A view built out of a state and a dispatch, which is all `receiveImages`
- *  reads. No DOM: what is under test is where the markdown lands, not the
- *  pointer that started it. */
 function surface(doc: string, caret: number, readOnly = false) {
   let state = EditorState.create({
     doc,
@@ -34,16 +30,12 @@ function surface(doc: string, caret: number, readOnly = false) {
   }
 }
 
-/** A sink that hands nothing back until the test says so, which is the gap a
- *  real one leaves while it writes the file into the note's folder. */
 function heldSink(): { sink: ImageSink; settle: (path: string) => void } {
   let settle: (path: string) => void = () => undefined
   const sink: ImageSink = () => new Promise((resolve) => (settle = resolve))
   return { sink, settle: (path) => settle(path) }
 }
 
-/** Two turns of the microtask queue, which is what the sink's promise and the
- *  loop awaiting it need to finish. */
 const settled = async () => {
   await Promise.resolve()
   await Promise.resolve()
@@ -63,9 +55,6 @@ describe('a dropped picture', () => {
   })
 
   test('lands where the drop point ended up after an edit above it', async () => {
-    // Writing the file is a round trip to the host, and the reader keeps typing
-    // through it. An offset taken at the drop is an offset into a document that
-    // has moved on, so it is handed to the editor and mapped like any other.
     const { sink, settle } = heldSink()
     const editor = surface('one two three\n', 0)
 
@@ -79,8 +68,6 @@ describe('a dropped picture', () => {
   })
 
   test('lands inside what is left when the note shrank under it', async () => {
-    // An undo or a restored version can take the drop point away entirely. The
-    // remembered offset was then out of range, and the insertion threw.
     const { sink, settle } = heldSink()
     const editor = surface('one two three\n', 0)
 
@@ -107,8 +94,6 @@ describe('a dropped picture', () => {
   })
 
   test('is not written at all once the note refuses changes', async () => {
-    // Reading mode would drop the insertion and let the selection through, and
-    // the selection was computed against a document that never took the text.
     const { sink, settle } = heldSink()
     const editor = surface('one two three\n', 0, true)
 

@@ -15,8 +15,6 @@ import {
   stopAskAt,
 } from './run'
 
-/** A view that is a state and a dispatch, which is all asking needs: the whole of
- *  the streaming is document arithmetic, and none of it draws anything. */
 class Fake {
   state: EditorState
 
@@ -40,7 +38,6 @@ class Fake {
     return this.state.doc.toString()
   }
 
-  /** Whether the one `ai` fence in the note is still waiting on an answer. */
   get asking(): boolean {
     return askingAt(this.state, this.text.indexOf('```ai'))
   }
@@ -49,8 +46,6 @@ class Fake {
 const NOTE = 'A note about herons.\n\n```ai\nSummarise @note\n```\n\nAfter it.\n'
 const PLAIN = 'A note.\n\n```ai\nJust the question\n```\n'
 
-/** The answers a run wrote, so a test can hold the two callbacks and finish when
- *  it likes. */
 function held() {
   let asked: AiAsk | null = null
   let ended: (() => void) | null = null
@@ -81,12 +76,6 @@ function held() {
 
 afterEach(() => setAiRunner(null))
 
-/** Waits until a finished run has tidied up: the blank space comes off the end of
- *  the answer and the run is forgotten once the promise the app returned has
- *  settled, which is a turn of the loop later.
- *
- *  Waited for rather than slept through. A fixed timeout is a test that passes on
- *  an idle machine and fails on a loaded one, which is the worst kind. */
 async function settled(view: Fake): Promise<void> {
   for (let turn = 0; turn < 200 && view.asking; turn++) {
     await new Promise((resolve) => setTimeout(resolve, 5))
@@ -273,7 +262,6 @@ describe('asking', () => {
   })
 })
 
-/** Today, spelled the way the answer line spells it. */
 function dated(): string {
   const now = new Date()
   const two = (value: number) => String(value).padStart(2, '0')

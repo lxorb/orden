@@ -1,17 +1,3 @@
-/** The selection, drawn.
- *
- *  The view is asked for the rectangles it would have painted and paints none of
- *  them; what reaches the page instead is one element per block of the
- *  selection, clipped to the outline `shape.ts` traces. That keeps the layer as
- *  cheap as the stack of rectangles it replaces - one element rather than three -
- *  and it keeps every measurement in the view's own measuring phase, so a
- *  pointer dragging a selection never reads layout on its way through.
- *
- *  `drawSelection` stays underneath it. The caret, the drag handles a phone puts
- *  on a selection, and hiding the browser's own highlight are all its work and
- *  none of it changes here. Its rectangles are the measurement this layer is
- *  drawn from, and they are the one thing it no longer shows. */
-
 import type { Extension, SelectionRange } from '@codemirror/state'
 import {
   drawSelection,
@@ -22,13 +8,8 @@ import {
 } from '@codemirror/view'
 import { type SelectionBlock, selectionBlocks, type SelectionRect } from './shape'
 
-/** How round a corner is when the theme says nothing. */
 const RADIUS = 6
 
-/** The corner the theme asks for, in pixels. Read here rather than kept in the
- *  code because it belongs with the colour it rounds, and read in the measuring
- *  phase because that is where the layout the rest of this reads is already
- *  settled. */
 function radiusOf(view: EditorView): number {
   const said = getComputedStyle(view.contentDOM).getPropertyValue('--selection-radius')
   const asked = Number.parseFloat(said)
@@ -36,10 +17,6 @@ function radiusOf(view: EditorView): number {
   return Number.isFinite(asked) ? asked : RADIUS
 }
 
-/** What the view measures for one range. The class name never reaches a page:
- *  these rectangles are a measurement and nothing else. A rectangle with no
- *  width of its own is what the view returns for an empty range, which this is
- *  never asked for. */
 function rectsFor(view: EditorView, range: SelectionRange): SelectionRect[] {
   const rects: SelectionRect[] = []
 
@@ -52,11 +29,6 @@ function rectsFor(view: EditorView, range: SelectionRange): SelectionRect[] {
   return rects
 }
 
-/** One block of one range: a box, clipped to the block's outline.
- *
- *  A path is a string, so an element that is already there is updated rather
- *  than replaced, and the block that eased in when the selection appeared keeps
- *  following the pointer without easing again. */
 class Shape implements LayerMarker {
   constructor(private readonly block: SelectionBlock) {}
 
@@ -99,9 +71,6 @@ class Shape implements LayerMarker {
 }
 
 const shapes = layer({
-  // Under the text, where the view puts its own selection: what lifts it over a
-  // block with a background of its own is the theme, and blends it there. See
-  // editor.css in @orden/themes.
   above: false,
   class: 'cm-nib-selection',
   update: (update) => update.docChanged || update.selectionSet || update.viewportChanged,
@@ -121,11 +90,6 @@ const shapes = layer({
   },
 })
 
-/** How long a selection takes to arrive. A block that appears eases in; one that
- *  is already there follows the pointer or the keys exactly, because a selection
- *  that lags behind the hand dragging it reads as the editor being busy, and
- *  fading on every change is a flicker for as long as the drag lasts. Reduced
- *  motion zeroes the duration with every other one. */
 const style = EditorView.baseTheme({
   '.cm-nib-selection-block': {
     position: 'absolute',
@@ -138,11 +102,9 @@ const style = EditorView.baseTheme({
     to: { opacity: 1 },
   },
 
-  // The view's own rectangles: measured, never shown.
   '.cm-selectionBackground': { display: 'none' },
 })
 
-/** Everything a view needs to show its selection as one smoothed block. */
 export function nibSelection(): Extension {
   return [drawSelection(), shapes, style]
 }

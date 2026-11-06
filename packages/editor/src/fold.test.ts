@@ -30,8 +30,6 @@ function state(doc: string, cursor = 0): EditorState {
   )
 }
 
-/** Runs a command and hands back what it did: whether it answered, and the state
- *  it dispatched. */
 function ran(command: StateCommand, from: EditorState): { ok: boolean; state: EditorState } {
   let next = from
   const ok = command({
@@ -58,7 +56,6 @@ describe('folding what the caret is in', () => {
   })
 
   test('folds the section the caret is inside, from a line that owns nothing', () => {
-    // The caret is in "nested", under the second heading.
     const inside = CHAPTER.indexOf('nested') + 2
     const folded = ran(toggleFold, state(CHAPTER, inside))
 
@@ -72,7 +69,6 @@ describe('folding what the caret is in', () => {
     const head = folded.state.selection.main.head
 
     expect(folded.state.doc.lineAt(head).number).toBe(5)
-    // On the heading line, which is the one line of the fold still on screen.
     expect(folded.state.doc.lineAt(head).text).toBe('## Under one')
   })
 
@@ -110,8 +106,6 @@ describe('folding everything', () => {
     const folded = ran(foldHeadings, state(CHAPTER, 0))
 
     expect(folded.ok).toBe(true)
-    // One fold per `#` heading. The `##` inside the first is already hidden by
-    // it, so folding it again would be work nobody can see.
     expect(foldLines(folded.state)).toEqual([
       [1, 7],
       [9, 11],
@@ -150,9 +144,6 @@ describe('folding everything', () => {
   })
 })
 
-/** The two level commands, as a reader presses them: one after another on the
- *  same state. Answers what was folded after every press, so a test reads as the
- *  walk it is. */
 function pressed(command: StateCommand, times: number, from: EditorState): FoldLines[][] {
   const seen: FoldLines[][] = []
   let now = from
@@ -170,9 +161,7 @@ function pressed(command: StateCommand, times: number, from: EditorState): FoldL
 describe('folding one level more', () => {
   test('takes the deepest level first, then walks out to the outline', () => {
     expect(pressed(foldMore, 4, state(CHAPTER, 0))).toEqual([
-      // The `##` section, which is the deepest thing open.
       [[5, 7]],
-      // Then both chapters, in one press: one level is one press.
       [
         [1, 7],
         [5, 7],
@@ -191,8 +180,6 @@ describe('folding one level more', () => {
   })
 
   test('counts the levels the note is written in, not the hashes', () => {
-    // A `###` straight under a `#`: the second level of this note, so the first
-    // press folds it and the second folds the chapter holding it.
     const skipped = '# One\n\n### Deep\n\nwords\n'
     expect(pressed(foldMore, 3, state(skipped, 0))).toEqual([
       [[3, 5]],
@@ -207,7 +194,6 @@ describe('folding one level more', () => {
     const list = '# One\n\n- item\n  - child\n\nafter\n'
     const walk = pressed(foldMore, 3, state(list, 0))
 
-    // The item with a child first, then the whole section.
     expect(walk[0]).toEqual([[3, 4]])
     expect(walk[1]).toEqual([
       [1, 6],
@@ -228,11 +214,7 @@ describe('folding one level less', () => {
   test('opens the shallowest level that is folded, one press at a time', () => {
     const shut = ran(foldMore, ran(foldMore, state(CHAPTER, 0)).state)
 
-    expect(pressed(foldLess, 3, shut.state)).toEqual([
-      // The chapters open; the `##` inside the first one stays folded.
-      [[5, 7]],
-      [],
-    ])
+    expect(pressed(foldLess, 3, shut.state)).toEqual([[[5, 7]], []])
   })
 
   test('walks back exactly as many presses as folded the note', () => {
@@ -261,9 +243,6 @@ describe('folding one level less', () => {
 
 describe('folds written down and put back', () => {
   test('come out in document order, however they were made', () => {
-    // The nested section first, then the whole of the chapter above it: a range
-    // set hands its chunks back in the order they were filled, not in the order
-    // of the document, and what is written down has to be the document's.
     const nested = ran(toggleFold, state(CHAPTER, CHAPTER.indexOf('nested') + 2))
     const all = ran(foldHeadings, nested.state)
 
@@ -309,7 +288,6 @@ describe('folds written down and put back', () => {
   })
 
   test('never come back over the caret', () => {
-    // The caret is in the first section, which the written-down fold covers.
     const inside = CHAPTER.indexOf('first') + 2
     expect(foldLines(withFolds(state(CHAPTER, inside), [[1, 7]]))).toEqual([])
   })
@@ -320,9 +298,6 @@ describe('folds written down and put back', () => {
   })
 })
 
-/** The one fold the file itself carries: Obsidian's `-` after a callout's type.
- *  Orden never writes the sign and never rewrites it, so it says how the note
- *  opens rather than how it is. */
 describe('a callout the note says is shut', () => {
   const SHUT = [
     '# One',
@@ -401,13 +376,6 @@ describe('two sets of folds', () => {
   })
 })
 
-/** An indented block: a paragraph or a run of code that starts two spaces or a tab
- *  in, which Obsidian folds the way it folds a list item's children.
- *
- *  The language already answers for one - it has a fold prop for every block that
- *  is not a heading or a list - so the whole of this is which lines get asked; see
- *  `foldOpenedBy`. The chevron, the two levels and the toggle all ask that one
- *  question, which is why folding one line proves all three. */
 describe('an indented block', () => {
   const INDENTED =
     '# Notes\n\nPlain.\n\n  an indented block\n  a second line\n  a third\n\nAfter.\n'
@@ -420,7 +388,6 @@ describe('an indented block', () => {
       from: built.doc.line(5).to,
       to: built.doc.line(7).to,
     })
-    // The lines under it are the fold's, not folds of their own.
     expect(foldOpenedBy(built, built.doc.line(6))).toBe(null)
     expect(foldOpenedBy(built, built.doc.line(3))).toBe(null)
   })
@@ -470,16 +437,12 @@ describe('an indented block', () => {
     expect(foldLines(again)).toEqual([[5, 7]])
   })
 
-  /** A plain paragraph is not an indented block, whatever the library would fold:
-   *  a note is read down its left edge, and a chevron beside every paragraph of it
-   *  is a map of nothing. */
   test('leaves an unindented paragraph alone', () => {
     const plain = state('# Notes\n\none line\nand another\n\nAfter.\n')
 
     expect(foldOpenedBy(plain, plain.doc.line(3))).toBe(null)
   })
 
-  /** The line under a list item's marker belongs to the item's own fold. */
   test('leaves what a list item already folds alone', () => {
     const listed = state('- item\n  continued\n- another\n')
 

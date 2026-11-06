@@ -6,17 +6,12 @@ import { lineBeside, type Side, tableAt, tableCrossed } from './navigation'
 import type { Landing } from './view'
 import { tableViewAt } from './widget'
 
-/** A key that would carry the caret over a rendered table instead walks it
- *  into the table, into the cell nearest to where it was. The editor's own
- *  motion is asked where it would go; a table in the way is the signal. */
 function walkInto(
   side: Side,
   move: (view: EditorView, range: SelectionRange) => SelectionRange,
   where: (view: EditorView) => Landing,
 ): Command {
   return (view) => {
-    // One caret only. A column of them crossing a table would take the arrow
-    // key away from every one of them to walk the main one into a cell.
     if (view.state.selection.ranges.length > 1) return false
 
     const range = view.state.selection.main
@@ -29,9 +24,6 @@ function walkInto(
   }
 }
 
-/** Where the caret is, so the cell it lands in is the one straight below or
- *  above it. A run of vertical moves remembers the column it set out from,
- *  and that wins over a blank line's start. */
 function caretX(view: EditorView): Landing {
   const { head, goalColumn } = view.state.selection.main
   if (goalColumn !== undefined)
@@ -46,23 +38,18 @@ const up = (view: EditorView, range: SelectionRange) => view.moveVertically(rang
 const forward = (view: EditorView, range: SelectionRange) => view.moveByChar(range, true)
 const backward = (view: EditorView, range: SelectionRange) => view.moveByChar(range, false)
 
-/** Inserts a table and starts on its first cell, the way Typora does. */
 export const insertTableToEdit: Command = (view) => {
   insertTable()(view)
 
   const span = tableAt(view.state, view.state.selection.main.head)
   if (!span) return true
 
-  // The caret has to be off the table's text for the table to render.
   const line = lineBeside(view.state, span, 'below')
   view.dispatch({ changes: line.changes, selection: { anchor: line.from } })
   tableViewAt(view, span.from)?.focusCell({ row: -1, column: 0 }, 'all')
   return true
 }
 
-/** Every one of these gives way when there is no table where it is looking,
- *  so they share their keys with the editor's own motion rather than taking
- *  them over. See `contextual` in shortcuts.ts. */
 export const tableBindings: BindingSpec[] = [
   { id: 'table.below', key: 'ArrowDown', run: walkInto('above', down, caretX), contextual: true },
   { id: 'table.above', key: 'ArrowUp', run: walkInto('below', up, caretX), contextual: true },
@@ -78,8 +65,6 @@ export const tableBindings: BindingSpec[] = [
     run: walkInto('below', backward, () => 'end'),
     contextual: true,
   },
-  // Deleting into a table from beside it would tear a row; stepping in is
-  // what was meant.
   {
     id: 'table.delete',
     key: 'Delete',

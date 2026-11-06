@@ -53,9 +53,6 @@ describe('a table of contents', () => {
   })
 
   test('is different when a heading moved', () => {
-    // Each entry's link carries the position it scrolls to, so a heading that
-    // slid down the document needs a new one. Held equal, the rendered list
-    // would keep sending the reader to where the heading used to be.
     const before = headings(state('# One\n\n## Two\n'))
     const after = headings(state('a new line\n\n# One\n\n## Two\n'))
 

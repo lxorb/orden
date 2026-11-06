@@ -38,12 +38,6 @@ import { clearFormatting, marksAcross } from './marks'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
-/** One command over one document, and everything a test might ask about the
- *  result: whether it took the keystroke, what the note became, and where the
- *  caret ended up.
- *
- *  Takes the selection as offsets, because a task list and a footnote are written
- *  with the very brackets the markers below use. */
 function apply(
   command: StateCommand,
   doc: string,
@@ -71,8 +65,6 @@ function apply(
   }
 }
 
-/** A document with the selection written into it: `|` is the caret, `[` and `]`
- *  are the ends of a selection. */
 function marks(marked: string): { doc: string; from: number; to: number } {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[[\]|]/g, '')
@@ -81,14 +73,11 @@ function marks(marked: string): { doc: string; from: number; to: number } {
   return { doc, from: marked.indexOf('['), to: marked.indexOf(']') - 1 }
 }
 
-/** Runs a command against a marked document and returns the resulting text. */
 function run(command: StateCommand, marked: string): string {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).doc
 }
 
-/** A state with the caret at an offset, for the two things here that read a state
- *  rather than command one. */
 function stateOf(doc: string, at: number): EditorState {
   return parsed(
     EditorState.create({
@@ -99,21 +88,15 @@ function stateOf(doc: string, at: number): EditorState {
   )
 }
 
-/** A command over a document with the caret at an offset. The marked-document
- *  helpers above cannot be used on a callout: they strip the very brackets a callout
- *  is written with. */
 function at(command: StateCommand, doc: string, offset: number): string {
   return apply(command, doc, offset).doc
 }
 
-/** Whether the command took the keystroke at all, which is how one that gives way
- *  can share a key with another. */
 function took(command: StateCommand, marked: string): boolean {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).took
 }
 
-/** Same, but reports the selection so caret placement can be checked. */
 function runSelection(command: StateCommand, marked: string): [number, number] {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).selection
@@ -186,11 +169,6 @@ describe('inline wrapping', () => {
     expect(run(toggleWrap('<u>', '</u>'), '[x]')).toBe('<u>x</u>')
   })
 
-  /** Select All takes the line break at the end of a note, and a triple click the
-   *  one after its line, and the markers went round that too: `**word` on one line
-   *  and `**` on the next, which Markdown reads as two runs of stars and nothing
-   *  bold. The space and the break at either edge stay outside, as Obsidian and
-   *  Typora leave them. */
   test('leaves the space and the line break at either edge outside the markers', () => {
     expect(run(strong, '[word\n]')).toBe('**word**\n')
     expect(run(strong, 'a[ word ]b')).toBe('a **word** b')
@@ -222,9 +200,6 @@ describe('headings', () => {
     expect(run(setHeading(0), '### |Title')).toBe('Title')
   })
 
-  /** The key that made a heading unmakes it, which is what every other format key
-   *  on the keyboard already does - and why Paragraph needs no chord of its own; see
-   *  keymap.ts. */
   test('the level a line already is turns it back into a paragraph', () => {
     expect(run(setHeading(2), '## |Title')).toBe('Title')
     expect(run(setHeading(1), '# |Title')).toBe('Title')
@@ -235,9 +210,6 @@ describe('headings', () => {
     expect(run(setHeading(2), '### |Title')).toBe('## Title')
   })
 
-  /** All of them or none, over a selection - the rule the line prefixes already
-   *  follow: a run where one line is short of the level becomes headings, and a run
-   *  that is already all of that level becomes prose. */
   test('over several lines, all of them or none', () => {
     expect(run(setHeading(2), '[## One\nTwo]')).toBe('## One\n## Two')
     expect(run(setHeading(2), '[## One\n## Two]')).toBe('One\nTwo')
@@ -265,23 +237,16 @@ describe('line prefixes', () => {
     expect(run(toggleBulletList, '- |item')).toBe('item')
   })
 
-  // The indent is what nests an item under the one above it, so a bullet that is
-  // traded or taken off leaves it where it was: a list made over a selection that
-  // already holds a nested item keeps that item nested.
   test('keeps a nested bullet nested when the list is made over it', () => {
     const doc = '- a\n  - b\nc'
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n  - b\n- c')
   })
 
-  // And a task's box is part of what makes the line a list item, so taking the list
-  // off takes the box with the bullet, rather than leaving `[ ]` in the words.
   test('takes off a nested bullet and a task box without the indent', () => {
     const doc = '- a\n  - [ ] b\n  - c'
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n  b\n  c')
   })
 
-  // Shift+Down, a triple click and Mod-L leave the selection at the start of the
-  // next line, which the caret is in front of, not in.
   test('leaves the line a selection ends in front of', () => {
     expect(apply(toggleBulletList, 'a\nb\nc', 0, 4).doc).toBe('- a\n- b\nc')
     expect(apply(setHeading(2), 'a\nb\nc', 0, 2).doc).toBe('## a\nb\nc')
@@ -449,7 +414,6 @@ describe('select word', () => {
 })
 
 describe('pressing Enter after a code fence', () => {
-  /** Whether the command took the key, and what the document became. */
   function press(marked: string): { took: boolean; doc: string } {
     const caret = marked.indexOf('|')
     const doc = marked.replace(/\|/g, '')
@@ -521,8 +485,6 @@ describe('a task list', () => {
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('one\ntwo')
   })
 
-  // The `>` says the line is in a quote, and a box in front of it would take the
-  // line out of the quote and make a task of a line that starts with `>`.
   test('puts the box inside a quote, and takes it off again', () => {
     expect(run(toggleTaskList, '> |c')).toBe('> - [ ] c')
     expect(at(toggleTaskList, '> - [ ] c', 8)).toBe('> c')
@@ -549,7 +511,6 @@ describe('ticking the task under the caret', () => {
     expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [x] two')
   })
 
-  /** Obsidian's Ctrl+Enter: the first press makes the task, the next ticks it. */
   test('makes a task of words, a bullet, a number or an empty line', () => {
     expect(run(toggleTask, 'just words|')).toBe('- [ ] just words')
     expect(run(toggleTask, '  - a bullet|')).toBe('  - [ ] a bullet')
@@ -568,21 +529,16 @@ describe('ticking the task under the caret', () => {
     expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [ ] two')
   })
 
-  /** Which is what lets it share Ctrl+Enter with running a code fence, and leaves the
-   *  library's line below to the lines a box cannot go on. */
   test('gives way in code, a heading, a quote and a table', () => {
     expect(took(toggleTask, '```\n- [ ] still code|\n```')).toBe(false)
     expect(took(toggleTask, '```py\nprint()|\n```')).toBe(false)
     expect(took(toggleTask, '# A heading|')).toBe(false)
     expect(took(toggleTask, '> quoted|')).toBe(false)
-    // Offsets rather than marks, because a table is written with the caret's mark.
     const table = '| a | b |\n| - | - |\n| 1 | 2 |'
     expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
   })
 })
 
-/** Enter in Vim's normal mode, which ticks a task and is Vim's own on every other line;
- *  see vim-mode.ts. */
 describe('ticking the task the caret is on, and nothing else', () => {
   test('ticks an empty box and clears a ticked one, wherever on the line the caret is', () => {
     expect(apply(tickTaskAtCaret, '- [ ] wash up', 0).doc).toBe('- [x] wash up')
@@ -672,13 +628,6 @@ describe('a footnote', () => {
   })
 })
 
-/** The fold sign on a callout, written rather than typed by hand.
- *
- *  `insertCallout` writes no sign and should not: most callouts are not folded, and a
- *  sign in every one of them would be punctuation nobody asked for. So the two rows in
- *  the menu put one there - `+` for a callout that may be folded, which is what
- *  Obsidian reads, and `-` for one that opens shut, which Orden reads on the way in. See
- *  callouts.ts in @orden/markdown. */
 describe('a callout is asked to fold', () => {
   const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
 

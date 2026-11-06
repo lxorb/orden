@@ -1,20 +1,3 @@
-/** A note's cover, drawn across the top of it while it is being written.
- *
- *  Not a block like the others here. Every other widget in this folder replaces
- *  its own source and gives it back the moment the caret lands inside; a cover has
- *  no source of its own on the page - it is two keys of front matter - and a band
- *  of picture that disappeared whenever somebody put the caret in the metadata
- *  would be the one thing on the page that flickers. So it is a widget *inserted*
- *  before the front matter rather than a replacement of anything, and the YAML
- *  under it behaves exactly as it did: rows while the caret is elsewhere, source
- *  the moment it is inside.
- *
- *  Dragging it up and down writes `cover-position` - which part of the picture the
- *  band is taken from - back into the front matter, as one whole number. One
- *  document change per drag, on release: a change per pointer event would be a
- *  hundred undo steps for one gesture. Arrow keys do the same in fives, because a
- *  picture nobody can drag is a picture nobody can place. */
-
 import type { EditorView } from '@codemirror/view'
 import { COVER_MIDDLE, COVER_POSITION_KEY, type Cover, coverOf } from '@orden/markdown/cover'
 import { frontMatterEdit } from '@orden/markdown/front-matter'
@@ -23,28 +6,17 @@ import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
 import { NibWidget } from './widget'
 
-/** How far one arrow key moves the band, in percent. Five is a nudge you can see
- *  and twenty presses from end to end, which is a control rather than a slider. */
 const STEP = 5
 
-/** The position, clamped, as a whole number. */
 function inside(value: number): number {
   return Math.min(100, Math.max(0, Math.round(value)))
 }
 
-/** Writes the band's position into the note, or nothing where it is already
- *  there. The middle is written as any other number: a reader who dragged a cover
- *  back to the middle asked for the middle, and taking the key away again would be
- *  the app deciding the gesture did not happen. */
 function writePosition(view: EditorView, position: number) {
   const source = view.state.doc.toString()
   const edit = frontMatterEdit(source, COVER_POSITION_KEY, String(position))
   if (!edit) return
 
-  // And the caret out of the metadata, for the reason the rows beside this need the
-  // same: a note opened at the top has a caret at 0, and the first thing written from
-  // a widget would otherwise turn the rows under the band into YAML. See
-  // front-matter.ts.
   const keep = clearOfBlock(view, applied(source, edit))
   view.dispatch({
     changes: edit,
@@ -62,22 +34,11 @@ export class CoverWidget extends NibWidget {
     return other.cover.src === this.cover.src && other.cover.position === this.cover.position
   }
 
-  /** Kept off the height of a line: a band of picture is not text, and asking
-   *  CodeMirror to guess at it makes it scroll in jumps. What the block measures at
-   *  the defaults: the band's `--cover-height` (tokens.css) and the 1.8em under it
-   *  (document.css) at the 16.5px a note's text starts at. */
   override get estimatedHeight() {
     return 230
   }
 
   toDOM(view: EditorView) {
-    // The band inside a box of its own, and the box is what the editor is handed.
-    // CodeMirror finds the line under a click from the heights it measured, and it
-    // measures a block by its border box: the room under the band is a margin in
-    // document.css, which is outside that box, so with the band as the block every
-    // line below it sat that margin lower on the screen than CodeMirror had it, and
-    // a click was taken for the line under the one clicked. A box that holds its
-    // child's margins (editor.css) measures the band and the room under it as one.
     const host = document.createElement('div')
     host.className = 'nib-cover-block'
 
@@ -92,14 +53,6 @@ export class CoverWidget extends NibWidget {
     picture.style.objectPosition = `50% ${this.cover.position}%`
     band.append(picture)
 
-    // A handle rather than the picture itself, so a drag over a cover is a drag of
-    // the cover and never a selection of the text under it.
-    //
-    // A slider and not a button: what it does has a value - how far down the picture
-    // the band is taken from - rather than a press, and a slider is the one thing in
-    // the tab order that says so and that a keyboard already knows the arrow keys for.
-    // A button here would be a promise that Enter does something, and Enter has
-    // nothing to do with placing a picture.
     const handle = document.createElement('div')
     handle.className = 'nib-cover-drag'
     handle.tabIndex = 0
@@ -115,9 +68,6 @@ export class CoverWidget extends NibWidget {
     let from = this.cover.position
     let at: number | null = null
 
-    /** What the picture is showing, without writing anything down: the drag has to
-     *  be seen while the button is held, and one document change per pointer event
-     *  would be one undo step per pointer event. */
     const show = (position: number) => {
       picture.style.objectPosition = `50% ${position}%`
       handle.setAttribute('aria-valuenow', String(position))
@@ -125,8 +75,6 @@ export class CoverWidget extends NibWidget {
 
     const moved = (event: PointerEvent) => {
       if (at === null) return
-      // Across the picture's own height, so dragging the whole band moves the
-      // whole way through the picture however tall it is drawn.
       const height = picture.clientHeight || 1
       show(inside(from + ((at - event.clientY) / height) * 100))
     }
@@ -164,11 +112,6 @@ export class CoverWidget extends NibWidget {
     handle.addEventListener('pointercancel', lifted)
     handle.addEventListener('keydown', keyed)
 
-    // And measured again whenever its height changes on its own: a picture arriving
-    // late where a theme lets it take its own shape, the text size under an `em`, a
-    // narrow window's shorter band. Nothing in the document changed, so nothing else
-    // would tell CodeMirror, and whatever reads the heights it last measured - a drop,
-    // a hover, a scroll - would find every line under the band where it used to be.
     const resized =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => view.requestMeasure()) : null
     resized?.observe(host)
@@ -185,8 +128,6 @@ export class CoverWidget extends NibWidget {
     return host
   }
 
-  /** The widget runs its own dragging, so CodeMirror should not read the pointer
-   *  events inside it as a selection being made in the document. */
   override ignoreEvent() {
     return true
   }

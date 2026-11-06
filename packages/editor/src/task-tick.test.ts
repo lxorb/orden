@@ -6,9 +6,6 @@ import { afterEach, expect, test } from 'vitest'
 import { toggleTask } from './commands'
 import { noteIndex, type TaskHelp } from './wikilink/notes'
 
-/** Ctrl+Enter on tasks in a real view, with the note changed between the press and the
- *  tick's arrival (#526): the lines it was pressed on are not taken from another note. */
-
 const HELP: TaskHelp = {
   tick(note, line) {
     const from = note.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)

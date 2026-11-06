@@ -9,18 +9,8 @@ import { delimitedToTable, pastedMarkdown } from './paste'
 import { placed, plainly } from './paste-place'
 import { linkedPaste } from './paste-link'
 
-// The renderer a copy writes its HTML with is fetched by the first selection; a test
-// has none, so it waits for it here.
 beforeAll(() => readyToCopy())
 
-/** The conversion itself is `@orden/markdown/from-html`, tested there. What is
- *  tested here is the choosing: a clipboard carries two flavours at once, and
- *  which of them a paste reads decides what lands in the note.
- *
- *  Awaited, because the converter is fetched the first time a page is pasted and not
- *  before - so what a clipboard comes to is an answer rather than a value. The two
- *  flavours that need nothing fetched are still settled in the call: a spreadsheet,
- *  and a clipboard with no HTML on it at all. */
 describe('what a clipboard comes to', () => {
   test('a page arrives as markdown', async () => {
     await expect(pastedMarkdown('<h2>Title</h2>', 'Title')).resolves.toBe('## Title')
@@ -42,12 +32,6 @@ describe('what a clipboard comes to', () => {
   })
 })
 
-/** A copy out of this app puts both flavours on the clipboard itself - the note's
- *  own markdown, and the same words drawn; see copy.ts. The markdown is the better
- *  of the two, because it is what the note says down to the character, and a
- *  drawing is a one-way trip: converting one back guesses at the source it was
- *  made from and lands beside it. A formula is where it landed furthest, arriving
- *  as the symbols it had been drawn as. */
 describe('a clipboard this app filled itself', () => {
   function copied(note: string) {
     const state = EditorState.create({
@@ -61,8 +45,6 @@ describe('a clipboard this app filled itself', () => {
 
   test('is pasted as the markdown that was copied, character for character', async () => {
     const note = String.raw`$$B_r(x) := \left\{ y \in \mathbb{R}^n \;\middle|\; \|x - y\| < r \right\}$$`
-    // The engine, so that the HTML beside it is the drawing a copy really carries
-    // rather than the source a copy falls back to before one has been loaded.
     await loadFor(note)
     const { html, text } = copied(note)
 
@@ -94,8 +76,6 @@ describe('pasting spreadsheet cells', () => {
   })
 
   test('two sentences that happen to have a comma each are not a table', () => {
-    // One comma per line is a sentence, and pasting prose was turning it into a
-    // two-column table. A spreadsheet's tabs still settle it outright.
     expect(delimitedToTable('Hello, world\nGoodbye, world')).toBeNull()
     expect(delimitedToTable('Yes, it is\nNo, it is not')).toBeNull()
     expect(delimitedToTable('a\tb\n1\t2')).toContain('| a | b |')
@@ -123,13 +103,7 @@ describe('pasting spreadsheet cells', () => {
   })
 })
 
-/** An address pasted over selected words makes a link of them, and nothing else
- *  does: a paste with no selection, a paste of more than an address, and a paste
- *  into code or into a link that is already there all go in as they stand. */
 describe('an address pasted over a selection', () => {
-  /** What the note becomes, or null where the paste is left to go in as it stands.
-   *  `«` and `»` in `marked` are the ends of the selection, since a link is written
-   *  with the brackets. */
   function pasted(marked: string, text: string): string | null {
     const from = marked.indexOf('«')
     const to = marked.indexOf('»') - 1

@@ -10,11 +10,6 @@ import { propertiesMode } from './hidden-front-matter'
 import { newProperty, openProperties, propertiesOpen, showProperties } from './properties'
 import { livePreview } from '.'
 
-/** A note's front matter as the strip at the top of the note (#1120): one line
- *  folded, the rows open, and the two commands that reach it now that no panel
- *  beside the note does. The controls in the rows are driven in the built app by
- *  apps/desktop/test/e2e/properties.py. */
-
 const NOTE = '---\ntitle: A note\ntags: [one, two]\n---\n\n# A note\n\nWords.\n'
 const PAGE = NOTE.indexOf('# A note')
 
@@ -75,7 +70,6 @@ describe('the properties strip', () => {
     expect(view.state.field(propertiesOpen)).toBe(true)
     expect(rows(view)).toEqual(['title', 'tags'])
     expect(strip(view)?.querySelector('.nib-property-add')).not.toBeNull()
-    // Opening is how the note is read, not a change to it.
     expect(view.state.doc.toString()).toBe(NOTE)
 
     press()

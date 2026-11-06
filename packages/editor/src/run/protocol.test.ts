@@ -47,10 +47,8 @@ describe('reading a message from the sandbox', () => {
   })
 })
 
-/** A frame script standing in for the real one, which is the frame's business. */
 const SCRIPT = 'window.ranTheFrameScript = true'
 
-/** A document for this code, and the program in it the frame script evaluates. */
 const made = (code: string, run = 1) => runnerDocument(code, run, SCRIPT)
 const programOf = (html: string) =>
   /<script type="text\/plain" id="nib-frame">([\s\S]*?)<\/script>/.exec(html)?.[1]
@@ -64,18 +62,12 @@ describe('the document the sandbox runs', () => {
 
   test('runs nothing inline but the frame script: the program is text it evaluates', () => {
     const html = made('1 + 1')
-    // Every script element is either the program, which no browser executes, or
-    // the frame script, which the app's policy - inherited by the frame - allows
-    // by its hash and which is the only inline script it allows.
     const scripts = [...html.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
     expect(scripts).toEqual(['type="text/plain" id="nib-frame"', ''])
     expect(html).toContain(`<script>${SCRIPT}</script>`)
     expect(html.indexOf('nib-frame')).toBeLessThan(html.indexOf(`<script>${SCRIPT}`))
   })
 
-  /** In WebKit a frame shares the app's thread, and code that never ended froze the
-   *  app with the timer that was to stop it (#525): the code runs in a worker the frame
-   *  makes, a thread of its own everywhere, which the frame's policy has to allow. */
   test('runs the code in a worker of its own, which its policy allows', () => {
     const html = made('while (true) {}')
     expect(html).toContain('worker-src blob:')
@@ -93,8 +85,6 @@ describe('the document the sandbox runs', () => {
   })
 
   test('is JavaScript that compiles, embedded formatter and all', () => {
-    // The program is written as text, so nothing type checks it. Compiling it
-    // here catches a stray backtick or a broken embedding before it ships.
     const body = programOf(made("console.log('hi')"))
     expect(body).toBeDefined()
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- compiling the script is how a stray backtick is caught
@@ -103,7 +93,6 @@ describe('the document the sandbox runs', () => {
 
   test('cannot be escaped from by code that closes the script element', () => {
     const html = made('const tag = "</script><script>alert(1)</script>"')
-    // Two script elements: the program and the frame script, both this file's.
     expect(html.match(/<\/script>/g)).toHaveLength(2)
     expect(html).not.toContain('alert(1)</script>')
   })

@@ -3,8 +3,6 @@ import { EditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import { markTags } from './markdown/tags'
 
-/** Chrome for the editor itself. Everything visual reads from the theme tokens,
- *  so swapping a theme restyles the editor without touching this file. */
 export const nibTheme = EditorView.theme({
   '&': {
     height: '100%',
@@ -25,10 +23,6 @@ export const nibTheme = EditorView.theme({
     borderLeftColor: 'var(--accent)',
     borderLeftWidth: '2px',
   },
-  // The editor paints the selection itself, as one block per range; see
-  // selection/layer.ts, which carries its colour with it. The browser's own
-  // highlight has to be turned off inside the editor, or the two stack and the
-  // words under them wash out.
   '.cm-content ::selection, .cm-content::selection': {
     backgroundColor: 'transparent',
   },
@@ -49,9 +43,6 @@ export const nibTheme = EditorView.theme({
 })
 
 export const nibHighlightStyle = HighlightStyle.define([
-  // Size and leading belong to the line (see editor.css), not to the heading's
-  // token: inline code in a heading is a token of its own, and a size set here
-  // would leave it at paragraph size inside a title.
   { tag: tags.heading1, fontWeight: '620' },
   { tag: tags.heading2, fontWeight: '620' },
   { tag: tags.heading3, fontWeight: '620' },
@@ -73,9 +64,5 @@ export const nibHighlightStyle = HighlightStyle.define([
   { tag: markTags.math, fontFamily: 'var(--font-mono)', color: 'var(--muted-strong)' },
   { tag: markTags.footnote, color: 'var(--accent)', fontSize: '0.8em', verticalAlign: 'super' },
   { tag: markTags.frontMatter, fontFamily: 'var(--font-mono)', color: 'var(--muted)' },
-  // The ink alone: the pill is the preview's, so source mode shows a tag undressed.
   { tag: markTags.hashtag, color: 'var(--tag)' },
 ])
-
-// Code fences are coloured separately, in `code-theme.ts`, so the syntax theme
-// can be chosen independently of the one the document is written in.

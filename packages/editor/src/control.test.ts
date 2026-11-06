@@ -3,7 +3,6 @@ import { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { refuseControlCharacters, unprintable } from './control'
 
-/** Whether any input handler claims the typing, which is what keeps it out. */
 function refused(typed: string): boolean {
   const state = EditorState.create({ extensions: [refuseControlCharacters()] })
   const view = { state } as unknown as EditorView

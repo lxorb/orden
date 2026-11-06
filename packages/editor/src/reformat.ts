@@ -5,18 +5,8 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { nibMarkdownParser } from './markdown/extensions'
 import { parseTable, serializeTable } from './table/model'
 
-/** Which lines are code comes from @orden/markdown/fences, the same reading the
- *  renderer and the comment stripper use. The mark matters, not just the shape: a
- *  `~~~` in the middle of a ``` block is code, and reading it as a fence would
- *  end the block early and let the rest of it be rewritten as prose. */
-
-/** What else is written to be read exactly, as the parser finds it: code, maths, raw
- *  HTML, a rule, and the spaces that end a line with a hard break. `* * *` is a rule
- *  rather than a list item, and two spaces at the end of a line are a line break, so
- *  `tidy` is kept away from the characters these are spelled with. */
 const VERBATIM = new Set([
   'CodeBlock',
-  // In a quote or a list item, where the walk below does not look.
   'FencedCode',
   'InlineCode',
   'BlockMath',
@@ -34,8 +24,6 @@ const VERBATIM = new Set([
   'LinkReference',
 ])
 
-/** Tidies a document without changing what it means: dashes for stars, one emphasis
- *  style, pipe-aligned tables, and no runs of blank lines. */
 export function reformat(source: string): string {
   const lines = source.split('\n')
   const out: string[] = []
@@ -46,10 +34,6 @@ export function reformat(source: string): string {
   let index = 0
   let blanks = 0
 
-  // YAML is not markdown, so front matter is copied through untouched. Its
-  // values are full of the characters `tidy` rewrites - an `_id_` in a title,
-  // a `* ` starting a list item - and rewriting them changes what the note
-  // says about itself.
   const matter = readFrontMatter(source)
   if (matter) {
     out.push(...lines.slice(0, matter))
@@ -62,9 +46,6 @@ export function reformat(source: string): string {
 
     const mark = fenceMark(line)
     if (mark) {
-      // Code is copied through exactly as written, closing fence and all. A
-      // block nothing closes runs to the end of the note, which is what the
-      // parser does with it too.
       out.push(line)
       index += 1
       while (index < lines.length) {
@@ -97,21 +78,15 @@ export function reformat(source: string): string {
     index += 1
   }
 
-  // Exactly one trailing newline.
   while (out.length && !(out.at(-1) ?? '').trim()) out.pop()
   return `${out.join('\n')}\n`
 }
 
-/** How many lines the document's front matter takes, or null when it has none.
- *  The same test the parser makes (see `FrontMatter` in markdown/constructs.ts) so
- *  that the two agree on what a leading `---` is. */
 function readFrontMatter(source: string): number | null {
   const block = frontMatterBlock(source)
   return block && source.slice(0, block.close).split('\n').length
 }
 
-/** The lines the parser starts a table on: not in code, a comment or HTML, and not
- *  in a quote or a list item, whose markers the serialiser would drop. */
 function tableStarts(tree: Tree, lines: readonly string[]): Set<number> {
   const starts = new Set<number>()
   tree.iterate({
@@ -132,7 +107,6 @@ function tableStarts(tree: Tree, lines: readonly string[]): Set<number> {
   return found
 }
 
-/** A table starting at `start`, already re-aligned, or null. */
 function readTable(lines: string[], start: number): { text: string; next: number } | null {
   if (!lines[start]?.includes('|')) return null
 
@@ -150,9 +124,6 @@ function readTable(lines: string[], start: number): { text: string; next: number
   return { text: serializeTable(model), next: end }
 }
 
-/** For each line, the stretches of it the parser says are `VERBATIM`, from and to
- *  within the line. A blank line inside one, in a comment or between two lines of
- *  code, has one that is empty. */
 function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
   const ranges: [number, number][] = []
   tree.iterate({
@@ -187,31 +158,21 @@ function markersOfNeighbours(list: SyntaxNode, ranges: [number, number][]) {
   }
 }
 
-/** `tidy`, leaving the `kept` stretches of the line as they are. Every rewrite it
- *  makes keeps the line's length but the trimming of its end, so a kept character can
- *  be hidden behind an `x` - whitespace staying whitespace, so what is around it reads
- *  the same - and put back at the same place afterwards. */
 function tidyAround(line: string, kept: readonly [number, number][]): string {
   const isKept = (at: number) => kept.some(([from, to]) => at >= from && at < to)
   const tidied = tidy(line.replace(/\S/g, (char, at: number) => (isKept(at) ? 'x' : char)))
-  // What `tidy` trimmed off the end reads as nothing.
   return line.replace(/[^]/g, (char, at: number) => (isKept(at) ? char : tidied.charAt(at)))
 }
 
 function tidy(line: string): string {
-  return (
-    line
-      .replace(/^(\s*)\*(\s+)/, '$1-$2')
-      // Underscore emphasis becomes asterisk, which nests more predictably.
-      .replace(/(^|[\s(])__(\S(?:[^_]*\S)?)__(?=[\s).,;:!?]|$)/g, '$1**$2**')
-      .replace(/(^|[\s(])_(\S(?:[^_]*\S)?)_(?=[\s).,;:!?]|$)/g, '$1*$2*')
-      // Setext-style trailing hashes on a heading add nothing.
-      .replace(/^(#{1,6}\s+.*?)\s+#+\s*$/, '$1')
-      .replace(/[ \t]+$/, '')
-  )
+  return line
+    .replace(/^(\s*)\*(\s+)/, '$1-$2')
+    .replace(/(^|[\s(])__(\S(?:[^_]*\S)?)__(?=[\s).,;:!?]|$)/g, '$1**$2**')
+    .replace(/(^|[\s(])_(\S(?:[^_]*\S)?)_(?=[\s).,;:!?]|$)/g, '$1*$2*')
+    .replace(/^(#{1,6}\s+.*?)\s+#+\s*$/, '$1')
+    .replace(/[ \t]+$/, '')
 }
 
-/** Rewrites the whole document, keeping the caret where it was. */
 export const reformatDocument: StateCommand = ({ state, dispatch }) => {
   const source = state.doc.toString()
   const tidied = reformat(source)

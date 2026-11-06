@@ -4,8 +4,6 @@ import type { EditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import { once } from './once'
 
-/** The colours a code fence needs. Kept apart from the document's own styling
- *  so a code theme can be chosen without changing how prose looks. */
 export interface CodePalette {
   id: string
   name: string
@@ -19,16 +17,6 @@ export interface CodePalette {
   property: string
 }
 
-/** Reads the app theme's own tokens, so this one changes with the app.
- *
- *  The four the palette has no name for read `--syntax-*`, which tokens.css
- *  declares per scheme: that is how a theme reaches the syntax in a fence, which
- *  is the whole of why those four are tokens. Everything else here already
- *  follows a token any theme restates.
- *
- *  The hex behind each is still the colour it has always been, for a page wearing
- *  this editor without @orden/themes under it - this package does not depend on
- *  that one. */
 const FOLLOW: CodePalette = {
   id: 'follow',
   name: 'Follow the theme',
@@ -104,24 +92,12 @@ function codeHighlightStyle(palette: CodePalette) {
       color: palette.comment,
       fontStyle: 'italic',
     },
-    // A name where it is given, which in a key=value fence is the key: the
-    // properties mode calls it `def`, and CodeMirror reads that as a defined
-    // variable. Measured on 06.09.2026 against real fences: in a `.env`,
-    // `.conf` or `.gitconfig` the value was coloured and the key was not,
-    // because nothing here reached this tag. It also tints the name in
-    // `const total` or a parameter list, which is the same thing said in a
-    // language that has more to say. It stands above the function rule on
-    // purpose: a function's name is given too, and it stays a function.
     { tag: tags.definition(tags.variableName), color: palette.property },
     { tag: [tags.function(tags.variableName), tags.labelName], color: palette.function },
     { tag: [tags.typeName, tags.className, tags.namespace], color: palette.type },
     { tag: [tags.operator, tags.punctuation], color: palette.punctuation },
     { tag: tags.propertyName, color: palette.property },
     { tag: tags.invalid, color: 'var(--danger)' },
-    // A diff says added and removed, not keyword and string, so these two take
-    // the theme's own words for it rather than a palette entry: green and red
-    // are what the fence means, in every palette. Until now they were the one
-    // fence a code theme left entirely grey.
     { tag: tags.inserted, color: 'var(--success)' },
     { tag: tags.deleted, color: 'var(--danger)' },
   ])
@@ -133,9 +109,6 @@ function paletteById(id: string): CodePalette {
 
 const codeTheme = new Compartment()
 
-/** Built once per palette: reconfiguring with a freshly built highlighter drops
- *  the highlighting on screen and works it out again, and the palette is only
- *  ever one of a handful. See once.ts. */
 const highlightingFor = once((id: string): Extension =>
   syntaxHighlighting(codeHighlightStyle(paletteById(id))),
 )
@@ -144,8 +117,6 @@ export function codeThemeExtension(id = 'follow'): Extension {
   return codeTheme.of(highlightingFor(id))
 }
 
-/** The palette as an effect, so a pane taking another note on can put it in the
- *  same transaction as everything else it changes. */
 export function codeThemeEffect(id: string): StateEffect<unknown> {
   return codeTheme.reconfigure(highlightingFor(id))
 }

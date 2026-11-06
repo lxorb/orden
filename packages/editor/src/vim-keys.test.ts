@@ -7,12 +7,6 @@ import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { loadVim } from './vim'
 import { modalEditing, takeBackNibKeys } from './vim-mode'
 
-/** Modal editing in a real view, keys and all, which is what vim.test.ts cannot do
- *  without a DOM: Vim's own keys that stand for others, and Enter on a task.
- *
- *  jsdom lays nothing out, so a range has no rectangles to measure; a motion that
- *  asks for them is given none, and these keys are ones whose answer is in the text. */
-
 beforeAll(async () => {
   await loadVim()
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
@@ -38,7 +32,6 @@ function viewOf(doc: string, at: number): EditorView {
   return view
 }
 
-/** A keystroke as the browser hands it to the editor. */
 function press(view: EditorView, key: string) {
   view.contentDOM.dispatchEvent(
     new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }),
@@ -46,8 +39,6 @@ function press(view: EditorView, key: string) {
 }
 
 describe("Vim's own keys that stand for others", () => {
-  // The library looks these up by counting back from the length its keymap started
-  // at; taking Orden's keys off it used to leave it short, and every one of them threw.
   test('still find what they stand for once the app has taken its keys back', () => {
     takeBackNibKeys()
     const view = viewOf('one two', 0)
@@ -62,8 +53,6 @@ describe("Vim's own keys that stand for others", () => {
     expect(view.state.doc.toString()).toBe('oe two')
   })
 
-  // A bullet, because Enter on one is where the editor's own Enter carries the list
-  // on, which is what Enter in normal mode used to do instead of moving.
   test("Enter on a line that is not a task is still Vim's, and splits nothing", () => {
     const view = viewOf('- one\n- two', 3)
     press(view, 'Enter')

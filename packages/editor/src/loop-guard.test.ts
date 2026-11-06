@@ -2,16 +2,11 @@
 import { describe, expect, test, vi } from 'vitest'
 import { guarded, guardedBlock, LOOP_LIMIT } from './loop-guard'
 
-/** Code compiled as a function of the names given. */
 function compiled(...parts: string[]): (...args: unknown[]) => unknown {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the guarded code is what is under test
   return new Function(...parts) as (...args: unknown[]) => unknown
 }
 
-/** Every loop in a block's scripts made to give up (#525): in WebKit the block's frame
- *  shares the app's thread, and a loop that never ends froze the whole app. */
-
-/** Runs guarded code with a check that says leave after `rounds` of asking. */
 function runs(code: string, rounds = 5): number {
   let asked = 0
   const spin = () => ++asked > rounds

@@ -2,9 +2,6 @@ import { EditorSelection, EditorState, type StateCommand } from '@codemirror/sta
 import { insertLink, toggleWrap } from '../commands'
 import { highlightSelection } from '../highlight'
 
-/** A cell's text after one of the editor's inline commands ran on it. A cell
- *  is a document of one line, so the command that wraps a selection in the
- *  editor wraps it here too, and the two never disagree about what bold is. */
 export function runInCell(
   command: StateCommand,
   text: string,
@@ -24,9 +21,6 @@ export function runInCell(
   return result
 }
 
-/** The editor's inline shortcuts, for a key pressed in a cell. The bindings
- *  are the ones in the keymap; matched here by hand because the key never
- *  reaches the editor. */
 export function inlineShortcut(event: KeyboardEvent): StateCommand | null {
   const mod = event.ctrlKey || event.metaKey
 

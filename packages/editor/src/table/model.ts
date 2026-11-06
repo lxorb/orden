@@ -6,7 +6,6 @@ export interface TableModel {
   rows: string[][]
 }
 
-/** Counts CJK and emoji as two columns so pipe-aligned source stays aligned. */
 export function displayWidth(text: string): number {
   let width = 0
   for (const char of text) {
@@ -45,10 +44,6 @@ function splitRow(line: string): string[] {
     current += character
   }
 
-  // A closing pipe ends the row rather than opening one more cell. Decided here
-  // rather than by trimming the line first, because trimming cannot tell a
-  // closing pipe from the `\|` of a cell that ends in a literal one - and used
-  // to eat it, along with the backslash's meaning.
   if (!current && cells.length) return cells
 
   cells.push(current.trim())
@@ -79,7 +74,6 @@ export function parseTable(source: string): TableModel | null {
   const align = splitRow(delimiterLine).map(readAlign)
   const rows = bodyLines.map((line) => splitRow(line))
 
-  // Ragged rows are legal markdown; normalise so the model is rectangular.
   const columns = Math.max(header.length, align.length, ...rows.map((row) => row.length))
   const fit = (row: string[]) => Array.from({ length: columns }, (_, i) => row[i] ?? '')
 
@@ -90,7 +84,6 @@ export function parseTable(source: string): TableModel | null {
   }
 }
 
-/** The narrowest a column is written, which is what `---` needs. */
 const MIN_CELL = 3
 
 function padCell(text: string, width: number): string {
@@ -106,17 +99,10 @@ function delimiterCell(align: Align, width: number): string {
     case 'center':
       return `:${'-'.repeat(Math.max(1, width - 2))}:`
     case null:
-      // No alignment marker, so all of the width is dashes.
       return '-'.repeat(Math.max(MIN_CELL, width))
   }
 }
 
-/** Writes the table back as pipe-aligned markdown, the way Typora formats it.
- *
- *  Every line gets the same number of cells, taken from the widest of the header
- *  and the alignments, whatever shape the model is in. A row short of a cell or
- *  one cell over would otherwise write a table that does not parse as one, and
- *  the note would be left with a block of pipes where its table was. */
 export function serializeTable(model: TableModel): string {
   const columns = Math.max(model.header.length, model.align.length)
   const widths = Array.from({ length: columns }, (_, i) =>
@@ -146,8 +132,6 @@ export function insertColumn(model: TableModel, at: number): TableModel {
 }
 
 export function removeColumn(model: TableModel, at: number): TableModel {
-  // A negative index would reach `splice` and take the *last* column away, and
-  // -1 is what the view's column bar holds while no column is under the pointer.
   if (at < 0 || at >= model.header.length) return model
   if (model.header.length <= 1) return model
   return {
@@ -183,8 +167,6 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
   const swap = <T>(list: T[]) => {
     const next = [...list]
     const [moved] = next.splice(from, 1)
-    // Compared against undefined rather than tested for truth: an alignment of
-    // null is a real value, and dropping it would unalign the column.
     if (moved === undefined) return list
     next.splice(to, 0, moved)
     return next
@@ -196,14 +178,8 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
   }
 }
 
-/** Which way a column is sorted. */
 export type Order = 'up' | 'down'
 
-/** A cell read as a number, or null when it is not one. Thousands separators and
- *  a leading currency mark are taken off first: a column of prices is a column of
- *  numbers to everybody reading it, and sorting it as words would put 1,000
- *  before 9. A currency mark and nothing else - a word in front of a number makes
- *  a name of it, and `Room 5` is a room, not a five. */
 function numberIn(cell: string): number | null {
   const bare = cell
     .trim()
@@ -214,8 +190,6 @@ function numberIn(cell: string): number | null {
   return Number(bare.replace(/%$/, ''))
 }
 
-/** A date, as a date. `2025-09-08` sorts before `2025-10-01`, which sorting it as
- *  words happens to get right, and `08/09/2025` does not. */
 function dateIn(cell: string): number | null {
   const said = cell.trim()
   if (!/^\d{4}-\d{2}-\d{2}([T ]|$)/.test(said)) return null
@@ -224,22 +198,10 @@ function dateIn(cell: string): number | null {
   return Number.isNaN(at) ? null : at
 }
 
-/** Two cells of one column, compared as what they look like they are.
- *
- *  Numbers as numbers, dates as dates, everything else as words in the reader's
- *  own language - so `ä` sorts where a German reader expects it rather than after
- *  `z`. An empty cell always sorts last, whichever way the column is going: a gap
- *  is not a small value, and a column of prices with three blanks in it should
- *  not open with the blanks. */
 function compareCells(left: string, right: string): number {
   const empty = (one: string) => one.trim() === ''
   if (empty(left) || empty(right)) return empty(left) ? (empty(right) ? 0 : 1) : -1
 
-  // Numbers first, then dates, then words, in a column that mixes them. Each kind
-  // is compared its own way, and two cells of different kinds by their kind alone:
-  // comparing a number to a word as words would let `5x` come before 999 and
-  // after 1,000 while 999 comes before 1,000, and a sort handed an order that goes
-  // round in a circle puts the rows in whatever order they happened to arrive.
   const oneNumber = numberIn(left)
   const otherNumber = numberIn(right)
   if (oneNumber !== null && otherNumber !== null) return oneNumber - otherNumber
@@ -253,15 +215,6 @@ function compareCells(left: string, right: string): number {
   return left.trim().localeCompare(right.trim(), undefined, { numeric: true, sensitivity: 'base' })
 }
 
-/** The table with its body rows in the order one column puts them.
- *
- *  A one-time edit and never a view's own state: the rows really are reordered in
- *  the file, which is what makes the sort survive being read in Obsidian, being
- *  exported, and being read again tomorrow. Sorting a table is something you do
- *  to it, not a way of looking at it.
- *
- *  Stable, so rows that tie stay in the order they were written. The empty-cell
- *  rule stays put in both directions; see `compareCells`. */
 export function sortRows(model: TableModel, column: number, order: Order): TableModel {
   if (column < 0 || column >= model.header.length) return model
   if (model.rows.length < 2) return model
@@ -271,8 +224,6 @@ export function sortRows(model: TableModel, column: number, order: Order): Table
 
   kept.sort((left, right) => {
     const said = compareCells(left.row[column] ?? '', right.row[column] ?? '')
-    // Ties keep the order they were written in, and an empty cell is last
-    // whichever way the column runs, so the reversal is not applied to it.
     if (said === 0) return left.at - right.at
     const blank = (one: string) => one.trim() === ''
     if (blank(left.row[column] ?? '') || blank(right.row[column] ?? '')) return said
@@ -291,12 +242,6 @@ export function setAlign(model: TableModel, column: number, align: Align): Table
 }
 
 export function setCell(model: TableModel, row: number, column: number, value: string): TableModel {
-  // The source is one line per row, so a newline typed into a cell would split
-  // it. A pipe has to be escaped or it would open another cell - and the value
-  // comes back from a focused cell, which shows the markdown, so a pipe that is
-  // already escaped comes back escaped. Matching the backslash as part of what
-  // is replaced is what keeps a cell from growing one more backslash every time
-  // the caret visits it.
   const clean = value.replace(/\r?\n/g, ' ').replace(/\\?\|/g, '\\|')
 
   if (row < 0) {

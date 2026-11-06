@@ -8,11 +8,6 @@ import { nibMarkdownExtensions } from '../markdown/extensions'
 import { definitionOf, definitionWords, followFootnote, footnoteAt } from './footnotes'
 import { livePreview } from '.'
 
-/** A footnote read where it is used (#1120): its words in a card over the mark, and a
- *  press on the mark's number going to the definition and a press on the
- *  definition's number coming back to the mark the reader left. The card itself is
- *  photographed by apps/desktop/test/e2e/footnotes.py. */
-
 const NOTE = [
   'First[^a] and again[^a], then[^2].',
   '',
@@ -76,7 +71,6 @@ describe('a footnote', () => {
 
     const definition = footnoteAt(view.state, NOTE.indexOf('[^a]:') + 2)
     expect(definition && followFootnote(view, definition)).toBe(true)
-    // The second mark, which is where the reader was, and not the first.
     expect(view.state.selection.main.head).toBe(SECOND + 4)
   })
 
@@ -106,8 +100,6 @@ describe('a footnote', () => {
   test('leaves a press alone where the caret already shows the mark as written', () => {
     const view = viewOf(NOTE, NOTE.indexOf('[^2]') + 1)
     const two = [...view.dom.querySelectorAll('.nib-footnote-number')][2]
-    // Only the jump is asked about: where the library's own press puts the caret
-    // depends on a layout jsdom does not have.
     if (two) press(two)
     expect(view.state.selection.main.head).not.toBe(NOTE.indexOf('**Bold**'))
   })
