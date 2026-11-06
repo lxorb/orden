@@ -6,7 +6,7 @@
   import { roving } from '../roving'
   import { nameOf, samePath, within } from '../space-paths'
   import { dropInto, over } from './drag'
-  import { explorerDragged, isExplorerDrag } from '../drag-paths'
+  import { dropOver, isExplorerDrag, explorerDragged } from '../drag-paths'
   import { placeMark, placeName, places } from './places.svelte'
   import type { ExplorerView } from './view.svelte'
 
@@ -75,7 +75,7 @@
 <nav
   class="places"
   aria-label={t('Places')}
-  ondragover={(event) => {
+  use:dropOver={(event) => {
     if (isExplorerDrag(event.dataTransfer)) event.preventDefault()
   }}
   ondrop={pinDropped}
@@ -90,7 +90,7 @@
           title={row.path}
           onclick={() => view.go(row.path)}
           oncontextmenu={(event) => rowMenu(event, row.path, row.pinned)}
-          ondragover={(event) => {
+          use:dropOver={(event) => {
             if (over(event)) taking = row.path
           }}
           ondragleave={() => (taking = null)}

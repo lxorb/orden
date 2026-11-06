@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from './drag-paths'
   import { fade } from 'svelte/transition'
 
   import { key, plural, t } from './i18n.svelte'
@@ -83,7 +84,7 @@
       class="drop"
       class:over
       class:busy={importing.stage === 'reading'}
-      ondragover={(event) => {
+      use:dropOver={(event) => {
         event.preventDefault()
         over = true
       }}

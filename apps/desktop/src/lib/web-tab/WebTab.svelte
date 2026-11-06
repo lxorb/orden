@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../drag-paths'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { agentMarks } from '../agent-marks.svelte'
@@ -783,7 +784,7 @@
       class:still={pictured}
       style:background-image={pictured ? `url(${page.shot})` : 'none'}
       bind:this={hole}
-      ondragover={(event) => hole && overPage(tab.id, hole, event, page.zoom)}
+      use:dropOver={(event) => hole && overPage(tab.id, hole, event, page.zoom)}
       ondragleave={() => leftPage(tab.id)}
       ondrop={(event) => hole && droppedOnPage(tab.id, hole, event, page.zoom)}
     ></div>

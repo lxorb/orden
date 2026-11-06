@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from './drag-paths'
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { fade, fly, scale, slide } from 'svelte/transition'
@@ -1175,7 +1176,7 @@
         aria-label={nameFor(id)}
         draggable={!viewport.touch}
         ondragstart={(event) => takeBar(event, at)}
-        ondragover={(event) => overBar(event, at)}
+        use:dropOver={(event) => overBar(event, at)}
         ondragleave={() => (dropAt = null)}
         ondragend={() => {
           dragging = null

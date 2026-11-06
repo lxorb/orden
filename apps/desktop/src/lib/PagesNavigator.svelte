@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from './drag-paths'
   import { moved, removed, reshaped } from '@orden/markdown/pages'
   import type { Canvas } from './canvas/format'
   import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
@@ -273,7 +274,7 @@
             use:longPress={(event) =>
               menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })}
             ondragstart={(event) => start(event, at)}
-            ondragover={(event) => overPage(event, at)}
+            use:dropOver={(event) => overPage(event, at)}
             ondragleave={() => (over = null)}
             ondragend={() => (over = null)}
             ondrop={(event) => drop(event, at)}

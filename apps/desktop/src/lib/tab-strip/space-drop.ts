@@ -1,3 +1,4 @@
+import { listenOver } from '../drag-paths'
 import { type Space, workspace } from '../workspace.svelte'
 import { spacesOf, spacesOfPaths, toSpace } from './to-space'
 
@@ -94,7 +95,7 @@ export function followTreeDrag(paths: readonly string[]): void {
     event.stopPropagation()
   }
   const options = { capture: true, signal: done.signal }
-  window.addEventListener('dragover', dragover, options)
+  listenOver(window, dragover, options)
   window.addEventListener('drop', drop, options)
   window.addEventListener('dragend', stop, options)
 }

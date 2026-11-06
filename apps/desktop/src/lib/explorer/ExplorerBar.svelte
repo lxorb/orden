@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../drag-paths'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import ArrowUp from 'lucide/dist/esm/icons/arrow-up.mjs'
@@ -138,7 +139,7 @@
         <button
           class="crumb"
           class:is-here={index === crumbs.length - 1}
-          ondragover={(event) => over(event)}
+          use:dropOver={(event) => over(event)}
           ondrop={(event) => dropInto(view, event, crumb.path)}
           aria-current={index === crumbs.length - 1 ? 'location' : undefined}
           onclick={() => view.go(crumb.path)}>{crumb.name}</button

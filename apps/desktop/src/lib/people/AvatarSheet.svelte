@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../drag-paths'
   import { onMount } from 'svelte'
   import { message, t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
@@ -198,7 +199,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="stage"
-    ondragover={(event) => event.preventDefault()}
+    use:dropOver={(event) => event.preventDefault()}
     ondrop={(event) => {
       event.preventDefault()
       given(event.dataTransfer?.files)

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../drag-paths'
   import { tick } from 'svelte'
   import { SvelteMap, SvelteSet } from 'svelte/reactivity'
   import { fileMark } from '../file-mark'
@@ -404,7 +405,7 @@
     onpointermove={bandMove}
     onpointerup={bandEnd}
     onpointercancel={bandEnd}
-    ondragover={(event) => over(event)}
+    use:dropOver={(event) => over(event)}
     ondrop={dropOnRoom}
     oncontextmenu={roomMenuAt}
     data-entry={rows.length ? undefined : ''}
@@ -446,7 +447,7 @@
             draggable={view.renaming !== entry.name}
             ondragstart={(event) => dragFrom(event, entry)}
             ondragend={endDrag}
-            ondragover={(event) => overRow(event, entry)}
+            use:dropOver={(event) => overRow(event, entry)}
             ondragleave={() => leaveRow(entry)}
             ondrop={(event) => dropOnRow(event, entry)}
           >

@@ -1,4 +1,5 @@
 import type { CarriedFiles } from '@orden/editor'
+import type { Action } from 'svelte/action'
 import type { Platform } from './keys'
 
 const ONE = 'text/nib-path'
@@ -196,4 +197,35 @@ function index(transfer: DataTransfer | null, type: string): number | null {
   const at = Number(written)
 
   return written !== '' && Number.isInteger(at) && at >= 0 ? at : null
+}
+
+export type Over = (event: DragEvent) => unknown
+
+export function listenOver(
+  target: EventTarget,
+  over: Over,
+  options?: boolean | AddEventListenerOptions,
+): () => void {
+  const heard = over as EventListener
+  target.addEventListener('dragenter', heard, options)
+  target.addEventListener('dragover', heard, options)
+  return () => {
+    target.removeEventListener('dragenter', heard, options)
+    target.removeEventListener('dragover', heard, options)
+  }
+}
+
+type OverNode = (event: DragEvent & { currentTarget: HTMLElement }) => unknown
+
+export const dropOver: Action<HTMLElement, OverNode> = (node, over) => {
+  let current = over
+  const stop = listenOver(node, (event) =>
+    current(event as DragEvent & { currentTarget: HTMLElement }),
+  )
+  return {
+    update(next: OverNode) {
+      current = next
+    },
+    destroy: stop,
+  }
 }

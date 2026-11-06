@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
   import { onDestroy, untrack } from 'svelte'
-  import { carriedFiles, carriesFiles, draggedTab, isTreeDrag } from '../../drag-paths'
+  import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag } from '../../drag-paths'
   import { pages } from '../../web-tab/pages.svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { t } from '../../i18n.svelte'
@@ -163,7 +163,7 @@
   data-chat-drop={tab.id}
   bind:clientWidth={width}
   onkeydowncapture={onKey}
-  ondragover={dragging}
+  use:dropOver={dragging}
   ondragleave={(event) => {
     if (event.currentTarget === event.target) dropping = false
   }}

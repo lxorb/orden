@@ -9,14 +9,17 @@ export const noteCarrier = Facet.define<
 
 const noteLinksCode = () => import('./note-links')
 
-export const noteDrops: Extension = EditorView.domEventHandlers({
-  dragover(event, view) {
-    if (view.state.readOnly || !carried(event, view).length) return false
+function over(event: DragEvent, view: EditorView): boolean {
+  if (view.state.readOnly || !carried(event, view).length) return false
 
-    event.preventDefault()
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-    return false
-  },
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  return false
+}
+
+export const noteDrops: Extension = EditorView.domEventHandlers({
+  dragenter: over,
+  dragover: over,
 
   drop(event, view) {
     const paths = carried(event, view)

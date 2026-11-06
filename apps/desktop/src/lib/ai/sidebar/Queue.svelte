@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../../drag-paths'
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
   import { fly } from 'svelte/transition'
@@ -26,7 +27,7 @@
         draggable="true"
         ondragstart={() => (dragging = index)}
         ondragend={() => (dragging = null)}
-        ondragover={(event) => event.preventDefault()}
+        use:dropOver={(event) => event.preventDefault()}
         ondrop={(event) => onDrop(event, index)}
         animate:flip={{ duration: dur(150) }}
         transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}

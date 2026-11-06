@@ -1,4 +1,4 @@
-import { isFileDrop, outsideRows } from './drag-paths'
+import { isFileDrop, listenOver, outsideRows } from './drag-paths'
 
 const PDF = /\.pdf$/i
 
@@ -51,12 +51,12 @@ export function guardDrops(
     if (!event.defaultPrevented && isFileDrop(event.dataTransfer)) event.preventDefault()
   }
 
-  window.addEventListener('dragover', over)
+  const unheard = listenOver(window, over)
   window.addEventListener('drop', taken, true)
   window.addEventListener('drop', drop)
 
   return () => {
-    window.removeEventListener('dragover', over)
+    unheard()
     window.removeEventListener('drop', taken, true)
     window.removeEventListener('drop', drop)
   }

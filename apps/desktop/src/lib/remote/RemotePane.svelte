@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../drag-paths'
   import { t } from '../i18n.svelte'
   import { prompt } from '../prompt.svelte'
   import { arrive } from '../slide'
@@ -83,7 +84,7 @@
                 event.dataTransfer?.setData('text/plain', one.id)
                 dragging = at
               }}
-              ondragover={(event) => over(event, at)}
+              use:dropOver={(event) => over(event, at)}
               ondragleave={() => (dropAt = null)}
               ondragend={() => {
                 dragging = null
