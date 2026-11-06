@@ -1,17 +1,3 @@
-/** This device's history of web pages: written as tabs arrive at them, read by the
- *  address field.
- *
- *  **Nothing is read at launch.** nib opens in under a second, and a list of five
- *  hundred addresses is not something the first frame needs: it is read the first time
- *  an address field takes the keyboard (`wake`), or the first time a tab arrives at a
- *  page, whichever comes first - both of them long after the window is up.
- *
- *  This device's, beside the other things a device keeps for itself (see stored.ts),
- *  and never on the account: where somebody has been is theirs, and a history that
- *  followed them onto every machine they signed in on is not what a browser's history
- *  is. The rows and what is done to them are visits.ts; what is offered from them is
- *  omnibox.ts. */
-
 import { forget as forgetStored, Shared } from '../stored'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
@@ -27,26 +13,15 @@ import {
 } from './visits'
 import type { Visit } from './visits'
 
-/** A history is kept under a storage key of its own, which is its whole name: the one
- *  every space shares, or a space's own where the space keeps its web data apart. The
- *  caller says which, from `webData.history`; see web-data.ts. */
 type Book = string
 
 class Visited {
-  /** Each history read so far, read the first time anything asks and again whenever
-   *  another window has written it since: one window writing back the rows it read
-   *  at first lost the other's visits, and brought back a history deleted there. See
-   *  `Shared` in stored.ts. */
   private readonly books = new Map<Book, Shared<readonly Visit[]>>()
 
-  /** Where each tab was last counted as being, so the engine saying the same page
-   *  again - its title arrived, its mark arrived - is not another visit. */
   private readonly counted = new Map<string, string>()
 
-  /** Who is drawing a history, told whenever one changes: the History page. */
   private readonly watchers = new Set<(book: Book) => void>()
 
-  /** Hears every change to every history; the answer stops hearing. */
   watch(heard: (book: Book) => void): () => void {
     this.watchers.add(heard)
     return () => this.watchers.delete(heard)
@@ -61,14 +36,10 @@ class Visited {
     return kept
   }
 
-  /** The rows as they are now, read the first time anything asks. */
   private rows(book: Book): readonly Visit[] {
     return this.bookOf(book).get()
   }
 
-  /** Written as it changes, which is at most twice a page: the engine reports a page
-   *  three times as it lands - the page, its title, its mark - and only the first two
-   *  change a row. See `named` in visits.ts. */
   private write(book: Book, next: readonly Visit[]) {
     const kept = this.bookOf(book)
     if (next === kept.get()) return
@@ -77,14 +48,10 @@ class Visited {
     for (const heard of this.watchers) heard(book)
   }
 
-  /** Reads the list now, because somebody is about to type. */
   wake(book: Book) {
     this.rows(book)
   }
 
-  /** A tab is on `url`, and the page calls itself `title` (or has not said yet). A new
-   *  address in the tab is a visit; the same one again is the page saying more about
-   *  itself. */
   saw(book: Book, tab: string, url: string, title: string) {
     const key = visitKey(url)
     if (key === null) return
@@ -99,38 +66,29 @@ class Visited {
     this.write(book, arrived(this.rows(book), key, title, now))
   }
 
-  /** Somebody typed their way to `url`. */
   typed(book: Book, url: string) {
     this.write(book, typedTo(this.rows(book), url, Date.now()))
   }
 
-  /** Another browser's history, read row by row as an earlier run's would be, folded
-   *  in; see `broughtIn`. */
   brought(book: Book, rows: unknown) {
     this.write(book, broughtIn(this.rows(book), visitsFrom(rows)))
   }
 
-  /** `into` written as `rows`, and `from` forgotten: a history folded into another. */
   fold(from: Book, into: Book, rows: readonly Visit[]) {
     this.write(into, rows)
     this.books.delete(from)
     forgetStored(from)
   }
 
-  /** The tab has closed. */
   left(tab: string) {
     this.counted.delete(tab)
   }
 
-  /** Takes one address out, which is Shift+Delete on a row of the list, and the mark
-   *  this device kept for it: a page forgotten is forgotten everywhere it was kept. */
   remove(book: Book, url: string) {
     this.write(book, unvisited(this.rows(book), url))
     forget(url)
   }
 
-  /** Takes out every page last open at or after `since`, and the marks kept for them:
-   *  Delete browsing data's Browsing history; see clearing.ts. Answers the pages taken. */
   removeSince(book: Book, since: number): string[] {
     const rows = this.rows(book)
     const left = unvisitedSince(rows, since)
@@ -141,25 +99,19 @@ class Visited {
     return gone
   }
 
-  /** What a page called itself the last time a tab was on it, or the empty string:
-   *  the words a row of the history under a held arrow reads. */
   titleOf(book: Book, url: string): string {
     const key = visitKey(url)
     return this.rows(book).find((one) => one.url === key)?.title ?? ''
   }
 
-  /** The rest of an address `typed` is the start of; see omnibox.ts. */
   complete(book: Book, typed: string): Completion | null {
     return completion(this.rows(book), typed, Date.now())
   }
 
-  /** Every page it holds, for the palette, which weighs them with everything else it
-   *  finds rather than taking the field's few. */
   all(book: Book): readonly Visit[] {
     return this.rows(book)
   }
 
-  /** The pages worth offering under the field for `typed`. */
   suggest(book: Book, typed: string): Visit[] {
     return suggested(this.rows(book), typed, Date.now())
   }

@@ -1,16 +1,8 @@
-<!-- What of a Firefox add-on does not run in Orden (#1155), in the reader's words: a
-     sentence for each part that has one, and the other Firefox-only parts by name. Under
-     an installed add-on's row in Settings, and, with Install anyway and Cancel, where an
-     install waits for the reader to decide (`asking`, extensions.svelte.ts). -->
 <script lang="ts">
   import { t } from '../i18n.svelte'
   import { extensions, GAP_WORDS, type Gaps } from './extensions.svelte'
 
-  const {
-    gaps,
-    /** Whether this is an install waiting on the reader, with its two buttons. */
-    asking = false,
-  }: { gaps: Gaps; asking?: boolean } = $props()
+  const { gaps, asking = false }: { gaps: Gaps; asking?: boolean } = $props()
 </script>
 
 <div class="gaps" role={asking ? 'alert' : undefined}>

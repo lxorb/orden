@@ -4,10 +4,6 @@ import { clipNote, clipSource, keptBody, webTitleOf, webUrlOf } from './note'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 
-/** What the old writer wrote: front matter, the title as a heading, and the address
- *  again as a link. Kept here as a string because nothing writes one any more - a
- *  website is a shortcut file now - and what is left is the reading of the ones that
- *  are already in people's spaces. */
 const WAS = `---
 url: https://svelte.dev/docs
 title: Svelte docs
@@ -31,8 +27,6 @@ describe('which notes are websites', () => {
     expect(webUrlOf(null)).toBeNull()
   })
 
-  /** A note can arrive from a shared space, a room or somebody's export, so the key
-   *  is judged and not only read. */
   test('an address no tab may open is not a website', () => {
     expect(webUrlOf('---\nurl: javascript:alert(1)\n---\n')).toBeNull()
     expect(webUrlOf('---\nurl: file:///etc/passwd\n---\n')).toBeNull()
@@ -45,8 +39,6 @@ describe('which notes are websites', () => {
   })
 })
 
-/** Awaited, because the converter that turns a page into markdown is fetched when a
- *  page is clipped rather than when the window opens; see note.ts. */
 describe('the note a clip is', () => {
   test('says where it came from and when, and holds the page as markdown', async () => {
     const note = await clipNote(
@@ -66,8 +58,6 @@ describe('the note a clip is', () => {
     expect(note).toContain('Some **words**.')
   })
 
-  /** A browser build cannot read the frame's document, so a clip there is the link,
-   *  which is what the glyph said it would be. */
   test('a page with no words to keep says the one thing it knows', async () => {
     const note = await clipNote(
       { url: 'https://example.com/post', title: 'A post', html: '' },
@@ -82,8 +72,6 @@ describe('the note a clip is', () => {
     expect(note).toContain('\n# Untitled\n')
   })
 
-  /** A page names itself, and the name becomes the note's heading: a note of the
-   *  reader's own has its markup rendered, so a title cannot carry a tag. */
   test('a title that names a tag says the words rather than the tag', async () => {
     const note = await clipNote(
       {
@@ -107,10 +95,6 @@ describe('the note a clip is', () => {
   })
 })
 
-/** A tab that has no page yet - the address field still empty, which is what "Open a
- *  website" opens on - has no address to have come from. Clipping it wrote a note whose
- *  `source:` was empty and whose whole body was `<>`; the audit found one called
- *  `Second page.md`. */
 describe('a tab with no address is not a clip', () => {
   test('refuses a blank address rather than writing an empty source', () => {
     expect(clipSource('', null)).toBeNull()
@@ -119,8 +103,6 @@ describe('a tab with no address is not a clip', () => {
     expect(clipSource('   ', null)).toBeNull()
   })
 
-  /** The same judgement the tab itself is held to, so a clip cannot come from
-   *  somewhere the tab would never have opened. */
   test('and anything that is not the web', () => {
     expect(clipSource('javascript:alert(1)', null)).toBeNull()
     expect(clipSource('file:///C:/notes/Idea.md', null)).toBeNull()
@@ -136,8 +118,6 @@ describe('a tab with no address is not a clip', () => {
   })
 })
 
-/** A clip carried its title twice: the heading this file writes above the words, and
- *  the article's own `h1`, which the converter keeps because it is part of the page. */
 describe('the heading a clip wears', () => {
   test('is written once when the article opens with the same heading', async () => {
     const note = await clipNote(
@@ -154,8 +134,6 @@ describe('the heading a clip wears', () => {
     expect(note).toContain('They are signals.')
   })
 
-  /** A page whose article says something else keeps both: the note is still titled
-   *  after the page, and the article's own heading is the article's. */
   test('and twice when the article says something else', async () => {
     const note = await clipNote(
       {
@@ -181,9 +159,6 @@ describe('what a converted note leaves behind', () => {
     expect(keptBody('---\nurl: https://a.example/\n---\n\n')).toBeNull()
   })
 
-  /** Somebody wrote in it. That is a note, and it stays one - without the line that
-   *  made it a website, because the shortcut written beside it is what that line
-   *  means now. */
   test('the note itself, when somebody had written in it', () => {
     const said = keptBody(`${WAS}
 Why this page is worth keeping.

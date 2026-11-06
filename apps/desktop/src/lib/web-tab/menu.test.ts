@@ -1,13 +1,5 @@
-/** The dots on a web tab's bar: Chrome's rows, in Chrome's order.
- *
- *  Worth a test for two reasons. The order is the whole point - a reader who knows
- *  Chrome's menu should find Orden's in the same shape - and the zoom rows are the one
- *  place in the app where a row keeps the menu open and says a number that has to be
- *  true. See menu.ts. */
-
 import { expect, test, vi } from 'vitest'
 
-// The English string is its own key, so the labels read as themselves here.
 vi.mock('../i18n.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../i18n.svelte')>()),
   t: (one: string) => one,
@@ -16,7 +8,6 @@ vi.mock('../i18n.svelte', async (importOriginal) => ({
 const { trailSteps, webRows, zoomed, ZOOMS } = await import('./menu')
 const { Page } = await import('./pages.svelte')
 
-/** A tab's page, on a site. */
 function page(url: string | null) {
   const made = new Page()
   made.url = url
@@ -38,7 +29,6 @@ const actions = {
   settings: () => undefined,
 }
 
-/** Every row's label, with the rules between groups left out. */
 function labels(url: string | null, zoom = 1): string[] {
   return webRows(page(url), zoom, actions).flatMap((one) => (one === null ? [] : [one.label]))
 }
@@ -69,8 +59,6 @@ test('the middle zoom row says how large the page is being drawn', () => {
   expect(labels('https://a.example/', 0.67)).toContain('67%')
 })
 
-/** A tab nobody has given an address yet has a menu, because New tab and Settings are
- *  still worth having; everything about the page is greyed out. */
 test('a tab with nowhere to go has no rows about a page', () => {
   const rows = webRows(page(null), 1, actions).filter((one) => one !== null)
   const off = rows.filter((one) => one.disabled).map((one) => one.label)
@@ -82,8 +70,6 @@ test('a tab with nowhere to go has no rows about a page', () => {
   expect(rows.find((one) => one.label === 'New tab')?.disabled).toBe(undefined)
 })
 
-/** The zoom rows are the one kind in the app that keeps the menu open, because a
- *  browser's zoom is pressed two or three times in a row. */
 test('the zoom rows keep the menu open and nothing else does', () => {
   const kept = webRows(page('https://a.example/'), 1, actions)
     .filter((one) => one !== null)
@@ -99,7 +85,6 @@ test('steps along the ladder a browser steps along, and stops at both ends', () 
   expect(zoomed(0.67, true)).toBe(0.75)
   expect(zoomed(ZOOMS[0]!, false)).toBe(ZOOMS[0])
   expect(zoomed(ZOOMS[ZOOMS.length - 1]!, true)).toBe(ZOOMS[ZOOMS.length - 1])
-  // A size somebody arrived at another way still steps to the next rung.
   expect(zoomed(1.13, true)).toBe(1.25)
   expect(zoomed(1.13, false)).toBe(1.1)
 })
@@ -110,7 +95,6 @@ test('ends the two ends of the ladder where a browser ends them', () => {
   expect(ZOOMS).toContain(1)
 })
 
-/** The list under a held arrow, which is the trail read outwards from where the tab is. */
 test('lists the pages behind and ahead, the nearest first, and how far each is', () => {
   const urls = ['a', 'b', 'c', 'd']
   expect(trailSteps(urls, 2, false)).toEqual([
@@ -129,7 +113,6 @@ test('stops at a dozen rows however long the reading was', () => {
   expect(back[11]).toEqual({ url: '27', by: 12 })
 })
 
-/** Orden's own History page is no site: the rows about a site are there and greyed. */
 test('on the History page nothing about a site is offered', () => {
   const rows = webRows(page('nib://history'), 1, actions).flatMap((one) =>
     one === null ? [] : [one],
@@ -140,8 +123,6 @@ test('on the History page nothing about a site is offered', () => {
   expect(named('History')?.disabled).toBeFalsy()
 })
 
-/** #405: the scissors left the bar, so this row is the way a page is saved as a note
- *  from its tab, and pressing it is the clipper. */
 test('saving the page as a note is a row of the menu, and runs the clipper', () => {
   let saved = 0
   const rows = webRows(page('https://a.example/'), 1, { ...actions, save: () => (saved += 1) })

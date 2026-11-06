@@ -15,7 +15,6 @@ const MOODLE = visit('https://moodle-app2.let.ethz.ch/course/view.php?id=12', {
   visits: 4,
 })
 
-/** The field finishing what was typed: Emil's own example first. */
 describe('the rest of an address, in the field', () => {
   test('finishes a site from its first letters, to the site and not the page', () => {
     expect(completion([MOODLE], 'moo', NOW)).toEqual({
@@ -107,7 +106,6 @@ describe('what a row counts', () => {
   })
 })
 
-/** The list under the field. */
 describe('the pages offered', () => {
   const pages = [
     MOODLE,
@@ -139,7 +137,6 @@ describe('the pages offered', () => {
   })
 
   test('finds a letter or two only at the front of something', () => {
-    // `ethz` and `example` start with it; `svelte` and `are` only have it inside.
     const found = suggested(pages, 'e', NOW).map((one) => one.url)
     expect(found).toHaveLength(2)
     expect(found.some((url) => url.includes('svelte'))).toBe(false)
@@ -170,8 +167,6 @@ describe('an address as the list shows it', () => {
   })
 })
 
-/** History keeps the address the engine says, which is punycode; the field speaks as the
- *  reader does (#790). */
 describe('a name that is not ASCII', () => {
   const munich = visit('https://xn--mnchen-3ya.de/stadt', { title: 'Stadtportal' })
 

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** Chrome's own mark for a private page, the hat and the glasses, on a private tab and
-   *  at the left of its bar: what tells it from every other tab at a glance. See
-   *  private.ts. */
   import { fade } from 'svelte/transition'
   import HatGlasses from 'lucide/dist/esm/icons/hat-glasses.mjs'
   import { t } from '../i18n.svelte'

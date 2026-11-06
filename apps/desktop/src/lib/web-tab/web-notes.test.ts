@@ -1,7 +1,3 @@
-/** The space's websites in the address field's list (#1059): found the palette's way by
- *  their name and their address, built once per map of websites, and opened as the note
- *  they are. See web-notes.ts. */
-
 import { describe, expect, test } from 'vitest'
 import {
   leads,

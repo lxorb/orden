@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { Latest } from './latest'
 
-/** A crate that answers when the test says so, in whatever order it says. */
 function crate() {
   const sent: number[] = []
   const answers: { one: number; land: () => void; refuse: () => void }[] = []
@@ -55,7 +54,6 @@ describe('one placement in the air', () => {
     answers.at(-1)?.land()
     await settled()
     expect(sent.at(-1)).toBe(30)
-    // Each sent after the one before it, so the order the crate sees is the order said.
     expect([...sent].sort((a, b) => a - b)).toEqual(sent)
     expect(latest.idle).toBe(true)
   })

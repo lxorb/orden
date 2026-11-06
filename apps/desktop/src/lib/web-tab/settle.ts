@@ -1,28 +1,5 @@
-/** Two copies of one web note, made into one.
- *
- *  Emil, 2026-10-03: *"Still getting a lot of name-clash files for web notes."* A web
- *  note is a browser tab written down - where the reading has got to, what it is
- *  called, the site's mark - and the file moves under the reader every time a link is
- *  followed (see keep.ts). Two devices with the same site open write it within
- *  seconds of each other, and a copy beside it for every one of those is a file list
- *  full of `Docs (from another device 2026-10-03).url`. Nobody wants to compare two
- *  bookmarks by hand, and nothing is in one that matters once the other is newer.
- *
- *  So a web note is never kept twice: the newer copy stands, which is what Obsidian
- *  Sync does with every file that is not markdown, and the fields one side says and
- *  the other does not are carried across. Where the reading is, what it is called and
- *  where it points come from the newer side; the site's mark from whichever has one,
- *  the newer first; when it was first written down is the earlier of the two. Pure,
- *  so each place that settles two copies - a pass, a refused push, an answer in the
- *  sync pane, and the sweep over the copies already made - settles them the same way.
- *  See sync/pass.ts and sync/web-copies.ts. */
-
 import { readWebFile, rewriteShortcut, type Shortcut } from '@orden/scan/shortcut'
 
-/** The one file two copies of the web note at `path` come to. `theirsNewer` says
- *  which side was written last. A side that is not a shortcut at all - a `.webloc`,
- *  a file somebody broke by hand - has no fields to carry, so the newer side stands
- *  as it is. */
 export function settleShortcuts(
   path: string,
   ours: string,
@@ -36,30 +13,20 @@ export function settleShortcuts(
   const stale = readWebFile(path, older)
   if (!fresh || !stale || /\.webloc$/i.test(path.trim())) return newer
 
-  // The icon the reader chose from whichever side has one, the newer first, as the
-  // site's mark is: a page moving on rewrites its file far more often than anybody
-  // chooses an icon, and a copy written by a device that had not heard of the choice
-  // yet must not take it away (#1098).
   const chosen = fresh.chosen ?? stale.chosen
   const settled = rewriteShortcut(fresh, {
     title: fresh.title ?? stale.title ?? '',
     when: firstAdded(fresh, stale),
     home: fresh.home ?? fresh.url,
     icon: fresh.icon ?? stale.icon,
-    // The newer side's word on the note's own web data.
     own: fresh.own,
     chosen,
     chosenColour: fresh.chosen ? fresh.chosenColour : stale.chosenColour,
   })
 
-  // Nothing the older side said is missing from the newer one: the newer file as it
-  // was written, rather than rewritten in this app's own spelling of it.
   return sameShortcut(readWebFile(path, settled), fresh) ? newer : settled
 }
 
-/** Whether two copies are the same web note: they point at the same place. Where
- *  the reading has got to, the title and the mark are a tab's state, which the newer
- *  side settles; an address somebody typed is what the note is. */
 export function sameWebNote(path: string, one: string, other: string): boolean {
   const a = readWebFile(path, one)
   const b = readWebFile(path, other)
@@ -68,8 +35,6 @@ export function sameWebNote(path: string, one: string, other: string): boolean {
   return (a.home ?? a.url) === (b.home ?? b.url)
 }
 
-/** The earlier of the two times a copy says it was written down, or now where
- *  neither says one that reads. */
 function firstAdded(one: Shortcut, other: Shortcut): Date {
   const times = [one.added, other.added]
     .map((said) => (said ? new Date(said).getTime() : Number.NaN))
@@ -92,9 +57,6 @@ function sameShortcut(one: Shortcut | null, other: Shortcut): boolean {
   )
 }
 
-/** Whether two addresses are on one site: the same host, `www.` aside. What makes a
- *  web tab saved under a name a web note already has the same note rather than a
- *  second one; see `keepWeb` in workspace/placing.ts. */
 export function sameSite(one: string | null | undefined, other: string | null | undefined) {
   const host = hostIn(one)
   return host !== null && host === hostIn(other)

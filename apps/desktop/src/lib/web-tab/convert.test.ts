@@ -1,19 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Turning a website that was written as a note into a `.url` shortcut, driven by a
- *  stand-in store.
- *
- *  This had almost no coverage while it lived in the workspace: the drives open a
- *  note, they do not migrate a format. What is held here is every branch the
- *  conversion owns - a note that is a website, one that is not, one somebody also
- *  wrote in, a name already taken, and signed in against signed out - because each is
- *  a different thing done to the files on disk. */
-
 const sent: { command: string; path: string; content: string }[] = []
 const disk = new Map<string, string>()
 const told: string[] = []
 let signedIn = true
-/** The files a document is open on, which is what `documentAt` answers about. */
 const open = new Set<string>()
 
 vi.mock('../tauri', () => ({
@@ -46,8 +36,6 @@ vi.mock('../account.svelte', () => ({
 vi.mock('../link-index.svelte', () => ({
   links: {
     noteSaved: (path: string) => void told.push(`saved ${path}`),
-    // The `url:` of a note, for convertWebsites' own filter. A note is a website
-    // when its text has a url line; the fixtures below carry one.
     urlOf: (path: string) => (disk.get(path)?.includes('url:') ? 'https://x' : null),
   },
 }))
@@ -59,15 +47,12 @@ type NoteDoc = import('../workspace/documents.svelte').NoteDoc
 
 const SPACE = '/space'
 
-/** A note with a `url:` line, as the old format wrote one. `extra` is whatever the
- *  reader also put in the body. */
 function urlNote(url: string, title: string, extra = ''): string {
   const front = `---\nurl: ${url}\ntitle: ${title}\n---\n`
   const body = `# ${title}\n\n<${url}>\n`
   return front + body + extra
 }
 
-/** A store over the disk, with the tree-edit calls recorded. */
 const binned: string[] = []
 
 function store(notes: Record<string, string>) {
@@ -81,7 +66,6 @@ function store(notes: Record<string, string>) {
     entryAt: (path: string) => (disk.has(path) ? ({ path } as Entry) : null),
     documentAt: (path: string) => (open.has(path) ? ({ path } as unknown as NoteDoc) : null),
     freeNameOnDisk: async (dir: string, wanted: string) => {
-      // The store's own numbering, in one line: `Name 2.url`, `Name 3.url`.
       let at = 1
       let name = wanted
       while (disk.has(dir ? `${dir}/${name}` : name)) {
@@ -92,8 +76,6 @@ function store(notes: Record<string, string>) {
     },
     showEntry: (entry: Entry) => void shown.push(entry.path),
     freshEntry: (path: string, isFolder: boolean) => ({ path, is_dir: isFolder }) as Entry,
-    // Said once to everything kept by path, the index among them; see
-    // workspace/file-ops.ts.
     fileGone: (path: string) => {
       told.push(`gone ${path}`)
       return Promise.resolve()
@@ -129,16 +111,10 @@ describe('a note that is a website', () => {
     expect(target).toBe(`${SPACE}/Svelte docs.url`)
     expect(disk.get(target ?? '')).toContain('URL=https://svelte.dev')
     expect(disk.has(NOTE)).toBe(false)
-    // The row appears before the filesystem has answered.
     expect(shown).toEqual([`${SPACE}/Svelte docs.url`])
-    // And the index hears both, so `[[Svelte docs]]` reaches the shortcut now rather
-    // than after the next scan of the space.
     expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
   })
 
-  /** Signed in, the account's Recently deleted gives back only a note it holds in a
-   *  space this account owns; a writer's note, or one made offline, went for good
-   *  with its front matter. So the note goes the way any delete does (`bin`). */
   test('and its file goes the way a deleted note goes', async () => {
     binned.length = 0
     const made = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
@@ -157,7 +133,6 @@ describe('a note in a space that is not on screen', () => {
       [NOTE]: urlNote('https://svelte.dev', 'Svelte docs'),
       [`${SPACE}/Svelte docs.url`]: "somebody else's file",
     })
-    // The listing on screen is another space's, so it has no row for either file.
     const away = { ...ws, entryAt: () => null } as Converts
 
     const target = await asShortcut(away, NOTE)
@@ -194,13 +169,10 @@ describe('a note somebody also wrote in', () => {
 
     const target = await asShortcut(ws, NOTE)
 
-    // Both come out of the one file: the shortcut, and the note that is still a note.
     expect(disk.has(target ?? '')).toBe(true)
     expect(disk.has(NOTE)).toBe(true)
     expect(disk.get(NOTE)).toContain('My own notes on it.')
     expect(disk.get(NOTE)).not.toContain('url: https://svelte.dev')
-    // A note that stays is still in the index, as what it says now; it was told the
-    // note had gone, and `[[Svelte]]` found nothing until the next scan.
     expect(told).toEqual([`saved ${target}`, `saved ${NOTE}`])
   })
 })
@@ -261,16 +233,6 @@ describe('converting a whole space', () => {
   })
 })
 
-/** The one file a conversion must not touch.
- *
- *  Converting writes `X.url` and then rewrites or deletes `X.md`. A document open
- *  on `X.md` holds that file's words and writes them back as the typing pauses, so
- *  a conversion underneath it leaves the shortcut and the note it was made from
- *  both alive, each claiming to be the website - and the note comes back from the
- *  document the moment anybody pauses. `openWeb` asks what is open before it
- *  converts anything; the palette's pass over a whole space asked nothing, which
- *  made it the one gesture in the app that wrote a file out from under a document.
- *  See workspace/open.ts. */
 describe('a website a document is open on', () => {
   const NOTE = `${SPACE}/Open.md`
 
@@ -282,8 +244,6 @@ describe('a website a document is open on', () => {
     expect(disk.has(NOTE)).toBe(true)
     expect(disk.has(`${SPACE}/Open.url`)).toBe(false)
     expect(shown).toEqual([])
-    // Not even read: nothing about this file is the conversion's business while
-    // somebody has it open.
     expect(sent).toEqual([])
     expect(told).toEqual([])
   })

@@ -1,10 +1,3 @@
-/** The file keeping up with the page.
- *
- *  This is what makes reopening a web note open the page that was open rather than the
- *  site's front door, so the thing worth being sure of is what ends up in the file:
- *  `URL` moves, `Nib-Home` remembers where the note pointed, and `Nib-Added` is left
- *  exactly as it was - a day a note was made is not a day that changes. See keep.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 interface Call {
@@ -13,8 +6,6 @@ interface Call {
 }
 
 const written: Call[] = []
-/** What the link index was told, so a row that draws the site's own mark can be
- *  shown to hear about it. */
 const told: Call[] = []
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -33,8 +24,6 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-/** The notes in a space shared with this account to be read, which nothing may be
- *  written in (B288). Empty for every test but the one about them. */
 const readOnly = new Set<string>()
 
 vi.mock('../sharing.svelte', () => ({
@@ -50,7 +39,6 @@ const FILE =
   '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\n' +
   'Title=Svelte docs\r\nNib-Added=2026-09-12T08:30:00.000Z\r\n'
 
-/** Everything the write said, as the app's own reader reads it back. */
 function said(): string {
   return written.at(-1)?.content ?? ''
 }
@@ -73,8 +61,6 @@ test('writes the page the reading got to, and keeps where the note points', asyn
     wrote: (next) => (text = next),
   })
 
-  // Nothing yet: the reading has to settle first, so a page that redirects twice on
-  // the way in is one write rather than three. The notes' own pause; see backoff.ts.
   expect(written).toHaveLength(0)
   await vi.advanceTimersByTimeAsync(SAVE_DELAY - 50)
   expect(written).toHaveLength(0)
@@ -86,9 +72,7 @@ test('writes the page the reading got to, and keeps where the note points', asyn
   expect(said()).toContain('Nib-Home=https://svelte.dev/docs')
   expect(said()).toContain('Nib-Icon=https://svelte.dev/favicon.png')
   expect(said()).toContain('Title=Svelte docs')
-  // The day the note was made, untouched.
   expect(said()).toContain('Nib-Added=2026-09-12T08:30:00.000Z')
-  // And the tab's own copy of the file is the file.
   expect(text).toBe(said())
 })
 
@@ -159,10 +143,6 @@ test('an address that is not the web is never written', async () => {
   expect(written).toHaveLength(0)
 })
 
-/** The row in the file list draws the site's own mark out of this file, and nothing
- *  rescans a space while it is open - so the index has to be told, the same way every
- *  other write in the app tells it. Without this the row wore the plain globe until
- *  the next launch. See link-index.svelte.ts and docs/web-tabs.md. */
 test('tells the index what the file now says, so the row can wear the favicon', async () => {
   keepPage({
     path: PATH,
@@ -175,7 +155,6 @@ test('tells the index what the file now says, so the row can wear the favicon', 
 
   expect(told).toHaveLength(1)
   expect(told[0]?.path).toBe(PATH)
-  // The same text that went to the disk, so the index and the file cannot disagree.
   expect(told[0]?.content).toBe(said())
   expect(told[0]?.content).toContain('Nib-Icon=https://svelte.dev/favicon.png')
 })
@@ -194,13 +173,6 @@ test('says nothing to the index when there was nothing to write', async () => {
   expect(told).toHaveLength(0)
 })
 
-/** #353: *"after choosing web data > separate for a note sometimes it doesn't apply
- *  the option."* Sometimes is the pause. A page that has just moved owes its file a
- *  write, and the write waits for the reading to settle; Separate web data writes
- *  `Nib-Data` into the same file inside that pause. The waiting write read the file's
- *  other keys once, when the page moved, so it wrote back the file as it was before
- *  the choice - no `Nib-Data` - and the note was on the shared store again a fifth of
- *  a second after being told not to be. The file is asked again at the write. */
 test('a choice made while a write is waiting is in the file the write makes', async () => {
   let text = FILE
   keepPage({
@@ -211,8 +183,6 @@ test('a choice made while a write is waiting is in the file the write makes', as
     wrote: (next) => (text = next),
   })
 
-  // Separate web data, inside the pause: the note's own id goes in the file, and the
-  // tab's copy of the file with it. See own-data.ts.
   text = `${FILE}Nib-Data=0123456789abcdef\r\n`
   await vi.advanceTimersByTimeAsync(2500)
 
@@ -222,10 +192,6 @@ test('a choice made while a write is waiting is in the file the write makes', as
   expect(text).toBe(said())
 })
 
-/** Two devices draw one favicon into two different pictures, and each wrote its own
- *  over the other's on every open: a web note syncing back and forth on a change
- *  nobody could see, and the copies beside it that two writers between two passes
- *  used to leave. A mark already held as a picture stays until the reading moves. */
 test('a mark already held as a picture is not written over on its own', async () => {
   const held = `${FILE}Nib-Icon=data:image/png;base64,AAAA\r\n`
   keepPage({
@@ -249,8 +215,6 @@ test('a mark already held as a picture is not written over on its own', async ()
   expect(said()).toContain('Nib-Icon=data:image/png;base64,BBBB')
 })
 
-/** A reader clicking through links without a pause is still written every couple of
- *  seconds, the way somebody typing without a pause is. */
 test('a reading that never settles is written at the longest wait a note has', async () => {
   for (let step = 0; step < 12; step++) {
     keepPage({
@@ -267,7 +231,6 @@ test('a reading that never settles is written at the longest wait a note has', a
   expect(written.length).toBeLessThanOrEqual(Math.ceil((12 * SAVE_DELAY) / 2 / SAVE_AT_MOST) + 1)
 })
 
-/** Emil's quit: the window going writes the address now, and waits for it. */
 test('the window going writes what is waiting, and waits for it', async () => {
   keepPage({
     path: PATH,
@@ -282,7 +245,6 @@ test('the window going writes what is waiting, and waits for it', async () => {
   await landed()
 
   expect(said()).toContain('URL=https://svelte.dev/docs/kit')
-  // And nothing is written a second time once the pause would have come.
   await vi.advanceTimersByTimeAsync(2500)
   expect(written).toHaveLength(1)
 })
@@ -300,9 +262,6 @@ test('leaving the tab writes what is waiting for its note', () => {
   expect(said()).toContain('URL=https://svelte.dev/docs/cli')
 })
 
-/** A `.webloc` a Mac wrote stays a plist a Mac reads when the reading moves on: only
- *  the address in it changes, every other key is kept, and no internet shortcut is
- *  written into it. A redirect or a page saying its mark is enough to start a write. */
 test('a .webloc keeps its plist, with nothing in it changed but the address', async () => {
   const path = '/Notes/Docs.webloc'
   const plist = (url: string) =>
@@ -342,9 +301,6 @@ test('a .webloc is not written for a page that only said its mark', async () => 
   expect(written).toHaveLength(0)
 })
 
-/** A web note in a space shared to be read browses like any other, and the file is
- *  never told: the copy here would stop being the space's, and the sync refuses it on
- *  every pass (B288). Where the reading got to is the session's; see `webWalked`. */
 test('a note in a space shared to be read is never written, nor its copy changed', async () => {
   readOnly.add(PATH)
   let text = FILE

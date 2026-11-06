@@ -1,8 +1,3 @@
-/** The script in every web tab's page (`SCRIPT` in src-tauri/src/web_opens.rs), run in a
- *  document of its own: which of a page's keys it asks Orden's answer for. A page says it
- *  took a key by `preventDefault`, as it does to Chrome; `stopPropagation` keeps a key from
- *  the page's own listeners and says nothing about the browser's (#1022). */
-
 import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
@@ -12,8 +7,6 @@ const script = /pub const SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
 
 type Listening = 'bare' | 'stops' | 'takes'
 
-/** A page with one field, whose listeners on it do what `listening` says. Events raised
- *  by a script are never trusted, so that one test is taken out. */
 function page(listening: Listening) {
   const dom = new JSDOM('<input id="field">', { runScripts: 'outside-only' })
   const asked: string[] = []
@@ -104,9 +97,6 @@ describe('the keys an engine or a page has its own use for', () => {
   })
 })
 
-/** Orden's own Chromium has no find and no Ctrl+0 of its own to fall back on, so a key a page
- *  only stopped is Orden's to answer there, as it is to Chrome (#397). The replacement
- *  `script()` in web_opens.rs makes; its own test holds it to this line. */
 describe('the same keys on the engine with no answer of its own', () => {
   const onChromium = /const STOPPED_ENGINE_KEYS: &str = "(.*?)";/.exec(source)?.[1] ?? ''
 

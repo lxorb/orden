@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The icon picker's Web icons as this device holds them (#1054): the account's list,
- *  the pictures the service fetched, written as `site:` values, told by tabs that are
- *  not private, and taken away with the history. */
-
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => kept.get(key) ?? null,
@@ -26,8 +22,6 @@ const server = vi.hoisted(() => ({
   told: [] as Record<string, unknown>[],
   forgot: [] as unknown[],
   sites: [] as { site: string; label: string; seen: number; hash: string | null }[],
-  /** What every call answers with instead, as the api module throws it: a service from
-   *  before the Web icons (404), or none reachable. */
   refuse: null as null | Error,
   calls: 0,
 }))
@@ -164,7 +158,6 @@ describe('a service from before the Web icons', () => {
       expect(siteIcons.lacking).toBe(true)
       expect(siteSet().unoffered).toBe(true)
 
-      // A while later it is asked again, and a service that has them offers them.
       server.refuse = null
       vi.setSystemTime(Date.now() + 11 * 60_000)
       await siteIcons.refresh()

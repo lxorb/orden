@@ -1,8 +1,3 @@
-/** Two windows over one device's storage. Each window is its own copy of these
- *  modules, and what one of them wrote is not undone by what the other still holds:
- *  a visit, a reset of a site's permissions, a deleted history. Each module here is
- *  imported twice, after `vi.resetModules`, which is what a second window is. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {

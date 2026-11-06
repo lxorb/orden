@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Delete browsing data: what reaches the engine, and what of the history goes. */
-
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => kept.get(key) ?? null,
@@ -18,7 +16,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-// The account's Web icons (#1054), which a clearing of the history takes away too.
 const forgotten = vi.hoisted(() => [] as number[])
 vi.mock('./site-icons.svelte', () => ({
   siteIcons: { forgetSince: (since: number) => void forgotten.push(since) },
@@ -62,7 +59,6 @@ describe('the clearing', () => {
     const book = 'nib:web-visits'
     visited.saw(book, 'old', 'https://old.example/page', 'Old')
     visited.saw(book, 'new', 'https://new.example/page', 'New')
-    // Back-date the old one by a day, as if it was last open yesterday.
     const rows = visited
       .all(book)
       .map((one) =>

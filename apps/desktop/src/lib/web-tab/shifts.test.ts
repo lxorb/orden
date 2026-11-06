@@ -8,7 +8,6 @@ describe('the root shrunk to the box', () => {
   })
 
   test('never cuts into a box between two pixels', () => {
-    // 240.5 from the left: the root starts at 240, so the box is all inside it.
     const box = { left: 240.5, top: 76.25, width: 480.5, height: 600 }
     expect(marginAround(box, 1200, 800)).toBe('-76px -479px -123px -240px')
   })
@@ -21,7 +20,6 @@ describe('the root shrunk to the box', () => {
   })
 })
 
-/** An intersection observer that answers when the test says, with the ratio it says. */
 class Watching {
   static all: Watching[] = []
   watched: Element | null = null
@@ -47,7 +45,6 @@ class Watching {
   }
 }
 
-/** A resize observer the test makes speak, for the element and the window both. */
 class Sizing {
   static all: Sizing[] = []
   watched: Element | null = null
@@ -66,7 +63,6 @@ class Sizing {
   }
 }
 
-/** The one observer still watching. */
 function live(): Watching {
   const left = Watching.all.filter((one) => !one.gone)
   expect(left).toHaveLength(1)
@@ -82,7 +78,6 @@ describe('a hole that moves', () => {
     getBoundingClientRect: () => ({ ...box, x: box.left, y: box.top }),
   } as unknown as Element
 
-  /** The window's own resize listeners, by the test's hand. */
   const listening = new Set<() => void>()
   const viewport = { clientWidth: 1200, clientHeight: 800 }
 
@@ -115,9 +110,6 @@ describe('a hole that moves', () => {
     expect(listening.size).toBe(0)
   })
 
-  /** The sidebar opened, which shrinks the box inside the root it was armed with and
-   *  says nothing to an intersection observer; then the sidebar moved to the other side,
-   *  a move inside that old root, which said nothing either. */
   test('a box that shrank inside its root is watched where it is now', () => {
     box = { left: 0, top: 76, width: 1200, height: 684 }
     watchShifts(hole, () => undefined)
@@ -149,7 +141,6 @@ describe('a hole that moves', () => {
     watchShifts(hole, shifted)
     live().say(1)
 
-    // The file list went to the other side: the panes moved left, the same size.
     box = { ...box, left: 0 }
     live().say(0.75)
     expect(shifted).toHaveBeenCalledTimes(1)

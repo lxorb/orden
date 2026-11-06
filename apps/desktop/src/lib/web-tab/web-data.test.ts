@@ -2,8 +2,6 @@ import { getDomain } from 'tldts'
 import { describe, expect, test, vi } from 'vitest'
 import { hostOf, isWebData, siteOf, storeName, WEB_DATA } from './web-data'
 
-/** Storage for the test, since node has none; what the app writes is read back from
- *  here. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -21,14 +19,12 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** The public suffix list's answer, the way web-data.svelte.ts asks for it. */
 const registrable = (host: string) => getDomain(host, { allowPrivateDomains: true })
 
 const site = (url: string) => siteOf(hostOf(url) ?? '', registrable)
 
 describe('what a site is', () => {
   test('a sign-in through a sister host stays one site', () => {
-    // ETH's Moodle signs in at ETH's identity provider and comes back: one store.
     expect(site('https://moodle-app2.let.ethz.ch/my/')).toBe('ethz.ch')
     expect(site('https://aai-logon.ethz.ch/idp/profile/SAML2/Redirect/SSO')).toBe('ethz.ch')
   })

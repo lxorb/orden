@@ -32,8 +32,6 @@ describe("Chrome's list", () => {
   })
 })
 
-/** Where a new web note lands (#354): the engine's own page, which is the root of the
- *  address its search goes to. */
 describe("the engine's own page", () => {
   test('is the front door of the engine, not a search for nothing', () => {
     expect(engineHome(SEARCH)).toBe('https://www.google.com/')
@@ -55,8 +53,6 @@ describe("the engine's own page", () => {
     expect(engineHome('https://kagi.com/search?q=%s')).toBe('https://kagi.com/')
   })
 
-  /** Nothing can reach this - a custom engine is an address before it is kept - but a
-   *  new tab with nowhere to go is worse than a new tab on Google. */
   test('falls back to the default engine for an address that cannot be read', () => {
     expect(engineHome('not an address')).toBe('https://www.google.com/')
   })
@@ -73,7 +69,6 @@ describe('a custom engine', () => {
 
 describe('the choice', () => {
   beforeEach(() => {
-    // Node has no storage; this one outlives a module read again, which is a restart.
     const kept = new Map<string, string>()
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => kept.get(key) ?? null,
@@ -107,7 +102,6 @@ describe('the choice', () => {
     const { searchEngine, CUSTOM } = await import('./search-engine.svelte')
     expect(searchEngine.setCustom('not an engine')).toBe(false)
     expect(searchEngine.id).toBe('google')
-    // Custom with nothing written is not a choice.
     searchEngine.choose(CUSTOM)
     expect(searchEngine.id).toBe('google')
 
@@ -115,7 +109,6 @@ describe('the choice', () => {
     expect(searchEngine.id).toBe(CUSTOM)
     expect(searchEngine.url).toBe('https://kagi.com/search?q=%s')
 
-    // Kept while another is chosen, so going back finds it.
     searchEngine.choose('bing')
     searchEngine.choose(CUSTOM)
     expect(searchEngine.url).toBe('https://kagi.com/search?q=%s')

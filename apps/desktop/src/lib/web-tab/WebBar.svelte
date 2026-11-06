@@ -1,24 +1,4 @@
 <script lang="ts">
-  /** The bar over a page: back, forward, reload, the address, the extensions, what has
-   *  been downloaded, and the dots. Saving the page as a note is a row behind the dots
-   *  (menu.ts): Emil, #405, asked for the scissors off the bar.
-   *
-   *  A browser's row, in Orden's shapes. The same `.nib-glyph` squares the find bar and
-   *  the sidebar's foot are made of, the same `.nib-field` every box you type in is,
-   *  and the same row scale, so a thumb gets 56px where a pointer gets 28 without a
-   *  second design for a small screen. Under the strip and above the page, which is
-   *  where the find bar sits too: a bar over the page would cover the first line of
-   *  it.
-   *
-   *  The field is one control with two faces. Nobody typing in it wants to read a
-   *  title, and nobody reading wants to read an address: so it holds the whole
-   *  address while it has the keyboard and the site and the page's own name while it
-   *  does not. The site is there whichever face is up - it is the one part of an
-   *  address worth being sure of, and an `http:` page says so in front of its own
-   *  name.
-   *
-   *  Nothing here decides anything. Every press is handed up to the tab. */
-
   import { onMount, untrack } from 'svelte'
   import { scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -54,10 +34,7 @@
   const {
     page,
     tab,
-    /** Whether the pane this bar is in has the focus, so the address key lands in
-     *  one bar rather than in all of them. */
     focused,
-    /** Which history the address field offers from: its space's; see web-data.ts. */
     book,
     onstep,
     onhistory,
@@ -74,36 +51,21 @@
     theme,
   }: {
     page: Page
-    /** The tab's id, which is what the crate gives the keyboard back to a page by. */
     tab: string
-    /** What the page stands on, under glass: the bar takes it, so the tab, the bar and
-     *  the page are one surface; see glass/tint.ts. */
     ground?: { colour: string } | undefined
-    /** The scheme whose words read on that colour, where it is not the window's. */
     theme?: 'dark' | 'light' | undefined
     focused: boolean
     book: string
-    /** An arrow or reload pressed, and how: with the middle button or a modifier an
-     *  arrow opens its step in a tab of its own, and reload opens this page again in
-     *  one; see new-tab.ts. A key has no press. */
     onstep: (step: 'back' | 'forward' | 'reload' | 'fresh' | 'stop', press?: MouseEvent) => void
-    /** A right click or a held finger on an arrow: the pages that way, as a list. */
     onhistory: (forward: boolean, event: MouseEvent) => void
     onaddress: (said: string, aside: boolean, typed: string) => void
-    /** One of the space's websites chosen from the address field's list (#1059). */
     onnote?: (path: string) => void
     onmenu: (event: MouseEvent) => void
     onsite: () => void
     ondownloads: () => void
     ontyping: (on: boolean) => void
-    /** A zoom key pressed while the app has the keyboard. Inside the page the engine
-     *  answers them itself; see web_page.rs. */
     onzoom: (step: ZoomStep) => void
-    /** Chrome's History or Delete browsing data, from its key while the app has the
-     *  keyboard. Inside the page the page has them first; see web_opens.rs. */
     onbrowser: (which: 'history' | 'clear') => void
-    /** The extensions' buttons, where the engine runs extensions; see
-     *  ExtensionButtons.svelte. Null draws none. */
     extending?: {
       addable: string | null
       open: string | null
@@ -113,71 +75,24 @@
     } | null
   } = $props()
 
-  /** How far the files on their way have got, for the ring round the downloads glyph;
-   *  see `progressOf`. The circle's own length is 2πr with r = 10. */
   const progress = $derived(progressOf(downloads.list))
   const RING = 2 * Math.PI * 10
 
-  /** The site's own mark: the page's, else the last one this device saw there, so a
-   *  tab coming back wears it before its page does. See `favicons` in pages.svelte.ts. */
   const mark = $derived(siteMark(page.icon, page.url))
 
-  /** Whether the site's own mark arrived. A site with none, or one the engine will not
-   *  fetch, leaves a broken picture where a mark should be, and the lock reads better
-   *  than that. */
   let marked = $state(true)
 
-  // A new page is a new mark to look for.
   $effect(() => {
     if (mark) marked = true
   })
 
   let field = $state<{ take(): void }>()
 
-  /** The address the page is on, whole, while nobody is typing in the field (#774).
-   *
-   *  It read as the site and the page's own name after it, `github.com - Issues`, and
-   *  the address itself only once the field was pressed: so where a link had taken the
-   *  tab - the path, the query, `https:` or not - was something to click for, and the
-   *  page's name was said twice, here and on its tab. A reader on a NixOS laptop:
-   *  *"Can I see proper link, instead the 'Nicified' version without clicking on it?"*,
-   *  and Emil: *"we want that in general for nib by default"*. So the field always says
-   *  where the tab is, as Chrome's does under Always show full URLs, and what a press
-   *  adds is only the selection to type over. Orden's own pages read as their address,
-   *  as they did, as `chrome://history` does; see own-pages.ts. */
   const resting = $derived(shownUrl(page.url ?? ''))
 
-  /** Whether this tab had nowhere to go when the bar was built, which is the one thing
-   *  `onMount` needs to know and the one moment it cannot ask.
-   *
-   *  Read here, in the instance body, rather than inside `onMount`. A pane is swapped by
-   *  destroying one and building the next, and both happen in the same flush: a read
-   *  from inside the new bar's `onMount` reaches the page through the pane's `$derived`
-   *  at a moment when Svelte has already marked that graph inert, which is
-   *  `derived_inert` and a read of a value nobody is keeping up to date. The instance
-   *  body runs while the parent is building this component, which is the one moment the
-   *  chain is certainly alive - and once is all this wants, which is what `untrack`
-   *  says out loud. */
   const started = untrack(() => page.url === null)
 
-  /** A browser's keys - the address field, reload, the tabs by number, the zoom - read here
-   *  rather than off the window, and only by the bar in the focused pane: an app-level
-   *  key never reaches the editor, and these share chords with it and with Present. A
-   *  pane showing a page has neither; see bar-keys.ts.
-   *
-   *  Read before the app's own handler, which is what lets F5 reload here and present
-   *  a note everywhere else, and not while anything is open over the page or a note is
-   *  being presented: those have the keyboard.
-   *
-   *  While the page itself has the keyboard, the crate hands the address keys over and
-   *  F5 is the engine's own reload; see web_keys.rs.
-   *
-   *  A tab with nowhere to go yet takes the keyboard as it arrives, because typing
-   *  an address is the only thing to do with an empty tab. */
   onMount(() => {
-    // The keyboard back where it was in this tab as another came to the front: its field,
-    // half-typed words and caret with it, or its page - and nowhere else (#381). A tab
-    // with nowhere to go yet takes it into its field the first time only.
     const was = page.keyboard
     page.keyboard = null
     if (focused && (was === 'address' || (started && !page.seen))) take()
@@ -189,7 +104,6 @@
       if (!focused || overlays.depth > 0 || present.on) return
 
       const said = barKey(event, shortcuts)
-      // With no page to zoom, the keys are the words' size again.
       if (!said || (said.to === 'zoom' && !page.live)) return
 
       event.preventDefault()
@@ -200,8 +114,6 @@
       else showTab(said.at)
     }
 
-    // Escape last: whatever is open over the page, and the field being typed in, have
-    // their own first.
     const escape = (event: KeyboardEvent) => {
       if (!focused || !stops(event, page.loading, shortcuts)) return
 
@@ -214,8 +126,6 @@
     return () => {
       window.removeEventListener('keydown', key, true)
       window.removeEventListener('keydown', escape)
-      // The tab left with its page holding the keyboard: given back to the page as it
-      // comes back. The field says for itself whether it held it; see AddressField.svelte.
       if (focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
     }
   })
@@ -224,17 +134,12 @@
     field?.take()
   }
 
-  // Ctrl+L or Alt+D pressed inside this bar's page, which the page let go by: the
-  // address field takes the keyboard, as Chrome's does. See passed.svelte.ts.
-  // Only an ask made while this bar is up: one from before it was built was answered.
   const answered = untrack(() => addressing.asked)
   $effect(() => {
     const asked = addressing.asked
     if (asked && asked !== answered && asked.page === page) untrack(take)
   })
 
-  /** Whether the field has a line of its own under the glyphs: a pane too narrow for
-   *  all of the bar on one line. See bar-rows.ts. */
   let row = $state<HTMLElement>()
   let alone = $state(false)
   $effect(() => {
@@ -251,8 +156,6 @@
   data-theme={theme}
   style:--web-ground={ground?.colour}
 >
-  <!-- Back and forward. A right click or a held finger on either lists the pages that
-       way, the way Chrome's do. -->
   <button
     class="nib-glyph"
     title={shortcuts.tooltip(t('Back'), 'app.back')}
@@ -287,10 +190,6 @@
     </svg>
   </button>
 
-  <!-- One glyph for both, the way a browser has one: a cross while the page is
-       coming, which stops it, and the arrow again once it is here. The tab's own mark
-       turns meanwhile, so this says only what a press would do. The middle button,
-       or Ctrl, opens the page again in a tab of its own. -->
   <button
     class="nib-glyph"
     title={page.loading
@@ -313,10 +212,6 @@
     {/key}
   </button>
 
-  <!-- The site, at the left of the field, which is where every browser puts it: the
-       page's own mark, and the lock for a site that has none or whose mark will not
-       load. Pressing it says what this site is and what it has been allowed; see
-       WebSite.svelte. -->
   <button
     class="nib-glyph site"
     data-opens="site"
@@ -337,7 +232,6 @@
     {/if}
   </button>
 
-  <!-- A private tab says so where the address is, as Chrome's private window does. -->
   {#if page.inPrivate}
     <span class="privately"><PrivateMark large /></span>
   {/if}
@@ -358,9 +252,6 @@
     <ExtensionButtons {...extending} />
   {/if}
 
-  <!-- What has been downloaded, the way Chrome has it: a glyph that is not there until
-       the first file is, in the accent with a ring filling round it while anything is on
-       its way. -->
   {#if downloads.list.length > 0}
     <button
       class="nib-glyph saving"
@@ -413,10 +304,6 @@
 </div>
 
 <style>
-  /* The find bar's own row, because it is the same kind of thing in the same place:
-     a row of controls between the strip and what is being read. A pane too narrow
-     for the glyphs and a field that can be read puts the field on a line of its own;
-     see AddressField.svelte, and `.alone` below. */
   .webbar {
     flex: none;
     display: flex;
@@ -431,13 +318,6 @@
       border-color var(--dur-slow) var(--ease-out);
   }
 
-  /* Too narrow for one line (#1118): the glyphs keep the first, those in front of the
-     field at its start and those after it at its end, and the field takes the whole
-     line under them - rather than the last glyph wrapping alone onto a second line and
-     leaving the rest of it an empty band over the page. A spacer between the two kinds
-     of glyph, a break before the field, and the field last; the break is the gap
-     between the lines. Pseudo-elements, so bar-rows.ts measures the same items either
-     way. See bar-rows.ts. */
   .webbar.alone {
     row-gap: 0;
   }
@@ -463,18 +343,14 @@
     order: 4;
   }
 
-  /* On its page's own colour there is nothing to draw a line between. */
   .webbar.grounded {
     border-bottom-color: transparent;
   }
 
-  /* The site's mark sits against the field rather than in the row of arrows, so the
-     bar reads as "where you have been" and then "where you are". */
   .site {
     margin-left: var(--space-1);
   }
 
-  /* The private mark, a quiet glyph and no button: nothing about it is pressed. */
   .privately {
     flex: none;
     display: flex;
@@ -488,8 +364,6 @@
     border-radius: var(--radius-sm);
   }
 
-  /* The ring sits over the glyph's own square, a little inside its edge, and starts at
-     the top the way a clock's hand does. */
   .saving {
     position: relative;
   }
@@ -510,7 +384,6 @@
     transition: stroke-dashoffset var(--dur-base) var(--ease-out);
   }
 
-  /* A file of no known size is a quarter of the ring going round. */
   .nib-glyph > .ring.sweeping {
     animation: turn 1s linear infinite;
   }

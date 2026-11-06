@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A reader's tab lent to an agent: its page running out of sight for the agent's calls,
- *  whatever the reader is looking at, and given back to its own life after. */
-
 interface Held {
   live: boolean
   onScreen: boolean
@@ -106,7 +103,6 @@ describe('a tab lent to an agent', () => {
     expect(done).toEqual(['hide t1'])
     expect(pages.of('t1').lent).toBe(false)
 
-    // Once is enough, and a tab nothing lent - a note an agent wrote in - is no page.
     unlend('t1')
     unlend('a-note')
     expect(done).toEqual(['hide t1'])

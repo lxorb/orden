@@ -1,8 +1,3 @@
-/** A page out of sight, carried out: the rules in resting.ts asked of the pages store, the
- *  freeze sent, and the countdown to when they are asked again. Fetched with the first
- *  page that goes out of sight, so the first paint carries none of it; pages.svelte.ts
- *  hands its calls through. */
-
 import { agentMarks } from '../agent-marks.svelte'
 import { invoke } from '../tauri'
 import type { Page } from './pages.svelte'
@@ -10,13 +5,11 @@ import { grants, siteOf } from './permissions.svelte'
 import { FROZEN_AFTER, overCap, rest as judged, type Resting } from './resting'
 import { saver } from './saver.svelte'
 
-/** As much of the pages store as this needs. */
 export interface Held {
   each(): [string, Page][]
   park(tabId: string, hidden?: boolean): Promise<void>
 }
 
-/** Every page as the rules read it. */
 function resting(pages: Held): Resting[] {
   return pages.each().map(([id, page]) => {
     const site = siteOf(page.url)
@@ -40,9 +33,6 @@ function resting(pages: Held): Resting[] {
   })
 }
 
-/** What becomes of a page out of sight now, and the countdown to when it is asked again;
- *  `refused` is a page the engine would not freeze just now, asked again a freeze's wait
- *  later. */
 export function rest(pages: Held, tabId: string, refused = false): void {
   const page = pages.each().find(([id]) => id === tabId)?.[1]
   const one = resting(pages).find((each) => each.id === tabId)
@@ -61,12 +51,6 @@ export function rest(pages: Held, tabId: string, refused = false): void {
   if (again !== null) page.resting = setTimeout(() => rest(pages, tabId), again)
 }
 
-/** A freeze or a thaw, each after the last has landed: a thaw sent behind a freeze still
- *  on its way would land first, and the freeze would then hide a page on screen. Never a
- *  freeze halfway through a photograph; see `aside` in pages.svelte.ts.
- *
- *  A freeze the engine refused - WebView2 leaves a page running that plays, is in a call
- *  or holds a lock, and says so only in its answer - leaves the page counted as running. */
 export function lull(pages: Held, tabId: string, page: Page, paused: boolean): Promise<void> {
   page.frozen = paused
   page.lulling = page.lulling.then(async () => {
@@ -81,8 +65,6 @@ export function lull(pages: Held, tabId: string, page: Page, paused: boolean): P
   return page.lulling
 }
 
-/** Memory saver's cap, kept as one more page is built. A page in a pane on screen is
- *  never parked, nor one under a menu. */
 export function bound(pages: Held): void {
   for (const id of overCap(resting(pages), saver.mode, Date.now())) void pages.park(id, true)
 }

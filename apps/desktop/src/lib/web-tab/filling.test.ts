@@ -1,6 +1,3 @@
-/** A page holding the whole screen, and the window following it: full screen while a
- *  page holds it, and back to what it was when the page lets go. See filling.svelte.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const frame = {
@@ -39,7 +36,6 @@ test('a page taking the screen takes the window with it, and gives both back', a
   expect(frame.full).toBe(false)
 })
 
-/** The reader had put the app full screen themselves: a video ending leaves it there. */
 test('a window already full screen stays so', async () => {
   frame.full = true
   await filling.take('a')

@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { readPressed } from './keys'
 
-/** A key the crate took from a page, as the window reads it. What it does once played
- *  is the window's own handler, as for any key pressed in the app; which keys are taken
- *  is `web_keys.rs` and its own tests. */
 describe('a key out of a page', () => {
   test('is read as the crate sends it', () => {
     expect(
@@ -27,7 +24,6 @@ describe('a key out of a page', () => {
     })
   })
 
-  /** A modifier let go of. */
   test('and a release is a release', () => {
     expect(readPressed({ key: 'Control', code: 'ControlLeft', down: false })).toMatchObject({
       key: 'Control',
@@ -36,7 +32,6 @@ describe('a key out of a page', () => {
     })
   })
 
-  /** Only `true` is true, so a field that went missing is a modifier nobody held. */
   test('holds nothing it was not told', () => {
     expect(readPressed({ key: 'w', code: 'KeyW', ctrl: 'yes', down: 1 })).toMatchObject({
       ctrl: false,

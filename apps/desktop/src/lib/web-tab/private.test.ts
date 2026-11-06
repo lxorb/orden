@@ -1,7 +1,3 @@
-/** A private tab writes nothing down about where it went: not what a site was allowed,
- *  not how large it was drawn, not that it was muted. Its size and mute last as long as
- *  the tab, what a site was told as long as the private session, in memory. See private.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const told: { tab: string; muted: boolean }[] = []
@@ -38,7 +34,6 @@ const { Page } = await import('./pages.svelte')
 const sites = await import('./sites')
 const { grants } = await import('./permissions.svelte')
 const { pages } = await import('./pages.svelte')
-// mute.ts fetches the workspace with the press; only its tabs are asked for here.
 vi.doMock('../workspace.svelte', () => ({
   workspace: {
     get tabs() {
@@ -93,7 +88,6 @@ test('a private page answered is remembered for the private session and written 
   expect(grants.said('secret.example', 'notifications')).toBeNull()
   expect(grants.said('secret.example', 'notifications', true)).toBe('block')
 
-  // Asked again in a private tab: answered from what was said.
   grants.heard({
     id: 2,
     tab: 'priv',
@@ -103,7 +97,6 @@ test('a private page answered is remembered for the private session and written 
   })
   expect(grants.asking).toEqual([])
 
-  // A tab that is not private is asked.
   grants.heard({
     id: 3,
     tab: 'open',
@@ -114,7 +107,6 @@ test('a private page answered is remembered for the private session and written 
   expect(grants.asking.map((one) => one.id)).toEqual([3])
   grants.dismiss(grants.asking[0]!)
 
-  // The last private tab closed: what the session was told is gone with it.
   grants.dropped('priv', false)
   expect(grants.said('secret.example', 'notifications', true)).toBeNull()
 })
@@ -129,7 +121,6 @@ test('a site muted from a tab that is not private leaves a private tab’s own c
     page.url = 'https://loud.example/'
     page.inPrivate = inPrivate
   }
-  // The private tab let the site be heard, for itself.
   sites.setMuted('loud.example', false, 'priv')
 
   await muteSite('open', true)

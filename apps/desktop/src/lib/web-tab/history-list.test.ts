@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { answers, dayName, dayOf, historyRows, hostOf, onScreen } from './history-list'
 import type { Visit } from './visits'
 
-/** Noon on a Saturday, on this computer's clock, so the days are the machine's own. */
 const NOW = new Date(2026, 9, 3, 12, 0).getTime()
 const HOUR = 3_600_000
 
@@ -44,7 +43,6 @@ describe('the History page', () => {
     expect(dayName(dayOf(NOW), NOW, 'en', words)).toBe('Today')
     expect(dayName(dayOf(NOW - 24 * HOUR), NOW, 'en', words)).toBe('Yesterday')
     expect(dayName(dayOf(NOW - 72 * HOUR), NOW, 'en', words)).toBe('Wednesday, September 30')
-    // Another year says its year.
     expect(dayName(dayOf(new Date(2025, 0, 2).getTime()), NOW, 'en', words)).toContain('2025')
   })
 
@@ -53,7 +51,6 @@ describe('the History page', () => {
     expect(hostOf('not an address')).toBe('not an address')
   })
 
-  /** Two thousand rows are drawn a screenful at a time. */
   test('draws the rows on screen and a few either side', () => {
     expect(onScreen(0, 280, 28, 2000)).toEqual({ from: 0, to: 18 })
     expect(onScreen(28 * 100, 280, 28, 2000)).toEqual({ from: 92, to: 118 })

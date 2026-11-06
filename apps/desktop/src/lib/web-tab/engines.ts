@@ -1,27 +1,12 @@
-/** The search engines the address field can send a few words to: Chrome's list.
- *
- *  Emil's browser vision (2026-09-13) keeps the search engine choice inside the browser,
- *  where Chrome keeps it: Settings, one row, the engines Chrome offers for the reader's
- *  region and a custom one written with `%s` where the words go. Google stays the first
- *  and the default, which was Emil's call; see `SEARCH` in typed.ts.
- *
- *  The addresses are the ones Chrome's own prepopulated list sends a search to
- *  (components/search_engines/prepopulated_engines.json), with `{searchTerms}` written
- *  as the `%s` Chrome's own custom engines use. Pure, so the list, what a choice makes
- *  of a few words and where a new web note lands are tested apart from any setting. */
-
 import { isWebAddress } from './address'
 import { SEARCH, WORDS } from './typed'
 
-/** One engine: what it is called and where its search goes. */
 export interface Engine {
   id: string
   name: string
-  /** The search's address, `%s` where the words go. */
   url: string
 }
 
-/** The ones Chrome offers everywhere, in the order its own settings list them. */
 const EVERYWHERE: readonly Engine[] = [
   { id: 'google', name: 'Google', url: SEARCH },
   { id: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s' },
@@ -33,7 +18,6 @@ const EVERYWHERE: readonly Engine[] = [
   { id: 'yahoo', name: 'Yahoo!', url: 'https://search.yahoo.com/search?p=%s' },
 ]
 
-/** And the ones Chrome adds where a region has its own, by the reader's language. */
 const REGIONAL: Readonly<Record<string, readonly Engine[]>> = {
   zh: [
     { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd=%s' },
@@ -48,34 +32,21 @@ const REGIONAL: Readonly<Record<string, readonly Engine[]>> = {
   ru: [{ id: 'yandex', name: 'Яндекс', url: 'https://yandex.ru/search/?text=%s' }],
 }
 
-/** The engines offered to a reader whose system speaks `language` (a BCP 47 tag). */
 export function enginesFor(language: string): readonly Engine[] {
   const base = language.toLowerCase().split('-')[0] ?? ''
   return [...EVERYWHERE, ...(REGIONAL[base] ?? [])]
 }
 
-/** Every engine any region is offered, which is what a choice is read back against: a
- *  reader who chose Naver keeps it on a machine set to English. */
 const ALL: readonly Engine[] = [...EVERYWHERE, ...Object.values(REGIONAL).flat()]
 
-/** The engine with this id, or null. */
 export function engineById(id: string): Engine | null {
   return ALL.find((one) => one.id === id) ?? null
 }
 
-/** An engine's own page, from the address its search goes to: where a new web note
- *  lands, as a browser's new tab lands on the engine the reader chose (#354).
- *
- *  The search's root and nothing else. Every engine on the list and every custom one
- *  serves its front door there - `google.com`, `duckduckgo.com`, `kagi.com` - and an
- *  engine's search page with no words in it is a results page for nothing, which is not
- *  what somebody who asked for a web note is after. Google's for an address that cannot
- *  be read at all, which is the engine of a reader who has chosen none. */
 export function engineHome(search: string): string {
   return rootOf(search) ?? rootOf(SEARCH) ?? SEARCH
 }
 
-/** The root of an engine's search address, or null for one that is no address. */
 function rootOf(search: string): string | null {
   let parsed: URL
   try {
@@ -88,16 +59,11 @@ function rootOf(search: string): string | null {
   return isWebAddress(root) ? root : null
 }
 
-/** Whether a custom engine's address can take a search: a web address once the words
- *  are in it, with somewhere to put them. */
 export function isEngineAddress(url: string): boolean {
   const said = url.trim()
   return said.includes(WORDS) && isWebAddress(said.replaceAll(WORDS, 'nib'))
 }
 
-/** The engine of the list another browser's search goes to (import/search-engines.ts):
- *  the one of its name, else the one whose search is on the same site. Null for one
- *  not on the list. */
 export function engineFor(name: string | null, search: string | null): Engine | null {
   const called = name?.trim().toLowerCase()
   const named = called ? ALL.find((one) => one.name.toLowerCase() === called) : undefined
@@ -107,7 +73,6 @@ export function engineFor(name: string | null, search: string | null): Engine | 
   return site === null ? null : (ALL.find((one) => siteOf(one.url) === site) ?? null)
 }
 
-/** The site an engine's search is on, without the `www.` in front. */
 function siteOf(search: string): string | null {
   try {
     return new URL(search.replaceAll(WORDS, 'nib')).hostname.replace(/^www\./, '')

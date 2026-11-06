@@ -1,22 +1,3 @@
-/** A web note's own web data, chosen from its tab's menu or its row in the file list (#239).
- *
- *  Emil, 2026-10-13: *"there should be an option that you can set for a web note / tab when
- *  right clicking on it that gives it independent web data"*. Firefox's containers are
- *  the model, one cookie jar per container and the history shared, and so are their two
- *  faults, which this does not repeat: the choice is in the menu of the thing it is about,
- *  ticked where it stands, and undone the way it was made.
- *
- *  - **Separate**: a new id goes in the note's file (`Nib-Data`, see shortcut.ts) and its
- *    page is built again in a store of its own, empty - signed out, which is the point of
- *    one: a second account on the same site. Said under the bar for a moment.
- *  - **Global**: asked first, because what the note's pages were signed in to is deleted -
- *    a store nobody names is a login nobody can see - then the id comes out of the file,
- *    the page is built again in the store every page shares, and the note's own is
- *    cleared through the same call Delete browsing data makes (web_clear.rs).
- *
- *  The file is the whole of the choice, so it moves and is renamed with the note, syncs
- *  with it, and is the same choice on every computer. Fetched with the press. */
-
 import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
@@ -32,25 +13,17 @@ import { withOwn } from './own-file'
 import { readWebFile } from '@orden/scan/shortcut'
 import { freshOwn, isCopying, ownStore, webData } from './web-data.svelte'
 
-/** The two places a web note's pages may keep what websites store. */
 type Where = 'global' | 'separate'
 
 const WHERE: readonly Where[] = ['global', 'separate']
 
-/** The note's words: the open document's, or the file's. */
 async function textOf(path: string): Promise<string | null> {
   const open = workspace.documentAt(path)
   if (open) return open.text
   return invoke<string>('read_note', { path }).catch(() => null)
 }
 
-/** Whether a web note other than `path` names the store `own`: one open in a tab, or
- *  one in the file list. A store two notes name is both of theirs, so setting one of
- *  them back to Global must not clear it, or the other is signed out and loses what it
- *  kept with nothing said. Save never gives two notes one id (see `ownFor` in
- *  workspace/placing.ts), but a copied file does. */
 async function namedElsewhere(path: string, own: string): Promise<boolean> {
-  // A tab saved out of this note has its store copied out of this one right now.
   if (isCopying(own)) return true
   const others = new Set<string>()
   for (const tab of workspace.tabs) {
@@ -66,8 +39,6 @@ async function namedElsewhere(path: string, own: string): Promise<boolean> {
   return false
 }
 
-/** The choice in place of the row that asked, the one in force ticked: the shared web
- *  data, or the note's own. */
 export async function showWebData(path: string): Promise<void> {
   const text = await textOf(path)
   const now: Where = readWebFile(path, text)?.own ? 'separate' : 'global'
@@ -81,14 +52,7 @@ export async function showWebData(path: string): Promise<void> {
   )
 }
 
-/** Keeps the note's web data where it was asked to.
- *
- *  What the page owes the file is written first: a write waiting on the reading to
- *  settle is a second writer over the same file, and the two used to land in whichever
- *  order the pause fell in. See keep.ts and #353. */
 async function choose(path: string, where: Where): Promise<void> {
-  // The choice is the file, and a space shared to be read is not written in (B288);
-  // its menus do not offer this there, and this asks for a caller that did not look.
   if (!canWriteAt(path)) return
   keepNow(path)
   const text = await textOf(path)
@@ -96,7 +60,6 @@ async function choose(path: string, where: Where): Promise<void> {
   const was = readWebFile(path, text)?.own ?? null
   if ((was !== null) === (where === 'separate')) return
 
-  // A store another note still names is left as it is, so there is nothing to ask.
   const shared = was !== null && where === 'global' && (await namedElsewhere(path, was))
   if (where === 'global' && !shared) {
     const sure = await prompt.confirm({
@@ -115,9 +78,7 @@ async function choose(path: string, where: Where): Promise<void> {
   workspace.documentAt(path)?.replace(content, false)
   await writeFile(path, content)
 
-  // Its open page moves now, before the store it leaves is cleared; see `rehouse`.
   const said = own ? t('This note keeps its own web data now') : t('Back on the shared web data')
-  // The note's tabs, and the tabs with no file that took its web data with them.
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
     const copy = !shared && tab.path === null && was !== null && tab.apart === was
@@ -125,8 +86,6 @@ async function choose(path: string, where: Where): Promise<void> {
     if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
 
-  // Every site the history knows, for Orden's own Chromium, which clears a site's data
-  // only where it is named; the history is not kept per store. See `sitesSince`.
   if (was !== null && own === null && !shared) {
     await invoke('web_clear', {
       stores: [ownStore(was)],

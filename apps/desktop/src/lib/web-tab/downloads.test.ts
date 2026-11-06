@@ -1,9 +1,3 @@
-/** What the bar knows about the files the web tabs saved.
- *
- *  The crate reports each download whole, every time it starts, moves or ends, and the
- *  reports can cross: a word about how far a file had got can arrive after the word that
- *  it is done. The list has to end on what actually happened. See downloads.svelte.ts. */
-
 import { expect, test, vi } from 'vitest'
 
 const asked: { command: string; id: unknown }[] = []
@@ -53,7 +47,6 @@ test('what the crate sends is read, and nothing else is', () => {
     total: 10,
   })
 
-  // A size the server never said is no size, not a size of nought.
   expect(
     readDownload({ id: 1, tab: 't', url: 'u', name: 'n', state: 'going', total: null })?.total,
   ).toBeNull()

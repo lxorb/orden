@@ -19,7 +19,6 @@ describe('what a web tab may open', () => {
     expect(isWebAddress('http://example.com')).toBe(true)
   })
 
-  /** Chrome's "View page source", which the page's own menu asks for as a window. */
   test('takes the source of a page it would take', () => {
     expect(isWebAddress('view-source:https://example.com/a')).toBe(true)
     expect(isWebAddress('view-source:file:///C:/notes/Idea.md')).toBe(false)
@@ -37,8 +36,6 @@ describe('what a web tab may open', () => {
     expect(isWebAddress('nib://open')).toBe(false)
   })
 
-  /** A tab holding Orden inside Orden is a page whose script sits beside the app's. The
-   *  crate says the same thing again on every navigation; see web_tabs.rs. */
   test('refuses the app itself', () => {
     expect(isWebAddress('http://tauri.localhost/index.html')).toBe(false)
     expect(isWebAddress('https://TAURI.localhost/')).toBe(false)
@@ -62,7 +59,6 @@ describe('the origin, plainly', () => {
     expect(plainOrigin('https://www.bbc.co.uk/news')).toBe('bbc.co.uk')
   })
 
-  /** The one thing about an address worth warning somebody about. */
   test('says so when the page is not over https', () => {
     expect(plainOrigin('http://example.com/a')).toBe('http://example.com')
   })
@@ -76,25 +72,20 @@ test("a site's own picture is looked for at its root, and an address with no roo
   expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe(
     'https://pass.proton.me/favicon.ico',
   )
-  // What a tab can hold before its page is an address, which once threw in the pane.
   expect(favicon('pass.proton.me/onboarding')).toBeNull()
   expect(favicon('about:blank')).toBeNull()
 })
 
-/** #790 review: the bar is what says who is answering, so when in doubt it says punycode. */
 describe('a name that could pass for another', () => {
   const ascii = (name: string) => new URL(`https://${name}/`).hostname
 
   test.each([
-    // Latin letters that exist to look like others, and no one's diacritic.
     ['gıthub.com'],
     ['\u0237query.com'],
     ['\u0138ey.com'],
     ['faß.de'],
     ['ɡoogle.com'],
-    // Greek's final sigma, which reads as an o or a c.
     ['ςιτι.com'],
-    // A known name with one diacritic, which only a list can tell.
     ['gòogle.com'],
     ['pаypal.com'],
     ['pàypal.com'],
@@ -116,8 +107,6 @@ describe('a name that could pass for another', () => {
   )
 })
 
-/** What a grant, a muted site and a size are kept under is not how the name is drawn: a rule
- *  about what is safe to show must never move what a site was allowed. */
 describe('the key of a site', () => {
   test('is the spelling that does not change', () => {
     expect(originKey('https://www.xn--mnchen-3ya.de/a')).toBe('xn--mnchen-3ya.de')
@@ -135,7 +124,6 @@ describe('the key of a site', () => {
   })
 })
 
-/** The field's face is a display string; going somewhere from it is not. */
 describe('Enter on a bar nobody typed in', () => {
   test('goes to the page itself', () => {
     const url = 'https://xn--mnchen-3ya.de/a'
@@ -150,8 +138,6 @@ describe('Enter on a bar nobody typed in', () => {
   })
 })
 
-/** The host as Chrome spells it: a name in one writing system reads as itself, and one that
- *  could pass for another name stays punycode (#790). */
 describe('a name that is not ASCII', () => {
   test.each([
     ['https://xn--mnchen-3ya.de/a', 'münchen.de'],
@@ -166,13 +152,9 @@ describe('a name that is not ASCII', () => {
   })
 
   test.each([
-    // Latin with Cyrillic, the classic: a Cyrillic a in front of pple.
     ['https://xn--pple-43d.com/', 'xn--pple-43d.com'],
-    // Cyrillic alone, every letter of it one that looks Latin, under a Latin ending.
     ['https://xn--80ak6aa92e.com/', 'xn--80ak6aa92e.com'],
-    // Greek with Latin.
     ['https://xn--pple-zld.com/', 'xn--pple-zld.com'],
-    // A symbol: not a name in any writing system.
     ['https://xn--n3h.com/', 'xn--n3h.com'],
   ])('%s stays as it is', (url, shown) => {
     expect(plainOrigin(url)).toBe(shown)
@@ -183,7 +165,6 @@ describe('a name that is not ASCII', () => {
   })
 
   test('Latin beside the writing systems that are written with it', () => {
-    // abcテスト, and 中文abc.
     expect(plainOrigin('https://xn--abc-7k4bocn.jp/')).toBe('abcテスト.jp')
     expect(plainOrigin('https://xn--abc-u68do18h.cn/')).toBe('中文abc.cn')
   })
@@ -201,7 +182,6 @@ describe('a name that is not ASCII', () => {
       'view-source:https://münchen.de/',
     )
     expect(shownUrl('not an address')).toBe('not an address')
-    // Who the page is, for an address that spends its front on something else.
     expect(shownUrl('https://google.com@xn--mnchen-3ya.de/')).toBe(
       'https://google.com@xn--mnchen-3ya.de/',
     )

@@ -1,7 +1,3 @@
-/** A web note set back to Global clears the web data it kept, and only where nothing
- *  else still keeps its pages there: a store another note names is that note's sign-in,
- *  and clearing it signed that note out without a word. See own-data.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const files = new Map<string, string>()
@@ -102,7 +98,6 @@ test('a note set back to Global leaves a store another listed note still names',
   await setGlobal('/s/B.url')
 
   expect(cleared).toEqual([])
-  // Nothing is deleted, so nothing is asked.
   expect(asked).toEqual([])
 })
 
@@ -120,7 +115,6 @@ test('a note set back to Global leaves a store a note open in a tab still names'
 test('a note set back to Global leaves a store a tab saved out of it is being copied from', async () => {
   files.set('/s/A.url', SEPARATE)
   listed.push({ path: '/s/A.url', name: 'A.url' })
-  // A link-out tab of A is being saved: its store is copied out of A's (`ownFor`).
   copying.add('0123456789abcdef')
 
   await setGlobal('/s/A.url')

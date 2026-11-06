@@ -1,11 +1,3 @@
-/** What a site is told, and when it is asked.
- *
- *  The behaviour worth being sure of is Chrome's: a site is asked **once**, at the
- *  moment it asks, and every request after that is answered before anything appears on
- *  screen. A request the reader never sees is a request that was answered from what
- *  they said last time - which is the whole difference between this and the menu row it
- *  replaced. See permissions.svelte.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const answered: { id: number; allow: boolean }[] = []
@@ -42,8 +34,6 @@ const { grants, readAsked, siteOf } = await import('./permissions.svelte')
 
 let next = 1
 
-/** One request from a site, as the crate sends it, and as a private tab's page says it
- *  came from a private tab. */
 function asked(site: string, kind: string, tab = 'a', privately = false) {
   const said = readAsked({ tab, id: next++, origin: `https://${site}/page`, kind })
   expect(said).not.toBe(null)
@@ -103,11 +93,9 @@ test('a grant is about one site and one thing', () => {
   grants.heard(one)
   grants.answer(one, true)
 
-  // Another site that links to it is another site.
   grants.heard(asked('b.example', 'camera'))
   expect(grants.asking).toHaveLength(1)
 
-  // And the microphone is not the camera.
   grants.asking = []
   grants.heard(asked('a.example', 'microphone'))
   expect(grants.asking).toHaveLength(1)
@@ -136,7 +124,6 @@ test('a bubble somebody dismissed decides nothing about the site', () => {
 
   expect(grants.asking).toHaveLength(0)
   expect(answered).toEqual([{ id: one.id, allow: false }])
-  // Nothing remembered, so the site is asked again the next time it asks.
   expect(grants.said('a.example', 'camera')).toBe(null)
 
   const again = asked('a.example', 'camera')
@@ -187,8 +174,6 @@ test('the site is the host as the bar shows it', () => {
   expect(siteOf('https://xn--mnchen-3ya.de/')).toBe('xn--mnchen-3ya.de')
 })
 
-// #787: a private tab's Allow was written to the store, and a normal tab on the same site
-// was then allowed with no bubble, and the site's info named the private visit.
 test("a private tab's answer is kept nowhere and never answers a normal tab", () => {
   const privately = asked('a.example', 'camera', 'p', true)
   grants.heard(privately)
@@ -207,17 +192,14 @@ test('the private session answers its own tabs until the last private tab closes
   grants.heard(first)
   grants.answer(first, true)
 
-  // Another private tab, the same session: answered without a bubble.
   grants.heard(asked('a.example', 'camera', 'q', true))
   expect(grants.asking).toHaveLength(0)
   expect(answered.at(-1)?.allow).toBe(true)
   expect(grants.of('a.example', true)).toEqual({ camera: 'allow' })
 
-  // One private tab closed while another is open: the session goes on.
   grants.dropped('p', true)
   expect(grants.said('a.example', 'camera', true)).toBe('allow')
 
-  // The last one closed: what was said in it is gone.
   grants.dropped('q', false)
   expect(grants.said('a.example', 'camera', true)).toBe(null)
   grants.heard(asked('a.example', 'camera', 'r', true))

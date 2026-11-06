@@ -1,10 +1,3 @@
-/** A web tab's hole moving without changing size, and the screen's scale changing, heard
- *  as they happen (#246): a resize observer hears neither, and the page stayed where the
- *  hole had been. `watchShifts` is Floating UI's `observeMove` - an intersection observer
- *  whose root is shrunk to the box - and `watchScale` hears a screen of another scale. Why,
- *  and what was measured: docs/web-tabs.md, "One box, and every change of it". */
-
-/** A box, in the window's own pixels. */
 export interface Box {
   left: number
   top: number
@@ -12,8 +5,6 @@ export interface Box {
   height: number
 }
 
-/** The root margin that shrinks a viewport of `width` by `height` to `box`, rounded so the
- *  root never cuts into the box: an observer of that root sees all of it until it moves. */
 export function marginAround(box: Box, width: number, height: number): string {
   const top = Math.floor(box.top)
   const left = Math.floor(box.left)
@@ -22,7 +13,6 @@ export function marginAround(box: Box, width: number, height: number): string {
   return `${String(-top)}px ${String(-right)}px ${String(-bottom)}px ${String(-left)}px`
 }
 
-/** Whether two boxes are the same box. */
 export function sameBox(one: Box, other: Box): boolean {
   return (
     one.left === other.left &&
@@ -37,19 +27,8 @@ function boxOf(node: Element): Box {
   return { left, top, width, height }
 }
 
-/** How long to wait before looking again at a box that is out of the window altogether,
- *  where every position is the same nothing; Floating UI's figure. */
 const CLIPPED_AGAIN = 1000
 
-/** Calls `shifted` whenever `node` moves on the screen, and answers the way to stop. A
- *  change of size is a resize observer's to hear, though this hears most of those too.
- *
- *  The root is the box as it was when the observer was made, so it is made again on
- *  every change of size, the element's or the window's. A box that shrinks inside its
- *  root, or a window that grows round it, is still seen whole - nothing is said - and a
- *  move inside a root that is out of date is never seen at all: the sidebar opened, then
- *  moved to the other side, was a page left where the panes had been, which the probe
- *  found with the first version of this. Floating UI's `observeMove` has the same gap. */
 export function watchShifts(node: Element, shifted: () => void): () => void {
   if (typeof IntersectionObserver !== 'function') return () => undefined
 
@@ -72,17 +51,12 @@ export function watchShifts(node: Element, shifted: () => void): () => void {
     const heard = (entries: IntersectionObserverEntry[]) => {
       const ratio = entries[0]?.intersectionRatio ?? 1
       if (ratio !== threshold) {
-        // The observer's first answer is where the element was when it started watching:
-        // a ratio a hair under the line is the rounding of the margin, and becomes the
-        // line. Any answer after it is the element having moved.
         shifted()
         if (!first) arm()
         else if (ratio === 0) again = setTimeout(() => arm(1e-7), CLIPPED_AGAIN)
         else arm(ratio)
         return
       }
-      // Seen whole and still moved: an observer can say the old ratio for a frame that
-      // has the element somewhere else, which Floating UI found under load.
       if (!sameBox(box, boxOf(node))) {
         shifted()
         arm()
@@ -112,8 +86,6 @@ export function watchShifts(node: Element, shifted: () => void): () => void {
   }
 }
 
-/** Calls `changed` whenever the screen's scale under the window changes, and answers the
- *  way to stop. A media query for the scale there is now, asked again each time. */
 export function watchScale(changed: () => void): () => void {
   if (typeof matchMedia !== 'function') return () => undefined
 

@@ -1,11 +1,4 @@
 // @vitest-environment jsdom
-/** The clip's reader, the page's half of a clip, run over the extractor's own saved pages
- *  in a page of their own - and what it wrote down read back the way the window reads it.
- *
- *  The script is the very file the crate runs (`src-tauri/src/web_tabs/reader.js`), with
- *  the two words filled in the way `web_tabs::reader` fills them. What it hands over has
- *  to come out of the extractor as exactly what the extractor makes of the live page,
- *  because that is the extractor's own answer: one page, one note, however it was read. */
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -42,7 +35,6 @@ function pageOf(name: string, url: string): JSDOM {
   return new JSDOM(html, { url, runScripts: 'outside-only' })
 }
 
-/** What the reader answers on that page, asked for the selection or not. */
 function read(page: JSDOM, selection: boolean, longest = 4_000_000): Clipped {
   const script = READER.replace('__SELECTION__', selection ? 'yes' : 'no').replace(
     '__LONGEST__',

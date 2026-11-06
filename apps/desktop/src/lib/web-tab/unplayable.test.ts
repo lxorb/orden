@@ -1,7 +1,3 @@
-/** The script in every web tab's page on Orden's own Chromium (`web_media.js`), run in a
- *  document of its own: which failures it says, and that an engine with the decoder says
- *  nothing (#1021). jsdom plays nothing, so each failure is set on the element by hand. */
-
 import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
 import { expect, test } from 'vitest'

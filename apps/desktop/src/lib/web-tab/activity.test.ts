@@ -1,8 +1,3 @@
-/** Whether somebody is at this computer: five minutes without a key or the pointer is
- *  idle, and the next key is active again; and input to a web page, which the app's own
- *  page never hears, counts through what the system says. Said on the change and only
- *  then. */
-
 import { beforeEach, describe, expect, test } from 'vitest'
 import { IDLE_AFTER, INPUT_EVERY } from '../backoff'
 import { Activity, readSystemInput, type SystemInput } from './activity'
@@ -55,7 +50,6 @@ describe('activity', () => {
 
     heard?.()
     expect(one.active).toBe(true)
-    // On the change and only then.
     await one.check()
     expect(said).toEqual([false, true])
   })
@@ -69,7 +63,6 @@ describe('activity', () => {
     await one.check()
     expect(one.active).toBe(true)
 
-    // The same input with another program in front was not Orden's.
     now += IDLE_AFTER + 1
     system = { idleMs: 2_000, front: false }
     await one.check()

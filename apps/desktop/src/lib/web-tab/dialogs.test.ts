@@ -1,7 +1,3 @@
-/** A page's dialogs: read off the crate's event, answered once, and cancelled with the
- *  tab. The behaviour worth being sure of is the page's - a `confirm()` answered Cancel
- *  is a `false`, never a yes nobody gave. See dialogs.svelte.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const told: { id: number; accept: boolean; text: unknown }[] = []

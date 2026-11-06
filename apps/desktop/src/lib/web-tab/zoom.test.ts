@@ -1,7 +1,3 @@
-/** The zoom rows and keys over a page in front: the page's size, as in Chrome, and never
- *  the words of a note nobody is looking at. On a Mac a row is the only way the key
- *  reaches the app while the page has the keyboard (#397). */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const calls: { command: string; args: Record<string, unknown> }[] = []

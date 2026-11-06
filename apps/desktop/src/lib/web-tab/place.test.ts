@@ -1,9 +1,3 @@
-/** Where each web note was left, kept on the device.
- *
- *  What a web note reopening on the page it was on rests on, together with the address
- *  in the file itself: this is the half about *this* screen - how far down the page the
- *  reading had got, and the trail behind the tab. See place.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -61,8 +55,6 @@ test('a note written twice keeps what was written last', () => {
   expect(placeOf('/a.url')?.y).toBe(20)
 })
 
-/** The list is this device's and it is bounded: two hundred notes is longer than
- *  anybody's list of open sites, and the oldest is the one that goes. */
 test('keeps two hundred notes and forgets the oldest', () => {
   for (let index = 0; index < 205; index += 1) {
     placeKept(`/note-${index}.url`, { url: `https://a.example/${index}`, x: 0, y: index })
@@ -74,8 +66,6 @@ test('keeps two hundred notes and forgets the oldest', () => {
   expect(placeOf('/note-204.url')?.y).toBe(204)
 })
 
-/** Storage is not a type system: what is under the key was written by some version of
- *  this app, and a row that is not a place is a note that opens at the top. */
 test('reads nothing out of nonsense', () => {
   localStorage.setItem(
     'nib:web-places',

@@ -1,13 +1,7 @@
-/** What the bar, its bubble and Settings make of the crate's list of extensions: a row
- *  read whatever the crate sent, the buttons the bar shows, when the stores are asked for
- *  newer versions, and a press shown at once and put right when the crate refuses it.
- *  See extensions.svelte.ts. */
-
 import { expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> | undefined }[] = []
 let refuse = false
-/** What each popup build is answered with in turn: a refusal's words, or null for built. */
 const builds: (string | null)[] = []
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -32,7 +26,6 @@ vi.mock('../tauri', async (importOriginal) => ({
     }
     if (command === 'extension_popup_open') {
       const said = builds.shift() ?? null
-      // The crate refuses with its words, as a string, which is what the window reads.
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       return said === null ? Promise.resolve(undefined) : Promise.reject(said)
     }
@@ -79,7 +72,6 @@ test('a row is read whole, and anything that is not one is nothing', () => {
 
   expect(readExtension(null)).toBeNull()
   expect(readExtension({ id: 3 })).toBeNull()
-  // A nameless extension is called by its id rather than by nothing.
   expect(readExtension(row({ name: '' }))?.name).toBe('ddkjiahejlhfcafbddmgiahcphecmpfh')
   expect(readExtension(row({ store: 'edge', permissions: ['tabs', 4] }))).toMatchObject({
     store: 'edge',
@@ -213,7 +205,6 @@ test('a popup that cannot be opened closes and says why on its button, and the a
   expect(extensions.popped).toBeNull()
   expect(extensions.list[0]?.problem).toBe('that popup could not be opened: no')
 
-  // And opened the next time, the button is itself again.
   extensions.open('a', 't1', null)
   const again = extensions.popped
   if (!again) throw new Error('no popup')

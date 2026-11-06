@@ -1,11 +1,3 @@
-/** The reader typed an address into a web tab's bar, which is the one thing that
- *  changes where a website points.
- *
- *  Following a link inside the page does not: the file says where the document points
- *  and the session remembers where the reading got to, so a file that moved under every
- *  click would be a file no link could point at. See `webWalked` in
- *  workspace.svelte.ts. Fetched with the first address typed. */
-
 import { shownName } from '../note-name'
 import { canWriteAt } from '../sharing.svelte'
 import { nameOf } from '../space-paths'
@@ -18,20 +10,14 @@ export async function aimed(
   tab: Tab,
   url: string,
 ): Promise<void> {
-  // An address typed is the reader using the tab, in either build, so a website that
-  // was only being previewed stays; see used.ts.
   ws.keep(tab.id)
   if (tab.kind !== 'web' || tab.path === null) return
-  // A website in a space shared to be read goes where it was told without the file
-  // following: nothing may be written there (B288). The session keeps where the tab
-  // is, as it does for a link followed inside the page.
   if (!canWriteAt(tab.path)) return
 
   const was = readWebFile(tab.path, tab.doc)
   if (was?.url === url) return
 
   const title = was?.title ?? shownName(nameOf(tab.path))
-  // A `.webloc` keeps its plist, and every other key in it: only the address changes.
   const content = /\.webloc$/i.test(tab.path.trim())
     ? aimWebloc(tab.doc, url)
     : was

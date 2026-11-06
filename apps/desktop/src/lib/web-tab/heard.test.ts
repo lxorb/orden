@@ -1,6 +1,3 @@
-/** What the engine says about a page, read and landed: the speaker on the tab, a page
- *  holding the screen, a zoom made inside the page, and a find's tally. See heard.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const muted: { tab: string; muted: boolean }[] = []
@@ -89,7 +86,6 @@ test('a page playing puts the speaker on its tab, and falling quiet takes it off
   expect(muted).toEqual([])
 })
 
-/** Chrome's Mute site: a muted site is quiet in whichever tab it starts playing in. */
 test('a muted site is muted the moment it plays', () => {
   sites.setMuted('example.com', true)
   const page = on('https://www.example.com/watch')
@@ -99,7 +95,6 @@ test('a muted site is muted the moment it plays', () => {
   expect(page.muted).toBe(true)
 })
 
-/** And a tab muted for the last site is heard on the next one. */
 test('a site nobody muted is heard, whatever the tab was told before', () => {
   const page = on('https://other.example/')
 
@@ -115,8 +110,6 @@ test('a page holding the screen says so on its tab', () => {
   expect(page.filling).toBe(false)
 })
 
-/** Ctrl and the wheel inside the page: the menu's percentage follows, and the site
- *  opens at that size next time. */
 test('a zoom made inside the page is the size the site is kept at', () => {
   const page = on('https://example.com/')
   heard(page, { tab: 'a', said: 'zoom', factor: 1.25 })
@@ -138,14 +131,12 @@ test('reads how a page arrived, and why it did not', () => {
     bare: false,
     reason: null,
   })
-  // A word the crate never says reads as no failure rather than as a reason to act.
   expect(readSaid({ ...arrived, failure: 'x' })).toEqual({
     ...arrived,
     failure: null,
     bare: false,
     reason: null,
   })
-  // What the engine drew nothing for, and its words for why (#1093).
   expect(readSaid({ ...arrived, failure: 'other', bare: true, reason: 'No such server.' })).toEqual(
     { ...arrived, failure: 'other', bare: true, reason: 'No such server.' },
   )
@@ -158,8 +149,6 @@ test('reads how a page arrived, and why it did not', () => {
   expect(readSaid({ tab: 'a', said: 'arrived' })).toBe(null)
 })
 
-/** #1093: on a Mac a page that failed to load left the tab empty under a spinner for good;
- *  black, in a dark theme. A failure the engine drew nothing for is the pane's to say. */
 test('a page that did not arrive and that nothing was drawn for is said, and only that', () => {
   const page = on('https://no-such-host.invalid/')
   const failed: [string, unknown][] = []
@@ -177,7 +166,6 @@ test('a page that did not arrive and that nothing was drawn for is said, and onl
     ['a', { url: 'https://no-such-host.invalid/', failure: 'other', reason: 'No such server.' }],
   ])
 
-  // An engine that drew its own page for it, or a page that arrived, says nothing more.
   heard(
     page,
     { ...arrived, failure: 'other', bare: false, reason: null },
@@ -211,7 +199,6 @@ test('an upgrade that falls back to http is never said to have failed', () => {
   expect(went).toEqual(['http://example.com'])
   expect(failed).toEqual([])
 
-  // The http it fell back to not arriving either is said.
   heard(
     page,
     {
@@ -229,15 +216,12 @@ test('an upgrade that falls back to http is never said to have failed', () => {
   expect(failed).toEqual(['a'])
 })
 
-/** Emil, 2026-10-13 (#235): a host typed with no scheme, given https, and nothing
- *  answering there - plain http next, once. */
 test('an upgrade nothing answered goes to plain http, once', () => {
   const page = on('https://example.com')
   page.upgrade = { tried: 'https://example.com', fallback: 'http://example.com' }
   const went: [string, string][] = []
   const go = (tab: string, url: string) => void went.push([tab, url])
 
-  // The page the tab was on, finishing as it left, is not the upgrade.
   heard(
     page,
     {
@@ -268,7 +252,6 @@ test('an upgrade nothing answered goes to plain http, once', () => {
   expect(went).toEqual([['a', 'http://example.com']])
   expect(page.upgrade).toBeNull()
 
-  // Settled: the next failure is shown as it is.
   heard(
     page,
     {

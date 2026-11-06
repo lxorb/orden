@@ -8,8 +8,6 @@ vi.mock('../workspace/write-file', () => ({
   },
 }))
 
-/** A folder in a space shared with this account to be read, which nothing may be
- *  written in (B288). */
 const READ = '/Theirs'
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => path !== READ && !path.startsWith(`${READ}/`),

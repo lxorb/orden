@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { sameSite, sameWebNote, settleShortcuts } from './settle'
 import { readShortcut } from '@orden/scan/shortcut'
 
-/** Two copies of one web note made into one: the newer stands, and what only the
- *  older said comes across. See settle.ts. */
-
 const PATH = '/Notes/Docs.url'
 const file = (rows: string[]) => `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 

@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** Every extension, in the bubble under the puzzle: Chrome's extensions menu, in Orden's
-   *  shapes.
-   *
-   *  A row is an extension's picture and name; pressing it opens its popup, or its options
-   *  where it has no popup. At the end of the row its pin, which puts its button in the
-   *  bar or takes it out. Under the rows, a field that takes a Chrome Web Store, Edge
-   *  Add-ons or addons.mozilla.org link and installs what it names, and what of a Firefox
-   *  add-on will not run before it is installed. Turning one off, its permissions and taking
-   *  it away are Settings' (Settings > General > Browser > Extensions), one row below the
-   *  list here. */
-
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
@@ -24,7 +13,6 @@
   import { extensions, type Extension } from './extensions.svelte'
 
   const {
-    /** Where the bubble hangs from, measured against the bar. */
     right,
     onpress,
     onclose,
@@ -37,9 +25,6 @@
   let link = $state('')
   let bubble = $state<HTMLElement>()
 
-  // As a browser's menu closes: by Escape, a press past it and the window losing the focus - which is also
-  // how a press into the page under it is heard; see overlays.ts. A press on the button
-  // that opened it is that button's own to answer.
   $effect(() =>
     overlays.show(onclose, () => [
       bubble,
@@ -141,7 +126,6 @@
 </div>
 
 <style>
-  /* Under the puzzle, at the right of the bar, which is where Chrome's menu hangs. */
   .extensions {
     position: absolute;
     top: 100%;
@@ -225,7 +209,6 @@
     font-size: var(--text-xs);
   }
 
-  /* The hairline an install fills while the file is on its way: the downloads' own. */
   .line {
     position: relative;
     height: 2px;

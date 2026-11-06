@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** What the web tabs have downloaded: the bubble under the glyph at the right of the
-   *  bar.
-   *
-   *  Chrome's download bubble, in Orden's shapes. One row a file, newest first: its name,
-   *  a hairline that fills while it is on its way, and one glyph at the end - stop while
-   *  it is going, the folder once it is there. Pressing a finished row opens the file,
-   *  which is what pressing a download in a browser does. A file that did not arrive
-   *  says so in one word and nothing opens it.
-   *
-   *  Nothing here saves or opens anything itself: every press goes to the crate by the
-   *  download's id; see downloads.svelte.ts. */
-
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileIcon from 'lucide/dist/esm/icons/file.mjs'
@@ -26,18 +14,12 @@
   const { onclose }: { onclose: () => void } = $props()
 
   const rows = $derived([...downloads.list].reverse())
-  // "Show in Finder" on a Mac, as Safari's own downloads say it; see reveal.ts.
   const showWords = $derived(t(showLabel()))
 
-  /** How far one file has got, or null while the server has not said how large it is -
-   *  which the hairline draws as a sweep rather than as a length. */
   function fraction(one: Download): number | null {
     return one.total === null ? null : Math.min(1, one.received / one.total)
   }
 
-  // Closed by Escape, a press past it and the window losing the focus - which is also
-  // how a press into the page under it is heard; see overlays.ts. A press on the button
-  // that opened it is that button's own to answer.
   let bubble = $state<HTMLElement>()
   $effect(() =>
     overlays.show(onclose, () => [
@@ -120,8 +102,6 @@
 </div>
 
 <style>
-  /* Under the glyph it belongs to, at the right of the bar, which is where a browser
-     draws it. */
   .downloads {
     position: absolute;
     top: 100%;
@@ -154,8 +134,6 @@
     color: var(--text);
   }
 
-  /* A row that is on its way or did not arrive has nothing to open, but it is still
-     read at full strength: greyed out would say it was not there. */
   .file:disabled {
     opacity: 1;
   }
@@ -199,7 +177,6 @@
     font-size: var(--text-xs);
   }
 
-  /* The hairline a file fills on its way: the accent, from the start of the line. */
   .line {
     position: relative;
     height: 2px;
@@ -220,7 +197,6 @@
     transform-origin: right;
   }
 
-  /* A file of no known size is a third of the line going across, again and again. */
   .sweeping .done {
     animation: sweep 1.2s var(--ease-in-out) infinite;
   }

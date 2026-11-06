@@ -3,9 +3,6 @@ import { matchesCombination } from '../keys'
 import { barKey, type Bindings, stops } from './bar-keys'
 import { replay } from './keys'
 
-/** The registry's defaults for the bar, bound the way the shortcuts store binds
- *  them. Which keys those are is shortcuts.test.ts's; this is what the bar makes of
- *  them. */
 const DEFAULTS: Record<string, string> = {
   'web.address': 'Mod-l',
   'web.address.alt': 'Alt-d',
@@ -78,7 +75,6 @@ describe('a key in front of a page', () => {
     const keys = bindings()
     expect(barKey(press('1', CTRL), keys)).toEqual({ to: 'tab', at: 0 })
     expect(barKey(press('9', CTRL), keys)).toEqual({ to: 'tab', at: 'last' })
-    // Ctrl+Alt and a digit is the app's own jump, which the window answers.
     expect(barKey(press('1', { ctrlKey: true, altKey: true }), keys)).toBeNull()
   })
 
@@ -89,8 +85,6 @@ describe('a key in front of a page', () => {
     expect(barKey(press('=', { ...CTRL, code: 'Equal' }), keys)).toEqual(zoom('in'))
     expect(barKey(press('-', { ...CTRL, code: 'Minus' }), keys)).toEqual(zoom('out'))
     expect(barKey(press('0', CTRL), keys)).toEqual(zoom('reset'))
-    // Ctrl and +: Shift and = on an American keyboard, its own key on a German one,
-    // and the number pad's, whose - and 0 are the same characters as the row's.
     expect(barKey(press('+', { ...CTRL, shiftKey: true, code: 'Equal' }), keys)).toEqual(zoom('in'))
     expect(barKey(press('+', { ...CTRL, code: 'BracketRight' }), keys)).toEqual(zoom('in'))
     expect(barKey(press('+', { ...CTRL, code: 'NumpadAdd' }), keys)).toEqual(zoom('in'))
@@ -140,8 +134,6 @@ describe('a key in front of a page', () => {
   })
 })
 
-/** F6 in the app walks its regions; F6 inside a page is Chrome's way out to the
- *  address field, and the only thing that tells them apart is where it was pressed. */
 describe('F6', () => {
   test('from inside the page is the address field', () => {
     let played: Event | undefined

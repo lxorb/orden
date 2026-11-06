@@ -2,18 +2,6 @@ import { expect, test } from 'vitest'
 import { completion, suggested } from './omnibox'
 import { MOST_VISITS, type Visit } from './visits'
 
-/** What a keystroke in the address field costs with the history full.
- *
- *  Both halves run on every key: the rest of the address in the field and the pages
- *  under it. The history is bounded (see visits.ts), so the worst case is a full one,
- *  and this types an address a letter at a time into it. On the machine this was
- *  written on, a Snapdragon X Elite: 500 rows, 0.35 ms a key over the whole address with
- *  the first key's work - every row's parts - in it, and 0.3 ms a key once warm.
- *
- *  The clock is asked only of a run that set `NIB_PERF=1`, for the reason
- *  search/fuzzy.perf.test.ts gives: a loaded machine misses a bound for reasons that
- *  are about the machine. The bound is a frame's worth, which a change of shape - a
- *  scan that grew with something other than the rows - misses by far more than that. */
 const CLOCKED = process.env.NIB_PERF === '1'
 
 const NOW = Date.UTC(2026, 8, 27)

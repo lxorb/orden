@@ -1,36 +1,17 @@
-/** Whether somebody is at this computer: the dot on this person's face that the others
- *  see, and whether a chat's notice is wanted here (people/here.ts).
- *
- *  Active while a key was pressed or the pointer moved in Orden in the last five minutes;
- *  idle otherwise. The hub is told on the change and only then.
- *
- *  Two ears, because one would miss most of it. The app's own page hears its own keys
- *  and pointer, and nothing that goes to a web page: a page is a webview of its own, so
- *  somebody typing a mail for ten minutes is ten minutes of silence here. So the system
- *  is asked as well, every half minute, when it last had any input and whether an Orden
- *  window is in front (src-tauri/src/presence.rs) - which together are input to Orden -
- *  and where the system cannot say, the app's own page is what is gone on. */
-
 import { IDLE_AFTER, INPUT_EVERY } from '../backoff'
 
-/** What the system says about its input; see presence.rs. */
 export interface SystemInput {
   idleMs: number
   front: boolean
 }
 
-/** What activity needs from around it, handed in so a test can drive the clock. */
 export interface ActivityWorld {
   now(): number
-  /** The system's answer, or null where it has none. */
   system(): Promise<SystemInput | null>
-  /** Hears input in the app's own page; answers how to stop. */
   listen(heard: () => void): () => void
-  /** A clock; answers how to stop it. */
   every(ms: number, tick: () => void): () => void
 }
 
-/** Reads `input_idle`'s answer, which crossed the IPC and is unknown until looked at. */
 export function readSystemInput(value: unknown): SystemInput | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
@@ -40,8 +21,6 @@ export function readSystemInput(value: unknown): SystemInput | null {
 }
 
 export class Activity {
-  /** Whether somebody is at this computer. Starts true: the app was just opened, which
-   *  is somebody at it. */
   active = true
 
   private last: number
@@ -52,7 +31,6 @@ export class Activity {
     this.last = world.now()
   }
 
-  /** Starts listening. Answers how to stop. */
   start(): () => void {
     this.stops = [
       this.world.listen(() => {
@@ -66,19 +44,16 @@ export class Activity {
     }
   }
 
-  /** Runs on every change, with what it changed to. */
   changed(run: (active: boolean) => void): () => void {
     this.heard.add(run)
     return () => this.heard.delete(run)
   }
 
-  /** Input, of whatever kind: somebody is here now. */
   touched(): void {
     this.last = this.world.now()
     this.become(true)
   }
 
-  /** Asks everything that can say whether somebody is here, and becomes that. */
   async check(): Promise<void> {
     const system = await this.world.system().catch(() => null)
     if (system?.front) this.last = Math.max(this.last, this.world.now() - system.idleMs)
@@ -93,9 +68,6 @@ export class Activity {
   }
 }
 
-/** The keys and the pointer the app's own page hears. A move is counted as much as a
- *  press: somebody reading and scrolling is somebody here. Throttled, because a move is
- *  sixty events a second and one a second says the same. */
 export function listenForInput(heard: () => void): () => void {
   if (typeof window === 'undefined') return () => undefined
 

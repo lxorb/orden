@@ -2,9 +2,6 @@ import { getDomain } from 'tldts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Visit } from './visits'
 
-/** The stores the spaces kept, folded into the shared one once (#239): which stores, with
- *  which origins, what the crate is asked, and that it happens once and only once whole. */
-
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => kept.get(key) ?? null,
@@ -102,7 +99,6 @@ describe('the merge', () => {
     ])
     expect(kept.get(MERGED)).toBeTruthy()
 
-    // Never again.
     asked.length = 0
     kept.set('nib:web-data', JSON.stringify({ w: 'space' }))
     await mergeOld()

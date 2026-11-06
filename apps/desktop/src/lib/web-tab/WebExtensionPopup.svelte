@@ -1,20 +1,4 @@
 <script lang="ts">
-  /** An extension's popup, in a bubble under its button.
-   *
-   *  The bubble is Orden's and the page in it is the extension's: a webview of its own on
-   *  `chrome-extension://<id>/<popup>`, built in the tab's store by the crate and placed
-   *  over the bubble's inside; see src-tauri/src/extensions/popup.rs. It is on the overlay
-   *  stack like every bubble under the bar, so the tab's page steps out of sight while it
-   *  is open and its picture stands in - the popup's own webview is then the only page
-   *  over the pane, and nothing of the app's is drawn under a page.
-   *
-   *  The bubble starts at the smallest size and grows to the size the page lays itself out
-   *  at, which the crate measures; Escape, a press outside, the page closing itself and
-   *  the tab going all close it. Every press inside it is the popup page's own, so the
-   *  bubble itself lets the pointer through. A tab's browser too busy to answer is asked
-   *  again until it does, and a popup that cannot be opened says why on its button; see
-   *  `build` in extensions.svelte.ts. */
-
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { dur } from '../motion'
@@ -22,14 +6,9 @@
   import { invoke } from '../tauri'
   import { extensions, type Popped } from './extensions.svelte'
 
-  const {
-    popped,
-    /** Where the bubble hangs from, measured against the bar. */
-    right,
-    from,
-  }: { popped: Popped; right: number; from?: HTMLElement | null } = $props()
+  const { popped, right, from }: { popped: Popped; right: number; from?: HTMLElement | null } =
+    $props()
 
-  /** The size the page wants, once the crate has said. */
   let size = $state<{ width: number; height: number } | null>(null)
   let inside = $state<HTMLElement>()
   let bubble = $state<HTMLElement>()
@@ -44,7 +23,6 @@
     ),
   )
 
-  /** Puts the popup's webview over the bubble's inside, as the window measures it. */
   function place() {
     const box = inside?.getBoundingClientRect()
     if (!box) return
@@ -90,7 +68,6 @@
     }
   })
 
-  // The page said how large it is: the bubble grows to it, and the page follows.
   $effect(() => {
     if (size) requestAnimationFrame(place)
   })
@@ -113,7 +90,6 @@
 </div>
 
 <style>
-  /* Under the button it belongs to, the way Chrome hangs a popup from its toolbar. */
   .popup {
     position: absolute;
     top: 100%;
@@ -125,8 +101,6 @@
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
-  /* Seen once the page has said its size, so the bubble never shows a box the page
-     has not filled. */
   .popup.sized {
     opacity: 1;
   }

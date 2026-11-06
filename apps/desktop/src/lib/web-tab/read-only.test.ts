@@ -1,18 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Websites in a space shared with this account to be read (B288).
- *
- *  Opening one, typing an address into its bar and opening a website written in the
- *  old format all used to write the file: the address, a shortcut beside the note,
- *  the note put in the trash. A space shared to be read is one nothing may be written
- *  in - the copy here would stop being the space's, and the sync refuses it on every
- *  pass - so a website there browses as a tab with no file does, and its file stays
- *  as the owner left it.
- *
- *  Two spaces on a map of a disk, as read-only-files.test.ts has them, and every
- *  command the disk is asked is logged, so a refusal can be told from a write that
- *  failed. */
-
 const files = new Map<string, string>()
 const asked: string[] = []
 const readOnly = vi.hoisted(() => new Set<string>())
@@ -65,7 +52,6 @@ vi.mock('../tauri', async (importOriginal) => ({
         files.delete(path)
         return { id: 't' }
       case 'read_tree': {
-        // As the crate does: a root that is not a folder is refused.
         const root = text(args?.root)
         if (!ROOTS.includes(root)) throw new Error('root is not a directory')
         return listing(root)
@@ -102,14 +88,12 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('../workspace.svelte')
 const { pages } = await import('./pages.svelte')
 
-/** What the disk was asked to change, rather than to say. */
 const WRITES = /write|rename|delete|trash|copy|create|move|snapshot|bring|remove/
 const writes = () => asked.filter((command) => WRITES.test(command))
 
 const SHORTCUT =
   '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\n' +
   'Title=Svelte docs\r\nNib-Added=2026-09-12T08:30:00.000Z\r\n'
-/** A website as an older Orden wrote one: a note with the address in its front matter. */
 const OLD = '---\nurl: https://kit.svelte.dev/\n---\n\n# Kit\n\n<https://kit.svelte.dev/>\n'
 
 beforeEach(async () => {
@@ -184,7 +168,6 @@ describe('in a space shared to be read', () => {
   })
 
   test('converting the space writes nothing', async () => {
-    // What the index says of the space's notes, which a unit test has not scanned.
     const { links } = await import('../link-index.svelte')
     vi.spyOn(links, 'urlOf').mockImplementation((path) =>
       path.endsWith('Kit.md') ? 'https://kit.svelte.dev/' : null,

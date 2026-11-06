@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** What this site is: the popover behind the mark at the left of the address field.
-   *
-   *  Chrome's site information bubble, kept to what Orden can honestly say: whether the
-   *  connection is the secure kind, the certificates it was made with - pressing that
-   *  line shows the chain, the site's own up to the root, as a browser's viewer does
-   *  (#776) - what the site has been allowed or refused, and one row that forgets
-   *  all of it. A site that has never asked for anything shows the first
-   *  line and nothing else, which is the common case and reads as "there is nothing to
-   *  know here".
-   *
-   *  Turning something off here does not reach into the page. A site that already has the
-   *  camera keeps it until it asks again, which is what happens in a browser too: the
-   *  answer is about the next time. */
-
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
@@ -37,17 +23,14 @@
     site: string
     tab: string
     onclose: () => void
-    /** A private tab's site, whose answers are the private session's; see permissions.svelte.ts. */
     privately?: boolean
   } = $props()
 
-  /** Whom a certificate names; see web_certificate.rs. */
   interface Party {
     name: string
     organization: string[]
   }
 
-  /** One certificate of the chain; see web_certificate.rs. */
   interface Link {
     to: Party
     by: Party
@@ -58,16 +41,12 @@
     root: boolean
   }
 
-  /** The certificates the page came with, the site's first, as web_certificate.rs
-   *  reads them. `separately` where the engine said nothing of the page's and the
-   *  chain was read from the site over a connection of the app's own. */
   interface Certificate {
     secure: boolean
     separately: boolean
     chain: Link[]
   }
 
-  /** What each certificate of a chain is, by where it stands in it. */
   type Role = 'site' | 'intermediate' | 'root'
   const ROLES: Record<Role, () => string> = {
     site: () => t('Site'),
@@ -77,8 +56,6 @@
   const role = (link: Link, index: number): Role =>
     index === 0 ? 'site' : link.root ? 'root' : 'intermediate'
 
-  /** What each one is called on a row that says what a site may do. Chrome's words, so
-   *  a reader who has turned one of these off in Chrome finds the same name here. */
   const NAMES: Record<Ask, () => string> = {
     camera: () => t('Camera'),
     microphone: () => t('Microphone'),
@@ -94,8 +71,6 @@
 
   const https = $derived(url?.startsWith('https:') === true)
 
-  /** Asked for as the popover opens, about the page as it is then. Null where nothing
-   *  could be read, and then the address is all there is to go on. */
   let certificate = $state<Certificate | null>(null)
   let asked = $state(false)
   $effect(() => {
@@ -114,8 +89,6 @@
       })
     return () => (gone = true)
   })
-  /** Whether the line about the connection has been pressed open, and which
-   *  certificate of the chain is shown: the site's until another is chosen. */
   let showingCertificate = $state(false)
   let chosen = $state(0)
   const at = $derived(certificate && chosen < certificate.chain.length ? chosen : 0)
@@ -123,16 +96,12 @@
 
   const secure = $derived(certificate ? certificate.secure : https)
 
-  /** A party as a browser names it: the name, then its organisation where it has one. */
   const named = (party: Party) =>
     [party.name, ...party.organization].filter((one) => one !== '').join(' · ')
   const day = (when: number) => i18n.when(when, { dateStyle: 'long' })
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
-  // Closed by Escape, a press past it and the window losing the focus - which is also
-  // how a press into the page under it is heard; see overlays.ts. A press on the button
-  // that opened it is that button's own to answer.
   let bubble = $state<HTMLElement>()
   $effect(() =>
     overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="site"]')]),
@@ -155,8 +124,6 @@
     <span class="said">{secure ? t('Connection is secure') : t('Connection is not secure')}</span>
   {/snippet}
 
-  <!-- Over https the line is the way in to the certificate, as a browser's is: pressed,
-       it shows the chain the page came with. A plain http page has none to show. -->
   {#if https}
     <button
       class="nib-button is-quiet how"
@@ -226,8 +193,6 @@
       {#each decided as ask (ask)}
         <li>
           <span>{NAMES[ask]()}</span>
-          <!-- The answer, as the thing it is: a site is allowed or it is blocked, and
-               pressing the word is the other answer. -->
           <button
             class="nib-button is-quiet"
             onclick={() =>
@@ -252,8 +217,6 @@
 </div>
 
 <style>
-  /* Under the mark it belongs to, at the left of the bar, which is where a browser
-     draws it. */
   .site {
     position: absolute;
     top: 100%;
@@ -287,8 +250,6 @@
     stroke-linejoin: round;
   }
 
-  /* The line as a row to press: the width of the bubble, its words at the start and
-     the chevron at the end, turned down while the certificate is open under it. */
   button.how {
     min-height: 0;
     margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
@@ -314,8 +275,6 @@
     transform: rotate(90deg);
   }
 
-  /* An `http:` page is the one thing about an address worth warning somebody about, so
-     the line says so in the colour a callout warns in. */
   .risky,
   button.how.risky {
     color: var(--callout-warning);
@@ -327,8 +286,6 @@
     gap: var(--space-2);
   }
 
-  /* The chain as a browser's viewer draws it: each certificate a step in from the one
-     it issued, the site's at the top. */
   .chain {
     margin: 0;
     padding: 0;
@@ -374,7 +331,6 @@
     font-size: var(--text-sm);
   }
 
-  /* What a browser's certificate viewer leads with, a label over each answer. */
   .details {
     margin: 0;
     display: flex;

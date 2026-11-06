@@ -1,28 +1,13 @@
-/** The search engine this device's address field sends words to: Settings' one row.
- *
- *  Google until somebody chooses otherwise (Emil's call; see typed.ts), one of Chrome's
- *  list for the reader's region, or a custom address with `%s` where the words go. This
- *  device's, like Memory saver beside it: Chrome keeps it with the profile, and Orden's
- *  profile is the machine's. What the list is, what a choice makes of the words and
- *  where the engine's own page is, is engines.ts.
- *
- *  Asked for with the press rather than imported where it is wanted: this reaches
- *  typed.ts, which is deliberately not in front of the first paint. See the web row in
- *  new-kinds.ts and test/weight.test.ts. */
-
 import { isRecord, isString, keepJson, stored } from '../stored'
 import { SEARCH } from './typed'
 import { engineById, engineHome, isEngineAddress } from './engines'
 
 const KEY = 'nib:search-engine'
 
-/** The id a custom engine is chosen under. */
 export const CUSTOM = 'custom'
 
 interface Choice {
-  /** An engine's id, or `CUSTOM`. */
   id: string
-  /** The custom engine's address, kept while another is chosen so going back finds it. */
   custom: string
 }
 
@@ -39,46 +24,34 @@ function read(): Choice {
 class SearchEngine {
   private choice = $state<Choice>(read())
 
-  /** Whether somebody chose on this device, rather than it being Google for want of a
-   *  choice: what another browser's import may answer for (import/browser-extras.ts). */
   private made = $state(isRecord(stored(KEY)))
 
   get chosen(): boolean {
     return this.made
   }
 
-  /** The chosen engine's id, or `CUSTOM`. */
   get id(): string {
     return this.choice.id
   }
 
-  /** The custom address as it was last written, chosen or not. */
   get custom(): string {
     return this.choice.custom
   }
 
-  /** Where the words go now, `%s` where they go. */
   get url(): string {
     if (this.choice.id === CUSTOM) return this.choice.custom || SEARCH
     return engineById(this.choice.id)?.url ?? SEARCH
   }
 
-  /** The chosen engine's own page: where a new web note goes, since a reader asking for
-   *  one is asking for somewhere to start. Emil, #354: *"if you click on web note in the
-   *  Ctrl + T menu, then it should open your configured search engine"*. See
-   *  `engineHome`, and the web row in new-kinds.ts. */
   get home(): string {
     return engineHome(this.url)
   }
 
-  /** One of the list, or `CUSTOM` once a custom address is written. */
   choose(id: string) {
     if (id === CUSTOM ? !this.choice.custom : !engineById(id)) return
     this.write({ ...this.choice, id })
   }
 
-  /** A custom engine's address, chosen as it is written. False for one that cannot take a
-   *  search, which leaves the choice as it was. */
   setCustom(url: string): boolean {
     if (!isEngineAddress(url)) return false
     this.write({ id: CUSTOM, custom: url.trim() })

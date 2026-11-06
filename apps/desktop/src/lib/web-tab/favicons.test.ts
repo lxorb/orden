@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The one favicon cache: what a page showed, found again after a restart by the page,
- *  else by its origin, bounded, and never in front of a page's own live mark. */
-
-/** Storage for the test, since node has none, and a second run reads what the first
- *  wrote: `fresh` builds the store again over the same storage, which is a restart. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -22,12 +17,10 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** A picture as the engine sends one, different for every `n`, `bytes` longer. */
 function mark(n: number, bytes = 0): string {
   return `data:image/png;base64,${btoa(`mark-${String(n)}${'.'.repeat(bytes)}`)}`
 }
 
-/** The store as a new launch finds it: the reading half and the writing half. */
 async function fresh() {
   vi.resetModules()
   return { ...(await import('./pages.svelte')), ...(await import('./favicons')) }
@@ -72,8 +65,6 @@ describe('a mark seen', () => {
     expect(two.favicons.of('https://docs.google.com/spreadsheets/d/1/edit?gid=0')).toBe(mark(1))
   })
 
-  /** Chrome's `fallback_to_host` and Firefox's root icon: a page this device never
-   *  showed wears the last mark its origin did. */
   test('and at every other page of its origin, where that page showed none', async () => {
     const { favicons, saw } = await fresh()
     saw('https://docs.google.com/spreadsheets/d/1/edit', mark(1))
@@ -92,8 +83,6 @@ describe('a mark seen', () => {
     expect(favicons.of('http://mail.google.com/')).toBeNull()
   })
 
-  /** An unread count redrawn into the mark is the page's mark now, and it replaces the
-   *  last one rather than adding to it: Firefox bug 1598371 stored 207,000 of those. */
   test('a page that redraws its mark replaces it, and keeps one picture', async () => {
     const { favicons, saw } = await fresh()
     for (let n = 0; n < 50; n++) saw('https://web.whatsapp.com/', mark(n))
@@ -118,7 +107,6 @@ describe('a mark seen', () => {
   })
 })
 
-/** Every picture the store has a key for, whatever their ids. */
 function storedPictures(): string[] {
   const out: string[] = []
   for (let at = 0; at < localStorage.length; at++) {
@@ -137,7 +125,6 @@ describe('the ceiling', () => {
     }
     vi.runAllTimers()
 
-    // Each site is two keys, its page and its origin: 250 sites fill 500.
     expect(favicons.of('https://site0.example/')).toBeNull()
     expect(favicons.of('https://site49.example/')).toBeNull()
     expect(favicons.of('https://site50.example/')).toBe(mark(50))
@@ -147,13 +134,10 @@ describe('the ceiling', () => {
 
   test('and half a megabyte of pictures, a page drawn lately outliving one that was not', async () => {
     const { favicons, saw } = await fresh()
-    // Twenty kilobytes each once written out, so 25 fit in the half megabyte and a 26th
-    // does not.
     for (let n = 0; n < 25; n++) {
       vi.setSystemTime(Date.UTC(2026, 0, 1) + n * 1000)
       saw(`https://site${String(n)}.example/`, mark(n, 15_400))
     }
-    // The first site is drawn again a day and more later, which is a use.
     vi.setSystemTime(Date.UTC(2026, 0, 3))
     expect(favicons.of('https://site0.example/')).toBe(mark(0, 15_400))
     saw('https://late.example/', mark(99, 15_400))
@@ -197,8 +181,6 @@ describe('forgetting', () => {
 })
 
 describe('which mark is drawn', () => {
-  /** The live page's own mark always wins: the cache is what stands in for a page
-   *  that is not there, never what corrects one that is. */
   test('the live page s own, whatever the cache says', async () => {
     const { saw, siteMark } = await fresh()
     saw('https://a.example/', mark(1))

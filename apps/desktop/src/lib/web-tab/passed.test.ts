@@ -1,7 +1,3 @@
-/** Escape a page let go by, as the window reads it: the crate says it only while the
- *  app holds the screen (`nib-escape` in src-tauri/src/web_opens.rs), and the window
- *  gives the screen back. See passed.svelte.ts. */
-
 import { expect, test, vi } from 'vitest'
 
 const left = vi.hoisted(() => ({ times: 0 }))

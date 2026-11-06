@@ -1,25 +1,3 @@
-/** The file keeps up with the page: a web note says where the reading has got to.
- *
- *  This is the whole of what makes a web note a browser tab rather than a bookmark.
- *  Emil, 2026-09-13: *"I believe currently it resets the page every time you reopen
- *  it. That is extremely annoying and should not be. It should basically reopen the
- *  exact same page you had open last time when you open that page."*
- *
- *  So `URL` is where the tab is, written on the same pause a note's words are written
- *  on (`SAVE_DELAY` in backoff.ts) and before the window goes, and `Nib-Home` keeps the address the note points at - what somebody typed
- *  into the bar or made the note with - for the one row that offers it back. The file
- *  is what syncs, so this is the half of a tab's state that reaches another machine;
- *  the place on the page and the trail behind it are this device's and live beside it.
- *  See place.ts and docs/web-tabs.md.
- *
- *  Written from here rather than from the workspace because it is about the shortcut
- *  and not about the session: the workspace still owns what a tab is, and it is the
- *  one that writes a file when somebody keeps the page - see `save`. A write
- *  is only ever made for a note that already has a file.
- *
- *  Quiet about a write that fails. A shortcut that could not be written is a note that
- *  opens where it opened yesterday, which is what it did before any of this. */
-
 import { SAVE_AT_MOST, SAVE_DELAY } from '../backoff'
 import { links } from '../link-index.svelte'
 import { owes, writing } from '../parting'
@@ -29,61 +7,27 @@ import { afterQuiet, type Later } from '../timing'
 import { isWebAddress } from './address'
 import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
-/** What one web note's file needs to be brought up to date. Named rather than
- *  positional because four strings in a row is four chances to swap two. */
 export interface Kept {
-  /** The file, which must already exist: this never makes one. */
   path: string
-  /** What the file says, asked again at the moment the write is made rather than
-   *  handed over as the words were a moment ago.
-   *
-   *  A write waits for the reading to settle (`SAVE_DELAY`), and the keys this never
-   *  touches - the title, the day it was made, and the note's own web data - are read
-   *  out of the file and written back. Read once, when the page moved, they were the
-   *  file as it was before anything a reader did in that pause: choosing Separate web
-   *  data on a page that had just moved wrote `Nib-Data` into the file, and the write
-   *  still waiting then wrote the file again without it, which is the option not
-   *  applying (#353). Asked here instead, so the pause cannot carry stale words. */
   text: () => string
-  /** Where the tab is. */
   url: string
-  /** The site's own mark, or null while the page has not said. */
   icon: string | null
-  /** Told what the file now says, so the tab's own copy of it stays the file's. */
   wrote: (text: string) => void
 }
 
-/** The write each note is waiting on, so a page that moves twice in a moment writes
- *  once. Keyed by path: two tabs on the same file are one file.
- *
- *  The notes' own pause, Emil's rule of 2026-09-14: the address is the document's and
- *  follows the reading the way the words follow the typing - a page that redirects on
- *  the way in moves faster than the pause, so it is still one write - and a reader
- *  clicking through a set of links without stopping is written every couple of seconds
- *  all the same. */
 const waiting = new Map<string, { later: Later; write: () => void }>()
 
-// A window closing runs no timer: what is waiting is written as it goes, and the window
-// waits for it the way it waits for a note. See parting.ts.
 owes(() => {
   for (const path of [...waiting.keys()]) keepNow(path)
 })
 
-/** The reading has moved on. The file follows, once it stops moving. */
 export function keepPage(kept: Kept) {
   if (!isWebAddress(kept.url)) return
-  // Not in a space shared with this account to be read: the copy here would stop being
-  // the space's, and the sync refuses it on every pass (B288). The tab browses all the
-  // same, and where it got to is the session's, as a tab with no file keeps it; see
-  // `webWalked` in workspace.svelte.ts. The file opens where its owner left it.
   if (!canWriteAt(kept.path)) return
 
   const said = readWebFile(kept.path, kept.text())
   if (!said) return
 
-  // The home is whatever the file already says it is, and the address it was written
-  // with the first time this happens: a note that has never been browsed out of keeps
-  // the address it points at from the moment the reading leaves it.
   const home = said.home ?? said.url
   const icon = kept.icon ?? said.icon
   if (said.url === kept.url && (said.icon === icon || holdsPicture(said.icon))) return
@@ -104,20 +48,10 @@ export function keepPage(kept: Kept) {
   one.later()
 }
 
-/** Whether the file already holds the site's mark as a picture, which a page reporting
- *  its mark again is no reason to write over.
- *
- *  Two devices draw the same favicon into two different `data:` addresses - a size,
- *  an encoder - and each wrote its own over the other's every time the page opened.
- *  The file synced back and forth on a change nobody can see, and two devices writing
- *  one web note between two passes is what used to leave a copy of it beside itself.
- *  A mark still held as an address, from before marks were kept as pictures, is
- *  replaced; so is any mark once the reading moves, which writes the file anyway. */
 function holdsPicture(icon: string | null): boolean {
   return icon?.startsWith('data:') === true
 }
 
-/** What is waiting for this note, written now: the window is going, or the tab. */
 export function keepNow(path: string) {
   const held = waiting.get(path)
   if (!held) return
@@ -126,7 +60,6 @@ export function keepNow(path: string) {
 }
 
 async function writeFile(kept: Kept, home: string | null, icon: string | null): Promise<void> {
-  // Asked again as the write is made: a space can be shared to be read in the pause.
   if (!canWriteAt(kept.path)) return
   const text = kept.text()
   const content = /\.webloc$/i.test(kept.path.trim())
@@ -135,17 +68,10 @@ async function writeFile(kept: Kept, home: string | null, icon: string | null): 
   if (content === text) return
 
   kept.wrote(content)
-  // The index is told what the file now says, exactly as the workspace's own saves
-  // tell it: the row in the file list draws the site's own mark out of this file, and
-  // nothing rescans a space while it is open - so without this the row wore the plain
-  // globe until the next launch, however long ago the page said what its icon was.
   links.noteSaved(kept.path, content)
   await invoke('write_note', { path: kept.path, content }).catch(() => undefined)
 }
 
-/** What an internet shortcut says once it follows the reading. A `.webloc` never comes
- *  here: it is a plist, and a `.url` written in a `.webloc`'s name was a file neither
- *  nib nor Finder could open again. */
 function shortcutFor(kept: Kept, text: string, home: string | null, icon: string | null): string {
   const said = readWebFile(kept.path, text)
   if (!said) return writeShortcut(kept.url, '', new Date(), home, icon)

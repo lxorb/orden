@@ -1,17 +1,4 @@
 <script lang="ts">
-  /** A page's own dialog: what it says with `alert`, asks with `confirm` and `prompt`,
-   *  and asks as it is left.
-   *
-   *  Chrome's shape, in Orden's clothes, because everybody has answered these a thousand
-   *  times: a card at the top of the page, naming the site, with the page's own words and
-   *  the answers a browser gives - OK alone for an alert, Cancel and OK for the others,
-   *  Cancel and Leave for a page that would rather not be left. The page's script waits
-   *  on it; see dialogs.svelte.ts and src-tauri/src/web_dialogs.rs.
-   *
-   *  It is the app's own HTML, so the page steps out of sight while it is up, the way it
-   *  does for the site's permission bubble: it goes on the overlay stack, and Escape -
-   *  the stack's own key - is Cancel. */
-
   import { onMount } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -32,10 +19,6 @@
 
   $effect(() => overlays.show(() => dialogs.answer(dialog, false)))
 
-  // The keyboard is the card's while it is up, on the answer a browser puts it on - OK,
-  // or the prompt's field - so Enter answers the way it does in Chrome. The page opened
-  // it, so the keyboard is almost always in the page, which keeps it while it is out of
-  // sight: the app's own webview takes it back first, as the permission bubble does.
   onMount(() => {
     text = dialog.text
     if (field) {
@@ -94,9 +77,6 @@
 </div>
 
 <style>
-  /* At the top of the page, in the middle, where a browser puts a page's own dialog:
-     it is the page speaking, not the address, so it sits over the page rather than
-     under the address field the way the permission bubble does. */
   .dialog {
     position: absolute;
     top: 100%;
@@ -127,8 +107,6 @@
     border-radius: var(--radius-sm);
   }
 
-  /* The page's own words, which may be several lines of them: kept as it wrote them,
-     and scrolled rather than let past the pane. */
   .said {
     margin: 0;
     max-height: 40vh;

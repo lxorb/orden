@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { dotCom, isLocalFile, mayBeSecret, typedAddress, webAddress } from './typed'
 
-/** Ctrl+Enter in the address field, which every browser has had for thirty years. */
 describe('the dot-com press', () => {
   test('makes one word a site', () => {
     expect(dotCom('svelte')).toBe('https://www.svelte.com')
@@ -54,8 +53,6 @@ describe('what somebody typed', () => {
     expect(webAddress('example.com:443/a')).toBe('https://example.com:443/a')
   })
 
-  /** Emil, 2026-10-13 (#235): `localhost:8765` was tried over https alone. Chrome goes to
-   *  this machine and the network it is on over plain http, and to a port of its own. */
   test('this machine, the network and a port of its own are given http', () => {
     expect(webAddress('localhost:8765')).toBe('http://localhost:8765')
     expect(webAddress('localhost')).toBe('http://localhost')
@@ -91,7 +88,6 @@ describe('what somebody typed', () => {
 
   test('words are a search', () => {
     expect(webAddress('svelte docs')).toBe('https://www.google.com/search?q=svelte%20docs')
-    // One word with no dot is a word: a browser searches for `svelte` too.
     expect(webAddress('svelte')).toBe('https://www.google.com/search?q=svelte')
   })
 
@@ -99,7 +95,6 @@ describe('what somebody typed', () => {
     expect(webAddress('a & b', 'https://duckduckgo.com/?q=%s')).toBe(
       'https://duckduckgo.com/?q=a%20%26%20b',
     )
-    // An address is an address whichever engine searches words.
     expect(webAddress('svelte.dev', 'https://duckduckgo.com/?q=%s')).toBe('https://svelte.dev')
     expect(webAddress('javascript:alert(1)', 'https://duckduckgo.com/?q=%s')).toBeNull()
   })
@@ -220,9 +215,6 @@ describe('a local path', () => {
   })
 })
 
-/** A path on this machine, typed into the bar, is not a host called `c` or `nas`: it would
- *  go out over http, and as words it would go to the search engine. `file:` is not a thing
- *  a tab opens, so it is what `file:///C:/...` typed out is: nothing (#790). */
 describe('a Windows path', () => {
   test.each([
     ['C:\\Users\\emil\\Documents\\thesis.pdf'],
@@ -253,7 +245,6 @@ describe('a Windows path', () => {
   })
 })
 
-/** What is typed is kept in history under the address the page then says it is on. */
 describe('a name that is not ASCII', () => {
   test('is sent to the address the engine will say', () => {
     expect(webAddress('münchen.de')).toBe('https://xn--mnchen-3ya.de/')

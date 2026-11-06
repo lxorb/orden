@@ -66,9 +66,6 @@ describe('what of a page the app is over', () => {
   })
 })
 
-/** A toast floats over the foot of the panes (#218), so a page under it is cut round
- *  it like any other layer - each card, and not the row, whose empty tracks are the
- *  page's own. Which elements are found is all jsdom can say: it has no layout. */
 describe("the notices row's cards", () => {
   function row(): { hole: HTMLElement; notices: HTMLElement; toast: HTMLElement } {
     document.body.innerHTML = `
@@ -89,9 +86,6 @@ describe("the notices row's cards", () => {
     expect(found.some((one) => one.node === notices)).toBe(false)
   })
 
-  /** A hint card in the sidebar stays in the document while the sidebar is
-   *  shut, hidden with its column and still laid out over the foot of the page beside it:
-   *  a page cut round it showed an empty box where nothing was drawn. */
   test('a layer hidden with what it stands in is no layer', () => {
     document.body.innerHTML = `
       <div class="hole"></div>
@@ -111,9 +105,6 @@ describe("the notices row's cards", () => {
   })
 })
 
-/** A swipe's arrow over a page on Windows was cut out of it in a window shape, whole
- *  pixels with no soft edge, set again on every step (#209). While the fingers are on,
- *  the room it comes in over covers the page, which stands as its picture under it. */
 describe("a swipe's arrow over a page", () => {
   function swipe(stage: 'tracking' | 'went'): HTMLElement {
     document.body.innerHTML = `
@@ -134,9 +125,6 @@ describe("a swipe's arrow over a page", () => {
   })
 })
 
-/** On an engine that cannot cut, a layer hides the page behind its still - and a notice is
- *  up until somebody answers it, the update notice for a day. So the page ends above the
- *  notices there, the way Chrome gives its download bar room of its own. */
 describe('a page on an engine that cannot cut, over the notices', () => {
   function notice(x: number, y: number, width: number, height: number): Layer {
     return { ...float(x, y, width, height), notice: true }
@@ -172,9 +160,6 @@ describe('a page on an engine that cannot cut, over the notices', () => {
   })
 })
 
-/** A layer that arrives by no press and by no overlay stack - a hint, a second toast in a
- *  row that did not change size, a card a row puts up under the pointer - was a layer the
- *  page never heard of, drawn behind the page. */
 describe('a layer arriving by itself', () => {
   function record(target: Node, added: Node[] = [], removed: Node[] = []) {
     const list = (nodes: Node[]) => nodes as unknown as NodeList
@@ -208,8 +193,6 @@ describe('a layer arriving by itself', () => {
     expect(found.map((one) => one.scrim)).toEqual([false, true])
   })
 
-  // #1124: a layer shown by a class or a style is no node put in, and the page heard of
-  // it on the next press, or a fifth of a second after one, or never.
   test('and as one is shown, hidden or moved in place, or what holds one is', () => {
     document.body.innerHTML =
       '<div class="bar" data-covers></div><section><span class="nib-bubble"></span></section><p></p>'
@@ -226,7 +209,6 @@ describe('a layer arriving by itself', () => {
     document.querySelector<HTMLElement>('.nib-scrim')!.style.visibility = ''
     await Promise.resolve()
     expect(heard).toBe(1)
-    // A style on something holding no layer says nothing.
     document.querySelector('p')!.setAttribute('style', 'color: red')
     await Promise.resolve()
     expect(heard).toBe(1)
@@ -246,7 +228,6 @@ describe('a layer arriving by itself', () => {
     await Promise.resolve()
     expect([one, other]).toEqual([1, 1])
 
-    // Typing in a note beside the page is no layer, and says nothing.
     document.querySelector('main')!.append(document.createElement('p'))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 1])
@@ -265,7 +246,6 @@ describe('a layer arriving by itself', () => {
   })
 })
 
-/** #1050: a page hidden whole behind its picture is told nothing of what moves over it. */
 describe('what is told of a cut', () => {
   const arrow = (x: number): Cut => ({
     all: true,

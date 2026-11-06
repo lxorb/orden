@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** The History page: every page this tab's history holds, in the pane where a site
-   *  would be. Chrome's `chrome://history` - Ctrl+H, a row in the dots - in Orden's shapes.
-   *
-   *  One search field and one list, newest first under the day each page was last open,
-   *  a time against each row. A press opens the page in this tab, Ctrl or the middle
-   *  button in a tab behind it, Shift as well in front; the cross at a row's end and
-   *  Delete take it out of the history. Its own menu has Chrome's rows: Open in new tab,
-   *  More from this site, Remove from history. Delete browsing data is at the top right,
-   *  where Chrome's own link to it is.
-   *
-   *  Drawn a screenful at a time: two thousand rows are two thousand buttons nobody can
-   *  see, so only the rows the scroll has reached are in the document. See
-   *  history-list.ts, which says which. */
-
   import { onMount, untrack } from 'svelte'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { i18n, t } from '../i18n.svelte'
@@ -29,23 +15,17 @@
     onopen,
     onclear,
   }: {
-    /** Which history: the tab's space's; see web-data.ts. */
     book: string
-    /** Whether this pane has the focus, which is when the search field takes the keys. */
     focused: boolean
-    /** A page chosen, and how the press asked for it. */
     onopen: (url: string, ask: TabAsk) => void
-    /** Delete browsing data. */
     onclear: () => void
   } = $props()
 
-  /** The history as it is now, read again whenever it changes, and when that was. */
   let all = $state.raw(visited.all(untrack(() => book)))
   let now = $state(Date.now())
   let typed = $state('')
   let scrolled = $state(0)
   let height = $state(0)
-  /** The height of one row, read off the theme once the list is in the document. */
   let rowHeight = $state(28)
   let list = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
@@ -53,9 +33,6 @@
   const rows = $derived(historyRows(all, typed))
   const shown = $derived(onScreen(scrolled, height, rowHeight, rows.length))
 
-  // Every search starts at the top of what it found, as Chrome's does: a scroll kept
-  // from far down the whole list showed the oldest of the pages found, the newest out
-  // of sight above them.
   $effect(() => atTop(typed))
 
   function atTop(_search: string) {
@@ -81,17 +58,14 @@
     return stop
   })
 
-  /** A row's page, or null for a day's heading. */
   function visitOf(row: HistoryRow): Visit | null {
     return row.kind === 'visit' ? row.visit : null
   }
 
-  /** A heading's day. */
   function dayAt(row: HistoryRow): number {
     return row.kind === 'day' ? row.day : 0
   }
 
-  /** What a row reads as: the page's own name, or its site before it has said one. */
   function titleOf(visit: Visit): string {
     return visit.title === '' ? hostOf(visit.url) : visit.title
   }
@@ -109,8 +83,6 @@
     ])
   }
 
-  /** Up and Down from row to row, Delete takes one out: the list's keys while a row
-   *  has the keyboard. */
   function rowKey(event: KeyboardEvent, visit: Visit, index: number) {
     if (event.key === 'Delete') {
       event.preventDefault()
@@ -127,8 +99,6 @@
     else focusRow(next)
   }
 
-  /** The keyboard to the row at `index`, or the nearest one there is, scrolled into
-   *  sight first: a row out of sight is not in the document. */
   function focusRow(index: number) {
     let at = Math.min(index, rows.length - 1)
     while (at > 0 && rows[at]?.kind === 'day') at--
@@ -237,8 +207,6 @@
 </div>
 
 <style>
-  /* The page fills the pane under the bar, on the app's own ground, and its column is a
-     reading width rather than the pane's, as Chrome's is. */
   .history {
     flex: 1;
     min-height: 0;
@@ -289,8 +257,6 @@
     padding-bottom: var(--space-4);
   }
 
-  /* As tall as every row would be, so the scrollbar is the list's; the rows on screen
-     are placed in it by where they would be. */
   .room {
     position: relative;
   }
@@ -303,8 +269,6 @@
     margin: 0;
   }
 
-  /* A day's heading: the section label every list in the app groups by, on the row
-     scale so the list's arithmetic holds. */
   .day {
     display: flex;
     align-items: flex-end;
@@ -348,7 +312,6 @@
     white-space: nowrap;
   }
 
-  /* The cross is there for the row under the pointer or the keyboard, as Chrome's is. */
   .gone {
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);

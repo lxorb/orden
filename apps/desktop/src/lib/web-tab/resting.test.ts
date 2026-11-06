@@ -1,14 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import { FROZEN_AFTER, isSaver, overCap, rest, type Resting, SAVING } from './resting'
 
-/** A page out of sight on numbers: frozen after five minutes and never taken down, unless
- *  Memory saver is on; see resting.ts. */
-
 const NOW = 1_000_000_000
 const MINUTES = 60_000
 const HOURS = 60 * MINUTES
 
-/** A page out of sight for `minutes`, with nothing going on in it. */
 function page(id: string, minutes: number, more: Partial<Resting> = {}): Resting {
   return {
     id,

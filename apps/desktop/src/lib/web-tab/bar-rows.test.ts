@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { fieldAlone } from './bar-rows'
 
-/** The bar's own numbers: five glyphs of 28 with the site's margin of 4, a field whose
- *  basis is 128, and gaps of 4. One line takes 28 * 5 + 4 + 128 + 4 * 5 = 292. */
 const GLYPHS = [28, 28, 28, 32, 28]
 
 describe('whether the address field takes a line of its own (#1118)', () => {

@@ -1,9 +1,3 @@
-/** Find and the address field in a web tab: Ctrl+F, Ctrl+L and Alt+D are the page's
- *  first, as in Chrome. The script in every page asks for Orden's answer only when nothing
- *  in the page took the key, and the crate's word for it is read into one of four asks
- *  for the tab it came from. Ctrl+0 asks the same way, and the crate answers it itself.
- *  See seek.ts, passed.svelte.ts, web_opens.rs and web_page.rs. */
-
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
@@ -27,7 +21,6 @@ beforeEach(() => {
   called.length = 0
 })
 
-/** The script the crate puts in every page, read off the crate so the two cannot drift. */
 function pageScript(): string {
   const crate = readFileSync(
     fileURLToPath(new URL('../../../src-tauri/src/web_opens.rs', import.meta.url)),
@@ -45,7 +38,6 @@ interface Key {
   altKey?: boolean
   metaKey?: boolean
   isTrusted?: boolean
-  /** The key by name and when it was pressed, which a tap is counted by. */
   key?: string
   timeStamp?: number
   repeat?: boolean
@@ -65,13 +57,6 @@ type Pressed = Required<Key> & {
   preventDefault: () => void
 }
 
-/** The script run in a page of its own, with what it opens written down.
- *
- *  The page's window is the one target a key reaches last, and the DOM's order on it is
- *  kept: the capturing handlers, then the bubbling ones, each turn running the handlers
- *  there are when it starts, in the order they were added. `own` is the key of a page
- *  that answers Ctrl and that key itself - a find of its own, say - whose handler is
- *  added after the script, as every page's is. */
 function page(own: number | null = null) {
   const opened: string[] = []
   const heard: Heard[] = []
@@ -101,7 +86,6 @@ function page(own: number | null = null) {
     Element: Object,
   })
 
-  // The page puts its own `window.open` in after the script has run, as some do.
   window.open = () => {
     throw new Error("the page's own open")
   }
@@ -145,7 +129,6 @@ function page(own: number | null = null) {
     turn(event, false)
     return { opened: opened.splice(0), prevented }
   }
-  /** A page that answers Shift itself, the way a game might. */
   const takeShift = () =>
     addEventListener('keyup', (event) => {
       if (event.key === 'Shift') event.preventDefault()
@@ -167,7 +150,6 @@ describe('the script in every page', () => {
     expect(one.press({ keyCode: 70, ctrlKey: true })).toEqual({ opened: [], prevented: true })
     expect(one.press({ keyCode: 70, ctrlKey: true }).opened).toEqual([])
     expect(one.own()).toBe(2)
-    // Its other keys are still Orden's.
     expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['nib-find-next'])
   })
 
@@ -184,18 +166,14 @@ describe('the script in every page', () => {
   test('leaves every other key alone', () => {
     const one = page()
     const others: Key[] = [
-      // Ctrl+Shift+L and Ctrl+Alt+D, and a D typed with Alt and Shift.
       { keyCode: 76, ctrlKey: true, shiftKey: true },
       { keyCode: 68, ctrlKey: true, altKey: true },
       { keyCode: 68, altKey: true, shiftKey: true },
-      // Typing an f, and Ctrl+Shift+F, which is the page's.
       { keyCode: 70 },
       { keyCode: 70, ctrlKey: true, shiftKey: true },
-      // AltGr is Ctrl+Alt, and a character.
       { keyCode: 70, ctrlKey: true, altKey: true },
       { keyCode: 71, ctrlKey: true, altKey: true },
       { keyCode: 70, ctrlKey: true, metaKey: true },
-      // F3 with Ctrl is not a step, and neither is a G.
       { keyCode: 114, ctrlKey: true },
       { keyCode: 71 },
       { keyCode: 75, ctrlKey: true },
@@ -216,7 +194,6 @@ describe('the script in every page', () => {
     const actual = { opened: ['nib-actual-size'], prevented: true }
     expect(one.press({ keyCode: 48, ctrlKey: true })).toEqual(actual)
     expect(one.press({ keyCode: 96, ctrlKey: true })).toEqual(actual)
-    // With Shift or AltGr, or with no Ctrl, it is a character, and the page's.
     for (const key of [
       { keyCode: 48, ctrlKey: true, shiftKey: true },
       { keyCode: 48, ctrlKey: true, altKey: true },
@@ -239,7 +216,6 @@ describe('the script in every page', () => {
 })
 
 describe('a modifier tapped twice in a page', () => {
-  /** Shift pressed and let go at `at`, and what the page asked for. */
   function tap(one: ReturnType<typeof page>, at: number, key = 'Shift') {
     const held = { key, keyCode: 16, shiftKey: key === 'Shift', ctrlKey: key === 'Control' }
     one.press({ ...held, timeStamp: at }, 'keydown')

@@ -1,6 +1,3 @@
-/** What a device remembers about a site: Chrome's "Mute site", and the size a site was
- *  zoomed to. Both by site, both only for what somebody chose. See sites.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {

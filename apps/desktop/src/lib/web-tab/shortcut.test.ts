@@ -43,8 +43,6 @@ describe('the file a website is written as', () => {
     })
   })
 
-  // #239: a web note that keeps its own web data says so in its file, so the choice moves,
-  // is renamed and syncs with the note.
   test('says a note keeps its own web data, and reads it back', () => {
     const written = writeShortcut('https://a.example', 'A', WHEN, null, null, '3f9a0c17e2b4d685')
     expect(written).toContain('Nib-Data=3f9a0c17e2b4d685\r\n')
@@ -52,7 +50,6 @@ describe('the file a website is written as', () => {
     expect(writeShortcut('https://a.example', 'A', WHEN)).not.toContain('Nib-Data')
   })
 
-  // #346: one answer for every way a page is opened - a tab, an essential, a copy.
   test('a tab is on its file’s web data, and one with no file on what it took along', () => {
     const own = '3f9a0c17e2b4d685'
     const doc = writeShortcut('https://a.example', 'A', WHEN, null, null, own)
@@ -61,7 +58,6 @@ describe('the file a website is written as', () => {
     expect(apartOf({ path: '/s/a.url', doc: writeShortcut('https://a.example', 'A', WHEN) })).toBe(
       null,
     )
-    // The file decides once there is one, whatever the tab carried before.
     expect(apartOf({ path: '/s/b.url', doc: '', apart: own })).toBeNull()
     expect(apartOf({ path: null, doc: '', apart: own })).toBe(own)
     expect(apartOf({ path: null, doc: '' })).toBeNull()
@@ -79,9 +75,6 @@ describe('the file a website is written as', () => {
     )
   })
 
-  // A web note is a browser tab: `URL` is the page the reading has got to, so that
-  // opening the note again opens that page, and the address the note points at is kept
-  // beside it. See keep.ts and docs/web-tabs.md.
   test('keeps where the note points when the reading has moved on', () => {
     const written = writeShortcut(
       'https://svelte.dev/docs/svelte/what-are-runes',
@@ -101,8 +94,6 @@ describe('the file a website is written as', () => {
     expect(said?.icon).toBe('https://svelte.dev/favicon.png')
   })
 
-  // The ordinary file is the three lines it always was: a note nobody has followed a
-  // link out of says nothing it has nothing to say.
   test('says nothing about home when the reading is where the note points', () => {
     const written = writeShortcut('https://a.example/', 'A', WHEN, 'https://a.example/', null)
     expect(written).not.toContain('Nib-Home')
@@ -115,7 +106,6 @@ describe('a shortcut somebody else wrote', () => {
   test('is read whatever case and spacing it uses', () => {
     const said = readShortcut('[internetshortcut]\r\n url = https://a.example/page \r\n')
     expect(said?.url).toBe('https://a.example/page')
-    // No title in the file: the name on disk is the only name there is.
     expect(said?.title).toBe(null)
   })
 

@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** Delete browsing data: Chrome's dialog, in Orden's sheet.
-   *
-   *  Chrome's choices in Chrome's words - a time range, Browsing history, Cookies and
-   *  other site data, Cached images and files - and Chrome's default: the last hour, all
-   *  three, over the web data every page shares and that of each web note kept apart
-   *  that is open, as Firefox clears every container. The browser build has no engine
-   *  of its own behind its pages, so it offers the history and nothing it cannot clear.
-   *  What goes and how is clearing.ts.
-   *
-   *  Drawn in the window's own layer rather than in the pane, so the sheet is over every
-   *  page: a page is cut out under anything with the layer's shape; see covers.ts. */
-
   import Select from '../Select.svelte'
   import Sheet from '../Sheet.svelte'
   import { message, t } from '../i18n.svelte'
@@ -22,7 +10,6 @@
     apart,
     onclose,
   }: {
-    /** The web notes kept apart that are open, by the ids their stores are named by. */
     apart: readonly (string | null)[]
     onclose: () => void
   } = $props()
@@ -57,8 +44,6 @@
       : []),
   ])
 
-  /** Moved to the end of the window's own document as it arrives, so the sheet is the
-   *  window's and not the pane's, whatever the pane is inside. */
   function portal(node: HTMLElement) {
     document.body.appendChild(node)
     return { destroy: () => node.remove() }
@@ -134,7 +119,6 @@
 </div>
 
 <style>
-  /* Nothing of its own: the sheet's scrim and screen are fixed to the window. */
   .holder {
     display: contents;
   }
@@ -161,7 +145,6 @@
     background: var(--surface-press);
   }
 
-  /* The sheet's foot holds the two answers at its end, the way a dialog's are. */
   .holder :global(.foot) {
     justify-content: flex-end;
   }
