@@ -68,7 +68,7 @@ function caretFor(state: EditorState, ranges: readonly FoldRange[]): Transaction
   return holder ? { selection: { anchor: holder.from } } : {}
 }
 
-export const toggleFold: StateCommand = (target) => {
+export const unfoldAtCaret: StateCommand = (target) => {
   const { state } = target
   const line = state.doc.lineAt(state.selection.main.head)
 
@@ -78,10 +78,16 @@ export const toggleFold: StateCommand = (target) => {
   }
 
   const open = foldedAtLine(state, line)
-  if (open) {
-    openFolds(target, [open])
-    return true
-  }
+  if (!open) return false
+
+  openFolds(target, [open])
+  return true
+}
+
+export const foldAtCaret: StateCommand = (target) => {
+  const { state } = target
+  const line = state.doc.lineAt(state.selection.main.head)
+  if (foldedAtLine(state, line) || shuttingAt(state, line.from, line.to)) return false
 
   const range = enclosingFold(state, state.selection.main.head)
   if (!range) return false
@@ -89,6 +95,8 @@ export const toggleFold: StateCommand = (target) => {
   shutFolds(target, [range], caretFor(state, [range]))
   return true
 }
+
+export const toggleFold: StateCommand = (target) => unfoldAtCaret(target) || foldAtCaret(target)
 
 export const foldHeadings: StateCommand = (target) => {
   const { state } = target
