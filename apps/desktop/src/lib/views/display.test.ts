@@ -207,6 +207,21 @@ describe('Todos grouped by note across two spaces (#1157)', () => {
     const alone = answer(displayed(byNote, 0), 0, one, context).groups
     expect(alone.map((group) => group.key)).toEqual(['.Inbox.md', 'Garden.md'])
   })
+
+  test('Display narrowed to one space or one note keeps the keys it had across both', () => {
+    const narrowedTo = (only: Parameters<typeof withOnly>[2]) =>
+      answer(displayed(withOnly(byNote, 0, only), 0), 0, rows, context).groups.map(
+        (group) => group.key,
+      )
+    expect(narrowedTo({ space: 'Home' })).toEqual(['Home//.Inbox.md', 'Home//Garden.md'])
+    expect(narrowedTo({ project: 'Work//.Inbox.md' })).toEqual(['Work//.Inbox.md'])
+  })
+
+  test('a task ticked out of sight leaves the keys alone', () => {
+    const ticked = [rows[0]!, ...taskRowsOfText('Home', 'Garden.md', '- [x] Done')]
+    const shown = answer(displayed(byNote, 0), 0, ticked, context).groups
+    expect(shown.map((group) => group.key)).toEqual(['Work//.Inbox.md'])
+  })
 })
 
 describe('the Display menu over Todos', () => {
