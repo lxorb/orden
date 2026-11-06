@@ -1,43 +1,12 @@
-//! A task item, as a line of markdown says it is.
-//!
-//! `- [ ] buy milk` and `- [x] buy milk`, in every marker a list is written with:
-//! the three bullets and the two ways a number is followed. What is inside the
-//! brackets decides the state, and the rule is the checkbox's own: a space is not
-//! done and anything else is, which takes in the marks a theme gives a task of its
-//! own - `[-]` for cancelled, `[/]` for started - all of which mean a task nobody
-//! is waiting on any more.
-//!
-//! The twin of this is tasks.ts in `@orden/markdown`, and the tests at the bottom
-//! are the twin of tasks.test.ts: the same lines, the same answers. Read by hand
-//! rather than with a pattern, because the `task:` operator asks it of every line
-//! of every note in a space.
-
-/// The state and the marker. Offsets are bytes from the start of the line,
-/// which is what the matcher counts in.
-///
-/// Where the box sits is not here, though the twin says it: writing a tick is
-/// the app's own path through a note and never a search's, so the offset would
-/// be a field nothing on this side ever reads. What is in the box and how far the
-/// line is indented are here, because the scan of a space hands every task line on
-/// to the rows the window builds; see `prose` in links.rs.
 pub struct TaskItem {
-    /// Whether the box counts as ticked: anything but a space does.
     pub done: bool,
-    /// What is between the brackets, as written: `x`, `/`, `-`, or whatever a
-    /// theme gave a meaning of its own.
     pub mark: char,
-    /// How far the line is indented, in characters, which is what makes a task a
-    /// sub-task of the one above it.
     pub indent: usize,
-    /// How much of the line is the marker, its indentation and the space after
-    /// the box included, which is where the task's own words start.
     pub marker: usize,
 }
 
-/// How many digits a numbered list marker may have before it stops being one.
 const DIGITS: usize = 9;
 
-/// The task this line is, or None for a line that is not one.
 #[must_use]
 pub fn task_at(line: &str) -> Option<TaskItem> {
     let bytes = line.as_bytes();
@@ -48,7 +17,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
     }
     let indent = at;
 
-    // A bullet, or a number followed by a dot or a bracket.
     match bytes.get(at)? {
         b'-' | b'*' | b'+' => at += 1,
         b'0'..=b'9' => {
@@ -64,7 +32,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
         _ => return None,
     }
 
-    // At least one space between the marker and the box.
     let gap = at;
     while matches!(bytes.get(at), Some(b' ' | b'\t')) {
         at += 1;
@@ -77,7 +44,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
         return None;
     }
 
-    // One character inside, which may be more than one byte.
     let mark = line.get(at + 1..)?.chars().next()?;
     if mark == ']' {
         return None;
@@ -88,8 +54,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
         return None;
     }
 
-    // A space after the box, or the end of the line: `- [ ]` with nothing written
-    // yet is a task somebody is about to write.
     let mut end = close + 1;
     let after = end;
     while matches!(bytes.get(end), Some(b' ' | b'\t')) {
@@ -111,7 +75,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
 mod tests {
     use super::task_at;
 
-    /// The task's own words, which is what `marker` is for.
     fn words(line: &str) -> Option<&str> {
         task_at(line).map(|task| &line[task.marker..])
     }

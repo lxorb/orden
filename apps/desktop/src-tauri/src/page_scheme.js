@@ -1,6 +1,3 @@
-// The app's scheme, light or dark, said to the crate as the app's page starts and each
-// time the reader changes it, so a web tab's page is drawn in it rather than in the
-// system's. The app wears it on its root as `data-theme`. See page_scheme.rs.
 ;(function () {
   if (window.top !== window) return
   let said = null

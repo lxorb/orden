@@ -1,20 +1,3 @@
-//! The Mac's App Intents (swift/AddTask.swift): what Shortcuts calls into Orden with. The
-//! intent runs in the app's own process, started in the background where Orden is not
-//! running, so this answers without a window or a page: the task goes straight onto the
-//! disk, and a space open in a window sees the note change like any other.
-//!
-//! **Which note** is the inbox of the space in front, which the page says whenever that
-//! changes (`rememberInbox` in apps/desktop/src/lib/rows/inbox.ts) and this keeps in a
-//! file, since the crate cannot read local storage and the app may not be open when a
-//! task comes. Where nothing was said, or it is not in the spaces folder any more, the
-//! inbox is Orden's own in the first space on disk, alphabetical, the way the space list
-//! orders them: `.Inbox.md`, hidden, so no file the reader did not make is put into the
-//! space (#1044). Made where it is not there yet.
-//!
-//! **Whether to offer it** is the signature's call: the system lists an app's App
-//! Intents in Shortcuts only when a developer team signed it, so Settings shows the
-//! Shortcuts row only then (`offered`).
-
 use std::ffi::{c_char, CStr};
 use std::fs;
 use std::io::ErrorKind;
@@ -29,23 +12,15 @@ use crate::paths::{
     write_atomically, SPACES, SPACES_DIR, SPACES_KEPT, TRASH,
 };
 
-/// The inbox of a space that says nothing else: Orden's own, hidden (`INBOX_PATH` in
-/// packages/bases/src/inbox.ts).
 const INBOX: &str = ".Inbox.md";
 
-/// The file in the settings folder that holds the inbox of the space in front.
 const FRONT: &str = "inbox.txt";
 
-/// Whether the system offers Orden's actions: an ad-hoc build (a probe, a build from
-/// source) has no team, and Shortcuts lists nothing of it. Asked once, since a running
-/// app's signature does not change under it.
 pub fn offered() -> bool {
     static OFFERED: OnceLock<bool> = OnceLock::new();
     *OFFERED.get_or_init(signed_by_a_team)
 }
 
-/// True when the running code's certificate comes from Apple, which is what a team's
-/// Apple Development or Developer ID certificate is and an ad-hoc signature is not.
 fn signed_by_a_team() -> bool {
     let Ok(requirement) = "anchor apple generic".parse::<SecRequirement>() else {
         return false;
@@ -55,7 +30,6 @@ fn signed_by_a_team() -> bool {
         .is_ok()
 }
 
-/// Keeps the inbox of the space in front, a note inside the spaces folder.
 pub fn remember(app: &AppHandle, path: &str) -> Result<(), String> {
     let inbox = in_spaces(app, path)?;
     if inbox.extension().is_none_or(|one| one != "md") {
@@ -66,19 +40,12 @@ pub fn remember(app: &AppHandle, path: &str) -> Result<(), String> {
     write_atomically(&dir.join(FRONT), inbox.to_string_lossy().as_bytes())
 }
 
-/// Called by `AddTaskIntent.perform`: appends `- [ ] <text>` to the inbox. Answers 0
-/// when the task is written, 1 when it is not.
-///
-/// Unsafe, excepted by name: the Swift side hands a C string, which is read here and
-/// nowhere else, for as long as the call lasts.
 #[allow(unsafe_code)]
 #[no_mangle]
 pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
     if text.is_null() {
         return 1;
     }
-    // SAFETY: not null, and Swift's `withCString` keeps it valid and terminated for
-    // the whole call.
     let text = unsafe { CStr::from_ptr(text) }.to_string_lossy();
     let front = crate::mcp::home::config_dir()
         .and_then(|dir| fs::read_to_string(dir.join(FRONT)).ok())
@@ -92,7 +59,6 @@ pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
     }
 }
 
-/// Writes the task into the inbox; answers the note it went to.
 fn add_to_inbox(spaces: &Path, front: Option<&Path>, text: &str) -> Result<PathBuf, String> {
     let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
     if text.is_empty() {
@@ -109,8 +75,6 @@ fn add_to_inbox(spaces: &Path, front: Option<&Path>, text: &str) -> Result<PathB
     Ok(inbox)
 }
 
-/// The inbox the page named, while it is still in a space under `spaces` and its folder
-/// is there; else the first space's own.
 fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     let named = front.filter(|path| {
         inside(spaces, path)
@@ -125,8 +89,6 @@ fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     }
 }
 
-/// The folder every space lives in, the one the app itself decided on (`decide_spaces`
-/// in paths.rs): `NIB_SPACES_DIR`, else `spaces_in` the settings folder.
 fn decided_spaces() -> Result<PathBuf, String> {
     if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
         return Ok(named);
@@ -136,11 +98,6 @@ fn decided_spaces() -> Result<PathBuf, String> {
     Ok(spaces_in(&settings, documents.as_deref()))
 }
 
-/// The spaces folder as `chosen_spaces` in paths.rs finds it, with the folders it starts
-/// from already found: the one the settings folder keeps, else `Documents/Nib` where it
-/// is there, else `Spaces` in the app's data - which on a Mac is the settings folder.
-/// Not `Documents/Nib` alone, which is where spaces were only until #376, and never a
-/// folder outside Orden's own that the settings folder names (#552).
 fn spaces_in(settings: &Path, documents: Option<&Path>) -> PathBuf {
     let said = fs::read_to_string(settings.join(SPACES_KEPT)).ok();
     let fresh = settings.join(SPACES);
@@ -150,7 +107,6 @@ fn spaces_in(settings: &Path, documents: Option<&Path>) -> PathBuf {
     spaces_folder(said.as_deref(), nib.filter(|dir| dir.is_dir()), fresh)
 }
 
-/// The first space, alphabetical, as the space list orders them.
 fn default_space(spaces: &Path) -> Result<PathBuf, String> {
     let entries = fs::read_dir(spaces)
         .map_err(|error| format!("could not read {}: {error}", spaces.display()))?;
@@ -163,9 +119,6 @@ fn default_space(spaces: &Path) -> Result<PathBuf, String> {
         .ok_or_else(|| format!("no space in {}", spaces.display()))
 }
 
-/// The note with the line at its end, the way quick add places a task that names no
-/// heading (`placeIn` in packages/bases/src/agent/entry.ts): under a list that ends the
-/// note, else after a blank line.
 fn appended(note: &str, line: &str) -> String {
     let eol = if note.contains("\r\n") { "\r\n" } else { "\n" };
     let lines: Vec<&str> = note
@@ -175,9 +128,6 @@ fn appended(note: &str, line: &str) -> String {
     let Some(last) = lines.iter().rposition(|one| !one.trim().is_empty()) else {
         return format!("{line}{eol}");
     };
-    // Where the last words end, counted on the note as it is: a note edited on two
-    // systems ends some lines with `\r\n` and some with `\n`, so `eol` is not what
-    // every line before them ends with.
     let kept = note
         .split('\n')
         .take(last)
@@ -192,7 +142,6 @@ fn appended(note: &str, line: &str) -> String {
     format!("{}{gap}{line}{}", &note[..kept], &note[kept..])
 }
 
-/// True when the last words of the note belong to a list item.
 fn ends_in_list(lines: &[&str]) -> bool {
     for line in lines.iter().rev() {
         if line.trim().is_empty() {
@@ -201,7 +150,6 @@ fn ends_in_list(lines: &[&str]) -> bool {
         if is_item(line) {
             return true;
         }
-        // An indented line is a description or a sub-item; the item is above.
         if !line.starts_with([' ', '\t']) {
             return false;
         }
@@ -235,8 +183,6 @@ mod tests {
         assert_eq!(appended("- [ ] a\r\n", "- [ ] b"), "- [ ] a\r\n- [ ] b\r\n");
     }
 
-    /// A note edited on two systems has both line endings, and the place after its last
-    /// words is where they end, whatever ends the lines before them.
     #[test]
     fn a_task_lands_after_the_last_words_of_a_note_of_mixed_endings() {
         assert_eq!(
@@ -261,20 +207,17 @@ mod tests {
         fs::create_dir_all(&settings).unwrap();
         fs::create_dir_all(&documents).unwrap();
 
-        // A fresh install: no Documents/Nib, so the app's own data.
         assert_eq!(
             spaces_in(&settings, Some(&documents)),
             settings.join(SPACES)
         );
 
-        // An install from before #376, whose spaces stayed where they were.
         fs::create_dir(documents.join("Nib")).unwrap();
         assert_eq!(
             spaces_in(&settings, Some(&documents)),
             documents.join("Nib")
         );
 
-        // And whatever the settings folder says, once the app has said it.
         let kept = settings.join(SPACES);
         fs::write(
             settings.join(SPACES_KEPT),
@@ -283,7 +226,6 @@ mod tests {
         .unwrap();
         assert_eq!(spaces_in(&settings, Some(&documents)), kept);
 
-        // But never a folder of somebody else's written there by hand (#552).
         fs::write(
             settings.join(SPACES_KEPT),
             dir.path().join("Elsewhere").to_string_lossy().as_bytes(),
@@ -362,7 +304,6 @@ mod tests {
 
     #[test]
     fn an_ad_hoc_build_is_not_offered_the_shortcuts() {
-        // The test binary is signed the way a build from source is: ad hoc, by the linker.
         assert!(!signed_by_a_team());
     }
 

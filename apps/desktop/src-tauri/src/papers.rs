@@ -1,22 +1,3 @@
-//! The words taken out of a PDF, kept so that they are only taken out once.
-//!
-//! A PDF's words are not text on disk: getting at them is the window's own pdf.js,
-//! a worker and a page at a time. So the window takes them down as they are read
-//! and hands them here, and a paper somebody opened last week answers a search
-//! today without being opened again.
-//!
-//! They live in the app's own config folder rather than beside the PDF, which is
-//! the rule the version history follows for the same reason: a PDF's folder belongs
-//! to the person who put the PDF there, and a cache is the app's business. Each
-//! paper gets a folder named after a hash of its path - `folder_key` in `paths`,
-//! the same one history uses - holding the words and the path they came from, so
-//! that the store can be listed by paper without every record in it being read.
-//!
-//! What is in a record belongs to the window, which is the only thing that reads
-//! it: here it is text, judged only by its size and by where it may be written. The
-//! window keys it by the hash of the file's bytes and drops it when that changes;
-//! see pdf/text-cache.ts.
-
 use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -24,29 +5,18 @@ use tauri::AppHandle;
 
 use crate::paths::{config_dir, is_pdf, kept_folder, made, write_atomically, ORIGIN};
 
-/// How much of one paper's words may be kept. A thousand pages of a dense book,
-/// and a ceiling so that a window asking a cache to hold more than a cache should
-/// is refused rather than obeyed. The window holds itself to the same number; this
-/// is the one that protects the disk.
 const LIMIT: u64 = 4 * 1024 * 1024;
 
-/// What the store holds for one paper: which paper, and how much.
 #[derive(Serialize)]
 pub struct PaperFile {
-    /// The PDF's path, as the window spells it.
     path: String,
-    /// How many bytes its words come to.
     size: u64,
 }
 
-/// The folder every paper's words live under.
 fn papers_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join("papers"))
 }
 
-/// One paper's folder. The path is judged first: a store of what is inside PDFs
-/// holds nothing else, so a window that names something that is not one is refused
-/// rather than answered.
 fn paper_dir(app: &AppHandle, pdf: &str) -> Result<PathBuf, String> {
     if !is_pdf(Path::new(pdf)) {
         return Err(format!("{pdf} is not a PDF"));
@@ -55,9 +25,6 @@ fn paper_dir(app: &AppHandle, pdf: &str) -> Result<PathBuf, String> {
     Ok(kept_folder(&papers_dir(app)?, pdf))
 }
 
-/// Where the words are, and where the paper they came from is named. Two files
-/// rather than one, so that listing the store reads a path per paper instead of
-/// megabytes of words; `origin.txt` is the same trick history.rs plays.
 fn pages_file(dir: &Path) -> PathBuf {
     dir.join("pages.json")
 }
@@ -66,27 +33,16 @@ fn origin_file(dir: &Path) -> PathBuf {
     dir.join(ORIGIN)
 }
 
-/// What was taken down for one paper, or nothing at all. A record larger than a
-/// record may be is nothing rather than an error: the paper is read again, and the
-/// next write is what clears it.
 fn read_pages(dir: &Path) -> String {
     match fs::metadata(pages_file(dir)) {
         Err(_) => String::new(),
         Ok(meta) if meta.len() > LIMIT => String::new(),
-        // Gone between the two calls is another window sweeping the store, which is
-        // a paper to read again rather than anything to report.
         Ok(_) => fs::read_to_string(pages_file(dir)).unwrap_or_default(),
     }
 }
 
-/// Writes one paper's words down, whole, the way a note is written: a crash mid
-/// write leaves what was there rather than half of what is new.
-///
-/// Nothing to keep takes the folder with it, so a paper whose words were dropped
-/// leaves no folder behind.
 fn write_pages(dir: &Path, content: &str) -> Result<(), String> {
     if content.is_empty() {
-        // Gone already is what was asked for, so none of this is an error.
         let _ = fs::remove_file(pages_file(dir));
         let _ = fs::remove_file(origin_file(dir));
         let _ = fs::remove_dir(dir);
@@ -101,14 +57,8 @@ fn write_pages(dir: &Path, content: &str) -> Result<(), String> {
     write_atomically(&pages_file(dir), content.as_bytes())
 }
 
-/// Which papers the store holds words for, and how many bytes each comes to.
-///
-/// A record whose origin cannot be read is left out: a folder nobody can name a
-/// paper for is a folder nobody can ask about, and the window's own sweep is what
-/// clears it.
 fn listed(root: &Path) -> Vec<PaperFile> {
     let Ok(entries) = fs::read_dir(root) else {
-        // Nothing has ever been kept, so there is nothing to list.
         return Vec::new();
     };
 
@@ -130,32 +80,23 @@ fn listed(root: &Path) -> Vec<PaperFile> {
     found
 }
 
-/// The words taken out of a PDF, or nothing where none have been. A paper nobody
-/// has read is the ordinary case rather than a failure.
 #[tauri::command(async)]
 pub fn read_paper_text(app: AppHandle, path: String) -> Result<String, String> {
     Ok(read_pages(&paper_dir(&app, &path)?))
 }
 
-/// One paper's words written down, or taken away again when the window sends
-/// nothing: a paper that has been deleted, renamed or written over has no words
-/// worth keeping.
 #[tauri::command(async)]
 pub fn write_paper_text(app: AppHandle, path: String, content: String) -> Result<(), String> {
     let dir = paper_dir(&app, &path)?;
     write_pages(&dir, &content)?;
 
     if !content.is_empty() {
-        // The paper's own path, so the store can be listed by paper. Not worth
-        // failing the write over; the listing simply passes over a record that
-        // cannot say which paper it is.
         let _ = fs::write(origin_file(&dir), &path);
     }
 
     Ok(())
 }
 
-/// Every paper the store holds words for.
 #[tauri::command(async)]
 pub fn list_paper_texts(app: AppHandle) -> Result<Vec<PaperFile>, String> {
     Ok(listed(&papers_dir(&app)?))
@@ -163,8 +104,6 @@ pub fn list_paper_texts(app: AppHandle) -> Result<Vec<PaperFile>, String> {
 
 #[cfg(test)]
 mod tests {
-    // A test module is its own scope: what it touches is named here rather than
-    // borrowed from the module above.
     use super::{listed, origin_file, pages_file, read_pages, write_pages, LIMIT};
     use crate::paths::folder_key;
     use std::fs;
@@ -176,8 +115,6 @@ mod tests {
 
         assert_eq!(pages_file(&dir).file_name().expect("a name"), "pages.json");
         assert_eq!(origin_file(&dir).file_name().expect("a name"), "origin.txt");
-        // The folder is a hash rather than the path, so nothing in the store says
-        // where anybody keeps their papers.
         assert!(!dir.to_string_lossy().contains("paper.pdf"));
     }
 
@@ -208,12 +145,9 @@ mod tests {
 
         write_pages(&paper, "").expect("the clearing");
         assert!(!paper.exists());
-        // And clearing one that has gone already is not a failure.
         assert_eq!(write_pages(&paper, ""), Ok(()));
     }
 
-    /// The writer is held to the reader's ceiling. Without that, a window could
-    /// write words that come back as nothing for ever after.
     #[test]
     fn words_too_many_to_read_back_are_refused_on_the_way_in() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -232,7 +166,6 @@ mod tests {
 
         write_pages(&one, "{\"pages\":[]}").expect("the write");
         fs::write(origin_file(&one), "/Notes/paper.pdf").expect("the origin");
-        // A record that cannot say which paper it is, which is a half written one.
         write_pages(&two, "{}").expect("the second write");
 
         let found = listed(dir.path());

@@ -1,10 +1,3 @@
-//! A note is a file. This module owns the eleven things the window can ask of one:
-//! read it, write it back as text, write it back as bytes, rename or move it,
-//! copy it, delete it, ask when it was last written and how long it is, ask whether
-//! anything is at its name at all, make the folder it is going to live in, take that
-//! folder away, and take it away only if nothing whatever is left in it. Whether a
-//! path is allowed at all is decided by `paths`, not here.
-
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use std::fs;
@@ -23,39 +16,18 @@ use crate::paths::{
     write_in_place,
 };
 
-/// The most a note may be for Orden to read it: 64 MiB.
-///
-/// Not a limit anybody writing notes meets. The account keeps a note to 4 MiB
-/// (`MAX_NOTE_BYTES` in services/sync/src/notes.ts), and the editor stops parsing
-/// one past 512 KiB (`PARSED_AT_MOST` in packages/editor/src/modes.ts); this is
-/// sixteen times the first. What it stops is a file of gigabytes somebody left in a
-/// space - a log, an export, a dump - which read whole is an allocation the app does
-/// not survive, and which would cross to the window as a string of the same size if
-/// it did. The browser build refuses at the same number; see `read_note` in
-/// web/commands.ts.
 pub const MOST_NOTE_BYTES: u64 = 64 * 1024 * 1024;
 
-/// What a file past that is refused with: the account's own sentence for a note too
-/// large to keep, so every catalogue carries it already.
 pub const TOO_LARGE: &str = "that note is too large";
 
-/// Reads a note: a file in a space, or one of the app's own files (the two settings
-/// files and the scratchpad).
-/// nib opens nothing from anywhere else on the disk; see `openable`.
 #[tauri::command(async)]
 pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
     let target = openable(&app, &path)?;
-    // A note iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     icloud::fetched(&app, &target)?;
     words_of(&target)
 }
 
-/// The words of a note: the file whole, when it is small enough to be one and is
-/// text. What `read_note` answers with, and how the search and the link scan read a
-/// space, so that none of the three reads a file of gigabytes whole - the scan least
-/// of all, which reads every note in a space at the launch, before anybody has
-/// opened anything. See `MOST_NOTE_BYTES`.
 pub fn words_of(target: &Path) -> Result<String, String> {
     let bytes = at_most(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
     String::from_utf8(bytes)
@@ -72,23 +44,12 @@ fn unmarked(words: String) -> String {
     }
 }
 
-/// The words of a note and what its file says about itself, its size and times, off
-/// the one open: the scan of a space wants both for every note, and a second look at
-/// each path would be a second pass over the disk.
 pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
     let (bytes, meta) = at_most_stamped(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
     let words = String::from_utf8(bytes).map_err(|error| cannot("read", target, &error))?;
     Ok((unmarked(words), meta))
 }
 
-/// Writes a note whole into the file that is there, so a crash mid-write can never
-/// truncate it and every save stays the same file; see `write_in_place`. Missing folders are created, which is what lets sync
-/// land a note at a path that is new on this machine.
-///
-/// A note in a space, one of the settings files, or the file an export was pointed
-/// at in the save dialog; see `chosen`.
-///
-/// The line endings the file already had are kept; see `as_written`.
 #[tauri::command(async)]
 pub fn write_note(
     app: AppHandle,
@@ -97,40 +58,19 @@ pub fn write_note(
     arrived: Option<bool>,
 ) -> Result<(), String> {
     let target = chosen(&app, &path)?;
-    // A note made in a space is held to a name every machine can hold (#477); one already
-    // there, and a file outside the spaces, are written as they are. So is one sync brings
-    // under the name it has on the account, where this platform can hold it.
     if !may_arrive(arrived) && !target.exists() && target.starts_with(spaces_dir(&app)?) {
         named_for_every_machine(&target)?;
     }
     note_written(&target, &path, &content)
 }
 
-/// The text writer once the path has been judged.
 fn note_written(target: &Path, shown: &str, content: &str) -> Result<(), String> {
     let body = as_written(target, content);
     write_file(target, shown, body.as_bytes())
 }
 
-/// The text with the line endings the file on disk already uses.
-///
-/// The editor holds one line ending, `\n`, whatever the file had: that is
-/// `CodeMirror`'s own convention and the only sane one for a document being
-/// edited. A file written on Windows by another program very often has `\r\n`,
-/// and writing it back with bare newlines rewrites every line of it - which shows
-/// up as a whole-file change in git, in a diff, and in anything watching the
-/// folder, for a note where one word was corrected.
-///
-/// So the file is asked what it uses, and it is written back the same way. A file
-/// that is not there yet is new, and a new file gets `\n`: it is what markdown is
-/// written in and what every editor on every platform reads.
-///
-/// No setting. There is no answer here anybody could want other than "the way it
-/// already was".
 fn as_written(target: &Path, content: &str) -> String {
     let body = if crlf(target) {
-        // Only the newlines that stand alone: text that already carries `\r\n`, which
-        // a paste can, must not become `\r\r\n`.
         content.replace("\r\n", "\n").replace('\n', "\r\n")
     } else {
         content.to_owned()
@@ -151,17 +91,11 @@ fn marked(target: &Path) -> bool {
     file.read_exact(&mut head).is_ok() && head == [0xEF, 0xBB, 0xBF]
 }
 
-/// Whether the file at `target` uses `\r\n`, judged by its first line ending. A
-/// file with no line ending at all, one that cannot be read, or one that is not
-/// there says no, which is the `\n` a new note is written in.
 fn crlf(target: &Path) -> bool {
     let Ok(file) = fs::File::open(target) else {
         return false;
     };
 
-    // The first line ending settles it, so only the head of the file is read: a
-    // note is written on every keystroke that is saved, and a megabyte read to
-    // answer a question the first eighty bytes answer is a megabyte wasted.
     let mut head = [0_u8; HEAD];
     let Ok(read) = (&file).take(HEAD as u64).read(&mut head) else {
         return false;
@@ -173,26 +107,13 @@ fn crlf(target: &Path) -> bool {
         .is_some_and(|at| at > 0 && head[at - 1] == b'\r')
 }
 
-/// How much of a file is read to find its first line ending. Long enough for a
-/// front matter fence and a heading, short enough to cost nothing.
 const HEAD: usize = 8192;
 
-/// Writes bytes, under exactly the checks the text writer is held to: a path the
-/// reader chose, the folders above it made, and the file written whole.
-///
-/// An export is bytes as often as it is text - a Word file, an `ePub`, a
-/// picture, a `TextPack`, the pictures inside a `TextBundle` - none of those go
-/// through `write_note` without being mangled by the string.
-///
-/// Base64 rather than an array of numbers: a two megabyte picture written out as
-/// JSON digits is twenty megabytes of text for the bridge to parse, and one
-/// export is a document plus every picture in it.
 #[tauri::command(async)]
 pub fn write_bytes(app: AppHandle, path: String, base64: String) -> Result<(), String> {
     bytes_written(&chosen(&app, &path)?, &path, &base64)
 }
 
-/// The bytes writer once the path has been judged.
 fn bytes_written(target: &Path, shown: &str, base64: &str) -> Result<(), String> {
     let bytes = BASE64
         .decode(base64.as_bytes())
@@ -201,15 +122,6 @@ fn bytes_written(target: &Path, shown: &str, base64: &str) -> Result<(), String>
     write_file(target, shown, &bytes)
 }
 
-/// What both writers do once they have the bytes: make the folder, then write
-/// the file whole, into the file that is there (`write_in_place`), so a crash
-/// mid-write can never truncate it and no sync client mistakes a save for a new
-/// file; and the missing folders are made, which is what lets sync
-/// land a note at a path that is new on this machine.
-///
-/// The target is judged by the caller rather than here, because the text writer has
-/// to read the file before it knows what to write; `shown` is the path as that
-/// caller spelled it, which is what a refusal names.
 fn write_file(target: &Path, shown: &str, bytes: &[u8]) -> Result<(), String> {
     let parent = target
         .parent()
@@ -219,32 +131,15 @@ fn write_file(target: &Path, shown: &str, bytes: &[u8]) -> Result<(), String> {
     write_in_place(target, bytes)
 }
 
-/// Deletes a note outright. The window sends almost everything to the trash
-/// instead; this is for the cases that are already a copy, such as a file sync
-/// has just replaced.
 #[tauri::command(async)]
 pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_file(&target).map_err(|error| cannot("delete", &target, &error))?;
 
-    // A PDF's highlights are part of that PDF, and a page note's paper is part of
-    // the note, and neither has anything left to describe.
     drop_held(&target);
     Ok(())
 }
 
-/// Renames a note, which is also how it is moved: the new path can name a folder
-/// that does not exist yet. A folder is renamed and moved the same way.
-///
-/// `hold` is a PDF being turned into its page note (pages/from-pdf.ts): moved, in its
-/// own folder, to the paper of the note just made for it or made for it before. Only
-/// that move may put a PDF where a page note takes it for its paper.
-///
-/// `alone` is sync's move (sync2/app-world.ts), which leaves what the account holds as
-/// an entry of its own: a PDF's highlights, moved by a move of their own, in whichever
-/// order the two come. Highlights that came ahead of their PDF were otherwise cleared
-/// as left by another (#733). A page note's paper is no entry (#551) and still goes
-/// with the note, though not the paper's highlights, which are one.
 #[tauri::command(async)]
 pub fn rename_note(
     app: AppHandle,
@@ -265,7 +160,6 @@ pub fn rename_note(
     )
 }
 
-/// `rename_note` past its gate, which wants an app around it.
 #[cfg(test)]
 fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
     renamed_as(source, target, hold, alone, false)
@@ -279,16 +173,10 @@ fn renamed_as(
     arrived: bool,
 ) -> Result<(), String> {
     let respelling = respelled(source, target, same_entry);
-    // A new name is held to what every machine can hold (#477); a move that keeps the
-    // name is not a new name, and nor is the name a note arrived under.
     if !arrived && source.file_name() != target.file_name() {
         named_for_every_machine(target)?;
     }
 
-    // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
-    // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
-    // put where a page note takes it for its paper is somebody's own as well, unless
-    // it is being turned into that note.
     let holding = hold && is_pdf(target) && source.parent() == target.parent();
     if let Some(there) = paper_in_the_way(source, target, same_entry).filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
@@ -296,8 +184,6 @@ fn renamed_as(
 
     move_entry(source, target, respelling)?;
 
-    // A PDF's highlights follow it, and a page note's paper follows the note, so a
-    // rename or a move keeps them.
     if alone {
         move_paper(source, target);
     } else {
@@ -306,27 +192,10 @@ fn renamed_as(
     Ok(())
 }
 
-/// Whether `target` is `source` under another spelling of its own name: `idea.md`
-/// renamed `Idea.md` on a Mac or on Windows, whose filesystems look a name up
-/// without regard to case, and on a Mac without regard to how its letters are
-/// composed either. There `target` already "exists", because it is the very file
-/// being renamed, and refusing that as a collision is refusing every rename that
-/// only fixes a capital. Finder, Explorer and Obsidian all take one.
-///
-/// Only a name beside itself can be one: a move into another folder is never the
-/// same entry. Whether the two paths reach one entry is `same`'s to say, handed in
-/// so the decision can be tested on a filesystem that tells case apart.
 pub(crate) fn respelled(source: &Path, target: &Path, same: impl Fn(&Path, &Path) -> bool) -> bool {
     source != target && source.parent() == target.parent() && same(source, target)
 }
 
-/// Whether two paths name one directory entry, rather than two entries that happen
-/// to hold the same file.
-///
-/// On a Unix the entry's device and inode, with one caution: a file with a second
-/// hard link has the same inode under another name that is not a respelling, and
-/// renaming over it would take that name away. A file with one link, or a folder
-/// (which cannot be hard-linked), reached under two spellings is one entry.
 #[cfg(unix)]
 pub(crate) fn same_entry(one: &Path, other: &Path) -> bool {
     use std::os::unix::fs::MetadataExt as _;
@@ -341,9 +210,6 @@ pub(crate) fn same_entry(one: &Path, other: &Path) -> bool {
     }
 }
 
-/// On Windows the file's own spelling of its path: `canonicalize` asks the handle
-/// for its final name, which comes back the same for both spellings of one file.
-/// The file index that would say it directly is not stable in `std` yet.
 #[cfg(not(unix))]
 pub(crate) fn same_entry(one: &Path, other: &Path) -> bool {
     match (fs::canonicalize(one), fs::canonicalize(other)) {
@@ -352,13 +218,6 @@ pub(crate) fn same_entry(one: &Path, other: &Path) -> bool {
     }
 }
 
-/// Moves a note or a folder to where it is going.
-///
-/// Two notes cannot share a path, and a rename that would overwrite one is a
-/// mistake rather than an instruction. The check races with whatever else is
-/// writing to the folder, which is as close as either platform gets: both renames
-/// replace the target without asking. A respelling is the exception, since what is
-/// there is the note itself; see `respell`.
 pub(crate) fn move_entry(source: &Path, target: &Path, respelling: bool) -> Result<(), String> {
     if respelling {
         return respell(source, target);
@@ -372,19 +231,9 @@ pub(crate) fn move_entry(source: &Path, target: &Path, respelling: bool) -> Resu
         made(parent)?;
     }
 
-    // A move into a space on another disk is a copy and a removal; see carry.rs.
     move_whole(source, target, "rename")
 }
 
-/// Renames an entry to another spelling of its own name by way of a name of its
-/// own, the way git does on a filesystem that ignores case.
-///
-/// A direct rename works on APFS and NTFS, but not on every filesystem a Mac
-/// mounts - an exFAT stick, a network share - where a rename onto what the
-/// filesystem calls the same name is allowed to do nothing and say it succeeded.
-/// Two steps through a name nothing else can hold always land. The step is dotted,
-/// so the file list never shows it in the moment it exists, and if the second step
-/// fails the first is taken back, so the note is never left under it.
 fn respell(source: &Path, target: &Path) -> Result<(), String> {
     let step = stepping_name(source)
         .ok_or_else(|| format!("{} has no name to rename", source.display()))?;
@@ -400,7 +249,6 @@ fn respell(source: &Path, target: &Path) -> Result<(), String> {
     })
 }
 
-/// The dotted name beside an entry that a respelling passes through.
 fn stepping_name(source: &Path) -> Option<std::path::PathBuf> {
     let mut name = std::ffi::OsString::from(".");
     name.push(source.file_name()?);
@@ -408,18 +256,6 @@ fn stepping_name(source: &Path) -> Option<std::path::PathBuf> {
     Some(source.with_file_name(name))
 }
 
-/// Copies a note, a file or a folder with everything in it, which is what pasting a
-/// copied row and a Ctrl-drag in the file list both mean.
-///
-/// Here rather than read and written back through the window, because the file
-/// list is not the folder: it leaves out the pictures a note was written around,
-/// the dotted files and a PDF's own highlights, and a copy made out of what the
-/// list shows would be a copy with holes in it. Bytes, so a PDF or a picture
-/// arrives the way it left.
-///
-/// Like a rename it never writes over anything: the window picks a name nothing
-/// answers to first, and a copy that lands on something anyway is a race the
-/// reader is told about rather than a file lost.
 #[tauri::command(async)]
 pub fn copy_path(app: AppHandle, from: String, to: String) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
@@ -427,19 +263,13 @@ pub fn copy_path(app: AppHandle, from: String, to: String) -> Result<(), String>
     copied(&source, &target)
 }
 
-/// The copy itself, with the two paths already judged. Whole or not at all, and
-/// never over anything; see `copy_whole`.
 fn copied(source: &Path, target: &Path) -> Result<(), String> {
     named_for_every_machine(target)?;
 
-    // A folder copied into itself would go on finding the copy it is making.
     if target.starts_with(source) {
         return Err(format!("{} cannot be copied into itself", source.display()));
     }
 
-    // A page note's copy brings its paper, and a PDF's copy beside a page note of its
-    // name would be taken for that note's paper: either way the file in the way is
-    // somebody's own (#538).
     if let Some(there) = paper_in_the_way(source, target, same_entry) {
         return Err(format!("{} is already there", there.display()));
     }
@@ -450,14 +280,10 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
 
     copy_whole(source, target)?;
 
-    // A PDF's highlights are part of it, and a page note's paper is part of the
-    // note, so the copy has them too. A folder's come along with everything else in
-    // it.
     copy_held(source, target);
     Ok(())
 }
 
-/// Makes a folder inside a space, and every folder above it.
 #[tauri::command(async)]
 pub fn create_folder(app: AppHandle, path: String, arrived: Option<bool>) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
@@ -467,8 +293,6 @@ pub fn create_folder(app: AppHandle, path: String, arrived: Option<bool>) -> Res
     folder_made(&target)
 }
 
-/// `create_folder` past its gate: every folder it makes held to a name every machine can
-/// hold (#477), and the ones already there left as they are.
 fn folder_made(target: &Path) -> Result<(), String> {
     for folder in target.ancestors().take_while(|folder| !folder.exists()) {
         named_for_every_machine(folder)?;
@@ -476,52 +300,24 @@ fn folder_made(target: &Path) -> Result<(), String> {
     made(target)
 }
 
-/// Removes a folder and everything under it.
 #[tauri::command(async)]
 pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
 }
 
-/// Removes a folder only if there is nothing whatever left inside it.
-///
-/// `remove_dir` rather than `remove_dir_all`, and that is the whole point. The
-/// caller decided the folder was empty by reading the file tree, and the tree
-/// leaves out the dotted files and everything a tab cannot hold - so a folder
-/// that looks empty in the sidebar may still hold the picture a note was written
-/// around, or a PDF's highlights. This refuses instead of taking those with it,
-/// and the caller ignores the refusal: a folder left standing is a folder, while
-/// a picture taken away is gone. See `unnest` in workspace.svelte.ts.
 #[tauri::command(async)]
 pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_dir(&target).map_err(|error| cannot("delete", &target, &error))
 }
 
-/// When a file was last written, and how long it is: enough to tell that
-/// something other than this app has changed it.
-///
-/// Two numbers and a copy, so that anything holding what it read of a file can
-/// hold one of these beside it and tell in a `stat` call whether what it read is
-/// still what is there; see `warm` in search.rs.
 #[derive(Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct Stamp {
-    /// Milliseconds since the epoch, as the window counts time.
     pub modified: u64,
-    /// How many bytes the file holds.
     pub len: u64,
 }
 
-/// The stamp of one file, or nothing where there is no file to stamp: whether a
-/// note that would not read is there all the same, and what the mirror compares a
-/// space's files by. Two numbers rather than a hash: reading a megabyte to answer a
-/// question a stat call answers is a megabyte wasted.
-///
-/// Only what `read_note` may read, and refused rather than null for anything else,
-/// so asking is also how the window learns whether nib may open a path at all.
-///
-/// Null rather than an error for a file that is gone: a file being deleted or
-/// replaced is a thing that happens, not a failure to report.
 #[tauri::command(async)]
 pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String> {
     Ok(stamp_of(&openable(&app, &path)?))
@@ -555,33 +351,15 @@ pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
     }
 }
 
-/// Whether anything at all - a file, a folder, a link - is at a path the reader
-/// may write to. What an export asks before it writes a picture or a page beside
-/// the file the save dialog was given: the dialog asked about that one file, so
-/// a picture of the same name already in the folder is somebody else's, and the
-/// new one steps aside instead of writing over it; see `writeBeside` in
-/// export/save.ts.
-///
-/// Behind `chosen` rather than `openable`, because the folder an export goes to is
-/// usually outside every space, and a yes or no about a name there reads nothing.
 #[tauri::command(async)]
 pub fn path_taken(app: AppHandle, path: String) -> Result<bool, String> {
     Ok(taken(&chosen(&app, &path)?))
 }
 
-/// The same once the path has been judged. `symlink_metadata`, so a link that
-/// points nowhere still counts: writing through it would make a file where the
-/// link points, which is not a free name either.
 fn taken(target: &Path) -> bool {
     fs::symlink_metadata(target).is_ok()
 }
 
-/// The stamp of one file, for the crate's own use: the command above, and the
-/// search asking whether the note it is holding is still the note on disk.
-///
-/// Nothing here reads a byte of the file, which is the whole point: a space of
-/// five thousand notes can be asked whether it has changed for the price of five
-/// thousand `stat` calls rather than of five thousand reads.
 #[must_use]
 pub fn stamp_of(target: &Path) -> Option<Stamp> {
     let data = fs::metadata(target).ok()?;
@@ -598,22 +376,16 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
 #[cfg(test)]
 mod tests {
     use super::{copied, folder_made, move_entry, renamed, respelled, Stamp};
-    use std::path::Path;
-    // The trait the encoding method hangs off. The module above reaches it
-    // through what it imports; a test module is its own scope and has to say so.
     use base64::Engine;
     use std::fs;
+    use std::path::Path;
 
-    /// The bytes of a two by one PNG, which is a picture rather than text and so
-    /// cannot go through the text writer at all.
     const PNG: &[u8] = &[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff];
 
     fn path(dir: &tempfile::TempDir, name: &str) -> String {
         dir.path().join(name).to_string_lossy().to_string()
     }
 
-    /// The two writers and the stamp past their judges, which want an app around
-    /// them: what `chosen` and `openable` let through is tested in paths.rs.
     fn write_bytes(path: String, base64: String) -> Result<(), String> {
         super::bytes_written(Path::new(&path), &path, &base64)
     }
@@ -735,8 +507,6 @@ mod tests {
         assert!(dir.path().join("paper copy.pdf.highlights.json").exists());
     }
 
-    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and a page note
-    /// copied in as `Report.pages` would take it for its paper (#538).
     #[test]
     fn a_page_note_copied_never_takes_a_pdf_already_there() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -755,9 +525,6 @@ mod tests {
         assert_eq!(fs::read(&theirs).expect("theirs"), b"%PDF theirs");
     }
 
-    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and one copied in
-    /// beside a page note `Report.pages` with no paper yet would become its paper, and
-    /// go with the note when it is deleted.
     #[test]
     fn a_pdf_copied_never_becomes_a_page_notes_paper() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -773,8 +540,6 @@ mod tests {
         assert!(!dir.path().join("B/Report.pages.pdf").exists());
     }
 
-    /// And in the note's own folder too: `Old.pdf` copied to `Report.pages.pdf` beside
-    /// a blank `Report.pages` would become that note's paper, and go with it.
     #[test]
     fn a_pdf_copied_beside_a_page_note_of_its_name_is_refused() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -800,9 +565,6 @@ mod tests {
         assert_eq!(fs::read_to_string(dir.path().join("b.md")).expect("b"), "b");
     }
 
-    /// A folder with a file in it that will not be read: the copy is the whole folder or
-    /// nothing, and a paste that says it worked while leaving the file out is a copy with
-    /// a hole in it nobody was told about.
     #[test]
     fn a_copy_that_cannot_finish_leaves_nothing_behind() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -855,7 +617,6 @@ mod tests {
 
     #[test]
     fn refuses_a_path_that_names_no_file() {
-        // The same check the text writer is held to.
         let error = write_bytes("/".to_string(), super::BASE64.encode(PNG))
             .expect_err("a root that is not a file");
         assert!(error.contains("has no folder to write into"), "{error}");
@@ -891,12 +652,6 @@ mod tests {
         assert!(left.is_empty(), "{left:?}");
     }
 
-    /// Every save of a note is an edit of one file, never a new file under its name.
-    /// A sync client that follows files by their identity (Proton Drive follows the
-    /// NTFS file id) read a new file under a taken name as a clash, and kept each
-    /// save as a copy of its own beside the note: eight files for one note typed into
-    /// for a minute. A reader that opened the note before the saves sees the last
-    /// one through its own handle only if the file it holds is still the note.
     #[test]
     fn every_save_is_the_same_file() {
         use std::io::{Read as _, Seek as _};
@@ -937,9 +692,6 @@ mod tests {
         assert_eq!(fs::read(&target).expect("the file back"), PNG);
     }
 
-    /// The editor always hands over `\n`; what reaches the disk is what the file
-    /// already used, so correcting one word in a Windows file is a change to one
-    /// line rather than to every line of it.
     #[test]
     fn keeps_the_line_endings_a_file_already_had() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1009,8 +761,6 @@ mod tests {
         assert_eq!(fs::read(&target).expect("the file back"), b"one\ntwo\n");
     }
 
-    /// Text that already carries `\r\n` - a paste from somewhere else - must not
-    /// come out as `\r\r\n`.
     #[test]
     fn never_doubles_a_carriage_return() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1022,8 +772,6 @@ mod tests {
         assert_eq!(fs::read(&target).expect("the file back"), b"one\r\ntwo\r\n");
     }
 
-    /// A file whose first line is longer than the head that is read still answers,
-    /// because the answer is the first line ending anywhere in that head.
     #[test]
     fn reads_only_the_head_of_a_file_to_answer() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1033,9 +781,6 @@ mod tests {
         body.extend_from_slice(b"\r\nafter\r\n");
         fs::write(&target, &body).expect("a long first line");
 
-        // Nothing was found in the head, so the file is written the way a new one
-        // is. Said out loud because it is a choice: a first line longer than eight
-        // kilobytes is not a line anybody wrote.
         assert!(!super::crlf(std::path::Path::new(&target)));
     }
 
@@ -1062,9 +807,6 @@ mod tests {
         assert!(file_stamp(&inside).is_none());
     }
 
-    /// A rename that only changes a capital is the note itself, not a collision.
-    /// Whether two paths reach one entry is handed in, because this machine's disk
-    /// tells case apart and a Mac's does not.
     #[test]
     fn a_respelling_is_a_name_beside_itself_that_reaches_the_same_entry() {
         fn asks<'a>(from: &'a str, to: &'a str) -> (&'a Path, &'a Path) {
@@ -1078,7 +820,6 @@ mod tests {
         assert!(respelled(from, to, same));
         assert!(!respelled(from, to, other));
 
-        // A move is never one, whatever the disk says, and nor is no change at all.
         let (from, to) = asks("/s/idea.md", "/s/in/Idea.md");
         assert!(!respelled(from, to, same));
         let (from, to) = asks("/s/idea.md", "/s/idea.md");
@@ -1124,8 +865,6 @@ mod tests {
         assert_eq!(fs::read_to_string(&to).expect("the other note"), "b");
     }
 
-    /// A second hard link is the same file under a name that is not a respelling,
-    /// and renaming over it would take that name away.
     #[cfg(unix)]
     #[test]
     fn a_hard_link_is_not_the_same_entry() {
@@ -1140,9 +879,6 @@ mod tests {
         assert!(same_entry(dir.path(), dir.path()));
     }
 
-    /// Whether this disk looks a name up the way a Mac's does: `a` found as `A`.
-    /// The three tests below ask the real disk, so on one that tells case apart they
-    /// have nothing to show and say nothing.
     #[cfg(unix)]
     fn ignores_case(dir: &tempfile::TempDir) -> bool {
         let probe = dir.path().join("case-probe");
@@ -1152,7 +888,6 @@ mod tests {
         answer
     }
 
-    /// What is in a folder, by name as the disk spells it.
     #[cfg(unix)]
     fn names(dir: &Path) -> Vec<String> {
         let mut names: Vec<String> = fs::read_dir(dir)
@@ -1169,8 +904,6 @@ mod tests {
         names
     }
 
-    /// `idea.md` to `Idea.md` on a disk that calls both one file: the whole
-    /// decision, with the disk's own answer to whether they are one entry.
     #[cfg(unix)]
     #[test]
     fn a_capital_is_changed_on_a_disk_that_ignores_case() {
@@ -1213,9 +946,6 @@ mod tests {
         );
     }
 
-    /// `Übersicht` written the way a Mac keyboard composes it, one letter and a
-    /// combining mark, renamed to the way it is typed elsewhere, one letter. A Mac's
-    /// disk calls both the same name, so it is a respelling like a capital is.
     #[cfg(unix)]
     #[test]
     fn a_name_composed_another_way_is_the_same_note() {
@@ -1236,10 +966,6 @@ mod tests {
         assert_eq!(fs::read_to_string(&composed).expect("the note"), "overview");
     }
 
-    /// Sync moves every file on its own: a PDF's highlights and a page note's paper are
-    /// entries of their own in the account, moved by their own moves and in whichever
-    /// order those come. Highlights that came ahead of their PDF were cleared by the
-    /// PDF's move as leftovers, and the next scan sent that delete to every device.
     #[test]
     fn a_pdf_moved_alone_keeps_the_highlights_that_came_ahead_of_it() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1257,10 +983,6 @@ mod tests {
         );
     }
 
-    /// Sync's move leaves what sync carries as an entry of its own, a PDF's highlights,
-    /// and takes what it does not: a page note's paper goes with the note (#551,
-    /// pages/carried.ts). A paper left behind was downloaded again under the new name
-    /// and the old one listed as a new PDF, which spread to every device.
     #[test]
     fn a_file_moved_alone_takes_only_what_sync_does_not_carry() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1300,10 +1022,6 @@ mod tests {
         assert!(dir.path().join("B.pdf.highlights.json").exists());
     }
 
-    /// A page note's paper is never moved by sync on its own: it goes with the note
-    /// (pages/carried.ts). So a PDF where the note's paper would go is somebody's own,
-    /// for sync's move as for one by hand, and taking it for the note's paper would put
-    /// their PDF under the note (#538).
     #[test]
     fn a_page_note_is_refused_over_a_pdf_of_its_paper_name_however_it_moves() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1317,9 +1035,6 @@ mod tests {
         }
     }
 
-    /// #477: a name Windows keeps for a device is refused where a note or a folder is
-    /// given it - renamed, copied to, made - on every platform, since the note syncs to
-    /// the reader's Windows machine too. One that already has it is still moved.
     #[test]
     fn a_device_name_is_never_given_to_a_note_or_a_folder() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1339,7 +1054,6 @@ mod tests {
         assert!(!dir.path().join("Work").exists(), "nothing made on the way");
         folder_made(&dir.path().join("Work/Notes")).expect("an ordinary folder");
 
-        // A note that arrived under such a name is still moved, under the name it has.
         let arrived = dir.path().join("aux.md");
         std::fs::write(&arrived, "kept").expect("a note from elsewhere");
         renamed(&arrived, &dir.path().join("Work/aux.md"), false, false).expect("moved");

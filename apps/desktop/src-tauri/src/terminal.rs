@@ -1,38 +1,3 @@
-//! A shell in a tab: one pseudo terminal per terminal tab, and the commands the window
-//! runs it with.
-//!
-//! A terminal tab is a session, not a file: nothing here touches the spaces folder, and
-//! the tab keeps which shell it runs and in which folder in its own words; see
-//! `lib/terminal` in the frontend and docs/terminal.md. What is here is the engine: the
-//! shells this machine has (shells.rs), one running shell each (session.rs), and what a
-//! shell is doing (process.rs).
-//!
-//! **Who may.** A shell can do anything the person at the keyboard can, so the commands
-//! answer the app's own document windows and nobody else, checked here rather than
-//! trusted to a list somewhere else:
-//!
-//! - the webview has to be the page of a window of ours - `main` or `nib-2` and so on -
-//!   which a web tab's page (`web-...`), the presenter's window and anything a site could
-//!   open never are. A remote origin is refused before it gets this far, by Tauri, and a
-//!   web tab has the app's globals taken away besides; see `web_tabs.rs`;
-//! - a session belongs to the window that started it, and no other window can type into
-//!   it, size it, read it or end it;
-//! - a shell is started by an id this module found (see shells.rs): the window cannot
-//!   name a program, an argument or a variable of its own. Another machine is the same:
-//!   a host's id, which the crate finds in the reader's ssh config or among the hosts it
-//!   keeps itself, and the system's `ssh` started for it (remote.rs). A picture carried to
-//!   a host is the same id and the same `ssh`, with the picture's bytes the window's only
-//!   words of its own (picture.rs).
-//!
-//! And none of this is reachable from outside the app: the `nib` command and `nib://`
-//! links reach verbs, and no verb opens or types into a terminal; see docs/terminal.md.
-//!
-//! **Nothing outlives its window.** A session ends when its tab closes (the window says
-//! so), when the page it belongs to loads again, when its window is destroyed, and when
-//! the app exits - so no shell is ever left running with nothing to show it. What a
-//! restart brings back is the tab's own words, its folder among them, and its last lines,
-//! which are kept in the app's local data folder and never in a space (history.rs).
-
 pub mod history;
 pub mod picture;
 pub(crate) mod process;
@@ -51,38 +16,28 @@ use tauri::{AppHandle, Manager, Webview};
 
 use session::{Out, Session};
 
-/// Every shell running, by the name the window gave its session.
 #[derive(Default)]
 pub struct Terminals {
     sessions: Mutex<HashMap<String, Held>>,
 }
 
-/// One session, and the window it belongs to.
 struct Held {
     owner: String,
     session: Session,
-    /// Whether the session is another machine's: `ssh` itself rather than a shell.
     remote: bool,
 }
 
 impl Held {
-    /// Whether ending it would stop something: a program besides the shell, or - on
-    /// another machine, whose programs cannot be seen from here - the connection
-    /// itself, as macOS Terminal and iTerm2 count an `ssh` among the jobs that ask.
     fn busy(&self) -> bool {
         self.remote || self.session.busy()
     }
 }
 
-/// What `pty_spawn` answers: the shell's process id, which the window keeps for nothing
-/// but the probe that checks no shell outlives its tab.
 #[derive(Serialize)]
 pub struct Spawned {
     pid: Option<u32>,
 }
 
-/// The one answer every refusal gets. The window never asks for anything it may not
-/// have, so this is only ever read by whoever was trying.
 const REFUSED: &str = "not a window of this app";
 
 impl Terminals {
@@ -92,7 +47,6 @@ impl Terminals {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    /// Runs `with` on a session this window owns.
     fn with<T>(
         &self,
         owner: &str,
@@ -106,8 +60,6 @@ impl Terminals {
         }
     }
 
-    /// Takes out every session one window owns - or every session, for `None` - and ends
-    /// them off this thread, since closing a Windows console waits for it.
     fn end_where(&self, owner: Option<&str>) {
         let ending: Vec<Held> = {
             let mut sessions = self.lock();
@@ -130,9 +82,6 @@ impl Terminals {
     }
 }
 
-/// The state this module keeps, and the page load that lets go of a page's shells: a
-/// window reloaded is a window whose tabs are about to be made again from the session,
-/// and the old shells have nobody left to show them.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
     builder
         .manage(Terminals::default())
@@ -145,15 +94,12 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
         })
 }
 
-/// A window has gone, and its shells with it.
 pub fn window_gone(app: &AppHandle, label: &str) {
     if let Some(terminals) = app.try_state::<Terminals>() {
         terminals.end_where(Some(label));
     }
 }
 
-/// The app is ending: every shell goes, and is waited for, so that nothing is still
-/// running once the process has gone.
 pub fn end_all(app: &AppHandle) {
     let Some(terminals) = app.try_state::<Terminals>() else {
         return;
@@ -164,7 +110,6 @@ pub fn end_all(app: &AppHandle) {
     }
 }
 
-/// The window this call came from, when it is one of ours; see the top of this file.
 fn owner(webview: &Webview) -> Result<String, String> {
     let label = webview.label();
     if label == webview.window().label() && crate::launch::is_document_window(label) {
@@ -174,8 +119,6 @@ fn owner(webview: &Webview) -> Result<String, String> {
     }
 }
 
-/// A name the window may give a session: short, and nothing but letters, digits, `-`
-/// and `_`, since it is only ever a key.
 fn usable(id: &str) -> Result<(), String> {
     let fits = !id.is_empty()
         && id.len() <= 80
@@ -189,8 +132,6 @@ fn usable(id: &str) -> Result<(), String> {
     }
 }
 
-/// The shells this machine has, the platform's default first. Found the first time it is
-/// asked, which is the first time a chooser needs the list, and never at launch.
 #[tauri::command(async)]
 pub fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, String> {
     owner(&webview)?;
@@ -200,9 +141,6 @@ pub fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, String>
         .collect())
 }
 
-/// Starts a shell, by one of the ids `terminal_shells` answered, in a folder where there
-/// is one, at the size the tab is. What it prints arrives on `output` as bytes, at most
-/// once a frame, and the last message is `{ exit }`.
 #[tauri::command(async)]
 pub fn pty_spawn(
     webview: Webview,
@@ -220,7 +158,6 @@ pub fn pty_spawn(
         return Err(format!("terminal {id} is already running"));
     }
 
-    // Another machine is a host the crate found, by its id, as a shell is; see remote.rs.
     let host = remote::host_id(&shell);
     let remote = host.is_some();
     let launch = match host {
@@ -246,7 +183,6 @@ pub fn pty_spawn(
         Box::new(move |out| {
             let _ = match out {
                 Out::Bytes(bytes) => output.send(InvokeResponseBody::Raw(bytes)),
-                // The last message, and the only one that is not bytes.
                 Out::Exit(exit) => {
                     output.send(InvokeResponseBody::Json(format!("{{\"exit\":{exit}}}")))
                 }
@@ -265,8 +201,6 @@ pub fn pty_spawn(
                     None
                 }
             };
-            // Dropped here, on the waiter's own thread: closing the console is what
-            // lets the reader reach the end.
             drop(gone);
         },
     );
@@ -274,8 +208,6 @@ pub fn pty_spawn(
     Ok(Spawned { pid })
 }
 
-/// Keystrokes, and what xterm.js answers the shell with. `binary` is for the mouse
-/// reports that are bytes rather than text, one character a byte.
 #[tauri::command]
 pub fn pty_write(webview: Webview, id: String, data: String, binary: bool) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -291,7 +223,6 @@ pub fn pty_write(webview: Webview, id: String, data: String, binary: bool) -> Re
         .with(&owner, &id, |session| session.write(bytes))
 }
 
-/// The tab is another size.
 #[tauri::command]
 pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -300,7 +231,6 @@ pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<
         .with(&owner, &id, |session| session.resize(cols, rows))?
 }
 
-/// The window has drawn this much of what it was sent; see `MOST_UNSEEN` in session.rs.
 #[tauri::command]
 pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -309,8 +239,6 @@ pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String
         .with(&owner, &id, |session| session.seen(bytes))
 }
 
-/// Whether something besides the shell is running, asked before the tab closes and
-/// before the app quits; see `Held::busy`.
 #[tauri::command(async)]
 pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
     let owner = owner(&webview)?;
@@ -322,8 +250,6 @@ pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
     }
 }
 
-/// What is running in front of the shell, by name, which the tab is named for; nothing
-/// while the shell itself is. See process.rs.
 #[tauri::command(async)]
 pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
@@ -332,7 +258,6 @@ pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, Strin
         .with(&owner, &id, Session::program)
 }
 
-/// Which folder the shell is in, where the system can say without the shell's help.
 #[tauri::command(async)]
 pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
@@ -341,8 +266,6 @@ pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String
         .with(&owner, &id, Session::folder)
 }
 
-/// What the shell and everything under it use of this computer, for the tab's hover
-/// card in developer mode (issue 1063, step 10; usage.rs); None where it cannot be read.
 #[tauri::command(async)]
 pub fn pty_usage(webview: Webview, id: String) -> Result<Option<crate::usage::Usage>, String> {
     let owner = owner(&webview)?;
@@ -353,7 +276,6 @@ pub fn pty_usage(webview: Webview, id: String) -> Result<Option<crate::usage::Us
         .and_then(|pid| crate::usage::sample(&format!("pty:{id}"), crate::usage::Whose::Tree(pid))))
 }
 
-/// The tab has closed, or is starting its shell again: this one goes.
 #[tauri::command]
 pub fn pty_kill(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -384,7 +306,6 @@ mod tests {
         }
     }
 
-    /// A shell at its prompt, started the way a tab starts one.
     fn idle_shell() -> Session {
         let (program, args) = if cfg!(windows) {
             let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
@@ -406,8 +327,6 @@ mod tests {
         session
     }
 
-    /// Another machine's terminal is busy for as long as it is connected, whatever runs
-    /// there; a shell here only while something besides it runs.
     #[test]
     fn a_remote_terminal_is_busy_while_it_is_connected() {
         let here = Held {

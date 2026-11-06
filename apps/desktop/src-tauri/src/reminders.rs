@@ -1,25 +1,3 @@
-//! Reminders that ring with Orden closed (docs/tasks.md 5.10): the plan the page makes,
-//! handed to the system's own scheduler, and the presses on what rings handed back.
-//!
-//! **The plan is the page's.** The window reads every space's tasks and works out the
-//! next 64 moments (src/lib/reminders); this module only makes the system hold them:
-//! scheduled toasts on Windows (toasts.rs), notification requests on a Mac (macos.rs).
-//! Linux has no scheduler a notification can be handed to, so there the answer is no,
-//! and the page rings them itself while Orden runs, in the tray where it keeps running.
-//!
-//! **A press comes back as a link.** Done and a press on the notification are
-//! `nib://reminder` links (link.rs) carrying a nonce made here, kept in `reminders.json`
-//! beside the settings and nowhere else, so only a notification this app made can tick
-//! a task. A link that arrives is checked, put in a queue and the window told to look
-//! (`nib://reminder`); the window takes the queue (`reminders_taken`) and ticks the task
-//! through the one write path every box uses. Started by a Done, the app comes up
-//! without its window (`quiet_launch`), does it, and stays in the tray.
-//!
-//! **Never a probe's**, unless the probe asks: a run whose windows are off the screen is
-//! a drive's, and a toast is on the screen of whoever is at the machine. Only a probe
-//! started with `NIB_PROBE_REMINDERS` schedules, and the drive takes it off again
-//! (scripts/reminders-probe.py).
-
 pub(crate) mod link;
 #[cfg(target_os = "macos")]
 pub(crate) mod macos;
@@ -43,13 +21,10 @@ use tauri::{AppHandle, Emitter as _};
 
 use link::Act;
 
-/// One reminder as the page hands it over; see `Reminder` in src/lib/reminders/plan.ts.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Planned {
-    /// Sixteen hex digits.
     pub id: String,
-    /// Milliseconds since the epoch.
     pub at: i64,
     pub title: String,
     pub body: String,
@@ -57,7 +32,6 @@ pub struct Planned {
     pub path: String,
     pub hash: String,
     pub line: u32,
-    /// Minutes from its moment to nine the next morning, which the snooze offers.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[cfg_attr(
         not(windows),
@@ -69,7 +43,6 @@ pub struct Planned {
     pub tomorrow: Option<u32>,
 }
 
-/// The words on a notification's buttons, in the reader's language.
 #[derive(Clone, Debug, Deserialize)]
 #[cfg_attr(
     not(any(windows, target_os = "macos")),
@@ -78,11 +51,8 @@ pub struct Planned {
 pub struct Words {
     pub done: String,
     pub snooze: String,
-    /// The first snooze, fifteen minutes.
     pub minutes: String,
-    /// The second, an hour.
     pub hour: String,
-    /// Nine the next morning.
     #[cfg_attr(
         not(windows),
         allow(
@@ -105,7 +75,6 @@ impl Default for Words {
     }
 }
 
-/// A press the window has to answer: tick a task, or open its note at it.
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Pressed {
@@ -116,19 +85,14 @@ pub struct Pressed {
     pub line: u32,
 }
 
-/// How long a reminder that rang is still answered: its notification may sit in the
-/// action centre for days before somebody presses Done on it.
 const ANSWERED_FOR_MS: i64 = 7 * 86_400_000;
 
-/// What the window is told when a press is waiting.
 const PRESSED: &str = "nib://reminder";
 
 static LAUNCHED_QUIETLY: AtomicBool = AtomicBool::new(false);
 
-/// The file the nonces are kept in, beside the settings.
 const FILE: &str = "reminders.json";
 
-/// One reminder kept: as planned, and the nonce its links carry.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Kept {
     #[serde(flatten)]
@@ -138,15 +102,10 @@ struct Kept {
 
 #[derive(Default)]
 struct State {
-    /// By id; read from the file the first time anything is asked.
     kept: Option<HashMap<String, Kept>>,
-    /// Presses waiting for the window, as they arrived: checked against the nonces as
-    /// the window takes them, off the thread a link arrives on.
     pressed: Vec<Arrived>,
 }
 
-/// A press as it arrived: what it asks, of which reminder, and with which nonce; none
-/// for one the system itself handed over.
 struct Arrived {
     act: Act,
     id: String,
@@ -166,7 +125,6 @@ fn file(app: &AppHandle) -> Option<PathBuf> {
     crate::paths::config_dir(app).ok().map(|dir| dir.join(FILE))
 }
 
-/// The reminders kept, read from the file once.
 fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Kept> {
     state.kept.get_or_insert_with(|| {
         file(app)
@@ -181,9 +139,6 @@ fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Ke
     })
 }
 
-/// The ids of a plan held at another moment than the plan says, read before `merge` writes
-/// the new moments down. An id is the wall minute, so it stays when the moment moves: the
-/// machine changed zone, or a new version reads a clock change differently.
 fn moved(kept: &HashMap<String, Kept>, plan: &[Planned]) -> Vec<String> {
     plan.iter()
         .filter(|one| {
@@ -194,9 +149,6 @@ fn moved(kept: &HashMap<String, Kept>, plan: &[Planned]) -> Vec<String> {
         .collect()
 }
 
-/// The plan merged into what is kept: each reminder keeps the nonce it was first given,
-/// one that rang is kept a week for its Done, and one taken out of the plan before it
-/// rang is forgotten. Answers the plan with its nonces.
 fn merge(
     kept: &mut HashMap<String, Kept>,
     plan: Vec<Planned>,
@@ -219,11 +171,8 @@ fn merge(
         .collect()
 }
 
-/// Sixteen hex digits from the system's own randomness.
 fn fresh_nonce() -> String {
     let mut bytes = [0u8; 8];
-    // A machine with no randomness to give is not one a reminder is worth failing on:
-    // the nonce is then the clock's, which nobody else on the machine can know either.
     if getrandom::fill(&mut bytes).is_err() {
         bytes = now_ms().to_le_bytes();
     }
@@ -254,14 +203,10 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
-        // Nothing to do about a failed write: the reminders still ring, and a Done on
-        // one is answered for as long as this run holds its nonce.
         let _ = std::fs::write(path, bytes);
     }
 }
 
-/// Whether this run may put anything on the system's schedule: never a probe's, unless
-/// the probe was started to prove exactly that.
 fn may_schedule() -> bool {
     if crate::placement::away().is_some() {
         return std::env::var_os("NIB_PROBE_REMINDERS").is_some();
@@ -269,10 +214,6 @@ fn may_schedule() -> bool {
     true
 }
 
-/// The plan, handed to the system. Answers whether the system holds it now: false is
-/// the page's to ring while it runs (Linux, and a Windows that refused the app's id).
-/// On a thread of the runtime's: the nonces are a file, and Windows' schedule is reached
-/// through the apartment the `windows` crate joins for a thread that has none.
 #[tauri::command(async)]
 pub fn reminders_set(
     webview: tauri::Webview,
@@ -281,7 +222,6 @@ pub fn reminders_set(
     words: Words,
 ) -> Result<bool, String> {
     crate::agents::from_the_app(&webview)?;
-    // A probe says yes and holds nothing: the page must not ring one either.
     if !may_schedule() {
         return Ok(true);
     }
@@ -297,7 +237,6 @@ pub fn reminders_set(
     Ok(handed(&app, &wanted, &moved, &words, now))
 }
 
-/// The plan made so on this platform's schedule, if it has one.
 fn handed(
     app: &AppHandle,
     wanted: &[(Planned, String)],
@@ -323,8 +262,6 @@ fn handed(
     }
 }
 
-/// The presses waiting, taken: each is answered once, and only one whose nonce is the
-/// one kept for its reminder - a link nobody's notification made does nothing.
 #[tauri::command(async)]
 pub fn reminders_taken(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Pressed>, String> {
     crate::agents::from_the_app(&webview)?;
@@ -338,7 +275,6 @@ pub fn reminders_taken(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Pr
     }))
 }
 
-/// A press as the window answers it, where it is one of ours.
 fn answered(kept: &HashMap<String, Kept>, press: &Arrived) -> Option<Pressed> {
     let one = kept
         .get(&press.id)
@@ -352,8 +288,6 @@ fn answered(kept: &HashMap<String, Kept>, press: &Arrived) -> Option<Pressed> {
     })
 }
 
-/// Listens for presses on what a Mac shows from the launch on, so a press that started
-/// the app is heard; nothing anywhere else, where a press arrives as a link.
 pub fn start(app: &AppHandle) {
     #[cfg(target_os = "macos")]
     if may_schedule() {
@@ -363,14 +297,10 @@ pub fn start(app: &AppHandle) {
     let _ = app;
 }
 
-/// A press on a reminder, from a link: queued with its nonce, which the window's taking
-/// checks, and the window told.
 pub fn pressed(app: &AppHandle, act: Act, id: &str, nonce: &str) {
     press(app, act, id, Some(nonce));
 }
 
-/// A press the system itself handed over, which needs no nonce: a Mac's notification
-/// centre says which of the app's own requests was pressed.
 #[cfg(target_os = "macos")]
 pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
     press(app, act, id, None);
@@ -387,8 +317,6 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
             nonce: nonce.map(str::to_string),
         });
     });
-    // A press on the notification itself asks for the note, so the window comes forward;
-    // a Done is answered out of sight.
     if act == Act::Open {
         if let Some(window) = crate::agents::shell::host(app) {
             let _ = window.show();
@@ -400,8 +328,6 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
     }
 }
 
-/// A `nib://` link that arrived, answered here if it is a reminder's. Answers whether it
-/// was, so uris.rs neither raises the window for a Done nor hands it to the automation.
 pub fn answer_link(app: &AppHandle, url: &str) -> bool {
     if !link::is_reminder(url) {
         return false;
@@ -412,10 +338,6 @@ pub fn answer_link(app: &AppHandle, url: &str) -> bool {
     true
 }
 
-/// The window has answered what a quiet launch was for (`quiet_launch`): with its window
-/// still out of sight and nothing keeping Orden in the tray, the app goes again, the way
-/// Quit in the tray ends it. On a thread of the runtime's, as a quit writes down where
-/// each window was.
 #[tauri::command(async)]
 pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), String> {
     crate::agents::from_the_app(&webview)?;
@@ -423,7 +345,6 @@ pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), 
     let hidden =
         crate::agents::shell::host(&app).is_some_and(|window| !window.is_visible().unwrap_or(true));
     if goes_again(quiet, hidden, crate::agents::shell::in_tray()) {
-        // Out of sight, with nothing it opened: nobody to ask, and nothing to ask about.
         crate::lifecycle::quit_now(&app);
     }
     Ok(())
@@ -437,8 +358,6 @@ pub fn came_up_quietly() {
     LAUNCHED_QUIETLY.store(true, Ordering::Relaxed);
 }
 
-/// Whether a launch was asked for by nothing but a reminder's Done: the app then comes
-/// up without its window, answers it and stays in the tray.
 pub fn quiet_launch(urls: &[String]) -> bool {
     !urls.is_empty()
         && urls
@@ -477,7 +396,6 @@ mod tests {
         assert_eq!(first[0].1, "n1");
         assert_eq!(first[1].1, "n2");
 
-        // Planned again with b moved: a keeps its nonce, b's own goes, c is new.
         let second = merge(
             &mut kept,
             vec![planned("a", 2000), planned("c", 4000)],
@@ -488,7 +406,6 @@ mod tests {
         assert_eq!(second[1].1, "n3");
         assert!(!kept.contains_key("b"));
 
-        // a rang and is out of the plan: kept for its Done, then let go after a week.
         merge(&mut kept, vec![planned("c", 4000)], 2500, nonce);
         assert!(kept.contains_key("a"));
         merge(
@@ -530,7 +447,6 @@ mod tests {
             (Act::Done, "Plan.md", 2)
         );
         assert_eq!(answered(&kept, &press(Some("wrong"))), None);
-        // The system's own press, which carries none.
         assert!(answered(&kept, &press(None)).is_some());
         assert_eq!(
             answered(

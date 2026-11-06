@@ -1,14 +1,3 @@
-//! Recently deleted, on this machine. A deleted note, folder or space is not
-//! removed but moved into `Documents/Nib/.trash/<id>/`, and a manifest beside
-//! those folders remembers what each one was and where it came from, so it can
-//! be put back for fourteen days. The app sweeps what is older.
-//!
-//! This module owns that folder, that manifest, and nothing else.
-//!
-//! Into the trash and back out is a move, and a space linked in from another disk
-//! is on another disk from the trash: there a rename says it cannot, so the move is
-//! a copy and a removal instead, whole or not at all. See carry.rs.
-
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
@@ -23,50 +12,26 @@ use crate::paths::{
     rejoins_highlights, restore_held, spaces_dir, write_atomically, HIGHLIGHTS, TRASH,
 };
 
-/// The record of what is in the trash, written beside the folders it describes.
 const MANIFEST: &str = "manifest.json";
 
-/// What the app knows how to put back. The kind decides how a name is numbered if
-/// its old place has been taken in the meantime.
 const KINDS: [&str; 3] = ["note", "folder", "space"];
 
-/// Two deletions in the same millisecond still get different folders.
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 
-/// The manifest is read, changed and written whole. Two windows deleting at the
-/// same moment would otherwise each write a manifest that does not know about the
-/// other's entry, and one of the two notes would be unreachable. Only one process
-/// ever runs, so one lock covers it.
 static MANIFEST_LOCK: Mutex<()> = Mutex::new(());
 
-/// One thing waiting in the trash.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrashEntry {
-    /// The folder inside the trash that holds it.
     pub id: String,
-    /// `note`, `folder` or `space`: what the app should call it, and how to
-    /// number it if its place is taken on the way back.
     pub kind: String,
-    /// The name it had, which is also the name it is stored under.
     pub name: String,
-    /// Where it was, relative to the notes folder, with `/` between parts.
     pub from: String,
-    /// When it was deleted, in milliseconds since the epoch.
     pub trashed_at: u64,
-    /// Whether sync deleted it, which leaves what the account holds as an entry of its
-    /// own (a PDF's highlights) out of the slot, to be deleted and restored on its own.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub apart: bool,
 }
 
-/// Moves a note, folder or space into the trash and says what it became.
-///
-/// `alone` is sync's delete (sync2/app-world.ts), which leaves what the account holds
-/// as an entry of its own, a PDF's highlights, for that entry's own delete or move: a
-/// PDF turned into its page note elsewhere is a delete of the PDF here and a move of its
-/// highlights, and the delete runs first. A page note's paper is no entry (#551) and
-/// still goes with the note, though not the paper's highlights. See `rename_note`.
 #[tauri::command(async)]
 pub fn trash_item(
     app: AppHandle,
@@ -78,8 +43,6 @@ pub fn trash_item(
         return Err(format!("{kind} is not something Orden can delete"));
     }
 
-    // Refuses anything outside the notes folder, and the trash itself: what is
-    // already deleted cannot be deleted again.
     let (source, from, name) = placed(&app, &path)?;
     if !source.exists() {
         return Err("nothing is there".into());
@@ -90,7 +53,6 @@ pub fn trash_item(
     trashed(&dir, &source, from, name, kind, alone == Some(true))
 }
 
-/// `trash_item` past its gate and its lock, into the trash at `dir`.
 fn trashed(
     dir: &Path,
     source: &Path,
@@ -105,14 +67,10 @@ fn trashed(
 
     let held = slot.join(&name);
     if let Err(error) = move_whole(source, &held, "delete") {
-        // The slot only if it is empty: a move that could not put back what it took
-        // leaves its copy there, and that copy is the one whole one; see carry.rs.
         let _ = fs::remove_dir(&slot);
         return Err(error);
     }
 
-    // A deleted PDF takes its highlights into the same folder, and a page note its
-    // paper, so putting it back puts them back with it. Sync's takes only the paper.
     if alone {
         move_paper(source, &held);
     } else {
@@ -128,24 +86,14 @@ fn trashed(
         apart: alone,
     };
 
-    // An entry that cannot be written down is a note nobody could find again, so
-    // it goes back where it came from instead. And stays in its slot if it cannot
-    // go back: a note in the trash that the list does not show is still a note,
-    // where one taken away with the slot would not be.
     recorded(dir, entry, || {
         if move_whole(&held, source, "restore").is_ok() {
-            // Sync's delete left the highlights where they were, for the restore to find.
             restore_held(&held, source);
             let _ = fs::remove_dir(&slot);
         }
     })
 }
 
-/// Words that never had a file, put in the trash as though a note at `path` had been
-/// deleted: a new tab closed with something written in it. Closing one asks nothing,
-/// because this is where its words go - for fourteen days, like any note, and Restore
-/// puts them at `path`. Nothing is written in the space itself: `path` is only where
-/// the note would have been, judged the way a real one is.
 #[tauri::command(async)]
 pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<TrashEntry, String> {
     let (_, from, name) = placed(&app, &path)?;
@@ -177,9 +125,6 @@ pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<Tras
     })
 }
 
-/// A path the trash is asked about, judged: where it is on this disk, where it is
-/// inside the notes folder with `/` between parts, and its name. The notes folder
-/// itself is not something to put in the trash.
 fn placed(app: &AppHandle, path: &str) -> Result<(PathBuf, String, String), String> {
     let base = spaces_dir(app)?;
     let source = in_spaces(app, path)?;
@@ -187,8 +132,6 @@ fn placed(app: &AppHandle, path: &str) -> Result<(PathBuf, String, String), Stri
     Ok((source, from, name))
 }
 
-/// Where `source` is inside the notes folder `base`, with `/` between parts, and its
-/// name: what the manifest writes down.
 fn manifest_place(base: &Path, source: &Path) -> Result<(String, String), String> {
     let relative = source
         .strip_prefix(base)
@@ -196,8 +139,6 @@ fn manifest_place(base: &Path, source: &Path) -> Result<(String, String), String
     if relative.as_os_str().is_empty() {
         return Err("that cannot be deleted".into());
     }
-    // Part by part rather than by replacing `\\`, which is a letter in a name on a Mac
-    // or Linux and only Windows's separator.
     let from = relative
         .components()
         .map(|part| part.as_os_str().to_string_lossy())
@@ -212,8 +153,6 @@ fn manifest_place(base: &Path, source: &Path) -> Result<(String, String), String
     Ok((from, name))
 }
 
-/// One more entry in the manifest. One that cannot be written down is something
-/// nobody could find again, so `undo` puts things back as they were instead.
 fn recorded(dir: &Path, entry: TrashEntry, undo: impl FnOnce()) -> Result<TrashEntry, String> {
     let mut entries = read_manifest(dir);
     entries.push(entry.clone());
@@ -262,7 +201,6 @@ fn follows(dir: &Path, from: &str, to: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Everything in the trash, newest first.
 #[tauri::command(async)]
 pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
     let _guard = locked();
@@ -273,8 +211,6 @@ pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
     Ok(entries)
 }
 
-/// Puts something back where it was and returns where it landed, which is the
-/// old place unless that is taken by now.
 #[tauri::command(async)]
 pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     let base = spaces_dir(&app)?;
@@ -284,7 +220,6 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     restored(&base, &dir, &id)
 }
 
-/// `restore_trash` past its lock, from the trash at `dir` into the notes folder `base`.
 fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     let mut entries = read_manifest(dir);
 
@@ -294,8 +229,6 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
         .ok_or("nothing to restore")?;
     let entry = entries[position].clone();
 
-    // Where it is now and where it is going, both judged before anything moves:
-    // the manifest is a file on disk, and a hand-edited one names neither.
     if !is_slot(&entry.id) {
         return Err("that is not something in the trash".into());
     }
@@ -313,14 +246,8 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     }
 
     move_whole(&held, &target, "restore")?;
-    // The highlights come back under whatever name the PDF landed under, and a
-    // paper under its page note's, which is not the old one when something has
-    // taken its place in the meantime.
     restore_held(&held, &target);
 
-    // A paper or highlights that could not follow are still in the slot, and stay in
-    // the trash as the file they are rather than going with the slot or staying in
-    // one nobody can see.
     match left_in(&slot) {
         None => {
             let _ = fs::remove_dir(&slot);
@@ -341,9 +268,6 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     Ok(target.to_string_lossy().to_string())
 }
 
-/// What is still in a slot once its file has gone back: a paper or highlights that
-/// could not follow it, named by the one to put back first - a paper brings its own
-/// highlights with it.
 fn left_in(slot: &Path) -> Option<String> {
     let mut left: Vec<String> = fs::read_dir(slot)
         .ok()?
@@ -354,7 +278,6 @@ fn left_in(slot: &Path) -> Option<String> {
     left.into_iter().next()
 }
 
-/// Takes one thing away for good.
 #[tauri::command(async)]
 pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
     if !is_slot(&id) {
@@ -369,8 +292,6 @@ pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
     write_manifest(&dir, &entries)
 }
 
-/// The sweep: everything that has waited longer than `age` milliseconds goes.
-/// Returns how many did.
 #[tauri::command(async)]
 pub fn purge_trash_older_than(app: AppHandle, age: u64) -> Result<u32, String> {
     let _guard = locked();
@@ -392,21 +313,16 @@ pub fn purge_trash_older_than(app: AppHandle, age: u64) -> Result<u32, String> {
     Ok(u32::try_from(old.len()).unwrap_or(u32::MAX))
 }
 
-/// The trash folder, made if it is not there yet. One `create_dir_all` for both:
-/// the folder above it is the spaces folder, and making a folder makes its parents.
 fn trash_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = spaces_dir(app)?.join(TRASH);
     made(&dir)?;
     Ok(dir)
 }
 
-/// The lock, whether or not whoever held it last panicked: what it protects is a
-/// file on disk, and that file is no less readable for it.
 fn locked() -> MutexGuard<'static, ()> {
     MANIFEST_LOCK.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// A folder name no other deletion will use.
 fn new_id() -> String {
     format!(
         "{}-{}",
@@ -415,13 +331,6 @@ fn new_id() -> String {
     )
 }
 
-/// Whether a string is one of the folder names `new_id` hands out, which is the
-/// shape a whole tree is about to be removed under.
-///
-/// The window sends an id back to purge one thing, and `purge` joins it onto the
-/// trash folder. `..` there names the folder above, and `remove_dir_all` on that
-/// takes the notes folder or the documents folder with it, so the id is held to
-/// digits and the one hyphen rather than merely to being a single part.
 fn is_slot(id: &str) -> bool {
     let Some((moment, counter)) = id.split_once('-') else {
         return false;
@@ -435,7 +344,6 @@ fn is_slot(id: &str) -> bool {
         && counter.bytes().all(|byte| byte.is_ascii_digit())
 }
 
-/// The manifest, or an empty one when there is nothing to read.
 fn read_manifest(dir: &Path) -> Vec<TrashEntry> {
     let path = dir.join(MANIFEST);
     let Ok(text) = fs::read_to_string(&path) else {
@@ -443,25 +351,17 @@ fn read_manifest(dir: &Path) -> Vec<TrashEntry> {
     };
 
     serde_json::from_str(&text).unwrap_or_else(|_| {
-        // A manifest that cannot be read is kept rather than written over: the
-        // folders beside it still hold the notes, and this is the only record of
-        // where each of them came from.
         let _ = fs::rename(&path, dir.join(format!("{MANIFEST}.unreadable")));
         Vec::new()
     })
 }
 
-/// Written whole and renamed into place, so a crash mid-write cannot leave half
-/// a manifest behind.
 fn write_manifest(dir: &Path, entries: &[TrashEntry]) -> Result<(), String> {
     let text = serde_json::to_string_pretty(entries)
         .map_err(|error| format!("could not write down what is in the trash: {error}"))?;
     write_atomically(&dir.join(MANIFEST), text.as_bytes())
 }
 
-/// Forgets one entry and takes its folder with it. An id of any other shape is
-/// forgotten without a folder being removed: the manifest is a file on disk and
-/// a hand-edited one must not be able to name a folder outside the trash.
 fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
     if is_slot(id) {
         let _ = fs::remove_dir_all(dir.join(id));
@@ -469,21 +369,6 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
     entries.retain(|entry| entry.id != id);
 }
 
-/// Where something is put back, given the notes folder and the entry that says
-/// where it came from.
-///
-/// The manifest is a file in the notes folder like any other, so what it says is
-/// read the way anything from outside is: `from` has to land back inside the
-/// notes folder and outside the trash, and the name it was stored under has to be
-/// a name rather than a path.
-///
-/// Any name this platform reads as one entry, not only one `is_name` would make: the
-/// trash took the file under the name it had, and a `Q3:Q4 plan.md` a Mac's Finder
-/// wrote or an `aux.md` that came by sync has to come back out as surely as it went in.
-///
-/// A PDF sync deleted apart from its highlights (`apart`) finds them back at its old
-/// name when they were restored ahead of it, and rejoins them there rather than step
-/// aside from them as another PDF's.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     if !names_one_entry(&entry.name) {
         return Err("that is not a name Orden stored".into());
@@ -500,12 +385,7 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     Ok(free_spot(&wanted, entry.kind == "note"))
 }
 
-/// Whether `name` is one entry of a folder as this platform reads a path, and nothing
-/// else: no folder, drive, `.` or `..` in it, and no NUL. What a restore asks of the
-/// name a slot holds, since the slot is joined with it: on Windows `C:x` is a drive,
-/// and here it is one name, which only a disk that holds such names put there.
 fn names_one_entry(name: &str) -> bool {
-    // And no `:` on Windows, which holds no such name and reads one as a stream.
     if name.contains('\0') || (cfg!(windows) && name.contains(':')) {
         return false;
     }
@@ -514,24 +394,6 @@ fn names_one_entry(name: &str) -> bool {
         && parts.next().is_none()
 }
 
-/// Whether a string names one file or folder rather than a path to one, and one every
-/// platform can hold: what the trash makes a name for itself, for words that never had
-/// a file, so nothing else is one.
-///
-/// Judged by its letters rather than by this platform's path parser, and to the
-/// same rule everywhere. `Path` reads `C:` as a drive on Windows and as an
-/// ordinary name on Linux, so asking it would make the trash answer differently
-/// on the two - and the answer that matters is the stricter one, whichever
-/// machine is asking: a manifest travels between them, and a name Windows would
-/// read as a drive must not be put back on Linux either.
-///
-/// Refused, then: anything that could be a path (`/`, `\`, `:`) or end a C string
-/// (`NUL`); a trailing dot or space, which Windows drops silently, so the file
-/// written would not be the file named - and which is also what rules out `.` and
-/// `..`; a leading space, for the same reason at the other end; and a device name.
-///
-/// A leading dot is kept. A hidden note can be deleted and has to come back, and
-/// a dot in front is the only thing about it that is unusual.
 fn is_name(name: &str) -> bool {
     !name.is_empty()
         && !name.contains(['/', '\\', ':', '\0'])
@@ -560,8 +422,6 @@ mod tests {
         }
     }
 
-    /// Written the way the platform writes them, so the assertions read the same
-    /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
     }
@@ -629,9 +489,6 @@ mod tests {
         assert!(!is_slot("1-"));
     }
 
-    /// The id comes from the window, and `purge` joins it onto the trash folder
-    /// before removing that folder and everything under it. `..` there names the
-    /// notes folder, and the folder above that is the reader's documents.
     #[test]
     fn purging_cannot_reach_outside_the_trash() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -663,31 +520,20 @@ mod tests {
         assert!(!is_name("Work/Idea.md"));
         assert!(!is_name(r"..\Idea.md"));
         assert!(!is_name("/Idea.md"));
-        // A drive is a path on Windows and an ordinary name on Linux, and the
-        // answer here is the same on both: the rule reads the letters rather than
-        // asking a parser that only one of the two platforms has.
         assert!(!is_name("C:"));
         assert!(!is_name(r"C:\Notes\Idea.md"));
         assert!(!is_name("Idea.md:stream"));
-        // A trailing dot or space is dropped by Windows, so the file written
-        // would not be the file named.
         assert!(!is_name("Idea.md "));
         assert!(!is_name("Idea.md."));
         assert!(!is_name(" Idea.md"));
-        // A device name is a device on Windows whatever follows the dot.
         assert!(!is_name("NUL"));
         assert!(!is_name("nul.md"));
         assert!(!is_name("COM1.md"));
-        // Only the exact ones, so an ordinary note that starts like one is fine.
         assert!(is_name("Console.md"));
         assert!(is_name("nullable.md"));
-        // A name cannot hold a zero byte on either platform.
         assert!(!is_name("Idea\0.md"));
     }
 
-    /// A hidden note can be deleted, so it has to come back. A dot in front is
-    /// the only thing unusual about its name, and it is not one of the shapes
-    /// that could name somewhere else.
     #[test]
     fn a_hidden_note_is_still_a_name() {
         assert!(is_name(".secret.md"));
@@ -700,8 +546,6 @@ mod tests {
         );
     }
 
-    /// A manifest is a file in the notes folder, so where it says something came
-    /// from is read as warily as anything else from outside.
     #[test]
     fn restoring_lands_back_inside_the_notes_folder() {
         let base = path(&["Documents", "Nib"]);
@@ -712,25 +556,16 @@ mod tests {
         );
         assert!(restore_target(&base, &entry("1-0", "Idea.md", "../Idea.md")).is_err());
         assert!(restore_target(&base, &entry("1-0", "Idea.md", "../../../../etc/passwd")).is_err());
-        // Back into the trash is not back where it came from either.
         assert!(restore_target(&base, &entry("1-0", "Idea.md", ".trash/1-0/Idea.md")).is_err());
-        // Nor is the notes folder itself, which is no note.
         assert!(restore_target(&base, &entry("1-0", "Idea.md", "")).is_err());
-        // And a name that is a path cannot pick a file out of another folder.
         assert!(restore_target(&base, &entry("1-0", "../../Idea.md", "Idea.md")).is_err());
     }
 
-    /// What went into the trash comes back out. A name the trash took is one this disk
-    /// held, however little Windows would like it - a Finder `/` is stored as `:`, and a
-    /// note may arrive by sync or from another program as `aux.md` - and refusing to
-    /// put it back left it in the trash until it was purged.
     #[test]
     fn a_restore_takes_back_any_name_the_trash_took() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let base = dir.path();
 
-        // Only where the disk could have held them: Windows reads a device name as a
-        // device wherever it is, and drops a trailing dot or space.
         let mut names = vec![" Lead.md"];
         if cfg!(unix) {
             names.extend([
@@ -751,9 +586,6 @@ mod tests {
         }
     }
 
-    /// A `\\` in a name is a letter on a Mac or Linux, where Finder allows one: written
-    /// down as a `/` it came back as a folder `back` with `slash.md` in it, its name
-    /// lost and every link to it broken. Only Windows writes its paths with `\\`.
     #[cfg(unix)]
     #[test]
     fn a_name_with_a_backslash_comes_back_under_it() {
@@ -780,8 +612,6 @@ mod tests {
         assert!(manifest_place(base, base).is_err());
     }
 
-    /// A folder called `Report.pages` - a macOS Pages document is one - holds no paper,
-    /// so a `Report.pages.pdf` beside it does not take its name.
     #[test]
     fn a_folder_of_a_page_notes_name_restores_beside_a_pdf_of_its_papers_name() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -804,8 +634,6 @@ mod tests {
         assert!(Path::new(&target).parent().is_some());
     }
 
-    /// A page note comes back where neither it nor its paper would go over anything: a
-    /// PDF of its paper's name is somebody's own (#538).
     #[test]
     fn a_page_note_restores_beside_a_pdf_of_its_papers_name() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -817,8 +645,6 @@ mod tests {
         assert_eq!(target, base.join("Report 2.pages"));
     }
 
-    /// And a PDF of a page note's paper's name comes back beside the note under a name
-    /// of its own: under that one the note would take it for its paper.
     #[test]
     fn a_pdf_restores_beside_a_page_note_of_its_name() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -830,8 +656,6 @@ mod tests {
         assert_eq!(target, base.join("Report.pages 2.pdf"));
     }
 
-    /// An entry goes on the end of what the manifest already holds, and nothing is
-    /// undone when it was written down.
     #[test]
     fn a_recorded_entry_joins_the_manifest() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -896,8 +720,6 @@ mod tests {
         assert!(dir.path().join("manifest.json.unreadable").exists());
     }
 
-    /// A space with a PDF and its highlights, and a page note with its paper and the
-    /// paper's highlights, and a trash beside it.
     fn a_space() -> tempfile::TempDir {
         let dir = tempfile::tempdir().expect("a temp folder");
         for (name, words) in [
@@ -930,10 +752,6 @@ mod tests {
         super::restored(dir, &dir.join(".trash"), id).expect("restored")
     }
 
-    /// Sync's delete leaves what sync carries as an entry of its own, a PDF's
-    /// highlights. A PDF turned into its page note elsewhere comes here as a delete of
-    /// the PDF and a move of its highlights to the paper's: the delete took them into
-    /// the trash, the move found nothing, and the next scan deleted them everywhere.
     #[test]
     fn a_pdf_deleted_alone_leaves_its_highlights() {
         let dir = a_space();
@@ -943,8 +761,6 @@ mod tests {
         assert!(dir.path().join("X.pdf.highlights.json").exists());
     }
 
-    /// And takes what sync does not carry: a page note's paper, which goes with the
-    /// note (#551), though not the paper's highlights, which are an entry.
     #[test]
     fn a_page_note_deleted_alone_takes_its_paper() {
         let dir = a_space();
@@ -970,10 +786,6 @@ mod tests {
         }
     }
 
-    /// Sync deletes a page note and its paper's highlights apart, each an entry of its
-    /// own, and each is restored on its own, in either order. Highlights first, the
-    /// note's restore found its paper without highlights in the slot and cleared the
-    /// ones already back as left by another PDF, for good.
     #[test]
     fn a_page_note_restored_after_its_papers_highlights_keeps_them() {
         let dir = a_space();
@@ -988,8 +800,6 @@ mod tests {
         }
     }
 
-    /// And a PDF restored after its highlights rejoins them, where it stepped aside to
-    /// `X 2.pdf` as from a name another PDF's highlights took, and left them on their own.
     #[test]
     fn a_pdf_restored_after_its_highlights_rejoins_them() {
         let dir = a_space();
@@ -1003,7 +813,6 @@ mod tests {
         assert!(dir.path().join("X.pdf.highlights.json").exists());
     }
 
-    /// Whichever comes back first.
     #[test]
     fn a_pdf_restored_before_its_highlights_is_joined_by_them() {
         let dir = a_space();

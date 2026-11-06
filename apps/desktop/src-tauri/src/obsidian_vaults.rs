@@ -1,17 +1,3 @@
-//! The vaults Obsidian knows about on this machine, and reading one of them.
-//!
-//! Chrome's and Arc's first run, which list the browsers already on the machine by
-//! name rather than asking for a profile folder nobody has ever looked for. Obsidian
-//! keeps its own list in `obsidian.json` beside its settings - the vault chooser's
-//! rows - so Orden reads that list and offers each vault by its name.
-//!
-//! This is a narrow way past paths.rs, which keeps the crate to the spaces folder: a
-//! folder is read here only when Obsidian itself lists it as a vault, and every file
-//! asked for is judged to be inside that folder. The vault is read and never
-//! written; what the import writes goes into a space like every other import.
-//!
-//! Desktop only: a phone has no Obsidian config this app could read.
-
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use serde::Serialize;
@@ -20,27 +6,20 @@ use std::path::{Component, Path, PathBuf};
 
 use crate::paths::{folded, inside, MAX_DEPTH};
 
-/// One vault, the way Obsidian's chooser shows it.
 #[derive(Serialize, Debug, PartialEq)]
 pub struct Vault {
-    /// The folder's name, which is what Obsidian calls the vault.
     pub name: String,
     pub path: String,
 }
 
-/// One file of a vault, relative to it, with forward slashes.
 #[derive(Serialize, Debug, PartialEq)]
 pub struct VaultFile {
     pub path: String,
     pub size: u64,
 }
 
-/// More files than any vault anybody writes in, so a folder that is not really a
-/// vault - a home folder somebody opened as one - is not walked forever.
 const MOST_FILES: usize = 200_000;
 
-/// The vaults on this machine, most recently opened first. None where Obsidian
-/// has never run.
 #[tauri::command(async)]
 pub fn obsidian_vaults() -> Vec<Vault> {
     listed()
@@ -56,15 +35,12 @@ pub fn obsidian_vaults() -> Vec<Vault> {
         .collect()
 }
 
-/// Every file of a vault Obsidian lists, minus what is about one machine rather
-/// than the vault.
 #[tauri::command(async)]
 pub fn obsidian_vault_files(vault: String) -> Result<Vec<VaultFile>, String> {
     let root = known(&vault, &listed())?;
     Ok(files_of(&root))
 }
 
-/// One file of such a vault, as base64, which is how bytes cross the bridge.
 #[tauri::command(async)]
 pub fn read_obsidian_file(vault: String, path: String) -> Result<String, String> {
     let root = known(&vault, &listed())?;
@@ -73,19 +49,10 @@ pub fn read_obsidian_file(vault: String, path: String) -> Result<String, String>
     Ok(BASE64.encode(bytes))
 }
 
-/// The vaults `obsidian.json` names, wherever this platform's Obsidian keeps it.
 fn listed() -> Vec<PathBuf> {
     listed_in(&config_files())
 }
 
-/// The vaults of every one of these lists, each once. Every list is read rather
-/// than the first found, because a Linux reader who moved from the downloaded app to the
-/// Flatpak still has the old list, naming vaults long gone, beside the one Obsidian
-/// writes now.
-///
-/// Newest first across all of them, as within one: the leftover list is the older
-/// one, and its vaults would otherwise sit above the ones opened yesterday. A vault
-/// in two lists is as new as the newer of them says.
 fn listed_in(configs: &[PathBuf]) -> Vec<PathBuf> {
     let mut found: Vec<(i64, PathBuf)> = Vec::new();
 
@@ -105,8 +72,6 @@ fn listed_in(configs: &[PathBuf]) -> Vec<PathBuf> {
     found.into_iter().map(|(_, path)| path).collect()
 }
 
-/// Where Obsidian writes `obsidian.json`: its config folder, which on Linux may also
-/// be inside a Flatpak's or a Snap's own home.
 fn config_files() -> Vec<PathBuf> {
     let mut found = Vec::new();
 
@@ -123,14 +88,11 @@ fn config_files() -> Vec<PathBuf> {
     found
 }
 
-/// The vaults out of the file's text: `{"vaults": {"<id>": {"path", "ts"}}}`, the
-/// newest `ts` first, which is the order Obsidian's chooser lists them in.
 #[cfg(test)]
 fn vaults_in(text: &str) -> Vec<PathBuf> {
     dated_in(text).into_iter().map(|(_, path)| path).collect()
 }
 
-/// The same, each with its `ts`, so lists can be put in one order.
 fn dated_in(text: &str) -> Vec<(i64, PathBuf)> {
     let Ok(said) = serde_json::from_str::<serde_json::Value>(text) else {
         return Vec::new();
@@ -155,8 +117,6 @@ fn dated_in(text: &str) -> Vec<(i64, PathBuf)> {
     found
 }
 
-/// The vault asked for, when it is one of those listed, spelled the way the list
-/// spells it.
 fn known(vault: &str, listed: &[PathBuf]) -> Result<PathBuf, String> {
     let asked = folded(Path::new(vault));
     listed
@@ -166,8 +126,6 @@ fn known(vault: &str, listed: &[PathBuf]) -> Result<PathBuf, String> {
         .ok_or_else(|| format!("{vault} is not a vault Obsidian lists"))
 }
 
-/// A file inside the vault, from its relative path: nothing absolute, no climbing
-/// out, nothing through a link.
 fn file_in(root: &Path, path: &str) -> Result<PathBuf, String> {
     let asked = Path::new(path);
     let plain = asked
@@ -187,12 +145,6 @@ fn file_in(root: &Path, path: &str) -> Result<PathBuf, String> {
     Ok(real)
 }
 
-/// Every file of the vault, walked without following links. Hidden folders are
-/// another program's business and are left, except Obsidian's own, which keeps the
-/// settings the vault was written under; inside that, the panes of the last
-/// machine, the plugins' code, themes and caches stay behind. So do `.git`,
-/// `node_modules` and Obsidian's own trash. iCloud's placeholders are listed, so the
-/// import can say how many notes are still in iCloud; see `left`.
 fn files_of(root: &Path) -> Vec<VaultFile> {
     let mut found = Vec::new();
     walk(root, root, 0, &mut found);
@@ -236,9 +188,6 @@ fn walk(root: &Path, folder: &Path, depth: usize, found: &mut Vec<VaultFile>) {
     }
 }
 
-/// The path from the vault's top, with forward slashes. None for a name that is not
-/// UTF-8, an old Latin-1 download on Linux, say: written out it would be a name with
-/// a replacement character in it, which `read_obsidian_file` could then not find.
 fn relative(root: &Path, path: &Path) -> Option<String> {
     let rest = path.strip_prefix(root).ok()?;
     let parts: Option<Vec<&str>> = rest
@@ -248,19 +197,13 @@ fn relative(root: &Path, path: &Path) -> Option<String> {
     Some(parts?.join("/"))
 }
 
-/// Whether a path of the vault stays behind.
 fn left(relative: &str, is_dir: bool) -> bool {
     let name = relative.rsplit('/').next().unwrap_or(relative);
-    // The desktop's rubbish, inside Obsidian's folder as much as anywhere else.
-    // `Icon\r` is where Finder keeps a folder's own icon: hidden, empty, and named
-    // with a character Windows cannot write.
     let rubbish =
         name.starts_with('.') || name == "Thumbs.db" || name == "desktop.ini" || name == "Icon\r";
 
     if let Some(rest) = relative.strip_prefix(".obsidian/") {
         let top = rest.split('/').next().unwrap_or(rest);
-        // `workspace.json` and `workspace-mobile.json` are the last machine's panes;
-        // `workspaces.json` is the layouts saved by name, which are the vault's own.
         let panes = name.strip_suffix(".json").is_some_and(|stem| {
             stem.eq_ignore_ascii_case("workspace")
                 || stem
@@ -275,11 +218,6 @@ fn left(relative: &str, is_dir: bool) -> bool {
         return false;
     }
 
-    // iCloud's placeholder for a note it took off this Mac, `.Plan.md.icloud`, is
-    // hidden but is not rubbish: it stands for one of the reader's own files, so it
-    // is listed and the import says how many are still in iCloud; see obsidian.ts.
-    // Spelled out here rather than asked of notes/icloud.rs, which is a Mac's alone,
-    // since a vault copied off a Mac holds them too.
     let evicted = !is_dir
         && name
             .strip_prefix('.')
@@ -375,8 +313,6 @@ mod tests {
 
         let here = tempfile::tempdir().expect("a folder");
         let vault = here.path();
-        // macOS's file systems refuse such a name outright, so there it cannot be in
-        // a vault at all and there is nothing to test.
         if fs::write(
             vault.join(std::ffi::OsStr::from_bytes(b"Caf\xe9.md")),
             "# Cafe",
@@ -457,8 +393,6 @@ mod tests {
             "Projects/Sub/Plan.md",
             "Read me.md",
         ] {
-            // Finder's `Icon\r` is a name Windows cannot hold, so it is not there to
-            // leave behind.
             if cfg!(windows) && file.ends_with('\r') {
                 continue;
             }

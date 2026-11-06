@@ -1,29 +1,10 @@
-//! Finding words in a web tab's page: Ctrl+F.
-//!
-//! The bar is Orden's own - the one every other surface finds with, under the web bar -
-//! and the finding is the engine's. `WebView2` has a find of its own (`ICoreWebView2Find`)
-//! that marks every match in the page, walks them and says how many there are and which
-//! one is lit, which is Chrome's own find with the dialog left out. The window types, the
-//! engine finds, and the count comes back as `nib://web-found`.
-//!
-//! An engine without it - an older runtime, the other two desktops, Orden's own Chromium -
-//! is asked by a line of script in the page instead: the browser's own `window.find`
-//! walks and selects the matches, and the page's text is counted for the tally. It marks
-//! one match rather than all of them, which is the honest difference.
-//!
-//! The keys are the page's first, as in Chrome: a site with a find of its own keeps
-//! Ctrl+F, and one without asks for this one through `web_opens.rs`, which can say that
-//! and nothing else, for the tab it came from and no other.
-
 use serde::{Deserialize, Serialize};
 #[cfg(not(feature = "cef"))]
 use tauri::Webview;
 use tauri::{AppHandle, Emitter};
 
-/// The event the window hears the tally on.
 const FOUND: &str = "nib://web-found";
 
-/// Which way a look goes: a new word, or the next or the previous match of the last.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Look {
@@ -32,7 +13,6 @@ pub enum Look {
     Previous,
 }
 
-/// How many matches a page has and which is lit, counting from nought, or -1 for none.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 struct Found {
     #[serde(default)]
@@ -41,8 +21,6 @@ struct Found {
     at: i32,
 }
 
-/// The page's own find, for an engine that has none to lend. `window.find` selects the
-/// next match and scrolls to it; the tally is the page's text counted, without case.
 const LOOKED: &str = r"(function (term, back, fresh) {
   try {
     var state = window.__nibFound || (window.__nibFound = { at: -1 })
@@ -67,11 +45,9 @@ const LOOKED: &str = r"(function (term, back, fresh) {
   }
 })(__TERM__, __BACK__, __FRESH__)";
 
-/// And the same page let go of: the lit match is only a selection.
 const LEFT: &str =
     "(function () { var one = window.getSelection(); if (one) one.removeAllRanges() })()";
 
-/// The script for one look.
 fn looked(term: &str, look: Look) -> String {
     let term = serde_json::to_string(term).unwrap_or_else(|_| "''".to_string());
     LOOKED
@@ -90,7 +66,6 @@ fn looked(term: &str, look: Look) -> String {
         )
 }
 
-/// Looks for a word in a tab's page, or for the next or the previous of it.
 #[tauri::command]
 pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result<(), String> {
     let view = crate::web_tabs::found(&app, &tab)?;
@@ -112,8 +87,6 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
         Ok(())
     }
 
-    // Orden's own Chromium has no find to lend either, and runs the page's in Orden's own
-    // world, where the page cannot see what it leaves behind; see web_worlds.rs.
     #[cfg(feature = "cef")]
     {
         let script = looked(&term, look);
@@ -129,7 +102,6 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
     }
 }
 
-/// Stops looking: the marks go and the page is the page again.
 #[tauri::command]
 pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
     let view = crate::web_tabs::found(&app, &tab)?;
@@ -157,7 +129,6 @@ pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
     }
 }
 
-/// The page's own find, and its answer said to the window the way the engine's is.
 #[cfg(not(feature = "cef"))]
 fn script(view: &Webview, tab: String, term: &str, look: Look) {
     let telling = view.clone();
@@ -170,7 +141,6 @@ fn script(view: &Webview, tab: String, term: &str, look: Look) {
     });
 }
 
-/// Every engine but `WebView2` finds through the page; see the top of this file.
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
@@ -205,8 +175,6 @@ mod native {
 
     use super::{Found, Look, FOUND};
 
-    /// One page's find: the engine's object, the environment its options come from, and
-    /// how its tally is said.
     struct Finder {
         find: ICoreWebView2Find,
         env: ICoreWebView2Environment15,
@@ -214,20 +182,14 @@ mod native {
     }
 
     thread_local! {
-        /// Each page's find, on the window's own thread and nowhere else.
         static FINDERS: RefCell<HashMap<String, Finder>> = RefCell::new(HashMap::new());
     }
 
-    /// Starts listening on one page. Called on the window's thread, once, as the page is
-    /// built. A runtime too old to find leaves nothing here, and the page's own find is
-    /// used instead.
     #[allow(
         unsafe_code,
         reason = "the engine's find and its events are reached through WebView2's COM interfaces"
     )]
     pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
-        // Safe: the controller is this window's, every object below is used only on this
-        // thread, and WebView2 holds each handler for as long as it can fire.
         unsafe {
             let Ok(core) = webview.controller().CoreWebView2() else {
                 return;
@@ -239,16 +201,12 @@ mod native {
                 return;
             };
 
-            // Told the find it is about rather than holding one: a handler on the find
-            // that held the find would keep it, and the page under it, for ever.
             let named = tab.clone();
             let tell: Rc<dyn Fn(&ICoreWebView2Find)> = Rc::new(move |reading| {
                 let mut count = 0i32;
                 let mut at = 0i32;
                 let _ = reading.MatchCount(&raw mut count);
                 let _ = reading.ActiveMatchIndex(&raw mut at);
-                // The engine counts the lit match from one, and nothing lit as nought or
-                // less; the window counts from nought, as the page's own find does.
                 let found = Found {
                     tab: named.clone(),
                     count,
@@ -280,7 +238,6 @@ mod native {
         }
     }
 
-    /// Looks, through the engine, and says whether it could.
     #[allow(
         unsafe_code,
         reason = "the engine's find is reached through its COM interfaces"
@@ -291,7 +248,6 @@ mod native {
                 return false;
             };
 
-            // Safe: every object is this page's, on the thread it was made on.
             let done = unsafe {
                 match look {
                     Look::Next => finder.find.FindNext(),
@@ -303,16 +259,11 @@ mod native {
         })
     }
 
-    /// A new word: the engine's options, with its own dialog kept out of sight because
-    /// the bar is Orden's. The tally is said once the session has started as well as as it
-    /// changes, because a new word with as many matches as the last changes nothing the
-    /// engine would report.
     #[allow(
         unsafe_code,
         reason = "the engine's find is reached through its COM interfaces"
     )]
     unsafe fn opened_on(finder: &Finder, term: &str) -> windows_core::Result<()> {
-        // Safe: as in `seek`, which is the only caller.
         unsafe {
             let options = finder.env.CreateFindOptions()?;
             options.SetFindTerm(&HSTRING::from(term))?;
@@ -331,20 +282,17 @@ mod native {
         }
     }
 
-    /// Stops the engine's find, and says whether there was one to stop.
     #[allow(
         unsafe_code,
         reason = "the engine's find is reached through its COM interfaces"
     )]
     pub fn halt(tab: &str) -> bool {
-        // Safe: the object is this page's, on the thread it was made on.
         FINDERS.with_borrow(|all| {
             all.get(tab)
                 .is_some_and(|finder| unsafe { finder.find.Stop() }.is_ok())
         })
     }
 
-    /// The page has gone, and its find with it.
     pub fn forget(tab: &str) {
         FINDERS.with_borrow_mut(|all| all.remove(tab));
     }

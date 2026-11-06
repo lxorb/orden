@@ -1,75 +1,16 @@
-//! Which stream of releases an install follows, and the look for a new version on
-//! it.
-//!
-//! Two streams come out of the repository; see `.github/workflows/release.yml`. A
-//! tag `v*` is a release proper, and every push to main is a build as well, on one
-//! rolling pre-release named `edge`. The releases are what an install follows: they
-//! are the endpoint in `tauri.conf.json`, which is what the updater is built with
-//! when nothing here says otherwise. The rolling build is the other choice, and
-//! this module is the only place that knows where it lives.
-//!
-//! The look is here rather than on the window side because the plugin's `check()`
-//! in JavaScript takes no endpoints: it reads the whole list from the
-//! configuration and stops at the first manifest it can parse, so a window cannot
-//! choose between two. The builder in Rust does take them. Everything after the
-//! look is the plugin's again - the window is handed the same resource id the
-//! plugin's own `check` would have handed it, and downloads and installs through
-//! the plugin's own commands.
-
 use serde::Serialize;
 use tauri::{Manager, ResourceId, Url, Webview};
 use tauri_plugin_updater::UpdaterExt;
 
-/// The channel that follows every push to main, and the name the window asks for
-/// it by.
 const UNSTABLE: &str = "unstable";
 
-/// The manifest of the rolling build of main, remade by every push.
-///
-/// The releases' own manifest is in `tauri.conf.json` rather than beside this: it
-/// is what the updater falls back to when no endpoint is given, so the stable
-/// stream is the app's configuration itself instead of a second copy of it that
-/// could drift from it.
 const EDGE: &str = "https://github.com/lxorb/orden/releases/download/edge/latest.json";
 
-/// Where this project's own release files are served from. Every bundle and every
-/// signature beside it is under one of these; see `scripts/update-manifest.mjs`, which
-/// is what writes the addresses a manifest holds.
-///
-/// Two, because the repository was `lxorb/nibeditor` until it was renamed to
-/// `lxorb/orden`. GitHub forwards the old address, and the manifest still writes it,
-/// because every build from before the rename accepts nothing else; this one accepts
-/// the new address too, so a release may switch to it once no install still runs one
-/// of those.
 const RELEASES: [&str; 2] = [
     "https://github.com/lxorb/nibeditor/releases/download/",
     "https://github.com/lxorb/orden/releases/download/",
 ];
 
-/// Whether an update a manifest offered is one this channel may install.
-///
-/// Tauri signs the bundle and not the manifest, so the manifest's words are the
-/// part of an update nobody signed: the version it claims and the address it
-/// points at are the server's, and the server is a release page, a CDN and
-/// whatever sits between them and this machine. The signature still settles the
-/// bytes - nothing but this project's key can hand the app a binary it will run -
-/// but it does not say *which* of this project's binaries, and the plugin's only
-/// other check is that the claimed version is higher than the installed one. A
-/// manifest claiming `99.0.0` over the genuine signed installer of an old release
-/// therefore verifies, and walks the reader back into whatever that release
-/// shipped; and then goes on doing it, because the installed version is older
-/// every time and the claim never changes.
-///
-/// So the two are held to each other. The address has to be a file on this
-/// project's own release pages, and the file's name has to be the one a bundle of the
-/// version the manifest claimed is given - `Nib-<version>-<platform>`; see `names`.
-/// Between them, the only thing a manifest can offer as `99.0.0` is a file this
-/// project published as `99.0.0`.
-///
-/// And a version with a pre-release part on it is a build of main, which only the
-/// rolling channel follows: `0.8.1-421` sits above `0.8.0` in semver, so the edge
-/// manifest served at the releases' endpoint would otherwise hand a stable install
-/// an untested build of main. See `scripts/build-version.sh`.
 pub(crate) fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
     let Some(file) = RELEASES
         .iter()
@@ -93,25 +34,8 @@ pub(crate) fn offered(channel: &str, version: &str, download: &str) -> Result<()
     Ok(())
 }
 
-/// The words a bundle's file name begins with: the product's name until 0.11, which
-/// every release is still published under because every build from before 0.12 reads
-/// nothing else, then the two names it has had since, nibeditor and Orden, which a
-/// release may switch to once no install still runs a build that does not know them.
 const PREFIXES: [&str; 3] = ["Nib-", "nibeditor-", "Orden-"];
 
-/// Whether a bundle's file name is the one this project gives `version`:
-/// `Nib-<version>-<platform>` (or `nibeditor-`, `Orden-`; see `PREFIXES`), the platform
-/// beginning with a letter.
-///
-/// The version as the whole of what stands between `Nib-` and the platform, rather
-/// than as something found in the name: `0.1` is inside `Nib-0.10.0-...`, and a
-/// manifest claiming the first over the second's bundle would install whatever
-/// `0.10.0` shipped under a number nothing signed. And the platform a letter,
-/// because a version can have a pre-release after it: a build of main is
-/// `0.8.1-421`, whose bundle `Nib-0.8.1-421-windows-...` begins with the release's
-/// own `Nib-0.8.1-`. A pre-release here is digits and nothing else, which the MSI
-/// bundler holds it to (`scripts/build-version.sh`), and every platform the release
-/// matrix labels a bundle with is a word (`scripts/name-assets.mjs`).
 fn names(file: &str, version: &str) -> bool {
     PREFIXES.iter().any(|prefix| {
         file.strip_prefix(prefix)
@@ -121,32 +45,15 @@ fn names(file: &str, version: &str) -> bool {
     })
 }
 
-/// What the window is told about a new version: the fields the updater plugin's
-/// own `Update` is built from on that side.
-///
-/// The date and the release notes are left out because nothing shows them, and
-/// formatting a date would cost a dependency for a field nobody reads. The
-/// manifest is passed on whole, the way the plugin's own `check` passes it.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Found {
-    /// The update itself, which stays on this side; the download and the install
-    /// name it.
     rid: ResourceId,
-    /// The version running now.
     current_version: String,
-    /// The version that was found.
     version: String,
-    /// The manifest as it was served.
     raw_json: serde_json::Value,
 }
 
-/// Where a channel looks, or `None` for the endpoint the app is configured with.
-///
-/// Anything the app has not heard of is the stable stream: following the releases
-/// is the only safe answer to a value nobody wrote, and it is where every install
-/// starts. A constant that did not parse would read as stable too, which is why
-/// the tests below parse it.
 pub(crate) fn endpoints(channel: &str) -> Option<Vec<Url>> {
     if channel != UNSTABLE {
         return None;
@@ -155,21 +62,9 @@ pub(crate) fn endpoints(channel: &str) -> Option<Vec<Url>> {
     Url::parse(EDGE).ok().map(|url| vec![url])
 }
 
-/// Looks for a new version on the channel this machine follows, and answers
-/// nothing when there is none.
-///
-/// Only ever a higher version, whichever channel was asked for: the plugin
-/// compares semver and offers nothing at or below what is installed. That is what
-/// keeps a machine which has just left the rolling stream from being handed an
-/// older release as an update - a build of main is numbered one patch past the
-/// newest tag with a pre-release number, so `0.6.1-84` sits above `0.6.0` and
-/// below `0.6.1` and stays where it is until a release passes it. See
-/// `scripts/build-version.sh`.
 #[tauri::command]
 pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Found>, String> {
     let (app, label) = (webview.app_handle().clone(), webview.label().to_owned());
-    // On Windows the install ends the process; see `before_installer`. The update belongs
-    // to this window, so this is the window that installs it.
     let mut builder = webview
         .updater_builder()
         .on_before_exit(move || crate::lifecycle::before_installer(&app, &label));
@@ -192,16 +87,12 @@ pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Fo
         return Ok(None);
     };
 
-    // A manifest that says one thing and points at another is not an update; see
-    // `offered`. Nothing is downloaded and nothing is handed to the window, so the
-    // look answers the way a look that found nothing does.
     offered(&channel, &update.version, update.download_url.as_str())?;
 
     Ok(Some(Found {
         current_version: update.current_version.clone(),
         version: update.version.clone(),
         raw_json: update.raw_json.clone(),
-        // Last, because it hands the update itself over to the table.
         rid: webview.resources_table().add(update),
     }))
 }
@@ -211,7 +102,6 @@ mod tests {
     use super::{endpoints, offered, EDGE, PREFIXES, RELEASES, UNSTABLE};
     use tauri::Url;
 
-    /// The address of one bundle on a release page, as the manifest writes it.
     fn bundle(version: &str) -> String {
         format!(
             "{}v{version}/Nib-{version}-windows-x64-setup.exe",
@@ -227,14 +117,9 @@ mod tests {
     #[test]
     fn a_build_of_main_is_installed_on_the_channel_that_follows_main() {
         assert_eq!(offered(UNSTABLE, "0.8.1-421", &bundle("0.8.1-421")), Ok(()));
-        // And is not an update for an install that follows the releases, however
-        // high semver puts it: a manifest served at the wrong endpoint is a
-        // manifest anybody between here and the release page can serve.
         assert!(offered("stable", "0.8.1-421", &bundle("0.8.1-421")).is_err());
     }
 
-    /// The whole of the rollback: a real signature over a real old bundle, under a
-    /// version number nothing ever signed.
     #[test]
     fn a_version_the_file_is_not_is_no_update() {
         assert!(offered("stable", "99.0.0", &bundle("0.5.0")).is_err());
@@ -260,10 +145,6 @@ mod tests {
         }
     }
 
-    /// A version is the whole of what the file name carries between `Nib-` and the
-    /// platform, not something found somewhere in it: `0.1` is inside `0.10.0`, and a
-    /// manifest claiming the first over the second's bundle would walk an install onto
-    /// whatever `0.10.0` shipped under a number nothing signed.
     #[test]
     fn a_version_is_the_whole_version_in_the_name() {
         assert!(offered("stable", "0.1", &bundle("0.10.0")).is_err());
@@ -273,10 +154,6 @@ mod tests {
         assert_eq!(offered("stable", "0.10.0", &bundle("0.10.0")), Ok(()));
     }
 
-    /// A build of main is the release it is numbered after with a pre-release on it,
-    /// so its bundle's name begins with that release's: `Nib-0.8.1-421-...` starts
-    /// `Nib-0.8.1-`. A manifest claiming the release over the build's bundle is a
-    /// stable install handed an untested build of main.
     #[test]
     fn a_release_is_not_the_build_of_main_before_it() {
         assert!(offered("stable", "0.8.1", &bundle("0.8.1-421")).is_err());
@@ -285,8 +162,6 @@ mod tests {
         assert_eq!(offered(UNSTABLE, "0.8.1-421", &bundle("0.8.1-421")), Ok(()));
     }
 
-    /// Every bundle the updater is handed: the Windows installers, the `AppImage`s and
-    /// the Mac archive, each named the way scripts/name-assets.mjs names it.
     #[test]
     fn every_platform_the_updater_serves_is_named_the_same_way() {
         for platform in [
@@ -305,8 +180,6 @@ mod tests {
         }
     }
 
-    /// Either name, and only a name: a bundle called anything else, or the name with a
-    /// version run into it, is not one this project published.
     #[test]
     fn a_bundle_is_named_by_either_name_and_nothing_else() {
         for file in [
@@ -353,8 +226,6 @@ mod tests {
         }
     }
 
-    /// A manifest served over anything but https is refused in a release build,
-    /// which would be a channel that silently never finds anything.
     #[test]
     fn the_rolling_manifest_is_served_over_https() {
         let url = Url::parse(EDGE).expect("the manifest url parses");
@@ -363,9 +234,6 @@ mod tests {
         assert!(url.path().ends_with("latest.json"));
     }
 
-    /// The two channels are two endpoints. A configuration that listed the rolling
-    /// manifest as well would follow it whatever the window asked for, since the
-    /// updater takes the first endpoint that answers.
     #[test]
     fn the_configured_endpoint_is_the_releases_one() {
         let config: serde_json::Value =
@@ -378,9 +246,6 @@ mod tests {
         assert_ne!(configured[0].as_str(), Some(EDGE));
     }
 
-    /// Both manifests are asked for at the repository's own name. The old name answers
-    /// too, through GitHub's forward, which is how every build from before the rename
-    /// still finds them.
     #[test]
     fn both_manifests_are_asked_for_under_the_new_name() {
         let config: serde_json::Value =

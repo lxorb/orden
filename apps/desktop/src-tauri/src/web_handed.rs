@@ -1,46 +1,13 @@
-//! Web pages another program hands Orden, because Orden is the browser.
-//!
-//! A link clicked in a mail, a chat, a PDF or a terminal goes to whichever program the
-//! system keeps for `http` and `https`. When that is Orden (see `default_browser.rs`), the
-//! address arrives on a command line on Windows and Linux - a launch of its own, or a
-//! second launch handed to the one already open - and as the system's "open these" on
-//! a Mac. This module says which of what arrived is a page; launch.rs says which window
-//! shows it.
-//!
-//! Only a page. The system hands over whatever string the other program wrote, and Orden
-//! opens no file from outside its spaces: a path, a `file:` address, `javascript:`,
-//! another program's scheme and the app's own origins are all refused here, before any
-//! window hears of them. What is left is judged again by the tab on every navigation;
-//! see `allowed` in `web_tabs.rs`.
-
 use tauri::Url;
 
-/// What a launch Windows makes for a link says in front of the address: the command
-/// nib registers for its links is `"nib.exe" --url "%1"`; see `default_browser.rs`.
 pub const LINK_FLAG: &str = "--url";
 
-/// The longest address taken, which is the longest command line Windows can start a
-/// program with. Nothing somebody clicked is longer.
 const LONGEST: usize = 32 * 1024;
 
-/// Whether a command line is one Windows made for a link. Such a launch is about that
-/// address and nothing else, so nothing else on it is ever read as a note to open:
-/// the guard Chrome's `--single-argument` is, against a link that smuggles a quote
-/// into its address to add an argument of its own.
 pub fn for_a_link<A: AsRef<std::ffi::OsStr>>(args: &[A]) -> bool {
     args.iter().skip(1).any(|one| one.as_ref() == LINK_FLAG)
 }
 
-/// The pages a command line asks for.
-///
-/// After the flag, the rest is one address. The single instance plugin hands a second
-/// launch's arguments over joined with `|` and splits them again, so an address with
-/// a `|` in it arrives in pieces, and so does one somebody smuggled a quote into.
-/// Joined back, the first is the address the other program wrote, and the second is
-/// an address on the same site rather than a path on this disk.
-///
-/// Without the flag - a Linux handler's `%u`, somebody typing `nib https://...` in a
-/// terminal - every argument that is a page is one, in the order given.
 pub fn pages_in(args: &[String]) -> Vec<String> {
     let given = args.get(1..).unwrap_or_default();
     if let Some(at) = given.iter().position(|one| one == LINK_FLAG) {
@@ -50,8 +17,6 @@ pub fn pages_in(args: &[String]) -> Vec<String> {
     given.iter().filter_map(|one| page(one)).collect()
 }
 
-/// The pages among what a Mac was asked to open. A `file:` address among them is a
-/// document, which nib opens nothing of; see lifecycle.rs.
 #[cfg_attr(
     not(target_os = "macos"),
     allow(
@@ -63,8 +28,6 @@ pub fn pages_among(urls: &[Url]) -> Vec<String> {
     urls.iter().filter_map(|url| page(url.as_str())).collect()
 }
 
-/// The address as a tab opens it, or `None` for anything that is not a page on the
-/// web: `http` or `https`, somewhere, and not the app itself.
 fn page(said: &str) -> Option<String> {
     if said.len() > LONGEST {
         return None;
@@ -148,20 +111,17 @@ mod tests {
 
     #[test]
     fn a_bar_in_the_address_survives_the_hand_over() {
-        // What the single instance plugin makes of `https://example.com/?q=a|b`.
         let args = line(&[LINK_FLAG, "https://example.com/?q=a", "b"]);
         assert_eq!(pages_in(&args), vec!["https://example.com/?q=a|b"]);
     }
 
     #[test]
     fn a_smuggled_argument_stays_part_of_the_address() {
-        // `https://example.com/" "C:\secret.md`, split by Windows at the quotes.
         let args = line(&[LINK_FLAG, "https://example.com/", r"C:\secret.md"]);
         let pages = pages_in(&args);
 
         assert_eq!(pages.len(), 1);
         assert!(pages[0].starts_with("https://example.com/"));
-        // And nothing else on a link's command line is read as a note.
         assert!(for_a_link(&args));
     }
 

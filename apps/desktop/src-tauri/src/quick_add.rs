@@ -1,54 +1,23 @@
-//! Quick add from any app (docs/tasks.md 5.6): a key the system holds for Orden, and the
-//! small window it opens over whatever is in front, with the quick add field and
-//! nothing else.
-//!
-//! **The key is the page's.** The window's page says which key (`app.quick-add`, which
-//! the reader can move or switch off in Settings) after its launch order, and again
-//! whenever it changes; nothing is registered before. The page that says it is the one
-//! that writes the tasks the window hands over, so it is also the window that comes
-//! forward when a task is opened (`host`).
-//!
-//! **The window is made on the first press** and hidden rather than closed after it, so
-//! every press after the first shows a page that is already there. It is its own page,
-//! `quick-add.html`, which carries the field and none of the app; it talks to the app's
-//! page over a broadcast channel, so it is granted nothing (see the capability's
-//! description in capabilities/default.json, whose labels it does not match).
-//!
-//! **A probe never holds the reader's key.** A run whose windows are sent off the screen
-//! is a drive's, and a key registered there is a key taken from whoever is at the
-//! machine, their own Orden's included. There the key is the one the drive names in
-//! `NIB_QUICK_ADD_KEY`, or none at all, and the window it opens is sent off the screen
-//! like every other and never brought forward (`placement::built`, `placement::raised`).
-
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Manager as _, Webview, WebviewUrl, WebviewWindowBuilder};
 
-/// The window's label: no capability names it, so it is granted nothing.
 const LABEL: &str = "nib-quick-add";
 
-/// How big the window is, in points: the field, a description line, the controls.
 const WIDTH: f64 = 600.0;
 const HEIGHT: f64 = 150.0;
 
-/// The key a probe registers instead of the page's.
 const PROBE_KEY: &str = "NIB_QUICK_ADD_KEY";
 
-/// The label of the window whose page answers, which is the window that comes forward
-/// when a task is opened.
 static HOST: Mutex<Option<String>> = Mutex::new(None);
 
-/// Whether this launch was started by `--quick-add`, and the window is to come up as
-/// soon as there is a page to answer it.
 static ASKED_AT_LAUNCH: AtomicBool = AtomicBool::new(false);
 
 fn host() -> Option<String> {
     HOST.lock().unwrap_or_else(PoisonError::into_inner).clone()
 }
 
-/// The key a run may hold: the page's, or in a probe the one the drive named, and none
-/// where the page asks for none.
 fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Option<String> {
     let asked = asked.filter(|key| !key.trim().is_empty())?;
     if away {
@@ -58,9 +27,6 @@ fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Opti
     }
 }
 
-/// The key quick add answers to from any app, from the page of a document window, or
-/// none. Answers the key held now. A sync command on purpose: a hot key registered
-/// from another thread is one whose presses go to a thread with no loop to hear them.
 #[tauri::command]
 pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> Option<String> {
     if !crate::launch::is_document_window(webview.label()) {
@@ -77,23 +43,17 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
     held
 }
 
-/// Notes a launch started by `--quick-add`, whose window comes up once the page that
-/// answers it is there (`quick_add_key`).
 pub fn asked_at_launch(argv: &[std::ffi::OsString]) {
     if crate::hotkeys::Which::asked_by(argv).contains(&crate::hotkeys::Which::QuickAdd) {
         ASKED_AT_LAUNCH.store(true, Ordering::Relaxed);
     }
 }
 
-/// The window, shown over whatever is in front with the keyboard in its field: made the
-/// first time, shown again every time after. With the compositor's token for the press,
-/// where a Wayland session handed one, so the window may take the front.
 pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     let window = match app.get_webview_window(LABEL) {
         Some(window) => window,
         None => match quick_window(app) {
             Ok(window) => {
-                // Floated by a tiling window manager, as a launcher's field is; see linux.rs.
                 #[cfg(feature = "cef")]
                 crate::linux::float(&window);
                 window
@@ -110,7 +70,6 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     crate::placement::keyboard_to(window.as_ref());
 }
 
-/// The window, built hidden: small, on top, no frame, no taskbar button.
 fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::Engine>> {
     let builder = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add.html".into()))
         .title("Orden")
@@ -122,17 +81,11 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
         .always_on_top(true)
         .skip_taskbar(true)
         .visible(false)
-        // A drop is the page's, and never a pick; see `window_builder` in launch.rs.
         .disable_drag_drop_handler();
 
-    // The same switches as the first window, which runs on the same user data folder
-    // and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.additional_browser_args(&crate::engine::browser_args(app));
 
-    // On Linux the window is an X11 one, and the size it may not leave is said to the
-    // window manager as well - the least and the most it may be, the same - which is
-    // what a tiling compositor floats an X11 window by.
     #[cfg(feature = "cef")]
     let builder = builder
         .min_inner_size(WIDTH, HEIGHT)
@@ -141,13 +94,9 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
     #[cfg(feature = "cef")]
     let builder = crate::engine::own_profile(builder);
 
-    // Off the screen with every other window where a drive sent them there.
     crate::placement::built(builder)
 }
 
-/// Centred across the screen the pointer is on, a quarter of the way down, where a
-/// launcher's field is. Not on Wayland, which never says where the pointer is outside
-/// the app's own windows and places every window itself.
 fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) {
     let Ok(pointer) = app.cursor_position() else {
         let _ = window.center();
@@ -165,11 +114,8 @@ fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) 
     let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
 }
 
-/// How tall the window grows while one of its pickers is open: room for the list under
-/// the controls, which a window no taller than its field would cut off.
 const TALL: f64 = 420.0;
 
-/// The window grown to hold an open picker, or back to its field's height.
 #[tauri::command]
 pub fn quick_add_tall(app: AppHandle, webview: Webview, tall: bool) {
     if webview.label() != LABEL {
@@ -181,8 +127,6 @@ pub fn quick_add_tall(app: AppHandle, webview: Webview, tall: bool) {
     }
 }
 
-/// The window put away: Escape, a task added, or another app taken to. With `raise`,
-/// the window whose page answers comes forward, for a task opened at its line.
 #[tauri::command]
 pub fn quick_add_hide(app: AppHandle, webview: Webview, raise: bool) {
     if webview.label() != LABEL {
@@ -214,8 +158,6 @@ mod tests {
         assert_eq!(key_allowed(None, probe, true), None);
     }
 
-    /// `scripts/quick-add-probe.py` presses the probe's key the way the system does, by
-    /// the id the plugin gives it; this is that id.
     #[test]
     fn the_probe_key_is_the_id_the_probe_presses() {
         use std::str::FromStr as _;

@@ -1,17 +1,3 @@
-//! A spaces folder somebody pointed at a folder of their own (#552), by writing it into
-//! `spaces-folder` by hand: an Obsidian vault, or any folder Orden did not make. Orden
-//! keeps every note in its own folder, and an outside folder is only ever imported, so
-//! such a folder is never used where it is (`SPACES_OUTSIDE` in paths.rs).
-//!
-//! What was a space there is taken in once instead: each space's folder copied whole
-//! into Orden's own and checked byte for byte against the one it came from, under a
-//! name no space there has. The outside folder is left exactly as it was. The page then
-//! says every path it kept under the old folder again under the new one, which keeps
-//! the spaces' ids, versions and sync (workspace/outside.ts), and only then is
-//! `spaces-folder` written with Orden's own folder (`settle_outside`). What did not
-//! copy is tried again at the next launch; what did is written down (`TAKEN`), so it is
-//! never copied twice.
-
 use serde::Serialize;
 use std::fmt::Write as _;
 use std::fs;
@@ -25,35 +11,25 @@ use crate::paths::{
     self, cannot, config_dir, inside, made, write_atomically, SPACES_KEPT, SPACES_OUTSIDE,
 };
 
-/// What was taken in so far, one line each: the root it had, a tab, the root it has.
 const TAKEN: &str = "spaces-taken-in";
 
-/// Where the spaces Orden keeps itself are, in a spaces folder (internal/spaces.ts).
 const KEPT: &str = ".orden";
 
-/// What a kept space says it was made of, and the folders such spaces were made of
-/// that are no space any more (internal/spaces.ts): none of them is a space to copy.
 const FROM: &str = ".from";
 const RETIRED: &str = ".retired";
 
-/// What a kept space holds while it is still being made: no space yet.
 const CONVERTING: &str = ".converting";
 
-/// How many times a taken name is numbered, as `create_space` does.
 const MAX_TRIES: usize = 500;
 
-/// One taking in at a time, whichever window asks.
 static TAKING: Mutex<()> = Mutex::new(());
 
-/// One space's root before and after.
 #[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct Moved {
     from: String,
     to: String,
 }
 
-/// What a taking in did: the outside folder, every space of it that is in Orden's own
-/// folder now, and the names of those that are not.
 #[derive(Serialize, Debug)]
 pub struct TakenIn {
     folder: String,
@@ -65,16 +41,11 @@ fn outside_pending() -> Option<PathBuf> {
     SPACES_OUTSIDE.lock().ok()?.clone()
 }
 
-/// The outside folder still to be taken in, if there is one. Only reads a mutex, so
-/// the page asks before anything of it has read its storage (early.ts).
 #[tauri::command]
 pub fn outside_spaces() -> Option<String> {
     outside_pending().map(|folder| folder.to_string_lossy().to_string())
 }
 
-/// Every space of the outside folder copied into Orden's own; see the top of this file.
-/// Nothing while there is no outside folder, or while it is not there to be read: a
-/// drive not plugged in is tried again at the next launch.
 #[tauri::command(async)]
 pub fn take_in_outside(app: AppHandle) -> Result<Option<TakenIn>, String> {
     let _one = TAKING
@@ -101,8 +72,6 @@ pub fn take_in_outside(app: AppHandle) -> Result<Option<TakenIn>, String> {
     Ok(Some(taken))
 }
 
-/// Orden's own folder written as the spaces folder, once the page has followed every
-/// space taken in: the outside folder is not asked about again.
 #[tauri::command(async)]
 pub fn settle_outside(app: AppHandle) -> Result<(), String> {
     let _one = TAKING
@@ -121,8 +90,6 @@ pub fn settle_outside(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// The taking in, apart from the app: the spaces of `folder` into `own`, with what was
-/// taken in before read from and written to `record`.
 fn take_in_from(folder: &Path, own: &Path, record: &Path) -> TakenIn {
     let mut done = taken_before(record);
     let mut left = Vec::new();
@@ -156,8 +123,6 @@ fn leaf_name(path: &Path) -> String {
         .unwrap_or_default()
 }
 
-/// The root the rest of the app holds a space by: its folder, or for a space Orden
-/// keeps itself the file in its folder named as it.
 fn space_root_of(folder: &Path, kept: bool) -> String {
     let root = if kept {
         folder.join(leaf_name(folder))
@@ -190,10 +155,6 @@ fn note_taken(record: &Path, done: &[Moved], moved: &Moved) {
     let _ = write_atomically(record, lines.as_bytes());
 }
 
-/// What is a space in `folder`, the way `list_spaces` and internal/spaces.ts find them,
-/// each with the folder it goes into and whether it is a kept one: every folder not
-/// dotted, bar those a kept space was made of, and every kept space whole. Not one that
-/// holds Orden's own folder, which would be copied into itself.
 fn spaces_outside(folder: &Path, own: &Path) -> Vec<(PathBuf, PathBuf, bool)> {
     let home = folder.join(KEPT);
     let mut made_of: Vec<String> = lines_in_file(&home.join(RETIRED));
@@ -225,7 +186,6 @@ fn lines_in_file(path: &Path) -> Vec<String> {
         .collect()
 }
 
-/// The folders directly in `dir` whose names have no dot in front, by name.
 fn undotted_folders(dir: &Path) -> Vec<PathBuf> {
     let mut found: Vec<PathBuf> = fs::read_dir(dir)
         .into_iter()
@@ -239,9 +199,6 @@ fn undotted_folders(dir: &Path) -> Vec<PathBuf> {
     found
 }
 
-/// `from` copied whole into `into` under its name, else the first `name 2`, `name 3`
-/// that nothing there answers to, and read back. Answers where it landed. A copy that
-/// did not read back as it was is taken away again.
 fn carried_into(from: &Path, into: &Path, kept: bool) -> Result<PathBuf, String> {
     let name = leaf_name(from);
     made(into)?;
@@ -258,14 +215,11 @@ fn carried_into(from: &Path, into: &Path, kept: bool) -> Result<PathBuf, String>
         return Err(error);
     }
     if kept && to.file_name() != from.file_name() {
-        // A kept space's root is the file named as its folder.
         let _ = fs::rename(to.join(&name), to.join(leaf_name(&to)));
     }
     Ok(to)
 }
 
-/// Whether every file under `from` reads at `to` as it does there. A link to a folder
-/// is copied as the link, and is not followed.
 fn copied_alike(from: &Path, to: &Path) -> Result<(), String> {
     let kind = fs::symlink_metadata(from).map_err(|error| cannot("read", from, &error))?;
     if kind.is_symlink() && !from.is_file() {
@@ -301,7 +255,6 @@ fn bytes_alike(one: &Path, other: &Path) -> Result<bool, String> {
     }
 }
 
-/// As much of `buffer` as the file fills, which is less only at its end.
 fn read_full(file: &mut fs::File, buffer: &mut [u8]) -> std::io::Result<usize> {
     let mut at = 0;
     while at < buffer.len() {
@@ -374,7 +327,6 @@ mod tests {
         assert!(!own.join(".obsidian").exists());
         assert_eq!(said_in(&vault.join("Work").join("Plans.md")), "# Plans");
 
-        // Asked again, as a launch cut short would: nothing is copied twice.
         let again = take_in_from(&vault, &own, &record);
         assert_eq!(again.moved, taken.moved);
         assert!(!own.join("Work 3").exists());

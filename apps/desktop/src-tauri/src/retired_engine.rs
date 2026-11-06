@@ -1,27 +1,7 @@
-//! What Orden's own Chromium left on a machine, now that every launch is on the system's
-//! engine.
-//!
-//! Up to 0.15 a reader on Windows could choose Orden's own Chromium in Settings: the choice
-//! was a file, and a launch that read `chromium` there handed itself to a second build of
-//! the app fetched into the app's local data folder. That build is gone (#305, #313).
-//! Nothing reads the choice any more, so a launch whatever it says - `chromium`, a word
-//! from a later version, half a file - is on the system's engine, and once the window is
-//! up the choice, its lock and the fetched builds go, off the window's thread:
-//!
-//! ```text
-//! <config>/engine.json              {"engine": "chromium", "tries": 0}
-//! <config>/engine.lock
-//! <local>/engines/chromium/         a build for each version that fetched one
-//! ```
-//!
-//! Chromium's profiles in `<config>/chromium` are the reader's own - what its web tabs
-//! were signed in to - and stay where they are.
-
 use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, Manager as _};
 
-/// Where the engine choice and the fetched builds were, for one app.
 struct Leftovers {
     choice: PathBuf,
     lock: PathBuf,
@@ -38,17 +18,12 @@ impl Leftovers {
     }
 }
 
-/// The engine an old choice named, for the log: `None` where there was no choice, or
-/// none that could be read. The launch is on the system's engine either way.
 fn named_engine(path: &Path) -> Option<String> {
     let text = std::fs::read_to_string(path).ok()?;
     let said: serde_json::Value = serde_json::from_str(&text).ok()?;
     said.get("engine")?.as_str().map(str::to_string)
 }
 
-/// Takes the choice, its lock and the fetched builds away, and answers what the choice
-/// said. A file that is not there is not an error, and one that will not go is left for
-/// the next launch.
 fn retire_engine(places: &Leftovers) -> Option<String> {
     let said = named_engine(&places.choice);
     let _ = std::fs::remove_file(&places.choice);
@@ -57,13 +32,10 @@ fn retire_engine(places: &Leftovers) -> Option<String> {
     if chromium.is_dir() {
         let _ = std::fs::remove_dir_all(&chromium);
     }
-    // The folder held nothing else; gone only where it is empty now.
     let _ = std::fs::remove_dir(&places.engines);
     said
 }
 
-/// Clears what the Chromium build left, on a thread of its own: a fetched build is three
-/// hundred megabytes of files, and the window is already up.
 pub fn clear_leftovers(app: &AppHandle) {
     let (Ok(config), Ok(local)) = (
         crate::paths::config_dir(app),
@@ -116,7 +88,6 @@ mod tests {
         assert_eq!(retire_engine(&places), None);
         assert!(!places.choice.exists());
 
-        // And nothing there at all.
         assert_eq!(retire_engine(&places), None);
     }
 

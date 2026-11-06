@@ -1,23 +1,5 @@
-//! The dictionaries Orden's own Chromium checks a word against, several at once (#771).
-//!
-//! Chromium reads no page's `lang` to choose a dictionary: it checks every word against
-//! each one in its profile's `spellcheck.dictionaries`, and fetches one it has not got
-//! the first time the list names it. Orden never wrote that list, so a note was checked in
-//! the one dictionary the profile started with, which is the locale's - English, on the
-//! NixOS laptop of the reader who asked for several. The window says which are on, and
-//! this writes them into every profile a page of the app's is drawn from: its own
-//! windows', so a note is checked in them, and a web tab's, so a field in a page is too,
-//! the way one browser's dictionaries serve all of its tabs.
-//!
-//! The other engines keep no such list of their own to write - `WebView2` checks in
-//! Windows' languages and `WKWebView` in the Mac's - so there it is nothing, and the
-//! window says so; see lib/spell-languages.ts.
-
 use tauri::{AppHandle, Manager as _};
 
-/// The dictionaries to check in, by Chromium's tags (`de-DE`, `en-US`). Nothing when
-/// the list is empty: a checker with no language is the window's switch for spelling,
-/// not this.
 #[tauri::command]
 pub fn spell_languages(app: AppHandle, languages: Vec<String>) {
     let languages: Vec<String> = languages.into_iter().filter(|one| tag(one)).collect();
@@ -30,8 +12,6 @@ pub fn spell_languages(app: AppHandle, languages: Vec<String>) {
     }
 }
 
-/// Whether a tag is one Chromium could name a dictionary by: a language and an optional
-/// region, letters only, so nothing else is written into the profile's preferences.
 fn tag(said: &str) -> bool {
     let mut parts = said.split('-');
     let language = parts.next().unwrap_or_default();
@@ -49,13 +29,8 @@ mod engine {
         ImplPreferenceManager as _, ImplValue as _,
     };
 
-    /// The preference Chromium's spellcheck service reads, and watches: a change is
-    /// taken up at once, and a dictionary it has not got is fetched then.
     const DICTIONARIES: &str = "spellcheck.dictionaries";
 
-    /// The page's profile told which dictionaries to check against. On CEF's UI thread,
-    /// the only one a profile's preferences may be written on: anywhere else the write is
-    /// refused, and with no reason given.
     pub fn use_dictionaries(platform: &tauri::webview::PlatformWebview, languages: &[String]) {
         let Some(context) = platform
             .downcast_ref::<tauri_runtime_cef::Webview>()
@@ -74,9 +49,6 @@ mod engine {
                 list.set_string(at, Some(&CefString::from(language.as_str())));
             }
             value.set_list(Some(&mut list));
-            // Something in it from the start: an empty `CefString` reaches CEF as no string
-            // at all, and CEF refuses every write whose `error` is missing, before it reads
-            // the name - which is how every write here was refused, with nothing said.
             let mut error = CefString::from(" ");
             if context.set_preference(
                 Some(&CefString::from(DICTIONARIES)),
@@ -95,7 +67,6 @@ mod engine {
 
 #[cfg(not(feature = "cef"))]
 mod engine {
-    /// Nothing to tell: the platform's own checker reads the platform's languages.
     pub fn use_dictionaries(_platform: &tauri::webview::PlatformWebview, _languages: &[String]) {}
 }
 

@@ -1,32 +1,14 @@
-//! An install from a `.deb` or an `.rpm`, updated from inside Orden (#1147): through
-//! `PackageKit`, which asks for the password once, and then the window restarts into the
-//! new version. See packagekit.rs.
-//!
-//! From the repository the system has, when it offers the version: apt.orden.so's or
-//! rpm.orden.so's, set up as the README says. Otherwise the release's own package, fetched the way the updater
-//! fetches an `AppImage` - from this project's release pages, under the version's name,
-//! and checked against the updater's key (`offered` in updates.rs) - and handed to
-//! `PackageKit` as a file - except on openSUSE, whose `PackageKit` refuses a package no key
-//! it trusts has signed. There, and without `PackageKit`, the window is told the command that
-//! does the same in a terminal.
-
 use serde::Serialize;
 use tauri::Webview;
 
-/// Why the update did not happen, for the window.
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NotUpdated {
-    /// The reader turned the password down: nothing to say.
     refused: bool,
-    /// What to run in a terminal instead.
     command: Option<String>,
-    /// What went wrong, for the log.
     reason: String,
 }
 
-/// Installs `version`, found on `channel`, through the system. The window restarts once
-/// this answers.
 #[tauri::command]
 pub async fn system_update(
     webview: Webview,
@@ -59,13 +41,10 @@ mod linux {
     use super::NotUpdated;
     use crate::packagekit::{Failure, Format, PackageKit};
 
-    /// The package's name in every repository and on every system.
     const PACKAGE: &str = "orden";
 
-    /// Where a source or a `.repo` file for one of this project's repositories names it.
     const OURS: [&str; 2] = ["apt.orden.so", "rpm.orden.so"];
 
-    /// The folders a system's package managers read their repositories from.
     const SOURCES: [&str; 4] = [
         "/etc/apt/sources.list.d",
         "/etc/yum.repos.d",
@@ -112,8 +91,6 @@ mod linux {
         if from_repository {
             return Ok(());
         }
-        // openSUSE's PackageKit aborts the install of a package no key it trusts has signed,
-        // after the password: the terminal it is, with nothing asked first.
         if format == Format::Rpm && zypper {
             return Err(not(
                 "zypper installs no package file through PackageKit that it cannot verify".into(),
@@ -148,8 +125,6 @@ mod linux {
             .map_err(|error| Failure::Failed(error.to_string()))?
     }
 
-    /// The channel's package for this system, downloaded and checked against the
-    /// updater's key: its name, and its bytes.
     async fn fetched(
         webview: &Webview,
         channel: &str,
@@ -179,8 +154,6 @@ mod linux {
         Ok((PathBuf::from(file), bytes))
     }
 
-    /// The manifest's entry for this system's package: `linux-x86_64-rpm` and the rest;
-    /// see scripts/update-manifest.mjs.
     pub(super) fn target(arch: &str, format: Format) -> String {
         format!("linux-{arch}-{}", extension(format))
     }
@@ -192,7 +165,6 @@ mod linux {
         }
     }
 
-    /// The package on the version's own release page, or edge's for a build of main.
     pub(super) fn release_url(version: &str, arch: &str, format: Format) -> String {
         let tag = if version.contains('-') {
             "edge".to_owned()
@@ -206,8 +178,6 @@ mod linux {
         )
     }
 
-    /// What a terminal is told to run: the repository's update where the system has
-    /// one of this project's repositories, and the package itself where it has none.
     pub(super) fn command(format: Format, zypper: bool, repository: bool, url: &str) -> String {
         match (format, zypper, repository) {
             (Format::Rpm, true, true) => "sudo zypper refresh && sudo zypper update orden".into(),
@@ -223,8 +193,6 @@ mod linux {
         }
     }
 
-    /// Whether a file in `folder` (or `folder` itself) names one of this project's
-    /// repositories.
     pub(super) fn names_ours(folder: &Path) -> bool {
         let read = |path: &Path| {
             std::fs::read_to_string(path)

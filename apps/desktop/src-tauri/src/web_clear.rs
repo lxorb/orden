@@ -1,29 +1,3 @@
-//! Delete browsing data: a store's cookies and other site data, and its cached files, over
-//! a time range, through each engine's own call.
-//!
-//! Chrome keeps this inside the browser (Ctrl+Shift+Delete), and so does nib: Emil's
-//! browser vision, 2026-09-13. The window decides what goes - the range, the two kinds,
-//! which stores - and clears its own history beside it; see lib/web-tab/clearing.ts. This
-//! is the half only an engine can do, and every engine has a call for it:
-//!
-//! | engine | call |
-//! | --- | --- |
-//! | `WebView2` | `ICoreWebView2Profile2::ClearBrowsingDataInTimeRange`, or `ClearBrowsingData` for all time |
-//! | `WKWebView` | `WKWebsiteDataStore removeDataOfTypes:modifiedSince:` |
-//! | CEF (Linux) | the `DevTools` Protocol: `Storage.clearDataForOrigin` for each site the range visited, every cookie for all time, and the cache |
-//!
-//! **A store is reached through a page built in it.** Each engine hands its store out
-//! through a webview - a profile, a data store, a data manager - and a store may have no
-//! tab open at all: a space's own store, the day after its last tab closed. So a page is
-//! built for the clearing, a pixel wide and out of sight, on the same seam a tab's page is
-//! built on (`engine::web_store`), and closed again once the engine has answered. A
-//! private tab's store is in memory and goes with its last tab; nothing here reaches it.
-//!
-//! CEF has no call that takes a time range. There the range decides which sites' data
-//! goes - each site the window says the range visited (`sites`), with everything it
-//! stored, cookies included - and the cache, which is no site's, goes whole: what a
-//! reader loses to that is a few pictures fetched again. Said in docs/web-tabs.md.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
@@ -32,42 +6,28 @@ use tauri::{
     AppHandle, LogicalPosition, LogicalSize, Manager as _, Webview, WebviewBuilder, WebviewUrl,
 };
 
-/// How long one store is given to answer. A clearing that deletes a large cache can take
-/// a while; one that never answers is reported rather than waited on for ever.
 const PATIENCE: Duration = Duration::from_secs(30);
 
-/// The pages built for a clearing are numbered, so two clearings never share a label.
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
-/// What goes. `since` is when the range starts, in milliseconds since 1970, and nought
-/// is all time.
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Clearing {
     pub since: f64,
-    /// Cookies and other site data: every cookie, `localStorage`, `IndexedDB`, service
-    /// workers, the cache API, file systems.
     pub site: bool,
-    /// Cached images and files: the HTTP cache.
     pub cache: bool,
 }
 
 impl Clearing {
-    /// Whether it asks for anything at all.
     const fn any(self) -> bool {
         self.site || self.cache
     }
 
-    /// Whether the range is all time.
     fn always(self) -> bool {
         self.since <= 0.0
     }
 }
 
-/// Clears what `clearing` says from each of `stores` - `None` for the store every space
-/// shares, a name for a space's or a site's own - one after the other. `sites` are the
-/// origins the range visited, which only CEF needs and a window that does not say them
-/// leaves out; see above.
 #[tauri::command]
 pub async fn web_clear(
     webview: Webview,
@@ -90,7 +50,6 @@ pub async fn web_clear(
     Ok(())
 }
 
-/// A page in `store`, out of sight: what the engine's store is reached through.
 async fn page_in_store(
     app: &AppHandle,
     window: &tauri::Window,
@@ -100,7 +59,6 @@ async fn page_in_store(
     let blank: tauri::Url = "about:blank"
         .parse()
         .map_err(|_| "the data could not be reached".to_string())?;
-    // Never the keyboard, and nothing dropped on it: it is a store, not a page.
     let builder = WebviewBuilder::new(&label, WebviewUrl::External(blank))
         .focused(false)
         .disable_drag_drop_handler();
@@ -111,8 +69,6 @@ async fn page_in_store(
     #[cfg(all(windows, not(feature = "cef")))]
     let (anchoring, storing) = (app.clone(), store.map(str::to_string));
     app.run_on_main_thread(move || {
-        // On the session its store's tabs share, so the profile cleared is theirs; see
-        // `on_shared_session`.
         #[cfg(all(windows, not(feature = "cef")))]
         let builder =
             crate::web_tabs::on_shared_session(builder, &building, &anchoring, storing.as_deref());
@@ -138,8 +94,6 @@ async fn page_in_store(
         .ok_or_else(|| "the data could not be reached".to_string())
 }
 
-/// The milliseconds since 1970 that `clearing` starts at, as seconds: what `WebView2`
-/// and `WKWebView` count in.
 #[cfg_attr(
     feature = "cef",
     allow(dead_code, reason = "CEF has no range; see the top of this file")
@@ -148,7 +102,6 @@ fn seconds(clearing: Clearing) -> f64 {
     clearing.since / 1000.0
 }
 
-/// `WebView2`.
 #[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use webview2_com::ClearBrowsingDataCompletedHandler;
@@ -160,7 +113,6 @@ mod engine {
 
     use super::{seconds, Clearing, PATIENCE};
 
-    /// The kinds the two rows mean to `WebView2`.
     fn kinds(clearing: Clearing) -> COREWEBVIEW2_BROWSING_DATA_KINDS {
         let mut kinds = COREWEBVIEW2_BROWSING_DATA_KINDS(0);
         if clearing.site {
@@ -190,7 +142,6 @@ mod engine {
                 );
                 Ok(())
             }));
-            // Safe: the controller is this page's, asked on the thread it was built on.
             let asked = unsafe {
                 platform
                     .controller()
@@ -224,7 +175,6 @@ mod engine {
     }
 }
 
-/// `WKWebView`.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod engine {
     use block2::RcBlock;
@@ -241,35 +191,24 @@ mod engine {
 
     use super::{seconds, Clearing, PATIENCE};
 
-    /// `WebKit`'s name for the file systems (OPFS), on a macOS that has them.
-    ///
-    /// Looked up rather than named: the crate declares it as a plain static, which links
-    /// it strongly, and a symbol macOS 13.3 does not have would stop the app from starting
-    /// there. Rust has no weak link to give it, and `available!` only guards the read.
     #[allow(
         unsafe_code,
         reason = "a constant only some versions of WebKit export is found through dlsym"
     )]
     pub(super) fn file_system_type() -> Option<&'static NSString> {
-        // SAFETY: dlsym only reads the dynamic linker's tables.
         let found =
             unsafe { libc::dlsym(libc::RTLD_DEFAULT, c"WKWebsiteDataTypeFileSystem".as_ptr()) };
-        // SAFETY: what WebKit exports under this name is an `NSString * const`, which lives
-        // for the program.
         (!found.is_null()).then(|| unsafe { *found.cast::<&'static NSString>() })
     }
 
-    /// The types the two rows mean to `WKWebsiteDataStore`: all of them for both.
     #[allow(
         unsafe_code,
         reason = "the data types are WebKit's own constants, read as the statics they are"
     )]
     fn types(clearing: Clearing, mtm: MainThreadMarker) -> Retained<NSSet<NSString>> {
         if clearing.site && clearing.cache {
-            // SAFETY: a class method of WebKit's, on the main thread.
             return unsafe { WKWebsiteDataStore::allWebsiteDataTypes(mtm) };
         }
-        // SAFETY: WebKit's own constants, which live for the program.
         let mut named: Vec<&NSString> = unsafe {
             if clearing.site {
                 vec![
@@ -307,8 +246,6 @@ mod engine {
                 let _ = sending.try_send(Err("the data could not be reached".to_string()));
                 return;
             };
-            // SAFETY: the pointer is the WKWebView wry built for this page, alive for as
-            // long as the page is, and retained while its store is asked.
             let Some(view) = (unsafe { Retained::retain(platform.inner().cast::<WKWebView>()) })
             else {
                 let _ = sending.try_send(Err("the data could not be reached".to_string()));
@@ -322,8 +259,6 @@ mod engine {
             let done = RcBlock::new(move || {
                 let _ = sending.try_send(Ok(()));
             });
-            // SAFETY: the webview's own store, asked on its own thread; the engine copies
-            // the block and calls it once.
             unsafe {
                 view.configuration()
                     .websiteDataStore()
@@ -340,16 +275,12 @@ mod engine {
     }
 }
 
-/// Orden's own Chromium, through the `DevTools` Protocol.
 #[cfg(feature = "cef")]
 mod engine {
     use serde_json::{json, Value};
 
     use super::{Clearing, PATIENCE};
 
-    /// What the protocol is asked for, in order: each site the range visited with
-    /// everything it stored, and for all time every cookie as well; the cache, which no
-    /// site owns, whole.
     pub(super) fn asks(clearing: Clearing, sites: &[String]) -> Vec<(&'static str, Value)> {
         let mut asks = Vec::new();
         if clearing.site {
@@ -376,8 +307,6 @@ mod engine {
     ) -> Result<(), String> {
         let page = page.clone();
         let asks = asks(clearing, sites);
-        // The protocol's answers arrive on the window's thread, so they are waited for
-        // anywhere but there; see engine/devtools.rs.
         tauri::async_runtime::spawn_blocking(move || {
             for (method, params) in asks {
                 crate::engine::devtools::call(&page, None, method, &params, PATIENCE)?;
@@ -389,7 +318,6 @@ mod engine {
     }
 }
 
-/// Every other build has no web tab, so nothing to clear.
 #[cfg(not(any(feature = "cef", windows, target_os = "macos")))]
 mod engine {
     use super::Clearing;
@@ -403,7 +331,6 @@ mod engine {
     }
 }
 
-/// An engine's answer, or a word that it never came.
 #[cfg_attr(
     feature = "cef",
     allow(dead_code, reason = "the protocol's calls wait for themselves")
@@ -423,8 +350,6 @@ async fn within(
 mod tests {
     use super::Clearing;
 
-    /// Found at run time, so it is what `WebKit` has and not a word of ours; `macos-latest`
-    /// is past the 14 it arrived in.
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     #[test]
     fn a_mac_finds_the_file_systems_type() {
@@ -432,7 +357,6 @@ mod tests {
         assert_eq!(found.to_string(), "WKWebsiteDataTypeFileSystem");
     }
 
-    /// The window's words for it, read as the crate reads them.
     #[test]
     fn what_the_window_says_is_read() {
         let said: Clearing =
@@ -449,8 +373,6 @@ mod tests {
         assert!(!said.always());
     }
 
-    /// CEF: every cookie only for all time, each site the range visited,
-    /// and the cache whole.
     #[cfg(feature = "cef")]
     #[test]
     fn chromium_is_asked_site_by_site() {

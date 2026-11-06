@@ -1,30 +1,3 @@
-//! The certificates the page in a web tab was served with, for the site's popover.
-//!
-//! "I have connection is secure, but I cannot see the certificate" (#776, from #678).
-//! The popover said the connection was secure from the address alone - `https:` - and
-//! had nothing behind it. A browser's says who the certificate was issued to and by,
-//! from when until when it holds, and its fingerprint, and shows the chain it was
-//! trusted through: the site's certificate, the intermediates, and the root. So the
-//! popover asks this for the chain of the page as it is now, and says the connection is
-//! secure only where the engine says so too.
-//!
-//! Each engine is asked for the certificates the page itself came with, as the bytes
-//! the site sent, and those are read the one way (see `x509.rs`):
-//!
-//! - Orden's own Chromium: the page's visible navigation entry carries the connection's
-//!   state and the certificate with its issuers (`CefNavigationEntry::GetSSLStatus`).
-//! - `WebView2`: the `DevTools` Protocol's `Network.getCertificate`, which answers the
-//!   chain the page's frame was committed with. `WebView2` has no certificate API of its
-//!   own for a connection that had nothing wrong with it; it raises one only for an
-//!   error, and refuses the page then.
-//! - `WKWebView`: `serverTrust`, the trust the committed navigation was evaluated with,
-//!   which holds the chain up to the anchor it was trusted through.
-//!
-//! An engine that has nothing to say for an `https:` page has the chain read from the
-//! site over a connection of this module's own (`separately.rs`), and the popover then
-//! says that is where it came from: what the site serves now, not necessarily what the
-//! page was served.
-
 use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tauri::AppHandle;
@@ -47,72 +20,44 @@ mod engine {
 
     use super::Served;
 
-    /// Nothing: no other engine says what a page came with.
     #[allow(clippy::unused_async, reason = "the same call as on the other engines")]
     pub async fn read(_view: Webview, _address: &str) -> Option<Served> {
         None
     }
 }
 
-/// Who a certificate names: whom it was issued to, or who issued it.
 #[derive(Serialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Party {
-    /// The common name: the site's host for the one issued to, the authority's name
-    /// for the one that issued it.
     pub name: String,
-    /// The organisations it names, in the order the certificate does; often none.
     pub organization: Vec<String>,
 }
 
-/// One certificate of the chain, as the popover shows it.
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Link {
-    /// Whom it was issued to.
     pub to: Party,
-    /// Who issued it.
     pub by: Party,
-    /// When it starts to hold, in milliseconds since the Unix epoch.
     pub from: i64,
-    /// When it stops holding, the same way.
     pub until: i64,
-    /// Its serial number, as colon-separated hex.
     pub serial: String,
-    /// The SHA-256 of the certificate as it was sent, as colon-separated hex.
     pub sha256: String,
-    /// Whether it is a root: issued by itself.
     pub root: bool,
 }
 
-/// What the popover shows of a page's certificates.
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Certificate {
-    /// Whether the engine took the connection for a secure one and found nothing wrong
-    /// with the certificate: a name that does not match, a date it does not hold on, an
-    /// authority nobody trusts, and the rest of what a browser warns about. For a chain
-    /// read separately, what the address says, as the engine said nothing.
     pub secure: bool,
-    /// Whether the chain was read from the site over a connection of this module's
-    /// own, because the engine said nothing of the page's.
     pub separately: bool,
-    /// The site's certificate first, then each that issued the one before it, up to
-    /// the root where the engine has it.
     pub chain: Vec<Link>,
 }
 
-/// What an engine says of a page: whether the connection was secure, and the
-/// certificates it was made with, as DER, the site's first.
 pub struct Served {
     secure: bool,
     chain: Vec<Vec<u8>>,
 }
 
-/// The certificates the tab's page was served with, or `None` where the page came
-/// over no secure connection or nothing could be read. `address` is the page's, as the
-/// tab shows it: where a chain read separately is read from, and the origin the
-/// `DevTools` Protocol is asked about.
 #[tauri::command]
 pub async fn web_certificate(
     app: AppHandle,
@@ -136,9 +81,6 @@ pub async fn web_certificate(
 }
 
 impl Certificate {
-    /// The chain as the popover shows it, or `None` where the site's own certificate
-    /// cannot be read. A certificate further up that cannot be read ends the chain
-    /// there, as nothing above it could be said to have issued it.
     fn from_chain(secure: bool, separately: bool, chain: &[Vec<u8>]) -> Option<Self> {
         let chain: Vec<Link> = chain.iter().map_while(|der| Link::from_der(der)).collect();
         (!chain.is_empty()).then_some(Self {
@@ -150,7 +92,6 @@ impl Certificate {
 }
 
 impl Link {
-    /// One certificate, from the bytes the site sent.
     fn from_der(der: &[u8]) -> Option<Self> {
         let read = x509::fields(der)?;
         Some(Self {
@@ -165,7 +106,6 @@ impl Link {
     }
 }
 
-/// Bytes as colon-separated upper-case hex, the way a browser shows a fingerprint.
 fn hex(bytes: &[u8]) -> String {
     bytes
         .iter()

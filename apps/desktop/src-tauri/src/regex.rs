@@ -1,211 +1,97 @@
-//! The regular expression engine behind a `/pattern/` search.
-//!
-//! A slash-wrapped query runs twice: in the browser over JavaScript's `RegExp`,
-//! and here over the notes on disk. Both halves have to answer the same, so this
-//! file implements the corner of `RegExp` syntax a search box actually uses, and
-//! implements it by backtracking, because backtracking is what decides which of
-//! several possible matches is the one reported. It works over `char` slices,
-//! since the caller counts positions in characters rather than bytes.
-//!
-//! Understood: literal characters, `.`, the class escapes `\d \D \w \W \s \S`,
-//! the boundaries `\b \B`, the character escapes `\n \t \r \f \v \0` and a
-//! backslash before punctuation, character classes with ranges and negation, the
-//! anchors `^` and `$`, capturing and non-capturing groups, alternation, and the
-//! quantifiers `* + ? {n} {n,} {n,m}`, greedy or lazy.
-//!
-//! Not understood, and answered by refusing to compile: lookahead, lookbehind,
-//! backreferences, named groups, property escapes, inline flags, a `{` that
-//! opens no quantifier, and anything half typed. A pattern that does not compile
-//! is one that matches nothing, which is what a query still being typed should
-//! do.
-//!
-//! Two places part from the browser on purpose. A `.` here takes every character
-//! but a newline, where the browser also holds back the carriage return and the
-//! two line separators. A `]` written first inside a class is that bracket, where
-//! the browser reads `[]` as a class of nothing at all. Both are the reading the
-//! search field is specified against, and both are what the other half of search
-//! implements.
-//!
-//! Matching runs on a step budget. `(a+)+b` costs exponentially many steps on a
-//! line of the right shape, and a search field is exactly where such a pattern
-//! gets typed, so the engine gives up rather than let the window stop answering.
-
 use std::cell::Cell;
 use std::sync::LazyLock;
 
-/// How many machine steps one note may spend on one pattern before the pattern
-/// gives up on it. Far more than any pattern a person means needs, and reached in
-/// a moment by one they do not.
-///
-/// One note rather than one `find`, which is what `find_within` is for: a search
-/// asks a pattern about a note region by region - every line of it, for a
-/// `line:(/…/)` group - and a budget that started again at each of them would
-/// bound nothing. Twenty thousand lines is twenty thousand times this.
 pub const BUDGET: usize = 250_000;
 
-/// The most instructions a compiled pattern may hold. Counted repetitions are
-/// written out in full, so this is what keeps `(a{1000}){1000}` from becoming a
-/// program too large to hold.
 const PROGRAM_LIMIT: usize = 10_000;
 
-/// The largest count a `{n,m}` may name, for the same reason.
 const REPEAT_LIMIT: usize = 1_000;
 
-/// How deeply groups may nest, which is what bounds the parser's recursion.
 const DEPTH_LIMIT: usize = 64;
 
-/// How long a pattern may be. The program a pattern compiles to is capped, but
-/// the tree it is parsed into is built before that cap is reached, and the source
-/// crosses from the window: a megabyte of `a` is a million nodes held at once for
-/// a program that is refused anyway. Far longer than any pattern typed into a
-/// search field.
 const SOURCE_LIMIT: usize = 4096;
 
-/// A cell nothing has been written to. Cells hold char indices, so the largest
-/// `usize` is never one of them.
 const UNSET: usize = usize::MAX;
 
-/// The most characters worth keeping as the set a match can begin with. Past
-/// this the test stops being a way of skipping work and becomes work of its own.
 const FIRST_LIMIT: usize = 64;
 
-/// One place a pattern matched, in bytes of the text it was given, the way the rest
-/// of the search counts.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Match {
-    /// Where the match starts.
     pub from: usize,
-    /// One past where it ends.
     pub to: usize,
-    /// What each capturing group caught, in order. A group that took part in
-    /// no match is an empty string.
     pub groups: Vec<String>,
 }
 
-/// A compiled pattern, ready to be run over as many lines as the search visits.
 pub struct Pattern {
     program: Program,
     groups: usize,
     fold: bool,
-    /// What a match can begin with, when that is a short enough list to be sure
-    /// of. Most starting points in a note begin nothing, and stepping over one
-    /// costs a table lookup rather than an attempt at the whole pattern.
     first: Option<First>,
 }
 
-/// A set of characters small enough to test at every starting point.
 struct First {
-    /// One flag per ASCII character, which is what a search pattern is made of
-    /// nearly all of the time.
     ascii: [bool; 128],
-    /// The rest, kept as a short list because there are never many.
     wide: Vec<char>,
 }
 
-/// The instructions of a compiled pattern, the classes they point at, and how
-/// many cells running them needs.
 struct Program {
     steps: Vec<Step>,
     classes: Vec<Class>,
     cells: usize,
 }
 
-/// One instruction of a compiled pattern.
 #[derive(Clone, Copy)]
 enum Step {
-    /// Match one character, compared folded when the pattern ignores case.
     Char(char),
-    /// Match anything except a newline.
     Any,
-    /// Match against the class held at this index.
     Class(usize),
-    /// Match only at the very start of the text.
     Start,
-    /// Match only at its very end.
     End,
-    /// A word boundary, or for `\B` the absence of one.
     Boundary(bool),
-    /// Write the current position into a cell, which is how a capture is caught
-    /// and how a repetition remembers where its round began.
     Save(usize),
-    /// Fail unless the position has moved on since that cell was written.
     Advanced(usize),
-    /// Forget what a range of cells holds, which is how a repetition starts each
-    /// round with the groups inside it empty again.
-    Clear {
-        /// First cell to forget.
-        from: usize,
-        /// Last cell to forget, itself included.
-        to: usize,
-    },
-    /// Take `first`, and on failure come back here and take `second`.
-    Split {
-        /// The branch tried first, which is the greedy one.
-        first: usize,
-        /// The branch left for when the first one leads nowhere.
-        second: usize,
-    },
-    /// Carry on at another instruction.
+    Clear { from: usize, to: usize },
+    Split { first: usize, second: usize },
     Jump(usize),
-    /// The whole pattern matched.
     Done,
 }
 
-/// A choice left behind, to be taken up when the path chosen instead fails.
 #[derive(Clone, Copy)]
 struct Resume {
     pc: usize,
     pos: usize,
-    /// How long the trail was when this choice was left, which says how much of
-    /// it to undo before taking the choice up.
     undo: usize,
 }
 
-/// One attempt at one starting point: where it is in the program and in the
-/// text, what its cells hold, and what it can still fall back on.
 struct Run<'a> {
     text: &'a str,
     cells: Vec<usize>,
-    /// Every cell written and what it held before, so that falling back can put
-    /// the cells back as they were.
     trail: Vec<(usize, usize)>,
     choices: Vec<Resume>,
     pc: usize,
     pos: usize,
 }
 
-/// A character class, from `[abc]` to `[^\d\-_]`.
 #[derive(Clone)]
 struct Class {
     negated: bool,
     members: Vec<Member>,
 }
 
-/// One member of a character class.
 #[derive(Clone, Copy)]
 enum Member {
-    /// A single character, held as written since folding happens when it is
-    /// compared.
     One(char),
-    /// A range written `a-z`, held unfolded because a range is tested against
-    /// the text character's cases rather than the other way round.
     Span(char, char),
-    /// One of the `\d \w \s` sets, and whether the negated spelling was used.
     Set(Kind, bool),
 }
 
-/// The sets a class escape stands for.
 #[derive(Clone, Copy)]
 enum Kind {
-    /// `\d`
     Digit,
-    /// `\w`
     Word,
-    /// `\s`
     Space,
 }
 
-/// The tree a pattern is parsed into, before it is written out as steps.
 enum Node {
     Char(char),
     Any,
@@ -213,24 +99,19 @@ enum Node {
     Start,
     End,
     Boundary(bool),
-    /// A group, capturing under the number it was given, or `None` for `(?:`.
     Group(Option<usize>, Box<Node>),
     Seq(Vec<Node>),
     Alt(Vec<Node>),
     Repeat(Box<Node>, Limits),
 }
 
-/// How often a quantifier lets its atom repeat, and in which order it tries.
 #[derive(Clone, Copy)]
 struct Limits {
     min: usize,
-    /// `None` for the unbounded forms, `*` `+` and `{n,}`.
     max: Option<usize>,
     lazy: bool,
 }
 
-/// What follows an atom: a quantifier, nothing, or something shaped like a
-/// quantifier that this does not understand.
 enum Quantifier {
     Absent,
     Broken,
@@ -238,12 +119,8 @@ enum Quantifier {
 }
 
 impl Pattern {
-    /// Compiles a pattern. `None` when the source is not one this understands,
-    /// which is what a half-typed query looks like.
     #[must_use]
     pub fn compile(source: &str, fold: bool) -> Option<Pattern> {
-        // Before the string is turned into characters, so a pattern too long to
-        // mean anything costs one comparison rather than a copy of itself.
         if source.len() > SOURCE_LIMIT {
             return None;
         }
@@ -258,8 +135,6 @@ impl Pattern {
 
         let node = parser.alternation()?;
 
-        // Anything left over is a `)` with nothing to close, and the query is
-        // still being typed rather than finished.
         if parser.at != src.len() {
             return None;
         }
@@ -271,8 +146,6 @@ impl Pattern {
             cells: groups.checked_add(1)?.checked_mul(2)?,
         };
 
-        // Cells 0 and 1 hold the whole match, so a group's cells are its number
-        // doubled, exactly as if the pattern were group zero.
         program.push(Step::Save(0))?;
         program.emit(&node)?;
         program.push(Step::Save(1))?;
@@ -286,38 +159,21 @@ impl Pattern {
         })
     }
 
-    /// The leftmost match at or after `at`, spending what is left of `budget`.
-    ///
-    /// The budget is the caller's, and one note is what it is meant to cover. A
-    /// pattern that cannot finish gives up for good rather than per region: a
-    /// `line:(/(a+)+b/)` group asks a pattern about every line of a note, and a
-    /// note of twenty thousand lines of `aaaa…` would otherwise cost twenty
-    /// thousand budgets - tens of seconds for one note, with every note in the
-    /// space paying its own. What a spent budget costs instead is that the rest
-    /// of that note answers no, which is the same answer the pattern was about to
-    /// spend a minute failing to improve on.
     #[must_use]
     pub fn find_within(&self, text: &str, at: usize, budget: &Cell<usize>) -> Option<Match> {
         let mut start = at;
 
         while start <= text.len() {
-            // Nearly every place in a note begins no match at all, and a pattern
-            // whose first character is known walks past those without running
-            // anything at them.
             start = self.next_start(text, start)?;
 
             if let Some(cells) = self.attempt(text, start, budget) {
                 return Some(self.take(text, &cells, start));
             }
 
-            // Spent, so this note is answered: see above.
             if budget.get() == 0 {
                 return None;
             }
 
-            // On to the next letter rather than the next byte: a place inside one
-            // begins nothing, and asking about it would answer no for the wrong
-            // reason.
             let step = letter_at(text, start).map_or(1, char::len_utf8);
             start = start.checked_add(step)?;
         }
@@ -325,16 +181,11 @@ impl Pattern {
         None
     }
 
-    /// The next place at or after `from` where a match could begin, or `None`
-    /// when the text holds no such place. A pattern that gave no first character
-    /// away answers `from` itself, which is the search this had before.
     fn next_start(&self, text: &str, from: usize) -> Option<usize> {
         let Some(first) = &self.first else {
             return Some(from);
         };
 
-        // A pattern with a known first character needs a character to read, so
-        // the end of the text begins nothing either.
         let rest = text.get(from..)?;
         let step = rest
             .char_indices()
@@ -344,10 +195,6 @@ impl Pattern {
         from.checked_add(step)
     }
 
-    /// Runs the program from one starting point, taking up the choices it left
-    /// behind until one path reaches the end or none is left. `None` covers both
-    /// no match and a budget that ran out, which the caller tells apart by
-    /// looking at what is left of the budget.
     fn attempt(&self, text: &str, start: usize, budget: &Cell<usize>) -> Option<Vec<usize>> {
         let mut run = Run {
             text,
@@ -368,9 +215,6 @@ impl Pattern {
         }
     }
 
-    /// Follows one path as far as it goes: `true` when it reached the end of the
-    /// pattern, `false` when it ran into something that did not match, and `None`
-    /// when the budget ran out under it.
     fn follow(&self, run: &mut Run, budget: &Cell<usize>) -> Option<bool> {
         loop {
             budget.set(budget.get().checked_sub(1)?);
@@ -388,8 +232,6 @@ impl Pattern {
                         return Some(false);
                     }
 
-                    // Along by the letter's own length, so every position the run
-                    // holds is the start of a letter.
                     run.pos += letter.len_utf8();
                     run.pc += 1;
                 }
@@ -408,18 +250,12 @@ impl Pattern {
                     run.pc += 1;
                 }
                 Step::Advanced(cell) => {
-                    // A round that consumed nothing would go round for ever,
-                    // which is what `(a*)*` does without this.
                     if run.cells.get(cell).copied() == Some(run.pos) {
                         return Some(false);
                     }
                     run.pc += 1;
                 }
                 Step::Clear { from, to } => {
-                    // Charged for the cells it writes rather than for being one
-                    // step. A pattern may hold a thousand groups inside a starred
-                    // body, and a budget that counts clearing all of them as one
-                    // step is a budget out by a thousand.
                     budget.set(budget.get().saturating_sub(to.saturating_sub(from)));
 
                     for (cell, slot) in run.cells.iter_mut().enumerate().skip(from) {
@@ -445,7 +281,6 @@ impl Pattern {
         }
     }
 
-    /// Whether one of the three steps that consume a character accepts this one.
     fn accepts(&self, step: Step, c: char) -> bool {
         match step {
             Step::Char(wanted) => {
@@ -455,8 +290,6 @@ impl Pattern {
                     c == wanted
                 }
             }
-            // A newline is the one thing `.` will not have, there being no flag
-            // in this dialect that would let it.
             Step::Any => c != '\n',
             Step::Class(index) => self
                 .program
@@ -467,8 +300,6 @@ impl Pattern {
         }
     }
 
-    /// Reads a finished run's cells as a match. A group whose cells were never
-    /// written took part in no match, and comes back as an empty string.
     fn take(&self, text: &str, cells: &[usize], start: usize) -> Match {
         let (from, to) = span(cells, 0).unwrap_or((start, start));
         let mut groups = Vec::with_capacity(self.groups);
@@ -485,9 +316,6 @@ impl Pattern {
 }
 
 impl Run<'_> {
-    /// Takes up the last choice left behind, putting the cells back as they were
-    /// when it was left. `false` when there is no choice left, which is what
-    /// makes the attempt a failure.
     fn backtrack(&mut self) -> bool {
         let Some(resume) = self.choices.pop() else {
             return false;
@@ -508,21 +336,14 @@ impl Run<'_> {
     }
 }
 
-/// The letter at a byte offset, or None past the end of the text - and None inside
-/// a letter, which no position the engine holds ever is: every one of them is a
-/// start the prefilter found or a position advanced by the length of a letter.
 fn letter_at(text: &str, at: usize) -> Option<char> {
     text.get(at..).and_then(|rest| rest.chars().next())
 }
 
-/// The letter before a byte offset, or None at the very start.
 fn letter_before(text: &str, at: usize) -> Option<char> {
     text.get(..at).and_then(|head| head.chars().next_back())
 }
 
-/// Whether an assertion holds where the run stands. Neither `^` nor `$` is given
-/// the multiline reading, so they are the two ends of the text the caller passed
-/// and nothing else.
 fn asserts(step: Step, text: &str, pos: usize) -> bool {
     match step {
         Step::Start => pos == 0,
@@ -535,7 +356,6 @@ fn asserts(step: Step, text: &str, pos: usize) -> bool {
     }
 }
 
-/// Where a group's cells say it matched, or `None` when it matched nowhere.
 fn span(cells: &[usize], group: usize) -> Option<(usize, usize)> {
     let open = group.checked_mul(2)?;
     let close = open.checked_add(1)?;
@@ -549,20 +369,14 @@ fn span(cells: &[usize], group: usize) -> Option<(usize, usize)> {
     Some((from, to))
 }
 
-/// Whether the character on one side of a position counts towards `\b`. The text
-/// running out is not a word character, which is what makes the start and the end
-/// of the text boundaries.
 fn wordish(c: Option<char>) -> bool {
     c.is_some_and(is_word)
 }
 
-/// The `\w` set, which JavaScript keeps to ASCII whatever the text holds.
 fn is_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
-/// The `\s` set as JavaScript spells it, which is neither what
-/// `char::is_whitespace` answers nor a part of it.
 fn is_space(c: char) -> bool {
     let breaks = matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}');
     let blanks = matches!(c, '\t' | '\u{b}' | '\u{c}' | ' ' | '\u{a0}' | '\u{feff}');
@@ -570,8 +384,6 @@ fn is_space(c: char) -> bool {
     breaks || blanks || wide || ('\u{2000}'..='\u{200a}').contains(&c)
 }
 
-/// Case folding as the browser half does it: the lowercase of a character when
-/// that is a single character, and the character itself when it is not.
 fn folded(c: char) -> char {
     let mut lower = c.to_lowercase();
     match (lower.next(), lower.next()) {
@@ -580,8 +392,6 @@ fn folded(c: char) -> char {
     }
 }
 
-/// The same idea the other way round, which a case-insensitive range needs:
-/// `[A-Z]` is only reached from `a` by raising it.
 fn raised(c: char) -> char {
     let mut upper = c.to_uppercase();
     match (upper.next(), upper.next()) {
@@ -591,7 +401,6 @@ fn raised(c: char) -> char {
 }
 
 impl Kind {
-    /// Whether a character belongs to the set.
     fn holds(self, c: char) -> bool {
         match self {
             Kind::Digit => c.is_ascii_digit(),
@@ -600,13 +409,6 @@ impl Kind {
         }
     }
 
-    /// Every character in the set, worked out the first time one is asked for.
-    ///
-    /// Kept rather than listed again, because the answer never changes and reading
-    /// it is not free: the spaces are found by asking about sixty-five thousand
-    /// code points, and `first_of` asks once per set named in a class. A class may
-    /// hold a thousand of them, which is a pattern somebody can type, and a query
-    /// is compiled twice per keystroke.
     fn members(self) -> &'static [char] {
         match self {
             Kind::Digit => &DIGITS,
@@ -616,17 +418,12 @@ impl Kind {
     }
 }
 
-/// The three lists, each made the first time it is wanted; see `Kind::members`.
 static DIGITS: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Digit));
 static WORDS: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Word));
 static SPACES: LazyLock<Vec<char>> = LazyLock::new(|| listed(Kind::Space));
 
-/// Every character in one set, listed by asking the set itself so that the list
-/// cannot drift from what a match tests against.
 fn listed(kind: Kind) -> Vec<char> {
     let ceiling = match kind {
-        // Digits and word characters are ASCII, and the last of the spaces the
-        // browser counts is the byte order mark.
         Kind::Digit | Kind::Word => 0x7f,
         Kind::Space => 0xfeff,
     };
@@ -638,7 +435,6 @@ fn listed(kind: Kind) -> Vec<char> {
 }
 
 impl Class {
-    /// Whether the class accepts a character, negation included.
     fn holds(&self, c: char, fold: bool) -> bool {
         let inside = self.members.iter().any(|member| member.holds(c, fold));
         inside != self.negated
@@ -646,7 +442,6 @@ impl Class {
 }
 
 impl Member {
-    /// Whether one member of a class accepts a character.
     fn holds(self, c: char, fold: bool) -> bool {
         match self {
             Member::One(one) => {
@@ -657,8 +452,6 @@ impl Member {
                 }
             }
             Member::Span(lo, hi) => {
-                // A range is written in one case and the text may arrive in the
-                // other, so both cases of the character are offered to it.
                 let range = lo..=hi;
                 range.contains(&c)
                     || (fold && (range.contains(&folded(c)) || range.contains(&raised(c))))
@@ -668,37 +461,28 @@ impl Member {
     }
 }
 
-/// A pattern being read, left to right.
 struct Parser<'a> {
     src: &'a [char],
     at: usize,
-    /// How many capturing groups have been opened, which is what numbers the
-    /// next one.
     groups: usize,
-    /// How deeply groups are nested here, which is what bounds the recursion.
     depth: usize,
 }
 
 impl Parser<'_> {
-    /// The character about to be read.
     fn peek(&self) -> Option<char> {
         self.src.get(self.at).copied()
     }
 
-    /// The character `by` further along, for the two places a decision needs to
-    /// see past the next one.
     fn ahead(&self, by: usize) -> Option<char> {
         self.src.get(self.at.checked_add(by)?).copied()
     }
 
-    /// Reads the next character, `None` at the end of the pattern.
     fn eat(&mut self) -> Option<char> {
         let c = self.peek()?;
         self.at += 1;
         Some(c)
     }
 
-    /// Reads the next character when it is the one asked for.
     fn eat_if(&mut self, c: char) -> bool {
         if self.peek() == Some(c) {
             self.at += 1;
@@ -708,8 +492,6 @@ impl Parser<'_> {
         }
     }
 
-    /// Branches separated by `|`, in the order they were written, which is the
-    /// order they are tried in.
     fn alternation(&mut self) -> Option<Node> {
         let mut branches = vec![self.sequence()?];
         while self.eat_if('|') {
@@ -722,8 +504,6 @@ impl Parser<'_> {
         Some(Node::Alt(branches))
     }
 
-    /// One branch: terms until the branch or the group ends. An empty branch is
-    /// allowed, since `(a|)` is a pattern the browser accepts.
     fn sequence(&mut self) -> Option<Node> {
         let mut terms = Vec::new();
         while let Some(c) = self.peek() {
@@ -739,14 +519,12 @@ impl Parser<'_> {
         Some(Node::Seq(terms))
     }
 
-    /// An atom and whatever quantifier follows it.
     fn term(&mut self) -> Option<Node> {
         let atom = self.atom()?;
         match self.quantifier() {
             Quantifier::Absent => Some(atom),
             Quantifier::Broken => None,
             Quantifier::Given(limits) => {
-                // A quantifier on a quantifier is not something to guess at.
                 if matches!(self.peek(), Some('*' | '+' | '?' | '{')) {
                     return None;
                 }
@@ -755,7 +533,6 @@ impl Parser<'_> {
         }
     }
 
-    /// The smallest thing a quantifier can be applied to.
     fn atom(&mut self) -> Option<Node> {
         let c = self.eat()?;
         match c {
@@ -765,17 +542,12 @@ impl Parser<'_> {
             '(' => self.group(),
             '[' => self.class().map(Node::Class),
             '\\' => self.escape(),
-            // A quantifier here has nothing before it to repeat.
             '*' | '+' | '?' | '{' => None,
             _ => Some(Node::Char(c)),
         }
     }
 
-    /// A group, capturing unless it was opened `(?:`.
     fn group(&mut self) -> Option<Node> {
-        // `(?:` is the only `(?` this understands: lookahead, lookbehind, named
-        // groups and inline flags all come back as a pattern that does not
-        // compile.
         let number = if self.peek() == Some('?') {
             if self.ahead(1) != Some(':') {
                 return None;
@@ -795,7 +567,6 @@ impl Parser<'_> {
         let inner = self.alternation()?;
         self.depth = self.depth.saturating_sub(1);
 
-        // A group left open is a query mid-typing.
         if !self.eat_if(')') {
             return None;
         }
@@ -803,9 +574,7 @@ impl Parser<'_> {
         Some(Node::Group(number, Box::new(inner)))
     }
 
-    /// What a backslash outside a class makes of the character after it.
     fn escape(&mut self) -> Option<Node> {
-        // A pattern ending in a lone backslash is one still being typed.
         let c = self.eat()?;
 
         if let Some((kind, negated)) = named_set(c) {
@@ -819,27 +588,21 @@ impl Parser<'_> {
         }
     }
 
-    /// Everything between `[` and its `]`.
     fn class(&mut self) -> Option<Class> {
         let negated = self.eat_if('^');
         let mut members = Vec::new();
 
-        // A `]` straight after the bracket is a plain `]`, which is the only way
-        // a class of brackets can be written.
         if self.eat_if(']') {
             members.push(Member::One(']'));
         }
 
         loop {
-            // Running out before the `]` is a class still being typed.
             let c = self.peek()?;
             if c == ']' {
                 self.at += 1;
                 break;
             }
 
-            // A dash reached here opens no range: it either starts the class or
-            // follows a set like `\d`, and the browser reads both as a dash.
             if c == '-' {
                 self.at += 1;
                 members.push(Member::One('-'));
@@ -857,14 +620,11 @@ impl Parser<'_> {
             let second = self.class_atom()?;
             match (first, second) {
                 (Member::One(lo), Member::One(hi)) => {
-                    // A range running backwards is an error in the browser too.
                     if lo > hi {
                         return None;
                     }
                     members.push(Member::Span(lo, hi));
                 }
-                // A range takes two single characters, so `[\d-x]` is a set, a
-                // dash, and an x.
                 (start, end) => {
                     members.push(start);
                     members.push(Member::One('-'));
@@ -876,7 +636,6 @@ impl Parser<'_> {
         Some(Class { negated, members })
     }
 
-    /// One member as written inside a class, before any range is made of it.
     fn class_atom(&mut self) -> Option<Member> {
         let c = self.eat()?;
         if c != '\\' {
@@ -888,8 +647,6 @@ impl Parser<'_> {
             return Some(Member::Set(kind, negated));
         }
 
-        // Inside a class `\b` is the backspace character rather than a word
-        // boundary, which is what the browser makes of it as well.
         if escaped == 'b' {
             return Some(Member::One('\u{8}'));
         }
@@ -897,7 +654,6 @@ impl Parser<'_> {
         literal_escape(escaped, self.peek()).map(Member::One)
     }
 
-    /// The quantifier following an atom, if one does.
     fn quantifier(&mut self) -> Quantifier {
         let Some(c) = self.peek() else {
             return Quantifier::Absent;
@@ -932,9 +688,6 @@ impl Parser<'_> {
         })
     }
 
-    /// The `{n}`, `{n,}` and `{n,m}` forms. A `{` that opens none of them is a
-    /// pattern this refuses rather than a literal brace, which is the one place
-    /// it is stricter than the browser.
     fn braces(&mut self) -> Option<(usize, Option<usize>)> {
         self.at += 1;
         let min = self.number()?;
@@ -959,8 +712,6 @@ impl Parser<'_> {
         Some((min, max))
     }
 
-    /// A run of digits. `None` when there are none, and when they name a count
-    /// too large to write out.
     fn number(&mut self) -> Option<usize> {
         let mut value: usize = 0;
         let mut seen = false;
@@ -984,7 +735,6 @@ impl Parser<'_> {
     }
 }
 
-/// The set a class escape names, and whether it was the negated spelling.
 fn named_set(c: char) -> Option<(Kind, bool)> {
     match c {
         'd' => Some((Kind::Digit, false)),
@@ -997,7 +747,6 @@ fn named_set(c: char) -> Option<(Kind, bool)> {
     }
 }
 
-/// A class escape standing on its own is a class of one member.
 fn one_set(kind: Kind, negated: bool) -> Node {
     Node::Class(Class {
         negated: false,
@@ -1005,10 +754,6 @@ fn one_set(kind: Kind, negated: bool) -> Node {
     })
 }
 
-/// The escapes that stand for a single character: the named few, and a backslash
-/// before punctuation, which is that punctuation. `None` for a letter or a digit
-/// that names nothing, since `\1` and `\p{L}` are patterns this cannot run rather
-/// than patterns meaning `1` and `p`.
 fn literal_escape(c: char, next: Option<char>) -> Option<char> {
     match c {
         'n' => Some('\n'),
@@ -1016,8 +761,6 @@ fn literal_escape(c: char, next: Option<char>) -> Option<char> {
         'r' => Some('\r'),
         'f' => Some('\u{c}'),
         'v' => Some('\u{b}'),
-        // `\0` is the null character on its own, but `\01` is an octal escape,
-        // which is not one of these.
         '0' if !next.is_some_and(|d| d.is_ascii_digit()) => Some('\0'),
         _ if !c.is_alphanumeric() => Some(c),
         _ => None,
@@ -1025,8 +768,6 @@ fn literal_escape(c: char, next: Option<char>) -> Option<char> {
 }
 
 impl First {
-    /// The table for a list of characters, or `None` when there are none, or
-    /// more than the test is worth making for.
     fn new(chars: &[char]) -> Option<First> {
         if chars.is_empty() || chars.len() > FIRST_LIMIT {
             return None;
@@ -1046,8 +787,6 @@ impl First {
         Some(First { ascii, wide })
     }
 
-    /// Whether the set holds a character. A pattern that ignores case is offered
-    /// both cases of it, exactly as a match against that character would be.
     fn holds(&self, c: char, fold: bool) -> bool {
         if self.has(c) {
             return true;
@@ -1056,7 +795,6 @@ impl First {
         fold && (self.has(folded(c)) || self.has(raised(c)))
     }
 
-    /// Whether the set holds this very character.
     fn has(&self, c: char) -> bool {
         usize::try_from(u32::from(c))
             .ok()
@@ -1066,14 +804,6 @@ impl First {
     }
 }
 
-/// The characters a match of this node can begin with, or `None` when there is
-/// no answer worth having.
-///
-/// What rests on this is that the list is never short of a character: one left
-/// out is a place the search would step over, so everything uncertain, from a
-/// quantifier that may take nothing to an anchor that takes no character at all,
-/// has to come back as no answer. No answer means no skipping, which is the
-/// search this had before there was a list.
 fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
     match node {
         Node::Char(c) => {
@@ -1083,8 +813,6 @@ fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
         }
         Node::Class(class) => class_first(class, fold),
         Node::Group(_, inner) => first_of(inner, fold),
-        // Only the head of a sequence can begin it, and a sequence of nothing is
-        // begun by every place there is.
         Node::Seq(nodes) => first_of(nodes.first()?, fold),
         Node::Alt(branches) => {
             let mut out = Vec::new();
@@ -1096,22 +824,16 @@ fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
             Some(out)
         }
         Node::Repeat(inner, limits) => {
-            // A quantifier that may take nothing leaves whatever follows it to
-            // begin the match, and what follows is not looked at here.
             if limits.min == 0 {
                 return None;
             }
             first_of(inner, fold)
         }
-        // A dot is very nearly every character there is, and an anchor takes no
-        // character at all, so neither narrows anything down.
         Node::Any | Node::Start | Node::End | Node::Boundary(_) => None,
     }
 }
 
-/// The characters a class can begin with, while it lists few enough of them.
 fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
-    // A negated class holds nearly everything, which is nothing to skip on.
     if class.negated {
         return None;
     }
@@ -1121,8 +843,6 @@ fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
         match *member {
             Member::One(c) => spread(&mut out, c, fold)?,
             Member::Span(lo, hi) => {
-                // A long range gives up part way through, since `spread` refuses
-                // once the list is as long as it may be.
                 for value in u32::from(lo)..=u32::from(hi) {
                     let Some(c) = char::from_u32(value) else {
                         continue;
@@ -1144,8 +864,6 @@ fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
     Some(out)
 }
 
-/// Adds a character to the list, with both its cases when the pattern ignores
-/// case, since a match would take either of them here.
 fn spread(out: &mut Vec<char>, c: char, fold: bool) -> Option<()> {
     add(out, c)?;
     if fold {
@@ -1155,8 +873,6 @@ fn spread(out: &mut Vec<char>, c: char, fold: bool) -> Option<()> {
     Some(())
 }
 
-/// Adds a character the list has not got yet, and refuses once it holds as many
-/// as testing every place in a note is worth.
 fn add(out: &mut Vec<char>, c: char) -> Option<()> {
     if out.contains(&c) {
         return Some(());
@@ -1170,8 +886,6 @@ fn add(out: &mut Vec<char>, c: char) -> Option<()> {
 }
 
 impl Program {
-    /// Adds an instruction, refusing once the program has grown past anything a
-    /// search query could mean.
     fn push(&mut self, step: Step) -> Option<usize> {
         if self.steps.len() >= PROGRAM_LIMIT {
             return None;
@@ -1182,21 +896,17 @@ impl Program {
         Some(at)
     }
 
-    /// Replaces an instruction, which is how a branch written before its target
-    /// was known is given that target.
     fn patch(&mut self, at: usize, step: Step) -> Option<()> {
         *self.steps.get_mut(at)? = step;
         Some(())
     }
 
-    /// Takes the next cell, for a repetition to remember where a round began.
     fn cell(&mut self) -> Option<usize> {
         let taken = self.cells;
         self.cells = self.cells.checked_add(1)?;
         Some(taken)
     }
 
-    /// Writes one node of the tree out as instructions.
     fn emit(&mut self, node: &Node) -> Option<()> {
         match node {
             Node::Char(c) => {
@@ -1242,8 +952,6 @@ impl Program {
         Some(())
     }
 
-    /// Branches, each falling through to the next when the rest of the pattern
-    /// cannot go on from it.
     fn emit_alt(&mut self, branches: &[Node]) -> Option<()> {
         let last = branches.len().checked_sub(1)?;
         let mut leaving = Vec::new();
@@ -1277,11 +985,7 @@ impl Program {
         Some(())
     }
 
-    /// A quantified atom. The rounds it must take are written out one after
-    /// another, and whatever it may take on top of them follows.
     fn emit_repeat(&mut self, node: &Node, limits: Limits) -> Option<()> {
-        // Every round starts with the groups inside the atom empty again, which
-        // is what the browser reports for `(?:(a)|b)+` over "ab".
         let clear = if let Some((low, high)) = groups_in(node) {
             let from = low.checked_add(1)?.checked_mul(2)?;
             let to = high.checked_add(1)?.checked_mul(2)?.checked_add(1)?;
@@ -1302,7 +1006,6 @@ impl Program {
         }
     }
 
-    /// One round of a repetition: what it forgets, then the atom itself.
     fn emit_round(&mut self, node: &Node, clear: Option<Step>) -> Option<()> {
         if let Some(step) = clear {
             self.push(step)?;
@@ -1310,8 +1013,6 @@ impl Program {
         self.emit(node)
     }
 
-    /// The unbounded forms. A cell holds where the round began, so a body that
-    /// can match nothing stops instead of going round for ever.
     fn emit_star(&mut self, node: &Node, clear: Option<Step>, lazy: bool) -> Option<()> {
         let cell = self.cell()?;
         let split = self.push(Step::Jump(0))?;
@@ -1326,8 +1027,6 @@ impl Program {
         Some(())
     }
 
-    /// The tail of a `{n,m}`: the rounds it may take on top of the ones it must,
-    /// where skipping one skips all that follow.
     fn emit_optional(
         &mut self,
         node: &Node,
@@ -1352,8 +1051,6 @@ impl Program {
     }
 }
 
-/// A `Split` that tries the body first, or the way out first when the quantifier
-/// is lazy.
 fn branch(body: usize, after: usize, lazy: bool) -> Step {
     if lazy {
         Step::Split {
@@ -1368,9 +1065,6 @@ fn branch(body: usize, after: usize, lazy: bool) -> Step {
     }
 }
 
-/// The lowest and highest capture number inside a node. Groups are numbered left
-/// to right, so everything inside one node is a run of numbers, which is what
-/// lets a repetition forget them all at once.
 fn groups_in(node: &Node) -> Option<(usize, usize)> {
     match node {
         Node::Group(number, inner) => {
@@ -1395,50 +1089,37 @@ mod tests {
     use super::{Kind, Match, Pattern, BUDGET};
     use std::cell::Cell;
 
-    /// One search on a budget of its own, which is what a case here is: the engine
-    /// shares one budget over a whole note, and every case below is one subject
-    /// asked about once. See `find_within`.
     fn find(pattern: &Pattern, text: &str, at: usize) -> Option<Match> {
         pattern.find_within(text, at, &Cell::new(BUDGET))
     }
 
-    /// The first match a pattern makes in a subject. A match names where it sits
-    /// rather than carrying the letters, and it names it in the subject's own bytes.
     fn run(source: &str, subject: &str, fold: bool, from: usize) -> Option<Match> {
         find(&Pattern::compile(source, fold)?, subject, from)
     }
 
-    /// What the first match covers.
     fn first(source: &str, subject: &str) -> Option<String> {
         let found = run(source, subject, false, 0)?;
         Some(subject.get(found.from..found.to)?.to_owned())
     }
 
-    /// The same for a pattern that ignores case.
     fn folding(source: &str, subject: &str) -> Option<String> {
         let found = run(source, subject, true, 0)?;
         Some(subject.get(found.from..found.to)?.to_owned())
     }
 
-    /// Where the first match at or after `from` sits, in bytes.
     fn spans(source: &str, subject: &str, from: usize) -> Option<(usize, usize)> {
         let found = run(source, subject, false, from)?;
         Some((found.from, found.to))
     }
 
-    /// What the capturing groups caught.
     fn caught(source: &str, subject: &str) -> Option<Vec<String>> {
         Some(run(source, subject, false, 0)?.groups)
     }
 
-    /// An answer spelled as a list of words, which is how the groups of a match
-    /// read most clearly.
     fn words(list: &[&str]) -> Vec<String> {
         list.iter().copied().map(String::from).collect()
     }
 
-    /// The characters a pattern will consider as a starting point, in order, or
-    /// `None` when it worked out nothing worth knowing.
     fn starts(source: &str, fold: bool) -> Option<Vec<char>> {
         let first = Pattern::compile(source, fold)?.first?;
         let mut out: Vec<char> = (0..128u32)
@@ -1450,13 +1131,10 @@ mod tests {
         Some(out)
     }
 
-    /// Whether a pattern knows what its match can begin with at all.
     fn knows_start(source: &str) -> bool {
         Pattern::compile(source, false).is_some_and(|pattern| pattern.first.is_some())
     }
 
-    /// The same pattern with the prefilter taken off, which is the search this
-    /// had before there was a set of first characters to skip on.
     fn without_filter(mut pattern: Pattern) -> Pattern {
         pattern.first = None;
         pattern
@@ -1493,10 +1171,6 @@ mod tests {
     }
 
     #[test]
-    /// A match names where it sits in the bytes of the subject, which is what the
-    /// rest of the search counts in: a span in a note, a range in a line. Three
-    /// two-byte letters and then the digits, so the digits start at the sixth byte
-    /// and not at the third letter.
     fn a_match_counts_in_bytes_the_way_a_span_does() {
         let found = Pattern::compile(r"\d+", false).and_then(|p| find(&p, "äöü42", 0));
         assert_eq!(
@@ -1517,10 +1191,6 @@ mod tests {
         assert_eq!(first("[abc]", "xyz"), None);
     }
 
-    /// A set is listed by asking it, and listed once: the spaces take sixty-five
-    /// thousand questions to find, and a class may name the set a thousand times
-    /// over. The saving is invisible in an answer, so what is checked is that a
-    /// second ask hands back the first list rather than making another.
     #[test]
     fn a_set_lists_itself_once() {
         let spaces = Kind::Space.members();
@@ -1528,8 +1198,6 @@ mod tests {
         assert!(std::ptr::eq(spaces, Kind::Space.members()));
         assert!(spaces.contains(&' ') && spaces.contains(&'\t'));
         assert!(!spaces.contains(&'a'));
-        // And the list is what the set itself says, which is the one thing it may
-        // not drift from.
         assert!(spaces.iter().all(|&one| Kind::Space.holds(one)));
         assert_eq!(Kind::Digit.members().len(), 10);
     }
@@ -1548,8 +1216,6 @@ mod tests {
         assert_eq!(first("[a-]+", "-a-").as_deref(), Some("-a-"));
         assert_eq!(first(r"[\d\-_]+", "x-4_y").as_deref(), Some("-4_"));
         assert_eq!(first(r"[\w-]+", "! a-b").as_deref(), Some("a-b"));
-        // A set at one end of a dash is no range, so this is a, a dash, or a
-        // digit, and never the characters in between.
         assert_eq!(first(r"[a-\d]+", "qb-5").as_deref(), Some("-5"));
     }
 
@@ -1595,8 +1261,6 @@ mod tests {
         assert_eq!(spans(r"\bfoo", "foo", 0), Some((0, 3)));
         assert_eq!(spans(r"\Bar", "bar car", 0), Some((1, 3)));
         assert_eq!(first(r"\Bfoo", "a foo"), None);
-        // The boundary is judged against the whole text, not against the place
-        // the search was told to start.
         assert_eq!(spans(r"\bcat", "the cat", 4), Some((4, 7)));
         assert_eq!(spans(r"\bat", "the cat", 5), None);
     }
@@ -1609,10 +1273,8 @@ mod tests {
         assert_eq!(first("b$", "abc"), None);
         assert_eq!(spans("^abc$", "abc", 0), Some((0, 3)));
         assert_eq!(spans("^$", "", 0), Some((0, 0)));
-        // Without the multiline flag a line of a text is not the text.
         assert_eq!(first("^b", "a\nb"), None);
         assert_eq!(first("a$", "a\nb"), None);
-        // A start further along the text is still not the start of it.
         assert_eq!(spans("^a", "aa", 1), None);
     }
 
@@ -1794,9 +1456,6 @@ mod tests {
         );
     }
 
-    /// The step budget covers matching; this is the parse. A pattern longer than
-    /// anybody types is a tree of a node per character, held all at once, for a
-    /// program the instruction cap refuses anyway.
     #[test]
     fn a_pattern_longer_than_a_search_field_does_not_compile() {
         assert!(Pattern::compile(&"a".repeat(super::SOURCE_LIMIT), false).is_some());
@@ -1815,8 +1474,6 @@ mod tests {
         assert_eq!(starts("(?:ab)+", false), Some(vec!['a']));
         assert_eq!(starts("(a)(b)", false), Some(vec!['a']));
         assert_eq!(starts(r"\d+", false), Some(('0'..='9').collect()));
-        // A set is listed by asking the set itself, so `\w` is every character
-        // a word is made of and `\s` reaches past ASCII.
         assert_eq!(starts(r"\w", false).map(|set| set.len()), Some(63));
         assert_eq!(starts(r"\s", false).map(|set| set.len()), Some(25));
         assert_eq!(starts("ötest", false), Some(vec!['ö']));
@@ -1854,7 +1511,6 @@ mod tests {
             r"\W",
             r"\S",
             "[^abc]",
-            // A set larger than the test is worth making stops being one.
             "[ -~]x",
         ] {
             assert!(
@@ -1881,12 +1537,9 @@ mod tests {
             ("a{2,3}", "a aa aaaa"),
             (r"\w+@\w+", "write to bob@host now"),
             ("ötest", "aa ötest bb"),
-            // A range written in one case has to go on taking the other, and a
-            // character outside ASCII has to be found in the list beside it.
             ("[A-Z]q", "aq Bq zq"),
             ("Ötest", "aa ötest bb"),
             (r"\s+q", "a q  q\tq\u{a0}q"),
-            // The ones that work no set out have to go on answering the same.
             ("[^a]b", "xb ab"),
             ("a*b", "xxb"),
             ("^a.*$", "abc"),
@@ -1905,7 +1558,6 @@ mod tests {
                 let plain = without_filter(plain);
 
                 for at in 0..=subject.len() {
-                    // A place inside a letter is not a place a search begins.
                     if !subject.is_char_boundary(at) {
                         continue;
                     }
@@ -1919,8 +1571,6 @@ mod tests {
         }
     }
 
-    /// A small stream of numbers, so that the patterns tried at random are the
-    /// same ones on every run.
     fn roll(seed: &mut u64, ceiling: usize) -> usize {
         *seed = seed
             .wrapping_mul(6_364_136_223_846_793_005)
@@ -1979,7 +1629,6 @@ mod tests {
             checked += 1;
         }
 
-        // The run says nothing if nearly everything it made up was unreadable.
         assert!(checked > 500, "only {checked} of the patterns compiled");
     }
 

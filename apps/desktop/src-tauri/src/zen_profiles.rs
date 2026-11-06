@@ -1,27 +1,3 @@
-//! The profiles Zen keeps on this machine, and the file of each that holds its
-//! spaces and tabs.
-//!
-//! Zen is Firefox underneath, so it keeps a `profiles.ini` in its own folder - the
-//! one Firefox keeps in `Mozilla/Firefox`, under the name Zen builds with, `zen` -
-//! and a profile folder per profile. Arc's first run lists the browsers on the
-//! machine by name; this lists Zen's profiles the same way, out of Zen's own list,
-//! so nobody hunts for a folder called `x7k2.Default (release)`.
-//!
-//! The sidebar is in `zen-sessions.jsonlz4` in the profile, with backups beside it;
-//! a profile from before that file holds the same lists in Firefox's own session,
-//! `sessionstore-backups/recovery.jsonlz4`, all but the spaces and the pinned tabs,
-//! which a Zen up to 1.17 kept in `places.sqlite` (`zen_workspaces`, `zen_pins`).
-//! That database also holds the bookmarks, and which spaces each is shown in; see
-//! `read_zen_places`. The sites' marks, the history and the search engines are
-//! Firefox's files and read the way Firefox's are (`browser_data.rs`). Those few
-//! files, by those names, are all this reads, and only out of a profile Zen lists: a
-//! narrow way past paths.rs, as `obsidian_vaults.rs` is. Never written, and read while Zen runs: `fs::read` opens a
-//! file sharing it for reading, writing and deleting, which is how Zen replaces it,
-//! and the bytes are a copy the moment they are read. The unpacking is the app's;
-//! see `import/mozlz4.ts`.
-//!
-//! Desktop only: a phone's Zen, where there is one, is somebody else's sandbox.
-
 use rusqlite::types::ValueRef;
 use rusqlite::Connection;
 use serde_json::{json, Map, Value};
@@ -36,16 +12,10 @@ use crate::browser_profiles::{entries_in, installed_defaults};
 use crate::firefox_profiles::{tree_of, FAVICONS, PLACES, SEARCH};
 use crate::paths::folder_named;
 
-/// One profile, the way Zen's profile manager shows it.
 pub type ZenProfile = Profile;
 
-/// Where a drive keeps a Zen of its own, so a probe never reads the reader's: the
-/// folder `profiles.ini` is in. The same rule as `NIB_SPACES_DIR`.
 const ZEN_DIR: &str = "NIB_ZEN_DIR";
 
-/// The session files, in the order they are worth reading: Zen's own, its last
-/// clean copy, and Firefox's session, which carries the same lists on each window.
-/// The newest of Zen's dated backups goes after its clean copy; see `files_of`.
 const SESSIONS: [&str; 4] = [
     "zen-sessions.jsonlz4",
     "zen-sessions-backup/clean.jsonlz4",
@@ -53,31 +23,20 @@ const SESSIONS: [&str; 4] = [
     "sessionstore.jsonlz4",
 ];
 
-/// Where Zen keeps its dated backups, and what each is called.
 const BACKUPS: &str = "zen-sessions-backup";
 const BACKUP_PREFIX: &str = "zen-sessions-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
 
-/// The profiles on this machine that hold a session, the one Zen opens first in
-/// front. None where Zen has never run.
 #[tauri::command(async)]
 pub fn zen_profiles() -> Vec<ZenProfile> {
     listed()
 }
 
-/// One session file of a profile Zen lists, as base64, which is how bytes cross the
-/// bridge.
 #[tauri::command(async)]
 pub fn read_zen_file(profile: String, file: String) -> Result<String, String> {
     read_listed("Zen", &profile, &file, &listed())
 }
 
-/// What a listed profile keeps in `places.sqlite`, as one JSON object: `bookmarks`,
-/// the tree `read_firefox_places` answers; and the rows of Zen's own tables by their
-/// column names, each table's empty where it is not there - `spaces`
-/// (`zen_workspaces`) and `pins` (`zen_pins`), which a Zen up to 1.17 kept its
-/// sidebar in, and `assigned` (`zen_bookmarks_workspaces`), the spaces a bookmark is
-/// shown in. The app reads what they mean; see `import/zen.ts`.
 #[tauri::command(async)]
 pub fn read_zen_places(profile: String) -> Result<String, String> {
     let path = listed_file("Zen", &profile, PLACES, &listed())?;
@@ -98,9 +57,6 @@ fn places_of(db: &Connection) -> Value {
     })
 }
 
-/// Every row a query answers, each by its column names; none where the table is not
-/// there, which is every table Zen added in a version this profile never ran. A
-/// blob is nothing.
 fn table_rows(db: &Connection, query: &str) -> Vec<Value> {
     let Ok(mut statement) = db.prepare(query) else {
         return Vec::new();
@@ -132,9 +88,6 @@ pub(crate) fn listed() -> Vec<ZenProfile> {
     once(homes().iter().flat_map(|home| profiles_in(home)))
 }
 
-/// The folders Zen keeps `profiles.ini` in: its own folder in the system's
-/// application data, and on Linux the dotted folder Firefox's lineage uses and the
-/// Flatpak's own home.
 fn homes() -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(ZEN_DIR).as_deref()) {
         return vec![named];
@@ -154,15 +107,10 @@ fn homes() -> Vec<PathBuf> {
     found
 }
 
-/// The profiles of one `profiles.ini` that hold a session: the one an install
-/// opens first, then the one marked default, then the rest in the file's order.
 fn profiles_in(home: &Path) -> Vec<ZenProfile> {
     ini_profiles(home, files_of)
 }
 
-/// The session files a profile holds, in the order they are worth reading, and the
-/// databases and the search engines after them. A profile with no session is not
-/// listed: there is no sidebar to bring.
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found: Vec<String> = SESSIONS
         .iter()
@@ -197,8 +145,6 @@ fn files_of(profile: &Path) -> Vec<String> {
     found
 }
 
-/// The file asked for, when the profile is one Zen lists and the file is one of the
-/// session files that profile was listed with: never a path the caller made up.
 #[cfg(test)]
 fn known(profile: &str, file: &str, listed: &[ZenProfile]) -> Result<PathBuf, String> {
     crate::browser_profiles::known("Zen", profile, file, listed)

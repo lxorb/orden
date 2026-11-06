@@ -1,39 +1,15 @@
-//! The `nib://` scheme: how a link written somewhere else on the machine reaches
-//! the app.
-//!
-//! A shortcut, a launcher, a note in another program: all any of them can do is
-//! hand the system an address. This module owns the arriving half of that - the
-//! link the app was launched by, which lands before there is a window to give it
-//! to, and the link that arrives while the app is already up, which goes to the
-//! window as an event. What a link *means* is the window's, which holds the
-//! spaces and the command registry; see apps/desktop/src/lib/automation.
-//!
-//! The same shape `launch` uses for the pages a command line names, and for the
-//! same reason: a launch argument reaches the app before anything is listening,
-//! so it waits here until the window asks.
-
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_deep_link::DeepLinkExt as _;
 
-/// What the window is told when a link arrives while the app is already running.
 const OPENED: &str = "nib://open-url";
 
-/// Links the app was launched by, waiting for the window to ask for them.
 #[derive(Default)]
 pub struct Pending(pub Mutex<Vec<String>>);
 
-/// Starts listening for links, and puts aside the one that started the app.
-///
-/// On Linux, and in a debug build on Windows, the scheme is registered here
-/// rather than by an installer: there is no installer in either case, and a
-/// scheme nothing has registered is a link that opens nothing at all. A release
-/// on Windows and macOS is registered by the bundle itself.
 pub fn watch(app: &AppHandle) {
     #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
     {
-        // Nothing to do about a refusal: the app runs, and a link into it does
-        // not. Which is exactly what happens today.
         let _ = app.deep_link().register_all();
     }
 
@@ -43,8 +19,6 @@ pub fn watch(app: &AppHandle) {
     let opened = app.clone();
     app.deep_link().on_open_url(move |event| {
         let urls = said(event.urls());
-        // A reminder's press is the reminders' own, and a Done never brings the window
-        // forward; see reminders.rs.
         #[cfg(desktop)]
         let urls: Vec<String> = urls
             .into_iter()
@@ -56,13 +30,10 @@ pub fn watch(app: &AppHandle) {
 
         #[cfg(desktop)]
         handing(&opened, urls);
-        // A phone has one window and the system has already brought it up.
         #[cfg(not(desktop))]
         let _ = opened.emit_to("main", OPENED, urls);
     });
 
-    // The link that started the app, which no handler above can have heard: it
-    // was delivered before this function existed.
     let launched = said(
         app.deep_link()
             .get_current()
@@ -136,9 +107,6 @@ fn link_window(windows: &[LinkWindow]) -> Option<String> {
         .map(|one| one.label.clone())
 }
 
-/// Whether the app was started by nothing but a reminder's Done, which is answered
-/// without the window coming up (see reminders.rs), or by an agent's `nib mcp`, which never
-/// brings it up (`launch::BACKGROUND_FLAG`, #1091).
 #[cfg(desktop)]
 pub fn launched_quietly(app: &AppHandle) -> bool {
     if crate::launch::in_background(&std::env::args_os().collect::<Vec<_>>()) {
@@ -158,8 +126,6 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
     quiet
 }
 
-/// Handed to the window once it is ready; clearing them stops a reload from
-/// following the same link a second time.
 #[tauri::command]
 pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     let Ok(mut urls) = pending.0.lock() else {
@@ -169,19 +135,8 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     std::mem::take(&mut *urls)
 }
 
-/// The scheme a link into the app is written in, as the platform hands it over.
 const SCHEME: &str = "nib:";
 
-/// The links as the window reads them: strings, and only `nib:` ones.
-///
-/// Only those, because on a Mac the plugin hears everything the system asks the
-/// app to open: a web page once nib is the browser, which is the pages' road (see
-/// `hand_over` in launch.rs), and a `file://` address somebody forced on it, which
-/// nib opens nothing of. Neither is a link into the app.
-///
-/// Written against anything that can say itself rather than against the URL type
-/// the plugin hands over, so this module has no opinion about which crate parsed
-/// the address.
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
     urls.iter()
         .map(ToString::to_string)
@@ -189,8 +144,6 @@ fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
         .collect()
 }
 
-/// Whether an address is a link into this app, in whichever case the scheme was
-/// written.
 fn is_ours(url: &str) -> bool {
     url.trim_start()
         .get(..SCHEME.len())

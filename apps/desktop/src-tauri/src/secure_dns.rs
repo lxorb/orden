@@ -1,26 +1,9 @@
-//! Which DNS the web tabs' pages look names up with: Settings › General › DNS.
-//!
-//! "Can I overwrite DNS servers I use?" and "DNS over HTTPS?" (#766, #767, from #678).
-//! The pages asked the system's resolver, and nothing in the app could change that.
-//! Chromium itself looks names up two ways: through the system, or over HTTPS from a
-//! provider (`dns_over_https.mode` and `.templates`, the browser's own Secure DNS). A
-//! server of somebody's own over plain DNS is not one of them in Chromium; a provider of
-//! somebody's own, by its address, is. So the setting is Chrome's, with the same
-//! choices: the system's, the system's upgraded to HTTPS where its provider has it
-//! (Chrome's default), a provider from the list, or one's own.
-//!
-//! Kept in the app's own settings folder (`dns.json`) and told to the engine as the
-//! app starts and the moment it changes: Chromium reads both preferences live. Only on
-//! Orden's own Chromium; elsewhere Settings does not offer it.
-
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-/// Where the choice is kept, in the app's own settings folder.
 const FILE: &str = "dns.json";
 
-/// The providers the list offers, by Chrome's name for them and their address.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const PROVIDERS: [(&str, &str); 3] = [
     ("cloudflare", "https://chrome.cloudflare-dns.com/dns-query"),
@@ -28,20 +11,15 @@ pub const PROVIDERS: [(&str, &str); 3] = [
     ("quad9", "https://dns.quad9.net/dns-query"),
 ];
 
-/// Which DNS the pages use.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Dns {
-    /// `system`, `automatic` (the system's, over HTTPS where its provider has it), one
-    /// of `PROVIDERS` by name, or `custom`.
     pub choice: String,
-    /// The address of one's own provider, kept for when `custom` is chosen again.
     #[serde(default)]
     pub custom: String,
 }
 
 impl Default for Dns {
-    /// Chrome's own default.
     fn default() -> Self {
         Self {
             choice: "automatic".to_string(),
@@ -51,9 +29,6 @@ impl Default for Dns {
 }
 
 impl Dns {
-    /// What Chromium is told: its mode, and the provider's address where there is one.
-    /// A custom choice with no address that will do is the system's over HTTPS where it
-    /// can, as Chrome does when its own field is left empty.
     #[cfg_attr(not(feature = "cef"), allow(dead_code))]
     pub fn told(&self) -> (&'static str, String) {
         match self.choice.as_str() {
@@ -69,7 +44,6 @@ impl Dns {
     }
 }
 
-/// Whether an address is one Chromium will ask over HTTPS: `https://`, and a host.
 pub fn usable(address: &str) -> bool {
     address
         .trim()
@@ -77,7 +51,6 @@ pub fn usable(address: &str) -> bool {
         .is_some_and(|rest| !rest.is_empty() && !rest.starts_with('/') && !rest.contains(' '))
 }
 
-/// The choice kept in `config`, or Chrome's default.
 fn kept(config: &Path) -> Dns {
     std::fs::read_to_string(config.join(FILE))
         .ok()
@@ -85,8 +58,6 @@ fn kept(config: &Path) -> Dns {
         .unwrap_or_default()
 }
 
-/// The DNS Settings shows, or `None` where the engine is not Orden's own Chromium and
-/// cannot be told.
 #[tauri::command(async)]
 pub fn dns_chosen(app: tauri::AppHandle<crate::Engine>) -> Result<Option<Dns>, String> {
     if !cfg!(feature = "cef") {
@@ -95,7 +66,6 @@ pub fn dns_chosen(app: tauri::AppHandle<crate::Engine>) -> Result<Option<Dns>, S
     Ok(Some(kept(&crate::paths::config_dir(&app)?)))
 }
 
-/// A DNS chosen in Settings: kept, and told to the engine at once.
 #[tauri::command(async)]
 pub fn dns_choose(app: tauri::AppHandle<crate::Engine>, dns: Dns) -> Result<(), String> {
     if dns.choice == "custom" && !dns.custom.trim().is_empty() && !usable(&dns.custom) {
@@ -109,7 +79,6 @@ pub fn dns_choose(app: tauri::AppHandle<crate::Engine>, dns: Dns) -> Result<(), 
     Ok(())
 }
 
-/// The kept choice told to the engine, as the app starts.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub fn start(app: &tauri::AppHandle<crate::Engine>) {
     if let Ok(config) = crate::paths::config_dir(app) {
@@ -123,12 +92,9 @@ mod engine {
 
     use super::Dns;
 
-    /// Chromium's two preferences, in the browser's own state rather than a profile's:
-    /// every page looks names up through the one resolver.
     const MODE: &str = "dns_over_https.mode";
     const TEMPLATES: &str = "dns_over_https.templates";
 
-    /// Both preferences written, on CEF's UI thread, the only one they may be written on.
     pub fn tell(app: &tauri::AppHandle<crate::Engine>, dns: &Dns) {
         let (mode, templates) = dns.told();
         let app = app.clone();
@@ -142,8 +108,6 @@ mod engine {
                     return;
                 };
                 value.set_string(Some(&CefString::from(said)));
-                // Something in it from the start, as in spelling.rs: CEF refuses a write
-                // whose `error` reaches it as no string at all.
                 let mut error = CefString::from(" ");
                 if manager.set_preference(
                     Some(&CefString::from(name)),
@@ -171,7 +135,6 @@ mod engine {
 mod engine {
     use super::Dns;
 
-    /// Nothing to tell: these engines look names up the system's way.
     pub fn tell(_app: &tauri::AppHandle<crate::Engine>, _dns: &Dns) {}
 }
 

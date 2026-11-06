@@ -1,10 +1,3 @@
-//! Looks the reader can install: a folder of `.css` files beside the app's own
-//! config, plus the two files that are always there - `custom.css`, applied on
-//! top of whichever theme is active, and `snippets.json`. Dropping a file into
-//! that folder is all it takes to install a theme, which is the contract Typora
-//! uses. The scratchpad lives beside them, as the app's own note rather than a
-//! space's.
-
 use serde::Serialize;
 use std::ffi::OsStr;
 use std::fs;
@@ -14,25 +7,14 @@ use tauri::AppHandle;
 
 use crate::paths::{cannot, config_dir, folded, inside, made, write_atomically};
 
-/// What `custom.css` says when it is first made.
 const CUSTOM_CSS: &str = "/* Loaded after the active theme. Anything here wins. */\n";
 
-/// What the scratchpad says when it is first made: nothing, so the first key typed
-/// into it is the first thing in it.
 const SCRATCHPAD: &str = "";
 
-/// What `snippets.json` says when it is first made.
 const SNIPPETS: &str = "{\n  \"todo\": \"- [ ] \",\n  \"note\": \"> [!NOTE]\\n> \"\n}\n";
 
-/// The most a theme may be. The store refuses a bigger one before it is offered;
-/// this is the same limit on the side that writes the file, with room for the
-/// line the store stamps on the front.
 const MOST_BYTES: usize = 64 * 1024;
 
-/// Whether a string may name a theme file. Lower-case letters, digits and
-/// hyphens, starting with one of the first two, which is also the shape the
-/// registry gives its folders. Anything else, `..` and a separator included,
-/// is not an id - which is what keeps an id from becoming a path.
 fn is_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 39
@@ -42,7 +24,6 @@ fn is_id(id: &str) -> bool {
             .all(|one| one.is_ascii_lowercase() || one.is_ascii_digit() || one == '-')
 }
 
-/// One installed theme.
 #[derive(Serialize)]
 pub struct ThemeFile {
     id: String,
@@ -50,14 +31,11 @@ pub struct ThemeFile {
     path: String,
 }
 
-/// Where themes live, so the window can offer to open the folder. The folder is
-/// made if it is not there yet, so this waits for the disk.
 #[tauri::command(async)]
 pub fn theme_dir(app: AppHandle) -> Result<String, String> {
     Ok(themes_root(&app)?.to_string_lossy().to_string())
 }
 
-/// Every theme file in that folder, by name.
 #[tauri::command(async)]
 pub fn list_themes(app: AppHandle) -> Result<Vec<ThemeFile>, String> {
     let dir = themes_root(&app)?;
@@ -87,13 +65,6 @@ pub fn list_themes(app: AppHandle) -> Result<Vec<ThemeFile>, String> {
     Ok(themes)
 }
 
-/// Reads one theme: a `.css` file in the themes folder, and nothing else.
-///
-/// A theme is a stylesheet the app applies to itself, so this is not a way of
-/// reading a file. Held to the themes folder rather than to the settings folder
-/// above it, because that folder is the app's own data: the snapshots of every
-/// note are under it, and on Windows the webview keeps its profile there too.
-/// And held to the extension, because a theme is a stylesheet.
 #[tauri::command(async)]
 pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
     let target = folded(Path::new(&path));
@@ -104,9 +75,6 @@ pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
     fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))
 }
 
-/// Whether a path names a file `list_themes` would have offered: a stylesheet
-/// directly in the themes folder. Directly in it and not merely under it, because
-/// a theme is one file and nothing installs one into a folder of its own.
 fn is_a_theme(dir: &Path, target: &Path) -> bool {
     let directly_inside = target
         .parent()
@@ -115,13 +83,6 @@ fn is_a_theme(dir: &Path, target: &Path) -> bool {
     directly_inside && is_css(target)
 }
 
-/// Installs a theme from the store, replacing whatever was under that id.
-///
-/// The stylesheet has already been read down to what a theme may be by the time
-/// it arrives here; what this adds is that the id can only ever name a file in
-/// the themes folder. Written whole, so a theme being updated is either the old
-/// one or the new one and never half of each - a half-written stylesheet is what
-/// the window would be showing.
 #[tauri::command(async)]
 pub fn write_theme(app: AppHandle, id: String, css: String) -> Result<String, String> {
     if !is_id(&id) {
@@ -133,17 +94,11 @@ pub fn write_theme(app: AppHandle, id: String, css: String) -> Result<String, St
     }
 
     let target = themes_root(&app)?.join(format!("{id}.css"));
-    // The same whole-file write a note gets: its temp file is named after this
-    // process and a counter, so two windows installing the same theme at the same
-    // moment cannot write to one half-finished file, and a write that fails takes
-    // its leftovers with it.
     write_atomically(&target, css.as_bytes())?;
 
     Ok(target.to_string_lossy().to_string())
 }
 
-/// Takes an installed theme away. A theme that is already gone is not an error:
-/// the folder ends up the way the caller asked for either way.
 #[tauri::command(async)]
 pub fn remove_theme(app: AppHandle, id: String) -> Result<(), String> {
     if !is_id(&id) {
@@ -158,8 +113,6 @@ pub fn remove_theme(app: AppHandle, id: String) -> Result<(), String> {
     }
 }
 
-/// Where `custom.css` is, making it first if this is the first time it is asked
-/// for, so the window has something to open either way.
 #[tauri::command(async)]
 pub fn custom_css_path(app: AppHandle) -> Result<String, String> {
     let path = custom_css_file(&app)?;
@@ -167,7 +120,6 @@ pub fn custom_css_path(app: AppHandle) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
-/// The reader's own additions to whichever theme is active, or nothing at all.
 #[tauri::command(async)]
 pub fn read_custom_css(app: AppHandle) -> String {
     custom_css_file(&app)
@@ -176,9 +128,6 @@ pub fn read_custom_css(app: AppHandle) -> String {
         .unwrap_or_default()
 }
 
-/// Where `snippets.json` is, making it first if it is not there. Abbreviations the
-/// editor offers while typing, stored as plain JSON so they can be edited in Orden
-/// itself.
 #[tauri::command(async)]
 pub fn snippets_path(app: AppHandle) -> Result<String, String> {
     let path = snippets_file(&app)?;
@@ -186,9 +135,6 @@ pub fn snippets_path(app: AppHandle) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
-/// Where the scratchpad is, making it first if it is not there: the one note that
-/// belongs to no space, beside `custom.css` in the app's own folder, so it is the
-/// same note from every space and outlives any of them. See `lib/scratchpad.svelte.ts` in the window.
 #[tauri::command(async)]
 pub fn scratchpad_path(app: AppHandle) -> Result<String, String> {
     let path = settings_dir(&app)?.join(SCRATCHPAD_FILE);
@@ -196,8 +142,6 @@ pub fn scratchpad_path(app: AppHandle) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
-/// The snippets as they stand, or an empty set if the file is not readable. The
-/// editor works without them, so this is not worth an error.
 #[tauri::command(async)]
 pub fn read_snippets(app: AppHandle) -> String {
     snippets_file(&app)
@@ -206,23 +150,14 @@ pub fn read_snippets(app: AppHandle) -> String {
         .unwrap_or_else(|| "{}".into())
 }
 
-/// What the settings file is called in the settings folder (#673): the settings a
-/// configuration declares - Home Manager's `programs.orden.settings`, or a hand - which
-/// the window applies at launch and keeps out of the reader's hands. Never written or
-/// made here: no file is no declared settings, and one Home Manager wrote is a link
-/// into the store that nothing could write anyway.
 pub(crate) const SETTINGS_FILE: &str = "settings.json";
 
-/// The settings file, as it is on disk.
 #[derive(Serialize)]
 pub struct SettingsFile {
     path: String,
     text: String,
 }
 
-/// The declared settings, or nothing where there is no file. A file that is there and
-/// cannot be read is an error, said with its path, so the window can say why the
-/// settings it declares are not in force rather than quietly ignoring them.
 #[tauri::command(async)]
 pub fn read_settings_file(app: AppHandle) -> Result<Option<SettingsFile>, String> {
     declared(&config_dir(&app)?.join(SETTINGS_FILE))
@@ -239,10 +174,6 @@ fn declared(path: &Path) -> Result<Option<SettingsFile>, String> {
     }
 }
 
-/// Writes a starter file, unless it is already there. Asking the filesystem to
-/// create it rather than looking first and then writing: two windows starting at
-/// the same moment would both find it missing, and the second would write its
-/// default over whatever the first had already put there.
 fn seed(path: &Path, content: &str) -> Result<(), String> {
     seeded(path, content, |file, bytes| {
         file.write_all(bytes)?;
@@ -250,11 +181,6 @@ fn seed(path: &Path, content: &str) -> Result<(), String> {
     })
 }
 
-/// `seed`, with the write handed in so a write that fails can be tested.
-///
-/// A starter that could not be written whole is taken away again. Left, it would be
-/// there forever - the file exists, so no later ask writes it - and an empty
-/// `snippets.json` is an editor with no snippets and nothing to say why.
 fn seeded(
     path: &Path,
     content: &str,
@@ -273,45 +199,32 @@ fn seeded(
     })
 }
 
-/// The app's own settings folder, made if it is not there yet: on a fresh install
-/// nothing has written to it, and the two files below have to land somewhere.
 fn settings_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = config_dir(app)?;
     made(&dir)?;
     Ok(dir)
 }
 
-/// The themes folder, made if it is not there yet.
 fn themes_root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = settings_dir(app)?.join("themes");
     made(&dir)?;
     Ok(dir)
 }
 
-/// What the reader's own stylesheet is called in the settings folder.
 const CUSTOM_CSS_FILE: &str = "custom.css";
 
-/// And their snippets.
 const SNIPPETS_FILE: &str = "snippets.json";
 
-/// And the scratchpad, named for what the tab says.
 const SCRATCHPAD_FILE: &str = "Scratchpad.md";
 
-/// `custom.css` sits beside the themes folder rather than in it, so it is not
-/// offered as a theme of its own.
 fn custom_css_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(settings_dir(app)?.join(CUSTOM_CSS_FILE))
 }
 
-/// `snippets.json`, beside `custom.css`.
 fn snippets_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(settings_dir(app)?.join(SNIPPETS_FILE))
 }
 
-/// The three files outside every space that the app opens in a tab of its own, Edit
-/// custom CSS, Edit snippets and the scratchpad, because they are the app's own
-/// rather than somebody's documents. Where they are, and nothing more: judging a path is no
-/// reason to make a folder. See `openable` in paths.rs.
 pub fn own_files(app: &AppHandle) -> Vec<PathBuf> {
     config_dir(app)
         .map(|dir| {
@@ -324,14 +237,12 @@ pub fn own_files(app: &AppHandle) -> Vec<PathBuf> {
         .unwrap_or_default()
 }
 
-/// Whether a file is a stylesheet, in whichever case the extension is written.
 fn is_css(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("css"))
 }
 
-/// `night-owl` becomes `Night owl`, matching how Typora labels theme files.
 fn humanise(stem: &str) -> String {
     let spaced = stem.replace(['-', '_'], " ");
     let mut letters = spaced.chars();
@@ -350,8 +261,6 @@ mod tests {
     use std::io::{self, Write as _};
     use std::path::{Path, PathBuf};
 
-    /// A disk that fills up half way through the starter: what was written goes, and
-    /// the next ask writes the starter whole.
     #[test]
     fn a_starter_that_could_not_be_written_is_written_the_next_time() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -368,8 +277,6 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).expect("the file"), SNIPPETS);
     }
 
-    /// No settings file is no declared settings; one that is there is read as it is,
-    /// and one that cannot be read says which file and why.
     #[test]
     fn the_settings_file_is_read_as_it_is_and_never_made() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -390,7 +297,6 @@ mod tests {
         assert!(error.contains("folder.json"), "{error}");
     }
 
-    /// What the reader wrote is theirs, however little it is.
     #[test]
     fn a_starter_is_never_written_over_anything() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -401,7 +307,6 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).expect("the file"), "");
     }
 
-    /// The scratchpad starts empty, and once something is in it a second ask keeps it.
     #[test]
     fn the_scratchpad_starts_empty_and_keeps_what_is_jotted() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -418,16 +323,10 @@ mod tests {
         );
     }
 
-    /// Written the way the platform writes them, so the assertions read the same
-    /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
     }
 
-    /// The settings folder above the themes folder is the app's own data: every
-    /// kept version of every note is under it, and on Windows the webview's own
-    /// profile is too. A theme reader that reached those would be a way of reading
-    /// files rather than a way of reading a stylesheet.
     #[test]
     fn only_a_stylesheet_in_the_themes_folder_is_a_theme() {
         let settings = path(&["AppData", "ch.emilvinu.nib"]);
@@ -436,9 +335,7 @@ mod tests {
         assert!(is_a_theme(&themes, &themes.join("warm-paper.css")));
         assert!(is_a_theme(&themes, &themes.join("Night Owl.CSS")));
 
-        // Beside the themes folder rather than in it.
         assert!(!is_a_theme(&themes, &settings.join("custom.css")));
-        // Under the settings folder, which is where the history lives.
         assert!(!is_a_theme(
             &themes,
             &settings
@@ -446,12 +343,9 @@ mod tests {
                 .join("0123456789abcdef")
                 .join("1.css")
         ));
-        // In a folder of its own under the themes folder.
         assert!(!is_a_theme(&themes, &themes.join("deep").join("a.css")));
-        // Anything that is not a stylesheet.
         assert!(!is_a_theme(&themes, &themes.join("snippets.json")));
         assert!(!is_a_theme(&themes, &themes.join("origin.txt")));
-        // The folder itself.
         assert!(!is_a_theme(&themes, &themes));
     }
 

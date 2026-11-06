@@ -1,50 +1,24 @@
-//! Whether somebody is at this computer, and what the computer is called: the two things
-//! a device says about itself to its account's hub (docs/chats.md 4.10).
-//!
-//! **Somebody is at it** while a key was pressed or the pointer moved in Orden in the last
-//! five minutes. The app's own page hears its own input, and nothing else: a key typed
-//! into a web page, or the pointer moving over one, goes to the page's own webview, which
-//! is another process's window, and the app's page never hears of it. So the system is
-//! asked instead - when it last had any input at all, and whether one of Orden's windows is
-//! the one in front - which together say that the input was nib's. Where the system cannot
-//! be asked the window's own page is what the app goes on.
-//!
-//! **What it is called** is the name a person gave the machine, where the system keeps
-//! one worth showing: a Mac's computer name (Emil's laptop, say). A Windows or Linux
-//! host name is `DESKTOP-4F2K9L` far more often than it is anything a person chose, so
-//! there the app says the platform instead, the way a caret does (`rooms/who.ts`), and
-//! the name can be changed on the account.
-
 use serde::Serialize;
 
-/// What the system says about its input.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Input {
-    /// How long ago the last key or pointer input was, anywhere on the machine.
     pub idle_ms: u64,
-    /// Whether one of this process's windows is the one in front.
     pub front: bool,
 }
 
-/// When the system last had input and whether Orden is in front, or nothing where the
-/// system has no way to say.
 #[tauri::command(async)]
 pub fn input_idle() -> Option<Input> {
     platform::system_input()
 }
 
-/// The name a person gave this computer, where the system keeps one worth showing.
 #[tauri::command(async)]
 pub fn device_name() -> Option<String> {
     platform::computer_name().and_then(|name| shown(&name))
 }
 
-/// The longest name a device is announced with; the account keeps sixty characters of a
-/// person's name, and a computer's is no longer worth.
 const LONGEST: usize = 60;
 
-/// A name as it is announced: trimmed, one line, and not too long to read.
 fn shown(name: &str) -> Option<String> {
     let one_line: String = name
         .chars()
@@ -85,10 +59,6 @@ mod platform {
         };
         let mut process = 0u32;
 
-        // SAFETY: `last` is a LASTINPUTINFO with its size filled in, which is all the
-        // first call reads, and `process` is a number the last one writes; both live for
-        // the calls. The tick count and the window in front take nothing, and a window
-        // handle the system has just given out is what the last call is asked about.
         #[allow(
             unsafe_code,
             reason = "there is no safe way to ask Windows when it last had input, or which window is in front"
@@ -111,7 +81,6 @@ mod platform {
         })
     }
 
-    /// A Windows machine's name is its host name, which a person has rarely chosen.
     pub fn computer_name() -> Option<String> {
         None
     }
@@ -123,9 +92,7 @@ mod platform {
 
     use super::Input;
 
-    /// `kCGEventSourceStateCombinedSessionState`: every source of input in the session.
     const COMBINED: i32 = 0;
-    /// `kCGAnyInputEventType`: any kind of event.
     const ANY_INPUT: u32 = !0;
 
     #[allow(
@@ -138,7 +105,6 @@ mod platform {
     }
 
     pub fn system_input() -> Option<Input> {
-        // SAFETY: two plain values in and a number out; the call reads no memory of ours.
         #[allow(
             unsafe_code,
             reason = "there is no safe way to ask macOS when it last had input"
@@ -160,7 +126,6 @@ mod platform {
         })
     }
 
-    /// The computer name from Sharing in System Settings.
     pub fn computer_name() -> Option<String> {
         let out = std::process::Command::new("scutil")
             .args(["--get", "ComputerName"])
@@ -176,7 +141,6 @@ mod platform {
 mod platform {
     use super::Input;
 
-    /// Linux has no one answer: X11 and every Wayland compositor keep their own.
     pub fn system_input() -> Option<Input> {
         None
     }
@@ -190,7 +154,6 @@ mod platform {
 mod tests {
     use super::shown;
 
-    /// A name is one trimmed line of a readable length, and an empty one is none.
     #[test]
     fn a_name_is_one_readable_line() {
         assert_eq!(shown("  Emil's laptop\n").as_deref(), Some("Emil's laptop"));
@@ -199,7 +162,6 @@ mod tests {
         assert_eq!(shown(&"x".repeat(200)).map(|one| one.len()), Some(60));
     }
 
-    /// The system answers here, whatever it answers: a number and a flag, never a panic.
     #[test]
     fn the_system_is_asked_without_trouble() {
         let _ = super::input_idle();

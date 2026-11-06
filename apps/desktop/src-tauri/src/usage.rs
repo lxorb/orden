@@ -1,19 +1,3 @@
-//! What a tab's processes use of this computer (issue 1063, step 10; docs/apps.md): the
-//! processor, the memory, and the GPU, for the tab's hover card in developer mode. Asked
-//! once a second while the card is up and never otherwise.
-//!
-//! **Whose**: a terminal's shell and everything under it; an application's process
-//! group, which is everything it started (`apps_host.rs`).
-//!
-//! **Read from the kernel**, on Linux: `/proc/<pid>/stat` for the processor time and the
-//! group, `/proc/<pid>/status` for the memory resident (`VmRSS`), and the DRM clients'
-//! `/proc/<pid>/fdinfo` for the GPU's engines (`drm-engine-*`, Linux 5.19 on for Intel,
-//! AMD and most of the rest; NVIDIA's own driver says nothing there). The processor and the
-//! GPU are rates, so each sample is held against the one before it (`Sampler`). Where a
-//! number cannot be read - the GPU of most machines, anything on Windows and macOS yet -
-//! it is left out, never said as nothing.
-
-// The kernel's files are read on Linux alone; elsewhere their readers wait for theirs.
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
 use std::collections::HashMap;
@@ -21,9 +5,6 @@ use std::time::Instant;
 
 use serde::Serialize;
 
-/// What a set of processes uses: the processor as a share of one core (100 is one core
-/// whole), the memory resident in bytes, and the GPU's busiest engine as a share of it,
-/// where it can be read.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct Usage {
     pub cpu: f64,
@@ -32,36 +13,27 @@ pub struct Usage {
     pub gpu: Option<f64>,
 }
 
-/// The running totals one sample reads.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Totals {
-    /// Processor time, in the kernel's ticks (a hundredth of a second).
     pub ticks: u64,
     pub memory: u64,
-    /// Each GPU engine's busy time, in nanoseconds, by its name; empty where there is
-    /// no DRM client to read.
     pub engines: HashMap<String, u64>,
 }
 
-/// The kernel's ticks a second, `USER_HZ`: a hundred on every Linux there is.
 const TICKS: f64 = 100.0;
 
-/// Samples held against the one before, by whose they are.
 #[derive(Default)]
 pub struct Sampler {
     last: HashMap<String, (Instant, Totals)>,
 }
 
 impl Sampler {
-    /// The usage since the last sample under `key`; the first gives the memory, and the
-    /// processor and GPU as nothing yet but known.
     pub fn rate(&mut self, key: &str, now: Instant, totals: Totals) -> Usage {
         let before = self.last.insert(key.to_owned(), (now, totals.clone()));
         rate_between(before.as_ref(), now, &totals)
     }
 }
 
-/// The usage between two samples.
 #[allow(
     clippy::cast_precision_loss,
     reason = "ticks and nanoseconds over a second fit an f64's mantissa"
@@ -101,14 +73,9 @@ pub fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &T
     }
 }
 
-/// One process as `/proc/<pid>/stat` has it: its parent, its group, and its processor
-/// time. The name is in parentheses and may hold anything, so the fields are read from
-/// after its last one.
 pub fn stat_of(text: &str) -> Option<(u32, u32, u64)> {
     let rest = &text[text.rfind(')')? + 1..];
     let fields: Vec<&str> = rest.split_whitespace().collect();
-    // After the name: state, ppid, pgrp, session, tty, tpgid, flags, minflt, cminflt,
-    // majflt, cmajflt, utime, stime.
     let parent = fields.get(1)?.parse().ok()?;
     let group = fields.get(2)?.parse().ok()?;
     let user: u64 = fields.get(11)?.parse().ok()?;
@@ -116,15 +83,12 @@ pub fn stat_of(text: &str) -> Option<(u32, u32, u64)> {
     Some((parent, group, user + system))
 }
 
-/// The memory resident, in bytes, from `/proc/<pid>/status`.
 pub fn resident_of(text: &str) -> Option<u64> {
     let line = text.lines().find(|line| line.starts_with("VmRSS:"))?;
     let kilobytes: u64 = line.split_whitespace().nth(1)?.parse().ok()?;
     Some(kilobytes * 1024)
 }
 
-/// One DRM client's engines from an fd's `fdinfo`, and its client id, which more than
-/// one fd may share.
 pub fn engines_of(text: &str) -> Option<(String, Vec<(String, u64)>)> {
     let mut client = None;
     let mut engines = Vec::new();
@@ -147,16 +111,12 @@ pub fn engines_of(text: &str) -> Option<(String, Vec<(String, u64)>)> {
     Some((client?, engines))
 }
 
-/// Whose processes a sample is of.
 #[derive(Clone, Copy, Debug)]
 pub enum Whose {
-    /// A process and everything under it.
     Tree(u32),
-    /// A process group.
     Group(u32),
 }
 
-/// The totals of whose processes, now; None where the system cannot be read.
 #[cfg(target_os = "linux")]
 pub fn totals(whose: Whose) -> Option<Totals> {
     let mut all: Vec<(u32, u32, u32, u64)> = Vec::new();
@@ -226,8 +186,6 @@ pub fn totals(whose: Whose) -> Option<Totals> {
     Some(totals)
 }
 
-/// A sample of whose processes now, held against the last under `key`: the usage since,
-/// or None where the system cannot be read.
 pub fn sample(key: &str, whose: Whose) -> Option<Usage> {
     static SAMPLES: std::sync::LazyLock<std::sync::Mutex<Sampler>> =
         std::sync::LazyLock::new(std::sync::Mutex::default);
@@ -238,7 +196,6 @@ pub fn sample(key: &str, whose: Whose) -> Option<Usage> {
     Some(samples.rate(key, Instant::now(), totals))
 }
 
-/// Nothing to read here yet.
 #[cfg(not(target_os = "linux"))]
 pub fn totals(_whose: Whose) -> Option<Totals> {
     None
@@ -317,8 +274,6 @@ mod tests {
         );
     }
 
-    /// On Linux, this test's own process: its memory is read, and its processor time
-    /// grows as it works.
     #[cfg(target_os = "linux")]
     #[test]
     fn reads_this_process_from_the_kernel() {

@@ -1,30 +1,3 @@
-//! Safari's tabs and bookmarks, for the import's Safari row. A Mac's only.
-//!
-//! Safari keeps no list of profiles to read the way Firefox and Chromium do; what
-//! the import reads is three files in the home folder:
-//!
-//! - `Library/Safari/Bookmarks.plist`, a binary property list of every bookmark, the
-//!   Favorites bar and the Bookmarks menu among them, and the Reading List as a list
-//!   called `com.apple.ReadingList`;
-//! - `SafariTabs.db`, where Safari 15 and later keep the open tabs: one table,
-//!   `bookmarks`, whose rows of type 1 are folders (a tab group, a profile, a list of
-//!   Safari's own) and of type 0 tabs. It lives in Safari's container,
-//!   `Library/Containers/com.apple.Safari/Data/Library/Safari/`, and is open while
-//!   Safari runs, so it is copied with its log and the copy is read, the way
-//!   Firefox's bookmarks are;
-//! - `Library/Safari/LastSession.plist`, the windows of a Safari from before that;
-//! - and Safari's settings, `com.apple.Safari.plist` in its container's preferences
-//!   or, before Safari kept a container, the home folder's, for the name of the
-//!   search engine it sends a search to (`SearchProviderShortName`).
-//!
-//! Its history is `Library/Safari/History.db`, which `browser_data.rs` reads.
-//!
-//! The property lists are handed over as JSON, a date as its ISO day and time and a
-//! blob of bytes as nothing, and the tabs as their rows: what each means is the
-//! app's to read (`import/safari.ts`). macOS keeps all three behind Full Disk Access,
-//! so the first read is refused by the system; that is answered as `no access`, as
-//! Apple Notes' is, and the app says so and opens the setting. Never written.
-
 use serde_json::{json, Map, Value};
 use std::fs;
 use std::io::{Cursor, ErrorKind};
@@ -34,7 +7,6 @@ use crate::browser_profiles::{copied, Profile};
 use crate::firefox_profiles::BROWSERS_DIR;
 use crate::paths::folder_named;
 
-/// The bookmarks, the old session, and where the tabs may be, from the home folder.
 const BOOKMARKS: &str = "Library/Safari/Bookmarks.plist";
 const SESSION: &str = "Library/Safari/LastSession.plist";
 const TABS: [&str; 2] = [
@@ -48,16 +20,10 @@ const SETTINGS: [&str; 2] = [
 ];
 const ENGINE: &str = "SearchProviderShortName";
 
-/// What the app is answered when macOS refused every file: the setting is the way
-/// in, and saying so is the app's business.
 const NO_ACCESS: &str = "no access";
 
-/// More than any bookmark list is.
 const MOST_BYTES: u64 = 64 * 1024 * 1024;
 
-/// Safari's one profile, as the import lists it: on a Mac always, since Safari is
-/// part of it and whether its folder can even be looked at is Full Disk Access's to
-/// say; and a probe's own Safari wherever `NIB_BROWSERS_DIR` names one.
 pub(crate) fn profiles() -> Vec<Profile> {
     home()
         .map(|home| Profile {
@@ -69,7 +35,6 @@ pub(crate) fn profiles() -> Vec<Profile> {
         .collect()
 }
 
-/// The home folder Safari's files are under: a probe's own `safari/`, else a Mac's.
 fn home() -> Option<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         let home = named.join("safari");
@@ -82,15 +47,12 @@ fn home() -> Option<PathBuf> {
     }
 }
 
-/// Safari's bookmarks, open tabs and old session, as one JSON object, each null where
-/// its file is not there or does not read. `no access` where macOS refused them.
 #[tauri::command(async)]
 pub fn read_safari() -> Result<String, String> {
     let home = home().ok_or("Safari is a Mac's")?;
     read_from(&home).map(|read| read.to_string())
 }
 
-/// What a file came to: read, not there, or refused by the system.
 enum Got<T> {
     Read(T),
     Missing,
@@ -141,7 +103,6 @@ fn read_from(home: &Path) -> Result<Value, String> {
     Ok(read)
 }
 
-/// A property list as JSON.
 fn plist_at(path: &Path) -> Got<Value> {
     match fs::metadata(path) {
         Ok(found) if found.len() > MOST_BYTES => return Got::Missing,
@@ -155,7 +116,6 @@ fn plist_at(path: &Path) -> Got<Value> {
     }
 }
 
-/// What an error opening a file says: the system's refusal, or no such file.
 fn refusal<T>(error: &std::io::Error) -> Got<T> {
     if error.kind() == ErrorKind::PermissionDenied {
         Got::Refused
@@ -164,8 +124,6 @@ fn refusal<T>(error: &std::io::Error) -> Got<T> {
     }
 }
 
-/// A property list's value as JSON: a date as its ISO day and time, and a blob of
-/// bytes or an archiver's reference as nothing, since nothing the import reads is one.
 fn json_of(value: &plist::Value) -> Value {
     match value {
         plist::Value::Array(all) => Value::Array(all.iter().map(json_of).collect()),
@@ -188,8 +146,6 @@ fn json_of(value: &plist::Value) -> Value {
     }
 }
 
-/// The rows of `SafariTabs.db` in a folder: every row of its `bookmarks` table with
-/// what says where it is, in Safari's order.
 fn tabs_in(folder: &Path) -> Got<Value> {
     if let Err(error) = fs::metadata(folder.join(TABS_DATABASE)) {
         return refusal(&error);
@@ -201,8 +157,6 @@ fn tabs_in(folder: &Path) -> Got<Value> {
     rows_of(&copy.path().join(TABS_DATABASE)).map_or(Got::Missing, Got::Read)
 }
 
-/// The rows as `{ id, parent, type, title, url, order, deleted }`. A column an older
-/// Safari's table does not have is read as nothing.
 fn rows_of(database: &Path) -> rusqlite::Result<Value> {
     let db = rusqlite::Connection::open(database)?;
     let columns: Vec<String> = db
@@ -264,8 +218,6 @@ mod tests {
         P::Dictionary(out)
     }
 
-    /// Bookmarks.plist as Safari writes it: binary, the Favorites bar, the menu and the
-    /// Reading List under the root, a reading-list item with its day added.
     fn bookmarks(at: &Path) {
         let mut read = leaf("https://later.example.com/", "Later");
         if let P::Dictionary(entries) = &mut read {
@@ -293,7 +245,6 @@ mod tests {
         root.to_file_binary(at).expect("a property list");
     }
 
-    /// SafariTabs.db with the table as Safari 18 writes it, as far as these columns go.
     fn tabs(folder: &Path) {
         fs::create_dir_all(folder).expect("the folder");
         let db = rusqlite::Connection::open(folder.join(TABS_DATABASE)).expect("a database");
@@ -382,7 +333,6 @@ mod tests {
         bookmarks(&home.path().join(BOOKMARKS));
         let safari = home.path().join("Library/Safari");
         fs::set_permissions(&safari, fs::Permissions::from_mode(0o000)).expect("closed");
-        // Root reads through a closed folder; the refusal is only there for anybody else.
         let refused = fs::read(home.path().join(BOOKMARKS)).is_err();
         let read = read_from(home.path());
         fs::set_permissions(&safari, fs::Permissions::from_mode(0o755)).expect("open");

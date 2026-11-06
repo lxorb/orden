@@ -1,44 +1,6 @@
-//! The window moved by its own title bar and resized by its edges, on Linux.
-//!
-//! Orden draws its own frame (`decorations: false`), so the window manager has no title
-//! bar or border of the app's to take a press on: a press on the app's tab strip asks
-//! for a move (`data-tauri-drag-region`, which Tauri's own script answers with
-//! `start_dragging`), and the edges ask for a resize. On CEF neither reached the window
-//! manager (#427, Fedora 44 under KDE): the runtime moves a window through GTK's
-//! `begin_move`, which needs the press GTK saw, and GTK sees none - every press lands
-//! on Chromium's own X11 window inside GTK's, the app's page covering all of it.
-//!
-//! So the press is told to the window manager directly, as Chromium does for a window
-//! of its own and GTK for one of its: `_NET_WM_MOVERESIZE`, sent to the root window
-//! with where the pointer is on the screen and the button that is held, after this
-//! connection lets go of any grab of its own. Every window manager that follows the
-//! EWMH takes it - `KWin`, Mutter, Xfwm, Openbox - and so does a Wayland compositor for
-//! an `XWayland` window, which is what Orden's is (see linux.rs). The page asks through
-//! `SCRIPT`, put into the app's own page before anything of it runs: it hears the
-//! presses Tauri's script hands to `start_dragging` first, and asks for the move once
-//! the pointer has gone a few pixels with the button held, as GTK's own title bar does;
-//! it finds the edges itself, and shows the cursor a border shows there. A double click
-//! on the tab strip is still Tauri's: it maximises the window, which needs no press.
-//!
-//! The edges are not only the app's page's, though: a web tab's page is a browser of its
-//! own, an X11 window over the app's, and where it reaches the window's edge a press
-//! there was the site's, and the window could not be resized by that edge at all. So
-//! the edges are the window's own as well: eight thin windows of nothing but input along
-//! the window's edges and corners, inside it and above every page in it, each with a
-//! border's cursor, which ask for the resize themselves (`window_frame`, which the
-//! script asks for once the page is up). Taken away while the window is maximised or
-//! fills the screen, where it has no edges.
-
-/// What the app's own page runs on CEF, before any of its own scripts: see the top of
-/// this file.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("window_drag.js");
 
-/// Moves the window `webview` is in with the pointer, or resizes it by `edge` - `n`,
-/// `ne`, `e`, `se`, `s`, `sw`, `w` or `nw` - for as long as the button that was pressed
-/// on it is held: asked by `SCRIPT` the moment the press lands. A resize is refused
-/// where the window is maximised or fills the screen, and nothing happens where there
-/// is no X11 window to move (any platform but Linux, which moves its own).
 #[tauri::command(async)]
 pub fn window_move_resize(
     webview: tauri::Webview,
@@ -59,8 +21,6 @@ pub fn window_move_resize(
             return Ok(());
         }
         let done = x11::move_resize(&window, direction, at.map(|at| (at.x, at.y)));
-        // Said in the log, which is the one place a window manager that took no notice
-        // can be told apart from a press that never asked.
         crate::logs::say(
             webview.app_handle(),
             if done.is_ok() { "info" } else { "error" },
@@ -78,9 +38,6 @@ pub fn window_move_resize(
     }
 }
 
-/// Gives the window `webview` is in its edges (see the top of this file), once: asked by
-/// `SCRIPT` each time the app's page in it loads. Nothing for a window that cannot be
-/// resized, or where there is no X11 window (any platform but Linux).
 #[tauri::command(async)]
 #[cfg_attr(
     not(feature = "cef"),
@@ -98,7 +55,6 @@ pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
         }
         let scale = window.scale_factor().unwrap_or(1.0);
         let xid = x11::xid(&window)?;
-        // No white of the X server's own where a page is taken away; see page_hide.rs.
         crate::page_hide::no_ground_in(xid);
         x11::frame(xid, scale)
     }
@@ -109,7 +65,6 @@ pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
     }
 }
 
-/// Where a press was on the screen, in its own pixels.
 #[derive(Clone, Copy, Debug, serde::Deserialize)]
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub struct Pressed {
@@ -117,10 +72,8 @@ pub struct Pressed {
     y: i32,
 }
 
-/// `_NET_WM_MOVERESIZE`'s word for a move.
 const MOVE: u32 = 8;
 
-/// `_NET_WM_MOVERESIZE`'s word for a resize by `edge`: from the top left corner round.
 fn direction_of(edge: &str) -> Option<u32> {
     Some(match edge {
         "nw" => 0,
@@ -151,7 +104,6 @@ mod x11 {
     use x11rb::wrapper::ConnectionExt as _;
     use x11rb::CURRENT_TIME;
 
-    /// The window's own X11 window: the one the window manager frames.
     pub fn xid(window: &tauri::Window<crate::Engine>) -> Result<u32, String> {
         window
             .window_handle()
@@ -164,15 +116,12 @@ mod x11 {
             .ok_or_else(|| "the window has no X11 window to move".to_owned())
     }
 
-    /// The windows given their edges, so a page loaded again does not give them twice.
     static FRAMED: LazyLock<Mutex<HashSet<u32>>> = LazyLock::new(Mutex::default);
 
     fn framed<T>(look: impl FnOnce(&mut HashSet<u32>) -> T) -> T {
         look(&mut FRAMED.lock().unwrap_or_else(PoisonError::into_inner))
     }
 
-    /// Gives `window` its edges, at `scale`, on a thread and a connection of their own
-    /// that last as long as it does.
     pub fn frame(window: u32, scale: f64) -> Result<(), String> {
         if !framed(|all| all.insert(window)) {
             return Ok(());
@@ -194,20 +143,14 @@ mod x11 {
         started.map(|_| ())
     }
 
-    /// How thick an edge is, and how far along the window's sides a corner reaches, in
-    /// the page's own pixels: as `SCRIPT` has them.
     const EDGE: f64 = 5.0;
     const CORNER: f64 = 14.0;
 
-    /// One of the window's edges: an input-only window inside it, and the direction a
-    /// press on it resizes in. A corner is two, one along each side.
     struct Edge {
         id: u32,
         direction: u32,
     }
 
-    /// Where an edge goes in a window `wide` by `tall`, thick `edge` and with corners
-    /// `corner` long: left, top, width, height.
     pub(super) fn place(
         direction: u32,
         arm: bool,
@@ -218,7 +161,6 @@ mod x11 {
     ) -> (i32, i32, i32, i32) {
         let (c, e) = (corner, edge);
         match (direction, arm) {
-            // nw, ne, se, sw: along the top or bottom, then along the side.
             (0, false) => (0, 0, c, e),
             (0, true) => (0, 0, e, c),
             (2, false) => (wide - c, 0, c, e),
@@ -234,7 +176,6 @@ mod x11 {
         }
     }
 
-    /// The cursor a border shows, by the direction it resizes in.
     const CURSORS: [&str; 8] = [
         "top_left_corner",
         "top_side",
@@ -341,7 +282,6 @@ mod x11 {
             self.edges.iter().any(|(edge, _)| edge.id == id)
         }
 
-        /// Each edge put where it goes in a window `wide` by `tall`.
         fn fit(&mut self, wide: i32, tall: i32) -> Result<(), Box<dyn std::error::Error>> {
             if (wide, tall) == self.size {
                 return Ok(());
@@ -363,8 +303,6 @@ mod x11 {
             Ok(())
         }
 
-        /// The edges above every other window inside the window: a page's browser made or
-        /// moved goes on top of its siblings, and the edges then go back above it.
         fn raise(&self) -> Result<(), Box<dyn std::error::Error>> {
             for (edge, _) in &self.edges {
                 self.x.configure_window(
@@ -375,8 +313,6 @@ mod x11 {
             Ok(())
         }
 
-        /// Shown where the window has edges, and taken away where it is maximised or
-        /// fills the screen.
         fn show(&mut self) -> Result<(), Box<dyn std::error::Error>> {
             let state = self
                 .x
@@ -436,8 +372,6 @@ mod x11 {
                         else {
                             continue;
                         };
-                        // The press is this connection's grab until it lets go of it,
-                        // which the window manager's own grab for the resize needs.
                         self.x.ungrab_pointer(CURRENT_TIME)?;
                         self.x.send_event(
                             false,
@@ -464,8 +398,6 @@ mod x11 {
         }
     }
 
-    /// A release of `button` sent to the deepest window under the pointer inside
-    /// `window`, which is Chromium's own, and the wait for Chromium to let go.
     fn let_chromium_go(
         x: &RustConnection,
         root: u32,
@@ -517,9 +449,6 @@ mod x11 {
         x.send_event(false, under, EventMask::BUTTON_RELEASE, release)
             .map_err(|e| fail(&e))?;
         x.sync().map_err(|e| fail(&e))?;
-        // Chromium has let go once a grab of this connection's own is taken, and no
-        // longer than that is waited: every moment waited is a moment the pointer goes
-        // on without the window, which the window manager then never makes up.
         for _ in 0..50 {
             let status = x
                 .grab_pointer(
@@ -546,8 +475,6 @@ mod x11 {
         Err("the pointer was still held after 100 ms".into())
     }
 
-    /// The message, for the window `window` is: where the pointer is on the screen now,
-    /// and the first button held, which is the one the press was made with.
     pub fn move_resize(
         window: &tauri::Window<crate::Engine>,
         direction: u32,
@@ -576,17 +503,8 @@ mod x11 {
             .reply()
             .map_err(|error| error.to_string())?
             .atom;
-        // The window manager grabs the pointer for the move, which it cannot while a
-        // client holds it - and Chromium holds it from the press on, its own grab for
-        // a drag inside the page, on a connection of its own this one cannot let go of
-        // for it. KWin then took the resize and refused the move (#427). So Chromium is
-        // told the button went up, as an event sent to the window the pointer is over,
-        // and lets go of its grab itself, as it does at a real release; the page hears a
-        // release where the press was, which ends nothing but the press. This
-        // connection's own grab, if it had one, goes too.
         let _ = let_chromium_go(&x, root, xid, &pointer, button);
         let _ = x.ungrab_pointer(CURRENT_TIME);
-        // From where the press was, where the page says it, and otherwise from here.
         let from = pressed.unwrap_or((i32::from(pointer.root_x), i32::from(pointer.root_y)));
         let message = ClientMessageEvent::new(
             32,
@@ -597,7 +515,6 @@ mod x11 {
                 u32::try_from(from.1).unwrap_or(0),
                 direction,
                 u32::from(button),
-                // Said by an application, as against a pager.
                 1,
             ],
         );
@@ -621,8 +538,6 @@ mod x11 {
 mod tests {
     use super::{direction_of, MOVE, SCRIPT};
 
-    /// The eight edges are the EWMH's eight sizes, from the top left round, and the
-    /// move is the ninth word.
     #[test]
     fn the_edges_are_the_ewmh_s() {
         let edges = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
@@ -633,8 +548,6 @@ mod tests {
         assert_eq!(MOVE, 8);
     }
 
-    /// The window's edges, at 900 by 600 with edges of 5 and corners of 14: each side
-    /// between its corners, and each corner along both sides.
     #[cfg(feature = "cef")]
     #[test]
     fn the_edges_go_round_the_window() {
@@ -648,8 +561,6 @@ mod tests {
         assert_eq!(place(0, true, 900, 600, 5, 14), (0, 0, 5, 14));
     }
 
-    /// The script asks for every edge it finds by a name the command takes, and only
-    /// for a press of the first button.
     #[test]
     fn the_script_asks_by_the_command_s_names() {
         assert!(SCRIPT.contains("'window_move_resize'"));

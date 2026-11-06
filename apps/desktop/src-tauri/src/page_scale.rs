@@ -1,51 +1,14 @@
-//! How large the app's pages are drawn on Linux, and where a web tab's page goes.
-//!
-//! On a desktop scaled for X11 applications - KDE at 133 per cent, GNOME at 200 - a web
-//! tab's page was drawn over the sidebar and the address bar, a quarter of the way short
-//! of its hole, and the app's own page was drawn too large and cut off at the right and
-//! the bottom (#427). Chromium takes its scale from the desktop's settings (`Xft/DPI` in
-//! XSETTINGS), and CEF's windowed mode on X11 then reads the size it is given as that
-//! many of its own units and multiplies: a window 1180 pixels wide held a page 1568
-//! pixels wide. GTK, which sizes every window, kept its own scale, 1, so the app placed
-//! each page by GTK's scale while Chromium measured by its own.
-//!
-//! So Chromium is told the scale is 1 (`SWITCH`), which is the one it sizes windows by
-//! correctly, and the desktop's scale is given back as the app page's zoom (`desktop`),
-//! which Chromium lays out by without touching a window's size - the app as large as
-//! the rest of the desktop - and as every web tab's zoom, multiplied into the one the
-//! reader chose (`web`). A page is placed by what the app's page says its own pixel
-//! ratio is (`of`), its zoom included, which is the ratio between what it measures and
-//! the screen's pixels it is drawn in; GTK's scale is not that ratio here.
-//!
-//! **The whole interface's zoom** (#680): Settings > Appearance > Window > Zoom, as VS
-//! Code's "Window: Zoom Level" and Slack's View > Zoom. It is the engine's page zoom of
-//! the app's own page, kept on this device (`engine::FILE`), because the engine lays out by it the
-//! way it does by a screen's scale: the sidebar, the menus and every measurement go with
-//! it, and `100vh` and a pointer's place stay true, which CSS's `zoom` on the root would
-//! not leave them. A web tab's page keeps the size its site is kept at (`web`): only the
-//! hole it is placed in changes, and `of` is what says so. Linux's CEF only, the one engine
-//! a run has proved that on: `WebView2`'s zoom and `WKWebView`'s `pageZoom` have never been run
-//! with a web tab placed under them, and placing is the risk.
-
-/// Chromium's scale, which CEF on X11 sizes windows by correctly only at 1; see the top
-/// of this file.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SWITCH: (&str, &str) = ("--force-device-scale-factor", "1");
 
-/// What the app's own page runs to say its pixel ratio: once as it starts, and again
-/// whenever it changes.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("page_scale.js");
 
-/// The desktop's scale from `Xft/DPI` in XSETTINGS, in hundredths of a dot per inch: 96
-/// dots an inch is 1, and a scale is kept between a half and four.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
     (xft_dpi > 0).then(|| (f64::from(xft_dpi) / 1024.0 / 96.0).clamp(0.5, 4.0))
 }
 
-/// The desktop's settings for X11 applications, as XSETTINGS has them: the value of
-/// `wanted` among the integers in `data`, the `_XSETTINGS_SETTINGS` property.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     let big = *data.first()? == b'B';
@@ -89,13 +52,9 @@ fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     None
 }
 
-/// The interface's zoom as Settings offers it, Chrome's rungs: `INTERFACE_ZOOMS` in
-/// modes.svelte.ts.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 const RUNGS: [f64; 8] = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
 
-/// A zoom as the app takes it, from a command or the file: the rung nearest it, so a hand-
-/// written file can never leave Settings showing none of them.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 fn zoom_of(factor: f64) -> Option<f64> {
     (factor.is_finite() && factor > 0.0).then(|| {
@@ -106,8 +65,6 @@ fn zoom_of(factor: f64) -> Option<f64> {
     })
 }
 
-/// The interface's zoom as Settings shows it. Only Linux's CEF has it; see the top of this
-/// file.
 #[tauri::command(async)]
 pub fn interface_zoom_chosen() -> f64 {
     #[cfg(feature = "cef")]
@@ -120,7 +77,6 @@ pub fn interface_zoom_chosen() -> f64 {
     }
 }
 
-/// The interface's zoom changed: kept for the next run, and in force in every window now.
 #[tauri::command(async)]
 #[cfg_attr(
     not(feature = "cef"),
@@ -144,7 +100,6 @@ pub fn interface_zoom_choose(
     }
 }
 
-/// Reads the kept zoom, as the first window is made and before its page has run.
 #[cfg(feature = "cef")]
 pub fn read_chosen(app: &tauri::AppHandle<crate::Engine>) {
     engine::read_chosen(app);
@@ -157,13 +112,10 @@ mod engine {
 
     use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
 
-    /// Where the interface's zoom is kept, in the app's config folder: a number in plain text.
     const FILE: &str = "interface-zoom";
 
-    /// The zoom in force; 1 until `read_chosen`, and where nothing was ever chosen.
     static CHOSEN: Mutex<f64> = Mutex::new(1.0);
 
-    /// The interface's zoom in force: 1 is a hundred per cent.
     pub fn in_force() -> f64 {
         *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -179,7 +131,6 @@ mod engine {
         }
     }
 
-    /// Kept first: where the file cannot be written nothing changes, and the page is told.
     pub fn choose(app: &tauri::AppHandle<crate::Engine>, factor: f64) -> Result<(), String> {
         use tauri::Manager as _;
 
@@ -198,9 +149,6 @@ mod engine {
         Ok(())
     }
 
-    /// The desktop's scale, read from XSETTINGS as the app starts (`start`); 1 before
-    /// that, and where there is no X server or no settings daemon, which is the scale
-    /// Chromium itself would have taken there.
     static READ: OnceLock<f64> = OnceLock::new();
 
     pub fn desktop() -> f64 {
@@ -239,12 +187,8 @@ mod engine {
         super::scale_of_dpi(super::xsettings_int(&data, "Xft/DPI")?)
     }
 
-    /// Each window's page's pixel ratio as it last said it, by the window's label.
     static SAID: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
 
-    /// A page whose ratio is not the desktop's scale is zoomed to it, each time it says
-    /// so: the engine keeps a zoom by the page's origin, and the window's page starts
-    /// on an inert page of the runtime's own, whose zoom is not the app's.
     pub fn heard(webview: &tauri::Webview<crate::Engine>, ratio: f64) {
         let window = webview.window().label().to_owned();
         SAID.lock()
@@ -256,9 +200,6 @@ mod engine {
         }
     }
 
-    /// The window's ratio is what the zoom is about to make it, from before its page lays
-    /// out by it: the page places its web tabs as soon as it has, and may do that before
-    /// its own word on the ratio arrives.
     pub fn zooming(window: &str) {
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -274,8 +215,6 @@ mod engine {
     }
 }
 
-/// Reads the desktop's scale, once, as the app starts and before its window is made, and
-/// says it in the log. See the top of this file.
 #[cfg(feature = "cef")]
 pub fn start(app: &tauri::AppHandle<crate::Engine>) {
     let scale = engine::start();
@@ -288,9 +227,6 @@ pub fn start(app: &tauri::AppHandle<crate::Engine>) {
     );
 }
 
-/// What the app's page says its pixel ratio is, as it starts and whenever it changes:
-/// kept for placing the window's web pages (`of`), and the first time, the page given
-/// the desktop's scale as its zoom where it has not got it yet. See the top of this file.
 #[tauri::command(async)]
 #[cfg_attr(
     not(feature = "cef"),
@@ -309,9 +245,6 @@ pub fn page_scale_seen(webview: tauri::Webview<crate::Engine>, ratio: f64) {
     let _ = (webview, ratio);
 }
 
-/// The ratio between what a window's own page measures and the screen's pixels it is
-/// drawn in: where its web pages go is what it measured times this. Its page's own word
-/// on CEF on Linux, else the window's scale.
 #[cfg_attr(
     feature = "cef",
     allow(
@@ -330,8 +263,6 @@ pub fn of(window: &tauri::Window<crate::Engine>) -> tauri::Result<f64> {
     }
 }
 
-/// The zoom a web tab's page is given for the reader's `factor`: the desktop's scale
-/// times it on CEF on Linux (see the top of this file), else the factor itself.
 pub fn web(factor: f64) -> f64 {
     #[cfg(feature = "cef")]
     {
@@ -368,25 +299,21 @@ mod tests {
         );
     }
 
-    /// XSETTINGS as a daemon writes it: little-endian, a string, an integer and a colour.
     fn settings(dpi: i32) -> Vec<u8> {
         let mut data = vec![b'l', 0, 0, 0];
         data.extend(7_u32.to_le_bytes());
         data.extend(3_u32.to_le_bytes());
-        // A string: Net/ThemeName = "Adwaita".
         data.extend([1, 0]);
         data.extend(13_u16.to_le_bytes());
         data.extend(b"Net/ThemeName\0\0\0");
         data.extend(0_u32.to_le_bytes());
         data.extend(7_u32.to_le_bytes());
         data.extend(b"Adwaita\0");
-        // An integer: Xft/DPI.
         data.extend([0, 0]);
         data.extend(7_u16.to_le_bytes());
         data.extend(b"Xft/DPI\0");
         data.extend(0_u32.to_le_bytes());
         data.extend(dpi.to_le_bytes());
-        // A colour.
         data.extend([2, 0]);
         data.extend(4_u16.to_le_bytes());
         data.extend(b"Tint");

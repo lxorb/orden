@@ -1,18 +1,3 @@
-//! `PackageKit` (`org.freedesktop.PackageKit`, on the system bus): the system's own way to
-//! install a package, which is how an install from a `.deb` or an `.rpm` is updated from
-//! inside Orden (#1147). GNOME Software and KDE Discover go the same way, and so does the
-//! password: `PackageKit` asks polkit, which asks the reader once, in a dialog of the
-//! desktop's own.
-//!
-//! Two roads. A repository the system already has (apt.orden.so's, for apt, dnf or
-//! zypper) that offers the version is the first: the package comes signed with the key
-//! the system trusts for it, and `PackageKit` is told to install nothing else
-//! (`ONLY_TRUSTED`). Otherwise the caller hands over a package file it has verified
-//! itself, which `PackageKit` installs as one it cannot vouch for; see `system_update.rs`.
-//!
-//! Every call is one transaction, waited out on the calling thread: a dialog may wait on
-//! the reader for as long as they like, so this never runs on the event loop's.
-
 use std::path::Path;
 
 use zbus::blocking::{Connection, MessageIterator};
@@ -24,23 +9,14 @@ const SERVICE: &str = "org.freedesktop.PackageKit";
 const PATH: &str = "/org/freedesktop/PackageKit";
 const TRANSACTION: &str = "org.freedesktop.PackageKit.Transaction";
 
-/// `PK_FILTER_ENUM_NONE`, as the bitfield a method takes.
 const NO_FILTER: u64 = 1 << 1;
-/// `PK_TRANSACTION_FLAG_ENUM_ONLY_TRUSTED`, as the bitfield.
 const ONLY_TRUSTED: u64 = 1 << 1;
-/// No flags: a file no key `PackageKit` trusts has signed, which polkit asks a password for.
 const UNTRUSTED: u64 = 0;
-/// `PK_EXIT_ENUM_SUCCESS` and `PK_EXIT_ENUM_CANCELLED`.
 const SUCCESS: u32 = 1;
 const CANCELLED: u32 = 3;
-/// `PK_ERROR_ENUM_TRANSACTION_CANCELLED` and `PK_ERROR_ENUM_NOT_AUTHORIZED`: the dialog
-/// closed, or the password not given.
 const STOPPED: u32 = 17;
 const NOT_AUTHORIZED: u32 = 48;
 
-/// How a package manager writes a version: Debian's as the bundle has it, rpm's with
-/// the release after a dash and a build of main's pre-release after a tilde
-/// (`0.19.1~1101-1` for `0.19.1-1101`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Format {
     Deb,
@@ -49,11 +25,8 @@ pub enum Format {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Failure {
-    /// No `PackageKit` on this system.
     Absent,
-    /// The reader closed the dialog or gave no password.
     Refused,
-    /// Anything else, as `PackageKit` said it.
     Failed(String),
 }
 
@@ -78,17 +51,12 @@ impl PackageKit {
         Self { bus }
     }
 
-    /// Updates `package` to `version` from a repository the system has, and answers
-    /// whether one offered it. A repository that offers some other version is left
-    /// alone: that is the other channel's, or the version that was there before.
     pub fn update_from_repository(
         &self,
         package: &str,
         version: &str,
         format: Format,
     ) -> Result<bool, Failure> {
-        // An index older than the release does not know it yet. One that cannot be
-        // refreshed, offline or behind a lock, is still read as it is.
         match self.run("RefreshCache", &(false,)) {
             Err(Failure::Absent) => return Err(Failure::Absent),
             Err(Failure::Refused) => return Err(Failure::Refused),
@@ -105,8 +73,6 @@ impl PackageKit {
         Ok(true)
     }
 
-    /// Installs a package file over the installed version. The caller has verified it;
-    /// `PackageKit` cannot, so polkit asks for the password an unsigned package takes.
     pub fn install_file(&self, path: &Path) -> Result<(), Failure> {
         let path = path.to_str().ok_or_else(|| {
             Failure::Failed(format!("{} is not a path PackageKit takes", path.display()))
@@ -114,8 +80,6 @@ impl PackageKit {
         self.run("InstallFiles", &(UNTRUSTED, vec![path])).map(drop)
     }
 
-    /// One transaction: made, allowed to ask, `method` called on it, and heard out to
-    /// its end. Answers the package ids it named on the way.
     fn run<B>(&self, method: &str, body: &B) -> Result<Vec<String>, Failure>
     where
         B: serde::Serialize + DynamicType,
@@ -132,7 +96,6 @@ impl PackageKit {
                 other => other.into(),
             })?;
         let path: OwnedObjectPath = made.body().deserialize()?;
-        // Listening before the call, so nothing it says can arrive unheard.
         let rule = MatchRule::builder()
             .msg_type(Kind::Signal)
             .interface(TRANSACTION)?
@@ -187,7 +150,6 @@ fn ended(exit: u32, said: Option<(u32, String)>) -> Result<(), Failure> {
     }
 }
 
-/// Whether a `PackageKit` package id (`name;version;arch;data`) is `package` at `version`.
 fn offers(id: &str, package: &str, version: &str, format: Format) -> bool {
     let mut parts = id.split(';');
     parts.next() == Some(package)
@@ -196,8 +158,6 @@ fn offers(id: &str, package: &str, version: &str, format: Format) -> bool {
             .is_some_and(|its| plain(its, format) == version)
 }
 
-/// A package manager's version as the app writes it: no epoch, no rpm release, and a
-/// build of main's number after a dash.
 fn plain(version: &str, format: Format) -> String {
     let version = version
         .split_once(':')
@@ -224,8 +184,6 @@ mod tests {
     use zbus::zvariant::ObjectPath;
     use zbus::Guid;
 
-    /// How the mock ends a transaction: the packages it names, and its exit with what
-    /// it said before it.
     #[derive(Clone)]
     struct Ends {
         packages: Vec<&'static str>,
@@ -239,11 +197,8 @@ mod tests {
         exit: 1,
     };
 
-    /// What the client asked, in order: `Method(arguments)`.
     type Asked = Arc<Mutex<Vec<String>>>;
 
-    /// `PackageKit` on the far end of a socket: every transaction it makes ends as
-    /// `ends` says for its method, and every call is written down.
     fn mock(ends: impl Fn(&str) -> Ends + Send + 'static) -> (PackageKit, Asked) {
         let (ours, theirs) = UnixStream::pair().expect("a socket pair");
         let asked: Asked = Arc::default();
@@ -261,8 +216,6 @@ mod tests {
             .build()
             .expect("the client's end");
         let server: Connection = server.join().expect("the mock started");
-        // Listening before the client may call: a message is only heard by an iterator
-        // that was there when it arrived.
         let calls = MessageIterator::from(&server);
         std::thread::spawn(move || serve(&server, calls, &log, &ends));
         (PackageKit::on(client), asked)
@@ -368,8 +321,6 @@ mod tests {
         );
     }
 
-    /// The other channel's suite, or a repository that has not caught up: not this
-    /// version, so the file is what installs it.
     #[test]
     fn a_repository_with_another_version_is_left_alone() {
         let (kit, log) = mock(offering(&["orden;0.19.1~1101-1;x86_64;orden-unstable"]));
@@ -396,7 +347,6 @@ mod tests {
         );
     }
 
-    /// Offline, or another manager holding the lock: the index there is read anyway.
     #[test]
     fn a_refresh_that_fails_still_reads_the_index() {
         let (kit, _) = mock(|method| match method {

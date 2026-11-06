@@ -1,36 +1,11 @@
-//! Every tag a note uses, once per use.
-//!
-//! One rule, three readers: the tag tree the search panel offers, the `tag:`
-//! operator in a search, and the count behind `space_tags`. The twin of this
-//! is search/tags.ts, which the browser build reads with, and the tests hold
-//! the two to the same answers.
-//!
-//! A tag is written two ways, which is Obsidian's pair and so what a file
-//! written by either app says. Inline, `#work/nib`: a heading is not one
-//! because it has a space after the hash and a tag never does, a tag starts a
-//! word, and its name is not all digits, which is what rules out `#42`.
-//! And in the front matter, under `tags:`, as a list on the line or as items
-//! under it, where the hash is optional because YAML would read one as a
-//! comment.
-//!
-//! A tag's slashes make it a path: `work/nib/canvas` sits under `work/nib`,
-//! which sits under `work`, to any depth. Nothing here knows that - a tag is
-//! one string to this module - but the `tag:` operator reads the slashes, and
-//! so does the tree the app draws, so the characters a tag may hold are what
-//! decides how deep that tree can go.
-
 use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use icu_properties::props::{ExtendedPictographic, GeneralCategory, GeneralCategoryGroup};
 use icu_properties::{CodePointMapData, CodePointSetData};
 
-/// Every tag in one note's text, with the hash, in the order they are used.
 #[must_use]
 pub fn tags_in(body: &str) -> Vec<String> {
     let mut found = Vec::new();
-    // How many bytes of the note the block takes, fences included, or zero where
-    // the note opens with anything else: the tags under its key are read first,
-    // and the pass over the note's own words starts after it.
     let (front, close) = front_matter::block(body).map_or((0, 0), |one| (one.end, one.close));
 
     read_front(body, front, close, &mut found);
@@ -39,8 +14,6 @@ pub fn tags_in(body: &str) -> Vec<String> {
     found
 }
 
-/// The tags under a `tags:` key, whether they are on its line or in items
-/// beneath it.
 fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
     if front == 0 {
         return;
@@ -86,8 +59,6 @@ fn without_comment(line: &str) -> &str {
     opens.map_or(line, |at| &line[..at])
 }
 
-/// What follows `tags:` or `tag:` at the left margin, or nothing when the line
-/// is some other key. Both spellings, because Obsidian takes both.
 fn key_value(line: &str) -> Option<&str> {
     let lowered = line.to_ascii_lowercase();
 
@@ -100,8 +71,6 @@ fn key_value(line: &str) -> Option<&str> {
     None
 }
 
-/// The `- item` lines under a key, stopping at the first line that is not one.
-/// Answers where it stopped, so the caller reads on from there.
 fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) -> usize {
     let mut at = from;
 
@@ -126,11 +95,8 @@ fn read_items(body: &str, from: usize, front: usize, found: &mut Vec<String>) ->
     at
 }
 
-/// Every name in a written-out value: `[a, b]`, `a, b` and `a b` all read.
 fn read_values(text: &str, found: &mut Vec<String>) {
     for piece in text.split(|one: char| one.is_whitespace() || ",[]'\"".contains(one)) {
-        // The hash is optional here, because YAML reads one as a comment; a
-        // value that has one is the same tag as a value that has not.
         let name = piece.strip_prefix('#').unwrap_or(piece);
         if named(name) {
             found.push(format!("#{name}"));
@@ -138,8 +104,6 @@ fn read_values(text: &str, found: &mut Vec<String>) {
     }
 }
 
-/// Whether a name is one a tag may have: opened by a letter, mark, digit or emoji,
-/// then those and the three joiners, and not all digits.
 fn named(name: &str) -> bool {
     let mut letters = name.chars();
     let Some(first) = letters.next() else {
@@ -149,7 +113,6 @@ fn named(name: &str) -> bool {
     name_start(first) && letters.all(name_char) && !name.chars().all(char::is_numeric)
 }
 
-/// A character a name may open with: a letter, mark, digit or emoji.
 fn name_start(one: char) -> bool {
     let category = CodePointMapData::<GeneralCategory>::new().get(one);
     GeneralCategoryGroup::Letter.contains(category)
@@ -158,24 +121,12 @@ fn name_start(one: char) -> bool {
         || CodePointSetData::new::<ExtendedPictographic>().contains(one)
 }
 
-/// A character a name holds after its first: those, and the three that join words.
 fn name_char(one: char) -> bool {
     name_start(one) || "-_/".contains(one)
 }
 
-/// Every `#tag` in the note's own words. The front matter is left out of this
-/// pass: a hash there is a YAML comment, and the tags it holds have been read
-/// already. Code is left out too, fenced or indented, where a `#` is a comment or a heading
-/// in some other language, and so is inline code, which shows what is in it as
-/// written. A code span runs on across the lines of a paragraph, so the spans are
-/// cut a block at a time. Raw HTML and autolinks, which `CommonMark` reads before a
-/// backtick, are not looked for: a backtick in an attribute can hide a tag.
 fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
     for block in blocks(&body[front..]) {
-        // Read through the block as it is written rather than as a list of
-        // characters: this runs over every line of every note in a space, and an
-        // array of one block's letters is an allocation a tag does not need. Nor
-        // are its code spans, where it holds no hash.
         if !block.contains('#') {
             continue;
         }
@@ -188,7 +139,6 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
             let opens =
                 opens_tag(before) && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
-            // The name is what a tag may hold, which rules out `#1`.
             let rest = &block[start + 1..];
             let name = closed_by(
                 rest.find(|one: char| !name_char(one))
@@ -205,17 +155,8 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
     }
 }
 
-/// What emphasis, strike and highlight are written with.
 const MARKS: &[char] = &['*', '_', '~', '='];
 
-/// Whether a hash after `before` opens a tag. The twin of `opensTagAt` in
-/// @orden/markdown's tags.ts, which the renderer and the editor read tags by too.
-///
-/// It opens a word: after nothing, a blank or a `(`, though not the `](` of a
-/// link, where `#heading` is where the link goes. A run of marks in between is
-/// the start of emphasis, strike or highlight, so `**#tag**` is one; but marks in
-/// the middle of a word open nothing, so `a=#b` and `?q=#x` are words. A `|`
-/// opens one in a table row, a line that starts with one.
 fn opens_tag(before: &str) -> bool {
     let bare = before.trim_end_matches(MARKS);
     let Some(one) = bare.chars().next_back() else {
@@ -232,14 +173,10 @@ fn opens_tag(before: &str) -> bool {
     }
 }
 
-/// A name opened by `_` emphasis ends where the emphasis does: `_#urgent_` is the
-/// tag `urgent`, as the page draws it. Cut short to nothing a tag may be called,
-/// it is no tag. The twin of `closedBy` in tags.ts.
 fn closed_by(name: &str, underscores: usize) -> &str {
     if underscores == 0 || name.len() < underscores {
         return name;
     }
-    // Checked as bytes first, so the cut lands between characters.
     let at = name.len() - underscores;
     if !name.as_bytes()[at..].iter().all(|&one| one == b'_') {
         return name;
@@ -252,11 +189,6 @@ fn closed_by(name: &str, underscores: usize) -> &str {
     }
 }
 
-/// The blocks of words in a note: a paragraph's lines, a list item's or a
-/// heading's, which no code span reaches out of. A blank line, a line of code and
-/// a line that opens a block end one, and code is in none. What is code is
-/// judged as the renderer judges it, fences in quotes and list items and indented
-/// code included; see `code_blocks`.
 fn blocks(words: &str) -> Vec<&str> {
     let mut out = Vec::new();
     let mut code = CodeBlocks::default();
@@ -289,7 +221,6 @@ fn blocks(words: &str) -> Vec<&str> {
     out
 }
 
-/// Whether a line opens a block of its own: a list item, a quote or a heading.
 fn opens_block(line: &str) -> bool {
     let rest = line.trim_start_matches(' ');
     if line.len() - rest.len() > 3 {
@@ -306,23 +237,16 @@ fn opens_block(line: &str) -> bool {
     marker.is_some_and(ends_marker) || rest.starts_with('>') || heading(line)
 }
 
-/// Whether a line is a heading, which is one line long.
 fn heading(line: &str) -> bool {
     let rest = line.trim_start_matches(' ');
     let hashes = rest.bytes().take_while(|&one| one == b'#').count();
     line.len() - rest.len() <= 3 && (1..=6).contains(&hashes) && ends_marker(&rest[hashes..])
 }
 
-/// Whether what follows a block's marker lets it open one: a blank or nothing.
 fn ends_marker(after: &str) -> bool {
     after.is_empty() || after.starts_with([' ', '\t'])
 }
 
-/// Where the code spans in a line start and end, in bytes, cut the way
-/// `codeAndWords` in tags.ts cuts them: a run of backticks opens a span that
-/// the next run of the same length closes, one with no such run after it is
-/// backticks, and a backtick behind a backslash opens nothing. Every mark this
-/// looks for is ASCII, so reading bytes never lands inside a character.
 fn code_spans(line: &str) -> Vec<(usize, usize)> {
     let bytes = line.as_bytes();
     let mut spans = Vec::new();
@@ -345,12 +269,10 @@ fn code_spans(line: &str) -> Vec<(usize, usize)> {
     spans
 }
 
-/// How many backticks stand in a row from `at`.
 fn backticks_at(bytes: &[u8], at: usize) -> usize {
     bytes[at..].iter().take_while(|&&one| one == b'`').count()
 }
 
-/// Where the run of exactly `length` backticks closing a span starts, from `from`.
 fn closing_run(bytes: &[u8], from: usize, length: usize) -> Option<usize> {
     let mut at = from;
     while at < bytes.len() {
@@ -565,8 +487,6 @@ mod tests {
         );
     }
 
-    /// Twin of the CRLF case in scan-note.test.ts: the launch scan and a save
-    /// read the same tags out of a note written with Windows endings.
     #[test]
     fn reads_front_matter_tags_in_a_crlf_note() {
         assert_eq!(
@@ -579,7 +499,6 @@ mod tests {
         );
     }
 
-    /// Twin of "a link to a heading is no tag" in search/tags.test.ts.
     #[test]
     fn a_link_to_a_heading_is_no_tag() {
         assert_eq!(
@@ -588,8 +507,6 @@ mod tests {
         );
     }
 
-    /// Twin of "inside emphasis, strike, highlight or a cell" in
-    /// search/tags.test.ts: where the page draws a tag, the index has one.
     #[test]
     fn reads_a_tag_inside_emphasis_strike_highlight_or_a_cell() {
         assert_eq!(
@@ -599,8 +516,6 @@ mod tests {
         assert_eq!(tags_in("| x | y |\n| - | - |\n|#f|#g|\n"), vec!["#f", "#g"]);
     }
 
-    /// The rows of `PARITY` in @orden/markdown's tags.test.ts, which the page is
-    /// held to, and of "alike on the page and in the index" in search/tags.test.ts.
     #[test]
     fn reads_the_parity_rows() {
         let rows: [(&str, &[&str]); 11] = [

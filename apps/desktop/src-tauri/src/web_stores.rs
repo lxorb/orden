@@ -1,21 +1,3 @@
-//! Which store a web tab's site data goes in, when a space keeps its own.
-//!
-//! Emil, 2026-09-27: *"there should be a setting for a space where you can set on which
-//! granularity to save the website data. either global (default) which just uses the
-//! global cookies and data store of Orden or per space which saves it per space or per
-//! site which makes it separate for each site in this space."*
-//!
-//! The window decides which store a tab is in and says so by name - nothing for the
-//! one every space shares, `space_<id>` for a space of its own, `site_<id>_<site>` for
-//! one site within it; see web-tab/web-data.ts, which is where a site is defined. This
-//! is the other half: a name the crate will make something of, and what it makes of
-//! it on each engine. A name is the whole of a store's identity, so the same name
-//! reaches the same cookies on every launch, and a store nobody names any more is still
-//! on disk the day somebody names it again.
-
-/// The folder beside `web` that every store but the shared one lives in, one folder
-/// each. Beside rather than inside, because `web` is a `WebView2` user data folder and
-/// what is inside it is the engine's.
 #[cfg_attr(
     any(feature = "cef", target_os = "macos"),
     allow(
@@ -25,19 +7,8 @@
 )]
 pub(crate) const STORES: &str = "web-stores";
 
-/// The longest name the crate takes. A space's id and a registrable domain are both
-/// far shorter; this is what keeps a folder name under every file system's limit.
 const LONGEST: usize = 160;
 
-/// The store a tab was asked to be in, checked: `None` for the one every space
-/// shares, which is what nothing and an empty name both mean.
-///
-/// A name becomes a folder name, so it is held to the shapes the window writes -
-/// `note_`, for a web note that keeps its own (#239), or `space_` or `site_`, the stores a
-/// space kept before that, which are only ever read to be merged - and then lower case
-/// letters, digits, `.`, `-` and `_`. That
-/// leaves nothing that climbs out of the stores folder or means something to a file
-/// system, `nul` and `con` included, rather than trying to list what does.
 pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     let Some(name) = asked.filter(|one| !one.is_empty()) else {
         return Ok(None);
@@ -57,16 +28,8 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     }
 }
 
-/// Sixteen bytes for a store on a Mac, where a store is an identifier rather than a
-/// folder: `WKWebsiteDataStore(forIdentifier:)` hands back the same store for the same
-/// sixteen bytes, on every launch.
-///
-/// So they come from the name and from nothing else - two FNV-1a hashes of it, which
-/// are fixed by their definition and not by this build's hasher, whose seed changes
-/// from run to run. A store's cookies depend on these bytes never changing.
 #[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
 pub(crate) fn identifier(name: &str) -> [u8; 16] {
-    /// FNV-1a over the name, from a given start.
     fn hashed(name: &str, start: u64) -> u64 {
         name.bytes().fold(start, |hash, byte| {
             (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
@@ -74,8 +37,6 @@ pub(crate) fn identifier(name: &str) -> [u8; 16] {
     }
 
     let mut out = [0u8; 16];
-    // The standard offset basis for the first half, and a second start for the other,
-    // so the halves are two different hashes rather than one written twice.
     out[..8].copy_from_slice(&hashed(name, 0xcbf2_9ce4_8422_2325).to_be_bytes());
     out[8..].copy_from_slice(&hashed(name, 0x6e69_625f_7765_6273).to_be_bytes());
     out
@@ -85,14 +46,12 @@ pub(crate) fn identifier(name: &str) -> [u8; 16] {
 mod tests {
     use super::{identifier, named, LONGEST};
 
-    /// Nothing, and an empty name, are the store every space shares.
     #[test]
     fn no_name_is_the_shared_store() {
         assert_eq!(named(None), Ok(None));
         assert_eq!(named(Some("")), Ok(None));
     }
 
-    /// The shapes the window writes are taken as they are.
     #[test]
     fn a_note_a_space_and_a_site_are_names() {
         assert_eq!(
@@ -111,8 +70,6 @@ mod tests {
         );
     }
 
-    /// Nothing that could reach outside the stores folder, or mean something to a file
-    /// system, is a name.
     #[test]
     fn a_name_is_one_plain_folder() {
         for bad in [
@@ -140,8 +97,6 @@ mod tests {
         assert!(named(Some(&format!("{long}a"))).is_err());
     }
 
-    /// The same bytes for the same name on every launch, and different bytes for
-    /// different names - pinned, because a change here would move every store on a Mac.
     #[test]
     fn a_macs_store_is_the_same_every_time() {
         let one = identifier("space_0-k3j9x2");
@@ -152,7 +107,6 @@ mod tests {
             identifier("site_0-a_uzh.ch")
         );
         assert_ne!(one[..8], one[8..], "two halves, not one written twice");
-        // FNV-1a's own published value for "a", which is what says the hash is FNV-1a.
         assert_eq!(
             identifier("a")[..8],
             0xaf63_dc4c_8601_ec8c_u64.to_be_bytes()

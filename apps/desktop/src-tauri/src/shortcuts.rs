@@ -1,11 +1,5 @@
-//! Settings > AI > Access's Shortcuts row, and where a task added from Shortcuts goes.
-//! The action itself is the Mac's alone (siri.rs); everywhere else these answer that
-//! there is nothing to offer.
-
 use tauri::AppHandle;
 
-/// Whether the Shortcuts row is shown: only where Shortcuts lists Orden's actions. Off
-/// the window's thread, since the first answer reads the app's signature off the disk.
 #[tauri::command(async)]
 pub fn shortcuts_offered() -> bool {
     #[cfg(target_os = "macos")]
@@ -18,7 +12,6 @@ pub fn shortcuts_offered() -> bool {
     }
 }
 
-/// Opens the Shortcuts app, where nib's actions are.
 #[tauri::command(async)]
 pub fn open_shortcuts() -> Result<(), String> {
     #[cfg(target_os = "macos")]
@@ -35,7 +28,6 @@ pub fn open_shortcuts() -> Result<(), String> {
     }
 }
 
-/// The page saying which note is the inbox of the space in front; see siri.rs.
 #[tauri::command(async)]
 #[cfg_attr(
     not(target_os = "macos"),

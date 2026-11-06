@@ -1,66 +1,23 @@
-//! A site's own mark, as the engine that drew the page found it.
-//!
-//! Emil, 2026-09-28: *"I don't always get the proper icon, e.g. sometimes whatsapp just
-//! doesn't get its icon and keeps at the default icon."*
-//!
-//! **What it was.** The mark used to be an address: the page's last `<link rel=icon>`,
-//! read once as the page finished loading, and then fetched a second time by the app's
-//! own page to draw it. Both halves failed on web.whatsapp.com. Its script adds a second
-//! `<link rel=icon>` a second or so after the page has loaded - measured, 1.3 s after
-//! the load event - so which address the one read found depended on which finished
-//! first. And the address it adds, `web.whatsapp.com/favicon/1x/favicon/v4/`, is served
-//! with `Cross-Origin-Resource-Policy: same-origin`: the site's own page may draw it and
-//! nothing else may, the app's page included. So a tab that lost the race wore a broken
-//! picture, the globe stood in for it, and the address was written into the `.url`,
-//! where the file list met the same refusal on every launch after. An icon behind a login
-//! failed the same way for a different reason: the app's page is in another profile from
-//! the site's, so it asked without the site's cookies.
-//!
-//! **What it is now, on `WebView2`, which is Chrome's answer.** The engine already
-//! chose the page's icon and fetched it, inside the page's own profile with the page's
-//! own cookies, and says when that choice changes: `FaviconChanged`. What it chose is
-//! read again inside the page at the size the site drew it, and where the page will not
-//! hand that over the engine's own decoded copy stands in (`GetFavicon`); see `fetch`.
-//! Either way the window is sent a `data:` address nothing has to fetch again, whatever
-//! the site's headers say. The event follows the page for as long as it is open, so a
-//! mark a site redraws with an unread count is redrawn in the tab as well. See
-//! docs/web-tabs.md.
-//!
-//! Every other engine has no such event reachable through what wry hands out, so there
-//! the page is still asked once it has loaded. It is asked for every mark it declares
-//! rather than the last, and the one worth drawing is chosen here; see `best`.
-
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
-/// The event the window hears a tab's mark on.
 const ICON: &str = "nib://web-icon";
 
-/// The side of the box a mark is drawn in, in pixels, at the density a mark has to
-/// stay sharp at: `--icon-md` is sixteen, and a screen at twice that is common.
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 const WANT: u32 = 32;
 
-/// The largest mark worth sending, in bytes. It is written into the note's file, so it
-/// is kept small: a mark of 32 or 64 pixels is a few kilobytes as a PNG or an SVG. An
-/// `.ico` that carries every size up to 256 is several times this - proton.me's is 33
-/// kilobytes, measured - and that one is drawn from the engine's own copy instead.
 const LARGEST: usize = 16 * 1024;
 
-/// What the window is told: which tab, and its mark. Empty is a page with none.
 #[derive(Clone, Serialize)]
 struct Iconed<'a> {
     tab: &'a str,
     icon: &'a str,
 }
 
-/// Tells the window that holds a tab what its mark is now.
 pub fn said(app: &AppHandle, window: &str, tab: &str, icon: &str) {
     let _ = app.emit_to(window, ICON, Iconed { tab, icon });
 }
 
-/// A PNG as an address the window can draw without fetching anything, or nothing for
-/// bytes that are not a PNG of a size worth sending.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub fn data_url(png: &[u8]) -> Option<String> {
     use base64::Engine as _;
@@ -76,7 +33,6 @@ pub fn data_url(png: &[u8]) -> Option<String> {
     ))
 }
 
-/// One mark a page declares, as `ASK` reads it off a `<link>`.
 #[derive(Debug, Default, Deserialize)]
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 pub struct Declared {
@@ -90,7 +46,6 @@ pub struct Declared {
     r#type: String,
 }
 
-/// What a page says about its marks: where it is, and every `<link>` that names one.
 #[derive(Debug, Default, Deserialize)]
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 pub struct Declaring {
@@ -100,9 +55,6 @@ pub struct Declaring {
     links: Vec<Declared>,
 }
 
-/// Every `<link>` in the page with a `rel`, resolved, for `best` to choose from. The
-/// choosing is not done in here because a rule inside a page's script is a rule
-/// nothing can test.
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 pub const ASK: &str = r"(function () {
   try {
@@ -123,12 +75,6 @@ pub const ASK: &str = r"(function () {
   }
 })()";
 
-/// How good a declared mark is for a box `WANT` pixels wide: higher is better.
-///
-/// A drawing that scales is best, because it is sharp at any size. Then the smallest
-/// picture at least as large as the box, which is sharp without being a large picture
-/// shrunk. Then one that does not say its size - usually an `.ico` holding several -
-/// and last the largest of those smaller than the box.
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 fn score(declared: &Declared) -> u64 {
     let sizes = declared.sizes.to_ascii_lowercase();
@@ -160,19 +106,12 @@ fn score(declared: &Declared) -> u64 {
     }
 }
 
-/// Whether a `rel` holds the one word asked for: `shortcut icon` names an `icon`, and
-/// `apple-touch-icon` does not.
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 fn names(rel: &str, word: &str) -> bool {
     rel.split_ascii_whitespace()
         .any(|one| one.eq_ignore_ascii_case(word))
 }
 
-/// The one mark worth drawing out of everything a page declares, the way a browser
-/// chooses it: the best `rel=icon` for the box, the last declared where two are as
-/// good - a page that adds one with a script means the newer one - Apple's home screen
-/// picture where the page declares nothing else, and the site's `/favicon.ico` where
-/// it declares nothing at all.
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 pub fn best(declaring: &Declaring) -> Option<String> {
     let usable = |one: &&Declared| {
@@ -202,11 +141,6 @@ pub fn best(declaring: &Declaring) -> Option<String> {
         })
 }
 
-/// Starts following one page's mark. Called on the window's thread, once, as the page
-/// is built; `window` is the label of the window the page is in.
-///
-/// Asked once straight away as well, because a page that had its mark before this was
-/// listening would otherwise wear nothing until it changed it.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -222,9 +156,6 @@ pub fn listen(
     use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15;
     use windows_core::Interface as _;
 
-    // Safe: the controller is the one this window owns, every object below is used only
-    // on this thread, and the handler outlives the call because WebView2 holds it. A
-    // runtime too old to have favicons at all leaves the tab its file's mark.
     unsafe {
         let Ok(core) = webview.controller().CoreWebView2() else {
             return;
@@ -255,24 +186,18 @@ pub fn listen(
     }
 }
 
-/// Who hears a page's mark, and which asking an answer belongs to.
 #[cfg(all(windows, not(feature = "cef")))]
 #[derive(Clone)]
 struct Telling {
     app: AppHandle,
     tab: String,
     window: String,
-    /// How many times this page's mark has been asked for. The page's read and the
-    /// engine's copy each take their own time, so a mark redrawn twice in quick
-    /// succession can be answered out of order; only the latest asking is said.
     asked: std::rc::Rc<std::cell::Cell<u64>>,
-    /// Which asking this is.
     turn: u64,
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
 impl Telling {
-    /// The next asking, which every earlier one gives way to.
     fn again(&self) -> Self {
         let turn = self.asked.get() + 1;
         self.asked.set(turn);
@@ -282,7 +207,6 @@ impl Telling {
         }
     }
 
-    /// Says the mark, unless the page has been asked again since.
     fn tell(&self, icon: &str) {
         if self.asked.get() == self.turn {
             said(&self.app, &self.window, &self.tab, icon);
@@ -290,26 +214,12 @@ impl Telling {
     }
 }
 
-/// The picture the engine chose for the page now, at the resolution the site drew it,
-/// and the window told when it arrives.
-///
-/// **Why not `GetFavicon` alone.** It hands over the picture already scaled to sixteen
-/// pixels - measured, on a screen at twice that - so a mark drawn from it is blurred on
-/// exactly the screens a mark is looked at on. The engine's choice of which picture to
-/// fetch is the right one, a size that fills the box on this screen, and `FaviconUri`
-/// says what it chose. So that address is read again inside the page - in Orden's own
-/// world there, which the page cannot see - where the site's cookies and its own origin
-/// are, and the bytes come back as they were served; see
-/// `FETCH`. Where the page will not hand them over - a mark on another origin that does
-/// not allow reading it, or a page whose policy forbids the request - the engine's own
-/// sixteen pixels are the answer, and those always arrive.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "a page's favicon is WebView2's own, reached through its COM interfaces"
 )]
 fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15, told: Telling) {
-    // Safe: a string the engine allocated for this call, taken and freed here.
     let uri = unsafe {
         let mut uri = windows_core::PWSTR::null();
         match core.FaviconUri(&raw mut uri) {
@@ -318,15 +228,11 @@ fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15,
         }
     };
 
-    // No address is a page with no mark at all - or one that has not got that far yet -
-    // and is said as none rather than asked of the engine, which would answer with a
-    // picture of nothing.
     if uri.is_empty() {
         told.tell("");
         return;
     }
 
-    // A mark written into the page is already the picture.
     if let Some(icon) = picture(&uri) {
         told.tell(&icon);
         return;
@@ -337,9 +243,6 @@ fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15,
         return;
     }
 
-    // In nib's own world rather than the page's, so a page that has wrapped `fetch` - to
-    // log it, retry it, or route it through its own worker - neither sees this read nor
-    // changes what it answers; see web_worlds.rs.
     let fallback = core.clone();
     crate::web_worlds::evaluate(core, fetching(&uri), move |answer| {
         match answer.as_deref().and_then(read_back) {
@@ -349,9 +252,6 @@ fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15,
     });
 }
 
-/// The engine's own picture of the page's mark, sixteen pixels square, and the window
-/// told when it arrives. A page with none is told as none, so a tab that followed a
-/// link to a site without a mark stops wearing the last site's.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -372,22 +272,11 @@ fn decoded(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_1
         Ok(())
     }));
 
-    // Safe: the engine holds the handler until it answers, on this same thread.
     unsafe {
         let _ = core.GetFavicon(COREWEBVIEW2_FAVICON_IMAGE_FORMAT_PNG, &handler);
     }
 }
 
-/// Reads the mark the engine chose, inside the page: from the page's own origin, with
-/// its cookies where the mark is on that origin, and out of the cache the engine has just
-/// filled. The answer is a `data:` address or nothing. `__URI__` is the address, as a
-/// JSON string.
-///
-/// Cookies go to the page's own origin and no other - the fetch's own default - because
-/// a mark on a shared host answers anybody with `Access-Control-Allow-Origin: *`, which
-/// the engine refuses for a request that carries credentials: Google's editors keep
-/// theirs on `ssl.gstatic.com`, and asked with cookies it was refused every time, in red
-/// in the page's own console.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 const FETCH: &str = r"(async () => {
   try {
@@ -406,8 +295,6 @@ const FETCH: &str = r"(async () => {
   }
 })()";
 
-/// `FETCH` for one address: what the protocol's own evaluation is asked to run, because
-/// it waits for a promise and a plain script does not.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 fn fetching(uri: &str) -> String {
     let address = serde_json::to_string(uri).unwrap_or_else(|_| "''".into());
@@ -416,18 +303,12 @@ fn fetching(uri: &str) -> String {
         .replace("__LARGEST__", &LARGEST.to_string())
 }
 
-/// The picture out of the protocol's answer to `fetching`, or nothing.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 fn read_back(answer: &str) -> Option<String> {
     let said: serde_json::Value = serde_json::from_str(answer).ok()?;
     picture(said.pointer("/result/value")?.as_str()?)
 }
 
-/// An address that is a picture the window may draw as it stands, or nothing.
-///
-/// The page wrote it, so it is taken as the page's word and no more: a picture of a
-/// kind an `<img>` draws, in base64, of a size worth keeping in a file. An SVG among
-/// them is safe to draw, because an `<img>` never runs what is in one.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 fn picture(address: &str) -> Option<String> {
     const KINDS: [&str; 9] = [
@@ -457,7 +338,6 @@ fn picture(address: &str) -> Option<String> {
         .then(|| address.to_string())
 }
 
-/// Every other engine is asked by the page it drew; see the top of this file.
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
@@ -541,8 +421,6 @@ mod tests {
         assert_eq!(on(links).as_deref(), Some("https://a.example/favicon.ico"));
     }
 
-    // web.whatsapp.com's own shape: the page declares one, and its script adds another
-    // after the page has loaded. Two as good as each other go to the newer.
     #[test]
     fn of_two_as_good_the_one_declared_last_wins() {
         let links = vec![
