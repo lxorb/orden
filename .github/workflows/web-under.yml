@@ -11,6 +11,9 @@ on:
       - apps/desktop/src/lib/web-tab/**
       - scripts/web-under-drive.py
       - scripts/overview-drive.py
+      - scripts/tools-freeze-drive.py
+      - apps/desktop/src-tauri/src/terminal/**
+      - apps/desktop/src-tauri/src/explorer/**
       - .github/workflows/web-under.yml
   workflow_dispatch:
 
@@ -56,6 +59,11 @@ jobs:
         run: |
           python -m pip install --quiet pillow mss numpy
           python scripts/overview-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER" --out overview
+
+      - name: Terminals and the file explorer worked hard, the window watched
+        if: always()
+        run: |
+          python scripts/tools-freeze-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER"
 
       - name: Windowed, for UI Automation
         if: always()
