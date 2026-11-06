@@ -1,14 +1,3 @@
-//! Two facts `nib mcp` needs without Tauri's generated context: the identifier, which
-//! names the folder the running app keeps its endpoint file in, and the version it says
-//! it is. Read from the same files and the same `TAURI_CONFIG` tauri-build reads, so a
-//! probe built with an identifier of its own is a probe whose `nib mcp` finds that probe
-//! and never the reader's own Orden. See src/mcp/home.rs.
-//!
-//! A file of its own because two build scripts say them: the app's (`build.rs`) and the
-//! Chromium build's (`cef/build.rs`), which compiles the same library and so needs the
-//! same two variables. Both run it from the app's folder, after `tauri_build::build`.
-
-/// Says both to the crate being built.
 pub fn say() {
     let config = config();
     let said = |key: &str| {
@@ -22,9 +11,6 @@ pub fn say() {
     println!("cargo:rustc-env=NIB_VERSION={}", said("version"));
 }
 
-/// The configuration as tauri-build reads it: the file, the platform's own file over it,
-/// and what `--config` put in `TAURI_CONFIG` over both, key by key at the top, which is
-/// all the two keys above need of a merge.
 fn config() -> serde_json::Value {
     let target = std::env::var("TARGET").unwrap_or_default();
     let here = std::env::current_dir().expect("the build runs in the app's folder");

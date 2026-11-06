@@ -24,18 +24,12 @@ mod app_intents {
     use std::path::PathBuf;
     use std::process::Command;
 
-    /// The Swift files, compiled as one module.
     const SOURCES: &[&str] = &["swift/AddTask.swift"];
 
-    /// The module the intents are in; the metadata names their types by it.
     const MODULE: &str = "NibIntents";
 
-    /// The protocols whose conformances the compiler writes values out for, which the
-    /// metadata processor reads the intents from (Xcode's own list, and a few spare).
     const PROTOCOLS: &str = r#"["AppIntent","AppEntity","AppEnum","EntityQuery","TransientAppEntity","AppShortcutsProvider","AppIntentsPackage","DynamicOptionsProvider"]"#;
 
-    /// Where the metadata is written, relative to src-tauri; the bundle copies it from
-    /// here into Contents/Resources.
     const METADATA: &str = "gen/app-intents";
 
     pub fn build() {
@@ -108,9 +102,6 @@ mod app_intents {
             .arg("--force");
         run(&mut processor);
 
-        // The object into the app itself, not the library: the intents call back into
-        // the app's Rust, and the system looks for their types in the main executable.
-        // The Swift runtime and AppIntents come in by the object's own link commands.
         println!("cargo:rustc-link-arg-bins={}", object.display());
         println!("cargo:rustc-link-search=native={sdk}/usr/lib/swift");
         println!(
@@ -132,7 +123,6 @@ mod app_intents {
         String::from_utf8(out.stdout).unwrap().trim().to_owned()
     }
 
-    /// Xcode's build number, which the metadata records as the tools that made it.
     fn xcode_build() -> String {
         let out = Command::new("xcodebuild")
             .arg("-version")
