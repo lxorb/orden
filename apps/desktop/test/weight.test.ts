@@ -1326,8 +1326,11 @@ function holds(tail: string): boolean {
  *  Raised on 2026-11-06, to 3,683,600 in 401 files, for #1068: the file list keeps each row
  *  by an id that follows its moves, holds the keyboard, the pick and the scroll through
  *  another device's changes and slides the rows into place (row-ids.ts, tree-settle.ts,
- *  Tree.svelte). Measured 3,683,326 in 400. */
-const BUDGET = 3_683_600
+ *  Tree.svelte). Measured 3,683,326 in 400.
+ *
+ *  Raised on 2026-11-06, to 3,684,000, for #1137: how a page is layered is said for each
+ *  page (`page.layering` in web-tab/pages.svelte.ts). Measured 3,683,701 in 400. */
+const BUDGET = 3_684_000
 const MOST_FILES = 401
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
