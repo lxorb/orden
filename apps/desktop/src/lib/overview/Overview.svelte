@@ -419,6 +419,7 @@
   )
 
   const byId = $derived(new Map(workspace.tabs.map((tab) => [tab.id, tab])))
+  const slotOf = $derived(new Map(laid.slots.map((slot) => [slot.id, slot])))
   const unzoom = $derived(Math.max(1, 1 / camera.zoom))
   const windows = $derived(
     laid.slots.flatMap((slot) => {
@@ -705,7 +706,7 @@
   function paint(id: string) {
     const flight = flights.get(id)
     const parts = elements.get(id)
-    const slot = laid.slots.find((one) => one.id === id)
+    const slot = slotOf.get(id)
     if (!flight || !parts || !slot) return
     const pose = flight.pose
     const styles = drawn(pose, slot.w, slot.h, corner, camera)
@@ -744,7 +745,7 @@
     if (!node) return
     const at = riders.get(id)
     const pose = flights.get(id)?.pose
-    const slot = laid.slots.find((one) => one.id === id)
+    const slot = slotOf.get(id)
     const home = homes.get(id)
     if (!at || !pose || !slot || !home || home.tab >= 0.5 || home.alpha < 0.5) {
       node.style.opacity = '0'
