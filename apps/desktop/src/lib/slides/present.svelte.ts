@@ -9,6 +9,10 @@ class Present {
 
   private wasFullscreen = false
 
+  private filled = false
+
+  private turn: Promise<void> = Promise.resolve()
+
   start(tabId: string | null = workspace.activeTabId) {
     const tab = workspace.tabs.find((one) => one.id === tabId)
     if (tab?.kind !== 'note') return
@@ -17,14 +21,14 @@ class Present {
     if (!isDeck(tab.doc)) return
 
     this.tabId = tab.id
-    void this.fill()
+    this.follow()
   }
 
   stop() {
     if (this.tabId === null) return
 
     this.tabId = null
-    void this.shrink()
+    this.follow()
   }
 
   toggle(tabId: string | null = workspace.activeTabId) {
@@ -39,17 +43,23 @@ class Present {
     return isDeck(tab.doc)
   }
 
-  private async fill() {
-    const window = await currentWindow()
-    this.wasFullscreen = await window.isFullscreen()
-    if (!this.wasFullscreen) await window.setFullscreen(true)
+  private follow() {
+    this.turn = this.turn.then(() => this.settle()).catch(() => undefined)
   }
 
-  private async shrink() {
-    if (this.wasFullscreen) return
+  private async settle() {
+    if (this.on === this.filled) return
 
     const window = await currentWindow()
-    await window.setFullscreen(false)
+    if (this.on) {
+      this.wasFullscreen = await window.isFullscreen()
+      this.filled = true
+      if (!this.wasFullscreen) await window.setFullscreen(true)
+      return
+    }
+
+    this.filled = false
+    if (!this.wasFullscreen) await window.setFullscreen(false)
   }
 }
 
