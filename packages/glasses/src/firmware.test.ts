@@ -1,6 +1,19 @@
+import { measureTextWrap } from '@evenrealities/pretext'
 import { describe, expect, test } from 'vitest'
-import { draws, fit, fold, rightward, rows, ruleOf, SPACE, TICK, width, workDone } from './firmware'
-import { LINE } from './panel'
+import {
+  draws,
+  fit,
+  fold,
+  rightward,
+  rows,
+  ruleOf,
+  SPACE,
+  TICK,
+  width,
+  workDone,
+  wrap,
+} from './firmware'
+import { BODY_INNER, LINE } from './panel'
 
 describe('the firmware font', () => {
   test('sets a fixed 27 pixel line', () => {
@@ -183,5 +196,30 @@ describe('measuring as the firmware sets it', () => {
 
   test('makes a rule of at least one glyph, however little room there is', () => {
     expect(ruleOf('─', 4)).toBe('─')
+  })
+})
+
+describe('a word too long for a row', () => {
+  const URL = `https://example.org/${'abcdefghij'.repeat(20)}`
+
+  test.each([
+    ['a quote', '│ ', `│ link${'x'.repeat(200)}`],
+    ['a list', '   ', `• ${URL}`],
+    ['a quote with a link', '│ ', `│ ${URL}`],
+  ])('in %s, is cut into rows the firmware keeps to one line each', (_what, hang, text) => {
+    for (const row of wrap(text, BODY_INNER, hang)) {
+      expect(measureTextWrap(row, BODY_INNER).lineCount, row).toBe(1)
+    }
+  })
+
+  test('starts beside its bullet or quote bar, not on the row after it', () => {
+    expect(wrap(`• ${URL}`, BODY_INNER, '   ')[0]).toMatch(/^• https/)
+    expect(wrap(`│ ${URL}`, BODY_INNER, '│ ')[0]).toMatch(/^│ https/)
+  })
+
+  test('keeps the space before the word after it', () => {
+    const rows = wrap(`see ${'x'.repeat(120)} after this`, BODY_INNER)
+
+    expect(rows.at(-1)).toMatch(/x after this$/)
   })
 })

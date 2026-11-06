@@ -54,14 +54,22 @@ const SUBS = '₀₁₂₃₄₅₆₇₈₉'
 const MARKERS = [...BULLETS, TASK_OPEN, TASK_DONE, PICTURE, ':', '\\d+\\.']
 const FURNITURE = new RegExp(`^(?:${QUOTE})*(?: *)(?:${MARKERS.join('|')})? ?`, 'u')
 
+const hangs = new Map<string, string>()
+
 export function hangOf(text: string): string {
   const found = FURNITURE.exec(text)?.[0] ?? ''
   if (found === '') return ''
 
+  const known = hangs.get(found)
+  if (known !== undefined) return known
+
   const bars = QUOTE.repeat(found.match(new RegExp(QUOTE, 'gu'))?.length ?? 0)
   const spare = Math.max(0, Math.round((width(found) - width(bars)) / width(' ')))
+  const hang = bars + ' '.repeat(spare)
 
-  return bars + ' '.repeat(spare)
+  if (hangs.size >= 1000) hangs.clear()
+  hangs.set(found, hang)
+  return hang
 }
 
 function raise(text: string, digits: string): string | null {
