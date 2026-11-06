@@ -277,8 +277,9 @@ export class EngineDevice implements DeviceAdapter {
       if (!space) return false
       const key = nameKey(path)
       for (const one of space.paths().values()) if (nameKey(one) === key) return true
-      for (const one of this.disk.files.keys())
-        if (nameKey(one) === nameKey(this.full(path))) return true
+      const full = nameKey(this.full(path))
+      for (const one of [...this.disk.files.keys(), ...this.disk.folders])
+        if (nameKey(one) === full) return true
       return false
     }
   }

@@ -383,7 +383,7 @@ function making(space: SpaceState, id: string, unsent = false): boolean {
 /** This device's delete of an entry whose making has not gone either, taken out of the
  *  outbox: the account will hear of neither, and a restore behind them would name an
  *  entry it never had, the two folded away before it (`coalesce`). */
-function unsent(space: SpaceState, id: string, changes: Change[]): void {
+function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   const one = space.outbox.find(
     (op) =>
       op.record.t === 'op' &&
@@ -391,10 +391,11 @@ function unsent(space: SpaceState, id: string, changes: Change[]): void {
       op.record.op.t === 'delete' &&
       op.record.op.id === id,
   )
-  if (!one) return
+  if (!one) return false
   space.outbox = space.outbox.filter((other) => other !== one)
   changes.push(remove('outbox', one.row.op_id))
   space.changed()
+  return true
 }
 
 /** What this device deleted, back on its disk at `path` - out of its trash, or a delete
@@ -479,8 +480,10 @@ export async function restored(
       if (text !== null) changes.push(...(await wrote(core, entry, text)))
     }
     // Made here and not gone yet: the delete behind it goes instead, and nothing else.
+    // Where the delete was of a folder around it, that delete still goes and takes it,
+    // so it goes up as a restore behind it like the rest (#1068).
     if (making(space, entry.id, true)) {
-      unsent(space, entry.id, changes)
+      const folded = unsent(space, entry.id, changes)
       // And its words, let go of with the delete, are its file's again: the account has
       // none of them yet.
       const shape = shapeOf(entry.kind)
@@ -491,7 +494,7 @@ export async function restored(
         doc.flush()
         changes.push(...core.docChanges(doc), ...(await wrote(core, entry, text)))
       }
-      continue
+      if (folded) continue
     }
     // Even where it shows: somebody else's delete this device has not heard of yet may
     // be on the account, and a person asking for it back outweighs a delete that had

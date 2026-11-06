@@ -343,10 +343,25 @@ device shows until the feed said it again, so a folder deleted in that moment di
 take the note just moved into it, though the account did (seed 5244). The engine's walks
 never showed either.
 
+Ten thousand seeds of the tree with the engine as every device found three more. Two are
+fixed: a folder made here inside one deleted here, put back from the trash while away,
+was said to the account only as the outer folder's restore when the outer delete was
+already on its way, and that delete had taken the inner one with it; it now goes up as a
+restore of its own (seed 2412). And the simulated trash put a folder back beside one
+whose folder on disk it did not look at (seed 9654). The third is a known gap, below.
+
 ## Known gaps
 
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
+
+- **A folder restored inside one deleted after it, all before the account heard of
+  either, is lost.** A device makes a folder inside another, deletes the inner one, then
+  the outer, and puts the inner one back from the trash, all while away. The outer
+  folder's delete folds every one of them away as never made (`coalesce` in
+  @orden/sync-core/outbox), and the restore goes with them (engine seed 8388). Keeping
+  them in the outbox when a restore follows broke a reference walk that deletes the
+  restored folder again (seed 2316); the fold has to tell those two apart.
 
 - **An older app's drag in a folder that has places is not read.** Builds from before
   places still keep the order per folder path as a list of names (`arranged`, synced
