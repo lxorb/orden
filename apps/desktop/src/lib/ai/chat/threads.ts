@@ -652,7 +652,7 @@ export async function forgetSpace(space: string): Promise<void> {
 /** Writes a thread, one write at a time per thread: a write asked for while one is on
  *  its way is made once that one is done, with the thread as it is then, and any more
  *  asked for meanwhile are that same write. */
-const writing = new Map<string, { next: boolean; done: Promise<void> }>()
+const writing = new Map<string, { next: boolean; thread: Thread; done: Promise<void> }>()
 
 /** Whether another write was asked for while one was on its way. Read through a call,
  *  because the write in between is what sets it. */
@@ -675,15 +675,17 @@ export function keepThread(thread: Thread): Promise<void> {
   const held = writing.get(thread.id)
   if (held) {
     held.next = true
+    held.thread = thread
     return held.done
   }
-  const entry = { next: false, done: Promise.resolve() }
+  const entry = { next: false, thread, done: Promise.resolve() }
   entry.done = (async () => {
     try {
       do {
         entry.next = false
-        await writeThread(thread)
-        if (tell || thread.answering) windows.say('thread-written', { id: thread.id })
+        const latest = entry.thread
+        await writeThread(latest)
+        if (tell || latest.answering) windows.say('thread-written', { id: latest.id })
       } while (again(entry) && !removed.has(thread.id))
     } finally {
       writing.delete(thread.id)

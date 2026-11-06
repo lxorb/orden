@@ -471,6 +471,21 @@ describe('writing while a write is on its way', () => {
     expect(writes).toHaveLength(2)
     expect(JSON.parse(writes[1] ?? '{}')).toMatchObject({ title: 'two' })
   })
+
+  test('is the newest thread asked for, where it came as another object', async () => {
+    let release: () => void = () => undefined
+    slowly = new Promise((go) => {
+      release = go
+    })
+    const thread = had()
+    const first = keepThread(thread)
+    const last = keepThread({ ...thread, title: 'read again from the other window' })
+    release()
+    await Promise.all([first, last])
+    expect(JSON.parse(writes.at(-1) ?? '{}')).toMatchObject({
+      title: 'read again from the other window',
+    })
+  })
 })
 
 describe('a helper’s thread (#1062)', () => {
