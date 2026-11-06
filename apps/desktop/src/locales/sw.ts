@@ -1265,7 +1265,6 @@ export const sw: Dictionary = {
     'Orden haifungui tena {folder} mahali ilipo. Nafasi zake sasa zimehifadhiwa ndani ya Orden, na folda imeachwa kama ilivyokuwa. Ili kuleta zaidi kutoka humo, tumia Ingiza.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Bado hazijanakiliwa, kwa hiyo bado ziko kwenye folda hiyo tu: {names}. Orden itajaribu tena itakapoanza wakati ujao.',
-  'Turn this space back into a folder': 'Rudisha nafasi hii kuwa folda',
   'Share this note': 'Shiriki dokezo hili',
   'Everyone in the space already has it.': 'Kila mtu katika nafasi anayo tayari.',
   'Remove from your list': 'Ondoa kwenye orodha yako',

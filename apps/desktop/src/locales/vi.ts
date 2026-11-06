@@ -1246,7 +1246,6 @@ export const vi: Dictionary = {
     'Orden không còn mở {folder} ngay tại chỗ nữa. Các không gian trong đó giờ được giữ trong Orden, và thư mục được để nguyên như cũ. Để đưa thêm từ đó vào, hãy dùng Nhập.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Chưa được sao chép nên vẫn chỉ có trong thư mục đó: {names}. Orden sẽ thử lại vào lần khởi động tiếp theo.',
-  'Turn this space back into a folder': 'Chuyển không gian này trở lại thành thư mục',
   'Share this note': 'Chia sẻ ghi chú này',
   'Everyone in the space already has it.': 'Mọi người trong không gian đã có.',
   'Remove from your list': 'Bỏ khỏi danh sách của bạn',

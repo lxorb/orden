@@ -1256,7 +1256,6 @@ export const ur: Dictionary = {
     'Orden اب {folder} کو اس کی جگہ پر نہیں کھولتا۔ اس کی اسپیسز اب Orden میں رکھی ہیں، اور فولڈر جیسا تھا ویسا ہی چھوڑ دیا گیا ہے۔ اس سے مزید لانے کے لیے امپورٹ استعمال کریں۔',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'ابھی کاپی نہیں ہوئیں، اس لیے اب بھی صرف اسی فولڈر میں ہیں: {names}۔ اگلی بار شروع ہونے پر Orden دوبارہ کوشش کرے گا۔',
-  'Turn this space back into a folder': 'اس اسپیس کو دوبارہ فولڈر بنائیں',
   'Share this note': 'یہ نوٹ شیئر کریں',
   'Everyone in the space already has it.': 'اسپیس میں سب کے پاس یہ پہلے سے ہے۔',
   'Remove from your list': 'اپنی فہرست سے ہٹائیں',

@@ -1278,7 +1278,6 @@ export const fr: Dictionary = {
     'Orden n’ouvre plus {folder} sur place. Ses espaces sont désormais gardés dans Orden, et le dossier reste tel qu’il était. Pour en faire venir davantage, utilisez Importer.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Pas encore copiés, donc toujours uniquement dans ce dossier : {names}. Orden réessaiera au prochain démarrage.',
-  'Turn this space back into a folder': 'Refaire de cet espace un dossier',
   'Share this note': 'Partager cette note',
   'Everyone in the space already has it.': 'Tout le monde dans l’espace l’a déjà.',
   'Remove from your list': 'Retirer de votre liste',

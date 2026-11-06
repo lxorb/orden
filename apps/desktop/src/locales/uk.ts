@@ -1294,7 +1294,6 @@ export const uk: Dictionary = {
     'Orden більше не відкриває {folder} на місці. Його простори тепер зберігаються в Orden, а теку залишено такою, як була. Щоб перенести з неї ще щось, скористайтеся Імпортом.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Ще не скопійовано, тож вони досі лише в тій теці: {names}. Orden спробує знову під час наступного запуску.',
-  'Turn this space back into a folder': 'Знову зробити простір текою',
   'Share this note': 'Поділитися нотаткою',
   'Everyone in the space already has it.': 'У всіх у просторі вона вже є.',
   'Remove from your list': 'Прибрати зі свого списку',

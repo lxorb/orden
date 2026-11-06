@@ -1260,7 +1260,6 @@ export const tr: Dictionary = {
     'Orden artık {folder} klasörünü yerinde açmıyor. İçindeki alanlar artık Orden’de tutuluyor ve klasör olduğu gibi bırakıldı. Ondan daha fazlasını getirmek için İçe aktar’ı kullanın.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Henüz kopyalanmadı, bu yüzden hâlâ yalnızca o klasörde: {names}. Orden bir sonraki açılışında yeniden deneyecek.',
-  'Turn this space back into a folder': 'Bu alanı yeniden klasöre çevir',
   'Share this note': 'Bu notu paylaş',
   'Everyone in the space already has it.': 'Alandaki herkeste zaten var.',
   'Remove from your list': 'Listenizden kaldır',

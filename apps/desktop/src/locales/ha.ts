@@ -1267,7 +1267,6 @@ export const ha: Dictionary = {
     'Orden ba ya buɗe {folder} a inda yake kuma. Wuraren sa yanzu suna cikin Orden, kuma an bar babban fayil ɗin yadda yake. Don kawo ƙari daga gare shi, yi amfani da Shigar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Ba a kwafe su ba tukuna, don haka har yanzu suna cikin wannan babban fayil kawai: {names}. Orden zai sake gwadawa idan ya sake farawa.',
-  'Turn this space back into a folder': 'Mayar da wannan wurin babban fayil',
   'Share this note': 'Raba wannan bayanin kula',
   'Everyone in the space already has it.': 'Kowa a wurin yana da shi riga.',
   'Remove from your list': 'Cire daga jerinka',

@@ -1253,7 +1253,6 @@ export const gu: Dictionary = {
     'Orden હવે {folder} ને તેની જગ્યાએ ખોલતું નથી. તેની જગ્યાઓ હવે Orden માં રાખેલી છે, અને ફોલ્ડર જેમ હતું તેમ જ રહેવા દીધું છે. તેમાંથી વધુ લાવવા માટે આયાત વાપરો.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'હજી નકલ થઈ નથી, એટલે હજી ફક્ત તે ફોલ્ડરમાં જ છે: {names}. Orden આગલી વખતે શરૂ થાય ત્યારે ફરી પ્રયાસ કરશે.',
-  'Turn this space back into a folder': 'આ જગ્યાને ફરી ફોલ્ડર બનાવો',
   'Share this note': 'આ નોંધ વહેંચો',
   'Everyone in the space already has it.': 'જગ્યામાં બધા પાસે પહેલેથી છે.',
   'Remove from your list': 'તમારી યાદીમાંથી કાઢો',

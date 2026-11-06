@@ -1269,7 +1269,6 @@ export const ptBR: Dictionary = {
     'O Orden não abre mais {folder} no lugar. Os espaços dela agora ficam no Orden, e a pasta ficou como estava. Para trazer mais dela, use Importar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Ainda não copiados, então continuam só naquela pasta: {names}. O Orden tenta de novo na próxima vez que abrir.',
-  'Turn this space back into a folder': 'Transformar este espaço de volta em pasta',
   'Share this note': 'Compartilhar esta nota',
   'Everyone in the space already has it.': 'Todo mundo no espaço já tem.',
   'Remove from your list': 'Remover da lista',

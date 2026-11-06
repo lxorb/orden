@@ -1238,7 +1238,6 @@ export const th: Dictionary = {
     'Orden ไม่เปิด {folder} ในที่เดิมอีกต่อไป พื้นที่ในนั้นถูกเก็บไว้ใน Orden แล้ว และโฟลเดอร์ยังคงอยู่อย่างเดิม หากต้องการนำเข้าเพิ่มเติมจากโฟลเดอร์นั้น ให้ใช้ นำเข้า',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'ยังไม่ได้คัดลอก จึงยังอยู่ในโฟลเดอร์นั้นเท่านั้น: {names} Orden จะลองอีกครั้งเมื่อเปิดครั้งถัดไป',
-  'Turn this space back into a folder': 'เปลี่ยนพื้นที่นี้กลับเป็นโฟลเดอร์',
   'Share this note': 'แชร์โน้ตนี้',
   'Everyone in the space already has it.': 'ทุกคนในพื้นที่นี้มีอยู่แล้ว',
   'Remove from your list': 'เอาออกจากรายการของคุณ',

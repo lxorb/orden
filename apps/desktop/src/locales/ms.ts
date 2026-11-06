@@ -1252,7 +1252,6 @@ export const ms: Dictionary = {
     'Orden tidak lagi membuka {folder} di tempatnya. Ruangnya kini disimpan dalam Orden, dan folder itu dibiarkan seperti asal. Untuk membawa masuk lebih banyak daripadanya, gunakan Import.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Belum disalin, jadi masih hanya dalam folder itu: {names}. Orden akan mencuba lagi apabila ia dimulakan semula.',
-  'Turn this space back into a folder': 'Kembalikan ruang ini kepada folder',
   'Share this note': 'Kongsi nota ini',
   'Everyone in the space already has it.': 'Semua orang dalam ruang ini sudah ada.',
   'Remove from your list': 'Buang daripada senarai anda',

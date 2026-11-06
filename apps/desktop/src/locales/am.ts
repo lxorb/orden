@@ -1240,7 +1240,6 @@ export const am: Dictionary = {
     'Orden {folder} ን ከእንግዲህ በቦታው አይከፍትም። ቦታዎቹ አሁን በOrden ውስጥ ተቀምጠዋል፤ አቃፊው እንደነበረ ቀርቷል። ተጨማሪ ከእሱ ለማምጣት «አምጣ»ን ይጠቀሙ።',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'ገና አልተገለበጡም፤ ስለዚህ አሁንም በዚያ አቃፊ ውስጥ ብቻ ናቸው፦ {names}። Orden በሚቀጥለው ሲጀምር እንደገና ይሞክራል።',
-  'Turn this space back into a folder': 'ይህን ቦታ ወደ አቃፊ መልስ',
   'Share this note': 'ይህን ማስታወሻ አጋራ',
   'Everyone in the space already has it.': 'በቦታው ያለ ሁሉ አስቀድሞ አለው።',
   'Remove from your list': 'ከዝርዝርህ አስወግድ',

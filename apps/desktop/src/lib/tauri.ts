@@ -33,8 +33,7 @@ export const internal: {
   routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
   file: ((path: string) => string | null) | null
   flush: (() => Promise<void>) | null
-  madeOf: ((root: string) => string | undefined) | null
-} = { routed: null, file: null, flush: null, madeOf: null }
+} = { routed: null, file: null, flush: null }
 
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
 

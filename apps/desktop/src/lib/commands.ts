@@ -851,18 +851,6 @@ function spaceCommands(): Command[] {
           },
         ]
       : []),
-    ...(internal.madeOf?.(space.root)
-      ? [
-          {
-            id: 'space-to-folder',
-            label: t('Turn this space back into a folder'),
-            run: () =>
-              void import('./internal/convert').then(({ revertSpace }) =>
-                revertSpace(workspace, space.id),
-              ),
-          },
-        ]
-      : []),
     ...(canShareItem(workspace.active?.path)
       ? [
           {

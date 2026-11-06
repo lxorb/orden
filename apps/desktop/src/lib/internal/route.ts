@@ -196,7 +196,6 @@ async function spaces(
         value: await kept.listedWith(await crate<{ name: string; path: string }[]>(command)),
       }
     case 'create_space':
-      if (!kept.keepsNewSpaces()) return { done: false }
       return { done: true, value: await kept.makeKept(String(args.name)) }
     case 'rename_space':
       if (!own(args.from)) return { done: false }

@@ -1269,7 +1269,6 @@ export const de: Dictionary = {
     'Orden öffnet {folder} nicht mehr an Ort und Stelle. Seine Bereiche liegen jetzt in Orden, und der Ordner bleibt, wie er war. Um mehr daraus zu holen, nutze Importieren.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Noch nicht kopiert und daher nur in diesem Ordner: {names}. Orden versucht es beim nächsten Start noch einmal.',
-  'Turn this space back into a folder': 'Diesen Bereich wieder zum Ordner machen',
   'Share this note': 'Diese Notiz teilen',
   'Everyone in the space already has it.': 'Alle im Bereich haben sie schon.',
   'Remove from your list': 'Aus deiner Liste entfernen',

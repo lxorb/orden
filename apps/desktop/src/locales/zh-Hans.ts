@@ -1230,7 +1230,6 @@ export const zhHans: Dictionary = {
     'Orden 不再在原处打开 {folder}。其中的空间现在保存在 Orden 中，文件夹保持原样。要从中导入更多内容，请使用“导入”。',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     '尚未复制，因此仍只在该文件夹中：{names}。Orden 下次启动时会再试一次。',
-  'Turn this space back into a folder': '将此空间变回文件夹',
   'Share this note': '共享此笔记',
   'Everyone in the space already has it.': '此空间中的每个人都已有权限。',
   'Remove from your list': '从你的列表中移除',

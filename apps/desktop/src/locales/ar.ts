@@ -1304,7 +1304,6 @@ export const ar: Dictionary = {
     'لم يعد Orden يفتح {folder} في مكانه. مساحاته محفوظة الآن في Orden، وتُرك المجلد كما كان. لجلب المزيد منه، استخدم «استيراد».',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'لم تُنسخ بعد، فهي ما زالت في ذلك المجلد وحده: {names}. سيحاول Orden مرة أخرى عند تشغيله التالي.',
-  'Turn this space back into a folder': 'إعادة هذه المساحة إلى مجلد',
   'Share this note': 'مشاركة هذه الملاحظة',
   'Everyone in the space already has it.': 'كل من في المساحة لديه ذلك بالفعل.',
   'Remove from your list': 'إزالة من قائمتك',

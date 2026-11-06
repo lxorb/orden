@@ -1275,7 +1275,6 @@ export const ptPT: Dictionary = {
     'O Orden já não abre {folder} no próprio sítio. Os espaços dela estão agora guardados no Orden, e a pasta ficou como estava. Para trazer mais dela, use Importar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Ainda não copiados, por isso continuam só nessa pasta: {names}. O Orden volta a tentar da próxima vez que iniciar.',
-  'Turn this space back into a folder': 'Voltar a fazer deste espaço uma pasta',
   'Share this note': 'Partilhar esta nota',
   'Everyone in the space already has it.': 'Todos no espaço já a têm.',
   'Remove from your list': 'Remover da lista',

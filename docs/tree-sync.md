@@ -239,22 +239,23 @@ note it has always been, under the name it has always had, so an older app and a
 account see what they always saw; a space's hidden file is taken in with the rest of it
 when the space is converted (step 4e), and written out again by Export (step 4f).
 
-Where a device says so (`nib:keep-spaces` in the window's storage, step 4d), a new space
-is one of these: a folder of `.orden` in the spaces folder, named as the space, holding
+On a desktop every new space is one of these (step 4d), and there is no other kind:
+no switch makes a new space a folder, and a `nib:keep-spaces` an older build stored is
+not read. A space is a folder of `.orden` in the spaces folder, named as the space, holding
 its bytes and its index hidden and one file named as the space too, which is the space's
 root - the address the rest of the app holds it by. A file, so nothing can be made under
 it: a call that reaches the crate with a path in the space by mistake fails out loud
 instead of writing beside the bytes. The crate lists a dotted folder as no space, so the
-spaces are listed by Orden beside the crate's folders, found as the folders of `.orden`
-whatever the device says, and mounted as they are found; a rename renames the folder
+spaces are listed by Orden beside the crate's folders, found as the folders of `.orden`,
+and mounted as they are found; a rename renames the folder
 and moves nothing in it, and a delete takes the folder whole into Recently deleted, from
 which it comes back whole. A note moved or copied between such a space and a folder is
 written where it goes, with its highlights or its paper, before it is taken from where
 it was; between two such spaces it goes as rows from one store into the other. A PDF
 handed to Orden is not yet brought into one.
 
-Where a device says so, each space that is still a folder becomes one of these too,
-once (step 4e, internal/convert.ts), at the last turn of the launch: every file the
+Each space that is still a folder becomes one of these, once (step 4e,
+internal/convert.ts), at the last turn of the launch: every file the
 space holds - what the list shows, the papers page notes hold, every other file, and
 the inbox, but none of the app's other dotted files - is copied in under the path it
 had, read back and checked against the file it came from; then, with the writes of
@@ -271,12 +272,10 @@ seconds, not once a file, so a large space costs about one write of each file. O
 conversion runs at a time, the window says which space and how many of its files are
 in, and a space that stays a folder is named at the top of the window, with nothing of
 it lost and another try at the next launch. A kept space that already has the name
-gives the converted one the next free name (`Notes 2`), as a rename does. Turn this space back into a folder makes it
-the folder again: the folder backed up once more, every file of the space written into
-it as the space has it now, what the space no longer has taken into Recently deleted,
-the space moved back as a rename does and its kept folder into Recently deleted whole;
-that folder is made a kept space no more on this device (`.orden/.folders`). Until then
-the folder is left exactly as it was and is listed and written no more - the kept space says which folder it was (`.from`), and one deleted
+gives the converted one the next free name (`Notes 2`), as a rename does. There is no
+way back to a folder in place: Export (below) writes a space out, and an older build's
+"Turn this space back into a folder" (`.orden/.folders`) no longer keeps a folder from
+being converted again. The folder is left exactly as it was and is listed and written no more - the kept space says which folder it was (`.from`), and one deleted
 afterwards leaves a line in `.orden/.retired` - so a build from before reads that folder
 as it always did, and going back costs only what was written since.
 

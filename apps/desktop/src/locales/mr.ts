@@ -1253,7 +1253,6 @@ export const mr: Dictionary = {
     'Orden आता {folder} त्याच जागी उघडत नाही. त्यातले स्पेस आता Orden मध्ये ठेवले आहेत, आणि फोल्डर जसा होता तसाच ठेवला आहे. त्यातून आणखी आणण्यासाठी इंपोर्ट वापरा.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'अजून कॉपी झाले नाहीत, म्हणून अजूनही फक्त त्या फोल्डरमध्येच आहेत: {names}. पुढच्या वेळी सुरू झाल्यावर Orden पुन्हा प्रयत्न करेल.',
-  'Turn this space back into a folder': 'हा स्पेस पुन्हा फोल्डर करा',
   'Share this note': 'ही नोंद शेअर करा',
   'Everyone in the space already has it.': 'स्पेसमधील सर्वांकडे ते आधीच आहे.',
   'Remove from your list': 'तुमच्या यादीतून काढा',
