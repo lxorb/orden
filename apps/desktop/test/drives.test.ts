@@ -177,7 +177,8 @@ describe('the names a drive points at', () => {
   test.each(drives)('%s points at names the app still writes', (name) => {
     const text = read(E2E, name)
     const selectors = new Set<string>()
-    for (const found of text.matchAll(ASKED)) selectors.add(caught(found, 2))
+    for (const found of text.matchAll(ASKED))
+      if (!caught(found, 2).includes('://')) selectors.add(caught(found, 2))
     for (const found of text.matchAll(HELD)) selectors.add(`.${caught(found, 2)}`)
 
     const stale = [...selectors]

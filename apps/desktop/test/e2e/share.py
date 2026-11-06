@@ -370,7 +370,7 @@ def rename(page: Page, name: str) -> None:
     entry.wait_for(state="visible", timeout=10_000)
     entry.click()
 
-    field = page.locator(".sheet .body input.inline").first
+    field = page.locator(".sheet .body input.nib-field").first
     field.wait_for(state="visible", timeout=10_000)
     field.fill(name)
     field.press("Enter")
