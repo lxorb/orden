@@ -3,6 +3,34 @@ import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
+const DIRECTIVE =
+  /^\s*(?:eslint(?:-disable|-enable)?(?:-next-line|-line)?\s|global\s|@ts-(?:expect-error|ignore|nocheck|check)\b|@vitest-environment\s|prettier-ignore\b|svelte-ignore\s|@vite-ignore\s*$|[@#]__PURE__\s*$|__[A-Z_]+__\s*$|kept\s*$|\*\s*@(?:public|internal)\s*$|\/\s*<reference\s)/
+
+const noComments = {
+  meta: {
+    type: 'suggestion',
+    schema: [],
+    messages: { prose: 'No comments in code: a directive to a tool, or nothing.' },
+  },
+  create(context) {
+    const source = context.sourceCode
+    const alone = (comment) => {
+      const node = source.getNodeByRangeIndex(comment.range[0])
+      return node?.type === 'BlockStatement' && node.body.length === 0
+    }
+    return {
+      Program() {
+        for (const comment of source.getAllComments())
+          if (comment.type !== 'Shebang' && !DIRECTIVE.test(comment.value) && !alone(comment))
+            context.report({ loc: comment.loc, messageId: 'prose' })
+      },
+      SvelteHTMLComment(node) {
+        if (!DIRECTIVE.test(node.value)) context.report({ node, messageId: 'prose' })
+      },
+    }
+  },
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -142,5 +170,26 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',
     },
+  },
+  {
+    plugins: { orden: { rules: { 'no-comments': noComments } } },
+    rules: { 'orden/no-comments': 'error' },
+  },
+  {
+    files: [
+      'services/sync/src/blog/math.ts',
+      'services/sync/src/blog/script.ts',
+      'services/sync/src/blog/style.ts',
+      'packages/markdown/src/embeddable.ts',
+      'apps/desktop/src/lib/rows/inbox.test.ts',
+      'apps/desktop/src/lib/rows/inbox.ts',
+      'apps/desktop/src/lib/workspace/across.test.ts',
+      'apps/desktop/src/lib/workspace/across.ts',
+      'packages/chats/src/mail/fake-server.ts',
+      'packages/chats/src/mail/imap.ts',
+      'packages/chats/src/mail/mail.test.ts',
+      'packages/editor/test/cover.test.ts',
+    ],
+    rules: { 'orden/no-comments': 'off' },
   },
 )
