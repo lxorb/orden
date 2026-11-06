@@ -3,18 +3,12 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- The same policy as the editor's page, for the same reasons; one string,
-         written in `src/csp.ts` and held to it by `test/csp.test.ts`. First in
-         the head, since a policy only governs what is parsed after it. -->
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-iR2Aqj1jRJSx35wTBtrVLSatm9gSp55tpjHpCB3GAHs=' 'sha256-v841QeTG55+uEpzDrS3ofxcdk/VIgYtt2NynJyqxXik=' 'sha256-7EyWWoiOaEITiSnztLnl41c924jo2MevGJiwDThhx64='; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: asset: http://asset.localhost; media-src 'self' data: blob: https: asset: http://asset.localhost; font-src 'self' data:; connect-src 'self' https: wss: ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:* ipc: http://ipc.localhost asset: http://asset.localhost blob: data:; frame-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-    <!-- The Even app's WebView, not a browser: no manifest and no install
-         prompt, because the phone app is what installs this. Everything else is
-         the same page the editor is served as. -->
     <meta name="theme-color" content="#0e1013" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -23,8 +17,6 @@
 
     <title>Orden</title>
 
-    <!-- The one rule the page carries itself, because the stylesheet is a
-         module and this has to be readable before any module has loaded. -->
     <style>
       #boot {
         margin: 0;
@@ -36,10 +28,6 @@
     </style>
   </head>
   <body>
-    <!-- Painted before a line of script runs, and removed by the app the moment
-         it mounts. The plain editor has nothing like it, so seeing it at all
-         proves the plugin's own page was loaded; seeing it stay proves the page
-         loaded and its script did not. -->
     <p id="boot">Orden for G2</p>
     <div id="app"></div>
     <script type="module" src="/src/even.ts"></script>
