@@ -3030,4 +3030,11 @@ export const ps: Dictionary = {
   },
   Columns: 'ستونونه',
   'Add numbers': 'شمېرې ورزیاتې کړئ',
+  'Screen lock': 'د پردې قلف',
+  'System password': 'د سیسټم پټنوم',
+  'Use {way}': '{way} وکاروئ',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'هېر مو شو؟ دوتنه لا هم د ځای په پوښۍ کې ده، او بله وسیله کولای شي ساتنه لرې کړي.',
+  'Unlock what you protected in Orden': 'هغه څه پرانیزئ چې په Orden کې مو خوندي کړي',
+  'Protect with': 'خوندي کول په',
 }

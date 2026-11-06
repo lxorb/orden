@@ -3029,4 +3029,11 @@ export const mr: Dictionary = {
   },
   Columns: 'स्तंभ',
   'Add numbers': 'क्रमांक जोडा',
+  'Screen lock': 'स्क्रीन लॉक',
+  'System password': 'सिस्टम पासवर्ड',
+  'Use {way}': '{way} वापरा',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'विसरलात? फाइल अजूनही स्पेसच्या फोल्डरमध्ये आहे, आणि दुसरे डिव्हाइस संरक्षण काढू शकते.',
+  'Unlock what you protected in Orden': 'Orden मध्ये तुम्ही संरक्षित केलेले उघडा',
+  'Protect with': 'याने संरक्षित करा',
 }

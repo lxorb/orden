@@ -3000,4 +3000,11 @@ export const my: Dictionary = {
   '{count} folders': 'ဖိုင်တွဲ {count} ခု',
   Columns: 'ကော်လံများ',
   'Add numbers': 'နံပါတ်ထည့်ရန်',
+  'Screen lock': 'မျက်နှာပြင် လော့ခ်',
+  'System password': 'စနစ် စကားဝှက်',
+  'Use {way}': '{way} ကို သုံးရန်',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'မေ့သွားပြီလား။ ဖိုင်သည် နေရာ၏ ဖိုင်တွဲထဲတွင် ရှိနေဆဲဖြစ်ပြီး အခြားစက်တစ်ခုက ကာကွယ်မှုကို ဖယ်ရှားနိုင်သည်။',
+  'Unlock what you protected in Orden': 'Orden တွင် သင်ကာကွယ်ထားသည်ကို ဖွင့်ရန်',
+  'Protect with': 'ဖြင့် ကာကွယ်ရန်',
 }

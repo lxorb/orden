@@ -3016,4 +3016,11 @@ export const gu: Dictionary = {
   },
   Columns: 'કૉલમ',
   'Add numbers': 'ક્રમાંક ઉમેરો',
+  'Screen lock': 'સ્ક્રીન લૉક',
+  'System password': 'સિસ્ટમ પાસવર્ડ',
+  'Use {way}': '{way} વાપરો',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'ભૂલી ગયા? ફાઇલ હજુ સ્પેસના ફોલ્ડરમાં છે, અને બીજું ઉપકરણ સુરક્ષા દૂર કરી શકે છે.',
+  'Unlock what you protected in Orden': 'Ordenમાં તમે સુરક્ષિત કરેલું ખોલો',
+  'Protect with': 'આનાથી સુરક્ષિત કરો',
 }

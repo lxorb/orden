@@ -3111,4 +3111,11 @@ export const es: Dictionary = {
   },
   Columns: 'Columnas',
   'Add numbers': 'Añadir números',
+  'Screen lock': 'Bloqueo de pantalla',
+  'System password': 'Contraseña del sistema',
+  'Use {way}': 'Usar {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    '¿La olvidaste? El archivo sigue en la carpeta del espacio y otro dispositivo puede quitar la protección.',
+  'Unlock what you protected in Orden': 'Abre lo que protegiste en Orden',
+  'Protect with': 'Proteger con',
 }

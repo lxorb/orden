@@ -2916,4 +2916,11 @@ export const zhHantHK: Dictionary = {
   '{count} folders': '{count} 個資料夾',
   Columns: '分欄',
   'Add numbers': '加入編號',
+  'Screen lock': '螢幕鎖',
+  'System password': '系統密碼',
+  'Use {way}': '使用 {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    '忘記了？檔案仍在空間的資料夾裡，另一部裝置可以取消保護。',
+  'Unlock what you protected in Orden': '打開你在 Orden 中保護的內容',
+  'Protect with': '保護方式',
 }

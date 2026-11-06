@@ -1164,6 +1164,7 @@ const UNSUPPORTED: Record<string, unknown> = {
   file_stamp: null,
   mcp_config: null,
   new_menu_registered: false,
+  owner_can: false,
   write_log: null,
   read_log: '',
   log_dir: '',

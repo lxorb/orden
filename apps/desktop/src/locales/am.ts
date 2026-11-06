@@ -2970,4 +2970,11 @@ export const am: Dictionary = {
   },
   Columns: 'ዓምዶች',
   'Add numbers': 'ቁጥሮች ጨምር',
+  'Screen lock': 'የማያ ገጽ ቁልፍ',
+  'System password': 'የስርዓት የይለፍ ቃል',
+  'Use {way}': '{way} ተጠቀም',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'ረሱት? ፋይሉ አሁንም በቦታው አቃፊ ውስጥ አለ፣ እና ሌላ መሣሪያ ጥበቃውን ማስወገድ ይችላል።',
+  'Unlock what you protected in Orden': 'በOrden የጠበቁትን ይክፈቱ',
+  'Protect with': 'ጠብቅ በ',
 }

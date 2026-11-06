@@ -2971,4 +2971,11 @@ export const ko: Dictionary = {
   '{count} folders': '폴더 {count}개',
   Columns: '열',
   'Add numbers': '번호 붙이기',
+  'Screen lock': '화면 잠금',
+  'System password': '시스템 비밀번호',
+  'Use {way}': '{way} 사용',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    '잊으셨나요? 파일은 스페이스 폴더에 그대로 있고, 다른 기기에서 보호를 해제할 수 있습니다.',
+  'Unlock what you protected in Orden': 'Orden에서 보호한 항목 열기',
+  'Protect with': '보호 방법',
 }

@@ -3052,4 +3052,11 @@ export const gsw: Dictionary = {
   },
   Columns: 'Spaltä',
   'Add numbers': 'Nummerä aahänke',
+  'Screen lock': 'Bildschirmsperri',
+  'System password': 'Systempasswort',
+  'Use {way}': '{way} bruuche',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Vergässe? D Datei isch immer no im Ordner vom Space, und es anders Gerät chan de Schutz entferne.',
+  'Unlock what you protected in Orden': 'Gschützts in Orden öffne',
+  'Protect with': 'Schütze mit',
 }

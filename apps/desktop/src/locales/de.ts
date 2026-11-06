@@ -3093,4 +3093,11 @@ export const de: Dictionary = {
   },
   Columns: 'Spalten',
   'Add numbers': 'Nummern anhängen',
+  'Screen lock': 'Bildschirmsperre',
+  'System password': 'Systempasswort',
+  'Use {way}': '{way} verwenden',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Vergessen? Die Datei liegt weiter im Ordner des Space, und ein anderes Gerät kann den Schutz entfernen.',
+  'Unlock what you protected in Orden': 'Geschütztes in Orden öffnen',
+  'Protect with': 'Schützen mit',
 }

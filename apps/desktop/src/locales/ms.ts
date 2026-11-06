@@ -3006,4 +3006,11 @@ export const ms: Dictionary = {
   '{count} folders': '{count} folder',
   Columns: 'Lajur',
   'Add numbers': 'Tambah nombor',
+  'Screen lock': 'Kunci skrin',
+  'System password': 'Kata laluan sistem',
+  'Use {way}': 'Guna {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Terlupa? Fail masih dalam folder ruang, dan peranti lain boleh membuang perlindungan.',
+  'Unlock what you protected in Orden': 'Buka apa yang anda lindungi dalam Orden',
+  'Protect with': 'Lindungi dengan',
 }

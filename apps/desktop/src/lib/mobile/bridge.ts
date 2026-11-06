@@ -61,6 +61,8 @@ export interface NibSystem {
   reminders(said: string, json: string): void
   /** Done and presses on a reminder since the page last asked, as JSON, once. */
   remindersTaken(said: string): string
+  ownerCan(said: string): boolean
+  ownerCheck(said: string, reason: string): void
   /** Whether the phone rings an alarm at its minute rather than within a few. */
   exactAlarms(): boolean
   /** The system's own switch for exact alarms, opened once. */

@@ -2992,4 +2992,11 @@ export const jv: Dictionary = {
   '{count} folders': '{count} folder',
   Columns: 'Kolom',
   'Add numbers': 'Tambah nomer',
+  'Screen lock': 'Kunci layar',
+  'System password': 'Sandhi sistem',
+  'Use {way}': 'Gunakaké {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Lali? Berkasé isih ana ing folder papan, lan piranti liya bisa mbusak pangreksan.',
+  'Unlock what you protected in Orden': 'Bukak sing koklindhungi ing Orden',
+  'Protect with': 'Lindhungi nganggo',
 }

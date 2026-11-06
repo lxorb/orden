@@ -3163,4 +3163,11 @@ export const ar: Dictionary = {
   },
   Columns: 'أعمدة',
   'Add numbers': 'إضافة أرقام',
+  'Screen lock': 'قفل الشاشة',
+  'System password': 'كلمة مرور النظام',
+  'Use {way}': 'استخدم {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'نسيتها؟ الملف ما زال في مجلد المساحة، ويمكن لجهاز آخر إزالة الحماية.',
+  'Unlock what you protected in Orden': 'افتح ما حميته في Orden',
+  'Protect with': 'الحماية باستخدام',
 }

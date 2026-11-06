@@ -2980,4 +2980,11 @@ export const vi: Dictionary = {
   '{count} folders': '{count} thư mục',
   Columns: 'Cột',
   'Add numbers': 'Thêm số',
+  'Screen lock': 'Khóa màn hình',
+  'System password': 'Mật khẩu hệ thống',
+  'Use {way}': 'Dùng {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Quên rồi? Tệp vẫn nằm trong thư mục của không gian, và thiết bị khác có thể bỏ bảo vệ.',
+  'Unlock what you protected in Orden': 'Mở những gì bạn đã bảo vệ trong Orden',
+  'Protect with': 'Bảo vệ bằng',
 }

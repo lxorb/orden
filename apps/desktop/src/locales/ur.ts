@@ -3025,4 +3025,11 @@ export const ur: Dictionary = {
   },
   Columns: 'کالم',
   'Add numbers': 'نمبر لگائیں',
+  'Screen lock': 'اسکرین لاک',
+  'System password': 'سسٹم پاس ورڈ',
+  'Use {way}': '{way} استعمال کریں',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'بھول گئے؟ فائل اب بھی اسپیس کے فولڈر میں ہے، اور کوئی دوسرا آلہ حفاظت ہٹا سکتا ہے۔',
+  'Unlock what you protected in Orden': 'Orden میں اپنی محفوظ کردہ چیز کھولیں',
+  'Protect with': 'اس سے محفوظ کریں',
 }

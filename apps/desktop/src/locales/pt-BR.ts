@@ -3092,4 +3092,11 @@ export const ptBR: Dictionary = {
   },
   Columns: 'Colunas',
   'Add numbers': 'Adicionar números',
+  'Screen lock': 'Bloqueio de tela',
+  'System password': 'Senha do sistema',
+  'Use {way}': 'Usar {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Esqueceu? O arquivo continua na pasta do espaço, e outro dispositivo pode remover a proteção.',
+  'Unlock what you protected in Orden': 'Abrir o que você protegeu no Orden',
+  'Protect with': 'Proteger com',
 }

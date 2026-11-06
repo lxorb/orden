@@ -3070,4 +3070,11 @@ export const sw: Dictionary = {
   },
   Columns: 'Safu wima',
   'Add numbers': 'Ongeza namba',
+  'Screen lock': 'Kifungo cha skrini',
+  'System password': 'Nenosiri la mfumo',
+  'Use {way}': 'Tumia {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Umesahau? Faili bado iko kwenye folda ya nafasi, na kifaa kingine kinaweza kuondoa ulinzi.',
+  'Unlock what you protected in Orden': 'Fungua ulichokilinda katika Orden',
+  'Protect with': 'Linda kwa',
 }

@@ -3093,4 +3093,11 @@ export const fil: Dictionary = {
   },
   Columns: 'Mga column',
   'Add numbers': 'Lagyan ng numero',
+  'Screen lock': 'Screen lock',
+  'System password': 'Password ng system',
+  'Use {way}': 'Gamitin ang {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Nakalimutan? Nasa folder pa rin ng space ang file, at maaaring alisin ng ibang device ang proteksyon.',
+  'Unlock what you protected in Orden': 'Buksan ang pinrotektahan mo sa Orden',
+  'Protect with': 'Protektahan gamit ang',
 }

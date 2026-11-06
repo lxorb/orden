@@ -3120,4 +3120,11 @@ export const it: Dictionary = {
   },
   Columns: 'Colonne',
   'Add numbers': 'Aggiungi numeri',
+  'Screen lock': 'Blocco schermo',
+  'System password': 'Password di sistema',
+  'Use {way}': 'Usa {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Dimenticata? Il file è ancora nella cartella dello spazio, e un altro dispositivo può rimuovere la protezione.',
+  'Unlock what you protected in Orden': 'Apri ciò che hai protetto in Orden',
+  'Protect with': 'Proteggi con',
 }

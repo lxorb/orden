@@ -3025,4 +3025,11 @@ export const bn: Dictionary = {
   },
   Columns: 'কলাম',
   'Add numbers': 'নম্বর যোগ করুন',
+  'Screen lock': 'স্ক্রিন লক',
+  'System password': 'সিস্টেম পাসওয়ার্ড',
+  'Use {way}': '{way} ব্যবহার করুন',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'ভুলে গেছেন? ফাইলটি এখনও স্পেসের ফোল্ডারে আছে, আর অন্য ডিভাইস সুরক্ষা সরাতে পারে।',
+  'Unlock what you protected in Orden': 'Orden-এ আপনার সুরক্ষিত জিনিস খুলুন',
+  'Protect with': 'যা দিয়ে সুরক্ষিত করবেন',
 }

@@ -88,6 +88,12 @@ tauri = { version = "=3.0.0-alpha.5", features = ["tray-icon"] }
 [target.'cfg(target_os = "ios")'.dependencies]
 keyring = { version = "3", default-features = false, features = ["apple-native"] }
 objc2 = "0.6"
+block2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSError",
+  "NSString",
+] }
 objc2-ui-kit = { version = "0.3", default-features = false, features = [
   "std",
   "block2",
@@ -96,6 +102,13 @@ objc2-ui-kit = { version = "0.3", default-features = false, features = [
   "UIScene",
   "UISceneOptions",
   "UISceneSession",
+] }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+objc2-local-authentication = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "LAContext",
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -284,6 +297,8 @@ windows = { version = "0.58", features = [
   "Foundation_Collections",
   "Data_Xml_Dom",
   "UI_Notifications",
+  "Security_Credentials_UI",
+  "Win32_System_WinRT",
 ] }
 webview2-com = "0.38"
 windows-core = "0.61"

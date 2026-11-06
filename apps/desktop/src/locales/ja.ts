@@ -2984,4 +2984,11 @@ export const ja: Dictionary = {
   '{count} folders': '{count}個のフォルダー',
   Columns: 'カラム',
   'Add numbers': '番号を付ける',
+  'Screen lock': '画面ロック',
+  'System password': 'システムのパスワード',
+  'Use {way}': '{way} を使う',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    '忘れましたか？ファイルはスペースのフォルダーにそのままあり、別のデバイスから保護を解除できます。',
+  'Unlock what you protected in Orden': 'Orden で保護したものを開きます',
+  'Protect with': '保護の方法',
 }

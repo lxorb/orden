@@ -3141,4 +3141,11 @@ export const pl: Dictionary = {
   },
   Columns: 'Kolumny',
   'Add numbers': 'Dodaj numery',
+  'Screen lock': 'Blokada ekranu',
+  'System password': 'Hasło systemu',
+  'Use {way}': 'Użyj: {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Zapomniane? Plik nadal jest w folderze przestrzeni, a inne urządzenie może usunąć ochronę.',
+  'Unlock what you protected in Orden': 'Otwórz to, co chronisz w Orden',
+  'Protect with': 'Chroń za pomocą',
 }

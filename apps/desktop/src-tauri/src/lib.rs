@@ -169,6 +169,8 @@ mod papers;
 // A spaces folder pointed at a folder outside Orden's own, taken in once; see outside.rs.
 #[cfg(desktop)]
 mod outside;
+#[cfg(any(desktop, target_os = "ios"))]
+mod owner;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
@@ -569,6 +571,8 @@ macro_rules! desktop_commands {
             pdf::pdf_supported,
             pdf::print_pdf,
             pdf::print_page,
+            owner::owner_can,
+            owner::owner_check,
             secrets::secret_forget,
             secrets::secret_read,
             secrets::secret_write,
@@ -887,6 +891,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // it through the activity, so its page never calls these. See secrets.rs.
     #[cfg(target_os = "ios")]
     let builder = builder.invoke_handler(commands![
+        owner::owner_can,
+        owner::owner_check,
         secrets::secret_forget,
         secrets::secret_read,
         secrets::secret_write,

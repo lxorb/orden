@@ -2915,4 +2915,11 @@ export const zhHans: Dictionary = {
   '{count} folders': '{count} 个文件夹',
   Columns: '分栏',
   'Add numbers': '添加编号',
+  'Screen lock': '屏幕锁',
+  'System password': '系统密码',
+  'Use {way}': '使用 {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    '忘了？文件仍在空间的文件夹里，另一台设备可以取消保护。',
+  'Unlock what you protected in Orden': '打开你在 Orden 中保护的内容',
+  'Protect with': '保护方式',
 }

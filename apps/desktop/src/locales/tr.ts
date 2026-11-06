@@ -3050,4 +3050,11 @@ export const tr: Dictionary = {
   },
   Columns: 'Sütunlar',
   'Add numbers': 'Numara ekle',
+  'Screen lock': 'Ekran kilidi',
+  'System password': 'Sistem parolası',
+  'Use {way}': '{way} kullan',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Unuttunuz mu? Dosya hâlâ alanın klasöründe ve başka bir cihaz korumayı kaldırabilir.',
+  'Unlock what you protected in Orden': 'Orden’da koruduklarınızı açın',
+  'Protect with': 'Şununla koru',
 }

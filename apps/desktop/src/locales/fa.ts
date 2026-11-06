@@ -3034,4 +3034,11 @@ export const fa: Dictionary = {
   },
   Columns: 'ستون‌ها',
   'Add numbers': 'افزودن شماره',
+  'Screen lock': 'قفل صفحه',
+  'System password': 'گذرواژهٔ سیستم',
+  'Use {way}': 'استفاده از {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'فراموش کرده‌اید؟ فایل هنوز در پوشهٔ فضا است و دستگاه دیگری می‌تواند محافظت را بردارد.',
+  'Unlock what you protected in Orden': 'آنچه در Orden محافظت کرده‌اید را باز کنید',
+  'Protect with': 'محافظت با',
 }

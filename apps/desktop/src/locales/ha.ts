@@ -3074,4 +3074,11 @@ export const ha: Dictionary = {
   },
   Columns: 'Ginshiƙai',
   'Add numbers': 'Ƙara lambobi',
+  'Screen lock': 'Kullen allo',
+  'System password': 'Kalmar sirrin tsarin',
+  'Use {way}': 'Yi amfani da {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    "Ka manta? Fayil ɗin yana nan a babban fayil na sararin, kuma wata na'ura na iya cire kariyar.",
+  'Unlock what you protected in Orden': 'Buɗe abin da ka kare a Orden',
+  'Protect with': 'Kare da',
 }

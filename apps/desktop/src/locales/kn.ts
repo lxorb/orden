@@ -3064,4 +3064,11 @@ export const kn: Dictionary = {
   },
   Columns: 'ಕಾಲಮ್‌ಗಳು',
   'Add numbers': 'ಸಂಖ್ಯೆ ಸೇರಿಸಿ',
+  'Screen lock': 'ಸ್ಕ್ರೀನ್ ಲಾಕ್',
+  'System password': 'ಸಿಸ್ಟಮ್ ಪಾಸ್‌ವರ್ಡ್',
+  'Use {way}': '{way} ಬಳಸಿ',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'ಮರೆತಿರಾ? ಫೈಲ್ ಇನ್ನೂ ಸ್ಪೇಸ್‌ನ ಫೋಲ್ಡರ್‌ನಲ್ಲಿದೆ, ಮತ್ತು ಇನ್ನೊಂದು ಸಾಧನ ರಕ್ಷಣೆಯನ್ನು ತೆಗೆದುಹಾಕಬಹುದು.',
+  'Unlock what you protected in Orden': 'Orden ನಲ್ಲಿ ನೀವು ರಕ್ಷಿಸಿದುದನ್ನು ತೆರೆಯಿರಿ',
+  'Protect with': 'ಇದರಿಂದ ರಕ್ಷಿಸಿ',
 }

@@ -3076,4 +3076,11 @@ export const ml: Dictionary = {
   },
   Columns: 'കോളങ്ങൾ',
   'Add numbers': 'നമ്പർ ചേർക്കുക',
+  'Screen lock': 'സ്ക്രീൻ ലോക്ക്',
+  'System password': 'സിസ്റ്റം പാസ്‌വേഡ്',
+  'Use {way}': '{way} ഉപയോഗിക്കുക',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'മറന്നോ? ഫയൽ ഇപ്പോഴും സ്പേസിന്റെ ഫോൾഡറിലുണ്ട്, മറ്റൊരു ഉപകരണത്തിന് സംരക്ഷണം നീക്കാം.',
+  'Unlock what you protected in Orden': 'Orden-ൽ നിങ്ങൾ സംരക്ഷിച്ചത് തുറക്കുക',
+  'Protect with': 'ഇതുപയോഗിച്ച് സംരക്ഷിക്കുക',
 }

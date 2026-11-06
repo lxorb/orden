@@ -3,7 +3,9 @@
   import Icon from '../Icon.svelte'
   import { t } from '../i18n.svelte'
   import { nameOf } from '../space-paths'
-  import { unlockAt } from './unlocking'
+  import { workspace } from '../workspace.svelte'
+  import { deviceCan, deviceName } from './device'
+  import { unlockAt, unlockByDevice } from './unlocking'
 
   const { path, focused = false }: { path: string; focused?: boolean } = $props()
 
@@ -11,6 +13,20 @@
   let wrong = $state(false)
   let busy = $state(false)
   let field = $state<HTMLInputElement>()
+  let device = $state(false)
+
+  const password = $derived(workspace.protection.password !== null)
+
+  $effect(() => {
+    void deviceCan().then((can) => (device = can))
+  })
+
+  async function byDevice() {
+    if (busy) return
+    busy = true
+    await unlockByDevice(path)
+    busy = false
+  }
 
   $effect(() => {
     if (focused) field?.focus({ preventScroll: true })
@@ -33,22 +49,36 @@
 <div class="locked" data-region="editor" role="group" aria-label={t('Protected')}>
   <span class="mark" aria-hidden="true"><Icon icon={null} fallback={Lock} /></span>
   <p class="name">{nameOf(path)}</p>
-  <form class="unlock" onsubmit={unlock}>
-    <input
-      bind:this={field}
-      bind:value={typed}
-      class="nib-field"
-      type="password"
-      autocomplete="current-password"
-      placeholder={t('Password')}
-      aria-label={t('Password')}
-      aria-invalid={wrong}
-      oninput={() => (wrong = false)}
-    />
-    <button class="nib-button" type="submit" disabled={busy || !typed}>{t('Unlock')}</button>
-  </form>
+  {#if device}
+    <button class="nib-button" class:is-quiet={password} disabled={busy} onclick={byDevice}>
+      {t('Use {way}', { way: deviceName() })}
+    </button>
+  {/if}
+  {#if password}
+    <form class="unlock" onsubmit={unlock}>
+      <input
+        bind:this={field}
+        bind:value={typed}
+        class="nib-field"
+        type="password"
+        autocomplete="current-password"
+        placeholder={t('Password')}
+        aria-label={t('Password')}
+        aria-invalid={wrong}
+        oninput={() => (wrong = false)}
+      />
+      <button class="nib-button" type="submit" disabled={busy || !typed}>{t('Unlock')}</button>
+    </form>
+  {/if}
   {#if wrong}
     <p class="wrong" role="alert">{t('Wrong password')}</p>
+  {/if}
+  {#if (wrong || !password) && !device}
+    <p class="note">
+      {t(
+        'Forgot it? The file is still in the space’s folder, and another device can remove the protection.',
+      )}
+    </p>
   {/if}
   <p class="note">
     {t('Protected, not encrypted: this only keeps it from being opened by accident.')}

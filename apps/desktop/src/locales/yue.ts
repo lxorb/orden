@@ -2908,4 +2908,11 @@ export const yue: Dictionary = {
   '{count} folders': '{count} 個資料夾',
   Columns: '欄',
   'Add numbers': '加編號',
+  'Screen lock': '螢幕鎖',
+  'System password': '系統密碼',
+  'Use {way}': '用 {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    '唔記得？個檔案仲喺空間個資料夾度，另一部裝置可以取消保護。',
+  'Unlock what you protected in Orden': '打開你喺 Orden 保護嘅嘢',
+  'Protect with': '用以下方法保護',
 }

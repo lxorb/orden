@@ -3031,4 +3031,11 @@ export const hi: Dictionary = {
   },
   Columns: 'कॉलम',
   'Add numbers': 'नंबर जोड़ें',
+  'Screen lock': 'स्क्रीन लॉक',
+  'System password': 'सिस्टम पासवर्ड',
+  'Use {way}': '{way} इस्तेमाल करें',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'भूल गए? फ़ाइल अब भी स्पेस के फ़ोल्डर में है, और कोई दूसरा डिवाइस सुरक्षा हटा सकता है।',
+  'Unlock what you protected in Orden': 'Orden में अपनी सुरक्षित चीज़ खोलें',
+  'Protect with': 'इससे सुरक्षित करें',
 }

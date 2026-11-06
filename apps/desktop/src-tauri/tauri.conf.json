@@ -98,7 +98,10 @@
         "conflicts": ["nib", "nibeditor"],
         "replaces": ["nib", "nibeditor"],
         "desktopTemplate": "linux/main.desktop",
-        "postInstallScript": "linux/postinst"
+        "postInstallScript": "linux/postinst",
+        "files": {
+          "/usr/share/polkit-1/actions/ch.emilvinu.nib.policy": "linux/ch.emilvinu.nib.policy"
+        }
       },
       "rpm": {
         "depends": [
@@ -121,7 +124,10 @@
           "libdbus-1.so.3()(64bit)"
         ],
         "obsoletes": ["nib", "nibeditor"],
-        "desktopTemplate": "linux/main.desktop"
+        "desktopTemplate": "linux/main.desktop",
+        "files": {
+          "/usr/share/polkit-1/actions/ch.emilvinu.nib.policy": "linux/ch.emilvinu.nib.policy"
+        }
       }
     },
     "iOS": {

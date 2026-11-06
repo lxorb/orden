@@ -3107,4 +3107,11 @@ export const ptPT: Dictionary = {
   },
   Columns: 'Colunas',
   'Add numbers': 'Adicionar números',
+  'Screen lock': 'Bloqueio de ecrã',
+  'System password': 'Palavra-passe do sistema',
+  'Use {way}': 'Usar {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Esqueceu-se? O ficheiro continua na pasta do espaço, e outro dispositivo pode remover a proteção.',
+  'Unlock what you protected in Orden': 'Abrir o que protegeu no Orden',
+  'Protect with': 'Proteger com',
 }

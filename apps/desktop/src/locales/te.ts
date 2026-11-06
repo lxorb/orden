@@ -3043,4 +3043,11 @@ export const te: Dictionary = {
   },
   Columns: 'నిలువు వరుసలు',
   'Add numbers': 'సంఖ్యలు జోడించు',
+  'Screen lock': 'స్క్రీన్ లాక్',
+  'System password': 'సిస్టమ్ పాస్‌వర్డ్',
+  'Use {way}': '{way} వాడండి',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'మరచిపోయారా? ఫైల్ ఇంకా స్పేస్ ఫోల్డర్‌లోనే ఉంది, మరో పరికరం రక్షణను తీసివేయగలదు.',
+  'Unlock what you protected in Orden': 'Orden‌లో మీరు రక్షించినది తెరవండి',
+  'Protect with': 'దీనితో రక్షించు',
 }

@@ -3127,4 +3127,11 @@ export const fr: Dictionary = {
   },
   Columns: 'Colonnes',
   'Add numbers': 'Ajouter des numéros',
+  'Screen lock': 'Verrouillage de l’écran',
+  'System password': 'Mot de passe du système',
+  'Use {way}': 'Utiliser {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Oublié ? Le fichier est toujours dans le dossier de l’espace, et un autre appareil peut retirer la protection.',
+  'Unlock what you protected in Orden': 'Ouvrir ce que vous avez protégé dans Orden',
+  'Protect with': 'Protéger avec',
 }

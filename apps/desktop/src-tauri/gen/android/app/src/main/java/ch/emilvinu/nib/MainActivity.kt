@@ -1,13 +1,17 @@
 package ch.emilvinu.nib
 
 import android.Manifest
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.hardware.biometrics.BiometricManager
+import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
+import android.os.CancellationSignal
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -290,6 +294,43 @@ class MainActivity : TauriActivity() {
     tell("window.__nibHeard?.(${JSONObject.quote(json)})")
   }
 
+  private fun ownerAsks(): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+      getSystemService(KeyguardManager::class.java)?.isDeviceSecure == true
+
+  private fun owned(yes: Boolean) {
+    tell("window.__nibOwner?.('${if (yes) "yes" else "no"}')")
+  }
+
+  @Suppress("DEPRECATION")
+  private fun askOwner(reason: String) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !ownerAsks()) return owned(false)
+    val prompt = BiometricPrompt.Builder(this).setTitle(reason)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      prompt.setAllowedAuthenticators(
+        BiometricManager.Authenticators.BIOMETRIC_WEAK or
+          BiometricManager.Authenticators.DEVICE_CREDENTIAL
+      )
+    } else {
+      prompt.setDeviceCredentialAllowed(true)
+    }
+    prompt
+      .build()
+      .authenticate(
+        CancellationSignal(),
+        mainExecutor,
+        object : BiometricPrompt.AuthenticationCallback() {
+          override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+            owned(true)
+          }
+
+          override fun onAuthenticationError(code: Int, message: CharSequence) {
+            owned(false)
+          }
+        },
+      )
+  }
+
   /** The microphone, asked for the first time dictation is turned on. The old
    *  call rather than a result contract: the webview registers its own contracts
    *  as it is built, and registering another one this late throws. */
@@ -419,6 +460,14 @@ class MainActivity : TauriActivity() {
     @JavascriptInterface
     fun remindersTaken(said: String): String =
       if (said == frame) Reminders.taken(this@MainActivity) else "[]"
+
+    @JavascriptInterface
+    fun ownerCan(said: String): Boolean = said == frame && ownerAsks()
+
+    @JavascriptInterface
+    fun ownerCheck(said: String, reason: String) {
+      if (said == frame) runOnUiThread { askOwner(reason.take(200)) } else owned(false)
+    }
 
     /** Whether an alarm rings at its minute. */
     @JavascriptInterface fun exactAlarms(): Boolean = Reminders.exact(this@MainActivity)

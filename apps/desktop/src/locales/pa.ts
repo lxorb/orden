@@ -3039,4 +3039,11 @@ export const pa: Dictionary = {
   },
   Columns: 'ਕਾਲਮ',
   'Add numbers': 'ਨੰਬਰ ਜੋੜੋ',
+  'Screen lock': 'ਸਕ੍ਰੀਨ ਲਾਕ',
+  'System password': 'ਸਿਸਟਮ ਪਾਸਵਰਡ',
+  'Use {way}': '{way} ਵਰਤੋ',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'ਭੁੱਲ ਗਏ? ਫ਼ਾਈਲ ਹਾਲੇ ਵੀ ਸਪੇਸ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਹੈ, ਅਤੇ ਕੋਈ ਹੋਰ ਡਿਵਾਈਸ ਸੁਰੱਖਿਆ ਹਟਾ ਸਕਦੀ ਹੈ।',
+  'Unlock what you protected in Orden': 'Orden ਵਿੱਚ ਆਪਣੀ ਸੁਰੱਖਿਅਤ ਚੀਜ਼ ਖੋਲ੍ਹੋ',
+  'Protect with': 'ਇਸ ਨਾਲ ਸੁਰੱਖਿਅਤ ਕਰੋ',
 }

@@ -3135,4 +3135,11 @@ export const uk: Dictionary = {
   },
   Columns: 'Колонки',
   'Add numbers': 'Додати номери',
+  'Screen lock': 'Блокування екрана',
+  'System password': 'Пароль системи',
+  'Use {way}': 'Використати {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'Забули? Файл досі в папці простору, а інший пристрій може зняти захист.',
+  'Unlock what you protected in Orden': 'Відкрийте захищене в Orden',
+  'Protect with': 'Захистити за допомогою',
 }

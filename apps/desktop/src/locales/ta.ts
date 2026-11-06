@@ -3082,4 +3082,11 @@ export const ta: Dictionary = {
   },
   Columns: 'நெடுவரிசைகள்',
   'Add numbers': 'எண்களைச் சேர்',
+  'Screen lock': 'திரைப் பூட்டு',
+  'System password': 'கணினிக் கடவுச்சொல்',
+  'Use {way}': '{way} பயன்படுத்து',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'மறந்துவிட்டீர்களா? கோப்பு இன்னும் இடத்தின் கோப்புறையில் உள்ளது, மற்றொரு சாதனம் பாதுகாப்பை அகற்றலாம்.',
+  'Unlock what you protected in Orden': 'Orden-இல் நீங்கள் பாதுகாத்ததைத் திறக்கவும்',
+  'Protect with': 'இதன் மூலம் பாதுகா',
 }

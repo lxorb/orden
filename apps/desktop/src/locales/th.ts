@@ -2948,4 +2948,11 @@ export const th: Dictionary = {
   '{count} folders': '{count} โฟลเดอร์',
   Columns: 'คอลัมน์',
   'Add numbers': 'เพิ่มตัวเลข',
+  'Screen lock': 'ล็อกหน้าจอ',
+  'System password': 'รหัสผ่านระบบ',
+  'Use {way}': 'ใช้ {way}',
+  'Forgot it? The file is still in the space’s folder, and another device can remove the protection.':
+    'ลืมหรือ? ไฟล์ยังอยู่ในโฟลเดอร์ของพื้นที่ และอุปกรณ์อื่นเอาการป้องกันออกได้',
+  'Unlock what you protected in Orden': 'เปิดสิ่งที่คุณป้องกันไว้ใน Orden',
+  'Protect with': 'ป้องกันด้วย',
 }
