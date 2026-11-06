@@ -186,3 +186,64 @@ describe('the global window', () => {
     expect(sent).toContainEqual(expect.objectContaining({ kind: 'task' }))
   })
 })
+
+describe('lines pasted as a task each', () => {
+  function paste(words: string) {
+    const event = new Event('paste', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'clipboardData', { value: { getData: () => words } })
+    fieldOf().dispatchEvent(event)
+    flushSync()
+  }
+
+  test('each goes into the note it names, under its heading, and the rest where the field points', async () => {
+    const handed: Entry[] = []
+    shown = mount(QuickAdd, {
+      target: document.body,
+      props: {
+        langs: ['en'],
+        notes: ['Groceries', 'Work'],
+        prefill: { note: 'Plans', heading: 'Soon' },
+        onsubmit: (entry: Entry) => {
+          handed.push(entry)
+          return true
+        },
+        onclose: () => undefined,
+      },
+    })
+    flushSync()
+
+    paste('Milk >Groceries\nCall Ada >Work /Calls\nSketch the plan')
+    document.querySelector<HTMLButtonElement>('.pasted .add')?.click()
+    await settled()
+
+    expect(handed.map((one) => [one.text, one.note, one.heading])).toEqual([
+      ['Milk', 'Groceries', undefined],
+      ['Call Ada', 'Work', 'Calls'],
+      ['Sketch the plan', 'Plans', 'Soon'],
+    ])
+  })
+
+  test('a note typed in the field takes no heading from the note it was opened on', async () => {
+    const handed: Entry[] = []
+    shown = mount(QuickAdd, {
+      target: document.body,
+      props: {
+        langs: ['en'],
+        notes: ['Groceries'],
+        prefill: { note: 'Plans', heading: 'Soon' },
+        onsubmit: (entry: Entry) => {
+          handed.push(entry)
+          return true
+        },
+        onclose: () => undefined,
+      },
+    })
+    flushSync()
+
+    await typeAndAdd('Milk >Groceries')
+
+    expect(handed.map((one) => [one.text, one.note, one.heading])).toEqual([
+      ['Milk', 'Groceries', undefined],
+    ])
+  })
+})
