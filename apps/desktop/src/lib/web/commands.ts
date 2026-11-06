@@ -278,6 +278,9 @@ async function renameNote(from: string, to: string, hold = false, alone = false,
   const turning = hold && isPdf(target) && parent(source) === parent(target)
   const there = await paperInTheWay(source, target)
   if (there && !turning) throw new Error(`${there} is already there`)
+  if (!raw && spaceOf(source) !== spaceOf(target) && (await stillAway(source))) {
+    throw new Error(NOT_HERE)
+  }
 
   const pictures = await moveAssets(source, target)
 
@@ -300,6 +303,13 @@ async function renameNote(from: string, to: string, hold = false, alone = false,
   )
 
   if (isPages(source)) await renamePaper(paperOf(source), paperOf(target), !alone)
+}
+
+async function stillAway(source: string): Promise<boolean> {
+  const away = keptAway.under(source)
+  if (!away.length) return false
+  const here = new Set(await files.paths())
+  return away.some((one) => !here.has(normalise(one.path)))
 }
 
 async function renameInTree(

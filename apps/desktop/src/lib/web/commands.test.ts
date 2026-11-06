@@ -1366,6 +1366,22 @@ describe('a note kept away', () => {
     ).rejects.toThrow('something already lives there')
   })
 
+  test('moved to another space only once its words are here, and offline is left where it was', async () => {
+    const offline = { yes: true }
+    away(offline)
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/Plan.md', to: '/Work/Plan.md' }),
+    ).rejects.toThrow(NOT_HERE)
+    expect(keptAway.at('/Notes/Plan.md')).not.toBeNull()
+    expect(disk.files.has('/Work/Plan.md')).toBe(false)
+
+    offline.yes = false
+    expect(await read('/Notes/Plan.md')).toBe('Ship Monday')
+    await webInvoke('rename_note', { from: '/Notes/Plan.md', to: '/Work/Plan.md' })
+    expect(disk.files.get('/Work/Plan.md')?.content).toBe('Ship Monday')
+    expect(disk.files.has('/Notes/Plan.md')).toBe(false)
+  })
+
   test('is fetched before it is copied, and a copy offline is refused', async () => {
     const offline = { yes: true }
     away(offline)

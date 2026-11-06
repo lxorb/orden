@@ -21,6 +21,8 @@ import type { World } from './world'
 
 const ROOT = '/browser/space'
 const SPACE = 'sim'
+const WORK = 'work'
+const WORK_ROOT = '/browser/work'
 const PLAN = 'n1'
 const IDEAS = 'n2'
 
@@ -36,13 +38,23 @@ interface Device {
 async function fresh(
   account: ReferenceAccount,
   id: string,
-  { lazy = true, index = true }: { lazy?: boolean; index?: { on: boolean } | boolean } = {},
+  {
+    lazy = true,
+    index = true,
+    work,
+  }: { lazy?: boolean; index?: { on: boolean } | boolean; work?: ReferenceAccount } = {},
 ): Promise<Device> {
   const store = new MemoryStore(id)
   const seeding = store.open()
   await seeding.write([
     put('spaces', { space_id: SPACE, root: ROOT, cursor: 0, role: 'owner', store: null }),
     put('meta', wantedRow(SPACE, new Map())),
+    ...(work
+      ? [
+          put('spaces', { space_id: WORK, root: WORK_ROOT, cursor: 0, role: 'owner', store: null }),
+          put('meta', wantedRow(WORK, new Map())),
+        ]
+      : []),
   ])
   await seeding.cleanExit(true)
   const disk = new MemoryDisk()
@@ -59,17 +71,15 @@ async function fresh(
   const world: World = {
     disk,
     account: {
-      ask: async (route, body) => {
+      ask: async (route, body, space) => {
         if (!made.online || route === 'prepare') return null
+        const to = work && space === WORK ? work : account
         made.routes.push(route)
         if (route === 'pull') {
           const asked = (body as { docs: { id: string }[] }).docs
           made.pulled.push(...asked.map((one) => one.id))
         }
-        const answer = unframe(await account.handle(id, route, frame(body))) as Record<
-          string,
-          unknown
-        >
+        const answer = unframe(await to.handle(id, route, frame(body))) as Record<string, unknown>
         return route === 'feed' && saying.on ? { ...answer, index: true } : answer
       },
     },
@@ -353,6 +363,72 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Plan.md`])
   })
 
+  test('a canvas, a pages file and a folder never fetched move to another space whole (#1187)', async () => {
+    const { account, work, browser } = await keptAwayInHome()
+
+    for (const name of MOVED) {
+      const from = `${ROOT}/${name}`
+      const to = `${WORK_ROOT}/${name}`
+      await browser.engine.moving(from, to, () => browser.disk.move(from, to))
+      await browser.engine.moved(from, to)
+    }
+    await settledBoth(browser)
+
+    expect(await wordsOn(work)).toEqual(drawn(AWAY))
+    const home = await wordsOn(account)
+    for (const name of Object.keys(AWAY)) expect(home[name]).toBeUndefined()
+    expect(Object.keys(home).sort()).toEqual(['Ideas.md', 'Plan.md'])
+  })
+
+  test('offline, a move to another space of what was never fetched stops and deletes nothing', async () => {
+    const { account, work, browser } = await keptAwayInHome()
+    browser.online = false
+
+    for (const name of MOVED) {
+      const from = `${ROOT}/${name}`
+      const to = `${WORK_ROOT}/${name}`
+      let ran = false
+      await expect(
+        browser.engine.moving(from, to, () => {
+          ran = true
+          return browser.disk.move(from, to)
+        }),
+      ).rejects.toThrow()
+      expect(ran).toBe(false)
+    }
+    browser.online = true
+    await settledBoth(browser)
+
+    expect(await wordsOn(account)).toEqual(drawn({ ...AWAY, ...seededWords() }))
+    expect(await wordsOn(work)).toEqual({})
+  })
+
+  test('a move to another space told after the files went still brings what was kept away', async () => {
+    const { work, browser } = await keptAwayInHome()
+
+    await browser.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    await settledBoth(browser)
+
+    const there = await wordsOn(work)
+    expect(there['Trip/Map.md']).toBe(AWAY['Trip/Map.md'])
+    expect(there['Trip/Trip.md']).toBe(AWAY['Trip/Trip.md'])
+  })
+
+  test('and offline puts the files back where they were, and deletes nothing', async () => {
+    const { account, work, browser } = await keptAwayInHome()
+    await browser.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    browser.online = false
+
+    await browser.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    expect(await browser.disk.exists(`${ROOT}/Trip`)).toBe(true)
+    expect(await browser.disk.exists(`${WORK_ROOT}/Trip`)).toBe(false)
+    browser.online = true
+    await settledBoth(browser)
+
+    expect(await wordsOn(account)).toEqual(drawn({ ...AWAY, ...seededWords() }))
+    expect(await wordsOn(work)).toEqual({})
+  })
+
   test('an account that does not say it serves the rest, and a desktop, are kept whole', async () => {
     for (const how of [{ index: false }, { lazy: false }]) {
       const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -386,6 +462,76 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.engine.awayFiles()).toEqual([])
   })
 })
+
+const AWAY: Record<string, string> = {
+  'Board.canvas':
+    '{"nodes":[{"id":"a","type":"text","x":0,"y":0,"width":200,"height":80,"text":"On the board"}],"edges":[]}',
+  'Lecture.pages':
+    '{"nodes":[{"id":"p1","type":"group","x":-397,"y":0,"width":794,"height":1123,"label":"Page 1"}],"edges":[],"nib":{"version":1,"pages":[{"id":"p1","paper":"a4","pattern":"blank"}]}}',
+  'Trip/Trip.md': '# Trip\n\nThe trip.\n',
+  'Trip/Map.md': '# Map\n\nThe map.\n',
+}
+const MOVED = ['Board.canvas', 'Lecture.pages', 'Trip']
+
+function drawn(words: Record<string, string>): Record<string, string> {
+  const plain = (name: string, text: string) => {
+    if (!/\.(canvas|pages)$/.test(name)) return text
+    const { nodes, edges, nib } = JSON.parse(text) as {
+      nodes: unknown
+      edges: unknown
+      nib?: { pages?: unknown }
+    }
+    return JSON.stringify({ nodes, edges, pages: nib?.pages })
+  }
+  return Object.fromEntries(Object.entries(words).map(([name, text]) => [name, plain(name, text)]))
+}
+
+function seededWords(): Record<string, string> {
+  return Object.fromEntries(SEEDED.map((one) => [one.name, one.text]))
+}
+
+async function keptAwayInHome() {
+  const account = new ReferenceAccount(new Clock(), SEEDED)
+  const work = new ReferenceAccount(new Clock(), [])
+  const other = await fresh(account, 'o', { lazy: false })
+  await other.engine.pass(SPACE)
+  await other.disk.mkdir(`${ROOT}/Trip`)
+  await other.engine.created(`${ROOT}/Trip`, true)
+  for (const [name, text] of Object.entries(AWAY)) {
+    await other.disk.write(`${ROOT}/${name}`, text)
+    await other.engine.created(`${ROOT}/${name}`, false, text)
+  }
+  await other.engine.pass(SPACE)
+  await other.engine.pass(SPACE)
+
+  const browser = await fresh(account, 'b', { work })
+  await browser.engine.pass(SPACE)
+  await browser.engine.pass(WORK)
+  expect(
+    browser.engine
+      .awayFiles()
+      .map((one) => one.relative)
+      .sort(),
+  ).toEqual([...Object.keys(AWAY), 'Ideas.md', 'Plan.md'].sort())
+  expect(browser.pulled).toEqual([])
+  return { account, work, browser }
+}
+
+async function settledBoth(browser: Device) {
+  for (let round = 0; round < 3; round += 1) {
+    await browser.engine.pass(SPACE)
+    await browser.engine.pass(WORK)
+  }
+}
+
+async function wordsOn(account: ReferenceAccount): Promise<Record<string, string>> {
+  const reader = await fresh(account, `r${String(Math.random())}`, { lazy: false })
+  await reader.engine.pass(SPACE)
+  await reader.engine.pass(SPACE)
+  const out: Record<string, string> = {}
+  for (const [path, text] of reader.disk.files) out[path.slice(ROOT.length + 1)] = text
+  return drawn(out)
+}
 
 function readingOf(account: ReferenceAccount, how = { missing: false }) {
   const asked: { route: string; ids: string[] }[] = []

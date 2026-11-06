@@ -27,6 +27,20 @@ export function away(space: SpaceState, entry: EntryRow): boolean {
   return !space.foreign(entry.id)
 }
 
+export function awayUnder(space: SpaceState, path: string): EntryRow[] {
+  if (!space.keepsFew) return []
+  const key = space.key(path)
+  const inside = space.key(`${path}/`)
+  const out: EntryRow[] = []
+  for (const [id, at] of space.paths()) {
+    const entry = space.entries.get(id)
+    if (!entry || !away(space, entry)) continue
+    const one = space.key(at)
+    if (one === key || one.startsWith(inside)) out.push(entry)
+  }
+  return out
+}
+
 export function usedChanges(core: Core, space: SpaceState, id: string, size?: number): Change[] {
   if (!space.keepsFew) return []
   const was = space.keeping.used.get(id)
