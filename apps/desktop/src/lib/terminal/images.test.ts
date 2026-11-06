@@ -34,15 +34,33 @@ beforeEach(() => {
 describe('pictures carried to another machine', () => {
   test('are their paths there, a space apart, quoted where a shell would split one', async () => {
     const source = machine((at) => (at === 1 ? '/home/me/a.png' : '/home/me/my shots/b.png'))
-    expect(await carried(source, [picture(3), picture(5)])).toBe(
+    expect(await carried(source, [picture(3), picture(5)], '/bin/sh')).toBe(
       "/home/me/a.png '/home/me/my shots/b.png'",
     )
     expect(source.sizes).toEqual([3, 5])
   })
 
+  test('are spelled for the shell they land in, as a kept one on Windows is', async () => {
+    const kept = 'C:\\Users\\Emil Vinu\\AppData\\Local\\nib\\images\\nib-1.png'
+    expect(
+      await carried(
+        machine(() => kept),
+        [picture(1)],
+        'powershell',
+      ),
+    ).toBe(`"${kept}"`)
+    expect(
+      await carried(
+        machine(() => kept),
+        [picture(1)],
+        'wsl:Ubuntu',
+      ),
+    ).toBe("'/mnt/c/Users/Emil Vinu/AppData/Local/nib/images/nib-1.png'")
+  })
+
   test('one larger than a paste carries is never sent, and the line says so', async () => {
     const source = machine(() => '/x.png')
-    expect(await carried(source, [picture(MOST_IMAGE + 1)])).toBeNull()
+    expect(await carried(source, [picture(MOST_IMAGE + 1)], '/bin/sh')).toBeNull()
     expect(source.sizes).toEqual([])
     expect(busy.trouble).toBe('Could not send the image')
   })
@@ -52,6 +70,7 @@ describe('pictures carried to another machine', () => {
       await carried(
         machine(() => new Error('refused')),
         [picture(1)],
+        '/bin/sh',
       ),
     ).toBeNull()
     expect(busy.trouble).toBe('Could not send the image')
@@ -60,7 +79,7 @@ describe('pictures carried to another machine', () => {
   test('nothing goes where the source cannot carry a picture', async () => {
     const local = machine(() => '/x.png')
     delete local.image
-    expect(await carried(local, [picture(1)])).toBeNull()
+    expect(await carried(local, [picture(1)], '/bin/sh')).toBeNull()
     expect(local.sizes).toEqual([])
     expect(busy.trouble).toBeNull()
   })

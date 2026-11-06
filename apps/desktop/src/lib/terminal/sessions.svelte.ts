@@ -8,7 +8,7 @@ import { chrome } from '../glass/chrome.svelte'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
-import { dragged, isTreeDrag } from '../drag-paths'
+import { dragged, explorerDragged, isExplorerDrag, isFileDrop, isTreeDrag } from '../drag-paths'
 import { i18n, key, plural, t } from '../i18n.svelte'
 import { identifier } from '../identifier'
 import { notify } from '../notify'
@@ -43,7 +43,7 @@ import { findColours, monospace, terminalContrast, terminalGround, terminalTheme
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
-import { asksFirst, imageIn, imageKindAt, linesIn, pasted, spokenPath } from './paste'
+import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath } from './paste'
 import { setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
@@ -219,7 +219,7 @@ class Session {
     this.host.addEventListener('paste', (event) => this.pasting(event), true)
     this.host.addEventListener('mouseup', () => this.copyChosen())
     this.host.addEventListener('dragover', (event) => {
-      if (!isTreeDrag(event.dataTransfer)) return
+      if (!takesDrop(event.dataTransfer)) return
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
     })
@@ -1157,14 +1157,14 @@ class Session {
   private pasting(event: ClipboardEvent) {
     event.preventDefault()
     event.stopImmediatePropagation()
-    const image = this.remote ? imageIn(event.clipboardData) : null
+    const image = imageIn(event.clipboardData)
     if (image) void import('./images').then(({ pictureOf }) => this.carry([pictureOf(image)]))
     else void this.paste(event.clipboardData?.getData('text/plain') ?? '')
   }
 
   private async pasteFromMenu() {
     const text = await navigator.clipboard.readText().catch(() => '')
-    if (text || !this.remote) await this.paste(text)
+    if (text) await this.paste(text)
     else await this.pictureOrKey('')
   }
 
@@ -1181,7 +1181,7 @@ class Session {
     if (source === null || !some.length || (this.online && !this.mayType)) return
 
     const { carried } = await import('./images')
-    const paths = await carried(source, some)
+    const paths = await carried(source, some, this.remote ? '/bin/sh' : this.spec().shell)
     if (paths !== null && this.source === source) this.term.paste(paths)
     this.focus()
   }
@@ -1204,18 +1204,45 @@ class Session {
   }
 
   private dropped(event: DragEvent) {
-    const paths = isTreeDrag(event.dataTransfer) ? dragged(event.dataTransfer) : []
-    if (!paths.length || this.pty === null) return
+    const transfer = event.dataTransfer
+    if (this.pty === null || !takesDrop(transfer)) return
 
+    event.preventDefault()
+    const rows = isTreeDrag(transfer)
+      ? dragged(transfer)
+      : isExplorerDrag(transfer)
+        ? explorerDragged(transfer)
+        : null
+    if (rows !== null) {
+      this.droppedRows(rows)
+      return
+    }
+
+    const files = [...(transfer?.files ?? [])]
+    const pictures = this.remote ? files.filter((file) => imageKindOf(file.type) !== null) : []
+    if (pictures.length) {
+      void import('./images').then(({ pictureOf }) => this.carry(pictures.map(pictureOf)))
+      return
+    }
+    if (this.online || !files.length) return
+
+    void import('../dropped-paths').then(async ({ droppedPaths }) =>
+      this.speak(await droppedPaths(files)),
+    )
+  }
+
+  private droppedRows(paths: readonly string[]) {
     const pictures = this.remote ? paths.filter((path) => imageKindAt(path) !== null) : []
     if (pictures.length) {
-      event.preventDefault()
       void import('./images').then(({ pictureAt }) => this.carry(pictures.map(pictureAt)))
       return
     }
-    if (this.online) return
+    if (!this.online) this.speak(paths)
+  }
 
-    event.preventDefault()
+  private speak(paths: readonly string[]) {
+    if (!paths.length || this.pty === null) return
+
     const shell = this.spec().shell
     this.term.paste(paths.map((path) => spokenPath(path, shell)).join(' '))
     this.focus()
@@ -1374,4 +1401,8 @@ watch()
 function laid(theme: ITheme): ITheme {
   chrome.terminal = terminalGround(theme)
   return theme
+}
+
+function takesDrop(transfer: DataTransfer | null): boolean {
+  return isTreeDrag(transfer) || isExplorerDrag(transfer) || isFileDrop(transfer)
 }

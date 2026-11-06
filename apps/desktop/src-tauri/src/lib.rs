@@ -491,6 +491,7 @@ macro_rules! desktop_commands {
             terminal::remote::remote_hosts,
             terminal::remote::remote_keep,
             terminal::remote::remote_config_open,
+            terminal::picture::local_image,
             terminal::picture::remote_image,
             updates::check_update,
             system_update::system_update,
