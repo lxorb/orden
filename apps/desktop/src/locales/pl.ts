@@ -31,6 +31,9 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Przenieść zakładki, karty i historię z innej przeglądarki?',
+  'No thanks': 'Nie, dziękuję',
   'Containers stay in Firefox': 'Kontenery zostają w Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} wyszukuje w {engine}: wybierz to w Ustawieniach, aby wyszukiwać tak również tutaj',

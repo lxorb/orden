@@ -30,6 +30,9 @@ export const fa: Dictionary = {
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'نشانک‌ها، زبانه‌ها و تاریخچه‌تان را از مرورگر دیگری بیاورید؟',
+  'No thanks': 'نه، ممنون',
   'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} با {engine} جست‌وجو می‌کند: برای جست‌وجو با آن در اینجا، آن را در تنظیمات انتخاب کنید',

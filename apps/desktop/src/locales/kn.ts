@@ -31,6 +31,9 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'ಬೇರೆ ಬ್ರೌಸರ್‌ನಿಂದ ನಿಮ್ಮ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು, ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಇತಿಹಾಸವನ್ನು ತರಬೇಕೆ?',
+  'No thanks': 'ಬೇಡ, ಧನ್ಯವಾದಗಳು',
   'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ಮೂಲಕ ಹುಡುಕುತ್ತದೆ: ಇಲ್ಲಿಯೂ ಅದರಿಂದ ಹುಡುಕಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆರಿಸಿ',

@@ -30,6 +30,9 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'خپل نښه شوي پاڼې، ټبونه او تاریخچه له بل براوزر څخه راوړئ؟',
+  'No thanks': 'نه، مننه',
   'Containers stay in Firefox': 'کانټینرونه په Firefox کې پاتې کېږي',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} په {engine} لټون کوي: دلته هم ورسره د لټون لپاره یې په امستنو کې وټاکئ',

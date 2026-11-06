@@ -31,6 +31,9 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Kawo alamomin shafi, shafuka da tarihinka daga wani burauza?',
+  'No thanks': 'A’a, na gode',
   'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} yana bincike da {engine}: zaɓe shi a Saituna don bincike da shi a nan ma',

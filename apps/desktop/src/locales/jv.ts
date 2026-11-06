@@ -30,6 +30,9 @@ export const jv: Dictionary = {
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Nggawa tetenger, tab lan riwayatmu saka browser liya?',
+  'No thanks': 'Ora, matur nuwun',
   'Containers stay in Firefox': 'Kontainer tetep ana ing Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} nggolèk nganggo {engine}: pilih ing Setelan kanggo nggolèk nganggo kuwi ing kéné uga',

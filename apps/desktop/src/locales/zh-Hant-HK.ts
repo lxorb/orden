@@ -30,6 +30,9 @@ export const zhHantHK: Dictionary = {
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen',
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
+  'Bring your bookmarks, tabs and history from another browser?':
+    '要從其他瀏覽器帶來書籤、分頁和瀏覽記錄嗎？',
+  'No thanks': '不用了，謝謝',
   'Containers stay in Firefox': '容器會留在 Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 使用 {engine} 搜尋：在設定中選擇它，即可在這裡也用它搜尋',

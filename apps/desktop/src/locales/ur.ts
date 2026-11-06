@@ -30,6 +30,9 @@ export const ur: Dictionary = {
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'کسی دوسرے براؤزر سے اپنے بُک مارکس، ٹیبز اور ہسٹری لائیں؟',
+  'No thanks': 'نہیں، شکریہ',
   'Containers stay in Firefox': 'کنٹینر Firefox ہی میں رہتے ہیں',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} سے تلاش کرتا ہے: یہاں بھی اس سے تلاش کرنے کے لیے ترتیبات میں اسے منتخب کریں',

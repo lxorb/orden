@@ -30,6 +30,9 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'นำบุ๊กมาร์ก แท็บ และประวัติจากเบราว์เซอร์อื่นมาไหม',
+  'No thanks': 'ไม่ ขอบคุณ',
   'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} ค้นหาด้วย {engine}: เลือกในการตั้งค่าเพื่อค้นหาด้วยสิ่งนั้นที่นี่ด้วย',

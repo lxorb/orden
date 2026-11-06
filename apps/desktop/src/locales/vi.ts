@@ -30,6 +30,9 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Mang dấu trang, thẻ và lịch sử của bạn từ trình duyệt khác sang?',
+  'No thanks': 'Không, cảm ơn',
   'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} tìm kiếm bằng {engine}: chọn nó trong Cài đặt để tìm bằng nó ở đây nữa',

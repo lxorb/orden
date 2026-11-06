@@ -30,6 +30,9 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'ዕልባቶችዎን፣ ትሮችዎን እና ታሪክዎን ከሌላ አሳሽ ያምጡ?',
+  'No thanks': 'አይ፣ አመሰግናለሁ',
   'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} በ{engine} ይፈልጋል፦ እዚህም በእሱ ለመፈለግ በቅንብሮች ውስጥ ይምረጡት',

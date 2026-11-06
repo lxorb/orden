@@ -30,6 +30,9 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Bawa bookmark, tab, dan riwayat Anda dari browser lain?',
+  'No thanks': 'Tidak, terima kasih',
   'Containers stay in Firefox': 'Kontainer tetap di Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} mencari dengan {engine}: pilih di Pengaturan untuk mencari dengannya di sini juga',

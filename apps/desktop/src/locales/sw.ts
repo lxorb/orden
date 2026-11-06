@@ -31,6 +31,9 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Leta alamisho, vichupo na historia yako kutoka kivinjari kingine?',
+  'No thanks': 'Hapana, asante',
   'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} hutafuta kwa {engine}: kichague kwenye Mipangilio ili kutafuta nacho hapa pia',

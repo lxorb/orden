@@ -9,6 +9,7 @@ import type { Vault } from './import/vaults'
 import type { ZenProfile } from './import/zen-profiles'
 import { isDesktop } from './tauri'
 import { viewport } from './viewport.svelte'
+import { importOffer } from './web-tab/import-offer.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 class Migrating {
@@ -53,6 +54,7 @@ class Migrating {
     await this.running(async () => {
       const { landBrowser } = await import('./import/browser-landing')
       const space = await landBrowser(profile, several)
+      importOffer.answered()
       this.browserProfiles = null
       await arrive(space, false)
     })
@@ -72,6 +74,7 @@ class Migrating {
     await this.running(async () => {
       const { landZen } = await import('./import/zen-landing')
       const space = await landZen(profile)
+      importOffer.answered()
       this.profiles = null
       await arrive(space, false)
     })

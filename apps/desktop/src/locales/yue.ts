@@ -30,6 +30,9 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
+  'Bring your bookmarks, tabs and history from another browser?':
+    '由另一個瀏覽器帶埋你嘅書籤、分頁同瀏覽記錄過嚟？',
+  'No thanks': '唔使喇，多謝',
   'Containers stay in Firefox': '容器留喺 Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 用 {engine} 搜尋：喺設定揀佢，喺呢度都用佢搜尋',
