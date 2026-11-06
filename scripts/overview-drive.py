@@ -1,21 +1,3 @@
-"""The tab overview opened and closed on a real engine, filmed off its screen (#1136).
-
-Reported on 0.19.1-1087 for Windows: the overview flashed for the whole of its way in, and
-a web tab's page stayed behind it. A browser shows neither of the native page's parts, so
-a probe build is started on the runner's own desktop - WebView2 on Windows, CEF under an
-X server on Linux - a note and then a web tab of one colour put in front, and the overview
-opened and closed from its button while the window is filmed. Every frame is judged:
-
-    a flash: a frame far from both of its neighbours while they are near each other
-    the page under the overview: three of the four corners of the page's hole in its
-      colour while the overview is more than a quarter out, which its window flying away
-      from the pane cannot be (a notice may stand over the fourth)
-
-What the window told the engine for the page, frame by frame, is written beside the
-frames.
-
-    python scripts/overview-drive.py --exe <probe build> --identifier <probe id> --out <folder>
-"""
 
 from __future__ import annotations
 
@@ -35,12 +17,18 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from PIL import Image, ImageChops, ImageGrab, ImageStat
+import mss
+import numpy
+from PIL import Image, ImageStat
 
 COLOUR = (255, 0, 255)
 PAGE = b"<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%;background:#ff00ff}</style>"
 WIDTH, HEIGHT = 1280, 800
 Box = tuple[int, int, int, int]
+CELLS = (16, 10)
+FAR, STILL = 24.0, 1.5
+WIDE = 10
+MOST = 0.6
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -64,9 +52,10 @@ if sys.platform == "win32":
 
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+    VK_MENU, KEYUP, WHEEL = 0x12, 0x2, 0x800
+    LEFTDOWN, LEFTUP = 0x2, 0x4
 
     class Desk:
-        """The app's window on Windows' desktop."""
 
         def __init__(self, pid: int) -> None:
             self.pid, self.hwnd = pid, 0
@@ -77,8 +66,6 @@ if sys.platform == "win32":
 
         @staticmethod
         def moving() -> None:
-            # Animations on, which a server's desktop has off and Chromium reads as
-            # prefers-reduced-motion: the overview would arrive in one frame.
             user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
 
         def found(self) -> bool:
@@ -87,7 +74,6 @@ if sys.platform == "win32":
 
         def placed(self) -> None:
             user32.ShowWindow(self.hwnd, 9)
-            # The desk the taskbar leaves, so every corner of the page is on it.
             desk = wintypes.RECT()
             user32.SystemParametersInfoW(0x30, 0, ctypes.byref(desk), 0)
             width = min(WIDTH, desk.right - desk.left)
@@ -111,8 +97,27 @@ if sys.platform == "win32":
             user32.AttachThreadInput(ours, theirs, False)
 
         @staticmethod
-        def grab(box: Box) -> Image.Image:
-            return ImageGrab.grab(bbox=box, include_layered_windows=True)
+        def click(x: int, y: int) -> None:
+            user32.SetCursorPos(x, y)
+            time.sleep(0.1)
+            user32.mouse_event(LEFTDOWN, 0, 0, 0, 0)
+            time.sleep(0.05)
+            user32.mouse_event(LEFTUP, 0, 0, 0, 0)
+            time.sleep(0.3)
+
+        @staticmethod
+        def alt_alt() -> None:
+            scan = user32.MapVirtualKeyW(VK_MENU, 0)
+            for _ in range(2):
+                user32.keybd_event(VK_MENU, scan, 0, 0)
+                time.sleep(0.03)
+                user32.keybd_event(VK_MENU, scan, KEYUP, 0)
+                time.sleep(0.06)
+
+        @staticmethod
+        def wheel(x: int, y: int, notches: int) -> None:
+            user32.SetCursorPos(x, y)
+            user32.mouse_event(WHEEL, 0, 0, ctypes.c_uint32((120 * notches) & 0xFFFFFFFF).value, 0)
 
 else:
 
@@ -120,7 +125,6 @@ else:
         return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout
 
     class Desk:  # type: ignore[no-redef]
-        """The app's window on an X server: CEF's browsers are X windows of their own."""
 
         def __init__(self, pid: int) -> None:
             self.pid, self.window = pid, ""
@@ -159,8 +163,19 @@ else:
             xdo("windowactivate", self.window)
 
         @staticmethod
-        def grab(box: Box) -> Image.Image:
-            return ImageGrab.grab(bbox=box, xdisplay=os.environ.get("DISPLAY"))
+        def click(x: int, y: int) -> None:
+            xdo("mousemove", str(x), str(y))
+            xdo("click", "1")
+            time.sleep(0.3)
+
+        @staticmethod
+        def alt_alt() -> None:
+            xdo("key", "--delay", "60", "Alt_L", "Alt_L")
+
+        @staticmethod
+        def wheel(x: int, y: int, notches: int) -> None:
+            xdo("mousemove", str(x), str(y))
+            xdo("click", "4" if notches > 0 else "5")
 
 
 class App:
@@ -197,17 +212,19 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
 
 
 class Film:
-    """The window, grabbed as fast as the desktop gives it."""
 
-    def __init__(self, desk: Desk, box: Box) -> None:
-        self.desk, self.box, self.frames, self.going = desk, box, [], True
+    def __init__(self, box: Box) -> None:
+        self.box, self.frames, self.going = box, [], True
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
 
     def run(self) -> None:
-        while self.going:
-            at = time.time() * 1000
-            self.frames.append((at, self.desk.grab(self.box)))
+        left, top, right, bottom = self.box
+        with mss.mss() as screen:
+            while self.going:
+                at = time.time() * 1000
+                shot = screen.grab({"left": left, "top": top, "width": right - left, "height": bottom - top})
+                self.frames.append((at, Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX")))
 
     def stop(self) -> list[tuple[float, Image.Image]]:
         self.going = False
@@ -215,14 +232,18 @@ class Film:
         return self.frames
 
 
-#: How far out the overview is on each of the window's frames, and every placement the
-#: window tells the engine for a page.
 LOG = """
 (() => {
   window.__ov = { frames: [], puts: [] }
-  const look = () => {
-    const open = document.documentElement.style.getPropertyValue('--overview-open')
-    window.__ov?.frames.push([Date.now(), open === '' ? null : Number(open)])
+  let last = 0
+  const look = (now) => {
+    const html = document.documentElement
+    const layered = document.querySelectorAll('.is-moving, [style*="will-change: transform"]').length
+    const cut = document.querySelectorAll('[data-underlay]').length
+    const holder = document.querySelector('.canvas [style*="--overview-open"]')
+    const open = holder ? Number(holder.style.getPropertyValue('--overview-open')) : 0
+    window.__ov?.frames.push([Date.now(), html.hasAttribute('data-overview'), layered, cut, Math.round(now - last), open])
+    last = now
     if (window.__ov) requestAnimationFrame(look)
   }
   requestAnimationFrame(look)
@@ -230,7 +251,7 @@ LOG = """
   if (!pages.__heard) {
     const put = pages.put
     pages.put = function (id, page, one) {
-      window.__ov?.puts.push([Date.now(), one.visible, one.cut, one.pane])
+      window.__ov?.puts.push([Date.now(), one.visible, one.cut && one.cut.all, one.pane, one.opacity])
       return put.call(this, id, page, one)
     }
     pages.__heard = true
@@ -239,76 +260,177 @@ LOG = """
 })()
 """
 TAKE = "(() => { const got = window.__ov; window.__ov = null; return got })()"
-TOGGLE = "document.querySelector('button.nib-glyph.overview')?.click()"
+TOGGLE = "document.querySelector('button.nib-glyph.overview')?.click(); return true"
+SHOWN = "document.querySelector('button.nib-glyph.overview')?.getAttribute('aria-pressed') === 'true'"
 
 
-def opened_at(log: list[list[Any]], at: float) -> float | None:
-    best = None
-    for when, open in log:
-        if when > at:
-            break
-        best = open
-    return best
+def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) -> str:
+
+    what = "open" if up else "close"
+    pressed.append((time.time() * 1000, what))
+    desk.alt_alt()
+    time.sleep(0.6)
+    if app.eval(SHOWN) is up:
+        return "keys"
+    pressed.append((time.time() * 1000, what))
+    app.eval(TOGGLE)
+    return "button"
 
 
-def corners_of(hole: dict[str, float], scale: float, side: int, inset: int = 6) -> list[tuple[int, int]]:
-    x0, y0 = hole["x"] * scale, hole["y"] * scale
-    x1, y1 = (hole["x"] + hole["width"]) * scale, (hole["y"] + hole["height"]) * scale
-    spots = [(x0 + inset, y0 + inset), (x1 - inset - side, y0 + inset), (x0 + inset, y1 - inset - side), (x1 - inset - side, y1 - inset - side)]
-    return [(int(x), int(y)) for x, y in spots]
+def small(image: Image.Image) -> numpy.ndarray:
+    return numpy.asarray(image.convert("L").resize((CELLS[0] * 20, CELLS[1] * 20)), dtype=numpy.float32)
 
 
-def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, Any], hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
+def cells(a: numpy.ndarray, b: numpy.ndarray) -> list[float]:
+    diff = numpy.abs(a - b).reshape(CELLS[1], 20, CELLS[0], 20).mean(axis=(1, 3))
+    return [float(one) for one in diff.ravel()]
+
+
+def distinct(smalls: list[numpy.ndarray]) -> list[int]:
+
+    kept = [0]
+    for i in range(1, len(smalls)):
+        if max(cells(smalls[kept[-1]], smalls[i])) >= 0.5:
+            kept.append(i)
+    return kept
+
+
+def flashes(smalls: list[numpy.ndarray], kept: list[int]) -> list[tuple[int, int, int, float]]:
+
+    found = []
+    for length in (1, 2, 3):
+        for k in range(1, len(kept) - length):
+            before, after = smalls[kept[k - 1]], smalls[kept[k + length]]
+            across = cells(before, after)
+            inside = [cells(before, smalls[kept[k + n]]) for n in range(length)]
+            back = [cells(smalls[kept[k + n]], after) for n in range(length)]
+            far = []
+            for cell in range(len(across)):
+                left = min(one[cell] for one in inside)
+                right = min(one[cell] for one in back)
+                if min(left, right) > FAR and across[cell] < min(left, right) / 3:
+                    far.append(min(left, right))
+            if len(far) >= WIDE:
+                found.append((kept[k], length, len(far), round(max(far), 1)))
+    return found
+
+
+def pops(smalls: list[numpy.ndarray], kept: list[int], times: list[float], pressed: list[float]) -> list[tuple[int, float, float]]:
+
+    found = []
+    for k in range(1, len(kept)):
+        i, was = kept[k], kept[k - 1]
+        moved = max(cells(smalls[was], smalls[i]))
+        stood_from = times[was] if k == 1 else times[kept[k - 1]]
+        since = max((one for one in pressed if one <= times[i]), default=None)
+        if since is None or moved <= FAR / 2:
+            continue
+        if times[i] - stood_from >= 200 and stood_from > since:
+            found.append((i, round(moved, 1), round(times[i] - since)))
+    return found
+
+
+def sheet(frames: list[tuple[float, Image.Image]], path: pathlib.Path) -> None:
+    across = 10
+    w, h = 256, 160
+    rows = (len(frames) + across - 1) // across
+    out = Image.new("RGB", (across * w, max(rows, 1) * h), (0, 0, 0))
+    for index, (_, one) in enumerate(frames):
+        out.paste(one.resize((w, h)), ((index % across) * w, (index // across) * h))
+    out.save(path, quality=80)
+
+
+def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, Any], pressed: list[tuple[float, str]], hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
     wrong: list[str] = []
     folder = out / name
     folder.mkdir(parents=True, exist_ok=True)
-    smalls = [one.convert("L").resize((160, 100)) for _, one in frames]
     for index, (_, one) in enumerate(frames):
-        one.convert("RGB").resize((one.width // 2, one.height // 2)).save(folder / f"{index:03d}.jpg", quality=80)
+        one.resize((one.width // 2, one.height // 2)).save(folder / f"{index:03d}.jpg", quality=85)
+    sheet(frames, folder / "sheet.jpg")
+    smalls = [small(one) for _, one in frames]
+    times = [at for at, _ in frames]
+    steps = [round(max(cells(smalls[i - 1], smalls[i])), 1) for i in range(1, len(smalls))]
+    print(f"[{name}] {len(frames)} frames over {(times[-1] - times[0]) / 1000:.2f} s", flush=True)
+    kept = distinct(smalls)
+    print(f"[{name}] {len(kept)} of them drawn anew", flush=True)
+    for i, length, many, far in flashes(smalls, kept):
+        wrong.append(f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
+    for k in range(1, len(kept)):
+        share = sum(one > FAR for one in cells(smalls[kept[k - 1]], smalls[kept[k]])) / (CELLS[0] * CELLS[1])
+        if share > MOST:
+            wrong.append(f"[{name}] frame {kept[k]} jumps: {share:.0%} of the window changed at once")
+    for i, moved, since in pops(smalls, kept, times, [at for at, _ in pressed]):
+        wrong.append(f"[{name}] frame {i} pops {moved} after the screen stood still, {since} ms after the last press")
+    up = [(at, on) for at, on, *_ in log.get("frames", [])]
+    outs = [(one[0], one[5] if len(one) > 5 else 0) for one in log.get("frames", [])]
 
-    def apart(a: Image.Image, b: Image.Image) -> float:
-        return ImageStat.Stat(ImageChops.difference(a, b)).mean[0]
+    def up_at(at: float) -> bool:
+        best = False
+        for when, on in up:
+            if when > at:
+                break
+            best = bool(on)
+        return best
 
-    steps = [round(apart(smalls[i - 1], smalls[i]), 1) for i in range(1, len(smalls))]
-    opens = [opened_at(log["frames"], at) for at, _ in frames]
-    print(f"[{name}] {len(frames)} frames over {(frames[-1][0] - frames[0][0]) / 1000:.2f} s, the overview out on {sum(o is not None for o in opens)}", flush=True)
-    for i in range(1, len(smalls) - 1):
-        before, after, across = steps[i - 1], steps[i], apart(smalls[i - 1], smalls[i + 1])
-        if min(before, after) > 10 and across < min(before, after) / 2:
-            wrong.append(f"[{name}] frame {i} flashes: {before:.1f} and {after:.1f} from its neighbours, {across:.1f} between them")
+    def out_at(at: float) -> float:
+        best = 0.0
+        for when, open in outs:
+            if when > at:
+                break
+            best = float(open or 0)
+        return best
+
+    if not any(on for _, on in up):
+        wrong.append(f"[{name}] the overview never came up")
+    elif up and up[-1][1]:
+        wrong.append(f"[{name}] the overview never went away")
     if hole:
+        told = [one for one in log.get("puts", []) if up_at(one[0])]
+        if len(told) > 2:
+            wrong.append(f"[{name}] the page was told where it is {len(told)} times while the overview was up")
         side = 20
-        spots = corners_of(hole, scale, side)
-        for index, ((_, one), open) in enumerate(zip(frames, opens)):
-            if open is None or open < 0.25:
+        x0, y0 = hole["x"] * scale, hole["y"] * scale
+        x1, y1 = (hole["x"] + hole["width"]) * scale, (hole["y"] + hole["height"]) * scale
+        spots = [(x0 + 6, y0 + 6), (x1 - 26, y0 + 6), (x0 + 6, y1 - 26), (x1 - 26, y1 - 26)]
+        for index, (at, one) in enumerate(frames):
+            if out_at(at) < 0.6:
                 continue
-            rgb = one.convert("RGB")
             painted = sum(
-                all(abs(channel - COLOUR[k]) < 40 for k, channel in enumerate(ImageStat.Stat(rgb.crop((x, y, x + side, y + side))).mean))
+                all(abs(channel - COLOUR[k]) < 40 for k, channel in enumerate(ImageStat.Stat(one.crop((int(x), int(y), int(x) + side, int(y) + side))).mean))
                 for x, y in spots
             )
             if painted >= 3:
-                wrong.append(f"[{name}] frame {index}: the page is drawn under the overview, {open:.2f} out")
+                wrong.append(f"[{name}] frame {index}: the page is drawn over the overview")
                 break
-    (folder / "log.json").write_text(json.dumps({"steps": steps, "opens": opens, **log}, indent=1), encoding="utf-8")
+    (folder / "log.json").write_text(json.dumps({"times": times, "steps": steps, "pressed": pressed, **log}, indent=1), encoding="utf-8")
     return wrong
 
 
 def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
     desk.forward()
+    box = desk.box()
+    middle = ((box[0] + box[2]) // 2, (box[1] + box[3]) // 2)
+    desk.click(box[0] + round(60 * scale), box[3] - round(90 * scale))
     time.sleep(0.5)
     app.eval(LOG)
-    film = Film(desk, desk.box())
+    pressed: list[tuple[float, str]] = []
+    film = Film(box)
     time.sleep(0.4)
-    app.eval(TOGGLE)
-    time.sleep(1.8)
-    app.eval(TOGGLE)
+    how = toggled(app, desk, True, pressed)
+    time.sleep(1.6)
+    for notches in (-1, -1, -1, 1, 1, 1):
+        pressed.append((time.time() * 1000, "wheel"))
+        desk.wheel(*middle, notches)
+        time.sleep(0.35)
+    time.sleep(1.2)
+    how += " " + toggled(app, desk, False, pressed)
     time.sleep(1.8)
     frames = film.stop()
     log = app.eval(TAKE)
     if not isinstance(log, dict) or "frames" not in log:
         log = {"frames": [], "puts": [], "said": log}
-    return judged(name, frames, log, hole, out, scale)
+    print(f"[{name}] opened and closed by {how}", flush=True)
+    return judged(name, frames, log, pressed, hole, out, scale)
 
 
 def main() -> int:
@@ -332,7 +454,8 @@ def main() -> int:
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-overview-spaces-"))
     Desk.moving()
-    process = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
+    said = open(args.out / "app.log", "wb")
+    process = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
     desk = Desk(process.pid)
     wrong: list[str] = []
     try:
@@ -348,16 +471,24 @@ def main() -> int:
         desk.forward()
         time.sleep(3)
         app.eval(
+            "for (const one of document.querySelectorAll('button'))"
+            " if (one.textContent.trim() === 'Keep running') one.click();"
+            " for (const tab of [...nib.workspace.tabs]) nib.workspace.close(tab.id, false); return true"
+        )
+        time.sleep(1)
+        app.eval(
             "for (const name of ['One', 'Two', 'Three'])"
-            " nib.workspace.openBlank(name, `# ${name}\\n\\nSome words of ${name}.`); return true"
+            " nib.workspace.openBlank(name, `# ${name}\\n\\n` + `Some words of ${name}. `.repeat(40));"
+            " nib.workspace.split('row'); return true"
         )
         time.sleep(2)
         scale = float(app.eval("devicePixelRatio") or 1)
         still = app.eval("matchMedia('(prefers-reduced-motion: reduce)').matches")
         if still is not False:
             wrong.append(f"the window asks for no movement ({still}), so nothing would be filmed moving")
-        desk.grab(desk.box()).save(args.out / "start.png")
+        print(f"the engine: {app.eval('navigator.userAgent')}; pages under the app: {app.eval('nib.pages.under')}", flush=True)
         wrong += round_trip(app, desk, "notes", None, args.out, scale)
+        wrong += round_trip(app, desk, "notes-again", None, args.out, scale)
 
         app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
         until = time.monotonic() + 40
@@ -370,12 +501,13 @@ def main() -> int:
             "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
         )
-        desk.grab(desk.box()).save(args.out / "web.png")
+        print(f"pages under the app: {app.eval('nib.pages.under')}", flush=True)
         if not isinstance(hole, dict):
             wrong.append(f"the web tab's page was never shown: {hole}")
         else:
             print(f"the page's hole: {hole}", flush=True)
             wrong += round_trip(app, desk, "web", hole, args.out, scale)
+            wrong += round_trip(app, desk, "web-again", hole, args.out, scale)
     finally:
         process.terminate()
         try:
