@@ -1032,6 +1032,10 @@ describe('a tapered pen written zoomed in', () => {
     expect(shown(tool, 4)).toBeCloseTo(shown(tool, 1), 0)
   })
 
+  test.each(['fountain', 'pencil', 'brush'] as const)('%s shows the same at 25%%', (tool) => {
+    expect(shown(tool, 0.25)).toBeCloseTo(shown(tool, 1), 0)
+  })
+
   test.each([
     [14, 30],
     [14, 60],

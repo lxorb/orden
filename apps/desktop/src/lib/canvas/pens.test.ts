@@ -15,6 +15,7 @@ import {
   PEN_SLOTS,
   pens,
   readPens,
+  shownWidth,
   STROKE_RUB,
   upright,
 } from './pens.svelte'
@@ -338,9 +339,29 @@ describe('the width a stroke is written with', () => {
     expect(drawnWidth(3, 1.5)).toBe(2)
   })
 
-  test('at the actual size and further out, is the pen’s own', () => {
+  test('at the actual size, is the pen’s own', () => {
     expect(drawnWidth(3, 1)).toBe(3)
-    expect(drawnWidth(3, 0.25)).toBe(3)
+  })
+
+  test('zoomed out, is the width on the screen too (#644)', () => {
+    expect(drawnWidth(3, 0.25)).toBe(12)
+    expect(drawnWidth(3, 0.5)).toBe(6)
+    expect(drawnWidth(MOST_WIDTH, 0.04)).toBe(750)
+  })
+
+  test.each([0.04, 0.1, 0.25, 0.5, 0.8, 1, 1.5, 2.5, 4])(
+    'shows on the screen as wide as the pen at %s',
+    (scale) => {
+      for (const size of [LEAST_WIDTH, 1, 3, 7.5, MOST_WIDTH]) {
+        expect(shownWidth(drawnWidth(size, scale), scale)).toBeCloseTo(size, 1)
+      }
+    },
+  )
+
+  test('keeps the pen’s own for a zoom that is no zoom', () => {
+    expect(drawnWidth(3, 0)).toBe(3)
+    expect(drawnWidth(3, Number.NaN)).toBe(3)
+    expect(shownWidth(3, Number.POSITIVE_INFINITY)).toBe(3)
   })
 
   test('is never finer than a file keeps', () => {
