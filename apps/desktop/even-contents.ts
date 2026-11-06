@@ -676,9 +676,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  download and the two roads it adds to the choice (dictation/local.svelte.ts,
  *  engines.svelte.ts), and their words in every language. The code to 6,141,200, measured
  *  6,140,904; the catalogues to 1,020,700, measured 1,020,337.
+ *
+ *  Raised on 2026-11-06 for #331, the overview's bubbles round all the way (overview/
+ *  bubble.ts `softened`): the code to 6,141,800, measured 6,141,418.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_141_200,
+  code: 6_141_800,
   catalogues: 1_020_700,
   styles: 293_100,
   fonts: 260_000,
