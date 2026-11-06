@@ -294,7 +294,12 @@ export class SpaceState {
   folderAt(path: string): string | null | undefined {
     if (!path) return null
     const entry = this.at(path)
-    return entry?.kind === 'folder' && !entry.deleted ? entry.id : undefined
+    if (entry) return entry.kind === 'folder' && !entry.deleted ? entry.id : undefined
+    for (const id of this.shownKeys().get(this.key(path)) ?? []) {
+      const one = this.entries.get(id)
+      if (one?.kind === 'folder' && !one.local_path && this.isLive(id)) return id
+    }
+    return undefined
   }
 
   foreign(id: string): boolean {

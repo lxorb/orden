@@ -273,3 +273,30 @@ describe('what a space holds at a path', () => {
     }
   })
 })
+
+describe('a folder the tree shows with nothing of it on this disk', () => {
+  test('is the folder a note made or moved there goes into, not a new one of the same name', () => {
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [row('W', 'folder', null, 'Work', ''), row('N', 'note', 'W', 'away.md', '')],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+    expect(space.folderAt('Work')).toBe('W')
+    expect(space.folderAt('work')).toBe('W')
+    expect(space.folderAt('Other')).toBeUndefined()
+  })
+
+  test('is not one that is gone', () => {
+    const gone = { ...row('W', 'folder', null, 'Work', ''), deleted: true }
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [gone],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+    expect(space.folderAt('Work')).toBeUndefined()
+  })
+})
