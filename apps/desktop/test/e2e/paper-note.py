@@ -77,32 +77,40 @@ LISTED = """
   .map((path) => path.split('/').pop())
 """
 
-DARK_ON_SHEETS = """
-() => [...document.querySelectorAll('.sheet canvas')].map((sheet) => {
-  const context = sheet.getContext('2d', { willReadFrequently: true })
-  if (!context || !sheet.width || !sheet.height) return 0
+DARK_ON_SHEET = """
+(number) => {
+  const sheet = [...document.querySelectorAll('.sheet')].find(
+    (one) => one.querySelector('.number')?.textContent === String(number),
+  )?.querySelector('canvas')
+  const context = sheet?.getContext('2d', { willReadFrequently: true })
+  if (!sheet || !context || !sheet.width || !sheet.height) return -1
   const data = context.getImageData(0, 0, sheet.width, sheet.height).data
   let dark = 0
   for (let at = 0; at < data.length; at += 160) {
     if (data[at + 3] > 8 && data[at] < 100 && data[at + 1] < 100 && data[at + 2] < 100) dark++
   }
   return dark
-})
+}
 """
 
 def drawn(page: Page, label: str, pages: int) -> None:
     page.wait_for_selector(".pages", timeout=15000)
-    DRIVE.waited(
-        page,
-        f"(() => {{ const d = ({DARK_ON_SHEETS})(); return d.length === {pages} && d.every((n) => n >= 100) }})()",
-        f"[{label}] every page of the paper to be drawn",
-    )
-    dark = page.evaluate(DARK_ON_SHEETS)
+    DRIVE.waited(page, f"window.nibApp.pages.current?.store.count === {pages}", f"[{label}] the page note")
+    dark: list[int] = []
+    for number in range(1, pages + 1):
+        page.evaluate("(number) => window.nibApp.pages.current?.store.turnTo(number)", number)
+        DRIVE.waited(
+            page,
+            f"({DARK_ON_SHEET.strip()})({number}) >= 100",
+            f"[{label}] page {number} of the paper to be drawn",
+        )
+        dark.append(page.evaluate(DARK_ON_SHEET, number))
+    page.evaluate("() => window.nibApp.pages.current?.store.turnTo(1)")
     say(f"[{label}] dark pixels per sheet: {dark}")
-    if len(dark) != pages:
-        wrong(f"[{label}] {len(dark)} sheets rather than {pages}")
     for at, count in enumerate(dark):
-        if count < 100:
+        if count < 0:
+            wrong(f"[{label}] page {at + 1} is not on the page")
+        elif count < 100:
             wrong(f"[{label}] page {at + 1} drew nothing of the paper")
 
 def only_the_note(page: Page, label: str, under: str, note: str) -> None:
