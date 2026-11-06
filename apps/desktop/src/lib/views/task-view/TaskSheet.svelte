@@ -405,9 +405,7 @@
               subtasks={countsOf(child)}
             />
           {/each}
-          {#if !writes}
-
-          {:else if adding}
+          {#if writes && adding}
             <div class="nib-row adding">
               <Glyph icon={Plus} />
               <!-- svelte-ignore a11y_autofocus -->
@@ -435,7 +433,7 @@
                 }}
               />
             </div>
-          {:else}
+          {:else if writes}
             <button
               type="button"
               class="nib-row adder"
@@ -522,9 +520,7 @@
                 >{/if}</span
             >
           {/each}
-          {#if !writes}
-
-          {:else if labelling}
+          {#if writes && labelling}
             <input
               bind:this={labelField}
               bind:value={label}
@@ -544,7 +540,7 @@
               }}
               onblur={writeLabel}
             />
-          {:else}
+          {:else if writes}
             <button
               type="button"
               class="nib-glyph add-tag"
