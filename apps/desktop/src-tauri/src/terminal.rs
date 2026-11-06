@@ -7,7 +7,7 @@ pub mod shells;
 mod ssh_config;
 
 use std::collections::HashMap;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use serde::Serialize;
 use tauri::ipc::{Channel, InvokeResponseBody};
@@ -23,14 +23,8 @@ pub struct Terminals {
 
 struct Held {
     owner: String,
-    session: Session,
+    session: Arc<Session>,
     remote: bool,
-}
-
-impl Held {
-    fn busy(&self) -> bool {
-        self.remote || self.session.busy()
-    }
 }
 
 #[derive(Serialize)]
@@ -47,17 +41,21 @@ impl Terminals {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
+    fn held(&self, owner: &str, id: &str) -> Result<(Arc<Session>, bool), String> {
+        match self.lock().get(id) {
+            Some(held) if held.owner == owner => Ok((Arc::clone(&held.session), held.remote)),
+            _ => Err(format!("no terminal {id}")),
+        }
+    }
+
     fn with<T>(
         &self,
         owner: &str,
         id: &str,
         with: impl FnOnce(&Session) -> T,
     ) -> Result<T, String> {
-        let sessions = self.lock();
-        match sessions.get(id) {
-            Some(held) if held.owner == owner => Ok(with(&held.session)),
-            _ => Err(format!("no terminal {id}")),
-        }
+        let (session, _) = self.held(owner, id)?;
+        Ok(with(&session))
     }
 
     fn end_where(&self, owner: Option<&str>) {
@@ -173,7 +171,7 @@ pub fn pty_spawn(
         id.clone(),
         Held {
             owner,
-            session,
+            session: Arc::new(session),
             remote,
         },
     );
@@ -223,7 +221,7 @@ pub fn pty_write(webview: Webview, id: String, data: String, binary: bool) -> Re
         .with(&owner, &id, |session| session.write(bytes))
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<(), String> {
     let owner = owner(&webview)?;
     webview
@@ -242,12 +240,8 @@ pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String
 #[tauri::command(async)]
 pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
     let owner = owner(&webview)?;
-    let sessions = webview.state::<Terminals>();
-    let sessions = sessions.lock();
-    match sessions.get(&id) {
-        Some(held) if held.owner == owner => Ok(held.busy()),
-        _ => Err(format!("no terminal {id}")),
-    }
+    let (session, remote) = webview.state::<Terminals>().held(&owner, &id)?;
+    Ok(remote || session.busy())
 }
 
 #[tauri::command(async)]
@@ -328,21 +322,23 @@ mod tests {
     }
 
     #[test]
-    fn a_remote_terminal_is_busy_while_it_is_connected() {
-        let here = Held {
-            owner: "main".to_owned(),
-            session: idle_shell(),
-            remote: false,
-        };
-        assert!(!here.busy());
-        here.session.end();
+    fn a_session_is_used_with_the_list_of_terminals_let_go() {
+        let terminals = Terminals::default();
+        terminals.lock().insert(
+            "t1".to_owned(),
+            Held {
+                owner: "main".to_owned(),
+                session: Arc::new(idle_shell()),
+                remote: true,
+            },
+        );
 
-        let there = Held {
-            owner: "main".to_owned(),
-            session: idle_shell(),
-            remote: true,
-        };
-        assert!(there.busy());
-        there.session.end();
+        let free = terminals.with("main", "t1", |_| terminals.sessions.try_lock().is_ok());
+        assert_eq!(free, Ok(true));
+        let (session, remote) = terminals.held("main", "t1").expect("held");
+        assert!(remote);
+        assert!(!session.busy());
+        assert!(terminals.held("other", "t1").is_err());
+        session.end();
     }
 }

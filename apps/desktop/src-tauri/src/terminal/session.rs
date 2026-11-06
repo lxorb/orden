@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Arc, Condvar, Mutex, MutexGuard};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -24,9 +24,10 @@ pub enum Out {
 pub type Sink = Box<dyn Fn(Out) + Send + Sync>;
 
 pub struct Session {
-    master: Box<dyn MasterPty + Send>,
+    master: Mutex<Option<Box<dyn MasterPty + Send>>>,
+    wanted: Mutex<Option<PtySize>>,
     input: Sender<Vec<u8>>,
-    killer: Box<dyn ChildKiller + Send + Sync>,
+    killer: Mutex<Box<dyn ChildKiller + Send + Sync>>,
     pid: Option<u32>,
     stream: Arc<Stream>,
 }
@@ -104,9 +105,10 @@ impl Session {
         let stream = Arc::new(Stream::default());
 
         let session = Self {
-            master: pair.master,
+            master: Mutex::new(Some(pair.master)),
+            wanted: Mutex::new(None),
             input,
-            killer: child.clone_killer(),
+            killer: Mutex::new(child.clone_killer()),
             pid: child.process_id(),
             stream: Arc::clone(&stream),
         };
@@ -133,10 +135,24 @@ impl Session {
         let _ = self.input.send(bytes);
     }
 
+    fn master(&self) -> MutexGuard<'_, Option<Box<dyn MasterPty + Send>>> {
+        self.master.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
     pub fn resize(&self, cols: u16, rows: u16) -> Result<(), String> {
-        self.master
-            .resize(size(cols, rows))
-            .map_err(|error| error.to_string())
+        *self.wanted.lock().unwrap_or_else(PoisonError::into_inner) = Some(size(cols, rows));
+        let master = self.master();
+        let wanted = self
+            .wanted
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take();
+        match (master.as_deref(), wanted) {
+            (Some(master), Some(wanted)) => {
+                master.resize(wanted).map_err(|error| error.to_string())
+            }
+            _ => Ok(()),
+        }
     }
 
     pub fn seen(&self, bytes: usize) {
@@ -147,11 +163,13 @@ impl Session {
     }
 
     pub fn busy(&self) -> bool {
-        process::busy(self.pid, &*self.master)
+        self.master()
+            .as_deref()
+            .is_some_and(|master| process::busy(self.pid, master))
     }
 
     pub fn program(&self) -> Option<String> {
-        process::program(self.pid, &*self.master)
+        process::program(self.pid, self.master().as_deref()?)
     }
 
     pub fn folder(&self) -> Option<String> {
@@ -162,11 +180,27 @@ impl Session {
         self.pid
     }
 
-    pub fn end(mut self) {
+    pub fn end(&self) {
         self.stream.lock().ended = true;
         self.stream.changed.notify_all();
-        let _ = self.killer.kill();
-        drop(self);
+        let _ = self
+            .killer
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .kill();
+    }
+}
+
+impl Drop for Session {
+    fn drop(&mut self) {
+        let master = self
+            .master
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take();
+        if let Some(master) = master {
+            thread::spawn(move || drop(master));
+        }
     }
 }
 
@@ -572,5 +606,20 @@ mod tests {
             .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_owned())
             .unwrap_or_default();
         !state.is_empty() && !state.starts_with('Z')
+    }
+
+    #[test]
+    fn a_session_is_shared_between_threads_and_let_go_of_without_waiting() {
+        fn shared<T: Send + Sync>() {}
+        shared::<Session>();
+
+        let (held, _heard) = started(80, 24);
+        let session = held.lock().expect("the session").take().expect("a session");
+        session.resize(100, 30).expect("resized");
+        session.resize(100, 30).expect("resized again");
+        let began = Instant::now();
+        session.end();
+        drop(session);
+        assert!(began.elapsed() < Duration::from_secs(1));
     }
 }
