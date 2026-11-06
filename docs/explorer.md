@@ -14,8 +14,12 @@ choice, are on the issue.
 
 - Desktop only. The browser build has no file system, and a phone's app storage holds only
   the spaces. Neither one offers the kind (`kindsHere` in `settings.svelte.ts`).
-- You make one from the new tab's kinds (`F`), the palette, or `Ctrl+Alt+E` (`app.explorer`).
-  A new one opens on the home folder.
+- Off until the reader turns it on under Settings, Note types (`OFF_UNTIL_SHOWN` in
+  `settings.svelte.ts`). The choice is kept as `shown-explorer` in the list of kinds turned
+  off, so nothing stored means off, for a new reader and for one who chose other kinds before.
+- Once on, you make one from the new tab's kinds (`F`), the palette, or `Ctrl+Alt+E`
+  (`app.explorer`); while it is off, neither `F` nor `Ctrl+Alt+E` makes one, as with any
+  kind turned off. A new one opens on the home folder.
 - Its words are the folder it shows and the way back and forward (`explorer/spec.ts`), so a
   restart, the closed-tab stack and Duplicate carry it.
 - The sort, the hidden files and whether the places show are set once for every tab and

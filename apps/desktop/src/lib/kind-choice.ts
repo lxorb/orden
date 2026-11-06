@@ -1,6 +1,15 @@
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
-import { hiddenKinds, KINDS_KEY, type KindName, kindsHere, shownOf } from './settings.svelte'
+import {
+  choiceWord,
+  chosenOn,
+  hiddenKinds,
+  KINDS_KEY,
+  type KindName,
+  kindsHere,
+  offUntilShown,
+  shownOf,
+} from './settings.svelte'
 import { forget, isString, keepJson } from './stored'
 
 const MOST_KINDS = 32
@@ -19,7 +28,7 @@ export function mayHide(kind: KindName, here: readonly KindName[], hidden: reado
 }
 
 export function turnedOff(kind: KindName): boolean {
-  return hiddenKinds.hidden.includes(kind) && !hiddenKinds.offers(kind)
+  return !chosenOn(kind, hiddenKinds.hidden) && !hiddenKinds.offers(kind)
 }
 
 export function locked(kind: KindName): boolean {
@@ -28,10 +37,11 @@ export function locked(kind: KindName): boolean {
 
 export function setKind(kind: KindName, on: boolean) {
   const hidden = hiddenKinds.hidden
-  if (on === !hidden.includes(kind)) return
+  if (on === chosenOn(kind, hidden)) return
   if (!on && !mayHide(kind, kindsHere(), hidden)) return
 
-  hiddenKinds.hidden = on ? hidden.filter((one) => one !== kind) : [...hidden, kind]
+  const rest = hidden.filter((one) => one !== kind && one !== choiceWord(kind))
+  hiddenKinds.hidden = on === offUntilShown(kind) ? [...rest, choiceWord(kind)] : rest
   settle()
   share()
 }
