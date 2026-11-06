@@ -314,7 +314,7 @@ export function createApiEngine(setup: Setup): Engine {
         }
         if (ending === 'pause') continue
         if (ending === 'tool') {
-          const outputs = await runCalls(thread, provider, calls, turn, on, signal)
+          const outputs = await runCalls(thread, provider, calls, turn, start, on, signal)
           addedNow = [...addedNow, ...wire.results(outputs)]
           if (signal.aborted) throw new DOMException('stopped', 'AbortError')
         } else if (ending !== 'end') {
@@ -380,11 +380,14 @@ export function createApiEngine(setup: Setup): Engine {
     provider: Provider,
     calls: readonly Call[],
     turn: Turn,
+    from: number,
     on: (event: EngineEvent) => void,
     signal: AbortSignal,
   ): Promise<{ call: Call; output: ToolOutput }[]> {
     const written = (call: Call, output: ToolOutput) => {
-      const index = turn.parts.findIndex((one) => one.kind === 'tool' && one.id === call.id)
+      const index = turn.parts.findIndex(
+        (one, at) => at >= from && one.kind === 'tool' && one.id === call.id,
+      )
       const part = turn.parts[index]
       if (part?.kind !== 'tool') return
       const done: Part = {

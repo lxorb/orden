@@ -153,6 +153,7 @@ class GeminiReader implements Reader {
   private blocked = ''
   private usage: Usage | undefined
   private thinking: { part: number; started: number } | null = null
+  private readonly made = crypto.randomUUID()
 
   constructor(private readonly window: number | null) {}
 
@@ -177,7 +178,7 @@ class GeminiReader implements Reader {
     const signature = text(piece.thoughtSignature)
     const call = record(piece.functionCall)
     if (piece.functionCall) {
-      const id = text(call.id) || `${MADE}${this.calls.length}`
+      const id = text(call.id) || `${MADE}${this.made}-${String(this.calls.length)}`
       const args = typeof call.args === 'object' && call.args !== null ? call.args : {}
       this.calls.push({ id, name: text(call.name), args })
       this.kept.push({ ...piece })

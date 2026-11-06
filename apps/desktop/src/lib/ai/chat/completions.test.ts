@@ -132,3 +132,23 @@ describe('the request', () => {
     ).toEqual([{ role: 'tool', tool_call_id: 'c', content: 'seen\n[1 picture(s)]' }])
   })
 })
+
+test('a call a server sends without an id gets one no other round of the turn has', () => {
+  const made = () => {
+    const reader = completions.reader(null)
+    reader.heard({
+      choices: [
+        {
+          delta: { tool_calls: [{ index: 0, function: { name: 'read_note', arguments: '{}' } }] },
+          finish_reason: 'tool_calls',
+        },
+      ],
+    })
+    return reader.answer().calls[0]?.id
+  }
+  const first = made()
+  const second = made()
+  expect(first).toMatch(/^call_/)
+  expect(second).toMatch(/^call_/)
+  expect(first).not.toBe(second)
+})

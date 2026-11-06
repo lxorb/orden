@@ -124,6 +124,7 @@ interface Arriving {
 class CompletionsReader implements Reader {
   readonly parts: Part[] = []
   private readonly calls = new Map<number, Arriving>()
+  private readonly made = crypto.randomUUID()
   private words = ''
   private finish = ''
   private thinking: { part: number; started: number } | null = null
@@ -205,11 +206,15 @@ class CompletionsReader implements Reader {
   answer(): Answer {
     const calls: Call[] = [...this.calls.entries()]
       .sort(([a], [b]) => a - b)
-      .map(([at, one]) => ({ id: one.id || `call_${at}`, name: one.name, args: argsOf(one.json) }))
+      .map(([at, one]) => ({
+        id: one.id || `call_${this.made}_${String(at)}`,
+        name: one.name,
+        args: argsOf(one.json),
+      }))
     for (const [at, one] of this.calls) {
       const part = this.parts[one.part]
       if (part?.kind === 'tool') {
-        part.id = part.id || `call_${at}`
+        part.id = part.id || `call_${this.made}_${String(at)}`
         part.args = argsOf(one.json)
       }
     }
