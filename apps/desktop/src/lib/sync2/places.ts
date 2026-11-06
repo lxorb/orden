@@ -58,6 +58,11 @@ export class SpaceState {
   private shownCache: TreeState | null = null
   private pathsCache: Map<string, string> | null = null
   private placedCache: Map<string, { folder: string; names: string[] }> | null = null
+  private readonly holding = new Map<string, Set<string>>()
+  private heldIds: string[] = []
+  private heldPaths: string[] = []
+  private readonly keys = new Map<string, string>()
+  private shownAt: { paths: Map<string, string>; keys: Map<string, string[]> } | null = null
 
   constructor(
     public row: SpaceRow,
@@ -200,17 +205,90 @@ export class SpaceState {
 
   at(path: string): EntryRow | null {
     const wanted = this.key(path)
-    for (const entry of this.entries.values()) {
-      if (entry.local_path && this.key(entry.local_path) === wanted) return entry
+    const held = this.holders().get(wanted)
+    if (held?.size === 1) {
+      const [id] = held
+      const entry = id === undefined ? undefined : this.entries.get(id)
+      if (entry) return entry
+    } else if (held) {
+      for (const entry of this.entries.values()) {
+        if (entry.local_path && this.key(entry.local_path) === wanted) return entry
+      }
     }
     if (!this.keepsFew) return null
-    for (const [id, shown] of this.paths()) {
-      if (this.key(shown) !== wanted) continue
+    for (const id of this.shownKeys().get(wanted) ?? []) {
       const entry = this.entries.get(id)
       if (entry && !entry.local_path && entry.seq !== null && holdsDocument(entry.kind))
         return entry
     }
     return null
+  }
+
+  private holders(): Map<string, Set<string>> {
+    let at = 0
+    for (const entry of this.entries.values()) {
+      if (this.heldIds[at] !== entry.id) return this.heldAgain()
+      const was = this.heldPaths[at] ?? ''
+      if (was !== entry.local_path) {
+        this.unhold(entry.id, was)
+        this.hold(entry.id, entry.local_path)
+        this.heldPaths[at] = entry.local_path
+      }
+      at += 1
+    }
+    return at === this.heldIds.length ? this.holding : this.heldAgain()
+  }
+
+  private heldAgain(): Map<string, Set<string>> {
+    this.holding.clear()
+    if (this.keys.size > this.entries.size * 4) this.keys.clear()
+    this.heldIds = []
+    this.heldPaths = []
+    for (const entry of this.entries.values()) {
+      this.heldIds.push(entry.id)
+      this.heldPaths.push(entry.local_path)
+      this.hold(entry.id, entry.local_path)
+    }
+    return this.holding
+  }
+
+  private keyOf(path: string): string {
+    let key = this.keys.get(path)
+    if (key === undefined) {
+      key = this.key(path)
+      this.keys.set(path, key)
+    }
+    return key
+  }
+
+  private hold(id: string, path: string) {
+    if (!path) return
+    const key = this.keyOf(path)
+    const ids = this.holding.get(key) ?? new Set<string>()
+    ids.add(id)
+    this.holding.set(key, ids)
+  }
+
+  private unhold(id: string, path: string) {
+    if (!path) return
+    const key = this.keyOf(path)
+    const ids = this.holding.get(key)
+    ids?.delete(id)
+    if (ids?.size === 0) this.holding.delete(key)
+  }
+
+  private shownKeys(): Map<string, string[]> {
+    const paths = this.paths()
+    if (this.shownAt?.paths === paths) return this.shownAt.keys
+    const keys = new Map<string, string[]>()
+    for (const [id, shown] of paths) {
+      const key = this.keyOf(shown)
+      const ids = keys.get(key)
+      if (ids) ids.push(id)
+      else keys.set(key, [id])
+    }
+    this.shownAt = { paths, keys }
+    return keys
   }
 
   folderAt(path: string): string | null | undefined {

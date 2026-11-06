@@ -236,3 +236,40 @@ describe('a file waiting aside', () => {
     },
   )
 })
+
+describe('what a space holds at a path', () => {
+  test('is found as a walk of every entry finds it, through any change to the entries', () => {
+    let seed = 7
+    const random = (most: number) => {
+      seed = (seed * 1103515245 + 12345) % 2147483648
+      return seed % most
+    }
+    const names = ['a.md', 'A.md', 'b.md', 'Ä.md', 'Ä.md', 'f/a.md', 'F/A.md', '']
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+    const walked = (path: string) => {
+      const wanted = space.key(path)
+      for (const entry of space.entries.values()) {
+        if (entry.local_path && space.key(entry.local_path) === wanted) return entry
+      }
+      return null
+    }
+    for (let step = 0; step < 3000; step++) {
+      const id = `e${String(random(12))}`
+      const name = names[random(names.length)] ?? ''
+      const held = space.entries.get(id)
+      const what = random(4)
+      if (what === 0) space.entries.delete(id)
+      else if (what === 1 || !held) space.entries.set(id, row(id, 'note', null, 'x.md', name))
+      else held.local_path = name
+      for (const path of names.filter(Boolean)) {
+        expect(space.at(path)?.id ?? null).toBe(walked(path)?.id ?? null)
+      }
+    }
+  })
+})
