@@ -3,21 +3,26 @@
 A probe build is started on the runner's desktop - in view, which no probe on somebody's
 machine ever is - with `NIB_PAGES_UNDER=1`, a page of one colour is opened in a web tab,
 and everything a page drawn as a DirectComposition visual has to get right is done to it
-with the system's own input (`SendInput`), not the page's devtools:
+with the system's own input (`SendInput`, `InjectTouchInput`), not the page's devtools:
 
     drawn       the page's colour in its hole; a layer of the app's drawn over it there
     the press   a click, a right click, and the field it lands in has the keyboard
     typing      keys typed into the field arrive in it
     the wheel   a notch over the page scrolls it
     a drag      an element dragged onto another inside the page is dropped there
-    the cursor  an I-beam over the field
-    reading     UI Automation finds the page's own button at its place
+    a finger    a touch on the page's button is heard as a touch
+    the cursor  an I-beam over the field, where the machine shows a cursor at all
+    reading     UI Automation (IUIAutomation, a screen reader's client) finds the page's
+                own button in the window's tree
     overview    the tab overview opened and closed, filmed: no frame flashes, and the page
                 is never drawn over the overview
 
 What the page heard it says in its title, which the window reads as any page's.
 
     python scripts/web-under-drive.py --exe <probe nib.exe> --identifier <probe id> --out <folder>
+
+`--windowed` starts the same build without `NIB_PAGES_UNDER=1` and only reads the page's
+tree, the same question asked of a windowed page.
 """
 
 from __future__ import annotations
@@ -278,24 +283,30 @@ def near(one: tuple[int, int, int], other: tuple[int, int, int], by: int = 40) -
 
 
 def named_at(x: int, y: int) -> str:
-    """What UI Automation finds at a point of the screen, and the page's button under it by
-    name: asked a few times, since Chromium builds a page's tree once something asks for it."""
+    """What UI Automation finds at a point of the screen, and the page's button under the
+    window there by name: through the system's own client (IUIAutomation), which is what a
+    screen reader asks. Asked a few times, since Chromium builds a page's tree once
+    something asks for it."""
 
-    script = (
-        "Add-Type -AssemblyName UIAutomationClient; Add-Type -AssemblyName UIAutomationTypes; Add-Type -AssemblyName WindowsBase;"
-        "$found = 'nothing';"
-        "for ($try = 0; $try -lt 8; $try++) {"
-        f" $e = [System.Windows.Automation.AutomationElement]::FromPoint((New-Object System.Windows.Point({x},{y})));"
-        " if ($e -and $e.Current.Name -eq 'Pressable') { $found = 'at the point: ' + $e.Current.ControlType.ProgrammaticName + ':' + $e.Current.Name; break }"
-        " if ($e) { $c = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, 'Pressable');"
-        "  $b = $e.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $c);"
-        "  if ($b) { $found = 'under it: ' + $b.Current.ControlType.ProgrammaticName + ':' + $b.Current.Name; break }"
-        "  $found = 'only ' + $e.Current.ControlType.ProgrammaticName + ':' + $e.Current.ClassName }"
-        " Start-Sleep -Seconds 2 };"
-        " $found"
-    )
-    said = subprocess.run(["powershell", "-NoProfile", "-Command", script], capture_output=True, text=True, timeout=180)
-    return (said.stdout.strip() + " " + said.stderr.strip()[-400:]).strip()
+    import comtypes.client  # noqa: PLC0415 - the drive's own, on Windows
+
+    comtypes.client.GetModule("UIAutomationCore.dll")
+    from comtypes.gen import UIAutomationClient as uia  # noqa: PLC0415
+
+    client = comtypes.client.CreateObject(uia.CUIAutomation, interface=uia.IUIAutomation)
+    found = "nothing"
+    for _ in range(8):
+        at = client.ElementFromPoint(wintypes.POINT(x, y))
+        if at and at.CurrentName == "Pressable":
+            return f"at the point: {at.CurrentControlType}:{at.CurrentName}"
+        top = client.ElementFromHandle(user32.GetAncestor(user32.WindowFromPoint(wintypes.POINT(x, y)), 2))
+        named = client.CreatePropertyCondition(uia.UIA_NamePropertyId, "Pressable")
+        button = top.FindFirst(uia.TreeScope_Descendants, named) if top else None
+        if button:
+            return f"under the window: {button.CurrentControlType}:{button.CurrentName}"
+        found = f"only {at.CurrentControlType}:{at.CurrentClassName}" if at else "nothing"
+        time.sleep(2)
+    return found
 
 
 class Film:
@@ -575,10 +586,8 @@ def main() -> int:
         # Reading the page.
         named = named_at(*at(150, 150))
         print(f"UI Automation at the button: {named!r}", flush=True)
-        # Not yet read through the composition controller's provider (#1137): said, and not
-        # failed, until pages are drawn under the app by default.
         if "Pressable" not in named:
-            print(f"::warning::UI Automation does not find the page's button: {named!r}", flush=True)
+            wrong.append(f"UI Automation does not find the page's button: {named!r}")
 
         # A finger on the page's button.
         if tapped(*at(150, 150)):

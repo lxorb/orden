@@ -30,9 +30,9 @@ use std::sync::{Mutex, PoisonError};
 use tauri::{Manager, Runtime, Webview};
 use webview2_com::CursorChangedEventHandler;
 use webview2_com::Microsoft::Web::WebView2::Win32::{
-    ICoreWebView2CompositionController, ICoreWebView2CompositionController2,
-    ICoreWebView2CompositionController3, ICoreWebView2Controller, ICoreWebView2Environment3,
-    ICoreWebView2PointerInfo, COREWEBVIEW2_MOUSE_EVENT_KIND, COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,
+    ICoreWebView2CompositionController, ICoreWebView2CompositionController3,
+    ICoreWebView2Controller, ICoreWebView2Environment3, ICoreWebView2PointerInfo,
+    COREWEBVIEW2_MOUSE_EVENT_KIND, COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,
     COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS, COREWEBVIEW2_POINTER_EVENT_KIND,
 };
 use windows_com::core::Interface;
@@ -45,9 +45,7 @@ use windows_com::Win32::Graphics::Gdi::{MapWindowPoints, ScreenToClient};
 use windows_com::Win32::System::Ole::{
     IDropTarget, OleInitialize, RegisterDragDrop, RevokeDragDrop,
 };
-use windows_com::Win32::UI::Accessibility::{
-    IRawElementProviderSimple, UiaReturnRawElementProvider, UiaRootObjectId,
-};
+use windows_com::Win32::UI::Accessibility::{UiaReturnRawElementProvider, UiaRootObjectId};
 use windows_com::Win32::UI::Input::KeyboardAndMouse::{
     GetCapture, ReleaseCapture, SetCapture, TrackMouseEvent, TME_LEAVE, TRACKMOUSEEVENT,
 };
@@ -564,19 +562,15 @@ unsafe extern "system" fn page_window_heard(
             }
         }
         #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_possible_truncation)]
         WM_GETOBJECT if lparam.0 as i32 == UiaRootObjectId => {
-            let provider = composition
-                .cast::<ICoreWebView2CompositionController2>()
-                // Safe: the page's own tree for assistive technology, handed over to it.
-                .and_then(|two| unsafe { two.AutomationProvider() })
-                .and_then(|provider| provider.cast::<IRawElementProviderSimple>());
-            match provider {
-                // Safe: as above.
-                Ok(provider) => unsafe {
+            match reading::of(key, window) {
+                // Safe: this window's own provider, handed to UI Automation for it.
+                Some(provider) => unsafe {
                     UiaReturnRawElementProvider(window, wparam, lparam, &provider)
                 },
                 // Safe: as above.
-                Err(_) => unsafe { DefSubclassProc(window, message, wparam, lparam) },
+                None => unsafe { DefSubclassProc(window, message, wparam, lparam) },
             }
         }
         WM_WINDOWPOSCHANGED => {
@@ -705,6 +699,7 @@ fn visual_gone(key: isize) {
         }
     });
     let _ = ENVIRONMENTS.with_borrow_mut(|all| all.remove(&key));
+    reading::forget(key);
 }
 
 /// The engine changed the page's cursor: kept for the window's next `WM_SETCURSOR`, and
@@ -875,6 +870,99 @@ fn pointer_detail(
             info.SetPenRotation(pen.rotation)?;
             info.SetPenTiltX(pen.tiltX)?;
             info.SetPenTiltY(pen.tiltY)
+        }
+    }
+}
+
+/// What UI Automation reads of a page's window (#1137). The engine keeps an input window of
+/// its own inside it, empty and of no size, and the page's tree belongs to that window:
+/// the page's window answers for itself as itself, and for the engine's window with the
+/// page's provider (`GetAutomationProviderForWindow`), which is how UI Automation is told
+/// whose tree a window inside another is.
+mod reading {
+    #![allow(
+        unsafe_code,
+        clippy::ref_as_ptr,
+        clippy::inline_always,
+        reason = "a COM object's methods are called by UI Automation through its vtable, which `implement` writes, and each answers through Win32 or WebView2's COM interface"
+    )]
+
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment4;
+    use windows_com::core::{implement, IUnknown, Interface};
+    use windows_com::Win32::Foundation::HWND;
+    use windows_com::Win32::System::Variant::VARIANT;
+    use windows_com::Win32::UI::Accessibility::{
+        IRawElementProviderHwndOverride, IRawElementProviderHwndOverride_Impl,
+        IRawElementProviderSimple, IRawElementProviderSimple_Impl, ProviderOptions,
+        ProviderOptions_ServerSideProvider, ProviderOptions_UseComThreading,
+        UiaHostProviderFromHwnd, UIA_PATTERN_ID, UIA_PROPERTY_ID,
+    };
+
+    thread_local! {
+        static MADE: RefCell<HashMap<isize, IRawElementProviderSimple>> = RefCell::new(HashMap::new());
+    }
+
+    /// The page's window's provider, made once.
+    pub(super) fn of(key: isize, window: HWND) -> Option<IRawElementProviderSimple> {
+        if let Some(made) = MADE.with_borrow(|all| all.get(&key).cloned()) {
+            return Some(made);
+        }
+        let environment = super::ENVIRONMENTS
+            .with_borrow(|all| all.get(&key).cloned().flatten())?
+            .cast::<ICoreWebView2Environment4>()
+            .ok()?;
+        let made: IRawElementProviderSimple = Reading {
+            window: window.0 as isize,
+            environment,
+        }
+        .into();
+        MADE.with_borrow_mut(|all| all.insert(key, made.clone()));
+        Some(made)
+    }
+
+    /// The page's window gone, and its provider with it.
+    pub(super) fn forget(key: isize) {
+        let _ = MADE.with_borrow_mut(|all| all.remove(&key));
+    }
+
+    #[implement(IRawElementProviderSimple, IRawElementProviderHwndOverride)]
+    struct Reading {
+        window: isize,
+        environment: ICoreWebView2Environment4,
+    }
+
+    impl IRawElementProviderSimple_Impl for Reading_Impl {
+        fn ProviderOptions(&self) -> windows_com::core::Result<ProviderOptions> {
+            Ok(ProviderOptions(
+                ProviderOptions_ServerSideProvider.0 | ProviderOptions_UseComThreading.0,
+            ))
+        }
+
+        fn GetPatternProvider(&self, _: UIA_PATTERN_ID) -> windows_com::core::Result<IUnknown> {
+            Err(windows_com::core::Error::empty())
+        }
+
+        fn GetPropertyValue(&self, _: UIA_PROPERTY_ID) -> windows_com::core::Result<VARIANT> {
+            Ok(VARIANT::default())
+        }
+
+        fn HostRawElementProvider(&self) -> windows_com::core::Result<IRawElementProviderSimple> {
+            // Safe: this page's own window, described by the system's own provider.
+            unsafe { UiaHostProviderFromHwnd(HWND(self.window as *mut core::ffi::c_void)) }
+        }
+    }
+
+    impl IRawElementProviderHwndOverride_Impl for Reading_Impl {
+        fn GetOverrideProviderForHwnd(
+            &self,
+            window: HWND,
+        ) -> windows_com::core::Result<IRawElementProviderSimple> {
+            // Safe: the environment the page was built in, asked for the provider of a
+            // window inside the page's.
+            unsafe { self.environment.GetAutomationProviderForWindow(window) }?.cast()
         }
     }
 }
