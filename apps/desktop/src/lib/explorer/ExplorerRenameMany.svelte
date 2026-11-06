@@ -3,6 +3,7 @@
   import { t } from '../i18n.svelte'
   import { nameOf } from '../space-paths'
   import { renameMany } from './changes'
+  import { inASpace } from './open'
   import { clashing, renamedAll } from './renaming'
   import type { ExplorerView } from './view.svelte'
 
@@ -19,7 +20,7 @@
 
   const names = $derived(paths.map((one) => nameOf(one)))
   const next = $derived(renamedAll(names, { find, replace, numbered }))
-  const clashes = $derived(clashing(names, next, view.names))
+  const clashes = $derived(clashing(names, next, view.names, !inASpace(view.listing?.path ?? '')))
   const changed = $derived(next.some((name, at) => name !== names[at]))
 
   onMount(() => {

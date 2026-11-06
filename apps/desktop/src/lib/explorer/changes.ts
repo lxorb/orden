@@ -270,6 +270,20 @@ function broughtFile(path: string, under: string): Brought {
   }
 }
 
+async function putBack(
+  staged: readonly { from: string; at: string }[],
+  done: readonly { from: string; to: string }[],
+) {
+  const left = new Set(staged.map((one) => one.from))
+  for (const [index, { from, to }] of [...done.entries()].reverse()) {
+    const aside = staged[index]?.at ?? from
+    await renameTo(to, nameOf(aside)).catch(() => left.delete(from))
+  }
+  for (const { from, at } of staged) {
+    if (left.has(from) && at !== from) await renameTo(at, nameOf(from)).catch(() => undefined)
+  }
+}
+
 export async function renameMany(
   view: ExplorerView,
   pairs: readonly { from: string; name: string }[],
@@ -278,9 +292,13 @@ export async function renameMany(
   if (!moving.length || !changeable(view)) return
   const folder = view.listing?.path ?? ''
   if (inASpace(folder)) {
-    await workspace.undone.batch(async () => {
-      for (const { from, name } of moving) await workspace.rename(from, name)
-    })
+    try {
+      await workspace.undone.batch(async () => {
+        for (const { from, name } of moving) await workspace.rename(from, name)
+      })
+    } catch (error) {
+      view.tell(message(error, 'could not rename this'))
+    }
     await view.reload()
     return
   }
@@ -290,14 +308,15 @@ export async function renameMany(
     ),
   )
   const done: { from: string; to: string }[] = []
+  const staged: { from: string; at: string; name: string }[] = []
   try {
-    const staged: { from: string; at: string; name: string }[] = []
     for (const [index, { from, name }] of moving.entries()) {
-      const at = crossing ? await renameTo(from, `.orden-renaming-${index}-${name}`) : from
+      const at = crossing ? await renameTo(from, `.orden-renaming-${index}`) : from
       staged.push({ from, at, name })
     }
     for (const { from, at, name } of staged) done.push({ from, to: await renameTo(at, name) })
   } catch (error) {
+    if (crossing) await putBack(staged, done.splice(0))
     view.tell(message(error, 'could not rename this'))
   }
   record(done.length ? [{ op: 'moved', pairs: done }] : [])

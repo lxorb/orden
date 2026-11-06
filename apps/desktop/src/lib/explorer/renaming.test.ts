@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { clashing, renamedAll } from './renaming'
+import { clashing, isOneName, renamedAll } from './renaming'
 
 describe('renaming many at once', () => {
   test('replaces words in the names and leaves the endings alone', () => {
@@ -34,5 +34,20 @@ describe('renaming many at once', () => {
     ]).toEqual([0, 1])
     expect([...clashing(['a.txt'], ['d.txt'], ['a.txt', 'd.txt'])]).toEqual([0])
     expect([...clashing(['a.txt', 'b.txt'], ['b.txt', 'a.txt'], ['a.txt', 'b.txt'])]).toEqual([])
+  })
+
+  test('says which would not be one name in the folder', () => {
+    expect([
+      ...clashing(['a.txt', 'b.txt', 'c.txt'], ['x/a.txt', '..', 'c\\d.txt'], ['a.txt']),
+    ]).toEqual([0, 1, 2])
+    expect(isOneName('Rome 01.jpg')).toBe(true)
+    expect(isOneName(' . ')).toBe(false)
+  })
+
+  test('in a space names do not swap places, a respelling of its own name aside', () => {
+    expect([...clashing(['a.md', 'b.md'], ['b.md', 'a.md'], ['a.md', 'b.md'], false)]).toEqual([
+      0, 1,
+    ])
+    expect([...clashing(['a.md', 'b.md'], ['A.md', 'b.md'], ['a.md', 'b.md'], false)]).toEqual([])
   })
 })
