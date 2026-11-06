@@ -356,37 +356,37 @@ describe('what a person types in a hurry', () => {
   })
 
   test.each([
-    ['Run every morning', '09:00'],
-    ['Run every evening', '19:00'],
-  ])('%s', (text, time) => {
-    expect(said(en(text))).toEqual({
-      text: 'Run',
-      recurrence: 'every day',
-      due: '2026-10-07',
-      time,
-    })
+    ['Run every morning', '09:00', '2026-10-08'],
+    ['Run every evening', '19:00', '2026-10-07'],
+  ])('%s', (text, time, due) => {
+    expect(said(en(text))).toEqual({ text: 'Run', recurrence: 'every day', due, time })
   })
 
   test.each([
-    ['Laufen jeden Morgen', '09:00'],
-    ['Laufen jeden Abend', '19:00'],
-    ['Laufen jeden Mittag', '12:00'],
-  ])('%s', (text, time) => {
-    expect(said(de(text))).toEqual({
-      text: 'Laufen',
-      recurrence: 'every day',
-      due: '2026-10-07',
-      time,
-    })
+    ['Laufen jeden Morgen', '09:00', '2026-10-08'],
+    ['Laufen jeden Abend', '19:00', '2026-10-07'],
+    ['Laufen jeden Mittag', '12:00', '2026-10-07'],
+  ])('%s', (text, time, due) => {
+    expect(said(de(text))).toEqual({ text: 'Laufen', recurrence: 'every day', due, time })
   })
 
   test('a time said beside every morning is the time', () => {
     expect(said(de('Laufen jeden Morgen um 7'))).toEqual({
       text: 'Laufen',
       recurrence: 'every day',
-      due: '2026-10-07',
+      due: '2026-10-08',
       time: '07:00',
     })
+  })
+
+  test.each([
+    ['Standup every day at 9', 'every day', '2026-10-08'],
+    ['Standup every day at 11', 'every day', '2026-10-07'],
+    ['Standup every wednesday at 8', 'every week on Wednesday', '2026-10-14'],
+    ['Standup every 3 days at 9', 'every 3 days', '2026-10-08'],
+    ['Standup every day starting today at 9', 'every day', '2026-10-07'],
+  ])('%s: a repeat whose time today has gone starts at its next one', (text, recurrence, due) => {
+    expect(said(en(text))).toMatchObject({ text: 'Standup', recurrence, due })
   })
 
   test.each([
