@@ -1,10 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A canvas or a page note in a space shared to be read (B370). The store refuses every
- *  edit, so anything that opens a card for typing, asks a question or stores a picture
- *  first only takes the reader's words or a file and then drops them. Nothing of that
- *  starts at all. */
-
 const asked = vi.hoisted(() => ({ prompts: 0, stored: 0 }))
 
 vi.mock('../prompt.svelte', () => ({

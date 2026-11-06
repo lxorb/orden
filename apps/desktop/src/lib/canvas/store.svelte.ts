@@ -1,30 +1,3 @@
-/** One open canvas: what is on the plane, what is picked, where it is being
- *  looked at from, and what can be taken back.
- *
- *  The file is the document. A canvas tab holds a NoteDoc like a note does, and
- *  its words are the JSON in the file, so keeping itself, Ctrl+S, the snapshot
- *  before a write and the closing question all work here without knowing a canvas
- *  exists. What this adds is a surface on top of those words instead of an editor.
- *
- *  The document is written at the end of a gesture and never during one. Dragging
- *  nine cards across the plane is one edit, one undo step and one save, not one
- *  per frame: the surface carries the offset while the pointer is down and hands
- *  the result over when it comes up. That is also what keeps a canvas of five
- *  hundred nodes at sixty frames a second, since nothing is serialised in
- *  between. The eraser is the one gesture that cannot wait - it has to answer
- *  under the nib - so it names its drag and gets the same three things anyway:
- *  one undo step, and one write once the drag has gone quiet. See `edit`.
- *
- *  Every edit stamps the things it touched with the time. Nothing else in the
- *  app has to know that, and it is what lets two devices drawing on one file keep
- *  both drawings; see canvas-merge.ts.
- *
- *  A plane in a room is the same surface with one thing added: every edit also goes
- *  into the room, and what arrives from the room is taken on the way an edit made
- *  here is. Which of the two histories undo asks is the only real difference: in a
- *  room it is the room's, so undo takes back what you drew and never what somebody
- *  else did. See shared.ts for the contract and rooms/plane.ts for the room. */
-
 import { idle } from '../breathe'
 import { type Camera, clampScale, framingBox, turnOf } from '../camera'
 import { owesWords } from '../parting'
@@ -49,110 +22,46 @@ import type { Hand, PlaneSurface, Reachable, SharedPlane } from './shared'
 import { flushCardEdits } from './writing'
 import type { NoteDoc, Tab } from '../workspace/documents.svelte'
 
-/** Room left around the canvas when it is framed, in pixels. */
 const PADDING = 48
 
-/** How long after the changes stop the file is written.
- *
- *  A stroke crossing from another device has to appear at once, and so does the
- *  hole an eraser is making under the nib; serialising the whole plane is the size
- *  of the plane rather than the size of what changed, and doing that per event is
- *  the one thing a plane of five thousand strokes cannot afford. The same pause the
- *  room's own settle waits, so a device being drawn on and a device being watched
- *  write their file at the same moment. */
 const WRITE_DELAY = 1_200
 
-/** How many points of ink one slice of printing a plane ahead takes on: eight or so
- *  milliseconds of it, measured over a plane of ten thousand strokes. See `warm`. */
 const PRINTED_AT_ONCE = 10_000
 
 export class CanvasStore implements PlaneSurface {
-  /** The plane as it stands. Replaced whole by every edit; see edits.ts.
-   *
-   *  Raw, and that is not an optimisation to be tidied away later. A canvas is
-   *  thousands of objects that are never changed in place, and a deep proxy over
-   *  them would wrap every stroke, every point and every card, then charge for
-   *  every read of any of them. Measured on a plane of five thousand strokes, the
-   *  proxy was a fifth of a second on every stroke a pen finished. */
   canvas = $state.raw<Canvas>(emptyCanvas())
 
-  /** What is picked, by id: nodes, edges and strokes of ink together, since
-   *  Delete and the colour dots mean whatever is picked. Replaced whole, like
-   *  the canvas, and raw for the same reason. */
   picked = $state.raw<string[]>([])
-  /** The same, as a set: what `isPicked` asks, once per card or edge of a plane that
-   *  may hold thousands while thousands are picked (#535). */
   readonly pickedSet = $derived(idSet(this.picked))
 
-  /** The text node being written in, while one is. One at a time: an editor is
-   *  mounted only for this node, which is what keeps five hundred cards cheap. */
   #editing = $state<string | null>(null)
   get editing(): string | null {
     return this.#editing
   }
 
-  /** Leaving a card hands its words to the plane first, whoever leaves it. The card
-   *  hands them over itself as its editor goes, but a card that goes with it - drawn
-   *  only while it is written in, as from far away (CanvasFar.svelte, #535) - went
-   *  before it could, and took the words with it. See canvas/writing.ts. */
   set editing(id: string | null) {
     if (this.#editing !== null && id !== this.#editing) flushCardEdits()
     this.#editing = id
   }
 
-  /** The room this plane is in, while it is in one. Raw: it is set once, when the
-   *  room has said what it holds, and read for what it can do rather than for
-   *  anything inside it. */
   shared = $state.raw<SharedPlane | null>(null)
 
-  /** Whose hands are on the plane besides this one, and what each is drawing. Empty
-   *  for a plane nobody else is looking at, which is the ordinary case. */
   hands = $state.raw<readonly Hand[]>([])
 
-  /** What the room says there is to take back and to put forward. Held here rather
-   *  than asked of the room, because the bar's two arrows are drawn from it and a
-   *  Yjs undo stack is not something a surface can watch. */
   private reachable = $state.raw<Reachable>({ undo: false, redo: false })
 
-  /** The same two answers for the snapshot stack, which is the history out of a
-   *  room. The stack is plain arrays, and the bar cannot watch those any more than
-   *  it can watch the room's: asked of the stack itself, the arrows stayed dark over
-   *  a plane that had just been drawn on. So this is said again after every change
-   *  to the stack; see `stackChanged`. */
   private local = $state.raw<Reachable>({ undo: false, redo: false })
 
-  /** Whether this plane is one to look at rather than one to draw on: a space
-   *  somebody shared to read.
-   *
-   *  A reader is on the plane and sees every stroke as it is drawn; the one thing
-   *  they may not do is add one. Every gesture on a canvas ends in exactly one
-   *  `edit`, so refusing there is the whole of it, and the room refuses the same
-   *  thing again on its own side. */
   readOnly = $state(false)
 
   protected readonly tab: Tab
   private readonly note: NoteDoc
   private readonly history: CanvasHistory
-  /** Which revision of the document this surface has read. Anything past it came
-   *  from somewhere else and has to be taken on; see `follow`. */
   private at = -1
-  /** The file written once the changes have stopped coming; see `soon`. */
   private readonly writing = afterQuiet(() => this.commit(), WRITE_DELAY)
-  /** The gesture the last edit belonged to, while one is under way; see `edit`. */
   private during: string | null = null
-  /** The file as this surface last wrote it, or read it and found it what it would
-   *  have written: what the next write is worked out against; see written.ts. */
   private wrote: Written | null = null
-  /** The plane as this surface read it, and which revision of the document that was,
-   *  until the first write: what that write is worked out against when the printing
-   *  ahead has not got there first; see `asRead`. */
   private opened: { canvas: Canvas; revision: number } | null = null
-  /** The view this device had written down for this plane, where it had one and
-   *  the camera was taken from it.
-   *
-   *  A plane wants nothing more from it than the camera, which the constructor has
-   *  already set. A page note reads one more fact off it - whether that zoom is the
-   *  reader's own - and this is how it reaches it; see pages/store.svelte.ts. */
   protected readonly restored: KeptView | null
 
   constructor(tab: Tab) {
@@ -165,26 +74,14 @@ export class CanvasStore implements PlaneSurface {
     this.stackChanged()
     this.restored = tab.camera === undefined ? viewOf(tab.path) : null
 
-    // Where this device left the plane, so opening the canvas again - tomorrow, or
-    // after the app is started again - lands where the reading was rather than fitting
-    // the whole plane. Only for a tab with no view of its own yet: a tab still open has
-    // kept its camera across the switch away and back (the camera lives on the tab, not
-    // here), and that one is newer than anything written down. The `!store.framed` guard
-    // in Canvas.svelte keeps the opening fit off a view restored this way. See place.ts.
     const kept = this.restored
     if (kept) this.tab.camera = { x: kept.x, y: kept.y, scale: kept.scale }
 
     drawn.add(this.mine)
   }
 
-  /** How `drawn` holds this surface, so it can let go of it; see `gone`. */
   private readonly mine = new WeakRef(this)
 
-  /** The plane drawn for a document in one of these tabs, while there is one: what an
-   *  agent's edit of a canvas goes through, so that it is one more edit on the surface
-   *  somebody may be drawing on, merged object by object, one step to undo, and into
-   *  the room when the plane is in one (docs/agent-native.md 8.7). A store whose tab
-   *  has closed is not one, however long it takes to be collected. */
   static drawing(note: NoteDoc, tabs: readonly Tab[]): CanvasStore | null {
     for (const held of drawn) {
       const store = held.deref()
@@ -194,22 +91,7 @@ export class CanvasStore implements PlaneSurface {
     return null
   }
 
-  /** The file's words as a plane, and a plane as the file's words, in the runs of
-   *  pieces a write is worked out in; see written.ts.
-   *
-   *  Overridable, and the only pair of methods that is. A page note is the same
-   *  plane in the same format with pages among the objects on it, so it wants this
-   *  whole class - the one edit per gesture, the one undo step, the one write once
-   *  the changes stop, the room - and differs in nothing but what it does to the
-   *  canvas on the way in and out: the pages are laid out in a column, and a long
-   *  page grows. Which is two lines, and this is where they go. See
-   *  pages/store.svelte.ts.
-   *
-   *  Both are the canvas format either way round, so a page note and a canvas write
-   *  the same bytes and a file renamed across the two loses nothing. */
   protected parse(text: string): Canvas {
-    // Whatever `openCanvas` read a task ago, where it read this one. The parse and
-    // the mount used to be one task; see `parseAhead` in format.ts.
     return takeParsed(text) ?? readCanvas(text)
   }
 
@@ -217,12 +99,6 @@ export class CanvasStore implements PlaneSurface {
     return canvasRuns(canvas)
   }
 
-  /** Where the file is, or null for a plane that has none.
-   *
-   *  Read by anything holding the store rather than the tab, which is what the
-   *  outline panel's thumbnails are: a page's `file` is relative to the note, so a
-   *  thumbnail cannot find the paper behind a page without knowing which note it is
-   *  a page of. See pages/paper.ts. */
   get path(): string | null {
     return this.note.path
   }
@@ -235,24 +111,10 @@ export class CanvasStore implements PlaneSurface {
     this.tab.camera = { ...next, scale: clampScale(next.scale) }
   }
 
-  /** What is written down beside the camera when this plane is left, and what a
-   *  surface reads back off it on the way in.
-   *
-   *  The camera and nothing else, for a plane. A page note has one more fact to
-   *  keep - whether the zoom is the reader's own rather than the fitted one - and
-   *  these two are where it goes; see pages/store.svelte.ts. Two lines, like
-   *  `parse` and `runs` above, rather than a second store. */
   protected get keptView(): KeptView {
     return this.camera
   }
 
-  /** Whether the view has been settled on anything yet, so a canvas frames itself
-   *  once and never again.
-   *
-   *  An empty plane never counts as framed: there is nothing to frame, and the
-   *  cards of one a sync is bringing over arrive a moment after the tab does.
-   *  Panning an empty plane does count, because that is somebody choosing where
-   *  they want to be. */
   get framed(): boolean {
     return this.tab.camera !== undefined
   }
@@ -265,33 +127,10 @@ export class CanvasStore implements PlaneSurface {
     return this.shared ? this.reachable.redo : this.local.redo
   }
 
-  /** The box round everything picked, or null. What the handles are drawn on. */
   get box() {
     return pickedBox(this.canvas, this.picked)
   }
 
-  /** An edit: remembered so it can be taken back, stamped with the time so two
-   *  devices can be put back together, and written into the document so it can be
-   *  saved. Almost every gesture ends in exactly one of these.
-   *
-   *  A canvas that comes back identical is not an edit at all, which is what lets
-   *  the operations in edits.ts hand back what they were given when there was
-   *  nothing to do.
-   *
-   *  `run` names the gesture an edit belongs to, for the one kind that cannot
-   *  wait for the pointer to come up: an eraser has to answer under the nib, so
-   *  it edits on every point of the drag. Edits that name the same run are one
-   *  thing somebody did - one step to take back.
-   *
-   *  Writing the plane down waits either way, and for the same reason: serialising
-   *  it is the size of the plane, and the size of the plane is a hundred and fifty
-   *  milliseconds on one with ten thousand strokes on it. That used to be spent on
-   *  the tick the pen came up - the whole document written out, the previous one
-   *  read back as a string and both of them walked character by character to work
-   *  out what changed - while the hand was still moving on to the next stroke. What
-   *  is on screen does not wait for any of it: the plane on screen is `canvas`, and
-   *  this is the file catching up. `part` writes what is owing when the tab or the
-   *  window goes. */
   edit(next: Canvas, run?: string) {
     if (next === this.canvas || this.readOnly) return
 
@@ -302,8 +141,6 @@ export class CanvasStore implements PlaneSurface {
     const carrying = run !== undefined && run === this.during
     this.during = run ?? null
 
-    // In a room the room is the history, and what changed goes to the other devices
-    // as the objects it touched. Out of one, the snapshot stack is the history.
     if (this.shared) this.shared.push(before, after)
     else if (!carrying) {
       this.history.record(before)
@@ -313,16 +150,8 @@ export class CanvasStore implements PlaneSurface {
     this.soon()
   }
 
-  /** The plane with the paths on it pointed somewhere else, by a rename or a move:
-   *  one edit like any other, so what it changed is stamped as changed now and goes
-   *  into the room, and written into the document at once, since the rewrite writes
-   *  the file in the same breath. Answers whether there was anything to change. Given
-   *  through the plane rather than its file, so a card dragged and not written yet
-   *  keeps its place, and a plane that keeps no times still takes the new paths; see
-   *  `retargetIn` in link-index.svelte.ts. */
   relinked(change: (canvas: Canvas) => Canvas): boolean {
     if (this.readOnly) return false
-    // Up to the document first, so what arrived under the plane is never written over.
     this.follow()
     const next = change(this.canvas)
     if (next === this.canvas) return false
@@ -333,8 +162,6 @@ export class CanvasStore implements PlaneSurface {
   }
 
   undo() {
-    // In a room, taking something back is the room's own history: what this device
-    // drew and never what somebody else did. See rooms/plane-bind.ts.
     if (this.shared) {
       this.shared.undo()
       return
@@ -344,9 +171,6 @@ export class CanvasStore implements PlaneSurface {
     if (!before) return
     this.stackChanged()
 
-    // Stamped forwards, not restored: taking an edit back is itself an edit, and
-    // a card put back with its old time would be deleted again by the next
-    // device to see it.
     this.canvas = stamped(this.canvas, before, Date.now())
     this.keepPicked()
     this.commit()
@@ -367,16 +191,7 @@ export class CanvasStore implements PlaneSurface {
     this.commit()
   }
 
-  /** The plane as the room now says it is.
-   *
-   *  Taken on at once, so a stroke somebody else drew appears as they draw it, and
-   *  written into the file a moment later rather than on every arrival. The room is
-   *  already writing the file into the account; this is only this device's own copy
-   *  of it catching up. */
   arrived(canvas: Canvas) {
-    // A room carries the plane and not the file, so what arrives says nothing
-    // about the icon - and this is written back to the file a moment later, which
-    // would take the icon out of it.
     this.canvas = {
       ...canvas,
       icon: this.canvas.icon ?? null,
@@ -386,16 +201,10 @@ export class CanvasStore implements PlaneSurface {
     this.soon()
   }
 
-  /** The plane written down once the changes have stopped coming: a gesture that
-   *  edits as it goes, or a stroke after stroke arriving from a room. Serialising
-   *  the plane is the size of the plane, and doing it per event is the one thing a
-   *  canvas of five thousand strokes cannot afford. */
   private soon() {
     this.writing()
   }
 
-  /** Who else is on the plane. Held here rather than in the room because this is
-   *  what the surface reads, and what a surface reads is state. */
   handsAre(hands: readonly Hand[]) {
     this.hands = hands
   }
@@ -404,65 +213,28 @@ export class CanvasStore implements PlaneSurface {
     this.reachable = reachable
   }
 
-  /** The snapshot stack's two answers, as state the bar can follow.
-   *
-   *  Written without reading what was there before. `follow` runs inside an effect
-   *  in Canvas.svelte and Pages.svelte, and an effect that reads what it writes runs
-   *  itself again. */
   private stackChanged() {
     this.local = { undo: this.history.canUndo, redo: this.history.canRedo }
   }
 
-  /** The surface taken down: a tab closed, or sent to the back of its pane. What it
-   *  owes is written, and it is no longer the plane drawn for its document, which it
-   *  stops following. Kept in `drawn`, a rename or an agent's edit went through it
-   *  while its tab was in the back, onto a plane that had missed what arrived since,
-   *  and wrote that over the document. */
   gone() {
     this.part()
     drawn.delete(this.mine)
   }
 
-  /** Anything owing, written now: the room is being left, or the last tab on this
-   *  plane is closing. */
   part() {
-    // The card somebody is writing in holds words the plane has not been given yet,
-    // and this is the last moment they can be asked for: a window shut mid-word wrote
-    // the plane without the word in it. See canvas/writing.ts.
     flushCardEdits()
     this.writing.flush()
     LEFT.set(this.tab, { note: this.note, revision: this.at, history: this.history })
 
-    // Where the reading was left, for this device: coming back to the plane, or opening
-    // it again, lands here. Only once it has been framed, so an empty plane nobody moved
-    // is not written down as the origin over a view it might have had. See place.ts.
     if (this.framed) viewKept(this.tab.path, this.keptView)
   }
 
-  /** Brings the surface up to words that changed under it: a version restored, a
-   *  copy a sync brought over, the file undo putting one back.
-   *
-   *  A plane somebody has been drawing on is merged with what arrived rather
-   *  than replaced by it: both drawings are kept, which is the whole point of
-   *  giving everything an id. A plane nobody has touched simply takes the new
-   *  words, since there is nothing of ours to keep.
-   *
-   *  What can be taken back is forgotten either way. Undoing past a canvas
-   *  somebody else wrote would put ours over theirs, which is the one thing this
-   *  must not do.
-   *
-   *  Answers whether it took anything on, so the caller can tell a canvas that
-   *  arrived from elsewhere from one the reader is drawing. */
   follow(): boolean {
     if (this.note.revision === this.at) return false
 
     const arrived = this.parse(this.note.text)
 
-    // A version put back from the history is the plane the reader asked for, whole:
-    // merged, what was deleted since stayed deleted and what was added since stayed,
-    // so nothing came back and the merge was written over the version (#533). Taken as
-    // one edit - undoable, to the room as what it changed, its deletions and what it
-    // brought back stamped as now, so the other devices take it the same way.
     if (this.note.restoredAt === this.note.revision) {
       this.at = this.note.revision
       this.edit(arrived)
@@ -471,9 +243,6 @@ export class CanvasStore implements PlaneSurface {
     }
 
     const ours = this.canvas
-    // A plane in a room always has something of its own: the room's other devices
-    // are holding it, so words arriving under it are one more copy to merge with
-    // rather than the newest word on the subject.
     const mine = this.shared !== null || this.history.canUndo || this.note.dirty
 
     this.at = this.note.revision
@@ -488,14 +257,6 @@ export class CanvasStore implements PlaneSurface {
       return true
     }
 
-    // The icon is the file's own metadata rather than anything on the plane, so
-    // the words that just arrived are the newest word on it: a merge that kept
-    // ours would make taking an icon away impossible while the canvas is open.
-    //
-    // And what the file holds that Orden does not read, for the same reason: nothing in
-    // the app changes it, so the file is the only one that can have a newer word on it,
-    // and what is open holds only what the file said before - two changes made outside
-    // before the app writes again count the same generation (#781).
     const together: Canvas = {
       ...merged(ours, arrived),
       icon: arrived.icon ?? null,
@@ -505,11 +266,8 @@ export class CanvasStore implements PlaneSurface {
     if (!arrived.extras) delete together.extras
     this.canvas = together
     this.keepPicked()
-    // Whatever the merge kept goes to the other devices as the edit it is.
     this.shared?.push(ours, together)
 
-    // Written back only when the merge actually kept something of ours, so a
-    // canvas that arrived unchanged does not start a round of writes; see `commit`.
     this.commit()
     return true
   }
@@ -522,14 +280,6 @@ export class CanvasStore implements PlaneSurface {
     void this.warm()
   }
 
-  /** A plane just read, printed ahead of its first write, a slice at a time.
-   *
-   *  The first write after a plane opens would otherwise print every stroke on it -
-   *  ninety milliseconds for ten thousand, in one task, a moment after somebody's
-   *  first stroke. So the strokes are printed while nobody is drawing yet, in the
-   *  moments the thread has nothing else to do: behind the ink filling in, never in
-   *  its frames. And then the file they come to is set beside the one that was read,
-   *  so the first write has something to be worked out against; see `asRead`. */
   private async warm() {
     const ink = this.canvas.ink
 
@@ -550,10 +300,6 @@ export class CanvasStore implements PlaneSurface {
     if (this.wrote?.text !== this.note.text) this.wrote = this.asRead() ?? this.wrote
   }
 
-  /** The file as this surface read it, printed, where the document still holds
-   *  exactly that and it is what printing gives: a plane this app wrote. Null for
-   *  one written by hand or by another program, whose first write is then compared
-   *  the long way, once. */
   private asRead(): Written | null {
     const opened = this.opened
     if (opened?.revision !== this.note.revision) return null
@@ -562,9 +308,6 @@ export class CanvasStore implements PlaneSurface {
     return read.text === this.note.text ? read : null
   }
 
-  /** The canvas into the document, which starts the clock on its write - and, for a
-   *  plane with no file yet, is what makes it one. The revision is noted so `follow`
-   *  can tell our own write from somebody else's. */
   protected commit() {
     this.writing.cancel()
 
@@ -572,12 +315,9 @@ export class CanvasStore implements PlaneSurface {
     const text = next.text
     const last = this.wrote?.text === this.note.text ? this.wrote : this.asRead()
     this.opened = null
-    // What changed since the last write, where the document still holds that write.
     const changes = last ? changesBetween(last, next.runs) : null
     this.wrote = next
 
-    // A plane that comes back saying exactly what the file says is not an edit, and
-    // marking the note changed for it would start a round of writes over nothing.
     if (changes && last) {
       if (changes.length) this.note.replace(text, true, { from: last.text, changes })
     } else if (text !== this.note.text) {
@@ -586,13 +326,9 @@ export class CanvasStore implements PlaneSurface {
     this.at = this.note.revision
   }
 
-  /** Only the ids that still name something. A card that has gone cannot be
-   *  picked, and an undo that brought one back should not leave it selected by
-   *  accident either. */
   private keepPicked() {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
     const held = new Set([
-      // Something locked in place is not picked either, once a lock or an undo says so.
       ...this.canvas.nodes.filter((node) => !node.locked).map((node) => node.id),
       ...this.canvas.edges.map((edge) => edge.id),
       ...this.canvas.ink.map((stroke) => stroke.id),
@@ -607,8 +343,6 @@ export class CanvasStore implements PlaneSurface {
     return this.pickedSet.has(id)
   }
 
-  /** A plain click picks one thing; Shift or Ctrl adds to what is picked and
-   *  takes an already-picked one out again, the way a file list does. */
   pick(id: string, adding = false) {
     if (this.lockedIds().has(id)) return
     if (!adding) {
@@ -619,14 +353,8 @@ export class CanvasStore implements PlaneSurface {
     this.picked = this.isPicked(id) ? this.picked.filter((one) => one !== id) : [...this.picked, id]
   }
 
-  /** Several at once: what a rubber band caught, or Ctrl+A. Each id once, so a
-   *  band that catches something already picked does not pick it twice. */
   pickAll(ids: readonly string[], adding = false) {
     const wanted = adding ? [...this.picked, ...ids] : ids
-    // Each id once, in the order they arrived. Through a set rather than by
-    // looking back along the list, because a rubber band answers on every
-    // pointer event and may have caught five hundred cards. Begun with what is
-    // locked, so that is never let through.
     const seen = this.lockedIds()
     const next = wanted.filter((id) => {
       if (seen.has(id)) return false
@@ -639,8 +367,6 @@ export class CanvasStore implements PlaneSurface {
     this.picked = next
   }
 
-  /** What is locked in place, which nothing picks: not a press, a band, Ctrl+A or a
-   *  find (#643). Unlocked from the menu, which finds it under the press. */
   private lockedIds(): Set<string> {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within one call and thrown away; nothing renders from it
     return new Set(this.canvas.nodes.filter((node) => node.locked).map((node) => node.id))
@@ -650,19 +376,11 @@ export class CanvasStore implements PlaneSurface {
     if (this.picked.length) this.picked = []
   }
 
-  /** Everything on the plane in view, with room to spare. What Ctrl+0 does, and
-   *  what a canvas does the first time it has anything to show.
-   *
-   *  An empty plane is left exactly where it is. There is nothing to fit, and
-   *  leaving the view unset is also what says the canvas has not been framed yet,
-   *  so the first cards to arrive are framed when they do. */
   fit(width: number, height: number) {
     const box = bounds([...this.canvas.nodes, ...this.canvas.ink.map(strokeBox)])
     if (box) this.camera = this.framingTurned(box, width, height)
   }
 
-  /** A box framed with the view kept turned the way it is (#351): the box as it
-   *  stands on the turned screen, which is wider and taller than it is upright. */
   private framingTurned(
     box: { x: number; y: number; width: number; height: number },
     width: number,
@@ -685,8 +403,6 @@ export class CanvasStore implements PlaneSurface {
     return { ...framed, turn }
   }
 
-  /** Just what is picked in view, which is the other half of the same gesture:
-   *  one key frames everything, the same key with something picked frames that. */
   frame(width: number, height: number) {
     const box = this.box
     if (box) this.camera = this.framingTurned(box, width, height)
@@ -694,29 +410,11 @@ export class CanvasStore implements PlaneSurface {
   }
 }
 
-/** Every plane that has been opened in this window, weakly.
- *
- *  A plane's file is written once the drawing stops rather than on the tick the pen
- *  came up, and a surface going away writes what is owing itself - but a window
- *  closing tears nothing down: no effect's cleanup runs, so nothing would call
- *  `part`, and until the plane is in its document there is nothing for the document's
- *  own write to take down.
- *
- *  Weak references, so a canvas that has been closed is collected with everything
- *  else about it and this list never keeps one alive. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; see above
 const drawn = new Set<WeakRef<CanvasStore>>()
 
-/** What each tab's plane could take back as it was left: the surface is made again
- *  every time the tab comes back to the front, and the undo went with it. With the
- *  document and the revision it was left at, since a tab can move on to another
- *  document and words can arrive while it is away, and either makes it stale. Weak, so
- *  a tab that closes takes it along. */
 const LEFT = new WeakMap<Tab, { note: NoteDoc; revision: number; history: CanvasHistory }>()
 
-/** Every plane's file written now. Said to `parting.ts` when this module is first
- *  loaded, which is when the first canvas opens: the launch must not have to load the
- *  ink engine in order to know that a plane might owe a write. */
 function flushCanvases(): void {
   for (const held of drawn) {
     const store = held.deref()

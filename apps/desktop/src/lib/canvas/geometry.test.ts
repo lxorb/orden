@@ -53,8 +53,6 @@ describe('which side faces which', () => {
     expect(facingSide(here, { x: 0, y: -400, width: 100, height: 100 })).toBe('top')
   })
 
-  /** A wide card beside a tall one connects the way it looks like it should,
-   *  which is what weighing the distance against the box's own size is for. */
   test('reads a wide box as wide', () => {
     const wide = { x: 0, y: 0, width: 600, height: 40 }
     expect(facingSide(wide, { x: 200, y: 200, width: 40, height: 40 })).toBe('bottom')
@@ -128,8 +126,6 @@ describe('what is under a point', () => {
     expect(within(box, { x: 101, y: 50 })).toBe(false)
   })
 
-  /** A group is a frame around some room: the frame is the group, and the room
-   *  inside it belongs to whatever is sitting there. */
   test('picks a group up by its frame and not by the middle of it', () => {
     const framed = [group('g', 0, 0, 400, 400), card('inside', 100, 100)]
 
@@ -235,8 +231,6 @@ describe('resizing a box', () => {
     expect(resizedBox(box, 'n', 0, -40, least)).toEqual({ x: 100, y: 60, width: 200, height: 240 })
   })
 
-  /** The offset arrives already snapped, or not, as the surface decided: the
-   *  guides and the grid are settled next door, in snap.ts. */
   test('takes the offset as it was given, rounded to a whole pixel', () => {
     expect(resizedBox(box, 'se', 27.4, 27.4, least)).toEqual({
       x: 100,
@@ -257,8 +251,6 @@ describe('resizing a box', () => {
   })
 })
 
-/** The corners a shape is drawn through: one answer for the drawing, the export and
- *  the hit test, so a click cannot land somewhere other than where the shape is. */
 describe('the corners of a shape', () => {
   const box = { x: 0, y: 0, width: 100, height: 60 }
 
@@ -333,8 +325,6 @@ describe('inside a polygon', () => {
   })
 })
 
-/** A resize that holds the shape of the box: what Shift asks for, and what a picture
- *  under a thumb is given without being asked. */
 describe('holding the shape of a box', () => {
   const was = { x: 0, y: 0, width: 100, height: 50 }
 
@@ -354,7 +344,6 @@ describe('holding the shape of a box', () => {
     const now = keptAspect(was, { x: 0, y: 0, width: 200, height: 50 }, 'e', 10)
     expect(now.width).toBe(200)
     expect(now.height).toBe(100)
-    // Centred on where the box was, so the side that was not pulled stays put.
     expect(now.y + now.height / 2).toBe(25)
   })
 

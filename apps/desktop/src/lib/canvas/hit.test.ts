@@ -3,10 +3,6 @@ import type { Canvas, CanvasEdge, CanvasNode } from './format'
 import { edgeEnds, edgeMiddle, boxOf } from './geometry'
 import { hitAt, type Where } from './hit'
 
-/** What is under a point, which is the one question a press asks. It is answered
- *  from the same geometry the plane is drawn from, so what is checked here is
- *  that the two agree: a connector is found where it is drawn, and nowhere else. */
-
 function card(id: string, x: number, y: number): CanvasNode {
   return { id, type: 'text', x, y, width: 250, height: 60, text: id }
 }
@@ -52,9 +48,6 @@ describe('what a point is on', () => {
     })
   })
 
-  /** An end of a picked connector is what moves that end onto another card, and it
-   *  sits exactly where a card's own dot would: it is found first, because it is what
-   *  is drawn on top. */
   test('is the end of a picked connector, before the card under it', () => {
     const ends = edgeEnds(EDGE, boxOf(NODES[0]!), boxOf(NODES[1]!))
     const picked = where({ picked: ['e'] })
@@ -68,8 +61,6 @@ describe('what a point is on', () => {
     expect(hitAt(where(), ends.from).endpoint).toBeNull()
   })
 
-  /** The chrome a selection wears is drawn over everything, so it is grabbed
-   *  before anything under it. */
   test('is the handle before the card it sits on', () => {
     const box = boxOf(NODES[0]!)
     const picked = where({ picked: ['a'], box })
@@ -80,7 +71,6 @@ describe('what a point is on', () => {
   })
 })
 
-/** A picture locked in place is under the writing: a press goes through it (#643). */
 describe('what a point is on, over something locked in place', () => {
   const photo: CanvasNode = { ...card('photo', -50, -50), width: 400, height: 300, locked: true }
 
@@ -95,10 +85,6 @@ describe('what a point is on, over something locked in place', () => {
   })
 })
 
-/** #535: far out a card is a few pixels across, and the handles round a picked box are
- *  a fixed size on screen: they covered the whole card, so a double press meant to open
- *  it took a handle, found no card, and made a new one. A box that small carries no
- *  handles; near, the same press on the same corner is a handle. */
 describe('a picked card too small on screen for its handles', () => {
   const box = { x: 0, y: 0, width: 250, height: 60 }
 

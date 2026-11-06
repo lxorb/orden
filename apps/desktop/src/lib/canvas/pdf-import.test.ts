@@ -1,13 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A PDF dropped on a canvas, All pages (#532): the pages are rendered one by one, many
- *  awaits long, and the plane laid out as it stood when the import began was written
- *  back at the end - a card drawn meanwhile, or one another device's words brought in,
- *  was gone, and recorded as deleted, so the deletion went to every other device too.
- *  The pages go onto the plane as it is once they are rendered. */
-
 const world = vi.hoisted(() => ({
-  /** Run while the second page renders: what happens to the plane meanwhile. */
   meanwhile: null as (() => void) | null,
   stored: 0,
 }))
@@ -28,8 +21,6 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** The canvas a page is rendered on, for the one call that asks for it: the editor's
- *  modules read `document` as they load, so it is put in place only for the import. */
 const paper = {
   createElement: () => ({
     width: 0,

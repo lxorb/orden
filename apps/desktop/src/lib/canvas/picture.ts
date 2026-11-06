@@ -1,19 +1,3 @@
-/** A canvas as a picture: one SVG, and the two other formats made out of it.
- *
- *  SVG is the only drawing here. A PNG is that SVG rasterised by the browser,
- *  and a PDF is that SVG on a page handed to the same printer the notes use, so
- *  there is one description of what a canvas looks like on paper rather than
- *  three that drift apart. Pictures are inlined as data, so the file stands on
- *  its own once it has left the app.
- *
- *  Cards keep their words, and how depends on where the picture is going. An SVG
- *  and a printed page put the rendered markdown inside a `foreignObject`, so a
- *  heading is a heading and a list is a list. A PNG cannot: a browser marks a
- *  canvas as tainted the moment an SVG holding a `foreignObject` is drawn on it,
- *  and a tainted canvas will not hand over its pixels. So the PNG is drawn from
- *  the same picture with the cards set as plain wrapped lines instead, which is
- *  the one thing that both reads the same and rasterises at all. */
-
 import { escapeAll } from '@orden/markdown/html'
 import { assetsOf, inlineImages, localSources, printInFrame, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
@@ -40,7 +24,6 @@ import { assetPath, invoke, isDesktop } from '../tauri'
 import { message, t } from '../i18n.svelte'
 import { settings } from '../settings.svelte'
 
-/** Room left round the drawing, in plane units. */
 const PADDING = 32
 
 function colourOf(node: { color?: string }, palette: Palette, fallback: string): string {
@@ -49,8 +32,6 @@ function colourOf(node: { color?: string }, palette: Palette, fallback: string):
   return palette[colour] ?? colour
 }
 
-/** How the words inside a card are set, since an SVG carries no stylesheet of
- *  its own and a `foreignObject` inherits nothing from the page it came from. */
 export function styles(palette: Palette): string {
   return `
     .card { box-sizing: border-box; width: 100%; height: 100%; padding: 8px 12px;
@@ -69,13 +50,6 @@ export function styles(palette: Palette): string {
   `
 }
 
-/** Markdown's HTML as XML.
- *
- *  An SVG is XML, and an SVG opened as an image is parsed strictly: one `<br>`
- *  or one bare `&` in a card and the whole picture fails to load with nothing
- *  said. The browser's own parsers are the only thing that gets this right, so
- *  the HTML goes through the one that is lenient and comes back out of the one
- *  that is exact. */
 function asXml(html: string): string {
   const page = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html')
   const root = page.body.firstElementChild
@@ -84,8 +58,6 @@ function asXml(html: string): string {
   return new XMLSerializer().serializeToString(root).replace(/^<div[^>]*>|<\/div>$/g, '')
 }
 
-/** Markdown as the lines a reader would see, with the marks taken off. What a
- *  card says when it cannot be set as HTML. */
 function plainLines(text: string): string[] {
   return text.split('\n').map((line) =>
     line
@@ -101,14 +73,10 @@ function plainLines(text: string): string[] {
   )
 }
 
-/** How wide a character is as a share of the font size, and how tall a line is.
- *  Measuring properly would want a DOM; half the size is close enough for a
- *  picture nobody is going to typeset from. */
 const PER_CHARACTER = 0.52
 const LINE = 17
 const CARD_FONT = 13
 
-/** The lines of a card, broken to its width. */
 function fitted(text: string, width: number): string[] {
   const most = Math.max(4, Math.floor((width - 24) / (CARD_FONT * PER_CHARACTER)))
   const out: string[] = []
@@ -129,7 +97,6 @@ function fitted(text: string, width: number): string[] {
   return out
 }
 
-/** A card's words as SVG text, for the picture a browser can rasterise. */
 function plainCard(text: string, box: Box, palette: Palette): string {
   const lines = fitted(text, box.width).slice(0, Math.floor((box.height - 12) / LINE))
   if (!lines.length) return ''
@@ -147,9 +114,6 @@ function plainCard(text: string, box: Box, palette: Palette): string {
 function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean): string {
   switch (node.type) {
     case 'text':
-      // The question the plane on screen asks of the same card: an SVG opened on
-      // its own is a document, and a PDF is printed from a window of the app's
-      // own, so somebody else's HTML in a card is still theirs. See trust.ts.
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
     case 'link':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
@@ -159,16 +123,10 @@ function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean)
     case 'group':
     case 'shape':
     case 'page':
-      // Drawn as themselves rather than as a card with words in it. A page never
-      // reaches a canvas's picture at all - a page note goes out through pages/out.ts,
-      // which puts one page on one sheet - and is here so the switch covers every kind.
       return ''
   }
 }
 
-/** The words inside a shape, in the middle of it. Through the same two routes a card
- *  takes: the real renderer where a browser is drawing the picture, and plain lines
- *  where it is not. */
 function shapeWords(
   node: CanvasNode & { type: 'shape' },
   box: Box,
@@ -188,13 +146,10 @@ function hostOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '')
   } catch {
-    // Not a URL a browser would parse, so the whole of it is the name.
     return url
   }
 }
 
-/** One node as SVG. A group is a dashed frame with its name above it, a shape is
- *  itself, a picture is the picture, and everything else is a card. */
 export function drawnNode(
   node: CanvasNode,
   palette: Palette,
@@ -227,9 +182,6 @@ export function drawnNode(
       return `<g><ellipse cx="${box.x + box.width / 2}" cy="${box.y + box.height / 2}" rx="${box.width / 2}" ry="${box.height / 2}" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2"/>${words}</g>`
     }
 
-    // Everything else - a diamond, a triangle, a line, an arrow, an elbow - is the
-    // corners the plane draws it through, so a picture that has left the app is the
-    // picture that was on it. See shapePath in geometry.ts.
     const corners = shapePath(node)
     const open = isLineShape(node.shape)
     const d = `M ${corners.map((one) => `${one.x} ${one.y}`).join(' L ')}${open ? '' : ' Z'}`
@@ -250,7 +202,6 @@ export function drawnNode(
 
   const wash = node.color === undefined ? '' : ` fill-opacity="0.09"`
   const paper = node.color === undefined ? (palette.surface ?? '#fff') : line
-  // Words with no card round them are drawn as the words alone (#421).
   const card =
     node.type === 'text' && node.bare
       ? ''
@@ -263,7 +214,6 @@ export function drawnNode(
   return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath, trusted)}</foreignObject></g>`
 }
 
-/** What a card says, as words. */
 function saidBy(node: CanvasNode): string {
   switch (node.type) {
     case 'text':
@@ -317,16 +267,6 @@ function drawnEdges(canvas: Canvas, palette: Palette): string {
   return out.join('')
 }
 
-/** The whole plane as one SVG, sized to what is on it.
- *
- *  Exported because a plane is also drawn inside the note that embeds it, where the
- *  same reasoning holds: there is one description of what a canvas looks like as a
- *  picture, and an embed that drew its own would be a second one to drift from.
- *  That reader asks for `plain`, and reading/drawn.ts says why.
- *
- *  `trusted` is whether the HTML in the cards is markup rather than the characters
- *  it is made of, asked of the plane the way its surface asks it; see trust.ts. A
- *  plain picture holds no HTML at all, so it does not matter there. */
 export function canvasSvg(
   canvas: Canvas,
   palette: Palette,
@@ -363,14 +303,9 @@ export function canvasSvg(
   ].join('')
 }
 
-/** How many device pixels a plane unit becomes in a PNG. Two, so the picture is
- *  crisp where it is going to be looked at, and no more, so a large plane is
- *  still an image somebody can send. */
 const PNG_SCALE = 2
 const PNG_MOST = 8000
 
-/** The SVG rasterised by the browser itself. Nothing else can draw a
- *  `foreignObject`, and nothing else has the fonts. */
 async function svgToPng(svg: string): Promise<Blob | null> {
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
@@ -404,7 +339,6 @@ async function svgToPng(svg: string): Promise<Blob | null> {
   }
 }
 
-/** What a canvas is called once it has left the app. */
 function stem(name: string): string {
   return name.replace(/\.[^.]+$/, '') || 'Canvas'
 }
@@ -415,11 +349,9 @@ export interface Drawing {
   path: string | null
   root: string | null
   name: string
-  /** Whether the cards' HTML is markup; see `canvasSvg`. */
   trusted: boolean
 }
 
-/** The SVG, with every picture in it inlined so the file stands alone. */
 async function readySvg(drawing: Drawing, palette: Palette, plain = false): Promise<string> {
   return inlinedSvg(
     canvasSvg(drawing.canvas, palette, drawing.path, drawing.root, plain, drawing.trusted),
@@ -431,21 +363,9 @@ function chosenPalette(drawing: Drawing): Palette {
   return chosen === 'app' ? drawing.palette : paletteOf(chosen)
 }
 
-/** A picture drawn on the plane, as `drawnNode` writes one. Also one an own card's HTML
- *  wrote out as an `<image>` in an `<svg>` of its own, which is a picture to inline just
- *  the same; a card's words cannot match, their `<` being escaped in the XML. */
 const DRAWN = /(<image\b[^>]*?\bhref=")([^"]*)(")/g
 
-/** An SVG with every picture in it inlined. Also a page note's; see pages/out.ts.
- *
- *  Two kinds of picture, each left the tag it is: an `<img src>` in a card's HTML,
- *  which is what XHTML in a `foreignObject` shows, and an `<image href>` on the plane.
- *  Neither is ever rewritten into the other: a regular expression over the whole SVG
- *  also goes through what cards say, and `src="q"` in a card's code is words. */
 export async function inlinedSvg(svg: string): Promise<string> {
-  // A picture on the plane is drawn there through `assetUrl`, so what the SVG
-  // holds is an address rather than a path: `assetPath` is that journey back, and
-  // it is the same one line on a desktop and in a browser.
   const back = (src: string) => assetPath(src) ?? src
 
   try {
@@ -480,9 +400,6 @@ export async function exportCanvasSvg(drawing: Drawing) {
   return target
 }
 
-/** A PNG is handed over rather than written to a path of the reader's choosing:
- *  the app's own file commands write text, and a picture is bytes. The browser's
- *  own save is what every other binary download in the app uses too. */
 export async function exportCanvasPng(drawing: Drawing) {
   const blob = await svgToPng(await readySvg(drawing, chosenPalette(drawing), true)).catch(
     () => null,
@@ -497,29 +414,17 @@ export async function exportCanvasPng(drawing: Drawing) {
   return name
 }
 
-/** The plane on a page, through the same printer a note goes through. */
-/** The plane as one sheet of paper: the page the PDF is printed from, and the page
- *  printing puts in front of the print engine, so the two cannot differ. Always the
- *  light side, as a note's PDF and print are: it is going on paper. */
 async function sheetOf(drawing: Drawing) {
   const svg = await readySvg(drawing, paletteOf('light'))
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
   const height = Number(size?.[4] ?? 600)
 
-  // The paper is the drawing: a plane has no columns to break into pages, so it
-  // goes on one sheet of its own size rather than being cut across A4.
-  //
-  // With the policy a note's page has. In a frame the sheet is under the app's own; for
-  // a PDF, and for the dialog on a Mac, it is a file in a window of its own, under
-  // nothing else, and a plane of one's own has markup on it. See trust.ts.
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${SHEET_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
   return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
 }
 
-/** The plane on paper, through whatever print dialog the machine has: the sheet the
- *  PDF export prints from, handed to the print engine instead of to a file (#350). */
 export async function printCanvas(drawing: Drawing) {
   const { html, page } = await sheetOf(drawing)
   await printInFrame(html, page)
@@ -532,8 +437,6 @@ export async function exportCanvasPdf(drawing: Drawing) {
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
 
   if (target) {
-    // The print dialog can still save the file, so nobody is left with nothing -
-    // and the line says the road changed; see export/print.ts.
     if (await writtenPdf(html, target, page)) return target
   }
 

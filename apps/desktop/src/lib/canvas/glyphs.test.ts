@@ -3,16 +3,8 @@ import { INK_TOOLS } from './format'
 import { ABOUT, MARKS, PEN_ICONS, PEN_NAMES, PLACING, RUBBING, type ToolMark } from './glyphs'
 import { BY_ID } from '../shortcuts/registry'
 
-/** The bar is data, so what a test can say about it is what somebody looking at
- *  the bar should be able to say: every button is a Lucide icon, every tool has a
- *  key, and the words on the hover are the words the key is filed under. A button
- *  whose tooltip and whose shortcut row disagree is the bar teaching the wrong
- *  key. */
-
 const TOOLS: ToolMark[] = [...ABOUT, ...RUBBING, ...PLACING]
 
-/** An icon node is a list of [tag, attributes]. Anything else is a helper that
- *  found its way into the map. */
 function drawable(icon: unknown): boolean {
   return (
     Array.isArray(icon) &&
@@ -50,8 +42,6 @@ describe('the key the bar teaches', () => {
     }
   })
 
-  /** The words are in two places because the bar shows a mark and the settings
-   *  show a row, and this is what keeps them one answer. */
   test('is filed in the registry under the same words the button says', () => {
     for (const mark of TOOLS) {
       const entry = BY_ID.get(mark.key ?? '')

@@ -16,10 +16,6 @@ describe('the line a pen would write', () => {
   })
 
   test('stays inside the box it is drawn in, at any width the dial allows', () => {
-    // Every pen at every end of the slider, because what breaks this is a fat
-    // nib on a turn: perfect-freehand puts the outline of a tapered stroke a
-    // little outside its own half-width there, and `sampleStroke` leaves room
-    // for exactly that. A line that left the box would be a preview that lied.
     for (const size of [LEAST_WIDTH, 1, 3, 8, 18, MOST_WIDTH]) {
       for (const tool of INK_TOOLS) {
         const ring = outlineOf(sampleStroke({ ...nibFor(tool), size }, 240, 64))
@@ -46,8 +42,6 @@ describe('the line a pen would write', () => {
   })
 
   test('turns enough for a flat nib to show both of its widths', () => {
-    // A chisel nib is a ribbon at a fixed angle, so a straight sample would show
-    // one width and say nothing. The wave is what makes the two visible.
     const ys = sampleStroke(nibFor('calligraphy'), 200, 60).points.map((one) => one.y)
     const swing = Math.max(...ys) - Math.min(...ys)
 
@@ -63,10 +57,6 @@ describe('the line a pen would write', () => {
   })
 
   test('is fatter for a fatter pen', () => {
-    // How thick the line is where it is thickest, which is the ring's own height
-    // in a narrow column rather than the height of the whole wave: the wave
-    // flattens as the nib grows, so measuring the box would say the opposite of
-    // what a reader sees.
     const thickest = (size: number) => {
       const ring = outlineOf(sampleStroke({ ...nibFor('pen'), size }, 200, 60))
       let most = 0

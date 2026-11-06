@@ -11,14 +11,9 @@ import {
   stepped,
 } from './lattice'
 
-/** The screen spacings the levels are chosen by. Written out here rather than read
- *  off the module, so a change to either of them has to be a change to what this
- *  file says the pattern does. */
 const THINS_AT = 12
 const FILLS_AT = 15
 
-/** Every zoom the camera reaches, and a long way past it, since a plane can arrive
- *  from a file, a share or a room carrying a camera nobody here chose. */
 function zooms(): number[] {
   const out: number[] = []
   for (let scale = 8; scale > 0.0002; scale /= 1.03) out.push(scale)
@@ -33,18 +28,15 @@ describe('the level a zoom asks for', () => {
   })
 
   test('thins as its points close to the floor, and not before', () => {
-    // The grid is 20 plane units, so its points are 12px apart at 0.6.
     expect(latticeLevel(0.61, 0)).toBe(0)
     expect(latticeLevel(0.6, 0)).toBe(0)
     expect(latticeLevel(0.599, 0)).toBe(1)
 
-    // And the level above thins at half of that, by the same rule.
     expect(latticeLevel(0.3, 1)).toBe(1)
     expect(latticeLevel(0.299, 1)).toBe(2)
   })
 
   test('comes back only once there is comfortably room again', () => {
-    // Thinned at 0.6 and back at 0.75: the stretch between is the hysteresis.
     expect(latticeLevel(0.6, 1)).toBe(1)
     expect(latticeLevel(0.74, 1)).toBe(1)
     expect(latticeLevel(0.75, 1)).toBe(0)
@@ -57,15 +49,11 @@ describe('the level a zoom asks for', () => {
     let level = latticeLevel(0.62)
     expect(level).toBe(0)
 
-    // Nudged back and forth across the point where the level was left behind. Once
-    // it has thinned it stays thinned, because coming back asks for more room than
-    // going asked for.
     for (const scale of [0.6, 0.599, 0.601, 0.6, 0.62, 0.599, 0.7, 0.61]) {
       level = latticeLevel(scale, level)
     }
     expect(level).toBe(1)
 
-    // And going properly back in brings it back, once and for good.
     level = latticeLevel(0.8, level)
     expect(level).toBe(0)
     for (const scale of [0.76, 0.9, 0.75, 0.8]) level = latticeLevel(scale, level)
@@ -96,7 +84,6 @@ describe('the level a zoom asks for', () => {
     expect(latticeLevel(1, -5)).toBe(0)
     expect(latticeLevel(1, Number.NaN)).toBe(0)
     expect(latticeLevel(1, 2.4)).toBe(0)
-    // Nothing to work an answer out of, so the level in force stands.
     expect(latticeLevel(0, 3)).toBe(3)
     expect(latticeLevel(-1, 3)).toBe(3)
     expect(latticeLevel(Number.NaN, 3)).toBe(3)
@@ -111,7 +98,6 @@ describe('the lattice the levels are cut from', () => {
     expect(latticeEvery(4)).toBe(16 * GRID)
   })
 
-  /** The whole of what Emil asked for: thinning and never densifying or shifting. */
   test("keeps every coarser level's points inside the finer one's", () => {
     for (let level = 0; level < 8; level++) {
       const fine = latticeEvery(level)
@@ -119,8 +105,6 @@ describe('the lattice the levels are cut from', () => {
 
       expect(coarse % fine).toBe(0)
 
-      // The points themselves, out to a good way either side of the plane's origin:
-      // every point the coarser level draws is a point the finer one drew.
       const points = new Set<number>()
       for (let at = -40 * fine; at <= 40 * fine; at += fine) points.add(at)
       for (let at = -40 * fine; at <= 40 * fine; at += coarse) {
@@ -144,11 +128,7 @@ describe('the lattice the levels are cut from', () => {
       level = latticeLevel(scale, level)
       const step = latticeEvery(level) * scale
 
-      // Never a wash.
       expect(step, String(scale)).toBeGreaterThanOrEqual(THINS_AT)
-      // And never sparse, once there is a coarser level to have come from. Level 0
-      // is the grid at the zoom it is being read at: zoomed right in its points are
-      // as far apart as the zoom says, because the grid is on the plane.
       if (level > 0) expect(step, String(scale)).toBeLessThan(2 * FILLS_AT)
     }
   })
@@ -157,7 +137,6 @@ describe('the lattice the levels are cut from', () => {
 describe('the fade between levels', () => {
   const MS = 200
 
-  /** Wound forward in whole frames, which is how the surface steps it. */
   function through(fade: Fade, wound: number, frame = 16): Fade {
     let out = fade
     for (let gone = 0; gone < wound; gone += frame) out = stepped(out, frame, MS)
@@ -186,9 +165,6 @@ describe('the fade between levels', () => {
   })
 
   test('is a function of time and never of the zoom', () => {
-    // The same fade, the same distance in: the same pattern, whatever the zoom is
-    // doing while it runs. What the zoom decides is where the fade is heading, and
-    // that is all it decides.
     const half = through(aimed(settled(1), 2), MS / 2)
     for (const scale of [1, 0.5, 0.31, 0.04]) {
       const layers = latticeLayers(half.at, scale)
@@ -207,7 +183,6 @@ describe('the fade between levels', () => {
     }
     expect(fade.at).toBe(2)
 
-    // Eased out: over the first half of the time it covers more than half the way.
     expect(through(aimed(settled(3), 2), MS / 2).at).toBeLessThan(2.5)
   })
 
@@ -215,7 +190,6 @@ describe('the fade between levels', () => {
     const out = through(aimed(settled(2), 3), MS / 2)
     const back = aimed(out, 2)
 
-    // From where the first one had reached, over a whole duration again.
     expect(back.from).toBe(out.at)
     expect(back.at).toBe(out.at)
     expect(back.to).toBe(2)
@@ -243,8 +217,6 @@ describe('the fade between levels', () => {
   })
 
   test('crosses several levels by passing through them, not by jumping', () => {
-    // A fling out from the grid to four levels coarser: every level in between is
-    // drawn on the way, so the points leave in waves rather than all at once.
     let fade = aimed(settled(0), 4)
     const seen = new Set<number>()
 
@@ -269,7 +241,6 @@ describe('the tiles the pattern draws', () => {
     const layers = latticeLayers(1.4, 0.5)
     expect(layers).toHaveLength(2)
 
-    // Coarsest first, so the points the two share are drawn the colour they were.
     expect(layers[0]!.every).toBe(4 * GRID)
     expect(layers[0]!.showing).toBe(1)
     expect(layers[1]!.every).toBe(2 * GRID)

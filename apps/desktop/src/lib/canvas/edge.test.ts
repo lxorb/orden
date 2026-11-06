@@ -1,14 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import { ALONE_INSET, heldAtEdge, INSET } from './edge'
 
-/** A hand off the screen is held at the screen's edge and points the way to it,
- *  whatever the camera is doing (#386). */
-
 const WIDTH = 800
 const HEIGHT = 600
 const still = { x: 0, y: 0, scale: 1 }
 
-/** Where a held hand is on the screen, in pixels, for a camera. */
 function onScreen(at: { x: number; y: number }, camera = still) {
   return {
     x: WIDTH / 2 + (at.x - camera.x) * camera.scale,
@@ -38,7 +34,6 @@ describe('a hand off the screen', () => {
     expect(held).not.toBeNull()
     expect(onScreen(held!.at)).toEqual({ x: WIDTH - INSET.right, y: HEIGHT / 2 + 40 })
     expect(held!.angle).toBeCloseTo(0)
-    // Its name reads inwards, to the left of the arrow.
     expect(held!.anchor).toBe('end')
     expect(held!.baseline).toBe('middle')
   })

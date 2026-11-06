@@ -1,36 +1,12 @@
-/** What a press, a drag and a lift mean, as one machine over events.
- *
- *  Every gesture the plane has lives here and nowhere else: picking, banding,
- *  dragging, resizing, connecting, panning, pinching, drawing, rubbing out and
- *  lassoing. The surface next door does three things and no more - it works out
- *  what is under a point, it hands the machine the event, and it carries out the
- *  effects it gets back. That is why this file has no DOM in it and every rule in
- *  it is a test rather than a thing to try with a mouse.
- *
- *  A hit is part of the event rather than something the machine goes and asks
- *  for. Hit testing needs the plane, the camera and the z order; keeping it out
- *  here is what makes a gesture a sequence of values, and a sequence of values is
- *  something a test can write down.
- *
- *  Nothing here touches the document. The machine says "these cards moved by
- *  this much"; the store decides what that is worth remembering. A gesture is one
- *  edit because the machine only ever says so once, when the pointer comes up. */
-
 import { settledTurn, TURN_DEADBAND, turnedBy } from '../camera'
 import type { InkPoint, InkTool, Shape, Side } from './format'
 import type { Box, HandleId, Point } from './geometry'
 import { rubbedBetween } from './ink'
 
-/** What the bar is set to. The arrow is the one everything else falls back to;
- *  the last seven are the shapes, which the format already names. */
 export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
 
-/** A tool that puts something on the plane, which every one of them does by being
- *  pulled out: pressed once it lands at its own size, dragged it lands at the size
- *  it was dragged to. One gesture for a card, a frame and a triangle alike. */
 export type PutTool = 'text' | 'words' | 'file' | 'picture' | 'link' | 'group' | Shape
 
-/** The ones a press puts down, as a set, so the machine can ask in one lookup. */
 const PUT: ReadonlySet<Tool> = new Set<Tool>([
   'text',
   'words',
@@ -47,38 +23,23 @@ const PUT: ReadonlySet<Tool> = new Set<Tool>([
   'elbow',
 ])
 
-/** Whether the tool puts something on the plane. */
 export function puts(tool: Tool): tool is PutTool {
   return PUT.has(tool)
 }
 
-/** The three that are a line from one point to another rather than a body, and so
- *  become a connector when both ends land on a card. */
 const JOINS: ReadonlySet<Tool> = new Set<Tool>(['line', 'arrow', 'elbow'])
 
 export type PointerKind = 'mouse' | 'pen' | 'touch'
 
-/** Which end of a connector: the one it leaves, or the one it arrives at. */
 type EdgeEnd = 'from' | 'to'
 
-/** What the pointer landed on, worked out by the surface before the event gets
- *  here. Everything is a name rather than an object, so a machine state can be
- *  compared with `toEqual` and a test needs no canvas to write one down. */
 export interface Hit {
-  /** A resize handle of what is picked. */
   handle: HandleId | null
-  /** One of the four dots an edge is dragged from. */
   port: { id: string; side: Side } | null
-  /** An end of a picked connector, which is dragged onto another card to move it
-   *  there. */
   endpoint: { id: string; end: EdgeEnd } | null
-  /** The card under the point, if any. */
   node: string | null
-  /** The connector under the point, if any. */
   edge: string | null
-  /** The ink stroke under the point, if any. */
   stroke: string | null
-  /** A handle of the lasso's own box: a corner to pull, or its ring to turn by. */
   ink: HandleId | 'turn' | 'inside' | null
 }
 
@@ -92,30 +53,18 @@ export const NOTHING: Hit = {
   ink: null,
 }
 
-/** What the surface knows when the pointer goes down, beyond where it is. */
 export interface Down {
   kind: 'down'
   id: number
   pointer: PointerKind
-  /** Where on the plane, and where on the screen. Panning and pinching are
-   *  screen arithmetic; everything else is plane arithmetic. */
   at: Point
   screen: Point
-  /** When it landed, from the event. Two fingers a moment apart are a pinch and
-   *  two fingers a second apart are a hand settling on the page, and that is the
-   *  only thing in here that needs a clock. */
   time: number
-  /** The mouse button, or 0 for a pen and a finger. */
   button: number
-  /** Shift, and the "as well as" key, which is Ctrl or Cmd. */
   shift: boolean
   adds: boolean
-  /** Alt, which is what leaves a copy behind when something is dragged. */
   alt: boolean
-  /** The pen held with its button down, or turned over. Rubs out whatever the
-   *  bar is set to, which is what every stylus does. */
   eraser: boolean
-  /** What the pen reported, for the first point of a stroke. */
   sample: InkPoint
   hit: Hit
 }
@@ -125,29 +74,15 @@ interface Move {
   id: number
   at: Point
   screen: Point
-  /** Every sample since the last event, oldest first, which is what
-   *  `getCoalescedEvents` hands over: a fast stroke is drawn through all of them
-   *  rather than through the one that happened to be delivered. */
   samples: InkPoint[]
   hit: Hit
 }
 
-/** A contact that turns out to be a pen after all, or a pen whose button was not
- *  down yet when it landed.
- *
- *  Samsung's S Pen reports the first event of a contact as a finger on some
- *  devices, and a barrel button held as the nib touches down is sometimes only in
- *  the second event. Either way the surface says so as soon as it knows, and a
- *  gesture that has not got anywhere yet is taken back and begun again as the
- *  pen's own. Without it the first press after picking the tablet up pans the
- *  plane instead of drawing on it. */
 interface Penned {
   kind: 'penned'
   id: number
   at: Point
-  /** The first point of the stroke it should have been drawing. */
   sample: InkPoint
-  /** Whether the pen's button is down now, which rubs out. */
   eraser: boolean
   hit: Hit
 }
@@ -159,18 +94,10 @@ export type Input =
   | { kind: 'up'; id: number; at: Point; screen: Point; hit: Hit }
   | { kind: 'cancel'; id: number }
   | { kind: 'space'; down: boolean }
-  /** The pointer has been still long enough to mean something: a menu under a
-   *  finger, a tidied shape under a pen. */
   | { kind: 'held'; at: Point }
 
-/** What the machine asks the surface to do. Named as verbs because that is what
- *  they are; the surface carries them out in order and none of them can fail. */
 export type Effect =
   | { do: 'pick'; ids: string[]; adding: boolean }
-  /** The band as it stands, for the surface to say what it covers: what a box
-   *  caught is the plane's own arithmetic, and the machine has no plane. `was`
-   *  is what was picked before the band began, which a band held with the "as
-   *  well as" key adds to. */
   | { do: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
   | { do: 'clear' }
   | { do: 'edit'; id: string }
@@ -182,16 +109,9 @@ export type Effect =
       handle: HandleId
       dx: number
       dy: number
-      /** Whether the shape of the box is held, which Shift asks for and a picture
-       *  under a thumb is given without being asked. */
       aspect: boolean
     }
-  /** A copy left where the drag began, so what the pointer carries away is what
-   *  was picked and the copy stays behind. Alt on a drag, which is what every
-   *  drawing program does with it. */
   | { do: 'clone' }
-  /** `auto` lets the store work the far side out from where the two cards
-   *  ended up, which is what a hand dropping a line on a card means. */
   | {
       do: 'connect'
       from: string
@@ -200,55 +120,37 @@ export type Effect =
       toSide: Side | 'auto'
       head?: boolean
     }
-  /** One end of an existing connector moved onto another card. */
   | { do: 'reconnect'; edge: string; end: EdgeEnd; to: string }
-  /** Something put on the plane at the size it was dragged out to. */
   | { do: 'pull'; tool: PutTool; from: Point; to: Point }
-  /** Something put on the plane at its own size, which is what a press with no
-   *  drag in it means. */
   | { do: 'place'; tool: PutTool; at: Point }
   | { do: 'stroke'; stroke: PendingStroke }
   | { do: 'rub'; at: Point; reach: number }
   | { do: 'cut'; at: Point; reach: number }
-  /** `cards` where the lasso takes cards as well as ink: one drawn by a held finger,
-   *  which is a finger's way to pick (#349). */
   | { do: 'catch'; lasso: Point[]; cards?: boolean }
-  /** The menu a held finger opened, put away: the finger moved on instead. */
   | { do: 'unmenu' }
   | { do: 'ink'; dx: number; dy: number; scale: number; turn: number; about: Point }
   | { do: 'pan'; dx: number; dy: number }
   | { do: 'zoom'; at: Point; by: number }
-  /** The view turned about a screen point, by radians clockwise (#351). */
   | { do: 'turn'; at: Point; by: number }
   | { do: 'menu'; at: Point }
   | { do: 'assist' }
 
-/** A stroke while it is being drawn: everything but an id, which the store hands
- *  out when it takes it. */
 export interface PendingStroke {
   tool: InkTool
   size: number
   color: string
-  /** How much of the colour lands, 0 to 1. */
   opacity: number
   points: InkPoint[]
 }
 
 type Gesture =
-  /** `bare` where a finger landed on the plane itself, which a hold turns into a
-   *  lasso (#349). */
   | { kind: 'pan'; id: number; screen: Point; moved: boolean; bare?: boolean }
-  /** A finger held still on the bare plane: the menu is up, and moving on from here
-   *  draws a lasso instead (#349). */
   | { kind: 'armed'; id: number; at: Point; screen: Point }
   | {
       kind: 'pinch'
       ids: [number, number]
       screens: [Point, Point]
       apart: number
-      /** The angle the two fingers began at, and the one they were last at, in
-       *  radians; and whether they have turned past the deadband, after which the
-       *  view turns with them (#351). */
       began: number
       angle: number
       turning: boolean
@@ -266,25 +168,12 @@ type Gesture =
   | { kind: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
   | { kind: 'connect'; id: string; side: Side; to: Point }
   | { kind: 'reconnect'; edge: string; end: EdgeEnd; to: Point }
-  /** Something being pulled out of the bar onto the plane. `fromNode` is the card
-   *  the pull began on, which is what turns a line dragged between two cards into
-   *  a connector rather than a line lying across them. */
   | { kind: 'pull'; tool: PutTool; from: Point; to: Point; fromNode: string | null }
   | { kind: 'draw'; stroke: PendingStroke; id: number }
   | { kind: 'erase'; whole: boolean; id: number; last: Point; lastScreen: Point }
-  /** A loop drawn by hand, or a box pulled out. Either way it is the ring it
-   *  caught things with, so what draws it and what reads it know one shape. */
   | { kind: 'lasso'; from: Point; points: Point[]; box: boolean; cards?: boolean }
   | { kind: 'ink'; how: 'move' | HandleId | 'turn'; box: Box; from: Point }
 
-/** The pointer a gesture belongs to.
- *
- *  A palm coming off the glass must not end the stroke the pen is still drawing,
- *  and a second finger lifting must not end a pan the first is still driving, so
- *  the gesture knows whose it is. It also knows what kind of pointer that is,
- *  where it last was on screen, so a second finger pinches from wherever the
- *  first one has got to, and when it began, so a stroke a moment old can be given
- *  up for a pinch and an older one cannot. */
 interface Driver {
   id: number
   kind: PointerKind
@@ -294,18 +183,10 @@ interface Driver {
 
 export interface Machine {
   gesture: Gesture | null
-  /** Whose gesture it is. */
   driver: Driver | null
-  /** Space held, which turns any drag into a pan. */
   spacing: boolean
-  /** Whether a pen is on the glass. Every finger is ignored while it is, which
-   *  is the whole of palm rejection: a hand resting on a tablet is touch, and a
-   *  pen that has arrived means the hand is not what anybody is drawing with. */
   penDown: boolean
-  /** Fingers down that are not driving the gesture, so the second one can start
-   *  a pinch and the first can carry on. */
   spare: { id: number; screen: Point }[]
-  /** The card the pointer is over, which wears the four dots. */
   hovered: string | null
 }
 
@@ -313,23 +194,10 @@ export function start(): Machine {
   return { gesture: null, driver: null, spacing: false, penDown: false, spare: [], hovered: null }
 }
 
-/** How far a pointer may travel and still count as a press rather than a drag,
- *  in plane units at one to one. */
 const SLOP = 3
 
-/** How far a finger may miss a handle and still find it. A pen and a mouse are
- *  precise; a thumb is not, and the same numbers have to serve both. */
 export const FORGIVING = 8
 
-/** How soon after a gesture began a second finger is the plane rather than a palm,
- *  in milliseconds.
- *
- *  Two fingers mean the page, in every tool: whatever the first one had started,
- *  the second one takes over as a pan and a pinch. The only question is what
- *  happens to ink the first finger had already laid down, and the answer every
- *  drawing app gives is that a stroke a moment old is given up for the pinch and
- *  an older one is not: a hand settling on the page halfway through a long line
- *  must not take the line with it. */
 const TWO_FINGERS = 250
 
 export interface Step {
@@ -337,64 +205,33 @@ export interface Step {
   effects: Effect[]
 }
 
-/** What the surface has to tell the machine that is not in the event: which tool
- *  the bar is on, what is picked, and how big a plane unit is on screen. */
 export interface Context {
   tool: Tool
   picked: string[]
-  /** Whether a card is being written in, which suspends every gesture over it. */
   editing: string | null
-  /** Pixels per plane unit. Slop and the eraser are felt in pixels. */
   scale: number
-  /** How far the view is turned, in radians, so a drag across the screen moves what
-   *  it carries the way the hand went (#351). */
   turn?: number
-  /** Whether two fingers turn the view, which is a setting and off unless it is on. */
   turns?: boolean
-  /** The box round the ink a lasso caught, when there is one. */
   inkBox: Box | null
-  /** The pen as the bar has it set. */
   pen: { tool: InkTool; size: number; color: string; opacity: number }
-  /** The eraser as the bar has it set: how wide it is on screen, how wide when it
-   *  takes a whole stroke, and whether it takes a whole stroke rather than the
-   *  part under it. */
   eraser: { whole: boolean; size: number; stroke: number }
-  /** Whether the lasso is a box pulled out rather than a loop drawn by hand. */
   lassoBox: boolean
-  /** Whether a resize holds the shape of the box without being asked. What a
-   *  picture under a thumb wants: a photograph stretched one way is not the
-   *  photograph, and there is no Shift on a tablet. */
   aspect: boolean
-  /** Whether a stroke held still is tidied into the line, ring or box it was
-   *  aiming at. */
   straighten: boolean
-  /** Whether a pen has ever been on this glass. */
   penSeen: boolean
-  /** Whether a finger draws anyway, which is the one way round the above. */
   fingerDraws: boolean
 }
 
-/** What the eraser reaches, in plane units, from what the bar says and how far
- *  in the plane a pixel goes. Held in one place, because a rub answers under the
- *  nib and again on every point of the drag, and the two have to agree.
- *
- *  Shift is the other way of asking for a whole stroke, which is what a keyboard
- *  had before there was a popover to ask in. */
 function rubbing(context: Context, shift: boolean, touch: boolean) {
   const whole = context.eraser.whole || shift
-  // A finger misses a line by as much as it may miss one it taps.
   const stroke = context.eraser.stroke + (touch ? FORGIVING : 0)
   return { whole, reach: (whole ? stroke : context.eraser.size) / context.scale }
 }
 
-/** What every point of the eraser does: take whole every stroke it reaches, or
- *  bite a hole where it is. */
 function rubbed(rub: { whole: boolean; reach: number }, at: Point): Effect {
   return { do: rub.whole ? 'rub' : 'cut', at, reach: rub.reach }
 }
 
-/** The eraser taken up: the pen's own button, or the tool on the bar. Both are
- *  the eraser, set the way the bar has the eraser set. */
 function rubbingOut(held: Machine, input: Down, context: Context): Step {
   const rub = rubbing(context, input.shift, input.pointer === 'touch')
 
@@ -413,9 +250,6 @@ function rubbingOut(held: Machine, input: Down, context: Context): Step {
   }
 }
 
-/** Which side of a card a line drawn from it left by: whichever way the hand went
- *  furthest. What settles the near end of a connector dragged out with the arrow
- *  tool, since the hand aimed rather than pressed a dot. */
 function facing(from: Point, to: Point): Side {
   const across = to.x - from.x
   const down = to.y - from.y
@@ -424,19 +258,10 @@ function facing(from: Point, to: Point): Side {
   return down >= 0 ? 'bottom' : 'top'
 }
 
-/** The four corners of the box between two points, which is what a lasso pulled
- *  out as a box catches things with. */
 function ring(from: Point, to: Point): Point[] {
   return [from, { x: to.x, y: from.y }, to, { x: from.x, y: to.y }]
 }
 
-/** Whether a second finger takes the plane from the gesture in hand.
- *
- *  It does, in every tool: a card being dragged, a band, a shape or a stroke a
- *  moment old all give way to a pan and a pinch, because two fingers on a page
- *  mean the page. The one thing it will not do is throw away ink that has been
- *  going for longer than a moment, so a hand settling on the glass halfway
- *  through a long line leaves the line alone; see TWO_FINGERS. */
 function takesOver(gesture: Gesture, first: Driver, now: number): boolean {
   if (first.kind !== 'touch' || gesture.kind === 'pinch') return false
   if (gesture.kind !== 'draw' && gesture.kind !== 'erase') return true
@@ -444,9 +269,6 @@ function takesOver(gesture: Gesture, first: Driver, now: number): boolean {
   return now - first.since <= TWO_FINGERS
 }
 
-/** Whether a gesture has got anywhere: something on the plane has moved, ink has
- *  been laid down, or the plane itself has. What has got nowhere can be taken
- *  back and begun again as something else. */
 function begun(gesture: Gesture): boolean {
   switch (gesture.kind) {
     case 'pan':
@@ -473,10 +295,6 @@ function begun(gesture: Gesture): boolean {
   }
 }
 
-/** A contact the surface has just worked out is a pen, or a pen whose button was
- *  not down yet when it landed. Whatever a finger was given is taken back, so
- *  long as it has got nowhere, and the pen draws or rubs out from where the nib
- *  touched down. */
 function onPenned(machine: Machine, input: Penned, context: Context): Step {
   const driver = machine.driver
   if (driver?.id !== input.id) return { machine, effects: [] }
@@ -486,15 +304,7 @@ function onPenned(machine: Machine, input: Penned, context: Context): Step {
 
   const drawing = machine.gesture?.kind === 'draw'
 
-  // A button that comes down while the nib is already writing turns that contact
-  // into the eraser it now is, and the ink laid down since it touched down goes
-  // with it: a hand holding the button is rubbing out, and a stub of a stroke it
-  // never meant to leave is worse than nothing. Nothing is on the plane yet - a
-  // stroke is committed when the pen lifts - so there is nothing to undo either.
   if (!(input.eraser && drawing) && machine.gesture && begun(machine.gesture)) {
-    // Whatever else it is doing, it is doing it: a stroke half drawn is not
-    // restarted because the pen was reported late, and a plane that has been
-    // panned stays where the hand put it.
     return { machine: now, effects: [] }
   }
 
@@ -527,39 +337,16 @@ function onPenned(machine: Machine, input: Penned, context: Context): Step {
     }
   }
 
-  // A pen with the arrow or a shape in hand behaves as a mouse does, and a mouse
-  // is what the finger was already being treated as. Nothing to take back.
   return { machine: now, effects: [] }
 }
 
-/** The tools a pen is for. Everything else on the bar is for a finger as much as
- *  for anything: a card has to be placed and a shape dragged out somehow. */
 const INK: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
 
-/** What a press means with this pointer, which is not always what the bar says.
- *
- *  On a tablet with a stylus the two are different instruments. Once a pen has
- *  been on the glass the finger stops being a nib and goes back to what a finger
- *  is for - moving the plane, picking things up, holding for the menu - whichever
- *  pen the bar is holding, because a hand resting on a page while the other one
- *  writes must not leave a mark. That is what every stylus app does and what
- *  nobody has to be told.
- *
- *  A device that has never seen a pen has no other way to draw, so there the
- *  finger draws. And a reader who wants it anyway says so once, in the pen's own
- *  row, and is believed. */
 function toolFor(input: Down, context: Context): Tool {
   if (inks(input.pointer, context)) return context.tool
   return INK.has(context.tool) ? 'select' : context.tool
 }
 
-/** Whether a contact of this kind may lay ink down at all, which is the rule above
- *  with the tool left out of it.
- *
- *  Its own function because a page note asks the same question of the same glass, and
- *  there is one answer: a hand resting on paper while the other one writes must not
- *  leave a mark, whichever surface the paper is on. Pure, like everything else here,
- *  so both surfaces are held to it by the same test. */
 export function inks(
   pointer: PointerKind,
   glass: { penSeen: boolean; fingerDraws: boolean },
@@ -567,8 +354,6 @@ export function inks(
   return pointer !== 'touch' || !glass.penSeen || glass.fingerDraws
 }
 
-/** One event. The machine and the effects, never a change in place: a reducer
- *  that hands back a new value is one a test can compare. */
 export function step(machine: Machine, input: Input, context: Context): Step {
   switch (input.kind) {
     case 'space':
@@ -577,9 +362,6 @@ export function step(machine: Machine, input: Input, context: Context): Step {
       return onDown(machine, input, context)
     case 'move': {
       const next = onMove(machine, input, context)
-      // Where the pointer driving the gesture has got to, kept in one place: a
-      // second finger pinches from there rather than from where the first one
-      // landed.
       const driver = next.machine.driver
       if (driver?.id !== input.id) return next
 
@@ -599,11 +381,6 @@ export function step(machine: Machine, input: Input, context: Context): Step {
   }
 }
 
-/** A pointer the system took back. The one driving the gesture, or either finger of
- *  a pinch, ends the gesture where it was. Any other is let go of alone: iPadOS
- *  cancels a touch it decides was a palm, and an edge swipe claims the finger it
- *  began with, and either used to end the drag or the pinch the other hand was in
- *  the middle of. */
 export function drives(machine: Machine, id: number): boolean {
   const one = machine.gesture
   return (
@@ -628,22 +405,14 @@ function onCancel(machine: Machine, id: number): Step {
 }
 
 function onDown(machine: Machine, input: Down, context: Context): Step {
-  // A hand resting on the glass while the pen is on it is a hand, not a gesture.
   if (input.pointer === 'touch' && machine.penDown) return { machine, effects: [] }
 
-  // A pen arriving is what the hand is drawing with, whatever else is on the
-  // glass. A palm that landed a moment before it began a gesture nobody meant,
-  // and it is dropped here rather than left to drag the plane out from under the
-  // stroke.
   const now: Machine =
     input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driver: null } : machine
 
   const penDown = now.penDown || input.pointer === 'pen'
   const tool = toolFor(input, context)
 
-  // A second finger is the page, whatever the first one was doing. A third is
-  // spare and changes nothing, and so is a second finger on a stroke that is
-  // already under way; see TWO_FINGERS.
   if (input.pointer === 'touch' && now.gesture && now.driver) {
     const first = now.driver
 
@@ -685,16 +454,8 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     driver: { id: input.id, kind: input.pointer, screen: input.screen, since: input.time },
   }
 
-  // The pen's own button rubs out whatever the bar says, which is what a stylus
-  // does in every app that has ever had one. Before the button below it, because
-  // Chromium reports a barrel button held as the right one on Android and as the
-  // eraser bit elsewhere, and both mean the same thing to a hand. Set the way the
-  // eraser is set, because it is the eraser.
   if (input.eraser) return rubbingOut(held, input, context)
 
-  // The right button is the menu's, wherever it lands, and it is a mouse's: a pen
-  // holding its button is rubbing out. It starts nothing, so it drives nothing
-  // either.
   if (input.button === 2 && input.pointer !== 'pen') {
     return {
       machine: { ...held, driver: now.driver },
@@ -702,8 +463,6 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
-  // Space, the middle button and the hand tool all pan, over a card as readily
-  // as over the plane: a hand that has learned one of them uses it everywhere.
   if (now.spacing || input.button === 1 || tool === 'hand') {
     return {
       machine: {
@@ -714,10 +473,6 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
-  // Everything a press puts on the plane is pulled out: a card, a frame, a picture
-  // and a triangle alike. Let go without moving and it lands at its own size;
-  // dragged, it lands at the size it was dragged to, and the plane draws it the
-  // whole way rather than only once it is let go.
   if (puts(tool)) {
     return {
       machine: {
@@ -744,8 +499,6 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     case 'erase':
       return rubbingOut(held, input, context)
     case 'lasso':
-      // A press inside what the lasso already caught moves it; anywhere else
-      // draws a new one.
       if (input.hit.ink) {
         return {
           machine: {
@@ -774,17 +527,12 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
         effects: [],
       }
     case 'select':
-      // The hand is not here: it panned above, from anywhere, which is what a hand
-      // does. Only the arrow reaches the rest of this file, and a finger on a device
-      // with a pen reaches it whatever the bar says.
       break
   }
 
   return select(held, input, context)
 }
 
-/** What a press means with the arrow: a handle, a dot, a connector, a card, or
- *  the plane. In that order, because that is the order they are drawn in. */
 function select(machine: Machine, input: Down, context: Context): Step {
   const { hit } = input
 
@@ -806,8 +554,6 @@ function select(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
-  // An end of a connector that is already picked, dragged onto another card. Before
-  // the dots below, because an end sits exactly where a dot would.
   if (hit.endpoint) {
     return {
       machine: {
@@ -843,16 +589,11 @@ function select(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
-  // A card being written in keeps the pointer: it is a text field, and a drag in
-  // one selects words.
   if (context.editing !== null && hit.node === context.editing) {
     return { machine: { ...machine, driver: null }, effects: [] }
   }
 
   if (!hit.node) {
-    // A finger on the plane moves the plane; there is no second button to pan
-    // with and no marquee anybody draws with a thumb. Held still first, it draws a
-    // lasso instead; see `onHeld`.
     if (input.pointer === 'touch') {
       return {
         machine: {
@@ -881,15 +622,12 @@ function select(machine: Machine, input: Down, context: Context): Step {
 
   const adding = input.adds || input.shift
   const effects: Effect[] = [{ do: 'leave' }]
-  // A press on something already picked keeps the whole selection, so a drag of
-  // nine cards is not undone by grabbing one of them.
   if (adding || !context.picked.includes(hit.node)) {
     effects.push({ do: 'pick', ids: [hit.node], adding })
   }
 
   const ids = adding
-    ? // Whatever the pick just did, worked out here so the drag carries it.
-      context.picked.includes(hit.node)
+    ? context.picked.includes(hit.node)
       ? context.picked.filter((one) => one !== hit.node)
       : [...context.picked, hit.node]
     : context.picked.includes(hit.node)
@@ -898,9 +636,6 @@ function select(machine: Machine, input: Down, context: Context): Step {
 
   if (!ids.length) return { machine: { ...machine, driver: null }, effects }
 
-  // Alt leaves a copy where the drag began. The originals are what the pointer
-  // carries away, so the ids the gesture already holds stay the right ones and
-  // nothing has to be renamed halfway through a drag.
   if (input.alt) effects.push({ do: 'clone' })
 
   return {
@@ -923,11 +658,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
     }
   }
 
-  // A move from a pointer that is not the one driving the gesture moves nothing. An
-  // iPad reports an Apple Pencil hovering over the glass as moves of its own, with an
-  // id of its own, while a finger carries a card; the card followed whichever of the
-  // two had moved last. Pan, draw and erase answer to the id they began with below;
-  // a pinch is two pointers and answers to both.
   if (machine.driver && input.id !== machine.driver.id && one.kind !== 'pinch') {
     return { machine, effects: [] }
   }
@@ -965,15 +695,10 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       }
 
       const effects: Effect[] = [{ do: 'pan', dx: middle.x - was.x, dy: middle.y - was.y }]
-      // Two fingers that stay the same distance apart are a pan, and a zoom of
-      // exactly one is not worth a camera write.
       if (one.apart > 0 && Math.abs(apart - one.apart) > 0.5) {
         effects.push({ do: 'zoom', at: middle, by: apart / one.apart })
       }
 
-      // And their turn, where turning is on: nothing until it has passed the
-      // deadband, which a pinch held a little crooked never does, and from there
-      // every change of angle (#351).
       const angle = angleOf(screens[0], screens[1])
       const turning =
         one.turning ||
@@ -1003,8 +728,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       }
 
     case 'band': {
-      // Answered as it is dragged rather than when it is let go, which is what a
-      // band round a row of files does: what is caught is shown being caught.
       const band = { ...one, to: input.at }
       return {
         machine: { ...machine, gesture: band },
@@ -1063,8 +786,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [],
       }
 
-    // The held finger moving on: the menu goes, and the finger draws a lasso from
-    // where it was held, catching cards as well as ink (#349).
     case 'armed': {
       if (input.id !== one.id) return { machine, effects: [] }
       if (Math.hypot(input.screen.x - one.screen.x, input.screen.y - one.screen.y) <= SLOP) {
@@ -1090,9 +811,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
   }
 }
 
-/** What a drag of the lasso's box comes to: a move, a pull from one corner, or a
- *  turn about its middle. One effect either way, so the surface applies one
- *  transform and the store keeps one undo step. */
 function inkEffect(one: Extract<Gesture, { kind: 'ink' }>, at: Point): Effect {
   const box = one.box
   const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
@@ -1114,8 +832,6 @@ function inkEffect(one: Extract<Gesture, { kind: 'ink' }>, at: Point): Effect {
     return { do: 'ink', dx: 0, dy: 0, scale: 1, turn: now - was, about: middle }
   }
 
-  // A corner scales about the middle, evenly on both axes: handwriting stretched
-  // one way is handwriting nobody wrote.
   const reach = Math.max(box.width, box.height, 1) / 2
   const was = Math.hypot(one.from.x - middle.x, one.from.y - middle.y)
   const now = Math.hypot(at.x - middle.x, at.y - middle.y)
@@ -1130,7 +846,6 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
 
   if (!one) return { machine: { ...machine, spare, penDown: false, driver: null }, effects: [] }
 
-  // A pinch that loses one finger goes back to panning with the other.
   if (one.kind === 'pinch' && one.ids.includes(input.id)) {
     const left = one.ids[0] === input.id ? 1 : 0
     return {
@@ -1149,8 +864,6 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
     }
   }
 
-  // Somebody else's pointer. A palm coming off the glass is not the pen putting
-  // its stroke down, and a stray finger is not the end of a drag.
   if (machine.driver !== null && machine.driver.id !== input.id) {
     return { machine: { ...machine, spare }, effects: [] }
   }
@@ -1159,16 +872,11 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
 
   switch (one.kind) {
     case 'pan':
-      // A finger that went down and came up without going anywhere is a tap on
-      // the plane, and a tap on the plane means "nothing, thank you". A mouse
-      // says the same thing the moment it is pressed; a finger cannot, because
-      // the same press is how the plane is moved.
       return { machine: rest, effects: one.moved ? [] : [{ do: 'clear' }] }
     case 'pinch':
       return { machine: rest, effects: [] }
 
     case 'drag': {
-      // A drag that was really a click has nothing to record.
       if (Math.hypot(one.dx, one.dy) * context.scale <= SLOP) return { machine: rest, effects: [] }
       return { machine: rest, effects: [{ do: 'move', ids: one.ids, dx: one.dx, dy: one.dy }] }
     }
@@ -1215,14 +923,10 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
 
     case 'pull': {
       const span = Math.hypot(one.to.x - one.from.x, one.to.y - one.from.y)
-      // Pressed rather than dragged: it lands at its own size where the press was.
       if (span * context.scale <= SLOP) {
         return { machine: rest, effects: [{ do: 'place', tool: one.tool, at: one.from }] }
       }
 
-      // A line dragged from one card to another is a connector between them, which
-      // is what a hand drawing an arrow between two cards means. A line dragged
-      // anywhere else is a line.
       const target = input.hit.node
       if (JOINS.has(one.tool) && one.fromNode && target && target !== one.fromNode) {
         return {
@@ -1246,9 +950,6 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       }
     }
 
-    // A tap is a dot: the pen went down and came up in one place, which is a mark
-    // somebody meant to make. What it looks like is the nib's own footprint; see
-    // outlineOf in ink.ts.
     case 'draw':
       return { machine: rest, effects: [{ do: 'stroke', stroke: one.stroke }] }
 
@@ -1261,7 +962,6 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
         effects: [{ do: 'catch', lasso: one.points, ...(one.cards ? { cards: true } : {}) }],
       }
 
-    // Held and let go where it was: the menu it opened is what it was for.
     case 'armed':
       return { machine: rest, effects: [] }
 
@@ -1270,26 +970,14 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
   }
 }
 
-/** The pointer has been still long enough to mean something. A finger asks for
- *  the menu; a pen that is still drawing asks for its shape to be tidied. */
 function onHeld(machine: Machine, at: Point, context: Context): Step {
   const one = machine.gesture
   if (!one) return { machine, effects: [] }
 
-  // A stroke that stops still is asking to be tidied, when the pen has been told
-  // to do that. A pen that has not is a pen drawing a wobbly circle on purpose.
   if (one.kind === 'draw') {
     return { machine, effects: context.straighten ? [{ do: 'assist' }] : [] }
   }
 
-  // A finger held on the plane or on a card is the menu, which is the only way
-  // to reach one without a second mouse button. Never a pen: a nib resting on the
-  // page is a hand thinking, not a hand asking for a list.
-  //
-  // On the bare plane it is a lasso as well, armed (#349): Emil, "holding down with
-  // your finger and then dragging after some short waiting time to get a lasso
-  // instead of a normal select". Let go there, and the menu is what it was for; moved
-  // on, the menu goes and the finger draws the loop.
   if (one.kind === 'pan' && one.bare && !one.moved && machine.driver?.kind === 'touch') {
     return {
       machine: { ...machine, gesture: { kind: 'armed', id: one.id, at, screen: one.screen } },
@@ -1303,14 +991,10 @@ function onHeld(machine: Machine, at: Point, context: Context): Step {
   return { machine, effects: [] }
 }
 
-/** The angle of the line from one finger to the other, in radians. */
 function angleOf(one: Point, other: Point): number {
   return Math.atan2(other.y - one.y, other.x - one.x)
 }
 
-/** A drag across the screen as a move on the plane: by the zoom, and turned back by
- *  however far the view is turned, so what is carried goes where the hand went
- *  (#351). */
 function planeDelta(dx: number, dy: number, context: Context): { dx: number; dy: number } {
   const by = turnedBy(dx, dy, -(context.turn ?? 0))
   return { dx: by.x / context.scale, dy: by.y / context.scale }

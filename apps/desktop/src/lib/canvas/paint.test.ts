@@ -1,12 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import type { InkStroke } from './format'
 
-/** The paint itself: an outline, a kind of ink, a fill. What the tiles do with it is
- *  tiles.test.ts; this is what one fill of some strokes is, which the tiles, the pen's
- *  own layer and a thumbnail all share. */
-
-/** A path that counts what is copied into it and draws nothing: this runs under
- *  node, where there is no canvas and no `Path2D`. */
 class CountingPath {
   held = 0
 
@@ -27,8 +21,6 @@ class CountingPath {
   }
 }
 
-/** A context that accepts everything and remembers its fills: how many strokes each
- *  was, in which colour, at which alpha and through which blend. */
 function context() {
   const fills: { strokes: number; colour: string; alpha: number; blend: string }[] = []
   const transforms: number[][] = []
@@ -92,7 +84,6 @@ describe('one fill of some strokes', () => {
     const before = strokesFilled()
     fillInk(ctx, strokes, {}, () => 0)
 
-    // Three kinds, three fills - and every stroke counted once.
     expect(fills).toHaveLength(3)
     expect(fills.reduce((sum, one) => sum + one.strokes, 0)).toBe(300)
     expect(strokesFilled() - before).toBe(300)

@@ -19,8 +19,6 @@ import {
   upright,
 } from './pens.svelte'
 
-/** The row of pens is one store the whole app shares, so every test starts it
- *  again from what a device that has never been drawn on would hold. */
 beforeEach(() => {
   pens.restore(readPens(null))
 })
@@ -116,9 +114,6 @@ describe('setting the pen in hand', () => {
   })
 })
 
-/** Three slots, always three. Nothing to add, nothing to put away, nothing to
- *  drag into order: each of them is a pen, and setting one is the only thing
- *  anybody does to the row. */
 describe('the three slots', () => {
   test('are what a device starts with and what it keeps', () => {
     expect(pens.list).toHaveLength(PEN_SLOTS)
@@ -301,9 +296,6 @@ describe('the dials', () => {
   })
 })
 
-/** Where the bar sits. All four edges, because a wrist rests somewhere different on
- *  every device and in every grip. It follows the finger while it is dragged and
- *  springs to whichever edge it was let go nearest, which is answered here. */
 describe('which edge the bar springs to', () => {
   const pane = { width: 1000, height: 700 }
 
@@ -314,9 +306,6 @@ describe('which edge the bar springs to', () => {
     expect(nearestDock({ x: 970, y: 350 }, pane.width, pane.height)).toBe('right')
   })
 
-  /** Nearest, not "whichever half of the screen": a bar dragged into the middle of a
-   *  wide pane is nearer the top or the bottom than either side, and a bar in the
-   *  middle of a tall one is nearer a side. */
   test('is measured rather than guessed from halves', () => {
     expect(nearestDock({ x: 480, y: 300 }, 1000, 700)).toBe('top')
     expect(nearestDock({ x: 300, y: 480 }, 700, 1000)).toBe('left')
@@ -342,9 +331,6 @@ describe('which edge the bar springs to', () => {
   })
 })
 
-/** Emil, #369: at a high zoom the pens were not fine enough. Zoomed in, a stroke is as
- *  wide as the pen shows on the screen; at the actual size and further out, as wide as
- *  the pen is. */
 describe('the width a stroke is written with', () => {
   test('zoomed in, is the width on the screen', () => {
     expect(drawnWidth(2, 4)).toBe(0.5)

@@ -1,7 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The keys a plane answers, pressed on a plane with one card picked. The modules
- *  read the browser's storage as they load, so it is stood in for first. */
 vi.stubGlobal('localStorage', {
   getItem: () => null,
   setItem: () => undefined,
@@ -68,7 +66,6 @@ describe('a nudge', () => {
 })
 
 describe('the zoom keys', () => {
-  // The bar has no zoom buttons, so the keys are a keyboard's whole zoom (#401).
   const chord = (key: string, code: string) =>
     ({ key, code, ctrlKey: true, altKey: true, metaKey: false, shiftKey: false }) as KeyboardEvent
 

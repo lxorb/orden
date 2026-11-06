@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { Trace } from './trace'
 
-/** The record kept for the one thing about this app nobody here can test by hand: a
- *  stylus, whose button the browser reports three different ways. It has to be cheap
- *  enough to leave on during a stroke, so it writes down what could say something new
- *  and nothing else. */
-
 const one = (over: Partial<Parameters<Trace['note']>[0]> = {}) => ({
   what: 'move',
   kind: 'pen',
@@ -24,8 +19,6 @@ describe('the pointer record', () => {
     expect(trace.line).toBe('down/pen b0 B1 | up/pen b0 B0 | cancel/pen b-1 B0')
   })
 
-  /** A stroke is thousands of moves and all but a handful of them say the same thing,
-   *  so a fast line writes nothing at all. */
   test('says nothing for a move that changed nothing', () => {
     const trace = new Trace()
     trace.note(one({ what: 'down', button: 0, buttons: 1 }))
@@ -34,8 +27,6 @@ describe('the pointer record', () => {
     expect(trace.line).toBe('down/pen b0 B1')
   })
 
-  /** The one move worth keeping: the barrel button arriving halfway through a line,
-   *  which is exactly the report that could not be reproduced on a desktop. */
   test('writes down the move where the button arrived', () => {
     const trace = new Trace()
     trace.note(one({ what: 'down', button: 0, buttons: 1 }))

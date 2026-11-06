@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { changesBetween, type Replacement, written } from './written'
 
-/** The replacements put into the old file, last first so each keeps its offsets. */
 function applied(text: string, changes: readonly Replacement[]): string {
   return [...changes]
     .sort((one, other) => other.from - one.from)

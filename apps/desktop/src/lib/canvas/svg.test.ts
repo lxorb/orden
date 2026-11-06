@@ -4,12 +4,6 @@ import { INK_STYLES } from './ink'
 import type { Palette } from './paint'
 import { inkSvg } from './svg'
 
-/** A picture that has left the app carries no stylesheet, so everything a stroke
- *  looks like has to be written into the path itself. What is checked here is
- *  that how much of the colour lands is one of those things: a canvas drawn at a
- *  quarter opacity has to come out of the export at a quarter opacity, or the
- *  file is not the drawing. */
-
 const PALETTE: Palette = { '1': '#ff0000', ink: '#111111' }
 
 function stroke(over: Partial<InkStroke> = {}): InkStroke {
@@ -78,15 +72,11 @@ describe('ink written into a picture', () => {
       const svg = inkSvg([dot], PALETTE)
 
       expect(svg, tool).toContain('<path ')
-      // A path with something in it: `d=""` would be a dot nobody can see.
       expect(svg, tool).toMatch(/ d="M[^"]+Z"/)
     }
   })
 })
 
-/** An SVG is a document, and a canvas may have arrived from a room, a share or a
- *  paste. So a colour out of a file is written into the picture as a value and
- *  can never become markup of its own. */
 describe('a colour a file wrote', () => {
   test('cannot end the attribute it is written into', () => {
     const hostile = '"><script>alert(1)</script><path fill="'

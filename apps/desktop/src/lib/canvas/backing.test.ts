@@ -1,21 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { inkMode, wantedInkMode } from './backing'
 
-/** The decision has no canvas in it, so a platform is a string and what the
- *  browser says about a context is an object. Both are written down. */
-
 const DESKTOP =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 
-/** The tablet this went wrong on: an Android WebView, which is the app's own. */
 const TABLET =
   'Mozilla/5.0 (Linux; Android 14; SM-X710 Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.6478.122 Safari/537.36'
 
-/** Android Chrome, which is the same compositor without the app around it. */
 const PHONE =
   'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36'
 
-/** What Chromium answers: the attributes that were asked for, echoed back. */
 const ECHOED: CanvasRenderingContext2DSettings = {
   alpha: true,
   desynchronized: true,

@@ -1,25 +1,10 @@
-/** Finding something on a plane.
- *
- *  A canvas can hold five hundred cards and no scrollbar to look down, so the
- *  only way to find a word on one is to be taken to it. This says which things
- *  hold the word; the surface frames them one at a time.
- *
- *  Everything a card can say is searched, whichever kind it is: the words of a
- *  text card, the path of a file card, the address of a link, the name on a
- *  frame and the words along a connector. A reader looking for "invoice" does
- *  not care which of those it turned out to be. */
-
 import type { Canvas } from './format'
 
-/** What one hit is: the thing that holds the word, and enough of what it says to
- *  recognise it by. */
 export interface Found {
   id: string
-  /** A line to show in the list, already trimmed to something readable. */
   says: string
 }
 
-/** How much of a card's words a hit shows. Enough to tell two apart. */
 const SHOWN = 60
 
 function shortened(text: string, term: string): string {
@@ -33,9 +18,6 @@ function shortened(text: string, term: string): string {
   return `${from ? '…' : ''}${flat.slice(from, from + SHOWN)}…`
 }
 
-/** Everything on the plane that holds the word, in the order it is drawn in. An
- *  empty term finds nothing rather than everything: a list of the whole canvas
- *  is not an answer to a question nobody asked yet. */
 export function matches(canvas: Canvas, term: string): Found[] {
   const wanted = term.trim().toLowerCase()
   if (!wanted) return []
@@ -43,7 +25,6 @@ export function matches(canvas: Canvas, term: string): Found[] {
   const found: Found[] = []
 
   for (const node of canvas.nodes) {
-    // An empty one holds nothing, and the term is never empty by here.
     const says = saysOf(node)
     if (says.toLowerCase().includes(wanted)) {
       found.push({ id: node.id, says: shortened(says, wanted) })
@@ -71,8 +52,6 @@ function saysOf(node: Canvas['nodes'][number]): string {
       return node.label ?? ''
     case 'shape':
       return node.text ?? ''
-    // A page has nothing written on it: what is written is the cards and the ink on
-    // top of it, which the find bar reaches on their own.
     case 'page':
       return ''
   }

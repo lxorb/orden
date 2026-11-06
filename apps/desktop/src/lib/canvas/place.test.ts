@@ -1,12 +1,3 @@
-/** Where each canvas was left on this device: the pan and the zoom.
- *
- *  Emil, 2026-09-13: *"when I switch to a different tab and then come back to a canvas
- *  tab then the scroll position will be lost. It should be saved locally (per device)
- *  for the canvas."* So the view is kept the way a web note's scroll is - per device,
- *  by path - and comes back on a switch, on a reopen, and after the app is started
- *  again. See place.ts, and the `!store.framed` guard in Canvas.svelte that keeps the
- *  opening fit off a view restored this way. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -69,7 +60,6 @@ test('a framed canvas stays turned the way it was turned (#351)', () => {
   }
   store.fit(800, 600)
   expect(store.camera.turn).toBe(0.7)
-  // Turned, the card is wider on screen than it is upright, so it fits at a smaller scale.
   const upright = new CanvasStore(new Tab(note, 'pane'))
   upright.canvas = store.canvas
   upright.fit(800, 600)
@@ -82,7 +72,6 @@ test('a canvas written twice keeps what was written last', () => {
   expect(viewOf('/a.canvas')).toEqual({ x: 10, y: 20, scale: 2 })
 })
 
-/** The list is this device's and it is bounded, the oldest the one that goes. */
 test('keeps three hundred canvases and forgets the oldest', () => {
   for (let index = 0; index < 305; index += 1) {
     viewKept(`/plane-${index}.canvas`, { x: index, y: 0, scale: 1 })
@@ -94,8 +83,6 @@ test('keeps three hundred canvases and forgets the oldest', () => {
   expect(viewOf('/plane-304.canvas')?.x).toBe(304)
 })
 
-/** Storage is not a type system: what is under the key was written by some version of
- *  this app, and a row that is not a view is a canvas that opens fitted to its cards. */
 test('reads nothing out of nonsense', () => {
   localStorage.setItem(
     'nib:canvas-views',
@@ -113,7 +100,6 @@ test('reads nothing out of nonsense', () => {
   expect(viewOf('/scale-of-text.canvas')).toBeNull()
 })
 
-/** A canvas surface in a space, the way store.test.ts opens one. */
 function canvasDoc(path: string) {
   return new NoteDoc(
     {
@@ -127,9 +113,6 @@ function canvasDoc(path: string) {
   )
 }
 
-/** The whole of Emil's report: a tab switched away from and come back to. The surface
- *  is torn down and built again on the same tab, and the view has to be exactly where
- *  it was - not the plane fitted afresh, which is what used to happen. */
 test('a switch away and back restores the exact pan and zoom', () => {
   const tab = new Tab(canvasDoc('/space/Board.canvas'), 'pane')
 
@@ -142,8 +125,6 @@ test('a switch away and back restores the exact pan and zoom', () => {
   expect(again.framed).toBe(true)
 })
 
-/** And opening the canvas again - a brand-new tab, tomorrow or after a relaunch -
- *  comes back off this device rather than at the fit. */
 test('and opening the canvas again restores it from this device', () => {
   const first = new CanvasStore(new Tab(canvasDoc('/space/Board.canvas'), 'pane'))
   first.camera = { x: 88, y: 12, scale: 0.5 }
@@ -154,8 +135,6 @@ test('and opening the canvas again restores it from this device', () => {
   expect(reopened.framed).toBe(true)
 })
 
-/** An empty plane nobody moved is left unframed, so it is not written down as the
- *  origin over a view it might get later. */
 test('an untouched plane keeps no view', () => {
   const store = new CanvasStore(new Tab(canvasDoc('/space/Empty.canvas'), 'pane'))
   store.part()

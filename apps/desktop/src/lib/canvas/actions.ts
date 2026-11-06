@@ -1,13 +1,3 @@
-/** Everything a canvas can be asked to do, in one place.
- *
- *  A gesture, a key and a menu row are three ways of asking for the same thing,
- *  and this is the thing. The surface next door owns the pointer and the layers;
- *  what happens when something is deleted, duplicated, lined up, coloured or
- *  turned into a note is here, once, so the three ways cannot drift apart.
- *
- *  Everything takes the store and hands nothing back. What is picked, what the
- *  canvas holds and what can be taken back all live there; these are verbs. */
-
 import { type Alignment, aligned, distributed, type Order, ordered } from './arrange'
 import {
   connected,
@@ -67,8 +57,6 @@ import { workspace } from '../workspace.svelte'
 import { loading, pdfjs } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
 
-/** How far a nudge moves a card: one pixel with a bare arrow key, one grid step
- *  with Shift, which is the pair every drawing program has. */
 const NUDGE = 1
 
 export const run = {
@@ -90,7 +78,6 @@ export const run = {
     if (made.id) store.pick(made.id)
   },
 
-  /** One end of a connector dropped on another card. */
   reattach(store: CanvasStore, edge: string, end: 'from' | 'to', to: string) {
     store.edit(reattached(store.canvas, edge, end, to))
   },
@@ -101,7 +88,6 @@ export const run = {
     store.pick(made.id)
   },
 
-  /** Everything picked inside one frame, and that frame picked. */
   group(store: CanvasStore) {
     if (store.picked.length < 1) return
 
@@ -112,18 +98,15 @@ export const run = {
     store.pick(made.id)
   },
 
-  /** What is picked locked in place, and so let go of: nothing picks it now (#643). */
   lock(store: CanvasStore) {
     store.edit(locking(store.canvas, store.picked, true))
     store.pickAll(store.picked)
   },
 
-  /** Something locked in place let go again, from its own menu. */
   unlock(store: CanvasStore, id: string) {
     store.edit(locking(store.canvas, [id], false))
   },
 
-  /** The frames among what is picked, gone, and what they held picked instead. */
   ungroup(store: CanvasStore) {
     const made = ungrouped(store.canvas, store.picked)
     if (!made.ids.length && made.canvas === store.canvas) return
@@ -132,9 +115,6 @@ export const run = {
     store.pickAll(made.ids)
   },
 
-  /** A copy left exactly where what is picked stands, so the originals can be
-   *  dragged off it. `run` is the drag it belongs to, so the copy and the move it
-   *  begins are one thing to take back.  */
   leaveCopy(store: CanvasStore, run: string) {
     if (!store.picked.length) return
 
@@ -142,7 +122,6 @@ export const run = {
     store.edit(made.canvas, run)
   },
 
-  /** The words inside whatever is picked, if it is something that holds words. */
   write(store: CanvasStore): boolean {
     const id = store.picked[0]
     const node = store.canvas.nodes.find((one) => one.id === id)
@@ -152,16 +131,9 @@ export const run = {
     return true
   },
 
-  /** A stroke of ink, tidied on the way in: a digitiser reports far more points
-   *  than a line needs, and the ones it drops are the ones that say nothing. */
   stroke(store: CanvasStore, pending: PendingStroke) {
-    // One point is a dot, which is a stroke like any other. None at all is
-    // nothing, and cannot happen: a stroke starts at the point the pen went down.
     if (!pending.points.length) return
 
-    // The alpha is written down only where it is not the one this kind of pen has
-    // by itself, so a plane drawn by somebody who never touched the dial is the
-    // same bytes it was before there was a dial.
     const { opacity, ...rest } = pending
     const own = INK_STYLES[pending.tool].opacity
     const stroke = { id: freshId(), ...rest, ...(opacity === own ? {} : { opacity }) }
@@ -169,26 +141,17 @@ export const run = {
     store.edit(withStroke(store.canvas, tidied(stroke)))
   },
 
-  /** Every stroke on the plane, gone, which is what the eraser's own row asks
-   *  for. One edit, so one press of undo brings the drawing back. */
   eraseAll(store: CanvasStore) {
     if (!store.canvas.ink.length) return
 
     store.edit({ ...store.canvas, ink: [] })
   },
 
-  /** Whole strokes gone, which is what the stroke eraser does: come within its
-   *  reach of a line anywhere and the line goes. `run` names the drag it is part
-   *  of, so the whole drag is one step to take back; see `edit` in store.svelte.ts. */
   rub(store: CanvasStore, at: Point, reach: number, run?: string) {
     const next = cutInk(store.canvas, (stroke) => (nearStroke(stroke, at, reach) ? [] : [stroke]))
     store.edit(next, run)
   },
 
-  /** A hole rubbed through whatever is under the eraser, which may leave the two
-   *  ends of a line behind. Every point of the drag is one of these, so the plane
-   *  answers under the nib rather than when it is lifted, and all of them are one
-   *  rub. */
   cut(store: CanvasStore, at: Point, reach: number, run?: string) {
     const next = cutInk(store.canvas, (stroke) =>
       nearStroke(stroke, at, reach) ? erased(stroke, at, reach) : [stroke],
@@ -197,12 +160,6 @@ export const run = {
     store.edit(next, run)
   },
 
-  /** What a loop or a box caught. Only strokes it went right round, so half a word
-   *  is never dragged away from the other half, unless the lasso's own panel says
-   *  a stroke it touched at all counts. */
-  /** What a loop caught: the ink in it, and with `cards`, the cards in it too - a loop
-   *  drawn by a held finger, which is how a finger picks (#349). A card is caught whole
-   *  inside the loop, or with `partly`, by its middle. */
   lasso(store: CanvasStore, points: readonly Point[], partly = false, cards = false) {
     const ink = strokesInLasso(store.canvas.ink, points, partly)
     if (!cards) {
@@ -219,8 +176,6 @@ export const run = {
     store.clearPicked()
   },
 
-  /** False with nothing picked, so the key is let go: Ctrl+D is the app's Deselect tab
-   *  as well, and a plane with nothing to copy has no claim on it. */
   duplicate(store: CanvasStore): boolean {
     if (!store.picked.length) return false
 
@@ -254,16 +209,12 @@ export const run = {
     store.edit(coloured(store.canvas, store.picked, colour))
   },
 
-  /** Which way the arrows on the picked connectors point. */
   ends(store: CanvasStore, from: boolean, to: boolean) {
     store.edit(withEnds(store.canvas, store.picked, from, to))
   },
 
-  /** Cards from a clipboard: another canvas, an address, or some words. */
   paste(store: CanvasStore, incoming: Canvas, text: string, at: Point) {
     if (incoming.nodes.length || incoming.ink.length) {
-      // Centred on the pointer, so a paste lands where the reader is looking
-      // rather than where the cards happened to be in the canvas they came from.
       const box = bounds([...incoming.nodes, ...incoming.ink.map(strokeBox)])
       const dx = box ? Math.round(at.x - box.x - box.width / 2) : 0
       const dy = box ? Math.round(at.y - box.y - box.height / 2) : 0
@@ -281,9 +232,6 @@ export const run = {
     }
   },
 
-  /** Notes and pictures dragged out of the file list. Several of them go one
-   *  under the other, which is where a hand dropping a folder's worth would put
-   *  them anyway. */
   dropPaths(store: CanvasStore, paths: readonly string[], at: Point) {
     const root = canvasRoot(store)
     if (!root) return
@@ -291,8 +239,6 @@ export const run = {
     let next = store.canvas
     const ids: string[] = []
 
-    // Only what the canvas's own space holds: a card can name nothing else but by its
-    // whole local path, which is a file nowhere on any other device.
     const inside = paths.flatMap((path) => withinSpace(root, path) ?? [])
     for (const [index, file] of inside.entries()) {
       const id = freshId()
@@ -306,35 +252,22 @@ export const run = {
     store.pickAll(ids)
   },
 
-  /** A picture pasted or dropped: stored where every other pasted picture goes,
-   *  and put on the plane as a card of its own. */
   async dropImage(store: CanvasStore, file: File, where: Point | Box, notePath: string | null) {
-    // Before the picture is stored: a plane that may not be written in would refuse
-    // the card, and the file would be left behind with nothing pointing at it.
     if (store.readOnly) return
     const stored = await storeImage(file, notePath).catch(() => null)
     if (!stored) return
 
     const root = canvasRoot(store)
-    // Kept by the account, the card names its whole address: the web app's API is its
-    // own origin and answers `/i/…`, which read as a path in the space was a file
-    // nowhere, and every picture pasted by somebody signed in was "Nothing here" (#364).
     const relative =
       accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
     if (!relative) return
     const size = ownSize('picture')
-    // A box says exactly where and how big; a point is a paste or a drop, which is
-    // centred on it at the size a picture starts at.
     const box = 'width' in where ? where : placedAt(where, size.width, size.height)
 
     putFile(store, relative, box)
   },
 
-  /** A PDF dropped on the plane: choose one page or lay every page out in order.
-   *  Each imported sheet becomes a picture, so it can be moved and resized like
-   *  any other image on the canvas. */
   async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
-    // Before the question and before every page is rendered and stored; see dropImage.
     if (!notePath || store.readOnly) return
     const mode = await prompt.choose({
       title: t('Import PDF'),
@@ -379,10 +312,6 @@ export const run = {
     }
 
     try {
-      // The pages are laid on the plane as it stands once they are all rendered, not
-      // as it stood when the import began: a card drawn, or one that arrived from
-      // another device, while the pages were rendering was otherwise written over by
-      // the older plane, and recorded as deleted everywhere (#532).
       const made: Parameters<typeof withNode>[1][] = []
       let y = at.y
       for (const number of pages) {
@@ -433,7 +362,6 @@ export const run = {
     }
   },
 
-  /** What a double click means, wherever it landed. */
   async open(store: CanvasStore, hit: Hit, at: Point) {
     if (hit.edge) {
       await askLabel(store, hit.edge)
@@ -447,8 +375,6 @@ export const run = {
       return
     }
 
-    // On a plane that may not be written in, a double click only follows what a card
-    // points at: a card opened to type in would take words the store then drops.
     switch (node.type) {
       case 'text':
         if (store.readOnly) break
@@ -458,9 +384,6 @@ export const run = {
       case 'group':
         await askLabel(store, node.id)
         break
-      // A card on a plane holding an address is the reader's own content, so opening
-      // one opens the page here rather than handing them to another browser - the
-      // same answer a link in a note gets; see open-link.ts.
       case 'link':
         openHref(node.url)
         break
@@ -473,21 +396,16 @@ export const run = {
         if (root) await workspace.openEntry(insideSpace(root, node.file))
         break
       }
-      // A shape holds words the way a card does, so opening one opens the words.
       case 'shape':
         if (store.readOnly) break
         store.pick(node.id)
         store.editing = node.id
         break
-      // A page is never on a canvas, and on a page note a double press on the paper
-      // is a press on the paper: there is nothing to open.
       case 'page':
         break
     }
   },
 
-  /** A card that has outgrown its box, as a note beside the canvas, with the
-   *  card left behind pointing at it. */
   async toNote(store: CanvasStore, canvasPath: string | null) {
     const id = store.picked[0]
     const node = store.canvas.nodes.find((one) => one.id === id)
@@ -517,13 +435,6 @@ export const run = {
     })
   },
 
-  /** The keys the plane answers to on its own. Answers whether it took the key,
-   *  so the surface knows whether to stop it going anywhere else.
-   *
-   *  Every one of them is in the shortcut registry, so a reader who rebound one
-   *  has their own key here and can see the whole list in the settings. They are
-   *  marked contextual there, which is what lets a plane hold a bare letter and
-   *  the arrows without being a clash with anything the file list holds. */
   keys(store: CanvasStore, event: KeyboardEvent, view: KeyView): boolean {
     const tool = toolPressed(event)
     if (tool) {
@@ -531,10 +442,6 @@ export const run = {
       return true
     }
 
-    // Shift makes a nudge a grid step, which is the pair every drawing program
-    // has. The key itself is the registry's; the modifier is what it means.
-    // The key is matched without the Shift: a bare arrow is what is bound, and a Shift
-    // the binding never named would otherwise match nothing at all (#350).
     const step = event.shiftKey ? GRID : NUDGE
     const arrow = { ...keystroke(event), shiftKey: false }
     const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, arrow))
@@ -558,8 +465,6 @@ export const run = {
     for (const [id, act] of ACTS) {
       if (!shortcuts.pressed(id, event)) continue
 
-      // A key that turned out to have nothing to act on is not a key the plane
-      // took: Enter with nothing picked belongs to whatever else wants it.
       return act(store, view) !== false
     }
 
@@ -567,17 +472,10 @@ export const run = {
   },
 }
 
-/** The tool a key asks for, or null where this key is not one of them.
- *
- *  Exported because a page note answers the same keys with the same hand: the bar
- *  teaches the keyboard, and it is one bar. It takes the five that mean something on
- *  paper and leaves the rest; see Pages.svelte. One table either way, so a reader who
- *  rebound Draw has their own key on both surfaces. */
 export function toolPressed(event: KeyboardEvent): Tool | null {
   return TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))?.[1] ?? null
 }
 
-/** Which tool each key puts in your hand. */
 const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.select', 'select'],
   ['canvas.tool.hand', 'hand'],
@@ -599,8 +497,6 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.elbow', 'elbow'],
 ]
 
-/** A key event as the shortcut table reads one: its own fields, copied, since an
- *  event's fields are getters on its prototype and a spread of one carries none. */
 function keystroke(event: KeyboardEvent): Keystroke {
   return {
     key: event.key,
@@ -613,7 +509,6 @@ function keystroke(event: KeyboardEvent): Keystroke {
   }
 }
 
-/** Which way each nudge goes. */
 const NUDGES: readonly (readonly [string, number, number])[] = [
   ['canvas.nudge.left', -1, 0],
   ['canvas.nudge.right', 1, 0],
@@ -621,10 +516,6 @@ const NUDGES: readonly (readonly [string, number, number])[] = [
   ['canvas.nudge.down', 0, 1],
 ]
 
-/** Everything else a key does, by the id it is bound to. */
-/** What each key does, and whether it turned out to have anything to do: a row that
- *  answers `false` is a key the plane did not take, so Enter with nothing picked
- *  belongs to whatever else wants it. Everything else answers nothing at all. */
 const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => unknown])[] = [
   ['canvas.duplicate', (store) => run.duplicate(store)],
   ['canvas.write', (store) => run.write(store)],
@@ -643,8 +534,6 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.backward', (store) => run.order(store, 'backward')],
 ]
 
-/** A turned view upright again about its middle, keeping what is there there (#351);
- *  false where it is upright already, so the key is let go. */
 function upright(store: CanvasStore, view: { width: number; height: number }): boolean {
   const turn = turnOf(store.camera)
   if (!turn) return false
@@ -654,9 +543,6 @@ function upright(store: CanvasStore, view: { width: number; height: number }): b
   return true
 }
 
-/** One notch of the zoom, about the middle of the view. */
-/** The plane at its actual size, 100%, about the middle of the view: what the zoom's
- *  reading on the bar does when pressed (#369). */
 export function actualSize(store: CanvasStore, view: { width: number; height: number }) {
   const { width, height } = view
   store.camera = zoomed(store.camera, width, height, width / 2, height / 2, 1 / store.camera.scale)
@@ -681,14 +567,9 @@ function putText(store: CanvasStore, text: string, box: Box, writing = false) {
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'text', text }))
   store.pick(id)
-  // A card made by hand is a card somebody is about to write in.
   if (writing) store.editing = id
 }
 
-/** Words on the plane with no card round them, the Text tool's (#421): put where the
- *  press was, at the start of a line, and written in at once, as Miro's text tool and a
- *  PDF viewer's do. Left empty, it goes again, as an empty card does. The arrow is in
- *  hand after it, so the next press picks rather than starting another. */
 export function putWords(store: CanvasStore, box: Box) {
   if (store.readOnly) return
   const id = freshId()
@@ -722,12 +603,7 @@ async function askLabel(store: CanvasStore, id: string) {
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
 }
 
-/** How big each thing is when it is pressed rather than dragged out: a card wide
- *  enough to read a line in, a frame with room for a handful of cards, a shape big
- *  enough to grab. Dragging says otherwise, and then this is not asked. */
 function ownSize(tool: PutTool): { width: number; height: number } {
-  // Every shape starts at the same size, which is big enough to grab and small enough
-  // that a hand that meant to drag one out sees at once that it did not.
   if (isShape(tool)) return { width: GRID * 6, height: GRID * 4 }
 
   switch (tool) {
@@ -746,20 +622,15 @@ function ownSize(tool: PutTool): { width: number; height: number } {
   }
 }
 
-/** What the surface has to say for something to be put down: the colour the next
- *  one gets, and where this canvas lives, which is what a picture is stored beside. */
 export interface Putting {
   colour: string
   path: string | null
 }
 
-/** The root the canvas's cards are relative to: that of the space the canvas is in,
- *  which is not always the active one, since tabs are shared across spaces. */
 function canvasRoot(store: CanvasStore): string | null {
   return workspace.rootHolding(store.path)
 }
 
-/** What a tool puts on the plane where it was pressed, at its own size. */
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
   await putDown(
@@ -770,16 +641,11 @@ export async function place(store: CanvasStore, tool: PutTool, at: Point, puttin
   )
 }
 
-/** Where words pressed down go: their line starting where the press was, as a caret
- *  goes where text is clicked. */
 export function wordsAt(at: Point): Box {
   const { width, height } = ownSize('words')
   return { x: Math.round(at.x), y: Math.round(at.y - height / 2), width, height }
 }
 
-/** What a tool puts on the plane at the size it was dragged out to. The one
- *  difference from a press: the box came from the hand rather than from the table
- *  above, and a line remembers which way round it was drawn. */
 export async function pull(
   store: CanvasStore,
   tool: PutTool,
@@ -790,11 +656,6 @@ export async function pull(
   await putDown(store, tool, rectBetween(from, to), putting, from, to)
 }
 
-/** One thing on the plane in one box, whichever kind of thing it is.
- *
- *  Here rather than twice over, because a press and a drag differ only in where the
- *  box came from: a picture asks for a picture either way, a link asks for an
- *  address either way, and a card is a card. */
 async function putDown(
   store: CanvasStore,
   tool: PutTool,
@@ -803,8 +664,6 @@ async function putDown(
   from?: Point,
   to?: Point,
 ) {
-  // Every tool puts something on the plane, which one that may not be written in
-  // refuses; the questions some of them ask first would be answered for nothing.
   if (store.readOnly) return
   if (isShape(tool)) {
     const corner = from ?? { x: box.x, y: box.y }
@@ -839,7 +698,6 @@ async function putDown(
       const root = canvasRoot(store)
       if (!root) return
 
-      // The file list is the active space's, which need not be the canvas's.
       const chosen = await prompt.find({
         title: t('Which note'),
         placeholder: t('Search'),
@@ -853,10 +711,6 @@ async function putDown(
       return
     }
     case 'picture': {
-      // The system's own picker, which on Android is the gallery and the camera
-      // together. Deliberately not the camera alone: somebody putting a photograph
-      // on a plane usually already has it, and the camera is one row down the sheet
-      // Android opens anyway.
       const [file] = await chooseFiles({ accept: PICTURES })
       if (!file) return
 
@@ -869,37 +723,18 @@ async function putDown(
 export interface MenuView extends KeyView {
   narrowed: boolean
   onnarrow: () => void
-  /** Whether the cards' HTML is markup, asked of the plane's note; an export of
-   *  it asks the same question the surface does. See trust.ts. */
   trusted: boolean
-  /** Whether the menu was asked for on bare plane rather than about something:
-   *  only then is putting something down where it was asked one of its rows. The
-   *  bar over what is picked opens it about the pick, and a right click on a card
-   *  is about the card. */
   bare: boolean
-  /** Rows shown in the menu's place, where it was opened: what pressing Arrange does. */
   again: (rows: MenuEntry[], title: string) => void
-  /** What is locked in place under the press, which a press cannot pick: the menu is
-   *  the one way back to it (#643). */
   locked: string | null
 }
 
-/** Groups of rows with a rule between each, leaving out the groups with nothing in
- *  them: a rule round nothing is two rules. */
 function sections(...groups: readonly MenuEntry[][]): MenuEntry[] {
   return groups
     .filter((one) => one.length)
     .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
 }
 
-/** The menu, which is the whole of what a canvas can do here, written down. What a
- *  reader cannot find a key for they find here.
- *
- *  Only the rows that would do something (#350). A greyed row is a row read past on
- *  every opening: on bare plane the menu was seventeen of them out of twenty-eight,
- *  and taller than a laptop's window, so the export at its foot was below the fold.
- *  Lining up, spreading out and the order of the stack go behind one row, Arrange,
- *  which is where every drawing program keeps them. */
 export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuEntry[] {
   const picked = store.picked.length > 0
   const several = store.picked.length > 1
@@ -984,8 +819,6 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   )
 }
 
-/** What Arrange holds for what is picked: the order of the stack for anything,
- *  lining up for two or more, spreading out for three or more. */
 function arrangeRows(store: CanvasStore, several: boolean, many: boolean): MenuEntry[] {
   return sections(
     [

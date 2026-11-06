@@ -4,8 +4,6 @@ import type { Box } from './geometry'
 import { strokeBox } from './ink'
 import { InkGrid } from './ink-grid'
 
-/** A stroke from `x, y` to `x + wide, y + tall`, so its box is known without
- *  working anything out. */
 function stroke(id: string, x: number, y: number, wide = 20, tall = 8, size = 3): InkStroke {
   return {
     id,
@@ -28,7 +26,6 @@ function meets(one: Box, other: Box): boolean {
   )
 }
 
-/** What a walk of every stroke would answer, which is what the grid must agree with. */
 function walked(strokes: readonly InkStroke[], box: Box): string[] {
   return strokes
     .filter((one) => meets(strokeBox(one), box))
@@ -40,7 +37,6 @@ function ids(strokes: readonly InkStroke[]): string[] {
   return strokes.map((one) => one.id).sort()
 }
 
-/** A seeded run of numbers, so a failure here is the same failure next time. */
 function numbers(seed: number) {
   let state = seed
   return () => {
@@ -54,9 +50,6 @@ describe('which strokes are near a part of the plane', () => {
     const next = numbers(7)
     const strokes: InkStroke[] = []
     for (let one = 0; one < 600; one++) {
-      // Short strokes and a few that cross many cells, anywhere either side of the
-      // origin: a stroke filed under several cells is the one that could be answered
-      // twice.
       const long = one % 37 === 0
       strokes.push(
         stroke(
@@ -100,8 +93,6 @@ describe('which strokes are near a part of the plane', () => {
   })
 
   test('is asked about a corner of the plane without being walked whole', () => {
-    // Ten thousand strokes a long way off and one in the corner being asked about:
-    // the answer is the one, and it comes out of the cells under the box.
     const grid = new InkGrid()
     for (let one = 0; one < 10_000; one++) grid.add(stroke(`far${one}`, 50_000 + one * 3, 50_000))
     grid.add(stroke('here', 5, 5))

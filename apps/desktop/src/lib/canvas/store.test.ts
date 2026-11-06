@@ -1,8 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The surface holds a document, and a document holds the shared text every pane
- *  is a view onto. Neither needs a browser, but the modules they come from read
- *  the browser's storage as they load, so it is stood in for first. */
 vi.stubGlobal('localStorage', {
   getItem: () => null,
   setItem: () => undefined,
@@ -26,8 +23,6 @@ function card(id: string, x = 0): CanvasNode {
   return { id, type: 'text', x, y: 0, width: 250, height: 60, text: id }
 }
 
-/** A canvas tab, with the plane it opens on written into its document. In a space,
- *  so it keeps itself the way every plane somebody draws on does. */
 function opened(text = blankCanvas()) {
   const note = new NoteDoc(
     { kind: 'canvas', path: '/space/Board.canvas', name: 'Board.canvas', text, dirty: false },
@@ -38,7 +33,6 @@ function opened(text = blankCanvas()) {
   return { store: new CanvasStore(tab), note, tab }
 }
 
-/** A room, recorded rather than run: what it was pushed, and what it was asked. */
 function room(): Shared & { pushed: Canvas[]; undone: number } {
   return {
     pushed: [],
@@ -114,16 +108,11 @@ describe('a plane in a space somebody shared to read', () => {
     store.edit({ ...store.canvas, nodes: [card('a')] })
     expect(ids(store.canvas)).toEqual(['a'])
 
-    // The plane is right at once and the file catches up: serialising it is the size
-    // of the plane, so it waits for the drawing to stop. See `edit`.
     store.part()
     expect(readCanvas(note.text).nodes).toHaveLength(1)
   })
 })
 
-/** The eraser is the one gesture that cannot wait for the pointer to come up: it
- *  has to answer under the nib. So it edits on every point of its drag, and the
- *  plane has to treat the drag as the one thing it is. */
 describe('a gesture that edits as it goes', () => {
   test('is one step to take back, however many points the drag had', () => {
     const { store } = opened()
@@ -176,14 +165,6 @@ describe('a gesture that edits as it goes', () => {
     }
   })
 
-  /** What one stroke costs the pointer coming up.
-   *
-   *  It used to be the whole document: the plane written out, the previous text read
-   *  back and both of them walked to find what changed - a hundred and fifty
-   *  milliseconds on a plane of ten thousand strokes, on the tick the pen lifted,
-   *  while the hand was already moving. Now the plane on screen is right at once and
-   *  the file catches up when the drawing stops. Counted in writes rather than
-   *  milliseconds, for the reason the rest of these give. */
   test('a stroke finished writes nothing until the drawing stops', () => {
     vi.useFakeTimers()
     try {
@@ -195,7 +176,6 @@ describe('a gesture that edits as it goes', () => {
         replace(text)
       }
 
-      // Six strokes drawn one after another, as a hand draws them.
       for (let stroke = 0; stroke < 6; stroke++) {
         store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card(`s${stroke}`)] })
         vi.advanceTimersByTime(100)
@@ -204,7 +184,6 @@ describe('a gesture that edits as it goes', () => {
       expect(writes).toBe(0)
       expect(ids(store.canvas)).toHaveLength(6)
 
-      // One write for the six, once the hand stops.
       vi.advanceTimersByTime(1300)
       expect(writes).toBe(1)
       expect(ids(readCanvas(note.text))).toHaveLength(6)
@@ -214,7 +193,6 @@ describe('a gesture that edits as it goes', () => {
   })
 })
 
-/** The width dial over picked ink edits on every step of its drag, like the eraser. */
 describe('picked ink given another width (#432)', () => {
   test('widens every picked stroke, and one undo takes the drag back', async () => {
     const { sized } = await import('./edits')
@@ -232,8 +210,6 @@ describe('picked ink given another width (#432)', () => {
   })
 })
 
-/** The stroke eraser reaches as far as its own width says, like the area eraser,
- *  and as far as a click on a line until the width is turned (#628). */
 describe('the stroke eraser', () => {
   const line = (y: number) => ({
     id: `at${y}`,
@@ -267,9 +243,6 @@ describe('a plane that is in a room', () => {
     expect(held.pushed).toHaveLength(1)
     expect(ids(held.pushed[0] ?? blank())).toEqual(['a'])
 
-    // The room is the history now, so taking something back is asked of it, and
-    // what the bar's arrows say is what the room last said rather than what this
-    // device happens to remember.
     expect(store.canUndo).toBe(false)
     store.historyIs({ undo: true, redo: false })
     expect(store.canUndo).toBe(true)
@@ -297,10 +270,7 @@ describe('a plane that is in a room', () => {
 
       store.arrived({ ...store.canvas, nodes: [card('theirs', 400)], at: { theirs: 1000 } })
 
-      // On screen at once: a stroke somebody else drew appears as they draw it.
       expect(ids(store.canvas)).toEqual(['theirs'])
-      // And not written per arrival, which would cost the plane every time rather
-      // than costing what arrived.
       expect(note.text).toBe(before)
 
       vi.advanceTimersByTime(1300)
@@ -329,7 +299,6 @@ function blank(): Canvas {
 }
 
 describe('a plane written after it opens', () => {
-  /** A plane of `count` strokes, as this app writes one. */
   function drawnPlane(count: number): string {
     const plane = blank()
     plane.ink = Array.from({ length: count }, (_, at) => ({
@@ -350,13 +319,10 @@ describe('a plane written after it opens', () => {
     return writeCanvas(plane)
   }
 
-  /** Every turn the plane's printing ahead takes, taken. */
   async function warmed() {
     for (let turn = 0; turn < 20; turn++) await new Promise((go) => setTimeout(go, 0))
   }
 
-  /** What the document's words were handed for each write: how many characters went
-   *  in, and whether they came as the changes or as the whole file. */
   function watched(note: InstanceType<typeof NoteDoc>) {
     const handed: { inserted: number; known: boolean }[] = []
     const replace = note.live.replace.bind(note.live)
@@ -418,8 +384,6 @@ describe('a plane written after it opens', () => {
 })
 
 describe('a version put back from the history (#533)', () => {
-  /** A plane with one card, then the card deleted and another drawn, and written down:
-   *  the version with the first card is what the history offers back. */
   function laterThanTheVersion() {
     const version = writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('kept')] })
     const { store, note } = opened(version)
@@ -436,7 +400,6 @@ describe('a version put back from the history (#533)', () => {
     store.follow()
 
     expect(ids(store.canvas)).toEqual(['kept'])
-    // Gone the way any deletion goes, so the other devices take it the same way.
     expect(store.canvas.gone).toHaveProperty('later')
     expect(store.canvas.gone).not.toHaveProperty('kept')
   })
@@ -518,7 +481,6 @@ describe('a plane whose tab is switched away from and back', () => {
   })
 })
 
-/** Nothing picks what is locked in place: not a press, a band or Ctrl+A (#643). */
 describe('something locked in place', () => {
   test('is never picked, alone or among others', () => {
     const { store } = opened()
@@ -584,7 +546,6 @@ describe('something locked in place', () => {
     store.edit(locking({ ...store.canvas, nodes: [card('a')], ink }, ['a'], true))
     const before = store.canvas.nodes
 
-    // The line written across it cut through, and then rubbed out whole.
     run.cut(store, { x: 100, y: 30 }, 20)
     run.rub(store, { x: 10, y: 30 }, 20)
     run.rub(store, { x: 190, y: 30 }, 20)
@@ -593,10 +554,6 @@ describe('something locked in place', () => {
   })
 })
 
-/** Somebody's Obsidian vault: a node of a plugin's own type, the edge to it, a field
- *  Advanced Canvas keeps on a card and a key beside the lists. An edit on the plane read
- *  the file, left those four out of what it read and wrote the rest back, so a card
- *  put down took them all away (#780). */
 describe('a plane with something on it this app does not read', () => {
   const vault = () =>
     `${JSON.stringify(
@@ -639,10 +596,6 @@ describe('a plane with something on it this app does not read', () => {
     expect(written.metadata).toEqual({ version: '1.0-1.0' })
   })
 
-  /** #781: another app moved its own node twice while the reader had the plane open
-   *  and had drawn on it, so the file's words are merged with the reader's each time.
-   *  Both moves count the same generation from what the app last wrote, so only the
-   *  file can say which is newer: nothing in the app changes such a node. */
   test('takes what another app changed in the file, even with the reader’s edits open', () => {
     const { store, note } = opened(vault())
     store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('b', 600)] })
@@ -656,7 +609,6 @@ describe('a plane with something on it this app does not read', () => {
       return `${JSON.stringify(file, null, '\t')}\n`
     }
     store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('c', 900)] })
-    // 25 sorts before 50, so a tie between the two moves would keep the first.
     note.replace(movedTo(25))
     store.follow()
     note.replace(movedTo(50))
@@ -678,9 +630,6 @@ describe('a plane with something on it this app does not read', () => {
   })
 })
 
-/** #535: what is picked is asked once per card and per edge of a plane that may hold
- *  thousands while thousands are picked, so it is asked of a set kept beside the list,
- *  which has to say what the list says after every way of picking. */
 describe('what is picked, asked by id', () => {
   test('answers what the list says, through every way of picking', () => {
     const { store } = opened(
@@ -705,9 +654,6 @@ describe('what is picked, asked by id', () => {
   })
 })
 
-/** #535: a card drawn only while it is written in - from far away, CanvasFar.svelte -
- *  goes with its editor, before it can hand its words over. Leaving it asks for them
- *  first, whoever leaves it. */
 describe('leaving the card being written in', () => {
   test('asks it for its words first', async () => {
     const { cardWriting } = await import('./writing')

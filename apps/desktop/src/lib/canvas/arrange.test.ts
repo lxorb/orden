@@ -60,8 +60,6 @@ describe('lining things up', () => {
     }
   })
 
-  /** A frame is a thing with room in it, so lining one up takes what is inside
-   *  it along. */
   test('a frame carries what is inside it', () => {
     const framed = plane([
       { id: 'g', type: 'group', x: 200, y: 0, width: 300, height: 300 },
@@ -111,7 +109,6 @@ describe('spreading things out', () => {
     ])
     const spread = distributed(canvas, ['a', 'b', 'c'], 'y')
 
-    // Three fifty-tall cards between 0 and 300 leave a hundred of gap each way.
     expect(spread.nodes[1]?.y).toBe(150)
   })
 
@@ -139,8 +136,6 @@ describe('the z order', () => {
     expect(order(ordered(canvas, ['a'], 'backward'))).toEqual(['a', 'b', 'c', 'd'])
   })
 
-  /** Several brought forward arrive in the order they were already in, which is
-   *  the only answer nobody has to think about. */
   test('several keep their own order among themselves', () => {
     expect(order(ordered(canvas, ['a', 'b'], 'front'))).toEqual(['c', 'd', 'a', 'b'])
     expect(order(ordered(canvas, ['a', 'b'], 'forward'))).toEqual(['c', 'a', 'b', 'd'])
@@ -160,8 +155,6 @@ describe('the z order', () => {
   })
 })
 
-/** A move says nothing about what a card says, so it hands back the very same cards:
- *  a merge would otherwise take this copy's words for newer than another's (#783). */
 describe('the order of the stack', () => {
   const board = () =>
     ({

@@ -10,11 +10,6 @@ import {
   type Said,
 } from './contacts'
 
-/** The barrel button, in every shape the browser has been seen to report it.
- *
- *  All of these are one S Pen on one tablet. The button rubs out; the question is only
- *  which of these three the browser will say this time, and getting one of them wrong
- *  is what made the button "somehow detected, somehow not". */
 describe('what kind of pointer an event really is', () => {
   const desktop = { penSeen: true, touch: false }
   const tablet = { penSeen: true, touch: true }
@@ -33,8 +28,6 @@ describe('what kind of pointer an event really is', () => {
     })
   })
 
-  /** The report that had no answer at all: a stylus with its button held looks like a
-   *  mouse to the layer underneath, so on glass that has had a pen on it, it is one. */
   test('is the pen when a mouse presses button two on glass that has had a pen on it', () => {
     expect(penKind({ pointerType: 'mouse', button: 2, buttons: 2 }, tablet)).toEqual({
       kind: 'pen',
@@ -42,8 +35,6 @@ describe('what kind of pointer an event really is', () => {
     })
   })
 
-  /** And never on a desktop, where a right click is a right click and taking the menu
-   *  away because somebody once drew with a stylus would be worse than the bug. */
   test('is a mouse when a mouse presses button two on a desktop', () => {
     expect(penKind({ pointerType: 'mouse', button: 2, buttons: 2 }, desktop)).toEqual({
       kind: 'mouse',
@@ -79,9 +70,6 @@ describe('what kind of pointer an event really is', () => {
   })
 })
 
-/** The two things Samsung's S Pen does that no other pointer does: it lands as a
- *  finger and turns into a pen, and it presses its button a moment after the nib
- *  is already down. Both have to be noticed once and then left alone. */
 describe('a contact that changes its story', () => {
   test('says nothing about a pointer that landed as a pen and stayed one', () => {
     const held = new Contacts()
@@ -123,11 +111,6 @@ describe('a contact that changes its story', () => {
   })
 })
 
-/** Every pen the app is expected to work with, in the shape its own platform reports
- *  it in. None of these devices is here to be held, so each of them is written down
- *  as the numbers it sends and answered as a value.
- *
- *  The table in docs/canvas.md is the same list in prose. */
 describe('the pens out there', () => {
   const desktop = { penSeen: true, touch: false }
   const tablet = { penSeen: true, touch: true }
@@ -153,9 +136,6 @@ describe('the pens out there', () => {
     })
   })
 
-  /** A driver that hands the lower button to the middle mouse button, which is what a
-   *  Wacom, a Huion and an XP-Pen are all set up to do out of the box. The plane pans
-   *  on the middle button whatever is holding it, so nothing here has to know. */
   test('a graphics tablet holding a button mapped to the middle one does not rub out', () => {
     expect(penKind({ pointerType: 'pen', button: 1, buttons: 5 }, desktop)).toEqual({
       kind: 'pen',
@@ -163,8 +143,6 @@ describe('the pens out there', () => {
     })
   })
 
-  /** A USI pen on a Chromebook and the cheaper Android tablets: a pen with a nib and
-   *  nothing else on it. */
   test('a pen with no button and no pressure is still a pen', () => {
     expect(penKind({ pointerType: 'pen', button: 0, buttons: 1 }, desktop)).toEqual({
       kind: 'pen',
@@ -173,9 +151,6 @@ describe('the pens out there', () => {
   })
 })
 
-/** A pen over the glass rather than on it. Every pen on the list hovers, and a
- *  hovering pen that is allowed to draw leaves a line from wherever it was last seen
- *  to wherever it turns up next. */
 describe('a pointer over the glass', () => {
   test('is hovering when nothing at all is pressed', () => {
     expect(hovering({ buttons: 0 })).toBe(true)
@@ -185,10 +160,6 @@ describe('a pointer over the glass', () => {
     expect(hovering({ buttons: 1 })).toBe(false)
   })
 
-  /** The shape that matters most: an Apple Pencil hovering over an M2 iPad with the
-   *  barrel it does not have, and a Surface Pen holding its button an inch off the
-   *  screen. Something is pressed, so nothing is hovering - and the nib is not on the
-   *  glass either, which is what the contact record is for. */
   test('is not hovering with a button held, whatever the nib is doing', () => {
     expect(hovering({ buttons: 2 })).toBe(false)
     expect(hovering({ buttons: 32 })).toBe(false)
@@ -206,9 +177,6 @@ describe('a pointer over the glass', () => {
   })
 })
 
-/** Windows hands pen input to anything that does not ask for it as mouse input, and a
- *  graphics tablet's driver will do the same on any desktop. One nib arriving twice is
- *  one gesture, not two. */
 describe('the same nib arriving twice', () => {
   test('is an echo while a pen is on the glass', () => {
     const held = new Contacts()
@@ -241,8 +209,6 @@ describe('the same nib arriving twice', () => {
   })
 })
 
-/** Which pen this device has, from what the machine says about itself. The user agents
- *  are the real ones, because that is the only thing about this that can be wrong. */
 describe('which pen a machine has', () => {
   function said(agent: string, over: Partial<Said> = {}): Said {
     return { agent, touch: false, coalesced: true, predicted: true, ...over }
@@ -259,8 +225,6 @@ describe('which pen a machine has', () => {
     ).toBe('apple')
   })
 
-  /** Since iPadOS 13 Safari on an iPad calls itself a Macintosh and nothing else, so
-   *  the glass is the only thing left to tell them apart by. */
   test('is an iPad when it calls itself a Macintosh with a touch screen', () => {
     const agent =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15'
@@ -306,8 +270,6 @@ describe('which pen a machine has', () => {
     expect(penShape(said('Mozilla/5.0 (X11; Linux x86_64) Firefox/130.0'))).toBe('desktop')
   })
 
-  /** The gain is the one thing a platform changes about the ink, and the Pencil is the
-   *  one platform that has one; see GAINS. */
   test('carries the Pencil its own gain and everything else none', () => {
     expect(penProfile(said('Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)')).gain).toBe(0.8)
     expect(penProfile(said('Mozilla/5.0 (Windows NT 10.0; Win64; x64)')).gain).toBe(1)
@@ -333,8 +295,6 @@ describe('which pen a machine has', () => {
   })
 })
 
-/** Which of the two ways a pen says it is leaning. Both are the same fact, and one of
- *  them is the only one Safari has. */
 describe('how a pen says it leans', () => {
   test('is tilt when the two degrees off the vertical are there', () => {
     expect(leanOf({ pressure: 0.5, tiltX: -20, tiltY: 4 })).toBe('tilt')
@@ -354,7 +314,6 @@ describe('how a pen says it leans', () => {
   })
 })
 
-/** What a pen turns out to be, once one has been on the glass. */
 describe('the pen this glass has, learnt', () => {
   const machine: Said = {
     agent: 'Mozilla/5.0 (X11; CrOS aarch64 14541.0.0) Chrome/140.0.0.0',
@@ -373,7 +332,6 @@ describe('the pen this glass has, learnt', () => {
 
     expect(stylus.saw(down(0.4, { tiltX: 12 }))).toBe(true)
     expect(stylus.traits.lean).toBe('tilt')
-    // And says nothing the second time, so the record is written once.
     expect(stylus.saw(down(0.5, { tiltX: 14 }))).toBe(false)
   })
 
@@ -384,9 +342,6 @@ describe('the pen this glass has, learnt', () => {
     expect(stylus.traits.force).toBe('reported')
   })
 
-  /** The USI pen: one half for every sample of every stroke. A number that never
-   *  changes is not a measurement, and handed to a nib that thins with pressure it is
-   *  every stroke anybody draws at one wrong width. */
   test('stops believing a pressure that never changes', () => {
     const stylus = new Stylus(machine)
     let changed = false
@@ -402,8 +357,6 @@ describe('the pen this glass has, learnt', () => {
 
     expect(stylus.traits.force).toBe('reported')
 
-    // And a run of identical samples after that - a hand holding still halfway
-    // through a line - does not take it back.
     for (let one = 0; one < 40; one++) stylus.saw(down(0.5))
     expect(stylus.traits.force).toBe('reported')
   })
@@ -417,8 +370,6 @@ describe('the pen this glass has, learnt', () => {
     expect(stylus.traits.force).toBe('reported')
   })
 
-  /** A hovering pen presses on nothing and reports nought for as long as it is over
-   *  the glass. A column of noughts is not a pen with nothing to say. */
   test('does not read a hovering pen as one with no pressure', () => {
     const stylus = new Stylus(machine)
     for (let one = 0; one < 40; one++) stylus.saw({ ...down(0), buttons: 0 })

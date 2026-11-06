@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import type { Canvas } from './format'
 import { CanvasHistory, KEPT } from './history'
 
-/** A canvas told apart by the id of the one card on it. */
 function step(id: string): Canvas {
   return {
     nodes: [{ id, type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
@@ -46,8 +45,6 @@ describe('the canvas undo stack', () => {
     expect(history.canRedo).toBe(false)
   })
 
-  /** A step made after an undo is a new branch, and the one that was undone is
-   *  no longer ahead of anything. */
   test('forgets what was undone as soon as something else is done', () => {
     const history = new CanvasHistory()
     history.record(step('one'))
@@ -73,7 +70,6 @@ describe('the canvas undo stack', () => {
     }
 
     expect(count).toBe(KEPT)
-    // The oldest ten went, so the earliest step still there is the eleventh.
     expect(at(canvas)).toBe('10')
   })
 

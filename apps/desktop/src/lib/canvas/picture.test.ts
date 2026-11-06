@@ -1,11 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
 
-/** The space around the plane and the save, stood in for. What a picture of a
- *  plane has to get right is the question the plane on screen already asks of
- *  every card: whose words these are. An SVG opened on its own is a document,
- *  and a PDF of one is printed from a window of the app's own, so a
- *  collaborator's `<img onerror>` in a card is their markup in both. */
 const world = vi.hoisted(() => ({ saved: [] as string[], printed: [] as string[] }))
 
 vi.mock('../link-index.svelte', () => ({
@@ -50,7 +45,6 @@ const plane = () =>
         { id: 'a', type: 'text', text: `Card ${HOSTILE}`, x: 0, y: 0, width: 200, height: 100 },
       ],
       edges: [],
-      // A shape is the app's own, and is kept beside the nodes; see readCanvas.
       nib: {
         shapes: [
           {
@@ -185,9 +179,6 @@ describe('a picture with its pictures inlined', () => {
   })
 })
 
-/** Printing a plane of one's own prints its markup, and on a Mac and for a PDF that page
- *  is a file in a window of its own, which the app's content policy does not reach. So
- *  the sheet carries a policy of its own, the one a note's page does (#612). */
 describe('the sheet a plane of one’s own is printed on', () => {
   const printed = async (text: string) => {
     world.printed = []

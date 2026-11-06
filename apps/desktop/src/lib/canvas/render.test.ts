@@ -1,8 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The space around the plane, stood in for. What a card has to get right is
- *  that it renders as a small page, and that whose page it is decides whether the
- *  HTML in it is markup or is words. */
 vi.mock('../link-index.svelte', () => ({
   links: {
     version: 1,
@@ -11,8 +8,6 @@ vi.mock('../link-index.svelte', () => ({
       path,
       read: () => Promise.resolve(null),
     }),
-    // A card renders through the reading view, which asks the index which note a
-    // link means; see `pointer` in reading/render.ts.
     targetOf: (_from: string | null, link: { target: string }) =>
       link.target.toLowerCase() === 'plan' ? 'Plan.md' : null,
   },
@@ -39,8 +34,6 @@ describe('a card on the plane', () => {
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x onerror="alert(1)">')
   })
 
-  /** A plane arrives through a room card by card, so the words in one may be
-   *  anybody's who is in the space; see trust.ts. */
   test('shows the HTML as characters, for a plane from anywhere else', () => {
     const html = cardHtml(HOSTILE, null, false)
 
@@ -49,8 +42,6 @@ describe('a card on the plane', () => {
     expect(html).toContain('&lt;img src=x')
   })
 
-  /** The same words are asked about twice, and the two answers differ. A cache
-   *  keyed on the words alone would serve the trusting one to both. */
   test('remembers the two answers apart', () => {
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, false)).not.toContain('<img src=x')
@@ -59,8 +50,6 @@ describe('a card on the plane', () => {
 })
 
 describe('a picture on the plane', () => {
-  // Pasted while signed in, a picture is kept by the account and the card names its
-  // address; joined to the space's folder, it was a file nowhere (#364).
   test('kept by the account is loaded from its address as it is', () => {
     const kept = 'https://sync.orden.so/i/ab12cd.png'
     expect(fileUrl(kept, '/space')).toBe(kept)

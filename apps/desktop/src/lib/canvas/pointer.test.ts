@@ -15,10 +15,6 @@ import type { InkStroke } from './format'
 import { nearStroke } from './ink'
 import { RUB, STROKE_RUB } from './pens.svelte'
 
-/** The machine has no DOM in it, so a gesture is a list of values and a test is
- *  that list written down. Everything below is one sequence of events and what
- *  the machine said about it. */
-
 const HERE = { x: 0, y: 0 }
 
 function context(over: Partial<Context> = {}): Context {
@@ -62,8 +58,6 @@ function hit(over: Partial<Hit>): Hit {
   return { ...NOTHING, ...over }
 }
 
-/** A whole gesture, as one call: the machine after it and everything it asked
- *  for along the way. */
 function play(inputs: Input[], where: Context, from: Machine = start()) {
   let machine = from
   const effects: Effect[] = []
@@ -87,8 +81,6 @@ describe('picking with the arrow', () => {
     expect(machine.gesture).toMatchObject({ kind: 'drag', ids: ['a'] })
   })
 
-  /** A press on one of nine picked cards drags all nine: grabbing one of them
-   *  is not a reason to drop the other eight. */
   test('a press on something already picked keeps the whole selection', () => {
     const where = context({ picked: ['a', 'b', 'c'] })
     const { machine, effects } = play([down({ hit: hit({ node: 'b' }) })], where)
@@ -115,9 +107,6 @@ describe('picking with the arrow', () => {
     expect(machine.gesture?.kind).toBe('band')
   })
 
-  /** A band round three cards picks three cards, the way dragging a box round
-   *  three files does. It says the box rather than the ids, because what a box
-   *  caught is the plane's own arithmetic and not the machine's. */
   test('a band says what it covers as it is dragged', () => {
     const { effects } = play(
       [
@@ -205,8 +194,6 @@ describe('dragging', () => {
     expect(moves).toEqual([{ do: 'move', ids: ['a'], dx: 80, dy: 20 }])
   })
 
-  /** An iPad reports the Pencil hovering over the glass as moves of its own, with
-   *  an id of its own, and they go on arriving while a finger carries a card. */
   test('a pointer that is not carrying the card does not move it', () => {
     const { effects } = play(
       [
@@ -245,8 +232,6 @@ describe('dragging', () => {
     ])
   })
 
-  /** A hand that presses and lets go without meaning to move is a click, and a
-   *  click has nothing to record. */
   test('a drag that was really a click records nothing', () => {
     const { effects } = play(
       [
@@ -299,9 +284,6 @@ describe('panning', () => {
     expect(machine.gesture?.kind).toBe('pan')
   })
 
-  /** A mouse says "nothing, thank you" the moment it is pressed on the plane. A
-   *  finger cannot, because the same press is how the plane is moved, so it says
-   *  it on the way up instead. */
   test('a finger tapped on the plane and lifted clears what was picked', () => {
     const { effects } = play(
       [down({ pointer: 'touch' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
@@ -356,10 +338,6 @@ describe('two fingers', () => {
     expect(zoom).toEqual({ do: 'zoom', at: { x: 100, y: 0 }, by: 2 })
   })
 
-  /** Each finger arrives in an event of its own, so a pair moved together is a
-   *  wobble in and a wobble out that come to nothing: what matters is that the
-   *  two are as far apart as they started, and that the plane moved by what the
-   *  hand moved. */
   test('moving them together comes out as a pan and no zoom at all', () => {
     const { machine, effects } = play(
       [
@@ -390,7 +368,6 @@ describe('two fingers', () => {
 })
 
 describe('two fingers turning the view (#351)', () => {
-  /** The second finger swung round the first by `degrees`, a step at a time. */
   function swung(degrees: number, steps = 6): Input[] {
     const moves: Input[] = []
     for (let step = 1; step <= steps; step++) {
@@ -416,8 +393,6 @@ describe('two fingers turning the view (#351)', () => {
 
   test('turn it with them, past the deadband, where the setting is on', () => {
     const { effects } = play(swung(40), context({ turns: true }))
-    // The deadband's few degrees are not taken back from the hand: what is turned is
-    // every degree from where the turn began to follow it.
     expect(turnedBy(effects)).toBeGreaterThan((30 * Math.PI) / 180)
     expect(turnedBy(effects)).toBeLessThanOrEqual((40 * Math.PI) / 180 + 1e-9)
   })
@@ -442,7 +417,6 @@ describe('two fingers turning the view (#351)', () => {
       context({ turn: Math.PI / 2 }),
     )
     const move = effects.find((one) => one.do === 'move')
-    // Turned a quarter clockwise, right on the screen is up the plane.
     expect(move).toMatchObject({ do: 'move' })
     if (move?.do !== 'move') return
     expect(move.dx).toBeCloseTo(0)
@@ -450,8 +424,6 @@ describe('two fingers turning the view (#351)', () => {
   })
 })
 
-/** A hand resting on a tablet is touch, and a pen that has arrived means the
- *  hand is not what anybody is drawing with. */
 describe('a pointer the system takes back', () => {
   const where = context()
   const move = (id: number, x: number): Input => ({
@@ -500,7 +472,6 @@ describe('palm rejection', () => {
     expect(palm.effects).toEqual([])
   })
 
-  /** A hand coming off the glass is not the pen putting its stroke down. */
   test('a palm lifting does not end the stroke the pen is still drawing', () => {
     const where = context({ tool: 'draw' })
     const drawing = play(
@@ -536,9 +507,6 @@ describe('palm rejection', () => {
     expect(verbs(pen.effects)).toEqual(['stroke'])
   })
 
-  /** The palm usually lands first: a hand comes down on the page and then the nib
-   *  touches it. Whatever the heel of the hand started is not what anybody meant,
-   *  so the pen takes the glass and the plane stays where it was. */
   test('a pen arriving takes the glass from a palm that got there first', () => {
     const where = context({ tool: 'draw', penSeen: true })
     const palm = play([down({ id: 1, pointer: 'touch' })], where)
@@ -550,7 +518,6 @@ describe('palm rejection', () => {
     expect(pen.machine.driver?.id).toBe(2)
     expect(pen.machine.penDown).toBe(true)
 
-    // And the palm dragging on has nothing to say about the plane.
     const dragged = step(
       pen.machine,
       { kind: 'move', id: 1, at: HERE, screen: { x: 90, y: 0 }, samples: [], hit: NOTHING },
@@ -574,10 +541,6 @@ describe('palm rejection', () => {
   })
 })
 
-/** A tablet with a stylus is two instruments. The pen writes and the hand moves
- *  the page, and it has to be able to do that with an ink tool in hand or there
- *  is no way to reach the rest of the drawing. A phone has no pen, so there the
- *  finger draws, because nothing else can. */
 describe('a finger on a device that has a pen', () => {
   const INK = ['draw', 'erase', 'lasso'] as const
   const tablet = (over: Partial<Context> = {}) => context({ penSeen: true, ...over })
@@ -633,8 +596,6 @@ describe('a finger on a device that has a pen', () => {
     expect(effects.at(-1)).toEqual({ do: 'menu', at: { x: 7, y: 8 } })
   })
 
-  /** A card has to be placed and a shape dragged out somehow, and on a tablet
-   *  the finger is what does it. Only the pen's own three tools are withheld. */
   test('still places a card and drags out a shape', () => {
     const placed = play([down({ pointer: 'touch' })], tablet({ tool: 'text' }))
     expect(placed.machine.gesture).toMatchObject({ kind: 'pull', tool: 'text' })
@@ -648,7 +609,6 @@ describe('a finger on a device that has a pen', () => {
     expect(machine.gesture?.kind).toBe('pan')
   })
 
-  /** The pen is the instrument. Nothing about it changes. */
   test('leaves the pen drawing, rubbing out and lassoing as before', () => {
     const drawn = play([down({ pointer: 'pen' })], tablet({ tool: 'draw' }))
     expect(drawn.machine.gesture?.kind).toBe('draw')
@@ -660,8 +620,6 @@ describe('a finger on a device that has a pen', () => {
     expect(caught.machine.gesture?.kind).toBe('lasso')
   })
 
-  /** With the arrow a pen is a mouse: it bands rather than panning, which is what
-   *  a nib on a plane you are not drawing on should do. */
   test('leaves the pen behaving as a mouse with the arrow', () => {
     const { machine } = play([down({ pointer: 'pen' })], tablet())
     expect(machine.gesture?.kind).toBe('band')
@@ -674,8 +632,6 @@ describe('a finger on a device that has a pen', () => {
     }
   })
 
-  /** The one way round it, for the hand in a hundred that wants it: a switch in
-   *  the pen's own row, and the finger is a nib again. */
   test('draws again when the reader has asked for it', () => {
     const { machine } = play(
       [down({ pointer: 'touch' })],
@@ -686,8 +642,6 @@ describe('a finger on a device that has a pen', () => {
   })
 })
 
-/** A phone has no pen and never will, so the finger has to draw: there is no
- *  other way to put a mark on the plane at all. */
 describe('a finger on a device that has never seen a pen', () => {
   test('draws, rubs out and lassoes as before', () => {
     const drawn = play([down({ pointer: 'touch' })], context({ tool: 'draw' }))
@@ -749,8 +703,6 @@ describe('drawing', () => {
     expect(stroke[0]?.do === 'stroke' && stroke[0].stroke.tool).toBe('pen')
   })
 
-  /** A pen down and up in one place is a dot, which is a mark somebody meant to
-   *  make. The format, the paint and the export all draw one; see ink.ts. */
   test('a pen down and up in one place is a stroke of one point', () => {
     const { effects } = play(
       [down({ pointer: 'pen' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
@@ -768,8 +720,6 @@ describe('drawing', () => {
     expect(verbs(effects)).toContain('assist')
   })
 
-  /** Every stylus in the world rubs out when its button is held, whatever the
-   *  bar happens to say. */
   test('the pen button rubs out whatever the tool is', () => {
     const { machine, effects } = play(
       [down({ pointer: 'pen', eraser: true })],
@@ -801,8 +751,6 @@ describe('rubbing out', () => {
     expect(effects).toEqual([{ do: 'rub', at: HERE, reach: STROKE_RUB / 2 }])
   })
 
-  /** The bar's own row asks the same question shift asks, and asks it for a
-   *  device that has no shift key to ask it with. */
   test('takes whole strokes when the bar says so, with no key held', () => {
     const { effects } = play(
       [down({ hit: hit({ stroke: 's1' }) })],
@@ -903,8 +851,6 @@ describe('rubbing out', () => {
     expect(effects).toHaveLength(5)
   })
 
-  /** A finger has the room to miss a line by that a tap on one has, on top of the
-   *  stroke eraser's width; a pen and a mouse are precise. */
   test('takes a whole line 8 px off under a finger, and not under a pen', () => {
     const line: InkStroke = {
       id: 's1',
@@ -923,8 +869,6 @@ describe('rubbing out', () => {
     expect(reaches('pen')).toBe(false)
   })
 
-  /** The stylus button is the eraser, so it rubs the way the bar has the eraser
-   *  set rather than being a second eraser with a mind of its own. */
   test('the pen button rubs the way the bar is set', () => {
     const { effects } = play(
       [down({ pointer: 'pen', eraser: true, hit: hit({ stroke: 's1' }) })],
@@ -981,10 +925,6 @@ describe('the lasso', () => {
   })
 })
 
-/** Everything a press puts on the plane is pulled out: a card, a frame, a picture
- *  and a triangle alike. Pressed, it lands at its own size; dragged, at the size it
- *  was dragged to - and the plane draws it the whole way rather than only once it is
- *  let go, which is what "you can't see the arrow till you let go" was about. */
 describe('the tools that put something down', () => {
   const PUT: Tool[] = [
     'text',
@@ -1058,9 +998,6 @@ describe('the tools that put something down', () => {
     expect(machine.gesture).toMatchObject({ kind: 'pull', to: { x: 200, y: 90 } })
   })
 
-  /** A line dragged from one card to another is what a hand drawing a connector
-   *  between two cards means, so that is what it makes: an edge, not a line lying
-   *  across them. An arrow carries a head and a plain line does not. */
   test('a line dragged from one card to another becomes a connector', () => {
     for (const [tool, head] of [
       ['line', false],
@@ -1134,7 +1071,6 @@ describe('the tools that put something down', () => {
   })
 })
 
-/** An end of a picked connector, dragged onto another card. */
 describe('moving an end of a connector', () => {
   test('takes it to whatever card it was dropped on', () => {
     const { effects } = play(
@@ -1162,8 +1098,6 @@ describe('moving an end of a connector', () => {
   })
 })
 
-/** Alt on a drag leaves a copy behind. The originals are what the pointer carries
- *  away, so the ids the gesture already holds stay the right ones. */
 describe('alt on a drag', () => {
   test('leaves a copy where the drag began and carries the originals off', () => {
     const { machine, effects } = play(
@@ -1181,8 +1115,6 @@ describe('alt on a drag', () => {
   })
 })
 
-/** A resize that holds the shape of the box: Shift on every device, and a picture
- *  under a thumb without being asked. */
 describe('holding the shape of what is resized', () => {
   const box = { x: 0, y: 0, width: 100, height: 50 }
 
@@ -1267,8 +1199,6 @@ describe('what a gesture leaves behind', () => {
   })
 })
 
-/** Two fingers on a page mean the page, whatever the first one was doing. The
- *  only question is what happens to ink the first one had already laid down. */
 describe('a second finger', () => {
   const nib = { x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
 
@@ -1293,9 +1223,6 @@ describe('a second finger', () => {
     expect(machine.gesture?.kind).toBe('pinch')
   })
 
-  /** A phone draws with the finger, so the finger that starts a stroke is also
-   *  the one that has to be able to move the page. A stroke a moment old is worth
-   *  less than the pinch, which is what every drawing app decided. */
   test('gives up a stroke a moment old and takes the plane', () => {
     const { machine, effects } = play(
       [down({ id: 1, pointer: 'touch', sample: nib }), second()],
@@ -1306,8 +1233,6 @@ describe('a second finger', () => {
     expect(verbs(effects)).toEqual(['leave'])
   })
 
-  /** And a line somebody is halfway through is worth more than the pinch: a hand
-   *  settling on the glass must not take the line with it. */
   test('leaves a stroke that is already under way alone', () => {
     const { machine } = play(
       [
@@ -1352,9 +1277,6 @@ describe('a second finger', () => {
   })
 })
 
-/** Every stylus rubs out when its button is held. Chromium says so as the eraser
- *  bit on a desktop and as the right button on Android, and both mean the same
- *  thing to a hand. */
 describe('the pen with its button held', () => {
   test('rubs out where Chromium reports the right button', () => {
     const { machine, effects } = play(
@@ -1388,9 +1310,6 @@ describe('the pen with its button held', () => {
   })
 })
 
-/** Samsung's S Pen reports the first event of a contact as a finger on some
- *  devices, and a button held as the nib lands is sometimes only in the second
- *  event. Either way, what the finger was given is taken back. */
 describe('a contact that turns out to be a pen', () => {
   const nib = { x: 3, y: 4, pressure: 0.7, tiltX: 1, tiltY: -1, t: 0 }
   const penned = {
@@ -1436,12 +1355,6 @@ describe('a contact that turns out to be a pen', () => {
     expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke.points).toHaveLength(2)
   })
 
-  /** A button pressed halfway through a line used to be ignored, on the grounds that
-   *  what a stroke is should be settled when the nib touches down. On the tablet that
-   *  read as the pen going dead: the line stopped and nothing was rubbed out. A hand
-   *  that presses the button while it is writing is a hand that wants to rub out, so
-   *  the contact becomes the eraser it now is and the ink it had laid down goes with
-   *  it - nothing is on the plane yet, so there is nothing to take back either. */
   test('turns a stroke that is already drawing into a rub when the button comes down', () => {
     const { machine, effects } = play(
       [
@@ -1545,8 +1458,6 @@ describe('straightening what was drawn', () => {
     expect(verbs(effects)).not.toContain('assist')
   })
 
-  /** And a nib resting on the plane is a hand thinking, not a hand asking for a
-   *  list of things it could do. */
   test('is not the menu, whatever a pen is holding', () => {
     const spacing = step(start(), { kind: 'space', down: true }, context()).machine
     const { effects } = play(
@@ -1559,10 +1470,6 @@ describe('straightening what was drawn', () => {
   })
 })
 
-/** #349, Emil: "holding down with your finger and then dragging after some short
- *  waiting time to get a lasso instead of a normal select". A finger held still on the
- *  bare plane opens the menu as it always has; moved on from there, the menu goes and
- *  the finger draws a loop from where it was held, which catches cards as well as ink. */
 describe('a finger held on the bare plane, then moved', () => {
   const at = (x: number, y: number) => ({ x, y })
   const move = (x: number, y: number): Input => ({

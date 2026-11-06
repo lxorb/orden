@@ -1,16 +1,3 @@
-/** Everything on the canvas bar, as data: the icon, the words and the key.
- *
- *  One icon set for the whole app. These are Lucide's, the same ones the spaces
- *  and the file list are drawn with, so the plane does not arrive wearing a
- *  second set of hand-drawn shapes that drift a little further from the rest of
- *  the interface every time one of them is redrawn. Each is an icon node, which
- *  is a list of tags and attributes; `CanvasIcon.svelte` draws one.
- *
- *  The words are thunks rather than strings, so a language chosen after this
- *  module loaded is the one they answer in. Each carries the id of the shortcut
- *  that does the same thing, which is where the key in the tooltip comes from:
- *  the bar teaches the keyboard, and neither of them holds a key of its own. */
-
 import ArrowUpRight from 'lucide/dist/esm/icons/arrow-up-right.mjs'
 import Brush from 'lucide/dist/esm/icons/brush.mjs'
 import Circle from 'lucide/dist/esm/icons/circle.mjs'
@@ -55,29 +42,20 @@ import { type Tool } from './pointer'
 import { t } from '../i18n.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 
-/** One button on the bar. */
 export interface Mark {
   icon: IconNode
-  /** Read out, and shown on a hover. */
   title: () => string
-  /** The shortcut that does the same thing, or nothing where no key does. */
   key: string | null
 }
 
-/** A button that puts a tool in your hand. */
 export interface ToolMark extends Mark {
   id: Tool
 }
 
-/** What a hover says: the name, and the key that does the same thing, in the words
- *  every other button in the app says it with; see `tooltip` in shortcuts.svelte.ts.
- *  This is how the bar teaches the keyboard: somebody reads "Rectangle (R)" once, and
- *  after that the button is there for the times their hand is on the glass. */
 export function hinted(mark: Pick<Mark, 'title' | 'key'>): string {
   return shortcuts.tooltip(mark.title(), mark.key)
 }
 
-/** Getting about the plane: the arrow, and the hand that moves it. */
 export const ABOUT: ToolMark[] = [
   {
     id: 'select',
@@ -88,9 +66,6 @@ export const ABOUT: ToolMark[] = [
   { id: 'hand', icon: Hand, title: () => t('Pan'), key: 'canvas.tool.hand' },
 ]
 
-/** Words put straight on the plane or the paper, with no card round them: a button of
- *  its own on the bar of a canvas and of a page note, as Miro's and a PDF viewer's text
- *  tool are, rather than one more row behind Add (#421). */
 export const WORDS: ToolMark = {
   id: 'words',
   icon: Type,
@@ -98,19 +73,11 @@ export const WORDS: ToolMark = {
   key: 'canvas.tool.words',
 }
 
-/** The two tools the pens are used with. */
 export const RUBBING: ToolMark[] = [
   { id: 'erase', icon: Eraser, title: () => t('Erase'), key: 'canvas.tool.erase' },
   { id: 'lasso', icon: Lasso, title: () => t('Lasso'), key: 'canvas.tool.lasso' },
 ]
 
-/** What a press puts on the plane, in the order the grid shows them: the five
- *  things a note taker puts down, then the four bodies, then the three lines.
- *
- *  A note and a picture are two entries and not one. They were one, which meant
- *  somebody who wanted a photograph on the plane was asked which note to embed;
- *  they are different things to want, they come from different places, and one of
- *  them was unreachable. */
 export const PLACING: ToolMark[] = [
   { id: 'text', icon: StickyNote, title: () => t('Card'), key: 'canvas.tool.text' },
   { id: 'file', icon: FileText, title: () => t('Note'), key: 'canvas.tool.file' },
@@ -126,8 +93,6 @@ export const PLACING: ToolMark[] = [
   { id: 'elbow', icon: CornerDownRight, title: () => t('Elbow'), key: 'canvas.tool.elbow' },
 ]
 
-/** A nib each. Seven pens are seven objects rather than seven scribbles, so each
- *  one is the icon of the instrument it is. */
 export const PEN_ICONS: Record<InkTool, IconNode> = {
   pen: PenLine,
   fountain: PenTool,
@@ -138,9 +103,6 @@ export const PEN_ICONS: Record<InkTool, IconNode> = {
   calligraphy: Feather,
 }
 
-/** What each pen is called. Beside its icon in the pen's own panel, because a
- *  drawing of a nib and a drawing of a broad nib are two pictures of one thing
- *  and the word is what tells them apart. */
 export const PEN_NAMES: Record<InkTool, () => string> = {
   pen: () => t('Pen'),
   fountain: () => t('Fountain pen'),
@@ -151,26 +113,18 @@ export const PEN_NAMES: Record<InkTool, () => string> = {
   calligraphy: () => t('Calligraphy'),
 }
 
-/** Everything on the bar that is not a tool: the two arrows, the zoom, the
- *  handful of marks the panels and the selection use. */
 export const MARKS = {
   undo: Undo2,
   redo: Redo2,
   zoomOut: Minus,
   zoomIn: Plus,
-  /** What a press puts on the plane, as one button with a grid behind it. */
   put: Shapes,
-  /** The rest of what can be done, which is the menu everything else opens. */
   rest: Ellipsis,
   copy: Copy,
   bin: Trash2,
-  /** Several things made one, and taken apart again. */
   group: Group,
   ungroup: Ungroup,
-  /** The bar itself: dragged to an edge, pressed to fold away. */
   grip: GripVertical,
-  /** A stroke tidied into the line, ring or box it was aiming at. */
   straight: Ruler,
-  /** Whether a finger draws on a device that also has a pen. */
   finger: Pointer,
 } as const

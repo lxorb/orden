@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The pens are kept in the browser's storage, which the modules read as they load. */
 vi.stubGlobal('localStorage', {
   getItem: () => null,
   setItem: () => undefined,

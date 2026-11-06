@@ -40,9 +40,6 @@ describe('moving cards', () => {
     ])
   })
 
-  /** One offset for the whole selection keeps a row of cards a row: moving each
-   *  one to its own nearest dot would pull them into a single column. Where the
-   *  offset came from is the surface's business; see snap.ts. */
   test('applies one offset to everything picked, so a selection keeps its shape', () => {
     const off = canvasOf([card('a', 3, 7), card('b', 45, 7)])
     const moved = movedBy(off, ['a', 'b'], GRID, 0)
@@ -81,8 +78,6 @@ describe('resizing what is picked', () => {
     expect(wider.nodes[1]).toBe(canvas.nodes[1])
   })
 
-  /** One box round the lot is pulled and everything keeps where it was in that
-   *  box, which is what a hand dragging a corner of nine cards means. */
   test('scales several together, keeping each where it was in the box', () => {
     const canvas = canvasOf([card('a', 0, 0, 100, 100), card('b', 100, 0, 100, 100)])
     const wider = resizedPick(canvas, ['a', 'b'], 'e', 200, 0)
@@ -169,7 +164,6 @@ describe('connecting two cards', () => {
 
     expect(again.canvas).toBe(once.canvas)
     expect(again.id).toBe(once.id)
-    // The other way round is another connector, and so is another pair of sides.
     expect(connected(once.canvas, 'b', 'left', 'a', 'right').canvas.edges).toHaveLength(2)
     expect(connected(once.canvas, 'a', 'top', 'b', 'left').canvas.edges).toHaveLength(2)
   })
@@ -276,7 +270,6 @@ describe("a card's words", () => {
 
 describe('a card put down where the pointer was', () => {
   test('is centred on the point, with its corner on the grid', () => {
-    // Centred is x - width / 2 and y - height / 2, each landing on a dot.
     expect(placedAt({ x: 100, y: 100 }, 200, 100)).toEqual({ x: 0, y: 60, width: 200, height: 100 })
   })
 })
@@ -290,8 +283,6 @@ describe('a card added to the canvas', () => {
   })
 })
 
-/** A shape in a diagram is a shape with a name in it far more often than it is a
- *  shape, so it holds words the way a card does. */
 describe('the words inside a shape', () => {
   const shape = (text?: string): CanvasNode => ({
     id: 's',
@@ -309,8 +300,6 @@ describe('the words inside a shape', () => {
     expect(next.nodes[0]).toMatchObject({ text: 'Ready?' })
   })
 
-  /** The field is optional in the format, so an empty one is taken away rather than
-   *  written: a shape wearing `""` is a shape with nothing in it, said twice. */
   test('are taken away rather than written empty', () => {
     const next = withText(canvasOf([shape('Ready?')]), 's', '   ')
     expect(next.nodes[0]).not.toHaveProperty('text')
@@ -322,9 +311,6 @@ describe('the words inside a shape', () => {
   })
 })
 
-/** A group is a labelled box, and whatever sits inside it moves with it. Nothing is
- *  written into the cards themselves, so a canvas grouped here opens in Obsidian as the
- *  same cards inside the same frame. */
 describe('grouping', () => {
   const canvas = canvasOf([card('a'), card('b', 300, 0)])
 
@@ -333,7 +319,6 @@ describe('grouping', () => {
     const frame = made.canvas.nodes[0]
 
     expect(frame).toMatchObject({ id: made.id, type: 'group' })
-    // Room enough round them to read as holding them rather than touching them.
     expect(frame!.x).toBeLessThan(0)
     expect(frame!.x + frame!.width).toBeGreaterThan(400)
   })
@@ -366,8 +351,6 @@ describe('ungrouping', () => {
     ])
   })
 
-  /** Ungrouping four cards and being left with nothing selected is a gesture that
-   *  looks as though it deleted them. */
   test('leaves what the frame held picked', () => {
     const made = grouped(canvasOf([card('a'), card('b', 300, 0)]), ['a', 'b'])
     expect(ungrouped(made.canvas, [made.id]).ids.sort()).toEqual(['a', 'b'])
@@ -379,8 +362,6 @@ describe('ungrouping', () => {
   })
 })
 
-/** An end of a connector dragged onto another card. The side it meets is dropped, so
- *  the drawing works it out from where the two cards ended up. */
 describe('moving an end of a connector', () => {
   const canvas = canvasOf(
     [card('a'), card('b', 300, 0), card('c', 0, 300)],
@@ -391,7 +372,6 @@ describe('moving an end of a connector', () => {
     const next = reattached(canvas, 'e', 'to', 'c')
     expect(next.edges[0]).toMatchObject({ fromNode: 'a', toNode: 'c' })
     expect(next.edges[0]).not.toHaveProperty('toSide')
-    // And leaves the other end exactly as it was.
     expect(next.edges[0]).toMatchObject({ fromSide: 'right' })
   })
 
@@ -416,8 +396,6 @@ describe('moving an end of a connector', () => {
   })
 })
 
-/** A resize that holds the shape of the box: what Shift asks for, and what a picture
- *  under a thumb gets without being asked. */
 describe('resizing with the shape of the box held', () => {
   const canvas = canvasOf([card('a', 0, 0, 100, 50)])
 

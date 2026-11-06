@@ -1,32 +1,3 @@
-/** The ink on the plane as square tiles of pixels, kept between repaints.
- *
- *  What the lower ink layer shows is put together out of these, the way a map is:
- *  a repaint is the tiles copied onto the layer where the camera now puts them. So
- *  a pan over a plane of ten thousand strokes fills nothing at all. Before these,
- *  every repaint filled every stroke in view: about four hundred milliseconds a
- *  frame on a plane of ten thousand seen whole, growing as the plane arrived,
- *  because the plane was one path and a path is filled whole or not at all.
- *
- *  An edit repaints only the pixels it changed. A stroke drawn, rubbed out or moved
- *  marks the rectangle it covers on each tile it crosses, and the rectangle is
- *  cleared and filled again with the strokes that reach into it, clipped to it. On
- *  whole pixels that is exactly what painting the tile afresh would leave there -
- *  two passes of a highlighter still darken once - and it costs the strokes near the
- *  edit rather than the strokes on the tile: a tile of a plane seen whole holds a
- *  couple of thousand.
- *
- *  Figma paints its documents in tiles, and for the same reason: a picture that is
- *  zoomed and panned far more often than it is changed is cheaper kept as pixels
- *  than drawn again. What this takes from maps is the rest - the tiles in view
- *  first, from the middle out, and the old picture under the new one while the new
- *  one is arriving, so a zoom sharpens rather than blinks.
- *
- *  One scale at a time. A tile is the plane at exactly the scale it is shown at, so
- *  the ink is as sharp at rest as it was drawn; a zoom that settles somewhere new
- *  paints that scale afresh, a frame's budget at a time, over the old picture drawn
- *  larger or smaller. Tiles nobody has looked at for a while are let go, so the
- *  pixels kept are a couple of screens' worth whatever the size of the plane. */
-
 import type { InkStroke } from './format'
 import type { Box } from './geometry'
 import { strokeBox } from './ink'
@@ -47,46 +18,18 @@ import {
   wipe,
 } from './paint'
 
-/** How wide a tile is, in device pixels. Small enough that the pixels kept off
- *  screen are a ring round it rather than another screen; big enough that a screen
- *  is a hundred tiles to copy and not a thousand. */
 export const TILE = 256
 
-/** How much one frame does before it leaves the rest for the next, counted in
- *  strokes filled: about twenty milliseconds of it on the machine this was measured
- *  on, with the frame's own drawing still to come. A tile with more than this on it
- *  is still painted whole, on a frame of its own. A count rather than a deadline
- *  because what this is worth is asserted by counting it; see tiles.test.ts. */
 export const FILLED_A_FRAME = 2048
 
-/** What working out one stroke's outline costs, in strokes filled: a tenth of a
- *  millisecond against a hundredth, measured over a plane of ten thousand opening.
- *  A plane opened for the first time has no outline worked out, and ten thousand of
- *  them were a second in one task before a single card was on screen - so they are
- *  worked out a slice of the same budget at a time, and a tile waits until
- *  everything on it has one. Out of one budget rather than two, because two let a
- *  frame spend both: sixty to ninety milliseconds, where either alone is twenty. */
 export const OUTLINE_WEIGHT = 8
 
-/** What filing one stroke under the cells of the plane it touches costs, in strokes
- *  filled: its box measured and a few cells written, which measured a tenth of a
- *  fill over a plane of ten thousand strokes and is counted as a quarter, so the
- *  frame that files is never the long one. Out of the same budget as the outlines,
- *  because a plane just opened files every stroke before a tile can be painted, and
- *  that was a first frame of thirty milliseconds before the budget had spent
- *  anything. See `#file`. */
 export const FILE_WEIGHT = 0.25
 
-/** How many tiles are kept, as a multiple of the tiles the layer shows: the screen
- *  and about as much again around it, so panning back is a copy and not a fill. */
 const KEPT = 2
 
-/** How many separate rectangles a tile keeps to repair before they are one: a rub
- *  marks one a move, and past a handful the strokes under their bounds are fewer
- *  fills than the strokes under each. */
 const MOST_PATCHES = 8
 
-/** Something a tile is painted on and copied off. */
 export interface Surface {
   image: CanvasImageSource
   context: Paintable
@@ -94,8 +37,6 @@ export interface Surface {
 
 export type MakeSurface = (size: number) => Surface | null
 
-/** A canvas of its own for a tile, or none where there is no document to make one
- *  in. */
 function makeSurface(size: number): Surface | null {
   if (typeof document === 'undefined') return null
 
@@ -106,8 +47,6 @@ function makeSurface(size: number): Surface | null {
   return context ? { image: canvas, context } : null
 }
 
-/** A rectangle of a tile, in its own whole device pixels: the left and top edges
- *  in it, the right and bottom ones not. */
 interface Patch {
   left: number
   top: number
@@ -118,23 +57,13 @@ interface Patch {
 interface Tile {
   across: number
   down: number
-  /** Nothing for a tile with no ink on it, which needs no pixels at all. */
   surface: Surface | null
-  /** Painted under a theme or an order of inks that no longer holds, and due to be
-   *  painted again whole. Worth showing until then. */
   stale: boolean
-  /** Where it shows something that is no longer so: a stroke taken away, or put
-   *  down, since it was painted. */
   patches: Patch[]
-  /** Strokes put down since it was painted. Laid over it on a frame that cannot
-   *  repair it yet, so a stroke is on the layer the moment it is drawn. */
   adds: InkStroke[]
-  /** The repaint it was last on the layer in, for letting the oldest go. */
   used: number
 }
 
-/** Where the picture on the layer was painted from: the scale, the origin in whole
- *  device pixels, and the layer's size. */
 interface Painted {
   scale: number
   x: number
@@ -143,13 +72,11 @@ interface Painted {
   height: number
 }
 
-/** Which tile: how many tiles across and down from the plane's origin. */
 interface Spot {
   across: number
   down: number
 }
 
-/** A tile's two numbers as one key, the way ink-grid.ts files its cells. */
 const SPAN = 2 ** 21
 const HALF = 2 ** 20
 
@@ -157,10 +84,6 @@ function keyOf(across: number, down: number): number {
   return (across + HALF) * SPAN + (down + HALF)
 }
 
-/** Whether `now` is `was` with something added on the end - the same strokes, by
- *  identity, and then more. Which is what drawing one is, and what a room
- *  delivering one is. A walk of references, which is nothing beside the sets a
- *  change of any other kind is worked out with. */
 function grewFrom(was: readonly InkStroke[], now: readonly InkStroke[]): boolean {
   if (now.length < was.length) return false
   for (let one = 0; one < was.length; one++) if (was[one] !== now[one]) return false
@@ -168,10 +91,6 @@ function grewFrom(was: readonly InkStroke[], now: readonly InkStroke[]): boolean
   return true
 }
 
-/** Whether the kinds of ink both orders know are in the same order in each: the
- *  kinds are painted in that order, so a tile painted under one and a tile painted
- *  under the other would put a highlighter under a pen on one side of their edge and
- *  over it on the other. */
 function sameOrder(was: ReadonlyMap<string, number>, now: ReadonlyMap<string, number>): boolean {
   let last = -1
   for (const kind of now.keys()) {
@@ -184,13 +103,6 @@ function sameOrder(was: ReadonlyMap<string, number>, now: ReadonlyMap<string, nu
   return true
 }
 
-/** Whether two palettes say the same colours, whichever objects they are.
- *
- *  Read by what they say rather than by which object they are, because a surface
- *  reads its palette off the theme again whenever the root element's class or style
- *  moves - which the pointer hiding under a key and coming back on the next move
- *  does - and every one of those is a new object with the same colours in it. Taken
- *  as a new theme, each one painted every tile again. */
 function samePalette(one: Palette, other: Palette | null): boolean {
   if (!other) return false
   if (one === other) return true
@@ -202,10 +114,8 @@ function samePalette(one: Palette, other: Palette | null): boolean {
   )
 }
 
-/** All of a tile, as a patch. */
 const WHOLE: Patch = { left: 0, top: 0, right: TILE, bottom: TILE }
 
-/** One patch that covers them all. */
 function bounds(patches: readonly Patch[]): Patch {
   return {
     left: Math.min(...patches.map((one) => one.left)),
@@ -217,20 +127,15 @@ function bounds(patches: readonly Patch[]): Patch {
 
 export class InkTiles {
   readonly #make: MakeSurface
-  /** Surfaces of tiles let go, kept for the next tiles rather than made again. */
   readonly #spare: Surface[] = []
 
   #strokes: readonly InkStroke[] = []
   readonly #grid = new InkGrid()
-  /** Strokes on the plane not filed under the grid yet, and how far along them the
-   *  filing has got. No tile is painted until they are all filed, since until then
-   *  the grid could leave one of them off it. */
   #unfiled: InkStroke[] = []
   #filed = 0
   #order = new Map<string, number>()
   #palette: Palette | null = null
 
-  /** Device pixels per plane unit, which is what the tiles are painted at. */
   #scale = 0
   readonly #tiles = new Map<number, Tile>()
   #repaints = 0
@@ -240,9 +145,6 @@ export class InkTiles {
     this.#make = make
   }
 
-  /** The ink on `ctx`, which is a layer the size of `view`, and what is picked
-   *  ringed on top. Answers whether any of it is still to come, which is a repaint
-   *  owed on the next frame. */
   paint(
     ctx: CanvasRenderingContext2D,
     strokes: readonly InkStroke[],
@@ -275,10 +177,6 @@ export class InkTiles {
     return pending
   }
 
-  /** A patch of a tile as the part of the plane it covers, in plane units, with a
-   *  device pixel to spare all round: the edge of an outline is softened into the
-   *  pixel beside it, and a stroke that stops just short of the patch can still
-   *  colour its edge. */
   #plane(tile: Spot, patch: Patch): Box {
     const scale = this.#scale
     return {
@@ -289,8 +187,6 @@ export class InkTiles {
     }
   }
 
-  /** What a box on the plane covers of one tile, as a patch, or null for none. The
-   *  same pixel to spare, and out to whole pixels. */
   #patch(tile: Spot, box: Box): Patch | null {
     const scale = this.#scale
     const left = Math.max(0, Math.floor(box.x * scale - tile.across * TILE) - 1)
@@ -301,7 +197,6 @@ export class InkTiles {
     return right > left && bottom > top ? { left, top, right, bottom } : null
   }
 
-  /** Every tile kept that a box on the plane touches, handed to `visit`. */
   #touched(box: Box, visit: (tile: Tile) => void) {
     const spare = 1 / this.#scale
     const left = Math.floor(((box.x - spare) * this.#scale) / TILE)
@@ -309,7 +204,6 @@ export class InkTiles {
     const top = Math.floor(((box.y - spare) * this.#scale) / TILE)
     const bottom = Math.floor(((box.y + box.height + spare) * this.#scale) / TILE)
 
-    // A long stroke zoomed far in crosses more tiles than are kept: ask the tiles.
     if ((right - left + 1) * (bottom - top + 1) > this.#tiles.size) {
       for (const tile of this.#tiles.values()) {
         const { across, down } = tile
@@ -326,8 +220,6 @@ export class InkTiles {
     }
   }
 
-  /** The tiles told what changed between the strokes they were painted from and
-   *  these: where to repair, and what to lay over meanwhile. */
   #follow(strokes: readonly InkStroke[]) {
     const was = this.#strokes
     this.#strokes = strokes
@@ -368,8 +260,6 @@ export class InkTiles {
       this.#touched(strokeBox(stroke), (tile) => mark(stroke, tile))
     }
 
-    // Filed a frame's budget at a time; see `#file`. A stroke gone before its turn
-    // came is not filed at all.
     if (gone.length && this.#filed < this.#unfiled.length) {
       const left = new Set(gone)
       this.#unfiled = this.#unfiled.slice(this.#filed).filter((stroke) => !left.has(stroke))
@@ -377,8 +267,6 @@ export class InkTiles {
     }
     for (const stroke of added) this.#unfiled.push(stroke)
 
-    // A plane just opened has no tiles to tell, and measuring its strokes here would
-    // be the filing's cost paid anyway, outside the budget.
     if (!this.#tiles.size) return
     for (const stroke of added) {
       this.#touched(strokeBox(stroke), (tile) => {
@@ -388,9 +276,6 @@ export class InkTiles {
     }
   }
 
-  /** Strokes filed under the grid out of this frame's budget: every one on the frame
-   *  after an edit, which adds a stroke or two, and a frame's worth at a time on a
-   *  plane just opened. Answers what it spent. */
   #file(): number {
     let spent = 0
     const queue = this.#unfiled
@@ -409,13 +294,9 @@ export class InkTiles {
     return spent
   }
 
-  /** The tiles the layer shows, from the middle of the view outwards: what somebody
-   *  is looking at is painted first when there is more to paint than a frame. */
   #wanted(view: View): Spot[] {
     const box = seen(view)
     const scale = this.#scale
-    // The tiles the layer's pixels fall in: a tile that starts exactly where the
-    // layer ends has none of them.
     const left = Math.floor((box.x * scale) / TILE)
     const right = Math.ceil(((box.x + box.width) * scale) / TILE) - 1
     const top = Math.floor((box.y * scale) / TILE)
@@ -434,9 +315,6 @@ export class InkTiles {
     return out.sort((one, other) => one.far - other.far)
   }
 
-  /** Which to do first: a repair, which is cheap and is an edit somebody is waiting
-   *  to see; then a tile with nothing to show at all; then one that is only out of
-   *  date. */
   #urgency(spot: Spot): number {
     const tile = this.#tiles.get(keyOf(spot.across, spot.down))
     if (!tile) return 1
@@ -444,14 +322,10 @@ export class InkTiles {
     return tile.stale ? 2 : 3
   }
 
-  /** As much of what is missing, out of date or edited as one frame's budget covers.
-   *  Answers whether any is left. */
   #fill(wanted: readonly Spot[], palette: Palette): boolean {
     let spent = this.#file()
     if (this.#unfiled.length) return true
 
-    // Outlines first, out of the same budget: a stroke nobody has outlined yet is a
-    // stroke its tile waits for.
     const ready = (strokes: readonly InkStroke[]) => {
       let unready = 0
       for (const stroke of strokes) {
@@ -474,8 +348,6 @@ export class InkTiles {
     for (const spot of order) {
       const tile = this.#tiles.get(keyOf(spot.across, spot.down))
 
-      // An edit is repaired where it is even on a tile that is due to be painted
-      // again whole: it is what somebody is waiting to see, and it is cheap.
       if (tile?.patches.length) {
         const patches = tile.patches
         const members = patches.map((patch) => this.#grid.near(this.#plane(tile, patch)))
@@ -498,9 +370,6 @@ export class InkTiles {
       spent += members.length
     }
 
-    // Whatever could not be repaired this frame still shows what was drawn on it,
-    // laid over; the repair that follows makes it exactly what a fill of everything
-    // there would have made.
     let left = false
     for (const spot of wanted) {
       const tile = this.#tiles.get(keyOf(spot.across, spot.down))
@@ -516,7 +385,6 @@ export class InkTiles {
     return left
   }
 
-  /** A tile painted whole, from nothing. */
   #paintTile(spot: Spot, held: Tile | undefined, members: readonly InkStroke[], palette: Palette) {
     const tile: Tile = held ?? {
       across: spot.across,
@@ -533,7 +401,6 @@ export class InkTiles {
     tile.adds = []
 
     if (!members.length) {
-      // Nothing on it now, so nothing to keep: the pixels go back for another tile.
       this.#release(tile)
       return
     }
@@ -547,7 +414,6 @@ export class InkTiles {
     plain(ctx)
   }
 
-  /** One patch of a tile cleared and filled again, and nothing outside it touched. */
   #repair(tile: Tile, patch: Patch, members: readonly InkStroke[], palette: Palette) {
     const ctx = this.#surfaceOf(tile)
     if (!ctx) return
@@ -569,8 +435,6 @@ export class InkTiles {
     plain(ctx)
   }
 
-  /** The context a tile is painted on, finding it pixels if it has none: a spare
-   *  one wiped of the tile it was, or a new one. */
   #surfaceOf(tile: Tile): Paintable | null {
     if (tile.surface) return tile.surface.context
 
@@ -580,11 +444,8 @@ export class InkTiles {
     return tile.surface?.context ?? null
   }
 
-  /** Where a kind of ink comes in the order the plane paints them. */
   readonly #rank = (kind: string) => this.#order.get(kind) ?? this.#order.size
 
-  /** The tile's corner of the plane on its context, at the tiles' scale. Whole
-   *  pixels, so a tile meets the one beside it exactly. */
   #onto(ctx: Paintable, tile: Spot) {
     const scale = this.#scale
     ctx.setTransform(scale, 0, 0, scale, -tile.across * TILE, -tile.down * TILE)
@@ -602,13 +463,6 @@ export class InkTiles {
     plain(ctx)
   }
 
-  /** The tiles copied onto the layer where the camera puts them now.
-   *
-   *  Where a tile is not there yet - a zoom that settled on a new scale, a pan onto
-   *  plane nobody has painted - the picture the layer held before is drawn there
-   *  instead, moved and scaled to where it now belongs. That is what the layer was
-   *  showing under its transform while the view moved, so nothing blinks; the tile
-   *  replaces it when it arrives. */
   #compose(ctx: CanvasRenderingContext2D, wanted: readonly Spot[], view: View) {
     const at = origin(view)
     const width = view.width * view.ratio
@@ -650,8 +504,6 @@ export class InkTiles {
     this.#painted = { scale: this.#scale, x: at.x, y: at.y, width, height }
   }
 
-  /** The tiles nobody has looked at for longest, let go once there are more than
-   *  `KEPT` screens of them. */
   #letGo(wanted: readonly Spot[]) {
     const most = Math.max(16, wanted.length * KEPT)
     if (this.#tiles.size <= most) return

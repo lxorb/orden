@@ -3,24 +3,6 @@ import type { InkStroke } from './format'
 import type { Box } from './geometry'
 import { strokeBox } from './ink'
 
-/** What a repaint of the ink costs, counted, and what the tiles end up showing.
- *
- *  A plane of ten thousand strokes seen whole was one path, and every repaint
- *  filled all of it: four hundred milliseconds a frame, growing as the plane
- *  arrived, whether the repaint was for a pan, a zoom or one stroke drawn. So what
- *  is counted here is strokes filled, and what it has to say is that a pan fills
- *  none, an edit fills the strokes around it, and a plane arriving fills a frame's
- *  budget at a time. A count rather than a clock, for the reason the counter's own
- *  comment gives.
- *
- *  And because an edit repaints part of a tile rather than all of it, what a tile
- *  shows is not any one fill: it is whatever was last painted at each of its
- *  pixels. So the contexts here keep a model of that - every clear and every fill,
- *  with the rectangle it was clipped to and the strokes in it - and `check` holds
- *  every tile, pixel by pixel, to the strokes that really cover it. */
-
-/** A path that counts what is traced into it and draws nothing: this runs under
- *  node, where there is no canvas and no `Path2D`. */
 class CountingPath {
   static traced = 0
 
@@ -41,8 +23,6 @@ class CountingPath {
   }
 }
 
-/** The strokes of the fill being made, handed from the paint to the context that
- *  receives it: the context sees a path, and a path does not say what is in it. */
 const filling = vi.hoisted(() => ({ strokes: [] as InkStroke[] }))
 
 vi.mock('./paint', async (original) => {
@@ -72,13 +52,10 @@ interface Rect {
   bottom: number
 }
 
-/** One thing done to a context's pixels, in its own device pixels. */
 type Mark =
   | { kind: 'clear'; rect: Rect }
   | { kind: 'fill'; rect: Rect; strokes: InkStroke[]; scale: number; x: number; y: number }
 
-/** A 2d context that accepts everything and remembers what it did to its pixels, the
- *  colours it filled in, and what was copied onto it. */
 function context() {
   const marks: Mark[] = []
   const colours: string[] = []
@@ -86,8 +63,6 @@ function context() {
   const transform = { a: 1, e: 0, f: 0 }
   let outline: Rect | null = null
   let clip: Rect | null = null
-  // What the layer and a tile are copied as: something to tell apart by identity,
-  // since nothing here draws pixels.
   const self = {} as unknown as HTMLCanvasElement
   const all = { left: -1e9, top: -1e9, right: 1e9, bottom: 1e9 }
 
@@ -129,8 +104,6 @@ function context() {
         x: transform.e,
         y: transform.f,
       })
-      // The other kinds in the same fill are the same strokes as far as which
-      // pixels they reach.
       filling.strokes = []
     },
     stroke: () => undefined,
@@ -142,8 +115,6 @@ function context() {
   return { ctx: ctx as unknown as CanvasRenderingContext2D, marks, colours, copies, self }
 }
 
-/** Tiles painted on contexts of the same kind, one each, remembered in the order
- *  they were made. */
 function surfaces() {
   const made: ReturnType<typeof context>[] = []
   const make = () => {
@@ -155,8 +126,6 @@ function surfaces() {
   return { made, make }
 }
 
-/** Whether a stroke reaches a pixel of a context placed at `scale`, `x`, `y`: its
- *  box, out to the pixel its edge is softened into. */
 function reaches(stroke: InkStroke, px: number, py: number, scale: number, x: number, y: number) {
   const box = strokeBox(stroke)
   const middle = { x: px + 0.5, y: py + 0.5 }
@@ -171,8 +140,6 @@ function reaches(stroke: InkStroke, px: number, py: number, scale: number, x: nu
 const inside = (rect: Rect, px: number, py: number) =>
   px >= rect.left && px < rect.right && py >= rect.top && py < rect.bottom
 
-/** What a context's pixel shows: the strokes painted there since it was last
- *  cleared there, as the marks say. */
 function shown(marks: readonly Mark[], px: number, py: number): string[] {
   const out = new Set<string>()
   for (let at = marks.length - 1; at >= 0; at--) {
@@ -187,10 +154,6 @@ function shown(marks: readonly Mark[], px: number, py: number): string[] {
   return [...out].sort()
 }
 
-/** Every tile holds, at every pixel sampled, exactly the strokes that reach it -
- *  and every tile of `at` that any stroke reaches has pixels of its own. Sampled on a
- *  grid, at the middle of every stroke on the tile, and at the middle of every
- *  stroke in `gone`, which is where a stroke rubbed out would still show. */
 function check(
   made: ReturnType<typeof surfaces>['made'],
   strokes: readonly InkStroke[],
@@ -201,8 +164,6 @@ function check(
   const held = new Map<string, Mark[]>()
 
   for (const one of made) {
-    // What this context is now: the tile its latest fill was placed for, and the
-    // marks since it was last wiped whole.
     let wiped = 0
     one.marks.forEach((mark, at) => {
       const { left, top, right, bottom } = mark.rect
@@ -251,7 +212,6 @@ function check(
   }
 }
 
-/** Whether a stroke reaches any pixel of the tile placed at `x`, `y`. */
 function reachesTile(stroke: InkStroke, scale: number, x: number, y: number) {
   const box = strokeBox(stroke)
   return (
@@ -262,7 +222,6 @@ function reachesTile(stroke: InkStroke, scale: number, x: number, y: number) {
   )
 }
 
-/** A plane of strokes laid out in a grid, each a short line, all in one ink. */
 function plane(count: number, across = 100, spacing = 120): InkStroke[] {
   const strokes: InkStroke[] = []
 
@@ -287,7 +246,6 @@ function plane(count: number, across = 100, spacing = 120): InkStroke[] {
   return strokes
 }
 
-/** A stroke of `tool` from `x, y`, going right. */
 function drawn(id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'): InkStroke {
   return {
     id,
@@ -305,7 +263,6 @@ function drawn(id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'
   }
 }
 
-/** A layer of 800 by 600 over the plane, at one device pixel per CSS pixel. */
 const view = (x: number, y: number, scale = 1) => ({
   camera: { x, y, scale },
   width: 800,
@@ -313,13 +270,10 @@ const view = (x: number, y: number, scale = 1) => ({
   ratio: 1,
 })
 
-/** The whole plane of ten thousand in view, the way a canvas opened for the first
- *  time frames itself: a tile of it holds nearly two thousand strokes. */
 const whole = view(6000, 6000, 0.05)
 
 const palette = {}
 
-/** Repaints until nothing is owed, and what each one filled. */
 function settle(paint: () => boolean, most = 400): number[] {
   const each: number[] = []
   for (let frame = 0; frame < most; frame++) {
@@ -334,7 +288,6 @@ function settle(paint: () => boolean, most = 400): number[] {
 
 const sum = (list: readonly number[]) => list.reduce((all, one) => all + one, 0)
 
-/** Which strokes meet each tile the layer shows, worked out the long way. */
 function expected(strokes: readonly InkStroke[], at: ReturnType<typeof view>): Map<string, number> {
   const scale = at.camera.scale * at.ratio
   const side = TILE / scale
@@ -399,9 +352,6 @@ describe('a plane seen whole, arriving', () => {
     }
     filing.mockRestore()
 
-    // More than one frame, and none of them over the budget, filing, outlines and
-    // fills together: this is the four hundred milliseconds a frame that the plane
-    // used to be, and the thirty the first frame spent filing before it began.
     expect(frames.length).toBeGreaterThan(1)
     frames.forEach((filled, at) => {
       const outlined = (outlines[at] ?? 0) * OUTLINE_WEIGHT
@@ -410,7 +360,6 @@ describe('a plane seen whole, arriving', () => {
       )
     })
 
-    // Every stroke filed once, outlined once, and every tile filled once.
     expect(sum(filings)).toBe(strokes.length)
     expect(sum(outlines)).toBe(strokes.length)
     expect(sum(frames)).toBe(sum([...expected(strokes, whole).values()]))
@@ -444,8 +393,6 @@ describe('moving over a plane already painted', () => {
     settle(() => tiles.paint(layer.ctx, strokes, view(3000, 3000), palette))
     settle(() => tiles.paint(layer.ctx, strokes, view(3300, 3100), palette))
 
-    // Forty settles of a hand going to and fro, which used to be forty fills of
-    // everything in view.
     const before = strokesFilled()
     for (let frame = 0; frame < 40; frame++) {
       const at = frame % 2 ? view(3000, 3000) : view(3300, 3100)
@@ -491,8 +438,6 @@ describe('moving over a plane already painted', () => {
   })
 
   test('the same colours read off the theme again paint nothing again', () => {
-    // A surface reads its palette again whenever the root element's class or style
-    // moves: a new object with the same colours in it, every time.
     const strokes = plane(10_000)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
@@ -516,13 +461,10 @@ describe('writing on a plane already painted', () => {
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
 
-    // Right across the edge between two tiles, each holding nearly two thousand.
     const grown = [...strokes, drawn('new', TILE / 0.05 - 20, 3000)]
     const before = strokesFilled()
     expect(tiles.paint(layer.ctx, grown, whole, palette)).toBe(false)
 
-    // A handful, where it was every stroke in view - and then every stroke on the
-    // two tiles it crossed.
     expect(strokesFilled() - before).toBeGreaterThan(0)
     expect(strokesFilled() - before).toBeLessThan(40)
     check(made, grown, whole)
@@ -544,10 +486,6 @@ describe('writing on a plane already painted', () => {
   })
 
   test('a stroke rubbed out on a plane seen whole leaves every other stroke where it was', () => {
-    // The plane used to be one path gathered a slice a frame, and a list that
-    // changed rather than grew was gathered again from nothing: one stroke rubbed
-    // out left 256 of ten thousand on the layer, and the rest came back over forty
-    // frames.
     const strokes = plane(3_000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
@@ -570,7 +508,6 @@ describe('writing on a plane already painted', () => {
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
 
-    // Sixty moves of an eraser along a row, each taking the strokes it reaches.
     let now = strokes
     const each: number[] = []
     for (let move = 0; move < 60; move++) {
@@ -615,8 +552,6 @@ describe('writing on a plane already painted', () => {
   })
 
   test('the kinds are painted in the order the plane first has them, in every tile', () => {
-    // A highlighter first and then a pen in one tile, and the other way round in the
-    // next: both tiles fill the highlighter first, because the plane has it first.
     const strokes = [
       drawn('mark', 10, 10, 'highlighter'),
       drawn('word', 12, 12),
@@ -646,10 +581,8 @@ describe('a zoom, a theme, and what is kept', () => {
     const before = strokesFilled()
     const owed = tiles.paint(layer.ctx, strokes, closer, palette)
 
-    // Not all of it at once...
     expect(owed).toBe(true)
     expect(strokesFilled() - before).toBeLessThanOrEqual(FILLED_A_FRAME)
-    // ...with the picture that was there drawn under what is missing, larger.
     const old = layer.copies.find((copy) => copy.image === layer.self)
     expect(old?.scale).toBeCloseTo(0.08 / 0.05)
 
@@ -671,7 +604,6 @@ describe('a zoom, a theme, and what is kept', () => {
   })
 
   test('a tile with nothing on it has no pixels', () => {
-    // Four strokes far apart on a plane of empty tiles.
     const strokes = plane(4, 2, 2000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
@@ -692,8 +624,6 @@ describe('a zoom, a theme, and what is kept', () => {
       settle(() => tiles.paint(layer.ctx, strokes, view(400 + step * 400, 3000), palette))
     }
 
-    // Twelve tiles to a screen of this size; the rest are made again from the ones
-    // let go rather than for good.
     const screen = expected(strokes, view(3000, 3000)).size
     expect(made.length).toBeLessThanOrEqual(screen * 3 + 64)
   })

@@ -1,11 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A canvas of one space stays open when the reader switches to another, since tabs
- *  are shared across spaces. What the plane writes about its files is relative to
- *  the space the canvas is in, not the one being looked at: a path relative to the
- *  wrong root came out as the whole local path, which points nowhere on any other
- *  device and tells everyone in the space how this machine's folders are laid out. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {

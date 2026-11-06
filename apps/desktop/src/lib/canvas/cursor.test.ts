@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { cursorFor, type Look, nibCursor, rubCursor } from './cursor'
 
-/** What the pointer says. A mouse hand should never have to look at the bar to know
- *  what a press will do, so every tool and everything under the pointer has an
- *  answer, and the two drawn ones are drawn at the size the tool really is. */
-
 function look(over: Partial<Look> = {}): Look {
   return {
     tool: 'select',
@@ -37,8 +33,6 @@ describe('what the pointer says', () => {
     expect(cursorFor(look({ tool: 'put' }))).toBe('crosshair')
   })
 
-  /** Which way a handle pulls, said by the arrow on it: the one bit of chrome whose
-   *  whole job is to be dragged in one direction. */
   test('is the resize arrow that matches the handle under it', () => {
     expect(cursorFor(look({ over: 'se' }))).toBe('nwse-resize')
     expect(cursorFor(look({ over: 'nw' }))).toBe('nwse-resize')
@@ -52,7 +46,6 @@ describe('what the pointer says', () => {
     expect(cursorFor(look({ over: 'thing' }))).toBe('move')
   })
 
-  /** A pen does not resize anything, so what is under it does not change what it is. */
   test('is still the nib over a handle, because a pen cannot resize a card', () => {
     expect(cursorFor(look({ tool: 'draw', over: 'se' }))).toContain('data:image/svg+xml')
   })
@@ -68,9 +61,6 @@ describe('the pen’s own dot', () => {
     expect(nibCursor(8, '#ff0000')).toContain(encodeURIComponent('#ff0000'))
   })
 
-  /** A colour is whatever a file said it was, and a canvas may have arrived from a
-   *  room, a share or a paste: what a file called a colour must never be able to end
-   *  the attribute it is written into. */
   test('cannot be broken out of by a colour a file made up', () => {
     const cursor = nibCursor(8, '#f00" onload="alert(1)')
     expect(cursor).not.toContain(encodeURIComponent('onload="'))
@@ -92,8 +82,6 @@ describe('the pen’s own dot', () => {
 })
 
 describe('the eraser’s own ring', () => {
-  /** The whole point of drawing it: the ring on screen is the hole it will rub, so
-   *  nothing has to be read off a number and imagined. */
   test('is as wide on screen as the hole it will rub', () => {
     expect(sizeOf(rubCursor({ size: 10, whole: false }))).toBe(24)
     expect(sizeOf(rubCursor({ size: 30, whole: false }))).toBe(64)
@@ -105,8 +93,6 @@ describe('the eraser’s own ring', () => {
     expect(sizeOf(wide)).toBeGreaterThan(sizeOf(narrow))
   })
 
-  /** A stroke eraser takes whole whatever line it reaches, so it says so with a
-   *  dashed ring as wide as it reaches, and a small one while that is a touch. */
   test('is a dashed ring for the eraser that takes whole strokes, small at a touch', () => {
     const whole = rubCursor({ size: 40, whole: true })
     expect(whole).toContain(encodeURIComponent('stroke-dasharray'))
@@ -119,7 +105,6 @@ describe('the eraser’s own ring', () => {
   })
 })
 
-/** How wide the drawn cursor is, read back out of the SVG it is made of. */
 function sizeOf(cursor: string): number {
   const found = /width%3D%22(\d+)%22/.exec(cursor)
   return Number(found?.[1] ?? 0)
