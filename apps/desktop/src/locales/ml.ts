@@ -3074,4 +3074,6 @@ export const ml: Dictionary = {
     one: '{count} ഫോൾഡർ',
     other: '{count} ഫോൾഡറുകൾ',
   },
+  Columns: 'കോളങ്ങൾ',
+  'Add numbers': 'നമ്പർ ചേർക്കുക',
 }

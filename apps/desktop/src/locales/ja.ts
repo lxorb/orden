@@ -2982,4 +2982,6 @@ export const ja: Dictionary = {
   'Search below this folder': 'このフォルダー内を検索',
   'Quick look': 'クイックルック',
   '{count} folders': '{count}個のフォルダー',
+  Columns: 'カラム',
+  'Add numbers': '番号を付ける',
 }

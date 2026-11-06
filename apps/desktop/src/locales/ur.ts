@@ -3023,4 +3023,6 @@ export const ur: Dictionary = {
     one: '{count} فولڈر',
     other: '{count} فولڈرز',
   },
+  Columns: 'کالم',
+  'Add numbers': 'نمبر لگائیں',
 }

@@ -3125,4 +3125,6 @@ export const fr: Dictionary = {
     many: '{count} de dossiers',
     other: '{count} dossiers',
   },
+  Columns: 'Colonnes',
+  'Add numbers': 'Ajouter des numéros',
 }

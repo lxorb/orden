@@ -3072,4 +3072,6 @@ export const ha: Dictionary = {
     one: 'babban fayil {count}',
     other: 'manyan fayiloli {count}',
   },
+  Columns: 'Ginshiƙai',
+  'Add numbers': 'Ƙara lambobi',
 }

@@ -3090,4 +3090,6 @@ export const ptBR: Dictionary = {
     many: '{count} de pastas',
     other: '{count} pastas',
   },
+  Columns: 'Colunas',
+  'Add numbers': 'Adicionar números',
 }

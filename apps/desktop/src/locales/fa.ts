@@ -3032,4 +3032,6 @@ export const fa: Dictionary = {
     one: '{count} پوشه',
     other: '{count} پوشه',
   },
+  Columns: 'ستون‌ها',
+  'Add numbers': 'افزودن شماره',
 }

@@ -2990,4 +2990,6 @@ export const jv: Dictionary = {
   'Search below this folder': 'Golek ing jero folder iki',
   'Quick look': 'Deleng sedhela',
   '{count} folders': '{count} folder',
+  Columns: 'Kolom',
+  'Add numbers': 'Tambah nomer',
 }

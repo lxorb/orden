@@ -1842,6 +1842,7 @@ const EXPLORER_ENTRIES: Shortcut[] = (
     ['explorer.preview', () => t('Preview'), 'Alt-p', 'Mod-Alt-p'],
     ['explorer.list', () => t('List'), 'Mod-1', 'Mod-1'],
     ['explorer.grid', () => t('Grid'), 'Mod-2', 'Mod-2'],
+    ['explorer.columns', () => t('Columns'), 'Mod-3', 'Mod-3'],
   ] as const
 ).map(([id, label, key, mac]) => ({
   id,

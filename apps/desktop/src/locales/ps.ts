@@ -3028,4 +3028,6 @@ export const ps: Dictionary = {
     one: '{count} فولډر',
     other: '{count} فولډرونه',
   },
+  Columns: 'ستونونه',
+  'Add numbers': 'شمېرې ورزیاتې کړئ',
 }

@@ -8,16 +8,26 @@
   import { newFolder, paste, removeForGood, trash } from './changes'
   import { jobs } from './jobs.svelte'
   import ExplorerBar from './ExplorerBar.svelte'
+  import ExplorerColumn from './ExplorerColumn.svelte'
+  import { folderName, parentOf } from './crumbs'
   import ExplorerList from './ExplorerList.svelte'
   import ExplorerLook from './ExplorerLook.svelte'
   import ExplorerPlaces from './ExplorerPlaces.svelte'
   import ExplorerPreview from './ExplorerPreview.svelte'
+  import ExplorerRenameMany from './ExplorerRenameMany.svelte'
   import { explorerPrefs } from './prefs.svelte'
   import { viewOf } from './view.svelte'
 
   const { tab: shown, focused = false }: { tab: Tab; focused?: boolean } = $props()
   const tab = untrack(() => shown)
   const view = viewOf(tab)
+
+  const above = $derived(view.folder && !view.search ? parentOf(view.folder) : null)
+  const inside = $derived.by(() => {
+    const cursor = view.picked.cursor
+    const entry = cursor === null ? null : view.rows.find((one) => one.name === cursor)
+    return entry?.folder ? view.pathOf(entry.name) : null
+  })
 
   let typing = $state(false)
   let filtering = $state(false)
@@ -68,13 +78,18 @@
     else if (pressed('explorer.preview')) run = () => explorerPrefs.togglePreview()
     else if (pressed('explorer.list')) run = () => explorerPrefs.show('list')
     else if (pressed('explorer.grid')) run = () => explorerPrefs.show('grid')
+    else if (pressed('explorer.columns')) run = () => explorerPrefs.show('columns')
     else if (pressed('explorer.parent') || pressed('explorer.parent.alt')) run = () => view.up()
     else if (pressed('explorer.location')) run = () => (typing = true)
     else if (pressed('explorer.hidden')) run = () => explorerPrefs.toggleHidden()
     else if (pressed('explorer.new-folder')) run = () => newFolder(view)
     else if (pressed('explorer.delete')) run = () => removeForGood(view, chosen)
     else if (pressed('tree.delete')) run = () => trash(view, chosen)
-    else if (pressed('tree.rename') && view.picked.cursor !== null)
+    else if (pressed('tree.rename') && chosen.length > 1) {
+      run = () => {
+        view.renamingMany = chosen
+      }
+    } else if (pressed('tree.rename') && view.picked.cursor !== null)
       run = () => (view.renaming = view.picked.cursor)
     else if (pressed('fixed.copy') && chosen.length) run = () => fileClipboard.hold(chosen, false)
     else if (pressed('fixed.cut') && chosen.length) run = () => fileClipboard.hold(chosen, true)
@@ -97,9 +112,24 @@
     {#if explorerPrefs.places}
       <ExplorerPlaces {view} />
     {/if}
+    {#if explorerPrefs.view === 'columns' && above}
+      <ExplorerColumn {view} folder={above} lit={view.folder ? folderName(view.folder) : null} />
+    {/if}
     <ExplorerList {view} bind:this={list} />
-    {#if explorerPrefs.preview}
+    {#if explorerPrefs.view === 'columns' && inside}
+      <ExplorerColumn {view} folder={inside} />
+    {:else if explorerPrefs.preview || explorerPrefs.view === 'columns'}
       <ExplorerPreview {view} />
+    {/if}
+    {#if view.renamingMany}
+      <ExplorerRenameMany
+        {view}
+        paths={view.renamingMany}
+        onclose={() => {
+          view.renamingMany = null
+          list?.focus()
+        }}
+      />
     {/if}
     {#if looking}
       <ExplorerLook

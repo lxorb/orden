@@ -35,6 +35,7 @@ export class ExplorerView {
   wrong = $state<string | null>(null)
   picked = $state<Picked>(NOTHING)
   renaming = $state<string | null>(null)
+  renamingMany = $state<string[] | null>(null)
   said = $state<string | null>(null)
   #saying: ReturnType<typeof setTimeout> | undefined
 

@@ -8,6 +8,7 @@
   import Search from 'lucide/dist/esm/icons/search.mjs'
   import List from 'lucide/dist/esm/icons/list.mjs'
   import LayoutGrid from 'lucide/dist/esm/icons/layout-grid.mjs'
+  import Columns from 'lucide/dist/esm/icons/columns-3.mjs'
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -187,6 +188,14 @@
     aria-label={t('Grid')}
     aria-pressed={explorerPrefs.view === 'grid'}
     onclick={() => explorerPrefs.show('grid')}>{@render glyph(LayoutGrid)}</button
+  >
+  <button
+    class="nib-glyph"
+    class:is-on={explorerPrefs.view === 'columns'}
+    title={shortcuts.tooltip(t('Columns'), 'explorer.columns')}
+    aria-label={t('Columns')}
+    aria-pressed={explorerPrefs.view === 'columns'}
+    onclick={() => explorerPrefs.show('columns')}>{@render glyph(Columns)}</button
   >
   <button
     class="nib-glyph"

@@ -266,4 +266,46 @@ describe('a file explorer', () => {
     expect(target.querySelectorAll('.entry.tile').length).toBe(0)
     expect(explorerPrefs.view).toBe('list')
   })
+
+  test('renames several at once with F2, one name each from what is found and replaced', async () => {
+    await explorer()
+    press('n')
+    press('ArrowDown', { shiftKey: true })
+    press('F2')
+    await settled()
+    const sheet = target.querySelector('.many')
+    expect(sheet?.textContent).toContain('plan.pdf')
+    const [find, replace] = [...target.querySelectorAll<HTMLInputElement>('.many input.nib-field')]
+    if (!find || !replace) return
+    find.value = 'n'
+    find.dispatchEvent(new Event('input', { bubbles: true }))
+    replace.value = 'N'
+    replace.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    expect(target.querySelector('.many')?.textContent).toContain('Notes.txt')
+    expect(target.querySelector('.many')?.textContent).toContain('plaN.pdf')
+    find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual([
+      'rename /home/me/notes.txt Notes.txt',
+      'rename /home/me/plan.pdf plaN.pdf',
+    ])
+  })
+
+  test('walks into a folder and back out with the sideways arrows in columns', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    const { view } = await explorer()
+    press('3', { ctrlKey: true })
+    await settled()
+    expect(explorerPrefs.view).toBe('columns')
+    press('ArrowDown')
+    press('ArrowDown')
+    press('ArrowRight')
+    await settled()
+    expect(view.folder).toBe('/home/me/Pictures')
+    press('ArrowLeft')
+    await settled()
+    expect(view.folder).toBe('/home/me')
+    explorerPrefs.show('list')
+  })
 })

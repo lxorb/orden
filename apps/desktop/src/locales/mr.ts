@@ -3027,4 +3027,6 @@ export const mr: Dictionary = {
     one: '{count} फोल्डर',
     other: '{count} फोल्डर',
   },
+  Columns: 'स्तंभ',
+  'Add numbers': 'क्रमांक जोडा',
 }

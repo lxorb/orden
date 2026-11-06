@@ -3068,4 +3068,6 @@ export const sw: Dictionary = {
     one: 'folda {count}',
     other: 'folda {count}',
   },
+  Columns: 'Safu wima',
+  'Add numbers': 'Ongeza namba',
 }

@@ -2916,4 +2916,6 @@ export const zhHant: Dictionary = {
   'Search below this folder': '在此資料夾中搜尋',
   'Quick look': '快速查看',
   '{count} folders': '{count} 個資料夾',
+  Columns: '分欄',
+  'Add numbers': '加入編號',
 }

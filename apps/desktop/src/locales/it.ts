@@ -3118,4 +3118,6 @@ export const it: Dictionary = {
     many: '{count} di cartelle',
     other: '{count} cartelle',
   },
+  Columns: 'Colonne',
+  'Add numbers': 'Aggiungi numeri',
 }

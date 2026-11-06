@@ -3029,4 +3029,6 @@ export const hi: Dictionary = {
     one: '{count} फ़ोल्डर',
     other: '{count} फ़ोल्डर',
   },
+  Columns: 'कॉलम',
+  'Add numbers': 'नंबर जोड़ें',
 }

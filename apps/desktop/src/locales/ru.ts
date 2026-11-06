@@ -3139,4 +3139,6 @@ export const ru: Dictionary = {
     many: '{count} папок',
     other: '{count} папки',
   },
+  Columns: 'Колонки',
+  'Add numbers': 'Добавить номера',
 }

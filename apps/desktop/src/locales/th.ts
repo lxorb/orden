@@ -2946,4 +2946,6 @@ export const th: Dictionary = {
   'Search below this folder': 'ค้นหาในโฟลเดอร์นี้',
   'Quick look': 'ดูด่วน',
   '{count} folders': '{count} โฟลเดอร์',
+  Columns: 'คอลัมน์',
+  'Add numbers': 'เพิ่มตัวเลข',
 }

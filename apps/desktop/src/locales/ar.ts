@@ -3161,4 +3161,6 @@ export const ar: Dictionary = {
     many: '{count} مجلدًا',
     other: '{count} مجلد',
   },
+  Columns: 'أعمدة',
+  'Add numbers': 'إضافة أرقام',
 }

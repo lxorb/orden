@@ -3041,4 +3041,6 @@ export const te: Dictionary = {
     one: '{count} ఫోల్డర్',
     other: '{count} ఫోల్డర్‌లు',
   },
+  Columns: 'నిలువు వరుసలు',
+  'Add numbers': 'సంఖ్యలు జోడించు',
 }

@@ -3014,4 +3014,6 @@ export const gu: Dictionary = {
     one: '{count} ફોલ્ડર',
     other: '{count} ફોલ્ડર',
   },
+  Columns: 'કૉલમ',
+  'Add numbers': 'ક્રમાંક ઉમેરો',
 }

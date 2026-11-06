@@ -2906,4 +2906,6 @@ export const yue: Dictionary = {
   'Search below this folder': '喺呢個資料夾入面搵',
   'Quick look': '快速睇',
   '{count} folders': '{count} 個資料夾',
+  Columns: '欄',
+  'Add numbers': '加編號',
 }

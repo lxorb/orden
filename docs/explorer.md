@@ -54,7 +54,7 @@ file, and is never a selection mode.
 | Ctrl+L (Cmd+Shift+G) | type a path |
 | Ctrl+H (Cmd+Shift+H) | hidden files |
 | Enter, a double click | open |
-| F2 (Cmd+Enter) | rename in place, with the name chosen and its ending left out |
+| F2 (Cmd+Enter) | rename in place, with the name chosen and its ending left out; with several picked, rename them together: find and replace, and numbers added, with every new name shown first and a clash refused (`explorer/renaming.ts`) |
 | Ctrl+C, Ctrl+X, Ctrl+V | copy, cut, paste: the file list's own clipboard, so a row copied in either pastes in the other |
 | Ctrl+Shift+N | a new folder, waiting for its name |
 | Delete (Cmd+Backspace) | to the trash |
@@ -95,6 +95,10 @@ shown.
 
 **Quick look** (`Space`) opens the same preview large over the tab. The arrows step through
 the files, and `Space` or `Escape` puts it away.
+
+**Columns** (`Ctrl+3`) are Finder's and yazi's Miller columns: the folder above, the folder,
+and on the right the folder the keyboard is on or the preview of the file. Right goes into
+a folder and Left goes up.
 
 **Grid** (`Ctrl+2`) draws the folder as tiles, with a picture's own thumbnail where it is
 under 8 MB. **List** (`Ctrl+1`) is the default. The arrows walk the grid across and down.

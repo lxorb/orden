@@ -3048,4 +3048,6 @@ export const tr: Dictionary = {
     one: '{count} klasör',
     other: '{count} klasör',
   },
+  Columns: 'Sütunlar',
+  'Add numbers': 'Numara ekle',
 }

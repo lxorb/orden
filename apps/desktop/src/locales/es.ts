@@ -3109,4 +3109,6 @@ export const es: Dictionary = {
     many: '{count} de carpetas',
     other: '{count} carpetas',
   },
+  Columns: 'Columnas',
+  'Add numbers': 'Añadir números',
 }

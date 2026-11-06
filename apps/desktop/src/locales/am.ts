@@ -2968,4 +2968,6 @@ export const am: Dictionary = {
     one: '{count} አቃፊ',
     other: '{count} አቃፊዎች',
   },
+  Columns: 'ዓምዶች',
+  'Add numbers': 'ቁጥሮች ጨምር',
 }

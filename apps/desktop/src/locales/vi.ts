@@ -2978,4 +2978,6 @@ export const vi: Dictionary = {
   'Search below this folder': 'Tìm trong thư mục này',
   'Quick look': 'Xem nhanh',
   '{count} folders': '{count} thư mục',
+  Columns: 'Cột',
+  'Add numbers': 'Thêm số',
 }

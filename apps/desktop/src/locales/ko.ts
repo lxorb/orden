@@ -2969,4 +2969,6 @@ export const ko: Dictionary = {
   'Search below this folder': '이 폴더 안에서 검색',
   'Quick look': '훑어보기',
   '{count} folders': '폴더 {count}개',
+  Columns: '열',
+  'Add numbers': '번호 붙이기',
 }

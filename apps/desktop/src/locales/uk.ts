@@ -3133,4 +3133,6 @@ export const uk: Dictionary = {
     many: '{count} тек',
     other: '{count} теки',
   },
+  Columns: 'Колонки',
+  'Add numbers': 'Додати номери',
 }

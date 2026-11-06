@@ -1,4 +1,6 @@
 import { plural } from '../i18n.svelte'
+import { folderOf, nameOf, samePath } from '../space-paths'
+import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { FileAction, OutsideStep } from '../workspace/undo.svelte'
 import { type Pair, put, trashPaths, type Transferred, untrash } from './commands'
@@ -28,12 +30,7 @@ export async function redoOutside(action: Outside): Promise<void> {
 async function undoStep(step: OutsideStep): Promise<void> {
   switch (step.op) {
     case 'moved':
-      whole(
-        await carried(
-          step.pairs.map(({ from, to }) => ({ from: to, to: from })),
-          'move',
-        ),
-      )
+      await movedBack(step.pairs.map(({ from, to }) => ({ from: to, to: from })))
       return
     case 'copied':
       await trashPaths(step.pairs.map((one) => one.to))
@@ -68,6 +65,27 @@ async function redoStep(step: OutsideStep): Promise<OutsideStep> {
     case 'replaced':
       return { op: step.op, tickets: await trashPaths(step.tickets.map((one) => one.path)) }
   }
+}
+
+async function movedBack(pairs: Pair[]) {
+  const crossing = pairs.some((one, at) =>
+    pairs.some((other, there) => there !== at && samePath(other.from, one.to)),
+  )
+  if (!crossing) {
+    whole(await carried(pairs, 'move'))
+    return
+  }
+  const staged = pairs.map((one, at) => ({
+    from: one.from,
+    to: joinPath(folderOf(one.to), `.orden-renaming-${at}-${nameOf(one.to)}`),
+  }))
+  whole(await carried(staged, 'move'))
+  whole(
+    await carried(
+      staged.map((one, at) => ({ from: one.to, to: pairs[at]?.to ?? one.from })),
+      'move',
+    ),
+  )
 }
 
 function carried(pairs: Pair[], how: 'copy' | 'move'): Promise<Transferred> {

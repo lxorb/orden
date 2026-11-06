@@ -1196,6 +1196,10 @@
     "type": "string",
     "description": "The key that runs Upper case, as the keys file writes it; empty for none."
   },
+  "shortcuts.explorer-columns": {
+    "type": "string",
+    "description": "The key that runs Columns, as the keys file writes it; empty for none."
+  },
   "shortcuts.explorer-delete": {
     "type": "string",
     "description": "The key that runs Delete for good, as the keys file writes it; empty for none."

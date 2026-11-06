@@ -3037,4 +3037,6 @@ export const pa: Dictionary = {
     one: '{count} ਫੋਲਡਰ',
     other: '{count} ਫੋਲਡਰ',
   },
+  Columns: 'ਕਾਲਮ',
+  'Add numbers': 'ਨੰਬਰ ਜੋੜੋ',
 }

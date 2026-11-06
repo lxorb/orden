@@ -3004,4 +3004,6 @@ export const ms: Dictionary = {
   'Search below this folder': 'Cari di dalam folder ini',
   'Quick look': 'Lihat sekilas',
   '{count} folders': '{count} folder',
+  Columns: 'Lajur',
+  'Add numbers': 'Tambah nombor',
 }

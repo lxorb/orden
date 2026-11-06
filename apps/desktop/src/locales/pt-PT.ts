@@ -3105,4 +3105,6 @@ export const ptPT: Dictionary = {
     many: '{count} de pastas',
     other: '{count} pastas',
   },
+  Columns: 'Colunas',
+  'Add numbers': 'Adicionar números',
 }

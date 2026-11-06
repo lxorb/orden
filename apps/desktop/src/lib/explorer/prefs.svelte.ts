@@ -5,7 +5,7 @@ const KEY = 'nib:explorer'
 
 const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'size', 'kind']
 
-type View = 'list' | 'grid'
+type View = 'list' | 'grid' | 'columns'
 
 class ExplorerPrefs {
   sort = $state<Sort>({ key: 'name', down: false })
@@ -21,7 +21,7 @@ class ExplorerPrefs {
       this.sort = { key: kept.sort.key as SortKey, down: kept.sort.down === true }
     this.hidden = kept.hidden === true
     this.places = kept.places !== false
-    this.view = kept.view === 'grid' ? 'grid' : 'list'
+    this.view = kept.view === 'grid' || kept.view === 'columns' ? kept.view : 'list'
     this.preview = kept.preview === true
   }
 

@@ -83,4 +83,23 @@ describe("a file explorer's undo", () => {
       ],
     })
   })
+
+  test('takes back names that swapped places through names of their own first', async () => {
+    await undoOutside({
+      kind: 'outside',
+      steps: [
+        {
+          op: 'moved',
+          pairs: [
+            { from: '/a/x', to: '/a/y' },
+            { from: '/a/y', to: '/a/x' },
+          ],
+        },
+      ],
+    })
+    expect(asked).toEqual([
+      'move /a/y>/a/.orden-renaming-0-x,/a/x>/a/.orden-renaming-1-y',
+      'move /a/.orden-renaming-0-x>/a/x,/a/.orden-renaming-1-y>/a/y',
+    ])
+  })
 })

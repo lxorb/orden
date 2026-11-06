@@ -2913,4 +2913,6 @@ export const zhHans: Dictionary = {
   'Search below this folder': '在此文件夹中搜索',
   'Quick look': '快速查看',
   '{count} folders': '{count} 个文件夹',
+  Columns: '分栏',
+  'Add numbers': '添加编号',
 }

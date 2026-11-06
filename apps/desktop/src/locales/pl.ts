@@ -3139,4 +3139,6 @@ export const pl: Dictionary = {
     many: '{count} folderów',
     other: '{count} folderu',
   },
+  Columns: 'Kolumny',
+  'Add numbers': 'Dodaj numery',
 }

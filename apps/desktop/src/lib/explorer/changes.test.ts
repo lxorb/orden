@@ -58,7 +58,7 @@ vi.mock('../prompt.svelte', () => ({
   },
 }))
 
-const { carry, freeName, renamePath, removeForGood, trash } = await import('./changes')
+const { carry, freeName, renameMany, renamePath, removeForGood, trash } = await import('./changes')
 
 function view(path = '/home/me/Downloads') {
   return {
@@ -183,5 +183,32 @@ describe("a file explorer's changes", () => {
     )
     expect(crate.trashPaths).toHaveBeenCalledWith(['/home/me/Downloads/a.txt'])
     expect(crate.transfer).not.toHaveBeenCalled()
+  })
+
+  test('rename names that swap places through names of their own first, as one undo', async () => {
+    await renameMany(view() as never, [
+      { from: '/home/me/Downloads/a.txt', name: 'b.txt' },
+      { from: '/home/me/Downloads/b.txt', name: 'a.txt' },
+    ])
+    expect(crate.renameTo.mock.calls.map(([path, name]) => `${path} ${name}`)).toEqual([
+      '/home/me/Downloads/a.txt .orden-renaming-0-b.txt',
+      '/home/me/Downloads/b.txt .orden-renaming-1-a.txt',
+      '/home/me/Downloads/.orden-renaming-0-b.txt b.txt',
+      '/home/me/Downloads/.orden-renaming-1-a.txt a.txt',
+    ])
+    expect(recorded).toEqual([
+      {
+        kind: 'outside',
+        steps: [
+          {
+            op: 'moved',
+            pairs: [
+              { from: '/home/me/Downloads/a.txt', to: '/home/me/Downloads/b.txt' },
+              { from: '/home/me/Downloads/b.txt', to: '/home/me/Downloads/a.txt' },
+            ],
+          },
+        ],
+      },
+    ])
   })
 })

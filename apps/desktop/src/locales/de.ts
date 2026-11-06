@@ -3091,4 +3091,6 @@ export const de: Dictionary = {
     one: '{count} Ordner',
     other: '{count} Ordner',
   },
+  Columns: 'Spalten',
+  'Add numbers': 'Nummern anhängen',
 }

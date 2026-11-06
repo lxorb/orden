@@ -3062,4 +3062,6 @@ export const kn: Dictionary = {
     one: '{count} ಫೋಲ್ಡರ್',
     other: '{count} ಫೋಲ್ಡರ್‌ಗಳು',
   },
+  Columns: 'ಕಾಲಮ್‌ಗಳು',
+  'Add numbers': 'ಸಂಖ್ಯೆ ಸೇರಿಸಿ',
 }

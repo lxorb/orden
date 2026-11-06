@@ -3080,4 +3080,6 @@ export const ta: Dictionary = {
     one: '{count} கோப்புறை',
     other: '{count} கோப்புறைகள்',
   },
+  Columns: 'நெடுவரிசைகள்',
+  'Add numbers': 'எண்களைச் சேர்',
 }

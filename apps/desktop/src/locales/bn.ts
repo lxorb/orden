@@ -3023,4 +3023,6 @@ export const bn: Dictionary = {
     one: '{count}টি ফোল্ডার',
     other: '{count}টি ফোল্ডার',
   },
+  Columns: 'কলাম',
+  'Add numbers': 'নম্বর যোগ করুন',
 }

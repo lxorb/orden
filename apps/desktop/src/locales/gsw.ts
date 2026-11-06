@@ -3050,4 +3050,6 @@ export const gsw: Dictionary = {
     one: '{count} Ordner',
     other: '{count} Ordner',
   },
+  Columns: 'Spaltä',
+  'Add numbers': 'Nummerä aahänke',
 }

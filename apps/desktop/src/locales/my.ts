@@ -2998,4 +2998,6 @@ export const my: Dictionary = {
   'Search below this folder': 'ဤဖိုင်တွဲအတွင်း ရှာရန်',
   'Quick look': 'အမြန်ကြည့်ရန်',
   '{count} folders': 'ဖိုင်တွဲ {count} ခု',
+  Columns: 'ကော်လံများ',
+  'Add numbers': 'နံပါတ်ထည့်ရန်',
 }

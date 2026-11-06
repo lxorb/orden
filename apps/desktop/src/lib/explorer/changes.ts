@@ -269,3 +269,37 @@ function broughtFile(path: string, under: string): Brought {
     },
   }
 }
+
+export async function renameMany(
+  view: ExplorerView,
+  pairs: readonly { from: string; name: string }[],
+) {
+  const moving = pairs.filter(({ from, name }) => nameOf(from) !== name)
+  if (!moving.length || !changeable(view)) return
+  const folder = view.listing?.path ?? ''
+  if (inASpace(folder)) {
+    await workspace.undone.batch(async () => {
+      for (const { from, name } of moving) await workspace.rename(from, name)
+    })
+    await view.reload()
+    return
+  }
+  const crossing = moving.some(({ name }, at) =>
+    moving.some(
+      (other, there) => there !== at && nameOf(other.from).toLowerCase() === name.toLowerCase(),
+    ),
+  )
+  const done: { from: string; to: string }[] = []
+  try {
+    const staged: { from: string; at: string; name: string }[] = []
+    for (const [index, { from, name }] of moving.entries()) {
+      const at = crossing ? await renameTo(from, `.orden-renaming-${index}-${name}`) : from
+      staged.push({ from, at, name })
+    }
+    for (const { from, at, name } of staged) done.push({ from, to: await renameTo(at, name) })
+  } catch (error) {
+    view.tell(message(error, 'could not rename this'))
+  }
+  record(done.length ? [{ op: 'moved', pairs: done }] : [])
+  await view.reload()
+}

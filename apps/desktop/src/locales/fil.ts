@@ -3091,4 +3091,6 @@ export const fil: Dictionary = {
     one: '{count} folder',
     other: '{count} na folder',
   },
+  Columns: 'Mga column',
+  'Add numbers': 'Lagyan ng numero',
 }

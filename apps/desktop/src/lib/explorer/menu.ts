@@ -83,7 +83,10 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
           {
             label: t('Rename'),
             hint: shortcuts.hint('tree.rename'),
-            run: () => (view.renaming = entry.name),
+            run: () => {
+              if (paths.length > 1) view.renamingMany = paths
+              else view.renaming = entry.name
+            },
           },
         ]
       : []),

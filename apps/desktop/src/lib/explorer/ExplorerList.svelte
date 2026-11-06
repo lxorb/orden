@@ -162,6 +162,20 @@
     const plain = pressed('tree.down') ? 'ArrowDown' : pressed('tree.up') ? 'ArrowUp' : null
     const key = extend ?? plain ?? (event.altKey ? null : event.key)
     const how: How = event.shiftKey ? 'range' : event.ctrlKey || event.metaKey ? 'move' : 'one'
+    if (explorerPrefs.view === 'columns' && key && !event.shiftKey) {
+      const side = steppedKey(key)
+      const entry = at === null ? null : rows[at]
+      if (side === 'ArrowRight' && entry?.folder) {
+        event.preventDefault()
+        void view.go(view.pathOf(entry.name))
+        return
+      }
+      if (side === 'ArrowLeft') {
+        event.preventDefault()
+        void view.up()
+        return
+      }
+    }
     const to = key ? stepped(steppedKey(key), at, count, columns, page()) : null
     if (to !== null) {
       event.preventDefault()
@@ -359,7 +373,7 @@
   ]
 </script>
 
-<div class="list" class:searching={!!view.search}>
+<div class="list" class:searching={!!view.search} class:narrow={explorerPrefs.view === 'columns'}>
   {#if !grid}
     <div class="head">
       {#each COLUMNS as column (column.key)}
@@ -562,6 +576,15 @@
   .entry {
     position: absolute;
     inset-inline: 0;
+  }
+
+  .list.narrow {
+    --columns: minmax(0, 1fr) 5rem;
+  }
+
+  .list.narrow .modified,
+  .list.narrow .kind {
+    display: none;
   }
 
   .list.searching {
