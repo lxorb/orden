@@ -1,15 +1,3 @@
-/** A chat's routes, behind the session guard under `/v2/chats` (docs/chats.md 4.2, 4.4).
- *
- *  A chat is made in a space by somebody who may write there, and is named by an id the
- *  account makes, `c_` and 32 hex digits: that id is the chat, whichever sync the
- *  devices run. The app writes it into a `.chat` pointer in the space, which gives the
- *  chat a name and a place and nothing else; access is the chat's space (reach.ts).
- *  These routes answer every account alike, on sync v1 or v2, and none asks which.
- *
- *  Everything a chat holds is its `ChatLog`'s; these routes decide who may ask, and ask
- *  it. The listing reads D1 alone, which the object keeps current within a second, so
- *  the Chats panel wakes no object. Every shape here is `@orden/chats/wire`'s. */
-
 import { type Event, type Message, matches, parseSearch, type Who } from '@orden/chats'
 import { EVENTS_A_MINUTE } from '@orden/chats/limits'
 import { newChatOf, postEventsOf } from '@orden/chats/wire'
@@ -31,24 +19,18 @@ interface App {
   Variables: Variables
 }
 
-/** A chat nobody here can reach, which is the same answer as one that is not there. */
 export const NO_SUCH_CHAT = 'no such chat'
 
-/** A body that is not what the route reads. A correct client never sends one, so it
- *  stays English. */
 const NOT_THAT = 'that is not what this route reads'
 
-/** How many chats one search across them asks. */
 const MOST_SEARCHED = 50
 
-/** The most hits a search answers. */
 const MOST_HITS = 100
 
 const HASH = /^[a-f0-9]{64}$/
 
 export const chats = new Hono<App>()
 
-/** What the object is told about whoever a route is asking for. */
 export function asking(reached: Reached, device?: string): Record<string, string> {
   return {
     'x-nib-space': reached.space,
@@ -59,18 +41,12 @@ export function asking(reached: Reached, device?: string): Record<string, string
   }
 }
 
-/** An object's answer passed on, or the moment to wait through. */
 function passed(answer: Response | null): Response {
   return (
     answer ?? Response.json({ error: CHAT_AWAY }, { status: 503, headers: { 'retry-after': '1' } })
   )
 }
 
-/* ── Listing ───────────────────────────────────────────────────────────── */
-
-/** Every chat this person reaches, with what the Chats panel draws before any chat is
- *  opened (`ChatRow`): the head, its settings, how many people it has, this person's
- *  read place, mentions and notification setting. `?4` narrows it to one space. */
 const LISTED = `with me as (select ?1 as user_id, ?2 as email, ?3 as guest_id),
 held as (
   select sp.id as space_id, '' as item, 'owner' as role
@@ -137,7 +113,6 @@ interface ListedRow {
 
 const ROLES = ['read', 'read', 'write', 'owner'] as const
 
-/** A row as `ChatRow` says it, with the asker's role beside it. */
 function rowOf(row: ListedRow) {
   return {
     id: row.id,
@@ -176,10 +151,6 @@ chats.get('/', async (context) => {
   return context.json({ chats: await listed(context.env, context.get('who'), space) })
 })
 
-/* ── Making and moving ─────────────────────────────────────────────────── */
-
-/** A new chat in a space, by somebody who may write there, answered with the pointer
- *  its `.chat` file holds (4.2). */
 chats.post('/', async (context) => {
   const env = context.env
   const asked = newChatOf(await context.req.json().catch(() => null))
@@ -196,11 +167,6 @@ chats.post('/', async (context) => {
   return context.json({ v: 1, chat }, 201)
 })
 
-/** A chat's settings, or its space (Move to space): `{space}` by a writer of both
- *  spaces, between spaces of one owner unless it is that owner who asks, which takes
- *  its history along and changes its audience; `{topic}`, `{posting}` and `{slowmode}`
- *  as a `meta` event the object places for the asker, by the same table every event is
- *  held to. */
 chats.patch('/:chat', async (context) => {
   const env = context.env
   const reached = await reachChat(env, context.get('who'), context.req.param('chat'))
@@ -209,10 +175,6 @@ chats.patch('/:chat', async (context) => {
   if (!sent) return context.json({ error: NOT_THAT }, 400)
 
   if (typeof sent.space === 'string') {
-    // The space the chat leaves is asked on its own, since the role a chat is reached
-    // at counts a share of its pointer alone, and somebody handed one file is not the
-    // one to take it out of the space it was shared from (DELETE /v1/notes/:id says
-    // the same).
     const source = await reachedSpace(env, context.get('who'), reached.space)
     if (!source || !allows(source.role, 'write')) {
       return context.json({ error: 'this chat was shared with you, not its space' }, 403)
@@ -220,9 +182,6 @@ chats.patch('/:chat', async (context) => {
     const target = await reachedSpace(env, context.get('who'), sent.space)
     if (!target) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!allows(target.role, 'write')) return context.json({ error: refusal('write') }, 403)
-    // A move leaves nothing behind in Recently deleted, so a writer who is not the
-    // owner moves the chat only between spaces of that same owner: into a space of
-    // their own it would be the owner's chat taken away from them.
     if (source.role !== 'owner' && target.user_id !== source.user_id) {
       return context.json({ error: refusal('owner') }, 403)
     }
@@ -251,14 +210,10 @@ chats.patch('/:chat', async (context) => {
   return refused ? context.json({ error: refused }, 403) : context.json({ ok: true })
 })
 
-/* ── The log ───────────────────────────────────────────────────────────── */
-
-/** The chat a route names, as the person asking reaches it. */
 function reachedOf(context: { env: Env; get: (key: 'who') => Variables['who'] }, chat: string) {
   return reachChat(context.env, context.get('who'), chat)
 }
 
-/** Events by seq: `after`, `before` or `around` one, at most 500 (4.4). */
 chats.get('/:chat/events', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -267,7 +222,6 @@ chats.get('/:chat/events', async (context) => {
   )
 })
 
-/** Messages as they stand, newest first, for a first copy (4.5). */
 chats.get('/:chat/state', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -276,9 +230,6 @@ chats.get('/:chat/state', async (context) => {
   )
 })
 
-/** Up to fifty events from a device's outbox, each answered with its place or why not;
- *  idempotent by each event's id, so a resend is answered as before. A body with any
- *  event that does not check is refused whole. */
 chats.post('/:chat/events', async (context) => {
   const env = context.env
   const reached = await reachedOf(context, context.req.param('chat'))
@@ -286,7 +237,6 @@ chats.post('/:chat/events', async (context) => {
 
   const sent = postEventsOf(await context.req.json().catch(() => null))
   if (!sent) return context.json({ error: INVALID }, 400)
-  // The account's ceiling, a request at a time; the object counts each event per person.
   if (!(await within(env, 'chat-events', reached.id, EVENTS_A_MINUTE, 60_000))) {
     return context.json({ error: RATE }, 429)
   }
@@ -297,8 +247,6 @@ chats.post('/:chat/events', async (context) => {
   )
 })
 
-/** This person's read place, from a device with no socket open: forward, or back with
- *  `back` (Mark unread). */
 chats.post('/:chat/read', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -317,7 +265,6 @@ chats.post('/:chat/read', async (context) => {
   )
 })
 
-/** This person's own posts waiting for their time. */
 chats.get('/:chat/scheduled', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -326,9 +273,6 @@ chats.get('/:chat/scheduled', async (context) => {
 
 const NOTIFY = new Set(['all', 'mentions', 'nothing'])
 
-/** What pings this person about this chat, kept by the account so every device agrees
- *  (4.11): `notify` all, mentions or nothing (null for the chat's default), and
- *  `mutedUntil` a moment or null. */
 chats.put('/:chat/me', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -362,10 +306,6 @@ chats.put('/:chat/me', async (context) => {
   return context.json({ notify: row?.notify ?? null, mutedUntil: row?.muted_until ?? null })
 })
 
-/* ── People ────────────────────────────────────────────────────────────── */
-
-/** Who is in the chat: everybody its space reaches, and those holding its pointer on
- *  its own, each once at their strongest role, by name. */
 const MEMBERS = `with c as (
   select sp.id as space_id, sp.user_id as owner, f.id as file_id
     from chats ch join spaces sp on sp.id = ch.space_id
@@ -406,19 +346,12 @@ export async function membersOf(env: Env, chat: string): Promise<Member[]> {
   }))
 }
 
-/** Names only: addresses are the owner's to see, in the share sheet. */
 chats.get('/:chat/members', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   return context.json({ members: await membersOf(context.env, reached.chat) })
 })
 
-/* ── A note dropped in ─────────────────────────────────────────────────── */
-
-/** The people of a chat, with an account, who cannot open one note: not its space's
- *  owner, and no membership of its space or of the note alone (`?2` the space, `?3` the
- *  note, `?1` the chat). A guest is not among them: nothing can be shared with a guest
- *  but by a link. */
 const MISSING = `with c as (
   select sp.id as space_id, sp.user_id as owner, f.id as file_id
     from chats ch join spaces sp on sp.id = ch.space_id
@@ -438,7 +371,6 @@ select u.id as id, u.email as email, u.name as name
                      and (m.item = '' or m.item = ?3))
  order by u.name limit 200`
 
-/** The note a request names, in the space it names, as the asker reaches that space. */
 async function droppedNote(
   env: Env,
   who: Whoever,
@@ -456,9 +388,6 @@ async function droppedNote(
   return found ? { space, note, owner: reached.role === 'owner' } : null
 }
 
-/** Who in the chat cannot open a note dropped into it (docs/chats.md 4.13), by name, and
- *  whether the asker may share it with them: what the composer shows over the field
- *  before the message goes. Asked only by somebody who reaches the note themselves. */
 chats.get('/:chat/note', async (context) => {
   const env = context.env
   const reached = await reachedOf(context, context.req.param('chat'))
@@ -479,10 +408,6 @@ chats.get('/:chat/note', async (context) => {
   })
 })
 
-/** A note dropped into a chat shared, to read, with everybody in the chat who could not
- *  open it: Slack's one press when a file's link goes where some cannot follow it. By
- *  the note's owner only, as every share is; no mail goes, because the message they
- *  are about to read is the news. */
 chats.post('/:chat/note', async (context) => {
   const env = context.env
   const reached = await reachedOf(context, context.req.param('chat'))
@@ -510,10 +435,6 @@ chats.post('/:chat/note', async (context) => {
   return context.json({ shared: results.length })
 })
 
-/* ── Search ────────────────────────────────────────────────────────────── */
-
-/** The reader's calendar day of a moment, in the zone their device said (`zone`), UTC
- *  for one this runtime does not know. */
 function dayIn(zone: string | undefined): (at: number) => string {
   let format: Intl.DateTimeFormat
   try {
@@ -524,8 +445,6 @@ function dayIn(zone: string | undefined): (at: number) => string {
   return (at) => format.format(new Date(at))
 }
 
-/** One search over some chats: the query as `@orden/chats` reads it, the candidates each
- *  chat's words index gives, answered with `matches`, newest first (4.12). */
 export async function searched(
   env: Env,
   who: Whoever,
@@ -565,7 +484,6 @@ export async function searched(
     .slice(0, MOST_HITS)
 }
 
-/** A chat's name: its pointer's file name, once the account has seen the pointer. */
 async function chatName(env: Env, chat: string): Promise<string> {
   const row = await env.DB.prepare(
     'select f.path as path from chats ch join notes f on f.id = ch.file_id where ch.id = ?',
@@ -575,8 +493,6 @@ async function chatName(env: Env, chat: string): Promise<string> {
   return (row?.path.split('/').pop() ?? '').replace(/\.chat$/i, '')
 }
 
-/** Across every chat this person reaches: the browser build's search, which has no store
- *  of its own to search. */
 chats.get('/search', async (context) => {
   const who = context.get('who')
   const all = await listed(context.env, who, null)
@@ -593,7 +509,6 @@ chats.get('/search', async (context) => {
   return context.json({ hits })
 })
 
-/** In one chat: Ctrl+F's search (4.12). */
 chats.get('/:chat/search', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -606,9 +521,6 @@ chats.get('/:chat/search', async (context) => {
   return context.json({ hits: hits.map((one) => one.message) })
 })
 
-/* ── Files ─────────────────────────────────────────────────────────────── */
-
-/** A file a message in this chat names, for its members. */
 chats.get('/:chat/files/:hash', async (context) => {
   const env = context.env
   const hash = context.req.param('hash').toLowerCase()
@@ -627,8 +539,6 @@ chats.get('/:chat/files/:hash', async (context) => {
     headers: {
       'content-type': BYTES,
       'content-length': String(object.size),
-      // Its bytes never change under one hash, and they are this chat's, not the
-      // world's: kept by the device that asked and by nothing in between.
       'cache-control': 'private, max-age=31536000, immutable',
       etag: `"${hash}"`,
       'x-content-type-options': 'nosniff',

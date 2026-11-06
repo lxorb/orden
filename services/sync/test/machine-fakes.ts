@@ -1,8 +1,3 @@
-/** A machine, driven without Cloudflare under it: a fake host, a link that keeps what
- *  was sent down it, sockets that keep what was said to them, and a namespace that
- *  makes one real `Machine` per id. The state is the hub's stand-in (hub-fakes.ts), the
- *  clock Vitest's. */
-
 import type { MachineHost } from '@orden/online'
 import { linkFrame, type MachineFrame, type NibdFrame } from '@orden/online/wire'
 import { unframe } from '@orden/sync-core/wire'
@@ -10,12 +5,8 @@ import { Machine, type Viewer } from '../src/machines/machine'
 import type { Env } from '../src/types'
 import { HubState } from './hub-fakes'
 
-/** The link to `nibd`: what `Machine` sent down it, and a way to close it. A ping is
- *  answered with a pong, as `nibd` answers it, until the link is made `silent`: a
- *  `nibd` that froze, or a connection half open. */
 class FakeLink {
   readonly sent: MachineFrame[] = []
-  /** What `nibd` answers a `sleep` with, as it does: every screen saved. */
   onSleep: (() => void) | null = null
   silent = false
   closed = false
@@ -28,7 +19,6 @@ class FakeLink {
     if (frame.t === 'ping' && !this.silent) queueMicrotask(() => this.say({ t: 'pong' }))
   }
 
-  /** A frame from `nibd`, as the runtime hands a link's message over. */
   say(frame: NibdFrame) {
     const bytes = linkFrame(frame)
     const data = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
@@ -50,24 +40,17 @@ class FakeLink {
   }
 }
 
-/** The host: what it was asked, in order, and the link it handed out. */
 class FakeHost implements MachineHost {
   readonly calls: string[] = []
-  /** Whether an instance runs. */
   up = false
   link_: FakeLink | null = null
   onSleep: (() => void) | null = null
   snapshots = 0
   backups = 0
-  /** Set to make the next start throw. */
   failStart = false
-  /** How many of the next links fail. */
   failLinks = 0
-  /** What the next backup throws, if anything. */
   failBackup: Error | null = null
-  /** Set to make a restore from a backup never answer. */
   hangRestore = false
-  /** A server of its own (4.15): never slept, snapshotted or backed up. */
   alwaysOn = false
 
   reboot(): Promise<void> {
@@ -138,13 +121,11 @@ class FakeHost implements MachineHost {
   }
 }
 
-/** A person's socket: the text frames said to it, parsed, and the binary ones. */
 export class MachineSocket {
   readonly said: { t: string; [key: string]: unknown }[] = []
   readonly bytes: Uint8Array[] = []
   readyState = 1
   closedWith: { code: number | undefined; reason: string | undefined } | null = null
-  /** When the runtime last answered this socket's beat, as it does without the object. */
   beatAt: Date | null = null
   readonly tags: string[] = []
   private attachment: unknown = null
@@ -167,7 +148,6 @@ export class MachineSocket {
     return structuredClone(this.attachment)
   }
 
-  /** The text frames of one kind said so far. */
   of(t: string) {
     return this.said.filter((one) => one.t === t)
   }
@@ -179,7 +159,6 @@ export interface Running {
   host: FakeHost
 }
 
-/** A machine named `id` for `user`, told who it is the way a route tells it. */
 export async function machine(env: Env, id: string, user: string): Promise<Running> {
   const state = new HubState()
   Object.assign(state, {
@@ -196,7 +175,6 @@ export async function machine(env: Env, id: string, user: string): Promise<Runni
   return { machine: made, state, host }
 }
 
-/** A socket let in the way the door lets it in. */
 export async function join(
   running: Running,
   viewer: Partial<Viewer> & { who: string },
@@ -223,7 +201,6 @@ export async function join(
   return socket
 }
 
-/** A frame from the app. */
 export async function say(running: Running, socket: MachineSocket, frame: unknown) {
   await running.machine.webSocketMessage(
     socket as unknown as WebSocket,
@@ -231,12 +208,10 @@ export async function say(running: Running, socket: MachineSocket, frame: unknow
   )
 }
 
-/** A frame from `nibd`. */
 export async function nibd(running: Running, frame: NibdFrame) {
   await running.machine.fromNibd(frame)
 }
 
-/** The alarm, if it is due by the clock. Answers whether it fired. */
 export async function fire(running: Running): Promise<boolean> {
   const { state } = running
   if (state.alarm === null || state.alarm > Date.now()) return false
@@ -245,8 +220,6 @@ export async function fire(running: Running): Promise<boolean> {
   return true
 }
 
-/** A namespace that keeps what the door told it, as the hub door's test does, and
- *  answers every ask with what `answers` says for it, or that it is asleep. */
 export function doorway(): {
   MACHINES: DurableObjectNamespace
   asked: { id: string; headers: Headers }[]

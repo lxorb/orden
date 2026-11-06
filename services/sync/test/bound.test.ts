@@ -1,17 +1,3 @@
-/** No statement binds more parameters than D1 will take.
- *
- *  D1 refuses a query with more than a hundred bound parameters, and the SQLite
- *  the other tests run against takes tens of thousands. So every query whose
- *  parameter count grows with what an account holds is a query the tests run and
- *  the service would not: a rail of a hundred spaces, a space of a hundred PDFs,
- *  a purge of a space of five hundred notes. Each of those really was a 500 in
- *  production and a pass here.
- *
- *  Written as one file because it is one rule, and the rule is about every route
- *  rather than about any of them. `widest` on the environment is what enforces it;
- *  see test/harness.ts.
- */
-
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { purgeExpired } from '../src/trash'
 import { MOST_BOUND } from '../src/bound'
@@ -29,15 +15,11 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** Says which statement went over, so a failure names the query rather than only
- *  the number. */
 function withinTheLimit() {
   const { count, sql } = env.widest()
   expect(count, sql.replace(/\s+/g, ' ').trim()).toBeLessThanOrEqual(MOST_BOUND)
 }
 
-/** A rail of `many` spaces, written straight in: what is measured is the width of
- *  the statements the routes make, not the route that makes a space. */
 function fillRail(many: number): string[] {
   const ids: string[] = []
   for (let at = 0; at < many; at++) {
@@ -72,7 +54,6 @@ test('listing a rail whose spaces are shared', async () => {
 
   const listed = await call(env, '/v1/spaces', { token })
   expect(listed.status).toBe(200)
-  // The one the account was given holds nobody; every one written above does.
   expect(listed.json.spaces.filter((one) => one.shared)).toHaveLength(ids.length)
   withinTheLimit()
 })
@@ -89,9 +70,6 @@ test('putting a rail of many spaces in order', async () => {
   expect(ordered.status).toBe(200)
   withinTheLimit()
 
-  // And the whole order really was applied, whatever it took to apply it: not
-  // only the first chunk of it. The space the account was given was not in the
-  // list, so it keeps its place at the end.
   const listed = await call(env, '/v1/spaces', { token })
   const rail = listed.json.spaces.map((one) => one.id)
   expect(rail.slice(0, ids.length)).toEqual([...ids].reverse())
@@ -141,7 +119,6 @@ test('purging a space of many notes', async () => {
   await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
   withinTheLimit()
 
-  // And the nightly job walks the same path.
   env.db.prepare('update spaces set deleted_at = 1 where id = ?').run(space)
   await purgeExpired(env, Date.now())
   withinTheLimit()
@@ -182,6 +159,5 @@ test('deleting an account of many spaces, notes and pictures', async () => {
 
   expect(gone.status).toBe(200)
   withinTheLimit()
-  // More than one sweep's worth, so what is left waits for the nightly job.
   expect(env.db.prepare('select count(*) as many from leftovers').get()).not.toEqual({ many: 0 })
 })

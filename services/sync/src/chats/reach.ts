@@ -1,31 +1,14 @@
-/** Who reaches a chat, and as what (docs/chats.md 4.2 and 4.6).
- *
- *  A chat lives in a space, and the space's roles answer for it: its owner, every
- *  member at their role, every guest a link let in. Access is the chat's space and never
- *  its `.chat` pointer, so a copy of the pointer pasted into another space reaches
- *  nothing for the people of that space. A private chat is the same membership about one
- *  file, the pointer's own note row (`file_id`), once the account has seen it arrive;
- *  the role is the rooms' (rooms/index.ts): the stronger of a membership of the space
- *  and one of this file.
- *
- *  Every question here is one statement, around a `me (user_id, email, guest_id)` the
- *  caller hands it: the door's from the token a socket carries, a route's from the
- *  session the guard already read, the object's own from a person's id. */
-
 import type { Role } from '@orden/chats'
 import type { Env, Whoever } from '../types'
 
-/** One chat as one person reaches it. */
 export interface Reached {
   chat: string
   space: string
   role: Role
-  /** The account or the guest, by the id its hub is named by. */
   id: string
   guest: boolean
 }
 
-/** The chat (`?<n>`) as `me` reaches it, if at all. */
 const reached = (me: string, chat: string) => `with ${me},
 reached as (
   select ch.id as chat, sp.id as space,
@@ -48,7 +31,6 @@ reached as (
       or mi.role is not null or gs.role is not null or gi.role is not null
 )`
 
-/** The session behind a socket's token (`?1` its hash, `?2` now). */
 const TOKEN_ME = `me as (
   select u.id as user_id, u.email as email, null as guest_id
     from sessions s join users u on u.id = s.user_id
@@ -58,11 +40,8 @@ const TOKEN_ME = `me as (
     from guest_sessions s where s.token_hash = ?1 and s.expires_at > ?2
 )`
 
-/** Whoever a route's guard let in (`?1` the account, `?2` its address, `?3` a guest). */
 const ASKING_ME = 'me as (select ?1 as user_id, ?2 as email, ?3 as guest_id)'
 
-/** A person by the id their hub is named by (`?1`, and `?2` 1 for a guest): what the
- *  object asks for a scheduled post when its time comes. */
 const PERSON_ME = `me as (
   select u.id as user_id, u.email as email, null as guest_id from users u
    where ?2 = 0 and u.id = ?1
@@ -86,12 +65,10 @@ function reachedOf(row: Row | null): Reached | null {
   return { chat: row.chat, space: row.space, role, id: row.id, guest: row.guest === 1 }
 }
 
-/** The three values `ASKING_ME` is bound with. */
 export function askingOf(who: Whoever): [string | null, string | null, string | null] {
   return who.kind === 'user' ? [who.user.id, who.user.email, null] : [null, null, who.guest.id]
 }
 
-/** A chat as whoever a route let in reaches it, or null. */
 export async function reachChat(env: Env, who: Whoever, chat: string): Promise<Reached | null> {
   const row = await env.DB.prepare(`${reached(ASKING_ME, '?4')} ${PICKED}`)
     .bind(...askingOf(who), chat)
@@ -99,7 +76,6 @@ export async function reachChat(env: Env, who: Whoever, chat: string): Promise<R
   return reachedOf(row)
 }
 
-/** A chat as a person reaches it now, by their id. */
 export async function reachAs(
   env: Env,
   person: { id: string; guest: boolean },
@@ -111,8 +87,6 @@ export async function reachAs(
   return reachedOf(row)
 }
 
-/** The door's answer: no live session (`live` false), or the chat as the session
- *  reaches it (`reached` null where it does not). */
 export async function reachByToken(
   env: Env,
   tokenHash: string,
@@ -124,8 +98,6 @@ export async function reachByToken(
     .first<Row>()
   if (row) return { live: true, reached: reachedOf(row) }
 
-  // No row is either no session or no chat; which of the two is one more question,
-  // asked only on the way to a refusal.
   const live = await env.DB.prepare(
     `select 1 as yes from sessions where token_hash = ?1 and expires_at > ?2
      union all select 1 from guest_sessions where token_hash = ?1 and expires_at > ?2`,
@@ -135,13 +107,10 @@ export async function reachByToken(
   return { live: live !== null, reached: null }
 }
 
-/** The id a person's hub is named by, from the way the chat's events name them. */
 export function hubIdOf(who: string): string {
   return who.slice(who.indexOf(':') + 1)
 }
 
-/** Everybody a chat reaches, each once at their strongest role: the space's owner, its
- *  members by address, its guests, and those holding the chat's pointer on its own. */
 const PEOPLE = `with c as (
   select sp.id as space_id, sp.user_id as owner, f.id as file_id
     from chats ch join spaces sp on sp.id = ch.space_id and sp.deleted = 0

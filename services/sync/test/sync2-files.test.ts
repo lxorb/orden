@@ -1,9 +1,3 @@
-/** Every file of a space, through sync v2 (docs/sync-v2.md section 5.8): bytes up as
- *  blobs by hash, in one request or in parts, checked against their name; an entry in
- *  the tree for each; the bytes back down to members of the space and nobody else;
- *  a replacement that the later arrival wins and that says so to a device that
- *  replaced it too. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { OpsResponse } from '@orden/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -63,7 +57,6 @@ describe('bytes up', () => {
     expect(answer.status).toBe(201)
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(before + 4096)
 
-    // Once is enough: the same bytes again are already kept.
     expect((await upload(data)).json.stored).toBe(false)
   })
 
@@ -78,8 +71,6 @@ describe('bytes up', () => {
     expect(env.keys().some((key) => key.startsWith('blobs/'))).toBe(false)
   })
 
-  /** A list R2 cannot put together is the device's mistake, and said so; the bucket
-   *  itself being unwell is not, and is left to say what it says (#473). */
   describe('in parts that do not make a file', () => {
     async function started(data: Uint8Array) {
       const hash = await hashOf(data)
@@ -100,7 +91,6 @@ describe('bytes up', () => {
         raw,
       })
 
-    /** The bucket answering a completion with this. */
     function completing(fails: Error) {
       const notes = env.NOTES as unknown as {
         resumeMultipartUpload(key: string, id: string): { complete(parts: unknown): unknown }
@@ -125,7 +115,6 @@ describe('bytes up', () => {
       expect((await finish(upload, [{ part: 7, etag: 'etag-7' }])).status).toBe(400)
       expect((await finish(upload, [{ part: 1, etag: 'not its own' }])).status).toBe(400)
 
-      // A list that was wrong is not an upload thrown away: the right one still lands.
       expect((await finish(upload, [part])).status).toBe(201)
       expect(env.db.prepare('select size from blobs where hash = ?').get(hash)).toEqual({
         size: 100,
@@ -156,8 +145,6 @@ describe('bytes up', () => {
       expect((await finish(upload, [part])).status).toBe(400)
     })
 
-    /** Aborted, expired, or finished by another request at the same moment: the answer
-     *  a route gives for an upload it does not know, and nothing left to ask about. */
     test('an upload the bucket no longer has', async () => {
       const data = bytes(100, 7)
       const { upload } = await started(data)
@@ -234,11 +221,6 @@ describe('bytes up', () => {
     expect(env.keys().some((key) => key.startsWith('blobs/'))).toBe(false)
   })
 
-  /** The parts are put together where the blob would live, and a copy somebody else
-   *  finished meanwhile was there: the wrong bytes were left in its place, for them
-   *  and everybody who keeps it. Parts are put together somewhere of their own. */
-  /** Knowing a hash is not having the file: a row is what lets a file entry in a space
-   *  of this account's name a blob, and so read it back. */
   test('in parts, sent in full even when somebody else already keeps them', async () => {
     const data = bytes(1000, 7)
     const hash = await hashOf(data)
@@ -363,8 +345,6 @@ describe('a file replaced', () => {
     expect(phone.json.moved.hash).toBe(await hashOf(second))
   })
 
-  /** #1068: the account keeps every device's latest change, so replacing the bytes after
-   *  another device did leaves that one's standing against this device's stale delete. */
   test("by another device stand against a delete that had not seen them, though this one's came since", async () => {
     const other = await signIn(env, 'files@example.com')
     const versions = [bytes(100, 1), bytes(100, 2), bytes(100, 3)]
@@ -413,9 +393,6 @@ describe('a file replaced', () => {
   })
 })
 
-/** The owner's bytes are not all one space's: somebody who writes in one space names
- *  only bytes of their own, or bytes this space already holds, and never what the
- *  owner keeps for another space - its hash is all they would need to read it. */
 describe('the bytes an editor names', () => {
   async function elsewhere(): Promise<string> {
     const other = (await call(env, '/v1/spaces', { token, body: { name: 'Private' } })).json.space
@@ -486,9 +463,6 @@ describe('the bytes an editor names', () => {
   })
 })
 
-/** v1 keeps a drawn diagram's SVG under a name that is not the hash of its bytes, so a
- *  name somebody else wrote first is not taken on trust by an upload of the real bytes
- *  (#468). */
 describe('a copy kept under a hash it is not the bytes of', () => {
   const PLANTED = '<svg xmlns="http://www.w3.org/2000/svg"><text>not yours</text></svg>'
 
@@ -551,7 +525,6 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     await upload(data, 'image/png', other)
 
     expect((await upload(data, 'audio/webm')).status).toBe(201)
-    // The first upload's type is what is kept: nothing was written again.
     expect((await env.NOTES.get(`blobs/${hash}`))?.httpMetadata?.contentType).toBe('image/png')
   })
 
@@ -559,7 +532,6 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     const data = bytes(5000, 14)
     const hash = await hashOf(data)
     await plant(hash)
-    // What the upload route did before: the real bytes' row, over the planted copy.
     const mine = (await call(env, '/v1/me', { token })).json.user.id
     env.db
       .prepare(
@@ -567,7 +539,6 @@ describe('a copy kept under a hash it is not the bytes of', () => {
       )
       .run(hash, mine)
 
-    // And a diagram, held only as an SVG under a name that is not its hash, stays.
     const diagram = 'a'.repeat(64)
     await plant(diagram)
 
@@ -580,17 +551,14 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     })
     expect(await env.NOTES.get(`blobs/${diagram}`)).not.toBeNull()
 
-    // And the real bytes go up again as the first of them.
     expect((await upload(data)).status).toBe(201)
     expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(5000)
   })
 })
 
-/** The quota is what is kept when the bytes land, not when an upload starts (#469). */
 describe('the quota, for bytes that went up in parts', () => {
   const QUOTA = 1024 ** 3
 
-  /** The account this many bytes short of its quota. */
   function shortBy(bytes: number) {
     const user = (env.db.prepare('select id from users').get() as { id: string }).id
     env.db
@@ -639,7 +607,6 @@ describe('the quota, for bytes that went up in parts', () => {
   test('nor bytes in one request, past it by the time the row is written', async () => {
     shortBy(2000)
     const data = bytes(1200, 23)
-    // Something else of the account's lands between the check and the row.
     env.justBefore(/insert into blobs/, () => shortBy(1500))
 
     expect((await upload(data)).status).toBe(507)
@@ -647,8 +614,6 @@ describe('the quota, for bytes that went up in parts', () => {
   })
 })
 
-/** #517: which of a device's hashes the account keeps, so that bytes it lost are sent
- *  again by the device that has them. */
 describe('the bytes an account keeps, asked', () => {
   test('answers its own rows only, and no more than ninety at once', async () => {
     const data = bytes(3000, 21)

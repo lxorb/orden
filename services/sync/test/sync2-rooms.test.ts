@@ -1,9 +1,3 @@
-/** A note's room as sync v2's home for its document (docs/sync-v2.md sections 5.2 to
- *  5.4, 5.10 and 11): seeded exactly as a device seeds, taking HTTP pushes durably
- *  and answering `moved` when it has moved on, acknowledging at every settle, writing
- *  its snapshot to the bucket, starting a new epoch without dropping a word a v1 room
- *  held, and taking whole texts in as operations under its own id. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type Canvas, type CanvasNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import {
@@ -54,7 +48,6 @@ async function body(id: string): Promise<string> {
   return object ? await object.text() : ''
 }
 
-/** A device holding a note's document: the seed, and whatever it types after. */
 class Device {
   readonly doc = new Y.Doc()
   seq: number
@@ -73,7 +66,6 @@ class Device {
     return this.doc.getText(TEXT).toJSON()
   }
 
-  /** What typing here makes, as the pending update a push carries. */
   type(at: number, words: string): { base: Uint8Array; update: Uint8Array } {
     const base = Y.encodeStateVector(this.doc)
     this.doc.getText(TEXT).insert(at, words)
@@ -96,7 +88,6 @@ describe('a room holding a note on sync v2', () => {
     const id = await made('Plan.md', text)
     await prepare()
 
-    // Waking it is enough: a socket joining, and the settle after.
     await join(rooms.of(id).room, { id, spaceId: space })
     await rooms.settle()
 
@@ -112,8 +103,6 @@ describe('a room holding a note on sync v2', () => {
     const answer = value.docs[0]
     expect(answer).toMatchObject({ id, ok: true, seq: 2 })
 
-    // Durable before the answer: the room's own storage already holds it, though
-    // nothing has settled yet.
     const { state } = rooms.of(id)
     expect(state.kept.get('version')).toMatchObject({ seq: 2 })
     expect(await body(id)).toBe('one\n')
@@ -138,7 +127,6 @@ describe('a room holding a note on sync v2', () => {
     if (!moved || !('moved' in moved)) throw new Error(`not moved: ${JSON.stringify(moved)}`)
     expect(moved.seq).toBe(2)
 
-    // What it was missing is the laptop's words and nothing of its own.
     const remote = new Y.Doc()
     Y.applyUpdateV2(remote, seedUpdate(id, 1, 'one\n'))
     Y.applyUpdateV2(remote, moved.moved)
@@ -182,7 +170,6 @@ describe('a room holding a note on sync v2', () => {
   test('brings a deleted note back when words land on it', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
-    // Deleted on another device, which is another session.
     const phone = await signIn(env, 'rooms@example.com')
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token: phone })
     expect(row(id).deleted).toBe(1)
@@ -196,8 +183,6 @@ describe('a room holding a note on sync v2', () => {
   })
 
   test('leaves a note deleted when the words are the deleting device’s own (#413)', async () => {
-    // What a move to another space is here: typed in, then deleted by the same device
-    // - the words went with it - and the room settling them after the delete.
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const device = new Device(id, 'one\n', 'laptop')
@@ -234,7 +219,6 @@ describe('whole texts', () => {
     Y.applyUpdateV2(device.doc, pulled.update)
     expect(device.words).toBe('one\n2\n')
 
-    // Made under the room's own id, and as the few operations the text differs by.
     const clients = [...Y.decodeStateVector(Y.encodeStateVectorFromUpdateV2(pulled.update)).keys()]
     expect(clients).toEqual([hash32(id, 'account')])
   })
@@ -264,8 +248,6 @@ describe('whole texts', () => {
     const device = new Device(id, 'one\n', 'laptop')
     await device.push(device.type(4, 'typed\n'))
 
-    // What a connected app writes lands on top of what the room held unsettled, not
-    // over it: the room settles first, and the text goes in as operations.
     const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
     const written = await call<RpcView>(env, '/mcp', {
       token: mcp.json.token,
@@ -317,8 +299,6 @@ describe('an epoch starting', () => {
     const { room, state } = rooms.of(id)
     const socket = await join(room, { id, spaceId: space })
 
-    // A v1 app's handshake: what the room holds comes down, and then it types, and
-    // nothing has settled when the space is prepared.
     const device = new Y.Doc()
     const awareness = new Awareness(device)
     await say(room, state, socket, syncStep1(device))
@@ -330,7 +310,6 @@ describe('an epoch starting', () => {
     state.takeAlarm()
 
     await prepare()
-    // The settle that finds the note on an epoch starts it; the one after writes it.
     await room.alarm()
     await state.idle()
     await rooms.settle()
@@ -338,17 +317,12 @@ describe('an epoch starting', () => {
     expect(socket.closedWith?.code).toBe(1012)
     expect(await body(id)).toBe('one\nunsettled\n')
 
-    // The new document is the seed a device makes with the words on top: a device
-    // holding the seed merges into one text, not two.
     const merged = new Y.Doc()
     Y.applyUpdateV2(merged, seedUpdate(id, 1, 'one\n'))
     Y.applyUpdateV2(merged, await snapshotOf(id))
     expect(merged.getText(TEXT).toJSON()).toBe('one\nunsettled\n')
   })
 
-  /** A v1 room holding `one\nunsettled\n` it never settled, the note written to `saved`
-   *  by another road meanwhile, and then the epoch. Answers the note's words after it
-   *  and the paths of the space. */
   async function startedOver(saved: string): Promise<{ words: string; paths: string[] }> {
     const id = await made('Plan.md', 'one\n')
     const { room, state } = rooms.of(id)
@@ -407,7 +381,6 @@ describe('an epoch starting', () => {
     socket.serializeAttachment({ ...(socket.deserializeAttachment() as object), v2: true })
     socket.take()
 
-    // An operator starting the note again: the room hears it at its next settle.
     env.db.prepare('update notes set epoch = 2, epoch_base = hash where id = ?').run(id)
     await room.alarm()
     await state.idle()
@@ -418,7 +391,6 @@ describe('an epoch starting', () => {
   })
 })
 
-/** The snapshot of a note's document the bucket holds. */
 async function snapshotOf(id: string): Promise<Uint8Array> {
   const object = await env.NOTES.get(`crdt/${id}`)
   if (!object) throw new Error('no snapshot')
@@ -511,9 +483,6 @@ describe('the bulk read and the kept side', () => {
     expect(held.get(id)).toEqual({ many: 1 })
   })
 
-  // #471: a kept side is a whole note, written whatever the five minute rule says, and
-  // seven hundred of them a minute all landed, every one a version the night's sweep
-  // was the first thing to count.
   test('kept sides are held to a number an hour of their own', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
@@ -535,7 +504,6 @@ describe('the bulk read and the kept side', () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const { MOST_VERSION_BYTES } = await import('../src/versions')
-    // Every version the account has comes to four bytes under its ceiling.
     env.db.prepare('update note_versions set size = 0').run()
     env.db
       .prepare('update note_versions set size = ? where note_id = ?')

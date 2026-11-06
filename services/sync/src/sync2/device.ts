@@ -1,13 +1,3 @@
-/** Which device a v2 request comes from.
- *
- *  The tree's rules need it for one thing: a device's own writing never stands
- *  against its own delete (section 5.9), so every change is written down with the
- *  device that made it. The session is what proves it, never something the request
- *  says about itself: a device that said hello to its hub is bound to its session
- *  (see hub/devices.ts), and one that has not yet is named by its session, which is
- *  the same device for as long as the session lasts. A guest is one device, and so is
- *  a program's token. */
-
 import type { Context } from 'hono'
 import { tokenIn } from '../auth'
 import { sha256 } from '../crypto'
@@ -25,19 +15,13 @@ export async function deviceOf(
   const device = await deviceOfSession(context.env, who.user.id, header)
   if (device) return device
 
-  // Short: it is written beside every change, and sixteen hex digits of a hash tell
-  // a person's sessions apart without saying anything about the token.
   return `session:${(await sha256(tokenIn(header) ?? '')).slice(0, 16)}`
 }
 
-/** A program's token as a device: one per token rather than one per account, so
- *  two scripts writing one note are two devices. Sixteen hex digits of its hash,
- *  the way a session is named. */
 export async function programDevice(token: string): Promise<string> {
   return `program:${(await sha256(token)).slice(0, 16)}`
 }
 
-/** Whose ceilings a request counts against: the account's, or the guest's. */
 export function whoseId(who: Whoever): string {
   return who.kind === 'user' ? who.user.id : who.guest.id
 }

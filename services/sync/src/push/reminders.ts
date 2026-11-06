@@ -1,23 +1,3 @@
-/** Reminders pushed from here, so a phone that has not opened Orden since a task was
- *  written elsewhere can ring (docs/tasks.md 5.10 and decision 5).
- *
- *  **Kept from the notes as they arrive.** Every note is written through one place
- *  (`saveNote` and the two that make a note, notes.ts), and each hands its words here:
- *  the task lines are read the way the app reads them, their reminders worked out by the
- *  same code (`@orden/markdown/task-reminders`) in the time zone the account's newest
- *  device said it is in, and the note's rows of `push_reminders` rewritten. Only for an
- *  account with a device to push to, so a save costs nothing for everybody else.
- *
- *  **Sent at the minute** by the cron each minute (`sendDue`): each reminder due is
- *  claimed once, pushed to every target of its account, and let go a day later. One no
- *  service took is tried again after a wait, a few times (`MOST_TRIES`). A
- *  reminder in a note deleted since, or of a space deleted since, is not sent.
- *
- *  The id is the one every device makes for the same reminder, so a phone could tell this
- *  push from an alarm it set itself. None does yet: the Android app has no FCM receiver and
- *  nothing calls `Reminders.known`, so a push there rings nothing and nothing is kept quiet
- *  by it. See fcm.ts, Reminders.kt. */
-
 import { taskHash } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { readTask } from '@orden/markdown/task-line'
@@ -26,31 +6,24 @@ import type { Env } from '../types'
 import { liveTarget } from './live'
 import { type Message, push, type Target } from './send'
 
-/** The automatic reminder's choices, in minutes before a task's time, -1 for none: the
- *  app's own list (modes.svelte.ts), which the settings route holds an account to. */
 export const REMIND_BEFORE: readonly number[] = [0, 5, 15, 30, 60, -1]
 
-/** How many of one note's reminders are kept. */
 const MOST_PER_NOTE = 64
 
-/** How many due reminders one run of the cron sends. */
 const AT_ONCE = 200
 
-/** How long a reminder is kept after its minute, sent or not. */
 const KEPT_FOR = 86_400_000
 
 export const TRY_AGAIN_AFTER = 300_000
 
 export const MOST_TRIES = 4
 
-/** A note as this reads it. */
 interface Saved {
   id: string
   space_id: string
   path: string
 }
 
-/** One reminder of one note. */
 interface Kept {
   id: string
   at: number
@@ -60,8 +33,6 @@ interface Kept {
   line: number
 }
 
-/** The task lines of a note's words, with the line each is on: outside the front matter
- *  and outside a fenced block, as the app's own scan reads them (scan-rows.ts). */
 function taskLines(content: string): { line: number; text: string }[] {
   const lines = content.split(/\r?\n/)
   const found: { line: number; text: string }[] = []
@@ -82,8 +53,6 @@ function taskLines(content: string): { line: number; text: string }[] {
   return found
 }
 
-/** The reminders a note's words ask for, after `now` - or after `from`, for a caller
- *  that also wants the ones whose minute has just gone by. */
 export function remindersIn(
   content: string,
   space: string,
@@ -115,7 +84,6 @@ export function remindersIn(
   return kept.sort((a, b) => a.at - b.at).slice(0, MOST_PER_NOTE)
 }
 
-/** The automatic reminder the account chose, or the app's own default. */
 function autoOf(settings: string | null): number | null {
   try {
     const chosen = (JSON.parse(settings ?? '{}') as { remindBefore?: unknown }).remindBefore
@@ -128,8 +96,6 @@ function autoOf(settings: string | null): number | null {
   return 0
 }
 
-/** A note's reminders, rewritten from its words. Best effort, as the note's words and
- *  versions are: the note is already stored. */
 export async function keepReminders(env: Env, note: Saved, content: string, now = Date.now()) {
   const owner = await env.DB.prepare(
     `select s.user_id, s.name, u.settings,
@@ -141,19 +107,11 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
     .first<{ user_id: string; name: string; settings: string | null; zone: string | null }>()
 
   const forget = env.DB.prepare('delete from push_reminders where note_id = ?').bind(note.id)
-  // No device to push to: nothing is kept, and nothing an earlier save kept stays.
   if (!owner?.zone) {
     await forget.run()
     return
   }
 
-  // What the note kept before this save. What was sent stays sent: a save after a
-  // reminder rang does not ring it again. And one whose minute has gone by while the
-  // cron has not got to it yet stays to be sent, for as long as a reminder is kept: a
-  // room settles a note being typed in every second or so, and a save in the moment
-  // between the minute and the cron took the reminder away unsent (#458). Only one the
-  // note had already kept, and only while its task still asks for it: a reminder
-  // written for a time already past is not rung late.
   const before = await env.DB.prepare(
     'select id, sent_at, tries, retry_at from push_reminders where note_id = ?',
   )
@@ -202,7 +160,6 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
   ])
 }
 
-/** What a due reminder carries. */
 interface Due {
   note_id: string
   id: string
@@ -217,14 +174,10 @@ interface Due {
   tries: number
 }
 
-/** And takes them away again, for a note whose words have gone for good: a reminder
- *  holds the words of its task, and nothing would send it now, so nothing keeps it. */
 export function forgetReminders(env: Env, noteId: string): D1PreparedStatement {
   return env.DB.prepare('delete from push_reminders where note_id = ?').bind(noteId)
 }
 
-/** Every reminder due by now, pushed once to every device of its account. Answers how
- *  many were sent. */
 export async function sendDue(
   env: Env,
   now: number,
@@ -249,7 +202,6 @@ export async function sendDue(
   let sent = 0
   const targets = new Map<string, Target[]>()
   for (const one of due) {
-    // Claimed first, so two runs of the cron that overlap send it once.
     const claimed = await env.DB.prepare(
       'update push_reminders set sent_at = ? where note_id = ? and id = ? and sent_at is null',
     )
@@ -264,8 +216,6 @@ export async function sendDue(
           `select t.id, t.user_id, t.kind, t.token, t.keys, t.zone from push_targets t
             where t.user_id = ?1 and ${liveTarget('?2')}`,
         )
-          // Whether the session lives is asked of the clock, not of the moment the
-          // reminders are due at, which a test or a late run may set elsewhere.
           .bind(one.user_id, Date.now())
           .all<Target>()
       ).results

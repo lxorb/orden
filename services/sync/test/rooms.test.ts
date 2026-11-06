@@ -13,11 +13,8 @@ import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
 import { doorway, FakeSocket, type FakeState, join, room, running, say } from './room'
 
-/** What the note holds before anybody writes in it. */
 const OPENING = '# Together\n'
 
-/** A device in a room, the way the app's client is one: its own document, its own
- *  awareness, and the same protocol run over whatever the room says. */
 class Device {
   readonly doc = new Y.Doc()
   readonly awareness = new Awareness(this.doc)
@@ -29,14 +26,12 @@ class Device {
     return this.text.toJSON()
   }
 
-  /** What this device would send after typing: the update its own document made. */
   type(at: number, words: string): Uint8Array {
     const before = Y.encodeStateVector(this.doc)
     this.text.insert(at, words)
     return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
   }
 
-  /** And after taking something out again. */
   erase(at: number, length: number): Uint8Array {
     const before = Y.encodeStateVector(this.doc)
     this.text.delete(at, length)
@@ -44,8 +39,6 @@ class Device {
   }
 }
 
-/** A device joining, through the whole handshake: the room says what it holds and
- *  who is in it, the device says what it holds, and both catch up. */
 async function arrive(
   made: NoteRoom,
   state: FakeState,
@@ -57,7 +50,6 @@ async function arrive(
   return device
 }
 
-/** Everything waiting on the wire, in both directions, until nothing is left. */
 async function settle(made: NoteRoom, state: FakeState, devices: readonly Device[]) {
   for (let round = 0; round < 12; round++) {
     let moved = false
@@ -121,7 +113,6 @@ describe('a room', () => {
     const one = await arrive(made, state, { id: noteId, spaceId })
     const two = await arrive(made, state, { id: noteId, spaceId })
 
-    // Both write at the end of the same line before either has heard the other.
     const first = one.type(11, 'one\n')
     const second = two.type(11, 'two\n')
 
@@ -140,7 +131,6 @@ describe('a room', () => {
     await say(made, state, one.socket, one.type(11, 'written here\n'))
     await settle(made, state, [one])
 
-    // A device that had the note open all along, offline, and now reconnects.
     const away = new Device(new FakeSocket())
     Y.applyUpdate(away.doc, Y.encodeStateAsUpdate(one.doc))
     const alone = away.type(away.words.length, 'written there\n')
@@ -156,33 +146,16 @@ describe('a room', () => {
   })
 
   describe('a note something wrote without going through the room', () => {
-    /** The exact sequence that lost somebody's paragraph, as requests.
-     *
-     *  Two devices with one note open. The first can reach the account but not its
-     *  room - every network that allows HTTPS and blocks WebSockets - so the file is
-     *  the only way its words travel, and it pushes the whole file naming the version
-     *  it read. Nothing about that push is wrong: the account takes it. But the room
-     *  is still holding words of its own, and its settle is a whole-file write too. It
-     *  used to write straight over the push, and every word in it that the room did
-     *  not have went with it - out of the account, and then out of the pushing
-     *  device's own disk on its next pass, with nothing said and no copy anywhere.
-     *
-     *  So the settle keeps what it is about to stop holding, under the same name the
-     *  app gives such a copy; see `keptBeside` in src/rooms/room.ts. */
     async function overwritten() {
       const { room: made, state } = room(env)
       const inside = await arrive(made, state, { id: noteId, spaceId })
 
-      // Somebody in the room types, and the room settles it: version 2.
       await say(made, state, inside.socket, inside.type(11, 'from the room\n'))
       await made.alarm()
 
       const held = await call(env, `/v1/notes/${noteId}`, { token })
       expect(held.json.note.version).toBe(2)
 
-      // The device that cannot reach the room pushes the file it holds, naming the
-      // version it last read. Its own line, and not the room's, because it never
-      // heard the room.
       const pushed = await call(env, `/v1/notes/${noteId}`, {
         token,
         method: 'PUT',
@@ -195,8 +168,6 @@ describe('a room', () => {
       expect(pushed.status).toBe(200)
       expect(pushed.json.note.version).toBe(3)
 
-      // And the person in the room carries on typing, which is the settle that used
-      // to write over it.
       await say(made, state, inside.socket, inside.type(inside.words.length, 'and more\n'))
       await made.alarm()
 
@@ -228,8 +199,6 @@ describe('a room', () => {
     test('is copied once however many times the same words are offered again', async () => {
       const { made, state, inside } = await overwritten()
 
-      // A device whose room it cannot reach offers the same file on every pass until
-      // somebody looks at it. A second copy of a copy says nothing the first did not.
       for (const line of ['once more\n', 'and again\n']) {
         await call(env, `/v1/notes/${noteId}`, {
           token,
@@ -271,8 +240,6 @@ describe('a room', () => {
     })
   })
 
-  /** The live notes of the space, by path: what a second copy of anything shows up
-   *  in. */
   async function held(): Promise<string[]> {
     const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
     return (page.json.notes as { path: string; deleted?: boolean }[])
@@ -281,30 +248,13 @@ describe('a room', () => {
       .sort()
   }
 
-  /** One device with the note open, which is two ways up to the account for one hand
-   *  typing: the room, keystroke by keystroke, and that machine's own pass, which
-   *  carries the file. They meet whenever a push lands in the seconds before the room
-   *  settles - and what the room sees then is a version it did not write, which is
-   *  exactly what it sees when a device it cannot reach pushes from the other side of
-   *  the world.
-   *
-   *  A room cannot know which of the two it is and must not guess. What it can read
-   *  off the two texts is the only thing the copy is for: whether writing its own
-   *  words over that version would drop any of it. Where the push is this same
-   *  document a keystroke ago, none of it goes - and a copy of one's own paragraph is
-   *  not an answer to anything. Three of them turned up on Emil's disk on three
-   *  consecutive mornings, on a machine that has never had a second device. */
   describe('a note pushed as a file while its room held it', () => {
     test('is not copied when the settle would drop none of it', async () => {
       const { room: made, state } = room(env)
       const inside = await arrive(made, state, { id: noteId, spaceId })
 
-      // Typed here, and a moment later the file on disk says the same.
       await say(made, state, inside.socket, inside.type(11, 'one\n'))
 
-      // The pass carries that file up, naming the version it read. Nothing about it
-      // is wrong: the room has not settled, so the account's copy is still the one
-      // this device was handed.
       const pushed = await call(env, `/v1/notes/${noteId}`, {
         token,
         method: 'PUT',
@@ -312,8 +262,6 @@ describe('a room', () => {
       })
       expect(pushed.json.note.version).toBe(2)
 
-      // And the hand carries on typing, which is the settle that used to make the
-      // copy: a version it never saw, holding words it has every one of.
       await say(made, state, inside.socket, inside.type(inside.words.length, 'two\n'))
       await made.alarm()
 
@@ -323,17 +271,6 @@ describe('a room', () => {
       expect(read.json.content).toBe('# Together\none\ntwo\n')
     })
 
-    /** The one way in that is left, and it is narrow: the words that went up are ones
-     *  the hand then took out again, inside the second and a bit before the settle. The
-     *  change that turns the pushed version into what the room holds is then a
-     *  deletion, and a deletion is exactly what the copy is for - so the copy is made,
-     *  and it holds a line somebody had already decided against.
-     *
-     *  Closing it needs the one thing this side is never told: that the push came from
-     *  a device that is in this room. Nothing on the wire says so - the write arrives
-     *  over the API as any device's would, and the name it carries is a platform
-     *  ("Windows"), not a machine. Held as a failing test rather than argued about in a
-     *  comment, so that the day anything does carry it, this line is what says so. */
     test.fails('is copied when the settle takes back words the push had in it', async () => {
       const { room: made, state } = room(env)
       const inside = await arrive(made, state, { id: noteId, spaceId })
@@ -346,7 +283,6 @@ describe('a room', () => {
         body: { path: 'together.md', content: '# Together\none\ntwo\n', baseVersion: 1 },
       })
 
-      // The second line goes again before the room has settled anything.
       await say(made, state, inside.socket, inside.erase(15, 4))
       await made.alarm()
 
@@ -357,9 +293,6 @@ describe('a room', () => {
       const { room: made, state } = room(env)
       const inside = await arrive(made, state, { id: noteId, spaceId })
 
-      // Nothing was typed in the room: the note was opened, the room answered with
-      // what the account held, and every keystroke since went to the file, because
-      // the room had not said it was carrying the note yet.
       await call(env, `/v1/notes/${noteId}`, {
         token,
         method: 'PUT',
@@ -370,8 +303,6 @@ describe('a room', () => {
         },
       })
 
-      // The tab closes, and the last device out settles what is left - which is
-      // nothing at all.
       await made.webSocketClose(inside.socket as unknown as WebSocket)
 
       expect(await held()).toEqual(['together.md'])
@@ -381,34 +312,16 @@ describe('a room', () => {
     })
   })
 
-  /** A room keeps its document for as long as the file does, and the note goes on
-   *  being written while nobody is in it. So what a room wakes holding can be a day
-   *  behind - and it used to hand that to the next device to open the note as the
-   *  truth, which took the newer words off that device's screen and then, through the
-   *  settle, off the account.
-   *
-   *  Behind it was the same record and the same mistake: which version the room is
-   *  level with is written down, and a join wrote over it. The header a device arrives
-   *  on says which note and which shape and nothing about where the note had got to,
-   *  so the first join after a sleep left the room saying nothing about itself at all.
-   *
-   *  Nothing here is weighed against anything: the room holds exactly what it last
-   *  wrote down, so every word the note has gained since is one nobody in this room
-   *  has touched, and taking them costs nothing and keeps nothing beside. */
   describe('a room that wakes up behind the note', () => {
-    /** A room that settled its words, was left, and was written to while it slept. */
     async function pushedWhileAsleep() {
       const { room: made, state } = room(env)
       const one = await arrive(made, state, { id: noteId, spaceId })
       await say(made, state, one.socket, one.type(11, 'from the room\n'))
       await made.alarm()
 
-      // Everybody leaves, and the runtime takes the object out of memory.
       await made.webSocketClose(one.socket as unknown as WebSocket)
       state.drop(one.socket)
 
-      // The file is written while the room is away: this same device's next pass,
-      // the connector, a version put back.
       await call(env, `/v1/notes/${noteId}`, {
         token,
         method: 'PUT',
@@ -419,7 +332,6 @@ describe('a room', () => {
         },
       })
 
-      // The note is opened again: a new object over the storage the old one left.
       const woken = new NoteRoom(state as unknown as DurableObjectState, env)
       return { woken, state }
     }
@@ -456,34 +368,19 @@ describe('a room', () => {
 
     const read = await call(env, `/v1/notes/${noteId}`, { token })
     expect(read.json.content).toBe('# Together\nsettled\n')
-    // An ordinary save: the version moved on, so every device that is not in the
-    // room reads it as an edit made somewhere else.
     expect(read.json.note.version).toBe(2)
   })
 
-  /** The versions of a note, newest first. */
   function versionsOf(id: string): { by: string }[] {
     return env.db
       .prepare('select by from note_versions where note_id = ? order by at desc')
       .all(id) as { by: string }[]
   }
 
-  /** A note keeps a version from the moment it was made, and another is only kept
-   *  once that one is old enough to be worth a second; see `keepVersion`. So the one
-   *  it arrived with is aged out of the way, which is what every other test of the
-   *  versions does. */
   function longAgo() {
     env.db.exec('update note_versions set at = at - 600000')
   }
 
-  /** Which device a version of a note says it came from.
-   *
-   *  Every other way a note is written names the device in a header, and the history
-   *  sheet puts that name beside the moment. A settle named nobody, so a note being
-   *  written in together - the one kind of note whose versions arrive thickest - had
-   *  a history of blank rows. The room knows: what a device calls itself is what it
-   *  announced to everybody else in the room, and which of them was typing is
-   *  whoever's update put this settle on the clock. */
   test('says which device was typing when it settled', async () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
@@ -513,7 +410,6 @@ describe('a room', () => {
     }
     await settle(made, state, [one, two])
 
-    // The second of them types, and hers is the keystroke the settle is about.
     await say(made, state, two.socket, two.type(11, 'from the phone\n'))
     await made.alarm()
 
@@ -526,8 +422,6 @@ describe('a room', () => {
     const one = await arrive(made, state, { id: noteId, spaceId })
 
     longAgo()
-    // A device that never announced itself: there is no name to put on the row, and
-    // an invented one would be worse than none.
     await say(made, state, one.socket, one.type(11, 'from nowhere\n'))
     await made.alarm()
 
@@ -573,11 +467,8 @@ describe('a room', () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
     await say(made, state, one.socket, one.type(11, 'slept on it\n'))
-    // The settle is where what arrived reaches storage; see `record` in state.ts.
     await made.alarm()
 
-    // A second room over the same storage is what waking up looks like: every
-    // field is gone, and what matters came back out of the object.
     const woken = new NoteRoom(state as unknown as DurableObjectState, env)
     const back = await arrive(woken, state, { id: noteId, spaceId })
 
@@ -587,13 +478,9 @@ describe('a room', () => {
   test('asks the devices that were here for what it slept through', async () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
-    // Typed, and no settle: those keystrokes are in the room's memory and in this
-    // device, and nowhere else.
     await say(made, state, one.socket, one.type(11, 'never written down\n'))
     one.socket.take()
 
-    // The same storage, a new object, and the device still connected. Its greeting
-    // is what asks the device to say what it has.
     const woken = new NoteRoom(state as unknown as DurableObjectState, env)
     await woken.webSocketMessage(
       one.socket as unknown as WebSocket,
@@ -645,7 +532,6 @@ describe('a reader in a room', () => {
 
   afterEach(() => env.close())
 
-  /** A device the door let in to read and not to write; see rooms/index.ts. */
   async function reading(made: NoteRoom, state: FakeState): Promise<Device> {
     const device = new Device(await join(made, { id: noteId, spaceId }, false))
     await say(made, state, device.socket, syncStep1(device.doc))
@@ -685,8 +571,6 @@ describe('a reader in a room', () => {
   })
 
   test('cannot write into it by having been away, either', async () => {
-    // What a device that was closed sends to put its own words back is an
-    // ordinary update, so it is refused in exactly the same way.
     const { room: made, state } = room(env)
     const reader = await reading(made, state)
 
@@ -709,9 +593,6 @@ describe('a reader in a room', () => {
     await made.alarm()
 
     const token = await signIn(env, 'looking@example.com')
-    // Read through the database, because the account that owns it has already
-    // used its one code above and asking for a second inside the resend gap
-    // gets none.
     env.db.exec(
       `insert into space_members (space_id, email, role, created_at)
        values ('${spaceId}', 'looking@example.com', 'read', 1)`,
@@ -734,9 +615,6 @@ describe('a reader in a room', () => {
     })
   })
 
-  /** Awareness is said per client, and a reader could say it for the writer's: a
-   *  higher clock under any name relabelled the writer's caret on every screen, and
-   *  the writer's next settle was credited to that name. */
   test('cannot speak for somebody else’s caret, only for its own', async () => {
     const { room: made, state } = room(env)
     const writer = await arrive(made, state, { id: noteId, spaceId })
@@ -772,17 +650,11 @@ describe('a reader in a room', () => {
     expect(kept[0]?.by).toBe('Ada Mac')
   })
 
-  /** A socket's attachment has a hard ceiling of a couple of kilobytes and the
-   *  list of what it announced only ever grew, so one message naming a few hundred
-   *  carets took it past the ceiling - and the write that threw threw inside the
-   *  handler for that message. Which is a room one client stops for everybody. */
   test('cannot make the room remember an unbounded list of carets', async () => {
     const { room: made, state } = room(env)
     const writer = await arrive(made, state, { id: noteId, spaceId })
     const reader = await reading(made, state)
 
-    // Every caret announced at once, each from a document of its own, which is
-    // what one hand-made awareness message can carry.
     const crowd = new Awareness(new Y.Doc())
     crowd.setLocalState(null)
     for (let one = 0; one < 400; one++) {
@@ -799,7 +671,6 @@ describe('a reader in a room', () => {
     const kept = reader.socket.deserializeAttachment() as { clients: number[]; mayWrite: boolean }
     expect(kept.clients.length).toBeLessThanOrEqual(32)
     expect(JSON.stringify(kept).length).toBeLessThan(2048)
-    // Still a reader, which is the other half of what the attachment carries.
     expect(kept.mayWrite).toBe(false)
   })
 
@@ -870,7 +741,6 @@ describe('the door to a room', () => {
       expect(door.asked.at(-1)?.get('x-nib-space'), who).toBe(spaceId)
     }
 
-    // And somebody nobody shared it with is a note that is not there.
     const outside = await signIn(env, 'nobody@example.com')
     const refused = await call(env, `/rooms/${noteId}`, {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(outside) },
@@ -902,12 +772,9 @@ describe('the door to a room', () => {
       return door.asked.at(-1)?.get('x-nib-device-id')
     }
 
-    // A device that has not said hello to its hub is named by its session, as the
-    // tree's ops name it, whatever its socket says.
     const hash = await sha256(token)
     expect(await told('laptop')).toBe(`session:${hash.slice(0, 16)}`)
 
-    // Once bound to the session, it is the device the session is bound to.
     const session = env.db
       .prepare('select id, user_id from sessions where token_hash = ?')
       .get(hash) as {
@@ -939,7 +806,6 @@ describe('the door to a room', () => {
       })
     ).json.note.id
 
-    /** Somebody with no account who followed the space's link. */
     async function guest(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
       const { json } = await call<ShareView>(env, `/v1/spaces/${spaceId}/share/link`, {
         method: 'PUT',
@@ -968,8 +834,6 @@ describe('the door to a room', () => {
       expect(door.asked.at(-1)?.get('x-nib-space'), role).toBe(spaceId)
     }
 
-    // A canvas is the same door and the same guest: the kind is read off the
-    // file's name in the very query that answered the guest's session.
     const boardId = (
       await call(env, `/v1/spaces/${spaceId}/notes`, {
         token: owner,
@@ -988,7 +852,6 @@ describe('the door to a room', () => {
     expect(door.asked.at(-1)?.get('x-nib-kind')).toBe('plane')
     expect(door.asked.at(-1)?.get('x-nib-write')).toBe('yes')
 
-    // Waiting on the owner is not being in, so the note is not there yet.
     const waiting = await call(env, `/rooms/${noteId}`, {
       headers: {
         upgrade: 'websocket',
@@ -1032,12 +895,6 @@ describe('the door to a room', () => {
     expect(answer.status).toBe(426)
   })
 
-  /** Whether a socket may write is the door's to say and the room's to enforce, so
-   *  the room reads the header the door said it on and nothing else. It read
-   *  anything but the word `no` as permission, so a header left out was a socket
-   *  that could write - the wrong way round for the one flag standing between a
-   *  reader and the words, and the opposite of what the room does with an
-   *  attachment it cannot read. */
   test('only the word yes says a socket may write', () => {
     expect(writesOf('yes')).toBe(true)
 
@@ -1072,13 +929,6 @@ describe('the door to a room', () => {
     }
   })
 
-  /** The door's query is four joins wide because a share can be about a space or
-   *  about one file, and one person can hold both: a reader of the space who was
-   *  given this note to write in. Four joins that each matched would be four rows
-   *  in anything but this - the item is part of every key, so each matches at most
-   *  one - and the whole of it has to stay one row and one round trip, because a
-   *  scalar subquery over two rows would be the door quietly picking one of the
-   *  two roles. */
   test('lets somebody who holds both the space and the file in at the stronger', async () => {
     for (const [space, item, writes] of [
       ['read', 'write', 'yes'],
@@ -1109,7 +959,6 @@ describe('the door to a room', () => {
         body: { email, role: item },
       })
 
-      // Both memberships are really there, or the rest of this says nothing.
       expect(
         env.db.prepare('select count(*) as held from space_members where email = ?').get(email),
       ).toEqual({ held: 2 })
@@ -1123,15 +972,12 @@ describe('the door to a room', () => {
       })
 
       expect(answer.status, said).toBe(200)
-      // One row: one space, one role, one ask.
       expect(door.asked, said).toHaveLength(1)
       expect(door.asked[0]?.get('x-nib-space'), said).toBe(spaceId)
       expect(door.asked[0]?.get('x-nib-write'), said).toBe(writes)
     }
   })
 
-  /** D1 takes a hundred parameters and the door is in front of every socket a file
-   *  opens, so what it asks must not grow with what anybody holds. */
   test('asks the same three things however many shares somebody has', async () => {
     const door = doorway()
     env.close()
@@ -1168,13 +1014,10 @@ describe('the door to a room', () => {
 
     expect(answer.status).toBe(200)
     expect(door.asked[0]?.get('x-nib-write')).toBe('yes')
-    // The widest thing anything bound while all of that ran, the door included.
     expect(env.widest().count).toBeLessThan(20)
   })
 })
 
-/** A device on a plane, the way the app's client is one: its own document, and the
- *  same two maps both ends of the real thing ask for. */
 class Plane {
   readonly doc = new Y.Doc()
   readonly awareness = new Awareness(this.doc)
@@ -1185,7 +1028,6 @@ class Plane {
     return readPlane(this.doc)
   }
 
-  /** What this device would send after drawing: the update its own document made. */
   draws(...strokes: InkStroke[]): Uint8Array {
     const before = Y.encodeStateVector(this.doc)
     const was = this.canvas
@@ -1194,7 +1036,6 @@ class Plane {
     return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
   }
 
-  /** A card moved, which is an edit to an object rather than one more of them. */
   moves(id: string, x: number, y: number): Uint8Array {
     const before = Y.encodeStateVector(this.doc)
     const was = this.canvas
@@ -1236,8 +1077,6 @@ async function onPlane(
   return device
 }
 
-/** Everything waiting on the wire, in both directions, until nothing is left.
- *  The same as `settle` above; a plane's devices are another shape. */
 async function drain(made: NoteRoom, state: FakeState, devices: readonly Plane[]) {
   for (let round = 0; round < 12; round++) {
     let moved = false
@@ -1262,7 +1101,6 @@ describe('a canvas in a room', () => {
   let spaceId: string
   let noteId: string
 
-  /** A canvas with one card and one stroke already on it. */
   const DRAWN: Canvas = {
     nodes: [{ id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'a card' }],
     edges: [],
@@ -1363,8 +1201,6 @@ describe('a canvas in a room', () => {
     await made.alarm()
 
     const read = await call(env, `/v1/notes/${noteId}`, { token })
-    // Exactly the file the app would have written from the same plane, so
-    // Obsidian, the exports and an offline device's merge all read it as one.
     expect(read.json.content).toBe(writeCanvas(one.canvas))
     expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual([
       'first',
@@ -1392,7 +1228,6 @@ describe('a canvas in a room', () => {
     await drain(made, state, [writer, reader])
     expect(reader.canvas.ink.map((stroke) => stroke.id)).toEqual(['first', 'theirs'])
 
-    // And what the reader draws goes nowhere at all.
     writer.socket.take()
     await say(made, state, reader.socket, reader.draws(penStroke('refused', 6)))
     await drain(made, state, [writer])
@@ -1418,7 +1253,6 @@ describe('a canvas in a room', () => {
     const kept = [...state.kept.keys()]
     expect(kept.filter((key) => key.startsWith('state:')).length).toBeGreaterThan(0)
     expect(kept.filter((key) => key.startsWith('log:')).length).toBeLessThan(240)
-    // And nothing was lost to the folding.
     expect(one.canvas.ink).toHaveLength(241)
   })
 
@@ -1432,7 +1266,6 @@ describe('a canvas in a room', () => {
     const back = await onPlane(woken, state, { id: noteId, spaceId })
 
     expect(back.canvas.ink.map((stroke) => stroke.id)).toEqual(['first', 'slept-on'])
-    // And it knows it is a plane rather than a note, which is what it kept.
     expect(back.canvas.nodes[0]?.id).toBe('card')
   })
 
@@ -1474,8 +1307,6 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   beforeEach(async () => {
     env = testEnv()
-    // The rooms have to be able to reach the same database the routes use, so the
-    // namespace is put in afterwards; nothing has asked for it yet.
     live = running(env)
     env.ROOMS = live.ROOMS
 
@@ -1499,8 +1330,6 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   afterEach(() => env.close())
 
-  /** The room this note's sockets are in, and a socket in it, joined the way the
-   *  door joins one: with whose it is. */
   async function open(who: string, writes = true): Promise<FakeSocket> {
     const { room: made } = live.of(noteId)
     return await join(made, { id: noteId, spaceId, who }, writes)
@@ -1520,8 +1349,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
   })
 
-  /** A day and an hour from now, for as long as `work` runs: past the age a row
-   *  saying somebody has a file open is cleared at. */
   async function aDayLater(work: () => Promise<void>): Promise<void> {
     const later = Date.now() + 25 * 60 * 60 * 1000
     const real = Date.now
@@ -1547,7 +1374,6 @@ describe('somebody who stops being in the space while the file is open', () => {
   test('has a socket open for more than a day closed when the owner takes them out', async () => {
     const socket = await open(writerId)
     await aDayLater(async () => {
-      // Anybody opening any file a day later, which is when rows are cleared by age.
       await ownerOpensAnother()
       await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
         method: 'DELETE',
@@ -1608,8 +1434,6 @@ describe('somebody who stops being in the space while the file is open', () => {
   test('keeps the row when another device of theirs closes while this one joins', async () => {
     const laptop = await open(writerId)
     const { room: made, state } = live.of(noteId)
-    // The laptop's close lands after the phone's row is written and before its socket
-    // is taken.
     const prepare = env.DB.prepare.bind(env.DB)
     let pending = true
     env.DB.prepare = (sql: string) => {
@@ -1638,7 +1462,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     ])
   })
 
-  /** A socket let in the way the door lets one in, with the sign-in it came with. */
   async function signedIn(token: string, who: string): Promise<FakeSocket> {
     const socket = new FakeSocket()
     await live
@@ -1651,7 +1474,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     return socket
   }
 
-  /** A minute and more from now, for as long as `work` runs. */
   async function aMinuteLater(work: () => Promise<void>): Promise<void> {
     const later = Date.now() + 61_000
     const real = Date.now
@@ -1663,7 +1485,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     }
   }
 
-  /** A keystroke from `socket`, the way a device sends one. */
   async function typeInto(socket: FakeSocket): Promise<void> {
     const doc = new Y.Doc()
     const mark = Y.encodeStateVector(doc)
@@ -1674,7 +1495,6 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   test('has the socket closed within a minute where no revocation reached it', async () => {
     const socket = await signedIn(writer, writerId)
-    // Gone from the space without the route that tells the room.
     env.db
       .prepare('delete from space_members where space_id = ? and email = ?')
       .run(spaceId, WRITER)
@@ -1698,9 +1518,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(read.json.content).toBe(OPENING)
   })
 
-  /** The door asks the database and the room then waits on its storage and on D1: an
-   *  owner's route landing in that wait found no row to tell, or a room with no socket
-   *  yet, and the socket was then let in on what the door had read (#473). */
   test('has the socket closed when they are taken out during its handshake', async () => {
     env.justBefore(/insert into room_sockets/, () => {
       env.db
@@ -1736,7 +1553,6 @@ describe('somebody who stops being in the space while the file is open', () => {
       vi.useRealTimers()
     })
 
-    /** A join whose statement matching `sql`, past the first `skip` of them, never answers. */
     async function hungAt(sql: RegExp, method: 'first' | 'run', skip = 0) {
       vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
       const login = await sha256(writer)
@@ -1768,7 +1584,6 @@ describe('somebody who stops being in the space while the file is open', () => {
         .then(() => {
           entered = true
         })
-      // Opening the room takes turns of the event loop rather than time.
       for (let turn = 0; turn < 1000 && !wasAsked(); turn++) {
         await new Promise((next) => setImmediate(next))
       }
@@ -1828,7 +1643,6 @@ describe('somebody who stops being in the space while the file is open', () => {
 
     expect(socket.closed).toBe(true)
     expect(socket.closedWith?.code).toBe(1008)
-    // And the row goes with it: a close this side asked for brings no handler.
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
   })
 
@@ -1858,7 +1672,6 @@ describe('somebody who stops being in the space while the file is open', () => {
 
     expect(socket.closed).toBe(false)
 
-    // The same socket, the same room, and a line it types now changes nothing.
     const device = new Device(socket)
     await say(made, state, socket, syncStep1(device.doc))
     await settle(made, state, [device])
@@ -1918,7 +1731,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(socket.closed).toBe(true)
   })
 
-  /** Types a line through a socket and settles the room: what reaches the note. */
   async function typedThrough(socket: FakeSocket): Promise<string> {
     const { room: made, state } = live.of(noteId)
     const device = new Device(socket)
@@ -1973,7 +1785,6 @@ describe('somebody who stops being in the space while the file is open', () => {
   })
 
   test('and a room nobody is in is told without being woken', async () => {
-    // Nothing has ever opened this note, so there is no row and no object to ask.
     await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
       method: 'DELETE',
       token: owner,
@@ -1983,14 +1794,6 @@ describe('somebody who stops being in the space while the file is open', () => {
   })
 })
 
-/** A room that is a moment from answering.
- *
- *  A room is a Durable Object, and the commonest reason one is not there is a
- *  deploy: every object whose code changed is reset, and the fetch in flight
- *  throws. This service deploys on every push, so that is every note anybody had
- *  open at the time - which is what four 500s on `GET /rooms/{id}` in one day
- *  were. A 500 is the wrong answer twice over: it reads as a bug in what was
- *  asked, and nothing in it says that asking again is the whole of the fix. */
 describe('a room that is not answering', () => {
   let env: TestEnv
 
@@ -2003,7 +1806,6 @@ describe('a room that is not answering', () => {
     vi.restoreAllMocks()
   })
 
-  /** Every line the log was written with while `work` ran. */
   async function logged(work: () => Promise<unknown>): Promise<string[]> {
     const lines: string[] = []
     vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
@@ -2014,7 +1816,6 @@ describe('a room that is not answering', () => {
     return lines
   }
 
-  /** A note of somebody's own, with the door's namespace already in place. */
   async function opening(door: ReturnType<typeof doorway>): Promise<[string, string]> {
     env.close()
     env = testEnv({ ROOMS: door.ROOMS })
@@ -2056,8 +1857,6 @@ describe('a room that is not answering', () => {
     expect(said).toBe('this room is not answering - try again')
     expect(wait).toBe('1')
 
-    // And it is written down, once, with the room it was about: a room that fails
-    // every time is a bug rather than a deploy, and this is where the two part.
     expect(lines).toHaveLength(1)
     const written = JSON.parse(lines[0] ?? '{}') as Record<string, unknown>
     expect(written.failed).toBe(`room ${noteId}`)
@@ -2073,8 +1872,6 @@ describe('a room that is not answering', () => {
       status = (await knock(noteId, token)).status
     })
 
-    // The second ask landed on the object that replaced the one that went, so
-    // nobody waited and nothing was written down.
     expect(status).toBe(200)
     expect(door.asked).toHaveLength(2)
     expect(lines).toEqual([])
@@ -2090,13 +1887,6 @@ describe('a room that is not answering', () => {
   })
 })
 
-/** What a room does when a store under it is the thing that is unwell.
- *
- *  Opening a room reaches two of them - its own storage and the note store - and a
- *  failure used to be kept as though it were the room: `opened` held the
- *  rejection, so every later join, every message and every settle was handed the
- *  same moment again for as long as the object lived, and the store being well
- *  again changed nothing about it. */
 describe('a room that could not be opened', () => {
   let env: TestEnv
 
@@ -2106,7 +1896,6 @@ describe('a room that could not be opened', () => {
 
   afterEach(() => env.close())
 
-  /** A note store that refuses until it is told to stop. */
   function refusing(): { NOTES: R2Bucket; well: () => void } {
     let failing = true
     const notes = {
@@ -2139,7 +1928,6 @@ describe('a room that could not be opened', () => {
     store.well()
     const socket = await join(made, { id: 'n1', spaceId: 's1', who: 'u1' })
 
-    // Greeted with what the room holds, which is what being in one is.
     expect(socket.sent.length).toBeGreaterThan(0)
   })
 
@@ -2151,8 +1939,6 @@ describe('a room that could not be opened', () => {
 
     await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow()
 
-    // The alarm finds a room that knows which file it is and cannot read it, and
-    // what it must not do is write the empty document it is holding over the file.
     await expect(made.alarm()).rejects.toThrow()
     expect(env.keys()).toEqual([])
     expect(state.getWebSockets()).toEqual([])
@@ -2164,8 +1950,6 @@ describe('a room that could not be opened', () => {
 
     await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow('room_sockets')
 
-    // A socket in the room that no row names is one an owner cannot close, so
-    // there is no socket: the door answers 503 and the client asks again.
     expect(state.getWebSockets()).toEqual([])
   })
 
@@ -2181,23 +1965,11 @@ describe('a room that could not be opened', () => {
   })
 })
 
-/** A file renamed from a note into a canvas, or back, while its room held it.
- *
- *  A room's document is the shape of the file it was opened for - one `Y.Text` of
- *  prose, or a map of the objects on a plane - and those two cannot be turned into
- *  each other. A rename across them makes the file a different kind of thing while
- *  the room goes on holding the old one.
- *
- *  What used to happen is that the next join said the new kind, the room wrote that
- *  down as though it had always been so, and the settle then read the document
- *  through the wrong serialiser. A plane read as words is the empty string, so a
- *  canvas somebody had drawn on was written over with nothing at all. */
 describe('a file that changed which kind of room it is', () => {
   let env: TestEnv
   let token: string
   let spaceId: string
 
-  /** A canvas with a card and a stroke already on it. */
   const DRAWN: Canvas = {
     nodes: [{ id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'a card' }],
     edges: [],
@@ -2217,7 +1989,6 @@ describe('a file that changed which kind of room it is', () => {
     vi.restoreAllMocks()
   })
 
-  /** Every line the log was written with while `work` ran. */
   async function logged(work: () => Promise<unknown>): Promise<string[]> {
     const lines: string[] = []
     vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
@@ -2233,8 +2004,6 @@ describe('a file that changed which kind of room it is', () => {
     return made.json.note.id
   }
 
-  /** The rename itself, as the app makes it: the same note id, a path whose name
-   *  says the other kind, and the bytes it already had. */
   async function renameTo(noteId: string, path: string): Promise<void> {
     const read = await call(env, `/v1/notes/${noteId}`, { token })
     const done = await call(env, `/v1/notes/${noteId}`, {
@@ -2259,9 +2028,6 @@ describe('a file that changed which kind of room it is', () => {
 
     await renameTo(boardId, 'Board.md')
 
-    // The runtime put the object to sleep, and a device joins the file as it now
-    // is. Before the fix this was let in and the settle wrote the empty string;
-    // now it is refused while the room changes over. The file must survive both.
     const woken = new NoteRoom(state as unknown as DurableObjectState, env)
     await logged(async () => {
       await join(woken, { id: boardId, spaceId, kind: 'words' }).catch(() => undefined)
@@ -2300,9 +2066,6 @@ describe('a file that changed which kind of room it is', () => {
 
     await renameTo(boardId, 'Board.md')
 
-    // The join that finds the file changed is refused, and the room goes with it:
-    // every socket closed with the code that means come back, the row saying
-    // somebody had it open taken away, and the storage emptied.
     await expect(join(made, { id: boardId, spaceId, kind: 'words' })).rejects.toThrow()
 
     expect(drawing.socket.closed).toBe(true)
@@ -2310,8 +2073,6 @@ describe('a file that changed which kind of room it is', () => {
     expect(state.kept.size).toBe(0)
     expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
 
-    // And the next join builds the room out of the file, under the kind it is now:
-    // the canvas as it was written, read as the words the file's name says.
     const again = new NoteRoom(state as unknown as DurableObjectState, env)
     const back = await arrive(again, state, { id: boardId, spaceId })
     expect(readCanvas(back.words).nodes).toHaveLength(1)
@@ -2323,13 +2084,9 @@ describe('a file that changed which kind of room it is', () => {
     const one = await arrive(made, state, { id: noteId, spaceId })
     await say(made, state, one.socket, one.type(7, 'typed on\n'))
 
-    // Renamed with nobody joining afterwards, so nothing has told the room: the
-    // settle already on the clock is the next thing to happen.
     await renameTo(noteId, 'plan.canvas')
     const lines = await logged(() => made.alarm())
 
-    // The words stay in the room and the file keeps its own; what does not happen
-    // is prose written into a file that says it holds a plane.
     expect(await contentOf(noteId)).toBe('# Plan\n')
     expect(lines).toHaveLength(1)
     const written = JSON.parse(lines[0] ?? '{}') as Record<string, unknown>
@@ -2337,17 +2094,12 @@ describe('a file that changed which kind of room it is', () => {
     expect(String(written.said)).toContain('plane')
   })
 
-  /** The second line of defence, and the one that matters for a room an older
-   *  build already left in this state: its storage says words and its document is
-   *  a plane, which is exactly what the overwritten kind looked like. */
   test('never writes nothing over a file that has something in it', async () => {
     const boardId = await fileAt('Board.canvas', writeCanvas(DRAWN))
     const { room: made, state } = room(env)
     await onPlane(made, state, { id: boardId, spaceId })
     await made.alarm()
 
-    // What the old build wrote down: the file is a note and the room agrees it is
-    // one, while the document it holds is the plane it always was.
     await renameTo(boardId, 'Board.md')
     state.kept.set('note', { noteId: boardId, spaceId, kind: 'words' })
 
@@ -2360,17 +2112,11 @@ describe('a file that changed which kind of room it is', () => {
     expect(said).toContain('holds a plane')
   })
 
-  /** The same guard from the other side, and the one the client can reach on its
-   *  own: a tab that thinks it holds a canvas, joined to the room of a file whose
-   *  name says it is a note. Nothing on the server renamed anything here - the two
-   *  ends decided the shape from different things and disagreed. */
   test('leaves the words alone when a canvas is drawn into a note’s room', async () => {
     const noteId = await fileAt('plan.md', '# Plan\nwritten down\n')
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
 
-    // A device drawing on what the room holds as prose, which is what a canvas
-    // binding on a note's room does.
     const before = Y.encodeStateVector(one.doc)
     one.doc.transact(() => {
       pushPlane(one.doc, readPlane(one.doc), stamped(readPlane(one.doc), DRAWN, 7000))
@@ -2389,8 +2135,6 @@ describe('a file that changed which kind of room it is', () => {
     await arrive(made, state, { id: noteId, spaceId })
     await made.alarm()
 
-    // A snapshot whose bytes are not bytes: the keys are there, so the room reads
-    // itself back as though it had a document, and what it has is nothing.
     for (const key of [...state.kept.keys()]) {
       if (key.startsWith('state:') || key.startsWith('log:')) state.kept.set(key, 'not bytes')
     }
@@ -2410,8 +2154,6 @@ describe('a file that changed which kind of room it is', () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
 
-    // Everything selected and deleted, which is a note somebody emptied rather
-    // than a document read through the wrong serialiser.
     const before = Y.encodeStateVector(one.doc)
     one.text.delete(0, one.text.length)
     await say(made, state, one.socket, syncUpdate(Y.encodeStateAsUpdate(one.doc, before)))
@@ -2421,13 +2163,6 @@ describe('a file that changed which kind of room it is', () => {
   })
 })
 
-/** Who a revocation reaches, which is every file they have open rather than the
- *  first fifty rows of them: the checks a socket was let in on are made at the
- *  handshake and never again, so a room nobody told goes on writing. */
-/** A document has a ceiling: past it the room refuses the update before applying it -
- *  an update applied is in the document for good - and closes the socket with 1009 and
- *  the reason, which the app reads and says once. See `full` in rooms/state.ts and
- *  `TOO_LARGE` in apps/desktop/src/lib/rooms/door.ts. */
 describe('a room whose document has reached its ceiling', () => {
   let env: TestEnv
   let token: string
@@ -2454,9 +2189,6 @@ describe('a room whose document has reached its ceiling', () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
 
-    // One insert rather than a million keystrokes: the ceiling is about the size of
-    // the document, however it got there. This one is taken - it is what carries the
-    // document over the line - and what follows it is not.
     await say(made, state, one.socket, one.type(0, 'x'.repeat(MOST_DOCUMENT_BYTES)))
     expect(one.socket.closed).toBe(false)
 
@@ -2478,8 +2210,6 @@ describe('a room whose document has reached its ceiling', () => {
 
     await say(made, state, one.socket, one.type(0, 'refused'))
 
-    // Nothing of the refused keystroke reached the store, and the note is what it
-    // was: a settle past `MAX_NOTE_BYTES` is refused on its own terms.
     expect(await content()).toBe(held)
   })
 })
@@ -2489,7 +2219,6 @@ describe('telling the rooms somebody has been taken out of a space', () => {
 
   afterEach(() => told.close())
 
-  /** Somebody holding `note-0000` upwards open, as the rooms wrote it down. */
   function holding(open: number): void {
     for (let at = 0; at < open; at++) {
       told.db
@@ -2505,8 +2234,6 @@ describe('telling the rooms somebody has been taken out of a space', () => {
     const open = 137
     holding(open)
 
-    // A room of the same space held by somebody else, and one of another space
-    // held by this person: neither is this revocation's business.
     for (const [noteId, spaceId, who] of [
       ['note-9998', 's1', 'u2'],
       ['note-9999', 's2', 'u1'],
@@ -2537,16 +2264,11 @@ describe('telling the rooms somebody has been taken out of a space', () => {
   })
 })
 
-/** A session ending has to reach the sockets it opened, for the same reason a
- *  revocation does: the checks a socket was let in on were made at the handshake and
- *  never again, so a laptop that has gone missing goes on typing through its room
- *  long after the session was ended from another device. */
 describe('ending a session', () => {
   let out: TestEnv
 
   afterEach(() => out.close())
 
-  /** The account, and one note of one space open in a room. */
   async function signedIn(door: { ROOMS: DurableObjectNamespace; asked: Headers[] }) {
     out = testEnv({ ROOMS: door.ROOMS })
     const token = await signIn(out, 'a@b.dev')
@@ -2573,7 +2295,6 @@ describe('ending a session', () => {
   test('and so does ending every session but this one', async () => {
     const door = doorway()
     const { token, who } = await signedIn(door)
-    // The device that went missing, which is the row this ends.
     await signIn(out, 'a@b.dev')
 
     await call(out, '/v1/sessions', { method: 'DELETE', token })
@@ -2583,9 +2304,6 @@ describe('ending a session', () => {
   })
 })
 
-/** An account deleted while its files, or somebody else's, are open. The rows that
- *  let every one of those sockets in are gone, and a socket is not a request: the
- *  rooms are told, and a room of the account's own keeps nothing of the file. */
 describe('an account deleted while files are open', () => {
   let env: TestEnv
   let live: ReturnType<typeof running>
@@ -2602,7 +2320,6 @@ describe('an account deleted while files are open', () => {
     return (await call(env, '/v1/me', { token })).json.user.id
   }
 
-  /** A space of this account's, with one note, and whose room it is. */
   async function noteOf(token: string, name: string): Promise<{ spaceId: string; id: string }> {
     const spaceId = (await call(env, '/v1/spaces', { token, body: { name } })).json.space.id
     const id = (
@@ -2614,7 +2331,6 @@ describe('an account deleted while files are open', () => {
     return { spaceId, id }
   }
 
-  /** The three steps, the codes read out of the mail. */
   async function deleteAccount(token: string): Promise<number> {
     const { mail } = await import('./harness')
     const sent = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))

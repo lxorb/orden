@@ -1,26 +1,3 @@
-/** Sharing: who else may reach a space, or one file of it, the link that lets
- *  somebody ask, and the requests waiting on the owner.
- *
- *  Everything here is the owner's, which is what `owner` means. What the people
- *  it lets in may then do is decided somewhere else, by `atLeast` in front of
- *  every route that names a space; and how they got in is in `join.ts`.
- *
- *  Two kinds of person show up in the one sheet. A member is an address rather
- *  than an account, so somebody with no Orden account can be given a space today
- *  and find it waiting the first time they prove that address. A guest is
- *  whoever followed the space's own link, which names nobody and so has no
- *  address to write down: what the owner sees of them is the name their device
- *  gave them or the one they typed. Both hold one of the two given roles, and
- *  the sheet treats them the same because they are the same thing to it: a
- *  person in a space who is not its owner.
- *
- *  And two sizes of thing to share, which is the one addition: the space, as
- *  ever, or one note or canvas out of it. Every route below takes `?item=<note
- *  id>` and answers about that file instead; without it they answer about the
- *  space exactly as they always have. It is the same membership, the same two
- *  roles, the same link, the same guests and the same sheet - the row simply
- *  says what it is about. See docs/sharing.md. */
-
 import { Hono, type MiddlewareHandler } from 'hono'
 import { NOT_AN_EMAIL, NO_SUCH_NOTE, SPACE_IS_FULL } from '../refused'
 import { readBody } from '../body'
@@ -33,30 +10,15 @@ import { roomsRevoked } from '../rooms'
 import type { Env, Note, Space, User, Variables } from '../types'
 import { atLeast, isGiven, MOST_ITEMS, onceShared, spaceOf, trustAgain, type Given } from './space'
 
-/** An invitation, a change of role or a guest's role with no role named. Three
- *  routes and one sentence: what is missing is the same field each time. */
 const SAY_WHICH_ROLE = 'say whether they may write or read'
 
-/** More people in one space than anyone shares with, and the bound on every
- *  listing below. Exported because `join.ts` holds a link to the same number: a
- *  space whose sheet cannot list everybody in it is a space whose owner cannot
- *  take anybody out. */
 export const MOST_MEMBERS = 200
 export const EMAIL_LIMIT = 320
-/** An id is a UUID; the length is all this needs to know. */
 const ID_LIMIT = 64
-/** How long the link in an invitation stays a shortcut. After that the address
- *  still opens the space; only the link has stopped carrying it there. */
 const INVITE_TTL = 30 * 24 * 60 * 60 * 1000
 
-/** How long a request nobody answered waits. The same month an invitation's link
- *  lasts, for the same reason: past that it is not something either side is still
- *  thinking about, and the person can ask again in one press. */
 const WAITED_FOR = 30 * 24 * 60 * 60 * 1000
 
-/** Requests nobody answered, let go. Part of the nightly job, beside Recently
- *  deleted; nothing else would ever take these away, and every one of them counts
- *  against how many people may be waiting on the space. */
 export async function expireRequests(env: Env, at: number): Promise<number> {
   const gone = await env.DB.prepare('delete from space_requests where created_at < ?')
     .bind(at - WAITED_FOR)
@@ -71,31 +33,17 @@ function isMode(value: unknown): value is Mode {
   return value === 'open' || value === 'approval'
 }
 
-/** A role somebody can be given: never `owner`, which is the space's own column. */
 function givenRole(value: unknown): Given | null {
   return isGiven(value) ? value : null
 }
 
-/* ── What one share is about ──────────────────────────────────────────── */
-
-/** What a share is about: one file of the space, or the space itself.
- *
- *  `id` is the empty string for the space, which is what the column holds for
- *  every row written before there were items and what every query below binds.
- *  See migration 0026: a key has to be able to say that two rows are the same
- *  row, and one null is not equal to another. */
 export interface Scope {
   id: string
-  /** The file's path, for the head of the sheet and for the mail. Null for the
-   *  space, which is named by the space. */
   path: string | null
 }
 
 const WHOLE_SPACE: Scope = { id: '', path: null }
 
-/** Which share the request is about, off `?item=`. Null when it names a note
- *  that is not a live note of this space - which is the same 404 a note nobody
- *  shared gets, and says nothing about whether the id exists somewhere else. */
 async function scopeOf(
   env: Env,
   spaceId: string,
@@ -113,10 +61,6 @@ async function scopeOf(
   return note ? { id: note.id, path: note.path } : null
 }
 
-/** How many of a space's files are shared on their own right now, counting the
- *  ones nobody has opened yet: an invitation is a share whether or not it has
- *  been walked through, and a ceiling that only counted arrivals would not be
- *  one. */
 async function itemsShared(env: Env, spaceId: string): Promise<Set<string>> {
   const { results } = await env.DB.prepare(
     `select item from space_members where space_id = ?1 and item <> ''
@@ -130,9 +74,6 @@ async function itemsShared(env: Env, spaceId: string): Promise<Set<string>> {
   return new Set(results.map((row) => row.item))
 }
 
-/** Whether one more of this space's files may be shared. Nothing is refused
- *  about a file that is already shared: what is bounded is how many of them
- *  there are, not how many people are in one. */
 export async function roomForAnItem(env: Env, spaceId: string, item: string): Promise<boolean> {
   if (!item) return true
 
@@ -140,12 +81,8 @@ export async function roomForAnItem(env: Env, spaceId: string, item: string): Pr
   return held.has(item) || held.size < MOST_ITEMS
 }
 
-/** What a sheet is told when a space is sharing as many of its files as it can. */
 export const TOO_MANY_ITEMS = 'that is as many notes as one space shares on their own'
 
-/** Who somebody with an account is, beside the address they were given things under:
- *  their id, and the face they chose. Null throughout for an address nobody has made an
- *  account at yet. See people/. */
 interface FaceColumns {
   user_id: string | null
   avatar: string | null
@@ -166,11 +103,8 @@ interface RequestRow extends FaceColumns {
   name: string | null
 }
 
-/** The face columns of the account at `u`, for a listing of people. */
 const FACE = 'u.id as user_id, u.avatar, u.accent'
 
-/** What a row of the sheet draws a person's face with: who they are, so a press can
- *  open their card, and the picture and accent they chose. */
 function faceOf(row: FaceColumns) {
   return { id: row.user_id, avatar: avatarIn(row.avatar), accent: row.accent }
 }
@@ -184,13 +118,9 @@ interface LinkRow {
   created_at: number
 }
 
-/** Somebody the space's own link let in. `joined_at` is whether they are in:
- *  null with no `declined_at` is a request the owner has not answered yet. */
 interface GuestRow {
   guest_id: string
   name: string
-  /** What they typed into a link that asks first, unverified. Shown to the owner
-   *  because it is what the request said, and never treated as proved. */
   email: string | null
   role: Given
   joined_at: number | null
@@ -198,15 +128,10 @@ interface GuestRow {
   created_at: number
 }
 
-/** Where a link takes somebody. The web app reads this path, and so does the
- *  desktop app when it is what opened it; see docs/collaboration.md. */
 function joinUrl(env: Env, token: string): string {
   return `${env.APP_ORIGIN}/join/${token}`
 }
 
-/** What to call somebody in a sentence: the name on the account, else the part
- *  of the address in front of the at sign. Never the whole address, which is
- *  not a name and which the other person may not have been given. */
 export function personName(user: { name: string | null; email: string }): string {
   const chosen = user.name?.trim()
   if (chosen) return chosen
@@ -214,16 +139,11 @@ export function personName(user: { name: string | null; email: string }): string
   return user.email.split('@')[0] ?? user.email
 }
 
-/** What a file is called in a sentence: its own name, without the folders in
- *  front of it and without the extension the app keeps its documents under. */
 export function itemName(path: string): string {
   const file = path.slice(path.lastIndexOf('/') + 1)
   return file.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 }
 
-/** The account at an address, which is what a room knows a person as. Null for a
- *  membership written to an address nobody has proved yet: that person has no
- *  session anywhere, so there is nothing of theirs to close. */
 async function accountAt(env: Env, email: string): Promise<string | null> {
   const row = await env.DB.prepare('select id from users where email = ?')
     .bind(email)
@@ -281,9 +201,6 @@ async function linkOf(env: Env, spaceId: string, item: string): Promise<LinkRow 
   return row ?? null
 }
 
-/** One row of the sheet's People list. Whichever kind of person it is, exactly
- *  one of `email` and `guest` says which and names them: a member is an address,
- *  a guest is an id, and the sheet keys its rows on whichever it got. */
 function presentMember(member: MemberRow) {
   return {
     ...faceOf(member),
@@ -291,8 +208,6 @@ function presentMember(member: MemberRow) {
     guest: null,
     name: member.name,
     role: member.role,
-    // Nobody has opened it yet. Shown quietly beside the name rather than as a
-    // second list: they are already in, they have simply not been in.
     pending: member.joined_at === null,
   }
 }
@@ -306,7 +221,6 @@ function presentGuest(guest: GuestRow) {
     guest: guest.guest_id,
     name: guest.name,
     role: guest.role,
-    // A guest who is in has been in: the link they followed was the arriving.
     pending: false,
   }
 }
@@ -315,11 +229,6 @@ function presentLink(env: Env, link: LinkRow) {
   return { url: joinUrl(env, link.token), role: link.role, mode: link.mode }
 }
 
-/** Everything the sheet draws, in one request.
- *
- *  Members and guests are one list, and so are the two ways of waiting: what the
- *  owner is being asked is the same question either way, and a sheet with two
- *  Waiting sections would be saying so twice. */
 async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
   const [members, requests, guests, link, face] = await Promise.all([
     membersOf(env, space.id, scope.id),
@@ -337,8 +246,6 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
       name: owner.name,
       ...faceOf(face ?? { user_id: owner.id, avatar: null, accent: null }),
     },
-    /** Which file this is about, so the sheet's head can say so. Null for the
-     *  space, which the sheet already knows it is in. */
     item: scope.path === null ? null : { id: scope.id, path: scope.path },
     members: [
       ...members.map(presentMember),
@@ -372,13 +279,6 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
 
 export const share = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** Middleware: the share the request names, put on the request.
- *
- *  Written once, behind `atLeast('owner')`, so that no route can forget it and
- *  so that a note id naming nothing in this space is refused in one place. Every
- *  route below then reads `scope` and is otherwise the route it always was:
- *  there is one set of routes for both sizes of share, because there is one
- *  question. */
 function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
   return async (context, next) => {
     const space = spaceOf(context)
@@ -396,10 +296,6 @@ share.get('/:id/share', atLeast('owner'), about(), async (context) => {
   )
 })
 
-/** Somebody is given the space, or one file of it, and told so. The row is
- *  written first and the mail sent after: the membership is what lets them in,
- *  and a mail that could not go out is not a reason for the sharing not to have
- *  happened. */
 share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
@@ -431,15 +327,9 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
     return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
 
-  // Asked before anything is written, because a ceiling is the one answer here
-  // that is a refusal rather than a quiet no: the invitation itself is what lets
-  // somebody in, so a row written and then refused would be an owner told
-  // nothing happened while it had.
   const may = await mayMail(context.env, email, machineOf(context.req))
   if (may.refusal) return refusedMail(context, may.refusal)
 
-  // What they held before, if anything: an invitation to somebody already in the space
-  // is a change of their role as much as `PATCH` is, and is told the same way below.
   const before = held.find((one) => one.email === email)?.role
 
   const token = randomToken()
@@ -455,22 +345,16 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
     .run()
   await onceShared(context.env, space.id, scope.id)
 
-  // Asking to be let in and then being let in is one thing, not two.
   await context.env.DB.prepare(
     'delete from space_requests where space_id = ? and email = ? and item = ?',
   )
     .bind(space.id, email, scope.id)
     .run()
 
-  // A writer invited again as a reader may have a file of this one open, and a socket
-  // is not a request (#456): told now, as `PATCH /share/members` tells it.
   if (before === 'write' && role === 'read') {
     await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
   }
 
-  // Whether the mail went is not answered back. The gate is per address across
-  // every space there is, so saying so would tell an owner whether somebody
-  // else had just written to that address.
   if (may.ok) {
     const message = inviteMessage({
       space: space.name,
@@ -480,11 +364,6 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
       link: joinUrl(context.env, token),
     })
 
-    // Still nothing said back about it - but a send that failed gives up the gap
-    // it took, so an owner pressing the button again writes to the address
-    // instead of being held behind a message that never went. The invitation
-    // above stands either way: the row is what lets somebody in, and the link in
-    // it is one the owner can hand over themselves.
     if (!(await mailer(context.env).send(email, message.subject, message))) {
       await forgetMailed(context.env, email)
     }
@@ -519,9 +398,6 @@ share.patch('/:id/share/members/:email', atLeast('owner'), about(), async (conte
     .bind(role, space.id, email, scope.id)
     .run()
 
-  // A writer who is now a reader may have a file of this space open, and a socket
-  // is not a request: nothing else would ask again. Only the one file, when the
-  // share was about one file: nothing else they hold has changed.
   if (held.role === 'write' && role === 'read') {
     await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
   }
@@ -545,26 +421,11 @@ share.delete('/:id/share/members/:email', atLeast('owner'), about(), async (cont
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-/** The owner saying the space's words are theirs again. Somebody who could once write
- *  in it keeps it marked as somebody else's after they leave, because what they wrote
- *  is still there (see `onceShared`); this is the one way back, and it never unmarks
- *  a space or a note somebody is still in. */
 share.post('/:id/share/trust', atLeast('owner'), async (context) => {
   await trustAgain(context.env, spaceOf(context).id)
   return context.json({ ok: true })
 })
 
-/** Somebody letting themselves out of a space. The one thing under this path
- *  that is not the owner's: being in a space is something a person can stop, and
- *  having to ask the owner to do it for them is not a way to leave.
- *
- *  Which is as true of a guest, so this is the one route under `share` a guest
- *  may ask for. A guest who leaves their last space is nobody, and the session
- *  goes with them: the device is back to the app it had before the link.
- *
- *  Only ever about the space, because reaching this route at all means reaching
- *  the space. Letting yourself out of one file is `DELETE /v1/shared/:id`, which
- *  is where the files somebody was given are listed. */
 share.delete('/:id/share/me', atLeast('read'), async (context) => {
   const space = spaceOf(context)
   const who = context.get('who')
@@ -588,19 +449,11 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
     .bind(space.id, who.user.email)
     .run()
 
-  // Their own other devices, which may still have a file of it open: leaving on
-  // one is leaving.
   await roomsRevoked(context.env, space.id, who.user.id, 'none')
 
   return context.json({ ok: true })
 })
 
-/** The link, made on the first ask and kept afterwards. Changing what it hands
- *  out changes it for the copy already in somebody's message, which is what an
- *  owner means by changing it; a link that should stop working is revoked.
- *
- *  One per thing shared: the space has its own, and so does each file shared on
- *  its own. A file's link opens that file and nothing around it. */
 share.put('/:id/share/link', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
@@ -637,10 +490,6 @@ share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
 
-  // Whoever is still waiting to come in through it is waiting on nothing now: the
-  // requests go with it, so an Accept later lets nobody in that the link no longer
-  // would, and a reader who presses Cancel finds nothing to take back (B540). A
-  // guest the request was all of goes too, the way one taken out does.
   const waiting = await context.env.DB.prepare(
     `select guest_id from guest_members
       where space_id = ? and item = ? and joined_at is null and declined_at is null`,
@@ -686,11 +535,6 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
     .bind(space.id, email, scope.id)
     .first<{ role: Given }>()
 
-  // Already proved the address to have asked at all, so they are in rather than
-  // invited: joined_at is set now and no mail goes anywhere. Set on a row that
-  // was already there as well - an invitation nobody had opened - or accepting
-  // the request would leave the sheet saying they are still waiting to arrive
-  // when they have already been.
   await context.env.DB.prepare(
     `insert into space_members (space_id, email, item, role, joined_at, created_at)
      values (?1, ?2, ?3, ?4, ?5, ?5)
@@ -708,8 +552,6 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
     .bind(space.id, email, scope.id)
     .run()
 
-  // The role the request asked for replaces one they already held, so a writer whose
-  // request was for reading is a reader now, sockets and all (#456).
   if (before?.role === 'write' && waiting.role === 'read') {
     await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
   }
@@ -731,20 +573,10 @@ share.delete('/:id/share/requests/:email', atLeast('owner'), about(), async (con
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-/* ── The guests the link let in ───────────────────────────────────────── */
-
-/** A guest is one row rather than a membership and a request, so the three
- *  things the owner can do to one are three verbs on one path: let them in,
- *  change what they may do, and end it. Which of the two lists they were in when
- *  it happened is the row's own business.
- *
- *  Nothing here takes an address, because a guest has none to take. */
-
 function guestIdOf(context: { req: { param: (name: string) => string | undefined } }): string {
   return (context.req.param('guest') ?? '').slice(0, ID_LIMIT)
 }
 
-/** Letting a waiting guest in, at the role the link promised them. */
 share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
@@ -803,13 +635,6 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), about(), async (contex
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-/** Declining somebody who is waiting, and taking out somebody who is in. One
- *  gesture, because to the owner it is one: this person is not in my space.
- *
- *  A guest who was waiting keeps their row, stamped, so the calm page they are
- *  waiting on can say they were told no rather than only stop saying anything. A
- *  guest who was in loses the row, which is what ends their access on the next
- *  pass - and loses the guest itself once nothing of theirs is left. */
 share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
@@ -840,16 +665,6 @@ share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (conte
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-/* ── The files somebody else shared with me ───────────────────────────── */
-
-/** One file this person was given on its own: what it is, whose it is, and what
- *  they may do to it.
- *
- *  A file, not a space: there is no folder for it on the machine and no row in
- *  the tree, because it is one note out of somebody else's drawer and inventing
- *  a drawer to put it in would be inventing a space. It is listed at the foot of
- *  the space switcher and opens in a tab of its own, whose words travel through
- *  the file's room; see docs/sharing.md. */
 interface SharedRow {
   id: string
   path: string
@@ -870,8 +685,6 @@ const SHARED_WITH_ME = `select n.id, n.path, n.updated_at, m.role,
  where m.email = ?1 and m.item <> ''
  order by u.email, n.path limit ?2`
 
-/** And the same for a guest, whose row is keyed by the guest and who is only in
- *  once the owner has said so. */
 const GUEST_SHARED_WITH_ME = `select n.id, n.path, n.updated_at, g.role,
     sp.id as space_id, sp.name as space_name, u.name as owner_name, u.email as owner_email
   from guest_members g
@@ -881,9 +694,6 @@ const GUEST_SHARED_WITH_ME = `select n.id, n.path, n.updated_at, g.role,
  where g.guest_id = ?1 and g.item <> '' and g.joined_at is not null
  order by u.email, n.path limit ?2`
 
-/** One shared file as the app reads it, wherever it is answered: the listing
- *  below, and walking through a link to one; see join.ts. One shape, because the
- *  app opens it the same way whichever answer carried it. */
 export function presentItem(item: {
   id: string
   path: string
@@ -898,13 +708,7 @@ export function presentItem(item: {
     name: itemName(item.path),
     role: item.role,
     updatedAt: item.updatedAt,
-    /** Whose it is, by name. Never the address: a name is what a row needs, and
-     *  an address is something the person shared with may not have been given. */
     owner: { name: personName(item.owner) },
-    /** Which space it came out of, so two notes called the same thing from two
-     *  people are still told apart. The id travels because the room's door needs
-     *  no space and the app's listing does not either - it is here for the mark,
-     *  not for a way in. */
     space: { id: item.space.id, name: item.space.name },
   }
 }
@@ -936,19 +740,6 @@ sharedWithMe.get('/', async (context) => {
   return context.json({ shared: results.map(presentShared) })
 })
 
-/** Letting yourself out of one file, which is the same act as leaving a space
- *  and for the same reason: what somebody was handed is theirs to hand back.
- *
- *  Outside `atLeast`, because somebody holding one note of a space cannot reach
- *  the space at all - which is the whole point of an item share.
- *
- *  The same answer whatever is there. Nobody has to hold anything to ask this, and it
- *  used to say 404 for a name no note has - so anybody signed in, and any guest with
- *  a link to one unrelated file, could ask whether an id names a note on this server
- *  and be told, one guess at a time, about spaces they have never been near. Letting
- *  go of what you were never holding is already done, so `ok` is the truth as well as
- *  the only thing worth saying: a row that is not there is deleted by a statement that
- *  matches nothing. */
 sharedWithMe.delete('/:noteId', async (context) => {
   const who = context.get('who')
   const noteId = context.req.param('noteId').slice(0, ID_LIMIT)

@@ -1,9 +1,3 @@
-/** Reaching a machine's object from a route: one `Machine` per machine id, asked one
- *  thing at a time by a header, as a hub is (hub/reach.ts).
- *
- *  Never a throw: whatever a route tells a machine about has already happened in the
- *  rows, and the object's minute alarm reads the rows again. */
-
 import { chunks } from '../bound'
 import type { Env } from '../types'
 
@@ -31,9 +25,6 @@ export async function askMachine(
   const namespace = env.MACHINES
   if (!namespace) return null
 
-  // In the EU jurisdiction (decision 6), where the runtime offers one. `wrangler dev`'s
-  // workerd throws on any jurisdiction, so a drive against a local `nibd` (DevHost, never
-  // set on a deployed Worker) asks the namespace itself.
   const place =
     typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_NIBD
       ? namespace.jurisdiction('eu')
@@ -54,9 +45,6 @@ export async function askMachine(
   return null
 }
 
-/** The objects of machines that have gone for good, emptied: the container stopped,
- *  the sockets closed and the object's storage taken away. Answers the ids that are
- *  empty now; see leftovers.ts. */
 export async function eraseMachines(env: Env, ids: readonly string[]): Promise<string[]> {
   if (!env.MACHINES) return [...ids]
 

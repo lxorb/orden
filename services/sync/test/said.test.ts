@@ -4,9 +4,6 @@ import { sha256 } from '../src/crypto'
 import { MOST_ASKED } from '../src/notes'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
-/** What a device signing back in asks about the copies it holds: whether each is words
- *  its note once said, and what the note said at the moment both sides last agreed. */
-
 interface Said {
   said?: string[]
   content?: string
@@ -19,7 +16,6 @@ let env: TestEnv
 let token: string
 let note: string
 
-/** Five minutes apart, the most often the account keeps one. */
 function aged(): void {
   env.db.exec('update note_versions set at = at - 600000')
 }

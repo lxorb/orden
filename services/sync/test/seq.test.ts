@@ -1,18 +1,9 @@
-/** A space's cursor number is taken in the same transaction as the row written under it
- *  (#470). Taken in one request and written in another, a write that took N and one
- *  that took N + 1 could land the other way round, and a device reading the feed in
- *  between was handed a cursor of N + 1 and never asked about N again.
- *
- *  What is held to here is the shape that rules that out: no route moves a space's
- *  cursor outside a batch, which D1 runs as one transaction with the rows it writes. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { live } from './sync2'
 
 let env: TestEnv
 let token: string
-/** Every statement that moved a cursor by itself, outside a batch. */
 let alone: string[]
 
 beforeEach(async () => {
@@ -25,7 +16,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** The database, watched for a cursor moved anywhere but inside a batch. */
 function watch(on: TestEnv) {
   const db = on.DB
   const prepare = db.prepare.bind(db)
@@ -66,8 +56,6 @@ async function newSpace(name: string, prepared: boolean): Promise<string> {
   return space
 }
 
-/** The rows of a space by the number each was written under: one each, none past the
- *  cursor, which is what a feed that pages by number needs of them. */
 function numbered(space: string) {
   const rows = env.db
     .prepare(
@@ -158,7 +146,6 @@ describe('the cursor of a space', () => {
     const { seqs, next } = numbered(space)
     expect(new Set(seqs).size).toBe(seqs.length)
     expect(Math.max(...seqs)).toBe(next - 1)
-    // What each route answered is the number its row was written under.
     const file = env.db.prepare("select seq from notes where id = 'file-1'").get() as {
       seq: number
     }

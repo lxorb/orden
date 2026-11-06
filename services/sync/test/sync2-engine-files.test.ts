@@ -1,11 +1,3 @@
-/** Files that are not documents under sync v2, the app's engine against this Worker (docs/sync-v2.md
- *  section 5.8): a picture made on one device reaches another as its bytes, a
- *  replacement follows it, two replacements made apart ask rather than one quietly
- *  winning, and a delete takes it away everywhere.
- *
- *  The devices are the app's own engine (apps/desktop/src/lib/sync2/test-device.ts),
- *  reached by its path for the reason sync2-engine.test.ts gives. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -169,7 +161,6 @@ describe('a file that is not a note, under v2', () => {
     await made.engine.foreign(`${made.root}/photo.png`)
     await passed(made)
 
-    // The feed names its own bytes before the file is read again: nothing to ask.
     expect(made.engine.held.notes).toHaveLength(0)
     expect(made.engine.core.held.size).toBe(0)
     const phone = await device('phone')
@@ -189,7 +180,6 @@ describe('a file that is not a note, under v2', () => {
     await laptop.engine.pass(space)
     await phone.engine.pass(space)
 
-    // The second to arrive is the one that asks, and nothing was written over.
     expect(phone.engine.held.notes).toHaveLength(1)
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(7))
 
@@ -222,8 +212,6 @@ describe('a file that is not a note, under v2', () => {
   })
 
   test('fetched onto a file this device has not read yet, it waits and both are kept', async () => {
-    // The app was closed when a different Scan.pdf was dropped here, and the launch
-    // pass ran before the scan made it an entry: the laptop's was written over it.
     const laptop = await device('laptop')
     const desktop = await device('desktop')
     await laptop.disk.writeBytes(`${laptop.root}/Scan.pdf`, picture(3))
@@ -245,7 +233,6 @@ describe('a file that is not a note, under v2', () => {
   })
 
   test('one the disk refuses to write waits for the next pass, and the rest arrive', async () => {
-    // Refused, the write threw, and the pass stopped before anything after it came.
     const laptop = await device('laptop', { 'a.png': picture(3), 'b.png': picture(5) })
     const desktop = await device('desktop')
     const real = desktop.disk.writeBytes.bind(desktop.disk)
@@ -282,9 +269,6 @@ describe('a file that is not a note, under v2', () => {
   })
 })
 
-/** #517: the nightly sweep of misnamed copies takes the rows of an upload answered over
- *  such a copy with it, and the bytes were the account's no more. The device that still
- *  has the file sends them again on its own, rather than at its next edit of the file. */
 describe('a file whose bytes on this disk cannot be judged', () => {
   const entryOf = (one: Device, name: string) =>
     [...(one.engine.core.spaces.get(space)?.entries.values() ?? [])].find(
@@ -543,7 +527,6 @@ describe('a file whose bytes the account lost', () => {
       many: 1,
     })
 
-    // What the sweep leaves: no row and no object.
     env.db.prepare('delete from blobs where hash = ?').run(hash)
     await env.NOTES.delete(`blobs/${hash}`)
 
@@ -551,7 +534,6 @@ describe('a file whose bytes the account lost', () => {
     await passed(phone)
     expect(bytesAt(phone, 'Trip/photo.png')).toBeUndefined()
 
-    // Hours on: the laptop's check finds the bytes gone and sends them.
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(Date.now() + 7 * 60 * 60 * 1000)
     await passed(laptop)
@@ -565,8 +547,6 @@ describe('a file whose bytes the account lost', () => {
 })
 
 describe('an account too full for a file', () => {
-  /** A laptop whose account answers every upload of bytes `status` (507, no room) while
-   *  `full` says so. */
   async function filling(files: Record<string, string | Uint8Array>) {
     const state = { full: false, status: 507 }
     const made = await (
@@ -590,7 +570,6 @@ describe('an account too full for a file', () => {
 
   afterEach(() => vi.restoreAllMocks())
 
-  /** The clock, past the wait before refused bytes go again. */
   function later() {
     const real = Date.now
     vi.spyOn(Date, 'now').mockImplementation(() => real() + 10 * 60_000)
@@ -615,10 +594,8 @@ describe('an account too full for a file', () => {
     await passed(phone)
     expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
     expect(bytesAt(phone, 'photo.png')).toBeUndefined()
-    // Kept, not dropped: the file goes once there is room.
     expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
 
-    // Tried again only after a while: every try sends every byte.
     state.full = false
     expect((await made.engine.pass(space))?.full).toBe(true)
     later()
@@ -722,7 +699,6 @@ describe('an account too full for a file', () => {
 })
 
 describe('a file in a space this account may only read', () => {
-  /** Somebody the space is shared with to read, on a device of their own. */
   async function reader(): Promise<Device> {
     const theirs = await signIn(env, 'reader@example.com')
     env.db
@@ -733,7 +709,6 @@ describe('a file in a space this account may only read', () => {
     return await device('reader', {}, { token: theirs, role: 'read' })
   }
 
-  /** Every path the disk takes away, to this device's trash in the app. */
   function trashed(one: Device): string[] {
     const taken: string[] = []
     const remove = one.disk.remove.bind(one.disk)
@@ -785,7 +760,6 @@ describe('a file in a space this account may only read', () => {
     expect(here.disk.files.get(`${here.root}/a.md`)).toBe('one\ntwo\n')
     expect(bytesAt(here, 'photo.png')).toEqual(picture(10))
 
-    // Let go of, it goes the way an unlocked one does.
     here.disk.remove = remove
     await here.engine.pass(space)
     await rooms.settle()

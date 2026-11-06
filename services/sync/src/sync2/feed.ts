@@ -1,12 +1,3 @@
-/** A space's feed: everything that changed since a cursor, the tree and the words in
- *  one order.
- *
- *  Folders and notes take their numbers off the same cursor, so one query over both,
- *  ordered by it, is the order the account applied them in, and a device that applies
- *  the feed in that order ends where the account is (docs/sync-v2.md section 7). A
- *  document's words moving shows as its `docSeq` moving, which happens when its room
- *  settles - the moment its snapshot is there to pull. */
-
 import { FEED_PAGE, type FeedItem, heldName, isEntryId } from '@orden/sync-core'
 import type { Env } from '../types'
 import { kindOfName } from './tree'
@@ -40,7 +31,6 @@ const CHANGED = `select * from (
       from folders where space_id = ?1 and seq > ?2
   ) order by seq limit ?3`
 
-/** One page of the feed after `since`, with the cursor to ask from next. */
 export async function feedPage(
   env: Env,
   spaceId: string,
@@ -48,8 +38,6 @@ export async function feedPage(
 ): Promise<{ items: FeedItem[]; cursor: number; more: boolean; order: true; index: true }> {
   let rows = await changedSince(env, spaceId, since)
 
-  // A note a v1 app wrote while the space was being prepared has no place yet: it is
-  // placed now, and the page read again.
   if (rows.some((row) => row.name === null)) {
     await prepareSpace(env, spaceId)
     rows = await changedSince(env, spaceId, since)
@@ -66,10 +54,7 @@ export async function feedPage(
     ),
     cursor: page.at(-1)?.seq ?? since,
     more: rows.length > FEED_PAGE,
-    // This account keeps positions, so a device may send them (#1068).
     order: true,
-    // And answers each note's scan and a search over the notes (reading.ts), so a
-    // browser may keep only the words it uses (#1126).
     index: true,
   }
 }

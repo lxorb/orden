@@ -22,27 +22,20 @@ function put(icons: unknown, options: { as?: string; id?: string; tints?: unknow
   })
 }
 
-/** What the space listing says the folders wear, which is how the app reads it. */
 async function listed(as = token) {
   const { json } = await call(env, '/v1/spaces', { token: as })
   return json.spaces.find((one) => one.id === space)?.icons
 }
 
-/** And the colours, under the same keys. */
 async function tinted(as = token) {
   const { json } = await call(env, '/v1/spaces', { token: as })
   return json.spaces.find((one) => one.id === space)?.tints
 }
 
-/** The column as somebody else's build left it, which no route would write. */
 function column(raw: string, which: 'icons' | 'tints' = 'icons') {
   env.db.prepare(`update spaces set ${which} = ? where id = ?`).run(raw, space)
 }
 
-/** Somebody the owner gave the space to at read, and in it: invited, then having
- *  proved the address by signing in. Which roles every space route lets through
- *  is one matrix in share.test.ts; this is here because the map is the space's,
- *  so being in it is not the same as being allowed to change it. */
 async function reader(): Promise<string> {
   const sent = await mail(() =>
     call(env, `/v1/spaces/${space}/share/invite`, {
@@ -59,8 +52,6 @@ async function reader(): Promise<string> {
   return theirs
 }
 
-/** Two folders wearing an icon, one named the way the picker writes a space's and
- *  one the way a note's front matter writes its own. */
 const DRESSED = { Work: 'Briefcase', 'Work/Ideas': 'folder-open' }
 
 describe("a space's folder icons", () => {
@@ -106,7 +97,6 @@ describe("a space's folder icons", () => {
 
 describe('what a folder may wear', () => {
   test('is an icon name, in either spelling the app writes one', () => {
-    // The picker's library key, Lucide's own plain name, and Iconize's.
     expect(isIcon('FileText')).toBe(true)
     expect(isIcon('file-text')).toBe(true)
     expect(isIcon('LiFileText')).toBe(true)
@@ -118,15 +108,10 @@ describe('what a folder may wear', () => {
   test('or an emoji, however many code points one takes', () => {
     expect(isIcon('📚')).toBe(true)
     expect(isIcon('🇩🇪')).toBe(true)
-    // A skin tone and a zero-width join, which is one icon and seven units.
     expect(isIcon('👩🏽‍🚀')).toBe(true)
     expect(isIcon('🙂'.repeat(9))).toBe(false)
   })
 
-  /** Anything but Lucide and the emoji is written with its set's own id in front of
-   *  it, so a column that took only bare names would drop every coloured icon
-   *  anybody chose. Read as a shape rather than resolved: this service ships no
-   *  icons, so a set it has never heard of is still carried. */
   test('or a set of its own, named in front of it', () => {
     expect(isIcon('flat-color-icons:calendar')).toBe(true)
     expect(isIcon('some-future-set:thing')).toBe(true)
@@ -225,8 +210,6 @@ describe('more folder icons than a space holds', () => {
   })
 
   test('is refused by the size, when every entry is legal on its own', async () => {
-    // Two hundred folders nested as deep as a path may go is more than the column
-    // carries, which is the other end of the same guard.
     const deep = Object.fromEntries(
       Array.from({ length: 200 }, (_, at) => [`${'folder/'.repeat(40)}${at}`, 'Folder']),
     )
@@ -273,8 +256,6 @@ describe('the icons are the space’s', () => {
   test('are not another account’s to write', async () => {
     const other = await signIn(env, 'e@f.dev')
 
-    // The same answer an id that does not exist gets: nothing about the space
-    // leaks, not even that it is there.
     expect((await put(DRESSED, { as: other })).status).toBe(404)
     expect(await listed()).toEqual({})
   })
@@ -288,12 +269,6 @@ describe('the icons are the space’s', () => {
   })
 })
 
-/** The colour each of those icons is drawn in.
- *
- *  A second map in the same request, because a folder's icon and its colour are one
- *  gesture in the picker and one request is what that gesture should cost. It was
- *  this machine's own until there was a column for it, which meant a tree dressed on
- *  a desktop came down to a phone in the plain foreground. */
 describe('the colour a folder’s icon is drawn in', () => {
   const PAINTED = { Work: 'violet', 'Work/Ideas': 'teal' }
 
@@ -324,9 +299,6 @@ describe('the colour a folder’s icon is drawn in', () => {
     expect(await tinted()).toEqual({})
   })
 
-  /** An app older than this route sends the icons alone. Undressing every colour on
-   *  the account because one machine has not been updated is the one thing that must
-   *  not happen, so nothing said is nothing changed. */
   test('stays as it was when a request says nothing about it', async () => {
     await put(DRESSED, { tints: PAINTED })
     const again = await put({ Work: 'Folder' })
@@ -380,10 +352,6 @@ describe('the colour a folder’s icon is drawn in', () => {
 })
 
 describe('what colour a folder may be drawn in', () => {
-  /** The accents by their own ids, which is what the app writes; see accents.ts
-   *  there. Read as a shape rather than resolved, for the reason an icon set is: the
-   *  colours are the app's and a palette that gains one must not wait on a deploy of
-   *  this. */
   test('is an accent’s id', () => {
     expect(isTint('violet')).toBe(true)
     expect(isTint('slate')).toBe(true)

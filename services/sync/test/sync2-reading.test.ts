@@ -1,7 +1,3 @@
-/** What the account reads off a space's notes for a browser that keeps only some of
- *  their words (#1126): each note's scan, and a search over the rest, through their
- *  routes and against the words the account keeps. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { indexed } from '@orden/scan/indexed'
 import { parseQuery } from '@orden/scan/search/query'
@@ -186,14 +182,9 @@ describe('the search', () => {
   })
 })
 
-/** Who may ask: exactly who may read the space's feed. A person in the space, by an
- *  invitation or its link, at either role; nobody else - not somebody handed one note
- *  of it, not somebody let go of, and nothing of another space through this one. */
 describe('who may ask', () => {
   const SECRET = 'the code is 4711'
 
-  /** The space's link, or one note's, set to hand out this role, followed by nobody:
-   *  a guest. Answers the guest's session and id. */
   async function linkGuest(item?: string): Promise<{ token: string; id: string }> {
     const at = `/v1/spaces/${space}/share/link${item ? `?item=${item}` : ''}`
     const { json } = await call(env, at, {
@@ -210,7 +201,6 @@ describe('who may ask', () => {
   async function reaches(as: string, id: string): Promise<{ index: number; search: number }> {
     const asked = await index([id], as)
     const found = await search({ q: '4711', limit: 10 }, as)
-    // Refused, never a word of the note with it.
     if (asked.status !== 200) expect(asked.text).not.toContain('4711')
     if (found.status !== 200) expect(found.text).not.toContain('4711')
     return { index: asked.status, search: found.status }
@@ -251,7 +241,6 @@ describe('who may ask', () => {
     })
     await call(env, `/v1/spaces/${space}/share/guests/${guest.id}`, { method: 'DELETE', token })
     expect(await reaches(member, id)).toEqual({ index: 404, search: 404 })
-    // A guest let go of, with nothing else left, has no session any more either.
     expect(await reaches(guest.token, id)).toEqual({ index: 401, search: 401 })
   })
 
@@ -260,7 +249,6 @@ describe('who may ask', () => {
     const stranger = await signIn(env, 'stranger@example.com')
     expect(await reaches(stranger, id)).toEqual({ index: 404, search: 404 })
 
-    // The stranger's own space, asked about the note by its id and searched for its words.
     const theirs = (await call(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } }))
       .json.space.id
     const asked = await call(env, `/v2/spaces/${theirs}/index`, {

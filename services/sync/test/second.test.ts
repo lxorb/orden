@@ -17,8 +17,6 @@ import {
 } from '../src/second'
 import { opened } from '../src/ask/key'
 
-/** The nightly job, run to the end: what it hands to `waitUntil` is what it is
- *  doing, so a test that wants the sweep awaits those. */
 async function nightly(env: TestEnv): Promise<void> {
   const waiting: Promise<unknown>[] = []
   const context = {
@@ -46,28 +44,17 @@ interface SecondView {
   ok?: boolean
 }
 
-/** The environment secret the factor is kept under. Absent in tests unless a
- *  test says otherwise, which is itself one of the cases. */
 const KEPT = { OPENAI_KEY_SECRET: 'a secret for the tests' }
 
 describe('what a recovery code costs to hash', () => {
-  /** The cost is the whole of what hashing them buys: ten bytes behind a hundred
-   *  thousand rounds is not a table a leaked database hands anybody. Asserted here
-   *  because the test build turns the cost down to run, and a default that quietly
-   *  became two hundred rounds would be the one change nobody would notice. */
   test('is a hundred thousand rounds, whatever a test asks for', () => {
     expect(RECOVERY_ROUNDS).toBe(100_000)
   })
 
-  /** The cost used to be a module `let` behind an exported setter, which anything in
-   *  the bundle could call at any moment - and a deploy carried it whether or not
-   *  anything did. Now it is a question about the build, so there is nothing to call. */
   test('and nothing a running Worker can reach says otherwise', async () => {
     const module: Record<string, unknown> = await import('../src/second')
 
     expect(Object.keys(module)).not.toContain('costRecoveryLess')
-    // Nothing exported takes a cost and answers nothing, which is the shape a setter
-    // has: what is exported are two constants' worth of answers and the derivation.
     const setters = Object.entries(module).filter(
       ([name, held]) => typeof held === 'function' && /^(?:set|cost)/i.test(name),
     )
@@ -83,8 +70,6 @@ describe('the codes themselves', () => {
   })
 
   test('are the six digits the standard names for a known secret', async () => {
-    // RFC 6238's own test vector: the ASCII secret "12345678901234567890", at
-    // 59 seconds, is 94287082.
     const secret = [...new TextEncoder().encode('12345678901234567890')]
       .map((byte) => byte.toString(16).padStart(2, '0'))
       .join('')
@@ -119,8 +104,6 @@ describe('the codes themselves', () => {
 
     expect(codes).toHaveLength(10)
     expect(new Set(codes).size).toBe(10)
-    // Ten bytes, in groups somebody can read off a screen without losing their
-    // place. Five was forty bits, which is a table rather than a secret.
     expect(codes[0]).toMatch(/^[0-9a-f]{5}(-[0-9a-f]{5}){3}$/)
   })
 })
@@ -149,8 +132,6 @@ describe('turning it on', () => {
     expect(begun.json.secret).toMatch(/^[A-Z2-7]+$/)
     expect(begun.json.holding).toBeTruthy()
 
-    // Nothing is on until a code out of the app proves it was set up, so
-    // somebody who closes the pane here is not locked out.
     const said = await call<SecondView>(env, '/v1/second', { token })
     expect(said.json.on).toBe(false)
   })
@@ -238,9 +219,6 @@ describe('signing in with it on', () => {
   })
 
   test('a recovery code finishes it too, and is spent', async () => {
-    // Fresh codes, so the test has one it knows. The next step's code rather
-    // than this one's: signing in above spent the code it used, and the app
-    // would be showing the next one by the time somebody pressed the button.
     const token = await signInWith(env, secret)
     const made = await call<SecondView>(env, '/v1/second/recovery', {
       token,
@@ -254,7 +232,6 @@ describe('signing in with it on', () => {
     })
     expect(done.json.token).toBeTruthy()
 
-    // The same code again is nothing.
     const again = await signInHalfWay(env)
     const refused = await call<SecondView>(env, '/v1/auth/second', {
       body: { holding: again.json.holding, code },
@@ -285,9 +262,6 @@ describe('signing in with it on', () => {
   })
 
   test('and a code the app has already answered with is spent', async () => {
-    // RFC 6238 §5.2: a code that has been accepted must not be accepted again.
-    // Without that, a code read over somebody's shoulder or out of a phishing
-    // page is a second sign-in for the ninety seconds it stays in the window.
     const code = await codeAt(secret, step())
 
     const first = await signInHalfWay(env)
@@ -305,8 +279,6 @@ describe('signing in with it on', () => {
   })
 
   test('but a wrong code does not throw the whole sign-in away', async () => {
-    // The emailed half was answered; mistyping the second half is not a reason
-    // to ask for another mail. The token is spent by a code that works.
     const half = await signInHalfWay(env)
 
     const wrong = await call<SecondView>(env, '/v1/auth/second', {
@@ -328,7 +300,6 @@ describe('signing in with it on', () => {
       token,
       body: { code: await codeAt(secret, step() + 1) },
     })
-    // As it was handed over, dashes and all: that is the string that was hashed.
     const code = made.json.recovery?.[0] ?? ''
 
     const user = env.db.prepare("select id from users where email = 'a@b.dev'").get() as {
@@ -338,17 +309,11 @@ describe('signing in with it on', () => {
       env.db.prepare('select code_hash from recovery_codes').all() as { code_hash: string }[]
     ).map((one) => one.code_hash)
 
-    // The cost is part of what the row says, and the row says what this build hashes
-    // at - so a cost nothing can change at runtime is a cost the rows are proof of.
     expect(held).toContain(await recoveryHash(user.id, code, recoveryCost()))
     expect(held).not.toContain(await recoveryHash(user.id, code, recoveryCost() + 1))
   })
 
   test('and a recovery code is not a bare digest of five bytes at rest', async () => {
-    // Forty bits under one round of SHA-256 is a table a GPU builds in minutes,
-    // so a leaked database would be a way past the factor for every account at
-    // once. The entropy is the fix; the derivation is what stops one table
-    // serving every account.
     const token = await signInWith(env, secret)
     const made = await call<SecondView>(env, '/v1/second/recovery', {
       token,
@@ -386,8 +351,6 @@ describe('signing in with it on', () => {
     expect(said.json.on).toBe(false)
   })
 
-  /** Begins an enrolment and answers it with the new app's code, with whatever
-   *  `current` is given for the factor already on. */
   async function replace(token: string, current?: string) {
     const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
     const fresh = await secretHeldFor(env, begun.json.holding ?? '')
@@ -413,12 +376,9 @@ describe('signing in with it on', () => {
       expect(done.json.error).toBe('that code is not right')
     }
 
-    // Nothing moved: the same secret, and every recovery code still there.
     expect(env.db.prepare('select totp_secret from users').get()).toEqual(before)
     expect((await call<SecondView>(env, '/v1/second', { token })).json.codesLeft).toBe(10)
 
-    // And the old factor still finishes a sign-in, with the step after the one
-    // spent above.
     const half = await signInHalfWay(env)
     const done = await call<SecondView>(env, '/v1/auth/second', {
       body: { holding: half.json.holding, code: await codeAt(secret, step() + 1) },
@@ -458,7 +418,6 @@ describe('signing in with it on', () => {
 
   test('and a secret handed out before it came on cannot replace it later', async () => {
     const token = await signInWith(env, secret)
-    // Off, then an enrolment begun and left, then on again with another app.
     await call(env, '/v1/second', {
       method: 'DELETE',
       token,
@@ -475,16 +434,10 @@ describe('signing in with it on', () => {
     })
     expect(late.status).toBe(400)
 
-    // The factor that came on is the one that still answers.
     expect(await signInWith(env, fresh)).toBeTruthy()
   })
 })
 
-/** Every way an address alone opens an account, held to the second factor the
- *  way the app's own sign-in is. The consent page for a connector and an
- *  invitation link each proved the address and then handed out a credential that
- *  reads every note, so somebody who could read the mail had the account however
- *  many factors it asked for. */
 describe('a second factor is asked wherever an address alone would sign in', () => {
   let env: TestEnv
 
@@ -507,7 +460,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     return { token, secret }
   }
 
-  /** The consent page's form, as a browser posts it. */
   function consent(fields: Record<string, string>) {
     return call(env, '/oauth/authorize', {
       raw: new URLSearchParams(fields).toString(),
@@ -515,7 +467,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     })
   }
 
-  /** A client, and the fields every step of its consent page carries. */
   async function asking(): Promise<Record<string, string>> {
     const redirect = 'https://chatgpt.com/connector/oauth/abc123'
     const registered = await call(env, '/oauth/register', {
@@ -535,7 +486,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     }
   }
 
-  /** The six digits a mail carried. */
   async function emailed(work: () => Promise<unknown>): Promise<string> {
     env.db.exec('delete from login_codes')
     const said = /(\d{3}) (\d{3})/.exec(await mail(work))
@@ -549,7 +499,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     const code = await emailed(() => consent({ ...ask, action: 'send', email: 'a@b.dev' }))
     const allowed = await consent({ ...ask, action: 'allow', email: 'a@b.dev', code, write: '1' })
 
-    // A page asking for the app's code, not the client's callback with a grant.
     expect(allowed.status).toBe(200)
     expect(allowed.headers.get('location')).toBe(null)
     const holding = /name="holding" value="([a-f0-9]+)"/.exec(allowed.text)?.[1] ?? ''
@@ -570,7 +519,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     expect(right.status).toBe(302)
     expect(new URL(right.headers.get('location') ?? '').searchParams.get('code')).toBeTruthy()
 
-    // And the half is spent: the same page cannot be posted twice for two grants.
     const again = await consent({
       ...ask,
       action: 'second',
@@ -608,7 +556,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     expect(joined.json.token).toBeUndefined()
     expect(joined.json.second).toBe(true)
 
-    // What finishes it is the app's own second step, and what it opens is a session.
     const finished = await call<SecondView>(env, '/v1/auth/second', {
       body: { holding: joined.json.holding, code: await codeAt(secret, step() + 1) },
     })
@@ -616,7 +563,6 @@ describe('a second factor is asked wherever an address alone would sign in', () 
     const session = finished.json.token ?? ''
     expect(session).not.toBe('')
 
-    // And the invitation is still there to walk through, now as the account.
     const walked = await call(env, `/v1/join/${link}`, {
       method: 'POST',
       token: session,
@@ -637,7 +583,6 @@ describe('how many codes may be tried', () => {
 
   afterEach(() => env.close())
 
-  /** Somebody with the factor on, and the secret their app would be showing. */
   async function enrolled(email: string): Promise<{ token: string; secret: string }> {
     const token = await signIn(env, email)
     const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
@@ -651,7 +596,6 @@ describe('how many codes may be tried', () => {
     return { token, secret }
   }
 
-  /** One code tried against one account, from a machine. */
   function tryOne(token: string, code: string, machine: string) {
     return call<SecondView>(env, '/v1/second/recovery', {
       method: 'POST',
@@ -666,16 +610,11 @@ describe('how many codes may be tried', () => {
 
     for (let at = 0; at < 20; at++) await tryOne(token, '000000', '203.0.113.7')
 
-    // Twenty wrong ones in, and the ceiling is what answers rather than the
-    // factor: the right code is refused too.
     const refused = await tryOne(token, '000000', '203.0.113.7')
     expect(refused.status).toBe(400)
   })
 
   test('and at a number of tries from one machine, whoever they are about', async () => {
-    // The per-account ceiling does nothing about a script with a list of
-    // accounts: twenty each is as many guesses as it likes, from one machine, so
-    // long as it keeps moving on to the next address.
     const mine = await enrolled('a@b.dev')
 
     for (const email of ['c@d.dev', 'e@f.dev', 'g@h.dev']) {
@@ -683,12 +622,9 @@ describe('how many codes may be tried', () => {
       for (let at = 0; at < 20; at++) await tryOne(token, '000000', '203.0.113.9')
     }
 
-    // This account has spent none of its own twenty and the code is its app's.
     const refused = await tryOne(mine.token, await codeAt(mine.secret, step() + 1), '203.0.113.9')
     expect(refused.status).toBe(400)
 
-    // And from anywhere else the same code still works, so it is the machine
-    // that ran out and not the account.
     const fine = await tryOne(mine.token, await codeAt(mine.secret, step() + 1), '203.0.113.10')
     expect(fine.status).toBe(200)
   })
@@ -704,11 +640,6 @@ describe('what an abandoned enrolment leaves behind', () => {
   afterEach(() => env.close())
 
   test('is swept by the nightly job, secret and all', async () => {
-    // The secret a pending enrolment holds is the one thing here kept in the
-    // clear, because until a code proves the app has it there is nothing to
-    // encrypt it against. Ten minutes is what the row promises; nothing was
-    // taking it away, so an enrolment somebody closed the pane on left a working
-    // secret in the table for good.
     const token = await signIn(env, 'a@b.dev')
     await call(env, '/v1/second', { token, body: {} })
 
@@ -721,12 +652,6 @@ describe('what an abandoned enrolment leaves behind', () => {
   })
 })
 
-/** The factor's secret is its own, and the one it used to borrow only reads.
- *
- *  Rotating the AI key's secret locked every enrolled account out of its factor
- *  while the two were one secret. Each case below rotates one of them by writing
- *  over it in the environment, which is what `wrangler secret put` does to a
- *  running Worker. */
 describe('a secret of its own', () => {
   const AI = 'the AI key secret'
   const OWN_SECRET = 'the second factor secret'
@@ -735,7 +660,6 @@ describe('a secret of its own', () => {
 
   afterEach(() => env.close())
 
-  /** An account with a factor turned on, under whatever the environment holds. */
   async function enrolled(): Promise<string> {
     const token = await signIn(env, 'a@b.dev')
     const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
@@ -748,15 +672,11 @@ describe('a secret of its own', () => {
     return secret
   }
 
-  /** What the account's row holds, sealed. */
   function sealedNow(): string {
     const row = env.db.prepare('select totp_secret from users').get() as { totp_secret: string }
     return row.totp_secret
   }
 
-  /** Whether a whole sign-in goes through with the app's code `ahead` steps on:
-   *  a later step for a second sign-in, because a code once answered with is
-   *  spent. */
   async function signsIn(secret: string, ahead: number): Promise<boolean> {
     const half = await signInHalfWay(env)
     const done = await call<SecondView>(env, '/v1/auth/second', {
@@ -813,7 +733,6 @@ describe('a secret of its own', () => {
     expect(await signsIn(secret, 0)).toBe(true)
     expect(sealedNow().startsWith('own:')).toBe(true)
 
-    // And from then on the AI key's secret is nothing to it.
     env.OPENAI_KEY_SECRET = 'a rotated AI key secret'
     expect(await signsIn(secret, 1)).toBe(true)
   })
@@ -916,8 +835,6 @@ describe('the sessions a reader can see', () => {
   })
 })
 
-/** The secret the pending enrolment holds, read out of the table the way only a
- *  test may: the route hands back base32 and the check wants hex. */
 function secretOf(env: TestEnv): string {
   const row = env.db
     .prepare("select value from cached where scope = 'second-pending' order by until desc limit 1")
@@ -926,9 +843,6 @@ function secretOf(env: TestEnv): string {
   return (row?.value ?? '').split(':')[1] ?? ''
 }
 
-/** The secret one pending enrolment holds, found by its holding token: where two are
- *  pending at once, made in the same millisecond, the newest is not a question the
- *  table can answer. */
 async function secretHeldFor(env: TestEnv, holding: string): Promise<string> {
   const row = env.db
     .prepare("select value from cached where scope = 'second-pending' and key = ?")
@@ -941,17 +855,10 @@ function step(): number {
   return Math.floor(Date.now() / 30_000)
 }
 
-/** The emailed half of a sign-in for an account that asks for two.
- *
- *  The pending row goes first: a second code asked for within thirty seconds is
- *  answered without a mail being sent, which is the resend gap doing its job and
- *  not what any of these tests are about. */
 async function signInHalfWay(env: TestEnv) {
   const { mail } = await import('./harness')
   env.db.exec('delete from login_codes')
 
-  // The mail is captured whole, so the six digits come out of it the way the
-  // harness's own sign-in reads them.
   const logged = await mail(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
   const said = /(\d{3}) (\d{3})/.exec(logged)
 
@@ -960,7 +867,6 @@ async function signInHalfWay(env: TestEnv) {
   })
 }
 
-/** A whole sign-in, both halves, for a test that needs a session. */
 async function signInWith(env: TestEnv, secret: string): Promise<string> {
   const half = await signInHalfWay(env)
   const done = await call<SecondView>(env, '/v1/auth/second', {

@@ -1,18 +1,3 @@
-/** A machine on a Hetzner server of its own (docs/online-terminal.md 4.15): a CX43 (8
- *  vCPU, 16 GB, 160 GB), always on, in Nuremberg or else Falkenstein, reached only
- *  through a Cloudflare Tunnel.
- *
- *  `start` makes what is missing and nothing else, so it is safe to ask again at any
- *  point: the tunnel and its hostname, then the server - found by its label
- *  `nib-machine=<id>`, made only where there is none, after the budget breaker says the
- *  month's fixed costs may grow by its price. A made server sets itself up from its
- *  cloud-init (cloudinit.ts) for a few minutes; `Machine` waits for `nibd` on its alarm
- *  meanwhile. There is no sleep, snapshot, backup or restore: the disk is a disk.
- *
- *  The link is a WebSocket to `https://m-<id>.nibeditor.com/link`: Cloudflare's edge lets
- *  it through only with the Access service token (where Access is set up), `cloudflared`
- *  on the server checks the same, and `nibd` takes it only with the machine's secret. */
-
 import type { Env } from '../types'
 import type { MachineHost } from '@orden/online'
 import type { Refusal } from '@orden/online/wire'
@@ -22,15 +7,11 @@ import { cloudInit, sshKeyOf } from './cloudinit'
 import { Hetzner, HetznerError, type ServerType } from './hetzner'
 import { type Access, Tunnels } from './tunnel'
 
-/** The server type, and where it is made, nearest Zurich first: Nuremberg answered a
- *  connection in 16.6 ms from ETH Zurich and Falkenstein in 18.4 ms (2026-10-06). */
 const SERVER_TYPE = 'cx43'
 const LOCATIONS: readonly Place[] = ['nbg1', 'fsn1']
 
-/** The label every Hetzner resource of a machine carries. */
 const LABEL = 'nib-machine'
 
-/** What Hetzner answers where a type cannot be had in a location just now. */
 const UNAVAILABLE = new Set([
   'resource_unavailable',
   'placement_error',
@@ -38,15 +19,11 @@ const UNAVAILABLE = new Set([
   'resource_limit_exceeded',
 ])
 
-/** How often, and how far apart, a link is tried: once the server answers at all it
- *  answers at once, and `Machine` tries again on its alarm while it is being set up. */
 const LINK_TRIES = 3
 const LINK_WAIT = 1000
 
-/** Where a machine's link secret is kept: `Machine`'s storage, under its own key. */
 const SECRET = 'secret'
 
-/** A start the host refuses for a reason the person is told: the budget, so far. */
 export class HostRefused extends Error {
   constructor(readonly refusal: Refusal) {
     super(`refused: ${refusal}`)
@@ -54,8 +31,6 @@ export class HostRefused extends Error {
   }
 }
 
-/** What the Worker needs for Hetzner machines, by the names the manager sets them under;
- *  the ones missing, for the admin route and for a start's refusal. */
 export function hetznerMissing(env: Env): string[] {
   const needed: [string, string | undefined][] = [
     ['HETZNER_TOKEN', env.HETZNER_TOKEN],
@@ -66,18 +41,13 @@ export function hetznerMissing(env: Env): string[] {
   return needed.filter(([, value]) => !value).map(([name]) => name)
 }
 
-/** Whether the budget allows a new fixed cost of `monthly` in `currency` a month. */
 export type MayCost = (monthly: number, currency: string) => Promise<boolean>
 
-/** Everything the host talks to, made from the environment or handed in by a test. */
 export interface Setup {
   hetzner: Hetzner
   tunnels: Tunnels
-  /** The Access service token the link is sent with, where Access is set up. */
   service: { id: string; secret: string } | null
-  /** What `cloudflared` checks the Access token against, where it is set up. */
   access: Access | null
-  /** The zone the machines' hostnames are in, and the origin the bundle comes from. */
   domain: string
   origin: string
   mayCost: MayCost
@@ -109,7 +79,6 @@ export function setupOf(env: Env, mayCost: MayCost): Setup | null {
   }
 }
 
-/** A machine's names: its hostname, its server's and its tunnel's. */
 export function namesOf(id: string, domain: string) {
   const slug = id
     .replace(/^m_/, '')
@@ -123,20 +92,15 @@ export function namesOf(id: string, domain: string) {
   }
 }
 
-/** The domain the machines' hostnames are made in: where their DNS records are,
- *  which stays put when the app's links move to another name. */
 export function machineDomain(env: Env): string {
   return env.MACHINE_DOMAIN ?? new URL(env.APP_ORIGIN).hostname
 }
 
-/** Whether a hostname is a machine's own (`namesOf`), under `domain`. */
 export function isMachineHost(hostname: string, domain: string): boolean {
   const escaped = domain.toLowerCase().replaceAll('.', '\\.')
   return new RegExp(`^m-[0-9a-f]{32}\\.${escaped}$`).test(hostname.toLowerCase())
 }
 
-/** The firewall's inbound rules: none at all, which lets nothing in, or SSH alone while
- *  the owner's emergency key is set. Outbound is left open (no outbound rule). */
 export function firewallRules(ssh: boolean): unknown[] {
   return ssh
     ? [
@@ -179,7 +143,6 @@ export class HetznerHost implements MachineHost {
     const setup = this.need()
     const names = this.names(id)
 
-    // The way in first, so a server that comes up finds its tunnel waiting.
     const tunnel = await setup.tunnels.tunnel(names.tunnel)
     await setup.tunnels.route(tunnel, names.hostname, setup.access)
     await setup.tunnels.hostname(names.hostname, tunnel)
@@ -245,7 +208,6 @@ export class HetznerHost implements MachineHost {
           firewall,
         })
         const ip = location === first ? ipv4 : (await setup.hetzner.ipv4(location)).monthly
-        // Where it went, in the audit as well: Nuremberg can have none to give (2026-10-06).
         const place = LOCATIONS.find((one) => one === made.location) ?? location
         await this.record(id, {
           server_id: made.id,
@@ -266,7 +228,6 @@ export class HetznerHost implements MachineHost {
     throw last instanceof Error ? last : new Error(`no ${SERVER_TYPE} could be made`)
   }
 
-  /** What the row says about the server, as the API last said it. */
   private async record(id: string, fields: Record<string, string | number>): Promise<void> {
     const entries = Object.entries(fields)
     const sets = entries.map(([key], at) => `${key} = ?${String(at + 2)}`).join(', ')
@@ -275,7 +236,6 @@ export class HetznerHost implements MachineHost {
       .run()
   }
 
-  /** Always on: there is nothing to stop. A machine is ended by `remove`. */
   stop(): Promise<void> {
     return Promise.resolve()
   }
@@ -309,7 +269,6 @@ export class HetznerHost implements MachineHost {
           return socket
         }
         last = new Error(`nibd answered ${String(answer.status)}`)
-        // Refused for good: a wrong secret or token is not cured by asking again.
         if (answer.status === 401 || answer.status === 403) break
       } catch (error) {
         last = error
@@ -334,8 +293,6 @@ export class HetznerHost implements MachineHost {
     return Promise.resolve({ cpuS: 0, egressBytes: 0 })
   }
 
-  /** A hard power cycle, through the API: the server answers nothing, so nothing on it
-   *  can be asked to restart. */
   async reboot(id: string): Promise<void> {
     const setup = this.need()
     const server = await setup.hetzner.serverLabelled(LABEL, id)
@@ -344,9 +301,6 @@ export class HetznerHost implements MachineHost {
     await this.record(id, { server_status: 'starting' })
   }
 
-  /** The server, its firewall, its tunnel and its hostname, deleted; whichever is gone
-   *  already is skipped, so this finishes what an earlier try began. A Worker never set
-   *  up for Hetzner made none of them. */
   async remove(id: string): Promise<void> {
     if (!this.setup) return
     const { hetzner, tunnels } = this.setup
@@ -359,13 +313,10 @@ export class HetznerHost implements MachineHost {
   }
 }
 
-/** The server type's monthly price in a location, with VAT. */
 function priceIn(type: ServerType, location: string): number {
   return type.prices.find((one) => one.location === location)?.monthly ?? 0
 }
 
-/** A firewall is still in use for the moment its server takes to go: asked again a few
- *  times, and left for the next sweep if it is still held. */
 async function deleteWhenFree(hetzner: Hetzner, id: number): Promise<void> {
   for (let tried = 0; ; tried++) {
     try {

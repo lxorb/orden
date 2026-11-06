@@ -6,8 +6,6 @@ import { MOST_MEMBERS } from '../src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 
-/** What a row of the sheet says about a face: none for an address nobody has an account
- *  at, and the account's id with no picture for one that does. */
 const NO_FACE = { id: null, avatar: null, accent: null }
 const A_FACE = { id: expect.any(String), avatar: null, accent: null }
 
@@ -23,16 +21,11 @@ let reader: string
 let stranger: string
 let space: string
 let note: string
-/** Two guests with no account, one at each role a link can hand out. */
 let guestWriter: string
 let guestReader: string
-/** A guest the owner has not answered yet, and one who is in, so that the three
- *  routes about a guest have somebody to work on. */
 let waitingGuest: string
 let readingGuest: string
 
-/** Somebody given the space, and in it: invited, then having proved the address
- *  by signing in, which is the whole of what joining is. */
 async function invite(email: string, role: 'write' | 'read'): Promise<string> {
   const link = await inviteLink(email, role)
   const token = await signIn(env, email)
@@ -40,7 +33,6 @@ async function invite(email: string, role: 'write' | 'read'): Promise<string> {
   return token
 }
 
-/** The token in the link the invitation mail carried. */
 async function inviteLink(email: string, role: 'write' | 'read'): Promise<string> {
   const sent = await mail(() =>
     call(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role } }),
@@ -55,7 +47,6 @@ function shareView(as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })
 }
 
-/** The space's own link, set to hand out this role in this mode, as a token. */
 async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
   const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
     method: 'PUT',
@@ -68,9 +59,6 @@ async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Pro
   return found[1]
 }
 
-/** Somebody with no account who followed the link, and the session it handed
- *  them. Nothing is typed and nothing is proved: holding the link is the whole
- *  of it. */
 async function guestAt(role: 'write' | 'read', device = 'Windows'): Promise<string> {
   const token = await shareLink(role, 'open')
   const { json } = await call(env, `/v1/join/${token}`, { method: 'POST', body: { device } })
@@ -78,19 +66,14 @@ async function guestAt(role: 'write' | 'read', device = 'Windows'): Promise<stri
   return json.token
 }
 
-/** Which guest a session belongs to, as the guest itself is told. */
 async function guestOf(token: string): Promise<string> {
   return (await call(env, '/v1/me', { token })).json.guest.id
 }
 
-/** Every account owns a space called `Notes` from the moment it is made; see
- *  src/spaces/first.ts. The space this file shares is named something else, so
- *  that a listing, a mail and a connector answer all say which one they mean. */
 const SHARED = 'Plans'
 
 beforeEach(async () => {
   env = testEnv()
-  // The rooms run under the routes, for the ones that reach a note's room.
   live(env)
   owner = await signIn(env, OWNER)
   stranger = await signIn(env, STRANGER)
@@ -105,8 +88,6 @@ beforeEach(async () => {
 })
 
 afterEach(() => env.close())
-
-/* ── The matrix ───────────────────────────────────────────────────────── */
 
 interface Route {
   what: string
@@ -300,8 +281,6 @@ const ROUTES: Route[] = [
   },
 ]
 
-/** A file of the space's tree, made by its owner the first time a route asks for one:
- *  its bytes kept, and an entry naming them. Answers its id and its hash. */
 async function fileEntry(): Promise<{ id: string; hash: string }> {
   const bytes = new Uint8Array([1, 2, 3, 4])
   const digest = await crypto.subtle.digest('SHA-256', bytes)
@@ -324,7 +303,6 @@ async function fileEntry(): Promise<{ id: string; hash: string }> {
   return { id: 'file', hash }
 }
 
-// Sync v2's routes that name a space, held to the same matrix as v1's.
 ROUTES.push(
   {
     what: 'reading what changed, the way sync v2 reads it',
@@ -381,16 +359,8 @@ ROUTES.push(
   },
 )
 
-/** Which roles a route lets through, so each case below reads as one sentence. */
 const RANK = { read: 0, write: 1, owner: 2 }
 
-/** Everybody a route can be asked by, at the role they hold.
- *
- *  A guest is not a fourth role. It is either of the two a link hands out, held
- *  by somebody with no account at all, and no route may tell the difference:
- *  whether they proved an address or followed a link is how they arrived, and
- *  what they may do is their role. Which is why they are a column here rather
- *  than a file of their own. */
 const HOLDERS: { as: string; role: 'read' | 'write' | 'owner'; token: () => string }[] = [
   { as: 'the owner', role: 'owner', token: () => owner },
   { as: 'a writer', role: 'write', token: () => writer },
@@ -408,9 +378,6 @@ describe('every route that names a space', () => {
     guestReader = await guestAt('read')
     readingGuest = await guestOf(guestReader)
 
-    // Somebody waiting to be let in, of each kind, so the routes about a request
-    // and the routes about a guest have one to work on rather than answering
-    // that there is nothing there.
     const asking = await shareLink('read', 'approval')
     await call(env, `/v1/join/${asking}`, { method: 'POST', token: stranger })
 
@@ -439,9 +406,6 @@ describe('every route that names a space', () => {
     })
   }
 
-  /** Sync v2's routes that judge each thing they carry rather than the request: a
-   *  batch of tree operations in a space, and documents from anywhere. What a role may
-   *  not do is refused per thing, with the request itself answered. */
   const ITEMS: {
     what: string
     needs: 'read' | 'write'
@@ -528,11 +492,7 @@ describe('every route that names a space', () => {
   }
 })
 
-/* ── The listing ──────────────────────────────────────────────────────── */
-
 describe('the space listing', () => {
-  /** The shared space as an account's rail shows it. By id, because the rail
-   *  starts with the space that account was given. */
   async function inRail(as: string) {
     const { json } = await call(env, '/v1/spaces', { token: as })
     return json.spaces.find((one) => one.id === space)
@@ -608,8 +568,6 @@ describe('the space listing', () => {
   })
 })
 
-/* ── Inviting ─────────────────────────────────────────────────────────── */
-
 describe('an invitation', () => {
   test('puts the person in the space and mails them a link', async () => {
     const sent = await mail(() =>
@@ -640,8 +598,6 @@ describe('an invitation', () => {
   })
 
   test('is waiting for somebody who had no account when it was sent', async () => {
-    // Nobody by this address has ever signed in, so there is no account for the
-    // membership to point at - and it does not point at one.
     await inviteLink('later@example.com', 'write')
 
     const token = await signIn(env, 'later@example.com')
@@ -707,13 +663,10 @@ describe('an invitation', () => {
     })
 
     expect(sent.match(/shared the space Plans with you/g)).toHaveLength(1)
-    // The mail waited; the sharing did not.
     expect((await shareView()).json.members[0]?.role).toBe('write')
   })
 
   test('never says whether the mail went, which would say who else had mailed them', async () => {
-    // The gate is per address across every space there is, so an answer here
-    // would be a way to ask about somebody else's sharing.
     const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
       token: owner,
       body: { email: READER, role: 'read' },
@@ -722,9 +675,6 @@ describe('an invitation', () => {
     expect(json.mailed).toBeUndefined()
   })
 
-  /** The other half of the live 500s: the same unguarded send, on the route that
-   *  had already written the row. An owner was shown a fault of the provider's
-   *  and told nothing had happened, while the person was in fact invited. */
   test('stands, and still says nothing, when the message cannot go', async () => {
     env.MAIL_FROM = 'Nib <nib@nibeditor.com>'
     env.EMAIL = { send: () => Promise.reject(new Error('the sender is not answering')) }
@@ -737,12 +687,8 @@ describe('an invitation', () => {
     quiet.mockRestore()
 
     expect(response.status).toBe(200)
-    // The invitation is the row, and the row is written: the owner can hand the
-    // link over themselves.
     expect(response.json.members.some((one) => one.email === STRANGER)).toBe(true)
 
-    // And the gap the send took is given up, so pressing the button again writes
-    // to the address rather than being held behind a message that never went.
     const gap = env.db
       .prepare('select count(*) as many from mailed where email = ?')
       .get(STRANGER) as { many: number }
@@ -807,14 +753,11 @@ describe('an invitation', () => {
 
     expect((await call<JoinView>(env, `/v1/join/${link}`)).status).toBe(404)
 
-    // The address still opens the space, because the address is what opens it.
     const token = await signIn(env, READER)
     const { json } = await call(env, '/v1/spaces', { token })
     expect(json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
 })
-
-/* ── Roles, one person at a time ──────────────────────────────────────── */
 
 describe('one person’s role', () => {
   beforeEach(async () => {
@@ -899,7 +842,6 @@ describe('one person’s role', () => {
 
     expect(status).toBe(409)
     expect(json.error).toBe('this space is yours')
-    // And nothing about the space changed.
     const { json: rail } = await call(env, '/v1/spaces', { token: owner })
     expect(rail.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
@@ -924,15 +866,7 @@ describe('one person’s role', () => {
   })
 })
 
-/* ── The link ─────────────────────────────────────────────────────────── */
-
-/** The number is on the space rather than on the route that lets somebody in.
- *  An invitation held itself to it and a link did not, so the link was the way
- *  round it - and a space past the number is one whose sheet cannot list the
- *  people in it, which means an owner who can neither see nor take out whoever
- *  came in last. */
 describe('as many people as one space holds', () => {
-  /** Fills the space to the brim, leaving room for `spare` more. */
   function fillMembers(spare = 0) {
     const at = Date.now()
     for (let one = 0; one < MOST_MEMBERS - spare; one++) {
@@ -963,7 +897,6 @@ describe('as many people as one space holds', () => {
     expect(joined.status).toBe(409)
     expect(joined.json.error).toBe('that is as many people as one space holds')
 
-    // And nothing was written, so the space still holds what it held.
     expect((await shareView()).json.members).toHaveLength(MOST_MEMBERS)
   })
 
@@ -972,7 +905,6 @@ describe('as many people as one space holds', () => {
     fillMembers(1)
     await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
 
-    // Full now, and the same person comes back to the same link.
     const again = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
     expect(again.status).toBe(200)
     expect(again.json.space.role).toBe('read')
@@ -1025,7 +957,6 @@ describe('a share link', () => {
     const { json } = await call<JoinView>(env, `/v1/join/${token}`)
 
     expect(json).toMatchObject({ kind: 'link', space: SHARED, role: 'read', asks: false })
-    // Whoever has it, so it names nobody.
     expect(json.email).toBeNull()
   })
 
@@ -1042,7 +973,6 @@ describe('a share link', () => {
     expect(json.requests.map((one) => [one.email, one.role])).toEqual([[STRANGER, 'read']])
     expect(json.members).toEqual([])
 
-    // Waiting is not being in.
     expect((await call(env, `/v1/notes/${note}`, { token: stranger })).status).toBe(404)
   })
 
@@ -1091,12 +1021,6 @@ describe('a share link', () => {
     expect(json.members).toEqual([])
   })
 
-  /** Accepting is the one thing that settles whether somebody has been in, and it
-   *  wrote the role onto a row that was already there without saying so. No route
-   *  reaches that pair today - an invitation takes any waiting request away, and
-   *  the link hands back the space rather than making a request when a membership
-   *  exists - so the state is arranged here, which is what a clause written for a
-   *  conflict has to be held to. */
   test('accepting says they have arrived even over a membership that was waiting', async () => {
     const at = Date.now()
     env.db
@@ -1199,8 +1123,6 @@ describe('a share link', () => {
   })
 })
 
-/* ── What a shared space costs, and who pays ──────────────────────────── */
-
 describe('a note written in a space somebody shared', () => {
   test('counts against the owner of the space rather than the writer', async () => {
     writer = await invite(WRITER, 'write')
@@ -1216,7 +1138,6 @@ describe('a note written in a space somebody shared', () => {
     const mine = await call(env, '/v1/usage', { token: writer })
 
     expect(after.json.used).toBe(before + 500)
-    // Their own account holds what it was given and not a byte of the note.
     expect(mine.json.used).toBe(theirs)
   })
 
@@ -1237,10 +1158,7 @@ describe('a note written in a space somebody shared', () => {
   })
 })
 
-/* ── The files beside the notes ───────────────────────────────────────── */
-
 describe('the PDFs a shared space keeps', () => {
-  /** A PDF on somebody's account, as the blob store holds it. */
   function blobOf(email: string, hash: string) {
     env.db.exec(
       `insert into blobs (hash, user_id, size, type, created_at)
@@ -1266,8 +1184,6 @@ describe('the PDFs a shared space keeps', () => {
     writer = await invite(WRITER, 'write')
     blobOf(WRITER, mine.hash)
 
-    // The writer sends the list as their machine sees it: the owner's paper,
-    // which they are keeping no bytes for, and one of their own.
     const { json } = await files(writer, [theirs, mine])
 
     expect(json.files).toEqual([theirs, mine])
@@ -1283,13 +1199,8 @@ describe('the PDFs a shared space keeps', () => {
   })
 })
 
-/* ── Recently deleted ─────────────────────────────────────────────────── */
-
 describe('recently deleted in a shared space', () => {
   test('stays the owner’s, whoever deleted the note', async () => {
-    // What Recently deleted gives back is storage, and the storage a shared
-    // space uses is its owner's. A writer emptying their own would otherwise
-    // take away somebody else's notes for good.
     writer = await invite(WRITER, 'write')
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: writer })
 
@@ -1310,7 +1221,6 @@ describe('recently deleted in a shared space', () => {
       expect((await call(env, path, { method, token: writer })).status, path).toBe(404)
     }
 
-    // And emptying their own takes nothing of the owner's with it.
     await call(env, '/v1/trash', { method: 'DELETE', token: writer })
     expect((await call(env, '/v1/trash', { token: owner })).json.notes).toHaveLength(1)
 
@@ -1329,8 +1239,6 @@ describe('recently deleted in a shared space', () => {
   })
 })
 
-/* ── The connector ────────────────────────────────────────────────────── */
-
 describe('the connector in a shared space', () => {
   async function connector(session: string): Promise<string> {
     const { json } = await call(env, '/v1/mcp/token', { token: session, body: { readOnly: false } })
@@ -1348,7 +1256,6 @@ describe('the connector in a shared space', () => {
     writer = await invite(WRITER, 'write')
     const said = await tool(await connector(writer), 'list_spaces', {})
 
-    // Its name is the owner's words, so it comes marked (docs/agent-native.md 9.6).
     expect(said.json.result.content[0]?.text).toBe(
       `Notes\n<untrusted source="spaces shared with you">\n${SHARED}\n</untrusted>`,
     )
@@ -1392,7 +1299,6 @@ describe('the connector in a shared space', () => {
 
   test('cannot see a space nobody shared', async () => {
     const said = await tool(await connector(stranger), 'list_spaces', {})
-    // Their own space, and no sign of the one nobody shared with them.
     expect(said.json.result.content[0]?.text).toBe('Notes')
   })
 })

@@ -6,16 +6,11 @@ import { QUOTA } from '../src/storage'
 
 let env: TestEnv
 let token: string
-/** What the account holds before a test uploads anything: a new one is given a
- *  space with a note in it, and what these tests measure is what images add. */
 let start: number
 
-/** A name that is a hash, for the tests that never get as far as the bytes. */
 const HASH = 'a'.repeat(64)
 const OTHER = 'b'.repeat(64)
 
-/** A picture of `size` bytes and the hash it is named by: the same bytes every time
- *  it is asked for, so one test can name the picture it uploaded. */
 const sized = (size: number) => file(size, 7)
 
 beforeEach(async () => {
@@ -26,7 +21,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** Uploads bytes under their hash, the way the editor does after a paste. */
 function upload(
   contents: { bytes: Uint8Array; hash: string },
   options: { token?: string; type?: string } = {},
@@ -63,10 +57,6 @@ describe('storing an image', () => {
     expect(usage.json.used).toBe(start + 4096)
   })
 
-  /** A paste that went up twice at once - the same picture in two notes, saved
-   *  together - found the row already there by the time it wrote and answered with
-   *  a 500, because the check above is a courtesy and the primary key is the rule.
-   *  The other upload's row goes in at the one moment that matters. */
   test('the same picture offered twice at once is one row', async () => {
     const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
     env.justBefore(/insert into blobs/, () => {
@@ -105,9 +95,6 @@ describe('storing an image', () => {
   })
 })
 
-/** Every account that keeps the same file is served one object under its hash, so
- *  the hash is what the bytes have to be: bytes under somebody else's hash were their
- *  picture, or their published site's script, replaced for all of them. */
 describe('bytes under a hash that is not theirs', () => {
   test('are refused', async () => {
     const real = file(64, 1)
@@ -149,8 +136,6 @@ describe('bytes under a hash that is not theirs', () => {
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(script.bytes)
     expect(stored!.httpMetadata?.contentType).toBe('text/javascript')
   })
-  /** What was in the bucket before bytes were checked can be anything under any
-   *  name, and the next account to bring the right bytes for that name mends it. */
   test('are replaced by the bytes the hash names when those arrive', async () => {
     const real = file(64, 1)
     const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
@@ -175,9 +160,6 @@ describe('bytes under a hash that is not theirs', () => {
     expect(stored!.httpMetadata?.contentType).toBe('image/png')
   })
 
-  /** A drawn diagram is the one blob named by something other than its bytes - its
-   *  fence and its space - so the name is all there is to check, and it is a name
-   *  no page prints. What it can never do is write over a drawing already there. */
   test('as a diagram, are kept under its name but never over one already drawn', async () => {
     const key = 'd'.repeat(64)
     const drawing = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>')
@@ -201,12 +183,9 @@ describe('bytes under a hash that is not theirs', () => {
 
     const stored = await env.NOTES.get(`blobs/${key}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
-    // And the stranger is given no row for it: a row is what lets a post name a blob.
     expect(env.db.prepare('select hash from blobs where hash = ?').all(key)).toHaveLength(1)
   })
 
-  /** And a diagram sent with what its name was hashed from is held to that: the
-   *  name has to be the hash of it, in a space the uploader may write in (#518). */
   test('as a diagram with its fence, are kept only under the name that fence makes', async () => {
     const space = (env.db.prepare('select id from spaces limit 1').get() as { id: string }).id
     const fence = { space, language: 'mermaid', scheme: 'light', code: 'graph TD\n  A --> B' }
@@ -231,9 +210,6 @@ describe('bytes under a hash that is not theirs', () => {
     expect((await put(key, fence)).status).toBe(201)
   })
 
-  /** A diagram's name is the hash of a string anybody who reads the page can write,
-   *  so those bytes are a name, never a file: sent as one, they would hash to the
-   *  drawing's name and take its place. */
   test('that spell out a diagram’s name are not the file that name holds', async () => {
     const space = (env.db.prepare('select id from spaces limit 1').get() as { id: string }).id
     const fence = { space, language: 'mermaid', scheme: 'light', code: 'graph TD\n  A --> B' }
@@ -310,12 +286,7 @@ describe('serving an image', () => {
   })
 })
 
-/** A stylesheet and a script are the two types a browser does something with, and
- *  every published site is a host under one shared domain: a script served on all
- *  of them is a script inside all of their origins. So each is served only on the
- *  site whose own pages ask for it. */
 describe('serving what a site is dressed in', () => {
-  /** A space of this account's, published at `field.nibeditor.com`. */
   async function published(): Promise<string> {
     const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
     const space: string = created.json.space.id
@@ -345,7 +316,6 @@ describe('serving what a site is dressed in', () => {
     expect(
       (await call(env, `/i/${sized(64).hash}.js`, { host: 'field.nibeditor.com' })).status,
     ).toBe(200)
-    // Not on anybody else's site, and not on the app's own origin.
     expect(
       (await call(env, `/i/${sized(64).hash}.js`, { host: 'other.nibeditor.com' })).status,
     ).toBe(404)
@@ -389,9 +359,6 @@ describe('giving an image back', () => {
 
     expect((await call(env, `/i/${sized(2048).hash}.png`)).status).toBe(200)
   })
-  /** Somebody else's space shows it, and the bytes are that space's as much as they
-   *  are the uploader's: giving them back hands the row to the space's owner, as
-   *  deleting the account would (erase.ts), rather than leaving a hole in the note. */
   test('hands it to the owner of a space that still uses it, rather than deleting it', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -449,8 +416,6 @@ describe('giving an image back', () => {
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
 
-  /** Another account holding the same bytes is no reason to skip the owner: it may
-   *  hold them as something that is no picture, and give them back in turn. */
   test('hands it over even while a stranger holds the same bytes as something else', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const stranger = await signIn(env, 'stranger@b.dev')
@@ -485,8 +450,6 @@ describe('giving an image back', () => {
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
 
-  /** A note written before its pictures were written down has none yet, until the
-   *  nightly sweep reads it: in a space the asker is in, its body is read instead. */
   test('hands it over from a note the sweep has not read yet', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -523,9 +486,6 @@ describe('giving an image back', () => {
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
 
-  /** Giving a file back is asking to stop paying for it, so nothing is guessed: a space
-   *  with more unread notes than one request reads is not handed the picture on the
-   *  chance it shows it. The asker keeps it until the sweep has read those notes. */
   test('keeps it rather than guessing while a space it writes in is unread', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -584,8 +544,6 @@ describe('giving an image back', () => {
 
 describe('a name that is not a hash', () => {
   test('cannot be given back either', async () => {
-    // The name becomes an object key, so one that could never have been stored
-    // has no business reaching the bucket.
     const response = await call(env, '/v1/blobs/%2e%2e%2fspaces%2fsomebody-else', {
       method: 'DELETE',
       token,
@@ -623,9 +581,6 @@ describe('the quota', () => {
     expect(usage.json.limit).toBe(QUOTA)
   })
 
-  /** Leaving Recently deleted out was the way round the whole limit: fill the
-   *  account, delete the lot, fill it again, and every round put another copy in
-   *  the bucket for a fortnight that nobody was charged for. */
   test('counts a note in Recently deleted, whose bytes are still kept', async () => {
     const space = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
     const note = await call(env, `/v1/spaces/${space.json.space.id}/notes`, {
@@ -637,7 +592,6 @@ describe('the quota', () => {
     await call(env, `/v1/notes/${note.json.note.id}`, { method: 'DELETE', token })
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 5000)
 
-    // Purged is when the bytes have gone, and only then do they stop counting.
     await call(env, `/v1/trash/notes/${note.json.note.id}`, { method: 'DELETE', token })
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
@@ -651,8 +605,6 @@ describe('the quota', () => {
     expect(theirs.json.used).toBe(before)
   })
 
-  /** Each fits on its own and they do not fit together. Both have read the account as
-   *  having room by the time either writes: the row's own insert is what decides. */
   test('lets one of two uploads through when only one fits, however they land', async () => {
     const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
     const size = 4096
@@ -662,7 +614,6 @@ describe('the quota', () => {
     const first = file(size, 1)
     const second = file(size, 2)
 
-    // The other upload lands just as this one, past its own check, is about to write.
     env.justBefore(/insert into blobs/, () => {
       env.db
         .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
@@ -677,7 +628,6 @@ describe('the quota', () => {
   })
 
   test('turns away an image that would not fit', async () => {
-    // Fill the account to the brim first, then offer one more byte.
     const owner = env.db.prepare('select id from users limit 1').get() as { id: string }
     env.db
       .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
@@ -688,10 +638,6 @@ describe('the quota', () => {
   })
 })
 
-/** #784: a writer in a shared space puts a page note's paper there, so the bytes are the
- *  writer's row; the writer deleting their account handed the space's files and
- *  pictures to its owner but not the paper, and the night's sweep took it out of the
- *  bucket. A paper is named by its note's own column, and is handed on like the rest. */
 describe('a writer who deletes their account', () => {
   test('leaves the paper they gave the owner’s page note, handed to the owner', async () => {
     const owner = await signIn(env, 'owner@b.dev')

@@ -1,17 +1,6 @@
-/** Firebase Cloud Messaging, HTTP v1: a message to an Android phone's token.
- *
- *  Sent as data rather than as a notification, so the app is the one to decide what to
- *  show. The Android app has no FCM receiver yet, so nothing reads a data message there:
- *  no ring comes of it, and a phone that set the alarm itself (Reminders.kt) rings that.
- *  `Reminders.known` is what a receiver would ask to stay quiet; nothing calls it today.
- *  Signed in as the project's service account, whose key is the Worker's secret
- *  `FCM_SERVICE_ACCOUNT` (the JSON Google hands out); the hour's access token is kept
- *  for the isolate's life and asked again a minute before it runs out. */
-
 import { pemKey, signedToken } from './keys'
 import type { Delivery } from './send'
 
-/** The fields of a service account key this reads. */
 interface ServiceAccount {
   client_email: string
   private_key: string
@@ -25,7 +14,6 @@ function account(json: string): ServiceAccount | null {
       ? (read as ServiceAccount)
       : null
   } catch {
-    // A secret that is not the key Google hands out: FCM is off, as if unset.
     return null
   }
 }
@@ -70,7 +58,6 @@ async function accessToken(
   return said.access_token
 }
 
-/** One message to one token. A token FCM no longer knows is gone. */
 export async function sendFcm(
   token: string,
   message: Record<string, string>,
@@ -97,11 +84,9 @@ export async function sendFcm(
   if (answer.status === 404) return 'gone'
   if (answer.status === 429 || answer.status === 503) return 'busy'
   const said = await answer.text()
-  // A token that was never one, or one for another app: as gone as one unregistered.
   return answer.status === 400 && /registration token|UNREGISTERED/i.test(said) ? 'gone' : 'failed'
 }
 
-/** Forgets the access token held, for a test that starts from nothing. */
 export function forgetAccess() {
   held = null
 }

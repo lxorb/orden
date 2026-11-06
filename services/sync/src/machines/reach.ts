@@ -1,48 +1,20 @@
-/** Who reaches an online terminal, and as what (docs/online-terminal.md, 4.5 and 4.6).
- *
- *  One statement for both questions there are: the door's, for the session a socket
- *  arrives with, and `Machine`'s, for every socket it holds, asked again each minute so
- *  that a file trashed, moved or unshared closes what it should even when nothing told
- *  the object. Access is keyed by the `.term` file's id and its space as the rows say
- *  now, never by the file's text: a copy pasted elsewhere has another id and no
- *  session, and reaches nothing.
- *
- *  The role is the rooms' (rooms/index.ts): the space's owner, the stronger of a
- *  membership of the space and one of this file, or a link's. The machine's owner
- *  reaches their own session whatever the space says - from a trashed file, or a space
- *  they were taken out of - because it is their machine (4.5). A session made with no
- *  file at all, by an account whose devices are still on sync v1 and so have no file id
- *  to name, is in no space, and reaches its owner and nobody else. */
-
 import type { Env } from '../types'
 import type { SpaceRole, Typing } from '@orden/online'
 
-/** What one person reaches on one terminal. */
 export interface Reached {
   who: string
   term: string
   guest: boolean
-  /** Their role in the file's space, or null. */
   role: SpaceRole | null
-  /** Whether they own the machine the session is on. */
   owns: boolean
   machine: string
   session: string
-  /** The machine's owner. */
   owner: string
   typing: Typing
-  /** Whether the machine's owner is on the allow-list, and what holds the machine. */
   listed: boolean
   held: string | null
 }
 
-/** The statement, around a `pairs (who, term, guest)` it is handed, and the parameter
- *  that names a machine id to narrow to, or empty.
- *
- *  A session made with no file is kept under its own id (`term = session`), and a note's
- *  id is the device's to choose: matched by file, such a session would be reached through
- *  any note a stranger made under that id, as the owner of the space they made it in.
- *  So it is reached by its session alone, and only by its own account. */
 const reach = (pairs: string, machine: string) => `with ${pairs}
 select p.who as who, p.term as term, p.guest as guest,
        case when sp.user_id = p.who and p.guest = 0 then 'owner'
@@ -69,7 +41,6 @@ select p.who as who, p.term as term, p.guest as guest,
   left join guest_members gi on gi.space_id = sp.id and gi.guest_id = p.who and p.guest = 1
                             and gi.item = n.id and gi.joined_at is not null`
 
-/** The door's: the session behind a token (`?1` its hash, `?2` now) and the file. */
 export const DOOR = reach(
   `me as (
   select s.user_id as who, 0 as guest from sessions s where s.token_hash = ?1 and s.expires_at > ?2
@@ -81,12 +52,10 @@ pairs as (select who, ?3 as term, guest from me)`,
   '?4',
 )
 
-/** Whoever the token is, whatever they reach: told apart from reaching nothing. */
 export const WHO = `select s.user_id as who from sessions s where s.token_hash = ?1 and s.expires_at > ?2
   union all
   select g.guest_id as who from guest_sessions g where g.token_hash = ?1 and g.expires_at > ?2`
 
-/** `Machine`'s: every socket's person and file at once, as JSON in `?1`. */
 const AGAIN = reach(
   `pairs as (
   select json_extract(value, '$.who') as who, json_extract(value, '$.term') as term,
@@ -111,8 +80,6 @@ export interface Row {
   held: string | null
 }
 
-/** A row as what it means, or null where it reaches nothing: no role, or a trashed
- *  file for anybody but the machine's owner. */
 export function reachedOf(row: Row): Reached | null {
   const owns = row.owns === 1
   const role = row.role === 'owner' || row.role === 'write' || row.role === 'read' ? row.role : null
@@ -133,7 +100,6 @@ export function reachedOf(row: Row): Reached | null {
   }
 }
 
-/** Every one of these people on these files, as they reach them now. */
 export async function reachAgain(
   env: Env,
   machine: string,

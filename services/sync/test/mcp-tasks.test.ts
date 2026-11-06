@@ -1,8 +1,3 @@
-/** The connector's to-dos and bases, with Orden closed: a list read off the account's
- *  notes, a task added to the inbox, one ticked and moved, a base queried and a row
- *  added where it looks, and every write refused to a token that may only read and in
- *  a space shared to read (docs/tasks.md 5.15). */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
@@ -33,7 +28,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** A `.base` file, which syncs as a file: its bytes kept by their hash. */
 async function baseFile(path: string, yaml: string) {
   const hash = 'b'.repeat(64)
   await env.NOTES.put(`blobs/${hash}`, yaml)
@@ -114,22 +108,18 @@ describe('the to-dos, with Orden closed', () => {
       space: 'Work',
       text: 'Call the bank 📅 2026-10-06',
     })
-    // Orden's own inbox, in the space's hidden folder: no Inbox.md the reader never
-    // made is put at the root of the space (#1044).
     expect(added.at).toMatch(/^\.Inbox\.md#0:/)
     expect(await read(key, '.Inbox.md')).toBe('- [ ] Call the bank 📅 2026-10-06\n')
     expect(await read(key, 'Inbox.md')).not.toContain('Call the bank')
     const { tasks } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
     expect(tasks.map((one) => one.text)).toEqual(['Call the bank'])
 
-    // Sent to the Inbox by name, where no note is called that, it goes there too.
     await json(key, 'add_task', { space: 'Work', text: 'Post the letter', note: 'Inbox' })
     expect(await read(key, '.Inbox.md')).toBe(
       '- [ ] Call the bank 📅 2026-10-06\n- [ ] Post the letter\n',
     )
     expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
 
-    // Into a note and back again, and still no Inbox.md.
     const { tasks: inbox } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
     const letter = inbox.find((one) => one.text === 'Post the letter')
     const moved = await json(key, 'update_task', {
@@ -200,7 +190,6 @@ describe('the to-dos, with Orden closed', () => {
     })
 
     const key = await connector()
-    // Somebody else's words, so inside the mark (docs/agent-native.md 9.6).
     const listed = await tool(key, 'list_tasks', { space: 'Club' })
     const inside = /^<untrusted source="shared space Club">\n(.*)\n<\/untrusted>$/s.exec(listed)
     expect(JSON.parse(inside?.[1] ?? 'null').tasks).toMatchObject([{ text: 'Meet' }])

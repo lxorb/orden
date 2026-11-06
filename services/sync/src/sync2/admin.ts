@@ -1,19 +1,3 @@
-/** Moving accounts to sync v2, and back: the switches docs/sync-v2.md section 11 names,
- *  as requests instead of lines of SQL typed against production.
- *
- *  One account at a time (`/sync-version`): forward is refused while something could
- *  still reach the account with an app that cannot speak v2 well enough, and names it
- *  (gate.ts says what holds a move back). Back is never refused: it is the kill switch,
- *  and a kill switch that can say no is not one. It still names the devices below
- *  `min`, because an app without the rollback fix makes copies on the way back and the
- *  person flipping should know.
- *
- *  Everybody (`/sync-rollout`): the service's switch, `off`, `new` or `all`, and the way
- *  back for every account at once (rollout.ts says what each does).
- *
- *  Reached only by the account `online_service.admin` names, and a 404 for anybody else,
- *  the same door as the online terminal's switches (machines/admin.ts). */
-
 import { Hono, type MiddlewareHandler } from 'hono'
 import { tokenIn } from '../auth'
 import { readBody } from '../body'
@@ -29,7 +13,6 @@ interface Admin {
   Variables: Variables
 }
 
-/** A reading as the answer says it: everything but the account's id. */
 function view(account: Account, min: string, judged: Standing) {
   return { email: account.email, version: account.version, min, ...judged }
 }
@@ -50,7 +33,6 @@ async function askerOf(header: string | undefined): Promise<string | null> {
   return token ? await sha256(token) : null
 }
 
-/** Where one account stands: its version, its devices and what would hold a flip back. */
 syncAdmin.get('/sync-version', async (context) => {
   const email = context.req.query('email') ?? ''
   const allow = new Set(context.req.queries('allow') ?? [])
@@ -69,7 +51,6 @@ syncAdmin.get('/sync-version', async (context) => {
   return context.json(view(account, judged.min, found))
 })
 
-/** The flip itself: `{ email, to, min, allow?, dry? }`. */
 syncAdmin.post('/sync-version', async (context) => {
   const body = await readBody(context)
   const email = body.text('email', 320)
@@ -79,7 +60,6 @@ syncAdmin.post('/sync-version', async (context) => {
   const dry = body.flag('dry') === true
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (!email || (to !== 1 && to !== 2)) return context.json({ error: 'email and to (1 or 2)' }, 400)
-  // Forward needs the caller to say which build is safe; nothing here can know.
   if (to === 2 && !given) return context.json({ error: NEEDS_MIN }, 400)
 
   const judged = minimum(given)
@@ -106,10 +86,8 @@ syncAdmin.post('/sync-version', async (context) => {
   return context.json({ ...shown, version: to, to, changed })
 })
 
-/** The service's switch, the accounts on each version, and the latest moves. */
 syncAdmin.get('/sync-rollout', async (context) => context.json(await rolloutView(context.env)))
 
-/** The switch: `{ mode: 'off' | 'new' | 'all', min? }`. Setting it moves nobody now. */
 syncAdmin.post('/sync-rollout', async (context) => {
   const body = await readBody(context)
   const mode = body.text('mode', 10)
@@ -122,8 +100,6 @@ syncAdmin.post('/sync-rollout', async (context) => {
   return context.json(await rolloutView(context.env))
 })
 
-/** Every v2 account back to 1, and the switch off: `{ everyone: true, dry? }`. The flag
- *  is there so that no body sent here by mistake moves the whole service. */
 syncAdmin.post('/sync-rollout/back', async (context) => {
   const body = await readBody(context)
   const everyone = body.flag('everyone')

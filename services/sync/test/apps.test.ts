@@ -1,7 +1,3 @@
-/** An application's relay and door (issue 1063): the lock between viewers, which is the
- *  online terminal's (locks/sockets.ts), and signalling that only the holder and the host
- *  ever see. */
-
 import { createHash } from 'node:crypto'
 import { subprotocol } from '@orden/rooms'
 import { UNKNOWN_APP } from '@orden/online/apps'
@@ -15,7 +11,6 @@ import { HubState } from './hub-fakes'
 import { MachineSocket } from './machine-fakes'
 
 let env: TestEnv
-/** Whether a test made a database to close. */
 let opened = false
 
 beforeEach(() => {
@@ -401,13 +396,10 @@ describe('an application’s door', () => {
   })
 })
 
-/** What each computer has installed (step 3; apps/catalogue.ts): written by a host for
- *  itself, read by the reader's other devices, behind the door's switch. */
 describe('a host’s catalogue', () => {
   const APPS = {} as unknown as DurableObjectNamespace
   const GIMP = { id: 'org.gimp.GIMP.desktop', name: 'GIMP' }
 
-  /** A signed-in device, bound to its session as its hub's hello binds it. */
   async function device(email: string, id: string): Promise<string> {
     const token = await signIn(env, email)
     const hash = createHash('sha256').update(token).digest('hex')
@@ -484,8 +476,6 @@ describe('a host’s catalogue', () => {
   })
 })
 
-/** The servers a viewer's connection may use (step 4; apps/ice.ts): STUN always, TURN
- *  with the owner's key, behind the door's switch. */
 describe('an application’s ICE servers', () => {
   const APPS = {} as unknown as DurableObjectNamespace
   const on = () =>

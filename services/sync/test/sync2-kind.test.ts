@@ -1,13 +1,3 @@
-/** A note on sync v2 renamed across the two kinds of room, `.md` to `.canvas` or back.
- *
- *  On sync v2 an entry's kind is part of its identity: a rename moves its name and
- *  nothing else, and every device goes on holding the document in the shape the entry
- *  was made as (`shapeOf` in the app's sync2/kinds.ts). The room has to hold the same
- *  shape as those devices, whatever the name now says, and whichever road it is woken
- *  by: a socket, a push, a pull or a whole text handed in. Read by the name instead, a
- *  room woken cold by a push took the words it held as a plane, and its settle wrote an
- *  empty canvas over them (A26-S1). */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
@@ -60,7 +50,6 @@ async function renamed(id: string, name: string) {
   expect(row(id).path).toBe(name)
 }
 
-/** The object the runtime dropped, made again over the same storage. */
 function evict(id: string) {
   const held = rooms.of(id)
   ;(rooms.all() as Map<string, { room: NoteRoom; state: unknown }>).set(id, {
@@ -69,7 +58,6 @@ function evict(id: string) {
   })
 }
 
-/** A device holding a note's words, as its sync v2 engine does. */
 class Words {
   readonly doc = new Y.Doc()
   seq = 1
@@ -163,7 +151,6 @@ describe('a note renamed to a canvas', () => {
 
       await renamed(id, 'Plan.canvas')
       if (!warm) evict(id)
-      // No snapshot in the bucket, so the pull asks the room.
       await env.NOTES.delete(`crdt/${id}`)
 
       const fresh = new Y.Doc()
@@ -405,8 +392,6 @@ describe('a room that holds another kind than its entry', () => {
   test('writes nothing over the file, and starts the next epoch, when a push wakes it', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
-    // What a build that read the kind off the name left behind: the room written down
-    // as a plane, for an entry that is words.
     await join(rooms.of(id).room, { id, spaceId: space, kind: 'plane' })
     await rooms.settle()
     expect(await body(id)).toBe('one\n')
@@ -419,7 +404,6 @@ describe('a room that holds another kind than its entry', () => {
     expect(await body(id)).toBe('one\n')
     expect(row(id).epoch).toBe(2)
 
-    // And the room it starts again as holds the words.
     const fresh = new Y.Doc()
     const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
       docs: [{ id, epoch: 2, sv: Y.encodeStateVector(fresh) }],

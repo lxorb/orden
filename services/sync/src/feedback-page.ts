@@ -1,26 +1,14 @@
-/** A report's page (#1087): what somebody who sent feedback is given back. That it
- *  arrived, how it stands - waiting to be filed, filed, done or not planned - and what
- *  it said, with its pictures. The issue it became is in a private repository, so this
- *  is the one place its sender can see it; see `GET /v1/feedback/:id/:key` in
- *  feedback.ts.
- *
- *  Everything on it came from a person, so all of it is escaped, and the page loads
- *  nothing but its own pictures. */
-
 import { escape } from './email'
 import type { IssueState } from './feedback-issues'
 
 export interface PageReport {
   text: string
   sentAt: number
-  /** Whether its issue has been opened yet. */
   filed: boolean
-  /** How that issue stands, where GitHub said. */
   state: IssueState | null
   images: readonly string[]
 }
 
-/** The one line that says how a report stands. */
 export function standing(report: Pick<PageReport, 'filed' | 'state'>): string {
   if (!report.filed) return 'Received. It is waiting to be filed for the team.'
   if (report.state === 'done') return 'Closed: this has been dealt with.'
@@ -67,8 +55,6 @@ function page(body: string): string {
 </html>`
 }
 
-/** The page, or the one that says there is no such report where the address named
- *  none or its key was wrong; the two are not told apart. */
 export function reportPage(report: PageReport | null): string {
   if (!report) {
     return page(`<h1>No report here</h1>

@@ -3,18 +3,6 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 import { listIn, MOST_BODY_BYTES, objectBody, objectIn } from '../src/body'
 import { MAX_NOTE_BYTES } from '../src/notes'
 
-/** What every route that reads its own fields does with a body, and what every
- *  reader does with a column.
- *
- *  Nine routes had written the same parse out and eight readers the same
- *  try/catch, and each of the nine answers with its own sentence. This holds both
- *  ends of that: one reading, and the sentence each route has always sent - byte
- *  for byte, because the app drops it into a line of its own text.
- *
- *  A backward-compatibility test as much as a refactor's: today's client and last
- *  month's send the same bodies to these routes, and what a route answers a
- *  malformed one with is part of its contract. */
-
 let env: TestEnv
 let token: string
 let space: string
@@ -27,8 +15,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** The bodies a route must refuse: a list, a number, a string, and nonsense. Each
- *  is a client's mistake rather than a field that is wrong. */
 const NOT_OBJECTS: { what: string; raw: string }[] = [
   { what: 'a list', raw: '[1, 2]' },
   { what: 'a number', raw: '7' },
@@ -36,8 +22,6 @@ const NOT_OBJECTS: { what: string; raw: string }[] = [
   { what: 'nothing parseable', raw: '{' },
 ]
 
-/** Every route that reads its own fields out of the body, with the method it takes
- *  and the body an older client sends it. */
 const ROUTES: { name: string; path: () => string; method: string; older: unknown }[] = [
   {
     name: 'PUT /v1/spaces/:id/bookmarks',
@@ -102,7 +86,6 @@ describe('a body that is not an object', () => {
   }
 
   test('and a route that asks for its fields one at a time says so its own way', async () => {
-    // `readBody`'s wording, which is a different set of routes and has not moved.
     const answer = await call(env, '/v1/spaces', { method: 'POST', token, raw: '[1, 2]' })
 
     expect(answer.status).toBe(400)
@@ -124,9 +107,6 @@ describe('the body an older client sends', () => {
   }
 })
 
-/** The one route where an empty body means something. A client asking for a token
- *  without saying anything is asking for a read-only one, and that is how every
- *  build since the route landed has asked. */
 describe('POST /v1/mcp/token', () => {
   test('takes no body at all, and hands back a read-only token', async () => {
     const answer = await call(env, '/v1/mcp/token', { method: 'POST', token })
@@ -160,7 +140,6 @@ describe('POST /v1/mcp/token', () => {
 })
 
 describe('what the one reading answers', () => {
-  /** The smallest thing with a body, which is all `objectBody` asks for. */
   const sent = (json: () => Promise<unknown>) => ({ req: { json: json as never } })
 
   test('the object where a body was one', async () => {
@@ -177,9 +156,6 @@ describe('what the one reading answers', () => {
     expect(await objectBody(sent(() => Promise.reject(new Error('no body'))))).toBeUndefined()
   })
 
-  /** Parsing first and measuring afterwards is how a Worker with a hundred and
-   *  twenty-eight megabytes is asked to hold a hundred - and `/v1/auth/code` takes a
-   *  body from anybody at all. So the length a request declares is read first. */
   test('and null for a body that says it is longer than one, without reading it', async () => {
     let read = 0
     const long = {
@@ -209,9 +185,6 @@ describe('what the one reading answers', () => {
     expect(await objectBody(held(MOST_BODY_BYTES))).toEqual({ a: 1 })
   })
 
-  /** The longest field any body carries is a note, so the ceiling has to be above
-   *  it: the two are in different modules and a note could otherwise grow past the
-   *  body that has to hold it. */
   test('and the ceiling leaves room for the longest note', () => {
     expect(MOST_BODY_BYTES).toBeGreaterThan(MAX_NOTE_BYTES)
   })
@@ -235,8 +208,6 @@ describe('what a stored column reads as', () => {
     expect(objectIn(undefined)).toBeNull()
   })
 
-  /** A column nobody can read must not reach a caller as something it can walk:
-   *  `JSON.parse('null')` is a successful parse of nothing. */
   test('and a column that says null is not an object', () => {
     expect(objectIn('null')).toBeNull()
     expect(listIn('null')).toBeNull()

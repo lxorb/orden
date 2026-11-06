@@ -1,8 +1,3 @@
-/** What a note's body counts as showing a picture: only what the renderer draws as
- *  one. A hash written anywhere else - in code, in prose, in a comment - is somebody
- *  naming it, and a deleted account must not hand its bytes to whoever did; see
- *  src/pictures.ts and src/erase.ts. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { picturesOf } from '../src/pictures'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
@@ -17,7 +12,6 @@ describe('the pictures a body shows', () => {
     expect([...picturesOf(`<img alt="x" src="${URL}">`)]).toEqual([HASH])
   })
 
-  /** Every way the app itself puts a picture in a note, a canvas or a cover. */
   test.each([
     ['a picture in a list item', `- item\n\n    ![](${URL})\n`],
     ['a picture in a nested list', `- a\n    - b ![](${URL})\n`],
@@ -92,10 +86,6 @@ describe('the pictures a body shows', () => {
   })
 })
 
-/** In a note whose HTML is live - a space nobody else is in, where the renderer draws
- *  raw HTML as markup - every address anywhere in that HTML counts, however a browser
- *  would come to load it: over-counting there keeps the owner's own bytes and nothing
- *  else. Anywhere else, and in prose, the strict reading above stands. */
 describe('the pictures of a note whose HTML is live', () => {
   const split = `https://nibeditor.com/i/${HASH.slice(0, 32)}`
   test.each([

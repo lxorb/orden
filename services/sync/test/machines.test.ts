@@ -1,7 +1,3 @@
-/** The online terminal's server side (docs/online-terminal.md, 4.4 to 4.9): the routes
- *  and the door against real SQL, and `Machine` driven through a fake host with the
- *  alarm moved by the clock. */
-
 import { mayType } from '@orden/online'
 import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -17,9 +13,6 @@ import { doorway, fire, join, machine, type MachineSocket, nibd, say } from './m
 
 const DEVICE = 'device-laptop'
 
-// A socket refused at the door is a 101 with a socket in it, which only the runtime can
-// make: here it is a 200 that names its refusal and the protocol it names back. What the
-// socket says is refuse.test.ts's.
 vi.mock('../src/machines/refuse', async (real) => ({
   ...(await real<typeof import('../src/machines/refuse')>()),
   refusedSocket: (error: string, protocol: string) =>
@@ -29,17 +22,12 @@ vi.mock('../src/machines/refuse', async (real) => ({
     }),
 }))
 
-/** What the door refused a socket with, or null for one it let through. */
 const refusal = (answer: { headers: Headers }) => answer.headers.get('x-refused')
 
-/** Everybody 4.6's table is about: the machine's owner (who owns the space too), a
- *  writer and a reader of the space, and a guest at each role. */
 const OWNER = 'owner@example.com'
 const WRITER = 'writer@example.com'
 const READER = 'reader@example.com'
 
-/** What a Worker set up for Hetzner machines has (4.15); the values are never used, since
- *  every host here is a fake. */
 const HETZNER = {
   HETZNER_TOKEN: 'hetzner-token',
   MACHINE_TUNNEL_TOKEN: 'tunnel-token',
@@ -67,8 +55,6 @@ function allow(email: string) {
   env.db.prepare('update users set online = 1 where email = ?').run(email)
 }
 
-/** The owner's space with one `.term` file in it, a writer and a reader in it, and two
- *  guests let in by links. Answers the guests' tokens. */
 async function world(): Promise<{
   owner: string
   writer: string
@@ -124,12 +110,6 @@ const knock = (term: string, token: string) =>
     },
   })
 
-/** The clock every test runs on: the date, and the timers a `Machine` sets. A linked
- *  machine pings `nibd` every `PING_EVERY` for as long as it lives, and a test's machine
- *  is never put away: on the real timers its heartbeat went on after the test, found the
- *  link quiet by the real date, and wrote its recovery into a database already closed
- *  (an unhandled rejection that failed CI, issue 208). On these it never fires unless a
- *  test moves the clock, and `useRealTimers` drops it before the database goes. */
 beforeEach(() => {
   vi.useFakeTimers({
     toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
@@ -171,8 +151,6 @@ describe('the allow-list and the switches', () => {
         "insert into users (id, email, created_at) values ('78180341-d10b-4bea-92dc-f327035ebfac', 'e@x.ch', 1)",
       )
       .run()
-    // The migration ran before the row existed here; on the real database the row was
-    // there first. What it names is the id, which is what is checked.
     const admin = env.db.prepare("select value from online_service where key = 'admin'").get() as {
       value: string
     }
@@ -265,7 +243,6 @@ describe('the door', () => {
     const name = door.asked[0]?.headers.get('x-nib-device-name') ?? ''
     expect(decodeURIComponent(name)).toBe('Emil’s MacBook')
 
-    // The same id named by somebody else's socket is not their device.
     door.asked.length = 0
     await knock('term-1', writer)
     expect(door.asked[0]?.headers.get('x-nib-device-name')).toBe('')
@@ -310,7 +287,6 @@ describe('the door', () => {
       guestRead: { role: 'read', owns: 'no', guest: 'yes', typing: 'owner' },
     })
 
-    // 4.6's table, both settings of `typing`, for each of the five.
     const types = (typing: 'owner' | 'writers') =>
       Object.fromEntries(
         Object.entries(seen).map(([name, one]) => [
@@ -363,7 +339,6 @@ describe('the door', () => {
     expect(door.asked[0]?.headers.get('x-nib-session')).toBe(alone.json.session)
     expect(refusal(await knock(alone.json.session, writer))).toBe('gone')
 
-    // Not on the list, not even that.
     const stranger = await session('stranger@example.com')
     expect((await call(env, '/v2/online/terms', { token: stranger, body: {} })).json).toEqual({
       error: 'list',
@@ -390,19 +365,15 @@ describe('the door', () => {
     const stranger = await session('stranger@example.com')
     const refused = await knock('term-1', stranger)
     expect(refusal(refused)).toBe('gone')
-    // Named back by its device, never by its token.
     expect(refused.headers.get('sec-websocket-protocol')).toBe(`nib.device.${DEVICE}`)
   })
 
-  /** 2026-10-07: a tab whose session was gone - its machine replaced - was answered 404,
-   *  which a page reads as a dropped socket and tries again, silently and forever. */
   test('a session ended, or never made, is gone, on a socket the app can read', async () => {
     const { owner } = await made()
     env.db.prepare("update term_sessions set ended_at = 1 where term = 'term-1'").run()
     door.asked.length = 0
     expect(refusal(await knock('term-1', owner))).toBe('gone')
     expect(refusal(await knock('never-1', owner))).toBe('gone')
-    // The machine is never asked about a session that is not there.
     expect(door.asked).toEqual([])
   })
 
@@ -427,7 +398,6 @@ describe('the door', () => {
     expect(door.asked[0]?.id).toBe(term.machine)
   })
 
-  /** What the machines were told about sign-ins that ended: which, to whom. */
   const signedOut = () =>
     door.asked
       .filter((one) => one.headers.get('x-nib-machine') === 'signedout')
@@ -464,12 +434,10 @@ describe('the door', () => {
     await call(env, `/v1/sessions/${laptop}`, { method: 'DELETE', token: phone })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(owner)] }])
 
-    // A writer watching the owner's terminal, signing out of their own account.
     door.asked.length = 0
     await call(env, '/v1/auth/signout', { method: 'POST', token: writer })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(writer)] }])
 
-    // A device of the owner's, ended from the devices list.
     const tablet = await session(OWNER)
     const tabletSession = (
       env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(tablet)) as {
@@ -534,7 +502,6 @@ describe('the door', () => {
       expect.objectContaining({ term: null, session: 's_orphan', program: 'sleep', alive: true }),
     ])
 
-    // A machine that could not be asked says nothing of any, rather than that none runs.
     door.answers.set('sessions', { sessions: null })
     const blind = await call<{ terms: Record<string, unknown>[] }>(env, '/v2/online/terms', {
       token: owner,
@@ -569,11 +536,8 @@ describe('the door', () => {
         body: { term: id, session: term.session },
       })
 
-    // A copy while the file it was made for is still there: a session of its own.
     expect((await ask('copy-1')).json.session).not.toBe(term.session)
 
-    // Moved: the file it was made for is gone, and the new one, with a new id and the
-    // same words, is the same session, the shell in it going on.
     env.db
       .prepare(
         `insert into notes (id, space_id, path, seq, updated_at, size, hash)
@@ -614,9 +578,6 @@ describe('the door', () => {
   })
 })
 
-/** 2026-10-07: under v2 a `.term` made on sync v1 was asked for by its file's id, which
- *  no row had, so it got a new shell beside the old one, which went on counting toward
- *  the eight. The file's words name the old one; its owner adopts it. */
 describe('a session made on sync v1, asked for by its file under v2', () => {
   interface Term {
     v: number
@@ -625,7 +586,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
   }
   const live = () =>
     env.db.prepare('select term, session from term_sessions where ended_at is null').all()
-  /** What a session's row is keyed by now. */
   const keyOf = (session: string) =>
     (
       env.db.prepare('select term from term_sessions where session = ?').get(session) as {
@@ -651,7 +611,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(asked.json).toEqual(old)
     expect(live()).toEqual([{ term: 'term-1', session: old.session }])
 
-    // Asked again, by the file alone or with its words, the same.
     expect(
       (await call(env, '/v2/online/terms', { token: owner, body: { term: 'term-1' } })).json,
     ).toEqual(old)
@@ -665,7 +624,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     ).toEqual(old)
     expect(live()).toHaveLength(1)
 
-    // The file's people reach it by the file now; by the session, its owner alone.
     door.asked.length = 0
     expect((await knock('term-1', writer)).status).toBe(200)
     expect(door.asked[0]?.headers.get('x-nib-session')).toBe(old.session)
@@ -685,7 +643,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(door.asked[0]?.headers.get('x-nib-session')).toBe(old.session)
     expect(door.asked[0]?.headers.get('x-nib-owns')).toBe('yes')
 
-    // `Machine`'s minute check keeps the socket it already holds.
     const again = await reachAgain(env, old.machine, [
       { who: idOf(OWNER), term: old.session, guest: false },
     ])
@@ -707,9 +664,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(keyOf(old.session)).toBe('term-1')
   })
 
-  /** Re-audit B202: a writer who opened the owner's file first had a session made on
-   *  their own machine and wrote it into the file, and the owner's own was refused as
-   *  `gone`, the shell in it cut off from its file. */
   test('is never somebody else’s to adopt, nor taken over by opening the file first', async () => {
     const { owner, writer, v1: old } = await v1()
     allow(WRITER)
@@ -722,7 +676,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(keyOf(old.session)).toBe(old.session)
     expect(live()).toHaveLength(1)
 
-    // The owner's own, after, is the session as it was; the writer joins it by the file.
     const mine = await call<Term>(env, '/v2/online/terms', {
       token: owner,
       body: { term: 'term-1', session: old.session },
@@ -810,10 +763,6 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
   })
 })
 
-/** A `.term` file purged from Recently deleted ends its session (4.5): deleting it leaves
- *  the shell running, and emptying the trash, by the button, by the nightly job, with its
- *  space or with the account that owned the space, is what ends it. Before, every purge
- *  left the row live, so the shell ran on out of reach and counted toward the eight. */
 describe('emptying the trash of a .term file', () => {
   interface Term {
     v: number
@@ -831,8 +780,6 @@ describe('emptying the trash of a .term file', () => {
       .filter((one) => one.headers.get('x-nib-machine') === 'end')
       .map((one) => ({ machine: one.id, session: one.headers.get('x-nib-session') }))
 
-  /** The owner's session for `term-1`, and the writer's own for `copy-1`, on their own
-   *  machine in the owner's space. */
   async function two() {
     const people = await world()
     serviceOn()
@@ -864,7 +811,6 @@ describe('emptying the trash of a .term file', () => {
     expect(endedAt('copy-1')).toBeNull()
     expect(ends()).toEqual([{ machine: mine.machine, session: mine.session }])
 
-    // The writer's, in the same space, ends with its own file, on the writer's machine.
     await call(env, '/v1/trash', { token: owner, method: 'DELETE' })
     expect(endedAt('copy-1')).not.toBeNull()
     expect(ends().at(-1)).toEqual({ machine: theirs.machine, session: theirs.session })
@@ -911,10 +857,6 @@ describe('emptying the trash of a .term file', () => {
   })
 })
 
-/** A session made with no file is kept under its own id, and a note's id is the
- *  device's to choose: a stranger who learns the id (it is in an old `.term` file's
- *  words) and makes a note of that id in a space of their own reaches nobody's session
- *  through it, and ends nobody's by emptying that note out of the trash. */
 describe('a note made under a session’s own id', () => {
   async function stranded() {
     const people = await world()
@@ -1012,8 +954,6 @@ describe('a machine', () => {
     expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
     expect(machineRow().state).toBe('awake')
 
-    // Woken before the socket said its size, so the session opens at the default and
-    // takes the owner's size from their hello, before anybody typed.
     await say(running, socket, { t: 'hello', cols: 120, rows: 40 })
     expect(running.host.link_?.take()).toEqual([
       { t: 'open', session: 'session-1', cols: 80, rows: 24 },
@@ -1023,8 +963,6 @@ describe('a machine', () => {
     ])
   })
 
-  /** What the app's terminal reads as a boot that failed (lib/online/arrival.svelte.ts):
-   *  starting, then asleep with `restart`, on the socket that asked. */
   test('a start the host refuses tells the socket, which may ask again', async () => {
     const running = await machine(env, ID, user)
     running.host.failStart = true
@@ -1061,8 +999,6 @@ describe('a machine', () => {
     await nibd(running, { t: 'out', session: 'session-1', seq: 5, data: bytes(' world') })
     expect(owner.bytes).toHaveLength(2)
 
-    // A reader arriving later, having drawn nothing, gets a screen from nibd, then what
-    // follows it, and nothing twice.
     const reader = await join(running, { who: 'reader' })
     await say(running, reader, { t: 'hello', cols: 80, rows: 24 })
     await nibd(running, {
@@ -1079,15 +1015,9 @@ describe('a machine', () => {
     ])
     expect(reader.bytes).toHaveLength(1)
     expect(owner.bytes).toHaveLength(3)
-    // The owner, there from the start, was sent a cleared screen before the stream
-    // from its first byte, and not the reader's screen.
     expect(owner.of('screen')).toEqual([{ t: 'screen', seq: 0, cols: 80, rows: 24, data: '' }])
   })
 
-  /** `open` on a session whose shell ended starts it again in `nibd` (nibd.ts), which is
-   *  `start`'s to ask for, and `start` is refused to whoever may not type. A reader or a
-   *  link's guest opening the terminal, or coming back to it, watches the ended shell;
-   *  it does not start the owner's program again. */
   test('a watcher arriving on an ended session does not start it again', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1104,7 +1034,6 @@ describe('a machine', () => {
     expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([])
     expect(reader.of('ended')).toEqual([{ t: 'ended', code: 0 }])
 
-    // Its owner coming back does, as before.
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([
       { t: 'open', session: 'session-1', cols: 80, rows: 24 },
@@ -1178,7 +1107,6 @@ describe('a machine', () => {
     const queried = vi.spyOn(env.DB, 'prepare')
     const socket = owner as unknown as WebSocket
 
-    // Neither is awaited: each key is down the link before its handler yields once.
     void running.machine.webSocketMessage(socket, JSON.stringify({ t: 'in', data: 'a' }))
     void running.machine.webSocketMessage(
       socket,
@@ -1190,7 +1118,6 @@ describe('a machine', () => {
       { t: 'in', session: 'session-1', data: new TextEncoder().encode('b') },
     ])
 
-    // And the echo out to every socket the same way.
     void running.machine.fromNibd({
       t: 'out',
       session: 'session-1',
@@ -1201,7 +1128,6 @@ describe('a machine', () => {
     expect(watcher.bytes).toHaveLength(1)
 
     for (const spy of [...touched, queried]) expect(spy).not.toHaveBeenCalled()
-    // Who typed is news to the others, never a frame per key back to the typist.
     expect(owner.of('typed')).toEqual([])
     expect(watcher.of('typed')).toHaveLength(2)
   })
@@ -1328,7 +1254,6 @@ describe('a machine', () => {
     const reader = await join(running, { who: idOf(READER), role: 'read' })
     env.db.prepare('delete from space_members where email = ?').run(READER)
 
-    // Keep it busy so the minute does not also put it to sleep.
     await nibd(running, {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0, net: 0, homeBytes: 1000 },
@@ -1347,7 +1272,6 @@ describe('a machine', () => {
       activity: { at: Date.now(), output: 10, cpu: 0.5, net: 0, homeBytes: 4096 },
     })
 
-    // Working, then watched: awake each minute until fifteen minutes of neither.
     for (let minute = 1; minute <= 15; minute++) {
       vi.setSystemTime(Date.now() + 60_000)
       await fire(running)
@@ -1396,7 +1320,6 @@ describe('a machine', () => {
 
     await running.machine.sleep('stopped')
     running.host.calls.length = 0
-    // Thirty-one days on, the snapshot is gone: a fresh system, the home put back.
     env.db
       .prepare('update machines set snapshot_at = ? where id = ?')
       .run(Date.now() - 31 * 24 * 3600_000, ID)
@@ -1404,8 +1327,6 @@ describe('a machine', () => {
     expect(running.host.calls[0]).toBe('start machine')
     expect(running.host.calls[1]).toMatch(/^restore backup .*backup-1/)
   })
-
-  /* ── Health (2026-10-06: a frozen terminal, a stuck start, failed saves) ── */
 
   const events = () =>
     env.db
@@ -1417,12 +1338,9 @@ describe('a machine', () => {
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
 
-    // Answering pings, the link stays.
     await vi.advanceTimersByTimeAsync(QUIET_FOR * 2)
     expect(running.host.calls).toEqual(['start machine', 'link'])
 
-    // Frozen: no pong, nothing else either. Found out within 25 seconds (issue 208: it
-    // was up to 55).
     const frozen = running.host.link_
     if (frozen) frozen.silent = true
     await vi.advanceTimersByTimeAsync(25_000)
@@ -1433,12 +1351,9 @@ describe('a machine', () => {
       { t: 'link', up: false },
       { t: 'link', up: true },
     ])
-    // The machine never stopped being awake, so no terminal says it is starting (issue
-    // 962: every relink showed "Starting machine…" over every live screen).
     const states = owner.of('machine').map((one) => one.state)
     expect(states.slice(states.indexOf('awake') + 1)).toEqual([])
     expect(await running.machine.state()).toBe('awake')
-    // Every session somebody is on is opened on the new link and sent its screen.
     expect(running.host.link_?.take()).toEqual(
       expect.arrayContaining([
         { t: 'open', session: 'session-1', cols: 80, rows: 24 },
@@ -1466,11 +1381,8 @@ describe('a machine', () => {
       'link',
     ])
     expect(await running.machine.state()).toBe('awake')
-    // Starting until it is back, and never asleep on the way.
     const states = owner.of('machine').map((one) => one.state)
     expect(states.slice(states.indexOf('awake') + 1)).toEqual(['starting', 'starting', 'awake'])
-    // The relink that failed said only that the link dropped; the restart is what
-    // starts, and says so.
     expect(owner.of('link')).toEqual([{ t: 'link', up: false }])
     expect(events()).toEqual(
       expect.arrayContaining([
@@ -1491,8 +1403,6 @@ describe('a machine', () => {
     })
     const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     try {
-      // The heartbeat's recovery is nobody's to await: what it throws must not escape it
-      // (an unhandled rejection), and must not stop it before the restart.
       await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
       expect(running.host.calls.slice(-3)).toEqual([
         'restore snapshot snap-1',
@@ -1514,7 +1424,6 @@ describe('a machine', () => {
   test('a terminal opened while the link is gone makes it again at once', async () => {
     const running = await machine(env, ID, user)
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-    // The object restarted (a deploy): its storage says awake, it holds no link.
     const again = { ...running, machine: new Machine(running.state as never, env, running.host) }
     const owner = await join(again, { who: user, owns: true, role: 'owner' })
     await say(again, owner, { t: 'hello', cols: 80, rows: 24 })
@@ -1522,7 +1431,6 @@ describe('a machine', () => {
       expect(owner.of('link').at(-1)).toEqual({ t: 'link', up: true })
     })
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
-    // The link, not the machine: nothing said it was starting (issue 962).
     expect(owner.of('machine')).toEqual([{ t: 'machine', state: 'awake' }])
   })
 
@@ -1547,7 +1455,6 @@ describe('a machine', () => {
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     expect(await running.machine.state()).toBe('awake')
     expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
-    // No shell is started in a home about to be replaced.
     expect(running.host.link_?.take().filter((one) => one.t === 'open')).toEqual([])
 
     await vi.advanceTimersByTimeAsync(120_000)
@@ -1578,7 +1485,6 @@ describe('a machine', () => {
           'backup: SandboxProtocolError SANDBOX_PROTOCOL_ERROR sandbox-shim returned truncated control data at ~',
       },
     ])
-    // The snapshot went first, and was kept.
     expect(running.host.calls.indexOf('snapshot')).toBeLessThan(
       running.host.calls.indexOf('backup /home/nib'),
     )
@@ -1690,7 +1596,6 @@ describe('a machine', () => {
     await nibd(running, { t: 'browse', session: 'session-1', url })
     expect(laptop.of('browse')).toHaveLength(1)
 
-    // Another session's program reaches nobody here.
     await nibd(running, { t: 'browse', session: 'session-2', url })
     expect(laptop.of('browse')).toHaveLength(1)
     expect(phone.of('browse')).toHaveLength(1)
@@ -1723,7 +1628,6 @@ describe('a machine', () => {
     expect(writer.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect(running.host.link_?.take()).toEqual([])
 
-    // Anywhere but this machine's loopback is no callback at all.
     await say(running, owner, { t: 'callback', url: 'http://10.0.0.1:80/admin' })
     expect(running.host.link_?.take()).toEqual([])
 
@@ -1858,7 +1762,6 @@ describe('a machine on a server of its own', () => {
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     expect(await running.machine.state()).toBe('awake')
 
-    // Nobody here and nothing working for an hour: a container would have slept.
     socket.close()
     for (let minute = 1; minute <= 60; minute++) {
       vi.setSystemTime(Date.now() + 60_000)
@@ -1938,14 +1841,12 @@ describe('a machine on a server of its own', () => {
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
 
-    // Quiet once: linked again, nothing restarted.
     const first = running.host.link_
     if (first) first.silent = true
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
     expect(running.host.link_?.sent.some((frame) => frame.t === 'restart')).toBe(false)
 
-    // Quiet again a minute later: the fresh link carries a restart.
     const second = running.host.link_
     if (second) second.silent = true
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
@@ -1955,14 +1856,11 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
   })
 
-  /** Issue 208: a `nibd` that ended (a Restart, its watchdog, an update) is back in about
-   *  three seconds, and was looked for again only ten seconds after the first try. */
   test('a nibd that ended is linked again within seconds of being back', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
 
-    // Still starting again when the link closes: the first try finds nothing.
     running.host.failLinks = 1
     running.host.link_?.close()
     await vi.waitFor(async () => {
@@ -2001,9 +1899,6 @@ describe('a machine on a server of its own', () => {
     expect(gaps.at(-1)).toBe(10_000)
   })
 
-  /** Issue 208: a link that closed - the edge, the tunnel, a deploy - counted toward
-   *  "quiet again", and the second within five minutes restarted nibd, ending every
-   *  shell on the machine. */
   test('a link that closes twice in a minute is made again both times, and nibd keeps its shells', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -2028,7 +1923,6 @@ describe('a machine on a server of its own', () => {
     running.host.failLinks = 1000
     await vi.advanceTimersByTimeAsync(QUIET_FOR + PING_EVERY)
     expect(await running.machine.state()).toBe('starting')
-    // No snapshot, no stop: the server keeps everything while it is waited for.
     expect(running.host.calls).not.toContain('snapshot')
     expect(running.host.calls).not.toContain('stop')
 
@@ -2083,7 +1977,6 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
     expect(running.host.link_?.sent).toContainEqual({ t: 'close', session: 'session-1' })
 
-    // Said once: the link after that one has nothing more to end.
     const said = running.host.link_
     said?.close()
     await vi.waitFor(() => {
@@ -2109,7 +2002,6 @@ describe('a machine on a server of its own', () => {
     await nibd(running, { t: 'sessions', sessions })
     expect(await (await asked).json()).toEqual({ sessions })
 
-    // nibd that never answers is not waited on for ever.
     const unanswered = ask()
     await vi.advanceTimersByTimeAsync(3_000)
     expect(await (await unanswered).json()).toEqual({ sessions: null })
@@ -2155,7 +2047,6 @@ describe('a machine on a server of its own', () => {
   })
 
   test('the cost gate: a server is made only while its price fits under the ceiling', async () => {
-    // Paid for already: a spent budget never keeps its owner from it.
     env.db
       .prepare(
         "insert into machine_usage (user_id, month, awake_s, mem_gib_s) values ('someone', '2026-10', 1, 1e9)",
@@ -2164,12 +2055,10 @@ describe('a machine on a server of its own', () => {
     await knock('term-1', owner)
     expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('yes')
 
-    // No server yet: the spent budget refuses one.
     env.db.prepare('update machines set server_id = null where id = ?').run(ID)
     await knock('term-1', owner)
     expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('budget')
 
-    // The month's fixed prices count: thirty servers at €14.50 are past $30.
     env.db.prepare('delete from machine_usage').run()
     const { budgetLeft, mayCost } = await import('../src/machines/budget')
     expect(await budgetLeft(env, 30, Date.now())).toBeCloseTo(30)
@@ -2208,7 +2097,6 @@ describe('a machine on a server of its own', () => {
       'CF_ACCOUNT_ID',
       'CF_ZONE_ID',
     ])
-    // A Cloudflare machine is not touched by any of it.
     bare.db.prepare("update machines set host = 'cloudflare' where id = 'm_1'").run()
     expect(await whyNotWake(bare, 'u1', Date.now())).toBeNull()
     bare.close()
@@ -2265,7 +2153,6 @@ describe('a machine on a server of its own', () => {
     expect(asked()?.get('x-nib-host')).toBe('cloudflare')
     expect((await admin(`/machines/${ID}/host`, { host: 'aws' })).status).toBe(400)
 
-    // The key opens port 22 on the server's firewall, and taking it away closes it.
     const { Cloud } = await import('./hetzner-cloud')
     const cloud = new Cloud()
     cloud.firewalls.push({ id: 5, name: 'nib-server', labels: { 'nib-machine': ID }, rules: [] })
@@ -2338,7 +2225,6 @@ describe('the hub’s machine frame', () => {
     expect(hubFrameOf({ t: 'machine', state: 'awake' })).toEqual({ t: 'machine', state: 'awake' })
     expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
 
-    // A session made or ended: every device of the owner's asks Settings' list again.
     await made.fetch(
       new Request('https://hub.invalid/terms', { headers: { 'x-nib-hub': 'terms' } }),
     )
@@ -2385,7 +2271,6 @@ describe('one device at a time (issue 1055)', () => {
 
   type Running = Awaited<ReturnType<typeof machine>>
 
-  /** The owner on one of their devices, the terminal open on it. */
   async function on(running: Running, device: string, since?: number): Promise<MachineSocket> {
     const socket = await join(
       running,
@@ -2424,7 +2309,6 @@ describe('one device at a time (issue 1055)', () => {
     expect(laptop.bytes).toHaveLength(1)
     expect(phone.bytes).toHaveLength(0)
 
-    // Its keys, its size and its new shell go nowhere.
     await say(running, phone, { t: 'in', data: 'rm -rf ~\r' })
     await running.machine.webSocketMessage(phone as unknown as WebSocket, new ArrayBuffer(3))
     await say(running, phone, { t: 'size', cols: 40, rows: 10 })
@@ -2446,7 +2330,6 @@ describe('one device at a time (issue 1055)', () => {
     ])
     expect(hold(running)?.device).toBe('phone')
 
-    // The phone says hello again and is sent what it missed; nothing restarts.
     await say(running, phone, { t: 'hello', cols: 40, rows: 20, hold: true })
     const told = running.host.link_?.take() ?? []
     expect(told).toContainEqual({ t: 'want', session: 'session-1', since: 0 })
@@ -2456,7 +2339,6 @@ describe('one device at a time (issue 1055)', () => {
     expect(phone.bytes).toHaveLength(1)
     expect(laptop.bytes).toHaveLength(1)
 
-    // The laptop's keys go nowhere now; Take back makes it the holder again.
     await say(running, laptop, { t: 'in', data: 'x' })
     expect(running.host.link_?.take()).toEqual([])
     await say(running, laptop, { t: 'take' })
@@ -2545,14 +2427,12 @@ describe('one device at a time (issue 1055)', () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
 
-    // Beating: still there, however long.
     vi.setSystemTime(Date.now() + 10 * 60_000)
     laptop.beatAt = new Date()
     const phone = await on(running, 'phone')
     expect(phone.of('held')).toHaveLength(1)
     expect(laptop.closedWith).toBeNull()
 
-    // Silent past HOLD_QUIET: closed, and the session free once its grace is over.
     vi.setSystemTime(Date.now() + HOLD_QUIET + 1_000)
     phone.beatAt = new Date()
     await say(running, phone, { t: 'hello', cols: 80, rows: 24, hold: true })
@@ -2584,7 +2464,6 @@ describe('one device at a time (issue 1055)', () => {
     expect(older.of('held')).toEqual([])
     expect(reader.bytes).toHaveLength(1)
     expect(older.bytes).toHaveLength(1)
-    // A reader cannot take it over.
     await say(running, reader, { t: 'take' })
     expect(reader.of('refused')).toEqual([{ t: 'refused', error: 'role' }])
     expect(hold(running)?.device).toBe('laptop')

@@ -4,29 +4,13 @@ import { note } from './failed'
 import { mailCeilings, mailNotSent, type MailRefusal } from './limits'
 import type { EmailSender, Env } from './types'
 
-/** How long an address waits between two messages about sharing. The same gap
- *  the sign-in code keeps, and kept per address for the same reason: it is the
- *  person receiving it who is being protected, whoever asked for the send. */
 const MAIL_GAP = 30 * 1000
 
-/** Whether a message may go, and why not when it may not. A refusal is meant
- *  to be answered; null with `ok` false is the gap below, or a ceiling on the
- *  address, which keep their silence on purpose. */
 export interface Mailable {
   ok: boolean
   refusal: MailRefusal | null
 }
 
-/** Whether this address may be written to now, marking it as written to when it
- *  may. One call rather than a question and an answer, so nothing can ask, be
- *  told no, and send anyway.
- *
- *  For a message somebody causes to somebody else: an invitation, an owner told
- *  that somebody is waiting. The gap this one address keeps is asked first, so a
- *  message held back by it costs nothing against any ceiling. Then the ceilings
- *  in limits.ts, where the ones about the service and the asker have something to
- *  say and the ones about the address have not - for the gap's reason: a sentence
- *  would tell whoever asked that somebody else had been writing to that address. */
 export async function mayMail(
   env: Env,
   address: string,
@@ -41,10 +25,6 @@ export async function mayMail(
   const refusal = await mailCeilings(env, address, machine)
   if (refusal) return { ok: false, refusal: refusal.aboutTheAddress ? null : refusal }
 
-  // Rows past the gap say nothing any more, so they go as new ones arrive - the
-  // way the sessions and the sign-in codes are cleared. One row per address ever
-  // written to would otherwise be kept for ever to answer a question about the
-  // last thirty seconds.
   await env.DB.prepare('delete from mailed where sent_at < ?')
     .bind(now() - MAIL_GAP)
     .run()
@@ -59,20 +39,11 @@ export async function mayMail(
   return { ok: true, refusal: null }
 }
 
-/** Takes back what `mayMail` wrote, for a message that then did not go.
- *
- *  The row is there so one address is not written to twice in half a minute. A
- *  message that never left the building wrote to nobody, and a row left behind
- *  for it would answer the next try with the gap's silent no - so whoever asked
- *  would press the button again, be told nothing, and still receive nothing. The
- *  ceilings give back what they counted, for the same reason. */
 export async function forgetMailed(env: Env, address: string): Promise<void> {
   await env.DB.prepare('delete from mailed where email = ?').bind(address).run()
   await mailNotSent(env, address)
 }
 
-/** A refusal as the service answers it: the sentence, the status, and when to
- *  come back where that is known. */
 export function refusedMail(
   context: Context,
   refusal: { error: string; status: 400 | 429 | 503; retryAfter: number | null },
@@ -85,23 +56,12 @@ export function refusedMail(
 }
 
 export interface Mailer {
-  /** Whether the message went.
-   *
-   *  A boolean rather than a throw, because a provider refusing an address,
-   *  timing out or having a bad minute is not a fault in this service and is not
-   *  something for a route to fall over on. Every caller here has already
-   *  written the row the message is about - a code, an invitation - and the
-   *  person in front of it needs a sentence and a button, not a 500. The
-   *  provider's own words go to the log; see failed.ts. */
   send(to: string, subject: string, body: { text: string; html: string }): Promise<boolean>
 }
 
-/** Without the binding - local dev and tests - codes go to the log. */
 function logging(): Mailer {
   return {
     send(to, subject, body) {
-      // The log is the mailbox here; without it there is no way to sign in
-      // locally, and the tests read the code back out of it.
       // eslint-disable-next-line no-console -- the log stands in for the mail
       console.log(`[mail] ${to} - ${subject}\n${body.text}`)
       return Promise.resolve(true)
@@ -109,15 +69,6 @@ function logging(): Mailer {
   }
 }
 
-/** Cloudflare Email Sending. No API key: the binding is the credential, and
- *  SPF, DKIM and DMARC come from the sending domain.
- *
- *  That domain has to be onboarded to Email Sending (Email Service > Email
- *  Sending in the dashboard), and the account has to be on Workers Paid. Without
- *  both, the same binding still works - as Email Routing's, which reaches only
- *  the account's own verified addresses. Every sign-in from the owner then goes
- *  through and every other one fails with "destination address is not a
- *  verified address", which is how this looked fixed for months. */
 function cloudflare(binding: EmailSender, from: string): Mailer {
   const named = sender(from)
 
@@ -127,9 +78,6 @@ function cloudflare(binding: EmailSender, from: string): Mailer {
         await binding.send({ from: named, to, subject, text: body.text, html: body.html })
         return true
       } catch (error) {
-        // The one call in a sign-in that leaves the building, and the only thing
-        // in it that no amount of care here can keep from failing. Written down
-        // with the provider's own words and code, and answered no.
         note('mail', error, null)
         return false
       }
@@ -137,10 +85,6 @@ function cloudflare(binding: EmailSender, from: string): Mailer {
   }
 }
 
-/** `MAIL_FROM` as the binding takes it. The variable is written the way a
- *  person writes a sender, `Orden <nib@nibeditor.com>`, and Email Sending wants
- *  the name and the address apart: handed the whole line as a string, it is
- *  asked to send from an address that has a space and two brackets in it. */
 export function sender(from: string): string | { name: string; email: string } {
   const parts = /^(.*)<([^<>\s]+@[^<>\s]+)>$/.exec(from.trim())
   if (!parts) return from.trim()
@@ -155,8 +99,6 @@ export function mailer(env: Env): Mailer {
   return cloudflare(env.EMAIL, env.MAIL_FROM)
 }
 
-/** A code in a message: what it is for, the six digits, and what to do about one
- *  nobody asked for. */
 function codeMail(code: string, subject: string, what: string, unasked: string) {
   const spaced = `${code.slice(0, 3)} ${code.slice(3)}`
 
@@ -180,10 +122,6 @@ export function codeMessage(code: string) {
   )
 }
 
-/** The code that deletes an account. Its own words, because it is the one code
- *  somebody holding a session asks for about the account itself: one nobody at
- *  this address asked for means a session is in somebody else's hands, and that is
- *  worth more than "ignore this". */
 export function leavingMessage(code: string) {
   return codeMail(
     code,
@@ -193,8 +131,6 @@ export function leavingMessage(code: string) {
   )
 }
 
-/** The receipt for a deleted account: that it happened, what it did not touch, and
- *  what to do if it was not the person reading it. */
 export function goneMessage() {
   const said = 'Your Orden account and everything it synced have been deleted.'
   const stays = 'The notes on your devices are still there.'
@@ -210,15 +146,10 @@ export function goneMessage() {
   }
 }
 
-/** A subject is one line. Everything put into one below comes from a person - a
- *  space's name, a name somebody chose - and a line break in one of those is not
- *  part of a name; it is a second header. */
 export function oneLine(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
 }
 
-/** Everything put into the messages below comes from a person: a space's name,
- *  an address, a name somebody chose. None of it may become markup. */
 export function escape(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -227,9 +158,6 @@ export function escape(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** The house style for a message that is not a code: a sentence or two, the one
- *  thing to do, and nothing else. Written once so that everything sharing sends
- *  looks like the same app wrote it. */
 function letter(lines: readonly string[], action: { label: string; href: string }) {
   const paragraphs = lines
     .map((line) => `  <p style="margin:0 0 14px">${escape(line)}</p>`)
@@ -244,17 +172,11 @@ ${paragraphs}
   }
 }
 
-/** Somebody was given a space. The link is where to go; what actually opens the
- *  space is the address being proved, by the same emailed code the app signs in
- *  with, so there is nothing to sign up for first. */
 export function inviteMessage(invite: {
   space: string
   from: string
   role: 'write' | 'read'
   link: string
-  /** The one file that was shared, when it was one file and not the space. The
-   *  mail says what was actually handed over, because that is what the person
-   *  opening it will find: a note, and not the drawer it came out of. */
   item?: string | null
 }) {
   const what = invite.role === 'write' ? 'write in it' : 'read it'
@@ -273,7 +195,6 @@ export function inviteMessage(invite: {
   }
 }
 
-/** Somebody followed a link that asks first, and is waiting on the owner. */
 export function requestMessage(request: { space: string; who: string; link: string }) {
   return {
     subject: oneLine(`${request.who} would like to join ${request.space}`),

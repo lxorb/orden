@@ -7,13 +7,6 @@ import {
   requestMessage,
 } from '../src/email'
 
-/** What every message calls the app.
- *
- *  The product is Orden (2026-10-12), after Nib and nibeditor. The mails were the
- *  last place a new reader met an old name after the first rename, and the first one anybody reads is the sign-in
- *  code. Every message the service sends is here, subject, text and markup, so a
- *  new sentence cannot bring the old name back without this saying so. */
-
 const SENT = {
   code: codeMessage('123456'),
   leaving: leavingMessage('123456'),
@@ -34,8 +27,6 @@ const SENT = {
   request: requestMessage({ space: 'Plans', who: 'Kim', link: 'https://orden.so/s/a' }),
 }
 
-/** Either old name as a word of its own: not the `nib@nibeditor.com` the mail is
- *  still sent from until orden.so is verified for sending. */
 const OLD_NAME = /(?<![A-Za-z@./])(?:Nib|nibeditor)(?![A-Za-z@])/i
 
 describe('every message the service sends', () => {

@@ -1,16 +1,3 @@
-/** The app's sync v2 engine against this Worker, both whole, in `@orden/sync-core`'s
- *  simulator (docs/sync-v2.md section 12).
- *
- *  The devices are the engine that runs in the window (apps/desktop/src/lib/sync2,
- *  through its simulator adapter, `sim-device.ts`), each with its store in memory and a
- *  disk of its own; the account is this Worker's routes, rooms and SQL (sync2-account.ts).
- *  Every scripted road of section 1 that used to end in a second file or in lost words,
- *  then random walks on the unkind network, judged by the same checks as the reference.
- *
- *  The engine is reached by its path rather than by a package: it is the app's, and the
- *  Worker's types say nothing about it. Its own suite runs ten thousand seeds against the
- *  reference account (apps/desktop/src/lib/sync2/sim.test.ts). */
-
 import { afterEach, describe, expect, test } from 'vitest'
 import {
   CALM,
@@ -25,7 +12,6 @@ import { WorkerAccount } from './sync2-account'
 
 type Devices = NonNullable<Options['device']>
 
-/** The engine's simulator adapter, fetched by its path. */
 async function engineDevices(): Promise<Devices> {
   const path = new URL('../../../apps/desktop/src/lib/sync2/sim-device.ts', import.meta.url)
   const engine = (await import(/* @vite-ignore */ path.href)) as {
@@ -47,7 +33,6 @@ const account: NonNullable<Options['account']> = (_clock, seeded) => {
   return one
 }
 
-/** Waits long enough for everything in the air to land. */
 const settle: Step = { t: 'wait', ticks: 40 }
 
 async function run(script: readonly Step[]): Promise<Report> {
@@ -66,7 +51,6 @@ function textOf(report: Report, name: string): string {
   return entry ? (report.account.texts[entry.id] ?? '') : ''
 }
 
-/** Plan.md is the first of the seeded notes by id, so a pick of 0 lands on it. */
 const PLAN = 0
 
 describe('the engine against the Worker', () => {
@@ -247,7 +231,6 @@ describe('the engine against the Worker', () => {
 })
 
 describe('random walks of the engine against the Worker', () => {
-  /** A few dozen seeds of the unkind network: what CI affords beside the rest. */
   const SEEDS = 25
 
   test(`${String(SEEDS)} seeds hold every check`, async () => {

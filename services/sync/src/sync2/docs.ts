@@ -1,19 +1,3 @@
-/** Documents, in batches: what a device is missing, what it wrote while apart, and the
- *  words that lost a modal answer (docs/sync-v2.md sections 5.2 to 5.4 and 7).
- *
- *  A pull never wakes a room. Every room writes its document to the bucket at every
- *  settle, and a note whose room has not woken since it was given an epoch is exactly
- *  the seed of the words it has, which this computes as any device would; the room is
- *  asked only for a note in neither state, which is a note somebody wrote between its
- *  epoch being marked and its room waking.
- *
- *  A push goes to each document's room, which applies it and writes it down before it
- *  answers, or answers `moved`. The rooms are asked a few at a time: every one is a
- *  request of its own, and a Worker keeps only so many open at once.
- *
- *  Who may do what is asked per document, since one batch can span every space a
- *  device reaches: the space at its role, or one file shared on its own. */
-
 import { diffUpdateV2 } from 'yjs'
 import {
   type DocRefusal,
@@ -38,23 +22,17 @@ import { keepVersionNow, versionsFit } from '../versions'
 import { prepareSpace } from './prepare'
 import { DOCUMENT_KINDS, DOCUMENTS_SQL } from './tree'
 
-/** A note a batch names, and what the asker may do with it. */
 interface Reached {
   note: Note
   role: Role
 }
 
-/** Every note a batch names that the asker can reach, by id. One query for the notes
- *  and one per space they are in; a note in a space the asker cannot reach is asked
- *  about on its own, as a file somebody was handed. */
 async function reachedNotes(
   env: Env,
   who: Whoever,
   ids: readonly string[],
 ): Promise<Map<string, Reached>> {
   const { results } = await env.DB.prepare(
-    // Never a note purged from Recently deleted: its words are gone for good, though
-    // its room may not have been emptied yet (leftovers.ts).
     `select * from notes where id in (select value from json_each(?))
         and not (deleted = 1 and deleted_at is null)`,
   )
@@ -79,9 +57,6 @@ async function reachedNotes(
   return out
 }
 
-/** The notes of these that are on no epoch yet, with their spaces prepared and the
- *  rows read again: a device that asks for a document of a space nobody prepared is a
- *  device that has just been moved to v2. */
 async function onEpochs(env: Env, found: Map<string, Reached>): Promise<void> {
   const spaces = new Set<string>()
   for (const { note } of found.values()) {
@@ -101,9 +76,6 @@ async function onEpochs(env: Env, found: Map<string, Reached>): Promise<void> {
   }
 }
 
-/** What a document is as a snapshot, and its version: the bucket's copy when the room
- *  has written one at this epoch, the seed of its words when the room has not woken
- *  since; null when neither holds, and only the room can say. */
 export async function documentOf(
   env: Env,
   note: Note,
@@ -125,7 +97,6 @@ export async function documentOf(
   return { update, seq: seedsAnything(update) ? 1 : 0 }
 }
 
-/** `POST /v2/docs/pull`. */
 export async function pullDocs(
   env: Env,
   who: Whoever,
@@ -170,11 +141,8 @@ function roomAnswer(bytes: Uint8Array): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
 
-/** How many rooms one push asks at once: a Worker keeps six connections open at a
- *  time, and a request to an object is one of them. */
 const AT_ONCE = 6
 
-/** `POST /v2/docs/push`. */
 export async function pushDocs(
   env: Env,
   who: Whoever,
@@ -250,9 +218,6 @@ async function pushed(
   return refused(doc.id, why === 'large' || why === 'role' ? why : 'gone')
 }
 
-/** `POST /v2/docs/keep`: the losing side of a modal answer, kept as a version of the
- *  note and named after the device it came from. Answers whether it was the asker's
- *  to keep. */
 export async function keepDoc(
   env: Env,
   who: Whoever,
@@ -267,14 +232,9 @@ export async function keepDoc(
   return 'kept'
 }
 
-/** How much one page of a first sync's bulk read carries, and at most how many
- *  documents, so a page is one answer of a few megabytes and a bounded number of reads
- *  of the bucket. */
 const PAGE_BYTES = 4 * 1024 * 1024
 const PAGE_DOCS = 200
 
-/** `GET /v2/spaces/:space/snapshot?after=<id>`: the documents of a space in id order,
- *  about four megabytes a page. */
 export async function snapshotPage(
   env: Env,
   spaceId: string,
@@ -295,7 +255,6 @@ export async function snapshotPage(
     const held = await documentOf(env, note)
     const epoch = note.epoch ?? 0
     if (!held) {
-      // Only the room holds this one; the device pulls it on its own.
       continue
     }
     const doc: SnapshotDoc = { id: note.id, epoch, seq: held.seq, update: held.update }

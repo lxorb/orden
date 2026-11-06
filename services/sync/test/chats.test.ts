@@ -1,9 +1,3 @@
-/** Chats on the Worker (docs/chats.md 4.2 to 4.6): the routes against real SQL, and each
- *  chat's `ChatLog` against Node's SQLite, which has FTS5 as a Durable Object's does.
- *  Five people hold the space - its owner, a writer, a reader, and a guest at each role -
- *  and a sixth holds nothing. Every shape is `@orden/chats/wire`'s, read back through its
- *  own checks where the app would read it. */
-
 import { chatText } from '@orden/chats'
 import { MOST_BEHIND } from '@orden/chats/limits'
 import { chatListOf, eventsPageOf, resultsOf, statePageOf } from '@orden/chats/wire'
@@ -31,7 +25,6 @@ interface People {
   stranger: string
 }
 
-/** Somebody with no account who walked through the space's link at this role. */
 async function guest(env: TestEnv, owner: string, spaceId: string, role: 'write' | 'read') {
   const { json } = await call<ShareView>(env, `/v1/spaces/${spaceId}/share/link`, {
     method: 'PUT',
@@ -102,7 +95,6 @@ describe('chats', () => {
     return page
   }
 
-  /** A socket into a chat, let in at the role the door would have given. */
   async function socketOf(
     who: keyof People,
     chat: string,
@@ -282,7 +274,6 @@ describe('chats', () => {
       expect((await send(people.owner, chat, remove(theirs.message))).results[0]).toMatchObject({
         seq: expect.any(Number),
       })
-      // A delete stands over an edit in either order.
       expect((await send(people.writer, chat, edit(theirs.message))).results[0]).toMatchObject({
         refused: 'gone',
       })
@@ -542,7 +533,6 @@ describe('chats', () => {
       expect(owner.take()).toEqual([read])
       expect(laptop.take()).toEqual([])
 
-      // A device arriving later is told where everybody has read to.
       const late = await socketOf('reader', chat)
       expect(late.takeOf('read')).toContainEqual(read)
     })
@@ -567,7 +557,6 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const writer = await socketOf('writer', chat)
       at(25 * 60 * 60 * 1000)
-      // Anybody opening any chat a day later, which is when rows are cleared by age.
       await socketOf('reader', await chatOfOwner())
       await socketOf('reader', chat)
       await call(env, `/v1/spaces/${spaceId}/share/members/writer@example.com`, {
@@ -581,7 +570,6 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const other = await chatOfOwner()
       await socketOf('writer', chat)
-      // Gone without the close the object would have heard.
       for (const socket of logs.of(chat).state.getWebSockets()) logs.of(chat).state.drop(socket)
       at(25 * 60 * 60 * 1000)
       await socketOf('reader', other)
@@ -592,8 +580,6 @@ describe('chats', () => {
     })
 
     test('taking somebody out reaches every chat they have open, past two hundred', async () => {
-      // Two hundred and fifty chats of the space the writer has open, written down before
-      // the one whose socket is watched, so it comes last whichever way they are read.
       const chatRow = env.db.prepare(
         'insert into chats (id, space_id, created_at) values (?, ?, 0)',
       )
@@ -618,8 +604,6 @@ describe('chats', () => {
     test('a device closing while another of the same person joins leaves the row', async () => {
       const chat = await chatOfOwner()
       const laptop = await socketOf('writer', chat)
-      // The laptop's close lands while the phone's row is being written: after that
-      // write, before the phone's socket is taken.
       const prepare = env.DB.prepare.bind(env.DB)
       let pending = true
       env.DB.prepare = (sql: string) => {
@@ -651,7 +635,6 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const writer = await socketOf('writer', chat, undefined, await sha256(people.writer))
       const owner = await socketOf('owner', chat, undefined, await sha256(people.owner))
-      // Gone from the space without the route that tells the chat.
       env.db
         .prepare("delete from space_members where space_id = ? and email = 'writer@example.com'")
         .run(spaceId)
@@ -719,7 +702,6 @@ describe('chats', () => {
         readSeq: 0,
         mentions: 1,
       })
-      // The author read what they wrote.
       expect((await list(people.owner))[0]).toMatchObject({ readSeq: 1, mentions: 0 })
 
       const read = await call(env, `/v2/chats/${chat}/read`, {
@@ -731,7 +713,6 @@ describe('chats', () => {
       await fire(logs.of(chat))
       expect((await list(people.writer))[0]).toMatchObject({ readSeq: 1, mentions: 0 })
 
-      // Mark unread moves it back only when asked to.
       await call(env, `/v2/chats/${chat}/read`, { token: people.writer, body: { seq: 0 } })
       await call(env, `/v2/chats/${chat}/read`, {
         token: people.writer,
@@ -757,7 +738,6 @@ describe('chats', () => {
 
     test('@everyone and @here call everybody when they are the first thing a cold chat hears (#459)', async () => {
       const chat = await chatOfOwner()
-      // The object as it is after a sleep or a revocation: no list of who it reaches.
       ;(logs.of(chat).log as unknown as { reachers: unknown }).reachers = null
       await send(people.owner, chat, postOf('all of you', { mentions: ['everyone'] }))
       at(201_000)
@@ -955,8 +935,6 @@ describe('chats', () => {
       at(262_000)
       await fire(logs.of(chat))
       expect((await events(people.owner, chat)).events).toMatchObject([{ id: fine.id }])
-      // The head is told to D1 at once, and then nothing until the stuck one is tried
-      // again: not straight away, which is an alarm going off as fast as it is set.
       expect(await fire(logs.of(chat))).toBe(true)
       expect(logs.of(chat).state.alarm).toBeGreaterThan(Date.now())
       expect(await fire(logs.of(chat))).toBe(false)
@@ -1090,7 +1068,6 @@ describe('chats', () => {
       })
       await send(people.writer, chat, edit([file(b)]))
       expect([await fetched(a), await fetched(b), await fetched(c)]).toEqual([404, 200, 200])
-      // An edit that names no files keeps the ones the message has.
       await send(people.writer, chat, edit())
       expect(await fetched(b)).toBe(200)
 
@@ -1112,7 +1089,6 @@ describe('chats', () => {
         (await call(env, `/v2/chats/${chat}/files/${picture}`, { token })).status
       expect([await fetched(people.writer), await fetched(people.reader)]).toEqual([200, 200])
       expect(await fetched(people.stranger)).toBe(404)
-      // A use of the blob as any file of a message is, which is what an erase hands on.
       expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
         { hash: picture },
       ])
@@ -1421,7 +1397,6 @@ describe('chats', () => {
       expect(env.db.prepare('select file_id from chats where id = ?').get(chat)).toEqual({
         file_id: file,
       })
-      // The writer's v1 device reads the pointer through the v1 feed and opens the chat.
       const feed = await call(env, `/v1/spaces/${spaceId}/changes`, { token: people.writer })
       expect(feed.json.notes.map((one) => one.path)).toContain('Thesis.chat')
       expect((await send(people.writer, chat, postOf('from v1'))).results[0]).toMatchObject({
@@ -1445,7 +1420,6 @@ describe('chats', () => {
         404,
       )
       expect(await list(people.stranger)).toEqual([])
-      // And the copy is not the chat's file.
       expect(env.db.prepare('select file_id from chats where id = ?').get(chat)).not.toEqual({
         file_id: copy.json.note.id,
       })
@@ -1474,8 +1448,6 @@ describe('chats', () => {
       await send(people.owner, chat, postOf('kept'))
       await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
       expect((await events(people.owner, chat)).events).toHaveLength(1)
-      // Not listed while its pointer is in Recently deleted, for anybody (#375): a list
-      // that kept it gave every device a row with no pointer and no name.
       expect(await list(people.owner)).toEqual([])
       expect(await list(people.writer)).toEqual([])
 
@@ -1654,7 +1626,6 @@ describe('chats', () => {
         expect(told?.get('x-nib-chat-ask'), who).toBe('join')
         expect(told?.get('x-nib-space'), who).toBe(spaceId)
         expect(told?.get('x-nib-device'), who).toBe('device-one')
-        // And the sign-in it arrived with, which the socket lasts no longer than (#520).
         expect(told?.get('x-nib-login'), who).toBe(await sha256(people[who]))
       }
       expect((await knock(people.stranger)).status).toBe(404)

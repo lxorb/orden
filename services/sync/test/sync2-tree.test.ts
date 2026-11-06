@@ -1,24 +1,15 @@
-/** Sync v2's tree, through its routes, against real SQL (docs/sync-v2.md section 5.9).
- *
- *  A space prepared out of the paths v1 wrote; every rule the tree applies, as a device
- *  meets it through `POST /v2/spaces/:space/ops`; the paths publishing and v1 apps read
- *  kept current in the same batch; an op sent twice answered once; and the feed that
- *  carries all of it in one order. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { FeedPage, OpResult, OpsResponse } from '@orden/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { framed, invited, live } from './sync2'
 
 let env: TestEnv
-/** Two devices of one account: two sessions, which the tree tells apart. */
 let token: string
 let other: string
 let space: string
 
 beforeEach(async () => {
   env = testEnv()
-  // The rooms run under the routes: a v1 save of a note with an epoch goes to its room.
   live(env)
   token = await signIn(env, 'tree@example.com')
   other = await signIn(env, 'tree@example.com')
@@ -80,7 +71,6 @@ async function prepare(as = token): Promise<number> {
 }
 
 let counter = 0
-/** One op, with an id of its own and the cursor its device had seen. */
 function op<T extends Record<string, unknown>>(t: string, fields: T, seen = 0) {
   counter += 1
   return { op: `op-${String(counter)}`, t, seen, ...fields }
@@ -128,7 +118,6 @@ describe('preparing a space', () => {
     expect(row(a)).toMatchObject({ folder_id: null, name: 'a.md', name_key: 'a.md', kind: 'note' })
     expect(row(b)).toMatchObject({ folder_id: work?.id, name: 'b.md', path: 'Work/b.md' })
     expect(row(c)).toMatchObject({ folder_id: deep?.id, name: 'c.canvas', kind: 'canvas' })
-    // Nothing a v1 app sees moved: the paths and the versions are what they were.
     expect([a, b, c].map((id) => row(id).version)).toEqual(versions)
   })
 
@@ -163,7 +152,6 @@ describe('preparing a space', () => {
     expect(row(b).path).toBe('Work/b.md')
     expect(row(upper).path).toBe('Work/A 2.md')
 
-    // Every rename is one a v1 app reads off its own feed.
     const moved = await call(env, `/v1/spaces/${space}/changes?since=${String(since)}`, { token })
     expect(moved.json.notes.map((one) => one.path).sort()).toEqual(['Work/A 2.md', 'Work/b.md'])
   })
@@ -288,7 +276,6 @@ describe('tree operations', () => {
     const id = await made('Plan.md', 'first\n')
     const before = (await feed()).cursor
 
-    // Written by the other device, through the note's room.
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token: other,
@@ -326,9 +313,6 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
-  /** #1068: who last put a note where it is is kept apart from who last wrote in it, so a
-   *  device that wrote in a note somebody else had moved into a folder, never having seen
-   *  it there, does not take it, words and all, with the folder. */
   test('leave a note in a deleted folder that another device moved in, though this one wrote in it', async () => {
     const id = await made('Plan.md', 'first\n')
     const { cursor } = await ops([op('mkdir', { id: 'f', parent: null, name: 'Folder' })])
@@ -346,9 +330,6 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
-  /** #1068: the account keeps every device's latest change, not only the last changer's,
-   *  so a device's own restore or words since do not hide another device's from its
-   *  delete, and a delete that stands answers for all it had seen. */
   test("refuse a delete that had not seen another device's restore, though its own came since", async () => {
     const { cursor } = await ops([
       op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' }),
@@ -400,8 +381,6 @@ describe('tree operations', () => {
     expect(row(id).deleted).toBe(0)
   })
 
-  /** #1068: where somebody put an entry among the rest of its folder is the entry's own,
-   *  kept through a rename, said in the feed, and only what was dragged moves. */
   test('keep a position on the entry, through a rename, in the feed', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Folder', pos: 'V' }),
@@ -409,7 +388,6 @@ describe('tree operations', () => {
       op('create', { id: 'b', kind: 'note', parent: null, name: 'B.md' }),
     ])
     expect(await one(op('place', { id: 'b', pos: 'K' }, cursor))).toMatchObject({ ok: true })
-    // Two devices dragging different rows of one folder at once: both stand.
     await one(op('place', { id: 'a', pos: 'k' }, cursor), other)
     await one(op('rename', { id: 'a', name: 'Renamed.md' }, cursor))
 
@@ -460,10 +438,8 @@ describe('tree operations', () => {
     expect(paths).toHaveLength(500)
     expect(paths.every((one) => /^Huge\/(Sub\/)?\d+\.md$/.test(one.path))).toBe(true)
     expect(new Set(paths.map((one) => one.seq)).size).toBe(500)
-    // What D1 would take in one statement, however many rows moved.
     expect(env.widest().count).toBeLessThanOrEqual(100)
 
-    // And a v1 app reads every one of them off its feed.
     const moved = await call(env, `/v1/spaces/${space}/changes?since=${String(since)}`, { token })
     expect(moved.json.notes).toHaveLength(500)
   })
@@ -517,17 +493,12 @@ describe('tree operations', () => {
     expect(await one(op('create', { id: 'pic', ...file }))).toMatchObject({ ok: true })
     expect(row('pic')).toMatchObject({ kind: 'file', hash, epoch: 0 })
 
-    // And a v1 app never reads it as a note.
     const v1 = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
     expect(v1.json.notes.map((one) => one.id)).not.toContain('pic')
     expect((await call(env, '/v1/notes/pic', { token })).status).toBe(404)
   })
 
   test('keep an online terminal out of what a v1 app reads', async () => {
-    // v1 never carries a `.term` (its routes refuse the name), so a v1 app that met one
-    // in its feed kept it nowhere it lists, read it as a file deleted on its own disk,
-    // and deleted it on the account: every terminal of the account, on every device,
-    // the moment one device still on v1 - the glasses' plugin is v1 for good - passed.
     const result = await one(
       op('create', { id: 't', kind: 'term', parent: null, name: 'Build.term' }),
     )
@@ -559,7 +530,6 @@ describe('the feed', () => {
     expect(page.more).toBe(false)
     expect(page.items[1]).toMatchObject({ epoch: 1, docSeq: 0, deleted: false })
 
-    // Words written move the note's docSeq, and only its.
     await call(env, '/v1/notes/n', { method: 'PUT', token, body: { content: 'words\n' } })
     const next = await feed(cursor)
     expect(next.items.map((item) => item.id)).toEqual(['n'])

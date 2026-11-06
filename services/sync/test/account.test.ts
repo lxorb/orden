@@ -1,8 +1,3 @@
-/** Deleting an account, through the routes: what it takes to be allowed, and what
- *  is left afterwards. The list of tables it empties is held to the schema in
- *  erase.test.ts; this file is about the door and about the people on either side
- *  of a share. */
-
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { codeAt } from '../src/second'
@@ -25,7 +20,6 @@ interface LeavingView {
   members?: { email: string | null }[]
 }
 
-/** The secret the second factor is kept under; see second.test.ts. */
 const KEPT = { OPENAI_KEY_SECRET: 'a secret for the tests' }
 
 const ME = 'leaving@example.com'
@@ -41,7 +35,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** Step one, what it answered, and the six digits and the words it mailed. */
 async function askToLeave(
   as = token,
 ): Promise<{ answer: Answer<LeavingView>; code: string; mailed: string }> {
@@ -71,14 +64,12 @@ function confirm(ticket: string | undefined, as = token) {
   })
 }
 
-/** All three steps, for an account with no second factor. */
 async function leave(as = token): Promise<Answer<LeavingView>> {
   const { code } = await askToLeave(as)
   const { json } = await verify(code, undefined, as)
   return await confirm(json.ticket, as)
 }
 
-/** Some other six digits than these. */
 function wrong(code: string): string {
   return code.replace(/^./, (digit) => String((Number(digit) + 1) % 10))
 }
@@ -87,7 +78,6 @@ async function me(as = token) {
   return await call<LeavingView>(env, '/v1/me', { token: as })
 }
 
-/** The second factor, turned on the way the pane turns it on; answers the secret. */
 async function enrol(): Promise<string> {
   const begun = await call<LeavingView>(env, '/v1/second', { token, body: {} })
   const row = env.db
@@ -152,7 +142,6 @@ describe('the door', () => {
 
     expect(answer.status).toBe(200)
     expect(answer.json.ok).toBe(true)
-    // The session that asked went with everything else.
     expect((await me()).status).toBe(401)
   })
 
@@ -164,7 +153,6 @@ describe('the door', () => {
 
     expect(receipt).toContain(ME)
     expect(receipt).toContain('Your Orden account has been deleted')
-    // A receipt counts against nothing, so it writes nothing at the address.
     expect(env.db.prepare('select count(*) as many from limits where key = ?').get(ME)).toEqual({
       many: 0,
     })
@@ -188,7 +176,6 @@ describe('the door', () => {
     expect((await me(other)).status).toBe(200)
     expect((await me()).status).toBe(200)
 
-    // And it is still good for the account it was earned by.
     expect((await confirm(json.ticket)).status).toBe(200)
     expect((await me(other)).status).toBe(200)
   })
@@ -209,7 +196,6 @@ describe('the door', () => {
     expect((await verify(code)).status).toBe(400)
     expect((await verify(code, '000000')).status).toBe(400)
 
-    // The mailed code survives a mistyped second one, as a sign-in's does.
     const right = await verify(code, await codeAt(secret, step()))
     expect(right.status).toBe(200)
     expect((await confirm(right.json.ticket)).status).toBe(200)
@@ -286,8 +272,6 @@ describe('what is left', () => {
 
     const listed = await call<LeavingView>(env, '/v1/spaces', { token: again })
     expect(listed.json.spaces?.map((one) => one.name)).toEqual(['Notes'])
-    // Not even as a marker: a fresh account has no deleted spaces to tell a
-    // machine about.
     expect(listed.json.deleted).toEqual([])
   })
 
@@ -443,7 +427,6 @@ describe('what is left', () => {
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(pasted)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
-    // Only what that space shows: the one it never used went with the account.
     expect((await call(env, `/i/${kept}.png`)).status).toBe(404)
   })
 
@@ -488,8 +471,6 @@ describe('what is left', () => {
     ])
   })
 
-  /** And by somebody who wrote it there and may only read there now: they are still in
-   *  the space, and what they put into it is still in its notes. */
   test('a picture it put into a space it may now only read is handed over too', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (
@@ -536,8 +517,6 @@ describe('what is left', () => {
     ])
   })
 
-  /** Taken out of the space, or gone of its own accord: either way nothing says it is in
-   *  the space any more, and the picture it put there is still in the owner's note. */
   test.each([
     ['been taken out of', 'members'],
     ['left', 'me'],
@@ -589,8 +568,6 @@ describe('what is left', () => {
     ])
   })
 
-  /** Somebody who never shared anything with the owner kept the picture alive for a
-   *  while, by holding the same bytes; when they go, it is the owner's note it is in. */
   test('a picture a stranger held too is handed over when the stranger goes', async () => {
     const other = await signIn(env, OTHER)
     const stranger = await signIn(env, 'stranger@example.com')
@@ -635,8 +612,6 @@ describe('what is left', () => {
     ])
   })
 
-  /** What a note showed once and no longer does is not the space's: the owner is handed
-   *  what its notes show now. */
   test('a picture taken out of the owner’s note again is not handed over', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (
@@ -684,8 +659,6 @@ describe('what is left', () => {
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(404)
   })
 
-  /** And a paper, which a row names: whoever hung it there, and whether or not they are
-   *  still in the space. */
   test('a paper it hung in a space it has since left is handed over too', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (
@@ -728,8 +701,6 @@ describe('what is left', () => {
     ])
   })
 
-  /** A note written before its pictures were written down has none yet, until the
-   *  nightly sweep reads it: in a space this account is still in, its body is read. */
   test('a picture in a note not yet read by the sweep is found in its body', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (
@@ -773,9 +744,6 @@ describe('what is left', () => {
     ])
   })
 
-  /** Naming a hash is not showing a picture, and a picture is not a paper: somebody who
-   *  shares nothing with this account and only knows the hash of its private PDF must
-   *  not be handed the bytes by writing the hash into a note of their own. */
   test.each([
     ['in a code span', (hash: string) => `see \`/i/${hash}\``],
     ['in prose', (hash: string) => `see /i/${hash} there`],
@@ -813,9 +781,6 @@ describe('what is left', () => {
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
   })
 
-  /** What was emptied for good is not a space's use any more: a purged page note's
-   *  paper and a file a purged space listed go with the account, and nobody is handed
-   *  them to pay for. */
   test.each(['a page note', 'a space'])(
     'a paper in %s emptied for good is not handed over',
     async (what) => {
@@ -877,8 +842,6 @@ describe('what is left', () => {
     },
   )
 
-  /** Somebody else holding the same bytes, as something that is no picture, is no reason
-   *  to skip the owner: they may give the bytes back the moment this account has gone. */
   test('a picture a stranger holds as a PDF is handed over all the same', async () => {
     const other = await signIn(env, OTHER)
     const stranger = await signIn(env, 'stranger@example.com')
@@ -922,8 +885,6 @@ describe('what is left', () => {
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
 
-  /** A picture is shown in more places than a note's prose: a card on a canvas and a
-   *  note's cover hold its whole address, and are what the owner sees. */
   test.each([
     [
       'a card on a canvas',
@@ -966,9 +927,6 @@ describe('what is left', () => {
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
 
-  /** A space too big to read hands over everything rather than guess, which is right
-   *  only where this account could have put something: a reader who never wrote there
-   *  keeps its own pictures to itself, and they go with it. */
   test('a picture of its own is not handed to a big space it only reads', async () => {
     const other = await signIn(env, OTHER)
     const big = (

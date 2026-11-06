@@ -1,13 +1,3 @@
-/** The Worker as `@orden/sync-core`'s simulator's account (docs/sync-v2.md section 12).
- *
- *  The simulator drives devices and an account over an unkind network and then judges
- *  what everybody holds. Here the account is this Worker - its routes, its rooms and
- *  its SQL - behind the kit's `AccountAdapter`, and the devices are the kit's reference
- *  ones, which speak exactly the protocol of section 7. Each scripted road of section 1
- *  that used to end in a second file or in lost words is run against the real thing:
- *  the closed laptop (road 2), two `Untitled.md` made apart (road 4), a delete against
- *  an edit in both orders (road 5), and an offline rename against an edit (road 6). */
-
 import { afterEach, describe, expect, test } from 'vitest'
 import { CALM, type Report, simulate, type Step, markersIn } from '@orden/sync-core/sim'
 import { WorkerAccount } from './sync2-account'
@@ -19,7 +9,6 @@ afterEach(() => {
   made = []
 })
 
-/** Waits long enough for everything in the air to land. */
 const settle: Step = { t: 'wait', ticks: 40 }
 
 function run(script: readonly Step[]): Promise<Report> {
@@ -41,7 +30,6 @@ function textOf(report: Report, name: string): string {
   return entry ? (report.account.texts[entry.id] ?? '') : ''
 }
 
-/** Plan.md is the first of the seeded notes by id, so a pick of 0 lands on it. */
 const PLAN = 0
 
 describe('the Worker as the simulator’s account', () => {
@@ -136,9 +124,6 @@ describe('the Worker as the simulator’s account', () => {
 })
 
 describe('random walks against the Worker', () => {
-  /** A few dozen seeds of the unkind network, each a run of sixty steps: what CI can
-   *  afford beside the rest of the suite. The kit's own nightly run walks a million
-   *  against the reference account. */
   const SEEDS = 25
 
   test(`${String(SEEDS)} seeds hold every check`, async () => {
@@ -161,8 +146,6 @@ describe('random walks against the Worker', () => {
 })
 
 describe('rows arranged at random against the Worker', () => {
-  /** The order walks of #1068: rows dragged among the rest of their folders while the
-   *  tree moves, every device ending with each row where the Worker has it. */
   const SEEDS = 10
 
   test(`${String(SEEDS)} seeds end with every row in the same place everywhere`, async () => {

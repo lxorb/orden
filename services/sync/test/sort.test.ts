@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
-/** Which order a space's file list is read in, on the space so every device reads it in
- *  the same one (#423); see spaces/sort.ts. */
-
 let env: TestEnv
 let token: string
 let space: string
@@ -20,7 +17,6 @@ function put(sort: unknown) {
   return call(env, `/v1/spaces/${space}/sort`, { method: 'PUT', token, body: { sort } })
 }
 
-/** What the space listing says, which is how the app reads it. */
 async function listed() {
   const { json } = await call(env, '/v1/spaces', { token })
   return json.spaces.find((one: { id: string }) => one.id === space)?.sort

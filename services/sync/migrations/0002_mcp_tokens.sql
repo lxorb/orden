@@ -1,6 +1,3 @@
--- A connector token belongs to a person, not to a space: it reaches everything
--- that person has synced. Only the hash is kept, so a leaked database cannot be
--- used to read anyone's notes.
 create table mcp_tokens (
   token_hash   text    primary key,
   user_id      text    not null references users(id) on delete cascade,

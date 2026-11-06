@@ -44,9 +44,6 @@ describe('account settings', () => {
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
 
-  /** The ligature setting was a switch before it was a scope. Both shapes are
-   *  kept as they arrive, because one account is read by every version of the
-   *  app at once and the older ones only know the switch. */
   test('the ligature scope is one of the three the app offers', async () => {
     for (const scope of ['off', 'code', 'all']) {
       const set = await patch({ ligatures: scope })
@@ -126,8 +123,6 @@ describe('the keyboard an account is on', () => {
     }
   })
 
-  /** A preset name is shown as a word in a select, so an account may not carry
-   *  a sentence, a number or a name no version of the app has. */
   test('is nothing else', async () => {
     expect((await patch({ preset: 'emacs' })).status).toBe(400)
     expect((await patch({ preset: '' })).status).toBe(400)
@@ -233,8 +228,6 @@ describe('modal editing on an account', () => {
     expect((await patch({ vim: null })).status).toBe(400)
   })
 
-  /** It is a mode rather than a map: someone on the Obsidian keyboard can have
-   *  modal editing too, so the two travel independently. */
   test('sits beside the keyboard rather than inside it', async () => {
     await patch({ preset: 'obsidian' })
     await patch({ vim: true })
@@ -244,8 +237,6 @@ describe('modal editing on an account', () => {
   })
 })
 
-/** What pings for every chat at once (docs/chats.md 4.11), on the account so every
- *  device holds back the same pings. */
 describe('what an account lets ping about its chats', () => {
   test('keeps keywords, hours, previews and sound', async () => {
     const hours = { days: [1, 2, 3, 4, 5], from: 540, to: 1080 }
@@ -263,7 +254,6 @@ describe('what an account lets ping about its chats', () => {
       chatSound: true,
     })
 
-    // Every hour again: null, which travels as a choice.
     const cleared = await patch({ chatHours: null })
     expect(cleared.json.settings.chatHours).toBeNull()
   })
@@ -279,12 +269,6 @@ describe('what an account lets ping about its chats', () => {
   })
 })
 
-/** The Glasses section, which only the Even Hub plugin shows.
- *
- *  All of it is on the account rather than on the machine, because the plugin runs
- *  on a phone and is set up on a desktop. That is the whole reason the Worker has
- *  to know these names at all: a key it does not know is a 400, so a setting that
- *  is not here cannot travel. */
 describe('the glasses an account reads on', () => {
   test('start a page at a heading level, or at none', async () => {
     expect((await patch({ glassesBreak: 2 })).json.settings.glassesBreak).toBe(2)
@@ -328,7 +312,6 @@ describe('the glasses an account reads on', () => {
   })
 
   test('refuse an effort the model API does not take', async () => {
-    // The list is the API's own, read off the error it answers an invalid one with.
     expect((await patch({ glassesEffort: 'max' })).status).toBe(200)
     expect((await patch({ glassesEffort: 'banana' })).status).toBe(400)
   })
@@ -345,9 +328,6 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesScroll: 'sideways' })).status).toBe(400)
   })
 
-  /** Which of a note's markers are drawn, by construct. Named rather than accepted
-   *  as any object, so an account cannot carry a switch no version of the app has
-   *  ever heard of. */
   test('carry the markers a reader turned on, and only the ones there are', async () => {
     const set = await patch({ glassesMarks: { fence: true, bold: true } })
     expect(set.status).toBe(200)
@@ -358,8 +338,6 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesMarks: [true] })).status).toBe(400)
   })
 
-  /** The phrases a spoken command answers to. The ids are the app's own and are not
-   *  listed on the server, for the same reason the shortcut ids are not. */
   test('carry the phrases a reader rebound', async () => {
     const set = await patch({ glassesWords: { next: 'vorwärts', close: 'zu' } })
     expect(set.status).toBe(200)
@@ -370,24 +348,18 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesWords: { next: 12 } })).status).toBe(400)
   })
 
-  /** What the Mobile section on a laptop waits for (#769), said by a phone or a tablet. */
   test('remember that a phone or a tablet has been used', async () => {
     expect((await patch({ mobileSeen: true })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.mobileSeen).toBe(true)
     expect((await patch({ mobileSeen: 'yes' })).status).toBe(400)
   })
 
-  /** What the Glasses section on every other device waits for. */
   test('remember that a pair of glasses has answered', async () => {
     expect((await patch({ glassesSeen: true })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.glassesSeen).toBe(true)
     expect((await patch({ glassesSeen: 'yes' })).status).toBe(400)
   })
 
-  /** Emil, on his desktop: *"I don't see the glasses setting on desktop, even though I
-   *  already had the Even plugin open."* One device says it and another reads it, which
-   *  is the whole of what the setting is for - so the round trip is the test, not the
-   *  one session patching and reading its own answer back. */
   test('and hand that to every other device on the account', async () => {
     const phone = await signIn(env, 'a@b.dev')
     const desktop = await signIn(env, 'a@b.dev')
@@ -406,10 +378,6 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesModel: 'gpt-6-astra' })).status).toBe(200)
   })
 
-  /** The key used to be a setting here, in the clear, and every read handed it
-   *  back. It is not one any more: it is encrypted on the row and set through
-   *  `PUT /v1/ask/key`. The settings read says whether there is one and what its
-   *  last four characters are, and that is all any read ever says. See ask.test.ts. */
   test('do not carry the key at all, and say only whether there is one', async () => {
     expect((await patch({ glassesKey: 'sk-proj-AbC123-_xyz' })).status).toBe(400)
 
@@ -420,9 +388,6 @@ describe('the glasses an account reads on', () => {
 })
 
 describe('a name that is not a setting', () => {
-  /** `KNOWN[name]` reaches Object's own properties for these, and what came
-   *  back was called as though it were a check: a 500 from a body a client is
-   *  free to send. Asked of the map itself, they are simply unknown. */
   test('is refused even when Object has one of its own', async () => {
     for (const name of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
       const response = await call(env, '/v1/settings', {
@@ -437,9 +402,6 @@ describe('a name that is not a setting', () => {
     }
   })
 
-  /** The name goes back out in the answer, and an answer is shown, logged and kept.
-   *  A field name is a word, so there is no honest reason for one to be a kilobyte of
-   *  somebody else's text - and every reason not to carry one back. */
   test('says back as much of it as is worth saying and no more', async () => {
     const long = `weather${'A'.repeat(5000)}`
     const response = await call(env, '/v1/settings', {
@@ -450,7 +412,6 @@ describe('a name that is not a setting', () => {
     })
 
     expect(response.status).toBe(400)
-    // Enough to recognise the typo that caused it.
     expect(response.json.error).toContain('unknown setting weather')
     expect(response.json.error.length).toBeLessThanOrEqual('unknown setting '.length + 64)
   })
@@ -492,7 +453,6 @@ describe('the kinds an account turned off', () => {
     expect((await patch({ hiddenKinds: ['Canvas'] })).status).toBe(400)
     expect((await patch({ hiddenKinds: ['canvas', 'canvas'] })).status).toBe(400)
     expect((await patch({ hiddenKinds: [1] })).status).toBe(400)
-    // Thirty-three different words, one more than an account carries.
     const letter = (at: number) => String.fromCharCode(97 + at)
     const many = Array.from({ length: 33 }, (_, at) => `k${letter(at % 26)}${letter(at >> 4)}`)
     expect((await patch({ hiddenKinds: many })).status).toBe(400)
@@ -510,8 +470,6 @@ describe('the phone bar an account carries', () => {
   })
 
   test('takes null, which is the default bar', async () => {
-    // A choice like any other: without it a device could never learn that
-    // another one went back to the default.
     expect((await patch({ toolbar: null })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.toolbar).toBeNull()
   })
@@ -521,8 +479,6 @@ describe('the phone bar an account carries', () => {
   })
 
   test('keeps a command this version has never heard of', async () => {
-    // Read for its shape rather than against a list, for the reason a shortcut
-    // id is: the commands are the app's.
     expect((await patch({ toolbar: ['something.new'] })).status).toBe(200)
   })
 
@@ -574,8 +530,6 @@ describe('the shortcuts an account carries', () => {
   })
 
   test('keep an id this version has never heard of', async () => {
-    // A newer app may bind something this server knows nothing about. The id
-    // is checked for shape, not against a list, so it survives.
     expect((await patch({ shortcuts: { 'something.new': 'Mod-9' } })).status).toBe(200)
   })
 
@@ -608,8 +562,6 @@ describe('the shortcuts an account carries', () => {
   })
 
   test('refuse a body too big for the column', async () => {
-    // Every entry is legal on its own; together they are more than the row
-    // will carry, which is the other end of the same guard.
     const big = Object.fromEntries(
       Array.from({ length: 199 }, (_, index) => [
         `app.${'thing'.repeat(10)}-${index}`,

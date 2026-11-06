@@ -1,16 +1,6 @@
-/** Somebody's access to a space ended or narrowed, and they may be watching one of its
- *  online terminals right now (docs/online-terminal.md, 4.6).
- *
- *  Called from `roomsRevoked`, which every share change already goes through, so a
- *  terminal is closed or downgraded in the same request as a note's room is. Each
- *  machine with a live session in the space is told once, with the files of it that
- *  are in that space; the machine's own owner is never revoked from their own machine.
- *  `Machine`'s minute alarm asks the rows again besides, for anything nothing said. */
-
 import type { Env } from '../types'
 import { askMachine } from './ask'
 
-/** How many machines one revocation tells. */
 const MOST_MACHINES = 100
 
 export async function machinesRevoked(
@@ -44,18 +34,8 @@ export async function machinesRevoked(
   )
 }
 
-/** How many sign-ins one ending names to a machine: well past how many sessions an
- *  account has, and a bound on the header. Past it the minute alarm finds the rest. */
 const MOST_LOGINS = 100
 
-/** Sign-ins of one account that ended - signed out, ended from the sessions or the
- *  devices list - and the terminal sockets that arrived with them, which close now
- *  (`signedOut` in machine.ts), the machine owner's own included.
- *
- *  Unlike a share changing, this is about the person and not about a space: every
- *  machine where they may have a terminal open is told, which is their own and any with a
- *  live session in a space they are in. A machine nothing told closes the socket at its
- *  next minute anyway, when it asks whether each socket's sign-in still lives. */
 export async function machinesSignedOut(
   env: Env,
   who: string,

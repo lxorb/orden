@@ -1,10 +1,3 @@
-/** Emil's switches (docs/online-terminal.md, 4.8): the service, the ceiling, the
- *  allow-list, and a hold on one machine. One request each.
- *
- *  Reached only by the account `online_service.admin` names; anybody else is told
- *  there is nothing here. Open while the service is off, because one of them is how it
- *  is switched on. */
-
 import { Hono, type MiddlewareHandler } from 'hono'
 import { readBody } from '../body'
 import type { Env, Variables } from '../types'
@@ -34,7 +27,6 @@ const admin: MiddlewareHandler<Admin> = async (context, next) => {
 }
 onlineAdmin.use('*', admin)
 
-/** The service as it stands: switched on or not, the ceiling, this month's spend. */
 onlineAdmin.get('/', async (context) => {
   const service = await serviceOf(context.env)
   const at = Date.now()
@@ -50,13 +42,11 @@ onlineAdmin.get('/', async (context) => {
     online: service.on,
     ceiling: service.ceiling,
     spent: await spentThisMonth(context.env, at),
-    // What the Hetzner host still needs set before a machine can be made on it (4.15).
     hetzner: { missing: hetznerMissing(context.env) },
     machines,
   })
 })
 
-/** The service switch and the ceiling. Off, every machine stops at its next minute. */
 onlineAdmin.post('/service', async (context) => {
   const body = await readBody(context)
   const on = body.flag('online')
@@ -69,7 +59,6 @@ onlineAdmin.post('/service', async (context) => {
   return context.json({ online: service.on, ceiling: service.ceiling })
 })
 
-/** An account on or off the allow-list. Off stops its machine now. */
 onlineAdmin.post('/allow', async (context) => {
   const body = await readBody(context)
   const email = body.text('email', 320)
@@ -103,7 +92,6 @@ onlineAdmin.post('/allow', async (context) => {
   return context.json({ online: on })
 })
 
-/** A machine stopped and held, by a flag or by hand, until released. */
 onlineAdmin.post('/machines/:id/stop', async (context) => {
   const id = context.req.param('id')
   const body = await readBody(context)
@@ -134,8 +122,6 @@ onlineAdmin.post('/machines/:id/release', async (context) => {
   return context.json({ held: null })
 })
 
-/** An always-on machine power-cycled through Hetzner's API: what a server that answers
- *  nothing at all needs (4.15). Its sessions end; its disk stays. */
 onlineAdmin.post('/machines/:id/reboot', async (context) => {
   const id = context.req.param('id')
   const row = await context.env.DB.prepare('select user_id, host from machines where id = ?')
@@ -147,9 +133,6 @@ onlineAdmin.post('/machines/:id/reboot', async (context) => {
   return context.json({ state: answer ? (await answer.json<{ state: string }>()).state : null })
 })
 
-/** A machine moved to another host (4.15): the container saved one last time, its home
- *  backed up to R2 (where it stays, to be fetched by hand), and its next start made on
- *  the other. */
 onlineAdmin.post('/machines/:id/host', async (context) => {
   const id = context.req.param('id')
   const body = await readBody(context)
@@ -166,17 +149,12 @@ onlineAdmin.post('/machines/:id/host', async (context) => {
     'x-nib-user': row.user_id,
     'x-nib-host': host,
   })
-  // Without the object (a Worker with no machines bound), the row alone.
   if (!answer) {
     await context.env.DB.prepare('update machines set host = ? where id = ?').bind(host, id).run()
   }
   return context.json({ host })
 })
 
-/** The owner's SSH public key for an emergency, or null to take it away (the default):
- *  while it is set the server's firewall lets port 22 in, and a server made after it
- *  lets the key in as the machine's user. A server already made takes a new key from its
- *  owner's own hand, in a terminal (`~/.ssh/authorized_keys`); root never logs in. */
 onlineAdmin.post('/machines/:id/ssh', async (context) => {
   const id = context.req.param('id')
   const body = await readBody(context)
@@ -199,10 +177,6 @@ onlineAdmin.post('/machines/:id/ssh', async (context) => {
   return context.json({ ssh: key !== null })
 })
 
-/** The server under a machine deleted, and everything made for it - its firewall, its
- *  tunnel and hostname - with the object emptied: what stops its monthly price without
- *  erasing the account (4.15). Its disk goes with it. The row stays, so the owner's next
- *  terminal makes a new server. */
 onlineAdmin.post('/machines/:id/remove', async (context) => {
   const id = context.req.param('id')
   const row = await context.env.DB.prepare('select user_id from machines where id = ?')

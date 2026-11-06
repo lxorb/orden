@@ -1,17 +1,5 @@
-/** A machine's one way in (docs/online-terminal.md 4.15): a Cloudflare Tunnel of its own,
- *  run by `cloudflared` on the server, and the hostname in front of it,
- *  `m-<machine>.nibeditor.com`, whose only origin is that tunnel.
- *
- *  Made and taken away through Cloudflare's API with the Worker's secret
- *  `MACHINE_TUNNEL_TOKEN`, which may edit Cloudflare Tunnels on the account and DNS on the
- *  one zone and nothing else. Every call is idempotent: a tunnel is found by its name and
- *  a record by its hostname before either is made, so a start that died halfway finishes
- *  what it began instead of making a second of each.
- *  https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/get-started/create-remote-tunnel-api/ */
-
 const API = 'https://api.cloudflare.com/client/v4'
 
-/** The port `nibd` listens on, on the server's loopback (nibd.service). */
 const NIBD = 'http://127.0.0.1:7680'
 
 class TunnelError extends Error {
@@ -25,9 +13,6 @@ class TunnelError extends Error {
   }
 }
 
-/** Cloudflare Access in front of the machines' hostnames, where it is set up: the team's
- *  name and the application's audience tag, which `cloudflared` checks every request's
- *  token against as well as the edge does. */
 export interface Access {
   team: string
   aud: string
@@ -78,8 +63,6 @@ export class Tunnels {
     return (said as { result?: unknown }).result
   }
 
-  /** The tunnel named `name`, made where there is none: its id. Managed by Cloudflare
-   *  (`config_src`), so its routes are set here and the server needs only its token. */
   async tunnel(name: string): Promise<string> {
     const found = await this.ask(
       'GET',
@@ -97,17 +80,12 @@ export class Tunnels {
     return made.id
   }
 
-  /** The token `cloudflared` runs the tunnel with. Asked when a server is made, handed to
-   *  it once, and never kept by the Worker. */
   async tokenOf(id: string): Promise<string> {
     const token = await this.ask('GET', `/accounts/${this.account}/cfd_tunnel/${id}/token`)
     if (typeof token !== 'string' || !token) throw new TunnelError(502, 0, 'no tunnel token')
     return token
   }
 
-  /** The tunnel's one route: the machine's hostname to `nibd`, and nothing for anything
-   *  else. With Access set up, `cloudflared` also refuses a request whose Access token
-   *  is not this application's. */
   async route(id: string, hostname: string, access: Access | null): Promise<void> {
     await this.ask('PUT', `/accounts/${this.account}/cfd_tunnel/${id}/configurations`, {
       config: {
@@ -125,7 +103,6 @@ export class Tunnels {
     })
   }
 
-  /** The hostname, a proxied CNAME to the tunnel: its record's id. */
   async hostname(hostname: string, tunnel: string): Promise<string> {
     const content = `${tunnel}.cfargotunnel.com`
     const found = await this.ask(
@@ -152,9 +129,6 @@ export class Tunnels {
     return made.id
   }
 
-  /** The tunnel and its hostname, gone; either already gone is fine. A tunnel with a
-   *  connector still attached cannot be deleted, so its connections are cleaned first
-   *  (the server is gone by now, and they are stale). */
   async remove(name: string, hostname: string): Promise<void> {
     const records = await this.ask(
       'GET',

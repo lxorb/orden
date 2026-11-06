@@ -1,20 +1,3 @@
-/** Which spaces of other people use a blob, and handing it to their owners.
- *
- *  A blob is held by whoever uploaded it, and a writer in somebody else's space uploads
- *  their own: the picture in the owner's note, the paper of a page note, a file of the
- *  space and a file posted in its chat are all the writer's row. So when that row is
- *  about to go - the account is deleted (erase.ts), or the writer gives the bytes back
- *  (blobs.ts) - the bytes another account's space still uses are handed to that space's
- *  owner instead, and only what nobody else's space uses goes from the bucket.
- *
- *  What decides is which spaces use the bytes now, not who is a member where: a writer
- *  who left, or was taken out, wrote what they wrote. Every space is asked, through the
- *  rows that name a blob by its hash - a file of its tree, a page note's paper, the
- *  pictures written down for each note's body (pictures.ts), a file it records and a
- *  file posted in one of its chats. A note's body counts only for a blob this account
- *  holds as a picture: a paper or a file is named by its own column, and a hash
- *  somebody wrote into a note of their own does not make the bytes theirs. */
-
 import { FRONT_REV } from './blog/front'
 import { askChat } from './chats/ask'
 import { noteKey } from './notes'
@@ -23,14 +6,8 @@ import { readSpaceFiles } from './spaces/files'
 import type { Env } from './types'
 import { picturesOfVersion, versionKey } from './versions'
 
-/** A space that has not been emptied for good: a purged space keeps its row as a marker
- *  (trash.ts), and what is still named under it - a chat's files, kept a month - is not
- *  anything a space uses. */
 const LIVE = '(sp.deleted = 0 or sp.deleted_at is not null)'
 
-/** The owners other than this account of the spaces that use any of these hashes, and
- *  which of the hashes each one's spaces use. With `own`, this account's own spaces
- *  are asked too, under its own id: a face given back may be a picture in its notes. */
 export async function usedElsewhere(
   env: Env,
   userId: string,
@@ -46,7 +23,6 @@ export async function usedElsewhere(
   }
   const held = JSON.stringify([...hashes])
 
-  // Every row that names one of them by its hash, in a space of somebody else's.
   const { results: used } = await env.DB.prepare(
     `select sp.user_id as owner, n.hash as hash
        from notes n join spaces sp on sp.id = n.space_id
@@ -74,8 +50,6 @@ export async function usedElsewhere(
     .all<{ owner: string; hash: string }>()
   for (const one of used) owe(one.owner, one.hash)
 
-  // And the files a space records, which are a list in one column: only the spaces
-  // whose list has one of the hashes in it at all are read, and then read properly.
   const { results: listing } = await env.DB.prepare(
     `select user_id as owner, files from spaces sp
       where (?3 or user_id <> ?1) and ${LIVE}
@@ -92,17 +66,6 @@ export async function usedElsewhere(
   return owed
 }
 
-/** What else of an account's own holds a blob, beside its spaces' notes, files and
- *  chats (`usedElsewhere` with `own`). `used` for:
- *  - its face or the theme of one of its sites;
- *  - any chat naming it, of whoever's space: the account may have posted it there, which
- *    nothing says, and editing that message asks for a row of its own (`holds` in
- *    chats/log.ts), so it is not handed over;
- *  - a post it holds for later, in any chat, which needs the row when it goes;
- *  - a picture in a version of a note in a space it is in, which restoring would show.
- *  `unknown` while one of those cannot be asked or read yet, or for a picture while one of
- *  its own notes was written before its pictures were and has not been read since. And
- *  null for none. */
 export async function ownOtherwise(
   env: Env,
   userId: string,
@@ -150,8 +113,6 @@ export async function ownOtherwise(
   return unread ? 'unknown' : null
 }
 
-/** The statements that give each owner a row of their own for the hashes they are
- *  owed, copied from the row this account holds, so the bytes stay kept once it goes. */
 export function handedTo(
   env: Env,
   userId: string,
@@ -170,20 +131,12 @@ export function handedTo(
     )
 }
 
-/** How many note bodies `unreadUses` reads, over every space it looks in: a bound on
- *  what one request asks of the bucket. */
 const MOST_READ = 250
 
 const MOST_ASKED = 100
 
-/** What has been read of the notes written before their pictures were, kept across
- *  every question one request asks: a space's unread notes are the same bodies whoever
- *  asks and about whichever picture, so a sweep that asks about many reads them once,
- *  and one budget of bodies is shared between all of it. */
 export interface Reading {
   left: number
-  /** By space (and note, for somebody handed one note): the pictures its unread notes
-   *  show, and whether every one of them was read. */
   read: Map<string, { pictures: Set<string>; whole: boolean }>
   asks: number
   held: Map<string, Set<string> | null>
@@ -295,25 +248,6 @@ async function versionsRead(env: Env, userId: string, done: Reading): Promise<bo
   return whole
 }
 
-/** And the pictures in notes written before their pictures were written down, which
- *  have none yet until the nightly sweep reads them (blog/fill.ts), added to `owed`.
- *
- *  Their bodies are read the old way, in the spaces this account is still a member of,
- *  whatever its role, because a writer made a reader wrote what they wrote. A space
- *  with more of them than is left to read hands over every picture where this account
- *  may write, rather than guessing, because a picture somebody pays for is better than
- *  a hole in their note; in one it only reads, that would hand the owner pictures that
- *  were never there, so it is read as far as what is left goes. What this cannot reach
- *  is an unread note of a space this account is no longer in, which the sweep shrinks
- *  to nothing.
- *
- *  Without `guess`, a space with more unread notes than is left to read hands nothing
- *  over on the chance it shows a picture, and the answer is false: not everything that
- *  might use the pictures was read. That is for giving a file back, where the person
- *  is asking to stop paying for it and handing it to somebody else blindly would make
- *  them pay instead; an erase guesses, because keeping is better than losing there.
- *
- *  `done` is what was read already in this request; see `Reading`. */
 export async function unreadUses(
   env: Env,
   user: { id: string; email: string },
@@ -373,7 +307,6 @@ export async function unreadUses(
   return complete
 }
 
-/** Every picture the service holds that these notes show, read a handful at a time. */
 async function picturesIn(
   env: Env,
   space: string,

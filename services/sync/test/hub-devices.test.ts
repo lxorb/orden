@@ -1,6 +1,3 @@
-/** The account's devices: what `hello` writes down, the list, a rename, and when
- *  a device was last here. Ending one is in hub.test.ts. See hub/devices.ts. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type TestEnv, testEnv } from './harness'
 import { computer, hangUp, type Hubs, hubs, send } from './hub-fakes'

@@ -34,9 +34,6 @@ describe('what a program may reach', () => {
   })
 
   test('and nothing about the second factor or the sessions', () => {
-    // A token in a CI secret that could see the sessions could end them, and one
-    // that could reach the factor could take it off: both are the account
-    // defending itself against a stolen credential, which is what this is.
     for (const path of ['/v1/second', '/v1/second/confirm', '/v1/second/recovery']) {
       expect(programMayReach('GET', path, false)).toBe(false)
       expect(programMayReach('POST', path, false)).toBe(false)
@@ -48,21 +45,13 @@ describe('what a program may reach', () => {
     expect(programMayReach('DELETE', '/v1/sessions/abc', false)).toBe(false)
   })
 
-  /** A rollback is an edit rather than a removal: every note it changes keeps what
-   *  it said as a version, so a bad argument is another rollback away from being
-   *  undone. Which is the difference between it and the delete above, and why a
-   *  headless job may reach it. */
   test('and a rollback, which writes versions rather than taking anything away', () => {
     expect(programMayReach('POST', '/v1/spaces/abc/rollback', false)).toBe(true)
-    // A token that may only read reaches nothing that writes, this included.
     expect(programMayReach('POST', '/v1/spaces/abc/rollback', true)).toBe(false)
-    // And nothing that only looks like it.
     expect(programMayReach('POST', '/v1/spaces/abc/rollback/all', false)).toBe(false)
     expect(programMayReach('GET', '/v1/spaces/abc/rollback', false)).toBe(false)
   })
 
-  /** Sync v2's half that is about computers rather than notes: a token in a CI
-   *  secret has no device to be. */
   test('and nothing of the hub: its socket, or the devices', () => {
     for (const [method, path] of [
       ['GET', '/v2/hub'],
@@ -79,7 +68,6 @@ describe('what a program may reach', () => {
     expect(programMayReach('GET', '/v1/notes/abc/versions/1/more', false)).toBe(false)
     expect(programMayReach('GET', '/v1/spaces/abc/changes/x', false)).toBe(false)
     expect(programMayReach('GET', '/v1/spaces/abc/notes', false)).toBe(false)
-    // Whether a blog name is free, which only has the change feed's shape.
     expect(programMayReach('GET', '/v1/spaces/available/changes', false)).toBe(false)
   })
 
@@ -89,8 +77,6 @@ describe('what a program may reach', () => {
     expect(programMayReach('POST', '/v1/spaces/abc/notes', true)).toBe(false)
   })
 
-  /** Sync v2's documents: a program reads them, and writes the way it always has,
-   *  through the v1 routes, whose words a note's room takes in. */
   test('and of sync v2, the feed and the pull and nothing that writes', () => {
     for (const readOnly of [false, true]) {
       expect(programMayReach('GET', '/v2/spaces/abc/feed', readOnly)).toBe(true)
@@ -125,7 +111,6 @@ describe('a token acting for somebody', () => {
     env = testEnv()
     token = await signIn(env, 'a@b.dev')
 
-    // Read-only unless writing is asked for in as many words; see mcp/tokens.ts.
     const minted = await call<ProgramView>(env, '/v1/mcp/token', {
       token,
       body: { readOnly: false },
@@ -177,13 +162,9 @@ describe('a token acting for somebody', () => {
     expect(said.json.content).toBe('# Two')
   })
 
-  /** The rescue a headless job needs: a build that wrote a thousand notes wrong is
-   *  not something to undo by hand in a settings pane. `dry` first, because that is
-   *  the shape the pane uses and the shape a job should use. */
   test('and puts a space back to how it read at a moment', async () => {
     const before = Date.now()
 
-    // Something to put back, written the way the job that went wrong would have.
     await call<ProgramView>(env, `/v1/notes/${note}`, {
       method: 'PUT',
       token: program,
@@ -239,7 +220,6 @@ describe('a token acting for somebody', () => {
   })
 
   test('a read-only token reads and does not write', async () => {
-    // Nothing said, so read-only, which is the mint's own default.
     const minted = await call<ProgramView>(env, '/v1/mcp/token', { token, body: {} })
     const reader = minted.json.token ?? ''
 

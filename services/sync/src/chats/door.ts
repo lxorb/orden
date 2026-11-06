@@ -1,11 +1,3 @@
-/** The door to a chat: `GET /v2/chats/:id/socket` (docs/chats.md 4.4).
- *
- *  A socket carries no `Authorization` header, so it names its session token and its
- *  device in the subprotocols, as a room's and the hub's do, and is let in ahead of the
- *  session guard. Who reaches the chat, and as what, is one query (reach.ts); the
- *  object is told the answer and never looks anybody up. A chat this session reaches
- *  nothing of is a chat that does not exist. */
-
 import { Hono } from 'hono'
 import { subprotocol, tokenOf } from '@orden/rooms'
 import { DEVICE_PROTOCOL } from '@orden/sync-core'
@@ -48,8 +40,6 @@ chatDoor.get('/:chat/socket', async (context) => {
     'x-nib-guest': reached.guest ? 'yes' : 'no',
     'x-nib-role': reached.role,
     ...(device ? { 'x-nib-device': device } : {}),
-    // The sign-in the socket arrived with, by its hash, which the socket lasts no longer
-    // than; see `askSignIns` in log.ts.
     'x-nib-login': await sha256(token),
   })
 
@@ -58,8 +48,6 @@ chatDoor.get('/:chat/socket', async (context) => {
     return context.json({ error: CHAT_AWAY }, 503, { 'retry-after': '1' })
   }
 
-  // The browser refuses the socket unless the server names an offered subprotocol back:
-  // the device's where it named one, so the token is not written into a response.
   const headers = new Headers(answer.headers)
   headers.set('sec-websocket-protocol', device ? `${DEVICE_PROTOCOL}${device}` : subprotocol(token))
   return new Response(answer.body, {

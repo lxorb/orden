@@ -1,11 +1,3 @@
-/** The account's OpenAI key, and the question flow that is the only thing allowed
- *  to read it.
- *
- *  Emil's rule is one sentence - "it stays in the account, but after you set it you
- *  can't read it anymore" - and most of this file is about the second half of it.
- *  What is stored is not the key, what any read answers is not the key, and the one
- *  function that opens it is the one the model's request goes through. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { opened, sealed } from '../src/ask/key'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -35,8 +27,6 @@ function state(as = token) {
   return call(env, '/v1/settings', { token: as })
 }
 
-/** What is actually in the column, which is the only way to say that it is not the
- *  key. Read straight from the database: no route answers with it. */
 function stored(): { openai_key: string | null; openai_key_tail: string | null } {
   return env.db.prepare('select openai_key, openai_key_tail from users').get() as {
     openai_key: string | null
@@ -44,14 +34,10 @@ function stored(): { openai_key: string | null; openai_key_tail: string | null }
   }
 }
 
-/** The user's id, for the round trip below. */
 function userId(): string {
   return (env.db.prepare('select id from users').get() as { id: string }).id
 }
 
-/** How many questions the account has been counted for this hour, which is what the
- *  ceiling is actually made of. Read straight from the database, so a test can say
- *  what sixty questions did without asking sixty of them. */
 function asked(): number {
   const row = env.db
     .prepare('select count from limits where scope = ? and key = ?')
@@ -59,8 +45,6 @@ function asked(): number {
 
   return row?.count ?? 0
 }
-
-/* ── Encryption ───────────────────────────────────────────────────────── */
 
 describe('a key at rest', () => {
   test('goes round trip', async () => {
@@ -96,8 +80,6 @@ describe('a key at rest', () => {
     expect(await opened(SECRET, 'u1', 'nonsense')).toBeNull()
   })
 })
-
-/* ── Setting it, and never getting it back ────────────────────────────── */
 
 describe('setting the key', () => {
   test('answers that it is set and the last four characters, and nothing else', async () => {
@@ -141,9 +123,6 @@ describe('setting the key', () => {
     expect(stored().openai_key).toBeNull()
   })
 
-  /** The one that matters most: a server with no secret refuses rather than
-   *  falling back to plaintext. A key somebody believes is encrypted and is not is
-   *  worse than no key at all. */
   test('refuses to store at all when the server has no secret', async () => {
     const bare = testEnv()
     const only = await signIn(bare, 'c@d.dev')
@@ -184,7 +163,6 @@ describe('reading the key', () => {
     await put(KEY)
 
     const bare = testEnv()
-    // The same row, on a server with no secret: the tail is in the clear on purpose.
     bare.db.exec(
       `insert into users (id, email, created_at, settings, openai_key, openai_key_tail)
        values ('u', 'e@f.dev', 1, '{}', 'unreadable', '4f2a')`,
@@ -206,7 +184,6 @@ describe('reading the key', () => {
     expect((await state()).json.key).toEqual({ set: false, tail: '' })
   })
 
-  /** It used to be a setting, in the clear, and every read handed it back. */
   test('cannot be smuggled back in through the settings', async () => {
     const patched = await call(env, '/v1/settings', {
       method: 'PATCH',
@@ -220,10 +197,6 @@ describe('reading the key', () => {
   })
 })
 
-/* ── The models the key may choose ────────────────────────────────────── */
-
-/** OpenAI's model list, as the endpoint answers it, plus a count of how often it
- *  was asked. */
 function fakeModels(): () => number {
   let asked = 0
   vi.stubGlobal('fetch', (url: string) => {
@@ -294,8 +267,6 @@ describe('the models on offer', () => {
   })
 })
 
-/* ── Asking ───────────────────────────────────────────────────────────── */
-
 interface Sent {
   model: string
   input: { role?: string; type?: string; name?: string; output?: string; content?: unknown }[]
@@ -303,9 +274,6 @@ interface Sent {
   reasoning: { effort: string }
 }
 
-/** OpenAI's Responses endpoint, answering with whatever each round was told to.
- *  Every request it was sent is kept, because what the model was given - and in
- *  particular what it was *not* given - is most of what there is to check. */
 function fakeAsking(rounds: unknown[]): Sent[] {
   const sent: Sent[] = []
   let round = 0
@@ -370,7 +338,6 @@ describe('a question', () => {
     await question({ question: 'fonts?', model: 'gpt-6-astra' })
 
     expect(sent[0]?.tools.map((one) => one.name)).toEqual(['search_notes', 'read_note'])
-    // Two items: the prompt and the question. Not one note.
     expect(sent[0]?.input.map((one) => one.role)).toEqual(['developer', 'user'])
     expect(JSON.stringify(sent[0]?.input)).not.toContain('bitmaps')
   })
@@ -402,7 +369,6 @@ describe('a question', () => {
     expect(answered?.output).toBe('# Fonts\n\nOne font.\n')
   })
 
-  /** The scope of the tools, which is the whole of what they are allowed to be. */
   test('never reaches a note belonging to somebody else', async () => {
     const sent = fakeAsking([
       wants('search_notes', { query: 'secret' }),
@@ -415,7 +381,6 @@ describe('a question', () => {
 
     await question({ question: 'anything?', model: 'gpt-6-astra' })
 
-    // The last request carries the whole conversation, so both answers are in it.
     const answers = (sent.at(-1)?.input ?? [])
       .filter((one) => one.type === 'function_call_output')
       .map((one) => one.output)
@@ -460,41 +425,24 @@ describe('a question', () => {
     expect(none.json.error).toContain('OpenAI key')
   })
 
-  /** The account's own credit is what this spends, and a phone in a pocket is
-   *  what a ceiling is for.
-   *
-   *  Counted rather than ground through. This asked sixty questions and then a sixty
-   *  first, and sixty one round trips through the Worker and the database is most of
-   *  a test timeout on a runner with the rest of the suite on it: the test timed out
-   *  while the ceiling was doing exactly what it does now. The ceiling is a row in
-   *  `limits`, so the row says what sixty questions did without sixty being asked -
-   *  which is how the utterance ceiling below is tested too. Three questions are
-   *  enough to say the whole of it: the count goes up with each one, the sixtieth is
-   *  answered, and the sixty first is not. */
   test('stops after sixty in an hour', async () => {
     fakeAsking([said('yes')])
 
-    // Every question counts, and what it counts against is the account's own row.
     expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
     expect(asked()).toBe(1)
 
-    // Fifty nine asked this hour, without fifty nine round trips.
     env.db
       .prepare('update limits set count = ? where scope = ? and key = ?')
       .run(59, 'ask', userId())
 
-    // The sixtieth is answered.
     expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
     expect(asked()).toBe(60)
 
-    // And the sixty first is not.
     const over = await question({ question: 'again', model: 'gpt-6-astra' })
     expect(over.status).toBe(429)
     expect(over.json.error).toContain('a lot of questions')
   })
 })
-
-/* ── An utterance, as words ───────────────────────────────────────────── */
 
 describe('what the microphone heard', () => {
   beforeEach(async () => {
@@ -510,8 +458,6 @@ describe('what the microphone heard', () => {
     })
   }
 
-  /** Which model a transcription asked for. `FormData.get` answers a string or a
-   *  file, and only one of those is a model name. */
   function modelIn(form: FormData): string {
     const value = form.get('model')
     return typeof value === 'string' ? value : ''
@@ -545,11 +491,6 @@ describe('what the microphone heard', () => {
     expect(tried).toEqual(['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'])
   })
 
-  /** Workers AI runs where this Worker runs; the account's own key is a second
-   *  journey across the internet inside the one request somebody is standing there
-   *  waiting on. Emil, on the glasses: *"it takes so long for a voice command that
-   *  there's no reason to use it."* So the near model listens first, key or no key,
-   *  and the key is what answers when it heard nothing at all. */
   test('listens on Workers AI first, and does not leave the building for it', async () => {
     const asked: string[] = []
     env.AI = {
@@ -580,9 +521,6 @@ describe('what the microphone heard', () => {
     expect(asked).toEqual(['@cf/openai/whisper-large-v3-turbo', '@cf/openai/whisper'])
   })
 
-  /** Half a second of "next" comes back as "text" often enough to matter. Whisper
-   *  takes a prompt and leans towards it, so the plugin sends the phrases it is
-   *  hoping to hear - the reader's own, whatever they rebound them to. */
   test('leans on the words the plugin said it was hoping for', async () => {
     let prompted: unknown = null
     env.AI = {
@@ -653,20 +591,7 @@ describe('what the microphone heard', () => {
   })
 })
 
-/* ── An utterance with no OpenAI key at all ─────────────────── */
-
-/** Emil has no OpenAI account at all, and the plugin answered "no way to listen" to
- *  somebody wearing a pair of glasses with a working microphone. The microphone is
- *  there, and so is a model - Whisper on Workers AI, on the same Worker that is
- *  already answering the request - so a key decides which model listens and nothing
- *  more.
- *
- *  Nothing on the glasses does this: the SDK hands a plugin raw PCM and there is no
- *  speech to text anywhere in `@evenrealities/even_hub_sdk` 0.0.15. */
 describe('what the microphone heard with no key', () => {
-  /** A WAV header saying what the glasses send: 16 kHz, sixteen bit, one channel,
-   *  `seconds` of it. Built as a real header because the cap is measured in seconds
-   *  off the header own fields, which is the whole point of reading them. */
   function wav(seconds: number): Uint8Array {
     const rate = 16_000
     const bytes = Math.round(seconds * rate * 2)
@@ -691,8 +616,6 @@ describe('what the microphone heard with no key', () => {
     return file
   }
 
-  /** The Workers AI binding, as a fake: which models were asked and with what, and
-   *  a model with no answer here throws the way one that has been retired does. */
   function workersAi(answers: Record<string, unknown>) {
     const asked: { model: string; input: unknown }[] = []
     const AI = {
@@ -729,7 +652,6 @@ describe('what the microphone heard with no key', () => {
     expect(status).toBe(200)
     expect(json.said).toBe('open page four')
     expect(asked.map((one) => one.model)).toEqual(['@cf/openai/whisper-large-v3-turbo'])
-    // The turbo model takes the file as base64, not as bytes.
     expect(typeof (asked[0]?.input as { audio: unknown }).audio).toBe('string')
   })
 
@@ -742,7 +664,6 @@ describe('what the microphone heard with no key', () => {
       '@cf/openai/whisper-large-v3-turbo',
       '@cf/openai/whisper',
     ])
-    // And that one takes its bytes.
     expect(Array.isArray((asked[1]?.input as { audio: unknown }).audio)).toBe(true)
   })
 
@@ -764,10 +685,6 @@ describe('what the microphone heard with no key', () => {
     expect(json.said).toBeNull()
   })
 
-  /** A spoken command is a second or two. Twelve seconds of anything arrived from a
-   *  pocket or a room rather than from somebody talking to their glasses, and the
-   *  seconds are read off the header so that the ceiling means the same thing at any
-   *  sample rate. */
   test('refuses more audio than a spoken command, by its seconds', async () => {
     const { AI, asked } = workersAi({
       '@cf/openai/whisper-large-v3-turbo': { text: 'never asked' },
@@ -785,7 +702,6 @@ describe('what the microphone heard with no key', () => {
   test('counts every utterance against the same ceiling, key or no key', async () => {
     const { AI } = workersAi({ '@cf/openai/whisper-large-v3-turbo': { text: 'again' } })
     env.AI = AI
-    // Six hundred already said this hour, without six hundred round trips.
     env.db
       .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
       .run('said', userId(), 600, Date.now() + 60 * 60 * 1000)
@@ -802,10 +718,7 @@ describe('what the microphone heard with no key', () => {
   })
 })
 
-/* ── A guest cannot ask ───────────────────────────────────────────────── */
-
 describe('a guest', () => {
-  /** A session a share link handed out, with no account behind it. */
   async function guest(): Promise<string> {
     const space = await firstSpace(token)
     await noteIn(token, space, 'plan.md', '# Plan\n')
@@ -824,9 +737,6 @@ describe('a guest', () => {
     return followed.json.token
   }
 
-  /** Not a check in the ask routes: the session guard opens only what
-   *  `guestMayReach` names, and everything account-wide is left out of it. A key and
-   *  a set of notes are as account-wide as it gets. */
   test('cannot ask, cannot set a key, cannot list models', async () => {
     const as = await guest()
     fakeAsking([said('never asked')])
@@ -839,18 +749,7 @@ describe('a guest', () => {
   })
 })
 
-/* ── A piece of a recording ──────────────────────────────────────────── */
-
-/** The recorder sends the same WAV the glasses do and asks the same question of the
- *  same models; what differs is the length. A spoken command is a second or two, a
- *  piece of a recording is a minute, and a route that refused the second at twelve
- *  seconds would be a route the recorder could not use at all.
- *
- *  See apps/desktop/src/lib/recorder/transcribe.ts, which is what cuts a recording
- *  into pieces this size, and heard.ts for why the two ceilings are two numbers. */
 describe('a piece of a recording', () => {
-  /** A WAV header saying 16 kHz mono, `seconds` of it, the way the recorder writes
-   *  one; see recorder/wav.ts. The ceiling is measured off these fields. */
   function wav(seconds: number): Uint8Array {
     const rate = 16_000
     const bytes = Math.round(seconds * rate * 2)
@@ -900,8 +799,6 @@ describe('a piece of a recording', () => {
     expect(over.json.error).toContain('too long')
   })
 
-  /** Without the flag it is a spoken command again, and the old ceiling stands: one
-   *  route, two callers, and neither reaches the other's rules by accident. */
   test('and the glasses keep their own ceiling', async () => {
     env.AI = { run: () => Promise.resolve({ text: 'never asked' }) }
 
@@ -910,8 +807,6 @@ describe('a piece of a recording', () => {
     expect(over.json.error).toContain('spoken command')
   })
 
-  /** A transcript in a note says what language it is in; a spoken command has no use
-   *  for one and reads the same field as empty. Only the turbo model says. */
   test('comes back with the language the model settled on', async () => {
     env.AI = {
       run: () =>
@@ -932,8 +827,6 @@ describe('a piece of a recording', () => {
   })
 })
 
-/** Meeting notes went on 2026-10-03, and the route that summarised one went with them:
- *  nothing is offered that the app no longer asks for. */
 test('there is no summary route any more', async () => {
   await put(KEY)
   const gone = await call(env, '/v1/ask/summary', { token, body: { text: 'words', model: 'm' } })

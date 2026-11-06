@@ -1,28 +1,3 @@
-/** Everything the glasses' question flow needs, behind the account's session.
- *
- *  Five routes, and the reason they are all here rather than in the plugin is one
- *  sentence of Emil's about the key: "it stays in the account, but after you set it
- *  you can't read it anymore." A key nothing can read is a key the plugin cannot
- *  send to OpenAI, so the Worker sends it - and once the Worker is making that
- *  request it is also the place that runs the tools, lists the models and turns
- *  sound into words.
- *
- *    PUT    /v1/ask/key      sets or replaces it; answers only set and the tail
- *    DELETE /v1/ask/key      takes it away
- *    GET    /v1/ask/models   what this key may choose, kept for a day
- *    POST   /v1/ask          a question, answered with the account's own notes
- *    POST   /v1/ask/heard    a WAV, as words; `?piece=1` for one piece of a recording
- *
- *  What the plugin sends is a question and nothing else. It holds no key, and
- *  `api.openai.com` is off its manifest's network whitelist: the one origin it may
- *  reach is the service. That is the whole point of moving this.
- *
- *  **A guest cannot ask.** Not a special case: the session guard in index.ts opens
- *  only what `guestMayReach` names, everything account-wide is left out of that
- *  list, and a key and a set of notes are as account-wide as it gets. A guest gets
- *  403 from the guard and never reaches this file, which is why every route here
- *  reads `user` without checking. */
-
 import { Hono } from 'hono'
 import { readBody } from '../body'
 import { mayAsk, mayTranscribe } from '../limits'
@@ -32,31 +7,18 @@ import { heard, PIECE_SECONDS, shortEnough } from './heard'
 import { forgetKey, keyFor, mayStore, setKey } from './key'
 import { forgetModels, modelsFor } from './models'
 
-/** How long a question may be. A question said out loud in one breath; anything
- *  longer arrived from something other than a person talking. */
 const MOST_QUESTION = 500
 
-/** A model id, which is a name and not a sentence. */
 const MOST_MODEL = 100
 
-/** How long an utterance may be, as bytes of WAV. A minute of the mono 16 kHz the
- *  glasses send is about two megabytes; four is a generous ceiling and still small
- *  enough that a Worker holding one in memory is nothing. */
 const MOST_WAV = 4 * 1024 * 1024
 
-/** What a key may be, as a length. The check that matters is in key.ts; this one
- *  only keeps a novel out of the body reader. */
 const MOST_KEY = 200
 
-/** How much of a vocabulary a transcription may be prompted with. A dozen short
- *  phrases; anything longer is not a list of commands and would only be somewhere to
- *  put a paragraph of somebody else's words into a model. */
 const MOST_LIKE = 300
 
 export const ask = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** Sets the key, or replaces the one that is there. There is no editing a key
- *  nothing can read, so this is the only way to change one. */
 ask.put('/key', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
@@ -66,12 +28,9 @@ ask.put('/key', async (context) => {
 
   const state = await setKey(context.env, user.id, given)
   if (typeof state === 'string') {
-    // A server with no encryption secret is a server that is not ready, rather
-    // than a request that is wrong; see key.ts.
     return context.json({ error: state }, mayStore(context.env) ? 400 : 503)
   }
 
-  // The list that was cached belonged to the key that is gone.
   await forgetModels(context.env, user.id)
   return context.json(state)
 })
@@ -82,9 +41,6 @@ ask.delete('/key', async (context) => {
   return context.json(await forgetKey(context.env, user.id))
 })
 
-/** Which models this account's key may choose. Empty when there is no key, when the
- *  key is wrong, or when OpenAI could not be reached - all of which the settings
- *  pane says in one line rather than in a dialog. */
 ask.get('/models', async (context) => {
   const user = context.get('user')
   const key = await keyFor(context.env, user.id)
@@ -122,8 +78,6 @@ ask.post('/', async (context) => {
     })
     return context.json({ answer })
   } catch (error) {
-    // Whatever OpenAI refused with, in its own words: the reader is standing there
-    // and "something went wrong" tells them nothing they can act on.
     return context.json(
       { error: error instanceof Error ? error.message : 'the model refused' },
       502,
@@ -131,23 +85,9 @@ ask.post('/', async (context) => {
   }
 })
 
-/** One utterance, as words, or one piece of a recording.
- *
- *  Two callers with one shape. The glasses send half a second of somebody saying
- *  "next" and the phone does the same where its WebView has no recogniser of its
- *  own; the recorder sends a recording somebody asked to have transcribed, in pieces
- *  small enough to hold. `?piece=1` says which,
- *  and the only difference it makes is how many seconds are allowed: the model, the
- *  ceiling on the bytes and the account's hourly allowance are the same for both.
- *
- *  One route rather than two because it is one question. A second route would be a
- *  second place for the model list to fall out of step, and the pieces a recording
- *  is cut into are exactly what this has always taken: a WAV of 16 kHz mono. */
 ask.post('/heard', async (context) => {
   const user = context.get('user')
 
-  // Read from the header before the body is read at all: measuring afterwards is
-  // how a Worker with a hundred and twenty-eight megabytes is asked to hold more.
   const declared = Number(context.req.header('content-length') ?? '')
   if (Number.isFinite(declared) && declared > MOST_WAV) {
     return context.json({ error: 'that is too much audio' }, 413)
@@ -157,9 +97,6 @@ ask.post('/heard', async (context) => {
   if (!wav.byteLength) return context.json({ error: 'send some audio' }, 400)
   if (wav.byteLength > MOST_WAV) return context.json({ error: 'that is too much audio' }, 413)
 
-  // Nothing about a key here. With one, OpenAI listens; without one, Whisper on
-  // Workers AI does. A reader with no OpenAI account still has a microphone and still
-  // has this Worker, and "no way to listen" was the wrong answer to give them.
   const ofRecording = context.req.query('piece') === '1'
   if (!shortEnough(wav, ofRecording ? PIECE_SECONDS : undefined)) {
     return context.json(
@@ -172,13 +109,8 @@ ask.post('/heard', async (context) => {
     return context.json({ error: 'that is a lot of listening - try again later' }, 429)
   }
 
-  // The words the caller is hoping to hear, if it said. The plugin sends its own
-  // spoken commands, which is what turns half a second of "next" into "next" rather
-  // than "text"; see apps/desktop/src/lib/api.ts.
   const like = (context.req.query('like') ?? '').slice(0, MOST_LIKE)
 
   const key = await keyFor(context.env, user.id)
-  // `said` and `language`, and the plugin reads only the first of them: a spoken
-  // command has no language to name, and a transcript in a note does.
   return context.json(await heard(context.env, wav, key, like))
 })

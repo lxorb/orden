@@ -6,11 +6,6 @@ import { plainWords } from '../src/blog/words'
 import worker from '../src/index'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
-/** The second half of publishing: what a reader of a site is given besides the
- *  note. The pieces on their own here, and the whole site through a hostname in
- *  site.test.ts. */
-
-/** One page of an imaginary site, as the navigation and the backlinks read it. */
 function page(path: string, front: Listed['front'] = {}): Listed {
   const title = path.replace(/\.md$/, '').split('/').pop() ?? path
   return { slug: path.replace(/\.md$/, '').toLowerCase(), title, path, front }
@@ -37,8 +32,6 @@ describe('what a reader typed into the search box', () => {
   })
 
   test('a word that would steer the query is a word', () => {
-    // FTS5 reads `AND`, `NOT` and a bracket as syntax, so every word is quoted
-    // before it gets there; what a reader typed is what is searched for.
     expect(asked('AND (NOT)').words).toEqual(['AND', '(NOT)'])
   })
 })
@@ -80,9 +73,6 @@ describe('the navigation down the left', () => {
   ]
 
   test('reads a level at a time: its pages in order, then its folders', () => {
-    // The pages of a level first, ordered by what they say and then by name,
-    // and the folders under it after them - which is the order the column shows
-    // and therefore the order previous and next follow.
     expect(inOrder(pages).map((one) => one.path)).toEqual([
       'Two.md',
       'One.md',
@@ -143,9 +133,6 @@ describe('what links to a page', () => {
   })
 
   test('never a page the site does not publish', () => {
-    // The list is the published pages, so a private note that links here is not
-    // in it and cannot be named. This is the whole reason backlinks are built
-    // from the site's own list rather than from a link index.
     const pages = [page('Plan.md')]
     expect(backlinks(pages, pages[0]!)).toBe('')
   })
@@ -442,7 +429,6 @@ describe('a site with forms on it', () => {
     expect(csv.text).toContain('"Ada"')
   })
 
-  /** One answer sent the way a reader's browser sends it. */
   const answer = (name = 'Ada') =>
     call(env, `/form/${note}`, {
       host: HOST,
@@ -451,8 +437,6 @@ describe('a site with forms on it', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
 
-  /** Answers written straight into the table, `count` of them at `bytes` each and
-   *  `at` old: what a flood that already happened left behind. */
   let batches = 0
   function held(count: number, bytes: number, at = Date.now()) {
     batches += 1
@@ -485,7 +469,6 @@ describe('a site with forms on it', () => {
     held(4999, 2)
     expect((await answer()).headers.get('location')).toBe(`/hello?sent=${note}`)
 
-    // The five thousandth was the last; the next is refused, and nothing is kept.
     const refused = await answer('Grace')
     expect(refused.headers.get('location')).toBe('/hello?wrong=full')
     expect(env.db.prepare('select count(*) as many from form_answers').get()).toEqual({
@@ -495,7 +478,6 @@ describe('a site with forms on it', () => {
   })
 
   test('or as many bytes of them', async () => {
-    // Ten mebibytes less a few: room for a short answer, and not for a longer one.
     held(9, 1024 * 1024)
     held(1, 1024 * 1024 - 20)
 
@@ -531,9 +513,6 @@ describe('a site with forms on it', () => {
   })
 
   test('and the theme the author chose is linked after the site’s own sheet', async () => {
-    // The app has the themes installed, so the app sends the stylesheet up as a
-    // blob and the site keeps its name and hash; the page links it from where
-    // every other blob is served, and after its own sheet so it wins.
     const hash = 'a'.repeat(64)
     await call(env, `/v1/spaces/${space}/site`, {
       method: 'PUT',
@@ -546,8 +525,6 @@ describe('a site with forms on it', () => {
     expect(answer.text.indexOf(`/i/${hash}.css`)).toBeGreaterThan(answer.text.indexOf('/s/'))
   })
 
-  /** A stranger's message is the note's: emptied from Recently deleted for good, the
-   *  note takes its answers with it, and the old addresses it answered on too. */
   test('a note emptied for good takes its answers and its old paths with it', async () => {
     const sent = await call(env, `/form/${note}`, {
       host: HOST,
@@ -581,9 +558,6 @@ describe('a site with forms on it', () => {
   })
 })
 
-/** A form on a site behind a password. The answer is taken before the gate, so
- *  that a reader who is through it can send one - and a reader who is not never
- *  spends one of their tries at the password by sending it. */
 describe('a form on a site behind a password', () => {
   let env: TestEnv
   let token: string
@@ -602,7 +576,6 @@ describe('a form on a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
     })
 
-  /** The ticket a reader who typed the password carries. */
   async function letIn(headers: Record<string, string> = {}) {
     return call(env, '/hello', {
       host: HOST,
@@ -664,7 +637,6 @@ describe('a form on a site behind a password', () => {
     const machine = { 'cf-connecting-ip': '198.51.100.9' }
     for (let at = 0; at < 20; at++) expect((await sending(machine)).status).toBe(303)
 
-    // Every try at the password is still there: the answers spent none of them.
     const said = await letIn(machine)
 
     expect(said.status).toBe(303)

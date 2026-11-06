@@ -1,14 +1,3 @@
-/** Where a device can be pushed to: registered by the device, removed by it or by a
- *  service that says it is gone (send.ts).
- *
- *    GET    /v2/push/key           which services are on, and the VAPID public key
- *    POST   /v2/push/targets       {kind, token, p256dh?, auth?, zone?, device?}
- *    DELETE /v2/push/targets/:id
- *
- *  Behind the session guard, and not a program's or a guest's to reach (index.ts):
- *  a target is a person's own device. One row per token, so a device registering again
- *  replaces its own row rather than adding a second. */
-
 import { Hono } from 'hono'
 import { readBody } from '../body'
 import { tokenIn } from '../auth'
@@ -18,18 +7,14 @@ import { configured, type TargetKind } from './send'
 
 const KINDS: readonly TargetKind[] = ['webpush', 'fcm', 'apns']
 
-/** How long a token may be: a Web Push endpoint is an address, the rest are shorter. */
 const LONGEST_TOKEN = 2048
 const LONGEST_KEY = 200
 const LONGEST_ZONE = 64
 
-/** How many targets one account keeps; past this the oldest goes. */
 const MOST_TARGETS = 20
 
-/** Refusals a correct client never meets, left in English. */
 const NOT_A_TARGET = 'not a push target'
 
-/** Whether a zone is one this runtime can read a time in. */
 function isZone(zone: string): boolean {
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: zone })
@@ -56,16 +41,12 @@ push.post('/targets', async (context) => {
 
   const known = KINDS.find((one) => one === kind)
   if (!known || !token) return context.json({ error: NOT_A_TARGET }, 400)
-  // A subscription is somebody's push service, never anywhere else on the internet,
-  // and it cannot be encrypted to without its two keys.
   if (known === 'webpush' && (!token.startsWith('https://') || !p256dh || !auth)) {
     return context.json({ error: NOT_A_TARGET }, 400)
   }
   if (zone !== undefined && !isZone(zone)) return context.json({ error: NOT_A_TARGET }, 400)
 
   const keys = known === 'webpush' ? JSON.stringify({ p256dh, auth }) : null
-  // The session asking, which the target lives exactly as long as (0054, live.ts): a
-  // device ended, signed out or run out is told nothing more.
   const session = await sha256(tokenIn(context.req.header('authorization')) ?? '')
   const id = newId()
   await context.env.DB.prepare(
@@ -79,7 +60,6 @@ push.post('/targets', async (context) => {
   )
     .bind(id, user.id, device ?? null, known, token, keys, zone ?? null, now(), session)
     .run()
-  // The oldest beyond the ceiling: a browser that subscribed and was never seen again.
   await context.env.DB.prepare(
     `delete from push_targets where user_id = ?1 and id not in
        (select id from push_targets where user_id = ?1 order by created_at desc limit ?2)`,

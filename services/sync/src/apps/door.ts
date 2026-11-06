@@ -1,17 +1,3 @@
-/** The door to an application (issue 1063): `GET /v2/apps/:app/socket`.
- *
- *  As the online terminal's door: the token and the device ride in the subprotocols, and
- *  the host names itself with `nib.role.host`. An application is the reader's own and
- *  nobody else's: the file must be in a space the person owns, and only their own signed-in
- *  devices come in - as its host or as a viewer. While the switch is off (`apps` in
- *  `online_service`), or wherever the `APPS` binding is absent, this answers 404 like a
- *  route that does not exist, which an app that knows it reads as not available yet.
- *
- *  A page cannot read why a socket was refused, so a tab looks first: the same address
- *  asked as a plain request, its token as a bearer, is told whether the account may
- *  open it - 426, a websocket and nothing else - or why not: signed out, the file not
- *  on the account (yet), or the switch off. */
-
 import { HOST_PROTOCOL, UNKNOWN_APP } from '@orden/online/apps'
 import { tokenOf } from '@orden/rooms'
 import { Hono } from 'hono'
@@ -92,7 +78,6 @@ appsDoor.get('/:app/socket', async (context) => {
     })
   if (!answer?.webSocket) return context.json({ error: AWAY }, 503, { 'retry-after': '1' })
 
-  // The device's protocol named back, so the token is not written into a response.
   const headers = new Headers(answer.headers)
   headers.set('sec-websocket-protocol', `${DEVICE_PROTOCOL}${device}`)
   return new Response(answer.body, { status: answer.status, headers, webSocket: answer.webSocket })

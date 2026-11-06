@@ -1,10 +1,3 @@
-/** An account's hub, driven without a Durable Object under it.
- *
- *  The same idea as room.ts: the class the Worker exports is a plain one, so a state
- *  that keeps its storage in a Map, sockets that keep what was said to them, and a
- *  namespace that makes one real hub per id are the whole runtime a test needs. The
- *  clock is Vitest's, set by the tests. */
-
 import { vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { AccountHub, type Joining } from '../src/hub/hub'
@@ -12,7 +5,6 @@ import type { FromHub } from '../src/hub/frames'
 import type { Env } from '../src/types'
 import { signIn, type TestEnv } from './harness'
 
-/** What the runtime pairs a request and its automatic answer with. Not in Node. */
 class Pair {
   constructor(
     readonly request: string,
@@ -21,7 +13,6 @@ class Pair {
 }
 Object.assign(globalThis, { WebSocketRequestResponsePair: Pair })
 
-/** A hub socket: what was said down it. */
 export class HubSocket {
   readonly said: FromHub[] = []
   readyState = 1
@@ -40,7 +31,6 @@ export class HubSocket {
   }
 
   serializeAttachment(value: unknown) {
-    // Kept the way the runtime keeps it: a copy, so a test cannot reach in.
     this.attachment = structuredClone(value)
   }
 
@@ -48,13 +38,11 @@ export class HubSocket {
     return structuredClone(this.attachment)
   }
 
-  /** Everything said since the last time a test looked. */
   take(): FromHub[] {
     return this.said.splice(0, this.said.length)
   }
 }
 
-/** A Durable Object's state, as much of it as a hub uses. */
 export class HubState {
   readonly kept = new Map<string, unknown>()
   private sockets: HubSocket[] = []
@@ -124,8 +112,6 @@ export class HubState {
     return socket.tags
   }
 
-  /** A socket the runtime has finished with, gone from the list as it is once its
-   *  close handler has run. */
   drop(socket: HubSocket) {
     this.sockets = this.sockets.filter((one) => one !== socket)
   }
@@ -139,16 +125,12 @@ export class HubState {
   }
 }
 
-/** A hub and the state under it, with the casts in one place: this file is the
- *  stand-in, so it is where the shapes are promised to line up. */
 export function hub(env: Env): { hub: AccountHub; state: HubState } {
   const state = new HubState()
   const made = new AccountHub(state as unknown as DurableObjectState, env)
   return { hub: made, state }
 }
 
-/** The hubs of a whole Worker, one per id, made the first time one is asked for. A
- *  request a route makes runs the real `fetch` on the real class. */
 export function hubs(env: Env): {
   HUB: DurableObjectNamespace
   of(id: string): { hub: AccountHub; state: HubState }
@@ -180,7 +162,6 @@ export function hubs(env: Env): {
   return { HUB: namespace as unknown as DurableObjectNamespace, of, asked }
 }
 
-/** A device's socket, let in the way the door lets it in. */
 export function connect(
   made: AccountHub,
   joining: Partial<Joining> & { device: string; who: string },
@@ -194,7 +175,6 @@ export function connect(
   return socket
 }
 
-/** A frame from a device, whatever it holds. */
 export async function send(made: AccountHub, socket: HubSocket, frame: unknown): Promise<void> {
   await made.webSocketMessage(
     socket as unknown as WebSocket,
@@ -202,20 +182,14 @@ export async function send(made: AccountHub, socket: HubSocket, frame: unknown):
   )
 }
 
-/** A socket closed from the device's side, and the runtime done with it. */
 export async function hangUp(made: AccountHub, state: HubState, socket: HubSocket) {
   socket.readyState = 3
   await made.webSocketClose(socket as unknown as WebSocket)
   state.drop(socket)
 }
 
-/** The hubs of a whole Worker; see `hubs`. */
 export type Hubs = ReturnType<typeof hubs>
 
-/** A computer of an account: signed in through the real sign-in, with a hub socket
- *  that said hello under that session. Expects Vitest's clock: a second code to one
- *  address waits out the gap between two codes, so the clock is moved past it for
- *  whoever signs in next. */
 export interface Computer {
   token: string
   id: string

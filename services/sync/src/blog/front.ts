@@ -1,80 +1,30 @@
-/** What a note says about its own page.
- *
- *  A published page is the note, so the note is where the page's decisions live:
- *  whether it is on the site at all, where it sits, what else finds it, and what
- *  a search result or a shared link shows. Obsidian Publish's own keys, because a
- *  vault should move between the two without being rewritten - `publish`,
- *  `permalink`, `aliases`, `description`, `image` (or `cover`), `date`.
- *
- *  Read once, when the note is written, and kept on the row: the site has to
- *  decide about every note in a space to answer one request, and the bodies are
- *  in R2. The first words ride along for the same reason - a feed of twenty
- *  entries would otherwise be twenty reads out of storage.
- *
- *  Nothing here is a setting. A note that says nothing about itself has no row
- *  to speak of, and what happens to it is the site's default; see
- *  spaces/site.ts. */
-
 import { documentTitle, noteWithoutComments, withoutComments } from '@orden/markdown'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { findLinks } from '@orden/markdown/links'
 import { objectIn } from '../body'
 
-/** Long enough for a sentence somebody wrote as a description, short enough that
- *  the column cannot be used as storage. */
 const LONGEST_TEXT = 400
-/** A path inside a site: a few words and some slashes. */
 const LONGEST_PATH = 200
-/** More aliases than a page has reasons to have. */
 const MOST_ALIASES = 10
-/** More tags than a note carries, and more links than a page of prose holds.
- *  Both are bounds on a column rather than opinions about writing: past them the
- *  row is being used as storage. */
 const MOST_TAGS = 40
 const MOST_LINKS = 200
-/** What a feed entry shows of a page that gave no description. Two lines. */
 const LONGEST_SUMMARY = 300
 
 export interface NoteFront {
-  /** What the note says about being published, or absent where it says nothing -
-   *  which is the only state the site's default applies to. */
   publish?: boolean
-  /** Where the page sits, instead of where its path would put it. */
   permalink?: string
-  /** Other paths that find this page. */
   aliases?: string[]
-  /** The page's own title, where the note names one rather than opening with a
-   *  heading. */
   title?: string
-  /** The page's description, for the tags and for the feed. */
   description?: string
-  /** The picture a shared link shows. */
   image?: string
-  /** What the feed orders by, where the note says. */
   date?: string
-  /** The heading the note opens with, which is what its page is called when it
-   *  names no title. Not front matter; it comes out of the same read, and it is
-   *  here so that a list of a thousand pages needs none of their bodies. */
   heading?: string
-  /** The first words of the note, for a feed entry and for a description
-   *  nobody wrote. Not front matter; it comes out of the same read. */
   summary?: string
-  /** Where this page sits among its siblings in the site's navigation, from
-   *  `order:`. Absent for a page that says nothing, which is sorted by name
-   *  after the ones that do. */
   order?: number
-  /** The note's own tags, from the front matter. What the site's `tag:` reads;
-   *  an inline `#tag` is one of the page's words and is found as one. */
   tags?: string[]
-  /** What this note links to, by the name each link used. Not front matter
-   *  either: it comes out of the same read, and it is what lets a page say what
-   *  links to it without every other note being fetched. */
   links?: string[]
 }
 
-/** `true`, `false`, and the two words YAML reads as those. Anything else is a
- *  note saying something we do not understand, which is a note saying nothing:
- *  the site's default decides, rather than a typo taking a page down. */
 function flag(value: string | null): boolean | undefined {
   if (value === null) return undefined
 
@@ -85,9 +35,6 @@ function flag(value: string | null): boolean | undefined {
   return undefined
 }
 
-/** One path inside the site, as the site spells paths: lower case, no leading or
- *  trailing slash, no `..`, one slash between parts. Anything left over after
- *  that is not a path and is dropped. */
 function cleanSlug(value: string): string {
   const parts = value
     .trim()
@@ -106,13 +53,6 @@ function text(value: string | null, longest = LONGEST_TEXT): string | undefined 
   return said ? said.slice(0, longest) : undefined
 }
 
-/** The first paragraph of a note, as one line.
- *
- *  What a reader would read first, which is what a feed entry and a search result
- *  want. The heading is skipped: a title above a description that repeats it is
- *  the same words twice. Everything that is markup for something - a fence, a
- *  quote, a picture, a table - is passed over rather than shown as the characters
- *  it is written with. */
 function firstWords(source: string): string | undefined {
   const body = stripFrontMatter(source)
   let words = ''
@@ -132,8 +72,6 @@ function firstWords(source: string): string | undefined {
       continue
     }
 
-    // A heading, a rule, a quote, a list, a table, a picture on its own, or a
-    // property block's fence: none of those is the sentence being looked for.
     if (/^(#{1,6}\s|>|\||-{3,}|\*{3,}|!\[)/.test(said)) {
       if (words) break
       continue
@@ -145,7 +83,6 @@ function firstWords(source: string): string | undefined {
 
   if (!words) return undefined
 
-  // The marks that make words bold or linked are not part of the words.
   const plain = words
     .replace(/!?\[\[([^|\]]*\|)?([^\]]*)\]\]/g, '$2')
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
@@ -156,12 +93,7 @@ function firstWords(source: string): string | undefined {
   return plain ? plain.slice(0, LONGEST_SUMMARY) : undefined
 }
 
-/** Everything a note says about its page, from the note. Null where it says
- *  nothing at all, which is most notes, so most rows keep nothing. */
 export function frontOf(written: string): NoteFront | null {
-  // A comment is the writer's note to themselves: nothing in one is a title, a
-  // summary, a tag or a link of the page, and nothing read here goes anywhere but a
-  // page, a feed, a listing or a search (#453).
   const source = noteWithoutComments(written)
   const front: NoteFront = {}
 
@@ -184,8 +116,6 @@ export function frontOf(written: string): NoteFront | null {
   const description = text(frontMatterValue(source, 'description'))
   if (description) front.description = description
 
-  // Obsidian Publish reads `image`; a good many themes write `cover` for the
-  // same thing, and a vault that has one rarely has both.
   const image = text(frontMatterValue(source, 'image') ?? frontMatterValue(source, 'cover'), 500)
   if (image) front.image = image
 
@@ -195,8 +125,6 @@ export function frontOf(written: string): NoteFront | null {
   const heading = text(documentTitle(source), 200)
   if (heading) front.heading = heading
 
-  // A note that says nothing about its order has none. `Number('')` is zero,
-  // which would put every silent note first.
   const said = frontMatterValue(source, 'order')?.trim()
   const order = said ? Number(said) : Number.NaN
   if (Number.isFinite(order)) front.order = order
@@ -207,9 +135,6 @@ export function frontOf(written: string): NoteFront | null {
     .slice(0, MOST_TAGS)
   if (tags.length) front.tags = [...new Set(tags)]
 
-  // Every name this note points at, as it was written. A link to a note the site
-  // does not publish is dropped where it is read rather than here: what a note
-  // says is what a note says, and what is published is the site's answer.
   const links = [
     ...new Set(
       findLinks(source)
@@ -225,9 +150,6 @@ export function frontOf(written: string): NoteFront | null {
   return Object.keys(front).length ? front : null
 }
 
-/** The column, as everything downstream reads it. A row written by a newer
- *  version may hold a key this one has never heard of, so every field is checked
- *  on the way out rather than trusted. */
 export function readFront(raw: string | null): NoteFront {
   const held = objectIn(raw)
   if (!held) return {}
@@ -247,9 +169,6 @@ export function readFront(raw: string | null): NoteFront {
     if (typeof value === 'string' && value) front[key] = value.slice(0, LONGEST_TEXT)
   }
 
-  // A summary and a heading read off a note before comments were taken out of it
-  // can still hold one. Taken out here as well, so a row written then says no more
-  // than one written now, until the nightly sweep reads it again (`fillFronts`).
   const uncommented = (value: string | undefined) =>
     value === undefined
       ? undefined
@@ -277,9 +196,6 @@ export function readFront(raw: string | null): NoteFront {
   return front
 }
 
-/** What a note's page is called: its own `title:`, the heading it opens with,
- *  or its file name. One answer, because the index, the navigation, the feed and
- *  the page itself all ask it and a site with two answers reads as two sites. */
 function titleIn(path: string, front: NoteFront): string {
   return (
     front.title ??
@@ -292,25 +208,10 @@ function titleIn(path: string, front: NoteFront): string {
   )
 }
 
-/** The same answer from a body rather than from a row, for the two callers that
- *  have one in hand: the save that indexes it, and the sweep. */
 export function titleFrom(path: string, source: string): string {
   return titleIn(path, frontOf(source) ?? {})
 }
 
-/** What goes in the column.
- *
- *  Always a string, `{}` for a note that says nothing about itself, so that null
- *  in the column means one thing only: nobody has read this note's head yet. That
- *  is the question `fillFronts` below asks, and a sentinel is what keeps it from
- *  reading the same silent note out of storage every night.
- *
- *  Note that a null front and an empty one are the same answer to every reader:
- *  see `readFront`. */
-/** Which reading of a note's head `writeFront` is, written beside it as `front_rev`:
- *  1 since comments were taken out first (#453), 2 since its pictures are written down
- *  with it (0059, pictures.ts). A row below it is read again by the nightly sweep; see
- *  blog/fill.ts. */
 export const FRONT_REV = 2
 
 export function writeFront(source: string): string {

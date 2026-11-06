@@ -1,20 +1,3 @@
-/** Every file of a space that is not a note: a picture, a recording, a PDF, anything
- *  (docs/sync-v2.md section 5.8).
- *
- *  In the tree such a file is an entry of kind `file` with a hash and a size, and its
- *  bytes are a blob addressed by that hash - the same `blobs` rows and the same
- *  `blobs/<hash>` objects pictures already use, counted against the uploading account
- *  as they always were. Nothing merges: a replacement is a new hash, the later arrival
- *  stands, and a device replacing a file another replaced while it was away is told
- *  so and asks its person.
- *
- *  Three roads in, one out. Bytes up to 64 MB go up in one request, larger ones in
- *  8 MB parts through R2's multipart upload; either way the hash is checked against the
- *  bytes, since a blob named by a hash is shared by everybody who holds the same file
- *  and a wrong name would hand them somebody else's. And the bytes come back down
- *  through the space, to its members only: `/i/<hash>` serves what a published page
- *  points at and nothing else. */
-
 import { DIAGRAM_NAMED } from '@orden/markdown/diagrams'
 import { Hono } from 'hono'
 import { now } from '../crypto'
@@ -34,29 +17,18 @@ interface App {
 
 const HASH = /^[a-f0-9]{64}$/
 
-/** The largest file that goes up in one request; past it, parts. A Worker holds a
- *  request's body in 128 MB of memory, and hashes it there. */
 const ONE_REQUEST = 64 * 1024 * 1024
 
-/** How big a part is. R2 takes parts of at least 5 MB, all but the last the same size. */
 const PART = 8 * 1024 * 1024
 
-/** The largest file a space keeps: the account's whole quota is the other bound. */
 const LARGEST = 1024 * 1024 * 1024
 
-/** A file nobody can reach, or one that is not a file. A reader can bring it about -
- *  opening a file somebody removed a moment ago - so it has a row in every catalogue. */
 export const NO_SUCH_FILE = 'no such file'
 
-/** Bytes whose hash is not the name they arrived under. A correct client never sends
- *  these, so it reaches no reader and stays English. */
 export const WRONG_BYTES = 'those bytes are not that hash'
 const NOT_A_HASH = 'that is not a hash'
 const TOO_BIG = 'that file is too big'
 
-/** The types a blob keeps as they were declared: what `/i/` serves a published page,
- *  and what the v1 routes take. Anything else is kept as bytes and nothing more, so no
- *  file anybody syncs is ever served as a page on this origin. */
 const DECLARED = new Set([
   'image/png',
   'image/jpeg',
@@ -72,7 +44,6 @@ function typeOf(header: string | undefined): string {
   return DECLARED.has(type) ? type : BYTES
 }
 
-/** Where a file's bytes are kept: by their hash, so one blob serves every copy. */
 export function blobKey(hash: string): string {
   return `blobs/${hash}`
 }
@@ -81,31 +52,20 @@ function hex(digest: ArrayBuffer): string {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-/** The hash a blob is named by, of bytes in hand. */
 export async function hashOfBytes(bytes: ArrayBuffer): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', bytes))
 }
 
 const NAMED = new TextEncoder().encode(DIAGRAM_NAMED)
 
-/** Whether bytes are what a drawn diagram's name is the hash of, rather than a file.
- *
- *  That string is the fence, its space and its scheme, which a reader of the space can
- *  write out, and its hash is the name the drawing is kept under: sent as a file, it
- *  would be bytes that are their name and take the drawing's place for everybody. No
- *  file anybody keeps starts like that, so none is refused that should not be. */
 export function spellsADiagramName(bytes: ArrayBuffer): boolean {
   const start = new Uint8Array(bytes, 0, Math.min(bytes.byteLength, NAMED.length))
   return start.length === NAMED.length && start.every((byte, at) => byte === NAMED[at])
 }
 
-/** A Worker's streaming hasher, which Node has no equivalent of. */
 type DigestStreaming = new (algorithm: string) => WritableStream & { digest: Promise<ArrayBuffer> }
 
-/** The hash of an object in the bucket, read as a stream where the runtime can hash
- *  one (a Worker's `DigestStream`), and whole where it cannot. */
 async function hashOf(object: R2ObjectBody): Promise<string> {
-  // Read off the runtime rather than its types, which describe only one of the two.
   const Streaming = (crypto as unknown as { DigestStream?: DigestStreaming }).DigestStream
   if (Streaming) {
     const stream = new Streaming('SHA-256')
@@ -115,20 +75,14 @@ async function hashOf(object: R2ObjectBody): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', await object.arrayBuffer()))
 }
 
-/** `spellsADiagramName` of parts put together. A diagram's name is hashed from a few
- *  lines of fence, so only what one request could have carried is read again. */
 async function stagedSpellsADiagramName(env: Env, upload: Upload): Promise<boolean> {
   if (upload.size > ONE_REQUEST) return false
   const staged = await env.NOTES.get(upload.staging)
   return staged !== null && spellsADiagramName(await staged.arrayBuffer())
 }
 
-/** A Worker's stream that tells R2 how long it is, which Node has no equivalent of. */
 type FixedLength = new (length: number) => TransformStream<Uint8Array, Uint8Array>
 
-/** An object copied to another name, as a stream where the runtime can say how long
- *  one is (a Worker's `FixedLengthStream`, which R2 asks of a stream it is given), and
- *  whole where it cannot - a gigabyte of file never sits in a Worker's memory. */
 async function moveInto(env: Env, from: string, to: string, type: string): Promise<void> {
   const object = await env.NOTES.get(from)
   if (!object) return
@@ -142,13 +96,6 @@ async function moveInto(env: Env, from: string, to: string, type: string): Promi
   await env.NOTES.put(to, await object.arrayBuffer(), metadata)
 }
 
-/** A row saying this account keeps a blob, once its bytes are there - written only if
- *  it fits under the quota as the row is written (#469). Asked once before the bytes
- *  are read and again here, because nothing between the two is held: two uploads
- *  started while each fitted could otherwise both land past it, and a multipart one is
- *  a gigabyte. Answers whether the account keeps it now.
- *
- *  Refused, the bytes put there for it go again unless somebody keeps them. */
 async function keepBlob(
   env: Env,
   user: string,
@@ -171,7 +118,6 @@ async function keepBlob(
   return false
 }
 
-/** Whether this account keeps a blob already, and whether anybody's bytes are there. */
 export async function held(
   env: Env,
   user: string,
@@ -185,35 +131,16 @@ export async function held(
   return { mine: row?.mine === 1, there: (row?.rows ?? 0) > 0 }
 }
 
-/** Whether the object under a hash is the bytes that hash names, for an upload that has
- *  just checked its own bytes against it and is about to keep the copy that is there.
- *
- *  Not taken on trust because a row is there: v1 keeps a drawn diagram's SVG under a
- *  name that is not the hash of its bytes (blobs.ts), so a name somebody else wrote
- *  first may hold anything. A copy of another size is not these bytes; one of the
- *  same size is hashed. */
 export async function holdsItsName(env: Env, hash: string, size: number): Promise<boolean> {
   const object = await env.NOTES.get(blobKey(hash))
   if (!object) return false
-  // Another size is another file, and its body is never read.
   if (object.size !== size) return false
   return (await hashOf(object)) === hash
 }
 
-/** How many hashes one night's look for misnamed copies reads, a page at a time. */
 const MISNAMED_PAGE = 100
 const MISNAMED_AT_MOST = 1000
 
-/** Copies kept under a hash they are not the bytes of, taken away by the nightly job.
- *
- *  Before uploads checked the copy that was already there (`holdsItsName`), an SVG v1
- *  kept unchecked under somebody else's file's hash was what everybody who uploaded
- *  that file afterwards was served. Such a hash is held both as an SVG - the only
- *  type v1 keeps unchecked - and as something else, by whoever uploaded the real
- *  file. Where its copy is not the bytes the hash names, the copy and every row of it
- *  go: the file reads as missing rather than as somebody else's bytes, and the next
- *  upload of the real one is kept, as the first of it. A hash held only as an SVG is a
- *  drawn diagram's, named by its fence, and is left alone. */
 export async function sweepMisnamed(env: Env): Promise<number> {
   let after = ''
   let gone = 0
@@ -244,10 +171,6 @@ export async function sweepMisnamed(env: Env): Promise<number> {
 
 export const v2Blobs = new Hono<App>()
 
-/** A file's bytes, in one request. The object already there - somebody else's copy of
- *  the same file - is not written again, so what a published page is served stays
- *  what it was. Unless it is not the same bytes (`holdsItsName`): then these, which
- *  are, take its place for everybody who keeps that hash. */
 v2Blobs.put('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
@@ -278,10 +201,6 @@ v2Blobs.put('/:hash', async (context) => {
   return context.json({ hash, stored: true }, 201)
 })
 
-/** What a multipart upload in flight remembers: whose, which hash, how big, and where
- *  its parts are put together. Kept in `cached` for a day, as
- *  `user:hash:size:type:staging`, which is also how deleting the account finds it; see
- *  erase.ts. */
 const UPLOADS = 'upload'
 const A_DAY = 24 * 60 * 60 * 1000
 
@@ -290,13 +209,9 @@ interface Upload {
   hash: string
   size: number
   type: string
-  /** Where the parts go: never the blob's own name, because the parts are put together
-   *  before anything has checked them, and a copy somebody else finished meanwhile may
-   *  be living there. */
   staging: string
 }
 
-/** Somewhere of this upload's own for its parts. */
 function stagingKey(hash: string): string {
   return `uploads/${hash}/${crypto.randomUUID()}`
 }
@@ -312,16 +227,8 @@ async function uploadOf(env: Env, id: string, user: string): Promise<Upload | nu
   return { user: owner, hash, size: Number(size), type: decodeURIComponent(type), staging }
 }
 
-/** The most hashes one question about them names: D1 binds at most a hundred values to
- *  a statement, and the account's id is one of them. */
 const MOST_ASKED = 90
 
-/** Which of these hashes the account keeps: the question a device asks of the files it
- *  holds in step, so that bytes the account has lost - the nightly `sweepMisnamed` takes
- *  the rows of a misnamed copy away with it, rows of an upload that was answered
- *  `stored` over that copy among them - are sent again from the device that still has
- *  them, rather than waiting for its next edit of the file (#517). The account's own
- *  rows only: a hash somebody else keeps is no promise that this account's file stays. */
 v2Blobs.post('/have', async (context) => {
   const user = context.get('user')
   const body: unknown = await context.req.json().catch(() => null)
@@ -343,8 +250,6 @@ v2Blobs.post('/have', async (context) => {
   return context.json({ kept: results.map((one) => one.hash) })
 })
 
-/** A large file, started: answers the upload to send parts to, and how big a part is;
- *  or that nothing needs sending. */
 v2Blobs.post('/parts', async (context) => {
   const user = context.get('user')
   const body: unknown = await context.req.json().catch(() => null)
@@ -360,9 +265,6 @@ v2Blobs.post('/parts', async (context) => {
   if ((await held(context.env, user.id, hash)).mine) return context.json({ hash, stored: false })
   if (!(await fits(context.env, user.id, size))) return context.json({ error: OUT_OF_SPACE }, 507)
 
-  // Sent in full even when somebody else's copy is already here. A row is what lets a
-  // file entry, a face or a post name a blob, so it is had for the bytes and never for
-  // knowing their hash; once they are checked, the copy that is there is kept as it is.
   const declared = typeOf(typeof type === 'string' ? type : undefined)
 
   const staging = stagingKey(hash)
@@ -383,13 +285,10 @@ v2Blobs.post('/parts', async (context) => {
   return context.json({ upload: upload.uploadId, part: PART }, 201)
 })
 
-/** A number a part may have. */
 function isPartNumber(part: unknown): part is number {
   return typeof part === 'number' && Number.isSafeInteger(part) && part >= 1 && part <= 10_000
 }
 
-/** Which refusal of R2's this is. Read off the code, or the message for where a thrown
- *  error carries none, as `wrangler dev` does. */
 function r2Code(error: unknown): number | null {
   const { code, message } = (error ?? {}) as { code?: unknown; message?: unknown }
   if (typeof code === 'number') return code
@@ -397,27 +296,19 @@ function r2Code(error: unknown): number | null {
   return said?.[1] ? Number(said[1]) : null
 }
 
-/** Whether R2 refused a completion because of the list it was given: a part it does not
- *  have or an etag that is not that part's (10025), parts below its smallest (10011), or
- *  of sizes it cannot join (10048). Anything else is the bucket's own trouble. */
 function isTheListsFault(error: unknown): boolean {
   const code = r2Code(error)
   return code === 10011 || code === 10025 || code === 10048
 }
 
-/** Whether the upload itself has gone from the bucket: aborted, expired, or finished by
- *  another request a moment ago (10024). */
 function isUploadGone(error: unknown): boolean {
   return r2Code(error) === 10024
 }
 
-/** The row saying an upload was here, for one the bucket no longer has: answered from
- *  then on as an upload these routes do not know. */
 async function forgetUpload(env: Env, id: string): Promise<void> {
   await env.DB.prepare('delete from cached where scope = ? and key = ?').bind(UPLOADS, id).run()
 }
 
-/** One part of a large file. */
 v2Blobs.put('/parts/:upload/:part', async (context) => {
   const user = context.get('user')
   const upload = await uploadOf(context.env, context.req.param('upload'), user.id)
@@ -444,8 +335,6 @@ v2Blobs.put('/parts/:upload/:part', async (context) => {
   }
 })
 
-/** A large file, finished: the parts put together, measured and hashed, and kept only
- *  when they are the bytes the upload named. */
 v2Blobs.post('/parts/:upload', async (context) => {
   const user = context.get('user')
   const id = context.req.param('upload')
@@ -467,8 +356,6 @@ v2Blobs.post('/parts/:upload', async (context) => {
     parts.push({ partNumber: part, etag })
   }
 
-  // A list the bucket cannot put together leaves the upload as it was, to be finished
-  // with a right one (workerd's emulation does; R2 itself has not been asked).
   try {
     await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
   } catch (error) {
@@ -494,18 +381,12 @@ v2Blobs.post('/parts/:upload', async (context) => {
     return context.json({ error: WRONG_BYTES }, 400)
   }
 
-  // The quota asked again, for what was started while it fitted (#469): uploads started
-  // together each fit on their own. Asked before a gigabyte is moved, and once more as
-  // the row is written; see `keepBlob`.
   const mine = (await held(context.env, user.id, upload.hash)).mine
   if (!mine && !(await fits(context.env, user.id, upload.size))) {
     await context.env.NOTES.delete(upload.staging)
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  // Checked, so they go where the blob lives - unless a copy somebody else finished
-  // meanwhile is already there, which is the same bytes and stays as it is. Only if it
-  // is: see `holdsItsName`.
   if (
     !(await held(context.env, user.id, upload.hash)).there ||
     !(await holdsItsName(context.env, upload.hash, upload.size))
@@ -521,14 +402,12 @@ v2Blobs.post('/parts/:upload', async (context) => {
 
 export const v2Files = new Hono<App>()
 
-/** The file entry a route names, in the space it names. */
 async function fileIn(env: Env, spaceId: string, id: string): Promise<Note | null> {
   return await env.DB.prepare("select * from notes where id = ? and space_id = ? and kind = 'file'")
     .bind(id, spaceId)
     .first<Note>()
 }
 
-/** A file's bytes, for somebody in its space. */
 v2Files.get('/:space/:id', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
   const file = await fileIn(context.env, space.id, context.req.param('id'))
@@ -541,8 +420,6 @@ v2Files.get('/:space/:id', atLeast('read', 'space'), async (context) => {
     headers: {
       'content-type': BYTES,
       'content-length': String(object.size),
-      // Its bytes never change under one hash, and they are this space's, not the
-      // world's: kept by the device that asked and by nothing in between.
       'cache-control': 'private, max-age=31536000, immutable',
       etag: `"${file.hash}"`,
       'x-content-type-options': 'nosniff',
@@ -550,10 +427,6 @@ v2Files.get('/:space/:id', atLeast('read', 'space'), async (context) => {
   })
 })
 
-/** A file replaced: its entry now names new bytes, which this account keeps. Written
- *  only over the bytes the device replaced (`base`); a file replaced elsewhere since
- *  answers `moved` with what it is now, and the device asks its person (section 5.8).
- *  A file deleted meanwhile comes back, since an edit beats a delete. */
 v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const space = spaceOf(context)
   const id = context.req.param('id')
@@ -574,8 +447,6 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
     return context.json({ moved: { hash: file.hash, size: file.size, at: file.updated_at } })
   }
 
-  // Bytes the asker keeps, or the owner's this space already holds, for the reason
-  // `blobSizes` in ops.ts gives.
   const who = context.get('who')
   const size = (
     await blobSizes(context.env, space, who.kind === 'user' ? who.user.id : null, [hash])
@@ -585,7 +456,6 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const device = await deviceOf(context)
   if (file.deleted) await revive(context.env, space.id, device, id)
 
-  // The number taken and the row written as one; see `atNextSeq`.
   const { seq, changes } = await atNextSeq(
     context.env,
     space.id,

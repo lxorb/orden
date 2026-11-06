@@ -1,7 +1,3 @@
-/** People: a profile and its face, who may read it, whether somebody is here, and what
- *  they are called in a space. Routes against the real schema, the hub as the real class
- *  over its fakes. See src/people and docs/chats.md 4.9 and 4.10. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { presenceOf } from '../src/people/presence'
@@ -15,7 +11,6 @@ const MEMBER = 'member@example.com'
 const OTHER = 'other@example.com'
 const STRANGER = 'stranger@example.com'
 
-/** What the people routes answer, as far as these tests read it. */
 interface PeopleReply {
   people: Record<string, unknown>[]
   profile: { avatar: unknown }
@@ -106,12 +101,10 @@ describe('the routes', () => {
   let stranger: string
   let space: string
 
-  /** The account behind a session. */
   async function idOf(token: string): Promise<string> {
     return (await call(env, '/v1/me', { token })).json.user.id
   }
 
-  /** Somebody invited into the space and in it. */
   async function invite(email: string): Promise<string> {
     const sent = await mail(() =>
       call(env, `/v1/spaces/${space}/share/invite`, {
@@ -126,13 +119,11 @@ describe('the routes', () => {
     return token
   }
 
-  /** The people an account reads, by id. */
   async function seen(token: string, ids: string[]): Promise<Record<string, unknown>[]> {
     const { json } = await call<PeopleReply>(env, `/v2/people?ids=${ids.join(',')}`, { token })
     return json.people
   }
 
-  /** A picture uploaded the way the app uploads a face: WebP, by its hash. */
   async function upload(token: string, bytes: string, type = 'image/webp'): Promise<string> {
     const hash = await sha256(bytes)
     const put = await call(env, `/v1/blobs/${hash}`, {
@@ -202,10 +193,8 @@ describe('the routes', () => {
 
     const names = async (token: string) => (await seen(token, all)).map((one) => one.id).sort()
 
-    // The owner sees the two let in; each of them sees the owner and the other.
     expect(await names(owner)).toEqual([ownerId, memberId, otherId].sort())
     expect(await names(member)).toEqual([ownerId, memberId, otherId].sort())
-    // Somebody who shares nothing sees themselves and nobody else.
     expect(await names(stranger)).toEqual([strangerId])
   })
 
@@ -244,7 +233,6 @@ describe('the routes', () => {
     const [person] = await seen(owner, [await idOf(member)])
     expect(person?.avatar).toEqual({ s: small, l: large })
 
-    // A new face: the first two are not this account's any more.
     const next = [await upload(member, 'small two'), await upload(member, 'large two')]
     await call(env, '/v2/me/avatar', {
       method: 'PUT',
@@ -257,14 +245,11 @@ describe('the routes', () => {
       .map((row) => (row as { hash: string }).hash)
     expect(held.sort()).toEqual([...next].sort())
 
-    // And none: both given back.
     const gone = await call<PeopleReply>(env, '/v2/me/avatar', { method: 'DELETE', token: member })
     expect(gone.json.profile.avatar).toBeNull()
     expect(env.db.prepare('select count(*) as n from blobs').get()).toEqual({ n: 0 })
   })
 
-  /** A face whose bytes are also a picture in one of the account's own notes is still
-   *  that picture when the face changes. */
   test('a face given back stays where the account’s own note shows it', async () => {
     const small = await upload(owner, 'small face')
     const large = await upload(owner, 'large face')
@@ -282,9 +267,6 @@ describe('the routes', () => {
     })
   })
 
-  /** A face given back while one of the account's own notes written before their
-   *  pictures were might show it is not decided then, and not kept for good either: it
-   *  is asked about again, as a purge's leftovers are. */
   test('a face given back that cannot be decided yet is asked about again', async () => {
     const small = await upload(owner, 'small undecided')
     const large = await upload(owner, 'large undecided')
@@ -508,19 +490,16 @@ describe('presence, kept by the hub', () => {
     const laptop = await device(made, 'device-laptop')
     expect(row()).toEqual({ state: 'active', at: T0 })
 
-    // A second device in use changes nothing, so nothing is written.
     vi.setSystemTime(T0 + 1000)
     const phone = await device(made, 'device-phone')
     expect(row()).toEqual({ state: 'active', at: T0 })
 
-    // Both idle: away, once.
     vi.setSystemTime(T0 + 2000)
     await send(made, laptop, { t: 'idle' })
     expect(row()?.state).toBe('active')
     await send(made, phone, { t: 'idle' })
     expect(row()).toEqual({ state: 'away', at: T0 + 2000 })
 
-    // Both gone: offline.
     vi.setSystemTime(T0 + 3000)
     await hangUp(made, state, laptop)
     expect(row()?.state).toBe('away')

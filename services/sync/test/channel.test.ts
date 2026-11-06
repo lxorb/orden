@@ -2,14 +2,6 @@ import { afterEach, describe, expect, test } from 'vitest'
 import { serveApp, switchChannel } from '../src/channel'
 import { call, testEnv, type TestEnv } from './harness'
 
-/** The web serves two builds from one Worker: the release at the root and the edge of
- *  `unstable` under `/_unstable/`, picked per browser by a cookie. See src/channel.ts
- *  and #424. */
-
-/** The assets binding as the deploy configures it: no not-found page, a page asked
- *  for without `.html` found by its file, and `.html` redirected away - which the
- *  binding follows itself unless the request says `redirect: 'manual'`, as one that
- *  came in from a browser does. */
 function assets(files: Record<string, string>): { fetch(request: Request): Promise<Response> } {
   const binding = {
     fetch(request: Request): Promise<Response> {
@@ -60,7 +52,6 @@ describe('without the cookie', () => {
     expect((await call(env, '/handoff')).text).toBe('stable handoff')
     expect((await call(env, '/sw.js')).text).toBe('stable sw')
     expect((await call(env, '/even/')).text).toBe('stable even')
-    // A route of the app's own, which no file is: the release's page.
     expect((await call(env, '/s/some/where')).text).toBe('stable index')
   })
 
@@ -119,9 +110,6 @@ describe('the folder itself', () => {
   })
 })
 
-/** Every published site is a name under the app's own root and may run a script of its
- *  own, which may set a cookie for the whole root. A browser takes one with this prefix
- *  only from the app's own hostname. */
 describe('a cookie another site set for the root', () => {
   test('does not choose the build for a browser that chose one', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
@@ -151,12 +139,9 @@ describe('?channel=', () => {
     expect(cookie).toMatch(
       /^__Host-orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/,
     )
-    // The page reads it to say which build it is.
     expect(cookie).not.toMatch(/HttpOnly/i)
   })
 
-  /** Said rather than only cleared: a cookie another site set for the root would be
-   *  the next thing asked, and would put the browser straight back on the edge. */
   test('stable says so, and clears the one a browser chose before the rename', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
     const answer = await call(env, '/?channel=stable', { headers: ON_EDGE })
@@ -168,8 +153,6 @@ describe('?channel=', () => {
     expect(cookies[1]).toMatch(/^orden-channel=; Path=\/; Max-Age=0;/)
   })
 
-  /** A browser refuses the prefix without https: a machine running this for itself, and
-   *  the end-to-end drive (test/e2e/web-channel.py), keep the plain name. */
   test('over plain http, keeps the name a browser takes there', () => {
     env = testEnv({ ASSETS: assets(BOTH) })
     const edge = switchChannel(new Request('http://localhost:8787/?channel=unstable'))

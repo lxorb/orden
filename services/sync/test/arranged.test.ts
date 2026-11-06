@@ -22,22 +22,15 @@ function put(arranged: unknown, options: { as?: string; id?: string } = {}) {
   })
 }
 
-/** What the space listing says the folders were arranged into, which is how the app
- *  reads it. */
 async function listed(as = token) {
   const { json } = await call(env, '/v1/spaces', { token: as })
   return json.spaces.find((one) => one.id === space)?.arranged
 }
 
-/** The column as somebody else's build left it, which no route would write. */
 function column(raw: string) {
   env.db.prepare('update spaces set arranged = ? where id = ?').run(raw, space)
 }
 
-/** Somebody the owner gave the space to at read, and in it: invited, then having
- *  proved the address by signing in. Which roles every space route lets through is one
- *  matrix in share.test.ts; this is here because the order is the space's, so being in
- *  it is not the same as being allowed to change it. */
 async function reader(): Promise<string> {
   const sent = await mail(() =>
     call(env, `/v1/spaces/${space}/share/invite`, {
@@ -54,8 +47,6 @@ async function reader(): Promise<string> {
   return theirs
 }
 
-/** Two folders whose rows were dragged, one inside the other. The top of the space is a
- *  key like any other and has a describe of its own below. */
 const ARRANGED = {
   Work: ['Plan.md', 'Ideas', 'Old.md'],
   'Work/Ideas': ['Best.md', 'Rest.md'],
@@ -88,8 +79,6 @@ describe("the order a space's folders were arranged into", () => {
     expect(await listed()).toEqual({})
   })
 
-  /** An empty list says exactly what no entry says, so the column holds the shorter of
-   *  the two rather than both. */
   test('drops a folder whose list comes to nothing', async () => {
     const set = await put({ ...ARRANGED, Travel: [] })
 
@@ -126,12 +115,9 @@ describe('what one folder may hold', () => {
     expect(isName('/etc/passwd')).toBe(false)
   })
 
-  /** For the reason a path holds none: a name with a newline in it is two names to
-   *  whatever reads it next. */
   test('and never a name that is two names to whatever reads it', () => {
     expect(isName('Plan\nOld.md')).toBe(false)
     expect(isName('Plan\u0000.md')).toBe(false)
-    // A space in the middle is a name, though, and one somebody typed on purpose.
     expect(isName('Old plan.md')).toBe(true)
   })
 
@@ -170,12 +156,7 @@ describe('an entry that is not a folder of this space with an order on it', () =
     })
   })
 
-  /** A name a filesystem allows is a folder somebody may have, and a key set on an
-   *  object as a loop goes would have become that object's prototype rather than an
-   *  entry in it. */
   test('takes a folder named the way an object names its prototype', async () => {
-    // Written as JSON rather than as an object literal, where `__proto__` is no key at
-    // all but the prototype of the thing being written.
     const sent: unknown = JSON.parse('{"__proto__":["Plan.md"],"Work":["Plan.md"]}')
     const set = await put(sent)
 
@@ -202,10 +183,6 @@ describe('an entry that is not a folder of this space with an order on it', () =
   })
 })
 
-/** The top of the space is a folder whose rows somebody can drag, and the key it has is
- *  the one the app's own arithmetic gives it: a path relative to the root is no path at
- *  all. The icons refuse an empty key because a folder with no name is not a folder
- *  anybody can dress; this column takes it. */
 describe('the top of the space', () => {
   test('is a key like any other, and rides the space listing', async () => {
     const set = await put({ '': ['b.md', 'a.md'] })
@@ -272,8 +249,6 @@ describe('more arranged folders than a space holds', () => {
   })
 
   test('is refused by the size, when every entry is legal on its own', async () => {
-    // Two hundred folders, each holding a dozen names as long as a name may get, is
-    // more than the column carries, which is the other end of the same guard.
     const names = Array.from({ length: 12 }, (_one, at) => `${'n'.repeat(200)}${at}.md`)
     const heavy = Object.fromEntries(Array.from({ length: 200 }, (_one, at) => [`${at}`, names]))
 
@@ -282,8 +257,6 @@ describe('more arranged folders than a space holds', () => {
   })
 })
 
-/** The column is written whole by clients, so a newer app may have left something in it
- *  this build has never heard of. Read, not trusted. */
 describe('a column written by a newer build', () => {
   test('is read as far as this one understands it', async () => {
     column(JSON.stringify({ ...ARRANGED, '../elsewhere': ['Plan.md'], Travel: { by: 'size' } }))
@@ -317,8 +290,6 @@ describe('the order is the space’s', () => {
   test('is not another account’s to write', async () => {
     const other = await signIn(env, 'e@f.dev')
 
-    // The same answer an id that does not exist gets: nothing about the space leaks,
-    // not even that it is there.
     expect((await put(ARRANGED, { as: other })).status).toBe(404)
     expect(await listed()).toEqual({})
   })

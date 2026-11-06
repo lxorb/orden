@@ -1,20 +1,9 @@
-/** What deleting an account empties, held to the schema.
- *
- *  Two questions, and the second is the one that matters. Does the list of tables
- *  in erase.ts name every table the migrations make - so that a table added next
- *  month with a `user_id` in it fails here until somebody decides what deleting an
- *  account does to it? And, with a row of every kind written for two accounts
- *  side by side, does deleting one leave no row anywhere that names it, and every
- *  row of the other exactly where it was? */
-
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { ERASED, eraseAccount } from '../src/erase'
 import { type TestEnv, testEnv } from './harness'
 import { hubs } from './hub-fakes'
 
-/** The tables that hold nothing of any one account, and why. Everything else the
- *  schema has must be in `ERASED`. */
 const HOLDS_NOTHING: Record<string, string> = {
   oauth_clients: 'a client registered itself; its row names a program, never a person',
   leftovers: 'what is still to go, written by the deletion itself and emptied after it',
@@ -24,8 +13,6 @@ const HOLDS_NOTHING: Record<string, string> = {
   guest_sessions: "a guest's way in: a guest only says it is at an address (#488)",
 }
 
-/** The columns that say whose a row is or what it is inside. A table with one of
- *  these cannot be waved through as holding nothing. */
 const WHOSE = ['user_id', 'email', 'space_id', 'note_id', 'who']
 
 function tables(database: DatabaseSync): string[] {
@@ -33,8 +20,6 @@ function tables(database: DatabaseSync): string[] {
     .prepare("select name, sql from sqlite_master where type = 'table'")
     .all() as { name: string; sql: string }[]
 
-  // A full-text table keeps its index in shadow tables of its own, named after
-  // it; they are the index's business and go when its rows do.
   const virtual = rows
     .filter((one) => /^create virtual table/i.test(one.sql))
     .map((one) => one.name)
@@ -86,11 +71,6 @@ describe('the list of what is erased', () => {
   })
 })
 
-/* ── Two accounts, one of everything ─────────────────────────────────── */
-
-/** Everything that names the account being deleted. Its hashes are the ones only it
- *  holds; the shared ones are named by the other account too, and stay. Its guest
- *  only said it was at the address, and stays too. */
 const LEAVING = {
   id: 'user-leaving',
   email: 'leaving@example.com',
@@ -116,7 +96,6 @@ const SHARED_VERSION = 'c2'.repeat(32)
 
 type Person = typeof LEAVING
 
-/** One of every row an account can have, for one account. */
 function seed(database: DatabaseSync, who: Person): void {
   const run = (sql: string, ...values: (string | number | null)[]) =>
     database.prepare(sql).run(...values)
@@ -246,8 +225,6 @@ function seed(database: DatabaseSync, who: Person): void {
   )
   run('insert into mailed (email, sent_at) values (?, 1)', who.email)
   run('insert into mailed_days (day, email) values (1, ?)', who.email)
-  // A computer of the account, the web key wrapped to it, a site's login it wrote
-  // and one of that login's chunks, and the ceilings counted on them.
   run(
     `insert into devices (id, user_id, session_id, name, platform, app, created_at)
      values (?, ?, ?, 'Laptop', 'windows', '1.0.0', 1)`,
@@ -287,8 +264,6 @@ function seed(database: DatabaseSync, who: Person): void {
        ('web-key', ?1, 1, 9e15)`,
     who.id,
   )
-  // Its online terminal machine: the machine, a month of it, a line of its audit and a
-  // session on it; see machines/.
   run("insert into machines (id, user_id, created_at) values ('m-' || ?1, ?1, 1)", who.id)
   run("insert into machine_usage (user_id, month, awake_s) values (?, '2026-10', 60)", who.id)
   run(
@@ -301,8 +276,6 @@ function seed(database: DatabaseSync, who: Person): void {
     who.id,
     who.note,
   )
-  // A chat in its space, its own read place in it, a file a message there names, and
-  // its socket on it; see chats/.
   run(
     `insert into chats (id, space_id, file_id, created_at, last_by)
      values ('chat-' || ?1, ?2, ?3, 1, 'user:' || ?1)`,
@@ -327,8 +300,6 @@ function seed(database: DatabaseSync, who: Person): void {
   )
 }
 
-/** The ways the two reach each other: each is a member of the other's space, has
- *  asked for a file of it, has a guest in it and has it open. */
 function entangle(database: DatabaseSync, one: Person, other: Person): void {
   const run = (sql: string, ...values: string[]) => database.prepare(sql).run(...values)
 
@@ -357,7 +328,6 @@ function entangle(database: DatabaseSync, one: Person, other: Person): void {
     other.space,
     one.id,
   )
-  // And has the other's chat open, read to somewhere.
   run(
     "insert into chat_reads (chat_id, who, read_seq) values ('chat-' || ?, ?, 1)",
     other.id,
@@ -371,7 +341,6 @@ function entangle(database: DatabaseSync, one: Person, other: Person): void {
   )
 }
 
-/** Every row of every table, as text, so a test can say which name anything. */
 function everyRow(database: DatabaseSync): { table: string; row: string }[] {
   return tables(database).flatMap((table) =>
     database
@@ -422,7 +391,6 @@ describe('deleting one of two accounts', () => {
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
 
     expect(theirs()).toEqual(before)
-    // Machines and programs are nobody's: a ceiling counted against a machine stays.
     expect(before.length).toBeGreaterThan(20)
   })
 
@@ -482,8 +450,6 @@ describe('deleting one of two accounts', () => {
   test('undoes nothing when the transaction fails', async () => {
     const before = everyRow(env.db)
     const keys = env.keys().sort()
-    // The last statement of the batch throwing, the way a constraint would: every
-    // statement before it is rolled back with it.
     env.db.exec("create trigger refuse before delete on users begin select raise(abort, 'no'); end")
 
     await expect(
@@ -496,7 +462,6 @@ describe('deleting one of two accounts', () => {
   })
 
   test('picks up what a request did not get to, the next night', async () => {
-    // The bucket answering nothing: the rows go, the list stays.
     const bucket = env.NOTES as unknown as { delete: (keys: string | string[]) => Promise<void> }
     const real = bucket.delete.bind(bucket)
     bucket.delete = () => Promise.reject(new Error('the bucket is unwell'))

@@ -1,7 +1,3 @@
-/** A space somebody else could once write in stays marked after they have gone: what
- *  they wrote is still in it. Leaving, or being taken out, does not make their words
- *  the owner's. Only the owner saying so does (`POST /share/trust`). */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, type RpcView, type ShareView, signIn, testEnv, type TestEnv } from './harness'
 

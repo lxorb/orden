@@ -1,58 +1,31 @@
-/** The host behind `Machine` (docs/online-terminal.md, 6.1): Cloudflare Containers,
- *  through the Durable Object's own `ctx.container`.
- *
- *  Sandbox SDK 1.0 (pinned in package.json) moved starting and stopping a container
- *  into the application's own Durable Object, and keeps for itself only the file
- *  helpers and the R2 directory backups. So the container is `Machine`'s own, and this
- *  file is the one place that touches it; the backups are the one piece of the SDK,
- *  handed in by the machines' entry (entry.ts), because the SDK imports
- *  `cloudflare:workers`, which neither the main deploy nor the tests can load.
- *
- *  What is not provable without Cloudflare: that `nibd` answers on its port within the
- *  link's tries, that a snapshot restores, and the per-instance CA. See
- *  docs/online-terminal-live.md. */
-
 import type { Env } from '../types'
 import type { HostKind, MachineHost } from '@orden/online'
 import { mayCost } from './budget'
 import { HetznerHost, setupOf } from './hetzner-host'
 import { serviceOf } from './service'
 
-/** The port `nibd` listens on in the machine, and the path its link answers. */
 const NIBD_PORT = 7680
 const LINK_URL = 'http://nibd/link'
 
-/** How long the container waits with nobody's request after `Machine` goes quiet.
- *  `Machine` decides sleep itself on its minute alarm; this is only the backstop for an
- *  object that died without saying so (4.4). */
 const BACKSTOP = 20 * 60 * 1000
 
-/** How long the link waits for `nibd` to answer after a start: a cold start is 1-3 s. */
 const LINK_TRIES = 40
 const LINK_WAIT = 250
 
-/** The small machine as an instance: ½ vCPU, 4 GiB, an 8 GB disk (decision 3). A custom
- *  size needs at least one whole vCPU, so it is the named type. */
 const SMALL_INSTANCE = 'standard-1' as const
 
-/** Where a machine's link secret is kept across an object restart. */
 export const SECRET = 'secret'
 
-/** The SDK's directory backups, as the host needs them; see entry.ts. */
 interface Backups {
-  /** Routes the container's backup traffic to the gateway; before any other intercept. */
   intercept(): Promise<void>
-  /** Answers the backup's record, serialised. */
   backup(dir: string, name: string): Promise<string>
   restore(record: string): Promise<void>
 }
 
 type MakeBackups = (container: Container, ctx: DurableObjectState, env: Env) => Backups
 
-/** How HTTP and HTTPS leave a machine; see `egressOf`. */
 type Egress = 'open' | 'web'
 
-/** What the entry hands the host: the backups, and the outbound gateway for `web`. */
 export interface Wiring {
   backups: MakeBackups
   outbound: (ctx: DurableObjectState) => Fetcher
@@ -60,37 +33,17 @@ export interface Wiring {
 
 let wiring: Wiring | null = null
 
-/** Set once, by entry.ts, as the module loads. */
 export function wire(given: Wiring): void {
   wiring = given
 }
 
-/** How a machine's traffic leaves it (4.8).
- *
- *  `web`: the internet off, so nothing leaves but HTTP and HTTPS, and those go through
- *  Orden's outbound gateway (entry.ts), which refuses private and metadata addresses and
- *  forwards the rest. With Sandbox SDK 1.0 that gateway is the only way HTTPS leaves a
- *  container whose internet is off, and it holds the cleartext while it forwards it -
- *  which is what 4.8's rule forbids for the AI providers' traffic.
- *
- *  `open`: the internet on and no handler at all, so no code of Orden's ever sees a
- *  byte; nothing but Cloudflare's own figures meter it, and other ports are open.
- *
- *  The design's rule is "never the other way round", so `open` is the default and
- *  `web` is one variable away; which to run is Emil's call at going live. */
 function egressOf(env: Env): Egress {
   return env.MACHINE_EGRESS === 'web' ? 'web' : 'open'
 }
 
-/** The host over `ctx.container`. Ids are the object's own: one container per object. */
 class ContainerHost implements MachineHost {
-  /** A snapshot to boot the next start from, set by `restore`. */
   private boot: string | null = null
   private backups: Backups | null = null
-  /** Whether this object set up the running instance: its inactivity timeout and its
-   *  routes out. A Durable Object that restarted (every deploy restarts it) finds its
-   *  container running with neither, and Cloudflare stops such a container shortly
-   *  after the object goes quiet; so the first link after a restart sets them again. */
   private ready = false
 
   constructor(
@@ -134,10 +87,7 @@ class ContainerHost implements MachineHost {
     }
   }
 
-  /** The running instance's routes out and its inactivity timeout. */
   private async setUp(container: Container): Promise<void> {
-    // The backups' intercept first: an intercept registered after the catch-all never
-    // receives anything.
     await this.backupsOf().intercept()
     if (egressOf(this.env) === 'web' && wiring) {
       const outbound = wiring.outbound(this.ctx)
@@ -154,7 +104,6 @@ class ContainerHost implements MachineHost {
 
   async stop(_id: string, grace: number): Promise<void> {
     const container = this.container
-    // Read afresh each time: `running` is the runtime's, and changes under us.
     const running = () => container.running
     this.ready = false
     if (!running()) return
@@ -201,28 +150,17 @@ class ContainerHost implements MachineHost {
     if (from.backup) await this.backupsOf().restore(from.backup)
   }
 
-  /** The runtime gives a Durable Object no per-instance CPU or egress figures, so the
-   *  meter counts from what `nibd` reports; see `Machine`. */
   usage(): Promise<{ cpuS: number; egressBytes: number }> {
     return Promise.resolve({ cpuS: 0, egressBytes: 0 })
   }
 }
 
-/** A machine that is a `nibd` already running on this computer, for an end-to-end drive
- *  under `wrangler dev` with no container at all.
- *
- *  Chosen by `MACHINE_DEV_NIBD` (its address, `http://127.0.0.1:<port>`) and
- *  `MACHINE_DEV_SECRET` (the secret that `nibd` was started with), which only a
- *  `.dev.vars` sets; an address that is not this computer's is refused, so a deployed
- *  Worker can never be pointed at one. Starting, stopping and saving are nothing here:
- *  the `nibd` is the drive's, and so is its home. */
 export class DevHost implements MachineHost {
   constructor(
     private readonly address: string,
     private readonly secret: string,
   ) {}
 
-  /** The dev host, if the environment asks for one and it is this computer's. */
   static of(env: Env): DevHost | null {
     const address = env.MACHINE_DEV_NIBD
     if (!address) return null
@@ -239,7 +177,6 @@ export class DevHost implements MachineHost {
     return Promise.resolve()
   }
 
-  /** The drive's own `nibd`, which is started with its own secret: always a fresh start. */
   running(): Promise<boolean> {
     return Promise.resolve(false)
   }
@@ -271,8 +208,6 @@ export class DevHost implements MachineHost {
   }
 }
 
-/** The host a machine of this kind runs on: a dev `nibd` where `.dev.vars` names one, a
- *  Hetzner server (4.15), or a Cloudflare container. */
 export function hostOf(kind: HostKind, ctx: DurableObjectState, env: Env): MachineHost {
   const dev = DevHost.of(env)
   if (dev) return dev

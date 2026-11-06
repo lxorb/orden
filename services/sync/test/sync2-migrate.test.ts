@@ -1,12 +1,3 @@
-/** A device moving from sync v1 to v2, against this Worker (docs/sync-v2.md section 11,
- *  step 2): one test per row of the table, each asserting that no word is lost and no
- *  file appears that nobody made, and the way back to v1 meeting every note agreeing.
- *
- *  The device is the app's own engine (apps/desktop/src/lib/sync2, through
- *  `test-device.ts`), reached by its path for the reason sync2-engine.test.ts gives; v1's
- *  state is the mirror v1 would have written: each note's id, version and the hash of
- *  the words it last agreed on. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { keepVersionNow } from '../src/versions'
@@ -14,7 +5,6 @@ import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
 
-/** What these tests use of the engine, as it is shaped there. */
 interface Tracked {
   id: string
   version: number
@@ -69,7 +59,6 @@ interface Device {
   asked: string[]
 }
 
-/** v1's listing of a space, as `mirrorsFrom` meets it. */
 interface Listing {
   cursor: number
   notes: {
@@ -135,14 +124,12 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** A note written the way a v1 app writes one; answers its id and version. */
 async function v1Note(path: string, content: string): Promise<{ id: string; version: number }> {
   const made = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   expect(made.status).toBe(201)
   return { id: made.json.note.id, version: made.json.note.version }
 }
 
-/** Another device of the account, writing the way a v1 app writes. */
 let other: string
 
 async function v1Write(id: string, path: string, content: string, baseVersion: number) {
@@ -165,13 +152,10 @@ async function liveNames(): Promise<string[]> {
   return rows.map((row) => row.path)
 }
 
-/** Where v1's last pass left this device's cursor: what a mirror written now says. */
 async function v1Cursor(): Promise<number> {
   return (await call(env, `/v1/spaces/${space}/changes?since=0`, { token })).json.cursor
 }
 
-/** The device, its first v2 pass with the mirror given, and one pass after it. `cursor`
- *  is where v1's last pass left it: the mirror's cursor. */
 async function migrated(
   files: Record<string, string>,
   notes: Record<string, Tracked>,
@@ -249,7 +233,6 @@ describe('a device moving to v2', () => {
 
   test('both moved: merged against the version v1 last agreed on', async () => {
     const note = await v1Note('Plan.md', 'First line.\n\nSecond line.\n')
-    // The version the account kept of it: one every five minutes, and this one is old.
     await keepVersionNow(env, note.id, 'First line.\n\nSecond line.\n', 'one')
     await v1Write(
       note.id,
@@ -301,10 +284,6 @@ describe('a device moving to v2', () => {
     expect(await liveNames()).toEqual(['Plan.md'])
   })
 
-  /** A canvas another program cut short, or left with conflict markers, after v1 last
-   *  agreed on it is no edit of it: read as a plane, it has nothing on it, and taken it
-   *  would empty the account's canvas and every device's. The account's stands, as v1's
-   *  own merge has it, and the file is kept as a version before it is written. */
   test('a canvas that no longer reads is not taken for an empty one', async () => {
     const good = JSON.stringify({
       nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
@@ -335,7 +314,6 @@ describe('a device moving to v2', () => {
     const note = await v1Note('Plan.md', 'Plan.\n')
     const folder = '0f'.repeat(16)
     const idea = '1e'.repeat(16)
-    // The account's own note keeps the account's id, whatever it was called here.
     const carried = new Map([
       ['ideas', folder],
       ['ideas/new.md', idea],
@@ -366,7 +344,6 @@ describe('a device moving to v2', () => {
     const gone = await v1Note('Gone.md', 'Delete me.\n')
     const kept = await v1Note('Kept.md', 'Keep me.\n')
     const seen = await v1Cursor()
-    // Written in by another device after this one's last v1 pass.
     await v1Write(kept.id, 'Kept.md', 'Keep me, I was written in.\n', kept.version)
     const { file } = await migrated(
       {},
@@ -511,9 +488,6 @@ describe('a first pass over what v1 left unsaid', () => {
     expect(file('Elsewhere/New name.md')).toBe('Words that moved.\n')
   })
 
-  /** Waiting on a question, the note has no words v1 agreed on to be found by, and a
-   *  file at its old name is another note's. Read as gone, it was deleted on the
-   *  account, and the file at the old name was matched to it. */
   test('a held note v1 renamed and could not tell is that note, moved', async () => {
     const note = await v1Note('One.md', 'One.\n')
     await v1Write(note.id, 'One.md', 'One, there.\n', note.version)
@@ -624,7 +598,6 @@ describe('the way back to v1', () => {
     const engine = device.engine
     const at = (path: string) => `${device.root}/${path}`
 
-    // Under v2: a rename, a move into another folder, a delete and an edit, all sent.
     await device.disk.move(at('Old.md'), at('Renamed.md'))
     await engine.moved(at('Old.md'), at('Renamed.md'))
     await device.disk.move(at('Folder/Inner.md'), at('Notes/Inner.md'))
@@ -635,8 +608,6 @@ describe('the way back to v1', () => {
     await engine.saved(at('Plan.md'), 'Plan.\n\nEdited under v2.\n')
     await sentAll(device)
 
-    // An edit that never went up before the switch back, and a v1 device writing in a
-    // note after this device's last pull.
     await device.disk.write(at('Notes/Ideas.md'), 'Ideas.\n\nTyped and never sent.\n')
     await engine.saved(at('Notes/Ideas.md'), 'Ideas.\n\nTyped and never sent.\n')
     const now = noteRow(theirs.id)
@@ -647,7 +618,6 @@ describe('the way back to v1', () => {
     ]
     if (!mirror) throw new Error('no mirror for the space')
 
-    // v1's first pass from these mirrors, then an edit of every note.
     const first = await v1Pass(device, mirror)
     expect(first).toEqual({ copies: [], refused: [], deleted: [], created: [] })
     for (const path of Object.keys(mirror.notes)) {
@@ -726,8 +696,6 @@ function liveFolders(): string[] {
   return rows.map((row) => row.name)
 }
 
-/** Passes until nothing waits to go up, the rooms taking each push: the runner's own
- *  way back does the same before it writes the mirrors. */
 async function sentAll(device: Device) {
   for (let round = 0; round < 4; round++) {
     const passed = await device.engine.pass(space)
@@ -749,13 +717,6 @@ async function v1Listing(): Promise<Listing> {
   }
 }
 
-/** What v1 would do with a mirror, by the rules of apps/desktop/src/lib/sync/pass.ts:
- *  the pull (a note at the version it knows is skipped; a file saying the account's
- *  words is recorded; the account's words written over a file that only it moved; a
- *  copy where both moved), then the push (a file whose words moved is written on the
- *  version it knows; one it does not know is created; one it knows whose file is gone is
- *  deleted). Answers everything that went wrong for a person: copies made, writes
- *  refused, notes deleted and notes made twice. */
 async function v1Pass(device: Device, mirror: Mirror) {
   const at = (path: string) => `${device.root}/${path}`
   const out = {

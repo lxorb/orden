@@ -1,12 +1,3 @@
-/** The Hetzner Cloud API, as much of it as a machine needs (docs/online-terminal.md 4.15):
- *  servers found by their label, made, power-cycled and deleted; their firewall; and
- *  what a server type is and costs. https://docs.hetzner.cloud, read 2026-10-06.
- *
- *  Every answer is read into its type or refused, and every failure is a `HetznerError`
- *  with the API's own code (`resource_unavailable`, `rate_limit_exceeded`, ...), so the
- *  host can tell "try the next location" from "stop". The token is the Worker's secret
- *  `HETZNER_TOKEN`, scoped by Hetzner to one project. */
-
 const API = 'https://api.hetzner.cloud/v1'
 
 export class HetznerError extends Error {
@@ -20,27 +11,21 @@ export class HetznerError extends Error {
   }
 }
 
-/** A server as the host reads it. */
 export interface Server {
   id: number
   status: string
   location: string
 }
 
-/** A server type: its size, and what it costs a month in each location where it can be
- *  had now, with VAT, in the project's currency. */
 export interface ServerType {
   name: string
   cores: number
-  /** GB, as Hetzner says them. */
   memory: number
   disk: number
   prices: { location: string; monthly: number }[]
-  /** Locations where it can be ordered now. */
   available: string[]
 }
 
-/** What the server will be: the request body of `POST /servers`. */
 export interface NewServer {
   name: string
   serverType: string
@@ -69,7 +54,6 @@ function serverOf(value: unknown): Server | null {
   }
 }
 
-/** A price string ("14.8631") as a number of the currency's units. */
 function amount(value: unknown): number | null {
   const gross = isRecord(value) ? Number(value.gross) : Number.NaN
   return Number.isFinite(gross) && gross >= 0 ? gross : null
@@ -110,9 +94,6 @@ export class Hetzner {
     return said
   }
 
-  /** The server with this label, if there is one. A label is how a server is known to be
-   *  a machine's, so a start that died halfway finds what it made rather than making a
-   *  second one. */
   async serverLabelled(key: string, value: string): Promise<Server | null> {
     const selector = encodeURIComponent(`${key}==${value}`)
     const said = await this.ask('GET', `/servers?label_selector=${selector}`)
@@ -120,9 +101,6 @@ export class Hetzner {
     return serverOf(servers[0])
   }
 
-  /** The server made, and what the API said it is. Its root password, which Hetzner
-   *  answers with when no SSH key is given, is never read: root has no password the
-   *  machine accepts (install.sh). */
   async createServer(server: NewServer): Promise<Server> {
     const said = await this.ask('POST', '/servers', {
       name: server.name,
@@ -132,7 +110,6 @@ export class Hetzner {
       user_data: server.userData,
       labels: server.labels,
       firewalls: [{ firewall: server.firewall }],
-      // IPv4 too: much of what a person fetches (GitHub among it) has no IPv6.
       public_net: { enable_ipv4: true, enable_ipv6: true },
       start_after_create: true,
     })
@@ -145,7 +122,6 @@ export class Hetzner {
     await this.ask('DELETE', `/servers/${String(id)}`)
   }
 
-  /** A hard power cycle: what a server that answers nothing needs. */
   async reset(id: number): Promise<void> {
     await this.ask('POST', `/servers/${String(id)}/actions/reset`)
   }
@@ -154,7 +130,6 @@ export class Hetzner {
     await this.ask('POST', `/servers/${String(id)}/actions/poweron`)
   }
 
-  /** The firewall with this label, if there is one. */
   async firewallLabelled(key: string, value: string): Promise<number | null> {
     const selector = encodeURIComponent(`${key}==${value}`)
     const said = await this.ask('GET', `/firewalls?label_selector=${selector}`)
@@ -163,8 +138,6 @@ export class Hetzner {
     return isRecord(first) && typeof first.id === 'number' ? first.id : null
   }
 
-  /** A firewall that lets in only what `rules` says: none is nothing at all. Outbound is
-   *  left open, as no outbound rule means. */
   async createFirewall(name: string, labels: Record<string, string>, rules: unknown[]) {
     const said = await this.ask('POST', '/firewalls', { name, labels, rules })
     const wall = isRecord(said) && isRecord(said.firewall) ? said.firewall : null
@@ -182,7 +155,6 @@ export class Hetzner {
     await this.ask('DELETE', `/firewalls/${String(id)}`)
   }
 
-  /** A server type by name, with its prices and where it can be had. */
   async serverType(name: string): Promise<ServerType> {
     const said = await this.ask('GET', `/server_types?name=${encodeURIComponent(name)}`)
     const types = isRecord(said) && Array.isArray(said.server_types) ? said.server_types : []
@@ -209,8 +181,6 @@ export class Hetzner {
     }
   }
 
-  /** What a public IPv4 address costs a month in a location, with VAT (0 where the API
-   *  says nothing), and the currency every price of the project is in. */
   async ipv4(location: string): Promise<{ monthly: number; currency: string }> {
     const said = await this.ask('GET', '/pricing')
     const pricing = isRecord(said) && isRecord(said.pricing) ? said.pricing : {}

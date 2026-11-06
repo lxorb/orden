@@ -1,14 +1,8 @@
-/** What the sync v2 tests share: the Worker's rooms running under the routes, their
- *  settles fired on demand, and requests made the way a v2 device makes them, in the
- *  framed envelope of @orden/sync-core. */
-
 import { frame, type Framed, unframe } from '@orden/sync-core'
 import app from '../src/index'
 import { call, mail, signIn, type TestEnv } from './harness'
 import { running } from './room'
 
-/** Somebody given a space, or one file of it, and in it: invited by its owner, then
- *  having signed in and followed the link. Answers their session. */
 export async function invited(
   env: TestEnv,
   owner: string,
@@ -32,12 +26,9 @@ export async function invited(
 }
 
 export type Live = ReturnType<typeof running> & {
-  /** Every settle on the clock, fired, until none is left: what a second and a bit of
-   *  nobody typing does. */
   settle(): Promise<void>
 }
 
-/** The rooms of the Worker, running under its routes. */
 export function live(env: TestEnv): Live {
   const rooms = running(env)
   env.ROOMS = rooms.ROOMS
@@ -60,13 +51,11 @@ export function live(env: TestEnv): Live {
   return { ...rooms, settle }
 }
 
-/** What a framed request was answered: the status, and the envelope read back. */
 export interface FramedAnswer<T> {
   status: number
   value: T
 }
 
-/** A v2 request with a framed body, answered framed and read back. */
 export async function framed<T = Record<string, unknown>>(
   env: TestEnv,
   path: string,
@@ -91,8 +80,6 @@ export async function framed<T = Record<string, unknown>>(
 
   const bytes = new Uint8Array(await response.arrayBuffer())
   const type = response.headers.get('content-type') ?? ''
-  // What the route answered, as the test reads it: an envelope where it framed one,
-  // and the JSON of a refusal otherwise.
   const value: unknown = type.startsWith('application/octet-stream')
     ? unframe(bytes)
     : JSON.parse(new TextDecoder().decode(bytes))

@@ -1,17 +1,3 @@
-/** The connector's to-dos and bases: `list_tasks`, `add_task`, `update_task`,
- *  `query_base` and `add_row`, under the names and arguments `nib mcp` gives them, so
- *  a prompt written against one works against the other (docs/tasks.md 5.15).
- *
- *  What a call means is `@orden/bases/agent`, the same module the app's own verbs use,
- *  over rows read off the account's notes with Orden closed: each note's words through
- *  `rowsOfText`, the one reader of a task line there is. A change is the note written
- *  whole through `putNote`, the connector's `write_note`, so it is a version like any
- *  other and a room merges it with whoever is typing, naming the version it read: a
- *  note that moved since is read and changed again, and no word typed in between is
- *  written over (`edits`). The answers are the same JSON the app answers with, because
- *  a model reads both. Writing needs a token that may write and a space that was not
- *  shared to read. */
-
 import type { Context, Row } from '@orden/bases'
 import {
   AgentError,
@@ -55,10 +41,7 @@ import {
 } from './tools'
 import type { TokenRow } from './tokens'
 
-/** How many notes one call reads the words of, across every space it looks in. A list
- *  past this says it stopped looking (`partial`), the way a search does. */
 const MOST_READ = 2000
-/** How many bodies are asked of storage at once. */
 const AT_ONCE = 32
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
@@ -149,7 +132,6 @@ export const TASK_TOOLS = [
 
 type Args = Record<string, unknown>
 
-/** The engine's sentence, or the connector's, as what the model reads. */
 class Said extends Error {}
 
 const words = (args: Args, name: string): string | undefined => {
@@ -157,13 +139,11 @@ const words = (args: Args, name: string): string | undefined => {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
-/** A note of a space as the connector has it: its row in the table and its words. */
 interface Held {
   id: string
   path: string
 }
 
-/** The notes of a space, by path. */
 async function notesOf(env: Env, space: Space): Promise<Held[]> {
   const { results } = await env.DB.prepare(
     `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
@@ -174,7 +154,6 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
   return results
 }
 
-/** The rows of the spaces, read a few notes at a time; `partial` where the cap was met. */
 async function rowsOf(
   env: Env,
   spaces: readonly Space[],
@@ -198,8 +177,6 @@ async function rowsOf(
   return { rows, partial }
 }
 
-/** The note a task names, or the space's inbox where it names none: "Inbox" by name
- *  too, where the space has no note called that (#1044), so no `Inbox.md` is made. */
 async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<string> {
   if (named === undefined) return INBOX_PATH
   const path = notePath(named)
@@ -207,7 +184,6 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
   return path
 }
 
-/** One note's words, or null where there is no note at that path. */
 async function wordsAt(env: Env, space: Writable, path: string): Promise<string | null> {
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
@@ -227,7 +203,6 @@ async function readOf(
   return read
 }
 
-/** A note path an argument names, `.md` added where it has no ending. */
 function notePath(asked: string): string {
   const named = asked.trim()
   if (isCanvasTarget(named) || isPagesTarget(named)) throw new Said(`${asked} is not a note.`)
@@ -268,14 +243,10 @@ async function written(
   return put.path
 }
 
-/** What the engine is asked against. The account keeps no zone, so the day is UTC's;
- *  `nib mcp`, on the reader's machine, answers in theirs. */
 function contextNow(): Context {
   return clockOf(new Date(), 'UTC')
 }
 
-/** A `.base` file's words. A base is no note to the account: it syncs as a file, its
- *  bytes kept by their hash (sync2/files.ts). */
 async function baseText(env: Env, space: Space, path: string): Promise<string | null> {
   const file = await env.DB.prepare(
     "select hash from notes where space_id = ? and path = ? and deleted = 0 and kind = 'file'",
@@ -301,8 +272,6 @@ async function readBaseAt(env: Env, space: Space, asked: string) {
   }
 }
 
-/** Whether the account's Today holds a task with no start date, as the app's does
- *  (#408): one key out of the settings blob, read per call; off where it never said. */
 async function undatedInToday(env: Env, user: string): Promise<boolean> {
   const row = await env.DB.prepare('select settings from users where id = ?')
     .bind(user)
@@ -346,8 +315,6 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   return partial ? { ...answer, partial } : answer
 }
 
-/** The space a call names, refused in a sentence where it names none it reaches.
- *  Kept in `seen`, which is what decides whether the answer comes marked. */
 async function spaceOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Space> {
   const space = await askedSpace(env, token.user_id, args)
   if (typeof space === 'string') throw new Said(space)
@@ -355,7 +322,6 @@ async function spaceOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Pr
   return space
 }
 
-/** The space a write names, refused where the token or the share may not write. */
 async function writableSpace(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Space> {
   if (token.read_only)
     throw new Said('This token may only read. Allow writing in Orden’s settings first.')
@@ -369,20 +335,13 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
   return addTaskTo(env, await writableSpace(env, token, args, seen), args)
 }
 
-/** The space a task goes to. */
 type Writable = Pick<Space, 'id' | 'name' | 'user_id'>
 
-/** A task added to a space the caller may write: to its inbox (`INBOX_PATH`, Orden's
- *  own, which puts no file into the space the reader did not make), or to `note` under
- *  `under`: the connector's `add_task`. Throws the sentence to answer with where it
- *  cannot. */
 async function addTaskTo(
   env: Env,
   space: Writable,
   args: Args,
 ): Promise<{ at: string; space: string; path: string }> {
-  // Quick add's grammar over the words, English and German: the account keeps no
-  // language, and those are the two its tables have.
   const read = newTask(args, quickWords(['en', 'de'], new Date()))
   const { fields } = read
   const path = await placeNamed(env, space, words(args, 'note') ?? read.note)
@@ -435,7 +394,6 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
     })
   }
 
-  // Moved: the new note written first, so the task is never in neither.
   const target = typeof moveTo === 'object' ? (moveTo as Args) : { note: moveTo }
   const into =
     typeof target.note === 'string' && target.note.trim()
@@ -553,21 +511,15 @@ const RUNS: Record<
   add_row: addRow,
 }
 
-/** A sentence a task tool answered with rather than a task. */
 function refusalOf(error: unknown): string | null {
   return error instanceof Said || error instanceof AgentError ? error.message : null
 }
 
-/** Where the words of an answer came from: every space it read or wrote that somebody
- *  else may write in, or null where there is none. Rows, task text, a base's columns
- *  and the paths a write answers with all come out of those notes. */
 function sourceOf(seen: readonly Space[]): string | null {
   const sources = [...new Set(seen.map(spaceSource).filter((one) => one !== null))]
   return sources.length ? sources.join(', ') : null
 }
 
-/** Runs one of the five, answering JSON, or a sentence where it cannot: inside the
- *  untrusted mark where a space somebody else may write in was read. */
 export async function callTaskTool(
   env: Env,
   token: TokenRow,

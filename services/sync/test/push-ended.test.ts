@@ -1,6 +1,3 @@
-/** A device that is no longer signed in is pushed nothing (#454): ended from the
- *  devices list, its session ended, signed out, or run out. See src/push/live.ts. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { sha256 } from '../src/crypto'
@@ -31,7 +28,6 @@ afterEach(() => {
   env.close()
 })
 
-/** A Google service account with a key of its own. */
 async function serviceAccount(): Promise<string> {
   const pair = (await crypto.subtle.generateKey(
     {
@@ -50,7 +46,6 @@ async function serviceAccount(): Promise<string> {
   return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'nib-test' })
 }
 
-/** What FCM was asked to deliver, and to which tokens. */
 function fcm() {
   const tokens: string[] = []
   const send = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -65,8 +60,6 @@ function fcm() {
   return { send, tokens }
 }
 
-/** A phone and a laptop of one account, the phone registered to be pushed to, and a
- *  reminder due. */
 async function setUp() {
   env.FCM_SERVICE_ACCOUNT = await serviceAccount()
   const phone = await computer(env, running, EMAIL, 'Phone')

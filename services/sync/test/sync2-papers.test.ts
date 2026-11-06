@@ -1,9 +1,3 @@
-/** The paper a page note holds, under sync v2 (#551): part of the note, and so never an
- *  entry of the tree of its own. A page note and its paper are one thing on the account,
- *  kept by the note's id (`/v1/notes/:id/paper`, papers.test.ts); a second entry for the
- *  paper, paired with the note by name, is what a rename left behind under the old name
- *  on every other device. The engine itself, run against the Worker's own routes. */
-
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -70,7 +64,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** What the account's tree holds, live: each path and its kind. */
 function onAccount(): string[] {
   const rows = env.db
     .prepare('select path, kind from notes where space_id = ? and deleted = 0 order by path')
@@ -103,7 +96,6 @@ test('a folder read for the first time holds the page note and not its paper', a
   await synced({
     'Lecture.pages': PAGES,
     'Lecture.pages.pdf': PDF,
-    // Somebody's own PDF that happens to be named so: no note beside it, so a PDF.
     'Report.pages.pdf': PDF,
   })
 
@@ -119,12 +111,10 @@ test('a PDF turned into a page note leaves the tree as the note takes it in', as
   await pass()
   expect(onAccount()).toEqual(['Notes.md note', 'Week 1.pdf file'])
 
-  // What turning it does (pages/from-pdf.ts): the note written, the PDF moved in under it.
   await device.disk.write(at('Week 1.pages'), PAGES)
   await device.engine.created(at('Week 1.pages'), false, PAGES)
   await device.disk.move(at('Week 1.pdf'), at('Week 1.pages.pdf'))
   await device.engine.moved(at('Week 1.pdf'), at('Week 1.pages.pdf'))
-  // And a watcher that hears the paper arrive as a new file of its own.
   await device.engine.created(at('Week 1.pages.pdf'), false)
   await pass()
 

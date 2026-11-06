@@ -1,15 +1,3 @@
-/** Sharing one file out of a space rather than the whole of it.
- *
- *  The same membership, the same two roles, the same link and the same guests as
- *  a space share - the rows simply say which note they are about. So what is
- *  tested here is not a second mechanism; it is the seam between the two: that
- *  somebody handed one note gets that note and nothing around it, that the space
- *  they got it out of is a space that does not exist as far as they can tell, and
- *  that everything the space's own sharing does is unchanged by an item share
- *  sitting beside it.
- *
- *  See docs/sharing.md and src/spaces/share.ts. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { subprotocol } from '@orden/rooms'
 import { spacesFor } from '../src/mcp/tools'
@@ -22,8 +10,6 @@ const OWNER = 'owner@example.com'
 const FRIEND = 'friend@example.com'
 const STRANGER = 'nobody@example.com'
 
-/** The file that gets shared, and one beside it that does not: almost everything
- *  here is about the difference between the two. */
 const SHARED_NOTE = 'plans/meeting.md'
 const OTHER_NOTE = 'plans/private.md'
 const CANVAS = 'plans/board.canvas'
@@ -56,12 +42,10 @@ async function makeNote(path: string, content: string): Promise<string> {
   return made.json.note.id
 }
 
-/** The sheet about one file, as the owner reads it. */
 function itemView(item = note, as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share?item=${item}`, { token: as })
 }
 
-/** The token in the link an invitation mail carried. */
 async function inviteLink(email: string, role: 'write' | 'read', item = note): Promise<string> {
   const sent = await mail(() =>
     call(env, `/v1/spaces/${space}/share/invite?item=${item}`, {
@@ -75,8 +59,6 @@ async function inviteLink(email: string, role: 'write' | 'read', item = note): P
   return found[1]
 }
 
-/** Somebody given one file, and in it: invited, then having proved the address by
- *  signing in, which is the whole of what joining is. */
 async function given(email: string, role: 'write' | 'read', item = note): Promise<string> {
   const link = await inviteLink(email, role, item)
   const token = await signIn(env, email)
@@ -84,7 +66,6 @@ async function given(email: string, role: 'write' | 'read', item = note): Promis
   return token
 }
 
-/** The link on one file, set to hand out this role in this mode, as a token. */
 async function itemLink(
   role: 'write' | 'read',
   mode: 'open' | 'approval',
@@ -104,7 +85,6 @@ async function itemLink(
 beforeEach(async () => {
   env = testEnv()
   owner = await signIn(env, OWNER)
-  // Named, because what a mail and a shared row say is a person's name.
   await call(env, '/v1/me', { method: 'PATCH', token: owner, body: { name: 'Emil' } })
 
   const made = await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })
@@ -135,8 +115,6 @@ describe('a share about one file', () => {
     expect(sheet.json.item).toBeNull()
     expect(sheet.json.members).toEqual([])
 
-    // Which is what the two marks are: the space's row says nothing, and the
-    // file's row says it is shared.
     const listed = await call(env, '/v1/spaces', { token: owner })
     const mine = listed.json.spaces.find((one) => one.id === space)
     expect(mine?.shared).toBe(false)
@@ -168,8 +146,6 @@ describe('a share about one file', () => {
       expect(asked.status, item).toBe(404)
     }
 
-    // And about one that has gone to Recently deleted, which is not a file
-    // anybody can be handed.
     await call(env, `/v1/notes/${other}`, { method: 'DELETE', token: owner })
     const deleted = await call(env, `/v1/spaces/${space}/share?item=${other}`, { token: owner })
     expect(deleted.status).toBe(404)
@@ -200,8 +176,6 @@ describe('somebody who was handed one file', () => {
   })
 
   test('and cannot reach one thing about the space it came out of', async () => {
-    // The listing does not hold it: being handed one note is not being let into
-    // the drawer it came from.
     const listed = await call(env, '/v1/spaces', { token: friend })
     expect(listed.json.spaces.some((one) => one.id === space)).toBe(false)
 
@@ -228,8 +202,6 @@ describe('somebody who was handed one file', () => {
     }
   })
 
-  /** The words are theirs to write. Where the file sits, and whether it exists,
-   *  belong to the space - which is not what they were given. */
   test('and cannot move it or take it away', async () => {
     const read = await call(env, `/v1/notes/${note}`, { token: friend })
 
@@ -243,15 +215,11 @@ describe('somebody who was handed one file', () => {
     const gone = await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: friend })
     expect(gone.status).toBe(403)
 
-    // Both left it exactly where it was.
     const still = await call(env, `/v1/notes/${note}`, { token: owner })
     expect(still.json.note.path).toBe(SHARED_NOTE)
     expect(still.json.note.deleted).toBe(false)
   })
 
-  /** Every way the account is asked what it can reach has to give the same
-   *  answer, and the connector is one of them: a model handed the space would be
-   *  handed everything in it. */
   test('and the connector does not list the space either', async () => {
     const who = (await call(env, '/v1/me', { token: friend })).json.user.id
     const listed = await spacesFor(env, who)
@@ -273,7 +241,6 @@ describe('somebody who was handed one file', () => {
     })
   })
 
-  /** A reader is a reader about one file exactly as about a space. */
   test('and a reader is refused the write', async () => {
     const reader = await given('reader@example.com', 'read', canvas)
 
@@ -316,15 +283,12 @@ describe('the room door', () => {
       expect(door.asked.at(-1)?.get('x-nib-space'), who).toBe(space)
     }
 
-    // The file next to it in the same space is a file that does not exist.
     const refused = await call(env, `/rooms/${other}`, {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(friend) },
     })
     expect(refused.status).toBe(404)
   })
 
-  /** Somebody who reaches the space and was also handed one of its files to write
-   *  in: what they may do to that file is the most any of it allows. */
   test('gives the stronger of a space role and a file role', async () => {
     const door = doorway()
     env.close()
@@ -378,13 +342,11 @@ describe('a link to one file', () => {
     const listed = await call<SharedView>(env, '/v1/shared', { token: guest })
     expect(listed.json.shared.map((one) => one.id)).toEqual([note])
 
-    // No space, and nothing of the space.
     const spaces = await call(env, '/v1/spaces', { token: guest })
     expect(spaces.json.spaces).toEqual([])
     const refused = await call(env, `/v1/notes/${other}`, { token: guest })
     expect(refused.status).toBe(404)
 
-    // And the file itself opens and takes a write.
     const read = await call(env, `/v1/notes/${note}`, { token: guest })
     expect(read.status).toBe(200)
     const written = await call(env, `/v1/notes/${note}`, {
@@ -402,8 +364,6 @@ describe('a link to one file', () => {
     expect(asked.json.waiting).toBe(true)
     const guest = asked.json.token
 
-    // Waiting on the file, and not on the space: the space's own sheet says
-    // nobody is at its door.
     const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
     expect(sheet.json.requests).toEqual([])
 
@@ -422,14 +382,10 @@ describe('a link to one file', () => {
     expect(listed.json.shared.map((one) => one.id)).toEqual([note])
   })
 
-  /** A guest that signs in is the account, and whatever the guest held follows
-   *  it in - a file shared on its own included. */
   test('and a guest who signs in keeps the file as the account', async () => {
     const token = await itemLink('write', 'open')
     const walked = await call(env, `/v1/join/${token}`, { method: 'POST', body: {} })
 
-    // The guest session the device holds, which is what the app hands to the
-    // sign-in: that is how a device says "this guest is me".
     const account = await signIn(env, FRIEND, walked.json.token)
     const listed = await call<SharedView>(env, '/v1/shared', { token: account })
 
@@ -451,7 +407,6 @@ describe('revoking a share about one file', () => {
     const listed = await call<SharedView>(env, '/v1/shared', { token: friend })
     expect(listed.json.shared).toEqual([])
 
-    // And the owner's own row stops saying it is shared.
     const spaces = await call(env, '/v1/spaces', { token: owner })
     expect(spaces.json.spaces.find((one) => one.id === space)?.sharedItems).toEqual([])
   })
@@ -467,8 +422,6 @@ describe('revoking a share about one file', () => {
     expect(walked.status).toBe(404)
   })
 
-  /** Being given something is not being kept: what somebody was handed is theirs
-   *  to hand back, without asking the person who gave it. */
   test('and the person handed it can let themselves out', async () => {
     const friend = await given(FRIEND, 'write')
 
@@ -481,16 +434,10 @@ describe('revoking a share about one file', () => {
     expect(refused.status).toBe(404)
   })
 
-  /** Letting go of something is not a question about what exists. Anybody signed in
-   *  can ask this, holding nothing, so an answer that differed would be a way to ask
-   *  whether an id names a file on this server - one guess at a time, about spaces the
-   *  asker has never been near. */
   test('and it answers the same for a file nobody handed them', async () => {
     const stranger = await signIn(env, STRANGER)
 
-    // A note that exists, in a space this person cannot see at all.
     const real = await call(env, `/v1/shared/${note}`, { method: 'DELETE', token: stranger })
-    // And a name no note has.
     const madeUp = await call(env, '/v1/shared/not-a-note-at-all', {
       method: 'DELETE',
       token: stranger,
@@ -500,7 +447,6 @@ describe('revoking a share about one file', () => {
     expect(madeUp.status).toBe(real.status)
     expect(madeUp.json).toEqual(real.json)
 
-    // And the share that was there is still there: answering ok is not doing anything.
     const friend = await given(FRIEND, 'write')
     const listed = await call<SharedView>(env, '/v1/shared', { token: friend })
     expect(listed.json.shared.map((one) => one.id)).toEqual([note])
@@ -526,13 +472,10 @@ describe('revoking a share about one file', () => {
 })
 
 describe('the ceilings', () => {
-  /** The bytes land in the owner's storage whoever wrote them, so it is the
-   *  owner's quota a write has to fit inside - exactly as for a space share. */
   test('count a write against whoever owns the space', async () => {
     const friend = await given(FRIEND, 'write')
     const read = await call(env, `/v1/notes/${note}`, { token: friend })
 
-    // The owner, at their ceiling.
     env.db.exec(`update notes set size = 3221225472 where id = '${other}'`)
 
     const written = await call(env, `/v1/notes/${note}`, {
@@ -547,13 +490,7 @@ describe('the ceilings', () => {
     expect(written.status).toBe(507)
   })
 
-  /** Two hundred notes made and shared one request at a time, against the real SQL,
-   *  because what this is about is the number the service refuses at: three seconds
-   *  alone, and past the project's thirty beside the rest of the suite on a busy
-   *  machine. The budget is this test's own - a wall a slow honest run must not hit;
-   *  the statuses are what say whether it is right. */
   test('and bound how many files one space shares on their own', { timeout: 120_000 }, async () => {
-    // Every share the space is allowed, and then one more file.
     for (let made = 0; made < MOST_ITEMS; made++) {
       const id = made === 0 ? note : await makeNote(`plans/note-${made}.md`, 'x')
       await call(env, `/v1/spaces/${space}/share/link?item=${id}`, {
@@ -570,7 +507,6 @@ describe('the ceilings', () => {
     })
     expect(oneMore.status).toBe(409)
 
-    // A file already shared is not one more file, so changing its link still works.
     const again = await call(env, `/v1/spaces/${space}/share/link?item=${note}`, {
       method: 'PUT',
       token: owner,

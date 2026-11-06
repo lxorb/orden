@@ -1,18 +1,7 @@
-/** Chats whose pointer or space has gone for good, erased a month later (docs/chats.md
- *  4.2): the nightly job's part for chats.
- *
- *  A chat ends when what shows it goes: its `.chat` pointer purged from Recently
- *  deleted, or its whole space purged. In Recently deleted it is still the chat, and put
- *  back it is the chat as it was. Once ended, the log is kept 30 days more, then its
- *  rows go and its object is emptied with the other leftovers (leftovers.ts), which is
- *  safe to repeat. The files it named are written down where that says who to ask
- *  (`noteChatFiles`, unused.ts) before the rows that say so go. */
-
 import { AT_A_TIME, places } from '../bound'
 import type { Env } from '../types'
 import { noteChatFiles } from '../unused'
 
-/** How long an ended chat's log is kept. */
 const KEPT_FOR = 30 * 24 * 60 * 60 * 1000
 
 export async function sweepChats(env: Env, at: number): Promise<number> {

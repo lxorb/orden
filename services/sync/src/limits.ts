@@ -1,21 +1,3 @@
-/** How often a thing may happen, and to whom.
- *
- *  Three of the ways in here cost the service something it cannot take back:
- *  mail leaves the building, a registration writes a row, an owner is told
- *  somebody is waiting. Each already had a gate on the one person it is about -
- *  an address hears from Orden at most every thirty seconds - and none of them had
- *  a ceiling on the whole: one machine could ask for a code for ten thousand
- *  addresses, and every one of those sends is Orden's reputation as a sender.
- *
- *  So this module holds the ceilings. `within` is the general one, counting
- *  arrivals per scope and key inside a window; `mailCeilings` is the set that
- *  guards every message that goes out - per machine, per address, and on the
- *  service as a whole - which is the one place worth naming because three of the
- *  modules here send mail and none should decide the numbers for itself.
- *
- *  Each counts and answers in one call, for the reason the per-address gate does:
- *  nothing can ask, be told no, and go ahead anyway. */
-
 import { now } from './crypto'
 import { TRY_IN_AN_HOUR } from './refused'
 import type { Env } from './types'
@@ -23,39 +5,16 @@ import type { Env } from './types'
 const AN_HOUR = 60 * 60 * 1000
 const A_DAY = 24 * AN_HOUR
 
-/** How many messages one machine may cause in an hour. A person signing in
- *  needs one and asks for a second if the first went astray; the number is what
- *  an office behind one address can want at once, and far below what somebody
- *  working through a list of addresses does. */
 const MAIL_FROM_ONE_MACHINE = 20
 
-/** How many people the service writes to in a day. Every address that has heard
- *  from Orden today counts once, however often it heard; past this, an address
- *  that has not heard yet waits for tomorrow. */
 const ADDRESSES_A_DAY = 500
 
-/** The machine a request came from, as Cloudflare names it.
- *
- *  Cloudflare sets the header on everything that reaches a Worker, so in the
- *  places this is used it is there. Where it is not - `wrangler dev`, a test,
- *  anything reaching the app some other way - there is no machine to count, and
- *  counting them all as one would make one shared bucket that the first person
- *  through empties for everybody. So the answer is null and the ceiling on the
- *  whole day is what is left standing. */
 export function machineOf(headers: { header(name: string): string | undefined }): string | null {
   const said = headers.header('cf-connecting-ip')?.trim()
-  // An address is 45 characters at the outside; anything longer is not one, and
-  // the column is not somewhere to write a story.
   return said && said.length <= 64 ? said : null
 }
 
-/** Counts one arrival under a scope and key, and says how many there have been
- *  inside the window. */
 async function counted(env: Env, scope: string, key: string, window: number): Promise<number> {
-  // Rows whose window has ended say nothing any more, so they go as new ones
-  // arrive - the way the sessions and the sign-in codes are cleared. It also
-  // means the upsert below never has to reason about a stale row: by the time it
-  // runs, the row it finds is one still inside its window.
   await env.DB.prepare('delete from limits where until < ?').bind(now()).run()
 
   const row = await env.DB.prepare(
@@ -69,7 +28,6 @@ async function counted(env: Env, scope: string, key: string, window: number): Pr
   return row?.count ?? 1
 }
 
-/** Counts one arrival against a ceiling and says whether it was inside it. */
 export async function within(
   env: Env,
   scope: string,
@@ -80,8 +38,6 @@ export async function within(
   return (await counted(env, scope, key, window)) <= most
 }
 
-/** Takes one arrival back, for something that was counted and then did not
- *  happen. Never below nothing, and a row already swept stays swept. */
 async function uncount(env: Env, scope: string, key: string): Promise<void> {
   await env.DB.prepare(
     'update limits set count = count - 1 where scope = ? and key = ? and count > 0',
@@ -90,7 +46,6 @@ async function uncount(env: Env, scope: string, key: string): Promise<void> {
     .run()
 }
 
-/** Whether the service may write to one more person today, counting this one. */
 async function withinTheDay(env: Env, address: string): Promise<boolean> {
   const day = Math.floor(now() / A_DAY)
 
@@ -103,8 +58,6 @@ async function withinTheDay(env: Env, address: string): Promise<boolean> {
     .bind(day, address)
     .first<{ many: number; held: number | null }>()
 
-  // Somebody who has already heard from Orden today is not one more person to
-  // write to, so the ceiling has nothing to say about them.
   if (!counted?.held && (counted?.many ?? 0) >= ADDRESSES_A_DAY) return false
 
   await env.DB.prepare('insert into mailed_days (day, email) values (?, ?) on conflict do nothing')
@@ -114,119 +67,53 @@ async function withinTheDay(env: Env, address: string): Promise<boolean> {
   return true
 }
 
-/** How many clients one machine may register in an hour. Registering is open to
- *  anybody, so this is the only thing standing between one script and a table of
- *  clients; a client that registers afresh on every conversation gets its own row
- *  back rather than a new one, so it never reaches this. */
 const REGISTRATIONS_AN_HOUR = 20
 
-/** Whether one more client may be registered from this machine. */
 export function mayRegister(env: Env, machine: string | null): Promise<boolean> {
   if (!machine) return Promise.resolve(true)
   return within(env, 'register', machine, REGISTRATIONS_AN_HOUR, AN_HOUR)
 }
 
-/** How often the owner of one space hears that somebody is waiting on them. A
- *  link anybody may follow is a door a roomful of people can knock on in a
- *  minute, and what the owner needs to know is that somebody is there. */
 export function mayTellTheOwner(env: Env, spaceId: string): Promise<boolean> {
   return within(env, 'waiting', spaceId, 1, AN_HOUR)
 }
 
-/** How many questions one account may ask the model in an hour, and how many
- *  utterances it may have turned into words.
- *
- *  These cost somebody money - the account's own OpenAI credit, or Orden's own Workers
- *  AI allowance where an account has no key - and the Worker is what spends it now
- *  that the key never leaves the Worker. So the ceiling is not
- *  about Orden's reputation like the mail ones; it is about a bug, or a phone in a
- *  pocket, not being able to run through a month's credit in an afternoon.
- *
- *  Sixty questions is far more than a person walking around asks and far less than a
- *  loop does. Utterances are the higher of the two because the microphone hears
- *  every command, not only the questions - and only where the WebView has no
- *  recogniser of its own, which is the phone doing the work for free. */
 const QUESTIONS_AN_HOUR = 60
 const UTTERANCES_AN_HOUR = 600
 
-/** Whether one more question may be asked, counting this one. */
 export function mayAsk(env: Env, userId: string): Promise<boolean> {
   return within(env, 'ask', userId, QUESTIONS_AN_HOUR, AN_HOUR)
 }
 
-/** Whether one more utterance may be turned into words, counting this one. */
 export function mayTranscribe(env: Env, userId: string): Promise<boolean> {
   return within(env, 'said', userId, UTTERANCES_AN_HOUR, AN_HOUR)
 }
 
-/** How many times one account may be given a second-factor code to check in an
- *  hour. Six digits is a million guesses, and without a ceiling a script with an
- *  afternoon walks them; twenty is far more than anybody mistypes. */
 const SECOND_TRIES_AN_HOUR = 20
 
-/** Whether one more second-factor code may be checked, counting this one. */
 export function mayTrySecond(env: Env, userId: string): Promise<boolean> {
   return within(env, 'second', userId, SECOND_TRIES_AN_HOUR, AN_HOUR)
 }
 
-/** And how many one machine may try, whoever they are about.
- *
- *  The ceiling above says nothing to a script working through a list of
- *  addresses: twenty guesses each is as many as it likes, from one machine, so
- *  long as it keeps moving on to the next account. This is the one that answers
- *  that. Generous against the account ceiling, because a household or an office
- *  behind one address is several people mistyping. */
 const SECOND_TRIES_FROM_ONE_MACHINE = 60
 
-/** Whether one more may be checked from this machine, counting this one. */
 export function mayTrySecondFrom(env: Env, machine: string | null): Promise<boolean> {
   if (!machine) return Promise.resolve(true)
   return within(env, 'second-from', machine, SECOND_TRIES_FROM_ONE_MACHINE, AN_HOUR)
 }
 
-/** How many sign-in codes one address may have checked in an hour, whichever
- *  codes they were.
- *
- *  Five wrong tries spend one code, and that alone bounds nothing: asking for
- *  another resets the count, an address may be sent one every thirty seconds, and
- *  the machine ceiling on mail says nothing to a script spread over a few of them.
- *  That was six hundred guesses an hour at somebody's account for as long as it
- *  cared to run. Fifteen is three codes' worth of mistyping, and far below that.
- *
- *  Counted per address rather than per machine, because the address is what is
- *  being guessed at. The price is that a script can make somebody wait an hour to
- *  sign in, which is the trade every such ceiling makes, and a far better one than
- *  the account. */
 const CODE_TRIES_AN_HOUR = 15
 
-/** Whether one more sign-in code may be checked for this address, counting this
- *  one. */
 export function mayTryCode(env: Env, address: string): Promise<boolean> {
   return within(env, 'code-tries', address, CODE_TRIES_AN_HOUR, AN_HOUR)
 }
 
-/** How many times one account may ask to be deleted in an hour, counting the code
- *  it is mailed and every code it tries.
- *
- *  The two ceilings under it already bound the guessing - fifteen codes an hour at
- *  an address, twenty second-factor codes at an account - and the mail ceilings
- *  bound the sending. This one bounds a session that keeps knocking: whoever holds
- *  a session they should not is the reason the door asks for a code at all, and
- *  ten tries is two people mistyping twice and far below a script. */
 const LEAVING_AN_HOUR = 10
 
 export function mayLeave(env: Env, userId: string): Promise<boolean> {
   return within(env, 'leaving', userId, LEAVING_AN_HOUR, AN_HOUR)
 }
 
-/** How many answers one machine may send through the forms on published pages
- *  in an hour, and how many any one site may take.
- *
- *  A form on the open web is a spam target, and the whole of what is done about
- *  it here is counting: no captcha, which is a third party watching the reader,
- *  and no address kept, which is the row's own promise. Ten is far more than
- *  somebody filling in a form, and a site that is being flooded stops taking
- *  answers rather than growing a table nobody asked for. */
 const ANSWERS_FROM_ONE_MACHINE = 10
 const ANSWERS_TO_ONE_SITE = 200
 
@@ -239,19 +126,6 @@ export function mayTakeAnswer(env: Env, spaceId: string): Promise<boolean> {
   return within(env, 'answers', spaceId, ANSWERS_TO_ONE_SITE, AN_HOUR)
 }
 
-/** How many passwords one machine may try at one site in an hour, and how many
- *  tries any one site answers.
- *
- *  A guess costs the reader nothing and costs the service a hundred thousand rounds
- *  of PBKDF2, which is the point of a hundred thousand rounds - and an unmetered
- *  door is both a way to guess a short password and a way to spend somebody else's
- *  CPU with a loop. Twenty is far past somebody typing the word they were sent and
- *  mistyping it; the site's own ceiling is what a roomful of readers on one office
- *  address share, and it is generous for the same reason.
- *
- *  What a refused try is told is what a wrong password is told, which is the point:
- *  a door that says "too many tries" to a guesser has confirmed that the tries are
- *  being counted, and the reader who mistyped theirs waits either way. */
 const GUESSES_FROM_ONE_MACHINE = 20
 const GUESSES_AT_ONE_SITE = 500
 
@@ -268,11 +142,6 @@ export async function mayGuess(
 
 const A_MINUTE = 60 * 1000
 
-/** How many requests that change a tree, and how many that push documents, one
- *  account (or one guest) may make in a minute. Each request carries up to two hundred
- *  ops or fifty documents, and a device coming back from a week away sends a few; six
- *  hundred is a script gone wrong, not a person. Keyed by the account or the guest, so
- *  deleting either takes its rows; see erase.ts. See docs/sync-v2.md section 8. */
 const TREE_CHANGES_A_MINUTE = 600
 const DOCUMENT_PUSHES_A_MINUTE = 600
 
@@ -284,49 +153,23 @@ export function mayPushDocuments(env: Env, whoId: string): Promise<boolean> {
   return within(env, 'doc-push', whoId, DOCUMENT_PUSHES_A_MINUTE, A_MINUTE)
 }
 
-/** How many sides a modal answer let go of one account (or one guest) may keep in an
- *  hour, on top of the pushes above. A kept side is a whole note, up to eight megabytes,
- *  and somebody meets one when two of their devices disagreed and they chose: a device
- *  back from a month away brings a few dozen at most. Two hundred in an hour is a
- *  script, and was gigabytes of versions before the night's sweep could see them
- *  (#471). Keyed by the account or the guest; see erase.ts. */
 const KEEPS_AN_HOUR = 200
 
 export function mayKeepVersions(env: Env, whoId: string): Promise<boolean> {
   return within(env, 'doc-keep', whoId, KEEPS_AN_HOUR, AN_HOUR)
 }
 
-/** How many messages one address may be sent in an hour, and in a day, whoever
- *  caused them and whichever kind they were.
- *
- *  The thirty second gap each address keeps is a pace and not a ceiling: it let
- *  anybody who kept asking send one address a hundred and twenty codes an hour,
- *  and the ceiling on one machine said nothing to a few machines taking turns. So
- *  somebody's inbox could be filled from outside, on the service's account. Six
- *  an hour is a sign-in on every device somebody owns with a second try on two of
- *  them; twenty-four a day is far past what anybody not being flooded is sent. */
 const MAIL_TO_ONE_ADDRESS_AN_HOUR = 6
 const MAIL_TO_ONE_ADDRESS_A_DAY = 24
 
-/** How many messages the service sends in any twenty-four hours, all told.
- *
- *  Below the thousand a day the provider sends for the account, so that when the
- *  day runs short it is this that says no, with a time to come back, rather than
- *  the provider refusing every sign-in there is. Counted in hourly buckets that
- *  each last a day, so the window rolls and there is no midnight at which two
- *  days' worth can go out together. */
 const MAIL_A_DAY = 900
 
 const SENT = 'mail-sent'
 
-/** The bucket a message sent now is counted in. */
 function thisHour(): string {
   return String(Math.floor(now() / AN_HOUR))
 }
 
-/** How many seconds until the service has mail to send again, or null while it
- *  has. Asked without counting, and first, so that nothing refused anywhere
- *  below - one address being flooded above all - spends the day's mail. */
 async function mailRunsOutFor(env: Env): Promise<number | null> {
   const row = await env.DB.prepare(
     `select coalesce(sum(count), 0) as sent, min(until) as first
@@ -337,39 +180,18 @@ async function mailRunsOutFor(env: Env): Promise<number | null> {
 
   if (!row || row.sent < MAIL_A_DAY) return null
 
-  // The oldest hour is the first to stop counting, and that is when to come back.
   return Math.max(1, Math.ceil(((row.first ?? now()) - now()) / 1000))
 }
 
 const TOO_MUCH_TODAY = 'too much mail today - try again tomorrow'
 
-/** Why a message may not go. */
 export interface MailRefusal {
   error: string
-  /** 429 when whoever asked, or the address, has had enough; 503 when the
-   *  service has no mail left to send for now. */
   status: 429 | 503
-  /** Seconds until asking again can work, where that is known. */
   retryAfter: number | null
-  /** Whether it is about the address rather than the asker or the service. Only
-   *  somebody asking for their own address is told that; see `mayMail`. */
   aboutTheAddress: boolean
 }
 
-/** Whether a message may go now, and why not when it may not, counting it
- *  against every ceiling when it may.
- *
- *  Null is the answer that means yes, so that a caller writes
- *  `if (refusal) ...` and nothing reads as allowed by accident. Every sentence is
- *  the app's own voice, because the ones about the service and the asker are
- *  always shown: unlike the per-address gate, which is silent on purpose - saying
- *  it would tell whoever asked that somebody else had just written to that
- *  address - a ceiling is about the service and the person in front of it, and
- *  says so. The ones about the address are shown only to that address's owner.
- *
- *  The order is what is spent by what: the day's mail is asked first and counted
- *  last, and the address is counted only once the asker and the day have let the
- *  message through, so that a flood refused at any step costs nobody else. */
 export async function mailCeilings(
   env: Env,
   address: string,
@@ -405,11 +227,6 @@ export async function mailCeilings(
   return null
 }
 
-/** Gives back what `mailCeilings` counted, for a message that then did not go.
- *
- *  A provider having a bad hour would otherwise spend somebody's six messages on
- *  nothing, and they would be told to wait an hour for a code that never came.
- *  The machine keeps its count: it did ask. */
 export async function mailNotSent(env: Env, address: string): Promise<void> {
   await uncount(env, 'mail-to', address)
   await uncount(env, 'mail-to-day', address)

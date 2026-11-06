@@ -1,12 +1,3 @@
-/** What a route that throws leaves behind.
- *
- *  The live service answered thirteen 500s in four days, and the whole of the
- *  evidence was a path in the zone's analytics: the answer was Hono's own plain
- *  `Internal Server Error`, nothing was written to the log, and `wrangler tail`
- *  can only ever show what is happening now. These are about the half of the fix
- *  that is not any one bug - that the next unknown failure says where it was and
- *  what it said, and comes back in a shape a client can read. See src/failed.ts. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EmailSender } from '../src/types'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -22,7 +13,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** Every line the log was written with while `work` ran. */
 async function logged(work: () => Promise<unknown>): Promise<string[]> {
   const lines: string[] = []
   vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
@@ -33,9 +23,6 @@ async function logged(work: () => Promise<unknown>): Promise<string[]> {
   return lines
 }
 
-/** A route that cannot answer. Nothing a request may send makes a store fail, so
- *  the store is taken away instead: what is being tested is the handler, not any
- *  one way of reaching it. */
 function breakTheStore(): void {
   env.db.exec('drop table spaces')
 }
@@ -54,8 +41,6 @@ describe('a route that throws', () => {
     })
 
     expect(status).toBe(500)
-    // Plain text was the thing the app fell over on: it reads `error` out of
-    // every other answer and had nothing to read out of this one.
     expect(said).toBe('something went wrong here - try again')
   })
 
@@ -105,7 +90,6 @@ describe('what is never written down', () => {
     expect(lines).toHaveLength(1)
     expect(lines[0]).not.toContain('someone@example.com')
     expect(lines[0]).toContain('<address>')
-    // And it still says what happened, which is the point of writing it at all.
     expect(lines[0]).toContain('550 no mailbox')
   })
 })

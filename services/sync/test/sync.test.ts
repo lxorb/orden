@@ -53,8 +53,6 @@ describe('spaces', () => {
     const other = await signIn(env, 'other@b.dev')
     await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
 
-    // `Notes` is the space the account was given when it was made; see
-    // src/spaces/first.ts. It leads the rail everywhere below.
     const mine = await call(env, '/v1/spaces', { token })
     expect(mine.json.spaces.map((one) => one.name)).toEqual(['Notes', 'Work'])
   })
@@ -127,9 +125,6 @@ describe('deleting a space', () => {
 })
 
 describe("a space's icon", () => {
-  /** The space this file made, as the listing shows it. Looked up by id rather
-   *  than by position, because the rail starts with the space the account was
-   *  given, which has an icon of its own. */
   async function inRail() {
     const listed = await call(env, '/v1/spaces', { token })
     return listed.json.spaces.find((one) => one.id === space)
@@ -183,10 +178,6 @@ describe("a space's icon", () => {
     expect(response.json.space.name).toBe('Work')
   })
 
-  /** A space is dressed from the same picker a note and a folder are, so the same
-   *  three shapes arrive here: Lucide's plain name, a set's own name in front of an
-   *  icon, and an emoji. A column that took only bare letters would have dropped two
-   *  of the three without a word. */
   test('is any of the shapes the picker writes', async () => {
     for (const icon of ['file-text', 'flat-color-icons:calendar', '🚀']) {
       const response = await call(env, `/v1/spaces/${space}`, {
@@ -210,16 +201,12 @@ describe("a space's icon", () => {
   })
 })
 
-/** The colour the mark in the rail is drawn in. It was this machine's own choice
- *  until there was a column for it, which meant a space looked like itself on the
- *  machine it was dressed on and plain everywhere else. */
 describe("the colour a space's icon is drawn in", () => {
   async function inRail() {
     const listed = await call(env, '/v1/spaces', { token })
     return listed.json.spaces.find((one) => one.id === space)
   }
 
-  /** An icon and a colour, which is what one gesture in the picker chooses. */
   function dress(body: Record<string, unknown>) {
     return call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body })
   }
@@ -250,8 +237,6 @@ describe("the colour a space's icon is drawn in", () => {
     expect(cleared.json.space.icon).toBe('Briefcase')
   })
 
-  /** A colour with nothing to colour is not a colour. The app says the same thing
-   *  where the picker writes: see `chose` in IconPicker.svelte. */
   test('goes with the icon it was drawing', async () => {
     await dress({ icon: 'Briefcase', tint: 'green' })
     const bare = await dress({ icon: null })
@@ -260,9 +245,6 @@ describe("the colour a space's icon is drawn in", () => {
     expect(bare.json.space.tint).toBe(null)
   })
 
-  /** The accents are the app's own and this service ships none of them, so what the
-   *  column is held to is the shape of an accent's id. A hex, a path or a sentence is
-   *  not one, and leaves the colour as it was rather than being written. */
   test('is an accent name and nothing else', async () => {
     await dress({ icon: 'Briefcase', tint: 'violet' })
 
@@ -272,10 +254,6 @@ describe("the colour a space's icon is drawn in", () => {
     }
   })
 
-  /** A colour the palette gains after this Worker was deployed. Read as a name it
-   *  does not know rather than refused, the way an icon set it has never heard of is:
-   *  the app resolves accents, this does not, and an older Worker must not be what
-   *  stops somebody choosing a new colour. */
   test('may name a colour this build has never heard of', async () => {
     const response = await dress({ icon: 'Briefcase', tint: 'oxblood' })
     expect(response.json.space.tint).toBe('oxblood')
@@ -283,7 +261,6 @@ describe("the colour a space's icon is drawn in", () => {
 })
 
 describe('the order spaces appear in', () => {
-  /** Names as the account lists them, which is the rail order. */
   async function order(): Promise<string[]> {
     const listed = await call(env, '/v1/spaces', { token })
     return listed.json.spaces.map((one: { name: string }) => one.name)
@@ -390,9 +367,6 @@ describe('notes', () => {
     expect((await addNote('Read me.md', 'two')).status).toBe(409)
   })
 
-  /** A save that moves a note, or brings one back from Recently deleted, onto a path a
-   *  live note already holds ran into the space's unique index and came back as a 500.
-   *  It is the same thing a create onto that path is, and gets the same answer. */
   test('a save that moves a note onto another one is told it is there', async () => {
     const a = (await addNote('a.md', 'one')).json.note.id
     const b = (await addNote('b.md', 'two')).json.note.id
@@ -423,11 +397,6 @@ describe('notes', () => {
     expect(back.json.note.id).toBe(fresh)
   })
 
-  /** The space's unique index is what guarantees it; the read above is only a
-   *  courtesy. Two devices creating one path at the same moment both got past
-   *  the read, and the one that lost came back as a 500 rather than as the 409
-   *  it would have been given a moment earlier. The other device's row goes in at
-   *  the one moment that matters; see `justBefore`. */
   test('a create that lost the path gets the same answer as one that was late', async () => {
     env.justBefore(/insert into notes/, () => {
       env.db
@@ -442,7 +411,6 @@ describe('notes', () => {
 
     expect(late.status).toBe(409)
     expect(late.json.error).toBe('a note already lives there')
-    // And it says which note is there, so the client can keep its own copy.
     expect(late.json.note.id).toBe('theirs')
   })
 
@@ -461,8 +429,6 @@ describe('notes', () => {
     const rows = env.db.prepare('select id from notes').all() as { id: string }[]
     expect(rows.map((one) => one.id)).toContain('theirs')
 
-    // And nothing in the bucket under the id the losing note would have had: the
-    // row is what claims a path, so it goes in before the bytes do.
     const named = new Set(rows.map((one) => one.id))
     const orphans = env
       .keys()
@@ -488,16 +454,6 @@ describe('notes', () => {
     expect((await addNote('paper.pdf', 'x')).status).toBe(400)
   })
 
-  /** A page note is the same file as a canvas under another name - JSON Canvas
-   *  with pages among its nodes - and the app's mirror sends every file that is
-   *  not a PDF up this road. The list of endings left `.pages` out, so every page
-   *  note a reader made was refused here, on every pass, for ever: the file stayed
-   *  on the one machine that wrote it and no second device ever saw it. Nothing
-   *  said so out loud, because a note the server will not take is a note the pass
-   *  simply steps over.
-   *
-   *  `roomKind` in src/rooms/kind.ts already answers `plane` for one, which is the
-   *  rest of what a page note needs to be edited from two devices at once. */
   test('takes a page note, which is a canvas under another name', async () => {
     const paper =
       '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],"edges":[]}\n'
@@ -526,9 +482,6 @@ describe('notes', () => {
     expect(paper?.version).toBe(2)
   })
 
-  /** A canvas is text that is drawn on from more than one device, so it travels
-   *  the way a note does: versioned, hashed, and with the conflict rule behind
-   *  it. The blob list beside this only goes up, which would not round trip. */
   test('takes a canvas as a note, and gives it back unchanged', async () => {
     const drawn = '{\n\t"nodes": [],\n\t"edges": []\n}\n'
     const created = await addNote('Boards/Plan.canvas', drawn)
@@ -600,13 +553,6 @@ describe('notes', () => {
     expect(stale.json.note.version).toBe(2)
   })
 
-  /** The version a save names is the one it read, so two saves that read the
-   *  same row cannot both land. Without that they both wrote `version + 1`: the
-   *  second replaced the first's bytes under the first's version number, and
-   *  every device that had already seen that number never learned there was
-   *  anything newer. Which is not the case above - a PUT that names a version is
-   *  answered 409 - but the one where a room settles the note a moment after a
-   *  device pushed what it had; see rooms/room.ts. */
   test('a save from a row that has moved on does not land', async () => {
     const note = await makeNote(env, space, 'a.md', 'one')
 
@@ -626,10 +572,6 @@ describe('notes', () => {
     const created = await addNote('a.md', 'one')
     const id = created.json.note.id
 
-    // The row moving on between the read and the write is what a room settling
-    // the same note does, and no order of requests can stand in for it. So the
-    // write is made to lose where it would lose: the statement that names the
-    // version it read reports that it changed nothing.
     const claimed = env.losing(/update notes set path/)
 
     const late = await call(env, `/v1/notes/${id}`, {
@@ -644,9 +586,6 @@ describe('notes', () => {
     expect(late.json.content).toBe('one')
   })
 
-  /** A canvas is the one thing a machine can settle on its own: everything on
-   *  it has an id and a time, so the union of the two copies keeps every card
-   *  both devices drew. Nobody gets a second file to go and find. */
   describe('two devices drawing on one canvas', () => {
     const card = (id: string, at: number) => ({
       nodes: [{ id, type: 'text', x: 0, y: 0, width: 100, height: 50, text: id }],
@@ -739,9 +678,6 @@ describe('notes', () => {
   })
 })
 
-/** An id is not a permission. Every route that takes one looks it up inside the
- *  signed-in account, so an id from somewhere else is indistinguishable from an
- *  id that was never issued: 404, and nothing about it in the answer. */
 describe('an id belonging to another account', () => {
   test('is not found by any route that takes one', async () => {
     const created = await addNote('Secret.md', 'not yours')
@@ -784,7 +720,6 @@ describe('an id belonging to another account', () => {
       expect(response.text, `${method} ${path}`).not.toContain('Secret')
     }
 
-    // And nothing was changed by the asking.
     const mine = await call(env, '/v1/spaces', { token })
     const work = mine.json.spaces.find((one) => one.id === space)
     expect(work?.name).toBe('Work')
@@ -830,8 +765,6 @@ describe('what a note is made of', () => {
     expect(response.status).toBe(400)
   })
 
-  /** A path travels into a published page, a mail, a listing and a file on
-   *  somebody's disk. A newline in one is not a folder, so it is not a path. */
   test('a control character is not part of a path', async () => {
     const response = await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -856,11 +789,7 @@ describe('what a note is made of', () => {
     expect(response.status).toBe(400)
   })
 
-  /** The quota is in bytes, so what is counted has to be bytes. Counting
-   *  characters let an account keep four times what it was allowed. */
   test('what a note costs is its bytes, not its characters', async () => {
-    // What the account already holds is the note it was given; what this
-    // measures is what one emoji adds to it.
     const before = (await call(env, '/v1/usage', { token })).json.used
     const created = await addNote('emoji.md', '🙂')
 
@@ -878,7 +807,6 @@ describe('catching up', () => {
     const seen: string[] = []
     let cursor = 0
 
-    // Walk the cursor one step at a time, the way a client resuming would.
     for (let round = 0; round < 5; round++) {
       const page = await call(env, `/v1/spaces/${space}/changes?since=${cursor}`, { token })
       if (!page.json.notes.length) break
@@ -909,9 +837,6 @@ describe('catching up', () => {
     expect(all.json.notes).toHaveLength(2)
   })
 
-  /** A cursor is a number this space handed out. Anything else reads as the
-   *  beginning rather than reaching a query: `1e999` is `Infinity`, and a bound
-   *  that is not a number is not something to put in front of one. */
   test('a cursor that is not a number reads as the beginning', async () => {
     await addNote('one.md', '1')
 

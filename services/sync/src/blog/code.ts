@@ -1,30 +1,3 @@
-/** Colouring a fence on a published page.
- *
- *  The editor colours code with CodeMirror, which needs a browser, and an export
- *  colours it with whichever of the hundred and forty-three grammars
- *  `@codemirror/language-data` loads for the fence. Neither is available here: a
- *  Worker has no DOM, and a page is rendered while the reader waits, so nothing
- *  can be fetched on the way.
- *
- *  So the Worker carries the grammars themselves. They are the very parsers the
- *  editor uses - `@codemirror/lang-javascript` is a wrapper around
- *  `@lezer/javascript` - and the colouring is @orden/markdown/highlight, the same
- *  module the export calls, writing the same `hl-` classes that themes/document.css
- *  colours. A fence on a published page is therefore the fence in the reading
- *  view, character for character.
- *
- *  Thirteen grammars rather than all of them: these are the ones with a Lezer
- *  parser of their own, which is what can be carried without a CodeMirror around
- *  it. The rest of the list - shell, SQL, Ruby, Swift and the other hundred - are
- *  stream parsers that only exist inside the editor, and a fence naming one stays
- *  plain rather than being coloured differently here than there. Whatever is
- *  added to this table is a fence that starts coming out coloured; nothing else
- *  changes.
- *
- *  A note's own marker - ` ```chart ` - and a diagram are not code and are not
- *  here: the renderer draws a chart itself, and a diagram needs a drawing library
- *  and a DOM, so it stays a code block. See docs/publishing.md. */
-
 import type { Parser } from '@lezer/common'
 import { parser as cpp } from '@lezer/cpp'
 import { parser as css } from '@lezer/css'
@@ -41,20 +14,11 @@ import { parser as xml } from '@lezer/xml'
 import { parser as yaml } from '@lezer/yaml'
 import { highlightedFence } from '@orden/markdown/highlight'
 
-/** TypeScript and JSX are the JavaScript grammar in another dialect, which is
- *  exactly what `@codemirror/lang-javascript` asks it for. */
 const typescript = javascript.configure({ dialect: 'ts' })
 const jsx = javascript.configure({ dialect: 'jsx' })
 const tsx = javascript.configure({ dialect: 'jsx ts' })
-/** Sass's older, indented syntax; `.scss` is the default one. */
 const indentedSass = sass.configure({ dialect: 'indented' })
 
-/** Every word a fence may be opened with, and the grammar it names.
- *
- *  The spellings are the editor's own: a language's name, the aliases
- *  `@codemirror/language-data` knows it by, and the file extensions people
- *  actually type, which is `SPELLINGS` in @orden/editor. Kept as one flat table
- *  because that is what the lookup is - a fence says one word. */
 const GRAMMARS: Readonly<Record<string, Parser>> = {
   javascript,
   js: javascript,
@@ -132,15 +96,9 @@ const GRAMMARS: Readonly<Record<string, Parser>> = {
   php,
 }
 
-/** A fence, coloured, or null to leave it as the plain block marked writes.
- *
- *  What the renderer's `code` option takes; the reading view and an export hand
- *  it the same shape. See `prepareFences` in apps/desktop/src/lib/export.ts. */
 export function blogFence(code: string, language: string): string | null {
   const parser = GRAMMARS[language.toLowerCase()]
   return parser ? highlightedFence(code, language, parser) : null
 }
 
-/** Which words this Worker can colour. For the test that holds the table to the
- *  editor's spellings, and for nothing else. */
 export const COLOURED = Object.keys(GRAMMARS)

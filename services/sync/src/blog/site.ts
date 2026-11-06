@@ -1,81 +1,25 @@
-/** What the site decides, as against what each note decides.
- *
- *  Publishing a space used to mean publishing every note in it, which is the
- *  right default for a space somebody made to be a blog and the wrong one for
- *  the space somebody already writes in. So a site has rules: folders that are
- *  in, folders that are out, and what happens to a note that says nothing about
- *  itself. A note that does say - `publish: true` or `publish: false` in its
- *  front matter, which is Obsidian Publish's key - always wins, because the note
- *  is the thing the author has in front of them.
- *
- *  The rest of the column is the site's own presence: the description and the
- *  picture its pages fall back on, the icon a tab shows, and a password if it
- *  has one. All of it is one JSON object on the space's row, the way bookmarks,
- *  folder icons, the graph and the excluded paths already are, because every one
- *  of those is read on the same request and a second table would be a second
- *  read per page.
- *
- *  The whole object is written at once. It is short, it is one screen in the
- *  publish sheet, and a PUT of the lot is the only shape in which turning a
- *  password off and a folder on is one request.
- *
- *  What is here is the column and the one decision read off it; the route that
- *  writes it is spaces/site.ts. Two files because the space listing reads this
- *  and the route writes through the listing, and one module cannot be both. */
-
 import { objectIn } from '../body'
 import type { NoteFront } from './front'
 import { PASSWORD_LIMIT } from './gate'
 
-/** More folders than anyone rules on by hand. A vault has hundreds of folders
- *  and a site is a handful of decisions about them; past this it is a site that
- *  wants the other default. */
 const MOST_FOLDERS = 100
-/** A path inside a space, which is a few folder names. */
 const LONGEST_PATH = 300
-/** A sentence, for the description every page falls back on. */
 const LONGEST_TEXT = 400
-/** A theme's name, and a domain beside a counter's script. */
 const LONGEST_NAME = 60
-/** A URL somebody pasted. */
 const LONGEST_URL = 400
-/** The icon a tab shows, as the drawing the app made of it. Room for a Lucide
- *  stroke or an emoji drawn as text, and far too little to hide anything in. */
 export const LONGEST_ICON = 8 * 1024
 
-/** What an SVG served from a site may do, which is nothing.
- *
- *  An SVG is a document, not a picture. Inside an `<img>` - which is the only way
- *  a page here writes one - a browser runs no script and fetches nothing anyway,
- *  but the address is a link like any other and somebody may open it on its own:
- *  a tab icon is `/favicon.svg`, and a diagram is `/i/<hash>.svg`. Then it is a
- *  document on one of the service's hosts, drawn out of text somebody wrote. So it is
- *  sandboxed into an origin of its own with nothing allowed but the styles the
- *  picture's own colours are written in.
- *
- *  Here rather than beside either route because both serve one, and a picture that
- *  was sandboxed on one path and not the other is the path nobody remembered. */
 export const SVG_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
 
-/** What a note that says nothing about itself gets. */
 const DEFAULTS = ['all', 'none'] as const
 type Otherwise = (typeof DEFAULTS)[number]
 
 export interface SiteRules {
-  /** Folders published even where the default is to publish nothing. */
   include: string[]
-  /** Folders never published, whatever the default is. */
   exclude: string[]
-  /** What a note outside every rule, and silent about itself, gets. */
   otherwise: Otherwise
 }
 
-/** How the password is kept.
- *
- *  Hashed with a salt of its own, so the column is not a password. The key is
- *  what the cookie a reader carries is signed with: per site, made when the
- *  password is set, so taking the password off ends every session that was let
- *  in by it. */
 export interface SitePassword {
   salt: string
   hash: string
@@ -83,44 +27,23 @@ export interface SitePassword {
   at: number
 }
 
-/** What the site is dressed in, where the author chose something other than the
- *  app's own. One of the themes the app itself renders in, by its name in the
- *  registry: the page's stylesheet is generated from the same tokens, so a theme
- *  is a set of colours on both surfaces rather than a second design. */
 interface SiteAnalytics {
-  /** The script to load, which is the whole of what Plausible, Umami and
-   *  GoatCounter are. */
   url: string
-  /** What one or two of them want beside it, as `data-domain`. */
   domain?: string
 }
 
 export interface Site {
   rules: SiteRules
-  /** The description and the picture a page with none of its own falls back on. */
   description?: string
   image?: string
-  /** The icon a tab shows, as an SVG. Drawn by the app, which is the side that
-   *  has the icon sets; see docs/publishing.md. */
   icon?: string
-  /** The theme the site is dressed in: its name, and the hash of the stylesheet
-   *  the app uploaded for it. Absent for the one every page has worn until now,
-   *  which is the app's own tokens.
-   *
-   *  The bytes are a blob rather than a column, because a theme's stylesheet is
-   *  tens of kilobytes and the space listing is read on every pass. The page
-   *  links it from where every other blob is served; see blog.ts. */
   theme?: { name: string; hash: string }
-  /** Where the reader's visit is counted, if the author asked for that. */
   analytics?: SiteAnalytics
   password?: SitePassword
 }
 
 const DEFAULT_RULES: SiteRules = { include: [], exclude: [], otherwise: 'all' }
 
-/** A folder path as the space spells it: forward slashes, no leading slash, no
- *  climbing out. The empty string is the space itself, which is a rule about
- *  everything and so is dropped - that is what `otherwise` is for. */
 function cleanFolder(value: string): string {
   return value
     .replace(/\\/g, '/')
@@ -148,16 +71,10 @@ export function words(value: unknown, longest = LONGEST_TEXT): string | undefine
   return said ? said.slice(0, longest) : undefined
 }
 
-/** A counter's script as `words` leaves it: an https address that parses. A stray
- *  space leaves one that does not, and a page cannot name the origin of such a
- *  script. Checked where the sheet's address comes in and where it is read back. */
 function isCounterUrl(url: string | undefined): url is string {
   return url !== undefined && /^https:\/\//i.test(url) && URL.canParse(url)
 }
 
-/** The column, as everything that reads the site reads it. Written whole by the
- *  app, and read field by field here, so a newer client's extra key is ignored
- *  rather than trusted. */
 export function readSite(raw: string | null | undefined): Site {
   const held = objectIn(raw)
   if (!held) return { rules: DEFAULT_RULES }
@@ -212,17 +129,12 @@ export function readSite(raw: string | null | undefined): Site {
   return site
 }
 
-/** Whether a path sits in a folder, or is the folder itself. Case folded,
- *  because a rule somebody typed and a path somebody's disk wrote disagree about
- *  case on two platforms out of three. */
 function inside(path: string, folder: string): boolean {
   const one = path.toLowerCase()
   const other = folder.toLowerCase()
   return one === other || one.startsWith(`${other}/`)
 }
 
-/** The longest rule that covers a path, so that a folder inside an excluded one
- *  can be included again and the deeper word is the one that counts. */
 function longest(path: string, rules: readonly string[]): number {
   let found = -1
   for (const folder of rules)
@@ -230,16 +142,6 @@ function longest(path: string, rules: readonly string[]): number {
   return found
 }
 
-/** Whether the site publishes one note.
- *
- *  The note first: a note that says `publish:` has settled it, and no rule about
- *  a folder overrides what the author wrote in the file. Then the folders, the
- *  deeper rule winning, so `Work` out and `Work/Notes` in reads the way it
- *  sounds. Then the site's default.
- *
- *  Nothing else is consulted. A page is on the site or it is not, and that is one
- *  question with one answer, which is what makes the sheet able to show the list
- *  before anything is published. */
 export function publishes(rules: SiteRules, path: string, front: NoteFront): boolean {
   if (front.publish !== undefined) return front.publish
 
@@ -251,8 +153,6 @@ export function publishes(rules: SiteRules, path: string, front: NoteFront): boo
   return rules.otherwise === 'all'
 }
 
-/** What the app is told about the site. The password never comes back - only
- *  that there is one - and the icon does, because the sheet shows it. */
 export function presentSite(site: Site) {
   return {
     rules: site.rules,
@@ -265,7 +165,6 @@ export function presentSite(site: Site) {
   }
 }
 
-/** What is wrong with what arrived, as one sentence, or null. */
 export function wrong(body: Record<string, unknown>): string | null {
   const rules = body.rules
   if (rules !== undefined && (!rules || typeof rules !== 'object' || Array.isArray(rules))) {

@@ -30,12 +30,6 @@ async function addNote(path: string, content: string) {
   return call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
 }
 
-/** A domain of one's own, published and proved.
- *
- *  The proof is stamped rather than walked through, because reading a record is
- *  over the network and what this file is about is what a hostname serves. The
- *  record itself, and the fact that an unproved domain serves nothing, are in
- *  test/domains.test.ts. */
 async function publishDomain(domain: string) {
   const answer = await publish({ domain })
   env.db
@@ -116,8 +110,6 @@ describe('publishing', () => {
     expect(response.text).toContain('<strong>post</strong>')
   })
 
-  /** The hover card asks for the page's own address with a header, and is answered
-   *  with less of it; a browser that kept the card must not show it for the page. */
   test('a note and its hover card are two answers to a cache', async () => {
     await publish({ subdomain: 'field' })
 
@@ -134,8 +126,6 @@ describe('publishing', () => {
     expect(response.text).toContain('Not found')
   })
 
-  /** Addresses once dropped every letter outside ASCII, so `Über mich.md` was
-   *  `/ber-mich`. That address is in feeds and other people's links. */
   test('the address a page had before its letters were kept redirects to it', async () => {
     await addNote('Über mich.md', '# Über mich\n')
     await addNote('Team.md', '---\npermalink: Über uns\naliases:\n  - Für Presse\n---\n\n# Team\n')
@@ -205,9 +195,6 @@ describe('publishing', () => {
   })
 })
 
-/** The hostname decides which account's notes are served, so it is taken apart
- *  rather than trusted: the port, the case and the trailing dot of a fully
- *  qualified name are all names for the same host. */
 describe('the hostname a blog answers on', () => {
   test('is the same host with a trailing dot', async () => {
     await publish({ subdomain: 'field' })
@@ -218,8 +205,6 @@ describe('the hostname a blog answers on', () => {
   })
 
   test('is not read as a domain of someone else when it carries one', async () => {
-    // With the dot left on, the name did not end in `.nibeditor.com` and was
-    // looked up as a domain somebody had brought.
     await publish({ subdomain: 'field' })
     env.db
       .prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?')
@@ -318,13 +303,7 @@ describe('a published note cannot script the reader', () => {
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     const policy = response.headers.get('content-security-policy') ?? ''
 
-    // The furniture - the search shortcut, the theme button, the hover card, the
-    // graph - is a script served from this site, and the one inline line is
-    // named by its own hash. Nothing else may run, nothing else may be fetched,
-    // and a form may only reach back here. See docs/publishing.md.
     expect(policy).toContain("script-src 'self' 'sha256-")
-    // Inline styles are KaTeX laying out an equation; inline scripts are named
-    // by hash or not at all.
     expect(policy).not.toContain("script-src 'self' 'unsafe-inline'")
     expect(policy).toContain("connect-src 'self'")
     expect(policy).toContain("form-action 'self'")
@@ -344,14 +323,10 @@ describe('a published note cannot script the reader', () => {
 
     const response = await call(env, '/watch', { host: 'field.nibeditor.com' })
 
-    // The card is here, and it is a link: this page runs no script, so a click
-    // takes the reader to the video rather than loading one in place.
     expect(response.text).toContain('class="embed-web embed-wide"')
     expect(response.text).toContain('href="https://youtu.be/dQw4w9WgXcQ"')
     expect(response.text).toContain('YouTube')
-    // Nothing a browser fetches from anybody on its way to reading the note.
     expect(response.text).not.toContain('<iframe')
-    // Which is why no frame needs letting through, and none is.
     const policy = response.headers.get('content-security-policy') ?? ''
     expect(policy).toContain("default-src 'none'")
     expect(policy).not.toContain('frame-src')
@@ -373,7 +348,6 @@ describe('a published note cannot script the reader', () => {
     expect(response.text).toContain('<figure class="chart" data-kind="bar">')
     expect(response.text).toContain('<svg class="chart-svg"')
     expect(response.text).toContain('Two months')
-    // Drawn, not printed as its own source.
     expect(response.text).not.toContain('series:')
   })
 
@@ -406,8 +380,6 @@ describe('a published note cannot script the reader', () => {
   })
 })
 
-/** Two notes in one folder, where the first points at the second the way a
- *  markdown link does: a path, relative to where it was written. */
 const ONE = '# One\n\nsee [the other](../Public/Two.md)\n'
 const TWO = '# Two\n\nthe other one\n'
 const DEEP = '# Deep idea\n\n## The middle\n\nText.\n'
@@ -441,8 +413,6 @@ describe('links between notes on a published page', () => {
     expect(response.text).toContain('href="/notes/deep-idea"')
   })
 
-  /** A leading slash is a path from the top of the space: what a rename writes
-   *  where nothing shorter reaches the note it renamed (B543). */
   test('a path from the top of the space finds the note there, and is linked from it', async () => {
     await addNote('Road.md', '# Road\n')
     await addNote('B/Road.md', '# Other road\n')
@@ -478,13 +448,6 @@ describe('links between notes on a published page', () => {
     ])
   })
 
-  /** The other half of the same question. A wikilink names a note; a markdown
-   *  link names a path, written relative to the note it sits in - and that path
-   *  is not where the site serves anything. It used to be published exactly as
-   *  written, so `[the other](../Public/Two.md)` on a page at `/public/one`
-   *  pointed at `/Public/Two.md`, which answered 404 for every reader who
-   *  followed it. In the app there is a click to read the path at; on a page
-   *  there is not. */
   test('and so does a plain markdown link that names one', async () => {
     await addNote('Public/One.md', ONE)
     await addNote('Public/Two.md', TWO)
@@ -661,9 +624,6 @@ describe('choosing a subdomain', () => {
     expect((await publish({ subdomain: 'mail' })).status).toBe(409)
   })
 
-  /** A name that reads as the product is refused as well, and `blog` was the
-   *  example this used to make of the opposite rule; see `RESERVED` in
-   *  spaces/addresses.ts. What is free is somebody's own words. */
   test('and so is one that reads as ours', async () => {
     expect((await publish({ subdomain: 'blog' })).status).toBe(409)
     expect((await publish({ subdomain: 'login' })).status).toBe(409)
@@ -797,8 +757,6 @@ describe('the author', () => {
     const byline = note.text.indexOf('<p class="by">by Ada</p>')
 
     expect(byline).toBeGreaterThan(-1)
-    // The paragraph as it is rendered, not the description in the head: the
-    // first words of a note are what stands in for one it never wrote.
     expect(byline).toBeLessThan(note.text.indexOf('<p>Just a paragraph.'))
     expect(byline).toBeLessThan(note.text.indexOf('<h1 id="later">Later</h1>'))
   })
@@ -830,9 +788,6 @@ describe('the author', () => {
   })
 })
 
-/** Every public surface, rendered for an account whose address is known, and
- *  searched for it. The blog is one, but so is anything that answers without
- *  a session; a new public route belongs in this list. */
 describe('nothing public carries the email address', () => {
   const EMAIL = 'a@b.dev'
   const PUBLIC = [
@@ -856,7 +811,6 @@ describe('nothing public carries the email address', () => {
       seen.push(`${path}: ${response.text}`)
     }
 
-    // Pages really were rendered, or the search below would prove nothing.
     const text = seen.join('\n')
     expect(text).toContain('Published with')
     return text
@@ -987,7 +941,6 @@ describe('publishing one note instead of the space', () => {
 describe('a site of one note', () => {
   const PRIVATE = file(2048, 7)
 
-  /** A paper kept somewhere in the space that the one note does not link. */
   async function keepPrivately(path = 'Private/salary.pdf') {
     await call(env, `/v1/blobs/${PRIVATE.hash}`, {
       method: 'PUT',
@@ -1013,7 +966,6 @@ describe('a site of one note', () => {
       expect(response.headers.get('location'), path).toBeNull()
     }
 
-    // Nor by the address of its bytes, which a hash learned somewhere else asks for.
     expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(404)
   })
 
@@ -1033,7 +985,6 @@ describe('a site of one note', () => {
     expect(page.text).toContain(`href="/i/${PRIVATE.hash}.pdf"`)
     expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(200)
 
-    // And by the path the note wrote, because the page links it.
     expect((await call(env, '/reading/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(302)
   })
 
@@ -1047,12 +998,9 @@ describe('a site of one note', () => {
 })
 
 describe('a published note that links a PDF', () => {
-  /** A paper, and the hash it is named by. */
   const PAPER_BYTES = file(2048, 3)
   const PAPER = PAPER_BYTES.hash
 
-  /** The paper goes up as a blob, and the space records where in it the file
-   *  sits: the same two steps a sync pass takes. */
   async function keepPaper(path = 'reading/paper.pdf') {
     await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
@@ -1208,10 +1156,8 @@ describe('a published note read as slides', () => {
     await publishDeck()
 
     const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
-    // The prose sheet and the stage, both served from here; see blog/style.ts.
     expect(response.text.match(/<link rel="stylesheet" href="\/s\//g)).toHaveLength(2)
     expect(response.text).toContain('--stage-width:1280px')
-    // Without this every slide is drawn on top of the one before it.
     expect(response.text).toContain('.deck .stage.away { display: none; }')
   })
 
@@ -1231,8 +1177,6 @@ describe('a published note read as slides', () => {
   })
 
   test('a slide keeps the line breaks the author typed', async () => {
-    // A slide is a poster: three placed lines stay three lines. The page the
-    // same note is published as keeps CommonMark's space; see docs/slides.md.
     await addNote('poster.md', '# One\n\n---\n\nShip it\nRead it\n')
     await publish({ subdomain: 'field' })
 
@@ -1259,7 +1203,6 @@ describe('a published note read as slides', () => {
 
     expect(nonce).toBeTruthy()
     expect(response.text).toContain(`<script nonce="${nonce}">`)
-    // One script tag on the page, and it is that one.
     expect(response.text.match(/<script/g)).toHaveLength(1)
   })
 
@@ -1269,8 +1212,6 @@ describe('a published note read as slides', () => {
     const response = await call(env, '/talk', { host: 'field.nibeditor.com' })
     const policy = response.headers.get('content-security-policy') ?? ''
 
-    // A page is a page: the site's own furniture, and no nonce - the one script
-    // a deck needs runs on the deck's own page, which is `?slides`.
     expect(policy).toContain("script-src 'self' 'sha256-")
     expect(policy).not.toContain('nonce-')
   })
@@ -1304,9 +1245,6 @@ describe('a published note read as slides', () => {
   })
 })
 
-/** A canvas and a page note are the same bytes under two extensions: JSON Canvas,
- *  which is a drawing rather than a page. Published, one would say its ink's
- *  coordinates and its cards' words to anybody who guessed the slug. */
 describe('a drawing in a published space', () => {
   const DRAWING = '{"nodes":[{"id":"a","type":"text","text":"the private bit"}],"edges":[]}'
 
@@ -1321,7 +1259,6 @@ describe('a drawing in a published space', () => {
       expect(response.text, slug).not.toContain('the private bit')
     }
 
-    // Nor in the index, the feed or the sitemap.
     for (const path of ['/', '/feed.xml', '/sitemap.xml']) {
       const listing = await call(env, path, { host: 'field.nibeditor.com' })
       expect(listing.text, path).not.toContain('lecture-4')
@@ -1349,8 +1286,6 @@ describe('a drawing in a published space', () => {
   })
 })
 
-/** A snippet is the note's own prose with the index's marks in it, and the words
- *  were indexed with the markup stripped rather than escaped. */
 describe('searching a site', () => {
   test('marks what matched and says the rest as words', async () => {
     await addNote('found.md', '# Found\n\nA paragraph about hedgehogs.\n')
@@ -1362,8 +1297,6 @@ describe('searching a site', () => {
     expect(response.text).toContain('href="/found"')
   })
 
-  /** A purged note's words may outlive it in the index until the sweep comes back for
-   *  them (see `purgeNote`), so what answers a search is the pages, not the index. */
   test('shows nothing of a purged note whose words are still in the index', async () => {
     const note = (await addNote('gone.md', '# Gone\n\nA paragraph about hedgehogs.\n')).json.note
     await addNote('kept.md', '# Kept\n\nAnother one about hedgehogs.\n')
@@ -1386,8 +1319,6 @@ describe('searching a site', () => {
   })
 
   test('and a tag a note only half wrote is still words', async () => {
-    // Half a tag, because the index strips whole ones: the page's own `</span>`
-    // after it was what used to close this one.
     await addNote('sneaky.md', '# Sneaky\n\nhedgehogs <script src=/i/x.js\n')
     await publish({ subdomain: 'field' })
 
@@ -1395,13 +1326,10 @@ describe('searching a site', () => {
 
     expect(response.text).toContain('&lt;script')
     expect(response.text).not.toContain('<script src')
-    // The site's own script and the one inline line, and nothing the note added.
     expect(response.text.match(/<script/g)).toHaveLength(2)
   })
 })
 
-/** A comment is the writer's note to themselves (#453): hidden on the page, and so
- *  never in anything else a site says about the page either. */
 describe('what a writer commented out', () => {
   const POST = [
     'Intro %%hidden-inline%% and <!-- html-inline --> more.',
@@ -1426,14 +1354,12 @@ describe('what a writer commented out', () => {
       for (const word of HIDDEN) expect(response.text, `${path} ${word}`).not.toContain(word)
     }
 
-    // The words that were not commented out are what the head and the feed say.
     const page = await call(env, '/post', { host: 'field.nibeditor.com' })
     expect(page.text).toContain('content="Intro and more."')
 
     for (const query of ['quokka', 'hiddenblock', 'hidden-inline', '%23secret-tag']) {
       const found = await call(env, `/search?q=${query}`, { host: 'field.nibeditor.com' })
       expect(found.text, query).toContain('Nothing matches.')
-      // The box says the query back; nothing else hidden is said.
       for (const word of HIDDEN.filter((one) => !query.includes(one))) {
         expect(found.text, `${query} ${word}`).not.toContain(word)
       }
@@ -1464,8 +1390,6 @@ describe('what a writer commented out', () => {
     await addNote('Post.md', POST)
     await publish({ subdomain: 'field' })
 
-    // A row as the old reading left it: a summary with the comment in it, words
-    // indexed with it, and nothing to say it was read the new way.
     env.db
       .prepare("update notes set front = ?, front_rev = 0 where path = 'Post.md'")
       .run(JSON.stringify({ summary: 'Intro %%hidden-inline%% more.', tags: ['secret-tag'] }))
@@ -1492,8 +1416,6 @@ describe('what a writer commented out', () => {
     expect(tagged.text).toContain('Nothing matches.')
   })
 
-  /** The pictures of a note written before they were written down, which a deleted
-   *  account asks about (src/pictures.ts), are picked up by the same sweep. */
   test('writes down the pictures of a note read before they were', async () => {
     const hash = 'ab'.repeat(32)
     await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)
@@ -1530,9 +1452,6 @@ describe('what a writer commented out', () => {
   })
 })
 
-/** The graph's data travels as a JSON island, and a title is somebody's words:
- *  nothing inside a `<script>` element is escaped by the parser, so the island's
- *  own escaping is the whole of what keeps a title from closing it. */
 describe('the graph the site draws', () => {
   test('writes a title that would close the island as JSON rather than as a tag', async () => {
     await addNote(

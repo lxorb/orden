@@ -54,7 +54,6 @@ async function stored(noteId: string, inSpace = space): Promise<string | null> {
   return object ? await object.text() : null
 }
 
-/** Moves a deletion back in time, the way waiting would. */
 function agedBy(days: number) {
   const at = Date.now() - days * DAY
   env.db.prepare('update notes set deleted_at = ? where deleted_at is not null').run(at)
@@ -204,7 +203,6 @@ describe('restoring a space', () => {
     expect(restored.status).toBe(200)
     expect(restored.json.space).toMatchObject({ id: space, name: 'Work' })
 
-    // Behind the space the account was given, and behind the one made since.
     const listed = await call(env, '/v1/spaces', { token })
     expect(listed.json.spaces.map((one) => one.name)).toEqual(['Notes', 'Second', 'Work'])
     expect(listed.json.spaces.map((one) => one.id)).toContain(other)
@@ -261,8 +259,6 @@ describe('purging', () => {
     expect((await call(env, '/v1/spaces', { token })).json.deleted).toEqual([space])
   })
 
-  /** The words a note was searched by are its words too, and go when it does, as
-   *  they do when a note is emptied out of the trash on its own. */
   test('a space now keeps no words of its notes to search by', async () => {
     const id = await addNote('Secret.md', 'my bank pin is 4711')
     expect(env.db.prepare('select 1 from note_search where note_id = ?').all(id)).toHaveLength(1)
@@ -292,13 +288,7 @@ describe('purging', () => {
     })
   })
 
-  /** Every row of a space went while only one batch of its bytes did, so the
-   *  notes past the batch were left in the bucket with nothing pointing at them
-   *  and the space no longer listed as having anything to purge. Nothing would
-   *  ever have found them again. */
   test('a space larger than one batch leaves nothing orphaned', async () => {
-    // Written straight in: what is being measured is the purge, not the route
-    // that makes a note, and a batch and one is a lot of requests.
     for (let at = 0; at <= AT_ONCE; at++) {
       const id = `note-${at}`
       env.db
@@ -313,8 +303,6 @@ describe('purging', () => {
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
     await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
 
-    // Whatever still has a row still has its bytes, and the space still says
-    // there is more to do.
     const left = env.db.prepare('select id from notes where space_id = ?').all(space) as {
       id: string
     }[]
@@ -322,7 +310,6 @@ describe('purging', () => {
     for (const one of left) expect(await stored(one.id)).not.toBeNull()
     expect(spaceRow(space)?.deleted_at).not.toBeNull()
 
-    // A second tap finishes it, which is what the button promises.
     await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
     expect(env.db.prepare('select id from notes where space_id = ?').all(space)).toEqual([])
     expect(spaceRow(space)).toMatchObject({ deleted: 1, deleted_at: null })
@@ -350,9 +337,6 @@ describe('purging', () => {
   })
 })
 
-/** A restored note's path is numbered by @orden/markdown/paths, which is where
- *  that rule is now tested; what is left here is the space name, whose numbering
- *  has no extension to step around. */
 describe('the numbering', () => {
   test('for names', () => {
     expect(freeName(new Set(), 'Work')).toBe('Work')

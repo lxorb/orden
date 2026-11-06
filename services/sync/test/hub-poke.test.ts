@@ -1,12 +1,8 @@
-/** Pokes: a space moved, and every device that can reach it hears so, except the
- *  one whose write it was. See hub/poke.ts and docs/sync-v2.md section 5.12. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { pokeSpace } from '../src/hub/poke'
 import { type TestEnv, testEnv } from './harness'
 import { type Computer, computer, connect, type Hubs, hubs } from './hub-fakes'
 
-/** A request's `waitUntil`, whose work a test can wait for. */
 function later(): { waitUntil(work: Promise<unknown>): void; done(): Promise<unknown[]> } {
   const pending: Promise<unknown>[] = []
   return {
@@ -89,7 +85,6 @@ describe('a poke', () => {
     await work.done()
 
     expect(running.asked.map((one) => one.id)).not.toContain('guest-2')
-    // Without a device to leave out, the writer's own devices hear it too.
     expect(laptop.socket.take()).toEqual([{ t: 'poke', space, seq: 1 }])
   })
 

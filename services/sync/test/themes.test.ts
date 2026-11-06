@@ -1,15 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, testEnv, type TestEnv } from './harness'
 
-/** The theme store's catalogue, proxied from the registry.
- *
- *  Nothing here is behind the session and nothing here touches the database.
- *  What matters is that the app can read it from anywhere, that the edge is told
- *  to hold on to it, and that an id can never become a path into the registry. */
-
 let env: TestEnv
 
-/** What the registry was asked for, and what it answered. */
 let asked: string[] = []
 
 function registry(answer: (url: string) => Response) {
@@ -77,9 +70,6 @@ describe('the catalogue', () => {
   })
 
   test('says so where the app can read it when it goes wrong', async () => {
-    // The desktop app is not on this origin, so a body without the header is a
-    // body it is not allowed to look at: the reader would be shown whatever the
-    // browser says about a failed request instead of the sentence written here.
     registry(() => new Response('nope', { status: 500 }))
 
     const answer = await call(env, '/themes/index.json', {
@@ -139,10 +129,6 @@ describe('a theme stylesheet', () => {
     expect(asked).toEqual([])
   })
 
-  /** A theme is text and nothing here is ever big, so a registry answering with
-   *  something enormous is turned down. Turned down before it is held: reading it
-   *  whole and measuring afterwards is how a Worker with a hundred and twenty-eight
-   *  megabytes of memory is asked to hold more than that. */
   test('a stylesheet larger than a stylesheet is turned down', async () => {
     registry(
       () =>
@@ -157,8 +143,6 @@ describe('a theme stylesheet', () => {
   })
 
   test('an id that tries to be a path is not a theme route at all', async () => {
-    // Hono matches one segment, so a path never arrives here as an id. Checked
-    // anyway, because what comes back must not be a file from the repository.
     for (const path of ['/themes/../../secret/theme.css', '/themes/a/b/theme.css']) {
       const answer = await call(env, path)
 

@@ -5,37 +5,20 @@ import { fileURLToPath } from 'node:url'
 import app from '../src/index'
 import type { Env } from '../src/types'
 
-// Read rather than listed: a migration that exists but was never added here
-// would leave every test running against yesterday's schema. And read once, when
-// a file of tests starts, rather than by every test: each test builds a database
-// of its own, and it was thirty-odd files off the disk for each of them.
 const FOLDER = fileURLToPath(new URL('../migrations/', import.meta.url))
 const MIGRATIONS = readdirSync(FOLDER)
   .filter((name) => name.endsWith('.sql'))
   .sort()
   .map((name) => readFileSync(FOLDER + name, 'utf8'))
 
-/** D1's shape over Node's built-in SQLite, so routes run against real SQL.
- *
- *  The fake is handed to the Worker as a D1Database, which is where the types
- *  come from; here every read is `unknown`, because only the calling route
- *  knows what it selected. Nothing is `async` that has nothing to await - a
- *  resolved promise is the same thing to the caller and says so. */
-/** Whether the statement about to run is one a test asked to lose; see `losing`
- *  on the environment. Consumed by the statement it matches and by nothing else. */
 type Loses = (sql: string) => boolean
 
-/** What a statement bound, so a test can hold the Worker to what D1 allows. */
 type Bound = (sql: string, count: number) => void
 
-/** Something to do just before a statement runs; see `justBefore`. */
 type JustBefore = (sql: string) => void
 
 function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: JustBefore) {
   return {
-    /** D1 runs a batch in one transaction, so the fake does too: a route that
-     *  reaches for one is a route saying that half of it applied is not a state
-     *  anything may end up in. */
     async batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]> {
       database.exec('begin')
       try {
@@ -66,18 +49,10 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
         all(): Promise<{ results: unknown[] }> {
           return Promise.resolve({ results: database.prepare(sql).all(...statement.args) })
         },
-        // `meta.changes` is what a conditional write reads to find out whether
-        // it landed; see `saveNote`. Node's driver reports the same number under
-        // the same name, so the fake passes it straight through.
-        //
-        // And the rows, for a statement that answers with some: D1 answers a batch with
-        // every statement's rows, which is how a batch reads back what it just wrote
-        // (see `atNextSeq` in notes.ts).
         run(): Promise<{ success: true; results: unknown[]; meta: { changes: number } }> {
           if (lost) return Promise.resolve({ success: true, results: [], meta: { changes: 0 } })
 
           const prepared = database.prepare(sql)
-          // Node has had `columns` since 22.16; the types this repo pins predate it.
           if ((prepared as unknown as { columns(): unknown[] }).columns().length) {
             const changed = () =>
               (database.prepare('select total_changes() as n').get() as { n: number }).n
@@ -102,7 +77,6 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
   }
 }
 
-/** What was put, as bytes: text as UTF-8, and bytes as they came. */
 function bytesOf(value: unknown): Uint8Array {
   if (value instanceof Uint8Array) return value
   if (value instanceof ArrayBuffer) return new Uint8Array(value)
@@ -110,8 +84,6 @@ function bytesOf(value: unknown): Uint8Array {
 }
 
 function bucket() {
-  // Notes go in as text and images as bytes, so both are kept as given and
-  // handed back the way the Worker asks for them.
   const store = new Map<
     string,
     {
@@ -127,9 +99,6 @@ function bucket() {
   let uploadsMade = 0
 
   return {
-    /** Everything in it, so a test can say that nothing is stored under a name no
-     *  row names. Not part of the R2 surface the Worker uses; see `keys` on the
-     *  environment. */
     keys: () => [...store.keys()],
 
     put(
@@ -160,7 +129,6 @@ function bucket() {
         customMetadata: held.customMetadata,
       })
     },
-    /** R2's multipart upload, parts kept in memory and put together on completion. */
     createMultipartUpload(key: string, options?: { httpMetadata?: { contentType?: string } }) {
       const uploadId = `upload-${String(++uploadsMade)}`
       uploads.set(uploadId, { key, parts: new Map(), options })
@@ -182,10 +150,6 @@ function bucket() {
           upload.parts.set(partNumber, bytesOf(value))
           return Promise.resolve({ partNumber, etag: `etag-${String(partNumber)}` })
         },
-        /** What the real thing says to a list it cannot put together, in its words
-         *  (workerd's, as `wrangler dev` runs them). Its other refusal, parts too small
-         *  or uneven, is left to a test to ask for: parts that can be read at a glance
-         *  are what most tests here want. */
         complete(parts: { partNumber: number; etag: string }[]) {
           const upload = uploads.get(uploadId)
           if (!upload) {
@@ -227,7 +191,6 @@ function bucket() {
         },
       }
     },
-    /** One name or a list of them, as R2 takes either. */
     delete(keys: string | string[]) {
       for (const key of typeof keys === 'string' ? [keys] : keys) store.delete(key)
       return Promise.resolve()
@@ -236,30 +199,10 @@ function bucket() {
 }
 
 export interface TestEnv extends Env {
-  /** The database underneath, for setting up a state no endpoint can reach -
-   *  an account already at its quota, for instance. */
   db: DatabaseSync
-  /** Makes the next write matching `sql` report that it changed nothing, the way
-   *  a conditional write reads when somebody else claimed the row first. Answers
-   *  a function saying how many writes it caught, so a test can say that the
-   *  race it meant to arrange actually happened. */
   losing(sql: RegExp): () => number
-  /** Runs `work` once, just before the next statement matching `sql` does.
-   *
-   *  What a check-then-write race actually is: a row that was not there when the
-   *  route looked and is there by the time it writes. Two requests in flight
-   *  cannot arrange that here - the fake answers a query in one microtask, so the
-   *  awaits do not interleave where they would over a network - and a race that
-   *  cannot be arranged is a race no test proves. This puts the other writer's row
-   *  in at the one moment that matters. */
   justBefore(sql: RegExp, work: () => void): void
-  /** Every name the bucket holds something under, so a test can say that nothing
-   *  is stored that no row names. */
   keys(): string[]
-  /** The widest statement anything has bound since the environment was made: how
-   *  many parameters, and which statement. Node's SQLite takes tens of thousands
-   *  and D1 takes a hundred, so a query that grows with what an account holds is
-   *  a query this fake would run and the real one would refuse. */
   widest(): { count: number; sql: string }
   close(): void
 }
@@ -298,8 +241,6 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
   return {
     DB: d1(database, loses, bound, justBefore) as unknown as D1Database,
     NOTES: notes as unknown as R2Bucket,
-    // The service's names as wrangler.jsonc gives them, so every test runs
-    // where both are answered on; see src/hosts.ts and test/hosts.test.ts.
     BLOG_ROOT: 'orden.so',
     OTHER_BLOG_ROOTS: 'nibeditor.com',
     BLOG_CNAME_TARGET: 'cname.orden.so',
@@ -321,8 +262,6 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
     close: () => database.close(),
   }
 }
-
-/* ── What the routes answer with ──────────────────────────────────────── */
 
 interface UserView {
   id: string
@@ -353,28 +292,19 @@ interface SpaceView {
   name: string
   position: number
   icon: string | null
-  /** The colour that icon is drawn in; see 0036. */
   tint: string | null
   role: string
   shared: boolean
-  /** Which of its files are shared on their own, by note id; see 0026. */
   sharedItems: string[]
-  /** Whether anybody besides the owner could once write in it, and which of its files
-   *  were once shared on their own; see 0066. */
   onceShared?: boolean
   onceSharedItems?: string[]
   bookmarks: BookmarkView[]
   icons: Record<string, string>
-  /** And the colour each of those icons is drawn in, under the same keys. */
   tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
-  /** The order each folder of its tree was arranged into, by the folder's path; see
-   *  0037. */
   arranged: Record<string, string[]>
-  /** Which order its file list is read in; see spaces/sort.ts. */
   sort: string
-  /** What it has archived, a moment per path; see 0041. */
   archived: Record<string, number>
   createdAt: number
   updatedAt: number
@@ -385,8 +315,6 @@ interface SpaceView {
     title: string | null
     note: string | null
     dns: DnsRecord[]
-    /** What the site itself decides; see spaces/site.ts. The password is only
-     *  ever whether there is one. */
     site: {
       rules: { include: string[]; exclude: string[]; otherwise: string }
       description?: string
@@ -416,55 +344,36 @@ interface ClientView {
   lastUsedAt: number | null
 }
 
-/** Every field any route answers with, in one shape rather than one per route.
- *
- *  Each is declared as present: a test reads the field belonging to the route
- *  it called and gets `undefined` from any other, which is what an `any` body
- *  gave before - except that now the names and the types are checked, so a
- *  test cannot quietly assert on a field no route sends. Where two routes
- *  disagree about a name, the odd one out gets its own shape and the test asks
- *  for it: `call<TrashView>(...)`. */
 export interface Reply {
   error: string
   error_description: string
   ok: boolean
 
-  // Signing in and the account.
   token: string
   user: UserView
   resendIn: number
   settings: Record<string, unknown>
 
-  // The glasses' question flow. `key` is what the settings read says about the
-  // account's OpenAI key, which is the whole of what any read can say about it;
-  // `set` and `tail` are the same two fields as the key's own routes answer them.
   key: { set: boolean; tail: string }
   set: boolean
   tail: string
   models: string[]
   answer: string
   said: string | null
-  /** The language tag the speech model settled on, or empty where it did not say.
-   *  A spoken command has no use for one; a transcript in a note is headed with it. */
   language: string
 
-  // Storage.
   used: number
   limit: number
   hash: string
   stored: boolean
 
-  // What the forms on a site have collected; see spaces/answers.ts.
   answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
 
-  // What a publish would change, which is which pages appear and disappear.
-  // `more` is further down, where the change feed already asks for it.
   pages: number
   before: number
   adds: string[]
   removes: string[]
 
-  // Spaces, what they keep above their file list, and their published address.
   space: SpaceView
   spaces: SpaceView[]
   bookmarks: BookmarkView[]
@@ -484,27 +393,22 @@ export interface Reply {
   detail: string | null
   dns: DnsRecord[]
 
-  // Following a link into a space somebody shared, and the guest a link that
-  // asks nothing hands out.
   waiting: boolean
   declined: boolean
   guest: { id: string; name: string }
 
-  // Notes and the change feed.
   note: NoteView
   notes: NoteView[]
   content: string
   cursor: number
   more: boolean
 
-  // The connector, as the settings pane sees it.
   exists: boolean
   readOnly: boolean
   createdAt: number | null
   lastUsedAt: number | null
   clients: ClientView[]
 
-  // What a client discovers about the OAuth server.
   issuer: string
   authorization_endpoint: string
   token_endpoint: string
@@ -520,7 +424,6 @@ export interface Reply {
   resource_name: string
   authorization_servers: string[]
 
-  // Registering, and the tokens that follow.
   client_id: string
   client_secret: string
   client_name: string
@@ -532,16 +435,11 @@ export interface Reply {
   expires_in: number
   scope: string
 
-  // The marks of the sites the account has been to (#1054).
   sites: { site: string; label: string; seen: number; hash: string | null }[]
 }
 
-/** Who else may reach a space, as the Share sheet reads it. Exactly one of
- *  `email` and `guest` names each person: a member is an address, a guest is an
- *  id the space's own link handed out. */
 export interface ShareView {
   owner: { email: string; name: string | null }
-  /** Which file the sheet is about, or null for the whole space. */
   item: { id: string; path: string } | null
   members: {
     email: string | null
@@ -562,12 +460,9 @@ export interface ShareView {
   error: string
 }
 
-/** What a link somebody was sent is about, which names its space by name
- *  rather than by the shape the sync routes use. */
 export interface JoinView {
   kind: string
   space: string
-  /** The one file the link is about, by name, or null for the space. */
   note: string | null
   role: string
   email: string | null
@@ -576,8 +471,6 @@ export interface JoinView {
   error: string
 }
 
-/** Recently deleted, which names its lists after what they hold rather than
- *  after the shapes the sync routes use. */
 export interface TrashView {
   spaces: { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[]
   notes: {
@@ -590,7 +483,6 @@ export interface TrashView {
   }[]
 }
 
-/** JSON-RPC, as the connector speaks it. */
 export interface RpcView {
   jsonrpc: string
   id: number | string | null
@@ -608,7 +500,6 @@ export interface RpcView {
 interface CallOptions {
   method?: string
   body?: unknown
-  /** Sent as-is instead of JSON, for uploads that are not JSON. */
   raw?: BodyInit
   headers?: Record<string, string>
   token?: string
@@ -617,14 +508,11 @@ interface CallOptions {
 
 export interface Answer<T> {
   status: number
-  /** The parsed body. Null when the answer was not JSON, which the shape does
-   *  not say: a test that asks for a page reads `text` instead. */
   json: T
   text: string
   headers: Headers
 }
 
-/** Calls the Worker the way the network would. */
 export async function call<T = Reply>(
   env: Env,
   path: string,
@@ -657,8 +545,6 @@ export async function call<T = Reply>(
   return { status: response.status, json: json as T, text, headers: response.headers }
 }
 
-/** What the mailer printed while something ran. Without the binding it writes
- *  to the log instead of sending, so this is the test's mailbox; see email.ts. */
 export async function mail(work: () => Promise<unknown>): Promise<string> {
   const logged: string[] = []
   const original = console.log
@@ -675,9 +561,6 @@ export async function mail(work: () => Promise<unknown>): Promise<string> {
   return logged.join('\n')
 }
 
-/** Runs the sign-in flow and returns a usable session token. `guest` is the
- *  guest session this device was holding, if it was holding one: the app hands
- *  it over so that whatever a link let the device into follows it in. */
 export async function signIn(env: Env, email: string, guest?: string): Promise<string> {
   const logged = await mail(() => call(env, '/v1/auth/code', { body: { email } }))
 
@@ -692,8 +575,6 @@ export async function signIn(env: Env, email: string, guest?: string): Promise<s
   return verified.json.token
 }
 
-/** Bytes and the hash they are named by, the way the app names a file it uploads.
- *  `seed` makes two files of one size two different files. */
 export function file(size: number, seed = 0): { bytes: Uint8Array; hash: string } {
   const bytes = new Uint8Array(size).fill(seed)
   return { bytes, hash: createHash('sha256').update(bytes).digest('hex') }

@@ -1,11 +1,3 @@
-/** The page a person actually sees: who is asking, what it would be allowed to
- *  do, and the emailed code that signs them in - the same code as the app, on
- *  a page rendered here rather than in the editor.
- *
- *  Everything written into the HTML goes through `escape`, including the fields
- *  carried from one step to the next: they arrive from a stranger's query
- *  string and are handed straight back into a form. */
-
 import type { Env } from '../types'
 import type { Client } from './clients'
 import { type Ask, FIELDS, wantsWrite } from './protocol'
@@ -23,7 +15,6 @@ function escape(text: string): string {
   return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 }
 
-/** The app's own palette, both ways round, so the page reads as Orden's. */
 const STYLE = `
 :root{--bg:#fbfcfd;--fg:#1a1d23;--strong:#0e1013;--muted:#6b7482;--line:#e1e6ed;--line-strong:#ccd4de;--surface:#f3f5f8;--accent:#5b4be0;--accent-hover:#4e3ed6;--danger:#d92b34}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#c9cfd8;--strong:#eef1f5;--muted:#8a93a2;--line:#232830;--line-strong:#2f3641;--surface:#14171c;--accent:#7c6bf5;--accent-hover:#8d7ef7;--danger:#f2555a}}
@@ -69,7 +60,6 @@ ${body}
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      // Consent must not be collectable through a frame on someone else's page.
       'x-frame-options': 'DENY',
       'content-security-policy': "frame-ancestors 'none'",
     },
@@ -80,8 +70,6 @@ export function refusal(problem: string): string {
   return `<h1>That did not work</h1><p>${escape(problem)}</p>`
 }
 
-/** Server messages are lowercase so the app can drop them into a sentence;
- *  here they stand alone. */
 function sentence(text: string): string {
   return `<p class="error">${escape(text.charAt(0).toUpperCase() + text.slice(1))}.</p>`
 }
@@ -138,14 +126,6 @@ ${write}
 <p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
 }
 
-/** The third step, for an account that asks for a second code: the one out of the
- *  authenticator app, or a recovery code. The emailed code proved the address and
- *  nothing more, which is exactly what a second factor is there to be more than -
- *  a connector's token reads every note, so it is not handed out on less than the
- *  app's own sign-in asks for. See `/v1/auth/second` in auth.ts.
- *
- *  What the page carries between the two is the half a sign-in the app's own flow
- *  holds, never the address, and whether the person said the client may write. */
 export function secondStep(
   ask: Ask,
   given: { holding: string; write: boolean; error?: string },

@@ -1,19 +1,7 @@
-/** Whose profile an account may read: its own, and anybody it shares something with.
- *
- *  A face, a status and whether somebody is at their desk are things the people in a
- *  space with them see, the way a Slack workspace's members see each other's; somebody
- *  who only knows an id sees nothing, and is answered as if the id named nobody. Shared
- *  means one of three things, each a row of `space_members` (a space or one file of it):
- *  they own something this account was let into, this account owns something they were
- *  given, or both were let into the same thing. An invitation not yet opened counts for
- *  the owner who wrote it and for nobody else, which is what the Share sheet already
- *  shows them. See docs/chats.md 4.9. */
-
 import { askInChunks, AT_A_TIME, places } from '../bound'
 import type { Env, User } from '../types'
 import { PROFILE_COLUMNS, type Presence, type ProfileRow } from './profile'
 
-/** How many people one request may ask about: the most a space holds. */
 export const MOST_PEOPLE = 200
 
 const SHARES_WITH = `(
@@ -31,8 +19,6 @@ const SHARES_WITH = `(
        and b.email = u.email and b.joined_at is not null
        and (a.item = '' or b.item = '' or a.item = b.item)))`
 
-/** The profiles of the people among `ids` this account may see, with whether each is
- *  here as their hub last wrote it. */
 export async function seenAmong(
   env: Env,
   asker: User,
@@ -42,7 +28,6 @@ export async function seenAmong(
   return askInChunks(
     wanted,
     async (chunk) => {
-      // Numbered past the two the condition names, so the list binds after them.
       const list = chunk.map((_, at) => `?${at + 3}`).join(', ')
       const { results } = await env.DB.prepare(
         `select ${PROFILE_COLUMNS}, p.state from users u
@@ -57,9 +42,6 @@ export async function seenAmong(
   )
 }
 
-/** Up to `most` other people in each of these spaces, owner first: the faces the
- *  switcher draws beside a shared space's mark. People with an account who are in,
- *  never an address nobody has opened the space under. */
 export async function facesIn(
   env: Env,
   asker: string,

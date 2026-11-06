@@ -1,12 +1,3 @@
-/** One push to one device, whichever service it goes through: the one module chats and
- *  reminders both send by (docs/chats.md 4.11, docs/tasks.md 5.10).
- *
- *  A device registered a target (targets.ts): a Web Push subscription for the browser
- *  build, an FCM token for Android, an APNs token for an iPhone. A target whose service
- *  says it is gone is dropped here, so the next push does not try it again. A service
- *  the Worker has no keys for answers `off` and is left alone: the keys are Emil's to
- *  make (docs/mobile.md, "Push"). */
-
 import type { Env } from '../types'
 import { sendApns } from './apns'
 import { sendFcm } from './fcm'
@@ -16,7 +7,6 @@ export type Delivery = 'sent' | 'gone' | 'failed' | 'busy' | 'off'
 
 export type TargetKind = 'webpush' | 'fcm' | 'apns'
 
-/** A target as `push_targets` holds it. */
 export interface Target {
   id: string
   user_id: string
@@ -26,7 +16,6 @@ export interface Target {
   zone: string | null
 }
 
-/** What a push says: what it is about, words to show, and fields for the app. */
 export interface Message {
   kind: 'reminder' | 'chat'
   id: string
@@ -42,12 +31,10 @@ function keysOf(target: Target): SubscriptionKeys | null {
       ? { p256dh: keys.p256dh, auth: keys.auth }
       : null
   } catch {
-    // A subscription written without its keys cannot be encrypted to.
     return null
   }
 }
 
-/** Which services this Worker has the keys for. */
 export function configured(env: Env) {
   return {
     webpush: env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY ? env.VAPID_PUBLIC_KEY : null,
@@ -56,7 +43,6 @@ export function configured(env: Env) {
   }
 }
 
-/** One message to one target, and a gone one dropped. */
 export async function push(
   env: Env,
   target: Target,
@@ -107,8 +93,6 @@ export async function push(
       )
     }
   } catch {
-    // A service that could not be reached, or a key it could not be signed with: this
-    // push did not go, and the next one tries again.
     delivery = 'busy'
   }
 

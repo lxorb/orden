@@ -1,45 +1,9 @@
-/** A form on a published page, and the answers it collects.
- *
- *  What it is for: the one thing a blog cannot do without leaving somebody
- *  else's script on the page. A note asking "what did you think" or "tell me
- *  when you are free" is a form, and every way of having one today is a third
- *  party who then holds the answers and watches the reader.
- *
- *  So: a fence in the note, a real form on the page, and the answers on the
- *  account beside the note that asked. No script - it posts and the page comes
- *  back - no third party, and nothing about the reader kept beyond what they
- *  typed.
- *
- *  Obsidian has no form block, so there is no key to borrow and this is Orden's
- *  own. It is written to read as a note rather than as a config file: a title, a
- *  word on the button, and one line per field.
- *
- *      ```form
- *      title: Say hello
- *      send: Send it
- *      fields:
- *        - Your name
- *        - Your email: email
- *        - What you want to say: lines
- *        - * Which day: choice Monday | Tuesday
- *      ```
- *
- *  A field is its label, and after the colon what kind it is: `text` (the
- *  default), `email`, `lines` for a paragraph, `number`, or `choice` with the
- *  choices after it. A `*` in front means it must be answered. That is the whole
- *  grammar, and a fence that says something else is shown as the fence it is
- *  rather than guessed at. */
-
 import { escape } from './head'
 
-/** How many fields one form may have, and how long one answer is kept. Both are
- *  bounds on what a page can be used for: a form is a question, not a file
- *  upload. */
 const MOST_FIELDS = 20
 const LONGEST_ANSWER = 4000
 const LONGEST_LABEL = 120
 
-/** How a cell starts that a spreadsheet runs as a formula. */
 const FORMULA = /^[=+\-@\t\r]/
 
 type FieldKind = 'text' | 'email' | 'lines' | 'number' | 'choice'
@@ -57,7 +21,6 @@ export interface Form {
   fields: Field[]
 }
 
-/** One field from one line of the fence. */
 function field(line: string): Field | null {
   const said = line.replace(/^[-*]\s+/, '').trim()
   if (!said) return null
@@ -89,8 +52,6 @@ function field(line: string): Field | null {
   return { label, kind: found ?? 'text', required, choices: [] }
 }
 
-/** The fence, as the form it describes, or null for one that is not a form: a
- *  fence nobody can read is a fence, and a page shows it as one. */
 export function formOf(code: string): Form | null {
   const form: Form = { title: '', send: 'Send', fields: [] }
   let inFields = false
@@ -122,16 +83,12 @@ export function formOf(code: string): Form | null {
       continue
     }
 
-    // A line that is none of those, outside the field list, is a fence that is
-    // not a form.
     if (!inFields) return null
   }
 
   return form.fields.length ? form : null
 }
 
-/** The name a field's answer arrives under. The label, folded, so the answers
- *  read as the question rather than as `field-3`. */
 function nameOf(field: Field, at: number): string {
   const said = field.label
     .toLowerCase()
@@ -141,10 +98,6 @@ function nameOf(field: Field, at: number): string {
   return said || `field-${at + 1}`
 }
 
-/** What a form can come back saying went wrong, by the code the page's address
- *  carries. The address is anybody's to write, so it names one of these rather
- *  than holding the words: a link could otherwise put any sentence on somebody's
- *  site. A code about one question is its place and a kind, `2-needed`. */
 const WRONG_ALL = new Map([
   ['busy', 'Too many just now. Try later.'],
   ['full', 'This form is full.'],
@@ -157,7 +110,6 @@ const WRONG_ONE = new Map([
   ['choice', 'is one of the choices.'],
 ])
 
-/** Every sentence this form can say went wrong, by its code. */
 function wrongsOf(form: Form): Map<string, string> {
   const wrongs = new Map(WRONG_ALL)
   for (const [at, one] of form.fields.entries()) {
@@ -166,15 +118,6 @@ function wrongsOf(form: Form): Map<string, string> {
   return wrongs
 }
 
-/** The form, as the page draws it.
- *
- *  A real form: it posts, the page comes back, and a reader with scripting off is
- *  not told to enable anything. `sent` is what the page says after a successful
- *  post, which is the address the redirect came back on.
- *
- *  `noteId` is where the answers go and is in the form as a hidden field, because
- *  a page's address can be a permalink, an alias or an old path and the note is
- *  the one name that does not move. */
 export function formHtml(form: Form, noteId: string, sent: boolean, wrong: string | null): string {
   if (sent) {
     return `<div class="form sent"><p>Thank you.</p></div>`
@@ -209,11 +152,6 @@ ${rows}
 </form>`
 }
 
-/** What a reader sent, as the answers to this form's questions.
- *
- *  Read against the form rather than taken as it arrives: a field the form does
- *  not have is dropped, a required one that is empty is a refusal, and every
- *  answer is bounded. What comes back is what goes in the row. */
 export function answersFrom(
   form: Form,
   sent: FormData,
@@ -250,21 +188,11 @@ export function answersFrom(
   return { answers }
 }
 
-/** The answers as a spreadsheet, for the pane in the app: one column per
- *  question, in the order the form asks them, and a row per answer.
- *
- *  Written here rather than in the app because the shape of an answer is decided
- *  here, and a second writer of the same file is a second answer to what a
- *  column is called. */
 export function asCsv(
   rows: readonly { at: number; path: string; answers: Record<string, string> }[],
 ): string {
-  // The export's own columns go by place rather than by name, so a question
-  // called "page" is a column of its own instead of the page it was asked on.
   const asked = [...new Set(rows.flatMap((one) => Object.keys(one.answers)))]
 
-  // A cell a spreadsheet would run as a formula is written as text, the way
-  // OWASP says to; a number, a negative one too, stays a number.
   const cell = (said: string) => {
     const text = FORMULA.test(said) && !Number.isFinite(Number(said)) ? `'${said}` : said
     return `"${text.replace(/"/g, '""')}"`

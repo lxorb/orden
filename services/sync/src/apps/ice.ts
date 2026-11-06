@@ -1,10 +1,3 @@
-/** The servers a viewer's connection to an application's host may use (issue 1063, step
- *  4; docs/apps.md): `GET /v2/apps/ice`. STUN always, so a viewer learns the address the
- *  internet sees it at; and TURN, with credentials that last a day, where the Worker has
- *  a Cloudflare TURN key (`TURN_KEY_ID` and `TURN_KEY_TOKEN`, secrets set by the owner),
- *  for two devices that cannot reach each other directly. Only the viewer relays: the
- *  host answers a relayed candidate from its own address. Behind the door's switch. */
-
 import { FALLBACK_ICE, iceServersOf, type IceServer } from '@orden/online/apps'
 import { Hono } from 'hono'
 import { note } from '../failed'
@@ -12,13 +5,10 @@ import { NOT_FOUND } from '../refused'
 import type { Env, Variables } from '../types'
 import { appsOn } from './catalogue'
 
-/** How long a TURN credential lasts. */
 const TTL = 24 * 60 * 60
 
 export const appIce = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** The servers to hand out: Cloudflare's, with credentials, where there is a key; its
- *  STUN alone where there is none or it does not answer. */
 async function iceServers(env: Env): Promise<IceServer[]> {
   const id = env.TURN_KEY_ID
   const token = env.TURN_KEY_TOKEN

@@ -1,14 +1,3 @@
-/** Tree operations: a device's, applied in the order they arrive, and a v1 app's writes
- *  said as the same operations.
- *
- *  A v2 device sends `mkdir`, `create`, `rename`, `move`, `delete` and `restore` by id
- *  (docs/sync-v2.md sections 5.9 and 7), and each is answered with where the entry
- *  ended up or why it was refused. A v1 app names paths, and in a space whose tree is
- *  rows its path writes become the same operations here - a create with a server id, a
- *  rename or a move, a delete that asks nothing (a v1 delete names no version to judge
- *  an edit against, so it goes to Recently deleted exactly as it always has) - so the
- *  rows, the paths and every v2 device's feed stay one story whichever app wrote. */
-
 import {
   type CreateOp,
   isEntryId,
@@ -22,16 +11,8 @@ import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
 import { type Changed, changeTree, type Content, kindOfName, type Tree } from './tree'
 
-/** A v1 op judges nothing against what its device had seen. */
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
 
-/** The size of each of these blobs a file's entry in this space may name, by hash:
- *  bytes the asker keeps, so nobody makes an entry for bytes they could not upload - or
- *  the space owner's and already in this space, as a file or a paper of it, which is
- *  bytes everybody here can read anyway. Not every blob the owner keeps: an entry is a
- *  way to read its bytes back through the space, a hash can be learned without the
- *  file, and somebody who writes in one of the owner's spaces would otherwise read a
- *  file the owner keeps for another. The same rule as a page note's paper (notes.ts). */
 export async function blobSizes(
   env: Env,
   space: Pick<Reached, 'id' | 'user_id'>,
@@ -57,21 +38,10 @@ export async function blobSizes(
   return new Map(results.map((row) => [row.hash, row.size]))
 }
 
-/** The hashes a batch of file creates names. */
 function createdHashes(ops: readonly Op[]): string[] {
   return ops.flatMap((op) => (op.t === 'create' && op.kind === 'file' && op.hash ? [op.hash] : []))
 }
 
-/** The ids a batch of creates and mkdirs names that are not this space's to make: a
- *  note or a folder of another space, live or deleted; a note of this one purged from
- *  Recently deleted, whose row stays as a tombstone; and an id whose row went for good
- *  with its space or its account (0052).
- *
- *  A device chooses the ids of what it makes, and a note's id names more than its row
- *  - its room above all, which holds the whole document and is emptied only after the
- *  row has gone. So an id is made once, by one space, and never again: a create under
- *  one that was ever somebody else's is refused, as a create of something that has
- *  gone is, rather than handed whatever is still kept under it. */
 async function takenIds(env: Env, spaceId: string, ops: readonly Op[]): Promise<Set<string>> {
   const ids = new Set<string>()
   for (const op of ops) if (op.t === 'create' || op.t === 'mkdir') ids.add(op.id)
@@ -91,7 +61,6 @@ async function takenIds(env: Env, spaceId: string, ops: readonly Op[]): Promise<
   return new Set(results.map((row) => row.id))
 }
 
-/** A device's batch of ops, applied by the rules, answering each. */
 export async function applyOps(
   env: Env,
   space: Reached,
@@ -123,8 +92,6 @@ function applied(
   if (into !== null && !isEntryId(into) && !tree.answers(op.op)) {
     return { op: op.op, refused: 'gone' }
   }
-  // Not written down as the op's answer, so that an op this space already answered -
-  // sent again by a device that missed the answer - is still answered as it was.
   if ((op.t === 'create' || op.t === 'mkdir') && taken.has(op.id) && !tree.answers(op.op)) {
     return { op: op.op, refused: 'gone' }
   }
@@ -133,8 +100,6 @@ function applied(
     return tree.apply(op, context)
   }
 
-  // A file is its bytes, so an entry for bytes nobody uploaded is not made. Not written
-  // down as the op's answer either: the device uploads and sends the same op again.
   const hash = op.hash?.toLowerCase()
   const size = hash === undefined ? undefined : sizes.get(hash)
   if (hash === undefined || size === undefined) return { op: op.op, refused: 'gone' }
@@ -144,11 +109,6 @@ function applied(
   return result
 }
 
-/* ── A v1 app's writes, as ops ─────────────────────────────────────────── */
-
-/** The folders a path names, each found or made, answering the folder the last one is:
- *  what a v1 app's path means in a tree of ids. A folder is found among the live ones,
- *  the way the file list would find it. */
 function foldersFor(tree: Tree, folders: readonly string[], context: OpContext): string | null {
   let parent: string | null = null
   for (const name of folders) {
@@ -176,9 +136,6 @@ function split(path: string): { folders: string[]; name: string } {
   return { folders, name }
 }
 
-/** The live note a v1 app's path already names, if there is one: a create at that
- *  path is the 409 it always was, and a Linux device's other spelling of the same
- *  name answers the same way. */
 function noteAtPath(tree: Tree, path: string): string | null {
   const { folders, name } = split(path)
   let parent: string | null = null
@@ -191,8 +148,6 @@ function noteAtPath(tree: Tree, path: string): string | null {
   return found && found.kind !== 'folder' ? found.id : null
 }
 
-/** A note a v1 app made, with its words: a create with a server id, in the folders
- *  its path names. Answers the id, or the note already at that path. */
 export async function createByPath(
   env: Env,
   spaceId: string,
@@ -220,7 +175,6 @@ export async function createByPath(
     tree.apply(create, context)
     tree.content.set(id, content)
 
-    // Made with words, which is a content change as well as a place.
     const entry = tree.entry(id)
     if (entry) {
       entry.docSeq = entry.seq
@@ -232,8 +186,6 @@ export async function createByPath(
   return value
 }
 
-/** A v1 app's rename or move: the note placed at the path it names, its folders found
- *  or made. Answers the path it ended up at, numbered where the name was taken. */
 export async function moveByPath(
   env: Env,
   spaceId: string,
@@ -254,7 +206,6 @@ export async function moveByPath(
   return value
 }
 
-/** A v1 app's delete, or a restore out of Recently deleted, as the tree says them. */
 export async function deleteById(
   env: Env,
   spaceId: string,
@@ -272,16 +223,6 @@ export async function deleteById(
   return value
 }
 
-/** A document's words changed while it was deleted: it comes back, with its folders
- *  (an edit beats a delete). What a room's settle asks before it writes the words of a
- *  note somebody deleted meanwhile.
- *
- *  A room's words that are the deleting device's own leave it deleted (`own`): they
- *  never stand against its own delete (section 5.9), and a room settles a moment after
- *  the typing, so a note somebody typed in and then moved to another space - a delete
- *  here, the words going with it - came back here once the room caught up, and the
- *  move was a copy (#413). New bytes put on a file are a new file, and bring it back
- *  whoever deleted it. */
 export async function revive(
   env: Env,
   spaceId: string,

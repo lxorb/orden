@@ -1,6 +1,3 @@
-/** A Hetzner machine's first boot (docs/online-terminal.md 4.15): its cloud-init, drawn
- *  whole with its secrets redacted, and the rules that keep them out of every log. */
-
 import { describe, expect, test } from 'vitest'
 import { cloudInit, sshKeyOf } from '../src/machines/cloudinit'
 
@@ -37,7 +34,6 @@ describe('cloud-init', () => {
     for (const path of ['/etc/nibd/env', '/etc/cloudflared/env']) {
       expect(files).toContain(`- path: ${path}\n    owner: root:root\n    permissions: '0600'`)
     }
-    // What it runs is checked before it runs, and cloud-init's own copy goes after.
     expect(commands).toContain(`echo '${BUNDLE}  /root/machine.bin' | sha256sum -c -`)
     expect(commands).toContain('https://nibeditor.com/v2/online/machine/' + BUNDLE + '.bin')
     expect(commands).toContain('rm -f /var/lib/cloud/instance/user-data.txt')

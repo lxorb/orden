@@ -1,8 +1,3 @@
-/** A report sent with Send feedback, as an issue in the private repository (#666),
- *  against a GitHub that lives in this file: the issue opened with all of the report, its
- *  log cut to GitHub's limit, a try that failed tried again from the cron, and never two
- *  issues for one report. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   issueBody,
@@ -33,18 +28,12 @@ interface Opened {
   state?: string
 }
 
-/** GitHub's issues of the one repository, and what each request asked. */
 class Github {
   issues: Opened[] = []
   asked: string[] = []
-  /** What the next requests to open an issue do instead of answering: fail outright,
-   *  or open it and lose the answer on its way back. */
   failing: ('refuse' | 'lose')[] = []
-  /** Run while an issue is being opened, before it is: what else happens meanwhile. */
   meanwhile: (() => void) | null = null
-  /** The board: its items, each an issue's node id and its Status option. */
   board = new Map<string, string | null>()
-  /** Whether the token may reach the board, as one without the `project` scope may not. */
   boardRefused = false
 
   private graphql(body: string): Response {
@@ -287,7 +276,6 @@ describe('a report on the board', () => {
       expect(off).toMatchObject({ board_at: null, board_tries: 1 })
 
       hub.boardRefused = false
-      // Not before its time.
       await openWaitingIssues(onBoard, (off?.board_next_at ?? 0) - 1)
       expect(hub.board.size).toBe(0)
 
@@ -319,7 +307,6 @@ describe('a report GitHub did not take', () => {
     expect(row).toMatchObject({ issue_number: null, issue_tries: 1 })
     expect(hub.issues).toHaveLength(0)
 
-    // Not before its time.
     await openWaitingIssues(env, (row?.issue_next_at ?? 0) - 1)
     expect(opens()).toBe(1)
 
@@ -328,8 +315,6 @@ describe('a report GitHub did not take', () => {
     expect((await rows())[0]).toMatchObject({ issue_number: 1 })
   })
 
-  /** The issue opened and its answer lost: the next try finds it by the report's mark
-   *  rather than opening a second. */
   test('whose issue opened without its answer coming back becomes no second issue', async () => {
     hub.failing = ['lose']
     await call(env, '/v1/feedback', { body: REPORT })
@@ -356,8 +341,6 @@ describe('a report GitHub did not take', () => {
 })
 
 describe('a report whose words carry another report’s mark', () => {
-  /** #785: the mark is the issue's own only as its last line; words that say it are not
-   *  that report's issue, so they cannot take its place. */
   test('is not taken for that report’s issue', async () => {
     hub.failing = ['refuse']
     await call(env, '/v1/feedback', { body: REPORT })
@@ -381,7 +364,6 @@ describe('a report whose words carry another report’s mark', () => {
   })
 })
 
-/** An account deleted through the routes, all three steps. */
 async function leave(token: string): Promise<void> {
   const mailed = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))
   const found = /(\d{3}) (\d{3})/.exec(mailed)
@@ -438,7 +420,6 @@ describe('a report whose account is deleted', () => {
     await call(env, '/v1/feedback', { token, body: REPORT })
     const at = ((await rows())[0]?.issue_next_at ?? 0) + 1
 
-    // The account goes between the run taking the report on and GitHub opening it.
     hub.meanwhile = () => {
       hub.meanwhile = null
       env.db.prepare('delete from feedback').run()
@@ -474,8 +455,6 @@ describe('the issue', () => {
     expect(platformLabel('')).toBeNull()
   })
 
-  /** #785: the platform is the app's to say, so a name of somebody's own is no label,
-   *  which would have been made in the repository. */
   test('is labelled only with a system there is, whatever the platform says', () => {
     expect(platformLabel('my own label')).toBeNull()
     expect(platformLabel('wontfix · desktop')).toBeNull()
@@ -497,10 +476,6 @@ describe('the issue', () => {
     expect(body).toContain('````\na ``` in the log\n````')
   })
 
-  /** #785. Whatever the words say, they are the fence's: it opens on the first line,
-   *  shuts after the last, and nothing in them - a mention spelled any way, a table of
-   *  their own, an HTML comment left open, a fence of their own - is drawn as anything
-   *  but what was typed, so the table after it is the app's and is seen. */
   test('holds the words in a fence they cannot leave, whatever they write', () => {
     const forged = [
       'x.@lxorb and &#64;lxorb and @lxorb',
@@ -518,12 +493,10 @@ describe('the issue', () => {
     expect(
       body.startsWith(`${fence}\n${forged}\n${fence}\n\n| | |\n| --- | --- |\n| Version |`),
     ).toBe(true)
-    // The words are in the body once, inside the fence, and the app's table follows.
     expect(body.split(forged)).toHaveLength(2)
     expect(body).toContain('| Account | signed out |')
   })
 
-  /** The rest of what the app is sent is somebody's too: code spans, pipes escaped. */
   test('puts what came with the words in code, which no pipe or backtick ends', () => {
     const body = issueBody(
       report({

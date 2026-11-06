@@ -1,7 +1,3 @@
-/** Hetzner's Cloud API and Cloudflare's tunnel and DNS API, faked as one `fetch`
- *  (docs/online-terminal.md 4.15): enough of each to make, find, power-cycle and delete
- *  what a machine has, with what was asked kept in order. Nothing leaves the test. */
-
 interface FakeServer {
   id: number
   name: string
@@ -12,7 +8,6 @@ interface FakeServer {
   firewall: number
 }
 
-/** One API error, as the next matching call answers it. */
 interface Failure {
   method: string
   path: RegExp
@@ -21,7 +16,6 @@ interface Failure {
 }
 
 export class Cloud {
-  /** Every call, as `METHOD path`. */
   readonly asked: string[] = []
   readonly servers: FakeServer[] = []
   readonly firewalls: {
@@ -32,13 +26,9 @@ export class Cloud {
   }[] = []
   readonly tunnels: { id: string; name: string; config: unknown; connections: boolean }[] = []
   readonly records: { id: string; name: string; content: string; proxied: boolean }[] = []
-  /** Headers each request to a machine's hostname came with. */
   readonly linked: Headers[] = []
-  /** Answers to the next calls that match. */
   readonly failures: Failure[] = []
-  /** Where the server type may be had now. */
   available = ['nbg1', 'fsn1', 'hel1']
-  /** How a link to `nibd` is answered. */
   linkStatus = 101
   private next = 100
 

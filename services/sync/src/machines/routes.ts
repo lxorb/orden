@@ -1,11 +1,3 @@
-/** The online terminal's routes behind the session guard (docs/online-terminal.md, 4.5,
- *  4.9 and 4.10): the account's machine, its terminals' sessions, its month and its
- *  audit.
- *
- *  Accounts only. A guest reaches none of these (`guestMayReach` names none) and only
- *  ever watches, through the socket; a program's `nib_` token reaches none either
- *  (`programMayReach`). Every route answers 404 while the service is off. */
-
 import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import { readBody } from '../body'
 import { askHub } from '../hub/reach'
@@ -66,8 +58,6 @@ async function machineOf(env: Env, userId: string): Promise<MachineRow | null> {
     .first<MachineRow>()
 }
 
-/** The account's machine, made the first time it is needed: on a Hetzner server of its
- *  own (4.15). */
 async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
   const had = await machineOf(env, userId)
   if (had) return had
@@ -86,8 +76,6 @@ async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
 
 const asked = (machine: MachineRow) => ({ 'x-nib-user': machine.user_id })
 
-/** The server under a machine, for Settings' one line about it: its type, its size and
- *  what it costs a month, as Hetzner said them when it was made; null for none. */
 function serverOf(machine: MachineRow) {
   if (machine.server_id === null || !machine.spec) return null
   let spec: unknown
@@ -111,11 +99,8 @@ function serverOf(machine: MachineRow) {
   }
 }
 
-/** A refusal as the app reads it: one of `@orden/online`'s codes, which the app turns into
- *  words, rather than a sentence of the Worker's. */
 const refused = (error: Refusal) => ({ error })
 
-/** The machine, the month and whether the account may have one at all. */
 online.get('/machine', async (context) => {
   const user = context.get('user')
   const at = now()
@@ -159,8 +144,6 @@ online.post('/machine/stop', async (context) => {
   const user = context.get('user')
   const machine = await machineOf(context.env, user.id)
   if (!machine) return context.json({ error: NOT_FOUND }, 404)
-  // A server that is always on is never stopped by its owner: Stop is Restart, which
-  // starts `nibd` again and keeps the server and everything on its disk (4.15).
   if (machine.host === 'hetzner') {
     const answer = await askMachine(context.env, machine.id, 'restart', {
       ...asked(machine),
@@ -178,19 +161,6 @@ online.post('/machine/stop', async (context) => {
   return context.json({ state: 'asleep' })
 })
 
-/** A `.term` file made a session on the maker's own machine (4.5). The file is made
- *  first, by sync, in a space the maker may write in; this names its session. Asking
- *  again for the same file answers the same session.
- *
- *  `session` is the one the file's words name, if any: a session its owner made on sync
- *  v1, keyed by its own id, is adopted by the file's id the first time the owner asks by
- *  it, rather than a new shell made beside it (`adopt`). Anybody else asking by it is told
- *  `gone` until then, and joins it by the file's socket once it is adopted.
- *
- *  With no `term`, a session of the maker's alone, in no space: what a device still on
- *  sync v1 makes, having no file id the account knows. Its socket is named by the
- *  session (`/v2/online/<session>/socket`), and only its owner reaches it; it is shared
- *  by nobody until its file has an id. */
 online.post('/terms', async (context) => {
   const env = context.env
   const user = context.get('user')
@@ -225,10 +195,6 @@ online.post('/terms', async (context) => {
   }
   if (had) return context.json(refused('gone'), 409)
 
-  // A file whose words name somebody else's session, waiting for its owner to adopt it,
-  // is their terminal: opening it first never makes one of the asker's own under it,
-  // which the asker's device would write into the file and so cut the owner off. `gone`
-  // is what the app reads as somebody else's terminal, joined by its socket.
   if (named && (await adoptable(env, user.id, named))) {
     return context.json(refused('gone'), 409)
   }
@@ -236,10 +202,6 @@ online.post('/terms', async (context) => {
   return await makeSession(context, env, user.id, term)
 })
 
-/** Whether `session` is somebody else's live session that its owner could still adopt,
- *  `adopt`'s rule from their side: keyed by no live file, so a file naming it is theirs.
- *  A copy beside a file still there is not, and gets a session of the asker's own. A
- *  session keyed by its own id is keyed by no file, whatever note a stranger gives that id. */
 async function adoptable(env: Env, userId: string, session: string): Promise<boolean> {
   const row = await env.DB.prepare(
     `select 1 as one from term_sessions t
@@ -252,16 +214,6 @@ async function adoptable(env: Env, userId: string, session: string): Promise<boo
   return row !== null
 }
 
-/** The session the file's words name, taken by this file where no other file has it:
- *  its row re-keyed to the file's id, so the shell in it goes on and the account's count
- *  of sessions stays as it was. Two files come here. One a device on sync v1 made, whose
- *  session is still keyed by its own id. And one moved to another space, which is a new
- *  file there with a new id and the same words, the one it was made as gone (issue 222's
- *  orphan: it used to start a fresh shell and leave the program running out of reach).
- *  Only the asker's own live session, never while the file it is keyed by is still there
- *  (a copy, or a Duplicate, gets one of its own), and never over a session the file has
- *  already. Its owner's sockets named by the session still reach it (reach.ts), so a
- *  device not yet on v2, or back on v1, keeps it. */
 async function adopt(env: Env, userId: string, term: string, session: string) {
   const row = await env.DB.prepare(
     `update term_sessions set term = ?1
@@ -279,8 +231,6 @@ async function adopt(env: Env, userId: string, term: string, session: string) {
   return row && { v: 1, machine: row.machine, session: row.session }
 }
 
-/** A new session on the account's machine, for a file or (`term` null) for none, in
- *  which case the session's own id names it. */
 async function makeSession(
   context: Context<Online>,
   env: Env,
@@ -310,7 +260,6 @@ async function makeSession(
   return context.json({ v: 1, machine: machine.id, session })
 }
 
-/** Every session `nibd` has, by its id; null where the machine could not be asked. */
 async function machineSessions(env: Env, userId: string): Promise<Map<string, SessionNow> | null> {
   const machine = await machineOf(env, userId)
   if (!machine) return null
@@ -319,10 +268,6 @@ async function machineSessions(env: Env, userId: string): Promise<Map<string, Se
   return said?.sessions ? new Map(said.sessions.map((one) => [one.session, one])) : null
 }
 
-/** The sessions of the account's machine, for Settings' list: every row the account
- *  keeps, with what the machine says of each - the program in front, whether a shell
- *  runs, when it last printed - and every session the machine has that no row names any
- *  more, which can only be ended. `alive` is null where the machine could not be asked. */
 online.get('/terms', async (context) => {
   const user = context.get('user')
   const running = machineSessions(context.env, user.id)
@@ -380,7 +325,6 @@ online.get('/terms', async (context) => {
   })
 })
 
-/** A session of the caller's own, as the owner alone may touch it. */
 async function ownSession(env: Env, userId: string, term: string) {
   return await env.DB.prepare(
     `select t.machine as machine, t.session as session, t.user_id as user_id
@@ -390,7 +334,6 @@ async function ownSession(env: Env, userId: string, term: string) {
     .first<{ machine: string; session: string; user_id: string }>()
 }
 
-/** Who else may type: `owner` (the default) or `writers`. Sockets are told at once. */
 online.patch('/terms/:term', async (context) => {
   const user = context.get('user')
   const term = context.req.param('term')
@@ -414,12 +357,8 @@ online.patch('/terms/:term', async (context) => {
   return context.json({ typing })
 })
 
-/** A session on the caller's own machine that no row names any more, by its id: one the
- *  machine still has, listed in Settings, which its owner may end. */
 const SESSION_ID = /^s_[A-Za-z0-9]{1,64}$/
 
-/** Ending a session: the shell and everything in it (4.5). By its file's id, or by the
- *  session's own where no row names it any more (`GET /terms`'s `term: null`). */
 online.delete('/terms/:term', async (context) => {
   const user = context.get('user')
   const term = context.req.param('term')
@@ -453,7 +392,6 @@ online.delete('/terms/:term', async (context) => {
   return context.json({ ok: true })
 })
 
-/** The machine's audit, newest first, for its owner (4.8). */
 online.get('/events', async (context) => {
   const user = context.get('user')
   const machine = await machineOf(context.env, user.id)

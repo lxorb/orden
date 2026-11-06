@@ -1,8 +1,3 @@
-/** The two ways a connector call proves who it is, and the pane that shows
- *  them: a token the person copied out of the settings, or a grant an LLM
- *  client got by signing them in through OAuth. Both live hashed, so a leaked
- *  database cannot be used to read anyone's notes. */
-
 import { Hono } from 'hono'
 import { NOT_AN_OBJECT } from '../refused'
 import { objectBody } from '../body'
@@ -16,19 +11,13 @@ export interface TokenRow {
   token_hash: string
   user_id: string
   read_only: number
-  /** The device a write through this token is, the way a program's request names
-   *  one (sync2/device.ts): what tells two scripts' versions of a note apart. */
   device?: string
 }
 
-/** Tokens are recognisable on sight, so one found in a config file is obvious. */
 function mint(): string {
   return `nib_${randomToken()}`
 }
 
-/** A token works only while the session it was handed out through is signed in, so
- *  ending that session ends the token (#461). A row from before tokens named a session
- *  has none, and keeps working. Written once, so every reader asks the same question. */
 function liveToken(at: string): string {
   return `(session_hash is null or exists (select 1 from sessions s
             where s.token_hash = mcp_tokens.session_hash and s.expires_at > ${at}))`
@@ -42,8 +31,6 @@ async function issueToken(
 ): Promise<string> {
   const token = mint()
 
-  // One token at a time: a second one nobody remembers issuing is a way in
-  // that nobody would think to close.
   await env.DB.prepare('delete from mcp_tokens where user_id = ?').bind(userId).run()
   await env.DB.prepare(
     `insert into mcp_tokens (token_hash, user_id, read_only, created_at, session_hash)
@@ -55,11 +42,7 @@ async function issueToken(
   return token
 }
 
-/** The caller, by the token it sent: one a client got by signing the person
- *  in, or one the person copied out of the settings. */
 export async function bearer(env: Env, header: string | undefined): Promise<TokenRow | null> {
-  // Read the same way a session's header is, so the two cannot drift: the whole
-  // of the header was being taken as the token when it named no scheme at all.
   const token = tokenIn(header)
   if (!token) return null
 
@@ -83,8 +66,6 @@ export async function bearer(env: Env, header: string | undefined): Promise<Toke
   return row ? { ...row, device } : null
 }
 
-/** What the settings show, behind the ordinary session: the clients that
- *  signed in through OAuth, and the pasted token if there is one. */
 export const mcpAdmin = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 mcpAdmin.get('/token', async (context) => {
@@ -111,7 +92,6 @@ mcpAdmin.get('/token', async (context) => {
     }>()
 
   return context.json({
-    // The secret itself is never returned again; only that one exists.
     exists: !!row,
     readOnly: row ? !!row.read_only : true,
     createdAt: row?.created_at ?? null,
@@ -127,20 +107,14 @@ mcpAdmin.get('/token', async (context) => {
 })
 
 mcpAdmin.post('/token', async (context) => {
-  // A body that says nothing is a body: asking for a token without one means a
-  // read-only token, so `undefined` - no body at all - is let through, while a body
-  // that parsed to a list or a number is a client's mistake. See objectBody.
   const body = await objectBody(context)
   if (body === null) return context.json({ error: NOT_AN_OBJECT }, 400)
 
-  // Read-only unless writing is asked for in as many words, so a request that
-  // says nothing cannot hand out more than the person meant.
   const asked = body?.readOnly
   if (asked !== undefined && typeof asked !== 'boolean') {
     return context.json({ error: 'readOnly must be true or false' }, 400)
   }
 
-  // The session asking: the token lives only as long as it does; see liveToken.
   const session = await sha256(tokenIn(context.req.header('authorization')) ?? '')
   const token = await issueToken(context.env, context.get('user').id, asked !== false, session)
   return context.json({ token })
@@ -154,8 +128,6 @@ mcpAdmin.delete('/token', async (context) => {
   return context.json({ ok: true })
 })
 
-/** Disconnects one client. Its tokens stop working at once; it has to sign
- *  the person in again to come back. */
 mcpAdmin.delete('/clients/:id', async (context) => {
   await context.env.DB.prepare('delete from oauth_grants where id = ? and user_id = ?')
     .bind(context.req.param('id'), context.get('user').id)

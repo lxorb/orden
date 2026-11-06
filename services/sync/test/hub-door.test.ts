@@ -1,7 +1,3 @@
-/** The door to a hub: which sockets it lets in, as whom, and to which hub. The
- *  namespace here leads nowhere and keeps what the door told it, the way the room
- *  door's tests watch it decide; see room.ts `doorway`. */
-
 import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
@@ -9,7 +5,6 @@ import { call, signIn, type TestEnv, testEnv } from './harness'
 
 const DEVICE = 'device-laptop'
 
-/** A namespace that answers every ask and remembers what it was told. */
 function doorway(): { HUB: DurableObjectNamespace; asked: { id: string; headers: Headers }[] } {
   const asked: { id: string; headers: Headers }[] = []
   const namespace = {
@@ -17,7 +12,6 @@ function doorway(): { HUB: DurableObjectNamespace; asked: { id: string; headers:
     get: (id: unknown) => ({
       fetch: (request: Request) => {
         asked.push({ id: String(id), headers: request.headers })
-        // Not 101: a Response cannot be made with that status outside the runtime.
         return Promise.resolve(new Response(null, { status: 200 }))
       },
     }),
@@ -41,8 +35,6 @@ describe('the hub door', () => {
     env.close()
   })
 
-  /** A session for an address, with the clock moved past the gap between two codes
-   *  to one address so the next sign-in can have one. */
   async function session(email: string): Promise<string> {
     const token = await signIn(env, email)
     vi.setSystemTime(Date.now() + 31_000)
@@ -69,7 +61,6 @@ describe('the hub door', () => {
     const answer = await knock([subprotocol(token), `nib.device.${DEVICE}`])
 
     expect(answer.status).toBe(200)
-    // The device's protocol is named back, and the token is not.
     expect(answer.headers.get('sec-websocket-protocol')).toBe(`nib.device.${DEVICE}`)
 
     const [asked] = door.asked
@@ -118,15 +109,12 @@ describe('the hub door', () => {
       )
       .run(DEVICE, userId('a@example.com'))
 
-    // Another account naming it.
     const theirs = await knock([subprotocol(other), `nib.device.${DEVICE}`])
     expect(theirs.status).toBe(403)
 
-    // Another live session of the same account naming it.
     const again = await session('a@example.com')
     expect((await knock([subprotocol(again), `nib.device.${DEVICE}`])).status).toBe(409)
 
-    // The session it said hello with.
     expect((await knock([subprotocol(first), `nib.device.${DEVICE}`])).status).toBe(200)
   })
 
@@ -167,7 +155,6 @@ describe('the hub door', () => {
 
     const asked = door.asked.at(-1)
     expect(asked?.headers.get('x-nib-guest')).toBe('yes')
-    // The sign-in, so that signing out can find this socket; a guest's has no id.
     expect(asked?.headers.get('x-nib-session')).toBe(await sha256(guest))
     expect(asked?.id).toBe(joined.json.guest.id)
     expect(asked?.id).not.toBe(userId('owner@example.com'))

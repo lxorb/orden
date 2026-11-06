@@ -1,7 +1,3 @@
-/** The switch that moves an account's devices to sync v2: 1 for every account until it
- *  is flipped, and said by `/v1/me`, which is where the app reads it as it starts. See
- *  migrations/0040_sync2_tree.sql and docs/sync-v2.md section 11. */
-
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 

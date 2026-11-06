@@ -1,8 +1,3 @@
-/** The connector hands claude.ai the words of notes somebody else may have written
- *  inside the same untrusted mark the local server uses (docs/agent-native.md 9.6),
- *  and its instructions say what the mark means. A space only the account is in
- *  stays unmarked. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
@@ -33,7 +28,6 @@ beforeEach(async () => {
   home = (await call(env, '/v1/spaces', { token, body: { name: 'Home' } })).json.space.id
   await note(token, home, 'Finances.md', '# Finances\n- [ ] Pay rent\nmine alone\n')
 
-  // Bob's space, shared with the reader to write in.
   const bob = await signIn(env, 'bob@example.com')
   team = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space.id
   await note(bob, team, 'Plan.md', `# Plan\n- [ ] Ship it\n${BOB}\n`)

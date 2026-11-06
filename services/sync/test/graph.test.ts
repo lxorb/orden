@@ -18,13 +18,11 @@ function put(graph: unknown) {
   return call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph } })
 }
 
-/** What the space listing says about the picture, which is how the app reads it. */
 async function listed() {
   const { json } = await call(env, '/v1/spaces', { token })
   return json.spaces.find((one) => one.id === space)?.graph
 }
 
-/** The column as somebody else's build left it, which no route would write. */
 function column(raw: string) {
   env.db.prepare('update spaces set graph = ? where id = ?').run(raw, space)
 }
@@ -97,7 +95,6 @@ describe('what a space may say about its graph', () => {
     const set = await put({ spread: 400, gather: true, depth: 9 })
 
     expect(set.json.graph).toEqual({ spread: 4, gather: true, depth: 5 })
-    // And the whole of what the card's slider reaches is kept as it arrived.
     expect((await put({ depth: 4 })).json.graph).toEqual({ depth: 4 })
     expect((await put({ depth: 0 })).json.graph).toEqual({ depth: 1 })
   })
@@ -146,8 +143,6 @@ describe('what a space may say about its graph', () => {
       groups: [{ query: 'tag:work', colour: 99 }, { query: 'path:x' }, { colour: 3 }],
     })
 
-    // An entry with no query key is not a group at all. One whose query is empty
-    // is the row the card has just added, and that one is kept.
     expect(set.json.graph).toEqual({
       groups: [
         { query: 'tag:work', colour: 6 },
@@ -157,8 +152,6 @@ describe('what a space may say about its graph', () => {
   })
 })
 
-/** The column is written whole by clients, so a newer app may have left something
- *  in it this build has never heard of. Read, not trusted. */
 describe('reading the column back', () => {
   test('keeps what reads as a setting and leaves the rest', async () => {
     column('{"arrows":true,"filter":"plan","somethingElse":{"deep":1}}')

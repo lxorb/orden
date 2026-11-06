@@ -1,37 +1,3 @@
-/** One person's machine: the one door and the one fan-out (docs/online-terminal.md,
- *  4.4 and 4.6).
- *
- *  A Durable Object named by the machine's id. It holds the people's sockets through
- *  the hibernation API, so a machine asleep with a tab open costs nothing, and while
- *  the machine is awake it holds one link to `nibd` inside it. Every byte a session
- *  prints comes up that link once and goes out to every socket on the session, each at
- *  its own offset; everything typed is checked against the socket's right to type
- *  before it goes down.
- *
- *  The machine wakes when its owner puts one of its terminals on screen or presses
- *  Start, and decides about sleeping itself, on an alarm each minute while awake, by
- *  the one rule of 4.4 (`awake`). Going to sleep saves: `nibd` writes every screen, the
- *  root filesystem is snapshotted, the home goes to R2, and the instance stops. Waking
- *  boots from the snapshot when there is a good one, and otherwise from the image with
- *  the home put back from R2 (4.3).
- *
- *  An awake machine is either working or says it is not. The link to `nibd` is pinged;
- *  a link that goes quiet or closes is made again, and where it cannot be, the machine
- *  is saved as far as it can be and started afresh, its sockets told `starting` and
- *  then `awake` (`recover`). A wake never waits on the home's backup: the machine is
- *  awake at once, and its sessions open once the home is back or could not be.
- *
- *  What the door decided about a socket lives on the socket, and the minute alarm asks
- *  the rows again for all of them at once, so a file trashed or a person taken out of a
- *  space closes what it should within a minute even when nothing told the object; the
- *  routes that change access tell it at once besides (`revoke`, `typing`, `end`).
- *
- *  A machine on a host that is always on (a Hetzner server, 4.15) is never put to sleep
- *  but by a kill switch, and keeps no snapshot or backup: its disk is a disk. It is awake
- *  once `nibd` answers; a server still setting itself up, or one whose `nibd` stopped
- *  answering, is waited for on the alarm (`waitForNibd`), and one that does not come
- *  back is power-cycled through the host's API. */
-
 import { BEAT, BEAT_ANSWER } from '@orden/sync-core/wire'
 import { randomToken } from '../crypto'
 import { note } from '../failed'
@@ -86,85 +52,46 @@ import { reachAgain } from './reach'
 import { stillSignedIn } from '../signins'
 import { serviceOf } from './service'
 
-/** Work nothing waits for - a heartbeat's, a socket's, a link event's - with whatever it
- *  throws written down. Left to reject on its own, it is an unhandled rejection that
- *  names neither the machine nor what it was doing. */
 function aside(at: string, work: Promise<unknown>): void {
   work.catch((error: unknown) => {
     note(at, error, null)
   })
 }
 
-/** The image the machine boots, by its name in wrangler.jsonc's `images`. */
 const IMAGE = 'machine'
 
-/** The home `nibd` keeps the person in, and what its backup leaves out: what any
- *  package manager fetches again (4.3). */
 const HOME = '/home/nib'
 
-/** How often the alarm looks, while awake. */
 const MINUTE = 60_000
-/** A person is active while they said hello or typed in the last five minutes. */
 const ACTIVE_FOR = 5 * MINUTE
-/** Reports older than this say nothing to the awake rule any more. */
 const RECENT_FOR = 15 * MINUTE
-/** What the breaker gives an awake machine before it sleeps. */
 const BUDGET_GRACE = 10 * MINUTE
-/** How long a snapshot is good for, from its making or its last restore. */
 const SNAPSHOT_KEPT = 30 * 24 * 60 * MINUTE
-/** How old the home's backup may be before a sleep writes a new one. */
 const BACKUP_EVERY = 6 * 60 * MINUTE
-/** How long the sleep waits for `nibd` to say every screen is saved, and for the
- *  instance to stop after SIGTERM. */
 const SAVE_WAIT = 15_000
 const STOP_GRACE = 15_000
-/** The most a host call may take before the machine gives up on it: a call with no answer
- *  must never leave the machine starting or stopping for good. */
 const START_LIMIT = 90_000
 const RESTORE_LIMIT = 120_000
 const SAVE_LIMIT = 120_000
-/** How long a link to `nibd` may take to make: the host's own tries are about ten
- *  seconds of a cold start. */
 const LINK_LIMIT = 20_000
-/** A restart's snapshot is of a machine that stopped answering, taken so that what is on
- *  its disk survives the restart; it gets less time than a sleep's. */
 const RESTART_SAVE_LIMIT = 60_000
 
-/** How long somebody counts as typing after a key. */
 const TYPING_FOR = 2_000
-/** How often a socket's `seen` is written back to it, at most. */
 const SEEN_EVERY = MINUTE
-/** How many addresses a machine may have opened on its owner's computer in a minute,
- *  and how many sign-in callbacks it may be asked to make: a program in a loop opens
- *  a few tabs and then nothing, never a wall of them (docs/online-terminal.md 4.13). */
 const OPENS_A_MINUTE = 10
 const CALLBACKS_A_MINUTE = 10
 
-/** How long Settings' list waits for `nibd` to say what it has. */
 const LIST_WAIT = 3_000
 
-/** How often a machine that is always on is asked for `nibd` while it is set up or comes
- *  back; how long its first boot may take (cloud-init installs everything, a few
- *  minutes); how long one that stopped answering is waited for before it is
- *  power-cycled, and then for its reboot. */
 const PROVISION_EVERY = 10_000
-/** One that stopped answering is looked for sooner at first: a `nibd` that ended is
- *  started again by systemd in about three seconds (`RestartSec=2`, then `nib-update`),
- *  which a flat ten seconds between looks turned into fifteen (issue 208). The looks
- *  come at half the time waited so far, from one second up to `PROVISION_EVERY`. */
 const FIRST_LOOK = 1_000
 const FIRST_BOOT_LIMIT = 20 * MINUTE
 const REBOOT_AFTER = 3 * MINUTE
 const REBOOT_LIMIT = 10 * MINUTE
-/** A `nibd` that goes quiet again this soon after it was linked again is restarted. */
 const SILENT_AGAIN = 5 * MINUTE
 
-/** Storage keys. */
 const ME = 'me'
-/** The machine's host kind, kept here too: an erased account's row is gone before its
- *  object is emptied, and the object must still know what to take away. */
 const HOST = 'host'
-/** An always-on machine being waited for (`Provision`). */
 const PROVISION = 'provision'
 const STATE = 'state'
 const DOWN = 'down'
@@ -174,12 +101,9 @@ const GRACE = 'grace'
 const RESTORED = 'restored'
 const KEPT_ABOVE = 5
 const REFUSED_SOCKET = 'refused'
-/** Sessions ended while there was no link to say it on, said on the next one. */
 const ENDING = 'ending'
 
-/** What a wake reads of the machine's row: its snapshot and backup. */
 interface Booted {
-  /** The Hetzner server under it, where there is one already (4.15). */
   server_id: number | null
   snapshot: string | null
   snapshot_at: number | null
@@ -187,7 +111,6 @@ interface Booted {
   backup: string | null
 }
 
-/** What the door decided about a socket, kept on it across a hibernation. */
 export interface Viewer {
   who: string
   device: string
@@ -199,40 +122,27 @@ export interface Viewer {
   typing: Typing
   cols: number
   rows: number
-  /** When this person last said hello or typed, by the object's clock. */
   seen: number
-  /** The hash of the sign-in the socket arrived with, which it lasts no longer than.
-   *  Empty on a socket let in before sockets carried one. */
   login?: string
-  /** The name the device gave itself, which another device is told it by. */
   name?: string
-  /** Whether the socket said it takes part in the session's lock (locks/holding.ts): an
-   *  Orden from before it does not, and is let drive as it always was. */
   hold?: boolean
-  /** Whether another device holds the session, so this socket is sent nothing of it;
-   *  and whether it held the session itself until that one took it. */
   parked?: boolean
   lost?: boolean
 }
 
-/** The tag a socket is found by through the sign-in it arrived with. */
 const loginTag = (login: string) => `login:${login}`
 
-/** Who the machine is: its id and its owner. */
 interface Me {
   id: string
   user: string
 }
 
-/** An always-on machine being waited for: since when, why - a `boot` (made, or powered
- *  on) or a `recover` (its `nibd` stopped answering) - and whether it was power-cycled. */
 interface Provision {
   since: number
   why: 'boot' | 'recover'
   rebooted: boolean
 }
 
-/** What a session last said, kept for the joiners after it. */
 interface SessionNews {
   program?: Extract<ServerFrame, { t: 'program' }>
   ended?: Extract<ServerFrame, { t: 'ended' }>
@@ -242,7 +152,6 @@ interface SessionNews {
 const OPEN = 1
 const encoder = new TextEncoder()
 
-/** `promise`, or an error once `ms` pass without it settling. */
 function capped<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | null = null
   const late = new Promise<never>((_, fail) => {
@@ -262,50 +171,30 @@ function viewerOf(socket: WebSocket): Viewer | null {
 }
 
 export class Machine implements DurableObject {
-  /** The host a test handed in, which every other choice yields to. */
   private readonly given: MachineHost | null
-  /** The host, once its kind is known: machines.host, kept in storage as well. */
   private made: { kind: HostKind; host: MachineHost } | null = null
   private link: WebSocket | null = null
   private waking: Promise<void> | null = null
-  /** Each socket's next offset: what it has drawn up to; -1 for a socket waiting for a
-   *  screen. In memory: the link is, too, and a new link resets them all. */
   private readonly next = new Map<WebSocket, number>()
-  /** Who typed last on each session, for the size (4.6). */
   private readonly typed = new Map<string, Typed[]>()
-  /** Where each session's output has reached, from the frames that came up. */
   private readonly ends = new Map<string, number>()
   private readonly news = new Map<string, SessionNews>()
-  /** Input frames each person sent this second, for the rate. */
   private readonly rate = new Map<string, { second: number; count: number }>()
   private readonly lastKey = new Map<string, number>()
-  /** The owner's device whose keys reached each session last: where an address a program in it
-   *  asks a browser for is opened. */
   private readonly lastDevice = new Map<string, string>()
-  /** When this minute's opens and callbacks began, and how many there were. */
   private opens = { minute: 0, count: 0 }
   private callbacks = { minute: 0, count: 0 }
-  /** Activity and egress since the meter last counted. */
   private pending = { cpuS: 0, egressBytes: 0, homeBytes: -1 }
   private saved: (() => void) | null = null
-  /** A sleep running in this instance; a `stopping` kept without one was cut short. */
   private sleeping = false
-  /** When the link last said anything. */
   private heard = 0
-  /** A link being made again, or the machine restarted, after the last one died. */
   private recovering: Promise<void> | null = null
-  /** The home being put back from its backup after a fresh start; sessions open after. */
   private restoring: Promise<void> | null = null
-  /** The disk `nibd` last said, and whether its being full was said to the sockets. */
   private disk: Disk | null = null
   private diskSaid = false
-  /** When a link that went quiet was last made again, for one that keeps going quiet. */
   private relinked = 0
-  /** A sleep that backs the home up whatever its age: before the machine moves host. */
   private backupNow = false
-  /** Settings' lists waiting for `nibd` to say every session it has. */
   private listing: ((sessions: SessionNow[] | null) => void)[] = []
-  /** Who of the sockets holds each session: one device at a time (locks/sockets.ts). */
   private readonly lock: SocketLock<Viewer>
 
   constructor(
@@ -326,11 +215,9 @@ export class Machine implements DurableObject {
         this.people(session)
       },
     })
-    // The app's heartbeat, answered without waking the object (lib/online/link.ts).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
   }
 
-  /** The host this machine runs on (4.15): asked of its row once, then kept. */
   private async host(): Promise<MachineHost> {
     if (this.given) return this.given
     const kind = await this.kind()
@@ -352,8 +239,6 @@ export class Machine implements DurableObject {
     }
     return (await this.ctx.storage.get<HostKind>(HOST)) ?? 'cloudflare'
   }
-
-  /* ── Requests ─────────────────────────────────────────────────────────── */
 
   async fetch(request: Request): Promise<Response> {
     const headers = request.headers
@@ -399,7 +284,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** The machine's id and owner, said by every request a route makes. */
   private async remember(headers: Headers): Promise<void> {
     const id = headers.get('x-nib-id')
     const user = headers.get('x-nib-user')
@@ -417,9 +301,6 @@ export class Machine implements DurableObject {
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
 
-  /** A socket the door let in. Apart from `fetch` so a test can drive it with no
-   *  runtime to make the pair. `wake` is `yes` where the owner's socket may wake the
-   *  machine, or why it may not. */
   async enter(server: WebSocket, viewer: Viewer, wake: string): Promise<void> {
     const invitedWriter = !viewer.guest && viewer.role === 'write'
     const room = viewer.owns ? MOST_SOCKETS : MOST_SOCKETS - KEPT_ABOVE * (invitedWriter ? 1 : 2)
@@ -470,7 +351,6 @@ export class Machine implements DurableObject {
     if (!viewer) return
 
     if (typeof message !== 'string') {
-      // Held by another device: nothing it types goes anywhere (locks/holding.ts).
       if (!viewer.parked) this.input(socket, viewer, new Uint8Array(message))
       return
     }
@@ -493,7 +373,6 @@ export class Machine implements DurableObject {
       }
       case 'take':
         if (!drives(viewer)) this.say(socket, { t: 'refused', error: 'role' })
-        // The socket says hello again once it holds it, and is sent what it missed.
         else if (await this.lock.claim(socket, true)) this.say(socket, { t: 'hold' })
         break
       case 'leave':
@@ -534,23 +413,16 @@ export class Machine implements DurableObject {
     this.next.delete(socket)
     const viewer = viewerOf(socket)
     if (!viewer) return
-    // A holder that dropped keeps the session for its grace, to come back to.
     if (drives(viewer) && !viewer.parked) await this.lock.settle(viewer.session, socket)
     this.people(viewer.session, socket)
     const me = await this.me()
     if (me) await audit(this.env, me.id, 'close', { who: viewer.who, device: viewer.device })
   }
 
-  /* ── The app's frames ─────────────────────────────────────────────────── */
-
-  /** A socket saying what it last drew. It is sent what came after, or a screen. */
   private async hello(socket: WebSocket, viewer: Viewer, since?: number): Promise<void> {
     socket.serializeAttachment({ ...viewer, seen: Date.now() })
     this.next.set(socket, since ?? -1)
     this.ensureOpen(viewer)
-    // Before anybody typed, the pty is the size of whoever may type and arrived; after,
-    // the latest typist's (4.6). The device holding the session is the one typing on
-    // it, so a phone that takes it over gets a terminal that fits it at once.
     if (drives(viewer)) this.typedBy(viewer, Date.now())
     else if (maySocketType(viewer) && !this.typed.get(viewer.session)?.length) {
       this.tell(viewer.session, {
@@ -561,18 +433,13 @@ export class Machine implements DurableObject {
       })
     }
     this.tell(viewer.session, { t: 'want', session: viewer.session, since: since ?? 0 })
-    // A link gone under an awake machine is made again now, not at the next minute: a
-    // terminal opened meanwhile says so and waits a bounded while, never for ever.
     if (!this.link) aside('machine recover', this.recover())
 
-    // The owner putting a sleeping machine's terminal on screen wakes it.
     if (viewer.owns && (await this.state()) === 'asleep' && (await this.mayWake()) === null) {
       await this.wake()
     }
   }
 
-  /** Whether a frame of input `size` bytes long may go down the link: from somebody who
-   *  may type, no larger than a frame may be, and inside their rate. Says why not. */
   private admitted(socket: WebSocket, viewer: Viewer, size: number): boolean {
     if (!maySocketType(viewer)) {
       this.say(socket, { t: 'refused', error: 'role' })
@@ -597,10 +464,6 @@ export class Machine implements DurableObject {
     if (!this.admitted(socket, viewer, data.length)) return
     const now = Date.now()
 
-    // Down the link before anything else is done with it, and nothing on the way waits:
-    // no storage, no query, no await. A key is a round trip the typist feels, and the
-    // bookkeeping after it is nobody's wait. Only the size goes first, so the key lands
-    // at the typist's size (4.6).
     const wasTyping = now - (this.lastKey.get(viewer.who) ?? 0) < TYPING_FOR
     this.lastKey.set(viewer.who, now)
     if (viewer.owns) this.lastDevice.set(viewer.session, viewer.device)
@@ -610,8 +473,6 @@ export class Machine implements DurableObject {
     if (!this.link) aside('machine recover', this.recover())
 
     if (now - viewer.seen > SEEN_EVERY) socket.serializeAttachment({ ...viewer, seen: now })
-    // Said to everybody else: the typist knows they typed, and on a slow link a frame
-    // per key back to them is a frame their echo queues behind.
     this.toSession(
       viewer.session,
       { t: 'typed', who: viewer.who, seq: this.ends.get(viewer.session) ?? 0 },
@@ -620,7 +481,6 @@ export class Machine implements DurableObject {
     if (!wasTyping) this.people(viewer.session)
   }
 
-  /** A typist's first key makes the pty their size (tmux's `latest`). */
   private typedBy(viewer: Viewer, at: number): void {
     const list = (this.typed.get(viewer.session) ?? []).filter((one) => one.who !== viewer.who)
     list.push({ who: viewer.who, at, cols: viewer.cols, rows: viewer.rows })
@@ -653,7 +513,6 @@ export class Machine implements DurableObject {
     return sizeOf(this.typed.get(viewer.session) ?? []) ?? { cols: viewer.cols, rows: viewer.rows }
   }
 
-  /** Resume (4.7): the saved agent's own continue command, typed by the owner's hand. */
   private async resume(socket: WebSocket, viewer: Viewer): Promise<void> {
     if (!viewer.owns) {
       this.say(socket, { t: 'refused', error: 'role' })
@@ -667,8 +526,6 @@ export class Machine implements DurableObject {
     if (me) await audit(this.env, me.id, 'resume', { who: viewer.who, device: viewer.device })
   }
 
-  /** A part of a picture pasted into the session (4.13): input, as far as who may send
-   *  it and how often, and down the link as its bytes for `nibd` to write. */
   private image(
     socket: WebSocket,
     viewer: Viewer,
@@ -687,8 +544,6 @@ export class Machine implements DurableObject {
     if (!this.link) aside('machine recover', this.recover())
   }
 
-  /** Where a pasted picture was written: to everybody on the session who may type, which
-   *  is who could have sent it, and who could find it there anyway. */
   private imaged(session: string, frame: Extract<ServerFrame, { t: 'image' }>): void {
     for (const socket of this.ctx.getWebSockets(session)) {
       const viewer = viewerOf(socket)
@@ -696,12 +551,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /* ── The owner's computer ──────────────────────────────────────────────── */
-
-  /** An address a program in a session asked a browser for: to one socket of the
-   *  machine's owner on that session - the device that typed there last, or else the
-   *  one there longest awake - and to nobody else. A watcher in somebody's space is
-   *  never sent a page by their machine (4.13). */
   private browse(session: string, url: string): void {
     if (!within(this.opens, OPENS_A_MINUTE)) return
     const owners = this.ctx.getWebSockets(session).flatMap((socket) => {
@@ -717,8 +566,6 @@ export class Machine implements DurableObject {
     if (chosen) this.say(chosen.socket, { t: 'browse', url })
   }
 
-  /** A tab the owner's Orden opened landed on the program's own sign-in callback: that
-   *  request, made on the machine, where the program listens. The owner's alone. */
   private callback(socket: WebSocket, viewer: Viewer, url: string): void {
     if (!viewer.owns) {
       this.say(socket, { t: 'refused', error: 'role' })
@@ -731,25 +578,14 @@ export class Machine implements DurableObject {
     this.tell(viewer.session, { t: 'callback', session: viewer.session, url })
   }
 
-  /** How a callback was answered, to the owner's sockets on that session. */
   private called(session: string, frame: Extract<ServerFrame, { t: 'called' }>): void {
     for (const socket of this.ctx.getWebSockets(session)) {
       if (viewerOf(socket)?.owns) this.say(socket, frame)
     }
   }
 
-  /* ── The link to nibd ─────────────────────────────────────────────────── */
-
   private opened = new Set<string>()
 
-  /** The session open in `nibd`, at the size it should be, once per link - and not while
-   *  the home is being put back, which would leave its shell in the home being replaced.
-   *  Nor for a watcher on a session whose shell ended: `open` on an ended session starts
-   *  its shell again (nibd.ts), which is `start`'s to ask for and refused to whoever may
-   *  not type, so a reader or a link's guest opening the terminal, or coming back to it,
-   *  would otherwise start the owner's program for them. They watch it ended. `news` is
-   *  gone once this object restarts, so `nibd` is told it is a watcher too, and such an
-   *  open does not count: somebody who may type still opens after it. */
   private ensureOpen(viewer: Viewer): void {
     if (!this.link || this.restoring || this.opened.has(viewer.session)) return
     const size = this.sizeFor(viewer)
@@ -762,8 +598,6 @@ export class Machine implements DurableObject {
     this.tell(viewer.session, { t: 'open', session: viewer.session, ...size })
   }
 
-  /** Every session `nibd` has, tabs open on it or not, for Settings' list; null where
-   *  there is no link to ask (a machine asleep, or one being made again). */
   private sessions(): Promise<SessionNow[] | null> {
     if (!this.link) return Promise.resolve(null)
     const answered = new Promise<SessionNow[] | null>((resolve) => {
@@ -776,7 +610,6 @@ export class Machine implements DurableObject {
     return answered
   }
 
-  /** One frame down the link, if there is one. */
   private tell(_session: string, frame: MachineFrame): void {
     if (!this.link) return
     try {
@@ -794,7 +627,6 @@ export class Machine implements DurableObject {
     try {
       link = await capped(asked, LINK_LIMIT, 'link')
     } catch (error) {
-      // A link that turns up after it was given up on is nobody's.
       asked.then(
         (late) => {
           try {
@@ -807,9 +639,6 @@ export class Machine implements DurableObject {
       )
       throw error
     }
-    // Binary frames as bytes, read in order: since the standard binary type
-    // (compatibility date 2026), the runtime hands a socket's binary messages over as
-    // Blobs, which no frame check reads.
     link.binaryType = 'arraybuffer'
     this.link = link
     this.heard = Date.now()
@@ -835,8 +664,6 @@ export class Machine implements DurableObject {
       this.pulse(link, beat)
     }, PING_EVERY)
 
-    // An End said while the link was down: `nibd` ends the session now, so its program
-    // does not run on in its holder with nobody left to reach it.
     for (const session of (await this.ctx.storage.get<string[]>(ENDING)) ?? []) {
       this.tell(session, { t: 'close', session })
     }
@@ -844,10 +671,6 @@ export class Machine implements DurableObject {
     this.reopen()
   }
 
-  /** The heartbeat (docs/online-terminal.md 4.6): a ping down the link, and a link that
-   *  has said nothing at all for `QUIET_FOR` - no pong, no output, no activity - is
-   *  dead whether or not it ever closes. A half-open link is what 2026-10-06's frozen
-   *  terminal was: no output, keys going nowhere, new terminals waiting for ever. */
   private pulse(link: WebSocket, beat: ReturnType<typeof setInterval>): void {
     if (this.link !== link) {
       clearInterval(beat)
@@ -861,12 +684,10 @@ export class Machine implements DurableObject {
     this.tell('', { t: 'ping' })
   }
 
-  /** Every session somebody is on, opened again and asked for what they need. */
   private reopen(): void {
     if (!this.link || this.restoring) return
     const sessions = new Map<string, Viewer>()
     for (const socket of this.ctx.getWebSockets()) {
-      // Somebody who may type before a watcher, whose `open` an ended session would not take.
       const viewer = viewerOf(socket)
       const held = viewer && sessions.get(viewer.session)
       if (viewer && (!held || (!maySocketType(held) && maySocketType(viewer))))
@@ -878,7 +699,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** What `nibd` said. Exposed to the tests, which have no link to listen on. */
   async fromNibd(frame: NibdFrame): Promise<void> {
     switch (frame.t) {
       case 'out':
@@ -918,7 +738,6 @@ export class Machine implements DurableObject {
         this.news.set(frame.session, { ...this.news.get(frame.session), ended: said })
         this.opened.delete(frame.session)
         this.toSession(frame.session, said)
-        // Settings' list says which sessions have a shell running.
         const me = await this.me()
         if (me) await askHub(this.env, me.user, 'terms')
         return
@@ -946,11 +765,9 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** Output, to every socket on the session from where each of them is. */
   private out(session: string, seq: number, data: Uint8Array): void {
     const end = seq + data.length
     this.ends.set(session, Math.max(this.ends.get(session) ?? 0, end))
-    // Output after `ended` is a new shell: the old code is no news to a joiner.
     const news = this.news.get(session)
     if (news?.ended) {
       const { program, size } = news
@@ -960,10 +777,7 @@ export class Machine implements DurableObject {
     for (const socket of this.ctx.getWebSockets(session)) {
       const next = this.next.get(socket) ?? -1
       if (next === -1) {
-        // Held by another device: sent nothing of the session (locks/holding.ts).
         if (viewerOf(socket)?.parked) continue
-        // Waiting for a screen: a stream from the very start is as good as one, drawn
-        // on a cleared terminal.
         if (seq !== 0) continue
         this.say(socket, { t: 'screen', seq: 0, cols: 80, rows: 24, data: '' })
         this.send(socket, outFrame(0, data))
@@ -972,7 +786,6 @@ export class Machine implements DurableObject {
       }
       if (end <= next) continue
       if (seq > next) {
-        // A gap: ask for what came after what it drew, or a screen.
         this.next.set(socket, -1)
         this.tell(session, { t: 'want', session, since: next })
         continue
@@ -987,18 +800,13 @@ export class Machine implements DurableObject {
       (old) => one.at - old.at <= RECENT_FOR,
     )
     recent.push({ ...one, at: Date.now() })
-    // Unconfirmed: a confirmed write holds every frame the object sends until it is
-    // durable, keystroke echoes included, and a report lost to a crash costs nothing.
     await this.ctx.storage.put(RECENT, recent, { allowUnconfirmed: true })
-    // CPU as a share of the machine's vCPUs over the 30 s the report covers.
     this.pending.cpuS += one.cpu * SMALL.vcpu * 30
     this.pending.egressBytes += one.net
     this.pending.homeBytes = one.homeBytes
     if (one.disk) this.diskIs(one.disk)
   }
 
-  /** The disk as `nibd` said it: kept for the row, and said under every screen once it
-   *  is nearly full, and to every socket that joins while it is (4.15). */
   private diskIs(disk: Disk): void {
     this.disk = disk
     const full = diskFull(disk)
@@ -1006,11 +814,6 @@ export class Machine implements DurableObject {
     this.diskSaid = full
   }
 
-  /** The link went quiet (`silent`) or closed under an awake machine, or an object that
-   *  restarted (every deploy restarts it) has none: made again, and where that fails,
-   *  the machine restarted. Its sockets are told the link is down meanwhile, so a frozen
-   *  terminal never takes keys it cannot send, and up once it is back; `starting` only
-   *  where the machine is restarted. Once, however many ask. */
   private recover(silent = false): Promise<void> {
     this.recovering ??= this.recoverNow(silent).finally(() => {
       this.recovering = null
@@ -1019,7 +822,6 @@ export class Machine implements DurableObject {
   }
 
   private async recoverNow(silent: boolean): Promise<void> {
-    // A sleep or a wake running here has the link in hand already.
     if (this.sleeping || this.waking) return
     const dead = this.link
     this.link = null
@@ -1032,20 +834,12 @@ export class Machine implements DurableObject {
     const me = await this.me()
     if (!me) return
 
-    // The link, not the machine: it is awake and its sessions run on, so its terminals
-    // are told the way to it dropped rather than that it is starting (issue 962). They
-    // keep their screens and hold what is typed; a restart below, if the link cannot be
-    // made again, says `starting` itself.
     this.everybody({ t: 'link', up: false })
     try {
       await this.attachLink()
-      // Put to sleep meanwhile: the sleep has the machine now.
       if ((await this.state()) !== 'awake') return
       await audit(this.env, me.id, 'relink')
       this.everybody({ t: 'link', up: true })
-      // Only a link that went quiet says anything about `nibd`: one that closed was the
-      // way to it (the edge, the tunnel), and restarting `nibd` for that would redraw every
-      // terminal on the machine for nothing (issue 208).
       if (silent) await this.quietAgain(me)
       return
     } catch (error) {
@@ -1054,12 +848,6 @@ export class Machine implements DurableObject {
     await this.restart(me)
   }
 
-  /** A `nibd` whose link went quiet again within minutes of the last one that did answers
-   *  its link but not much else - a loop starved, a session wedged in it - so it is
-   *  restarted: told down the fresh link, it saves every screen and its supervisor
-   *  starts it again in a moment, and the link is made again after it (4.14). Every
-   *  program goes on in its holder meanwhile (4.16). Only on a machine that is always on;
-   *  a container is restarted whole instead. */
   private async quietAgain(me: Me): Promise<void> {
     const now = Date.now()
     const again = now - this.relinked < SILENT_AGAIN
@@ -1070,9 +858,6 @@ export class Machine implements DurableObject {
     await audit(this.env, me.id, 'restart', { detail: 'silent' })
   }
 
-  /** The owner's Restart on a machine that is always on, which stops nothing else: `nibd`
-   *  saves every screen and starts again, every program going on in its holder (4.16),
-   *  and the link is made again. */
   private async restartNibd(who: string | null): Promise<void> {
     const me = await this.me()
     if (!me || !this.link) return
@@ -1080,11 +865,6 @@ export class Machine implements DurableObject {
     await audit(this.env, me.id, 'restart', { who, detail: 'stopped' })
   }
 
-  /** A machine whose `nibd` will not link. A container: what is on its disk snapshotted
-   *  if it still runs (the home, and the screens `nibd` saved minutes ago), the instance
-   *  stopped, and a wake from that snapshot. A server that is always on: waited for on
-   *  the alarm while its supervisor starts `nibd` again, and power-cycled if it does not
-   *  come back (`waitForNibd`). */
   private async restart(me: Me): Promise<void> {
     if ((await this.host()).alwaysOn) {
       await this.waitFor('recover', false)
@@ -1102,14 +882,11 @@ export class Machine implements DurableObject {
     } finally {
       this.waking = null
     }
-    // Refused a wake (the month's hours, the budget, a hold): asleep, and says so.
     if ((await this.ctx.storage.get<MachineState>(STATE)) === 'starting') {
       await this.setState('asleep', 'restart')
     }
   }
 
-  /** An always-on machine waited for on the alarm, `starting` meanwhile: a server
-   *  setting itself up (`boot`), or one whose `nibd` stopped answering (`recover`). */
   private async waitFor(why: Provision['why'], rebooted: boolean): Promise<void> {
     const now = Date.now()
     const waiting = { since: now, why, rebooted } satisfies Provision
@@ -1118,10 +895,6 @@ export class Machine implements DurableObject {
     await this.ctx.storage.setAlarm(now + nextLook(waiting, now))
   }
 
-  /** One look for `nibd` on an always-on machine being waited for: linked, and awake;
-   *  or, for one that stopped answering, power-cycled once it has been gone a few
-   *  minutes - its supervisor starts a `nibd` that merely ended within seconds; or,
-   *  past every limit, asleep with `restart`, which its terminals offer to try again. */
   private async waitForNibd(): Promise<void> {
     const me = await this.me()
     const waiting = await this.ctx.storage.get<Provision>(PROVISION)
@@ -1152,14 +925,11 @@ export class Machine implements DurableObject {
       await this.setState('asleep', 'restart')
       return
     }
-    // Still starting, said again: a terminal waiting on a first boot's few minutes hears
-    // that it is not forgotten, and keeps waiting (lib/online/arrival.svelte.ts).
     this.everybody({ t: 'machine', state: 'starting' })
     const after = Date.now()
     await this.ctx.storage.setAlarm(after + nextLook(waiting, after))
   }
 
-  /** The server power-cycled through its host's API, and waited for again. */
   private async powerCycle(me: Me): Promise<void> {
     const host = await this.host()
     try {
@@ -1172,8 +942,6 @@ export class Machine implements DurableObject {
     await this.waitFor('recover', true)
   }
 
-  /** The admin's Reboot: an always-on machine power-cycled now, its link dropped, and
-   *  waited for as it comes back. Nothing on a host that sleeps. */
   private async reboot(): Promise<void> {
     const me = await this.me()
     if (!me || !(await this.host()).alwaysOn) return
@@ -1188,10 +956,6 @@ export class Machine implements DurableObject {
     await this.powerCycle(me)
   }
 
-  /** The machine moved to another host (4.15): asleep on the one it was on first - a
-   *  container saved one last time, its home backed up to R2 whatever the backup's age,
-   *  where it stays to be fetched by hand - then its row and this object pointed at the
-   *  other. Its owner's next terminal starts it there. */
   private async move(kind: HostKind): Promise<void> {
     const me = await this.me()
     if (!me) return
@@ -1207,11 +971,8 @@ export class Machine implements DurableObject {
     this.made = null
   }
 
-  /** A host call that failed, written down with why (audit.ts's `failureOf`). */
   private async failed(me: Me, step: Step, error: unknown): Promise<void> {
     note(`machine ${me.id} ${step}`, error, null)
-    // Said in the log above whatever becomes of its row: an audit that cannot be written
-    // must neither take the place of what failed nor stop what comes after it, a restart.
     await audit(this.env, me.id, 'failed', { detail: failureOf(step, error) }).catch(
       (failed: unknown) => {
         note(`machine ${me.id} audit`, failed, null)
@@ -1219,9 +980,6 @@ export class Machine implements DurableObject {
     )
   }
 
-  /* ── Awake and asleep ─────────────────────────────────────────────────── */
-
-  /** Wakes the machine, once however many ask at the same moment. */
   async wake(): Promise<void> {
     const state = await this.state()
     if (state === 'awake' && this.link) return
@@ -1260,9 +1018,6 @@ export class Machine implements DurableObject {
         await this.setState('asleep', error.refusal === 'budget' ? 'budget' : 'restart')
         return
       }
-      // A server that is there and not answering yet is waited for, not given up on:
-      // one just made sets itself up for minutes; one made before is power-cycled if
-      // it does not answer soon.
       if (host.alwaysOn && at.step === 'link') {
         await this.waitFor(row?.server_id ? 'recover' : 'boot', false)
         return
@@ -1275,7 +1030,6 @@ export class Machine implements DurableObject {
     await this.awoke(me, now, from)
   }
 
-  /** The machine linked: written down, and the minute's alarm set. */
   private async awoke(me: Me, now: number, from: Detail): Promise<void> {
     await this.env.DB.prepare(
       `update machines set woke_at = ?2,
@@ -1291,14 +1045,8 @@ export class Machine implements DurableObject {
     await this.ctx.storage.setAlarm(now + MINUTE)
   }
 
-  /** The machine up and linked, and how: the instance a sleep cut short left running,
-   *  taken as it is; one booted from a good snapshot of this image, which brings
-   *  everything back in one step; or a fresh one, whose home comes back from its backup
-   *  behind the wake (4.3, `restoreHome`). `at` says which step a throw came from. */
   private async boot(me: Me, row: Booted | null, now: number, at: { step: Step }): Promise<Detail> {
     const host = await this.host()
-    // Always on: whatever is missing made, the server powered on if it is off, and the
-    // link to the `nibd` that has been running there all along.
     if (host.alwaysOn) {
       await capped(host.start(me.id, IMAGE, await this.bootEnv(me, host)), START_LIMIT, 'start')
       at.step = 'link'
@@ -1347,10 +1095,6 @@ export class Machine implements DurableObject {
     return from
   }
 
-  /** What a new instance starts with: a new link secret, and the machine's clock in its
-   *  owner's zone (4.2) - the zone their newest device that said one is in, as push keeps
-   *  it; UTC for an account none of whose devices did. A server that is always on keeps
-   *  the secret it was made with, which is in its own files and nowhere else. */
   private async bootEnv(me: Me, host: MachineHost): Promise<Record<string, string>> {
     const kept = host.alwaysOn ? await this.ctx.storage.get<string>(SECRET) : undefined
     const secret = kept ?? randomToken()
@@ -1364,10 +1108,6 @@ export class Machine implements DurableObject {
     return { NIBD_SECRET: secret, TZ: zone?.zone ?? 'UTC' }
   }
 
-  /** The home put back from its backup while the machine is already awake, so a slow or
-   *  failed restore never holds a wake (2026-10-06: one held a machine `starting` for
-   *  minutes). The sessions open once it is done either way, never in a home about to be
-   *  replaced; a failed one is a line under each screen, and the fresh home stays. */
   private async restoreHome(me: Me, backup: string): Promise<void> {
     try {
       await capped((await this.host()).restore(me.id, { backup }), RESTORE_LIMIT, 'restore')
@@ -1381,14 +1121,11 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** Why the machine may not wake now, or null; see gate.ts. */
   private async mayWake(): Promise<Refusal | null> {
     const me = await this.me()
     return me ? await whyNotWake(this.env, me.user, Date.now()) : 'gone'
   }
 
-  /** The minute: count what was used, ask the rows again, and decide. Sooner while an
-   *  always-on machine is waited for. */
   async alarm(): Promise<void> {
     const state = await this.state()
     if (state === 'starting' && (await this.ctx.storage.get<Provision>(PROVISION))) {
@@ -1400,8 +1137,6 @@ export class Machine implements DurableObject {
     if (!me) return
     const now = Date.now()
 
-    // An object that came back without its link (a deploy restarts it) makes it again,
-    // or restarts the machine; see `recover`.
     if (!this.link) {
       await this.recover()
       if ((await this.state()) !== 'awake') return
@@ -1418,7 +1153,6 @@ export class Machine implements DurableObject {
     await this.ctx.storage.setAlarm(now + MINUTE)
   }
 
-  /** Why the machine sleeps now, or null to stay awake. */
   private async decide(me: Me, now: number): Promise<DownReason | null> {
     const service = await serviceOf(this.env)
     const row = await this.env.DB.prepare(
@@ -1429,10 +1163,7 @@ export class Machine implements DurableObject {
       .first<{ online: number; held: string | null; keep: number | null }>()
     if (row?.held) return row.held === 'flag' ? 'flag' : 'stopped'
 
-    // The service or the account switched off is an allowance of nothing, which the
-    // rule answers `off`.
     const on = service.on && row?.online === 1
-    // Always on, and paid by the month: nothing but a kill switch puts it down.
     if ((await this.host()).alwaysOn) return on ? null : 'off'
     const recent = (await this.ctx.storage.get<Activity[]>(RECENT)) ?? []
     const answer = awake(
@@ -1450,7 +1181,6 @@ export class Machine implements DurableObject {
     }
     if (answer.reason !== 'budget') return answer.reason
 
-    // The breaker gives an awake machine ten minutes and says so on its screens.
     const grace = await this.ctx.storage.get<number>(GRACE)
     if (grace === undefined) {
       await this.ctx.storage.put(GRACE, now + BUDGET_GRACE)
@@ -1471,7 +1201,6 @@ export class Machine implements DurableObject {
     })
   }
 
-  /** Sleeps the machine, saving as it goes: screens, the home, the root filesystem. */
   async sleep(reason: DownReason): Promise<void> {
     const state = await this.state()
     const me = await this.me()
@@ -1500,12 +1229,6 @@ export class Machine implements DurableObject {
     await this.setState('asleep', reason)
   }
 
-  /** Everything of a machine going down that can be kept, kept, and its instance
-   *  stopped: the screens (`nibd` asked, a bounded wait); the root filesystem's
-   *  snapshot, first, because it is what the next wake boots from and a deploy can cut a
-   *  sleep short at any moment (one did, twice: 2026-10-05 18:11 mid-snapshot and
-   *  2026-10-06 06:51 mid-backup); the home's backup when one is due; the stop. Every
-   *  step bounded, and every failure written down with its reason. */
   private async keep(
     me: Me,
     state: MachineState,
@@ -1523,8 +1246,6 @@ export class Machine implements DurableObject {
 
     const now = Date.now()
     const host = await this.host()
-    // A disk of its own needs no snapshot or backup, and a server that is always on is
-    // not stopped: put down by a kill switch, it is only unlinked.
     const keeps = state === 'awake' && !host.alwaysOn
     if (keeps) {
       try {
@@ -1575,7 +1296,6 @@ export class Machine implements DurableObject {
     await this.meterNow()
   }
 
-  /** What was used since the meter last counted, added to the month. */
   private async meterNow(): Promise<void> {
     const me = await this.me()
     if (!me) return
@@ -1590,7 +1310,6 @@ export class Machine implements DurableObject {
     }
     const home = this.pending.homeBytes
     this.pending = { cpuS: 0, egressBytes: 0, homeBytes: -1 }
-    // A server's month is its price, whatever it did (budget.ts); a container's is metered.
     if (!host.alwaysOn) await meter(this.env, me.user, now, used)
     await this.ctx.storage.put(METERED, now)
     if (this.disk) {
@@ -1605,10 +1324,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /* ── Access ───────────────────────────────────────────────────────────── */
-
-  /** Every socket's person and file asked of the rows again: what no longer reaches
-   *  closes, and what may no longer type is told so. */
   private async recheck(): Promise<void> {
     const me = await this.me()
     if (!me) return
@@ -1618,8 +1333,6 @@ export class Machine implements DurableObject {
     })
     if (!sockets.length) return
 
-    // The sign-ins first: a socket whose sign-in has ended closes, whoever it is, before
-    // anything is asked about what it reaches.
     const logins = [
       ...new Set(sockets.flatMap(({ viewer }) => (viewer.login ? [viewer.login] : []))),
     ]
@@ -1646,17 +1359,12 @@ export class Machine implements DurableObject {
       this.reattach(socket, { ...viewer, role: one.role, owns: one.owns, typing: one.typing })
     }
 
-    // A lock whose holder went while nothing was here to time its grace: an object
-    // evicted, a deploy.
     const held = new Set(sockets.flatMap(({ viewer }) => (viewer.parked ? [viewer.session] : [])))
     for (const session of held) await this.lock.settle(session)
   }
 
-  /** A socket's rights changed: kept on it, and said when typing changed. */
   private reattach(socket: WebSocket, viewer: Viewer): void {
     const before = viewerOf(socket)
-    // Who may only watch takes no part in the lock: one held off is let watch, and one
-    // that held it lets go of it, after its grace as a socket that went would.
     const watches = viewer.parked === true && !drives(viewer)
     socket.serializeAttachment(watches ? { ...viewer, parked: false, lost: false } : viewer)
     if (before && maySocketType(before) !== maySocketType(viewer)) {
@@ -1675,8 +1383,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** Somebody's access to a space ended or narrowed to reading, and these are the
-   *  terminals of that space on this machine. */
   private revoke(who: string, role: string | null, headers: Headers): void {
     const terms = new Set((headers.get('x-nib-terms') ?? '').split(',').filter(Boolean))
     for (const socket of this.ctx.getWebSockets(who)) {
@@ -1687,9 +1393,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** Sign-ins that ended - signed out, ended from another device, run out - and every
-   *  socket that arrived with one, the machine's owner's included: a laptop whose
-   *  session was ended keeps no shell open on anybody's machine. */
   private signedOut(logins: readonly string[]): void {
     for (const login of logins) {
       for (const socket of this.ctx.getWebSockets(loginTag(login))) {
@@ -1698,8 +1401,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** A session ended by its owner: the shell closed and every socket on it with it. With
-   *  no link just now, said on the next one. */
   private async end(session: string): Promise<void> {
     if (this.link) this.tell(session, { t: 'close', session })
     else {
@@ -1714,9 +1415,6 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** The machine gone for good: its sockets, its link, its instance or its server with
-   *  everything made for it, and the object's storage. A server that could not be deleted
-   *  yet answers 503, and the account's leftovers ask again tomorrow. */
   private async erase(id: string | null): Promise<Response> {
     const me = await this.me()
     const machine = me?.id ?? id
@@ -1732,8 +1430,6 @@ export class Machine implements DurableObject {
       if (!host.alwaysOn) await host.stop(machine, 0).catch(() => undefined)
       try {
         if (host.remove) await host.remove(machine)
-        // Whatever kind it was last known as, a server labelled with it is looked for
-        // wherever Hetzner is set up: a machine that moved leaves nothing behind.
         else if (!this.given) await hostOf('hetzner', this.ctx, this.env).remove?.(machine)
       } catch (error) {
         note(`machine ${machine} erase`, error, null)
@@ -1745,17 +1441,12 @@ export class Machine implements DurableObject {
     return new Response(null, { status: 204 })
   }
 
-  /* ── State and saying things ──────────────────────────────────────────── */
-
   private async me(): Promise<Me | null> {
     return (await this.ctx.storage.get<Me>(ME)) ?? null
   }
 
   async state(): Promise<MachineState> {
     const kept = (await this.ctx.storage.get<MachineState>(STATE)) ?? 'asleep'
-    // A deploy or eviction mid-sleep or mid-wake leaves `stopping` or `starting` behind
-    // with nothing in this instance finishing it.
-    // An always-on machine waited for on the alarm is starting with nothing running here.
     const orphan =
       (kept === 'stopping' && !this.sleeping) ||
       (kept === 'starting' && !this.waking && !(await this.ctx.storage.get(PROVISION)))
@@ -1770,8 +1461,6 @@ export class Machine implements DurableObject {
     return (await this.ctx.storage.get<DownReason>(DOWN)) ?? null
   }
 
-  /** A new state: kept, mirrored into the row, said to every socket and to every
-   *  device of the owner through their hub. */
   private async setState(state: MachineState, reason?: DownReason): Promise<void> {
     await this.ctx.storage.put(STATE, state)
     if (reason) await this.ctx.storage.put(DOWN, reason)
@@ -1828,12 +1517,6 @@ export class Machine implements DurableObject {
   }
 }
 
-/* ── Helpers ────────────────────────────────────────────────────────────── */
-
-/** How long until an always-on machine being waited for is looked for again: a server
- *  setting itself up every `PROVISION_EVERY`, since its first boot takes minutes; one
- *  that stopped answering at half the time waited so far, from `FIRST_LOOK` up to the
- *  same, so a `nibd` that is back in seconds is linked in seconds. */
 function nextLook(waiting: Provision, now: number): number {
   if (waiting.why === 'boot') return PROVISION_EVERY
   return Math.min(PROVISION_EVERY, Math.max(FIRST_LOOK, Math.round((now - waiting.since) / 2)))
@@ -1843,13 +1526,10 @@ function maySocketType(viewer: Viewer): boolean {
   return mayType(viewer.role, viewer.guest, viewer.owns, viewer.typing)
 }
 
-/** Whether a socket takes part in its session's lock: one that may type, from an Orden
- *  that knows the lock. Who may only watch is never held off (locks/holding.ts). */
 function drives(viewer: Viewer): boolean {
   return viewer.hold === true && maySocketType(viewer)
 }
 
-/** What the door decided, off the headers it handed the object. */
 function viewerFrom(headers: Headers): Viewer {
   const role = headers.get('x-nib-role')
   return {
@@ -1869,7 +1549,6 @@ function viewerFrom(headers: Headers): Viewer {
   }
 }
 
-/** A header's escaped words, or nothing where they are not escaped words. */
 function unescaped(value: string): string {
   try {
     return decodeURIComponent(value)
@@ -1878,7 +1557,6 @@ function unescaped(value: string): string {
   }
 }
 
-/** Counts one more in this minute's `count`; false past `most`. */
 function within(counted: { minute: number; count: number }, most: number): boolean {
   const minute = Math.floor(Date.now() / MINUTE)
   if (counted.minute !== minute) {
@@ -1899,14 +1577,12 @@ function downOf(value: string | null): DownReason {
     : 'stopped'
 }
 
-/** The command Resume types for the program a session's saved screen had in front. */
 export function resumeOf(program: string | null): string | null {
   if (program === 'claude') return 'claude --continue\r'
   if (program === 'codex') return 'codex resume --last\r'
   return null
 }
 
-/** The bucket key a backup's record names, for deleting the one it replaces. */
 function keyOf(record: string): string | null {
   try {
     const parsed = JSON.parse(record) as { key?: unknown }

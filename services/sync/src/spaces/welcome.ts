@@ -1,14 +1,3 @@
-/** What the note a new account starts with says, in the language the sign-in
- *  asked in.
- *
- *  The words live here rather than in the app's dictionaries because the Worker
- *  writes this note once, at the moment the account comes into being, when no
- *  client is around to translate anything. From then on the note is an ordinary
- *  note: somebody's to edit, rename or throw away.
- *
- *  It is short because it has one job, which is to show what markdown does
- *  here: bold, italic, a highlight, code, maths, a fenced block and a table. */
-
 const EN = `# Welcome to Orden
 
 Your notes live in your account, so they follow you to every device you sign in on.
@@ -99,19 +88,12 @@ const hello = 'world'
 | 書いたものすべて | あなたのアカウント |
 `
 
-/** The languages the app has words for. Anything else reads English. */
 type Language = 'en' | 'de' | 'gsw' | 'fr' | 'ja'
 
 const WELCOME: Record<Language, string> = { en: EN, de: DE, gsw: GSW, fr: FR, ja: JA }
 
-/** Longest tag first, so `gsw` is matched before anything can read it as a
- *  two-letter code. */
 const TAGS = ['gsw', 'de', 'fr', 'ja'] as const satisfies readonly Language[]
 
-/** The first language in an `Accept-Language` header the app has words for. A
- *  region goes: `de-CH` is German, the way the app reads `navigator.language`.
- *  The quality values are not weighed, because a browser already writes the
- *  header in the order it prefers. */
 function languageOf(accepted: string | undefined): Language {
   for (const part of (accepted ?? '').split(',')) {
     const tag = part.split(';')[0]?.trim().toLowerCase() ?? ''
@@ -122,7 +104,6 @@ function languageOf(accepted: string | undefined): Language {
   return 'en'
 }
 
-/** The note a new account starts with, for whoever is signing in. */
 export function welcomeNote(accepted: string | undefined): string {
   return WELCOME[languageOf(accepted)]
 }

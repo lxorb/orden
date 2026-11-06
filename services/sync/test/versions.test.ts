@@ -20,7 +20,6 @@ interface VersionView {
   notes?: number
   paths?: string[]
   more?: boolean
-  /** Whether a rollback reached its ceiling, and how many notes are left. */
   partial?: boolean
   left?: number
   error?: string
@@ -28,14 +27,10 @@ interface VersionView {
   space?: { id: string }
 }
 
-/** A version is only kept every five minutes, so a test that wants two of them
- *  moves the rows back rather than waiting. */
 function agedBy(env: TestEnv, ms: number): void {
   env.db.exec(`update note_versions set at = at - ${ms}`)
 }
 
-/** The versions of one note. A fresh space arrives with a note in it already, so
- *  a count of every row in the table counts that one too. */
 function rows(env: TestEnv, noteId: string): { at: number; hash: string; by: string }[] {
   return env.db
     .prepare('select at, hash, by from note_versions where note_id = ? order by at')
@@ -79,7 +74,6 @@ describe('the account keeps what a note said', () => {
   })
 
   test('and every push after it, at most one every five minutes and the newest', async () => {
-    // Soon after, so it becomes the newest and is folded into by the next save.
     for (const [content, baseVersion] of [
       ['# Two', 1],
       ['# Three', 2],
@@ -89,7 +83,6 @@ describe('the account keeps what a note said', () => {
 
     expect(rows(env, note)).toHaveLength(2)
 
-    // Five minutes clear of the one before, the newest stays as it is.
     agedBy(env, 6 * 60 * 1000)
     env.db
       .prepare('update note_versions set at = at + ? where note_id = ? and hash = ?')
@@ -108,8 +101,6 @@ describe('the account keeps what a note said', () => {
   })
 
   test('and the last of a session, folded into the newest rather than dropped', async () => {
-    // Two saves a minute apart: the second is the one the session ended on, and a
-    // throttle that dropped it left the account with no copy of those words.
     for (const [content, baseVersion] of [
       ['# Two', 1],
       ['# Three', 2],
@@ -122,7 +113,6 @@ describe('the account keeps what a note said', () => {
     expect(held[0]?.hash).toBe(await sha256('# One'))
     expect(held.at(-1)?.hash).toBe(await sha256('# Three'))
     expect(env.keys()).toContain(versionKey(await sha256('# Three')))
-    // The words it replaced are no row's any more, and neither are their bytes.
     expect(env.keys()).not.toContain(versionKey(await sha256('# Two')))
   })
 
@@ -132,8 +122,6 @@ describe('the account keeps what a note said', () => {
       token,
       body: { content: '# Two', baseVersion: 1 },
     })
-    // Another save folds into the newest version between this one reading it and
-    // writing it.
     const two = await sha256('# Two')
     env.justBefore(/^update note_versions set at/, () => {
       env.db
@@ -169,7 +157,6 @@ describe('the account keeps what a note said', () => {
       })
     }
 
-    // Each slides a version of its own: the laptop's last words, and Bob's.
     expect(rows(env, note).map((one) => one.hash)).toEqual([
       await sha256('# One'),
       await sha256('# Bob'),
@@ -178,7 +165,6 @@ describe('the account keeps what a note said', () => {
   })
 
   test('nor of another device that calls itself by the same name', async () => {
-    // Two Macs: the name a device sends is its kind, not which one it is.
     const other = await signIn(env, 'a@b.dev')
     for (const [content, baseVersion, who] of [
       ['# Mine', 1, token],
@@ -241,7 +227,6 @@ describe('the account keeps what a note said', () => {
       body: { path: 'copy.md', content: '# One' },
     })
 
-    // Both notes say the same five bytes, so both rows name one body.
     const said = env.db.prepare('select hash from note_versions where size = 5').all() as {
       hash: string
     }[]
@@ -295,10 +280,6 @@ describe('the account keeps what a note said', () => {
   })
 
   test('and says so when the body a row names has gone', async () => {
-    // A row whose body is missing is a version the account cannot answer, and
-    // answering it with no words at all is worse than answering nothing: the
-    // history sheet shows an empty note and restoring it writes that emptiness
-    // over the words somebody still has.
     const at = rows(env, note)[0]?.at ?? 0
     await env.NOTES.delete(versionKey(rows(env, note)[0]?.hash ?? ''))
 
@@ -309,17 +290,10 @@ describe('the account keeps what a note said', () => {
   })
 
   test('and keeps a bounded number of them per note', async () => {
-    // One every five minutes is two hundred and eighty-eight a day, and the
-    // thinning that answers for that runs nightly with a write budget of four
-    // hundred for the whole service. So a note written in all day outruns the
-    // sweep, and the ceiling has to hold where the version is written.
     const insert = env.db.prepare(
       'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
     )
 
-    // The one the note arrived with goes, so what is seeded below is the whole of
-    // its history and the newest of those is old enough for the five minute rule
-    // to let the save keep a version at all.
     env.db.exec(`delete from note_versions where note_id = '${note}'`)
 
     const oldest = Date.now() - (MOST_KEPT + 1) * 5 * 60 * 1000
@@ -335,16 +309,11 @@ describe('the account keeps what a note said', () => {
 
     const held = rows(env, note)
     expect(held.length).toBeLessThanOrEqual(MOST_KEPT)
-    // What went is the oldest, and what arrived is there.
     expect(held.some((one) => one.hash === 'seeded-0')).toBe(false)
     expect(held.at(-1)?.at).toBeGreaterThan(oldest + (MOST_KEPT - 1) * 5 * 60 * 1000)
   })
 
   test('and the sweep keeps up with a busy day rather than falling behind it', async () => {
-    // Two notes written in all day is more versions a day than the sweep's write
-    // budget, so the month thinned to one an hour was a promise the nightly job
-    // could not keep: the rows it could not reach stayed, and every night it
-    // started the same distance behind.
     const insert = env.db.prepare(
       'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
     )
@@ -355,7 +324,6 @@ describe('the account keeps what a note said', () => {
     })
     const second = other.json.note?.id ?? ''
 
-    // A day of saves each, two days back, so the thinning is what applies.
     const from = Date.now() - 2 * 24 * 60 * 60 * 1000
     for (const which of [note, second]) {
       for (let at = 0; at < 288; at++) {
@@ -365,9 +333,6 @@ describe('the account keeps what a note said', () => {
 
     await sweepVersions(env, Date.now())
 
-    // One an hour is what is left of a day of saves, for both notes. Twenty-five
-    // rather than twenty-four because the buckets are whole hours and a day of
-    // saves that does not begin on one straddles one more of them.
     for (const which of [note, second]) {
       const held = rows(env, which).filter(
         (one) => one.at >= from && one.at < from + 24 * 60 * 60 * 1000,
@@ -391,7 +356,6 @@ describe('a note many write in at once', () => {
       body: { path: 'minutes.md', content: 'the agenda' },
     })
     note = wrote.json.note?.id ?? ''
-    // The note's history goes back three weeks.
     env.db.exec(`update note_versions set at = at - ${20 * 24 * 60 * 60 * 1000}`)
     clock = Date.now()
     vi.spyOn(Date, 'now').mockImplementation(() => clock)
@@ -402,7 +366,6 @@ describe('a note many write in at once', () => {
     env.close()
   })
 
-  /** Saves, `every` milliseconds apart, from the devices given in turn. */
   async function saves(count: number, every: number, devices: readonly (string | null)[]) {
     for (let at = 0; at < count; at++) {
       clock += every
@@ -419,7 +382,6 @@ describe('a note many write in at once', () => {
   }
 
   test('keeps a bounded number of versions of two people typing together', async () => {
-    // Twenty minutes of a room settling every 1.2 seconds, for whoever typed last.
     await saves(1034, 1200, ['dev-owner', 'dev-bob'])
 
     const held = rows(env, note)
@@ -439,7 +401,6 @@ describe('a note many write in at once', () => {
     const insert = env.db.prepare(
       "insert into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, 5, '', ?)",
     )
-    // A year of one a week, a held one among them, and then a crowd from today.
     const week = 7 * 24 * 60 * 60 * 1000
     for (let at = 1; at <= 50; at++)
       insert.run(note, clock - at * week, `week-${at}`, at === 30 ? 1 : 0)
@@ -482,7 +443,6 @@ describe('putting a space back to a moment', () => {
     })
     second = two.json.note?.id ?? ''
 
-    // Both notes have a version from a while ago, and both have moved on since.
     agedBy(env, 6 * 60 * 1000)
     await call(env, `/v1/notes/${first}`, {
       method: 'PUT',
@@ -498,8 +458,6 @@ describe('putting a space back to a moment', () => {
 
   afterEach(() => env.close())
 
-  /** Between the two versions each note has: the older one is what a rollback
-   *  puts back, and the newer one is the change being undone. */
   const before = () => Date.now() - 60 * 1000
 
   test('says what would change before it changes anything', async () => {
@@ -533,9 +491,6 @@ describe('putting a space back to a moment', () => {
   })
 
   test('says so when there is more to put back than one request may', async () => {
-    // Four hundred and one notes, each with one version that differs from what
-    // the note now says - written as rows rather than through the API, because
-    // what is being tested is the ceiling and a dry run reads no bodies at all.
     const at = Date.now() - 5 * 60 * 1000
     for (let made = 0; made < 401; made++) {
       const id = `big-${made}`
@@ -562,9 +517,6 @@ describe('putting a space back to a moment', () => {
     expect(asked.json.left).toBe(1)
   })
 
-  /** Notes under `Big/`, each with a version from before `at` whose body the
-   *  account holds. `changed` says which of them have moved on since; the rest
-   *  still say what their version says. */
   async function bigSpace(count: number, changed: (made: number) => boolean): Promise<string> {
     const at = Date.now() - 10 * 60 * 1000
     const then = await sha256('then words')
@@ -588,7 +540,6 @@ describe('putting a space back to a moment', () => {
     return now
   }
 
-  /** Asks the way the pane does, until the answer says there is nothing more. */
   async function rollAll(): Promise<VersionView[]> {
     const answers: VersionView[] = []
     const at = Date.now() - 60 * 1000
@@ -638,8 +589,6 @@ describe('putting a space back to a moment', () => {
   }, 60000)
 
   test('and ends, saying what is left, when a note cannot be put back', async () => {
-    // The first note by path has a version whose body the account no longer
-    // holds, so every round lists it and none can write it.
     const now = await bigSpace(402, () => true)
     const gone = await sha256('gone words')
     env.db.prepare("update note_versions set hash = ? where note_id = 'big-0'").run(gone)
@@ -655,9 +604,6 @@ describe('putting a space back to a moment', () => {
     expect(left).toEqual([{ id: 'big-0' }])
   }, 60000)
 
-  /** A note written, left as it was, and deleted since: its words never moved, so
-   *  only the delete is there to undo. Its one version is moved back, so it is
-   *  from before `before()`. */
   async function deletedUnchanged(path: string): Promise<string> {
     const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -738,8 +684,6 @@ describe('putting a space back to a moment', () => {
   })
 
   test('and in a space whose tree is rows', async () => {
-    // The two notes written over have rooms there, which this harness has none of,
-    // so what is asked here is only the note that comes back.
     await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
     const id = await deletedUnchanged('kept.md')
     expect(noteRow(id).deleted).toBe(1)
@@ -793,8 +737,6 @@ describe('putting a space back to a moment', () => {
     expect(noteRow(id).deleted).toBe(1)
   })
 
-  /** A note that said `draft`, then a minute later what the session ended on, and
-   *  nothing since: an hour ago, all of it. */
   async function leftAlone(path: string): Promise<string> {
     const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -828,7 +770,6 @@ describe('putting a space back to a moment', () => {
   })
 
   test('also when what it said then never became a version', async () => {
-    // What the account holds from before versions kept the last save of a session.
     const id = await leftAlone('three.md')
     env.db
       .prepare('delete from note_versions where note_id = ? and hash = ?')
@@ -853,8 +794,6 @@ describe('putting a space back to a moment', () => {
     })
     const id = made.json.note?.id ?? ''
     env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(20 * 60 * 1000, id)
-    // Two saves since, the second of them the newest version and still open to
-    // being folded into the next save.
     for (const [content, baseVersion] of [
       ['one', 1],
       ['two', 2],
@@ -874,7 +813,6 @@ describe('putting a space back to a moment', () => {
     expect(hashes).toContain(await sha256('two'))
     expect(hashes.at(-1)).toBe(await sha256('draft'))
 
-    // And still after the sweep has thinned that hour, days later.
     await sweepVersions(env, Date.now() + 2 * 24 * 60 * 60 * 1000)
     expect(rows(env, id).map((one) => one.hash)).toContain(await sha256('two'))
   })
@@ -918,8 +856,6 @@ describe('putting a space back to a moment', () => {
   })
 
   test('and the version it writes says which device asked', async () => {
-    // Far enough back that the five minute rule lets a version be kept at all:
-    // a rollback is a write like any other and is kept like any other.
     agedBy(env, 6 * 60 * 1000)
 
     const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
@@ -945,8 +881,6 @@ describe('putting a space back to a moment', () => {
   })
 
   test('and only that folder, whatever its name has in it', async () => {
-    // A folder's name used to be read as a `like` pattern: `_` matched any one
-    // character and case was ignored, so these three were all "under" `a_b`.
     const at = Date.now() - 5 * 60 * 1000
     for (const [id, path] of [
       ['wanted', 'a_b/x.md'],
@@ -1060,8 +994,6 @@ describe('thinning to one an hour', () => {
 
   afterEach(() => env.close())
 
-  /** A note, and rows for it at the moments given, so the sweep has something to
-   *  thin without a note having to be written in for a day first. */
   async function noteWithVersionsAt(path: string, moments: readonly number[]): Promise<string> {
     const made = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -1089,8 +1021,6 @@ describe('thinning to one an hour', () => {
 
   test('keeps the newest in each hour and takes the rest', async () => {
     const hour = 60 * 60 * 1000
-    // Two days back, and on an hour, so which bucket a moment falls in is the
-    // arithmetic the sweep does and not the hour the test happens to run at.
     const from = Math.floor((Date.now() - 2 * 24 * hour) / hour) * hour
 
     const one = await noteWithVersionsAt('one.md', [from + 300, from + 600, from - hour + 100])
@@ -1119,7 +1049,6 @@ describe('thinning to one an hour', () => {
 
     await sweepVersions(env, Date.now())
 
-    // Each hour keeps what was kept by name, and the newest of the rest.
     expect(kept(one)).toEqual([from + 300, from + 600, from + hour + 100, from + hour + 200])
   })
 
@@ -1143,21 +1072,15 @@ describe('thinning to one an hour', () => {
     expect(kept(note)).toHaveLength(3)
   })
 
-  /** The shelves: an hour for the first month, a day for the next two, a week
-   *  after that. What a backup has done since 2007, and for the same reason -
-   *  what somebody wants from last spring is *a* version. */
   test('thins to one a day past a month and one a week past three', async () => {
     const hour = 60 * 60 * 1000
     const day = 24 * hour
     const week = 7 * day
 
-    // A year kept, or everything past the month would simply be deleted.
     env.db.exec(`update users set settings = '{"keepVersions":365}'`)
 
     const now = Date.now()
-    // Two moments inside one day, two months back: one survives.
     const old = Math.floor((now - 60 * day) / day) * day
-    // Two inside one week, six months back: one survives.
     const older = Math.floor((now - 180 * day) / week) * week
 
     const note = await noteWithVersionsAt('long.md', [
@@ -1201,8 +1124,6 @@ describe('how long an account keeps its history', () => {
   })
 
   test('and a year for one that asked for a year', async () => {
-    // The same version, the same age, and the only difference is the word on the
-    // account: this is the whole of what the setting does.
     env.db.exec(`update users set settings = '{"keepVersions":365}'`)
     agedBy(env, KEEP_FOR + 1000)
 
@@ -1219,8 +1140,6 @@ describe('how long an account keeps its history', () => {
   })
 
   test('a setting nobody offered is not a horizon', async () => {
-    // The route refuses it, which is what keeps the sweep's arithmetic to the two
-    // numbers the app knows; see settings.ts.
     const refused = await call(env, '/v1/settings', {
       method: 'PATCH',
       token,
@@ -1243,8 +1162,6 @@ describe('how long an account keeps its history', () => {
   })
 })
 
-/** The ceiling. Version bytes are not counted against the account's own
- *  gigabyte, so this is the only thing between a year of history and a bill. */
 describe('more history than an account may hold', () => {
   let env: TestEnv
   let token: string
@@ -1265,7 +1182,6 @@ describe('more history than an account may hold', () => {
 
   afterEach(() => env.close())
 
-  /** Rows of a size, inside the month so nothing else would take them. */
   function heavy(bytes: number, count: number) {
     env.db.exec(`delete from note_versions where note_id = '${note}'`)
 
@@ -1287,16 +1203,12 @@ describe('more history than an account may hold', () => {
   }
 
   test('loses its oldest until it is under the ceiling', async () => {
-    // Three of them, one and a half gigabytes each: four and a half against a
-    // ceiling of two.
     heavy(1536 * 1024 * 1024, 3)
     expect(held()).toBeGreaterThan(MOST_VERSION_BYTES)
 
     await sweepVersions(env, Date.now())
 
     expect(held()).toBeLessThanOrEqual(MOST_VERSION_BYTES)
-    // And what is left of this note is the newest of them: enough went, and the
-    // oldest went first.
     const left = rows(env, note)
     expect(left).toHaveLength(1)
     expect(left[0]?.hash).toBe('big-0')
@@ -1325,20 +1237,14 @@ describe('the name a device sends for itself', () => {
   test('is words, bounded, and not layout', () => {
     expect(deviceIn('the laptop')).toBe('the laptop')
     expect(deviceIn(undefined)).toBe('')
-    // A newline was already taken out; the rest of the control characters are
-    // what somebody sends to make a name in the Account pane read as two.
     expect(deviceIn('one\r\ntwo')).toBe('one two')
     expect(deviceIn('a\u0000b\u001bc')).toBe('abc')
     expect(deviceIn('x'.repeat(80))).toHaveLength(40)
   })
 
   test('and is never cut through the middle of a character', () => {
-    // Forty whole ones, which is eighty units: a bound counted in units kept forty
-    // units and left half of the twentieth behind.
     expect(deviceIn('🙂'.repeat(60))).toBe('🙂'.repeat(40))
 
-    // And a character a code point would have broken too: one family is seven
-    // code points joined, and half a family is three strangers.
     const family = '👨‍👩‍👧'
     expect(deviceIn(family.repeat(20))).toBe(family.repeat(20))
     expect(deviceIn(family.repeat(60))).toBe(family.repeat(40))

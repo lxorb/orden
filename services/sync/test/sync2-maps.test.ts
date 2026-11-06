@@ -1,9 +1,3 @@
-/** What a space keeps about its own tree, one entry at a time (docs/sync-v2.md 5.11):
- *  two devices changing different entries both keep theirs, a folder's icon and a
- *  row's place are keyed by what they are about so a rename orphans neither, a v1
- *  app's whole value is read as every entry changed, and what a v1 app reads is
- *  written from the entries. And the account's settings, merged per key. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { live } from './sync2'
@@ -181,7 +175,6 @@ describe('a bookmark that says which entry it points at (#1068)', () => {
       '',
     ])
 
-    // A v1 app writes back what it read, with no ids: the entries keep theirs.
     await call(env, `/v1/spaces/${space}/bookmarks`, {
       method: 'PUT',
       token: phone,
@@ -244,7 +237,6 @@ describe('a v1 app writing a whole value', () => {
     const first = await entries()
     expect(first.entries.filter((one) => one.value !== null)).toHaveLength(2)
 
-    // One taken out: its entry goes, the other keeps its key.
     await call(env, `/v1/spaces/${space}/bookmarks`, {
       method: 'PUT',
       token: laptop,
@@ -280,8 +272,6 @@ describe('a v1 app writing a whole value', () => {
 
 describe("the account's settings", () => {
   test('two devices changing different settings at once both keep theirs', async () => {
-    // The other device's write lands between this one reading the settings and
-    // writing them.
     env.justBefore(/update users set settings/, () => {
       env.db
         .prepare(

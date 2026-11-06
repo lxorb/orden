@@ -1,7 +1,3 @@
-/** A room's or a chat's socket lasts no longer than the sign-in it arrived with (#520):
- *  a session that runs out, which nothing announces, closes its sockets the next time
- *  anything is said where they are. See src/signins.ts. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { subprotocol } from '@orden/rooms'
 import { sha256 } from '../src/crypto'
@@ -23,7 +19,6 @@ afterEach(() => {
   env.close()
 })
 
-/** A session that ran out: its row is still there, past its time. */
 async function runOut(token: string): Promise<void> {
   env.db.prepare('update sessions set expires_at = 1 where token_hash = ?').run(await sha256(token))
 }
@@ -75,12 +70,10 @@ describe('a room', () => {
     const lost = await enter(laptop)
     await runOut(laptop)
 
-    // Anything at all said in the room is when it asks.
     await room.webSocketMessage(kept as unknown as WebSocket, new Uint8Array([1, 0]).buffer)
 
     expect(lost.closedWith?.code).toBe(4401)
     expect(kept.closed).toBe(false)
-    // And the row stays: the person still has the file open on the other device.
     expect(
       env.db.prepare('select count(*) as held from room_sockets where note_id = ?').get(note),
     ).toEqual({ held: 1 })

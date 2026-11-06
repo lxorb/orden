@@ -13,7 +13,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** Reads the code out of the logging mailer. */
 async function requestCode(email: string): Promise<string> {
   const logged: string[] = []
   const spy = vi.spyOn(console, 'log').mockImplementation((message) => {
@@ -57,9 +56,6 @@ describe('requesting a code', () => {
     expect(again.json.resendIn).toBeGreaterThan(0)
   })
 
-  /** The table is one anybody can write a row to, and a code that ran out says
-   *  nothing any more. Cleared as new ones arrive, the way sessions are: nothing
-   *  else would ever take them away. */
   test('clears the codes that ran out as new ones are made', async () => {
     await call(env, '/v1/auth/code', { body: { email: 'gone@b.dev' } })
     env.db.prepare('update login_codes set expires_at = 1').run()
@@ -71,25 +67,12 @@ describe('requesting a code', () => {
   })
 })
 
-/** The message not going out.
- *
- *  This is the bug the live service had: the send was the one call in a sign-in
- *  that leaves the building, it was awaited with nothing around it, and every
- *  provider refusal came back as a bare 500. Five of the six failures the zone
- *  recorded over three days were this route. See src/failed.ts.
- *
- *  Worse than the status, and the reason a second press did not help: the thirty
- *  second gap had already been written, so the next try answered `ok` with a
- *  `resendIn` and sent nothing at all. */
 describe('a provider that will not take the message', () => {
-  /** The environment again, with a sender that fails. `send` is handed the
-   *  message, so a test can read the code out of one that never went. */
   function refusing(send: EmailSender['send']): void {
     env.close()
     env = testEnv({ MAIL_FROM: 'Nib <nib@nibeditor.com>', EMAIL: { send } })
   }
 
-  /** Runs `work` with the log held, because a failed send writes one line to it. */
   async function quietly<T>(work: () => Promise<T>): Promise<T> {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     try {
@@ -109,9 +92,6 @@ describe('a provider that will not take the message', () => {
     expect(response.headers.get('retry-after')).toBe('5')
   })
 
-  /** A send can fail after the message went: what was lost is the answer, not
-   *  the mail. So the code stays good, because somebody holding one that no
-   *  longer works is worse off than somebody who had to ask twice. */
   test('keeps the code it issued, so a message that did go still signs them in', async () => {
     let carried = ''
     refusing((message) => {
@@ -140,8 +120,6 @@ describe('a provider that will not take the message', () => {
     await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
     const again = await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
 
-    // Without the gap being given up this is 200 with a `resendIn`, the provider
-    // is never asked a second time, and nothing ever arrives.
     expect(asked).toBe(2)
     expect(again.status).toBe(503)
   })
@@ -154,7 +132,6 @@ describe('a provider that will not take the message', () => {
       await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
     }
 
-    // Ten presses while the provider was down, and the eleventh still goes.
     const sent = await call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } })
     expect(sent.status).toBe(200)
   })
@@ -211,9 +188,6 @@ describe('verifying a code', () => {
   })
 
   test('stops at a number of tries for one address, however many codes it was sent', async () => {
-    // Five wrong tries spend a code, and a new code used to start the count again:
-    // one every thirty seconds, from as many machines as a script has, was six
-    // hundred guesses an hour at one account. See `mayTryCode`.
     for (let code = 0; code < 3; code++) {
       env.db.exec('delete from login_codes')
       await requestCode('a@b.dev')
@@ -233,7 +207,6 @@ describe('verifying a code', () => {
     })
     expect(refused.status).toBe(429)
 
-    // Another address is its own count.
     expect(await signIn(env, 'c@d.dev')).toBeTruthy()
   })
 
@@ -266,15 +239,7 @@ describe('verifying a code', () => {
   })
 })
 
-/** Two devices signing in together with an address nobody has used yet.
- *
- *  Both read `select ... where email = ?` and both found nothing, so both went on
- *  to insert - and the second one was `UNIQUE constraint failed: users.email`
- *  coming back as a 500 on somebody's very first sign-in. The address is the
- *  account, so the second insert is not a mistake to report: it is the account,
- *  already made. */
 describe('two sign-ins arriving together', () => {
-  /** The other device's row, landing between this one's read and its write. */
   function theOtherDeviceGetsThereFirst(email: string): void {
     env.justBefore(/insert into users/, () => {
       env.db
@@ -290,17 +255,12 @@ describe('two sign-ins arriving together', () => {
     const response = await call(env, '/v1/auth/verify', { body: { email: 'both@b.dev', code } })
 
     expect(response.status).toBe(200)
-    // The account to carry on with is the row in the table, not the id this
-    // request made and could not write.
     expect(response.json.user.id).toBe('the-other-one')
 
     const many = env.db.prepare('select count(*) as many from users').get() as { many: number }
     expect(many.many).toBe(1)
   })
 
-  /** Only the sign-in whose insert wrote the row seeds, because the guard inside
-   *  `makeFirstSpace` reads a space the other request has not written yet and so
-   *  is not something either of them can be held to. */
   test('do not give that one account two spaces called Notes', async () => {
     const code = await requestCode('both@b.dev')
     theOtherDeviceGetsThereFirst('both@b.dev')
@@ -314,8 +274,6 @@ describe('two sign-ins arriving together', () => {
   })
 })
 
-/** A client sends what it likes. None of it may reach a `.trim()` or a query
- *  and come back as a 500: the answer is 400 and a sentence saying what. */
 describe('a body that is not what it should be', () => {
   const JSON_TYPE = { 'content-type': 'application/json' }
 
@@ -380,9 +338,6 @@ describe('sessions', () => {
     expect((await call(env, '/v1/me', { token })).status).toBe(401)
   })
 
-  /** The scheme is a word, not a spelling: RFC 7235 says it is matched without
-   *  regard to case, and a client that wrote it in lower case was holding a
-   *  perfectly good session and being told to sign in again. */
   test('the scheme is read whatever its case', async () => {
     const token = await signIn(env, 'a@b.dev')
 
@@ -411,9 +366,6 @@ describe('sessions', () => {
   })
 })
 
-/** The API is reached by the desktop app and by the web build on the app's own
- *  origin, and by nothing else. A token is not a cookie, so this is a second
- *  line rather than the only one - but it is the line the browser enforces. */
 describe('who may call the API from a browser', () => {
   test('the app itself may', async () => {
     for (const origin of [

@@ -1,19 +1,3 @@
-/* A published note: the room it is read in once it has left the app.
- *
- * tokens.css, base.css and document.css are already in the sheet above this one -
- * the same three the reading view loads and an exported document carries - so the
- * note itself needs nothing here. What is left is the difference between a page
- * and an app: a page scrolls, and it has a byline, a way back to the index, and a
- * line at the bottom saying where it came from.
- *
- * Served from the Worker rather than written into every page; see
- * scripts/blog-css.ts for how it is put together and services/sync/src/blog.ts
- * for what serves it. */
-
-/* ── A page rather than an app ───────────────────────────────────── */
-
-/* The app pins the window and scrolls the writing surface inside it. A page is
-   as long as it is and the window scrolls it, the way every other page does. */
 html,
 body {
   height: auto;
@@ -21,16 +5,10 @@ body {
   overscroll-behavior: auto;
 }
 
-/* The app leaves half a screen under the last line so the caret can sit in the
-   middle of the window. Nothing is being typed here, so the text ends where it
-   ends. */
 #write {
   padding: var(--space-7) var(--space-5) var(--space-6);
 }
 
-/* ── The page's own furniture ────────────────────────────────────── */
-
-/* The author, under the title where a byline goes. */
 #write .by {
   margin: -0.4em 0 2.2em;
   font-family: var(--font-ui);
@@ -38,9 +16,6 @@ body {
   color: var(--muted);
 }
 
-/* The way back to the index, above the note, and the offer to read it as a talk,
-   under it. Both are the page talking rather than the note, so both are quiet:
-   the colour of a caption until the pointer is on them. */
 #write .back,
 #write .present {
   font-family: var(--font-ui);
@@ -77,11 +52,6 @@ body {
   color: var(--muted);
 }
 
-/* ── The index ───────────────────────────────────────────────────── */
-
-/* Every note the space publishes, one to a row: its name, and when it last
-   changed. A list of names is a list of rows, which is what the app draws for
-   one too - here without the app's hover, since the whole row is the link. */
 #write ul.index {
   margin: 0;
   padding: 0;
@@ -120,11 +90,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── The password ────────────────────────────────────────────────── */
-
-/* One field and one button, in the same faces and the same tokens as
-   everything else: a site behind a password should look like the site rather
-   than like a login screen. See services/sync/src/blog/gate.ts. */
 #write form.gate {
   display: flex;
   flex-wrap: wrap;
@@ -163,7 +128,6 @@ body {
   cursor: pointer;
 }
 
-/* Said once, under the field, and nothing beyond that about why. */
 #write form.gate .wrong {
   flex: 1 0 100%;
   margin: 0;
@@ -172,12 +136,6 @@ body {
   font-size: var(--text-sm);
 }
 
-/* ── The furniture around a note ─────────────────────────────────── */
-
-/* A site is a note with three things around it: a bar, the pages down the left,
-   the contents of this page down the right. One grid, and every part of it
-   optional - a site of one note is the note, exactly as it was before any of
-   this existed. */
 body.site {
   display: flex;
   flex-direction: column;
@@ -192,9 +150,6 @@ body.site {
   max-width: 90rem;
 }
 
-/* Two columns from the width where a column of names does not squeeze the
-   prose, three from the width where the contents fit as well. Below that the
-   note has the screen to itself and the navigation is the bar's own list. */
 @media (min-width: 64rem) {
   .site .frame:has(.pages) {
     grid-template-columns: 15rem minmax(0, 1fr);
@@ -211,10 +166,6 @@ body.site {
   min-width: 0;
 }
 
-/* A link that is furniture and not prose is quiet. The underline in the base
-   sheet is the writing surface's, drawn as a border under the words; outside it
-   a browser draws its own, and a column of names wearing one reads as a page of
-   links rather than as a way around one. */
 .site .bar a,
 .site .pages a,
 .site .toc-aside a,
@@ -222,8 +173,6 @@ body.site {
   border-bottom: 0;
   text-decoration: none;
 }
-
-/* ── The bar ─────────────────────────────────────────────────────── */
 
 .site .bar {
   position: sticky;
@@ -250,7 +199,6 @@ body.site {
   color: var(--accent);
 }
 
-/* The box takes the middle, which is where a reader looks for one. */
 .site .find {
   flex: 1;
   min-width: 0;
@@ -274,8 +222,6 @@ body.site {
   outline: none;
 }
 
-/* Three states, one glyph: the moon for dark, the sun for light, and both for
-   whatever the reader's system says. Drawn in text rather than fetched. */
 .site .bar .theme {
   flex: none;
   width: var(--touch-target, 40px);
@@ -304,8 +250,6 @@ body.site {
 .site .bar .theme:hover {
   color: var(--accent);
 }
-
-/* ── The pages, down the left ────────────────────────────────────── */
 
 .site .pages {
   padding: var(--space-5) var(--space-3) var(--space-6);
@@ -345,9 +289,6 @@ body.site {
   color: var(--text-strong);
 }
 
-/* Every disclosure on a site is the same row: a folder of the tree, the tree
-   itself where a phone shows it as one row, and the contents. One mark, one
-   size, one place - a reader who has opened one knows what the others do. */
 .site .pages summary,
 .site .toc-aside summary {
   padding: 5px 9px;
@@ -382,12 +323,7 @@ body.site {
   color: var(--text-strong);
 }
 
-/* On a phone there is no column: the tree is one row under the bar that opens
-   the whole thing, which is the same markup a wide screen shows as a column. */
 @media (max-width: 63.99rem) {
-  /* Both rows above the note rather than the contents after it: the columns sit
-     either side of the note in the markup, which on one column would leave a
-     list of this page's headings at the foot of the page it lists. */
   .site .pages {
     order: 1;
     padding: var(--space-2) var(--space-4);
@@ -407,8 +343,6 @@ body.site {
     display: none;
   }
 
-  /* Open on a wide screen whatever the disclosure says, for the reason the
-     contents column is: see there. */
   .site .pages .all::details-content {
     display: block;
     content-visibility: visible;
@@ -419,14 +353,7 @@ body.site {
   }
 }
 
-/* ── The contents, down the right ───────────────────────────────── */
-
-/* A `<details>`, closed in the markup, so a phone gets a row it can open and no
-   script is needed to make one. Where there is a column for it, the stylesheet
-   opens it and takes the summary away. */
 .site .toc-aside {
-  /* The tree's own padding, so the two rows a phone shows sit in one column
-     rather than half a space apart. */
   padding: var(--space-2) var(--space-4);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
@@ -446,11 +373,6 @@ body.site {
     display: none;
   }
 
-  /* What lets one piece of markup serve both shapes - a row a phone can open, a
-     column on a screen with room for one. A closed disclosure hides its content
-     on `::details-content`, so that is where it is put back; a display on the
-     list inside cannot reach past it, and is here for a browser old enough to
-     hide the content itself. */
   .site .toc-aside::details-content {
     display: block;
     content-visibility: visible;
@@ -477,11 +399,6 @@ body.site {
   color: var(--accent);
 }
 
-/* ── Under the note ─────────────────────────────────────────────── */
-
-/* Under the note, and lined up with it: the same measure and the same middle,
-   because a list of what links here that starts at the column's edge reads as
-   part of the furniture rather than as part of the page. */
 .site .under {
   max-width: var(--measure);
   margin: 0 auto;
@@ -520,8 +437,6 @@ body.site {
   font-size: var(--text-sm);
 }
 
-/* Every name under the note reads as furniture: the same quiet colour as the
-   columns, and the accent only where the pointer is. */
 .site .under a {
   color: var(--muted-strong);
 }
@@ -537,8 +452,6 @@ body.site {
 .site .around .after::after {
   content: ' →';
 }
-
-/* ── The search page ────────────────────────────────────────────── */
 
 #write .tally {
   margin: 0 0 var(--space-4);
@@ -592,10 +505,6 @@ body.site {
   color: var(--muted);
 }
 
-/* ── The graph ──────────────────────────────────────────────────── */
-
-/* A canvas the script fills, and the same pages as words under it for anybody
-   the canvas is no use to. Sized here because a canvas has no size of its own. */
 #write .graph {
   position: relative;
   height: 26rem;
@@ -613,8 +522,6 @@ body.site {
 #write .graph canvas {
   display: block;
 }
-
-/* ── The card a link shows on hover ─────────────────────────────── */
 
 body > .card {
   position: fixed;
@@ -640,22 +547,6 @@ body > .card h3 {
   font-size: var(--text-base);
   border: none;
 }
-
-/* ── A diagram the app drew ─────────────────────────────────────── */
-
-/* The app renders a ` ```mermaid `, ` ```flow ` or ` ```sequence ` fence to an
-   SVG and sends it up as a blob; the page writes it as a picture inside the same
-   `figure.diagram` an export frames its inline SVG with. So the frame, the
-   padding and the scroll are document.css's, and what is left is the picture
-   itself and which of the two schemes' pictures is being looked at.
-
-   Two pictures, because an `<img>` is a document of its own that no variable of
-   this page reaches, and because `prefers-color-scheme` inside one would answer
-   the reader's system rather than the button in the bar; see
-   packages/markdown/src/diagrams.ts for the whole of that reasoning. The light
-   one is the default here for the same reason the light tokens are: nothing said
-   is a page on the open web. The order below matters - the system's word, then
-   the reader's - which is exactly how the token blocks are stacked. */
 
 #write .diagram img {
   max-width: 100%;
@@ -692,7 +583,6 @@ body > .card h3 {
   display: none;
 }
 
-/* Paper is light whatever the screen was, the way the tokens are. */
 @media print {
   #write .diagram img[data-scheme='light'] {
     display: inline;

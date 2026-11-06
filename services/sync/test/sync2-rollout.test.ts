@@ -1,7 +1,3 @@
-/** Sync v2 for everybody: the service's switch, the accounts it starts on v2, the ones
- *  it moves by itself when a device says hello, and the way back for all. See
- *  src/sync2/rollout.ts and src/sync2/gate.ts. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -39,7 +35,6 @@ afterEach(() => {
   env.close()
 })
 
-/** A sign-in, with the clock moved past the gap a second code to one address waits. */
 async function signedIn(email: string): Promise<string> {
   const token = await signIn(env, email)
   vi.setSystemTime(Date.now() + 31_000)
@@ -64,8 +59,6 @@ interface Device {
   socket: HubSocket
 }
 
-/** A device of the account: its own sign-in, and a hub socket that said hello with
- *  this app. */
 async function device(email: string, name: string, app: string): Promise<Device> {
   const token = await signedIn(email)
   const user = idOf(email)
@@ -79,7 +72,6 @@ async function device(email: string, name: string, app: string): Promise<Device>
   return one
 }
 
-/** The device saying hello again, as it does after an update or a reconnect. */
 async function hello(one: Device, app: string): Promise<void> {
   await send(running.of(one.user).hub, one.socket, {
     t: 'hello',
@@ -134,7 +126,6 @@ describe('the switch', () => {
     expect(set.status).toBe(200)
     expect(set.json).toMatchObject({ mode: 'all', min: MIN })
 
-    // The min is kept, so going back to all needs none.
     expect((await rollout({ mode: 'new' })).json).toMatchObject({ mode: 'new', min: MIN })
     expect((await rollout({ mode: 'all' })).json).toMatchObject({ mode: 'all', min: MIN })
   })
@@ -170,7 +161,6 @@ describe('an account on v1, under all', () => {
     await device(MOVER, 'desktop', '0.13.1-580')
 
     expect(versionOf(MOVER)).toBe(2)
-    // The session it was made with has no device behind it, like the Even plugin.
     expect(await syncVersionSaid(token)).toBe(2)
     const said = await call<Rollout>(env, '/v2/admin/sync-rollout', { token: admin })
     expect(said.json.moves).toEqual([
@@ -184,7 +174,6 @@ describe('an account on v1, under all', () => {
 
     await device(MOVER, 'desktop', '0.13.1-600')
     expect(versionOf(MOVER)).toBe(1)
-    // A phone's builds count on their own and lag behind: one that says less is older.
     await hello(laptop, '0.13.1-488')
     expect(versionOf(MOVER)).toBe(1)
 
@@ -199,7 +188,6 @@ describe('an account on v1, under all', () => {
     await device(MOVER, 'desktop', '0.14.0')
 
     expect(versionOf(MOVER)).toBe(2)
-    // The plugin still reads the account on v1's routes.
     expect((await call(env, '/v1/spaces', { token: even })).status).toBe(200)
   })
 
@@ -302,14 +290,12 @@ describe('the way back for everybody', () => {
     expect(answer.status).toBe(200)
     expect(answer.json).toMatchObject({ moved: 2, mode: 'off', accounts: { v1: 2, v2: 0 } })
     expect([versionOf(MOVER), versionOf(ADMIN)]).toEqual([1, 1])
-    // What the app reads at its next launch, and walks back by.
     expect(await syncVersionSaid(token)).toBe(1)
     expect(answer.json.moves.filter((one) => one.why === 'everyone')).toHaveLength(2)
 
     await device(MOVER, 'laptop', '0.14.0')
     expect(versionOf(MOVER)).toBe(1)
 
-    // And setting all again is the decision to move them again.
     vi.setSystemTime(Date.now() + 1000)
     await rollout({ mode: 'all' })
     await device(MOVER, 'phone', '0.14.0')

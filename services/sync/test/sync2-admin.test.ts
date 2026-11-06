@@ -1,7 +1,3 @@
-/** Moving an account to sync v2 and back through the admin's route: refused while a
- *  device could still run an older app, never refused on the way back. See
- *  src/sync2/admin.ts. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { atLeastVersion } from '../src/sync2/gate'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -41,7 +37,6 @@ function idOf(email: string): string {
   return (env.db.prepare('select id from users where email = ?').get(email) as { id: string }).id
 }
 
-/** Every live session of an account, newest last. */
 function sessionsOf(email: string): string[] {
   return (
     env.db
@@ -50,7 +45,6 @@ function sessionsOf(email: string): string[] {
   ).map((one) => one.id)
 }
 
-/** A device that said hello with this app on this session. */
 function device(id: string, email: string, session: string | null, app: string) {
   env.db
     .prepare(
@@ -157,7 +151,6 @@ describe('forward', () => {
   test('goes through once every live device is new enough, and /v1/me says so', async () => {
     const [session] = sessionsOf(MOVER)
     device('laptop', MOVER, session ?? null, '0.14.0')
-    // Ended, and one whose session ran out: neither can sync, so neither holds it back.
     device('old', MOVER, null, '0.9.0')
     env.db.prepare("update devices set revoked_at = 5 where id = 'old'").run()
     device('drawer', MOVER, 'gone-session', '0.10.0')

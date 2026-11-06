@@ -1,17 +1,3 @@
-/** The connector's chats: `list_chats`, `read_chat`, `search_chats`, `post_message`
- *  and `react`, under the names and arguments `nib mcp` gives them, answered in the same
- *  words (`@orden/chats/agent`), so a prompt written against one reads the other the same
- *  way (docs/chats.md 4.14). `draft_message` is the app's alone: there is no composer
- *  here to put words in.
- *
- *  A chat is reached as the account reaches it, through its space (chats/reach.ts), and
- *  everything it holds is its `ChatLog`'s, asked the way the chats' own routes ask it.
- *  Every message the account did not write comes inside an untrusted mark naming the
- *  chat and the person. Posting and reacting need a token that may write and a role
- *  that may post; the account said yes to an agent writing as it when it gave the token
- *  that may, so nothing waits for a question here, and every message says it came by
- *  way of the connector. */
-
 import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { accountById } from '../auth'
@@ -24,12 +10,10 @@ import type { TokenRow } from './tokens'
 
 const string = { type: 'string' }
 
-/** What a message sent from here says it came by. */
 const VIA = { agent: 'nib connector' }
 
 const MOST_LISTED = 500
 
-/** The most messages one read answers, and one search. */
 const MOST_READ = 200
 const MOST_FOUND = 50
 
@@ -80,27 +64,21 @@ export const CHAT_TOOLS = [
   },
 ]
 
-/** An argument as words, or undefined where it is missing or is not words. */
 function words(args: Record<string, unknown>, name: string): string | undefined {
   const value = args[name]
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
-/** A whole number argument, clamped, or the fallback. */
 function whole(args: Record<string, unknown>, name: string, fallback: number, most: number) {
   const value = Number(args[name])
   return Number.isFinite(value) ? Math.min(Math.max(1, Math.floor(value)), most) : fallback
 }
 
-/** One chat the account reaches, as the answers name it. */
 interface Known extends Listed {
   role: 'read' | 'write' | 'owner'
   posting: 'writers' | 'owner'
 }
 
-/** Every chat the account reaches, named by its pointer and its space: one query for
- *  the list, one for the names. A chat whose pointer the account has not seen yet has
- *  no name to be found by and is left out. */
 async function chatsOf(
   env: Env,
   who: Whoever,
@@ -149,12 +127,6 @@ function whoOf(who: Whoever): Who {
   return who.kind === 'user' ? `user:${who.user.id}` : `guest:${who.guest.id}`
 }
 
-/** The chat an argument names, by id or by name (with or without `#`), or the sentence
- *  to answer with instead.
- *
- *  A name is not an id, and two chats can share one: the first of them was whichever the
- *  listing had first, and a message meant for one audience landed in front of the other.
- *  So several are named back by id, as `findSpace` in ./tools.ts names back spaces. */
 async function chatNamed(
   env: Env,
   who: Whoever,
@@ -176,7 +148,6 @@ async function chatNamed(
   return { known, reached }
 }
 
-/** How the answers name people: by the chats' own names for them. */
 async function readingOf(env: Env, who: Whoever, chats: readonly string[]): Promise<Reading> {
   const names = new Map<Who, string>()
   for (const chat of chats) {
@@ -187,7 +158,6 @@ async function readingOf(env: Env, who: Whoever, chats: readonly string[]): Prom
   return { me: whoOf(who), nameOf: (person) => names.get(person) ?? person }
 }
 
-/** A page of a chat's messages as they stand, newest first, from its object. */
 async function stateOf(
   env: Env,
   reached: Reached,
@@ -199,7 +169,6 @@ async function stateOf(
   return (await answer.json<{ messages: Message[] }>()).messages
 }
 
-/** One message by its id, or null. */
 async function messageOf(env: Env, reached: Reached, id: string): Promise<Message | null> {
   const url = `https://chats.invalid/${reached.chat}/message?id=${encodeURIComponent(id)}`
   const answer = await askChat(env, reached.chat, 'message', asking(reached), { url })
@@ -231,7 +200,6 @@ async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
     if (!found) return `#${known.name} has no message ${before}.`
     from = found.seq
   }
-  // Replies come in their own page; the chat itself is read past the replies in it.
   const page = await stateOf(env, reached, {
     limit: String(parent ? limit : Math.min(1000, limit * 4)),
     ...(from !== undefined ? { before: String(from) } : {}),
@@ -263,7 +231,6 @@ async function searchChats(env: Env, who: Whoever, args: Record<string, unknown>
   return hitsText(hits, reading)
 }
 
-/** One event sent to a chat as the account, answered with what the object said. */
 async function sent(env: Env, reached: Reached, event: Post | Record<string, unknown>) {
   const answer = await askChat(env, reached.chat, 'send', asking(reached), {
     body: JSON.stringify({ events: [event] }),
@@ -274,8 +241,6 @@ async function sent(env: Env, reached: Reached, event: Post | Record<string, unk
   return refused ? `The chat refused it: ${refused}.` : null
 }
 
-/** Whether the account may say anything in the chat: a token that may write, and a role
- *  that may post there. The sentence to answer with where not. */
 function mayWrite(token: TokenRow, known: Known): string | null {
   if (token.read_only) return 'This connection may only read. Reconnect it with writing allowed.'
   if (!may(known.role, 'post', known.posting)) return `You may only read #${known.name}.`
@@ -327,7 +292,6 @@ async function react(env: Env, token: TokenRow, who: Whoever, args: Record<strin
   )
 }
 
-/** One of the chats' tools, answered in words. */
 export async function callChatTool(
   env: Env,
   token: TokenRow,

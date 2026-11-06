@@ -21,7 +21,6 @@ function put(bookmarks: unknown, options: { as?: string; id?: string } = {}) {
   })
 }
 
-/** What the space listing says the space keeps, which is how the app reads it. */
 async function listed(as = token) {
   const { json } = await call(env, '/v1/spaces', { token: as })
   return json.spaces.find((one) => one.id === space)?.bookmarks
@@ -77,8 +76,6 @@ describe('bookmarks belong to one account', () => {
   test("are not another account's to write", async () => {
     const other = await signIn(env, 'c@d.dev')
 
-    // The same answer an id that does not exist gets: nothing about the space
-    // leaks, not even that it is there.
     expect((await put([note], { as: other })).status).toBe(404)
     expect(await listed()).toEqual([])
   })
@@ -87,7 +84,6 @@ describe('bookmarks belong to one account', () => {
     const other = await signIn(env, 'c@d.dev')
     await put([note])
 
-    // They see the space their own account was given, and nothing of this one.
     const theirs = await call(env, '/v1/spaces', { token: other })
     expect(theirs.json.spaces.map((one) => one.id)).not.toContain(space)
     expect(theirs.json.spaces.flatMap((one) => one.bookmarks)).toEqual([])
@@ -150,9 +146,6 @@ describe('a bookmark of a graph view', () => {
   })
 
   test('a view on any other kind is kept as it was sent', async () => {
-    // Nothing here knows what a view is for: the app does, and a field read for
-    // its length rather than its meaning is a field the server never has to be
-    // deployed for.
     expect((await put([{ kind: 'note', path: 'a.md', text: '', view: '{}' }])).status).toBe(200)
   })
 })
@@ -199,8 +192,6 @@ describe('more bookmarks than a space holds', () => {
   })
 
   test('is refused by the size, when every entry is legal on its own', async () => {
-    // Sixty paths of three hundred characters is more than the column carries,
-    // which is the other end of the same guard.
     const big = Array.from({ length: 60 }, (_, at) => ({
       kind: 'note',
       path: `${'folder/'.repeat(40)}${at}.md`,

@@ -1,20 +1,6 @@
-/** Getting in without signing in.
- *
- *  Three links and three ways through them, all at `POST /v1/join/:token`: an
- *  invitation, which is proof of the address it was mailed to; an open link,
- *  which is proof of nothing and hands out a guest; and a link that asks first,
- *  which is the same guest with the owner in front of it. Then what a guest can
- *  and cannot reach, and the two ways one turns into an account.
- *
- *  What is under test is that nobody types anything. Every case here that lands
- *  in a space lands in it with no code, no password and, but for the one field a
- *  link that asks first asks for, no form at all. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
-/** What a row of the Share sheet says about a face: none for a guest or an address
- *  nobody has an account at, and the account's id with no picture for one that does. */
 const NO_FACE = { id: null, avatar: null, accent: null }
 const A_FACE = { id: expect.any(String), avatar: null, accent: null }
 
@@ -44,7 +30,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** The space's own link, set to hand out this role in this mode. */
 async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
   const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
     method: 'PUT',
@@ -57,7 +42,6 @@ async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Pro
   return found[1]
 }
 
-/** The token in the link an invitation mail carried. */
 async function inviteLink(email: string, role: 'write' | 'read'): Promise<string> {
   const sent = await mail(() =>
     call(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role } }),
@@ -68,7 +52,6 @@ async function inviteLink(email: string, role: 'write' | 'read'): Promise<string
   return found[1]
 }
 
-/** Following a link, as whoever is at the browser: nobody, a guest, an account. */
 function follow(token: string, options: { as?: string; body?: unknown } = {}) {
   return call(env, `/v1/join/${token}`, {
     method: 'POST',
@@ -85,8 +68,6 @@ function rail(as: string) {
   return call(env, '/v1/spaces', { token: as })
 }
 
-/* ── An invitation is its own proof ───────────────────────────────────── */
-
 describe('the link in an invitation', () => {
   test('opens the space with nothing typed at all', async () => {
     const link = await inviteLink(GUEST, 'write')
@@ -98,7 +79,6 @@ describe('the link in an invitation', () => {
     expect(json.space.name).toBe(SHARED)
     expect(json.space.role).toBe('write')
 
-    // And the session it handed back is a real one, on a real account.
     const { json: rails } = await rail(json.token)
     expect(rails.spaces.map((one) => [one.name, one.role])).toEqual([
       ['Notes', 'owner'],
@@ -110,7 +90,6 @@ describe('the link in an invitation', () => {
     const link = await inviteLink('later@example.com', 'read')
     const { json } = await follow(link)
 
-    // Made on the spot, with the space every new account starts with.
     expect(json.user.email).toBe('later@example.com')
     const { json: rails } = await rail(json.token)
     expect(rails.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
@@ -139,7 +118,6 @@ describe('the link in an invitation', () => {
     const link = await inviteLink(GUEST, 'write')
     expect((await follow(link)).status).toBe(200)
 
-    // A session for an address nobody typed a code for is spent when it works.
     expect((await follow(link)).status).toBe(404)
     const { status, json } = await call<JoinView>(env, `/v1/join/${link}`)
     expect(status).toBe(404)
@@ -150,7 +128,6 @@ describe('the link in an invitation', () => {
     const link = await inviteLink(GUEST, 'write')
     await follow(link)
 
-    // The membership was never the link's to take away.
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
@@ -175,13 +152,10 @@ describe('the link in an invitation', () => {
     const link = await inviteLink(GUEST, 'read')
     await call(env, `/v1/join/${link}`)
 
-    // Still pending, and the link still works.
     expect((await shareView()).json.members[0]?.pending).toBe(true)
     expect((await follow(link)).status).toBe(200)
   })
 })
-
-/* ── An open link asks nothing ────────────────────────────────────────── */
 
 describe('a link anybody may follow', () => {
   test('hands out a guest, in the space, at once', async () => {
@@ -192,7 +166,6 @@ describe('a link anybody may follow', () => {
     expect(json.token).toBeTruthy()
     expect(json.space.name).toBe(SHARED)
     expect(json.space.role).toBe('write')
-    // Named from the device, the way the carets name devices.
     expect(json.guest.name).toMatch(/^iPhone \w+$/)
   })
 
@@ -243,7 +216,6 @@ describe('a link anybody may follow', () => {
 
     const me = await call(env, '/v1/me', { token: json.token })
     expect(me.json.guest).toEqual({ id: json.guest.id, name: json.guest.name })
-    // A guest is not an account and is never answered as one.
     expect(me.json.user).toBeUndefined()
   })
 
@@ -299,10 +271,6 @@ describe('a link anybody may follow', () => {
     expect((await shareView()).json.members).toHaveLength(1)
   })
 
-  /** Two tabs of the same guest arriving together. What `guestStanding` read a
-   *  moment ago is not a lock on the row, so the second write met the first and
-   *  came back as a 500. The other tab's row goes in at the one moment that
-   *  matters; see `justBefore`. */
   test('one guest at the link twice at once is still one row', async () => {
     const link = await shareLink('read', 'open')
     const arrived = await follow(link)
@@ -328,8 +296,6 @@ describe('a link anybody may follow', () => {
 
     await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
 
-    // The link is gone. The guest keeps what it was given, the way a member does
-    // when the link they came through is revoked.
     expect((await follow(link)).status).toBe(404)
     expect((await call(env, `/v1/notes/${note}`, { token: json.token })).status).toBe(200)
   })
@@ -345,8 +311,6 @@ describe('a link anybody may follow', () => {
     expect(refused).toBeGreaterThan(0)
   })
 })
-
-/* ── A link that asks first asks one field ────────────────────────────── */
 
 describe('a link that asks first', () => {
   test('says it will ask, before anybody has followed it', async () => {
@@ -372,7 +336,6 @@ describe('a link that asks first', () => {
     expect(json.space).toBeUndefined()
     expect(json.token).toBeTruthy()
 
-    // Waiting is not being in.
     expect((await call(env, `/v1/notes/${note}`, { token: json.token })).status).toBe(404)
     expect((await rail(json.token)).json.spaces).toEqual([])
   })
@@ -399,12 +362,10 @@ describe('a link that asks first', () => {
     const link = await shareLink('write', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
 
-    // The link changes afterwards; what was promised stands.
     await shareLink('read', 'approval')
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
 
-    // Asking again is how the page waiting on it finds out.
     const again = await follow(link, { as: json.token })
     expect(again.json.space.name).toBe(SHARED)
     expect(again.json.space.role).toBe('write')
@@ -428,7 +389,6 @@ describe('a link that asks first', () => {
     expect(again.json.declined).toBe(true)
     expect(again.json.space).toBeUndefined()
 
-    // And the owner is asked nothing further about them.
     const { json: who } = await shareView()
     expect(who.requests).toEqual([])
     expect(who.members).toEqual([])
@@ -444,9 +404,6 @@ describe('a link that asks first', () => {
   })
 })
 
-/** Somebody waiting who stops, and a wait that has run out (B540). Cancel is a
- *  withdrawal the owner can no longer accept, and a page that goes on asking
- *  after the month a request lasts does not knock on the door again. */
 describe('a wait the reader ends', () => {
   function withdraw(token: string, as?: string) {
     return call(env, `/v1/join/${token}`, { method: 'DELETE', ...(as ? { token: as } : {}) })
@@ -544,8 +501,6 @@ describe('a wait the reader ends', () => {
   })
 })
 
-/* ── What a guest may reach ───────────────────────────────────────────── */
-
 describe('a guest session', () => {
   let guest: string
 
@@ -553,7 +508,6 @@ describe('a guest session', () => {
     guest = (await follow(await shareLink('write', 'open'))).json.token
   })
 
-  /** Everything account-wide, which is everything a guest is not. */
   const CLOSED: { what: string; go: (token: string) => Promise<{ status: number }> }[] = [
     { what: 'the storage it is using', go: (token) => call(env, '/v1/usage', { token }) },
     { what: 'the settings', go: (token) => call(env, '/v1/settings', { token }) },
@@ -587,16 +541,12 @@ describe('a guest session', () => {
           headers: { 'content-type': 'image/png' },
         }),
     },
-    // The account's record of its own notes, and the whole space at once. See the
-    // allowlist in guests.ts, which says why neither is a guest's.
     { what: 'the versions of a note', go: (token) => call(env, '/v1/notes/x/versions', { token }) },
     { what: 'one of them', go: (token) => call(env, '/v1/notes/x/versions/1', { token }) },
     {
       what: 'putting a space back to a moment',
       go: (token) => call(env, `/v1/spaces/${space}/rollback`, { token, body: { at: Date.now() } }),
     },
-    // And anything about the second factor or the sessions, which are the account
-    // itself: a guest has neither, and a token acting for somebody may not either.
     { what: 'the second factor', go: (token) => call(env, '/v1/second', { token }) },
     { what: 'turning it off', go: (token) => call(env, '/v1/second', { method: 'DELETE', token }) },
     { what: 'the sessions', go: (token) => call(env, '/v1/sessions', { token }) },
@@ -604,8 +554,6 @@ describe('a guest session', () => {
       what: 'ending every other one',
       go: (token) => call(env, '/v1/sessions', { method: 'DELETE', token }),
     },
-    // Sync v2's devices, which are an account's: a guest's hub socket hears pokes and
-    // nothing else, and none of these routes is a guest's at all.
     { what: 'the devices', go: (token) => call(env, '/v2/devices', { token }) },
     {
       what: 'ending a device',
@@ -676,8 +624,6 @@ describe('a guest session', () => {
     await call(env, `/v1/spaces/${space}/share/guests/${who}`, { method: 'DELETE', token: owner })
 
     expect((await shareView()).json.members).toEqual([])
-    // A guest with nothing left to reach is nobody, so the session goes too and
-    // the device is back to the app it had before the link.
     expect((await call(env, `/v1/notes/${note}`, { token: guest })).status).toBe(401)
     expect((await rail(guest)).status).toBe(401)
   })
@@ -738,8 +684,6 @@ describe('a guest session', () => {
   })
 })
 
-/* ── A guest that turns out to be somebody ────────────────────────────── */
-
 describe('a guest becoming an account', () => {
   test('keeps what the device was given, when that device signs in', async () => {
     const { json } = await follow(await shareLink('write', 'open'))
@@ -751,7 +695,6 @@ describe('a guest becoming an account', () => {
       [SHARED, 'write'],
     ])
 
-    // And the sheet says one person, by address, rather than two.
     const { json: who } = await shareView()
     expect(who.members).toEqual([
       { ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', pending: false },
@@ -772,7 +715,6 @@ describe('a guest becoming an account', () => {
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
 
-    // Somebody else's browser entirely: the address is what carries it over.
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
@@ -782,11 +724,9 @@ describe('a guest becoming an account', () => {
 
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes'])
-    // Still waiting, and still theirs to accept.
     expect((await shareView()).json.requests).toHaveLength(1)
   })
 
-  /** An invitation to the owner's second space, mailed to `email`. */
   async function inviteToMore(email: string): Promise<string> {
     const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json
       .space.id
@@ -803,31 +743,26 @@ describe('a guest becoming an account', () => {
     const open = await follow(await shareLink('write', 'open'))
     const link = await inviteToMore(GUEST)
 
-    // The link proves the address it was mailed to, not who opened it.
     const { status, json } = await follow(link, { as: open.json.token })
     expect(status).toBe(403)
     expect(json.error).toBe('that invitation was sent to another address')
     expect(json.token).toBeUndefined()
 
-    // The guest is still the guest, in what it was lent and nothing else.
     expect((await call(env, '/v1/me', { token: open.json.token })).json.guest.id).toBe(
       open.json.guest.id,
     )
     expect((await rail(open.json.token)).json.spaces.map((one) => one.name)).toEqual([SHARED])
 
-    // And the address has what it was invited to and nothing the guest held.
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes'])
     expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
 
-    // Nor did the invitation get spent on the refusal.
     expect((await call<JoinView>(env, `/v1/join/${link}`)).status).toBe(200)
   })
 
   test('keeps a space owned by somebody else out of an invitation another owner sent', async () => {
     const open = await follow(await shareLink('write', 'open'))
 
-    // Somebody else entirely, inviting an address of their own choosing.
     const other = await signIn(env, 'other@example.com')
     const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'B' } })).json.space
       .id
@@ -866,8 +801,6 @@ describe('a guest becoming an account', () => {
     expect(status).toBe(200)
     expect(json.user.email).toBe(GUEST)
 
-    // Both spaces: the one the owner let the guest into and the one the mail gave
-    // the address. Proving the address is what hands that guest over.
     const { json: rails } = await rail(json.token)
     expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
   })
@@ -876,7 +809,6 @@ describe('a guest becoming an account', () => {
     const open = await follow(await shareLink('write', 'open'))
     const link = await inviteToMore(GUEST)
 
-    // The emailed code, with the device's guest handed over, is the way in.
     const token = await signIn(env, GUEST, open.json.token)
     expect((await follow(link, { as: token })).status).toBe(200)
 

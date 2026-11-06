@@ -1,9 +1,3 @@
-/** The Worker as `@orden/sync-core`'s simulator's account (docs/sync-v2.md section 12):
- *  its routes, its rooms and its SQL behind the kit's `AccountAdapter`, so the same
- *  seeds that judge the reference account judge this one. Used by the runs with the
- *  kit's reference devices (sync2-sim.test.ts) and with the app's own engine
- *  (sync2-engine.test.ts). */
-
 import { TEXT } from '@orden/rooms'
 import type { AccountAdapter, AccountView, Route, Seeded } from '@orden/sync-core/sim'
 import { frame, nameKey } from '@orden/sync-core'
@@ -17,7 +11,6 @@ import { type Live, live } from './sync2'
 
 const OCTETS = 'application/octet-stream'
 
-/** The Worker, as the simulator reaches an account. */
 export class WorkerAccount implements AccountAdapter {
   readonly env: TestEnv
   private readonly rooms: Live
@@ -31,8 +24,6 @@ export class WorkerAccount implements AccountAdapter {
     this.ready = this.setUp()
   }
 
-  /** An account, a space holding the seeded notes on their first epoch at the
-   *  numbers the devices start from, and a session for each device, bound to it. */
   private async setUp() {
     const token = await signIn(this.env, 'sim@example.com')
     this.space = (
@@ -66,8 +57,6 @@ export class WorkerAccount implements AccountAdapter {
     db.prepare('update spaces set prepared_at = 1 where id = ?').run(this.space)
   }
 
-  /** The session a device speaks with: its own, with the device bound to it the way a
-   *  hello binds one, so every change it makes is written down as its own. */
   private async session(device: string): Promise<string> {
     const held = this.sessions.get(device)
     if (held) return held
@@ -109,9 +98,6 @@ export class WorkerAccount implements AccountAdapter {
     }
 
     const response = await app.fetch(request, this.env)
-    // A note gone or out of reach is the account's answer to a person's request, which
-    // a device reads and acts on (a version kept of a note deleted meanwhile, say);
-    // anything else is the Worker failing, which no run should meet.
     if (response.status === 404 || response.status === 403) {
       const said = await response.json<{ error?: string }>()
       return frame({ refused: response.status, error: said.error ?? '' })
@@ -121,8 +107,6 @@ export class WorkerAccount implements AccountAdapter {
     }
     const bytes = new Uint8Array(await response.arrayBuffer())
 
-    // A second and a bit of nobody typing: every room that took something settles, so
-    // what it took is in the feed and in the bucket, as it would be by the next pass.
     if (route === 'push') await this.rooms.settle()
     return bytes
   }
@@ -187,7 +171,6 @@ export class WorkerAccount implements AccountAdapter {
   }
 }
 
-/** Where a note was put among the rest of its folder (#1068), read past the row's type. */
 function placeOf(note: Note): string | null {
   const pos = (note as unknown as { pos?: unknown }).pos
   return typeof pos === 'string' ? pos : null

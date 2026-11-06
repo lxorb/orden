@@ -1,7 +1,5 @@
 import { vi } from 'vitest'
 
-/** One custom hostname as Cloudflare's API describes it, trimmed to the
- *  fields the Worker reads. */
 export interface FakeHostname {
   id: string
   hostname: string
@@ -35,27 +33,16 @@ export const TOKEN = 'test-token'
 
 const DOH = 'https://cloudflare-dns.com/dns-query'
 
-/** Cloudflare's custom-hostname API and its resolver, kept in memory and
- *  installed over the global fetch. Both, because they are the two things the
- *  Worker asks of the network about a domain: give me a certificate for this
- *  name, and does this name say it is ours. Anything else that reaches the
- *  network is thrown at, so a stray call cannot pass unnoticed. */
 export function fakeCloudflare() {
   const base = `https://api.cloudflare.com/client/v4/zones/${ZONE}/custom_hostnames`
   const hostnames = new Map<string, FakeHostname>()
-  /** Hostnames Cloudflare will not take, and what it says about each. */
   const refusals = new Map<string, string>()
-  /** Every request, as `METHOD path`, in order. */
   const calls: string[] = []
-  /** The TXT records people have added at their registrars, and every name that
-   *  has been looked up. */
   const records = new Map<string, string[]>()
   const lookups: string[] = []
   let resolves = true
   let next = 0
 
-  /** The resolver's answer, in the shape JSON DNS gives it: a status, and the
-   *  strings quoted the way a zone file quotes them. */
   function resolved(name: string): Response {
     lookups.push(name)
     if (!resolves) return new Response('no', { status: 503 })
@@ -76,8 +63,6 @@ export function fakeCloudflare() {
     })
   }
 
-  /** Cloudflare's answer, worked out without touching anything asynchronous;
-   *  the stub below is what makes it look like a fetch. */
   function answer(input: RequestInfo | URL, init?: RequestInit): Response {
     const url = new URL(
       typeof input === 'string' ? input : input instanceof URL ? input : input.url,
@@ -147,39 +132,29 @@ export function fakeCloudflare() {
     install() {
       vi.stubGlobal('fetch', fetch)
     },
-    /** A record somebody added at their registrar. */
     txt(name: string, values: string[]) {
       records.set(name, values)
     },
-    /** And the record taken away again, which is what a domain that has changed
-     *  hands looks like. */
     forgetTxt(name: string) {
       records.delete(name)
     },
-    /** A resolver that cannot be reached, which is not the same answer as a name
-     *  with nothing on it. */
     dnsDown(down = true) {
       resolves = !down
     },
-    /** Makes Cloudflare turn the hostname down when it is asked for. */
     refuse(hostname: string, message: string) {
       refusals.set(hostname, message)
     },
-    /** What Cloudflare does once the CNAME is in place and the certificate is out. */
     activate(hostname: string) {
       const one = hostnames.get(hostname)!
       one.status = 'active'
       one.ssl.status = 'active'
     },
-    /** What it reports while the CNAME is still missing. */
     complain(hostname: string, message: string) {
       hostnames.get(hostname)!.ssl.validation_errors = [{ message }]
     },
-    /** What it reports when it has given up. */
     timeOut(hostname: string) {
       hostnames.get(hostname)!.ssl.status = 'validation_timed_out'
     },
-    /** What it reports when the CNAME was taken away again. */
     move(hostname: string) {
       hostnames.get(hostname)!.status = 'moved'
     },

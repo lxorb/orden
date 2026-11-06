@@ -1,20 +1,5 @@
-/** What a socket already in a room may still do to its file, asked again once a
- *  minute beside its sign-in (`askSignIns` in room.ts).
- *
- *  The checks a socket was let in on are made at the handshake, and the route that
- *  takes somebody's access away tells the rooms they have open (`roomsRevoked`). That
- *  telling can miss: a room a moment away from answering, a row gone. This is what
- *  catches what it missed, a minute late rather than never.
- *
- *  Asked by the sign-in the socket came with, the way the door asks (`ALLOWED` in
- *  index.ts), but without leaving out a file in Recently deleted or the space it is
- *  in: what this says is whether the person is still in the space at all, and a file
- *  going is not their access ending. A sign-in that has ended answers nothing here;
- *  the sign-in check closes those. */
-
 import type { Env } from '../types'
 
-/** The person a sign-in is, if it lives: an account or a guest. */
 export const SIGNED_IN_AS = `me as (
   select u.id as user_id, u.email as email, null as guest_id, s.id as session_id
     from sessions s join users u on u.id = s.user_id
@@ -45,8 +30,6 @@ select case when sp.user_id = me.user_id then 'write'
 
 export type Access = 'write' | 'read' | 'none'
 
-/** What each of these sign-ins, by hash, may do to the note now. One that has ended,
- *  or a note no longer there at all, is left out: nothing is known about it here. */
 export async function accessOf(
   env: Env,
   noteId: string,

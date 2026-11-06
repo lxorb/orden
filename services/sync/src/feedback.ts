@@ -1,17 +1,3 @@
-/** Send feedback (#548): what somebody wrote about a problem, with what the app adds -
- *  its version, the platform it runs on and the recent app log - and nothing of their
- *  notes.
- *
- *  `POST /v1/feedback`, open to anybody: a person who cannot sign in is often the one
- *  with something to report. A session, when the request carries one, says whose report
- *  it is; a guest's or a program's is not an account and counts as nobody. Each report
- *  is a row (0055), an issue in the private `FEEDBACK_REPO` (feedback-issues.ts), and,
- *  where `FEEDBACK_TO` names an address, a mail to it through the binding every other
- *  message goes out by.
- *
- *  Counted three ways, because the route writes a row and sends a mail for anybody who
- *  asks: per machine, per account, and on the service as a whole. */
-
 import { Hono } from 'hono'
 import { requireWhoever } from './auth'
 import { readBody } from './body'
@@ -24,21 +10,15 @@ import { machineOf, within } from './limits'
 import { TRY_IN_AN_HOUR } from './refused'
 import type { Env, Variables } from './types'
 
-/** How long each part may be: a description is a few paragraphs, the log the tail the
- *  app sends, and the version and platform a few words each. */
 const MOST = { text: 10_000, version: 64, platform: 120, log: 64 * 1024 } as const
 
 const AN_HOUR = 60 * 60 * 1000
 const A_DAY = 24 * AN_HOUR
 
-/** What one machine and one account may send in an hour, and the service in a day:
- *  far more than a person reporting what went wrong, and far less than a script. */
 const FROM_ONE_MACHINE = 10
 const FROM_ONE_ACCOUNT = 10
 const ALL_IN_A_DAY = 500
 
-/** And how many reports with pictures the service takes in a day, which are the ones
- *  that cost the bucket anything. */
 const PICTURED_IN_A_DAY = 200
 
 const EMPTY = 'say what happened'
@@ -77,10 +57,8 @@ feedback.post('/', async (context) => {
 
   const id = newId()
   const at = now()
-  // The page's key, given to the sender and to nobody else; the row keeps its hash.
   const key = randomToken()
 
-  // The pictures' bytes first, so a row never names one that is not there.
   const names = pictures.map(() => randomToken())
   for (const [index, picture] of pictures.entries()) {
     await env.NOTES.put(pictureKey(id, names[index] ?? ''), picture.bytes, {
@@ -101,9 +79,6 @@ feedback.post('/', async (context) => {
     ),
   ])
 
-  // And an issue of it in the private repository, as lxorbs-minion (#666): after the
-  // answer where the runtime lets work go on past it, and tried again from the cron
-  // until it has worked; see feedback-issues.ts.
   const issue = openIssue(env, id)
   try {
     context.executionCtx.waitUntil(issue)
@@ -120,19 +95,13 @@ feedback.post('/', async (context) => {
     )
   }
 
-  // Answered only now, once the report is kept: what the app shows as received is what
-  // the service has. The address is the report's page, which says how it stands to
-  // whoever was given it (#1087).
   return context.json({ ok: true, id, url: pageUrl(env, id, key) })
 })
 
-/** The address of a report's page. */
 function pageUrl(env: Env, id: string, key: string): string {
   return `${env.APP_ORIGIN}/v1/feedback/${id}/${key}`
 }
 
-/** One picture of a report, to whoever holds its name: GitHub, drawing the report's
- *  issue, and the report's page. */
 feedback.get('/images/:name', async (context) => {
   const name = context.req.param('name')
   if (!/^[0-9a-f]{64}$/.test(name)) return context.notFound()
@@ -147,7 +116,6 @@ feedback.get('/images/:name', async (context) => {
   return new Response(object.body, {
     headers: {
       'content-type': row.type,
-      // A name is never given to other bytes.
       'cache-control': 'public, max-age=31536000, immutable',
       'x-content-type-options': 'nosniff',
       'content-security-policy': "default-src 'none'",
@@ -155,9 +123,6 @@ feedback.get('/images/:name', async (context) => {
   })
 })
 
-/** A report's page: that it arrived, how it stands, and what it said, for whoever holds
- *  its key - the sender, who is given the address once, as the service answers. The
- *  repository its issue is in is private, so this is the one place they can see it. */
 feedback.get('/:id/:key', async (context) => {
   const { id, key } = context.req.param()
   const env = context.env
@@ -186,21 +151,17 @@ feedback.get('/:id/:key', async (context) => {
       : reportPage(null)
   return context.html(html, found ? 200 : 404, {
     'cache-control': 'no-store',
-    // The key is in the address; no page this links to is told it.
     'referrer-policy': 'no-referrer',
     'x-robots-tag': 'noindex',
     'content-security-policy': `default-src 'none'; img-src ${new URL(env.APP_ORIGIN).origin}; style-src 'unsafe-inline'`,
   })
 })
 
-/** The subject: the report's first words, so a list of them reads as one. */
 export function feedbackSubject(text: string): string {
   const first = oneLine(text)
   return `Orden feedback: ${first.length > 60 ? `${first.slice(0, 59)}…` : first}`
 }
 
-/** The mail: who sent it, the words, then what the app added. Every part came from a
- *  person or their machine, so none of it may become markup. */
 export function feedbackMail(report: {
   from: string
   text: string

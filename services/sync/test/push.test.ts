@@ -1,7 +1,3 @@
-/** Push: where a device is reached, the reminders kept from the notes as they are
- *  saved, and each pushed once at its minute, against recorded answers of the three
- *  services. See src/push. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/push/keys'
@@ -29,7 +25,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** A fetch that answers from a list of recorded replies, and says what it was asked. */
 function recorded(...replies: ((url: string) => Response)[]) {
   const asked: { url: string; init: RequestInit | undefined }[] = []
   const send = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -157,8 +152,6 @@ describe('reminders kept from the notes', () => {
     expect(kept()).toEqual([])
   })
 
-  /** A reminder holds the words of its task, so it goes when the note's words do: a
-   *  note or a space emptied from Recently deleted takes its reminders with it. */
   test('go with a note emptied for good', async () => {
     await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
     const id = (await save('Plan.md', TASK)).json.note.id
@@ -190,8 +183,6 @@ describe('reminders kept from the notes', () => {
     expect(found[0]?.id).toMatch(/^[0-9a-f]{16}$/)
   })
 
-  // The table holds a note's reminders by their id, so two moments under one id would
-  // refuse the whole save.
   test('a counted and a written reminder a clock change sets apart are two rows', () => {
     const content = '- [ ] a [time:: 02:00] [remind:: 30m, 1:30] 🛫 2026-11-01\n'
     const found = remindersIn(content, 'Work', 'Plan.md', 'America/New_York', null, 0)
@@ -204,7 +195,6 @@ describe('reminders kept from the notes', () => {
 })
 
 describe('sending', () => {
-  /** A Google service account with a key of its own. */
   async function serviceAccount() {
     const pair = (await crypto.subtle.generateKey(
       {
@@ -223,8 +213,6 @@ describe('sending', () => {
     return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'nib-test' })
   }
 
-  /** A reminder two days from now, at nine where the phone is: near enough that the
-   *  session is still good when the clock is moved to it. */
   function soon() {
     const day = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10)
     return {
@@ -242,7 +230,6 @@ describe('sending', () => {
 
     vi.useFakeTimers({ toFake: ['Date'] })
     try {
-      // Typing on in the note, two seconds after its minute and before the cron.
       vi.setSystemTime(at + 2000)
       const saved = await call(env, `/v1/notes/${made.note.id}`, {
         method: 'PUT',
@@ -315,7 +302,6 @@ describe('sending', () => {
     })
     expect(sent.message.data.id).toBe(kept()[0]?.id)
 
-    // Sent once: the next minute, and a save of the same words, send nothing again.
     expect(await sendDue(env, AT + 60_000, fcm.send)).toBe(0)
     await save('Plan 2.md', '')
     expect(kept().filter((one) => one.sent_at !== null)).toHaveLength(1)

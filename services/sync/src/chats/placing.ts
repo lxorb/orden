@@ -1,17 +1,3 @@
-/** Placing one event: whether this person may, the order it takes, and the messages it
- *  changes, in one synchronous step the object runs inside a transaction
- *  (docs/chats.md 4.3, 4.5 and 4.6).
- *
- *  Nothing here decides a rule of its own. Who may is `mayEvent` from `@orden/chats`,
- *  the table the app hides its buttons by; what an event does to a message is `apply`,
- *  the reducer every device runs. A placed event is applied by replaying every event
- *  about the messages it touches - a post's own, the edits, reactions, pins, votes and
- *  deletes aimed at it, and its replies - which is the reducer's state for those
- *  messages exactly, and a handful of rows however long the chat. What is refused is
- *  never logged, so every device replaying the log arrives at the same state.
- *
- *  Each refusal is a `Refusal` code; the app says it in the reader's language. */
-
 import { apply, chatState, mayEvent } from '@orden/chats'
 import type {
   Event,
@@ -27,8 +13,6 @@ import type {
 import { BURST_POSTS, BURST_SECONDS, EVENTS_A_MINUTE } from '@orden/chats/limits'
 import type { Refusal } from '@orden/chats/wire'
 
-/** The refusals a route or the object names outside `admit`: an event or a body that
- *  does not check, a person who may not, and a ceiling. */
 export const INVALID: Refusal = 'invalid'
 export const ROLE: Refusal = 'role'
 export const RATE: Refusal = 'rate'
@@ -39,9 +23,6 @@ export interface Asker {
   device?: string
 }
 
-/** What a placed event set going that is not the log's: the people a post calls (and
- *  the author of the message a reply answers), the files it brought, and the files a
- *  delete or an edit let go of, with who posted them. */
 export interface Effects {
   called: Mention[]
   answered: Who | null
@@ -64,7 +45,6 @@ export interface EventRow extends Record<string, SqlStorageValue> {
   body: string
 }
 
-/** An event as the log placed it. */
 export function loggedOf(row: EventRow): Logged {
   const placed: Logged = {
     ...(JSON.parse(row.body) as Event),
@@ -77,13 +57,10 @@ export function loggedOf(row: EventRow): Logged {
   return placed
 }
 
-/** A message as the object keeps it. */
 function messageIn(sql: SqlStorage, id: string): Message | null {
   const row = sql.exec<{ json: string }>('select json from messages where id = ?', id).toArray()[0]
   return row ? (JSON.parse(row.json) as Message) : null
 }
-
-/* ── The chat's settings ───────────────────────────────────────────────── */
 
 export function metaOf(sql: SqlStorage): Meta {
   const kept = new Map(
@@ -115,9 +92,6 @@ export function setMeta(sql: SqlStorage, key: string, value: string | null): voi
   )
 }
 
-/* ── Admitting ─────────────────────────────────────────────────────────── */
-
-/** Counts one arrival against a ceiling, answering whether it was inside it. */
 function paced(
   sql: SqlStorage,
   who: Who,
@@ -146,7 +120,6 @@ function paced(
   return count <= most
 }
 
-/** The message an event is about, for those that are about one. */
 function targetOf(event: Event): string | null {
   return 'target' in event ? event.target : null
 }
@@ -157,9 +130,6 @@ const posts = (event: Event) =>
   event.kind === 'react' ||
   event.kind === 'vote'
 
-/** Whether this person may send this event now, or why not: the roles table, then
- *  whether what it is about is there, then the chat's slowmode and the ceilings (4.3). A
- *  ceiling is counted only for what got that far. */
 export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): Refusal | null {
   const meta = metaOf(sql)
   const target = targetOf(event)
@@ -172,7 +142,6 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
 
   if (target !== null) {
     if (!message) return 'gone'
-    // A delete stands over everything else said about a message.
     if (message.deleted && event.kind !== 'delete') return 'gone'
   }
   if (event.kind === 'vote') {
@@ -187,8 +156,6 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
     if (messageIn(sql, post.message) || heldFor(sql, post.message, asker.who) === 'other') {
       return 'invalid'
     }
-    // A deleted message takes no more replies or quotes: a device that saw it go keeps
-    // no row for it, and a reply under a row it does not have is a reply it cannot place.
     for (const named of [post.parent, post.quote]) {
       if (named !== undefined && !(messageIn(sql, named)?.deleted === false)) return 'gone'
     }
@@ -200,7 +167,6 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
   return paced(sql, asker.who, 'events', EVENTS_A_MINUTE, 60_000, at) ? null : 'rate'
 }
 
-/** Whether a message id is held for its time: by this person, by another, or not. */
 function heldFor(sql: SqlStorage, message: string, who: Who): 'mine' | 'other' | null {
   const row = sql
     .exec<{ author: string }>('select author from scheduled where message = ?', message)
@@ -209,15 +175,11 @@ function heldFor(sql: SqlStorage, message: string, who: Who): 'mine' | 'other' |
   return row.author === who ? 'mine' : 'other'
 }
 
-/* ── Placing ───────────────────────────────────────────────────────────── */
-
-/** The place an event already has, if the log holds it. */
 export function placedEvent(sql: SqlStorage, id: string): Logged | null {
   const row = sql.exec<EventRow>('select * from events where id = ?', id).toArray()[0]
   return row ? loggedOf(row) : null
 }
 
-/** One admitted event appended and applied. Synchronous, for one transaction. */
 export function place(
   sql: SqlStorage,
   event: Exclude<Event, { kind: 'schedule' }>,
@@ -228,8 +190,6 @@ export function place(
   const target = targetOf(event)
   const before = target === null ? null : messageIn(sql, target)
 
-  // When it was written, kept only where that was more than a minute before it arrived:
-  // the hover's "written 13:40" (4.5).
   const written = madeAt !== undefined && madeAt < at - 60_000 ? madeAt : null
   const { seq } = sql
     .exec<{ seq: number }>(
@@ -288,10 +248,6 @@ export function place(
   }
 }
 
-/** The files a message names: its own, and its link preview's picture, which is a blob
- *  its members fetch as they fetch the others and a use of it as theirs is (the erase
- *  hands it on, docs/chats.md 4.18). The picture has no name or size of its own; it is
- *  served as bytes, whatever its type. */
 function namedBy(files: readonly FileRef[] | undefined, preview: Preview | undefined): FileRef[] {
   const picture = preview?.picture
   const named = [...(files ?? [])]
@@ -299,15 +255,10 @@ function namedBy(files: readonly FileRef[] | undefined, preview: Preview | undef
   return named
 }
 
-/** Whether an event can take files off the message it names: a delete, and an edit
- *  that names files of its own, since the history an edit keeps is words alone and the
- *  files it replaced are shown in no version of the message any more. Which of them no
- *  message names now is the object's to ask (`freeFiles`), after the message is kept. */
 function frees(event: Event): boolean {
   return event.kind === 'delete' || (event.kind === 'edit' && event.files !== undefined)
 }
 
-/** These messages as the reducer makes them from every event about them. */
 function replayed(sql: SqlStorage, ids: readonly string[]): Message[] {
   if (!ids.length) return []
   const list = ids.map(() => '?').join(', ')
@@ -328,7 +279,6 @@ function replayed(sql: SqlStorage, ids: readonly string[]): Message[] {
   return ids.flatMap((id) => state.messages.get(id) ?? [])
 }
 
-/** Messages written back as they now stand. */
 function keep(sql: SqlStorage, messages: readonly Message[]): void {
   for (const message of messages) {
     sql.exec(

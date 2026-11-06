@@ -1,20 +1,9 @@
-/** Reaching a chat's `ChatLog` from a route: one object per chat, named by its id,
- *  asked one thing at a time by a header (log.ts `ChatAsk`).
- *
- *  Asked twice, as a room and a hub are: the commonest reason for an object not to
- *  answer is a deploy, and the second ask lands on the object that replaced it. The
- *  helpers below that tell many objects one thing never throw: whoever calls them has
- *  already changed the rows the message is about. */
-
 import { chunks } from '../bound'
 import type { Env } from '../types'
 import type { ChatAsk } from './log'
 
-/** What a route answers when the chat's object did not: a moment to wait through. The
- *  app's outbox retries on its own, so nobody reads it and it has no catalogue row. */
 export const CHAT_AWAY = 'this chat is not answering - try again'
 
-/** How many objects one request tells at once. */
 const AT_ONCE = 50
 
 export async function askChat(
@@ -44,25 +33,15 @@ export async function askChat(
   return null
 }
 
-/** One chat told one thing, answering whether it heard. */
 async function tell(env: Env, chat: string, ask: ChatAsk, headers: Record<string, string>) {
   const answer = await askChat(env, chat, ask, headers)
   return answer?.ok === true
 }
 
-/** How many chats one round of a revocation tells. */
 const MOST_OPEN = 200
 
-/** How many rounds it does: four thousand chats, far past what anybody has open. A bound
- *  on the request rather than on how much of somebody's access ends - one round alone
- *  left a member with 201 chats of the space open reading and posting on the rest, as
- *  `MOST_ROUNDS` in rooms/index.ts says of rooms. */
 const MOST_ROUNDS = 20
 
-/** Somebody's access to a space ended, or narrowed to reading, and they may have its
- *  chats open: each chat they have open there is told, in the same request, as each
- *  room is (rooms/index.ts `roomsRevoked`, which calls this). `item` narrows it to the
- *  chats whose file that is. */
 export async function chatsRevoked(
   env: Env,
   spaceId: string,
@@ -72,8 +51,6 @@ export async function chatsRevoked(
 ): Promise<void> {
   if (!env.CHATS) return
 
-  // One page of rows at a time, ordered by the chat so the next starts where this
-  // ended; a page that came back short is the last.
   let after = ''
   for (let round = 0; round < MOST_ROUNDS; round++) {
     const { results } = await env.DB.prepare(
@@ -98,10 +75,6 @@ export async function chatsRevoked(
   }
 }
 
-/** A chat moved to another space (Move to space, docs/chats.md 4.2): its history goes
- *  with it and its audience changes, so everybody who has it open is closed out to come
- *  back through the door, which lets in whoever the new space reaches. Its pointer is
- *  linked again when it arrives in the new space. */
 export async function chatsMoved(env: Env, chat: string, space: string): Promise<void> {
   await env.DB.prepare('update chats set space_id = ?, file_id = null where id = ?')
     .bind(space, chat)
@@ -115,7 +88,6 @@ export async function chatsMoved(env: Env, chat: string, space: string): Promise
   )
 }
 
-/** Sockets whose way in went with an account: read before its rows go; see erase.ts. */
 export async function closeChats(
   env: Env,
   open: readonly { chat_id: string; who: string }[],
@@ -130,8 +102,6 @@ export async function closeChats(
   }
 }
 
-/** The objects of chats that have gone for good, emptied. Answers the ids that are empty
- *  now, so the list they came from keeps the rest; see leftovers.ts. */
 export async function eraseChats(env: Env, chats: readonly string[]): Promise<string[]> {
   if (!env.CHATS) return [...chats]
   const emptied: string[] = []

@@ -18,13 +18,11 @@ function put(excluded: unknown) {
   return call(env, `/v1/spaces/${space}/excluded`, { method: 'PUT', token, body: { excluded } })
 }
 
-/** What the space listing says is left out, which is how the app reads it. */
 async function listed() {
   const { json } = await call(env, '/v1/spaces', { token })
   return json.spaces.find((one) => one.id === space)?.excluded
 }
 
-/** The column as somebody else's build left it, which no route would write. */
 function column(raw: string) {
   env.db.prepare('update spaces set excluded = ? where id = ?').run(raw, space)
 }
@@ -100,8 +98,6 @@ describe('what may be in it', () => {
   })
 })
 
-/** The column is written whole by clients, so a newer app may have left something
- *  in it this build has never heard of. Read, not trusted. */
 describe('reading the column back', () => {
   test('keeps the paths and leaves the rest', async () => {
     column('["Archive",{"glob":"*.tmp"},"Work"]')

@@ -1,12 +1,3 @@
-/** The migrations as migrations: run against the schema that was there before
- *  them, on rows that schema allowed.
- *
- *  Every other test here runs against the whole folder applied to an empty
- *  database, which is the right thing for a route and no test at all for a
- *  backfill: the rows a backfill exists for cannot be written once the migration
- *  that fixes them has run. So this file builds the database up to one
- *  migration, puts yesterday's rows in, and then applies the next. */
-
 import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
@@ -21,7 +12,6 @@ function sql(name: string): string {
   return readFileSync(FOLDER + name, 'utf8')
 }
 
-/** A database with every migration up to and including this one applied. */
 function upTo(last: string): DatabaseSync {
   const database = new DatabaseSync(':memory:')
 
@@ -33,8 +23,6 @@ function upTo(last: string): DatabaseSync {
   throw new Error(`no migration named ${last}`)
 }
 
-/** The account, space and note every case below needs, written with the columns
- *  the schema had at that point. */
 function seed(database: DatabaseSync): void {
   database.exec(`insert into users (id, email, created_at) values ('u', 'a@b.c', 1)`)
   database.exec(
@@ -51,7 +39,6 @@ function indexes(database: DatabaseSync, table: string): string[] {
 }
 
 describe('0017, the notes deleted before Recently deleted existed', () => {
-  /** A note as a delete wrote it before 0011: flagged, and no stamp. */
   function deletedLongAgo(database: DatabaseSync, id: string, at: number): void {
     database.exec(
       `insert into notes (id, space_id, path, seq, updated_at, deleted, size, hash)
@@ -111,8 +98,6 @@ describe('0017, the notes deleted before Recently deleted existed', () => {
 })
 
 describe('0022, the plaintext OpenAI key an older build stored', () => {
-  /** The settings blob as a build before this one wrote it: the key in the clear,
-   *  beside the choices that are settings like any other. */
   function chose(database: DatabaseSync, id: string, settings: string): void {
     database.exec(
       `insert into users (id, email, created_at, settings)
@@ -134,7 +119,6 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
     const { settings, openai_key: sealed } = row as { settings: string; openai_key: unknown }
     expect(JSON.parse(settings)).toEqual({ glassesModel: 'gpt-6-astra', vim: true })
     expect(settings).not.toContain('sk-proj-secret')
-    // Not carried over: it cannot be encrypted here, and the pane asks for it again.
     expect(sealed).toBeNull()
     database.close()
   })
@@ -158,7 +142,6 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
 })
 
 describe('0039, the account’s devices and web logins', () => {
-  /** A device of the account, with the web key wrapped to it and a state it wrote. */
   function device(database: DatabaseSync): void {
     database.exec(
       `insert into devices (id, user_id, name, platform, created_at) values ('d', 'u', 'L', 'mac', 1);
@@ -412,8 +395,6 @@ describe('0066, who could once write in a space', () => {
       `insert into sessions (token_hash, user_id, created_at, expires_at)
        values ('aaaabbbbccccdddd0000', 'u', 1, 9)`,
     )
-    // The owner's device, session, token and pre-0064 program name are the owner's; a
-    // device of another account, its token, a guest and a session nobody holds now are not.
     database.exec(
       `insert into notes (id, space_id, path, seq, updated_at, deleted, size, hash, doc_by,
                           updated_by)

@@ -1,10 +1,3 @@
-/** The meter's rows (docs/online-terminal.md, 4.9): what each account's machine used,
- *  per month, in `machine_usage`.
- *
- *  `Machine` adds to the month's row every minute it is awake and once more as it
- *  sleeps, so the allowance and the budget breaker read numbers at most a minute old.
- *  The arithmetic is `@orden/online`'s (`accrue`, `usedOf`, `spend`); this is the SQL. */
-
 import { accrue, monthOf, NONE, SMALL, type Usage, usedOf as asAllowance } from '@orden/online'
 import type { Allowance } from '@orden/online'
 import type { Env } from '../types'
@@ -12,7 +5,6 @@ import type { Env } from '../types'
 const USAGE = `awake_s as awakeS, cpu_s as cpuS, mem_gib_s as memGibS, disk_gb_s as diskGbS,
   egress_bytes as egressBytes`
 
-/** One awake stretch added to its month's row. */
 export async function meter(
   env: Env,
   userId: string,
@@ -40,7 +32,6 @@ export async function meter(
     .run()
 }
 
-/** What an account has used this month, against the allowance's four lines. */
 export async function usedOf(env: Env, userId: string, at: number): Promise<Allowance> {
   const usage = await env.DB.prepare(
     `select ${USAGE} from machine_usage where user_id = ? and month = ?`,
@@ -53,7 +44,6 @@ export async function usedOf(env: Env, userId: string, at: number): Promise<Allo
   return asAllowance(usage ?? NONE, home?.home_bytes ?? 0)
 }
 
-/** The whole service's month, and the homes it keeps: what the breaker prices. */
 export async function serviceMonth(
   env: Env,
   at: number,

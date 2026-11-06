@@ -1,44 +1,3 @@
-/** The reader's AI accounts, kept for every device of the account and readable on none
- *  but theirs (docs/ai.md, "Every device").
- *
- *  The account holds two kinds of ciphertext and no key. The vault is the accounts and
- *  their API keys, sealed on a device with a key only the account's devices have; each
- *  device that has that key holds it wrapped to its own public key. The shape is web
- *  logins' (docs/sync-v2.md 6.6), on routes rather than the hub, because a phone and a
- *  browser carry AI accounts too.
- *
- *  A new device is let in by the reader comparing six digits on two screens, and the
- *  digits are worked out so that nobody between the two - this service included - can
- *  choose a key that shows the same ones:
- *
- *  1. The new device registers a commitment, SHA-256(pub || its nonce), and nothing else.
- *  2. A device that has the vault key answers with a random nonce of its own.
- *  3. Only then does the new device reveal its public key and its nonce. They have to
- *     hash to the commitment, and the key has to hash to the device's id.
- *  4. Both screens show six digits of SHA-256(new pub || new nonce || answering nonce ||
- *     answering pub). A key swapped in had to be committed to before the answering nonce
- *     existed, so it shows the same digits one time in a million, and every try is a
- *     prompt the reader sees.
- *
- *  Who may change what is the vault key's, not the session's: the vault is created with
- *  a token derived from the key (`auth`, HKDF of the vault key), and the account keeps
- *  only that token's hash. Answering a device, wrapping the key to it, writing the vault,
- *  turning a device down and letting the vault go each send the token, so a stolen
- *  session alone can register a device and wait - and nothing more. Letting the vault go
- *  without it is for an account with no allowed device left, which is when nobody could
- *  send it.
- *
- *  Every change is said to the account's hub, which tells its devices to read again.
- *  A write names the revision it read, and one over a newer revision is refused, so a
- *  device merges and writes again rather than writing another's change away.
- *
- *  An allowed device is let go of only by changing the key (#389): a device with the key
- *  seals the vault under a new one, wraps that to every allowed device but the ones going,
- *  and sends it all at once with the old token and the new one (`/rotate`). The account
- *  takes it only over the revision it was read at and the token it holds, swaps the hash,
- *  writes the wraps, and lets the going devices go in the same breath, so a device let go
- *  of keeps a key that opens nothing written after. */
-
 import { type Context, Hono } from 'hono'
 import { readBody } from '../body'
 import { now } from '../crypto'
@@ -49,13 +8,10 @@ import { deviceIn } from '../versions'
 
 type Vault = Context<{ Bindings: Env; Variables: Variables }>
 
-/** The most devices an account keeps for its AI accounts. */
 const MOST_DEVICES = 30
 
-/** The most a sealed vault may be: hundreds of accounts and their keys. */
 const MOST_VAULT = 512 * 1024
 
-/** A device's id, a public key and a wrap: what a device makes, base64 or hex. */
 const ID = /^[a-f0-9]{32}$/
 const BASE64 = /^[A-Za-z0-9+/=_-]+$/
 
@@ -65,19 +21,15 @@ const NOT_THE_KEY = 'not the vault key'
 
 export const aiVault = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** The account's devices, told to read the vault again; never the one that wrote. */
 function told(env: Env, user: string, from: string): Promise<unknown> {
   return askHub(env, user, 'ai', { 'x-nib-from': from }).catch(() => null)
 }
 
-/** The hash the account keeps of a vault token. */
 async function authHash(auth: string): Promise<string | null> {
   const bytes = BASE64.test(auth) ? bytesOf(auth) : null
   return bytes ? hexOf(await digest(bytes)) : null
 }
 
-/** Whether `auth` is the token of the vault the account holds, compared without an
- *  early way out. No vault, no token, or the wrong one is no. */
 async function holdsTheKey(env: Env, user: string, auth: string | undefined): Promise<boolean> {
   if (!auth) return false
   const held = await env.DB.prepare('select auth_hash from ai_vaults where user_id = ?')
@@ -91,7 +43,6 @@ async function holdsTheKey(env: Env, user: string, auth: string | undefined): Pr
   return differ === 0
 }
 
-/** Whether any of the account's devices is allowed: has the key wrapped to it. */
 async function anyAllowed(env: Env, user: string): Promise<boolean> {
   const found = await env.DB.prepare(
     'select 1 as one from ai_devices where user_id = ? and approved_at is not null limit 1',
@@ -101,7 +52,6 @@ async function anyAllowed(env: Env, user: string): Promise<boolean> {
   return found !== null
 }
 
-/** The token a body carries, for the routes a body is optional on. */
 async function authIn(context: Vault): Promise<string | undefined> {
   const sent: unknown = await context.req.json().catch(() => null)
   if (typeof sent !== 'object' || sent === null) return undefined
@@ -126,8 +76,6 @@ interface DeviceRow {
   approved_at: number | null
 }
 
-/** Everything a device reads: the vault, the devices with where each stands in being let
- *  in, and the key wrapped to it. */
 aiVault.get('/', async (context) => {
   const user = context.get('user').id
   const device = context.req.query('device') ?? ''
@@ -160,9 +108,6 @@ aiVault.get('/', async (context) => {
   })
 })
 
-/** A device saying it is here, with a commitment to the key it will reveal. An allowed
- *  device keeps everything but its name; one still waiting starts its asking over, so a
- *  device that restarted asks with a fresh nonce rather than one it no longer has. */
 aiVault.post('/devices', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -199,8 +144,6 @@ aiVault.post('/devices', async (context) => {
   return context.json({ ok: true })
 })
 
-/** A device that has the key answering one that asks: its nonce, once. The first answer
- *  stands; another device that has the key leaves this one to it. */
 aiVault.put('/devices/:id/nonce', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -225,9 +168,6 @@ aiVault.put('/devices/:id/nonce', async (context) => {
   return context.json({ ok: true })
 })
 
-/** The asking device's key and nonce, once it has been answered: they have to be what it
- *  committed to, and the key has to be the one its id names. The first device of an
- *  account, which nobody can answer, reveals straight away. */
 aiVault.put('/devices/:id/reveal', async (context) => {
   const user = context.get('user').id
   const id = context.req.param('id')
@@ -247,7 +187,6 @@ aiVault.put('/devices/:id/reveal', async (context) => {
   if (!row) return context.json({ error: NO_SUCH_DEVICE }, 404)
   if (row.pub !== null) return context.json({ error: 'revealed already' }, 409)
 
-  // The key is the one the device's id names, and the two are what it committed to.
   if (hexOf(await digest(pubBytes), 16) !== id) {
     return context.json({ error: 'that key is not this device' }, 400)
   }
@@ -255,7 +194,6 @@ aiVault.put('/devices/:id/reveal', async (context) => {
     return context.json({ error: 'not what this device committed to' }, 400)
   }
 
-  // Answered first, unless nothing could answer: no vault and no allowed device.
   if (row.nonce === null) {
     const vault = await context.env.DB.prepare('select 1 as one from ai_vaults where user_id = ?')
       .bind(user)
@@ -274,8 +212,6 @@ aiVault.put('/devices/:id/reveal', async (context) => {
   return context.json({ ok: true })
 })
 
-/** The vault key wrapped to a device that revealed its key: written by a device that has
- *  the vault key. */
 aiVault.put('/devices/:id/wrap', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -299,8 +235,6 @@ aiVault.put('/devices/:id/wrap', async (context) => {
   return context.json({ ok: true })
 })
 
-/** A device let go of: one still asking, by anyone signed in - itself, or a device turning
- *  it down - and an allowed one only by a device that has the key. */
 aiVault.delete('/devices/:id', async (context) => {
   const user = context.get('user').id
   const id = context.req.param('id')
@@ -313,7 +247,6 @@ aiVault.delete('/devices/:id', async (context) => {
   if (row.approved_at !== null && !(await holdsTheKey(context.env, user, await authIn(context)))) {
     return context.json({ error: NOT_THE_KEY }, 403)
   }
-  // An allowed device among others goes only with the key changed under it; see `/rotate`.
   if (row.approved_at !== null) {
     const others = await context.env.DB.prepare(
       'select 1 as one from ai_devices where user_id = ? and id != ? and approved_at is not null',
@@ -330,8 +263,6 @@ aiVault.delete('/devices/:id', async (context) => {
   return context.json({ ok: true })
 })
 
-/** The sealed vault written over the revision it was read at. The first write makes the
- *  vault and names its token; every later one has to send it. */
 aiVault.put('/vault', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -371,12 +302,6 @@ aiVault.put('/vault', async (context) => {
   return context.json({ rev: held?.rev ?? rev + 1 })
 })
 
-/** The vault key changed, to let allowed devices go: the vault sealed under the new key,
- *  the new key wrapped to each device that stays, all over the revision and the token it
- *  was read at. `keep` and `wraps` go together, one wrap per device that stays; `go` are
- *  the devices let go of. An allowed device the sender did not know of - let in between
- *  its read and this - is put back to asking rather than left with a key that opens
- *  nothing, and so is a device still asking that a device going had answered. */
 aiVault.put('/rotate', async (context) => {
   const user = context.get('user').id
   const body = await readBody(context)
@@ -396,7 +321,6 @@ aiVault.put('/rotate', async (context) => {
     rev < 1 ||
     !nextHash ||
     !go.length ||
-    // Somebody has to be left holding the new key; the last device lets the vault go.
     !keep.length ||
     keep.length !== wraps.length ||
     ![...keep, ...go].every((one) => ID.test(one)) ||
@@ -410,8 +334,6 @@ aiVault.put('/rotate', async (context) => {
   }
   const oldHash = (await authHash(auth ?? '')) ?? ''
 
-  // Every statement after the first holds only once the first has: the new hash at the
-  // next revision is what says the key changed here.
   const changed = `exists (select 1 from ai_vaults where user_id = ?1 and rev = ?2 and auth_hash = ?3)`
   const after = [user, rev + 1, nextHash] as const
   const marks = (ids: readonly string[], first: number) =>
@@ -452,9 +374,6 @@ aiVault.put('/rotate', async (context) => {
   return context.json({ rev: rev + 1 })
 })
 
-/** Starting over: the vault and every wrap let go of, the devices kept so they can be let
- *  in again. By a device that has the key, or on an account with no allowed device left,
- *  which is when nobody could have it. */
 aiVault.delete('/vault', async (context) => {
   const user = context.get('user').id
   const allowed =

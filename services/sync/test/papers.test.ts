@@ -2,9 +2,6 @@ import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 
-/** The paper a page note holds, kept by the note's id (#551): what a second device and
- *  somebody the note was shared with on its own open the note's pages on. */
-
 const OWNER = 'owner@example.com'
 
 let env: TestEnv
@@ -12,8 +9,6 @@ let owner: string
 let space: string
 let pages: string
 
-/** A PDF's bytes and the hash they are named by. Plain text, so the answer reads back
- *  as the same string. */
 function paper(words = 'a lecture') {
   const bytes = new TextEncoder().encode(`%PDF-1.4\n${words}\n%%EOF\n`)
   return {
@@ -40,7 +35,6 @@ function note(path: string, content = '{}') {
   return call(env, `/v1/spaces/${space}/notes`, { token: owner, body: { path, content } })
 }
 
-/** An open link to one file, followed by somebody with no account: their token. */
 async function guestOf(item: string): Promise<string> {
   const { json } = await call<{ link?: { url: string } }>(
     env,
@@ -53,7 +47,6 @@ async function guestOf(item: string): Promise<string> {
   return joined.json.token
 }
 
-/** Somebody invited to write in the space: their token. */
 async function editor(): Promise<string> {
   const token = await signIn(env, 'editor@example.com')
   const sent = await mail(() =>

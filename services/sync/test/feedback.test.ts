@@ -1,6 +1,3 @@
-/** Send feedback (#548): anybody may send a report, a session says whose it is, it is
- *  kept and mailed to the owner where an address is set, and it is counted. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { feedbackMail, feedbackSubject } from '../src/feedback'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'

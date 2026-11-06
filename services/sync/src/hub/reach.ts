@@ -1,29 +1,12 @@
-/** Reaching an account's hub from a route: one object per account (or guest),
- *  named by its id, asked one thing at a time by a header.
- *
- *  Never a throw. Every caller has already done the thing the hub is being told
- *  about - a row written, a session ended, a note saved - and a hub that is a
- *  moment from answering is not a reason for that to fail. A socket the hub did
- *  not hear about is set right by the socket's next connect; a poke nobody heard
- *  is covered by polling. */
-
 import { chunks } from '../bound'
 import type { Env } from '../types'
 
-/** What a route may ask a hub. */
 export type HubAsk = 'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai'
 
-/** What a route answers when the hub it needs did not answer: a moment to wait
- *  through, as a deploy is, rather than a failure. The socket's own handshake cannot
- *  be read by a browser, so nobody reads this and it has no catalogue row. */
 export const HUB_AWAY = 'sync is not answering - try again'
 
-/** How many hubs one request tells at once. */
 const AT_ONCE = 50
 
-/** Asks the hub named `id`, answering its response or null when it could not be
- *  reached. Asked twice, like a room: the commonest reason for an object not to
- *  answer is a deploy, and the second ask lands on the object that replaced it. */
 export async function askHub(
   env: Env,
   id: string,
@@ -47,10 +30,6 @@ export async function askHub(
   return null
 }
 
-/** The hubs of accounts and guests that have gone for good, emptied: every socket
- *  closed and their storage emptied. Answers the ids that are empty now, so the
- *  list they came from keeps the rest; without the namespace there are no hubs,
- *  and every one of them is as empty as it will ever be. See leftovers.ts. */
 export async function eraseHubs(env: Env, ids: readonly string[]): Promise<string[]> {
   if (!env.HUB) return [...ids]
 
@@ -63,7 +42,6 @@ export async function eraseHubs(env: Env, ids: readonly string[]): Promise<strin
   return emptied
 }
 
-/** Tells every one of these hubs the same thing, a round at a time. */
 export async function tellHubs(
   env: Env,
   ids: readonly string[],

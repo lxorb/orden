@@ -1,8 +1,3 @@
-/** What a report is answered with (#1087): the address of its own page, given only once
- *  the report is kept, which says how it stands to whoever holds its key; and the
- *  pictures it carried, kept without what was written beside them, served by a name
- *  only the issue and the page know, and gone with the account. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { eraseAccount } from '../src/erase'
 import { jpegWithout, MOST_IMAGES, pictureOf, pngWithout, sniffed } from '../src/feedback-images'
@@ -44,7 +39,6 @@ function chunk(type: string, data: string | number[]): Uint8Array {
 
 const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
-/** A PNG that carries a camera's place in an EXIF chunk and words in a text chunk. */
 const PNG = bytes(
   SIGNATURE,
   chunk('IHDR', [0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0]),
@@ -59,7 +53,6 @@ function segment(marker: number, data: string): Uint8Array {
   return bytes([0xff, marker, length >> 8, length & 255], data)
 }
 
-/** A JPEG with JFIF's header, EXIF with a place, and a comment before its scan. */
 const JPEG = bytes(
   [0xff, 0xd8],
   segment(0xe0, 'JFIF\0\x01\x01\0\0\x01\0\x01\0\0'),

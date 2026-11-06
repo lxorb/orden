@@ -21,7 +21,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** Issues a connector token, read-only unless told otherwise. */
 async function connector(readOnly = true): Promise<string> {
   const made = await call(env, '/v1/mcp/token', { token, body: { readOnly } })
   return made.json.token
@@ -46,7 +45,6 @@ describe('handing out a token', () => {
     expect(made.status).toBe(200)
     expect(made.json.token).toMatch(/^nib_/)
 
-    // Asking again says one exists, but never repeats the secret.
     const asked = await call(env, '/v1/mcp/token', { token })
     expect(asked.json.exists).toBe(true)
     expect(asked.json.token).toBeUndefined()
@@ -83,7 +81,6 @@ describe('handing out a token', () => {
     expect((await call(env, '/v1/spaces', { token: key })).status).toBe(401)
     expect((await call(env, '/v1/mcp/token', { token })).json.exists).toBe(false)
 
-    // The session that stayed can still hand one out, and that one works.
     const kept = await connector(false)
     expect((await call(env, '/v1/spaces', { token: kept })).status).toBe(200)
   })
@@ -247,8 +244,6 @@ describe('the notes that link to one note', () => {
   })
 })
 
-/** A model sends what it likes. Every one of these used to reach a `null.id` or
- *  a `String({})` and come back as a message about a property of undefined. */
 describe('what a tool is given', () => {
   test('a space nobody named is asked for in words', async () => {
     const key = await connector()
@@ -338,9 +333,6 @@ describe('writing through it', () => {
   })
 
   test('goes to the account’s own space when somebody else’s has the same name', async () => {
-    // Being invited is enough to have a space in the list, so a stranger who knows
-    // the address can put a Work beside this account's Work - spelled to sort first,
-    // which is what the first of two equal names used to be.
     const stranger = await signIn(env, 'x@y.dev')
     const theirs = await call(env, '/v1/spaces', { token: stranger, body: { name: 'WORK' } })
     await call(env, `/v1/spaces/${theirs.json.space.id}/share/invite`, {
@@ -388,9 +380,6 @@ describe('writing through it', () => {
     expect(paths).toContain('fresh.md')
   })
 
-  /** The connector is a second door onto the same notes, so it has to hold the
-   *  same limits. It used to hold neither: a model could write past the quota
-   *  and past the size a note may be. */
   test('is refused once the account is full', async () => {
     const key = await connector(false)
     const owner = env.db.prepare('select id from users limit 1').get() as { id: string }
@@ -425,7 +414,6 @@ describe('writing through it', () => {
       body: { readOnly: false },
     })
 
-    // Their own account's space, and nothing of this one's.
     expect(await tool(otherKey.json.token, 'list_spaces')).toBe('Notes')
     expect(
       await tool(otherKey.json.token, 'read_note', { space: 'Work', path: 'plan.md' }),

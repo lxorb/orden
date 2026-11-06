@@ -2,14 +2,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 import { MOST_SITES, siteOf } from '../src/site-icons'
 
-/** The marks of the sites an account has been to, for the icon picker (#1054): kept
- *  by the account, the picture fetched by the service rather than by a device, newest
- *  first, and taken away with the history and with the account. */
-
 let env: TestEnv
 let token: string
 
-/** Every address the service fetched a mark from. */
 let fetched: string[] = []
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4])
@@ -59,7 +54,6 @@ describe('the sites an account has been to', () => {
     expect(sites.map((one) => one.site)).toEqual(['github.com', 'example.org'])
     expect(sites[0]?.label).toBe('GitHub')
     expect(sites[0]?.hash).toMatch(/^[a-f0-9]{64}$/)
-    // The same mark named again is not fetched again.
     expect(fetched).toEqual(['https://github.com/favicon.ico', 'https://example.org/i.png'])
 
     const picture = await call(env, '/v2/site-icons/github.com/picture', { token })

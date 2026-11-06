@@ -1,9 +1,3 @@
-/** The space and the note a new account is given; see src/spaces/first.ts.
- *
- *  Everything here goes through the sign-in the app uses, because the point of
- *  the feature is that no client has to know about it: whatever signs in first
- *  finds the space already there. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 
@@ -15,7 +9,6 @@ beforeEach(() => {
 
 afterEach(() => env.close())
 
-/** The one note in the one space, content and all. */
 async function firstNote(token: string) {
   const spaces = await call(env, '/v1/spaces', { token })
   const id = spaces.json.spaces[0]?.id ?? ''
@@ -28,7 +21,6 @@ async function firstNote(token: string) {
   return { note, content: fetched.json.content }
 }
 
-/** Signs in with a language, which is all the service ever learns about one. */
 async function signInFrom(email: string, language: string): Promise<string> {
   const logged = await mail(() => call(env, '/v1/auth/code', { body: { email } }))
   const code = /(\d{3}) (\d{3})/.exec(logged)
@@ -61,8 +53,6 @@ describe('a new account', () => {
     expect(content).toContain('# Welcome to Orden')
   })
 
-  /** The connector used to have to say "make a space
-   *  first", because an account could exist with nowhere to write. */
   test('is somewhere the connector can write without being told to make a space', async () => {
     const token = await signIn(env, 'a@b.dev')
     const key = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
@@ -106,8 +96,6 @@ describe('the space a new account is given', () => {
     expect(changes.json.notes).toHaveLength(1)
   })
 
-  /** Two verifies for one code is what a retried request looks like, and it is
-   *  the way two of them could once have raced each other into two spaces. */
   test('is made once when a second verify arrives for the same address', async () => {
     const logged = await mail(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
     const code = /(\d{3}) (\d{3})/.exec(logged)
@@ -129,10 +117,6 @@ describe('the space a new account is given', () => {
     expect(json.spaces.map((one) => one.name)).toEqual(['Notes', 'Work'])
   })
 
-  /** Only an account being made is given one. An empty rail is a state somebody
-   *  can mean - they deleted every space - and it is the state every account
-   *  made before this feature existed signs in with, so a space appearing on a
-   *  later sign-in would be the app deciding something for them. */
   test('does not come back for an account that has emptied its rail', async () => {
     const token = await signIn(env, 'a@b.dev')
     const { json } = await call(env, '/v1/spaces', { token })
@@ -142,8 +126,6 @@ describe('the space a new account is given', () => {
     expect((await call(env, '/v1/spaces', { token: again })).json.spaces).toEqual([])
   })
 
-  /** An account is worth more than the note it opens with, so a store that
-   *  refuses does not cost somebody their sign-in; see src/auth.ts. */
   test('is not worth a sign-in when the store will not take the note', async () => {
     env = testEnv({
       NOTES: {
@@ -176,8 +158,6 @@ describe('the note a new account is given', () => {
     expect(new Set(said).size).toBe(said.length)
   })
 
-  /** The path is an identity: the browser build seeds `/Notes/Read me.md`
-   *  before anybody signs in, and a translated one would pair with nothing. */
   test('keeps its path and its space name in English whatever the language', async () => {
     const token = await signInFrom('de@b.dev', 'de-CH,de;q=0.9')
 
@@ -209,8 +189,6 @@ describe('the note a new account is given', () => {
     const token = await signIn(env, 'a@b.dev')
     const { note, content } = await firstNote(token)
 
-    // The changes feed carries it at the space's first cursor, and the note
-    // route hands back exactly the bytes that were counted.
     expect(note.seq).toBe(1)
     expect(note.deleted).toBe(false)
     expect(note.size).toBe(new TextEncoder().encode(content).length)

@@ -1,24 +1,13 @@
-/** The token endpoint, and the grant a token belongs to.
- *
- *  A code is good once, however the attempt goes, and only to the client it was
- *  issued to and only with the verifier whose digest it carries. Access tokens
- *  are short-lived and refresh tokens roll over; both live only as hashes, so a
- *  leaked database is not a set of keys. */
-
 import { type Context, Hono } from 'hono'
 import { equals, newId, now, randomToken, sha256 } from '../crypto'
 import type { Env } from '../types'
 import { clientFor } from './clients'
 import { failure, GRANTS, resourceMatches, resourceUrl, SCOPES, textFields } from './protocol'
 
-/** Long enough that a client is not forever refreshing; short enough that a
- *  token found somewhere is soon worthless. Clients refresh without asking. */
 const ACCESS_TTL = 24 * 60 * 60 * 1000
 
 export const tokens = new Hono<{ Bindings: Env }>()
 
-/** Token requests come form-encoded, as RFC 6749 says; JSON is taken too,
- *  because some clients send it anyway. */
 async function tokenBody(
   context: Context<{ Bindings: Env }>,
 ): Promise<Record<string, string | undefined>> {
@@ -31,8 +20,6 @@ async function tokenBody(
   return textFields(object ? (raw as Record<string, unknown>) : {})
 }
 
-/** The client's id and, if it has one, its secret: in the body or, for
- *  `client_secret_basic`, in the Authorization header. */
 function credentials(
   header: string | undefined,
   body: Record<string, string | undefined>,
@@ -73,10 +60,6 @@ interface Grant {
   read_only: number
 }
 
-/** Fresh tokens for a grant, new or refreshed. The token being replaced is kept
- *  beside the new one, not as a second key but as the record that lets the next
- *  presentation of it be recognised for what it is; see the refresh branch
- *  below. */
 async function issue(env: Env, grant: Grant, replacing?: { refresh_hash: string }) {
   const access = `nib_${randomToken()}`
   const refresh = `nibr_${randomToken()}`
@@ -115,11 +98,6 @@ tokens.post('/token', async (context) => {
       'www-authenticate': 'Basic realm="oauth"',
     })
 
-  // A client that registered with a secret has to show it; one without proves
-  // itself with PKCE alone, and a secret it sends anyway is ignored.
-  // Compared the way every other secret here is: a digest read a byte at a time
-  // is a digest whose length a caller can measure, and `equals` is what the rest
-  // of the service uses for exactly that reason.
   const client = await clientFor(context.env, id)
   if (!client) return invalidClient()
   if (client.secretHash && (!secret || !equals(await sha256(secret), client.secretHash))) {
@@ -151,7 +129,6 @@ tokens.post('/token', async (context) => {
         expires_at: number
       }>()
 
-    // A code is good once, however the attempt goes.
     if (code) {
       await context.env.DB.prepare('delete from oauth_codes where code_hash = ?').bind(hash).run()
     }
@@ -203,17 +180,6 @@ tokens.post('/token', async (context) => {
       .bind(hash)
       .first<Grant & { refresh_hash: string }>()
 
-    // A refresh token that was already rotated away, presented again. Only one
-    // party can have received the token that replaced it, so the one presenting
-    // this is either not that party or is a client whose store was copied - and
-    // there is no way from here to tell which. RFC 9700 says what to do about
-    // that, and it is the only safe answer: the whole grant goes, both tokens
-    // with it, and the person reconnects the client once. Which is why the
-    // replaced hash is kept at all.
-    //
-    // Whatever client asks. Holding the token is the compromise, and a grant
-    // revoked because somebody held a spent token is a connection made again in
-    // one press; a grant left standing is an open door.
     if (grant && grant.refresh_hash !== hash) {
       await context.env.DB.prepare('delete from oauth_grants where id = ?').bind(grant.id).run()
       return context.json(failure('invalid_grant', 'that refresh token was already used'), 401)
@@ -230,7 +196,6 @@ tokens.post('/token', async (context) => {
   return context.json(failure('unsupported_grant_type', `use one of ${GRANTS.join(', ')}`), 400)
 })
 
-/** Looks up a connector request's bearer token among the grants. */
 export async function grantForToken(
   env: Env,
   token: string,

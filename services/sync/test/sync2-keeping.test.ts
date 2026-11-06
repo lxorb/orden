@@ -1,10 +1,3 @@
-/** A browser that keeps only the words it uses, against this Worker (#1126): the app's
- *  engine (`test-device.ts`, reached by its path for the reason sync2-engine.test.ts
- *  gives) over the real routes. The tree comes down and no words with it; each note's
- *  scan and a search of them come from the account; a note's words come down when it is
- *  opened; and an account that does not say it serves the rest, or says so with no route
- *  for it, is kept whole as before. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frame, unframe } from '@orden/sync-core'
 import { parseQuery } from '@orden/scan/search/query'
@@ -111,8 +104,6 @@ async function note(path: string, content: string): Promise<string> {
 const PLANS = '# Plans\n\nThe garden in spring, see [[Ideas]] #work\n\n- [ ] Dig the beds\n'
 const IDEAS = '# Ideas\n\nNothing yet.\n'
 
-/** A browser signed in to the account, through its first pass and one more, with the
- *  account's answers passed through `through` on the way. */
 async function browser(
   through: (request: Request, answer: () => Promise<Response>) => Promise<Response> = (_r, a) =>
     a(),
@@ -173,7 +164,6 @@ describe('a browser keeping only the words it uses, against the Worker', () => {
     expect(hits).toEqual([`${device.root}/Plans.md|The garden in spring, see [[Ideas]] #work`])
     expect(pulls(device)).toEqual([])
 
-    // Opened: its words come down, and it is a note like any other from then on.
     expect(await device.engine.fetch(`${device.root}/Plans.md`)).toBe(true)
     expect(device.disk.files.get(`${device.root}/Plans.md`)).toBe(PLANS)
     expect(pulls(device)).toHaveLength(1)
@@ -183,7 +173,6 @@ describe('a browser keeping only the words it uses, against the Worker', () => {
   test('an account that does not say it serves the rest is kept whole', async () => {
     await note('Plans.md', PLANS)
     await note('Ideas.md', IDEAS)
-    // The Worker on `main`: a feed with no `index`.
     const { device } = await browser(async (request, answer) => {
       const answered = await answer()
       if (!new URL(request.url).pathname.endsWith('/feed')) return answered
@@ -198,7 +187,6 @@ describe('a browser keeping only the words it uses, against the Worker', () => {
   test('one that says so with no route for it is kept whole from the next pass', async () => {
     await note('Plans.md', PLANS)
     await note('Ideas.md', IDEAS)
-    // A Worker put back to one from before the routes, its feed still saying so.
     const { device, indexing } = await browser(async (request, answer) =>
       new URL(request.url).pathname.endsWith('/index')
         ? new Response('404 Not Found', { status: 404 })

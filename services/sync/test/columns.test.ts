@@ -3,19 +3,6 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 import { fits, MOST_BYTES } from '../src/spaces/columns'
 import { staysInside } from '../src/spaces/paths'
 
-/** The seven columns a client writes whole: what each may hold, and that writing one
- *  says the space changed.
- *
- *  The ceilings were six constants in six files and the write was one statement in
- *  five. What is held here is the part a client can feel: the ceiling each column
- *  refuses at, in the words it has always refused with, and `updated_at` moving -
- *  which is how every other device learns there is something to fetch. A write that
- *  forgot the second half would leave the other devices reading last week's
- *  bookmarks and nothing would say so.
- *
- *  A backward-compatibility test too: 413 and its sentence are what an app that
- *  cannot shrink its own list shows somebody. */
-
 let env: TestEnv
 let token: string
 let space: string
@@ -28,13 +15,11 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** When the space listing says this space last changed. */
 async function changedAt() {
   const { json } = await call(env, '/v1/spaces', { token })
   return json.spaces.find((one) => one.id === space)?.updatedAt
 }
 
-/** A column, the body that fills it past its ceiling, and what it says then. */
 const TOO_MUCH: {
   name: string
   path: string
@@ -136,7 +121,6 @@ describe('writing a column', () => {
     const { json } = await call(env, '/v1/spaces', { token })
     const kept = json.spaces.find((one) => one.id === space)
 
-    // Each column still holds what its own route put there.
     expect(kept?.bookmarks).toHaveLength(1)
     expect(kept?.excluded).toEqual(['Archive'])
   })
@@ -149,13 +133,9 @@ describe('what each column may hold', () => {
     expect(MOST_BYTES.excluded).toBeLessThan(MOST_BYTES.site)
     expect(MOST_BYTES.site).toBeLessThan(MOST_BYTES.files)
     expect(MOST_BYTES.files).toBe(MOST_BYTES.icons)
-    // The three keyed by path share the ceiling: fewer folders may be arranged than
-    // may wear an icon, and each of them carries a list rather than one word.
     expect(MOST_BYTES.arranged).toBe(MOST_BYTES.icons)
   })
 
-  /** Bytes and not characters: one emoji is a single character and four bytes, and
-   *  a ceiling counted in characters lets a space keep several times what it may. */
   test('and is counted in bytes', () => {
     const emoji = '📦'.repeat(MOST_BYTES.graph / 4 + 1)
 
@@ -170,9 +150,6 @@ describe('what each column may hold', () => {
   })
 })
 
-/** The one reading four columns judge a path by; see src/spaces/paths.ts. The app
- *  holds itself to the same three answers - `insideItsSpace` - because a column the
- *  service takes is a column the app resolves against a folder. */
 describe('a path a column may hold', () => {
   test('is one every machine resolves in the same place', () => {
     for (const path of ['Read me.md', 'a/b/Read me.md', 'Notes/Deep idea.md', '..hidden/x.md']) {

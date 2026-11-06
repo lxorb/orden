@@ -1,11 +1,3 @@
-/** Writing what the site decides.
- *
- *  The column itself, and the decision every page is served through, are
- *  blog/site.ts; this is the one route that changes them. The owner's, not the
- *  space's: whether a folder of somebody's notes is on the internet is not a
- *  thing a collaborator settles, which is the same answer publishing itself
- *  gives; see spaces/publish.ts. */
-
 import { Hono } from 'hono'
 import { NOT_AN_OBJECT } from '../refused'
 import { objectBody } from '../body'
@@ -33,25 +25,9 @@ import { atLeast, presentSpace, spaceOf } from './space'
 
 export const site = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** How many names the answer below lists. Enough to read before pressing a
- *  button, and the count says how many there are in all. */
 const SHOWN = 50
-/** And how many notes it decides about. The same ceiling the site itself
- *  publishes under; see blog.ts. */
 const MOST_LISTED = 2000
 
-/** What a publish would change, before anything changes.
- *
- *  An Orden site is live: the page is the note, so there is no upload to hold back
- *  and no "publish" that copies anything anywhere. What can change, then, is
- *  which notes are on the site - and that is exactly what somebody is about to
- *  decide when they are looking at the rules. So this answers the only honest
- *  version of "what will this do": which pages appear, which disappear, and how
- *  many there will be, worked out by the same function that serves them.
- *
- *  The rules in the body rather than the ones on the row, so the sheet can ask
- *  about what is on screen. Reads nothing out of storage: every note's own
- *  answer is on its row. */
 site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
@@ -62,8 +38,6 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
-  // Read before it is answered, for the same reason the rules are: the whole
-  // point of this route is to be right about what will be on the site.
   await fillFronts(context.env, space.id).catch(() => 0)
 
   const held = readSite(space.site)
@@ -85,17 +59,12 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   const removes: string[] = []
   let after = 0
   let before = 0
-  /** How many bytes of notes the site would serve, for the line in the sheet
-   *  that says what a site costs; see docs/publishing.md. */
   let bytes = 0
 
   for (const row of results) {
-    // A drawing by its name or by its kind; see `sitePages` in blog.ts.
     if (isCanvasTarget(row.path) || noteKind(row) === 'plane') continue
 
     const front = readFront(row.front)
-    // What the site shows now, which for a space that has never been published
-    // is nothing at all: everything on it would be new.
     const was = space.blog_enabled ? publishes(held.rules, row.path, front) : false
     const is = publishes(asked, row.path, front)
 
@@ -108,9 +77,6 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
     if (was && !is) removes.push(row.path)
   }
 
-  // And whether the space carries the two files an author dresses their own site
-  // with, so the sheet can say they are in use rather than leaving somebody to
-  // wonder whether the name was right. See blog/shell.ts.
   const beside = readSpaceFiles(space.files).map((one) => one.path.toLowerCase())
 
   return context.json({
@@ -124,15 +90,6 @@ site.post('/:id/site/preview', atLeast('owner'), async (context) => {
   })
 })
 
-/** The site's own decisions, written whole.
- *
- *  The owner's, not the space's: whether a folder of somebody's notes is on the
- *  internet is not a thing a collaborator settles. The same answer publishing
- *  itself gives; see spaces/publish.ts.
- *
- *  Every field is optional and what is absent is left as it was, except a
- *  password, where `null` is the way to say "take it off" - which is a different
- *  statement from "leave it alone" and has to be sayable. */
 site.put('/:id/site', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
@@ -143,12 +100,6 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
-  // The rules are about what the notes say, so any note nobody has read for it
-  // is read before the rules take effect - waited for rather than left to the
-  // night, because a note that says `publish: false` and has not been read is a
-  // page on the internet that was meant to be private. As much as one request
-  // can; a space bigger than that finishes in the nightly sweep. See
-  // blog/fill.ts.
   await fillFronts(context.env, space.id).catch(() => 0)
 
   const held = readSite(space.site)
@@ -176,8 +127,6 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
   const icon = sent.icon === undefined ? held.icon : words(sent.icon, LONGEST_ICON)
   if (icon?.startsWith('<svg')) kept.icon = icon
 
-  // A theme by name, and a counter's script. Both take null to mean "none",
-  // which is a different statement from saying nothing about them.
   if (sent.theme === undefined) {
     if (held.theme) kept.theme = held.theme
   } else if (sent.theme && typeof sent.theme === 'object') {
@@ -196,8 +145,6 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
     if (url) kept.analytics = { url, ...(domain ? { domain } : {}) }
   }
 
-  // A password arriving is a new password, whatever there was: a fresh salt and a
-  // fresh signing key, so every reader let in by the old one is asked again.
   if (sent.password === undefined) {
     if (held.password) kept.password = held.password
   } else if (typeof sent.password === 'string' && sent.password) {

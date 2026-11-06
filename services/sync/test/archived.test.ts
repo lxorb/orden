@@ -18,13 +18,11 @@ function put(archived: unknown) {
   return call(env, `/v1/spaces/${space}/archived`, { method: 'PUT', token, body: { archived } })
 }
 
-/** What the space listing says is archived, which is how the app reads it. */
 async function listed() {
   const { json } = await call(env, '/v1/spaces', { token })
   return json.spaces.find((one) => one.id === space)?.archived
 }
 
-/** The column as somebody else's build left it, which no route would write. */
 function column(raw: string) {
   env.db.prepare('update spaces set archived = ? where id = ?').run(raw, space)
 }

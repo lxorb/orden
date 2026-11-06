@@ -1,15 +1,7 @@
-/** A profile changed, and the chats somebody has open where that person is are told,
- *  so a face or a name on screen changes without anybody asking: each `ChatLog` says
- *  `profile {who}` to its sockets and the app asks for the person again (docs/chats.md
- *  4.4). Only chats that are open right now (`chat_sockets`), in the spaces the person
- *  is in, or in one space where only their name there changed. Best effort: a chat that
- *  did not hear learns it the next time the person is asked for. */
-
 import { chunks } from '../bound'
 import { askChat } from '../chats/ask'
 import type { Env, User } from '../types'
 
-/** How many open chats one change tells, at most, and how many at once. */
 const MOST_OPEN = 200
 const AT_ONCE = 50
 

@@ -1,16 +1,3 @@
-/** The door to an online terminal: `GET /v2/online/:term/socket` (docs/online-terminal.md,
- *  4.6).
- *
- *  A socket carries no `Authorization` header, so it names its session token and its
- *  device in the subprotocols, as the hub's does, and is let in ahead of the session
- *  guard. Who reaches the session, and as what, is one query (reach.ts); the object is
- *  told the answer and never looks anybody up. The machine's owner's socket may wake
- *  the machine; everybody else watches it as it is.
- *
- *  While the service is off, or wherever the `MACHINES` binding is absent,
- *  this answers 404 like a route that does not exist. A terminal it reaches no session of
- *  is refused on a socket instead, which the app can read (refuse.ts). */
-
 import { Hono } from 'hono'
 import { tokenOf } from '@orden/rooms'
 import { now, sha256 } from '../crypto'
@@ -45,8 +32,6 @@ onlineDoor.get('/:term/socket', async (context) => {
   const at = now()
   const term = context.req.param('term')
 
-  // The switch and the socket's rows asked at once: two round trips to the database
-  // that wait on nothing of each other, in front of every terminal's connect.
   const [service, row] = await Promise.all([
     serviceOf(env),
     env.DB.prepare(DOOR).bind(hash, at, term, '').first<Row>(),
@@ -55,7 +40,6 @@ onlineDoor.get('/:term/socket', async (context) => {
   if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
     return context.json({ error: 'an online terminal is a websocket' }, 426)
   }
-  // Told apart: no session is a sign-in.
   if (!row && !(await env.DB.prepare(WHO).bind(hash, at).first<{ who: string }>())) {
     return context.json({ error: SIGN_IN }, 401)
   }
@@ -63,13 +47,9 @@ onlineDoor.get('/:term/socket', async (context) => {
   const device = deviceProtocol(offered)
   if (!device) return context.json({ error: 'an online terminal socket names its device' }, 400)
 
-  // No live session for the file, or a file this person does not reach: one answer for
-  // both, on a socket the app can read it from (refuse.ts).
   const reached = row ? reachedOf(row) : null
   if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
 
-  // Asked at once: whether the owner may wake the machine, and what the device is called,
-  // which another device holding the session off is told it by (locks/holding.ts).
   const [wake, name] = await Promise.all([
     reached.owns ? whyNotWake(env, reached.owner, at, service).then((why) => why ?? 'yes') : 'no',
     deviceName(env, device, reached.who),
@@ -87,8 +67,6 @@ onlineDoor.get('/:term/socket', async (context) => {
     'x-nib-owns': reached.owns ? 'yes' : 'no',
     'x-nib-typing': reached.typing,
     'x-nib-wake': wake,
-    // The sign-in the socket arrived with, by the hash its row is keyed by: ending it
-    // ends the socket, the machine's owner's too (revoke.ts, `recheck` in machine.ts).
     'x-nib-login': hash,
   })
 
@@ -97,7 +75,6 @@ onlineDoor.get('/:term/socket', async (context) => {
     return context.json({ error: AWAY }, 503, { 'retry-after': '1' })
   }
 
-  // The device's protocol named back, so the token is not written into a response.
   const headers = new Headers(answer.headers)
   headers.set('sec-websocket-protocol', `${DEVICE_PROTOCOL}${device}`)
   return new Response(answer.body, {

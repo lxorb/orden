@@ -1,21 +1,3 @@
-/** How one space's graph is drawn: what the picture is filtered to, which queries
- *  are coloured, how far apart the arrangement sits, and whether a link wears an
- *  arrowhead.
- *
- *  On the space rather than on the account, because every one of these is a fact
- *  about that space's notes: a filter reading `tag:work` means nothing in a space
- *  with no such tag. So it travels with the space, and every device signed in draws
- *  the same picture.
- *
- *  Written whole, the way the bookmarks and the folder icons are: it is one small
- *  object, and one PUT of the lot is the only shape in which turning a switch and
- *  clearing a filter in the same gesture is a single request.
- *
- *  Read from what was checked rather than from what arrived, and a field this
- *  version has never heard of is dropped rather than the request refused - a newer
- *  app writing a setting this build does not know must not lose the rest along
- *  with it. See spaces/icons.ts, whose shape this is. */
-
 import { Hono } from 'hono'
 import { NOT_AN_OBJECT } from '../refused'
 import { objectBody, objectIn } from '../body'
@@ -25,31 +7,18 @@ import { atLeast, spaceOf } from './space'
 import { deviceOf } from '../sync2/device'
 import { v1Wrote } from '../sync2/maps'
 
-/** How many colour groups a space may have: one per colour the app's theme names.
- *  The app holds itself to the same six, so a set that fits there fits here. */
 const MOST_GROUPS = 6
-/** How long one query may be, in the field and in a group. */
 const LONGEST_QUERY = 200
-/** How far apart the arrangement may be pushed, as a multiple of what it does on
- *  its own. */
 const LEAST_SPREAD = 0.25
 const MOST_SPREAD = 4
-/** How far apart a link may be asked to hold two notes, in graph units, and how hard
- *  every note may be asked to push every other away. The app's dials go exactly this
- *  far. */
 const LEAST_DISTANCE = 12
 const MOST_DISTANCE = 96
 const LEAST_PUSH = 40
 const MOST_PUSH = 400
-/** How many links out the picture beside one note may reach; the app's slider goes
- *  exactly this far. */
 const SHALLOWEST = 1
 const DEEPEST = 5
-/** The three widths a link may be drawn at; the app offers the same three. */
 const LEAST_LINES = 1
 const MOST_LINES = 3
-/** How much sooner or later the names may be asked to fade in, as a multiple of the
- *  zoom the picture shows them at unasked. */
 const LEAST_FADE = 0.25
 const MOST_FADE = 4
 
@@ -58,8 +27,6 @@ interface ColourGroup {
   colour: number
 }
 
-/** What the column holds. Every field optional on the way in: a client sends what
- *  it knows about, and one that knows about less is not wrong. */
 interface GraphSettings {
   filter?: string
   orphans?: boolean
@@ -76,13 +43,6 @@ interface GraphSettings {
   depth?: number
 }
 
-/** What is wrong with the object that arrived, as one sentence the app can show,
- *  or null when nothing is.
- *
- *  Only the object itself and the size of what is in it. A field that does not read
- *  as a setting is dropped rather than refused, for the reason the folder icons give:
- *  the object is written whole, so refusing over one field the app and this version
- *  disagree about would be losing every setting in it. */
 function wrong(value: unknown): string | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return 'graph must be an object'
 
@@ -106,9 +66,6 @@ function switched(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined
 }
 
-/** A group with no query yet is kept rather than dropped: it is the row the app
- *  has just added and is about to be typed into, and it colours nothing until it
- *  says something. The app keeps it for the same reason. */
 function groupsOf(value: unknown): ColourGroup[] | undefined {
   if (!Array.isArray(value)) return undefined
 
@@ -129,8 +86,6 @@ function groupsOf(value: unknown): ColourGroup[] | undefined {
   return out
 }
 
-/** The fields that read as settings, and nothing else. The one place the two
- *  directions agree: what a PUT keeps is what a read gives back. */
 function settingsOf(value: object): GraphSettings {
   const sent = value as Record<string, unknown>
   const out: GraphSettings = {}
@@ -176,9 +131,6 @@ function settingsOf(value: object): GraphSettings {
   return out
 }
 
-/** The column, as the app reads it back. Anything in it that is not a setting is
- *  left out: the column is written whole by clients, and a newer one may keep a
- *  setting this version has never heard of. */
 export function readGraph(raw: string): GraphSettings {
   const held = objectIn(raw)
   return held ? settingsOf(held) : {}
@@ -186,11 +138,6 @@ export function readGraph(raw: string): GraphSettings {
 
 export const spaceGraph = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** The settings, whole. Reading them needs no route of its own: the space listing
- *  carries them, so one request brings every space's picture along with its name.
- */
-// The picture is the space's rather than the reader's: everyone in it looks at the
-// same notes, so filtering it is writing in the space.
 spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
@@ -201,18 +148,13 @@ spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
-  // Written from the fields that were checked rather than from what arrived, so
-  // nothing else a client sent along ends up in the column.
   const kept = settingsOf(sent as object)
   const written = JSON.stringify(kept)
   if (!fits(written, 'graph')) {
     return context.json({ error: 'that is more than a space keeps about its graph' }, 413)
   }
 
-  // The space is touched as well, so a device that watches for spaces that
-  // changed learns that this one did.
   await writeColumn(context.env, 'graph', space.id, written)
-  // And, in a space sync v2 keeps entry by entry, every setting as one; see sync2/maps.ts.
   await v1Wrote(context.env, space, 'graph', kept, await deviceOf(context))
 
   return context.json({ graph: kept })

@@ -1,7 +1,3 @@
-/** A machine on a Hetzner server of its own (docs/online-terminal.md 4.15): `HetznerHost`
- *  against a fake Hetzner Cloud API and a fake Cloudflare tunnel API - made once, found
- *  again, power-cycled, deleted, refused, and every error said for what it is. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { carry } from '../src/machines/bundle'
 import { HetznerError } from '../src/machines/hetzner'
@@ -52,7 +48,6 @@ function host(given: Setup | null = setup()): HetznerHost {
 const row = () =>
   env.db.prepare('select * from machines where id = ?').get(ID) as Record<string, unknown>
 
-/** The servers the audit says were made, by where. */
 const made = () =>
   (
     env.db
@@ -101,7 +96,6 @@ describe('a Hetzner machine', () => {
         proxied: true,
       }),
     ])
-    // Nothing let in at all.
     expect(cloud.firewalls).toEqual([
       expect.objectContaining({ labels: { 'nib-machine': ID }, rules: [] }),
     ])
@@ -114,12 +108,10 @@ describe('a Hetzner machine', () => {
       labels: { 'nib-machine': ID },
       firewall: cloud.firewalls[0]?.id,
     })
-    // Its secrets reach it in its user data, and nowhere it runs a command.
     expect(server?.userData).toContain(`NIBD_SECRET=${SECRET}`)
     expect(server?.userData).toContain(`TUNNEL_TOKEN=eyJ-token-of-${cloud.tunnels[0]?.id ?? ''}`)
     expect(server?.userData).toContain('TZ=Europe/Zurich')
 
-    // The price as Hetzner said it, with the address, and the budget asked before.
     expect(costs).toEqual([{ monthly: 13.6731 + 0.595, currency: 'EUR' }])
     expect(row()).toMatchObject({
       server_id: server?.id,
@@ -175,7 +167,6 @@ describe('a Hetzner machine', () => {
     expect(row().region).toBe('fsn1')
     expect(made()).toEqual(['fsn1'])
 
-    // And a type Hetzner says is not to be had in Nuremberg is not asked for there.
     cloud.servers.length = 0
     cloud.available = ['fsn1']
     await host().start(ID, 'machine', BOOT)
@@ -236,7 +227,6 @@ describe('a Hetzner machine', () => {
     expect(sent?.get('cf-access-client-id')).toBe('access-id')
     expect(sent?.get('cf-access-client-secret')).toBe('access-secret')
 
-    // Refused for good is not asked again.
     cloud.asked.length = 0
     cloud.linkStatus = 401
     await expect(host().link(ID)).rejects.toThrow('nibd answered 401')

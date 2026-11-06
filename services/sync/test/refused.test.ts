@@ -4,19 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import * as refused from '../src/refused'
 
-/** The sentences the service refuses with, and the rule that keeps them one each.
- *
- *  Every one of these is wire text: the app puts what `error` says into a line of
- *  its own, so the bytes are the contract and an older client shows whatever this
- *  sends. They are written out again here on purpose - a test that read them off the
- *  module would pass whatever the module said, and what needs holding is that the
- *  words have not moved.
- *
- *  Then the guard: a sentence that two modules both send is a sentence that drifts,
- *  because somebody improves one of the two. Ten of them were two copies of a
- *  literal, and the list of what is left is read off the source rather than written
- *  down, so it gets shorter rather than older. */
-
 describe('what the service refuses with', () => {
   test('is these words, in these bytes', () => {
     expect(refused.NOT_AN_OBJECT).toBe('send an object')
@@ -48,8 +35,6 @@ describe('what the service refuses with', () => {
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
-/** The three files the build writes, which are minified bundles rather than code
- *  anybody edits; see scripts/blog-css.ts and scripts/site-js.ts. */
 const GENERATED = new Set(['style.ts', 'math.ts', 'script.ts'])
 
 function sources(dir: string, found: string[] = []): string[] {
@@ -62,8 +47,6 @@ function sources(dir: string, found: string[] = []): string[] {
   return found
 }
 
-/** Every sentence written out as a literal beside `error:`, and which files write
- *  it. A named constant does not appear here, which is the point. */
 function literals(): Map<string, Set<string>> {
   const found = new Map<string, Set<string>>()
 
@@ -90,8 +73,6 @@ describe('a sentence two modules both send', () => {
     expect(shared, shared.join('\n')).toEqual([])
   })
 
-  /** The scan is worth nothing if it finds nothing: the service refuses in a great
-   *  many words, and most of them belong to one route. */
   test('and the scan is looking at something', () => {
     expect(literals().size).toBeGreaterThan(40)
   })

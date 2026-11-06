@@ -1,19 +1,3 @@
-/** One application's relay (issue 1063): the door between the device an application runs
- *  on and the reader's other devices that use it as a tab.
- *
- *  A hibernating Durable Object named by the account and the application's file. It holds
- *  the **host**'s socket - the device the application runs on - and every **viewer**'s,
- *  and keeps the lock between the viewers: one device at a time, Take over, a grace after
- *  a drop, exactly the online terminal's (locks/sockets.ts, issue 1055). Only the holder's
- *  signalling reaches the host, and only the host's reaches the holder; the picture and
- *  the input then go between the two of them directly (WebRTC), never through here.
- *
- *  It never starts anything itself: the application lives on its host, goes on when every
- *  viewer leaves, and is said to be there or not by whether the host's socket is.
- *
- *  A door checks a socket once, so each minute with a socket here (`alarm`) asks again
- *  whether its sign-in lives and the file is still the person's, and looks at the lock. */
-
 import {
   type AppState,
   hostFrameOf,
@@ -28,18 +12,15 @@ import { type Holder, SocketLock } from '../locks/sockets'
 import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import { OWNED } from './door'
 
-/** What the door decided about a socket, kept on it across a hibernation. */
 export interface Party extends Holder {
   role: 'host' | 'viewer'
   login?: string
-  /** Whether a viewer's hello said it takes part in the lock. */
   hold?: boolean
   view?: View
 }
 
 const NOT_THEIRS = 4404
 
-/** Where the application stood, as its host last said it. */
 const STATE = 'state'
 
 const OPEN = 1
@@ -52,7 +33,6 @@ function partyOf(socket: WebSocket): Party | null {
   return one as Party
 }
 
-/** Whether a socket takes part in the lock: a viewer that said so. */
 function drives(party: Party): boolean {
   return party.role === 'viewer' && party.hold === true
 }
@@ -92,7 +72,6 @@ export class AppRelay implements DurableObject {
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
 
-  /** A socket the door let in. Apart from `fetch` so a test can drive it. */
   async enter(socket: WebSocket, party: Party): Promise<void> {
     this.ctx.acceptWebSocket(socket, [party.session, party.role])
     socket.serializeAttachment(party)
@@ -100,7 +79,6 @@ export class AppRelay implements DurableObject {
       await this.ctx.storage.setAlarm(Date.now() + ASK_SIGNINS_EVERY)
     }
     if (party.role === 'host') {
-      // One host at a time: a host that comes back replaces the socket it left.
       for (const other of this.hosts(party.session)) {
         if (other !== socket) other.close(4409, 'another host')
       }
@@ -202,11 +180,9 @@ export class AppRelay implements DurableObject {
       if (!left.length) this.toViewers(party.session, { t: 'host', up: false })
       return
     }
-    // A holder that dropped keeps the application for its grace, to come back to.
     if (drives(party) && !party.parked) await this.lock.settle(party.session, socket)
   }
 
-  /** What the host said: who it is, signalling for the holder, where the app stands. */
   private async fromHost(party: Party, message: string): Promise<void> {
     const frame = hostFrameOf(message)
     if (!frame) return
@@ -231,14 +207,11 @@ export class AppRelay implements DurableObject {
     }
   }
 
-  /** Whether a viewer's device holds the application now. */
   private async holds(party: Party): Promise<boolean> {
     if (!drives(party) || party.parked) return false
     return (await this.lock.holder(party.session))?.device === party.device
   }
 
-  /** The host told who holds the application now, and that device's view, so it makes
-   *  its display to fit and waits for that device's offer. */
   private async toldWho(session: string): Promise<void> {
     const hold = await this.lock.holder(session)
     this.toHost(session, { t: 'viewer', device: hold?.device ?? null, name: hold?.name ?? '' })
@@ -281,7 +254,6 @@ export class AppRelay implements DurableObject {
   }
 }
 
-/** What the door decided, off the headers it handed the object. */
 function partyFrom(headers: Headers): Party {
   let name = ''
   try {

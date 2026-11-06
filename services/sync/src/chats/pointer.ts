@@ -1,12 +1,3 @@
-/** A `.chat` pointer arriving in its chat's space, by either sync (docs/chats.md 4.2).
- *
- *  Every note is written through one of three places in notes.ts, a v1 device's and a
- *  room's settle alike, and each hands its words here as it hands them to reminders. A
- *  pointer naming a chat of the same space, which no pointer was linked to yet, becomes
- *  that chat's file: what an item share of a private chat is about. A pointer copied
- *  anywhere else, or a second one beside the first, links nothing and reaches nothing.
- *  Best effort: the note is written either way, and the next write of it tries again. */
-
 import { chatOf, CHAT_EXTENSION } from '@orden/chats'
 import type { Env, Note } from '../types'
 

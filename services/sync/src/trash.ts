@@ -20,20 +20,10 @@ import { FRONT_REV } from './blog/front'
 import { forgetEmptyGuest } from './guests'
 import { type Ended, endingTerm, endTerms, tellEnded } from './machines/end'
 
-/** How long Recently deleted holds on to something. */
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 
-/** How much of it is handled in one go.
- *
- *  Emptying something takes one write to R2 apiece, and a Worker has only so
- *  many of those in a single request; the daily job is under the same ceiling.
- *  So both work through a batch at a time. Purging is idempotent, so what is
- *  left over goes on the next tap of the button or the next night's run - the
- *  listing says `more` when there is any. */
 export const AT_ONCE = 500
 
-/** `wanted` if nobody has it, else the first free `wanted 2`, `wanted 3`... -
- *  the numbering the app gives a new space whose name is taken. */
 export function freeName(taken: Set<string>, wanted: string): string {
   if (!taken.has(wanted)) return wanted
   for (let counter = 2; ; counter++) {
@@ -55,14 +45,6 @@ async function deletedSpaces(env: Env, userId: string): Promise<Space[]> {
   return results
 }
 
-/** Deleted notes of live spaces. A deleted space keeps its notes to itself:
- *  they come back with it, not one by one.
- *
- *  The account's own spaces and no others. Recently deleted gives back storage,
- *  and the storage a shared space uses is its owner's; a writer emptying their
- *  own would otherwise reach into somebody else's account and take away notes
- *  for good. What a writer deleted is still in their own machine's trash, and
- *  the owner still sees it here. */
 async function deletedNotes(env: Env, userId: string): Promise<DeletedNote[]> {
   const { results } = await env.DB.prepare(
     `select n.*, s.name as space_name from notes n
@@ -102,9 +84,6 @@ async function deletedNote(
   )
 }
 
-/** The hashes of the blobs a note uses: its file's bytes, its paper and the pictures
- *  written down for its body - or read out of the body, for a note written before
- *  they were (blog/fill.ts). */
 async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Set<string>> {
   const row = await env.DB.prepare(
     'select kind, hash, paper, front_rev, size from notes where id = ?',
@@ -123,38 +102,17 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
 
   if (row.kind !== 'file' && row.size > 0 && row.front_rev < FRONT_REV) {
     const object = await env.NOTES.get(noteKey(note.space_id, note.id))
-    // Read as the save would have written them down, live HTML and all (pictures.ts).
     const live = await htmlIsLive(env, note.space_id)
     for (const hash of picturesOf(object ? await object.text() : '', live)) used.add(hash)
   }
   return used
 }
 
-/** Takes a note's content away for good. The row stays as the tombstone the
- *  change feed relies on, and stops being listed.
- *
- *  One transaction, because both ways of doing it in steps lose something. A restore of
- *  the same note may be on its way, and a purge finishing over one left a live note with
- *  nothing in it, so nothing may be taken before the row is. And past the row there is
- *  nothing left in Recently deleted to tap again, so nothing may be left to do after it
- *  that a failure could leave undone: words in search, a reminder still pushing a task.
- *  So all of it lands together or none of it does, and a note that failed is still in
- *  Recently deleted, whole, to be purged again.
- *
- *  It answers false, having taken nothing, where the note has already left Recently
- *  deleted. And the cursor moves with it, so that a tree batch that read the note as
- *  still there starts again and finds it gone, rather than writing it back
- *  (`changeTree`).
- *
- *  What is not the database's goes after, and is written down in the same transaction
- *  for the sweep to come back for (leftovers.ts). */
 async function purgeNote(
   env: Env,
   note: Pick<Note, 'id' | 'space_id'>,
   who: string | null,
 ): Promise<boolean> {
-  // What the note used of the owner's blobs, read before the purge takes it away; see
-  // unused.ts. A note written before its pictures were has its body read for them.
   const used = await usedBy(env, note)
   const guests = await guestsOf(env, note.space_id, note.id)
 
@@ -167,9 +125,6 @@ async function purgeNote(
 
   const statements = [
     takeSeq(env, note.space_id),
-    // Only out of Recently deleted. The cursor's row is there by now, so this insert is a
-    // conflict that ends the transaction, the way the tree's own guard is, unless the
-    // note is still where this purge read it.
     env.DB.prepare(
       `insert into space_cursor (space_id, next)
        select ?1, 0 where not exists (
@@ -177,54 +132,26 @@ async function purgeNote(
           where space_id = ?1 and id = ?2 and deleted = 1 and deleted_at is not null)`,
     ).bind(note.space_id, note.id),
     ...objects.map(leftover),
-    // And what the account remembered it saying before. A version of a note whose
-    // words have gone for good is a version of nothing; the bodies go with the
-    // rows, each only once the last row naming it has gone. See versions.ts.
     env.DB.prepare(
       `insert or ignore into leftovers (what, since)
          select distinct 'versions/' || hash, ?2 from note_versions where note_id = ?1`,
     ).bind(note.id, at),
     versions,
-    // Written down rather than done: the index keeps the id in a column it cannot look
-    // up, so taking them out reads all of it, and a statement that may not fit in the
-    // time a transaction has must not be able to keep the note from going. Tried below,
-    // then by the sweep. No search shows them meanwhile: an answer is a published page
-    // or nothing (`matching` in blog/find.ts).
     leftover(wordsLeftover(note.id)),
-    // And its reminders, which hold the words of its tasks; see push/reminders.ts.
     forgetReminders(env, note.id),
     forgetPictures(env, note.id),
-    // And its paper, which the tombstone would otherwise still serve to whoever reaches
-    // the note, and which the bytes would still be kept for as a use of the space.
     env.DB.prepare(
       "update notes set size = 0, hash = '', paper = null, deleted_at = null where id = ?",
     ).bind(note.id),
-    // And the blobs it used, so the owner stops paying for whichever nothing else of
-    // theirs still shows (unused.ts).
     ...noteUnused(env, note.space_id, used, at),
-    // And what is named by the note's id outside the row: its room, which holds the
-    // whole document for as long as the file does, emptied from `leftovers` like an
-    // account's (leftovers.ts); and a chat its `.chat` file opened, which ends now and
-    // is erased a month later (chats/sweep.ts). The row stays as a tombstone, so the
-    // id is still this note's and nobody else may make anything under it.
     leftover(`rooms/${note.id}`),
     env.DB.prepare('update chats set ended_at = ? where file_id = ? and ended_at is null').bind(
       at,
       note.id,
     ),
-    // And what strangers sent through a form in it, and the addresses it answered on
-    // once. Both would go with the row, but the row stays as a tombstone, so nothing
-    // cascades: a message somebody typed into the page is the page's, and stays no
-    // longer than its words do.
     env.DB.prepare('delete from form_answers where note_id = ?').bind(note.id),
     env.DB.prepare('delete from blog_paths where note_id = ?').bind(note.id),
-    // And the online terminal session its `.term` file named, which deleting the file left
-    // running for its owner and emptying the trash ends (machines/end.ts).
     terms,
-    // And whatever was shared about this one file. A share about a note whose
-    // words have gone reaches nothing - every read of one joins the live note -
-    // but a row nobody can ever use is a row nothing would take away, and it is
-    // what a listing and a ceiling still count. See spaces/share.ts.
     env.DB.prepare('delete from space_members where space_id = ? and item = ?').bind(
       note.space_id,
       note.id,
@@ -245,7 +172,6 @@ async function purgeNote(
       note.space_id,
       note.id,
     ),
-    // A guest that was in nothing else is nobody now; see `forgetEmptyGuest`.
     env.DB.prepare(
       `delete from guests where id in (select value from json_each(?))
           and not exists (select 1 from guest_members where guest_id = guests.id)`,
@@ -263,16 +189,10 @@ async function purgeNote(
     if (still) throw error
     return false
   }
-  // A batch that answered without saying it landed has not let go of anything. Whichever
-  // it did, what would be taken below is on the list for the sweep, which asks the rows.
-  // The types say this cannot be false; it is the bytes that are at stake if they are wrong.
   if (!(answers as { success: boolean }[]).every((one) => one.success)) {
     throw new Error(`purge ${note.id} did not land`)
   }
 
-  // Past the transaction, so none of this can take the purge back, and none of it is
-  // lost by failing: the sweep comes back for the bytes, and a machine reads its rows
-  // again.
   const later = (error: unknown) => {
     noted(`purge ${note.id}`, error, null)
   }
@@ -292,8 +212,6 @@ async function purgeNote(
   return true
 }
 
-/** The guests one share of a space reaches, read before its rows go: a guest that
- *  was in nothing else is nobody afterwards, and its session goes with it. */
 async function guestsOf(env: Env, spaceId: string, item: string | null): Promise<string[]> {
   const { results } = await env.DB.prepare(
     `select distinct guest_id from guest_members
@@ -304,16 +222,6 @@ async function guestsOf(env: Env, spaceId: string, item: string | null): Promise
   return results.map((one) => one.guest_id)
 }
 
-/** Empties a space for good, a batch of notes at a time. The row stays as the
- *  marker a machine that was away reads, and stops being listed once the last
- *  note has gone.
- *
- *  Only the rows whose bytes went are taken away. Deleting every row after one
- *  batch of R2 deletes left the notes past the batch with nothing pointing at
- *  them: bytes in the bucket, no row to find them by, and the space no longer
- *  listed as having anything to purge. `deleted_at` stays set while there is more,
- *  which is what brings the next tap of the button, or the next night's run, back
- *  here to finish. */
 async function purgeSpace(
   env: Env,
   space: Pick<Space, 'id'>,
@@ -327,33 +235,15 @@ async function purgeSpace(
     .bind(space.id, take)
     .all<{ id: string }>()
 
-  // The note's words and the snapshot of its document, in one delete apiece.
   await Promise.all(
     results.map((note) => env.NOTES.delete([noteKey(space.id, note.id), snapshotKey(note.id)])),
   )
 
-  // Exactly the rows whose bytes have gone, so nothing rejected above is left
-  // recorded as purged. A chunk at a time, because a batch is five hundred notes
-  // and D1 binds a hundred parameters; see src/bound.ts.
-  //
-  // Each chunk writes down, with the rows, what the note's id names outside them:
-  // its room, and the bodies of its versions, which go once no other row names the
-  // same hash - emptied from `leftovers` as an account's are. And the id itself is
-  // retired, so that no create anywhere is made under it again and handed what the
-  // room held (0052). And the words it was searched by go with it, as they do when a
-  // note is emptied on its own (`forgetWords`).
-  // The online terminal sessions its `.term` files named end first,
-  // whoever's machine they are on, while the rows still say which files were here.
   const at = now()
   for (const chunk of chunks(results.map((note) => note.id))) {
     await endTerms(env, chunk, who)
     const list = places(chunk.length)
     await env.DB.batch([
-      // The blobs those notes used, written down for their owner before the rows that
-      // say so go: files of the tree, papers and the pictures written down for each
-      // body (unused.ts). A note written before its pictures were is not read for them
-      // here, because a batch of five hundred bodies is too much to read: its pictures
-      // stay counted, which costs the owner storage and loses nothing.
       env.DB.prepare(
         `insert or ignore into unused_blobs (user_id, hash, since)
            select sp.user_id, used.hash, ?2 from (
@@ -380,23 +270,13 @@ async function purgeSpace(
            select id, ? from notes where id in (${list})`,
       ).bind(at, ...chunk),
       env.DB.prepare(`delete from note_search where note_id in (${list})`).bind(...chunk),
-      // And the reminders kept from them, which hold the words of their tasks and have
-      // no row of their own to go with; see push/reminders.ts.
       env.DB.prepare(`delete from push_reminders where note_id in (${list})`).bind(...chunk),
       env.DB.prepare(`delete from notes where id in (${list})`).bind(...chunk),
     ])
   }
 
   if (results.length < take) {
-    // And sync v2's tree of it, which is nothing once the notes have gone. And who it
-    // was shared with: the row of a purged space stays as a marker, so nothing
-    // cascades from it, and a membership, a link or a guest in a space with nothing
-    // in it is a way in to nothing that nothing else would take away. A guest that
-    // was in nothing else is nobody now, and its session goes with it. Its chats end
-    // with it, and are erased a month later (chats/sweep.ts).
     const guests = await guestsOf(env, space.id, null)
-    // And the files it listed and its site's theme, written down for its owner before
-    // the marker stops naming them (unused.ts).
     const marker = await env.DB.prepare('select files, site from spaces where id = ?')
       .bind(space.id)
       .first<{ files: string; site: string | null }>()
@@ -416,8 +296,6 @@ async function purgeSpace(
         at,
         space.id,
       ),
-      // And the files it listed, which the marker would otherwise still name as the
-      // space's own: bytes kept, handed over and counted for a space that is gone.
       env.DB.prepare("update spaces set files = '[]', deleted_at = null where id = ?").bind(
         space.id,
       ),
@@ -428,12 +306,6 @@ async function purgeSpace(
   return results.length
 }
 
-/** What the daily job does: everything that has waited its 14 days goes, up to
- *  the batch. Spaces are worked through what is left of the batch after the notes,
- *  because a space holds notes of its own and the ceiling is on the writes rather
- *  than on the rows: five hundred deleted spaces of five hundred notes each is a
- *  quarter of a million writes, which is not something one invocation may do. What
- *  does not fit goes on the next run. */
 export async function purgeExpired(
   env: Env,
   at: number,
@@ -446,7 +318,6 @@ export async function purgeExpired(
   )
     .bind(cutoff, AT_ONCE)
     .all<Pick<Note, 'id' | 'space_id'>>()
-  // One that fails is still there for the next run, and holds up none of the others.
   for (const note of notes.results) {
     await purgeNote(env, note, null).catch((error: unknown) => {
       noted(`purge ${note.id}`, error, null)
@@ -468,7 +339,6 @@ export async function purgeExpired(
     emptied++
   }
 
-  // And the blobs those purges may have left nobody using; see unused.ts.
   await sweepUnused(env, NIGHTLY)
 
   return { notes: notes.results.length, spaces: emptied }
@@ -507,8 +377,6 @@ trash.get('/', async (context) => {
     purgeAt: (note.deleted_at ?? 0) + KEEP_FOR,
   }))
 
-  // A listing this long is the batch, not the whole of it. Nobody has held so
-  // much in Recently deleted, and saying so is better than pretending.
   const more = counted.length === AT_ONCE || notes.length === AT_ONCE
   if (more) return context.json({ spaces: counted, notes, more })
 
@@ -552,7 +420,6 @@ trash.post('/notes/:id/restore', async (context) => {
   if (note.space_deleted) return context.json({ error: 'restore its space first' }, 409)
 
   const back = await restoreNote(env, note, await deviceOf(context))
-  // Purged in the moment since it was read: there is nothing to give back.
   if (back.deleted) return context.json({ error: 'nothing to restore' }, 404)
   return context.json({ note: presentNote(back) })
 })
@@ -562,11 +429,9 @@ trash.delete('/notes/:id', async (context) => {
   const note = await deletedNote(context.env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
 
-  // Restored in the moment since it was read: that is the answer that stands.
   if (!(await purgeNote(context.env, note, user.id))) {
     return context.json({ error: 'nothing to delete' }, 404)
   }
-  // On the list either way, and the nightly job asks if this does not: the purge is done.
   await sweepUnused(context.env, RIGHT_AFTER, user.id).catch((error: unknown) => {
     noted('purge sweep', error, null)
   })
@@ -583,15 +448,10 @@ trash.delete('/spaces/:id', async (context) => {
   return context.json({ ok: true })
 })
 
-/** Empties the account's Recently deleted now, a batch at a time. Purging is
- *  idempotent, so a second tap finishes what a first left - and the batch is
- *  counted in writes rather than in rows, for the reason `purgeExpired` gives. */
 trash.delete('/', async (context) => {
   const user = context.get('user')
   const env = context.env
 
-  // One that fails stays listed for the next tap, holds up none of the others, and is
-  // said at the end: the rest are gone, and the list is not empty.
   const notes = await deletedNotes(env, user.id)
   const failures: unknown[] = []
   for (const note of notes) {

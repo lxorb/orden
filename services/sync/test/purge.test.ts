@@ -1,10 +1,3 @@
-/** What emptying Recently deleted leaves behind, which is nothing (#457, #467).
- *
- *  A note's id names more than its row: its room, which holds the whole document; the
- *  chat its `.chat` file opens; who it was shared with. A purge takes all of them, and
- *  an id whose row went for good is not one anybody may make something under again
- *  while anything it named is still there. */
-
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
@@ -31,7 +24,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** A note on sync v2 whose room holds an edit that went through it. */
 async function heldInARoom(path: string, text: string, typed: string): Promise<string> {
   const id = (
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: text } })
@@ -52,7 +44,6 @@ async function heldInARoom(path: string, text: string, typed: string): Promise<s
   return id
 }
 
-/** Somebody else's account, with a space of its own on sync v2. */
 async function anotherAccount(): Promise<{ token: string; space: string }> {
   const other = await signIn(env, 'other@example.com')
   const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Mine' } })).json
@@ -92,7 +83,6 @@ describe('a space purged from Recently deleted', () => {
     expect(made.status).toBe(200)
     expect(made.json.results[0]).toMatchObject({ refused: 'gone' })
 
-    // And nothing was made: a push to it is a push to nothing.
     const doc = new Y.Doc()
     doc.getText(TEXT).insert(0, 'y')
     const { value } = await framed<PushResponse>(env, '/v2/docs/push', other.token, {
@@ -222,7 +212,6 @@ describe('a note purged from Recently deleted', () => {
       ).ended_at
     expect(ended()).not.toBeNull()
 
-    // A chat a purge from before this ended nothing of is ended by the sweep.
     env.db.exec("update chats set ended_at = null where id = 'c_file'")
     await sweepChats(env, Date.now())
     expect(ended()).not.toBeNull()
@@ -289,9 +278,6 @@ describe('a room erased while its object lives', () => {
   })
 })
 
-/** A purge and a restore of one note are two requests, and each reads the row before it
- *  writes it. Whichever way round they land the note is either whole or gone: never a
- *  live note with nothing in it (#473). */
 describe('a note restored and purged at once', () => {
   interface Row {
     deleted: number
@@ -303,8 +289,6 @@ describe('a note restored and purged at once', () => {
   const row = (id: string) =>
     env.db.prepare('select deleted, deleted_at, hash, size from notes where id = ?').get(id) as Row
 
-  /** `work` run at the moment the next batch is about to be written, after whatever
-   *  that request read to decide on it. */
   function beforeNextBatch(work: () => Promise<unknown>) {
     const real = env.DB.batch.bind(env.DB)
     let waiting = true
@@ -334,7 +318,6 @@ describe('a note restored and purged at once', () => {
   test('the restore first, as the purge is starting: it stays, whole', async () => {
     const id = await deleted('Both.md')
     const before = row(id)
-    // Past the purge's own look at the row and before anything it does about it.
     env.justBefore(/select kind, hash, paper, front_rev, size/, () => {
       env.db.prepare('update notes set deleted = 0, deleted_at = null where id = ?').run(id)
     })
@@ -346,7 +329,6 @@ describe('a note restored and purged at once', () => {
     expect(env.keys()).toContain(`spaces/${space}/${id}`)
     expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toContain('KEEP ME')
 
-    // And what the purge wrote down before it asked is not taken from a note that stayed.
     await sweepLeftovers(env)
     expect(env.keys()).toContain(`spaces/${space}/${id}`)
     expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toContain('KEEP ME')
@@ -401,8 +383,6 @@ describe('a note restored and purged at once', () => {
     expect(row(id)).toMatchObject({ deleted: 1, hash: '' })
   })
 
-  /** The row says it is gone before the bucket is asked, so the bucket saying no leaves
-   *  nothing in Recently deleted to tap again: the sweep is what comes back for it. */
   test('bytes the bucket would not give up go at the next sweep', async () => {
     const id = await deleted('Stuck.md')
     const bucket = env.NOTES as unknown as { delete(keys: string | string[]): Promise<void> }
@@ -426,13 +406,9 @@ describe('a note restored and purged at once', () => {
   })
 })
 
-/** A purge is one transaction, so it finishes or leaves the note in Recently deleted to
- *  be purged again; anything left half done is words somebody asked to have gone, or
- *  storage nothing would ever take back. */
 describe('a purge the database fails part way', () => {
   const HASH = 'c'.repeat(64)
 
-  /** A note deleted with a row in everything a purge has to take away. */
   async function held(path = 'Held.md'): Promise<string> {
     const id = await heldInARoom(path, 'one\nKEEP ME\n', 'x')
     const at = 1
@@ -522,13 +498,11 @@ describe('a purge the database fails part way', () => {
     return id
   }
 
-  /** A hash of its own per note, so two notes do not hold one body between them. */
   const versionOf = (id: string) => createHash('sha256').update(id).digest('hex')
 
   const count = (sql: string, ...args: string[]) =>
     (env.db.prepare(sql).get(...args) as { held: number }).held
 
-  /** How much of a note's is still there, table by table. */
   const remaining = (id: string) => ({
     search: count('select count(*) as held from note_search where note_id = ?', id),
     reminders: count('select count(*) as held from push_reminders where note_id = ?', id),
@@ -566,8 +540,6 @@ describe('a purge the database fails part way', () => {
     terms: 0,
   }
 
-  /** Every statement matching `sql` that names `only`, if that is given, failing as it
-   *  runs, until the answer is called. */
   function failing(sql: RegExp, only?: string): () => void {
     const prepare = env.DB.prepare.bind(env.DB)
     let down = true
@@ -617,7 +589,6 @@ describe('a purge the database fails part way', () => {
     const first = await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
 
     expect(first.status).toBe(500)
-    // Still in Recently deleted, whole, and nothing of it taken.
     expect(env.db.prepare('select hash, size from notes where id = ?').get(id)).toEqual(before)
     expect(
       (await call(env, '/v1/trash', { token })).json.notes.map((one: { id: string }) => one.id),
@@ -643,9 +614,6 @@ describe('a purge the database fails part way', () => {
     ).toBeLessThanOrEqual(1)
   })
 
-  /** The index keeps a note's id in a column nothing can look up, so this statement reads
-   *  all of it. In the transaction, an index grown too big for one statement would have
-   *  kept every note from ever being purged. */
   describe('its words, which are not worth holding the rest up for', () => {
     const wordsLeft = (id: string) =>
       count('select count(*) as held from leftovers where what = ?', `words/${id}`)
@@ -673,7 +641,6 @@ describe('a purge the database fails part way', () => {
       expect(remaining(id).search).toBeGreaterThan(0)
       expect(wordsLeft(id)).toBe(1)
 
-      // And a sweep they fail in again keeps them, and holds up nothing else.
       await sweepLeftovers(env)
       expect(wordsLeft(id)).toBe(1)
       expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
@@ -686,7 +653,6 @@ describe('a purge the database fails part way', () => {
     })
   })
 
-  /** A batch that answered and did not say it landed has not said anything was let go. */
   test('takes no bytes on a batch that says it did not land', async () => {
     const id = await held()
     const real = env.DB.batch.bind(env.DB)
@@ -703,8 +669,6 @@ describe('a purge the database fails part way', () => {
     expect(env.keys()).toContain(`versions/${versionOf(id)}`)
   })
 
-  /** D1 takes two million bytes in one bound value, and a hash is 67 of them in a list: a
-   *  note may name more pictures than one list holds, four megabytes of it being allowed. */
   test('fits what a note with every picture it can hold stopped using', async () => {
     const id = await held()
     const insert = env.db.prepare('insert into note_pictures (note_id, hash) values (?, ?)')
@@ -799,7 +763,6 @@ describe('a purge the database fails part way', () => {
     expect(remaining(stuck)).toEqual(nothing)
   })
 
-  /** Nothing is taken before the row is, so a restore that wins keeps all of it. */
   test('a restore landing just ahead of it keeps the history too', async () => {
     const id = await held()
     const whole = remaining(id)
@@ -817,7 +780,6 @@ describe('a purge the database fails part way', () => {
 })
 
 describe('a v1 note deleted again', () => {
-  /** A note on the v1 tree, which has no `name_key`: its delete is the route's own. */
   async function v1Note(): Promise<string> {
     return (
       await call(env, `/v1/spaces/${space}/notes`, {
@@ -913,9 +875,6 @@ describe('an id made by another space', () => {
   })
 })
 
-/** What is purged costs nothing (storage.ts): the bytes a purged note or space was the
- *  only use of stop counting against its owner, and go from the bucket once nobody
- *  holds them, while bytes something else of theirs still shows stay. */
 describe('what a purge stops paying for', () => {
   const used = async () => (await call<{ used: number }>(env, '/v1/usage', { token })).json.used
 
@@ -997,9 +956,6 @@ describe('what a purge stops paying for', () => {
     expect((await call(env, `/i/${kept}.png`)).status).toBe(200)
   })
 
-  /** Whether one of the owner's own notes written before its pictures were shows the
-   *  picture cannot be told until the nightly sweep reads it: the row stays, and so does
-   *  the question, for the next sweep. */
   test('keeps a picture an unread note of its own might show, and asks again later', async () => {
     const hash = await upload('maybe somewhere else', 'image/png')
     const id = (
@@ -1043,9 +999,6 @@ describe('what a purge stops paying for', () => {
     expect(await used()).toBe(before)
   })
 
-  /** One sweep reads the bodies it needs once, whatever it asks about: a purge of a
-   *  note with many pictures, by a writer in a space of unread notes, reads that space
-   *  once and not once per picture. */
   test('reads the unread notes once for everything a sweep asks about', async () => {
     const other = await signIn(env, 'other@example.com')
     const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json
@@ -1090,7 +1043,6 @@ describe('what a purge stops paying for', () => {
     }
     expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
 
-    // One budget of bodies, and the purged note's own.
     expect(gets).toBeLessThanOrEqual(251)
   })
 })

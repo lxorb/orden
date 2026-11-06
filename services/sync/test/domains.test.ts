@@ -43,23 +43,18 @@ function verify(id = space, as = token) {
   return call(env, `/v1/spaces/${id}/blog/domain/verify`, { method: 'POST', token: as })
 }
 
-/** The record the space asks for, which is what the pane shows the owner. */
 async function wanted(id = space, as = token) {
   const record = (await status(id, as)).json.dns.find((one) => one.type === 'TXT')
   if (!record) throw new Error('no record was asked for')
   return record
 }
 
-/** The owner adding the record at their registrar and pressing Verify, which is
- *  the whole of proving a domain. */
 async function prove(id = space, as = token) {
   const record = await wanted(id, as)
   cloudflare.txt(record.name, [record.value])
   return await verify(id, as)
 }
 
-/** A domain published and proved, which is where most of the cases below start:
- *  nothing at all happens with Cloudflare until it has been. */
 async function published(domain = 'notes.example.com') {
   await publish({ domain })
   return await prove()
@@ -126,8 +121,6 @@ describe("a domain of one's own", () => {
   })
 
   test('is asked for again when Cloudflare has no record of it', async () => {
-    // A domain set before certificates were handed out, or while Cloudflare
-    // was unreachable, catches up the first time anyone asks after it.
     await published()
     cloudflare.hostnames.clear()
 
@@ -177,8 +170,6 @@ describe("a domain of one's own", () => {
     await publish({ domain: 'blog.example.com' })
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
-    // Nothing is asked of Cloudflare for a name this account has not shown is
-    // theirs, which is the whole point of the record.
     expect(cloudflare.hostnames.has('blog.example.com')).toBe(false)
     expect((await status()).json.state).toBe('unproved')
 
@@ -213,8 +204,6 @@ describe("a domain of one's own", () => {
   })
 
   test('is recorded even when Cloudflare refuses, and the refusal is reported', async () => {
-    // Someone else's zone already holds the hostname, say. The row is the
-    // truth; the status is where the trouble shows.
     cloudflare.refuse('notes.example.com', 'The hostname is already on Cloudflare in another zone.')
 
     const response = await publish({ domain: 'notes.example.com' })
@@ -241,16 +230,12 @@ describe("a domain of one's own", () => {
   })
 
   test('cannot be the shared domain with a trailing dot', async () => {
-    // The same host, written the way a resolver writes it. Left as it was, the
-    // name got past the check and a certificate was asked for inside the zone.
     expect((await publish({ domain: 'nibeditor.com.' })).status).toBe(400)
     expect((await publish({ domain: 'EVIL.NIBEDITOR.COM.' })).status).toBe(400)
     expect(cloudflare.hostnames.size).toBe(0)
   })
 
   test('cannot be longer than a domain name may be', async () => {
-    // Every label is legal on its own; the whole is past what DNS carries, and
-    // a name that can never resolve is not an address.
     const long = `${Array.from({ length: 4 }, () => 'a'.repeat(63)).join('.')}.com`
     expect(long.length).toBeGreaterThan(253)
 
@@ -275,8 +260,6 @@ describe("a domain of one's own", () => {
   })
 
   test('is never served on the shared domain, whatever the row says', async () => {
-    // Belt and braces: a row that somehow names the app's own host must not
-    // put a blog in front of the app for everyone.
     await publish({ subdomain: 'field' })
     env.db
       .prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?')
@@ -378,8 +361,6 @@ describe('proving a domain is yours', () => {
   })
 
   test('a claim nobody has proved does not stand in the real owner’s way', async () => {
-    // Somebody types a domain they do not hold. Nothing serves, and the answer
-    // to the person who does hold it used to be "that domain is taken" for ever.
     const squatter = await signIn(env, 'squatter@b.dev')
     const theirs = (await call(env, '/v1/spaces', { token: squatter, body: { name: 'Squatted' } }))
       .json.space.id
@@ -388,7 +369,6 @@ describe('proving a domain is yours', () => {
     const taken = await publish({ domain: 'notes.example.com' })
     expect(taken.status).toBe(200)
 
-    // And the claim it took is gone from the space that could not prove it.
     const left = env.db
       .prepare('select blog_domain, blog_domain_token from spaces where id = ?')
       .get(theirs)
@@ -408,7 +388,6 @@ describe('proving a domain is yours', () => {
     await published()
     const before = proofAge()
 
-    // A week on, with the record still where the owner put it.
     expect(await recheckDomains(env, before + WEEK + 1)).toBe(0)
     expect(proofAge()).toBe(before + WEEK + 1)
     expect(cloudflare.lookups.filter((one) => one === RECORD)).toHaveLength(2)
@@ -420,12 +399,9 @@ describe('proving a domain is yours', () => {
     cloudflare.forgetTxt(RECORD)
     const before = proofAge()
 
-    // A week on the record is missing, and a domain does not stop serving over
-    // one bad answer: the proof is left where it was.
     expect(await recheckDomains(env, before + WEEK + 1)).toBe(0)
     expect((await call(env, '/', { host: 'notes.example.com' })).text).toContain('Hello')
 
-    // Three weeks on it has been gone long enough to mean it.
     expect(await recheckDomains(env, before + 3 * WEEK + 1)).toBe(1)
     expect((await call(env, '/', { host: 'notes.example.com' })).text).not.toContain('Hello')
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
@@ -442,7 +418,6 @@ describe('proving a domain is yours', () => {
 
   const WEEK = 7 * 24 * 60 * 60 * 1000
 
-  /** When the proof was last seen, which is the stamp that lets it serve. */
   function proofAge(): number {
     const row = env.db
       .prepare('select blog_domain_verified_at as at from spaces where id = ?')
@@ -540,8 +515,6 @@ describe('what to add at the registrar', () => {
   })
 
   test('a space id is not an address', async () => {
-    // It used to be the CNAME target for a space without a name, which is
-    // every space on a domain of its own now that no space has both.
     await publish({ domain: 'notes.example.com' })
 
     const response = await call(env, '/', { host: `${space}.nibeditor.com` })
@@ -604,9 +577,6 @@ describe('one address, never two', () => {
   })
 
   test('the guard is written into the table itself', () => {
-    // A CHECK rather than a trigger: D1 cannot create triggers, see the
-    // migration. Being part of the table, it cannot be forgotten by a later
-    // migration the way a trigger could be dropped.
     const row = env.db
       .prepare("select sql from sqlite_master where type = 'table' and name = 'spaces'")
       .get() as { sql: string }
@@ -625,10 +595,6 @@ describe('names kept off the shared domain', () => {
     }
   })
 
-  /** The app, the API and the mail are all on this one domain, so a site at
-   *  `login.` is a page under the product's own name on the product's own
-   *  certificate - which is the whole of what a phishing page wants, for the price
-   *  of one signup. "Only what is in use" was the wrong rule. */
   test('a name that reads as the product speaking is not', async () => {
     const theirs = [
       'login',
@@ -662,23 +628,18 @@ describe('names kept off the shared domain', () => {
     for (const name of theirs) expect(await available(name), name).toBe(false)
   })
 
-  /** What a browser or a mail client goes looking for without being told. A site
-   *  answering one of these is a site answering for the domain. */
   test('nor one a client fetches by itself', async () => {
     for (const name of ['autoconfig', 'autodiscover', 'mta-sts', 'dmarc', 'wpad']) {
       expect(await available(name), name).toBe(false)
     }
   })
 
-  /** RFC 2142's mailbox names: the addresses a domain is expected to answer at,
-   *  which read as official wherever they are written. */
   test('nor one of the names a domain answers mail at', async () => {
     for (const name of ['postmaster', 'abuse', 'security', 'webmaster', 'hostmaster', 'noc']) {
       expect(await available(name), name).toBe(false)
     }
   })
 
-  /** Nobody is losing a name to this: the list is read when an address is chosen. */
   test('and no space on the domain today holds one of them', async () => {
     const held = env.db
       .prepare('select blog_subdomain as name from spaces where blog_subdomain is not null')

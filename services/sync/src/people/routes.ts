@@ -1,11 +1,3 @@
-/** People: the account's own profile and face, the profiles of the people it shares
- *  something with, whether they are here, and what each is called in a space.
- *
- *  Behind the session guard under `/v2`, and closed to a guest and to a program, both
- *  of which reach only what their lists name (guests.ts, programs.ts): a guest has no
- *  profile to edit, and a guest's face in a note is the initial its device sends. See
- *  docs/chats.md 4.9 and 4.10. */
-
 import { Hono } from 'hono'
 import { letGo } from '../blobs'
 import { objectBody, readBody } from '../body'
@@ -29,7 +21,6 @@ import { profileTold } from './told'
 
 export const people = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** The ids a listing asks about, out of `?ids=a,b,c`. */
 function idsIn(raw: string | undefined): string[] {
   return (raw ?? '')
     .split(',')
@@ -38,15 +29,12 @@ function idsIn(raw: string | undefined): string[] {
     .slice(0, MOST_PEOPLE)
 }
 
-/** The account's own profile row. */
 export async function ownProfile(env: Env, userId: string): Promise<ProfileRow | null> {
   return env.DB.prepare(`select ${PROFILE_COLUMNS} from users u where u.id = ?`)
     .bind(userId)
     .first<ProfileRow>()
 }
 
-/** Everybody among `ids` this account may see, as their cards say them. An id it may
- *  not see is left out rather than refused: to this account it names nobody. */
 people.get('/people', async (context) => {
   const user = context.get('user')
   const at = now()
@@ -54,8 +42,6 @@ people.get('/people', async (context) => {
   return context.json({ people: rows.map((row) => presentProfile(row, row.state, at, user.id)) })
 })
 
-/** Whether each of them is here: what an open list of people asks again each minute,
- *  so it is the one column and nothing else. */
 people.get('/presence', async (context) => {
   const user = context.get('user')
   const rows = await seenAmong(context.env, user, idsIn(context.req.query('ids')))
@@ -71,9 +57,6 @@ const COLUMN: Record<Exclude<keyof ProfileChanges, 'status' | 'hidden'>, string>
   zone: 'zone',
 }
 
-/** The words about the account, the accent its initial is drawn on, the zone its card
- *  tells the time in, a status, and Appear offline: whichever of them the body names,
- *  each taken away by null. Answers the profile as it now stands. */
 people.put('/me/profile', async (context) => {
   const user = context.get('user')
   const fields = await objectBody(context)
@@ -109,10 +92,6 @@ people.put('/me/profile', async (context) => {
   return context.json({ profile: await own(context.env, user) })
 })
 
-/** The face, as the two pictures the device made and uploaded through `/v1/blobs`.
- *  Both have to be this account's, WebP (or JPEG, from an engine that cannot write
- *  WebP), and small; whatever face it had before is
- *  given back, so a person who changes their picture ten times keeps one. */
 people.put('/me/avatar', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
@@ -128,7 +107,6 @@ people.put('/me/avatar', async (context) => {
     .bind(user.id, small, large, AVATAR_BYTES)
     .all<{ hash: string }>()
   const held = new Set(results.map((row) => row.hash))
-  // Wire text a correct client never meets: the app uploads both before it asks.
   if (!held.has(small) || !held.has(large)) {
     return context.json({ error: 'upload both pictures first' }, 400)
   }
@@ -143,7 +121,6 @@ people.put('/me/avatar', async (context) => {
   return context.json({ profile: await own(context.env, user) })
 })
 
-/** No face: the initial on the accent again, and both pictures given back. */
 people.delete('/me/avatar', async (context) => {
   const user = context.get('user')
   const before = await ownProfile(context.env, user.id)
@@ -153,7 +130,6 @@ people.delete('/me/avatar', async (context) => {
   return context.json({ profile: await own(context.env, user) })
 })
 
-/** What each person in a space is called there, where they chose something. */
 people.get('/spaces/:id/nicks', atLeast('read'), async (context) => {
   const space = spaceOf(context)
   const { results } = await context.env.DB.prepare(
@@ -164,8 +140,6 @@ people.get('/spaces/:id/nicks', atLeast('read'), async (context) => {
   return context.json({ nicks: Object.fromEntries(results.map((row) => [row.user_id, row.nick])) })
 })
 
-/** What the account is called in one space; empty is its own name again. Anybody in a
- *  space may name themselves in it, a reader too: it is about them, not the space. */
 people.put('/spaces/:id/nick', atLeast('read'), async (context) => {
   const user = context.get('user')
   const space = spaceOf(context)
@@ -194,7 +168,6 @@ people.put('/spaces/:id/nick', atLeast('read'), async (context) => {
   return context.json({ nick: nick || null })
 })
 
-/** The pictures of a face no longer worn, unless the new one is the same bytes. */
 async function giveBack(
   env: Env,
   userId: string,
@@ -203,9 +176,6 @@ async function giveBack(
 ): Promise<void> {
   if (!old) return
   for (const hash of new Set([old.s, old.l])) {
-    // A face's bytes may be a picture in one of the account's own notes too, which
-    // nothing about the face says; see `letGo`. One that cannot be decided yet is asked
-    // about again with what a purge leaves, rather than kept for good (unused.ts).
     if (keeping.includes(hash)) continue
     if (!(await letGo(env, userId, hash, true))) {
       await env.DB.prepare(
@@ -217,7 +187,6 @@ async function giveBack(
   }
 }
 
-/** The account's profile as its owner edits it. */
 async function own(env: Env, user: User) {
   const row = await ownProfile(env, user.id)
   return row ? presentOwnProfile(row, now()) : null

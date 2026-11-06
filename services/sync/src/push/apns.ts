@@ -1,11 +1,3 @@
-/** Apple Push Notification service: a reminder to an iPhone, shown by the system.
- *
- *  Ready and off: it needs the Apple developer account `docs/mobile.md` already waits
- *  on, its key (`APNS_KEY`, the `.p8`), the key's id, the team's id and the app's bundle
- *  id, and the iPhone app's registration, which is not built yet. Until all four are set
- *  every APNs target answers `off` and nothing is sent. Signed with a token of the key,
- *  ES256, which Apple accepts for an hour. */
-
 import { pemKey, signedToken } from './keys'
 import type { Delivery } from './send'
 
@@ -17,7 +9,6 @@ export interface ApnsConfig {
   sandbox: boolean
 }
 
-/** One message to one device token. */
 export async function sendApns(
   token: string,
   alert: { title: string; body: string; id: string },

@@ -1,106 +1,31 @@
-/** What a note said before, on the account.
- *
- *  A device already keeps its own versions, and that is the one a reader reaches
- *  for: it is there instantly, it goes back to before the note was ever synced,
- *  and it costs nobody anything. But it is keyed by the note's path on that
- *  machine, so a rename orphans it, another machine never sees it, and a laptop
- *  that dies takes it with it. This is the other half: keyed by the note's id,
- *  which is the one name for a note that every device agrees on.
- *
- *  What a version is: a body the account was sent. Every push already carries the
- *  whole note, so the versions are the pushes - nothing is computed, diffed or
- *  stored twice. The body goes to R2 under its own hash, so a note that flips
- *  between two states costs two objects however many times it flips, and two
- *  notes that say the same thing cost one; the same arrangement pictures already
- *  use. The row is a moment, a hash, a size and the device that sent it.
- *
- *  What is deliberately not kept:
- *
- *  Every save. At most one version per note per five minutes, which is the same
- *  interval the device's own keeper defaults to, plus the newest: a save inside
- *  the five minutes is folded into the newest version rather than dropped, so the
- *  last save of a session is always one. Dropped, it was the version a rollback
- *  needed and nowhere on the account once the rollback had written over it.
- *
- *  Forever. A month by default, or a year for an account that asks - and thinned
- *  as it ages, the way a backup is: everything from the first day, one an hour
- *  for the first month, one a day for the next two, one a week after that. Which
- *  is the shape Time Machine has had since 2007, for the reason it has it: what
- *  somebody wants from last Tuesday is the version they were writing, and what
- *  they want from last spring is *a* version.
- *
- *  There is a ceiling under all of it, per account and in bytes, swept
- *  oldest-first: a year of a busy vault is real storage, and a history that grew
- *  without limit would be a bill nobody agreed to. Version bytes do not count
- *  against the account's own gigabyte - that is Emil's to decide - so this is the
- *  only thing holding them. */
-
 import { chunks, places } from './bound'
 import { byteLength, cleanPersonName, now, sha256 } from './crypto'
 import { picturesOf } from './pictures'
 import type { Env, Note } from './types'
 
-/** How long the account keeps a version, in days: a month, or a year. The two
- *  the setting offers, and the two the service will take; see settings.ts. */
 export const KEEP_DAYS = [30, 365] as const
 
-/** What an account that has never said keeps: a month, which is what every
- *  account kept before there was a choice. */
 export const KEEP_FOR = 30 * 24 * 60 * 60 * 1000
 
-/** The closest two versions of one note are allowed to be. */
 const VERSION_EVERY = 5 * 60 * 1000
 
-/** Everything from the last day is kept as it happened; older than that, one per
- *  hour survives, then one per day, then one per week. */
 const HOUR = 60 * 60 * 1000
 const DAY = 24 * HOUR
 const WEEK = 7 * DAY
 
-/** Where each shelf begins, as an age. Older than a month, a day is enough;
- *  older than three, a week is - and a year of a note written in every day comes
- *  to 24 + 30 + 60 + 39, which is a hundred and fifty-odd rows rather than nine
- *  thousand. */
 const AFTER_A_MONTH = 30 * DAY
 const AFTER_THREE = 90 * DAY
 
-/** How many bytes of history one account may hold before the oldest of it starts
- *  to go.
- *
- *  Two gigabytes. A year of hourly versions of a thousand-note vault written in
- *  every day is around that, and the bodies are shared by hash, so a vault of
- *  small edits costs far less than the arithmetic suggests. It is a number to
- *  turn rather than a policy: version bytes are not counted against the account's
- *  own gigabyte, so this is what stands between a year of history and a bill. */
 export const MOST_VERSION_BYTES = 2 * 1024 * 1024 * 1024
 
-/** How many accounts over that ceiling one night deals with. The sweep is
- *  nightly and an account that is over it is over it by a little more each day,
- *  so a queue that empties slowly empties. */
 const ACCOUNTS_AT_ONCE = 20
 
-/** How much one sweep does. Counted in writes rather than rows, because a Worker
- *  invocation has a ceiling on those and a busy month has plenty of both. */
 const AT_ONCE = 400
 
-/** The most versions a route hands back at once. A month of one an hour is 720,
- *  and a list nobody scrolls is a list nobody reads. */
 const MOST_SHOWN = 300
 
-/** The most versions the account keeps of any one note.
- *
- *  A month under the two rules above is the first day at one every five minutes
- *  and twenty-nine days at one an hour, which is 984 - so a note somebody writes
- *  in every day of a month lands just under this and nothing anybody does reaches
- *  it by accident.
- *
- *  It is here rather than left to the sweep because the sweep runs nightly with a
- *  write budget, and a note written in all day makes 288 versions between two
- *  runs of it. A ceiling that holds where the version is written is one the
- *  bucket can be sized against; one that waits for a sweep is a hope. */
 export const MOST_KEPT = 1024
 
-/** How long a device's name may be. */
 const DEVICE_LIMIT = 40
 
 export interface Version {
@@ -111,7 +36,6 @@ export interface Version {
   by: string
 }
 
-/** Where a version's bytes live. Its hash, so the same words are stored once. */
 export function versionKey(hash: string): string {
   return `versions/${hash}`
 }
@@ -128,25 +52,10 @@ export function picturesOfVersion(content: string): string | null {
   }
 }
 
-/** The name a device sent for itself, as far as it is worth keeping.
- *
- *  A note settled in a room names the device that was typing, the same as a note
- *  pushed by a pass; see rooms/room.ts. Empty means nobody announced a name - the
- *  note a new space arrives with, a connected app writing through the connector,
- *  a client that sent no header. The history sheet shows the moment with no name
- *  beside it, which is what the device's own snapshots look like. See
- *  docs/sync.md. */
 export function deviceIn(header: string | undefined): string {
-  // Cleaned the way a person's name is, because that is what it is: a word
-  // somebody's client chose, shown in the history sheet and beside a session in
-  // the Account pane. A newline was already taken out; the rest of the control
-  // characters were not, and a name is words and not layout either way.
   const name = cleanPersonName(header ?? '')
   if (name.length <= DEVICE_LIMIT) return name
 
-  // Cut by what a reader would call a character rather than by UTF-16 unit, so a
-  // bound of forty never leaves half of one in the column. A code point is not
-  // that either: a flag is two of them and a family is seven.
   const characters = new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(name)
 
   let out = ''
@@ -160,24 +69,6 @@ export function deviceIn(header: string | undefined): string {
   return out
 }
 
-/** Keeps what the account was just sent, unless it says nothing new.
- *
- *  Called from the one place every note body arrives through, so a note that a
- *  room settled between four devices is kept the same way a note one device
- *  pushed is. Best effort by design: a version that could not be written is not a
- *  reason to fail the save that carried it, and the note itself is already
- *  safely stored by the time this runs.
- *
- *  A save less than five minutes after the newest version replaces it, as long as
- *  that version is itself less than five minutes after the one before: the newest
- *  version slides along with the session, and stays where it is once it is five
- *  minutes clear of the last one kept. So one version every five minutes or so,
- *  and the newest is always what the note last said. A version kept by name
- *  (`held`) is never replaced, and neither is one another device sent: folded,
- *  somebody else's words in between two saves of this one's were on no version.
- *  The device is the one the session proves (`device`, see sync2/device.ts), not
- *  the name it sends: two Macs send the same name. A save with none never folds,
- *  and neither does one into a row with none. */
 export async function keepVersion(
   env: Env,
   note: Pick<Note, 'id' | 'hash' | 'size'>,
@@ -185,14 +76,8 @@ export async function keepVersion(
   by = '',
   device: string | null = null,
 ): Promise<void> {
-  // The bytes before the row, so a row never names a body that is not there. A
-  // hash another note already keeps needs neither.
   let stored = false
 
-  // Read, then written on the condition that what was read is still there: a save
-  // folding into the same row at the same time moves it, and this one then reads
-  // again rather than writing nowhere, which left the newest version one save
-  // behind the note.
   for (let tries = 0; tries < 3; tries++) {
     const last = await env.DB.prepare(
       'select at, hash from note_versions where note_id = ? order by at desc limit 1',
@@ -200,7 +85,6 @@ export async function keepVersion(
       .bind(note.id)
       .first<{ at: number; hash: string }>()
 
-    // Nothing new to say.
     if (last?.hash === note.hash) break
 
     if (!stored) {
@@ -211,9 +95,6 @@ export async function keepVersion(
       stored = true
     }
 
-    // This device's own newest version, and the moment of the one before it,
-    // whoever sent that. Its own rather than the newest, so two people typing in
-    // one room each slide a version of their own instead of adding one a settle.
     const mine = await env.DB.prepare(
       `select v.at as at, v.hash as hash, v.held as held,
               (select max(at) from note_versions where note_id = v.note_id and at < v.at) as before
@@ -234,9 +115,6 @@ export async function keepVersion(
       mine.at - mine.before < VERSION_EVERY
 
     if (folds) {
-      // After the newest, which is where the last save belongs. Or ignore: a
-      // version kept meanwhile at that moment would otherwise throw, and the save
-      // would be on no version at all.
       const to = mine.at === last?.at ? Math.max(at, mine.at) : Math.max(at, (last?.at ?? 0) + 1)
       const folded = await env.DB.prepare(
         `update or ignore note_versions set at = ?4, hash = ?5, size = ?6, by = ?7, pictures = ?9
@@ -262,15 +140,9 @@ export async function keepVersion(
     return
   }
 
-  // Not written after all: the bytes put above for it are nobody's.
   if (stored) await forgetBodies(env, [note.hash])
 }
 
-/** Whether `incoming` more bytes of versions fit under `MOST_VERSION_BYTES` for the
- *  account that owns the note: the ceiling held where a kept side is written, as well
- *  as by the night's sweep. A side kept on purpose is written whatever the five minute
- *  rule says, so a script keeping eight megabytes at a time was past the ceiling by
- *  gigabytes before the sweep came round to it (#471). */
 export async function versionsFit(env: Env, noteId: string, incoming: number): Promise<boolean> {
   const row = await env.DB.prepare(
     `select coalesce(sum(v.size), 0) as bytes
@@ -285,12 +157,6 @@ export async function versionsFit(env: Env, noteId: string, incoming: number): P
   return (row?.bytes ?? 0) + incoming <= MOST_VERSION_BYTES
 }
 
-/** Keeps a text as a version of a note now, whatever else it has kept lately: the
- *  words that lost a modal answer in sync v2 (docs/sync-v2.md section 5.4), which are
- *  the one version somebody asked for by name. Held, so no later save folds it away
- *  and the sweep's thinning passes it by; it still goes with the horizon and the
- *  ceilings, like every version. A moment of its own, after the newest, so two kept
- *  in one millisecond are both kept. */
 export async function keepVersionNow(
   env: Env,
   noteId: string,
@@ -324,10 +190,6 @@ export async function keepVersionNow(
   await keepAtMost(env, noteId)
 }
 
-/** Keeps what a note says now as a version no later save folds away: the words a
- *  rollback is about to write over, so that the rollback can be undone. The newest
- *  version is held instead where it already says them, so the same words are not
- *  kept twice in a row. */
 export async function holdVersion(
   env: Env,
   note: Pick<Note, 'id' | 'hash'>,
@@ -350,14 +212,6 @@ export async function holdVersion(
   await keepVersionNow(env, note.id, content, by)
 }
 
-/** The ceiling on one note's history, held where the version is written.
- *
- *  Counted rather than read, because almost every save is nowhere near the
- *  ceiling and a count on the note's own index is one seek. Over it, what goes is
- *  what the thinning would take anyway, crowded runs first, and the oldest only
- *  after that: four people typing in one note for an afternoon reach the ceiling,
- *  and taking the oldest then took a year of history with it, and the words a
- *  rollback had kept. */
 async function keepAtMost(env: Env, noteId: string): Promise<void> {
   const held = await env.DB.prepare('select count(*) as many from note_versions where note_id = ?')
     .bind(noteId)
@@ -366,10 +220,6 @@ async function keepAtMost(env: Env, noteId: string): Promise<void> {
   let over = (held?.many ?? 0) - MOST_KEPT
   const freed: string[] = []
 
-  // The crowded first: a version with another close behind it says least, so the
-  // ones a five minute run, an hour, a day and a week cover go before any of the
-  // rest. Then the oldest, still sparing the held; the held last of all. Never the
-  // newest, which is what the note says.
   for (const close of [VERSION_EVERY, HOUR, DAY, WEEK, null]) {
     if (over <= 0) break
     const { results } = await env.DB.prepare(
@@ -405,11 +255,6 @@ async function keepAtMost(env: Env, noteId: string): Promise<void> {
   await forgetBodies(env, freed)
 }
 
-/** The bodies of versions that have gone, for the hashes no row names any more.
- *
- *  The one place a version's bytes are taken away, because the rule is one rule:
- *  a body goes when the last row naming it has, so a version two notes share
- *  outlives either of them losing it. Answers how many went. */
 export async function forgetBodies(env: Env, hashes: Iterable<string>): Promise<number> {
   let gone = 0
 
@@ -426,7 +271,6 @@ export async function forgetBodies(env: Env, hashes: Iterable<string>): Promise<
   return gone
 }
 
-/** Every version of one note, newest first. */
 export async function versionsOf(env: Env, noteId: string): Promise<Version[]> {
   const { results } = await env.DB.prepare(
     'select * from note_versions where note_id = ? order by at desc limit ?',
@@ -437,12 +281,6 @@ export async function versionsOf(env: Env, noteId: string): Promise<Version[]> {
   return results
 }
 
-/** What one version said, or null for a moment this note has no version at.
- *
- *  Null as well for a row whose body has gone, which is the same answer for the
- *  same reason: there is nothing to show. Answering that with no words at all is
- *  worse than answering nothing - the history sheet would draw an empty note, and
- *  restoring it would write that emptiness over the words somebody still has. */
 export async function versionAt(env: Env, noteId: string, at: number): Promise<string | null> {
   const version = await env.DB.prepare(
     'select hash from note_versions where note_id = ? and at = ?',
@@ -456,13 +294,6 @@ export async function versionAt(env: Env, noteId: string, at: number): Promise<s
   return object ? await object.text() : null
 }
 
-/** Whether a note ever said the words that hash to `hash`, as far as the account
- *  still remembers: one of its versions, or what it says now.
- *
- *  What a device signing back in asks about a copy it has no record for (a storage
- *  wiped, a first pairing). A copy the account once held word for word is behind,
- *  not beside: there is nothing in it the account has not seen, so it is brought up
- *  to date rather than kept as a second copy. See `pull` in the app's sync/pass.ts. */
 export async function saidOnce(
   env: Env,
   note: Pick<Note, 'id' | 'hash'>,
@@ -479,9 +310,6 @@ export async function saidOnce(
   return row !== null
 }
 
-/** The words a note said when they hashed to `hash`, or null when no version of it
- *  is kept: the ancestor a device merges against when both it and the account wrote
- *  since they last agreed. */
 export async function saidAs(env: Env, noteId: string, hash: string): Promise<string | null> {
   if (!(await saidOnce(env, { id: noteId, hash: '' }, hash))) return null
 
@@ -489,36 +317,11 @@ export async function saidAs(env: Env, noteId: string, hash: string): Promise<st
   return object ? await object.text() : null
 }
 
-/** What the path of every note inside a folder starts with: the folder and a
- *  slash, or nothing for the whole space.
- *
- *  Compared as the characters it is rather than as a `like` pattern. A pattern
- *  reads `_` and `%` in a folder's name as wildcards and ignores the case of every
- *  letter, so putting `Work` back put `work` back too, and `a_b` took `aXb` with it:
- *  a rollback reaching notes the reader never asked it to touch. */
 function folderPrefix(under: string): string {
   const folder = under.replace(/\/+$/, '')
   return folder ? `${folder}/` : ''
 }
 
-/** What every note under a path said at a moment: the newest version at or
- *  before it, for the notes that have one.
- *
- *  Deleted notes are in, because a note that was deleted after that moment is
- *  one of the things a rollback is for - also when its words never changed, since
- *  a delete leaves the hash as it was. Only one deleted after it, though: a note
- *  already in Recently deleted at that moment was not part of the space then, and
- *  stays where it is. History records no deletes, so `deleted_at` is the only
- *  clock, and it says the last delete: a note deleted before the moment, restored
- *  and deleted again since reads as deleted since, and comes back. A note purged
- *  from Recently deleted is not in at all: its words are gone for good. A live
- *  note not written since the moment is out as well, whatever its newest version
- *  says: what it says now is what it said then, also where that was a save no
- *  version kept. A live note that already says what it said
- *  then is out: it has nothing to put back, and left in it would hold a place
- *  in the page, so that once the first four hundred were back every later page
- *  was those four hundred again and the rest of the space was never reached.
- *  `countVersionsAt` asks the same question and has to keep the same filter. */
 export async function versionsAt(
   env: Env,
   spaceId: string,
@@ -545,35 +348,13 @@ export async function versionsAt(
   return results
 }
 
-/** What the account a note belongs to keeps its history for, in milliseconds.
- *
- *  Read off the owner's settings through the note's space, which is where the
- *  word the reader chose already lives; a column on the version row would be the
- *  same fact written twice, and would answer for the choice in force on the day
- *  the version was written rather than the one in force now. `keepVersions` is
- *  days, and an account that has never said keeps the month it always kept. */
 const HORIZON = "coalesce(json_extract(u.settings, '$.keepVersions'), ?2) * 86400000"
 
-/** Which shelf a row is on, as the bucket its survivor is chosen within: an hour
- *  for the first month, a day for the next two, a week after that.
- *
- *  Used twice in one statement - grouped by, and divided by - and the group key
- *  carries both, because two shelves can otherwise land on the same number: a
- *  week's bucket of an old row and an hour's bucket of a recent one are both
- *  integers and nothing says they differ. */
 const SHELF = 'case when at < ?3 then ?4 when at < ?5 then ?6 else ?7 end'
 
-/** The sweep: a month or a year, thinned as it ages, and a ceiling under both.
- *
- *  Bodies go only when the last row naming one has gone, and the whole run is
- *  bounded: a sweep that tried to catch up on a year in one invocation would be
- *  stopped in the middle by the platform rather than by us, and the next night
- *  would start again from the same place. */
 export async function sweepVersions(env: Env, at: number): Promise<number> {
   const freed = new Set<string>()
 
-  // Older than what its own account keeps. The join is what makes the horizon
-  // the reader's rather than the service's; see HORIZON.
   const old = await env.DB.prepare(
     `delete from note_versions
       where rowid in (
@@ -591,20 +372,6 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
 
   for (const row of old.results) freed.add(row.hash)
 
-  // And the thinning, for what is left beyond the first day: one statement per
-  // note rather than one per row.
-  //
-  // Which is the difference between a promise the sweep keeps and one it does
-  // not. A note written in all day is 288 rows, of which 264 are crowded, and a
-  // budget counted in rows spent the whole night's on a single note - so with two
-  // busy notes the month thinned to one an hour was simply not what the account
-  // held, and every night began the same distance behind. A statement a note is
-  // 400 notes a night instead, and a note is only ever behind by one run.
-  //
-  // A held version is not thinned, and does not count as an hour's survivor
-  // either: it is milliseconds older than the write that followed it (a rollback
-  // writing over it), so as the hour's newest it would lose to that write the
-  // first night it was a day old.
   const { results: busy } = await env.DB.prepare(
     'select distinct note_id from note_versions where at < ? limit ?',
   )
@@ -630,15 +397,6 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
   return (await forgetBodies(env, freed)) + (await capVersions(env))
 }
 
-/** The ceiling: an account over it loses its oldest history until it is under.
- *
- *  Oldest-first, because that is the order anybody would give history up in - and
- *  because the version somebody actually asks for is nearly always a recent one.
- *  Bounded twice, by the accounts looked at and by the rows deleted, so one
- *  night's run is one night's work and an account that is far over comes down
- *  over several of them.
- *
- *  Answers how many bodies went, which the sweep adds to its own count. */
 async function capVersions(env: Env): Promise<number> {
   const { results: over } = await env.DB.prepare(
     `select s.user_id as user_id, sum(v.size) as bytes
@@ -658,8 +416,6 @@ async function capVersions(env: Env): Promise<number> {
     let held = account.bytes
 
     for (let round = 0; round < 4 && held > MOST_VERSION_BYTES; round++) {
-      // Read before deleted, so exactly as much goes as has to: a chunk deleted
-      // outright would take four hundred versions where one was over the line.
       const { results: oldest } = await env.DB.prepare(
         `select v.rowid as id, v.hash as hash, v.size as size
            from note_versions v
@@ -696,25 +452,8 @@ async function capVersions(env: Env): Promise<number> {
   return await forgetBodies(env, freed)
 }
 
-/** Everything the account remembered one note saying, gone for good.
- *
- *  Called when a note's words are purged rather than when it is deleted: a note
- *  in Recently deleted is one somebody may still want back, and its history is
- *  part of what coming back means. Each body goes only once the last row naming
- *  it has, which is what keeps a version another note shares. */
-/** How many notes one rollback puts back. The same ceiling `versionsAt` reads
- *  under, said out loud so the route can tell a full answer from a truncated
- *  one. */
 export const ROLLBACK_AT_ONCE = AT_ONCE
 
-/** How many notes a rollback has in all to put back, for the moment it hits that
- *  ceiling.
- *
- *  An answer that said "400 notes" where there were twelve hundred read as
- *  finished, and half the space was still where it had been. This is the same
- *  question `versionsAt` asks, counted rather than listed, and asked only when
- *  the answer was cut off - which is rarely, because most spaces are smaller than
- *  the ceiling. */
 export async function countVersionsAt(
   env: Env,
   spaceId: string,
@@ -738,8 +477,6 @@ export async function countVersionsAt(
   return found?.held ?? 0
 }
 
-/** A note's versions going, as a statement of a batch: what its rows answer with is what
- *  `forgetBodies` is then asked about. */
 export function forgetVersions(env: Env, noteId: string): D1PreparedStatement {
   return env.DB.prepare('delete from note_versions where note_id = ? returning hash').bind(noteId)
 }

@@ -1,6 +1,3 @@
-/** The machine's bundle (docs/online-terminal.md 4.15): what a Hetzner server fetches with
- *  no session, at its first boot and before every start of nibd, by its SHA-256. */
-
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { carry } from '../src/machines/bundle'

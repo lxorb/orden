@@ -1,12 +1,3 @@
-/** The authorization endpoint: the two steps a person walks through, and the
- *  code that comes out of them.
- *
- *  The order of the checks is the point. Whether the browser may be sent
- *  anywhere at all is settled first, against what the client registered; only
- *  then does anything travel back to the client as an OAuth error. A bad client
- *  or a callback it never registered is shown on a page and never forwarded -
- *  that is how open redirects happen. */
-
 import { type Context, Hono } from 'hono'
 import { sendCode, verifyCode } from '../auth'
 import { WRONG_CODE } from '../refused'
@@ -33,24 +24,11 @@ import { sameRedirect } from './redirects'
 
 const CODE_TTL = 10 * 60 * 1000
 
-/** How many clients one account keeps connected, and how many connections in
- *  all. Two numbers because a connection and a client are not the same thing: a
- *  client that is reconnected keeps its place under the first and takes a second
- *  row under the second, and neither may run away.
- *
- *  Twenty is well past the number of LLM clients a person has, and what it bounds
- *  is a new one rather than one already there, so nobody is shut out of a client
- *  they already use. Two hundred is what the settings pane lists, and a
- *  connection it cannot list is one nobody can disconnect - the same reason a
- *  space holds two hundred people. */
 const MOST_CLIENTS_AN_ACCOUNT = 20
 const MOST_CONNECTIONS = 200
 
 export const authorize = new Hono<{ Bindings: Env }>()
 
-/** Whether this account has room for a connection to this client. Asked on the
- *  consent page rather than where the grant is written, so that the person
- *  standing in front of it is the one who is told. */
 async function roomToConnect(env: Env, userId: string, clientId: string): Promise<boolean> {
   const held = await env.DB.prepare(
     `select count(*) as connections,
@@ -64,22 +42,14 @@ async function roomToConnect(env: Env, userId: string, clientId: string): Promis
   if ((held?.connections ?? 0) >= MOST_CONNECTIONS) return false
   if ((held?.clients ?? 0) < MOST_CLIENTS_AN_ACCOUNT) return true
 
-  // Full of clients, but this one is already among them: what is refused is one
-  // more client, not one more connection to a client that is already there.
   return !!held?.ours
 }
 
-/** Sends the browser back to the client with whatever happened. The issuer
- *  rides along (RFC 9207) so the client can tell this server's answer from an
- *  impostor's, in the name the page was reached at (`at`, its URL), which is the
- *  name the client knows the server by. */
 function backToClient(env: Env, at: string, ask: Ask, params: Record<string, string>): Response {
   let url: URL
   try {
     url = new URL(ask.redirect_uri)
   } catch {
-    // Everything that reaches here matched something a client registered, so
-    // this cannot happen; a refusal is still better than a 500 if it ever does.
     return page(env, refusal('That app gave an address this server cannot use.'), 400)
   }
 
@@ -90,9 +60,6 @@ function backToClient(env: Env, at: string, ask: Ask, params: Record<string, str
   return new Response(null, { status: 302, headers: { location: url.toString() } })
 }
 
-/** Checks the part of a request that decides whether the browser may be sent
- *  anywhere at all: that the client is known, that the callback is one it
- *  registered, and that nothing is longer than a field of that name ever is. */
 async function checkClient(env: Env, ask: Ask): Promise<{ client: Client } | { problem: string }> {
   const long = tooLong(ask)
   if (long) return { problem: `The ${long.replace(/_/g, ' ')} in this request is too long.` }
@@ -110,7 +77,6 @@ async function checkClient(env: Env, ask: Ask): Promise<{ client: Client } | { p
   return { client }
 }
 
-/** Checks the rest, whose failures go back to the client as OAuth errors. */
 function checkRequest(
   env: Env,
   at: string,
@@ -148,7 +114,6 @@ authorize.get('/authorize', async (context) => {
   return page(context.env, emailStep(checked.client, ask, {}))
 })
 
-/** The consent page's forms come back here, one step at a time. */
 async function formOf(
   context: Context<{ Bindings: Env }>,
 ): Promise<Record<string, string | undefined>> {
@@ -159,16 +124,10 @@ authorize.post('/authorize', async (context) => {
   const form = await formOf(context)
   const ask = askFrom(form)
 
-  // Nothing in a form is trusted more than a query string: the same checks,
-  // against the same record of what the client registered.
   const checked = await checkClient(context.env, ask)
   if ('problem' in checked) return page(context.env, refusal(checked.problem), 400)
   const { client } = checked
 
-  // The form carries no response_type - the first step settled that - but
-  // everything else it does carry is checked again, so a hand-made POST cannot
-  // reach consent with a challenge, a resource or a scope the query string
-  // would have been turned away for.
   if (
     !challengeLooksRight(ask.code_challenge) ||
     !resourceMatches(context.env, ask.resource) ||
@@ -211,10 +170,6 @@ authorize.post('/authorize', async (context) => {
       return page(context.env, codeStep(client, ask, { email, error: verified.error }))
     }
 
-    // The emailed code is half a sign-in for an account that asks for two, here
-    // as in the app: a connector's token reads every note, and handing one out on
-    // the address alone was a way round the second factor for anybody who could
-    // read the mail. See `secondStep`.
     if (await asksForSecond(context.env, verified.user.id)) {
       const holding = await halfWay(context.env, verified.user)
       return page(context.env, secondStep(ask, { holding, write: form.write === '1' }))
@@ -242,11 +197,8 @@ authorize.post('/authorize', async (context) => {
   return page(context.env, refusal('That is not something this page does.'), 400)
 })
 
-/** The half a sign-in a page may carry: a session token's length, and no more. */
 const HOLDING_LIMIT = 128
 
-/** The code the client exchanges for its token, once whoever is at the page has
- *  proved all an account asks for. Sends the browser back with it. */
 async function grant(
   context: Context<{ Bindings: Env }>,
   client: Client,
@@ -265,8 +217,6 @@ async function grant(
   const readOnly = !(wantsWrite(ask) && write)
   const code = randomToken()
 
-  // Codes that were never redeemed go with this one, so the table holds what
-  // is live rather than every attempt anyone ever started.
   await context.env.DB.prepare('delete from oauth_codes where expires_at < ?').bind(now()).run()
 
   await context.env.DB.prepare(
@@ -284,8 +234,6 @@ async function grant(
     )
     .run()
 
-  // The client is in use, whatever becomes of the code: a registration that got
-  // this far is not one of the dead ones the nightly sweep collects.
   await clientWasUsed(context.env, client.id)
 
   return backToClient(context.env, context.req.url, ask, { code })

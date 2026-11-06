@@ -1,8 +1,3 @@
--- A report's issue put on the project board `FEEDBACK_PROJECT` names, as Todo: the issue's
--- node id GitHub's GraphQL knows it by, and when it went on the board, null until it has.
--- One the board did not take - GitHub out of reach, or a token without the `project`
--- scope - is tried again from the cron: `board_tries` how often so far, `board_next_at`
--- when next.
 alter table feedback add column issue_node text;
 alter table feedback add column board_at integer;
 alter table feedback add column board_tries integer not null default 0;

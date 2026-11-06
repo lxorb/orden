@@ -1,18 +1,3 @@
-/** The files of a space that are not notes: today the PDFs a note links to.
- *
- *  The bytes go up as blobs, addressed by the hash of their contents, exactly as
- *  a pasted image does. What a space records here is where in it each one sits,
- *  which is what lets a published note linking `[[paper.pdf]]` be served the
- *  paper: the link says a name, and the name has to reach a blob.
- *
- *  The whole list is written at once, the way bookmarks are. It is short, it is
- *  the client's own statement about its space, and one PUT of the lot is what
- *  makes a file that has gone stop being served.
- *
- *  Only a file whose bytes this account is keeping is recorded. The answer says
- *  which hashes were not, so a client knows exactly what to upload and a large
- *  PDF is sent once rather than on every pass. */
-
 import { Hono } from 'hono'
 import { NOT_AN_OBJECT } from '../refused'
 import { listIn, objectBody } from '../body'
@@ -22,34 +7,18 @@ import type { Env, Variables } from '../types'
 import { LONGEST_PATH, staysInside } from './paths'
 import { atLeast, spaceOf } from './space'
 
-/** More files than a space of notes keeps beside them, and a bound on the one
- *  statement below that grows with what was sent. */
 const MOST = 200
-/** A path inside a space, which is a few folder names and a file name. */
 
 const HASH = /^[a-f0-9]{64}$/
 
-/** What a space may record. A PDF is the one file Orden itself opens, and the one
- *  a published note can point a reader at; anything else beside a note belongs
- *  to that note and is carried inside it.
- *
- *  And two files by name: `publish.css` and `publish.js` at the root, which are
- *  Obsidian Publish's own names for the dressing an author puts on their own
- *  site. They are recorded here rather than in a setting so that they live in the
- *  vault, travel with it, and are edited in whatever the author edits files with.
- *  See docs/publishing.md; the site serves them from blog.ts. */
 const KEPT = /\.pdf$/i
 const DRESSING = new Set(['publish.css', 'publish.js'])
 
 export interface SpaceFile {
-  /** Relative to the space, `/`-separated: `reading/paper.pdf`. */
   path: string
-  /** The hash of its bytes, which is the blob that holds them. */
   hash: string
 }
 
-/** What is wrong with the list that arrived, as one sentence the app can show,
- *  or null when nothing is. */
 function wrong(value: unknown): string | null {
   if (!Array.isArray(value)) return 'files must be a list'
   if (value.length > MOST) return `files holds at most ${MOST} entries`
@@ -64,8 +33,6 @@ function wrong(value: unknown): string | null {
     if (typeof hash !== 'string' || !HASH.test(hash.toLowerCase())) {
       return "a file's hash must be the hash of its contents"
     }
-    // A path climbing out of the space is not a place in it, and a path the
-    // column holds is one a published page turns into a URL; see ./paths.
     if (!staysInside(path)) return 'a file sits inside its own space'
     if (!KEPT.test(path) && !DRESSING.has(path.toLowerCase())) {
       return 'only PDFs, publish.css and publish.js are kept beside the notes'
@@ -75,9 +42,6 @@ function wrong(value: unknown): string | null {
   return null
 }
 
-/** The column, as a published page reads it back. Anything in it that is not a
- *  file is left out: the column is written whole by clients, and a newer one may
- *  keep something this version has never heard of. */
 export function readSpaceFiles(raw: string): SpaceFile[] {
   const held = listIn(raw)
   if (!held) return []
@@ -88,12 +52,9 @@ export function readSpaceFiles(raw: string): SpaceFile[] {
     .slice(0, MOST)
 }
 
-/** Which of those hashes this account is actually keeping. */
 async function heldBy(env: Env, userId: string, hashes: readonly string[]): Promise<Set<string>> {
   if (!hashes.length) return new Set<string>()
 
-  // A chunk at a time: a space may record two hundred files and D1 binds a
-  // hundred parameters; see src/bound.ts.
   const found = await askInChunks(hashes, async (chunk) => {
     const { results } = await env.DB.prepare(
       `select hash from blobs where user_id = ? and hash in (${places(chunk.length)})`,
@@ -120,40 +81,16 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   const problem = wrong(sent)
   if (problem) return context.json({ error: problem }, 400)
 
-  // Written from the fields that were checked rather than from what arrived, so
-  // nothing else a client sent along ends up in the column.
   const stated = (sent as SpaceFile[]).map(({ path, hash }) => ({
     path,
     hash: hash.toLowerCase(),
   }))
 
-  // The dressing is the owner's alone. Everything else a space keeps beside its
-  // notes is a file a reader opens on purpose; these two are served on every page
-  // of the site, and `publish.js` runs there - so a writer naming one would be a
-  // collaborator putting their own script on somebody else's public pages, and a
-  // stylesheet can rewrite a page into a different page. Publishing at all is
-  // `atLeast('owner')` and so is every other setting of a site; see ./site.ts.
-  //
-  // Dropped from the list rather than refused, because a client states the whole
-  // column and a writer's client knows nothing about these: what it left out is
-  // kept below the way the owner's PDFs are.
   const asked =
     space.role === 'owner' ? stated : stated.filter((one) => !DRESSING.has(one.path.toLowerCase()))
 
-  // A row pointing at a blob nobody in this space keeps would serve nothing, so
-  // an entry is kept when this account holds its bytes or when the space is
-  // already serving them. Both halves matter once a space can be shared: the
-  // writer's own PDFs are theirs to add, and the ones somebody else put here
-  // are not theirs to drop by sending a list that leaves them out.
-  //
-  // A guest holds no bytes anywhere, because a guest has no storage to hold them
-  // in. So the first half is empty for one, and what stays is what the space was
-  // already serving.
   const already = readSpaceFiles(space.files)
   const serving = new Set(already.map((one) => one.hash))
-  // Both lists, because whose an entry is comes from whether this account keeps
-  // its bytes, and that has to be asked about the ones already there as much as
-  // about the ones arriving.
   const hashes = [...new Set([...asked, ...already].map((one) => one.hash))]
   const held =
     who.kind === 'user' ? await heldBy(context.env, who.user.id, hashes) : new Set<string>()
@@ -162,12 +99,6 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   const kept = asked.filter(there)
   const missing = [...new Set(asked.filter((one) => !there(one)).map((one) => one.hash))]
 
-  // What the list left out and was not this writer's to leave out. A client
-  // states its own space, and what it knows of it is what its account uploaded:
-  // the PDF somebody else put here is not in the list because it was never in
-  // that client's hands, and writing the list whole would drop it. So an entry
-  // whose bytes this account does not keep stays, unless this list names its
-  // place itself.
   const named = new Set(kept.map((one) => one.path))
   const others = already.filter((one) => !held.has(one.hash) && !named.has(one.path))
 
@@ -177,11 +108,7 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
     return context.json({ error: 'that is more files than a space keeps' }, 413)
   }
 
-  // The space is touched as well, so a device watching for spaces that changed
-  // learns that this one did.
   await writeColumn(context.env, 'files', space.id, written)
 
-  // The column as it now stands rather than only the part of it this list
-  // claimed, because what the space serves is the answer to what was asked.
   return context.json({ files, missing })
 })

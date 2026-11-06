@@ -1,19 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, testEnv, type TestEnv } from './harness'
 
-/** The Even Realities plugin is the second page the build writes, and the assets
- *  router's not-found handling would answer `/even/` with the editor's own page.
- *  So the path is named in the Worker and asked for by file name; this is the
- *  test that says so.
- *
- *  See docs/even.md. */
-
-/** The assets binding, answering with the name of whatever was asked for. */
 function assets(): { fetch(request: Request): Promise<Response> } {
   return {
     fetch(request: Request) {
       const path = new URL(request.url).pathname
-      // What the binding really does with a path nothing was built for.
       const body = path === '/even.html' || path === '/index.html' ? path : '/index.html'
       return Promise.resolve(new Response(body, { headers: { 'content-type': 'text/html' } }))
     },
@@ -36,7 +27,6 @@ describe('the Even Realities plugin', () => {
 
   test('is not what the editor is served as', async () => {
     expect((await call(env, '/')).text).toBe('/index.html')
-    // A path nothing was built for still falls back to the editor.
     expect((await call(env, '/somewhere')).text).toBe('/index.html')
   })
 
@@ -47,7 +37,6 @@ describe('the Even Realities plugin', () => {
       expect(page.headers.get('x-frame-options'), path).toBe('DENY')
     }
 
-    // The plugin is shown by the glasses' own app, which is not a thing to guess at.
     expect((await call(env, '/even/')).headers.get('x-frame-options')).toBe(null)
   })
 

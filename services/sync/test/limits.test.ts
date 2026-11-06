@@ -1,12 +1,3 @@
-/** The ceilings, and what runs out: how much mail one machine can cause, how
- *  many people the service writes to in a day, how often an owner hears that
- *  somebody is waiting, how many may be waiting at all, and what the nightly
- *  sweep takes away once nobody is waiting for it any more.
- *
- *  Every gate here is about the service rather than about one account, so each
- *  case is driven the way the outside drives it: a request with a
- *  `CF-Connecting-IP` header, or the rows a day of sending would have left. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { expireGuests } from '../src/guests'
 import { expireRequests } from '../src/spaces/share'
@@ -20,7 +11,6 @@ beforeEach(() => {
 
 afterEach(() => env.close())
 
-/** Asking for a sign-in code, from a machine or from nowhere in particular. */
 function askForACode(email: string, machine?: string) {
   return call(env, '/v1/auth/code', {
     body: { email },
@@ -28,12 +18,10 @@ function askForACode(email: string, machine?: string) {
   })
 }
 
-/** Which day the ceiling counts in, worked out the way limits.ts works it out. */
 function today(): number {
   return Math.floor(Date.now() / (24 * 60 * 60 * 1000))
 }
 
-/** A day's worth of sending already done, as the rows it would have left. */
 function alreadyMailed(many: number): void {
   const insert = env.db.prepare('insert into mailed_days (day, email) values (?, ?)')
   for (let at = 0; at < many; at++) insert.run(today(), `already-${at}@example.com`)
@@ -60,7 +48,6 @@ describe('mail from one machine', () => {
   test('counts the machine and not the address', async () => {
     for (let at = 0; at < 20; at++) await askForACode(`one-${at}@example.com`, '203.0.113.7')
 
-    // Somebody else, somewhere else, is not held to what that machine spent.
     expect((await askForACode('elsewhere@example.com', '198.51.100.4')).status).toBe(200)
   })
 
@@ -68,7 +55,6 @@ describe('mail from one machine', () => {
     await askForACode('same@example.com', '203.0.113.7')
     for (let at = 0; at < 30; at++) await askForACode('same@example.com', '203.0.113.7')
 
-    // The address keeps its own gap, and the machine spent one message.
     expect((await askForACode('another@example.com', '203.0.113.7')).status).toBe(200)
   })
 
@@ -103,7 +89,6 @@ describe('the people the service writes to in a day', () => {
     alreadyMailed(500)
     env.db.prepare('insert into mailed_days (day, email) values (?, ?)').run(today(), 'a@b.dev')
 
-    // An address already in today's set is not one more person to write to.
     const sent = await mail(() => askForACode('a@b.dev', '203.0.113.7'))
     expect(sent).toMatch(/\d{3} \d{3}/)
   })
@@ -136,21 +121,16 @@ describe('the people the service writes to in a day', () => {
     expect(refused.status).toBe(429)
     expect(refused.json.error).toBe('too much mail today - try again tomorrow')
 
-    // Nothing was written, so the sheet does not show somebody the owner was
-    // told could not be reached.
     const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
     expect(sheet.json.members).toEqual([])
   })
 })
 
-/** The thirty seconds an address keeps between two codes, moved on, the way a
- *  flood from outside waits it out. */
 function gapPassed(): void {
   env.db.prepare('update login_codes set sent_at = 0').run()
   env.db.prepare('delete from mailed').run()
 }
 
-/** A machine each time, as a flood spread over several would arrive. */
 function fromSomewhere(at: number): string {
   return `198.51.100.${at + 1}`
 }
@@ -174,7 +154,6 @@ describe('mail to one address', () => {
       await askForACode('victim@example.com', fromSomewhere(at))
     }
 
-    // From one of the very machines that did the flooding, even.
     const sent = await mail(() => askForACode('bystander@example.com', fromSomewhere(0)))
     expect(sent).toMatch(/\d{3} \d{3}/)
   })
@@ -185,7 +164,6 @@ describe('mail to one address', () => {
         gapPassed()
         expect((await askForACode('victim@example.com', fromSomewhere(at))).status).toBe(200)
       }
-      // The hour ends and the day does not.
       env.db.prepare('update limits set until = ? where scope = ?').run(Date.now() - 1, 'mail-to')
     }
 
@@ -214,8 +192,6 @@ describe('mail to one address', () => {
       })
     })
 
-    // The invitation stands and nothing went: the owner is not told that somebody
-    // else has been writing to that address.
     expect(answer.status).toBe(200)
     expect(sent).not.toContain('shared Plans with you')
     const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
@@ -223,7 +199,6 @@ describe('mail to one address', () => {
   })
 })
 
-/** Messages sent in the last day, as the hourly rows they would have left. */
 function alreadySent(many: number, until = Date.now() + 60 * 60 * 1000): void {
   env.db
     .prepare(`insert into limits (scope, key, count, until) values ('mail-sent', 'earlier', ?, ?)`)
@@ -280,7 +255,6 @@ describe('the mail the service sends in a day', () => {
       await askForACode('victim@example.com', fromSomewhere(at % 10))
     }
 
-    // Six went, and only those six count against everybody else's sign-in.
     expect(sentToday()).toBe(6)
   })
 
@@ -310,7 +284,6 @@ describe('telling an owner that somebody is waiting', () => {
     expect(link).toBeTruthy()
   })
 
-  /** Somebody following the link that asks first, with no session at all. */
   function knock(name: string) {
     return call(env, `/v1/join/${link}`, { method: 'POST', body: { name, device: 'Windows' } })
   }
@@ -335,8 +308,6 @@ describe('telling an owner that somebody is waiting', () => {
   test('again once the hour has passed', async () => {
     await mail(() => knock('First'))
 
-    // Both waits are moved on: the hour this ceiling keeps, and the thirty
-    // seconds the owner's own address keeps between any two messages.
     env.db.prepare('update limits set until = ? where scope = ?').run(Date.now() - 1, 'waiting')
     env.db.prepare('delete from mailed').run()
 
@@ -369,9 +340,6 @@ describe('how many people may be waiting on one space', () => {
     return call(env, `/v1/join/${link}`, { method: 'POST', body: { name, device: 'Windows' } })
   }
 
-  /** People already waiting, as the rows their knocking left. Guests, because a
-   *  link that asks first is the way most of them arrive, and an hour ago by
-   *  default so that the burst the link also bounds is not what answers. */
   function waiting(many: number, at = Date.now() - 60 * 60 * 1000) {
     const guest = env.db.prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
     const member = env.db.prepare(
@@ -472,7 +440,6 @@ describe('how many guests one space holds', () => {
     link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
   })
 
-  /** Guests of the space, at whatever standing and whenever they arrived. */
   function guests(many: number, options: { joined: boolean; at?: number }) {
     const at = options.at ?? Date.now()
     const guest = env.db.prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
@@ -500,8 +467,6 @@ describe('how many guests one space holds', () => {
   })
 
   test('does not count the ones who were told no, which used to shut it for good', async () => {
-    // Two hundred people knocked on this link a year ago and the owner said no to
-    // every one of them. The link is not spent; nobody is in the space.
     guests(200, { joined: false, at: Date.now() - 60 * 60 * 1000 })
 
     expect((await follow()).status).toBe(200)

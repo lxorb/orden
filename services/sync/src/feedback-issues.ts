@@ -1,63 +1,20 @@
-/** A report sent with Send feedback, as an issue in a private repository (#666).
- *
- *  Issues in a public repository are public, so reports go to `FEEDBACK_REPO`, which
- *  only its collaborators can read, opened as lxorbs-minion with `GITHUB_FEEDBACK_TOKEN`.
- *  The issue carries all of the report: the words, the version and the platform, whose
- *  it is, its id and its time, and the log, folded away and cut from its start to fit
- *  GitHub's limit on a body.
- *
- *  The row in D1 (0055) is the report; the issue is a copy of it, and its number and
- *  address go on the row once it is open (0058). Opening one is tried the moment the
- *  report arrives and again from the cron while it has not worked - GitHub out of
- *  reach, or no token set yet - so no report is lost. And none becomes two issues: a
- *  run takes a report on by writing its claim first, and one that finds a report tried
- *  before looks for the issue an earlier try may have opened without hearing back, by
- *  the report's id in its body, before it opens another.
- *
- *  Everything in the issue that somebody typed - the words, and the version, the
- *  platform and the address the app sends with them - goes in as code: the words in a
- *  fence they cannot close, the rest in code spans (#785). Code is the one thing GitHub
- *  draws exactly as written: no mention in it pings anybody however its at sign is
- *  spelled (`x.@lxorb`, `&#64;lxorb`), no table or heading or comment in it is one, so
- *  a report can neither reach a person through the repository nor dress itself as the
- *  table the app adds or hide that table. The title, which GitHub draws as text, has
- *  every at sign broken.
- *
- *  Once open, the issue goes on the project board `FEEDBACK_PROJECT` names, as Todo, so a
- *  report is in the same queue as the rest of the work. The board is public; an issue
- *  of a private repository shows on it only to those who may read that repository. A
- *  board that did not take it is tried again from the cron, apart from the issue, which
- *  stays open whatever the board does.
- *
- *  Deleting the account a report came from deletes the report (erase.ts), and the issue
- *  goes with it as far as this token can take it: closed, and its title and body
- *  written over with nothing of the report, from the list of what an account leaves
- *  behind (src/leftovers.ts). Deleting the issue itself takes an admin of the
- *  repository, which the minion is not. */
-
 import { now } from './crypto'
 import { oneLine } from './email'
 import type { Env } from './types'
 
 const API = 'https://api.github.com'
 
-/** GitHub's limit on an issue's body, in characters. */
 export const MOST_BODY = 65_536
 
-/** Room kept below it, for what a count of characters and GitHub's own may differ by. */
 const SPARE = 512
 
-/** How long a claim holds: past it, the run that wrote it is taken to be gone. */
 const CLAIM = 5 * 60 * 1000
 
-/** The longest wait between two tries, and the first. */
 const FIRST_WAIT = 60 * 1000
 const LONGEST_WAIT = 6 * 60 * 60 * 1000
 
-/** How many waiting reports one run of the cron takes on. */
 const AT_ONCE = 10
 
-/** The mark in an issue's body that says which report it is, for finding it again. */
 export function markOf(id: string): string {
   return `<!-- orden-feedback:${id} -->`
 }
@@ -69,15 +26,10 @@ export interface Report {
   platform: string
   log: string
   createdAt: number
-  /** The account it came from, or null from somebody signed out. */
   account: { id: string; email: string } | null
-  /** Where the pictures that came with it are served, in the order they were sent
-   *  (#1087); see feedback-images.ts. */
   images?: readonly string[]
 }
 
-/** The issue's title: the report's first sentence, every at sign in it followed by a
- *  zero-width space, so no part of it is a name. */
 export function issueTitle(text: string): string {
   const line = oneLine(text)
   const sentence = /^(.+?[.!?])(?:\s|$)/.exec(line)?.[1] ?? line
@@ -85,50 +37,36 @@ export function issueTitle(text: string): string {
   return `Feedback: ${said.replace(/@/g, '@\u200b')}`
 }
 
-/** The labels a report may carry beside `feedback`: the systems the app runs on. The
- *  platform is the app's to say, so anything else is no label - a label it named would
- *  be made in the repository. */
 const SYSTEMS = ['macos', 'windows', 'linux', 'ios', 'android'] as const
 
-/** The platform as a label: the system where the app is native, `web` in a browser. */
 export function platformLabel(platform: string): string | null {
   const said = platform.toLowerCase()
   if (said.startsWith('web')) return 'web'
   return SYSTEMS.find((system) => said.includes(system)) ?? null
 }
 
-/** The longest run of backticks in `text`. */
 function longestTicks(text: string): number {
   return Math.max(0, ...[...text.matchAll(/`+/g)].map((run) => run[0].length))
 }
 
-/** A value for one cell of the table, as code: one line, in a span its own backticks
- *  cannot end, and with its pipes escaped, which a table reads before the span. */
 function cell(text: string): string {
   const line = oneLine(text)
   if (!line) return '-'
   const ticks = '`'.repeat(longestTicks(line) + 1)
-  // A space inside the span where the value starts or ends with a backtick, which
-  // CommonMark takes off again.
   const pad = line.startsWith('`') || line.endsWith('`') ? ' ' : ''
   return `${ticks}${pad}${line.replace(/\|/g, '\\|')}${pad}${ticks}`
 }
 
-/** A fence the text inside it cannot close: longer than any run of backticks in it. */
 function fenced(text: string): string {
   const fence = '`'.repeat(Math.max(2, longestTicks(text)) + 1)
   return `${fence}\n${text}\n${fence}`
 }
 
-/** The pictures, each drawn from where the service serves it. The address is the
- *  service's own, so nothing a report says can make the issue fetch anything else. */
 function pictures(images: readonly string[] | undefined): string {
   if (!images?.length) return ''
   return `${images.map((url, at) => `![Image ${String(at + 1)}](${url})`).join('\n\n')}\n\n`
 }
 
-/** The issue's body: the words, the pictures, the table of what the app added, and the
- *  log folded away, cut from its start where the whole would be past GitHub's limit. */
 export function issueBody(report: Report): string {
   const account = report.account
     ? `\`${report.account.id}\` · ${cell(report.account.email)}`
@@ -186,20 +124,14 @@ function asked(to: Github, path: string, init: RequestInit = {}): Promise<Respon
 interface Issue {
   number: number
   html_url: string
-  /** What GitHub's GraphQL knows it by, for putting it on the board. */
   node_id: string
   body?: string | null
 }
 
-/** Whether `body` is the issue of report `id`: its mark the body's last line, where the
- *  app puts it. Anywhere else it is somebody's words saying it, which must not take
- *  another report's place (#785). */
 function isMarked(body: string | null | undefined, id: string): boolean {
   return body?.trimEnd().split('\n').at(-1)?.trim() === markOf(id)
 }
 
-/** An issue an earlier try opened for this report without hearing back: every issue
- *  touched since the report came is asked for, and its body read for the report's mark. */
 async function openedBefore(to: Github, report: Report): Promise<Issue | null> {
   const since = new Date(report.createdAt - 60_000).toISOString()
   for (let page = 1; page <= 5; page++) {
@@ -254,7 +186,6 @@ async function reportOf(env: Env, id: string): Promise<Row | null> {
     .first<Row>()
 }
 
-/** Where each picture of a report is served, in the order it was sent. */
 export async function imagesOf(env: Env, id: string): Promise<string[]> {
   const { results } = await env.DB.prepare(
     'select name from feedback_images where feedback_id = ? order by position',
@@ -264,13 +195,10 @@ export async function imagesOf(env: Env, id: string): Promise<string[]> {
   return results.map((one) => imageUrl(env, one.name))
 }
 
-/** The address one picture is served at. */
 function imageUrl(env: Env, name: string): string {
   return `${env.APP_ORIGIN}/v1/feedback/images/${name}`
 }
 
-/** How a report's issue stands, for its page: open, closed as done, closed as not
- *  planned, or null where GitHub could not say just now. */
 export type IssueState = 'open' | 'done' | 'not planned'
 
 export async function issueState(env: Env, number: number): Promise<IssueState | null> {
@@ -287,14 +215,10 @@ export async function issueState(env: Env, number: number): Promise<IssueState |
   }
 }
 
-/** Opens the issue for one report, where it has none and no other run has it in hand.
- *  Answers whether the report has its issue now. Never throws: a try that fails is
- *  written down and tried again later. */
 export async function openIssue(env: Env, id: string, at = now()): Promise<boolean> {
   const to = github(env)
   if (!to) return false
 
-  // Taken on first, so a request and the cron, or two runs of it, cannot both open one.
   const claimed = await env.DB.prepare(
     `update feedback set issue_claim = ?2
       where id = ?1 and issue_number is null and (issue_claim is null or issue_claim < ?3)`,
@@ -327,9 +251,6 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
     )
       .bind(id, issue.number, issue.html_url, issue.node_id)
       .run()
-    // The report went while GitHub was opening it: its account was deleted, and the
-    // erase found no issue to withdraw yet. So this run withdraws the one it opened,
-    // written down first, so one GitHub does not take now is withdrawn the next night.
     if (!written.meta.changes) {
       const what = `${ISSUES}${String(issue.number)}`
       await env.DB.prepare('insert or ignore into leftovers (what, since) values (?1, ?2)')
@@ -355,8 +276,6 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
   }
 }
 
-/** The reports still waiting for their issue, tried again, and the issues still off the
- *  board: what the cron runs. */
 export async function openWaitingIssues(env: Env, at = now()): Promise<void> {
   if (!github(env)) return
   const waiting = await env.DB.prepare(
@@ -383,13 +302,11 @@ export async function openWaitingIssues(env: Env, at = now()): Promise<void> {
   }
 }
 
-/** The board's owner and number, from `FEEDBACK_PROJECT` (`user/number`), or null. */
 function board(env: Env): { owner: string; number: number } | null {
   const named = /^([A-Za-z0-9-]+)\/(\d+)$/.exec(env.FEEDBACK_PROJECT?.trim() ?? '')
   return named?.[1] && named[2] ? { owner: named[1], number: Number(named[2]) } : null
 }
 
-/** An issue's node id, for one opened before the issue's node was kept (0065). */
 async function nodeOf(env: Env, number: number): Promise<string | null> {
   const to = github(env)
   if (!to) return null
@@ -421,7 +338,6 @@ interface Board {
   todo: string
 }
 
-/** The board's id, its Status field's and that field's Todo option's. */
 async function boardOf(to: Github, owner: string, number: number): Promise<Board> {
   const data = await graphql<{
     user: {
@@ -458,9 +374,6 @@ async function boardOf(to: Github, owner: string, number: number): Promise<Board
   return { project: project.id, status: project.field.id, todo: todo.id }
 }
 
-/** Puts an issue on the board as Todo, and writes down that it is there. Never throws: a
- *  try that fails is written down and tried again from the cron. Putting it there twice
- *  is one item, so a try whose answer was lost does no harm. */
 async function putOnBoard(
   env: Env,
   id: string,
@@ -521,11 +434,8 @@ async function putOnBoard(
   }
 }
 
-/** How an issue is named on the list of what a deleted account leaves behind (0038):
- *  `issues/<number>`. */
 export const ISSUES = 'issues/'
 
-/** What a withdrawn issue says instead of the report. */
 const WITHDRAWN = {
   title: 'Feedback: withdrawn',
   body: 'The account this report came from was deleted, and the report with it.',
@@ -533,9 +443,6 @@ const WITHDRAWN = {
   state_reason: 'not_planned',
 }
 
-/** The issues of reports whose account was deleted, closed and written over, by
- *  number. Answers the ones GitHub took; one it did not, or every one where no token is
- *  set, waits for the next try. One that is not there any more is as good as withdrawn. */
 export async function withdrawIssues(env: Env, numbers: readonly number[]): Promise<number[]> {
   const to = github(env)
   if (!to) return []

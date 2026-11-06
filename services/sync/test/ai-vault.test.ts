@@ -1,8 +1,3 @@
-/** The AI accounts' vault: a device asking in three steps, a device with the key letting
- *  it in, a write over a newer revision refused, starting over, and nothing changed by a
- *  session that does not hold the vault key. The account only ever holds what the devices
- *  sealed; see ai/vault.ts. */
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { hubs } from './hub-fakes'
@@ -38,8 +33,6 @@ async function sha(...parts: Uint8Array[]): Promise<Uint8Array> {
   return new Uint8Array(await crypto.subtle.digest('SHA-256', all))
 }
 
-/** A device as the app makes one, as far as the account can tell: a key it never parses,
- *  the id that key's hash names, a nonce, and the commitment to both. */
 async function aDevice() {
   const pub = random(65)
   const nonce = random(32)
@@ -88,8 +81,6 @@ describe('the AI vault', () => {
       body: { pub, nonce },
     })
 
-  /** The first device of the account: registered, revealed, the vault made with its token
-   *  and the key wrapped to itself. */
   async function first() {
     const laptop = await aDevice()
     await register(laptop, 'Laptop')
@@ -118,7 +109,6 @@ describe('the AI vault', () => {
   test('lets a device in in three steps, and carries nothing in the clear', async () => {
     const laptop = await first()
 
-    // The phone signs in elsewhere and commits to its key.
     const phoneToken = await signIn(env, 'vault@example.com')
     const phone = await aDevice()
     await register(phone, 'Phone', phoneToken)
@@ -131,10 +121,8 @@ describe('the AI vault', () => {
         { id: phone.id, name: 'Phone', pub: null, commitment: phone.commitment, approved: false },
       ],
     })
-    // Not before it is answered.
     expect((await reveal(phone.id, phone.pub, phone.nonce, phoneToken)).status).toBe(409)
 
-    // The laptop answers, and its answer is the one that stands.
     const answer = base64(random(32))
     const answered = await call(env, `/v2/ai/devices/${phone.id}/nonce`, {
       token,
@@ -143,8 +131,6 @@ describe('the AI vault', () => {
     })
     expect(answered.status).toBe(200)
 
-    // The phone reveals: not a key other than its id's, nor a nonce other than the one it
-    // committed to.
     const other = await aDevice()
     expect((await reveal(phone.id, other.pub, phone.nonce, phoneToken)).status).toBe(400)
     expect((await reveal(phone.id, phone.pub, other.nonce, phoneToken)).status).toBe(400)
@@ -157,14 +143,12 @@ describe('the AI vault', () => {
       revealed: phone.nonce,
     })
 
-    // The laptop wraps the key to it.
     await call(env, `/v2/ai/devices/${phone.id}/wrap`, {
       token,
       method: 'PUT',
       body: { wrapped: 'd3JhcDI', from: laptop.id, auth },
     })
     expect((await read(phone.id, phoneToken)).json.wrapped).toBe('d3JhcDI')
-    // Each change was said to the account's hub.
     const told = running.asked.filter((one) => one.ask === 'ai')
     expect(told.length).toBeGreaterThanOrEqual(6)
   })
@@ -275,13 +259,11 @@ describe('the AI vault', () => {
       devices: [{ id: laptop.id, approved: false }],
     })
 
-    // With nobody allowed, any device of the account may.
     const again = await first()
     await call(env, `/v2/ai/devices/${again.id}`, { token, method: 'DELETE', body: { auth } })
     expect((await call(env, '/v2/ai/vault', { token, method: 'DELETE' })).status).toBe(200)
   })
 
-  /** The laptop and the phone let in, and a tablet asking that the phone answered. */
   async function three() {
     const laptop = await first()
     const allowed = async (name: string) => {
@@ -314,7 +296,6 @@ describe('the AI vault', () => {
   const rotate = (body: Record<string, unknown>) =>
     call<{ rev?: number; error?: string }>(env, '/v2/ai/rotate', { token, method: 'PUT', body })
 
-  /** #389: an allowed device goes only with the key changed under it, in one step. */
   test('lets an allowed device go by changing the key, and only so', async () => {
     const { laptop, phone, tablet } = await three()
     expect(
@@ -341,13 +322,11 @@ describe('the AI vault', () => {
       wrapped: 'bmV3d3JhcA',
       devices: [
         { id: laptop.id, approved: true },
-        // Answered by the device that went: asks again from the start.
         { id: tablet.id, nonce: null, nonceFrom: null, approved: false },
       ],
     })
     expect((await read(phone.id)).json.wrapped).toBeNull()
 
-    // The old token changes nothing any more; the new one does.
     const write = (as: string) =>
       call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 2, blob: 'eA', auth: as } })
     expect((await write(auth)).status).toBe(403)
@@ -372,7 +351,6 @@ describe('the AI vault', () => {
     expect(stale.status).toBe(409)
     expect(stale.json).toMatchObject({ error: 'stale', rev: 2 })
     expect((await turn(2, base64(random(32)))).status).toBe(403)
-    // Nothing moved: the phone is still let in, under the key it had.
     expect((await read(phone.id)).json).toMatchObject({ rev: 2, wrapped: 'd3JhcCPhone' })
     expect((await turn(2, auth)).status).toBe(200)
   })

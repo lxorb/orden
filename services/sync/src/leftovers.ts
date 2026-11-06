@@ -1,21 +1,3 @@
-/** What the bucket and the rooms still hold for rows that have gone.
- *
- *  An account's rows go in one transaction and its bytes cannot go in the same
- *  one: they are in R2 and in the rooms' own storage, which no transaction of the
- *  database's reaches. So the transaction writes down what it is leaving behind -
- *  see 0038 and erase.ts - and this empties it, a batch at a time, from the route
- *  that deleted the account and again every night until the list is empty.
- *
- *  Every step is safe to repeat. Deleting an object that is not there is nothing,
- *  and so is emptying a room nobody kept anything in; a row goes from the list only
- *  once what it names has gone, so a sweep that stops half way leaves the rest for
- *  the next one. Withdrawing an issue a report became on GitHub is the same: writing
- *  over one already withdrawn changes nothing.
- *
- *  The account's reports are copied into issues on GitHub (feedback-issues.ts), which
- *  no transaction reaches either, so those are on the list too, as `issues/<number>`,
- *  and withdrawn a request at a time like a room. */
-
 import { askInChunks, chunks, places } from './bound'
 import { eraseChats } from './chats/ask'
 import { note } from './failed'
@@ -25,39 +7,25 @@ import { eraseMachines } from './machines/ask'
 import type { Env } from './types'
 import { eraseRooms } from './rooms'
 
-/** How many names one R2 delete takes: the most the bucket accepts in one call. */
 const PER_DELETE = 1000
 
-/** How much one sweep takes on. The bucket's names are cheap - two deletes and a
- *  few dozen questions for this many - and they go first, because a picture is
- *  served to anybody holding its address until its bytes are gone. A room is a
- *  request of its own, so far fewer of those. */
 const OBJECTS_AT_ONCE = 2 * PER_DELETE
 const ROOMS_AT_ONCE = 200
 
 const ROOM = 'rooms/'
-/** An account's hub, or a guest's, which keeps storage of its own; see hub/hub.ts.
- *  Emptied the way a room is, and counted with the rooms. */
 const HUB = 'hubs/'
-/** An online terminal machine, whose object holds its container; see machines/. */
 const MACHINE = 'machines/'
-/** A chat's `ChatLog`, which keeps the chat's log in storage of its own; see chats/. */
 const CHAT = 'chats/'
-/** A machine home's backup, in the homes bucket rather than the notes one. */
 const HOME = 'homes/'
 
-/** A purged note's words in the search index, by the note's id; see `purgeNote`. */
 const WORDS = 'words/'
 
-/** How many notes' words one sweep takes out: one statement, which reads the whole index
- *  however many it names. */
 const WORDS_AT_ONCE = 100
 
 export function wordsLeftover(noteId: string): string {
   return WORDS + noteId
 }
 
-/** Whether a name is an object's storage rather than the bucket's. */
 const isObject = (name: string) =>
   name.startsWith(ROOM) ||
   name.startsWith(HUB) ||
@@ -65,10 +33,6 @@ const isObject = (name: string) =>
   name.startsWith(CHAT) ||
   name.startsWith(ISSUES)
 
-/** Purged notes' words taken out of the search index, and crossed off once they have
- *  gone. Apart from the rest because this is the one step that can be too much for the
- *  database: one that fails stays on the list for the next sweep, and nothing else on it
- *  waits. Answers how many it crossed off. */
 async function sweepWords(env: Env): Promise<number> {
   const { results } = await env.DB.prepare(
     'select what from leftovers where what like ? order by since, what limit ?',
@@ -95,8 +59,6 @@ async function sweepWords(env: Env): Promise<number> {
   return names.length
 }
 
-/** Empties the oldest of what the list names, as much as one sweep takes on, and
- *  answers how many it crossed off. */
 export async function sweepLeftovers(env: Env): Promise<number> {
   const words = await sweepWords(env)
 
@@ -126,18 +88,12 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   const names = results.map((one) => one.what)
   if (!names.length) return words
 
-  // A version or a picture another note or another account still names is not
-  // this account's to take away, and neither is anything a row has come back for.
-  // Asked now rather than when the name was written, because now is when it has to
-  // be true.
   const named = await stillNamed(env, names)
   const loose = names.filter((one) => !named.has(one))
 
   const objects = loose.filter((one) => !isObject(one) && !one.startsWith(HOME))
   for (const piece of chunks(objects, PER_DELETE)) await env.NOTES.delete(piece)
 
-  // A home's backup is in a bucket of its own, bound only where machines are; until it
-  // is bound there is nothing to delete it from, and the name waits.
   const homes = loose.filter((one) => one.startsWith(HOME))
   const homesBucket = env.HOMES
   if (homesBucket) {
@@ -157,9 +113,6 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(homesBucket ? homes : []),
   ])
 
-  // Everything the bucket took, every room, hub and machine that answered, every issue
-  // GitHub took, and every name that turned out to be somebody else's. One that did not
-  // answer stays for the next sweep.
   const done = names.filter(
     (one) => (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one),
   )
@@ -170,9 +123,6 @@ export async function sweepLeftovers(env: Env): Promise<number> {
       .run()
   }
 
-  // An id retired while its room still held something is free again once the room is
-  // empty and nothing else named by it is still to go: what a create under it would
-  // have been handed is gone (0052). Never sooner.
   const rooms = done.filter((one) => one.startsWith(ROOM)).map((one) => one.slice(ROOM.length))
   for (const chunk of chunks(rooms)) {
     await env.DB.prepare(
@@ -189,14 +139,6 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   return done.length
 }
 
-/** Which of these names a row still answers for.
- *
- *  A note's body, its room and its document's snapshot are the note's, so the note's
- *  row is the question - a live one, or one in Recently deleted, and not the tombstone
- *  a purge leaves. A version's body and a picture are addressed by their contents
- *  and shared by whoever holds the same bytes, so the question there is whether any
- *  row at all still names the hash. A web login's bytes and a hub are named by the account
- *  itself, which never comes back: nothing else can name them. */
 async function stillNamed(env: Env, names: readonly string[]): Promise<Set<string>> {
   const byNote = new Map<string, string>()
   const versions = new Map<string, string>()
@@ -213,8 +155,6 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     else if (kind === 'chats') chats.set(name, last)
   }
 
-  // A row purged from Recently deleted is a tombstone, not the note: its words are
-  // gone for good and nothing brings it back, so it answers for nothing here.
   const notes = await askIn(
     env,
     'select id as one from notes where not (deleted = 1 and deleted_at is null) and id in',
@@ -226,13 +166,11 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     versions,
   )
   const heldBlobs = await askIn(env, 'select distinct hash as one from blobs where hash in', blobs)
-  // A chat whose row is back - restored before the sweep reached it - is not erased.
   const heldChats = await askIn(env, 'select id as one from chats where id in', chats)
 
   return new Set([...notes, ...heldVersions, ...heldBlobs, ...heldChats])
 }
 
-/** The names whose key one question still finds a row for. */
 async function askIn(
   env: Env,
   question: string,

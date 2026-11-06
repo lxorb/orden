@@ -1,32 +1,3 @@
-/** The second factor: a code from an authenticator app.
- *
- *  Signing in to Orden is an emailed code, so whoever holds the mailbox holds the
- *  account. That is fine for almost everybody and not fine for two cases worth
- *  taking seriously: a mailbox that has been taken over, and one left signed in
- *  on a machine somebody else uses. A second factor is exactly the answer to
- *  those, and to nothing else.
- *
- *  Why TOTP rather than passkeys, which are stronger and nicer: a passkey is
- *  bound to one origin, and Orden runs at `tauri://localhost` on the desktop, at
- *  `http://127.0.0.1:<a fresh port every launch>` inside the glasses plugin, and
- *  at its own domain on the web. There is no single relying party those three can
- *  agree on, so a passkey would work on the web and refuse to exist on the other
- *  two - which is not a second factor, it is a second class of reader. Six digits
- *  work everywhere, need no new dependency, and are the thing every authenticator
- *  app already does. See docs/sync.md, which says this out loud.
- *
- *  How it is kept: the secret is encrypted under an environment secret of its own,
- *  `SECOND_FACTOR_SECRET`, the way the OpenAI key is under `OPENAI_KEY_SECRET`
- *  (see ask/key.ts), so a leaked database is not a drawer full of working
- *  authenticators. It used to borrow the OpenAI one, which meant rotating the AI
- *  key's secret locked every enrolled account out of its own factor; see `seal`
- *  below for how the rows written then move across. No secret configured means no
- *  second factor rather than one stored in the clear.
- *
- *  Recovery codes are ten one-shot words, hashed at rest and spent the moment
- *  they work, which is how every other one-shot secret here behaves. Losing a
- *  phone is the common case and the only honest way out of it. */
-
 import { Hono } from 'hono'
 import { TOOK_TOO_LONG, WRONG_CODE } from './refused'
 
@@ -37,51 +8,25 @@ import { rounds } from './rounds'
 import { machineOf, mayTrySecond, mayTrySecondFrom } from './limits'
 import type { Env, User, Variables } from './types'
 
-/** This derivation, which is not the one the OpenAI key uses. */
 const SALT = 'nib/second-factor/v1'
 
 const encoder = new TextEncoder()
 
-/** Thirty seconds a step, six digits, SHA-1: what every authenticator app
- *  implements, and none of it is ours to choose. */
 const STEP = 30_000
 const DIGITS = 6
 
-/** How far out of step a clock may be. One step either side is what every other
- *  implementation allows, and it is the difference between a phone that is a few
- *  seconds slow working and looking broken. */
 const DRIFT = 1
 
-/** How many one-shot codes are handed out, and how long each is.
- *
- *  Ten bytes rather than five. Five is forty bits, and forty bits behind one
- *  round of SHA-256 is a table a graphics card walks in minutes: a leaked
- *  database would have been a way past the factor on every account at once,
- *  which is the one thing hashing them was there to prevent. */
 const RECOVERY_CODES = 10
 const RECOVERY_BYTES = 10
 
-/** What a recovery code is at rest, and which scheme said so.
- *
- *  PBKDF2 rather than a single digest, salted with the account's own id, so one
- *  table cannot serve two accounts and a shorter code than the ten bytes above
- *  would still not be cheap to walk. Versioned for the reason the sealed key is
- *  (see ask/key.ts): a row that cannot say which scheme wrote it is a row nobody
- *  can migrate, and the bare digests written before this still have to work. */
 const RECOVERY_VERSION = '2'
-/** What hashing one recovery code costs, in PBKDF2 rounds. A hundred thousand is the
- *  number, and the only reason it is not written straight into the derivation below is
- *  the cost of running the tests; see `recoveryCost`. */
 export const RECOVERY_ROUNDS = 100_000
 
-/** What a recovery code is hashed at here; see rounds.ts. */
 export function recoveryCost(): number {
   return rounds(RECOVERY_ROUNDS)
 }
 
-/** RFC 4648 base32, unpadded, which is the only way an authenticator app takes a
- *  secret. Written here because the codebase has no codec for it and it is
- *  twenty lines. */
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 
 export function base32(raw: Uint8Array): string {
@@ -113,15 +58,10 @@ function fromHex(hex: string): Uint8Array {
   return out
 }
 
-/** A fresh secret, as hex. Hex on the way in and base32 on the way out to the
- *  reader: one shape to store and one shape to type into a phone. */
 export function newSecret(): string {
   return [...randomBytes(20)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-/** What the app shows for somebody to scan or paste. The label is what an
- *  authenticator app lists it under. An entry made before the rename keeps its
- *  `nib` label: a code is checked against the secret, never the label. */
 export function otpauth(secretHex: string, email: string): string {
   const secret = base32(fromHex(secretHex))
   const label = encodeURIComponent(`Orden:${email}`)
@@ -129,7 +69,6 @@ export function otpauth(secretHex: string, email: string): string {
   return `otpauth://totp/${label}?secret=${secret}&issuer=Orden&algorithm=SHA1&digits=${DIGITS}&period=30`
 }
 
-/** The code a secret stands at, for one step. */
 export async function codeAt(secretHex: string, step: number): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
@@ -139,16 +78,11 @@ export async function codeAt(secretHex: string, step: number): Promise<string> {
     ['sign'],
   )
 
-  // The counter is eight bytes, big endian. A step fits in the low four for the
-  // next several thousand years, and the high four are written anyway because
-  // that is what the standard says is sent.
   const counter = new Uint8Array(8)
   new DataView(counter.buffer).setUint32(4, step, false)
 
   const signed = new Uint8Array(await crypto.subtle.sign('HMAC', key, counter))
 
-  // Dynamic truncation: the low nibble of the last byte says where to read the
-  // four bytes that become the number.
   const at = (signed[19] ?? 0) & 15
   const value =
     (((signed[at] ?? 0) & 0x7f) << 24) |
@@ -159,11 +93,6 @@ export async function codeAt(secretHex: string, step: number): Promise<string> {
   return String(value % 10 ** DIGITS).padStart(DIGITS, '0')
 }
 
-/** Which step a code is this secret's at, or null for one that is nobody's.
- *
- *  The step rather than a yes, because a code that has been answered with must
- *  not be answered with again - RFC 6238 §5.2 - and the step is what can be
- *  written down to say so. The code itself is not ours to keep. */
 async function stepMatching(secretHex: string, given: string, at = now()): Promise<number | null> {
   const entered = given.replace(/\D/g, '')
   if (entered.length !== DIGITS) return null
@@ -176,19 +105,10 @@ async function stepMatching(secretHex: string, given: string, at = now()): Promi
   return null
 }
 
-/** Whether a code is this secret's, now or one step either side. What the
- *  enrolment asks, which is about the app holding the secret rather than about
- *  letting anybody in, so it spends nothing. */
 export async function matches(secretHex: string, given: string, at = now()): Promise<boolean> {
   return (await stepMatching(secretHex, given, at)) !== null
 }
 
-/** Spends one step, and says whether it was this account's to spend.
- *
- *  One conditional update rather than a read and a write, so two requests
- *  holding the same code cannot both find it unspent. Every step at or below the
- *  one written is spent with it, which is what keeps a code from the window
- *  before this one from being replayed either. */
 async function spendStep(env: Env, userId: string, step: number): Promise<boolean> {
   const written = await env.DB.prepare(
     'update users set totp_step = ? where id = ? and (totp_step is null or totp_step < ?)',
@@ -199,7 +119,6 @@ async function spendStep(env: Env, userId: string, step: number): Promise<boolea
   return !!written.meta.changes
 }
 
-/** Ten one-shot codes, in the shape somebody can read off a screen and type. */
 export function recoveryCodes(): string[] {
   return Array.from({ length: RECOVERY_CODES }, () =>
     [...randomBytes(RECOVERY_BYTES)]
@@ -209,12 +128,6 @@ export function recoveryCodes(): string[] {
   )
 }
 
-/** One recovery code as it is stored: derived, not digested. See the constants
- *  above for why, and for what the version in front of it is for.
- *
- *  The cost is an argument, so that what a row was written at is something a caller
- *  said rather than something the module was holding; every caller here says
- *  `recoveryCost()`. */
 export async function recoveryHash(userId: string, code: string, rounds: number): Promise<string> {
   const material = await crypto.subtle.importKey('raw', encoder.encode(code), 'PBKDF2', false, [
     'deriveBits',
@@ -237,8 +150,6 @@ export async function recoveryHash(userId: string, code: string, rounds: number)
   return `${RECOVERY_VERSION}.${digest}`
 }
 
-/** Ten fresh codes, written down and handed back. The old ones go first: a list
- *  somebody has replaced is a list that must stop working. */
 async function writeRecovery(env: Env, userId: string): Promise<string[]> {
   const codes = recoveryCodes()
 
@@ -255,31 +166,18 @@ async function writeRecovery(env: Env, userId: string): Promise<string[]> {
   return codes
 }
 
-/** What a seal made under the factor's own secret starts with. A row without it
- *  was sealed under `OPENAI_KEY_SECRET`, by a build from before the factor had a
- *  secret of its own or by this one before `SECOND_FACTOR_SECRET` was set. The row
- *  says which, so opening one is never a guess and the nightly job can find the
- *  borrowed ones with a `like`. */
 const OWN = 'own:'
 
-/** The secret a new seal is made under: the factor's own, or - until somebody has
- *  set that - the one it used to borrow, so that deploying this changes nothing for
- *  anybody until the new secret exists. Django's `SECRET_KEY_FALLBACKS` is the same
- *  shape: the new key writes, the old one only reads, and it can be retired once
- *  nothing it wrote is left. */
 function sealingSecret(env: Env): { secret: string; own: boolean } | null {
   if (env.SECOND_FACTOR_SECRET) return { secret: env.SECOND_FACTOR_SECRET, own: true }
   if (env.OPENAI_KEY_SECRET) return { secret: env.OPENAI_KEY_SECRET, own: false }
   return null
 }
 
-/** Whether the service can keep a factor at all. */
 function mayKeep(env: Env): boolean {
   return sealingSecret(env) !== null
 }
 
-/** One authenticator secret, sealed under whichever secret `sealingSecret` names,
- *  and marked when that is the factor's own. */
 async function seal(env: Env, userId: string, secretHex: string): Promise<string | null> {
   const under = sealingSecret(env)
   if (!under) return null
@@ -288,7 +186,6 @@ async function seal(env: Env, userId: string, secretHex: string): Promise<string
   return under.own ? `${OWN}${made}` : made
 }
 
-/** One stored seal, opened under the secret its mark names, or null. */
 function unseal(env: Env, userId: string, stored: string): Promise<string | null> {
   const own = stored.startsWith(OWN)
   const secret = own ? env.SECOND_FACTOR_SECRET : env.OPENAI_KEY_SECRET
@@ -297,10 +194,6 @@ function unseal(env: Env, userId: string, stored: string): Promise<string | null
   return opened(secret, userId, own ? stored.slice(OWN.length) : stored, SALT)
 }
 
-/** Moves one borrowed seal under the factor's own secret, once there is one.
- *
- *  Conditional on the row still holding the seal that was read, so a factor turned
- *  off or replaced in the meantime is never written back over. */
 async function reseal(env: Env, userId: string, stored: string, secretHex: string) {
   if (stored.startsWith(OWN) || !env.SECOND_FACTOR_SECRET) return
 
@@ -312,10 +205,6 @@ async function reseal(env: Env, userId: string, stored: string, secretHex: strin
     .run()
 }
 
-/** Whether this account has a second factor, and the secret when it has one, with
- *  the seal it was read out of. Null for an account with none, and for one whose
- *  secret will not open - which is the same answer, because a factor nobody can
- *  verify is not one. */
 async function secondFor(
   env: Env,
   userId: string,
@@ -332,17 +221,8 @@ async function secondFor(
   return secret === null ? null : { secret, stored: row.totp_secret }
 }
 
-/** How many borrowed seals the nightly job reads at a time. */
 const RESEAL_PAGE = 100
 
-/** Every seal still made under `OPENAI_KEY_SECRET`, moved under the factor's own,
- *  by the nightly job.
- *
- *  A seal also moves on its account's next good code, but an account nobody signs
- *  in to for a year would otherwise keep its factor bound to the AI key's secret
- *  for that year - and rotating that secret is exactly what must not lock anybody
- *  out. After one night with both secrets set nothing depends on the old one. A
- *  seal that will not open under it is left as it is: it was dead before this. */
 export async function resealBorrowed(env: Env): Promise<number> {
   if (!env.SECOND_FACTOR_SECRET || !env.OPENAI_KEY_SECRET) return 0
 
@@ -371,8 +251,6 @@ export async function resealBorrowed(env: Env): Promise<number> {
   }
 }
 
-/** Whether the account asks for a second factor at all. Asked before the secret
- *  is opened, because the sign-in needs to know before it knows who is asking. */
 export function asksForSecond(env: Env, userId: string): Promise<boolean> {
   return env.DB.prepare('select totp_at from users where id = ? and totp_at is not null')
     .bind(userId)
@@ -380,18 +258,6 @@ export function asksForSecond(env: Env, userId: string): Promise<boolean> {
     .then((row) => !!row)
 }
 
-/** One code, checked against the factor and then against the recovery codes.
- *
- *  Both kinds are spent the moment they work: a recovery code because it is
- *  one-shot by definition, and an app's code because RFC 6238 says a verifier
- *  must not take the same one twice - which is what stands between a code seen
- *  over a shoulder or on a screen share and a second sign-in inside the ninety
- *  seconds it stays in the window.
- *
- *  Ceilinged twice. Per account, because six digits is a million guesses and a
- *  script with an afternoon would otherwise walk them; and per machine, because
- *  the per-account ceiling says nothing at all to a script working through a
- *  list of addresses twenty guesses at a time. */
 export async function accepted(
   env: Env,
   userId: string,
@@ -407,8 +273,6 @@ export async function accepted(
     if (step !== null) {
       if (!(await spendStep(env, userId, step))) return false
 
-      // A good code is the moment a borrowed seal moves under the factor's own
-      // secret; see `reseal`.
       await reseal(env, userId, factor.stored, factor.secret)
       return true
     }
@@ -416,8 +280,6 @@ export async function accepted(
 
   const tidied = given.trim().toLowerCase().replace(/\s/g, '')
 
-  // Both shapes in one statement: what this build writes, and the bare digest
-  // rows written before it, so nobody's printed list stopped working overnight.
   const spent = await env.DB.prepare(
     `update recovery_codes set used_at = ?1
       where user_id = ?2 and code_hash in (?3, ?4) and used_at is null`,
@@ -428,15 +290,10 @@ export async function accepted(
   return !!spent.meta.changes
 }
 
-/** Turns it on for an account, and hands back the codes that get somebody in
- *  when the phone is gone. Replaces whatever was there: turning it on twice is
- *  two secrets and one of them would be a way in nobody remembers. */
 async function turnOn(env: Env, userId: string, secretHex: string): Promise<string[]> {
   const kept = await seal(env, userId, secretHex)
   if (!kept) return []
 
-  // And the step a code was last accepted at, which belonged to the secret being
-  // replaced: leaving it would refuse the new app's first several codes.
   await env.DB.prepare(
     'update users set totp_secret = ?, totp_at = ?, totp_step = null where id = ?',
   )
@@ -448,7 +305,6 @@ async function turnOn(env: Env, userId: string, secretHex: string): Promise<stri
 
 export const second = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** What the pane shows: whether it is on, and how many recovery codes are left. */
 second.get('/', async (context) => {
   const user = context.get('user')
   const row = await context.env.DB.prepare('select totp_at from users where id = ?')
@@ -465,18 +321,10 @@ second.get('/', async (context) => {
     on: !!row?.totp_at,
     since: row?.totp_at ?? null,
     codesLeft: left?.spare ?? 0,
-    // Without the environment's secret there is nowhere safe to keep a secret,
-    // so the pane offers nothing rather than offering something that would be
-    // stored in the clear.
     possible: mayKeep(context.env),
   })
 })
 
-/** Step one of turning it on: a secret to put into an authenticator app.
- *
- *  Nothing is switched on here. The secret comes back, is shown once, and is only
- *  written to the account by the confirm below - so somebody who never finishes
- *  is not locked out of their own account by a factor they cannot answer. */
 second.post('/', async (context) => {
   if (!mayKeep(context.env)) {
     return context.json({ error: 'this service cannot keep a secret safely' }, 503)
@@ -485,8 +333,6 @@ second.post('/', async (context) => {
   const user = context.get('user')
   const secret = newSecret()
 
-  // Held for ten minutes under the token the confirm sends back, in the table
-  // that exists for exactly this: something answered once and kept a while.
   const holding = randomToken()
   await context.env.DB.prepare(
     'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
@@ -501,15 +347,6 @@ second.post('/', async (context) => {
   })
 })
 
-/** Step two: the first code out of the app, which proves it was set up, and the
- *  recovery codes, which are shown once and never again.
- *
- *  An account that already has a factor is replacing it, and replacing it is
- *  turning the old one off: it takes a code from the old one, as `DELETE` does,
- *  or a recovery code, in `current`. Asked here rather than at step one, because
- *  this is where the account changes - a secret handed out while the factor was
- *  off is still only a secret, and confirming it after the factor came on is a
- *  replacement like any other. */
 second.post('/confirm', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
@@ -530,8 +367,6 @@ second.post('/confirm', async (context) => {
     return context.json({ error: TOOK_TOO_LONG }, 400)
   }
 
-  // The new app's code first, which spends nothing, so a mistyped one does not
-  // cost the old factor a step it then has to wait out.
   if (!(await matches(secret, code))) return context.json({ error: WRONG_CODE }, 400)
 
   if (
@@ -549,8 +384,6 @@ second.post('/confirm', async (context) => {
   return context.json({ on: true, recovery: codes })
 })
 
-/** Turns it off, which takes a code: somebody who has the session but not the
- *  phone is exactly who a second factor is there to stop. */
 second.delete('/', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
@@ -572,8 +405,6 @@ second.delete('/', async (context) => {
   return context.json({ on: false })
 })
 
-/** Fresh recovery codes, for somebody who has used most of theirs or thinks a
- *  list has been seen. The old ones stop working. */
 second.post('/recovery', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
@@ -587,11 +418,6 @@ second.post('/recovery', async (context) => {
   return context.json({ recovery: await writeRecovery(context.env, user.id) })
 })
 
-/** What a sign-in holds between the emailed code and the second one.
- *
- *  Kept in the same table as everything else answered once and held a while, for
- *  ten minutes: long enough to find a phone, short enough that a half-finished
- *  sign-in on a shared machine is not a way in tomorrow. */
 export async function halfWay(env: Env, user: User): Promise<string> {
   const token = randomToken()
 
@@ -604,14 +430,6 @@ export async function halfWay(env: Env, user: User): Promise<string> {
   return token
 }
 
-/** Whose half-finished sign-in this is.
- *
- *  Reading it does not spend it; `spendHalf` below does, once a code has worked.
- *  Spending it on a wrong code meant that one mistyped digit threw away the
- *  emailed half as well, and the way back from that was another mail - which the
- *  resend gap holds for thirty seconds and the daily ceiling may refuse
- *  altogether. What bounds the guessing is the ceiling on the codes themselves,
- *  which is where a guess is counted; see `accepted`. */
 export async function whoseHalf(env: Env, token: string): Promise<string | null> {
   const row = await env.DB.prepare(
     'select value from cached where scope = ? and key = ? and until > ?',
@@ -622,24 +440,12 @@ export async function whoseHalf(env: Env, token: string): Promise<string | null>
   return row?.value ?? null
 }
 
-/** And the token gone, for a sign-in that has finished: one that has been
- *  answered cannot be answered again. */
 export async function spendHalf(env: Env, token: string): Promise<void> {
   await env.DB.prepare('delete from cached where scope = ? and key = ?')
     .bind('second-half', await sha256(token))
     .run()
 }
 
-/** Everything half done that has run out of time, taken away by the nightly job.
- *
- *  The pending enrolment above is the one secret here kept in the clear - until a
- *  code proves an app has it there is no account to bind it to - and nothing was
- *  ever taking the row away. So an enrolment somebody closed the pane on left a
- *  working authenticator secret in the table, ten minutes after it stopped being
- *  usable and for as long as the database lived.
- *
- *  Every scope, because `cached` is shared and a row past its `until` says
- *  nothing to anybody; see 0022. */
 export function forgetHalfDone(env: Env, at: number): Promise<unknown> {
   return env.DB.prepare('delete from cached where until < ?').bind(at).run()
 }

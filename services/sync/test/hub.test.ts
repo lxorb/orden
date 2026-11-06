@@ -1,10 +1,3 @@
-/** The hub's sockets: beats, the frames it reads, and ending a device.
- *
- *  The hub runs as the real class over a fake runtime (see hub-fakes.ts), against
- *  the real schema, on Vitest's clock. Until #393 most of this file was web-login
- *  leases (docs/sync-v2.md section 6), which were removed with web logins that
- *  travelled between computers. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { readFrame } from '../src/hub/frames'
@@ -82,8 +75,6 @@ describe('ending a device', () => {
     expect((await call(env, '/v1/me', { token: laptop.token })).status).toBe(401)
   })
 
-  /** A web key wrapped to a device from before #393 goes with the device, and another
-   *  device's stays until the later cleanup. */
   test('takes the web key wrapped to it, and only that one', async () => {
     const laptop = await computer(env, running, 'keys@example.com', 'Laptop')
     const desktop = await computer(env, running, 'keys@example.com', 'Desktop')
@@ -138,8 +129,6 @@ describe('ending a device', () => {
     expect(tablet.socket.closedWith?.code).toBe(1008)
   })
 
-  /** A device row is written by `hello`, so a socket that has not said it yet is
-   *  found by the session it came in on. */
   test('is what signing out does to a socket that never said hello', async () => {
     const token = await signIn(env, 'quiet@example.com')
     const user = (await call(env, '/v1/me', { token })).json.user.id
@@ -152,8 +141,6 @@ describe('ending a device', () => {
     expect(socket.closedWith?.code).toBe(1008)
   })
 
-  /** A guest's sign-in has no id and no device row, so its socket is found by the hash
-   *  its token is kept under, which the door says it came with; see hub/door.ts. */
   test('is what a guest signing out does, to that one sign-in', async () => {
     const owner = await signIn(env, 'host@example.com')
     const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json

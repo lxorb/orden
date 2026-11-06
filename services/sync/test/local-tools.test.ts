@@ -1,16 +1,3 @@
-/** The local server's tools beside this connector's.
- *
- *  `nib mcp`, the app's own binary speaking MCP on the reader's machine, has the sixteen
- *  tools this connector has under the same names, six of notes, five of to-dos and
- *  bases and five of chats, so a prompt or a skill written against one works against
- *  the other (docs/agent-native.md 10, docs/tasks.md 5.15, docs/chats.md 4.14). What that takes is held here, from
- *  the connector's side: every argument this connector takes, the local tool takes under
- *  the same name and type, and never needs an argument this one does not. The local tool
- *  may take more, and may need less - the open space stands in for `space` there. Its
- *  table is apps/desktop/src-tauri/src/mcp/tools.json; the six notes' answers' words are held
- *  in src-tauri/src/mcp/shared.rs, the chats' in `@orden/chats/agent`, and the five others
- *  answer the same JSON on both. */
-
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'

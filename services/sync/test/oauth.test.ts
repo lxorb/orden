@@ -17,7 +17,6 @@ afterEach(() => {
 const ORIGIN = 'https://nibeditor.com'
 const CHATGPT = 'https://chatgpt.com/connector/oauth/abc123'
 
-/** PKCE, as a client does it: a random verifier and its S256 challenge. */
 async function pkce() {
   const verifier = 'v'.repeat(20) + Math.random().toString(36).slice(2).padEnd(30, 'x')
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
@@ -28,7 +27,6 @@ async function pkce() {
   return { verifier, challenge }
 }
 
-/** Registers a public client the way Claude and ChatGPT do. */
 async function register(redirectUris = [CHATGPT], extra: Record<string, unknown> = {}) {
   const response = await call(env, '/oauth/register', {
     body: {
@@ -53,7 +51,6 @@ function authorizeUrl(params: Record<string, string>) {
   return `/oauth/authorize?${query.toString()}`
 }
 
-/** Submits one of the consent page's forms. */
 async function submit(fields: Record<string, string>) {
   return call(env, '/oauth/authorize', {
     raw: new URLSearchParams(fields).toString(),
@@ -61,7 +58,6 @@ async function submit(fields: Record<string, string>) {
   })
 }
 
-/** Reads the emailed code out of the logging mailer. */
 async function codeSentTo(action: () => Promise<unknown>): Promise<string> {
   const logged: string[] = []
   const spy = vi.spyOn(console, 'log').mockImplementation((message) => {
@@ -82,7 +78,6 @@ async function exchange(fields: Record<string, string>) {
   })
 }
 
-/** The whole dance, as a client and a person would do it, ending in tokens. */
 async function connect(
   options: { write?: boolean; email?: string; clientId?: string; redirect?: string } = {},
 ) {
@@ -384,10 +379,6 @@ describe('asking for consent', () => {
   })
 })
 
-/** Everything in an authorization request arrives from a stranger's query
- *  string or from a hand-made form post. What may be sent anywhere is settled
- *  before anything is, and each field is what it says it is or the request
- *  stops on a page. */
 describe('what an authorization request may carry', () => {
   test('a challenge that is not an S256 digest is turned down', async () => {
     const { client_id } = (await register()).json
@@ -526,8 +517,6 @@ describe('connecting', () => {
       arguments: {},
     })
 
-    // The account was made by the consent page, so it holds the space every new
-    // account is given and the connector has somewhere to write from the start.
     expect(spaces.json.result.content[0]!.text).toBe('Notes')
   })
 
@@ -661,13 +650,10 @@ describe('refreshing', () => {
     const first = await refresh(clientId, tokens.json.refresh_token)
     expect(first.status).toBe(200)
 
-    // Two parties have held this one and only one of them got what replaced it.
     const again = await refresh(clientId, tokens.json.refresh_token)
     expect(again.status).toBe(401)
     expect(again.json.error).toBe('invalid_grant')
 
-    // Everything the grant held went with it: the token that was current, the
-    // access token beside it, and the row itself.
     expect((await refresh(clientId, first.json.refresh_token)).status).toBe(400)
     expect((await rpc(first.json.access_token, 'ping')).status).toBe(401)
 
@@ -776,9 +762,6 @@ describe('a client that describes itself at a URL', () => {
     expect(response.status).toBe(400)
   })
 
-  /** Anybody at all names the URL this fetches - it comes off a query string - so
-   *  a host answering with something enormous must not be able to spend the
-   *  Worker's memory on it. It was read whole and measured afterwards. */
   test('is refused, unread, when it declares itself larger than a document', async () => {
     const asked = vi.fn(() =>
       Promise.resolve(
@@ -803,7 +786,6 @@ describe('a client that describes itself at a URL', () => {
   })
 
   test('is refused when it turns out to be larger than a document', async () => {
-    // No content-length, so the only bound is the one applied while reading.
     const long = JSON.stringify({
       client_id: CLAUDE_CODE,
       client_name: 'x'.repeat(80_000),
@@ -871,8 +853,6 @@ describe('what the settings show', () => {
 })
 
 describe('how many clients this server registers', () => {
-  /** Registering from a machine, which is what Cloudflare names on every request
-   *  that reaches a Worker. */
   function registerFrom(machine: string, name: string) {
     return call(env, '/oauth/register', {
       body: {
@@ -897,8 +877,6 @@ describe('how many clients this server registers', () => {
   test('and lets a client that already has a row ask for it again', async () => {
     for (let at = 0; at < 20; at++) await registerFrom('203.0.113.7', `One ${at}`)
 
-    // The same name and the same callbacks are the same client, so nothing is
-    // written and there is nothing for the ceiling to be about.
     expect((await registerFrom('203.0.113.7', 'One 0')).status).toBe(201)
   })
 
@@ -925,16 +903,11 @@ describe('how many apps one account connects', () => {
   const ACCOUNT = 'a@b.dev'
 
   beforeEach(() => {
-    // The account itself, written rather than signed in to: a sign-in sends a
-    // code, and the consent page below asks for one of its own inside the gap one
-    // address keeps between two messages.
     env.db
       .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
       .run('one', ACCOUNT, Date.now())
   })
 
-  /** Connections the account already holds. The rows are what the ceilings count,
-   *  so they are written rather than walked through twenty times. */
   function connected(clients: string[]) {
     const insert = env.db.prepare(
       `insert into oauth_grants
@@ -946,7 +919,6 @@ describe('how many apps one account connects', () => {
     clients.forEach((client, at) => insert.run(`g-${at}`, client, Date.now()))
   }
 
-  /** Consent, as far as the answer to pressing Allow. */
   async function consent(clientId: string) {
     const { challenge } = await pkce()
     const ask = {
@@ -974,8 +946,6 @@ describe('how many apps one account connects', () => {
     const clientId = (await register()).json.client_id
     connected([clientId, ...Array.from({ length: 19 }, (_, at) => `other-${at}`)])
 
-    // Full of apps, and this one is not a new app: what is refused is one more
-    // app, not one more connection to an app somebody already uses.
     expect((await consent(clientId)).status).toBe(302)
   })
 
@@ -994,7 +964,6 @@ describe('how many apps one account connects', () => {
 describe('a client that registered and never came back', () => {
   const MONTH = 30 * 24 * 60 * 60 * 1000
 
-  /** A client that has sat there since before the sweep's cutoff. */
   function longAgo() {
     env.db.prepare('update oauth_clients set used_at = ?').run(Date.now() - MONTH - 1000)
   }
@@ -1005,7 +974,6 @@ describe('a client that registered and never came back', () => {
 
     expect(await expireClients(env, Date.now())).toBe(1)
 
-    // And it is nobody's client to ask for consent as any more.
     const asked = await call(
       env,
       authorizeUrl({ client_id: clientId, code_challenge: 'c'.repeat(43) }),
@@ -1046,8 +1014,6 @@ describe('a client that registered and never came back', () => {
     const clientId = (await register()).json.client_id
     longAgo()
 
-    // The whole dance, which ends in a grant as well; the point is the stamp, so
-    // the grant goes and the client should still be here.
     await connect({ clientId })
     env.db.prepare('delete from oauth_grants').run()
 

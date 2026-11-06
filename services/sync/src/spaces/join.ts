@@ -1,29 +1,3 @@
-/** Following a link into a space somebody shared.
- *
- *  If somebody shares something with you, you should not have to sign in to see
- *  it. So a link is its own proof, and which proof it is depends on which link:
- *
- *  An **invitation** was written to an address and mailed to it, so holding the
- *  mail is holding the address. Opening the link establishes the session for
- *  that address the way a magic link does, once, and lands in the space. It is
- *  the same account the emailed code would have opened, and the code is still
- *  there for whoever comes to a link that has been used or has run out.
- *
- *  An **open link** names nobody, so there is nothing to prove and asking for an
- *  address anyway is a sign-up wearing a different hat. It hands out a guest
- *  instead: a session with a name on it and no account behind it, in that one
- *  space at that one role. See src/guests.ts.
- *
- *  A link that **asks first** is the same guest, with one field in front of it so
- *  that the owner has something to accept or decline, and a wait that turns into
- *  the space when they do.
- *
- *  All three end at `POST /v1/join/:token`, which is also what somebody waiting
- *  asks again: the answer to "let me in" and the answer to "am I in yet" are the
- *  same answer. `GET` is the peek and stays open to anybody, because it is what
- *  the page shows before there is a session to have. Mail clients follow links,
- *  so nothing that changes anything happens on a GET. */
-
 import { Hono, type Context } from 'hono'
 import { SPACE_IS_FULL } from '../refused'
 import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoever } from '../auth'
@@ -37,54 +11,25 @@ import type { Env, Guest, Space, User, Variables } from '../types'
 import { EMAIL_LIMIT, itemName, MOST_MEMBERS, personName, presentItem } from './share'
 import { onceShared, presentSpace, type Given } from './space'
 
-/** A link that opens nothing: one nobody issued, one already spent, or one of the
- *  wrong kind for the route it was sent to. The same words for all of them, because
- *  which it was is not somebody-with-a-link's to learn. */
 const EXPIRED = 'that link has expired'
 
-/** A page still asking about a request that is gone: the month a request lasts
- *  ran out, or the reader withdrew it. Asking again does not knock again; the
- *  link does, followed afresh. */
 const NO_LONGER_WAITING = 'that request has run out'
 
-/** Whether this is a page that is waiting asking again, rather than somebody at
- *  the link for the first time. */
 async function askingAgain(context: Reply): Promise<boolean> {
-  // Through the guard on a body's length, as anything anybody may post to is.
   return (await objectBody(context))?.again === true
 }
 
 type Mode = 'open' | 'approval'
 
-/** What a device calls itself, which becomes the first half of a guest's name.
- *  A word, not a sentence. */
 const DEVICE_LIMIT = 24
 
-/** How many guests one space takes through its link in a minute, and how many it
- *  holds at once. A link anybody may follow is a door with no lock on it, so the
- *  bound belongs on the door rather than on whoever knocks: without it one
- *  address could make rows all afternoon. */
 const GUESTS_A_MINUTE = 20
 const MOST_GUESTS = 200
 
-/** How many people may be waiting on one space at once, of either kind. The
- *  Share sheet lists two hundred of each list, and somebody it cannot show is
- *  somebody the owner can neither accept nor decline - the same reason a space
- *  holds two hundred people. */
 const MOST_WAITING = MOST_MEMBERS
 
-/** Where a token leads. One of two things, because there are two kinds of link:
- *  the space's own, which anybody may hold, and an invitation, which was written
- *  to one address.
- *
- *  And what it leads to is either the space or one file of it, which is `item`:
- *  the note's id, or empty for the space. Every check below is scoped by it, so a
- *  link to one note is bounded, waited on and joined exactly as a link to a space
- *  is - what is being shared is smaller and nothing else differs. */
 interface About {
-  /** The note this link is about, or empty for the space. */
   item: string
-  /** That note's path, for the page and for the answer. Null for the space. */
   path: string | null
 }
 
@@ -94,17 +39,9 @@ type Leads =
 
 type Reply = Context<{ Bindings: Env; Variables: Variables }>
 
-/** What a token is about. Answered without a session, because it is what the
- *  page shows somebody who has not signed in yet: the space they were sent to,
- *  and what they will be able to do there. A token that names nothing is a 404,
- *  so the endpoint says nothing about spaces to somebody guessing. */
 async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
   if (!token || token.length > 128) return null
 
-  // The note is joined rather than looked up afterwards: a link to a file that
-  // has been deleted since leads nowhere, which is the same answer as a link that
-  // was never one. `item = ''` joins nothing and leaves the path null, which is
-  // the space's own link.
   const link = await env.DB.prepare(
     `select l.role, l.mode, l.item, n.path as item_path, sp.* from space_links l
        join spaces sp on sp.id = l.space_id
@@ -144,7 +81,6 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
     >()
 
   if (!invite) return null
-  // The address still opens the space; only the shortcut has run out.
   if (invite.expires_at !== null && invite.expires_at < now()) return null
 
   return {
@@ -158,9 +94,6 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
   }
 }
 
-/** What the link led to, as the app opens it: the space, or the one file. Every
- *  answer below that lets somebody in carries one of the two, and the app reads
- *  whichever it got. */
 function landedOn(env: Env, found: Leads, role: Given | 'owner', owner: OwnerRow | null) {
   if (!found.item || found.path === null) {
     return { space: presentSpace(found.space, env, role, true) }
@@ -171,10 +104,6 @@ function landedOn(env: Env, found: Leads, role: Given | 'owner', owner: OwnerRow
       id: found.item,
       path: found.path,
       updatedAt: now(),
-      // The owner walking through their own link is the one case this is not one
-      // of the two given roles. It reads as what the link hands out instead: a
-      // row in the owner's own switcher is not what Shared with you is for, and
-      // their own file is already where they keep it.
       role: role === 'owner' ? found.role : role,
       space: { id: found.space.id, name: found.space.name },
       owner: owner ?? { name: null, email: '' },
@@ -187,17 +116,12 @@ interface OwnerRow {
   email: string
 }
 
-/** Whoever owns the space, for the sentence a page or a mail puts their name in. */
 function ownerOf(env: Env, space: Space) {
   return env.DB.prepare('select name, email from users where id = ?')
     .bind(space.user_id)
     .first<{ name: string | null; email: string }>()
 }
 
-/** An invitation opens the space once. What it hands out is a session for an
- *  address nobody typed a code for, so it is spent the moment it works: after
- *  this the link says it has expired, and the code is the way in. The membership
- *  stays, because the membership was never the link's to take away. */
 function spendInvitation(env: Env, hash: string): Promise<unknown> {
   return env.DB.prepare(
     'update space_members set invite_hash = null, expires_at = null where invite_hash = ?',
@@ -206,14 +130,6 @@ function spendInvitation(env: Env, hash: string): Promise<unknown> {
     .run()
 }
 
-/** The membership, written or found, and the role it actually holds. Somebody
- *  already in the space at a role the owner gave them keeps it: a link is how
- *  they arrived, not what they are.
- *
- *  Null when the space is full and this person is not in it. The invitation route
- *  holds itself to the same number, and a link that did not would be the way
- *  round it: past it the Share sheet cannot list the people it holds, so the owner
- *  can neither see nor take out whoever came in last. */
 async function memberNow(
   env: Env,
   found: Leads,
@@ -233,8 +149,6 @@ async function memberNow(
     .bind(space.id, item)
     .first<{ held: number }>()
 
-  // A full space still lets in somebody who is already a member: what is refused
-  // is one more row, not one more visit.
   if ((counted?.held ?? 0) >= MOST_MEMBERS) return (await roleOf())?.role ?? null
 
   await env.DB.prepare(
@@ -250,21 +164,10 @@ async function memberNow(
   return (await roleOf())?.role ?? role
 }
 
-/** What a link says when the space it leads to holds as many people as it can. */
 function spaceIsFull(context: Reply) {
   return context.json({ error: SPACE_IS_FULL }, 409)
 }
 
-/** Whether the space has room for another guest through its link: how many are
- *  in it, and how many arrived in the last minute.
- *
- *  Only the guests who are actually in count towards the first. A row for
- *  somebody the owner never answered, or said no to, is not a person in the
- *  space, and counting them used to make the ceiling permanent: two hundred
- *  people knocking on a link once was a link that had stopped working for ever,
- *  with nothing an owner could do about it. Waiting is bounded by `roomToWait`
- *  instead, and a row nobody answered runs out after a month; see
- *  `expireGuests`. */
 async function roomForAGuest(env: Env, spaceId: string, item: string): Promise<boolean> {
   const held = await env.DB.prepare(
     `select sum(case when joined_at is not null then 1 else 0 end) as held,
@@ -277,9 +180,6 @@ async function roomForAGuest(env: Env, spaceId: string, item: string): Promise<b
   return (held?.held ?? 0) < MOST_GUESTS && (held?.lately ?? 0) < GUESTS_A_MINUTE
 }
 
-/** Whether one more person may be waiting on this space. Both kinds count,
- *  because both are one line in the sheet's Waiting list: an account that
- *  followed a link which asks first, and a guest that did. */
 async function roomToWait(env: Env, spaceId: string, item: string): Promise<boolean> {
   const held = await env.DB.prepare(
     `select (select count(*) from space_requests where space_id = ?1 and item = ?2)
@@ -293,14 +193,10 @@ async function roomToWait(env: Env, spaceId: string, item: string): Promise<bool
   return (held?.waiting ?? 0) < MOST_WAITING
 }
 
-/** What a link that asks first says when the owner has as many people waiting as
- *  the sheet can show them. */
 function tooManyWaiting(context: Reply) {
   return context.json({ error: 'that many people are already waiting to be let in' }, 429)
 }
 
-/** Where one guest stands in one space: in it, waiting on the owner, told no, or
- *  nowhere near it. */
 function guestStanding(env: Env, spaceId: string, guestId: string, item: string) {
   return env.DB.prepare(
     `select role, joined_at, declined_at from guest_members
@@ -310,7 +206,6 @@ function guestStanding(env: Env, spaceId: string, guestId: string, item: string)
     .first<{ role: Given; joined_at: number | null; declined_at: number | null }>()
 }
 
-/** A guest in a space, at a role, either in it or waiting to be. */
 async function writeGuestMember(
   env: Env,
   spaceId: string,
@@ -319,8 +214,6 @@ async function writeGuestMember(
   waiting: boolean,
   item: string,
 ): Promise<void> {
-  // A guest arriving twice at once is one row, not a 500: what `guestStanding`
-  // read a moment ago is not a lock on it.
   await env.DB.prepare(
     `insert into guest_members (space_id, guest_id, item, role, joined_at, created_at)
      values (?, ?, ?, ?, ?, ?)
@@ -331,14 +224,6 @@ async function writeGuestMember(
   if (!waiting) await onceShared(env, spaceId, item)
 }
 
-/** The owner is told that somebody is waiting, at the same rate anybody is told
- *  anything: it is the person receiving the mail who is protected, whoever
- *  caused the send. And at most once an hour about any one space, because what
- *  the owner needs to know is that somebody is at the door rather than how many
- *  times it was knocked on.
- *
- *  Nothing is said back about any of this. The person at the link is waiting on
- *  the owner either way, and whether a message went is not their business. */
 async function tellTheOwner(context: Reply, found: Leads, who: string): Promise<void> {
   const env = context.env
   const space = found.space
@@ -348,14 +233,9 @@ async function tellTheOwner(context: Reply, found: Leads, who: string): Promise<
   if (!(await mayTellTheOwner(env, space.id))) return
   if (!(await mayMail(env, owner.email, machineOf(context.req))).ok) return
 
-  // What was knocked on, which is what the owner has to go and look at: the note
-  // where the link was about one, and the space where it was about the space.
   const named = found.path === null ? space.name : itemName(found.path)
   const message = requestMessage({ space: named, who, link: env.APP_ORIGIN })
 
-  // Still nothing said back - but a send that failed gives up the gap it took, so
-  // the next person at the door is one the owner can actually be told about. The
-  // request itself is written either way, and the sheet is where it is answered.
   if (!(await mailer(env).send(owner.email, message.subject, message))) {
     await forgetMailed(env, owner.email)
   }
@@ -372,13 +252,8 @@ join.get('/:token', async (context) => {
   return context.json({
     kind: found.kind,
     space: found.space.name,
-    /** The one file the link is about, by name, or null for the space. What the
-     *  page says somebody was sent: "Emil shared Plans" is a space and "Emil
-     *  shared the meeting" is a note, and the sentence is the same either way. */
     note: found.path === null ? null : itemName(found.path),
     role: found.role,
-    // Which address the invitation was written to, so a page can say who it is
-    // for. An open link is for whoever has it and names none.
     email: found.kind === 'invite' ? found.email : null,
     asks: found.kind === 'link' && found.mode === 'approval',
     from: owner ? personName(owner) : null,
@@ -390,19 +265,9 @@ join.post('/:token', async (context) => {
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
   if (!found) return context.json({ error: EXPIRED }, 404)
 
-  // An invitation is proof of an address, so it opens that account for a tab with
-  // nobody signed in. A tab that already has somebody is not proof of anything
-  // about them: an account signed in as another address is answered below, where
-  // the address is checked, and a guest is answered the same way here.
   if (found.kind === 'invite' && !who) return await redeemInvitation(context, found)
 
   if (found.kind === 'invite' && who?.kind === 'guest') {
-    // A guest is nobody in particular, so holding somebody's invitation does not
-    // make them that somebody, and what they were lent is not the address's to
-    // take. The one guest that is already that address is the one that said so,
-    // and proving the address hands that guest over anyway (`claimGuestsAt`).
-    // Anybody else keeps the session they have, and the emailed code is the way
-    // into the account - which is also how a device hands its guest over.
     if (who.guest.email !== found.email) {
       return context.json({ error: 'that invitation was sent to another address' }, 403)
     }
@@ -413,13 +278,10 @@ join.post('/:token', async (context) => {
   if (who?.kind === 'user') return await asAnAccount(context, found, who.user)
   if (who?.kind === 'guest') return await asAGuest(context, found, who.guest)
 
-  // A page that was waiting and lost its session: nobody is asking any more.
   if (await askingAgain(context)) return context.json({ error: NO_LONGER_WAITING }, 410)
   return await asNobody(context, found)
 })
 
-/** Somebody waiting who stops: their own request, and only one still waiting,
- *  is taken off the owner's list, so Accept afterwards finds nobody. */
 join.delete('/:token', async (context) => {
   const who = await requireWhoever(context.env, context.req.header('authorization'))
   if (!who) return context.json({ error: 'sign in first' }, 401)
@@ -442,30 +304,19 @@ join.delete('/:token', async (context) => {
     )
       .bind(space.id, who.guest.id, item)
       .run()
-    // A guest the request was all of is nobody now, sessions and all.
     await forgetEmptyGuest(context.env, who.guest.id)
   }
 
   return context.json({ ok: true })
 })
 
-/** The mailed link, opening the account it was written to. The whole of what
- *  somebody with no Orden account does: they press the link. */
 async function redeemInvitation(context: Reply, found: Leads) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
   const user = await accountFor(context.env, found.email, context.req.header('accept-language'))
 
-  // Whatever any guest said it was at this address is the account's now: proving
-  // the address is what that turns on. Never the guest holding the tab as such -
-  // the link proves who it was mailed to, not who opened it.
   await claimWhatWasGuested(context.env, user, null)
 
-  // An account that asks for a second code is not signed in by a mail any more
-  // than by the emailed code: the link proved the address, which is half, and the
-  // app finishes it the way it finishes a sign-in - `/v1/auth/second` with this.
-  // The invitation is left standing, so that the account walks through it once it
-  // is signed in, the way an account already signed in does. See auth.ts.
   if (await asksForSecond(context.env, user.id)) {
     return context.json({ second: true, holding: await halfWay(context.env, user) })
   }
@@ -481,9 +332,6 @@ async function redeemInvitation(context: Reply, found: Leads) {
   })
 }
 
-/** Somebody with an account, walking through a link. The address behind the
- *  session is proved, so an invitation written to it is theirs and one written to
- *  somebody else is not. */
 async function asAnAccount(context: Reply, found: Leads, user: User) {
   const { space, item } = found
   const owner = () => ownerOf(context.env, space)
@@ -517,7 +365,6 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
       return context.json(landedOn(context.env, found, already.role, await owner()))
     }
 
-    // Asked again by a page that was waiting, and no request is left to wait on.
     if (await askingAgain(context)) {
       const waiting = await context.env.DB.prepare(
         'select 1 from space_requests where space_id = ? and email = ? and item = ?',
@@ -547,9 +394,6 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
   return context.json(landedOn(context.env, found, role, await owner()))
 }
 
-/** A guest at a link. Either they are asking again about the space they are
- *  waiting on, which is the same question as walking through it, or this is a
- *  second link and a second space for the same guest. */
 async function asAGuest(context: Reply, found: Leads, guest: Guest) {
   const { space, item } = found
   const standing = await guestStanding(context.env, space.id, guest.id, item)
@@ -586,8 +430,6 @@ async function asAGuest(context: Reply, found: Leads, guest: Guest) {
   })
 }
 
-/** Nobody at all, at a link the space itself holds. This is where a guest comes
- *  from: one session, one name, one space. */
 async function asNobody(context: Reply, found: Leads) {
   if (found.kind !== 'link') return context.json({ error: EXPIRED }, 404)
   const { space, item } = found
@@ -597,8 +439,6 @@ async function asNobody(context: Reply, found: Leads) {
   }
 
   const body = await readBody(context)
-  // A body is optional here: an open link asks for nothing at all, so what
-  // arrived is complained about where it matters rather than at the door.
   const device = body.text('device', DEVICE_LIMIT)
   const said = body.text('name', NAME_LIMIT * 8)
   const address = body.text('email', EMAIL_LIMIT)
@@ -616,8 +456,6 @@ async function asNobody(context: Reply, found: Leads) {
 
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  // One field, and either half of it will do: the owner has to have something
-  // to accept, and a name is as much as a link that asks first can ask for.
   const named = cleanPersonName(said ?? '').slice(0, NAME_LIMIT)
   const gave = normaliseEmail(address ?? '')
   if (!named && !isEmail(gave)) return context.json({ error: 'say who you are' }, 400)

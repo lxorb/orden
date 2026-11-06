@@ -1,15 +1,3 @@
-/** The Worker with the machines in it: wrangler.jsonc's `main`
- *  (docs/online-terminal.md, 6.3).
- *
- *  Everything src/index.ts is, plus the three classes only a deploy with containers
- *  binds: `Machine`, the Sandbox SDK's `DirectoryBackupGateway` (which carries a home's
- *  backup between the container and R2, reaching only the one object each operation
- *  names), and `Egress`, the outbound gateway a machine uses when `MACHINE_EGRESS` is
- *  `web`; and the machine's bundle a Hetzner server is set up from (bundle.ts). Kept out
- *  of src/index.ts because the SDK imports `cloudflare:workers`, which
- *  neither the deploy CI runs nor the tests can load; the host is wired here, once, as
- *  the module loads. */
-
 import {
   DirectoryBackup,
   DirectoryBackupGateway,
@@ -17,25 +5,19 @@ import {
   type DirectoryBackupRecord,
 } from '@cloudflare/sandbox'
 import { WorkerEntrypoint } from 'cloudflare:workers'
-// The machine's bundle, written by `pnpm --filter @orden/machine build` (4.15).
 import machine from '../../../machine/dist/machine.bin'
 import worker from '../index'
 import type { Env } from '../types'
 import { carry } from './bundle'
 import { wire } from './host'
 
-/** What the machines' entry exports, as `ctx.exports` hands them back. */
 interface Exports {
   DirectoryBackupGateway: DirectoryBackupGatewayBinding
   Egress: (options: { props: Record<string, never> }) => Fetcher
 }
 
-/** The homes bucket's binding, by name, as the gateway reads it off `env`. */
 const HOMES = 'HOMES'
 
-/** What a machine may never reach over HTTP: private ranges, link-local and the
- *  metadata addresses, and the loopback (4.8). Hostnames only; with the internet off an
- *  HTTPS request to a bare address does not leave anyway. */
 const DENIED = [
   /^localhost$/i,
   /^127\./,
@@ -50,9 +32,6 @@ const DENIED = [
   /\.local$/i,
 ]
 
-/** The outbound gateway for `web` egress: refuses the denied hosts and forwards the
- *  rest as it came. It reads the hostname and nothing else; see `egressOf` in host.ts
- *  for why it is not the default. */
 export class Egress extends WorkerEntrypoint<Env> {
   override async fetch(request: Request): Promise<Response> {
     const host = new URL(request.url).hostname.replace(/\.+$/, '')
@@ -77,8 +56,6 @@ wire({
         const record = await homes.backup({
           dir,
           name,
-          // What any package manager fetches again, left out of the R2 copy; the
-          // snapshot keeps them (4.3).
           exclude: ['.cache/', 'node_modules/', '.npm/_cacache/'],
         })
         return JSON.stringify({ ...record, key: `${record.id}.tar.zst` })

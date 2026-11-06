@@ -4,11 +4,6 @@ import { blogRootOf, blogRoots, isOwnOrigin, originAt, origins } from '../src/ho
 import { isMachineHost, machineDomain } from '../src/machines/hetzner-host'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
-/** The service under both of its names, as wrangler.jsonc sets it up: every
- *  name answers as itself, with the same accounts, tokens and sites behind it.
- *  The harness sets both names up the same way, so the rest of the suite runs
- *  there too; this file is about what differs between the two. */
-
 let env: TestEnv
 
 beforeEach(() => {
@@ -109,7 +104,6 @@ describe('a published site', () => {
     expect(now.status).toBe(200)
     expect((await call(env, '/hello-world', { host: 'Field.Orden.so.' })).status).toBe(200)
     expect(now.text).toContain('First <strong>post</strong>')
-    // Each answers in its own name, so a link copied from either stays on it.
     expect(old.text).toContain('https://field.nibeditor.com/hello-world')
     expect(now.text).toContain('https://field.orden.so/hello-world')
   })
@@ -147,7 +141,6 @@ describe('a published site', () => {
   })
 })
 
-/** PKCE, as a client does it. */
 async function pkce() {
   const verifier = 'v'.repeat(20) + Math.random().toString(36).slice(2).padEnd(30, 'x')
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
@@ -158,7 +151,6 @@ async function pkce() {
   return { verifier, challenge }
 }
 
-/** The emailed code, out of the logging mailer. */
 async function codeSentTo(action: () => Promise<unknown>): Promise<string> {
   const logged: string[] = []
   const spy = vi.spyOn(console, 'log').mockImplementation((message) => {
@@ -213,7 +205,6 @@ describe('a connector', () => {
       redirect_uri: CALLBACK,
       state: 'xyz',
       code_challenge: challenge,
-      // The resource it was told about when it was added, before the rename.
       resource: `${OLD}/mcp`,
     }
 
@@ -291,13 +282,10 @@ describe('a machine', () => {
     expect(isMachineHost(`m-${HEX}.nibeditor.com`, machineDomain(moved))).toBe(true)
     expect(isMachineHost(`m-${HEX}.orden.so`, machineDomain(moved))).toBe(false)
 
-    // Unset, it is wherever the links are, which is what a test or a local
-    // Worker with one name means.
     const single = testEnv({ APP_ORIGIN: NEW })
     delete single.MACHINE_DOMAIN
     expect(machineDomain(single)).toBe('orden.so')
 
-    // And a request for a machine's name goes on to the machine, not the app.
     const outward = vi.fn(() => Promise.resolve(new Response('nibd')))
     vi.stubGlobal('fetch', outward)
     const answer = await worker.fetch(new Request(`https://m-${HEX}.nibeditor.com/link`), moved)

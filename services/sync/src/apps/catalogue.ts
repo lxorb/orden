@@ -1,15 +1,3 @@
-/** What each of the reader's computers has installed (issue 1063, step 3): the list New
- *  application offers once a computer is chosen, so an application is picked by its name
- *  and its icon rather than typed as a path.
- *
- *  A host writes its own, `PUT /v2/apps/catalogue`, as it starts serving applications and
- *  whenever the list it finds changes; the device is the session's, never one the request
- *  names. Any of the reader's devices reads one by the host's id,
- *  `GET /v2/apps/catalogue/:device`. The list is only ever what to offer: a host starts an
- *  installed application by the id it found itself, never by a name or a command line from
- *  here. Behind the same switch as the door (`apps` in `online_service`), and gone with the
- *  device when it is ended and with the account. */
-
 import { catalogueOf, MOST_CATALOGUE } from '@orden/online/apps'
 import { Hono } from 'hono'
 import { now } from '../crypto'
@@ -19,7 +7,6 @@ import type { Env, Variables } from '../types'
 
 export const appCatalogues = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** Whether applications are switched on: the door's switch. */
 export async function appsOn(env: Env): Promise<boolean> {
   if (!env.APPS) return false
   const row = await env.DB.prepare("select value from online_service where key = 'apps'").first<{
@@ -59,8 +46,6 @@ appCatalogues.get('/:device', async (context) => {
   const env = context.env
   if (!(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)
   const user = context.get('user')
-  // Only a device the account has and has not ended: an ended laptop's list is not one
-  // to start anything from.
   const row = await env.DB.prepare(
     `select c.at as at, c.body as body from app_catalogues c
        join devices d on d.id = c.device_id and d.user_id = c.user_id and d.revoked_at is null

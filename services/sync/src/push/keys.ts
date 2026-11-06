@@ -1,8 +1,3 @@
-/** The few shapes of key and token the three push services speak: base64url, a JSON Web
- *  Token signed with ES256 (Web Push's VAPID, APNs) or RS256 (Google's service account),
- *  and the keys those are signed with, imported from the strings they are kept as. Web
- *  Crypto only, so nothing here is a dependency. */
-
 const encoder = new TextEncoder()
 
 export function base64url(bytes: Uint8Array): string {
@@ -30,8 +25,6 @@ export function concat(...parts: Uint8Array[]): Uint8Array {
   return out
 }
 
-/** A JSON Web Token: the header and the claims, signed. ECDSA signatures come out of Web
- *  Crypto as `r || s`, which is exactly what ES256 asks for. */
 export async function signedToken(
   header: Record<string, string>,
   claims: Record<string, string | number>,
@@ -47,8 +40,6 @@ export async function signedToken(
   return `${head}.${body}.${base64url(new Uint8Array(signature))}`
 }
 
-/** A P-256 key pair from its raw halves: the 65-byte public point and the 32-byte private
- *  scalar, both base64url, which is how VAPID keys are written. */
 export function p256(publicRaw: Uint8Array, privateRaw: Uint8Array): JsonWebKey {
   return {
     kty: 'EC',
@@ -60,7 +51,6 @@ export function p256(publicRaw: Uint8Array, privateRaw: Uint8Array): JsonWebKey 
   }
 }
 
-/** The DER bytes inside a PEM block. */
 function pemBytes(pem: string): Uint8Array {
   const body = pem
     .replace(/-----BEGIN [^-]+-----/, '')
@@ -69,7 +59,6 @@ function pemBytes(pem: string): Uint8Array {
   return fromBase64url(body.replace(/\+/g, '-').replace(/\//g, '_'))
 }
 
-/** A PKCS #8 private key from PEM: RSA for Google's service account, P-256 for APNs. */
 export function pemKey(pem: string, kind: 'rsa' | 'ec'): Promise<CryptoKey> {
   const algorithm =
     kind === 'rsa'

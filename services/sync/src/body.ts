@@ -1,62 +1,17 @@
-/** Reading what arrives, without ever trusting it: what a client sent, and what
- *  a server somebody else named answered with.
- *
- *  A route asks for the fields it knows about, each with what it may be and
- *  how long it may get. Anything wrong - a body that is not a JSON object, a
- *  number where text was meant, a name past its limit - is remembered as one
- *  sentence, and the route answers 400 with it. That is the whole point: a
- *  malformed body used to reach `.trim()` or `.length` on something that had
- *  neither, and a client's mistake came back as a 500.
- *
- *  Nothing is coerced. `{"name": 12}` is a mistake in the client, not a name,
- *  and saying so is more use than storing "12".
- *
- *  The sentences are lowercase like every other message here, so the app can
- *  drop one into a line of its own text. */
-
-/** Only the body is read, so this takes the smallest thing that has one - and the
- *  one header that says how long it is going to be. */
 interface HasJson {
   req: { json: <T>() => Promise<T>; header?: (name: string) => string | undefined }
 }
 
-/** The longest body any route here reads.
- *
- *  The same reasoning as `textAtMost` below, in the other direction: parsing first
- *  and measuring afterwards is how a Worker with a hundred and twenty-eight
- *  megabytes of memory is asked to hold a hundred, and `/v1/auth/code` is a route
- *  anybody can post to without being anybody. So the length a request declares is
- *  read first, and a body that says it is longer than this is never parsed.
- *
- *  Twice the longest note, which is the largest field any body carries; see
- *  `MAX_NOTE_BYTES` in notes.ts and the test in test/bodies.test.ts that holds the
- *  two together. A body that arrives without saying how long it is falls to the
- *  platform's own ceiling, as it always has. */
 export const MOST_BODY_BYTES = 8 * 1024 * 1024
 
-/** Whether the request has already said it is too long to read. */
 function overlong(source: HasJson): boolean {
   const said = Number(source.req.header?.('content-length') ?? '')
   return Number.isFinite(said) && said > MOST_BODY_BYTES
 }
 
-/** The object a request carried, for the routes that read their own fields out of
- *  it rather than asking for them one at a time.
- *
- *  Three answers, because one route turns on the difference between the last two:
- *  the object where a body was one, `null` where it parsed to something else - a
- *  list, a number, a string - and `undefined` where there was no body, or none that
- *  parsed. `POST /v1/mcp/token` takes an empty body to mean "read-only", and must
- *  keep doing so, while a body that says `[1, 2]` is a client's mistake.
- *
- *  Eight routes had written this parse out, and each of them answers with its own
- *  sentence, so the sentence stays theirs; what is here is the reading. */
 export async function objectBody(
   source: HasJson,
 ): Promise<Record<string, unknown> | null | undefined> {
-  // A body too long to hold is not an object, and is not read to find out; see
-  // `MOST_BODY_BYTES`. Null rather than undefined, because it is a client's mistake
-  // rather than a request that carried nothing.
   if (overlong(source)) return null
 
   const parsed = await source.req.json<unknown>().catch(() => undefined)
@@ -66,22 +21,11 @@ export async function objectBody(
   return object ? (parsed as Record<string, unknown>) : null
 }
 
-/** The list a stored column holds, or null where it holds anything else.
- *
- *  A column of this database is written whole by whichever client wrote it last,
- *  which may be a newer build than this one or an older, and `JSON.parse` hands
- *  back whatever it finds without an opinion about it. So a reader asks for the
- *  shape it wants and takes nothing else - the same bargain a request's body gets,
- *  which is why it lives here. Eight readers had each written the try/catch out.
- *
- *  Nothing is repaired and nothing throws: a column nobody can read answers the
- *  same as one that was never written, which is the only sensible answer to both. */
 export function listIn(raw: string | null | undefined): unknown[] | null {
   const parsed = parsedOr(raw)
   return Array.isArray(parsed) ? parsed : null
 }
 
-/** The object a stored column holds, or null where it holds anything else. */
 export function objectIn(raw: string | null | undefined): Record<string, unknown> | null {
   const parsed = parsedOr(raw)
   const object = !!parsed && typeof parsed === 'object' && !Array.isArray(parsed)
@@ -98,31 +42,16 @@ function parsedOr(raw: string | null | undefined): unknown {
   }
 }
 
-/** What a fetched document says, up to a limit, or null when it is longer than
- *  that. Answers the same question about somebody else's server as everything
- *  below does about a client, which is why it lives here: a body is untrusted
- *  whichever direction it arrived from.
- *
- *  The limit is applied while reading rather than after. Reading first and
- *  measuring afterwards is how a Worker with a hundred and twenty-eight megabytes
- *  of memory is asked to hold a gigabyte, and both callers reach a host somebody
- *  else named - the URL a client says its description is at, and the theme
- *  registry. `content-length` is consulted first, so an answer that declares
- *  itself too big is dropped without being read at all. */
 export async function textAtMost(response: Response, limit: number): Promise<string | null> {
   const bytes = await bytesAtMost(response, limit)
   return bytes === null ? null : new TextDecoder().decode(bytes)
 }
 
-/** The same read, as the bytes themselves: a picture fetched from a host somebody else
- *  named (site-icons.ts) is bounded exactly as a document is. */
 export async function bytesAtMost(response: Response, limit: number): Promise<Uint8Array | null> {
   const declared = Number(response.headers.get('content-length') ?? '')
   if (Number.isFinite(declared) && declared > limit) return null
   if (!response.body) return new Uint8Array()
 
-  // Typed here rather than trusted from the stream: what a reader hands back is
-  // `any` to the runtime's own types, and a chunk is bytes or it is nothing.
   const reader: { read(): Promise<{ done: boolean; value?: unknown }>; cancel(): Promise<void> } =
     response.body.getReader()
 
@@ -154,16 +83,11 @@ export async function bytesAtMost(response: Response, limit: number): Promise<Ui
 }
 
 export interface Body {
-  /** The first thing wrong with what arrived, once something is. A route reads
-   *  the fields it wants and then checks this once, which is where it answers. */
   problem: string | null
-  /** Text, or undefined when the field was left out. */
   text(name: string, limit: number): string | undefined
-  /** Text that may also arrive as null, which means "take this away". */
   nullableText(name: string, limit: number): string | null | undefined
   flag(name: string): boolean | undefined
   count(name: string): number | undefined
-  /** A list of text: at most `most` entries, each at most `limit` long. */
   texts(name: string, most: number, limit: number): string[] | undefined
 }
 
@@ -173,13 +97,10 @@ export async function readBody(source: HasJson): Promise<Body> {
 
   let problem: string | null = sent ? null : 'send a JSON object'
 
-  /** The first complaint is the one reported: a reader that kept going would
-   *  end up describing a field the client has not got to yet. */
   function wrong(sentence: string): void {
     problem ??= sentence
   }
 
-  /** Own keys only, so nothing inherited from Object can pass for a field. */
   function present(name: string): boolean {
     return Object.hasOwn(fields, name) && fields[name] !== undefined
   }

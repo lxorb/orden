@@ -1,18 +1,8 @@
-/** A person, as the others see them: what a profile holds, what may be written into
- *  it, and how it is said to somebody else.
- *
- *  Pure, so every rule here is a test of its own: the columns are text somebody's
- *  client wrote, read the way a request's body is (see body.ts), and a status whose
- *  time has passed is read as no status at all, so nothing has to run at the minute it
- *  ends. See docs/chats.md 4.9 and 4.10, and migration 0048. */
-
 import { objectIn } from '../body'
 import { cleanPersonName } from '../crypto'
 import { personName } from '../spaces/share'
 import { avatarIn } from './avatar'
 
-/** An emoji and a line, and when they go. `quiet` is Do not disturb: a status that
- *  stops pings, never counts. */
 export interface Status {
   emoji: string
   text: string
@@ -22,7 +12,6 @@ export interface Status {
 
 export type Presence = 'active' | 'away' | 'offline'
 
-/** The columns a profile is read from, beside the account's own. */
 export interface ProfileRow {
   id: string
   email: string
@@ -36,29 +25,18 @@ export interface ProfileRow {
   hidden: number
 }
 
-/** The columns, for a `select` that reads a person: `u.` in front of each. */
 export const PROFILE_COLUMNS =
   'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.accent, u.zone, u.hidden'
 
-/** Discord's lengths, which people already write to: forty for pronouns, a hundred and
- *  ninety for a bio. A status is a line, and a hundred characters is a long one. */
 const PRONOUNS_LIMIT = 40
 const BIO_LIMIT = 190
 const STATUS_LIMIT = 100
-/** An emoji is one picture and may be several code points: a flag is two, a family
- *  seven. Sixteen units is room for any of them and none of a sentence. */
 const EMOJI_LIMIT = 16
-/** What a nickname may be, the same as a name: see `NAME_LIMIT` in crypto.ts. */
 export const NICK_LIMIT = 60
-/** Each picture of a face, made small on the device: the card's at 512 px is well
- *  under this, and a face that is not has kept something it should not have. */
 export const AVATAR_BYTES = 100 * 1024
 
-/** One of the app's accents, by its id: a word, never a colour. The app keeps the
- *  list, and an id it does not know is drawn as its first. */
 const ACCENT = /^[a-z]{1,16}$/
 
-/** The status as it stands at `now`: none once its time has passed. */
 export function statusIn(raw: string | null, now: number): Status | null {
   const held = objectIn(raw)
   if (!held) return null
@@ -68,7 +46,6 @@ export function statusIn(raw: string | null, now: number): Status | null {
   return status
 }
 
-/** A status out of whatever arrived, or null where it is not one. */
 function statusFrom(value: Record<string, unknown>): Status | null {
   const { emoji, text, until, quiet } = value
   if (typeof emoji !== 'string' || emoji.length > EMOJI_LIMIT) return null
@@ -86,7 +63,6 @@ function statusFrom(value: Record<string, unknown>): Status | null {
   }
 }
 
-/** Whether a time zone is one this runtime can tell the time in. */
 function isZone(zone: string): boolean {
   if (zone.length > 64) return false
   try {
@@ -97,8 +73,6 @@ function isZone(zone: string): boolean {
   }
 }
 
-/** What a request may change about its own profile, each field left out where it was
- *  left out and null where it is to be taken away. */
 export interface ProfileChanges {
   pronouns?: string | null
   bio?: string | null
@@ -108,15 +82,11 @@ export interface ProfileChanges {
   hidden?: boolean
 }
 
-/** A request's body, read as changes to a profile, or the sentence saying what is
- *  wrong with it. Lowercase like every refusal here; see body.ts. */
 export function profileChanges(
   fields: Record<string, unknown>,
 ): { changes: ProfileChanges } | { problem: string } {
   const changes: ProfileChanges = {}
 
-  /** A field of words: what to keep, or why not. A bio keeps its lines; pronouns are
-   *  one. Empty is the same as taking it away. */
   const words = (
     name: 'pronouns' | 'bio',
     limit: number,
@@ -174,8 +144,6 @@ export function profileChanges(
   return { changes }
 }
 
-/** A person as every list of people names them: who, what to call them, and the face
- *  to draw. Never the address, which the others may not have been given. */
 function presentFace(row: ProfileRow) {
   return {
     id: row.id,
@@ -185,8 +153,6 @@ function presentFace(row: ProfileRow) {
   }
 }
 
-/** The whole card: the face, the words about them, and whether they are here. A person
- *  who appears offline is offline to everybody but themselves. */
 export function presentProfile(
   row: ProfileRow,
   presence: Presence | null,
@@ -204,8 +170,6 @@ export function presentProfile(
   }
 }
 
-/** What `/v1/me` adds to the account: the profile as its owner edits it, the switch
- *  that hides them included. */
 export function presentOwnProfile(row: ProfileRow, now: number) {
   return {
     avatar: avatarIn(row.avatar),

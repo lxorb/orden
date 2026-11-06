@@ -1,10 +1,3 @@
-/** What a client is told about this server before it has asked for anything.
- *
- *  A client finds everything on its own: where the endpoints are (RFC 8414 and
- *  RFC 9728), how to introduce itself (by registering, RFC 7591, or with an id
- *  that is the URL of its own description), and the code flow with PKCE that
- *  OAuth 2.1 and the MCP specification ask for. */
-
 import { Hono } from 'hono'
 import type { Env } from '../types'
 import { GRANTS, issuer, resourceUrl, SCOPES } from './protocol'
@@ -26,14 +19,10 @@ oauthMetadata.get('/oauth-authorization-server', (context) => {
     code_challenge_methods_supported: ['S256'],
     scopes_supported: SCOPES,
     client_id_metadata_document_supported: true,
-    // The `iss` on every redirect is what lets ChatGPT use one fixed callback
-    // rather than one per connector.
     authorization_response_iss_parameter_supported: true,
   })
 })
 
-/** The same document at the plain path and at the one with the connector's
- *  path folded in: RFC 9728 asks for the second, older clients try the first. */
 function protectedResource(env: Env, at: string) {
   return {
     resource: resourceUrl(env, at),
@@ -51,8 +40,6 @@ oauthMetadata.get('/oauth-protected-resource/mcp', (context) =>
   context.json(protectedResource(context.env, context.req.url)),
 )
 
-/** What a refused connector request carries, so a client knows where to go:
- *  `at` is the refused request's URL, whose name the client knows the server by. */
 export function challenge(env: Env, at: string, invalid: boolean): string {
   const parts = [
     `resource_metadata="${issuer(env, at)}/.well-known/oauth-protected-resource/mcp"`,

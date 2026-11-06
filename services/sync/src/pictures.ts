@@ -1,48 +1,15 @@
-/** The pictures a note shows, written down beside it.
- *
- *  A picture in a note is the service's `/i/` and the hash of its bytes, and the bytes
- *  are held by whoever uploaded them. Deleting an account has to know which spaces of
- *  other people show the pictures it alone holds, so it can hand each one to that
- *  space's owner (see erase.ts), and the bodies are in the bucket where nothing can be
- *  asked of them. So every body that is written has its pictures written down here,
- *  from the same place as its words and its reminders (notes.ts), and the nightly sweep
- *  reads the notes written before there was anywhere to put them (blog/fill.ts). */
-
 import { lexMarkdown, withoutComments } from '@orden/markdown'
 import { coverOf } from '@orden/markdown/cover'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { withoutBlockIds } from '@orden/markdown/links'
 import type { Env } from './types'
 
-/** The keys of a note's front matter beside its cover that hold a picture the app
- *  shows: the image its published page is shared with. */
 const FRONT_PICTURES = ['image'] as const
 
-/** The service's own address for a picture: its `/i/`, the hash and the extension the
- *  app writes after it, and nothing else on the end of the path. */
 const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 
-/** The same address anywhere in a run of markup, for HTML that is live. */
 const ANYWHERE = /\/i\/([a-f0-9]{64})(?![a-f0-9])/gi
 
-/** Every picture the service holds that this body shows: in its prose, as its cover,
- *  or - for a canvas, which is JSON - on one of its cards.
- *
- *  The prose is read through the same grammar that renders it (`lexMarkdown`, the
- *  package's own tokens), so what counts here is exactly what a reader is drawn: a
- *  markdown image however its address is given - inline, by reference, by shortcut -
- *  an embed of the address in double brackets, and the source of an HTML image tag.
- *  Nothing else: a hash in prose, in a link, in code, escaped or in a comment is
- *  somebody naming the bytes, not a note showing them, and anybody who once saw a hash
- *  could otherwise claim the bytes behind it by writing it down.
- *
- *  With `liveHtml` - a note in a space nobody else is in, where the renderer draws raw
- *  HTML as markup rather than characters (the app's `trustsHtml`) - raw HTML is not
- *  enumerated: a browser loads a picture from more corners of markup than any list
- *  holds, so every address anywhere in it counts, tags, attributes and style sheets
- *  alike, with its character references decoded and any whitespace inside it taken
- *  out. That over-counts only the owner's own note, which keeps bytes and earns nobody
- *  anything; prose is read strictly either way. */
 export function picturesOf(source: string, liveHtml = false): Set<string> {
   const found = new Set<string>()
   const add = (address: string | null | undefined) => {
@@ -61,8 +28,6 @@ export function picturesOf(source: string, liveHtml = false): Set<string> {
 
   const canvas = cardsOf(source)
   if (canvas) {
-    // A picture card names its picture's address whole, as a group names the picture
-    // behind it; a text card is markdown like a note.
     for (const card of canvas) {
       if (card.type === 'file') add(card.file)
       add(card.background)
@@ -76,16 +41,11 @@ export function picturesOf(source: string, liveHtml = false): Set<string> {
   add(coverOf(source)?.src)
   for (const key of FRONT_PICTURES) add(frontMatterValue(source, key))
 
-  // What `renderMarkdown` parses: the body without its front matter, its block names
-  // and its comments.
   const tokens = lexMarkdown(withoutComments(withoutBlockIds(stripFrontMatter(source))))
   visit(tokens, add, html)
   return found
 }
 
-/** Every picture a run of tokens draws, handed to `add`, at any depth: a list's items,
- *  a table's cells, a quote's paragraphs and a link's words all hold tokens of their
- *  own. Code holds none, so it is never looked inside. */
 function visit(
   value: unknown,
   add: (address: string | undefined) => void,
@@ -103,7 +63,6 @@ function visit(
   if (token.type === 'html' && typeof token.text === 'string') {
     html(token.text)
   }
-  // `![[…]]`, as a block of its own or inside a line.
   if (token.type === 'embed' || token.type === 'wikilink') {
     const link = token.link as { embed?: boolean; target?: string } | undefined
     if (link?.embed) add(link.target)
@@ -114,7 +73,6 @@ function visit(
   }
 }
 
-/** What a canvas card says that can hold a picture. */
 interface Card {
   type: unknown
   file: string | undefined
@@ -122,7 +80,6 @@ interface Card {
   text: unknown
 }
 
-/** The cards of a canvas, or null for a body that is not one. */
 function cardsOf(source: string): Card[] | null {
   if (!source.trimStart().startsWith('{')) return null
   try {
@@ -141,12 +98,6 @@ function cardsOf(source: string): Card[] | null {
   }
 }
 
-/** Rewrites a note's pictures from its body, replacing whatever an earlier save wrote.
- *
- *  Best effort, as the note's words and versions are: the note is already stored. But a
- *  picture missing here is one a deleted account would not hand over, so a note whose
- *  pictures could not be written is marked unread, and the nightly sweep reads it again.
- *  Answers whether they were written, for the sweep, which writes the mark itself. */
 export async function keepPictures(
   env: Env,
   note: { id: string; space_id: string },
@@ -171,10 +122,6 @@ export async function keepPictures(
   }
 }
 
-/** Whether a space's raw HTML is markup, as the app decides it (`trustsHtml`): only in
- *  a space nobody else is in - no member, invited or not, no link and no guest. Asked
- *  as a note is written; a space shared later keeps what was written down until each
- *  note is written again, which only keeps the owner's bytes. */
 export async function htmlIsLive(env: Env, spaceId: string): Promise<boolean> {
   const shared = await env.DB.prepare(
     `select 1 as one from space_members where space_id = ?1
@@ -187,20 +134,12 @@ export async function htmlIsLive(env: Env, spaceId: string): Promise<boolean> {
   return !shared
 }
 
-/** And takes them away again, for a note whose words have gone for good. */
 export function forgetPictures(env: Env, noteId: string): D1PreparedStatement {
   return env.DB.prepare('delete from note_pictures where note_id = ?').bind(noteId)
 }
 
-/** The attributes of an HTML tag that a browser draws a picture from: an image's or a
- *  source's `src` and `srcset`, a film's `poster`, and a `url(…)` in a `style`. Not its
- *  words (`alt`, `title`), a link's `href` or a script's `data-` attribute, which name
- *  an address without drawing it. */
 const DRAWN = new Set(['src', 'srcset', 'poster', 'style'])
 
-/** Every address raw HTML draws a picture from, read the way a browser reads a tag: an
- *  attribute's value whole, quotes and all - so a `>` inside one does not end the tag -
- *  with its character references decoded, and only inside tags, never between them. */
 function drawnByHtml(html: string): string[] {
   const found: string[] = []
   let at = 0
@@ -212,7 +151,6 @@ function drawnByHtml(html: string): string[] {
     }
     at += name[0].length
 
-    // The attributes, up to the `>` that is not inside a quoted value.
     while (at < html.length && html[at] !== '>') {
       const attribute = /^[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/.exec(
         html.slice(at),
@@ -237,8 +175,6 @@ function drawnByHtml(html: string): string[] {
   return found
 }
 
-/** The character references a browser decodes in an attribute's value: by number, and
- *  the few names an address is written with. */
 const NAMED: Record<string, string> = {
   amp: '&',
   sol: '/',

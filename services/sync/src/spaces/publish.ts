@@ -1,11 +1,3 @@
-/** Publishing a space: the address it answers on, what it is called there,
- *  and whether one note stands for the whole thing.
- *
- *  Turning a space into a blog publishes every note in it, which is the owner's
- *  to decide and nobody else's - a writer writes in a space, they do not put it
- *  on the internet. So everything here asks for `owner` first: an id belonging
- *  to someone else is a 404, one shared with them is a 403, never a page. */
-
 import { Hono } from 'hono'
 import { NOT_A_PATH, NO_ADDRESS } from '../refused'
 import { readBody } from '../body'
@@ -26,23 +18,10 @@ import { fillFronts } from '../blog/fill'
 import { newProof, proveDomain } from './proof'
 import { atLeast, presentSpace, spaceOf } from './space'
 
-/** Long enough for a title, short enough that the column cannot be used as
- *  storage. A name that does not fit was never a title. */
 const TITLE_LIMIT = 200
-/** The pattern allows thirty-two; the field is read a little longer so that
- *  something too long is turned down by name rather than by length. */
 const SUBDOMAIN_LIMIT = 64
-/** Room for a scheme and a trailing slash that a person may have pasted
- *  along with the domain, all of which `cleanDomain` takes off again. */
 const DOMAIN_FIELD_LIMIT = DOMAIN_LIMIT + 32
 
-/** The proof a space keeps, or starts over.
- *
- *  A domain it already had keeps the token and the stamp it had, so renaming the
- *  blog does not send the owner back to their registrar. One just claimed gets a
- *  token and no stamp: nothing is served on it and no certificate is asked for
- *  until the record is read, which is the whole of proof.ts. And a space going
- *  back to a shared name has neither. */
 function proofFor(
   space: Space,
   domain: string | null,
@@ -58,13 +37,9 @@ function proofFor(
 
 export const publish = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** Turning a space into a blog publishes every note in it. */
 publish.put('/:id/blog', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
-  // What the notes say about themselves, for any that arrived before there was
-  // somewhere to keep it: a `publish: false` nobody has read is a page that was
-  // meant to be private. Bounded; see blog/fill.ts.
   await fillFronts(context.env, space.id).catch(() => 0)
 
   const body = await readBody(context)
@@ -99,11 +74,6 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     return context.json({ error: 'use a domain of your own' }, 400)
   }
 
-  // One address, not two. A domain of their own replaces the shared name, so
-  // the name goes back into the pool; choosing a name lets the domain go. A
-  // request that names neither is changing something else and keeps what
-  // the space had. The database holds the same line, so nothing below can
-  // write both even by mistake.
   const address = domain
     ? { subdomain: null, domain }
     : subdomain !== undefined
@@ -114,13 +84,6 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     return context.json({ error: NO_ADDRESS }, 400)
   }
 
-  // Checked like a name is, so the answer is a clear no and not the unique
-  // index failing halfway through.
-  //
-  // A domain somebody has proved is theirs, and that is the end of it. One
-  // nobody has proved is nobody's: it is a sentence another account typed, and
-  // it used to shut the real owner out for ever. So this claim takes it, and
-  // whoever can write the record keeps it. See proof.ts.
   if (address.domain && address.domain !== space.blog_domain) {
     const clash = await context.env.DB.prepare(
       'select id, blog_domain_verified_at from spaces where blog_domain = ? and id != ?',
@@ -141,9 +104,6 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     }
   }
 
-  // A note path publishes that one note at the root; null, an empty string, or
-  // nothing at all publishes the space. A path that is not one is refused
-  // rather than quietly read as "publish everything".
   let note = space.blog_note
   if (asked !== undefined) {
     note = asked ? readablePath(asked) : null
@@ -160,14 +120,10 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     if (!exists) return context.json({ error: 'no such note in this space' }, 404)
   }
 
-  // An empty title is not a title: it keeps the one the space had, which is
-  // what the `coalesce` below does with a null.
   const chosenTitle = title === undefined || title === '' ? null : title
 
   const proof = proofFor(space, address.domain)
 
-  // And checked again in the write itself: another space can take the name or the
-  // domain between the checks above and here, and the unique index answers a 500.
   const at = now()
   const wrote = await context.env.DB.prepare(
     `update spaces set blog_enabled = 1,
@@ -200,15 +156,10 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     )
   }
 
-  // The certificate for a domain given up goes at once. One for a domain just
-  // chosen waits on the record: this is exactly where a certificate used to be
-  // asked for in somebody else's name.
   if (space.blog_domain && space.blog_domain !== address.domain) {
     await releaseDomain(context.env, space.blog_domain)
   }
 
-  // What was written, worked out rather than read back: the row above is the
-  // only thing that changed it, and one round trip is enough.
   const updated: Space = {
     ...space,
     blog_enabled: 1,
@@ -227,10 +178,6 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
   })
 })
 
-/** Stops serving. The shared name stays with the space, so it is there when
- *  publishing resumes; a domain of one's own is let go along with its
- *  certificate, since the owner's DNS keeps working either way and holding
- *  a certificate for a domain that serves nothing helps nobody. */
 publish.delete('/:id/blog', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
@@ -250,13 +197,6 @@ publish.delete('/:id/blog', atLeast('owner'), async (context) => {
   return context.json({ ok: true })
 })
 
-/** How far along a domain of one's own is, for the pane to keep asking while
- *  the owner adds the records. They ride along, so one call shows both what to
- *  do and whether it has been done.
- *
- *  A domain nobody has proved stops here. Cloudflare is not asked about it - a
- *  certificate for a name this account may not hold is the thing being prevented -
- *  and the state says which record is still wanted. */
 publish.get('/:id/blog/domain', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
@@ -281,9 +221,6 @@ publish.get('/:id/blog/domain', atLeast('owner'), async (context) => {
   })
 })
 
-/** The owner saying the record is in place. Reads it now, so that adding a record
- *  and finding out whether it took is one gesture; the schedule reads it again
- *  later. Nothing else can turn a claim into an address. */
 publish.post('/:id/blog/domain/verify', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
@@ -312,12 +249,6 @@ publish.post('/:id/blog/domain/verify', atLeast('owner'), async (context) => {
   })
 })
 
-/** Whether a subdomain is free - drives the live check while typing.
- *
- *  `?space=` names the space being published: a name it already holds is
- *  free for it, and would otherwise read as taken by itself. Only the
- *  caller's own space counts, or anyone could clear a name by naming the
- *  space that holds it. */
 publish.get('/available/:subdomain', async (context) => {
   const user = context.get('user')
   const subdomain = context.req.param('subdomain').toLowerCase()

@@ -1,25 +1,3 @@
-/** One chat's log: the Durable Object that gives every event of one chat its place in
- *  one order, and holds the chat (docs/chats.md 4.3 and 4.4).
- *
- *  Named by the chat's id, SQLite-backed, hibernating. Everything about who may come in
- *  is decided at the door (door.ts) and by the routes (routes.ts), where the database
- *  is: the object is told who each socket and request is and at what role, and decides
- *  only what that role may do to the log, by `@orden/chats`' own table and reducer
- *  (placing.ts). Its SQLite holds the log, every message as it stands with a full-text
- *  index, the chat's settings, each person's read place, scheduled posts and its
- *  bookkeeping (schema.ts); nothing lives in fields but caches.
- *
- *  What it tells the rest of the service, coalesced so a busy chat costs little:
- *  - the chat's head, settings and each person's read place and mentions, written to D1
- *    at most once a second (`chats`, `chat_reads`), so the Chats panel lists every chat
- *    in one query and wakes no object;
- *  - a `chat` poke (`ChatPoke`) through the hub of every person it reaches who has no
- *    socket open here, at most one every two seconds each, carrying no words;
- *  - the files a post names (`chat_files`), which is what lets its members fetch them.
- *
- *  One alarm carries all three of its waits: the next write to D1, the next poke owed,
- *  and the next scheduled post. */
-
 import type { Event, Logged, Message, Post, Who } from '@orden/chats'
 import { MOST_BEHIND, MOST_PAGE, RECEIPTS_UP_TO, TYPING_EVERY } from '@orden/chats/limits'
 import { clientFrameOf, isWho, type Refusal, type ServerFrame } from '@orden/chats/wire'
@@ -49,7 +27,6 @@ import { askChat } from './ask'
 import { hubIdOf, reachAs, reachByToken, reaching } from './reach'
 import { SCHEMA } from './schema'
 
-/** What a route or the door asks the object, named by `x-nib-chat-ask`; see ask.ts. */
 export type ChatAsk =
   | 'join'
   | 'send'
@@ -65,43 +42,27 @@ export type ChatAsk =
   | 'open'
   | 'held-files'
 
-/** A person a request or a socket is from, as the door or the route decided. */
 export type Person = Asker & { id: string; guest: boolean }
 
-/** What the door decided about a socket, kept on it across a sleep. */
 interface Attached extends Person {
-  /** The hash of the sign-in the socket arrived with, which it lasts no longer than;
-   *  see `askSignIns`. Absent on a socket let in before the door said. */
   login?: string
   hello: boolean
-  /** When this socket last had a typing frame relayed. */
   typedAt: number
 }
 
-/** One answer to one event, to its sender: its place, or why not. A post held for its
- *  time, or taken back before it went, is answered with `seq` 0: it is in no log yet. */
 export type Answer = Extract<ServerFrame, { t: 'placed' } | { t: 'refused' }>
 
-/** The most messages one page of state answers, and the most bytes it holds (4.4). */
 const MOST_MESSAGES = 1000
 const MOST_PAGE_BYTES = 4 * 1024 * 1024
 
-/** The most candidates a search hands the route to match. */
 const MOST_CANDIDATES = 1000
 
-/** D1 hears the head at most once a second, a person at most one poke every two. */
 const FLUSH_EVERY = 1000
 const POKE_EVERY = 2000
 
-/** A scheduled post that could not be placed is tried again this long after, twice as
- *  long each time it fails again, and never longer apart than an hour. */
 const RETRY_FIRST = 30_000
 const RETRY_MOST = 3_600_000
 
-/** Whether a live message still names a file (`?1` its hash): as one of its files, the
- *  small picture of one, or its link preview's picture. Read from where a message keeps
- *  them and nowhere else, since words that only say a hash name nothing, and a member
- *  who wrote one down would otherwise keep somebody's deleted file served. */
 const NAMES_FILE = `select 1 from messages m
   where m.deleted = 0
     and (json_extract(m.json, '$.preview.picture') = ?1
@@ -110,7 +71,6 @@ const NAMES_FILE = `select 1 from messages m
                         or json_extract(f.value, '$.preview') = ?1))
   limit 1`
 
-/** How long the list of who the chat reaches is believed. */
 const REACHERS_FOR = 60_000
 
 function filesOfHeld(post: Post): string[] {
@@ -143,8 +103,6 @@ function attach(socket: WebSocket, attached: Attached): void {
   socket.serializeAttachment(attached)
 }
 
-/** The one thing every socket write goes through. A socket the runtime has already given
- *  up on throws on `send`, and its close handler deals with that. */
 function say(socket: WebSocket, frame: ServerFrame): void {
   try {
     socket.send(JSON.stringify(frame))
@@ -153,7 +111,6 @@ function say(socket: WebSocket, frame: ServerFrame): void {
   }
 }
 
-/** A whole number from a query, or null. */
 function wholeIn(value: string | null): number | null {
   if (value === null || !/^\d{1,16}$/.test(value)) return null
   return Number(value)
@@ -161,7 +118,6 @@ function wholeIn(value: string | null): number | null {
 
 export class ChatLog implements DurableObject {
   private ready = false
-  /** When this object last asked whether its sockets' sign-ins live; see `askSignIns`. */
   private signInsAskedAt = 0
   private reachers: { at: number; list: { id: string; guest: boolean }[] } | null = null
 
@@ -172,7 +128,6 @@ export class ChatLog implements DurableObject {
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(BEAT, BEAT_ANSWER))
   }
 
-  /** The object's SQLite, its tables made on the first use after every wake. */
   private get sql(): SqlStorage {
     const sql = this.ctx.storage.sql
     if (!this.ready) {
@@ -187,7 +142,6 @@ export class ChatLog implements DurableObject {
     const ask = (headers.get('x-nib-chat-ask') ?? '') as ChatAsk
 
     if (ask === 'erase') return await this.erase()
-    // Whether a row a day old still has a socket behind it; see opened.ts.
     if (ask === 'open') return openAnswer(this.hasSocketOf(headers.get(OPEN_HEADER) ?? ''))
     if (ask === 'revoke') {
       return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
@@ -195,8 +149,6 @@ export class ChatLog implements DurableObject {
     if (ask === 'held-files') {
       return Response.json({ hashes: this.heldFilesOf(headers.get('x-nib-held-by') ?? '') })
     }
-    // Every ask below may say something to the sockets here, and none whose sign-in
-    // has ended hears it.
     await this.askSignIns()
     if (ask === 'profile') {
       const who = headers.get('x-nib-profile')
@@ -237,28 +189,17 @@ export class ChatLog implements DurableObject {
     }
   }
 
-  /** Which chat this object is, and which space it is in now: said by every request,
-   *  kept for the alarm, which has nobody to ask. */
   private remember(chat: string | null, space: string | null): void {
     if (chat && readMeta(this.sql, 'chat') !== chat) setMeta(this.sql, 'chat', chat)
     if (space && readMeta(this.sql, 'space') !== space) setMeta(this.sql, 'space', space)
   }
 
-  /* ── Sockets ──────────────────────────────────────────────────────────── */
-
-  /** The object's half of a socket, taken in. Apart from `fetch` because a test drives
-   *  it without a runtime to make the pair. The device says `hello` next. */
   async enter(server: WebSocket, person: Person, login?: string): Promise<void> {
-    // Written down before the socket is taken, so a revocation can always find it: a
-    // socket no row names is a socket nobody can close.
     await this.writeSocketRow(person.id)
 
     this.ctx.acceptWebSocket(server, [person.who])
     attach(server, { ...person, ...(login ? { login } : {}), hello: false, typedAt: 0 })
 
-    // And written again now the socket is here: the close of another device of this
-    // person landing during the first write saw none of theirs left and took the row
-    // away. A socket that cannot be written down is not kept either.
     try {
       await this.writeSocketRow(person.id)
     } catch (error) {
@@ -266,8 +207,6 @@ export class ChatLog implements DurableObject {
       throw error
     }
 
-    // Rows nothing will take away are cleared after the join rather than before it:
-    // the join waits on none of the chats that asks, and fails for none of them.
     this.ctx.waitUntil(
       this.sweep().catch((error: unknown) => {
         note(`chat ${this.chatId()} sweep`, error, null)
@@ -278,9 +217,6 @@ export class ChatLog implements DurableObject {
 
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string): Promise<void> {
     if (typeof message !== 'string') return
-    // Whatever this says is heard by every socket here, so none whose sign-in has
-    // ended - this one included - is left to say it or to hear it. And read after the
-    // asking, which may have made this socket a reader.
     if ((await this.askSignIns()).has(socket)) return
     const me = attachedTo(socket)
     if (!me) return
@@ -322,10 +258,6 @@ export class ChatLog implements DurableObject {
     this.sayHere(socket)
   }
 
-  /** A device saying where it is: the events after its seq, or that it is too far
-   *  behind for them; then who is here, and, in a small chat, where everybody has read
-   *  to. Who the chat reaches decides that, and a moment's failure to ask leaves the
-   *  receipts out rather than the greeting unsent. */
   private async hello(socket: WebSocket, me: Attached, since: number): Promise<void> {
     attach(socket, { ...me, hello: true })
     await this.reachersNow().catch(() => [])
@@ -356,7 +288,6 @@ export class ChatLog implements DurableObject {
   }
 
   private typing(socket: WebSocket, me: Attached, parent: string | undefined): void {
-    // A reader types nothing.
     if (me.role === 'read' || (me.role === 'write' && metaOf(this.sql).posting === 'owner')) return
     const now = Date.now()
     if (now - me.typedAt < TYPING_EVERY) return
@@ -369,7 +300,6 @@ export class ChatLog implements DurableObject {
     }
   }
 
-  /** Who has the chat open, once each. */
   private here(leaving?: WebSocket): Who[] {
     const who = new Set<Who>()
     for (const socket of this.ctx.getWebSockets()) {
@@ -387,28 +317,21 @@ export class ChatLog implements DurableObject {
     }
   }
 
-  /** A frame to every socket that said hello, but one. */
   private everyone(frame: ServerFrame, but?: WebSocket | null): void {
     for (const socket of this.ctx.getWebSockets()) {
       if (socket !== but && attachedTo(socket)?.hello) say(socket, frame)
     }
   }
 
-  /* ── Placing ──────────────────────────────────────────────────────────── */
-
-  /** One event from one person, answered: placed, refused, held for its time or taken
-   *  back before it went. Everybody else hears what was placed. */
   async take(person: Person, event: Event, from: WebSocket | null): Promise<Answer> {
     const sql = this.sql
     const at = Date.now()
 
-    // A resend of something already placed or held is answered as it was.
     const had = placedEvent(sql, event.id)
     if (had) return { t: 'placed', id: had.id, seq: had.seq, at: had.at }
     const held = this.heldAnswer(event.id)
     if (held) return held
 
-    // Taking back a post that has not gone yet.
     if (event.kind === 'delete' && (await this.unschedule(person.who, event.target))) {
       return { t: 'placed', id: event.id, seq: 0, at }
     }
@@ -424,18 +347,12 @@ export class ChatLog implements DurableObject {
     return await this.placeNow(person, event.kind === 'schedule' ? event.post : event, at, from)
   }
 
-  /** An admitted event placed, its effects set going, and everybody told. */
   private async placeNow(
     person: Person,
     event: Exclude<Event, { kind: 'schedule' }>,
     at: number,
     from: WebSocket | null,
   ): Promise<Answer> {
-    // `@here` and `@everyone` call whoever the chat reaches, which is a list this object
-    // keeps only a minute and has none of when it is cold - just made, woken, or told
-    // somebody's access changed - and the post is the commonest first thing it hears
-    // (#459). So the list is asked for first, outside the transaction that cannot wait.
-    // A moment's failure to ask places the post anyway, calling only who it names.
     const mentions = event.kind === 'post' ? (event.mentions ?? []) : []
     if (mentions.includes('here') || mentions.includes('everyone')) {
       await this.reachersNow().catch((error: unknown) => {
@@ -452,9 +369,6 @@ export class ChatLog implements DurableObject {
     return { t: 'placed', id: logged.id, seq: logged.seq, at: logged.at }
   }
 
-  /** In the transaction that placed an event: the head owed to D1, and for a post who
-   *  it calls - counted until they read past it - and its author's own read place moved
-   *  past it. `@here` and `@everyone` call everybody the chat reaches. */
   private noted(logged: Logged, effects: Effects): Who[] {
     this.flushSoon()
     if (logged.kind !== 'post') return []
@@ -485,8 +399,6 @@ export class ChatLog implements DurableObject {
     return [...called]
   }
 
-  /** What a placed event sets going outside the object: the files it names written down
-   *  for its members, the files a delete let go of, and pokes for a post. */
   private async after(logged: Logged, effects: Effects, called: readonly Who[]): Promise<void> {
     try {
       await this.keepFiles(effects, logged.at)
@@ -498,7 +410,6 @@ export class ChatLog implements DurableObject {
     await this.plan()
   }
 
-  /** Whether the sender holds every blob the event names; a guest holds none. */
   private async holds(person: Person, event: Event): Promise<boolean> {
     const post = event.kind === 'schedule' ? event.post : event
     if (post.kind !== 'post' && post.kind !== 'edit') return true
@@ -517,8 +428,6 @@ export class ChatLog implements DurableObject {
       .all<{ hash: string }>()
     return results.length === hashes.size
   }
-
-  /* ── Scheduled posts ──────────────────────────────────────────────────── */
 
   private heldFilesOf(who: string): string[] {
     const rows = this.sql.exec<{ post: string }>('select post from scheduled where author = ?', who)
@@ -541,8 +450,6 @@ export class ChatLog implements DurableObject {
     return row ? { t: 'placed', id, seq: 0, at: row.send_at } : null
   }
 
-  /** A post held for its time, replacing one the same person held for the same message:
-   *  a scheduled post is editable until it goes. */
   private async schedule(person: Person, event: Extract<Event, { kind: 'schedule' }>) {
     const sql = this.sql
     const before = sql
@@ -585,7 +492,6 @@ export class ChatLog implements DurableObject {
     await this.plan()
   }
 
-  /** A delete of a post still waiting for its time takes it back, for its author. */
   private async unschedule(who: Who, message: string): Promise<boolean> {
     const row = this.sql
       .exec<{ id: string; post: string }>(
@@ -617,11 +523,6 @@ export class ChatLog implements DurableObject {
       }))
   }
 
-  /** Every post whose time has come, placed as its author - who is asked about again,
-   *  because their role may have changed since. One that is refused stays, marked with
-   *  why, for its author to see. One that throws - the database a moment away, or a row
-   *  that always will - is tried again later rather than at once, and the others due
-   *  with it still go. */
   private async placeDue(now: number): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
@@ -641,9 +542,6 @@ export class ChatLog implements DurableObject {
         await this.placeOne(chat, one, now)
       } catch (error) {
         note(`chat ${chat} scheduled`, error, null)
-        // Placing it again is safe however far the take got (`placedEvent`), so all a
-        // failure costs is the wait, which doubles so a row that always throws does
-        // not keep the object awake.
         const tries =
           (this.sql
             .exec<{ tries: number }>('select tries from scheduled_tries where id = ?', one.id)
@@ -659,7 +557,6 @@ export class ChatLog implements DurableObject {
     }
   }
 
-  /** One post whose time has come, placed or refused; see `placeDue`. */
   private async placeOne(
     chat: string,
     one: { id: string; author: string; device: string | null; post: string },
@@ -677,8 +574,6 @@ export class ChatLog implements DurableObject {
           null,
         )
       : ({ t: 'refused', id: post.id, error: ROLE } as const)
-    // Only once it has gone or been refused: a take that threw - the database a
-    // moment away - leaves it for the next alarm, which places it once.
     this.sql.exec('delete from scheduled where id = ?', one.id)
     this.sql.exec('delete from scheduled_tries where id = ?', one.id)
     if (answer.t === 'refused') {
@@ -695,8 +590,6 @@ export class ChatLog implements DurableObject {
       )
     }
   }
-
-  /* ── Reading ──────────────────────────────────────────────────────────── */
 
   private head(): number {
     return (
@@ -722,8 +615,6 @@ export class ChatLog implements DurableObject {
       .one().many
   }
 
-  /** A person's read place moved: forward as they read, or back where they said so
-   *  (Mark unread). Their other devices follow; everybody sees it in a small chat. */
   async read(who: Who, seq: number, back: boolean, from: WebSocket | null): Promise<void> {
     const sql = this.sql
     const to = Math.min(seq, this.head())
@@ -749,14 +640,11 @@ export class ChatLog implements DurableObject {
     await this.plan()
   }
 
-  /** Whether this chat is small enough for receipts, by the people it reached when last
-   *  asked (decision 7.5). */
   private showsReceipts(): boolean {
     const known = this.reachers?.list.length ?? 0
     return known > 0 && known <= RECEIPTS_UP_TO
   }
 
-  /** Everybody else's read place. */
   private readPlaces(but: Who): { who: Who; seq: number }[] {
     return this.sql
       .exec<{ who: string; read_seq: number }>(
@@ -767,9 +655,6 @@ export class ChatLog implements DurableObject {
       .map((one) => ({ who: one.who as Who, seq: one.read_seq }))
   }
 
-  /* ── Pages over HTTP ──────────────────────────────────────────────────── */
-
-  /** Events by seq: after one, before one, or around one (4.4). */
   private eventsPage(query: URLSearchParams) {
     const limit = Math.max(1, Math.min(wholeIn(query.get('limit')) ?? 200, MOST_PAGE))
     const before = wholeIn(query.get('before'))
@@ -802,7 +687,6 @@ export class ChatLog implements DurableObject {
     return { events: rows.map(loggedOf), more }
   }
 
-  /** One message as it stands, by its id: where an agent's `before` or `around` is. */
   private messageById(id: string | null): Message | null {
     if (!id) return null
     const row = this.sql
@@ -811,10 +695,6 @@ export class ChatLog implements DurableObject {
     return row ? (JSON.parse(row.json) as Message) : null
   }
 
-  /** Messages as they stand, newest first, for a first copy (4.5): a message deleted
-   *  with nothing under it is left out, one with replies kept as the line they hang
-   *  from. `next` is the `before` of the following page. `parent` narrows it to one
-   *  message's replies, which the account connector reads (4.14). */
   private statePage(query: URLSearchParams) {
     const limit = Math.max(1, Math.min(wholeIn(query.get('limit')) ?? MOST_MESSAGES, MOST_MESSAGES))
     const before = wholeIn(query.get('before')) ?? Number.MAX_SAFE_INTEGER
@@ -848,9 +728,6 @@ export class ChatLog implements DurableObject {
     }
   }
 
-  /** What a search may match, newest first: the messages that have every word as the
-   *  start of one of theirs (the words index), or the newest messages where it names no
-   *  words. The route answers the query over them with `matches` from `@orden/chats`. */
   candidates(asked: unknown): Message[] {
     const words = (
       Array.isArray((asked as { words?: unknown } | null)?.words)
@@ -880,13 +757,10 @@ export class ChatLog implements DurableObject {
     return rows.map((row) => JSON.parse(row.json) as Message)
   }
 
-  /* ── D1: heads, files, pokes ──────────────────────────────────────────── */
-
   private chatId(): string | null {
     return readMeta(this.sql, 'chat')
   }
 
-  /** The next write of the head and read places to D1, a second after the last. */
   private flushSoon(): void {
     const sql = this.sql
     if (readMeta(sql, 'flush_at') !== null) return
@@ -939,11 +813,9 @@ export class ChatLog implements DurableObject {
     }
     setMeta(sql, 'flushed_at', String(Date.now()))
     setMeta(sql, 'flush_at', null)
-    // More than one write's worth was waiting: the next goes a second from now.
     if (dirty.length === 200) this.flushSoon()
   }
 
-  /** The files a post names, written down so the chat's members may fetch them. */
   private async keepFiles(effects: Effects, at: number): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.files.length) return
@@ -963,8 +835,6 @@ export class ChatLog implements DurableObject {
     )
   }
 
-  /** The files a deleted or edited message named, let go of where no message still names
-   *  them, and written down for the one who posted it (unused.ts). A guest holds none. */
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
@@ -984,7 +854,6 @@ export class ChatLog implements DurableObject {
     ])
   }
 
-  /** Everybody the chat reaches, believed for a minute. */
   private async reachersNow(): Promise<{ id: string; guest: boolean }[]> {
     const now = Date.now()
     if (this.reachers && now - this.reachers.at < REACHERS_FOR) return this.reachers.list
@@ -994,8 +863,6 @@ export class ChatLog implements DurableObject {
     return list
   }
 
-  /** A post, owed to everybody the chat reaches who has no socket open to it: sent now
-   *  where their last poke was two seconds ago or more, held and merged otherwise. */
   private async poke(logged: Logged, called: readonly Who[]): Promise<void> {
     let reachers: { id: string; guest: boolean }[]
     try {
@@ -1035,7 +902,6 @@ export class ChatLog implements DurableObject {
     await this.sendPokes(sendNow, now)
   }
 
-  /** The pokes owed to these hubs, sent and marked sent. */
   private async sendPokes(ids: readonly string[], now: number): Promise<void> {
     const chat = this.chatId()
     if (!chat || !ids.length) return
@@ -1065,10 +931,7 @@ export class ChatLog implements DurableObject {
     )
   }
 
-  /* ── The alarm ────────────────────────────────────────────────────────── */
-
   async alarm(): Promise<void> {
-    // What the alarm places - a post held for its time - is said to the sockets here.
     await this.askSignIns()
     const now = Date.now()
     const flushAt = Number(readMeta(this.sql, 'flush_at') ?? Number.NaN)
@@ -1099,7 +962,6 @@ export class ChatLog implements DurableObject {
     await this.plan()
   }
 
-  /** The alarm set for the soonest of the three waits, or taken off. */
   private async plan(): Promise<void> {
     const sql = this.sql
     const flushAt = readMeta(sql, 'flush_at')
@@ -1125,14 +987,6 @@ export class ChatLog implements DurableObject {
     await this.ctx.storage.setAlarm(Math.max(Math.min(...times), Date.now()))
   }
 
-  /* ── Access ending ────────────────────────────────────────────────────── */
-
-  /** Every socket whose sign-in has ended - run out, most of all, which nothing else
-   *  announces - closed, at most once a minute (#520); and, in the same minute, every
-   *  socket whose person is no longer in the space (`askAccess`). Asked when something is about to
-   *  be said to the sockets here, which is the only time a socket that outlived its
-   *  sign-in could hear or say anything: a chat nobody writes in is never woken for it.
-   *  A socket let in before the door said which sign-in it came with is left as it is. */
   private async askSignIns(): Promise<Set<WebSocket>> {
     const closed = new Set<WebSocket>()
     const now = Date.now()
@@ -1144,7 +998,6 @@ export class ChatLog implements DurableObject {
     if (!logins.length) return closed
 
     const live = await stillSignedIn(this.env, logins).catch(() => null)
-    // Not asked is not ended: the next minute asks again.
     if (!live) return closed
 
     for (const socket of sockets) {
@@ -1156,8 +1009,6 @@ export class ChatLog implements DurableObject {
     await this.askAccess(sockets, closed)
     if (!closed.size) return closed
 
-    // A close this side asked for brings no close handler with it, so the rows go from
-    // here, one for each person none of whose sockets is left, and who is here is said.
     const gone = new Set([...closed].flatMap((one) => attachedTo(one)?.id ?? []))
     for (const socket of sockets) {
       if (!closed.has(socket)) gone.delete(attachedTo(socket)?.id ?? '')
@@ -1172,12 +1023,6 @@ export class ChatLog implements DurableObject {
     return closed
   }
 
-  /** What each live sign-in here may still do, asked beside the sign-ins: the route
-   *  that takes somebody's access away tells the chats they have open, and this catches
-   *  a telling that missed, a minute late rather than never. A socket whose person is no
-   *  longer in the space is closed and added to `closed`, one who is a reader now is
-   *  made one. Nothing is done where the chat itself has ended or its space has gone,
-   *  which is not anybody's access ending; nor where nothing could be asked. */
   private async askAccess(sockets: WebSocket[], closed: Set<WebSocket>): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
@@ -1212,7 +1057,6 @@ export class ChatLog implements DurableObject {
     }
   }
 
-  /** Whether this chat is still open in a space that is still there. */
   private async lives(chat: string): Promise<boolean> {
     const row = await this.env.DB.prepare(
       `select 1 as yes from chats ch join spaces sp on sp.id = ch.space_id
@@ -1223,12 +1067,10 @@ export class ChatLog implements DurableObject {
     return row !== null
   }
 
-  /** Whether everybody's sockets of this `who` are among those just closed. */
   private closedWho(closed: Set<WebSocket>, who: Who): boolean {
     return this.ctx.getWebSockets(who).every((one) => closed.has(one))
   }
 
-  /** Somebody's access ended, or narrowed to reading, while they had the chat open. */
   private async revoke(id: string, role: string | null): Promise<Response> {
     this.reachers = null
     const toRead = role === 'read'
@@ -1245,7 +1087,6 @@ export class ChatLog implements DurableObject {
     return new Response(null, { status: 204 })
   }
 
-  /** The chat is gone for good, and so is everything this object kept of it. */
   private async erase(): Promise<Response> {
     for (const socket of this.ctx.getWebSockets()) socket.close(1008, 'this chat is gone')
     this.reachers = null
@@ -1255,7 +1096,6 @@ export class ChatLog implements DurableObject {
     return new Response(null, { status: 204 })
   }
 
-  /** This person has this chat open; see `chat_sockets` in 0047. */
   private async writeSocketRow(who: string): Promise<void> {
     const chat = this.chatId()
     const space = readMeta(this.sql, 'space')
@@ -1269,9 +1109,6 @@ export class ChatLog implements DurableObject {
       .run()
   }
 
-  /** Rows a close never came for, cleared as new ones arrive, but only once the chat a
-   *  row names says nobody of theirs is in it: a socket may simply have been open for
-   *  days. See opened.ts. */
   private async sweep(): Promise<void> {
     const chat = this.chatId()
     await sweepOpened(this.env, { name: 'chat_sockets', key: 'chat_id' }, async (other, them) =>
@@ -1281,7 +1118,6 @@ export class ChatLog implements DurableObject {
     )
   }
 
-  /** Whether this person - an id, as the rows name them - has a socket here. */
   private hasSocketOf(id: string): boolean {
     return !!id && this.ctx.getWebSockets().some((socket) => attachedTo(socket)?.id === id)
   }
@@ -1295,7 +1131,6 @@ export class ChatLog implements DurableObject {
   }
 }
 
-/** Whoever the door or a route said a request is from. */
 function personOf(headers: Headers): Person | null {
   const id = headers.get('x-nib-who') ?? ''
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return null
@@ -1311,7 +1146,6 @@ function personOf(headers: Headers): Person | null {
   }
 }
 
-/** An answer as `POST /v2/chats/:chat/events` says it (`Result` in `@orden/chats/wire`). */
 function resultOf(answer: Answer) {
   return answer.t === 'placed'
     ? { id: answer.id, seq: answer.seq, at: answer.at }

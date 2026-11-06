@@ -5,12 +5,6 @@ import { SITE_ROUNDS } from '../src/blog/gate'
 import { publishes } from '../src/blog/site'
 import { call, file, type ShareView, signIn, testEnv, type TestEnv } from './harness'
 
-/** Whatever an XML parser could not read in a document, by name and place, and an
- *  empty list for one it read whole.
- *
- *  Lezer's XML grammar, which the service already carries for the code fences on a
- *  published page: it never throws, it marks what it could not make sense of, and a
- *  feed a reader cannot parse is a feed nobody has. */
 function broken(text: string): string[] {
   const found: string[] = []
   xml.parse(text).iterate({
@@ -22,8 +16,6 @@ function broken(text: string): string[] {
   return found
 }
 
-/** A site of a few notes, published on a name, so that everything below can ask
- *  the hostname what it serves. */
 let env: TestEnv
 let token: string
 let space: string
@@ -175,8 +167,6 @@ describe('a site with rules', () => {
       body: { rules: { exclude: ['Drafts'], otherwise: 'all' } },
     })
 
-    // Three notes, one of which says no for itself, so two pages now and one
-    // once the drafts are out.
     expect(asked.json.before).toBe(2)
     expect(asked.json.pages).toBe(1)
     expect(asked.json.removes).toEqual(['Drafts/Two.md'])
@@ -206,9 +196,6 @@ describe('a site with rules', () => {
     expect((await page('/public/one')).status).toBe(200)
   })
 
-  /** A file keeps the same rules a note does. It carries no front matter to settle
-   *  its own case, so where it sits is the whole of the answer - and where it sits is
-   *  a path somebody can guess, which the hash it redirects to is not. */
   test('and the papers in them, which are asked for by their own path', async () => {
     const { hash, bytes } = file(64, 4)
     await call(env, `/v1/blobs/${hash}`, {
@@ -394,8 +381,6 @@ describe('what the head of a page says', () => {
   })
 
   test('a picture the note names becomes the card', async () => {
-    // `/i/<hash>` is where a picture in a note already lives, so that is what a
-    // note names; an address of somebody else's is taken as it was written.
     await note('Shown.md', '---\nimage: /i/abc123.png\n---\n\n# Shown\n')
 
     const said = (await page('/shown')).text
@@ -426,8 +411,6 @@ describe('what the machines read', () => {
     expect(said).toContain(`<loc>https://${HOST}/two</loc>`)
   })
 
-  /** And both feeds, so a crawler that found the sitemap has found every way of
-   *  following the site. */
   test('and the two feeds as well', async () => {
     const said = (await page('/sitemap.xml')).text
 
@@ -446,9 +429,6 @@ describe('what the machines read', () => {
     expect(answer.text).toContain('<summary>The second one.</summary>')
   })
 
-  /** Two feeds out of one list: "RSS" is the word a reader pastes into a reader, and
-   *  several readers still ask for a file by that name. What they must not be is two
-   *  answers, so this holds them to the same entries, dates and summaries. */
   test('and the RSS feed says the same thing in RSS', async () => {
     const answer = await page('/rss.xml')
 
@@ -458,16 +438,12 @@ describe('what the machines read', () => {
     )
     expect(answer.text).toContain('<description>The first.</description>')
     expect(answer.text).toContain('<description>The second one.</description>')
-    // The day the note says it is about, spelled the way RSS spells a date.
     expect(answer.text).toContain('<pubDate>Fri, 02 Jan 2026 00:00:00 GMT</pubDate>')
     expect(answer.text).toContain('<pubDate>Wed, 06 May 2026 00:00:00 GMT</pubDate>')
     expect(answer.text).toContain(`<guid isPermaLink="true">https://${HOST}/one</guid>`)
     expect(answer.text).toContain(`href="https://${HOST}/rss.xml"`)
   })
 
-  /** A feed a reader cannot parse is a feed nobody has. Read with the XML grammar the
-   *  service already carries for the code fences, which marks what it could not
-   *  read. */
   test('and both of them are XML a parser can read', async () => {
     for (const path of ['/feed.xml', '/rss.xml', '/sitemap.xml']) {
       expect(broken((await page(path)).text), path).toEqual([])
@@ -528,9 +504,6 @@ describe('the icon a tab shows', () => {
     expect((await page('/favicon.svg')).text).toContain('>F<')
   })
 
-  /** An SVG is a document, and this one is the author's own markup on a host under
-   *  the shared domain: opened on its own it is a page there. The same policy a
-   *  diagram gets from /i/; see `SVG_POLICY`. */
   test('and is sandboxed, because a drawing opened on its own is a document', async () => {
     await publish()
     await setSite({ icon: '<svg xmlns="http://www.w3.org/2000/svg"><circle r="8"/></svg>' })
@@ -544,8 +517,6 @@ describe('the icon a tab shows', () => {
 })
 
 describe('the analytics script a site loads', () => {
-  /** A stray space in what was pasted, and a scheme with nothing after it. None of
-   *  them is an address a page can load. */
   const BROKEN = [
     'https:// plausible.io/js/script.js',
     'https://plausible.io /js/script.js',
@@ -579,7 +550,6 @@ describe('the analytics script a site loads', () => {
     expect(answer.headers.get('content-security-policy')).toContain('https://plausible.io')
   })
 
-  /** A row an earlier build wrote, which no route writes now. */
   test('one stored before the check does not take the site down', async () => {
     await note('One.md', '# One\n')
     await publish()
@@ -616,20 +586,11 @@ describe('a site behind a password', () => {
     const answer = await page('/plan')
     const policy = answer.headers.get('content-security-policy') ?? ''
 
-    // A form that posts to this site and nowhere else, and not one script: the
-    // page behind the password has the furniture, the form does not.
     expect(policy).toContain("form-action 'self'")
     expect(policy).toContain("script-src 'none'")
     expect(policy).toContain("connect-src 'none'")
   })
 
-  /** A guess costs the reader nothing and costs the service a hundred thousand
-   *  rounds of PBKDF2. Counted per machine at this site, and answered the way a
-   *  wrong password is: saying "too many tries" would tell a guesser that the tries
-   *  are being counted. */
-  /** Hashed at a few rounds here, which is the tests' own build (see rounds.ts); so
-   *  the number a deploy hashes at is asserted, since a hundred thousand becoming two
-   *  hundred would be the one change nobody would notice. */
   test('is hashed at a hundred thousand rounds wherever it is deployed', () => {
     expect(SITE_ROUNDS).toBe(100_000)
   })
@@ -647,12 +608,10 @@ describe('a site behind a password', () => {
 
     for (let at = 0; at < 20; at++) expect((await guess('wrong')).status).toBe(401)
 
-    // The right one, from the machine that has spent its tries.
     const refused = await guess(PASSWORD)
     expect(refused.status).toBe(401)
     expect(refused.headers.get('set-cookie')).toBeNull()
 
-    // And somebody else at the same site is unaffected: the ceiling is theirs.
     const other = await page('/plan', {
       method: 'POST',
       raw: `password=${encodeURIComponent(PASSWORD)}`,
@@ -707,13 +666,9 @@ describe('a site behind a password', () => {
     expect(read.status).toBe(200)
     expect(read.text).toContain('Words.')
 
-    // And the page behind the password is that reader's own to hold: a shared
-    // cache that kept it would hand it to the next reader with no password at all.
     expect(read.headers.get('cache-control')).toBe('private, no-store')
   })
 
-  /** Every site is a name under one root, and a script on any of them may set a
-   *  cookie for the whole root, which every other site is then sent ahead of its own. */
   test('a cookie another site set for the root keeps nobody out', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -726,8 +681,6 @@ describe('a site behind a password', () => {
     expect(read.text).toContain('Words.')
   })
 
-  /** The cookie was renamed with readers holding a month's tickets under the old name.
-   *  Signed with the site's own key, so whoever set it, it opens only what it opens. */
   test('a ticket from before the cookie was renamed still lets its reader in', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -740,7 +693,6 @@ describe('a site behind a password', () => {
     const read = await page('/plan', { headers: { cookie: old } })
     expect(read.text).toContain('Words.')
 
-    // Nor can a cookie set for the root shut that reader out, ahead of it or not.
     const behind = await page('/plan', { headers: { cookie: `nib_site=0.0; ${old}` } })
     expect(behind.text).toContain('Words.')
 
@@ -748,8 +700,6 @@ describe('a site behind a password', () => {
     expect((await page('/plan', { headers: { cookie: forged } })).text).toContain('type="password"')
   })
 
-  /** Every answer on a site behind a password, not only the gate: the feed and the
-   *  sitemap are the site's words too. */
   test('and nothing a site behind a password answers is a shared cache’s', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -804,8 +754,6 @@ describe('a site behind a password', () => {
 })
 
 describe('the notes that came before', () => {
-  /** A row as it would have been written before there was anywhere to keep what
-   *  a note says about itself. */
   async function unread(path: string, content: string) {
     const made = await note(path, content)
     env.db.prepare('update notes set front = null where id = ?').run(made.id)
@@ -843,8 +791,6 @@ describe('the notes that came before', () => {
 describe('what somebody who is not the owner is told about the site', () => {
   beforeEach(async () => {
     await note('One.md', '# One\n')
-    // A domain of one's own, because one of the records it wants is the TXT
-    // token that proves the domain is this account's.
     await publish({ domain: 'notes.example.com' })
     await setSite({ password: 'the quiet part', description: 'Notes from the field.' })
   })

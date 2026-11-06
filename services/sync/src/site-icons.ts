@@ -4,36 +4,17 @@ import { privateHost } from './oauth/redirects'
 import { NOT_AN_OBJECT } from './refused'
 import type { Env, Variables } from './types'
 
-/** The marks of the sites an account has been to, for the icon picker's Web icons
- *  (#1054): one row per site, newest first, the picture held here.
- *
- *  Kept by the account rather than by a device, so a site opened on the laptop is in
- *  the phone's picker without being opened there. The picture is fetched by this
- *  service from where the page said its mark is - or taken as the bytes, for a page
- *  whose mark is drawn inline - so the reader's devices never ask a site for anything
- *  to fill the picker, and every device draws the same picture.
- *
- *  Written only by the app's own web tabs, never a private one; taken away with the
- *  history ("Delete browsing data" says which since when), and with the account. */
-
-/** How many sites an account keeps: the most recently seen, the rest forgotten. */
 export const MOST_SITES = 300
 
-/** A mark is a small picture. Anything bigger is not one, and is not kept. */
 const MOST_PICTURE_BYTES = 64 * 1024
 
-/** What a site is written as: a host name, lower case, and nothing else. */
 const SITE =
   /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/
 
-/** What a site calls itself in the picker, at most. */
 const LONGEST_LABEL = 120
 
-/** Where a mark may be fetched from, as a page gives it: an address, not a novel. */
 const LONGEST_SOURCE = 2048
 
-/** The pictures a mark may be, as a browser draws them in an `<img>`. An SVG drawn
- *  that way runs nothing, which is the only way the app draws one of these. */
 const TYPES = new Set([
   'image/png',
   'image/jpeg',
@@ -45,7 +26,6 @@ const TYPES = new Set([
   'image/avif',
 ])
 
-/** A mark written inline, as a page may give it. */
 const DATA = /^data:(image\/[a-z0-9.+-]+)(;base64)?,(.*)$/is
 
 export const siteIcons = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -57,8 +37,6 @@ interface Row {
   hash: string | null
 }
 
-/** Every site the account keeps, the most recently seen first, with the hash of its
- *  picture - which says whether the one a device holds is still the one here. */
 siteIcons.get('/', async (context) => {
   const user = context.get('user')
   const { results } = await context.env.DB.prepare(
@@ -70,7 +48,6 @@ siteIcons.get('/', async (context) => {
   return context.json({ sites: results })
 })
 
-/** One site's picture, as it was kept. */
 siteIcons.get('/:site/picture', async (context) => {
   const user = context.get('user')
   const site = context.req.param('site')
@@ -87,16 +64,12 @@ siteIcons.get('/:site/picture', async (context) => {
       'content-type': row.type,
       etag: `"${row.hash ?? ''}"`,
       'cache-control': 'private, max-age=0',
-      // A picture somebody else drew, served from this origin: nothing in it runs.
       'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       'x-content-type-options': 'nosniff',
     },
   })
 })
 
-/** A tab has been to a site: when, what it is called, and where its mark is. Seen
- *  again moves it to the front; a new mark is fetched, and a mark that will not come
- *  leaves the one already kept. */
 siteIcons.post('/', async (context) => {
   const user = context.get('user')
   const body = await objectBody(context)
@@ -117,8 +90,6 @@ siteIcons.post('/', async (context) => {
     .bind(user.id, site)
     .first<{ source: string | null }>()
 
-  // The mark is fetched again only when the page names another one: a page shown a
-  // hundred times is one fetch.
   const remembered = source === null ? null : sourceKey(source)
   const picture =
     remembered !== null && remembered !== held?.source ? await pictureFrom(source ?? '') : null
@@ -146,7 +117,6 @@ siteIcons.post('/', async (context) => {
     )
     .run()
 
-  // Bounded, the oldest going first.
   await context.env.DB.prepare(
     `delete from site_icons where user_id = ?1 and site not in
        (select site from site_icons where user_id = ?1 order by seen desc limit ?2)`,
@@ -163,8 +133,6 @@ siteIcons.post('/', async (context) => {
   return context.json({ site: row })
 })
 
-/** Forgets sites: those named, or those seen since a moment, or every one. What
- *  "Delete browsing data" asks for, over every device. */
 siteIcons.delete('/', async (context) => {
   const user = context.get('user')
   const body = (await objectBody(context)) ?? {}
@@ -186,7 +154,6 @@ siteIcons.delete('/', async (context) => {
   return context.json({ ok: true })
 })
 
-/** A site as it is kept, or null for anything that is not a host name a site has. */
 export function siteOf(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const site = value
@@ -200,8 +167,6 @@ function labelOf(value: string): string {
   return value.trim().replace(/\s+/g, ' ').slice(0, LONGEST_LABEL)
 }
 
-/** What a mark's source is remembered as, so the same one is not fetched twice: the
- *  address, or for one written inline a digest of it. */
 function sourceKey(source: string): string | null {
   if (DATA.test(source)) return `data:${source.length}:${quickHash(source)}`
   return source.length <= LONGEST_SOURCE ? source : null
@@ -219,8 +184,6 @@ interface Picture {
   hash: string
 }
 
-/** The picture a page names as its mark: fetched from a public https or http
- *  address, or read out of a `data:` one, and only if it is a picture and small. */
 async function pictureFrom(source: string): Promise<Picture | null> {
   const inline = DATA.exec(source)
   if (inline) {

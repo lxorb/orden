@@ -1,7 +1,3 @@
-/** A note dropped into a chat (docs/chats.md 4.13): who in the chat cannot open it, and
- *  the owner's one press that shares it with them to read, with nobody else let in and
- *  nobody asking about a note they cannot reach themselves. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { chatLogs } from './chat-fakes'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -44,7 +40,6 @@ beforeEach(async () => {
   await call(env, '/v1/me', { method: 'PATCH', token: lucile, body: { name: 'Lucile' } })
   lucileId = (await call(env, '/v1/me', { token: lucile })).json.user.id
   mia = await signIn(env, 'mia@example.com')
-  // Mia holds the notes' space too; Lucile does not.
   await call(env, `/v1/spaces/${notes}/share/invite`, {
     token: owner,
     body: { email: 'mia@example.com', role: 'read' },

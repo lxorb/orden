@@ -6,8 +6,6 @@ let env: TestEnv
 let token: string
 let space: string
 
-/** Three files and the hashes they are named by; `bytesOf` gives each one's bytes
- *  back, since an upload is refused unless they are what the hash names. */
 const FILES = [file(64, 1), file(64, 2), file(64, 3)]
 const [PAPER, OTHER, THIRD] = FILES.map((one) => one.hash) as [string, string, string]
 const bytesOf = (hash: string) => FILES.find((one) => one.hash === hash)!.bytes
@@ -22,8 +20,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** The bytes of a PDF, the way the app sends them up before recording where the
- *  file sits. */
 function upload(hash: string, type = 'application/pdf') {
   return call(env, `/v1/blobs/${hash}`, {
     method: 'PUT',
@@ -37,7 +33,6 @@ function record(files: { path: string; hash: string }[], as = token) {
   return call(env, `/v1/spaces/${space}/files`, { method: 'PUT', token: as, body: { files } })
 }
 
-/** The column itself, which no route hands back whole. */
 function column(): string {
   const row = env.db.prepare('select files from spaces where id = ?').get(space) as {
     files: string
@@ -66,17 +61,13 @@ describe('a PDF as a blob', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('application/pdf')
-    // Whatever the bytes look like, they are read as what was accepted.
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
   })
 
-  /** A picture is a capability and a document is not; see the header of
-   *  src/blobs.ts, which is where the reasoning lives. */
   test('and not served at all while it is nobody’s published file', async () => {
     await upload(PAPER)
     expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
 
-    // Recorded in a space that publishes nothing is still nobody's page.
     await record([{ path: 'reading/paper.pdf', hash: PAPER }])
     expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
   })
@@ -249,7 +240,6 @@ describe('what a space keeps beside its notes', () => {
 })
 
 describe('a space two people write in', () => {
-  /** Somebody the owner gave the space to and who is in it, and their session. */
   async function writerIn(email: string): Promise<string> {
     const sent = await mail(() =>
       call(env, `/v1/spaces/${space}/share/invite`, {
@@ -266,7 +256,6 @@ describe('a space two people write in', () => {
     return session
   }
 
-  /** Somebody with no account, let in by the space's own link. */
   async function guestIn(): Promise<string> {
     const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
@@ -281,7 +270,6 @@ describe('a space two people write in', () => {
       .json.token
   }
 
-  /** A PDF this session's account keeps the bytes of, recorded in the space. */
   async function put(hash: string, as: string, path: string) {
     await call(env, `/v1/blobs/${hash}`, {
       method: 'PUT',
@@ -298,8 +286,6 @@ describe('a space two people write in', () => {
     await put(PAPER, token, 'owner.pdf')
     await put(OTHER, writer, 'writer.pdf')
 
-    // The writer's own client knows about its own paper and nothing else, so
-    // that is the whole list it states.
     const response = await record([{ path: 'writer.pdf', hash: OTHER }], writer)
 
     expect(readSpaceFiles(column())).toEqual([
@@ -316,7 +302,6 @@ describe('a space two people write in', () => {
 
     await record([], writer)
 
-    // Their own paper is theirs to take away; the owner's is not.
     expect(readSpaceFiles(column())).toEqual([{ path: 'owner.pdf', hash: PAPER }])
   })
 
@@ -335,8 +320,6 @@ describe('a space two people write in', () => {
     expect(readSpaceFiles(column())).toEqual([{ path: 'paper.pdf', hash: THIRD }])
   })
 
-  /** The script a site is dressed in runs on every page of it, and the pages are
-   *  the owner's; see the reasoning in src/spaces/files.ts. */
   test('and does not let a writer dress the owner’s site', async () => {
     const writer = await writerIn('writer@b.dev')
     await call(env, `/v1/blobs/${THIRD}`, {
@@ -349,7 +332,6 @@ describe('a space two people write in', () => {
     await record([{ path: 'publish.js', hash: THIRD }], writer)
     expect(readSpaceFiles(column())).toEqual([])
 
-    // Nor over one the owner put there.
     await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,

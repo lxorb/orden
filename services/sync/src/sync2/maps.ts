@@ -1,23 +1,3 @@
-/** The maps a space keeps about its tree, one entry at a time (docs/sync-v2.md 5.11).
- *
- *  Bookmarks, folder icons and their colours, the manual order, the graph's settings
- *  and what search leaves out were each one value a v1 app writes whole, so two
- *  devices changing different entries lost one of them (road 9). Here each entry is a
- *  row of `space_entries` with the cursor it arrived at: a device sends the entries it
- *  changed, the account keeps, per entry, the one that arrived last, and a device asks
- *  for what changed since the last time it asked.
- *
- *  Keyed so a rename orphans nothing. A folder's icon is keyed by the folder's id, and
- *  a place in the manual order by the id of the thing placed, with a number for its
- *  position among its siblings - Figma's fractional positions, so two devices moving
- *  different rows both keep their moves. Something the tree does not hold (a folder
- *  with nothing synced in it yet) is keyed by its path, `path:<path>`, which is what
- *  the v1 column said.
- *
- *  The v1 columns stay, as what a v1 app reads: they are written from these rows, and
- *  a v1 app's whole value is read as "every entry changed" - what it names is set, and
- *  what it leaves out is taken away. */
-
 import { Hono } from 'hono'
 import { byteLength, newId, now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
@@ -37,27 +17,20 @@ import { readTree, type Tree } from './tree'
 export type MapName = 'bookmark' | 'icon' | 'order' | 'graph' | 'excluded'
 const MAPS: readonly MapName[] = ['bookmark', 'icon', 'order', 'graph', 'excluded']
 
-/** One entry as a device sends it: `value` null takes it away. */
 export interface Entry {
   map: MapName
   key: string
   value: unknown
 }
 
-/** And as the account keeps it. */
 interface Kept extends Entry {
   seq: number
   at: number
 }
 
-/** The longest key an entry may have: an id, or a path. */
 const LONGEST_KEY = 512
-/** The most entries one request changes, and one page of the feed carries. */
 const MOST_CHANGED = 200
 const PAGE = 1000
-/** The most entries a space keeps, the taken-away ones among them: every PATCH reads
- *  them all, and an entry the columns drop (an id the tree does not hold, a null) is
- *  counted by nothing else. The columns come to a few thousand entries at most. */
 const MOST_ENTRIES = 10_000
 
 const PATH = 'path:'
@@ -70,14 +43,10 @@ function isPosition(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-/** A bookmark as the v1 list holds it: its place in the list is where it is, not a
- *  field of it. */
 function unplaced(value: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(value).filter(([field]) => field !== 'at'))
 }
 
-/** Whether a value is one this map may hold, judged by the same reader the v1 column
- *  is read through: what that reader would drop, a device may not send either. */
 function holds(map: MapName, key: string, value: unknown): boolean {
   if (value === null) return true
   switch (map) {
@@ -100,7 +69,6 @@ function holds(map: MapName, key: string, value: unknown): boolean {
   }
 }
 
-/** An entry off the wire, or null. */
 function entryOf(value: unknown): Entry | null {
   if (!isRecord(value)) return null
   const { map, key } = value
@@ -110,9 +78,6 @@ function entryOf(value: unknown): Entry | null {
   return holds(name, key, held) ? { map: name, key, value: held } : null
 }
 
-/* ── What a v1 app reads ─────────────────────────────────────────────────── */
-
-/** The live folder a path names, as the file list would find it. */
 function folderAt(tree: Tree, path: string): string | null {
   let parent: string | null = null
   for (const name of path.split('/')) {
@@ -123,20 +88,14 @@ function folderAt(tree: Tree, path: string): string | null {
   return parent
 }
 
-/** Where a key points, as a path: an id's entry where it is now, or the path it names. */
 function pathOfKey(tree: Tree, key: string): string | null {
   if (key.startsWith(PATH)) return key.slice(PATH.length)
   const entry = tree.entry(key)
   return entry && !entry.deleted ? tree.pathOf(key) : null
 }
 
-/** The kinds of bookmark that point at an entry of the tree, and so the ones an id
- *  finds again; the app's `POINTS_AT_A_FILE`. */
 const POINTS_AT_AN_ENTRY = new Set(['note', 'folder', 'heading', 'block'])
 
-/** A bookmark with its path written from where its entry is now, when it says which
- *  entry that is (#1068): a rename or a move on any device then reaches every list,
- *  a v1 app's too, the way a folder's icon does. A block bookmark keeps its `#` part. */
 function locatedBookmark(tree: Tree, value: Record<string, unknown>): Record<string, unknown> {
   const id = bookmarkId(value.id)
   const path = value.path
@@ -149,8 +108,6 @@ function locatedBookmark(tree: Tree, value: Record<string, unknown>): Record<str
   return now === file ? value : { ...value, path: now + path.slice(file.length) }
 }
 
-/** The v1 columns a set of entries says, each through its own reader, so what a v1 app
- *  is handed is exactly what its own write would have kept. */
 function projected(entries: readonly Kept[], tree: Tree): Record<string, string> {
   const of = (map: MapName) => entries.filter((one) => one.map === map && one.value !== null)
 
@@ -200,7 +157,6 @@ function projected(entries: readonly Kept[], tree: Tree): Record<string, string>
   }
 }
 
-/** Which folder an order entry is a place in, by path, and the name placed there. */
 function placeOf(tree: Tree, key: string): { folder: string; name: string } | null {
   if (key.startsWith(PATH)) {
     const path = key.slice(PATH.length)
@@ -212,7 +168,6 @@ function placeOf(tree: Tree, key: string): { folder: string; name: string } | nu
   return { folder: entry.parent === null ? '' : tree.pathOf(entry.parent), name: entry.name }
 }
 
-/** Whether the columns fit where a space keeps them; see spaces/columns.ts. */
 function fitting(columns: Record<string, string>): boolean {
   return (
     byteLength(columns.bookmarks ?? '') <= MOST_BYTES.bookmarks &&
@@ -238,7 +193,6 @@ async function keptIn(env: Env, spaceId: string): Promise<Kept[]> {
   }))
 }
 
-/** The entries with these laid over them, the later one of a key standing. */
 function overlaid(
   kept: readonly Kept[],
   changes: readonly Entry[],
@@ -252,11 +206,6 @@ function overlaid(
   return [...byKey.values()]
 }
 
-/** Entries written at a block of the space's cursor, the numbers taken and the rows
- *  written in one transaction (#470): taken first and written after, two writers could
- *  land the other way round, and a device that read the feed in between was handed a
- *  cursor past numbers it then never asked about. Each change carries its place in the
- *  block as `seq`. Answers the last number taken. */
 async function writeAtBlock(
   env: Env,
   spaceId: string,
@@ -276,8 +225,6 @@ async function writeAtBlock(
   return (results.at(-1)?.results[0] as { last?: number } | undefined)?.last ?? many
 }
 
-/** The statements that write entries, and the v1 columns they come to. Each entry's
- *  number is its place in a block of `many` the batch has just taken. */
 function writing(
   env: Env,
   spaceId: string,
@@ -330,9 +277,6 @@ function writing(
   return out
 }
 
-/** A device's changed entries, each standing until a later one of its key arrives, and
- *  the v1 columns written from all of them. Answers the cursor, or null when the
- *  columns would be past what a space keeps. */
 async function writeEntries(
   env: Env,
   spaceId: string,
@@ -349,9 +293,6 @@ async function writeEntries(
   return await writeAtBlock(env, spaceId, stamped, columns, by)
 }
 
-/** A v1 app's whole value for one map, read as every entry changed: what it names is
- *  set, keyed as the tree now knows it, and what it leaves out is taken away. The
- *  column itself the v1 route has written already. */
 export async function v1Wrote(env: Env, space: Space, map: MapName, value: unknown, by: string) {
   if (!space.prepared_at) return
   const [kept, tree] = [await keptIn(env, space.id), await readTree(env, space.id)]
@@ -370,16 +311,11 @@ export async function v1Wrote(env: Env, space: Space, map: MapName, value: unkno
   await writeAtBlock(env, space.id, stamped, null, by)
 }
 
-/** What one v1 column says, as entries of its map. */
 function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly Kept[]): Entry[] {
   switch (map) {
     case 'bookmark': {
-      // A bookmark has no id of its own in a v1 list, so one that says what a kept
-      // entry says is that entry, and keeps its key; the rest are new.
       const left = [...mine]
       return (Array.isArray(value) ? value : []).map((bookmark: unknown, index) => {
-        // Against the kept entry where its id now puts it, which is what the v1 app was
-        // handed: the entry's own path is the one it was written with.
         const same = left.findIndex((one) =>
           sameBookmark(
             isRecord(one.value) ? locatedBookmark(tree, one.value) : one.value,
@@ -388,7 +324,6 @@ function entriesFromV1(map: MapName, value: unknown, tree: Tree, mine: readonly 
         )
         const was = same >= 0 ? left.splice(same, 1)[0] : undefined
         const key = was?.key ?? newId()
-        // A v1 app reads no id and writes none back, so the one the entry had stays.
         const kept = isRecord(was?.value) ? bookmarkId(was.value.id) : null
         const sent = isRecord(bookmark) ? bookmark : {}
         const id = bookmarkId(sent.id) ?? kept
@@ -442,7 +377,6 @@ function sameBookmark(kept: unknown, sent: unknown): boolean {
   )
 }
 
-/** A space prepared for the first time: every v1 column read in as entries. */
 export async function backfillMaps(env: Env, spaceId: string): Promise<void> {
   const space = await env.DB.prepare('select * from spaces where id = ?')
     .bind(spaceId)
@@ -458,8 +392,6 @@ export async function backfillMaps(env: Env, spaceId: string): Promise<void> {
   for (const [map, value] of values) await v1Wrote(env, space, map, value, '')
 }
 
-/** The tree moved: every v1 column keyed by path written again from the entries, so a
- *  folder renamed on a v2 device keeps its icon and its order on a v1 one too. */
 export async function reproject(env: Env, spaceId: string): Promise<void> {
   const kept = await keptIn(env, spaceId)
   const byTree = (one: Kept) =>
@@ -472,7 +404,6 @@ export async function reproject(env: Env, spaceId: string): Promise<void> {
   await env.DB.batch(writing(env, spaceId, [], columns, '', 0))
 }
 
-/** What changed since a cursor, a page at a time. */
 async function entriesSince(
   env: Env,
   spaceId: string,
@@ -504,7 +435,6 @@ interface App {
   Variables: Variables
 }
 
-/** A request's entries, or null for one that is not a list of them. */
 function changesIn(body: unknown): Entry[] | null {
   if (!isRecord(body) || !Array.isArray(body.entries) || body.entries.length > MOST_CHANGED) {
     return null
@@ -518,12 +448,8 @@ function changesIn(body: unknown): Entry[] | null {
   return out
 }
 
-/** A map entry a correct client never sends. It reaches no reader, so it stays English. */
 const NOT_AN_ENTRY = 'that is not an entry this space keeps'
 
-/** Entries that would make one of the columns past what a space keeps; see
- *  spaces/columns.ts. A person can arrange and dress their way there, so it has a row
- *  in every catalogue. */
 const TOO_MUCH_ABOUT_THE_TREE = 'that is more than a space keeps about its tree'
 
 export const v2Maps = new Hono<App>()
@@ -535,7 +461,6 @@ v2Maps.get('/:space/maps', atLeast('read', 'space'), async (context) => {
   return context.json(await entriesSince(context.env, space.id, since))
 })
 
-// What a space says about its own tree is the space's, so changing it is writing in it.
 v2Maps.patch('/:space/maps', atLeast('write', 'space'), async (context) => {
   const space = spaceOf(context)
   const body: unknown = await context.req.json().catch(() => undefined)
