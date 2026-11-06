@@ -2989,4 +2989,13 @@ export const my: Dictionary = {
   '{name} is already here': '{name} ဤနေရာတွင် ရှိပြီးသား',
   '{count} names are already here': 'အမည် {count} ခု ဤနေရာတွင် ရှိပြီးသား',
   'Pin to Places': 'နေရာများတွင် ပင်ထိုးရန်',
+  Preview: 'အစမ်းကြည့်ရန်',
+  'Link to': 'ချိတ်ဆက်ထားသည့်နေရာ',
+  '{files}, {folders}, {size}': '{files}၊ {folders}၊ {size}',
+  'Counting…': 'ရေတွက်နေသည်…',
+  'Count what it holds': 'ပါဝင်သည်များကို ရေတွက်ရန်',
+  'Searching…': 'ရှာနေသည်…',
+  'Search below this folder': 'ဤဖိုင်တွဲအတွင်း ရှာရန်',
+  'Quick look': 'အမြန်ကြည့်ရန်',
+  '{count} folders': 'ဖိုင်တွဲ {count} ခု',
 }

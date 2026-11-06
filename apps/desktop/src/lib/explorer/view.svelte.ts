@@ -1,6 +1,6 @@
 import { message } from '../i18n.svelte'
 import { afterQuiet } from '../timing'
-import { isDesktop } from '../tauri'
+import { isDesktop, joinPath } from '../tauri'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import {
@@ -12,7 +12,8 @@ import {
   watchFolder,
 } from './commands'
 import { folderName, parentOf } from './crumbs'
-import { ordered } from './order'
+import { filtered, ordered } from './order'
+import { Search } from './search.svelte'
 import {
   type How,
   NOTHING,
@@ -37,8 +38,19 @@ export class ExplorerView {
   said = $state<string | null>(null)
   #saying: ReturnType<typeof setTimeout> | undefined
 
+  filter = $state('')
+  search = $state<Search | null>(null)
+
   readonly rows = $derived<Entry[]>(
-    this.listing ? ordered(this.listing.entries, explorerPrefs.sort, explorerPrefs.hidden) : [],
+    this.search
+      ? ordered(this.search.found, explorerPrefs.sort, true)
+      : this.listing
+        ? ordered(
+            filtered(this.listing.entries, this.filter),
+            explorerPrefs.sort,
+            explorerPrefs.hidden,
+          )
+        : [],
   )
   readonly names = $derived(this.rows.map((one) => one.name))
 
@@ -111,6 +123,7 @@ export class ExplorerView {
   }
 
   pathOf(name: string): string {
+    if (this.search) return joinPath(this.search.root, name)
     const folder = this.listing?.path ?? this.folder ?? ''
     const separator = folder.includes('\\') && !folder.includes('/') ? '\\' : '/'
     return /[\\/]$/.test(folder) ? `${folder}${name}` : `${folder}${separator}${name}`
@@ -141,6 +154,22 @@ export class ExplorerView {
     return names.map((one) => this.pathOf(one))
   }
 
+  searchBelow(query: string) {
+    const root = this.listing?.path
+    if (!root || !query.trim()) return
+    this.endSearch()
+    const search = new Search(root, query)
+    this.search = search
+    this.picked = NOTHING
+    void search.run(explorerPrefs.hidden)
+  }
+
+  endSearch() {
+    this.search?.stop()
+    if (this.search) this.picked = NOTHING
+    this.search = null
+  }
+
   tell(said: string) {
     this.said = said
     clearTimeout(this.#saying)
@@ -161,7 +190,11 @@ export class ExplorerView {
       return
     }
     const moved = !this.listing || !samePath(listing.path, this.listing.path)
-    if (moved) this.picked = NOTHING
+    if (moved) {
+      this.picked = NOTHING
+      this.filter = ''
+      this.endSearch()
+    }
     this.take(listing)
     this.spec = next(listing.path)
     this.tab.name = folderName(listing.path)

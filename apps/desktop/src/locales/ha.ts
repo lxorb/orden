@@ -3060,4 +3060,16 @@ export const ha: Dictionary = {
     other: 'Sunaye {count} suna nan tuni',
   },
   'Pin to Places': 'Maƙala a Wurare',
+  Preview: 'Duba kafin',
+  'Link to': 'Haɗi zuwa',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Ana ƙirgawa…',
+  'Count what it holds': 'Ƙirga abin da ke ciki',
+  'Searching…': 'Ana nema…',
+  'Search below this folder': 'Nema a cikin wannan babban fayil',
+  'Quick look': 'Duba da sauri',
+  '{count} folders': {
+    one: 'babban fayil {count}',
+    other: 'manyan fayiloli {count}',
+  },
 }

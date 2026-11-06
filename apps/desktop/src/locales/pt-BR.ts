@@ -3077,4 +3077,17 @@ export const ptBR: Dictionary = {
     other: '{count} nomes já estão aqui',
   },
   'Pin to Places': 'Fixar em Locais',
+  Preview: 'Prévia',
+  'Link to': 'Aponta para',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Contando…',
+  'Count what it holds': 'Contar o conteúdo',
+  'Searching…': 'Buscando…',
+  'Search below this folder': 'Buscar dentro desta pasta',
+  'Quick look': 'Olhada rápida',
+  '{count} folders': {
+    one: '{count} pasta',
+    many: '{count} de pastas',
+    other: '{count} pastas',
+  },
 }

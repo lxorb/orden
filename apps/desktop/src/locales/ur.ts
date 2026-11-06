@@ -3011,4 +3011,16 @@ export const ur: Dictionary = {
     other: '{count} نام پہلے سے یہاں ہیں',
   },
   'Pin to Places': 'مقامات میں پن کریں',
+  Preview: 'پیش منظر',
+  'Link to': 'لنک بطرف',
+  '{files}, {folders}, {size}': '{files}، {folders}، {size}',
+  'Counting…': 'گنتی ہو رہی ہے…',
+  'Count what it holds': 'اندر کیا ہے گنیں',
+  'Searching…': 'تلاش ہو رہی ہے…',
+  'Search below this folder': 'اس فولڈر کے اندر تلاش کریں',
+  'Quick look': 'فوری جھلک',
+  '{count} folders': {
+    one: '{count} فولڈر',
+    other: '{count} فولڈرز',
+  },
 }

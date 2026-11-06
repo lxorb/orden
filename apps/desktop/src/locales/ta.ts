@@ -3068,4 +3068,16 @@ export const ta: Dictionary = {
     other: '{count} பெயர்கள் ஏற்கெனவே இங்கே உள்ளன',
   },
   'Pin to Places': 'இடங்களில் பொருத்து',
+  Preview: 'முன்னோட்டம்',
+  'Link to': 'இணைப்பு',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'எண்ணுகிறது…',
+  'Count what it holds': 'உள்ளவற்றை எண்ணு',
+  'Searching…': 'தேடுகிறது…',
+  'Search below this folder': 'இந்தக் கோப்புறைக்குள் தேடு',
+  'Quick look': 'விரைவுப் பார்வை',
+  '{count} folders': {
+    one: '{count} கோப்புறை',
+    other: '{count} கோப்புறைகள்',
+  },
 }

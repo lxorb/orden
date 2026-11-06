@@ -1200,13 +1200,29 @@
     "type": "string",
     "description": "The key that runs Delete for good, as the keys file writes it; empty for none."
   },
+  "shortcuts.explorer-filter": {
+    "type": "string",
+    "description": "The key that runs Filter, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-grid": {
+    "type": "string",
+    "description": "The key that runs Grid, as the keys file writes it; empty for none."
+  },
   "shortcuts.explorer-hidden": {
     "type": "string",
     "description": "The key that runs Hidden files, as the keys file writes it; empty for none."
   },
+  "shortcuts.explorer-list": {
+    "type": "string",
+    "description": "The key that runs List, as the keys file writes it; empty for none."
+  },
   "shortcuts.explorer-location": {
     "type": "string",
     "description": "The key that runs Type a location, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-look": {
+    "type": "string",
+    "description": "The key that runs Quick look, as the keys file writes it; empty for none."
   },
   "shortcuts.explorer-new-folder": {
     "type": "string",
@@ -1215,6 +1231,14 @@
   "shortcuts.explorer-parent": {
     "type": "string",
     "description": "The key that runs Folder above, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-preview": {
+    "type": "string",
+    "description": "The key that runs Preview, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-search": {
+    "type": "string",
+    "description": "The key that runs Search below this folder, as the keys file writes it; empty for none."
   },
   "shortcuts.export-copy": {
     "type": "string",

@@ -2904,4 +2904,13 @@ export const zhHans: Dictionary = {
   '{name} is already here': '这里已有 {name}',
   '{count} names are already here': '这里已有 {count} 个同名项目',
   'Pin to Places': '固定到位置',
+  Preview: '预览',
+  'Link to': '链接到',
+  '{files}, {folders}, {size}': '{files}，{folders}，{size}',
+  'Counting…': '正在计数…',
+  'Count what it holds': '统计其中内容',
+  'Searching…': '正在搜索…',
+  'Search below this folder': '在此文件夹中搜索',
+  'Quick look': '快速查看',
+  '{count} folders': '{count} 个文件夹',
 }

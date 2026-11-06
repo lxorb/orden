@@ -3011,4 +3011,16 @@ export const bn: Dictionary = {
     other: '{count}টি নাম এখানে আগে থেকেই আছে',
   },
   'Pin to Places': 'স্থানে পিন করুন',
+  Preview: 'প্রিভিউ',
+  'Link to': 'যেখানে নির্দেশ করে',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'গণনা হচ্ছে…',
+  'Count what it holds': 'ভেতরে কী আছে গুনুন',
+  'Searching…': 'খোঁজা হচ্ছে…',
+  'Search below this folder': 'এই ফোল্ডারের ভেতরে খুঁজুন',
+  'Quick look': 'দ্রুত দেখা',
+  '{count} folders': {
+    one: '{count}টি ফোল্ডার',
+    other: '{count}টি ফোল্ডার',
+  },
 }

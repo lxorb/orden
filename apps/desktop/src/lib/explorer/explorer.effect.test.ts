@@ -57,6 +57,24 @@ vi.mock('./commands', () => ({
     return Promise.resolve(`${folder}/${name}`)
   },
   showInSystem: () => Promise.resolve(),
+  factsOf: (path: string) =>
+    Promise.resolve({
+      path,
+      name: path.slice(path.lastIndexOf('/') + 1),
+      kind: 'file',
+      folder: false,
+      size: 2048,
+      modified: 0,
+      hidden: false,
+      created: null,
+      accessed: null,
+      readonly: false,
+      mode: 'rw-r--r--',
+      link: null,
+    }),
+  peekAt: () => Promise.resolve({ size: 5, bytes: 'aGVsbG8=', cut: false }),
+  searchBelow: () => Promise.resolve({ found: 0, cut: false, cancelled: false }),
+  FOUND: 'explorer://found',
   PROGRESS: 'explorer://progress',
   cancelJob: () => Promise.resolve(),
 }))
@@ -204,5 +222,48 @@ describe('a file explorer', () => {
     press('N', { ctrlKey: true, shiftKey: true })
     await settled()
     expect(changed.at(-1)).toBe('make /home/me New folder')
+  })
+
+  test('narrows the folder as a filter is typed, and Escape brings the rest back', async () => {
+    const { view } = await explorer()
+    press('f', { ctrlKey: true })
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.filter')
+    expect(field).not.toBeNull()
+    if (!field) return
+    field.value = 'pl'
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    expect(rows()).toEqual(['plan.pdf'])
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settled()
+    expect(view.filter).toBe('')
+    expect(rows()).toHaveLength(4)
+  })
+
+  test('looks at a file with Space, its words and its facts, and puts it away again', async () => {
+    await explorer()
+    press('n')
+    press(' ')
+    await settled()
+    const look = target.querySelector('.look')
+    expect(look?.textContent).toContain('notes.txt')
+    expect(look?.textContent).toContain('hello')
+    expect(look?.textContent).toContain('rw-r--r--')
+    look?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settled()
+    expect(target.querySelector('.look')).toBeNull()
+  })
+
+  test('draws the folder as a grid of tiles with Ctrl+2, and as a list with Ctrl+1', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    await explorer()
+    press('2', { ctrlKey: true })
+    await settled()
+    expect(target.querySelectorAll('.entry.tile').length).toBe(4)
+    press('1', { ctrlKey: true })
+    await settled()
+    expect(target.querySelectorAll('.entry.tile').length).toBe(0)
+    expect(explorerPrefs.view).toBe('list')
   })
 })

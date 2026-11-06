@@ -3092,4 +3092,17 @@ export const ptPT: Dictionary = {
     other: '{count} nomes já estão aqui',
   },
   'Pin to Places': 'Afixar em Locais',
+  Preview: 'Pré-visualização',
+  'Link to': 'Aponta para',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'A contar…',
+  'Count what it holds': 'Contar o conteúdo',
+  'Searching…': 'A procurar…',
+  'Search below this folder': 'Procurar dentro desta pasta',
+  'Quick look': 'Vista rápida',
+  '{count} folders': {
+    one: '{count} pasta',
+    many: '{count} de pastas',
+    other: '{count} pastas',
+  },
 }

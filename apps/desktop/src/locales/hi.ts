@@ -3017,4 +3017,16 @@ export const hi: Dictionary = {
     other: '{count} नाम यहाँ पहले से हैं',
   },
   'Pin to Places': 'जगहों में पिन करें',
+  Preview: 'पूर्वावलोकन',
+  'Link to': 'इसकी ओर लिंक',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'गिनती हो रही है…',
+  'Count what it holds': 'अंदर क्या है गिनें',
+  'Searching…': 'खोजा जा रहा है…',
+  'Search below this folder': 'इस फ़ोल्डर के अंदर खोजें',
+  'Quick look': 'झटपट झलक',
+  '{count} folders': {
+    one: '{count} फ़ोल्डर',
+    other: '{count} फ़ोल्डर',
+  },
 }

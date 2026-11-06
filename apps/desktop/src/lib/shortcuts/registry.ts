@@ -1836,6 +1836,12 @@ const EXPLORER_ENTRIES: Shortcut[] = (
     ['explorer.hidden', () => t('Hidden files'), 'Mod-h', 'Mod-Shift-h'],
     ['explorer.new-folder', () => t('New folder'), 'Mod-Shift-n', 'Mod-Shift-n'],
     ['explorer.delete', () => t('Delete for good'), 'Shift-Delete', 'Mod-Alt-Backspace'],
+    ['explorer.filter', () => t('Filter'), 'Mod-f', 'Mod-f'],
+    ['explorer.search', () => t('Search below this folder'), 'Mod-Shift-f', 'Mod-Shift-f'],
+    ['explorer.look', () => t('Quick look'), 'Space', 'Space'],
+    ['explorer.preview', () => t('Preview'), 'Alt-p', 'Mod-Alt-p'],
+    ['explorer.list', () => t('List'), 'Mod-1', 'Mod-1'],
+    ['explorer.grid', () => t('Grid'), 'Mod-2', 'Mod-2'],
   ] as const
 ).map(([id, label, key, mac]) => ({
   id,

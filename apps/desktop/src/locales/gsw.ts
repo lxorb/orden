@@ -3038,4 +3038,16 @@ export const gsw: Dictionary = {
     other: '{count} Näme sind scho da',
   },
   'Pin to Places': 'A Ört aaheftä',
+  Preview: 'Vorschau',
+  'Link to': 'Zeigt uf',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Wird zellt…',
+  'Count what it holds': 'Inhalt zelle',
+  'Searching…': 'Wird gsuecht…',
+  'Search below this folder': 'I däm Ordner sueche',
+  'Quick look': 'Überblick',
+  '{count} folders': {
+    one: '{count} Ordner',
+    other: '{count} Ordner',
+  },
 }

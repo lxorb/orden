@@ -2995,4 +2995,13 @@ export const ms: Dictionary = {
   '{name} is already here': '{name} sudah ada di sini',
   '{count} names are already here': '{count} nama sudah ada di sini',
   'Pin to Places': 'Sematkan pada Tempat',
+  Preview: 'Pratonton',
+  'Link to': 'Pautan ke',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Mengira…',
+  'Count what it holds': 'Kira kandungannya',
+  'Searching…': 'Mencari…',
+  'Search below this folder': 'Cari di dalam folder ini',
+  'Quick look': 'Lihat sekilas',
+  '{count} folders': '{count} folder',
 }

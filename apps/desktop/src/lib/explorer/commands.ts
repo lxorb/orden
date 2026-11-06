@@ -130,3 +130,58 @@ export const PROGRESS = 'explorer://progress'
 export function showInSystem(path: string): Promise<void> {
   return invoke<undefined>('explorer_reveal', { path })
 }
+
+export interface Facts extends Entry {
+  path: string
+  created: number | null
+  accessed: number | null
+  readonly: boolean
+  mode: string | null
+  link: string | null
+}
+
+export function factsOf(path: string): Promise<Facts> {
+  return invoke<Facts>('explorer_facts', { path })
+}
+
+export interface Peek {
+  size: number
+  bytes: string
+  cut: boolean
+}
+
+export function peekAt(path: string, most: number): Promise<Peek> {
+  return invoke<Peek>('explorer_peek', { path, most })
+}
+
+export interface Count {
+  files: number
+  folders: number
+  bytes: number
+  cancelled: boolean
+}
+
+export function countIn(job: string, path: string): Promise<Count> {
+  return invoke<Count>('explorer_count', { job, path })
+}
+
+export interface Found extends Entry {
+  within: string
+}
+
+export interface Searched {
+  found: number
+  cut: boolean
+  cancelled: boolean
+}
+
+export function searchBelow(
+  job: string,
+  folder: string,
+  query: string,
+  hidden: boolean,
+): Promise<Searched> {
+  return invoke<Searched>('explorer_search', { job, folder, query, hidden })
+}
+
+export const FOUND = 'explorer://found'

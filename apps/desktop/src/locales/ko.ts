@@ -2960,4 +2960,13 @@ export const ko: Dictionary = {
   '{name} is already here': '{name}이(가) 이미 있습니다',
   '{count} names are already here': '이름 {count}개가 이미 있습니다',
   'Pin to Places': '위치 목록에 고정',
+  Preview: '미리 보기',
+  'Link to': '연결 대상',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': '세는 중…',
+  'Count what it holds': '안의 항목 세기',
+  'Searching…': '검색 중…',
+  'Search below this folder': '이 폴더 안에서 검색',
+  'Quick look': '훑어보기',
+  '{count} folders': '폴더 {count}개',
 }

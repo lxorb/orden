@@ -3036,4 +3036,16 @@ export const tr: Dictionary = {
     other: '{count} ad zaten burada',
   },
   'Pin to Places': 'Yerlere sabitle',
+  Preview: 'Önizleme',
+  'Link to': 'Bağlantı hedefi',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Sayılıyor…',
+  'Count what it holds': 'İçindekileri say',
+  'Searching…': 'Aranıyor…',
+  'Search below this folder': 'Bu klasörün içinde ara',
+  'Quick look': 'Hızlı bakış',
+  '{count} folders': {
+    one: '{count} klasör',
+    other: '{count} klasör',
+  },
 }

@@ -3112,4 +3112,17 @@ export const fr: Dictionary = {
     other: '{count} noms sont déjà ici',
   },
   'Pin to Places': 'Épingler dans Emplacements',
+  Preview: 'Aperçu',
+  'Link to': 'Pointe vers',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Comptage…',
+  'Count what it holds': 'Compter le contenu',
+  'Searching…': 'Recherche…',
+  'Search below this folder': 'Chercher dans ce dossier',
+  'Quick look': 'Coup d’œil',
+  '{count} folders': {
+    one: '{count} dossier',
+    many: '{count} de dossiers',
+    other: '{count} dossiers',
+  },
 }

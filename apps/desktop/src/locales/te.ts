@@ -3029,4 +3029,16 @@ export const te: Dictionary = {
     other: '{count} పేర్లు ఇప్పటికే ఇక్కడ ఉన్నాయి',
   },
   'Pin to Places': 'స్థలాలకు పిన్ చేయి',
+  Preview: 'ప్రివ్యూ',
+  'Link to': 'లింక్ చేసేది',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'లెక్కిస్తోంది…',
+  'Count what it holds': 'లోపల ఉన్నది లెక్కించు',
+  'Searching…': 'వెతుకుతోంది…',
+  'Search below this folder': 'ఈ ఫోల్డర్ లోపల వెతుకు',
+  'Quick look': 'త్వరిత చూపు',
+  '{count} folders': {
+    one: '{count} ఫోల్డర్',
+    other: '{count} ఫోల్డర్‌లు',
+  },
 }

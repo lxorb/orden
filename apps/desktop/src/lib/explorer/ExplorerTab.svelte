@@ -9,7 +9,9 @@
   import { jobs } from './jobs.svelte'
   import ExplorerBar from './ExplorerBar.svelte'
   import ExplorerList from './ExplorerList.svelte'
+  import ExplorerLook from './ExplorerLook.svelte'
   import ExplorerPlaces from './ExplorerPlaces.svelte'
+  import ExplorerPreview from './ExplorerPreview.svelte'
   import { explorerPrefs } from './prefs.svelte'
   import { viewOf } from './view.svelte'
 
@@ -18,6 +20,8 @@
   const view = viewOf(tab)
 
   let typing = $state(false)
+  let filtering = $state(false)
+  let looking = $state(false)
   let list = $state<{ focus: () => void; menuHere: () => void }>()
 
   onMount(() => {
@@ -48,7 +52,23 @@
     const pressed = (id: string) => shortcuts.pressed(id, event)
     let run: (() => unknown) | null = null
     const chosen = view.chosen
-    if (pressed('explorer.parent') || pressed('explorer.parent.alt')) run = () => view.up()
+    if (event.key === 'Escape' && (view.search || view.filter)) {
+      run = () => {
+        view.filter = ''
+        view.endSearch()
+        filtering = false
+      }
+    } else if (pressed('explorer.filter')) run = () => (filtering = true)
+    else if (pressed('explorer.search')) {
+      run = () => {
+        if (view.filter.trim()) view.searchBelow(view.filter)
+        else filtering = true
+      }
+    } else if (pressed('explorer.look') && view.picked.cursor !== null) run = () => (looking = true)
+    else if (pressed('explorer.preview')) run = () => explorerPrefs.togglePreview()
+    else if (pressed('explorer.list')) run = () => explorerPrefs.show('list')
+    else if (pressed('explorer.grid')) run = () => explorerPrefs.show('grid')
+    else if (pressed('explorer.parent') || pressed('explorer.parent.alt')) run = () => view.up()
     else if (pressed('explorer.location')) run = () => (typing = true)
     else if (pressed('explorer.hidden')) run = () => explorerPrefs.toggleHidden()
     else if (pressed('explorer.new-folder')) run = () => newFolder(view)
@@ -72,12 +92,24 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="explorer" data-region="editor" onkeydown={onkey}>
-  <ExplorerBar {view} bind:typing onleave={() => list?.focus()} />
+  <ExplorerBar {view} bind:typing bind:filtering onleave={() => list?.focus()} />
   <div class="body">
     {#if explorerPrefs.places}
       <ExplorerPlaces {view} />
     {/if}
     <ExplorerList {view} bind:this={list} />
+    {#if explorerPrefs.preview}
+      <ExplorerPreview {view} />
+    {/if}
+    {#if looking}
+      <ExplorerLook
+        {view}
+        onclose={() => {
+          looking = false
+          list?.focus()
+        }}
+      />
+    {/if}
   </div>
   {#each jobs.list.filter((one) => one.shown) as job (job.id)}
     <div class="job" role="status">
@@ -97,6 +129,8 @@
   <div class="foot" role="status">
     {#if view.said}
       <span class="said">{view.said}</span>
+    {:else if view.search && !view.search.done}
+      <span class="cut">{t('Searching…')}</span>
     {:else if view.listing?.cut}
       <span class="cut"
         >{t('Only the first {count} are shown.', { count: i18n.amount(100_000) })}</span
@@ -117,6 +151,7 @@
   }
 
   .body {
+    position: relative;
     display: flex;
     flex: 1;
     min-height: 0;

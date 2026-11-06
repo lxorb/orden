@@ -2969,4 +2969,13 @@ export const vi: Dictionary = {
   '{name} is already here': '{name} đã có ở đây',
   '{count} names are already here': 'Đã có {count} tên ở đây',
   'Pin to Places': 'Ghim vào Địa điểm',
+  Preview: 'Xem trước',
+  'Link to': 'Liên kết tới',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Đang đếm…',
+  'Count what it holds': 'Đếm những gì bên trong',
+  'Searching…': 'Đang tìm…',
+  'Search below this folder': 'Tìm trong thư mục này',
+  'Quick look': 'Xem nhanh',
+  '{count} folders': '{count} thư mục',
 }

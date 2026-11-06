@@ -4,6 +4,10 @@
   import ArrowUp from 'lucide/dist/esm/icons/arrow-up.mjs'
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import PanelLeft from 'lucide/dist/esm/icons/panel-left.mjs'
+  import PanelRight from 'lucide/dist/esm/icons/panel-right.mjs'
+  import Search from 'lucide/dist/esm/icons/search.mjs'
+  import List from 'lucide/dist/esm/icons/list.mjs'
+  import LayoutGrid from 'lucide/dist/esm/icons/layout-grid.mjs'
   import type { IconNode } from 'lucide'
   import { tick } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -18,8 +22,14 @@
   let {
     view,
     typing = $bindable(false),
+    filtering = $bindable(false),
     onleave,
-  }: { view: ExplorerView; typing?: boolean; onleave: () => void } = $props()
+  }: {
+    view: ExplorerView
+    typing?: boolean
+    filtering?: boolean
+    onleave: () => void
+  } = $props()
   /* eslint-enable prefer-const */
 
   const crumbs = $derived(view.folder ? crumbsOf(view.folder) : [])
@@ -41,6 +51,29 @@
     typing = false
     onleave()
     if (folder) await view.go(folder)
+  }
+
+  let filterField = $state<HTMLInputElement>()
+
+  $effect(() => {
+    if (filtering) void tick().then(() => filterField?.focus())
+  })
+
+  function filterKey(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      view.searchBelow(view.filter)
+      onleave()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      view.filter = ''
+      view.endSearch()
+      filtering = false
+      onleave()
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      onleave()
+    }
   }
 
   function onkey(event: KeyboardEvent) {
@@ -120,6 +153,41 @@
     </nav>
   {/if}
 
+  {#if filtering || view.filter || view.search}
+    <input
+      bind:this={filterField}
+      bind:value={view.filter}
+      class="nib-field filter"
+      aria-label={t('Filter')}
+      placeholder={t('Filter')}
+      spellcheck="false"
+      autocomplete="off"
+      onkeydown={filterKey}
+    />
+  {/if}
+  <button
+    class="nib-glyph"
+    class:is-on={filtering || !!view.filter || !!view.search}
+    title={shortcuts.tooltip(t('Filter'), 'explorer.filter')}
+    aria-label={t('Filter')}
+    onclick={() => (filtering = !filtering)}>{@render glyph(Search)}</button
+  >
+  <button
+    class="nib-glyph"
+    class:is-on={explorerPrefs.view === 'list'}
+    title={shortcuts.tooltip(t('List'), 'explorer.list')}
+    aria-label={t('List')}
+    aria-pressed={explorerPrefs.view === 'list'}
+    onclick={() => explorerPrefs.show('list')}>{@render glyph(List)}</button
+  >
+  <button
+    class="nib-glyph"
+    class:is-on={explorerPrefs.view === 'grid'}
+    title={shortcuts.tooltip(t('Grid'), 'explorer.grid')}
+    aria-label={t('Grid')}
+    aria-pressed={explorerPrefs.view === 'grid'}
+    onclick={() => explorerPrefs.show('grid')}>{@render glyph(LayoutGrid)}</button
+  >
   <button
     class="nib-glyph"
     class:is-on={explorerPrefs.hidden}
@@ -135,6 +203,14 @@
     aria-label={t('Places')}
     aria-pressed={explorerPrefs.places}
     onclick={() => explorerPrefs.togglePlaces()}>{@render glyph(PanelLeft)}</button
+  >
+  <button
+    class="nib-glyph"
+    class:is-on={explorerPrefs.preview}
+    title={shortcuts.tooltip(t('Preview'), 'explorer.preview')}
+    aria-label={t('Preview')}
+    aria-pressed={explorerPrefs.preview}
+    onclick={() => explorerPrefs.togglePreview()}>{@render glyph(PanelRight)}</button
   >
 </div>
 
@@ -152,6 +228,11 @@
   .path {
     flex: 1;
     min-width: 0;
+  }
+
+  .filter {
+    flex: 0 1 12rem;
+    min-width: 6rem;
   }
 
   .crumbs {

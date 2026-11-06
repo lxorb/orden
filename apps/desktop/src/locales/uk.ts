@@ -3119,4 +3119,18 @@ export const uk: Dictionary = {
     other: 'Тут уже {count} назви',
   },
   'Pin to Places': 'Закріпити в Місцях',
+  Preview: 'Перегляд',
+  'Link to': 'Посилається на',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Підрахунок…',
+  'Count what it holds': 'Порахувати вміст',
+  'Searching…': 'Пошук…',
+  'Search below this folder': 'Шукати в цій теці',
+  'Quick look': 'Швидкий перегляд',
+  '{count} folders': {
+    one: '{count} тека',
+    few: '{count} теки',
+    many: '{count} тек',
+    other: '{count} теки',
+  },
 }

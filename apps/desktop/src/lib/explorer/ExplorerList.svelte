@@ -1,17 +1,21 @@
 <script lang="ts">
   import { tick } from 'svelte'
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity'
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
   import { t } from '../i18n.svelte'
   import { spelled, type Spelling } from '../list-keys'
   import { shortcuts } from '../shortcuts.svelte'
   import { readableSize } from '../usage.svelte'
-  import { walked } from '../walk'
+  import { steppedKey } from '../direction'
+  import { isPicturePath, nameOf, folderOf } from '../space-paths'
   import { menu } from '../menu.svelte'
   import { when } from '../when'
   import { renamePath } from './changes'
   import { dropInto, endDrag, over, startDrag } from './drag'
-  import type { Entry } from './commands'
+  import { type Entry, peekAt } from './commands'
+  import { stepped } from './keys'
+  import { pictureUrl } from './preview'
   import { roomMenu, rowMenu } from './menu'
   import { openFile } from './open'
   import { endingOf, type SortKey } from './order'
@@ -24,23 +28,65 @@
   let scroller = $state<HTMLElement>()
   let scrollTop = $state(0)
   let height = $state(0)
+  let width = $state(0)
   let rowHeight = $state(28)
   let spelling: Spelling = { typed: '', typedAt: 0 }
 
   const SPARE = 8
+  const TILE = 112
+  const THUMB_MOST = 8 * 1024 * 1024
 
   const rows = $derived(view.rows)
+  const grid = $derived(explorerPrefs.view === 'grid')
+  const columns = $derived(grid ? Math.max(1, Math.floor(Math.max(0, width - 16) / TILE)) : 1)
+  const lineHeight = $derived(grid ? TILE : rowHeight)
+  const lines = $derived(Math.ceil(rows.length / columns))
   const cursorAt = $derived(
     view.picked.cursor === null ? -1 : view.names.indexOf(view.picked.cursor),
   )
   const drawn = $derived.by(() => {
-    const first = Math.max(0, Math.floor(scrollTop / rowHeight) - SPARE)
-    const last = Math.min(rows.length, Math.ceil((scrollTop + height) / rowHeight) + SPARE)
+    const firstLine = Math.max(0, Math.floor(scrollTop / lineHeight) - SPARE)
+    const lastLine = Math.min(lines, Math.ceil((scrollTop + height) / lineHeight) + SPARE)
+    const first = firstLine * columns
+    const last = Math.min(rows.length, lastLine * columns)
     const at: number[] = []
     for (let one = first; one < last; one++) at.push(one)
     if (cursorAt >= 0 && (cursorAt < first || cursorAt >= last)) at.push(cursorAt)
     return at.sort((one, other) => one - other)
   })
+
+  const thumbs = new SvelteMap<string, string>()
+  const asked = new SvelteSet<string>()
+  let thumbFolder: string | null = null
+
+  $effect(() => {
+    if (!grid) return
+    const folder = view.listing?.path ?? null
+    if (folder !== thumbFolder) {
+      thumbFolder = folder
+      for (const url of thumbs.values()) URL.revokeObjectURL(url)
+      thumbs.clear()
+      asked.clear()
+    }
+    for (const index of drawn) {
+      const entry = rows[index]
+      if (!entry || entry.folder || entry.size > THUMB_MOST || !isPicturePath(entry.name)) continue
+      const path = view.pathOf(entry.name)
+      if (asked.has(path)) continue
+      asked.add(path)
+      void peekAt(path, THUMB_MOST)
+        .then((read) => {
+          const url = pictureUrl(entry.name, read)
+          if (url) thumbs.set(path, url)
+        })
+        .catch(() => undefined)
+    }
+  })
+
+  $effect(() => () => {
+    for (const url of thumbs.values()) URL.revokeObjectURL(url)
+  })
+
   const entryAt = $derived(cursorAt >= 0 ? cursorAt : 0)
 
   export function focus() {
@@ -49,16 +95,16 @@
   }
 
   function measure(node: HTMLElement) {
-    if (node.offsetHeight > 0) rowHeight = node.offsetHeight
+    if (!node.classList.contains('tile') && node.offsetHeight > 0) rowHeight = node.offsetHeight
   }
 
   function reach(index: number) {
     const box = scroller
     if (!box) return
-    const top = index * rowHeight
+    const top = Math.floor(index / columns) * lineHeight
     if (top < box.scrollTop) box.scrollTop = top
-    else if (top + rowHeight > box.scrollTop + box.clientHeight)
-      box.scrollTop = top + rowHeight - box.clientHeight
+    else if (top + lineHeight > box.scrollTop + box.clientHeight)
+      box.scrollTop = top + lineHeight - box.clientHeight
     requestAnimationFrame(() => {
       box.querySelector<HTMLElement>(`[data-index="${index}"]`)?.focus({ preventScroll: true })
     })
@@ -77,7 +123,7 @@
   }
 
   function page(): number {
-    return Math.max(1, Math.floor((scroller?.clientHeight ?? rowHeight) / rowHeight) - 1)
+    return Math.max(1, Math.floor((scroller?.clientHeight ?? lineHeight) / lineHeight) - 1)
   }
 
   function onkey(event: KeyboardEvent) {
@@ -116,11 +162,8 @@
     const plain = pressed('tree.down') ? 'ArrowDown' : pressed('tree.up') ? 'ArrowUp' : null
     const key = extend ?? plain ?? (event.altKey ? null : event.key)
     const how: How = event.shiftKey ? 'range' : event.ctrlKey || event.metaKey ? 'move' : 'one'
-    let to: number | null = null
-    if (key === 'PageDown') to = Math.min(count - 1, (at ?? -1) + page())
-    else if (key === 'PageUp') to = Math.max(0, (at ?? 0) - page())
-    else if (key) to = walked(key, at, count)
-    if (to !== null && count) {
+    const to = key ? stepped(steppedKey(key), at, count, columns, page()) : null
+    if (to !== null) {
       event.preventDefault()
       landOn(to, how)
       return
@@ -153,27 +196,51 @@
   }
 
   let room = $state<HTMLElement>()
-  let band = $state<{ from: number; to: number; kept: string[] } | null>(null)
+  let band = $state<{
+    from: number
+    to: number
+    fromX: number
+    toX: number
+    kept: string[]
+  } | null>(null)
   let banded = $state(false)
 
   function bandStart(event: PointerEvent) {
     if (event.button !== 0 || (event.target !== scroller && event.target !== room) || !room) return
-    const y = event.clientY - room.getBoundingClientRect().top
+    const box = room.getBoundingClientRect()
+    const y = event.clientY - box.top
+    const x = event.clientX - box.left
     const kept = event.ctrlKey || event.metaKey ? [...view.picked.names] : []
-    band = { from: y, to: y, kept }
+    band = { from: y, to: y, fromX: x, toX: x, kept }
     ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
   }
 
   function bandMove(event: PointerEvent) {
     if (!band || !room) return
-    band = { ...band, to: event.clientY - room.getBoundingClientRect().top }
+    const box = room.getBoundingClientRect()
+    band = { ...band, to: event.clientY - box.top, toX: event.clientX - box.left }
     const top = Math.min(band.from, band.to)
     const bottom = Math.max(band.from, band.to)
-    if (bottom - top < 4) return
+    if (bottom - top < 4 && Math.abs(band.toX - band.fromX) < 4) return
     banded = true
-    const first = Math.max(0, Math.floor(top / rowHeight))
-    const last = Math.min(rows.length - 1, Math.floor(bottom / rowHeight))
-    view.pickNames([...band.kept, ...view.names.slice(first, last + 1)])
+    const firstLine = Math.max(0, Math.floor(top / lineHeight))
+    const lastLine = Math.min(lines - 1, Math.floor(bottom / lineHeight))
+    const ltr = getComputedStyle(room).direction !== 'rtl'
+    const across = (x: number) => (ltr ? x : box.width - x)
+    const firstColumn = grid
+      ? Math.max(0, Math.floor(Math.min(across(band.fromX), across(band.toX)) / TILE))
+      : 0
+    const lastColumn = grid
+      ? Math.min(columns - 1, Math.floor(Math.max(across(band.fromX), across(band.toX)) / TILE))
+      : 0
+    const names: string[] = []
+    for (let line = firstLine; line <= lastLine; line++) {
+      for (let column = firstColumn; column <= lastColumn; column++) {
+        const name = view.names[line * columns + column]
+        if (name !== undefined) names.push(name)
+      }
+    }
+    view.pickNames([...band.kept, ...names])
   }
 
   function bandEnd() {
@@ -288,21 +355,23 @@
     { key: 'name', label: () => t('Name') },
     { key: 'modified', label: () => t('Modified') },
     { key: 'size', label: () => t('Size') },
-    { key: 'kind', label: () => t('Kind') },
+    { key: 'kind', label: () => (view.search ? t('Folder') : t('Kind')) },
   ]
 </script>
 
-<div class="list">
-  <div class="head">
-    {#each COLUMNS as column (column.key)}
-      <button class="column {column.key}" onclick={() => explorerPrefs.sortBy(column.key)}>
-        {column.label()}
-        {#if explorerPrefs.sort.key === column.key}
-          <span class="turn" aria-hidden="true">{explorerPrefs.sort.down ? '↓' : '↑'}</span>
-        {/if}
-      </button>
-    {/each}
-  </div>
+<div class="list" class:searching={!!view.search}>
+  {#if !grid}
+    <div class="head">
+      {#each COLUMNS as column (column.key)}
+        <button class="column {column.key}" onclick={() => explorerPrefs.sortBy(column.key)}>
+          {column.label()}
+          {#if explorerPrefs.sort.key === column.key}
+            <span class="turn" aria-hidden="true">{explorerPrefs.sort.down ? '↓' : '↑'}</span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <div
@@ -313,6 +382,7 @@
     aria-label={view.folder ?? t('File explorer')}
     bind:this={scroller}
     bind:clientHeight={height}
+    bind:clientWidth={width}
     onscroll={() => (scrollTop = scroller?.scrollTop ?? 0)}
     onkeydown={onkey}
     onclick={pressEmpty}
@@ -330,7 +400,7 @@
     {:else if view.listing && !rows.length}
       <p class="said">{t('This folder is empty.')}</p>
     {/if}
-    <div class="room" bind:this={room} style:height="{rows.length * rowHeight}px">
+    <div class="room" bind:this={room} style:height="{lines * lineHeight}px">
       {#if band && banded}
         <div
           class="band"
@@ -344,6 +414,7 @@
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <div
             class="nib-row entry"
+            class:tile={grid}
             class:is-picked={view.picked.names.has(entry.name)}
             class:is-taking={taking === entry.name}
             class:is-quiet={entry.hidden}
@@ -352,7 +423,8 @@
             tabindex={index === entryAt ? 0 : -1}
             data-index={index}
             data-entry={index === entryAt ? '' : undefined}
-            style:top="{index * rowHeight}px"
+            style:top="{Math.floor(index / columns) * lineHeight}px"
+            style:inset-inline-start={grid ? `${(index % columns) * TILE}px` : undefined}
             use:measure
             onclick={(event) => press(event, entry)}
             ondblclick={() => open(entry)}
@@ -364,8 +436,19 @@
             ondragleave={() => leaveRow(entry)}
             ondrop={(event) => dropOnRow(event, entry)}
           >
+            {#if grid}
+              <span class="face">
+                {#if thumbs.has(view.pathOf(entry.name))}
+                  <img src={thumbs.get(view.pathOf(entry.name))} alt="" draggable="false" />
+                {:else}
+                  <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+                {/if}
+              </span>
+            {/if}
             <span class="name">
-              <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+              {#if !grid}
+                <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+              {/if}
               {#if view.renaming === entry.name}
                 <input
                   class="nib-field rename"
@@ -380,12 +463,16 @@
                   ondblclick={(event) => event.stopPropagation()}
                 />
               {:else}
-                <span class="nib-row-label">{entry.name}</span>
+                <span class="nib-row-label">{view.search ? nameOf(entry.name) : entry.name}</span>
               {/if}
             </span>
-            <span class="nib-row-meta modified">{when(entry.modified, 'short')}</span>
-            <span class="nib-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span>
-            <span class="nib-row-meta kind">{kindOf(entry)}</span>
+            {#if !grid}
+              <span class="nib-row-meta modified">{when(entry.modified, 'short')}</span>
+              <span class="nib-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span>
+              <span class="nib-row-meta kind"
+                >{view.search ? folderOf(entry.name) : kindOf(entry)}</span
+              >
+            {/if}
           </div>
         {/if}
       {/each}
@@ -475,6 +562,45 @@
   .entry {
     position: absolute;
     inset-inline: 0;
+  }
+
+  .list.searching {
+    --columns: minmax(0, 1fr) 9.5rem 5.5rem minmax(0, 0.8fr);
+  }
+
+  .entry.tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 112px;
+    height: 104px;
+    padding: var(--space-1);
+    inset-inline-end: auto;
+  }
+
+  .face {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+  }
+
+  .face img {
+    max-width: 64px;
+    max-height: 64px;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+  }
+
+  .face :global(.mark) {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tile .name {
+    justify-content: center;
+    width: 100%;
+    text-align: center;
   }
 
   .name {

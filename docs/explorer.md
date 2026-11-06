@@ -70,6 +70,35 @@ folder, Copy to and Move to the other pane where an explorer shows a folder ther
 Duplicate, Rename, Copy path, Move to Trash and Delete for good. The room under the rows
 has New folder, Paste, Hidden files and Show in the system's file manager.
 
+## Finding and seeing
+
+Three ways to find something, kept apart, because plain typing should never start a crawl
+of the whole tree:
+
+1. **Type-ahead**: a letter jumps to the first name that starts with it.
+2. **Filter**: `Ctrl+F` opens a field in the bar that narrows the folder as you type.
+3. **Search below**: `Enter` in the filter, or `Ctrl+Shift+F`, searches every folder below
+   by name (`explorer_search`). Results arrive in batches as they are found. The Kind
+   column becomes the folder each result is in. The search stops at 5,000 results or
+   500,000 entries walked, and can be cancelled. `Escape` goes back to the folder.
+
+Hidden names, and everything inside a hidden folder, are found only when hidden files are
+shown.
+
+**Preview pane** (`Alt+P`, `Cmd+Alt+P` on a Mac) shows the file the keyboard is on:
+- a picture, a sound or a film, read through the window as a blob (at most 48 MB, and
+  only kinds the engine plays);
+- the first 64 KB of anything else that is UTF-8 text, as text and never as markup;
+- below that, its facts: size, modified, created, permissions, where a link points, and
+  its path. A folder can count what it holds, and the count stops when the keyboard moves
+  on.
+
+**Quick look** (`Space`) opens the same preview large over the tab. The arrows step through
+the files, and `Space` or `Escape` puts it away.
+
+**Grid** (`Ctrl+2`) draws the folder as tiles, with a picture's own thumbnail where it is
+under 8 MB. **List** (`Ctrl+1`) is the default. The arrows walk the grid across and down.
+
 ## Opening
 
 In a space, a file Orden opens (a note, canvas, page note, PDF, web shortcut, base, chat)

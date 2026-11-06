@@ -3125,4 +3125,18 @@ export const ru: Dictionary = {
     other: 'Здесь уже {count} имени',
   },
   'Pin to Places': 'Закрепить в Местах',
+  Preview: 'Просмотр',
+  'Link to': 'Ссылается на',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Подсчёт…',
+  'Count what it holds': 'Посчитать содержимое',
+  'Searching…': 'Поиск…',
+  'Search below this folder': 'Искать в этой папке',
+  'Quick look': 'Быстрый просмотр',
+  '{count} folders': {
+    one: '{count} папка',
+    few: '{count} папки',
+    many: '{count} папок',
+    other: '{count} папки',
+  },
 }

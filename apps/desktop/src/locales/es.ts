@@ -3096,4 +3096,17 @@ export const es: Dictionary = {
     other: 'Ya hay {count} nombres aquí',
   },
   'Pin to Places': 'Fijar en Lugares',
+  Preview: 'Vista previa',
+  'Link to': 'Enlaza a',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Contando…',
+  'Count what it holds': 'Contar lo que contiene',
+  'Searching…': 'Buscando…',
+  'Search below this folder': 'Buscar dentro de esta carpeta',
+  'Quick look': 'Vista rápida',
+  '{count} folders': {
+    one: '{count} carpeta',
+    many: '{count} de carpetas',
+    other: '{count} carpetas',
+  },
 }

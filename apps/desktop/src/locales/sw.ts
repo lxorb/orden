@@ -3056,4 +3056,16 @@ export const sw: Dictionary = {
     other: 'Majina {count} yapo hapa tayari',
   },
   'Pin to Places': 'Bandika kwenye Maeneo',
+  Preview: 'Onyesho la awali',
+  'Link to': 'Kiungo kwenda',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Inahesabu…',
+  'Count what it holds': 'Hesabu kilichomo',
+  'Searching…': 'Inatafuta…',
+  'Search below this folder': 'Tafuta ndani ya folda hii',
+  'Quick look': 'Mtazamo wa haraka',
+  '{count} folders': {
+    one: 'folda {count}',
+    other: 'folda {count}',
+  },
 }

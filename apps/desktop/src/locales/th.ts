@@ -2937,4 +2937,13 @@ export const th: Dictionary = {
   '{name} is already here': 'มี {name} อยู่แล้ว',
   '{count} names are already here': 'มีชื่อนี้อยู่แล้ว {count} ชื่อ',
   'Pin to Places': 'ปักหมุดไว้ในสถานที่',
+  Preview: 'ดูตัวอย่าง',
+  'Link to': 'ลิงก์ไปยัง',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'กำลังนับ…',
+  'Count what it holds': 'นับสิ่งที่อยู่ข้างใน',
+  'Searching…': 'กำลังค้นหา…',
+  'Search below this folder': 'ค้นหาในโฟลเดอร์นี้',
+  'Quick look': 'ดูด่วน',
+  '{count} folders': '{count} โฟลเดอร์',
 }

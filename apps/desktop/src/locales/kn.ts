@@ -3050,4 +3050,16 @@ export const kn: Dictionary = {
     other: '{count} ಹೆಸರುಗಳು ಈಗಾಗಲೇ ಇಲ್ಲಿವೆ',
   },
   'Pin to Places': 'ಸ್ಥಳಗಳಿಗೆ ಪಿನ್ ಮಾಡಿ',
+  Preview: 'ಮುನ್ನೋಟ',
+  'Link to': 'ಇದಕ್ಕೆ ಲಿಂಕ್',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'ಎಣಿಸಲಾಗುತ್ತಿದೆ…',
+  'Count what it holds': 'ಒಳಗಿರುವುದನ್ನು ಎಣಿಸಿ',
+  'Searching…': 'ಹುಡುಕಲಾಗುತ್ತಿದೆ…',
+  'Search below this folder': 'ಈ ಫೋಲ್ಡರ್ ಒಳಗೆ ಹುಡುಕಿ',
+  'Quick look': 'ತ್ವರಿತ ನೋಟ',
+  '{count} folders': {
+    one: '{count} ಫೋಲ್ಡರ್',
+    other: '{count} ಫೋಲ್ಡರ್‌ಗಳು',
+  },
 }

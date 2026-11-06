@@ -3125,4 +3125,18 @@ export const pl: Dictionary = {
     other: '{count} nazwy już tu jest',
   },
   'Pin to Places': 'Przypnij do Miejsc',
+  Preview: 'Podgląd',
+  'Link to': 'Wskazuje na',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Liczenie…',
+  'Count what it holds': 'Policz zawartość',
+  'Searching…': 'Wyszukiwanie…',
+  'Search below this folder': 'Szukaj w tym folderze',
+  'Quick look': 'Szybki podgląd',
+  '{count} folders': {
+    one: '{count} folder',
+    few: '{count} foldery',
+    many: '{count} folderów',
+    other: '{count} folderu',
+  },
 }

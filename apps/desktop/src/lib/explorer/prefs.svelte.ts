@@ -5,10 +5,14 @@ const KEY = 'nib:explorer'
 
 const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'size', 'kind']
 
+type View = 'list' | 'grid'
+
 class ExplorerPrefs {
   sort = $state<Sort>({ key: 'name', down: false })
   hidden = $state(false)
   places = $state(true)
+  view = $state<View>('list')
+  preview = $state(false)
 
   constructor() {
     const kept = stored(KEY)
@@ -17,6 +21,8 @@ class ExplorerPrefs {
       this.sort = { key: kept.sort.key as SortKey, down: kept.sort.down === true }
     this.hidden = kept.hidden === true
     this.places = kept.places !== false
+    this.view = kept.view === 'grid' ? 'grid' : 'list'
+    this.preview = kept.preview === true
   }
 
   sortBy(key: SortKey) {
@@ -34,8 +40,24 @@ class ExplorerPrefs {
     this.keep()
   }
 
+  togglePreview() {
+    this.preview = !this.preview
+    this.keep()
+  }
+
+  show(view: View) {
+    this.view = view
+    this.keep()
+  }
+
   private keep() {
-    keepJson(KEY, { sort: this.sort, hidden: this.hidden, places: this.places })
+    keepJson(KEY, {
+      sort: this.sort,
+      hidden: this.hidden,
+      places: this.places,
+      view: this.view,
+      preview: this.preview,
+    })
   }
 }
 

@@ -2956,4 +2956,16 @@ export const am: Dictionary = {
     other: '{count} ስሞች እዚህ አሉ',
   },
   'Pin to Places': 'ወደ ቦታዎች ሰካ',
+  Preview: 'ቅድመ እይታ',
+  'Link to': 'የሚያመለክተው',
+  '{files}, {folders}, {size}': '{files}፣ {folders}፣ {size}',
+  'Counting…': 'በመቁጠር ላይ…',
+  'Count what it holds': 'የያዘውን ቁጠር',
+  'Searching…': 'በመፈለግ ላይ…',
+  'Search below this folder': 'ከዚህ አቃፊ በታች ፈልግ',
+  'Quick look': 'ፈጣን እይታ',
+  '{count} folders': {
+    one: '{count} አቃፊ',
+    other: '{count} አቃፊዎች',
+  },
 }

@@ -3002,4 +3002,16 @@ export const gu: Dictionary = {
     other: '{count} નામો અહીં પહેલેથી છે',
   },
   'Pin to Places': 'સ્થાનોમાં પિન કરો',
+  Preview: 'પૂર્વાવલોકન',
+  'Link to': 'આના તરફ લિંક',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'ગણતરી ચાલુ…',
+  'Count what it holds': 'અંદર શું છે તે ગણો',
+  'Searching…': 'શોધાય છે…',
+  'Search below this folder': 'આ ફોલ્ડરની અંદર શોધો',
+  'Quick look': 'ઝડપી દૃશ્ય',
+  '{count} folders': {
+    one: '{count} ફોલ્ડર',
+    other: '{count} ફોલ્ડર',
+  },
 }

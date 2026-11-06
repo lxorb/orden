@@ -2997,4 +2997,13 @@ export const id: Dictionary = {
   '{name} is already here': '{name} sudah ada di sini',
   '{count} names are already here': '{count} nama sudah ada di sini',
   'Pin to Places': 'Sematkan ke Tempat',
+  Preview: 'Pratinjau',
+  'Link to': 'Tautan ke',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Menghitung…',
+  'Count what it holds': 'Hitung isinya',
+  'Searching…': 'Mencari…',
+  'Search below this folder': 'Cari di dalam folder ini',
+  'Quick look': 'Lihat sekilas',
+  '{count} folders': '{count} folder',
 }

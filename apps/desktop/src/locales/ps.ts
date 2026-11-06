@@ -3016,4 +3016,16 @@ export const ps: Dictionary = {
     other: '{count} نومونه دمخه دلته دي',
   },
   'Pin to Places': 'په ځايونو کې يې ونښلوئ',
+  Preview: 'مخکتنه',
+  'Link to': 'لینک ته',
+  '{files}, {folders}, {size}': '{files}، {folders}، {size}',
+  'Counting…': 'شمېرل کېږي…',
+  'Count what it holds': 'دننه څه دي وشمېرئ',
+  'Searching…': 'لټول کېږي…',
+  'Search below this folder': 'په دې فولډر کې ولټوئ',
+  'Quick look': 'چټک نظر',
+  '{count} folders': {
+    one: '{count} فولډر',
+    other: '{count} فولډرونه',
+  },
 }

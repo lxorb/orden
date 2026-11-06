@@ -3020,4 +3020,16 @@ export const fa: Dictionary = {
     other: '{count} نام از پیش اینجاست',
   },
   'Pin to Places': 'سنجاق در مکان‌ها',
+  Preview: 'پیش‌نمایش',
+  'Link to': 'پیوند به',
+  '{files}, {folders}, {size}': '{files}، {folders}، {size}',
+  'Counting…': 'در حال شمارش…',
+  'Count what it holds': 'شمردن محتوا',
+  'Searching…': 'در حال جست‌وجو…',
+  'Search below this folder': 'جست‌وجو در این پوشه',
+  'Quick look': 'نگاه سریع',
+  '{count} folders': {
+    one: '{count} پوشه',
+    other: '{count} پوشه',
+  },
 }

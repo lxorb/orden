@@ -2973,4 +2973,13 @@ export const ja: Dictionary = {
   '{name} is already here': '{name} はすでにあります',
   '{count} names are already here': '{count}個の名前がすでにあります',
   'Pin to Places': '場所にピン留め',
+  Preview: 'プレビュー',
+  'Link to': 'リンク先',
+  '{files}, {folders}, {size}': '{files}、{folders}、{size}',
+  'Counting…': '数えています…',
+  'Count what it holds': '中身を数える',
+  'Searching…': '検索しています…',
+  'Search below this folder': 'このフォルダー内を検索',
+  'Quick look': 'クイックルック',
+  '{count} folders': '{count}個のフォルダー',
 }

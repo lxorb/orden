@@ -3025,4 +3025,16 @@ export const pa: Dictionary = {
     other: '{count} ਨਾਂ ਪਹਿਲਾਂ ਹੀ ਇੱਥੇ ਹਨ',
   },
   'Pin to Places': 'ਥਾਵਾਂ ਵਿੱਚ ਪਿੰਨ ਕਰੋ',
+  Preview: 'ਝਲਕ',
+  'Link to': 'ਇਸ ਵੱਲ ਲਿੰਕ',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'ਗਿਣਤੀ ਹੋ ਰਹੀ ਹੈ…',
+  'Count what it holds': 'ਅੰਦਰ ਕੀ ਹੈ ਗਿਣੋ',
+  'Searching…': 'ਲੱਭਿਆ ਜਾ ਰਿਹਾ ਹੈ…',
+  'Search below this folder': 'ਇਸ ਫੋਲਡਰ ਦੇ ਅੰਦਰ ਲੱਭੋ',
+  'Quick look': 'ਝਟਪਟ ਝਾਤ',
+  '{count} folders': {
+    one: '{count} ਫੋਲਡਰ',
+    other: '{count} ਫੋਲਡਰ',
+  },
 }

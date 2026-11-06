@@ -3079,4 +3079,16 @@ export const de: Dictionary = {
     other: '{count} Namen sind schon hier',
   },
   'Pin to Places': 'An Orte anheften',
+  Preview: 'Vorschau',
+  'Link to': 'Verweist auf',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Wird gezählt…',
+  'Count what it holds': 'Inhalt zählen',
+  'Searching…': 'Wird gesucht…',
+  'Search below this folder': 'In diesem Ordner suchen',
+  'Quick look': 'Übersicht',
+  '{count} folders': {
+    one: '{count} Ordner',
+    other: '{count} Ordner',
+  },
 }

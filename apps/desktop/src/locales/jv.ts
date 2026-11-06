@@ -2981,4 +2981,13 @@ export const jv: Dictionary = {
   '{name} is already here': '{name} wis ana ing kene',
   '{count} names are already here': '{count} jeneng wis ana ing kene',
   'Pin to Places': 'Pasang ing Panggonan',
+  Preview: 'Pratinjau',
+  'Link to': 'Pranala menyang',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Ngetung…',
+  'Count what it holds': 'Etung isine',
+  'Searching…': 'Nggoleki…',
+  'Search below this folder': 'Golek ing jero folder iki',
+  'Quick look': 'Deleng sedhela',
+  '{count} folders': '{count} folder',
 }

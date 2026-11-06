@@ -3079,4 +3079,16 @@ export const fil: Dictionary = {
     other: 'Nandito na ang {count} na pangalan',
   },
   'Pin to Places': 'I-pin sa Mga lugar',
+  Preview: 'Preview',
+  'Link to': 'Tumuturo sa',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Binibilang…',
+  'Count what it holds': 'Bilangin ang laman',
+  'Searching…': 'Naghahanap…',
+  'Search below this folder': 'Maghanap sa loob ng folder na ito',
+  'Quick look': 'Mabilisang tingin',
+  '{count} folders': {
+    one: '{count} folder',
+    other: '{count} na folder',
+  },
 }

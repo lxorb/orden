@@ -37,3 +37,9 @@ export function ordered(entries: readonly Entry[], sort: Sort, hidden: boolean):
       return byName(one.name, other.name) * (sort.key === 'name' ? turn : 1)
     })
 }
+
+export function filtered(entries: readonly Entry[], typed: string): Entry[] {
+  const wanted = typed.trim().toLowerCase()
+  if (!wanted) return [...entries]
+  return entries.filter((one) => one.name.toLowerCase().includes(wanted))
+}

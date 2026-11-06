@@ -2907,4 +2907,13 @@ export const zhHant: Dictionary = {
   '{name} is already here': '這裡已有 {name}',
   '{count} names are already here': '這裡已有 {count} 個同名項目',
   'Pin to Places': '釘選到位置',
+  Preview: '預覽',
+  'Link to': '連結至',
+  '{files}, {folders}, {size}': '{files}，{folders}，{size}',
+  'Counting…': '正在計算…',
+  'Count what it holds': '計算其中內容',
+  'Searching…': '正在搜尋…',
+  'Search below this folder': '在此資料夾中搜尋',
+  'Quick look': '快速查看',
+  '{count} folders': '{count} 個資料夾',
 }

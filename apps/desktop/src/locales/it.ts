@@ -3105,4 +3105,17 @@ export const it: Dictionary = {
     other: '{count} nomi sono già qui',
   },
   'Pin to Places': 'Fissa in Risorse',
+  Preview: 'Anteprima',
+  'Link to': 'Collegamento a',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'Conteggio…',
+  'Count what it holds': 'Conta il contenuto',
+  'Searching…': 'Ricerca…',
+  'Search below this folder': 'Cerca dentro questa cartella',
+  'Quick look': 'Occhiata rapida',
+  '{count} folders': {
+    one: '{count} cartella',
+    many: '{count} di cartelle',
+    other: '{count} cartelle',
+  },
 }

@@ -3062,4 +3062,16 @@ export const ml: Dictionary = {
     other: '{count} പേരുകൾ ഇതിനകം ഇവിടെയുണ്ട്',
   },
   'Pin to Places': 'സ്ഥലങ്ങളിൽ പിൻ ചെയ്യുക',
+  Preview: 'പ്രിവ്യൂ',
+  'Link to': 'ലിങ്ക് ചെയ്യുന്നത്',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'എണ്ണുന്നു…',
+  'Count what it holds': 'ഉള്ളിലുള്ളത് എണ്ണുക',
+  'Searching…': 'തിരയുന്നു…',
+  'Search below this folder': 'ഈ ഫോൾഡറിനുള്ളിൽ തിരയുക',
+  'Quick look': 'പെട്ടെന്നുള്ള കാഴ്ച',
+  '{count} folders': {
+    one: '{count} ഫോൾഡർ',
+    other: '{count} ഫോൾഡറുകൾ',
+  },
 }

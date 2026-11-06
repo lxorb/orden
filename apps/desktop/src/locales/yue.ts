@@ -2897,4 +2897,13 @@ export const yue: Dictionary = {
   '{name} is already here': '{name} 已經喺度',
   '{count} names are already here': '已經有 {count} 個名喺度',
   'Pin to Places': '釘喺位置',
+  Preview: '預覽',
+  'Link to': '連結去',
+  '{files}, {folders}, {size}': '{files}、{folders}、{size}',
+  'Counting…': '數緊…',
+  'Count what it holds': '數吓入面有咩',
+  'Searching…': '搵緊…',
+  'Search below this folder': '喺呢個資料夾入面搵',
+  'Quick look': '快速睇',
+  '{count} folders': '{count} 個資料夾',
 }

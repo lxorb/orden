@@ -3015,4 +3015,16 @@ export const mr: Dictionary = {
     other: '{count} नावे आधीच इथे आहेत',
   },
   'Pin to Places': 'ठिकाणांमध्ये पिन करा',
+  Preview: 'पूर्वावलोकन',
+  'Link to': 'याकडे दुवा',
+  '{files}, {folders}, {size}': '{files}, {folders}, {size}',
+  'Counting…': 'मोजणी सुरू…',
+  'Count what it holds': 'आत काय आहे ते मोजा',
+  'Searching…': 'शोधत आहे…',
+  'Search below this folder': 'या फोल्डरच्या आत शोधा',
+  'Quick look': 'झटपट नजर',
+  '{count} folders': {
+    one: '{count} फोल्डर',
+    other: '{count} फोल्डर',
+  },
 }
