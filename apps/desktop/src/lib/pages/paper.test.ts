@@ -136,6 +136,26 @@ describe('the pages of a paper', () => {
     expect(densityFor(2)).toBe(densityFor(1))
   })
 
+  test('zoomed in past twice its size, a page is drawn sharper still', () => {
+    expect(densityFor(3)).toBeGreaterThan(densityFor(2))
+    expect(densityFor(8)).toBe(densityFor(4))
+  })
+
+  test('sharp pages are kept only as many as fit in the memory a paper may hold', async () => {
+    const sharp = densityFor(4)
+    for (let number = 1; number <= 8; number++) void paperOf(AT, number, undefined, false, sharp)
+    for (let number = 1; number <= 8; number++) await drawNext()
+    const drawn = held.drawn.length
+
+    void paperOf(AT, 8, undefined, false, sharp)
+    await drawNext()
+    expect(held.drawn.length).toBe(drawn)
+
+    void paperOf(AT, 1, undefined, false, sharp)
+    await drawNext()
+    expect(held.drawn.length).toBe(drawn + 1)
+  })
+
   test('the paper is read once for all its pages', async () => {
     const before = held.opened
     for (let number = 1; number <= 5; number++)

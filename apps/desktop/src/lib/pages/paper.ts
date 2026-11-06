@@ -8,9 +8,15 @@ const SCALE = 2
 
 const ROUGH = 0.5
 
+const SHARP = 4
+
+const DENSITIES = [ROUGH, SCALE, SHARP]
+
 const MOST_PIXELS = 16 * 1024 * 1024
 
 const KEPT = 24
+
+const KEPT_PIXELS = 64 * 1024 * 1024
 
 export interface Paper {
   image: ImageBitmap
@@ -22,6 +28,7 @@ interface Held {
   open: Promise<OpenPdf>
   drawn: Map<string, Promise<Paper | null>>
   recent: string[]
+  pixels: Map<string, number>
   gone: boolean
 }
 
@@ -54,7 +61,7 @@ function keyOf(at: PaperAt): string {
 }
 
 export function densityFor(onScreen: number): number {
-  return onScreen <= ROUGH ? ROUGH : SCALE
+  return DENSITIES.find((one) => onScreen <= one) ?? SHARP
 }
 
 export function paperOf(
@@ -134,6 +141,7 @@ async function pump() {
       }
       if (!paper) job.one.drawn.delete(keyOfJob(job))
       else {
+        job.one.pixels.set(keyOfJob(job), paper.image.width * paper.image.height)
         touch(job.one, keyOfJob(job))
         forgetOldest(job.one)
       }
@@ -161,7 +169,13 @@ function heldOf(at: PaperAt): Held | null {
 
   const known = held.get(key)
   if (known) return known
-  const made: Held = { open: opened(at), drawn: new Map(), recent: [], gone: false }
+  const made: Held = {
+    open: opened(at),
+    drawn: new Map(),
+    recent: [],
+    pixels: new Map(),
+    gone: false,
+  }
   made.open.catch(() => {
     if (held.get(key) === made) held.delete(key)
   })
@@ -205,13 +219,20 @@ function touch(one: Held, key: string) {
   one.recent.push(key)
 }
 
+function pixelsOf(one: Held): number {
+  let all = 0
+  for (const key of one.recent) all += one.pixels.get(key) ?? 0
+  return all
+}
+
 function forgetOldest(one: Held) {
-  while (one.recent.length > KEPT) {
+  while (one.recent.length > KEPT || (one.recent.length > 1 && pixelsOf(one) > KEPT_PIXELS)) {
     const oldest = one.recent.shift()
     if (oldest === undefined) return
 
     const going = one.drawn.get(oldest)
     one.drawn.delete(oldest)
+    one.pixels.delete(oldest)
     void going?.then((paper) => paper?.image.close())
   }
 }
