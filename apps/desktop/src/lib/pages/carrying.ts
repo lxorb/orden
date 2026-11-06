@@ -1,9 +1,3 @@
-/** The app's half of carrying a page note's paper (carried.ts): the disk, the account
- *  and the record of what has gone up, for both syncs and for a page that opens.
- *
- *  Fetched by the first pass and the first paper that is not on this device, and not
- *  before: nothing in it is needed to draw a note. */
-
 import { account } from '../account.svelte'
 import { api } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
@@ -14,19 +8,14 @@ import type { Mirror } from '../sync/mirror'
 import { workspace } from '../workspace.svelte'
 import { type Carried, type Carrying, carryPapers, forgetLacking, paperFor } from './carried'
 
-/** The least time between two carryings. Each page note is looked at once a session
- *  (carried.ts), so a carrying after the first costs a walk of the list; this only
- *  keeps a run of passes from walking it on every one. */
 const EVERY = 3000
 
 const KEY = 'nib:papers-carried:'
 
 let carrying: Promise<void> | null = null
 let lastAt = 0
-/** The session the last carrying ran under; a new one starts over. */
 let lastToken: string | null = null
 
-/** What has been carried, by the account signed in now. */
 let record: { whose: string; carried: Map<string, string> } | null = null
 
 function carriedFor(whose: string): Map<string, string> {
@@ -66,7 +55,6 @@ function how(token: string, whose: string, said: Carrying['said'] = () => undefi
   }
 }
 
-/** Whether a file is at this path on the disk; see `onDisk` in turning.ts. */
 async function onDisk(path: string): Promise<boolean> {
   if (isNative) {
     const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
@@ -78,9 +66,6 @@ async function onDisk(path: string): Promise<boolean> {
   )
 }
 
-/** The page notes v1's mirrors hold, for their papers: of the spaces the workspace
- *  lists, as a pass syncs them, each named as v1's log names a space. `reads` says which
- *  are shared to read. */
 export function mirroredPages(
   mirrors: readonly Mirror[],
   reads: (spaceId: string) => boolean,
@@ -99,9 +84,6 @@ export function mirroredPages(
   return out
 }
 
-/** Every page note the account holds here, carried, at most once in a while. Answers
- *  at once where a carrying is under way or one was moments ago. `said` takes a line for
- *  the log of the sync asking. */
 export function carryNow(notes: () => Carried[], said: Carrying['said']): Promise<void> {
   const token = account.token
   const whose = account.user?.id
@@ -114,8 +96,6 @@ export function carryNow(notes: () => Carried[], said: Carrying['said']): Promis
   return carrying
 }
 
-/** The paper of a page note this device does not have, from the account; see
- *  `paperFor` in carried.ts. A guest asks with the session a link gave them. */
 export async function paperFromAccount(
   id: string,
   note: string | null,

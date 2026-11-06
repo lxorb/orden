@@ -1,22 +1,5 @@
-/** A page note's text cards, laid out by the browser exactly as the plane lays them
- *  out, and read back as the runs of text on each line.
- *
- *  Every attempt to break a card's words into lines by hand came out different from
- *  the card on screen somewhere: another face for Arabic, a long word the card keeps
- *  whole and clips, a hyphen, kinsoku, a paragraph's margin, a heading's size. Each
- *  difference is words that are on the sheet on screen and off it in the export. So
- *  the export does not break lines at all. It mounts the plane's own card
- *  (CanvasNode.svelte) off screen, at the card's size, in the light theme a sheet is
- *  printed in, lets the browser set it, and reads where every line of every piece of
- *  text landed. The PDF and the pictures then draw those lines where they are, in the
- *  face and size they are in - see out.ts.
- *
- *  Browser only, and its own module so a test can stand in for the browser here. */
-
 import type { CanvasNode } from '../canvas/format'
 
-/** One line of one piece of text, where the card set it: from the card's top left,
- *  in CSS pixels, `y` its baseline and `width` how wide the browser set it. */
 export interface Run {
   text: string
   x: number
@@ -32,8 +15,6 @@ export interface Run {
 
 export type TextCard = CanvasNode & { type: 'text' }
 
-/** The runs of each card, by its id. Empty where there is no document to lay a card
- *  out in. */
 export async function laidOut(
   cards: readonly TextCard[],
   context: { path: string | null; root: string | null; trusted: boolean },
@@ -46,8 +27,6 @@ export async function laidOut(
     import('../CanvasNode.svelte'),
   ])
 
-  // Off screen and invisible, but laid out: `visibility` keeps every box where it
-  // would be. The light theme, because that is the side a sheet is printed in.
   const stage = document.createElement('div')
   stage.dataset.theme = 'light'
   stage.setAttribute('aria-hidden', 'true')
@@ -92,8 +71,6 @@ export async function laidOut(
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 
-/** The runs of one mounted card: each text node's graphemes, grouped by the line they
- *  landed on. Text below the card is not read, since the card clips it. */
 function runsOf(host: HTMLElement): Run[] {
   const node = host.querySelector<HTMLElement>('.node')
   const card = node?.querySelector<HTMLElement>('.card')
@@ -176,23 +153,15 @@ function runsOf(host: HTMLElement): Run[] {
   return [...runs, ...markersOf(card, origin)]
 }
 
-/** A letter of a script written right to left, and any letter at all. */
 const RTL = /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}]/u
 const LETTER = /\p{L}/u
 
-/** Whether the strong letter nearest one end of some text is right to left: null
- *  where there is no letter. */
 function rtlAt(text: string, last: boolean): boolean | null {
   const letters = Array.from(text).filter((one) => LETTER.test(one))
   const one = last ? letters[letters.length - 1] : letters[0]
   return one === undefined ? null : RTL.test(one)
 }
 
-/** A line's run with the direction its ends had in the paragraph. The browser orders a
- *  line by the whole paragraph, so a comma or a full stop between two Arabic words
- *  runs right to left even where the line breaks after it; cut out on its own, the
- *  same mark sits at the line's other end. A right-to-left mark (U+200F) where the
- *  paragraph went on, or came in, right to left gives it that direction back. */
 function inContext(run: string, paragraph: string, start: number, end: number): string {
   const rlm = '\u200f'
   let out = run
@@ -205,8 +174,6 @@ function inContext(run: string, paragraph: string, start: number, end: number): 
 
 let measuring: CanvasRenderingContext2D | null | undefined
 
-/** How far below the top of a piece of text's box its baseline is: the ascent of its
- *  first face, which is what the box of a run of text is measured from. */
 function ascentOf(style: CSSStyleDeclaration): number {
   measuring ??= document.createElement('canvas').getContext('2d')
   const size = Number.parseFloat(style.fontSize)
@@ -217,9 +184,6 @@ function ascentOf(style: CSSStyleDeclaration): number {
   return Number.isFinite(ascent) && ascent > 0 ? ascent : size * 0.8
 }
 
-/** The bullets and numbers of the lists in a card, which are the browser's own
- *  drawing and not text anybody wrote: put where a marker sits, half an em before
- *  the item's first line. */
 function markersOf(card: HTMLElement, origin: DOMRect): Run[] {
   const runs: Run[] = []
 
@@ -251,7 +215,6 @@ function markersOf(card: HTMLElement, origin: DOMRect): Run[] {
   return runs
 }
 
-/** The box of an element's first line of text. */
 function firstLine(element: Element): DOMRect | null {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
   const range = document.createRange()
@@ -266,9 +229,6 @@ function firstLine(element: Element): DOMRect | null {
   return null
 }
 
-/** The document's own faces that name only fonts on the machine (`local()`), as CSS
- *  for a picture: an SVG drawn as an image sees no stylesheet of the page, and
- *  `Orden Arabic` - the face Arabic, Persian and Urdu are set in - is one of these. */
 export function localFaces(): string {
   if (typeof document === 'undefined') return ''
   const faces: string[] = []

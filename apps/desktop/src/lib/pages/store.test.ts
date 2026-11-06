@@ -1,13 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A page note's own store: the column, the view held to it, the page a pull adds
- *  and the zoom a reader chose.
- *
- *  The same shape canvas/store.test.ts is written in, because it is the same store
- *  wearing pages. What it needs that a canvas does not is somewhere to write a view
- *  down - the zoom being the reader's own has to survive the app being started
- *  again - so the browser's storage is stood in for rather than stubbed away. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -30,13 +22,8 @@ const { PagesStore, PEEK } = await import('./store.svelte')
 const { blankPages, GUTTER, pagesOf } = await import('@orden/markdown/pages')
 const { readCanvas } = await import('../canvas/format')
 
-/** A4 at 96 to the inch, which is what `PAPERS` says and what every sum below is
- *  against. */
 const A4 = { width: 794, height: 1123 }
 
-/** A page note open in a pane, measured and framed the way the surface does it:
- *  the pane's size, and the widest page fitted across it the first time there is
- *  anything to fit. See the two effects at the top of Pages.svelte. */
 function opened(text = blankPages(), path = '/space/Lecture.pages') {
   const note = new NoteDoc(
     { kind: 'pages', path, name: 'Lecture.pages', text, dirty: false },
@@ -49,7 +36,6 @@ function opened(text = blankPages(), path = '/space/Lecture.pages') {
   return { store, note }
 }
 
-/** A note of `count` pages, made the way the app makes them. */
 function ofPages(count: number, path?: string) {
   const held = opened(blankPages(), path)
   for (let at = 1; at < count; at++) held.store.addPage()
@@ -106,8 +92,6 @@ describe('a page added', () => {
     expect(store.count).toBe(4)
   })
 
-  /** The page the pull makes has to be one thing to take back, like every other
-   *  gesture on this surface: one edit, one undo step. */
   test('is taken back whole by one undo', () => {
     const { store } = opened()
     store.addPage()
@@ -172,8 +156,6 @@ describe('the view held to the column', () => {
     expect(store.top).toBeLessThan(0)
   })
 
-  /** The end of a page note is where the next page comes from, so the scroll
-   *  reaches far enough past the last sheet to show the silhouette of it. */
   test('reaches a band past the last page, for the sheet that is not there yet', () => {
     const { store } = ofPages(3)
     store.camera = store.held({ ...store.camera, y: 10_000 })
@@ -222,9 +204,6 @@ describe('the two fits and the zoom in between', () => {
     expect(store.camera.scale).toBe(1)
   })
 
-  /** Until the reader has zoomed, the paper stays fitted across the pane: the
-   *  sidebar opening must not push the page off the side of it. Once they have, the
-   *  zoom is theirs and nothing takes it off them. */
   test('the paper stays fitted while nobody has chosen a zoom', () => {
     const { store } = ofPages(2)
     store.measured(800, 722)
@@ -240,9 +219,6 @@ describe('the two fits and the zoom in between', () => {
     expect(store.camera.scale).toBe(1)
   })
 
-  /** The one that was wrong: the camera came back after a restart and `chose` did
-   *  not, so the first measurement fitted the paper across the pane again and threw
-   *  the reader's zoom away. */
   test('and survives the app being started again', () => {
     const first = ofPages(2, '/space/Kept.pages')
     first.store.zoomTo(1)
@@ -255,9 +231,6 @@ describe('the two fits and the zoom in between', () => {
     expect(again.store.camera.scale).toBe(1)
   })
 
-  /** The other one that was wrong (#421): the surface is made again each time its tab
-   *  comes back to the front, and the camera lived on the tab while `chose` lived on
-   *  the surface, so another tab and back fitted the paper again. */
   test('and survives another tab and back, the surface made again on the same tab', () => {
     const first = ofPages(2, '/space/Switched.pages')
     first.store.zoomTo(1.6)
@@ -287,7 +260,6 @@ describe('turning to a page', () => {
     store.turnTo(3)
 
     expect(store.showing).toBe(3)
-    // The margin's worth of paper-coloured air above it, in plane units.
     expect(store.top).toBeCloseTo((store.pages[2]?.y ?? 0) - 28 / store.camera.scale, 0)
   })
 
@@ -298,9 +270,6 @@ describe('turning to a page', () => {
     expect(store.showing).toBe(3)
   })
 
-  /** A sixty page note is the one that has to stay cheap: the boxes come out of the
-   *  list on every read, so this is sixty sums rather than sixty objects kept in
-   *  step. */
   test('works the same in a note of sixty pages', () => {
     const { store } = ofPages(60)
     expect(store.count).toBe(60)

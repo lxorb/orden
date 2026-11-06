@@ -1,15 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A PDF in a space somebody shared with this account to be read.
- *
- *  Opening a PDF anywhere else turns it into its page note: a `.pages` file is
- *  written beside it and the paper is renamed in under that note (from-pdf.ts). In a
- *  space that may not be written that is two changes the sync refuses on every pass,
- *  made by nothing more than a click on the row. So there the PDF opens as itself,
- *  its pages held in memory and nothing on the disk touched.
- *
- *  The disk is a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const readOnly = vi.hoisted(() => new Set<string>())
 
@@ -29,7 +19,6 @@ vi.mock('../sharing.svelte', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-/** Node has no pdf.js: every paper here is two pages, A4 and Letter. */
 vi.mock('../pdf/document', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../pdf/document')>()),
   pageSizes: () =>
@@ -49,8 +38,6 @@ const ROOT = '/theirs'
 const PAPER = `${ROOT}/paper.pdf`
 const NOTE = `${ROOT}/paper.pages`
 
-/** The page note an older build wrote beside the paper, which opening the paper in a
- *  space that may be written takes in, moving the paper under it. */
 const BESIDE = JSON.stringify({
   nodes: [
     {
@@ -73,11 +60,9 @@ function current(): import('../../../test/disk').Disk {
   return disk.current
 }
 
-/** What the disk was asked to change: a write, a rename or a delete. */
 const changes = () =>
   current().sent.filter((one) => /^(write_note|rename_note|delete_note|trash_item) /.test(one))
 
-/** A sitting from before papers opened as page notes: one tab of kind `pdf`. */
 function sitting() {
   return {
     frame: {
@@ -154,8 +139,6 @@ describe('a PDF in a space shared to be read', () => {
     expect(workspace.tabs.find((one) => one.path === PAPER)?.kind).toBe('pdf')
   })
 
-  /** A search hit inside the paper a page note holds, or a link to that paper, names
-   *  the paper. The note holding it is what the owner drew and wrote on. */
   test('held by a page note, opens that note, read as it is', async () => {
     const held = `${ROOT}/Lecture.pages.pdf`
     const holder = `${ROOT}/Lecture.pages`

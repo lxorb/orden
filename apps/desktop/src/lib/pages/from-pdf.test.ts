@@ -10,7 +10,6 @@ import {
   type Turning,
 } from './from-pdf'
 
-/** A disk in a map, and every move made on it. */
 function disk(start: Record<string, string>, refuse: boolean | 'after' = false) {
   const files = new Map(Object.entries(start))
   const moves: string[] = []
@@ -25,8 +24,6 @@ function disk(start: Record<string, string>, refuse: boolean | 'after' = false) 
       moves.push(`${from} -> ${to}`)
       files.set(to, files.get(from) ?? '')
       files.delete(from)
-      // Moved, and something the move owes after it failed: a link to it that could
-      // not be rewritten, say.
       if (refuse === 'after') return Promise.reject(new Error('permission denied'))
       return Promise.resolve()
     },
@@ -43,12 +40,10 @@ function disk(start: Record<string, string>, refuse: boolean | 'after' = false) 
   return { files, moves, how }
 }
 
-/** A page note's pages, as the paper and the page each names. */
 function pages(text: string | undefined): string[] {
   return pagesOf(readCanvas(text ?? '{}')).map((one) => `${one.file ?? ''}#${String(one.page)}`)
 }
 
-/** What an older build wrote beside `Lecture.pdf`: its pages, naming it. */
 const BESIDE = JSON.stringify({
   nodes: [
     {
@@ -124,7 +119,6 @@ describe('a PDF, as the page note that holds it', () => {
       '/s/Lecture 2.pages.pdf': '%PDF an orphan',
     })
 
-    // A blank sheet is not a page of the PDF, and `Lecture 2` has a paper of its own.
     expect(await asPageNote('/s/Lecture.pdf', how)).toBe('/s/Lecture 3.pages')
     expect(files.get('/s/Lecture.pages')).toBe(blank)
     expect(files.get('/s/Lecture 3.pages.pdf')).toBe('%PDF')

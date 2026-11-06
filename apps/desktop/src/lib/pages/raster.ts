@@ -1,13 +1,5 @@
-/** A page's picture made pixels: an SVG rasterised by the browser, at twice its size.
- *  Its own module because nothing but a browser can do it, so a test stands in for it
- *  here and nowhere else. Used for the PNG export and for what a page note's PDF cannot
- *  set as text; see out.ts. */
-
 import type { PaperAt } from './paper'
 
-/** One SVG rasterised by the browser, which is how the canvas's PNG is made too.
- *  Null where the browser refused the picture, which is a page nothing could be
- *  drawn from rather than an error worth a dialog. */
 export async function svgToPng(
   svg: string,
   width: number,
@@ -63,16 +55,12 @@ export async function paperIsLocked(at: PaperAt): Promise<boolean> {
 
 let measuring: CanvasRenderingContext2D | null | undefined
 
-/** One 2d context to measure and read colours with, or null where there is none. */
 function context(): CanvasRenderingContext2D | null {
   if (typeof document === 'undefined') return null
   measuring ??= document.createElement('canvas').getContext('2d')
   return measuring
 }
 
-/** A CSS colour as the browser says it back, which is hex or `rgb()` whatever form it
- *  was written in - `hsl()`, a name, a theme's `rgb(...)` - so the PDF, which wants
- *  numbers, can read it. Unchanged where there is no 2d context. */
 export function cssColour(colour: string): string {
   const ctx = context()
   if (!ctx) return colour

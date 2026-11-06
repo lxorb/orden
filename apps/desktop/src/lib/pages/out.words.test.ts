@@ -11,12 +11,7 @@ import {
 import { added, emptyPages } from '@orden/markdown/pages'
 import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '../canvas/format'
 
-/** What is on a page besides the ink (B541): the words typed onto it and the ruling it
- *  is printed with. The reader sees both on the page, so every way out shows both. */
-
 vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(null) }))
-/** The browser's rasteriser, stood in for: jsdom draws no pictures. It answers with a
- *  one pixel PNG, or with nothing where a test says the browser refused. */
 const raster = vi.hoisted(() => ({
   drawn: [] as string[],
   refuse: false,
@@ -27,9 +22,6 @@ const raster = vi.hoisted(() => ({
     (one) => one.charCodeAt(0),
   ),
 }))
-/** The browser's layout of a card, stood in for: jsdom lays nothing out. Each line of
- *  a card's text is one run 20px under the last, at 7px a character - or whatever a
- *  test puts in `layouts` for a card. */
 const layout = vi.hoisted(() => ({
   runs: new Map<string, unknown[]>(),
   asked: [] as string[],
@@ -79,7 +71,6 @@ const { laidOf, pagesOutOf, pagesPdf, pageSvg } = await import('./out')
 
 const out = (canvas: Canvas) => ({ canvas, palette: {}, name: 'P', path: '/s/P.pages', root: '/s' })
 
-/** Two pages, the first one ruled, with words typed onto each. */
 function note(pattern: PageNode['pattern'] = 'blank'): Canvas {
   const one = emptyPages()
   const grown = added(one, one.nodes[0]!.id).canvas
@@ -102,7 +93,6 @@ function note(pattern: PageNode['pattern'] = 'blank'): Canvas {
   }
 }
 
-/** Every content stream of one sheet, as text. */
 async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
   const doc = await PDFDocument.load(bytes)
   const sheet = doc.getPage(at)
@@ -118,7 +108,6 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
 const hex = (text: string) =>
   Array.from(text, (one) => one.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()).join('')
 
-/** One run a test lays out itself. */
 const run = (text: string, more: Record<string, unknown> = {}) => ({
   text,
   x: 6,
@@ -156,7 +145,6 @@ describe('words typed on a page', () => {
     layout.runs.clear()
 
     const helvetica = await (await PDFDocument.create()).embedFont(StandardFonts.Helvetica)
-    // The card is 40px into its page, so its lines are at 46 and 60 and 84.8 down it.
     expect(first).toMatch(/^1 0 0 1 46 -60 Tm$/m)
     expect(first).toMatch(/^1 0 0 1 46 -84\.8 Tm$/m)
     const squeeze = Number(/^([\d.]+) Tz$/m.exec(first)?.[1])
@@ -200,7 +188,6 @@ describe('words typed on a page', () => {
     card.color = '#f00'
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
 
-    // The frame's edge.
     expect(first).toMatch(/^1 0 0 RG$/m)
   })
 
@@ -219,7 +206,6 @@ describe('words typed on a page', () => {
     const svg = raster.drawn[0] ?? ''
     expect(svg).toContain(`<tspan x="${card.x + 6}" y="${card.y + 20}">Kolokwium w środę</tspan>`)
     expect(svg).toContain(`<tspan x="${card.x + 6}" y="${card.y + 44.8}">試験 ✓</tspan>`)
-    // As wide as the browser set it, whatever face the picture finds.
     expect(svg).toMatch(/textLength="140"/)
     expect(first).toMatch(/ Do$/m)
     expect(first).not.toContain(hex('Kolokwium'))

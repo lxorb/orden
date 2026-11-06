@@ -17,13 +17,6 @@ import {
   wheeled,
 } from './pull'
 
-/** Pulling a new page into being past the end of a page note.
- *
- *  The gesture has to feel like reaching for something, has to be the same
- *  gesture with a thumb and with a wheel, and above all must never make a page
- *  somebody did not ask for: the two guards - where the scroll began, and one page
- *  per scroll - are what the last half of this file is about. */
-
 describe('how far the pull has to come', () => {
   test('is a third of the page on screen', () => {
     expect(reachFor(360)).toBe(120)
@@ -35,8 +28,6 @@ describe('how far the pull has to come', () => {
     expect(reachFor(0)).toBe(LEAST_REACH)
   })
 
-  /** A page zoomed in is taller than the window, and a third of it is a
-   *  threshold nobody can reach: the gesture would simply not work. */
   test('and a ceiling, so it is always reachable', () => {
     expect(reachFor(1600)).toBe(MOST_REACH)
     expect(reachFor(99999)).toBe(MOST_REACH)
@@ -50,8 +41,6 @@ describe('how far the silhouette rises', () => {
   })
 
   test('the reader’s own pixels to begin with', () => {
-    // Within a couple of per cent of one for one over the first few pixels,
-    // which is what makes the silhouette feel attached to the hand.
     expect(risen(4, 120)).toBeGreaterThan(3.8)
     expect(risen(4, 120)).toBeLessThanOrEqual(4)
   })
@@ -71,8 +60,6 @@ describe('how far the silhouette rises', () => {
     expect(risen(100_000, 120)).toBeGreaterThan(355)
   })
 
-  /** The number the report quotes: the threshold sits at half again the distance
-   *  the hand has moved, so a pull of 240 has risen 160. */
   test('reaches the threshold at half again the hand’s travel', () => {
     expect(risen(240, 160)).toBeCloseTo(160, 6)
     expect(armed(risen(240, 160), 160)).toBe(true)
@@ -82,7 +69,6 @@ describe('how far the silhouette rises', () => {
   test('and follows the hand exactly for a reader who asked for no movement', () => {
     expect(risen(40, 120, true)).toBe(40)
     expect(risen(200, 120, true)).toBe(200)
-    // The cap is still a cap: nothing travels forever.
     expect(risen(10_000, 120, true)).toBe(360)
   })
 })
@@ -104,9 +90,6 @@ describe('a wheel that has stopped', () => {
     expect(fallen(200, FALL * 2)).toBe(0)
   })
 
-  /** Reduced motion means the app does not ease it away, not that the gesture has
-   *  no memory: a trackpad's deltas are five pixels each, and without the memory
-   *  they could never reach the threshold at all. */
   test('and for a reader who asked for no movement it goes whole rather than easing', () => {
     expect(fallen(200, 1, true)).toBe(200)
     expect(fallen(200, FALL / 2, true)).toBe(200)
@@ -136,8 +119,6 @@ describe('where a scroll has to start', () => {
     expect(startedNearEnd(9999, last)).toBe(true)
   })
 
-  /** The rule that stops a fling: a hard flick from the top of a sixty page note
-   *  passes the end of the column with hundreds of pixels of wheel left over. */
   test('and never its upper half, so a fling from the top cannot reach it', () => {
     expect(startedNearEnd(2326 + 561, last)).toBe(false)
     expect(startedNearEnd(0, last)).toBe(false)
@@ -164,7 +145,6 @@ describe('a finger', () => {
     const { pull: after } = dragged(pull, { raw: 90, reach, now: 1010 })
 
     expect(riseOf(after, reach, 1010)).toBeGreaterThan(60)
-    // Held where it is, however long the finger stays: only a wheel falls back.
     expect(riseOf(after, reach, 1010 + FALL * 4)).toBe(riseOf(after, reach, 1010))
   })
 
@@ -200,8 +180,6 @@ describe('a finger', () => {
     expect(lifted(noPull(), { reach, now: 1000 }).makes).toBe(false)
   })
 
-  /** No rubber to spring and nothing to wait for: the page is made the moment the
-   *  threshold is crossed. */
   test('makes the page at the threshold for a reader who asked for no movement', () => {
     const pull = began(noPull(), true, 1000)
     const short = dragged(pull, { raw: reach - 1, reach, now: 1010, still: true })
@@ -225,7 +203,6 @@ describe('a wheel', () => {
       made.push(answer.makes)
     }
 
-    // 100, 200, 300 rise to 80, 109 and 120: the third notch is the page.
     expect(made).toEqual([false, false, true, false])
   })
 
@@ -233,7 +210,6 @@ describe('a wheel', () => {
     let pull = began(noPull(), true, 1000)
     let pages = 0
 
-    // A trackpad flick: forty events over a third of a second.
     for (let step = 0; step < 40; step++) {
       const answer = wheeled(pull, { delta: 60, reach, now: 1000 + step * 8 })
       pull = answer.pull
@@ -254,7 +230,6 @@ describe('a wheel', () => {
     }
     expect(pages).toBe(1)
 
-    // The reader stops, and starts again.
     pull = began(pull, true, 1000 + SETTLE + 100)
     const again = wheeled(pull, { delta: 300, reach, now: 1000 + SETTLE + 110 })
     expect(again.makes).toBe(true)

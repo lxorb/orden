@@ -1,9 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** Carrying started over for a new session: a paper held back by the session before it,
- *  by a 401 or a run of failures, goes at the first carrying of the new one rather than
- *  minutes later. */
-
 const world = vi.hoisted(() => ({
   account: { token: 'first', user: { id: 'u1' } },
   puts: 0,
@@ -46,7 +42,6 @@ test('a new sign-in carries at once what the old session was refused or failed a
   await carryNow(NOTES, said)
   expect(world.puts).toBe(1)
 
-  // Past the least time between two carryings, and well inside any wait.
   vi.setSystemTime(Date.now() + 3_001)
   await carryNow(NOTES, said)
   expect(world.puts).toBe(1)

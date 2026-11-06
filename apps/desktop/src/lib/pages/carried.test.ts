@@ -9,10 +9,6 @@ import {
   paperRetryDelay,
 } from './carried'
 
-/** A page note's paper carried with the note (#551): up once from the device that has
- *  it, down onto a device that has the note and not the paper, and never asked about
- *  for a page note of blank sheets. */
-
 const WITH_PAPER = JSON.stringify({
   nodes: [
     {
@@ -118,8 +114,6 @@ describe('carrying a page note’s paper', () => {
     expect(asked).toEqual([])
   })
 
-  /** The device that made the note may not have carried it up yet: asked again, but
-   *  not on every pass. */
   test('asks again a while after the account had none', async () => {
     vi.useFakeTimers()
     try {
@@ -138,9 +132,6 @@ describe('carrying a page note’s paper', () => {
     }
   })
 
-  // Carrying runs beside the next pass, and a rename there moved no paper while this
-  // one was coming down: it landed at the old name beside no note, was sent everywhere
-  // as a PDF of its own, and the renamed note's came down again.
   test.each([
     ['renamed', '/s/Renamed.pages'],
     ['deleted', null],
@@ -185,8 +176,6 @@ describe('carrying a page note’s paper', () => {
 describe('a paper the account will not take', () => {
   const NOTE = { path: '/s/Lecture.pages', id: 'n1', writes: true, space: 'Work' }
 
-  /** A paper on the disk whose every read and send is counted, and sends that answer
-   *  as `answer` says. */
   function refusing(answer: () => Promise<void>) {
     const made = world({ '/s/Lecture.pages': WITH_PAPER, '/s/Lecture.pages.pdf': PDF })
     const count = { reads: 0, ups: 0 }
@@ -308,8 +297,6 @@ describe('a paper the account will not take', () => {
   })
 
   test('with nothing to say whether the file changed is tried again later, said once', async () => {
-    // No stamp where `file_stamp` failed or a browser has none: not remembered, since
-    // nothing would ever say the file changed.
     const { how, count, stamps, said } = refusing(() => Promise.reject(new ApiError(413, 'no')))
     stamps.clear()
 
@@ -323,8 +310,6 @@ describe('a paper the account will not take', () => {
   })
 
   test('is only what the blob store says: a 400 naming the note clears by itself', async () => {
-    // `only a page note holds a paper`: the account has the note under an older name, a
-    // push behind the carrying.
     const { how, count, said } = refusing(() => Promise.resolve())
     let hold: () => Promise<void> = () => Promise.reject(new ApiError(400, 'not pages yet'))
     how.hold = () => hold()
