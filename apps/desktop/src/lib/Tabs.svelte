@@ -837,6 +837,7 @@
     class:moving={drag.on}
     class:bare
     class:flush
+    ondragenter={over}
     ondragover={over}
     ondragleave={(event) => {
       const box = event.currentTarget.getBoundingClientRect()

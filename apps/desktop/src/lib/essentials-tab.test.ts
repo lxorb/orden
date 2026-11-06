@@ -122,6 +122,11 @@ describe('an essential dragged into a strip', () => {
     expect(tabs).toContain('droppedEssential(mark, paneId, at)')
   })
 
+  test('and the strip takes it from the moment it comes over the strip, as Safari asks', () => {
+    const tabs = readFileSync(new URL('./Tabs.svelte', import.meta.url), 'utf8')
+    expect(tabs).toMatch(/ondragenter=\{over\}\s+ondragover=\{over\}/)
+  })
+
   test('and a bookmark that is no note is no tab', async () => {
     workspace.bookmarks.put('/space', [{ kind: 'group', path: 'g', text: 'Group' }])
     const before = workspace.tabs.length
