@@ -38,6 +38,10 @@ const POLYFILL_JS: &str = include_str!("firefox/browser-polyfill.js");
 const BRIDGE_JS: &str = include_str!("firefox/bridge.js");
 const HOST_JS: &str = include_str!("firefox/host.js");
 
+/// The picture a notification is shown with where the add-on has none Chromium draws;
+/// see firefox.js.
+const ICON_PNG: &[u8] = include_bytes!("../../icons/128x128.png");
+
 /// What every page loads first, and what the background page loads before that.
 const PAGE_SCRIPTS: &str = r#"<script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
 const BACKGROUND_SCRIPTS: &str = r#"<script src="/orden/bridge.js"></script><script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
@@ -623,7 +627,12 @@ fn accessible(resources: &[Value]) -> Vec<Value> {
                 .filter_map(Value::as_str)
                 .map(relative)
                 .collect();
-            let matches = patterns(one.get("matches"));
+            // Chromium takes only an origin here, as `/*`; Firefox reads no more of any.
+            let matches: Vec<String> = patterns(one.get("matches"))
+                .iter()
+                .map(String::as_str)
+                .map(origin_of)
+                .collect();
             if listed.is_empty() || (matches.is_empty() && one.get("extension_ids").is_none()) {
                 return None;
             }
@@ -638,6 +647,17 @@ fn accessible(resources: &[Value]) -> Vec<Value> {
         out.insert(0, json!({ "resources": plain, "matches": ["<all_urls>"] }));
     }
     out
+}
+
+/// A match pattern for its origin alone, every path of it.
+fn origin_of(pattern: &str) -> String {
+    match pattern.split_once("://") {
+        Some((scheme, rest)) => {
+            let host = rest.split('/').next().unwrap_or_default();
+            format!("{scheme}://{host}/*")
+        }
+        None => pattern.to_owned(),
+    }
 }
 
 /// What Chromium takes of `commands`: the button's own under its V3 name, a description
@@ -663,6 +683,7 @@ fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
         let description = command
             .get("description")
             .and_then(Value::as_str)
+            .filter(|one| !one.trim().is_empty())
             .unwrap_or(name);
         if name != "_execute_action" {
             kept.insert("description".into(), json!(description));
@@ -803,6 +824,7 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     write("browser-polyfill.js", POLYFILL_JS)?;
     write("bridge.js", BRIDGE_JS)?;
     write("host.js", HOST_JS)?;
+    fs::write(layer_dir.join("icon.png"), ICON_PNG).map_err(|error| error.to_string())?;
 
     let mut background_page = None;
     match &translated.background {
@@ -1441,6 +1463,64 @@ mod tests {
         )
         .expect("a manifest");
         assert_eq!(manifest["name"], "__MSG_onboarding_1_header__");
+    }
+
+    /// Firefox reads only the origin of a pattern a page may load a file at; Chromium
+    /// refuses the whole add-on for one with a path of its own.
+    #[test]
+    fn a_file_a_page_may_load_is_matched_by_its_origin() {
+        let firefox = json!({
+            "manifest_version": 3, "name": "x", "version": "1",
+            "web_accessible_resources": [{
+                "resources": ["a.png"],
+                "matches": ["*://*.youtube.com/watch*", "https://example.com/a/b", "<all_urls>"],
+            }],
+        });
+        let made = translate(&firefox, "KEY");
+        assert_eq!(
+            made.manifest["web_accessible_resources"],
+            json!([{
+                "resources": ["a.png"],
+                "matches": ["*://*.youtube.com/*", "https://example.com/*", "<all_urls>"],
+            }])
+        );
+    }
+
+    /// Firefox takes a shortcut with an empty description; Chromium refuses to load one.
+    #[test]
+    fn a_shortcut_has_words_chromium_takes() {
+        let firefox = json!({
+            "manifest_version": 2, "name": "x", "version": "1",
+            "commands": { "open": { "description": "" }, "close": { "description": "Close" } },
+        });
+        let made = translate(&firefox, "KEY");
+        assert_eq!(
+            made.manifest["commands"],
+            json!({ "open": { "description": "open" }, "close": { "description": "Close" } })
+        );
+    }
+
+    /// A notification is shown with the add-on's picture, or the layer's own where it has
+    /// none Chromium draws; Chromium refuses one whose picture is not there.
+    #[test]
+    fn a_notification_has_a_picture_that_is_there() {
+        let folder = tempfile::tempdir().expect("a folder");
+        let at = folder.path();
+        std::fs::write(
+            at.join("manifest.json"),
+            json!({
+                "manifest_version": 2, "name": "x", "version": "1",
+                "icons": { "48": "icon.svg" },
+                "permissions": ["notifications"],
+            })
+            .to_string(),
+        )
+        .expect("a manifest");
+        std::fs::write(at.join("icon.svg"), "<svg/>").expect("a picture");
+        super::apply(at, "x@example.com").expect("applied");
+        let layer = std::fs::read_to_string(at.join("orden/firefox.js")).expect("there");
+        assert!(!layer.contains(r#""icon":"#), "{layer}");
+        assert!(at.join("orden/icon.png").is_file());
     }
 
     #[test]
