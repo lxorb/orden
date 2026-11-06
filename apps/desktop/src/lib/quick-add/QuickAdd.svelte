@@ -127,9 +127,17 @@
     return out
   })
 
-  const note = $derived(
-    picked.note === null ? undefined : (picked.note ?? read.note ?? prefill.note),
-  )
+  const placeOf = (said: { note?: string; heading?: string }) => ({
+    note: picked.note === null ? undefined : (picked.note ?? said.note ?? prefill.note),
+    heading:
+      picked.note !== undefined
+        ? undefined
+        : said.note !== undefined
+          ? said.heading
+          : (said.heading ?? prefill.heading),
+  })
+
+  const note = $derived(placeOf(read).note)
 
   onMount(() => input?.focus())
 
@@ -338,13 +346,17 @@
     )
   }
 
-  function entryOf(said: string, own: QuickFields): Entry | null {
+  function entryOf(
+    said: string,
+    own: QuickFields,
+    from: { note?: string; heading?: string } = read,
+  ): Entry | null {
     if (!said) return null
     const entry: Entry = { text: said, fields: own }
     if (description?.trim()) entry.description = description
-    if (note !== undefined) entry.note = note
-    const heading = picked.note === undefined ? (read.heading ?? prefill.heading) : undefined
-    if (heading !== undefined) entry.heading = heading
+    const place = placeOf(from)
+    if (place.note !== undefined) entry.note = place.note
+    if (place.heading !== undefined) entry.heading = place.heading
     return entry
   }
 
@@ -403,7 +415,7 @@
         const own: QuickFields = said
           ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
           : fields
-        const entry = entryOf(said ? said.text || line : line, own)
+        const entry = entryOf(said ? said.text || line : line, own, said ?? {})
         if (entry && (await onsubmit(entry, false)) === false) {
           pasted = lines.slice(index)
           return
