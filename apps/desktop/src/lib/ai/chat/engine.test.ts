@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../keys', () => ({ readKey: () => Promise.resolve('sk-test') }))
 
+const page = new EventTarget()
+vi.stubGlobal('addEventListener', page.addEventListener.bind(page))
+
 const { createApiEngine, engineFor, MOST_ROUNDS, registerLocalEngine } = await import('./engine')
 const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
@@ -642,6 +645,35 @@ describe('a stream that stops before it says it is done', () => {
     expect(one.turns.at(-1)?.parts).toEqual([
       { kind: 'text', text: 'Hello world' },
       { kind: 'notice', code: 'error', text: expect.stringContaining('connection') as string },
+    ])
+  })
+
+  test('is stopped, not an error, where the page is leaving and Safari fails the load', async () => {
+    const said = new TextEncoder().encode(`data: ${JSON.stringify(words('Kept '))}\n\n`)
+    let pulled = 0
+    answers = [
+      () =>
+        new Response(
+          new ReadableStream({
+            pull(control) {
+              if (pulled++ === 0) {
+                control.enqueue(said)
+                return
+              }
+              page.dispatchEvent(new Event('beforeunload'))
+              control.error(new TypeError('Load failed'))
+            },
+          }),
+        ),
+    ]
+    const one = thread()
+    const heard = await send(one, 'Say it')
+    page.dispatchEvent(new Event('pageshow'))
+
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
+    expect(one.turns.at(-1)?.parts).toEqual([
+      { kind: 'text', text: 'Kept ' },
+      { kind: 'notice', code: 'stopped', text: '' },
     ])
   })
 

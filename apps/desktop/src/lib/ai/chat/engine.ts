@@ -44,6 +44,13 @@ export const MOST_ROUNDS = 40
 
 const MOST_ASKS = 3
 
+let leaving = false
+if (typeof addEventListener === 'function') {
+  for (const name of ['beforeunload', 'pagehide']) addEventListener(name, () => (leaving = true))
+  for (const name of ['pageshow', 'pointerdown', 'keydown'])
+    addEventListener(name, () => (leaving = false), { capture: true, passive: true })
+}
+
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
 const PARTLY =
   'Change part of a note with edit_note rather than write_note: they may be typing in it.'
@@ -350,7 +357,7 @@ export function createApiEngine(setup: Setup): Engine {
       close(false)
       for (const part of turn.parts)
         if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
-      if (wasStopped(error) || signal.aborted) {
+      if (wasStopped(error) || signal.aborted || leaving) {
         say({ kind: 'notice', code: 'stopped', text: '' })
         on({ type: 'done', stop: 'stopped' })
       } else {
