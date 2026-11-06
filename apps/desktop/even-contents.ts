@@ -679,9 +679,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  Raised on 2026-11-06 for #331, the overview's bubbles round all the way (overview/
  *  bubble.ts `softened`): the code to 6,141,800, measured 6,141,418.
+ *
+ *  Raised on 2026-11-06 for #1155, a Firefox add-on said before it is installed, what of
+ *  it does not run and its theme (web-tab/extensions.svelte.ts): the code to 6,143,000,
+ *  measured 6,142,653.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_141_800,
+  code: 6_143_000,
   catalogues: 1_020_700,
   styles: 293_100,
   fonts: 260_000,
