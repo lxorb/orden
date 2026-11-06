@@ -60,6 +60,17 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
 
+    def do_GET(self) -> None:  # noqa: N802
+        """The models it has, which the app asks a provider for as an account is set up
+        and as a chat picks one."""
+        body = json.dumps({"object": "list", "data": [{"id": "heron", "object": "model"}]}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self._cors()
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_POST(self) -> None:  # noqa: N802
         raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         try:
