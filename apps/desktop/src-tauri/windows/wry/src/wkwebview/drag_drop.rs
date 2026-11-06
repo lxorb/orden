@@ -5,6 +5,7 @@
 use std::{ffi::CStr, path::PathBuf};
 
 use objc2::{
+  rc::Retained,
   runtime::{Bool, ProtocolObject},
   DeclaredClass,
 };
@@ -14,6 +15,26 @@ use objc2_foundation::{NSArray, NSPoint, NSRect, NSString};
 use crate::DragDropEvent;
 
 use super::WryWebView;
+
+pub type CarryIn =
+  fn(&ProtocolObject<dyn NSDraggingInfo>, bool) -> Option<Retained<ProtocolObject<dyn NSDraggingInfo>>>;
+
+static CARRY_IN: std::sync::OnceLock<CarryIn> = std::sync::OnceLock::new();
+
+pub fn carry_into_pages(hook: CarryIn) {
+  let _ = CARRY_IN.set(hook);
+}
+
+fn carried(
+  this: &WryWebView,
+  drag_info: &ProtocolObject<dyn NSDraggingInfo>,
+  dropping: bool,
+) -> Option<Retained<ProtocolObject<dyn NSDraggingInfo>>> {
+  if !this.ivars().is_child {
+    return None;
+  }
+  CARRY_IN.get().and_then(|hook| hook(drag_info, dropping))
+}
 
 pub(crate) unsafe fn collect_paths(drag_info: &ProtocolObject<dyn NSDraggingInfo>) -> Vec<PathBuf> {
   let pb = drag_info.draggingPasteboard();
@@ -43,6 +64,8 @@ pub(crate) fn dragging_entered(
 
   let listener = &this.ivars().drag_drop_handler;
   if !listener(DragDropEvent::Enter { paths, position }) {
+    let swapped = carried(this, drag_info, false);
+    let drag_info = swapped.as_deref().unwrap_or(drag_info);
     // Reject the Wry file drop (invoke the OS default behaviour)
     unsafe { objc2::msg_send![super(this), draggingEntered: drag_info] }
   } else {
@@ -60,6 +83,8 @@ pub(crate) fn dragging_updated(
 
   let listener = &this.ivars().drag_drop_handler;
   if !listener(DragDropEvent::Over { position }) {
+    let swapped = carried(this, drag_info, false);
+    let drag_info = swapped.as_deref().unwrap_or(drag_info);
     unsafe {
       let os_operation = objc2::msg_send![super(this), draggingUpdated: drag_info];
       if os_operation == NSDragOperation::None {
@@ -88,6 +113,8 @@ pub(crate) fn perform_drag_operation(
 
   let listener = &this.ivars().drag_drop_handler;
   if !listener(DragDropEvent::Drop { paths, position }) {
+    let swapped = carried(this, drag_info, true);
+    let drag_info = swapped.as_deref().unwrap_or(drag_info);
     // Reject the Wry drop (invoke the OS default behaviour)
     unsafe { objc2::msg_send![super(this), performDragOperation: drag_info] }
   } else {
@@ -98,6 +125,8 @@ pub(crate) fn perform_drag_operation(
 pub(crate) fn dragging_exited(this: &WryWebView, drag_info: &ProtocolObject<dyn NSDraggingInfo>) {
   let listener = &this.ivars().drag_drop_handler;
   if !listener(DragDropEvent::Leave) {
+    let swapped = carried(this, drag_info, false);
+    let drag_info = swapped.as_deref().unwrap_or(drag_info);
     // Reject the Wry drop (invoke the OS default behaviour)
     unsafe { objc2::msg_send![super(this), draggingExited: drag_info] }
   }

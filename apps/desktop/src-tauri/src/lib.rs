@@ -118,6 +118,8 @@ mod package_manager;
 #[cfg(target_os = "linux")]
 mod packagekit;
 #[cfg(desktop)]
+mod page_carry;
+#[cfg(desktop)]
 mod page_drag;
 #[cfg(desktop)]
 mod page_hide;
@@ -523,6 +525,9 @@ macro_rules! desktop_commands {
             web_tabs::web_zoom,
             web_tabs::web_print,
             web_tabs::web_devtools,
+            page_carry::page_carry,
+            page_carry::page_carry_end,
+            page_carry::page_carry_over,
             web_certificate::web_certificate,
             web_page::web_mute,
             web_page::web_unfill,
@@ -599,6 +604,8 @@ pub fn run() {
     linux::prepare();
     #[cfg(all(windows, not(feature = "cef")))]
     web_visual::arm_visuals();
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    page_carry::mac::arm();
     #[cfg(not(feature = "cef"))]
     run_on(tauri::Builder::default());
     #[cfg(feature = "cef")]
@@ -779,6 +786,7 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
 #[cfg(desktop)]
 fn hearing(handle: &tauri::AppHandle) {
     web_tabs::hearing(handle);
+    page_carry::forget_carried(handle);
     #[cfg(windows)]
     touchpad::start(handle);
 }

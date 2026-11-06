@@ -210,6 +210,7 @@ fn draw_page_under(
             let target: IDropTarget = dropping::Dropping {
                 page: three,
                 window: key,
+                carried: RefCell::new(None),
             }
             .into();
             let _ = RegisterDragDrop(window, &target);
@@ -850,6 +851,8 @@ mod dropping {
         reason = "a COM object's methods are called by the system through its vtable, which `implement` writes, and each hands the drag on to the page through WebView2's COM interface"
     )]
 
+    use std::cell::RefCell;
+
     use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2CompositionController3;
     use windows_com::core::{implement, Ref};
     use windows_com::Win32::Foundation::{HWND, POINT, POINTL};
@@ -862,6 +865,7 @@ mod dropping {
     pub(super) struct Dropping {
         pub(super) page: ICoreWebView2CompositionController3,
         pub(super) window: isize,
+        pub(super) carried: RefCell<Option<IDataObject>>,
     }
 
     impl Dropping {
@@ -882,9 +886,12 @@ mod dropping {
             at: &POINTL,
             effect: *mut DROPEFFECT,
         ) -> windows_com::core::Result<()> {
+            let carried = crate::page_carry::win::swapped(data.as_ref());
+            let handed = carried.clone().or_else(|| data.as_ref().cloned());
+            *self.carried.borrow_mut() = carried;
             unsafe {
                 self.page
-                    .DragEnter(data.as_ref(), keys.0, self.local(at), effect.cast())
+                    .DragEnter(handed.as_ref(), keys.0, self.local(at), effect.cast())
             }
         }
 
@@ -898,6 +905,7 @@ mod dropping {
         }
 
         fn DragLeave(&self) -> windows_com::core::Result<()> {
+            self.carried.borrow_mut().take();
             unsafe { self.page.DragLeave() }
         }
 
@@ -908,9 +916,14 @@ mod dropping {
             at: &POINTL,
             effect: *mut DROPEFFECT,
         ) -> windows_com::core::Result<()> {
+            let carried = self.carried.borrow_mut().take();
+            if carried.is_some() {
+                crate::page_carry::taken();
+            }
+            let handed = carried.or_else(|| data.as_ref().cloned());
             unsafe {
                 self.page
-                    .Drop(data.as_ref(), keys.0, self.local(at), effect.cast())
+                    .Drop(handed.as_ref(), keys.0, self.local(at), effect.cast())
             }
         }
     }

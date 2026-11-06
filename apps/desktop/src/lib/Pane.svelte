@@ -26,6 +26,7 @@
   import { bottomRow, type Pane, paneIn, panesIn, topRow } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
+  import { isDesktop } from './tauri'
   import { dragged, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
@@ -97,7 +98,9 @@
       !alone.on &&
       !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
   )
-  const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)
+  const ownSurface = $derived(
+    !!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')),
+  )
   const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading && !locked)
 
   const columns = $derived(
@@ -117,6 +120,8 @@
   const keepsMiddle = $derived(
     ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
   )
+
+  const edged = $derived(keepsMiddle ? '' : undefined)
 
   const columnViews = $state<Record<string, EditorView | undefined>>({})
 
@@ -574,10 +579,10 @@
   {#if workspace.panes.dragging}
     <div class="zones" class:sides={keepsMiddle} style:--band="{EDGE * 100}%">
       <div class="zone whole" class:lit={zone === 'middle'}></div>
-      <div class="zone left" class:lit={zone === 'left'}></div>
-      <div class="zone right" class:lit={zone === 'right'}></div>
-      <div class="zone up" class:lit={zone === 'top'}></div>
-      <div class="zone down" class:lit={zone === 'bottom'}></div>
+      <div class="zone left" class:lit={zone === 'left'} data-covers={edged}></div>
+      <div class="zone right" class:lit={zone === 'right'} data-covers={edged}></div>
+      <div class="zone up" class:lit={zone === 'top'} data-covers={edged}></div>
+      <div class="zone down" class:lit={zone === 'bottom'} data-covers={edged}></div>
     </div>
   {/if}
 </div>

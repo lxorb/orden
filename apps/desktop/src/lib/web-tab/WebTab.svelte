@@ -24,6 +24,7 @@
   import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
+  import { droppedOnPage, leftPage, overPage } from './carry-in'
   import { filling } from './filling.svelte'
   import {
     ALL,
@@ -105,7 +106,8 @@
 
   function coverOf(box: Rect): { box: Rect; cut: Cut | null } {
     if (page.filling) return { box, cut: null }
-    if (filling.by !== null || workspace.panes.dragging !== null) return { box, cut: ALL }
+    if (filling.by !== null || (workspace.panes.dragging?.tabId ?? null) !== null)
+      return { box, cut: ALL }
     if (!hole) return { box, cut: null }
     if (strangerOver(hole)) return { box, cut: ALL }
     const layers = layersOver(hole)
@@ -781,6 +783,9 @@
       class:still={pictured}
       style:background-image={pictured ? `url(${page.shot})` : 'none'}
       bind:this={hole}
+      ondragover={(event) => hole && overPage(tab.id, hole, event, page.zoom)}
+      ondragleave={() => leftPage(tab.id)}
+      ondrop={(event) => hole && droppedOnPage(tab.id, hole, event, page.zoom)}
     ></div>
   {:else if page.framing === 'frame' && address}
     <iframe
