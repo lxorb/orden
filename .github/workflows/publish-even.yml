@@ -1,15 +1,9 @@
 name: publish-even
 
-# What gets a new build of the G2 plugin in front of the beta testers. The rule
-# in docs/even.md is that every repack bumps `version` in even.app.json, so that
-# bump is the whole trigger: nothing else in the app can start a publish, and a
-# push that only touches the manifest without moving the version does nothing.
 on:
   push:
     branches: [main]
     paths: [apps/desktop/even.app.json]
-  # A run that failed on a bad secret, or a build that needs to go somewhere
-  # other than the testers, can be sent through by hand.
   workflow_dispatch:
     inputs:
       branch:
@@ -20,17 +14,10 @@ concurrency:
   group: publish-even
   cancel-in-progress: false
 
-# The floor, so a job added below without a block of its own still only reads.
-# Every job states its own as well, because what a job may do is part of what the
-# job is. The plugin goes to the Even Hub over its own account, not over this
-# token, so nothing here writes anything on GitHub.
 permissions:
   contents: read
 
 jobs:
-  # A job cannot ask `if: secrets.X != ''`, and it cannot read the previous
-  # commit either, so both questions are settled here and passed down as plain
-  # strings.
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -42,30 +29,16 @@ jobs:
       version: ${{ steps.gate.outputs.version }}
       changelog: ${{ steps.gate.outputs.changelog }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          # This commit only. The manifest the push started from is fetched by
-          # its own hash below, which is one object however long the history
-          # gets, and which HEAD^ is not when a push carried several commits.
           fetch-depth: 1
 
       - id: gate
         env:
           MANIFEST: apps/desktop/even.app.json
-          # Whether both are set, tested where the expression is evaluated rather
-          # than by putting them in this job's environment: either one missing is a
-          # publish that would get as far as the sign in and stop there, and that is
-          # the whole of what this job needs to know. The account's own password
-          # belongs in the one step that signs in with it - this job has the
-          # repository checked out. `publish-linux.yml` does the same with its key.
           HAS_CREDENTIALS: ${{ secrets.EVENHUB_EMAIL != '' && secrets.EVENHUB_PASSWORD != '' }}
-          # Through the environment rather than interpolated into the script: a
-          # commit message is somebody's prose, and a `${{ }}` of it would be
-          # pasted in as shell.
           MESSAGE: ${{ github.event.head_commit.message }}
           EVENT: ${{ github.event_name }}
-          # What this push started from, which is not the same as HEAD^ when the
-          # push carried more than one commit.
           BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
@@ -73,8 +46,6 @@ jobs:
           package=$(node -p "require('./$MANIFEST').package_id ?? ''")
           version=$(node -p "require('./$MANIFEST').version ?? ''")
 
-          # A manifest missing either of them would publish as an empty package
-          # id, which the portal answers with something unhelpful.
           if [ -z "$package" ] || [ -z "$version" ]; then
             echo "::error::$MANIFEST names no package_id or no version."
             exit 1
@@ -83,8 +54,6 @@ jobs:
           echo "package=$package" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-          # One line of it, and the version when there is no commit behind this
-          # run at all, which is every run started by hand.
           changelog=$(printf '%s' "${MESSAGE:-}" | head -1 | cut -c1-500)
           echo "changelog=${changelog:-$version}" >> "$GITHUB_OUTPUT"
 
@@ -99,9 +68,6 @@ jobs:
             exit 0
           fi
 
-          # A first push to the branch has no commit before it, and a force push
-          # may name one that is gone; either reads as no manifest, which is a
-          # version this run has not seen and so a publish.
           echo '{}' > before.json
           if git fetch --depth=1 --no-tags origin "$BEFORE" 2> /dev/null; then
             git show "$BEFORE:$MANIFEST" > before.json 2> /dev/null || echo '{}' > before.json
@@ -122,37 +88,24 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      # The same two commands docs/even.md gives for doing this by hand.
       - name: Build the plugin
         run: pnpm --filter @orden/desktop build:even
 
-      # Out of the lockfile, which is the difference between a version and a
-      # tarball. `npx --yes @evenrealities/evenhub-cli@0.1.14` named a version and ran
-      # whatever the registry handed back for that name at that moment - one deleted
-      # and republished version, or one registry somebody is in the middle of, and the
-      # code that decides what goes in our package is somebody else's. As a
-      # devDependency it has a hash in pnpm-lock.yaml, and `pnpm install
-      # --frozen-lockfile` above already refused anything that is not it. The command
-      # is a script in the root package.json so this and docs/even.md are one recipe.
       - name: Pack it
         run: pnpm even:pack
 
-      # Pinned to a commit and not to `v1`. This is the one step that is handed
-      # the Even account's own password rather than a token scoped to anything,
-      # and a tag is a name its owner can move: pinning means the code that gets
-      # the password is the code that was read.
-      - uses: lxorb/evenhub-publish@13791357d7737735801747fffb389a71c6fd1b68 # v1
+      - uses: lxorb/evenhub-publish@13791357d7737735801747fffb389a71c6fd1b68
         with:
           package-id: ${{ needs.gate.outputs.package }}
           ehpk: nib.ehpk

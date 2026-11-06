@@ -1,18 +1,8 @@
 name: agent-parity
 
-# One agent's browser script against every engine an agent's tab runs on (#1092):
-# scripts/agent-parity.py, on a probe build of each - WKWebView on a Mac, WebView2 on
-# Windows, Orden's own Chromium on Linux. Every verb answers as on the others, or
-# `unsupported_on_this_engine` exactly where that engine's table says, so a tool missing
-# on one engine fails here. Nobody is at a runner, so a window on its screen is nobody's;
-# and on a Mac an agent's page runs only while the window is on a screen (docs/agent-
-# native.md 12.2), so the window stays where the app puts it.
-
 on:
   pull_request:
     branches: [main]
-    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
-    # it is marked ready (see docs/conventions.md, "CI").
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - apps/desktop/src-tauri/src/agents/**
@@ -30,7 +20,6 @@ permissions:
 
 jobs:
   parity:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
@@ -55,15 +44,12 @@ jobs:
     env:
       IDENTIFIER: ch.emilvinu.nib.probe.agent-parity
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - uses: ./.github/actions/desktop-setup
         with:
           target: ${{ matrix.target }}
 
-      # A probe build: a version no release passes and an updater pointed at nothing, so
-      # it can never install anything over anything; see scripts/probe_app.py. A Mac's is
-      # a bundle, which is what gives it an identifier of its own to keep its stores by.
       - name: The probe
         run: |
           source scripts/edge-profile.sh
@@ -85,8 +71,6 @@ jobs:
               ;;
           esac
 
-      # And Chromium's sandbox helper beside the binary, which it refuses to start
-      # without unless root owns it with its set-user bit, as the packages install it.
       - name: A screen, on Linux
         if: runner.os == 'Linux'
         run: |
@@ -106,7 +90,7 @@ jobs:
             *) python3 "${parity[@]}" ;;
           esac
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: agent-parity-${{ matrix.engine }}

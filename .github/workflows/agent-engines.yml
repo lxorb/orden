@@ -1,16 +1,8 @@
 name: agent-engines
 
-# What an agent's tab can be on the system's engine of a Mac and of Linux, measured on a
-# machine of each kind (docs/agent-native.md 12): scripts/webkit-agent-probe puts a page
-# out of sight every way the engine offers and prints its rates, its picture, its
-# isolated world and its input as one JSON document, which lands in the run's summary.
-# Nobody is at a runner, so a window on its screen is nobody's.
-
 on:
   pull_request:
     branches: [main]
-    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
-    # it is marked ready (see docs/conventions.md, "CI").
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - scripts/webkit-agent-probe/**
@@ -26,7 +18,6 @@ permissions:
 
 jobs:
   measure:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
@@ -45,9 +36,9 @@ jobs:
         shell: bash
         working-directory: scripts/webkit-agent-probe
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: stable
 
@@ -80,7 +71,7 @@ jobs:
             echo '```'
           } >>"$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: agent-engines-${{ matrix.name }}

@@ -1,20 +1,5 @@
 name: publish
 
-# Where Orden goes once it is released: the package managers that carry it. One
-# job per manager, none depending on another, so a rate-limited push or a
-# rejected pull request never holds up the rest.
-#
-# Only published stable releases are sent to package managers. The rolling
-# `edge` prerelease is built from `unstable` and is deliberately not published
-# through this release channel.
-#
-# Started by release.yml's publish job, once the release and every file on it are up:
-# a dispatch, because a release that job makes on its own token raises no event any
-# other workflow hears. Nothing listens for `release: published` either. A release made
-# by hand would raise it before its installers were uploaded, and the run after the
-# dispatch would publish it a second time. A release can be sent through again by hand,
-# `gh workflow run publish.yml -f tag=v0.15.0`, and every job is safe to run twice: the
-# bucket and the tap commit only what changed, and Chocolatey skips a version it has.
 on:
   workflow_dispatch:
     inputs:
@@ -22,23 +7,16 @@ on:
         description: The release tag to publish, for example v0.4.0
         required: true
 
-# Two releases published minutes apart would race for the same branch of the
-# bucket and the tap, so they queue instead.
 concurrency:
   group: publish
   cancel-in-progress: false
 
-# The floor, so a job added below without a block of its own still only reads.
-# Every job states its own as well, because what a job may do is part of what the
-# job is.
 permissions:
   contents: read
 
 jobs:
   gate:
     runs-on: ubuntu-latest
-    # It checks nothing out and calls nothing: two secrets read as booleans and a
-    # tag picked apart. Nothing for a token to do, so it is handed none.
     permissions: {}
     outputs:
       publish: ${{ steps.release.outputs.publish }}
@@ -62,10 +40,6 @@ jobs:
             echo "::notice::$TAG is not a released version tag - nothing to publish."
           fi
 
-      # A job cannot ask `if: secrets.X != ''`, so which tokens are configured
-      # is settled here and passed down as plain booleans. A manager whose
-      # token is missing is skipped rather than failed: the point of this file
-      # is that a release with no secrets at all still publishes fine.
       - id: tokens
         env:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
@@ -78,13 +52,6 @@ jobs:
             echo "chocolatey=$([[ -n $CHOCOLATEY_API_KEY ]] && echo true || echo false)"
           } >> "$GITHUB_OUTPUT"
 
-      # Whether Scoop and Chocolatey move from `nib` to `orden` with this release. Off
-      # unless the repository variable PACKAGE_RENAME is `true`: until the rename has
-      # been tried on Windows, both keep publishing Orden as `nib`, the name everybody
-      # who has it installed it under. Two things stand in the way (packaging/windows.md,
-      # "The rename: nib to orden"): Scoop's `nib` 0.15.0 removes its junction in a way
-      # that can empty the persist folder behind it, and Chocolatey's deprecated `nib`
-      # would depend on an `orden` still waiting for moderation.
       - id: rename
         env:
           PACKAGE_RENAME: ${{ vars.PACKAGE_RENAME }}
@@ -96,39 +63,23 @@ jobs:
             echo "::notice::PACKAGE_RENAME is not true - Scoop and Chocolatey publish Orden as nib."
           fi
 
-  # winget-pkgs is a pull request, not a push, so this opens one and a Microsoft
-  # bot merges it. The action needs the package to exist there already - it
-  # refuses to create a package from nothing - so its first version is submitted
-  # by hand. lxorb.Nib never got past its pull request and nobody installed it,
-  # so the package starts out under the product's name instead: lxorb.Orden.
   winget:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.winget == 'true'
     runs-on: ubuntu-latest
-    # The pull request against winget-pkgs is opened with the PAT below. This
-    # token only reads: the action asks this repository for the release's assets
-    # with it, and fetches komac with it.
     permissions:
       contents: read
     steps:
-      - uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e # v2
+      - uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
         with:
           identifier: lxorb.Orden
           version: ${{ needs.gate.outputs.version }}
           release-tag: ${{ needs.gate.outputs.tag }}
-          # The NSIS setup is the installer winget offers. The MSI is a
-          # per-machine install of the same thing and would only be a second
-          # entry saying the same.
           installers-regex: '-setup\.exe$'
           fork-user: lxorb
           max-versions-to-keep: 5
-          # A classic PAT with `public_repo`; the action cannot use a
-          # fine-grained one.
           token: ${{ secrets.WINGET_TOKEN }}
 
-  # lxorb/apt, the apt repository: its `stable` suite, written by apt.yml, which
-  # release.yml calls as well for `unstable`. A workflow of its own, so the two never
-  # push the repository at once; it skips itself where the key or the token is missing.
   apt:
     needs: gate
     if: needs.gate.outputs.publish == 'true'
@@ -140,7 +91,6 @@ jobs:
       tag: ${{ needs.gate.outputs.tag }}
     secrets: inherit
 
-  # The dnf and zypper repository's `stable` suite, in apt.yml's bucket; see rpm.yml.
   rpm:
     needs: gate
     if: needs.gate.outputs.publish == 'true'
@@ -152,13 +102,10 @@ jobs:
       tag: ${{ needs.gate.outputs.tag }}
     secrets: inherit
 
-  # lxorb/scoop-bucket is ours, so this is a commit rather than a pull request.
   scoop:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
     runs-on: ubuntu-latest
-    # The commit goes to lxorb/scoop-bucket on the PACKAGING_TOKEN. This token
-    # only downloads this release's own installers.
     permissions:
       contents: read
     env:
@@ -166,37 +113,24 @@ jobs:
       VERSION: ${{ needs.gate.outputs.version }}
       RENAME: ${{ needs.gate.outputs.rename }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: lxorb/scoop-bucket
           token: ${{ secrets.PACKAGING_TOKEN }}
 
-      # The manifest as this release has it, rather than as the bucket last had it,
-      # the same way the cask below is taken: a line other than the version, the
-      # urls and the digests can change with a release, the way the product's name
-      # did.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           ref: ${{ env.TAG }}
           path: source
           sparse-checkout: packaging/scoop
           persist-credentials: false
 
-      # A release from before the rename has no orden.json; this run's own is the
-      # manifest then. Its version, urls and digests are written below either way.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: current
           sparse-checkout: packaging/scoop
           persist-credentials: false
 
-      # One manifest, the release's orden.json, written under whichever name this run
-      # publishes. `nib` is Orden under its first name, so its manifest is orden's
-      # without the lines that take over what `nib` kept - nothing to take over from
-      # itself - and both carry the installer and uninstaller that remove the
-      # `%APPDATA%` junction as a link alone. Writing nib.json from it is what moves
-      # the bucket's `nib` off 0.15.0's uninstaller, whose `Remove-Item -Recurse`
-      # Windows PowerShell follows through the junction into the persist folder.
       - name: Bump
         env:
           GH_TOKEN: ${{ github.token }}
@@ -211,9 +145,6 @@ jobs:
             --pattern "Orden-$VERSION-windows-arm64-setup.exe"
 
           base="${{ github.server_url }}/$GITHUB_REPOSITORY/releases/download/$TAG"
-          # Scoop reads the extension to pick an extractor, and an NSIS setup
-          # is a 7-Zip archive as far as that goes; the fragment renames the
-          # download so it is unpacked instead of run.
           jq --indent 4 \
             --arg version "$VERSION" \
             --arg x64url "$base/Orden-$VERSION-windows-x64-setup.exe#/dl.7z" \
@@ -229,8 +160,6 @@ jobs:
           mv orden.json.next orden.json
           rm -r dl
 
-          # nib's: orden's without its five lines of taking over from `nib`, which start
-          # at the line that says so.
           jq --indent 4 \
             '(.installer.script | map(startswith("# Up to 0.15.0")) | index(true)) as $at
              | if $at == null then error("orden.json no longer says where it takes over from nib") else . end
@@ -238,12 +167,6 @@ jobs:
             orden.json > nib.json
 
           if [[ "$RENAME" == true ]]; then
-            # The app was nib in this bucket up to 0.15.0. Scoop has no rename; what it
-            # has is `bucket/deprecated/`: a manifest there still updates what it
-            # installed, and `scoop status` says Deprecated beside it. So nib's goes
-            # there, on the release's version like orden's, saying where Orden is now:
-            # updated first, so that uninstalling it runs the uninstaller above rather
-            # than 0.15.0's.
             mv orden.json bucket/orden.json
             mkdir -p bucket/deprecated
             git rm -q --ignore-unmatch bucket/nib.json
@@ -251,8 +174,6 @@ jobs:
               nib.json > bucket/deprecated/nib.json
             rm nib.json
           else
-            # Orden stays `nib` in the bucket, bumped where it is. No orden.json, and
-            # nothing deprecated.
             mv nib.json bucket/nib.json
             rm orden.json
           fi
@@ -266,29 +187,22 @@ jobs:
           git diff --quiet --cached || git commit -m "feat: $name $VERSION"
           git push
 
-  # lxorb/homebrew-tap, likewise ours. Homebrew/homebrew-cask is not: it has a
-  # notability bar Orden has not cleared, so there is nothing to send there yet.
   homebrew:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
     runs-on: ubuntu-latest
-    # Likewise: the tap is pushed to on the PACKAGING_TOKEN, and this token only
-    # downloads the dmg to hash it.
     permissions:
       contents: read
     env:
       TAG: ${{ needs.gate.outputs.tag }}
       VERSION: ${{ needs.gate.outputs.version }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: lxorb/homebrew-tap
           token: ${{ secrets.PACKAGING_TOKEN }}
 
-      # The cask as this release has it, rather than as the tap last had it: a line
-      # other than the version and the digest can change with a release, the way the
-      # app's folder was renamed to nibeditor.app and then to Orden.app.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           ref: ${{ env.TAG }}
           path: source
@@ -302,10 +216,6 @@ jobs:
           cp source/packaging/homebrew/orden.rb Casks/orden.rb
           rm -r source
 
-          # The cask was called nib until the product was. `cask_renames.json` is how
-          # a tap renames one: `brew upgrade` moves everybody who has nib over to
-          # orden, and `brew install lxorb/tap/nib` still finds it. The old file has
-          # to go for that, and both steps change nothing once they have happened.
           git rm -q --ignore-unmatch Casks/nib.rb
           renames=$(cat cask_renames.json 2>/dev/null || echo '{}')
           jq --indent 2 '. + {"nib": "orden"}' <<<"$renames" > cask_renames.json
@@ -315,8 +225,6 @@ jobs:
           sha=$(sha256sum "dl/$dmg" | cut -d' ' -f1)
           rm -r dl
 
-          # The cask builds its own URL out of the version, so only these two
-          # lines change on the way.
           sed -i -E "s|^(  version )\".*\"$|\\1\"$VERSION\"|" Casks/orden.rb
           sed -i -E "s|^(  sha256 )\".*\"$|\\1\"$sha\"|" Casks/orden.rb
           grep -E '^  (version|sha256) ' Casks/orden.rb
@@ -329,22 +237,10 @@ jobs:
           git diff --quiet --cached || git commit -m "feat: orden $VERSION"
           git push
 
-  # Chocolatey is a push of a built package, and the only one of the four that
-  # needs Windows, because `choco` is what builds it. Until PACKAGE_RENAME is true, one
-  # package: `nib`, Orden under the name everybody installed it as, made from orden.nuspec
-  # with its id and the paragraph about the rename changed. With it, two: `orden`, the
-  # app, and `nib`, which is then empty and depends on `orden` - the way Chocolatey
-  # deprecates a package (packaging/chocolatey/nib.nuspec). Not before: a new package
-  # waits for moderation and `nib` is trusted, so the deprecated `nib` would be out
-  # first and `choco upgrade nib` would fail on an `orden` nobody can install yet. A
-  # version the community repository has already is a 409, which is a package already
-  # published rather than a failure: a run again after a partial one finishes the rest.
   chocolatey:
     needs: gate
     if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.chocolatey == 'true'
     runs-on: windows-latest
-    # The package is pushed to the community repository on its own API key; this
-    # token only downloads the two MSIs to hash them.
     permissions:
       contents: read
     env:
@@ -352,12 +248,8 @@ jobs:
       VERSION: ${{ needs.gate.outputs.version }}
       RENAME: ${{ needs.gate.outputs.rename }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      # Chocolatey installs for the whole machine, so this package carries the
-      # MSI rather than the per-user NSIS setup. The install script spells every
-      # url and checksum out as a literal so the community repository's validator
-      # can read them, so the version in both urls and both digests are rewritten.
       - name: Bump orden and nib
         shell: bash
         working-directory: packaging/chocolatey
@@ -370,8 +262,6 @@ jobs:
 
           sed -i -E "s|(releases/download/v)[^/']+/[A-Za-z]+-[^']+-windows-|\\1$VERSION/Orden-$VERSION-windows-|" tools/chocolateyinstall.ps1
 
-          # A digest is the first one below the url it belongs to, so the
-          # architecture in that url is what picks which of the two is rewritten.
           for arch in x64 arm64; do
             sum=$(sha256sum "dl/Orden-$VERSION-windows-$arch.msi" | cut -d' ' -f1 | tr 'a-f' 'A-F')
             sed -i -E "/-windows-$arch\.msi'/,/'[0-9A-Fa-f]{64}'/ s|'[0-9A-Fa-f]{64}'|'$sum'|" tools/chocolateyinstall.ps1
@@ -383,9 +273,6 @@ jobs:
           sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" orden.nuspec
 
           if [[ "$RENAME" != true ]]; then
-            # Orden as `nib`: orden.nuspec under the old id, without the two lines that
-            # say `nib` is the road to it. Written over the deprecation, which this run
-            # does not push. The backticks are the nuspec's Markdown, not the shell's.
             # shellcheck disable=SC2016
             grep -q '^This package was called `nib` until 0.15.0. `nib` is now an empty package that depends on$' orden.nuspec
             # shellcheck disable=SC2016
@@ -396,8 +283,6 @@ jobs:
             exit 0
           fi
 
-          # nib's version is the release's and the day it was published, so it is newer
-          # than every nib before it and the same on every run for one release.
           day=$(date -u -d "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json publishedAt --jq .publishedAt)" +%Y%m%d)
           sed -i -E "s|<version>.*</version>|<version>$VERSION.$day</version>|" nib.nuspec
           sed -i -E "s|(<dependency id=\"orden\" version=\")[^\"]*\"|\\1$VERSION\"|" nib.nuspec
@@ -413,8 +298,6 @@ jobs:
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         run: |
-          # In the order the bump wrote them: with the rename, `orden` first, so the package
-          # `nib` depends on is there when `nib` is read.
           foreach ($entry in $env:PACKAGES -split ' ') {
             $id, $version = $entry -split ':', 2
             $package = @{ id = $id; version = $version }

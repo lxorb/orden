@@ -1,22 +1,5 @@
 name: web-unstable
 
-# The web serves the edge of `unstable` beside the release, to the browsers that ask for
-# it with a cookie (services/sync/src/channel.ts, #424). This refreshes that half on every
-# push to `unstable`.
-#
-# Only the edge's pages and bundle come from `unstable`. The Worker that serves them is
-# main's, and not main's newest commit but the one live now: the one whose migrations
-# check.yml ran when it deployed it, and which it named in the version's message. So this
-# migrates nothing, builds the release's web app from that same commit, puts the edge's
-# beside it and deploys that Worker again, containers untouched. A live Worker that is not
-# known to be one of main's has nothing to deploy beside, and the run is red until main
-# deploys again.
-#
-# The unstable web app talks to that Worker, exactly as the unstable desktop builds do:
-# whatever needs a server change only works on the web once it is released.
-#
-# A push that changes nothing the web app is made of deploys nothing; the same list as
-# release.yml's.
 on:
   push:
     branches: [unstable]
@@ -30,7 +13,6 @@ on:
       - 'services/*/test/**'
   workflow_dispatch:
 
-# The floor, so a job added below without a block of its own still only reads.
 permissions:
   contents: read
 
@@ -38,46 +20,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # Reads the repository, and may run a main deploy again; see the last step.
     permissions:
       contents: read
       actions: write
 
-    # The same queue as main's deploy in check.yml, so the two never deploy at once and
-    # neither can finish under the other with an older half. A burst of pushes deploys
-    # its newest: GitHub keeps one waiting job per group and cancels the one before.
     concurrency:
       group: deploy
       cancel-in-progress: false
 
     steps:
-      # The pushed commit of `unstable`, which is the edge's web app.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      # The live version's message, as check.yml writes it: `main <sha> unstable <sha>`. A
-      # version made by changing a secret (`wrangler secret put`) is the deployment before
-      # it with that one secret changed, and carries no message: the live one was such a
-      # version for a week, and every push here said so in a notice and deployed nothing
-      # while the run stayed green (#1112). So the deployments are walked back
-      # from the live one through such versions to the code they kept, and the main that
-      # code says it is. Any other version with no main in it - one uploaded by hand, a
-      # rollback to a version from before the message - is not known to be main's, and
-      # the run is red: nothing beside it is a deploy that did not happen, said in green.
       - name: Which main is live
         id: live
         working-directory: services/sync
         run: |
           deployments=$(pnpm exec wrangler deployments list --json)
-          # Newest first, each by the version that takes the most of its traffic.
           versions=$(jq -r 'sort_by(.created_on) | reverse | .[] |
             .versions | sort_by(-.percentage) | .[0].version_id' <<<"$deployments")
           live=$(head -1 <<<"$versions")
@@ -103,10 +70,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      # In a worktree of its own, outside this one, so that nothing either build looks up
-      # on the way - a lockfile, a config - is the other's. Its packages are named by
-      # their folders below, never by their names: main may still call them by the old
-      # ones (#367).
       - name: Check out that main
         run: |
           git fetch --no-tags --depth=1 origin "$MAIN"
@@ -125,14 +88,10 @@ jobs:
           pnpm --filter ./apps/desktop build
           bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
 
-      # The Worker's bundle carries nibd for the machines it hands it to, as main's does.
       - name: Build nibd for the Worker's bundle
         working-directory: ${{ runner.temp }}/main
         run: pnpm --filter ./services/machine build
 
-      # No migration: main's ran when main deployed this Worker. And no containers: the
-      # machines' image is main's, built and rolled out by main's deploy, and nothing
-      # here changes it.
       - name: Deploy the Worker with the edge's pages
         working-directory: ${{ runner.temp }}/main
         run: |
@@ -144,11 +103,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           MAIN: ${{ steps.live.outputs.main }}
 
-      # A job waiting in a concurrency group is cancelled when a newer one joins it, so a
-      # push here can push main's deploy out of the queue while this one runs. When main's
-      # newest commit is not the one live and its deploy was cancelled, it is run again,
-      # and waits behind this one. (A main deploy cancelled by hand is run again too; a
-      # deploy is cancelled by hand by cancelling its run before it starts, or not at all.)
       - name: Put back a main deploy this queue pushed out
         if: always()
         run: |

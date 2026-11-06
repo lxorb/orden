@@ -1,19 +1,5 @@
 name: publish-linux
 
-# Pushes a finished release out to the Linux package managers that take an
-# upload. Each job is a no-op until its credentials exist as repository
-# secrets, so this can sit here doing nothing until an account is made -
-# packaging/linux.md has the steps for each one.
-#
-# Not here on purpose:
-#   Flathub  - Orden is not published there; see packaging/linux.md.
-#   AppImage - the release page is the distribution channel.
-#
-# Called by release.yml for every stable release, once its files are up, and run by
-# hand the same way (`gh workflow run publish-linux.yml -f tag=v0.15.0`). Called rather
-# than dispatched, because a dispatch only finds a workflow on the default branch; and
-# nothing listens for `release: published`, which a release made on the workflow's own
-# token never raises and one made by hand would raise before its files were up.
 on:
   workflow_call:
     inputs:
@@ -27,10 +13,6 @@ on:
         description: The release tag to publish (e.g. v0.4.0)
         required: true
 
-# The floor, so a job added below without a block of its own still only reads.
-# Every job states its own as well, because what a job may do is part of what the
-# job is. Both roads out of here - the AUR over ssh, the Snap Store over its own
-# credentials - leave GitHub entirely, so neither needs a token that writes.
 permissions:
   contents: read
 
@@ -38,18 +20,14 @@ jobs:
   aur:
     name: AUR (orden-bin)
     runs-on: ubuntu-latest
-    # It reads the repository and fetches this release's own .debs over plain
-    # https. The push to aur.archlinux.org travels on an ssh key.
     permissions:
       contents: read
-    # `edge` is remade on every push to unstable and is not a release anyone should
-    # be installing from a package manager.
     if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}
     env:
       TAG: ${{ inputs.tag }}
       HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - name: Point the PKGBUILD at this release
         working-directory: packaging/aur/nib-bin
@@ -58,8 +36,6 @@ jobs:
           version="${TAG#v}"
           base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
 
-          # Both architectures at once: updpkgsums would only ever fix the sums
-          # for the machine it runs on and would quietly leave the other wrong.
           sum() { curl -fsSL "$1" | sha256sum | cut -d' ' -f1; }
           x64=$(sum "$base/Orden-$version-linux-x64.deb")
           arm64=$(sum "$base/Orden-$version-linux-arm64.deb")
@@ -74,12 +50,6 @@ jobs:
             PKGBUILD
           cat PKGBUILD
 
-      # Pinned by digest, not by `base-devel`. The tag is rebuilt daily and the
-      # image it names is what builds and checks the package that then goes to
-      # every Arch user, so the image that ran is the image that was read. The
-      # `pacman -Syu` below is what keeps the packages inside it current, so
-      # pinning costs nothing in freshness: the digest is raised here when
-      # somebody decides to, rather than by whoever last pushed the tag.
       - name: Check it still builds, before anything is pushed
         env:
           ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
@@ -100,14 +70,9 @@ jobs:
           SH
           docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh "$ARCH_IMAGE" bash /aur.sh
 
-      # Generates .SRCINFO itself and pushes to ssh://aur@aur.archlinux.org.
-      #
-      # Pinned to a commit and not to a tag. This is the step handed the AUR
-      # account's own SSH key, and a tag is a name its owner can move: pinning
-      # means the code that gets the key is the code that was read.
       - name: Push to the AUR
         if: env.HAS_KEY == 'true'
-        uses: KSXGitHub/github-actions-deploy-aur@084b0d9b15415bf9cdb65d44dad1efe37a354050 # v4.2.0
+        uses: KSXGitHub/github-actions-deploy-aur@084b0d9b15415bf9cdb65d44dad1efe37a354050
         with:
           pkgname: orden-bin
           pkgbuild: packaging/aur/nib-bin/PKGBUILD
@@ -124,7 +89,6 @@ jobs:
           echo "The PKGBUILD builds, but AUR_SSH_PRIVATE_KEY is not set, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
           echo "See packaging/linux.md for how to create the account and add the secrets." >> "$GITHUB_STEP_SUMMARY"
 
-  # The snap's own workflow, which release.yml calls as well for edge; see snap.yml.
   snap:
     if: ${{ startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-') }}
     permissions:

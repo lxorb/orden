@@ -1,47 +1,33 @@
 name: validate-linux-packaging
 
-# Everything under packaging/ that targets Linux, built the way the package
-# managers themselves build it: makepkg in an Arch container and snapcraft in LXD.
-# Not Flathub, which Orden is not published on; its manifest under
-# packaging/flathub is kept for reference and built by nothing here.
-# Run by hand, because it only matters when a release moves. Nix has a workflow
-# of its own, nix.yml, which runs on every change to the flake.
 on:
   workflow_dispatch:
     inputs:
       version:
         description: The released version to package
         default: '0.4.0'
-  # workflow_dispatch alone only fires for files that are on the default
-  # branch, so a branch validating packaging has to run itself on push.
   push:
     branches: ['validate-linux-packaging']
 
 env:
   VERSION: ${{ inputs.version || '0.4.0' }}
 
-# The floor, so a job added below without a block of its own still only reads.
-# Every job states its own as well, because what a job may do is part of what the
-# job is. Nothing in this file writes anywhere: it builds every Linux package from
-# a release that already exists and reports what came out.
 permissions:
   contents: read
 
 jobs:
-  # What Tauri actually put in the .deb, since every Linux package unpacks it.
   deb:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - run: sudo apt-get update && sudo apt-get install -y desktop-file-utils
 
       - name: Fetch the release .debs
         run: |
           mkdir -p dl
-          # Called Orden from 0.15, Nib before.
           for arch in x64 arm64; do
             for name in Orden Nib; do
               curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
@@ -50,11 +36,6 @@ jobs:
           done
           sha256sum dl/*.deb
 
-      # What the snap says those bytes are. The `.deb` is fetched on a runner and
-      # unpacked into a package the Snap Store publishes under this name, so the
-      # digest in snapcraft.yaml is the one thing standing between a tampered asset
-      # and everybody's App Center. Compared here because this is the job that has
-      # the bytes; the unit test beside the app only reads the shape.
       - name: The digests the snap pins
         run: |
           for arch in x64 arm64; do
@@ -85,15 +66,9 @@ jobs:
       - name: Tauri's own .desktop entry
         run: |
           dpkg-deb -x "dl/Nib-$VERSION-linux-x64.deb" x
-          # Named after the product: Nib.desktop up to 0.11, nibeditor.desktop up to
-          # 0.13, Orden.desktop since.
           entry=$(ls x/usr/share/applications/*.desktop | head -1)
           cat "$entry"
-          # Not a gate: this is the file the packaging replaces, and it is
-          # expected to be thin. Reported so a regression stays visible.
           desktop-file-validate "$entry" && echo 'valid' || echo 'invalid'
-          # The program and the engine beside it, in /usr/share/Orden, with /usr/bin/nib a
-          # link to it; see packaging/linux.md.
           ls -la x/usr/bin/nib x/usr/share/Orden
           file -L x/usr/bin/nib
           objdump -p x/usr/share/Orden/nib | grep -E 'NEEDED|RUNPATH'
@@ -123,14 +98,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      # The same digest publish-linux.yml pins, and for the same reason: the
-      # `base-devel` tag is rebuilt daily, and this row is what decides whether
-      # the PKGBUILD that goes to every Arch user builds at all. Two files
-      # answering that question from two different images is two answers. The
-      # `pacman -Syu` inside keeps the packages current, so the pin costs no
-      # freshness; it is raised when somebody decides to.
       - name: makepkg in an archlinux container
         env:
           ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
@@ -183,7 +152,7 @@ jobs:
           SH
           docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh "$ARCH_IMAGE" bash /aur.sh
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: srcinfo
@@ -203,9 +172,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      # The snap stages no GTK of its own, so the platform snap the gnome extension
-      # pulls in has to carry the GTK 4 CEF's runtime is built against, and NSS.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: What the gnome platform snap carries
         run: |
           snap download gnome-46-2404 --basename=gnome-platform
@@ -213,8 +180,6 @@ jobs:
           grep -q "libgtk-4[.]so[.]1$" platform.txt
           echo "GTK 4 comes from the platform snap"
 
-      # snapcraft reads one checksum line, amd64's as committed; the arm64 row takes
-      # the arm64 digest the file keeps beside it. See packaging/linux.md.
       - name: This architecture's checksum
         if: matrix.arch == 'arm64'
         working-directory: packaging/snap
@@ -224,7 +189,7 @@ jobs:
           sed -i -E "s|^( *source-checksum: ).*|\1$own|" snapcraft.yaml
           grep -n 'source-checksum' snapcraft.yaml
 
-      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
+      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79
         id: build
         with:
           path: packaging/snap

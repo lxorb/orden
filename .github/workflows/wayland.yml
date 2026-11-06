@@ -1,30 +1,5 @@
 name: wayland
 
-# Orden on Linux the way a Wayland desktop runs it: every package a Linux reader
-# installs, started under a headless sway with three screens - one portrait at 1.77, one
-# at 1, one at 1.75 - the desk the first Hyprland report came from. Orden runs on CEF
-# (Chromium), whose browsers are X11 windows, so the session has Xwayland, as every
-# Wayland desktop does. See scripts/wayland-launch.sh for what each run checks, and
-# src-tauri/src/linux.rs and hotkeys/portal.rs for what it checks it of.
-#
-#   deb       Ubuntu 24.04, and the desktop portal's global shortcuts (a stand-in
-#             portal, scripts/wayland-portal.py): the key bound, pressed, and quick add
-#             up. And the drive: a web tab's page where its tab is (#387), and what #418
-#             asked of CEF, measured beside the last WebKitGTK build on the same runner
-#             (scripts/wayland-418.py).
-#   appimage  Arch, the newest Mesa and Wayland there are, against what the AppImage
-#             carries. No portal for keys, so `--quick-add` handed to the running app
-#             instead.
-#   rpm       Fedora's own GTK 4 and Mesa.
-#
-# The packages are built the way release.yml builds them, on the same Ubuntu, as a
-# debug build: the bundles are the same and the compile is a third of the time.
-#
-# The Nix flake has a workflow of its own, its own launch under sway included, in
-# nix.yml; this one leaves packaging/nix to it.
-# On a pull request into main once it is ready for review, the way check.yml runs, and
-# by hand (`gh workflow run wayland.yml --ref <branch>`). Not on a draft, and not on
-# `unstable`'s pushes: see docs/conventions.md, "CI".
 on:
   pull_request:
     branches: [main]
@@ -45,39 +20,31 @@ concurrency:
   group: wayland-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# Nothing here writes anywhere.
 permissions:
   contents: read
 
 jobs:
   build:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - uses: ./.github/actions/desktop-setup
         with:
           target: x86_64-unknown-linux-gnu
 
       - name: Build the app and its Linux packages
-        # Optimised, so what is timed against a frame - a page's still picture under a
-        # menu has 300 ms - is timed against code that runs the way a release runs it.
         env:
           CARGO_PROFILE_DEV_DEBUG: line-tables-only
           CARGO_PROFILE_DEV_OPT_LEVEL: '2'
-        # The window's own `@tauri-apps/api` and plugin packages are the Tauri 2 ones every
-        # other platform builds with; Tauri 3 speaks to them the same way, so the CLI is
-        # told to let the versions differ. See scripts/linux-cef.sh.
         run: >-
           bash scripts/linux-cef.sh tauri build --debug --bundles deb,rpm,appimage
           --ignore-version-mismatches
           --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
-      # What each package carries: the engine, and nothing of WebKitGTK or GStreamer.
       - name: The packages carry CEF and no WebKitGTK
         working-directory: apps/desktop/src-tauri/target/debug/bundle
         run: |
@@ -102,7 +69,7 @@ jobs:
           du -sh "$root"
           rm -rf squashfs-root AppDir
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: linux-packages
           if-no-files-found: error
@@ -111,16 +78,14 @@ jobs:
             apps/desktop/src-tauri/target/debug/bundle/rpm/*.rpm
             apps/desktop/src-tauri/target/debug/bundle/appimage/*.AppImage
 
-  # Also the one row that drives the app: a web tab opened on a page of one colour and
-  # read off pictures of every screen (scripts/wayland-drive.py).
   deb:
     needs: build
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: linux-packages
           path: packages
@@ -135,17 +100,12 @@ jobs:
           KEYS: 'the desktop portal, version 2'
           QUICK_ADD_FLOATS: '1'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # Clicked with the compositor's own pointer, so a page over the tab strip takes the
-      # click the way it took #387's; and quit and started again four times, a screen each.
       - name: A web tab's page where its tab is, on every screen, under the app's layers
         env:
           OUT: wayland-out/drive
           DRIVE: '1'
           COLD: '4'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #427: the same on a desktop scaled for X11 applications as KDE scales them, 133
-      # per cent by XSETTINGS: the page was drawn over the sidebar and the address bar, a
-      # quarter short of its hole, and the window's own page cut off at its edges.
       - name: A web tab's page where its tab is, on a desktop scaled for X11 applications
         if: always()
         env:
@@ -156,8 +116,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #763: a page written only for light stands on white in either of the app's
-      # schemes, not dark text on a dark ground.
       - name: A light page on its white ground in the app's dark scheme, under sway
         if: always()
         env:
@@ -167,8 +125,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #680: Settings > Editor > Text size dragged, and the note's text larger on the
-      # screen and after a load.
       - name: The editor's text size changed from Settings, under sway
         if: always()
         env:
@@ -178,7 +134,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #762: tabs switched in the dark scheme, filmed: no frame of the pane white.
       - name: Tabs switched in the dark without a white frame, under sway
         if: always()
         env:
@@ -188,7 +143,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #776: the certificate a web tab's page came with, from the site's popover.
       - name: A site's certificate from its popover, under sway
         if: always()
         env:
@@ -198,8 +152,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #766, #767: the DNS the pages look names up with, chosen in Settings - another
-      # provider, over HTTPS - taking hold at once and after a restart.
       - name: The pages' DNS chosen in Settings, over HTTPS, under sway
         if: always()
         env:
@@ -209,7 +161,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #788: a download stopped in a web tab stops, and the next of its name is its own.
       - name: A download stopped on its way, and the same name again, under sway
         if: always()
         env:
@@ -219,7 +170,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #789: the extensions web tabs run are seen and managed on Linux too.
       - name: A web tab's extensions in the bar and in Settings, under sway
         if: always()
         env:
@@ -229,7 +179,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #787: a private tab's answer to a site is kept for its private session only.
       - name: A private tab's permission answer kept from normal tabs, under sway
         if: always()
         env:
@@ -239,7 +188,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #477: a name Windows keeps for a device is given to no note or folder, on Linux too.
       - name: A device's name refused for a note and a folder, under sway
         if: always()
         env:
@@ -249,7 +197,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #676: a page note made from a PDF wears the PDF's mark.
       - name: A page note made from a PDF wears the PDF's mark, under sway
         if: always()
         env:
@@ -259,8 +206,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #481: changes other programs make are noticed though a folder cannot be watched,
-      # and the reader is told when the limit of watched folders is reached.
       - name: A space watched past a folder nobody may read and past the limit, under sway
         if: always()
         env:
@@ -270,8 +215,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #427: a web tab's page drawn in the app's scheme, light or dark, as the app's
-      # scheme is switched, not in the system's.
       - name: A web tab's page in the app's scheme, under sway
         if: always()
         env:
@@ -281,8 +224,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #961: a setting and a draft from a tenth of a second before the app was killed are there
-      # when it is started again.
       - name: What the app took in survives a kill, under sway
         if: always()
         env:
@@ -292,7 +233,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #1088: a web tab's page wears its rounded card's corners at its bottom.
       - name: A web tab's page has its card's rounded corners, under sway
         if: always()
         env:
@@ -302,7 +242,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #1080: a press into the page of a pane not being worked in chooses its tab and pane.
       - name: A press into a web tab's page chooses its tab and its pane, under sway
         if: always()
         env:
@@ -312,7 +251,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #1074: every way a page opens a window, pressed with the compositor's pointer.
       - name: Every way a page opens a window does what it asked for, under sway
         if: always()
         env:
@@ -322,8 +260,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #1031: web tabs closed as fast as Ctrl+W closes them, their pages still being
-      # built, and the window still answering.
       - name: Web tabs closed one after another while their pages come up, under sway
         if: always()
         env:
@@ -334,7 +270,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #777: a web tab's page has its workers run, as it opens and after a restart.
       - name: A web tab's page has its worker answer it, opened and after a restart, under sway
         if: always()
         env:
@@ -344,7 +279,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #483: a sign-in in a session cookie lasts across a restart.
       - name: A web tab's session cookie is there after a restart, under sway
         if: always()
         env:
@@ -354,7 +288,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #483: Export PDF writes a file with pages and words, from a window nobody sees.
       - name: Export PDF writes pages and words and nothing from the disk, under sway
         if: always()
         env:
@@ -364,9 +297,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #661: a press in a popup over a web tab's page chooses what it is on, and the
-      # popup is not closed as though the press had been outside it; and the same on a
-      # desktop scaled for X11 applications.
       - name: Popups chosen from over a web tab's page, under sway
         if: always()
         env:
@@ -386,7 +316,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # #427: the window moved by its tab strip and resized by its edge, floated.
       - name: The window moved by its strip and resized by its edge, under sway
         if: always()
         env:
@@ -398,9 +327,7 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # What #418 asked of the engine, measured; the `webkitgtk` job below measures the
-      # last WebKitGTK build the same way, for the numbers to be read side by side.
-      - name: What #418 asked, on CEF
+      - name: What
         if: always()
         env:
           OUT: wayland-out/418-cef
@@ -409,16 +336,12 @@ jobs:
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wayland-deb
           path: wayland-out
           if-no-files-found: ignore
 
-  # #427 under KDE's own window manager, on the system it was reported on: Fedora 44's
-  # KWin on an X server, the AppImage as the report ran it, and the window moved by its
-  # tab strip, resized by its edge and maximised by a double click on the strip, with
-  # xdotool.
   kwin:
     needs: build
     runs-on: ubuntu-latest
@@ -427,16 +350,9 @@ jobs:
       contents: read
     steps:
       - name: KWin on X11 as Fedora 44 released it, Xvfb and xdotool
-        # From the release, not its updates: Fedora 44's updates carry KWin 6.8, which takes
-        # the place of kwin-x11 and has no `kwin_x11`, so the package installs and the
-        # session then has no window manager to start. Lift it once this job runs KWin's own
-        # Wayland session, or the updates carry a `kwin_x11` again. xterm, not xmessage, is
-        # the other window a drive gives the focus to (page-drive.py): an AppImage's hook
-        # asks its question about user namespaces through xmessage where it finds one, and
-        # a container waits on that answer for good.
         run: dnf install -y --disablerepo=updates kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool xwd xterm ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: linux-packages
           path: packages
@@ -446,7 +362,6 @@ jobs:
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
           [ -d squashfs-root ] || mv AppDir squashfs-root
-      # As root in a container, where Chromium will not start sandboxed.
       - name: Tabs switched in the dark without a white frame, under KWin
         env:
           OUT: kwin-out/flash
@@ -487,21 +402,19 @@ jobs:
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: kwin
           path: kwin-out
           if-no-files-found: ignore
 
-  # The last build on WebKitGTK, the edge release's own .deb, through the same #418 checks
-  # on the same kind of runner: what CEF's numbers are read against.
   webkitgtk:
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: The edge release's .deb, on WebKitGTK
         env:
           GH_TOKEN: ${{ github.token }}
@@ -513,15 +426,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
-      - name: What #418 asked, on WebKitGTK
+      - name: What
         env:
           OUT: wayland-out/418-webkitgtk
           CHECK: '1'
-          # A release, not this commit: what its windows are named is not this run's to check.
           CLASS: ''
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wayland-webkitgtk
           path: wayland-out
@@ -535,26 +447,20 @@ jobs:
       contents: read
     steps:
       - name: sway, Mesa and a session bus, as Arch has them today
-        # sway's binary carries a file capability a container may not exec with; a copy
-        # carries none, and goes first on the path.
         run: |
           pacman -Syu --noconfirm --needed sway xorg-xwayland mesa dbus python git alsa-lib nss
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: linux-packages
           path: packages
-      # A container has no FUSE to mount it with, so it is unpacked and its own AppRun
-      # started: the same hooks, the same libraries, the same program.
       - name: Unpacked
         run: |
           cd packages/appimage
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
-          # sharun's AppImage unpacks as AppDir, an older one as squashfs-root.
           [ -d squashfs-root ] || mv AppDir squashfs-root
-      # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland with no portal, `--quick-add` reaching the running app
         env:
           OUT: wayland-out
@@ -564,15 +470,12 @@ jobs:
           app="$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
           SECOND="$app --quick-add" dbus-run-session -- bash scripts/wayland-launch.sh "$app"
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wayland-appimage
           path: wayland-out
           if-no-files-found: ignore
 
-  # #427: the AppImage on Fedora 44, whose Mesa 26.2, libgbm and libglvnd the WebKitGTK
-  # one aborted against at start. Under Wayland (sway) and under a bare X server (Xvfb),
-  # a picture of each.
   fedora-44:
     needs: build
     runs-on: ubuntu-latest
@@ -585,8 +488,8 @@ jobs:
           dnf install -y sway xorg-x11-server-Xwayland xorg-x11-server-Xvfb xdpyinfo xwininfo mesa-dri-drivers mesa-libEGL mesa-libgbm libglvnd-egl dbus-daemon dbus-tools python3 python3-pillow grim ImageMagick git
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
           rpm -q mesa-libgbm libglvnd
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: linux-packages
           path: packages
@@ -595,9 +498,7 @@ jobs:
           cd packages/appimage
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
-          # sharun's AppImage unpacks as AppDir, an older one as squashfs-root.
           [ -d squashfs-root ] || mv AppDir squashfs-root
-      # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland
         env:
           OUT: fedora-out/wayland
@@ -612,7 +513,7 @@ jobs:
           IDLE: '1'
         run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: fedora-44
           path: fedora-out
@@ -625,8 +526,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: linux-packages
           path: packages
@@ -634,14 +535,13 @@ jobs:
         run: |
           dnf install -y ./packages/rpm/*.rpm sway xorg-x11-server-Xwayland mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
-      # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland
         env:
           OUT: wayland-out
           NIB_CEF_SANDBOX: disabled
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wayland-rpm
           path: wayland-out

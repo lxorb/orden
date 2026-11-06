@@ -1,17 +1,5 @@
 name: rpm
 
-# The dnf and zypper repository, served at https://rpm.orden.so from `rpm/` in the apt
-# repository's own bucket, `orden-apt`, and signed with its own key, APT_SIGNING_KEY:
-# one suite of it written again from a release's .rpms and put into the bucket in place
-# of what that suite was, once Fedora and openSUSE have installed it and upgraded to it.
-# `stable` comes from publish.yml, for a stable release, and `unstable` from
-# release.yml, once edge is up; both call this workflow (`uses:`), as they call apt.yml.
-# By hand, once it is on main:
-#
-#   gh workflow run rpm.yml -f suite=stable -f tag=v0.20.0
-#   gh workflow run rpm.yml -f suite=unstable -f tag=edge
-#
-# See scripts/rpm-repo.sh, scripts/rpm-try.sh and packaging/linux.md, "dnf and zypper".
 on:
   workflow_call:
     inputs:
@@ -38,9 +26,7 @@ permissions:
   contents: read
 
 env:
-  # apt.yml's: the same key, bucket and account.
   APT_KEY_FINGERPRINT: 44404B19539FB2C53F31086941F0103448A194DE
-  # The bucket's `rpm/`, as readers are given it: rpm.orden.so/<x> is the bucket's rpm/<x>.
   RPM_BASE_URL: https://rpm.orden.so
   R2_BUCKET: orden-apt
   CF_ACCOUNT_ID: b0e98c15b1f905a394ecd6a849e8e99f
@@ -52,7 +38,6 @@ jobs:
     outputs:
       go: ${{ steps.check.outputs.go }}
     steps:
-      # As apt.yml's gate: skipped in a fork, red in lxorb/orden without the secrets.
       - id: check
         env:
           SUITE: ${{ inputs.suite }}
@@ -85,7 +70,7 @@ jobs:
       SUITE: ${{ inputs.suite }}
       TAG: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           sparse-checkout: |
             scripts/rpm-repo.sh
@@ -98,7 +83,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # The page's own copies, called Orden; edge holds the updater's, called Nib, too.
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir rpms \
             --pattern 'Orden-*-linux-x64.rpm' --pattern 'Orden-*-linux-arm64.rpm'
           ls -l rpms
@@ -111,25 +95,20 @@ jobs:
           published=$(gpg --batch --show-keys --with-colons packaging/apt/orden-archive-keyring.asc | awk -F: '$1 == "fpr" { print $10; exit }')
           [ "$published" = "$APT_KEY_FINGERPRINT" ] || { echo "::error::the published key is $published"; exit 1; }
 
-      # scripts/rpm-repo.sh reads every package back with the published key, so a
-      # secret that is not it signs nothing that leaves this job.
       - name: Write the suite
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q rpm createrepo-c
           bash scripts/rpm-repo.sh "$SUITE" rpms repo
-          # Beside it for the job below, and never put into the bucket.
           cp scripts/rpm-try.sh repo/
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: rpm-${{ inputs.suite }}
           path: repo
           if-no-files-found: error
           retention-days: 1
 
-  # What a reader does with it, before any reader can: installed fresh and over an older
-  # version, by dnf on Fedora and zypper on openSUSE, on both architectures.
   try:
     needs: write
     strategy:
@@ -142,7 +121,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: rpm-${{ inputs.suite }}
           path: repo
@@ -154,8 +133,6 @@ jobs:
   publish:
     needs: [write, try]
     runs-on: ubuntu-latest
-    # One writer at a time. Not apt.yml's group, whose files these never are: a group
-    # keeps one run waiting, and a third would take the place of this one.
     concurrency:
       group: rpm
       cancel-in-progress: false
@@ -165,7 +142,7 @@ jobs:
       SUITE: ${{ inputs.suite }}
       TAG: ${{ inputs.tag }}
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: rpm-${{ inputs.suite }}
           path: repo
@@ -187,9 +164,6 @@ jobs:
             echo "R2=https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com"
           } >>"$GITHUB_ENV"
 
-      # As apt.yml does it: the packages first, then the index that names them, and only
-      # then the packages nothing names any more taken away. The packages are named by
-      # their version and never change; the index is kept for a minute.
       - name: Into the bucket
         working-directory: repo
         run: |
@@ -209,14 +183,12 @@ jobs:
             for rpm in "$dir"/*.rpm; do echo "- $(basename "$rpm")"; done
           } >>"$GITHUB_STEP_SUMMARY"
 
-      # Read back over the address dnf and zypper use.
       - name: Served
         working-directory: repo
         run: |
           for path in "$SUITE/repodata/repomd.xml" "$SUITE/repodata/repomd.xml.asc" orden-archive-keyring.asc; do
             curl -fsSI "$RPM_BASE_URL/$path" | head -1
           done
-          # And the .repo file a reader is told to fetch, as it was written.
           for file in rpm/*.repo; do
             curl -fsS "$RPM_BASE_URL/${file#rpm/}" | cmp - "$file"
           done

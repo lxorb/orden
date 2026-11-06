@@ -1,38 +1,22 @@
 name: publish-mobile
 
-# The phone builds, on version tags and every push to `unstable`. A tag puts
-# them on that version's own release beside the installers; an unstable build
-# puts them on `edge` beside the desktop's. Both releases are release.yml's: the
-# phones only add their files to them, and take off edge only their own old ones.
-#
-# There is no store account behind either platform. The Android side is an APK to
-# sideload; the iOS side is a simulator build, because putting Orden on a real iPhone
-# needs an Apple developer account. See docs/mobile.md for what to add when there
-# is one.
 on:
   push:
     tags: ['v*']
     branches: [unstable]
   workflow_dispatch:
 
-# A newer push to unstable supersedes the build of an older one. A tag is a release
-# of its own and is never cancelled.
 concurrency:
   group: publish-mobile-${{ github.ref }}
   cancel-in-progress: ${{ github.ref == 'refs/heads/unstable' }}
 
-# The floor, so a job added below without a block of its own still only reads.
-# Every job states its own as well, because what a job may do is part of what the
-# job is.
 permissions:
   contents: read
 
 jobs:
-  # What this build is called; see scripts/build-version.sh.
   version:
     if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    # All but one of the jobs below may only read; the one that writes says so.
     permissions:
       contents: read
     outputs:
@@ -40,9 +24,8 @@ jobs:
       tag: ${{ steps.decide.outputs.tag }}
       rolling: ${{ steps.decide.outputs.rolling }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          # The whole history, so the newest released tag can be found.
           fetch-depth: 0
 
       - id: decide
@@ -52,52 +35,37 @@ jobs:
   android:
     needs: version
     runs-on: ubuntu-latest
-    # It reads the repository and uploads an artifact, which travels on the
-    # runtime's own token rather than on this one.
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      # No version here: it comes from the root package.json's packageManager.
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
-      # The Android Gradle plugin runs on 17; the runner's default is newer.
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: 17
 
-      # The platform and build tools the project asks for, which are newer than
-      # the ones the runner image happens to ship.
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
-      # The crate is cross-compiled by the NDK on the image, whichever version
-      # that is; the toolchain it ships is the same for every recent one.
       - name: Point Tauri at the NDK
         run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >>"$GITHUB_ENV"
 
-      # The two architectures worth shipping: every phone since 2017 is arm64,
-      # and x86_64 is what an emulator runs.
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          # Named, and not left to the `@stable` the ref used to carry: with the
-          # action pinned to a commit, the ref no longer says which toolchain to
-          # install, and this is the input that does.
           toolchain: stable
           targets: aarch64-linux-android,x86_64-linux-android
           components: clippy
 
-      # Shared by name with check.yml's android-check, which builds the same APK on a
-      # pull request and reads this cache rather than keeping one of its own.
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: |
             apps/desktop/src-tauri
@@ -105,13 +73,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # An unsigned APK will not install on a phone, so one is always signed.
-      # With the release secrets it is signed with Emil's own key and every build
-      # can replace the last; without them the job makes a key of its own, which
-      # is enough to install but changes from run to run, so the old app has to
-      # come off before the new one goes on. See docs/mobile.md. That is for a fork:
-      # in lxorb/orden, whose builds people have installed, an APK under a key of its own
-      # is one that cannot replace theirs, so a missing key is red (#1112).
       - name: A key to sign with
         working-directory: apps/desktop/src-tauri/gen/android
         env:
@@ -145,22 +106,12 @@ jobs:
             echo "keyPassword=$password"
           } >keystore.properties
 
-      # The version is passed in rather than read from tauri.conf.json, so a
-      # unstable build is named after the build it came from.
       - name: Build the APK
         run: |
           pnpm --filter @orden/desktop exec tauri android build --apk \
             --target aarch64 --target x86_64 \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
-      # The lints CI holds the crate to on a desktop, on the target it is built for
-      # here: a cfg gate is the one thing that can be clean on one platform and
-      # not on another. After the build, because the crate embeds the built
-      # frontend and will not compile before there is one.
-      #
-      # The bundled SQLite of the sync store is C, and a bare cargo has no compiler
-      # for the phone: `tauri android build` names the NDK's own, this does the same,
-      # at the minSdk the app is built for (gen/android/app/build.gradle.kts).
       - name: Clippy for the phone
         run: |
           ndk="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -169,7 +120,7 @@ jobs:
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml \
             --target aarch64-linux-android -- -D warnings
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: nib-android
           if-no-files-found: error
@@ -181,28 +132,22 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
-      # The simulator on an Apple silicon Mac, and a real phone. The first is what
-      # can be run without an account; the second is compiled below to prove it
-      # still compiles.
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          # Named, and not left to the `@stable` the ref used to carry: with the
-          # action pinned to a commit, the ref no longer says which toolchain to
-          # install, and this is the input that does.
           toolchain: stable
           targets: aarch64-apple-ios,aarch64-apple-ios-sim
           components: clippy
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: |
             apps/desktop/src-tauri
@@ -210,20 +155,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The Xcode project is generated here rather than committed: the CLI writes
-      # it on a macOS machine only, and nothing in it is edited by hand, so there
-      # is nothing a commit would preserve. See docs/mobile.md.
       - name: The Xcode project
         env:
-          # Xcode wants a team named even to lay the project out. There is no
-          # account behind this one, and nothing below signs anything, so the
-          # placeholder is only a field being filled in.
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
         run: pnpm --filter @orden/desktop exec tauri ios init
 
-      # The CLI fills the asset catalog with Tauri's own mark, and the project is
-      # made afresh on every run, so the app's icons go in after it: the ones
-      # `tauri icon` wrote into icons/ios, under the names the catalog already uses.
       - name: The app's own icons
         run: |
           cp apps/desktop/src-tauri/icons/ios/*.png \
@@ -236,12 +172,6 @@ jobs:
           pnpm --filter @orden/desktop exec tauri ios build --target aarch64-sim \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
 
-      # What a real phone would run, as far as it can be taken without an Apple
-      # account. An `.xcarchive` cannot: Xcode's own archive refuses to codesign
-      # without a certificate, and it cannot be driven by hand either, because the
-      # project's Rust build phase asks the CLI that started it for its options
-      # over a socket. The library for the device is the part that could break, so
-      # it is built, and the archive waits for an account. See docs/mobile.md.
       - name: Build for a phone
         run: |
           cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml \
@@ -252,7 +182,6 @@ jobs:
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml \
             --target aarch64-apple-ios -- -D warnings
 
-      # A bundle travels as one file.
       - name: Collect what was built
         run: |
           mkdir -p out
@@ -261,19 +190,16 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$app" out/ios-simulator.app.zip
           ls -l out
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: nib-ios
           if-no-files-found: error
           path: out/*.zip
 
-  # Only a build of unstable or of a tag has a release to go on: a manual run on a
-  # branch is somebody checking that the builds work.
   publish:
     needs: [version, android, ios]
     if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    # The one job that writes: the release and its files are the point of it.
     permissions:
       contents: write
     env:
@@ -282,22 +208,16 @@ jobs:
       ROLLING: ${{ needs.version.outputs.rolling }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with: { path: artifacts }
 
       - name: Name the downloads for humans
         run: |
           mkdir -p uploads
-          # Found rather than globbed: an artifact keeps whatever folders its
-          # files needed to tell them apart, and how deep that is depends on how
-          # many APKs the build produced.
           find artifacts -type f | while read -r file; do
             name=$(basename "$file")
             case "$name" in
-              # Tauri names an APK after the architectures inside it, wrapped in
-              # an `app-` and a `-release` that say nothing to anybody who is
-              # about to download one. The universal one is the APK, for any phone.
               app-universal-release.apk)
                 name=android.apk
                 ;;
@@ -305,8 +225,6 @@ jobs:
                 name=${name#app-}
                 name="android-${name%-release.apk}.apk"
                 ;;
-              # A simulator build installs on no phone, so a release's page, which
-              # is its installers, goes without it; `edge` has it.
               *.app.zip)
                 [ "$ROLLING" = true ] || continue
                 ;;

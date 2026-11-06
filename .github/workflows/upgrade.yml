@@ -1,22 +1,9 @@
 name: upgrade
 
-# An install made under one of the product's old names updated by this build, on
-# runners that are nobody's machine. Three starting points: the last release named
-# Nib (0.11.0), the last named nibeditor (0.13.0), and Nib updated to nibeditor, which
-# is what most machines that had Nib run now. From each, every road to an update on
-# Windows (the app's own updater, winget, a folder of its own, the MSI that Chocolatey
-# runs), and the Mac's first launch after the updater put this build into Nib.app or
-# nibeditor.app. What each checks is in scripts/windows-upgrade.ps1 and below.
-#
-# Not on every push: each road is a real install, and the build alone is the
-# better part of half an hour. On a pull request that touches what an update does,
-# and by hand.
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
-    # it is marked ready (see docs/conventions.md, "CI").
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - apps/desktop/src-tauri/installer.nsh
@@ -36,14 +23,12 @@ permissions:
   contents: read
 
 env:
-  # The releases the old names last shipped as, and a number above both for this build.
   NIB: '0.11.0'
   NIBEDITOR: '0.13.0'
   NEW: '0.14.0'
 
 jobs:
   build:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
@@ -57,36 +42,34 @@ jobs:
             label: macos
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: |
             apps/desktop/src-tauri
           key: upgrade-${{ matrix.label }}
       - run: pnpm install --frozen-lockfile
 
-      # Unsigned for the updater: nothing here is served to one.
       - name: Build
         shell: bash
         run: |
           pnpm --filter @orden/desktop exec tauri build --bundles ${{ matrix.bundles }} \
             --config "{\"version\":\"$NEW\",\"bundle\":{\"createUpdaterArtifacts\":false}}"
 
-      # An artifact keeps no file modes, and a Mac app's program has to stay one.
       - name: Pack the app
         if: runner.os == 'macOS'
         working-directory: apps/desktop/src-tauri/target/release/bundle/macos
         run: tar -czf app.tgz *.app
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: new-${{ matrix.label }}
           if-no-files-found: error
@@ -96,7 +79,6 @@ jobs:
             apps/desktop/src-tauri/target/release/bundle/macos/app.tgz
 
   windows:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     needs: build
     strategy:
@@ -106,14 +88,12 @@ jobs:
         scenario: [updater, silent, elsewhere, msi]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: new-windows
           path: new
 
-      # The old releases' own files, and the script that seals a default browser the
-      # way Settings does, pinned by its digest.
       - name: The old releases
         shell: bash
         env:
@@ -142,13 +122,7 @@ jobs:
           }
           ./scripts/windows-upgrade.ps1 -Scenario ${{ matrix.scenario }} @from -New flat -Sfta ./SFTA.ps1
 
-  # The Mac: the old app in a folder of its own, this build put into it the way
-  # Tauri's updater does (the archive's contents in place of the old ones, the
-  # folder's name kept), and launched. It renames itself and starts again from
-  # Orden.app; a copy Homebrew put there, under the cask's old token or its new one,
-  # keeps its name.
   macos:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     needs: build
     strategy:
@@ -166,7 +140,7 @@ jobs:
       OLD_APP: ${{ matrix.old }}.app
       CASK: ${{ matrix.cask }}
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: new-macos
           path: new
@@ -191,7 +165,6 @@ jobs:
           ditto "/tmp/old/$OLD_APP" "$apps/$OLD_APP"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$apps/$OLD_APP/Contents/Info.plist"
 
-          # What the updater does: the new bundle's contents under the old name.
           rm -rf "$apps/$OLD_APP"
           ditto new/Orden.app "$apps/$OLD_APP"
           open "$apps/$OLD_APP"
@@ -231,8 +204,6 @@ jobs:
           osascript -e 'quit app id "ch.emilvinu.nib"' || true
           rmdir "$room"
 
-      # What the machine says when a launch did not come back: the processes, the app's
-      # own logs and any crash report.
       - name: What happened
         if: failure()
         run: |
