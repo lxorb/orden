@@ -103,8 +103,6 @@ describe('reading one tab', () => {
 
   test('fills in a caret and a scroll that were never written', () => {
     expect(readDraft({ path: null, name: 'a', doc: '' })).toMatchObject({ cursor: 0, scroll: 0 })
-    // Absent, not undefined: the anchor is what tells an older session apart
-    // from one that simply sat at the top.
     expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('anchor')
   })
 
@@ -118,20 +116,15 @@ describe('reading one tab', () => {
     expect(readDraft({ path: null, name: 'a', doc: '', source: true })).toMatchObject({
       source: true,
     })
-    // False is an answer too: a tab may have left source mode where new tabs open in it.
     expect(readDraft({ path: null, name: 'a', doc: '', source: false })).toMatchObject({
       source: false,
     })
-    // Absent, from a build with one switch for the window: the tab opens where
-    // Settings says, which is where that switch was left.
     expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('source')
     expect(readDraft({ path: null, name: 'a', doc: '', source: 'yes' })).not.toHaveProperty(
       'source',
     )
   })
 
-  // #346: a web tab with no file comes back on the web note's data it took along; a tab
-  // with a file reads its own from the file.
   test('keeps the web data a tab with no file took along', () => {
     const apart = '3f9a0c17e2b4d685'
     expect(readDraft({ kind: 'web', path: null, name: 'a', doc: '', apart })).toMatchObject({
@@ -143,19 +136,12 @@ describe('reading one tab', () => {
   })
 
   test('is being written in unless it says otherwise', () => {
-    // Absent rather than false, so a tab that was being written in - which is
-    // nearly every tab - costs the entry nothing.
     expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('reading')
     expect(readDraft({ path: null, name: 'a', doc: '', reading: 'yes' })).not.toHaveProperty(
       'reading',
     )
   })
 
-  /** What a tab holds is the file's, not the entry's. An entry written before there
-   *  were canvases, one whose kind was lost, or one naming a kind this version has
-   *  never heard of used to come back as a note whatever its name said - and a
-   *  canvas restored as a note joins the room of a file the service serves as a
-   *  plane, which is the two ends of one file building different shapes for it. */
   test('reads the kind off the file’s name, whatever the entry claims', () => {
     for (const claimed of [undefined, 'note', 'pdf', 'graph', 'nonsense', 7]) {
       expect(
@@ -171,10 +157,6 @@ describe('reading one tab', () => {
     ).toMatchObject({ kind: 'note' })
   })
 
-  /** A website is a shortcut file and its name is the whole of what it is. A session
-   *  written before websites had a name of their own says `note` for one, and a
-   *  shortcut restored as a note would put three lines of INI in front of somebody in
-   *  an editor. */
   test('a website comes back as one, whatever the entry claims', () => {
     for (const claimed of [undefined, 'note', 'canvas', 'nonsense']) {
       expect(
@@ -202,17 +184,11 @@ describe('reading one tab', () => {
     expect(readDraft({ kind: 'graph', path: null, name: 'Graph', doc: '' })).toMatchObject({
       kind: 'graph',
     })
-    // And a paper is still a paper: its name says words, and `pdf` is not a kind
-    // the name can argue with.
     expect(
       readDraft({ kind: 'pdf', path: '/Notes/paper.pdf', name: 'paper.pdf', doc: '' }),
     ).toMatchObject({ kind: 'pdf' })
   })
 
-  /** The restart rule for a terminal: it comes back in its place, with its shell and the
-   *  folder it was last in, and the shell starts again when the tab is looked at. All of
-   *  that is the tab's own words, which a tab with no file always keeps; see
-   *  terminal/spec.ts and docs/terminal.md. */
   test('brings a terminal back as a terminal, with its shell and its folder', () => {
     const doc = '{"shell":"pwsh","folder":"/home/me/code","key":"k1"}'
     const back = readDraft({ kind: 'terminal', path: null, name: 'PowerShell', doc })
@@ -220,8 +196,6 @@ describe('reading one tab', () => {
     expect(back).toMatchObject({ kind: 'terminal', path: null, name: 'PowerShell', doc })
   })
 
-  /** A tab with no file keeps the space it was opened in; one with a file is in the
-   *  space holding it, which a session has no business saying otherwise. */
   test('brings a tab with no file back in the space it was opened in', () => {
     const web = { kind: 'web', path: null, name: 'Site', doc: '', space: 'w' }
     const kept = { ...web, path: '/Notes/Site.url' }
@@ -280,8 +254,6 @@ describe('reading one place', () => {
   })
 
   test('drops a fold that names nothing a note could have', () => {
-    // A line before the first, a pair that covers no line at all, a pair the
-    // wrong way round, a pair that is not a pair, and a fold that is not a list.
     expect(readPosition({ cursor: 1, scroll: 2, folds: [[0, 4]] })?.folds).toBeUndefined()
     expect(readPosition({ cursor: 1, scroll: 2, folds: [[4, 4]] })?.folds).toBeUndefined()
     expect(readPosition({ cursor: 1, scroll: 2, folds: [[9, 3]] })?.folds).toBeUndefined()
@@ -355,7 +327,6 @@ describe('reading an arrangement of panes', () => {
     const frame = layout?.frame
     expect(frame?.kind === 'split' && frame.along).toBe('row')
     expect(frame?.kind === 'split' && frame.fraction).toBe(0.5)
-    // A split with no id of its own still has to be one the divider can name.
     expect(frame?.kind === 'split' && frame.id.length).toBeGreaterThan(0)
   })
 
@@ -457,7 +428,6 @@ describe('writing the session down', () => {
     },
   })
 
-  /** Storage that refuses the first `refusals` writes and keeps the rest. */
   function tightStorage(refusals: number): string[] {
     const written: string[] = []
     let left = refusals
@@ -481,7 +451,6 @@ describe('writing the session down', () => {
       const saved = JSON.parse(written[0] ?? '{}') as Session
       const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
       expect(saved.closed).toEqual([])
-      // What is still on screen has given up nothing yet.
       expect(tabs[0]).toMatchObject({ path: '/Notes/a.md', doc: '# on disk too' })
     } finally {
       vi.unstubAllGlobals()
@@ -496,8 +465,6 @@ describe('writing the session down', () => {
 
       const saved = JSON.parse(written[0] ?? '{}') as Session
       const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
-      // The note that has a file keeps its path and gives up its text; the one
-      // that exists nowhere but here keeps every word.
       expect(tabs[0]).toMatchObject({ path: '/Notes/a.md', doc: '', dirty: false })
       expect(tabs[1]).toMatchObject({ path: null, doc: '# nowhere else', dirty: true })
     } finally {
@@ -514,8 +481,6 @@ describe('writing the session down', () => {
 
       expect(back?.closed).toHaveLength(1)
       expect(back?.closed?.[0]).toMatchObject({ paneId: 'p1', at: 0 })
-      // Unsaved words travel with it, which is the whole point of writing the
-      // stack down rather than keeping it for this run only.
       expect(back?.closed?.[0]?.draft).toMatchObject({ path: '/Notes/gone.md', doc: '# closed' })
     } finally {
       vi.unstubAllGlobals()
@@ -548,10 +513,6 @@ describe('writing the session down', () => {
   })
 })
 
-/** Whether a pane lays its notes out as columns is the pane's own answer, so it travels
- *  with the pane: a window put back after a restart is the arrangement it was left in.
- *  Absent in a session written by a build that had never heard of it, which reads back as
- *  off - and off is where every pane starts. */
 describe('a pane that stacks its notes', () => {
   test('says so when it is read back', () => {
     const layout = readLayout({

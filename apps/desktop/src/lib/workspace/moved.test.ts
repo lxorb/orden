@@ -19,7 +19,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { formerRoot, hasMoved, rebased, restate, settleRoot, SPACES_ROOT } = await import('./moved')
 
-/** Two installs of the same app on one iPhone: the same notes, a new container. */
 const OLD =
   '/var/mobile/Containers/Data/Application/03742EE0-9B69-4F07-9D03-0AAB3201676B/Documents/Nib'
 const NEW =

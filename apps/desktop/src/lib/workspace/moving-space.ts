@@ -1,15 +1,3 @@
-/** Move to space, carried out: the tab menu's row, the palette's and a tab let go of on a
- *  space in the switcher all end here. What each kind of tab takes with it is decided in
- *  space-move.ts.
- *
- *  The tab itself is never closed and opened again: it is the same tab in another set, so
- *  a terminal's shell is the same process with the same screen, a page keeps its place,
- *  and an unsaved note keeps its words and its undo. The window stays in the space it is
- *  in - Edge opens the workspace a tab is moved to, and that is what its users ask it not
- *  to do - and the tab is in front of its new set when that space is next shown.
- *
- *  Fetched with the first move. */
-
 import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { isAgentsName } from '../note-name'
@@ -24,9 +12,6 @@ import type { Draft } from './session'
 import { ownerOf } from './sets'
 import { carried, movingOf, spacesFor } from './space-move'
 
-/** The tabs, moved to `space`. A file that cannot move - a file of that name already
- *  there - keeps its tab where it is, so nothing is ever half moved, and the toast says
- *  so with the way to try again. Answers whether every one of them went. */
 export async function moveToSpace(ids: readonly string[], space: string): Promise<boolean> {
   const ws = workspace
   const target = ws.spaces.find((one) => one.id === space)
@@ -49,8 +34,6 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
     } else if (how === 'home') {
       homed(tab, space)
     }
-    // A file that moved takes every view of it along: a second pane on the note is the
-    // note, which is the other space's now.
     const views = how === 'file' ? ws.tabs.filter((one) => one.note === tab.note) : [tab]
     moved.push(...views.filter((one) => !moved.includes(one)))
   }
@@ -99,14 +82,10 @@ export async function tabsFollow(path: string): Promise<void> {
   )
 }
 
-/** A tab's file moved into the space's root: the one move between spaces there is, with
- *  its links and its Undo. Two tabs on one file move it once. 'said' where the refusal has
- *  already been told. */
 async function fileMoved(path: string, root: string, done: Map<string, boolean | 'said'>) {
   const before = done.get(path)
   if (before !== undefined) return before
 
-  // A note called AGENTS would become the setting of the space it lands in, so it stays.
   if (isAgentsName(nameOf(path))) {
     void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
     done.set(path, 'said')
@@ -123,8 +102,6 @@ async function fileMoved(path: string, root: string, done: Map<string, boolean |
   return ok
 }
 
-/** A tab with no file given the space as its home. A terminal's last lines move to the
- *  space's folder before anything is written under the new one. */
 function homed(tab: Tab, space: string) {
   if (tab.kind === 'terminal') {
     const key = readSpec(tab.doc)?.key ?? ''

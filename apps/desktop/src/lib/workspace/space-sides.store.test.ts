@@ -1,14 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The sidebars are the window's, not a space's (#1123). Each space keeps its own tabs,
- *  and the set it kept used to carry both sides with it: the file list shut in one space
- *  came back open in the next, the right side's panel went with the space it was opened
- *  in, and a switch from the switcher opened a shut file list on the tree. A switch
- *  changes what the window shows, never the frame around it.
- *
- *  Every test starts the store afresh, since sets.svelte.ts reads the window it finds as
- *  it is first fetched. The disk is a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -35,7 +26,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 const WORK = { id: 'work', name: 'Work', root: '/spaces/Work' }
 const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }
 
-/** A window as a launch leaves it, with both spaces and Work on screen. */
 async function window(setsRead?: unknown) {
   await vi.dynamicImportSettled()
   vi.resetModules()
@@ -53,7 +43,6 @@ type Workspace = Awaited<ReturnType<typeof window>>
 
 const fetched = async () => (await import('./sets.svelte')).sets
 
-/** Both spaces with a set of their own: a note open in each, Work on screen. */
 async function bothOpen(workspace: Workspace) {
   await fetched()
   await workspace.open(`${WORK.root}/Plan.md`)
@@ -181,7 +170,6 @@ describe('the switcher', () => {
 })
 
 describe('a session with a side for every space, as older builds wrote it', () => {
-  /** What an older build wrote: the set put aside with sides of its own. */
   async function older() {
     const before = await window()
     await bothOpen(before)

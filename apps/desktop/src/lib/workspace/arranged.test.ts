@@ -1,19 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Arranged, arrangedMap, MOST_ARRANGED, MOST_NAMES, STORAGE_KEY } from './arranged.svelte'
 
-/** The order somebody arranged a folder's rows into.
- *
- *  Kept beside the space rather than in a file inside it, which buys the same one
- *  obligation the folder icons buy: a row that is renamed, moved or deleted has to
- *  say so, or the list quietly names files that are not there. That is most of what
- *  is tested here, along with the one thing the icons never had to answer - the top
- *  of the space is a folder too, and its key is the empty one.
- *
- *  Nothing is pushed anywhere under node: the push imports the account and the
- *  syncing loop, both of which answer with nothing signed out. It waits for the
- *  dragging to stop, so the clock is held here rather than left to fire after this
- *  file has finished. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -97,7 +84,6 @@ describe('a drag that has not been dropped yet', () => {
 
     expect(arranged.listOf('/space/Work')).toEqual(['c.md', 'a.md'])
     expect(arranged.dragging).toBe(true)
-    // Nothing is written until it lands.
     expect(arranged.of(ROOT)).toEqual({})
   })
 
@@ -325,11 +311,7 @@ describe('reading a map out of an unknown', () => {
   })
 })
 
-/** A space whose account keeps each row's own place (#1068): the folder is drawn by the
- *  places, a drop is turned into them, and the map is still written for the builds that
- *  read nothing else. The engine's half is sync2/placing.test.ts. */
 describe('a space that keeps places', () => {
-  /** Places in memory, a folder's names in order, and every order asked for. */
   function places(start: Record<string, string[]> = {}) {
     const held = new Map(Object.entries(start))
     const asked: { folder: string; names: readonly string[] }[] = []
@@ -393,7 +375,6 @@ describe('a space that keeps places', () => {
     expect(one.asked).toEqual([{ folder: 'Old', names: ['y.md', 'x.md'] }])
     expect(arranged.of(ROOT)).toEqual({ Old: ['y.md', 'x.md'], Work: ['b.md', 'a.md'] })
 
-    // Once Old has places, the next pass leaves it be.
     one.land()
     one.asked.length = 0
     arranged.fromPlaces(ROOT)

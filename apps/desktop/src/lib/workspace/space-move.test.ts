@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { carried, spaceOfTab, spacesFor } from './space-move'
 
-/** Move to space, decided: what a move takes with the tab, and where a tab may go. */
-
 const spaces = [
   { id: 'work', name: 'Work', root: '/spaces/Work' },
   { id: 'home', name: 'Home', root: '/spaces/Home' },
@@ -72,7 +70,6 @@ describe('where a tab may go', () => {
   test('and a file is not taken out of a space it may not be written in', () => {
     const readOnly = (path: string) => !path.startsWith('/spaces/Work')
     expect(spacesFor([note], where, readOnly)).toEqual([])
-    // A terminal opened there has nothing in the space to take.
     expect(spacesFor([{ ...draft, home: 'work' }], where, readOnly).map((one) => one.id)).toEqual([
       'home',
       'uni',

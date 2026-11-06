@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A space deleted while signed in. The account keeps a deleted space of its own
- *  for 14 days, but only what sync handed it: a space never pushed, a note written
- *  since the last pass, and a dotfile like `.git/` are on this disk alone. Removed
- *  outright, they were gone for good, so only a space the account holds whole may
- *  leave its folder to the account's Recently deleted. */
-
 const sent: string[] = []
 let trees = new Map<string, unknown>()
 
@@ -24,7 +18,6 @@ const account = vi.hoisted(() => ({
 }))
 vi.mock('../account.svelte', () => ({ account }))
 
-/** Which spaces sync knows the account's id of, and which notes it holds as written. */
 const remote = new Map<string, string>()
 let unpushed = new Set<string>()
 vi.mock('../sync.svelte', () => ({

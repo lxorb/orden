@@ -10,14 +10,12 @@ import {
   offeredName,
 } from './drafts'
 
-/** How a test document differs from a blank draft note. */
 interface Made {
   path?: string | null
   kind?: TabKind
   name?: string
 }
 
-/** A tab's document: a draft where there is no path. */
 function doc(text: string, { path = null, kind = 'note', name = UNTITLED }: Made = {}) {
   return new NoteDoc({ kind, path, name, text, dirty: false }, () => undefined)
 }
@@ -42,8 +40,6 @@ describe('a draft', () => {
     expect(hasWords(doc('a'))).toBe(true)
   })
 
-  /** Asked on each change until it has words, so it reads a fixed slice and never
-   *  the whole of a paste. */
   test('with a very long paste of white space and then words has words', () => {
     expect(hasWords(doc(`${' '.repeat(5000)}a`))).toBe(true)
   })
@@ -82,7 +78,6 @@ describe('a tab waiting for a place', () => {
     expect(isUnsaved(doc('', { kind: 'graph', name: 'Graph' }))).toBe(false)
   })
 
-  /** A browser tab has nothing unwritten in it, so only the draft wears the dot. */
   test('wears the dot only where it has words of its own', () => {
     expect(isDraft(doc('', { kind: 'canvas' }))).toBe(true)
     expect(isDraft(doc('', { kind: 'web', name: 'Site' }))).toBe(false)
@@ -106,7 +101,6 @@ describe('the name Save offers', () => {
   test('is a web tab’s page title, as a file can hold it', () => {
     expect(offeredName(doc('', { kind: 'web', name: 'x.com' }), 'Home / X')).toBe('Home X')
     expect(offeredName(doc('', { kind: 'web', name: 'svelte.dev' }))).toBe('svelte.dev')
-    // A page that has said nothing yet is called what its tab is.
     expect(offeredName(doc('', { kind: 'web', name: 'Website' }), '')).toBe('Website')
   })
 

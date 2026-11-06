@@ -1,39 +1,19 @@
-/** A tab with no file, and the file it becomes once somebody gives it a place.
- *
- *  A new tab is a tab and nothing else - no file, no row in the list - however much is
- *  written in it, until it is saved: Ctrl+S or its dot, which ask where and under what
- *  name, or the tab dropped on a row of the file list. Its words are in the session
- *  meanwhile, the way VS Code's hot exit keeps an untitled editor, and closing it with
- *  words in it asks whether to save them (closing-unsaved.ts, #359). Emil, 2026-09-30: *"When I open a new tab or note on nib it should be in an
- *  unsaved state (with no saving location) and there should be a dot behind it
- *  (indicating that). For web tabs there should not be the dot behind them if they're
- *  unsaved."* Pure: when and where are the workspace's and saving.svelte.ts's. */
-
 import { endingOf, nameFromContent, nameFromTitle, shownName, TITLE_CHARS } from '../note-name'
 import { isOnlineTab } from '../online/path'
 import { isMarkdownPath } from '../space-paths'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 import { TAB_KINDS } from './tab-kinds'
 
-/** Whether a document is a draft: words of its own and no file for them, which is
- *  what wears the dot. A file somebody shared on its own is not one: its room keeps
- *  it. */
 export function isDraft(note: NoteDoc): boolean {
   return note.path === null && note.shared === null && holdsWords(note.kind)
 }
 
-/** Whether a document is waiting for a place: a draft, or a web tab or an online
- *  terminal nobody has kept, which wear no dot - nothing unwritten is in either, and
- *  closing one loses nothing, since its page or its session goes on - but are saved the
- *  same way (issue 1055). */
 export function isUnsaved(note: NoteDoc): boolean {
   if (isDraft(note)) return true
   if (note.path !== null || note.shared !== null) return false
   return note.kind === 'web' || isOnlineTab({ kind: note.kind, path: null, doc: note.text })
 }
 
-/** Whether a draft has anything in it worth keeping: a note once it holds a character
- *  that is not white space, a plane or a deck once anything was drawn on it. */
 export function hasWords(note: NoteDoc): boolean {
   return note.kind === 'note' ? !note.blank : note.dirty
 }
@@ -50,8 +30,6 @@ export function worthAFile(note: NoteDoc): boolean {
   )
 }
 
-/** The file a name comes to, under its kind's own ending, read the app's own way so
- *  `Plan.canvas` does not become `Plan.canvas.canvas`. */
 export function fileNamed(name: string, kind: TabKind): string {
   const extension = TAB_KINDS[kind].extension
   if (extension === null) return name
@@ -61,15 +39,10 @@ export function fileNamed(name: string, kind: TabKind): string {
   return already ? name : `${name}${extension}`
 }
 
-/** Whether a draft is named after its words rather than after a name it came with, as
- *  an import does. Only a note: a plane and a deck have no words to read a name off. */
 export function namedByWords(note: NoteDoc): boolean {
   return note.kind === 'note' && note.name === UNTITLED
 }
 
-/** The name saving offers, without an ending: a note's first heading or line (a
- *  fixed slice of the rope, never the whole), the name a document came with, or a web
- *  tab's page title. */
 export function offeredName(note: NoteDoc, title?: string): string {
   if (note.kind === 'web') return nameFromTitle(title?.trim() ? title : note.name) ?? UNTITLED
   if (!namedByWords(note)) return shownName(note.name)
@@ -77,7 +50,6 @@ export function offeredName(note: NoteDoc, title?: string): string {
   return nameFromContent(note.live.text.sliceString(0, TITLE_CHARS)) ?? UNTITLED
 }
 
-/** The file a draft is written as where nobody typed a name. */
 export function draftFile(note: NoteDoc): string {
   return fileNamed(offeredName(note), note.kind)
 }

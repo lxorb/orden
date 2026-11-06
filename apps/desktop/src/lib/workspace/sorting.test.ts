@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Which order each space's list is read in, carried with the account (#423): Emil, *"if
- *  I turn on manual for one space, it will remain on for that space even on other
- *  devices"*. What each machine chose before is taken over once; the first time an
- *  account sees a space this machine's choice stands where the account has none and is
- *  sent up; after that the account's word is taken. */
-
 const sent = vi.hoisted(() => [] as { root: string; sort: string }[])
 vi.mock('./pushing', () => ({
   push: async (
@@ -57,7 +51,6 @@ describe('the order a space is read in', () => {
     expect(sorting.of('/other')).toBe('name')
     expect(JSON.parse(store.get(STORAGE_KEY) ?? '{}')[ROOT].mode).toBe('modified-desc')
 
-    // Read once: a choice changed under the old key afterwards is not read again.
     store.set('nib:list-order', JSON.stringify({ [ROOT]: 'created-asc' }))
     expect(made().of(ROOT)).toBe('modified-desc')
   })
@@ -75,7 +68,6 @@ describe('the order a space is read in', () => {
     sorting.adopt(ROOT, 'manual', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
 
-    // Another device chose again; the next pass brings it here.
     sorting.adopt(ROOT, 'created-desc', 'account')
     expect(sorting.of(ROOT)).toBe('created-desc')
     expect(sent).toEqual([])
@@ -103,7 +95,6 @@ describe('a choice the account has not heard yet', () => {
     const sorting = made()
     sorting.adopt(ROOT, 'name', 'account')
     sent.length = 0
-    // Chosen, and the push not yet answered: a listing still saying the old order.
     sorting.set('manual')
     sorting.adopt(ROOT, 'name', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
@@ -114,16 +105,13 @@ describe('a choice the account has not heard yet', () => {
 
 describe('an account whose listing says nothing of the order', () => {
   test('is not folded with nor sent to, and the order chosen here stands until it does', async () => {
-    // A Worker from before #423: the listing has no sort at all, and a push would 404.
     store.set('nib:list-order', JSON.stringify({ [ROOT]: 'manual' }))
     const sorting = made()
     for (let pass = 0; pass < 3; pass++) sorting.adopt(ROOT, undefined, 'account')
     expect(sorting.of(ROOT)).toBe('manual')
-    // A push goes out after an import; give it the time to have gone, had it been sent.
     await new Promise((settled) => setTimeout(settled, 50))
     expect(sent).toEqual([])
 
-    // The Worker is new now: an account meeting this space for the first time.
     sorting.adopt(ROOT, 'name', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
     await vi.waitFor(() => expect(sent).toEqual([{ root: ROOT, sort: 'manual' }]))

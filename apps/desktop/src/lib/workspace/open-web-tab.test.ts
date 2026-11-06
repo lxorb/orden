@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { secondWebTabs } from './open'
 
-/** A tab as the check sees one: its kind, its file, and the document it shows. */
 const tab = (kind: string, path: string | null, note: object) => ({ kind, path, note })
 
 describe('a second tab over a web note', () => {

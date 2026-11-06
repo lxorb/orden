@@ -1,11 +1,3 @@
-/** What each space has put away. Nothing moves and nothing is written into the file,
- *  so an archived row keeps its path, bytes and modified time and comes back exactly
- *  where it was; a map beside the space says it instead, as Gmail, Keep and Bear keep
- *  theirs. A path as the space speaks it, to a moment: positive while archived,
- *  negative once taken back, so a synced restore is not mistaken for a path nobody
- *  archived. A folder stands for everything under it. See archive-map.ts for how two
- *  copies meet, and docs/archive.md. */
-
 import { insideItsSpace, relativeTo, within } from '../space-paths'
 import { isNumber, isRecord, keepJson } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
@@ -13,13 +5,10 @@ import { carried, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:archived'
 
-/** Moments per path: positive while archived, negative once taken back. */
 export type ArchiveMap = Record<string, number>
 
-/** Entries per map, restores included; the service's number too. */
 export const MOST_ARCHIVED = 1000
 
-/** The map in an unknown, with whatever is not a path and a moment left out. */
 export function archiveMap(value: unknown): ArchiveMap {
   if (!isRecord(value)) return {}
 
@@ -31,11 +20,9 @@ export function archiveMap(value: unknown): ArchiveMap {
     }
   }
 
-  // Gathered and then made into a map: a folder may be called `__proto__`.
   return Object.fromEntries(kept)
 }
 
-/** The archived path hiding `at`: itself, or the innermost folder above it. */
 export function coveredBy(keys: ReadonlySet<string>, at: string): string | null {
   if (!keys.size) return null
 
@@ -62,14 +49,12 @@ function read(): Record<string, Kept> {
 const EMPTY: ArchiveMap = {}
 
 export class Archive {
-  /** Raw: a change replaces a map whole, and deep would be a signal per path. */
   private spaces = $state.raw<Record<string, Kept>>(read())
   private live = new WeakMap<ArchiveMap, ReadonlySet<string>>()
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
 
   constructor(private readonly root: () => string | null) {}
 
-  /** Once the plugin's storage has answered; see even/local.ts. */
   reread(): void {
     const grown = filledIn(this.spaces, read())
     if (grown) this.spaces = grown
@@ -83,7 +68,6 @@ export class Archive {
     return this.spaces[root]?.account ?? null
   }
 
-  /** The paths a space has archived, as the space speaks of them. */
   keysOf(root: string): ReadonlySet<string> {
     const map = this.of(root)
     let keys = this.live.get(map)
@@ -101,7 +85,6 @@ export class Archive {
     return root !== null && this.keysOf(root).size > 0
   }
 
-  /** Either spelling of a path. */
   coverIn(root: string, path: string): string | null {
     return coveredBy(this.keysOf(root), relativeTo(root, path))
   }
@@ -111,7 +94,6 @@ export class Archive {
     return root !== null && this.coverIn(root, path) !== null
   }
 
-  /** Whether a path is archived, or holds something that is: what deleting asks. */
   holdsIn(root: string, path: string): boolean {
     const at = relativeTo(root, path)
     return (
@@ -120,9 +102,6 @@ export class Archive {
     )
   }
 
-  /** A row renamed or moved: archived at the new path, taken back at the old. Into
-   *  another space, `into`, the new path goes into that space's map, as that space
-   *  speaks of it; a key relative to the old root would be a path nothing holds. */
   moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
@@ -145,7 +124,6 @@ export class Archive {
     }
   }
 
-  /** Archives some paths and takes others back; see `changed` in archive-map.ts. */
   change(root: string, archive: readonly string[], restore: readonly string[]): Promise<void> {
     return import('./archive-map').then(({ changed }) => {
       const next = changed(this.of(root), archive, restore, Date.now())
@@ -172,7 +150,6 @@ export class Archive {
     return import('./archive-map').then(({ fold }) => fold(this, root, theirs, accountId))
   }
 
-  /** A map replaced, and the account told unless `account` says it is its copy. */
   put(root: string, map: ArchiveMap, account: string | null = null) {
     const held = this.spaces[root]
     const whose = account ?? held?.account ?? null

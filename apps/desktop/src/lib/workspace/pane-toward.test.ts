@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Along, type Frame, pane, paneToward, type Toward, withSplit } from './pane-tree'
 
-/** Alt+H, J, K and L between the panes (#1033): the pane next over on that side, by
- *  where the panes sit in the window rather than by the order of the tree. */
-
 function split(frame: Frame, id: string, along: Along, made: string): Frame {
   return withSplit(frame, id, along, pane(made), `s-${made}`)
 }
@@ -35,7 +32,6 @@ describe('the pane next over', () => {
   })
 
   test('goes every way round a 2x2', () => {
-    // a | b over c | d: a row of two, each split downwards.
     const four = split(
       split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'),
       'b',
@@ -51,7 +47,6 @@ describe('the pane next over', () => {
   })
 
   test('from a wide pane over two, is the one beside its middle, by where the divider is', () => {
-    // a on top, b | d under it, the divider a third of the way along.
     const frame = split(split(pane('a'), 'a', 'column', 'b'), 'b', 'row', 'd')
     expect(to(frame, 'b', 'up')).toBe('a')
     expect(to(frame, 'd', 'up')).toBe('a')

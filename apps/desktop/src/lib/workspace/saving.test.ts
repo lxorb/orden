@@ -1,22 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Writing what is open down, driven by a stand-in store.
- *
- *  The workspace's own tests take the rules the long way round, through tabs and
- *  files; see workspace.test.ts. What is here is the machinery on its own clock:
- *  the pause, the ceiling on it, a draft that stays a tab until it is given a place,
- *  one file operation at a time per document, the version a sitting's first write
- *  keeps, and a write the disk refuses. */
-
 const sent: { command: string; path: string; content: string }[] = []
 
-/** A write held open, so a test can do something while it is in the air. */
 let holding: Promise<void> | null = null
 
-/** A version being kept held open, which comes before the write it is for. */
 let holdingVersion: Promise<void> | null = null
 
-/** Paths the disk refuses a write to, and how many more times it will. */
 const refusing = new Map<string, number>()
 
 vi.mock('../tauri', () => ({
@@ -35,7 +24,6 @@ vi.mock('../tauri', () => ({
       refusing.set(path, left - 1)
       throw new Error(`could not write ${path}: the disk is full`)
     }
-    // Nothing is on this disk until it is written; a browser asks by reading.
     if (command === 'read_note' || command === 'read_asset') throw new Error('nothing there')
     return ''
   },
@@ -61,10 +49,8 @@ type Entry = import('../workspace.svelte').Entry
 
 const SPACE = '/space'
 
-/** For a move of sync's in a test where no write stalls. */
 const notStalled = () => Promise.reject(new Error('stalled'))
 
-/** One row of a listing, as the disk hands it over. */
 function row(path: string): Entry {
   return {
     name: path.slice(path.lastIndexOf('/') + 1),
@@ -76,8 +62,6 @@ function row(path: string): Entry {
   }
 }
 
-/** The space's listing, holding whatever paths are named. What says whether a note
- *  still has a file: a delete takes the row out of it before it touches the disk. */
 function listing(paths: readonly string[]): Entry {
   return { ...row(SPACE), is_dir: true, children: paths.map(row) }
 }
@@ -87,18 +71,13 @@ const written = (path?: string) =>
 
 const versions = () => sent.filter((one) => one.command === 'snapshot_note')
 
-/** Every store a test made, so what one left waiting is written before the next
- *  begins: the window going writes every store there is, and a note one test left
- *  on its clock would otherwise land in the next test's list of writes. */
 const stores: InstanceType<typeof Saving>[] = []
 
-/** What a test document starts as, where it is not a note saying `# a`. */
 interface Starting {
   text?: string
   kind?: 'note' | 'canvas'
 }
 
-/** A store with one document open in it: a note at `path`, or a draft with none. */
 function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {}) {
   let tree = listing(path?.startsWith(`${SPACE}/`) ? [path] : [])
   const came: { path: string; key: string | undefined }[] = []
@@ -120,7 +99,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     persist() {
       this.persisted += 1
     },
-    // What the listing and every open document hold, the one asking left out.
     freeName: (folder: string, name: string, except?: string) => {
       const taken = new Set([
         ...tree.children.map((one) => one.path),
@@ -155,8 +133,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
   ws.documents.push(note)
   Object.defineProperty(ws, 'active', { get: () => tab })
 
-  /** The note deleted, as the store deletes one: the row leaves the listing, the delete
-   *  is said, and the tab it was open in is closed. */
   const deleted = () => {
     tree = listing([])
     saving.follow({ op: 'removed', path: note.path ?? '', kind: 'file', root: SPACE })
@@ -164,14 +140,12 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     ws.documents.length = 0
   }
 
-  /** The tab closed, which is the ordinary way a document stops being shown. */
   const closed = () => {
     ws.tabs.length = 0
     ws.documents.length = 0
     saving.closed(note)
   }
 
-  /** A second note open beside the first. */
   const beside = (other: string, words = '# b') => {
     tree = listing([...(path ? [path] : []), other])
     const second: Doc = new NoteDoc(
@@ -189,7 +163,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     return second
   }
 
-  /** Types into the note the way the editor does: through the live text. */
   const type = (words: string) => {
     note.live.replace(words, true)
   }
@@ -228,8 +201,6 @@ describe('what the pause after the typing writes', () => {
     ])
   })
 
-  /** Somebody typing without a pause is written all the same: the pause is put off
-   *  by every keystroke, but never past its ceiling. */
   test('and never waits more than two seconds while the typing never stops', async () => {
     vi.useFakeTimers()
     const { note } = open(`${SPACE}/a.md`)
@@ -259,8 +230,6 @@ describe('what the pause after the typing writes', () => {
 })
 
 describe('a draft', () => {
-  /** A new tab is a tab and nothing else until somebody gives it a place: its words
-   *  are the session's to keep, the way VS Code's hot exit keeps an untitled editor. */
   test('stays a tab however much is written in it', async () => {
     vi.useFakeTimers()
     const { note, type, saving } = open(null, { text: '' })
@@ -283,7 +252,6 @@ describe('a draft', () => {
     expect(note.path).toBe(landed)
     expect(note.dirty).toBe(false)
     expect(written()).toEqual([{ command: 'write_note', path: landed, content: '# Plan' }])
-    // The one file operation a new file owes, naming the document that is it.
     expect(came).toEqual([{ path: landed, key: note.key }])
   })
 
@@ -365,8 +333,6 @@ describe('the window going while the typing is still warm', () => {
     ])
   })
 
-  /** And the session with it, synchronously, because the write above is a round trip
-   *  a page being torn down may never come back from. */
   test('and puts the same words in the session, which storage takes at once', () => {
     const { note, ws } = open(PATH)
 
@@ -527,8 +493,6 @@ describe('a write the disk refuses', () => {
     expect(other.dirty).toBe(false)
   })
 
-  /** A file that will not be written until somebody does something about it is on
-   *  the light, with its name: the words stay in the note and the tries go on. */
   test('and the third refusal in a row is on the light', async () => {
     vi.useFakeTimers()
     const { note } = open(A)
@@ -544,9 +508,6 @@ describe('a write the disk refuses', () => {
 })
 
 describe('a note renamed while its write was in the air', () => {
-  /** A write and a rename are two round trips, and a rename landing inside a write
-   *  used to move the file out from under it: the write then put the old name back
-   *  beside the new one. One at a time per document, whoever asked. */
   test('is renamed only once the write has landed', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
     const order: string[] = []
@@ -577,9 +538,6 @@ describe('a note renamed while its write was in the air', () => {
     expect(note.path).toBe(`${SPACE}/b.md`)
   })
 
-  /** A move sync makes on this disk, which waits for the write in the air and has the
-   *  next one wait for it: landing inside a rename, a write put the old name back beside
-   *  the file, and sync would then read that as a note made here. */
   test('by sync waits for the write in the air, and the next write follows it', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
     const order: string[] = []
@@ -619,7 +577,6 @@ describe('a note renamed while its write was in the air', () => {
     holding = null
     await writing
     await vi.waitFor(() => expect(order).toEqual(['rename after 1 write']))
-    // The write after it is not let down while the rename is in the air.
     expect(written()).toHaveLength(1)
 
     moved()
@@ -627,9 +584,6 @@ describe('a note renamed while its write was in the air', () => {
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`, `${SPACE}/b.md`])
   })
 
-  /** A pass has the engine to itself, and a move made here waits for the engine inside
-   *  its hold: telling the account (`follow` in sync2/runner.svelte.ts). Waiting for
-   *  that hold from inside the pass never ended. */
   test('by sync does not wait for what is held waiting on the engine', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
 
@@ -639,7 +593,6 @@ describe('a note renamed while its write was in the air', () => {
     const pass = new Promise<void>((go) => {
       passOver = () => go()
     })
-    // A rename made here, telling the account, which waits for the pass to end.
     const renaming = saving.holding([note], () => pass)
 
     let ran = false
@@ -657,9 +610,6 @@ describe('a note renamed while its write was in the air', () => {
     await renaming
   })
 
-  /** The tab closed and the write went on without it. Nothing lists the document any
-   *  more, so the move held nothing and the words landed at the old path, a second file
-   *  beside the one that moved. */
   test('by sync takes along a note whose tab closed on the way to its write', async () => {
     const { saving, note, closed, deleted } = open(`${SPACE}/a.md`)
 
@@ -694,13 +644,10 @@ describe('a note renamed while its write was in the air', () => {
     await saving.settled()
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/b.md`])
 
-    // A write after it finds no row at the new name in a listing not read again yet,
-    // which is not the file being gone.
     note.replace('# a again')
     await saving.write(note)
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/b.md`, `${SPACE}/b.md`])
 
-    // And the note really deleted after that stays deleted.
     deleted()
     note.replace('# a once more')
     await saving.write(note)
@@ -735,8 +682,6 @@ describe('a note renamed while its write was in the air', () => {
     expect(order).toEqual(['renamed'])
   })
 
-  /** A pass has the engine to itself: a write the disk never answers, on a share that
-   *  stalled, must not keep it there, with every operation queued behind it. */
   test('by sync waits for a write in the air only so long', async () => {
     vi.useFakeTimers()
     const { saving, note } = open(`${SPACE}/a.md`)
@@ -764,8 +709,6 @@ describe('a note renamed while its write was in the air', () => {
       return Promise.resolve()
     }
 
-    // Put off rather than made: the write would land at the old path after the move,
-    // a second file. Where the note still is, it lands where it belongs.
     const moving = saving.holdingWrites(`${SPACE}/a.md`, run, later)
     await vi.advanceTimersByTimeAsync(IN_THE_AIR_AT_MOST - 1)
     expect(stalled).toBe(0)
@@ -774,7 +717,6 @@ describe('a note renamed while its write was in the air', () => {
     expect(stalled).toBe(1)
     expect(ran).toBe(false)
 
-    // Not waited for all over again by every pass that asks.
     await saving.holdingWrites(`${SPACE}/a.md`, run, later)
     expect(stalled).toBe(2)
 
@@ -787,9 +729,6 @@ describe('a note renamed while its write was in the air', () => {
     vi.useRealTimers()
   })
 
-  /** Something that did not wait - a space renamed, a file moved by sync - moves the
-   *  note while its write is in the air. The write landing used to tell the document
-   *  the old path back, so the tab followed the file the move had just left. */
   test('by something that did not wait stays where it went, and is written there', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
 

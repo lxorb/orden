@@ -1,6 +1,3 @@
-/** Which tabs a close around one tab takes: the rows of a tab's own menu that close
- *  more than the tab. */
-
 import { i18n, t } from '../i18n.svelte'
 
 export type Around = 'others' | 'right' | 'all'
@@ -20,8 +17,6 @@ export function closedAround<T extends { readonly id: string }>(
       : strip.filter((one) => one.id !== id)
 }
 
-/** Left and right in a label are the screen's, so a language that reads the other
- *  way closes the tabs to the left. */
 export function closeAfterLabel(): string {
   return i18n.factor > 0 ? t('Close tabs to the right') : t('Close tabs to the left')
 }

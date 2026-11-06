@@ -1,14 +1,3 @@
-/** The bookmarks of a space: the notes, folders, headings and searches kept in
- *  the row above the file list.
- *
- *  A bookmark says where it points the way a link does, relative to the space,
- *  never as a path on this disk, because the list travels: signed in it lives
- *  on the account and every machine reads the same one. Signed out it stays
- *  here, the way the pins it grew out of did.
- *
- *  Kept per space, so two spaces cannot crowd each other out of one list and a
- *  space that goes takes its bookmarks with it. */
-
 import { movedTo, relativeTo, samePath, within } from '../space-paths'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { isRecord, isString, keepJson } from '../stored'
@@ -17,8 +6,6 @@ import { carried, moving } from './file-ops'
 
 const STORAGE_KEY = 'nib:bookmarks'
 
-/** More than anyone keeps above a file list. The service holds an account to
- *  the same number, so a list that fits here fits there. */
 export const MOST_BOOKMARKS = 60
 
 export const BOOKMARK_KINDS = [
@@ -32,49 +19,19 @@ export const BOOKMARK_KINDS = [
 ] as const
 type BookmarkKind = (typeof BOOKMARK_KINDS)[number]
 
-/** The kinds whose path names a file or a folder in the space, and so the kinds a
- *  rename or a move has to carry along. A search and a graph view point at no file,
- *  and a group's path is a name of its own. */
 const POINTS_AT_A_FILE: ReadonlySet<BookmarkKind> = new Set(['note', 'folder', 'heading', 'block'])
 
 export interface Bookmark {
   kind: BookmarkKind
-  /** The note or folder it points at, relative to the space. Empty for a
-   *  search, which points at no file; a name of its own for a group, which
-   *  points at nothing and is pointed at instead. */
   path: string
-  /** The heading a heading bookmark names, the block name a block bookmark
-   *  carries, the words a search looks for, or what a group is called. Empty for
-   *  a note or a folder. Always a string rather than an optional field, so one
-   *  shape serves the storage, the wire and the comparison below. */
   text: string
-  /** The group this sits in, by that group's own name, or absent at the top of
-   *  the list. One field rather than a list of children, because the order of
-   *  the whole list is the order it is drawn in and a tree of lists would have
-   *  two orders to keep in step. */
   parent?: string
-  /** What a graph bookmark is a bookmark of: one whole set of graph settings, as
-   *  the JSON they are stored in everywhere else. Absent on every other kind.
-   *
-   *  A field of its own rather than crammed into `text`, which is the name the
-   *  reader gave the view: the row has to say what it is called, and a row named
-   *  after its own filter would be a row called `tag:work path:Notes`. See
-   *  workspace/graph-settings.svelte.ts, which is what reads it. */
   view?: string
-  /** The id of the entry it points at, as sync knows it (#1068): what finds the note or
-   *  folder again where the path names nothing any more, because it was moved or
-   *  renamed somewhere this list did not hear of. Absent where sync has no id for it -
-   *  signed out, or not handed over yet - and for every kind that points at no file. An
-   *  older build drops it when it reads the list, and so does an older account. */
   id?: string
 }
 
-/** The longest id a bookmark carries: an entry id is a UUID. */
 const LONGEST_ID = 64
 
-/** How long the settings of a bookmarked view may be, as JSON. A filter, six
- *  colour groups and a handful of numbers; the service holds a space to the same
- *  number. */
 const LONGEST_VIEW = 400
 
 export function isBookmark(value: unknown): value is Bookmark {
@@ -88,13 +45,10 @@ export function isBookmark(value: unknown): value is Bookmark {
   )
 }
 
-/** An id a bookmark may carry; anything else is left off rather than costing the row. */
 function idIn(value: unknown): string | null {
   return isString(value) && value.length > 0 && value.length <= LONGEST_ID ? value : null
 }
 
-/** A name no group in this space has: what a group is filed under, and what its
- *  rows point back at. Short, because it travels with every row in the group. */
 function freeGroupId(taken: readonly Bookmark[]): string {
   for (;;) {
     const id = `g${Math.random().toString(36).slice(2, 8)}`
@@ -102,8 +56,6 @@ function freeGroupId(taken: readonly Bookmark[]): string {
   }
 }
 
-/** A bookmark in another group, or at the top of the list without one. Copied
- *  whole, so a graph bookmark keeps its view and a newer build's field stays. */
 export function filedUnder(mark: Bookmark, parent?: string | null): Bookmark {
   const row = { ...mark }
   if (parent) row.parent = parent
@@ -111,9 +63,6 @@ export function filedUnder(mark: Bookmark, parent?: string | null): Bookmark {
   return row
 }
 
-/** The bookmarks in an unknown, with whatever is not one left out. A list
- *  written by a newer build may hold a kind this one has never heard of, and
- *  that is a row it cannot draw. */
 export function bookmarkList(value: unknown): Bookmark[] {
   if (!Array.isArray(value)) return []
 
@@ -133,12 +82,6 @@ export function bookmarkList(value: unknown): Bookmark[] {
     .slice(0, MOST_BOOKMARKS)
 }
 
-/** A list with each bookmark of a file where sync says that file is (#1068): one whose
- *  path names nothing in the space while its id names an entry somewhere else is moved
- *  there, and one with no id is given the id of what its path names. The path is what
- *  is read where sync knows neither, so a list from an older build, an older account or
- *  a space signed out reads exactly as it did. One that lands on a bookmark already
- *  held is dropped, as a move here drops it. `moves` false only fills in ids. */
 export function located(
   root: string,
   list: readonly Bookmark[],
@@ -158,33 +101,22 @@ export function located(
       ? mark
       : { ...mark, path: there + mark.path.slice(file.length) }
   })
-  // One moved onto a bookmark already held is that bookmark twice; the first stays.
   return found.filter((one, at) => found.findIndex((other) => sameBookmark(one, other)) === at)
 }
 
-/** Whether two lists say the same down to the ids, which `sameList` does not ask. */
 function sameIds(one: readonly Bookmark[], other: readonly Bookmark[]): boolean {
   return one.length === other.length && one.every((mark, at) => mark.id === other[at]?.id)
 }
 
-/** A file at the top of the list, which is an essential's tile; one in a group is a
- *  row of its group. See Bookmarks.svelte. */
 export function isTile(mark: Bookmark): boolean {
   return mark.kind === 'note' && !mark.parent
 }
 
-/** The note or folder a bookmark points at. A block bookmark names its note and the
- *  block together; the note is the part in front of the `#`. See forBlock. */
 function fileOf(mark: Bookmark): string {
   const cut = mark.kind === 'block' ? mark.path.indexOf('#') : -1
   return cut === -1 ? mark.path : mark.path.slice(0, cut)
 }
 
-/** Two bookmarks are the same one when they point at the same thing.
- *
- *  Which group it is in is not part of that: a note is bookmarked or it is not,
- *  and moving it into a group is moving the bookmark it already is rather than
- *  making a second one. */
 export function sameBookmark(one: Bookmark, other: Bookmark): boolean {
   return one.kind === other.kind && samePath(one.path, other.path) && one.text === other.text
 }
@@ -198,65 +130,39 @@ function sameList(one: readonly Bookmark[], other: readonly Bookmark[]): boolean
   })
 }
 
-/** The account's list, with anything this machine had and it has not added
- *  after it.
- *
- *  Run once per space and account: afterwards the account holds the one copy,
- *  because a union run on every pass would hand back a bookmark that another
- *  machine had deliberately removed. */
 export function mergeBookmarks(theirs: Bookmark[], mine: Bookmark[]): Bookmark[] {
   const extra = mine.filter((one) => !theirs.some((held) => sameBookmark(held, one)))
   return [...theirs, ...extra].slice(0, MOST_BOOKMARKS)
 }
 
-/** One space's list, and which account it has already been reconciled with. */
 interface Kept extends Folded {
   list: Bookmark[]
-  /** Whether the account has heard the list as it is here. False from a change until
-   *  its push lands, and while it is the next pass keeps this machine's list and sends
-   *  it again rather than taking the account's word for a list it never heard: a pass
-   *  that read the account before an import's Essentials reached it handed back the
-   *  list without them (#1149). Written down, as folder-icons.svelte.ts's is. */
   sent: boolean
 }
 
 function read(): Record<string, Kept> {
   return readSpaces(STORAGE_KEY, (one) => ({
     list: bookmarkList(one.list),
-    // Anything but a false written by this build reads as said: a record an older one
-    // wrote has no such field, and what it holds did reach the account.
     sent: one.sent !== false,
   }))
 }
 
-/** This machine's bookmarks after the account's; see `mergeBookmarks`. */
 const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 
 export class Bookmarks {
   private spaces = $state<Record<string, Kept>>(read())
 
-  /** Sync's ids, which a list is located by as it is read from the account and as it
-   *  is written; see `located` and entry-ids.ts. */
   private get ids(): EntryIds | null {
     return entryIds()
   }
 
-  /** What the last change is still offering to the account; see `put`. The offer
-   *  outlives the call that caused it - the row answers in the frame the click
-   *  happened in and the account hears after - so this is how anything that has to
-   *  know the offer was made waits for the offer itself rather than for a moment
-   *  to pass. Not state: nothing on screen reads it. */
   offered: Promise<unknown> = Promise.resolve()
 
-  /** Which space the rows on screen belong to. A function rather than a value
-   *  because the workspace decides that, and it changes as spaces are picked.
-   *  `changed` hears every change to a list; see `kept` in essentials.svelte.ts. */
   constructor(
     private readonly root: () => string | null,
     private readonly changed: () => void = () => undefined,
   ) {}
 
-  /** The open space's bookmarks, in the order they were put in. */
   get list(): Bookmark[] {
     const root = this.root()
     return root === null ? [] : this.of(root)
@@ -270,8 +176,6 @@ export class Bookmarks {
     return !!mark && this.list.some((held) => sameBookmark(held, mark))
   }
 
-  /** In or out, whichever it is not. Bookmarking is one gesture, so it is one
-   *  call, and the row answers in the frame the click happened in. */
   toggle(mark: Bookmark | null) {
     const root = this.root()
     if (!mark || root === null) return
@@ -284,7 +188,6 @@ export class Bookmarks {
     this.put(root, next)
   }
 
-  /** A selection in, or out once all of it is in: one press, one write. */
   toggleAll(marks: readonly Bookmark[]) {
     const root = this.root()
     if (!marks.length || root === null) return
@@ -298,8 +201,6 @@ export class Bookmarks {
     this.put(root, next)
   }
 
-  /** Drags a row to another place in the list. Out-of-range indexes are what a
-   *  drop that landed on nothing looks like, so they leave the order alone. */
   move(from: number, to: number) {
     const root = this.root()
     if (root === null) return
@@ -312,7 +213,6 @@ export class Bookmarks {
     this.put(root, [...rest.slice(0, to), mark, ...rest.slice(to)])
   }
 
-  /** A new group, at the end of the list, under a name of its own. */
   addGroup(name: string): Bookmark | null {
     const root = this.root()
     const words = name.trim()
@@ -326,8 +226,6 @@ export class Bookmarks {
     return group
   }
 
-  /** What a group is called. Only a group has a name of its own: everything else
-   *  is called after what it points at. */
   rename(mark: Bookmark, name: string) {
     const root = this.root()
     const words = name.trim()
@@ -339,16 +237,10 @@ export class Bookmarks {
     )
   }
 
-  /** Takes one out. A group takes nothing with it: what was in it comes up to
-   *  where the group was, which is what somebody who empties a folder of
-   *  bookmarks means - the bookmarks were the point, the group was the shelf. */
   remove(mark: Bookmark, root = this.root()) {
     if (root === null) return
 
     const held = this.of(root)
-    // Where the group itself sits now, rather than where the caller last saw it:
-    // what was in it comes up to that, so a group inside a group leaves its rows
-    // in the group it was in.
     const freed = held.find((one) => sameBookmark(one, mark))?.parent
 
     this.put(
@@ -361,10 +253,6 @@ export class Bookmarks {
     )
   }
 
-  /** Puts a bookmark in a group, or back at the top of the list.
-   *
-   *  A group cannot be put inside itself or inside anything it holds, which is
-   *  the one arrangement that would be a list with no top. */
   moveInto(mark: Bookmark, parent: string | null) {
     const root = this.root()
     if (root === null) return
@@ -376,14 +264,6 @@ export class Bookmarks {
     )
   }
 
-  /** A file or a folder that has been renamed or moved, with everything under it:
-   *  every bookmark of it, of a heading or a block in it, or of anything inside a
-   *  folder that moved goes with it. A bookmark keeps the path it was made with, so
-   *  without this one pointed at a name nothing answered to and its row was gone.
-   *
-   *  A bookmark that lands on one already held is the same bookmark twice, so only
-   *  the first of the two stays. Into another space, `into`, the bookmarks go to the
-   *  end of that space's list, out of any group, which is that list's own. */
   moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
@@ -431,8 +311,6 @@ export class Bookmarks {
     )
   }
 
-  /** A space folder that has been renamed, which re-keys its list at once: it is
-   *  kept under the root, and the root is what moved. */
   spaceMoved(from: string, to: string) {
     const kept = this.spaces[from]
     if (!kept || from === to) return
@@ -441,7 +319,6 @@ export class Bookmarks {
     this.write()
   }
 
-  /** Whether a group holds another, however far down. */
   private holds(group: string, other: string): boolean {
     const held = this.list
     let at: string | undefined = other
@@ -456,14 +333,11 @@ export class Bookmarks {
 
   forEntry(entry: { path: string; is_dir: boolean }): Bookmark | null {
     const root = this.root()
-    // Inside the space rather than the space itself, or a row of another one.
     if (root === null || !within(root, entry.path)) return null
 
     return { kind: entry.is_dir ? 'folder' : 'note', path: relativeTo(root, entry.path), text: '' }
   }
 
-  /** One heading of a note, as a bookmark. `note` is already relative to the
-   *  space, which is how the workspace names the note on screen. */
   forHeading(note: string | null, text: string): Bookmark | null {
     const words = text.trim()
     if (!note || !words) return null
@@ -471,12 +345,6 @@ export class Bookmarks {
     return { kind: 'heading', path: note, text: words }
   }
 
-  /** A bookmark of one block of a note.
-   *
-   *  The path is the whole of what a link into it would say - `Plan.md#^a1b2c3` -
-   *  because that is what opening it needs, and the text is the block's own first
-   *  words, because `^a1b2c3` is not something anybody can read in a list. The
-   *  editor makes both: it is what knows how to name a block; see blockTarget. */
   forBlock(note: string | null, target: string, words: string): Bookmark | null {
     const said = target.trim()
     const label = words.trim()
@@ -490,14 +358,6 @@ export class Bookmarks {
     return words ? { kind: 'search', path: '', text: words } : null
   }
 
-  /** The graph as it is set right now, under a name: a view to come back to.
-   *
-   *  The space already remembers how its graph is drawn, which is what makes the
-   *  graph a command rather than something to open. This is the other half of
-   *  that: more than one way to look at the same space - the whole of it, one
-   *  project, what nothing links to - without setting the card up again each
-   *  time. Null for a name with nothing in it or a view too long to keep, which
-   *  is a view nobody wrote by hand. */
   forGraph(name: string, settings: unknown): Bookmark | null {
     const words = name.trim()
     if (!words) return null
@@ -508,22 +368,12 @@ export class Bookmarks {
     return { kind: 'graph', path: '', text: words, view }
   }
 
-  /** Takes over what the account holds for one space, and answers with the list
-   *  the account should be told about: this machine's own bookmarks the first
-   *  time an account sees the space, nothing on the passes after that. */
   adopt(root: string, theirs: Bookmark[], accountId: string): Bookmark[] | null {
-    // Read rather than trusted: the service is deployed on its own, so a build
-    // of it older than this app answers with no bookmarks at all.
     const said = bookmarkList(theirs)
-    // Where the account's paths name nothing here and sync knows where their ids went,
-    // the list is read with them there. Only read so: the device that moved the file is
-    // the one that writes the list again, so two devices do not answer each other's
-    // pull.
     const account = this.ids ? located(root, said, this.ids) : said
     const held = this.spaces[root]
     const met = meet(held, accountId, held?.list ?? [], account, LISTS)
     if (!met) {
-      // The same list, perhaps with ids this copy had not got yet.
       if (held && !sameIds(held.list, account)) {
         this.spaces = { ...this.spaces, [root]: { ...held, list: account } }
         this.write()
@@ -540,9 +390,6 @@ export class Bookmarks {
     return met.tell ? met.value : null
   }
 
-  /** Whether the account took `list`, the space's list as it was sent: heard only while
-   *  the list is still that one, since a change made while it was on its way is one the
-   *  account has not heard. See `sent`. */
   said(root: string, landed: boolean, list: readonly Bookmark[]) {
     const held = this.spaces[root]
     if (!held || held.sent === landed || (landed && !sameList(held.list, list))) return
@@ -552,8 +399,6 @@ export class Bookmarks {
   }
 
   put(root: string, given: Bookmark[]) {
-    // Ids only: a list written here says where its bookmarks are, and a move made here
-    // reaches it while sync may still have the file where it was.
     const list = this.ids ? located(root, given, this.ids, { moves: false }) : given
     this.spaces = {
       ...this.spaces,
@@ -561,16 +406,10 @@ export class Bookmarks {
     }
     this.write()
 
-    // Imported here rather than at the top: syncing reads the workspace this
-    // store belongs to, and the two would import each other. Kept rather than
-    // dropped, so the offer is something that can be waited for; nothing has to.
     this.offered = import('../sync.svelte').then(({ sync }) => sync.pushBookmarks(root))
   }
 
   private write() {
-    // Through `keep`, which cannot throw: this is reached from inside a syncing
-    // pass, and a storage that is full would otherwise end the pass rather than
-    // cost this machine one remembered list; see stored.ts.
     keepJson(STORAGE_KEY, this.spaces)
     this.changed()
   }

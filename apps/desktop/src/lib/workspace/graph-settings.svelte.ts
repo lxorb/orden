@@ -1,148 +1,65 @@
-/** How a space's graph is drawn.
- *
- *  On the space rather than on the account, and rather than on the tab: what the
- *  picture is filtered to and what its colours mean are facts about one space's
- *  notes, so they travel with the space to every machine signed in and come back
- *  with it when it is restored. It is also what lets the graph stay a command
- *  rather than something to open: there is one picture of a space and it is
- *  already the way you left it.
- *
- *  A bookmarked view is the other half of that, and does not make the graph a
- *  thing to open either: a row in the bookmarks carries a whole set of these
- *  settings, and pressing it writes them here and shows the graph. Which is what
- *  gives a space a second way of being looked at - the whole of it, one project,
- *  what nothing links to - without setting the card up again each time. See
- *  `take`, and forGraph in workspace/bookmarks.svelte.ts.
- *
- *  Not the camera, though, and not the time the reader has scrubbed to. Where the
- *  view is looking is a gesture, not a setting; sending it up would make two
- *  machines fight over the same pan.
- *
- *  `nib:folder-icons` is this store's twin in every respect, down to remembering
- *  which account a space's settings have been folded into. */
-
 import { isBoolean, isNumber, isRecord, isString, keepJson } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
 export const STORAGE_KEY = 'nib:graph'
 
-/** How many colour groups a space may have: one per colour the theme names. A
- *  seventh would either repeat a colour or invent one, and a picture with seven
- *  meanings in it is a picture nobody reads. */
 export const MOST_GROUPS = 6
 
-/** How long a query in the card may be. The service holds a space to the same
- *  number, so what fits here fits there. */
 const LONGEST_QUERY = 200
 
-/** How long after the last keystroke the account is told, in milliseconds. Long
- *  enough that a phrase typed at speed is one request, short enough that closing
- *  the window straight after does not lose it. */
 const SETTLING = 700
 
-/** How far apart the arrangement may be pushed, as a multiple of what it does on
- *  its own. */
 export const LEAST_SPREAD = 0.25
 export const MOST_SPREAD = 4
 
-/** How far apart a link may be asked to hold two notes, in graph units. The middle of
- *  the range is what the arrangement does unasked; short draws the clusters tight and
- *  long lets a chain of notes read as a chain. See `distance` in graph-layout.ts. */
 export const LEAST_DISTANCE = 12
 export const MOST_DISTANCE = 96
 
-/** How hard every note may be asked to push every other away, before the spread is
- *  applied. See `push` in graph-layout.ts. */
 export const LEAST_PUSH = 40
 export const MOST_PUSH = 400
 
-/** How many links out the picture beside a note may reach.
- *
- *  One is what it opens at: the notes around this one, which is the question the
- *  panel is opened for. Five is as far as the slider goes, because past three most
- *  spaces answer with the space - but which spaces those are is the reader's to
- *  find out, and a dial that stops before the answer is a dial that decided for
- *  them. See `depth` on the card in GraphControls.svelte. */
 export const SHALLOWEST = 1
 export const DEEPEST = 5
 
-/** How much sooner or later the names fade in, as a multiple of the zoom the picture
- *  has always shown them at. One is that zoom exactly, so a dial nobody has touched
- *  changes nothing; below it the names arrive while the space is still small, above it
- *  they wait until the view is in among the notes. See `LABELS_FROM` in
- *  graph-paint.ts. */
 export const LEAST_FADE = 0.25
 export const MOST_FADE = 4
 
-/** The three widths a link may be drawn at: thin, the look the picture has always
- *  had, and thick. Three steps rather than a range, because the widths worth having
- *  are the ones a screen can actually draw as a hairline; see `EDGE_PIXELS` in
- *  graph-paint.ts, which is where each step is a number of the screen's own pixels. */
 export const LEAST_LINES = 1
 export const MOST_LINES = 3
 
-/** One query and the colour the notes it keeps are drawn in. */
 interface ColourGroup {
   query: string
-  /** One of the six the theme names, 1 to 6; see `--canvas-1` in tokens.css. */
   colour: number
 }
 
 export interface GraphSettings {
-  /** What the picture of the whole space is narrowed to, in the search's own
-   *  language; see graph-filter.ts. Empty for the whole space. */
   filter: string
-  /** Whether notes nothing links to are in the picture. */
   orphans: boolean
-  /** Whether the files the notes embed - pictures, PDFs, sounds, films - are in the
-   *  picture as nodes of their own. */
   attachments: boolean
   groups: ColourGroup[]
   spread: number
-  /** Whether the pull towards the middle is on, which is what keeps the notes
-   *  nothing links to in a ring rather than letting them drift. */
   gather: boolean
-  /** How far apart a link holds two notes, in graph units. */
   distance: number
-  /** How hard every note pushes every other away, before the spread. */
   push: number
-  /** Whether a link is drawn with a head saying which note reached for which. */
   arrows: boolean
-  /** Whether a note with more links is drawn bigger. */
   sized: boolean
-  /** How wide a link is drawn: 1 thin, 2 the look the picture has always had, 3
-   *  thick. */
   lines: number
-  /** Where the names fade in, as a multiple of the zoom they have always faded in
-   *  at. One is that zoom. */
   fade: number
-  /** How many links out the picture beside a note reaches, `SHALLOWEST` to
-   *  `DEEPEST`. */
   depth: number
 }
 
 export const DEFAULT_GRAPH: GraphSettings = {
   filter: '',
   orphans: true,
-  // Off: an attachment is a node the arrangement has to make room for, so the
-  // picture a space arrives with is the picture of its notes.
   attachments: false,
   groups: [],
   spread: 1,
   gather: true,
-  // What the arrangement has always done: `DISTANCE` and `REPULSION` in
-  // graph-layout.ts, so a dial nobody has touched changes nothing.
   distance: 36,
   push: 150,
-  // Off: a graph says "these two are connected", and a space where most links are
-  // read both ways is a space full of arrowheads saying nothing. On when the
-  // question is which note reached for which.
   arrows: false,
   sized: true,
-  // The middle step, which is the hairline the picture has always been drawn with:
-  // a dial nobody has touched changes nothing.
   lines: 2,
-  // And the zoom the names have always arrived at, for the same reason.
   fade: 1,
   depth: 1,
 }
@@ -152,10 +69,6 @@ function held(value: unknown, least: number, most: number, fallback: number): nu
   return Math.min(most, Math.max(least, value))
 }
 
-/** A group with no query yet is kept, not dropped: it is the row that has just
- *  been added and is about to be typed into, and a card that removed it under the
- *  cursor would be a card nothing could be written in. It colours nothing until it
- *  says something. */
 function groupsOf(value: unknown): ColourGroup[] {
   if (!Array.isArray(value)) return []
 
@@ -173,10 +86,6 @@ function groupsOf(value: unknown): ColourGroup[] {
   return out
 }
 
-/** The settings in an unknown, with whatever does not read as one left at its
- *  default. Written by a newer build, by an older one, or by hand: what reads is
- *  kept and the rest is the default, the way every other store here reads
- *  itself. */
 export function graphSettingsOf(value: unknown): GraphSettings {
   if (!isRecord(value)) return { ...DEFAULT_GRAPH }
 
@@ -199,13 +108,10 @@ export function graphSettingsOf(value: unknown): GraphSettings {
   }
 }
 
-/** Whether two sets of settings say the same thing, so a pass that changed
- *  nothing writes nothing. */
 export function sameGraph(one: GraphSettings, other: GraphSettings): boolean {
   return JSON.stringify(one) === JSON.stringify(other)
 }
 
-/** One space's settings, and which account they have already been folded into. */
 interface Kept extends Folded {
   settings: GraphSettings
 }
@@ -214,9 +120,6 @@ function read(): Record<string, Kept> {
   return readSpaces(STORAGE_KEY, (one) => ({ settings: graphSettingsOf(one.settings) }))
 }
 
-/** This machine's settings where the account has only the defaults. There is nothing
- *  to merge the way there is with a map of icons - a filter is one string, not a set
- *  of pairs. */
 const SETTINGS: Folding<GraphSettings> = {
   fold: (theirs, mine) => (sameGraph(theirs, DEFAULT_GRAPH) ? mine : theirs),
   same: sameGraph,
@@ -224,17 +127,10 @@ const SETTINGS: Folding<GraphSettings> = {
 
 export class SpaceGraphSettings {
   private spaces = $state<Record<string, Kept>>(read())
-  /** A push waiting for the typing to stop, per space. Bookkeeping rather than
-   *  state: nothing on screen is drawn from it. */
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
 
-  /** Which space the picture on screen is of. A function rather than a value
-   *  because the workspace decides that, and it changes as spaces are picked. */
   constructor(private readonly root: () => string | null) {}
 
-  /** Reads the settings again, once the storage that holds them has answered. For
-   *  the plugin, whose store answers seconds after this one was built; see `reread`
-   *  in folder-icons.svelte.ts, which is the same fact about the same storage. */
   reread(): void {
     const grown = filledIn(this.spaces, read())
     if (grown) this.spaces = grown
@@ -244,14 +140,11 @@ export class SpaceGraphSettings {
     return this.spaces[root]?.settings ?? DEFAULT_GRAPH
   }
 
-  /** The settings of the space being looked at, which is what every surface that
-   *  draws a graph reads. */
   get here(): GraphSettings {
     const root = this.root()
     return root === null ? DEFAULT_GRAPH : this.of(root)
   }
 
-  /** Changes what is named and leaves the rest as it was. */
   set(change: Partial<GraphSettings>) {
     const root = this.root()
     if (root === null) return
@@ -262,12 +155,6 @@ export class SpaceGraphSettings {
     this.put(root, next)
   }
 
-  /** Takes a whole view at once, as a bookmarked one is kept: the JSON a graph
-   *  bookmark carries, read the way anything written by another build is read -
-   *  what makes sense is kept and the rest is the default. Nothing at all leaves
-   *  the picture alone, which is what a row with no view in it means.
-   *
-   *  See forGraph in workspace/bookmarks.svelte.ts, which writes it. */
   take(view: string | undefined) {
     if (!view) return
 
@@ -287,7 +174,6 @@ export class SpaceGraphSettings {
     this.put(root, next)
   }
 
-  /** Back to the picture the space arrived with. */
   reset() {
     const root = this.root()
     if (root === null || sameGraph(this.of(root), DEFAULT_GRAPH)) return
@@ -295,8 +181,6 @@ export class SpaceGraphSettings {
     this.put(root, { ...DEFAULT_GRAPH })
   }
 
-  /** A space folder that has been renamed, which re-keys the settings at once:
-   *  they are kept under the root, and the root is what moved. */
   spaceMoved(from: string, to: string) {
     const kept = this.spaces[from]
     if (!kept || from === to) return
@@ -305,7 +189,6 @@ export class SpaceGraphSettings {
     this.write()
   }
 
-  /** Forgets a space's settings, for a space that is no longer here. */
   forget(root: string) {
     if (!(root in this.spaces)) return
 
@@ -313,15 +196,7 @@ export class SpaceGraphSettings {
     this.write()
   }
 
-  /** Takes over what the account holds for one space: this machine's own settings
-   *  the first time an account sees the space, and the account's outright on every
-   *  pass after that.
-   *
-   *  First contact keeps whatever this machine has where the account has only the
-   *  defaults, and sends it up; see `SETTINGS`. Exactly what `bookmarks.adopt` does about which copy wins, and why. */
   adopt(root: string, theirs: unknown, accountId: string) {
-    // Read rather than trusted: the service is deployed on its own, so a build of
-    // it older than this app answers with no graph settings at all.
     const account = graphSettingsOf(theirs)
     const kept = this.spaces[root]
     const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, SETTINGS)
@@ -341,20 +216,6 @@ export class SpaceGraphSettings {
     this.soon(root)
   }
 
-  /** The storage and the account both hear about it once the typing stops.
-   *
-   *  Unlike a folder icon, which is one gesture, a filter is written a letter at a
-   *  time: a push per keystroke would be a request per keystroke, and every one of
-   *  them would be out of date before it landed. The storage is the same bargain on
-   *  a smaller scale and it used to be paid on every letter - every space's
-   *  settings stringified and written to `localStorage`, which blocks the thread it
-   *  is called on, beside the pass over five thousand nodes the same keystroke asks
-   *  the picture for.
-   *
-   *  What is on screen is still right immediately: the picture draws from the state
-   *  above, which this writes down rather than reads. What a crash inside the next
-   *  seven tenths of a second costs is the letter that was typed in it, which is
-   *  the bargain a note's own save makes at nearly twice the wait. */
   private soon(root: string) {
     const held = this.pushing[root]
     if (held !== undefined) clearTimeout(held)
@@ -368,9 +229,6 @@ export class SpaceGraphSettings {
     this.pushing = { ...this.pushing, [root]: waiting }
   }
 
-  /** Everything waiting, written down now. For a window going away: the timer
-   *  above will not fire after that, and the letters typed into the card in the last
-   *  breath are the ones somebody would look for when they came back. */
   flush() {
     for (const [root, held] of Object.entries(this.pushing)) {
       clearTimeout(held)
@@ -381,17 +239,12 @@ export class SpaceGraphSettings {
     this.write()
   }
 
-  /** The space's settings as they now stand, sent up so every other machine draws
-   *  the same picture. See pushing.ts. */
   private async push(root: string) {
     const { push } = await import('./pushing')
     await push(root, (api, token, spaceId) => api.saveGraphSettings(token, spaceId, this.of(root)))
   }
 
   private write() {
-    // Through `keep`, the one place that writes: a picture that cannot be
-    // written down is still the picture on screen, and the settings are in
-    // memory and true. See stored.ts.
     keepJson(STORAGE_KEY, this.spaces)
   }
 }

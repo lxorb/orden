@@ -1,28 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Putting the last file operation back, driven by a stand-in store.
- *
- *  The workspace's own tests already take each of these the long way round -
- *  delete a note and undo it, rename one and undo that; see workspace.test.ts and
- *  trash.test.ts. What is here is what those cannot reach without a disk that
- *  refuses: an entry whose file will not go, a deletion with nothing kept and
- *  nothing in the trash, and a write that fails halfway, which must leave the entry
- *  on the stack so it can be asked for again. */
-
 const sent: { command: string; path: string; content: string }[] = []
 
-/** Commands the disk refuses, by the path or the trash id they name, or by one
- *  command and the path it names. */
 const refused = new Set<string>()
 
-/** What a file says now, by its path, for the steps that look before they write. A
- *  path with nothing here reads empty and has no stamp, so nothing is at it. */
 const disk = new Map<string, string>()
 
-/** Where the trash put a note back, by its id, where that is not the name it had. */
 const restores = new Map<string, string>()
 
-/** The folders a listing can be had of, by root, as the crate lists them. */
 const trees = new Map<string, unknown>()
 
 vi.mock('../tauri', () => ({
@@ -34,7 +19,6 @@ vi.mock('../tauri', () => ({
     const id = typeof args?.id === 'string' ? args.id : ''
     sent.push({ command, path, content })
 
-    // The crate refuses a tree whose root is not a folder.
     if (command === 'read_tree') {
       const root = typeof args?.root === 'string' ? args.root : ''
       const tree = trees.get(root)
@@ -50,9 +34,6 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-/** The index hears about a file that was written, and every file operation is said
- *  once to everything kept by path. What they do with that is their own business
- *  and tested there; what matters here is that it is said. */
 const told: string[] = []
 
 vi.mock('../link-index.svelte', () => ({
@@ -67,8 +48,6 @@ const { FileActions } = await import('./undo.svelte')
 type PutsBack = import('./undoing').PutsBack
 type FileAction = import('./undo.svelte').FileAction
 
-/** A store with nothing open in it: no documents, no tabs, and everything kept by
- *  path standing in as one call, since that it is asked is all this cares about. */
 function store(action: FileAction): PutsBack & { loaded: number; wrote: number } {
   const undone = new FileActions()
   undone.record(action)
@@ -77,8 +56,6 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     undone,
     documentAt: () => null,
     entryAt: () => null,
-    // The three file operations, said the way the store says them; who follows
-    // each is workspace/file-ops.ts and tested with the store.
     fileMoved: (from: string, to: string) => {
       told.push(`moved ${from} -> ${to}`)
       return Promise.resolve()
@@ -92,14 +69,11 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       return Promise.resolve()
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
-    // Nothing is open, so a move holds nothing and runs straight away.
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
-    // The disk's part of a move, which the store says to sync first.
     renameOnDisk: async (from: string, to: string) => {
       const { invoke } = await import('../tauri')
       await invoke('rename_note', { from, to })
     },
-    // A creation undone goes to Recently deleted, which keeps it under an id.
     bin: (path: string, folder: boolean) => {
       told.push(folder ? `binned folder ${path}` : `binned ${path}`)
       return Promise.resolve({ content: '# new', trashId: `t-${path}` })
@@ -135,8 +109,6 @@ describe('an entry that goes back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a' })
     await undoLastFileAction(ws)
 
-    // Asked first whether anything is at the name now, which nothing is here; see
-    // `writeBeside` in undoing.ts.
     expect(sent).toEqual([
       { command: 'file_stamp', path: '/s/a.md', content: '' },
       { command: 'read_tree', path: '', content: '' },
@@ -164,16 +136,11 @@ describe('an entry that cannot go back', () => {
     await undoLastFileAction(ws)
 
     expect(ws.undone.stack).toHaveLength(1)
-    // Nothing was written and nothing was told: the file on disk is whatever
-    // somebody else has since made of it.
     expect(ws.loaded).toBe(0)
     expect(told).toEqual([])
   })
 
   test('and a deletion with nothing kept says so rather than writing nothing', async () => {
-    // What a PDF deleted while signed in looks like: bytes, no snapshot, and the
-    // trash entry already swept. Writing the empty content would leave an empty
-    // file where the paper was.
     const ws = store({ kind: 'delete', path: '/s/paper.pdf', content: '' })
     await undoLastFileAction(ws)
 
@@ -222,11 +189,6 @@ describe('a replacement put back', () => {
     expect(ws.undone.stack).toEqual([])
   })
 
-  /** A note another program has since rewritten in an encoding that is not UTF-8,
-   *  or deleted, will not read. That used to be taken for a note nobody had touched,
-   *  and the old words went over the file, or brought a deleted note back. A read
-   *  that fails cannot say a note is unchanged, so the whole replacement stays where
-   *  it is: none of its notes is written, and it can be asked for again. */
   test('and leaves it alone where a note will not read', async () => {
     disk.set('/s/a.md', NOTE.after)
     refused.add('read_note /s/b.md')
@@ -263,14 +225,10 @@ describe('an import taken back', () => {
       '/s/b.md',
       '/s/c.md',
     ])
-    // Only the two that went are gone as far as the index is concerned.
     expect(told).toEqual(['gone /s/a.md', 'gone /s/c.md'])
     expect(ws.undone.stack).toEqual([])
   })
 
-  /** An import is undone minutes or days after it landed, and a note it wrote can
-   *  have been written in since. Taken away outright, that writing was gone for good:
-   *  no version kept, nothing in Recently deleted. So that note stays where it is. */
   test('and keeps a note that has been written in since', async () => {
     disk.set('/s/a.md', '# imported')
     disk.set('/s/b.md', '# imported\n\na week of notes')
@@ -289,8 +247,6 @@ describe('an import taken back', () => {
     expect(ws.undone.stack).toEqual([])
   })
 
-  /** A paper, or anything else that is not words, has no hash to tell whether it has
-   *  changed, so it goes the way a note made here does: to Recently deleted. */
   test('and sends what it cannot compare to the trash', async () => {
     const ws = store({ kind: 'import', paths: ['/s/paper.pdf'], wrote: {} })
     await undoLastFileAction(ws)
@@ -301,10 +257,6 @@ describe('an import taken back', () => {
 })
 
 describe('a copy taken back', () => {
-  /** A copy is a note made here, and somebody can have gone on writing in it before
-   *  asking for the copy back. So what it made goes the way a note made here does when
-   *  that is undone: to Recently deleted, with a version kept, rather than off the
-   *  disk for good. */
   test('sends what it made to the trash, a folder as a folder, and tells the index', async () => {
     const ws = store({
       kind: 'copy',
@@ -334,8 +286,6 @@ describe('a copy taken back', () => {
 })
 
 describe('doing it again', () => {
-  /** The operations a redo asks for, standing in: each records what it did, the way
-   *  the store's own do. */
   function again(action: FileAction, refuse = false) {
     const ws = store(action)
     const asked: string[] = []
@@ -370,8 +320,6 @@ describe('doing it again', () => {
     expect(ws.undone.ahead).toEqual([])
   })
 
-  /** A note made at the deleted one's name since: the note put back stepped aside, and
-   *  that is the one to delete again, not the newer note at the old name. */
   test('deletes the note where it stepped aside to, not the one at its old name', async () => {
     disk.set('/s/old.md', 'newer words')
     const written = again({ kind: 'delete', path: '/s/old.md', content: 'kept words' })
@@ -397,13 +345,9 @@ describe('doing it again', () => {
 
     expect(renamed.asked).toEqual(['rename /s/a.md -> Plan.md'])
     expect(deleted.asked).toEqual(['remove /s/old.md'])
-    // Done again, and nothing is left ahead of it.
     expect(deleted.ws.undone.canRedo).toBe(false)
   })
 
-  /** Two taken back, one done again: the other is still ahead, which is what a second
-   *  Ctrl+Y is for. The redo records itself, and recording empties what is ahead, so
-   *  this is the part that has to put it back. */
   test('keeps what is further ahead when it does the nearer one again', async () => {
     const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
     ws.undone.record({ kind: 'move', from: '/s/b.md', to: '/s/Work/b.md' })
@@ -453,11 +397,6 @@ describe('doing it again', () => {
   })
 })
 
-/** Putting a name back is a rename, and owes everything a rename owes - the links
- *  that followed the note, and the move said to everything kept by path, the account
- *  among them, which keeps a note under an id rather than under a name. Without that
- *  the note that came back from a mistaken rename is a third note up there, with the
- *  history of neither; see `movedHere` in sync/pass.ts. */
 describe('a name put back', () => {
   test('rewrites the links that followed it, and only when they were rewritten', async () => {
     const ws = store({ kind: 'rename', from: '/s/a.md', to: '/s/b.md', rewrote: true })
@@ -511,10 +450,6 @@ describe('a merge and a carve put back', () => {
     ])
   })
 
-  /** The note a merge went into is the note it opens, and the reader goes on typing
-   *  in it. Its words from before the merge written over that took the typing with
-   *  them, with no version kept, so the merge is left where it is instead, to be
-   *  taken apart by hand. */
   test('and leaves a merge alone whose note has been written in since', async () => {
     disk.set('/s/b.md', `${MERGE.intoAfter}\n\ntyped since`)
     const ws = store({ ...MERGE })
@@ -524,9 +459,6 @@ describe('a merge and a carve put back', () => {
     expect(ws.undone.last?.kind).toBe('merge')
   })
 
-  /** The name the folded note had is free once it goes, and a note can arrive at it
-   *  before the undo: made here, synced in, or written by an agent. That note stays,
-   *  and the old words step aside the way a deleted note's do when it comes back. */
   test('and writes the folded note beside one that has arrived at its name', async () => {
     disk.set('/s/b.md', MERGE.intoAfter)
     disk.set('/s/a.md', '# a, arrived since')
@@ -596,8 +528,6 @@ describe('a merge and a carve put back', () => {
 })
 
 describe('an archiving put back', () => {
-  /** The store, with the archive and the opening as calls: which way each path went
-   *  and which tabs came back is all this is about. */
   function archived(action: FileAction) {
     const changes: unknown[] = []
     const opened: string[] = []
@@ -625,7 +555,6 @@ describe('an archiving put back', () => {
     expect(changes).toEqual([['/s', [], ['Plan.md']]])
     expect(opened).toEqual(['/s/Plan.md'])
     expect(ws.undone.stack).toEqual([])
-    // Nothing on disk moved, either way.
     expect(sent).toEqual([])
   })
 
@@ -644,8 +573,6 @@ describe('an archiving put back', () => {
   })
 })
 
-/** What was done in the sidebar as one gesture, and what it made, taken back and done
- *  again (#399). */
 describe('a gesture of several', () => {
   test('is recorded as one step, and one that recorded one is that one', async () => {
     const undone = new FileActions()
@@ -678,7 +605,6 @@ describe('a gesture of several', () => {
     const [step] = undone.stack
     expect(step?.kind === 'many' && step.steps[0]).toMatchObject({ trashId: 'id-b' })
 
-    // Restored from Recently deleted instead: that step goes, and the rest stays.
     undone.forget('id-b')
     expect(undone.stack).toEqual([
       { kind: 'many', steps: [{ kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true }] },
@@ -697,7 +623,6 @@ describe('a gesture of several', () => {
 
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'rename_note ',
-      // Asked first whether the name is still free, as a file or a folder; see `onDisk`.
       'file_stamp /s/A/b.md',
       'read_tree ',
       'write_note /s/A/b.md',
@@ -808,7 +733,6 @@ describe('a folder deleted', () => {
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'create_folder /s/A',
       'create_folder /s/A/B',
-      // Asked first whether the name is still free, as a file or a folder; see `onDisk`.
       'file_stamp /s/A/B/b.md',
       'read_tree ',
       'write_note /s/A/B/b.md',
@@ -825,9 +749,6 @@ describe('a folder deleted', () => {
   })
 })
 
-/** Whether the account holds all of a folder about to be deleted. A folder the listing
- *  did not read into looks empty and is not: a link out of the space, or one nested
- *  past the depth the listing stops at. Deleted outright, what was in it went. */
 describe('what the account holds of a folder', () => {
   const at = (path: string, children: unknown[] = [], more: object = {}) => ({
     name: path.split('/').pop(),
@@ -848,8 +769,6 @@ describe('what the account holds of a folder', () => {
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(true)
   })
 
-  // The account's Recently deleted lists notes and nothing else, so a picture or a
-  // paper the account holds the bytes of is still not one it can give back.
   test('one holding a picture is not, however well the account holds it', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/cat.png')]))
 

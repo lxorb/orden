@@ -1,13 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Where a closed draft's words go in Recently deleted.
- *
- *  As though deleted from the root of its space, which is where Restore puts them.
- *  A space shared to be read takes nothing back, so Restore is not offered for what
- *  came from one: words trashed there could never come out again. They go under the
- *  root of a space that may be written in instead, and under their own only where
- *  there is none. */
-
 const readOnly = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) =>

@@ -1,18 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The list of spaces, driven by a stand-in store.
- *
- *  Three rules are what this is about, and all three are about two machines
- *  agreeing. Ids survive a reload, so the space that was open still is. The order is
- *  the account's rather than the folder's, so a listing that comes back
- *  alphabetical does not undo every move. And a space that is renamed takes its
- *  four per-space stores with it, while a space that goes is forgotten by all of
- *  them. */
-
 const sent: { command: string; args: Record<string, unknown> }[] = []
 
-/** What `list_spaces` answers, and what `create_space` and `rename_space` will
- *  make of a name. Set per test. */
 let listed: { name: string; path: string }[] = []
 let refuses = false
 
@@ -40,15 +29,10 @@ const { deleteSpace, renameSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('../workspace.svelte').Space
 
-/** A store holding the spaces given, with the first of them open. What a space
- *  moving or going is said as is recorded rather than done: who follows it is
- *  workspace/file-ops.ts, tested with the store in file-ops.store.test.ts. */
 function store(spaces: Space[]) {
   const told: string[] = []
 
   const ws = {
-    // Copies: a rename writes the new name and root into the space it was given,
-    // which is what makes one list of spaces the one thing they are all read from.
     spaces: spaces.map((one) => ({ ...one })),
     activeSpaceId: spaces[0]?.id ?? null,
     tree: null,
@@ -64,7 +48,6 @@ function store(spaces: Space[]) {
       told.push(`gone ${kind} ${path}`)
       return Promise.resolve()
     },
-    // Nothing is open, so a move holds nothing and runs straight away.
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,
@@ -94,8 +77,6 @@ describe('reading the spaces folder', () => {
 
     await loadSpaces(ws)
 
-    // The listing came back the other way round; the order on screen is the one
-    // the account settled, and the ids are the ones the session wrote down.
     expect(ws.spaces.map((one) => one.id)).toEqual(['w', 'h'])
     expect(ws.activeSpaceId).toBe('w')
   })

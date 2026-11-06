@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Around, closedAround } from './closing-around'
 
-/** A strip spelled as the reader sees it, a letter a tab, each letter also its id. */
 function closing(shape: string, id: string, which: Around): string {
   const strip: { id: string }[] = []
   for (const name of shape) strip.push({ id: name })

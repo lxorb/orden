@@ -13,9 +13,6 @@ import {
   tidied,
 } from './sets'
 
-/** A space's own tabs, decided: which set a space shows, what a set out of sight is
- *  written down as, and what a frame is once its tabs have changed out of sight. */
-
 describe('which set a space shows', () => {
   test('its own, every space', () => {
     expect(setKey('work')).toBe('work')
@@ -27,8 +24,6 @@ describe('which set a space shows', () => {
   })
 })
 
-/** Before #674 a space chose: Global, sharing one set, or its own. The shared set
- *  becomes one space's, once, so nobody loses a tab. */
 describe('where the set every Global space shared goes', () => {
   const spaces = ['work', 'home', 'uni']
 
@@ -86,7 +81,6 @@ describe('which space a tab belongs to', () => {
 })
 
 describe('a frame put right after its tabs changed out of sight', () => {
-  /** Two panes side by side, the left showing `a`. */
   function two(): Frame {
     return {
       kind: 'split',
@@ -121,12 +115,9 @@ describe('a frame put right after its tabs changed out of sight', () => {
     const next = (strip: readonly string[]) => successor(strip, ['x'])
     const [left, right] = panesIn(tidied(two(), (id) => strips[id] ?? [], next))
     expect(left?.activeTabId).toBe('x')
-    // Untouched: none of its tabs has been in front, and where the one in front was is
-    // not known any more, so the end of the strip - never the first for being first.
     expect(right?.activeTabId).toBe('c')
   })
 
-  /** Ctrl+D showed nothing in that pane as the set was left, and it comes back so. */
   test('a pane put down stays down while it still has tabs', () => {
     const frame: Frame = {
       kind: 'split',

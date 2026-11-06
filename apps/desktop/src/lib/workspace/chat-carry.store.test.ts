@@ -1,21 +1,10 @@
 import { chatText } from '@orden/chats'
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A chat's pointer carried into another space (B193).
- *
- *  Moving a `.chat` file into another space moves its chat on the account, and the
- *  account lets a writer who is not the space's owner move it only into another space of
- *  that owner (services/sync, `PATCH /v2/chats/:id`). The file used to move first and the
- *  account's refusal was let go of: the pointer was in the owner's Recently deleted, the
- *  chat stayed where it was with nothing pointing at it, and emptying the trash ended it.
- *  So no such space is offered, and the account is asked before the file moves: refused,
- *  nothing moves and the toast says so. The disk is a map; see test/disk.ts. */
-
 const CHAT = `c_${'1'.repeat(32)}`
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const asked = vi.hoisted(() => ({
   moves: [] as [string, string][],
-  /** Where the account has each chat, as its listing says; a move it takes moves it. */
   spaces: new Map<string, string>(),
   answer: (): Promise<boolean> => Promise.resolve(true),
 }))
@@ -57,8 +46,6 @@ const { spacesOfPaths } = await import('../tab-strip/to-space')
 const { keepOwnPointer } = await import('../chats/places')
 const { prompt } = await import('../prompt.svelte')
 
-/** The owner's space the reader writes in, another of that owner's, and the reader's
- *  own. */
 const SHARED = '/spaces/Team'
 const OWNERS = '/spaces/Lab'
 const MINE = '/spaces/Mine'
@@ -94,10 +81,7 @@ beforeEach(async () => {
   asked.moves = []
   asked.spaces = new Map([[CHAT, 'r-team']])
   asked.answer = () => Promise.resolve(true)
-  // The pointer the chats list this chat at, as the store keeps it (chats/places.ts).
   keepOwnPointer(CHAT, POINTER)
-  // A chat goes with its pointer only on the owner's word (chats/copied.store.test.ts
-  // holds the question itself); here the owner says yes each time.
   vi.spyOn(prompt, 'choose').mockResolvedValue('chat')
   failed.dismiss()
   await workspace.loadTree()
@@ -155,7 +139,6 @@ test('a name already taken there, the account is not asked and nothing moves', a
 })
 
 test('the file refused after the chat moved, the chat is moved back', async () => {
-  // Taken in the moment between the look and the move, so only the move finds it.
   const one = disk.current
   if (!one) throw new Error('no disk')
   const real = one.invoke.bind(one)
@@ -194,8 +177,6 @@ test('the account refusing the way back, the undo stays to be asked for again', 
 })
 
 test('a folder’s move between spaces undone moves the chats in it back too', async () => {
-  // Undone from the space it left, so the folder is in a space whose tree is not the one
-  // loaded, and only the disk says what is in it (B246).
   const { undoLastFileAction } = await import('./undoing')
   disk.current?.folders.add(`${SHARED}/Proj`)
   disk.current?.files.set(`${SHARED}/Proj/Plans.chat`, chatText({ v: 1, chat: CHAT }))

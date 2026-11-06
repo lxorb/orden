@@ -1,14 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A space deleted takes its set of tabs with it, whichever tabs and whichever way it
- *  went (#786). The space on screen was the gap: its set was still the one showing while
- *  the list of spaces changed, so `gone` passed over it, and the switch away then put it
- *  aside under a key no space has. A web tab or a terminal, which no file-ops closes, went
- *  on running with nowhere to show, and came back the same after a restart.
- *
- *  Every test starts the store afresh, since sets.svelte.ts reads the window it finds as
- *  it is first fetched. The disk is a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -28,7 +19,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-/** What the question before a running terminal closes answers, and what it was asked. */
 const ending = vi.hoisted(() => ({ answer: true, asked: [] as string[][] }))
 vi.mock('../terminal/closing', () => ({
   mayEnd: (tabs: readonly { kind: string }[]) => {
@@ -44,7 +34,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 const WORK = { id: 'work', name: 'Work', root: '/spaces/Work' }
 const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }
 
-/** A window as a launch leaves it, with these spaces and this one on screen. */
 async function window(spaces: (typeof WORK)[], active: string | null, setsRead?: unknown) {
   await vi.dynamicImportSettled()
   vi.resetModules()
@@ -239,7 +228,6 @@ test('a space that is still there keeps its set through a launch', async () => {
 })
 
 describe('the set older builds shared, in a window with no space to give it to', () => {
-  /** A session holding that set: its tabs one web tab, drafted under `global`. */
   async function sharedSet(on: string) {
     const before = await window([WORK], 'work')
     const sets = await fetched()
@@ -262,7 +250,6 @@ describe('the set older builds shared, in a window with no space to give it to',
   })
 
   test('kept for the next launch, where the window itself shows the shared set', async () => {
-    // No build writes this: a set on screen is never also aside. Not lost if one did.
     const written = await sharedSet('global')
 
     const after = await window([], null, written)

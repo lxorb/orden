@@ -1,12 +1,3 @@
-/** Which panes there are, which one has the focus, and what a drag over them
- *  would do. The shape of the tree and every operation on it is next door in
- *  pane-tree.ts; this is the state around it.
- *
- *  The focus is marked quietly, in the tab strip of the pane that has it rather
- *  than by a border around the words: a line around the text someone is writing
- *  is a line they have to read past. Everything a key or a palette command does
- *  happens in the focused pane. */
-
 import { successor } from './recency'
 import { identifier } from '../identifier'
 import {
@@ -28,69 +19,26 @@ import {
 } from './pane-tree'
 import type { Zone } from './zones'
 
-/** Where a dragged tab or note would land: at a place in a pane's strip of tabs,
- *  in the middle of a pane, or against one of its sides, which makes a pane
- *  there. */
 export type Landing =
   { kind: 'strip'; paneId: string; at: number } | { kind: 'pane'; paneId: string; zone: Zone }
 
-/** What is being dragged over the panes, while something is. */
 export interface Dragging {
-  /** The tab being dragged, or null when what is moving came out of the file
-   *  list rather than out of a strip. */
   tabId: string | null
 }
 
 export class Panes {
   frame = $state<Frame>(pane(identifier()))
   focusedId = $state('')
-  /** The pane filling the window, while one is; see lib/tab-fill. */
   fills = $state<string | null>(null)
-  /** True for the frame in which a space's own set of tabs replaced the last; the strip
-   *  plays its arrival then rather than every tab's. See sets.svelte.ts. */
   swapping = false
-  /** Tab ids, the one last in front first, for Ctrl+Tab in that order; see
-   *  recency.ts. Here because every tab coming to the front comes through `activate`. */
   used: string[] = []
 
-  /** The divider under a pointer, while one is, so that split follows the finger
-   *  instead of easing after it. */
   sliding = $state<string | null>(null)
 
-  /** What is being dragged over the panes, while it is. What lights the drop
-   *  zones: they are there to be aimed at, and nothing else should show them.
-   *
-   *  Set and cleared through `dragged` and `dropped` below, never by hand. It used to be assigned
-   *  at the two ends of a drag by whichever element started it, and that element
-   *  is exactly what a cross-pane drop destroys: the tab moves to the other
-   *  strip, Svelte tears the original row down, and the `dragend` that would have
-   *  cleared this never fires on a node that is gone. The flag then stayed true
-   *  for the rest of the sitting.
-   *
-   *  What that looks like to a reader is not a stuck drag - the zones are
-   *  invisible - but a note that will not scroll. `.zone.whole` is `inset: 0` and
-   *  `pointer-events: auto` over the whole pane, so it swallows every wheel; the
-   *  caret still scrolls the note, because that is the app moving the scroller
-   *  rather than the reader. Emil: *"note scrollbar, mouse scrolling does
-   *  nothing, but when I move the cursor to the bottom it scrolls"*, in every
-   *  note, until the app was restarted. See Pane.svelte. */
   dragging = $state<Dragging | null>(null)
 
-  /** The drop zone the dragged tab is over, lit while it is. */
   landing = $state<Landing | null>(null)
 
-  /** A drag over the panes has begun.
-   *
-   *  The end is listened for on the window rather than left to the element that
-   *  began it, because that element may not survive the drop. `dragend` bubbles to
-   *  the window when it fires at all, and `drop` covers the case where it does not
-   *  fire because the node carrying it has gone. Both are once-only, so a drag
-   *  cannot leave a listener behind, and starting a second drag drops the first
-   *  one's listeners before adding its own.
-   *
-   *  One owner rather than a rule each caller follows: the zones this lights are
-   *  invisible and take every wheel over the pane, so forgetting to clear it does
-   *  not look like a bug in dragging. It looks like a note that will not scroll. */
   dragged(what: Dragging) {
     this.settled()
     this.dragging = what
@@ -109,14 +57,12 @@ export class Panes {
     }
   }
 
-  /** The drag is over, however it ended. Safe to call when none is under way. */
   dropped() {
     this.settled()
     this.dragging = null
     this.landing = null
   }
 
-  /** Takes off whatever the last drag was listening for. */
   private settled() {
     this.settling?.()
     this.settling = null
@@ -124,7 +70,6 @@ export class Panes {
 
   private settling: (() => void) | null = null
 
-  /** Called whenever the arrangement changes, so the session is written down. */
   private readonly changed: () => void
 
   constructor(changed: () => void) {
@@ -139,8 +84,6 @@ export class Panes {
 
   readonly focused: Pane = $derived.by(() => {
     const [first] = this.all
-    // A frame always holds at least one pane, so `first` is only ever missing
-    // to the compiler. A fresh one keeps the type honest without a cast.
     return paneIn(this.frame, this.focusedId) ?? first ?? pane(this.focusedId)
   })
 
@@ -155,15 +98,11 @@ export class Panes {
     this.changed()
   }
 
-  /** The next pane round. One key for all of them: with four at most, cycling
-   *  is quicker to press than four directions are to remember. */
   focusNext() {
     const next = nextPane(this.frame, this.focusedId)
     if (next) this.focus(next.id)
   }
 
-  /** The pane next over on that side, given the focus: Alt+H, J, K and L (#1033).
-   *  Answers it, or null at the window's edge, where nothing moves. */
   focusToward(toward: Toward): Pane | null {
     const next = paneToward(this.frame, this.focusedId, toward)
     if (next) this.focus(next.id)
@@ -174,9 +113,6 @@ export class Panes {
     return canSplit(this.frame, id, along)
   }
 
-  /** Puts a pane beside or below one, and gives it the focus. `near` puts it on
-   *  the other side: left of that pane, or above it. Answers the new pane, or
-   *  null when the one being split has split as far as it may. */
   split(along: Along, id: string = this.focusedId, near = false): Pane | null {
     if (!canSplit(this.frame, id, along)) return null
 
@@ -185,13 +121,9 @@ export class Panes {
     this.focusedId = made.id
     this.changed()
 
-    // The pane in the tree, not the one just built: the tree is reactive state,
-    // and what it holds is a proxy of what went in.
     return paneIn(this.frame, made.id)
   }
 
-  /** Takes a pane away; its sibling takes the room. The last pane stays, since
-   *  a window with no pane has nowhere to put a note. */
   close(id: string): boolean {
     if (this.count < 2) return false
 
@@ -202,12 +134,6 @@ export class Panes {
     return true
   }
 
-  /** Follows the divider under the pointer. Not written down on every move: the
-   *  drag ends with `settle`.
-   *
-   *  The share is written into the split rather than the tree being rebuilt
-   *  around it, so a move is one number changing and not the whole arrangement;
-   *  see `splitIn`. */
   resize(id: string, fraction: number, room: number) {
     const split = splitIn(this.frame, id)
     if (split) split.fraction = clamped(fraction, room)
@@ -218,7 +144,6 @@ export class Panes {
     this.changed()
   }
 
-  /** A double click on a divider: both sides the same again. */
   equalise(id: string) {
     const split = splitIn(this.frame, id)
     if (!split || split.fraction === EQUAL) return
@@ -227,8 +152,6 @@ export class Panes {
     this.changed()
   }
 
-  /** Whether a pane scrolls with the other one on the same note. Set for both
-   *  ends at once by the workspace, which is what knows they are a pair. */
   setLinked(id: string, on: boolean) {
     const one = paneIn(this.frame, id)
     if (!one || one.linked === on) return
@@ -237,9 +160,6 @@ export class Panes {
     this.changed()
   }
 
-  /** Whether a pane lays its notes out as columns side by side. Per pane, because two
-   *  panes are two arrangements: a long note read down the left and three short ones
-   *  stacked on the right is the whole point of it being a pane's own answer. */
   setStacked(id: string, on: boolean) {
     const one = paneIn(this.frame, id)
     if (!one || one.stacked === on) return
@@ -257,9 +177,6 @@ export class Panes {
     this.changed()
   }
 
-  /** Nothing in front of a pane, and every tab in it left open: Ctrl+D. The tab that
-   *  was in front is written down as the one used last - a tab the session put there
-   *  was never activated - because it is what this pane comes back to; see `lastOf`. */
   deselect(id: string) {
     const was = paneIn(this.frame, id)?.activeTabId
     if (!was) return
@@ -268,26 +185,18 @@ export class Panes {
     this.activate(id, null)
   }
 
-  /** Of a pane's tabs, the one in front last. */
   lastOf(strip: readonly string[]): string | null {
     return this.used.find((id) => strip.includes(id)) ?? null
   }
 
-  /** The one rule for what a pane shows once its tab in front has gone (#1079): the tab
-   *  used last of `left`, else the neighbour of the place `at` it went from. Every way a
-   *  tab leaves comes through here; see `successor` in recency.ts. */
   successorOf(left: readonly string[], at?: number): string | null {
     return successor(left, this.used, at)
   }
 
-  /** Tabs arriving in a pane count as used there, the last of them most recently: a tab
-   *  carried in is what its new pane comes back to. */
   arrived(tabIds: readonly string[]) {
     for (const id of tabIds) this.usedNow(id)
   }
 
-  /** The order of use a launch read back, behind everything used since: ids are made
-   *  fresh every run, so this is their first mention. */
   recall(order: readonly string[]) {
     this.used = [...this.used, ...order.filter((id) => !this.used.includes(id))].slice(0, 200)
   }
@@ -296,9 +205,6 @@ export class Panes {
     this.used = [tabId, ...this.used.filter((one) => one !== tabId)].slice(0, 200)
   }
 
-  /** One pane again, keeping the focused one. What a phone gets, where there is
-   *  no room to put two notes beside each other; the tabs are moved into it by
-   *  the workspace, which is what owns them. */
   collapse() {
     if (this.count < 2) return
 
@@ -308,7 +214,6 @@ export class Panes {
     this.changed()
   }
 
-  /** An arrangement read back from the session or from a saved layout. */
   restore(frame: Frame, focusedId: string) {
     this.frame = frame
     this.focusedId = paneIn(frame, focusedId) ? focusedId : (panesIn(frame)[0]?.id ?? focusedId)

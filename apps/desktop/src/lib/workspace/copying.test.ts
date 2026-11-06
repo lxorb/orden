@@ -1,14 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import type { Entry } from '../workspace.svelte'
 
-/** What a copy tells, and what it writes into the copy, before anything hears it came.
- *
- *  A copied folder drawn as its note: the note inside is renamed after the copy before
- *  the folder is told, so the rows hear one new folder note and no move, which a base
- *  would take for the note it was copied from (B551). A copied note in a base that
- *  numbers its rows comes without the original's id, so the runner gives it the next and
- *  the original keeps its own: no order of paths tells a copy from its original (B552). */
-
 const { told, disk, reads } = vi.hoisted(() => ({
   reads: [] as string[],
   told: [] as string[],
@@ -44,7 +36,6 @@ vi.mock('./write-file', () => ({
 }))
 vi.mock('../views/copied', () => ({
   numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
-  // The runner's own rule, for a space whose bases number by `id: BUG-`.
   withoutIds: (path: string, text: string) =>
     path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text) ? text.replace(/^id: .*\n/m, '') : null,
 }))
@@ -68,7 +59,6 @@ function rig(entries: Entry[]) {
     entryAt: (path: string) => entries.find((one) => one.path === path) ?? null,
     showEntry: () => undefined,
     freshEntry: (path: string) => entry(path),
-    // Taken where the copy goes beside what it copies.
     freeNameOnDisk: async (_dir: string, wanted: string) => (wanted === 'Trip' ? 'Trip x' : wanted),
     fileMoved: async (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
     fileCame: async (path: string) => void told.push(`came ${path}`),
@@ -83,7 +73,6 @@ describe('a copied folder note', () => {
     const ws = rig([entry('/s/Trip', [entry('/s/Trip/Trip.md')])])
     await copyRows(ws as never, [{ from: '/s/Trip', into: '/s' }])
 
-    // No base numbers anything there, so nothing copied is read.
     expect(reads).toEqual([])
     expect(told).toEqual([
       'copy /s/Trip -> /s/Trip copy',

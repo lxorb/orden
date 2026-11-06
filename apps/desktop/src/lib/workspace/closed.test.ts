@@ -68,7 +68,6 @@ describe('the stack of closed tabs', () => {
   test('gives back the tabs one gesture closed as one, each to its own place', () => {
     const stack = new ClosedTabs()
     stack.record(closed('before.md'))
-    // One gesture, one stamp; see `closeMany` in the workspace.
     stack.record({ ...closed('a.md', 'p1', 1), batch: 7 })
     stack.record({ ...closed('b.md', 'p1', 1), batch: 7 })
 

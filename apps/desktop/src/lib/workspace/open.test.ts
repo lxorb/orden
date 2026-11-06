@@ -1,20 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
-/** One document per file, which is the thing this has to be right about.
- *
- *  Two documents over one file are two notes wearing one name: each honest about
- *  its own words, both reporting theirs as that file's, and whichever is written
- *  last is what the file ends up saying. The workspace's own tests drive that the
- *  long way round - two clicks on one row, a session and a click in the same second;
- *  see workspace.test.ts. What is here is the rule itself, said once. */
-
 const { NoteDoc, Tab } = await import('./documents.svelte')
 const { OpenDocuments } = await import('./open')
 type Doc = import('./documents.svelte').NoteDoc
 type DocumentStart = import('./documents.svelte').DocumentStart
 
-/** A store of one pane's worth of tabs, and the documents open in it. `made`
- *  counts how many documents were built, which is the whole question. */
 function open() {
   const tabs: (typeof Tab)['prototype'][] = []
   const made: string[] = []
@@ -27,9 +17,6 @@ function open() {
     },
   )
 
-  /** What an opener does: reads the file, makes a document of it, puts it in a
-   *  tab. The read is held open until `release` is called, which is the round trip
-   *  a second open of the same file used to be started inside. */
   let releasing: () => void = () => undefined
   const reading = new Promise<void>((resolve) => {
     releasing = resolve
@@ -98,7 +85,6 @@ describe('the document a file is open as', () => {
 
     release()
     const note = await documents.opening('/s/a.md', opener('/s/a.md'))
-    // The same note in a second pane, which is one document and two tabs.
     if (note) tabs.push(new Tab(note, 'p2'))
 
     expect(documents.at('/s/a.md')).toBe(note)
@@ -112,7 +98,6 @@ describe('the document a file is open as', () => {
     const note = await documents.opening('/s/a.md', opener('/s/a.md'))
     if (!note) throw new Error('the open did not happen')
 
-    // A rename, a move, a website being given its first file: all of them are this.
     note.path = '/s/b.md'
 
     expect(documents.at('/s/a.md')).toBeNull()
@@ -168,9 +153,6 @@ describe('making a document', () => {
   })
 })
 
-/** The launch race. A session is read a note at a time and its tabs go into the
- *  window when the last one lands, so for that second the documents it has made are
- *  open and no pane is showing them. */
 describe('an arrangement being read', () => {
   test('holds what it makes open until its panes are in the window', async () => {
     const { documents, made } = open()
@@ -184,8 +166,6 @@ describe('an arrangement being read', () => {
         dirty: false,
       })
 
-      // The second pane of the same arrangement, on the same note - and a note
-      // clicked in that second, which is the same question asked from outside.
       expect(documents.at('/s/a.md')).toBe(first)
       expect(
         documents.make({ kind: 'note', path: '/s/a.md', name: 'a.md', text: '', dirty: false }),
@@ -194,7 +174,6 @@ describe('an arrangement being read', () => {
     })
 
     expect(made).toEqual(['/s/a.md'])
-    // And once it is over, a document no pane is showing is not open.
     expect(documents.at('/s/a.md')).toBeNull()
   })
 

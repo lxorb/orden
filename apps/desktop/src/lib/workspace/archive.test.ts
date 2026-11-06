@@ -2,14 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Archive, archiveMap, coveredBy, MOST_ARCHIVED, STORAGE_KEY } from './archive.svelte'
 import { changed, merged, REMEMBERED, sameMap, stampAfter, trimmed } from './archive-map'
 
-/** What each space has put away.
- *
- *  A map beside the space, so the obligations every such store has - read what
- *  storage answers rather than trust it, follow a row that moves - and the two that
- *  are the archive's own: a folder hides everything under it, and two machines'
- *  copies meet entry by entry with the later moment winning, so neither loses what
- *  the other did. Nothing is pushed under node; the timers are fake so nothing tries. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -32,7 +24,6 @@ const at = (relative: string) => `${ROOT}/${relative}`
 
 let archive: Archive
 
-/** A change made at a moment of this test's choosing. */
 async function changeAt(put: string[], back: string[], now: number) {
   vi.setSystemTime(now)
   await archive.change(ROOT, put, back)

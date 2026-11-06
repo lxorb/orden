@@ -1,26 +1,3 @@
-/** The spaces' own sets of tabs, carried out on the workspace: a switch putting one set
- *  aside and bringing another in, a tab of a set out of sight shown, a tab moved to
- *  another space, and the sets written with the session and built again after a restart. What each of
- *  those decides is sets.ts; this is the store that does it.
- *
- *  **A set out of sight is a frame put aside.** Every tab of every set stays in the
- *  workspace's one strip, so everything that holds across the tabs holds across the sets
- *  without being told: one document per file, one tab per web note, a page and a shell
- *  running for as long as their tab is open, a file renamed or deleted under a tab nobody
- *  can see. A tab is on screen when its pane is in the frame on screen; the frames of
- *  the other sets are kept here with the rest of what belongs to them - which pane has
- *  the focus and which fills the window, the preview, the tab the panels are held on,
- *  and whether the keyboard was in a page.
- *
- *  **The sidebars are the window's, not a set's** (#1123). Whether each side is open,
- *  which panel it shows and how wide it is stay as they are across a switch: a switch
- *  changes what the window shows, never the frame around it. A session an older build
- *  wrote with a side for every set comes back with the one the window had on screen.
- *
- *  Every space keeps its own tabs (#674), so this is fetched by the first switch of
- *  space or move of a tab to another, and by a launch whose session holds sets, at its
- *  last turn. */
-
 import { tick } from 'svelte'
 import { focusEditor } from '../focus'
 import { identifier } from '../identifier'
@@ -45,47 +22,31 @@ import {
 } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
 
-/** A set out of sight: everything about the window that is the set's, but its tabs. Not
- *  the sidebars, which are the window's (#1123). */
 interface Aside {
   frame: Frame
   focused: string
   fills: string | null
   preview: string | null
   held: string | null
-  /** Whether the keyboard was in a page as the set was left, rather than in the app. */
   inPage: boolean
 }
 
-/** The Hidden tabs answer and what it does, fetched with the first set that hides a
- *  page; see hidden-tabs.svelte.ts. */
 const hiddenTabs = () => import('./hidden-tabs.svelte').then((one) => one.hiddenTabs)
 
-/** Whether the keyboard is in a page rather than in the app; no page where there is no
- *  document to say, which every switch made outside a window is (#674 sends them all
- *  here). */
 function inPage(): boolean {
   const root = typeof document === 'undefined' ? null : (document.documentElement as Element | null)
   return root?.hasAttribute(IN_A_PAGE) ?? false
 }
 
 class Sets {
-  /** The sets out of sight, by key. Raw: replaced whole on every change. */
   private aside = $state.raw<Record<string, Aside>>({})
-  /** Sets a session named that have not been built back yet, by key. */
   private drafted: Record<string, SetDraft> = {}
-  /** Builds under way, so a switch and the launch's build share one. */
   private building = new Map<string, Promise<void>>()
-  /** The set on screen. Kept rather than worked out from the space: a window in no
-   *  space shows the window's own, and the tabs on screen are whichever set they were. */
   on: string
-  /** Switches one at a time: the second waits for the first's swap. */
   private going: Promise<void> = Promise.resolve()
 
   constructor() {
     const read = readSets(workspace.setsRead)
-    // A window that showed the shared set of older builds shows its space's own now:
-    // the tabs on screen are that space's, which is what the reader was looking at.
     const on = read?.on ?? GLOBAL
     this.on = on === GLOBAL ? setKey(workspace.activeSpaceId) : on
     this.drafted = read?.aside ?? {}
@@ -95,10 +56,6 @@ class Sets {
     void spaceSound.ask()
   }
 
-  /** The set every Global space shared before #674, out of sight, given to a space of its
-   *  own, once: the first that shared it and has none yet. Where every space has one, it
-   *  joins the set on screen at the launch's build (`wake`). The record of which spaces
-   *  kept their own goes with it. */
   private handOver() {
     const shared = this.drafted[GLOBAL]
     const kept = stored(TABS_KEY)
@@ -117,8 +74,6 @@ class Sets {
     this.drafted = { ...without(this.drafted, GLOBAL), [to]: shared }
   }
 
-  /** The sets the session named, built in the background, and the shared set no space
-   *  could take put into the set on screen, so none of its tabs is lost. */
   async wake(): Promise<void> {
     for (const key of Object.keys(this.drafted)) {
       await this.built(key).catch((error: unknown) => {
@@ -132,10 +87,6 @@ class Sets {
     }
   }
 
-  /** The switch to a space, wherever it was asked. The set on screen is put aside and the
-   *  space's own brought in, in the one step that also changes the space, so the first
-   *  frame drawn after it is the new set whole; then the tree is read, as any switch reads
-   *  it. The sidebars stay as they were, shut ones shut (#1123). */
   async toSpace(id: string): Promise<void> {
     const ws = workspace
     this.going = this.going.catch(() => undefined).then(() => this.swap(id))
@@ -155,8 +106,6 @@ class Sets {
     }
 
     await this.built(to)
-    // A window in no space that comes into one with no set yet: what is open becomes
-    // that space's, rather than put aside where no space would show it again.
     if (this.on === GLOBAL && !this.aside[to]) {
       this.on = to
       ws.activeSpaceId = id
@@ -171,7 +120,6 @@ class Sets {
     void this.settle(left, to, coming)
   }
 
-  /** The set on screen, put aside under its key. */
   private putAside(key: string) {
     const ws = workspace
     this.aside = {
@@ -187,9 +135,6 @@ class Sets {
     }
   }
 
-  /** A set brought on screen: its frame, put right for whatever happened to its tabs out
-   *  of sight, or one empty pane for a space that has never had a set. The sides are left
-   *  as they are, the window's. */
   private bringIn(key: string, set: Aside | undefined) {
     const ws = workspace
     this.aside = without(this.aside, key)
@@ -203,8 +148,6 @@ class Sets {
     ws.heldTabId = set?.held ?? null
   }
 
-  /** After the swap: the strip's arrival is over by the next frame, the keyboard goes
-   *  where the new set had it, and the Hidden tabs answer is given to the set that left. */
   private async settle(left: string, to: string, coming: Aside | undefined) {
     setTimeout(() => (workspace.panes.swapping = false))
     await tick()
@@ -222,7 +165,6 @@ class Sets {
     await hidden.left(this.tabsOf(left))
   }
 
-  /** The tabs of a set: on screen, or in a frame put aside. */
   tabsOf(key: string): Tab[] {
     const set = this.aside[key]
     if (key === this.on) return workspace.tabs.filter((tab) => workspace.panes.at(tab.paneId))
@@ -232,15 +174,11 @@ class Sets {
     return workspace.tabs.filter((tab) => panes.has(tab.paneId))
   }
 
-  /** The panes of a set: the window's for the set on screen, the one put aside for any
-   *  other, or null for a set not built yet. Read by the tab overview's All spaces, which
-   *  lays every space's panes out side by side (overview/Overview.svelte). */
   frameOf(key: string): Frame | null {
     if (key === this.on) return workspace.panes.frame
     return this.aside[key]?.frame ?? null
   }
 
-  /** Which set out of sight a tab is in, or null. */
   private setOf(tab: Tab): string | null {
     for (const [key, set] of Object.entries(this.aside)) {
       if (paneIn(set.frame, tab.paneId)) return key
@@ -248,20 +186,14 @@ class Sets {
     return null
   }
 
-  /** A frame with its panes put right for what happened to its tabs; see `tidied`. */
   private tidy(frame: Frame): Frame {
     return tidied(
       frame,
-      // Every tab a pane holds: one holding only an essential is a pane still in use.
       (paneId) => workspace.heldIn(paneId).map((tab) => tab.id),
       (strip) => workspace.panes.successorOf(strip),
     )
   }
 
-  /** A tab of a set out of sight, brought to the front: its space comes first, the way
-   *  Arc's command bar goes to the space a tab is in and Chrome's Switch to tab to its
-   *  window. One no space shows - a space's set gone with it, or the window's own set
-   *  of before it had a space - comes into the set on screen instead. */
   async reveal(id: string): Promise<void> {
     const ws = workspace
     const tab = ws.tabs.find((one) => one.id === id)
@@ -271,23 +203,16 @@ class Sets {
     const space = key !== null && ws.spaces.some((one) => one.id === key) ? key : null
 
     if (space !== null) await this.toSpace(space)
-    // Still out of sight - a set no space shows - it comes here rather than nowhere.
     if (!ws.panes.at(tab.paneId)) this.carry([tab], ws.panes.focusedId)
     ws.activeTabId = id
   }
 
-  /** Tabs moved to the end of a pane's strip. */
   private carry(tabs: readonly Tab[], paneId: string) {
     const ws = workspace
     for (const tab of tabs) tab.paneId = paneId
     ws.tabs = [...ws.tabs.filter((tab) => !tabs.includes(tab)), ...tabs]
   }
 
-  /** Tabs moved to another space's set. Each tab is the same tab - a shell keeps running and a page keeps its place -
-   *  and only the set it is in changes. They go to the end of the strip in front in that
-   *  set, the last of them in front, which is where Chrome puts a tab moved to another
-   *  window; the set they left falls back to the tab used before, as after a close. What
-   *  went out of sight is hidden as a switch hides it. See workspace/space-move.ts. */
   async adopt(tabs: readonly Tab[], space: string): Promise<void> {
     const ws = workspace
     const key = setKey(space)
@@ -330,13 +255,10 @@ class Sets {
     await hidden.left(shown.filter((tab) => !ws.panes.at(tab.paneId)))
   }
 
-  /** Which set a tab is in: the one on screen, one put aside, or none. */
   private keyOf(tab: Tab): string | null {
     return workspace.panes.at(tab.paneId) ? this.on : this.setOf(tab)
   }
 
-  /** The set on screen with its frame put right, the full window let go where its pane
-   *  went with it. */
   private retidyOn() {
     const ws = workspace
     const frame = this.tidy(ws.panes.frame)
@@ -344,7 +266,6 @@ class Sets {
     if (ws.panes.fills !== null && !paneIn(frame, ws.panes.fills)) ws.panes.fills = null
   }
 
-  /** A set of one pane holding these tabs, the one in front last in front. */
   private fresh(tabs: readonly Tab[]): Aside {
     const made = pane(identifier())
     this.carry(tabs, made.id)
@@ -359,7 +280,6 @@ class Sets {
     }
   }
 
-  /** A set out of sight with its frame put right. */
   private retidy(key: string) {
     const set = this.aside[key]
     if (!set) return
@@ -367,14 +287,6 @@ class Sets {
     this.aside = { ...this.aside, [key]: { ...set, frame, focused: focusIn(frame, set.focused) } }
   }
 
-  /** A set the session named, built back through the session's own restore - the same
-   *  drafts, documents and frame a launch puts on screen - into a frame put aside. One
-   *  build per set, however many ask. The sides an older build wrote with it are passed
-   *  over: the window's are the ones it had on screen (#1123).
-   *
-   *  It stays in `drafted` until `aside` holds it, in one breath: `written` writes the set
-   *  from one or the other, and a session written while a set is being read keeps it as it
-   *  was read (`arriving` in workspace.svelte.ts). */
   private built(key: string): Promise<void> {
     const under = this.building.get(key)
     if (under) return under
@@ -405,10 +317,6 @@ class Sets {
     return building
   }
 
-  /** The sets out of sight as the session writes them: the ones built, drafted through the
-   *  session's own `layout`, and the ones not built yet as they were read. Nothing at all
-   *  where the window is in no space and none is aside. Each says the window's sides, the
-   *  one pair there is, so an older build reading it brings the same sides back. */
   private written(): SetsDraft | undefined {
     const aside: Record<string, SetDraft> = { ...this.drafted }
     for (const [key, set] of Object.entries(this.aside)) {
@@ -421,8 +329,6 @@ class Sets {
     return this.on === GLOBAL && !Object.keys(aside).length ? undefined : { on: this.on, aside }
   }
 
-  /** The spaces with a page playing in a set out of sight, for the sound mark on the
-   *  space's row; see SpaceSound.svelte. */
   readonly playing = $derived.by((): string[] => {
     const out: string[] = []
     for (const [key, set] of Object.entries(this.aside)) {
@@ -436,11 +342,6 @@ class Sets {
     return out
   })
 
-  /** A space deleted takes its set with it: its tabs close the way any tab closes, so an
-   *  unsaved note's words go to Recently deleted. Only a delete says this. A space missing
-   *  from a listing may be a drive not mounted or a folder renamed elsewhere, and its set
-   *  stays. Asked after the switch away from it; the last space has none to switch to, and
-   *  what it showed becomes the window's own, for the next space made (`swap`). */
   async gone(space: string): Promise<void> {
     this.drafted = without(this.drafted, space)
     await this.building.get(space)?.catch(() => undefined)

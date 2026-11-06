@@ -1,22 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EditorState } from '@orden/editor'
 
-/** Writing across a space without opening it, driven by a stand-in store.
- *
- *  The four obligations are what this is about: the version about to be replaced is
- *  kept, the file is written, the index hears what it says now, and a pane that
- *  happens to be showing the note is handed the words that changed rather than the
- *  whole note. Plus the two callers that are only these in a different order - a
- *  task ticked from a row of search results, and a tag renamed everywhere. */
-
 const sent: { command: string; path: string; content: string }[] = []
 const told: string[] = []
 
-/** What is on this disk, for the reads that do not go through an open document. */
 const disk = new Map<string, string>()
 
-/** A command held open until the test lets it go, so a keystroke can land inside
- *  the round trip it is. */
 let holding: { command: string; until: Promise<void> } | null = null
 
 vi.mock('../tauri', () => ({
@@ -50,7 +39,6 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged') } }))
 
-/** The roots of the spaces shared with this account to be read, which take no write. */
 const readOnly = new Set<string>()
 
 vi.mock('../sharing.svelte', () => ({
@@ -69,8 +57,6 @@ type HoldsNotes = import('./note-text').HoldsNotes
 
 const SPACE = '/space'
 
-/** A store with the given notes on its disk and, optionally, one of them open in a
- *  pane - which is the case the edits are for. */
 function space(notes: Record<string, string>, openAt?: string) {
   disk.clear()
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
@@ -78,13 +64,11 @@ function space(notes: Record<string, string>, openAt?: string) {
   const edits: string[] = []
   const open = openAt ? [openNote(openAt, notes[openAt] ?? '')] : []
   for (const note of open) {
-    // What the pane was handed: the words the edits left, each time.
     const edited = note.edited.bind(note)
     note.edited = (changes, after) => {
       edits.push(after)
       edited(changes, after)
     }
-    // And by the road that carries edits past what was typed since; see `take`.
     const take = note.take.bind(note)
     note.take = (changes, before) => {
       const took = take(changes, before)
@@ -132,8 +116,6 @@ describe('a replacement across the space', () => {
       },
     ])
 
-    // Read again first, in case somebody else has written it since the change was
-    // worked out; see the last describe below.
     expect(sent).toEqual([
       { command: 'read_note', path: `${SPACE}/a.md`, content: '' },
       { command: 'snapshot_note', path: `${SPACE}/a.md`, content: 'before' },
@@ -188,8 +170,6 @@ describe('a replacement across the space', () => {
     expect(ws.undone.stack).toHaveLength(1)
   })
 
-  /** A word edit is a note's. A file of another kind takes one only from a caller
-   *  that says it knows the file's shape: an icon on a canvas, a base's own source. */
   test('writes no file that is not a note, unless the caller says it may', async () => {
     const shortcut = '[InternetShortcut]\r\nNib-Icon=star\r\n'
     const { ws } = space({ [`${SPACE}/Docs.url`]: shortcut })
@@ -218,9 +198,6 @@ describe('a replacement across the space', () => {
   })
 })
 
-/** A space shared with this account to be read is one nothing may be written in: the
- *  copy here would stop being the space's, and the sync refuses it on every pass. So a
- *  replacement, a tick and a tag renamed all pass over its notes, and say so (B274). */
 describe('a space shared to be read', () => {
   const change = (path: string) => ({
     path,
@@ -340,8 +317,6 @@ describe("a note's words as they stand", () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'on disk' }, `${SPACE}/a.md`)
     disk.set(`${SPACE}/a.md`, 'on disk')
 
-    // The document says what the pane holds, which is what a replacement must not
-    // write over.
     expect(await noteText(ws, `${SPACE}/a.md`)).toBe('on disk')
     expect(ws.flushed).toBe(1)
     expect(sent).toEqual([])
@@ -362,7 +337,6 @@ describe("a note's words as they stand", () => {
 describe('a task ticked from a row', () => {
   const NOTE = `${SPACE}/todo.md`
 
-  // Ticking writes today's date, so today is held still.
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 7, 10, 0))
@@ -407,10 +381,6 @@ describe('a task ticked from a row', () => {
   })
 })
 
-/** Which notes a rename touches and what each becomes is tag-edits.test.ts's. What is
- *  here is the rest of it: a note open in a pane is read as it stands rather than as it
- *  was saved, a note with no such tag is not written at all, and the whole rename is
- *  one thing to undo. */
 describe('a tag renamed everywhere', () => {
   test('rewrites every note that wears it, and only those, as one thing to undo', async () => {
     const { ws } = space({
@@ -438,7 +408,6 @@ describe('a tag renamed everywhere', () => {
 
   test('reads an open note as it stands on screen, not as it was saved', async () => {
     const { ws, edits } = space({ [`${SPACE}/a.md`]: 'Typed #work\n' }, `${SPACE}/a.md`)
-    // Saved before the typing; the pane holds what the rename has to work on.
     disk.set(`${SPACE}/a.md`, 'Saved\n')
 
     expect(await retagNotes(ws, 'work', null)).toBe(1)
@@ -455,10 +424,6 @@ describe("the space's tags", () => {
   })
 })
 
-/** The editor in a hover card hands back the whole note it was given, because that is
- *  what an editor holds. What reaches the file is the one span that changed, so a pane
- *  showing the same note keeps every caret in it. See preview-card.ts and hover.ts in
- *  @orden/editor. */
 describe('a note written from a hover card', () => {
   test('goes in as the one span it changed by, not as the note again', async () => {
     const { ws, edits } = space({ [`${SPACE}/a.md`]: 'the plan for monday' }, `${SPACE}/a.md`)
@@ -478,7 +443,6 @@ describe('a note written from a hover card', () => {
             path: `${SPACE}/a.md`,
             content: 'the plan for monday',
             after: 'the plan for tuesday',
-            // `mon` became `tues`, and nothing either side of it moved.
             edits: [{ from: 13, to: 17, insert: 'mon' }],
           },
         ],
@@ -506,7 +470,6 @@ describe('a note written from a hover card', () => {
   })
 })
 
-/** A note open in a pane, as the real document it is. */
 function openNote(path: string, words: string) {
   return new NoteDoc(
     { kind: 'note', path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
@@ -514,8 +477,6 @@ function openNote(path: string, words: string) {
   )
 }
 
-/** A note open in a pane, with a pane on it that can be typed in: the words, the
- *  live text every view shares, and the dirty mark. */
 function typedIn(path: string, words: string) {
   const { ws } = space({ [path]: words })
   const note = openNote(path, words)
@@ -532,8 +493,6 @@ function typedIn(path: string, words: string) {
   held.documents = [note]
   held.documentAt = (at: string) => (at === path ? note : null)
 
-  /** A keystroke, the way the editor hands one over: applied in the view, then
-   *  given to the document. See the update listener in editor.ts. */
   const type = (at: number, insert: string) => {
     const made = view.state.update({ changes: { from: at, insert } })
     view.state = made.state
@@ -544,20 +503,13 @@ function typedIn(path: string, words: string) {
   return { ws, note, type, live }
 }
 
-/** Holds a command open, and answers what lets it go. */
 function hold(command: string): () => void {
-  // In an object, so the compiler sees the promise's executor fill it in.
   const held = { release: () => undefined as unknown }
   const until = new Promise<void>((resolve) => (held.release = resolve))
   holding = { command, until }
   return () => void held.release()
 }
 
-/** The reader goes on typing while a replacement is on its way to the note. The
- *  replacement was worked out against the words as they were read, and it lands on
- *  the words as they are: measured against the first, applied to the second, a
- *  keystroke in between used to shift every edit after it and was then written
- *  over by a text that never had it. See docs/agent-native.md 8.2. */
 describe('a replacement while the reader types', () => {
   const NOTE = `${SPACE}/plan.md`
 
@@ -575,7 +527,6 @@ describe('a replacement while the reader types', () => {
     expect(live()).toBe('Re: the plan for tuesday')
     note.flush()
     expect(note.text).toBe('Re: the plan for tuesday')
-    // The keystroke is on the disk, or the note still says it has to be written.
     expect(disk.get(NOTE) === live() || note.dirty).toBe(true)
   })
 
@@ -591,8 +542,6 @@ describe('a replacement while the reader types', () => {
     note.flush()
     expect(note.text).toBe('Re: the plan for tuesday')
     expect(disk.get(NOTE) === live() || note.dirty).toBe(true)
-    // And taking the replacement back puts back what the reader had, keystroke
-    // and all, rather than the words as they were read.
     expect(ws.undone.stack).toEqual([
       {
         kind: 'replace',
@@ -616,7 +565,6 @@ describe('a replacement while the reader types', () => {
 
     const release = hold('snapshot_note')
     const renaming = retagNotes(ws, 'work', 'job')
-    // The rename has read both notes and is keeping the first one's version.
     await new Promise((resolve) => setTimeout(resolve, 0))
     type(6, 'now ')
     release()
@@ -627,11 +575,6 @@ describe('a replacement while the reader types', () => {
   })
 })
 
-/** A file with Windows line endings - every web note's `.url`, and a note written on
- *  Windows - is held by its open document as the file says it, `\r\n` and all, while the
- *  editor counts each line ending as one character. An icon chosen for an open web note
- *  was put in two characters early on its fourth line, inside the date (#1110): the
- *  edits went into the editor in the file's count. */
 describe('an open file with Windows line endings', () => {
   const URL_FILE = `${SPACE}/Site.url`
   const SHORTCUT =
@@ -661,7 +604,6 @@ describe('an open file with Windows line endings', () => {
     expect(live()).toBe(CHOSEN.replace(/\r\n/g, '\n'))
     expect(note.text).toBe(CHOSEN.replace(/\r\n/g, '\n'))
 
-    // And taken back the same way.
     await undoLastFileAction(ws as unknown as PutsBack)
     expect(disk.get(URL_FILE)).toBe(SHORTCUT)
     expect(live()).toBe(SHORTCUT.replace(/\r\n/g, '\n'))
@@ -677,11 +619,6 @@ describe('an open file with Windows line endings', () => {
   })
 })
 
-/** And the other way round: a replacement taken back after the reader went on
- *  typing. What the undo held was the words as they were before the replacement,
- *  and it put those back whole - over whatever had been typed since. The edits that
- *  take the replacement back are carried onto the words as they are now instead, the
- *  way the replacement's own were; see `putWordsBack` in workspace/undoing.ts. */
 describe('a replacement taken back while the reader types', () => {
   const NOTE = `${SPACE}/plan.md`
 
@@ -709,14 +646,8 @@ describe('a replacement taken back while the reader types', () => {
   })
 })
 
-/** A change worked out against a closed note's file, written after a question was
- *  answered: Convert syntax asks how many things to rewrite before it rewrites them.
- *  Sync or an agent can write the file while the sheet is up, and writing the change
- *  as it was worked out put the old words back over theirs, with no version kept of
- *  them. See `writeClosed` in workspace/note-text.ts. */
 describe('a closed note written to after the change was worked out', () => {
   const NOTE = `${SPACE}/plan.md`
-  /** `#two words#` to `#two-words`, as Convert syntax rewrites a Bear tag. */
   const change = {
     path: NOTE,
     before: 'the plan #two words#',
@@ -750,8 +681,6 @@ describe('a closed note written to after the change was worked out', () => {
     expect(ws.undone.stack).toEqual([])
   })
 
-  /** An agent's edits are worked out on one line ending (`wordsOf` in agents/docs), and
-   *  a file with Windows ones read as changed on every line, which overlapped them. */
   describe('in a file with other line endings than the change was worked out on', () => {
     const lf = {
       path: NOTE,
@@ -792,8 +721,6 @@ describe('a closed note written to after the change was worked out', () => {
       expect(disk.get(NOTE)).toBe('one\r\nnew\r\nmore\r\ntwo\r\n')
     })
 
-    /** The disk gives a file whose first line ends `\n` what it is handed; see
-     *  `as_written` in notes.rs. So the lines the edit did not touch stay as they were. */
     test('leaves a mixed file its other lines, and takes them back the same way', async () => {
       const mixed = '# T\none\r\nthe plan #two words#\r\nthree\n'
       const { ws } = space({ [NOTE]: mixed })
@@ -808,22 +735,17 @@ describe('a closed note written to after the change was worked out', () => {
       expect(await replaceInNotes(ws, [change])).toBe(1)
       expect(disk.get(NOTE)).toBe('# T\none\r\nthe plan #two-words\r\nthree\n')
 
-      // And past a word written since, on a line of its own.
       disk.set(NOTE, '# Title\none\r\nthe plan #two-words\r\nthree\n')
       await undoLastFileAction(ws as unknown as PutsBack)
       expect(disk.get(NOTE)).toBe('# Title\none\r\nthe plan #two words#\r\nthree\n')
     })
 
-    /** A first line ending `\r\n` has the disk turn every other line to it, as a save
-     *  from a tab does; see `as_written`. Sent as it stands, and not refused: nobody can
-     *  see why a note would take no edit. */
     test('writes a mixed file the disk then rewrites, as a save would', async () => {
       const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\nthree\r\n' })
 
       expect(await replaceInNotes(ws, [lf])).toBe(1)
       expect(disk.get(NOTE)).toBe('one\r\nthe plan #two-words\nthree\r\n')
 
-      // What the disk made of it, and a word since, put back the same way.
       disk.set(NOTE, 'Re: one\r\nthe plan #two-words\r\nthree\r\n')
       await undoLastFileAction(ws as unknown as PutsBack)
       expect(disk.get(NOTE)).toBe('Re: one\r\nthe plan #two words#\r\nthree\r\n')

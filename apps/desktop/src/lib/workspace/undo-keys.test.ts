@@ -2,10 +2,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { sidebarKey, used } from './undo.svelte'
 
-/** Whose Ctrl+Z it is (#399): the sidebar's where the sidebar was the last thing
- *  pressed or typed in, wherever the keyboard went since, but in a field; and the
- *  press goes on to whatever has the keyboard otherwise. */
-
 document.body.innerHTML = `
   <aside data-sidebar>
     <div data-panel="tree"><ul><li><button class="row">Plan</button></li></ul></div>
@@ -23,7 +19,6 @@ function $(selector: string): Element {
   return found
 }
 
-/** A key pressed on `target`; `held` is what the table would say it is. */
 function press(target: Element, held: string | null, prevented = false) {
   const event = new KeyboardEvent('keydown', { key: 'z', cancelable: true, bubbles: true })
   Object.defineProperty(event, 'target', { value: target })
@@ -72,7 +67,6 @@ describe('a press of Undo', () => {
     expect(press($('.row'), 'edit.undo', true)).toBeNull()
   })
 
-  /** Properties writes the note's own words, which the note's undo takes back. */
   test('and a press in a panel about the note leaves it the note’s', () => {
     used($('.row'))
     used($('.prop'))

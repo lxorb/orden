@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { outermost, Selection } from './selection.svelte'
 
-/** The rows as the tree shows them, top to bottom, with the folder open. */
 const ROWS = ['/a.md', '/f', '/f/b.md', '/f/c.md', '/d.md']
 
 let picked: Selection
@@ -38,7 +37,6 @@ describe('picking rows', () => {
     picked.extend('/f', '/f/b.md', ROWS)
     expect(picked.paths).toEqual(['/a.md', '/f', '/f/b.md'])
 
-    // Back up again narrows, since the range is still anchored where it began.
     picked.extend('/f/b.md', '/f', ROWS)
     expect(picked.paths).toEqual(['/a.md', '/f'])
   })
@@ -62,7 +60,6 @@ describe('picking rows', () => {
 
   test('a row that is no longer shown is not an anchor either', () => {
     picked.select('/f/b.md')
-    // The folder was closed, so its children are no longer between anything.
     picked.range('/d.md', ['/a.md', '/f', '/d.md'])
     expect(picked.paths).toEqual(['/d.md'])
   })
@@ -85,7 +82,6 @@ describe('what a drag carries', () => {
   test('the row alone otherwise, selection or not', () => {
     picked.select('/a.md')
     expect(picked.dragging('/f')).toEqual(['/f'])
-    // One picked row is not a group, so dragging it carries only itself.
     expect(picked.dragging('/a.md')).toEqual(['/a.md'])
   })
 })
@@ -116,19 +112,10 @@ describe('the outermost of a set of rows', () => {
   })
 })
 
-/** What these two cost, counted rather than timed.
- *
- *  Both used to walk the whole selection: `has` once per drawn row on every
- *  render, and `outermost` once per row of the selection. Ctrl+A in a space of
- *  three thousand notes made the first a hundred thousand comparisons a frame and
- *  the second nine million. Counting the comparisons is what says they are gone;
- *  how long they take says only how busy this machine is. */
 describe('what asking costs', () => {
   const DEEP = 3
   const MANY = 500
 
-  /** `MANY` rows, each `DEEP` folders down, which is a deeper tree than anybody
-   *  keeps and so the worst case for the walk below. */
   function manyRows(): string[] {
     return Array.from({ length: MANY }, (_, at) => `/a/b/c/note-${at}.md`)
   }
@@ -141,8 +128,6 @@ describe('what asking costs', () => {
     const rows = manyRows()
     picked.all(rows)
 
-    // Nothing but the asking between the spy and the count: an `expect` in here
-    // would walk a list of its own and be counted for it.
     const walked = vi.spyOn(Array.prototype, 'includes')
     const answers = rows.map((path) => picked.has(path))
     const missing = picked.has('/nowhere.md')
@@ -163,9 +148,6 @@ describe('what asking costs', () => {
     compared.mockRestore()
 
     expect(kept).toHaveLength(MANY)
-    // Not one comparison between two rows: MANY × MANY of those is what this
-    // replaced. A row is looked up by the cuts above it instead, of which it has
-    // as many as it is folders deep.
     expect(calls).toBe(0)
     expect(rows[0]?.split('/').length).toBe(DEEP + 2)
   })

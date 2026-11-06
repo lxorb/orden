@@ -1,21 +1,6 @@
-/** What this machine remembers about the file list, and the one case where it has
- *  to be asked twice.
- *
- *  Emil, on his phone with even 0.5.6: *"I don't see the icons of the spaces on the
- *  Even Realities plugin right now."* Nothing was wrong with the icons: they were on
- *  his account, the account had handed them over, the plugin had written them down.
- *  What was wrong is when they were read. A packed plugin is served from a port that
- *  never comes back, so the page's own `localStorage` is always empty and the plugin
- *  puts its own in front of it - and this store read the empty one, because every
- *  static import of an entry runs before the entry's first line does. See
- *  lib/even/first.ts, which now wins that race, and `reread` below, which is for the
- *  half of it a cookie has no room for: the phone app's own store answers seconds
- *  after the app was built. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { DeviceView } from './device.svelte'
 
-/** `localStorage` in a map, which is what the plugin's own is too. */
 function memory(): Storage {
   const held = new Map<string, string>()
 
@@ -74,10 +59,6 @@ describe('the icon a space wears', () => {
   })
 })
 
-/** The colour that icon is drawn in. Kept beside it here and on the account, which
- *  is what makes a space look like itself on the second machine rather than plain.
- *  What `applyIcon` answers is the one thing that is not simply "the account wins";
- *  see its own comment. */
 describe('the colour a space is drawn in', () => {
   test('comes down with the icon, and the account is the one copy', () => {
     const view = new DeviceView()
@@ -92,16 +73,11 @@ describe('the colour a space is drawn in', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book', 'violet')
 
-    // The account holds the icon and says there is no colour on it, which is a
-    // colour taken off rather than a service that cannot carry one.
     expect(view.applyIcon('/Notes', 'Book', null)).toBeNull()
     expect(view.tintOf('/Notes')).toBeNull()
     expect(view.iconOf('/Notes')).toBe('Book')
   })
 
-  /** The first pass against a service older than the colours: it carries the icon
-   *  and has nothing at all where the colour goes. Reading that silence as "no
-   *  colour" would undress every space dressed on this machine. */
   test('stays when the account has no column for it, and asks to be sent up', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book', 'violet')
@@ -138,13 +114,10 @@ describe('the colour a space is drawn in', () => {
 
 describe('storage that arrives after the store was built', () => {
   test('is read on the second asking, which is the plugin', () => {
-    // Built against a storage with nothing in it: a packed plugin, before the phone
-    // app has answered.
     const view = new DeviceView()
     expect(view.iconOf('/Uni')).toBeNull()
     expect(view.recent).toEqual([])
 
-    // And then it answers.
     store.setItem('nib:icons', JSON.stringify({ '/Uni': 'GraduationCap' }))
     store.setItem('nib:recent', JSON.stringify(['/Uni/Lecture.md']))
     store.setItem('nib:expanded', JSON.stringify({ '/Uni': true }))
@@ -155,9 +128,6 @@ describe('storage that arrives after the store was built', () => {
     expect(view.isExpanded('/Uni')).toBe(true)
   })
 
-  /** The second seeding fills in only what nothing has written this launch - see
-   *  `fillFrom` in lib/even/local.ts - so reading again cannot undo a choice made in
-   *  the seconds before it landed. */
   test('and does not undo what was chosen while it was on its way', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book')
@@ -197,8 +167,6 @@ describe('folding the whole list', () => {
   })
 })
 
-/** Which folders are open, kept clean of the ones no row is any more (#1081): left
- *  behind, they held the Collapse button up over a list with every row shut. */
 describe('the folders remembered open', () => {
   test('forget a folder that was deleted, and everything open under it', () => {
     const view = new DeviceView()

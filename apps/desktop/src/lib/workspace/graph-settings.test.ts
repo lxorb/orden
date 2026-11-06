@@ -17,21 +17,6 @@ import {
   STORAGE_KEY,
 } from './graph-settings.svelte'
 
-/** How a space says its graph is drawn.
- *
- *  Kept beside the space rather than in a note, because none of it is something a
- *  note could say: what the picture is filtered to is about the space's notes
- *  together. So the same obligations the folder icons have - read what storage
- *  answers rather than trust it, re-key when the space folder moves, forget a space
- *  that has gone - and the account's copy winning after first contact.
- *
- *  Nothing is pushed anywhere under node: the push imports the account and the
- *  syncing loop, both of which answer with nothing signed out. */
-
-/** How many times anything has been written to storage, ever. Counted because a
- *  filter is typed a letter at a time and `setItem` blocks the thread it is called
- *  on: what matters is that the letters are one write and not one each, and a count
- *  says that where a clock says what the machine was doing. */
 let writes = 0
 
 function memoryStorage(): Storage {
@@ -59,19 +44,12 @@ const ROOT = '/space'
 let graph: SpaceGraphSettings
 
 beforeEach(() => {
-  // On the clock from here on, so the write `set` waits out - a couple of seconds
-  // after the last letter; see `soon` - lands on a clock the afterEach can drop
-  // rather than a real timer that wakes in a later test and writes these settings
-  // over whatever that test had put in storage. A test timing the write itself
-  // says so with its own useFakeTimers. See afterEach.
   vi.useFakeTimers({ shouldAdvanceTime: true })
   localStorage.clear()
   graph = new SpaceGraphSettings(() => ROOT)
 })
 
 afterEach(() => {
-  // Drop whatever this test left waiting before the next one runs; dropping is not
-  // firing, so the write never lands late. Real again on the way out.
   if (vi.isFakeTimers()) vi.clearAllTimers()
   vi.useRealTimers()
 })
@@ -100,9 +78,6 @@ describe('what a space says about its graph', () => {
     expect(graph.here.depth).toBe(DEEPEST)
   })
 
-  /** The card's slider reaches five, where the panel's stepper used to stop at
-   *  three: past three most spaces answer with the space, but which spaces those are
-   *  is the reader's to find out. */
   test('and the depth reaches five, one link at a step', () => {
     expect(DEEPEST).toBe(5)
 
@@ -116,8 +91,6 @@ describe('what a space says about its graph', () => {
     expect(graph.here.depth).toBe(1)
   })
 
-  /** Three steps, and the middle one is the look the picture has always had, so a
-   *  dial nobody has touched changes nothing. */
   test('holds the Lines dial to its three steps, the middle one by default', () => {
     expect(graph.here.lines).toBe(2)
 
@@ -131,8 +104,6 @@ describe('what a space says about its graph', () => {
     expect(graph.here.lines).toBe(3)
   })
 
-  /** One is the zoom the names have always arrived at, so nothing changes until the
-   *  dial is touched. */
   test('holds the text fade to what the dial offers, one by default', () => {
     expect(graph.here.fade).toBe(1)
 
@@ -146,9 +117,6 @@ describe('what a space says about its graph', () => {
     expect(graph.here.fade).toBe(LEAST_FADE)
   })
 
-  /** The four the layout has, all of them the reader's now. The defaults are what the
-   *  arrangement has always done - `DISTANCE` and `REPULSION` in graph-layout.ts - so
-   *  a card nobody has touched lays a space out exactly as it did. */
   test('holds the two remaining forces to their dials, at their old values', () => {
     expect(graph.here.distance).toBe(36)
     expect(graph.here.push).toBe(150)
@@ -172,8 +140,6 @@ describe('what a space says about its graph', () => {
     expect(graph.here.groups).toHaveLength(MOST_GROUPS)
   })
 
-  /** The row the card has just added: it colours nothing yet, and a store that
-   *  dropped it would be a row nothing could be typed into. */
   test('and keeps a group with nothing typed in it yet', () => {
     graph.set({ groups: [{ query: '', colour: 3 }] })
 
@@ -189,8 +155,6 @@ describe('what a space says about its graph', () => {
 
   test('and survives being read again, which is another window', () => {
     graph.set({ filter: 'tag:work', depth: 3 })
-    // Written once the typing stops, or at once for a window going away, which is
-    // what this is standing in for; see `soon`.
     graph.flush()
 
     const again = new SpaceGraphSettings(() => ROOT)
@@ -223,8 +187,6 @@ describe('a whole view, taken at once', () => {
     expect(graph.here.filter).toBe('tag:work')
     expect(graph.here.arrows).toBe(true)
     expect(graph.here.depth).toBe(2)
-    // Everything the view did not name is the default, which is how anything
-    // written by another build is read here.
     expect(graph.here.orphans).toBe(DEFAULT_GRAPH.orphans)
   })
 
@@ -238,10 +200,6 @@ describe('a whole view, taken at once', () => {
     expect(graph.here.filter).toBe('tag:now')
   })
 
-  /** Every dial and every switch on the card, whichever was added last: a bookmarked
-   *  view is the JSON of the settings, so a key the store knows about and the row does
-   *  not would be a view that came back half the picture it was kept from. See
-   *  `forGraph` in bookmarks.svelte.ts, which writes it. */
   test('and carries every setting the card can change, not a chosen few', () => {
     const kept = {
       filter: 'tag:work',
@@ -262,8 +220,6 @@ describe('a whole view, taken at once', () => {
     graph.take(JSON.stringify(kept))
 
     expect(graph.here).toEqual(kept)
-    // Which is the same thing said the other way: the keys the store holds are the
-    // keys a view carries, so neither can grow one the other has never heard of.
     expect(Object.keys(graph.here).sort()).toEqual(Object.keys(DEFAULT_GRAPH).sort())
   })
 })
@@ -292,9 +248,6 @@ describe('the space folder itself moving', () => {
   })
 })
 
-/** Which copy wins, which is the one thing about this that is not obvious: this
- *  machine's the first time an account meets the space and has nothing of its own
- *  to say, and the account's on every pass after that. */
 describe('what the account holds', () => {
   test('is taken on outright once the space has been met', () => {
     graph.adopt(ROOT, { filter: 'tag:work', arrows: true }, 'u1')
@@ -328,13 +281,6 @@ describe('what the account holds', () => {
   })
 })
 
-/** What typing in the card costs the thread it is typed on.
- *
- *  A filter is written a letter at a time, and every letter used to stringify every
- *  space's settings and write them to `localStorage`, which blocks. Beside the pass
- *  over five thousand nodes the same letter asks the picture for, that is a write
- *  nobody needed until the typing stopped. Counted rather than timed, for the reason
- *  the counter beside `memoryStorage` gives. */
 describe('typing a filter', () => {
   test('writes storage once when the typing stops, not once a letter', () => {
     vi.useFakeTimers()
@@ -344,8 +290,6 @@ describe('typing a filter', () => {
         graph.set({ filter })
       }
 
-      // Seven letters and nothing written yet: the picture draws from the state,
-      // which is already right.
       expect(writes - before).toBe(0)
       expect(graph.here.filter).toBe('tag:work')
 
@@ -367,7 +311,6 @@ describe('typing a filter', () => {
       graph.flush()
       expect(writes - before).toBe(1)
 
-      // And the timer that was waiting does not write again behind it.
       vi.advanceTimersByTime(2000)
       expect(writes - before).toBe(1)
     } finally {

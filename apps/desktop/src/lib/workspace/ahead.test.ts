@@ -11,8 +11,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-/** A window whose early script asked, as src/early.ts does, and was answered with
- *  what the crate read. */
 function arrived(answer: unknown) {
   vi.stubGlobal('window', { nibEarly: Promise.resolve(answer) })
 }
@@ -27,7 +25,6 @@ const READ = {
   notes: { [`${ROOT}\\Plan.md`]: '# Plan' },
 }
 
-/** The module afresh, since what it received is kept for the launch. */
 async function fresh() {
   vi.resetModules()
   return import('./ahead')
@@ -61,7 +58,6 @@ describe('what was read ahead', () => {
     expect(await ahead.treeAhead('C:\\Nib\\Home', { showHidden: false })).toBeNull()
     expect(await ahead.treeAhead(ROOT, { showHidden: true })).toBeNull()
     expect(await ahead.noteAhead(`${ROOT}\\Other.md`)).toBeNull()
-    // Still there for the question it does answer.
     expect(await ahead.treeAhead(ROOT, { showHidden: false })).toEqual(TREE)
   })
 

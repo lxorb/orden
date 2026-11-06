@@ -5,8 +5,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** A clock that moves on with every reading, so "most recently" means
- *  something. */
 function ticking() {
   let at = 1_000
   vi.spyOn(Date, 'now').mockImplementation(() => ++at)
@@ -105,7 +103,6 @@ describe('the record as a whole', () => {
     places.remember('/old.md', 0, 0)
     for (let index = 0; index < 299; index++) places.remember(`/${index}.md`, index, index)
 
-    // Back to it before the cap is reached, so it is no longer the oldest.
     places.remember('/old.md', 1, 1)
     places.remember('/last.md', 0, 0)
 

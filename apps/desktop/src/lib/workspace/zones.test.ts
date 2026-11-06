@@ -2,16 +2,10 @@ import { describe, expect, test } from 'vitest'
 import { canSplit, type Frame, pane, withSplit } from './pane-tree'
 import { alongOf, type Box, inside, madeFirst, type Side, zoneAt } from './zones'
 
-/** A pane a thousand across and five hundred down, at the top left of the page.
- *  The bands are 28% of each way: 280 in from the sides, 140 from the top and
- *  the bottom. */
 const box: Box = { left: 0, top: 0, width: 1000, height: 500 }
 
-/** Every side on offer, which is what a pane on its own has. */
 const all = () => true
 
-/** Which sides a pane in a frame may still be split into, which is what the app
- *  offers: the 2x2 the arrangement stops at, read off the tree. */
 const offeredIn = (frame: Frame, id: string) => (side: Side) => canSplit(frame, id, alongOf(side))
 
 const split = (frame: Frame, id: string, made: string, side: Side): Frame =>
@@ -37,15 +31,12 @@ describe('which zone of a pane a drop is in', () => {
   })
 
   test('leaves the band the moment the pointer is past it', () => {
-    // 28% of a thousand is 280, and a hair past it is the pane itself.
     expect(zoneAt(box, 279, 250, all)).toBe('left')
     expect(zoneAt(box, 281, 250, all)).toBe('middle')
   })
 
   test('gives a corner to whichever side it is further into', () => {
-    // A tenth of the way in across, a fiftieth down: further into the top.
     expect(zoneAt(box, 100, 10, all)).toBe('top')
-    // Further into the left, at the same corner.
     expect(zoneAt(box, 10, 100, all)).toBe('left')
   })
 })
@@ -65,8 +56,6 @@ describe('the sides a pane offers', () => {
     const frame = split(pane('a'), 'a', 'b', 'right')
     const offered = offeredIn(frame, 'a')
 
-    // Along the row it would be three panes in a row, so the side is not
-    // offered and the drop lands in the pane rather than doing nothing.
     expect(zoneAt(box, 40, 250, offered)).toBe('middle')
     expect(zoneAt(box, 960, 250, offered)).toBe('middle')
     expect(zoneAt(box, 500, 20, offered)).toBe('top')
@@ -92,7 +81,6 @@ describe('the sides a pane offers', () => {
     const frame = split(pane('a'), 'a', 'b', 'right')
     const offered = offeredIn(frame, 'a')
 
-    // Deeper into the left than into the top, but the left cannot split.
     expect(zoneAt(box, 10, 100, offered)).toBe('top')
   })
 })

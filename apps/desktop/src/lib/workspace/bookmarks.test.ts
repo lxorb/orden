@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The store writes to the browser's storage and offers every change to the
- *  account, so both are stood in for before it is imported. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -49,7 +46,6 @@ const folder = (path: string): Bookmark => ({ kind: 'folder', path, text: '' })
 const heading = (path: string, text: string): Bookmark => ({ kind: 'heading', path, text })
 const search = (text: string): Bookmark => ({ kind: 'search', path: '', text })
 
-/** A store on one space, made fresh so nothing carries over between tests. */
 function store(root: string | null = '/Notes') {
   return new Bookmarks(() => root)
 }
@@ -73,7 +69,6 @@ describe('what counts as a bookmark', () => {
   })
 
   test('is read out of a stored list one entry at a time', () => {
-    // A list written by a newer build may hold a kind this one cannot draw.
     const read = bookmarkList([note('a.md'), { kind: 'tag', path: '', text: 'x' }, 7, null])
     expect(read).toEqual([note('a.md')])
   })
@@ -153,11 +148,6 @@ describe('bookmarking', () => {
     const marks = store()
     marks.toggle(search('tea'))
 
-    // Told after the click rather than during it: the syncing store is fetched
-    // when it is wanted, so the row answers first and the account hears next.
-    // What the store is waiting on is the offer itself, so that is what is waited
-    // for here - a machine with the other suites on it can take as long as it
-    // likes over the import, and this test measures nothing.
     await marks.offered
 
     expect(pushed).toEqual(['/Notes'])
@@ -319,7 +309,6 @@ describe('a bookmark found by the id of what it points at (#1068)', () => {
   const ROOT = '/spaces/Work'
   beforeEach(() => sayEntryIds(ids))
   afterEach(() => sayEntryIds(null))
-  /** Sync's ids for one space: `Plan.md` is entry p, which moved from `Old.md`. */
   const ids = {
     idOf: (_root: string, path: string) =>
       (({ 'Notes/Plan.md': 'p', Notes: 'n' }) as Record<string, string>)[path] ?? null,
@@ -366,7 +355,6 @@ describe('a bookmark found by the id of what it points at (#1068)', () => {
   test("the account's list is read with its moved bookmarks where they are now", () => {
     const store = new Bookmarks(() => ROOT)
     store.adopt(ROOT, [], 'acct')
-    // Moved onto one the list already holds, it is that one.
     store.adopt(ROOT, [{ ...note('Old.md'), id: 'p' }, note('Notes/Plan.md')], 'acct')
     expect(store.of(ROOT)).toEqual([{ ...note('Notes/Plan.md'), id: 'p' }])
   })
@@ -392,7 +380,6 @@ describe("the account's list meeting one it has not heard yet", () => {
     expect(kept.adopt('/Notes', [], 'acct')).toBeNull()
     kept.toggleAll([note('Mail.url'), note('News.url')])
 
-    // A pass that read the account before the list reached it.
     expect(kept.adopt('/Notes', [], 'acct')).toEqual([note('Mail.url'), note('News.url')])
     expect(kept.list).toEqual([note('Mail.url'), note('News.url')])
   })
@@ -403,7 +390,6 @@ describe("the account's list meeting one it has not heard yet", () => {
     kept.toggle(note('Mail.url'))
     kept.said('/Notes', true, [note('Mail.url')])
 
-    // Taken away on another machine.
     expect(kept.adopt('/Notes', [], 'acct')).toBeNull()
     expect(kept.list).toEqual([])
   })

@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Hidden tabs: the first switch away from a set with a page running asks once, a
- *  dismissed question asks again next time, an answer is the setting from then on, and
- *  a page is paused and let run again only where that answer says so. */
-
 const sent = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
 const answers = vi.hoisted(() => [] as (string | null)[])
 const asked = vi.hoisted(() => ({ count: 0 }))
@@ -32,22 +28,16 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { hiddenTabs } = await import('./hidden-tabs.svelte')
 const { pages } = await import('../web-tab/pages.svelte')
 const { agentMarks } = await import('../agent-marks.svelte')
-// What a freeze is carried out by, fetched with the first one; loaded here so a turn is enough.
 await import('../web-tab/sleeping')
 type Tab = import('../workspace.svelte').Tab
 
-/** A web tab in a pane nobody is showing, its page running or not: as much of a tab as
- *  the store reads. */
 function webTab(id: string, live = true): Tab {
   pages.of(id).live = live
   return { id, kind: 'web', paneId: 'aside' } as Tab
 }
 
-/** A turn for the pages to send what they were asked: each freeze and thaw goes after
- *  the one before it has landed; see `lull` in pages.svelte.ts. */
 const sending = () => new Promise<void>((go) => setTimeout(go, 0))
 
-/** What reached the crate, as [tab, paused]. */
 async function paused() {
   await sending()
   return sent
@@ -56,7 +46,6 @@ async function paused() {
 }
 
 beforeEach(async () => {
-  // Whatever the last test paused runs again, so each starts with nothing paused.
   hiddenTabs.set('run')
   await sending()
   sent.length = 0

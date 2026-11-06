@@ -17,19 +17,16 @@ import {
   withSplit,
 } from './pane-tree'
 
-/** Splits a pane and hands back the frame, named the way the app names them. */
 function split(frame: Frame, id: string, along: Along, made: string): Frame {
   return withSplit(frame, id, along, pane(made), `s-${made}`)
 }
 
 const one = () => pane('a')
 
-/** Beside: a row of two. */
 function beside(): Frame {
   return split(one(), 'a', 'row', 'b')
 }
 
-/** The 2x2 the app allows at most: a row of two, each split downwards. */
 function four(): Frame {
   let frame = beside()
   frame = split(frame, 'a', 'column', 'c')
@@ -61,8 +58,6 @@ describe('splitting a pane', () => {
     expect(frame).toEqual(one())
   })
 
-  /** A tab dropped against the left of a pane, or the top of it, asks for the
-   *  new pane on that side rather than on the far one. */
   test('puts the new pane on the near side when asked to', () => {
     const frame = withSplit(one(), 'a', 'row', pane('b'), 's-b', true)
 
@@ -73,7 +68,6 @@ describe('splitting a pane', () => {
     const beside = withSplit(one(), 'a', 'row', pane('b'), 's-b', true)
     const frame = withSplit(beside, 'a', 'column', pane('c'), 's-c', true)
 
-    // Laid out left to right and top to bottom: the new pane is above 'a'.
     expect(panesIn(frame).map((each) => each.id)).toEqual(['b', 'c', 'a'])
   })
 
@@ -97,7 +91,6 @@ describe('how far a pane may split', () => {
 
     expect(canSplit(frame, 'a', 'column')).toBe(true)
     expect(canSplit(frame, 'b', 'column')).toBe(true)
-    // Along it would be three in a row, which is a note too narrow to read.
     expect(canSplit(frame, 'a', 'row')).toBe(false)
     expect(canSplit(frame, 'b', 'row')).toBe(false)
   })
@@ -132,8 +125,6 @@ describe('closing a pane', () => {
     const frame = withoutPane(four(), 'c')
 
     expect(panesIn(frame).map((each) => each.id)).toEqual(['a', 'b', 'd'])
-    // The pane that is left is beside the split it was not part of, so it can
-    // still be split downwards.
     expect(canSplit(frame, 'a', 'column')).toBe(true)
   })
 })
@@ -159,8 +150,6 @@ describe('moving the focus', () => {
 
 describe('the share of the room', () => {
   test('is written into the split the divider belongs to', () => {
-    // Found rather than rebuilt around: a resize is one number changing, so
-    // everything else reading the tree hears nothing. See splitIn.
     const frame = beside()
     const split = splitIn(frame, 's-b')
     expect(split).not.toBeNull()
@@ -175,7 +164,6 @@ describe('the share of the room', () => {
   })
 
   test('leaves both sides something to show', () => {
-    // A thousand pixels wide with two hundred as the least: a fifth either end.
     expect(clamped(0.01, 1000, 200)).toBeCloseTo(0.2)
     expect(clamped(0.99, 1000, 200)).toBeCloseTo(0.8)
     expect(clamped(0.5, 1000, 200)).toBe(0.5)
@@ -186,7 +174,6 @@ describe('the share of the room', () => {
   })
 })
 
-/** The ids of the panes along the top of a frame, left to right. */
 const topIds = (frame: Frame) => panesIn(topRow(frame)).map((one) => one.id)
 
 describe('the top row', () => {

@@ -1,34 +1,3 @@
-/** The order somebody arranged the rows of a folder into, by hand.
- *
- *  Six of the file list's seven orders are a rule - a name, a time, either way
- *  round - and need nothing kept anywhere. The seventh is a decision, one drag at
- *  a time, and a decision has to be written down somewhere.
- *
- *  Not in a file beside the notes. A dotfile in every arranged folder would sync
- *  for free and survive a move without being told, and it would also put a file
- *  into somebody's vault that every other tool walking it can see; the space holds
- *  Obsidian-compatible files and nothing else. So the order is kept beside the
- *  space, exactly where a folder's icon is kept and for the same reason:
- *  workspace/folder-icons.svelte.ts is this store's twin in every respect, down to
- *  remembering which account a space's map has been folded into.
- *
- *  One map per space, from a folder's path as the space speaks it to the names of
- *  its children in the order they are drawn. The empty key is the top of the
- *  space, which is where most notes live and so the one folder that could not be
- *  left out.
- *
- *  Names rather than paths, because a name is what the list draws and what a
- *  folder's children are told apart by; and only as far as somebody actually
- *  arranged, because a name the list does not hold falls to the end in the order the
- *  folder would have read in anyway. Somebody who pulls three notes to the top of a
- *  folder of four hundred has arranged three names, and three names is all that is
- *  written, synced and rewritten when one of the four hundred is renamed. A folder
- *  nobody has moved a row in keeps nothing at all; see `trimmed` in
- *  tree-arranging.ts.
- *
- *  Which of the seven orders a space is read in is `SpaceSorting` at the end of this
- *  file, with the account too (#423). */
-
 import { untrack } from 'svelte'
 import { door } from '@orden/markdown/door'
 import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
@@ -39,26 +8,12 @@ import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:arranged'
 
-/** How many folders of one space may carry an order somebody arranged.
- *
- *  Fewer than the four hundred folders that may wear an icon, because an icon is
- *  one press and an order is a drag: nobody arranges two hundred folders by hand.
- *  The service holds an account to the same number, so a map that fits here fits
- *  there. */
 export const MOST_ARRANGED = 200
 
-/** How many names one folder's list may hold. A ceiling nobody writing notes
- *  meets, since the list only runs as far as the last row somebody moved. */
 export const MOST_NAMES = 500
 
-/** How long a name may be. The limit every filesystem the app runs on keeps. */
 const LONGEST_NAME = 255
 
-/** Whether this is the name of a child of a folder rather than a path.
- *
- *  A name, because that is what the list draws: a separator in it would be a path
- *  pretending to be one, and `..` would be the folder above pretending to be
- *  inside it. */
 function isName(value: unknown): value is string {
   return (
     isString(value) &&
@@ -72,15 +27,10 @@ function isName(value: unknown): value is string {
   )
 }
 
-/** Whether this key names a folder of the space. The empty key is the top of the
- *  space and is the one exception; every other key is a path the space could
- *  resolve on any machine, which is the same reading the icons keep. */
 function isFolderKey(key: string): boolean {
   return key === '' || insideItsSpace(key)
 }
 
-/** One folder's list as it was written, with whatever is not a name left out and
- *  a name said twice said once. */
 function namesIn(value: unknown): string[] {
   if (!Array.isArray(value)) return []
 
@@ -93,10 +43,6 @@ function namesIn(value: unknown): string[] {
   return out
 }
 
-/** The map in an unknown, with whatever is not a folder and an order left out.
- *  Written by a newer build, by an older one, or by hand: what reads as a folder
- *  with names in it is kept and the rest is dropped, the way every other store
- *  here reads itself. */
 export function arrangedMap(value: unknown): Record<string, string[]> {
   if (!isRecord(value)) return {}
 
@@ -106,21 +52,14 @@ export function arrangedMap(value: unknown): Record<string, string[]> {
     if (!isFolderKey(folder)) continue
 
     const kept = namesIn(names)
-    // A folder whose list is empty reads in name order, which is what no entry at
-    // all already means.
     if (kept.length) out[folder] = kept
   }
 
   return out
 }
 
-/** One space's map, and which account it has already been reconciled with. The
- *  three fields the folder icons keep, for the three reasons they keep them. */
 interface Kept extends Folded {
   folders: Record<string, string[]>
-  /** Whether the account has heard what is here. False for a push that did not
-   *  land, and then the next pass keeps this machine's map and sends it again
-   *  instead of taking the account's word for a drag the account never heard. */
   sent: boolean
 }
 
@@ -131,44 +70,21 @@ function read(): Record<string, Kept> {
   }))
 }
 
-/** Two lists as one. */
 function sameNames(one: readonly string[], other: readonly string[]): boolean {
   return one.length === other.length && one.every((name, at) => name === other[at])
 }
 
-/** How long after the last drop the account is told, in milliseconds. The number
- *  the folder icons wait, for the reason they wait: a row dragged three times in a
- *  row is three writes here and one request there. The list on screen and this
- *  machine's storage are written on the spot either way. */
 const SETTLING = 700
 
-/** The order a drag is showing but has not committed to: the folder it is in and
- *  the names as they would be if the row were dropped here.
- *
- *  Kept in the store rather than in the component, which is what makes the gap
- *  under the pointer the same gap the whole list is drawn from: one source for the
- *  order, so the rows in the window, the rows the keyboard walks and the row being
- *  dragged cannot come to different answers. Escape and a drag that ends nowhere
- *  drop it and the rows slide back. */
 interface Showing {
   root: string
   folder: string
   names: string[]
 }
 
-/** Where the account keeps each row's own place among the rest of its folder, by id
- *  (#1068): sync v2's engine, for a space whose account says it keeps places. What
- *  this store reads a folder's order from where it can, ahead of its own map, which it
- *  still writes for the builds that read nothing else. See sync2/placing.ts. */
 export interface Positioned {
-  /** The names of a folder's rows somebody put somewhere, in order; null where the
-   *  space keeps no places or nobody put one of this folder's rows anywhere. */
   namesIn(root: string, folder: string): readonly string[] | null
-  /** Every folder of the space that has such rows, and their names in order. */
   folders(root: string): ReadonlyMap<string, readonly string[]>
-  /** The folder's rows drawn in this order from now on, `names` the front of it that
-   *  somebody arranged. Answers the order to draw while the places are written, and
-   *  when they are; null where the space keeps no places, and nothing is sent. */
   arrange(
     root: string,
     folder: string,
@@ -179,26 +95,14 @@ export interface Positioned {
 export class Arranged {
   private spaces = $state<Record<string, Kept>>(read())
   private showing = $state<Showing | null>(null)
-  /** Where the places come from, while there is an engine to keep them. */
   private positioned: Positioned | null = null
-  /** Bumped when the places changed, here or elsewhere: what a folder drawn by them is
-   *  drawn again by, since the engine that keeps them is not reactive. */
   private placings = $state(0)
-  /** The order a drop asked for, by space and folder, while its places are written. */
   private placing = $state.raw<Record<string, readonly string[]>>({})
-  /** A push waiting for the dragging to stop, per space. Bookkeeping rather than
-   *  state: nothing on screen is drawn from it. */
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
-  /** The account's half, once it has been asked for. */
   private readonly talking = door(() => import('./arranging'))
 
-  /** Which space the rows on screen belong to. A function rather than a value
-   *  because the workspace decides that, and it changes as spaces are picked. */
   constructor(private readonly root: () => string | null) {}
 
-  /** Reads the map again, once the storage that holds it has answered. For the
-   *  plugin, which reads a store seeded seconds after the page was built; see
-   *  `reread` in device.svelte.ts, which is the same fact about the same storage. */
   reread(): void {
     const grown = filledIn(this.spaces, read())
     if (grown) this.spaces = grown
@@ -208,7 +112,6 @@ export class Arranged {
     return this.spaces[root]?.folders ?? {}
   }
 
-  /** The places to read from now on, or none; answers how to stop. */
   placeBy(positioned: Positioned): () => void {
     this.positioned = positioned
     this.repositioned()
@@ -219,29 +122,17 @@ export class Arranged {
     }
   }
 
-  /** The places changed: every folder drawn by them is drawn again. */
   repositioned() {
     this.placings += 1
   }
 
-  /** A folder's order by its rows' own places, where the space keeps them and somebody
-   *  put one of its rows somewhere; null for the map. */
   private placed(root: string, at: string): readonly string[] | null {
     const pending = this.placing[placingKey(root, at)]
     if (pending) return pending
-    // The count read first, so whatever draws from this is drawn again when it moves.
     const positioned = this.placings >= 0 ? this.positioned : null
     return positioned?.namesIn(root, at) ?? null
   }
 
-  /** The map brought into line with the places, after a pass over the space (#1068).
-   *
-   *  A folder arranged before its space kept places, which nobody has put a row of
-   *  anywhere since, has its order turned into places, once: only rows without one are
-   *  given one, so two devices doing it at once send the same. And every folder that
-   *  has places has the map written from them, for the builds that read nothing else;
-   *  an order such a build writes into the map of a folder that has places is not read
-   *  back, since the places are what everybody newer reads. */
   fromPlaces(root: string) {
     const positioned = this.positioned
     if (!positioned) return
@@ -251,12 +142,6 @@ export class Arranged {
     for (const [at, names] of positioned.folders(root)) this.keep(root, at, [...names])
   }
 
-  /** The names one folder's rows are drawn in, as far as anybody arranged them.
-   *  Takes the folder's path as the app holds one; empty for a folder nobody has
-   *  arranged, which reads in name order.
-   *
-   *  The order a drag is showing wins while it is showing, which is how the gap
-   *  under the pointer becomes the order the list is drawn in. */
   listOf(folder: string): readonly string[] {
     const root = this.root()
     if (root === null) return []
@@ -268,12 +153,6 @@ export class Arranged {
     return this.placed(root, at) ?? this.of(root)[at] ?? []
   }
 
-  /** The same list, ignoring whatever a drag is showing.
-   *
-   *  What every move is computed from, so a drag is idempotent: the answer to "this
-   *  row, beside that one" depends on where the pointer is and on nothing the pointer
-   *  did on the way there. Computed from what is showing instead, a drag drifts - each
-   *  frame builds on the last, and a row dragged down and back does not come back. */
   savedList(folder: string): readonly string[] {
     const root = this.root()
     if (root === null) return []
@@ -282,13 +161,10 @@ export class Arranged {
     return this.placed(root, at) ?? this.of(root)[at] ?? []
   }
 
-  /** Whether a drag is showing an order it has not committed to. */
   get dragging(): boolean {
     return this.showing !== null
   }
 
-  /** The order a drag would leave behind if it were dropped here. Written down
-   *  rather than committed, so the rows slide to it and Escape puts them back. */
   show(folder: string, names: readonly string[]) {
     const root = this.root()
     if (root === null) return
@@ -296,21 +172,16 @@ export class Arranged {
     const at = relativeTo(root, folder)
     if (!isFolderKey(at)) return
 
-    // The pointer moves many times between one gap and the next, and the order it
-    // would leave behind is the same answer every time: written again only where it
-    // has actually changed, so nothing downstream is redrawn for nothing.
     const shown = this.showing
     if (shown?.folder === at && sameNames(shown.names, names)) return
 
     this.showing = { root, folder: at, names: [...names] }
   }
 
-  /** The drag ended without a drop, or Escape took it back. */
   unshow() {
     this.showing = null
   }
 
-  /** The drop landed: what the drag was showing is what the folder keeps. */
   drop() {
     const shown = this.showing
     this.showing = null
@@ -319,8 +190,6 @@ export class Arranged {
     this.write(shown.root, shown.folder, shown.names)
   }
 
-  /** The order a folder keeps, set outright. For the keys, which move a row
-   *  without a drag; see `moveInOrder` in tree-lift.ts. */
   set(folder: string, names: readonly string[]) {
     const root = this.root()
     if (root === null) return
@@ -332,9 +201,6 @@ export class Arranged {
   }
 
   private write(root: string, at: string, names: string[]) {
-    // Where the space keeps places, the rows whose places the order needs are given new
-    // ones, and the folder is drawn in it until they are written. The map is written as
-    // well, for the builds that read nothing else.
     const placing = this.positioned?.arrange(root, at, names)
     if (placing) {
       const key = placingKey(root, at)
@@ -348,7 +214,6 @@ export class Arranged {
     this.keep(root, at, names)
   }
 
-  /** One folder's list in the map, as it now stands. */
   private keep(root: string, at: string, names: string[]) {
     const held = this.of(root)
     const kept = namesIn(names)
@@ -357,18 +222,9 @@ export class Arranged {
     if (sameNames(there, kept)) return
     if (kept.length && !(at in held) && Object.keys(held).length >= MOST_ARRANGED) return
 
-    // An empty list is no order at all, which is what no entry already means: a
-    // folder dragged back into name order stops being a folder anybody arranged.
     this.put(root, kept.length ? { ...held, [at]: kept } : without(held, at))
   }
 
-  /** A note or folder that has been renamed or moved, with everything under it.
-   *
-   *  Two things to put right, and a rename is both at once: the folder it sits in
-   *  knows it by name, and a folder that moved is the key of its own list and of
-   *  every list under it. Heard from every file operation that moves one; see
-   *  workspace/file-ops.ts. Into another space, `into`, the lists of the folder that
-   *  moved go into that space's map, as that space speaks of the folders. */
   moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
@@ -384,8 +240,6 @@ export class Arranged {
     const now = move.now ?? ''
     let next = held
 
-    // The keys, for a folder that moved. Everything under it comes along, which is
-    // the one thing a dotfile inside the folder would have got for free.
     const rekeyed: Record<string, string[]> = {}
     let touched = false
     for (const [folder, names] of Object.entries(held)) {
@@ -395,10 +249,6 @@ export class Arranged {
     }
     if (touched) next = rekeyed
 
-    // And the name, in the list of the folder it sits in. A row renamed keeps the
-    // place it was arranged into; a row that moved to another folder leaves the list
-    // it was in and falls to the end of its new one, in name order, which is where a
-    // row nobody arranged goes.
     const owner = folderKeyOf(was)
     const listed = next[owner]
     if (listed) {
@@ -412,8 +262,6 @@ export class Arranged {
     if (next !== held) this.put(root, next)
   }
 
-  /** The lists a move into another space took along, and the name it left in the
-   *  list of the folder it was in. */
   private carry(move: Moving) {
     const held = this.of(move.root)
     const { left, went } = carried(
@@ -438,7 +286,6 @@ export class Arranged {
     this.put(move.there, there)
   }
 
-  /** A note or folder that has gone, with everything under it. */
   gone(path: string, root = this.root()) {
     if (root === null) return
 
@@ -472,8 +319,6 @@ export class Arranged {
     if (touched) this.put(root, next)
   }
 
-  /** A space folder that has been renamed, which re-keys the whole map at once:
-   *  the map is kept under the root, and the root is what moved. */
   spaceMoved(from: string, to: string) {
     const held = this.spaces[from]
     if (!held || from === to) return
@@ -482,7 +327,6 @@ export class Arranged {
     this.writeAll()
   }
 
-  /** Forgets a space's map, for a space that is no longer here. */
   forget(root: string) {
     if (!(root in this.spaces)) return
 
@@ -490,24 +334,10 @@ export class Arranged {
     this.writeAll()
   }
 
-  /** Takes over what the account holds for one space.
-   *
-   *  The fold itself, and the push that answers it, are next door in arranging.ts and
-   *  are fetched when there is an account to talk to: a window that is not signed in,
-   *  or one nobody has arranged anything in, never asks for them, and the file list is
-   *  the first paint. See lib/ai/ask.ts, which is the same seam.
-   *
-   *  Answers a promise so a caller who wants to know when the fold has happened can
-   *  wait for it; App.svelte does not, and the tests do. */
   adopt(root: string, theirs: unknown, accountId: string): Promise<void> {
     return this.reaching().then(({ fold }) => fold(this, root, theirs, accountId))
   }
 
-  /** What one space's map is, and what the account has been told of it: the orders,
-   *  which account they were folded into, and whether that account has heard them.
-   *
-   *  These three are public for arranging.ts and for nothing else. The alternative was
-   *  a second interface saying the same three things, which is a shape that drifts. */
   kept(root: string): { folders: Record<string, string[]>; account: string | null; sent: boolean } {
     const held = this.spaces[root]
     return {
@@ -517,14 +347,11 @@ export class Arranged {
     }
   }
 
-  /** The account's copy taken on, whole, and marked as heard. */
   took(root: string, folders: Record<string, string[]>, account: string) {
     this.spaces = { ...this.spaces, [root]: { folders, account, sent: true } }
     this.writeAll()
   }
 
-  /** Whether the account has heard the space's map as it now stands. What the next
-   *  pass reads before it hands this machine the account's copy; see `fold`. */
   said(root: string, landed: boolean) {
     const held = this.spaces[root]
     if (!held || held.sent === landed) return
@@ -542,7 +369,6 @@ export class Arranged {
     this.soon(root)
   }
 
-  /** The account hears about it once the dragging stops. */
   private soon(root: string) {
     const held = this.pushing[root]
     if (held !== undefined) clearTimeout(held)
@@ -555,7 +381,6 @@ export class Arranged {
     this.pushing = { ...this.pushing, [root]: waiting }
   }
 
-  /** The account's half, once. */
   private reaching(): Promise<typeof import('./arranging')> {
     return this.talking()
   }
@@ -565,20 +390,15 @@ export class Arranged {
   }
 }
 
-/** Which drop a folder's places are being written for: its space and the folder. */
 function placingKey(root: string, at: string): string {
   return `${root}\u0000${at}`
 }
 
-/** The key of the folder a relative path sits in. The top of the space is the
- *  empty key, which is what a path with no separator in it is already in. */
 function folderKeyOf(at: string): string {
   const cut = at.lastIndexOf('/')
   return cut < 0 ? '' : at.slice(0, cut)
 }
 
-/** The map with one folder's list set, or with the folder dropped where the list
- *  no longer says anything. */
 function withList(
   held: Record<string, string[]>,
   folder: string,
@@ -587,20 +407,12 @@ function withList(
   return names.length ? { ...held, [folder]: names } : without(held, folder)
 }
 
-/** Which order each space's file list is read in, with the account, so a space read in
- *  the order somebody arranged by hand is read in it on every device (#423). Here beside
- *  the arranged order it chooses, rather than a module of its own the first paint would
- *  load besides. Folded as the graph's settings are; what each machine chose before, by
- *  folder, is read over once. See docs/tree.md. */
 export const SORT_KEY = 'nib:sorting'
 
 const BEFORE = 'nib:list-order'
 
 interface Sorted extends Folded {
   mode: SortMode
-  /** Whether the account has heard it, as the arranged order keeps; see `Kept` above. A
-   *  listing that arrives before a choice has landed says the old order, and is not
-   *  taken over the choice. */
   sent: boolean
 }
 
@@ -646,18 +458,11 @@ export class SpaceSorting {
     void this.push(root)
   }
 
-  /** Takes over what the account holds for one space. Untracked: the listing is what a
-   *  caller's effect follows, and the order written here is not. */
   adopt(root: string, theirs: unknown, accountId: string) {
-    // A Worker from before #423 lists no order at all. That account has not heard of
-    // a space's order, so there is nothing to fold and nowhere to send one: the order
-    // chosen here stands, kept on this device, until the listing carries one.
     if (theirs === undefined) return
     untrack(() => {
       const account = isSortMode(theirs) ? theirs : FIRST_MODE
       const kept = this.spaces[root]
-      // A choice the account has not heard yet stands against a listing from before it,
-      // and is sent again; the listing that says it is the one it was heard by.
       if (kept?.sent === false && kept.account === accountId) {
         if (kept.mode === account) this.keepAs(root, account, accountId, true)
         else void this.push(root)
@@ -698,7 +503,6 @@ export class SpaceSorting {
       (api, token, spaceId) => api.saveSort(token, spaceId, this.of(root)),
       (landed) => {
         const kept = this.spaces[root]
-        // Landed, it waits for the listing that says it; see `adopt`.
         if (kept && !landed) this.keepAs(root, kept.mode, kept.account, false)
       },
     )

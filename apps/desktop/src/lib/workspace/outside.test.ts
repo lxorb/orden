@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A spaces folder a hand-edited setting pointed outside Orden's own (#552): what the
- *  crate took in is followed by everything the page stored, before anything reads it. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -61,7 +58,6 @@ describe('a folder outside, taken in', () => {
     }
     expect(session.spaces).toEqual([{ id: 'kept-id', name: 'Work', root: '/Spaces/Work 2' }])
     expect(session.tabs).toEqual([{ path: '/Spaces/Work 2/Plans.md' }])
-    // Beside it, and not in it.
     expect(localStorage.getItem('nib:recent')).toBe(JSON.stringify(['/Vault/Workshop/a.md']))
     expect(asked).toContainEqual({
       command: 'rehome_snapshots',
@@ -89,7 +85,6 @@ describe('a folder outside, taken in', () => {
     }
 
     expect(await takeIn()).toBe(true)
-    // The page started over asks again and is told the same: nothing to say again.
     expect(await takeIn()).toBe(false)
 
     expect(asked.map((one) => one.command)).not.toContain('settle_outside')

@@ -16,16 +16,8 @@ import {
   tabsShown,
 } from './panels'
 
-/** Which side each panel sits on, as arithmetic.
- *
- *  The workspace's own tests take these through the store; see 'the two sides of
- *  the window' in workspace.test.ts. What is here is the rules themselves, which is
- *  where the awkward cases live: a panel moved while it was open, the last panel
- *  leaving the right side, and a session written by a build that had only one. */
-
 const EVERY = ['tree', 'outline', 'search', 'links'] as const
 
-/** Nothing open and nothing moved over, which is where every window starts. */
 function fresh(): Sides {
   return { panel: null, rightPanel: null, right: [] }
 }
@@ -38,7 +30,6 @@ describe('which side a panel is on', () => {
   })
 
   test('and a session with no right side at all reads as all on the left', () => {
-    // What a session written by a build that had one side looks like.
     for (const panel of EVERY) expect(sideOf([], panel)).toBe('left')
   })
 })
@@ -150,9 +141,6 @@ describe('what each side shows', () => {
   })
 })
 
-/** Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". The
- *  card goes over the right side and keeps its panel for when it goes; the side asked
- *  for puts the card away. */
 describe('the scratchpad over the right side', () => {
   const under: Sides = { panel: 'tree', rightPanel: 'outline', right: ['outline'], covered: true }
 
@@ -184,7 +172,6 @@ describe('the scratchpad over the right side', () => {
       right: ['search'],
       covered: false,
     })
-    // One that was not being read arrives shut, under the card.
     expect(moving(under, 'links', 'right').covered).toBe(true)
   })
 })
@@ -196,9 +183,7 @@ describe('where a panel lives until somebody moves it', () => {
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {
-    // A build with five panels wrote this: the outline moved over, the rest left.
     expect(rightFrom(['outline'])).toEqual(['outline', 'ask', 'tasks'])
-    // And one that had everything on the left wrote nothing at all.
     expect(rightFrom(undefined)).toEqual(STARTS_RIGHT)
   })
 
@@ -215,8 +200,6 @@ describe('where a panel lives until somebody moves it', () => {
   })
 })
 
-/** The left side's way to Todos is the checkbox in its top row, which opens it as a tab;
- *  the Tasks panel is the list beside the note, on the right (#1047). */
 describe('the Tasks panel', () => {
   test('lives on the right, in a window arranged with it on the left as well', () => {
     expect(panelsOn(rightFrom([], PANELS), 'left', PANELS)).not.toContain('tasks')
@@ -238,21 +221,17 @@ describe('the Tasks panel', () => {
   })
 })
 
-/** The strip's room, in pixels: a tab at its narrowest is 26 (an 18 pixel mark and
- *  4 either side), 2 between tabs and 6 of groove. */
 describe('how many tabs the strip draws', () => {
   test('all of them where nothing has been laid out yet', () => {
     expect(tabsShown(9, 0, 26)).toBe(9)
   })
 
   test('all of them where they fit at their narrowest', () => {
-    // 6 x 26 + 5 x 2 + 6 = 172.
     expect(tabsShown(6, 172, 26)).toBe(6)
     expect(tabsShown(6, 840, 26)).toBe(6)
   })
 
   test('and where they do not, as many as fit beside More', () => {
-    // A pixel short of six places is five: four tabs and More.
     expect(tabsShown(6, 171, 26)).toBe(4)
     expect(tabsShown(9, 172, 26)).toBe(5)
   })

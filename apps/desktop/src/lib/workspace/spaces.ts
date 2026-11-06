@@ -1,24 +1,9 @@
-/** The list of spaces: what is on this machine, in what order, and which one is
- *  open.
- *
- *  A space is a folder under the one the app owns, and that folder is the truth: a
- *  space made or removed outside the app simply shows up that way on the next
- *  listing. What the folder does not decide is the order they appear in, which is
- *  the account's, so every machine's switcher reads alike.
- *
- *  Its own module because the list is a thing with rules of its own - ids that
- *  survive a reload, an order two machines have to agree on, a folder renamed or
- *  gone said once to everything kept under it - and none of those rules is about
- *  what is open in a pane. Making, adopting, renaming and deleting one are
- *  space-changes.ts, fetched by the first of them. */
-
 import { spacesAhead } from './ahead'
 import { identifier } from '../identifier'
 import { invoke, isDesktop } from '../tauri'
 import type { Entry, Naming, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
 
-/** What the list of spaces needs of the store holding it. */
 export interface HoldsSpaces {
   spaces: Space[]
   activeSpaceId: string | null
@@ -29,8 +14,6 @@ export interface HoldsSpaces {
   setsRead: unknown
   fileMoved(from: string, to: string, kind: 'space'): Promise<void>
   fileGone(path: string, kind: 'space'): Promise<void>
-  /** One file operation on everything open under a folder; see `holdingUnder` in
-   *  workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   close(id: string): void
   clearSelection(): void
@@ -38,8 +21,6 @@ export interface HoldsSpaces {
   persist(): void
 }
 
-/** The spaces the crate read ahead, with the ones a desktop keeps itself beside them and
- *  without the folders those were made of (#1068, internal/spaces.ts), by name. */
 async function withKept(
   ahead: { name: string; path: string }[],
 ): Promise<{ name: string; path: string }[]> {
@@ -50,8 +31,6 @@ async function withKept(
   )
 }
 
-/** Reads the spaces folder. It is the source of truth, so a space added or
- *  removed outside the app simply shows up that way. */
 export async function loadSpaces(ws: HoldsSpaces) {
   let found: { name: string; path: string }[] | null = null
   for (let round = 0; round < 3; round += 1) {
@@ -65,12 +44,8 @@ export async function loadSpaces(ws: HoldsSpaces) {
   }
   if (!found) return
 
-  // Ids are kept across a reload so the selected space survives one.
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))
 
-  // The folder decides which spaces exist; the account decides the order they
-  // appear in. Without this, a listing that comes back alphabetical would
-  // undo every move on the next reload.
   const rank = new Map(ws.spaces.map((space, index) => [space.root, index]))
   const at = (root: string) => rank.get(root) ?? Number.MAX_SAFE_INTEGER
 
@@ -87,8 +62,6 @@ export async function loadSpaces(ws: HoldsSpaces) {
   }
 }
 
-/** Drops the dragged space in front of `beforeId`, or at the end for null.
- *  Returns whether anything actually moved, so a drag onto itself is quiet. */
 export function moveSpace(ws: HoldsSpaces, id: string, beforeId: string | null): boolean {
   const moving = ws.spaces.find((space) => space.id === id)
   if (!moving || id === beforeId) return false
@@ -105,14 +78,10 @@ export function moveSpace(ws: HoldsSpaces, id: string, beforeId: string | null):
   return true
 }
 
-/** Whether a proposed order is the one already on show, so a drag that ends
- *  where it started, or an account order that matches, stays quiet. */
 function sameOrder(ws: HoldsSpaces, next: readonly Space[]): boolean {
   return next.every((space, index) => space.id === ws.spaces[index]?.id)
 }
 
-/** Takes the account's order, which is the one the other machines see.
- *  A space this machine has but the account does not keeps its place. */
 export function applySpaceOrder(ws: HoldsSpaces, names: string[]): boolean {
   const rank = new Map(names.map((name, index) => [name, index]))
   const at = (name: string) => rank.get(name) ?? Number.MAX_SAFE_INTEGER
@@ -129,25 +98,10 @@ export function applySpaceOrder(ws: HoldsSpaces, names: string[]): boolean {
   return true
 }
 
-/** Where each space's choice of tabs was kept on this device, before every space kept its
- *  own (#674): read once, to give the set the Global spaces shared to one of them, and
- *  forgotten. See `handOver` in sets.svelte.ts. */
 export const TABS_KEY = 'nib:space-tabs'
 
-/** Whether this window has fetched sets.svelte.ts, which every switch goes through then. */
 export const tabSets = { fetched: false }
 
-/** The switch to a space, from the switcher, the palette or anywhere else.
- *
- *  Every space keeps its own tabs (#674), so a switch with any tab open puts them aside
- *  and brings the space's own in (sets.svelte.ts), fetched with the first such switch.
- *  A window with nothing open and no sets yet has nothing to put aside, and only says
- *  which space it is in.
- *
- *  The sidebars are left as they are, shut or open, on the panel they show (#1123). A
- *  switch from the switcher used to open a shut file list on the tree, so the window
- *  changed its frame under a key that only meant another space's notes; the file list
- *  has its own key, Ctrl+Shift+L. */
 export async function selectSpace(ws: HoldsSpaces, id: string) {
   if (tabSets.fetched || ws.tabs.length) {
     const { sets } = await import('./sets.svelte')

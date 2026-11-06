@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Undoing a delete in the browser, which keeps no stamps: `file_stamp` answers null
- *  for every path there (web/commands.ts), and an undo that asked it found every
- *  name free and wrote over the note made at the old name since. */
-
 const files = new Map<string, string>()
 
 vi.mock('../tauri', () => ({

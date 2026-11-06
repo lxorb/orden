@@ -1,19 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { FolderIcons, folderIconMap, MOST_FOLDER_ICONS } from './folder-icons.svelte'
 
-/** The map a space keeps of what its folders wear.
- *
- *  A folder has no file, so this is the one icon in the app that is kept beside the
- *  thing it belongs to rather than inside it - which buys one obligation: a folder
- *  that is renamed, moved or deleted has to say so, or the map quietly points at
- *  paths that are not there any more. That is most of what is tested here.
- *
- *  Nothing is pushed anywhere under node: the push imports the account and the
- *  syncing loop, both of which answer with nothing signed out. It waits for the
- *  choosing to stop, so the clock is held here rather than left to fire after this
- *  file has finished - which is an import into an environment that has been torn
- *  down. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -54,8 +41,6 @@ describe('the icon a folder wears', () => {
     expect(icons.iconOf('/space/Work')).toBe('rocket')
   })
 
-  /** The surfaces that draw a folder disagree about which path they know: the tree
-   *  knows the one on this disk, a bookmark and the Move sheet know the space's. */
   test('is found by a path on this disk or by the space s own', () => {
     icons.set('/space/Work/Deep', 'anchor')
 
@@ -86,8 +71,6 @@ describe('the icon a folder wears', () => {
     expect(icons.iconOf('/space/Work')).toBe('🚀')
   })
 
-  /** A path with a drive letter or a `..` in it is one no other machine could
-   *  resolve, and the map travels. */
   test('is refused for a path that is not inside the space', () => {
     icons.set('/elsewhere/Work', 'rocket')
 
@@ -95,8 +78,6 @@ describe('the icon a folder wears', () => {
   })
 })
 
-/** The obligation the map buys: every path that changes has to be rewritten, or an
- *  icon quietly stops being drawn. */
 describe('a folder that moves', () => {
   test('takes its icon with it', () => {
     icons.set('/space/Work', 'rocket')
@@ -115,7 +96,6 @@ describe('a folder that moves', () => {
     expect(icons.of(ROOT)).toEqual({
       'Archive/Work': 'rocket',
       'Archive/Work/Deep': 'anchor',
-      // `Work` does not hold `Working`, however alike the two names look.
       Working: 'compass',
     })
   })
@@ -144,7 +124,6 @@ describe('a folder that moves', () => {
     expect(icons.of(ROOT)).toEqual({ Notes: 'compass' })
   })
 
-  /** The map is kept under the space's root, and renaming a space moves the root. */
   test('a space that is renamed keeps every folder icon in it', () => {
     icons.set('/space/Work', 'rocket')
     icons.spaceMoved('/space', '/renamed')
@@ -161,9 +140,6 @@ describe('a folder that moves', () => {
   })
 })
 
-/** What the account holds and what this machine holds, put together. The rule is
- *  the bookmarks' rule: fold once, then the account is the one copy - or an icon
- *  taken away on another machine would be handed straight back to it. */
 describe('what the account says the folders wear', () => {
   test('is taken on, with what this machine had folded in the first time', () => {
     icons.set('/space/Work', 'rocket')
@@ -188,8 +164,6 @@ describe('what the account says the folders wear', () => {
     expect(icons.of(ROOT)).toEqual({ Work: 'rocket', Notes: 'anchor' })
   })
 
-  /** The service is deployed on its own, so a build of it older than this app
-   *  answers with nothing at all where the map should be. */
   test('is read rather than trusted', () => {
     icons.set('/space/Work', 'rocket')
     icons.adopt(ROOT, undefined, undefined, 'someone')
@@ -198,10 +172,6 @@ describe('what the account says the folders wear', () => {
   })
 })
 
-/** The colour each of those icons is drawn in. The same map with the same rules, a
- *  key at a time, because the two are written by one gesture and sent in one
- *  request: a pass that took the icons and left the colours would draw last week's
- *  colour under this week's icon. */
 describe('what the account says those icons are drawn in', () => {
   test('is taken on, with what this machine had folded in the first time', () => {
     icons.set('/space/Work', 'rocket', 'violet')
@@ -228,9 +198,6 @@ describe('what the account says those icons are drawn in', () => {
     expect(icons.tintOf('/space/Work')).toBe('red')
   })
 
-  /** A Worker older than the route that carries them answers with the icons and
-   *  nothing about the colours. Folded rather than taken as "no colour", or the first
-   *  pass would undress a tree somebody had coloured. */
   test('is read rather than trusted, so an older service takes nothing away', () => {
     icons.set('/space/Work', 'rocket', 'violet')
     icons.adopt(ROOT, { Work: 'rocket' }, undefined, 'someone')
@@ -238,9 +205,6 @@ describe('what the account says those icons are drawn in', () => {
     expect(icons.tintOf('/space/Work')).toBe('violet')
   })
 
-  /** A colour named by a build with a bigger palette. Kept as written: the app
-   *  resolves an accent when it draws one, and dropping a name this build does not
-   *  know would take it off the account on the next push. */
   test('keeps a colour this build has never heard of', () => {
     icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'oxblood' }, 'someone')
 
@@ -248,17 +212,10 @@ describe('what the account says those icons are drawn in', () => {
   })
 })
 
-/** What was chosen here and never reached the account.
- *
- *  A push that did not land - offline, a token that had expired - leaves the account
- *  holding a map it was never told about. The pass after must not hand that map back
- *  as the one copy, or a colour somebody chose on a plane goes away when they land. */
 describe('a choice the account has not heard', () => {
   test('is kept and folded in rather than replaced by the account s copy', () => {
     icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'violet' }, 'someone')
 
-    // The push from this one cannot land: nothing here is signed in, so it is the
-    // same shape as a push that failed.
     icons.set('/space/Work', 'rocket', 'teal')
     icons.set('/space/Notes', 'anchor', 'red')
 
@@ -272,8 +229,6 @@ describe('a choice the account has not heard', () => {
   test('and once the account has heard it, the account is the one copy again', () => {
     icons.set('/space/Work', 'rocket', 'teal')
 
-    // The pass that folds it in says the account now holds it, which is what the
-    // push says when it lands.
     icons.adopt(ROOT, { Work: 'rocket' }, { Work: 'teal' }, 'someone')
     icons.adopt(ROOT, {}, {}, 'someone')
 
@@ -281,8 +236,6 @@ describe('a choice the account has not heard', () => {
   })
 })
 
-/** The same reading the service does, so nothing is kept here that would be
- *  refused there and nothing drawn that could not have arrived. */
 describe('reading a map somebody else wrote', () => {
   test('keeps the pairs and drops everything that is not one', () => {
     expect(
@@ -316,16 +269,11 @@ describe('reading a map somebody else wrote', () => {
     icons.set('/space/One too many', 'anchor')
 
     expect(icons.iconOf('/space/One too many')).toBeNull()
-    // The ones already there can still be changed and taken away.
     icons.set('/space/Folder 0', 'anchor')
     expect(icons.iconOf('/space/Folder 0')).toBe('anchor')
   })
 })
 
-/** Storage that answers in two goes, which is what a packed plugin has: this map is
- *  one entry per folder somebody gave an icon to, so it grows with the vault and
- *  rides the phone app's own store rather than the cookie - and that store answers
- *  seconds after this was built. See lib/even/local.ts. */
 describe('a map that lands after the store was built', () => {
   test('is read again, and is there', () => {
     expect(icons.iconOf('/space/Work')).toBeNull()
@@ -342,7 +290,6 @@ describe('a map that lands after the store was built', () => {
   test('and does not undo what was chosen while it was on its way', () => {
     icons.set('/space/Reading', 'book')
 
-    // The phone app answers with the map as it was before that choice.
     localStorage.setItem(
       'nib:folder-icons',
       JSON.stringify({ [ROOT]: { icons: { Work: 'briefcase' }, colors: {}, account: null } }),

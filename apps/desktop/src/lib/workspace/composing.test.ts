@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** One note out of another, and two notes into one, driven by a stand-in store.
- *
- *  What the words become is composer.test.ts. What is here is everything around
- *  that: which files are written and in which order, that a snapshot of each is
- *  kept first, that the links which pointed at a note that went away are moved
- *  before it goes, and that either gesture is one thing to undo. */
-
 const sent: string[] = []
 const told: string[] = []
 const disk = new Map<string, string>()
@@ -35,8 +28,6 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-/** The spaces shared with this account to be read, by root. What may be written
- *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
 const readOnly = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
@@ -50,7 +41,6 @@ type Composes = import('./composing').Composes
 const SPACE = '/space'
 const OTHER = '/other'
 
-/** A store with the given notes on its disk, and the first of them open. */
 function space(notes: Record<string, string>, openAt?: string) {
   disk.clear()
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
@@ -63,8 +53,6 @@ function space(notes: Record<string, string>, openAt?: string) {
     tabs: tab ? [tab] : [],
     undone: new FileActions(),
     flush: () => undefined,
-    // Said once to everything kept by path, the tabs of it among them; see
-    // workspace/file-ops.ts.
     fileGone: (path: string) => {
       told.push(`gone ${path}`)
       return Promise.resolve()
@@ -78,8 +66,6 @@ function space(notes: Record<string, string>, openAt?: string) {
       told.push(`opened ${path}`)
       return Promise.resolve()
     },
-    // The store's own numbering, which is `freePath` over everything the space
-    // holds and the disk; see `freeNameOnDisk` in workspace.svelte.ts.
     freeNameOnDisk: (dir: string, wanted: string) =>
       Promise.resolve(freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`))),
     loadTree: () => Promise.resolve(),
@@ -105,15 +91,11 @@ describe('a note merged into another', () => {
 
     expect(disk.get(B)).toContain('first')
     expect(disk.has(A)).toBe(false)
-    // The snapshot of each note comes before that note is written or deleted, and
-    // the links move while the note they point at is still findable.
     expect(sent).toEqual([
       `read_note ${A}`,
       `read_note ${B}`,
       `snapshot_note ${B}`,
       `write_note ${B}`,
-      // What B says once the links are rewritten, which is what an undo checks it
-      // against.
       `read_note ${B}`,
       `snapshot_note ${A}`,
       `delete_note ${A}`,
@@ -132,7 +114,6 @@ describe('a note merged into another', () => {
     await mergeInto(ws, A, B)
 
     expect(ws.undone.stack).toEqual([
-      // Nothing linked to A here, so no note's links are to put back.
       {
         kind: 'merge',
         from: A,
@@ -177,8 +158,6 @@ describe('a merge that may not be made', () => {
   })
 
   test('leaves a note of another space where it is', async () => {
-    // A tab outlives a switch of space, so the note in front of the reader can be
-    // one the open space does not hold, while the notes on offer are the open one's.
     const away = `${OTHER}/a.md`
     const ws = space({ [away]: '# a\n', [B]: '# b\n' })
     await mergeInto(ws, away, B)
@@ -198,8 +177,6 @@ describe('a merge that may not be made', () => {
   })
 
   test('leaves a page note and its paper alone', async () => {
-    // Deleting a page note deletes the PDF it annotates, which may be the only
-    // copy; and its JSON appended to a note is no note at all.
     const page = `${SPACE}/Lecture.pages`
     const ws = space({ [page]: '{"pages":[]}', [B]: '# b\n' })
     await mergeInto(ws, page, B)
@@ -257,8 +234,6 @@ describe('a note split at the caret', () => {
   })
 
   test('and steps the new name aside from one the folder already has', async () => {
-    // The name a split reaches for, taken. Numbered the way every other name in
-    // the app is - a space and a digit before the extension.
     const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
 
@@ -267,8 +242,6 @@ describe('a note split at the caret', () => {
   })
 
   test('and the link left behind names the stepped-aside note, not the one it stepped from', async () => {
-    // The link was written from the name the split reached for, so the note was
-    // left pointing at an unrelated `Later` and nothing pointed at `Later 2`.
     const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
 
@@ -307,8 +280,6 @@ describe('a selection made into a note of its own', () => {
   })
 
   test('and links to the note by the name it was stepped aside to', async () => {
-    // The passage is the name, so the link would be left plain; once the name is
-    // taken the passage stays as the link's words and the target is the new note.
     const doc = '# Plan\n\nkeep this\n\nLater\n'
     const ws = space({ [NOTE]: doc, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     const from = doc.indexOf('Later')
@@ -326,8 +297,6 @@ describe('a selection made into a note of its own', () => {
   })
 })
 
-// Asked again here, since a split or an extraction can be reached without the
-// palette's say: only a markdown note of the open space that may be written is carved.
 describe('a file that is not a note of the open space', () => {
   const JSON_FILE = `${SPACE}/snippets.json`
   const DOC = '{\n  "a": 1\n}\n'
@@ -349,8 +318,6 @@ describe('a file that is not a note of the open space', () => {
     expect(disk.get(JSON_FILE)).toBe(DOC)
   })
 
-  /** A tab can outlive a space switch, and its note is carved in its own space,
-   *  beside it (B206), so a note of another space is still a note. */
   test('while a note of another space is still split, beside it', async () => {
     const note = `${OTHER}/plan.md`
     const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)

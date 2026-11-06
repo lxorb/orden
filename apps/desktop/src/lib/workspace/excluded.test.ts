@@ -1,17 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { Excluded, excludedPaths, MOST_EXCLUDED, STORAGE_KEY } from './excluded.svelte'
 
-/** The notes and folders a space leaves out of what it says about itself.
- *
- *  A list of paths kept beside the space, so the same obligations the folder icons
- *  have: read what storage answers rather than trust it, re-key when a note or a
- *  folder moves, forget a path that has gone, and let the account's copy win after
- *  first contact. A folder standing for everything under it is the rule most of
- *  these are about.
- *
- *  Nothing is pushed anywhere under node: the push imports the account and the
- *  syncing loop, both of which answer with nothing signed out. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -58,7 +47,6 @@ describe('leaving a path out', () => {
 
     expect(excluded.has(at('Archive/Old plan.md'))).toBe(true)
     expect(excluded.has(at('Archive/2025/Older.md'))).toBe(true)
-    // And nothing merely spelled like it.
     expect(excluded.has(at('Archived.md'))).toBe(false)
   })
 
@@ -76,8 +64,6 @@ describe('leaving a path out', () => {
     expect(excluded.of(ROOT)).toEqual(['Archive'])
   })
 
-  /** Which is what `names` is for: only the row that can be taken back is offered
-   *  the words to take it back with. */
   test('and only the path itself is the one that can be taken back', () => {
     excluded.toggle(at('Archive'))
 
@@ -178,8 +164,6 @@ describe('reading what storage answers with', () => {
   })
 })
 
-/** Which copy wins: this machine's folded in the first time an account meets the
- *  space, and the account's outright on every pass after that. */
 describe('what the account holds', () => {
   test('is taken on outright once the space has been met', () => {
     excluded.adopt(ROOT, ['Archive'], 'u1')
