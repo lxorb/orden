@@ -114,6 +114,8 @@ fn fenced(
             return Err(refused);
         }
     }
+    let path = super::working::on_disk(app, &path)
+        .map_err(|why| Answer::error(Code::BadArguments, why))?;
     if std::fs::symlink_metadata(&path).is_err() {
         return Err(Answer::error(
             Code::BadArguments,

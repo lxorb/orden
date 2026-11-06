@@ -1,6 +1,7 @@
 import { untrack } from 'svelte'
 import { links } from '../link-index.svelte'
 import { account } from '../account.svelte'
+import { keptShaped } from '../internal/roots'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
@@ -151,7 +152,10 @@ export class TheWatch {
 
   private arm() {
     if (!this.lead || engineWatches()) return
-    const roots = workspace.spaces.map((one) => one.root).sort()
+    const roots = workspace.spaces
+      .map((one) => one.root)
+      .filter((root) => !keptShaped(root))
+      .sort()
     const said = JSON.stringify(roots)
     if (said === this.armed) return
     this.armed = said

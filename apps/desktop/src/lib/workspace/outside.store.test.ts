@@ -97,4 +97,17 @@ describe('the watch of the spaces', () => {
     expect(watching.roots.length).toBe(first + 1)
     stop()
   })
+
+  test('a space Orden keeps is not handed to the watcher, so the folders beside it are still watched', async () => {
+    watching.roots.length = 0
+    account.user = null
+    const watch = new TheWatch()
+    workspace.spaces = [
+      { id: 'S', name: 's', root: '/s' },
+      { id: 'K', name: 'K', root: '/n/.orden/K/K' },
+    ]
+    watch.settle()
+    await settle()
+    expect(watching.roots).toEqual([['/s']])
+  })
 })

@@ -322,6 +322,9 @@ macro_rules! commands {
             space_watch::space_watch,
             space_watch::space_unwatch,
             space_watch::space_scan,
+            space_watch::working_watch,
+            space_watch::working_unwatch,
+            space_watch::working_scan,
             space_watch::file_identity,
             ai_accounts::ai_accounts_read,
             ai_accounts::ai_accounts_write,
@@ -500,7 +503,9 @@ macro_rules! desktop_commands {
             app_place::move_to_applications,
             shortcuts::shortcuts_offered,
             shortcuts::open_shortcuts,
-            shortcuts::remember_inbox,
+            shortcuts::shortcuts_added,
+            shortcuts::shortcuts_added_taken,
+            shortcuts::shortcuts_left_inbox,
             web_tabs::web_open,
             extensions::extensions_list,
             extensions::extensions_install,
@@ -676,7 +681,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 
     let builder = builder
         .manage(sync_store::Stores::default())
-        .manage(space_watch::Watching::default());
+        .manage(space_watch::Watching::default())
+        .manage(space_watch::Working::default());
 
     #[cfg(desktop)]
     let builder = builder.manage(endpoint::Waiting::default());

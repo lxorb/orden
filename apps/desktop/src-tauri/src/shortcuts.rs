@@ -1,4 +1,6 @@
-use tauri::AppHandle;
+#[cfg(target_os = "macos")]
+use tauri::Manager as _;
+use tauri::Webview;
 
 #[tauri::command(async)]
 pub fn shortcuts_offered() -> bool {
@@ -29,21 +31,44 @@ pub fn open_shortcuts() -> Result<(), String> {
 }
 
 #[tauri::command(async)]
-#[cfg_attr(
-    not(target_os = "macos"),
-    allow(
-        clippy::unnecessary_wraps,
-        reason = "a command's answer, the same on every platform"
-    )
-)]
-pub fn remember_inbox(app: AppHandle, path: String) -> Result<(), String> {
+pub fn shortcuts_added(webview: Webview) -> Result<Vec<serde_json::Value>, String> {
+    crate::agents::from_the_app(&webview)?;
     #[cfg(target_os = "macos")]
     {
-        crate::siri::remember(&app, &path)
+        crate::siri::added(webview.app_handle())?
+            .into_iter()
+            .map(|one| serde_json::to_value(one).map_err(|error| error.to_string()))
+            .collect()
     }
     #[cfg(not(target_os = "macos"))]
     {
-        let _ = (app, path);
-        Ok(())
+        Ok(Vec::new())
+    }
+}
+
+#[tauri::command(async)]
+pub fn shortcuts_added_taken(webview: Webview, id: String) -> Result<(), String> {
+    crate::agents::from_the_app(&webview)?;
+    #[cfg(target_os = "macos")]
+    {
+        crate::siri::taken(webview.app_handle(), &id)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err(format!("{id} is not a task Shortcuts added"))
+    }
+}
+
+#[tauri::command(async)]
+pub fn shortcuts_left_inbox(webview: Webview) -> Result<Option<String>, String> {
+    crate::agents::from_the_app(&webview)?;
+    #[cfg(target_os = "macos")]
+    {
+        Ok(crate::siri::left_inbox(webview.app_handle())
+            .map(|path| path.to_string_lossy().into_owned()))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(None)
     }
 }

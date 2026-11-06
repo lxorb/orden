@@ -118,6 +118,7 @@ mod scripts;
 mod tabs;
 #[cfg(any(windows, feature = "cef"))]
 mod twin;
+pub(crate) mod working;
 
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};

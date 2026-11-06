@@ -9,6 +9,13 @@ import { internalRows } from './rows'
 
 const crate = vi.hoisted(() => ({ calls: [] as { command: string; args: unknown }[] }))
 
+vi.mock('./work', () => ({
+  workingFolder: (path: string) =>
+    Promise.resolve(
+      path.includes('Plans') ? 'C:\\Users\\me\\Orden\\.orden\\.work\\Plans\\Work' : null,
+    ),
+}))
+
 vi.mock('../native', () => ({
   invoke: (command: string, args: unknown) => {
     crate.calls.push({ command, args })
@@ -180,6 +187,11 @@ describe('the call to the crate, on a desktop', () => {
       len: 7,
     })
     expect(await internalInvoke('file_stamp', { path: `${root}\\Work` }, all())).toBeNull()
+    const { forInternal } = await import('./roots')
+    expect(forInternal('file_there', { path: `${root}\\Work\\Plan.md` })).toBe(true)
+    expect(await internalInvoke('file_there', { path: `${root}\\Work\\Plan.md` }, all())).toBe(true)
+    expect(await internalInvoke('file_there', { path: `${root}\\Work` }, all())).toBe(true)
+    expect(await internalInvoke('file_there', { path: `${root}\\Gone.md` }, all())).toBe(false)
     await expect(internalInvoke('read_tree', { root: `${root}\\Nope` }, all())).rejects.toThrow(
       'not a folder',
     )
@@ -210,7 +222,7 @@ describe('the call to the crate, on a desktop', () => {
     expect(await internalInvoke('purge_trash_older_than', { age: 0 }, all())).toBe(2)
   })
 
-  test('what the crate would do in a folder on the disk, it is not asked to do in a kept space', async () => {
+  test('a shell in a kept space starts in its working folder, and nothing else reaches the disk', async () => {
     const { internalInvoke } = await import('./route')
     const { forInternal } = await import('./roots')
     const { folder, root } = await mounted()
@@ -219,9 +231,13 @@ describe('the call to the crate, on a desktop', () => {
     expect(forInternal('pty_spawn', { folder: `${root}\\Work` })).toBe(true)
     expect(forInternal('pty_spawn', { folder: 'C:\\Users\\me' })).toBe(false)
     await internalInvoke('pty_spawn', { id: 't1', folder: `${root}\\Work` }, all())
-    expect(crate.calls).toEqual([{ command: 'pty_spawn', args: { id: 't1', folder: null } }])
+    expect(crate.calls).toEqual([
+      {
+        command: 'pty_spawn',
+        args: { id: 't1', folder: 'C:\\Users\\me\\Orden\\.orden\\.work\\Plans\\Work' },
+      },
+    ])
 
-    await internalInvoke('remember_inbox', { path: `${root}\\.Inbox.md` }, all())
     expect(
       await internalInvoke('same_pdf', { from: '/tmp/Paper.pdf', space: root }, all()),
     ).toBeNull()

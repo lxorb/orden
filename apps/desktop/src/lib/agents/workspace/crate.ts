@@ -35,6 +35,12 @@ export async function answerTheCrate(name: string, args: Said): Promise<unknown>
       return storeFor(args)
     case 'agent.markdown':
       return markdown(args)
+    case 'agent.working_folder': {
+      if (__EVEN_PLUGIN__) return null
+      const { workingPath } = await import('../../internal/work')
+      const path = said(args, 'path')
+      return path ? await workingPath(path) : null
+    }
     default:
       throw new Error(`there is no verb called ${name}`)
   }

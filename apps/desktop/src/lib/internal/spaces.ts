@@ -88,6 +88,11 @@ export async function keptFrom(): Promise<string[]> {
   return [...fromOf.values(), ...(await lines(RETIRED))]
 }
 
+export async function keptCameFrom(): Promise<{ root: string; from: string }[]> {
+  await keptSpaces()
+  return [...fromOf].map(([root, from]) => ({ root, from }))
+}
+
 export async function listedWith(folders: readonly Space[]): Promise<Space[]> {
   const kept = await keptSpaces()
   const gone = new Set(await keptFrom())
@@ -102,6 +107,8 @@ function unmount(root: string) {
   letGo.get(root)?.()
   letGo.delete(root)
 }
+
+const work = () => import('./work')
 
 async function mounted(root: string, folder: string) {
   if (mountOf(root)?.mount.root === root) return
@@ -160,12 +167,14 @@ export async function renameKept(from: string, name: string): Promise<Space> {
 
   const folder = joinPath(await home(), wanted)
   await found.mount.folder.flush()
+  if (!__EVEN_PLUGIN__) await (await work()).letGoWorking(was)
   await crate('rename_note', { from: was, to: folder })
   unmount(found.mount.root)
   await crate('delete_note', { path: rootIn(folder, old) }).catch(() => undefined)
   const root = rootIn(folder, wanted)
   await crate('write_note', { path: root, content: '' })
   await mounted(root, folder)
+  if (!__EVEN_PLUGIN__) await (await work()).movedWorking(was, folder, root)
   const madeOf = fromOf.get(from)
   fromOf.delete(from)
   if (madeOf) fromOf.set(root, madeOf)
@@ -177,6 +186,7 @@ export async function removeKept(root: string, forGood: boolean): Promise<unknow
   if (!found || found.inside) throw new Error(`${root} is not a space kept here`)
   const folder = found.mount.folder.name
   await found.mount.folder.flush()
+  if (!__EVEN_PLUGIN__) await (await work()).letGoWorking(folder, 'gone')
   const was = fromOf.get(root)
   if (was) {
     await addLine(RETIRED, was)

@@ -226,9 +226,29 @@ the crate's listing when the watch begins (`hearInternal`, `listInternal`); the 
 list, the link scan and a PDF's highlights are the commands above; a search and the
 search held warm between two questions are the browser build's walk over the rows, on
 the window's thread, following the folder's word on every change (internal/search.ts).
-A shell is started where one with no folder starts, the Mac's Shortcuts keep adding to
-the inbox they had, and a PDF handed to Orden is refused there rather than written onto
+A shell, an agent's command and the AI command lines in a terminal start in the space's
+working folder (below), the Mac's Shortcuts hand their task to the window
+(docs/automation.md), and a PDF handed to Orden is refused there rather than written onto
 the disk at the space's address.
+
+A space Orden keeps has a working folder when something needs its files on the disk
+(#1200, internal/work.ts): `.orden/.work/<name>`, a copy of every file the space holds
+that a folder's watcher would carry, the inbox too, written out the first time a shell,
+an agent's `process` or `files`, Show in Finder, a drag into a web page or a Pandoc
+export asks for it, and kept in step from then on in both directions. What the app
+writes goes out at once; what a terminal, Claude Code, Codex, Gemini or any other program
+writes there is heard by a watcher of that folder (`working_watch`) and comes into the
+store as an edit from outside, so the engine, the editor and sync take it as they take
+any other; a rename there is a move in the store, under the same key. What each side last
+agreed on is kept beside the space (`.work.json`: each file's size and time there and its
+time in the store), so at the next launch - the folder is watched again whenever it is
+there - a change made while nothing watched, on either side, is carried over, a file
+deleted on one side is deleted on the other unless the other changed it since, and where
+both changed, the newer wins. One window keeps it at a time (a Web Lock); a rename of the
+space renames it, a delete deletes it. Rust paths that are given a path of such a space
+(`agents/working.rs`) ask the window for its working folder; Orden's own storage under
+`.orden`, other than the working folders, is not handed to any program, nor listed by
+the file explorer.
 
 Such a space's inbox (`.Inbox.md`, #1044) is a document only its store holds (step
 4c3): a line of its index and bytes under a key, never a file in a folder anybody else

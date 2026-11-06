@@ -1231,7 +1231,15 @@ fn files_of(
                 root.as_ref()
                     .map_or(given.clone(), |root| root.join(&given))
             };
-            let path = crate::paths::folded(&path);
+            let logical = crate::paths::folded(&path);
+            let twin = root
+                .as_deref()
+                .and_then(|root| super::working::kept_twin(root, &logical));
+            let path = match &twin {
+                Some(twin) => super::working::on_disk(app, twin)
+                    .map_err(|why| Answer::error(Code::BadArguments, why))?,
+                None => logical.clone(),
+            };
             let absent = || {
                 Answer::error(
                     Code::BadArguments,
@@ -1243,8 +1251,11 @@ fn files_of(
             }
             let mut inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
-                if inside && beyond_the_grant(root, &path, &grant.spaces) {
+                if inside && beyond_the_grant(root, &logical, &grant.spaces) {
                     return Err(absent());
+                }
+                if twin.is_some() {
+                    return Ok((path, inside));
                 }
                 let real = (std::fs::canonicalize(root), std::fs::canonicalize(&path));
                 let (Ok(root), Ok(real)) = real else {

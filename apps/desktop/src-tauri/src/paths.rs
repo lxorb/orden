@@ -422,7 +422,14 @@ pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
     }
 
     let mut parts = path.components().skip(spaces.components().count());
-    parts.next().map(|first| spaces.join(first))
+    let first = spaces.join(parts.next()?);
+    let working = first.join(".work");
+    match (parts.next(), parts.next()) {
+        (Some(second), Some(third)) if first.ends_with(".orden") && working.ends_with(second) => {
+            Some(working.join(third))
+        }
+        _ => Some(first),
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1388,6 +1395,22 @@ mod tests {
         assert_eq!(
             space_root(&spaces, &space.join("Work").join("..")),
             Some(space)
+        );
+    }
+
+    #[test]
+    fn a_working_folder_of_a_kept_space_is_a_space_of_its_own() {
+        let spaces = path(&["Documents", "Nib"]);
+        let working = path(&["Documents", "Nib", ".orden", ".work", "Notes"]);
+
+        assert_eq!(space_root(&spaces, &working), Some(working.clone()));
+        assert_eq!(
+            space_root(&spaces, &working.join("Work").join("Plan.md")),
+            Some(working)
+        );
+        assert_eq!(
+            space_root(&spaces, &path(&["Documents", "Nib", ".orden", "Notes"])),
+            Some(path(&["Documents", "Nib", ".orden"]))
         );
     }
 

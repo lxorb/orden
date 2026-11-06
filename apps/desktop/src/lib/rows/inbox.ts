@@ -3,7 +3,6 @@ import { insideItsSpace, insideSpace, movedTo, relativeTo, samePath } from '../s
 import { readIfThere } from '../read-if-there'
 import { without } from '../records'
 import { forget, isRecord, isString, keepJson, stored } from '../stored'
-import { invoke, isDesktop, platform } from '../tauri'
 import type { KeptByPath } from '../workspace/file-ops'
 
 export const STORAGE_KEY = 'nib:inbox'
@@ -48,15 +47,6 @@ export function setInbox(root: string, relative: string) {
   const key = keyOf(kept, root)
   const all = key === undefined ? kept : without(kept, key)
   write(isInternalInbox(relative) ? all : { ...all, [root]: relative })
-  if (front !== null && samePath(front, root)) rememberInbox(root)
-}
-
-let front: string | null = null
-
-export function rememberInbox(root: string | null) {
-  front = root
-  if (root === null || !isDesktop || platform() !== 'macos') return
-  void invoke('remember_inbox', { path: insideSpace(root, inboxOf(root)) }).catch(() => undefined)
 }
 
 export async function ensureInbox(

@@ -6,8 +6,11 @@ export function showLabel(system: string = platform()): string {
 }
 
 export async function reveal(path: string): Promise<void> {
-  if (!isDesktop) return
+  if (!isDesktop || __EVEN_PLUGIN__) return
 
-  const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-  await revealItemInDir(path).catch(() => undefined)
+  const [{ revealItemInDir }, { diskPathOf }] = await Promise.all([
+    import('@tauri-apps/plugin-opener'),
+    import('./internal/work'),
+  ])
+  await revealItemInDir(await diskPathOf(path)).catch(() => undefined)
 }

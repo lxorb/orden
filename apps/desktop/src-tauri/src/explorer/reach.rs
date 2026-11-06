@@ -74,6 +74,7 @@ pub fn judged(
     if !spoken(&path) {
         return Err(format!("{asked} is not a file name"));
     }
+    stored(fences, real, &path)?;
     match using {
         Use::List => {}
         Use::Look => {
@@ -105,6 +106,23 @@ fn unseen(path: &Path) -> String {
         "{} is not in a folder a file explorer has shown",
         path.display()
     )
+}
+
+fn stored(fences: &Fences, real: &impl Fn(&Path) -> PathBuf, path: &Path) -> Result<(), String> {
+    let Some(spaces) = fences.spaces.as_deref() else {
+        return Ok(());
+    };
+    let kept = spaces.join(".orden");
+    let working = kept.join(".work");
+    let real_path = real(path);
+    let meets = |fence: &Path| inside(fence, path) || inside(&real(fence), &real_path);
+    if meets(&kept) && !meets(&working) {
+        return Err(format!(
+            "{} is where Orden keeps your spaces: open them in the file list",
+            path.display()
+        ));
+    }
+    Ok(())
 }
 
 const SHALLOWEST: usize = if cfg!(windows) { 1 } else { 2 };
@@ -223,6 +241,28 @@ mod tests {
         assert!(judge(&seen, "/home/me/Documents/letter.odt", Use::Change).is_ok());
         assert!(judge(&seen, "/home/me/Documents", Use::Into).is_ok());
         assert!(judge(&seen, "/home/me/.config/orden/custom.css", Use::Look).is_ok());
+    }
+
+    #[test]
+    fn orden_s_own_storage_of_the_spaces_is_not_shown_only_a_working_folder() {
+        let seen = Explored::default();
+        let kept = "/home/me/Documents/Orden/.orden";
+        for folder in [kept, "/home/me/Documents/Orden/.orden/Notes"] {
+            seen.saw(Path::new(folder));
+            assert!(judge(&seen, folder, Use::List).is_err(), "{folder}");
+        }
+        assert!(judge(
+            &seen,
+            "/home/me/Documents/Orden/.orden/Notes/.entries/k1.md",
+            Use::Look
+        )
+        .is_err());
+        let working = "/home/me/Documents/Orden/.orden/.work/Notes";
+        assert!(judge(&seen, working, Use::List).is_ok());
+        seen.saw(Path::new(working));
+        assert!(judge(&seen, &format!("{working}/Plan.md"), Use::Look).is_ok());
+        assert!(judge(&seen, &format!("{working}/Plan.md"), Use::Change).is_err());
+        assert!(judge(&seen, "/home/me/Documents/Orden", Use::List).is_ok());
     }
 
     #[test]

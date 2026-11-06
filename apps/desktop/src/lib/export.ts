@@ -290,7 +290,7 @@ export async function exportPandoc(
   format: PandocFormat,
   note: string | null = null,
 ) {
-  if (!isDesktop) return
+  if (!isDesktop || __EVEN_PLUGIN__) return
 
   const spec = PANDOC_FORMATS.find((entry) => entry.id === format)
   if (!spec) return
@@ -298,7 +298,13 @@ export async function exportPandoc(
   const target = await chooseTarget(name, spec.extension, spec.label)
   if (!target) return
 
-  const missing = await invoke<string[]>('run_pandoc', { source, output: target, format, note })
+  const { diskPathOf } = await import('./internal/work')
+  const missing = await invoke<string[]>('run_pandoc', {
+    source,
+    output: target,
+    format,
+    note: note === null ? null : await diskPathOf(note),
+  })
   if (missing.length) {
     busy.failed(
       plural(missing.length, {

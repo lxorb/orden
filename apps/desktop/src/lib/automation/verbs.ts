@@ -141,6 +141,7 @@ const VERBS: Record<string, Verb> = {
   'agent.lend': { run: (args) => fromTheCrate('agent.lend', args) },
   'agent.store_for': { run: (args) => fromTheCrate('agent.store_for', args) },
   'agent.markdown': { run: (args) => fromTheCrate('agent.markdown', args) },
+  'agent.working_folder': { run: (args) => fromTheCrate('agent.working_folder', args) },
 }
 
 const BY_LINK: Record<string, string> = { command: 'commands.run', 'add-task': 'tasks.add' }
