@@ -46,30 +46,11 @@ pub async fn explorer_write(
     app: AppHandle,
     request: tauri::ipc::Request<'_>,
 ) -> Result<String, String> {
-    let (
-        Written {
-            folder,
-            under,
-            more,
-        },
-        bytes,
-    ) = crate::notes::raw_sent(request.headers(), request.body())?;
+    let (said, bytes) = crate::notes::raw_sent(request.headers(), request.body())?;
     let bytes = bytes.into_owned();
     crate::lane::off_the_runtime(move || {
-        let folder = asked(&app, &folder, Use::Into)?;
-        let path = placed(&folder, &under)?;
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
-        }
-        let opened = if more {
-            fs::OpenOptions::new().append(true).open(&path)
-        } else {
-            fs::File::create_new(&path)
-        };
-        let mut file = opened.map_err(|why| format!("{}: {why}", path.display()))?;
-        std::io::Write::write_all(&mut file, &bytes)
-            .map_err(|why| format!("{}: {why}", path.display()))?;
-        Ok(path.display().to_string())
+        let folder = asked(&app, &said.folder, Use::Into)?;
+        wrote(&folder, &said, &bytes).map(|path| path.display().to_string())
     })
     .await
 }
@@ -80,6 +61,30 @@ struct Written {
     under: String,
     #[serde(default)]
     more: bool,
+    #[serde(default)]
+    fresh: bool,
+}
+
+fn wrote(folder: &Path, said: &Written, bytes: &[u8]) -> Result<PathBuf, String> {
+    let path = placed(folder, &said.under)?;
+    if said.fresh {
+        if let Some((top, _)) = said.under.split_once('/') {
+            let top = folder.join(top);
+            fs::create_dir(&top).map_err(|why| format!("{}: {why}", top.display()))?;
+        }
+    }
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
+    }
+    let opened = if said.more {
+        fs::OpenOptions::new().append(true).open(&path)
+    } else {
+        fs::File::create_new(&path)
+    };
+    let mut file = opened.map_err(|why| format!("{}: {why}", path.display()))?;
+    std::io::Write::write_all(&mut file, bytes)
+        .map_err(|why| format!("{}: {why}", path.display()))?;
+    Ok(path)
 }
 
 pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
@@ -183,8 +188,35 @@ pub(super) fn gone(path: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{bad_name, renamed};
+    use super::{bad_name, renamed, wrote, Written};
     use std::fs;
+
+    #[test]
+    fn a_dropped_folder_is_made_new_and_never_written_into_one_already_there() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let mine = dir.path().join("Photos");
+        fs::create_dir(&mine).expect("a folder of one's own");
+        fs::write(mine.join("a.png"), "mine").expect("a picture");
+        let said = |under: &str, fresh: bool| Written {
+            folder: String::new(),
+            under: under.to_owned(),
+            more: false,
+            fresh,
+        };
+
+        assert!(wrote(dir.path(), &said("Photos/b.png", true), b"new").is_err());
+        assert!(!mine.join("b.png").exists());
+        assert!(wrote(dir.path(), &said("Photos.png", true), b"new").is_ok());
+        assert!(wrote(dir.path(), &said("Photos.png", true), b"again").is_err());
+
+        wrote(dir.path(), &said("Photos 2/b.png", true), b"new").expect("a new folder");
+        wrote(dir.path(), &said("Photos 2/c.png", false), b"new").expect("into it");
+        assert!(dir.path().join("Photos 2").join("c.png").is_file());
+        assert_eq!(
+            fs::read_to_string(mine.join("a.png")).expect("kept"),
+            "mine"
+        );
+    }
 
     #[test]
     fn a_dropped_file_lands_under_the_folder_and_nowhere_else() {
