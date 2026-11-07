@@ -51,7 +51,18 @@ pub struct Asks {
 
 struct Held {
     owner: String,
-    running: Running,
+    opening: u64,
+    running: Option<Running>,
+    stopped: bool,
+}
+
+impl Held {
+    fn stop(&mut self) {
+        self.stopped = true;
+        if let Some(running) = &self.running {
+            running.stop();
+        }
+    }
 }
 
 struct Session {
@@ -90,9 +101,9 @@ fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
 impl Asks {
     fn stop_where(&self, owner: Option<&str>) {
         let mine = |one: &str| owner.is_none_or(|owner| one == owner);
-        for held in lock(&self.running).values() {
+        for held in lock(&self.running).values_mut() {
             if mine(&held.owner) {
-                held.running.stop();
+                held.stop();
             }
         }
         let sessions: Vec<Session> = {
@@ -313,9 +324,21 @@ pub fn ai_cli_ask(
     let args = args::ask(model.as_deref(), &caps_of(&program, &folder))?;
 
     let asks = webview.state::<Asks>();
-    let mut running = lock(&asks.running);
-    if running.contains_key(&id) {
-        return Err(format!("{id} is already being asked"));
+    let opening = next_opening();
+    {
+        let mut running = lock(&asks.running);
+        if running.contains_key(&id) {
+            return Err(format!("{id} is already being asked"));
+        }
+        running.insert(
+            id.clone(),
+            Held {
+                owner,
+                opening,
+                running: None,
+                stopped: false,
+            },
+        );
     }
 
     let name = id.clone();
@@ -328,32 +351,44 @@ pub fn ai_cli_ask(
                 Heard::Line(line) => Message::Line { line },
                 Heard::End(ended) => {
                     if let Some(asks) = app.try_state::<Asks>() {
-                        lock(&asks.running).remove(&name);
+                        let mut running = lock(&asks.running);
+                        if running.get(&name).is_some_and(|one| one.opening == opening) {
+                            running.remove(&name);
+                        }
                     }
                     Message::End(ended)
                 }
             };
             sent(&output, message);
         },
-    )
-    .map_err(|error| format!("{} could not be started: {error}", tool.command()))?;
-
-    running.insert(
-        id,
-        Held {
-            owner,
-            running: started,
-        },
     );
+
+    let mut running = lock(&asks.running);
+    let mine = running.get(&id).is_some_and(|one| one.opening == opening);
+    let started = match started {
+        Ok(started) => started,
+        Err(error) => {
+            if mine {
+                running.remove(&id);
+            }
+            return Err(format!("{} could not be started: {error}", tool.command()));
+        }
+    };
+    if let Some(held) = running.get_mut(&id).filter(|_| mine) {
+        if held.stopped {
+            started.stop();
+        }
+        held.running = Some(started);
+    }
     Ok(())
 }
 
 #[tauri::command(async)]
 pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
-    if let Some(held) = lock(&webview.state::<Asks>().running).get(&id) {
+    if let Some(held) = lock(&webview.state::<Asks>().running).get_mut(&id) {
         if held.owner == owner {
-            held.running.stop();
+            held.stop();
         }
     }
     Ok(())
@@ -575,9 +610,11 @@ fn host_for(
     folder: &Path,
     token: Option<&str>,
 ) -> Result<Arc<Host>, String> {
-    let mut hosts = lock(&asks.hosts);
-    if let Some(host) = hosts.get(&key).filter(|host| host.alive()) {
-        return Ok(Arc::clone(host));
+    let alive = |hosts: &HashMap<HostKey, Arc<Host>>| {
+        hosts.get(&key).filter(|host| host.alive()).map(Arc::clone)
+    };
+    if let Some(host) = alive(&lock(&asks.hosts)) {
+        return Ok(host);
     }
     let mut command = command(program, &args::codex_server(), folder, key.home.as_ref());
     if let Some(token) = token {
@@ -587,6 +624,12 @@ fn host_for(
     let host = Host::start(command, IDLE, nib, folder.to_path_buf())
         .map_err(|error| format!("codex could not be started: {error}"))?;
     let host = Arc::new(host);
+    let mut hosts = lock(&asks.hosts);
+    if let Some(other) = alive(&hosts) {
+        drop(hosts);
+        host.stop();
+        return Ok(other);
+    }
     hosts.insert(key, Arc::clone(&host));
     Ok(host)
 }
