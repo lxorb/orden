@@ -3415,9 +3415,7 @@ export const jv: Dictionary = {
   'You said': 'Miturut sampeyan',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Kirim laporan crash lan macet',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Nalika Orden crash utawa macet, iku ngirim apa sing lagi ditindakake lan ing ngendi ing kodhe dhewe, tanpa jeneng, path, alamat lan sandhi. Ora tau cathetanmu.',
-  'Turn off in Settings': 'Pateni ing Setelan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Ngirim apa sing ditindakake Orden nalika crash utawa macet; ora tau cathetan, jeneng, path utawa sandhi.',
+  'Send crash reports to help improve Orden': 'Kirim laporan crash kanggo mbantu nambah apik Orden',
 }

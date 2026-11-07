@@ -3329,9 +3329,7 @@ export const zhHantHK: Dictionary = {
   'You said': '自述',
   Privacy: '私隱',
   'Send crash and freeze reports': '傳送當機和凍結報告',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden 當機或凍結時，會傳送它當時在做甚麼以及在自身程式碼中的位置，並去除名稱、路徑、地址和密碼。絕不傳送你的筆記。',
-  'Turn off in Settings': '在設定中關閉',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     '傳送 Orden 當機或凍結時正在做甚麼；絕不傳送筆記、名稱、路徑或密碼。',
+  'Send crash reports to help improve Orden': '傳送當機報告，協助改善 Orden',
 }

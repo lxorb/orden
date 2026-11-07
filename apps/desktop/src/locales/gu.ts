@@ -3478,9 +3478,7 @@ export const gu: Dictionary = {
   'You said': 'તમે કહ્યું',
   Privacy: 'ગોપનીયતા',
   'Send crash and freeze reports': 'ક્રેશ અને અટકી જવાના રિપોર્ટ મોકલો',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ક્રેશ થાય અથવા અટકી જાય ત્યારે, તે શું કરી રહ્યું હતું અને પોતાના કોડમાં ક્યાં હતું તે મોકલે છે, નામ, પાથ, સરનામાં અને પાસવર્ડ દૂર કરીને. તમારી નોંધો ક્યારેય નહીં.',
-  'Turn off in Settings': 'સેટિંગ્સમાં બંધ કરો',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ક્રેશ અથવા અટકી ગયું ત્યારે શું કરતું હતું તે મોકલે છે; નોંધો, નામ, પાથ કે પાસવર્ડ ક્યારેય નહીં.',
+  'Send crash reports to help improve Orden': 'Orden ને સુધારવામાં મદદ કરવા ક્રેશ રિપોર્ટ મોકલો',
 }

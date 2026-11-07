@@ -3517,9 +3517,7 @@ export const gsw: Dictionary = {
   'You said': 'Dini Aagabe',
   Privacy: 'Dateschutz',
   'Send crash and freeze reports': 'Absturz- und Hänger-Bricht schicke',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Wänn Orden abstürzt oder hanget, schickts, was es grad gmacht het und wo i sim eigete Code, ohni Näme, Pfäd, Adrässe und Passwörter. Nie dini Notize.',
-  'Turn off in Settings': 'I de Iistellige uusschalte',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Schickt, was Orden bim Absturz oder Hänger gmacht het; nie Notize, Näme, Pfäd oder Passwörter.',
+  'Send crash reports to help improve Orden': 'Absturzbricht schicke, zum Orden besser mache',
 }

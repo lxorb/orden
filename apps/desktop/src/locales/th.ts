@@ -3366,9 +3366,7 @@ export const th: Dictionary = {
   'You said': 'ที่คุณระบุ',
   Privacy: 'ความเป็นส่วนตัว',
   'Send crash and freeze reports': 'ส่งรายงานการขัดข้องและการค้าง',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'เมื่อ Orden ขัดข้องหรือค้าง จะส่งว่ากำลังทำอะไรอยู่และอยู่ตรงไหนในโค้ดของตัวเอง โดยเอาชื่อ พาธ ที่อยู่ และรหัสผ่านออก ไม่ส่งโน้ตของคุณเลย',
-  'Turn off in Settings': 'ปิดในการตั้งค่า',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'ส่งสิ่งที่ Orden ทำอยู่ตอนขัดข้องหรือค้าง ไม่ส่งโน้ต ชื่อ พาธ หรือรหัสผ่าน',
+  'Send crash reports to help improve Orden': 'ส่งรายงานการขัดข้องเพื่อช่วยปรับปรุง Orden',
 }

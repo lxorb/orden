@@ -3488,9 +3488,8 @@ export const ur: Dictionary = {
   'You said': 'آپ نے بتایا',
   Privacy: 'رازداری',
   'Send crash and freeze reports': 'کریش اور رکنے کی رپورٹیں بھیجیں',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'جب Orden کریش ہو یا رک جائے، تو یہ بھیجتا ہے کہ یہ کیا کر رہا تھا اور اپنے کوڈ میں کہاں تھا، نام، راستے، پتے اور پاس ورڈ ہٹا کر۔ آپ کے نوٹس کبھی نہیں۔',
-  'Turn off in Settings': 'ترتیبات میں بند کریں',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden کریش یا رکنے پر کیا کر رہا تھا یہ بھیجتا ہے؛ نوٹس، نام، راستے یا پاس ورڈ کبھی نہیں۔',
+  'Send crash reports to help improve Orden':
+    'Orden کو بہتر بنانے میں مدد کے لیے کریش رپورٹیں بھیجیں',
 }

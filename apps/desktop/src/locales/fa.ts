@@ -3498,9 +3498,7 @@ export const fa: Dictionary = {
   'You said': 'گفتهٔ شما',
   Privacy: 'حریم خصوصی',
   'Send crash and freeze reports': 'ارسال گزارش خرابی و هنگ',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'وقتی Orden از کار می‌افتد یا هنگ می‌کند، می‌فرستد که چه می‌کرد و کجای کد خودش بود، با حذف نام‌ها، مسیرها، نشانی‌ها و گذرواژه‌ها. هرگز یادداشت‌های شما را نه.',
-  'Turn off in Settings': 'خاموش کردن در تنظیمات',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'می‌فرستد Orden هنگام خرابی یا هنگ چه می‌کرد؛ هرگز یادداشت، نام، مسیر یا گذرواژه.',
+  'Send crash reports to help improve Orden': 'ارسال گزارش خرابی برای کمک به بهبود Orden',
 }

@@ -1,26 +1,25 @@
 import { keepJson, stored } from '../stored'
-import { CRASHES_TOLD as TOLD } from '../surfaces.svelte'
-
-const SENDING = 'nib:crash-reports'
+import { CRASHES_ASKED, CRASH_REPORTS, crashAskDue } from '../surfaces.svelte'
 
 class CrashReports {
-  on = $state(stored(SENDING) !== false)
+  on = $state(stored(CRASH_REPORTS) !== false)
 
-  telling = $state(false)
+  asking = $state(false)
 
   set(on: boolean): void {
     this.on = on
-    keepJson(SENDING, on)
+    keepJson(CRASH_REPORTS, on)
   }
 
-  tell(): void {
-    if (stored(TOLD) === true) return
-    this.telling = true
+  ask(): void {
+    if (crashAskDue()) this.asking = true
   }
 
-  told(): void {
-    this.telling = false
-    keepJson(TOLD, true)
+  answer(on: boolean): void {
+    if (!this.asking) return
+    this.asking = false
+    this.set(on)
+    keepJson(CRASHES_ASKED, true)
   }
 }
 

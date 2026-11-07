@@ -3631,9 +3631,8 @@ export const uk: Dictionary = {
   'You said': 'Вказано вами',
   Privacy: 'Конфіденційність',
   'Send crash and freeze reports': 'Надсилати звіти про збої та зависання',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Коли Orden падає або зависає, він надсилає, що робив і де у власному коді, без імен, шляхів, адрес і паролів. Ніколи ваші нотатки.',
-  'Turn off in Settings': 'Вимкнути в налаштуваннях',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Надсилає, що робив Orden під час збою чи зависання; ніколи нотатки, імена, шляхи чи паролі.',
+  'Send crash reports to help improve Orden':
+    'Надсилати звіти про збої, щоб допомогти покращити Orden',
 }

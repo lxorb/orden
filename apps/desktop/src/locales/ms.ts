@@ -3427,9 +3427,8 @@ export const ms: Dictionary = {
   'You said': 'Dinyatakan',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Hantar laporan ranap dan beku',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Apabila Orden ranap atau beku, ia menghantar apa yang sedang dilakukannya dan di mana dalam kodnya sendiri, tanpa nama, laluan, alamat dan kata laluan. Tidak sekali-kali nota anda.',
-  'Turn off in Settings': 'Matikan dalam Tetapan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Menghantar apa yang dilakukan Orden semasa ranap atau beku; tidak sekali-kali nota, nama, laluan atau kata laluan.',
+  'Send crash reports to help improve Orden':
+    'Hantar laporan ranap untuk membantu menambah baik Orden',
 }
