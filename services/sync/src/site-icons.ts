@@ -55,11 +55,11 @@ siteIcons.get('/:site/picture', async (context) => {
     'select type, hash, picture from site_icons where user_id = ? and site = ?',
   )
     .bind(user.id, site)
-    .first<{ type: string | null; hash: string | null; picture: ArrayBuffer | null }>()
+    .first<{ type: string | null; hash: string | null; picture: ArrayBuffer | number[] | null }>()
 
   if (!row?.picture || !row.type) return context.json({ error: 'no such picture' }, 404)
 
-  return new Response(row.picture, {
+  return new Response(new Uint8Array(row.picture), {
     headers: {
       'content-type': row.type,
       etag: `"${row.hash ?? ''}"`,

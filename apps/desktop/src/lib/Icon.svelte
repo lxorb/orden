@@ -15,6 +15,7 @@
   } = $props()
 
   const drawing = $derived(iconLibrary.drawing(icon))
+  let broken = $state<string | null>(null)
   const wanted = $derived(iconLibrary.setFor(icon))
 
   $effect(() => {
@@ -38,8 +39,9 @@
     <!-- eslint-disable-next-line svelte/no-at-html-tags -- a shipped icon set, not content -->
     {@html drawing.body}
   </svg>
-{:else if drawing?.kind === 'picture'}
-  <img class="glyph picture" src={drawing.src} alt="" draggable="false" />
+{:else if drawing?.kind === 'picture' && broken !== drawing.src}
+  {@const src = drawing.src}
+  <img class="glyph picture" {src} alt="" draggable="false" onerror={() => (broken = src)} />
 {:else if stroked}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" style:color={colour}>
     {#each stroked as [tag, attrs] (JSON.stringify(attrs))}

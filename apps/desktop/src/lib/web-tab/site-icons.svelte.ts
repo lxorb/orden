@@ -72,8 +72,38 @@ export function bounded(list: readonly HeldSite[]): HeldSite[] {
   })
 }
 
+async function draws(picture: string): Promise<boolean> {
+  if (typeof Image !== 'function') return true
+  const image = new Image()
+  if (typeof image.decode !== 'function') return true
+  image.src = picture
+  try {
+    await image.decode()
+    return image.naturalWidth > 0
+  } catch {
+    return false
+  }
+}
+
 class SiteIcons {
   list = $state<HeldSite[]>(readList(stored(KEY)))
+
+  constructor() {
+    void this.dropBroken()
+  }
+
+  private async dropBroken() {
+    const broken: string[] = []
+    for (const one of this.list) {
+      if (one.picture !== null && !(await draws(one.picture))) broken.push(one.site)
+    }
+    if (!broken.length) return
+    this.write(
+      this.list.map((one) =>
+        broken.includes(one.site) ? { ...one, hash: null, picture: null } : one,
+      ),
+    )
+  }
 
   private told = new Map<string, string>()
   private asked = 0
@@ -130,6 +160,7 @@ class SiteIcons {
     }
 
     this.write(next)
+    await this.dropBroken()
   }
 
   async saw(url: string | null | undefined, title: string, icon: string | null) {

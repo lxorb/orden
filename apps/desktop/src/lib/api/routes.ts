@@ -794,6 +794,7 @@ export const routes = {
     if (!response.ok) return null
 
     const type = response.headers.get('content-type') ?? 'image/png'
+    if (!type.startsWith('image/')) return null
     const bytes = new Uint8Array(await response.arrayBuffer())
     let text = ''
     for (let at = 0; at < bytes.length; at += 0x8000) {

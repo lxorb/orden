@@ -17,6 +17,16 @@ type Bound = (sql: string, count: number) => void
 
 type JustBefore = (sql: string) => void
 
+function asD1(row: unknown): unknown {
+  if (!row || typeof row !== 'object') return row
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      key,
+      value instanceof Uint8Array ? [...value] : value,
+    ]),
+  )
+}
+
 function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: JustBefore) {
   return {
     async batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]> {
@@ -44,10 +54,15 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
           return statement
         },
         first(): Promise<unknown> {
-          return Promise.resolve(database.prepare(sql).get(...statement.args) ?? null)
+          return Promise.resolve(asD1(database.prepare(sql).get(...statement.args)) ?? null)
         },
         all(): Promise<{ results: unknown[] }> {
-          return Promise.resolve({ results: database.prepare(sql).all(...statement.args) })
+          return Promise.resolve({
+            results: database
+              .prepare(sql)
+              .all(...statement.args)
+              .map(asD1),
+          })
         },
         run(): Promise<{ success: true; results: unknown[]; meta: { changes: number } }> {
           if (lost) return Promise.resolve({ success: true, results: [], meta: { changes: 0 } })
@@ -57,7 +72,7 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
             const changed = () =>
               (database.prepare('select total_changes() as n').get() as { n: number }).n
             const before = changed()
-            const results = prepared.all(...statement.args)
+            const results = prepared.all(...statement.args).map(asD1)
             return Promise.resolve({
               success: true,
               results,

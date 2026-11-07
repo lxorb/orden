@@ -58,6 +58,7 @@ describe('the sites an account has been to', () => {
 
     const picture = await call(env, '/v2/site-icons/github.com/picture', { token })
     expect(picture.status).toBe(200)
+    expect(picture.text).toBe(new TextDecoder().decode(PNG))
   })
 
   test('take a mark written inline, and refuse what is not a small picture', async () => {
