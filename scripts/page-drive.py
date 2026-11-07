@@ -346,6 +346,36 @@ def zoom():
     if float(kept) != 1:
         fail(f"the file keeps {kept}, not the last chosen")
 
-{"tree": tree, "zoom": zoom}[WHAT]()
+def back():
+    other = subprocess.Popen(["xterm", "-geometry", "20x5+1300+800", "-title", "another app"])
+    found = ""
+    for _ in range(50):
+        found = subprocess.run(["xdotool", "search", "--class", "xterm"], capture_output=True, text=True, check=False).stdout
+        if found.split():
+            break
+        time.sleep(0.1)
+    own = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False).stdout.split()
+    if not own or not found.split():
+        fail(f"no windows to switch between: {own} {found.split()}")
+        other.kill()
+        return
+    run("window.__keys = []; addEventListener('keydown', (event) => window.__keys.push(event.key), true); true")
+    for round in range(1, 4):
+        xdo("windowactivate", "--sync", found.split()[0])
+        time.sleep(0.6)
+        away = run("document.hasFocus()")
+        xdo("windowactivate", "--sync", own[0])
+        time.sleep(0.8)
+        here = until("document.hasFocus()", f"the keyboard back in the window (round {round})", 5)
+        run("window.__keys.length = 0; true")
+        xdo("key", "F14")
+        time.sleep(0.4)
+        keys = run("window.__keys.slice()") or []
+        print(f"back {round}: away {away}, back {here}, keys {keys}")
+        if not here or not keys:
+            fail(f"round {round}: a key pressed once the window came back did not reach it: {keys}")
+    other.kill()
+
+{"tree": tree, "zoom": zoom, "back": back}[WHAT]()
 print(f"{WHAT}: {len(failures)} failures")
 sys.exit(1 if failures else 0)

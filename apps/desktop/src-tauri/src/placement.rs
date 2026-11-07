@@ -953,7 +953,7 @@ mod tests {
                 if name == "keyboard.rs" {
                     assert_eq!(
                         text.matches("crate::placement::away().is_some()").count(),
-                        2,
+                        3,
                         "keyboard.rs hands the keyboard over past the guard"
                     );
                     continue;

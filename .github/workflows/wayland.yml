@@ -423,6 +423,7 @@ jobs:
           KWIN: '1'
           TREE: '1'
           ZOOM: '1'
+          BACK: '1'
           ORDEN_CEF_SANDBOX: disabled
         run: |
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
