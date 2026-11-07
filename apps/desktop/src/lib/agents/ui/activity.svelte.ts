@@ -11,12 +11,14 @@ import { callsOf, sessionMarkdown, today, type Call } from './session'
 import { heard, isStopped, nothing, overviewed, type Seen, wrote } from './seen'
 import type { Source } from './source'
 
+export const MOST_LOG_LINES = 5_000
+
 export class Activity {
   seen = $state<Seen>(nothing())
 
   now = $state(Date.now())
 
-  lines = $state<readonly unknown[]>([])
+  lines = $state.raw<readonly unknown[]>([])
 
   holds = $state(false)
 
@@ -91,8 +93,8 @@ export class Activity {
     const day = today()
     const same = day === this.logDay
     const read = await this.source.log(day, same ? this.logTo : 0)
-    if (!same || read.fresh) this.lines = read.lines
-    else if (read.lines.length) this.lines = [...this.lines, ...read.lines]
+    if (!same || read.fresh) this.lines = read.lines.slice(-MOST_LOG_LINES)
+    else if (read.lines.length) this.lines = this.lines.concat(read.lines).slice(-MOST_LOG_LINES)
     this.logDay = day
     this.logTo = read.to
   }

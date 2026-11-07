@@ -14,6 +14,7 @@ vi.spyOn(workspace, 'openPage').mockImplementation((url: string) => {
 })
 const { FakeCrate } = await import('./fake')
 const { ended, start, started } = await import('./live.svelte')
+const { MOST_LOG_LINES } = await import('./activity.svelte')
 const AgentSession = (await import('./AgentSession.svelte')).default
 
 afterEach(() => {
@@ -117,6 +118,21 @@ test("the day's log is read on from where the last read stopped, not whole each 
   const from = fake.asked.filter((one) => one.command === 'log').map((one) => one.args[1])
   expect(from.at(-1)).toBe(fake.lines.length - 2)
   expect(activity.lines).toEqual(fake.lines)
+  close()
+})
+
+test("a long day's log keeps only its latest lines, however often it is read on", async () => {
+  const { fake, tab, close } = await drawn()
+  const activity = started(fake)
+  for (let read = 0; read < 4; read++) {
+    for (let at = 0; at < MOST_LOG_LINES / 2; at++)
+      fake.lines.push({ at, agent: 'claude-code', verb: 'browser_click', tab: tab.id, args: {} })
+    await activity.readLog()
+  }
+
+  expect(activity.lines).toHaveLength(MOST_LOG_LINES)
+  expect(activity.lines.at(-1)).toEqual(fake.lines.at(-1))
+  expect(activity.lines[0]).toEqual(fake.lines.at(-MOST_LOG_LINES))
   close()
 })
 
