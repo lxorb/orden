@@ -118,7 +118,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${PASS:-0}" = 1 ]; then
   NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
   export NIB_CEF_DEBUG_PORT
 fi
@@ -292,6 +292,7 @@ fi
 [ "${OPENS:-0}" = 1 ] && endpoint
 [ "${CHOOSING:-0}" = 1 ] && endpoint
 [ "${CORNER:-0}" = 1 ] && endpoint
+[ "${PASS:-0}" = 1 ] && endpoint
 if [ "${CERT:-0}" = 1 ]; then
   endpoint
   set -- "$@" "https://${CERT_HOST:-example.com}/"
@@ -428,6 +429,12 @@ fi
 if [ "$status" = 0 ] && [ "${GLOBALS:-0}" = 1 ]; then
   sleep 3
   python3 "$here/globals-drive.py" "$out" "${command[0]}" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${PASS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/pass-drive.py" "$out" || status=1
+  find "$HOME" -path '*ch.emilvinu.nib*' -name nib.log -exec grep -h 'pass' {} + 2>/dev/null | tail -20 || true
 fi
 
 if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then

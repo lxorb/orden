@@ -162,7 +162,7 @@
 {/snippet}
 
 <div class="face" style:width="{width}px" style:height="{height}px">
-  {#if locked}
+  {#if locked || how === 'mark'}
     {@render mark()}
   {:else if how === 'reading' && html}
     <div class="read" in:fade={arrive}>

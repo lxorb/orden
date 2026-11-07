@@ -1,0 +1,23 @@
+{
+  "name": "@orden/pass",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.0.1",
+    "tldts": "^7.4.16"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}

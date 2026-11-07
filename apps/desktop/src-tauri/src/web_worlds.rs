@@ -85,6 +85,11 @@ fn attached(event: &str) -> Option<Attached> {
 }
 
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+fn pass_binding() -> Value {
+    json!({ "name": crate::web_pass::BINDING, "executionContextName": WORLD })
+}
+
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn let_go() -> (&'static str, String) {
     ("Runtime.runIfWaitingForDebugger", "{}".to_string())
 }
@@ -142,7 +147,9 @@ mod engine {
     use std::rc::Rc;
 
     use tauri::webview::PlatformWebview;
-    use webview2_com::Microsoft::Web::WebView2::Win32::{ICoreWebView2, ICoreWebView2_11};
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        ICoreWebView2, ICoreWebView2DevToolsProtocolEventReceivedEventArgs2, ICoreWebView2_11,
+    };
     use webview2_com::{
         AddScriptToExecuteOnDocumentCreatedCompletedHandler,
         CallDevToolsProtocolMethodCompletedHandler, DevToolsProtocolEventReceivedEventHandler,
@@ -150,8 +157,8 @@ mod engine {
     use windows_core::{Interface as _, HSTRING, PWSTR};
 
     use super::{
-        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, registering,
-        taken_back, world_in, Attached, Cleared, IN_THE_PAGE, MARK,
+        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, pass_binding,
+        registering, taken_back, world_in, Attached, Cleared, IN_THE_PAGE, MARK,
     };
 
     #[allow(
@@ -202,14 +209,22 @@ mod engine {
             }
             let following_on = sweeping.clone();
             let followed = scripts.clone();
-            registered(&sweeping, &scripts, move |ours| {
-                let adding_to = following_on.clone();
-                following(&following_on, &followed, move |frames| {
-                    added(&adding_to, crate::web_opens::PAGE_SCRIPT, move |_| {
-                        done(ours, frames);
+            let binding = sweeping.clone();
+            call(
+                &binding,
+                "Runtime.addBinding",
+                &pass_binding().to_string(),
+                move |_| {
+                    registered(&sweeping, &scripts, move |ours| {
+                        let adding_to = following_on.clone();
+                        following(&following_on, &followed, move |frames| {
+                            added(&adding_to, crate::web_opens::PAGE_SCRIPT, move |_| {
+                                done(ours, frames);
+                            });
+                        });
                     });
-                });
-            });
+                },
+            );
         });
     }
 
@@ -307,7 +322,12 @@ mod engine {
                     webview2_com::take_pwstr(event)
                 };
                 let (session, said) = match attached(&event) {
-                    Some(Attached::Frame(session)) => (session, in_frame(&scripts).to_vec()),
+                    Some(Attached::Frame(session)) => (
+                        session,
+                        std::iter::once(("Runtime.addBinding", pass_binding().to_string()))
+                            .chain(in_frame(&scripts))
+                            .collect::<Vec<_>>(),
+                    ),
                     Some(Attached::Held(session)) => (session, vec![let_go()]),
                     None => return Ok(()),
                 };
@@ -335,12 +355,56 @@ mod engine {
             then(false);
             return;
         }
+        rebinding(core);
         call(
             core,
             "Target.setAutoAttach",
             &attaching(IN_THE_PAGE),
             move |said| then(said.is_some()),
         );
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "the DevTools protocol and its events are WebView2's own, reached through its COM interfaces"
+    )]
+    fn rebinding(core: &ICoreWebView2) {
+        let Ok(sessions) = core.cast::<ICoreWebView2_11>() else {
+            return;
+        };
+        let Ok(receiver) = (unsafe {
+            core.GetDevToolsProtocolEventReceiver(&HSTRING::from("Page.frameNavigated"))
+        }) else {
+            return;
+        };
+        let handler =
+            DevToolsProtocolEventReceivedEventHandler::create(Box::new(move |_sender, args| {
+                let Some(args) = args else {
+                    return Ok(());
+                };
+                let session = args
+                    .cast::<ICoreWebView2DevToolsProtocolEventReceivedEventArgs2>()
+                    .ok()
+                    .and_then(|two| unsafe {
+                        let mut session = PWSTR::null();
+                        two.SessionId(&raw mut session).ok()?;
+                        Some(webview2_com::take_pwstr(session))
+                    })
+                    .unwrap_or_default();
+                let ignored =
+                    CallDevToolsProtocolMethodCompletedHandler::create(Box::new(|_, _| Ok(())));
+                let _ = unsafe {
+                    sessions.CallDevToolsProtocolMethodForSession(
+                        &HSTRING::from(session),
+                        &HSTRING::from("Runtime.addBinding"),
+                        &HSTRING::from(pass_binding().to_string()),
+                        &ignored,
+                    )
+                };
+                Ok(())
+            }));
+        let mut token = 0i64;
+        let _ = unsafe { receiver.add_DevToolsProtocolEventReceived(&handler, &raw mut token) };
     }
 
     #[allow(
@@ -425,8 +489,8 @@ mod engine {
     use crate::engine::devtools;
 
     use super::{
-        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, registering,
-        taken_back, world_in, Attached, Cleared, IN_THE_PAGE, MARK,
+        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, pass_binding,
+        registering, taken_back, world_in, Attached, Cleared, IN_THE_PAGE, MARK,
     };
 
     const PATIENCE: Duration = Duration::from_secs(10);
@@ -435,13 +499,21 @@ mod engine {
         json!({ "name": crate::web_opens::BINDING, "executionContextName": super::WORLD })
     }
 
-    pub(super) fn bound_again(method: &str) -> Option<(&'static str, Value)> {
-        (method == "Page.frameNavigated").then(|| ("Runtime.addBinding", binding()))
+    pub(super) fn bound_again(method: &str) -> Vec<(&'static str, Value)> {
+        if method == "Page.frameNavigated" {
+            vec![
+                ("Runtime.addBinding", binding()),
+                ("Runtime.addBinding", pass_binding()),
+            ]
+        } else {
+            Vec::new()
+        }
     }
 
     pub fn asking(view: &Webview, app: &tauri::AppHandle, tab: &str, window: &str) {
         let (app, tab, window) = (app.clone(), tab.to_string(), window.to_string());
-        let _ = devtools::hear(view, move |method, _session, params| {
+        let page = view.clone();
+        let _ = devtools::hear(view, move |method, session, params| {
             if method != "Runtime.bindingCalled" {
                 return;
             }
@@ -454,6 +526,9 @@ mod engine {
                 }
                 Some(crate::web_swipe::BINDING) => {
                     crate::web_swipe::heard(&app, &window, &tab, payload);
+                }
+                Some(crate::web_pass::BINDING) => {
+                    crate::web_pass::binding_called(&page, &app, &window, &tab, session, params);
                 }
                 _ => {}
             }
@@ -494,6 +569,7 @@ mod engine {
             "Runtime.addBinding",
             &crate::web_swipe::binding().to_string(),
         );
+        let _ = called(view, "Runtime.addBinding", &pass_binding().to_string());
         let ours = scripts.is_empty()
             || (enabled
                 && called(
@@ -524,8 +600,9 @@ mod engine {
         let telling = view.clone();
         let scripts = scripts.to_string();
         let heard = devtools::hear(view, move |method, session, params| {
-            if let Some(again) = bound_again(method) {
-                devtools::tell(&telling, session, vec![again]);
+            let again = bound_again(method);
+            if !again.is_empty() {
+                devtools::tell(&telling, session, again);
                 return;
             }
             if method != "Target.attachedToTarget" {
@@ -540,6 +617,7 @@ mod engine {
                     [
                         ("Runtime.addBinding", binding()),
                         ("Runtime.addBinding", crate::web_swipe::binding()),
+                        ("Runtime.addBinding", pass_binding()),
                     ]
                     .into_iter()
                     .chain(in_frame(&scripts).into_iter().filter_map(parsed))
@@ -756,12 +834,17 @@ mod tests {
     #[cfg(feature = "cef")]
     #[test]
     fn a_document_arriving_has_nib_s_binding_put_in_its_world() {
-        let (method, params) =
-            super::engine::bound_again("Page.frameNavigated").expect("the binding again");
-        assert_eq!(method, "Runtime.addBinding");
-        assert_eq!(params["name"], crate::web_opens::BINDING);
-        assert_eq!(params["executionContextName"], WORLD);
-        assert!(super::engine::bound_again("Runtime.bindingCalled").is_none());
+        let again = super::engine::bound_again("Page.frameNavigated");
+        let names: Vec<&str> = again
+            .iter()
+            .map(|(method, params)| {
+                assert_eq!(*method, "Runtime.addBinding");
+                assert_eq!(params["executionContextName"], WORLD);
+                params["name"].as_str().expect("a name")
+            })
+            .collect();
+        assert_eq!(names, [crate::web_opens::BINDING, crate::web_pass::BINDING]);
+        assert!(super::engine::bound_again("Runtime.bindingCalled").is_empty());
     }
 
     #[test]

@@ -153,6 +153,18 @@ export function mayPushDocuments(env: Env, whoId: string): Promise<boolean> {
   return within(env, 'doc-push', whoId, DOCUMENT_PUSHES_A_MINUTE, A_MINUTE)
 }
 
+const PASS_ITEM_WRITES_A_MINUTE = 600
+
+export function mayWritePassItems(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'pass-items', userId, PASS_ITEM_WRITES_A_MINUTE, A_MINUTE)
+}
+
+const PASS_INVITES_AN_HOUR = 100
+
+export function mayInviteToPass(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'pass-invites', userId, PASS_INVITES_AN_HOUR, AN_HOUR)
+}
+
 const KEEPS_AN_HOUR = 200
 
 export function mayKeepVersions(env: Env, whoId: string): Promise<boolean> {

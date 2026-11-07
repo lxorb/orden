@@ -53,6 +53,7 @@
     conversationSurface,
     emptySurface,
     explorerSurface,
+    passSurface,
     findBar,
     graphSurface,
     lockScreen,
@@ -499,6 +500,14 @@
     {#key tab.id}
       {#await explorerSurface() then ExplorerTab}
         <ExplorerTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'pass'}
+    {#key tab.id}
+      {#await passSurface() then PassTab}
+        <PassTab {tab} focused={workspace.panes.focusedId === pane.id} />
       {:catch}
         {@render unreachable()}
       {/await}

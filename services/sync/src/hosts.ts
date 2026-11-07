@@ -27,6 +27,11 @@ export function isOwnOrigin(env: Env, origin: string): boolean {
   return asked !== null && origins(env).includes(asked)
 }
 
+export function isAppHost(env: Env, url: string): boolean {
+  const asked = originOf(url)
+  return asked !== null && origins(env).some((one) => new URL(one).host === new URL(asked).host)
+}
+
 export function originAt(env: Env, url: string): string {
   const asked = originOf(url)
   return asked !== null && origins(env).includes(asked) ? asked : (originOf(env.APP_ORIGIN) ?? '')

@@ -49,14 +49,20 @@ export class AccountHub implements DurableObject {
         this.chat(headers)
         return new Response(null, { status: 204 })
       case 'ai':
-        for (const { socket, attached } of everySocket(this.ctx)) {
-          if (!attached.guest && attached.device !== (headers.get('x-nib-from') ?? '')) {
-            say(socket, { t: 'ai' })
-          }
-        }
+        this.others(headers, 'ai')
+        return new Response(null, { status: 204 })
+      case 'pass':
+        this.others(headers, 'pass')
         return new Response(null, { status: 204 })
       default:
         return new Response('not something a hub does', { status: 400 })
+    }
+  }
+
+  private others(headers: Headers, t: 'ai' | 'pass'): void {
+    const from = headers.get('x-nib-from') ?? ''
+    for (const { socket, attached } of everySocket(this.ctx)) {
+      if (!attached.guest && attached.device !== from) say(socket, { t })
     }
   }
 

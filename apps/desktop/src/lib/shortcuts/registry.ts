@@ -43,6 +43,7 @@ export type Category =
   | 'picture'
   | 'tasks'
   | 'explorer'
+  | 'pass'
   | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
@@ -57,6 +58,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'table', label: () => t('Tables') },
   { id: 'picture', label: () => t('Pictures') },
   { id: 'explorer', label: () => t('File explorer') },
+  { id: 'pass', label: () => t('Pass') },
   { id: 'fixed', label: () => t('Fixed keys') },
 ]
 
@@ -881,6 +883,18 @@ const APP_ENTRIES: Shortcut[] = [
         void import('../explorer/open').then((one) => one.openExplorer())
     },
   },
+  ...(__EVEN_PLUGIN__
+    ? []
+    : [
+        {
+          id: 'app.pass',
+          label: () => t('Pass'),
+          category: 'view',
+          scope: 'app',
+          key: 'Mod-Alt-v',
+          run: () => void import('../pass/open').then((one) => one.openPass()),
+        } satisfies Shortcut,
+      ]),
   {
     id: 'app.graph',
     label: () => t('Graph'),
@@ -1460,6 +1474,22 @@ const EXPLORER_ENTRIES: Shortcut[] = (
   ...(id.endsWith('.alt') ? { alias: true } : {}),
 }))
 
+const PASS_KEYS: readonly (readonly [string, () => string, string])[] = __EVEN_PLUGIN__
+  ? []
+  : [
+      ['pass.search', () => t('Search Pass'), 'Mod-f'],
+      ['pass.new-login', () => t('New login'), 'Mod-n'],
+    ]
+
+const PASS_ENTRIES: Shortcut[] = PASS_KEYS.map(([id, label, key]) => ({
+  id,
+  label,
+  category: 'pass' as const,
+  scope: 'panel' as const,
+  key,
+  contextual: true,
+}))
+
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
   ...NUMBERED,
@@ -1467,6 +1497,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...EDITOR_SPECS.map(fromEditor),
   ...PANEL_ENTRIES,
   ...EXPLORER_ENTRIES,
+  ...PASS_ENTRIES,
   ...CANVAS_ENTRIES,
   ...PAGES_ENTRIES,
   ...WEB_ENTRIES,

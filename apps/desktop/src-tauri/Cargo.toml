@@ -51,6 +51,8 @@ tauri-plugin-deep-link = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 base64 = "0.22"
+argon2 = { version = "0.5", default-features = false, features = ["alloc", "zeroize"] }
+zeroize = "1"
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 notify = "8"
@@ -212,6 +214,8 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKSecurityOrigin",
   "WKSnapshotConfiguration",
   "WKUIDelegate",
+  "WKScriptMessage",
+  "WKScriptMessageHandler",
   "WKUserContentController",
   "WKUserScript",
   "WKWebView",

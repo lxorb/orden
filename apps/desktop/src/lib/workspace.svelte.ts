@@ -1208,7 +1208,7 @@ class Workspace {
   }
 
   openUnsaved(
-    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application' | 'explorer',
+    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application' | 'explorer' | 'pass',
     text: string,
     name = UNTITLED,
     beside: string | null = null,

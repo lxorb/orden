@@ -1,0 +1,141 @@
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+}
+
+.link-page {
+  box-sizing: border-box;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-4);
+}
+
+.link-brand {
+  margin: 0 0 var(--space-5);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.02em;
+}
+
+.link-card,
+.link-said {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: var(--space-5);
+}
+
+.link-head {
+  margin-bottom: var(--space-4);
+}
+
+.link-kind {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.link-title {
+  margin: var(--space-1) 0 0;
+  color: var(--text-strong);
+  font-size: 20px;
+  font-weight: var(--weight-strong);
+  overflow-wrap: anywhere;
+}
+
+.link-group {
+  margin-top: var(--space-4);
+}
+
+.link-group-name {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+}
+
+.link-field {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--line);
+}
+
+.link-field:first-of-type {
+  border-top: none;
+}
+
+.link-field-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.link-name {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.link-value,
+.link-note {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-row);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.link-note {
+  font-family: var(--font-ui);
+}
+
+.link-hidden {
+  letter-spacing: 0.1em;
+}
+
+.link-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.link-button {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+
+.link-button:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.link-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.link-foot {
+  margin-top: var(--space-5);
+}
+
+.link-muted {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.link-about {
+  margin-top: var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}

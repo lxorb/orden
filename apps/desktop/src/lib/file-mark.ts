@@ -29,6 +29,13 @@ const Workflow: IconNode = [
   ['rect', { width: '9', height: '9', x: '13', y: '13', rx: '2.25' }],
 ]
 
+const Key: IconNode = [
+  ['circle', { cx: '8', cy: '16', r: '6' }],
+  ['path', { d: 'm12.25 11.75 9.75-9.75' }],
+  ['path', { d: 'm19 5 3 3' }],
+  ['path', { d: 'm16 8 2 2' }],
+]
+
 const Window: IconNode = [
   ['rect', { width: '18', height: '20', x: '3', y: '2', rx: '2' }],
   ['path', { d: 'M3 9h18' }],
@@ -69,6 +76,7 @@ export type FileMark =
   | 'base'
   | 'chat'
   | 'application'
+  | 'key'
 
 export function fileMark(name: string): FileMark {
   if (isWebTarget(name)) return 'web'
@@ -102,6 +110,7 @@ export const MARKS: Record<FileMark, IconNode> = {
   base: Table,
   chat: MessageSquare,
   application: Window,
+  key: Key,
 }
 
 export function faceOf(mark: FileMark, chosen: boolean): 'mark' | 'letter' {

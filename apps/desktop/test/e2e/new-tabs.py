@@ -189,7 +189,7 @@ def heading_key(page) -> None:
 
 LINES = [
     ["New note", "New canvas", "New page note"],
-    ["Online terminal", "New application"],
+    ["Online terminal", "New application", "Pass"],
     ["New web note"],
 ]
 
@@ -214,7 +214,7 @@ def chooser(page) -> None:
         wrong(f"the kinds are not in Emil's lines: {new['lines']}")
     else:
         say(f"the lines              -> {new['lines']}")
-    if new["letters"] != ["N", "C", "P", "O", "A", "W"]:
+    if new["letters"] != ["N", "C", "P", "O", "A", "K", "W"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
     settles(page, f"() => ({CALLED})().title === 'New tab'")
     called = page.evaluate(CALLED)

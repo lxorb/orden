@@ -720,6 +720,9 @@ fn opening(place: Option<Place>, url: &str) -> String {
     #[cfg(all(not(windows), not(feature = "cef")))]
     let mut scripts: Vec<String> = Vec::new();
 
+    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
+    scripts.push(crate::web_pass::script().to_string());
+
     if let Some(one) = want {
         scripts.push(PLACE.replace("__PLACE__", &one));
     }
@@ -1262,6 +1265,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::pinch::web_page(&platform, &asking, &label);
+            crate::web_pass::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
 
             #[cfg(not(feature = "cef"))]
@@ -1333,7 +1337,7 @@ fn capture_kinds(kind: isize) -> &'static [&'static str] {
 }
 
 #[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
-fn origin_written(protocol: &str, host: &str, port: isize) -> String {
+pub(crate) fn origin_written(protocol: &str, host: &str, port: isize) -> String {
     if port > 0 {
         format!("{protocol}://{host}:{port}")
     } else {
@@ -1693,6 +1697,7 @@ pub async fn web_close(
         if let Some(view) = closing.get_webview(&label) {
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
+            crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
             crate::web_cut::uncut(view.label());
@@ -2808,9 +2813,10 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page"),
             format!(
-                "{};\n{};\n",
+                "{};\n{};\n{};\n",
                 crate::web_opens::SCRIPT,
-                crate::web_swipe::script()
+                crate::web_swipe::script(),
+                crate::web_pass::script()
             )
         );
     }
@@ -2824,18 +2830,23 @@ mod tests {
                 "{};
 {};
 {};
+{};
 ",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
-                crate::web_media::script()
+                crate::web_media::script(),
+                crate::web_pass::script()
             )
         );
     }
 
-    #[cfg(all(not(windows), not(feature = "cef")))]
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
     #[test]
-    fn a_page_is_handed_nothing() {
-        assert_eq!(opening(None, "https://a.example/page"), "");
+    fn a_page_on_a_mac_is_handed_pass_s_script_alone() {
+        assert_eq!(
+            opening(None, "https://a.example/page"),
+            format!("{};\n", crate::web_pass::script())
+        );
     }
 
     #[test]

@@ -26,6 +26,7 @@
     "@orden/glasses": "workspace:*",
     "@orden/markdown": "workspace:*",
     "@orden/online": "workspace:*",
+    "@orden/pass": "workspace:*",
     "@orden/rooms": "workspace:*",
     "@orden/scan": "workspace:*",
     "@orden/sync-core": "workspace:*",

@@ -921,6 +921,7 @@ const SCRATCHPAD = '/.nib/Scratchpad.md'
 
 const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
+  web_pass_fill: false,
   file_stamp: null,
   mcp_config: null,
   new_menu_registered: false,

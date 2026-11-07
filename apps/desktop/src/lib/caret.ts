@@ -12,6 +12,7 @@ export interface Showing {
     | 'channel'
     | 'application'
     | 'explorer'
+    | 'pass'
   reading: boolean
 }
 

@@ -1,0 +1,5 @@
+export const FILE_PART = 4 * 1024 * 1024
+export const MOST_FILE_BYTES = 100 * 1024 * 1024
+export const MOST_FILE_PARTS = MOST_FILE_BYTES / FILE_PART
+export const SEALED_EXTRA = 28
+export const MOST_SEALED_PART = FILE_PART + SEALED_EXTRA

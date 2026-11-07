@@ -518,6 +518,11 @@
     "default": true,
     "description": "Offers this type when you make something new; off only takes it out of that list."
   },
+  "kinds.pass": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
   "kinds.private": {
     "type": "boolean",
     "default": true,
@@ -773,6 +778,10 @@
   "shortcuts.app-palette": {
     "type": "string",
     "description": "The key that runs Command palette, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-pass": {
+    "type": "string",
+    "description": "The key that runs Pass, as the keys file writes it; empty for none."
   },
   "shortcuts.app-present": {
     "type": "string",
@@ -1497,6 +1506,14 @@
   "shortcuts.paragraph-toc": {
     "type": "string",
     "description": "The key that runs Table of contents, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pass-new-login": {
+    "type": "string",
+    "description": "The key that runs New login, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pass-search": {
+    "type": "string",
+    "description": "The key that runs Search Pass, as the keys file writes it; empty for none."
   },
   "shortcuts.space-next": {
     "type": "string",

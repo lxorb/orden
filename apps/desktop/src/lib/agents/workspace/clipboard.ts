@@ -1,5 +1,6 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { copyText } from '../../clipboard'
+import { isPassSecret } from '../../pass/clipboard'
 import { asked } from './asks'
 import { type Call, done, need, text } from './call'
 import { Refused } from './problem'
@@ -11,6 +12,9 @@ export async function clipboard(call: Call): Promise<AgentAnswer> {
   if (op === 'read') {
     const words = await navigator.clipboard.readText().catch(() => null)
     if (words === null) throw new Refused('failed', 'the clipboard could not be read')
+    if (isPassSecret(words)) {
+      throw new Refused('protected', 'the clipboard holds a secret copied from Pass')
+    }
     const cut = words.length > MOST
     return done(
       { text: cut ? words.slice(0, MOST) : words, ...(cut ? { truncated: true } : {}) },

@@ -81,8 +81,8 @@ describe('a stored list of kinds turned off', () => {
 })
 
 describe('the kinds a device has', () => {
-  test('are what is written, the online terminal and an application on a page in a browser', () => {
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'web'])
+  test('are what is written, the online terminal, an application and Pass on a page in a browser', () => {
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass', 'web'])
   })
 
   test('take the chat in with an account', () => {
@@ -110,6 +110,7 @@ describe('turning a kind off', () => {
       'pages',
       'online',
       'application',
+      'pass',
       'web',
     ])
     expect(newFileRows().map((one) => one?.label)).toEqual([
@@ -131,7 +132,7 @@ describe('turning a kind off', () => {
   })
 
   test('is refused for the last kind offered', () => {
-    for (const kind of ['note', 'canvas', 'pages', 'online', 'application'] as const)
+    for (const kind of ['note', 'canvas', 'pages', 'online', 'application', 'pass'] as const)
       setKind(kind, false)
     expect(hiddenKinds.shown).toEqual(['web'])
 

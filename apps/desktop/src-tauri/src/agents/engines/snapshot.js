@@ -291,6 +291,25 @@ globalThis.nibAgentOf = (describe, base) => {
     return flat(el.getAttribute('title'))
   }
 
+  const SECRET_FILLS = /^(cc-.+|one-time-code|current-password|new-password)$/
+  const SECRET_NAMES =
+    /\b(card ?(number|no|num)|cc ?(number|num|no)|ccnum|cardnum|credit ?card|cvc2?|cvv2?|csc|cvn|security ?code|otp|totp|2fa|mfa|one ?time ?(code|password)|verification ?code|auth(entication|enticator)? ?code|passcode|pin)(?![a-z0-9])/
+
+  const secretField = (el, type) => {
+    if (type === 'password') return true
+    const tokens = String(el.getAttribute('autocomplete') || '')
+      .toLowerCase()
+      .split(/\s+/)
+    if (tokens.some((one) => SECRET_FILLS.test(one))) return true
+    const words = [el.name, el.id, el.getAttribute('aria-label'), el.getAttribute('placeholder')]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .toLowerCase()
+      .replace(/[_.-]+/g, ' ')
+    return SECRET_NAMES.test(words)
+  }
+
   const fieldValue = (el, role) => {
     const tag = el.localName
     if (tag === 'select') return [...el.selectedOptions].map((one) => flat(one.label)).join(', ')
@@ -299,7 +318,7 @@ globalThis.nibAgentOf = (describe, base) => {
       const type = String(el.type || 'text').toLowerCase()
       if (['checkbox', 'radio', 'button', 'submit', 'reset', 'image', 'file'].includes(type))
         return null
-      if (type === 'password') return '•'.repeat(el.value.length)
+      if (secretField(el, type)) return el.value === '' ? '' : '•'
       return el.value
     }
     if (el.isContentEditable && role === 'textbox') return el.innerText

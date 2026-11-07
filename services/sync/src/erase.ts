@@ -5,6 +5,7 @@ import { releaseDomain } from './hostnames'
 import { sweepLeftovers } from './leftovers'
 import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
+import { PASS_ERASED } from './pass/erase'
 import { type Ended, tellEnded } from './machines/end'
 import type { Env, User } from './types'
 import { handedTo, unreadUses, usedElsewhere } from './used'
@@ -108,6 +109,7 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['web_chunks', 'delete from web_chunks where user_id = ?1'],
   ['ai_vaults', 'delete from ai_vaults where user_id = ?1'],
   ['ai_devices', 'delete from ai_devices where user_id = ?1'],
+  ...PASS_ERASED,
   ['push_targets', 'delete from push_targets where user_id = ?1'],
   ['push_reminders', 'delete from push_reminders where user_id = ?1'],
   ['time_entries', 'delete from time_entries where user_id = ?1'],

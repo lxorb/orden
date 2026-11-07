@@ -108,7 +108,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['reopen', '> Reopen closed tab', 1],
   ['close all', '> Close all tabs', 1],
   ['split', '> Split right', 1],
-  ['word', '> Export as Word', 1],
+  ['word', '> Export as Word', 3],
   ['settings', '> Settings', 1],
   ['shortcuts', '> Shortcuts', 1],
   ['sidebar', '> Show left sidebar', 1],

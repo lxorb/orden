@@ -64,13 +64,14 @@ function makers(): string[] {
 }
 
 describe('the kinds a new tab can be', () => {
-  test('are the four, an online terminal and an application, in the order a reader is offered them', () => {
+  test('are the four, an online terminal, an application and Pass, in the order a reader is offered them', () => {
     expect(newKinds().map((one) => one.kind)).toEqual([
       'note',
       'canvas',
       'pages',
       'online',
       'application',
+      'pass',
       'web',
     ])
   })
@@ -78,7 +79,7 @@ describe('the kinds a new tab can be', () => {
   test('stand in three lines: what is written, what runs, and the web', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
-      ['online', 'application'],
+      ['online', 'application', 'pass'],
       ['web'],
     ])
   })
@@ -90,6 +91,7 @@ describe('the kinds a new tab can be', () => {
       'New page note',
       'Online terminal',
       'New application',
+      'Pass',
       'New web note',
     ])
   })
@@ -101,6 +103,7 @@ describe('the kinds a new tab can be', () => {
       'pages',
       'terminal',
       'application',
+      'key',
       'web',
     ])
   })
@@ -113,6 +116,7 @@ describe('the kinds a new tab can be', () => {
       'pages',
       'online',
       'application',
+      'pass',
     ])
   })
 
@@ -124,6 +128,7 @@ describe('the kinds a new tab can be', () => {
       'pages',
       'online',
       'application',
+      'pass',
     ])
   })
 
@@ -175,7 +180,7 @@ describe('the kinds a new tab can be', () => {
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 
-    expect(letters).toEqual(['n', 'c', 'p', 'o', 'a', 'w'])
+    expect(letters).toEqual(['n', 'c', 'p', 'o', 'a', 'k', 'w'])
     expect(new Set(letters).size).toBe(letters.length)
   })
 })

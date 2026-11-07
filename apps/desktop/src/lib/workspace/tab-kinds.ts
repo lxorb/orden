@@ -15,7 +15,7 @@ export interface TabKindTraits {
   readonly exports: 'note' | 'canvas' | 'pages' | 'file' | 'none'
   readonly selection: 'words' | 'drawing' | 'terminal' | 'page' | null
   readonly outsideTitle: boolean
-  readonly preview: 'reading' | 'scrollback' | 'photograph' | 'drawn' | 'picture'
+  readonly preview: 'reading' | 'scrollback' | 'photograph' | 'drawn' | 'picture' | 'mark'
   readonly panels: readonly TabPanel[]
 }
 
@@ -236,6 +236,24 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
     preview: 'drawn',
+    panels: [],
+  },
+  pass: {
+    words: false,
+    extension: null,
+    statusBar: false,
+    mark: 'key',
+    glyph: null,
+    liveMark: false,
+    editor: false,
+    takesDrops: false,
+    ownBar: false,
+    fileDocument: false,
+    plane: false,
+    exports: 'none',
+    selection: null,
+    outsideTitle: false,
+    preview: 'mark',
     panels: [],
   },
 } as const satisfies Record<string, TabKindTraits>

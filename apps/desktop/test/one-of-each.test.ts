@@ -234,6 +234,7 @@ describe('the ring a keyboard leaves', () => {
       'lib/Slides.svelte',
       'lib/agents/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
+      'lib/pass/PassFill.svelte',
       'lib/theme-picker/ThemePicker.svelte',
       'lib/web-tab/WebAsk.svelte',
     ])
@@ -296,6 +297,7 @@ describe('the badge in front of a name', () => {
       'lib/agents/settings/AgentMark.svelte',
       'lib/agents/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
+      'lib/pass/VaultMark.svelte',
       'lib/tab-strip/TabCard.svelte',
     ])
   })
@@ -345,6 +347,7 @@ describe('the switch', () => {
       'lib/ai/DoWithAiCard.svelte',
       'lib/ai/sidebar/ModelPicker.svelte',
       'lib/chats/view/PollSheet.svelte',
+      'lib/pass/SwitchRow.svelte',
       'lib/people/ProfileRows.svelte',
       'lib/remote/HostDetail.svelte',
       'lib/settings/ExtensionRows.svelte',
@@ -582,6 +585,7 @@ describe('the bubble a sentence appears in', () => {
       'lib/agents/ui/PairingBubble.svelte',
       'lib/ai/vault/VaultApprove.svelte',
       'lib/chats/view/Tip.svelte',
+      'lib/pass/PassFill.svelte',
       'lib/tab-strip/TabCard.svelte',
       'lib/web-tab/WebAsk.svelte',
       'lib/web-tab/WebDialog.svelte',

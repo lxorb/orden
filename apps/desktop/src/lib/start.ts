@@ -128,6 +128,13 @@ export function start(): () => void {
     void startup.turn('right').then(() => import('./reminders/start.svelte'))
   }
 
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('right')
+      .then(() => import('./pass/syncing.svelte'))
+      .then((one) => one.startPassSync())
+  }
+
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
 
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./time/start.svelte'))
