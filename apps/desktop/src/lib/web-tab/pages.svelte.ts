@@ -285,6 +285,8 @@ export class Page {
 class Pages {
   private readonly held = new Map<string, Page>()
 
+  private readonly gone = new Set<string>()
+
   private listening: Promise<void> | null = null
 
   each(): [string, Page][] {
@@ -298,6 +300,7 @@ class Pages {
   of(tabId: string): Page {
     const found = this.held.get(tabId)
     if (found) return found
+    if (this.gone.has(tabId)) return new Page()
 
     void this.listen()
 
@@ -340,6 +343,7 @@ class Pages {
     visible = true,
     over: Over = NOTHING,
   ): Promise<void> {
+    this.gone.delete(tabId)
     const page = this.of(tabId)
     this.wake(page)
     page.url ??= url
@@ -369,6 +373,7 @@ class Pages {
   }
 
   async adopt(tabId: string, handing: () => Promise<void>): Promise<void> {
+    this.gone.delete(tabId)
     const page = this.of(tabId)
     if (!isDesktop) {
       await handing()
@@ -936,6 +941,7 @@ class Pages {
   }
 
   forget(tabId: string) {
+    this.gone.add(tabId)
     const page = this.held.get(tabId)
     if (!page) return
 
