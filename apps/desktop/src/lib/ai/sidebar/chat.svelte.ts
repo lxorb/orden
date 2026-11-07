@@ -417,6 +417,15 @@ class Chat implements Panel {
     if (provider) void this.loadModels(provider)
   }
 
+  private showAgain(fresh: Thread): void {
+    const was = new Map(this.turns.map((one) => [one.id, JSON.stringify(one)]))
+    for (const turn of fresh.turns) {
+      if (was.get(turn.id) !== JSON.stringify(turn)) this.changed.add(turn.id)
+    }
+    this.open = fresh
+    this.redraw()
+  }
+
   async openThread(id: string, focus = true): Promise<void> {
     const held = await this.held(id)
     if (!held) return
@@ -617,7 +626,7 @@ class Chat implements Panel {
     if (this.live.get(id) !== held || this.running.includes(id)) return
     if (fresh) {
       this.live.set(id, fresh)
-      if (this.open === held) this.show(fresh)
+      if (this.open === held) this.showAgain(fresh)
     }
     if (!this.queued[id]?.length) return
     if (fresh && !fresh.elsewhere) this.next(fresh)
