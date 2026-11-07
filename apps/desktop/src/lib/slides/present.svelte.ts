@@ -52,20 +52,22 @@ class Present {
   }
 
   private async settle() {
-    if (this.on === this.filled) return
+    if (this.on !== this.filled) {
+      const window = await currentWindow()
+      if (!this.on) {
+        this.filled = false
+        if (!this.wasFullscreen) await window.setFullscreen(false)
+        return
+      }
 
-    const window = await currentWindow()
-    if (this.on) {
       this.wasFullscreen = await window.isFullscreen()
       this.filled = true
       if (!this.wasFullscreen) await window.setFullscreen(true)
-      this.unheard?.()
-      this.unheard = this.tabId === null ? null : whenScreenGivenBack(() => this.stop())
-      return
     }
 
-    this.filled = false
-    if (!this.wasFullscreen) await window.setFullscreen(false)
+    if (this.tabId !== null && this.unheard === null) {
+      this.unheard = whenScreenGivenBack(() => this.stop())
+    }
   }
 }
 
