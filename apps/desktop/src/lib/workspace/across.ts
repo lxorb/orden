@@ -93,6 +93,13 @@ export class Across {
     this.desk.owed(note)
   }
 
+  wroteHere(path: string) {
+    this.inTurn(async () => {
+      const note = this.desk.documents.find((one) => samePath(one.path, path))
+      if (note) await this.fromDisk(note, path)
+    })
+  }
+
   heardSoFar(): Promise<unknown> {
     return this.hearing
   }

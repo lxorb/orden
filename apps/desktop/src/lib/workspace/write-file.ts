@@ -1,6 +1,6 @@
 import { links } from '../link-index.svelte'
 import { invoke } from '../tauri'
-import { writeTaking } from './in-turn'
+import { writeTaking, wroteHere } from './in-turn'
 
 export interface Hearing {
   there(path: string): Promise<boolean>
@@ -22,9 +22,11 @@ export async function writeFile(path: string, content: string): Promise<void> {
   const was = ear ? await ear.there(path) : true
   await writeTaking(path, content)
   links.noteSaved(path, content)
-  if (!ear) return
-  if (was) ear.wrote(path, content)
-  else await ear.made(path)
+  if (ear) {
+    if (was) ear.wrote(path, content)
+    else await ear.made(path)
+  }
+  wroteHere(path)
 }
 
 export async function writeBytes(path: string, base64: string): Promise<void> {
