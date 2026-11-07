@@ -1,9 +1,9 @@
 {
-  "version": "0.20.1-1303",
+  "version": "0.20.1-1304",
   "tag": "edge",
   "asset": "Orden",
   "hashes": {
-    "x86_64-linux": "sha256-wVAB0acRShwocwMK2xlIDcl1u9yqgVhLAjZ0FQ7NsZg=",
-    "aarch64-linux": "sha256-bJcCyAmtOA1/m8Q8TIkph+rJAHHiq4OdwU+yLlhvS5Q="
+    "x86_64-linux": "sha256-u8tLmDo/+ka26i0/FcJkJPdxfRwWxISDN68eS8u3o4Q=",
+    "aarch64-linux": "sha256-UGHFT+5ckVyFa66KcBGwCRcj78Ztyha4/iB/YIvyrWs="
   }
 }
