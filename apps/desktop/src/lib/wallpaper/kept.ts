@@ -1,20 +1,11 @@
+import { heldDatabase } from '../held-database'
+
 const NAME = 'nib-wallpaper'
 const STORE = 'picture'
 
 export type Copy = 'source' | 'source-dark'
 
-let open: Promise<IDBDatabase> | null = null
-
-function database(): Promise<IDBDatabase> {
-  open ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open(NAME, 1)
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE)
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error ?? new Error('the wallpaper store did not open'))
-  })
-  open.catch(() => (open = null))
-  return open
-}
+const held = heldDatabase(NAME, 1, (request) => request.result.createObjectStore(STORE))
 
 function settled<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -24,8 +15,7 @@ function settled<T>(request: IDBRequest<T>): Promise<T> {
 }
 
 async function asked<T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) => IDBRequest<T>) {
-  const db = await database()
-  return settled(ask(db.transaction(STORE, mode).objectStore(STORE)))
+  return settled(ask((await held.transaction(STORE, mode)).objectStore(STORE)))
 }
 
 export async function keepSource(picture: Blob, key: Copy = 'source'): Promise<boolean> {
