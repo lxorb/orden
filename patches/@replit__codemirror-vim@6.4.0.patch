@@ -1,0 +1,974 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 88ec9b9b61047c079bb8dd8b8261d4548c0725dc..e58d0287637a070b253f4959858096a03e679c4b 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -98,8 +98,7 @@ catch (_) {
+ }
+ // workaround for missing api for merging transactions
+ function dispatchChange(cm, transaction) {
+-    var view = cm.cm6;
+-    if (view.state.readOnly)
++    if (cm.$st.readOnly)
+         return;
+     var type = "input.type.compose";
+     if (cm.curOp) {
+@@ -120,7 +119,7 @@ function dispatchChange(cm, transaction) {
+     else {
+         transaction.userEvent = type;
+     }
+-    return view.dispatch(transaction);
++    return cm.$dispatch(transaction);
+ }
+ function runHistoryCommand(cm, revert) {
+     var _a;
+@@ -131,7 +130,7 @@ function runHistoryCommand(cm, revert) {
+     let changeStartIndex = (_a = cm.curOp) === null || _a === void 0 ? void 0 : _a.$changeStart;
+     // vim mode expects the changed text to be either selected or cursor placed at the start
+     if (changeStartIndex != null) {
+-        cm.cm6.dispatch({ selection: { anchor: changeStartIndex } });
++        cm.$dispatch({ selection: { anchor: changeStartIndex } });
+     }
+ }
+ var keys = {
+@@ -160,26 +159,59 @@ class CodeMirror {
+         this._handlers = {};
+         this.$lastChangeEndOffset = 0;
+         this.virtualSelection = null;
+-        this.cm6 = cm6;
++        this.$view = cm6;
++        this.$batch = undefined;
++        this.$flushing = false;
+         this.onChange = this.onChange.bind(this);
+         this.onSelectionChange = this.onSelectionChange.bind(this);
+     }
+     ;
++    get cm6() {
++        this.$flush();
++        return this.$view;
++    }
++    get $st() {
++        var batch = this.$batch;
++        return batch && batch.length ? batch[batch.length - 1].state : this.$view.state;
++    }
++    $dispatch(...specs) {
++        if (this.$batch === undefined || this.$flushing)
++            return this.$view.dispatch(...specs);
++        var tr = this.$st.update(...specs);
++        this.$batch.push(tr);
++        if (tr.docChanged)
++            this.onChange({ changes: tr.changes });
++        if (tr.selection)
++            this.onSelectionChange();
++    }
++    $flush() {
++        var batch = this.$batch;
++        if (!batch || !batch.length)
++            return;
++        this.$batch = [];
++        this.$flushing = true;
++        try {
++            this.$view.dispatch(batch);
++        }
++        finally {
++            this.$flushing = false;
++        }
++    }
+     on(type, f) { on(this, type, f); }
+     off(type, f) { off(this, type, f); }
+     signal(type, e, handlers) { signal(this, type, e, handlers); }
+     indexFromPos(pos) {
+-        return indexFromPos(this.cm6.state.doc, pos);
++        return indexFromPos(this.$st.doc, pos);
+     }
+     ;
+     posFromIndex(offset) {
+-        return posFromIndex(this.cm6.state.doc, offset);
++        return posFromIndex(this.$st.doc, offset);
+     }
+     ;
+     foldCode(pos) {
+         let view = this.cm6;
+         let ranges = view.state.selection.ranges;
+-        let doc = this.cm6.state.doc;
++        let doc = this.$st.doc;
+         let index = indexFromPos(doc, pos);
+         let tmpRanges = state.EditorSelection.create([state.EditorSelection.range(index, index)], 0).ranges;
+         view.state.selection.ranges = tmpRanges;
+@@ -188,23 +220,23 @@ class CodeMirror {
+     }
+     firstLine() { return 0; }
+     ;
+-    lastLine() { return this.cm6.state.doc.lines - 1; }
++    lastLine() { return this.$st.doc.lines - 1; }
+     ;
+-    lineCount() { return this.cm6.state.doc.lines; }
++    lineCount() { return this.$st.doc.lines; }
+     ;
+     setCursor(line, ch) {
+         if (typeof line === 'object') {
+             ch = line.ch;
+             line = line.line;
+         }
+-        var offset = indexFromPos(this.cm6.state.doc, { line, ch: ch || 0 });
+-        this.cm6.dispatch({ selection: { anchor: offset } }, { scrollIntoView: !this.curOp });
++        var offset = indexFromPos(this.$st.doc, { line, ch: ch || 0 });
++        this.$dispatch({ selection: { anchor: offset } }, { scrollIntoView: !this.curOp });
+         if (this.curOp && !this.curOp.isVimOp)
+             this.onBeforeEndOperation();
+     }
+     ;
+     getCursor(p) {
+-        var sel = this.cm6.state.selection.main;
++        var sel = this.$st.selection.main;
+         var offset = p == "head" || !p
+             ? sel.head
+             : p == "anchor"
+@@ -220,8 +252,8 @@ class CodeMirror {
+     }
+     ;
+     listSelections() {
+-        var doc = this.cm6.state.doc;
+-        return this.cm6.state.selection.ranges.map(r => {
++        var doc = this.$st.doc;
++        return this.$st.selection.ranges.map(r => {
+             return {
+                 anchor: posFromIndex(doc, r.anchor),
+                 head: posFromIndex(doc, r.head),
+@@ -230,7 +262,7 @@ class CodeMirror {
+     }
+     ;
+     setSelections(p, primIndex) {
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         var ranges = p.map(x => {
+             var head = indexFromPos(doc, x.head);
+             var anchor = indexFromPos(doc, x.anchor);
+@@ -239,7 +271,7 @@ class CodeMirror {
+                 return state.EditorSelection.cursor(head, 1);
+             return state.EditorSelection.range(anchor, head);
+         });
+-        this.cm6.dispatch({
++        this.$dispatch({
+             selection: state.EditorSelection.create(ranges, primIndex)
+         });
+     }
+@@ -252,10 +284,10 @@ class CodeMirror {
+     }
+     ;
+     getLine(row) {
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         if (row < 0 || row >= doc.lines)
+             return "";
+-        return this.cm6.state.doc.line(row + 1).text;
++        return this.$st.doc.line(row + 1).text;
+     }
+     ;
+     getLineHandle(row) {
+@@ -280,25 +312,25 @@ class CodeMirror {
+         this.$lineHandleChanges = undefined;
+     }
+     getRange(s, e) {
+-        var doc = this.cm6.state.doc;
+-        return this.cm6.state.sliceDoc(indexFromPos(doc, s), indexFromPos(doc, e));
++        var doc = this.$st.doc;
++        return this.$st.sliceDoc(indexFromPos(doc, s), indexFromPos(doc, e));
+     }
+     ;
+     replaceRange(text, s, e, source) {
+         if (!e)
+             e = s;
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         var from = indexFromPos(doc, s);
+         var to = indexFromPos(doc, e);
+         dispatchChange(this, { changes: { from, to, insert: text } });
+     }
+     ;
+     replaceSelection(text) {
+-        dispatchChange(this, this.cm6.state.replaceSelection(text));
++        dispatchChange(this, this.$st.replaceSelection(text));
+     }
+     ;
+     replaceSelections(replacements) {
+-        var ranges = this.cm6.state.selection.ranges;
++        var ranges = this.$st.selection.ranges;
+         var changes = ranges.map((r, i) => {
+             return { from: r.from, to: r.to, insert: replacements[i] || "" };
+         });
+@@ -315,7 +347,7 @@ class CodeMirror {
+     }
+     ;
+     somethingSelected() {
+-        return this.cm6.state.selection.ranges.some(r => !r.empty);
++        return this.$st.selection.ranges.some(r => !r.empty);
+     }
+     ;
+     getInputField() {
+@@ -323,7 +355,7 @@ class CodeMirror {
+     }
+     ;
+     clipPos(p) {
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         var ch = p.ch;
+         var lineNumber = p.line + 1;
+         if (lineNumber < 1) {
+@@ -340,7 +372,7 @@ class CodeMirror {
+     }
+     ;
+     getValue() {
+-        return this.cm6.state.doc.toString();
++        return this.$st.doc.toString();
+     }
+     ;
+     setValue(text) {
+@@ -364,7 +396,7 @@ class CodeMirror {
+     }
+     ;
+     findMatchingBracket(pos, _options) {
+-        var state = this.cm6.state;
++        var state = this.$st;
+         var offset = indexFromPos(state.doc, pos);
+         var m = language.matchBrackets(state, offset + 1, -1);
+         if (m && m.end) {
+@@ -404,7 +436,7 @@ class CodeMirror {
+             commands.cursorLineBoundaryBackward(this.cm6);
+         else if (name == "goLineRight") {
+             commands.cursorLineBoundaryForward(this.cm6);
+-            let state = this.cm6.state;
++            let state = this.$st;
+             let cur = state.selection.main.head;
+             if (cur < state.doc.length && state.sliceDoc(cur, cur + 1) !== "\n") {
+                 commands.cursorCharBackward(this.cm6);
+@@ -431,7 +463,7 @@ class CodeMirror {
+             cm6Query.forVim = true;
+             this.cm6Query = cm6Query;
+             let effect = search.setSearchQuery.of(cm6Query);
+-            this.cm6.dispatch({ effects: effect });
++            this.$dispatch({ effects: effect });
+             return cm6Query;
+         }
+     }
+@@ -441,7 +473,7 @@ class CodeMirror {
+             return;
+         this.cm6Query.forVim = false;
+         let effect = search.setSearchQuery.of(this.cm6Query);
+-        this.cm6.dispatch({ effects: effect });
++        this.$dispatch({ effects: effect });
+     }
+     ;
+     getSearchCursor(query, pos) {
+@@ -451,7 +483,7 @@ class CodeMirror {
+         var afterEmptyMatch = false;
+         if (pos.ch == undefined)
+             pos.ch = Number.MAX_VALUE;
+-        var firstOffset = indexFromPos(cm.cm6.state.doc, pos);
++        var firstOffset = indexFromPos(cm.$st.doc, pos);
+         var source = query.source.replace(/(\\.|{(?:\d+(?:,\d*)?|,\d+)})|[{}]/g, function (a, b) {
+             if (!b)
+                 return "\\" + a;
+@@ -461,7 +493,7 @@ class CodeMirror {
+             return new search.RegExpCursor(doc, source, { ignoreCase: query.ignoreCase }, from, to);
+         }
+         function nextMatch(from) {
+-            var doc = cm.cm6.state.doc;
++            var doc = cm.$st.doc;
+             if (from > doc.length)
+                 return null;
+             let res = rCursor(doc, from).next();
+@@ -469,7 +501,7 @@ class CodeMirror {
+         }
+         var ChunkSize = 10000;
+         function prevMatchInRange(from, to) {
+-            var doc = cm.cm6.state.doc;
++            var doc = cm.$st.doc;
+             for (let size = 1;; size++) {
+                 let start = Math.max(from, to - size * ChunkSize);
+                 let cursor = rCursor(doc, start, to), range = null;
+@@ -485,7 +517,7 @@ class CodeMirror {
+             findNext: function () { return this.find(false); },
+             findPrevious: function () { return this.find(true); },
+             find: function (back) {
+-                var doc = cm.cm6.state.doc;
++                var doc = cm.$st.doc;
+                 if (back) {
+                     let endAt = last ? (afterEmptyMatch ? last.to - 1 : last.from) : firstOffset;
+                     last = prevMatchInRange(0, endAt);
+@@ -511,7 +543,7 @@ class CodeMirror {
+                     });
+                     last.to = last.from + text.length;
+                     if (lastCM5Result) {
+-                        lastCM5Result.to = posFromIndex(cm.cm6.state.doc, last.to);
++                        lastCM5Result.to = posFromIndex(cm.$st.doc, last.to);
+                     }
+                 }
+             },
+@@ -551,7 +583,7 @@ class CodeMirror {
+     ;
+     charCoords(pos, mode) {
+         var rect = this.cm6.contentDOM.getBoundingClientRect();
+-        var offset = indexFromPos(this.cm6.state.doc, pos);
++        var offset = indexFromPos(this.$st.doc, pos);
+         var coords = this.cm6.coordsAtPos(offset);
+         var d = -rect.top;
+         return { left: ((coords === null || coords === void 0 ? void 0 : coords.left) || 0) - rect.left, top: ((coords === null || coords === void 0 ? void 0 : coords.top) || 0) + d, bottom: ((coords === null || coords === void 0 ? void 0 : coords.bottom) || 0) + d };
+@@ -560,7 +592,7 @@ class CodeMirror {
+     coordsChar(coords, mode) {
+         var rect = this.cm6.contentDOM.getBoundingClientRect();
+         var offset = this.cm6.posAtCoords({ x: coords.left + rect.left, y: coords.top + rect.top }) || 0;
+-        return posFromIndex(this.cm6.state.doc, offset);
++        return posFromIndex(this.$st.doc, offset);
+     }
+     ;
+     getScrollInfo() {
+@@ -583,12 +615,12 @@ class CodeMirror {
+     scrollIntoView(pos, margin) {
+         if (pos) {
+             var offset = this.indexFromPos(pos);
+-            this.cm6.dispatch({
++            this.$dispatch({
+                 effects: View.EditorView.scrollIntoView(offset)
+             });
+         }
+         else {
+-            this.cm6.dispatch({ scrollIntoView: true, userEvent: "scroll" });
++            this.$dispatch({ scrollIntoView: true, userEvent: "scroll" });
+         }
+     }
+     ;
+@@ -619,6 +651,8 @@ class CodeMirror {
+     }
+     ;
+     onChange(update) {
++        if (this.$flushing)
++            return;
+         if (this.$lineHandleChanges) {
+             this.$lineHandleChanges.push(update);
+         }
+@@ -647,6 +681,8 @@ class CodeMirror {
+     }
+     ;
+     onSelectionChange() {
++        if (this.$flushing)
++            return;
+         var curOp = this.curOp = this.curOp || {};
+         if (!curOp.cursorActivityHandlers)
+             curOp.cursorActivityHandlers = this._handlers["cursorActivity"] && this._handlers["cursorActivity"].slice();
+@@ -657,10 +693,21 @@ class CodeMirror {
+         if (!this.curOp)
+             this.curOp = { $d: 0 };
+         this.curOp.$d++;
++        var outer = this.$batch === undefined;
++        if (outer)
++            this.$batch = [];
+         try {
+             var result = fn();
+         }
+         finally {
++            if (outer) {
++                try {
++                    this.$flush();
++                }
++                finally {
++                    this.$batch = undefined;
++                }
++            }
+             if (this.curOp) {
+                 this.curOp.$d--;
+                 if (!this.curOp.$d)
+@@ -710,10 +757,10 @@ class CodeMirror {
+     getOption(name) {
+         switch (name) {
+             case "firstLineNumber": return 1;
+-            case "tabSize": return this.cm6.state.tabSize || 4;
+-            case "readOnly": return this.cm6.state.readOnly;
+-            case "indentWithTabs": return this.cm6.state.facet(language.indentUnit) == "\t"; // TODO
+-            case "indentUnit": return this.cm6.state.facet(language.indentUnit).length || 2;
++            case "tabSize": return this.$st.tabSize || 4;
++            case "readOnly": return this.$st.readOnly;
++            case "indentWithTabs": return this.$st.facet(language.indentUnit) == "\t"; // TODO
++            case "indentUnit": return this.$st.facet(language.indentUnit).length || 2;
+             case "textwidth": return this.state.textwidth;
+             // for tests
+             case "keyMap": return this.state.keyMap || "vim";
+@@ -728,7 +775,7 @@ class CodeMirror {
+         var _a;
+         // only comment|string are needed
+         var offset = this.indexFromPos(pos);
+-        var tree = language.ensureSyntaxTree(this.cm6.state, offset);
++        var tree = language.ensureSyntaxTree(this.$st, offset);
+         var node = tree === null || tree === void 0 ? void 0 : tree.resolve(offset);
+         var type = ((_a = node === null || node === void 0 ? void 0 : node.type) === null || _a === void 0 ? void 0 : _a.name) || "";
+         if (/comment/i.test(type))
+@@ -739,8 +786,8 @@ class CodeMirror {
+     }
+     ;
+     overWriteSelection(text) {
+-        var doc = this.cm6.state.doc;
+-        var sel = this.cm6.state.selection;
++        var doc = this.$st.doc;
++        var sel = this.$st.selection;
+         var ranges = sel.ranges.map(x => {
+             if (x.empty) {
+                 var ch = x.to < doc.length ? doc.sliceString(x.from, x.to + 1) : "";
+@@ -749,30 +796,30 @@ class CodeMirror {
+             }
+             return x;
+         });
+-        this.cm6.dispatch({
++        this.$dispatch({
+             selection: state.EditorSelection.create(ranges, sel.mainIndex)
+         });
+         this.replaceSelection(text);
+     }
+     /*** multiselect ****/
+     isInMultiSelectMode() {
+-        return this.cm6.state.selection.ranges.length > 1;
++        return this.$st.selection.ranges.length > 1;
+     }
+     virtualSelectionMode() {
+         return !!this.virtualSelection;
+     }
+     forEachSelection(command) {
+-        var selection = this.cm6.state.selection;
++        var selection = this.$st.selection;
+         this.virtualSelection = state.EditorSelection.create(selection.ranges, selection.mainIndex);
+         for (var i = 0; i < this.virtualSelection.ranges.length; i++) {
+             var range = this.virtualSelection.ranges[i];
+             if (!range)
+                 continue;
+-            this.cm6.dispatch({ selection: state.EditorSelection.create([range]) });
++            this.$dispatch({ selection: state.EditorSelection.create([range]) });
+             command();
+-            this.virtualSelection.ranges[i] = this.cm6.state.selection.ranges[0];
++            this.virtualSelection.ranges[i] = this.$st.selection.ranges[0];
+         }
+-        this.cm6.dispatch({ selection: this.virtualSelection });
++        this.$dispatch({ selection: this.virtualSelection });
+         this.virtualSelection = null;
+     }
+     hardWrap(options) {
+@@ -790,7 +837,7 @@ CodeMirror.commands = {
+     undo: function (cm) { runHistoryCommand(cm, true); },
+     newlineAndIndent: function (cm) {
+         commands.insertNewlineAndIndent({
+-            state: cm.cm6.state,
++            state: cm.$st,
+             dispatch: (tr) => {
+                 return dispatchChange(cm, tr);
+             }
+@@ -983,7 +1030,7 @@ function findMatchingTag(cm, pos) {
+ }
+ function findEnclosingTag(cm, pos) {
+     var _a, _b;
+-    var state = cm.cm6.state;
++    var state = cm.$st;
+     var offset = cm.indexFromPos(pos);
+     if (offset < state.doc.length) {
+         var text = state.sliceDoc(offset, offset + 1);
+@@ -1167,7 +1214,7 @@ class BlockCursorPlugin {
+         this.setBlinkRate();
+     }
+     setBlinkRate() {
+-        let config = getDrawSelectionConfig(this.cm.cm6.state);
++        let config = getDrawSelectionConfig(this.cm.$st);
+         let blinkRate = config.cursorBlinkRate;
+         this.cursorLayer.style.animationDuration = blinkRate + "ms";
+     }
+@@ -1377,7 +1424,7 @@ const vimPlugin = View.ViewPlugin.fromClass(class {
+                 this.updateStatus();
+             }
+             else {
+-                view.dispatch({
++                this.cm.cm6.dispatch({
+                     effects: showVimPanel.of(!!this.cm.state.dialog),
+                 });
+             }
+diff --git a/dist/index.js b/dist/index.js
+index f0b243a40e4c4605811a774078a5a25d1fa5ae54..781d88893a737e551b9ae5a78b00aad556a83dc9 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -78,8 +78,7 @@ catch (_) {
+ }
+ // workaround for missing api for merging transactions
+ function dispatchChange(cm, transaction) {
+-    var view = cm.cm6;
+-    if (view.state.readOnly)
++    if (cm.$st.readOnly)
+         return;
+     var type = "input.type.compose";
+     if (cm.curOp) {
+@@ -100,7 +99,7 @@ function dispatchChange(cm, transaction) {
+     else {
+         transaction.userEvent = type;
+     }
+-    return view.dispatch(transaction);
++    return cm.$dispatch(transaction);
+ }
+ function runHistoryCommand(cm, revert) {
+     var _a;
+@@ -111,7 +110,7 @@ function runHistoryCommand(cm, revert) {
+     let changeStartIndex = (_a = cm.curOp) === null || _a === void 0 ? void 0 : _a.$changeStart;
+     // vim mode expects the changed text to be either selected or cursor placed at the start
+     if (changeStartIndex != null) {
+-        cm.cm6.dispatch({ selection: { anchor: changeStartIndex } });
++        cm.$dispatch({ selection: { anchor: changeStartIndex } });
+     }
+ }
+ var keys = {
+@@ -140,26 +139,59 @@ class CodeMirror {
+         this._handlers = {};
+         this.$lastChangeEndOffset = 0;
+         this.virtualSelection = null;
+-        this.cm6 = cm6;
++        this.$view = cm6;
++        this.$batch = undefined;
++        this.$flushing = false;
+         this.onChange = this.onChange.bind(this);
+         this.onSelectionChange = this.onSelectionChange.bind(this);
+     }
+     ;
++    get cm6() {
++        this.$flush();
++        return this.$view;
++    }
++    get $st() {
++        var batch = this.$batch;
++        return batch && batch.length ? batch[batch.length - 1].state : this.$view.state;
++    }
++    $dispatch(...specs) {
++        if (this.$batch === undefined || this.$flushing)
++            return this.$view.dispatch(...specs);
++        var tr = this.$st.update(...specs);
++        this.$batch.push(tr);
++        if (tr.docChanged)
++            this.onChange({ changes: tr.changes });
++        if (tr.selection)
++            this.onSelectionChange();
++    }
++    $flush() {
++        var batch = this.$batch;
++        if (!batch || !batch.length)
++            return;
++        this.$batch = [];
++        this.$flushing = true;
++        try {
++            this.$view.dispatch(batch);
++        }
++        finally {
++            this.$flushing = false;
++        }
++    }
+     on(type, f) { on(this, type, f); }
+     off(type, f) { off(this, type, f); }
+     signal(type, e, handlers) { signal(this, type, e, handlers); }
+     indexFromPos(pos) {
+-        return indexFromPos(this.cm6.state.doc, pos);
++        return indexFromPos(this.$st.doc, pos);
+     }
+     ;
+     posFromIndex(offset) {
+-        return posFromIndex(this.cm6.state.doc, offset);
++        return posFromIndex(this.$st.doc, offset);
+     }
+     ;
+     foldCode(pos) {
+         let view = this.cm6;
+         let ranges = view.state.selection.ranges;
+-        let doc = this.cm6.state.doc;
++        let doc = this.$st.doc;
+         let index = indexFromPos(doc, pos);
+         let tmpRanges = EditorSelection.create([EditorSelection.range(index, index)], 0).ranges;
+         view.state.selection.ranges = tmpRanges;
+@@ -168,23 +200,23 @@ class CodeMirror {
+     }
+     firstLine() { return 0; }
+     ;
+-    lastLine() { return this.cm6.state.doc.lines - 1; }
++    lastLine() { return this.$st.doc.lines - 1; }
+     ;
+-    lineCount() { return this.cm6.state.doc.lines; }
++    lineCount() { return this.$st.doc.lines; }
+     ;
+     setCursor(line, ch) {
+         if (typeof line === 'object') {
+             ch = line.ch;
+             line = line.line;
+         }
+-        var offset = indexFromPos(this.cm6.state.doc, { line, ch: ch || 0 });
+-        this.cm6.dispatch({ selection: { anchor: offset } }, { scrollIntoView: !this.curOp });
++        var offset = indexFromPos(this.$st.doc, { line, ch: ch || 0 });
++        this.$dispatch({ selection: { anchor: offset } }, { scrollIntoView: !this.curOp });
+         if (this.curOp && !this.curOp.isVimOp)
+             this.onBeforeEndOperation();
+     }
+     ;
+     getCursor(p) {
+-        var sel = this.cm6.state.selection.main;
++        var sel = this.$st.selection.main;
+         var offset = p == "head" || !p
+             ? sel.head
+             : p == "anchor"
+@@ -200,8 +232,8 @@ class CodeMirror {
+     }
+     ;
+     listSelections() {
+-        var doc = this.cm6.state.doc;
+-        return this.cm6.state.selection.ranges.map(r => {
++        var doc = this.$st.doc;
++        return this.$st.selection.ranges.map(r => {
+             return {
+                 anchor: posFromIndex(doc, r.anchor),
+                 head: posFromIndex(doc, r.head),
+@@ -210,7 +242,7 @@ class CodeMirror {
+     }
+     ;
+     setSelections(p, primIndex) {
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         var ranges = p.map(x => {
+             var head = indexFromPos(doc, x.head);
+             var anchor = indexFromPos(doc, x.anchor);
+@@ -219,7 +251,7 @@ class CodeMirror {
+                 return EditorSelection.cursor(head, 1);
+             return EditorSelection.range(anchor, head);
+         });
+-        this.cm6.dispatch({
++        this.$dispatch({
+             selection: EditorSelection.create(ranges, primIndex)
+         });
+     }
+@@ -232,10 +264,10 @@ class CodeMirror {
+     }
+     ;
+     getLine(row) {
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         if (row < 0 || row >= doc.lines)
+             return "";
+-        return this.cm6.state.doc.line(row + 1).text;
++        return this.$st.doc.line(row + 1).text;
+     }
+     ;
+     getLineHandle(row) {
+@@ -260,25 +292,25 @@ class CodeMirror {
+         this.$lineHandleChanges = undefined;
+     }
+     getRange(s, e) {
+-        var doc = this.cm6.state.doc;
+-        return this.cm6.state.sliceDoc(indexFromPos(doc, s), indexFromPos(doc, e));
++        var doc = this.$st.doc;
++        return this.$st.sliceDoc(indexFromPos(doc, s), indexFromPos(doc, e));
+     }
+     ;
+     replaceRange(text, s, e, source) {
+         if (!e)
+             e = s;
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         var from = indexFromPos(doc, s);
+         var to = indexFromPos(doc, e);
+         dispatchChange(this, { changes: { from, to, insert: text } });
+     }
+     ;
+     replaceSelection(text) {
+-        dispatchChange(this, this.cm6.state.replaceSelection(text));
++        dispatchChange(this, this.$st.replaceSelection(text));
+     }
+     ;
+     replaceSelections(replacements) {
+-        var ranges = this.cm6.state.selection.ranges;
++        var ranges = this.$st.selection.ranges;
+         var changes = ranges.map((r, i) => {
+             return { from: r.from, to: r.to, insert: replacements[i] || "" };
+         });
+@@ -295,7 +327,7 @@ class CodeMirror {
+     }
+     ;
+     somethingSelected() {
+-        return this.cm6.state.selection.ranges.some(r => !r.empty);
++        return this.$st.selection.ranges.some(r => !r.empty);
+     }
+     ;
+     getInputField() {
+@@ -303,7 +335,7 @@ class CodeMirror {
+     }
+     ;
+     clipPos(p) {
+-        var doc = this.cm6.state.doc;
++        var doc = this.$st.doc;
+         var ch = p.ch;
+         var lineNumber = p.line + 1;
+         if (lineNumber < 1) {
+@@ -320,7 +352,7 @@ class CodeMirror {
+     }
+     ;
+     getValue() {
+-        return this.cm6.state.doc.toString();
++        return this.$st.doc.toString();
+     }
+     ;
+     setValue(text) {
+@@ -344,7 +376,7 @@ class CodeMirror {
+     }
+     ;
+     findMatchingBracket(pos, _options) {
+-        var state = this.cm6.state;
++        var state = this.$st;
+         var offset = indexFromPos(state.doc, pos);
+         var m = matchBrackets(state, offset + 1, -1);
+         if (m && m.end) {
+@@ -384,7 +416,7 @@ class CodeMirror {
+             cursorLineBoundaryBackward(this.cm6);
+         else if (name == "goLineRight") {
+             cursorLineBoundaryForward(this.cm6);
+-            let state = this.cm6.state;
++            let state = this.$st;
+             let cur = state.selection.main.head;
+             if (cur < state.doc.length && state.sliceDoc(cur, cur + 1) !== "\n") {
+                 cursorCharBackward(this.cm6);
+@@ -411,7 +443,7 @@ class CodeMirror {
+             cm6Query.forVim = true;
+             this.cm6Query = cm6Query;
+             let effect = setSearchQuery.of(cm6Query);
+-            this.cm6.dispatch({ effects: effect });
++            this.$dispatch({ effects: effect });
+             return cm6Query;
+         }
+     }
+@@ -421,7 +453,7 @@ class CodeMirror {
+             return;
+         this.cm6Query.forVim = false;
+         let effect = setSearchQuery.of(this.cm6Query);
+-        this.cm6.dispatch({ effects: effect });
++        this.$dispatch({ effects: effect });
+     }
+     ;
+     getSearchCursor(query, pos) {
+@@ -431,7 +463,7 @@ class CodeMirror {
+         var afterEmptyMatch = false;
+         if (pos.ch == undefined)
+             pos.ch = Number.MAX_VALUE;
+-        var firstOffset = indexFromPos(cm.cm6.state.doc, pos);
++        var firstOffset = indexFromPos(cm.$st.doc, pos);
+         var source = query.source.replace(/(\\.|{(?:\d+(?:,\d*)?|,\d+)})|[{}]/g, function (a, b) {
+             if (!b)
+                 return "\\" + a;
+@@ -441,7 +473,7 @@ class CodeMirror {
+             return new RegExpCursor(doc, source, { ignoreCase: query.ignoreCase }, from, to);
+         }
+         function nextMatch(from) {
+-            var doc = cm.cm6.state.doc;
++            var doc = cm.$st.doc;
+             if (from > doc.length)
+                 return null;
+             let res = rCursor(doc, from).next();
+@@ -449,7 +481,7 @@ class CodeMirror {
+         }
+         var ChunkSize = 10000;
+         function prevMatchInRange(from, to) {
+-            var doc = cm.cm6.state.doc;
++            var doc = cm.$st.doc;
+             for (let size = 1;; size++) {
+                 let start = Math.max(from, to - size * ChunkSize);
+                 let cursor = rCursor(doc, start, to), range = null;
+@@ -465,7 +497,7 @@ class CodeMirror {
+             findNext: function () { return this.find(false); },
+             findPrevious: function () { return this.find(true); },
+             find: function (back) {
+-                var doc = cm.cm6.state.doc;
++                var doc = cm.$st.doc;
+                 if (back) {
+                     let endAt = last ? (afterEmptyMatch ? last.to - 1 : last.from) : firstOffset;
+                     last = prevMatchInRange(0, endAt);
+@@ -491,7 +523,7 @@ class CodeMirror {
+                     });
+                     last.to = last.from + text.length;
+                     if (lastCM5Result) {
+-                        lastCM5Result.to = posFromIndex(cm.cm6.state.doc, last.to);
++                        lastCM5Result.to = posFromIndex(cm.$st.doc, last.to);
+                     }
+                 }
+             },
+@@ -531,7 +563,7 @@ class CodeMirror {
+     ;
+     charCoords(pos, mode) {
+         var rect = this.cm6.contentDOM.getBoundingClientRect();
+-        var offset = indexFromPos(this.cm6.state.doc, pos);
++        var offset = indexFromPos(this.$st.doc, pos);
+         var coords = this.cm6.coordsAtPos(offset);
+         var d = -rect.top;
+         return { left: ((coords === null || coords === void 0 ? void 0 : coords.left) || 0) - rect.left, top: ((coords === null || coords === void 0 ? void 0 : coords.top) || 0) + d, bottom: ((coords === null || coords === void 0 ? void 0 : coords.bottom) || 0) + d };
+@@ -540,7 +572,7 @@ class CodeMirror {
+     coordsChar(coords, mode) {
+         var rect = this.cm6.contentDOM.getBoundingClientRect();
+         var offset = this.cm6.posAtCoords({ x: coords.left + rect.left, y: coords.top + rect.top }) || 0;
+-        return posFromIndex(this.cm6.state.doc, offset);
++        return posFromIndex(this.$st.doc, offset);
+     }
+     ;
+     getScrollInfo() {
+@@ -563,12 +595,12 @@ class CodeMirror {
+     scrollIntoView(pos, margin) {
+         if (pos) {
+             var offset = this.indexFromPos(pos);
+-            this.cm6.dispatch({
++            this.$dispatch({
+                 effects: EditorView.scrollIntoView(offset)
+             });
+         }
+         else {
+-            this.cm6.dispatch({ scrollIntoView: true, userEvent: "scroll" });
++            this.$dispatch({ scrollIntoView: true, userEvent: "scroll" });
+         }
+     }
+     ;
+@@ -599,6 +631,8 @@ class CodeMirror {
+     }
+     ;
+     onChange(update) {
++        if (this.$flushing)
++            return;
+         if (this.$lineHandleChanges) {
+             this.$lineHandleChanges.push(update);
+         }
+@@ -627,6 +661,8 @@ class CodeMirror {
+     }
+     ;
+     onSelectionChange() {
++        if (this.$flushing)
++            return;
+         var curOp = this.curOp = this.curOp || {};
+         if (!curOp.cursorActivityHandlers)
+             curOp.cursorActivityHandlers = this._handlers["cursorActivity"] && this._handlers["cursorActivity"].slice();
+@@ -637,10 +673,21 @@ class CodeMirror {
+         if (!this.curOp)
+             this.curOp = { $d: 0 };
+         this.curOp.$d++;
++        var outer = this.$batch === undefined;
++        if (outer)
++            this.$batch = [];
+         try {
+             var result = fn();
+         }
+         finally {
++            if (outer) {
++                try {
++                    this.$flush();
++                }
++                finally {
++                    this.$batch = undefined;
++                }
++            }
+             if (this.curOp) {
+                 this.curOp.$d--;
+                 if (!this.curOp.$d)
+@@ -690,10 +737,10 @@ class CodeMirror {
+     getOption(name) {
+         switch (name) {
+             case "firstLineNumber": return 1;
+-            case "tabSize": return this.cm6.state.tabSize || 4;
+-            case "readOnly": return this.cm6.state.readOnly;
+-            case "indentWithTabs": return this.cm6.state.facet(indentUnit) == "\t"; // TODO
+-            case "indentUnit": return this.cm6.state.facet(indentUnit).length || 2;
++            case "tabSize": return this.$st.tabSize || 4;
++            case "readOnly": return this.$st.readOnly;
++            case "indentWithTabs": return this.$st.facet(indentUnit) == "\t"; // TODO
++            case "indentUnit": return this.$st.facet(indentUnit).length || 2;
+             case "textwidth": return this.state.textwidth;
+             // for tests
+             case "keyMap": return this.state.keyMap || "vim";
+@@ -708,7 +755,7 @@ class CodeMirror {
+         var _a;
+         // only comment|string are needed
+         var offset = this.indexFromPos(pos);
+-        var tree = ensureSyntaxTree(this.cm6.state, offset);
++        var tree = ensureSyntaxTree(this.$st, offset);
+         var node = tree === null || tree === void 0 ? void 0 : tree.resolve(offset);
+         var type = ((_a = node === null || node === void 0 ? void 0 : node.type) === null || _a === void 0 ? void 0 : _a.name) || "";
+         if (/comment/i.test(type))
+@@ -719,8 +766,8 @@ class CodeMirror {
+     }
+     ;
+     overWriteSelection(text) {
+-        var doc = this.cm6.state.doc;
+-        var sel = this.cm6.state.selection;
++        var doc = this.$st.doc;
++        var sel = this.$st.selection;
+         var ranges = sel.ranges.map(x => {
+             if (x.empty) {
+                 var ch = x.to < doc.length ? doc.sliceString(x.from, x.to + 1) : "";
+@@ -729,30 +776,30 @@ class CodeMirror {
+             }
+             return x;
+         });
+-        this.cm6.dispatch({
++        this.$dispatch({
+             selection: EditorSelection.create(ranges, sel.mainIndex)
+         });
+         this.replaceSelection(text);
+     }
+     /*** multiselect ****/
+     isInMultiSelectMode() {
+-        return this.cm6.state.selection.ranges.length > 1;
++        return this.$st.selection.ranges.length > 1;
+     }
+     virtualSelectionMode() {
+         return !!this.virtualSelection;
+     }
+     forEachSelection(command) {
+-        var selection = this.cm6.state.selection;
++        var selection = this.$st.selection;
+         this.virtualSelection = EditorSelection.create(selection.ranges, selection.mainIndex);
+         for (var i = 0; i < this.virtualSelection.ranges.length; i++) {
+             var range = this.virtualSelection.ranges[i];
+             if (!range)
+                 continue;
+-            this.cm6.dispatch({ selection: EditorSelection.create([range]) });
++            this.$dispatch({ selection: EditorSelection.create([range]) });
+             command();
+-            this.virtualSelection.ranges[i] = this.cm6.state.selection.ranges[0];
++            this.virtualSelection.ranges[i] = this.$st.selection.ranges[0];
+         }
+-        this.cm6.dispatch({ selection: this.virtualSelection });
++        this.$dispatch({ selection: this.virtualSelection });
+         this.virtualSelection = null;
+     }
+     hardWrap(options) {
+@@ -770,7 +817,7 @@ CodeMirror.commands = {
+     undo: function (cm) { runHistoryCommand(cm, true); },
+     newlineAndIndent: function (cm) {
+         insertNewlineAndIndent({
+-            state: cm.cm6.state,
++            state: cm.$st,
+             dispatch: (tr) => {
+                 return dispatchChange(cm, tr);
+             }
+@@ -963,7 +1010,7 @@ function findMatchingTag(cm, pos) {
+ }
+ function findEnclosingTag(cm, pos) {
+     var _a, _b;
+-    var state = cm.cm6.state;
++    var state = cm.$st;
+     var offset = cm.indexFromPos(pos);
+     if (offset < state.doc.length) {
+         var text = state.sliceDoc(offset, offset + 1);
+@@ -1147,7 +1194,7 @@ class BlockCursorPlugin {
+         this.setBlinkRate();
+     }
+     setBlinkRate() {
+-        let config = getDrawSelectionConfig(this.cm.cm6.state);
++        let config = getDrawSelectionConfig(this.cm.$st);
+         let blinkRate = config.cursorBlinkRate;
+         this.cursorLayer.style.animationDuration = blinkRate + "ms";
+     }
+@@ -1357,7 +1404,7 @@ const vimPlugin = /*@__PURE__*/ViewPlugin.fromClass(class {
+                 this.updateStatus();
+             }
+             else {
+-                view.dispatch({
++                this.cm.cm6.dispatch({
+                     effects: showVimPanel.of(!!this.cm.state.dialog),
+                 });
+             }
