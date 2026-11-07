@@ -225,7 +225,7 @@ describe('each side', () => {
 
   test('and out, it is a layer on the stack: Escape, a press past it, a web page stepping aside', () => {
     expect(sidebar).toMatch(
-      /peek\s*\?\s*overlays\.show\(\s*\(\) => peeker\.hide\(\),\s*\(\) => \[aside\],?\s*\)/,
+      /peek\s*\?\s*overlays\.peek\(\s*\(\) => peeker\.hide\(\),\s*\(\) => \[aside\],?\s*\)/,
     )
   })
 

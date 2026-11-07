@@ -2,6 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Personalize from '../../src/lib/Personalize.svelte'
 import { modes } from '../../src/lib/modes.svelte'
+import { overlays } from '../../src/lib/overlays'
 import { settings } from '../../src/lib/settings.svelte'
 
 let host: HTMLElement
@@ -62,4 +63,20 @@ test('Done at any question leaves the rest at their defaults', async () => {
   expect(modes.developer).toBeNull()
   expect(modes.coder).toBe(true)
   await vi.waitFor(() => expect(host.querySelector('[role="dialog"]')).toBeNull())
+})
+
+test('stays up while a tab card or the shut list peeks out, and steps aside for a sheet', async () => {
+  const card = () => host.querySelector('[role="dialog"]')
+  const peeked = overlays.peek(() => undefined)
+  flushSync()
+  expect(card()).not.toBeNull()
+
+  const sheet = overlays.show(() => undefined)
+  flushSync()
+  await vi.waitFor(() => expect(card()).toBeNull())
+
+  sheet()
+  peeked()
+  flushSync()
+  expect(card()).not.toBeNull()
 })

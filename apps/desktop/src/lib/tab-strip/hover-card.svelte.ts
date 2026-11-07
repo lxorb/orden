@@ -153,7 +153,7 @@ class Hovering {
     }
     if (sliding && this.uncover) {
       this.uncover()
-      this.uncover = overlays.show(() => this.hush())
+      this.uncover = overlays.peek(() => this.hush())
     }
 
     this.watchFacts(tab)
@@ -220,7 +220,7 @@ class Hovering {
       await Promise.all(under.map((one) => pages.shoot(one.id)))
       if (under.some((one) => pages.of(one.id).shot === null)) return false
     }
-    this.uncover ??= overlays.show(() => this.hush())
+    this.uncover ??= overlays.peek(() => this.hush())
     return true
   }
 }

@@ -27,9 +27,9 @@
     if (account.signedIn) finish()
   })
 
-  let covered = $state(overlays.depth > 0)
+  let covered = $state(overlays.layers > 0)
 
-  $effect(() => overlays.watch(() => (covered = overlays.depth > 0)))
+  $effect(() => overlays.watch(() => (covered = overlays.layers > 0)))
 
   interface Asked {
     label: string
