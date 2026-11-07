@@ -446,10 +446,8 @@ class Decorator {
   }
 
   private taskFields(line: Line) {
-    const drawn = chipsFor(line.text)?.taskDrawing(
-      line.text,
-      this.state.facet(noteIndex).dueReads ?? 'start',
-    )
+    const index = this.state.facet(noteIndex)
+    const drawn = chipsFor(line.text)?.taskDrawing(line.text, index.dueReads ?? 'start')
     if (!drawn || !chips) return
 
     const shown = lineRevealed(this.state, line.from)
@@ -457,7 +455,7 @@ class Decorator {
     if (shown || !drawn.chips.length) return
     this.marks.push(
       Decoration.widget({
-        widget: new chips.TaskChipsWidget(drawn.chips),
+        widget: new chips.TaskChipsWidget(drawn.chips, index.tasks !== undefined),
         side: 1,
       }).range(line.to),
     )

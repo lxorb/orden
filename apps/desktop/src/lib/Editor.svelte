@@ -179,13 +179,15 @@
     else view?.contentDOM.removeAttribute('id')
   })
 
+  const shownIndex = $derived(notes?.(tab))
+
   $effect(() => {
     const current = view
     const showing = tab
     if (!current) return
 
     const switching = !states.shows(showing)
-    const index = notes?.(showing)
+    const index = shownIndex
     const trusted = trustsHtmlIn(showing.note)
     const cover = keptCoverOf(showing.path)
 

@@ -694,11 +694,11 @@ class Links {
       this.handed.clear()
     }
 
-    const key = stranger ? 'stranger\n' : (path ?? '')
+    const listed = path !== null && this.root !== null && this.listed(this.root, path)
+    const key = `${listed ? 'listed\n' : ''}${stranger ? 'stranger\n' : (path ?? '')}`
     const known = this.handed.get(key)
     if (known) return known
 
-    const listedHere = () => path !== null && this.root !== null && this.listed(this.root, path)
     const made: NoteIndex = {
       notes: this.refs,
       files: this.files,
@@ -719,9 +719,7 @@ class Links {
         return queryBlock.queryRowsHtml(code, t('Nothing found'))
       },
       pressRow: (target) => queryBlock?.pressRow(target) ?? false,
-      get tasks() {
-        return listedHere() ? TASKS : undefined
-      },
+      tasks: listed ? TASKS : undefined,
       render: (source, from) => this.shownHtml(source, from),
       drawFile: (card, file) => this.drawnFile(card, file),
       mountBase: (host, ask) => this.mountedBase(host, ask, path, stranger),

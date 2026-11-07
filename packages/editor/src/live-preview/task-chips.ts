@@ -95,17 +95,20 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
 }
 
 export class TaskChipsWidget extends NibWidget {
-  constructor(private readonly chips: readonly TaskChip[]) {
+  constructor(
+    private readonly chips: readonly TaskChip[],
+    readonly picks = true,
+  ) {
     super()
   }
 
   override eq(other: TaskChipsWidget) {
-    return JSON.stringify(other.chips) === JSON.stringify(this.chips)
+    return other.picks === this.picks && JSON.stringify(other.chips) === JSON.stringify(this.chips)
   }
 
   toDOM(view: EditorView) {
     const row = document.createElement('span')
-    row.className = 'nib-task-chips'
+    row.className = this.picks ? 'nib-task-chips' : 'nib-task-chips nib-task-chips-still'
     for (const chip of this.chips) {
       const one = document.createElement('span')
       one.className = 'nib-task-chip'
