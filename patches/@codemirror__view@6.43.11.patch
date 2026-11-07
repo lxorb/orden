@@ -1,5 +1,5 @@
 diff --git a/dist/index.js b/dist/index.js
-index 1021312cb249ef4c52559c82500ce061e9d66b17..c1195b8a973bb88f41cb825c62f1c970087e9f2f 100644
+index 1021312cb249ef4c52559c82500ce061e9d66b17..0b1acfd0b41bc7ab81b7cc64de19206913ffd3a7 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -1662,9 +1662,18 @@ class ViewUpdate {
@@ -119,3 +119,40 @@ index 1021312cb249ef4c52559c82500ce061e9d66b17..c1195b8a973bb88f41cb825c62f1c970
          this.select(this.lastEvent = event);
          let sx = 0, sy = 0;
          let left = 0, top = 0, right = this.view.win.innerWidth, bottom = this.view.win.innerHeight;
+@@ -9552,9 +9604,13 @@ const cursorLayer = /*@__PURE__*/layer({
+     above: true,
+     markers(view) {
+         let { state } = view, conf = state.facet(selectionConfig);
+-        let cursors = [];
++        let cursors = [], { from, to } = view.viewport, many = state.selection.ranges.length > 64;
+         for (let r of state.selection.ranges) {
+             let prim = r == state.selection.main;
++            // Patched (pnpm patch, see docs/patches.md): with many carets, only those in the
++            // viewport are measured, not every one in the note on every redraw.
++            if (many && !prim && (r.head < from || r.head > to))
++                continue;
+             if (r.empty || conf.drawRangeCursor && !(prim && browser.ios && conf.iosSelectionHandles)) {
+                 let className = prim ? "cm-cursor cm-cursor-primary" : "cm-cursor cm-cursor-secondary";
+                 let cursor = r.empty ? r : EditorSelection.cursor(r.head, r.assoc);
+@@ -9570,7 +9626,8 @@ const cursorLayer = /*@__PURE__*/layer({
+         let confChange = configChanged(update);
+         if (confChange)
+             setBlinkRate(update.state, dom);
+-        return update.docChanged || update.selectionSet || confChange;
++        return update.docChanged || update.selectionSet || confChange ||
++            update.viewportChanged && update.state.selection.ranges.length > 64;
+     },
+     mount(dom, view) {
+         setBlinkRate(view.state, dom);
+@@ -9583,9 +9640,9 @@ function setBlinkRate(state, dom) {
+ const selectionLayer = /*@__PURE__*/layer({
+     above: false,
+     markers(view) {
+-        let markers = [], { main, ranges } = view.state.selection;
++        let markers = [], { main, ranges } = view.state.selection, { from, to } = view.viewport;
+         for (let r of ranges)
+-            if (!r.empty) {
++            if (!r.empty && (ranges.length <= 64 || r == main || r.to >= from && r.from <= to)) {
+                 for (let marker of RectangleMarker.forRange(view, "cm-selectionBackground", r))
+                     markers.push(marker);
+             }
