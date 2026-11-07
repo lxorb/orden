@@ -40,21 +40,21 @@ export async function searchSpace(
   if (inbox.length) onFound({ hits: inbox, loose: [] })
 
   if (!isNative) {
-    const { searchInWorker } = await import('../web/search-client')
+    const [{ searchInWorker }, { keptAway }] = await Promise.all([
+      import('../web/search-client'),
+      import('../web/away.svelte'),
+    ])
     let found = 0
-    await searchInWorker(
-      root,
-      query,
-      terms,
-      limit,
-      (batch) => {
-        found += batch.hits.length
-        onFound(batch)
-      },
-      excluded,
-    )
-    const { keptAway } = await import('../web/away.svelte')
-    await keptAway.search(root, query, terms, limit - found, onFound, excluded)
+    const loose: FuzzyHit[] = []
+    const gathered = (batch: Found) => {
+      found += batch.hits.length
+      loose.push(...batch.loose)
+      if (batch.hits.length) onFound({ hits: batch.hits, loose: [] })
+    }
+    await searchInWorker(root, query, terms, limit, gathered, excluded)
+    await keptAway.search(root, query, terms, limit - found, gathered, excluded)
+    const guesses = loose.sort((one, other) => other.score - one.score).slice(0, limit)
+    if (guesses.length) onFound({ hits: [], loose: guesses })
     return
   }
 

@@ -95,7 +95,9 @@ export class Indexing {
     const space = this.engine.keepingFew().find((one) => samePath(one.root, root))
     if (!space) return true
     const away = new Map<string, AwayFile>(this.engine.awayFiles().map((one) => [one.id, one]))
-    const skip = this.engine.keptIds(space.id).slice(0, MOST_SKIPPED)
+    const kept = this.engine.keptIds(space.id)
+    const here = new Set(kept)
+    const skip = kept.slice(0, MOST_SKIPPED)
     const at = (id: string, path: string) => away.get(id)?.path ?? `${root}/${path}`
     let after: string | undefined
     let left = limit
@@ -113,8 +115,12 @@ export class Indexing {
         return false
       }
       if (page === null) return false
-      const hits = page.hits.map(({ id, ...hit }) => ({ ...hit, path: at(id, hit.path) }))
-      const loose = page.loose.map(({ id, ...hit }) => ({ ...hit, path: at(id, hit.path) }))
+      const hits = page.hits.flatMap(({ id, ...hit }) =>
+        here.has(id) ? [] : [{ ...hit, path: at(id, hit.path) }],
+      )
+      const loose = page.loose.flatMap(({ id, ...hit }) =>
+        here.has(id) ? [] : [{ ...hit, path: at(id, hit.path) }],
+      )
       left -= hits.length
       if (hits.length || loose.length) onFound({ hits, loose })
       if (page.after === null) return true

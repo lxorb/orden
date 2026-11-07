@@ -635,7 +635,7 @@ async function wordsOn(account: ReferenceAccount): Promise<Record<string, string
   return drawn(out)
 }
 
-function readingOf(account: ReferenceAccount, how = { missing: false }) {
+function readingOf(account: ReferenceAccount, how: { missing?: boolean; skipless?: boolean } = {}) {
   const asked: { route: string; ids: string[] }[] = []
   const reading: Reading = {
     async index(_space, ids) {
@@ -656,7 +656,9 @@ function readingOf(account: ReferenceAccount, how = { missing: false }) {
       const notes = [...account.tree.entries.values()]
         .filter(
           (one) =>
-            !one.deleted && one.id > (request.after ?? '') && !request.skip?.includes(one.id),
+            !one.deleted &&
+            one.id > (request.after ?? '') &&
+            (how.skipless === true || !request.skip?.includes(one.id)),
         )
         .sort((a, b) => (a.id < b.id ? -1 : 1))
       const one = notes[0]
@@ -767,6 +769,27 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     asked.length = 0
     await indexing.search(ROOT, parseQuery('e'), [], 1, () => undefined, [])
     expect(asked).toEqual([{ route: 'search', ids: [IDEAS] }])
+  })
+
+  test('a search of them shows nothing this browser keeps the words of, even where the account sends it', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    await browser.engine.fetch(`${ROOT}/Ideas.md`)
+    const { reading } = readingOf(account, { skipless: true })
+    const indexing = new Indexing(browser.engine, reading, memoryIndex())
+
+    const found: string[] = []
+    await indexing.search(
+      ROOT,
+      parseQuery('e'),
+      [],
+      10,
+      (batch) => found.push(...[...batch.hits, ...batch.loose].map((hit) => hit.path)),
+      [],
+    )
+    expect(found.some((one) => one.endsWith('/Plan.md'))).toBe(true)
+    expect(found.filter((one) => one.endsWith('/Ideas.md'))).toEqual([])
   })
 
   test('an account with no route for it keeps the space whole from the next pass', async () => {
