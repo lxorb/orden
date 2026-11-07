@@ -710,12 +710,13 @@ if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ] && [ "${COLD:-0}" -gt 0 ]; then
     app_pid=$!
     if ! wait_for_views 1; then
       echo "::error::no window mapped on start $run"
+      tail -5 "$out/orden-cold-$run.log"
       status=1
-      break
+      continue
     fi
     sleep 3
     echo "started again ($run of $COLD) on $screen:"
-    COLD_RUN=$run python3 "$here/wayland-drive.py" "$out" "$app_pid" cold || status=1
+    COLD_RUN=$run python3 "$here/wayland-drive.py" "$out" "$app_pid" cold || { status=1; tail -5 "$out/orden-cold-$run.log"; ls /tmp/cores 2>/dev/null || true; }
   done
 fi
 
