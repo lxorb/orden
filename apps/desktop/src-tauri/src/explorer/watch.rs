@@ -70,21 +70,21 @@ fn folders_of(paths: &[PathBuf]) -> Vec<String> {
     out
 }
 
-#[tauri::command]
-pub async fn explorer_watch(app: AppHandle, folder: String) -> Result<(), String> {
-    crate::lane::off_the_runtime(move || -> Result<(), String> {
-        let folder = asked(&app, &folder, Use::Look)?;
-        let watching = app.state::<Watching>();
-        let mut held = watching
+impl Watching {
+    fn add(
+        &self,
+        folder: PathBuf,
+        hear: impl Fn(Vec<String>) + Send + 'static,
+    ) -> Result<(), String> {
+        let mut held = self
             .0
             .lock()
             .map_err(|_| "the watcher is stuck".to_owned())?;
         if held.is_none() {
-            let hearing = app.clone();
             let watcher =
                 notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
                     if let Ok(event) = event {
-                        heard(&hearing, folders_of(&event.paths));
+                        hear(folders_of(&event.paths));
                     }
                 })
                 .map_err(|why| why.to_string())?;
@@ -101,16 +101,11 @@ pub async fn explorer_watch(app: AppHandle, folder: String) -> Result<(), String
         }
         *count += 1;
         Ok(())
-    })
-    .await
-}
+    }
 
-#[tauri::command]
-pub async fn explorer_unwatch(app: AppHandle, folder: String) {
-    crate::lane::off_the_runtime(move || {
-        let folder = crate::paths::folded(Path::new(&folder));
-        let watching = app.state::<Watching>();
-        let Ok(mut held) = watching.0.lock() else {
+    fn remove(&self, folder: &Path) {
+        let folder = crate::paths::folded(folder);
+        let Ok(mut held) = self.0.lock() else {
             return;
         };
         let Some((watcher, counts)) = held.as_mut() else {
@@ -123,15 +118,83 @@ pub async fn explorer_unwatch(app: AppHandle, folder: String) {
                 let _ = watcher.unwatch(&folder);
             }
         }
+    }
+}
+
+#[tauri::command]
+pub async fn explorer_watch(app: AppHandle, folder: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let folder = asked(&app, &folder, Use::Look)?;
+        let hearing = app.clone();
+        app.state::<Watching>()
+            .add(folder, move |folders| heard(&hearing, folders))
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn explorer_unwatch(app: AppHandle, folder: String) {
+    crate::lane::off_the_runtime(move || {
+        app.state::<Watching>().remove(Path::new(&folder));
     })
     .await;
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{folders_of, Gathered};
+    use super::{folders_of, Gathered, Watching};
+    use crate::explorer::listing::entries;
     use std::path::PathBuf;
-    use std::sync::Mutex;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::mpsc::channel;
+    use std::sync::{Arc, Mutex};
+    use std::time::Duration;
+
+    #[test]
+    fn going_quickly_between_folders_while_one_keeps_changing_never_sticks() {
+        let root = tempfile::tempdir().expect("a folder");
+        let folders: Vec<PathBuf> = ["Videos", "Downloads", "Pictures", "Music"]
+            .iter()
+            .map(|name| {
+                let folder = root.path().join(name);
+                std::fs::create_dir(&folder).expect("a folder");
+                std::fs::write(folder.join(format!("{name}.txt")), name).expect("a file");
+                crate::paths::folded(&folder)
+            })
+            .collect();
+        let busy = folders[0].clone();
+        let writing = Arc::new(AtomicBool::new(true));
+        let writer = {
+            let writing = writing.clone();
+            std::thread::spawn(move || {
+                let mut at = 0u32;
+                while writing.load(Ordering::Relaxed) {
+                    let _ = std::fs::write(busy.join(format!("clip {}.mp4", at % 50)), [0u8; 4096]);
+                    at += 1;
+                }
+            })
+        };
+        let (done, finished) = channel();
+        let going = folders.clone();
+        std::thread::spawn(move || {
+            let watching = Watching::default();
+            let mut shown = going[0].clone();
+            watching.add(shown.clone(), |_| {}).expect("watched");
+            for at in 1..400 {
+                let next = going[at % going.len()].clone();
+                watching.add(next.clone(), |_| {}).expect("watched");
+                watching.remove(&shown);
+                let (listed, _) = entries(&next, 100_000).expect("listed");
+                assert!(!listed.is_empty());
+                shown = next;
+            }
+            let _ = done.send(());
+        });
+        let answered = finished.recv_timeout(Duration::from_secs(120));
+        writing.store(false, Ordering::Relaxed);
+        writer.join().expect("the writer");
+        assert!(answered.is_ok(), "going between folders stuck");
+    }
 
     #[test]
     fn changes_that_come_together_are_said_once() {

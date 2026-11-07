@@ -1,4 +1,4 @@
-import { message } from '../i18n.svelte'
+import { message, t } from '../i18n.svelte'
 import { afterQuiet } from '../timing'
 import { isDesktop, joinPath } from '../tauri'
 import type { Tab } from '../workspace/documents.svelte'
@@ -134,11 +134,18 @@ export class ExplorerView {
     const went = this.#went
     const reread = ++this.#reread
     const current = () => went === this.#went && reread === this.#reread
+    const asked = listFolder(folder)
     try {
-      const listing = await listFolder(folder)
+      const listing = await inTime(asked)
       if (current()) this.take(listing)
     } catch (error) {
-      if (current()) this.wrong = message(error, 'could not read this folder')
+      if (!current()) return
+      this.wrong = why(error, folder)
+      if (error instanceof Unanswered) {
+        void asked.then((late) => {
+          if (current()) this.take(late)
+        }, quiet)
+      }
     }
   }
 
@@ -215,29 +222,48 @@ export class ExplorerView {
 
   private async show(folder: string, next: (listed: string) => Spec) {
     const went = ++this.#went
+    const asked = listFolder(folder)
     let listing: Listing
     try {
-      listing = await listFolder(folder)
+      listing = await inTime(asked)
     } catch (error) {
       if (went !== this.#went) return
       this.#landed = went
-      this.wrong = message(error, 'could not read this folder')
+      this.#leave()
+      this.listing = null
+      this.wrong = why(error, folder)
+      this.#settle(next(folder), folder)
+      this.#unwatch()
+      if (error instanceof Unanswered) {
+        void asked.then((late) => {
+          if (went === this.#went && !this.listing) this.#arrive(late, next)
+        }, quiet)
+      }
       return
     }
     if (went !== this.#went) return
     this.#landed = went
-    const moved = !this.listing || !samePath(listing.path, this.listing.path)
-    if (moved) {
-      this.picked = NOTHING
-      this.filter = ''
-      this.endSearch()
-    }
+    this.#arrive(listing, next)
+  }
+
+  #arrive(listing: Listing, next: (listed: string) => Spec) {
+    if (!this.listing || !samePath(listing.path, this.listing.path)) this.#leave()
     this.take(listing)
-    this.spec = next(listing.path)
-    this.tab.name = folderName(listing.path)
-    this.tab.note.replace(writeSpec(this.spec), false)
-    workspace.scheduleSession()
+    this.#settle(next(listing.path), listing.path)
     if (this.#alive) this.watch(listing.path)
+  }
+
+  #leave() {
+    this.picked = NOTHING
+    this.filter = ''
+    this.endSearch()
+  }
+
+  #settle(spec: Spec, folder: string) {
+    this.spec = spec
+    this.tab.name = folderName(folder)
+    this.tab.note.replace(writeSpec(spec), false)
+    workspace.scheduleSession()
   }
 
   private take(listing: Listing) {
@@ -260,6 +286,26 @@ export class ExplorerView {
 }
 
 const SAID_FOR = 6000
+
+export const LIST_WAIT = 8000
+
+class Unanswered extends Error {}
+
+const quiet = () => undefined
+
+function inTime(asked: Promise<Listing>): Promise<Listing> {
+  let late: ReturnType<typeof setTimeout> | undefined
+  const gaveUp = new Promise<never>((_, failed) => {
+    late = setTimeout(() => failed(new Unanswered()), LIST_WAIT)
+  })
+  return Promise.race([asked, gaveUp]).finally(() => clearTimeout(late))
+}
+
+function why(error: unknown, folder: string): string {
+  return error instanceof Unanswered
+    ? t('{device} did not answer.', { device: folderName(folder) })
+    : message(error, 'could not read this folder')
+}
 
 const MOST_REST = 2000
 

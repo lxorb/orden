@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Listing } from './commands'
 
 const DISK: Record<string, string[]> = {
@@ -62,7 +62,7 @@ vi.mock('./commands', () => ({
 const scheduleSession = vi.fn()
 vi.mock('../workspace.svelte', () => ({ workspace: { scheduleSession, tabs: [] } }))
 
-const { viewOf } = await import('./view.svelte')
+const { LIST_WAIT, viewOf } = await import('./view.svelte')
 const { readSpec } = await import('./spec')
 
 function tabWith(doc: string) {
@@ -81,6 +81,11 @@ function tabWith(doc: string) {
 beforeEach(() => {
   listed.length = 0
   watched.length = 0
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  slow.clear()
 })
 
 describe('a file explorer', () => {
@@ -129,15 +134,69 @@ describe('a file explorer', () => {
     expect(view.chosen).toEqual([])
   })
 
-  test('stays where it was, saying why, when a folder will not list', async () => {
+  test('goes to a folder that will not list, saying why, with nothing left of the one it left', async () => {
     const tab = tabWith('')
     const view = viewOf(tab as never)
     await view.appear()
-    const before = tab.doc
     await view.go('/gone')
-    expect(view.folder).toBe('/home/me')
+    expect(view.folder).toBe('/gone')
     expect(view.wrong).toContain('No such file')
-    expect(tab.doc).toBe(before)
+    expect(view.names).toEqual([])
+    expect(tab.name).toBe('gone')
+    await view.back()
+    expect(view.folder).toBe('/home/me')
+    expect(view.wrong).toBeNull()
+    expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
+  })
+
+  test('a folder that never answers is said so after a while, and every folder after it shows', async () => {
+    vi.useFakeTimers()
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    held('/home/me/Music')
+    const going = view.go('/home/me/Music')
+    await vi.advanceTimersByTimeAsync(LIST_WAIT)
+    await going
+    expect(view.folder).toBe('/home/me/Music')
+    expect(view.wrong).toBe('Music did not answer.')
+    expect(view.names).toEqual([])
+    await view.go('/home/me/Pictures')
+    expect(view.folder).toBe('/home/me/Pictures')
+    expect(view.wrong).toBeNull()
+    expect(view.names).toEqual(['a.png'])
+    await view.go('/home/me')
+    expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
+  })
+
+  test('a folder that answers late is shown when it does, if nothing was gone to since', async () => {
+    vi.useFakeTimers()
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    const pictures = held('/home/me/Pictures')
+    const going = view.go('/home/me/Pictures')
+    await vi.advanceTimersByTimeAsync(LIST_WAIT)
+    await going
+    expect(view.wrong).toBe('Pictures did not answer.')
+    pictures()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(view.wrong).toBeNull()
+    expect(view.names).toEqual(['a.png'])
+  })
+
+  test('a rereading that never answers never stops the ones after it', async () => {
+    vi.useFakeTimers()
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    listed.length = 0
+    held('/home/me')
+    const first = view.reload()
+    await vi.advanceTimersByTimeAsync(LIST_WAIT)
+    await first
+    slow.delete('/home/me')
+    await view.reload()
+    expect(listed).toEqual(['/home/me', '/home/me'])
+    expect(view.wrong).toBeNull()
+    expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
   })
 
   test('lists again only for a change in the folder on screen', async () => {
