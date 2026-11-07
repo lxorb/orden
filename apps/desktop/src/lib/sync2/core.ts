@@ -18,14 +18,16 @@ import {
   outgoingOf,
   wantKey,
   wantedOf,
-  wantedRow,
+  wantOneKey,
+  wantOneOf,
+  wantOneRow,
+  Wants,
   type Against,
   type DocNumbers,
   type Gone,
   type Keeping,
   type Ordering,
   type Outgoing,
-  type Wanted,
 } from './records'
 import {
   clear,
@@ -72,7 +74,7 @@ export class Core {
   readonly docs = new Map<string, Doc>()
   readonly pinned = new Set<string>()
   readonly held = new Map<string, Holding>()
-  readonly wants = new Map<string, Map<string, Wanted>>()
+  readonly wants = new Map<string, Wants>()
   readonly by = new Map<string, string>()
   readonly mine = new Set<string>()
   readonly carried = new Set<string>()
@@ -133,7 +135,13 @@ export class Core {
       if (row.key === CLIENTS) core.generation = Number(row.value) || 0
       if (row.key === COUNTER) core.counter = Number(row.value) || 0
       const wanted = wantedOf(row)
-      if (wanted) core.wants.set(wanted.space, wanted.wanted)
+      if (wanted) {
+        const wants = core.wanted(wanted.space)
+        for (const [id, one] of wanted.wanted) wants.set(id, one)
+        wants.inOneRow = true
+      }
+      const one = wantOneOf(row)
+      if (one) core.wanted(one.space).took(one.id, one.wanted)
     }
     if (!store.opened.wasClean) {
       core.generation += 1
@@ -171,13 +179,16 @@ export class Core {
   }
 
   commit(changes: readonly Change[]): Promise<void> {
-    if (!changes.length && !this.refused.length) return this.writing.then(() => undefined)
+    const wanted = this.wantChanges()
+    if (!changes.length && !wanted.length && !this.refused.length) {
+      return this.writing.then(() => undefined)
+    }
     const next = this.writing.then(async () => {
       if (this.clean) {
         await this.store.cleanExit(false)
         this.clean = false
       }
-      const batch = [...this.refused, ...changes]
+      const batch = [...this.refused, ...changes, ...wanted]
       this.refused = []
       try {
         await this.store.write(batch)
@@ -236,6 +247,10 @@ export class Core {
       if (this.hasDoc(entry.id)) changes.push(...this.forgetChanges(entry.id))
     }
     this.spaces.delete(spaceId)
+    const wants = this.wants.get(spaceId)
+    for (const id of new Set([...(wants?.keys() ?? []), ...(wants?.dirty ?? [])])) {
+      changes.push(remove('meta', wantOneKey(spaceId, id)))
+    }
     this.wants.delete(spaceId)
     changes.push(
       clear('entries', spaceId),
@@ -283,17 +298,31 @@ export class Core {
     return [put('meta', orderingRow(space.id, space.ordering))]
   }
 
-  wanted(space: string): Map<string, Wanted> {
+  wanted(space: string): Wants {
     let wanted = this.wants.get(space)
     if (!wanted) {
-      wanted = new Map()
+      wanted = new Wants()
       this.wants.set(space, wanted)
     }
     return wanted
   }
 
-  wantChange(space: string): Change {
-    return put('meta', wantedRow(space, this.wanted(space)))
+  private wantChanges(): Change[] {
+    const changes: Change[] = []
+    for (const [space, wants] of this.wants) {
+      if (wants.inOneRow) {
+        changes.push(remove('meta', wantKey(space)))
+        wants.inOneRow = false
+      }
+      for (const id of wants.dirty) {
+        const one = wants.get(id)
+        changes.push(
+          one ? put('meta', wantOneRow(space, id, one)) : remove('meta', wantOneKey(space, id)),
+        )
+      }
+      wants.dirty.clear()
+    }
+    return changes
   }
 
   hasDoc(id: string): boolean {

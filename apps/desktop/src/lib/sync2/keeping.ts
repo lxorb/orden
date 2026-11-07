@@ -137,12 +137,7 @@ async function letGo(
   space.keeping.used.delete(entry.id)
   entry.local_path = ''
   entry.written_hash = null
-  await core.commit([
-    ...changes,
-    put('entries', { ...entry }),
-    core.wantChange(space.id),
-    keepingChange(space),
-  ])
+  await core.commit([...changes, put('entries', { ...entry }), keepingChange(space)])
   await finishGoing(core, space, how)
   return true
 }

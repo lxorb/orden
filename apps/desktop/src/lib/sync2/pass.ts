@@ -418,11 +418,7 @@ export async function readFeed(
     }
     const asked = space.row.cursor
     space.row.cursor = Math.max(space.row.cursor, read.cursor)
-    changes.push(
-      put('spaces', { ...space.row }),
-      core.wantChange(space.id),
-      ...core.orderChanges(space),
-    )
+    changes.push(put('spaces', { ...space.row }), ...core.orderChanges(space))
     space.changed()
     await core.commit(changes)
     if (!alive()) return false
@@ -530,7 +526,6 @@ async function pullDocs(
       }
       if (!wanted.has(one.id)) brought += 1
     }
-    changes.push(core.wantChange(space.id))
     await core.commit(changes)
     if (!alive()) return null
   }
