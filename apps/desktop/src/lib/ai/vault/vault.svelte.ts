@@ -229,7 +229,6 @@ export class Vault {
         return
       }
 
-      this.standing = 'open'
       this.digits = ''
       this.offeredBy = ''
       this.mineAsking = null
@@ -403,6 +402,7 @@ export class Vault {
     if (!agrees(baseOf(here.contents, here.prints), contents, prints)) {
       await this.world.apply(contents, local)
     }
+    this.standing = 'open'
     if (remote && agrees(baseOf(remote.contents, remote.prints), contents, prints)) {
       this.world.keepBase(account, baseOf(contents, prints))
       return true
