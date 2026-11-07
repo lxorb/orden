@@ -28,6 +28,29 @@ export function documentOf(view: DocView): SharedDoc | null {
   return onDocument.get(view) ?? null
 }
 
+export function later(
+  view: DocView,
+): (write: (state: EditorState) => TransactionSpec | null) => boolean {
+  const asked = view.state
+  const note = documentOf(view)
+
+  return (write) => {
+    if (documentOf(view) === note) {
+      const spec = write(view.state)
+      if (spec) view.dispatch(spec)
+      return spec !== null
+    }
+
+    if (!note?.text.eq(asked.doc)) return true
+    const spec = write(asked)
+    if (!spec) return false
+
+    const made = asked.update(spec)
+    note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
+    return true
+  }
+}
+
 export function letGo(view: DocView) {
   onDocument.get(view)?.leave(view)
 }

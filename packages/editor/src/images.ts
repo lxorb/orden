@@ -1,6 +1,7 @@
 import { EditorSelection, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { embedKind, encodeTarget, formatWikilink } from '@orden/markdown/links'
+import { later } from './shared'
 
 export type ImageSink = (file: File) => Promise<string | null>
 
@@ -63,6 +64,7 @@ export async function receiveImages(
   const kept = files.filter(isKept)
   if (!kept.length) return
 
+  const land = later(view)
   view.dispatch({ effects: dropAt.of(at) })
 
   const written: string[] = []
@@ -72,20 +74,22 @@ export async function receiveImages(
   }
   if (!written.length) return
 
-  if (view.state.readOnly) return
-
   const markdown = written.join('\n')
-  const range = view.state.selection.main
-  const mapped = view.state.field(dropPoint, false) ?? null
-  const from = mapped ?? range.from
-  const to = mapped ?? range.to
+  land((state) => {
+    if (state.readOnly) return null
 
-  view.dispatch({
-    changes: { from, to, insert: markdown },
-    selection: EditorSelection.cursor(from + markdown.length),
-    scrollIntoView: true,
-    userEvent: 'input.paste',
-    effects: dropAt.of(null),
+    const range = state.selection.main
+    const mapped = state === view.state ? (state.field(dropPoint, false) ?? null) : at
+    const from = mapped ?? range.from
+    const to = mapped ?? range.to
+
+    return {
+      changes: { from, to, insert: markdown },
+      selection: EditorSelection.cursor(from + markdown.length),
+      scrollIntoView: true,
+      userEvent: 'input.paste',
+      effects: dropAt.of(null),
+    }
   })
 }
 

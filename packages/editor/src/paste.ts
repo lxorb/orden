@@ -4,7 +4,6 @@ import {
   type EditorState,
   type SelectionRange,
   type Extension,
-  Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
@@ -12,7 +11,7 @@ import { rangeInCode } from './code'
 import { ourOwn } from './copy'
 import { wordsBesidePicture } from './images'
 import { loadLineCommands } from './line-door'
-import { documentOf } from './shared'
+import { later } from './shared'
 
 function converter(): Promise<(html: string) => string> {
   return import('@orden/markdown/from-html').then((one) => one.htmlToMarkdown)
@@ -88,29 +87,6 @@ function insert(view: EditorView, text: string) {
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
-
-function later(
-  view: EditorView,
-): (write: (state: EditorState) => TransactionSpec | null) => boolean {
-  const asked = view.state
-  const note = documentOf(view)
-
-  return (write) => {
-    if (documentOf(view) === note) {
-      const spec = write(view.state)
-      if (spec) view.dispatch(spec)
-      return spec !== null
-    }
-
-    if (!note?.text.eq(asked.doc)) return true
-    const spec = write(asked)
-    if (!spec) return false
-
-    const made = asked.update(spec)
-    note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
-    return true
-  }
-}
 
 export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
 
