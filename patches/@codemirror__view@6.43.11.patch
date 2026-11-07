@@ -1,8 +1,30 @@
 diff --git a/dist/index.js b/dist/index.js
-index 1021312..7e82823 100644
+index 1021312cb249ef4c52559c82500ce061e9d66b17..c1195b8a973bb88f41cb825c62f1c970087e9f2f 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -1731,6 +1731,8 @@ class ViewUpdate {
+@@ -1662,9 +1662,18 @@ class ViewUpdate {
+         */
+         this.flags = 0;
+         this.startState = view.state;
+-        this.changes = ChangeSet.empty(this.startState.doc.length);
+-        for (let tr of transactions)
+-            this.changes = this.changes.compose(tr.changes);
++        // Patched (pnpm patch, see docs/patches.md): the changes of many
++        // transactions are composed in pairs, then pairs of pairs, rather than
++        // each onto the whole of those before it, which took time that grows
++        // with the square of their number for a vim command over every line.
++        let sets = transactions.map(tr => tr.changes);
++        while (sets.length > 1) {
++            let paired = [];
++            for (let i = 0; i < sets.length; i += 2)
++                paired.push(i + 1 < sets.length ? sets[i].compose(sets[i + 1]) : sets[i]);
++            sets = paired;
++        }
++        this.changes = sets.length ? sets[0] : ChangeSet.empty(this.startState.doc.length);
+         let changedRanges = [];
+         this.changes.iterChangedRanges((fromA, toA, fromB, toB) => changedRanges.push(new ChangedRange(fromA, toA, fromB, toB)));
+         this.changedRanges = changedRanges;
+@@ -1731,6 +1740,8 @@ class ViewUpdate {
  }
  
  const noChildren = [];
@@ -11,7 +33,7 @@ index 1021312..7e82823 100644
  class Tile {
      constructor(dom, length, flags = 0) {
          this.dom = dom;
-@@ -1766,6 +1768,11 @@ class Tile {
+@@ -1766,6 +1777,11 @@ class Tile {
          dom.cmTile = this;
      }
      get posAtStart() {
@@ -23,7 +45,7 @@ index 1021312..7e82823 100644
          return this.parent ? this.parent.posBefore(this) : 0;
      }
      get posAtEnd() {
-@@ -2754,11 +2761,14 @@ class TileUpdate {
+@@ -2754,11 +2770,14 @@ class TileUpdate {
                              throw new RangeError("Decorations that replace line breaks may not be specified via plugins");
                      }
                      markCount = active.length;
@@ -40,7 +62,7 @@ index 1021312..7e82823 100644
                          let flags = widgetFlags(deco);
                          let tile = this.cache.findWidget(widget, to - from, flags) || WidgetTile.of(widget, this.view, to - from, flags);
                          if (deco.block) {
-@@ -2768,7 +2778,7 @@ class TileUpdate {
+@@ -2768,7 +2787,7 @@ class TileUpdate {
                          }
                          else {
                              b.ensureLine(pendingLineAttrs);
@@ -49,7 +71,7 @@ index 1021312..7e82823 100644
                          }
                      }
                      pendingLineAttrs = null;
-@@ -4024,7 +4034,29 @@ class DOMReader {
+@@ -4024,7 +4043,29 @@ class DOMReader {
      readRange(start, end) {
          if (!start)
              return this;
@@ -79,7 +101,7 @@ index 1021312..7e82823 100644
          for (let cur = start;;) {
              this.findPointBefore(parent, cur);
              let oldLen = this.text.length;
-@@ -4764,6 +4796,17 @@ class MouseSelection {
+@@ -4764,6 +4805,17 @@ class MouseSelection {
              return this.destroy();
          if (this.dragging || this.dragging == null && dist(this.startEvent, event) < 10)
              return;

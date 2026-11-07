@@ -1,0 +1,191 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 68d14f396f563ca15f51a55eec3c943b64ca14c0..2be5900851751aa19845cc04d7780c2dab8c95a5 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -518,23 +518,65 @@ class ParseContext {
+ function cutFragments(fragments, from, to) {
+     return common.TreeFragment.applyChanges(fragments, [{ fromA: from, toA: to, fromB: from, toB: to }]);
+ }
++/**
++Patched (pnpm patch, see docs/patches.md): a transaction with this
++annotation leaves the parse to the next one without it, or to the
++parse worker. Its state holds an empty tree, and the changes since the
++last parse are applied to that parse's fragments once, when the next
++transaction without it comes or the context is asked for. They are held
++as a stack of composed runs whose lengths halve towards its top, so n
++edits compose in n log n time, not n squared. A batch of edits that only needs its last state parsed, as a vim command
++over every line, marks all the others with it.
++*/
++const parseLater = /*@__PURE__*/state.Annotation.define();
++function pushPending(pending, changes) {
++    let stack = pending ? pending.slice() : [];
++    stack.push({ changes, count: 1 });
++    while (stack.length > 1 && stack[stack.length - 2].count <= stack[stack.length - 1].count) {
++        let last = stack.pop(), prev = stack.pop();
++        stack.push({ changes: prev.changes.compose(last.changes), count: prev.count + last.count });
++    }
++    return stack;
++}
++function composePending(pending) {
++    let all = pending[0].changes;
++    for (let i = 1; i < pending.length; i++)
++        all = all.compose(pending[i].changes);
++    return all;
++}
+ class LanguageState {
+     constructor(
+     // A mutable parse state that is used to preserve work done during
+     // the lifetime of a state when moving to the next state.
+-    context) {
+-        this.context = context;
+-        this.tree = context.tree;
++    context, pending = null, state = null) {
++        this.base = context;
++        this.pending = pending;
++        this.after = state;
++        this.tree = pending ? common.Tree.empty : context.tree;
++    }
++    get context() {
++        if (this.pending) {
++            this.base = this.base.changes(composePending(this.pending), this.after);
++            this.pending = this.after = null;
++        }
++        return this.base;
+     }
+     apply(tr) {
+-        if (!tr.docChanged && this.tree == this.context.tree)
++        if (tr.annotation(parseLater)) {
++            if (!tr.docChanged)
++                return this.pending || this.tree == this.base.tree ? this : new LanguageState(this.context);
++            return new LanguageState(this.base, pushPending(this.pending, tr.changes), tr.state);
++        }
++        if (!this.pending && !tr.docChanged && this.tree == this.base.tree)
+             return this;
+-        let newCx = this.context.changes(tr.changes, tr.state);
++        let changes = this.pending ? composePending(pushPending(this.pending, tr.changes)) : tr.changes;
++        let start = this.pending ? this.base.state.doc.length : tr.startState.doc.length;
++        let newCx = this.base.changes(changes, tr.state);
+         // If the previous parse wasn't done, go forward only up to its
+         // end position or the end of the viewport, to avoid slowing down
+         // state updates with parse work beyond the viewport.
+-        let upto = this.context.treeLen == tr.startState.doc.length ? undefined
+-            : Math.max(tr.changes.mapPos(this.context.treeLen), newCx.viewport.to);
++        let upto = this.base.treeLen == start ? undefined
++            : Math.max(changes.mapPos(this.base.treeLen), newCx.viewport.to);
+         if (!newCx.work(20 /* Work.Apply */, upto))
+             newCx.takeTree();
+         return new LanguageState(newCx);
+@@ -2737,6 +2779,7 @@ exports.indentUnit = indentUnit;
+ exports.language = language;
+ exports.languageDataProp = languageDataProp;
+ exports.matchBrackets = matchBrackets;
++exports.parseLater = parseLater;
+ exports.sublanguageProp = sublanguageProp;
+ exports.syntaxHighlighting = syntaxHighlighting;
+ exports.syntaxParserRunning = syntaxParserRunning;
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index f13ef6eea775d6c23d537ce4846e92ddd5837f11..e39b87ffdceb9be014821c6130e7db3048c6a311 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -1216,4 +1216,10 @@ declare function bidiIsolates(options?: {
+     alwaysIsolate?: boolean;
+ }): Extension;
+ 
+-export { type Config, DocInput, HighlightStyle, IndentContext, LRLanguage, Language, LanguageDescription, LanguageSupport, type MatchResult, ParseContext, StreamLanguage, type StreamParser, StringStream, type Sublanguage, type TagStyle, TreeIndentContext, bidiIsolates, bracketMatching, bracketMatchingHandle, codeFolding, continuedIndent, defaultHighlightStyle, defineLanguageFacet, delimitedIndent, ensureSyntaxTree, flatIndent, foldAll, foldCode, foldEffect, foldGutter, foldInside, foldKeymap, foldNodeProp, foldService, foldState, foldable, foldedRanges, forceParsing, getIndentUnit, getIndentation, highlightingFor, indentNodeProp, indentOnInput, indentRange, indentService, indentString, indentUnit, language, languageDataProp, matchBrackets, sublanguageProp, syntaxHighlighting, syntaxParserRunning, syntaxTree, syntaxTreeAvailable, toggleFold, unfoldAll, unfoldCode, unfoldEffect };
++/**
++A transaction with this annotation leaves the parse to the next
++one without it, or to the parse worker.
++*/
++declare const parseLater: _codemirror_state.AnnotationType<boolean>;
++
++export { type Config, DocInput, HighlightStyle, IndentContext, LRLanguage, Language, LanguageDescription, LanguageSupport, type MatchResult, ParseContext, StreamLanguage, type StreamParser, StringStream, type Sublanguage, type TagStyle, TreeIndentContext, bidiIsolates, bracketMatching, bracketMatchingHandle, codeFolding, continuedIndent, defaultHighlightStyle, defineLanguageFacet, delimitedIndent, ensureSyntaxTree, flatIndent, foldAll, foldCode, foldEffect, foldGutter, foldInside, foldKeymap, foldNodeProp, foldService, foldState, foldable, foldedRanges, forceParsing, getIndentUnit, getIndentation, highlightingFor, indentNodeProp, indentOnInput, indentRange, indentService, indentString, indentUnit, language, languageDataProp, matchBrackets, parseLater, sublanguageProp, syntaxHighlighting, syntaxParserRunning, syntaxTree, syntaxTreeAvailable, toggleFold, unfoldAll, unfoldCode, unfoldEffect };
+diff --git a/dist/index.js b/dist/index.js
+index 1873fde2b33afaf2e35c88a0098cc46ad167a949..b8b0ca204eb323243e9938f94399fde191c82065 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1,5 +1,5 @@
+ import { NodeProp, IterMode, Tree, TreeFragment, Parser, NodeType, NodeSet } from '@lezer/common';
+-import { StateEffect, StateField, Facet, EditorState, countColumn, combineConfig, RangeSet, RangeSetBuilder, Prec } from '@codemirror/state';
++import { StateEffect, StateField, Facet, EditorState, countColumn, combineConfig, RangeSet, RangeSetBuilder, Prec, Annotation } from '@codemirror/state';
+ import { ViewPlugin, logException, EditorView, Decoration, WidgetType, gutter, GutterMarker, Direction } from '@codemirror/view';
+ import { tags, tagHighlighter, highlightTree, styleTags } from '@lezer/highlight';
+ import { StyleModule } from 'style-mod';
+@@ -516,23 +516,65 @@ class ParseContext {
+ function cutFragments(fragments, from, to) {
+     return TreeFragment.applyChanges(fragments, [{ fromA: from, toA: to, fromB: from, toB: to }]);
+ }
++/**
++Patched (pnpm patch, see docs/patches.md): a transaction with this
++annotation leaves the parse to the next one without it, or to the
++parse worker. Its state holds an empty tree, and the changes since the
++last parse are applied to that parse's fragments once, when the next
++transaction without it comes or the context is asked for. They are held
++as a stack of composed runs whose lengths halve towards its top, so n
++edits compose in n log n time, not n squared. A batch of edits that only needs its last state parsed, as a vim command
++over every line, marks all the others with it.
++*/
++const parseLater = /*@__PURE__*/Annotation.define();
++function pushPending(pending, changes) {
++    let stack = pending ? pending.slice() : [];
++    stack.push({ changes, count: 1 });
++    while (stack.length > 1 && stack[stack.length - 2].count <= stack[stack.length - 1].count) {
++        let last = stack.pop(), prev = stack.pop();
++        stack.push({ changes: prev.changes.compose(last.changes), count: prev.count + last.count });
++    }
++    return stack;
++}
++function composePending(pending) {
++    let all = pending[0].changes;
++    for (let i = 1; i < pending.length; i++)
++        all = all.compose(pending[i].changes);
++    return all;
++}
+ class LanguageState {
+     constructor(
+     // A mutable parse state that is used to preserve work done during
+     // the lifetime of a state when moving to the next state.
+-    context) {
+-        this.context = context;
+-        this.tree = context.tree;
++    context, pending = null, state = null) {
++        this.base = context;
++        this.pending = pending;
++        this.after = state;
++        this.tree = pending ? Tree.empty : context.tree;
++    }
++    get context() {
++        if (this.pending) {
++            this.base = this.base.changes(composePending(this.pending), this.after);
++            this.pending = this.after = null;
++        }
++        return this.base;
+     }
+     apply(tr) {
+-        if (!tr.docChanged && this.tree == this.context.tree)
++        if (tr.annotation(parseLater)) {
++            if (!tr.docChanged)
++                return this.pending || this.tree == this.base.tree ? this : new LanguageState(this.context);
++            return new LanguageState(this.base, pushPending(this.pending, tr.changes), tr.state);
++        }
++        if (!this.pending && !tr.docChanged && this.tree == this.base.tree)
+             return this;
+-        let newCx = this.context.changes(tr.changes, tr.state);
++        let changes = this.pending ? composePending(pushPending(this.pending, tr.changes)) : tr.changes;
++        let start = this.pending ? this.base.state.doc.length : tr.startState.doc.length;
++        let newCx = this.base.changes(changes, tr.state);
+         // If the previous parse wasn't done, go forward only up to its
+         // end position or the end of the viewport, to avoid slowing down
+         // state updates with parse work beyond the viewport.
+-        let upto = this.context.treeLen == tr.startState.doc.length ? undefined
+-            : Math.max(tr.changes.mapPos(this.context.treeLen), newCx.viewport.to);
++        let upto = this.base.treeLen == start ? undefined
++            : Math.max(changes.mapPos(this.base.treeLen), newCx.viewport.to);
+         if (!newCx.work(20 /* Work.Apply */, upto))
+             newCx.takeTree();
+         return new LanguageState(newCx);
+@@ -2690,4 +2732,4 @@ const marks = {
+     auto: /*@__PURE__*/Decoration.mark({ class: "cm-iso", inclusive: true, attributes: { dir: "auto" }, bidiIsolate: null })
+ };
+ 
+-export { DocInput, HighlightStyle, IndentContext, LRLanguage, Language, LanguageDescription, LanguageSupport, ParseContext, StreamLanguage, StringStream, TreeIndentContext, bidiIsolates, bracketMatching, bracketMatchingHandle, codeFolding, continuedIndent, defaultHighlightStyle, defineLanguageFacet, delimitedIndent, ensureSyntaxTree, flatIndent, foldAll, foldCode, foldEffect, foldGutter, foldInside, foldKeymap, foldNodeProp, foldService, foldState, foldable, foldedRanges, forceParsing, getIndentUnit, getIndentation, highlightingFor, indentNodeProp, indentOnInput, indentRange, indentService, indentString, indentUnit, language, languageDataProp, matchBrackets, sublanguageProp, syntaxHighlighting, syntaxParserRunning, syntaxTree, syntaxTreeAvailable, toggleFold, unfoldAll, unfoldCode, unfoldEffect };
++export { DocInput, HighlightStyle, IndentContext, LRLanguage, Language, LanguageDescription, LanguageSupport, ParseContext, StreamLanguage, StringStream, TreeIndentContext, bidiIsolates, bracketMatching, bracketMatchingHandle, codeFolding, continuedIndent, defaultHighlightStyle, defineLanguageFacet, delimitedIndent, ensureSyntaxTree, flatIndent, foldAll, foldCode, foldEffect, foldGutter, foldInside, foldKeymap, foldNodeProp, foldService, foldState, foldable, foldedRanges, forceParsing, getIndentUnit, getIndentation, highlightingFor, indentNodeProp, indentOnInput, indentRange, indentService, indentString, indentUnit, language, languageDataProp, matchBrackets, parseLater, sublanguageProp, syntaxHighlighting, syntaxParserRunning, syntaxTree, syntaxTreeAvailable, toggleFold, unfoldAll, unfoldCode, unfoldEffect };

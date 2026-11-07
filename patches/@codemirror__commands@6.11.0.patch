@@ -1,0 +1,142 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 1326e31224422c49602aeef5d504322ab4516409..c8936f6ba5e8ef70a98687110e21307eecbf1b35 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -369,15 +369,41 @@ class HistEvent {
+     startSelection, 
+     // Stores selection changes after this event, to be used for
+     // selection undo/redo.
+-    selectionsAfter) {
+-        this.changes = changes;
++    selectionsAfter, 
++    // Patched (pnpm patch, see docs/patches.md): the changes of a run
++    // of joined events, held as a stack of composed runs whose lengths
++    // halve towards its top and composed only when read, so joining n
++    // events takes n log n time and memory, not n squared.
++    joined) {
++        this.$changes = changes;
++        this.joined = joined || null;
+         this.effects = effects;
+         this.mapped = mapped;
+         this.startSelection = startSelection;
+         this.selectionsAfter = selectionsAfter;
+     }
++    get changes() {
++        if (this.joined) {
++            let stack = this.joined, all = stack[stack.length - 1].changes;
++            for (let i = stack.length - 2; i >= 0; i--)
++                all = all.compose(stack[i].changes);
++            this.$changes = all;
++            this.joined = null;
++        }
++        return this.$changes;
++    }
++    join(event) {
++        let stack = this.joined ? this.joined.slice() : [{ changes: this.$changes, count: 1 }];
++        stack.push({ changes: event.changes, count: 1 });
++        while (stack.length > 1 && stack[stack.length - 2].count <= stack[stack.length - 1].count) {
++            let last = stack.pop(), prev = stack.pop();
++            stack.push({ changes: last.changes.compose(prev.changes), count: prev.count + last.count });
++        }
++        let effects = event.effects.length ? state.StateEffect.mapEffects(event.effects, this.changes) : none;
++        return new HistEvent(undefined, conc(effects, this.effects), this.mapped, this.startSelection, none, stack);
++    }
+     setSelAfter(after) {
+-        return new HistEvent(this.changes, this.effects, this.mapped, this.startSelection, after);
++        return new HistEvent(this.$changes, this.effects, this.mapped, this.startSelection, after, this.joined);
+     }
+     toJSON() {
+         var _a, _b, _c;
+@@ -500,14 +526,14 @@ class HistoryState {
+     }
+     addChanges(event, time, userEvent, config, tr) {
+         let done = this.done, lastEvent = done[done.length - 1];
+-        if (lastEvent && lastEvent.changes && !lastEvent.changes.empty && event.changes &&
++        if (lastEvent && (lastEvent.joined || lastEvent.changes && !lastEvent.changes.empty) && event.changes &&
+             (!userEvent || joinableUserEvent.test(userEvent)) &&
+-            ((!lastEvent.selectionsAfter.length &&
+-                time - this.prevTime < config.newGroupDelay &&
+-                config.joinToEvent(tr, isAdjacent(lastEvent.changes, event.changes))) ||
+-                // For compose (but not compose.start) events, always join with previous event
+-                userEvent == "input.type.compose")) {
+-            done = updateBranch(done, done.length - 1, config.minDepth, new HistEvent(event.changes.compose(lastEvent.changes), conc(state.StateEffect.mapEffects(event.effects, lastEvent.changes), lastEvent.effects), lastEvent.mapped, lastEvent.startSelection, none));
++            // For compose (but not compose.start) events, always join with previous event
++            (userEvent == "input.type.compose" ||
++                (!lastEvent.selectionsAfter.length &&
++                    time - this.prevTime < config.newGroupDelay &&
++                    config.joinToEvent(tr, isAdjacent(lastEvent.changes, event.changes))))) {
++            done = updateBranch(done, done.length - 1, config.minDepth, lastEvent.join(event));
+         }
+         else {
+             done = updateBranch(done, done.length, config.minDepth, event);
+diff --git a/dist/index.js b/dist/index.js
+index 471b4b863c1f42ad3da846ca8ca25108627fba4e..67911d23f5054f09e4106c3313a76fa9b58972c4 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -367,15 +367,41 @@ class HistEvent {
+     startSelection, 
+     // Stores selection changes after this event, to be used for
+     // selection undo/redo.
+-    selectionsAfter) {
+-        this.changes = changes;
++    selectionsAfter, 
++    // Patched (pnpm patch, see docs/patches.md): the changes of a run
++    // of joined events, held as a stack of composed runs whose lengths
++    // halve towards its top and composed only when read, so joining n
++    // events takes n log n time and memory, not n squared.
++    joined) {
++        this.$changes = changes;
++        this.joined = joined || null;
+         this.effects = effects;
+         this.mapped = mapped;
+         this.startSelection = startSelection;
+         this.selectionsAfter = selectionsAfter;
+     }
++    get changes() {
++        if (this.joined) {
++            let stack = this.joined, all = stack[stack.length - 1].changes;
++            for (let i = stack.length - 2; i >= 0; i--)
++                all = all.compose(stack[i].changes);
++            this.$changes = all;
++            this.joined = null;
++        }
++        return this.$changes;
++    }
++    join(event) {
++        let stack = this.joined ? this.joined.slice() : [{ changes: this.$changes, count: 1 }];
++        stack.push({ changes: event.changes, count: 1 });
++        while (stack.length > 1 && stack[stack.length - 2].count <= stack[stack.length - 1].count) {
++            let last = stack.pop(), prev = stack.pop();
++            stack.push({ changes: last.changes.compose(prev.changes), count: prev.count + last.count });
++        }
++        let effects = event.effects.length ? StateEffect.mapEffects(event.effects, this.changes) : none;
++        return new HistEvent(undefined, conc(effects, this.effects), this.mapped, this.startSelection, none, stack);
++    }
+     setSelAfter(after) {
+-        return new HistEvent(this.changes, this.effects, this.mapped, this.startSelection, after);
++        return new HistEvent(this.$changes, this.effects, this.mapped, this.startSelection, after, this.joined);
+     }
+     toJSON() {
+         var _a, _b, _c;
+@@ -498,14 +524,14 @@ class HistoryState {
+     }
+     addChanges(event, time, userEvent, config, tr) {
+         let done = this.done, lastEvent = done[done.length - 1];
+-        if (lastEvent && lastEvent.changes && !lastEvent.changes.empty && event.changes &&
++        if (lastEvent && (lastEvent.joined || lastEvent.changes && !lastEvent.changes.empty) && event.changes &&
+             (!userEvent || joinableUserEvent.test(userEvent)) &&
+-            ((!lastEvent.selectionsAfter.length &&
+-                time - this.prevTime < config.newGroupDelay &&
+-                config.joinToEvent(tr, isAdjacent(lastEvent.changes, event.changes))) ||
+-                // For compose (but not compose.start) events, always join with previous event
+-                userEvent == "input.type.compose")) {
+-            done = updateBranch(done, done.length - 1, config.minDepth, new HistEvent(event.changes.compose(lastEvent.changes), conc(StateEffect.mapEffects(event.effects, lastEvent.changes), lastEvent.effects), lastEvent.mapped, lastEvent.startSelection, none));
++            // For compose (but not compose.start) events, always join with previous event
++            (userEvent == "input.type.compose" ||
++                (!lastEvent.selectionsAfter.length &&
++                    time - this.prevTime < config.newGroupDelay &&
++                    config.joinToEvent(tr, isAdjacent(lastEvent.changes, event.changes))))) {
++            done = updateBranch(done, done.length - 1, config.minDepth, lastEvent.join(event));
+         }
+         else {
+             done = updateBranch(done, done.length, config.minDepth, event);
