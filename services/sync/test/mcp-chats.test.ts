@@ -29,7 +29,16 @@ async function say(token: string, body: string, extra: Record<string, unknown> =
   return message
 }
 
-async function connector(token: string, readOnly = false): Promise<string> {
+async function chatsTurned(token: string, on: boolean) {
+  await call(env, '/v1/settings', {
+    method: 'PATCH',
+    token,
+    body: { hiddenKinds: on ? ['shown-chats'] : null },
+  })
+}
+
+async function connector(token: string, readOnly = false, chats = true): Promise<string> {
+  await chatsTurned(token, chats)
   return (await call(env, '/v1/mcp/token', { token, body: { readOnly } })).json.token
 }
 
@@ -89,6 +98,37 @@ afterEach(() => {
 })
 
 describe('chats through the connector', () => {
+  test('are neither listed nor run while chats are off, and come back when on', async () => {
+    const key = await connector(owner, false, false)
+    const names = async () => {
+      const response = await call<RpcView>(env, '/mcp', {
+        token: key,
+        body: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+      })
+      return response.json.result.tools.map((one: { name: string }) => one.name)
+    }
+    const chatTools = ['list_chats', 'read_chat', 'search_chats', 'post_message', 'react']
+    expect((await names()).filter((one) => chatTools.includes(one))).toEqual([])
+    expect(await names()).toContain('read_note')
+    const before = await state(owner)
+    for (const [name, args] of [
+      ['list_chats', {}],
+      ['post_message', { chat, text: 'sneaked in' }],
+    ] as const) {
+      const response = await call<RpcView>(env, '/mcp', {
+        token: key,
+        body: { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } },
+      })
+      expect(response.json.result.isError).toBe(true)
+      expect(response.json.result.content[0]?.text).toContain('Chats are turned off')
+    }
+    expect(await state(owner)).toEqual(before)
+
+    await chatsTurned(owner, true)
+    expect(await names()).toEqual(expect.arrayContaining(chatTools))
+    expect(await tool(key, 'list_chats')).toContain('#thesis')
+  })
+
   test('are listed with the tools', async () => {
     const response = await call<RpcView>(env, '/mcp', {
       token: await connector(owner),
