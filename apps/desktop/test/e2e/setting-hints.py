@@ -83,7 +83,7 @@ def the_sentence(page: Page) -> None:
     page.keyboard.press("Escape")
 
     page.evaluate("() => window.ordenApp.settings.show('ai')")
-    vault = page.locator("[role=switch]", has_text="vault").first
+    vault = page.locator(".orden-setting", has_text="vault").first
     page.evaluate(
         "() => { window.__taken = []; window.addEventListener('keydown', (event) =>"
         " { if (event.defaultPrevented) window.__taken.push(event.key) }) }"

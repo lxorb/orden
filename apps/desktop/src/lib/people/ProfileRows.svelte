@@ -252,17 +252,10 @@
       </div>
     {/if}
 
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="orden-setting setting pressable"
-      role="switch"
-      tabindex="0"
-      aria-checked={status?.quiet ?? false}
       onclick={() => withStatus({ quiet: !(status?.quiet ?? false) })}
-      onkeydown={(event) => {
-        if (event.key !== ' ' && event.key !== 'Enter') return
-        event.preventDefault()
-        withStatus({ quiet: !(status?.quiet ?? false) })
-      }}
     >
       <span class="name"
         ><span class="orden-named"
@@ -271,7 +264,19 @@
           /></span
         ></span
       >
-      <span class="orden-switch" class:on={status?.quiet ?? false} aria-hidden="true"></span>
+      <span
+        class="orden-switch"
+        class:on={status?.quiet ?? false}
+        role="switch"
+        tabindex="0"
+        aria-checked={status?.quiet ?? false}
+        aria-label={t('Do not disturb')}
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          withStatus({ quiet: !(status?.quiet ?? false) })
+        }}
+      ></span>
     </div>
 
     <div class="orden-setting setting">
@@ -290,17 +295,10 @@
       </div>
     </div>
 
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="orden-setting setting pressable"
-      role="switch"
-      tabindex="0"
-      aria-checked={user.hidden ?? false}
       onclick={() => void kept(() => changeProfile({ hidden: !(user.hidden ?? false) }))}
-      onkeydown={(event) => {
-        if (event.key !== ' ' && event.key !== 'Enter') return
-        event.preventDefault()
-        void kept(() => changeProfile({ hidden: !(user.hidden ?? false) }))
-      }}
     >
       <span class="name"
         ><span class="orden-named"
@@ -309,7 +307,19 @@
           /></span
         ></span
       >
-      <span class="orden-switch" class:on={user.hidden ?? false} aria-hidden="true"></span>
+      <span
+        class="orden-switch"
+        class:on={user.hidden ?? false}
+        role="switch"
+        tabindex="0"
+        aria-checked={user.hidden ?? false}
+        aria-label={t('Appear offline')}
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          void kept(() => changeProfile({ hidden: !(user.hidden ?? false) }))
+        }}
+      ></span>
     </div>
   </div>
   {#if wrong}<p class="wrong">{wrong}</p>{/if}
