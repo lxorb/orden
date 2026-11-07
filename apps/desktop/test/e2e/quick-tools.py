@@ -194,8 +194,10 @@ def asked(page: Page) -> None:
     page.keyboard.type("What is this?")
     page.keyboard.press("Enter")
     listed = page.evaluate(
-        "() => new Promise((done) => setTimeout(done, 50)).then(() => window.nibApp.aiChats())"
-        ".then((chat) => chat.heads.some((one) => one.words.includes('What is this?')))"
+        "(before) => new Promise((done) => setTimeout(done, 50)).then(() => window.nibApp.aiChats())"
+        ".then((chat) => chat.every.some((one) => one.id !== before && (chat.running.includes(one.id)"
+        " || one.words.includes('What is this?'))))",
+        open_before,
     )
     if not listed:
         wrong("the quick question is not in the panel's list the moment it is asked")
