@@ -44,6 +44,17 @@ describe('splitting a stream into events', () => {
     expect(sseLines('', 'data:\n\ndata: \n\n').payloads).toEqual([])
   })
 
+  test('reads one huge event in small chunks without going over what it holds each time', () => {
+    const huge = `data: {"text":"${'x'.repeat(4_000_000)}"}\n\n`
+    const started = performance.now()
+
+    const read = inPieces(huge, 64)
+
+    expect(read).toHaveLength(1)
+    expect(read[0]).toHaveLength(huge.length - 'data: \n\n'.length)
+    expect(performance.now() - started).toBeLessThan(2000)
+  })
+
   test('never mistakes a comment or an id for data', () => {
     expect(sseLines('', ': keep-alive\nid: 4\nretry: 100\n').payloads).toEqual([])
   })
