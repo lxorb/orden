@@ -56,6 +56,9 @@
     OPENING,
     partsFor,
     placed,
+    PLUS,
+    PLUS_GAP,
+    plusFits,
     separated,
     slotAt,
     trailing,
@@ -124,8 +127,6 @@
   }
 
   const LEAD = 8
-  const PLUS_GAP = 4
-  const PLUS = 28 + 2 * PLUS_GAP
   const TOP = 5
 
   let strip = $state<HTMLElement>()
@@ -136,9 +137,9 @@
   const flush = $derived(flushStart(paneId))
   const lead = $derived(flush ? 0 : LEAD)
 
-  const room = $derived(
-    stripWidth > 0 ? Math.max(0, stripWidth - lead - (viewport.touch ? 0 : PLUS)) : null,
-  )
+  const plus = $derived(!viewport.touch && plusFits(stripWidth, lead))
+
+  const room = $derived(stripWidth > 0 ? Math.max(0, stripWidth - lead - (plus ? PLUS : 0)) : null)
 
   const here = whileHere()
 
@@ -330,7 +331,7 @@
     return { boxes, end: endOf(base) }
   })
 
-  const span = $derived(lead + layout.end + (viewport.touch ? 0 : PLUS))
+  const span = $derived(lead + layout.end + (plus ? PLUS : 0))
   let shrinking = $state(false)
   let spanWas = 0
   $effect.pre(() => {
@@ -1017,7 +1018,7 @@
         </div>
       {/each}
 
-      {#if !viewport.touch}
+      {#if plus}
         <button
           class="new"
           title={shortcuts.tooltip(t('New tab'), 'app.new-kind')}
@@ -1082,7 +1083,7 @@
 
   .tabs {
     position: relative;
-    flex: 1 1 0;
+    flex: 1 1 calc(var(--lead) + 38px);
     min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
@@ -1613,8 +1614,8 @@
   }
 
   .drag {
-    flex: none;
-    width: var(--space-5);
+    flex: 0 1000 var(--space-5);
+    min-width: 0;
   }
 
   .link {

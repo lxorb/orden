@@ -7,6 +7,13 @@ export const WIDTH = {
 
 const INSET = 3 + 8
 
+export const PLUS_GAP = 4
+export const PLUS = 28 + 2 * PLUS_GAP
+
+export function plusFits(strip: number, lead: number): boolean {
+  return strip <= 0 || strip >= lead + WIDTH.active + PLUS
+}
+
 const MARK = 16
 const CLOSE = 16 + 4
 
