@@ -258,6 +258,9 @@ fn procargs(buffer: &[u8]) -> Option<Vec<String>> {
 }
 
 #[cfg(windows)]
+const MOST_COMMAND_LINE: usize = 8200;
+
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a process's command line is the kernel's own call and has no safe wrapper"
@@ -271,17 +274,25 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
     use windows::Win32::UI::Shell::CommandLineToArgvW;
 
     let mut buffer = vec![0_u64; 4096];
-    let size = u32::try_from(buffer.len() * 8).ok()?;
-    let mut written = 0_u32;
     let line: Vec<u16> = unsafe {
         let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
-        let status = NtQueryInformationProcess(
-            handle,
-            ProcessCommandLineInformation,
-            buffer.as_mut_ptr().cast(),
-            size,
-            &raw mut written,
-        );
+        let mut asked = 0;
+        let status = loop {
+            asked += 1;
+            let mut written = 0_u32;
+            let status = NtQueryInformationProcess(
+                handle,
+                ProcessCommandLineInformation,
+                buffer.as_mut_ptr().cast(),
+                u32::try_from(buffer.len() * 8).unwrap_or(u32::MAX),
+                &raw mut written,
+            );
+            let needed = usize::try_from(written).unwrap_or(0).div_ceil(8);
+            if status.is_ok() || asked > 1 || needed <= buffer.len() || needed > MOST_COMMAND_LINE {
+                break status;
+            }
+            buffer = vec![0_u64; needed];
+        };
         let _ = CloseHandle(handle);
         if status.is_err() {
             return None;
