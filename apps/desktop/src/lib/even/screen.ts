@@ -88,8 +88,9 @@ export class Panel {
     if (lineNumbers === this.numbered) return true
 
     this.numbered = lineNumbers
-    const rebuilt = await this.glasses.rebuild(skeleton(lineNumbers))
+    const rebuilt = await this.glasses.rebuild(skeleton(lineNumbers)).catch(() => false)
     if (rebuilt) this.forget()
+    else if (this.numbered === lineNumbers) this.numbered = !lineNumbers
 
     return rebuilt
   }

@@ -459,3 +459,45 @@ describe('a host that never answers', () => {
     vi.useRealTimers()
   })
 })
+
+describe('a host that says no', () => {
+  class Refusing extends Host {
+    private refuse(): Promise<unknown> {
+      return Promise.reject(new Error('refused'))
+    }
+
+    override rebuildPageContainer(): Promise<unknown> {
+      return this.refuse()
+    }
+
+    override audioControl(): Promise<unknown> {
+      return this.refuse()
+    }
+
+    override shutDownPageContainer(): Promise<unknown> {
+      return this.refuse()
+    }
+
+    override textContainerUpgrade(): Promise<unknown> {
+      return this.refuse()
+    }
+  }
+
+  test('is a no to a rebuild, the microphone and leaving, never a thrown call', async () => {
+    put(new Refusing())
+    const glasses = await connectGlasses()
+    if (!glasses) throw new Error('no glasses')
+
+    await expect(glasses.rebuild({})).resolves.toBe(false)
+    await expect(glasses.microphone(true)).resolves.toBe(false)
+    await expect(glasses.microphone(false)).resolves.toBe(false)
+    await expect(glasses.leave()).resolves.toBeUndefined()
+  })
+
+  test('still stops the words, which the panel counts as stalled', async () => {
+    put(new Refusing())
+    const glasses = await connectGlasses()
+
+    await expect(glasses?.words({ id: 5, name: 'nibBody' }, 'hello')).rejects.toThrow('refused')
+  })
+})

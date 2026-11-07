@@ -114,6 +114,10 @@ function answered<T>(asked: () => Promise<T>, otherwise: () => T): Promise<T> {
   })
 }
 
+function heard<T>(asked: () => Promise<T>, otherwise: () => T): Promise<T> {
+  return answered(asked, otherwise).catch(otherwise)
+}
+
 function silent(): never {
   throw new Error(SILENT)
 }
@@ -324,7 +328,7 @@ function glassesOf(bridge: Bridge): Glasses {
     },
 
     async rebuild(page) {
-      const answer = await answered(
+      const answer = await heard(
         () => bridge.rebuildPageContainer(page),
         () => false,
       )
@@ -345,7 +349,7 @@ function glassesOf(bridge: Bridge): Glasses {
     },
 
     async microphone(open) {
-      const answer = await answered(
+      const answer = await heard(
         () => bridge.audioControl(open, 'glasses'),
         () => false,
       )
@@ -372,7 +376,7 @@ function glassesOf(bridge: Bridge): Glasses {
     },
 
     async leave() {
-      await answered(
+      await heard(
         () => bridge.shutDownPageContainer(1),
         () => undefined,
       )
