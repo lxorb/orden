@@ -194,6 +194,8 @@ function paired(before: readonly Seen[], after: readonly Seen[]): (number | unde
   return from
 }
 
+export type Arrived = (hash: string, cancelled: boolean) => string | undefined
+
 function changed(
   before: readonly Seen[],
   after: readonly Seen[],
@@ -201,6 +203,7 @@ function changed(
   had: string | undefined,
   closed: (one: Seen) => boolean,
   today: string,
+  arrived: (hash: string) => string | undefined,
 ): string | null | undefined {
   const dates = datesOf(had)
   const counted = (list: readonly Seen[]) => {
@@ -223,7 +226,11 @@ function changed(
     const source = from[at]
     const there = source === undefined ? undefined : before[source]
     const day =
-      source !== undefined && there && closed(there) ? (daysBefore[source] ?? null) : today
+      source !== undefined && there && closed(there)
+        ? (daysBefore[source] ?? null)
+        : source === undefined
+          ? (arrived(one.hash) ?? today)
+          : today
     const days = out.get(one.hash)
     if (days) days.push(day)
     else out.set(one.hash, [day])
@@ -240,6 +247,7 @@ export function datesChanged(
   after: readonly Row[],
   meta: Meta,
   today: string,
+  arrived: Arrived = () => undefined,
 ): DatesPatch | null {
   if (before === null) return null
   const was = seenOf(before)
@@ -247,9 +255,25 @@ export function datesChanged(
   if (alike(was, now)) return null
   const from = paired(was, now)
   const patch: DatesPatch = {}
-  const done = changed(was, now, from, meta?.[DONE_KEY], (one) => one.done, today)
+  const done = changed(
+    was,
+    now,
+    from,
+    meta?.[DONE_KEY],
+    (one) => one.done,
+    today,
+    (hash) => arrived(hash, false),
+  )
   if (done !== undefined) patch[DONE_KEY] = done
-  const cancelled = changed(was, now, from, meta?.[CANCELLED_KEY], (one) => one.cancelled, today)
+  const cancelled = changed(
+    was,
+    now,
+    from,
+    meta?.[CANCELLED_KEY],
+    (one) => one.cancelled,
+    today,
+    (hash) => arrived(hash, true),
+  )
   if (cancelled !== undefined) patch[CANCELLED_KEY] = cancelled
   return Object.keys(patch).length ? patch : null
 }

@@ -613,4 +613,43 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
       .map((row) => row.task?.completed)
     expect(days).toEqual([todayOf(new Date(later)), todayOf(new Date(first))])
   })
+
+  test('a done todo moved to another list keeps the day it was done, not the day it moved', async () => {
+    const from = `${WORK}/Errands.md`
+    const to = `${WORK}/Groceries.md`
+    const first = new Date(2026, 10, 1, 12).getTime()
+    const later = new Date(2026, 10, 5, 12).getTime()
+    let clock = first
+    const { store, answer, settled, disk, meta } = listed(
+      { [from]: '- [ ] Buy soil\n- [x] Weed\n', [to]: '- [ ] Milk\n' },
+      () => clock,
+    )
+    meta.set('Groceries.md', { 'todo-list': 'yes' })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+    disk.set(from, '- [x] Buy soil\n- [x] Weed\n')
+    store.saved(from, '- [x] Buy soil\n- [x] Weed\n')
+    store.described(from)
+    await settled()
+
+    clock = later
+    disk.set(from, '- [x] Weed\n')
+    store.saved(from, '- [x] Weed\n')
+    disk.set(to, '- [x] Buy soil\n- [ ] Milk\n')
+    store.saved(to, '- [x] Buy soil\n- [ ] Milk\n')
+    store.described(to)
+    await settled()
+
+    const moved = store.of().find((row) => row.task?.text === 'Buy soil')
+    expect(moved?.path).toBe('Groceries.md')
+    expect(moved?.task?.completed).toBe(todayOf(new Date(first)))
+    disk.set(to, '- [x] Buy soil\n- [ ] Milk\n- [x] Weed\n')
+    store.saved(to, '- [x] Buy soil\n- [ ] Milk\n- [x] Weed\n')
+    store.described(to)
+    await settled()
+    const typed = store.of().find((row) => row.path === 'Groceries.md' && row.task?.text === 'Weed')
+    expect(typed?.task?.completed).toBe(todayOf(new Date(later)))
+  })
 })
