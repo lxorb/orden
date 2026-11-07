@@ -93,7 +93,139 @@ describe('done dates kept as the list’s metadata (#1228)', () => {
     )
     const text = datesText(many) ?? ''
     expect(text.length).toBeLessThanOrEqual(2048)
-    expect([...datesOf(text).values()]).toContain('2026-12-01')
+    expect([...datesOf(text).values()].flat()).toContain('2026-12-01')
+  })
+})
+
+describe('two todos with the same words keep their own dates (#1401)', () => {
+  type Kept = Record<string, string>
+  const twice = '- [ ] Call mom\n- [ ] Call mom\n'
+  const daysOf = (text: string, meta: Kept) =>
+    withDates(rows(text), meta)
+      .filter((row) => row.task)
+      .map((row) => row.task?.completed ?? row.task?.cancelledOn ?? null)
+  const step = (meta: Kept, before: string, after: string, today: string): Kept => {
+    const patch = datesChanged(rows(before), rows(after), meta, today) ?? {}
+    const both = Object.entries({ ...meta, ...patch })
+    return Object.fromEntries(both.filter((one): one is [string, string] => one[1] !== null))
+  }
+  const walk = (texts: readonly string[], days: readonly string[]) => {
+    let meta: Kept = {}
+    for (const [at, text] of texts.slice(1).entries())
+      meta = step(meta, texts[at] ?? '', text, days[at] ?? '')
+    return meta
+  }
+
+  test('ticking the lower one, then the upper', () => {
+    const texts = [twice, '- [ ] Call mom\n- [x] Call mom\n', '- [x] Call mom\n- [x] Call mom\n']
+    const meta = walk(texts, ['2026-11-01', '2026-11-05'])
+    expect(daysOf(texts[2] ?? '', meta)).toEqual(['2026-11-05', '2026-11-01'])
+  })
+
+  test('ticking the upper one, then the lower', () => {
+    const texts = [twice, '- [x] Call mom\n- [ ] Call mom\n', '- [x] Call mom\n- [x] Call mom\n']
+    const meta = walk(texts, ['2026-11-01', '2026-11-05'])
+    expect(daysOf(texts[2] ?? '', meta)).toEqual(['2026-11-01', '2026-11-05'])
+  })
+
+  test('unticking one leaves the other its date', () => {
+    const both = '- [x] Call mom\n- [x] Call mom\n'
+    const meta = walk(
+      [twice, '- [ ] Call mom\n- [x] Call mom\n', both],
+      ['2026-11-01', '2026-11-05'],
+    )
+    const upper = '- [ ] Call mom\n- [x] Call mom\n'
+    expect(daysOf(upper, step(meta, both, upper, '2026-11-07'))).toEqual([null, '2026-11-01'])
+    const lower = '- [x] Call mom\n- [ ] Call mom\n'
+    expect(daysOf(lower, step(meta, both, lower, '2026-11-07'))).toEqual(['2026-11-05', null])
+  })
+
+  test('deleting one leaves the other its date', () => {
+    const three = '- [x] Call mom\n- [ ] Call mom\n- [x] Call mom\n'
+    const meta = walk(
+      [
+        '- [ ] Call mom\n- [ ] Call mom\n- [ ] Call mom\n',
+        '- [x] Call mom\n- [ ] Call mom\n- [ ] Call mom\n',
+        three,
+      ],
+      ['2026-11-01', '2026-11-05'],
+    )
+    const gone = '- [ ] Call mom\n- [x] Call mom\n'
+    expect(daysOf(gone, step(meta, three, gone, '2026-11-07'))).toEqual([null, '2026-11-05'])
+    const open = '- [x] Call mom\n- [x] Call mom\n'
+    expect(daysOf(open, step(meta, three, open, '2026-11-07'))).toEqual([
+      '2026-11-01',
+      '2026-11-05',
+    ])
+  })
+
+  test('a moved one takes its date along', () => {
+    const done = '- [x] Call mom\n- [ ] Call mom\n- [ ] Gym\n'
+    const meta = walk([twice + '- [ ] Gym\n', done], ['2026-11-01'])
+    const moved = '- [ ] Call mom\n- [ ] Gym\n- [x] Call mom\n'
+    expect(daysOf(moved, step(meta, done, moved, '2026-11-07'))).toEqual([null, null, '2026-11-01'])
+  })
+
+  test('editing the words of one keeps both dates', () => {
+    const both = '- [x] Call mom\n- [x] Call mom\n'
+    const meta = walk(
+      [twice, '- [x] Call mom\n- [ ] Call mom\n', both],
+      ['2026-11-01', '2026-11-05'],
+    )
+    const edited = '- [x] Call mom\n- [x] Call dad\n'
+    expect(daysOf(edited, step(meta, both, edited, '2026-11-07'))).toEqual([
+      '2026-11-01',
+      '2026-11-05',
+    ])
+  })
+
+  test('a tick from another device gives the same dates whether its metadata comes first or last', () => {
+    const lower = '- [ ] Call mom\n- [x] Call mom\n'
+    const both = '- [x] Call mom\n- [x] Call mom\n'
+    const there = walk([twice, lower, both], ['2026-11-01', '2026-11-05'])
+    const here = walk([twice, lower], ['2026-11-01'])
+    expect(datesChanged(rows(lower), rows(both), there, '2026-11-05')).toBeNull()
+    expect(daysOf(both, step(there, lower, both, '2026-11-05'))).toEqual([
+      '2026-11-05',
+      '2026-11-01',
+    ])
+    expect(step(here, lower, both, '2026-11-05')).toEqual(there)
+    const unticked = '- [x] Call mom\n- [ ] Call mom\n'
+    const later = step(there, both, unticked, '2026-11-06')
+    expect(daysOf(unticked, step(later, both, unticked, '2026-11-06'))).toEqual([
+      '2026-11-05',
+      null,
+    ])
+  })
+
+  test('cancelling each keeps its own day', () => {
+    const texts = [twice, '- [ ] Call mom\n- [-] Call mom\n', '- [-] Call mom\n- [-] Call mom\n']
+    const meta = walk(texts, ['2026-11-01', '2026-11-05'])
+    expect(daysOf(texts[2] ?? '', meta)).toEqual(['2026-11-05', '2026-11-01'])
+  })
+
+  test('an old single date is still read, for each todo with those words', () => {
+    const both = '- [x] Call mom\n- [x] Call mom\n'
+    const hash = rows(both)[1]?.anchor?.hash ?? ''
+    const old = { [DONE_KEY]: `${hash}:20261101` }
+    expect(daysOf(both, old)).toEqual(['2026-11-01', '2026-11-01'])
+    const more = `${both}- [x] Call mom\n`
+    expect(daysOf(more, step(old, `${both}- [ ] Call mom\n`, more, '2026-11-05'))).toEqual([
+      '2026-11-01',
+      '2026-11-01',
+      '2026-11-05',
+    ])
+  })
+
+  test('taken out of Orden, each gets its own ✅', () => {
+    const both = '- [x] Call mom\n- [x] Call mom\n'
+    const meta = walk(
+      [twice, '- [ ] Call mom\n- [x] Call mom\n', both],
+      ['2026-11-01', '2026-11-05'],
+    )
+    expect(writtenDates(both, meta)).toBe(
+      '- [x] Call mom ✅ 2026-11-05\n- [x] Call mom ✅ 2026-11-01\n',
+    )
   })
 })
 

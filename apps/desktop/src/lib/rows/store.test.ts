@@ -506,10 +506,11 @@ describe('the rows a view shows', () => {
 })
 
 describe('the rows of a todo list and of a note (#1229, #1228)', () => {
-  function listed(disk: Record<string, string>) {
+  function listed(disk: Record<string, string>, now?: () => number) {
     const meta = new Map<string, Record<string, string>>([['Errands.md', { 'todo-list': 'yes' }]])
     const dated: [string, Record<string, string | null>][] = []
     const made = rig(disk, null, [], {
+      ...(now ? { now } : {}),
       meta: (_root, path) => meta.get(path) ?? null,
       list: (_root, path, said) => path === '.Inbox.md' || said?.['todo-list'] === 'yes',
       dated: (_root, path, patch) => {
@@ -556,5 +557,32 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
     const done = store.of().find((row) => row.task?.text === 'Post the letter')
     expect(done?.task?.completed).toBe(todayOf(new Date(42)))
     expect(done?.task?.text).toBe('Post the letter')
+  })
+
+  test('two todos with the same words keep their own dates, ticked here or on another device (#1401)', async () => {
+    const path = `${WORK}/Errands.md`
+    const first = new Date(2026, 10, 1, 12).getTime()
+    const later = new Date(2026, 10, 5, 12).getTime()
+    let clock = first
+    const { store, answer, settled, disk } = listed(
+      { [path]: '- [ ] Call mom\n- [ ] Call mom\n' },
+      () => clock,
+    )
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+    disk.set(path, '- [ ] Call mom\n- [x] Call mom\n')
+    store.saved(path, '- [ ] Call mom\n- [x] Call mom\n')
+    clock = later
+    disk.set(path, '- [x] Call mom\n- [x] Call mom\n')
+    await store.follow({ op: 'created', path, kind: 'file', root: WORK })
+    store.described(path)
+    await settled()
+    const days = store
+      .of()
+      .filter((row) => row.task)
+      .map((row) => row.task?.completed)
+    expect(days).toEqual([todayOf(new Date(later)), todayOf(new Date(first))])
   })
 })
