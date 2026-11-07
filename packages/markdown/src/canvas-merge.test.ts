@@ -377,6 +377,47 @@ describe('what stamping an edit compares', () => {
     expect(out.moved).toBeUndefined()
   })
 
+  test('and strokes cut far apart hold in mind only those strokes, not all that lies between', () => {
+    const { ink } = counted(600)
+    const before = stamped(plane(), plane({ ink }), 1000)
+    const cut = new Set([3, 300, 596])
+    const after = before.ink.flatMap((one, at) =>
+      cut.has(at) ? [stroke(`s${at}`, at + 0.5), stroke(`piece${at}`, at + 0.7)] : [one],
+    )
+    const add = Object.getOwnPropertyDescriptor(Set.prototype, 'add')?.value as (
+      this: Set<unknown>,
+      value: unknown,
+    ) => Set<unknown>
+    let held = 0
+    Set.prototype.add = function (this: Set<unknown>, value: unknown) {
+      held += 1
+      return add.call(this, value)
+    }
+    try {
+      stamped(before, { ...before, ink: after }, 2000)
+    } finally {
+      Set.prototype.add = add
+    }
+
+    expect(held).toBeLessThan(60)
+  })
+
+  test('and a stroke carried across others that stay is the one that moved', () => {
+    const before = stamped(
+      plane(),
+      plane({ ink: [stroke('a'), stroke('b'), stroke('c'), stroke('d'), stroke('e')] }),
+      1000,
+    )
+    const [a, b, c, d, e] = before.ink
+    const out = stamped(before, { ...before, ink: [b!, c!, d!, a!, e!] }, 2000)
+    const swapped = stamped(before, { ...before, ink: [{ ...a!, size: 9 }, c!, d!, e!, b!] }, 2000)
+
+    expect(out.moved).toEqual({ a: 2000 })
+    expect(out.at).toEqual({ a: 1000, b: 1000, c: 1000, d: 1000, e: 1000 })
+    expect(swapped.moved).toEqual({ b: 2000 })
+    expect(swapped.at.a).toBe(2000)
+  })
+
   test('and a stroke rubbed out between others leaves a tombstone, and nothing moved', () => {
     const before = stamped(
       plane(),

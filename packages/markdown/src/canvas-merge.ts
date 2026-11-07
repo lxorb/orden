@@ -72,13 +72,158 @@ function movesAfter(
   return Object.keys(moved).length ? moved : undefined
 }
 
-function diff<T extends Thing>(
-  before: readonly T[],
-  after: readonly T[],
-  touched: { changed: string[]; removed: string[]; shifted: string[] },
-): void {
-  if (before === after) return
+interface Touched {
+  changed: string[]
+  removed: string[]
+  shifted: string[]
+}
 
+function diff<T extends Thing>(before: readonly T[], after: readonly T[], touched: Touched): void {
+  const hunks = hunksOf(before, after)
+  if (!hunks.length) return
+
+  const [only] = hunks
+  if (only && hunks.length === 1) {
+    sorted(only.was, only.is, touched)
+    return
+  }
+
+  const sides = { was: new Map<T, number>(), is: new Map<T, number>() }
+  hunks.forEach((hunk, at) => {
+    for (const thing of hunk.was) sides.was.set(thing, at)
+    for (const thing of hunk.is) sides.is.set(thing, at)
+  })
+
+  const was = hunks.flatMap((hunk) => hunk.was)
+  const is = hunks.flatMap((hunk) => hunk.is)
+  if (sorted(was, is, touched, sides)) return
+
+  const [span] = spanOf(before, after)
+  if (span) sorted(span.was, span.is, touched)
+}
+
+function sorted<T extends Thing>(
+  wasMiddle: readonly T[],
+  isMiddle: readonly T[],
+  touched: Touched,
+  sides?: { was: ReadonlyMap<T, number>; is: ReadonlyMap<T, number> },
+): boolean {
+  if (wasMiddle.length === 0) {
+    for (const thing of isMiddle) touched.changed.push(thing.id)
+    return true
+  }
+
+  if (isMiddle.length === 0) {
+    for (const thing of wasMiddle) touched.removed.push(thing.id)
+    return true
+  }
+
+  const held = new Set(wasMiddle)
+  const kept = new Set(isMiddle)
+  const fresh = isMiddle.filter((thing) => !held.has(thing))
+  const left = wasMiddle.filter((thing) => !kept.has(thing))
+  const freshIds = new Map(fresh.map((thing) => [thing.id, thing]))
+  const leftIds = new Map(left.map((thing) => [thing.id, thing]))
+
+  if (sides) {
+    for (const thing of isMiddle) {
+      if (held.has(thing) && sides.was.get(thing) !== sides.is.get(thing)) return false
+    }
+    for (const [id, thing] of freshIds) {
+      const was = leftIds.get(id)
+      if (was && sides.was.get(was) !== sides.is.get(thing)) return false
+    }
+  }
+
+  for (const thing of fresh) touched.changed.push(thing.id)
+  for (const [id] of leftIds) {
+    if (!freshIds.has(id)) touched.removed.push(id)
+  }
+
+  const was = wasMiddle.filter((thing) => kept.has(thing) || freshIds.has(thing.id))
+  const both = isMiddle.filter((thing) => held.has(thing) || leftIds.has(thing.id))
+  if (
+    was.length === both.length &&
+    was.every((thing, at) => thing === both[at] || thing.id === both[at]?.id)
+  )
+    return true
+
+  const places = new Map(was.map((thing, index) => [thing.id, index]))
+  const stayed = standing(
+    both,
+    (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0),
+  )
+  for (const [index, thing] of both.entries()) {
+    if (!stayed.has(index)) touched.shifted.push(thing.id)
+  }
+  return true
+}
+
+export interface Hunk<T> {
+  at: number
+  was: readonly T[]
+  is: readonly T[]
+}
+
+const REACH = 48
+const HUNKS = 64
+
+function resync<T>(
+  before: readonly T[],
+  from: number,
+  after: readonly T[],
+  to: number,
+): [number, number] | null {
+  const left = before.length - from
+  const right = after.length - to
+
+  for (let reach = 1; reach <= REACH; reach++) {
+    for (let dropped = 0; dropped <= reach; dropped++) {
+      const added = reach - dropped
+      if (dropped > left || added > right) continue
+      if (dropped === left && added === right) return [dropped, added]
+      if (dropped < left && added < right && before[from + dropped] === after[to + added]) {
+        return [dropped, added]
+      }
+    }
+  }
+
+  return null
+}
+
+function walked<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] | null {
+  const hunks: Hunk<T>[] = []
+  let from = 0
+  let to = 0
+
+  while (from < before.length || to < after.length) {
+    if (from < before.length && to < after.length && before[from] === after[to]) {
+      from++
+      to++
+      continue
+    }
+
+    const step = resync(before, from, after, to)
+    if (!step || hunks.length === HUNKS) return null
+    const [dropped, added] = step
+    hunks.push({
+      at: to,
+      was: before.slice(from, from + dropped),
+      is: after.slice(to, to + added),
+    })
+    from += dropped
+    to += added
+  }
+
+  return hunks
+}
+
+export function hunksOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
+  if (before === after) return []
+  return walked(before, after) ?? spanOf(before, after)
+}
+
+function spanOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
   let head = 0
   const shortest = Math.min(before.length, after.length)
   while (head < shortest && before[head] === after[head]) head++
@@ -91,47 +236,13 @@ function diff<T extends Thing>(
     tail++
   }
 
-  const wasMiddle = before.slice(head, before.length - tail)
-  const isMiddle = after.slice(head, after.length - tail)
-
-  if (wasMiddle.length === 0) {
-    for (const thing of isMiddle) touched.changed.push(thing.id)
-    return
-  }
-
-  if (isMiddle.length === 0) {
-    for (const thing of wasMiddle) touched.removed.push(thing.id)
-    return
-  }
-
-  const held = new Set(wasMiddle)
-  const kept = new Set(isMiddle)
-  const fresh = isMiddle.filter((thing) => !held.has(thing))
-  const left = wasMiddle.filter((thing) => !kept.has(thing))
-  const freshIds = new Set(fresh.map((thing) => thing.id))
-  const leftIds = new Set(left.map((thing) => thing.id))
-
-  for (const thing of fresh) touched.changed.push(thing.id)
-  for (const thing of left) {
-    if (!freshIds.has(thing.id)) touched.removed.push(thing.id)
-  }
-
-  const was = wasMiddle.filter((thing) => kept.has(thing) || freshIds.has(thing.id))
-  const both = isMiddle.filter((thing) => held.has(thing) || leftIds.has(thing.id))
-  if (
-    was.length === both.length &&
-    was.every((thing, at) => thing === both[at] || thing.id === both[at]?.id)
-  )
-    return
-
-  const places = new Map(was.map((thing, index) => [thing.id, index]))
-  const stayed = standing(
-    both,
-    (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0),
-  )
-  for (const [index, thing] of both.entries()) {
-    if (!stayed.has(index)) touched.shifted.push(thing.id)
-  }
+  return [
+    {
+      at: head,
+      was: before.slice(head, before.length - tail),
+      is: after.slice(head, after.length - tail),
+    },
+  ]
 }
 
 export function standing<T extends object>(
