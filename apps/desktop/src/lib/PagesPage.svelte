@@ -15,6 +15,7 @@
   } from './pages/paper'
   import { boxOf, COLOURS, type Highlight, toViewport } from './pdf/highlights'
   import { wordsOfRuns } from './pdf/find'
+  import { wordsEnd } from './pages/words-end'
   import { locate } from './reading/find'
   import { pixelRatio } from './pixel-ratio.svelte'
 
@@ -203,6 +204,11 @@
     }
   })
 
+  $effect(() => {
+    const layer = words
+    if (layer && read) return wordsEnd(layer)
+  })
+
   const hits = $derived.by(() => {
     const layer = words
     if (!read || !layer || !sought.length) return []
@@ -382,6 +388,7 @@
   .words {
     position: absolute;
     inset: 0;
+    isolation: isolate;
     overflow: clip;
     text-align: initial;
     line-height: 1;
@@ -396,6 +403,7 @@
   .words :global(span),
   .words :global(br) {
     position: absolute;
+    z-index: var(--z-raised);
     color: transparent;
     white-space: pre;
     transform-origin: 0 0;
@@ -419,6 +427,20 @@
     cursor: text;
     user-select: text;
     -webkit-user-select: text;
+  }
+
+  .words :global(.end) {
+    position: absolute;
+    inset: 100% 0 0;
+    z-index: var(--z-base);
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .words.live:global(.selecting) :global(.end) {
+    top: 0;
+    pointer-events: auto;
   }
 
   .words :global(::selection) {

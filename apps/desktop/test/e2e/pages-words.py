@@ -92,12 +92,12 @@ def paper() -> bytes:
     return bytes(out)
 
 
-def across(page, box) -> None:
+def across(page, box, beyond: float = 0) -> None:
     y = box["y"] + box["height"] / 2
     page.mouse.move(box["x"] + 1, y)
     page.mouse.down()
     for step in range(1, 13):
-        page.mouse.move(box["x"] + 1 + (box["width"] - 2) * step / 12, y)
+        page.mouse.move(box["x"] + 1 + (box["width"] - 2 + beyond) * step / 12, y)
     page.mouse.up()
 
 
@@ -233,6 +233,15 @@ def drive(browser: Browser) -> None:
     if page.evaluate(INK):
         wrong("choosing words drew ink")
     shot(page, "words-chosen")
+
+    for beyond in (6, 40):
+        page.evaluate("() => getSelection().removeAllRanges()")
+        line = page.evaluate(SPAN, "Line 4:")
+        across(page, line, beyond)
+        chosen = page.evaluate("() => String(getSelection())")
+        say(f"dragged {beyond}px past the end of line 4: {chosen!r}")
+        if "Line 4: the kestrel hangs above the field." not in chosen or "Line 5" in chosen:
+            wrong(f"dragging past the end of a line of the PDF chose {chosen!r}")
 
     page.locator(".pages").first.focus()
     page.keyboard.press("d")
