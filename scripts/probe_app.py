@@ -41,6 +41,8 @@ SWP_NOMOVE = 0x0002
 SWP_NOZORDER = 0x0004
 SWP_NOACTIVATE = 0x0010
 
+GW_OWNER = 4
+
 UNDRAWN = frozenset({"Tao Thread Event Target", "Winit Thread Event Target"})
 UNDRAWN_SUFFIX = "-sic"
 
@@ -55,6 +57,14 @@ user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32"
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if sys.platform == "win32" else None
 if user32 is not None and kernel32 is not None:
     user32.GetForegroundWindow.restype = wintypes.HWND
+    user32.GetWindow.restype = wintypes.HWND
+    user32.GetWindow.argtypes = [wintypes.HWND, wintypes.UINT]
+    kernel32.QueryFullProcessImageNameW.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.LPWSTR,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
     user32.SetWindowPos.argtypes = [
         wintypes.HWND,
         wintypes.HWND,
@@ -367,6 +377,39 @@ def in_physical_pixels() -> None:
     if user32 is not None:
         user32.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
 
+def image_of(pid: int) -> str:
+
+    assert kernel32 is not None
+    handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not handle:
+        return "?"
+    try:
+        size = wintypes.DWORD(1024)
+        name = ctypes.create_unicode_buffer(1024)
+        if not kernel32.QueryFullProcessImageNameW(handle, 0, name, ctypes.byref(size)):
+            return "?"
+        return pathlib.PureWindowsPath(name.value).name
+    finally:
+        kernel32.CloseHandle(handle)
+
+def whose(look: Look, pids: Collection[int]) -> list[str]:
+
+    assert user32 is not None
+    living = parents()
+    found: list[str] = []
+    for one in look.windows:
+        if one.pid not in pids or not one.visible or not on_a_screen(one.box, look.screens):
+            continue
+        title = ctypes.create_unicode_buffer(256)
+        user32.GetWindowTextW(one.hwnd, title, 256)
+        owner = user32.GetWindow(one.hwnd, GW_OWNER) or 0
+        parent = living.get(one.pid, 0)
+        found.append(
+            f"0x{one.hwnd:X} {title.value!r} owned by 0x{owner:X}, {image_of(one.pid)} "
+            f"started by pid {parent} ({image_of(parent)})"
+        )
+    return found
+
 def end_all(pids: Iterable[int]) -> None:
 
     assert kernel32 is not None
@@ -395,14 +438,16 @@ def _watch(app: subprocess.Popen[bytes]) -> None:
             pids &= parents().keys()
             if not pids or now - gone_at > AFTERLIFE:
                 return
-        seen = in_view(look(pids), pids)
+        looked = look(pids)
+        seen = in_view(looked, pids)
         if seen:
+            told = whose(looked, pids)
             end_all([app.pid, *(pids - {app.pid})])
             after = (now - started) * 1000
             print(
-                f"PROBE IN VIEW after {after:.0f} ms: {'; '.join(seen)}. Ended pid {app.pid} and "
-                f"{len(pids) - 1} under it; this build or drive puts a window in front of "
-                "somebody. See scripts/probe_app.py.",
+                f"PROBE IN VIEW after {after:.0f} ms: {'; '.join(seen)} ({'; '.join(told)}). "
+                f"Ended pid {app.pid} and {len(pids) - 1} under it; this build or drive puts a "
+                "window in front of somebody. See scripts/probe_app.py.",
                 file=sys.stderr,
             )
             sys.stderr.flush()
