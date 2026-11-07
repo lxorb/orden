@@ -5,18 +5,24 @@ import {
   LIST_KEY,
   LIST_VALUE,
   type Meta,
+  STOPPED_VALUE,
 } from '@orden/bases/todo-lists'
 import { insideSpace, isMarkdownPath, relativeTo, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { inboxOf } from './inbox'
 import { inProjects, projectsOf } from './projects'
 
-const byFolder = (root: string, relative: string) =>
-  !workspace.itemMeta.listsMarked(root) && inProjects(root, relative)
+function byFolder(root: string, relative: string, meta: Meta): boolean {
+  return (
+    meta?.[LIST_KEY] === undefined &&
+    !workspace.itemMeta.listsMarked(root) &&
+    inProjects(root, relative)
+  )
+}
 
 export function listedAt(root: string, relative: string, meta?: Meta): boolean {
   const said = meta === undefined ? workspace.itemMeta.of(insideSpace(root, relative), root) : meta
-  return isTodoList(relative, said, inboxOf(root)) || byFolder(root, relative)
+  return isTodoList(relative, said, inboxOf(root)) || byFolder(root, relative, said)
 }
 
 export function isListed(path: string): boolean {
@@ -30,7 +36,11 @@ export function makeList(path: string): void {
 }
 
 export function unmakeList(path: string): void {
-  workspace.itemMeta.set(path, { [LIST_KEY]: null, [DONE_KEY]: null, [CANCELLED_KEY]: null })
+  workspace.itemMeta.set(path, {
+    [LIST_KEY]: STOPPED_VALUE,
+    [DONE_KEY]: null,
+    [CANCELLED_KEY]: null,
+  })
 }
 
 const keyOf = (path: string) => path.replace(/\\/g, '/').normalize('NFC').toLowerCase()
