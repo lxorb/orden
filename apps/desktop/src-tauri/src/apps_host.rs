@@ -222,6 +222,11 @@ impl Hosted {
     }
 }
 
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
+fn still_running(apps: &HashMap<String, Arc<Running>>, key: &str, running: &Arc<Running>) -> bool {
+    apps.get(key).is_some_and(|one| Arc::ptr_eq(one, running))
+}
+
 fn owner(webview: &Webview) -> Result<(), String> {
     let label = webview.label();
     if label == webview.window().label() && crate::launch::is_document_window(label) {
@@ -731,7 +736,15 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
             };
             match stream::Peer::answer(source, &offer) {
                 Ok((peer, answer)) => {
-                    hosted.peers().insert(key.to_owned(), peer);
+                    let apps = hosted.apps();
+                    if !still_running(&apps, key, &running) {
+                        drop(apps);
+                        drop(peer);
+                        return Some(stream::cannot_text("stopped"));
+                    }
+                    let replaced = hosted.peers().insert(key.to_owned(), peer);
+                    drop(apps);
+                    drop(replaced);
                     Some(stream::answer_text(&answer))
                 }
                 Err(why) => Some(stream::cannot_text(why.word())),
@@ -1069,30 +1082,46 @@ mod tests {
     }
 
     #[cfg(any(target_os = "linux", target_os = "windows"))]
+    fn idle() -> Arc<Running> {
+        Arc::new(Running {
+            pid: 0,
+            events: Mutex::new(None),
+            stopping: AtomicBool::new(false),
+            screen: Arc::new(Mutex::new(Screen {
+                display: String::new(),
+                hz: 60.0,
+            })),
+            #[cfg(target_os = "linux")]
+            display: Mutex::new(None),
+            #[cfg(target_os = "linux")]
+            sink: Mutex::new(None),
+            #[cfg(target_os = "windows")]
+            desktop: Mutex::new(None),
+        })
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[test]
     fn nothing_is_kept_once_the_app_has_begun_to_close() {
-        let idle = || {
-            Arc::new(Running {
-                pid: 0,
-                events: Mutex::new(None),
-                stopping: AtomicBool::new(false),
-                screen: Arc::new(Mutex::new(Screen {
-                    display: String::new(),
-                    hz: 60.0,
-                })),
-                #[cfg(target_os = "linux")]
-                display: Mutex::new(None),
-                #[cfg(target_os = "linux")]
-                sink: Mutex::new(None),
-                #[cfg(target_os = "windows")]
-                desktop: Mutex::new(None),
-            })
-        };
         let hosted = Hosted::default();
         assert!(hosted.kept("before", &idle()));
         assert_eq!(hosted.closed().len(), 1);
         assert!(!hosted.kept("after", &idle()));
         assert!(hosted.apps().is_empty());
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[test]
+    fn a_viewer_answered_after_its_app_ended_or_was_replaced_is_not_kept() {
+        let hosted = Hosted::default();
+        let first = idle();
+        assert!(hosted.kept("a", &first));
+        assert!(still_running(&hosted.apps(), "a", &first));
+        let second = idle();
+        assert!(hosted.kept("a", &second));
+        assert!(!still_running(&hosted.apps(), "a", &first));
+        hosted.apps().remove("a");
+        assert!(!still_running(&hosted.apps(), "a", &second));
     }
 
     #[test]
