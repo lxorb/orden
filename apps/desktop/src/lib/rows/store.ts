@@ -222,11 +222,11 @@ export class RowsStore {
     if (op.op === 'moved') {
       if (op.kind === 'space') this.spaceMoved(op.from, op.to)
       else if (this.moved(op.from, op.to)) return undefined
-      else return op.kind === 'folder' ? this.folderCame(op.to) : this.fileCame(op.to)
+      else return op.kind === 'folder' ? this.folderCame(op.to) : this.fileCame(op.to, !op.heard)
       return undefined
     }
 
-    return op.kind === 'folder' ? this.folderCame(op.path) : this.fileCame(op.path)
+    return op.kind === 'folder' ? this.folderCame(op.path) : this.fileCame(op.path, !op.heard)
   }
 
   private flat(held: Held): Row[] {

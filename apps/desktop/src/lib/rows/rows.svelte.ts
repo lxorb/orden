@@ -34,7 +34,7 @@ const store = new RowsStore({
   dated: (root, path, patch) => workspace.itemMeta.set(insideSpace(root, path), patch, root),
 })
 
-links.hearSaves((path, content) => store.saved(path, content))
+links.hearSaves((path, content, arrived) => store.saved(path, content, !arrived))
 workspace.itemMeta.hear((path) => store.described(path))
 hearInboxChosen((root) => {
   keepInboxListed(root, workspace)

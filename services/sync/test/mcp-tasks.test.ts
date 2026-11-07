@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { taskHash } from '@orden/bases'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
+import { running } from './room'
 
 let env: TestEnv
 let token: string
@@ -10,6 +11,7 @@ const today = new Date().toISOString().slice(0, 10)
 
 beforeEach(async () => {
   env = testEnv()
+  env.ROOMS = running(env).ROOMS
   token = await signIn(env, 'a@b.dev')
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
   space = created.json.space.id
@@ -65,6 +67,49 @@ async function json(key: string, name: string, args: Record<string, unknown> = {
 const read = async (key: string, path: string) => tool(key, 'read_note', { space: 'Work', path })
 
 describe('the to-dos, with Orden closed', () => {
+  test("a todo ticked or moved through the connector keeps its done day in its list's metadata", async () => {
+    const key = await connector()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Errands.md', content: '- [x] Post the letter\n' },
+    })
+    const posted = taskHash('Post the letter')
+    env.db
+      .prepare("update notes set meta = ? where space_id = ? and path = 'Errands.md'")
+      .run(JSON.stringify({ 'todo-list': 'yes', 'done-on': `${posted}:20200101` }), space)
+    const metaOf = async (path: string) => {
+      const id = (env.db.prepare('select id from notes where path = ?').get(path) as { id: string })
+        .id
+      const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
+      const items = (page.json as unknown as { items: { id: string; meta?: object }[] }).items
+      return items.find((one) => one.id === id)?.meta as Record<string, string> | undefined
+    }
+
+    await json(key, 'update_task', {
+      space: 'Work',
+      at: `Shop.md#1:${taskHash('Milk')}`,
+      done: true,
+    })
+    const day = today.replace(/-/g, '')
+    expect((await metaOf('Shop.md'))?.['done-on']).toBe(`${taskHash('Milk')}:${day}`)
+
+    await json(key, 'update_task', {
+      space: 'Work',
+      at: `Errands.md#0:${posted}`,
+      move_to: { note: 'Shop' },
+    })
+    expect(await read(key, 'Shop.md')).toContain('- [x] Post the letter')
+    expect((await metaOf('Shop.md'))?.['done-on']).toContain(`${posted}:20200101`)
+    expect((await metaOf('Shop.md'))?.['done-on']).toContain(`${taskHash('Milk')}:${day}`)
+
+    await tool(key, 'write_note', {
+      space: 'Work',
+      path: 'Thesis.md',
+      content: `# Thesis\n- [ ] Write the intro #writing ⏫ 📅 ${today}\n  - [x] Outline\n- [ ] Read 🔁 every day 📅 ${today}\n`,
+    })
+    expect((await metaOf('Thesis.md'))?.['done-on']).toBe(`${taskHash('Outline')}:${day}`)
+  })
+
   test('a limit is a whole number of tasks, one or more', async () => {
     const key = await connector()
     await tool(key, 'add_task', { space: 'Work', note: 'one.md', text: 'first' })

@@ -112,7 +112,7 @@ const TASKS = __EVEN_PLUGIN__ ? undefined : taskLines()
 let queryBlock: typeof import('./query-block') | null = null
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
-const hearing = new Set<(path: string, content: string) => void>()
+const hearing = new Set<(path: string, content: string, arrived: boolean) => void>()
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
 const indexing = new Set<(root: string, scans: readonly ScannedNote[]) => void>()
@@ -513,8 +513,8 @@ class Links {
     this.version++
   }
 
-  noteSaved(path: string, content: string) {
-    if (this === links) for (const hear of hearing) hear(path, content)
+  noteSaved(path: string, content: string, arrived = false) {
+    if (this === links) for (const hear of hearing) hear(path, content, arrived)
     const relative = this.relative(path)
     if (!relative) {
       this.otherSaved(path, content)
@@ -551,7 +551,7 @@ class Links {
     this.listed = listed
   }
 
-  hearSaves(hear: (path: string, content: string) => void): () => void {
+  hearSaves(hear: (path: string, content: string, arrived: boolean) => void): () => void {
     hearing.add(hear)
     return () => hearing.delete(hear)
   }
@@ -1290,7 +1290,7 @@ class Links {
           }).catch(refused)
       if (after === null) continue
       if (drawing.relinked) doc?.wroteAs(after)
-      for (const hear of hearing) hear(target, after)
+      for (const hear of hearing) hear(target, after, false)
       told?.push(target)
 
       rewritten(read, after)
