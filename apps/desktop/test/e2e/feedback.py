@@ -17,6 +17,7 @@ PHONE = (
 )
 
 BUG = ".foot button[aria-label='Send feedback']"
+YOU = "[data-phone-you]"
 SHEET = "[role=dialog][aria-label='Send feedback']"
 SEND = f"{SHEET} button[type=submit]"
 
@@ -32,8 +33,18 @@ def fresh(browser: Browser, finger: bool, scheme: str) -> Page:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     DRIVE.ready(page)
     page.evaluate("() => { window.nibApp.workspace.panel = 'tree' }")
-    wait_for(page, f"!!document.querySelector({BUG!r})", "the bug at the foot of the sidebar")
+    where = YOU if finger else BUG
+    wait_for(page, f"!!document.querySelector({where!r})", "the way to send feedback")
     return page
+
+def ask(page: Page, finger: bool) -> None:
+    if not finger:
+        page.locator(BUG).click()
+        return
+    page.locator(YOU).tap()
+    item = page.locator('[role="menuitem"]:has-text("Send feedback")')
+    item.wait_for(state="visible", timeout=5000)
+    item.tap()
 
 def reports(worker: harness.Worker) -> list[dict]:
     until = time.monotonic() + 10
@@ -52,9 +63,10 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
         ("phone", True, "light"),
     ):
         page = fresh(browser, finger, scheme)
-        shot(page, f"{label}-foot", clip=page.locator(".foot").bounding_box())
+        if not finger:
+            shot(page, f"{label}-foot", clip=page.locator(".foot").bounding_box())
 
-        page.locator(BUG).click()
+        ask(page, finger)
         wait_for(page, f"!!document.querySelector({SHEET!r})", f"[{label}] the sheet")
         page.wait_for_timeout(400)
         if not page.locator(SEND).is_disabled():
