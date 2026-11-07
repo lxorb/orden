@@ -63,7 +63,7 @@ sunday` becomes chips as it is typed, in English and German, and a chip pressed 
    scheduler (Windows scheduled toasts, macOS notification triggers), the phone schedules
    local alarms, Orden stays in the tray while a reminder exists, and the Worker pushes to
    a phone that has not opened Orden since (8.5).
-10. **The agent works the list.** `nib mcp` and the account connector gain `list_tasks`,
+10. **The agent works the list.** `orden mcp` and the account connector gain `list_tasks`,
     `add_task`, `update_task`, `query_base`, `add_row` and `edit_base`; the AI sidebar gets
     `/tasks` and `/today` (plan my day), and its background-work command becomes `/jobs`.
 11. **Todoist comes in whole**: projects, sections, sub-tasks, labels, priorities, recurring
@@ -285,9 +285,9 @@ added, property edited or a schedule; forms that write rows.
 | 77  | Karma                                                            | none                                                                                                                                                        | drop                                   | points for ticking boxes is the opposite of calm                 |
 | 78  | Vacation mode, days off                                          | none                                                                                                                                                        | drop                                   | belongs to Karma                                                 |
 | 79  | Calendar sync (Google, Outlook)                                  | an ICS feed of dated tasks from the Worker, read-only                                                                                                       | later                                  | a feed is cheap; two-way is a product                            |
-| 80  | 100+ integrations                                                | `nib mcp`, the account connector, the CLI and `orden://`                                                                                                      | drop                                   | one surface agents and scripts already use                       |
+| 80  | 100+ integrations                                                | `orden mcp`, the account connector, the CLI and `orden://`                                                                                                      | drop                                   | one surface agents and scripts already use                       |
 | 81  | API                                                              | the CLI's `tasks` verbs and `orden://add-task` (5.15)                                                                                                         | must                                   |                                                                  |
-| 82  | MCP server                                                       | `nib mcp` and the account connector (5.15)                                                                                                                  | must                                   | Emil's ask                                                       |
+| 82  | MCP server                                                       | `orden mcp` and the account connector (5.15)                                                                                                                  | must                                   | Emil's ask                                                       |
 | 83  | Offline                                                          | files                                                                                                                                                       | must                                   | free                                                             |
 | 84  | Sync                                                             | Orden sync, tasks being notes                                                                                                                                 | must                                   | free                                                             |
 | 85  | Mobile apps                                                      | the phone build with the panel and quick add                                                                                                                | must                                   |                                                                  |
@@ -1471,7 +1471,7 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 
 ### 5.15 Agents
 
-**The verbs**, in `nib mcp` (`apps/desktop/src-tauri/src/mcp/tools.json`, answered by the
+**The verbs**, in `orden mcp` (`apps/desktop/src-tauri/src/mcp/tools.json`, answered by the
 window as the note verbs are, `apps/desktop/src/lib/agents/workspace/notes.ts`) and, where
 marked, the account connector (`services/sync/src/mcp/tools.ts`, reading the account's notes
 with Orden closed):

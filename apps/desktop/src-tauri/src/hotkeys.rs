@@ -273,7 +273,7 @@ fn started_by(
         .as_deref()
         .and_then(|first| std::path::Path::new(first).file_name())
         .map_or_else(
-            || "nib".to_owned(),
+            || "orden".to_owned(),
             |name| name.to_string_lossy().into_owned(),
         )
 }
@@ -303,9 +303,9 @@ mod tests {
 
     #[test]
     fn a_command_line_presses_the_keys_it_names() {
-        let argv: Vec<String> = ["nib", "--quick-add"].map(String::from).into();
+        let argv: Vec<String> = ["orden", "--quick-add"].map(String::from).into();
         assert_eq!(Which::asked_by(&argv), vec![Which::QuickAdd]);
-        let argv: Vec<String> = ["nib", "--stop-agents", "--quick-add"]
+        let argv: Vec<String> = ["orden", "--stop-agents", "--quick-add"]
             .map(String::from)
             .into();
         assert_eq!(
@@ -330,17 +330,20 @@ mod tests {
                 None,
                 some("/home/e/Orden.AppImage"),
                 None,
-                some("/tmp/.mount/nib")
+                some("/tmp/.mount/orden")
             ),
             "/home/e/Orden.AppImage"
         );
         assert_eq!(
-            started_by(None, None, some("orden"), some("/snap/x/nib")),
+            started_by(None, None, some("orden"), some("/snap/x/orden")),
             "orden"
         );
-        assert_eq!(started_by(None, None, None, some("/usr/bin/nib")), "nib");
+        assert_eq!(
+            started_by(None, None, None, some("/usr/bin/orden")),
+            "orden"
+        );
         assert_eq!(started_by(None, None, None, some("orden")), "orden");
-        assert_eq!(started_by(None, None, None, None), "nib");
+        assert_eq!(started_by(None, None, None, None), "orden");
     }
 
     #[test]

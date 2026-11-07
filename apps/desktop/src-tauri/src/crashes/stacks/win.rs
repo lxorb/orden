@@ -66,7 +66,7 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
     let (told, heard) = mpsc::channel();
     let walker = std::thread::Builder::new()
-        .name("nib stack walk".to_owned())
+        .name("orden stack walk".to_owned())
         .spawn(move || {
             let _ = told.send(walk_all());
         });

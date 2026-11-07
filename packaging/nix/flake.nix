@@ -207,10 +207,19 @@
                 install -d $out/libexec
                 cp -r usr/share/Orden $out/libexec/${pname}
                 rm -f $out/libexec/${pname}/chrome-sandbox
+                if [ -e $out/libexec/${pname}/orden ]; then
+                  rm -f $out/libexec/${pname}/nib
+                else
+                  mv $out/libexec/${pname}/nib $out/libexec/${pname}/orden
+                fi
               ''
             else
               ''
-                install -Dm755 usr/bin/nib $out/libexec/${pname}/nib
+                if [ -e usr/bin/orden ]; then
+                  install -Dm755 usr/bin/orden $out/libexec/${pname}/orden
+                else
+                  install -Dm755 usr/bin/nib $out/libexec/${pname}/orden
+                fi
               ''
           )
           + ''
@@ -220,11 +229,13 @@
               --replace-fail 'Exec=orden' 'Exec=${pname}' \
               --replace-fail 'Icon=orden' 'Icon=${pname}' \
               --replace-fail 'StartupWMClass=orden' 'StartupWMClass=${pname}'
+            icon=orden
+            [ -e usr/share/icons/hicolor/32x32/apps/orden.png ] || icon=nib
             for size in 32 128; do
-              install -Dm644 usr/share/icons/hicolor/"$size"x"$size"/apps/nib.png \
+              install -Dm644 usr/share/icons/hicolor/"$size"x"$size"/apps/$icon.png \
                 $out/share/icons/hicolor/"$size"x"$size"/apps/${pname}.png
             done
-            install -Dm644 usr/share/icons/hicolor/256x256@2/apps/nib.png \
+            install -Dm644 usr/share/icons/hicolor/256x256@2/apps/$icon.png \
               $out/share/icons/hicolor/256x256/apps/${pname}.png
             runHook postInstall
           '';
@@ -240,7 +251,7 @@
               done
             ''
             + ''
-            makeShellWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
+            makeShellWrapper $out/libexec/${pname}/orden $out/bin/${pname} \
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
@@ -364,8 +375,8 @@
             '';
 
             postInstall = ''
-              install -Dm755 $out/bin/nib $out/libexec/${pname}/nib
-              rm $out/bin/nib
+              install -Dm755 $out/bin/orden $out/libexec/${pname}/orden
+              rm $out/bin/orden
               rm -f $out/bin/chrome-sandbox
               rm -rf $out/lib
               for one in ${cef}/*; do
@@ -390,7 +401,7 @@
 
             dontWrapGApps = true;
             postFixup = ''
-              makeWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
+              makeWrapper $out/libexec/${pname}/orden $out/bin/${pname} \
                 --inherit-argv0 \
                 ''${gappsWrapperArgs[@]} \
                 --prefix PATH : ${lib.makeBinPath [ pkgs.xdg-utils ]}

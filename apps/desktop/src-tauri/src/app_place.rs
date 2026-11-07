@@ -155,7 +155,7 @@ mod tests {
             Some(PathBuf::from("/Applications/nibeditor.app"))
         );
         for exe in [
-            "/Users/a/code/nib/target/release/nib",
+            "/Users/a/code/nib/target/release/orden",
             "/Applications/nibeditor.app/Contents/Resources/nib",
             "/Applications/nibeditor/Contents/MacOS/nib",
             "nib",

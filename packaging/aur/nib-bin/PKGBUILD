@@ -22,13 +22,21 @@ source=('nib.desktop')
 source_x86_64=("nib.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
-sha256sums=('dbc30233704066e7d5479267db5d81532ca61a5b68f30eb0b7eccc9372532aff')
-sha256sums_x86_64=('224c56b21c59f931b4d33d8e76f3df3211de9c9888ae935885bc9ddd37f2975d')
-sha256sums_aarch64=('353880baa146b3adb121a2ce85307a6c4f48f93697ce3fb2f6396bf09d54665e')
+sha256sums=('9275d5003e0f6d336c2159c3900e535512c6e9bf63309c2a7c85144b85902e63')
+sha256sums_x86_64=('85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b')
+sha256sums_aarch64=('58e43657f7b36a01864b595d740f143aca75f4f19d518846944c28820d675839')
 
 package() {
   bsdtar -O -xf "${srcdir}/nib.deb" 'data.tar.*' |
     bsdtar -xf - -C "${pkgdir}" usr
+  if [ ! -e "${pkgdir}/usr/bin/orden" ]; then
+    ln -s nib "${pkgdir}/usr/bin/orden"
+  fi
+  for one in "${pkgdir}"/usr/share/icons/hicolor/*/apps/nib.png; do
+    if [ -f "$one" ] && [ ! -e "${one%/nib.png}/orden.png" ]; then
+      mv "$one" "${one%/nib.png}/orden.png"
+    fi
+  done
   chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
   install -Dm644 "${srcdir}/nib.desktop" \
@@ -37,8 +45,8 @@ package() {
     "${pkgdir}/usr/share/applications/nibeditor.desktop" \
     "${pkgdir}/usr/share/applications/Orden.desktop"
 
-  install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/${_pkgname}.png" \
-    "${pkgdir}/usr/share/icons/hicolor/256x256/apps/${_pkgname}.png"
+  install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/orden.png" \
+    "${pkgdir}/usr/share/icons/hicolor/256x256/apps/orden.png"
   rm -rf "${pkgdir}/usr/share/icons/hicolor/256x256@2"
 }
 

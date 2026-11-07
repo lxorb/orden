@@ -100,7 +100,7 @@ describe('a call says its thread', () => {
   })
 })
 
-describe('an answer, as nib mcp writes it', () => {
+describe('an answer, as orden mcp writes it', () => {
   test('a question says what it is about, for the thread’s Always', () => {
     expect(
       outputIn({

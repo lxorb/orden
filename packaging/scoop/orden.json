@@ -37,10 +37,16 @@
             "New-Item -Path $appdata -ItemType Junction -Target \"$persist_dir\" | Out-Null"
         ]
     },
-    "bin": "nib.exe",
+    "bin": [
+        "orden.exe",
+        [
+            "orden.exe",
+            "nib"
+        ]
+    ],
     "shortcuts": [
         [
-            "nib.exe",
+            "orden.exe",
             "Orden"
         ]
     ],

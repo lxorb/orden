@@ -512,17 +512,17 @@ domain. It is a verification nonce rather than a credential - using it means alr
 controlling the domain's DNS - but a token scoped to "notes and nothing about the
 account" can read it, and so can a guest.
 
-Then a script, `scripts/nib-sync.mjs`, forty lines of fetch:
+Then a script, `scripts/orden-sync.mjs`, forty lines of fetch:
 
 ```yaml
 - name: Pull the notes
-  run: node scripts/nib-sync.mjs pull "Work" ./notes
+  run: node scripts/orden-sync.mjs pull "Work" ./notes
   env:
     ORDEN_TOKEN: ${{ secrets.ORDEN_TOKEN }}
 ```
 
 `pull` writes every note into the folder and remembers the cursor in
-`.nib-cursor`, so the second run asks only for what has changed and a deleted note
+`.orden-cursor`, so the second run asks only for what has changed and a deleted note
 takes its file with it. `push` sends every note in the folder, creating what the
 account does not hold and writing what it holds differently. A file missing from the
 folder is never read as "delete it from the account": a checkout that failed half
@@ -587,4 +587,4 @@ writes rather than rows, because a Worker's ceiling is on writes.
 - `apps/desktop/test/e2e/sync.py` - all of it against `wrangler dev`: a note pushed
   and its history read back, the rollback, the rule chosen in the pane and read off
   the account, the log, a second factor turned on with a code the drive works out
-  itself, and `nib-sync.mjs` pulling the space into a folder.
+  itself, and `orden-sync.mjs` pulling the space into a folder.

@@ -1127,7 +1127,7 @@ Features Typora does not have, which are the reason this exists.
 - [x] A space pulled or pushed without the app, for a repository of notes that
       publishes from CI. No new credential and no second API: the `nib_` token that
       already exists for an LLM connector now reaches the sync routes as well, and
-      `scripts/nib-sync.mjs` is forty lines of fetch over the change feed. Not a
+      `scripts/orden-sync.mjs` is forty lines of fetch over the change feed. Not a
       delete, ever - a script that can delete is a script that can empty a space on
       a bad `if`
 - [x] Models, brought rather than sold: Claude, OpenAI, and anything that speaks

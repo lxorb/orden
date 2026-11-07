@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 fn noting_every_window_from_a_command_while_one_moves_never_stops_the_window_s_thread() {
     let mut context = tauri::generate_context!();
     context.config_mut().app.windows.clear();
-    let app = nib_lib::window_thread::managed(tauri::Builder::<tauri::Wry>::new().any_thread())
+    let app = orden_lib::window_thread::managed(tauri::Builder::<tauri::Wry>::new().any_thread())
         .build(context)
         .expect("an app");
     let window = tauri::window::WindowBuilder::new(&app, "moving")
@@ -35,7 +35,7 @@ fn noting_every_window_from_a_command_while_one_moves_never_stops_the_window_s_t
         let until = Instant::now() + Duration::from_secs(5);
         let mut rounds = 0_u32;
         while Instant::now() < until {
-            nib_lib::window_thread::note_every_window(&handle);
+            orden_lib::window_thread::note_every_window(&handle);
             rounds += 1;
         }
         noted.store(true, Ordering::Relaxed);

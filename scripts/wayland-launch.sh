@@ -70,7 +70,7 @@ if [ "${PORTAL:-0}" = 1 ]; then
 fi
 
 strangers() {
-  [ -n "${CLASS-nib}" ] || return 0
+  [ -n "${CLASS-orden}" ] || return 0
   swaymsg -t get_tree | python3 -c '
 import json, sys
 def walk(node):
@@ -81,7 +81,7 @@ def walk(node):
     for child in node.get("nodes", []) + node.get("floating_nodes", []):
         walk(child)
 walk(json.load(sys.stdin))
-' "${CLASS-nib}"
+' "${CLASS-orden}"
 }
 
 views() {
@@ -341,7 +341,7 @@ if wait_for_views 1; then
   echo "the window mapped after $(( ($(date +%s%N) - started) / 1000000 )) ms:"
   views
   if [ -n "$(strangers)" ]; then
-    echo "::error::a window not under the desktop entry's name, ${CLASS-nib}, or Chromium's own:"
+    echo "::error::a window not under the desktop entry's name, ${CLASS-orden}, or Chromium's own:"
     strangers
     status=1
   fi
@@ -729,7 +729,7 @@ if ! kill -0 "$app_pid" 2>/dev/null; then
   status=1
 fi
 if [ -n "$(strangers)" ]; then
-  echo "::error::as the run ends, a window not under ${CLASS-nib}, or Chromium's own:"
+  echo "::error::as the run ends, a window not under ${CLASS-orden}, or Chromium's own:"
   strangers
   status=1
 fi

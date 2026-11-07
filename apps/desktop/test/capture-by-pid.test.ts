@@ -8,7 +8,7 @@ const read = (relative: string) => readFileSync(fileURLToPath(new URL(relative, 
 const SCRIPT = read('../../../scripts/capture-window.ps1')
 
 const CALLERS = [
-  '../../../apps/cli/nib.mjs',
+  '../../../apps/cli/orden.mjs',
   '../../../scripts/appearance-e2e.py',
   '../../../scripts/capture-e2e.py',
   '../../../scripts/recorder-e2e.py',
@@ -53,13 +53,13 @@ describe('the window capture', () => {
   })
 
   test('the command line says so rather than guessing when the app named no process', () => {
-    const cli = read('../../../apps/cli/nib.mjs')
+    const cli = read('../../../apps/cli/orden.mjs')
     expect(cli).toContain('did not say which process it is')
     expect(cli).not.toMatch(/pid \? \[/)
   })
 
   test('the command line photographs a Mac window by its number, not its rectangle', () => {
-    const cli = read('../../../apps/cli/nib.mjs')
+    const cli = read('../../../apps/cli/orden.mjs')
     expect(cli).toContain('kCGWindowOwnerPID === Number(argv[0])')
     expect(cli).toMatch(/'-l\$\{id\}'|`-l\$\{id\}`/)
     expect(cli).not.toMatch(/`-R\$\{/)

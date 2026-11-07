@@ -25,15 +25,16 @@ const MOST: Record<Kind, number> = {
   scheme: 21,
   key: 128,
   variable: 18,
-  dashed: 347,
-  word: 3009,
+  dashed: 334,
+  word: 2692,
 }
 
 const ALIASES_SHIP_IN = 'v0.21.0'
 
 const ALIASES: Record<string, readonly string[]> = {
   '.github/workflows/check.yml': ['nibApp'],
-  'apps/cli/nib.mjs': ['NIB_'],
+  'apps/cli/orden.mjs': ['NIB_', 'nib is the same command'],
+  'apps/cli/package.json': ['"nib"'],
   'apps/desktop/public/manifest.webmanifest': ['web+nib'],
   'apps/desktop/public/sw.js': ["'nib'"],
   'apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml': ['android:scheme="nib"'],
@@ -55,7 +56,13 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src-tauri/src/secrets.rs': ['"nibeditor"'],
   'apps/desktop/src-tauri/src/terminal/picture.rs': ['strip_prefix("nib-")', 'is_ours("nib-'],
   'apps/desktop/src-tauri/src/uris.rs': ['"nib:"', 'nib://', 'NIB://'],
-  'apps/desktop/src-tauri/tauri.conf.json': ['"orden", "nib"'],
+  'apps/desktop/src-tauri/linux/nib': ['/usr/bin/orden'],
+  'apps/desktop/src-tauri/src/mcp/program.rs': ['const FORMER'],
+  'apps/desktop/src-tauri/tauri.conf.json': [
+    '"orden", "nib"',
+    '"/usr/bin/nib"',
+    '"/usr/share/Orden/nib"',
+  ],
   'apps/desktop/src-tauri/tauri.macos.conf.json': ['"orden", "nib"'],
   'apps/desktop/src/App.svelte': ['nibApp'],
   'apps/desktop/src/lib/Editor.svelte': ["'nib'"],
@@ -119,8 +126,10 @@ const ALIASES: Record<string, readonly string[]> = {
     "TOKEN_PROTOCOL = 'nib.token.'",
     "DEVICE_PROTOCOL = 'nib.device.'",
   ],
+  'packaging/scoop/orden.json': ['"nib"'],
   'scripts/account-backup.mjs': ['NIB_API', 'NIB_TOKEN', 'x-nib-device'],
-  'scripts/nib-sync.mjs': ['NIB_API', 'NIB_TOKEN'],
+  'scripts/nib-sync.mjs': ['orden-sync'],
+  'scripts/orden-sync.mjs': ['NIB_API', 'NIB_TOKEN', '.nib-cursor'],
   'scripts/online-e2e.mjs': ['nib.token.', 'nib.device.'],
   'scripts/sync-flip.mjs': ["'x-nib-device'"],
   'services/machine/orden-update': ['NIB_ORIGIN'],

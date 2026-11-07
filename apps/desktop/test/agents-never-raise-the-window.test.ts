@@ -10,7 +10,7 @@ function launchers(text: string): string[] {
 }
 
 describe('an agent connecting and the reader’s window', () => {
-  test('nib mcp starts the app asking for no window, on every desktop', () => {
+  test('orden mcp starts the app asking for no window, on every desktop', () => {
     const app = read('mcp/app.rs')
     const each = launchers(app)
     expect(each.length).toBe(3)

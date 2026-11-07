@@ -144,8 +144,9 @@ Show 'after'
 
 $olds = @($names | Where-Object { $_ -ne $product })
 
-$exe = "$want\nib.exe"
+$exe = "$want\orden.exe"
 Check "the program is in $want" (Test-Path $exe)
+Check 'and the program under its former name is gone' (-not (Test-Path "$want\nib.exe"))
 Check "and it is $version" ((Get-Item $exe).VersionInfo.ProductVersion -like "$version*")
 if ($Scenario -eq 'msi') {
   Check 'no second folder under the new name' (-not (Test-Path "$env:ProgramFiles\$product"))

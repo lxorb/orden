@@ -100,7 +100,9 @@
         "desktopTemplate": "linux/main.desktop",
         "postInstallScript": "linux/postinst",
         "files": {
-          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy"
+          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy",
+          "/usr/bin/nib": "linux/nib",
+          "/usr/share/Orden/nib": "linux/nib"
         }
       },
       "rpm": {
@@ -126,7 +128,9 @@
         "obsoletes": ["nib", "nibeditor"],
         "desktopTemplate": "linux/main.desktop",
         "files": {
-          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy"
+          "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy",
+          "/usr/bin/nib": "linux/nib",
+          "/usr/share/Orden/nib": "linux/nib"
         }
       }
     },

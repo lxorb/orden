@@ -615,11 +615,11 @@ mod tests {
     #[test]
     fn a_crash_written_in_its_handler_is_read_back_as_a_report() {
         let stub = read_stub(
-            "orden-crash 1\nat 1791065463685\nversion 0.20.1-1184\nwhat SIGSEGV\ncode 0x1\naddress 0x10\nthread main\nmain 1\nframe nib\t0x1a2b\t\nframe libc.so.6\t0x29d90\t__libc_start_main\ndoing web_open\ncrumb 1791065463000\tweb_open\n",
+            "orden-crash 1\nat 1791065463685\nversion 0.20.1-1184\nwhat SIGSEGV\ncode 0x1\naddress 0x10\nthread main\nmain 1\nframe orden\t0x1a2b\t\nframe libc.so.6\t0x29d90\t__libc_start_main\ndoing web_open\ncrumb 1791065463000\tweb_open\n",
         )
         .expect("a stub");
         assert_eq!(stub.version, "0.20.1-1184");
-        assert_eq!(stub.report.summary, "SIGSEGV at 0x10 in nib");
+        assert_eq!(stub.report.summary, "SIGSEGV at 0x10 in orden");
         assert_eq!(stub.report.doing.as_deref(), Some("web_open"));
         let thread = &stub.report.threads[0];
         assert_eq!(thread.crashed, Some(true));
@@ -639,8 +639,8 @@ mod tests {
             exception_name(0xC000_0005),
             Some("EXCEPTION_ACCESS_VIOLATION")
         );
-        let stub = read_stub("orden-crash 1\nat 5\nwhat exception\ncode 0xc00000fd\nthread main\nmain 1\nframe nib.exe\t0x10\t\n")
+        let stub = read_stub("orden-crash 1\nat 5\nwhat exception\ncode 0xc00000fd\nthread main\nmain 1\nframe orden.exe\t0x10\t\n")
             .expect("a stub");
-        assert_eq!(stub.report.summary, "EXCEPTION_STACK_OVERFLOW in nib.exe");
+        assert_eq!(stub.report.summary, "EXCEPTION_STACK_OVERFLOW in orden.exe");
     }
 }

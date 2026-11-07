@@ -205,7 +205,7 @@ function claudeServers() {
   const names = Object.keys(config.mcpServers ?? {})
   if (names.length !== 1 || names[0] !== 'orden') throw new Error(`servers ${names.join(', ')}`)
   const nib = config.mcpServers.orden
-  if (nib.args?.join(' ') !== 'mcp' || nib.env) throw new Error('nib is not run as nib mcp')
+  if (nib.args?.join(' ') !== 'mcp' || nib.env) throw new Error('nib is not run as orden mcp')
   return has('--safe-mode') ? [] : [{ name: 'orden', status: 'connected' }]
 }
 
@@ -476,12 +476,12 @@ function appServer() {
     if (Object.keys(config).some((key) => !key.startsWith('mcp_servers.orden.')))
       return fail(id, 'configured beyond Orden')
     if (config['mcp_servers.orden.command']) {
-      if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
+      if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not orden mcp')
       if (
         !config['mcp_servers.orden.env_vars']?.includes('ORDEN_MCP_TOKEN') ||
         !process.env.ORDEN_MCP_TOKEN
       )
-        return fail(id, 'nib mcp has no token')
+        return fail(id, 'orden mcp has no token')
     }
     const thread = { id: `thread-${++threads}` }
     reply(id, {

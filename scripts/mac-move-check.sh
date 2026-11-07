@@ -3,7 +3,7 @@ set -u
 
 built="$1"
 identifier="so.orden.Orden.probe.mac-move"
-cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
+cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/orden.mjs"
 support="$HOME/Library/Application Support/$identifier"
 export ORDEN_ENDPOINT="$support/automation.json"
 name="$(basename "$built")"

@@ -1,12 +1,12 @@
 [package]
-name = "nib"
+name = "orden"
 version = "0.16.0"
 edition = "2021"
 license = "AGPL-3.0-only"
 rust-version = "1.89"
 
 [lib]
-name = "nib_lib"
+name = "orden_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [lints.rust]

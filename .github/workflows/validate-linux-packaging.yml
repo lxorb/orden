@@ -69,9 +69,11 @@ jobs:
           entry=$(ls x/usr/share/applications/*.desktop | head -1)
           cat "$entry"
           desktop-file-validate "$entry" && echo 'valid' || echo 'invalid'
-          ls -la x/usr/bin/nib x/usr/share/Orden
-          file -L x/usr/bin/nib
-          objdump -p x/usr/share/Orden/nib | grep -E 'NEEDED|RUNPATH'
+          ls -la x/usr/bin x/usr/share/Orden
+          file -L x/usr/bin/*
+          for program in x/usr/share/Orden/orden x/usr/share/Orden/nib; do
+            if [ -f "$program" ]; then objdump -p "$program" | grep -E 'NEEDED|RUNPATH'; fi
+          done
           stat -c '%a %U %n' x/usr/share/Orden/chrome-sandbox
 
       - name: What the AppImage bundles
@@ -139,8 +141,9 @@ jobs:
           for tauri in Nib nibeditor Orden; do
             test ! -e "/check/usr/share/applications/$tauri.desktop"
           done
-          test -f /check/usr/share/icons/hicolor/256x256/apps/nib.png
+          test -f /check/usr/share/icons/hicolor/256x256/apps/orden.png
           test ! -e /check/usr/share/icons/hicolor/256x256@2
+          test -x /check/usr/bin/orden
           test -x /check/usr/bin/nib
           desktop-file-validate /check/usr/share/applications/nib.desktop
           echo 'installed layout ok'

@@ -159,7 +159,7 @@ function stemOf(path) {
 
 export function framesToSymbolize(report, symbolsFile) {
   const stem = stemOf(symbolsFile)
-  const ours = new Set([stem, 'nib', 'orden', 'libnib_lib', 'nib_lib'])
+  const ours = new Set([stem, 'nib', 'orden', 'libnib_lib', 'orden_lib', 'liborden_lib', 'nib_lib'])
   const wanted = new Map()
   for (const thread of report.threads ?? []) {
     for (const frame of thread.frames) {

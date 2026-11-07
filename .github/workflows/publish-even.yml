@@ -108,7 +108,7 @@ jobs:
       - uses: lxorb/evenhub-publish@13791357d7737735801747fffb389a71c6fd1b68
         with:
           package-id: ${{ needs.gate.outputs.package }}
-          ehpk: nib.ehpk
+          ehpk: orden.ehpk
           version: ${{ needs.gate.outputs.version }}
           changelog: ${{ needs.gate.outputs.changelog }}
           branch: ${{ inputs.branch || vars.EVENHUB_BRANCH || 'beta' }}

@@ -34,7 +34,8 @@ installed() {
   now=$(rpm -q --queryformat '%{VERSION}-%{RELEASE}' orden)
   [ "$now" = "$wanted" ] || { echo "$manager installed orden $now, not $wanted" >&2; exit 1; }
   rpm -q --queryformat '%{DSAHEADER:pgpsig}%{RSAHEADER:pgpsig}\n' orden | grep -v '^(none)(none)$'
-  missing=$(ldd /usr/share/Orden/nib /usr/share/Orden/libcef.so | grep 'not found' || true)
+  program=$(readlink -f "$(command -v orden || command -v nib)")
+  missing=$(ldd "$program" /usr/share/Orden/libcef.so | grep 'not found' || true)
   [ -z "$missing" ] || { echo "what Orden links and $manager did not install:" >&2; echo "$missing" >&2; exit 1; }
   echo "orden $now from $suite, on $manager"
 }

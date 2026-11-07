@@ -78,12 +78,12 @@ mod tests {
   #[test]
   fn the_name_is_the_command_without_its_folder() {
     assert_eq!(
-      program_name(OsStr::new("/usr/bin/nib")).as_deref(),
-      Some("nib")
+      program_name(OsStr::new("/usr/bin/orden")).as_deref(),
+      Some("orden")
     );
     assert_eq!(
-      program_name(OsStr::new("/tmp/.mount_OrdenX/bin/nib")).as_deref(),
-      Some("nib")
+      program_name(OsStr::new("/tmp/.mount_OrdenX/bin/orden")).as_deref(),
+      Some("orden")
     );
     assert_eq!(
       program_name(OsStr::new("orden-unstable")).as_deref(),

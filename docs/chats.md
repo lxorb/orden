@@ -64,7 +64,7 @@ them.
    open it are offered a share in one press); `[[` mentions a note and makes a backlink; a
    message becomes a task through quick add, or a note, each linking back to the message;
    search finds messages beside notes.
-9. **The agent is a member, under the grant.** `nib mcp` and the account connector gain
+9. **The agent is a member, under the grant.** `orden mcp` and the account connector gain
    `list_chats`, `read_chat`, `search_chats`, `post_message`, `react` and `draft_message`.
    Reading is `chats.read`; posting where anybody else reads is Publishing in
    `docs/agent-native.md` 9.3 and asks first unless the reader allowed it for that chat; a
@@ -141,7 +141,7 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
   Nitro-style shop items (animated avatars, super reactions, banners as a product);
   stickers; forum channels (a note is the long-form answer); announcements and "urgent"
   repeat pings; disappearing messages on a chat the server can read anyway; a bot
-  marketplace, where `nib mcp`, the connector and program tokens are the integration. And,
+  marketplace, where `orden mcp`, the connector and program tokens are the integration. And,
   by Emil's decisions (section 7): direct and group messages outside a space, a transcript
   on disk, end-to-end encryption, and phone push for now.
 
@@ -829,7 +829,7 @@ Settings, and one function decides.
 
 ### 4.14 The agent
 
-**Verbs**, in `nib mcp` (`apps/desktop/src-tauri/src/mcp/tools.json`, answered by the window as
+**Verbs**, in `orden mcp` (`apps/desktop/src-tauri/src/mcp/tools.json`, answered by the window as
 the note verbs are) and, where marked, the account connector (`services/sync/src/mcp/tools.ts`):
 
 | tool | arguments | what it does | scope | connector |
@@ -1108,7 +1108,7 @@ says so and the lane picks the next free one.
 - **Disappearing messages** while chats are readable by the server.
 - **Stories, channels with subscribers, communities with discovery.** Orden's chats are among
   people who already share something.
-- **A bot marketplace.** `nib mcp`, the connector and program tokens are the integration.
+- **A bot marketplace.** `orden mcp`, the connector and program tokens are the integration.
 - **Direct and group messages** between people outside a space, and with them "who can
   message you", requests and blocking (decision 7.1).
 - **A transcript on disk.** Chats are not written into the space as markdown; the log lives

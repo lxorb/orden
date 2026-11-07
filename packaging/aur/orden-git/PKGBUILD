@@ -47,7 +47,7 @@ package() {
     "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
   rm -f "${pkgdir}/usr/share/applications/Orden.desktop"
 
-  install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/${_pkgname}.png" \
-    "${pkgdir}/usr/share/icons/hicolor/256x256/apps/${_pkgname}.png"
+  install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/orden.png" \
+    "${pkgdir}/usr/share/icons/hicolor/256x256/apps/orden.png"
   rm -rf "${pkgdir}/usr/share/icons/hicolor/256x256@2"
 }

@@ -61,7 +61,7 @@ jobs:
             Linux)
               bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
                 --ignore-version-mismatches --config "$config"
-              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib" >>"$GITHUB_ENV"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden" >>"$GITHUB_ENV"
               ;;
             macOS)
               pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --bundles app --config "$config"
@@ -70,7 +70,7 @@ jobs:
               ;;
             Windows)
               pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
-              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib.exe" >>"$GITHUB_ENV"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.exe" >>"$GITHUB_ENV"
               ;;
           esac
 

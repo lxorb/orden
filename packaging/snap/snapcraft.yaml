@@ -35,8 +35,8 @@ platforms:
 
 apps:
   orden:
-    command: usr/bin/nib
-    desktop: usr/share/applications/nib.desktop
+    command: usr/bin/orden
+    desktop: usr/share/applications/orden.desktop
     extensions: [gnome]
     common-id: so.orden.Orden
     plugs:
@@ -70,28 +70,37 @@ parts:
     override-build: |
       craftctl default
 
+      if [ ! -e "${CRAFT_PART_INSTALL}/usr/bin/orden" ]; then
+        ln -s nib "${CRAFT_PART_INSTALL}/usr/bin/orden"
+      fi
       rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop" \
         "${CRAFT_PART_INSTALL}/usr/share/applications/nibeditor.desktop" \
-        "${CRAFT_PART_INSTALL}/usr/share/applications/Orden.desktop"
+        "${CRAFT_PART_INSTALL}/usr/share/applications/Orden.desktop" \
+        "${CRAFT_PART_INSTALL}/usr/share/applications/orden.desktop"
       install -d "${CRAFT_PART_INSTALL}/usr/share/applications"
-      cat > "${CRAFT_PART_INSTALL}/usr/share/applications/nib.desktop" <<'DESKTOP'
+      cat > "${CRAFT_PART_INSTALL}/usr/share/applications/orden.desktop" <<'DESKTOP'
       [Desktop Entry]
       Type=Application
       Name=Orden
       GenericName=Markdown Editor
       Comment=Write markdown and see it as you type
-      Exec=nib %U
-      Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/nib.png
+      Exec=orden %U
+      Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/orden.png
       Terminal=false
       Categories=Office;TextEditor;Utility;
       MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;
       Keywords=markdown;md;editor;notes;writing;wysiwyg;nib;nibeditor;
-      StartupWMClass=nib
+      StartupWMClass=orden
       StartupNotify=true
       DESKTOP
 
       icons="${CRAFT_PART_INSTALL}/usr/share/icons/hicolor"
-      if [ -f "${icons}/256x256@2/apps/nib.png" ]; then
-        install -Dm644 "${icons}/256x256@2/apps/nib.png" "${icons}/256x256/apps/nib.png"
+      for one in "${icons}"/*/apps/nib.png; do
+        if [ -f "$one" ] && [ ! -e "${one%/nib.png}/orden.png" ]; then
+          mv "$one" "${one%/nib.png}/orden.png"
+        fi
+      done
+      if [ -f "${icons}/256x256@2/apps/orden.png" ]; then
+        install -Dm644 "${icons}/256x256@2/apps/orden.png" "${icons}/256x256/apps/orden.png"
         rm -rf "${icons}/256x256@2"
       fi

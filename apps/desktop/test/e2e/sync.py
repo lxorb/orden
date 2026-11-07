@@ -286,7 +286,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
     with tempfile.TemporaryDirectory(prefix="orden-ci-") as held:
         folder = Path(held)
         done = subprocess.run(
-            ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "pull", space, str(folder)],
+            ["node", str(ROOT / "scripts" / "orden-sync.mjs"), "pull", space, str(folder)],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -302,7 +302,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
         if landed:
             (folder / "from-ci.md").write_text("# From CI\n\nWritten by the action.\n", "utf-8")
             pushed = subprocess.run(
-                ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "push", space, str(folder)],
+                ["node", str(ROOT / "scripts" / "orden-sync.mjs"), "push", space, str(folder)],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",

@@ -1489,7 +1489,7 @@ to the same values. The client is under the product's name, which was Nib up to 
 an install over one of those, and a launch of a copy no installer ran over, move it to
 the new name and keep the ProgID, which is what the choice Windows sealed names.
 
-A link arrives as a command line on Windows and Linux (`nib.exe --url "%1"`, or a
+A link arrives as a command line on Windows and Linux (`orden.exe --url "%1"`, or a
 second launch handed to the running app) and as the system's "open these" on a Mac.
 The crate takes only a page on the web and never anything else on a link's command
 line (`web_handed.rs`), and gives it to the window in front, else the first, holding it

@@ -445,7 +445,7 @@ mod platform {
 mod tests {
     use super::{exe_of, is_ours, kept, registration, Value, OLD_NAMES, PROG_ID};
 
-    const EXE: &str = r"C:\Users\me\AppData\Local\Orden\nib.exe";
+    const EXE: &str = r"C:\Users\me\AppData\Local\Orden\orden.exe";
 
     fn values_under<'a>(table: &'a [Value], key: &str) -> Vec<&'a Value> {
         table.iter().filter(|one| one.key.ends_with(key)).collect()

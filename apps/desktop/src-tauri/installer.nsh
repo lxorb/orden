@@ -1,73 +1,82 @@
 !define ORDEN_OLD_NAME_1 "Nib"
 !define ORDEN_OLD_NAME_2 "nibeditor"
 !define ORDEN_NAME "Orden"
+!define ORDEN_OLD_BINARY "nib.exe"
 !define ORDEN_UNINSTKEYS "Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
-Var NibOldDir
-Var NibOldAsked
+Var OrdenOldDir
+Var OrdenOldAsked
 
-!define MUI_CUSTOMFUNCTION_GUIINIT NibFindOldInstall
+!define MUI_CUSTOMFUNCTION_GUIINIT OrdenFindOldInstall
 
 !macro ORDEN_FIND_UNDER OLD ID
-  StrCmp $NibOldDir "" 0 nib_find_${ID}_done
-  ReadRegStr $NibOldDir SHCTX "${ORDEN_UNINSTKEYS}\${OLD}" "InstallLocation"
-  StrCpy $R9 $NibOldDir 1
-  StrCmp $R9 '"' 0 nib_find_${ID}_unquoted
-    StrCpy $NibOldDir $NibOldDir "" 1
-    StrCpy $NibOldDir $NibOldDir -1
-  nib_find_${ID}_unquoted:
-  StrCmp $NibOldDir "" nib_find_${ID}_done
-  IfFileExists "$NibOldDir\uninstall.exe" nib_find_${ID}_done
-    StrCpy $NibOldDir ""
-  nib_find_${ID}_done:
+  StrCmp $OrdenOldDir "" 0 orden_find_${ID}_done
+  ReadRegStr $OrdenOldDir SHCTX "${ORDEN_UNINSTKEYS}\${OLD}" "InstallLocation"
+  StrCpy $R9 $OrdenOldDir 1
+  StrCmp $R9 '"' 0 orden_find_${ID}_unquoted
+    StrCpy $OrdenOldDir $OrdenOldDir "" 1
+    StrCpy $OrdenOldDir $OrdenOldDir -1
+  orden_find_${ID}_unquoted:
+  StrCmp $OrdenOldDir "" orden_find_${ID}_done
+  IfFileExists "$OrdenOldDir\uninstall.exe" orden_find_${ID}_done
+    StrCpy $OrdenOldDir ""
+  orden_find_${ID}_done:
 !macroend
 
-Function NibFindOldInstall
-  StrCmp $NibOldAsked "1" nib_find_done
-  StrCpy $NibOldAsked "1"
+Function OrdenFindOldInstall
+  StrCmp $OrdenOldAsked "1" orden_find_done
+  StrCpy $OrdenOldAsked "1"
 
   Push $R9
-  StrCpy $NibOldDir ""
+  StrCpy $OrdenOldDir ""
   !insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_2}" 2
   !insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_1}" 1
   Pop $R9
-  StrCmp $NibOldDir "" nib_find_done
-    StrCmp $INSTDIR "$LOCALAPPDATA\${ORDEN_NAME}" 0 nib_find_done
-    StrCpy $INSTDIR $NibOldDir
-  nib_find_done:
+  StrCmp $OrdenOldDir "" orden_find_done
+    StrCmp $INSTDIR "$LOCALAPPDATA\${ORDEN_NAME}" 0 orden_find_done
+    StrCpy $INSTDIR $OrdenOldDir
+  orden_find_done:
 FunctionEnd
 
 !macro ORDEN_RENAME_SHORTCUT DIR OLD ID
-  IfFileExists "${DIR}\${OLD}.lnk" 0 nib_lnk_${ID}_done
+  IfFileExists "${DIR}\${OLD}.lnk" 0 orden_lnk_${ID}_done
   !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
   Pop $0
-  StrCmp $0 1 nib_lnk_${ID}_here
-  StrCmp $NibOldDir "" nib_lnk_${ID}_done
-  !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$NibOldDir\${MAINBINARYNAME}.exe"
+  StrCmp $0 1 orden_lnk_${ID}_here
+  !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$INSTDIR\${ORDEN_OLD_BINARY}"
   Pop $0
-  StrCmp $0 1 nib_lnk_${ID}_gone nib_lnk_${ID}_done
-  nib_lnk_${ID}_here:
-    IfFileExists "${DIR}\${PRODUCTNAME}.lnk" nib_lnk_${ID}_gone
+  StrCmp $0 1 orden_lnk_${ID}_here
+  StrCmp $OrdenOldDir "" orden_lnk_${ID}_done
+  !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$OrdenOldDir\${MAINBINARYNAME}.exe"
+  Pop $0
+  StrCmp $0 1 orden_lnk_${ID}_gone
+  !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$OrdenOldDir\${ORDEN_OLD_BINARY}"
+  Pop $0
+  StrCmp $0 1 orden_lnk_${ID}_gone orden_lnk_${ID}_done
+  orden_lnk_${ID}_here:
+    IfFileExists "${DIR}\${PRODUCTNAME}.lnk" orden_lnk_${ID}_gone
     Rename "${DIR}\${OLD}.lnk" "${DIR}\${PRODUCTNAME}.lnk"
     !insertmacro SetLnkAppUserModelId "${DIR}\${PRODUCTNAME}.lnk"
-    Goto nib_lnk_${ID}_done
-  nib_lnk_${ID}_gone:
+    Goto orden_lnk_${ID}_done
+  orden_lnk_${ID}_gone:
     Delete "${DIR}\${OLD}.lnk"
-  nib_lnk_${ID}_done:
+  orden_lnk_${ID}_done:
 !macroend
 
 !macro ORDEN_FORGET_OLD_BROWSER OLD ID
   ReadRegStr $R7 SHCTX "Software\Clients\StartMenuInternet\${OLD}\shell\open\command" ""
-  StrCmp $R7 "" nib_browser_${ID}_done
-  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe"' nib_browser_${ID}_forget
-  StrCmp $R7 '"$NibOldDir\${MAINBINARYNAME}.exe"' nib_browser_${ID}_forget
+  StrCmp $R7 "" orden_browser_${ID}_done
+  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe"' orden_browser_${ID}_forget
+  StrCmp $R7 '"$OrdenOldDir\${MAINBINARYNAME}.exe"' orden_browser_${ID}_forget
+  StrCmp $R7 '"$INSTDIR\${ORDEN_OLD_BINARY}"' orden_browser_${ID}_forget
+  StrCmp $R7 '"$OrdenOldDir\${ORDEN_OLD_BINARY}"' orden_browser_${ID}_forget
   StrCpy $R6 $R7 "" 1
   StrCpy $R6 $R6 -1
-  IfFileExists $R6 nib_browser_${ID}_done
-  nib_browser_${ID}_forget:
+  IfFileExists $R6 orden_browser_${ID}_done
+  orden_browser_${ID}_forget:
     DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${OLD}"
     DeleteRegValue SHCTX "Software\RegisteredApplications" "${OLD}"
-  nib_browser_${ID}_done:
+  orden_browser_${ID}_done:
 !macroend
 
 !macro ORDEN_FORGET_OLD_NAME OLD ID
@@ -79,71 +88,73 @@ FunctionEnd
 !macroend
 
 !macro ORDEN_FORGET_OLD_MSI
-  IfSilent nib_msi_done
+  IfSilent orden_msi_done
   StrCpy $R8 0
-  nib_msi_loop:
+  orden_msi_loop:
     EnumRegKey $R7 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" $R8
-    StrCmp $R7 "" nib_msi_done
+    StrCmp $R7 "" orden_msi_done
     IntOp $R8 $R8 + 1
     ReadRegStr $R6 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "DisplayName"
     ReadRegStr $R5 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "Publisher"
-    StrCmp "$R6$R5" "${ORDEN_OLD_NAME_1}${MANUFACTURER}" nib_msi_old
-    StrCmp "$R6$R5" "${ORDEN_OLD_NAME_2}${MANUFACTURER}" nib_msi_old nib_msi_loop
-    nib_msi_old:
+    StrCmp "$R6$R5" "${ORDEN_OLD_NAME_1}${MANUFACTURER}" orden_msi_old
+    StrCmp "$R6$R5" "${ORDEN_OLD_NAME_2}${MANUFACTURER}" orden_msi_old orden_msi_loop
+    orden_msi_old:
     ReadRegStr $R6 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R7" "UninstallString"
     ${StrCase} $R5 $R6 "L"
     ${StrLoc} $R5 $R5 "msiexec" ">"
-    StrCmp $R5 0 0 nib_msi_loop
+    StrCmp $R5 0 0 orden_msi_loop
     ExecWait '$R6'
     StrCpy $WixMode 1
-  nib_msi_done:
+  orden_msi_done:
   ClearErrors
 !macroend
 
 !macro NSIS_HOOK_PREINSTALL
-  StrCmp $NibOldAsked "1" nib_pre_asked
+  StrCmp $OrdenOldAsked "1" orden_pre_asked
     StrCpy $R9 $INSTDIR
-    Call NibFindOldInstall
-    StrCmp $INSTDIR $R9 nib_pre_asked
+    Call OrdenFindOldInstall
+    StrCmp $INSTDIR $R9 orden_pre_asked
       SetOutPath $INSTDIR
       RMDir $R9
-  nib_pre_asked:
+  orden_pre_asked:
 
-  StrCmp $NibOldDir "" nib_pre_moved
-  StrCmp $NibOldDir $INSTDIR nib_pre_moved
-    ExecWait '"$NibOldDir\uninstall.exe" /S /UPDATE _?=$NibOldDir'
-    Delete "$NibOldDir\uninstall.exe"
-    RMDir "$NibOldDir"
-  nib_pre_moved:
+  StrCmp $OrdenOldDir "" orden_pre_moved
+  StrCmp $OrdenOldDir $INSTDIR orden_pre_moved
+    ExecWait '"$OrdenOldDir\uninstall.exe" /S /UPDATE _?=$OrdenOldDir'
+    Delete "$OrdenOldDir\uninstall.exe"
+    RMDir "$OrdenOldDir"
+  orden_pre_moved:
 
   !insertmacro ORDEN_FORGET_OLD_MSI
+  !insertmacro CheckIfAppIsRunning "${ORDEN_OLD_BINARY}" "${PRODUCTNAME}"
 !macroend
 
 !macro ORDEN_FORGET_EXTENSION EXT
   ReadRegStr $R0 SHCTX "Software\Classes\.${EXT}" ""
-  StrCmp $R0 "Markdown" 0 nib_forget_${EXT}_backup
+  StrCmp $R0 "Markdown" 0 orden_forget_${EXT}_backup
     ReadRegStr $R1 SHCTX "Software\Classes\.${EXT}" "Markdown_backup"
-    StrCmp $R1 "" nib_forget_${EXT}_unset
+    StrCmp $R1 "" orden_forget_${EXT}_unset
       WriteRegStr SHCTX "Software\Classes\.${EXT}" "" $R1
-      Goto nib_forget_${EXT}_backup
-    nib_forget_${EXT}_unset:
+      Goto orden_forget_${EXT}_backup
+    orden_forget_${EXT}_unset:
       DeleteRegValue SHCTX "Software\Classes\.${EXT}" ""
-  nib_forget_${EXT}_backup:
+  orden_forget_${EXT}_backup:
   DeleteRegValue SHCTX "Software\Classes\.${EXT}" "Markdown_backup"
 !macroend
 
 !macro ORDEN_FORGET_FILES
   ReadRegStr $R2 SHCTX "Software\Classes\Markdown\shell\open\command" ""
-  StrCmp $R2 '$INSTDIR\${MAINBINARYNAME}.exe "%1"' nib_forget_extensions
-  StrCmp $R2 "" nib_forget_extensions nib_forget_progid_kept
-  nib_forget_extensions:
+  StrCmp $R2 '$INSTDIR\${MAINBINARYNAME}.exe "%1"' orden_forget_extensions
+  StrCmp $R2 '$INSTDIR\${ORDEN_OLD_BINARY} "%1"' orden_forget_extensions
+  StrCmp $R2 "" orden_forget_extensions orden_forget_progid_kept
+  orden_forget_extensions:
     !insertmacro ORDEN_FORGET_EXTENSION "md"
     !insertmacro ORDEN_FORGET_EXTENSION "markdown"
     !insertmacro ORDEN_FORGET_EXTENSION "mdown"
     !insertmacro ORDEN_FORGET_EXTENSION "mkd"
-    StrCmp $R2 "" nib_forget_progid_kept
+    StrCmp $R2 "" orden_forget_progid_kept
       DeleteRegKey SHCTX "Software\Classes\Markdown"
-  nib_forget_progid_kept:
+  orden_forget_progid_kept:
 
   DeleteRegKey SHCTX "Software\Classes\Nib.markdown"
   DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}\Capabilities\FileAssociations"
@@ -163,14 +174,15 @@ FunctionEnd
 
 !macro ORDEN_PDF_FORGET
   ReadRegStr $R7 SHCTX "Software\Classes\NibPDF\shell\open\command" ""
-  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"' 0 nib_pdf_kept
+  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"' 0 orden_pdf_kept
     DeleteRegKey SHCTX "Software\Classes\NibPDF"
     DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF"
-  nib_pdf_kept:
+  orden_pdf_kept:
   ClearErrors
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
+  Delete "$INSTDIR\${ORDEN_OLD_BINARY}"
   !insertmacro ORDEN_PDF_OPEN_WITH
 
   WriteRegStr SHCTX "Software\Classes\NibURL" "" "${PRODUCTNAME} URL"
@@ -200,16 +212,17 @@ FunctionEnd
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
+  Delete "$INSTDIR\${ORDEN_OLD_BINARY}"
   !insertmacro ORDEN_PDF_FORGET
 
   !insertmacro ORDEN_FORGET_FILES
 
   ReadRegStr $R7 SHCTX "Software\Classes\NibURL\shell\open\command" ""
-  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" --url "%1"' 0 nib_browser_kept
+  StrCmp $R7 '"$INSTDIR\${MAINBINARYNAME}.exe" --url "%1"' 0 orden_browser_kept
     DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}"
     DeleteRegKey SHCTX "Software\Classes\NibURL"
     DeleteRegValue SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}"
-  nib_browser_kept:
+  orden_browser_kept:
   !insertmacro ORDEN_FORGET_OLD_BROWSER "${ORDEN_OLD_NAME_1}" uninstall_1
   !insertmacro ORDEN_FORGET_OLD_BROWSER "${ORDEN_OLD_NAME_2}" uninstall_2
   ClearErrors

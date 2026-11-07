@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use nib_lib as orden;
+use orden_lib as orden;
 
 fn main() {
     orden::former_name::carry_env();

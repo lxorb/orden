@@ -75,7 +75,7 @@ def closed():
     run("(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
     time.sleep(0.5)
 
-CLASS = os.environ.get("CLASS", "nib")
+CLASS = os.environ.get("CLASS", "orden")
 
 def strangers():
 

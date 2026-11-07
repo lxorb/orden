@@ -69,7 +69,7 @@ from probe_app import close_app, main_window, run_probe  # noqa: E402
 
 IDENTIFIER = "so.orden.Orden.launch"
 
-EXE = APP / "src-tauri" / "target" / "release" / "nib.exe"
+EXE = APP / "src-tauri" / "target" / "release" / "orden.exe"
 
 PATIENCE = 45
 

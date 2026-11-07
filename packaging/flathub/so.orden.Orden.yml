@@ -5,7 +5,7 @@ sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.node24
   - org.freedesktop.Sdk.Extension.rust-stable
-command: nib
+command: orden
 
 finish-args:
   - --share=ipc
@@ -18,15 +18,15 @@ finish-args:
   - --filesystem=xdg-documents
 
 modules:
-  - name: nib
+  - name: orden
     buildsystem: simple
     build-options:
-      append-path: /usr/lib/sdk/node24/bin:/usr/lib/sdk/rust-stable/bin:/run/build/nib/pnpm/bin
+      append-path: /usr/lib/sdk/node24/bin:/usr/lib/sdk/rust-stable/bin:/run/build/orden/pnpm/bin
       env:
-        CARGO_HOME: /run/build/nib/cargo
+        CARGO_HOME: /run/build/orden/cargo
         CARGO_NET_OFFLINE: 'true'
-        XDG_CACHE_HOME: /run/build/nib/flatpak-node/cache
-        npm_config_cache: /run/build/nib/flatpak-node/npm-cache
+        XDG_CACHE_HOME: /run/build/orden/flatpak-node/cache
+        npm_config_cache: /run/build/orden/flatpak-node/npm-cache
     build-commands:
       - ln -s pnpm.cjs pnpm/bin/pnpm
       - pnpm install --offline --frozen-lockfile --filter "@orden/desktop..."
@@ -39,7 +39,10 @@ modules:
         json.dump(conf, open(path, 'w'), indent=2)"
       - pnpm --filter @orden/desktop build
       - cargo build --offline --release --manifest-path apps/desktop/src-tauri/Cargo.toml
-      - install -Dm755 apps/desktop/src-tauri/target/release/nib /app/bin/nib
+      - |
+        built=apps/desktop/src-tauri/target/release
+        if [ -f "$built/orden" ]; then program="$built/orden"; else program="$built/nib"; fi
+        install -Dm755 "$program" /app/bin/orden
       - install -Dm644 so.orden.Orden.desktop /app/share/applications/so.orden.Orden.desktop
       - install -Dm644 so.orden.Orden.metainfo.xml /app/share/metainfo/so.orden.Orden.metainfo.xml
       - |

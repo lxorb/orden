@@ -54,28 +54,28 @@ jobs:
       - name: Driven
         run: |
           python -m pip install --quiet pillow comtypes
-          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER" --out drive
+          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out drive
 
       - name: The overview, filmed
         if: always()
         run: |
           python -m pip install --quiet pillow mss numpy
-          python scripts/overview-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER" --out overview
+          python scripts/overview-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out overview
 
       - name: Terminals and the file explorer worked hard, the window watched
         if: always()
         run: |
-          python scripts/tools-freeze-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER"
+          python scripts/tools-freeze-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER"
 
       - name: A tap of Alt or F10 leaves the window answering
         if: always()
         run: |
-          python scripts/alt-alone-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER"
+          python scripts/alt-alone-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER"
 
       - name: Windowed, for UI Automation
         if: always()
         run: |
-          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER" --out windowed --windowed
+          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out windowed --windowed
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
