@@ -40,13 +40,9 @@ export function notWritten(
   const times = (core.unwrittenFor.get(entry.id) ?? 0) + 1
   core.unwrittenFor.set(entry.id, times)
   if (times >= READS_TO_TELL) saidUnsynced(core, entry)
-  const changes = [core.wantChange(space.id)]
-  if (times > 1) return changes
+  if (times > 1) return []
   const failed = `${entry.name} not written: ${error instanceof Error ? error.message : String(error)}`
-  return [
-    ...changes,
-    put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }),
-  ]
+  return [put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed })]
 }
 
 export async function project(

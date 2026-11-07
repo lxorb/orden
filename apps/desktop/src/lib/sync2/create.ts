@@ -402,7 +402,6 @@ export async function restored(
     }
     return at
   }
-  let wants = false
   for (const { entry, at: copy } of back) {
     if (here(space, entry)) {
       if (space.key(entry.local_path) !== space.key(copy) && !space.at(copy)) {
@@ -452,7 +451,6 @@ export async function restored(
     if (entry.kind === 'file') core.touched.add(entry.id)
     if (holdsDocument(entry.kind) && !core.hasDoc(entry.id)) {
       core.wanted(space.id).set(entry.id, { docSeq: 0, epoch: core.epochs.get(entry.id) ?? 1 })
-      wants = true
       const text = await core.world.disk.read(core.world.join(space.row.root, at))
       if (text !== null) changes.push(...(await wrote(core, entry, text)))
     }
@@ -486,7 +484,6 @@ export async function restored(
     const seen = space.row.cursor
     changes.push(...queue(core, space, { op: core.nextId('o'), t: 'rename', id, name, seen }))
   }
-  if (wants) changes.push(core.wantChange(space.id))
   if (space.gone.delete(id)) changes.push(put('meta', goneRow(space.id, space.gone)))
   space.changed()
   return changes

@@ -172,6 +172,70 @@ describe('a keystroke', () => {
   })
 })
 
+describe('what a space still wants pulled', () => {
+  const metaWritten = (one: Device) => {
+    const batches: string[][] = []
+    const store = one.engine.core.store
+    const write = store.write.bind(store)
+    store.write = (changes) => {
+      batches.push(
+        changes.flatMap((change) =>
+          change.table === 'meta' && change.t === 'put' && 'row' in change
+            ? [(change.row as { key: string }).key]
+            : change.table === 'meta' && change.t === 'delete'
+              ? [`-${change.key}`]
+              : [],
+        ),
+      )
+      return write(changes)
+    }
+    return batches
+  }
+
+  test('is written by the note that changed, not whole on every commit', async () => {
+    const one = await device()
+    const batches = metaWritten(one)
+    const core = one.engine.core
+    const wanted = core.wanted(SPACE)
+    for (let at = 0; at < 500; at++) wanted.set(`w${String(at)}`, { docSeq: at, epoch: 1 })
+    await core.commit([])
+    const ours = (batch: string[]) => batch.filter((key) => key.includes('wants:'))
+    expect(ours(batches.at(-1) ?? [])).toHaveLength(500)
+
+    const from = batches.length
+    for (let at = 0; at < 50; at++) {
+      wanted.delete(`w${String(at)}`)
+      await core.commit([])
+    }
+    const later = batches.slice(from).map(ours)
+    expect(later).toHaveLength(50)
+    for (const batch of later) expect(batch).toHaveLength(1)
+
+    one.engine.stop()
+    const again = await one.launch()
+    const kept = again.core.wanted(SPACE)
+    expect(kept.size).toBe(450)
+    expect(kept.get('w499')).toEqual({ docSeq: 499, epoch: 1 })
+    expect(kept.has('w0')).toBe(false)
+  })
+
+  test('kept in one row by an older version is read, and moved to a row per note', async () => {
+    const one = await device()
+    one.engine.stop()
+    const older = one.store.open()
+    await older.write([put('meta', wantedRow(SPACE, new Map([['old', { docSeq: 3, epoch: 2 }]])))])
+    await older.cleanExit(true)
+    const again = await one.launch()
+    expect(again.core.wanted(SPACE).get('old')).toEqual({ docSeq: 3, epoch: 2 })
+    await again.core.commit([])
+    const keys = one.store.rows('meta').map((row) => row.key)
+    expect(keys.filter((key) => key.startsWith('want'))).toEqual([`wants:${SPACE}/old`])
+
+    again.stop()
+    expect((await one.launch()).core.wanted(SPACE).get('old')).toEqual({ docSeq: 3, epoch: 2 })
+  })
+})
+
 describe('a clean exit said too early', () => {
   async function typedAfter(say: (engine: Engine) => Promise<void>) {
     const one = await device()

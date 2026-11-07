@@ -223,7 +223,7 @@ export async function firstPass(
     changes.push(...madeHere.changes)
   }
 
-  changes.push(core.wantChange(space.id), ...done)
+  changes.push(...done)
   if (!alive()) return false
   await core.commit(changes)
   return true

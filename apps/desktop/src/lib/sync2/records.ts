@@ -143,6 +143,57 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
   return { key: wantKey(space), value: JSON.stringify(out) }
 }
 
+const WANTS = 'wants:'
+
+export function wantOneKey(space: string, id: string): string {
+  return `${WANTS}${space}/${id}`
+}
+
+export function wantOneRow(space: string, id: string, one: Wanted): MetaRow {
+  return { key: wantOneKey(space, id), value: JSON.stringify([one.docSeq, one.epoch]) }
+}
+
+export function wantOneOf(row: MetaRow): { space: string; id: string; wanted: Wanted } | null {
+  if (!row.key.startsWith(WANTS) || typeof row.value !== 'string') return null
+  const named = row.key.slice(WANTS.length)
+  const cut = named.indexOf('/')
+  if (cut <= 0 || cut === named.length - 1) return null
+  try {
+    const value: unknown = JSON.parse(row.value)
+    if (!Array.isArray(value)) return null
+    const [docSeq, epoch] = value as unknown[]
+    if (!whole(docSeq) || !whole(epoch)) return null
+    return { space: named.slice(0, cut), id: named.slice(cut + 1), wanted: { docSeq, epoch } }
+  } catch {
+    return null
+  }
+}
+
+export class Wants extends Map<string, Wanted> {
+  readonly dirty = new Set<string>()
+  inOneRow = false
+
+  override set(id: string, one: Wanted): this {
+    this.dirty.add(id)
+    return super.set(id, one)
+  }
+
+  override delete(id: string): boolean {
+    const had = super.delete(id)
+    if (had) this.dirty.add(id)
+    return had
+  }
+
+  override clear(): void {
+    for (const id of this.keys()) this.dirty.add(id)
+    super.clear()
+  }
+
+  took(id: string, one: Wanted): void {
+    super.set(id, one)
+  }
+}
+
 export interface Ordering {
   on: boolean
   positions: Map<string, string>
