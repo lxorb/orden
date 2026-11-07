@@ -28,6 +28,28 @@ describe('a paste into a terminal', () => {
     expect(spokenPath('/home/me/$(id) `id`.txt', 'ssh:box')).toBe("'/home/me/$(id) `id`.txt'")
   })
 
+  test('a dropped name never closes its quote in fish, PowerShell beside Visual Studio, nu or csh', () => {
+    expect(spokenPath("/tmp/x\\';id;#", '/usr/bin/fish')).toBe("'/tmp/x'\\\\\\'';id;#'")
+    expect(spokenPath('C:\\x\\$(calc).txt', 'vs-pwsh:66e9e031')).toBe("'C:\\x\\$(calc).txt'")
+    expect(spokenPath("/x/it's $(id)", '/opt/microsoft/powershell/7/pwsh')).toBe("'/x/it''s $(id)'")
+    expect(spokenPath("/x/a';id;'", '/usr/bin/nu')).toBe("r#'/x/a';id;''#")
+    expect(spokenPath('/x/a!1 b', '/bin/tcsh')).toBe("'/x/a'\\!'1 b'")
+    expect(spokenPath('/x/a\\b', '/bin/bash')).toBe("'/x/a'\\\\'b'")
+  })
+
+  test('a control character in a dropped name reaches the shell as a wildcard, never as a key', () => {
+    expect(spokenPath('/x/a\x01\x1b[201~\rb', '/bin/bash')).toBe("'/x/a'??'[201~'?'b'")
+    expect(spokenPath('/x/a\nb', 'pwsh')).toBe("'/x/a?b'")
+  })
+
+  test('a paste never carries a key a shell would act on by itself', () => {
+    expect(pasted('ls\x1b[201~rm -rf ~')).toBe('ls[201~rm -rf ~')
+    expect(pasted('rm -rf ~\x0f')).toBe('rm -rf ~')
+    expect(pasted('a\x9b1;2Hb\x7f\x03')).toBe('a1;2Hb')
+    expect(pasted('a\tb\r\nc')).toBe('a\tb\r\nc')
+    expect(linesIn('one\x0fline')).toBe(1)
+  })
+
   test('asks first only for lines a shell without bracketed paste would run', () => {
     expect(asksFirst('a\nb', false)).toBe(true)
     expect(asksFirst('a\nb', true)).toBe(false)

@@ -21,9 +21,19 @@ export function imageIn(transfer: DataTransfer | null): File | null {
   return [...transfer.files].find((file) => imageKindOf(file.type) !== null) ?? null
 }
 
+function control(char: string): boolean {
+  const code = char.codePointAt(0) ?? 0
+  return code < 0x20 || (code >= 0x7f && code <= 0x9f)
+}
+
+function typedAsIs(char: string): boolean {
+  return !control(char) || char === '\t' || char === '\n' || char === '\r'
+}
+
 export function pasted(text: string): string {
-  const trimmed = text.replace(/\s+$/, '')
-  return /[\r\n]/.test(trimmed) ? text : trimmed
+  const kept = [...text].filter(typedAsIs).join('')
+  const trimmed = kept.replace(/\s+$/, '')
+  return /[\r\n]/.test(trimmed) ? kept : trimmed
 }
 
 export function linesIn(text: string): number {
@@ -34,14 +44,55 @@ export function asksFirst(text: string, bracketed: boolean): boolean {
   return !bracketed && linesIn(text) > 1
 }
 
+type Speech = 'posix' | 'csh' | 'powershell' | 'doubled' | 'nu' | 'cmd'
+
+function speechOf(shell: string): Speech {
+  if (shell.startsWith('ssh:') || shell.startsWith('wsl:') || shell === 'git-bash') return 'posix'
+  if (shell.startsWith('vs-pwsh:')) return 'powershell'
+  if (shell.startsWith('vs-cmd:')) return 'cmd'
+  const name = (shell.split(/[\\/]/).pop() ?? '').toLowerCase().replace(/\.exe$/, '')
+  if (/^(pwsh|powershell)(-preview)?$/.test(name)) return 'powershell'
+  if (name === 'cmd') return 'cmd'
+  if (name === 'nu') return 'nu'
+  if (name === 'elvish') return 'doubled'
+  if (name === 'csh' || name === 'tcsh') return 'csh'
+  return 'posix'
+}
+
+function unquoted(spoken: string, speech: Speech): boolean {
+  const plain = speech === 'posix' || speech === 'csh' ? /^[\w\-./:~+@%,=]+$/ : /^[\w\-./\\:]+$/
+  return plain.test(spoken)
+}
+
+function posixSpoken(spoken: string, csh: boolean): string {
+  let out = ''
+  let run = ''
+  const close = () => {
+    if (run) out += `'${run}'`
+    run = ''
+  }
+  for (const char of spoken) {
+    if (control(char)) {
+      close()
+      out += '?'
+    } else if (char === "'" || char === '\\' || (csh && char === '!')) {
+      close()
+      out += `\\${char}`
+    } else run += char
+  }
+  close()
+  return out
+}
+
+function rawNu(spoken: string): string {
+  let hashes = '#'
+  while (spoken.includes(`'${hashes}`)) hashes += '#'
+  return `r${hashes}'${spoken}'${hashes}`
+}
+
 export function spokenPath(path: string, shell: string): string {
   const drive = /^([A-Za-z]):[\\/](.*)$/.exec(path)
-  const posix =
-    shell.startsWith('wsl:') ||
-    shell === 'git-bash' ||
-    shell.startsWith('/') ||
-    shell.startsWith('ssh:')
-  const powershell = shell === 'pwsh' || shell === 'powershell'
+  const speech = speechOf(shell)
 
   let spoken = path
   if (drive?.[1] !== undefined && (shell.startsWith('wsl:') || shell === 'git-bash')) {
@@ -50,7 +101,12 @@ export function spokenPath(path: string, shell: string): string {
     spoken = shell.startsWith('wsl:') ? `/mnt/${letter}/${rest}` : `/${letter}/${rest}`
   }
 
-  if (/^[\w\-./\\:~+@%,=]+$/.test(spoken)) return spoken
-  if (posix) return `'${spoken.replace(/'/g, "'\\''")}'`
-  return powershell ? `'${spoken.replace(/['‘’‚‛]/g, '$&$&')}'` : `"${spoken}"`
+  if (unquoted(spoken, speech)) return spoken
+  if (speech === 'posix' || speech === 'csh') return posixSpoken(spoken, speech === 'csh')
+
+  const seen = [...spoken].map((char) => (control(char) ? '?' : char)).join('')
+  if (speech === 'powershell') return `'${seen.replace(/['‘’‚‛]/g, '$&$&')}'`
+  if (speech === 'doubled') return `'${seen.replace(/'/g, "''")}'`
+  if (speech === 'nu') return seen.includes("'") ? rawNu(seen) : `'${seen}'`
+  return `"${seen.replace(/"/g, '?')}"`
 }
