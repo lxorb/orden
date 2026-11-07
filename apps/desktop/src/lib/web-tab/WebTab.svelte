@@ -19,6 +19,7 @@
   import { swiping } from '../back-swipe/shown.svelte'
   import { findBar, passFill } from '../surfaces.svelte'
   import { invoke, isDesktop, openExternal } from '../tauri'
+  import { takesWords, writes } from '../typing-pointer'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin } from './address'
@@ -317,8 +318,10 @@
 
     window.addEventListener('resize', follow)
     const unscale = watchScale(follow)
-    const pressed = () => {
-      if (page.layering !== 'under') void pages.shoot(tab.id)
+    const mac = /Mac|iPhone|iPad/.test(navigator.userAgent)
+    const pressed = (event: Event) => {
+      const typed = event instanceof KeyboardEvent && writes(event, mac) && takesWords(event.target)
+      if (page.layering !== 'under' && !typed) void pages.shoot(tab.id)
       follow()
     }
     window.addEventListener('pointerdown', pressed, true)
