@@ -66,14 +66,24 @@ pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     ))
 }
 
-#[tauri::command(async)]
-pub fn save_asset(
-    app: AppHandle,
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Kept {
     note_path: String,
     folder: String,
     name: String,
-    bytes: Vec<u8>,
-) -> Result<String, String> {
+}
+
+#[tauri::command(async)]
+pub fn save_asset(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<String, String> {
+    let (
+        Kept {
+            note_path,
+            folder,
+            name,
+        },
+        bytes,
+    ) = crate::notes::raw_sent(request.headers(), request.body())?;
     let note = in_spaces(&app, &note_path)?;
     let note_folder = note
         .parent()

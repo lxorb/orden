@@ -8,6 +8,7 @@ import { paperInches } from '../../page-setup'
 import { settings } from '../../settings.svelte'
 import { notePath, relativeTo } from '../../space-paths'
 import { invoke } from '../../tauri'
+import { decoded } from '../../bytes'
 import { pages } from '../../web-tab/pages.svelte'
 import { clipNote } from '../../web-tab/note'
 import { type Entry, workspace } from '../../workspace.svelte'
@@ -221,12 +222,12 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
 
 async function attachment(place: Place, notePath: string, file: Kept): Promise<string> {
   writableAt(place, notePath)
-  const bytes = Uint8Array.from(atob(file.base64), (character) => character.charCodeAt(0))
+  const bytes = await decoded(`data:application/octet-stream;base64,${file.base64}`)
   const saved = await invoke<string>('save_asset', {
     notePath,
     folder: attachmentFolder(modes.attachments, notePath, place.space.root),
     name: `page-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${file.extension}`,
-    bytes: [...bytes],
+    bytes,
   })
 
   return saved

@@ -2,14 +2,14 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
 
 const disk = new Map<string, string>()
-const sent: { command: string; path: string; folder?: unknown }[] = []
+const sent: { command: string; path: string; folder?: unknown; bytes?: unknown }[] = []
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = text(args?.path)
-    sent.push({ command, path, folder: args?.folder })
+    sent.push({ command, path, folder: args?.folder, bytes: args?.bytes })
     switch (command) {
       case 'scan_links': {
         const root = `${text(args?.root)}/`
@@ -146,6 +146,7 @@ test("a file kept beside a note of another space goes in that space's assets fol
   modes.attachments = 'space'
   await storeBeside(new ArrayBuffer(1), '/home/me/A/sub/Note.md', 'clip.pdf')
   expect(sent.find((one) => one.command === 'save_asset')?.folder).toBe('../assets')
+  expect(sent.find((one) => one.command === 'save_asset')?.bytes).toBeInstanceOf(Uint8Array)
 })
 
 test("a block named for a link in a note of another space is named in that space's note", async () => {

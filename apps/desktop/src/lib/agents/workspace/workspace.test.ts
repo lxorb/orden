@@ -1366,7 +1366,7 @@ describe('a page into a note', () => {
     expect(capture()).toMatchObject({ shape: 'screenshot', fullPage: true })
     const kept = saved()
     expect(String(kept?.name)).toMatch(/^page-[\d-]+\.png$/)
-    expect(kept?.bytes).toEqual([80, 78, 71, 32, 98, 121, 116, 101, 115])
+    expect([...(kept?.bytes as Uint8Array)]).toEqual([80, 78, 71, 32, 98, 121, 116, 101, 115])
     expect(files.get('/s/Work/A page.md')).toContain(`![[files/${String(kept?.name)}]]`)
   })
 
