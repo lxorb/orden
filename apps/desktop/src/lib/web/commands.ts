@@ -678,16 +678,24 @@ async function spaceList() {
 }
 
 async function spaceTags(root: string) {
-  const rows = (await files.all()).filter(
-    (row) => within(normalise(root), row.path) && isMarkdown(row.path),
-  )
+  const base = normalise(root)
+  const paths = (await files.paths()).filter((path) => within(base, path))
+  const sizes = new Map<string, number>()
+  for (const row of await stats.all()) {
+    if (row.size !== undefined && within(base, row.path)) sizes.set(row.path, row.size)
+  }
 
   const counts = new Map<string, number>()
-  for (const row of rows) {
-    for (const tag of tagsIn(row.content)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+  for (const chunk of chunksOf(paths, sizes, isMarkdown)) {
+    for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
+      if (!within(base, row.path) || !isMarkdown(row.path)) continue
+      for (const tag of tagsIn(row.content)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+    }
+    await breathe()
   }
   for (const away of keptAway.under(root)) {
-    for (const tag of keptAway.scanOf(away.id)?.tags ?? []) {
+    for (const one of keptAway.scanOf(away.id)?.tags ?? []) {
+      const tag = one.startsWith('#') ? one : `#${one}`
       counts.set(tag, (counts.get(tag) ?? 0) + 1)
     }
   }
