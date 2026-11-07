@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rowsOfText } from '@orden/bases/rows'
-import { todayOf } from '@orden/bases'
+import { taskHash, todayOf } from '@orden/bases'
 
 const files = new Map<string, string>()
+const metas = vi.hoisted(() => new Map<string, Record<string, string>>())
 const home = { name: 'Home', root: '/s/Home' }
 const work = { name: 'Work', root: '/s/Work' }
 const front = vi.hoisted(() => ({ name: 'Home' }))
@@ -17,7 +18,21 @@ vi.mock('./workspace.svelte', () => ({
     notes: [],
     recent: [],
     noteText: (path: string) => Promise.resolve(files.get(path) ?? null),
+    itemMeta: {
+      of: (path: string) => metas.get(path) ?? null,
+      set: (path: string, patch: Record<string, string | null>) => {
+        const now = Object.entries({ ...metas.get(path), ...patch }).filter(
+          (one): one is [string, string] => one[1] !== null,
+        )
+        metas.set(path, Object.fromEntries(now))
+      },
+    },
   },
+}))
+
+vi.mock('./rows/todo-lists', async (original) => ({
+  ...(await original<typeof import('./rows/todo-lists')>()),
+  listedAt: (_root: string, path: string) => path === 'Plan.md',
 }))
 
 const share = vi.hoisted(() => ({ readOnly: false }))
@@ -63,6 +78,7 @@ beforeEach(() => {
   front.name = 'Home'
   share.readOnly = false
   files.clear()
+  metas.clear()
   files.set('/s/Home/Plan.md', `# Plan\n- [ ] Water the plants 🔁 every day 📅 ${today}\n`)
 })
 
@@ -104,6 +120,16 @@ describe("the reader's own task actions", () => {
     const lines = files.get('/s/Home/Plan.md')?.split('\n') ?? []
     expect(lines[1]).toMatch(/^- \[ \] Water the plants 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
     expect(lines[2]).toBe(`- [x] Water the plants 🔁 every day 📅 ${today}`)
+  })
+
+  test('a tick keeps its day in the list itself, so a device with no rows store dates it too, and taken back drops it', async () => {
+    files.set('/s/Home/Plan.md', `# Plan\n- [ ] Post the letter 📅 ${today}\n`)
+    const { tasks } = await listed()
+    const ticked = await tickTask(tasks[0]?.at ?? '', 'Home', true)
+    const day = today.replace(/-/g, '')
+    expect(metas.get('/s/Home/Plan.md')?.['done-on']).toBe(`${taskHash('Post the letter')}:${day}`)
+    expect(await ticked?.back()).toBe(true)
+    expect(metas.get('/s/Home/Plan.md')?.['done-on']).toBeUndefined()
   })
 
   test('nothing ticked in a space shared to be read', async () => {

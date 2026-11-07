@@ -63,11 +63,28 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
     if (now !== after) return false
     const undo = oneEdit(after, before)
     if (!undo) return true
-    return (await replaceInNotes(workspace, [changeOf(path, after, [undo])])) > 0
+    if ((await replaceInNotes(workspace, [changeOf(path, after, [undo])])) === 0) return false
+    await dated(root, anchor.path, space, after, before)
+    return true
   }
   if (!edit) return { at: edited.at, back }
   if ((await replaceInNotes(workspace, [changeOf(path, before, [edit])])) === 0) return null
+  await dated(root, anchor.path, space, before, after)
   return { at: edited.at, back }
+}
+
+async function dated(root: string, relative: string, space: string, before: string, after: string) {
+  const [{ clockOf, taskRowsOfText }, { datesChanged }, { listedAt }] = await Promise.all([
+    import('@orden/bases/tasks'),
+    import('@orden/bases/todo-lists'),
+    import('./rows/todo-lists'),
+  ])
+  if (!listedAt(root, relative)) return
+  const path = insideSpace(root, relative)
+  const rows = (text: string) => taskRowsOfText(space, relative, text)
+  const meta = workspace.itemMeta.of(path, root)
+  const patch = datesChanged(rows(before), rows(after), meta, clockOf(new Date()).today)
+  if (patch) workspace.itemMeta.set(path, patch, root)
 }
 
 export async function listed(filter?: string): Promise<{ total: number; tasks: TaskOut[] }> {
