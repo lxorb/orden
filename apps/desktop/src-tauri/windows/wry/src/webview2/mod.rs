@@ -53,6 +53,58 @@ pub fn host_as_visual(choose: fn(&str) -> bool) {
   let _ = AS_VISUAL.set(choose);
 }
 
+/// Orden's patch (lxorb/orden#1304): how long the UI thread waits for WebView2 to make a
+/// browser environment or a webview, and for the scripts a webview is built with.
+const ENVIRONMENT_WAIT: std::time::Duration = std::time::Duration::from_secs(60);
+const CONTROLLER_WAIT: std::time::Duration = std::time::Duration::from_secs(15);
+const SCRIPTS_WAIT: std::time::Duration = std::time::Duration::from_secs(3);
+const COOKIES_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
+
+thread_local! {
+  static SCRIPTS_BY: std::cell::Cell<Option<std::time::Instant>> =
+    const { std::cell::Cell::new(None) };
+}
+
+/// Orden's patch (lxorb/orden#1304): `webview2_com::wait_with_pump`, given up at a deadline.
+/// WebView2 answers through the UI thread's messages, and a browser or a renderer that never
+/// answers (a page's renderer shared with one spinning in a loop) held the app's whole event
+/// loop in this nested pump for good. `None` when nothing came in time.
+fn pump_until<T>(rx: &mpsc::Receiver<T>, within: std::time::Duration) -> Option<T> {
+  let until = std::time::Instant::now() + within;
+  let mut msg = MSG::default();
+  loop {
+    if let Ok(result) = rx.try_recv() {
+      return Some(result);
+    }
+    let left = until.saturating_duration_since(std::time::Instant::now());
+    if left.is_zero() {
+      return None;
+    }
+    let millis = u32::try_from(left.as_millis()).unwrap_or(u32::MAX).max(1);
+    unsafe {
+      if MsgWaitForMultipleObjectsEx(None, millis, QS_ALLINPUT, MWMO_INPUTAVAILABLE) == WAIT_TIMEOUT
+      {
+        continue;
+      }
+      while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {
+        if msg.message == WM_QUIT {
+          PostQuitMessage(msg.wParam.0 as i32);
+          return rx.try_recv().ok();
+        }
+        let _ = TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+        if let Ok(result) = rx.try_recv() {
+          return Some(result);
+        }
+      }
+    }
+  }
+}
+
+fn gave_up() -> Error {
+  Error::WebView2Error(webview2_com::Error::TaskCanceled)
+}
+
 /// Orden's patch (lxorb/orden#1191): a message posted with
 /// `chrome.webview.postMessageWithAdditionalObjects` hands the embedder files, such as the
 /// ones dropped on the page, and is not the page's IPC.
@@ -156,17 +208,25 @@ impl InnerWebView {
       attributes.background_color
     };
 
+    let given_up = |error: Error| {
+      unsafe {
+        let _ = DestroyWindow(hwnd);
+      }
+      error
+    };
     let env = if let Some(env) = &pl_attrs.environment {
       env.clone()
     } else {
-      Self::create_environment(&attributes, pl_attrs.clone())?
+      Self::create_environment(&attributes, pl_attrs.clone()).map_err(given_up)?
     };
     let visual = is_child && AS_VISUAL.get().is_some_and(|choose| choose(&id));
     let controller = if visual {
-      Self::create_composition_controller(hwnd, &env, attributes.incognito, background_color)?
+      Self::create_composition_controller(hwnd, &env, attributes.incognito, background_color)
     } else {
-      Self::create_controller(hwnd, &env, attributes.incognito, background_color)?
-    };
+      Self::create_controller(hwnd, &env, attributes.incognito, background_color)
+    }
+    .map_err(given_up)?;
+    SCRIPTS_BY.set(Some(std::time::Instant::now() + SCRIPTS_WAIT));
     let webview = Self::init_webview(
       parent,
       hwnd,
@@ -176,7 +236,17 @@ impl InnerWebView {
       &controller,
       pl_attrs,
       is_child,
-    )?;
+    );
+    SCRIPTS_BY.set(None);
+    let webview = match webview {
+      Ok(webview) => webview,
+      Err(error) => {
+        unsafe {
+          let _ = controller.Close();
+        }
+        return Err(given_up(error));
+      }
+    };
 
     let drag_drop_controller = drop_handler.map(|handler| {
       // Disable file drops, so our handler can capture it
@@ -391,7 +461,7 @@ impl InnerWebView {
       )?;
     }
 
-    webview2_com::wait_with_pump(rx)?
+    pump_until(&rx, ENVIRONMENT_WAIT).ok_or_else(gave_up)?
   }
 
   #[inline]
@@ -408,12 +478,16 @@ impl InnerWebView {
     // by manually creating the callback handler and use webview2_com::with_with_bump
     let handler = CreateCoreWebView2ControllerCompletedHandler::create(Box::new(
       move |error_code, controller| {
-        let result = (|| {
+        let result: Result<ICoreWebView2Controller> = (|| {
           error_code?;
           controller.ok_or_else(|| windows::core::Error::from(E_POINTER).into())
         })();
-        tx.send(result)
-          .map_err(|_| windows::core::Error::from(E_UNEXPECTED))
+        if let Err(mpsc::SendError(Ok(late))) = tx.send(result) {
+          unsafe {
+            let _ = late.Close();
+          }
+        }
+        Ok(())
       },
     ));
 
@@ -442,7 +516,7 @@ impl InnerWebView {
       }
     }
 
-    webview2_com::wait_with_pump(rx)?
+    pump_until(&rx, CONTROLLER_WAIT).ok_or_else(gave_up)?
   }
 
   /// Orden's patch (lxorb/orden#1137): `create_controller`, as a composition controller.
@@ -460,8 +534,14 @@ impl InnerWebView {
           error_code?;
           controller.ok_or_else(|| windows::core::Error::from(E_POINTER).into())
         })();
-        tx.send(result)
-          .map_err(|_| windows::core::Error::from(E_UNEXPECTED))
+        if let Err(mpsc::SendError(Ok(late))) = tx.send(result) {
+          if let Ok(late) = late.cast::<ICoreWebView2Controller>() {
+            unsafe {
+              let _ = late.Close();
+            }
+          }
+        }
+        Ok(())
       },
     ));
 
@@ -490,7 +570,7 @@ impl InnerWebView {
       }
     }
 
-    let composition = webview2_com::wait_with_pump(rx)??;
+    let composition = pump_until(&rx, CONTROLLER_WAIT).ok_or_else(gave_up)??;
     Ok(composition.cast()?)
   }
 
@@ -1386,19 +1466,28 @@ impl InnerWebView {
     );
   }
 
+  /// Orden's patch (lxorb/orden#1304): the script is added at once and waited for only until
+  /// the webview's build has waited `SCRIPTS_WAIT` in all; a later answer is let go. WebView2
+  /// keeps the order of the calls, so a script added before a navigation runs in its page.
   #[inline]
   fn add_script_to_execute_on_document_created(webview: &ICoreWebView2, js: String) -> Result<()> {
-    let webview = webview.clone();
-    AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
-      Box::new(move |handler| unsafe {
-        let js = HSTRING::from(js);
-        webview
-          .AddScriptToExecuteOnDocumentCreated(&js, &handler)
-          .map_err(Into::into)
-      }),
-      Box::new(|e, _| e),
-    )
-    .map_err(Into::into)
+    let (tx, rx) = mpsc::channel();
+    let handler = AddScriptToExecuteOnDocumentCreatedCompletedHandler::create(Box::new(
+      move |error_code, _id| {
+        let _ = tx.send(error_code);
+        Ok(())
+      },
+    ));
+    unsafe {
+      webview.AddScriptToExecuteOnDocumentCreated(&HSTRING::from(js), &handler)?;
+    }
+    let by = SCRIPTS_BY
+      .get()
+      .unwrap_or_else(|| std::time::Instant::now() + SCRIPTS_WAIT);
+    match pump_until(&rx, by.saturating_duration_since(std::time::Instant::now())) {
+      Some(said) => said.map_err(Into::into),
+      None => Ok(()),
+    }
   }
 
   #[inline]
@@ -1749,7 +1838,7 @@ impl InnerWebView {
       )?;
     }
 
-    webview2_com::wait_with_pump(rx)?
+    pump_until(&rx, COOKIES_WAIT).ok_or_else(gave_up)?
   }
 
   pub fn set_cookie(&self, cookie: &cookie::Cookie<'_>) -> Result<()> {
