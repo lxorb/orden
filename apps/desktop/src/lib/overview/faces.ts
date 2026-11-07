@@ -1,3 +1,5 @@
+import { heldDatabase } from '../held-database'
+
 export interface Face {
   html: string | null
   shot: string | null
@@ -56,21 +58,10 @@ export function drawInto(into: Element, html: string) {
 const NAME = 'nib-overview-faces'
 const STORE = 'face'
 
-let open: Promise<IDBDatabase> | null = null
-
-function database(): Promise<IDBDatabase> {
-  open ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open(NAME, 2)
-    request.onupgradeneeded = ({ oldVersion }) => {
-      if (oldVersion < 1) request.result.createObjectStore(STORE)
-      else request.transaction?.objectStore(STORE).delete(IDBKeyRange.bound('web:', 'web:\uffff'))
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error ?? new Error('the faces store did not open'))
-  })
-  open.catch(() => (open = null))
-  return open
-}
+const held = heldDatabase(NAME, 2, (request, oldVersion) => {
+  if (oldVersion < 1) request.result.createObjectStore(STORE)
+  else request.transaction?.objectStore(STORE).delete(IDBKeyRange.bound('web:', 'web:\uffff'))
+})
 
 function settled<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -80,12 +71,11 @@ function settled<T>(request: IDBRequest<T>): Promise<T> {
 }
 
 async function asked<T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) => IDBRequest<T>) {
-  const db = await database()
-  return settled(ask(db.transaction(STORE, mode).objectStore(STORE)))
+  return settled(ask((await held.transaction(STORE, mode)).objectStore(STORE)))
 }
 
 export async function upgradeFaces(): Promise<void> {
-  await database().catch(() => undefined)
+  await held.transaction(STORE).catch(() => undefined)
 }
 
 export async function readFaces(): Promise<[string, Face][]> {
@@ -114,8 +104,7 @@ export async function writeFace(key: string, face: Face): Promise<void> {
 export async function forgetFaces(keys: readonly string[]): Promise<void> {
   if (!keys.length) return
   try {
-    const db = await database()
-    const store = db.transaction(STORE, 'readwrite').objectStore(STORE)
+    const store = (await held.transaction(STORE, 'readwrite')).objectStore(STORE)
     await Promise.all(keys.map((key) => settled(store.delete(key))))
   } catch {
     // Nothing kept is what was asked for.
