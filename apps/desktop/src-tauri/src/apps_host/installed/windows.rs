@@ -36,11 +36,11 @@ pub fn entries(with_icons: bool) -> Vec<Entry> {
     .unwrap_or_default()
 }
 
-struct Com(bool);
+pub(super) struct Com(bool);
 
 impl Com {
     #[allow(unsafe_code, reason = "COM is started on a thread by a Win32 call")]
-    fn start() -> Com {
+    pub(super) fn start() -> Com {
         Com(unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.is_ok())
     }
 }
@@ -293,7 +293,7 @@ fn icon(item: &IShellItem) -> Option<String> {
 }
 
 #[allow(unsafe_code, reason = "a bitmap's pixels are read with GDI")]
-fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
+pub(super) fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
     let mut about = BITMAP::default();
     let size = i32::try_from(std::mem::size_of::<BITMAP>()).ok()?;
     if unsafe { GetObjectW(bitmap, size, Some((&raw mut about).cast())) } == 0 {

@@ -20,6 +20,7 @@ mod events;
 #[cfg(target_os = "linux")]
 mod input;
 mod installed;
+pub(crate) use installed::kinds;
 #[cfg(target_os = "macos")]
 mod mac;
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]

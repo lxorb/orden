@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { fileMark } from '../file-mark'
-  import FileMark from '../FileMark.svelte'
   import { joinPath } from '../tauri'
   import { type Entry, listFolder } from './commands'
+  import EntryMark from './EntryMark.svelte'
   import { openFile } from './open'
   import { ordered } from './order'
   import { explorerPrefs } from './prefs.svelte'
@@ -83,7 +82,7 @@
             tabindex="-1"
             onclick={() => press(entry)}
           >
-            <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+            <EntryMark name={entry.name} folder={entry.folder} />
             <span class="orden-row-label">{entry.name}</span>
           </button>
         </li>

@@ -1,5 +1,7 @@
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 mod icons;
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
+pub(crate) mod kinds;
 #[cfg(any(target_os = "macos", test))]
 mod macos;
 #[cfg(target_os = "windows")]
@@ -348,7 +350,7 @@ pub(crate) mod linux {
     }
 
     #[cfg(target_os = "linux")]
-    fn current_theme() -> String {
+    pub fn current_theme() -> String {
         let config = dirs::config_dir();
         let read = |path: Option<PathBuf>, group: &str, key: &str| {
             let text = std::fs::read_to_string(path?).ok()?;
@@ -402,22 +404,64 @@ pub(crate) mod linux {
         scalable: bool,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Context {
+        Apps,
+        Kinds,
+    }
+
+    impl Context {
+        fn holds(self, context: &str, path: &str) -> bool {
+            match self {
+                Context::Apps => {
+                    matches!(context, "Applications" | "Apps") || path.contains("apps")
+                }
+                Context::Kinds => context == "MimeTypes" || path.contains("mimetypes"),
+            }
+        }
+
+        fn folder(self) -> &'static str {
+            match self {
+                Context::Apps => "apps",
+                Context::Kinds => "mimetypes",
+            }
+        }
+    }
+
     pub struct Icons {
         bases: Vec<PathBuf>,
         themes: Vec<(String, Vec<ThemeDir>)>,
         pixmaps: Vec<PathBuf>,
+        side: u32,
     }
 
     impl Icons {
         pub fn new(folders: &[PathBuf], theme: &str) -> Icons {
+            Icons::within(folders, &[theme], Context::Apps, icons::SIDE)
+        }
+
+        pub fn kinds(folders: &[PathBuf], theme: &str) -> Icons {
+            Icons::within(
+                folders,
+                &[theme, "Adwaita"],
+                Context::Kinds,
+                icons::KIND_SIDE,
+            )
+        }
+
+        fn within(folders: &[PathBuf], named: &[&str], context: Context, side: u32) -> Icons {
             let mut bases: Vec<PathBuf> = Vec::new();
             if let Some(home) = dirs::home_dir() {
                 bases.push(home.join(".icons"));
             }
             bases.extend(folders.iter().map(|one| one.join("icons")));
-            let pixmaps = folders.iter().map(|one| one.join("pixmaps")).collect();
+            let pixmaps = if context == Context::Apps {
+                folders.iter().map(|one| one.join("pixmaps")).collect()
+            } else {
+                Vec::new()
+            };
             let mut themes: Vec<(String, Vec<ThemeDir>)> = Vec::new();
-            let mut next = vec![theme.to_owned()];
+            let mut next: Vec<String> = named.iter().rev().map(|one| (*one).to_owned()).collect();
             while let Some(name) = next.pop() {
                 if themes.iter().any(|(one, _)| one == &name) || themes.len() > 16 {
                     continue;
@@ -429,7 +473,7 @@ pub(crate) mod linux {
                 let Some(index) = index else {
                     continue;
                 };
-                let (dirs, inherits) = theme_dirs(&index);
+                let (dirs, inherits) = theme_dirs(&index, context, side);
                 next.extend(inherits.into_iter().rev());
                 themes.push((name, dirs));
             }
@@ -437,20 +481,24 @@ pub(crate) mod linux {
                 let index = bases.iter().find_map(|base| {
                     std::fs::read_to_string(base.join("hicolor/index.theme")).ok()
                 });
-                let dirs = index.map_or_else(hicolor_fallback, |one| theme_dirs(&one).0);
+                let dirs = index.map_or_else(
+                    || hicolor_fallback(context, side),
+                    |one| theme_dirs(&one, context, side).0,
+                );
                 themes.push(("hicolor".to_owned(), dirs));
             }
             Icons {
                 bases,
                 themes,
                 pixmaps,
+                side,
             }
         }
 
         pub fn find(&self, icon: &str) -> Option<String> {
             let named = Path::new(icon);
             if named.is_absolute() {
-                return picture(named);
+                return picture(named, self.side);
             }
             let name = icon
                 .strip_suffix(".png")
@@ -469,7 +517,7 @@ pub(crate) mod linux {
                         for extension in extensions {
                             let path = folder.join(format!("{name}.{extension}"));
                             if path.is_file() {
-                                if let Some(found) = picture(&path) {
+                                if let Some(found) = picture(&path, self.side) {
                                     return Some(found);
                                 }
                             }
@@ -482,30 +530,31 @@ pub(crate) mod linux {
                     .iter()
                     .map(|extension| folder.join(format!("{name}.{extension}")))
                     .find(|path| path.is_file())
-                    .and_then(|path| picture(&path))
+                    .and_then(|path| picture(&path, self.side))
             })
         }
     }
 
-    fn hicolor_fallback() -> Vec<ThemeDir> {
+    fn hicolor_fallback(context: Context, side: u32) -> Vec<ThemeDir> {
+        let folder = context.folder();
         let mut dirs: Vec<ThemeDir> = [32, 48, 64, 128, 256, 24, 16]
             .iter()
             .map(|&size| ThemeDir {
-                path: format!("{size}x{size}/apps"),
+                path: format!("{size}x{size}/{folder}"),
                 size,
                 scalable: false,
             })
             .collect();
         dirs.push(ThemeDir {
-            path: "scalable/apps".to_owned(),
+            path: format!("scalable/{folder}"),
             size: 0,
             scalable: true,
         });
-        sort_dirs(&mut dirs);
+        sort_dirs(&mut dirs, side);
         dirs
     }
 
-    fn theme_dirs(index: &str) -> (Vec<ThemeDir>, Vec<String>) {
+    fn theme_dirs(index: &str, context: Context, fit: u32) -> (Vec<ThemeDir>, Vec<String>) {
         let groups = desktop::groups(index);
         let head = groups
             .iter()
@@ -531,8 +580,8 @@ pub(crate) mod linux {
                 .and_then(|one| one.parse().ok())
                 .unwrap_or(1);
             let scalable = keys.get("Type").is_some_and(|one| one == "Scalable");
-            let context = keys.get("Context").map(String::as_str).unwrap_or_default();
-            let apps = matches!(context, "Applications" | "Apps") || path.contains("apps");
+            let named = keys.get("Context").map(String::as_str).unwrap_or_default();
+            let apps = context.holds(named, path);
             Some((
                 ThemeDir {
                     path: path.clone(),
@@ -551,7 +600,7 @@ pub(crate) mod linux {
         } else {
             all.into_iter().map(|(one, _)| one).collect()
         };
-        sort_dirs(&mut dirs);
+        sort_dirs(&mut dirs, fit);
         let inherits = head
             .get("Inherits")
             .map(|one| {
@@ -564,8 +613,7 @@ pub(crate) mod linux {
         (dirs, inherits)
     }
 
-    fn sort_dirs(dirs: &mut [ThemeDir]) {
-        let side = icons::SIDE;
+    fn sort_dirs(dirs: &mut [ThemeDir], side: u32) {
         dirs.sort_by_key(|one| {
             if one.scalable {
                 (1, 0)
@@ -577,14 +625,14 @@ pub(crate) mod linux {
         });
     }
 
-    fn picture(path: &Path) -> Option<String> {
+    fn picture(path: &Path, side: u32) -> Option<String> {
         let kind = path.extension()?.to_str()?.to_ascii_lowercase();
         if std::fs::metadata(path).ok()?.len() > icons::MOST_FILE {
             return None;
         }
         let bytes = std::fs::read(path).ok()?;
         match kind.as_str() {
-            "png" => icons::png_url(&bytes),
+            "png" => icons::png_url_within(&bytes, side),
             "svg" if bytes.len() <= icons::MOST_SVG => {
                 Some(icons::data_url("image/svg+xml", &bytes))
             }
@@ -690,7 +738,7 @@ pub(crate) mod linux {
 
     #[cfg(test)]
     pub(super) fn dirs_of(index: &str) -> (Vec<(String, u32, bool)>, Vec<String>) {
-        let (dirs, inherits) = theme_dirs(index);
+        let (dirs, inherits) = theme_dirs(index, Context::Apps, icons::SIDE);
         (
             dirs.into_iter()
                 .map(|one| (one.path, one.size, one.scalable))
@@ -816,6 +864,9 @@ mod tests {
         assert_eq!(icons.find("plain").as_deref(), Some(picture.as_str()));
         assert_eq!(icons.find("text"), None);
         assert_eq!(icons.find("nothing"), None);
+        let kinds = linux::Icons::kinds(std::slice::from_ref(&root), "Mine");
+        assert_eq!(kinds.find("text").as_deref(), Some(picture.as_str()));
+        assert_eq!(kinds.find("both"), None);
         let _ = std::fs::remove_dir_all(root);
     }
 

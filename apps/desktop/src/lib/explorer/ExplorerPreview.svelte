@@ -1,7 +1,5 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { fileMark } from '../file-mark'
-  import FileMark from '../FileMark.svelte'
   import { plural, t } from '../i18n.svelte'
   import { identifier } from '../identifier'
   import { readableSize } from '../usage.svelte'
@@ -15,6 +13,7 @@
     factsOf,
     peekAt,
   } from './commands'
+  import EntryMark from './EntryMark.svelte'
   import { mediaUrl, MOST_MEDIA, MOST_TEXT, shownAs, textOf } from './preview'
   import type { ExplorerView } from './view.svelte'
 
@@ -112,7 +111,7 @@
       <pre class="words">{text.words}</pre>
     {:else}
       <span class="big">
-        <FileMark mark={!entry || entry.folder ? 'folder' : fileMark(entry.name)} />
+        <EntryMark name={entry?.name ?? null} folder={!entry || entry.folder} />
       </span>
     {/if}
   </div>

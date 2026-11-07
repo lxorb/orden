@@ -623,6 +623,7 @@ macro_rules! desktop_commands {
             explorer::listing::explorer_peek,
             explorer::listing::explorer_open,
             explorer::listing::explorer_reveal,
+            explorer::listing::explorer_icon,
             explorer::changes::explorer_make,
             explorer::changes::explorer_rename,
             explorer::changes::explorer_write,
