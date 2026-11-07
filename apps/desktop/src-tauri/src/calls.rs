@@ -14,8 +14,9 @@ const AWAY: [&str; 2] = ["spawn", "spawn_blocking"];
 
 const PEELED: [&str; 4] = ["unwrap", "expect", "unwrap_or_else", "map_err"];
 
-const MAIN: [&str; 12] = [
+const MAIN: [&str; 13] = [
     "run_on_main_thread",
+    "on_shortcut",
     "with_webview",
     "on_window_event",
     "on_webview_event",
@@ -94,6 +95,69 @@ const SEQUENCES: [&str; 9] = [
 ];
 
 const MAPS: [&str; 3] = ["HashMap", "BTreeMap", "IndexMap"];
+
+const HANDLES: [&str; 12] = [
+    "Weak",
+    "State",
+    "Ref",
+    "RefMut",
+    "MutexGuard",
+    "RwLockReadGuard",
+    "RwLockWriteGuard",
+    "Iter",
+    "AppHandle",
+    "Window",
+    "WebviewWindow",
+    "Webview",
+];
+
+const STORING: [&str; 10] = [
+    "push",
+    "push_back",
+    "push_front",
+    "insert",
+    "replace",
+    "set",
+    "get_or_init",
+    "or_insert",
+    "or_insert_with",
+    "extend",
+];
+
+const CLEARING: [&str; 4] = ["clear", "truncate", "retain", "retain_mut"];
+
+const OWNING: [&str; 17] = [
+    "take",
+    "remove",
+    "pop",
+    "pop_front",
+    "pop_back",
+    "swap_remove",
+    "replace",
+    "split_off",
+    "clone",
+    "cloned",
+    "to_owned",
+    "to_vec",
+    "collect",
+    "drain",
+    "insert",
+    "remove_entry",
+    "unwrap_or_default",
+];
+
+const KEEPING: [&str; 10] = [
+    "unwrap",
+    "expect",
+    "unwrap_or_else",
+    "unwrap_or",
+    "ok",
+    "err",
+    "map_err",
+    "into_iter",
+    "into_values",
+    "into_inner",
+];
 
 #[derive(Default)]
 struct Function {
@@ -402,6 +466,10 @@ fn item_allowed(target: Target, item: &syn::Item) -> bool {
         syn::Item::Mod(one) => target.allows(&one.attrs),
         syn::Item::Static(one) => target.allows(&one.attrs),
         syn::Item::Const(one) => target.allows(&one.attrs),
+        syn::Item::Type(one) => target.allows(&one.attrs),
+        syn::Item::Struct(one) => target.allows(&one.attrs),
+        syn::Item::Enum(one) => target.allows(&one.attrs),
+        syn::Item::Trait(one) => target.allows(&one.attrs),
         _ => true,
     }
 }
@@ -485,6 +553,40 @@ struct Found {
     output: Option<syn::Type>,
     inputs: Vec<Option<syn::Type>>,
     generics: Vec<String>,
+    bounds: Bounds,
+    closures: Closures,
+    drops: Drops,
+}
+
+type Bounds = HashMap<String, Vec<Vec<String>>>;
+
+#[derive(Clone, Default)]
+struct Enclosing {
+    scope: Scope,
+    bounds: Bounds,
+}
+
+#[derive(Default)]
+struct Closures {
+    stored: Vec<(Chain, String)>,
+    params: Vec<(Chain, usize)>,
+    handed: Vec<(Vec<String>, usize, String)>,
+    invoked: Vec<Chain>,
+}
+
+struct Site<'a> {
+    module: &'a str,
+    owner: Option<&'a str>,
+    path: &'a str,
+    scope: &'a Scope,
+    env: &'a Env,
+    bounds: &'a Bounds,
+}
+
+enum Run {
+    Main,
+    Passed(Vec<String>),
+    Stored,
 }
 
 #[derive(Default)]
@@ -571,6 +673,12 @@ struct Gathered {
     defs: HashMap<String, Def>,
     statics: HashMap<String, (String, syn::Type)>,
     by_path: HashMap<String, Vec<usize>>,
+    aliases: HashMap<String, (String, syn::Type)>,
+    traits: HashSet<String>,
+    impls: Vec<(String, Vec<String>, String)>,
+    implementors: HashMap<String, Vec<String>>,
+    implemented: HashMap<String, Vec<String>>,
+    drops: std::cell::RefCell<HashMap<String, HashSet<String>>>,
 }
 
 #[derive(Default)]
@@ -624,6 +732,10 @@ impl Gathered {
     ) {
         self.modules.entry(module.to_owned()).or_default();
         self.owners.insert(module.to_owned());
+        let top = Enclosing {
+            scope: outer.clone(),
+            bounds: Bounds::new(),
+        };
 
         for item in items {
             if !item_allowed(self.target, item) {
@@ -637,7 +749,7 @@ impl Gathered {
                         &function.attrs,
                         &function.sig,
                         &function.block,
-                        outer,
+                        &top,
                     );
                 }
                 syn::Item::Impl(block) if !tested(&block.attrs) => {
@@ -646,6 +758,14 @@ impl Gathered {
                     };
                     let owner = format!("{module}::{owner}");
                     self.owners.insert(owner.clone());
+                    if let Some((_, shape, _)) = &block.trait_ {
+                        self.impls
+                            .push((module.to_owned(), segments(shape), owner.clone()));
+                    }
+                    let enclosing = Enclosing {
+                        scope: outer.clone(),
+                        bounds: bounds_of(&block.generics),
+                    };
                     for inner in &block.items {
                         if let syn::ImplItem::Fn(function) = inner {
                             if !tested(&function.attrs) && self.target.allows(&function.attrs) {
@@ -655,7 +775,7 @@ impl Gathered {
                                     &function.attrs,
                                     &function.sig,
                                     &function.block,
-                                    outer,
+                                    &enclosing,
                                 );
                             }
                         }
@@ -664,6 +784,11 @@ impl Gathered {
                 syn::Item::Trait(shape) if !tested(&shape.attrs) => {
                     let owner = format!("{module}::{}", shape.ident);
                     self.owners.insert(owner.clone());
+                    self.traits.insert(owner.clone());
+                    let enclosing = Enclosing {
+                        scope: outer.clone(),
+                        bounds: bounds_of(&shape.generics),
+                    };
                     for inner in &shape.items {
                         if let syn::TraitItem::Fn(function) = inner {
                             if !self.target.allows(&function.attrs) {
@@ -676,7 +801,7 @@ impl Gathered {
                                     &function.attrs,
                                     &function.sig,
                                     block,
-                                    outer,
+                                    &enclosing,
                                 );
                             }
                         }
@@ -689,7 +814,8 @@ impl Gathered {
                 syn::Item::Struct(_)
                 | syn::Item::Enum(_)
                 | syn::Item::Static(_)
-                | syn::Item::Const(_) => self.shaped(module, item),
+                | syn::Item::Const(_)
+                | syn::Item::Type(_) => self.shaped(module, item),
                 syn::Item::Mod(inner) if !tested(&inner.attrs) => {
                     self.module(module, inner, files);
                 }
@@ -706,12 +832,12 @@ impl Gathered {
                 .map_or_else(|| at.to_string(), ToString::to_string)
         };
         let mut fields = HashMap::new();
-        let (name, attrs) = match item {
+        let (name, attrs, generics) = match item {
             syn::Item::Struct(shape) => {
                 for (at, field) in shape.fields.iter().enumerate() {
                     fields.insert(named(at, field), field.ty.clone());
                 }
-                (&shape.ident, &shape.attrs)
+                (&shape.ident, &shape.attrs, &shape.generics)
             }
             syn::Item::Enum(shape) => {
                 for variant in &shape.variants {
@@ -720,7 +846,16 @@ impl Gathered {
                         fields.insert(name, field.ty.clone());
                     }
                 }
-                (&shape.ident, &shape.attrs)
+                (&shape.ident, &shape.attrs, &shape.generics)
+            }
+            syn::Item::Type(one) => {
+                if !tested(&one.attrs) {
+                    self.aliases.insert(
+                        format!("{module}::{}", one.ident),
+                        (module.to_owned(), (*one.ty).clone()),
+                    );
+                }
+                return;
             }
             syn::Item::Static(one) => {
                 self.statics.insert(
@@ -744,6 +879,7 @@ impl Gathered {
                 Def {
                     module: module.to_owned(),
                     fields,
+                    bounds: bounds_of(generics),
                 },
             );
         }
@@ -781,7 +917,7 @@ impl Gathered {
         attrs: &[syn::Attribute],
         sig: &syn::Signature,
         block: &syn::Block,
-        outer: &Scope,
+        outer: &Enclosing,
     ) {
         let path = format!("{}::{}", owner.unwrap_or(module), sig.ident);
         let mut block = block.clone();
@@ -790,8 +926,12 @@ impl Gathered {
 
         let mut body = Body::default();
         body.visit_block(block);
-        let mut scope = outer.clone();
+        let mut scope = outer.scope.clone();
         scope.joined(&body.scope);
+        let mut bounds = outer.bounds.clone();
+        for (name, traits) in bounds_of(&sig.generics) {
+            bounds.entry(name).or_default().extend(traits);
+        }
 
         let tokens = block.to_token_stream();
         let mut found = Vec::new();
@@ -806,26 +946,16 @@ impl Gathered {
         let (env, taken) = Bindings::of(sig, block);
         let mut mains = Mains::default();
         mains.visit_block(block);
-        for (at, body) in mains.closures.iter().enumerate() {
-            self.closure(
-                module,
-                owner,
-                &format!("{path}::main#{at}"),
-                body,
-                (&scope, &env),
-                None,
-            );
-        }
-        for (at, (to, body)) in mains.passed.iter().enumerate() {
-            self.closure(
-                module,
-                owner,
-                &format!("{path}::passed#{at}"),
-                body,
-                (&scope, &env),
-                Some(to.clone()),
-            );
-        }
+        let site = Site {
+            module,
+            owner,
+            path: &path,
+            scope: &scope,
+            env: &env,
+            bounds: &bounds,
+        };
+        let closures = self.closures_of(&site, sig, block, &mains);
+        let drops = Drops::of(sig, block);
         let params: Vec<String> = sig
             .inputs
             .iter()
@@ -850,6 +980,10 @@ impl Gathered {
             sig.generics.to_token_stream()
         );
 
+        let inner = Enclosing {
+            scope: scope.clone(),
+            bounds: Bounds::new(),
+        };
         for nested in &body.nested {
             self.function(
                 module,
@@ -857,7 +991,7 @@ impl Gathered {
                 &nested.attrs,
                 &nested.sig,
                 &nested.block,
-                &scope,
+                &inner,
             );
         }
 
@@ -886,28 +1020,80 @@ impl Gathered {
             output: output_of(sig),
             inputs: taken,
             generics: generics_of(sig),
+            bounds,
+            closures,
+            drops,
         });
     }
 
-    fn closure(
+    fn closures_of(
         &mut self,
-        module: &str,
-        owner: Option<&str>,
-        path: &str,
-        body: &syn::Expr,
-        (scope, env): (&Scope, &Env),
-        passed_to: Option<Vec<String>>,
-    ) {
+        site: &Site<'_>,
+        sig: &syn::Signature,
+        block: &syn::Block,
+        mains: &Mains,
+    ) -> Closures {
+        let path = site.path;
+        for (at, body) in mains.closures.iter().enumerate() {
+            self.closure(site, &format!("{path}::main#{at}"), body, Run::Main);
+        }
+        for (at, (to, body)) in mains.passed.iter().enumerate() {
+            let passed = format!("{path}::passed#{at}");
+            self.closure(site, &passed, body, Run::Passed(to.clone()));
+        }
+        let mut slots = Slots::default();
+        slots.visit_block(block);
+        let named: Vec<Option<String>> = sig
+            .inputs
+            .iter()
+            .filter_map(|one| match one {
+                syn::FnArg::Typed(typed) => Some(bound(&typed.pat)),
+                syn::FnArg::Receiver(_) => None,
+            })
+            .collect();
+        let mut closures = Closures {
+            invoked: slots.invoked,
+            ..Closures::default()
+        };
+        for (at, (slot, carried)) in slots.stored.into_iter().enumerate() {
+            match carried {
+                Carried::Body(body) => {
+                    let stored = format!("{path}::stored#{at}");
+                    self.closure(site, &stored, &body, Run::Stored);
+                    closures.stored.push((slot, stored));
+                }
+                Carried::Named(name) => {
+                    if let Some(index) = named.iter().position(|one| one.as_ref() == Some(&name)) {
+                        closures.params.push((slot, index));
+                    }
+                }
+            }
+        }
+        for (at, (to, index, body)) in slots.handed.into_iter().enumerate() {
+            let handed = format!("{path}::arg#{at}");
+            self.closure(site, &handed, &body, Run::Stored);
+            closures.handed.push((to, index, handed));
+        }
+        closures
+    }
+
+    fn closure(&mut self, site: &Site<'_>, path: &str, body: &syn::Expr, run: Run) {
+        let (module, owner) = (site.module, site.owner);
         let locks = locks_in(owner.unwrap_or(module), module, |taking, holding| {
             taking.visit_expr(body);
             holding.visit_expr(body);
         });
+        let mut slots = Slots::default();
+        slots.visit_expr(body);
+        let mut drops = Drops::default();
+        drops.visit_expr(body);
+        drops.moved.extend(flows_out(body));
         let tokens = body.to_token_stream();
         self.found.push(Found {
             path: path.to_owned(),
             module: module.to_owned(),
             owner: owner.map(str::to_owned),
-            scope: scope.clone(),
+            scope: site.scope.clone(),
             calls: found_calls(tokens.clone()),
             said: said_of(tokens),
             command: false,
@@ -915,13 +1101,22 @@ impl Gathered {
             params: Vec::new(),
             shape: Shape::default(),
             mains: Vec::new(),
-            main: passed_to.is_none(),
-            passed_to,
-            env: env.clone(),
+            main: matches!(run, Run::Main),
+            passed_to: match run {
+                Run::Passed(to) => Some(to),
+                Run::Main | Run::Stored => None,
+            },
+            env: site.env.clone(),
             methods: Methods::of_expr(body),
             output: None,
             inputs: Vec::new(),
             generics: Vec::new(),
+            bounds: site.bounds.clone(),
+            closures: Closures {
+                invoked: slots.invoked,
+                ..Closures::default()
+            },
+            drops,
         });
     }
 
@@ -930,6 +1125,22 @@ impl Gathered {
         for (at, found) in self.found.iter().enumerate() {
             self.by_path.entry(found.path.clone()).or_default().push(at);
         }
+        let impls = std::mem::take(&mut self.impls);
+        for (module, shape, owner) in impls {
+            let Some(shape) = self
+                .absolute(&module, None, None, &shape, 0)
+                .into_iter()
+                .find(|one| self.traits.contains(one))
+            else {
+                continue;
+            };
+            self.implementors
+                .entry(shape.clone())
+                .or_default()
+                .push(owner.clone());
+            self.implemented.entry(owner).or_default().push(shape);
+        }
+        let slots = self.slots();
 
         let mut own = Crate {
             modules: self.modules.len(),
@@ -965,10 +1176,22 @@ impl Gathered {
                 .collect();
 
             let typed = self.typed(found, &found.methods);
+            let dropped = self.implicit(found);
+            let invoked: Vec<String> = found
+                .closures
+                .invoked
+                .iter()
+                .filter_map(|slot| self.slot_key(found, slot))
+                .filter_map(|key| slots.get(&key))
+                .flatten()
+                .cloned()
+                .collect();
             let function = own.functions.entry(found.path.clone()).or_default();
             function.said.push_str(&found.said);
             function.called.extend(called);
             function.called.extend(typed);
+            function.called.extend(dropped);
+            function.called.extend(invoked);
 
             if found.command && !own.commands.contains(&found.path) {
                 own.commands.push(found.path.clone());
@@ -994,6 +1217,180 @@ impl Gathered {
         }
 
         own
+    }
+
+    fn slots(&self) -> HashMap<String, Vec<String>> {
+        let mut slots: HashMap<String, Vec<String>> = HashMap::new();
+        for found in &self.found {
+            for (slot, stored) in &found.closures.stored {
+                if let Some(key) = self.slot_key(found, slot) {
+                    slots.entry(key).or_default().push(stored.clone());
+                }
+            }
+            for (to, index, handed) in &found.closures.handed {
+                for callee in self.resolve(found, to) {
+                    for &at in self.by_path.get(&callee).into_iter().flatten() {
+                        let called = &self.found[at];
+                        for (slot, _) in called.closures.params.iter().filter(|one| one.1 == *index)
+                        {
+                            if let Some(key) = self.slot_key(called, slot) {
+                                slots.entry(key).or_default().push(handed.clone());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        slots
+    }
+
+    fn slot_key(&self, found: &Found, slot: &Chain) -> Option<String> {
+        self.slot_in(found, slot, &mut Vec::new())
+    }
+
+    fn slot_in(&self, found: &Found, slot: &Chain, visiting: &mut Vec<String>) -> Option<String> {
+        if let Some(at) = slot
+            .steps
+            .iter()
+            .rposition(|step| matches!(step, Step::Field(_)))
+        {
+            let Step::Field(name) = &slot.steps[at] else {
+                return None;
+            };
+            let base = Chain {
+                root: slot.root.clone(),
+                steps: slot.steps[..at].to_vec(),
+            };
+            return self.field_key(found, &base, name);
+        }
+        match &slot.root {
+            Root::Var(name) => {
+                if visiting.iter().any(|one| one == name) || visiting.len() > TYPED_DEEPEST {
+                    return None;
+                }
+                visiting.push(name.clone());
+                let key = found
+                    .env
+                    .get(name)
+                    .into_iter()
+                    .flatten()
+                    .find_map(|one| self.slot_in(found, one, visiting));
+                visiting.pop();
+                key
+            }
+            Root::Path(path) => {
+                let key = self.key(found, &Key::Path(path.clone()));
+                self.statics.contains_key(&key).then_some(key)
+            }
+            _ => None,
+        }
+    }
+
+    fn implicit(&self, found: &Found) -> HashSet<String> {
+        let mut called = HashSet::new();
+        let drops = &found.drops;
+        let owned = |chain: &Chain, called: &mut HashSet<String>| {
+            if self.owns(found, chain, &mut Vec::new(), 0) {
+                for ty in self.types(found, chain, &mut Vec::new(), 0) {
+                    self.dropping(&ty, called, 0);
+                }
+            }
+        };
+        for (name, chain) in &drops.locals {
+            if !drops.moved.contains(name) {
+                owned(chain, &mut called);
+            }
+        }
+        for chain in &drops.discarded {
+            owned(chain, &mut called);
+        }
+        for chain in drops.replaced.iter().chain(&drops.cleared) {
+            for ty in self.types(found, chain, &mut Vec::new(), 0) {
+                let mut at = &ty;
+                while HANDLES.contains(&at.last()) || DEREFS.contains(&at.last()) {
+                    let Some(inner) = at.args.first() else {
+                        break;
+                    };
+                    at = inner;
+                }
+                self.dropping(at, &mut called, 0);
+            }
+        }
+        called
+    }
+
+    fn owns(&self, found: &Found, chain: &Chain, visiting: &mut Vec<String>, depth: usize) -> bool {
+        if depth > TYPED_DEEPEST {
+            return false;
+        }
+        let place = (
+            &*found.module,
+            Some(&found.scope),
+            found.owner.as_deref(),
+            Some(&found.bounds),
+        );
+        let mut owned = match &chain.root {
+            Root::Built(_) => true,
+            Root::Call(path, _) => {
+                let outputs: Vec<&syn::Type> = self
+                    .resolve(found, path)
+                    .iter()
+                    .flat_map(|one| self.by_path.get(one).into_iter().flatten())
+                    .filter_map(|&at| self.found[at].output.as_ref())
+                    .collect();
+                outputs.is_empty()
+                    || outputs
+                        .iter()
+                        .any(|one| !matches!(one, syn::Type::Reference(_)))
+            }
+            Root::Var(name) => match found.env.get(name) {
+                Some(chains) if !visiting.iter().any(|one| one == name) => {
+                    visiting.push(name.clone());
+                    let owned = chains
+                        .iter()
+                        .any(|one| self.owns(found, one, visiting, depth + 1));
+                    visiting.pop();
+                    owned
+                }
+                _ => false,
+            },
+            Root::Raw(raw) => !matches!(**raw, syn::Type::Reference(_)),
+            Root::Me => found.drops.me,
+            Root::Path(path) => {
+                !self.def_named(place, path).is_empty()
+                    && !self
+                        .absolute(place.0, place.1, place.2, path, 0)
+                        .iter()
+                        .any(|one| self.statics.contains_key(one))
+            }
+            Root::Unknown => false,
+        };
+        for (at, step) in chain.steps.iter().enumerate() {
+            let Step::Method(method, _) = step else {
+                continue;
+            };
+            let receiver = Chain {
+                root: chain.root.clone(),
+                steps: chain.steps[..at].to_vec(),
+            };
+            let outputs: Vec<&syn::Type> = self
+                .types(found, &receiver, &mut Vec::new(), 0)
+                .iter()
+                .flat_map(|ty| self.targets(ty, method))
+                .flat_map(|one| self.by_path.get(&one).into_iter().flatten().copied())
+                .filter_map(|at| self.found[at].output.as_ref())
+                .collect();
+            owned = if !outputs.is_empty() {
+                outputs
+                    .iter()
+                    .any(|one| !matches!(one, syn::Type::Reference(_)))
+            } else if OWNING.contains(&method.as_str()) {
+                true
+            } else {
+                owned && KEEPING.contains(&method.as_str())
+            };
+        }
+        owned
     }
 
     fn locked(&self) -> Vec<(String, Vec<String>, Vec<Held>)> {
@@ -1330,22 +1727,46 @@ impl Gathered {
     }
 
     fn dropping(&self, ty: &Ty, called: &mut HashSet<String>, depth: usize) {
-        if depth > TYPED_DEEPEST {
+        self.dropping_in(ty, called, &mut HashSet::new(), depth);
+    }
+
+    fn dropping_in(
+        &self,
+        ty: &Ty,
+        called: &mut HashSet<String>,
+        seen: &mut HashSet<String>,
+        depth: usize,
+    ) {
+        if depth > TYPED_DEEPEST || HANDLES.contains(&ty.last()) {
             return;
         }
-        if self.is_def(&ty.name) {
-            called.extend(self.landing(&format!("{}::drop", ty.name), 0));
+        if self.is_def(&ty.name) && seen.insert(ty.name.clone()) {
+            called.extend(self.dropped_by(&ty.name, seen, depth));
         }
-        if let Some(def) = self.defs.get(&ty.name) {
+        for one in &ty.args {
+            self.dropping_in(one, called, seen, depth + 1);
+        }
+    }
+
+    fn dropped_by(&self, name: &str, seen: &mut HashSet<String>, depth: usize) -> HashSet<String> {
+        if let Some(known) = self.drops.borrow().get(name) {
+            return known.clone();
+        }
+        let mut called: HashSet<String> = self
+            .landing(&format!("{name}::drop"), 0)
+            .into_iter()
+            .collect();
+        if let Some(def) = self.defs.get(name) {
             for raw in def.fields.values() {
-                if let Some(field) = self.def_ty(&ty.name, raw) {
-                    self.dropping(&field, called, depth + 1);
+                if let Some(field) = self.def_ty(name, raw) {
+                    self.dropping_in(&field, &mut called, seen, depth + 1);
                 }
             }
         }
-        for one in &ty.args {
-            self.dropping(one, called, depth + 1);
-        }
+        self.drops
+            .borrow_mut()
+            .insert(name.to_owned(), called.clone());
+        called
     }
 
     fn targets(&self, ty: &Ty, method: &str) -> Vec<String> {
@@ -1355,6 +1776,16 @@ impl Gathered {
                 let landed = self.landing(&format!("{}::{method}", one.name), 0);
                 if !landed.is_empty() {
                     return landed;
+                }
+                let defaulted: Vec<String> = self
+                    .implemented
+                    .get(&one.name)
+                    .into_iter()
+                    .flatten()
+                    .flat_map(|shape| self.landed(&format!("{shape}::{method}"), 0))
+                    .collect();
+                if !defaulted.is_empty() {
+                    return defaulted;
                 }
             }
             at = one.inside();
@@ -1370,7 +1801,7 @@ impl Gathered {
         if depth > TYPED_DEEPEST {
             return None;
         }
-        let (module, scope, owner) = place;
+        let (module, scope, owner, bounds) = place;
         let inner = |one: &syn::Type| {
             self.ty_in(place, one, depth + 1)
                 .unwrap_or_else(|| Ty::plain("?"))
@@ -1386,10 +1817,27 @@ impl Gathered {
             }),
             syn::Type::Array(array) => Some(Ty::wrapping("[]", inner(&array.elem))),
             syn::Type::Slice(slice) => Some(Ty::wrapping("[]", inner(&slice.elem))),
+            syn::Type::TraitObject(shape) => self.bounded(place, shape.bounds.iter()),
+            syn::Type::ImplTrait(shape) => self.bounded(place, shape.bounds.iter()),
             syn::Type::Path(path) if path.qself.is_none() => {
                 let said = segments(&path.path);
                 if said == ["Self"] {
                     return owner.map(Ty::plain);
+                }
+                if let ([one], Some(bounds)) = (said.as_slice(), bounds) {
+                    if let Some(shapes) = bounds.get(one) {
+                        return self
+                            .own_trait(place, shapes)
+                            .or_else(|| Some(Ty::plain(one)));
+                    }
+                }
+                let resolved = self.absolute(module, scope, owner, &said, 0);
+                if !resolved.iter().any(|one| self.is_def(one)) {
+                    if let Some((home, aliased)) =
+                        resolved.iter().find_map(|one| self.aliases.get(one))
+                    {
+                        return self.ty_in((home, None, None, None), aliased, depth + 1);
+                    }
                 }
                 let args = match path.path.segments.last().map(|last| &last.arguments) {
                     Some(syn::PathArguments::AngleBracketed(kinds)) => kinds
@@ -1402,8 +1850,7 @@ impl Gathered {
                         .collect(),
                     _ => Vec::new(),
                 };
-                let name = self
-                    .absolute(module, scope, owner, &said, 0)
+                let name = resolved
                     .into_iter()
                     .find(|one| self.is_def(one))
                     .or_else(|| said.last().cloned())?;
@@ -1413,9 +1860,42 @@ impl Gathered {
         }
     }
 
+    fn bounded<'b>(
+        &self,
+        place: Place<'_>,
+        bounds: impl Iterator<Item = &'b syn::TypeParamBound>,
+    ) -> Option<Ty> {
+        let shapes: Vec<Vec<String>> = bounds
+            .filter_map(|one| match one {
+                syn::TypeParamBound::Trait(shape) => Some(segments(&shape.path)),
+                _ => None,
+            })
+            .collect();
+        self.own_trait(place, &shapes).or_else(|| {
+            shapes
+                .first()
+                .and_then(|one| one.last())
+                .map(|one| Ty::plain(one))
+        })
+    }
+
+    fn own_trait(&self, place: Place<'_>, shapes: &[Vec<String>]) -> Option<Ty> {
+        shapes.iter().find_map(|shape| {
+            self.absolute(place.0, place.1, place.2, shape, 0)
+                .into_iter()
+                .find(|one| self.traits.contains(one))
+                .map(|one| Ty::plain(&one))
+        })
+    }
+
     fn ty_of(&self, found: &Found, raw: &syn::Type) -> Option<Ty> {
         self.ty_in(
-            (&found.module, Some(&found.scope), found.owner.as_deref()),
+            (
+                &found.module,
+                Some(&found.scope),
+                found.owner.as_deref(),
+                Some(&found.bounds),
+            ),
             raw,
             0,
         )
@@ -1423,7 +1903,7 @@ impl Gathered {
 
     fn def_ty(&self, owner: &str, raw: &syn::Type) -> Option<Ty> {
         let def = self.defs.get(owner)?;
-        self.ty_in((&def.module, None, Some(owner)), raw, 0)
+        self.ty_in((&def.module, None, Some(owner), Some(&def.bounds)), raw, 0)
     }
 
     fn types(
@@ -1479,7 +1959,12 @@ impl Gathered {
         visiting: &mut Vec<String>,
         depth: usize,
     ) -> Vec<Ty> {
-        let place = (&*found.module, Some(&found.scope), found.owner.as_deref());
+        let place = (
+            &*found.module,
+            Some(&found.scope),
+            found.owner.as_deref(),
+            Some(&found.bounds),
+        );
         match root {
             Root::Me => found.owner.as_deref().map(Ty::plain).into_iter().collect(),
             Root::Var(name) => {
@@ -1502,12 +1987,19 @@ impl Gathered {
                 tys.truncate(WIDEST);
                 tys
             }
-            Root::Path(path) => self
-                .absolute(place.0, place.1, place.2, path, 0)
-                .iter()
-                .filter_map(|one| self.statics.get(one))
-                .filter_map(|(module, raw)| self.ty_in((module, None, None), raw, 0))
-                .collect(),
+            Root::Path(path) => {
+                let statics: Vec<Ty> = self
+                    .absolute(place.0, place.1, place.2, path, 0)
+                    .iter()
+                    .filter_map(|one| self.statics.get(one))
+                    .filter_map(|(module, raw)| self.ty_in((module, None, None, None), raw, 0))
+                    .collect();
+                if statics.is_empty() {
+                    self.def_named(place, path)
+                } else {
+                    statics
+                }
+            }
             Root::Call(path, arguments) => self.returned(found, path, arguments, visiting, depth),
             Root::Raw(raw) => self.ty_of(found, raw).into_iter().collect(),
             Root::Built(path) => self.def_named(place, path),
@@ -1577,7 +2069,12 @@ impl Gathered {
             }
             _ => {}
         }
-        let place = (&*found.module, Some(&found.scope), found.owner.as_deref());
+        let place = (
+            &*found.module,
+            Some(&found.scope),
+            found.owner.as_deref(),
+            Some(&found.bounds),
+        );
         match path {
             [.., last] if last.starts_with(char::is_uppercase) => self.def_named(place, path),
             [shape @ .., last] if !shape.is_empty() && (last == "default" || last == "new") => {
@@ -1726,6 +2223,7 @@ impl Gathered {
             || self.defs.contains_key(&owner)
             || self.known.contains(&here)
             || self.statics.contains_key(&here)
+            || self.aliases.contains_key(&here)
         {
             found.push(here);
         }
@@ -1742,6 +2240,20 @@ impl Gathered {
     }
 
     fn landing(&self, path: &str, depth: usize) -> Vec<String> {
+        let mut landed = self.landed(path, depth);
+        if let Some((shape, method)) = path.rsplit_once("::") {
+            for owner in self.implementors.get(shape).into_iter().flatten() {
+                for one in self.landed(&format!("{owner}::{method}"), depth + 1) {
+                    if !landed.contains(&one) {
+                        landed.push(one);
+                    }
+                }
+            }
+        }
+        landed
+    }
+
+    fn landed(&self, path: &str, depth: usize) -> Vec<String> {
         if self.known.contains(path) {
             return vec![path.to_owned()];
         }
@@ -2517,6 +3029,7 @@ impl Ty {
 struct Def {
     module: String,
     fields: HashMap<String, syn::Type>,
+    bounds: Bounds,
 }
 
 fn member_name(member: &syn::Member) -> String {
@@ -2796,7 +3309,402 @@ impl<'a> Visit<'a> for Methods {
     fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
 }
 
-type Place<'a> = (&'a str, Option<&'a Scope>, Option<&'a str>);
+enum Carried {
+    Body(syn::Expr),
+    Named(String),
+}
+
+fn carried(expr: &syn::Expr) -> Option<Carried> {
+    match expr {
+        syn::Expr::Closure(closure) => Some(Carried::Body((*closure.body).clone())),
+        syn::Expr::Call(call)
+            if call.args.len() == 1 && matches!(&*call.func, syn::Expr::Path(_)) =>
+        {
+            call.args.first().and_then(carried)
+        }
+        syn::Expr::Cast(cast) => carried(&cast.expr),
+        syn::Expr::Paren(inner) => carried(&inner.expr),
+        syn::Expr::Group(inner) => carried(&inner.expr),
+        syn::Expr::Path(path) => path
+            .path
+            .get_ident()
+            .map(|one| Carried::Named(one.to_string())),
+        _ => None,
+    }
+}
+
+fn is_away(func: &syn::Expr) -> bool {
+    matches!(func, syn::Expr::Path(path) if path.path.segments.last().is_some_and(|one| AWAY.iter().any(|away| one.ident == away)))
+}
+
+#[derive(Default)]
+struct Slots {
+    stored: Vec<(Chain, Carried)>,
+    handed: Vec<(Vec<String>, usize, syn::Expr)>,
+    invoked: Vec<Chain>,
+    away: usize,
+}
+
+impl Slots {
+    fn elsewhere(&mut self, arguments: &Punctuated<syn::Expr, syn::Token![,]>) {
+        self.away += 1;
+        for argument in arguments {
+            self.visit_expr(argument);
+        }
+        self.away -= 1;
+    }
+}
+
+impl<'a> Visit<'a> for Slots {
+    fn visit_expr_struct(&mut self, built: &'a syn::ExprStruct) {
+        if built.qself.is_none() {
+            let base = Chain::rooted(Root::Built(segments(&built.path)));
+            for field in &built.fields {
+                if let Some(one) = carried(&field.expr) {
+                    let name = member_name(&field.member);
+                    self.stored
+                        .push((base.clone().then(Step::Field(name)), one));
+                }
+            }
+        }
+        syn::visit::visit_expr_struct(self, built);
+    }
+
+    fn visit_expr_assign(&mut self, assigned: &'a syn::ExprAssign) {
+        if let Some(one) = carried(&assigned.right) {
+            self.stored.push((chain_of(&assigned.left), one));
+        }
+        syn::visit::visit_expr_assign(self, assigned);
+    }
+
+    fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
+        if AWAY.iter().any(|one| call.method == one) {
+            self.visit_expr(&call.receiver);
+            self.elsewhere(&call.args);
+            return;
+        }
+        if STORING.iter().any(|one| call.method == one) {
+            for argument in &call.args {
+                if let Some(one) = carried(argument) {
+                    self.stored.push((chain_of(&call.receiver), one));
+                }
+            }
+        }
+        syn::visit::visit_expr_method_call(self, call);
+    }
+
+    fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
+        if is_away(&call.func) {
+            self.elsewhere(&call.args);
+            return;
+        }
+        match &*call.func {
+            syn::Expr::Path(path) => {
+                let said = segments(&path.path);
+                if let [one] = said.as_slice() {
+                    if self.away == 0 && one.starts_with(|letter: char| letter.is_lowercase()) {
+                        self.invoked.push(Chain::rooted(Root::Var(one.clone())));
+                    }
+                }
+                for (at, argument) in call.args.iter().enumerate() {
+                    if let Some(Carried::Body(body)) = carried(argument) {
+                        self.handed.push((said.clone(), at, body));
+                    }
+                }
+            }
+            func if self.away == 0 => self.invoked.push(chain_of(func)),
+            _ => {}
+        }
+        syn::visit::visit_expr_call(self, call);
+    }
+
+    fn visit_macro(&mut self, called: &'a syn::Macro) {
+        for argument in macro_arguments(called) {
+            self.visit_expr(&argument);
+        }
+    }
+
+    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
+
+    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
+
+    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+}
+
+#[derive(Default)]
+struct Drops {
+    locals: Vec<(String, Chain)>,
+    moved: HashSet<String>,
+    discarded: Vec<Chain>,
+    replaced: Vec<Chain>,
+    cleared: Vec<Chain>,
+    me: bool,
+}
+
+impl Drops {
+    fn of(sig: &syn::Signature, block: &syn::Block) -> Self {
+        let mut drops = Drops::default();
+        for input in &sig.inputs {
+            match input {
+                syn::FnArg::Typed(typed) => {
+                    drops.bind(&typed.pat, &Chain::rooted(Root::Raw(typed.ty.clone())));
+                }
+                syn::FnArg::Receiver(me) if me.reference.is_none() => {
+                    drops.me = true;
+                    drops
+                        .locals
+                        .push(("self".to_owned(), Chain::rooted(Root::Me)));
+                }
+                syn::FnArg::Receiver(_) => {}
+            }
+        }
+        drops.visit_block(block);
+        if let Some(syn::Stmt::Expr(tail, None)) = block.stmts.last() {
+            drops.moved.extend(flows_out(tail));
+        }
+        drops
+    }
+
+    fn bind(&mut self, pattern: &syn::Pat, chain: &Chain) {
+        let mut env = Env::new();
+        bind(pattern, chain, &mut env);
+        for (name, chains) in env {
+            for one in chains {
+                self.locals.push((name.clone(), one));
+            }
+        }
+    }
+
+    fn moving(&mut self, expr: &syn::Expr) {
+        if let syn::Expr::Path(path) = expr {
+            if let Some(one) = path.path.get_ident() {
+                self.moved.insert(one.to_string());
+            }
+        }
+    }
+
+    fn captured(&mut self, tokens: TokenStream) {
+        for token in tokens {
+            match token {
+                TokenTree::Ident(one) => {
+                    self.moved.insert(one.to_string());
+                }
+                TokenTree::Group(group) => self.captured(group.stream()),
+                _ => {}
+            }
+        }
+    }
+}
+
+fn flows_out(expr: &syn::Expr) -> Vec<String> {
+    match expr {
+        syn::Expr::Path(path) => path
+            .path
+            .get_ident()
+            .map(ToString::to_string)
+            .into_iter()
+            .collect(),
+        syn::Expr::Paren(inner) => flows_out(&inner.expr),
+        syn::Expr::Group(inner) => flows_out(&inner.expr),
+        syn::Expr::Block(block) => match block.block.stmts.last() {
+            Some(syn::Stmt::Expr(last, None)) => flows_out(last),
+            _ => Vec::new(),
+        },
+        syn::Expr::If(branched) => {
+            let mut out = match branched.then_branch.stmts.last() {
+                Some(syn::Stmt::Expr(last, None)) => flows_out(last),
+                _ => Vec::new(),
+            };
+            if let Some((_, other)) = &branched.else_branch {
+                out.extend(flows_out(other));
+            }
+            out
+        }
+        syn::Expr::Match(matched) => matched
+            .arms
+            .iter()
+            .flat_map(|arm| flows_out(&arm.body))
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+impl<'a> Visit<'a> for Drops {
+    fn visit_local(&mut self, local: &'a syn::Local) {
+        let Some(init) = &local.init else {
+            syn::visit::visit_local(self, local);
+            return;
+        };
+        let chain = chain_of(&init.expr);
+        if matches!(local.pat, syn::Pat::Wild(_)) {
+            self.discarded.push(chain);
+        } else {
+            self.bind(&local.pat, &chain);
+        }
+        self.moved.extend(flows_out(&init.expr));
+        syn::visit::visit_local(self, local);
+    }
+
+    fn visit_expr_let(&mut self, matched: &'a syn::ExprLet) {
+        self.bind(&matched.pat, &chain_of(&matched.expr));
+        syn::visit::visit_expr_let(self, matched);
+    }
+
+    fn visit_expr_for_loop(&mut self, looped: &'a syn::ExprForLoop) {
+        self.bind(&looped.pat, &chain_of(&looped.expr).then(Step::Item));
+        self.moving(&looped.expr);
+        syn::visit::visit_expr_for_loop(self, looped);
+    }
+
+    fn visit_stmt(&mut self, statement: &'a syn::Stmt) {
+        if let syn::Stmt::Expr(expr @ (syn::Expr::Call(_) | syn::Expr::MethodCall(_)), Some(_)) =
+            statement
+        {
+            if !matches!(expr, syn::Expr::Call(call) if is_away(&call.func)) {
+                self.discarded.push(chain_of(expr));
+            }
+        }
+        syn::visit::visit_stmt(self, statement);
+    }
+
+    fn visit_expr_assign(&mut self, assigned: &'a syn::ExprAssign) {
+        self.replaced.push(chain_of(&assigned.left));
+        self.moved.extend(flows_out(&assigned.right));
+        syn::visit::visit_expr_assign(self, assigned);
+    }
+
+    fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
+        if AWAY.iter().any(|one| call.method == one) {
+            self.captured(call.args.to_token_stream());
+            self.visit_expr(&call.receiver);
+            return;
+        }
+        if CLEARING.iter().any(|one| call.method == one) {
+            self.cleared.push(chain_of(&call.receiver));
+        }
+        for argument in &call.args {
+            self.moving(argument);
+        }
+        syn::visit::visit_expr_method_call(self, call);
+    }
+
+    fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
+        if is_away(&call.func) {
+            self.captured(call.args.to_token_stream());
+            return;
+        }
+        for argument in &call.args {
+            self.moving(argument);
+        }
+        syn::visit::visit_expr_call(self, call);
+    }
+
+    fn visit_expr_struct(&mut self, built: &'a syn::ExprStruct) {
+        for field in &built.fields {
+            self.moving(&field.expr);
+        }
+        if let Some(rest) = &built.rest {
+            self.moving(rest);
+        }
+        syn::visit::visit_expr_struct(self, built);
+    }
+
+    fn visit_expr_array(&mut self, array: &'a syn::ExprArray) {
+        for one in &array.elems {
+            self.moving(one);
+        }
+        syn::visit::visit_expr_array(self, array);
+    }
+
+    fn visit_expr_tuple(&mut self, tuple: &'a syn::ExprTuple) {
+        for one in &tuple.elems {
+            self.moving(one);
+        }
+        syn::visit::visit_expr_tuple(self, tuple);
+    }
+
+    fn visit_expr_return(&mut self, returned: &'a syn::ExprReturn) {
+        if let Some(one) = &returned.expr {
+            self.moved.extend(flows_out(one));
+        }
+        syn::visit::visit_expr_return(self, returned);
+    }
+
+    fn visit_expr_break(&mut self, broken: &'a syn::ExprBreak) {
+        if let Some(one) = &broken.expr {
+            self.moved.extend(flows_out(one));
+        }
+        syn::visit::visit_expr_break(self, broken);
+    }
+
+    fn visit_expr_closure(&mut self, closure: &'a syn::ExprClosure) {
+        if closure.capture.is_some() {
+            self.captured(closure.body.to_token_stream());
+        }
+        self.moved.extend(flows_out(&closure.body));
+        syn::visit::visit_expr_closure(self, closure);
+    }
+
+    fn visit_expr_async(&mut self, block: &'a syn::ExprAsync) {
+        if block.capture.is_some() {
+            self.captured(block.block.to_token_stream());
+        }
+        syn::visit::visit_expr_async(self, block);
+    }
+
+    fn visit_macro(&mut self, called: &'a syn::Macro) {
+        let vec = called.path.is_ident("vec");
+        for argument in macro_arguments(called) {
+            if vec {
+                self.moving(&argument);
+            }
+            self.visit_expr(&argument);
+        }
+    }
+
+    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
+
+    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
+
+    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+}
+
+fn bounds_of(generics: &syn::Generics) -> Bounds {
+    let mut bounds = Bounds::new();
+    let mut add = |name: String, said: &Punctuated<syn::TypeParamBound, syn::Token![+]>| {
+        for one in said {
+            if let syn::TypeParamBound::Trait(shape) = one {
+                bounds
+                    .entry(name.clone())
+                    .or_default()
+                    .push(segments(&shape.path));
+            }
+        }
+    };
+    for param in generics.type_params() {
+        add(param.ident.to_string(), &param.bounds);
+    }
+    if let Some(clause) = &generics.where_clause {
+        for predicate in &clause.predicates {
+            let syn::WherePredicate::Type(typed) = predicate else {
+                continue;
+            };
+            if let syn::Type::Path(path) = &typed.bounded_ty {
+                if let Some(name) = path.path.get_ident() {
+                    add(name.to_string(), &typed.bounds);
+                }
+            }
+        }
+    }
+    bounds
+}
+
+type Place<'a> = (
+    &'a str,
+    Option<&'a Scope>,
+    Option<&'a str>,
+    Option<&'a Bounds>,
+);
 
 fn unknown_key(name: &str, module: &str) -> String {
     if name.starts_with(|letter: char| letter.is_ascii_digit()) {
