@@ -118,9 +118,10 @@ mod heard {
     use tauri::{AppHandle, Emitter, Webview};
     use webview2_com::Microsoft::Web::WebView2::Win32::{
         ICoreWebView2, ICoreWebView2Controller, ICoreWebView2NavigationCompletedEventArgs,
-        ICoreWebView2NavigationCompletedEventArgs2, ICoreWebView2_8, COREWEBVIEW2_KEY_EVENT_KIND,
-        COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN, COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
-        COREWEBVIEW2_PROCESS_FAILED_KIND, COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED,
+        ICoreWebView2NavigationCompletedEventArgs2, ICoreWebView2ProcessFailedEventHandler,
+        ICoreWebView2_8, COREWEBVIEW2_KEY_EVENT_KIND, COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN,
+        COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
+        COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED,
         COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED, COREWEBVIEW2_WEB_ERROR_STATUS,
         COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT,
         COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT,
@@ -200,11 +201,29 @@ mod heard {
         }
     }
 
+    fn failing(
+        (app, tab): (AppHandle, String),
+        told: impl Fn(Said) + 'static,
+    ) -> ICoreWebView2ProcessFailedEventHandler {
+        ProcessFailedEventHandler::create(Box::new(move |_, args| {
+            let Some(args) = args else { return Ok(()) };
+            let (kind, what) = crate::stall::failure_of(&args);
+            crate::logs::say(&app, "error", &format!("web: tab {tab}'s page {what}"));
+            if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED
+                || kind == COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED
+            {
+                told(Said::Crashed);
+            }
+            Ok(())
+        }))
+    }
+
     #[allow(
         unsafe_code,
         reason = "what a page is doing is told through WebView2's own events, reached through COM"
     )]
     pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
+        let logged = (app.clone(), tab.clone());
         let tell = move |said: Said| {
             let heard = Heard {
                 tab: tab.clone(),
@@ -238,20 +257,8 @@ mod heard {
                 let _ = eight.add_IsMutedChanged(&muted, &raw mut token);
             }
 
-            let told = tell.clone();
-            let failed = ProcessFailedEventHandler::create(Box::new(move |_, args| {
-                let Some(args) = args else { return Ok(()) };
-                let mut kind = COREWEBVIEW2_PROCESS_FAILED_KIND::default();
-                args.ProcessFailedKind(&raw mut kind)?;
-                if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED
-                    || kind == COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED
-                {
-                    told(Said::Crashed);
-                }
-                Ok(())
-            }));
             let mut token = 0i64;
-            let _ = core.add_ProcessFailed(&failed, &raw mut token);
+            let _ = core.add_ProcessFailed(&failing(logged, tell.clone()), &raw mut token);
 
             let told = tell.clone();
             let filled =
