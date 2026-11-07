@@ -43,6 +43,11 @@ if (
   await new Promise<never>(() => undefined)
 }
 
+if (isDesktop && (await (await import('./lib/workspace/former-home')).carryFormerHome())) {
+  location.reload()
+  await new Promise<never>(() => undefined)
+}
+
 mark('mounting')
 
 watchFirstInput()
