@@ -3412,4 +3412,8 @@ export const vi: Dictionary = {
   'Waiting…': 'Đang chờ…',
   Service: 'Dịch vụ',
   'I understand and want to connect anyway': 'Tôi hiểu và vẫn muốn kết nối',
+  'Some changes have not reached your account yet':
+    'Một số thay đổi chưa đến được tài khoản của bạn',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Chúng ở lại trong trình duyệt này, không ai khác đăng nhập ở đây nhìn thấy, và được gửi lên khi bạn đăng nhập lại.',
 }

@@ -3501,4 +3501,8 @@ export const bn: Dictionary = {
   'Waiting…': 'অপেক্ষা করা হচ্ছে…',
   Service: 'পরিষেবা',
   'I understand and want to connect anyway': 'আমি বুঝেছি এবং তবুও সংযুক্ত করতে চাই',
+  'Some changes have not reached your account yet':
+    'কিছু পরিবর্তন এখনও আপনার অ্যাকাউন্টে পৌঁছায়নি',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'এগুলো এই ব্রাউজারে থাকে, এখানে সাইন ইন করা অন্য কেউ দেখতে পায় না, আর আপনি আবার সাইন ইন করলে পাঠানো হয়।',
 }

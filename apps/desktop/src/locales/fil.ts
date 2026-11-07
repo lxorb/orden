@@ -3576,4 +3576,8 @@ export const fil: Dictionary = {
   'Waiting…': 'Naghihintay…',
   Service: 'Serbisyo',
   'I understand and want to connect anyway': 'Naiintindihan ko at gusto ko pa ring kumonekta',
+  'Some changes have not reached your account yet':
+    'May mga pagbabagong hindi pa nakakarating sa iyong account',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Mananatili ang mga ito sa browser na ito, hindi makikita ng sinumang ibang mag-sign in dito, at maipapadala kapag nag-sign in ka ulit.',
 }

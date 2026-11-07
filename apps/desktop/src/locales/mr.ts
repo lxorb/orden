@@ -3505,4 +3505,7 @@ export const mr: Dictionary = {
   'Waiting…': 'प्रतीक्षा करत आहे…',
   Service: 'सेवा',
   'I understand and want to connect anyway': 'मला समजले आणि तरीही जोडायचे आहे',
+  'Some changes have not reached your account yet': 'काही बदल अजून तुमच्या खात्यात पोहोचलेले नाहीत',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'ते या ब्राउझरमध्येच राहतात, इथे साइन इन करणाऱ्या इतर कोणालाही दिसत नाहीत, आणि तुम्ही पुन्हा साइन इन केल्यावर पाठवले जातात.',
 }

@@ -3556,4 +3556,7 @@ export const ha: Dictionary = {
   'Waiting…': 'Ana jira…',
   Service: 'Sabis',
   'I understand and want to connect anyway': 'Na fahimta kuma ina so in haɗa duk da haka',
+  'Some changes have not reached your account yet': 'Wasu canje-canje ba su isa asusunka ba tukuna',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Suna zama a wannan burauzar, ba tare da wani da ya shiga nan ya gan su ba, kuma za a tura su idan ka sake shiga.',
 }

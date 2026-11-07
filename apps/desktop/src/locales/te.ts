@@ -3522,4 +3522,7 @@ export const te: Dictionary = {
   'Waiting…': 'వేచి ఉంది…',
   Service: 'సేవ',
   'I understand and want to connect anyway': 'నాకు అర్థమైంది, అయినా కనెక్ట్ చేయాలనుకుంటున్నాను',
+  'Some changes have not reached your account yet': 'కొన్ని మార్పులు ఇంకా మీ ఖాతాకు చేరలేదు',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'అవి ఈ బ్రౌజర్‌లోనే ఉంటాయి, ఇక్కడ సైన్ ఇన్ చేసే మరెవరికీ కనిపించవు, మీరు మళ్లీ సైన్ ఇన్ చేసినప్పుడు పంపబడతాయి.',
 }

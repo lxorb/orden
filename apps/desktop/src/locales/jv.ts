@@ -3428,4 +3428,7 @@ export const jv: Dictionary = {
   'Waiting…': 'Ngenteni…',
   Service: 'Layanan',
   'I understand and want to connect anyway': 'Aku ngerti lan tetep pengin nyambung',
+  'Some changes have not reached your account yet': 'Sawetara owahan durung tekan akun sampeyan',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Owahan kuwi tetep ana ing browser iki, ora katon dening sapa wae sing mlebu ing kene, lan dikirim nalika sampeyan mlebu maneh.',
 }

@@ -2081,6 +2081,10 @@ class Workspace {
     await (await changes()).deleteSpace(this, id, keep)
   }
 
+  async dropSpace(id: string) {
+    await (await changes()).dropSpace(this, id)
+  }
+
   async loadTree() {
     const root = this.activeSpace?.root
     if (!root) return

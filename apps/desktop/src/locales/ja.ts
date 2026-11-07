@@ -3422,4 +3422,7 @@ export const ja: Dictionary = {
   'Waiting…': '待機中…',
   Service: 'サービス',
   'I understand and want to connect anyway': '理解したうえで接続します',
+  'Some changes have not reached your account yet': 'まだアカウントに届いていない変更があります',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '変更はこのブラウザーに残り、ここでサインインするほかの人には見えず、もう一度サインインすると送られます。',
 }

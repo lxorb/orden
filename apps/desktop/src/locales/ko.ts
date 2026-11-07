@@ -3402,4 +3402,8 @@ export const ko: Dictionary = {
   'Waiting…': '기다리는 중…',
   Service: '서비스',
   'I understand and want to connect anyway': '이해했으며 그래도 연결하겠습니다',
+  'Some changes have not reached your account yet':
+    '아직 계정에 도착하지 않은 변경 사항이 있습니다',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '변경 사항은 이 브라우저에 남고, 여기서 로그인하는 다른 사람에게는 보이지 않으며, 다시 로그인하면 올라갑니다.',
 }

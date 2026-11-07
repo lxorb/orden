@@ -3623,4 +3623,8 @@ export const it: Dictionary = {
   'Waiting…': 'In attesa…',
   Service: 'Servizio',
   'I understand and want to connect anyway': 'Ho capito e voglio collegarmi comunque',
+  'Some changes have not reached your account yet':
+    'Alcune modifiche non sono ancora arrivate al tuo account',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Restano in questo browser, nascoste a chiunque altro acceda qui, e vengono inviate quando accedi di nuovo.',
 }

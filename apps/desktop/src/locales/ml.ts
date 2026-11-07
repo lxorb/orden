@@ -3556,4 +3556,8 @@ export const ml: Dictionary = {
   'Waiting…': 'കാത്തിരിക്കുന്നു…',
   Service: 'സേവനം',
   'I understand and want to connect anyway': 'ഞാൻ മനസ്സിലാക്കുന്നു, എങ്കിലും ബന്ധിപ്പിക്കണം',
+  'Some changes have not reached your account yet':
+    'ചില മാറ്റങ്ങൾ ഇതുവരെ നിങ്ങളുടെ അക്കൗണ്ടിൽ എത്തിയിട്ടില്ല',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'അവ ഈ ബ്രൗസറിൽ തന്നെ തുടരും, ഇവിടെ സൈൻ ഇൻ ചെയ്യുന്ന മറ്റാർക്കും കാണാനാകില്ല, നിങ്ങൾ വീണ്ടും സൈൻ ഇൻ ചെയ്യുമ്പോൾ അയയ്ക്കും.',
 }

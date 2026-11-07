@@ -3566,4 +3566,8 @@ export const ta: Dictionary = {
   'Waiting…': 'காத்திருக்கிறது…',
   Service: 'சேவை',
   'I understand and want to connect anyway': 'புரிகிறது, இருந்தாலும் இணைக்க விரும்புகிறேன்',
+  'Some changes have not reached your account yet':
+    'சில மாற்றங்கள் இன்னும் உங்கள் கணக்கை அடையவில்லை',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'அவை இந்த உலாவியிலேயே இருக்கும், இங்கே உள்நுழையும் வேறு யாருக்கும் தெரியாது, நீங்கள் மீண்டும் உள்நுழையும்போது அனுப்பப்படும்.',
 }

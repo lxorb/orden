@@ -3545,4 +3545,8 @@ export const kn: Dictionary = {
   'Waiting…': 'ಕಾಯಲಾಗುತ್ತಿದೆ…',
   Service: 'ಸೇವೆ',
   'I understand and want to connect anyway': 'ನನಗೆ ಅರ್ಥವಾಗಿದೆ, ಆದರೂ ಸಂಪರ್ಕಿಸಲು ಬಯಸುತ್ತೇನೆ',
+  'Some changes have not reached your account yet':
+    'ಕೆಲವು ಬದಲಾವಣೆಗಳು ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಯನ್ನು ತಲುಪಿಲ್ಲ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'ಅವು ಈ ಬ್ರೌಸರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ, ಇಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡುವ ಬೇರೆ ಯಾರಿಗೂ ಕಾಣುವುದಿಲ್ಲ, ಮತ್ತು ನೀವು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿದಾಗ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.',
 }

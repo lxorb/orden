@@ -3445,4 +3445,7 @@ export const id: Dictionary = {
   'Waiting…': 'Menunggu…',
   Service: 'Layanan',
   'I understand and want to connect anyway': 'Saya mengerti dan tetap ingin menghubungkan',
+  'Some changes have not reached your account yet': 'Beberapa perubahan belum sampai ke akun Anda',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Perubahan itu tetap di browser ini, tak terlihat oleh siapa pun yang masuk di sini, dan dikirim saat Anda masuk lagi.',
 }

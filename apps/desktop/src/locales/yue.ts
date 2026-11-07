@@ -3334,4 +3334,7 @@ export const yue: Dictionary = {
   'Waiting…': '等緊…',
   Service: '服務',
   'I understand and want to connect anyway': '我明白，都係想連接',
+  'Some changes have not reached your account yet': '有啲改動仲未去到你個帳戶',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '佢哋會留喺呢個瀏覽器，喺度登入嘅其他人睇唔到，你再登入嗰陣就會傳上去。',
 }

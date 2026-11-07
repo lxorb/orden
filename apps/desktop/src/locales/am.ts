@@ -3441,4 +3441,7 @@ export const am: Dictionary = {
   'Waiting…': 'በመጠበቅ ላይ…',
   Service: 'አገልግሎት',
   'I understand and want to connect anyway': 'ተረድቻለሁ፣ ቢሆንም መገናኘት እፈልጋለሁ',
+  'Some changes have not reached your account yet': 'አንዳንድ ለውጦች ገና ወደ መለያዎ አልደረሱም',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'በዚህ አሳሽ ውስጥ ይቆያሉ፣ እዚህ ለሚገባ ሌላ ሰው አይታዩም፣ እና እንደገና ሲገቡ ይላካሉ።',
 }

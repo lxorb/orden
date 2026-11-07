@@ -3588,4 +3588,8 @@ export const ptBR: Dictionary = {
   'Waiting…': 'Aguardando…',
   Service: 'Serviço',
   'I understand and want to connect anyway': 'Entendo e quero conectar mesmo assim',
+  'Some changes have not reached your account yet':
+    'Algumas alterações ainda não chegaram à sua conta',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Elas ficam neste navegador, fora da vista de qualquer outra pessoa que entrar aqui, e sobem quando você entrar de novo.',
 }

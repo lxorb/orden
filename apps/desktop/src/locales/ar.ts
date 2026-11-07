@@ -3697,4 +3697,7 @@ export const ar: Dictionary = {
   'Waiting…': 'في الانتظار…',
   Service: 'الخدمة',
   'I understand and want to connect anyway': 'أفهم ذلك وأريد الاتصال على أي حال',
+  'Some changes have not reached your account yet': 'بعض التغييرات لم تصل إلى حسابك بعد',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'تبقى في هذا المتصفح، بعيدًا عن أعين أي شخص آخر يسجّل الدخول هنا، وتُرسل عندما تسجّل الدخول مجددًا.',
 }

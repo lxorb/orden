@@ -499,7 +499,7 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () =>
             account.user
               ? __EVEN_PLUGIN__
-                ? void account.signOut()
+                ? void account.signOut('asked')
                 : void import('./ai/vault/leaving').then((one) => one.signOut())
               : (account.open = true),
         },
