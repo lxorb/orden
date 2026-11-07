@@ -7,6 +7,7 @@ import { fileMark } from '../file-mark'
 import { modes } from '../modes.svelte'
 import { shownName } from '../note-name'
 import { panelWord } from './panel-words'
+import { quietFor, waitFor } from './pace'
 import { Panel } from './screen'
 import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
@@ -113,6 +114,8 @@ class Bridge {
   private drawing: Promise<void> | null = null
   private wanted = false
   private steerUntil = 0
+  private since: number | null = null
+  private cost = 0
 
   start(): () => void {
     let stop: (() => void) | undefined
@@ -298,13 +301,21 @@ class Bridge {
         clearTimeout(this.timer)
 
         const switching = this.session.showing?.key !== note.key
-        const wait = switching ? 0 : reading.shared ? SHARED : SETTLE
+        const now = performance.now()
+        this.since = switching ? now : (this.since ?? now)
+        const quiet = switching ? 0 : quietFor(reading.shared ? SHARED : SETTLE, this.cost)
 
-        this.timer = setTimeout(() => {
-          note.flush()
-          const name = shownName(note.name)
-          this.follow({ key: note.key, name, text: note.text })
-        }, wait)
+        this.timer = setTimeout(
+          () => {
+            this.since = null
+            note.flush()
+            const name = shownName(note.name)
+            const started = performance.now()
+            this.follow({ key: note.key, name, text: note.text })
+            this.cost = performance.now() - started
+          },
+          waitFor(quiet, this.since, now),
+        )
       })
 
       $effect(() => {
