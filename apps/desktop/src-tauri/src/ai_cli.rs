@@ -1630,8 +1630,14 @@ exec node '{}' {name} \"$@\"
         assert!(gemini.say(pictured).is_err());
         assert!(gemini.say(Say::Fast { on: true }).is_err());
         assert!(gemini.say(Say::Effort { effort: None }).is_ok());
+        let at = Instant::now();
         gemini.stop();
-        assert!(!dir.path().join("gemini").join("g-1").exists());
+        assert!(at.elapsed() < Duration::from_millis(500));
+        let files = dir.path().join("gemini").join("g-1");
+        while files.exists() && at.elapsed() < Duration::from_secs(10) {
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        assert!(!files.exists());
     }
 
     #[test]
