@@ -47,6 +47,7 @@ class Transcriber:
 
     def __init__(self) -> None:
         self.asked: list[dict] = []
+        self.final = False
 
     def listen(self, route: Route) -> None:
         body = route.request.post_data_buffer or b""
@@ -61,7 +62,7 @@ class Transcriber:
         route.fulfill(
             status=200,
             content_type="application/json",
-            body=json.dumps({"text": WHOLE if seconds > 3 else LIVE}),
+            body=json.dumps({"text": WHOLE if self.final or seconds > 3 else LIVE}),
         )
 
 FIELD = """
@@ -136,6 +137,8 @@ def composer(browser: Browser) -> None:
     shot(page, "03-live")
 
     page.wait_for_timeout(3000)
+    live = max((one["seconds"] for one in heard.asked), default=0)
+    heard.final = True
     page.click(".foot button.mic")
     wait_for(page, f"document.querySelector('{COMPOSER}').value.includes({json.dumps(WHOLE)})", "the final words")
     wait_for(page, "!document.querySelector('.foot button.mic.finishing')", "the microphone to rest")
@@ -147,14 +150,15 @@ def composer(browser: Browser) -> None:
         wrong("the final words still wear the live words' wash")
     final = heard.asked[-1]
     say(f"{len(heard.asked)} requests; the last: {json.dumps(final)}")
-    if final["seconds"] < 3:
-        wrong(f"the final pass did not hear the whole utterance: {final}")
+    if final["seconds"] + 0.05 < live:
+        wrong(f"the final pass heard less than a live pass ({live} s): {final}")
     if "Frage:" not in final.get("prompt", ""):
         wrong(f"the final pass was not told what came before the caret: {final}")
     if final.get("model") != "whisper-1":
         wrong(f"a server on this machine was asked for {final.get('model')!r}")
     shot(page, "04-final")
 
+    heard.final = False
     say("--- Escape ---")
     before = field(page)["value"]
     page.keyboard.press("Alt+V")
@@ -169,6 +173,7 @@ def composer(browser: Browser) -> None:
     page.keyboard.down("v")
     wait_for(page, f"document.querySelector('{COMPOSER}').offsetParent?.querySelector('[data-heard] mark')", "live words while held")
     page.wait_for_timeout(3000)
+    heard.final = True
     page.keyboard.up("v")
     page.keyboard.up("Alt")
     wait_for(page, "!document.querySelector('.foot button.mic.listening, .foot button.mic.finishing')", "letting go to finish")
@@ -209,6 +214,7 @@ def quick_add(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.quick input.field').offsetParent?.querySelector('[data-heard] mark')", "live words in quick add")
     shot(page, "07-quick-add-live")
     page.wait_for_timeout(3000)
+    heard.final = True
     page.click(".quick button.mic")
     wait_for(page, f"document.querySelector('.quick input.field').value === {json.dumps(WHOLE)}", "the task's words")
     say(f"quick add's line: {page.evaluate('() => document.querySelector(\".quick input.field\").value')!r}")
