@@ -284,6 +284,8 @@ function about(item: string): string {
   return item ? `?item=${encodeURIComponent(item)}` : ''
 }
 
+const HEARD_WITHIN = 120_000
+
 async function listen(
   token: string,
   wav: Uint8Array<ArrayBuffer>,
@@ -293,6 +295,7 @@ async function listen(
     method: 'POST',
     headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/wav' },
     body: wav,
+    signal: AbortSignal.timeout(HEARD_WITHIN),
   })
 
   const body = parsed(await response.text())
