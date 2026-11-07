@@ -128,6 +128,7 @@ export interface OpsResponse {
 export const MOST_UPDATE_BYTES = 4 * 1024 * 1024
 
 export const PULL_BATCH = 200
+export const PULL_BYTES = 6 * 1024 * 1024
 export const PUSH_BATCH = 50
 export const PUSH_BYTES = 6 * 1024 * 1024
 
@@ -141,6 +142,7 @@ export interface PullDoc {
 
 export interface PullRequest {
   docs: PullDoc[]
+  part?: boolean
 }
 
 export type PullAnswer =
@@ -484,7 +486,8 @@ function pullDocOf(value: unknown): PullDoc | null {
 export function pullRequestOf(value: unknown): PullRequest | null {
   if (!isRecord(value)) return null
   const docs = listOf(value.docs, pullDocOf, PULL_BATCH)
-  return docs ? { docs } : null
+  if (!docs) return null
+  return value.part === true ? { docs, part: true } : { docs }
 }
 
 function docRefusalOf(value: unknown): DocRefusal | null {

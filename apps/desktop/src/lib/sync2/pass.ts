@@ -470,7 +470,7 @@ async function pullDocs(
       asked.set(entry.id, doc)
       asking.push({ id: entry.id, epoch, sv: doc ? doc.confirmedSv() : EMPTY_SV })
     }
-    const reply = await ask(core, space, 'pull', { docs: asking })
+    const reply = await ask(core, space, 'pull', { docs: asking, part: true })
     if (!alive() || reply === null) return null
     const answer = pullResponseOf(reply)
     if (!answer) throw new Error('the account answered the pull with something else')
@@ -811,7 +811,10 @@ async function newEpoch(
   doc: Doc,
   epoch: number,
 ): Promise<Change[]> {
-  const reply = await ask(core, space, 'pull', { docs: [{ id: doc.id, epoch, sv: EMPTY_SV }] })
+  const reply = await ask(core, space, 'pull', {
+    docs: [{ id: doc.id, epoch, sv: EMPTY_SV }],
+    part: true,
+  })
   const answer = reply === null ? null : pullResponseOf(reply)
   const whole = answer?.docs.find((one) => one.id === doc.id)
   if (!whole || !('update' in whole)) return []

@@ -225,7 +225,7 @@ export class HeldList implements HeldNotes {
     try {
       const reply = await this.core.world.account.ask(
         'pull',
-        { docs: [{ id: doc.id, epoch: doc.epoch, sv: doc.confirmedSv() }] },
+        { docs: [{ id: doc.id, epoch: doc.epoch, sv: doc.confirmedSv() }], part: true },
         space.id,
       )
       const answer = reply === null ? null : pullResponseOf(reply)
