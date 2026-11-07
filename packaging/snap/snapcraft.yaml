@@ -1,7 +1,7 @@
 name: orden
 title: Orden
 base: core24
-version: '0.20.0'
+version: '0.21.0'
 summary: Markdown editor with live preview
 description: |
   Orden, formerly nibeditor, is a small markdown editor that formats what you
@@ -62,11 +62,11 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/orden/releases/download/v0.20.0/Orden-0.20.0-linux-x64.deb
-      - on arm64: https://github.com/lxorb/orden/releases/download/v0.20.0/Orden-0.20.0-linux-arm64.deb
-    #   on amd64: sha256/224c56b21c59f931b4d33d8e76f3df3211de9c9888ae935885bc9ddd37f2975d
-    #   on arm64: sha256/353880baa146b3adb121a2ce85307a6c4f48f93697ce3fb2f6396bf09d54665e
-    source-checksum: sha256/224c56b21c59f931b4d33d8e76f3df3211de9c9888ae935885bc9ddd37f2975d
+      - on amd64: https://github.com/lxorb/orden/releases/download/v0.21.0/Orden-0.21.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/orden/releases/download/v0.21.0/Orden-0.21.0-linux-arm64.deb
+    #   on amd64: sha256/094cf955889dc4e89563d92cd160acd8d163c9cce7ad04e88752c43d7e9f3a66
+    #   on arm64: sha256/28b315db78cc2cecbc38d4bb7a56d33777b5a3dc3e69526b6b1a295d73bd149c
+    source-checksum: sha256/094cf955889dc4e89563d92cd160acd8d163c9cce7ad04e88752c43d7e9f3a66
     override-build: |
       craftctl default
 
