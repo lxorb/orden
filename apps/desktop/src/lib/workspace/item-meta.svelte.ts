@@ -245,6 +245,21 @@ export class ItemMetaStore {
     this.told(root, landed)
   }
 
+  copied(from: string, to: string): void {
+    const root = this.rootOf(from)
+    const there = this.rootOf(to)
+    if (root === null || there === null) return
+    const was = relativeTo(root, from)
+    const now = relativeTo(there, to)
+    if (!was || !now) return
+    const patches: Record<string, MetaPatch> = {}
+    for (const [path, meta] of Object.entries(this.kept(root).items)) {
+      const landed = movedTo(path, was, now, root)
+      if (landed !== null) patches[landed] = whole(meta)
+    }
+    this.setMany(there, patches)
+  }
+
   private carry(move: Moving) {
     const held = this.kept(move.root)
     const across = <T>(map: Record<string, T>) =>

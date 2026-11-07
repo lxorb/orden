@@ -40,7 +40,17 @@ vi.mock('../views/copied', () => ({
     path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text) ? text.replace(/^id: .*\n/m, '') : null,
 }))
 
+const stored = new Map<string, string>()
+vi.stubGlobal('localStorage', {
+  getItem: (key: string) => stored.get(key) ?? null,
+  setItem: (key: string, value: string) => void stored.set(key, value),
+  removeItem: (key: string) => void stored.delete(key),
+})
+
 const { copyRows } = await import('./copying')
+const { ItemMetaStore } = await import('./item-meta.svelte')
+
+const meta = new ItemMetaStore((path) => (path?.startsWith('/t/') ? '/t' : '/s'))
 
 const entry = (path: string, children: Entry[] = []): Entry => ({
   name: path.replace(/^.*\//, ''),
@@ -56,6 +66,7 @@ function rig(entries: Entry[]) {
   reads.length = 0
   return {
     undone: { record: () => undefined },
+    itemMeta: meta,
     entryAt: (path: string) => entries.find((one) => one.path === path) ?? null,
     showEntry: () => undefined,
     freshEntry: (path: string) => entry(path),
@@ -113,5 +124,53 @@ describe('a copied note in a base that numbers its rows', () => {
     expect(disk.get('/s/Bugs/2025/Sprint/X.md')).not.toContain('BUG')
     expect(disk.get('/s/Bugs/2025/Sprint/Deep/Y.md')).not.toContain('BUG')
     expect(told.at(-1)).toBe('came /s/Bugs/2025/Sprint')
+  })
+})
+
+describe('a copy keeps what Orden keeps about the item', () => {
+  test('a copied todo list is still a list, with its icon and done days', async () => {
+    disk.clear()
+    disk.set('/s/Groceries.md', '- [x] Milk\n')
+    meta.set('/s/Groceries.md', { 'todo-list': 'yes', icon: 'cart', 'done-on': 'abc:20261101' })
+    const ws = rig([entry('/s/Groceries.md')])
+    await copyRows(ws as never, [{ from: '/s/Groceries.md', into: '/s/Old' }])
+
+    expect(meta.of('/s/Old/Groceries.md')).toEqual({
+      'todo-list': 'yes',
+      icon: 'cart',
+      'done-on': 'abc:20261101',
+    })
+    expect(meta.of('/s/Groceries.md')).toEqual({
+      'todo-list': 'yes',
+      icon: 'cart',
+      'done-on': 'abc:20261101',
+    })
+  })
+
+  test('every note of a copied folder keeps its own, the renamed folder note too', async () => {
+    disk.clear()
+    disk.set('/s/Trip/Trip.md', '# Trip\n')
+    disk.set('/s/Trip/Packing.md', '- [ ] Socks\n')
+    meta.set('/s/Trip', { icon: 'plane' })
+    meta.set('/s/Trip/Trip.md', { cover: 'sea' })
+    meta.set('/s/Trip/Packing.md', { 'todo-list': 'yes' })
+    const ws = rig([entry('/s/Trip', [entry('/s/Trip/Trip.md'), entry('/s/Trip/Packing.md')])])
+    await copyRows(ws as never, [{ from: '/s/Trip', into: '/s' }])
+
+    expect(meta.of('/s/Trip copy')).toEqual({ icon: 'plane' })
+    expect(meta.of('/s/Trip copy/Trip copy.md')).toEqual({ cover: 'sea' })
+    expect(meta.of('/s/Trip copy/Trip.md')).toBeNull()
+    expect(meta.of('/s/Trip copy/Packing.md')).toEqual({ 'todo-list': 'yes' })
+    expect(meta.of('/s/Trip/Trip.md')).toEqual({ cover: 'sea' })
+  })
+
+  test('a note copied into another space takes it there', async () => {
+    disk.clear()
+    disk.set('/s/Plan.md', '- [ ] Call\n')
+    meta.set('/s/Plan.md', { 'todo-list': 'yes' })
+    const ws = rig([entry('/s/Plan.md')])
+    await copyRows(ws as never, [{ from: '/s/Plan.md', into: '/t' }])
+
+    expect(meta.of('/t/Plan.md', '/t')).toEqual({ 'todo-list': 'yes' })
   })
 })
