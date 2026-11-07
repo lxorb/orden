@@ -100,4 +100,25 @@ describe('the check the frame runs first', () => {
       global.__nibSpin = () => false
     }).toThrow()
   })
+
+  test('stops a loop around one that runs its own rounds, not only the inner one', async () => {
+    await new Promise((settle) => setTimeout(settle, 10))
+    const holder = document.createElement('template')
+    holder.innerHTML = guardedBlock(
+      '<script>let n = 0; for (;;) { if (++n > 100000) { globalThis.__ranOn = n; break } for (let i = 0; i < 1000; i++) {} }</script>',
+    )
+    const script = [...holder.content.querySelectorAll('script')][1]?.textContent ?? ''
+
+    let now = 0
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 1))
+    const said = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      compiled(script)()
+      expect((globalThis as Record<string, unknown>).__ranOn).toBeUndefined()
+      expect(now).toBeLessThan(LOOP_LIMIT * 2)
+    } finally {
+      clock.mockRestore()
+      said.mockRestore()
+    }
+  })
 })

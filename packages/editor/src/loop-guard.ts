@@ -43,12 +43,12 @@ export function guarded(code: string): string {
 const PRELUDE = `;(function () {
   var since = 0
   var armed = false
-  var told = false
+  var stopped = false
   var count = 0
   var next = new MessageChannel()
   next.port1.onmessage = function () {
     armed = false
-    told = false
+    stopped = false
   }
   Object.defineProperty(globalThis, '${SPIN}', {
     value: function () {
@@ -57,11 +57,10 @@ const PRELUDE = `;(function () {
         since = performance.now()
         next.port2.postMessage(0)
       }
+      if (stopped) return true
       if ((++count & 255) !== 0 || performance.now() - since < ${LOOP_LIMIT}) return false
-      if (!told) {
-        told = true
-        console.error('Orden stopped a loop that ran for ${LOOP_LIMIT / 1000} s')
-      }
+      stopped = true
+      console.error('Orden stopped a loop that ran for ${LOOP_LIMIT / 1000} s')
       return true
     },
   })
