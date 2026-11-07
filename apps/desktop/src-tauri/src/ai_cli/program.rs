@@ -117,12 +117,18 @@ pub fn marked_path(printed: &str) -> Option<&str> {
 
 #[cfg(unix)]
 fn ask_login_shell() -> Option<OsString> {
+    let shell = std::env::var_os("SHELL")?;
+    path_from_shell(&shell, std::time::Duration::from_secs(5))
+}
+
+#[cfg(unix)]
+fn path_from_shell(shell: &OsStr, patience: std::time::Duration) -> Option<OsString> {
     use std::io::Read as _;
     use std::os::unix::ffi::OsStringExt as _;
     use std::process::{Command, Stdio};
+    use std::sync::mpsc;
     use std::time::{Duration, Instant};
 
-    let shell = std::env::var_os("SHELL")?;
     let mut child = Command::new(shell)
         .args(["-ilc", &format!("printf '\\n{MARK}%s\\n' \"$PATH\"")])
         .stdin(Stdio::null())
@@ -131,28 +137,69 @@ fn ask_login_shell() -> Option<OsString> {
         .spawn()
         .ok()?;
     let mut out = child.stdout.take()?;
-    let reading = std::thread::spawn(move || {
-        let mut printed = Vec::new();
-        let _ = out.read_to_end(&mut printed);
-        printed
+    let (send, heard) = mpsc::channel::<Vec<u8>>();
+    std::thread::spawn(move || {
+        let mut chunk = [0_u8; 4096];
+        while let Ok(read) = out.read(&mut chunk) {
+            if read == 0 || send.send(chunk[..read].to_vec()).is_err() {
+                break;
+            }
+        }
     });
 
     let started = Instant::now();
-    while started.elapsed() < Duration::from_secs(5) {
-        if child.try_wait().ok().flatten().is_some() {
-            let printed = String::from_utf8_lossy(&reading.join().ok()?).into_owned();
-            return marked_path(&printed).map(|path| OsString::from_vec(path.as_bytes().to_vec()));
+    let mut printed = Vec::new();
+    let found = loop {
+        let Some(left) = patience.checked_sub(started.elapsed()) else {
+            break None;
+        };
+        match heard.recv_timeout(left.min(Duration::from_millis(20))) {
+            Ok(more) => printed.extend(more),
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                break marked_path(&String::from_utf8_lossy(&printed)).map(str::to_owned);
+            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {}
         }
-        std::thread::sleep(Duration::from_millis(20));
+        let text = String::from_utf8_lossy(&printed);
+        if let Some(at) = text.find(MARK) {
+            if text[at..].contains('\n') {
+                break marked_path(&text).map(str::to_owned);
+            }
+        }
+    };
+    if child.try_wait().ok().flatten().is_none() {
+        let _ = child.kill();
+        let _ = child.wait();
     }
-    let _ = child.kill();
-    let _ = child.wait();
-    None
+    found.map(|path| OsString::from_vec(path.into_bytes()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn a_login_shell_that_leaves_something_holding_its_output_is_not_waited_for() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let dir = std::env::temp_dir().join(format!("nib-login-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a folder");
+        let shell = dir.join("shell");
+        std::fs::write(
+            &shell,
+            format!("#!/bin/sh\nsleep 30 &\nprintf '\\n{MARK}%s\\n' /from/the/shell\n"),
+        )
+        .expect("a shell");
+        std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).expect("runnable");
+
+        let started = std::time::Instant::now();
+        let found = path_from_shell(shell.as_os_str(), std::time::Duration::from_secs(20));
+
+        assert_eq!(found.as_deref(), Some(OsStr::new("/from/the/shell")));
+        assert!(started.elapsed() < std::time::Duration::from_secs(5));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn the_path_first_then_where_installers_put_it() {
