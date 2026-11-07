@@ -23,7 +23,7 @@ import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
 import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
-import { away, awayUnder, keepingChange, type LettingGo, trim, usedChanges } from './keeping'
+import { away, awayUnder, keepingChange, type LettingGo, trim, used, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
 import { settle, type SpaceState, windowsPath } from './places'
 import { pass, type Passed, pullNow, resting } from './pass'
@@ -306,11 +306,16 @@ export class Engine implements AskedEngine {
   fetch(path: string): Promise<boolean> {
     return this.core.use(async () => {
       const placed = this.placed(path)
-      const entry = placed?.space.at(placed.path)
-      if (!placed || !entry) return false
-      if (entry.local_path) return true
-      if (!away(placed.space, entry)) return false
-      return this.bring(placed.space, [entry])
+      if (!placed) return false
+      const entry = placed.space.at(placed.path)
+      if (entry && entry.kind !== 'folder') {
+        if (entry.local_path) return true
+        if (!away(placed.space, entry)) return false
+        return this.bring(placed.space, [entry])
+      }
+      const left = awayUnder(placed.space, placed.path)
+      if (!entry && !left.length) return false
+      return this.bring(placed.space, left)
     })
   }
 
@@ -321,13 +326,13 @@ export class Engine implements AskedEngine {
     const life = this.core.life
     if (!(await pullNow(this.core, space, ids, () => this.core.life === life))) return false
     if (entries.some((one) => !one.local_path)) return false
-    let changes: Change[] = []
+    let kept = false
     for (const one of entries) {
       this.core.asked.delete(one.id)
       const doc = await this.core.doc(one.id)
-      changes = usedChanges(this.core, space, one.id, doc?.text().length)
+      kept = used(this.core, space, one.id, doc?.text().length) || kept
     }
-    await this.core.commit(changes)
+    await this.core.commit(kept ? [keepingChange(space)] : [])
     return true
   }
 

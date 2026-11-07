@@ -365,9 +365,7 @@ async function moveHighlights(source: string, target: string) {
 }
 
 async function bringBackUnder(source: string) {
-  for (const away of keptAway.under(source)) {
-    if (!(await keptAway.bringBack(away.path))) throw new Error(NOT_HERE)
-  }
+  if (!(await keptAway.bringBackUnder(source))) throw new Error(NOT_HERE)
 }
 
 async function copyPath(from: string, to: string) {

@@ -7,6 +7,7 @@ import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
 import { folderOf, isMarkdownPath, samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
+import { keptAway } from '../web/away.svelte'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
 import type { NoteDoc } from './documents.svelte'
@@ -237,6 +238,9 @@ async function stillSays(ws: PutsBack, path: string, words: string): Promise<boo
 }
 
 export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
+  const away = keptAway.under(path)
+  if (away.reduce((all, one) => all + one.size, 0) > HELD) return null
+  if (away.length && !(await keptAway.bringBackUnder(path))) return null
   const options = { papers: true, every: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
   if (!listed) return null

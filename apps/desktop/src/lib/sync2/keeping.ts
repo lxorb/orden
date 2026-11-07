@@ -42,10 +42,14 @@ export function awayUnder(space: SpaceState, path: string): EntryRow[] {
 }
 
 export function usedChanges(core: Core, space: SpaceState, id: string, size?: number): Change[] {
-  if (!space.keepsFew) return []
+  return used(core, space, id, size) ? [keepingChange(space)] : []
+}
+
+export function used(core: Core, space: SpaceState, id: string, size?: number): boolean {
+  if (!space.keepsFew) return false
   const was = space.keeping.used.get(id)
   space.keeping.used.set(id, { at: core.world.now(), size: size ?? was?.size ?? 0 })
-  return [keepingChange(space)]
+  return true
 }
 
 export function keepingChange(space: SpaceState): Change {
