@@ -200,7 +200,7 @@ function device(
       else bases.delete(id)
     },
   }
-  return { vault: new Vault(world), here, secrets }
+  return { vault: new Vault(world), here, secrets, world }
 }
 
 const keyed = added(NONE, 'anthropic').state
@@ -213,6 +213,30 @@ async function letIn(laptop: ReturnType<typeof device>, phone: ReturnType<typeof
 }
 
 describe('the AI accounts on two devices', () => {
+  test('a device says its vault is open only once the accounts in it are here', async () => {
+    const account = new Account()
+    const laptop = device(account, 'Laptop', keyed)
+    laptop.here.keys = { anthropic: 'sk-ant-secret' }
+    await laptop.vault.refresh()
+    const phone = device(account, 'Phone')
+    await letIn(laptop, phone)
+    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+    await phone.vault.refresh()
+    expect(phone.vault.standing).toBe('offered')
+
+    const said: string[] = []
+    const apply = phone.world.apply.bind(phone.world)
+    phone.world.apply = async (contents, before) => {
+      said.push(phone.vault.standing)
+      await apply(contents, before)
+    }
+    await phone.vault.join()
+
+    expect(said).toEqual(['offered'])
+    expect(phone.vault.standing).toBe('open')
+    expect(phone.here.accounts.accounts.map((one) => one.id)).toEqual(['anthropic'])
+  })
+
   test('the first device opens at once, and the vault never says a key', async () => {
     const account = new Account()
     const laptop = device(account, 'Laptop', keyed)
