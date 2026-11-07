@@ -38,7 +38,51 @@
       ? shownOf(shelves, pages.length, where.top, where.room || window.innerHeight)
       : { from: 0, to: Math.min(FIRST, pages.length), above: 0, below: 0 },
   )
-  const shown = $derived(pages.slice(view.from, view.to))
+  let holding = $state<string | null>(null)
+  let letting = 0
+
+  const pinned = $derived.by(() => {
+    if (holding === null) return -1
+    const at = pages.findIndex((one) => one.id === holding)
+    return at < view.from || at >= view.to ? at : -1
+  })
+
+  const shown = $derived.by(() => {
+    const out = pages.slice(view.from, view.to).map((page, index) => ({
+      page,
+      at: view.from + index,
+      away: false,
+    }))
+    const away = pages[pinned]
+    if (away)
+      out.splice(pinned < view.from ? 0 : out.length, 0, { page: away, at: pinned, away: true })
+    return out
+  })
+
+  function spotOf(at: number): { top: number; start: number; width: number } {
+    const { columns, tops } = shelves
+    const cell = Math.max(0, (wide - gap * (columns - 1)) / columns)
+    return {
+      top: tops[Math.floor(at / columns)] ?? 0,
+      start: (at % columns) * (cell + gap),
+      width: cell,
+    }
+  }
+
+  function held(event: FocusEvent) {
+    window.clearTimeout(letting)
+    const row = (event.target as HTMLElement).closest<HTMLElement>('li[data-id]')
+    holding = row?.dataset.id ?? null
+  }
+
+  function letFocusGo() {
+    window.clearTimeout(letting)
+    letting = window.setTimeout(() => {
+      if (!list?.contains(document.activeElement)) holding = null
+    })
+  }
+
+  $effect(() => () => window.clearTimeout(letting))
 
   $effect(() => {
     const ul = list
@@ -282,10 +326,21 @@
 
 {#if store}
   <div class="navigator" bind:this={host}>
-    <ul bind:this={list} style:padding-block="{view.above}px {view.below}px">
-      {#each shown as page, index (page.id)}
-        {@const at = view.from + index}
-        <li>
+    <ul
+      bind:this={list}
+      style:padding-block="{view.above}px {view.below}px"
+      onfocusin={held}
+      onfocusout={letFocusGo}
+    >
+      {#each shown as { page, at, away } (page.id)}
+        {@const spot = away ? spotOf(at) : null}
+        <li
+          data-id={page.id}
+          class:away
+          style:top={spot ? `${spot.top}px` : undefined}
+          style:inset-inline-start={spot ? `${spot.start}px` : undefined}
+          style:width={spot ? `${spot.width}px` : undefined}
+        >
           <button
             class="page"
             class:is-on={at + 1 === on}
@@ -342,6 +397,11 @@
     margin: 0;
     padding: 0;
     list-style: none;
+    position: relative;
+  }
+
+  .navigator li.away {
+    position: absolute;
   }
 
   .page {

@@ -164,6 +164,26 @@ THUMBNAILS = """
 }
 """
 
+HOLD_FIRST = """
+() => {
+  const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
+  const first = list?.querySelector('.page')
+  first?.focus()
+  return document.activeElement === first
+}
+"""
+
+HELD = """
+() => {
+  const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
+  const now = document.activeElement
+  return {
+    inside: !!list?.contains(now),
+    number: now instanceof HTMLElement ? Number(now.querySelector('.number')?.textContent) : null,
+  }
+}
+"""
+
 LIST_TO_END = """
 () => {
   const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
@@ -235,9 +255,14 @@ def main() -> int:
         page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
         page.wait_for_timeout(SETTLE)
         listed = page.evaluate(THUMBNAILS)
+        holding = page.evaluate(HOLD_FIRST)
         page.evaluate(LIST_TO_END)
         page.wait_for_timeout(SETTLE)
         bottom = page.evaluate(THUMBNAILS)
+        kept = page.evaluate(HELD)
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(SETTLE)
+        turned = page.evaluate("() => window.nibApp.pages.current?.store.showing ?? null")
         context.close()
 
     failed = False
@@ -283,6 +308,10 @@ def main() -> int:
     say(f"the page list holds {listed['count']} thumbnails, and {bottom['count']} scrolled to its end, the last page {bottom['last']}")
     if listed["count"] > 40 or bottom["count"] > 40:
         say("FAILED: the page list holds thumbnails far out of sight")
+        failed = True
+    say(f"the first thumbnail held the focus: {holding}; scrolled away, the focus is on page {kept['number']}, and Enter turned to page {turned}")
+    if not holding or not kept["inside"] or kept["number"] != 1 or turned != 1:
+        say("FAILED: the thumbnail with the focus lost it once the page list scrolled it away")
         failed = True
     if bottom["last"] != PAGES or not bottom["drawn"]:
         say("FAILED: the end of the page list does not show the last page drawn")
