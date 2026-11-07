@@ -1,5 +1,6 @@
 import type { Message, Who } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import { type Item, rowsOf, type Rowing } from './rows'
 
 const EMIL: Who = 'user:emil'
@@ -144,5 +145,16 @@ describe('rows', () => {
   test('nobody who read to before the first message drawn is drawn', () => {
     const reads = new Map<Who, number>([[LUCILE, 3]])
     expect(said(rows([message(5, EMIL, 0)], { reads }))).toEqual(['day 2026-10-02', 'head emil m5'])
+  })
+
+  test('a long window takes time in step with its length', () => {
+    const people = [EMIL, LUCILE, MIA]
+    const many = Array.from({ length: 16_000 }, (_, at) =>
+      message(at + 1, people[at % 3] ?? EMIL, at * 7, { deleted: at % 50 === 0 }),
+    )
+    const reads = new Map<Who, number>(people.map((who, at) => [who, 4_000 * (at + 1)]))
+    expect(
+      growth((size) => rows(many.slice(0, size), { reads, readAtOpen: size / 2 }), 4_000),
+    ).toBeLessThan(GROWS_AT_MOST)
   })
 })

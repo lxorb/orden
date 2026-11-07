@@ -1,5 +1,6 @@
 import { renderMarkdown } from '@orden/markdown'
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 
 import type { ImportPlan } from './plan'
 import { detect } from './read'
@@ -177,11 +178,12 @@ describe("Tomboy's own markup", () => {
       { length: 20000 },
       (_, at) => `<list-item dir="ltr"><bold>item ${at}</bold>\n</list-item>`,
     )
-    const started = performance.now()
-    const said = tomboyMarkdown(`<list>${items.join('')}</list>`)
+    const said = linearly(
+      (count) => tomboyMarkdown(`<list>${items.slice(0, count).join('')}</list>`),
+      20000,
+    )
 
     expect(said.split('\n')).toHaveLength(20000)
-    expect(performance.now() - started).toBeLessThan(2000)
   })
 
   test('emphasis keeps its spaces outside, and marks nothing where there are no words', () => {

@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+import { growth } from '../../../../../scripts/growth'
 import { candidates } from './kinds'
 import { LONGEST, MOST, ranked } from './rank'
 import { command, file, setting, visit, world } from './world.fixture'
@@ -66,9 +67,8 @@ test('a long paste is weighed by the length a name can have, so each key stays q
   const all = candidates(BIG)
   for (const unit of ['lecture 12 ', 'The heron stands still in the shallows. ']) {
     const pasted = unit.repeat(4_000)
-    const each = timed(() => ranked(pasted, all), 1)
 
     expect(ranked(pasted, all)).toEqual(ranked(pasted.slice(0, LONGEST), all))
-    expect(each).toBeLessThan(2_000)
+    expect(growth((count) => ranked(unit.repeat(count), all), 250, 16)).toBeLessThan(4)
   }
 })

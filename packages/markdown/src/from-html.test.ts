@@ -1,6 +1,6 @@
 import katex from 'katex'
 import { describe, expect, test } from 'vitest'
-import { linearly } from './growth'
+import { linearly } from '../../../scripts/growth'
 import { loadFor } from './engines'
 import { htmlToMarkdown, NEVER, workDone } from './from-html'
 import { renderMarkdown } from './index'

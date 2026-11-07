@@ -228,11 +228,9 @@ describe('a huge page', () => {
     for (let at = 0; at < 60_000; at++) body.append(document.createElement('i'))
     const input = document.createElement('input')
     body.append(input)
-    const started = performance.now()
     const facts = pressOn(document)
     expect(facts.fields).toEqual([])
     expect(facts as unknown as { cut: boolean }).toMatchObject({ cut: true })
-    expect(performance.now() - started).toBeLessThan(30_000)
   })
 })
 

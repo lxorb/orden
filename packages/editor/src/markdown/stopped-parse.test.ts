@@ -6,7 +6,7 @@ import { parser as javascript } from '@lezer/javascript'
 import { MarkdownParser } from '@lezer/markdown'
 import { htmlGrammar } from '@orden/lang-html'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
-import { measuredGrowth } from '../../../markdown/src/growth'
+import { measuredGrowth } from '../../../../scripts/growth'
 import { nibMarkdownExtensions } from './extensions'
 
 const js = LRLanguage.define({ parser: javascript })

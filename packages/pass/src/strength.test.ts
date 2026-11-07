@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import { DEFAULT_MEMORABLE, DEFAULT_RANDOM, memorablePassword, randomPassword } from './generate'
 import { COMMON_PASSWORDS, STRENGTH_BITS, strengthOf } from './strength'
 import { WORDS } from './words'
@@ -61,7 +62,7 @@ describe('strengthOf', () => {
     expect(strengthOf('')).toEqual({ strength: 'vulnerable', bits: 0 })
   })
 
-  it('reads 500 characters in under 50 ms', () => {
+  it('reads 500 characters in time that grows no faster than their square', () => {
     const long = randomPassword({ ...DEFAULT_RANDOM, length: 64 })
       .repeat(8)
       .slice(0, 500)
@@ -69,11 +70,10 @@ describe('strengthOf', () => {
     const words = memorablePassword({ ...DEFAULT_MEMORABLE, words: 10 }, WORDS)
       .repeat(10)
       .slice(0, 500)
-    strengthOf(long)
     for (const password of [long, same, words]) {
-      const start = performance.now()
-      strengthOf(password)
-      expect(performance.now() - start).toBeLessThan(50)
+      expect(growth((count) => strengthOf(password.slice(0, count)), 125)).toBeLessThan(
+        GROWS_AT_MOST * 4,
+      )
     }
   })
 })

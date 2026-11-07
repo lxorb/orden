@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 import { sseJson, sseLines, SSE_DONE } from './stream'
 
 function inPieces(stream: string, size: number): string[] {
@@ -45,14 +46,13 @@ describe('splitting a stream into events', () => {
   })
 
   test('reads one huge event in small chunks without going over what it holds each time', () => {
-    const huge = `data: {"text":"${'x'.repeat(4_000_000)}"}\n\n`
-    const started = performance.now()
+    const event = (length: number) => `data: {"text":"${'x'.repeat(length)}"}\n\n`
+    const huge = event(1_000_000)
 
-    const read = inPieces(huge, 64)
+    const read = linearly((length) => inPieces(event(length), 64), 1_000_000)
 
     expect(read).toHaveLength(1)
     expect(read[0]).toHaveLength(huge.length - 'data: \n\n'.length)
-    expect(performance.now() - started).toBeLessThan(2000)
   })
 
   test('never mistakes a comment or an id for data', () => {

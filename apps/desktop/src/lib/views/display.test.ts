@@ -1,6 +1,7 @@
 import { answer, builtinView, isWhen, readBase, WHEN } from '@orden/bases'
 import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
+import { linearly } from '../../../../../scripts/growth'
 import { contextFor } from './context'
 import {
   ASSIGNED_TO_ME,
@@ -161,11 +162,13 @@ describe('a view grouped by note', () => {
       { length: 2000 },
       (_, at) => `Folder ${Math.floor(at / 1000)}/Note ${at % 1000}.md`,
     )
-    const started = performance.now()
-    const names = noteNames(many)
-    const said = many.map((key) => groupLabel('file.path', key, TODAY, names))
-    expect(performance.now() - started).toBeLessThan(150)
+    const said = linearly((count) => {
+      const some = many.slice(0, count)
+      const names = noteNames(some)
+      return some.map((key) => groupLabel('file.path', key, TODAY, names))
+    }, 2000)
     expect(said[0]).toBe('Note 0 · Folder 0')
+    expect(said).toHaveLength(2000)
   })
 })
 

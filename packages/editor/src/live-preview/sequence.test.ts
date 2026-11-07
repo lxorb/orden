@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { sequenceToMermaid } from './sequence'
-import { growth, GROWS_AT_MOST } from '../../../markdown/src/growth'
+import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
 
 const lines = (source: string) => sequenceToMermaid(source).split('\n')
 

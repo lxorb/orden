@@ -1,5 +1,6 @@
 import { measureTextWrap } from '@evenrealities/pretext'
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import {
   draws,
   fit,
@@ -134,9 +135,7 @@ describe('folding a note to what the font can draw', () => {
     fold(page)
     const first = workDone()
 
-    const at = performance.now()
     for (let round = 0; round < 100; round++) fold(page)
-    const each = (performance.now() - at) / 100
     const rest = workDone()
 
     expect(first.folded).toBe(page.length)
@@ -147,7 +146,8 @@ describe('folding a note to what the font can draw', () => {
     expect(first.instead).toBeLessThanOrEqual(3)
     expect(rest.instead).toBe(0)
 
-    expect(each).toBeLessThan(10)
+    const unit = 'The quick brown fox ╬ jumps over the ┋ lazy dog ◃. '
+    expect(growth((count) => fold(unit.repeat(count)), 60)).toBeLessThan(GROWS_AT_MOST)
   })
 })
 
