@@ -70,6 +70,7 @@ export function metaOf(vault: Vault): VaultMeta {
     description: vault.description,
     color: vault.color,
     icon: vault.icon,
+    ...(vault.mark ? { mark: vault.mark } : {}),
     folders: vault.folders,
     hidePasswordsFromViewers: vault.hidePasswordsFromViewers,
   }

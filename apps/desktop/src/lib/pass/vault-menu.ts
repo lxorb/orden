@@ -1,4 +1,5 @@
 import type { Folder, Vault } from '@orden/pass/types'
+import { iconChoice } from '../icon-choice.svelte'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
@@ -102,9 +103,21 @@ async function deleteFolder(ui: PassUi, vault: Vault, folder: Folder): Promise<v
   await ui.choose({ kind: 'vault', vault: vault.id, folder: null })
 }
 
+function chooseFolderIcon(vault: Vault, folder: Folder): void {
+  iconChoice.pass(folder.mark ?? null, (mark) => {
+    const now = pass.vaults.find((one) => one.id === vault.id)
+    if (!now?.folders.some((one) => one.id === folder.id)) return
+    const folders = now.folders.map((one) =>
+      one.id === folder.id ? { ...one, mark: mark ?? undefined } : one,
+    )
+    void pass.updateVault(vault.id, { folders })
+  })
+}
+
 export function folderEntries(ui: PassUi, vault: Vault, folder: Folder): MenuEntry[] {
   return [
     { label: t('Rename'), run: () => void renameFolder(vault, folder) },
+    { label: t('Choose an icon'), run: () => chooseFolderIcon(vault, folder) },
     { label: t('New folder'), run: () => void newFolder(vault, folder.id) },
     DIVIDER,
     { label: t('Delete folder'), danger: true, run: () => void deleteFolder(ui, vault, folder) },

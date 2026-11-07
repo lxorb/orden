@@ -15,6 +15,8 @@
   import Trash from 'lucide/dist/esm/icons/trash-2.mjs'
   import UsersRound from 'lucide/dist/esm/icons/users-round.mjs'
   import { account } from '../account.svelte'
+  import Icon from '../Icon.svelte'
+  import { readIcon } from '../icons'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import SharedMark from '../SharedMark.svelte'
@@ -91,7 +93,13 @@
       onclick={() => chosen(scope)}
       oncontextmenu={(event) => menu.show(event, folderEntries(ui, vault, folder))}
     >
-      <Glyph icon={FolderMark} class="orden-row-mark" />
+      {#if folder.mark}
+        <span class="orden-row-mark folder-mark"
+          ><Icon icon={readIcon(folder.mark)} fallback={FolderMark} /></span
+        >
+      {:else}
+        <Glyph icon={FolderMark} class="orden-row-mark" />
+      {/if}
       <span class="orden-row-label">{folder.name}</span>
       <span class="orden-row-meta">{countIn(vault.id, folder.id)}</span>
     </button>
@@ -131,7 +139,7 @@
           onclick={() => chosen(scope)}
           oncontextmenu={(event) => menu.show(event, vaultEntries(ui, vault))}
         >
-          <VaultMark color={vault.color} icon={vault.icon} />
+          <VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />
           <span class="orden-row-label">{vault.name}</span>
           {#if vault.shared}<SharedMark />{/if}
           <span class="orden-row-meta count">{countIn(vault.id)}</span>

@@ -3,6 +3,7 @@
   import { totpIn } from '@orden/pass/totp'
   import { t } from '../i18n.svelte'
   import EditField from './EditField.svelte'
+  import { fieldKindIcon } from './field-icons'
   import { fieldShape } from './new-field'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
@@ -24,6 +25,7 @@
 {#each fields as field (field.id)}
   <EditField
     named
+    icon={fieldKindIcon(field.kind)}
     bind:label={field.name}
     bind:value={field.value}
     kind={fieldShape(field.kind)}

@@ -189,7 +189,7 @@ describe('sharing a vault', () => {
 
     button('Role').click()
     flushSync()
-    const editor = [...target.querySelectorAll('[role="option"]')].find(
+    const editor = [...document.querySelectorAll('[role="option"]')].find(
       (one) => one.textContent.trim() === 'Can edit',
     ) as HTMLElement
     editor.click()
@@ -231,7 +231,7 @@ describe('sharing a vault', () => {
     await shown()
     button('Role of Bob').click()
     flushSync()
-    const viewer = [...member('bob@example.com').querySelectorAll('[role="option"]')].find(
+    const viewer = [...document.querySelectorAll('[role="option"]')].find(
       (one) => one.textContent.trim() === 'Can view',
     ) as HTMLElement
     viewer.click()

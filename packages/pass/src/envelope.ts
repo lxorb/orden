@@ -62,6 +62,11 @@ function flagOf(raw: Raw, key: string, fallback: boolean): boolean {
   return value
 }
 
+function markOf(raw: Raw): { mark?: string } {
+  const mark = textOrNullOf(raw, 'mark')
+  return mark === null ? {} : { mark }
+}
+
 function textOrNullOf(raw: Raw, key: string): string | null {
   return raw[key] === null ? null : textOf(raw, key, '') || null
 }
@@ -199,6 +204,7 @@ function contentOf(value: unknown): Content {
         kind,
         ...common,
         template: textOf(raw, 'template'),
+        ...markOf(raw),
         sections: listOf(raw, 'sections', sectionOf),
       }
     case 'ssh':
@@ -256,7 +262,12 @@ function envelopeOf(value: unknown): Envelope {
 
 function folderOf(value: unknown): Folder {
   const raw = recordOf(value)
-  return { id: idOf(raw), name: textOf(raw, 'name'), parent: textOrNullOf(raw, 'parent') }
+  return {
+    id: idOf(raw),
+    name: textOf(raw, 'name'),
+    parent: textOrNullOf(raw, 'parent'),
+    ...markOf(raw),
+  }
 }
 
 function vaultMetaOf(value: unknown): VaultMeta {
@@ -267,6 +278,7 @@ function vaultMetaOf(value: unknown): VaultMeta {
     description: textOf(raw, 'description'),
     color: wordOf(raw, 'color', VAULT_COLORS, 'purple'),
     icon: wordOf(raw, 'icon', VAULT_ICONS, 'home'),
+    ...markOf(raw),
     folders: listOf(raw, 'folders', folderOf),
     hidePasswordsFromViewers: flagOf(raw, 'hidePasswordsFromViewers', false),
   }

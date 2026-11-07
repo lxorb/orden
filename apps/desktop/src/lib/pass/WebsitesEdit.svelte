@@ -4,6 +4,7 @@
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
+  import { FIELD_ICONS } from './field-icons'
   import { matchLabel } from './field-words'
   import Glyph from './Glyph.svelte'
 
@@ -28,55 +29,72 @@
   }
 </script>
 
-<div class="websites">
-  <span class="label">{t('Websites')}</span>
-  {#each websites as website, at (at)}
-    <div class="site">
-      <input
-        class="url"
-        bind:value={website.url}
-        placeholder="https://"
-        inputmode="url"
-        autocomplete="off"
-        spellcheck="false"
-        aria-label={t('Website')}
-        {oninput}
-      />
-      <div class="rule">
-        <Select
-          plain
-          value={website.match}
-          options={rules}
-          label={t('Fill on')}
-          onchange={(value: string) => {
-            website.match = ruleOf(value)
-            oninput()
-          }}
+<div class="websites orden-edit-row">
+  <span class="mark"><Glyph icon={FIELD_ICONS.website} /></span>
+  <div class="list">
+    <span class="label">{t('Websites')}</span>
+    {#each websites as website, at (at)}
+      <div class="site">
+        <input
+          class="url"
+          bind:value={website.url}
+          placeholder="https://"
+          inputmode="url"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label={t('Website')}
+          {oninput}
         />
+        <div class="rule">
+          <Select
+            plain
+            value={website.match}
+            options={rules}
+            label={t('Fill on')}
+            onchange={(value: string) => {
+              website.match = ruleOf(value)
+              oninput()
+            }}
+          />
+        </div>
+        <button
+          type="button"
+          class="orden-glyph"
+          aria-label={t('Remove')}
+          title={t('Remove')}
+          onclick={() => remove(at)}
+        >
+          <Cross />
+        </button>
       </div>
-      <button
-        type="button"
-        class="orden-glyph"
-        aria-label={t('Remove')}
-        title={t('Remove')}
-        onclick={() => remove(at)}
-      >
-        <Cross />
-      </button>
-    </div>
-  {/each}
-  <button type="button" class="orden-button is-quiet add" onclick={add}>
-    <Glyph icon={Plus} />
-    <span>{t('Add website')}</span>
-  </button>
+    {/each}
+    <button type="button" class="orden-button is-quiet add" onclick={add}>
+      <Glyph icon={Plus} />
+      <span>{t('Add website')}</span>
+    </button>
+  </div>
 </div>
 
 <style>
   .websites {
     display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .mark {
+    flex: none;
+    margin-top: 11px;
+    color: var(--muted);
+  }
+
+  .list {
+    flex: 1;
+    min-width: 0;
+    display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    padding: var(--space-2) var(--space-3);
   }
 
   .label {

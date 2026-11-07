@@ -1,6 +1,7 @@
 <script lang="ts">
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
+  import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import WandSparkles from 'lucide/dist/esm/icons/wand-sparkles.mjs'
   import { t } from '../i18n.svelte'
   import Glyph from './Glyph.svelte'
@@ -30,8 +31,9 @@
   }
 </script>
 
-<div class="password">
+<div class="password orden-edit-row">
   <div class="line">
+    <span class="mark"><Glyph icon={KeyRound} /></span>
     <div class="text">
       <label class="label" for={id}>{label}</label>
       <input
@@ -43,6 +45,7 @@
         spellcheck="false"
         oninput={() => onchange?.()}
       />
+      {#if value !== ''}<StrengthMeter password={value} />{/if}
     </div>
     <button
       type="button"
@@ -63,7 +66,6 @@
       <Glyph icon={WandSparkles} />
     </button>
   </div>
-  {#if value !== ''}<StrengthMeter password={value} />{/if}
 </div>
 
 <style>
@@ -78,6 +80,11 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
+  }
+
+  .mark {
+    flex: none;
+    color: var(--muted);
   }
 
   .text {

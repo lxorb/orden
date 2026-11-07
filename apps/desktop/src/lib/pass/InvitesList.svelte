@@ -61,7 +61,7 @@
     {#each invites as invite (invite.vault)}
       {@const meta = metas[invite.vault] ?? null}
       <div class="invite" data-invite={invite.vault}>
-        {#if meta}<VaultMark color={meta.color} icon={meta.icon} />{/if}
+        {#if meta}<VaultMark color={meta.color} icon={meta.icon} mark={meta.mark} />{/if}
         <span class="what">
           <span class="name">{meta?.name ?? t('A shared vault')}</span>
           <span class="meta"

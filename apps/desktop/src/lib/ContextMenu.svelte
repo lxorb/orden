@@ -253,6 +253,13 @@
             onmousedown={(event) => menu.keepFocus && event.preventDefault()}
             onpointermove={() => menu.keepFocus && !item.disabled && (menu.lit = index)}
           >
+            {#if item.icon}
+              <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+                {#each item.icon as [tag, attrs], at (at)}
+                  <svelte:element this={tag} {...attrs} />
+                {/each}
+              </svg>
+            {/if}
             <span class="orden-row-label">{item.label}</span>
             {#if item.checked}<span class="tick">✓</span>{/if}
             {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
@@ -343,6 +350,19 @@
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mark {
+    flex: none;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-inline-end: var(--space-2);
+    color: var(--muted);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
     stroke-linecap: round;
     stroke-linejoin: round;
   }

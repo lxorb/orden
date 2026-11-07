@@ -25,6 +25,7 @@
   import CardEdit from './CardEdit.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
+  import { FIELD_ICONS } from './field-icons'
   import FieldsEdit from './FieldsEdit.svelte'
   import { folderOptions } from './folder-options'
   import IdentityEdit from './IdentityEdit.svelte'
@@ -236,7 +237,13 @@
     {/if}
 
     <EditCard>
-      <EditField label={t('Note')} bind:value={draft.note} kind="multiline" oninput={touched} />
+      <EditField
+        label={t('Note')}
+        icon={FIELD_ICONS.note}
+        bind:value={draft.note}
+        kind="multiline"
+        oninput={touched}
+      />
     </EditCard>
 
     {#if draft.fields.length}

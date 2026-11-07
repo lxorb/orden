@@ -19,6 +19,13 @@ describe('blank', () => {
 })
 
 describe('contentIn', () => {
+  it("keeps a custom item's chosen icon", () => {
+    const custom = contentIn({ kind: 'custom', title: 'Bike', template: 't', mark: 'bike' })
+    expect(custom).toMatchObject({ kind: 'custom', mark: 'bike' })
+    expect(contentIn(JSON.parse(JSON.stringify(custom)))).toEqual(custom)
+    expect(contentIn({ kind: 'custom', title: 'Bike' })).not.toHaveProperty('mark')
+  })
+
   it('fills what is missing', () => {
     const login = contentIn({
       kind: 'login',
@@ -164,6 +171,22 @@ describe('vaultMetaIn', () => {
       color: 'teal',
       folders: [{ id: 'f', name: 'A', parent: null }],
     })
+  })
+
+  it('keeps a chosen library icon on the vault and its folders', () => {
+    const meta = vaultMetaIn({
+      name: 'Home',
+      mark: 'rocket',
+      folders: [
+        { id: 'f', name: 'A', mark: 'leaf' },
+        { id: 'g', name: 'B' },
+      ],
+    })
+    expect(meta).toMatchObject({ mark: 'rocket', folders: [{ mark: 'leaf' }, { id: 'g' }] })
+    expect(meta?.folders[1]).not.toHaveProperty('mark')
+    expect(vaultMetaIn(JSON.parse(JSON.stringify(meta)))).toEqual(meta)
+    expect(vaultMetaIn({ name: 'Home' })).not.toHaveProperty('mark')
+    expect(vaultMetaIn({ name: 'Home', mark: '' })).not.toHaveProperty('mark')
   })
 
   it('refuses the wrong type', () => {

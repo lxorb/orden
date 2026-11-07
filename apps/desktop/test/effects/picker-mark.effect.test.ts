@@ -52,7 +52,7 @@ function picker(device: 'desktop' | 'phone') {
 }
 
 function rows(): { label: string; marked: boolean; tooltip: string; said: string }[] {
-  return [...target.querySelectorAll('[role="option"]')].map((one) => {
+  return [...document.querySelectorAll('[role="option"]')].map((one) => {
     const mark = one.querySelector('.mark')
 
     return {

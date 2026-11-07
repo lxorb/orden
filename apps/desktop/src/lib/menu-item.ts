@@ -1,5 +1,8 @@
+import type { IconNode } from 'lucide'
+
 export interface MenuItem {
   label: string
+  icon?: IconNode
   hint?: string | undefined
   command?: string
   checked?: boolean

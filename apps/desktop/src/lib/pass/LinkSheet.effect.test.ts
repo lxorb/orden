@@ -115,7 +115,7 @@ function button(name: string): HTMLButtonElement {
 }
 
 function option(name: string): HTMLElement {
-  const found = [...target.querySelectorAll<HTMLElement>('[role="option"]')].find(
+  const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
     (one) => one.textContent.trim() === name,
   )
   if (!found) throw new Error(`no ${name} option`)
@@ -149,7 +149,7 @@ describe('making a secure link', () => {
     sheet()
     button('Expires after').click()
     flushSync()
-    const lives = [...target.querySelectorAll('[role="option"]')].map((one) =>
+    const lives = [...document.querySelectorAll('[role="option"]')].map((one) =>
       one.textContent.trim(),
     )
     expect(lives).toEqual(['1 hour', '1 day', '1 week', '2 weeks', '30 days'])

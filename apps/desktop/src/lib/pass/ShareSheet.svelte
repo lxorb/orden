@@ -261,7 +261,7 @@
   onclose={close}
 >
   {#snippet mark()}
-    {#if vault}<VaultMark color={vault.color} icon={vault.icon} />{/if}
+    {#if vault}<VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />{/if}
   {/snippet}
   <div class="share">
     {#if !signedIn}

@@ -3,6 +3,7 @@ export type IconTarget =
   | { kind: 'file'; path: string }
   | { kind: 'folder'; path: string }
   | { kind: 'terminal'; tab: string }
+  | { kind: 'pass'; worn: string | null; take: (icon: string | null) => void }
 
 class IconChoice {
   target = $state<IconTarget | null>(null)
@@ -21,6 +22,10 @@ class IconChoice {
 
   terminal(tab: string) {
     this.target = { kind: 'terminal', tab }
+  }
+
+  pass(worn: string | null, take: (icon: string | null) => void) {
+    this.target = { kind: 'pass', worn, take }
   }
 
   close() {

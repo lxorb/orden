@@ -45,7 +45,7 @@ function picker(mono: boolean, start = '') {
 
 const field = () => target.querySelector('input')!
 const rows = () =>
-  [...target.querySelectorAll('[role=option]')].map((one) => one.textContent.trim())
+  [...document.querySelectorAll('[role=option]')].map((one) => one.textContent.trim())
 
 async function opened() {
   field().focus()
@@ -70,7 +70,8 @@ test('lists the families installed, each set in its own face', async () => {
   picker(false)
   await opened()
   expect(rows()).toEqual(['DejaVu Sans', 'DejaVu Sans Mono', 'Inter'])
-  const first = target.querySelector<HTMLElement>('[role=option]')!
+  expect(target.contains(document.querySelector('[role=listbox]'))).toBe(false)
+  const first = document.querySelector<HTMLElement>('[role=option]')!
   expect(first.style.fontFamily).toContain('DejaVu Sans')
 })
 

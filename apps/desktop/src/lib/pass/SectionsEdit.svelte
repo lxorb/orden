@@ -24,7 +24,7 @@
 
 {#each sections as section (section.id)}
   <div class="section">
-    <div class="head">
+    <div class="head orden-edit-row">
       <input
         class="name"
         bind:value={section.name}
@@ -70,6 +70,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    padding-block: 2px;
     padding-inline-start: var(--space-3);
   }
 

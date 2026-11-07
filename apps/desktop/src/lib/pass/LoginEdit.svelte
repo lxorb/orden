@@ -4,6 +4,7 @@
   import { t } from '../i18n.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
+  import { FIELD_ICONS } from './field-icons'
   import PasswordField from './PasswordField.svelte'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'
@@ -28,16 +29,23 @@
 <EditCard>
   <EditField
     label={withUsername ? t('Email') : t('Email or username')}
+    icon={FIELD_ICONS.email}
     bind:value={content.email}
     inputmode="email"
     {oninput}
   />
   {#if withUsername}
-    <EditField label={t('Username')} bind:value={content.username} {oninput} />
+    <EditField
+      label={t('Username')}
+      icon={FIELD_ICONS.username}
+      bind:value={content.username}
+      {oninput}
+    />
   {/if}
   <PasswordField {ui} label={t('Password')} bind:value={content.password} onchange={oninput} />
   <EditField
     label={t('2FA secret key (TOTP)')}
+    icon={FIELD_ICONS.totp}
     bind:value={content.totp}
     kind="hidden"
     mono

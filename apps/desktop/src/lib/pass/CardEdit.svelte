@@ -4,6 +4,7 @@
   import Select from '../Select.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
+  import { FIELD_ICONS } from './field-icons'
   import { brandLabel, brandOf } from './field-words'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
@@ -30,15 +31,21 @@
 </script>
 
 <EditCard>
-  <EditField label={t('Name on card')} bind:value={content.holder} {oninput} />
+  <EditField
+    label={t('Name on card')}
+    icon={FIELD_ICONS.holder}
+    bind:value={content.holder}
+    {oninput}
+  />
   <EditField
     label={t('Card number')}
+    icon={FIELD_ICONS.number}
     bind:value={content.number}
     inputmode="numeric"
     mono
     oninput={numberTyped}
   />
-  <div class="brand">
+  <div class="brand orden-edit-row">
     <span class="label">{t('Card type')}</span>
     <Select
       plain
@@ -52,6 +59,7 @@
   </div>
   <EditField
     label={t('Expiration date')}
+    icon={FIELD_ICONS.expiry}
     bind:value={content.expiry}
     inputmode="numeric"
     placeholder={t('MM/YY')}
@@ -59,6 +67,7 @@
   />
   <EditField
     label={t('Security code')}
+    icon={FIELD_ICONS.code}
     bind:value={content.code}
     kind="hidden"
     inputmode="numeric"
@@ -66,6 +75,7 @@
   />
   <EditField
     label={t('PIN')}
+    icon={FIELD_ICONS.pin}
     bind:value={content.pin}
     kind="hidden"
     inputmode="numeric"
@@ -83,6 +93,7 @@
 
   .label {
     flex: 1;
+    padding-inline-start: calc(var(--icon-md) + var(--space-2));
     font-size: var(--text-xs);
     color: var(--muted);
   }

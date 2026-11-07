@@ -1,12 +1,16 @@
 <script lang="ts">
   import type { VaultColor, VaultIcon } from '@orden/pass/types'
+  import Icon from '../Icon.svelte'
+  import { readIcon } from '../icons'
   import { theme } from '../theme.svelte'
   import Glyph from './Glyph.svelte'
   import { VAULT_ICON_MARKS, vaultColour } from './icons'
 
-  const { color, icon }: { color: VaultColor; icon: VaultIcon } = $props()
+  const { color, icon, mark }: { color: VaultColor; icon: VaultIcon; mark?: string | undefined } =
+    $props()
 
   const ink = $derived(vaultColour(color, theme.current))
+  const chosen = $derived(mark ? readIcon(mark) : null)
 </script>
 
 <span
@@ -15,7 +19,11 @@
   style:--badge-fill="color-mix(in srgb, {ink} 18%, transparent)"
   style:--badge-ink={ink}
 >
-  <Glyph icon={VAULT_ICON_MARKS[icon]} />
+  {#if chosen}
+    <Icon icon={chosen} fallback={VAULT_ICON_MARKS[icon]} />
+  {:else}
+    <Glyph icon={VAULT_ICON_MARKS[icon]} />
+  {/if}
 </span>
 
 <style>

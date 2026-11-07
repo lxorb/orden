@@ -4,6 +4,7 @@
   import { chorded } from './keys'
   import { opensAt, type Walk, walk } from './list-keys'
   import { overlays } from './overlays'
+  import { hang } from './portal'
   import { viewport } from './viewport.svelte'
   import { dur, fade, fly } from './motion'
 
@@ -107,7 +108,7 @@
     }
   }
 
-  $effect(() => (open ? overlays.show(close, () => [host]) : undefined))
+  $effect(() => (open ? overlays.show(close, () => [host, list]) : undefined))
   $effect(() => closeOnBack(open && viewport.touch, close))
 </script>
 
@@ -171,6 +172,8 @@
       role="listbox"
       aria-label={label}
       bind:this={list}
+      style:min-width={host ? `${host.offsetWidth}px` : undefined}
+      use:hang={{ side: above ? 'above' : 'below', gap: 4, from: host ?? null }}
       onmouseleave={() => (hovered = null)}
       transition:fly={{ y: above ? 4 : -4, duration: dur(120), easing: cubicOut }}
     >
@@ -278,21 +281,12 @@
   }
 
   .list {
-    position: absolute;
-    top: calc(100% + var(--space-1));
-    inset-inline-end: 0;
-    min-width: 100%;
     max-height: 280px;
     margin: 0;
     padding: var(--space-1);
     list-style: none;
     overflow-y: auto;
-    z-index: var(--z-popover);
-  }
-
-  .list.above {
-    top: auto;
-    bottom: calc(100% + var(--space-1));
+    z-index: var(--z-menu);
   }
 
   .list li {

@@ -11,6 +11,7 @@
   import Select from '../Select.svelte'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
+  import { FIELD_ICONS } from './field-icons'
   import { securityLabel } from './field-words'
   import PasswordField from './PasswordField.svelte'
   import SectionsEdit from './SectionsEdit.svelte'
@@ -74,6 +75,7 @@
   <EditCard>
     <EditField
       label={t('Private key')}
+      icon={FIELD_ICONS.privateKey}
       bind:value={content.privateKey}
       kind="multiline"
       mono
@@ -84,6 +86,7 @@
     />
     <EditField
       label={t('Public key')}
+      icon={FIELD_ICONS.publicKey}
       bind:value={content.publicKey}
       kind="multiline"
       mono
@@ -104,9 +107,14 @@
   {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 {:else if content.kind === 'wifi'}
   <EditCard>
-    <EditField label={t('Network name')} bind:value={content.ssid} {oninput} />
+    <EditField
+      label={t('Network name')}
+      icon={FIELD_ICONS.network}
+      bind:value={content.ssid}
+      {oninput}
+    />
     <PasswordField {ui} label={t('Password')} bind:value={content.password} onchange={oninput} />
-    <div class="security">
+    <div class="security orden-edit-row">
       <span class="label">{t('Security')}</span>
       <Select
         plain
@@ -143,6 +151,7 @@
 
   .label {
     flex: 1;
+    padding-inline-start: calc(var(--icon-md) + var(--space-2));
     font-size: var(--text-xs);
     color: var(--muted);
   }

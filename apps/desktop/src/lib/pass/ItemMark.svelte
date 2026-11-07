@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Content } from '@orden/pass/types'
+  import Icon from '../Icon.svelte'
+  import { readIcon } from '../icons'
   import { favicons } from '../web-tab/pages.svelte'
   import Glyph from './Glyph.svelte'
   import { KIND_ICONS } from './icons'
@@ -17,6 +19,8 @@
 <span class="item-mark" class:is-big={big} data-kind={content.kind} aria-hidden="true">
   {#if site && !broken}
     <img src={site} alt="" draggable="false" onerror={() => (broken = true)} />
+  {:else if content.kind === 'custom' && content.mark}
+    <Icon icon={readIcon(content.mark)} fallback={KIND_ICONS.custom} />
   {:else}
     <Glyph icon={KIND_ICONS[content.kind]} />
   {/if}

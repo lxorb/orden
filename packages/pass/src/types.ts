@@ -141,6 +141,7 @@ export interface Identity extends Common {
 export interface Custom extends Common {
   kind: 'custom'
   template: string
+  mark?: string | undefined
   sections: Section[]
 }
 
@@ -238,6 +239,7 @@ export interface Folder {
   id: string
   name: string
   parent: string | null
+  mark?: string | undefined
 }
 
 export interface VaultMeta {
@@ -246,6 +248,7 @@ export interface VaultMeta {
   description: string
   color: VaultColor
   icon: VaultIcon
+  mark?: string | undefined
   folders: Folder[]
   hidePasswordsFromViewers: boolean
 }

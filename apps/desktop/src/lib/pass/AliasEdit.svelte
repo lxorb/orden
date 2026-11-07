@@ -6,6 +6,7 @@
   import type { AliasAsk, AliasOptions } from './aliases'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
+  import { FIELD_ICONS } from './field-icons'
   import { aliasOptions } from './new-alias'
   import SwitchRow from './SwitchRow.svelte'
 
@@ -90,7 +91,7 @@
 {#if fresh && options}
   <EditCard>
     <EditField label={t('Prefix')} bind:value={prefix} placeholder="shop" {oninput} />
-    <div class="choose">
+    <div class="choose orden-edit-row">
       <span class="label">{t('Suffix')}</span>
       <Select
         plain
@@ -104,7 +105,7 @@
       />
     </div>
     {#if mailboxes.length}
-      <div class="choose">
+      <div class="choose orden-edit-row">
         <span class="label">{t('Forwards to')}</span>
         <Select
           plain
@@ -135,6 +136,7 @@
   <EditCard>
     <EditField
       label={t('Alias address')}
+      icon={FIELD_ICONS.alias}
       bind:value={content.address}
       inputmode="email"
       placeholder="name@example.com"

@@ -51,7 +51,7 @@
   <div class="targets">
     {#each pass.vaults as vault (vault.id)}
       <button class="orden-row vault" type="button" onclick={() => void moved(vault.id, null)}>
-        <VaultMark color={vault.color} icon={vault.icon} />
+        <VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />
         <span class="orden-row-label">{vault.name}</span>
       </button>
       {@render folders(vault, null, 1)}

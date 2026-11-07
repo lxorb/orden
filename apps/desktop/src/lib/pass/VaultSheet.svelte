@@ -1,14 +1,14 @@
 <script lang="ts">
   import type { VaultColor, VaultIcon } from '@orden/pass/types'
-  import { VAULT_COLORS, VAULT_ICONS } from '@orden/pass/types'
+  import { VAULT_COLORS } from '@orden/pass/types'
+  import { iconChoice } from '../icon-choice.svelte'
   import { message, t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
   import { theme } from '../theme.svelte'
-  import Glyph from './Glyph.svelte'
-  import { VAULT_ICON_MARKS, vaultColour } from './icons'
+  import { vaultColour } from './icons'
   import { pass } from './store.svelte'
   import type { PassUi } from './ui.svelte'
-  import { colorName, iconName } from './vault-words'
+  import { colorName } from './vault-words'
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()
@@ -22,6 +22,7 @@
   let description = $state('')
   let color = $state<VaultColor>('purple')
   let icon = $state<VaultIcon>('home')
+  let picked = $state<string | undefined>(undefined)
   let busy = $state(false)
   let wrong = $state('')
 
@@ -31,6 +32,7 @@
     description = editing?.description ?? ''
     color = editing?.color ?? 'purple'
     icon = editing?.icon ?? 'home'
+    picked = editing?.mark
     wrong = ''
   })
 
@@ -43,10 +45,22 @@
     busy = true
     try {
       if (editing) {
-        await pass.updateVault(editing.id, { name: named, description, color, icon })
+        await pass.updateVault(editing.id, {
+          name: named,
+          description,
+          color,
+          icon,
+          mark: picked,
+        })
         close()
       } else {
-        const made = await pass.createVault({ name: named, description, color, icon })
+        const made = await pass.createVault({
+          name: named,
+          description,
+          color,
+          icon,
+          ...(picked ? { mark: picked } : {}),
+        })
         close()
         await ui.choose({ kind: 'vault', vault: made.id, folder: null })
       }
@@ -59,7 +73,7 @@
 </script>
 
 <Sheet open={asked !== null} title={editing ? t('Edit vault') : t('New vault')} onclose={close}>
-  {#snippet mark()}<VaultMark {color} {icon} />{/snippet}
+  {#snippet mark()}<VaultMark {color} {icon} mark={picked} />{/snippet}
   <form class="vault-form" onsubmit={kept}>
     <input
       class="orden-field is-value"
@@ -91,22 +105,14 @@
       {/each}
     </div>
     <div class="orden-section">{t('Icon')}</div>
-    <div class="icons" role="radiogroup" aria-label={t('Icon')}>
-      {#each VAULT_ICONS as one (one)}
-        <button
-          type="button"
-          class="orden-glyph icon"
-          class:on={icon === one}
-          role="radio"
-          aria-checked={icon === one}
-          aria-label={iconName(one)}
-          title={iconName(one)}
-          onclick={() => (icon = one)}
-        >
-          <Glyph icon={VAULT_ICON_MARKS[one]} />
-        </button>
-      {/each}
-    </div>
+    <button
+      type="button"
+      class="orden-row chooser"
+      onclick={() => iconChoice.pass(picked ?? null, (chosen) => (picked = chosen ?? undefined))}
+    >
+      <VaultMark {color} {icon} mark={picked} />
+      <span class="orden-row-label">{t('Choose an icon')}</span>
+    </button>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     <div class="buttons">
       <button class="orden-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
@@ -160,15 +166,8 @@
       0 0 0 4px var(--accent);
   }
 
-  .icons {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--row-height), 1fr));
-    gap: 2px;
-  }
-
-  .icon.on {
-    background: var(--accent-soft);
-    color: var(--accent);
+  .chooser {
+    gap: var(--space-2);
   }
 
   .wrong {

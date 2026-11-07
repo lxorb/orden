@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { IconNode } from 'lucide'
   import type { Snippet } from 'svelte'
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
@@ -11,6 +12,7 @@
     label = $bindable(),
     value = $bindable(),
     kind = 'text',
+    icon,
     named = false,
     mono = false,
     big = false,
@@ -24,6 +26,7 @@
     label: string
     value: string
     kind?: 'text' | 'hidden' | 'date' | 'multiline'
+    icon?: IconNode
     named?: boolean
     mono?: boolean
     big?: boolean
@@ -40,7 +43,12 @@
   const id = `pass-field-${Math.random().toString(36).slice(2, 8)}`
 </script>
 
-<div class="field" class:is-invalid={invalid !== null}>
+<div
+  class="field orden-edit-row"
+  class:is-invalid={invalid !== null}
+  class:is-tall={kind === 'multiline'}
+>
+  {#if icon}<span class="mark"><Glyph {icon} /></span>{/if}
   <div class="text">
     {#if named}
       <input
@@ -113,6 +121,16 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
+  }
+
+  .mark {
+    flex: none;
+    color: var(--muted);
+  }
+
+  .is-tall .mark {
+    align-self: flex-start;
+    margin-top: 11px;
   }
 
   .text {

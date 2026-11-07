@@ -2,6 +2,7 @@
   import { t } from '../i18n.svelte'
   import { type Family, installedFamilies, isInstalled, offered } from '../font-families'
   import { overlays } from '../overlays'
+  import { hang } from '../portal'
 
   const {
     value,
@@ -21,6 +22,7 @@
 
   let host = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
+  let list = $state<HTMLElement>()
   let typed = $state<string | null>(null)
   let open = $state(false)
   let active = $state(-1)
@@ -31,7 +33,9 @@
   const shown = $derived(offered(families, typed ?? '', mono).slice(0, MOST))
   const missing = $derived(value !== '' && !isInstalled(value))
 
-  $effect(() => (open ? overlays.show(close, () => (host ? [host] : [])) : undefined))
+  $effect(() =>
+    open ? overlays.show(close, () => [host, list].filter((one) => one !== undefined)) : undefined,
+  )
 
   function show() {
     open = true
@@ -103,7 +107,14 @@
   />
 
   {#if open && shown.length}
-    <ul id={`${id}-list`} class="orden-layer list" role="listbox" aria-label={label}>
+    <ul
+      id={`${id}-list`}
+      class="orden-layer list"
+      role="listbox"
+      aria-label={label}
+      bind:this={list}
+      use:hang={{ side: 'below', gap: 4, from: host ?? null, stretch: true }}
+    >
       {#each shown as one, at (one.name)}
         <li
           id={`${id}-${at}`}
@@ -134,16 +145,12 @@
   }
 
   .list {
-    position: absolute;
-    top: calc(100% + var(--space-1));
-    inset-inline-end: 0;
-    width: 16rem;
     max-height: 280px;
     margin: 0;
     padding: var(--space-1);
     list-style: none;
     overflow-y: auto;
-    z-index: var(--z-popover);
+    z-index: var(--z-menu);
   }
 
   .list li {

@@ -389,27 +389,29 @@
       </div>
     {/if}
 
-    <div class="tints" role="group" aria-label={t('Colour')}>
-      <button
-        type="button"
-        class="tint plain"
-        aria-label={t('Plain')}
-        aria-pressed={tint === null}
-        class:on={tint === null}
-        onclick={() => paint(null)}
-      ></button>
-      {#each ACCENTS as accent (accent.id)}
+    {#if target.kind !== 'pass'}
+      <div class="tints" role="group" aria-label={t('Colour')}>
         <button
           type="button"
-          class="tint"
-          aria-label={accent.name}
-          aria-pressed={tint === accent.id}
-          class:on={tint === accent.id}
-          style:--dot={accent.dark}
-          onclick={() => paint(accent.id)}
+          class="tint plain"
+          aria-label={t('Plain')}
+          aria-pressed={tint === null}
+          class:on={tint === null}
+          onclick={() => paint(null)}
         ></button>
-      {/each}
-    </div>
+        {#each ACCENTS as accent (accent.id)}
+          <button
+            type="button"
+            class="tint"
+            aria-label={accent.name}
+            aria-pressed={tint === accent.id}
+            class:on={tint === accent.id}
+            style:--dot={accent.dark}
+            onclick={() => paint(accent.id)}
+          ></button>
+        {/each}
+      </div>
+    {/if}
 
     <button class="clear" onclick={() => chose(null)}>
       {target.kind === 'space'

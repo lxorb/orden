@@ -9,6 +9,7 @@
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import { i18n, plural, t } from '../i18n.svelte'
+  import { iconChoice } from '../icon-choice.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { dur, fade } from '../motion'
   import { prompt } from '../prompt.svelte'
@@ -129,6 +130,17 @@
     void shareEntries().then((rows) => menu.show(at, rows, { title: t('Share') }))
   }
 
+  function chooseIcon() {
+    const now = item.content
+    if (now.kind !== 'custom') return
+    const id = item.id
+    iconChoice.pass(now.mark ?? null, (mark) => {
+      const latest = pass.items.find((one) => one.id === id)?.content
+      if (latest?.kind !== 'custom') return
+      void pass.update(id, { ...latest, mark: mark ?? undefined })
+    })
+  }
+
   function entries(from: Element): MenuEntry[] {
     if (trashed) {
       return [
@@ -148,6 +160,9 @@
             { label: t('Duplicate'), run: () => void duplicated() },
             { label: t('History'), run: () => (ui.sheet = { kind: 'history', item: item.id }) },
           ]),
+      ...(content.kind === 'custom' && linkable
+        ? [{ label: t('Choose an icon'), run: () => chooseIcon() }]
+        : []),
       ...(linkable ? [{ label: t('Share'), more: shareEntries, run: () => shareShown(from) }] : []),
       ...(content.kind === 'login'
         ? [
@@ -183,7 +198,9 @@
         {#if item.pinned}<span class="pinned" title={t('Pinned')}><Glyph icon={Pin} /></span>{/if}
       </h2>
       {#if vault}
-        <span class="vault"><VaultMark color={vault.color} icon={vault.icon} />{vault.name}</span>
+        <span class="vault"
+          ><VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />{vault.name}</span
+        >
       {/if}
     </div>
     {#if trashed}
