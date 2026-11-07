@@ -204,6 +204,37 @@ describe('the keyboard going anywhere else', () => {
   })
 })
 
+describe('words typed while the keyboard is on something else', () => {
+  test('never land in an editor that kept only its caret', () => {
+    const editor = control('<div contenteditable="true">words</div>')
+    const button = control('<button>Over</button>')
+    getSelection()?.collapse(editor.firstChild, 2)
+    button.focus()
+    const typed = new InputEvent('beforeinput', {
+      inputType: 'insertText',
+      data: 'L',
+      bubbles: true,
+      cancelable: true,
+    })
+    editor.dispatchEvent(typed)
+    expect(typed.defaultPrevented).toBe(true)
+    expect(getSelection()?.rangeCount).toBe(0)
+  })
+
+  test.each([
+    ['typed where the keyboard is', 'insertText', true],
+    ['dropped on an editor without the keyboard', 'insertFromDrop', false],
+  ])('go through when %s', (_, inputType, focusing) => {
+    const editor = control('<div contenteditable="true">words</div>')
+    const button = control('<button>Over</button>')
+    if (focusing) editor.focus()
+    else button.focus()
+    const typed = new InputEvent('beforeinput', { inputType, bubbles: true, cancelable: true })
+    editor.dispatchEvent(typed)
+    expect(typed.defaultPrevented).toBe(false)
+  })
+})
+
 test('the crate and the page name the word the same', () => {
   expect(crateSide).toContain(`pub const IN_PAGE: &str = "${IN_PAGE}";`)
 })
