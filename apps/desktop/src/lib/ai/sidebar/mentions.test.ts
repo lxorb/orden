@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { growth } from '../../../../../../scripts/growth'
+import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import { type Mention, mentionAt, mentionOf, ranked, sameMention } from './mentions'
 
 const hovering: Mention = { kind: 'note', id: '/s/Hovering.md', label: 'Hovering' }
@@ -46,6 +46,6 @@ test('a word after the @ longer than any name is weighed against none, so each k
     mentionOf({ path: `plan ${String(at)}.md`, name: `plan ${String(at)}.md`, is_dir: false }),
   )
   expect(ranked(notes, 'p'.repeat(20_000))).toEqual([])
-  expect(growth((count) => ranked(notes, 'p'.repeat(count)), 400, 16)).toBeLessThan(4)
+  expect(growth((count) => ranked(notes, 'p'.repeat(count)), 400, 16)).toBeLessThan(GROWS_AT_MOST)
   expect(ranked(notes, 'plan1').length).toBeGreaterThan(0)
 })
