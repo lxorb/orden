@@ -440,6 +440,7 @@
       if (!takesOver(one, driver.since, event.timeStamp)) return
 
       store.halt()
+      if (one.kind === 'erase') store.takeBack(one.run)
       predicted = []
       gesture = {
         kind: 'pinch',

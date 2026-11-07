@@ -1282,6 +1282,16 @@ describe('a second finger', () => {
     expect(machine.gesture).toMatchObject({ kind: 'pinch', apart: 100 })
   })
 
+  test('takes back what the eraser rubbed out a moment before it, and takes the plane', () => {
+    const { machine, effects } = play(
+      [down({ id: 1, pointer: 'touch', hit: hit({ stroke: 's1' }) }), second()],
+      context({ tool: 'erase' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('pinch')
+    expect(verbs(effects).slice(-1)).toEqual(['unrub'])
+  })
+
   test('is a palm rather than a pinch once the eraser has begun rubbing out', () => {
     const { machine } = play(
       [down({ id: 1, pointer: 'touch' }), second({ time: 900 })],

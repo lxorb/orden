@@ -126,6 +126,7 @@ export type Effect =
   | { do: 'stroke'; stroke: PendingStroke }
   | { do: 'rub'; ats: Point[]; reach: number }
   | { do: 'cut'; ats: Point[]; reach: number }
+  | { do: 'unrub' }
   | { do: 'catch'; lasso: Point[]; cards?: boolean }
   | { do: 'unmenu' }
   | { do: 'ink'; dx: number; dy: number; scale: number; turn: number; about: Point }
@@ -432,7 +433,7 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
             turning: false,
           },
         },
-        effects: [],
+        effects: now.gesture.kind === 'erase' ? [{ do: 'unrub' }] : [],
       }
     }
 

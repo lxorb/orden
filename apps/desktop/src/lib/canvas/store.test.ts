@@ -126,6 +126,38 @@ describe('a gesture that edits as it goes', () => {
     expect(store.canUndo).toBe(true)
   })
 
+  test('a drag a pinch took over is taken back whole, and leaves nothing to redo', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b'), card('c')] })
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b')] }, 'rub:1')
+    store.edit({ ...store.canvas, nodes: [card('a')] }, 'rub:1')
+
+    expect(store.takeBack('rub:1')).toBe(true)
+    expect(ids(store.canvas)).toEqual(['a', 'b', 'c'])
+    expect(store.canRedo).toBe(false)
+    expect(store.canUndo).toBe(true)
+  })
+
+  test('and only that drag, never one before it or what came after it', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b')] }, 'rub:1')
+    expect(store.takeBack('rub:2')).toBe(false)
+
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b'), card('c')] })
+    expect(store.takeBack('rub:1')).toBe(false)
+    expect(ids(store.canvas)).toEqual(['a', 'b', 'c'])
+  })
+
+  test('and in a room it is the room that takes it back', () => {
+    const { store } = opened()
+    const shared = room()
+    store.shared = shared
+    store.edit({ ...store.canvas, nodes: [card('a')] }, 'rub:1')
+
+    expect(store.takeBack('rub:1')).toBe(true)
+    expect(shared.undone).toBe(1)
+  })
+
   test('and a second drag is a second step', () => {
     const { store } = opened()
     store.edit({ ...store.canvas, nodes: [card('a'), card('b')] }, 'rub:1')

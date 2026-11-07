@@ -161,6 +161,21 @@ export class CanvasStore implements PlaneSurface {
     return true
   }
 
+  takeBack(run: string): boolean {
+    if (this.readOnly || this.during !== run) return false
+    this.during = null
+    if (this.shared) return this.shared.undo()
+
+    const before = this.history.drop()
+    if (!before) return false
+    this.stackChanged()
+
+    this.canvas = stamped(this.canvas, before, Date.now())
+    this.keepPicked()
+    this.soon()
+    return true
+  }
+
   undo() {
     if (this.shared) {
       this.shared.undo()

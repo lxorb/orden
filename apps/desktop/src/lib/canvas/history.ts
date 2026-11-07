@@ -28,6 +28,10 @@ export class CanvasHistory {
     return before
   }
 
+  drop(): Canvas | null {
+    return this.past.pop() ?? null
+  }
+
   redo(current: Canvas): Canvas | null {
     const after = this.future.shift()
     if (!after) return null
