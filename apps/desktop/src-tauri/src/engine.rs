@@ -365,9 +365,8 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     manager: &'a M,
     config: &tauri::utils::config::WindowConfig,
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
-    let building = tauri::WebviewWindowBuilder::from_config(manager, config)?
-        .devtools(cfg!(debug_assertions))
-        .initialization_script(crate::old_home::script());
+    let building =
+        tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
     #[cfg(all(windows, not(feature = "cef")))]
     if let Ok(settings) = config_dir(manager.app_handle()) {
         crate::gpu::accelerated(&settings);
@@ -383,7 +382,7 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
         crate::kept::read_kept(manager.app_handle());
         own_window(building)
     };
-    Ok(building)
+    Ok(building.initialization_script(crate::old_home::script()))
 }
 
 #[cfg(feature = "cef")]

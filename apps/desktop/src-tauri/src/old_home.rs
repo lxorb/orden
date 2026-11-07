@@ -47,12 +47,11 @@ fn after_move() -> Option<PathBuf> {
     dirs::config_dir().map(|dir| dir.join(NEW).join(AFTER_MOVE))
 }
 
+const SCRIPT: &str = include_str!("former.js");
+
 pub(crate) fn script() -> String {
     let said = serde_json::to_string(&former_homes()).unwrap_or_else(|_| "null".into());
-    format!(
-        "window.__ORDEN_FORMER__ = {};",
-        said.replace('<', "\\u003c")
-    )
+    SCRIPT.replace("/* __FORMER__ */ null", &said.replace('<', "\\u003c"))
 }
 
 #[tauri::command(async)]
@@ -401,6 +400,14 @@ mod tests {
         assert!(merged(&old, &new, false));
         assert!(new.join("Spaces/web/a.md").is_file());
         assert!(new.join("Spaces/web/b.md").is_file());
+    }
+
+    #[test]
+    fn the_window_is_given_what_the_former_home_holds() {
+        assert!(SCRIPT.contains("/* __FORMER__ */ null"));
+        let given = script();
+        assert!(!given.contains("/* __FORMER__ */ null"));
+        assert!(given.contains("__ORDEN_FORMER__"));
     }
 
     #[test]

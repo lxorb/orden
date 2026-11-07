@@ -166,44 +166,41 @@ def listing(name: str) -> None:
 class Run:
     def __init__(self, exe: pathlib.Path, identifier: str, out: pathlib.Path, name: str) -> None:
         self.exe, self.identifier, self.out, self.name = exe, identifier, out, name
-        self.process: subprocess.Popen[bytes] | None = None
         self.app: App | None = None
 
     def start(self) -> App:
         secret = allow(roaming(self.identifier))
         log = open(self.out / f"{self.name}.log", "ab")
-        self.process = subprocess.Popen(
+        process = subprocess.Popen(
             [str(self.exe)], cwd=str(self.exe.parent), stdout=log, stderr=subprocess.STDOUT
         )
-        stop = time.monotonic() + 180
-        while True:
-            try:
-                self.app = endpoint(roaming(self.identifier), self.process.pid, secret, 20)
+        pid = process.pid
+        for _ in range(3):
+            self.app = endpoint(roaming(self.identifier), pid, secret, 120)
+            self.app.until("!!orden.workspace", 120)
+            time.sleep(8)
+            again = self.started_again(pid)
+            if again is None:
                 break
-            except RuntimeError:
-                if time.monotonic() > stop:
-                    raise
-                self.process = self.relaunched() or self.process
-        self.app.until("!!orden.workspace", 120)
-        time.sleep(3)
+            print(f"{self.name}: the app started itself again as {again}", flush=True)
+            pid = again
+        assert self.app is not None
         self.app.eval(
             "for (const one of document.querySelectorAll('button'))"
             " if (one.textContent.trim() === 'Keep running') one.click(); return true"
         )
         return self.app
 
-    def relaunched(self) -> subprocess.Popen[bytes] | None:
-        if self.process is None or self.process.poll() is None:
-            return None
+    def started_again(self, pid: int) -> int | None:
         found = subprocess.run(
             ["powershell", "-NoProfile", "-Command",
-             f"(Get-Process | Where-Object {{ $_.Path -eq '{self.exe}' }} | Select-Object -First 1).Id"],
+             f"Get-Process | Where-Object {{ $_.Path -eq '{self.exe}' }} | ForEach-Object {{ $_.Id }}"],
             capture_output=True, text=True,
-        ).stdout.strip()
-        if not found:
+        ).stdout.split()
+        ids = [int(one) for one in found if one.isdigit()]
+        if pid in ids or not ids:
             return None
-        print(f"{self.name}: the app started again as {found}", flush=True)
-        return _Adopted(int(found))  # type: ignore[return-value]
+        return ids[0]
 
     def stop(self) -> None:
         time.sleep(6)
@@ -211,14 +208,6 @@ class Run:
         time.sleep(4)
         subprocess.run(["taskkill", "/F", "/IM", self.exe.name], capture_output=True)
         time.sleep(8)
-
-
-class _Adopted:
-    def __init__(self, pid: int) -> None:
-        self.pid = pid
-
-    def poll(self) -> int | None:
-        return None
 
 
 def tasks_text(app: App) -> str:

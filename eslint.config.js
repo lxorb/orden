@@ -151,6 +151,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/keyboard_press.js',
       'apps/desktop/src-tauri/src/page_scheme.js',
       'apps/desktop/src-tauri/src/kept.js',
+      'apps/desktop/src-tauri/src/former.js',
       'apps/desktop/src-tauri/src/agents/engines/snapshot.js',
       'apps/desktop/src-tauri/src/extensions/firefox/*.js',
       'packages/editor/src/frame-script.js',

@@ -1,4 +1,6 @@
 import { isTodoList } from '@orden/bases/todo-lists'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -45,9 +47,19 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-const { carryFormerNow, finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
+const { finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
 
-function said() {
+const SCRIPT = readFileSync(join(import.meta.dirname, '../../../src-tauri/src/former.js'), 'utf8')
+
+interface Said {
+  homes: { from: string; to: string }[]
+  waiting: boolean
+  dumped: boolean
+  after: string | null
+  carried?: boolean
+}
+
+function said(): Said | null {
   if (homes.said === null) return null
   return {
     homes: homes.said,
@@ -57,10 +69,19 @@ function said() {
   }
 }
 
+function pageStarts(former: Said | null): void {
+  const page: Record<string, unknown> = { localStorage }
+  page.top = page
+  const script = SCRIPT.replace('/* __FORMER__ */ null', JSON.stringify(former))
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the script the window is given, run as the window runs it
+  const run = new Function('window', script) as (window: unknown) => void
+  run(page)
+  vi.stubGlobal('__ORDEN_FORMER__', page.__ORDEN_FORMER__)
+}
+
 async function start(): Promise<boolean> {
-  const former = said()
-  carryFormerNow(former)
-  return finishFormerHome(former)
+  pageStarts(said())
+  return finishFormerHome()
 }
 const { ItemMetaStore } = await import('./item-meta.svelte')
 const { chosenInbox } = await import('../rows/inbox')
@@ -245,14 +266,13 @@ describe('carrying the former home', () => {
     expect(asked).toEqual([])
   })
 
-  test('is done before anything reads the storage, from what the window was given', () => {
+  test('is done by the script the window is given, before any of the app runs', () => {
     const now = mac.join(mac.base.to, 'Spaces', 'Work')
     oldProfile(mac)
     homes.said = [mac.base]
-    vi.stubGlobal('__ORDEN_FORMER__', said())
+    pageStarts(said())
 
-    expect(formerSaid()).toEqual(said())
-    carryFormerNow()
+    expect(formerSaid()?.carried).toBe(true)
     expect(chosenInbox(now)).toBe('Lists/Groceries.md')
     vi.stubGlobal('__ORDEN_FORMER__', undefined)
     expect(formerSaid()).toBeNull()
