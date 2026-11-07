@@ -520,7 +520,7 @@ WATCH = (
 LISTED_PDFS = (
     "const found = [];"
     "const walk = (one) => { if (!one) return;"
-    " if (!one.is_dir && /\\.pdf$/i.test(one.name)) found.push(one.name);"
+    " if (!one.is_dir && /\\.(pdf|pages)$/i.test(one.name)) found.push(one.name);"
     " for (const child of one.children ?? []) walk(child) };"
     "walk(nib.workspace.tree);"
     "return found"
@@ -616,7 +616,12 @@ def main() -> int:
         if why:
             wrong.append(why)
         elif not waited(lambda: any(one.startswith(name.removesuffix(".pdf")) for one in pdfs_in_space())):
-            wrong.append(f"a PDF dropped on the file list did not land in the space: {pdfs_in_space()}")
+            listed = app.eval(
+                "const tree = nib.workspace.tree;"
+                "return { root: nib.workspace.activeSpace?.root ?? null, tree: tree?.path ?? null,"
+                " names: (tree?.children ?? []).map((one) => one.name) }"
+            )
+            wrong.append(f"a PDF dropped on the file list did not land in the space: {pdfs_in_space()}; the list: {listed}")
         else:
             print(f"list: the PDF landed in the space: {pdfs_in_space()}", flush=True)
     finally:
