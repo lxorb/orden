@@ -1598,6 +1598,8 @@ export const uk: Dictionary = {
   Shorter: 'Коротше',
   Longer: 'Довше',
   'Fix grammar': 'Виправити граматику',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Вибраних слів більше немає в нотатці, тож нічого не замінено.',
   'A cited report': 'Звіт із цитуванням',
   'A helper in the background': 'Помічник у фоновому режимі',
   'A side question': 'Додаткове питання',

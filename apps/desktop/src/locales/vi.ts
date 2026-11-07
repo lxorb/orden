@@ -1503,6 +1503,8 @@ export const vi: Dictionary = {
   Shorter: 'Ngắn hơn',
   Longer: 'Dài hơn',
   'Fix grammar': 'Sửa ngữ pháp',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Những từ đã chọn không còn trong ghi chú, nên không có gì được thay.',
   'A cited report': 'Báo cáo có trích dẫn',
   'A helper in the background': 'Trợ lý nền',
   'A side question': 'Câu hỏi phụ',

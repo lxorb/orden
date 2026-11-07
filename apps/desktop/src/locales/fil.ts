@@ -1554,6 +1554,8 @@ export const fil: Dictionary = {
   Shorter: 'Paikliin',
   Longer: 'Pahabain',
   'Fix grammar': 'Ayusin ang gramatika',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Wala na sa tala ang mga napiling salita, kaya walang napalitan.',
   'A cited report': 'Ulat na may sanggunian',
   'A helper in the background': 'Katulong sa likod ng trabaho',
   'A side question': 'Isang karagdagang tanong',

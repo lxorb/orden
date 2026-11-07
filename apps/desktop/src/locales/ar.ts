@@ -1628,6 +1628,8 @@ export const ar: Dictionary = {
   Shorter: 'أقصر',
   Longer: 'أطول',
   'Fix grammar': 'تصحيح القواعد',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'لم تعد الكلمات المختارة في الملاحظة، فلم يُستبدل شيء.',
   'A cited report': 'تقرير موثّق',
   'A helper in the background': 'مساعد في الخلفية',
   'A side question': 'سؤال جانبي',

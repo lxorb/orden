@@ -1517,6 +1517,8 @@ export const gu: Dictionary = {
   Shorter: 'ટૂંકું',
   Longer: 'લાંબું',
   'Fix grammar': 'વ્યાકરણ સુધારો',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'પસંદ કરેલા શબ્દો હવે નોંધમાં નથી, તેથી કંઈ બદલાયું નહીં.',
   'A cited report': 'ઉલ્લેખિત અહેવાલ',
   'A helper in the background': 'પાછળથી મદદગાર',
   'A side question': 'સાઇડ પ્રશ્ન',

@@ -1508,6 +1508,8 @@ export const my: Dictionary = {
   Shorter: 'ပိုတို',
   Longer: 'ပိုရှည်',
   'Fix grammar': 'သဒ္ဒါပြင်ပါ',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ရွေးထားသော စကားလုံးများ မှတ်စုထဲတွင် မရှိတော့သဖြင့် ဘာမျှ အစားမထိုးပါ။',
   'A cited report': 'ကိုးကားချက်ပါ အစီရင်ခံစာ',
   'A helper in the background': 'နောက်ကွယ်ရှိ အကူ',
   'A side question': 'ဘေးထွက်မေးခွန်း',

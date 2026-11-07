@@ -1528,6 +1528,8 @@ export const pa: Dictionary = {
   Shorter: 'ਛੋਟਾ',
   Longer: 'ਲੰਮਾ',
   'Fix grammar': 'ਵਿਆਕਰਨ ਸੁਧਾਰੋ',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ਚੁਣੇ ਸ਼ਬਦ ਹੁਣ ਨੋਟ ਵਿੱਚ ਨਹੀਂ ਹਨ, ਇਸ ਲਈ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ ਗਿਆ।',
   'A cited report': 'ਹਵਾਲੇ ਵਾਲੀ ਰਿਪੋਰਟ',
   'A helper in the background': 'ਪਿਛੋਕੜ ਵਿੱਚ ਸਹਾਇਕ',
   'A side question': 'ਇੱਕ ਸਾਈਡ ਸਵਾਲ',

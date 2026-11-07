@@ -1501,6 +1501,8 @@ export const am: Dictionary = {
   Shorter: 'አሳጥር',
   Longer: 'አርዝም',
   'Fix grammar': 'ሰዋስው አስተካክል',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'የተመረጡት ቃላት ከእንግዲህ በማስታወሻው ውስጥ የሉም፣ ስለዚህ ምንም አልተተካም።',
   'A cited report': 'ምንጭ የተጠቀሰበት ዘገባ',
   'A helper in the background': 'ከበስተጀርባ ያለ ረዳት',
   'A side question': 'የጎን ጥያቄ',

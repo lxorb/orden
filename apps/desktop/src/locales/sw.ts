@@ -1544,6 +1544,8 @@ export const sw: Dictionary = {
   Shorter: 'Fupi zaidi',
   Longer: 'Ndefu zaidi',
   'Fix grammar': 'Sahihisha sarufi',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Maneno yaliyochaguliwa hayamo tena kwenye dokezo, kwa hiyo hakuna kilichobadilishwa.',
   'A cited report': 'Ripoti yenye vyanzo',
   'A helper in the background': 'Msaidizi nyuma ya pazia',
   'A side question': 'Swali la pembeni',

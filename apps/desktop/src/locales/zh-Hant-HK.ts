@@ -1478,6 +1478,8 @@ export const zhHantHK: Dictionary = {
   Shorter: '更短',
   Longer: '更長',
   'Fix grammar': '修正語法',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '所選文字已不在筆記中，因此沒有取代任何內容。',
   'A cited report': '附引報告',
   'A helper in the background': '背景幫手',
   'A side question': '附帶問題',

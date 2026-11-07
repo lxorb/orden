@@ -1603,6 +1603,8 @@ export const ru: Dictionary = {
   Shorter: 'Короче',
   Longer: 'Длиннее',
   'Fix grammar': 'Исправить грамматику',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Выбранных слов больше нет в заметке, поэтому ничего не заменено.',
   'A cited report': 'Отчёт с цитатами',
   'A helper in the background': 'Помощник на фоне',
   'A side question': 'Побочный вопрос',

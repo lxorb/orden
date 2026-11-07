@@ -1489,6 +1489,8 @@ export const th: Dictionary = {
   Shorter: 'สั้นลง',
   Longer: 'ยาวขึ้น',
   'Fix grammar': 'แก้ไวยากรณ์',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'คำที่เลือกไม่อยู่ในโน้ตแล้ว จึงไม่ได้แทนที่อะไร',
   'A cited report': 'รายงานพร้อมอ้างอิง',
   'A helper in the background': 'ผู้ช่วยเบื้องหลัง',
   'A side question': 'คำถามข้างเคียง',

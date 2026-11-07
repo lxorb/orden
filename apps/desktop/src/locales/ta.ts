@@ -1549,6 +1549,8 @@ export const ta: Dictionary = {
   Shorter: 'சுருக்கமாக',
   Longer: 'விரிவாக',
   'Fix grammar': 'இலக்கணத்தைச் சரிசெய்',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'தேர்ந்தெடுத்த சொற்கள் இனி குறிப்பில் இல்லை, எனவே எதுவும் மாற்றப்படவில்லை.',
   'A cited report': 'மேற்கோளிட்ட அறிக்கை',
   'A helper in the background': 'பின்னணியில் உதவியாளர்',
   'A side question': 'பக்கக் கேள்வி',

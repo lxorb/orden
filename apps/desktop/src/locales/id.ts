@@ -1511,6 +1511,8 @@ export const id: Dictionary = {
   Shorter: 'Lebih pendek',
   Longer: 'Lebih panjang',
   'Fix grammar': 'Perbaiki tata bahasa',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Kata-kata yang dipilih sudah tidak ada di catatan, jadi tidak ada yang diganti.',
   'A cited report': 'Laporan dengan sitasi',
   'A helper in the background': 'Pembantu di latar',
   'A side question': 'Pertanyaan sampingan',
