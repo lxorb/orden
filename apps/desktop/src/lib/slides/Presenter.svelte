@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { fitSurface } from './fit'
-  import { presenterChannel, type Stage } from './presenter'
+  import { leads, presenterChannel, type Lead, type Stage } from './presenter'
   import { STAGE_HEIGHT, stageScale, STAGE_WIDTH } from './stage'
 
   let stage = $state<Stage | null>(null)
@@ -13,22 +13,39 @@
   let bigPage = $state<HTMLElement>()
   let smallPage = $state<HTMLElement>()
 
+  const ALONE = 600
+
+  let lead: Lead | null = null
+  let alone: ReturnType<typeof setTimeout> | undefined
+
   const channel = presenterChannel((message) => {
     if (message.kind === 'stage') {
+      if (!leads(lead, message.show, message.took)) return
+      lead = { show: message.show, took: message.took }
+      clearTimeout(alone)
       stage = message.stage
       document.documentElement.dataset.theme = message.stage.scheme
       return
     }
 
-    if (message.kind === 'gone') {
-      gone = true
-      window.close()
+    if (message.kind === 'gone' && message.show === lead?.show) {
+      lead = null
+      channel.send({ kind: 'here' })
+      clearTimeout(alone)
+      alone = setTimeout(() => {
+        if (lead) return
+        gone = true
+        window.close()
+      }, ALONE)
     }
   })
 
   channel.send({ kind: 'here' })
 
-  onDestroy(() => channel.close())
+  onDestroy(() => {
+    clearTimeout(alone)
+    channel.close()
+  })
 
   $effect(() => {
     const from = stage?.started
@@ -73,7 +90,7 @@
   })
 
   function move(by: number) {
-    channel.send({ kind: 'move', by })
+    if (lead) channel.send({ kind: 'move', show: lead.show, by })
   }
 
   function onKeydown(event: KeyboardEvent) {
