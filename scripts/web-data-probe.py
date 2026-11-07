@@ -218,11 +218,11 @@ def main() -> int:
     page_probe.wipe(args.identifier)
     port = serve()
     a, b = f"http://127.0.0.1:{port}", f"http://localhost:{port}"
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-web-data-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-web-data-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     (root / SPACE).mkdir(parents=True)
     (root / SPACE / "Site.url").write_text(page_probe.shortcut(f"{b}/home", "Site"), encoding="utf-8")
-    env = {**os.environ, "NIB_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
     said: dict[str, object] = {}
     failed: list[str] = []
 
@@ -240,7 +240,7 @@ def main() -> int:
         ask(run.app, "for (const one of [...ws.tabs]) ws.close(one.id); return true")
         space = ask(run.app, "return ws.spaces.find((one) => one.name === %s)?.id" % json.dumps(SPACE))
         said["space"] = space
-        ask(run.app, "localStorage.setItem('nib:web-data', JSON.stringify({ %s: 'space' })); return true" % json.dumps(space))
+        ask(run.app, "localStorage.setItem('orden:web-data', JSON.stringify({ %s: 'space' })); return true" % json.dumps(space))
     finally:
         run.close()
     last = run.port
@@ -266,8 +266,8 @@ def main() -> int:
         here_b = go(args.identifier, f"{b}/check")
         said["new: 127.0.0.1"] = here_a
         said["new: localhost"] = here_b
-        said["new: merged"] = ask(run.app, "return localStorage.getItem('nib:web-data-merged')")
-        said["new: choice left"] = ask(run.app, "return localStorage.getItem('nib:web-data')")
+        said["new: merged"] = ask(run.app, "return localStorage.getItem('orden:web-data-merged')")
+        said["new: choice left"] = ask(run.app, "return localStorage.getItem('orden:web-data')")
 
         said["apart"] = ask(run.app, OWN % r"'\r\nNib-Data=3f9a0c17e2b4d685\r\n'" + STORE_OF, 40)
         said["apart: 127.0.0.1"] = go(args.identifier, f"{a}/check")

@@ -59,11 +59,17 @@
   <div class="fields">
     <label>
       <span>{t('Find')}</span>
-      <input bind:this={first} bind:value={find} class="nib-field" type="text" spellcheck="false" />
+      <input
+        bind:this={first}
+        bind:value={find}
+        class="orden-field"
+        type="text"
+        spellcheck="false"
+      />
     </label>
     <label>
       <span>{t('Replace with')}</span>
-      <input bind:value={replace} class="nib-field" type="text" spellcheck="false" />
+      <input bind:value={replace} class="orden-field" type="text" spellcheck="false" />
     </label>
     <label class="tick">
       <input type="checkbox" bind:checked={numbered} />
@@ -79,9 +85,12 @@
     {/each}
   </ol>
   <div class="buttons">
-    <button type="button" class="nib-button is-quiet" onclick={onclose}>{t('Cancel')}</button>
-    <button type="button" class="nib-button" disabled={!changed || clashes.size > 0} onclick={apply}
-      >{t('Rename')}</button
+    <button type="button" class="orden-button is-quiet" onclick={onclose}>{t('Cancel')}</button>
+    <button
+      type="button"
+      class="orden-button"
+      disabled={!changed || clashes.size > 0}
+      onclick={apply}>{t('Rename')}</button
     >
   </div>
 </div>

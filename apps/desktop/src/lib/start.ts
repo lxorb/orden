@@ -131,8 +131,13 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./pass/syncing.svelte'))
-      .then((one) => one.startPassSync())
+      .then(() => import('./feature-gate.svelte'))
+      .then(({ whenPassOn }) =>
+        whenPassOn(
+          () => void import('./pass/syncing.svelte').then((one) => one.startPassSync()),
+          () => void import('./pass/open').then((one) => one.quietPass()),
+        ),
+      )
   }
 
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
@@ -140,7 +145,7 @@ export function start(): () => void {
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
-      .then(() => import('./time-gate.svelte'))
+      .then(() => import('./feature-gate.svelte'))
       .then(({ whenTimeOn }) => whenTimeOn(() => void import('./time/start.svelte')))
   }
 
@@ -253,13 +258,13 @@ async function guardClose() {
   if (!__EVEN_PLUGIN__ && isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
-    await own.listen('nib://quit', () => void onQuit(window))
-    await own.listen('nib://update-settle', () => {
+    await own.listen('orden://quit', () => void onQuit(window))
+    await own.listen('orden://update-settle', () => {
       settle()
       void settledForInstaller(owed)
     })
     await own.listen(
-      'nib://quit-ask',
+      'orden://quit-ask',
       () => void import('./quitting/ask').then((one) => one.quitAsked()),
     )
     void startup

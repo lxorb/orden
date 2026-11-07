@@ -134,7 +134,7 @@ export function editorState(options: StateOptions): EditorState {
       findExtensions(options.onFind, options.onFindSlow),
       EditorView.lineWrapping,
       ...(options.coveredBelow ? [coveredBelow(options.coveredBelow)] : []),
-      EditorView.contentAttributes.of({ class: 'nib-write' }),
+      EditorView.contentAttributes.of({ class: 'orden-write' }),
       syntaxHighlighting(nibHighlightStyle),
       codeThemeExtension(options.codeTheme),
       modeExtensions(text.length),

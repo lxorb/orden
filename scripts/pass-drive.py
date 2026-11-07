@@ -21,7 +21,7 @@ from devtools import Session, targets  # noqa: E402
 
 OUT = Path(sys.argv[1])
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
-DEBUG = int(os.environ["NIB_CEF_DEBUG_PORT"])
+DEBUG = int(os.environ["ORDEN_CEF_DEBUG_PORT"])
 PORTS = {"mark": 8781, "three": 8783, "wrong": 8784}
 SECRET = "JBSWY3DPEHPK3PXPJBSWY3DP"
 PASS_PASSWORD = "drive the pass, drive it well"
@@ -421,7 +421,7 @@ def mark_pressed(port):
     try:
         box = until(
             lambda: session.value(
-                "(() => { const one = document.querySelector('nib-pass-mark'); if (!one) return null; "
+                "(() => { const one = document.querySelector('orden-pass-mark'); if (!one) return null; "
                 "const box = one.getBoundingClientRect(); return box.width ? [box.x + box.width / 2, box.y + box.height / 2] : null })()"
             ),
             10,

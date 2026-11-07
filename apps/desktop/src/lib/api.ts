@@ -26,7 +26,7 @@ export type {
   DomainStatus,
 } from './api/routes'
 
-export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://orden.so'
+export const BASE: string = import.meta.env.VITE_ORDEN_API ?? 'https://orden.so'
 
 export const ANSWERS_WITHIN = 120_000
 

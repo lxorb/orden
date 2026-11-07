@@ -181,7 +181,7 @@ describe('the versions kept while a note is being written in', () => {
     recovery.setEvery(15)
     recovery.setDays(30)
 
-    expect(localStorage.getItem('nib:recovery')).toBe(JSON.stringify({ every: 15, days: 30 }))
+    expect(localStorage.getItem('orden:recovery')).toBe(JSON.stringify({ every: 15, days: 30 }))
   })
 
   test('and taken from the account', () => {

@@ -83,7 +83,7 @@ store, cleared when the space changes.
 - Ctrl+A with the tree focused selects every shown row; Escape clears.
 - Delete or Backspace with the tree focused deletes the selection: to Recently
   deleted, so no confirmation is needed.
-- Dragging a selected row drags the whole selection (`text/nib-paths`, a JSON
+- Dragging a selected row drags the whole selection (`text/orden-paths`, a JSON
   array); dropping on a folder, the root, or a space moves every item. A row
   outside the selection drags alone as today.
 - The context menu on a selected row acts on the selection for Move to space

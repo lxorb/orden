@@ -5,7 +5,8 @@
   import { closeOnBack } from './backstack.svelte'
   import Cross from './Cross.svelte'
   import { feedback } from './feedback.svelte'
-  import { MOST_PICTURES, type Picture, pictureOf, picturesAmong } from './feedback-pictures'
+  import { MOST_PICTURES, type Picture, picturesAmong } from './feedback-pictures'
+  import { pictureOf } from './pictures-away'
   import { t } from './i18n.svelte'
   import { LAYER } from './motion'
   import { followHref } from './open-link'
@@ -85,13 +86,13 @@
 {#if feedback.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => feedback.close()}
   ></div>
 
   <div
-    class="nib-screen sheet"
+    class="orden-screen sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -123,7 +124,7 @@
           >
         {/if}
         <div class="row">
-          <button type="button" class="nib-button" onclick={() => feedback.close()}
+          <button type="button" class="orden-button" onclick={() => feedback.close()}
             >{t('Done')}</button
           >
         </div>
@@ -176,7 +177,7 @@
         <div class="add">
           <button
             type="button"
-            class="nib-chip is-quiet"
+            class="orden-chip is-quiet"
             disabled={sending || pictures.length >= MOST_PICTURES}
             onclick={() => void chooseFiles({ accept: 'image/*', multiple: true }).then(add)}
             >{t('Add images')}</button
@@ -201,10 +202,10 @@
         {/if}
 
         <div class="row">
-          <button type="button" class="nib-button is-quiet" onclick={() => feedback.close()}
+          <button type="button" class="orden-button is-quiet" onclick={() => feedback.close()}
             >{t('Cancel')}</button
           >
-          <button type="submit" class="nib-button" disabled={!text.trim() || sending}>
+          <button type="submit" class="orden-button" disabled={!text.trim() || sending}>
             {t('Send')}
           </button>
         </div>

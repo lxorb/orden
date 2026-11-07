@@ -5,10 +5,10 @@ built="$1"
 identifier="ch.emilvinu.nib.probe.mac-move"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
 support="$HOME/Library/Application Support/$identifier"
-export NIB_ENDPOINT="$support/automation.json"
+export ORDEN_ENDPOINT="$support/automation.json"
 name="$(basename "$built")"
-image=/tmp/nib-move.dmg
-mount=/tmp/nib-move
+image=/tmp/orden-move.dmg
+mount=/tmp/orden-move
 
 rm -f "$image"
 hdiutil create -quiet -srcfolder "$built" -format UDZO "$image"
@@ -22,7 +22,7 @@ running() { pgrep -f "$1/Contents/MacOS/" >/dev/null; }
 
 up() {
   for _ in $(seq 60); do
-    [ -f "$NIB_ENDPOINT" ] && running "$1" && node "$cli" verbs >/dev/null 2>&1 && return 0
+    [ -f "$ORDEN_ENDPOINT" ] && running "$1" && node "$cli" verbs >/dev/null 2>&1 && return 0
     sleep 1
   done
   echo "nothing answered from $1"
@@ -39,7 +39,7 @@ quit_app() {
 rm -rf "$support"
 open "$app"
 up "$app" || exit 1
-python3 - "$NIB_ENDPOINT" <<'EOF'
+python3 - "$ORDEN_ENDPOINT" <<'EOF'
 import json, sys
 path = sys.argv[1]
 held = json.load(open(path))

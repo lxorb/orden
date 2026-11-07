@@ -80,7 +80,7 @@ def drive(browser: Browser) -> None:
             raise SystemExit("the hint is not in a live region")
         hint.click()
 
-        box = page.locator(".nib-setting textarea")
+        box = page.locator(".orden-setting textarea")
         box.wait_for()
         wait_for(
             page,
@@ -145,7 +145,7 @@ def drive(browser: Browser) -> None:
         page.keyboard.type("Folder/AGENTS.md")
         page.wait_for_function("() => document.body.innerText.includes('agent instructions')")
         page.keyboard.press("Enter")
-        page.locator(".nib-setting textarea").wait_for()
+        page.locator(".orden-setting textarea").wait_for()
         page.keyboard.press("Escape")
         say("the palette's row goes to the field")
 
@@ -158,7 +158,7 @@ def drive(browser: Browser) -> None:
         )
 
         page.evaluate("(path) => window.nibApp.workspace.open(path)", agents)
-        page.locator(".nib-setting textarea").wait_for()
+        page.locator(".orden-setting textarea").wait_for()
         if page.evaluate(
             f"() => window.nibApp.workspace.tabs.some((tab) => tab.path === {agents!r})"
         ):

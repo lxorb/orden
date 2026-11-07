@@ -132,7 +132,7 @@ def drive_trail(browser: Browser) -> None:
     page.locator(".step").first.click(button="right")
     page.wait_for_timeout(400)
     rows = page.evaluate(
-        "() => [...document.querySelectorAll('.rows .nib-row')].map((row) => row.textContent.trim())"
+        "() => [...document.querySelectorAll('.rows .orden-row')].map((row) => row.textContent.trim())"
     )
     say(f"[trail] behind the back arrow: {json.dumps(rows)}")
     shot(page, "14-the-trail")

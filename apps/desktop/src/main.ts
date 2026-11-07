@@ -1,3 +1,4 @@
+import './lib/former-keys'
 import './lib/renamed.svelte'
 import '@orden/themes'
 import { mount } from 'svelte'

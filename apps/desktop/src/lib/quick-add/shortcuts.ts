@@ -5,9 +5,9 @@ import { hearHere } from '../own-window'
 import { nameOf, within } from '../space-paths'
 import { joinPath } from '../tauri'
 
-const TAKING = 'nib:shortcuts-added'
+const TAKING = 'orden:shortcuts-added'
 
-const ADDED = 'nib://shortcuts-added'
+const ADDED = 'orden://shortcuts-added'
 
 export const TAKEN = '.shortcuts'
 

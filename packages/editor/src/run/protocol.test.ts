@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { parseRunMessage, runnerDocument } from './protocol'
 
 const message = (extra: Record<string, unknown> = {}) => ({
-  nib: 'nib-run',
+  nib: 'orden-run',
   run: 7,
   lines: [{ level: 'log', text: 'hi' }],
   done: false,
@@ -51,7 +51,7 @@ const SCRIPT = 'window.ranTheFrameScript = true'
 
 const made = (code: string, run = 1) => runnerDocument(code, run, SCRIPT)
 const programOf = (html: string) =>
-  /<script type="text\/plain" id="nib-frame">([\s\S]*?)<\/script>/.exec(html)?.[1]
+  /<script type="text\/plain" id="orden-frame">([\s\S]*?)<\/script>/.exec(html)?.[1]
 
 describe('the document the sandbox runs', () => {
   test('leaves the code nothing to reach', () => {
@@ -63,9 +63,9 @@ describe('the document the sandbox runs', () => {
   test('runs nothing inline but the frame script: the program is text it evaluates', () => {
     const html = made('1 + 1')
     const scripts = [...html.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
-    expect(scripts).toEqual(['type="text/plain" id="nib-frame"', ''])
+    expect(scripts).toEqual(['type="text/plain" id="orden-frame"', ''])
     expect(html).toContain(`<script>${SCRIPT}</script>`)
-    expect(html.indexOf('nib-frame')).toBeLessThan(html.indexOf(`<script>${SCRIPT}`))
+    expect(html.indexOf('orden-frame')).toBeLessThan(html.indexOf(`<script>${SCRIPT}`))
   })
 
   test('runs the code in a worker of its own, which its policy allows', () => {

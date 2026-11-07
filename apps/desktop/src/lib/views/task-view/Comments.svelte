@@ -65,7 +65,7 @@
 
 <div class="comments">
   {#if comments.length}
-    <p class="nib-section">{t('Comments')}</p>
+    <p class="orden-section">{t('Comments')}</p>
   {/if}
   {#each comments as one (one.line)}
     <div class="comment">
@@ -73,7 +73,7 @@
       {#if one.at}<span class="at">{when(one.at)}</span>{/if}
       {#if writable}<button
           type="button"
-          class="nib-glyph gone"
+          class="orden-glyph gone"
           aria-label={t('Delete')}
           title={t('Delete')}
           onclick={() => void deleteComment(row, one.line)}><Cross /></button
@@ -81,8 +81,8 @@
     </div>
   {/each}
   {#if writable}
-    <label class="nib-row nib-field composer-row">
-      <span class="nib-row-mark"><Glyph icon={Message} /></span>
+    <label class="orden-row orden-field composer-row">
+      <span class="orden-row-mark"><Glyph icon={Message} /></span>
       <textarea
         bind:this={field}
         bind:value={words}
@@ -164,7 +164,7 @@
     background: none;
   }
 
-  .composer-row .nib-row-mark {
+  .composer-row .orden-row-mark {
     height: calc(var(--row-height) - 2px);
   }
 

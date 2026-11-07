@@ -42,7 +42,7 @@ const draftWords = 'DRAFT WORDS'
 describe('what a window that went left', () => {
   test('moves: a reload taking it again finds nothing, and the first entry keeps its tabs', async () => {
     const storage = memoryStorage({
-      'nib:workspace': session([
+      'orden:workspace': session([
         tab({ path: '/s/a.md', name: 'a.md' }),
         tab({ path: null, doc: draftWords }),
       ]),
@@ -58,35 +58,35 @@ describe('what a window that went left', () => {
 
     expect(taken).toHaveLength(1)
     expect(taken[0]?.map((one) => one.doc)).toEqual([draftWords])
-    expect(storage.getItem('nib:workspace')).toContain('/s/a.md')
-    expect(storage.getItem('nib:workspace')).not.toContain(draftWords)
+    expect(storage.getItem('orden:workspace')).toContain('/s/a.md')
+    expect(storage.getItem('orden:workspace')).not.toContain(draftWords)
   })
 
   test('stays where it is if it could not be taken', async () => {
     const storage = memoryStorage({
-      'nib:workspace:2': session([tab({ path: null, doc: draftWords })]),
+      'orden:workspace:2': session([tab({ path: null, doc: draftWords })]),
     })
     const take = vi.fn(() => Promise.reject(new Error('no')))
     await takeSessionsLeft(0, take, storage, locks).catch(() => undefined)
 
-    expect(storage.getItem('nib:workspace:2')).toContain(draftWords)
+    expect(storage.getItem('orden:workspace:2')).toContain(draftWords)
   })
 
   test('a session left this moment may be a reload coming back: it is left for its grace', async () => {
     const now = 1_000_000
     const storage = memoryStorage({
-      'nib:workspace:1': session([tab({ path: null, doc: draftWords })]),
-      'nib:window-left:1': String(now - 100),
+      'orden:workspace:1': session([tab({ path: null, doc: draftWords })]),
+      'orden:window-left:1': String(now - 100),
     })
     const take = vi.fn(() => Promise.resolve())
 
     expect(await takeSessionsLeft(0, take, storage, locks, now)).toBe(true)
     expect(take).not.toHaveBeenCalled()
-    expect(storage.getItem('nib:workspace:1')).not.toBeNull()
+    expect(storage.getItem('orden:workspace:1')).not.toBeNull()
 
     expect(await takeSessionsLeft(0, take, storage, locks, now + LEAVING_GRACE)).toBe(false)
     expect(take).toHaveBeenCalledTimes(1)
-    expect(storage.getItem('nib:workspace:1')).toBeNull()
+    expect(storage.getItem('orden:workspace:1')).toBeNull()
   })
 })
 
@@ -127,7 +127,7 @@ describe('wherever the session held them', () => {
 
   test('in a set out of sight, of a slot past the first', async () => {
     const storage = memoryStorage({
-      'nib:workspace:1': whole({
+      'orden:workspace:1': whole({
         sets: aside([
           tab({ path: null, doc: draftWords, space: 's2' }),
           tab({ path: '/s/a.md', doc: 'typed', dirty: true }),
@@ -139,12 +139,12 @@ describe('wherever the session held them', () => {
     await takeSessionsLeft(0, take, storage, locks)
 
     expect(taken.map((one) => one.doc)).toEqual([draftWords, 'typed'])
-    expect(storage.getItem('nib:workspace:1')).toBeNull()
+    expect(storage.getItem('orden:workspace:1')).toBeNull()
   })
 
   test('in a set out of sight, of the first slot: they move, and the rest stays', async () => {
     const storage = memoryStorage({
-      'nib:workspace': whole({
+      'orden:workspace': whole({
         sets: aside([tab({ path: null, doc: draftWords }), tab({ path: '/s/b.md' })]),
       }),
     })
@@ -154,8 +154,8 @@ describe('wherever the session held them', () => {
     }
 
     expect(taken.map((one) => one.doc)).toEqual([draftWords])
-    expect(storage.getItem('nib:workspace')).not.toContain(draftWords)
-    expect(storage.getItem('nib:workspace')).toContain('/s/b.md')
+    expect(storage.getItem('orden:workspace')).not.toContain(draftWords)
+    expect(storage.getItem('orden:workspace')).toContain('/s/b.md')
   })
 
   test('in a split, on both sides of it', async () => {
@@ -170,14 +170,14 @@ describe('wherever the session held them', () => {
       ],
     }
     const storage = memoryStorage({
-      'nib:workspace': whole({ layout: { panel: null, focused: 'q', frame: split } }),
+      'orden:workspace': whole({ layout: { panel: null, focused: 'q', frame: split } }),
     })
     const { taken, take } = taking()
     await takeSessionsLeft(1, take, storage, locks)
 
     expect(taken.map((one) => one.doc)).toEqual(['LEFT', 'RIGHT'])
-    expect(storage.getItem('nib:workspace')).not.toContain('LEFT')
-    expect(storage.getItem('nib:workspace')).not.toContain('RIGHT')
+    expect(storage.getItem('orden:workspace')).not.toContain('LEFT')
+    expect(storage.getItem('orden:workspace')).not.toContain('RIGHT')
   })
 
   test('in a strip of an older build', async () => {
@@ -185,7 +185,7 @@ describe('wherever the session held them', () => {
       layout?: unknown
     }
     delete raw.layout
-    const storage = memoryStorage({ 'nib:workspace:3': JSON.stringify(raw) })
+    const storage = memoryStorage({ 'orden:workspace:3': JSON.stringify(raw) })
     const { taken, take } = taking()
     await takeSessionsLeft(0, take, storage, locks)
     expect(taken.map((one) => one.doc)).toEqual([draftWords])
@@ -193,7 +193,7 @@ describe('wherever the session held them', () => {
 
   test('on the closed stack, where no Recently deleted has them', async () => {
     const storage = memoryStorage({
-      'nib:workspace:1': whole({
+      'orden:workspace:1': whole({
         closed: [
           { draft: tab({ path: null, doc: 'CLOSED, IN NO TRASH' }), paneId: 'p', at: 0 },
           { draft: tab({ path: null, doc: 'IN THE TRASH' }), paneId: 'p', at: 0, trashed: 't1' },
@@ -209,7 +209,7 @@ describe('wherever the session held them', () => {
 
   test('off the first slot, the closed stack keeps what it can still bring back', async () => {
     const storage = memoryStorage({
-      'nib:workspace': whole({
+      'orden:workspace': whole({
         closed: [
           { draft: tab({ path: null, doc: 'CLOSED, IN NO TRASH' }), paneId: 'p', at: 0 },
           { draft: tab({ path: '/s/b.md' }), paneId: 'p', at: 0 },
@@ -218,14 +218,14 @@ describe('wherever the session held them', () => {
     })
     const { take } = taking()
     await takeSessionsLeft(1, take, storage, locks)
-    const left = storage.getItem('nib:workspace') ?? ''
+    const left = storage.getItem('orden:workspace') ?? ''
     expect(left).not.toContain('CLOSED, IN NO TRASH')
     expect(left).toContain('/s/b.md')
   })
 
   test('a tab that holds no words of a file is not words: a terminal stays behind', async () => {
     const storage = memoryStorage({
-      'nib:workspace:1': whole({
+      'orden:workspace:1': whole({
         layout: {
           panel: null,
           focused: 'q',
@@ -247,13 +247,13 @@ describe('wherever the session held them', () => {
       tab({ path: '/s/c.md' }),
     ]
     const storage = memoryStorage({
-      'nib:workspace': whole({
+      'orden:workspace': whole({
         layout: { panel: null, focused: 'q', frame: frame(tabs, 3, [3, 0, 4, 2, 1]) },
       }),
     })
     const { take } = taking()
     await takeSessionsLeft(1, take, storage, locks)
-    const left = JSON.parse(storage.getItem('nib:workspace') ?? '{}') as {
+    const left = JSON.parse(storage.getItem('orden:workspace') ?? '{}') as {
       layout: { frame: { pane: { tabs: { path: string }[]; active: number; recent: number[] } } }
     }
     const { pane } = left.layout.frame
@@ -269,13 +269,13 @@ describe('wherever the session held them', () => {
       tab({ path: '/s/b.md' }),
     ]
     const storage = memoryStorage({
-      'nib:workspace': whole({
+      'orden:workspace': whole({
         layout: { panel: null, focused: 'q', frame: frame(tabs, 1) },
       }),
     })
     const { take } = taking()
     await takeSessionsLeft(1, take, storage, locks)
-    const left = JSON.parse(storage.getItem('nib:workspace') ?? '{}') as {
+    const left = JSON.parse(storage.getItem('orden:workspace') ?? '{}') as {
       layout: { frame: { pane: { tabs: { path: string }[]; active: number } } }
     }
     const { pane } = left.layout.frame

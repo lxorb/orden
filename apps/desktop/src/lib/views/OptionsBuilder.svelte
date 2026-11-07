@@ -79,7 +79,7 @@
   <label class="row prefix">
     <span class="key">{t('Prefix')}</span>
     <input
-      class="nib-field"
+      class="orden-field"
       value={id.prefix}
       aria-label={t('Prefix')}
       onchange={(event) => prefix(event.currentTarget.value)}
@@ -100,7 +100,7 @@
           }}
         />
         <input
-          class="nib-field"
+          class="orden-field"
           value={option.value}
           aria-label={t('Value')}
           onchange={(event) => rename(at, event.currentTarget.value)}
@@ -118,7 +118,7 @@
         />
         <button
           type="button"
-          class="nib-glyph"
+          class="orden-glyph"
           title={t('Remove')}
           aria-label={t('Remove')}
           onclick={() => write(options.filter((_, index) => index !== at))}><Cross small /></button
@@ -127,8 +127,8 @@
     {/each}
   </div>
 
-  <button type="button" class="nib-row is-short adder" onclick={add}>
-    <span class="nib-row-label">{t('Add')}</span>
+  <button type="button" class="orden-row is-short adder" onclick={add}>
+    <span class="orden-row-label">{t('Add')}</span>
   </button>
 {/if}
 
@@ -162,7 +162,7 @@
     color: var(--muted-strong);
   }
 
-  .adder .nib-row-label {
+  .adder .orden-row-label {
     color: var(--muted);
   }
 </style>

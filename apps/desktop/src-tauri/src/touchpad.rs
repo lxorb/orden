@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-const FINGERS: &str = "nib://touchpad";
+const FINGERS: &str = "orden://touchpad";
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 pub struct Fingers {
@@ -126,7 +126,7 @@ mod raw {
             let class = WNDCLASSW {
                 lpfnWndProc: Some(heard),
                 hInstance: module.into(),
-                lpszClassName: w!("nib-touchpad"),
+                lpszClassName: w!("orden-touchpad"),
                 ..Default::default()
             };
             if RegisterClassW(&raw const class) == 0 {
@@ -134,7 +134,7 @@ mod raw {
             }
             let Ok(window) = CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
-                w!("nib-touchpad"),
+                w!("orden-touchpad"),
                 w!(""),
                 WINDOW_STYLE::default(),
                 0,

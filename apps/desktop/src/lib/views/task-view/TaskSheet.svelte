@@ -286,14 +286,14 @@
 </script>
 
 <div
-  class="nib-scrim scrim"
+  class="orden-scrim scrim"
   role="presentation"
   onpointerdown={() => viewing.close()}
   transition:fade={{ duration: LAYER.fade }}
 ></div>
 <div
   bind:this={layer}
-  class="nib-screen sheet"
+  class="orden-screen sheet"
   class:page={phone}
   role="dialog"
   aria-modal="true"
@@ -327,24 +327,24 @@
       <span class="gap"></span>
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Previous')}
         disabled={!viewing.can(-1)}
         onclick={() => viewing.step(-1)}><Glyph icon={ChevronUp} /></button
       >
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Next')}
         disabled={!viewing.can(1)}
         onclick={() => viewing.step(1)}><Glyph icon={ChevronDown} /></button
       >
-      <button type="button" class="nib-glyph" aria-label={t('More')} onclick={moreMenu}
+      <button type="button" class="orden-glyph" aria-label={t('More')} onclick={moreMenu}
         ><Glyph icon={Ellipsis} /></button
       >
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Close')}
         onclick={() => viewing.close()}><Cross /></button
       >
@@ -390,7 +390,7 @@
 
         <div class="subtasks">
           {#if children.length}
-            <p class="nib-section">
+            <p class="orden-section">
               {t('Sub-tasks')}
               <span class="count"
                 >{children.filter((one) => one.task?.done).length}/{children.length}</span
@@ -407,7 +407,7 @@
             />
           {/each}
           {#if writes && adding}
-            <div class="nib-row adding">
+            <div class="orden-row adding">
               <Glyph icon={Plus} />
               <!-- svelte-ignore a11y_autofocus -->
               <input
@@ -437,14 +437,14 @@
           {:else if writes}
             <button
               type="button"
-              class="nib-row adder"
+              class="orden-row adder"
               onclick={() => {
                 adding = true
                 void tick().then(() => subField?.focus())
               }}
             >
-              <span class="nib-row-mark"><Glyph icon={Plus} /></span>
-              <span class="nib-row-label">{t('Add sub-task')}</span>
+              <span class="orden-row-mark"><Glyph icon={Plus} /></span>
+              <span class="orden-row-label">{t('Add sub-task')}</span>
             </button>
           {/if}
         </div>
@@ -457,59 +457,59 @@
       </section>
 
       <aside class="side">
-        <p class="nib-section">{t('Note')}</p>
+        <p class="orden-section">{t('Note')}</p>
         <button
           type="button"
-          class="nib-row is-short"
+          class="orden-row is-short"
           onclick={() => {
             viewing.close()
             kit.open(row, 'aside')
           }}
         >
-          <span class="nib-row-mark"><Glyph icon={NoteIcon} /></span>
-          <span class="nib-row-label">{row.file.basename}</span>
+          <span class="orden-row-mark"><Glyph icon={NoteIcon} /></span>
+          <span class="orden-row-label">{row.file.basename}</span>
         </button>
 
-        <p class="nib-section">{t('Start date')}</p>
+        <p class="orden-section">{t('Start date')}</p>
         <button
           type="button"
-          class="nib-row is-short when"
+          class="orden-row is-short when"
           disabled={!writes}
           onclick={(event) => scheduleRows([row], event.currentTarget, kit)}
         >
-          <span class="nib-row-mark"><Glyph icon={task.recurrence ? Repeat : Calendar} /></span>
-          <span class="nib-row-label"
+          <span class="orden-row-mark"><Glyph icon={task.recurrence ? Repeat : Calendar} /></span>
+          <span class="orden-row-label"
             >{#if starts}{dayWords(starts, today, task.time)}{#if task.duration !== undefined}
                 · {durationLabel(task.duration)}{/if}{:else}{t('No date')}{/if}</span
           >
         </button>
         {#if task.recurrence}<p class="rule">{task.recurrence}</p>{/if}
 
-        <p class="nib-section">{t('Deadline')}</p>
+        <p class="orden-section">{t('Deadline')}</p>
         <button
           type="button"
-          class="nib-row is-short"
+          class="orden-row is-short"
           disabled={!writes}
           onclick={(event) => scheduleDeadline(row, event.currentTarget, kit)}
         >
-          <span class="nib-row-mark"><Glyph icon={Target} /></span>
-          <span class="nib-row-label" class:late={!!deadline && deadline <= today}
+          <span class="orden-row-mark"><Glyph icon={Target} /></span>
+          <span class="orden-row-label" class:late={!!deadline && deadline <= today}
             >{deadline ? dayWords(deadline, today) : t('No deadline')}</span
           >
         </button>
 
-        <p class="nib-section">{t('Priority')}</p>
-        <button type="button" class="nib-row is-short" disabled={!writes} onclick={priorityMenu}>
-          <span class="nib-row-mark" style:color={priorityTone(task.priority)}
+        <p class="orden-section">{t('Priority')}</p>
+        <button type="button" class="orden-row is-short" disabled={!writes} onclick={priorityMenu}>
+          <span class="orden-row-mark" style:color={priorityTone(task.priority)}
             ><Glyph icon={Flag} /></span
           >
-          <span class="nib-row-label">p{Math.min(task.priority, 4)}</span>
+          <span class="orden-row-label">p{Math.min(task.priority, 4)}</span>
         </button>
 
-        <p class="nib-section">{t('Labels')}</p>
+        <p class="orden-section">{t('Labels')}</p>
         <div class="tags">
           {#each task.tags as tag (tag)}
-            <span class="nib-chip tag"
+            <span class="orden-chip tag"
               >#{tag}{#if writes}<button
                   type="button"
                   class="untag"
@@ -544,17 +544,17 @@
           {:else if writes}
             <button
               type="button"
-              class="nib-glyph add-tag"
+              class="orden-glyph add-tag"
               aria-label={t('Labels')}
               onclick={labelMenu}><Glyph icon={Hash} /></button
             >
           {/if}
         </div>
 
-        <p class="nib-section">{t('Reminders')}</p>
-        <button type="button" class="nib-row is-short" disabled={!writes} onclick={remindMenu}>
-          <span class="nib-row-mark"><Glyph icon={Bell} /></span>
-          <span class="nib-row-label"
+        <p class="orden-section">{t('Reminders')}</p>
+        <button type="button" class="orden-row is-short" disabled={!writes} onclick={remindMenu}>
+          <span class="orden-row-mark"><Glyph icon={Bell} /></span>
+          <span class="orden-row-label"
             >{task.remind.length
               ? task.remind.map((one) => remindLabel(one, today)).join(', ')
               : t('None')}</span
@@ -725,7 +725,7 @@
     border-top: 1px solid var(--line);
   }
 
-  .side .nib-section {
+  .side .orden-section {
     margin: var(--space-2) 0 0;
     padding-inline: var(--row-pad);
   }

@@ -12,7 +12,7 @@ function list(options: Parameters<typeof roving>[1] = {}) {
   const node = document.createElement('ul')
   for (const name of ['Kestrel', 'Read me']) {
     const row = document.createElement('button')
-    row.className = 'nib-row'
+    row.className = 'orden-row'
     row.textContent = name
     node.append(row)
   }

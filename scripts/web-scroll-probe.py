@@ -284,7 +284,7 @@ def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
 def chrome_reference(port: int, width: int, height: int, pixels: float) -> dict[str, object]:
 
     page_probe = borrowed()
-    data = pathlib.Path(tempfile.mkdtemp(prefix="nib-scroll-chrome-"))
+    data = pathlib.Path(tempfile.mkdtemp(prefix="orden-scroll-chrome-"))
     chrome = subprocess.Popen(
         [
             str(CHROME),
@@ -355,7 +355,7 @@ def main() -> int:
     page_probe.wipe(args.identifier)
     server, port = serve()
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-scroll-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-scroll-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     space = root / SPACE
     space.mkdir(parents=True)
@@ -367,7 +367,7 @@ def main() -> int:
     lines = lines_per_notch()
     pixels = round(lines * 100 / 3, 2)
     said: dict[str, object] = {"lines per notch": lines, "Chrome's notch in pixels": pixels}
-    env = {**os.environ, "NIB_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
     running = run_probe(args.exe, env=env, quiet=True)
     size: dict[str, object] = {}
     try:

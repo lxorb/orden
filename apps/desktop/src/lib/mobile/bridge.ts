@@ -21,7 +21,7 @@ export interface NibSystem {
 }
 
 export function method<K extends keyof NibSystem>(name: K): NibSystem[K] | undefined {
-  const found: unknown = (globalThis as { __NIB_SYSTEM__?: unknown }).__NIB_SYSTEM__
+  const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
   if (typeof found !== 'object' || found === null) return undefined
 
   const held = (found as Partial<NibSystem>)[name]

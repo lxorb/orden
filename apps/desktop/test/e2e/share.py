@@ -107,7 +107,7 @@ def fresh(
 ) -> Page:
     context = browser.new_context(**(device or {"viewport": viewport or {"width": 1180, "height": 760}}))
     if token:
-        context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+        context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
@@ -239,7 +239,7 @@ def rename(page: Page, name: str) -> None:
     entry.wait_for(state="visible", timeout=10_000)
     entry.click()
 
-    field = page.locator(".sheet .body input.nib-field").first
+    field = page.locator(".sheet .body input.orden-field").first
     field.wait_for(state="visible", timeout=10_000)
     field.fill(name)
     field.press("Enter")
@@ -710,7 +710,7 @@ def main() -> int:
         if not row.locator(".shared").count():
             wrong("the shared file's row does not wear the shared mark")
 
-        row.locator(".nib-row").click()
+        row.locator(".orden-row").click()
         wait_for(
             alone,
             "() => !!window.nibApp.workspace.active?.note.shared",
@@ -748,7 +748,7 @@ def main() -> int:
         else:
             say("the file beside it is a file that does not exist")
 
-        held = alone.evaluate("() => localStorage.getItem('nib:session')")
+        held = alone.evaluate("() => localStorage.getItem('orden:session')")
         phone = fresh(browser, "phone", token=held, viewport=PHONE)
         shared_with_you(phone, "phone")
         settled(phone, "phone")
@@ -756,7 +756,7 @@ def main() -> int:
         phone.wait_for_timeout(300)
         phone.screenshot(path=str(SHOTS / "shared-with-you-phone.png"))
 
-        shared_row(phone, ITEM[:-3]).locator(".nib-row").click()
+        shared_row(phone, ITEM[:-3]).locator(".orden-row").click()
         wait_for(
             phone,
             "() => !!window.nibApp.workspace.active?.note.shared",

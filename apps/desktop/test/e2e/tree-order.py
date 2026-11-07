@@ -99,7 +99,7 @@ TOP_NAMES = """
 
 DRAWN = """
 () => [...document.querySelectorAll('aside .row[data-path]')].map((row) =>
-  row.querySelector('.nib-row-label')?.textContent?.trim() ?? '')
+  row.querySelector('.orden-row-label')?.textContent?.trim() ?? '')
 """
 
 WHAT_IS_KEPT = """
@@ -108,7 +108,7 @@ WHAT_IS_KEPT = """
   return {
     mode: ws.sortMode,
     arranged: ws.arranged.of(ws.activeSpace.root),
-    stored: JSON.parse(localStorage.getItem('nib:sorting') ?? 'null'),
+    stored: JSON.parse(localStorage.getItem('orden:sorting') ?? 'null'),
   }
 }
 """
@@ -131,7 +131,7 @@ def chosen(page: Page, label: str, mode: str) -> None:
 def ticked(page: Page) -> list[str]:
     return page.evaluate(
         """() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((row) =>
-             `${row.querySelector('.nib-row-label')?.textContent?.trim()}`
+             `${row.querySelector('.orden-row-label')?.textContent?.trim()}`
              + (row.querySelector('.tick') ? ' [tick]' : ''))"""
     )
 

@@ -22,7 +22,7 @@ from probe_app import close_app, run_probe, main_window, sized
 PORT_FROM = 22300
 PORT_TO = 22399
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 
 SPACE = "Web session probe"
 NOTE = "Idea"
@@ -231,7 +231,7 @@ def serve(port: int) -> Server:
 
 def spaces_root() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-session-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-session-probe-"))
     os.environ[SPACES_DIR] = str(made)
     return made
 
@@ -468,7 +468,7 @@ def main() -> int:
         base = float(said["signed in"].get("dpr", "1") or "1")
 
         navigate(tab, f"http://127.0.0.1:{port}/ask")
-        bubble = ".ask .nib-button:not(.is-quiet)"
+        bubble = ".ask .orden-button:not(.is-quiet)"
         until = time.perf_counter() + 15
         while time.perf_counter() < until and not app.ask(f"!!document.querySelector('{bubble}')"):
             time.sleep(0.3)

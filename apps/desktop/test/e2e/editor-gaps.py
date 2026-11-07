@@ -221,15 +221,15 @@ def drive_links(page: Page, paths: dict[str, str]) -> None:
 
 CARD = """
 () => {
-  const card = document.querySelector('.nib-note-preview')
+  const card = document.querySelector('.orden-note-preview')
   if (!card) return null
 
-  const body = card.querySelector('.nib-note-preview-body')
+  const body = card.querySelector('.orden-note-preview-body')
   const inner = card.querySelector('.cm-content')
   const box = card.getBoundingClientRect()
 
   return {
-    name: card.querySelector('.nib-note-preview-name')?.textContent ?? '',
+    name: card.querySelector('.orden-note-preview-name')?.textContent ?? '',
     written: body?.dataset.written ?? 'no',
     editor: !!inner,
     said: inner ? inner.textContent.slice(0, 40) : (body?.textContent ?? '').slice(0, 40),
@@ -345,7 +345,7 @@ INDENTED = """
 CHEVRONS = """
 () => [...document.querySelectorAll('.cm-line')].map((line) => ({
   text: line.textContent.slice(0, 24),
-  fold: !!line.querySelector('.nib-fold'),
+  fold: !!line.querySelector('.orden-fold'),
 }))
 """
 
@@ -493,13 +493,13 @@ def drive_canvas(page: Page) -> None:
         wrong("pressing the card on the canvas loaded no frame")
 
 MENU = """
-() => [...document.querySelectorAll('.nib-layer .nib-row')].map((one) =>
+() => [...document.querySelectorAll('.orden-layer .orden-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
 
 SHEET = """
-() => [...document.querySelectorAll('.nib-screen.sheet .found-row')].map((one) =>
+() => [...document.querySelectorAll('.orden-screen.sheet .found-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
@@ -507,7 +507,7 @@ SHEET = """
 AWAY = """
 () => {
   document.activeElement instanceof HTMLElement && document.activeElement.blur()
-  return document.querySelectorAll('.nib-scrim').length
+  return document.querySelectorAll('.orden-scrim').length
 }
 """
 
@@ -590,10 +590,10 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
 
 CALLOUT_LOOKS = """
 () => [...document.querySelectorAll('.cm-line')]
-  .filter((one) => /nib-callout-/.test(one.className))
+  .filter((one) => /orden-callout-/.test(one.className))
   .map((one) => ({
     text: one.textContent.replace(/\\s+/g, ' ').trim().slice(0, 28),
-    classes: [...one.classList].filter((name) => name.startsWith('nib-callout')).join(' '),
+    classes: [...one.classList].filter((name) => name.startsWith('orden-callout')).join(' '),
     accent: getComputedStyle(one).getPropertyValue('--callout-accent').trim(),
   }))
 """
@@ -601,7 +601,7 @@ CALLOUT_LOOKS = """
 def press_row(page: Page, label: str) -> None:
     page.evaluate(
         """(label) => {
-          const row = [...document.querySelectorAll('.nib-layer .nib-row')].find(
+          const row = [...document.querySelectorAll('.orden-layer .orden-row')].find(
             (one) => one.textContent.trim() === label)
           if (row instanceof HTMLElement) row.click()
         }""",
@@ -635,12 +635,12 @@ def drive_callouts(page: Page, paths: dict[str, str]) -> None:
         wrong(f"the two callouts are not drawn: {looks}")
         return
 
-    if "nib-callout-tip" not in important["classes"]:
+    if "orden-callout-tip" not in important["classes"]:
         wrong(f"[!important] does not wear tip: {important['classes']}")
-    if "nib-callout-warning" not in caution["classes"]:
+    if "orden-callout-warning" not in caution["classes"]:
         wrong(f"[!caution] does not wear warning: {caution['classes']}")
 
-    tip = next((one for one in looks if "nib-callout-tip" in one["classes"]), None)
+    tip = next((one for one in looks if "orden-callout-tip" in one["classes"]), None)
     if tip and important["accent"] != tip["accent"]:
         wrong("[!important] is not the colour tip is")
 

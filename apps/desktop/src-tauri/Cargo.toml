@@ -289,6 +289,7 @@ trash = { version = "5.3", default-features = false, features = ["chrono", "coin
 file-id = "0.2"
 windows-registry = "0.6"
 windows = { version = "0.58", features = [
+  "Wdk_System_Threading",
   "Win32_UI_Shell",
   "Win32_Foundation",
   "Win32_System_Registry",

@@ -14,6 +14,7 @@ import { drawnNode, inlinedSvg, styles } from '../canvas/picture'
 import { inkSvg } from '../canvas/svg'
 import { type Box } from '../canvas/geometry'
 import { busy } from '../busy.svelte'
+import { pngData } from '../png-off'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
@@ -631,65 +632,88 @@ export async function printPages(out: PagesOut): Promise<void> {
   const bytes = await pagesPdf(out)
   if (!bytes) return
 
-  const [{ loading, pdfjs }, { printInFrame }] = await Promise.all([
+  const [{ loading, pdfjs }, { printInFrame, printsInFrame }] = await Promise.all([
     import('../pdf/document'),
     import('../export'),
   ])
+  const linked = printsInFrame()
   const library = await pdfjs()
   const task = loading(library, bytes)
   const doc = await task.promise
-  const sheets: { src: string; width: number; height: number }[] = []
+  const texts: string[] = []
+  const pieces: Blob[] = []
+  const links: string[] = []
+  let first: { width: number; height: number } | null = null
 
   try {
-    for (let number = 1; number <= doc.numPages; number += 1) {
-      const page = await doc.getPage(number)
-      const natural = page.getViewport({ scale: PDF_TO_CSS })
-      const sharp = sharpness(natural.width, natural.height, PRINT_SCALE)
-      const viewport = page.getViewport({ scale: PDF_TO_CSS * sharp })
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.max(1, Math.round(viewport.width))
-      canvas.height = Math.max(1, Math.round(viewport.height))
-      const context = canvas.getContext('2d')
-      if (context) {
-        await page.render({ canvas, canvasContext: context, viewport }).promise
-        sheets.push({
-          src: canvas.toDataURL('image/png'),
-          width: natural.width,
-          height: natural.height,
-        })
+    try {
+      for (let number = 1; number <= doc.numPages; number += 1) {
+        const page = await doc.getPage(number)
+        const natural = page.getViewport({ scale: PDF_TO_CSS })
+        const sharp = sharpness(natural.width, natural.height, PRINT_SCALE)
+        const viewport = page.getViewport({ scale: PDF_TO_CSS * sharp })
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(viewport.width))
+        canvas.height = Math.max(1, Math.round(viewport.height))
+        const context = canvas.getContext('2d')
+        if (context) {
+          await page.render({ canvas, canvasContext: context, viewport }).promise
+          first ??= { width: natural.width, height: natural.height }
+          const open = '<div class="sheet"><img src="'
+          const close = `" alt="Page ${texts.length + pieces.length + 1}" width="${Math.round(natural.width)}" height="${Math.round(natural.height)}"></div>`
+          if (linked) {
+            const link = await linkOf(canvas)
+            links.push(link)
+            texts.push(`${open}${link}${close}`)
+          } else {
+            pieces.push(new Blob([open, (await pngData(canvas)) ?? 'data:,', close]))
+          }
+          canvas.width = 0
+          canvas.height = 0
+        }
+        page.cleanup()
       }
-      page.cleanup()
+    } finally {
+      await task.destroy().catch(() => undefined)
     }
+
+    if (!first) return
+
+    const head = [
+      '<!doctype html><html><head><meta charset="utf-8">',
+      `<title>${escaped(stem(out.name))}</title><style>`,
+      `@page{size:${first.width}px ${first.height}px;margin:0}`,
+      'html,body{margin:0;padding:0;background:#fff}',
+      '.sheet{display:flex;align-items:center;justify-content:center;',
+      `width:${first.width}px;height:${first.height}px;break-after:page;overflow:hidden}`,
+      '.sheet:last-child{break-after:auto}',
+      'img{display:block;max-width:100%;max-height:100%}',
+      '</style></head><body>',
+    ].join('')
+    const tail = '</body></html>'
+    const html = linked
+      ? [head, ...texts, tail].join('')
+      : new Blob([head, ...pieces, tail], { type: 'text/html' })
+    pieces.length = 0
+
+    await printInFrame(html, {
+      width: first.width / 96,
+      height: first.height / 96,
+      margin: 0,
+      landscape: false,
+    })
   } finally {
-    await task.destroy().catch(() => undefined)
+    for (const link of links) URL.revokeObjectURL(link)
   }
+}
 
-  const first = sheets[0]
-  if (!first) return
-
-  const html = [
-    '<!doctype html><html><head><meta charset="utf-8">',
-    `<title>${escaped(stem(out.name))}</title><style>`,
-    `@page{size:${first.width}px ${first.height}px;margin:0}`,
-    'html,body{margin:0;padding:0;background:#fff}',
-    '.sheet{display:flex;align-items:center;justify-content:center;',
-    `width:${first.width}px;height:${first.height}px;break-after:page;overflow:hidden}`,
-    '.sheet:last-child{break-after:auto}',
-    'img{display:block;max-width:100%;max-height:100%}',
-    '</style></head><body>',
-    ...sheets.map(
-      (one, index) =>
-        `<div class="sheet"><img src="${one.src}" alt="Page ${index + 1}" width="${Math.round(one.width)}" height="${Math.round(one.height)}"></div>`,
-    ),
-    '</body></html>',
-  ].join('')
-
-  await printInFrame(html, {
-    width: first.width / 96,
-    height: first.height / 96,
-    margin: 0,
-    landscape: false,
+async function linkOf(canvas: HTMLCanvasElement): Promise<string> {
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/png')
   })
+  if (!blob) throw new Error('a page could not be turned into a picture')
+
+  return URL.createObjectURL(blob)
 }
 
 function escaped(text: string): string {

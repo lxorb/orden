@@ -15,7 +15,7 @@ let handle: { destroy?: () => void }
 let chosen: string[]
 
 function rows(): HTMLButtonElement[] {
-  return [...list.querySelectorAll<HTMLButtonElement>('.nib-row')]
+  return [...list.querySelectorAll<HTMLButtonElement>('.orden-row')]
 }
 
 function press(key: string, held: KeyboardEventInit): KeyboardEvent {
@@ -30,7 +30,7 @@ function mount(held: boolean) {
   list = document.createElement('div')
   for (const name of ['Work', 'Food', 'Uni']) {
     const row = document.createElement('button')
-    row.className = name === 'Food' ? 'nib-row is-on' : 'nib-row'
+    row.className = name === 'Food' ? 'orden-row is-on' : 'orden-row'
     row.textContent = name
     row.addEventListener('click', () => chosen.push(name))
     list.append(row)

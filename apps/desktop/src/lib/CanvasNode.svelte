@@ -239,7 +239,7 @@
       <div class="editor" use:edit onkeydowncapture={onKey}></div>
     {:else}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own note, through the same renderer the reading view uses -->
-      <div class="card page nib-rendered" use:embeds>{@html html}</div>
+      <div class="card page orden-rendered" use:embeds>{@html html}</div>
     {/if}
   {:else if node.type === 'file'}
     {#if isPicture(node.file)}
@@ -258,7 +258,7 @@
       <CanvasPdf file={node.file} note={canvasPath} {root} box={node} {scale} {seen} />
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
-      <div class="card page embed nib-rendered" use:embeds>{@html html}</div>
+      <div class="card page embed orden-rendered" use:embeds>{@html html}</div>
     {:else}
       <p class="missing">{t('Nothing here')}</p>
     {/if}
@@ -307,7 +307,7 @@
       <div class="editor inside" use:edit onkeydowncapture={onKey}></div>
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own words, through the same renderer the reading view uses -->
-      <div class="card page inside nib-rendered">{@html html}</div>
+      <div class="card page inside orden-rendered">{@html html}</div>
     {/if}
   {:else if node.type === 'group' && node.label}
     <span class="label">{node.label}</span>

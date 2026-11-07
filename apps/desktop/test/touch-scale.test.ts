@@ -151,7 +151,7 @@ describe('the touch scale', () => {
 
     const missing = SURFACES.filter((name) => {
       const one = components.find((component) => component.name === name)
-      return !one || !(scale.test(one.style) || one.text.includes('nib-row'))
+      return !one || !(scale.test(one.style) || one.text.includes('orden-row'))
     })
 
     expect(missing, `these draw a touch surface without the scale: ${missing.join(', ')}`).toEqual(

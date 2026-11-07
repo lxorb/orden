@@ -107,20 +107,23 @@ fn installed(root: &Path) -> bool {
             .all(|one| present(&root.join(model().id).join(one.name), one))
 }
 
-#[tauri::command(async)]
-pub fn dictation_local(app: AppHandle) -> Result<Local, String> {
-    let here = device::this();
-    let model = model();
-    Ok(Local {
-        fit: device::fit(&here, model),
-        device: here,
-        model: Offered {
-            id: model.id,
-            name: model.name,
-            bytes: model.bytes(),
-        },
-        installed: installed(&folder(&app)?),
+#[tauri::command]
+pub async fn dictation_local(app: AppHandle) -> Result<Local, String> {
+    crate::lane::off_the_runtime(move || -> Result<Local, String> {
+        let here = device::this();
+        let model = model();
+        Ok(Local {
+            fit: device::fit(&here, model),
+            device: here,
+            model: Offered {
+                id: model.id,
+                name: model.name,
+                bytes: model.bytes(),
+            },
+            installed: installed(&folder(&app)?),
+        })
     })
+    .await
 }
 
 #[tauri::command]
@@ -272,18 +275,21 @@ fn unpack(zip: &Path, runtime: &Runtime, into: &Path) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command(async)]
-pub fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
-    if FETCHING.load(Ordering::SeqCst) {
-        return Err("The speech model is being downloaded.".to_owned());
-    }
-    *lock(&app.state::<Arc<Loaded>>()) = None;
-    let root = folder(&app)?;
-    match fs::remove_dir_all(&root) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(error.to_string()),
-    }
+#[tauri::command]
+pub async fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        if FETCHING.load(Ordering::SeqCst) {
+            return Err("The speech model is being downloaded.".to_owned());
+        }
+        *lock(&app.state::<Arc<Loaded>>()) = None;
+        let root = folder(&app)?;
+        match fs::remove_dir_all(&root) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error.to_string()),
+        }
+    })
+    .await
 }
 
 fn lock(loaded: &Loaded) -> std::sync::MutexGuard<'_, Option<(sherpa::Engine, Instant, f32)>> {
@@ -298,28 +304,31 @@ pub struct Opened {
     pace: f32,
 }
 
-#[tauri::command(async)]
-pub fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
-    let loaded = Arc::clone(&app.state::<Arc<Loaded>>());
-    let mut held = lock(&loaded);
-    let (pace, fresh) = opened(
-        &mut held,
-        || open_engine(&folder(&app)?),
-        |engine| {
-            let quiet: Vec<f32> = (0..32_000u16)
-                .map(|i| f32::from(i.wrapping_mul(7919) % 200) / 100_000.0 - 0.001)
-                .collect();
-            engine.hear(&quiet, "")?;
-            let started = Instant::now();
-            engine.hear(&quiet, "")?;
-            Ok(started.elapsed().as_secs_f32() / 2.0)
-        },
-    )?;
-    drop(held);
-    if fresh {
-        watch_idle(loaded);
-    }
-    Ok(Opened { pace })
+#[tauri::command]
+pub async fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
+    crate::lane::off_the_runtime(move || -> Result<Opened, String> {
+        let loaded = Arc::clone(&app.state::<Arc<Loaded>>());
+        let mut held = lock(&loaded);
+        let (pace, fresh) = opened(
+            &mut held,
+            || open_engine(&folder(&app)?),
+            |engine| {
+                let quiet: Vec<f32> = (0..32_000u16)
+                    .map(|i| f32::from(i.wrapping_mul(7919) % 200) / 100_000.0 - 0.001)
+                    .collect();
+                engine.hear(&quiet, "")?;
+                let started = Instant::now();
+                engine.hear(&quiet, "")?;
+                Ok(started.elapsed().as_secs_f32() / 2.0)
+            },
+        )?;
+        drop(held);
+        if fresh {
+            watch_idle(loaded);
+        }
+        Ok(Opened { pace })
+    })
+    .await
 }
 
 fn opened<E>(
@@ -396,18 +405,21 @@ fn watch_idle(loaded: Arc<Loaded>) {
     });
 }
 
-#[tauri::command(async)]
-pub fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Result<String, String> {
+#[tauri::command]
+pub async fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Result<String, String> {
     let InvokeBody::Raw(body) = request.body() else {
         return Err("dictation was sent something that is not sound".to_owned());
     };
     let (context, samples) = framed(body)?;
-    let loaded = app.state::<Arc<Loaded>>();
-    let mut held = lock(&loaded);
-    let (engine, used, _) = held.as_mut().ok_or("The speech model is not open.")?;
-    let words = engine.hear(&samples, &context);
-    *used = Instant::now();
-    words
+    crate::lane::off_the_runtime(move || {
+        let loaded = app.state::<Arc<Loaded>>();
+        let mut held = lock(&loaded);
+        let (engine, used, _) = held.as_mut().ok_or("The speech model is not open.")?;
+        let words = engine.hear(&samples, &context);
+        *used = Instant::now();
+        words
+    })
+    .await
 }
 
 fn framed(body: &[u8]) -> Result<(String, Vec<f32>), String> {

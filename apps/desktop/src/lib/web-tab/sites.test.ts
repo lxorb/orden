@@ -59,7 +59,7 @@ test('the engine s doubles land on the rung they meant', () => {
 test('a hundred per cent is nothing kept', () => {
   keepZoom('example.com', 1.5)
   keepZoom('example.com', 1)
-  expect(localStorage.getItem('nib:web-zooms')).toBe('{}')
+  expect(localStorage.getItem('orden:web-zooms')).toBe('{}')
 })
 
 test('nonsense is not a size', () => {

@@ -354,7 +354,7 @@
 <div class="timeline">
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
   <div
-    class="scroller nib-scrolls"
+    class="scroller orden-scrolls"
     bind:this={scroller}
     bind:clientHeight={room}
     bind:clientWidth={width}
@@ -416,7 +416,7 @@
   {#if newAbove}
     <button
       type="button"
-      class="jump above nib-pill is-pressable"
+      class="jump above orden-pill is-pressable"
       onclick={toNew}
       transition:fade={{ duration: dur(130) }}
     >
@@ -427,7 +427,7 @@
   {#if !stuck && (unreadBelow > 0 || page.after)}
     <button
       type="button"
-      class="jump below nib-pill is-pressable"
+      class="jump below orden-pill is-pressable"
       aria-label={t('New')}
       onclick={() => void toBottom()}
       transition:fade={{ duration: dur(130) }}

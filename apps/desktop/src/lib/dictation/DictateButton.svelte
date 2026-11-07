@@ -50,7 +50,7 @@
   <button
     bind:this={button}
     type="button"
-    class="nib-glyph mic"
+    class="orden-glyph mic"
     class:listening={hearing === 'listening' || hearing === 'opening'}
     class:finishing={hearing === 'finishing'}
     style:--level={voice.owner === owner ? voice.level : 0}

@@ -39,7 +39,7 @@ WATCH = """
 }
 """
 
-SAID = "() => document.querySelector('p.nib-said[aria-live]')?.textContent ?? ''"
+SAID = "() => document.querySelector('p.orden-said[aria-live]')?.textContent ?? ''"
 
 def is_true(claim: bool, what: str) -> None:
     if claim:

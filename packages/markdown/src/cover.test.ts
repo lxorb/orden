@@ -70,7 +70,7 @@ describe('the banner every surface draws', () => {
   test('is one element carrying the picture and where its band sits', () => {
     const html = coverFigure({ src: 'assets/wide.jpg', position: 20 })
 
-    expect(html).toContain('class="nib-cover"')
+    expect(html).toContain('class="orden-cover"')
     expect(html).toContain('src="assets/wide.jpg"')
     expect(html).toContain('object-position: 50% 20%')
   })
@@ -92,19 +92,19 @@ describe('a rendered note', () => {
   test('draws the banner where the caller asked for one', () => {
     const html = renderMarkdown(source, { cover: true })
 
-    expect(html).toContain('class="nib-cover"')
-    expect(html.indexOf('nib-cover')).toBeLessThan(html.indexOf('<h1'))
+    expect(html).toContain('class="orden-cover"')
+    expect(html.indexOf('orden-cover')).toBeLessThan(html.indexOf('<h1'))
     expect(html).toContain('object-position: 50% 30%')
   })
 
   test('draws none where the caller did not ask', () => {
-    expect(renderMarkdown(source)).not.toContain('nib-cover')
+    expect(renderMarkdown(source)).not.toContain('orden-cover')
   })
 
   test('puts the banner above the properties, which are above the note', () => {
     const html = renderMarkdown(source, { cover: true, properties: 'properties' })
 
-    expect(html.indexOf('nib-cover')).toBeLessThan(html.indexOf('class="property'))
+    expect(html.indexOf('orden-cover')).toBeLessThan(html.indexOf('class="property'))
     expect(html.indexOf('class="property')).toBeLessThan(html.indexOf('<h1'))
   })
 

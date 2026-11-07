@@ -28,7 +28,7 @@ class Shown {
   from: HTMLElement | null = null
 
   constructor() {
-    const kept = stored('nib:scratchpad')
+    const kept = stored('orden:scratchpad')
     if (!isRecord(kept)) return
     this.on = kept.on === true
     if (typeof kept.width === 'number') this.resize(kept.width)
@@ -65,7 +65,7 @@ class Shown {
 
   private set(on: boolean) {
     this.on = on
-    keepJson('nib:scratchpad', { on, width: this.width })
+    keepJson('orden:scratchpad', { on, width: this.width })
   }
 }
 

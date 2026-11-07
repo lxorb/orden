@@ -1544,6 +1544,8 @@ export const sw: Dictionary = {
   Shorter: 'Fupi zaidi',
   Longer: 'Ndefu zaidi',
   'Fix grammar': 'Sahihisha sarufi',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Maneno yaliyochaguliwa hayamo tena kwenye dokezo, kwa hiyo hakuna kilichobadilishwa.',
   'A cited report': 'Ripoti yenye vyanzo',
   'A helper in the background': 'Msaidizi nyuma ya pazia',
   'A side question': 'Swali la pembeni',
@@ -2959,6 +2961,8 @@ export const sw: Dictionary = {
   'That could not be protected: {reason}': 'Haikuweza kulindwa: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} haikuongezwa: gumzo hupokea picha na faili za maandishi hadi MB 2.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} haikuongezwa: ujumbe mmoja hupokea hadi picha 20.',
   'Time tracker': 'Kifuatiliaji cha muda',
   'Start timer': 'Anzisha kipima muda',
   'Stop timer': 'Simamisha kipima muda',
@@ -3537,9 +3541,50 @@ export const sw: Dictionary = {
   'You said': 'Ulichosema',
   Privacy: 'Faragha',
   'Send crash and freeze reports': 'Tuma ripoti za kuharibika na kukwama',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ikiharibika au kukwama, hutuma ilichokuwa ikifanya na mahali ilipokuwa katika msimbo wake, bila majina, njia, anwani na manenosiri. Kamwe si madokezo yako.',
-  'Turn off in Settings': 'Zima katika Mipangilio',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Hutuma Orden ilichokuwa ikifanya ilipoharibika au kukwama; kamwe si madokezo, majina, njia au manenosiri.',
+  'Send crash reports to help improve Orden':
+    'Tuma ripoti za kuharibika ili kusaidia kuboresha Orden',
+  'Move to {space}?': 'Ihamishe kwenda {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS inaweza pia kuanzisha imla kwa kitufe hiki.',
+  'QR code': 'Msimbo wa QR',
+  'Waiting…': 'Inasubiri…',
+  Service: 'Huduma',
+  'I understand and want to connect anyway': 'Ninaelewa na bado nataka kuunganisha',
+  'Some changes have not reached your account yet':
+    'Baadhi ya mabadiliko bado hayajafika kwenye akaunti yako',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Yanabaki kwenye kivinjari hiki, bila kuonekana na mtu mwingine yeyote anayeingia hapa, na yatatumwa utakapoingia tena.',
+  'Leave it empty to sign in with a QR code instead':
+    'Acha wazi ili kuingia kwa msimbo wa QR badala yake',
+  'Telegram code': 'Msimbo wa Telegram',
+  'Sent to Telegram on your other device': 'Umetumwa kwa Telegram kwenye kifaa chako kingine',
+  'Sent by SMS': 'Umetumwa kwa SMS',
+  'You will get a call with the code': 'Utapigiwa simu yenye msimbo',
+  'The code was wrong. Try again.': 'Msimbo haukuwa sahihi. Jaribu tena.',
+  'The code expired, so Telegram sent a new one.':
+    'Msimbo umeisha muda, kwa hiyo Telegram imetuma mpya.',
+  'Two-step verification password': 'Nenosiri la uthibitishaji wa hatua mbili',
+  'The password was wrong. Try again.': 'Nenosiri halikuwa sahihi. Jaribu tena.',
+  'Scan with Telegram on your phone': 'Changanua kwa Telegram kwenye simu yako',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Kuingia kwenye Telegram kunahitaji programu',
+  'Telegram does not know this phone number': 'Telegram haijui nambari hii ya simu',
+  'Too many tries. Wait a while and try again.':
+    'Majaribio mengi mno. Subiri kidogo kisha ujaribu tena.',
+  'Too many wrong tries': 'Majaribio mengi mno yasiyo sahihi',
+  'Signed out of Telegram. Connect again.': 'Umetoka kwenye Telegram. Unganisha tena.',
+  'Telegram cannot do that in this conversation':
+    'Telegram haiwezi kufanya hivyo kwenye mazungumzo haya',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram hufuta ujumbe katika vikundi na chaneli kwa kila mtu',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram hukabidhi kikundi kwa mmiliki mpya kutoka programu yake tu',
+  'That sticker is no longer available': 'Kibandiko hicho hakipatikani tena',
+  'Telegram is not set up in this build': 'Telegram haijawekwa katika toleo hili',
+  'Password manager': 'Kidhibiti cha manenosiri',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Huongeza Pass, inayohifadhi manenosiri na kuyajaza kwenye tovuti. Kuizima huhifadhi makasha yako.',
 }

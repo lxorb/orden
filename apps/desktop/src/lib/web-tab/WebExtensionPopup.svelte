@@ -38,7 +38,7 @@
     void import('@tauri-apps/api/event')
       .then(({ listen }) =>
         listen<{ kind: string; width?: number; height?: number }>(
-          'nib://extension-popup',
+          'orden://extension-popup',
           ({ payload }) => {
             if (payload.kind === 'closed') extensions.close(popped)
             else if (payload.width && payload.height)
@@ -75,7 +75,7 @@
 
 <div
   bind:this={bubble}
-  class="popup nib-bubble"
+  class="popup orden-bubble"
   class:sized={size !== null}
   style:right="{right}px"
   role="dialog"

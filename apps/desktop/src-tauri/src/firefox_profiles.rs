@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use crate::browser_profiles::{copied, ini_profiles, known, once, Profile};
 use crate::paths::folder_named;
 
-pub(crate) const BROWSERS_DIR: &str = "NIB_BROWSERS_DIR";
+pub(crate) const BROWSERS_DIR: &str = "ORDEN_BROWSERS_DIR";
 
 const SESSIONS: [&str; 3] = [
     "sessionstore-backups/recovery.jsonlz4",

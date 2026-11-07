@@ -1524,6 +1524,8 @@ export const hi: Dictionary = {
   Shorter: 'छोटा',
   Longer: 'लंबा',
   'Fix grammar': 'व्याकरण सुधारें',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'चुने गए शब्द अब नोट में नहीं हैं, इसलिए कुछ नहीं बदला गया।',
   'A cited report': 'स्रोतयुक्त रिपोर्ट',
   'A helper in the background': 'पृष्ठभूमि में सहायक',
   'A side question': 'साइड सवाल',
@@ -2920,6 +2922,8 @@ export const hi: Dictionary = {
   'That could not be protected: {reason}': 'सुरक्षित नहीं किया जा सका: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} नहीं जोड़ा गया: चैट में चित्र और 2 MB तक की टेक्स्ट फ़ाइलें ही जोड़ी जा सकती हैं।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} नहीं जोड़ा गया: एक संदेश में अधिकतम 20 चित्र जोड़े जा सकते हैं।',
   'Time tracker': 'समय ट्रैकर',
   'Start timer': 'टाइमर शुरू करें',
   'Stop timer': 'टाइमर रोकें',
@@ -3496,9 +3500,47 @@ export const hi: Dictionary = {
   'You said': 'आपने बताया',
   Privacy: 'गोपनीयता',
   'Send crash and freeze reports': 'क्रैश और फ़्रीज़ की रिपोर्ट भेजें',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'जब Orden क्रैश होता है या अटक जाता है, तो वह भेजता है कि वह क्या कर रहा था और अपने कोड में कहाँ था, नाम, पाथ, पते और पासवर्ड हटाकर। आपके नोट कभी नहीं।',
-  'Turn off in Settings': 'सेटिंग में बंद करें',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden के क्रैश या अटकने पर वह क्या कर रहा था, यह भेजता है; नोट, नाम, पाथ या पासवर्ड कभी नहीं।',
+  'Send crash reports to help improve Orden':
+    'Orden को बेहतर बनाने में मदद के लिए क्रैश रिपोर्ट भेजें',
+  'Move to {space}?': '{space} में ले जाएँ?',
+  'macOS can start dictation with this key too.': 'macOS इस कुंजी से डिक्टेशन भी शुरू कर सकता है।',
+  'QR code': 'QR कोड',
+  'Waiting…': 'प्रतीक्षा हो रही है…',
+  Service: 'सेवा',
+  'I understand and want to connect anyway': 'मैं समझता हूँ और फिर भी जोड़ना चाहता हूँ',
+  'Some changes have not reached your account yet': 'कुछ बदलाव अभी तक आपके खाते तक नहीं पहुँचे',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'वे इसी ब्राउज़र में रहते हैं, यहाँ साइन इन करने वाले किसी और को नहीं दिखते, और आपके दोबारा साइन इन करने पर भेजे जाते हैं।',
+  'Leave it empty to sign in with a QR code instead':
+    'इसके बजाय QR कोड से साइन इन करने के लिए खाली छोड़ें',
+  'Telegram code': 'Telegram कोड',
+  'Sent to Telegram on your other device': 'आपके दूसरे डिवाइस पर Telegram में भेजा गया',
+  'Sent by SMS': 'SMS से भेजा गया',
+  'You will get a call with the code': 'आपको कोड बताने वाली कॉल आएगी',
+  'The code was wrong. Try again.': 'कोड गलत था। फिर से कोशिश करें।',
+  'The code expired, so Telegram sent a new one.':
+    'कोड की अवधि खत्म हो गई, इसलिए Telegram ने नया भेजा।',
+  'Two-step verification password': 'दो-चरणीय सत्यापन पासवर्ड',
+  'The password was wrong. Try again.': 'पासवर्ड गलत था। फिर से कोशिश करें।',
+  'Scan with Telegram on your phone': 'अपने फ़ोन पर Telegram से स्कैन करें',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram में साइन इन करने के लिए ऐप चाहिए',
+  'Telegram does not know this phone number': 'Telegram इस फ़ोन नंबर को नहीं जानता',
+  'Too many tries. Wait a while and try again.':
+    'बहुत ज़्यादा कोशिशें। थोड़ी देर रुककर फिर कोशिश करें।',
+  'Too many wrong tries': 'बहुत ज़्यादा गलत कोशिशें',
+  'Signed out of Telegram. Connect again.': 'Telegram से साइन आउट हो गए। फिर से कनेक्ट करें।',
+  'Telegram cannot do that in this conversation': 'Telegram इस बातचीत में ऐसा नहीं कर सकता',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram ग्रुप और चैनल के संदेश सभी के लिए हटाता है',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ग्रुप को नए मालिक को केवल अपने ऐप से सौंपता है',
+  'That sticker is no longer available': 'वह स्टिकर अब उपलब्ध नहीं है',
+  'Telegram is not set up in this build': 'इस बिल्ड में Telegram सेट अप नहीं है',
+  'Password manager': 'पासवर्ड मैनेजर',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass जोड़ता है, जो पासवर्ड रखता है और वेबसाइटों पर उन्हें भरता है। बंद करने पर आपके वॉल्ट बने रहते हैं।',
 }

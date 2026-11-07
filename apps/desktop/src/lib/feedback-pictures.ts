@@ -67,7 +67,37 @@ export async function redrawn(
   }
 }
 
-function canvasDrawing(): Drawing {
+interface Sheet {
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null
+  blob(type: PictureType, quality: number): Promise<Blob>
+}
+
+export function pageSheet(width: number, height: number): Sheet {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  return {
+    context: canvas.getContext('2d'),
+    blob: (type, quality) =>
+      new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('not written'))),
+          type,
+          quality,
+        )
+      }),
+  }
+}
+
+export function offscreenSheet(width: number, height: number): Sheet {
+  const canvas = new OffscreenCanvas(width, height)
+  return {
+    context: canvas.getContext('2d'),
+    blob: (type, quality) => canvas.convertToBlob({ type, quality }),
+  }
+}
+
+export function sheetDrawing(sheetOf: (width: number, height: number) => Sheet): Drawing {
   let bitmap: ImageBitmap | null = null
   return {
     async open(file) {
@@ -76,23 +106,15 @@ function canvasDrawing(): Drawing {
       return { width: bitmap.width, height: bitmap.height }
     },
     async write(width, height, type, quality) {
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const context = canvas.getContext('2d')
+      const sheet = sheetOf(width, height)
+      const context = sheet.context
       if (!context || !bitmap) throw new Error('nothing to draw with')
       if (type === 'image/jpeg') {
         context.fillStyle = '#fff'
         context.fillRect(0, 0, width, height)
       }
       context.drawImage(bitmap, 0, 0, width, height)
-      return await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject(new Error('not written'))),
-          type,
-          quality,
-        )
-      })
+      return await sheet.blob(type, quality)
     },
     close() {
       bitmap?.close()
@@ -108,14 +130,4 @@ export async function dataUrlOf(blob: Blob, type: PictureType): Promise<string> 
     binary += String.fromCharCode(...bytes.subarray(at, at + 0x8000))
   }
   return `data:${type};base64,${btoa(binary)}`
-}
-
-let made = 0
-
-export async function pictureOf(file: Blob, drawing = canvasDrawing()): Promise<Picture | null> {
-  const drawn = await redrawn(file, drawing)
-  if (!drawn) return null
-  const dataUrl = await dataUrlOf(drawn.blob, drawn.type)
-  made++
-  return { id: `picture-${String(made)}`, dataUrl, preview: dataUrl }
 }

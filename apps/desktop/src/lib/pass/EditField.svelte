@@ -85,7 +85,7 @@
   {#if kind === 'hidden'}
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={shown ? t('Hide') : t('Show')}
       title={shown ? t('Hide') : t('Show')}
       onclick={() => (shown = !shown)}
@@ -97,7 +97,7 @@
   {#if onremove}
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={t('Remove')}
       title={t('Remove')}
       onclick={() => onremove()}
@@ -177,12 +177,12 @@
     color: var(--danger);
   }
 
-  .nib-glyph {
+  .orden-glyph {
     flex: none;
     color: var(--muted-strong);
   }
 
-  .nib-glyph :global(.nib-cross) {
+  .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);
     stroke-width: 1.5;

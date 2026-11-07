@@ -43,6 +43,58 @@ describe('the look of things the browser also has an opinion about', () => {
     )
   })
 
+  test('every scroller that hides the engine bar hides it in every engine', () => {
+    const sheets = [
+      ...components,
+      ...readdirSync(THEMES)
+        .filter((name) => name.endsWith('.css'))
+        .map((name) => ({ name, text: readFileSync(join(THEMES, name), 'utf8') })),
+    ]
+    const offenders = sheets.flatMap((one) =>
+      [...one.text.matchAll(/([^{};]+)\{([^{}]*)\}/g)]
+        .filter(([, , body = '']) => /scrollbar-width:\s*none/.test(body))
+        .flatMap(([, selector = '']) => selector.split(',').map((part) => part.trim()))
+        .filter((selector) => {
+          const twin = new RegExp(
+            `${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}::-webkit-scrollbar\\s*\\{[^}]*display:\\s*none`,
+          )
+          return !twin.test(one.text)
+        })
+        .map((selector) => `${one.name}: ${selector}`),
+    )
+
+    expect(offenders, `these show the bar in WebKit before 18.2: ${offenders.join(', ')}`).toEqual(
+      [],
+    )
+  })
+
+  test("the theme's bar never outranks a scroller that hides its own", () => {
+    const base = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    const unwrapped = (selector: string) => {
+      let out = selector
+      for (let at = out.indexOf(':where('); at >= 0; at = out.indexOf(':where(')) {
+        let depth = 0
+        let end = at + ':where'.length
+        for (; end < out.length; end++) {
+          if (out[end] === '(') depth++
+          if (out[end] === ')' && --depth === 0) break
+        }
+        out = out.slice(0, at) + out.slice(end + 1)
+      }
+      return out
+    }
+    const themed = [...base.matchAll(/([^{};]+)\{([^{}]*)\}/g)]
+      .flatMap(([, selector = '']) => selector.split(',').map((part) => part.trim()))
+      .filter((selector) => selector.includes('::-webkit-scrollbar'))
+      .filter((selector) => !/^\.[\w-]+::/.test(selector))
+    const loud = themed.filter((selector) =>
+      /[.:[#]/.test(unwrapped(selector).split('::')[0] ?? ''),
+    )
+
+    expect(themed.length).toBeGreaterThan(4)
+    expect(loud, `these beat .orden-scrolls::-webkit-scrollbar: ${loud.join(', ')}`).toEqual([])
+  })
+
   test('no component restyles a dropdown on its own', () => {
     const offenders = components
       .filter((one) =>
@@ -141,7 +193,7 @@ describe('the paper a note is written on', () => {
 })
 
 describe('what a side shows', () => {
-  const FLOATING = ['nib-layer', 'nib-screen', 'nib-bubble']
+  const FLOATING = ['orden-layer', 'orden-screen', 'orden-bubble']
   const sidebar = readFileSync(join(SOURCE, 'lib/Sidebar.svelte'), 'utf8')
   const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
   const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {

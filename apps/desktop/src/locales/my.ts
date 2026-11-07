@@ -1508,6 +1508,8 @@ export const my: Dictionary = {
   Shorter: 'ပိုတို',
   Longer: 'ပိုရှည်',
   'Fix grammar': 'သဒ္ဒါပြင်ပါ',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ရွေးထားသော စကားလုံးများ မှတ်စုထဲတွင် မရှိတော့သဖြင့် ဘာမျှ အစားမထိုးပါ။',
   'A cited report': 'ကိုးကားချက်ပါ အစီရင်ခံစာ',
   'A helper in the background': 'နောက်ကွယ်ရှိ အကူ',
   'A side question': 'ဘေးထွက်မေးခွန်း',
@@ -2889,6 +2891,8 @@ export const my: Dictionary = {
   'That could not be protected: {reason}': 'ကာကွယ်၍ မရပါ - {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ကို မထည့်ရပါ - ချတ်တွင် ပုံများနှင့် 2 MB အထိ စာသားဖိုင်များသာ ထည့်နိုင်သည်။',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ကို မထည့်ရပါ - မက်ဆေ့ချ်တစ်ခုတွင် ပုံ 20 ပုံအထိသာ ထည့်နိုင်သည်။',
   'Time tracker': 'အချိန် မှတ်တမ်း',
   'Start timer': 'အချိန်တိုင်းကိရိယာ စတင်ရန်',
   'Stop timer': 'အချိန်တိုင်းကိရိယာ ရပ်ရန်',
@@ -3425,9 +3429,47 @@ export const my: Dictionary = {
   'You said': 'သင်ပြောထားသည်',
   Privacy: 'ကိုယ်ရေးလုံခြုံမှု',
   'Send crash and freeze reports': 'ပျက်ကျမှုနှင့် ရပ်တန့်မှု အစီရင်ခံစာများ ပို့ရန်',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ပျက်ကျ သို့မဟုတ် ရပ်တန့်သွားသောအခါ ၎င်းဘာလုပ်နေသည်နှင့် ၎င်း၏ကုဒ်ထဲ ဘယ်နေရာတွင်ရှိသည်ကို အမည်များ၊ လမ်းကြောင်းများ၊ လိပ်စာများနှင့် စကားဝှက်များ ဖယ်ရှားပြီး ပို့သည်။ သင့်မှတ်စုများကို ဘယ်တော့မှ မပို့ပါ။',
-  'Turn off in Settings': 'ဆက်တင်များတွင် ပိတ်ရန်',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ပျက်ကျ သို့မဟုတ် ရပ်တန့်ချိန်တွင် ဘာလုပ်နေသည်ကို ပို့သည်၊ မှတ်စု၊ အမည်၊ လမ်းကြောင်း သို့မဟုတ် စကားဝှက်များကို ဘယ်တော့မှ မပို့ပါ။',
+  'Send crash reports to help improve Orden':
+    'Orden ကို ပိုကောင်းအောင် ကူညီရန် ပျက်ကျမှု အစီရင်ခံစာများ ပို့ရန်',
+  'Move to {space}?': '{space} သို့ ရွှေ့မလား?',
+  'macOS can start dictation with this key too.':
+    'macOS သည် ဤခလုတ်ဖြင့် အသံဖြင့်စာရိုက်ခြင်းကိုလည်း စတင်နိုင်သည်။',
+  'QR code': 'QR ကုဒ်',
+  'Waiting…': 'စောင့်နေသည်…',
+  Service: 'ဝန်ဆောင်မှု',
+  'I understand and want to connect anyway': 'နားလည်ပါသည်၊ သို့သော် ချိတ်ဆက်လိုပါသည်',
+  'Some changes have not reached your account yet': 'အပြောင်းအလဲအချို့ သင့်အကောင့်သို့ မရောက်သေးပါ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '၎င်းတို့သည် ဤဘရောက်ဇာတွင် ကျန်ရှိပြီး ဤနေရာတွင် ဝင်ရောက်သူ အခြားမည်သူမျှ မမြင်ရဘဲ သင်ပြန်ဝင်သောအခါ ပို့ပါမည်။',
+  'Leave it empty to sign in with a QR code instead': 'QR ကုဒ်ဖြင့် ဝင်ရန် အလွတ်ထားပါ',
+  'Telegram code': 'Telegram ကုဒ်',
+  'Sent to Telegram on your other device': 'သင့်အခြားစက်ရှိ Telegram သို့ ပို့ပြီး',
+  'Sent by SMS': 'SMS ဖြင့် ပို့ပြီး',
+  'You will get a call with the code': 'ကုဒ်ပါသော ဖုန်းခေါ်ဆိုမှု ရရှိပါမည်',
+  'The code was wrong. Try again.': 'ကုဒ် မှားနေသည်။ ထပ်စမ်းပါ။',
+  'The code expired, so Telegram sent a new one.':
+    'ကုဒ် သက်တမ်းကုန်သဖြင့် Telegram က အသစ်ပို့ထားသည်။',
+  'Two-step verification password': 'နှစ်ဆင့် အတည်ပြုချက် စကားဝှက်',
+  'The password was wrong. Try again.': 'စကားဝှက် မှားနေသည်။ ထပ်စမ်းပါ။',
+  'Scan with Telegram on your phone': 'သင့်ဖုန်းရှိ Telegram ဖြင့် စကင်ဖတ်ပါ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > ဆက်တင်များ > စက်များ > Desktop စက် ချိတ်ဆက်ရန်',
+  'Signing in to Telegram needs the app': 'Telegram သို့ ဝင်ရန် အက်ပ် လိုအပ်သည်',
+  'Telegram does not know this phone number': 'Telegram သည် ဤဖုန်းနံပါတ်ကို မသိပါ',
+  'Too many tries. Wait a while and try again.': 'အကြိမ်များလွန်းသည်။ ခဏစောင့်ပြီး ထပ်စမ်းပါ။',
+  'Too many wrong tries': 'မှားသည့်အကြိမ် များလွန်းသည်',
+  'Signed out of Telegram. Connect again.': 'Telegram မှ ထွက်သွားပြီ။ ပြန်ချိတ်ဆက်ပါ။',
+  'Telegram cannot do that in this conversation':
+    'Telegram သည် ဤစကားဝိုင်းတွင် ထိုသို့ မလုပ်နိုင်ပါ',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram သည် အဖွဲ့နှင့် ချန်နယ်များရှိ မက်ဆေ့ချ်များကို လူတိုင်းအတွက် ဖျက်သည်',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram သည် အဖွဲ့ကို ပိုင်ရှင်အသစ်ထံ ၎င်း၏ကိုယ်ပိုင်အက်ပ်မှသာ လွှဲပေးသည်',
+  'That sticker is no longer available': 'ထိုစတစ်ကာ မရနိုင်တော့ပါ',
+  'Telegram is not set up in this build': 'ဤ build တွင် Telegram ကို မသတ်မှတ်ရသေးပါ',
+  'Password manager': 'စကားဝှက် စီမံသူ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'စကားဝှက်များကို သိမ်းပြီး ဝဘ်ဆိုက်များတွင် ဖြည့်ပေးသော Pass ကို ထည့်သည်။ ပိတ်ထားလည်း သင့်သေတ္တာများ ကျန်ရှိနေမည်။',
 }

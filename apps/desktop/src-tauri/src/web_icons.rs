@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
-const ICON: &str = "nib://web-icon";
+const ICON: &str = "orden://web-icon";
 
 #[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
 const WANT: u32 = 32;

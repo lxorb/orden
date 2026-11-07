@@ -4,6 +4,8 @@ export const HOUR = 3_600_000
 
 export const MINUTE = 60_000
 
+export const counts = (ms: number): boolean => ms >= MINUTE / 2
+
 export type Range = 'day' | 'week' | 'month'
 
 export interface Piece {
@@ -85,7 +87,7 @@ export function totalsOf(pieces: readonly Piece[]): Total[] {
   }
   return [...by]
     .map(([activity, list]) => ({ activity, ms: covered(list) }))
-    .filter((one) => one.ms > 0)
+    .filter((one) => counts(one.ms))
     .sort((one, other) => other.ms - one.ms)
 }
 

@@ -1,7 +1,7 @@
 import { isRecord, keepJson, stored } from '../stored'
 import type { Sort, SortKey } from './order'
 
-const KEY = 'nib:explorer'
+const KEY = 'orden:explorer'
 
 const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'size', 'kind']
 

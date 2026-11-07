@@ -25,7 +25,7 @@ function field(props: Record<string, unknown> = {}) {
 }
 
 function bubble(inside?: string): HTMLElement | null {
-  const reason = document.querySelector<HTMLElement>('.nib-bubble.reason')
+  const reason = document.querySelector<HTMLElement>('.orden-bubble.reason')
   return inside ? (reason?.querySelector<HTMLElement>(inside) ?? null) : reason
 }
 
@@ -50,7 +50,7 @@ afterEach(() => {
   close = undefined
   target.remove()
   reservedName.dismiss()
-  for (const one of document.querySelectorAll('.nib-bubble')) one.remove()
+  for (const one of document.querySelectorAll('.orden-bubble')) one.remove()
 })
 
 describe('a row named AGENTS', () => {

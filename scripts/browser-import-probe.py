@@ -18,7 +18,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-BROWSERS_DIR = "NIB_BROWSERS_DIR"
+BROWSERS_DIR = "ORDEN_BROWSERS_DIR"
 
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
@@ -185,7 +185,7 @@ def safari_tabs(at: pathlib.Path) -> None:
 
 def browsers_home() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-browsers-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-browsers-probe-"))
     firefox = made / "firefox"
     profile = firefox / "Profiles" / "x1.default-release"
     (profile / "sessionstore-backups").mkdir(parents=True)

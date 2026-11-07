@@ -86,7 +86,7 @@ describe('the frame script', () => {
     await settled()
     await settled()
 
-    expect(heard).toContainEqual(expect.objectContaining({ nib: 'nib-html-frame' }))
+    expect(heard).toContainEqual(expect.objectContaining({ nib: 'orden-html-frame' }))
   })
 
   test('runs nothing anywhere but an opaque origin', async () => {
@@ -94,6 +94,20 @@ describe('the frame script', () => {
     await settled()
 
     expect(window.document.getElementById('dial')).toBeNull()
+    expect(window.said).toBeUndefined()
+  })
+
+  test('runs nothing in a frame a block made inside its own', () => {
+    const dom = new JSDOM(
+      `<!doctype html><body><script type="text/plain" id="orden-frame">window.made = 5</script>
+      <script type="application/json" id="orden-block">${JSON.stringify(said('one'))}</script>`,
+      { url: 'about:blank', runScripts: 'outside-only' },
+    )
+    const window = dom.window as DOMWindow & Record<string, unknown>
+    Object.defineProperty(window, 'parent', { configurable: true, value: {} })
+    window.eval(SCRIPT)
+
+    expect(window.made).toBeUndefined()
     expect(window.said).toBeUndefined()
   })
 
@@ -148,7 +162,7 @@ describe('the frame script', () => {
 
   test('leaves code made from text alone in a frame that runs no block', () => {
     const dom = new JSDOM(
-      '<!doctype html><body><script type="text/plain" id="nib-frame">window.made = eval("for (;;) { break }; 5")</script>',
+      '<!doctype html><body><script type="text/plain" id="orden-frame">window.made = eval("for (;;) { break }; 5")</script>',
       { url: 'about:blank', runScripts: 'outside-only' },
     )
     const window = dom.window as DOMWindow & Record<string, unknown>

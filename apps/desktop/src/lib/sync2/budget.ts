@@ -21,7 +21,7 @@ export async function keptBudget(): Promise<number> {
   return used / quota > TIGHT ? Math.round(budget / 2) : Math.round(budget)
 }
 
-const WINDOW = 'nib:window'
+const WINDOW = 'orden:window'
 
 let holding: Promise<void> | null = null
 

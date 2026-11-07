@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
   import { dur } from '../../motion'
+  import { afterQuiet } from '../../timing'
   import { workspace } from '../../workspace.svelte'
   import { ACTIVE_FOR } from './marks'
   import { asking } from './asking.svelte'
@@ -47,16 +48,18 @@
 
   const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
 
-  let reading: ReturnType<typeof setTimeout> | undefined
+  const readSoon = afterQuiet(
+    () => void activity.readLog().catch(() => undefined),
+    LOG_EVERY,
+    LOG_EVERY,
+  )
   $effect(() => {
-    if (latest === 0) return
-    clearTimeout(reading)
-    reading = setTimeout(() => void activity.readLog().catch(() => undefined), LOG_EVERY)
+    if (latest !== 0) readSoon()
   })
 
   onMount(() => {
     void activity.readLog().catch(() => undefined)
-    return () => clearTimeout(reading)
+    return () => readSoon.cancel()
   })
 
   function titleOf(tab: string): string | null {
@@ -82,7 +85,7 @@
       {/if}
     </div>
     <button
-      class="nib-glyph"
+      class="orden-glyph"
       title={stopped ? t('Continue') : t('Stop')}
       aria-label={stopped ? t('Continue') : t('Stop')}
       onclick={() => void (stopped ? activity.resume(agent) : activity.stop(agent))}
@@ -108,13 +111,13 @@
       {#each tabs as tab (tab.id)}
         <li>
           <button
-            class="nib-row is-short"
+            class="orden-row is-short"
             class:is-on={watched === tab.id}
             data-agent-tab={tab.id}
             onclick={() => (watched = tab.id)}
           >
-            <span class="nib-row-label">{tab.title || hostOf(tab.url)}</span>
-            <span class="nib-row-meta">{hostOf(tab.url)}</span>
+            <span class="orden-row-label">{tab.title || hostOf(tab.url)}</span>
+            <span class="orden-row-meta">{hostOf(tab.url)}</span>
           </button>
         </li>
       {/each}
@@ -131,25 +134,25 @@
         <li class="call" class:failed={call.status === 'error'}>
           <span class="word">{wordFor(call.verb)}</span>
           <span class="about">{aboutOf(call, titleOf) ?? ''}</span>
-          <span class="nib-row-meta">{timeOf(call.at)}</span>
+          <span class="orden-row-meta">{timeOf(call.at)}</span>
         </li>
       {/each}
     </ol>
     {#if !all && calls.length > FIRST}
-      <button class="nib-row is-short more" onclick={() => (all = true)}>
-        <span class="nib-row-label">{t('Show all')}</span>
+      <button class="orden-row is-short more" onclick={() => (all = true)}>
+        <span class="orden-row-label">{t('Show all')}</span>
       </button>
     {/if}
   {/if}
 
   <div class="acts">
     {#if calls.length}
-      <button class="nib-chip" onclick={() => void activity.addToNote(agent)}>
+      <button class="orden-chip" onclick={() => void activity.addToNote(agent)}>
         {front === null ? t('Save as a note') : t('Add to {name}', { name: front })}
       </button>
     {/if}
     {#if undoable}
-      <button class="nib-chip" onclick={() => void activity.undo(agent)}>
+      <button class="orden-chip" onclick={() => void activity.undo(agent)}>
         {t('Undo edits by {name}', { name })}
       </button>
     {/if}
@@ -200,8 +203,8 @@
     white-space: nowrap;
   }
 
-  .nib-glyph svg path,
-  .nib-glyph svg rect {
+  .orden-glyph svg path,
+  .orden-glyph svg rect {
     fill: currentColor;
     stroke: none;
   }

@@ -63,14 +63,14 @@ describe('the button that opens the file list', () => {
       'padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);',
     )
     expect(style).toContain(
-      ":global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.nib-said))) { padding-inline-start: var(--inset-start); }",
+      ":global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) { padding-inline-start: var(--inset-start); }",
     )
   })
 
   test('is said and not shown where a swipe from the edge pulls the list out', () => {
     expect(titlebar).toContain('const swiped = $derived(swipeOpens())')
     expect(read('App.svelte')).toContain('if (!host || !swipeOpens()) return')
-    expect(toggle).toContain('class:nib-said={unseen && !keyed}')
+    expect(toggle).toContain('class:orden-said={unseen && !keyed}')
     expect(titlebar).toMatch(/hint="drawer"/)
     expect(read('lib/hints.svelte.ts')).toMatch(/HINTS = \['drawer'/)
   })

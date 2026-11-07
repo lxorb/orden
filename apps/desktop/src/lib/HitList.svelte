@@ -152,7 +152,7 @@
       style:top={one.away ? `${offsetOf(one.at, rows)}px` : undefined}
     >
       <button
-        class="nib-row hit"
+        class="orden-row hit"
         class:missing={noteOf(one.row) === null}
         onclick={(event) => onpick(one.row, event)}
         use:middleOpens={(event) => onpick(one.row, event)}
@@ -160,8 +160,8 @@
         <FileMark mark={place.mark} path={place.path} />
         <span class="words">
           <span class="head">
-            <span class="nib-row-label">{shownName(one.row.name)}</span>
-            {#if place.folder}<span class="nib-row-meta">{place.folder}</span>{/if}
+            <span class="orden-row-label">{shownName(one.row.name)}</span>
+            {#if place.folder}<span class="orden-row-meta">{place.folder}</span>{/if}
           </span>
           <span class="hit-line"
             >{#each linkPieces(one.row.text) as piece, at (at)}{#if piece.link}<span class="link"
@@ -214,7 +214,7 @@
     color: var(--accent);
   }
 
-  .missing .nib-row-label {
+  .missing .orden-row-label {
     color: var(--muted);
     text-decoration: underline dotted;
     text-underline-offset: 0.16em;

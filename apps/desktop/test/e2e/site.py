@@ -156,7 +156,7 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
 
     page.evaluate(ERASE)
     page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
-    page.evaluate("(token) => localStorage.setItem('nib:session', token)", token)
+    page.evaluate("(token) => localStorage.setItem('orden:session', token)", token)
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=60000)
     page.wait_for_function("() => !!window.nibApp.account.user", timeout=60000)
@@ -238,7 +238,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
         drawn = page.evaluate(
             """() => {
               const id = window.nibApp.publish.spaceId
-              try { return JSON.parse(localStorage.getItem(`nib:diagrams:${id}`) ?? '[]') } catch { return [] }
+              try { return JSON.parse(localStorage.getItem(`orden:diagrams:${id}`) ?? '[]') } catch { return [] }
             }"""
         )
         if drawn:
@@ -250,7 +250,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     for section in ["sync", "account"]:
         page.evaluate("() => window.nibApp.publish.close()")
         page.evaluate(f"() => window.nibApp.settings.show('{section}')")
-        page.wait_for_selector(".nib-screen.sheet", timeout=15000)
+        page.wait_for_selector(".orden-screen.sheet", timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
 
@@ -438,7 +438,7 @@ def diagrams() -> list[str]:
     return sources
 
 def dressing(token: str, space: str) -> None:
-    css = b"#write{--nib-drive:1}"
+    css = b"#write{--orden-drive:1}"
     digest = hashlib.sha256(css).hexdigest()
 
     put = urllib.request.Request(
@@ -572,7 +572,7 @@ def looking(browser, out: Path) -> None:
         ground = "() => getComputedStyle(document.body).backgroundColor"
         themed = (
             "() => [document.documentElement.dataset.theme,"
-            " localStorage.getItem('nib:site-theme')]"
+            " localStorage.getItem('orden:site-theme')]"
         )
         was = page.evaluate(ground)
         page.click("button.theme")

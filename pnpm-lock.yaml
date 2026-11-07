@@ -13,7 +13,7 @@ patchedDependencies:
     hash: 45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f
     path: patches/@codemirror__view@6.43.11.patch
   '@lezer/markdown@1.7.2':
-    hash: 0ac73b2e7540fdfa0973eb593c8644de45e7fc4a3a5e678e44085c6f40035076
+    hash: 1d097a5f9935446b395de3b495852f92d49d49ed2b5aa5542aa9389f07bc0eaa
     path: patches/@lezer__markdown@1.7.2.patch
   '@replit/codemirror-vim-core@0.1.0':
     hash: 154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4
@@ -25,7 +25,7 @@ patchedDependencies:
     hash: a8e34d0aec1f986637e502d0e6586e9830bcb9f3be8d10fa4a5967f72160c39b
     path: patches/knip@6.44.1.patch
   marked@18.0.11:
-    hash: 50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f
+    hash: 8abc7ccca48028f503ff94a3c0d9a0f33f82adb0bb47c0af00ee4f1891fc6f45
     path: patches/marked@18.0.11.patch
   turndown@7.2.4:
     hash: 9c3466f99138b32b2a649e68540007ba8b44bc619185905053f931ea9ec9ec5c
@@ -88,6 +88,9 @@ importers:
       '@iconify-json/simple-icons':
         specifier: ^1.2.100
         version: 1.2.100
+      '@mtcute/web':
+        specifier: ^0.32.7
+        version: 0.32.7
       '@orden/bases':
         specifier: workspace:*
         version: link:../../packages/bases
@@ -174,7 +177,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f)
+        version: 18.0.11(patch_hash=8abc7ccca48028f503ff94a3c0d9a0f33f82adb0bb47c0af00ee4f1891fc6f45)
       mermaid:
         specifier: ^11.17.2
         version: 11.17.2
@@ -279,7 +282,14 @@ importers:
         version: 5.0.0(@types/node@24.13.3)(@vitest/coverage-v8@5.0.0)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
 
   packages/chats:
+    dependencies:
+      long:
+        specifier: ^5.3.2
+        version: 5.3.2
     devDependencies:
+      '@mtcute/core':
+        specifier: ^0.32.7
+        version: 0.32.7
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
@@ -330,7 +340,7 @@ importers:
         version: 1.5.4
       '@lezer/markdown':
         specifier: ^1.7.2
-        version: 1.7.2(patch_hash=0ac73b2e7540fdfa0973eb593c8644de45e7fc4a3a5e678e44085c6f40035076)
+        version: 1.7.2(patch_hash=1d097a5f9935446b395de3b495852f92d49d49ed2b5aa5542aa9389f07bc0eaa)
       '@orden/markdown':
         specifier: workspace:*
         version: link:../markdown
@@ -391,7 +401,7 @@ importers:
         version: link:../markdown
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f)
+        version: 18.0.11(patch_hash=8abc7ccca48028f503ff94a3c0d9a0f33f82adb0bb47c0af00ee4f1891fc6f45)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -450,7 +460,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f)
+        version: 18.0.11(patch_hash=8abc7ccca48028f503ff94a3c0d9a0f33f82adb0bb47c0af00ee4f1891fc6f45)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -1182,6 +1192,15 @@ packages:
   '@fontsource/noto-emoji@5.3.2':
     resolution: {integrity: sha512-N9CSzXJB04AVWYvFbuBgL2Dq964Zo91th/uOu/QLSuWBYuL9FWXGcEo6ZNwc/IJ7vmpm8KHaIKD7jF8pYm4taw==}
 
+  '@fuman/io@0.0.23':
+    resolution: {integrity: sha512-ln1hhwaX357gMK5GPjur2H8y/l2EM98VZXj/BweMwQJHqPSyL8GUIMZaom9dSfNf+n9ujSgqoHF0J5vkhSPMhQ==}
+
+  '@fuman/net@0.0.23':
+    resolution: {integrity: sha512-qBLUeq6iC+bfIUeP1HPZ4Bqu9LECdKcZ8WsXtEpeXOl6B0tOAwg0gxWuh8/tV/vClUUnVBRoTxx/uMXZ9Hcfvg==}
+
+  '@fuman/utils@0.0.23':
+    resolution: {integrity: sha512-dTpiCi5CLkqfpf2PvsvEyX4WP3dj3r8j/ffm0/H/Xi3atCI4O4wNWhN+nn8th6k24zC1+8ooJJdiSKylepJnag==}
+
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
     engines: {node: '>=18.18.0'}
@@ -1597,6 +1616,21 @@ packages:
   '@mozilla/readability@0.6.0':
     resolution: {integrity: sha512-juG5VWh4qAivzTAeMzvY9xs9HY5rAcr2E4I7tiSSCokRFi7XIZCAu92ZkSTsIj1OPceCifL3cpfteP3pDT9/QQ==}
     engines: {node: '>=14.0.0'}
+
+  '@mtcute/core@0.32.7':
+    resolution: {integrity: sha512-S2Vu0PCPo/hqWd0u0WLRK1PdXi/bnOEInViRCdURwxnY0DP2Gh0b81vL1z7enGLjWBDazgPgwelu+pqRABOIdA==}
+
+  '@mtcute/file-id@0.32.6':
+    resolution: {integrity: sha512-qnHRstP/aCxl7L/OG3ZuiiLYiDNALCcU8ZpeASZx+BvqRRvsJORNdG80jWy8yhdpqQmWtamoq2ywgzOvTuBmgA==}
+
+  '@mtcute/tl-runtime@0.32.6':
+    resolution: {integrity: sha512-5Y31HHeH3GoZAqtPulh5L12OEvpk7prf1jPWkN0lN8ifCImCo+txqM1OA0yOnkpcsfNkUI4J3r3kuIAFTrl38g==}
+
+  '@mtcute/wasm@0.32.6':
+    resolution: {integrity: sha512-vDq8YdLoaZQfDKmc/ANa3cBg0i+vkWn+LRFUPzv4dt24BNC695b1c0M8coI8+z4JcwaVFnzjBusXTe8bL0W2Qg==}
+
+  '@mtcute/web@0.32.7':
+    resolution: {integrity: sha512-5tGUq4RY/C31jSzxJLerWuJ64RZC1bbhsSwDs9w4TkhIbajWWYQjaaV6i2rhcb3SmPgNR50pW9BtZPFkVqDIEg==}
 
   '@napi-rs/canvas-android-arm64@1.0.8':
     resolution: {integrity: sha512-5+nkh8i3gt6lqS/d2jTZ1xAn6tdgtB4Lf1mW6T0Qm5/rXNwBuV1sAEyLEWan5o9gJPU/GuvHR3rvSeZ+FaGrbw==}
@@ -2268,6 +2302,9 @@ packages:
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
+  '@types/events@3.0.0':
+    resolution: {integrity: sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==}
 
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
@@ -3256,6 +3293,9 @@ packages:
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
   lru-cache@11.5.2:
     resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
     engines: {node: 20 || >=22}
@@ -4201,7 +4241,7 @@ snapshots:
       '@codemirror/state': 6.7.2
       '@codemirror/view': 6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f)
       '@lezer/common': 1.5.2
-      '@lezer/markdown': 1.7.2(patch_hash=0ac73b2e7540fdfa0973eb593c8644de45e7fc4a3a5e678e44085c6f40035076)
+      '@lezer/markdown': 1.7.2(patch_hash=1d097a5f9935446b395de3b495852f92d49d49ed2b5aa5542aa9389f07bc0eaa)
 
   '@codemirror/lang-php@6.0.2':
     dependencies:
@@ -4522,6 +4562,17 @@ snapshots:
       '@noble/hashes': 2.4.0
 
   '@fontsource/noto-emoji@5.3.2': {}
+
+  '@fuman/io@0.0.23':
+    dependencies:
+      '@fuman/utils': 0.0.23
+
+  '@fuman/net@0.0.23':
+    dependencies:
+      '@fuman/io': 0.0.23
+      '@fuman/utils': 0.0.23
+
+  '@fuman/utils@0.0.23': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -4880,7 +4931,7 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.2
 
-  '@lezer/markdown@1.7.2(patch_hash=0ac73b2e7540fdfa0973eb593c8644de45e7fc4a3a5e678e44085c6f40035076)':
+  '@lezer/markdown@1.7.2(patch_hash=1d097a5f9935446b395de3b495852f92d49d49ed2b5aa5542aa9389f07bc0eaa)':
     dependencies:
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
@@ -4930,6 +4981,36 @@ snapshots:
   '@mixmark-io/domino@2.2.0': {}
 
   '@mozilla/readability@0.6.0': {}
+
+  '@mtcute/core@0.32.7':
+    dependencies:
+      '@fuman/io': 0.0.23
+      '@fuman/net': 0.0.23
+      '@fuman/utils': 0.0.23
+      '@mtcute/file-id': 0.32.6
+      '@mtcute/tl-runtime': 0.32.6
+      '@types/events': 3.0.0
+      long: 5.3.2
+
+  '@mtcute/file-id@0.32.6':
+    dependencies:
+      '@fuman/utils': 0.0.23
+      '@mtcute/tl-runtime': 0.32.6
+      long: 5.3.2
+
+  '@mtcute/tl-runtime@0.32.6':
+    dependencies:
+      '@fuman/utils': 0.0.23
+      long: 5.3.2
+
+  '@mtcute/wasm@0.32.6': {}
+
+  '@mtcute/web@0.32.7':
+    dependencies:
+      '@fuman/net': 0.0.23
+      '@fuman/utils': 0.0.23
+      '@mtcute/core': 0.32.7
+      '@mtcute/wasm': 0.32.6
 
   '@napi-rs/canvas-android-arm64@1.0.8':
     optional: true
@@ -5437,6 +5518,8 @@ snapshots:
   '@types/esrecurse@4.3.1': {}
 
   '@types/estree@1.0.9': {}
+
+  '@types/events@3.0.0': {}
 
   '@types/geojson@7946.0.16': {}
 
@@ -6507,6 +6590,8 @@ snapshots:
 
   lodash-es@4.18.1: {}
 
+  long@5.3.2: {}
+
   lru-cache@11.5.2: {}
 
   lucide-static@1.40.0: {}
@@ -6530,7 +6615,7 @@ snapshots:
 
   marked@16.4.2: {}
 
-  marked@18.0.11(patch_hash=50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f): {}
+  marked@18.0.11(patch_hash=8abc7ccca48028f503ff94a3c0d9a0f33f82adb0bb47c0af00ee4f1891fc6f45): {}
 
   mdn-data@2.27.1: {}
 

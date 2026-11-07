@@ -2907,7 +2907,7 @@ mod tests {
             "data:text/html,<h1>x</h1>",
             "about:version",
             "tauri://localhost",
-            "nib://open",
+            "orden://open",
         ] {
             assert!(
                 site_allowed(&grant, address, Store::Agent).is_err(),

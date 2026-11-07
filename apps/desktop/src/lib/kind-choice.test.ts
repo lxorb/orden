@@ -18,8 +18,8 @@ vi.mock('./api', async (actual) => ({
   },
 }))
 
-const { hiddenKinds, kindsHere, shownOf } = await import('./settings.svelte')
-const { hiddenOf, locked, mayHide, receive, setKind } = await import('./kind-choice')
+const { hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./settings.svelte')
+const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('./new-kinds')
 const { newFileRows } = await import('./row-menu')
 const { account } = await import('./account.svelte')
@@ -81,8 +81,15 @@ describe('a stored list of kinds turned off', () => {
 })
 
 describe('the kinds a device has', () => {
-  test('are what is written, the online terminal, an application and Pass on a page in a browser', () => {
+  test('are what is written, the online terminal and an application on a page in a browser', () => {
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'web'])
+  })
+
+  test('take Pass in once Settings turns the password manager on', () => {
+    setWord(PASS_WORD, true)
     expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass', 'web'])
+    setWord(PASS_WORD, false)
+    expect(kindsHere()).not.toContain('pass')
   })
 
   test('take the chat in with an account', () => {
@@ -110,7 +117,6 @@ describe('turning a kind off', () => {
       'pages',
       'online',
       'application',
-      'pass',
       'web',
     ])
     expect(newFileRows().map((one) => one?.label)).toEqual([
@@ -124,11 +130,11 @@ describe('turning a kind off', () => {
 
   test('is undone by turning it on, and the default is stored as nothing', () => {
     setKind('canvas', false)
-    expect(JSON.parse(store.get('nib:hidden-kinds') ?? '[]')).toEqual(['canvas'])
+    expect(JSON.parse(store.get('orden:hidden-kinds') ?? '[]')).toEqual(['canvas'])
 
     setKind('canvas', true)
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('nib:hidden-kinds')).toBe(false)
+    expect(store.has('orden:hidden-kinds')).toBe(false)
   })
 
   test('is refused for the last kind offered', () => {
@@ -170,7 +176,7 @@ describe('the account', () => {
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('nib:hidden-kinds')).toBe(false)
+    expect(store.has('orden:hidden-kinds')).toBe(false)
   })
 
   test('that never heard of it takes this machine’s list', () => {

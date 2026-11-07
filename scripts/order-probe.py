@@ -16,7 +16,7 @@ import urllib.request
 
 from probe_app import close_app, run_probe, main_window, sized
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "Order"
 SHOTS = pathlib.Path(__file__).resolve().parents[1] / "target" / "order-probe"
 
@@ -41,7 +41,7 @@ def wrong(words: str) -> None:
     print(f"  WRONG: {words}", flush=True)
 
 def spaces_root() -> pathlib.Path:
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-order-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-order-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made

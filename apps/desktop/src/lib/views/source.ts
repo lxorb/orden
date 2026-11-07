@@ -297,8 +297,8 @@ export function fenceSource(code: string, path: string | null, stranger = false)
 }
 
 export function embeddedPath(target: string, from: string | null): string | null {
-  const root = workspace.activeSpace?.root
-  if (root === undefined) return null
+  const root = workspace.rootHolding(from)
+  if (root === null) return null
   const plain = target.split('#')[0] ?? target
   const found = links.targetOf(from, { kind: 'wikilink', target: plain })
   return found === null ? null : insideSpace(root, found)

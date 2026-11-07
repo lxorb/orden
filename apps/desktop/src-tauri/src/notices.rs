@@ -15,7 +15,7 @@ use tauri::{AppHandle, Emitter as _, Manager as _};
     not(any(windows, target_os = "macos")),
     allow(dead_code, reason = "Linux hears no presses")
 )]
-const PRESSED: &str = "nib://notice";
+const PRESSED: &str = "orden://notice";
 
 const LONGEST_TAG: usize = 64;
 
@@ -115,7 +115,7 @@ pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> R
     if !plain(&notice) {
         return Err("a notice is named by plain characters".into());
     }
-    if probing() && !(cfg!(windows) && std::env::var_os("NIB_PROBE_NOTICES").is_some()) {
+    if probing() && !(cfg!(windows) && std::env::var_os("ORDEN_PROBE_NOTICES").is_some()) {
         return Ok(());
     }
     in_windows(|windows| {

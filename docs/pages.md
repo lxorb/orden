@@ -206,13 +206,13 @@ states the digit rule once.
 while the zoom is happening and for six tenths of a second after. It is the only
 place the number is: a hand pinching the middle of a page is not looking at the bar
 at the bottom of the pane, which is why the bar no longer carries it (#401). It is the same pill the text size uses
-after a pinch - `.nib-pill` in the themes package - because it is the same thing
+after a pinch - `.orden-pill` in the themes package - because it is the same thing
 said about something else.
 
 **The zoom is the reader's, and it is kept.** Until somebody has zoomed, the paper
 stays fitted across the pane: the sidebar opening, a pane splitting, a phone
 turning. Once they have, nothing takes it off them - including the app being
-started again, which used to. The camera came back from `nib:canvas-views` and the
+started again, which used to. The camera came back from `orden:canvas-views` and the
 fact that the zoom was chosen did not, so the first measurement fitted the paper
 again and threw it away. A `chose` key beside the camera is the whole fix; see
 `KeptView` in `apps/desktop/src/lib/canvas/place.ts`.

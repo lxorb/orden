@@ -66,7 +66,7 @@ above may change: the binary is the reader's own and unmodified, no auth method 
 removed, everybody signs in with their own credentials, and Orden never reads a token.
 The terms also ask that a reader be told an answer can be wrong, which Settings > AI
 says under the providers ("AI can be wrong. Check the facts."). The row stays behind a
-build switch, on by default, off with `NIB_CLAUDE_CODE=off` (read by `vite.config.ts` as
+build switch, on by default, off with `ORDEN_CLAUDE_CODE=off` (read by `vite.config.ts` as
 `__CLAUDE_CODE__` and by the crate in `ai_cli.rs`), for a build that must leave it out.
 
 ### ChatGPT: Sign in with ChatGPT, or the reader's own Codex
@@ -118,7 +118,7 @@ a headless run in an untrusted folder exits), and its settings by
 `GEMINI_CLI_SYSTEM_SETTINGS_PATH`: the built-in
 tools excluded, skills and hooks off, and for a sidebar thread `nib mcp` alone
 (`--allowed-mcp-server-names orden`, `includeTools` for the mode, the token by
-`${NIB_MCP_TOKEN}` from the environment). Its models are its aliases (Auto, Pro, Flash,
+`${ORDEN_MCP_TOKEN}` from the environment). Its models are its aliases (Auto, Pro, Flash,
 Flash-Lite); it has no effort, no steering and no pictures from Orden.
 
 ### What a program is run with
@@ -152,7 +152,7 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
 - **The tool's token**: `nib mcp` proves itself with a token lent to the sidebar's
   built-in grant ("nib · Claude Code" in Settings > Agents) for the thread's mode, one per
   provider and mode, made once per run of the app, kept in memory, and handed over in the
-  program's environment (`NIB_MCP_TOKEN`), never on a command line or in a file. The
+  program's environment (`ORDEN_MCP_TOKEN`), never on a command line or in a file. The
   endpoint knows the mode by it, so Agent asks nothing and Approve asks before every
   change, at Orden's own verbs; in Approve `nib mcp` holds the call open while the reader
   answers in the thread (docs/ai-sidebar.md 4.4). It stands in for pairing, so the
@@ -247,11 +247,11 @@ switch started with no providers while every key was still in the keychain. Ever
 and every space read the same file; a write names the stamp of the text it changed, is refused over a newer one
 and made again over it, and is heard by every window. A build under another identifier (a
 probe) has a file of its own, which is what keeps a test away from the reader's accounts.
-The window still keeps a copy (`nib:ai-accounts`) to start from before the crate answers;
+The window still keeps a copy (`orden:ai-accounts`) to start from before the crate answers;
 a browser has only that.
 
 Nobody signs in or types a key again for any of this. The first window that finds no file
-writes it out of the rows it kept before (`nib:ai`, which is left alone for an older
+writes it out of the rows it kept before (`orden:ai`, which is left alone for an older
 build), each row keeping its id, so its key is found under that id, its grant (`nib-<id>`)
 is the same grant and every thread still names it. A second profile that kept rows of its
 own adds the ones the file lacks, once.
@@ -490,7 +490,7 @@ subagent tool of its own (`--tools ""`), so this is its subagent tool.
   until the helper has ended, up to nine of the ten minutes each program gives a tool, and
   the model is told to call `agent_result` past that. The API loop waits outright.
 - **Which thread**: a panel session's `nib mcp` is told its thread beside its token
-  (`NIB_MCP_THREAD`, per Claude Code session and per Codex thread), so a helper is its
+  (`ORDEN_MCP_THREAD`, per Claude Code session and per Codex thread), so a helper is its
   thread's: in its mode, and stopped with it.
 - **Limits**: two deep under the thread the reader started (Claude Code's own is three),
   four at once under one, fifteen minutes each, the API loop's step limit; a helper works in
@@ -680,7 +680,7 @@ Every surface that shows a model's words - the panel, the quick question, a chat
 writes in - draws them the way a note is read (#1122): through `markdown-view.svelte.ts`,
 which is the reading view's renderer with its fences (`fenceFrom` in `before-render.ts`:
 the same coloured blocks and drawn diagrams), the formula engine, footnotes, and the note
-page's own stylesheet (`nib-write`) at the panel's size. An `ai` block's answer is note text
+page's own stylesheet (`orden-write`) at the panel's size. An `ai` block's answer is note text
 and is drawn by the note itself.
 
 - **One spelling of maths.** A model writes `\(…\)` and `\[…\]` as often as `$…$` and
@@ -863,7 +863,7 @@ only the provider knows.
 `scripts/fake-ai-cli.mjs` stands in for both programs: the crate's tests run it through
 the same spawn, stream, stop and timeout as the real ones (and through an npm-style
 `.cmd` shim on Windows), and it refuses a question asked without the flags above. A
-native probe points the app at it with `NIB_AI_CLAUDE_CODE` and `NIB_AI_CODEX`. The one
+native probe points the app at it with `ORDEN_AI_CLAUDE_CODE` and `ORDEN_AI_CODEX`. The one
 test that asks the real Claude Code, read-only, and only where it is already signed in,
 is `cargo test real_claude -- --ignored`.
 

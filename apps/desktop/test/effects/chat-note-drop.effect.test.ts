@@ -28,7 +28,7 @@ test('a note dropped on a chat is linked in the composer', async () => {
   await vi.waitFor(() => expect(target.querySelector('.cm-editor')).not.toBeNull())
 
   const drop = new Event('drop', { bubbles: true, cancelable: true })
-  const transfer = { types: ['text/nib-path'], files: [], getData: () => '/spaces/Team/Plan.md' }
+  const transfer = { types: ['text/orden-path'], files: [], getData: () => '/spaces/Team/Plan.md' }
   Object.defineProperty(drop, 'dataTransfer', { value: transfer })
   target.querySelector('.chat-tab')?.dispatchEvent(drop)
 
@@ -39,7 +39,7 @@ test('a note dropped on a chat is linked in the composer', async () => {
 
   workspace.tabs = [{ id: 'w', kind: 'web', address: 'https://svelte.dev/' }] as never
   const web = new Event('drop', { bubbles: true, cancelable: true })
-  const getData = (one: string) => (one === 'text/nib-tab' ? 'w' : '')
+  const getData = (one: string) => (one === 'text/orden-tab' ? 'w' : '')
   Object.defineProperty(web, 'dataTransfer', { value: { types: [], files: [], getData } })
   target.querySelector('.chat-tab')?.dispatchEvent(web)
   expect(words()).toBe('[[Plan]] https://svelte.dev/ ')

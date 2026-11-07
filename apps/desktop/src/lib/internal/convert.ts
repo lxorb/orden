@@ -134,7 +134,7 @@ async function backedUp(from: string, name: string): Promise<string> {
 
 let turn: Promise<unknown> = Promise.resolve()
 
-const CONVERTING_LOCK = 'nib:converting'
+const CONVERTING_LOCK = 'orden:converting'
 
 function oneAtATime<T>(run: () => Promise<T>): Promise<T> {
   const locked = async (): Promise<T> => {

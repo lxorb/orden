@@ -1603,6 +1603,8 @@ export const ru: Dictionary = {
   Shorter: 'Короче',
   Longer: 'Длиннее',
   'Fix grammar': 'Исправить грамматику',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Выбранных слов больше нет в заметке, поэтому ничего не заменено.',
   'A cited report': 'Отчёт с цитатами',
   'A helper in the background': 'Помощник на фоне',
   'A side question': 'Побочный вопрос',
@@ -3030,6 +3032,8 @@ export const ru: Dictionary = {
   'That could not be protected: {reason}': 'Не удалось защитить: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не добавлен: чат принимает изображения и текстовые файлы до 2 МБ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} не добавлен: сообщение принимает не больше 20 изображений.',
   'Time tracker': 'Учёт времени',
   'Start timer': 'Запустить таймер',
   'Stop timer': 'Остановить таймер',
@@ -3638,9 +3642,47 @@ export const ru: Dictionary = {
   'You said': 'Указано вами',
   Privacy: 'Конфиденциальность',
   'Send crash and freeze reports': 'Отправлять отчёты о сбоях и зависаниях',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Когда Orden падает или зависает, он отправляет, что делал и где в собственном коде, без имён, путей, адресов и паролей. Никогда ваши заметки.',
-  'Turn off in Settings': 'Выключить в настройках',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Отправляет, что делал Orden при сбое или зависании; никогда заметки, имена, пути или пароли.',
+  'Send crash reports to help improve Orden':
+    'Отправлять отчёты о сбоях, чтобы помочь улучшить Orden',
+  'Move to {space}?': 'Переместить в {space}?',
+  'macOS can start dictation with this key too.': 'macOS может запускать этой клавишей и диктовку.',
+  'QR code': 'QR-код',
+  'Waiting…': 'Ожидание…',
+  Service: 'Сервис',
+  'I understand and want to connect anyway': 'Я понимаю и всё равно хочу подключить',
+  'Some changes have not reached your account yet':
+    'Некоторые изменения ещё не дошли до вашего аккаунта',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Они остаются в этом браузере, скрытые от всех, кто войдёт здесь, и отправятся, когда вы войдёте снова.',
+  'Leave it empty to sign in with a QR code instead': 'Оставьте пустым, чтобы войти по QR-коду',
+  'Telegram code': 'Код Telegram',
+  'Sent to Telegram on your other device': 'Отправлен в Telegram на другом вашем устройстве',
+  'Sent by SMS': 'Отправлен по SMS',
+  'You will get a call with the code': 'Вам позвонят и продиктуют код',
+  'The code was wrong. Try again.': 'Код неверный. Попробуйте ещё раз.',
+  'The code expired, so Telegram sent a new one.':
+    'Срок действия кода истёк, Telegram отправил новый.',
+  'Two-step verification password': 'Пароль двухэтапной проверки',
+  'The password was wrong. Try again.': 'Пароль неверный. Попробуйте ещё раз.',
+  'Scan with Telegram on your phone': 'Отсканируйте в Telegram на телефоне',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Настройки > Устройства > Подключить устройство',
+  'Signing in to Telegram needs the app': 'Для входа в Telegram нужно приложение',
+  'Telegram does not know this phone number': 'Telegram не знает этот номер телефона',
+  'Too many tries. Wait a while and try again.':
+    'Слишком много попыток. Подождите и попробуйте снова.',
+  'Too many wrong tries': 'Слишком много неверных попыток',
+  'Signed out of Telegram. Connect again.': 'Вы вышли из Telegram. Подключитесь снова.',
+  'Telegram cannot do that in this conversation': 'Telegram не может сделать это в этом разговоре',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram удаляет сообщения в группах и каналах для всех',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram передаёт группу новому владельцу только в своём приложении',
+  'That sticker is no longer available': 'Этот стикер больше недоступен',
+  'Telegram is not set up in this build': 'Telegram не настроен в этой сборке',
+  'Password manager': 'Менеджер паролей',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Добавляет Pass, который хранит пароли и подставляет их на сайтах. При выключении ваши хранилища сохраняются.',
 }

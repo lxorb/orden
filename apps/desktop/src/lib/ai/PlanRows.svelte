@@ -95,18 +95,18 @@
 
 {#snippet program(kind: LocalKind)}
   {@const plan = plans.of(provider.id)}
-  <div class="nib-setting setting">
+  <div class="orden-setting setting">
     <span class="name">{t('Account')}</span>
     <div class="row">
       {#if plan.state === 'unknown' && !plan.program}
         <span class="hint">{t('Asking…')}</span>
       {:else if plan.state === 'missing'}
         <span class="hint">{t('Not installed')}</span>
-        <button class="nib-chip" onclick={() => void openExternal(INSTALL[kind])}>
+        <button class="orden-chip" onclick={() => void openExternal(INSTALL[kind])}>
           {t('Install')}
         </button>
         <button
-          class="nib-chip is-quiet"
+          class="orden-chip is-quiet"
           onclick={() => void plans.check({ id: provider.id, kind })}
         >
           {t('Check again')}
@@ -121,21 +121,21 @@
         </span>
       {:else if vault.seen[provider.id]}
         <span class="hint">{vault.seen[provider.id]}</span>
-        <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
+        <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
           {t('Sign in here')}
         </button>
       {:else}
-        <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
+        <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
           {t('Sign in')}
         </button>
       {/if}
     </div>
   </div>
 
-  <label class="nib-setting setting">
+  <label class="orden-setting setting">
     <span class="name">{t('Model')}</span>
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       value={provider.model}
       placeholder={t('Default')}
       spellcheck="false"
@@ -150,18 +150,18 @@
 {/snippet}
 
 {#snippet chatgpt()}
-  <div class="nib-setting setting">
+  <div class="orden-setting setting">
     <span class="name">{t('Account')}</span>
     <div class="row">
       {#if plans.chatgpt}
         <span class="hint">{plans.chatgpt.email ?? t('Signed in')}</span>
-        <button class="nib-chip is-quiet" onclick={() => void signOutOfChatgpt()}>
+        <button class="orden-chip is-quiet" onclick={() => void signOutOfChatgpt()}>
           {t('Sign out')}
         </button>
       {:else if plans.chatgpt === null}
         {#if signingIn}<span class="hint">{t('Asking…')}</span>
         {:else if vault.seen[provider.id]}<span class="hint">{vault.seen[provider.id]}</span>{/if}
-        <button class="nib-chip continue" onclick={() => void continueWithChatgpt()}>
+        <button class="orden-chip continue" onclick={() => void continueWithChatgpt()}>
           <ChatGptMark />
           {t('Continue with ChatGPT')}
         </button>
@@ -175,9 +175,9 @@
 
 {#snippet limited(kind: LocalKind | 'chatgpt', limit: Limit | null)}
   {#if limitWords(kind, limit)}
-    <div class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
+    <div class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
       <span class="name hint">{limitWords(kind, limit)}</span>
-      <button class="nib-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}>
+      <button class="orden-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}>
         {t('Manage usage')}
       </button>
     </div>

@@ -22,7 +22,7 @@ async () => {
   }
   await ws.selectSpace(home.id)
   ws.openBlank('Here', '# Here')
-  localStorage.setItem('nib:overview-spaces', 'all')
+  localStorage.setItem('orden:overview-spaces', 'all')
   await new Promise((go) => setTimeout(go, 600))
 }
 """

@@ -54,7 +54,7 @@ def show(page: Page, start: str) -> None:
     page.wait_for_timeout(60)
 
 def rows_now(page: Page) -> int:
-    return page.evaluate("() => document.querySelectorAll('.nib-row').length")
+    return page.evaluate("() => document.querySelectorAll('.orden-row').length")
 
 def weight_of(page: Page, words: str) -> float:
     return page.evaluate(

@@ -123,10 +123,21 @@ export interface Placed {
 
 export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
   const pinned = hosts.filter((host) => host.pinned)
-  const recent = hosts
+  const left = new Map<string, number>()
+  for (const host of hosts) {
+    if (host.group && !host.pinned) left.set(host.group, (left.get(host.group) ?? 0) + 1)
+  }
+  const recent: Host[] = []
+  const lately = hosts
     .filter((host) => !host.pinned && host.last !== null)
     .sort((a, b) => (b.last ?? 0) - (a.last ?? 0))
-    .slice(0, RECENT)
+  for (const host of lately) {
+    if (recent.length === RECENT) break
+    const others = host.group ? (left.get(host.group) ?? 0) : 2
+    if (others < 2) continue
+    if (host.group) left.set(host.group, others - 1)
+    recent.push(host)
+  }
   const taken = new Set([...pinned, ...recent].map((host) => host.id))
   const rest = hosts.filter((host) => !taken.has(host.id))
 
@@ -207,6 +218,23 @@ export function hostFor(hosts: readonly Host[], wanted: Destination): Host | nul
           (host.port ?? null) === wanted.port),
     ) ?? null
   )
+}
+
+export function hostReached(hosts: readonly Host[], reached: Destination): Host | null {
+  return (
+    hostFor(hosts, reached) ??
+    hosts.find(
+      (host) =>
+        (host.name === reached.hostname || host.also.includes(reached.hostname)) &&
+        (reached.user === null || reached.user === host.user) &&
+        (reached.port === null || reached.port === (host.port ?? 22)),
+    ) ??
+    null
+  )
+}
+
+export function groupHosts(hosts: readonly Host[], group: string): Host[] {
+  return hosts.filter((host) => host.group === group)
 }
 
 export function said(wanted: Destination): string {

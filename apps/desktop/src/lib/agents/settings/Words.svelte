@@ -34,18 +34,18 @@
   }
 </script>
 
-<div class="nib-setting words">
+<div class="orden-setting words">
   {#if words.length}
     <div class="list">
       {#each words as word (word)}
-        <button class="nib-tag" title={t('Remove')} onclick={() => onremove(word)}>
+        <button class="orden-tag" title={t('Remove')} onclick={() => onremove(word)}>
           {word}<Cross small />
         </button>
       {/each}
     </div>
   {/if}
   <input
-    class="nib-field is-value add"
+    class="orden-field is-value add"
     type="text"
     {placeholder}
     aria-label={placeholder}

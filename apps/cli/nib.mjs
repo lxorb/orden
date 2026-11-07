@@ -6,8 +6,15 @@ import { homedir, platform, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+for (const [name, value] of Object.entries(process.env)) {
+  const rest = /^NIB_(.+)$/.exec(name)?.[1]
+  if (!rest) continue
+  process.env[`ORDEN_${rest}`] ??= value
+  Reflect.deleteProperty(process.env, name)
+}
+
 function endpointFile() {
-  if (process.env.NIB_ENDPOINT) return process.env.NIB_ENDPOINT
+  if (process.env.ORDEN_ENDPOINT) return process.env.ORDEN_ENDPOINT
 
   const home = homedir()
   const identifier = 'ch.emilvinu.nib'
@@ -201,7 +208,7 @@ async function endpoint() {
 }
 
 async function screenshot(asked) {
-  const out = asked.out ?? join(tmpdir(), 'nib-window.png')
+  const out = asked.out ?? join(tmpdir(), 'orden-window.png')
   const rect = await ask('window', {}, [])
   if (!rect.ok) return show(rect, asked)
 

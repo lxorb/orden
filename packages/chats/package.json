@@ -7,10 +7,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./agent": "./src/agent.ts",
+    "./fake-provider": "./src/fake-provider.ts",
     "./ids": "./src/ids.ts",
     "./limits": "./src/limits.ts",
     "./links": "./src/links.ts",
     "./mail": "./src/mail/provider.ts",
+    "./mail-oauth": "./src/mail/oauth.ts",
     "./mime": "./src/mail/mime.ts",
     "./mentions": "./src/mentions.ts",
     "./notify": "./src/notify.ts",
@@ -20,6 +22,7 @@
     "./reduce": "./src/reduce.ts",
     "./roles": "./src/roles.ts",
     "./search": "./src/search.ts",
+    "./telegram": "./src/telegram/index.ts",
     "./types": "./src/types.ts",
     "./wire": "./src/wire.ts"
   },
@@ -27,7 +30,11 @@
     "test": "vitest run",
     "check": "tsc --noEmit"
   },
+  "dependencies": {
+    "long": "^5.3.2"
+  },
   "devDependencies": {
+    "@mtcute/core": "^0.32.7",
     "fast-check": "^4.10.2",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"

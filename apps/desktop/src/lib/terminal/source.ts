@@ -3,6 +3,7 @@ import type { DownReason, ImageKind } from '@orden/online/wire'
 import { Channel } from '../native'
 import { isNumber, isRecord } from '../stored'
 import { invoke } from '../tauri'
+import type { Destination } from '../remote/hosts'
 import { hostIdOf } from './spec'
 
 export type Machine = 'awake' | 'starting' | 'asleep' | 'stopping' | 'down' | 'near'
@@ -41,6 +42,7 @@ export interface Source {
 
 export class PtySource implements Source {
   readonly remote: boolean
+  reached: string | null = null
 
   constructor(
     readonly id: string,
@@ -88,7 +90,7 @@ export class PtySource implements Source {
   }
 
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
-    const host = hostIdOf(this.shell)
+    const host = this.reached ?? hostIdOf(this.shell)
     if (host === null) return invoke<string>('local_image', { kind, bytes })
     return invoke<string>('remote_image', { host, kind, bytes })
   }
@@ -97,6 +99,16 @@ export class PtySource implements Source {
     const found = await invoke<unknown>('pty_program', { id: this.id }).catch(() => undefined)
     if (found === undefined) return undefined
     return typeof found === 'string' && found ? found : null
+  }
+
+  async ssh(): Promise<Destination | null> {
+    const found = await invoke<unknown>('pty_ssh', { id: this.id }).catch(() => null)
+    if (!isRecord(found) || typeof found.hostname !== 'string' || !found.hostname) return null
+    return {
+      hostname: found.hostname,
+      user: typeof found.user === 'string' && found.user ? found.user : null,
+      port: isNumber(found.port) ? found.port : null,
+    }
   }
 
   async busy(): Promise<boolean> {

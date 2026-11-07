@@ -209,7 +209,7 @@ def agent_acts_and_undo_restores(page: Session, space: pathlib.Path, shots: path
         if listed:
             say("the changes list holds the rename and the delete")
         page.value(
-            "[...document.querySelectorAll('.bar .nib-chip')].find((one) => one.textContent.trim() === 'Undo').click()"
+            "[...document.querySelectorAll('.bar .orden-chip')].find((one) => one.textContent.trim() === 'Undo').click()"
         )
     back = until(
         lambda: (space / "Herons.md").exists()
@@ -284,7 +284,7 @@ def main() -> int:
         (space / name).write_text(words, encoding="utf-8")
 
     server, origin = serve()
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": SWITCHES}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": SWITCHES}
     app = run_probe(given.exe, env=env, quiet=True)
     try:
         page = main_page()

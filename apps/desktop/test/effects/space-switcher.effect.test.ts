@@ -88,7 +88,7 @@ test('the shut panel leaves no space in the title bar', () => {
   bar()
 
   expect(target.querySelector('header [data-space-drop]')).toBe(null)
-  expect(target.querySelector('header .nib-badge')).toBe(null)
+  expect(target.querySelector('header .orden-badge')).toBe(null)
   expect(target.querySelector('header')?.textContent).not.toContain('VIS')
 })
 
@@ -101,8 +101,8 @@ test('a press on the header opens the switcher, and a row in it changes space', 
 
   expect(list()?.getAttribute('aria-label')).toBe('Spaces')
   expect(mark()?.getAttribute('aria-expanded')).toBe('true')
-  const rows = [...(list()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
-  expect(rows.map((one) => one.querySelector('.nib-row-label')?.textContent)).toEqual([
+  const rows = [...(list()?.querySelectorAll<HTMLButtonElement>('.orden-row') ?? [])]
+  expect(rows.map((one) => one.querySelector('.orden-row-label')?.textContent)).toEqual([
     'VIS',
     'Journal',
     'New space',

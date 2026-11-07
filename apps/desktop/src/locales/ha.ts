@@ -1547,6 +1547,8 @@ export const ha: Dictionary = {
   Shorter: 'Gajarta',
   Longer: 'Tsawaita',
   'Fix grammar': 'Gyara nahawu',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Kalmomin da aka zaɓa ba sa cikin bayanin kuma, don haka ba a maye gurbin komai ba.',
   'A cited report': 'Rahoto mai ambato',
   'A helper in the background': 'Mataimaki a bango',
   'A side question': 'Tambaya ta gefe',
@@ -2963,6 +2965,8 @@ export const ha: Dictionary = {
   'That could not be protected: {reason}': 'Ba a iya karewa ba: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Ba a ƙara {name} ba: hira tana karɓar hotuna da fayilolin rubutu har zuwa 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'Ba a ƙara {name} ba: saƙo ɗaya yana karɓar hotuna har zuwa 20.',
   'Time tracker': 'Mai bin diddigin lokaci',
   'Start timer': 'Fara agogon lokaci',
   'Stop timer': 'Tsayar da agogon lokaci',
@@ -3544,9 +3548,48 @@ export const ha: Dictionary = {
   'You said': 'Abin da kuka faɗa',
   Privacy: 'Sirri',
   'Send crash and freeze reports': 'Aika rahotannin faɗuwa da daskarewa',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Idan Orden ya faɗi ko ya daskare, yana aika abin da yake yi da inda yake a cikin lambarsa, ba tare da sunaye, hanyoyi, adireshi da kalmomin sirri ba. Ba bayananka ba har abada.',
-  'Turn off in Settings': 'Kashe a cikin Saituna',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Yana aika abin da Orden ke yi lokacin da ya faɗi ko ya daskare; ba bayanai, sunaye, hanyoyi ko kalmomin sirri ba.',
+  'Send crash reports to help improve Orden': 'Aika rahotannin faɗuwa don taimakawa inganta Orden',
+  'Move to {space}?': 'A matsar zuwa {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS na iya fara rubutu da murya da wannan maɓallin ma.',
+  'QR code': 'Lambar QR',
+  'Waiting…': 'Ana jira…',
+  Service: 'Sabis',
+  'I understand and want to connect anyway': 'Na fahimta kuma ina so in haɗa duk da haka',
+  'Some changes have not reached your account yet': 'Wasu canje-canje ba su isa asusunka ba tukuna',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Suna zama a wannan burauzar, ba tare da wani da ya shiga nan ya gan su ba, kuma za a tura su idan ka sake shiga.',
+  'Leave it empty to sign in with a QR code instead':
+    'Bar shi babu don shiga da lambar QR maimakon haka',
+  'Telegram code': 'Lambar Telegram',
+  'Sent to Telegram on your other device': "An aika zuwa Telegram a ɗaya na'urarka",
+  'Sent by SMS': 'An aika ta SMS',
+  'You will get a call with the code': 'Za a kira ka da lambar',
+  'The code was wrong. Try again.': 'Lambar ba daidai ba ce. Sake gwadawa.',
+  'The code expired, so Telegram sent a new one.':
+    'Lambar ta ƙare, don haka Telegram ta aika sabuwa.',
+  'Two-step verification password': 'Kalmar sirri ta tabbatarwa mataki biyu',
+  'The password was wrong. Try again.': 'Kalmar sirrin ba daidai ba ce. Sake gwadawa.',
+  'Scan with Telegram on your phone': 'Duba da Telegram a wayarka',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Shiga Telegram yana buƙatar manhajar',
+  'Telegram does not know this phone number': 'Telegram ba ta san wannan lambar waya ba',
+  'Too many tries. Wait a while and try again.':
+    'Gwaji da yawa. Jira kaɗan sannan ka sake gwadawa.',
+  'Too many wrong tries': 'Kuskure da yawa',
+  'Signed out of Telegram. Connect again.': 'An fita daga Telegram. Sake haɗawa.',
+  'Telegram cannot do that in this conversation':
+    'Telegram ba za ta iya yin hakan a wannan tattaunawa ba',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram tana goge saƙonni a ƙungiyoyi da tashoshi ga kowa',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram tana miƙa ƙungiya ga sabon mai shi ne kawai daga manhajarta',
+  'That sticker is no longer available': 'Wannan sitika ba ya samuwa yanzu',
+  'Telegram is not set up in this build': 'Ba a saita Telegram a wannan ginin ba',
+  'Password manager': 'Manajan kalmomin sirri',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    "Yana ƙara Pass, wanda ke adana kalmomin sirri kuma yana cike su a shafukan yanar gizo. Kashe shi yana kiyaye ma'ajiyoyinka.",
 }

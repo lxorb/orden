@@ -190,11 +190,11 @@ def go(app: App, tab: str, url: str) -> None:
     time.sleep(2.5)
 
 def history_rows(app: App) -> list[str]:
-    said = app.ask("[...document.querySelectorAll('.history .page .nib-row-label')].map((one) => one.textContent)")
+    said = app.ask("[...document.querySelectorAll('.history .page .orden-row-label')].map((one) => one.textContent)")
     return said if isinstance(said, list) else []
 
 def visits(app: App) -> list[str]:
-    said = app.ask("(JSON.parse(localStorage.getItem('nib:web-visits') || '[]')).map((one) => one.url)")
+    said = app.ask("(JSON.parse(localStorage.getItem('orden:web-visits') || '[]')).map((one) => one.url)")
     return said if isinstance(said, list) else []
 
 def main() -> int:
@@ -212,8 +212,8 @@ def main() -> int:
     port = free_port()
     serve(port)
     site = f"http://127.0.0.1:{port}"
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-browser-parity-spaces-"))
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-browser-parity-spaces-"))
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     made = root / SPACE
     (made / "Read").mkdir(parents=True)
     (made / f"{NOTE}.md").write_text(f"# {NOTE}\n\nA note to start from.\n", encoding="utf-8")
@@ -246,7 +246,7 @@ def main() -> int:
         )
 
         key(app, "h", "KeyH")
-        history = until(lambda: next((one for one in tabs(app) if one.get("url") == "nib://history"), None))
+        history = until(lambda: next((one for one in tabs(app) if one.get("url") == "orden://history"), None))
         said["history tab"] = history
         checks["Ctrl+H opens the History page in a tab"] = bool(history) and bool(history.get("active"))  # type: ignore[union-attr]
         rows = until(lambda: history_rows(app))
@@ -256,7 +256,7 @@ def main() -> int:
         key(app, "h", "KeyH")
         time.sleep(1)
         checks["Ctrl+H again keeps the one History tab"] = (
-            len([one for one in tabs(app) if one.get("url") == "nib://history"]) == 1
+            len([one for one in tabs(app) if one.get("url") == "orden://history"]) == 1
         )
 
         app.ask(
@@ -328,13 +328,13 @@ def main() -> int:
         before = read(app, tab)
         said["before the clearing"] = before
         key(app, "Delete", "Delete", shift=True)
-        dialog = until(lambda: app.ask("!!document.querySelector('.nib-screen [role=switch]')"))
+        dialog = until(lambda: app.ask("!!document.querySelector('.orden-screen [role=switch]')"))
         checks["Ctrl+Shift+Delete opens the dialog"] = dialog is True
         app.ask(
-            "(() => { const all = [...document.querySelectorAll('.nib-screen button')];"
+            "(() => { const all = [...document.querySelectorAll('.orden-screen button')];"
             " const it = all.find((one) => one.textContent.trim() === 'Delete data'); it.click(); return !!it })()"
         )
-        gone = until(lambda: app.ask("!document.querySelector('.nib-screen [role=switch]')"), 30)
+        gone = until(lambda: app.ask("!document.querySelector('.orden-screen [role=switch]')"), 30)
         checks["the dialog closes once the engine has answered"] = gone is True
         go(app, tab, f"{site}/plain")
         after = read(app, tab)
@@ -371,7 +371,7 @@ def main() -> int:
         )
 
         app.ask(
-            "localStorage.setItem('nib:search-engine', JSON.stringify({ id: 'custom',"
+            "localStorage.setItem('orden:search-engine', JSON.stringify({ id: 'custom',"
             f" custom: '{site}/search?q=%s' }})); true"
         )
         close_app(running)

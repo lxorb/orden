@@ -35,6 +35,6 @@ test('the first page is asked for only once the window hears where pages get to'
   release()
   await shown
   await vi.waitFor(() => expect(order).toContain('web_open'))
-  expect(order.indexOf('nib://web-tab')).toBeGreaterThanOrEqual(0)
-  expect(order.indexOf('nib://web-tab')).toBeLessThan(order.indexOf('web_open'))
+  expect(order.indexOf('orden://web-tab')).toBeGreaterThanOrEqual(0)
+  expect(order.indexOf('orden://web-tab')).toBeLessThan(order.indexOf('web_open'))
 })

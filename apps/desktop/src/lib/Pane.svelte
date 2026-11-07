@@ -547,7 +547,7 @@
             aria-pressed={one.id === pane.activeTabId}
             onclick={() => workspace.activate(one.id)}
           >
-            <span class="nib-row-label"><bdi>{one.shown}</bdi></span>
+            <span class="orden-row-label"><bdi>{one.shown}</bdi></span>
           </button>
           <div
             class="sheet"
@@ -628,7 +628,7 @@
 
 {#snippet unreachable()}
   <div class="coming" role="alert">
-    <button class="nib-button" onclick={() => location.reload()}>{t('Reload')}</button>
+    <button class="orden-button" onclick={() => location.reload()}>{t('Reload')}</button>
   </div>
 {/snippet}
 
@@ -764,7 +764,7 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  .spine .nib-row-label {
+  .spine .orden-row-label {
     display: block;
     max-height: 100%;
     overflow: hidden;

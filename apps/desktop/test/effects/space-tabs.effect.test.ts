@@ -301,7 +301,7 @@ describe('the session', () => {
     await workspace.openEntry(FOOD)
     workspace.persist()
 
-    const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+    const written = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       sets?: { on: string; aside: Record<string, { layout: { frame: unknown } }> }
     }
     expect(written.sets?.on).toBe('home')

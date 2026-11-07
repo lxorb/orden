@@ -36,7 +36,7 @@ vi.mock('../api', async (importOriginal) => ({
   },
 }))
 vi.mock('../sync.svelte', () => ({
-  STORAGE_KEY: 'nib:mirrors',
+  STORAGE_KEY: 'orden:mirrors',
   sync: {
     nudge: () => {
       fake.nudged++

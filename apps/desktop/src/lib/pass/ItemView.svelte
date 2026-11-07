@@ -168,7 +168,7 @@
   <header class="head">
     {#if stepped}
       <button
-        class="nib-glyph"
+        class="orden-glyph"
         type="button"
         aria-label={t('Back')}
         title={t('Back')}
@@ -189,19 +189,19 @@
     </div>
     {#if trashed}
       <button
-        class="nib-button is-quiet is-soft"
+        class="orden-button is-quiet is-soft"
         type="button"
         onclick={() => void pass.restore([item.id])}
       >
         {t('Restore')}
       </button>
     {:else}
-      <button class="nib-button" type="button" onclick={() => void ui.edit(item.id)}
+      <button class="orden-button" type="button" onclick={() => void ui.edit(item.id)}
         >{t('Edit')}</button
       >
     {/if}
     <button
-      class="nib-glyph"
+      class="orden-glyph"
       type="button"
       aria-label={t('More')}
       title={t('More')}
@@ -218,7 +218,7 @@
 
     {#each groups as group (group.id)}
       <section class="card" aria-label={group.name || null}>
-        {#if group.name}<h3 class="nib-section">{group.name}</h3>{/if}
+        {#if group.name}<h3 class="orden-section">{group.name}</h3>{/if}
         {#each group.fields as field (field.id)}
           {#if field.kind === 'totp' && sealed}
             <FieldRow label={field.label} value="" hidden sealed />
@@ -263,7 +263,7 @@
 
     {#if content.kind === 'login' && content.websites.length}
       <section class="card">
-        <h3 class="nib-section">{t('Websites')}</h3>
+        <h3 class="orden-section">{t('Websites')}</h3>
         {#each content.websites as website, index (index)}
           <button
             class="line is-pressable site"
@@ -283,10 +283,10 @@
 
     {#if note}
       <section class="card">
-        <h3 class="nib-section">{t('Note')}</h3>
+        <h3 class="orden-section">{t('Note')}</h3>
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note rendered with every tag of its own escaped -->
-        <div class="note nib-rendered" onclick={linkPressed}>{@html note}</div>
+        <div class="note orden-rendered" onclick={linkPressed}>{@html note}</div>
       </section>
     {/if}
 
@@ -377,7 +377,7 @@
     overflow: hidden;
   }
 
-  .card > .nib-section {
+  .card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }

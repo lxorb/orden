@@ -167,7 +167,7 @@ esac
       built?: string[]
       held?: string[]
     }) {
-      const at = mkdtempSync(join(tmpdir(), 'nib-prune-'))
+      const at = mkdtempSync(join(tmpdir(), 'orden-prune-'))
       mkdirSync(join(at, 'bin'))
       mkdirSync(join(at, 'scripts'))
       writeFileSync(join(at, 'scripts', 'prune-edge.sh'), repo('scripts', 'prune-edge.sh'))
@@ -276,7 +276,7 @@ esac
   })
 
   test('names every Linux package in the manifest, by its architecture and kind', () => {
-    const at = mkdtempSync(join(tmpdir(), 'nib-manifest-'))
+    const at = mkdtempSync(join(tmpdir(), 'orden-manifest-'))
     for (const [arch, kinds] of [
       ['x64', ['AppImage', 'deb', 'rpm']],
       ['arm64', ['AppImage', 'deb', 'rpm']],
@@ -674,10 +674,10 @@ describe('what nib claims to open', () => {
     for (const line of writes) {
       expect(line).not.toMatch(/Nib\.markdown|FileAssociations|Classes\\\.m/)
     }
-    expect(install).toContain('!insertmacro NIB_FORGET_FILES')
-    expect(uninstall).toContain('!insertmacro NIB_FORGET_FILES')
+    expect(install).toContain('!insertmacro ORDEN_FORGET_FILES')
+    expect(uninstall).toContain('!insertmacro ORDEN_FORGET_FILES')
     for (const ext of ['md', 'markdown', 'mdown', 'mkd']) {
-      expect(script).toContain(`!insertmacro NIB_FORGET_EXTENSION "${ext}"`)
+      expect(script).toContain(`!insertmacro ORDEN_FORGET_EXTENSION "${ext}"`)
     }
     expect(script).toContain(String.raw`DeleteRegKey SHCTX "Software\Classes\Nib.markdown"`)
   })
@@ -1077,7 +1077,7 @@ describe('the packaging bump', () => {
   }
 
   test('finds every line it rewrites in the files as committed, and again in what it wrote', () => {
-    const at = mkdtempSync(join(tmpdir(), 'nib-bump-'))
+    const at = mkdtempSync(join(tmpdir(), 'orden-bump-'))
     mkdirSync(join(at, 'scripts'))
     cpSync(join(HERE, 'scripts', 'bump-packaging.mjs'), join(at, 'scripts', 'bump-packaging.mjs'))
     cpSync(ROOT, join(at, 'packaging'), { recursive: true })

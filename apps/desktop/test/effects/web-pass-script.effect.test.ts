@@ -378,7 +378,7 @@ test('a fillable field wears a mark in a closed root, and only a person pressing
   const { closed, document, said, only, trusted, inside } = await page(
     '<form><input name="user"><input type="password" name="pw"></form>',
   )
-  const marks = document.documentElement.querySelectorAll(':scope > nib-pass-mark')
+  const marks = document.documentElement.querySelectorAll(':scope > orden-pass-mark')
   expect(marks).toHaveLength(2)
   expect([...marks].every((one) => one.shadowRoot === null)).toBe(true)
   expect(closed).toHaveLength(2)

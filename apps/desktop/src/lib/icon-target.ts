@@ -38,7 +38,13 @@ export function setTerminalIcon(id: string, icon: string | null, colour: string 
   const tab = terminalTab(id)
   const spec = tab ? readSpec(tab.doc) : null
   if (!tab || !spec) return
-  const plain = { shell: spec.shell, folder: spec.folder, key: spec.key, name: spec.name }
+  const plain = {
+    shell: spec.shell,
+    folder: spec.folder,
+    key: spec.key,
+    name: spec.name,
+    ...(spec.via ? { via: spec.via } : {}),
+  }
   const worn = icon === null ? plain : { ...plain, icon, ...(colour ? { iconColor: colour } : {}) }
   tab.note.replace(writeSpec(worn), false)
   workspace.scheduleSession()

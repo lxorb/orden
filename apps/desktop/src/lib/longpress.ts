@@ -61,7 +61,7 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
   node.addEventListener('touchmove', onMove, { passive: true })
   node.addEventListener('touchend', onEnd)
   node.addEventListener('touchcancel', cancel)
-  node.addEventListener('nib-took-over', cancel)
+  node.addEventListener('orden-took-over', cancel)
 
   return {
     update(next: (event: MouseEvent) => void) {
@@ -73,7 +73,7 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
       node.removeEventListener('touchmove', onMove)
       node.removeEventListener('touchend', onEnd)
       node.removeEventListener('touchcancel', cancel)
-      node.removeEventListener('nib-took-over', cancel)
+      node.removeEventListener('orden-took-over', cancel)
     },
   }
 }

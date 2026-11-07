@@ -452,7 +452,7 @@ interface Held {
 
 const held = new Map<string, Held>()
 
-const lockOf = (folder: string) => `nib:working:${folder}`
+const lockOf = (folder: string) => `orden:working:${folder}`
 
 function keep(mount: Mounted, disk: (folder: string) => WorkDisk = crateDisk): Held {
   const key = mount.folder.name

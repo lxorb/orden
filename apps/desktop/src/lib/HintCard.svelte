@@ -31,17 +31,28 @@
     hints.dismiss(hint)
     onpress?.()
   }
+
+  let bubble = $state<HTMLDivElement>()
+
+  function busy(event: Event) {
+    if (hints.current !== hint) return
+    if (event.target instanceof Node && bubble?.contains(event.target)) return
+    hints.aside(hint)
+  }
 </script>
+
+<svelte:window onpointerdowncapture={busy} onkeydowncapture={busy} />
 
 {#if hints.current === hint}
   <div
-    class="nib-bubble is-pressable hint"
+    bind:this={bubble}
+    class="orden-bubble is-pressable hint"
     role="status"
     use:hang={{ side, gap: 4, inset: '--space-2' }}
     transition:fly={{ y: side === 'above' ? 4 : -4, duration: dur(180), easing: cubicOut }}
   >
     <button class="say" onclick={press}>{text}</button>
-    <button class="nib-glyph shut" aria-label={t('Dismiss')} onclick={() => hints.dismiss(hint)}>
+    <button class="orden-glyph shut" aria-label={t('Dismiss')} onclick={() => hints.dismiss(hint)}>
       <Cross small />
     </button>
   </div>

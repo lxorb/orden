@@ -1,3 +1,4 @@
+import { pngData } from '../png-off'
 import type { PaperAt } from './paper'
 
 const SIDE = 16384
@@ -52,7 +53,7 @@ export async function paperPicture(at: PaperAt, number: number): Promise<string 
   if (!ctx) return null
 
   ctx.drawImage(paper.image, 0, 0)
-  return sheet.toDataURL('image/png')
+  return pngData(sheet)
 }
 
 export async function paperIsLocked(at: PaperAt): Promise<boolean> {

@@ -54,8 +54,8 @@ afterEach(() => {
 })
 
 const dialog = () => target.querySelector<HTMLElement>('[data-spaces-open]')
-const rows = () => [...(dialog()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
-const names = () => rows().map((one) => one.querySelector('.nib-row-label')?.textContent)
+const rows = () => [...(dialog()?.querySelectorAll<HTMLButtonElement>('.orden-row') ?? [])]
+const names = () => rows().map((one) => one.querySelector('.orden-row-label')?.textContent)
 
 async function opened() {
   spacePicker.toggle()
@@ -129,7 +129,7 @@ test('a name is found, shown as hits, and waits for Enter', async () => {
   await type('jo')
 
   expect(names()).toEqual(['Journal'])
-  expect(rows()[0]?.querySelector('.nib-row-label b')?.textContent).toBe('Jo')
+  expect(rows()[0]?.querySelector('.orden-row-label b')?.textContent).toBe('Jo')
   expect(shown).not.toHaveBeenCalled()
   expect(spacePicker.open).toBe(true)
   expect(dialog()?.querySelector('input, textarea, [contenteditable]')).toBe(null)
@@ -146,7 +146,7 @@ test('Backspace takes a letter back, and a letter nothing holds is refused', asy
 
   await press('z')
   expect(names()).toEqual(['ETH'])
-  expect(rows()[0]?.querySelector('.nib-row-label b')?.textContent).toBe('E')
+  expect(rows()[0]?.querySelector('.orden-row-label b')?.textContent).toBe('E')
 
   await press('Backspace')
   expect(names()).toEqual(FOUR)
@@ -220,7 +220,7 @@ test('a space shared only to be read is there, and marked', async () => {
   await opened()
 
   const lab = rows()[3]
-  expect(lab?.querySelector('.nib-row-label')?.textContent).toBe('Lab')
+  expect(lab?.querySelector('.orden-row-label')?.textContent).toBe('Lab')
   expect(lab?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Read-only')
   expect(rows()[0]?.querySelector('[role="img"]')).toBe(null)
 })

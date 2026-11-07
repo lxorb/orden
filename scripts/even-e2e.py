@@ -602,7 +602,7 @@ def main() -> int:
                 """
                 () => {
                   localStorage.setItem(
-                    'nib:modes',
+                    'orden:modes',
                     JSON.stringify({
                       glassesBreak: 2,
                       glassesLineNumbers: true,
@@ -615,7 +615,7 @@ def main() -> int:
                   // A session, because a question is asked of an account: the key is
                   // on the account and the plugin has none. The stub above answers
                   // for it; see BRIDGE.
-                  localStorage.setItem('nib:session', 'a-test-session')
+                  localStorage.setItem('orden:session', 'a-test-session')
                 }
                 """
             )
@@ -1314,7 +1314,7 @@ def main() -> int:
 
             page.evaluate(SEED, [[[UNI_PATH, UNI]]])
             page.evaluate(
-                "([icon]) => localStorage.setItem('nib:icons', JSON.stringify({ '/Notes': icon }))",
+                "([icon]) => localStorage.setItem('orden:icons', JSON.stringify({ '/Notes': icon }))",
                 [ICON],
             )
             page.wait_for_timeout(700)
@@ -1328,11 +1328,11 @@ def main() -> int:
 
             marks = page.evaluate(
                 """
-                () => [...document.querySelectorAll('.spaces .nib-row')].map((one) => {
-                  const badge = one.querySelector('.nib-badge')
+                () => [...document.querySelectorAll('.spaces .orden-row')].map((one) => {
+                  const badge = one.querySelector('.orden-badge')
                   const path = badge ? badge.querySelector('svg path') : null
                   return {
-                    name: (one.querySelector('.nib-row-label')?.textContent ?? '').trim(),
+                    name: (one.querySelector('.orden-row-label')?.textContent ?? '').trim(),
                     shape: badge ? badge.querySelectorAll('svg path').length : 0,
                     // The half that cannot be seen in the DOM: an element in the
                     // wrong namespace is there, is the right size, and draws nothing
@@ -1366,7 +1366,7 @@ def main() -> int:
             )
             page.screenshot(path=str(OUT / "phone-spaces.png"))
 
-            page.evaluate("localStorage.setItem('nib:language', 'th')")
+            page.evaluate("localStorage.setItem('orden:language', 'th')")
             page.wait_for_timeout(700)
             page.reload()
             page.wait_for_timeout(1800)
@@ -1388,7 +1388,7 @@ def main() -> int:
             page.wait_for_timeout(400)
 
             def panel_in(language: str) -> dict:
-                page.evaluate("([one]) => localStorage.setItem('nib:language', one)", [language])
+                page.evaluate("([one]) => localStorage.setItem('orden:language', one)", [language])
                 page.wait_for_timeout(700)
                 page.reload()
                 page.wait_for_timeout(1800)
@@ -1421,7 +1421,7 @@ def main() -> int:
                 rows_yue.replace(chr(10), " | ")[:90],
             )
 
-            page.evaluate("localStorage.removeItem('nib:language')")
+            page.evaluate("localStorage.removeItem('orden:language')")
 
             astray = [one for one in missing if "sketch.png" not in one]
             report.ok("asks the server for nothing that is not there", not astray, "; ".join(astray[:3]))

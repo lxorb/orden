@@ -2,19 +2,19 @@ use std::sync::Mutex;
 use tauri::utils::config::Color;
 use tauri::{AppHandle, Manager, Webview};
 
-const LINE: &str = "/*! nib-pages ";
+const LINE: &str = "/*! orden-pages ";
 
 const NOTHING: &str = r#"{"clear":false,"sheets":[]}"#;
 
 const WEAR: &str = r"(function () {
   var pages = __PAGES__;
   function wear() {
-    document.querySelectorAll('style.nib-page-style').forEach(function (old) { old.remove(); });
+    document.querySelectorAll('style.orden-page-style').forEach(function (old) { old.remove(); });
     pages.sheets.forEach(function (one) {
       Promise.resolve().then(function () {
         if (!document.documentElement || !new RegExp(one.match).test(location.href)) return;
         var style = document.createElement('style');
-        style.className = 'nib-page-style';
+        style.className = 'orden-page-style';
         style.textContent = one.css;
         document.documentElement.appendChild(style);
       });

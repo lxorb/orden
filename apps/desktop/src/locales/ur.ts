@@ -1525,6 +1525,8 @@ export const ur: Dictionary = {
   Shorter: 'مختصر',
   Longer: 'طویل',
   'Fix grammar': 'قواعد درست کریں',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'چنے گئے الفاظ اب نوٹ میں نہیں ہیں، اس لیے کچھ نہیں بدلا گیا۔',
   'A cited report': 'ماخذ کے ساتھ رپورٹ',
   'A helper in the background': 'پس منظر میں مددگار',
   'A side question': 'ضمنی سوال',
@@ -2914,6 +2916,8 @@ export const ur: Dictionary = {
   'That could not be protected: {reason}': 'محفوظ نہیں کیا جا سکا: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} شامل نہیں کیا گیا: چیٹ تصاویر اور 2 MB تک کی متنی فائلیں لیتی ہے۔',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} شامل نہیں کیا گیا: ایک پیغام میں زیادہ سے زیادہ 20 تصاویر آ سکتی ہیں۔',
   'Time tracker': 'وقت ٹریکر',
   'Start timer': 'ٹائمر شروع کریں',
   'Stop timer': 'ٹائمر روکیں',
@@ -3490,9 +3494,47 @@ export const ur: Dictionary = {
   'You said': 'آپ نے بتایا',
   Privacy: 'رازداری',
   'Send crash and freeze reports': 'کریش اور رکنے کی رپورٹیں بھیجیں',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'جب Orden کریش ہو یا رک جائے، تو یہ بھیجتا ہے کہ یہ کیا کر رہا تھا اور اپنے کوڈ میں کہاں تھا، نام، راستے، پتے اور پاس ورڈ ہٹا کر۔ آپ کے نوٹس کبھی نہیں۔',
-  'Turn off in Settings': 'ترتیبات میں بند کریں',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden کریش یا رکنے پر کیا کر رہا تھا یہ بھیجتا ہے؛ نوٹس، نام، راستے یا پاس ورڈ کبھی نہیں۔',
+  'Send crash reports to help improve Orden':
+    'Orden کو بہتر بنانے میں مدد کے لیے کریش رپورٹیں بھیجیں',
+  'Move to {space}?': '{space} میں منتقل کریں؟',
+  'macOS can start dictation with this key too.': 'macOS اس کلید سے ڈکٹیشن بھی شروع کر سکتا ہے۔',
+  'QR code': 'QR کوڈ',
+  'Waiting…': 'انتظار ہو رہا ہے…',
+  Service: 'سروس',
+  'I understand and want to connect anyway': 'میں سمجھتا ہوں اور پھر بھی جوڑنا چاہتا ہوں',
+  'Some changes have not reached your account yet': 'کچھ تبدیلیاں ابھی آپ کے اکاؤنٹ تک نہیں پہنچیں',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'وہ اسی براؤزر میں رہتی ہیں، یہاں سائن ان کرنے والے کسی اور کو نظر نہیں آتیں، اور آپ کے دوبارہ سائن ان کرنے پر بھیجی جاتی ہیں۔',
+  'Leave it empty to sign in with a QR code instead':
+    'اس کے بجائے QR کوڈ سے سائن ان کرنے کے لیے خالی چھوڑیں',
+  'Telegram code': 'Telegram کوڈ',
+  'Sent to Telegram on your other device': 'آپ کے دوسرے آلے پر Telegram میں بھیجا گیا',
+  'Sent by SMS': 'SMS سے بھیجا گیا',
+  'You will get a call with the code': 'آپ کو کوڈ بتانے والی کال آئے گی',
+  'The code was wrong. Try again.': 'کوڈ غلط تھا۔ دوبارہ کوشش کریں۔',
+  'The code expired, so Telegram sent a new one.':
+    'کوڈ کی میعاد ختم ہو گئی، اس لیے Telegram نے نیا بھیجا۔',
+  'Two-step verification password': 'دو مرحلہ تصدیق کا پاس ورڈ',
+  'The password was wrong. Try again.': 'پاس ورڈ غلط تھا۔ دوبارہ کوشش کریں۔',
+  'Scan with Telegram on your phone': 'اپنے فون پر Telegram سے اسکین کریں',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram میں سائن ان کے لیے ایپ درکار ہے',
+  'Telegram does not know this phone number': 'Telegram اس فون نمبر کو نہیں جانتا',
+  'Too many tries. Wait a while and try again.':
+    'بہت زیادہ کوششیں۔ کچھ دیر رک کر دوبارہ کوشش کریں۔',
+  'Too many wrong tries': 'بہت زیادہ غلط کوششیں',
+  'Signed out of Telegram. Connect again.': 'Telegram سے سائن آؤٹ ہو گئے۔ دوبارہ جڑیں۔',
+  'Telegram cannot do that in this conversation': 'Telegram اس گفتگو میں یہ نہیں کر سکتا',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram گروپس اور چینلز کے پیغامات سب کے لیے حذف کرتا ہے',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram گروپ نئے مالک کو صرف اپنی ایپ سے سونپتا ہے',
+  'That sticker is no longer available': 'وہ اسٹیکر اب دستیاب نہیں',
+  'Telegram is not set up in this build': 'اس بلڈ میں Telegram سیٹ اپ نہیں ہے',
+  'Password manager': 'پاس ورڈ مینیجر',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass شامل کرتا ہے، جو پاس ورڈ رکھتا ہے اور ویب سائٹس پر بھرتا ہے۔ بند کرنے سے آپ کے والٹ برقرار رہتے ہیں۔',
 }

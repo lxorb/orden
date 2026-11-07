@@ -5,9 +5,11 @@ import { called } from './person'
 import { forget, keep, storedText } from './stored'
 import { waited } from './timing'
 
-const STORAGE_KEY = 'nib:session'
+const STORAGE_KEY = 'orden:session'
 
 export type Step = 'email' | 'code' | 'second'
+
+export type Leaving = 'asked' | 'told' | 'kept'
 
 export interface Vault {
   read(): Promise<string | null>
@@ -63,10 +65,16 @@ class Session {
     this.vault = vault
   }
 
-  private readonly alsoForget = new Set<() => void>()
+  private readonly alsoForget = new Set<(kept: boolean) => void>()
 
-  forgetWithSession(clear: () => void) {
+  forgetWithSession(clear: (kept: boolean) => void) {
     this.alsoForget.add(clear)
+  }
+
+  private mayLeave: () => Promise<boolean> = () => Promise.resolve(true)
+
+  askBeforeLeaving(ask: () => Promise<boolean>) {
+    this.mayLeave = ask
   }
 
   async restore() {
@@ -238,9 +246,10 @@ class Session {
     this.settling = false
   }
 
-  async signOut() {
+  async signOut(how: Leaving = 'told') {
+    if (how === 'asked' && this.user && !(await this.mayLeave())) return
     const token = this.token
-    this.forget()
+    this.forget(how === 'kept')
     if (token) await api.signOut(token).catch(() => undefined)
   }
 
@@ -279,7 +288,7 @@ class Session {
     )
   }
 
-  private forget() {
+  private forget(kept = false) {
     clearTimeout(this.asking)
     arriving.reset()
     forget(STORAGE_KEY)
@@ -293,7 +302,7 @@ class Session {
     this.spaces = []
     this.deletedSpaces = []
     this.listed = false
-    for (const clear of this.alsoForget) clear()
+    for (const clear of this.alsoForget) clear(kept)
   }
 
   private resendTimer: ReturnType<typeof setInterval> | undefined

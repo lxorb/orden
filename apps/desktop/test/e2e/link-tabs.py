@@ -73,7 +73,7 @@ def press(page, selector: str, *, modifiers=(), button="left") -> None:
 def in_the_note(page) -> None:
     say("--- a link in a note ---")
 
-    link = ".nib-link[data-href]"
+    link = ".orden-link[data-href]"
     if not page.locator(link).count():
         wrong("the note drew no link to press")
         return
@@ -111,7 +111,7 @@ def in_the_note(page) -> None:
 def an_email(page) -> None:
     say("--- what is not a page ---")
 
-    mail = '.nib-link[data-href^="mailto:"]'
+    mail = '.orden-link[data-href^="mailto:"]'
     if not page.locator(mail).count():
         wrong("the note drew no mailto link to press")
         return
@@ -133,7 +133,7 @@ def an_email(page) -> None:
 def the_menu(page) -> None:
     say("--- a right click on a link ---")
 
-    page.locator(".nib-link[data-href^='https']").first.click(button="right")
+    page.locator(".orden-link[data-href^='https']").first.click(button="right")
     page.wait_for_timeout(400)
     rows = page.evaluate(
         """
@@ -177,7 +177,7 @@ def a_locked_note(page) -> None:
     page.evaluate("() => window.nibApp.modes.toggleReadOnly(undefined)")
     page.wait_for_timeout(400)
 
-    press(page, ".nib-link[data-href^='https']")
+    press(page, ".orden-link[data-href^='https']")
     state = page.evaluate(STATE)
     if state["active"]["address"] != "https://svelte.dev/docs":
         wrong(f"a plain click in a locked note did not open the page in front: {state}")

@@ -1,9 +1,9 @@
 import { settings } from '../settings.svelte'
 import { hostPickerDialog } from '../surfaces.svelte'
 import { workspace } from '../workspace.svelte'
-import type { Destination, Host } from './hosts'
+import { type Destination, groupHosts, type Host } from './hosts'
 import { remote } from './hosts.svelte'
-import { connectTo, openRemote } from './open'
+import { connectTo, openAll, openRemote } from './open'
 
 class HostPicker {
   open = $state(false)
@@ -25,6 +25,11 @@ class HostPicker {
   choose(host: Host): void {
     this.away()
     void openRemote(host.id)
+  }
+
+  chooseGroup(group: string): void {
+    this.away()
+    void openAll(groupHosts(remote.hosts, group).map((host) => host.id))
   }
 
   connect(wanted: Destination): void {

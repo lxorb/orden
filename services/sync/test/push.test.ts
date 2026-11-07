@@ -260,7 +260,7 @@ describe('sending', () => {
       (await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer,
     )
     const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
-    return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'nib-test' })
+    return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
   }
 
   function soon() {
@@ -291,7 +291,7 @@ describe('sending', () => {
 
       const fcm = recorded(
         () => Response.json({ access_token: 'access', expires_in: 3600 }),
-        () => Response.json({ name: 'projects/nib-test/messages/1' }),
+        () => Response.json({ name: 'projects/orden-test/messages/1' }),
       )
       expect(await sendDue(env, at + 5000, fcm.send)).toBe(1)
     } finally {
@@ -331,13 +331,13 @@ describe('sending', () => {
 
     const fcm = recorded(
       () => Response.json({ access_token: 'access', expires_in: 3600 }),
-      () => Response.json({ name: 'projects/nib-test/messages/1' }),
+      () => Response.json({ name: 'projects/orden-test/messages/1' }),
     )
     expect(await sendDue(env, AT - 60_000, fcm.send)).toBe(0)
     expect(await sendDue(env, AT, fcm.send)).toBe(1)
     expect(fcm.asked.map((one) => one.url)).toEqual([
       'https://oauth2.googleapis.com/token',
-      'https://fcm.googleapis.com/v1/projects/nib-test/messages:send',
+      'https://fcm.googleapis.com/v1/projects/orden-test/messages:send',
     ])
     const sent = JSON.parse(fcm.asked[1]?.init?.body as string) as {
       message: { token: string; data: Record<string, string> }
@@ -369,7 +369,7 @@ describe('sending', () => {
 
     const fcm = recorded(
       () => Response.json({ access_token: 'access', expires_in: 3600 }),
-      () => Response.json({ name: 'projects/nib-test/messages/1' }),
+      () => Response.json({ name: 'projects/orden-test/messages/1' }),
     )
     expect(await sendDue(env, AT, fcm.send)).toBe(1)
     const said = fcm.asked[1]?.init?.body as string
@@ -428,7 +428,7 @@ describe('sending', () => {
   })
 
   describe('a push no service took', () => {
-    const OK = () => Response.json({ name: 'projects/nib-test/messages/1' })
+    const OK = () => Response.json({ name: 'projects/orden-test/messages/1' })
     const DOWN = () => new Response('down', { status: 503 })
     const TOKEN = () => Response.json({ access_token: 'access', expires_in: 3600 })
     const MINUTE = 60_000

@@ -1,8 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use nib_lib as orden;
+
 fn main() {
+    orden::former_name::carry_env();
     #[cfg(feature = "cef")]
-    if nib_lib::cef_helper() {
+    if orden::cef_helper() {
         return;
     }
     #[cfg(desktop)]
@@ -10,7 +13,7 @@ fn main() {
         .nth(1)
         .is_some_and(|first| first == "mcp")
     {
-        std::process::exit(nib_lib::mcp::serve());
+        std::process::exit(orden::mcp::serve());
     }
-    nib_lib::run();
+    orden::run();
 }

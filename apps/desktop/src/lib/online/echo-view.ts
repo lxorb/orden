@@ -1,7 +1,7 @@
 import type { IDisposable, Terminal } from '@xterm/xterm'
 import { type EchoScreen, Predictor } from './echo'
 
-const ECHOING = 'nib-echoing'
+const ECHOING = 'orden-echoing'
 
 export class LocalEcho {
   private readonly predictor = new Predictor(() => performance.now())

@@ -88,7 +88,7 @@
       <span class="acts">
         {#if !archived}
           <button
-            class="nib-glyph act"
+            class="orden-glyph act"
             class:on={!!head.pinned}
             title={head.pinned ? t('Unpin') : t('Pin')}
             aria-label={head.pinned ? t('Unpin') : t('Pin')}
@@ -99,7 +99,7 @@
           </button>
         {/if}
         <button
-          class="nib-glyph act"
+          class="orden-glyph act"
           title={archived ? t('Unarchive') : t('Archive')}
           aria-label={archived ? t('Unarchive') : t('Archive')}
           onclick={onarchive}
@@ -110,7 +110,7 @@
         </button>
         {#if onmenu}
           <button
-            class="nib-glyph act"
+            class="orden-glyph act"
             title={t('More')}
             aria-label={t('More')}
             aria-haspopup="menu"

@@ -18,8 +18,8 @@ export const linkOpener = Facet.define<
 export function hrefOf(target: string): string | null {
   const trimmed = target.trim()
   if (/^(https?|mailto):/i.test(trimmed)) return trimmed
-  if (/^nib:\/\/chat\//i.test(trimmed)) return trimmed
-  if (/^nib:\/\/settings\/import\/?$/i.test(trimmed)) return trimmed
+  if (/^(orden|nib):\/\/chat\//i.test(trimmed)) return trimmed
+  if (/^(orden|nib):\/\/settings\/import\/?$/i.test(trimmed)) return trimmed
   if (/^www\./i.test(trimmed)) return `https://${trimmed}`
   return null
 }
@@ -77,7 +77,7 @@ export const modifierWatch = ViewPlugin.fromClass(
     }
 
     private mark() {
-      this.view.contentDOM.classList.toggle('nib-modifier', held)
+      this.view.contentDOM.classList.toggle('orden-modifier', held)
     }
 
     destroy() {
@@ -98,7 +98,7 @@ export const linkClicks = EditorView.domEventHandlers({
     if (!asked) return false
 
     const target = event.target
-    const link = target instanceof Element ? target.closest('.nib-link') : null
+    const link = target instanceof Element ? target.closest('.orden-link') : null
     const href = link?.getAttribute('data-href')
     if (!href) return false
 

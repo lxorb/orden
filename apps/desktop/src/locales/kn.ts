@@ -1539,6 +1539,8 @@ export const kn: Dictionary = {
   Shorter: 'ಚಿಕ್ಕದಾಗಿ',
   Longer: 'ದೊಡ್ಡದಾಗಿ',
   'Fix grammar': 'ವ್ಯಾಕರಣ ಸರಿಪಡಿಸಿ',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ಆಯ್ಕೆ ಮಾಡಿದ ಪದಗಳು ಇನ್ನು ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಏನನ್ನೂ ಬದಲಾಯಿಸಲಿಲ್ಲ.',
   'A cited report': 'ಉಲ್ಲೇಖಿತ ವರದಿ',
   'A helper in the background': 'ಹಿನ್ನೆಲೆಯ ಸಹಾಯಕ',
   'A side question': 'ಪಕ್ಕದ ಪ್ರಶ್ನೆ',
@@ -2953,6 +2955,8 @@ export const kn: Dictionary = {
   'That could not be protected: {reason}': 'ರಕ್ಷಿಸಲಾಗಲಿಲ್ಲ: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಚಾಟ್ ಚಿತ್ರಗಳನ್ನು ಮತ್ತು 2 MB ವರೆಗಿನ ಪಠ್ಯ ಫೈಲ್‌ಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಒಂದು ಸಂದೇಶ ಗರಿಷ್ಠ 20 ಚಿತ್ರಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
   'Time tracker': 'ಸಮಯ ಟ್ರ್ಯಾಕರ್',
   'Start timer': 'ಟೈಮರ್ ಆರಂಭಿಸಿ',
   'Stop timer': 'ಟೈಮರ್ ನಿಲ್ಲಿಸಿ',
@@ -3532,9 +3536,48 @@ export const kn: Dictionary = {
   'You said': 'ನೀವು ಹೇಳಿದ್ದು',
   Privacy: 'ಗೌಪ್ಯತೆ',
   'Send crash and freeze reports': 'ಕ್ರ್ಯಾಶ್ ಮತ್ತು ಸ್ಥಗಿತ ವರದಿಗಳನ್ನು ಕಳುಹಿಸಿ',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ಕ್ರ್ಯಾಶ್ ಆದಾಗ ಅಥವಾ ಸ್ಥಗಿತಗೊಂಡಾಗ, ಅದು ಏನು ಮಾಡುತ್ತಿತ್ತು ಮತ್ತು ತನ್ನದೇ ಕೋಡ್‌ನಲ್ಲಿ ಎಲ್ಲಿತ್ತು ಎಂಬುದನ್ನು ಹೆಸರುಗಳು, ಪಥಗಳು, ವಿಳಾಸಗಳು ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ತೆಗೆದು ಕಳುಹಿಸುತ್ತದೆ. ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಎಂದಿಗೂ ಇಲ್ಲ.',
-  'Turn off in Settings': 'ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆಫ್ ಮಾಡಿ',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ಕ್ರ್ಯಾಶ್ ಅಥವಾ ಸ್ಥಗಿತಗೊಂಡಾಗ ಏನು ಮಾಡುತ್ತಿತ್ತು ಎಂಬುದನ್ನು ಕಳುಹಿಸುತ್ತದೆ; ಟಿಪ್ಪಣಿಗಳು, ಹೆಸರುಗಳು, ಪಥಗಳು ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಎಂದಿಗೂ ಇಲ್ಲ.',
+  'Send crash reports to help improve Orden':
+    'Orden ಅನ್ನು ಸುಧಾರಿಸಲು ನೆರವಾಗಲು ಕ್ರ್ಯಾಶ್ ವರದಿಗಳನ್ನು ಕಳುಹಿಸಿ',
+  'Move to {space}?': '{space} ಗೆ ಸರಿಸುವುದೇ?',
+  'macOS can start dictation with this key too.':
+    'macOS ಈ ಕೀಲಿಯಿಂದ ಡಿಕ್ಟೇಶನ್ ಅನ್ನೂ ಪ್ರಾರಂಭಿಸಬಹುದು.',
+  'QR code': 'QR ಕೋಡ್',
+  'Waiting…': 'ಕಾಯಲಾಗುತ್ತಿದೆ…',
+  Service: 'ಸೇವೆ',
+  'I understand and want to connect anyway': 'ನನಗೆ ಅರ್ಥವಾಗಿದೆ, ಆದರೂ ಸಂಪರ್ಕಿಸಲು ಬಯಸುತ್ತೇನೆ',
+  'Some changes have not reached your account yet':
+    'ಕೆಲವು ಬದಲಾವಣೆಗಳು ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಯನ್ನು ತಲುಪಿಲ್ಲ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'ಅವು ಈ ಬ್ರೌಸರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ, ಇಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡುವ ಬೇರೆ ಯಾರಿಗೂ ಕಾಣುವುದಿಲ್ಲ, ಮತ್ತು ನೀವು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿದಾಗ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.',
+  'Leave it empty to sign in with a QR code instead':
+    'ಬದಲಿಗೆ QR ಕೋಡ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಲು ಖಾಲಿ ಬಿಡಿ',
+  'Telegram code': 'Telegram ಕೋಡ್',
+  'Sent to Telegram on your other device': 'ನಿಮ್ಮ ಇನ್ನೊಂದು ಸಾಧನದ Telegram‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ',
+  'Sent by SMS': 'SMS ಮೂಲಕ ಕಳುಹಿಸಲಾಗಿದೆ',
+  'You will get a call with the code': 'ಕೋಡ್ ಹೇಳುವ ಕರೆ ನಿಮಗೆ ಬರುತ್ತದೆ',
+  'The code was wrong. Try again.': 'ಕೋಡ್ ತಪ್ಪಾಗಿತ್ತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'The code expired, so Telegram sent a new one.':
+    'ಕೋಡ್ ಅವಧಿ ಮುಗಿದಿದೆ, ಹಾಗಾಗಿ Telegram ಹೊಸದನ್ನು ಕಳುಹಿಸಿದೆ.',
+  'Two-step verification password': 'ಎರಡು ಹಂತದ ಪರಿಶೀಲನೆ ಪಾಸ್‌ವರ್ಡ್',
+  'The password was wrong. Try again.': 'ಪಾಸ್‌ವರ್ಡ್ ತಪ್ಪಾಗಿತ್ತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Scan with Telegram on your phone': 'ನಿಮ್ಮ ಫೋನ್‌ನ Telegram‌ನಿಂದ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram‌ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಲು ಆ್ಯಪ್ ಬೇಕು',
+  'Telegram does not know this phone number': 'Telegram‌ಗೆ ಈ ಫೋನ್ ಸಂಖ್ಯೆ ಗೊತ್ತಿಲ್ಲ',
+  'Too many tries. Wait a while and try again.': 'ತುಂಬಾ ಪ್ರಯತ್ನಗಳು. ಸ್ವಲ್ಪ ಕಾದು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Too many wrong tries': 'ತುಂಬಾ ತಪ್ಪು ಪ್ರಯತ್ನಗಳು',
+  'Signed out of Telegram. Connect again.': 'Telegram‌ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
+  'Telegram cannot do that in this conversation': 'ಈ ಸಂಭಾಷಣೆಯಲ್ಲಿ Telegram ಅದನ್ನು ಮಾಡಲಾರದು',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram ಗುಂಪುಗಳು ಮತ್ತು ಚಾನೆಲ್‌ಗಳ ಸಂದೇಶಗಳನ್ನು ಎಲ್ಲರಿಗೂ ಅಳಿಸುತ್ತದೆ',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ಗುಂಪನ್ನು ಹೊಸ ಮಾಲೀಕರಿಗೆ ತನ್ನ ಆ್ಯಪ್‌ನಿಂದ ಮಾತ್ರ ಹಸ್ತಾಂತರಿಸುತ್ತದೆ',
+  'That sticker is no longer available': 'ಆ ಸ್ಟಿಕರ್ ಈಗ ಲಭ್ಯವಿಲ್ಲ',
+  'Telegram is not set up in this build': 'ಈ ಬಿಲ್ಡ್‌ನಲ್ಲಿ Telegram ಹೊಂದಿಸಿಲ್ಲ',
+  'Password manager': 'ಪಾಸ್‌ವರ್ಡ್ ನಿರ್ವಾಹಕ',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass ಅನ್ನು ಸೇರಿಸುತ್ತದೆ, ಅದು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಇಟ್ಟುಕೊಂಡು ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿ ತುಂಬುತ್ತದೆ. ಆಫ್ ಮಾಡಿದರೂ ನಿಮ್ಮ ವಾಲ್ಟ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.',
 }

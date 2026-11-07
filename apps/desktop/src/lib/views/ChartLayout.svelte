@@ -76,7 +76,7 @@
 
 <div class="chart">
   <div class="settings">
-    <div class="nib-segmented kinds" role="tablist">
+    <div class="orden-segmented kinds" role="tablist">
       {#each CHART_KINDS as kind (kind)}
         <button
           type="button"
@@ -111,7 +111,7 @@
     {#if settings && settings.kind !== 'number' && settings.kind !== 'donut'}
       <button
         type="button"
-        class="nib-chip"
+        class="orden-chip"
         class:is-on={settings.cumulative}
         aria-pressed={settings.cumulative}
         onclick={() => set('cumulative', settings.cumulative ? undefined : true)}

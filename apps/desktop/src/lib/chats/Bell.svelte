@@ -63,7 +63,7 @@
 </script>
 
 <button
-  class="nib-glyph"
+  class="orden-glyph"
   aria-haspopup="menu"
   title={t('Notifications')}
   aria-label={t('Notifications')}

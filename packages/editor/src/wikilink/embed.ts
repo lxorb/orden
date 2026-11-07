@@ -64,14 +64,14 @@ export class EmbedWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const frame = document.createElement('div')
-    frame.className = 'nib-embed'
+    frame.className = 'orden-embed'
 
     const body = document.createElement('div')
-    body.className = 'nib-embed-body'
+    body.className = 'orden-embed-body'
     frame.append(body)
 
     const caption = document.createElement('button')
-    caption.className = 'nib-embed-name'
+    caption.className = 'orden-embed-name'
     caption.type = 'button'
     caption.textContent = this.link.alias ?? linkTarget(this.link)
     const open = (press?: MouseEvent) => {
@@ -87,8 +87,8 @@ export class EmbedWidget extends NibWidget {
     frame.append(caption)
 
     const missing = () => {
-      frame.classList.remove('nib-embed-loading')
-      frame.classList.add('nib-embed-missing')
+      frame.classList.remove('orden-embed-loading')
+      frame.classList.add('orden-embed-missing')
       body.textContent = label('noteNotFound')
     }
 
@@ -98,12 +98,12 @@ export class EmbedWidget extends NibWidget {
     }
 
     if (view.state.facet(noteIndex).locked?.(this.path)) {
-      frame.classList.add('nib-embed-missing')
+      frame.classList.add('orden-embed-missing')
       body.textContent = label('protectedNote')
       return frame
     }
 
-    frame.classList.add('nib-embed-loading')
+    frame.classList.add('orden-embed-loading')
 
     const showing = () => body.isConnected
 
@@ -122,7 +122,7 @@ export class EmbedWidget extends NibWidget {
         const html = await renderNote(section.slice(0, MOST_EMBEDDED), this.path, view.state)
         if (!showing()) return
 
-        frame.classList.remove('nib-embed-loading')
+        frame.classList.remove('orden-embed-loading')
         body.innerHTML = html
       })
       .catch(() => {
@@ -166,7 +166,7 @@ export class EmbedImageWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const picture = document.createElement('img')
-    picture.className = 'nib-embed-image'
+    picture.className = 'orden-embed-image'
     picture.draggable = false
     picture.alt = ''
 
@@ -211,7 +211,7 @@ export class EmbedMediaWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const player = document.createElement(this.kind)
-    player.className = `nib-embed-media nib-embed-${this.kind}`
+    player.className = `orden-embed-media orden-embed-${this.kind}`
     player.controls = true
     player.preload = 'metadata'
     player.draggable = false
@@ -272,15 +272,15 @@ export class EmbedFileWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const card = document.createElement('button')
-    card.className = 'nib-embed nib-embed-file'
+    card.className = 'orden-embed orden-embed-file'
     card.type = 'button'
     card.dataset.kind = this.kind
-    if (this.path === null) card.classList.add('nib-embed-missing')
+    if (this.path === null) card.classList.add('orden-embed-missing')
 
-    card.append(iconElement(this.kind === 'pdf' ? DOCUMENT : PLANE, 'nib-embed-icon'))
+    card.append(iconElement(this.kind === 'pdf' ? DOCUMENT : PLANE, 'orden-embed-icon'))
 
     const name = document.createElement('span')
-    name.className = 'nib-embed-name'
+    name.className = 'orden-embed-name'
     name.textContent = this.link.alias ?? linkTarget(this.link)
     card.append(name)
 

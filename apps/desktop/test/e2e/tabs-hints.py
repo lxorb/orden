@@ -95,7 +95,7 @@ def wrong(what: str) -> None:
 
 
 def build() -> None:
-    if os.environ.get("NIB_SKIP_BUILD") and (DIST / "index.html").exists():
+    if os.environ.get("ORDEN_SKIP_BUILD") and (DIST / "index.html").exists():
         say("reusing the build that is there")
         return
 
@@ -211,8 +211,8 @@ def tooltips(page: Page) -> None:
     page.evaluate("() => window.nibApp.shortcuts.reset('app.sidebar')")
 
     page.locator('.cm-line:has-text("Words about")').first.dblclick()
-    if wait_for(page, "document.querySelector('.nib-bar-at')", "the format bar", 10):
-        keyed(page, '.nib-bar-at button[aria-label="Bold"]', "Bold", "Ctrl+B")
+    if wait_for(page, "document.querySelector('.orden-bar-at')", "the format bar", 10):
+        keyed(page, '.orden-bar-at button[aria-label="Bold"]', "Bold", "Ctrl+B")
     page.keyboard.press("ArrowRight")
 
     page.locator(".cm-content").first.click()
@@ -474,7 +474,7 @@ def alt_numbers(page: Page, scheme: str) -> None:
     if worn != wanted:
         wrong(f"[{scheme}] the numbers read {worn}, not {wanted}")
     shot(page, f"09-numbers-{scheme}")
-    SCRATCH = os.environ.get("NIB_SHOTS_TOO")
+    SCRATCH = os.environ.get("ORDEN_SHOTS_TOO")
     if SCRATCH:
         shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
 

@@ -87,17 +87,16 @@ function spaceProjects(root: string, count: (note: string) => number): ProjectNo
 
 const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
 
-export function offersPlaces(): boolean {
-  const root = workspace.activeSpace?.root
-  return root !== undefined && canWriteAt(root)
+export function offersPlaces(root: string | null = workspace.activeSpace?.root ?? null): boolean {
+  return root !== null && canWriteAt(root)
 }
 
 export function placeEntries(
   go: (note: string) => void,
   here: (note: string) => boolean = () => false,
+  root: string | null = workspace.activeSpace?.root ?? null,
 ): MenuEntry[] {
-  const root = workspace.activeSpace?.root
-  if (root === undefined || !offersPlaces()) return []
+  if (root === null || !offersPlaces(root)) return []
   const out: MenuEntry[] = [
     {
       label: t('Inbox'),

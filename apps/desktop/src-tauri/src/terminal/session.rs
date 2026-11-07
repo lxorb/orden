@@ -172,6 +172,11 @@ impl Session {
         process::program(self.pid, self.master().as_deref()?)
     }
 
+    pub fn ssh(&self) -> Option<super::remote::Destination> {
+        let (program, args) = process::command(self.pid, self.master().as_deref()?)?;
+        super::remote::ssh_destination(&program, &args)
+    }
+
     pub fn folder(&self) -> Option<String> {
         process::folder(self.pid)
     }

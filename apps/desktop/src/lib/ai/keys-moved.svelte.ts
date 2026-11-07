@@ -3,7 +3,7 @@ import { keepJson, stored } from '../stored'
 import { hasKey } from './keys'
 import { ai } from './store.svelte'
 
-const KEY = 'nib:keys-moved'
+const KEY = 'orden:keys-moved'
 
 const KEYED = new Set(['anthropic', 'openai', 'gemini', 'chatgpt'])
 

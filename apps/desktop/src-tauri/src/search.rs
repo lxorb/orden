@@ -156,7 +156,7 @@ pub fn warm_search(app: AppHandle, root: String) -> Result<Warmth, String> {
 
 const BATCH: usize = 24;
 
-const HITS: &str = "nib://search-hits";
+const HITS: &str = "orden://search-hits";
 
 #[derive(Serialize)]
 pub struct Tag {

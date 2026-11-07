@@ -89,11 +89,11 @@ def body_to(page, where: str) -> None:
     )
     quiet(page)
 
-MEMORY = ".agents .nib-setting.sliding:has-text('Browser memory limit')"
+MEMORY = ".agents .orden-setting.sliding:has-text('Browser memory limit')"
 
 SLIDE = """
 ([label, value]) => {
-  const row = [...document.querySelectorAll('.agents .nib-setting.sliding')].find(
+  const row = [...document.querySelectorAll('.agents .orden-setting.sliding')].find(
     (one) => one.querySelector('.name')?.textContent?.trim() === label,
   )
   const range = row.querySelector('input[type=range]')
@@ -132,7 +132,7 @@ def look(browser, scheme: str, language: str) -> None:
         device_scale_factor=2,
     )
     context = page.context
-    context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
+    context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     page.on("console", lambda said: say(f"[{name}] {said.type}: {said.text[:200]}") if said.type == "error" else None)

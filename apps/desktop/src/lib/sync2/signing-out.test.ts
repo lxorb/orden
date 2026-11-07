@@ -67,13 +67,73 @@ describe('signing out', () => {
     const stopping = runner.stop()
     await Promise.all([leaving, stopping])
 
-    const kept = JSON.parse(localStorage.getItem('nib:mirrors') ?? 'null') as {
+    const kept = JSON.parse(localStorage.getItem('orden:mirrors') ?? 'null') as {
       account: string
       mirrors: Record<string, { spaceId: string }>
     } | null
     expect(kept?.account).toBe('u1')
     expect(kept?.mirrors['/Notes']?.spaceId).toBe('s1')
     expect(forgotten).toEqual(['u1'])
+  })
+})
+
+function engineWithSpaces(waiting: ReadonlySet<string>) {
+  const store = {
+    read: (gets: readonly unknown[]) => Promise.resolve(gets.map(() => ({ key: 'first' }))),
+    close: () => Promise.resolve(),
+  }
+  const spaces = new Map(
+    ['Notes', 'Draft'].map((name) => [
+      name,
+      { id: name, row: { root: `/${name}`, role: 'owner' }, entries: new Map() },
+    ]),
+  )
+  return {
+    core: { spaces, store, isHeld: () => false, world: {} },
+    waiting: (id: string) => waiting.has(id),
+    quit: () => Promise.resolve(),
+    stop: () => undefined,
+  }
+}
+
+describe('a browser signed out of', () => {
+  test('drops the spaces whose every change reached the account and keeps the rest for it alone', async () => {
+    const { workspace } = await import('../workspace.svelte')
+    const { leftBy, leftByAnother } = await import('../left-spaces')
+    workspace.spaces = [
+      { id: '1', name: 'Notes', root: '/Notes' },
+      { id: '2', name: 'Draft', root: '/Draft' },
+    ]
+    const dropped: string[] = []
+    const drop = vi.spyOn(workspace, 'dropSpace').mockImplementation((id) => {
+      dropped.push(id)
+      workspace.spaces = workspace.spaces.filter((one) => one.id !== id)
+      return Promise.resolve()
+    })
+    Object.assign(runner, { current: engineWithSpaces(new Set(['Draft'])) })
+
+    await runner.signedOut('u2')
+
+    expect(dropped).toEqual(['1'])
+    expect(leftBy('/Notes')).toBe(null)
+    expect(leftBy('/Draft')).toBe('u2')
+    expect(leftByAnother('/Draft', 'someone else')).toBe(true)
+    drop.mockRestore()
+  })
+
+  test('keeps every space, as nobody’s, when the account itself was deleted', async () => {
+    const { workspace } = await import('../workspace.svelte')
+    const { leaveSpaces, leftBy } = await import('../left-spaces')
+    workspace.spaces = [{ id: '1', name: 'Notes', root: '/Notes' }]
+    leaveSpaces('u3', ['/Notes'])
+    const drop = vi.spyOn(workspace, 'dropSpace')
+    Object.assign(runner, { current: engineWithSpaces(new Set()) })
+
+    await runner.signedOut('u3', true)
+
+    expect(drop).not.toHaveBeenCalled()
+    expect(leftBy('/Notes')).toBe(null)
+    drop.mockRestore()
   })
 })
 

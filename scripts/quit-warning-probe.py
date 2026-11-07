@@ -105,10 +105,10 @@ def main() -> int:
     args = parsed.parse_args()
     exe = pathlib.Path(args.exe).resolve()
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-quit-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-quit-"))
     (spaces / "Quit probe").mkdir(parents=True, exist_ok=True)
     tabs.wipe(args.identifier)
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)
@@ -142,7 +142,7 @@ def main() -> int:
             check(question["title"].startswith("Quit"), "as quitting, the window being the last")
             check(question["rows"] == [busy_name], "naming the busy terminal and not the idle one")
 
-        press(window, ".nib-button.is-quiet")
+        press(window, ".orden-button.is-quiet")
         time.sleep(1.5)
         check(app.poll() is None and asking(window) is None, "Cancel keeps the app running")
         check(window.open_tabs().count(busy) == 1 and idle in window.open_tabs(), "with both terminals")
@@ -158,7 +158,7 @@ def main() -> int:
         running = terminal.shells_of(app.pid)
         closed_by_hand(app)
         until(lambda: asking(window), 15)
-        press(window, ".nib-button.is-danger")
+        press(window, ".orden-button.is-danger")
         started = time.perf_counter()
         try:
             app.wait(timeout=90)

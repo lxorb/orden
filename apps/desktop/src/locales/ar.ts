@@ -1628,6 +1628,8 @@ export const ar: Dictionary = {
   Shorter: 'أقصر',
   Longer: 'أطول',
   'Fix grammar': 'تصحيح القواعد',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'لم تعد الكلمات المختارة في الملاحظة، فلم يُستبدل شيء.',
   'A cited report': 'تقرير موثّق',
   'A helper in the background': 'مساعد في الخلفية',
   'A side question': 'سؤال جانبي',
@@ -3052,6 +3054,8 @@ export const ar: Dictionary = {
   'That could not be protected: {reason}': 'تعذّرت الحماية: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'لم تُضف {name}: تقبل المحادثة الصور والملفات النصية حتى 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'لم تُضف {name}: تقبل الرسالة 20 صورة على الأكثر.',
   'Time tracker': 'متتبّع الوقت',
   'Start timer': 'بدء المؤقّت',
   'Stop timer': 'إيقاف المؤقّت',
@@ -3685,9 +3689,47 @@ export const ar: Dictionary = {
   'You said': 'ما ذكرته',
   Privacy: 'الخصوصية',
   'Send crash and freeze reports': 'إرسال تقارير الأعطال والتجمّد',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'عندما يتعطّل Orden أو يتجمّد، يرسل ما كان يفعله وأين كان في شيفرته، بعد حذف الأسماء والمسارات والعناوين وكلمات المرور. لا يرسل ملاحظاتك أبدًا.',
-  'Turn off in Settings': 'إيقافه من الإعدادات',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'يرسل ما كان Orden يفعله عند تعطّله أو تجمّده؛ دون الملاحظات أو الأسماء أو المسارات أو كلمات المرور.',
+  'Send crash reports to help improve Orden': 'إرسال تقارير الأعطال للمساعدة في تحسين Orden',
+  'Move to {space}?': 'النقل إلى {space}؟',
+  'macOS can start dictation with this key too.':
+    'قد يبدأ macOS الإملاء الصوتي بهذا المفتاح أيضًا.',
+  'QR code': 'رمز QR',
+  'Waiting…': 'في الانتظار…',
+  Service: 'الخدمة',
+  'I understand and want to connect anyway': 'أفهم ذلك وأريد الاتصال على أي حال',
+  'Some changes have not reached your account yet': 'بعض التغييرات لم تصل إلى حسابك بعد',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'تبقى في هذا المتصفح، بعيدًا عن أعين أي شخص آخر يسجّل الدخول هنا، وتُرسل عندما تسجّل الدخول مجددًا.',
+  'Leave it empty to sign in with a QR code instead':
+    'اتركه فارغًا لتسجيل الدخول برمز QR بدلًا من ذلك',
+  'Telegram code': 'رمز Telegram',
+  'Sent to Telegram on your other device': 'أُرسل إلى Telegram على جهازك الآخر',
+  'Sent by SMS': 'أُرسل برسالة SMS',
+  'You will get a call with the code': 'ستتلقى مكالمة بالرمز',
+  'The code was wrong. Try again.': 'الرمز خاطئ. حاول مرة أخرى.',
+  'The code expired, so Telegram sent a new one.':
+    'انتهت صلاحية الرمز، لذا أرسل Telegram رمزًا جديدًا.',
+  'Two-step verification password': 'كلمة مرور التحقق بخطوتين',
+  'The password was wrong. Try again.': 'كلمة المرور خاطئة. حاول مرة أخرى.',
+  'Scan with Telegram on your phone': 'امسحه باستخدام Telegram على هاتفك',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > الإعدادات > الأجهزة > ربط جهاز سطح المكتب',
+  'Signing in to Telegram needs the app': 'يتطلب تسجيل الدخول إلى Telegram التطبيق',
+  'Telegram does not know this phone number': 'لا يعرف Telegram رقم الهاتف هذا',
+  'Too many tries. Wait a while and try again.':
+    'محاولات كثيرة جدًا. انتظر قليلًا ثم حاول مرة أخرى.',
+  'Too many wrong tries': 'محاولات خاطئة كثيرة جدًا',
+  'Signed out of Telegram. Connect again.': 'تم تسجيل الخروج من Telegram. اتصل مرة أخرى.',
+  'Telegram cannot do that in this conversation': 'لا يستطيع Telegram فعل ذلك في هذه المحادثة',
+  'Telegram removes messages in groups and channels for everyone':
+    'يحذف Telegram الرسائل في المجموعات والقنوات للجميع',
+  'Telegram hands a group to a new owner only from its own app':
+    'لا ينقل Telegram ملكية المجموعة إلى مالك جديد إلا من تطبيقه',
+  'That sticker is no longer available': 'هذا الملصق لم يعد متاحًا',
+  'Telegram is not set up in this build': 'Telegram غير مُعدّ في هذا الإصدار',
+  'Password manager': 'مدير كلمات المرور',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'يضيف Pass الذي يحفظ كلمات المرور ويملؤها في المواقع. إيقافه يُبقي خزائنك.',
 }

@@ -34,6 +34,25 @@ beforeEach(() => {
 })
 
 describe('notices on a desktop', () => {
+  it('names a notice by plain characters the crate takes, the same each time, however its tag is written', () => {
+    for (const tag of [
+      'time-goal:6f1c:1762473600000',
+      'whatsapp\nme@example.org\nchat 1',
+      'x'.repeat(80),
+    ]) {
+      world.asked.length = 0
+      notify('Goal reached', 'Uni', tag)
+      notify('Goal reached', 'Uni', tag)
+      unshow(tag)
+      const tags = world.asked.map(
+        (one) => (one.args?.notice as { tag?: string } | undefined)?.tag ?? one.args?.tag,
+      )
+      expect(tags).toHaveLength(3)
+      expect(new Set(tags).size).toBe(1)
+      expect(tags[0]).toMatch(/^[A-Za-z0-9_-]{1,64}$/)
+    }
+  })
+
   it('hands the crate the words, the tag and the answer field', () => {
     show({
       title: 'Lucile',

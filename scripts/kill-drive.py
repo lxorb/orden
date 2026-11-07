@@ -85,7 +85,7 @@ if PHASE == "write":
         time.sleep(0.25)
     if not typed or not held:
         raise SystemExit(f"::error::write: the words did not go into a new note ({typed}, {held})")
-    probe = run("(() => { const token = 'kept ' + Date.now(); localStorage.setItem('nib:kill-probe', token); return token })()")
+    probe = run("(() => { const token = 'kept ' + Date.now(); localStorage.setItem('orden:kill-probe', token); return token })()")
     SAID.write_text(json.dumps({"scheme": now, "probe": probe}))
     print(f"write: the scheme switched {was} -> {now}, and a new note holds the words")
 else:
@@ -104,7 +104,7 @@ else:
     held = drafts()
     if not held:
         failures.append("the words written in the new note did not come back in any tab")
-    probe = run("localStorage.getItem('nib:kill-probe')")
+    probe = run("localStorage.getItem('orden:kill-probe')")
     if probe != said.get("probe"):
         failures.append(f"the page's storage lost what it was given a tenth of a second before the kill: {probe!r}, not {said.get('probe')!r}")
     for one in failures:

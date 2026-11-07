@@ -31,6 +31,7 @@ import {
   type ThemeValue,
   valueOf,
 } from './themes/settings'
+import { carriedCss } from './themes/carried'
 import { type Stamp, STAMP_LINE, stampOf } from './themes/stamp'
 
 export type Scheme = 'dark' | 'light'
@@ -56,14 +57,14 @@ interface ThemeFile {
   path: string
 }
 
-const STORAGE_KEY = 'nib:theme'
-const SCHEME_KEY = 'nib:theme-scheme'
-const STYLE_ID = 'nib-user-theme'
-const CUSTOM_ID = 'nib-custom-css'
+const STORAGE_KEY = 'orden:theme'
+const SCHEME_KEY = 'orden:theme-scheme'
+const STYLE_ID = 'orden-user-theme'
+const CUSTOM_ID = 'orden-custom-css'
 
-const ACCENT_KEY = 'nib:accent'
-const SHEET_KEY = 'nib:theme-sheet'
-const OFFERED_KEY = 'nib:contrast-offered'
+const ACCENT_KEY = 'orden:accent'
+const SHEET_KEY = 'orden:theme-sheet'
+const OFFERED_KEY = 'orden:contrast-offered'
 const CONTRAST_THEME = 'contrast'
 
 const DEFAULT_ID = 'default'
@@ -113,9 +114,9 @@ const GLASS: ThemeInfo = {
 }
 
 const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'green' }
-const GIVEN_KEY = 'nib:accent-given'
+const GIVEN_KEY = 'orden:accent-given'
 const GIVEN_BEFORE = 'yellow'
-const MOVED_KEY = 'nib:theme-moved'
+const MOVED_KEY = 'orden:theme-moved'
 
 const WALLPAPER: ThemeInfo = {
   id: 'wallpaper',
@@ -350,7 +351,11 @@ class Themes {
     }
 
     const sheets = await Promise.all(
-      found.map((file) => invoke<string>('read_theme', { path: file.path }).catch(() => '')),
+      found.map((file) =>
+        invoke<string>('read_theme', { path: file.path })
+          .then(carriedCss)
+          .catch(() => ''),
+      ),
     )
 
     const held = this.files
@@ -381,7 +386,9 @@ class Themes {
   }
 
   private async loadCustom() {
-    const css = await invoke<string>('read_custom_css').catch(() => '')
+    const css = await invoke<string>('read_custom_css')
+      .then(carriedCss)
+      .catch(() => '')
     let style = document.getElementById(CUSTOM_ID)
 
     if (!css.trim()) {
@@ -545,12 +552,14 @@ class Themes {
     else if (theme.load) {
       if (early !== undefined) this.wear(early, false)
       void this.fetched(theme)
+        .then(carriedCss)
         .then((css) => this.wear(applying === this.applied ? css : null, kept))
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     } else if (!theme.path) this.wear('', kept)
     else {
       if (early !== undefined) this.wear(early, false)
       void invoke<string>('read_theme', { path: theme.path })
+        .then(carriedCss)
         .then((css) => this.wear(applying === this.applied ? css : null, kept))
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     }

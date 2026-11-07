@@ -85,7 +85,7 @@ def one(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, cold: bool, pr
     if trace.exists():
         trace.unlink()
     able = able_to_take_the_front()
-    environment = {**os.environ, "NIB_TRACE_STARTUP": "1", "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_TRACE_STARTUP": "1", "ORDEN_SPACES_DIR": str(spaces)}
     app = run_probe(exe, env=environment)
     print(json.dumps({"pid": app.pid, "launcher able": able}), flush=True)
     try:
@@ -242,7 +242,7 @@ def main() -> int:
 
     front = Front()
     runs: list[dict] = []
-    with tempfile.TemporaryDirectory(prefix="nib-front-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="orden-front-") as scratch:
         made: set[str] = set()
         for at, (kind, cold) in enumerate(plan(told.launches)):
             spaces = pathlib.Path(scratch) / kind

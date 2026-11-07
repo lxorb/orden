@@ -109,8 +109,8 @@ async () => {
 MARKS = """
 () =>
   Object.fromEntries(
-    [...document.querySelectorAll('.nib-row.row')].map((row) => [
-      row.querySelector('.nib-row-label')?.textContent ?? '',
+    [...document.querySelectorAll('.orden-row.row')].map((row) => [
+      row.querySelector('.orden-row-label')?.textContent ?? '',
       row.querySelector('.mark svg')?.innerHTML.slice(0, 120) ?? '',
     ]),
   )
@@ -180,7 +180,7 @@ def shoot(page, name: str, scheme: str, selector: str | None = None) -> str:
     return target.name
 
 def open_row(page, name: str) -> None:
-    page.click(f".nib-row.row:has(.nib-row-label:text-is('{name}'))")
+    page.click(f".orden-row.row:has(.orden-row-label:text-is('{name}'))")
     page.wait_for_timeout(1200)
 
 def address(page) -> str:

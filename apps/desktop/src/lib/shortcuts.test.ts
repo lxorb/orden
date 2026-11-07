@@ -320,6 +320,21 @@ describe('choosing a key', () => {
     expect(shortcuts.warning('Mod-Alt-b')).toBeNull()
     expect(shortcuts.warning(null)).toBeNull()
   })
+
+  test('Control pressed twice on a Mac is warned about, since macOS dictates with it too', () => {
+    const { shortcuts } = registry
+    const on = (platform: string, key: string) => {
+      const one = Object.create(shortcuts) as typeof shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      return one.warning(key)
+    }
+
+    expect(on('mac', 'Ctrl Ctrl')).toBe('macOS can start dictation with this key too.')
+    expect(on('mac', 'Alt Alt')).toBeNull()
+    expect(on('mac', 'Mod Mod')).toBeNull()
+    expect(on('win', 'Ctrl Ctrl')).toBeNull()
+    expect(on('win', 'Mod Mod')).toBeNull()
+  })
 })
 
 describe('what is written down', () => {
@@ -327,13 +342,13 @@ describe('what is written down', () => {
     const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
 
-    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({
+    expect(JSON.parse(localStorage.getItem('orden:shortcuts')!)).toEqual({
       'format.bold': 'Mod-Alt-b',
     })
   })
 
   test('lets a default that changed later reach the reader', async () => {
-    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
+    localStorage.setItem('orden:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
     const { shortcuts } = await restarted()
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
@@ -343,21 +358,21 @@ describe('what is written down', () => {
   })
 
   test('keeps an id this version has never heard of', async () => {
-    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'from.the.future': 'Mod-9' }))
+    localStorage.setItem('orden:shortcuts', JSON.stringify({ 'from.the.future': 'Mod-9' }))
     const { shortcuts } = await restarted()
 
     shortcuts.set('format.bold', 'Mod-Alt-b')
-    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({
+    expect(JSON.parse(localStorage.getItem('orden:shortcuts')!)).toEqual({
       'from.the.future': 'Mod-9',
       'format.bold': 'Mod-Alt-b',
     })
   })
 
   test('survives a file that is nonsense', async () => {
-    localStorage.setItem('nib:shortcuts', '{{{')
+    localStorage.setItem('orden:shortcuts', '{{{')
     expect((await restarted()).shortcuts.keyFor('format.bold')).toBe('Mod-b')
 
-    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 42, 'app.new': null }))
+    localStorage.setItem('orden:shortcuts', JSON.stringify({ 'format.bold': 42, 'app.new': null }))
     const { shortcuts } = await restarted()
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
     expect(shortcuts.keyFor('app.new')).toBeNull()
@@ -368,7 +383,7 @@ describe('what is written down', () => {
     shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
-    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({
+    expect(JSON.parse(localStorage.getItem('orden:shortcuts')!)).toEqual({
       'format.bold': 'Mod-Alt-b',
     })
   })
@@ -463,7 +478,7 @@ describe('choosing a keyboard', () => {
     test('stays off when a name written down before is read back', async () => {
       for (const id of ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']) {
         localStorage.clear()
-        localStorage.setItem('nib:preset', id)
+        localStorage.setItem('orden:preset', id)
 
         const fresh = await restarted()
         const modes = await currentModes()
@@ -534,10 +549,10 @@ describe('a map made by hand', () => {
   })
 
   test('is what a map written by an older build reads as', async () => {
-    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
+    localStorage.setItem('orden:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
     expect((await restarted()).shortcuts.preset).toBe('custom')
 
-    localStorage.setItem('nib:shortcuts', '{}')
+    localStorage.setItem('orden:shortcuts', '{}')
     expect((await restarted()).shortcuts.preset).toBe('default')
   })
 })
@@ -549,7 +564,7 @@ describe('the keyboard the account carries', () => {
 
     expect(shortcuts.preset).toBe('notion')
     expect(shortcuts.keyFor('format.code')).toBe('Mod-e')
-    expect(localStorage.getItem('nib:preset')).toBe('notion')
+    expect(localStorage.getItem('orden:preset')).toBe('notion')
   })
 
   test('reads a name this version has never heard of as Custom', () => {

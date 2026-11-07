@@ -45,7 +45,7 @@ NAMES = """
 """
 
 def entry(page: Page, label: str) -> None:
-    row = page.locator(".menu .nib-row", has_text=label).first
+    row = page.locator(".menu .orden-row", has_text=label).first
     row.wait_for(state="visible", timeout=PATIENCE * 1000)
     row.click()
 

@@ -43,20 +43,20 @@ describe("Chrome's time ranges", () => {
 
 describe('whose data', () => {
   test('the store every page shares, and its one history', () => {
-    expect(reach([])).toEqual({ stores: [null], books: ['nib:web-visits'] })
+    expect(reach([])).toEqual({ stores: [null], books: ['orden:web-visits'] })
   })
 
   test('and the own store of each web note kept apart that is open, once each', () => {
     expect(reach(['3f9a0c17e2b4d685', null, '3f9a0c17e2b4d685', '0123456789abcdef'])).toEqual({
       stores: [null, 'note_3f9a0c17e2b4d685', 'note_0123456789abcdef'],
-      books: ['nib:web-visits'],
+      books: ['orden:web-visits'],
     })
   })
 })
 
 describe('the clearing', () => {
   test("asks the engine to clear the range and names the range's sites, then forgets the range's history", async () => {
-    const book = 'nib:web-visits'
+    const book = 'orden:web-visits'
     visited.saw(book, 'old', 'https://old.example/page', 'Old')
     visited.saw(book, 'new', 'https://new.example/page', 'New')
     const rows = visited
@@ -86,11 +86,11 @@ describe('the clearing', () => {
   })
 
   test('all time names every site the history has, and nothing that is not a web page', async () => {
-    const book = 'nib:web-visits-sites'
+    const book = 'orden:web-visits-sites'
     visited.saw(book, 'a', 'https://a.example/one', 'A')
     visited.saw(book, 'b', 'https://a.example/two', 'A again')
     visited.saw(book, 'c', 'http://b.example:8080/', 'B')
-    visited.saw(book, 'd', 'nib://home', 'Home')
+    visited.saw(book, 'd', 'orden://home', 'Home')
     expect(sitesSince([book], 0).sort()).toEqual(['http://b.example:8080', 'https://a.example'])
     expect(sitesSince([book], Date.now() + HOUR)).toEqual([])
   })
@@ -99,7 +99,7 @@ describe('the clearing', () => {
     placeKept('/Notes/A.url', { url: 'https://a.example/', x: 0, y: 1 })
     await clearData({ range: 'all', history: true, site: false, cache: false }, [], NOW)
     expect(asked.some((one) => one.command === 'web_clear')).toBe(false)
-    expect(visited.all('nib:web-visits')).toEqual([])
+    expect(visited.all('orden:web-visits')).toEqual([])
     expect(placeOf('/Notes/A.url')).toBeNull()
   })
 

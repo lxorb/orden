@@ -2,10 +2,10 @@ import type { EditorView } from '@codemirror/view'
 
 export function openLightbox(view: EditorView, src: string, alt: string) {
   const backdrop = document.createElement('div')
-  backdrop.className = 'nib-lightbox'
+  backdrop.className = 'orden-lightbox'
 
   const figure = document.createElement('figure')
-  figure.className = 'nib-lightbox-figure'
+  figure.className = 'orden-lightbox-figure'
   backdrop.append(figure)
 
   const image = document.createElement('img')

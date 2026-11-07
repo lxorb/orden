@@ -1,7 +1,6 @@
 <script lang="ts">
   import { dropOver } from '../drag-paths'
-  import { tick } from 'svelte'
-  import { SvelteMap, SvelteSet } from 'svelte/reactivity'
+  import { tick, untrack } from 'svelte'
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
   import { t } from '../i18n.svelte'
@@ -14,14 +13,14 @@
   import { when } from '../when'
   import { renamePath } from './changes'
   import { dropInto, endDrag, over, startDrag } from './drag'
-  import { type Entry, peekAt } from './commands'
+  import type { Entry } from './commands'
   import { stepped } from './keys'
-  import { pictureUrl } from './preview'
   import { roomMenu, rowMenu } from './menu'
   import { openFile } from './open'
   import { endingOf, type SortKey } from './order'
   import type { How } from './picked'
   import { explorerPrefs } from './prefs.svelte'
+  import { THUMB_MOST, Thumbs } from './thumbs'
   import type { ExplorerView } from './view.svelte'
 
   const { view }: { view: ExplorerView } = $props()
@@ -35,7 +34,6 @@
 
   const SPARE = 8
   const TILE = 112
-  const THUMB_MOST = 8 * 1024 * 1024
 
   const rows = $derived(view.rows)
   const grid = $derived(explorerPrefs.view === 'grid')
@@ -56,37 +54,23 @@
     return at.sort((one, other) => one - other)
   })
 
-  const thumbs = new SvelteMap<string, string>()
-  const asked = new SvelteSet<string>()
-  let thumbFolder: string | null = null
+  const thumbs = new Thumbs()
 
   $effect(() => {
-    if (!grid) return
-    const folder = view.listing?.path ?? null
-    if (folder !== thumbFolder) {
-      thumbFolder = folder
-      for (const url of thumbs.values()) URL.revokeObjectURL(url)
-      thumbs.clear()
-      asked.clear()
+    if (!grid) {
+      untrack(() => thumbs.clear())
+      return
     }
-    for (const index of drawn) {
+    const wanted = drawn.flatMap((index) => {
       const entry = rows[index]
-      if (!entry || entry.folder || entry.size > THUMB_MOST || !isPicturePath(entry.name)) continue
-      const path = view.pathOf(entry.name)
-      if (asked.has(path)) continue
-      asked.add(path)
-      void peekAt(path, THUMB_MOST)
-        .then((read) => {
-          const url = pictureUrl(entry.name, read)
-          if (url) thumbs.set(path, url)
-        })
-        .catch(() => undefined)
-    }
+      if (!entry || entry.folder || entry.size > THUMB_MOST || !isPicturePath(entry.name)) return []
+      return [{ path: view.pathOf(entry.name), name: entry.name }]
+    })
+    const folder = view.listing?.path ?? null
+    untrack(() => thumbs.want(folder, wanted))
   })
 
-  $effect(() => () => {
-    for (const url of thumbs.values()) URL.revokeObjectURL(url)
-  })
+  $effect(() => () => thumbs.clear())
 
   const entryAt = $derived(cursorAt >= 0 ? cursorAt : 0)
 
@@ -428,7 +412,7 @@
         {#if entry}
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <div
-            class="nib-row entry"
+            class="orden-row entry"
             class:tile={grid}
             class:is-picked={view.picked.names.has(entry.name)}
             class:is-taking={taking === entry.name}
@@ -453,8 +437,8 @@
           >
             {#if grid}
               <span class="face">
-                {#if thumbs.has(view.pathOf(entry.name))}
-                  <img src={thumbs.get(view.pathOf(entry.name))} alt="" draggable="false" />
+                {#if thumbs.shown.has(view.pathOf(entry.name))}
+                  <img src={thumbs.shown.get(view.pathOf(entry.name))} alt="" draggable="false" />
                 {:else}
                   <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
                 {/if}
@@ -466,7 +450,7 @@
               {/if}
               {#if view.renaming === entry.name}
                 <input
-                  class="nib-field rename"
+                  class="orden-field rename"
                   value={entry.name}
                   aria-label={t('Rename')}
                   spellcheck="false"
@@ -478,15 +462,16 @@
                   ondblclick={(event) => event.stopPropagation()}
                 />
               {:else}
-                <span class="nib-row-label"
+                <span class="orden-row-label"
                   ><bdi>{view.search ? nameOf(entry.name) : entry.name}</bdi></span
                 >
               {/if}
             </span>
             {#if !grid}
-              <span class="nib-row-meta modified">{when(entry.modified, 'short')}</span>
-              <span class="nib-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span>
-              <span class="nib-row-meta kind"
+              <span class="orden-row-meta modified">{when(entry.modified, 'short')}</span>
+              <span class="orden-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span
+              >
+              <span class="orden-row-meta kind"
                 >{view.search ? folderOf(entry.name) : kindOf(entry)}</span
               >
             {/if}

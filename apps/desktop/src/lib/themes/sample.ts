@@ -2,8 +2,8 @@ import { t } from '../i18n.svelte'
 import type { Palette, StoreTheme } from './registry'
 import { closes } from './validate'
 
-export const FRAME = 'nib-mini'
-const PAGE = 'nib-mini-page'
+export const FRAME = 'orden-mini'
+const PAGE = 'orden-mini-page'
 
 const SURFACE = `.${PAGE}`
 

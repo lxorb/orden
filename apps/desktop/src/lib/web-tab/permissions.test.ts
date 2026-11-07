@@ -163,7 +163,7 @@ test('what is written down survives being read back', () => {
   grants.heard(one)
   grants.answer(one, false)
 
-  const kept = localStorage.getItem('nib:web-grants')
+  const kept = localStorage.getItem('orden:web-grants')
   expect(kept).toContain('a.example')
   expect(kept).toContain('block')
 })
@@ -179,7 +179,7 @@ test("a private tab's answer is kept nowhere and never answers a normal tab", ()
   grants.heard(privately)
   grants.answer(privately, true)
 
-  expect(localStorage.getItem('nib:web-grants') ?? '').not.toContain('a.example')
+  expect(localStorage.getItem('orden:web-grants') ?? '').not.toContain('a.example')
   expect(grants.of('a.example')).toEqual({})
 
   const normal = asked('a.example', 'camera', 'n')

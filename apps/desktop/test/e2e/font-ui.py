@@ -15,7 +15,7 @@ SCALE = 2
 ARABIC = {"Noto Naskh Arabic", "Noto Naskh Arabic UI", "Geeza Pro", "Segoe UI", "Noto Sans Arabic", "Tahoma"}
 
 LABELS = [
-    ("a segmented button", ".sheet .nib-segmented button"),
+    ("a segmented button", ".sheet .orden-segmented button"),
     ("a pane in Settings", ".sheet nav button"),
 ]
 
@@ -55,7 +55,7 @@ LINES = """
 
 def look(browser, language: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, device_scale_factor=SCALE)
-    page.context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
+    page.context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     DRIVE.open(page)
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     quiet(page)

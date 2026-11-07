@@ -27,7 +27,7 @@ export function wholeRows(list: HTMLElement, _rows?: unknown) {
     const rows = [...list.children]
     const cut = cutAt(
       rows.map((one) => (one.getBoundingClientRect().bottom - box.top) / scale + list.scrollTop),
-      rows.map((one) => one.classList.contains('nib-section')),
+      rows.map((one) => one.classList.contains('orden-section')),
       room,
       parseFloat(getComputedStyle(list).paddingBottom) || 0,
     )

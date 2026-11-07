@@ -3,7 +3,7 @@ import { Fuzzy, fuzzyTerms, workDone } from './fuzzy'
 import { fold, Matcher, type SearchNote } from './match'
 import { parseQuery } from './query'
 
-const CLOCKED = process.env.NIB_PERF === '1'
+const CLOCKED = process.env.ORDEN_PERF === '1'
 
 function shared(body: string, count: () => void): () => string {
   let made: string | null = null

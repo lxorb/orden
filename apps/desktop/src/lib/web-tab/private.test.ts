@@ -58,7 +58,7 @@ function privatePage(): InstanceType<typeof Page> {
 test('a private page zoomed keeps the size for its tab and writes nothing', () => {
   heard(privatePage(), { tab: 'priv', said: 'zoom', factor: 1.5 })
 
-  expect(localStorage.getItem('nib:web-zooms')).toBeNull()
+  expect(localStorage.getItem('orden:web-zooms')).toBeNull()
   expect(sites.zoomOf('secret.example', 'priv')).toBe(1.5)
   expect(sites.zoomOf('secret.example')).toBe(1)
 
@@ -69,7 +69,7 @@ test('a private page zoomed keeps the size for its tab and writes nothing', () =
 test('a site muted in a private tab is muted there and written nowhere', () => {
   sites.setMuted('secret.example', true, 'priv')
 
-  expect(localStorage.getItem('nib:web-muted')).toBeNull()
+  expect(localStorage.getItem('orden:web-muted')).toBeNull()
   expect(sites.isMuted('secret.example', 'priv')).toBe(true)
   expect(sites.isMuted('secret.example')).toBe(false)
 })
@@ -84,7 +84,7 @@ test('a private page answered is remembered for the private session and written 
   })
   grants.answer(grants.asking[0]!, false)
 
-  expect(localStorage.getItem('nib:web-grants')).toBeNull()
+  expect(localStorage.getItem('orden:web-grants')).toBeNull()
   expect(grants.said('secret.example', 'notifications')).toBeNull()
   expect(grants.said('secret.example', 'notifications', true)).toBe('block')
 

@@ -20,7 +20,7 @@ use report::{App, Facts, Report, System};
 
 const FOLDER: &str = "crash-reports";
 
-const TOLD: &str = "nib://crash-report";
+const TOLD: &str = "orden://crash-report";
 
 const CLAIM: Duration = Duration::from_secs(120);
 
@@ -28,7 +28,7 @@ const MOST_JS: usize = 10;
 
 const ALIVE_EVERY: Duration = Duration::from_secs(30);
 
-const DRILL: &str = "NIB_CRASH_DRILL";
+const DRILL: &str = "ORDEN_CRASH_DRILL";
 
 const QUIET: [&str; 4] = [
     "write_log",

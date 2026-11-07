@@ -79,16 +79,16 @@
   {#each childrenOf(vault, parent) as folder (folder.id)}
     {@const scope = { kind: 'vault' as const, vault: vault.id, folder: folder.id }}
     <button
-      class="nib-row"
+      class="orden-row"
       class:is-on={isOn(scope)}
       type="button"
       style:padding-inline-start="calc(var(--row-pad) + {depth} * var(--row-indent))"
       onclick={() => chosen(scope)}
       oncontextmenu={(event) => menu.show(event, folderEntries(ui, vault, folder))}
     >
-      <Glyph icon={FolderMark} class="nib-row-mark" />
-      <span class="nib-row-label">{folder.name}</span>
-      <span class="nib-row-meta">{countIn(vault.id, folder.id)}</span>
+      <Glyph icon={FolderMark} class="orden-row-mark" />
+      <span class="orden-row-label">{folder.name}</span>
+      <span class="orden-row-meta">{countIn(vault.id, folder.id)}</span>
     </button>
     {@render folders(vault, folder.id, depth + 1)}
   {/each}
@@ -96,7 +96,7 @@
 
 <nav class="side" aria-label={t('Pass')}>
   <div class="top">
-    <button class="nib-button new" type="button" aria-haspopup="menu" onclick={newItem}>
+    <button class="orden-button new" type="button" aria-haspopup="menu" onclick={newItem}>
       <Glyph icon={Plus} />
       <span class="grow">{t('New item')}</span>
       <Glyph icon={ChevronDown} />
@@ -104,22 +104,22 @@
   </div>
 
   <div class="scroll" data-scrolls>
-    <h3 class="nib-section">{t('Vaults')}</h3>
+    <h3 class="orden-section">{t('Vaults')}</h3>
     <button
-      class="nib-row"
+      class="orden-row"
       class:is-on={isOn({ kind: 'all' })}
       type="button"
       onclick={() => chosen({ kind: 'all' })}
     >
-      <Glyph icon={Inbox} class="nib-row-mark" />
-      <span class="nib-row-label">{t('All items')}</span>
-      <span class="nib-row-meta">{live.length}</span>
+      <Glyph icon={Inbox} class="orden-row-mark" />
+      <span class="orden-row-label">{t('All items')}</span>
+      <span class="orden-row-meta">{live.length}</span>
     </button>
     {#each pass.vaults as vault (vault.id)}
       {@const scope = { kind: 'vault' as const, vault: vault.id, folder: null }}
       <div class="vault-row">
         <button
-          class="nib-row vault"
+          class="orden-row vault"
           class:is-on={isOn(scope)}
           type="button"
           data-vault={vault.id}
@@ -127,12 +127,12 @@
           oncontextmenu={(event) => menu.show(event, vaultEntries(ui, vault))}
         >
           <VaultMark color={vault.color} icon={vault.icon} />
-          <span class="nib-row-label">{vault.name}</span>
+          <span class="orden-row-label">{vault.name}</span>
           {#if vault.shared}<SharedMark />{/if}
-          <span class="nib-row-meta count">{countIn(vault.id)}</span>
+          <span class="orden-row-meta count">{countIn(vault.id)}</span>
         </button>
         <button
-          class="nib-glyph more"
+          class="orden-glyph more"
           type="button"
           aria-label={t('Vault options')}
           title={t('Vault options')}
@@ -144,87 +144,87 @@
       {@render folders(vault, null, 1)}
     {/each}
     <button
-      class="nib-row is-quiet"
+      class="orden-row is-quiet"
       type="button"
       onclick={() => (ui.sheet = { kind: 'vault', vault: null })}
     >
-      <Glyph icon={Plus} class="nib-row-mark" />
-      <span class="nib-row-label">{t('New vault')}</span>
+      <Glyph icon={Plus} class="orden-row-mark" />
+      <span class="orden-row-label">{t('New vault')}</span>
     </button>
 
     <div class="gap"></div>
 
     <button
-      class="nib-row"
+      class="orden-row"
       class:is-on={isOn({ kind: 'trash' })}
       type="button"
       onclick={() => chosen({ kind: 'trash' })}
     >
-      <Glyph icon={Trash} class="nib-row-mark" />
-      <span class="nib-row-label">{t('Trash')}</span>
-      {#if trashed}<span class="nib-row-meta">{trashed}</span>{/if}
+      <Glyph icon={Trash} class="orden-row-mark" />
+      <span class="orden-row-label">{t('Trash')}</span>
+      {#if trashed}<span class="orden-row-meta">{trashed}</span>{/if}
     </button>
 
     {#if shared}
-      <h3 class="nib-section">{t('Shared')}</h3>
+      <h3 class="orden-section">{t('Shared')}</h3>
       <button
-        class="nib-row"
+        class="orden-row"
         class:is-on={isOn({ kind: 'shared-with-me' })}
         type="button"
         onclick={() => chosen({ kind: 'shared-with-me' })}
       >
-        <Glyph icon={UsersRound} class="nib-row-mark" />
-        <span class="nib-row-label">{t('Shared with me')}</span>
-        {#if invited}<span class="nib-row-meta invited" data-invites>{invited}</span>{/if}
+        <Glyph icon={UsersRound} class="orden-row-mark" />
+        <span class="orden-row-label">{t('Shared with me')}</span>
+        {#if invited}<span class="orden-row-meta invited" data-invites>{invited}</span>{/if}
       </button>
       <button
-        class="nib-row"
+        class="orden-row"
         class:is-on={isOn({ kind: 'shared-by-me' })}
         type="button"
         onclick={() => chosen({ kind: 'shared-by-me' })}
       >
-        <Glyph icon={Share} class="nib-row-mark" />
-        <span class="nib-row-label">{t('Shared by me')}</span>
+        <Glyph icon={Share} class="orden-row-mark" />
+        <span class="orden-row-label">{t('Shared by me')}</span>
       </button>
       <button
-        class="nib-row"
+        class="orden-row"
         class:is-on={view.page === 'links'}
         type="button"
         onclick={() => void ui.goTo('links').then(() => onchosen?.())}
       >
-        <Glyph icon={Link} class="nib-row-mark" />
-        <span class="nib-row-label">{t('Secure links')}</span>
+        <Glyph icon={Link} class="orden-row-mark" />
+        <span class="orden-row-label">{t('Secure links')}</span>
       </button>
     {/if}
 
     <div class="gap"></div>
 
     <button
-      class="nib-row"
+      class="orden-row"
       class:is-on={view.page === 'monitor'}
       type="button"
       onclick={() => void ui.goTo('monitor').then(() => onchosen?.())}
     >
-      <Glyph icon={ShieldCheck} class="nib-row-mark" />
-      <span class="nib-row-label">{t('Monitor')}</span>
-      {#if issues}<span class="nib-row-meta issues">{issues}</span>{/if}
+      <Glyph icon={ShieldCheck} class="orden-row-mark" />
+      <span class="orden-row-label">{t('Monitor')}</span>
+      {#if issues}<span class="orden-row-meta issues">{issues}</span>{/if}
     </button>
   </div>
 
   <div class="foot">
     <SyncBadge onadopt={() => (ui.sheet = { kind: 'adopt' })} />
     <button
-      class="nib-row"
+      class="orden-row"
       class:is-on={view.page === 'settings'}
       type="button"
       onclick={() => void ui.goTo('settings').then(() => onchosen?.())}
     >
-      <Glyph icon={Settings} class="nib-row-mark" />
-      <span class="nib-row-label">{t('Settings')}</span>
+      <Glyph icon={Settings} class="orden-row-mark" />
+      <span class="orden-row-label">{t('Settings')}</span>
     </button>
-    <button class="nib-row" type="button" onclick={() => pass.lock()}>
-      <Glyph icon={Lock} class="nib-row-mark" />
-      <span class="nib-row-label">{t('Lock')}</span>
+    <button class="orden-row" type="button" onclick={() => pass.lock()}>
+      <Glyph icon={Lock} class="orden-row-mark" />
+      <span class="orden-row-label">{t('Lock')}</span>
     </button>
   </div>
 </nav>
@@ -267,7 +267,7 @@
     padding: 0 var(--space-2) var(--space-2);
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-3) 0 var(--space-1);
     padding: 0 var(--row-pad);
   }

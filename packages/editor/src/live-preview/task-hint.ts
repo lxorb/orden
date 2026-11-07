@@ -39,7 +39,7 @@ class HintWidget extends NibWidget {
 
   toDOM() {
     const hint = document.createElement('span')
-    hint.className = 'nib-task-hint'
+    hint.className = 'orden-task-hint'
     hint.textContent = `🛫 ${this.text} ⇥`
     return hint
   }

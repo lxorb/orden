@@ -160,7 +160,7 @@ tab's do, and go with Alt's release. There is no field: the typed letters are th
 
 ### In a list
 
-Every `.nib-row` list in the app behaves the same way, because they all go
+Every `.orden-row` list in the app behaves the same way, because they all go
 through one module. The file tree, the bookmarks above it, the outline, the tags,
 the search results, the backlinks, the strip of notes.
 
@@ -261,7 +261,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+F | Search (already there). Over a few words selected on one line, it searches for them |
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+A | Ask, the conversation about the space |
-| Ctrl Ctrl | **a quick question**, Claude Code's /btw: Ctrl pressed twice on its own (Cmd twice on a Mac), the shape Claude's own quick entry and JetBrains' Run Anything have. No chord a note, a shell or a site uses, so it works everywhere: the window hears it on its capturing turn, a terminal included, and a web page's own script says it too (`nib-twice-ctrl`, web_opens.rs). Pressed again, it goes away. See docs/ai.md |
+| Ctrl Ctrl | **a quick question**, Claude Code's /btw: Ctrl pressed twice on its own (Cmd twice on a Mac), the shape Claude's own quick entry and JetBrains' Run Anything have. No chord a note, a shell or a site uses, so it works everywhere: the window hears it on its capturing turn, a terminal included, and a web page's own script says it too (`orden-twice-ctrl`, web_opens.rs). Pressed again, it goes away. See docs/ai.md |
 | Ctrl+N, Ctrl+Shift+X | **the scratchpad**, the one note in no space, its card up and away again; up with the keyboard elsewhere, the keyboard into it. Ctrl+N since Emil's issue #213; a browser's own chord, which a page in a web tab is not offered where the engine lets nib take it (web_keys.rs), so it reaches the scratchpad over a site there too. Ctrl+Shift+X, its key before, stays as its second: a browser keeps Ctrl+N for its own new window, so in nib on the web that is the one that works, and a terminal hands Ctrl+Shift to the app without asking. A terminal asks once whose Ctrl+N is; see *A terminal* below |
 | Ctrl+Shift+U | **Chats**, the list of the account's chats, its Activity and Saved (docs/chats.md 4.15). Ctrl+Shift+L, which the chats design first named, was the sidebar's already |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
@@ -501,7 +501,7 @@ back. Chrome's F11 has no Escape at all; here it is the one the issue asked for,
 the rule Escape keeps everywhere else (one level back, never two). Outside a web page a
 small button in the corner stays as well, fading once nothing has moved; over a web page
 nothing is drawn, since nothing of the app's can be drawn over a page, and F11 and Escape
-are the way out, as in Chrome. A run sent off the screen (`NIB_OFF_SCREEN`) never puts its
+are the way out, as in Chrome. A run sent off the screen (`ORDEN_OFF_SCREEN`) never puts its
 window over one: the crate keeps what was asked and leaves the window where it is; see
 `src-tauri/src/full_screen.rs`.
 
@@ -848,7 +848,7 @@ reached for daily climbs over something that merely matches as well, and a note 
 from the file list counts as much as one chosen here. Nothing about it is read at launch.
 
 `lib/palette/eval.test.ts` holds the order to fifty-odd real queries on a space shaped
-like Emil's (`NIB_EVAL=1` prints them): the row meant is first for 98% of them and in the
+like Emil's (`ORDEN_EVAL=1` prints them): the row meant is first for 98% of them and in the
 first three for all, where the palette before this, which listed notes and nothing else
 without a `>`, had 28%.
 
@@ -1068,7 +1068,7 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | --- | --- |
 | `apps/desktop/src/lib/regions.ts` | which regions there are and which one a step lands in. Pure, tested |
 | `apps/desktop/src/lib/focus.ts` | the same, against the real page: what is on screen, where the keyboard is, how to put it somewhere |
-| `apps/desktop/src/lib/roving.ts` | one tab stop per list, and the arrows inside it. Every `.nib-row` list uses it |
+| `apps/desktop/src/lib/roving.ts` | one tab stop per list, and the arrows inside it. Every `.orden-row` list uses it |
 | `apps/desktop/src/lib/walk.ts` | where a press moves a cursor down a list of rows |
 | `apps/desktop/src/lib/list-keys.ts` | spelling a name, shared by every list |
 | `apps/desktop/src/lib/tree-keys.ts` | left and right in a list that holds lists |

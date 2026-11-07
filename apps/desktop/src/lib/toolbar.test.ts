@@ -96,7 +96,7 @@ describe('putting one together', () => {
 
     expect(toolbar.ids).toEqual(DEFAULT_TOOLBAR)
     expect(toolbar.changed).toBe(false)
-    expect(localStorage.getItem('nib:toolbar')).toBeNull()
+    expect(localStorage.getItem('orden:toolbar')).toBeNull()
   })
 })
 

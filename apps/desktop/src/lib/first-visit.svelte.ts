@@ -1,6 +1,6 @@
 import { keep, storedText } from './stored'
 
-const KEY = 'nib:first-visit'
+const KEY = 'orden:first-visit'
 
 class FirstVisit {
   fresh = $state(false)

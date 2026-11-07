@@ -81,11 +81,11 @@ if PHASE == "choose":
         fail("Settings > General has no DNS row")
         sys.exit(1)
     print(f"choose: Settings > General > DNS says {row.strip()!r}")
-    run("document.querySelector('[role=combobox][aria-label=\"DNS\"]').click()")
+    run("(() => { const row = document.querySelector('[role=combobox][aria-label=\"DNS\"]'); row.scrollIntoView({ block: 'center' }); row.click(); return true })()")
     time.sleep(0.5)
     picked = run(
         "(() => { const one = [...document.querySelectorAll('[role=option]')]"
-        ".find((option) => option.innerText.trim() === 'Another provider');"
+        ".find((option) => option.textContent.trim() === 'Another provider');"
         " if (!one) return false; (one.querySelector('button') ?? one).click(); return true })()"
     )
     if not picked:

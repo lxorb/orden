@@ -40,7 +40,7 @@ export const noteClicks = EditorView.domEventHandlers({
     if (!asked) return false
 
     const target = event.target
-    const link = target instanceof Element ? target.closest('.nib-link[data-note]') : null
+    const link = target instanceof Element ? target.closest('.orden-link[data-note]') : null
     if (!link) return false
 
     const pos = view.posAtCoords({ x: event.clientX, y: event.clientY })

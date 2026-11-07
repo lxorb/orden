@@ -27,6 +27,8 @@
   const path = $derived(entry ? view.pathOf(entry.name) : (view.listing?.path ?? null))
 
   let facts = $state<Facts | null>(null)
+  const SETTLED_MS = 150
+
   let media = $state<{ shown: 'picture' | 'sound' | 'film'; url: string } | null>(null)
   let text = $state<{ words: string; cut: boolean } | null>(null)
   let count = $state<Count | null>(null)
@@ -55,18 +57,22 @@
           if (!gone && words !== null) text = { words, cut: read.cut }
         })
         .catch(() => undefined)
-    } else if (shown && as !== null && as !== 'text') {
-      const kind = as
-      void peekAt(at, MOST_MEDIA)
-        .then((read) => {
-          url = mediaUrl(shown.name, read)
-          if (gone && url) URL.revokeObjectURL(url)
-          else if (url) media = { shown: kind, url }
-        })
-        .catch(() => undefined)
     }
+    const waiting =
+      shown && as !== null && as !== 'text'
+        ? setTimeout(() => {
+            void peekAt(at, MOST_MEDIA)
+              .then((read) => {
+                url = mediaUrl(shown.name, read)
+                if (gone && url) URL.revokeObjectURL(url)
+                else if (url) media = { shown: as, url }
+              })
+              .catch(() => undefined)
+          }, SETTLED_MS)
+        : undefined
     return () => {
       gone = true
+      clearTimeout(waiting)
       if (url) URL.revokeObjectURL(url)
       if (counting) void cancelJob(counting)
       counting = null
@@ -140,7 +146,7 @@
           })}
         </p>
       {:else}
-        <button type="button" class="nib-button is-quiet" onclick={countNow} disabled={!!counting}
+        <button type="button" class="orden-button is-quiet" onclick={countNow} disabled={!!counting}
           >{counting ? t('Counting…') : t('Count what it holds')}</button
         >
       {/if}

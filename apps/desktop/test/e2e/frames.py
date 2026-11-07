@@ -211,7 +211,7 @@ def drive(browser: Browser) -> None:
     until = time.monotonic() + 30
     while time.monotonic() < until:
         lines = page.evaluate(
-            """() => [...document.querySelectorAll('.nib-run-line')].map((one) => one.textContent)"""
+            """() => [...document.querySelectorAll('.orden-run-line')].map((one) => one.textContent)"""
         )
         if len(lines) >= 2:
             break

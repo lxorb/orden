@@ -244,12 +244,12 @@ export async function startAcross(): Promise<Across> {
   const { sync } = await import('../sync.svelte')
   const { account } = await import('../account.svelte')
   let told = false
-  account.forgetWithSession(() => {
-    if (!told) theWindows.say('signed-out')
+  account.forgetWithSession((kept) => {
+    if (!told) theWindows.say('signed-out', { kept })
   })
-  theWindows.hear('signed-out', () => {
+  theWindows.hear('signed-out', (said) => {
     told = true
-    void account.signOut().finally(() => (told = false))
+    void account.signOut(said.kept === true ? 'kept' : 'told').finally(() => (told = false))
   })
   const across = new Across({
     get documents() {

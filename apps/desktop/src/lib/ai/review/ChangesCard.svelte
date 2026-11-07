@@ -26,8 +26,8 @@
 {#if waiting}
   <div class="card" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
     <div class="bar">
-      <button class="nib-row is-short what" aria-expanded={listing} onclick={toggle}>
-        <span class="nib-row-label"
+      <button class="orden-row is-short what" aria-expanded={listing} onclick={toggle}>
+        <span class="orden-row-label"
           >{review.said ??
             plural(notes.length + files.length, {
               one: '{count} note',
@@ -36,10 +36,10 @@
         >
         <Tally {added} {removed} />
       </button>
-      <button class="nib-chip is-quiet" onclick={() => void review.undoAll(thread, files)}
+      <button class="orden-chip is-quiet" onclick={() => void review.undoAll(thread, files)}
         >{t('Undo')}</button
       >
-      <button class="nib-chip" onclick={() => review.keepAll(thread, files)}>{t('Keep')}</button>
+      <button class="orden-chip" onclick={() => review.keepAll(thread, files)}>{t('Keep')}</button>
     </div>
     <Changes {notes} {files} {thread} open={listing} />
   </div>

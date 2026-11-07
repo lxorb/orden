@@ -16,7 +16,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-ZEN_DIR = "NIB_ZEN_DIR"
+ZEN_DIR = "ORDEN_ZEN_DIR"
 
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
@@ -80,7 +80,7 @@ PROFILES_INI = (
 
 def zen_home() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-zen-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-zen-probe-"))
     (made / "profiles.ini").write_text(PROFILES_INI, encoding="utf-8")
     first = made / "Profiles" / "b2.Default (release)"
     first.mkdir(parents=True)
@@ -93,7 +93,7 @@ def zen_home() -> pathlib.Path:
     return made
 
 PRESS = """(async () => {
-  const row = [...document.querySelectorAll('.nib-setting')]
+  const row = [...document.querySelectorAll('.orden-setting')]
     .find((one) => one.querySelector('.name')?.textContent?.trim() === %s)
   const button = row?.querySelector('button')
   if (!button || button.disabled) return 'no row'
@@ -101,16 +101,16 @@ PRESS = """(async () => {
   return 'pressed'
 })()"""
 
-ROWS = """JSON.stringify([...document.querySelectorAll('.nib-setting .name')]
+ROWS = """JSON.stringify([...document.querySelectorAll('.orden-setting .name')]
   .map((one) => one.textContent.trim()))"""
 
 HELD = """JSON.stringify({
   spaces: nib.workspace.spaces.map((one) => one.name),
   open: nib.workspace.activeSpace?.name ?? null,
   busy: document.querySelector('.busy, [role="status"]')?.textContent?.trim() ?? null,
-  arranged: JSON.parse(localStorage.getItem('nib:arranged') ?? '{}'),
-  bookmarks: JSON.parse(localStorage.getItem('nib:bookmarks') ?? '{}'),
-  icons: JSON.parse(localStorage.getItem('nib:icons') ?? '{}'),
+  arranged: JSON.parse(localStorage.getItem('orden:arranged') ?? '{}'),
+  bookmarks: JSON.parse(localStorage.getItem('orden:bookmarks') ?? '{}'),
+  icons: JSON.parse(localStorage.getItem('orden:icons') ?? '{}'),
 })"""
 
 def files_under(root: pathlib.Path) -> list[str]:

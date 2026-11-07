@@ -1529,6 +1529,8 @@ export const tr: Dictionary = {
   Shorter: 'Daha kısa',
   Longer: 'Daha uzun',
   'Fix grammar': 'Dil bilgisini düzelt',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Seçilen sözcükler artık notta değil, bu yüzden hiçbir şey değiştirilmedi.',
   'A cited report': 'Alıntılı bir rapor',
   'A helper in the background': 'Arka planda bir yardımcı',
   'A side question': 'Yan bir soru',
@@ -2939,6 +2941,8 @@ export const tr: Dictionary = {
   'That could not be protected: {reason}': 'Korunamadı: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} eklenmedi: sohbet resimleri ve en fazla 2 MB metin dosyalarını kabul eder.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} eklenmedi: bir mesaj en fazla 20 resim kabul eder.',
   'Time tracker': 'Zaman takibi',
   'Start timer': 'Zamanlayıcıyı başlat',
   'Stop timer': 'Zamanlayıcıyı durdur',
@@ -3516,9 +3520,46 @@ export const tr: Dictionary = {
   'You said': 'Belirttiğiniz',
   Privacy: 'Gizlilik',
   'Send crash and freeze reports': 'Çökme ve donma raporları gönder',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden çöktüğünde ya da donduğunda, ne yaptığını ve kendi kodunun neresinde olduğunu adlar, yollar, adresler ve parolalar çıkarılmış olarak gönderir. Notlarınızı asla göndermez.',
-  'Turn off in Settings': 'Ayarlar’dan kapat',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden çöktüğünde ya da donduğunda ne yaptığını gönderir; asla not, ad, yol veya parola göndermez.',
+  'Send crash reports to help improve Orden':
+    'Orden’ı geliştirmeye yardımcı olmak için çökme raporları gönder',
+  'Move to {space}?': '{space} alanına taşınsın mı?',
+  'macOS can start dictation with this key too.': 'macOS bu tuşla dikteyi de başlatabilir.',
+  'QR code': 'QR kodu',
+  'Waiting…': 'Bekleniyor…',
+  Service: 'Hizmet',
+  'I understand and want to connect anyway': 'Anlıyorum ve yine de bağlanmak istiyorum',
+  'Some changes have not reached your account yet': 'Bazı değişiklikler henüz hesabınıza ulaşmadı',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Bu tarayıcıda kalırlar, burada oturum açan başka kimse onları görmez ve yeniden oturum açtığınızda gönderilirler.',
+  'Leave it empty to sign in with a QR code instead':
+    'Bunun yerine QR koduyla girmek için boş bırakın',
+  'Telegram code': 'Telegram kodu',
+  'Sent to Telegram on your other device': 'Diğer cihazınızdaki Telegram’a gönderildi',
+  'Sent by SMS': 'SMS ile gönderildi',
+  'You will get a call with the code': 'Kodu söyleyen bir arama alacaksınız',
+  'The code was wrong. Try again.': 'Kod yanlıştı. Tekrar deneyin.',
+  'The code expired, so Telegram sent a new one.':
+    'Kodun süresi doldu, Telegram yenisini gönderdi.',
+  'Two-step verification password': 'İki adımlı doğrulama parolası',
+  'The password was wrong. Try again.': 'Parola yanlıştı. Tekrar deneyin.',
+  'Scan with Telegram on your phone': 'Telefonunuzdaki Telegram ile tarayın',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Ayarlar > Cihazlar > Masaüstü Cihaz Bağla',
+  'Signing in to Telegram needs the app': 'Telegram’a giriş için uygulama gerekir',
+  'Telegram does not know this phone number': 'Telegram bu telefon numarasını tanımıyor',
+  'Too many tries. Wait a while and try again.': 'Çok fazla deneme. Biraz bekleyip tekrar deneyin.',
+  'Too many wrong tries': 'Çok fazla yanlış deneme',
+  'Signed out of Telegram. Connect again.': 'Telegram oturumu kapandı. Yeniden bağlanın.',
+  'Telegram cannot do that in this conversation': 'Telegram bunu bu konuşmada yapamaz',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram grup ve kanallardaki mesajları herkes için siler',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram bir grubu yeni sahibine yalnızca kendi uygulamasında devreder',
+  'That sticker is no longer available': 'Bu çıkartma artık kullanılamıyor',
+  'Telegram is not set up in this build': 'Telegram bu sürümde ayarlanmamış',
+  'Password manager': 'Parola yöneticisi',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Parolaları saklayan ve web sitelerinde dolduran Pass’i ekler. Kapatmak kasalarınızı korur.',
 }

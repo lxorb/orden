@@ -54,6 +54,25 @@ for (const run of [
 document.getElementById('made').textContent = said.join(' ')
 </script>
 
+A block whose pattern backtracks without end:
+
+<div id="pattern">nothing yet</div>
+<script>
+document.getElementById('pattern').textContent = 'it ran'
+;/^(\\w+\\s?)+$/.test('a'.repeat(40) + '!')
+</script>
+
+A block that makes a frame of its own to run what it says:
+
+<div id="nested">nothing yet</div>
+<script>
+const own = [...document.scripts].find((one) => !one.type && one !== document.currentScript && one.textContent.includes('orden-frame'))
+const child = document.createElement('iframe')
+child.srcdoc = '<script type="text/plain" id="orden-frame">while (true) {}</' + 'script><script>' + own.textContent + '</' + 'script>'
+document.body.append(child)
+document.getElementById('nested').textContent = 'made a frame'
+</script>
+
 The end.
 """
 
@@ -122,7 +141,7 @@ def fence(page: Page) -> None:
     if not answers(page, "while the fence ran"):
         return
     typed_lands(page, " typed while it ran")
-    lines = page.evaluate("() => [...document.querySelectorAll('.nib-run-line')].map((one) => one.textContent)")
+    lines = page.evaluate("() => [...document.querySelectorAll('.orden-run-line')].map((one) => one.textContent)")
     say(f"[fence] while it runs: {json.dumps(lines)}")
     if not any("started" in (line or "") for line in lines):
         wrong("the fence printed nothing before its loop")
@@ -131,7 +150,7 @@ def fence(page: Page) -> None:
         DRIVE.wait_for(
             page,
             "!document.querySelector('iframe[title=\"nib runner\"]')"
-            " && /tim/i.test(document.querySelector('.nib-run-state')?.textContent ?? '')",
+            " && /tim/i.test(document.querySelector('.orden-run-state')?.textContent ?? '')",
             "the run to be stopped as timed out",
             30,
         )
@@ -198,6 +217,33 @@ def made(page: Page) -> None:
             typed_lands(page, " typed after the press")
     DRIVE.shot(page, f"{engine}/03-made", caret="initial")
 
+def frame_with(page: Page, element: str) -> Frame | None:
+    for frame in page.frames:
+        if frame is page.main_frame:
+            continue
+        try:
+            if frame.evaluate("(id) => !!document.getElementById(id)", element):
+                return frame
+        except Error:
+            continue
+    return None
+
+def refused(page: Page, index: int, element: str, said: str, what: str) -> None:
+    card = page.locator(".embed-html").nth(index)
+    card.scroll_into_view_if_needed()
+    page.wait_for_timeout(400)
+    card.click()
+    page.wait_for_timeout(2500)
+    if not answers(page, f"once the block {what} was pressed"):
+        return
+    typed_lands(page, f" typed after the block {what}")
+    frame = frame_with(page, element)
+    found = frame.evaluate("(id) => document.getElementById(id)?.textContent", element) if frame else None
+    say(f"[{element}] the block says {found!r}")
+    if found != said:
+        wrong(f"the block {what} says {found!r}, not {said!r}")
+    DRIVE.shot(page, f"{engine}/04-{element}", caret="initial")
+
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="light")
     page = context.new_page()
@@ -210,6 +256,8 @@ def drive(browser: Browser) -> None:
     fence(page)
     block(page)
     made(page)
+    refused(page, 2, "pattern", "nothing yet", "with a pattern that backtracks without end")
+    refused(page, 3, "nested", "made a frame", "that makes a frame of its own")
     context.close()
 
 def main() -> int:

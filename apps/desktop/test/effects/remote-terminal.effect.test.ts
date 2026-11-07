@@ -3,6 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let refuse = false
+let front: string | null = null
+let reached: Record<string, unknown> | null = null
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
@@ -19,6 +21,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
         file: null,
       })
     }
+    if (command === 'remote_keep') return Promise.resolve(args.kept)
+    if (command === 'pty_program') return Promise.resolve(front)
+    if (command === 'pty_ssh') return Promise.resolve(reached)
     if (command === 'pty_spawn') {
       return refuse
         ? Promise.reject(new Error('no ssh on this machine'))
@@ -130,6 +135,8 @@ const { readSpec, writeSpec } = await import('../../src/lib/terminal/spec')
 const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { openRemote } = await import('../../src/lib/remote/open')
 const { shells } = await import('../../src/lib/terminal/shells.svelte')
+const { renameTerminal } = await import('../../src/lib/terminal/rename')
+const { setTerminalIcon } = await import('../../src/lib/icon-target')
 const TerminalTab = (await import('../../src/lib/terminal/TerminalTab.svelte')).default
 
 const spawns = () => asked.filter((one) => one.command === 'pty_spawn')
@@ -140,6 +147,8 @@ beforeEach(() => {
   asked.length = 0
   written.length = 0
   refuse = false
+  front = null
+  reached = null
   shells.restoring = false
   workspace.panes.collapse()
   workspace.tabs = []
@@ -242,4 +251,180 @@ test('one that will not start is never swapped for a shell on this machine', asy
   expect(spawns().map((one) => one.args.shell)).toEqual(['ssh:pi'])
   expect(readSpec(tab.doc)?.shell).toBe('ssh:pi')
   expect(written.join('')).toContain('Could not connect to pi')
+})
+
+async function local() {
+  workspace.openUnsaved(
+    'terminal',
+    writeSpec({ shell: 'pwsh', folder: null, key: 'here', name: null }),
+    'PowerShell',
+  )
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no tab')
+  await sessionOf(tab).attach(place, false)
+  await vi.waitFor(() => expect(spawns()).toHaveLength(1))
+  return tab
+}
+
+test('ssh to a known host in a local tab makes it that host, with the connection kept', async () => {
+  const tab = await local()
+
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+  expect(readSpec(tab.doc)?.via).toBe('pwsh')
+  await vi.waitFor(() => expect(tab.shown).toBe('pi'))
+  expect(tab.running).toMatchObject({ host: 'pi', colour: '4' })
+  expect(spawns()).toHaveLength(1)
+
+  front = null
+  typing?.('exit\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('pwsh'), { timeout: 2500 })
+  expect(readSpec(tab.doc)?.via).toBeUndefined()
+  expect(tab.running?.host).toBeNull()
+  expect(spawns()).toHaveLength(1)
+})
+
+test('ssh to an address no host has, or with a command, leaves the tab a shell here', async () => {
+  const tab = await local()
+
+  front = 'ssh'
+  reached = { hostname: 'box.example.com', user: 'emil', port: 2222 }
+  typing?.('ssh emil@box.example.com -p 2222\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+  await new Promise((settle) => setTimeout(settle, 50))
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+
+  reached = null
+  typing?.('ssh pi uptime\r')
+  await new Promise((settle) => setTimeout(settle, 1500))
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+})
+
+test('a local shell that ends under an ssh it was taken for ends as a shell here', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: '10.0.0.5', user: null, port: null }
+  typing?.('ssh 10.0.0.5\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+
+  exits(1)
+  flushSync()
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+  expect(sessionOf(tab).offline).toBe(false)
+  expect(written.join('')).toContain('Exited with code 1')
+})
+
+test('one taken over and put back by a restart is a remote tab of its own', async () => {
+  const words = writeSpec({ shell: 'ssh:pi', folder: null, key: 'before', name: null, via: 'pwsh' })
+  workspace.openUnsaved('terminal', words, 'pi')
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no tab')
+
+  await sessionOf(tab).attach(place, false)
+  await vi.waitFor(() => expect(sessionOf(tab).offline).toBe(true))
+  expect(spawns()).toHaveLength(0)
+
+  typing?.('\r')
+  await vi.waitFor(() => expect(spawns()).toHaveLength(1))
+  expect(spawns()[0]?.args.shell).toBe('ssh:pi')
+  expect(readSpec(tab.doc)?.via).toBeUndefined()
+})
+
+async function adopted() {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+  return tab
+}
+
+test('another ssh in front after the first is asked again, and an unknown one gives the tab back', async () => {
+  const tab = await adopted()
+
+  reached = { hostname: 'box.example.com', user: null, port: null }
+  typing?.('exit; ssh box.example.com\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('pwsh'), { timeout: 2500 })
+  expect(tab.running?.host).toBeNull()
+})
+
+test('a name cleared while it is a host gives the tab the local shell back as its name', async () => {
+  const tab = await adopted()
+  await renameTerminal(tab, 'mine')
+  await renameTerminal(tab, '')
+  expect(tab.name).toBe('PowerShell')
+})
+
+test('a split or duplicate of a local terminal is a terminal of its own, not the same words', async () => {
+  const tab = await adopted()
+  const { duplicateTab } = await import('../../src/lib/tab-strip/ops')
+  duplicateTab(tab.id)
+  const copy = workspace.tabs.at(-1)
+  if (!copy || copy === tab) throw new Error('no copy')
+
+  expect(copy.note).not.toBe(tab.note)
+  expect(readSpec(copy.doc)).toMatchObject({ shell: 'ssh:pi', key: '' })
+  expect(readSpec(copy.doc)?.via).toBeUndefined()
+  expect(readSpec(tab.doc)?.via).toBe('pwsh')
+})
+
+test('a host reached by ssh in a local tab is kept as connected to lately', async () => {
+  await adopted()
+  await vi.waitFor(() =>
+    expect(asked.find((one) => one.command === 'remote_keep')?.args).toMatchObject({
+      kept: { about: { pi: { last: expect.any(Number) as number } } },
+    }),
+  )
+})
+
+test('an address no host has is looked up once, not every time ssh is asked after', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: 'box.example.com', user: null, port: null }
+  const lookups = () => asked.filter((one) => one.command === 'remote_hosts').length
+
+  typing?.('ssh box.example.com\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+  await new Promise((settle) => setTimeout(settle, 100))
+  const after = lookups()
+  typing?.('ls\r')
+  await new Promise((settle) => setTimeout(settle, 1200))
+  typing?.('ls\r')
+  await new Promise((settle) => setTimeout(settle, 1200))
+  expect(lookups()).toBe(after)
+  expect(readSpec(tab.doc)?.shell).toBe('pwsh')
+})
+
+test('the prompt of the other machine landing while it is asked does not stop it', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+  channels.at(-1)?.onmessage?.(new TextEncoder().encode('\x1b]133;A\x07pi$ ').buffer)
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'))
+})
+
+test('an address looked up once is looked up again the next time ssh starts', async () => {
+  const tab = await local()
+  front = 'ssh'
+  reached = { hostname: '10.0.0.9', user: null, port: null }
+  typing?.('ssh 10.0.0.9\r')
+  await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
+
+  front = null
+  typing?.('exit\r')
+  await new Promise((settle) => setTimeout(settle, 1200))
+  front = 'ssh'
+  reached = { hostname: 'pi', user: null, port: null }
+  typing?.('ssh pi\r')
+  await vi.waitFor(() => expect(readSpec(tab.doc)?.shell).toBe('ssh:pi'), { timeout: 2500 })
+})
+
+test('an icon chosen while it is a host keeps the shell under it', async () => {
+  const tab = await adopted()
+  setTerminalIcon(tab.id, 'star', null)
+  expect(readSpec(tab.doc)).toMatchObject({ shell: 'ssh:pi', via: 'pwsh', icon: 'star' })
 })

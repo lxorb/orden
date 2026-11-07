@@ -106,7 +106,7 @@
 
   {#if open && head}
     <div
-      class="pop nib-layer"
+      class="pop orden-layer"
       role="dialog"
       aria-label={t('Model and effort')}
       tabindex="-1"
@@ -117,7 +117,7 @@
         <div class="providers">
           {#each providers as one (one.id)}
             <button
-              class="nib-chip provider"
+              class="orden-chip provider"
               class:is-on={one.id === provider?.id}
               onclick={() => void chat.chooseModel(one.id, one.model)}
               ><ProviderMark account={one} />{one.name}</button
@@ -128,7 +128,7 @@
 
       {#if shown.length > 6 || query}
         <input
-          class="nib-field filter"
+          class="orden-field filter"
           bind:this={field}
           bind:value={query}
           placeholder={t('Model')}
@@ -142,7 +142,7 @@
       <div class="models" role="listbox">
         {#each shown as one, index (one.id)}
           <button
-            class="nib-row model"
+            class="orden-row model"
             class:lit={index === lit}
             role="option"
             aria-selected={one.id === head.model}
@@ -152,7 +152,7 @@
               close()
             }}
           >
-            <span class="nib-row-label">{one.name}</span>
+            <span class="orden-row-label">{one.name}</span>
             {#if one.window}<span class="window">{tokens(one.window, i18n.language)}</span>{/if}
             <span class="tick" aria-hidden="true">{one.id === head.model ? '✓' : ''}</span>
           </button>
@@ -163,7 +163,7 @@
         <div class="line effort">
           <span class="what">{t('Effort')}</span>
           <div
-            class="nib-segmented levels"
+            class="orden-segmented levels"
             style:grid-template-columns={`repeat(${columns}, 1fr)`}
             role="radiogroup"
             aria-label={t('Effort')}
@@ -184,7 +184,7 @@
       {#if model?.fast}
         <button class="line fast" onclick={() => chat.setFast()}>
           <span class="what">{t('Fast')}</span>
-          <span class="nib-switch" class:on={head.fast}></span>
+          <span class="orden-switch" class:on={head.fast}></span>
         </button>
       {/if}
     </div>

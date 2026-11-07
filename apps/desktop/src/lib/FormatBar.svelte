@@ -201,7 +201,7 @@
 
 {#if docked}
   <div
-    class="nib-bar docked"
+    class="orden-bar docked"
     role="toolbar"
     aria-label={t('Format')}
     bind:this={bar}
@@ -213,7 +213,7 @@
   </div>
 {:else if at}
   <div
-    class="nib-bar nib-bar-at"
+    class="orden-bar orden-bar-at"
     role="toolbar"
     aria-label={t('Format')}
     bind:this={bar}

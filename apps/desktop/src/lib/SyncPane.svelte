@@ -189,15 +189,15 @@
   <h3>{t('When the same note was written twice')}</h3>
 
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('On two devices')}<Hint
             text={t('What happens when one note was changed on two devices before they synced.')}
           /></span
         ></span
       >
-      <div class="nib-setting-value">
+      <div class="orden-setting-value">
         <Select
           value={modes.conflicts}
           options={rules}
@@ -216,15 +216,15 @@
 <h3>{t('History on the account')}</h3>
 
 <div class="card">
-  <div class="nib-setting setting">
+  <div class="orden-setting setting">
     <span class="name"
-      ><span class="nib-named"
+      ><span class="orden-named"
         >{t('Keep versions')}<Hint
           text={t('How far back the account keeps earlier versions of your notes.')}
         /></span
       ></span
     >
-    <div class="nib-setting-value">
+    <div class="orden-setting-value">
       <Select
         value={String(modes.keepVersions)}
         options={horizons}
@@ -246,7 +246,7 @@
 
   <div class="card" transition:fade={{ duration: dur(130) }}>
     {#each asking.held as note (note.id)}
-      <button class="nib-action held" onclick={() => void asking.revisit(note)}>
+      <button class="orden-action held" onclick={() => void asking.revisit(note)}>
         <span class="name">{note.name}</span>
         <span class="hint">{when(note.theirs.at, 'short')}</span>
       </button>
@@ -261,13 +261,13 @@
         <span class="name">{shortPath(clash.path)}</span>
         <span class="hint">{when(clash.at, 'short')}</span>
         <div class="answers">
-          <button class="nib-chip" onclick={() => void settle(clash, 'mine')}>
+          <button class="orden-chip" onclick={() => void settle(clash, 'mine')}>
             {t('Keep mine')}
           </button>
-          <button class="nib-chip" onclick={() => void settle(clash, 'theirs')}>
+          <button class="orden-chip" onclick={() => void settle(clash, 'theirs')}>
             {t('Take theirs')}
           </button>
-          <button class="nib-chip" onclick={() => void settle(clash, 'both')}>
+          <button class="orden-chip" onclick={() => void settle(clash, 'both')}>
             {t('Keep both')}
           </button>
         </div>
@@ -280,7 +280,7 @@
   <h3 transition:fade={{ duration: dur(130) }}>{t('Conflict copies from other apps')}</h3>
 
   <div class="card" transition:fade={{ duration: dur(130) }}>
-    <button class="nib-action held" disabled={removing} onclick={() => void removeCopies()}>
+    <button class="orden-action held" disabled={removing} onclick={() => void removeCopies()}>
       <span class="name">{t('Remove from sync')}</span>
       <span class="hint">{amount(copies.count)}</span>
     </button>
@@ -316,7 +316,7 @@
 
   {#if !asking.engine}
     <div class="card">
-      <button class="nib-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+      <button class="orden-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
     </div>
   {/if}
 {/if}
@@ -324,15 +324,15 @@
 <h3>{t('Go back')}</h3>
 
 <div class="card">
-  <div class="nib-setting setting">
+  <div class="orden-setting setting">
     <span class="name"
-      ><span class="nib-named"
+      ><span class="orden-named"
         >{t('This space, as it was')}<Hint
           text={t('How far back Go back takes this space; it says first what would change.')}
         /></span
       ></span
     >
-    <div class="nib-setting-value">
+    <div class="orden-setting-value">
       <Select
         value={String(chosen)}
         options={back.map((one) => ({
@@ -372,11 +372,11 @@
 
 <div class="card">
   {#if asked?.notes}
-    <button class="nib-action is-danger" disabled={rolling} onclick={() => void roll()}>
+    <button class="orden-action is-danger" disabled={rolling} onclick={() => void roll()}>
       {rolling ? t('Going back') : t('Go back')}
     </button>
   {:else}
-    <button class="nib-action" disabled={!spaceId} onclick={() => void look()}>
+    <button class="orden-action" disabled={!spaceId} onclick={() => void look()}>
       {t('What would change?')}
     </button>
   {/if}

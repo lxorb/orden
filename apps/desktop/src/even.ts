@@ -1,3 +1,4 @@
+import './lib/former-keys'
 import { filling } from './lib/even/first'
 import '@orden/themes'
 import { mount } from 'svelte'

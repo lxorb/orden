@@ -5,7 +5,7 @@
 </script>
 
 {#if recorder.on || recorder.saving}
-  <div class="nib-bar recording" class:saving={!recorder.on}>
+  <div class="orden-bar recording" class:saving={!recorder.on}>
     <span class="dot"></span>
     <span class="clock">{spanOf(recorder.elapsed)}</span>
     <button

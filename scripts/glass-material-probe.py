@@ -81,7 +81,7 @@ def ran(held: dict, code: str) -> object:
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path):
     path = allow_eval(identifier)
-    app = run_probe(exe, env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, quiet=True)
+    app = run_probe(exe, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, quiet=True)
     held = endpoint(path)
     until = time.monotonic() + 30
     while not main_window(app.pid) and time.monotonic() < until:
@@ -96,10 +96,10 @@ def ended(app) -> None:
 
 CHOOSE = """
 (() => {
-  const kept = JSON.parse(localStorage.getItem('nib:theme-settings') || '{}')
+  const kept = JSON.parse(localStorage.getItem('orden:theme-settings') || '{}')
   kept.glass = { ...kept.glass, material: %s }
-  localStorage.setItem('nib:theme-settings', JSON.stringify(kept))
-  localStorage.setItem('nib:theme', 'glass')
+  localStorage.setItem('orden:theme-settings', JSON.stringify(kept))
+  localStorage.setItem('orden:theme', 'glass')
   setTimeout(() => location.reload(), 50)
   return true
 })()
@@ -112,7 +112,7 @@ def main() -> int:
     options = parser.parse_args()
 
     wipe(options.identifier)
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-material-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-material-"))
     app, held = started(options.exe, options.identifier, spaces)
     try:
         hwnd = main_window(app.pid)

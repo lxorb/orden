@@ -92,7 +92,7 @@
   </EditCard>
   {#if canGenerate}
     <button
-      class="nib-button is-quiet is-soft generate"
+      class="orden-button is-quiet is-soft generate"
       type="button"
       aria-busy={generating}
       disabled={generating}

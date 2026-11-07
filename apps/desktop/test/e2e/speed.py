@@ -36,7 +36,7 @@ was doing and a count says what the code did.
 The two search walks that keep a clock on themselves are timed here and nowhere
 else. Both count what the code did, and those counts are their test; each also has
 one wall-clock bound on its worst case, which a loaded machine misses for reasons
-that are nothing to do with the code. So they ask for `NIB_PERF=1` before they
+that are nothing to do with the code. So they ask for `ORDEN_PERF=1` before they
 believe their own clock, this drive is the only thing that sets it, and it is asked
 before a browser exists. `--no-clock` leaves it out. See `clocked`.
 
@@ -681,7 +681,7 @@ TYPING = r"""
 READING = r"""
 async () => {
   const ws = window.nibApp.workspace
-  performance.clearMeasures('nib:reading')
+  performance.clearMeasures('orden:reading')
   const started = window.__since()
   ws.toggleReading()
 
@@ -694,7 +694,7 @@ async () => {
     if (document.querySelector('.read #write')?.childElementCount) break
   }
   const painted = await window.__painted()
-  const render = performance.getEntriesByName('nib:reading').at(-1)?.duration ?? 0
+  const render = performance.getEntriesByName('orden:reading').at(-1)?.duration ?? 0
 
   return {
     reading: painted - started,
@@ -774,7 +774,7 @@ SIDEBAR = r"""
   aside: !!document.querySelector('aside'),
   rows: document.querySelectorAll('aside .row').length,
   find: !!document.querySelector('.find'),
-  sheet: !!document.querySelector('.nib-screen.sheet'),
+  sheet: !!document.querySelector('.orden-screen.sheet'),
   palette: !!document.querySelector('.palette'),
   space: window.nibApp?.workspace?.activeSpace?.root ?? null,
 })
@@ -1056,7 +1056,7 @@ async (path) => {
   return {
     'links-panel': shown,
     'links-rows': rows,
-    sections: document.querySelectorAll('.nib-section').length,
+    sections: document.querySelectorAll('.orden-section').length,
     loaf: window.__marks.loaf.filter((one) => one.ms >= 50),
   }
 }
@@ -1345,7 +1345,7 @@ def clocked() -> str:
     asked = subprocess.run(
         [npx, "vitest", "run", *CLOCKED],
         cwd=APP,
-        env={**os.environ, "NIB_PERF": "1"},
+        env={**os.environ, "ORDEN_PERF": "1"},
         capture_output=True,
         text=True,
         encoding="utf-8",

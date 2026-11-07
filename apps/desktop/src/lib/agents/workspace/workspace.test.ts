@@ -1674,7 +1674,7 @@ describe('to-dos and bases', () => {
     }
   })
 
-  test('the reader’s `tasks add` and `nib://add-task` go to the one inbox too (#1157)', async () => {
+  test('the reader’s `tasks add` and `orden://add-task` go to the one inbox too (#1157)', async () => {
     workspace.activeSpaceId = 'home'
     try {
       const added = await call('add_task', { text: 'Call Ada' }, READER)

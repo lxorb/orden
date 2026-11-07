@@ -1549,6 +1549,8 @@ export const ta: Dictionary = {
   Shorter: 'சுருக்கமாக',
   Longer: 'விரிவாக',
   'Fix grammar': 'இலக்கணத்தைச் சரிசெய்',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'தேர்ந்தெடுத்த சொற்கள் இனி குறிப்பில் இல்லை, எனவே எதுவும் மாற்றப்படவில்லை.',
   'A cited report': 'மேற்கோளிட்ட அறிக்கை',
   'A helper in the background': 'பின்னணியில் உதவியாளர்',
   'A side question': 'பக்கக் கேள்வி',
@@ -2971,6 +2973,8 @@ export const ta: Dictionary = {
   'That could not be protected: {reason}': 'பாதுகாக்க முடியவில்லை: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} சேர்க்கப்படவில்லை: அரட்டை படங்களையும் 2 MB வரையிலான உரைக் கோப்புகளையும் ஏற்கும்.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} சேர்க்கப்படவில்லை: ஒரு செய்தி அதிகபட்சம் 20 படங்களை ஏற்கும்.',
   'Time tracker': 'நேரக் கண்காணிப்பு',
   'Start timer': 'டைமரைத் தொடங்கு',
   'Stop timer': 'டைமரை நிறுத்து',
@@ -3553,9 +3557,50 @@ export const ta: Dictionary = {
   'You said': 'நீங்கள் சொன்னது',
   Privacy: 'தனியுரிமை',
   'Send crash and freeze reports': 'செயலிழப்பு மற்றும் உறைவு அறிக்கைகளை அனுப்பு',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden செயலிழக்கும்போது அல்லது உறையும்போது, அது என்ன செய்துகொண்டிருந்தது, தன் குறியீட்டில் எங்கே இருந்தது என்பதைப் பெயர்கள், பாதைகள், முகவரிகள், கடவுச்சொற்கள் நீக்கி அனுப்புகிறது. உங்கள் குறிப்புகளை ஒருபோதும் இல்லை.',
-  'Turn off in Settings': 'அமைப்புகளில் அணைக்கவும்',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden செயலிழந்தபோது அல்லது உறைந்தபோது என்ன செய்தது என்பதை அனுப்புகிறது; குறிப்புகள், பெயர்கள், பாதைகள், கடவுச்சொற்கள் ஒருபோதும் இல்லை.',
+  'Send crash reports to help improve Orden':
+    'Orden-ஐ மேம்படுத்த உதவ செயலிழப்பு அறிக்கைகளை அனுப்பு',
+  'Move to {space}?': '{space}-க்கு நகர்த்தவா?',
+  'macOS can start dictation with this key too.':
+    'இந்த விசையால் macOS குரல் தட்டச்சையும் தொடங்கலாம்.',
+  'QR code': 'QR குறியீடு',
+  'Waiting…': 'காத்திருக்கிறது…',
+  Service: 'சேவை',
+  'I understand and want to connect anyway': 'புரிகிறது, இருந்தாலும் இணைக்க விரும்புகிறேன்',
+  'Some changes have not reached your account yet':
+    'சில மாற்றங்கள் இன்னும் உங்கள் கணக்கை அடையவில்லை',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'அவை இந்த உலாவியிலேயே இருக்கும், இங்கே உள்நுழையும் வேறு யாருக்கும் தெரியாது, நீங்கள் மீண்டும் உள்நுழையும்போது அனுப்பப்படும்.',
+  'Leave it empty to sign in with a QR code instead':
+    'பதிலாக QR குறியீட்டால் உள்நுழைய காலியாக விடவும்',
+  'Telegram code': 'Telegram குறியீடு',
+  'Sent to Telegram on your other device': 'உங்கள் மற்ற சாதனத்திலுள்ள Telegram-க்கு அனுப்பப்பட்டது',
+  'Sent by SMS': 'SMS மூலம் அனுப்பப்பட்டது',
+  'You will get a call with the code': 'குறியீட்டைச் சொல்லும் அழைப்பு வரும்',
+  'The code was wrong. Try again.': 'குறியீடு தவறு. மீண்டும் முயலவும்.',
+  'The code expired, so Telegram sent a new one.':
+    'குறியீடு காலாவதியானதால் Telegram புதியதை அனுப்பியது.',
+  'Two-step verification password': 'இரண்டு படி சரிபார்ப்பு கடவுச்சொல்',
+  'The password was wrong. Try again.': 'கடவுச்சொல் தவறு. மீண்டும் முயலவும்.',
+  'Scan with Telegram on your phone': 'உங்கள் தொலைபேசியிலுள்ள Telegram-ஆல் ஸ்கேன் செய்யவும்',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram-இல் உள்நுழைய ஆப் தேவை',
+  'Telegram does not know this phone number': 'Telegram-க்கு இந்தத் தொலைபேசி எண் தெரியாது',
+  'Too many tries. Wait a while and try again.':
+    'அதிக முயற்சிகள். சிறிது நேரம் காத்திருந்து மீண்டும் முயலவும்.',
+  'Too many wrong tries': 'அதிக தவறான முயற்சிகள்',
+  'Signed out of Telegram. Connect again.':
+    'Telegram-இலிருந்து வெளியேறினீர்கள். மீண்டும் இணைக்கவும்.',
+  'Telegram cannot do that in this conversation': 'இந்த உரையாடலில் Telegram அதைச் செய்ய முடியாது',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram குழுக்கள் மற்றும் சேனல்களில் செய்திகளை எல்லோருக்கும் நீக்குகிறது',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram குழுவைப் புதிய உரிமையாளருக்குத் தன் ஆப்பில் மட்டுமே ஒப்படைக்கிறது',
+  'That sticker is no longer available': 'அந்த ஸ்டிக்கர் இனி கிடைக்காது',
+  'Telegram is not set up in this build': 'இந்த பில்டில் Telegram அமைக்கப்படவில்லை',
+  'Password manager': 'கடவுச்சொல் நிர்வாகி',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'கடவுச்சொற்களை வைத்து இணையதளங்களில் நிரப்பும் Pass ஐச் சேர்க்கிறது. அணைத்தாலும் உங்கள் பெட்டகங்கள் இருக்கும்.',
 }

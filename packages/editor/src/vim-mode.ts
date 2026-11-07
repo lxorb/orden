@@ -177,17 +177,17 @@ const normalKeys = Prec.highest(
 )
 
 const vimTheme = EditorView.theme({
-  '&.nib-vim .cm-fat-cursor': {
+  '&.orden-vim .cm-fat-cursor': {
     background: 'var(--accent)',
     color: 'var(--bg)',
     borderRadius: '1px',
   },
-  '&.nib-vim:not(.cm-focused) .cm-fat-cursor': {
+  '&.orden-vim:not(.cm-focused) .cm-fat-cursor': {
     background: 'none',
     outline: '1px solid var(--accent-line)',
     color: 'inherit',
   },
-  '&.nib-vim .cm-vim-panel': {
+  '&.orden-vim .cm-vim-panel': {
     padding: '4px var(--space-4)',
     borderTop: '1px solid var(--line)',
     background: 'var(--surface)',
@@ -195,7 +195,7 @@ const vimTheme = EditorView.theme({
     fontFamily: 'var(--font-mono)',
     fontSize: 'var(--text-sm)',
   },
-  '&.nib-vim .cm-vim-panel input': {
+  '&.orden-vim .cm-vim-panel input': {
     color: 'var(--text)',
     fontFamily: 'var(--font-mono)',
     fontSize: 'var(--text-sm)',
@@ -210,7 +210,7 @@ export const modalEditing = once((on: boolean): Extension =>
         normalKeys,
         modeReporter,
         vimTheme,
-        EditorView.editorAttributes.of({ class: 'nib-vim' }),
+        EditorView.editorAttributes.of({ class: 'orden-vim' }),
       ])
     : [],
 )

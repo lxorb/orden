@@ -29,7 +29,7 @@ function editorOn(doc: string): EditorView {
 }
 
 const drawn = (view: EditorView) =>
-  [...view.dom.querySelectorAll<HTMLElement>('.nib-table tbody tr[data-row]')].map((tr) =>
+  [...view.dom.querySelectorAll<HTMLElement>('.orden-table tbody tr[data-row]')].map((tr) =>
     Number(tr.dataset.row),
   )
 
@@ -43,7 +43,7 @@ describe('a long table', () => {
 
     expect(rows.length).toBeGreaterThan(0)
     expect(rows.length).toBeLessThan(200)
-    expect(view.dom.querySelectorAll('.nib-table tbody tr.nib-table-gap').length).toBe(1)
+    expect(view.dom.querySelectorAll('.orden-table tbody tr.orden-table-gap').length).toBe(1)
   })
 
   test('draws a row far down the moment a cell of it is asked for', () => {

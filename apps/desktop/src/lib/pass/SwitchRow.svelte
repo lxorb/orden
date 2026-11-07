@@ -8,7 +8,7 @@
 </script>
 
 <button
-  class="nib-setting switch-row"
+  class="orden-setting switch-row"
   type="button"
   role="switch"
   aria-checked={on}
@@ -18,7 +18,7 @@
   }}
 >
   <span class="name">{label}</span>
-  <span class="nib-switch" class:on class:off={disabled} aria-hidden="true"></span>
+  <span class="orden-switch" class:on class:off={disabled} aria-hidden="true"></span>
 </button>
 
 <style>

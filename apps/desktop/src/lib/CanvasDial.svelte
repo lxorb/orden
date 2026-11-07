@@ -42,7 +42,7 @@
   </button>
 
   <input
-    class="nib-slider"
+    class="orden-slider"
     type="range"
     min={least}
     max={most}

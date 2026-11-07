@@ -5,7 +5,7 @@ import { afterQuiet } from './timing'
 
 const HANDS_OFF = 3000
 
-const RELOADED_FOR = 'nib:reloaded-for'
+const RELOADED_FOR = 'orden:reloaded-for'
 
 const HANDS = ['keydown', 'pointerdown', 'pointerup', 'pointercancel', 'pointermove', 'wheel']
 

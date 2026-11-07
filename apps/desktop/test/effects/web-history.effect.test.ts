@@ -19,7 +19,7 @@ globalThis.ResizeObserver = NoLayout
 
 const { default: WebHistory } = await import('../../src/lib/web-tab/WebHistory.svelte')
 
-const BOOK = 'nib:web-visits:history-test'
+const BOOK = 'orden:web-visits:history-test'
 
 let target: HTMLElement
 let close: (() => void) | undefined
@@ -50,7 +50,7 @@ afterEach(() => {
 })
 
 const labels = () =>
-  [...target.querySelectorAll('.history .page .nib-row-label')].map((one) => one.textContent)
+  [...target.querySelectorAll('.history .page .orden-row-label')].map((one) => one.textContent)
 
 test('a search starts at the top of what it found', async () => {
   const list = target.querySelector<HTMLElement>('.history .list')

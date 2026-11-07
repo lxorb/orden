@@ -47,7 +47,7 @@ def came(page: Page, script: str, what: str, arg: object = None, patience: float
 
 def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     page = context.new_page()
     page.on(
         "console",
@@ -131,7 +131,7 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.keyboard.type("second draft", delay=10)
     found = came(
         owner,
-        "() => [...document.querySelectorAll('#nib-palette-list .nib-row')]"
+        "() => [...document.querySelectorAll('#orden-palette-list .orden-row')]"
         ".some((one) => one.textContent.includes('the second draft') && one.textContent.includes('#Chat'))",
         "[Emil] the message in the palette",
     )
@@ -150,7 +150,7 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.keyboard.type("figures", delay=10)
     came(
         owner,
-        "() => { const rows = [...document.querySelectorAll('#nib-palette-list .nib-row')];"
+        "() => { const rows = [...document.querySelectorAll('#orden-palette-list .orden-row')];"
         " return rows.length > 0 && rows.every((one) => one.textContent.includes('#Chat')) }",
         "[Emil] the chat's own search, messages alone",
     )
@@ -170,13 +170,13 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     inbox = wait(
         owner,
         "async () => { const text = await window.nibApp.workspace.noteText('/Team/.Inbox.md');"
-        " return text && text.includes('nib://chat/') ? text : null }",
+        " return text && text.includes('orden://chat/') ? text : null }",
         "[Emil] the task in the inbox, with its link",
     )
-    link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("nib://chat/")), "")
+    link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("orden://chat/")), "")
     say(f"the task landed in the inbox: {inbox.strip().splitlines()[-2:]}")
     owner.keyboard.press("Escape")
-    came(owner, "() => !document.querySelector('.nib-scrim')", "[Emil] quick add put away")
+    came(owner, "() => !document.querySelector('.orden-scrim')", "[Emil] quick add put away")
     owner.evaluate("() => window.nibApp.workspace.closeActive()")
     owner.evaluate("async (link) => (await window.nibApp.chats()).openChatLink(link)", link)
     came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the task's link, opening the message")
@@ -226,7 +226,7 @@ async (id) => {
 """
 
 BLANK_ROWS = """
-() => [...document.querySelectorAll('.nib-row.entry .nib-row-label')]
+() => [...document.querySelectorAll('.orden-row.entry .orden-row-label')]
   .filter((one) => !one.textContent.trim()).length
 """
 

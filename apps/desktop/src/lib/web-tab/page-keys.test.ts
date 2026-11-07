@@ -52,12 +52,12 @@ async function shiftTwice(listening: Listening) {
 
 describe('Ctrl+Space in a page', () => {
   test('asks when nothing in the page heard it', async () => {
-    expect(await pressedWithCtrl('bare', 32)).toEqual(['nib-ctrl-space'])
+    expect(await pressedWithCtrl('bare', 32)).toEqual(['orden-ctrl-space'])
   })
 
   test('asks when a field keeps it from the page and leaves its default', async () => {
-    expect(await pressedWithCtrl('stops', 32)).toEqual(['nib-ctrl-space'])
-    expect(await pressedWithCtrl('stops', 32, true)).toEqual(['nib-ctrl-shift-space'])
+    expect(await pressedWithCtrl('stops', 32)).toEqual(['orden-ctrl-space'])
+    expect(await pressedWithCtrl('stops', 32, true)).toEqual(['orden-ctrl-shift-space'])
   })
 
   test("is the page's when it takes it", async () => {
@@ -67,11 +67,11 @@ describe('Ctrl+Space in a page', () => {
 
 describe('Shift twice in a page', () => {
   test('asks once when nothing in the page heard it', async () => {
-    expect(await shiftTwice('bare')).toEqual(['nib-twice-shift'])
+    expect(await shiftTwice('bare')).toEqual(['orden-twice-shift'])
   })
 
   test('asks once when a field keeps it from the page', async () => {
-    expect(await shiftTwice('stops')).toEqual(['nib-twice-shift'])
+    expect(await shiftTwice('stops')).toEqual(['orden-twice-shift'])
   })
 
   test("is the page's when it takes it", async () => {
@@ -82,7 +82,7 @@ describe('Shift twice in a page', () => {
 describe('the keys an engine or a page has its own use for', () => {
   test("Ctrl+F kept from the page is the engine's, whose own find opens", async () => {
     expect(await pressedWithCtrl('stops', 70)).toEqual([])
-    expect(await pressedWithCtrl('bare', 70)).toEqual(['nib-find'])
+    expect(await pressedWithCtrl('bare', 70)).toEqual(['orden-find'])
   })
 
   test("Ctrl+0 kept from the page is the engine's", async () => {
@@ -101,9 +101,9 @@ describe('the same keys on the engine with no answer of its own', () => {
   const onChromium = /const STOPPED_ENGINE_KEYS: &str = "(.*?)";/.exec(source)?.[1] ?? ''
 
   test.each([
-    [70, 'nib-find'],
-    [71, 'nib-find-next'],
-    [48, 'nib-actual-size'],
+    [70, 'orden-find'],
+    [71, 'orden-find-next'],
+    [48, 'orden-actual-size'],
   ])('key %i kept from the page asks %s', async (code, name) => {
     expect(onChromium).not.toBe('')
     const dom = new JSDOM('<input id="field">', { runScripts: 'outside-only' })
@@ -131,10 +131,10 @@ describe('the same keys on the engine with no answer of its own', () => {
 
 describe('the other chords, which only a preventDefault keeps', () => {
   test.each([
-    [68, false, 'nib-ctrl-d'],
-    [68, true, 'nib-ctrl-shift-d'],
-    [72, false, 'nib-ctrl-h'],
-    [76, false, 'nib-address'],
+    [68, false, 'orden-ctrl-d'],
+    [68, true, 'orden-ctrl-shift-d'],
+    [72, false, 'orden-ctrl-h'],
+    [76, false, 'orden-address'],
   ])('key %i with Shift %s asks %s', async (code, shift, name) => {
     expect(await pressedWithCtrl('stops', code, shift)).toEqual([name])
     expect(await pressedWithCtrl('takes', code, shift)).toEqual([])

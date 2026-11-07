@@ -79,7 +79,7 @@ mod tests {
         let made = xml(&one, "0123", &Words::default());
 
         assert!(made.starts_with(
-            "<toast launch=\"nib://reminder?act=open&amp;id=00ff00ff00ff00ff&amp;n=0123\""
+            "<toast launch=\"orden://reminder?act=open&amp;id=00ff00ff00ff00ff&amp;n=0123\""
         ));
         assert!(made.contains("scenario=\"reminder\""));
         assert!(
@@ -88,7 +88,7 @@ mod tests {
         assert!(made.contains(
             "<selection id=\"15\" content=\"15 min\"/><selection id=\"60\" content=\"1 h\"/><selection id=\"900\" content=\"Tomorrow\"/>"
         ));
-        assert!(made.contains("arguments=\"nib://reminder?act=done&amp;id=00ff00ff00ff00ff&amp;n=0123\" content=\"Done\""));
+        assert!(made.contains("arguments=\"orden://reminder?act=done&amp;id=00ff00ff00ff00ff&amp;n=0123\" content=\"Done\""));
     }
 
     #[test]

@@ -17,10 +17,10 @@
   import { connected, type Linked } from '../connected.svelte'
   import { ORDEN } from '../providers/orden'
   import { newestFirst } from '@orden/chats/provider'
-  import { PROVIDERS } from '../accounts.svelte'
   import { host } from '../providers/host'
   import { accounts, openConversation } from '../linked'
   import ConnectForm from './ConnectForm.svelte'
+  import SignIn from './SignIn.svelte'
   import { byPriority, LEVELS, isLevel } from '@orden/chats/priority'
   import { priorities, rowKey } from '../priorities.svelte'
   import { startPriorities } from '../prioritise'
@@ -44,7 +44,7 @@
       .flatMap((row) => byId.get(row.conversation.id) ?? [])
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
-  const offered = PROVIDERS.filter((one) => one.available(host))
+  const offered = $derived(accounts.offered.filter((one) => one.available(host)))
   let connecting = $state(false)
 
   let arranged = $state<'service' | 'priority'>('service')
@@ -177,26 +177,26 @@
   {@const chat = chatOf(chatId)}
   <button
     type="button"
-    class="nib-row"
+    class="orden-row"
     aria-label={`${nameOf(author, [], chat?.space ?? null)}: ${line}`}
     onclick={() => open(chat, message)}
   >
-    <span class="nib-row-mark"
+    <span class="orden-row-mark"
       ><Avatar face={faceOf(author, [], chat?.space ?? null)} size={20} /></span
     >
-    <span class="nib-row-label">{line}</span>
-    <span class="nib-row-meta">{chat?.name ?? ''}</span>
+    <span class="orden-row-label">{line}</span>
+    <span class="orden-row-meta">{chat?.name ?? ''}</span>
   </button>
 {/snippet}
 
 <div class="chats">
-  <label class="nib-field find">
+  <label class="orden-field find">
     <Glyph name="hash" />
     <input bind:value={query} type="search" aria-label={t('Search')} placeholder={t('Search')} />
   </label>
 
   {#if showing === 'chats' && priorities.on}
-    <div class="nib-segmented arranged" role="radiogroup" aria-label={t('Chats')}>
+    <div class="orden-segmented arranged" role="radiogroup" aria-label={t('Chats')}>
       <button
         type="button"
         role="radio"
@@ -216,14 +216,14 @@
 
   {#snippet ranked(one: { row: Row; level: (typeof LEVELS)[number] | null })}
     <div class="ranked" class:unread={one.row.conversation.unread > 0}>
-      <button type="button" class="nib-row entry" onclick={() => openRow(one.row)}>
-        <span class="nib-row-mark"
+      <button type="button" class="orden-row entry" onclick={() => openRow(one.row)}>
+        <span class="orden-row-mark"
           ><svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
             ><path d={iconOf(one.row)} /></svg
           ></span
         >
-        <span class="nib-row-label">{titleOf(one.row)}</span>
-        {#if one.row.conversation.unread}<span class="nib-row-meta count"
+        <span class="orden-row-label">{titleOf(one.row)}</span>
+        {#if one.row.conversation.unread}<span class="orden-row-meta count"
             >{amount(one.row.conversation.unread)}</span
           >{/if}
       </button>
@@ -244,7 +244,7 @@
           <p class="draft">{suggested.reply}</p>
           <button
             type="button"
-            class="nib-chip"
+            class="orden-chip"
             onclick={() => suggested.reply && useDraft(one.row, suggested.reply)}
             >{t('Use draft')}</button
           >
@@ -253,14 +253,14 @@
           <p class="draft">{suggested.todo.title}</p>
           <button
             type="button"
-            class="nib-chip"
+            class="orden-chip"
             onclick={() => suggested.todo && addTodo(one.row, suggested.todo)}
             >{t('Add as task')}</button
           >
         {/if}
         <button
           type="button"
-          class="nib-chip"
+          class="orden-chip"
           onclick={() => priorities.settle(keyOf(one.row), 'all')}>{t('Dismiss')}</button
         >
       </div>
@@ -268,39 +268,39 @@
   {/snippet}
 
   {#if showing === 'chats' && priorities.on && arranged === 'priority'}
-    <p class="nib-section">{t('Pending')}</p>
+    <p class="orden-section">{t('Pending')}</p>
     {#each byLevel.pending as one (keyOf(one.row))}
       {@render ranked(one)}
     {/each}
-    <p class="nib-section">{t('Everything else')}</p>
+    <p class="orden-section">{t('Everything else')}</p>
     {#each byLevel.rest as one (keyOf(one.row))}
       {@render ranked(one)}
     {/each}
   {:else if showing === 'chats'}
     <button
       type="button"
-      class="nib-row"
+      class="orden-row"
       onclick={() => {
         showing = 'activity'
         void lookActive()
       }}
     >
-      <span class="nib-row-mark"><Glyph name="mention" /></span>
-      <span class="nib-row-label">{t('Activity')}</span>
+      <span class="orden-row-mark"><Glyph name="mention" /></span>
+      <span class="orden-row-label">{t('Activity')}</span>
       {#if mentions}<span class="badge">{amount(mentions)}</span>{/if}
     </button>
-    <button type="button" class="nib-row" onclick={() => (showing = 'saved')}>
-      <span class="nib-row-mark"><Glyph name="saved" /></span>
-      <span class="nib-row-label">{t('Saved')}</span>
-      {#if saved.list.length}<span class="nib-row-meta">{amount(saved.list.length)}</span>{/if}
+    <button type="button" class="orden-row" onclick={() => (showing = 'saved')}>
+      <span class="orden-row-mark"><Glyph name="saved" /></span>
+      <span class="orden-row-label">{t('Saved')}</span>
+      {#if saved.list.length}<span class="orden-row-meta">{amount(saved.list.length)}</span>{/if}
     </button>
 
     <div class="section">
-      <p class="nib-section">{t('Chats')}</p>
+      <p class="orden-section">{t('Chats')}</p>
       {#if workspace.activeSpace && hiddenKinds.offers('chat') && canWriteAt(workspace.activeSpace.root)}
         <button
           type="button"
-          class="nib-glyph add"
+          class="orden-glyph add"
           aria-label={t('New chat')}
           title={t('New chat')}
           onclick={() => void makeChat()}><Glyph name="attach" /></button
@@ -312,41 +312,43 @@
       {@const unread = chat.unread > 0 && !muted}
       <button
         type="button"
-        class="nib-row entry"
+        class="orden-row entry"
         class:unread
         class:muted
         class:is-on={workspace.active?.path === chat.path && chat.path !== null}
         disabled={!chat.path}
         onclick={() => open(chat)}
       >
-        <span class="nib-row-mark"><ChatMark path={chat.path} /></span>
-        <span class="nib-row-label">{chat.name ?? t('Chat')}</span>
+        <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
+        <span class="orden-row-label">{chat.name ?? t('Chat')}</span>
         {#if chat.mentions && !muted}
           <span class="badge">{amount(chat.mentions)}</span>
         {:else if unread}
-          <span class="nib-row-meta count">{amount(chat.unread)}</span>
+          <span class="orden-row-meta count">{amount(chat.unread)}</span>
         {/if}
       </button>
     {/each}
 
     {#if offered.length}
       <div class="section">
-        <p class="nib-section">{t('Accounts')}</p>
+        <p class="orden-section">{t('Accounts')}</p>
         <button
           type="button"
-          class="nib-glyph add"
+          class="orden-glyph add"
           aria-label={t('Connect')}
           title={t('Connect')}
           onclick={() => (connecting = !connecting)}><Glyph name="attach" /></button
         >
       </div>
-      {#if connecting && offered[0]}
-        <ConnectForm provider={offered[0]} done={() => (connecting = false)} />
+      {#if connecting}
+        <ConnectForm providers={offered} done={() => (connecting = false)} />
+      {:else}
+        <SignIn />
       {/if}
       {#each accounts.failed as one (`${one.provider}:${one.account}`)}
-        <p class="nib-row failed" title={one.reason}>
-          <span class="nib-row-label">{one.account}</span>
-          <span class="nib-row-meta">{t('Signed out')}</span>
+        <p class="orden-row failed" title={one.reason}>
+          <span class="orden-row-label">{one.account}</span>
+          <span class="orden-row-meta">{t('Signed out')}</span>
         </p>
       {/each}
       {#each connected.linked as one (`${one.provider.id}:${one.account.id}`)}
@@ -354,13 +356,14 @@
           <svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
             ><path d={one.provider.icon} /></svg
           >
-          <span class="nib-row-label">{one.account.label}</span>
-          {#if one.status === 'offline'}<span class="nib-row-meta">{t('Offline')}</span>
-          {:else if one.status === 'signed-out'}<span class="nib-row-meta">{t('Signed out')}</span>
+          <span class="orden-row-label">{one.account.label}</span>
+          {#if one.status === 'offline'}<span class="orden-row-meta">{t('Offline')}</span>
+          {:else if one.status === 'signed-out'}<span class="orden-row-meta">{t('Signed out')}</span
+            >
           {/if}
           <button
             type="button"
-            class="nib-glyph add"
+            class="orden-glyph add"
             aria-label={t('Disconnect')}
             title={t('Disconnect')}
             onclick={() => void accounts.disconnect(one.provider.id, one.account.id)}
@@ -371,7 +374,7 @@
           {@const unread = conversation.unread > 0}
           <button
             type="button"
-            class="nib-row entry"
+            class="orden-row entry"
             class:unread
             onclick={() =>
               openConversation(
@@ -383,19 +386,19 @@
                 conversation.title ?? conversation.people[0]?.name ?? one.provider.name,
               )}
           >
-            <span class="nib-row-label"
+            <span class="orden-row-label"
               >{conversation.title ??
                 conversation.people.map((person) => person.name).join(', ')}</span
             >
-            {#if unread}<span class="nib-row-meta count">{amount(conversation.unread)}</span>{/if}
+            {#if unread}<span class="orden-row-meta count">{amount(conversation.unread)}</span>{/if}
           </button>
         {/each}
       {/each}
     {/if}
   {:else}
-    <button type="button" class="nib-row back" onclick={() => (showing = 'chats')}>
-      <span class="nib-row-mark"><Glyph name="left" /></span>
-      <span class="nib-row-label">{showing === 'activity' ? t('Activity') : t('Saved')}</span>
+    <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
+      <span class="orden-row-mark"><Glyph name="left" /></span>
+      <span class="orden-row-label">{showing === 'activity' ? t('Activity') : t('Saved')}</span>
     </button>
     {#if showing === 'activity'}
       {#each activity as one (`${one.chat}:${one.message.id}`)}

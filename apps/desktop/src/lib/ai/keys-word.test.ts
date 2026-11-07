@@ -14,7 +14,7 @@ const store = {
   secretWrite: vi.fn(),
   secretForget: vi.fn(),
 }
-vi.stubGlobal('__NIB_SYSTEM__', store)
+vi.stubGlobal('__ORDEN_SYSTEM__', store)
 
 const { NoWord } = await import('../mobile/bridge')
 const keys = await import('./keys')

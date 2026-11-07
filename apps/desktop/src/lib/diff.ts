@@ -7,6 +7,8 @@ export interface Row {
 
 const MOST_LINES = 1500
 
+const MOST_CELLS = 8_000_000
+
 function lines(text: string): string[] {
   return text.length ? text.split('\n') : []
 }
@@ -91,7 +93,8 @@ export function lineDiff(before: string, after: string): Row[] {
   }
 
   const pairs =
-    oldMiddle.length > MOST_LINES && nowMiddle.length > MOST_LINES
+    (oldMiddle.length > MOST_LINES && nowMiddle.length > MOST_LINES) ||
+    oldMiddle.length * nowMiddle.length > MOST_CELLS
       ? []
       : common(oldMiddle, nowMiddle)
 

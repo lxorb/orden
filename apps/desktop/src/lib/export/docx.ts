@@ -46,7 +46,7 @@ const LINE = 'BFBFBF'
 
 const STEP = 720
 
-const ORDERED = 'nib-ordered'
+const ORDERED = 'orden-ordered'
 
 const RUNGS = [0, 1, 2, 3, 4]
 

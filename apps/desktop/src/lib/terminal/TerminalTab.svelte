@@ -90,7 +90,7 @@
     opacity: 0.55;
   }
 
-  .place :global(.nib-terminal) {
+  .place :global(.orden-terminal) {
     position: absolute;
     inset: var(--space-2) 0 0 var(--space-3);
   }
@@ -103,7 +103,7 @@
     background-color: transparent;
   }
 
-  .place :global(.nib-echoing .xterm-cursor) {
+  .place :global(.orden-echoing .xterm-cursor) {
     box-shadow: none !important;
     outline: none !important;
   }

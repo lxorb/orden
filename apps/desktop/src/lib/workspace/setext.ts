@@ -1,3 +1,4 @@
+import type { Query } from '@orden/scan/search/query'
 import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
@@ -5,13 +6,21 @@ import { relativeTo, samePath } from '../space-paths'
 import { keepJson, stored } from '../stored'
 import { type HoldsNotes, noteText, replaceInNotes } from './note-text'
 
-export const SETEXT_GONE = 'nib:setext-gone'
+export const SETEXT_GONE = 'orden:setext-gone'
 
 export const SETEXT_KEY = 'setext'
 
 const REWRITTEN = 'gone'
 
 const AFTER_THE_LAUNCH = 30_000
+
+const UNDERLINED: Query = {
+  kind: 'regex',
+  source: '\\S[ \\t]*\\r?\\n[ \\t>]*(?:[-*+]|\\d+[.)])?[ \\t]*(?:=+|-+)[ \\t]*(?:\\r?\\n|$)',
+  fold: false,
+}
+
+const MOST_UNDERLINED = 100_000
 
 export interface MarksNotes {
   readonly itemMeta: {
@@ -34,6 +43,23 @@ function markDone(root: string) {
 function beingWritten(ws: HoldsNotes, path: string): boolean {
   const open = ws.documentAt(path)
   return open !== null && (open.dirty || open.revision > 0 || open.shared !== null)
+}
+
+async function readable(root: string): Promise<((path: string) => boolean) | null> {
+  const { keptAway } = await import('../web/away.svelte')
+  if (!keptAway.under(root).length) return () => true
+  const underlined = new Set<string>()
+  const whole = await keptAway.search(root, UNDERLINED, [], MOST_UNDERLINED, (found) => {
+    for (const hit of found.hits) {
+      const away = keptAway.at(hit.path)
+      if (away) underlined.add(away.id)
+    }
+  })
+  if (!whole) return null
+  return (path) => {
+    const away = keptAway.at(path)
+    return away === null || underlined.has(away.id)
+  }
 }
 
 function rewrittenBefore(ws: MarksNotes, root: string): boolean {
@@ -60,6 +86,9 @@ export async function dropSetext(
     return 0
   }
 
+  const reads = await readable(root)
+  if (!reads) return 0
+
   const { setextEdits } = await import('@orden/editor/setext')
   const changes: Change[] = []
   let first: string | null = null
@@ -68,6 +97,10 @@ export async function dropSetext(
     if (!samePath(ws.activeSpace?.root, root)) return 0
 
     if (beingWritten(ws, note.path)) continue
+    if (!reads(note.path)) {
+      first ??= note.path
+      continue
+    }
     const before = await noteText(ws, note.path)
     if (before === null) continue
     first ??= note.path

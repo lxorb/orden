@@ -3,7 +3,7 @@ import { keep, storedText } from '../stored'
 import { isDesktop } from '../tauri'
 import type { Lock } from './protection.svelte'
 
-const RELOCK_KEY = 'nib:protect-relock'
+const RELOCK_KEY = 'orden:protect-relock'
 
 export const NEVER = -1
 export const RELOCK_MINUTES = [0, 1, 5, 15, 60, NEVER] as const

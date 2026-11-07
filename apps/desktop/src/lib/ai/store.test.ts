@@ -4,7 +4,7 @@ const file = { text: null as string | null, stamp: 0 }
 let heard: (() => void)[] = []
 
 vi.mock('./accounts-file', () => ({
-  COPY: 'nib:ai-accounts',
+  COPY: 'orden:ai-accounts',
   STALE: 'stale',
   readKept: () => Promise.resolve({ text: file.text, stamp: String(file.stamp) }),
   writeKept: (text: string, stamp: string) => {
@@ -71,7 +71,7 @@ beforeEach(() => {
 
 describe('moving the accounts out of one window', () => {
   test('a first window writes what it kept before, with the same ids', async () => {
-    const profile = storage({ 'nib:ai': EARLIER })
+    const profile = storage({ 'orden:ai': EARLIER })
     const ai = await windowOn(profile)
     await settled()
 
@@ -79,12 +79,12 @@ describe('moving the accounts out of one window', () => {
     expect(kept.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic'])
     expect(kept.active).toEqual({ claude: 'anthropic' })
     expect(ai.providerFor('block')?.id).toBe('anthropic')
-    expect(profile.getItem('nib:ai-moved')).toBe('1')
-    expect(profile.getItem('nib:ai')).toBe(EARLIER)
+    expect(profile.getItem('orden:ai-moved')).toBe('1')
+    expect(profile.getItem('orden:ai')).toBe(EARLIER)
   })
 
   test('a window on another engine’s profile starts with the same accounts', async () => {
-    await windowOn(storage({ 'nib:ai': EARLIER }))
+    await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
 
     const other = await windowOn(storage())
@@ -94,11 +94,11 @@ describe('moving the accounts out of one window', () => {
   })
 
   test('a second profile with rows of its own brings the missing ones, once', async () => {
-    await windowOn(storage({ 'nib:ai': EARLIER }))
+    await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
 
     const theirs = storage({
-      'nib:ai': JSON.stringify({
+      'orden:ai': JSON.stringify({
         providers: [
           { id: 'anthropic', kind: 'anthropic', name: 'theirs', model: '' },
           { id: 'openai', kind: 'openai', name: '', model: 'gpt-6-astra' },
@@ -121,7 +121,7 @@ describe('moving the accounts out of one window', () => {
 
 describe('two windows at once', () => {
   test('a switch in one is heard by the other', async () => {
-    const first = await windowOn(storage({ 'nib:ai': EARLIER }))
+    const first = await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
     const second = await windowOn(storage())
     await settled()
@@ -132,7 +132,7 @@ describe('two windows at once', () => {
   })
 
   test('changes made over the same text both stay', async () => {
-    const first = await windowOn(storage({ 'nib:ai': EARLIER }))
+    const first = await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
     const second = await windowOn(storage())
     await settled()
@@ -158,7 +158,7 @@ describe('an account kept on a model nobody can talk to', () => {
 
   test('is moved to the one a key given now starts on, and written so', async () => {
     listModels.mockClear()
-    const ai = await windowOn(storage({ 'nib:ai': KEPT('babbage-002') }))
+    const ai = await windowOn(storage({ 'orden:ai': KEPT('babbage-002') }))
     await vi.waitFor(() => {
       expect(ai.accounts[0]?.model).toBe('gpt-5.5')
     })
@@ -169,7 +169,7 @@ describe('an account kept on a model nobody can talk to', () => {
 
   test('one that can talk is left as it was, and nothing is asked', async () => {
     listModels.mockClear()
-    const ai = await windowOn(storage({ 'nib:ai': KEPT('gpt-4.1') }))
+    const ai = await windowOn(storage({ 'orden:ai': KEPT('gpt-4.1') }))
     await settled()
     expect(ai.accounts[0]?.model).toBe('gpt-4.1')
     expect(listModels).not.toHaveBeenCalled()
@@ -178,7 +178,7 @@ describe('an account kept on a model nobody can talk to', () => {
   test('a list that cannot be read leaves it, to be tried again', async () => {
     listModels.mockClear()
     listModels.mockImplementationOnce(() => Promise.reject(new Error('offline')))
-    const ai = await windowOn(storage({ 'nib:ai': KEPT('davinci-002') }))
+    const ai = await windowOn(storage({ 'orden:ai': KEPT('davinci-002') }))
     await settled()
     expect(listModels).toHaveBeenCalled()
     expect(ai.accounts.find((one) => one.id === 'openai')?.model).toBe('davinci-002')

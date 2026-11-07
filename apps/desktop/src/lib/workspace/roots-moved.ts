@@ -3,7 +3,7 @@ import type { Core } from '../sync2/core'
 import type { Change } from '../sync2/store'
 import { forget, isRecord, isString, keepJson, stored } from '../stored'
 
-export const ROOTS_MOVED = 'nib:roots-moved'
+export const ROOTS_MOVED = 'orden:roots-moved'
 
 export interface RootMoved {
   from: string

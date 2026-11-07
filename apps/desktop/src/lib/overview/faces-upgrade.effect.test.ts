@@ -6,7 +6,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 function writtenBefore(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib-overview-faces', 1)
+    const request = indexedDB.open('orden-overview-faces', 1)
     request.onupgradeneeded = () => request.result.createObjectStore('face')
     request.onerror = () => reject(request.error ?? new Error('not opened'))
     request.onsuccess = () => {
@@ -35,7 +35,7 @@ test('an upgrade wipes every web page’s picture before anything asks for one',
 test('an upgrade wipes every name a private tab could have left among the windows', async () => {
   const box = { x: 1, y: 2, w: 3, h: 4 }
   localStorage.setItem(
-    'nib:overview-windows',
+    'orden:overview-windows',
     JSON.stringify({
       'web:~Secret Bank Login': box,
       'web:/notes/kept.url': box,
@@ -44,8 +44,8 @@ test('an upgrade wipes every name a private tab could have left among the window
   )
   const { upgradeWindows } = await import('./places.svelte')
   upgradeWindows()
-  expect(localStorage.getItem('nib:overview-windows')).toBe(null)
-  expect(JSON.parse(localStorage.getItem('nib:overview-windows-2') ?? '')).toEqual({
+  expect(localStorage.getItem('orden:overview-windows')).toBe(null)
+  expect(JSON.parse(localStorage.getItem('orden:overview-windows-2') ?? '')).toEqual({
     'web:/notes/kept.url': box,
     'note:/a.md': box,
   })

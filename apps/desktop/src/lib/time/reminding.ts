@@ -7,7 +7,7 @@ import { timeOn } from '../settings.svelte'
 import { dueOf } from './goals'
 import { time } from './time.svelte'
 
-const TOLD = 'nib:time-told'
+const TOLD = 'orden:time-told'
 
 const KEPT = 100
 

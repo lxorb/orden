@@ -12,7 +12,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 PATIENCE = 40
 
-HINTS = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
+HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
 SEED = """
 async () => {
@@ -108,7 +108,7 @@ def desk(browser: Browser) -> None:
         if after["row"] != row or after["mark"] != mark:
             wrong(f"the row or its mark moved: {after}")
 
-        page.locator(f"{ROW} .nib-row-label").click()
+        page.locator(f"{ROW} .orden-row-label").click()
         try:
             wait_for(page, "() => (window.nibApp.workspace.active?.path ?? '').includes('/Work')", "the folder opened", 10)
         except BaseException:
@@ -190,7 +190,7 @@ def tags(browser: Browser) -> None:
             if page.evaluate(SEARCHED):
                 wrong(f"{what}: it searched for {page.evaluate(SEARCHED)!r} as well")
             say(f"{what}: {was} -> {page.evaluate(TAG_OPEN)}")
-        page.locator("aside .line:has(.twist) .nib-row-label").first.click()
+        page.locator("aside .line:has(.twist) .orden-row-label").first.click()
         try:
             wait_for(page, f"() => ({SEARCHED})().includes('tag:work')", "the tag searched for", 10)
         except BaseException:

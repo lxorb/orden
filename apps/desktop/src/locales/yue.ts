@@ -1476,6 +1476,8 @@ export const yue: Dictionary = {
   Shorter: '更短',
   Longer: '更長',
   'Fix grammar': '修正語法',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '揀咗嘅字已經唔喺筆記度，所以冇換到嘢。',
   'A cited report': '有引文嘅報告',
   'A helper in the background': '背景助手',
   'A side question': '旁枝問題',
@@ -2796,6 +2798,8 @@ export const yue: Dictionary = {
   'That could not be protected: {reason}': '保護唔到：{reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '冇加到 {name}：傾偈只收圖片同 2 MB 以內嘅文字檔。',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '冇加到 {name}：一個訊息最多收 20 張圖片。',
   'Time tracker': '時間記錄',
   'Start timer': '開始計時',
   'Stop timer': '停止計時',
@@ -3322,9 +3326,42 @@ export const yue: Dictionary = {
   'You said': '你講嘅',
   Privacy: '私隱',
   'Send crash and freeze reports': '傳送當機同凍結報告',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden 當機或者凍結嗰陣，會傳送佢當時做緊乜同喺自己程式碼邊度，冇名、路徑、地址同密碼。永遠唔會傳你嘅筆記。',
-  'Turn off in Settings': '喺設定度關閉',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     '傳送 Orden 當機或凍結時做緊乜；永遠唔傳筆記、名、路徑或密碼。',
+  'Send crash reports to help improve Orden': '傳送當機報告，幫手改善 Orden',
+  'Move to {space}?': '搬去 {space}？',
+  'macOS can start dictation with this key too.': 'macOS 用呢個掣都可能會開始聽寫。',
+  'QR code': 'QR 碼',
+  'Waiting…': '等緊…',
+  Service: '服務',
+  'I understand and want to connect anyway': '我明白，都係想連接',
+  'Some changes have not reached your account yet': '有啲改動仲未去到你個帳戶',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '佢哋會留喺呢個瀏覽器，喺度登入嘅其他人睇唔到，你再登入嗰陣就會傳上去。',
+  'Leave it empty to sign in with a QR code instead': '留空就改用 QR 碼登入',
+  'Telegram code': 'Telegram 驗證碼',
+  'Sent to Telegram on your other device': '已經傳咗去你另一部裝置嘅 Telegram',
+  'Sent by SMS': '已經用短訊傳咗',
+  'You will get a call with the code': '你會收到一個講驗證碼嘅電話',
+  'The code was wrong. Try again.': '驗證碼唔啱，請再試吓。',
+  'The code expired, so Telegram sent a new one.': '驗證碼過咗期，所以 Telegram 傳咗個新嘅。',
+  'Two-step verification password': '兩步驗證密碼',
+  'The password was wrong. Try again.': '密碼唔啱，請再試吓。',
+  'Scan with Telegram on your phone': '用手機嘅 Telegram 掃描',
+  'Telegram > Settings > Devices > Link Desktop Device': 'Telegram > 設定 > 裝置 > 連結桌面裝置',
+  'Signing in to Telegram needs the app': '登入 Telegram 要用應用程式',
+  'Telegram does not know this phone number': 'Telegram 唔識呢個電話號碼',
+  'Too many tries. Wait a while and try again.': '試得太多次，等陣再試吓。',
+  'Too many wrong tries': '錯得太多次',
+  'Signed out of Telegram. Connect again.': '已經登出咗 Telegram，請重新連線。',
+  'Telegram cannot do that in this conversation': 'Telegram 喺呢個對話度做唔到',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram 會幫所有人刪除群組同頻道入面嘅訊息',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram 淨係喺自己嘅應用程式先可以將群組轉畀新擁有人',
+  'That sticker is no longer available': '嗰張貼圖已經冇咗',
+  'Telegram is not set up in this build': '呢個版本未設定 Telegram',
+  'Password manager': '密碼管理器',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    '加入 Pass，幫你保管密碼，喺網站度自動填入。關咗都會保留你嘅保險庫。',
 }

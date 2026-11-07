@@ -29,8 +29,20 @@ describe('printing on a Mac', () => {
     await printInFrame('<p>hello</p>', PAGE)
 
     expect(world.asked).toEqual([
-      { command: 'print_page', args: { html: '<p>hello</p>', page: PAGE } },
+      {
+        command: 'print_page',
+        args: { bytes: new TextEncoder().encode('<p>hello</p>'), page: PAGE },
+      },
     ])
+  })
+
+  test('hands a page built in pieces over as bytes, never as one long string', async () => {
+    const pieces = ['<p>', new Blob(['h\u00e9llo']), '</p>']
+    await printInFrame(new Blob(pieces), PAGE)
+
+    const sent = world.asked[0]?.args?.bytes
+    expect(sent).toBeInstanceOf(Uint8Array)
+    expect(new TextDecoder().decode(sent as Uint8Array)).toBe('<p>h\u00e9llo</p>')
   })
 
   test('says no paper when the caller knows none', async () => {

@@ -61,10 +61,16 @@ import { eachDue, reachable, sentAll } from './rounds'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../usage.svelte'
+import { forgetAccount, leaveSpaces } from '../left-spaces'
+import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
 const ASKS_AT_MOST = 30_000
+
+const ASK_ALIVE_EVERY = 10_000
+
+const ASK_LONGEST = 10 * 60_000
 
 const SIGN_OUT_WAITS = 10_000
 
@@ -73,7 +79,7 @@ const NUDGE = 2_000
 const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
 
-const MIRRORS = 'nib:mirrors'
+const MIRRORS = 'orden:mirrors'
 
 const FIRST = 'first:'
 
@@ -618,13 +624,42 @@ class Runner {
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
   }
 
-  signedOut(accountId: string): Promise<void> {
-    this.leaving ??= this.leave(accountId).finally(() => (this.leaving = null))
+  signedOut(accountId: string, keepHere = false): Promise<void> {
+    this.leaving ??= this.leave(accountId, keepHere).finally(() => (this.leaving = null))
     return this.leaving
   }
 
-  private async leave(accountId: string): Promise<void> {
+  async sentBeforeLeaving(): Promise<boolean> {
+    if (isNative) return true
+    await workspace.writeNow().catch(() => undefined)
+    const engine = this.engine
+    if (!engine) {
+      await Promise.race([this.passNow().catch(() => false), waited(SIGN_OUT_WAITS)])
+      return true
+    }
+    const roots = ownRoots(this.accountId)
+    const until = Date.now() + SIGN_OUT_WAITS
+    for (let round = 0; ; round += 1) {
+      if (!(await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))).length)
+        return true
+      if (round >= SENDING_ROUNDS || Date.now() >= until || this.status === 'offline') break
+      if (this.engine !== engine) return true
+      await Promise.race([this.passNow().catch(() => false), waited(until - Date.now())])
+    }
+    return await leaveUnsent()
+  }
+
+  private async leave(accountId: string, keepHere: boolean): Promise<void> {
     const engine = this.current
+    const roots = ownRoots(accountId)
+    if (keepHere) forgetAccount(accountId)
+    else leaveSpaces(accountId, roots)
+    let sent: string[] = []
+    if (engine && !this.local && !isNative && !keepHere) {
+      await workspace.writesSettled().catch(() => undefined)
+      const unsent = await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))
+      sent = roots.filter((root) => !unsent.includes(root))
+    }
     if (engine) {
       try {
         const done = await this.kept(engine)
@@ -647,7 +682,12 @@ class Runner {
     this.firsts.clear()
     if (led) {
       forgetMadeDeviceId(accountId)
-      await forgetSyncStore(accountId).finally(() => this.letGoLead())
+      try {
+        await forgetSyncStore(accountId)
+        if (sent.length) await dropLeft(sent)
+      } finally {
+        this.letGoLead()
+      }
       if (!isNative) await forgetIndex(accountId)
       return
     }
@@ -736,7 +776,6 @@ class Runner {
           offline = true
         })
       }
-      if (!isNative) engine.core.crowded = !(await aloneHere())
       await eachDue(
         this.due,
         () => this.current === engine,
@@ -1295,19 +1334,40 @@ class Runner {
   private readonly asked = new Map<string, (value: unknown) => void>()
   private taking: Promise<unknown> = Promise.resolve()
 
-  private ask(what: string, args: Record<string, unknown>): Promise<unknown> {
+  private readonly parts = new Map<string, (value: unknown) => void>()
+  private readonly alive = new Map<string, () => void>()
+
+  private ask(
+    what: string,
+    args: Record<string, unknown>,
+    part?: (value: unknown) => void,
+  ): Promise<unknown> {
     if (!this.leaderId) return Promise.resolve(null)
     return new Promise((resolve) => {
       const id = crypto.randomUUID()
-      const timer = setTimeout(() => {
-        this.asked.delete(id)
-        resolve(null)
-      }, ASKS_AT_MOST)
-      this.asked.set(id, (value) => {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const done = (value: unknown) => {
         clearTimeout(timer)
+        clearTimeout(longest)
         this.asked.delete(id)
+        this.parts.delete(id)
+        this.alive.delete(id)
         resolve(value)
-      })
+      }
+      const wait = () => {
+        clearTimeout(timer)
+        timer = setTimeout(() => done(null), ASKS_AT_MOST)
+      }
+      wait()
+      const longest = setTimeout(() => done(null), ASK_LONGEST)
+      this.asked.set(id, done)
+      this.alive.set(id, wait)
+      if (part) {
+        this.parts.set(id, (value) => {
+          wait()
+          part(value)
+        })
+      }
       this.say('sync-ask', { id, what, args })
     })
   }
@@ -1349,6 +1409,14 @@ class Runner {
         if (said.to === windows.me && typeof said.id === 'string') {
           this.asked.get(said.id)?.(said.value)
         }
+      }),
+      this.hear('sync-part', (said) => {
+        if (said.to === windows.me && typeof said.id === 'string') {
+          this.parts.get(said.id)?.(said.value)
+        }
+      }),
+      this.hear('sync-alive', (said) => {
+        if (said.to === windows.me && typeof said.id === 'string') this.alive.get(said.id)?.()
       }),
       this.hear('sync-light', (said) => {
         if (this.engine) return
@@ -1393,15 +1461,7 @@ class Runner {
       this.hear('sync-mergeable', (said) => {
         if (typeof said.path === 'string') this.mergeables.add(said.path)
       }),
-      this.hear('sync-ask', (said) => {
-        this.inTurn(async () => {
-          this.say('sync-said', {
-            id: said.id,
-            to: said.from,
-            value: await this.answering(said).catch(() => null),
-          })
-        })
-      }),
+      this.hear('sync-ask', (said) => this.heardAsk(said)),
       this.hear('sync-hello', () => {
         this.sayAll()
         if (!isNative && engine.core.world.lazy) this.kick()
@@ -1420,6 +1480,25 @@ class Runner {
         log('error', `sync: ${String(error)}`)
       })
     }
+  }
+
+  private heardAsk(said: Said) {
+    const beat = setInterval(() => {
+      this.say('sync-alive', { id: said.id, to: said.from })
+    }, ASK_ALIVE_EVERY)
+    const answer = async () => {
+      try {
+        this.say('sync-said', {
+          id: said.id,
+          to: said.from,
+          value: await this.answering(said).catch(() => null),
+        })
+      } finally {
+        clearInterval(beat)
+      }
+    }
+    if (said.what === 'search-away') void answer()
+    else this.inTurn(answer)
   }
 
   private inTurn(run: () => Promise<void>) {
@@ -1445,7 +1524,11 @@ class Runner {
       const engine = this.current
       return engine ? await this.fetchAway(engine, args.path ?? '') : false
     }
-    if (said.what === 'search-away') return await searchedAway(said.args)
+    if (said.what === 'search-away') {
+      return await searchedAway(said.args, (found) => {
+        this.say('sync-part', { id: said.id, to: said.from, value: found })
+      })
+    }
     if (said.what === 'forget') {
       await this.forget(args.root ?? '')
       this.sayRows()
@@ -1479,8 +1562,18 @@ class Runner {
       async (path) => (await this.ask('fetch-away', { path })) === true,
     )
     keptAway.answeredBy(new Map(), async (root, query, terms, limit, onFound, excluded) => {
-      const found = await this.ask('search-away', { root, query, terms, limit, excluded })
-      if (Array.isArray(found)) for (const one of found) onFound(one as Found)
+      let told = 0
+      const found = await this.ask(
+        'search-away',
+        { root, query, terms, limit, excluded },
+        (one) => {
+          told += 1
+          onFound(one as Found)
+        },
+      )
+      if (!Array.isArray(found)) return false
+      for (const one of found.slice(told)) onFound(one as Found)
+      return true
     })
     if (back.length || files.length !== had) this.treeStale()
     for (const path of back) void workspace.arrived(path)
@@ -1695,7 +1788,7 @@ const SENDING_ROUNDS = 4
 
 const SETTLING = 1_500
 
-async function searchedAway(args: unknown): Promise<Found[]> {
+async function searchedAway(args: unknown, part: (found: Found) => void): Promise<Found[] | null> {
   const asked = (args ?? {}) as {
     root?: string
     query?: Query
@@ -1705,15 +1798,18 @@ async function searchedAway(args: unknown): Promise<Found[]> {
   }
   if (!asked.query || typeof asked.root !== 'string') return []
   const found: Found[] = []
-  await keptAway.search(
+  const whole = await keptAway.search(
     asked.root,
     asked.query,
     asked.terms ?? [],
     asked.limit ?? 0,
-    (one) => found.push(one),
+    (one) => {
+      found.push(one)
+      part(one)
+    },
     asked.excluded ?? [],
   )
-  return found
+  return whole ? found : null
 }
 
 function isAway(
@@ -1741,10 +1837,12 @@ async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   }
 }
 
-account.forgetWithSession(() => {
+account.forgetWithSession((keepHere) => {
   const id = runner.accountNow
-  if (id) void runner.signedOut(id)
+  if (id) void runner.signedOut(id, keepHere)
 })
+
+account.askBeforeLeaving(() => runner.sentBeforeLeaving())
 
 function pageNotes(engine: Engine): Carried[] {
   const out: Carried[] = []

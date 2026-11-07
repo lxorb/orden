@@ -388,6 +388,11 @@
     "default": "off",
     "description": "Unloads web pages that have been out of sight for a while to free memory; they load again when you return."
   },
+  "general.passwordManager": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults."
+  },
   "general.relockAfter": {
     "type": "string",
     "enum": [
@@ -524,11 +529,6 @@
     "description": "Offers this type when you make something new; off only takes it out of that list."
   },
   "kinds.pages": {
-    "type": "boolean",
-    "default": true,
-    "description": "Offers this type when you make something new; off only takes it out of that list."
-  },
-  "kinds.pass": {
     "type": "boolean",
     "default": true,
     "description": "Offers this type when you make something new; off only takes it out of that list."

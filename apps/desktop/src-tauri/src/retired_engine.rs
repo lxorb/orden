@@ -72,7 +72,7 @@ mod tests {
         std::fs::write(&places.lock, "").expect("lock");
         let build = places.engines.join("chromium").join("0.15.0");
         std::fs::create_dir_all(&build).expect("build");
-        std::fs::write(build.join("nib-chromium.exe"), "MZ").expect("exe");
+        std::fs::write(build.join("orden-chromium.exe"), "MZ").expect("exe");
 
         assert_eq!(retire_engine(&places).as_deref(), Some("chromium"));
         assert!(!places.choice.exists());

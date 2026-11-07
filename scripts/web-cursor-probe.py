@@ -239,25 +239,25 @@ def main() -> int:
         said["level while another thread hides it"] = hidden_elsewhere(window)
         said["level once it shows it again"] = level(window)
 
-        app.ask("document.querySelector('.webbar input.nib-field')?.focus()")
+        app.ask("document.querySelector('.webbar input.orden-field')?.focus()")
         time.sleep(0.3)
         type_into(ours, "moodle")
         said["level after typing in the address field"] = level(window)
         said["what the field holds"] = app.ask(
-            "JSON.stringify(document.querySelector('.webbar input.nib-field')?.value ?? null)"
+            "JSON.stringify(document.querySelector('.webbar input.orden-field')?.value ?? null)"
         )
         move_over(page)
         said["level after moving over the page"] = level(window)
         move_over(ours)
         said["level after moving over the app"] = level(window)
 
-        app.ask("document.querySelector('.webbar input.nib-field')?.blur()")
+        app.ask("document.querySelector('.webbar input.orden-field')?.blur()")
         focus(page)
         press(page, 60, 45)
         type_into(page, "hello")
         said["level after typing in the page"] = level(window)
         said["what the page heard"] = app.ask(
-            "JSON.stringify(document.querySelector('.webbar input.nib-field')?.value ?? null)"
+            "JSON.stringify(document.querySelector('.webbar input.orden-field')?.value ?? null)"
         )
         app.open("Idea.md")
         time.sleep(1.5)

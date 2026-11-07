@@ -67,7 +67,7 @@ ACTIVITY = """
     return cut ? btoa(cut) : ''
   }
 
-  window.__NIB_SYSTEM__ = {
+  window.__ORDEN_SYSTEM__ = {
     insets: () => '{"top":24,"right":0,"bottom":48,"left":0}',
     // Into the page itself, whoever asked, which is what makes it a word only the
     // page has: the activity runs this line in the main frame.
@@ -249,19 +249,19 @@ def palette(page: Page, words: str) -> None:
 
 def rows(page: Page) -> list[dict]:
     return page.evaluate(
-        """() => [...document.querySelectorAll('.palette .nib-row')].map((one) => ({
-             label: one.querySelector('.nib-row-label')?.textContent?.trim() ?? '',
+        """() => [...document.querySelectorAll('.palette .orden-row')].map((one) => ({
+             label: one.querySelector('.orden-row-label')?.textContent?.trim() ?? '',
              dim: one.classList.contains('dim'),
            }))"""
     )
 
 def shared_at_a_cold_start(page: Page) -> str:
-    page.wait_for_selector(".sheet .nib-button", timeout=20000)
+    page.wait_for_selector(".sheet .orden-button", timeout=20000)
     page.wait_for_timeout(500)
     shot(page, "01-the-sheet-asks-at-a-cold-start")
 
     labels = page.evaluate(
-        """() => [...document.querySelectorAll('.sheet .nib-button')]
+        """() => [...document.querySelectorAll('.sheet .orden-button')]
              .map((one) => one.textContent.trim()).filter(Boolean)"""
     )
     say(f"[cold] the sheet offers {labels}")
@@ -312,7 +312,7 @@ def shared_at_a_cold_start(page: Page) -> str:
         """() => {
              // The editor's own image, and not the empty one-pixel buffers CodeMirror
              // puts either side of every widget it draws.
-             const image = document.querySelector('.cm-content img.nib-image')
+             const image = document.querySelector('.cm-content img.orden-image')
              if (!image) return null
 
              // The address as the page resolved it, and as the note wrote it: an
@@ -349,12 +349,12 @@ def shared_while_it_is_open(page: Page) -> None:
     )
 
     hand(page, SHARE_WORDS)
-    page.wait_for_selector(".sheet .nib-button", timeout=10000)
+    page.wait_for_selector(".sheet .orden-button", timeout=10000)
     page.wait_for_timeout(500)
     shot(page, "03-the-sheet-asks")
 
     labels = page.evaluate(
-        """() => [...document.querySelectorAll('.sheet .nib-button')]
+        """() => [...document.querySelectorAll('.sheet .orden-button')]
              .map((one) => one.textContent.trim()).filter(Boolean)"""
     )
     say(f"[open] the sheet offers {labels}")
@@ -378,7 +378,7 @@ def shared_while_it_is_open(page: Page) -> None:
 def dismissing_it_does_nothing(page: Page) -> None:
     before = page.evaluate(STATE)
     hand(page, SHARE_WORDS)
-    page.wait_for_selector(".sheet .nib-button", timeout=10000)
+    page.wait_for_selector(".sheet .orden-button", timeout=10000)
     page.wait_for_timeout(400)
 
     page.keyboard.press("Escape")
@@ -659,7 +659,7 @@ def on_a_desktop(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    if page.evaluate("() => '__NIB_SYSTEM__' in window"):
+    if page.evaluate("() => '__ORDEN_SYSTEM__' in window"):
         wrong("the drive left an activity behind on a desktop")
 
     page.evaluate(

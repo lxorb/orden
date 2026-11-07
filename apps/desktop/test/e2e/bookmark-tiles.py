@@ -67,7 +67,7 @@ TILES = """
     name: tile.getAttribute('aria-label'),
     title: tile.getAttribute('title'),
     on: tile.classList.contains('is-on'),
-    letter: tile.querySelector('.nib-tile-letter')?.textContent ?? null,
+    letter: tile.querySelector('.orden-tile-letter')?.textContent ?? null,
     picture: !!tile.querySelector('img'),
     top: tile.offsetTop,
     width: Math.round(box.width),
@@ -77,7 +77,7 @@ TILES = """
 """
 
 ROWS = """
-() => [...document.querySelectorAll('.bookmarks .row .nib-row-label')].map((one) => one.textContent)
+() => [...document.querySelectorAll('.bookmarks .row .orden-row-label')].map((one) => one.textContent)
 """
 
 ORDER = "() => window.nibApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
@@ -194,7 +194,7 @@ def drive_look(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.theme.setScheme('light')")
     page.wait_for_timeout(300)
 
-    page.locator(".tiles .tile", has=page.locator(".nib-tile-letter", has_text="I")).click()
+    page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="I")).click()
     page.wait_for_timeout(500)
     if page.evaluate("() => window.nibApp.workspace.active?.name") != "Inbox.md":
         wrong("pressing a tile did not open its note")
@@ -208,14 +208,14 @@ def drive_look(browser: Browser) -> None:
     shown = page.evaluate("() => window.nibApp.workspace.active?.id")
     page.locator(".body [data-path$='Loose.md']").first.dblclick()
     page.wait_for_timeout(500)
-    page.locator(".tiles .tile", has=page.locator(".nib-tile-letter", has_text="I")).click()
+    page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="I")).click()
     page.wait_for_timeout(400)
     back = page.evaluate("() => window.nibApp.workspace.active?.id")
     if back != shown:
         wrong("pressing the tile again made a new view rather than coming back to its own")
     shot(page, "05-in-place")
 
-    page.locator(".tiles .tile", has=page.locator(".nib-tile-letter", has_text="P")).click(modifiers=["Control"])
+    page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="P")).click(modifiers=["Control"])
     page.wait_for_timeout(500)
     if not page.locator(".tab", has_text="Plan").count():
         wrong("Ctrl and a tile did not open a tab of its own")
@@ -264,7 +264,7 @@ def drive_hands(browser: Browser) -> None:
     page.wait_for_timeout(600)
     page.fill(".sheet .search input", "bookmarks")
     page.wait_for_timeout(500)
-    found = page.locator(".sheet .nib-segmented button", has_text="List")
+    found = page.locator(".sheet .orden-segmented button", has_text="List")
     if not found.count():
         wrong("a settings search for the old word does not find the Essentials")
     else:
@@ -278,7 +278,7 @@ def drive_hands(browser: Browser) -> None:
     if page.locator(".tiles").count() or len(listed) != 7:
         wrong(f"the list did not come back: {listed}")
     sidebar(page, "12-as-a-list")
-    page.evaluate("() => localStorage.setItem('nib:essentials-look', 'tiles')")
+    page.evaluate("() => localStorage.setItem('orden:essentials-look', 'tiles')")
     reload(page)
     page.evaluate(SHOW)
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the tiles")
@@ -286,7 +286,7 @@ def drive_hands(browser: Browser) -> None:
     page.wait_for_timeout(600)
     if page.locator(".tiles .tile").count() != 6:
         wrong("the tiles did not come back from the list")
-    if page.locator("p.nib-section", has_text="Essentials").count() != 1:
+    if page.locator("p.orden-section", has_text="Essentials").count() != 1:
         wrong("the rows under the tiles are not headed Essentials")
 
     page.evaluate("() => window.nibApp.workspace.bookmarks.toggle(window.nibApp.workspace.bookmarks.list[0])")

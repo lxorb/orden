@@ -73,7 +73,7 @@
     gap: 7px;
   }
 
-  :global(.nib-setting-value.is-wrapping) > .swatches {
+  :global(.orden-setting-value.is-wrapping) > .swatches {
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--swatch-size));
     justify-content: space-between;

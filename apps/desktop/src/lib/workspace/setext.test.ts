@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = new Map<string, string>()
+const read: string[] = []
 const kept = new Map<string, unknown>()
 
 vi.mock('../tauri', () => ({
@@ -9,6 +10,7 @@ vi.mock('../tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     if (command === 'read_note') {
+      read.push(path)
       const held = disk.get(path)
       return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
     }
@@ -30,6 +32,7 @@ vi.mock('../stored', () => ({
 
 const { dropSetext, keepSetextMarked, SETEXT_GONE, SETEXT_KEY } = await import('./setext')
 const { FileActions } = await import('./undo.svelte')
+const { keptAway } = await import('../web/away.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes & import('./setext').MarksNotes
 type ItemMeta = import('@orden/sync-core/meta').ItemMeta
 type MetaPatch = import('@orden/sync-core/meta').MetaPatch
@@ -69,6 +72,8 @@ function space(
 }
 
 beforeEach(() => {
+  read.length = 0
+  keptAway.clear()
   disk.clear()
   kept.clear()
   marked = []
@@ -194,6 +199,49 @@ describe('the mark a rewritten space carries', () => {
     kept.set(SETEXT_GONE, [SPACE])
     keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }, {}, false), SPACE)
 
+    expect(marked).toEqual([])
+  })
+})
+
+describe('a space whose notes the browser keeps away', () => {
+  function away(texts: Record<string, string>, answers = true) {
+    keptAway.keep(
+      Object.keys(texts).map((path, at) => ({ id: `x${String(at)}`, path, size: 1, modified: 1 })),
+      () => Promise.resolve(true),
+    )
+    keptAway.answeredBy(new Map(), (_root, query, _terms, _limit, onFound) => {
+      if (!answers) return Promise.resolve(false)
+      const pattern = new RegExp((query as { source: string }).source)
+      const hits = Object.entries(texts)
+        .filter(([, text]) => pattern.test(text))
+        .map(([path]) => ({ path }))
+      if (hits.length) onFound({ hits, loose: [] } as never)
+      return Promise.resolve(true)
+    })
+  }
+
+  test('brings back only those the account finds a line under words in', async () => {
+    const texts = {
+      [`${SPACE}/u.md`]: 'Away\n====\n',
+      [`${SPACE}/p.md`]: '# Plain\n\nwords\n',
+    }
+    const ws = space({ [`${SPACE}/a.md`]: 'Here\n----\n', ...texts })
+    away(texts)
+
+    expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(2)
+    expect([...new Set(read)].sort()).toEqual([`${SPACE}/a.md`, `${SPACE}/u.md`])
+    expect(disk.get(`${SPACE}/u.md`)).toBe('# Away\n')
+    expect(disk.get(`${SPACE}/p.md`)).toBe('# Plain\n\nwords\n')
+  })
+
+  test('waits for another launch when the account cannot be asked', async () => {
+    const texts = { [`${SPACE}/u.md`]: 'Away\n====\n' }
+    const ws = space({ [`${SPACE}/a.md`]: 'Here\n----\n', ...texts })
+    away(texts, false)
+
+    expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(0)
+    expect(read).toEqual([])
+    expect(kept.get(SETEXT_GONE)).toBeUndefined()
     expect(marked).toEqual([])
   })
 })

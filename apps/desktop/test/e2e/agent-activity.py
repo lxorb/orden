@@ -97,10 +97,10 @@ def drive(page: Page, scheme: str) -> None:
     )
     page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
     page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
-    wait_for(page, f"document.querySelector('.nib-row.agent[data-agent=\"{AGENT}\"]')", "the agent's row")
+    wait_for(page, f"document.querySelector('.orden-row.agent[data-agent=\"{AGENT}\"]')", "the agent's row")
     row = page.evaluate(
         f"""() => {{
-          const row = document.querySelector('.nib-row.agent[data-agent="{AGENT}"]')
+          const row = document.querySelector('.orden-row.agent[data-agent="{AGENT}"]')
           return {{
             name: row.querySelector('.name')?.textContent,
             asking: row.querySelector('.asking')?.textContent,
@@ -119,7 +119,7 @@ def drive(page: Page, scheme: str) -> None:
         wrong(f"the agent's row is {row}")
     shot(page, f"{scheme}-03-list")
 
-    page.click(f".nib-row.agent[data-agent='{AGENT}']")
+    page.click(f".orden-row.agent[data-agent='{AGENT}']")
     wait_for(page, "document.querySelector('section.agent .name')", "the agent's session")
     wait_for(page, "document.querySelector('.agent .question')", "the question")
     page.evaluate("() => import('/src/lib/agents/ui/index.ts').then((ui) => ui.started().readLog())")
@@ -129,7 +129,7 @@ def drive(page: Page, scheme: str) -> None:
     if name != "Claude Code":
         wrong(f"the session names the agent {name!r}")
     pages = page.evaluate(
-        "() => [...document.querySelectorAll('section.agent .tabs .nib-row-label')].map((one) => one.textContent)"
+        "() => [...document.querySelectorAll('section.agent .tabs .orden-row-label')].map((one) => one.textContent)"
     )
     if pages != ["Flights to Lisbon"]:
         wrong(f"the session lists the agent's own pages as {pages}")
@@ -166,7 +166,7 @@ def drive(page: Page, scheme: str) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=dialog]')", "the large view to close")
 
-    page.click(".agent .question .rows .nib-button:not(.is-quiet)")
+    page.click(".agent .question .rows .orden-button:not(.is-quiet)")
     wait_for(page, "!document.querySelector('.agent .question')", "the answered question to go")
     answered = page.evaluate("() => window.__fake.asked.filter((one) => one.command === 'answer')")
     if not answered or answered[-1]["args"][1] is not True:
@@ -178,7 +178,7 @@ def drive(page: Page, scheme: str) -> None:
     )
     wait_for(page, "document.querySelector('.takeover')", "the takeover's line")
     shot(page, f"{scheme}-05-takeover")
-    page.click(".takeover .nib-button")
+    page.click(".takeover .orden-button")
     wait_for(page, "!document.querySelector('.takeover')", "the step said done")
 
     fake(page, "pair('Codex')")

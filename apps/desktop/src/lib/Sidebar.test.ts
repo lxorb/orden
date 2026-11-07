@@ -278,8 +278,8 @@ describe('the space in the header', () => {
     const html = drawn('tree')
 
     expect(html).toContain('📓')
-    expect(html).toMatch(/class="nib-badge[^"]*"[^>]*>[\s\S]{0,300}📓/)
-    expect(html.indexOf('📓')).toBeLessThan(html.indexOf('nib-row-label'))
+    expect(html).toMatch(/class="orden-badge[^"]*"[^>]*>[\s\S]{0,300}📓/)
+    expect(html.indexOf('📓')).toBeLessThan(html.indexOf('orden-row-label'))
   })
 
   test('and the mark changes with the space', () => {

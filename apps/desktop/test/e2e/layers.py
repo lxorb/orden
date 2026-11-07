@@ -78,7 +78,7 @@ def held(page, row) -> None:
     at = {"x": box["x"] + box["width"] / 2, "y": box["y"] + box["height"] / 2}
     page.evaluate(
         """(at) => {
-          const row = document.elementFromPoint(at.x, at.y)?.closest('.nib-row.row')
+          const row = document.elementFromPoint(at.x, at.y)?.closest('.orden-row.row')
           if (!row) throw new Error('no row under the finger')
           const touch = new Touch({
             identifier: 1,
@@ -111,7 +111,7 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         color_scheme="light",
         device_scale_factor=2,
     )
-    context.add_init_script(f"try {{ localStorage.setItem('nib:session', '{token}') }} catch {{}}")
+    context.add_init_script(f"try {{ localStorage.setItem('orden:session', '{token}') }} catch {{}}")
 
     page = context.new_page()
     page.set_default_timeout(20000)
@@ -159,7 +159,7 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         page.wait_for_timeout(700)
         spaces = page.locator(".spaces")
         seen = bool(spaces.count()) and spaces.first.is_visible()
-        rows = page.locator(".spaces .nib-row").count()
+        rows = page.locator(".spaces .orden-row").count()
         box = spaces.first.bounding_box() if spaces.count() else None
         say(f"[{name}] the switcher: layer={spaces.count()} seen={seen} rows={rows} box={box}")
         if not seen or not rows:
@@ -167,14 +167,14 @@ def drive(browser, origin: str, name: str, width, height, agent, finger, token: 
         if box and (box["width"] < 40 or box["height"] < 20):
             hurt(f"the switcher opened with nothing to see: {box}")
         look(page, name, "switcher")
-        page.locator(".spaces .nib-row.is-on").first.click()
+        page.locator(".spaces .orden-row.is-on").first.click()
         page.wait_for_timeout(700)
         if page.locator(".spaces").count():
             hurt("the switcher did not close on a choice")
 
     panel(page)
     page.wait_for_timeout(600)
-    rows = page.locator("aside .nib-row.row[data-path]")
+    rows = page.locator("aside .orden-row.row[data-path]")
     if not rows.count():
         hurt("no rows in the file list")
     else:

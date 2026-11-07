@@ -11,7 +11,7 @@
   const remove = Storage.prototype.removeItem
   const clear = Storage.prototype.clear
 
-  const DONE = 'nib:kept-restored'
+  const DONE = 'orden:kept-restored'
   let done = false
   try {
     done = window.sessionStorage.getItem(DONE) === '1'

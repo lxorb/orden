@@ -533,7 +533,7 @@
     event.preventDefault()
     if (lifting) {
       closing?.letGo()
-      ;(event.currentTarget as HTMLElement).dispatchEvent(new CustomEvent('nib-took-over'))
+      ;(event.currentTarget as HTMLElement).dispatchEvent(new CustomEvent('orden-took-over'))
     }
     carry?.follow(drag, paneId)
   }
@@ -791,7 +791,7 @@
         oncontextmenu={(event) => showTrail(event, walking)}
         use:longPress={(event) => showTrail(event, walking)}
       >
-        <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+        <svg class="orden-mirror" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
       </button>
       <button
         class="step"
@@ -801,7 +801,7 @@
         onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
         use:middleOpens={(event) => workspace.goForward(walking.id, tabAsk(event))}
       >
-        <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+        <svg class="orden-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
       </button>
     </div>
   {/if}
@@ -911,7 +911,7 @@
               resumes(tab.id)
               if (event.detail > 0 && picksWith(event)) return
               workspace.activate(tab.id)
-              if (event.target instanceof Element && event.target.closest('.nib-unsaved')) {
+              if (event.target instanceof Element && event.target.closest('.orden-unsaved')) {
                 askPlace(tab.id)
               }
             }}
@@ -1056,7 +1056,7 @@
 
   {#if walking?.kind === 'note'}
     <button
-      class="nib-glyph more"
+      class="orden-glyph more"
       title={t('More')}
       aria-label={t('More')}
       aria-haspopup="menu"

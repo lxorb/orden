@@ -1,6 +1,7 @@
 import { spacesAhead } from './ahead'
+import { account } from '../account.svelte'
 import { identifier } from '../identifier'
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isDesktop, isNative } from '../tauri'
 import type { Entry, Naming, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
 
@@ -43,6 +44,11 @@ export async function loadSpaces(ws: HoldsSpaces) {
     if (ws.spaces === before) break
   }
   if (!found) return
+  const who = account.user?.id ?? null
+  if (!isNative && who !== null) {
+    const { leftByAnother } = await import('../left-spaces')
+    found = found.filter((one) => !leftByAnother(one.path, who))
+  }
 
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))
 
@@ -98,7 +104,7 @@ export function applySpaceOrder(ws: HoldsSpaces, names: string[]): boolean {
   return true
 }
 
-export const TABS_KEY = 'nib:space-tabs'
+export const TABS_KEY = 'orden:space-tabs'
 
 export const tabSets = { fetched: false }
 

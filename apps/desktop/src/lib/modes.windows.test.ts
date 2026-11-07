@@ -32,7 +32,7 @@ async function aWindow() {
 
 function storageMoved(except: number) {
   listeners.forEach((one, at) => {
-    if (at !== except) for (const listener of one) listener({ key: 'nib:modes' })
+    if (at !== except) for (const listener of one) listener({ key: 'orden:modes' })
   })
 }
 
@@ -49,7 +49,7 @@ beforeEach(() => {
 })
 
 const stored = () =>
-  JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+  JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
 
 describe('settings across two windows', () => {
   test('a setting made in one is heard in the other, and its next write keeps it', async () => {
@@ -77,7 +77,7 @@ describe('settings across two windows', () => {
     const b = await aWindow()
     a.setLineSpacing(2.1)
     const held = stored()
-    localStorage.setItem('nib:modes', JSON.stringify({ ...held, developer: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ ...held, developer: true }))
     b.toggleTypewriter()
     expect(stored().developer).toBe(true)
   })

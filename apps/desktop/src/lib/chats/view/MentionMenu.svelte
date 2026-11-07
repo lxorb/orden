@@ -31,7 +31,7 @@
 </script>
 
 <div
-  class="mentions nib-layer"
+  class="mentions orden-layer"
   role="listbox"
   aria-label="@"
   transition:fly={{ y: 4, duration: dur(130), easing: cubicOut }}
@@ -39,7 +39,7 @@
   {#each rows as row, index (row.key)}
     <button
       type="button"
-      class="nib-row"
+      class="orden-row"
       class:is-on={index === lit}
       role="option"
       aria-selected={index === lit}
@@ -49,19 +49,19 @@
       }}
     >
       {#if row.member}
-        <span class="nib-row-mark"
+        <span class="orden-row-mark"
           ><Avatar face={faceOf(row.member.who, members, space)} size={20} /></span
         >
-        <span class="nib-row-label">{nameOf(row.member.who, members, space)}</span>
+        <span class="orden-row-label">{nameOf(row.member.who, members, space)}</span>
         {#if row.member.nick && row.member.nick !== row.member.name}
-          <span class="nib-row-meta">{row.member.name}</span>
+          <span class="orden-row-meta">{row.member.name}</span>
         {/if}
       {:else if row.key === 'nib'}
-        <span class="nib-row-mark at">✦</span>
-        <span class="nib-row-label">@{row.key}</span>
+        <span class="orden-row-mark at">✦</span>
+        <span class="orden-row-label">@{row.key}</span>
       {:else}
-        <span class="nib-row-mark at">@</span>
-        <span class="nib-row-label">@{row.key}</span>
+        <span class="orden-row-mark at">@</span>
+        <span class="orden-row-label">@{row.key}</span>
       {/if}
     </button>
   {/each}

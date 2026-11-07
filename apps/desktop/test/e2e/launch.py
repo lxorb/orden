@@ -2,7 +2,7 @@
 shell, cold and warm, on an empty space and on five thousand notes.
 
 The one thing about this app that cannot be measured anywhere but on a real machine,
-so the app times itself: `NIB_TRACE_STARTUP=1` and every launch appends a page and one
+so the app times itself: `ORDEN_TRACE_STARTUP=1` and every launch appends a page and one
 line of JSON to `startup-trace.log`. This runs a probe build as many times as asked,
 reads the JSON and reports the median of every step, with the machine and what else
 it was doing beside the table - a launch measured on a busy machine is a measurement
@@ -10,7 +10,7 @@ of the machine.
 
 Every launch goes through `run_probe` in scripts/probe_app.py: off the screen, never
 taking the keyboard, with a watch that ends the run if any window of it is ever on a
-screen or in front, and `NIB_SPACES_DIR` in a folder of this run's own. So a probe
+screen or in front, and `ORDEN_SPACES_DIR` in a folder of this run's own. So a probe
 never opens in front of whoever is working at the machine, and never reads their notes.
 
     python apps/desktop/test/e2e/launch.py --runs 7
@@ -271,8 +271,8 @@ def launched(
 
     environment = {
         **os.environ,
-        "NIB_TRACE_STARTUP": "1",
-        "NIB_SPACES_DIR": str(spaces),
+        "ORDEN_TRACE_STARTUP": "1",
+        "ORDEN_SPACES_DIR": str(spaces),
         **(args or {}),
     }
     begun = time.perf_counter()
@@ -440,7 +440,7 @@ def main() -> int:
     kept: dict[str, list[dict]] = {}
     summary: list[str] = []
     corpora = ["empty", "big"] if told.corpus == "both" else [told.corpus]
-    with tempfile.TemporaryDirectory(prefix="nib-launch-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="orden-launch-") as scratch:
         for kind in corpora:
             spaces = pathlib.Path(scratch) / kind
             corpus(kind, spaces)

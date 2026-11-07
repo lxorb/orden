@@ -25,9 +25,9 @@ def wait(page: Page, script: str, what: str) -> object:
 
 def device(browser: Browser, label: str, token: str, before: str | None = None) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     if before is not None:
-        context.add_init_script(f"localStorage.setItem('nib:list-order', {json.dumps(before)})")
+        context.add_init_script(f"localStorage.setItem('orden:list-order', {json.dumps(before)})")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")

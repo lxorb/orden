@@ -5,7 +5,7 @@
 </script>
 
 <button
-  class="nib-glyph more"
+  class="orden-glyph more"
   role="menuitem"
   aria-haspopup="menu"
   title={t('More')}

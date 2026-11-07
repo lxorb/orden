@@ -31,7 +31,7 @@ def check(what: str, held: bool) -> None:
 def drive(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 860}, reduced_motion="reduce")
     page.context.add_init_script(
-        f"localStorage.setItem('nib:ai-accounts', {json.dumps(json.dumps(ACCOUNTS))})"
+        f"localStorage.setItem('orden:ai-accounts', {json.dumps(json.dumps(ACCOUNTS))})"
     )
     DRIVE.open(page)
     page.evaluate("window.nibApp.settings.show('ai')")
@@ -64,7 +64,7 @@ def drive(browser) -> None:
         })"""
     )
     check("the logos are drawn in the text's colour", len(inked) == 3 and all(inked))
-    adding = sheet.locator("button.nib-action", has_text="Add")
+    adding = sheet.locator("button.orden-action", has_text="Add")
     check(
         "every Add wears its provider's mark",
         adding.count() > 0 and adding.locator(".mark").count() == adding.count(),
@@ -91,7 +91,7 @@ def drive(browser) -> None:
 
     sheet.get_by_role("button", name="Use", exact=True).click()
     quiet(page)
-    active = page.evaluate("JSON.parse(localStorage.getItem('nib:ai-accounts')).active.claude")
+    active = page.evaluate("JSON.parse(localStorage.getItem('orden:ai-accounts')).active.claude")
     check("Use moved Claude to the other account", active == "anthropic-2")
     check("the mark moved with it", (sheet.locator(".card.using").get_attribute("data-account") or "") == "anthropic-2")
     shot(page, "02-switched")

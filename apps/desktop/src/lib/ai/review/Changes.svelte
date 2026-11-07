@@ -69,39 +69,39 @@
     <div class="note" role="listitem">
       <div class="line">
         <button
-          class="nib-row is-short name"
+          class="orden-row is-short name"
           onclick={() => note.changes[0] && void review.show(note.changes[0])}
         >
-          <span class="nib-row-label">{titleOf(note.path)}</span>
+          <span class="orden-row-label">{titleOf(note.path)}</span>
           <Tally added={note.added} removed={note.removed} />
         </button>
         <span class="pair">
-          <button class="nib-chip is-quiet" onclick={() => void review.undo(note.changes)}
+          <button class="orden-chip is-quiet" onclick={() => void review.undo(note.changes)}
             >{t('Undo')}</button
           >
-          <button class="nib-chip" onclick={() => review.keep(note.changes)}>{t('Keep')}</button>
+          <button class="orden-chip" onclick={() => review.keep(note.changes)}>{t('Keep')}</button>
         </span>
       </div>
       {#each open ? note.changes : [] as change (change.id)}
         <div class="line change" transition:slide={{ duration: dur(150), easing: cubicOut }}>
           <button
-            class="nib-row is-short name"
+            class="orden-row is-short name"
             class:is-on={litOf(change)}
             onclick={() => {
               lit = rows.indexOf(change)
               void review.show(change)
             }}
           >
-            <span class="nib-row-label" class:is-gone={!change.spots.some((one) => one.inserted)}
+            <span class="orden-row-label" class:is-gone={!change.spots.some((one) => one.inserted)}
               >{snippetOf(change)}</span
             >
             <Tally added={change.added} removed={change.removed} />
           </button>
           <span class="pair">
-            <button class="nib-chip is-quiet" onclick={() => void review.undo([change])}
+            <button class="orden-chip is-quiet" onclick={() => void review.undo([change])}
               >{t('Undo')}</button
             >
-            <button class="nib-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
+            <button class="orden-chip" onclick={() => review.keep([change])}>{t('Keep')}</button>
           </span>
         </div>
       {/each}
@@ -110,19 +110,19 @@
   {#each files as file (file.id)}
     <div class="line" role="listitem">
       {#if file.kind === 'moved'}
-        <button class="nib-row is-short name" onclick={() => openMoved(file)}>
-          <span class="nib-row-label">{titleOf(file.from)} → {titleOf(file.path)}</span>
+        <button class="orden-row is-short name" onclick={() => openMoved(file)}>
+          <span class="orden-row-label">{titleOf(file.from)} → {titleOf(file.path)}</span>
         </button>
       {:else}
-        <span class="nib-row is-short name">
-          <span class="nib-row-label is-gone">{titleOf(file.path)}</span>
+        <span class="orden-row is-short name">
+          <span class="orden-row-label is-gone">{titleOf(file.path)}</span>
         </span>
       {/if}
       <span class="pair">
-        <button class="nib-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
+        <button class="orden-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
           >{t('Undo')}</button
         >
-        <button class="nib-chip" onclick={() => review.keepFiles([file])}>{t('Keep')}</button>
+        <button class="orden-chip" onclick={() => review.keepFiles([file])}>{t('Keep')}</button>
       </span>
     </div>
   {/each}

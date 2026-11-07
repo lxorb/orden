@@ -79,7 +79,7 @@ describe('the Glasses settings', () => {
   })
 
   test('are there on any device once a pair has answered', () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ glassesSeen: true }))
+    localStorage.setItem('orden:modes', JSON.stringify({ glassesSeen: true }))
     const { panes, groups } = pageOf(false)
 
     expect(panes.map((one) => one.id)).toContain('glasses')

@@ -52,7 +52,7 @@ export class MathWidget extends PictureWidget {
 
   toDOM() {
     const host = document.createElement(this.block ? 'div' : 'span')
-    host.className = this.block ? 'nib-math-block' : 'nib-math-inline'
+    host.className = this.block ? 'orden-math-block' : 'orden-math-inline'
 
     const body = this.number ? document.createElement('span') : host
     if (this.number) host.append(body)
@@ -63,7 +63,7 @@ export class MathWidget extends PictureWidget {
 
     if (this.number) {
       const tag = document.createElement('span')
-      tag.className = 'nib-math-number'
+      tag.className = 'orden-math-number'
       tag.textContent = `(${this.number})`
       host.append(tag)
     }
@@ -120,7 +120,7 @@ export class DiagramWidget extends PictureWidget {
 
   toDOM() {
     const host = document.createElement('div')
-    host.className = 'nib-diagram'
+    host.className = 'orden-diagram'
     host.dataset.language = this.language
     void this.draw(host)
     return host
@@ -132,7 +132,7 @@ export class DiagramWidget extends PictureWidget {
       else if (this.language === 'sequence') await drawMermaid(host, sequenceToMermaid(this.code))
       else await drawMermaid(host, this.code)
     } catch (error) {
-      host.classList.add('nib-diagram-error')
+      host.classList.add('orden-diagram-error')
       host.textContent = error instanceof Error ? error.message : String(error)
     }
   }
@@ -149,7 +149,7 @@ export class ChartWidget extends PictureWidget {
 
   toDOM() {
     const host = document.createElement('div')
-    host.className = 'nib-chart'
+    host.className = 'orden-chart'
     host.innerHTML = chartFigure(this.code) ?? ''
     return host
   }
@@ -172,7 +172,7 @@ export class QueryWidget extends NibWidget {
 
   toDOM() {
     const host = document.createElement('div')
-    host.className = 'nib-query-block'
+    host.className = 'orden-query-block'
 
     host.addEventListener('mousedown', (event) => {
       if (this.index.pressRow?.(event.target) !== true) return
@@ -208,7 +208,7 @@ export class BaseWidget extends NibWidget {
 
   toDOM() {
     const host = document.createElement('div')
-    host.className = 'nib-base-block'
+    host.className = 'orden-base-block'
     const mounted = this.index.mountBase?.(host, this.ask)
     if (mounted) this.onDestroy(host, mounted)
     return host
@@ -242,7 +242,7 @@ async function drawMermaid(host: HTMLElement, code: string) {
     fontFamily: themeColour('--font-ui'),
   })
 
-  const { svg } = await mermaid.render(`nib-diagram-${diagramSeq++}`, code)
+  const { svg } = await mermaid.render(`orden-diagram-${diagramSeq++}`, code)
   host.innerHTML = svg
 }
 

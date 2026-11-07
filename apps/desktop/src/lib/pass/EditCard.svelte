@@ -4,7 +4,7 @@
   const { title, children }: { title?: string; children: Snippet } = $props()
 </script>
 
-{#if title}<h3 class="nib-section">{title}</h3>{/if}
+{#if title}<h3 class="orden-section">{title}</h3>{/if}
 <div class="card">
   {@render children()}
 </div>
@@ -22,7 +22,7 @@
     border-top: 1px solid var(--line);
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-2) 0 0;
   }
 </style>

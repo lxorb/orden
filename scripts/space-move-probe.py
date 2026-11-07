@@ -110,7 +110,7 @@ def menu_on(app, tab: str) -> object:
 def menu_rows(app) -> list[str]:
     said = ask(
         app,
-        "JSON.stringify([...document.querySelectorAll('.menu .nib-row .nib-row-label')].map((one) => one.textContent.trim()))",
+        "JSON.stringify([...document.querySelectorAll('.menu .orden-row .orden-row-label')].map((one) => one.textContent.trim()))",
     )
     return said if isinstance(said, list) else []
 
@@ -118,8 +118,8 @@ def chevron_of(app, label: str) -> object:
 
     return ask(
         app,
-        "(() => { const row = [...document.querySelectorAll('.menu .nib-row')]"
-        f".find((one) => one.querySelector('.nib-row-label')?.textContent.trim() === {json.dumps(label)}); "
+        "(() => { const row = [...document.querySelectorAll('.menu .orden-row')]"
+        f".find((one) => one.querySelector('.orden-row-label')?.textContent.trim() === {json.dumps(label)}); "
         "const more = row && row.querySelector('[data-more]'); if (!more) return 'no chevron'; "
         "more.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); return 'shown' })()",
     )
@@ -127,8 +127,8 @@ def chevron_of(app, label: str) -> object:
 def press_row(app, label: str) -> object:
     return ask(
         app,
-        "(() => { const row = [...document.querySelectorAll('.menu .nib-row')]"
-        f".find((one) => one.querySelector('.nib-row-label')?.textContent.trim() === {json.dumps(label)}); "
+        "(() => { const row = [...document.querySelectorAll('.menu .orden-row')]"
+        f".find((one) => one.querySelector('.orden-row-label')?.textContent.trim() === {json.dumps(label)}); "
         "if (!row) return 'no row'; row.click(); return 'pressed' })()",
     )
 
@@ -199,8 +199,8 @@ def main() -> int:
         work, home = str(ids["Work"]), str(ids["Home"])
         say(f"Work {work}, Home {home}")
 
-        ask(app, f"localStorage.setItem('nib:space-tabs', {json.dumps(json.dumps({work: 'space', home: 'space'}))}) || 'kept'")
-        ask(app, "localStorage.setItem('nib:hidden-tabs', '\"run\"') || 'kept'")
+        ask(app, f"localStorage.setItem('orden:space-tabs', {json.dumps(json.dumps({work: 'space', home: 'space'}))}) || 'kept'")
+        ask(app, "localStorage.setItem('orden:hidden-tabs', '\"run\"') || 'kept'")
         tabs_probe.to_space(app, home)
         tabs_probe.to_space(app, work)
 

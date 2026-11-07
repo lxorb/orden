@@ -40,8 +40,10 @@ export function mediaUrl(name: string, read: { bytes: Uint8Array; cut: boolean }
   return URL.createObjectURL(new Blob([read.bytes.slice().buffer], { type: known.type }))
 }
 
-export function pictureUrl(name: string, read: { bytes: Uint8Array; cut: boolean }): string | null {
-  return KINDS[endingOf(name)]?.shown === 'picture' ? mediaUrl(name, read) : null
+export function pictureBlob(name: string, read: { bytes: Uint8Array; cut: boolean }): Blob | null {
+  const known = KINDS[endingOf(name)]
+  if (known?.shown !== 'picture' || read.cut) return null
+  return new Blob([read.bytes.slice().buffer], { type: known.type })
 }
 
 export function textOf(bytes: Uint8Array): string | null {

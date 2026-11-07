@@ -35,6 +35,7 @@ vi.mock('./store', async (importOriginal) => {
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isDesktop: true,
+  isNative: true,
 }))
 vi.mock('./watching', () => ({
   watchFolders: () => ({ stop: () => undefined, follow: () => undefined }),

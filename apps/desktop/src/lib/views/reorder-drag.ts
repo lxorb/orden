@@ -37,7 +37,7 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
     lifted = true
     carried().classList.add('is-carried')
     window.getSelection()?.removeAllRanges()
-    document.documentElement.classList.add('nib-unselectable')
+    document.documentElement.classList.add('orden-unselectable')
   }
 
   const move = (event: PointerEvent) => {
@@ -77,7 +77,7 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
     lifted = false
     from = null
     carried().classList.remove('is-carried')
-    document.documentElement.classList.remove('nib-unselectable')
+    document.documentElement.classList.remove('orden-unselectable')
     if (!was) return
     window.addEventListener('click', swallow, { capture: true, once: true })
     setTimeout(() => window.removeEventListener('click', swallow, true), 0)

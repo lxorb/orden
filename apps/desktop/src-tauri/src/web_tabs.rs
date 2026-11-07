@@ -58,7 +58,7 @@ fn adopted_label(label: &str) -> bool {
     })
 }
 
-const CHOSEN: &str = "nib://web-chosen";
+const CHOSEN: &str = "orden://web-chosen";
 
 pub(crate) fn page_chosen(app: &AppHandle, window: &str, page: &str) {
     if let Some(tab) = tab_of(page) {
@@ -202,17 +202,17 @@ fn unadopt(tab: &str) {
 
 const MAIN: &str = "main";
 
-const MOVED: &str = "nib://web-tab";
+const MOVED: &str = "orden://web-tab";
 
 #[cfg_attr(
     any(not(any(windows, target_os = "macos")), feature = "cef"),
     allow(dead_code)
 )]
-const ASKED: &str = "nib://web-ask";
+const ASKED: &str = "orden://web-ask";
 
-const OPENED: &str = "nib://web-open";
+const OPENED: &str = "orden://web-open";
 
-const BLOCKED: &str = "nib://web-blocked";
+const BLOCKED: &str = "orden://web-blocked";
 
 const LONGEST_PAGE: usize = 4_000_000;
 
@@ -701,7 +701,7 @@ pub(crate) fn reader(selection: bool) -> String {
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
-fn opening(place: Option<Place>, url: &str) -> String {
+fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     let want = place.and_then(|one| {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
@@ -721,7 +721,11 @@ fn opening(place: Option<Place>, url: &str) -> String {
     let mut scripts: Vec<String> = Vec::new();
 
     #[cfg(any(windows, feature = "cef", target_os = "macos"))]
-    scripts.push(crate::web_pass::script().to_string());
+    if pass {
+        scripts.push(crate::web_pass::script().to_string());
+    }
+    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
+    let _ = pass;
 
     if let Some(one) = want {
         scripts.push(PLACE.replace("__PLACE__", &one));
@@ -967,6 +971,8 @@ pub struct Profile {
     store: Option<String>,
     #[serde(default)]
     private: bool,
+    #[serde(default)]
+    pass: bool,
 }
 
 impl Profile {
@@ -1007,7 +1013,7 @@ pub async fn web_open(
 
     tabs.restore(&tab, revived.trail, revived.at);
 
-    let scripts = crate::page_style::with(opening(revived.place, &url));
+    let scripts = crate::page_style::with(opening(revived.place, &url, profile.pass));
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
@@ -1701,6 +1707,7 @@ pub async fn web_close(
         if let Some(view) = closing.get_webview(&label) {
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
+            ask::forget(&named);
             crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
@@ -1849,11 +1856,12 @@ mod ask {
         COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT, COREWEBVIEW2_PERMISSION_STATE_ALLOW,
         COREWEBVIEW2_PERMISSION_STATE_DENY,
     };
-    use webview2_com::PermissionRequestedEventHandler;
+    use webview2_com::{NavigationStartingEventHandler, PermissionRequestedEventHandler};
 
     use super::{Asked, ASKED};
 
     struct Waiting {
+        tab: String,
         args: ICoreWebView2PermissionRequestedEventArgs,
         deferral: ICoreWebView2Deferral,
     }
@@ -1890,6 +1898,16 @@ mod ask {
                 return;
             };
 
+            let leaving = NavigationStartingEventHandler::create(Box::new({
+                let tab = tab.clone();
+                move |_, _| {
+                    forget(&tab);
+                    Ok(())
+                }
+            }));
+            let mut token = 0i64;
+            let _ = core.add_NavigationStarting(&leaving, &raw mut token);
+
             let handler =
                 PermissionRequestedEventHandler::create(Box::new(move |_sender, args| {
                     let Some(args) = args else {
@@ -1920,13 +1938,14 @@ mod ask {
                         held.insert(
                             id,
                             Waiting {
+                                tab: tab.clone(),
                                 args: args.clone(),
                                 deferral,
                             },
                         );
                     });
 
-                    let _ = app.emit_to(
+                    let told = app.emit_to(
                         window.as_str(),
                         ASKED,
                         Asked {
@@ -1936,6 +1955,9 @@ mod ask {
                             kind: kind.to_string(),
                         },
                     );
+                    if told.is_err() {
+                        answer(id, false);
+                    }
 
                     Ok(())
                 }));
@@ -2015,6 +2037,18 @@ mod ask {
                 COREWEBVIEW2_PERMISSION_STATE_DENY
             });
             let _ = waiting.deferral.Complete();
+        }
+    }
+
+    pub fn forget(tab: &str) {
+        let gone: Vec<u64> = WAITING.with_borrow(|held| {
+            held.iter()
+                .filter(|(_, one)| one.tab == tab)
+                .map(|(id, _)| *id)
+                .collect()
+        });
+        for id in gone {
+            answer(id, false);
         }
     }
 }
@@ -2255,6 +2289,18 @@ mod ask {
             WKPermissionDecision::Deny
         },));
     }
+
+    pub fn forget(tab: &str) {
+        let gone: Vec<u64> = WAITING.with_borrow(|held| {
+            held.iter()
+                .filter(|(_, one)| one.tab == tab)
+                .map(|(id, _)| *id)
+                .collect()
+        });
+        for id in gone {
+            answer(id, false);
+        }
+    }
 }
 
 #[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
@@ -2267,6 +2313,8 @@ mod ask {
     pub fn own(_webview: &PlatformWebview, _ours: Vec<String>) {}
 
     pub fn answer(_id: u64, _allow: bool) {}
+
+    pub fn forget(_tab: &str) {}
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
@@ -2504,7 +2552,11 @@ mod tests {
             Becomes::Blocked(site.to_string())
         );
         assert_eq!(becomes(&at(BLANK), false, false, true), Becomes::Nothing);
-        for refused in ["nib://open?x", "file:///etc/passwd", "javascript:alert(1)"] {
+        for refused in [
+            "orden://open?x",
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+        ] {
             assert_eq!(
                 becomes(&at(refused), false, true, false),
                 Becomes::Nothing,
@@ -2641,7 +2693,7 @@ mod tests {
             "blob:http://tauri.localhost/1",
             "file:///C:/notes/Idea.md",
             "http://ipc.localhost/notes",
-            "nib://open?path=a.md",
+            "orden://open?path=a.md",
             "mailto:someone@example.com",
         ] {
             assert!(!frame_may_open(&at(never)), "{never}");
@@ -2679,7 +2731,7 @@ mod tests {
             Some("https://example.com/a".to_string())
         );
 
-        assert!(handed_over(&at("nib://command?id=record")).is_none());
+        assert!(handed_over(&at("orden://command?id=record")).is_none());
         assert!(handed_over(&at("file:///C:/notes/Idea.md")).is_none());
         assert!(handed_over(&at("smb://example.com/share")).is_none());
         assert!(handed_over(&at("ms-officecmd:x")).is_none());
@@ -2788,8 +2840,12 @@ mod tests {
     #[test]
     fn nib_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
-            opening(None, "https://a.example/page"),
-            opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
+            opening(
+                Some(Place { x: 0.0, y: 940.0 }),
+                "https://a.example/page",
+                true,
+            ),
         ] {
             for script in scripts.split(";\n").filter(|one| !one.is_empty()) {
                 assert!(script.starts_with("(function () {"), "{script}");
@@ -2815,7 +2871,7 @@ mod tests {
     #[test]
     fn a_page_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
-            opening(None, "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
             format!(
                 "{};\n{};\n{};\n",
                 crate::web_opens::SCRIPT,
@@ -2829,7 +2885,7 @@ mod tests {
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
-            opening(None, "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
             format!(
                 "{};
 {};
@@ -2848,9 +2904,18 @@ mod tests {
     #[test]
     fn a_page_on_a_mac_is_handed_pass_s_script_alone() {
         assert_eq!(
-            opening(None, "https://a.example/page"),
+            opening(None, "https://a.example/page", true),
             format!("{};\n", crate::web_pass::script())
         );
+    }
+
+    #[test]
+    fn a_page_opened_while_pass_is_off_is_handed_none_of_pass_s_script() {
+        for place in [None, Some(Place { x: 0.0, y: 940.0 })] {
+            let opened = opening(place, "https://a.example/page", false);
+            assert!(!opened.contains(crate::web_pass::script()));
+            assert!(!opened.contains("__nibPass"));
+        }
     }
 
     #[test]
@@ -2861,11 +2926,15 @@ mod tests {
 
     #[test]
     fn a_revived_page_carries_the_place_it_was_left_at() {
-        let opened = opening(None, "https://a.example/page");
+        let opened = opening(None, "https://a.example/page", true);
         assert!(!opened.contains("__PLACE__"));
         assert!(!opened.contains("scrollTo"));
 
-        let revived = opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page");
+        let revived = opening(
+            Some(Place { x: 0.0, y: 940.0 }),
+            "https://a.example/page",
+            true,
+        );
         assert!(revived.contains("window.scrollTo"));
         assert!(revived.contains("\"url\":\"https://a.example/page\""));
         assert!(revived.contains("940"));
@@ -2925,6 +2994,32 @@ mod tests {
             let dismissed = body.find("web_dialogs::dismiss(").expect("dialogs let go");
             assert!(dismissed < body.find(moves).expect("the move"), "{command}");
         }
+    }
+
+    #[test]
+    fn a_page_s_waiting_question_is_let_go_when_it_leaves_or_closes() {
+        let source = include_str!("web_tabs.rs");
+        let close = source
+            .split("pub async fn web_close(")
+            .nth(1)
+            .and_then(|from| from.split("\n}\n").next())
+            .expect("the close");
+        assert!(close.contains("ask::forget(&named)"));
+
+        let asking = source
+            .split("mod ask {")
+            .nth(1)
+            .and_then(|from| from.split("pub fn listen(").nth(1))
+            .and_then(|from| from.split("\n    }\n").next())
+            .expect("the windows asks");
+        let leaving = asking
+            .find("add_NavigationStarting")
+            .expect("let go as it leaves");
+        assert!(leaving < asking.find("add_PermissionRequested").expect("heard"));
+        assert!(asking.contains("forget(&tab)"));
+
+        let dialogs = include_str!("web_dialogs.rs");
+        assert!(dialogs.contains("add_NavigationStarting(&starting"));
     }
 
     #[test]

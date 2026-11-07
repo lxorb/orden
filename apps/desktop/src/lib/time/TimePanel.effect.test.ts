@@ -74,7 +74,7 @@ describe('the time tracker beside the notes', () => {
     expect(target.textContent).toContain('Today')
     expect(target.textContent).not.toContain('Nothing recorded yet')
 
-    const row = [...target.querySelectorAll('button.nib-row')].find((one) =>
+    const row = [...target.querySelectorAll('button.orden-row')].find((one) =>
       one.textContent.includes('Analysis'),
     )
     row?.dispatchEvent(new MouseEvent('click', { bubbles: true }))

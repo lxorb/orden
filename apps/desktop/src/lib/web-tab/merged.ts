@@ -4,10 +4,10 @@ import { hostOf, isWebData, siteOf, storeName, type WebData } from './web-data'
 import { HISTORY } from './web-data.svelte'
 import { bounded, type Visit } from './visits'
 
-const OLD = 'nib:web-data'
-const OLD_UP = 'nib:web-data-up'
+const OLD = 'orden:web-data'
+const OLD_UP = 'orden:web-data-up'
 
-export const MERGED = 'nib:web-data-merged'
+export const MERGED = 'orden:web-data-merged'
 
 interface Merge {
   from: string

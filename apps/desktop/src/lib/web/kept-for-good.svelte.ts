@@ -1,7 +1,7 @@
 import { keep, storedText } from '../stored'
 import { isNative } from '../tauri'
 
-const ASKED = 'nib:kept-for-good-asked'
+const ASKED = 'orden:kept-for-good-asked'
 
 function storage(): StorageManager | null {
   if (isNative || typeof navigator === 'undefined') return null

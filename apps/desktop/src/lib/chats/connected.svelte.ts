@@ -54,6 +54,12 @@ function heardInto(linked: Linked, event: ProviderEvent): Linked {
       }
       return { ...linked, conversations: next }
     }
+    case 'deleted':
+    case 'changed':
+    case 'typing':
+    case 'presence':
+    case 'read':
+      return linked
   }
 }
 
@@ -95,8 +101,9 @@ export class Connected {
     provider: ChatProvider,
     config: Readonly<Record<string, string>>,
     host: Host,
+    known?: string,
   ): Promise<Linked> {
-    const connection = await provider.connect(config, host)
+    const connection = await provider.connect(config, host, known)
     const account = connection.account
     await this.unlink(provider.id, account.id)
     const conversations = await connection.conversations().catch(() => [])

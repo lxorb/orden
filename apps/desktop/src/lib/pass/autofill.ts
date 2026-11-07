@@ -33,6 +33,7 @@ import type { Flow, Step } from './sign-in-flow'
 import { FLOW_WINDOW, flowGoes, isSignInKind, pageOf } from './sign-in-flow'
 import type { PassStore } from './store.svelte'
 import { pass } from './store.svelte'
+import { passOn } from '../settings.svelte'
 
 const STEP_PAUSE = 700
 const SIGNING_SHOWN = 4000
@@ -235,6 +236,17 @@ export class Autofill {
     passBubbles.clear(tab)
   }
 
+  quiet(): void {
+    const tabs = [
+      ...this.frames.keys(),
+      ...this.offers.keys(),
+      ...this.saves.keys(),
+      ...this.flows.keys(),
+      ...this.timers.keys(),
+    ]
+    for (const tab of new Set(tabs)) this.forget(tab)
+  }
+
   forget(tab: string): void {
     this.stop(tab)
     this.frames.delete(tab)
@@ -299,9 +311,15 @@ export class Autofill {
 
   private async listen(): Promise<void> {
     await Promise.all([
-      onForms((said) => void this.heardForms(said)),
-      onMark((said) => void this.heardMark(said)),
-      onSubmitted((said) => void this.heardSubmitted(said)),
+      onForms((said) => {
+        if (passOn()) void this.heardForms(said)
+      }),
+      onMark((said) => {
+        if (passOn()) void this.heardMark(said)
+      }),
+      onSubmitted((said) => {
+        if (passOn()) void this.heardSubmitted(said)
+      }),
     ])
   }
 

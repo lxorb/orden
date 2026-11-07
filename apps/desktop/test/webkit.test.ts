@@ -130,7 +130,7 @@ describe("a Mac's WebKit", () => {
     })
   }
 
-  test('has no style.userSelect, so a drag holds selection off with .nib-unselectable', () => {
+  test('has no style.userSelect, so a drag holds selection off with .orden-unselectable', () => {
     const written = files.filter((one) => /\.style\.userSelect\b/.test(code(one.text)))
     expect(written.map((one) => one.name)).toEqual([])
   })

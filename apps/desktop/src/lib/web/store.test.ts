@@ -82,7 +82,7 @@ describe('a file written over', () => {
 
   test('says which path changed, and not what is in it', async () => {
     const heard: unknown[] = []
-    const listening = new BroadcastChannel('nib:rows')
+    const listening = new BroadcastChannel('orden:rows')
     const arrived = new Promise<void>((done) => {
       listening.onmessage = (event: MessageEvent<unknown>) => {
         heard.push(event.data)

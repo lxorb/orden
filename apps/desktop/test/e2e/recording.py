@@ -185,7 +185,7 @@ PRESS_ROW = """
 ([label]) => {
   const rows = [...document.querySelectorAll('[role=option]')]
   const found = rows.find(
-    (one) => (one.querySelector('.nib-row-label')?.textContent ?? '').trim() === label,
+    (one) => (one.querySelector('.orden-row-label')?.textContent ?? '').trim() === label,
   )
   if (!found) return rows.map((one) => one.textContent.trim())
 
@@ -415,7 +415,7 @@ def byok(browser: Browser) -> None:
     page.context.close()
 
 OFFERED = """
-() => [...document.querySelectorAll('[role=option] .nib-row-label')].map((one) => one.textContent.trim())
+() => [...document.querySelectorAll('[role=option] .orden-row-label')].map((one) => one.textContent.trim())
 """
 
 OPEN_OLD = """

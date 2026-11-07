@@ -172,7 +172,7 @@ views:
   test('shows choices as chips in their tones, a format as itself, a button to press', () => {
     expect(html).toContain('--tone: var(--canvas-5)')
     expect(html).toContain('300%')
-    expect(html.match(/class="nib-chip press/g)).toHaveLength(2)
+    expect(html.match(/class="orden-chip press/g)).toHaveLength(2)
   })
 })
 

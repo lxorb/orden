@@ -412,7 +412,7 @@
     {#key live.refused}
       <button
         type="button"
-        class="nib-glyph lock"
+        class="orden-glyph lock"
         class:shake={live.refused > 0}
         disabled={!kit.writable}
         title={t('Unlock view')}
@@ -430,8 +430,8 @@
 {/snippet}
 {#snippet searchField()}
   {#if !kit.compact}
-    <label class="nib-field search">
-      <svg class="nib-field-mark" viewBox="0 0 13 13" aria-hidden="true"
+    <label class="orden-field search">
+      <svg class="orden-field-mark" viewBox="0 0 13 13" aria-hidden="true"
         ><path d="M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3" /></svg
       >
       <input
@@ -456,7 +456,7 @@
     <div class="tool">
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         class:set={active[tool.id]}
         class:open={open === tool.id}
         data-opens-popover
@@ -481,7 +481,7 @@
   <div class="tool">
     <button
       type="button"
-      class="nib-glyph display-button"
+      class="orden-glyph display-button"
       class:set={displayChanged > 0}
       class:open={open === 'display'}
       data-opens-popover
@@ -509,7 +509,7 @@
   {#if kit.adds}
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       title={notes ? t('New note') : t('Add task')}
       aria-label={notes ? t('New note') : t('Add task')}
       onclick={onadd}
@@ -524,7 +524,7 @@
   <div class="tool">
     <button
       type="button"
-      class="nib-chip is-on"
+      class="orden-chip is-on"
       data-opens-popover
       disabled={!kit.writable}
       aria-expanded={open === which}
@@ -550,7 +550,7 @@
         {#each base?.views ?? [] as one, at (at)}
           {#if naming === at}
             <input
-              class="nib-field rename"
+              class="orden-field rename"
               value={one.name}
               aria-label={t('Rename')}
               use:focusSoon
@@ -595,7 +595,7 @@
         {#if kit.writable}
           <button
             type="button"
-            class="nib-glyph"
+            class="orden-glyph"
             title={t('New view')}
             aria-label={t('New view')}
             onclick={addTab}
@@ -612,7 +612,7 @@
       {#if kit.writable}<div class="tool">
           <button
             type="button"
-            class="nib-glyph"
+            class="orden-glyph"
             class:open={open === 'settings'}
             data-opens-popover
             title={t('Settings')}
@@ -654,7 +654,7 @@
   <div class="head" class:compact={kit.compact}>
     {#if renaming}
       <input
-        class="nib-field rename"
+        class="orden-field rename"
         value={project ? named : (view?.name ?? '')}
         aria-label={t('Rename')}
         use:focusSoon
@@ -688,7 +688,7 @@
     {@render lock()}
 
     {#if !tasky && kit.writable}
-      <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
+      <div class="orden-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
         {#each offered as one (one)}
           <button
             type="button"
@@ -835,6 +835,10 @@
     scrollbar-width: none;
   }
 
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
   .tab {
     display: flex;
     flex: none;
@@ -884,7 +888,7 @@
     padding: var(--space-1) 0 var(--space-2);
   }
 
-  .chips .nib-chip {
+  .chips .orden-chip {
     max-width: 20rem;
   }
 
@@ -918,7 +922,7 @@
     position: relative;
   }
 
-  .nib-glyph.set {
+  .orden-glyph.set {
     color: var(--accent);
   }
 
@@ -944,7 +948,7 @@
     line-height: 16px;
   }
 
-  .nib-glyph.open {
+  .orden-glyph.open {
     background: var(--surface-press);
   }
 

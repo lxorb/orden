@@ -50,7 +50,7 @@
     <span class="tick" role="timer">{ticking(now - running.start)}</span>
     <button
       type="button"
-      class="nib-button is-danger go"
+      class="orden-button is-danger go"
       aria-label={t('Stop timer')}
       title={t('Stop timer')}
       onclick={() => time.stop()}
@@ -62,7 +62,7 @@
   {:else}
     <div class="asking">
       <input
-        class="nib-field"
+        class="orden-field"
         aria-label={t('What are you working on?')}
         placeholder={t('What are you working on?')}
         bind:value={said}
@@ -77,19 +77,19 @@
         }}
       />
       {#if looking && said.trim() && matches.length}
-        <ul class="matches nib-layer" role="listbox" aria-label={t('Activity')}>
+        <ul class="matches orden-layer" role="listbox" aria-label={t('Activity')}>
           {#each matches as one (one.id)}
             <li>
               <button
                 type="button"
-                class="nib-row is-short"
+                class="orden-row is-short"
                 role="option"
                 aria-selected="false"
                 onpointerdown={(event) => event.preventDefault()}
                 onclick={() => started(one.name)}
               >
                 <span class="dot" style:background={tintOf(one.id)}></span>
-                <span class="nib-row-label">{one.name}</span>
+                <span class="orden-row-label">{one.name}</span>
               </button>
             </li>
           {/each}
@@ -98,7 +98,7 @@
     </div>
     <button
       type="button"
-      class="nib-button go"
+      class="orden-button go"
       aria-label={t('Start timer')}
       title={t('Start timer')}
       disabled={!said.trim()}

@@ -56,7 +56,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
   let settings = options
   let spelling: Spelling = { typed: '', typedAt: 0 }
 
-  const rowsSelector = () => settings.rows ?? '.nib-row'
+  const rowsSelector = () => settings.rows ?? '.orden-row'
   const currentSelector = () =>
     settings.current ?? '.is-on, .is-picked, .active, [aria-current=true]'
 

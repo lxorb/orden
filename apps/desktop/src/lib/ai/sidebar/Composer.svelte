@@ -27,7 +27,7 @@
   import ModeMark from './ModeMark.svelte'
   import { type Mention, mentionAt, mentionOf, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
-  import { chatPicture } from './picture'
+  import { chatPicture, MOST_CHAT_PICTURES } from './picture'
   import { minutes, tokens } from './numbers'
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
@@ -327,6 +327,8 @@
     caret = field?.selectionStart ?? 0
   }
 
+  let drawing = 0
+
   function take(file: File) {
     const name = file.name || t('Picture')
     const refused = () => {
@@ -338,10 +340,18 @@
       chat.trouble = t('{name} could not be read.', { name })
     }
     if (file.type.startsWith('image/')) {
-      void chatPicture(file).then((image) => {
-        if (image) addChip({ kind: 'picture', id: crypto.randomUUID(), label: name, image })
-        else unread()
-      })
+      const held = chat.chips.filter((one) => one.kind === 'picture').length
+      if (held + drawing >= MOST_CHAT_PICTURES) {
+        chat.trouble = t('{name} was not added: a message takes up to 20 pictures.', { name })
+        return
+      }
+      drawing++
+      void chatPicture(file)
+        .then((image) => {
+          if (image) addChip({ kind: 'picture', id: crypto.randomUUID(), label: name, image })
+          else unread()
+        })
+        .finally(() => drawing--)
       return
     }
     if (file.size > 2_000_000) {
@@ -532,7 +542,7 @@
     {/if}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="composer nib-field"
+      class="composer orden-field"
       onclick={(event) => {
         if (event.target === event.currentTarget) field?.focus()
       }}
@@ -613,7 +623,7 @@
 
       <div class="controls">
         <button
-          class="nib-glyph plus"
+          class="orden-glyph plus"
           title={t('Add')}
           aria-label={t('Add')}
           aria-haspopup="menu"

@@ -243,8 +243,8 @@ def main() -> int:
     config.mkdir(parents=True)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-pinch-spaces-"))
-    process = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-pinch-spaces-"))
+    process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     wrong: list[str] = []
     try:
         app = endpoint(config, process.pid, secret)
@@ -264,7 +264,7 @@ def main() -> int:
         engine.pinch(at)
         after = waited(lambda now: now["scale"] > 1.05 or now["seen"] < before["seen"] * 0.95)
         after = settled(1.0) or after
-        kept = app.eval("localStorage.getItem('nib:web-zooms')")
+        kept = app.eval("localStorage.getItem('orden:web-zooms')")
         print(f"after a pinch: {after}; zooms kept: {kept!r}", flush=True)
         magnified = after.get("scale", 1) > 1.05 or after.get("seen", 0) < before["seen"] * 0.95
         if not magnified:

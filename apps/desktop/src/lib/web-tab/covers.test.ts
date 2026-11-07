@@ -89,10 +89,10 @@ describe("the notices row's cards", () => {
   test('a layer hidden with what it stands in is no layer', () => {
     document.body.innerHTML = `
       <div class="hole"></div>
-      <div class="column" style="visibility: hidden"><div class="nib-bubble hint"></div></div>
-      <div class="nib-layer"></div>`
+      <div class="column" style="visibility: hidden"><div class="orden-bubble hint"></div></div>
+      <div class="orden-layer"></div>`
     const hidden = document.querySelector('.hint')!
-    const drawn = document.querySelector('.nib-layer')!
+    const drawn = document.querySelector('.orden-layer')!
     const visible = (one: Element) => one !== hidden
     for (const one of [hidden, drawn]) Object.assign(one, { checkVisibility: () => visible(one) })
     const found = layersOver(document.querySelector<HTMLElement>('.hole')!)
@@ -109,7 +109,7 @@ describe("a swipe's arrow over a page", () => {
   function swipe(stage: 'tracking' | 'went'): HTMLElement {
     document.body.innerHTML = `
       <div class="hole"></div>
-      <div class="track ${stage === 'went' ? '' : 'nib-swipe-room'}"><div class="nib-swipe"></div></div>`
+      <div class="track ${stage === 'went' ? '' : 'orden-swipe-room'}"><div class="orden-swipe"></div></div>`
     return document.querySelector<HTMLElement>('.hole')!
   }
 
@@ -167,8 +167,8 @@ describe('a layer arriving by itself', () => {
   }
 
   test('is heard as it comes, and as it goes', () => {
-    document.body.innerHTML = '<div class="nib-layer"></div><p>words</p>'
-    const layer = document.querySelector('.nib-layer')!
+    document.body.innerHTML = '<div class="orden-layer"></div><p>words</p>'
+    const layer = document.querySelector('.orden-layer')!
     const words = document.querySelector('p')!
     expect(bringsLayer(record(document.body, [layer]))).toBe(true)
     expect(bringsLayer(record(document.body, [], [layer]))).toBe(true)
@@ -176,7 +176,7 @@ describe('a layer arriving by itself', () => {
   })
 
   test('inside whatever brought it', () => {
-    document.body.innerHTML = '<section><div><span class="nib-bubble"></span></div></section>'
+    document.body.innerHTML = '<section><div><span class="orden-bubble"></span></div></section>'
     expect(bringsLayer(record(document.body, [document.querySelector('section')!]))).toBe(true)
   })
 
@@ -195,7 +195,7 @@ describe('a layer arriving by itself', () => {
 
   test('and as one is shown, hidden or moved in place, or what holds one is', () => {
     document.body.innerHTML =
-      '<div class="bar" data-covers></div><section><span class="nib-bubble"></span></section><p></p>'
+      '<div class="bar" data-covers></div><section><span class="orden-bubble"></span></section><p></p>'
     const changed = (target: Node) => ({ ...record(target), type: 'attributes' as const })
     expect(bringsLayer(changed(document.querySelector('.bar')!))).toBe(true)
     expect(bringsLayer(changed(document.querySelector('section')!))).toBe(true)
@@ -203,10 +203,10 @@ describe('a layer arriving by itself', () => {
   })
 
   test('a layer shown by its style is heard before the next frame', async () => {
-    document.body.innerHTML = '<div class="nib-scrim" style="visibility: hidden"></div><p></p>'
+    document.body.innerHTML = '<div class="orden-scrim" style="visibility: hidden"></div><p></p>'
     let heard = 0
     const stop = watchArrivals(() => (heard += 1))
-    document.querySelector<HTMLElement>('.nib-scrim')!.style.visibility = ''
+    document.querySelector<HTMLElement>('.orden-scrim')!.style.visibility = ''
     await Promise.resolve()
     expect(heard).toBe(1)
     document.querySelector('p')!.setAttribute('style', 'color: red')
@@ -224,7 +224,7 @@ describe('a layer arriving by itself', () => {
 
     document
       .querySelector('main')!
-      .append(Object.assign(document.createElement('div'), { className: 'nib-screen' }))
+      .append(Object.assign(document.createElement('div'), { className: 'orden-screen' }))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 1])
 
@@ -233,14 +233,14 @@ describe('a layer arriving by itself', () => {
     expect([one, other]).toEqual([1, 1])
 
     stopOne()
-    document.querySelector('.nib-screen')!.remove()
+    document.querySelector('.orden-screen')!.remove()
     await Promise.resolve()
     expect([one, other]).toEqual([1, 2])
 
     stopOther()
     document
       .querySelector('main')!
-      .append(Object.assign(document.createElement('div'), { className: 'nib-layer' }))
+      .append(Object.assign(document.createElement('div'), { className: 'orden-layer' }))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 2])
   })

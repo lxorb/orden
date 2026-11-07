@@ -103,8 +103,8 @@ def drive(browser: Browser) -> None:
     check(page, "bottom")
 
     page.evaluate(
-        "() => { const held = JSON.parse(localStorage.getItem('nib:pens') ?? '{}');"
-        " localStorage.setItem('nib:pens', JSON.stringify({ ...held, dock: 'left' })) }"
+        "() => { const held = JSON.parse(localStorage.getItem('orden:pens') ?? '{}');"
+        " localStorage.setItem('orden:pens', JSON.stringify({ ...held, dock: 'left' })) }"
     )
     page.reload()
     DRIVE.open(page)

@@ -118,7 +118,7 @@
       <header class="top">
         {#if wide}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             title={t('Chats')}
             aria-label={t('Chats')}
             aria-pressed={railed}
@@ -133,12 +133,12 @@
         {/if}
         {#if !wide && head?.kept && !listing}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             title={t('Back')}
             aria-label={t('Back')}
             onclick={() => chat.newThread()}
           >
-            <svg class="nib-mirror" viewBox="0 0 13 13" aria-hidden="true"
+            <svg class="orden-mirror" viewBox="0 0 13 13" aria-hidden="true"
               ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
             >
           </button>
@@ -152,7 +152,7 @@
         <span class="gap"></span>
         {#if wide && !railed}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             title={shortcuts.tooltip(t('New chat'), 'ai.new')}
             aria-label={t('New chat')}
             onclick={() => chat.newThread()}
@@ -173,12 +173,12 @@
       {#if !wide}
         <header class="top">
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             title={t('Back')}
             aria-label={t('Back')}
             onclick={() => chat.showThreads()}
           >
-            <svg class="nib-mirror" viewBox="0 0 13 13" aria-hidden="true"
+            <svg class="orden-mirror" viewBox="0 0 13 13" aria-hidden="true"
               ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
             >
           </button>

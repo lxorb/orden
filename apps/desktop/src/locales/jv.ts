@@ -1506,6 +1506,8 @@ export const jv: Dictionary = {
   Shorter: 'Luwih cendhek',
   Longer: 'Luwih dawa',
   'Fix grammar': 'Ndandani paramasastra',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Tembung sing dipilih wis ora ana ing cathetan, mula ora ana sing diganti.',
   'A cited report': 'Laporan kanthi sitiran',
   'A helper in the background': 'Pitulung ing latar mburi',
   'A side question': 'Pitakon sisih',
@@ -2881,6 +2883,8 @@ export const jv: Dictionary = {
   'That could not be protected: {reason}': 'Ora bisa dilindhungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ora ditambahake: obrolan nampa gambar lan berkas teks nganti 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ora ditambahake: siji pesen nampa paling akeh 20 gambar.',
   'Time tracker': 'Pelacak wektu',
   'Start timer': 'Wiwiti timer',
   'Stop timer': 'Mandhegake timer',
@@ -3417,9 +3421,46 @@ export const jv: Dictionary = {
   'You said': 'Miturut sampeyan',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Kirim laporan crash lan macet',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Nalika Orden crash utawa macet, iku ngirim apa sing lagi ditindakake lan ing ngendi ing kodhe dhewe, tanpa jeneng, path, alamat lan sandhi. Ora tau cathetanmu.',
-  'Turn off in Settings': 'Pateni ing Setelan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Ngirim apa sing ditindakake Orden nalika crash utawa macet; ora tau cathetan, jeneng, path utawa sandhi.',
+  'Send crash reports to help improve Orden': 'Kirim laporan crash kanggo mbantu nambah apik Orden',
+  'Move to {space}?': 'Pindhah menyang {space}?',
+  'macOS can start dictation with this key too.': 'macOS uga bisa miwiti dikte nganggo tombol iki.',
+  'QR code': 'Kode QR',
+  'Waiting…': 'Ngenteni…',
+  Service: 'Layanan',
+  'I understand and want to connect anyway': 'Aku ngerti lan tetep pengin nyambung',
+  'Some changes have not reached your account yet': 'Sawetara owahan durung tekan akun sampeyan',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Owahan kuwi tetep ana ing browser iki, ora katon dening sapa wae sing mlebu ing kene, lan dikirim nalika sampeyan mlebu maneh.',
+  'Leave it empty to sign in with a QR code instead': 'Kosongaké kanggo mlebu nganggo kode QR',
+  'Telegram code': 'Kode Telegram',
+  'Sent to Telegram on your other device': 'Dikirim menyang Telegram ing piranti liyané',
+  'Sent by SMS': 'Dikirim liwat SMS',
+  'You will get a call with the code': 'Panjenengan bakal ditelpon kanthi kodené',
+  'The code was wrong. Try again.': 'Kodené salah. Coba manèh.',
+  'The code expired, so Telegram sent a new one.':
+    'Kodené kadaluwarsa, mula Telegram ngirim sing anyar.',
+  'Two-step verification password': 'Tembung sandhi verifikasi rong langkah',
+  'The password was wrong. Try again.': 'Tembung sandhiné salah. Coba manèh.',
+  'Scan with Telegram on your phone': 'Pindai nganggo Telegram ing hapé',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Setelan > Piranti > Sambungaké Piranti Desktop',
+  'Signing in to Telegram needs the app': 'Mlebu Telegram mbutuhaké aplikasiné',
+  'Telegram does not know this phone number': 'Telegram ora ngerti nomer telpon iki',
+  'Too many tries. Wait a while and try again.':
+    'Kakèhan nyoba. Ngenteni sedhela banjur coba manèh.',
+  'Too many wrong tries': 'Kakèhan nyoba sing salah',
+  'Signed out of Telegram. Connect again.': 'Metu saka Telegram. Sambungaké manèh.',
+  'Telegram cannot do that in this conversation':
+    'Telegram ora bisa nindakaké kuwi ing obrolan iki',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram mbusak pesen ing grup lan kanal kanggo kabèh',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram mung masrahaké grup marang pemilik anyar saka aplikasiné dhéwé',
+  'That sticker is no longer available': 'Stiker kuwi wis ora ana',
+  'Telegram is not set up in this build': 'Telegram durung disiapaké ing versi iki',
+  'Password manager': 'Pangatur tembung sandi',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Nambahaké Pass, sing nyimpen tembung sandi lan ngisi ing situs web. Yen dipatèni, brankasmu tetep disimpen.',
 }

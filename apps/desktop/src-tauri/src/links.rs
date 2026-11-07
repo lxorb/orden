@@ -1643,7 +1643,7 @@ mod tests {
 
     #[test]
     fn a_stamp_says_the_size_and_the_times() {
-        let path = std::env::temp_dir().join(format!("nib-stamp-{}.md", std::process::id()));
+        let path = std::env::temp_dir().join(format!("orden-stamp-{}.md", std::process::id()));
         std::fs::write(&path, "- [ ] a").expect("written");
         let (words, meta) = words_stamped(&path).expect("read");
         let stamp = stamp_of(&meta);

@@ -45,7 +45,7 @@ def sentence_of(page: Page, index: int) -> dict | None:
           await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
           await new Promise((done) => setTimeout(done, 200))
           // The newest: the one before may still be fading out after it.
-          const bubble = [...document.querySelectorAll('.nib-bubble.sentence')].pop()
+          const bubble = [...document.querySelectorAll('.orden-bubble.sentence')].pop()
           if (!bubble) return { missing: true }
           // Measured where it rests, not part of the way through its rise.
           await Promise.all(bubble.getAnimations().map((one) => one.finished.catch(() => null)))
@@ -112,9 +112,9 @@ def the_vault_row(page: Page, tag: str) -> None:
     page.wait_for_timeout(500)
     glyph = page.locator("[role=switch]", has_text="vault").first.locator(".explain button")
     glyph.hover()
-    wait_for(page, "() => !!document.querySelector('.nib-bubble.sentence')", "the vault's sentence")
+    wait_for(page, "() => !!document.querySelector('.orden-bubble.sentence')", "the vault's sentence")
     page.wait_for_timeout(250)
-    one = page.evaluate("() => window.__whole(document.querySelector('.nib-bubble.sentence'))")
+    one = page.evaluate("() => window.__whole(document.querySelector('.orden-bubble.sentence'))")
     say(f"[{tag}] the vault's sentence: {one['box']['width']:.0f}x{one['box']['height']:.0f}, cut by {one['cut']}")
     if one["cut"] or one["box"]["height"] < 30:
         wrong(f"[{tag}] the vault's sentence is cut: {one}")
@@ -137,7 +137,7 @@ def at_the_foot(page: Page, tag: str) -> None:
           await new Promise((done) => setTimeout(done, 100))
           glyph.focus({ preventScroll: true })
           await new Promise((done) => setTimeout(done, 250))
-          const bubble = document.querySelector('.nib-bubble.sentence')
+          const bubble = document.querySelector('.orden-bubble.sentence')
           const foot = window.__whole(bubble)
           const room = innerHeight - glyph.getBoundingClientRect().bottom
           // And the glyph scrolled out of sight with its sentence up.
@@ -171,11 +171,11 @@ def names(page: Page, tag: str) -> None:
     field.wait_for(state="visible")
     for typed, held in (("a/b", False), ("AGENTS", True)):
         field.fill(typed)
-        wait_for(page, "() => !!document.querySelector('.nib-bubble.reason')", f"the reason for {typed!r}")
+        wait_for(page, "() => !!document.querySelector('.orden-bubble.reason')", f"the reason for {typed!r}")
         page.wait_for_timeout(250)
         one = page.evaluate(
             """(whole) => {
-              const bubble = document.querySelector('.nib-bubble.reason')
+              const bubble = document.querySelector('.orden-bubble.reason')
               const naming = document.querySelector('aside .row .naming').getBoundingClientRect()
               return { ...window.__whole(bubble), naming: { left: naming.left, right: naming.right,
                        bottom: naming.bottom, width: naming.width },
@@ -198,7 +198,7 @@ def names(page: Page, tag: str) -> None:
 
 def look(browser: Browser, tag: str, language: str = "en") -> None:
     page = DRIVE.page(browser, viewport={"width": DRIVE_WIDTH, "height": 860})
-    page.context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
+    page.context.add_init_script(f"localStorage.setItem('orden:language', {language!r})")
     DRIVE.open(page)
     page.evaluate(f"() => {{ window.__whole = {WHOLE} }}")
     names(page, tag)

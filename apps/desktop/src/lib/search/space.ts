@@ -3,7 +3,7 @@ import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 
-const HITS = 'nib://search-hits'
+const HITS = 'orden://search-hits'
 
 export interface Found {
   hits: Hit[]

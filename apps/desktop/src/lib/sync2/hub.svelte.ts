@@ -370,14 +370,14 @@ const nativeWorld: HubWorld = {
   name: deviceName,
   channel: (heard) => {
     if (typeof BroadcastChannel !== 'function') return null
-    const channel = new BroadcastChannel('nib:hub')
+    const channel = new BroadcastChannel('orden:hub')
     channel.onmessage = (event: MessageEvent<unknown>) => {
       heard(event.data)
     }
     return { post: (message) => channel.postMessage(message) }
   },
   elect: (lead) =>
-    heldForLife('nib:hub', () => {
+    heldForLife('orden:hub', () => {
       lead()
       return new Promise<never>(() => undefined)
     }),

@@ -1503,6 +1503,8 @@ export const vi: Dictionary = {
   Shorter: 'Ngắn hơn',
   Longer: 'Dài hơn',
   'Fix grammar': 'Sửa ngữ pháp',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Những từ đã chọn không còn trong ghi chú, nên không có gì được thay.',
   'A cited report': 'Báo cáo có trích dẫn',
   'A helper in the background': 'Trợ lý nền',
   'A side question': 'Câu hỏi phụ',
@@ -2869,6 +2871,8 @@ export const vi: Dictionary = {
   'That could not be protected: {reason}': 'Không thể bảo vệ: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Chưa thêm {name}: cuộc trò chuyện nhận hình ảnh và tệp văn bản tối đa 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'Chưa thêm {name}: một tin nhắn nhận tối đa 20 hình ảnh.',
   'Time tracker': 'Theo dõi thời gian',
   'Start timer': 'Bắt đầu hẹn giờ',
   'Stop timer': 'Dừng hẹn giờ',
@@ -3400,9 +3404,46 @@ export const vi: Dictionary = {
   'You said': 'Bạn đã nêu',
   Privacy: 'Quyền riêng tư',
   'Send crash and freeze reports': 'Gửi báo cáo sự cố và treo',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Khi Orden gặp sự cố hoặc bị treo, ứng dụng gửi việc đang làm và vị trí trong mã của chính nó, đã bỏ tên, đường dẫn, địa chỉ và mật khẩu. Không bao giờ gửi ghi chú của bạn.',
-  'Turn off in Settings': 'Tắt trong Cài đặt',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Gửi việc Orden đang làm khi gặp sự cố hoặc bị treo; không bao giờ gửi ghi chú, tên, đường dẫn hay mật khẩu.',
+  'Send crash reports to help improve Orden': 'Gửi báo cáo sự cố để giúp cải thiện Orden',
+  'Move to {space}?': 'Chuyển đến {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS cũng có thể bắt đầu đọc chính tả bằng phím này.',
+  'QR code': 'Mã QR',
+  'Waiting…': 'Đang chờ…',
+  Service: 'Dịch vụ',
+  'I understand and want to connect anyway': 'Tôi hiểu và vẫn muốn kết nối',
+  'Some changes have not reached your account yet':
+    'Một số thay đổi chưa đến được tài khoản của bạn',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Chúng ở lại trong trình duyệt này, không ai khác đăng nhập ở đây nhìn thấy, và được gửi lên khi bạn đăng nhập lại.',
+  'Leave it empty to sign in with a QR code instead': 'Để trống để đăng nhập bằng mã QR',
+  'Telegram code': 'Mã Telegram',
+  'Sent to Telegram on your other device': 'Đã gửi đến Telegram trên thiết bị khác của bạn',
+  'Sent by SMS': 'Đã gửi qua SMS',
+  'You will get a call with the code': 'Bạn sẽ nhận một cuộc gọi đọc mã',
+  'The code was wrong. Try again.': 'Mã không đúng. Hãy thử lại.',
+  'The code expired, so Telegram sent a new one.': 'Mã đã hết hạn nên Telegram đã gửi mã mới.',
+  'Two-step verification password': 'Mật khẩu xác minh hai bước',
+  'The password was wrong. Try again.': 'Mật khẩu không đúng. Hãy thử lại.',
+  'Scan with Telegram on your phone': 'Quét bằng Telegram trên điện thoại',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Cài đặt > Thiết bị > Liên kết thiết bị máy tính',
+  'Signing in to Telegram needs the app': 'Đăng nhập Telegram cần ứng dụng',
+  'Telegram does not know this phone number': 'Telegram không biết số điện thoại này',
+  'Too many tries. Wait a while and try again.': 'Thử quá nhiều lần. Hãy đợi một lúc rồi thử lại.',
+  'Too many wrong tries': 'Sai quá nhiều lần',
+  'Signed out of Telegram. Connect again.': 'Đã đăng xuất khỏi Telegram. Hãy kết nối lại.',
+  'Telegram cannot do that in this conversation':
+    'Telegram không làm được việc đó trong cuộc trò chuyện này',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram xoá tin nhắn trong nhóm và kênh cho mọi người',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram chỉ chuyển nhóm cho chủ mới trong ứng dụng của chính nó',
+  'That sticker is no longer available': 'Nhãn dán đó không còn nữa',
+  'Telegram is not set up in this build': 'Telegram chưa được thiết lập trong bản dựng này',
+  'Password manager': 'Trình quản lý mật khẩu',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Thêm Pass, giữ mật khẩu và điền chúng trên các trang web. Tắt đi vẫn giữ các kho của bạn.',
 }

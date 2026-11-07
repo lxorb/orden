@@ -15,13 +15,13 @@ OFF_CENTRE = 0.75
 GAP_SPREAD = 0.5
 OUTSIDE = 0.5
 
-KINDS = {"nib-hint": "?", "nib-outward": "arrow"}
+KINDS = {"orden-hint": "?", "orden-outward": "arrow"}
 
 MEASURE = """
 (kinds) => {
   const canvas = document.createElement('canvas').getContext('2d')
   const rows = []
-  for (const mark of document.querySelectorAll('[role="dialog"] .nib-mark')) {
+  for (const mark of document.querySelectorAll('[role="dialog"] .orden-mark')) {
     const svg = mark.querySelector('svg')
     const drawn = svg?.getBoundingClientRect()
     if (!drawn || !drawn.width) continue
@@ -102,7 +102,7 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
             document.head.append(style)
           }
           // Every row, and whatever else holds a mark: a caption, a link.
-          style.textContent = '.nib-setting, .nib-setting *, :has(> .nib-mark), :has(> .nib-mark) * {' +
+          style.textContent = '.orden-setting, .orden-setting *, :has(> .orden-mark), :has(> .orden-mark) * {' +
             (size ? `font-size: ${size}px !important;` : '') +
             (face ? `font-family: '${face}' !important;` : '') + '}'
         }""",
@@ -164,12 +164,12 @@ def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
             """(width) => {
               const style = document.getElementById('help-mark-wrap') ?? document.createElement('style')
               style.id = 'help-mark-wrap'
-              style.textContent = `[role="dialog"] .nib-setting .name { flex: none !important;
+              style.textContent = `[role="dialog"] .orden-setting .name { flex: none !important;
                 inline-size: ${width}px !important; min-inline-size: 0 !important }
                 [role="dialog"] :is(.hint.caption, .steps .link) {
                   max-inline-size: ${Math.max(width, 110)}px !important }`
               document.head.append(style)
-              return Math.max(...[...document.querySelectorAll('[role="dialog"] .nib-mark')]
+              return Math.max(...[...document.querySelectorAll('[role="dialog"] .orden-mark')]
                 .map((mark) => mark.parentElement.getBoundingClientRect().height))
             }""",
             width,
@@ -183,7 +183,7 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
          scheme: str = "light") -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860}, device_scale_factor=scale)
     page.context.add_init_script(
-        f"localStorage.setItem('nib:language', {language!r}); localStorage.setItem('nib:access-choice', 'claude')"
+        f"localStorage.setItem('orden:language', {language!r}); localStorage.setItem('orden:access-choice', 'claude')"
     )
     DRIVE.open(page)
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")

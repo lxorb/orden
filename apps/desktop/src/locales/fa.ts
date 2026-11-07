@@ -1526,6 +1526,8 @@ export const fa: Dictionary = {
   Shorter: 'کوتاه‌تر',
   Longer: 'بلندتر',
   'Fix grammar': 'اصلاح دستور',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'واژه‌های برگزیده دیگر در یادداشت نیستند، پس چیزی جایگزین نشد.',
   'A cited report': 'گزارش با ارجاع',
   'A helper in the background': 'کمک‌یار در پس‌زمینه',
   'A side question': 'پرسش جانبی',
@@ -2923,6 +2925,8 @@ export const fa: Dictionary = {
   'That could not be protected: {reason}': 'محافظت نشد: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} افزوده نشد: گفتگو تصویر و پرونده‌های متنی تا 2 MB را می‌پذیرد.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} افزوده نشد: هر پیام حداکثر 20 تصویر می‌پذیرد.',
   'Time tracker': 'ثبت زمان',
   'Start timer': 'شروع زمان‌سنج',
   'Stop timer': 'توقف زمان‌سنج',
@@ -3500,9 +3504,45 @@ export const fa: Dictionary = {
   'You said': 'گفتهٔ شما',
   Privacy: 'حریم خصوصی',
   'Send crash and freeze reports': 'ارسال گزارش خرابی و هنگ',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'وقتی Orden از کار می‌افتد یا هنگ می‌کند، می‌فرستد که چه می‌کرد و کجای کد خودش بود، با حذف نام‌ها، مسیرها، نشانی‌ها و گذرواژه‌ها. هرگز یادداشت‌های شما را نه.',
-  'Turn off in Settings': 'خاموش کردن در تنظیمات',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'می‌فرستد Orden هنگام خرابی یا هنگ چه می‌کرد؛ هرگز یادداشت، نام، مسیر یا گذرواژه.',
+  'Send crash reports to help improve Orden': 'ارسال گزارش خرابی برای کمک به بهبود Orden',
+  'Move to {space}?': 'به {space} منتقل شود؟',
+  'macOS can start dictation with this key too.':
+    'macOS ممکن است با این کلید دیکته را هم آغاز کند.',
+  'QR code': 'کد QR',
+  'Waiting…': 'در انتظار…',
+  Service: 'سرویس',
+  'I understand and want to connect anyway': 'متوجه شدم و با این حال می‌خواهم وصل شوم',
+  'Some changes have not reached your account yet': 'برخی تغییرات هنوز به حساب شما نرسیده‌اند',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'در این مرورگر می‌مانند، از دید هر کس دیگری که اینجا وارد می‌شود پنهان‌اند و وقتی دوباره وارد شوید فرستاده می‌شوند.',
+  'Leave it empty to sign in with a QR code instead': 'برای ورود با کد QR خالی بگذارید',
+  'Telegram code': 'کد Telegram',
+  'Sent to Telegram on your other device': 'به Telegram در دستگاه دیگرتان فرستاده شد',
+  'Sent by SMS': 'با پیامک فرستاده شد',
+  'You will get a call with the code': 'تماسی با کد دریافت می‌کنید',
+  'The code was wrong. Try again.': 'کد اشتباه بود. دوباره امتحان کنید.',
+  'The code expired, so Telegram sent a new one.': 'کد منقضی شد، پس Telegram کد تازه‌ای فرستاد.',
+  'Two-step verification password': 'گذرواژهٔ تأیید دومرحله‌ای',
+  'The password was wrong. Try again.': 'گذرواژه اشتباه بود. دوباره امتحان کنید.',
+  'Scan with Telegram on your phone': 'با Telegram روی گوشی‌تان اسکن کنید',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > تنظیمات > دستگاه‌ها > اتصال دستگاه رومیزی',
+  'Signing in to Telegram needs the app': 'ورود به Telegram به برنامه نیاز دارد',
+  'Telegram does not know this phone number': 'Telegram این شمارهٔ تلفن را نمی‌شناسد',
+  'Too many tries. Wait a while and try again.':
+    'تلاش‌های زیاد. کمی صبر کنید و دوباره امتحان کنید.',
+  'Too many wrong tries': 'تلاش‌های اشتباه زیاد',
+  'Signed out of Telegram. Connect again.': 'از Telegram خارج شدید. دوباره وصل شوید.',
+  'Telegram cannot do that in this conversation': 'Telegram در این گفتگو نمی‌تواند این کار را بکند',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram پیام‌های گروه‌ها و کانال‌ها را برای همه پاک می‌کند',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram گروه را فقط در برنامهٔ خودش به مالک تازه می‌سپارد',
+  'That sticker is no longer available': 'آن استیکر دیگر در دسترس نیست',
+  'Telegram is not set up in this build': 'Telegram در این نسخه تنظیم نشده است',
+  'Password manager': 'مدیر گذرواژه',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass را می‌افزاید که گذرواژه‌ها را نگه می‌دارد و در وب‌سایت‌ها پر می‌کند. خاموش کردنش گاوصندوق‌هایتان را نگه می‌دارد.',
 }

@@ -1,7 +1,7 @@
 import { forget, keep, storedText } from '../stored'
 import { DEVICE } from './hub-frames'
 
-const MADE_ID = 'nib:hub-device'
+const MADE_ID = 'orden:hub-device'
 
 const keyOf = (account: string | null) => (account ? `${MADE_ID}:${account}` : MADE_ID)
 

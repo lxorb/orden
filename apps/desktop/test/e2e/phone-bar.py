@@ -37,7 +37,7 @@ KEYS = """
 
 BAR = """
 () => {
-  const bar = document.querySelector('.nib-bar.docked')
+  const bar = document.querySelector('.orden-bar.docked')
   if (!bar) return { none: true }
 
   const buttons = [...bar.querySelectorAll('button')]
@@ -102,7 +102,7 @@ def drive(browser) -> None:
 
     say("--- a button presses the command its key presses ---")
     page.evaluate(CARET)
-    page.click('.nib-bar.docked button[aria-label="Bold"]')
+    page.click('.orden-bar.docked button[aria-label="Bold"]')
     page.wait_for_timeout(300)
     say(f"after Bold: {page.evaluate(LINES)}")
 
@@ -118,7 +118,7 @@ def drive(browser) -> None:
     say("shot chosen.png")
 
     page.evaluate(CARET)
-    page.click('.nib-bar.docked button[aria-label="Reading"]')
+    page.click('.orden-bar.docked button[aria-label="Reading"]')
     page.wait_for_timeout(400)
     say(f"Reading from the bar turned the note: {page.evaluate('() => window.nibApp.workspace.active.reading')}")
 

@@ -118,13 +118,13 @@
 {#if prompt.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => prompt.dismiss()}
   ></div>
 
   <div
-    class="nib-screen sheet"
+    class="orden-screen sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -213,7 +213,7 @@
           {#each answers as option (option.id)}
             <button
               type="button"
-              class="nib-button"
+              class="orden-button"
               class:is-danger={option.danger}
               class:is-quiet={!option.primary && !option.danger}
               data-lands={option.lands || (prompt.tick && option.primary) ? '' : undefined}
@@ -223,16 +223,16 @@
             </button>
           {/each}
         {:else if prompt.mode === 'find'}
-          <button type="button" class="nib-button is-quiet" onclick={() => prompt.dismiss()}
+          <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}
             >{t('Cancel')}</button
           >
         {:else}
-          <button type="button" class="nib-button is-quiet" onclick={() => prompt.dismiss()}
+          <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}
             >{t('Cancel')}</button
           >
           <button
             type="submit"
-            class="nib-button"
+            class="orden-button"
             class:is-danger={prompt.danger}
             disabled={prompt.mode === 'text' && !prompt.value.trim()}
             data-lands={prompt.mode === 'confirm' && prompt.lands ? '' : undefined}

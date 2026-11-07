@@ -3,7 +3,7 @@ import { api } from '../api'
 import type { LoadedSet } from '../icon-sets'
 import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 
-const KEY = 'nib:site-icons'
+const KEY = 'orden:site-icons'
 
 const MOST_SITES = 300
 

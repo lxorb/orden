@@ -1,6 +1,6 @@
 import { keep, storedText } from './stored'
 
-const OPEN_KEY = 'nib:archive-open'
+const OPEN_KEY = 'orden:archive-open'
 
 class ArchiveList {
   open = $state(storedText(OPEN_KEY) === '1')

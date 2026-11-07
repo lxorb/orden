@@ -65,11 +65,11 @@ async (base) => {
 STATE = """
 () => {
   const text = window.nib?.state.doc.toString() ?? ''
-  const glyph = document.querySelector('.nib-fence-run')
+  const glyph = document.querySelector('.orden-fence-run')
   return {
     text,
     glyph: glyph ? glyph.title : null,
-    glyphs: document.querySelectorAll('.nib-fence-run').length,
+    glyphs: document.querySelectorAll('.orden-fence-run').length,
     trouble: window.nibApp.busy.trouble,
   }
 }
@@ -77,7 +77,7 @@ STATE = """
 
 PRESS = """
 () => {
-  const button = document.querySelector('.nib-fence-run')
+  const button = document.querySelector('.orden-fence-run')
   const box = button.getBoundingClientRect()
   const where = {
     bubbles: true,
@@ -422,7 +422,7 @@ def drive_rewrite(browser: Browser) -> None:
     if "A heron waits." in midway["text"]:
         wrong("[rewrite] the rewrite was written before it was accepted")
 
-    page.locator(".answers .nib-button:not(.is-quiet)").click()
+    page.locator(".answers .orden-button:not(.is-quiet)").click()
     page.wait_for_timeout(400)
 
     after = state(page)
@@ -459,7 +459,7 @@ def drive_discard(browser: Browser) -> None:
     page.locator(".verbs button").first.click()
     page.wait_for_timeout(1000)
 
-    page.locator(".answers .nib-button.is-quiet").click()
+    page.locator(".answers .orden-button.is-quiet").click()
     page.wait_for_timeout(300)
     shot(page, "50-discarded")
 
@@ -475,18 +475,18 @@ def drive_pane(browser: Browser) -> None:
     page = fresh(browser, "pane")
     page.evaluate("() => { const ai = window.nibApp.ai; for (const one of [...ai.providers]) ai.remove(one.id) }")
     page.evaluate("() => window.nibApp.settings.show('ai')")
-    page.wait_for_selector(".nib-screen.sheet", timeout=15000)
+    page.wait_for_selector(".orden-screen.sheet", timeout=15000)
     page.wait_for_timeout(400)
     shot(page, "60-pane-empty")
 
     adds = page.evaluate(
-        "() => [...document.querySelectorAll('.nib-action')].map((one) => one.textContent.trim())"
+        "() => [...document.querySelectorAll('.orden-action')].map((one) => one.textContent.trim())"
     )
     say(f"[pane] the kinds offered: {adds}")
     if adds != ["Add Claude", "Add OpenAI", "Add Gemini", "Add OpenAI-compatible"]:
         wrong(f"[pane] Claude, OpenAI, Gemini and OpenAI-compatible were expected: {adds}")
 
-    page.locator(".nib-action").last.click()
+    page.locator(".orden-action").last.click()
     page.wait_for_timeout(300)
 
     page.evaluate(
@@ -498,7 +498,7 @@ def drive_pane(browser: Browser) -> None:
     )
     page.wait_for_timeout(200)
 
-    page.locator(".nib-chip", has_text=re.compile("model", re.I)).first.click()
+    page.locator(".orden-chip", has_text=re.compile("model", re.I)).first.click()
     page.wait_for_timeout(900)
     shot(page, "61-models-listed")
 

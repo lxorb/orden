@@ -77,7 +77,7 @@ PRELUDE = r"""
 const menuSize = async () => {
   document.querySelector('.webbar [aria-label="More"]').click()
   const rows = await wait(() => {
-    const all = [...document.querySelectorAll('.menu .nib-row')]
+    const all = [...document.querySelectorAll('.menu .orden-row')]
     return all.length ? all : null
   })
   const said = (rows ?? []).map((one) => one.textContent.trim()).find((one) => one.endsWith('%'))
@@ -86,7 +86,7 @@ const menuSize = async () => {
   return said ?? null
 }
 const words = () => document.documentElement.style.getPropertyValue('--zoom')
-const kept = () => JSON.parse(localStorage.getItem('nib:web-zooms') ?? '{}')
+const kept = () => JSON.parse(localStorage.getItem('orden:web-zooms') ?? '{}')
 const go = async (url, title) => {
   await invoke('web_navigate', { tab: front().id, url })
   await wait(() => bar()?.value.includes(title) && !document.querySelector('.webbar .turning'))
@@ -112,9 +112,9 @@ def main() -> int:
     home = f"http://127.0.0.1:{port}"
     other = f"http://localhost:{port}"
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-zoom-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-zoom-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     made = root / SPACE
     made.mkdir(parents=True)
     (made / "Idea.md").write_text("# Idea\n\nA note to open the space on.\n", encoding="utf-8")
@@ -130,7 +130,7 @@ def main() -> int:
         page_probe.allow_eval(args.identifier)
         time.sleep(1)
         running, app = page_probe.launch(args.exe, args.identifier, unlike=app.port)
-        app.ask("(localStorage.setItem('nib:language', 'en'), location.reload(), 1)")
+        app.ask("(localStorage.setItem('orden:language', 'en'), location.reload(), 1)")
         time.sleep(4)
         window = main_window(running.pid)
         sized(window, *scroll_probe.SIZE)
@@ -239,7 +239,7 @@ def main() -> int:
         try:
             tools.call(
                 "Runtime.evaluate",
-                {"expression": "open('about:blank', 'nib-actual-size'), 1", "userGesture": True},
+                {"expression": "open('about:blank', 'orden-actual-size'), 1", "userGesture": True},
             )
         finally:
             tools.close()

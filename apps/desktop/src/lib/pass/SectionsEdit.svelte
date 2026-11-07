@@ -34,7 +34,7 @@
       />
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Remove section')}
         title={t('Remove section')}
         onclick={() => removeSection(section.id)}
@@ -55,7 +55,7 @@
     />
   </div>
 {/each}
-<button type="button" class="nib-button is-quiet is-soft add" onclick={addSection}>
+<button type="button" class="orden-button is-quiet is-soft add" onclick={addSection}>
   {t('Add section')}
 </button>
 
@@ -104,7 +104,7 @@
     border-top: 1px solid var(--line);
   }
 
-  .nib-glyph :global(.nib-cross) {
+  .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);
     stroke-width: 1.5;

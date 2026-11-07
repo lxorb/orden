@@ -36,7 +36,7 @@
 
 {#if shown}
   <div
-    class="zoom nib-pill"
+    class="zoom orden-pill"
     role="status"
     in:growing={{ duration: dur(120), start: 0.94, easing: cubicOut }}
     out:fade={{ duration: dur(180) }}

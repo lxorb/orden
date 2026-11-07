@@ -9,7 +9,7 @@ import {
   type FieldToken,
   ID_EMOJI,
   KEY_BY_FIELD,
-  NIB_FIELDS,
+  ORDEN_FIELDS,
   NO_PRIORITY,
   ON_COMPLETION_EMOJI,
   type ParsedTask,
@@ -48,7 +48,7 @@ const RANK: Record<FieldToken['field'], number> = {
   tag: 20,
 }
 
-const WRITTEN: readonly FieldName[] = [...NIB_FIELDS, ...TASKS_FIELDS, 'block']
+const WRITTEN: readonly FieldName[] = [...ORDEN_FIELDS, ...TASKS_FIELDS, 'block']
 
 function valueText(
   field: FieldName,
@@ -90,7 +90,8 @@ function valueText(
 
 function fieldText(field: FieldName, value: string, form: 'emoji' | 'bracket'): string {
   if (field === 'block') return `^${value}`
-  if (form === 'bracket' || NIB_FIELDS.includes(field)) return `[${KEY_BY_FIELD[field]}:: ${value}]`
+  if (form === 'bracket' || ORDEN_FIELDS.includes(field))
+    return `[${KEY_BY_FIELD[field]}:: ${value}]`
 
   switch (field) {
     case 'priority':
@@ -407,7 +408,7 @@ export function changedTask(line: string, change: TaskChange): string {
 
 export function taskLine(fields: TaskFields, prefix = '- '): string {
   const parts = [fields.text]
-  for (const field of NIB_FIELDS) {
+  for (const field of ORDEN_FIELDS) {
     const value = valueText(field, fields, 'bracket')
     if (value !== null) parts.push(fieldText(field, value, 'bracket'))
   }

@@ -30,8 +30,8 @@ window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   exe_extension: '',
   eol: '\\n',
 };
-localStorage.setItem('nib:pen-seen', 'yes');
-localStorage.setItem('nib:finger-draws', 'yes');
+localStorage.setItem('orden:pen-seen', 'yes');
+localStorage.setItem('orden:finger-draws', 'yes');
 """
 
 COLOUR_ROWS = """
@@ -112,7 +112,7 @@ def pen_at(page: Page, index: int):
 
 def kept_pens(page: Page) -> list[str]:
     return page.evaluate(
-        "() => JSON.parse(localStorage.getItem('nib:pens')).pens.map((one) => one.tool)"
+        "() => JSON.parse(localStorage.getItem('orden:pens')).pens.map((one) => one.tool)"
     )
 
 def drag(page: Page, one, onto) -> None:
@@ -241,7 +241,7 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(300)
         shot(page, f"pen-settings-set-{device}-{theme}")
 
-        set_to = page.evaluate("() => window.nibApp && localStorage.getItem('nib:pens')")
+        set_to = page.evaluate("() => window.nibApp && localStorage.getItem('orden:pens')")
         if '"opacity":0.2' not in (set_to or ""):
             failures.append(f"{label}: the pen did not remember its alpha ({set_to})")
 
@@ -303,7 +303,7 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.mouse.up()
         page.wait_for_timeout(400)
 
-        docked = page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).dock")
+        docked = page.evaluate("() => JSON.parse(localStorage.getItem('orden:pens')).dock")
         if docked != "top":
             failures.append(f"{label}: the bar dragged upwards did not dock to the top ({docked})")
 
@@ -313,11 +313,11 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
 
         page.reload(wait_until="domcontentloaded")
         opened(page, label, device)
-        if page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).dock") != "top":
+        if page.evaluate("() => JSON.parse(localStorage.getItem('orden:pens')).dock") != "top":
             failures.append(f"{label}: the bar did not come back against the top edge")
 
         kept = page.evaluate(
-            "() => JSON.parse(localStorage.getItem('nib:pens'))"
+            "() => JSON.parse(localStorage.getItem('orden:pens'))"
             "  .pens.find((one) => one.tool === 'pen')"
         )
         if kept.get("opacity") != 0.2 or kept.get("size") != 9 or kept.get("colour") != "4":

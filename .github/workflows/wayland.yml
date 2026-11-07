@@ -395,7 +395,7 @@ jobs:
           OUT: kwin-out/flash
           KWIN: '1'
           FLASH: '1'
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
         run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: Popups chosen from over a web tab's page, under KWin
         if: always()
@@ -403,7 +403,7 @@ jobs:
           OUT: kwin-out/popups
           KWIN: '1'
           POPUP: '1'
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
         run: |
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
@@ -414,7 +414,7 @@ jobs:
           KWIN: '1'
           TREE: '1'
           ZOOM: '1'
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
         run: |
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
@@ -425,7 +425,7 @@ jobs:
           KWIN: '1'
           IDLE: '1'
           DRAG: '1'
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
         run: |
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
@@ -493,7 +493,7 @@ jobs:
         env:
           OUT: wayland-out
           KEYS: 'no desktop portal'
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
         run: |
           app="$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
           SECOND="$app --quick-add" dbus-run-session -- bash scripts/wayland-launch.sh "$app"
@@ -530,14 +530,14 @@ jobs:
       - name: Under Wayland
         env:
           OUT: fedora-out/wayland
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
           IDLE: '1'
         run: dbus-run-session -- bash scripts/wayland-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: Under X11
         if: always()
         env:
           OUT: fedora-out/x11
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
           IDLE: '1'
         run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - if: always()
@@ -572,7 +572,7 @@ jobs:
       - name: Under Wayland
         env:
           OUT: wayland-out
-          NIB_CEF_SANDBOX: disabled
+          ORDEN_CEF_SANDBOX: disabled
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

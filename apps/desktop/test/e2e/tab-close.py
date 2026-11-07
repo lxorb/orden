@@ -127,7 +127,7 @@ def drive(browser: Browser) -> None:
         for scheme in ("light", "dark"):
             page = DRIVE.page(browser, viewport={"width": 1440, "height": 700})
             page.context.add_init_script(
-                f"localStorage.setItem('nib:icon-tabs', {'yes' if icons else 'no'!r})"
+                f"localStorage.setItem('orden:icon-tabs', {'yes' if icons else 'no'!r})"
             )
             DRIVE.open(page)
             closing(page, scheme, icons)

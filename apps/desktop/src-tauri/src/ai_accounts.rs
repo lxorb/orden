@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{made, write_privately};
 
-const EVENT: &str = "nib://ai-accounts";
+const EVENT: &str = "orden://ai-accounts";
 
 const MOST_BYTES: usize = 256 * 1024;
 
@@ -153,7 +153,7 @@ mod tests {
 
     fn folder(name: &str) -> PathBuf {
         let dir =
-            std::env::temp_dir().join(format!("nib-ai-accounts-{name}-{}", std::process::id()));
+            std::env::temp_dir().join(format!("orden-ai-accounts-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         dir
     }

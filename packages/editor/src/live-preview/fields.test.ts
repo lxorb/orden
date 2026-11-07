@@ -63,10 +63,10 @@ async function settled() {
 describe('a field in the page left while the editor is updating', () => {
   test("a code block's language is written, after the update", async () => {
     const view = viewOf('words\n\n```js\nconst a = 1\n```\n\nafter\n')
-    const label = view.dom.querySelector<HTMLElement>('.nib-fence-language')
+    const label = view.dom.querySelector<HTMLElement>('.orden-fence-language')
     if (!label) throw new Error('no language drawn')
     label.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
-    const field = view.dom.querySelector<HTMLInputElement>('.nib-fence-language-input')
+    const field = view.dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
     if (!field) throw new Error('no field to type the language in')
     field.value = 'python'
 
@@ -79,9 +79,9 @@ describe('a field in the page left while the editor is updating', () => {
 
   test("a code block's language is not written over a fence that changed meanwhile", async () => {
     const view = viewOf('```js\nconst a = 1\n```\n')
-    const label = view.dom.querySelector<HTMLElement>('.nib-fence-language')
+    const label = view.dom.querySelector<HTMLElement>('.orden-fence-language')
     label?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
-    const field = view.dom.querySelector<HTMLInputElement>('.nib-fence-language-input')
+    const field = view.dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
     if (!field) throw new Error('no field to type the language in')
     field.value = 'python'
 

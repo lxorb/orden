@@ -634,7 +634,7 @@ risk at its worst (9.6). So:
   Playwright's `storageState` has the same two edges. Emil has not chosen between this and
   **blocking**, where an agent's tab is never in the reader's store and opens in its own,
   signed out, saying so in the answer; `engines::READER_STORE` is the switch, the twin is
-  the default, and `NIB_AGENT_READER_STORE=blocked` turns one run to the other. Measured
+  the default, and `ORDEN_AGENT_READER_STORE=blocked` turns one run to the other. Measured
   (`agent-tab-probe.py`, both engines): a cookie the reader's tab set is in the twin's
   page, and the agent's own cookie never reaches the reader's tab.
 - A site can be set to **agent store only** in the agent's grant (mail, banking), and the
@@ -1175,7 +1175,7 @@ since opening a file starts a program.
   a file or folder in the file manager. Both ask as `process` does, under *the terminal*
   (Full permissions asks nothing). An address is the web's, mail's or a telephone's -
   `http`, `https`, `mailto`, `tel` - never `file:`, which a path says, and never Orden's
-  own `nib:` and `orden:` links, which run the app's commands as the reader. The system's
+  own `orden:` and `orden:` links, which run the app's commands as the reader. The system's
   browser is the reader's, cookies and all, so a site the grant denies or keeps to the
   agent's own store is not opened there, by any spelling of its name (8.13), in any
   mode. A path is never in Orden's own folders, by its name or by where its links lead
@@ -1527,7 +1527,7 @@ already has a server called `nib` is left alone, whatever it points at; the swit
 Settings > AI > Access ("Agents on this computer connect on their own", on by default)
 takes the entry out again, only where it names this app's program. Only the app somebody
 installed does this - a release under the shipped identifier, never a probe or a
-development build - and a test does it in homes of its own (`NIB_ENROLL_HOME`), never the
+development build - and a test does it in homes of its own (`ORDEN_ENROLL_HOME`), never the
 reader's. The first call is the pairing in 9.1, allowed once and remembered; and a client
 paired since 2026-10-12 gets what the AI panel's own agent has: the terminal and helpers
 (`agents`, docs/ai.md "Helpers") as well as the rest of 9.1's defaults. Grants made before
@@ -1757,7 +1757,7 @@ tab there is in the reader's store itself (`engines::TWINS`).
 ## 13. The implementation plan
 
 Eight lanes on disjoint files, in three waves. Briefs are in the manager's scratchpad under
-`agent-browser/lanes/`. Every lane reads this document first, follows `nib-agent-rules.md`,
+`agent-browser/lanes/`. Every lane reads this document first, follows `orden-agent-rules.md`,
 and keeps the reader's window out of every probe (the family watch, every process under
 the app, is in `scripts/probe_app.py`'s `run_probe`).
 
@@ -1780,7 +1780,7 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   with every browser verb's name, arguments and answer as serde types, and
   `lib/agents/verbs.ts` with the window's; `agent-mcp` generates the tool schemas from
   those two files, so a verb and its tool cannot drift.
-- **Events** from the crate to the window, on `nib://agent`, each with its `kind`:
+- **Events** from the crate to the window, on `orden://agent`, each with its `kind`:
   `acting {agent, tab, verb}`, `paused {agent}` (one agent stopped on its own),
   `resumed {agent}` (its stop lifted, or everybody's for an empty agent), `asked {approval}`, `answered {approval}`, `tab {agent, id, url,
 title}`, `closed {agent, id}`, `stopped {closed}`, `connected {agents}` (the agents that

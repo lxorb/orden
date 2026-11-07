@@ -1,6 +1,6 @@
 use tauri::{AppHandle, Manager, Window};
 
-pub(crate) const PRESENTER: &str = "nib-presenter";
+pub(crate) const PRESENTER: &str = "orden-presenter";
 
 fn ours(app: &AppHandle) -> Vec<Window> {
     app.windows()

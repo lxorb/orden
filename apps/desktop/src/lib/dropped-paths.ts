@@ -1,7 +1,7 @@
 import { nameOf } from './space-paths'
 import { invoke } from './tauri'
 
-const ASKED = 'nib-dropped-paths'
+const ASKED = 'orden-dropped-paths'
 const TRIES = 20
 const APART = 50
 

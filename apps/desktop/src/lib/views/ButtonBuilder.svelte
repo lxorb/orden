@@ -58,7 +58,7 @@
 </script>
 
 <input
-  class="nib-field"
+  class="orden-field"
   value={name}
   aria-label={t('Name')}
   placeholder={t('Button')}
@@ -81,14 +81,14 @@
           })}
       />
       <input
-        class="nib-field"
+        class="orden-field"
         {value}
         aria-label={t('Value')}
         onchange={(event) => write({ set: { ...button.set, [key]: event.currentTarget.value } })}
       />
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         title={t('Remove')}
         aria-label={t('Remove')}
         onclick={() => write({ set: Object.fromEntries(sets.filter(([k]) => k !== key)) })}
@@ -98,17 +98,17 @@
   {/each}
   <button
     type="button"
-    class="nib-row is-short adder"
+    class="orden-row is-short adder"
     onclick={() => {
       const key = keys.find((one) => !(one in button.set)) ?? 'status'
       write({ set: { ...button.set, [key]: '' } })
     }}
   >
-    <span class="nib-row-label">{t('Add')}</span>
+    <span class="orden-row-label">{t('Add')}</span>
   </button>
 
   <input
-    class="nib-field"
+    class="orden-field"
     value={button.task ?? ''}
     aria-label={t('Add task')}
     placeholder={t('Add task')}
@@ -121,7 +121,7 @@
     onchange={(command: string) => write({ command })}
   />
   <input
-    class="nib-field"
+    class="orden-field"
     value={button.open ?? ''}
     aria-label={t('Address')}
     placeholder="https://"
@@ -137,7 +137,7 @@
     gap: var(--space-2);
   }
 
-  .adder .nib-row-label {
+  .adder .orden-row-label {
     color: var(--muted);
   }
 </style>

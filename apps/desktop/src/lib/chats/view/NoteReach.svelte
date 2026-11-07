@@ -54,7 +54,7 @@
       {/each}
     </span>
     {#if reach.share}
-      <button type="button" class="nib-button is-quiet" disabled={sharing} onclick={share}
+      <button type="button" class="orden-button is-quiet" disabled={sharing} onclick={share}
         >{t('Share')}</button
       >
     {/if}

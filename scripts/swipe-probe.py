@@ -131,7 +131,7 @@ def replay(app, target: int, x: int, y: int, ops: list[list[object]]) -> list[tu
     for op in ops:
         kind = op[0]
         if kind == "fingers":
-            ask(app, f"await window.__TAURI_INTERNALS__.invoke('plugin:event|emit', {{ event: 'nib://touchpad', payload: {{ fingers: {int(op[1])} }} }}); return true")
+            ask(app, f"await window.__TAURI_INTERNALS__.invoke('plugin:event|emit', {{ event: 'orden://touchpad', payload: {{ fingers: {int(op[1])} }} }}); return true")
             time.sleep(0.05)
         elif kind == "sweep":
             for _ in range(int(op[1])):
@@ -219,7 +219,7 @@ WATCH = """
 window.__arrow = false
 window.__watching?.disconnect()
 window.__watching = new MutationObserver(() => {
-  if (document.querySelector('.nib-swipe')) window.__arrow = true
+  if (document.querySelector('.orden-swipe')) window.__arrow = true
 })
 window.__watching.observe(document.body, { childList: true, subtree: true })
 return true
@@ -240,14 +240,14 @@ def main() -> int:
 
     page_probe.wipe(args.identifier)
     server, port = serve()
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-swipe-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-swipe-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     space = root / SPACE
     space.mkdir(parents=True)
     (space / "Alpha.md").write_text("# Alpha\n\nThe first note.\n", encoding="utf-8")
     (space / "Beta.md").write_text("# Beta\n\nThe second note.\n", encoding="utf-8")
     (space / "Site.url").write_text(page_probe.shortcut(f"http://127.0.0.1:{port}/one", "Site"), encoding="utf-8")
-    env = {**os.environ, "NIB_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
 
     said: dict[str, object] = {}
     failed: list[str] = []

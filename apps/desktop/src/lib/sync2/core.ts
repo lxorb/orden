@@ -86,7 +86,6 @@ export class Core {
   readonly mine = new Set<string>()
   readonly carried = new Set<string>()
   readonly asked = new Set<string>()
-  crowded = false
   readonly epochs = new Map<string, number>()
   readonly classified: Classification[] = []
   readonly touched = new Set<string>()

@@ -10,14 +10,14 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 UNEXPLAINED = """
 () => {
   const pane = document.querySelector('[role="dialog"][aria-label="Settings"]')
-  const rows = [...pane.querySelectorAll('.nib-setting')].filter((row) =>
+  const rows = [...pane.querySelectorAll('.orden-setting')].filter((row) =>
     !row.closest('.shortcut, .button, .extension') &&
     // A row's control, in the shapes Settings draws them in: a value - a dropdown or a
-    // field - is `.nib-setting-value` or `.nib-field` since #1056, which put every one in
+    // field - is `.orden-setting-value` or `.orden-field` since #1056, which put every one in
     // one box and one column.
     row.querySelector(
-      '[role="switch"], .nib-switch, input[type="range"], .nib-segmented, .nib-setting-value,' +
-        ' input.nib-field, .nib-swatches, .swatches, .pictures',
+      '[role="switch"], .orden-switch, input[type="range"], .orden-segmented, .orden-setting-value,' +
+        ' input.orden-field, .orden-swatches, .swatches, .pictures',
     ),
   )
   return {
@@ -47,7 +47,7 @@ def every_pane(page: Page) -> None:
 
 def the_sentence(page: Page) -> None:
     page.evaluate("() => window.nibApp.settings.show('markdown')")
-    row = page.locator(".nib-setting", has_text="Strict CommonMark").first
+    row = page.locator(".orden-setting", has_text="Strict CommonMark").first
     glyph = row.locator(".explain button")
     label = glyph.get_attribute("aria-label")
     say(f"the glyph's name: {label!r}")
@@ -60,18 +60,18 @@ def the_sentence(page: Page) -> None:
         wrong("the glyph is not a question mark")
 
     glyph.hover()
-    shown = wait_for(page, "() => document.querySelector('.nib-bubble.sentence')?.innerText ?? ''",
+    shown = wait_for(page, "() => document.querySelector('.orden-bubble.sentence')?.innerText ?? ''",
                      "the sentence on hover")
     say(f"on hover: {shown!r}")
     DRIVE.shot(page, "hover")
     page.mouse.move(5, 5)
-    wait_for(page, "() => !document.querySelector('.nib-bubble.sentence')", "the sentence gone again")
+    wait_for(page, "() => !document.querySelector('.orden-bubble.sentence')", "the sentence gone again")
 
     page.evaluate("() => window.nibApp.settings.show('general')")
-    smart = page.locator(".nib-setting", has_text="Smart dates").first
+    smart = page.locator(".orden-setting", has_text="Smart dates").first
     before = smart.locator("[role=switch]").get_attribute("aria-checked")
     smart.locator(".explain button").focus()
-    shown = wait_for(page, "() => document.querySelector('.nib-bubble.sentence')?.innerText ?? ''",
+    shown = wait_for(page, "() => document.querySelector('.orden-bubble.sentence')?.innerText ?? ''",
                      "the sentence on focus")
     say(f"on focus: {shown!r}")
     page.keyboard.press("Enter")

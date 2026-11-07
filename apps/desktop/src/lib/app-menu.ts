@@ -134,7 +134,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 ...keyed('app.print'),
                 asks: true,
                 disabled: !printable(workspace.active?.kind),
-                run: () => busy.start(t('Printing'), () => printOpen()),
+                run: () => busy.start(t('Printing'), () => printOpen(), 'print'),
               },
             ]
           : []),
@@ -499,7 +499,7 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () =>
             account.user
               ? __EVEN_PLUGIN__
-                ? void account.signOut()
+                ? void account.signOut('asked')
                 : void import('./ai/vault/leaving').then((one) => one.signOut())
               : (account.open = true),
         },

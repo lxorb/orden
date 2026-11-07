@@ -19,7 +19,7 @@ describe('pointing the prose rules at a miniature', () => {
   test('leaves behind everything that is not the writing surface', () => {
     const out = rescoped(
       `:root { --bg: #000; }
-.nib-bar { position: fixed; }
+.orden-bar { position: fixed; }
 #write p { margin: 0; }`,
       '.mini',
     )

@@ -39,7 +39,7 @@ vi.mock('./api', async (importOriginal) => ({
   api,
 }))
 
-const KEY = 'nib:modes'
+const KEY = 'orden:modes'
 
 await import('./modes.svelte')
 
@@ -128,7 +128,7 @@ beforeEach(() => {
   api.held.answer = {}
 })
 
-describe('what nib:modes holds', () => {
+describe('what orden:modes holds', () => {
   test('a start with nothing written writes nothing', async () => {
     await restarted()
     expect(everything()).toEqual({})

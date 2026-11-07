@@ -3,12 +3,12 @@ use std::sync::{Mutex, PoisonError};
 
 use tauri::{AppHandle, Manager as _, Webview, WebviewUrl, WebviewWindowBuilder};
 
-const LABEL: &str = "nib-quick-add";
+const LABEL: &str = "orden-quick-add";
 
 const WIDTH: f64 = 600.0;
 const HEIGHT: f64 = 150.0;
 
-const PROBE_KEY: &str = "NIB_QUICK_ADD_KEY";
+const PROBE_KEY: &str = "ORDEN_QUICK_ADD_KEY";
 
 static HOST: Mutex<Option<String>> = Mutex::new(None);
 

@@ -377,10 +377,10 @@ def main() -> int:
     base = f"http://127.0.0.1:{site.server_address[1]}"
 
     wipe(args.identifier)
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-parity-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-agent-parity-"))
     upload = spaces / "parity-upload.txt"
     upload.write_text("an agent's upload\n", encoding="utf-8")
-    app = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces), "NIB_AGENT_PAGES": "1"})
+    app = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces), "ORDEN_AGENT_PAGES": "1"})
     try:
         api = endpoint(args.identifier, app.pid)
         until = time.monotonic() + 60

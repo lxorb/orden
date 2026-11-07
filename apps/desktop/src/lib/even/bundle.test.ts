@@ -20,7 +20,7 @@ import manifest from '../../../even.app.json'
 import type { Dictionary } from '../i18n.svelte'
 
 const app = resolve(import.meta.dirname, '../../..')
-const staged = mkdtempSync(join(tmpdir(), 'nib-even-'))
+const staged = mkdtempSync(join(tmpdir(), 'orden-even-'))
 const contents = `${staged}.json`
 
 const allowed = manifest.permissions.find((one) => one.name === 'network')?.whitelist ?? []
@@ -55,7 +55,7 @@ beforeAll(() => {
       cwd: app,
       stdio: 'pipe',
       shell: process.platform === 'win32',
-      env: { ...process.env, NODE_ENV: 'production', NIB_EVEN_CONTENTS: contents },
+      env: { ...process.env, NODE_ENV: 'production', ORDEN_EVEN_CONTENTS: contents },
     },
   )
   execFileSync('node', [resolve(app, '../../scripts/even-stage.mjs'), staged, staged], {
@@ -158,7 +158,7 @@ describe('the bundle a package is made of', () => {
     const runner = files.filter(
       (one) =>
         one.name.endsWith('.js') &&
-        (one.text.includes('nib-run-panel') || one.text.includes('nib-run-output')),
+        (one.text.includes('orden-run-panel') || one.text.includes('orden-run-output')),
     )
 
     expect(runner.map((one) => one.name)).toEqual([])
@@ -167,7 +167,7 @@ describe('the bundle a package is made of', () => {
   test('and none of the sandbox that would have run it', () => {
     for (const file of files) {
       if (!file.name.endsWith('.js')) continue
-      expect(file.text, file.name).not.toContain('nib-run')
+      expect(file.text, file.name).not.toContain('orden-run')
     }
   })
 

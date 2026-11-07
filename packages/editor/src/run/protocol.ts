@@ -15,7 +15,7 @@ export interface RunMessage {
   done: boolean
 }
 
-const KIND = 'nib-run'
+const KIND = 'orden-run'
 
 const LEVELS: readonly string[] = ['log', 'info', 'warn', 'error', 'debug', 'result', 'exception']
 

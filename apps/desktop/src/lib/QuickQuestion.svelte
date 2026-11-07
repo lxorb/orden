@@ -141,13 +141,13 @@
 {#if quick.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => quick.close()}
   ></div>
 
   <div
-    class="nib-screen quick"
+    class="orden-screen quick"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -155,7 +155,7 @@
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     {#if quick.ready}
-      <div class="field nib-field">
+      <div class="field orden-field">
         <textarea
           bind:this={field}
           bind:value={quick.question}
@@ -273,7 +273,7 @@
         {#if quick.asking && workspace.offers('ask')}
           <div class="acts" in:fade={{ duration: dur(120) }}>
             <button
-              class="nib-glyph act"
+              class="orden-glyph act"
               title={t('Continue in the panel')}
               aria-label={t('Continue in the panel')}
               onclick={() => void quick.continueInPanel()}
@@ -294,7 +294,7 @@
         {#if done}
           <div class="acts" in:fade={{ duration: dur(120) }}>
             <button
-              class="nib-glyph act"
+              class="orden-glyph act"
               title={t('Add to note')}
               aria-label={t('Add to note')}
               onclick={() => void quick.addToNote(dollarMaths(done.text))}
@@ -303,7 +303,7 @@
               >
             </button>
             <button
-              class="nib-glyph act"
+              class="orden-glyph act"
               title={t('Copy')}
               aria-label={t('Copy')}
               onclick={() => void copy(dollarMaths(done.text))}
@@ -320,7 +320,7 @@
             </button>
             {#if workspace.offers('ask')}
               <button
-                class="nib-glyph act"
+                class="orden-glyph act"
                 title={t('Continue in the panel')}
                 aria-label={t('Continue in the panel')}
                 onclick={() => void quick.continueInPanel()}

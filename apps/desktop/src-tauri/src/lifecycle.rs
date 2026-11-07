@@ -6,11 +6,11 @@ use tauri::{AppHandle, Emitter, ExitRequestApi, Manager, RunEvent, WindowEvent};
 
 use crate::launch;
 
-const QUIT: &str = "nib://quit";
+const QUIT: &str = "orden://quit";
 
-const QUIT_ASK: &str = "nib://quit-ask";
+const QUIT_ASK: &str = "orden://quit-ask";
 
-const UPDATE_SETTLE: &str = "nib://update-settle";
+const UPDATE_SETTLE: &str = "orden://update-settle";
 
 const SETTLE_WAIT: Duration = Duration::from_secs(4);
 

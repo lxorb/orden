@@ -3,7 +3,7 @@ import { withOrWithout } from '../records'
 import { isRecord, Shared } from '../stored'
 import { originKey } from './address'
 
-const STORAGE_KEY = 'nib:web-grants'
+const STORAGE_KEY = 'orden:web-grants'
 
 export const ASKS = [
   'camera',
@@ -162,6 +162,10 @@ class Grants {
 
     this.asking = this.asking.filter((one) => one.tab !== tab)
     for (const one of gone) void this.tell(one.id, false)
+  }
+
+  refused(id: number) {
+    void this.tell(id, false)
   }
 
   private async tell(id: number, allow: boolean): Promise<void> {

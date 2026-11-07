@@ -138,8 +138,8 @@ def main() -> int:
     (spaces / "Probe" / "Plan.md").write_text("# Plan", encoding="utf-8")
     env = {
         **os.environ,
-        "NIB_SPACES_DIR": str(spaces),
-        "NIB_QUICK_ADD_KEY": PROBE_KEY,
+        "ORDEN_SPACES_DIR": str(spaces),
+        "ORDEN_QUICK_ADD_KEY": PROBE_KEY,
         "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": SWITCHES,
     }
     if held_elsewhere():

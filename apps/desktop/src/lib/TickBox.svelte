@@ -9,7 +9,7 @@
 <label class="tick">
   <input
     type="checkbox"
-    class="nib-checkbox"
+    class="orden-checkbox"
     {checked}
     onchange={(event) => onchange(event.currentTarget.checked)}
   />

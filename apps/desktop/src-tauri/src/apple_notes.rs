@@ -39,17 +39,20 @@ pub fn read_apple_notes() -> Result<Read, String> {
     }
 }
 
-#[tauri::command(async)]
-pub fn open_full_disk_access() -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        mac::open_setting()
-    }
+#[tauri::command]
+pub async fn open_full_disk_access() -> Result<(), String> {
+    crate::lane::off_the_runtime(|| -> Result<(), String> {
+        #[cfg(target_os = "macos")]
+        {
+            mac::open_setting()
+        }
 
-    #[cfg(not(target_os = "macos"))]
-    {
-        Err("Full Disk Access is a setting a Mac has".to_string())
-    }
+        #[cfg(not(target_os = "macos"))]
+        {
+            Err("Full Disk Access is a setting a Mac has".to_string())
+        }
+    })
+    .await
 }
 
 #[cfg(target_os = "macos")]

@@ -10,13 +10,31 @@ const DISK: Record<string, string[]> = {
 
 const listed: string[] = []
 
+const slow = new Map<string, Promise<void>>()
+
+function held(path: string): () => void {
+  let free: () => void = () => undefined
+  slow.set(
+    path,
+    new Promise((done) => {
+      free = done
+    }),
+  )
+  return () => {
+    slow.delete(path)
+    free()
+  }
+}
+
 vi.mock('./commands', () => ({
   CHANGED: 'explorer://changed',
   listFolder: (path: string): Promise<Listing> => {
     listed.push(path)
     const names = DISK[path]
-    if (!names) return Promise.reject(new Error(`${path}: No such file or directory`))
-    return Promise.resolve({
+    const waited = slow.get(path) ?? Promise.resolve()
+    if (!names)
+      return waited.then(() => Promise.reject(new Error(`${path}: No such file or directory`)))
+    return waited.then(() => ({
       path,
       parent: null,
       own: false,
@@ -30,7 +48,7 @@ vi.mock('./commands', () => ({
         modified: 0,
         hidden: false,
       })),
-    })
+    }))
   },
   watchFolder: () => Promise.resolve(),
   unwatchFolder: () => Promise.resolve(),
@@ -125,5 +143,30 @@ describe('a file explorer', () => {
     view.heard(['/home/me'])
     await Promise.resolve()
     expect(listed).toEqual(['/home/me'])
+  })
+
+  test('ends in the folder gone to last, however slowly the folders before it list', async () => {
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    const music = held('/home/me/Music')
+    const going = view.go('/home/me/Music')
+    const gone = view.go('/home/me/Pictures')
+    await gone
+    music()
+    await going
+    expect(view.folder).toBe('/home/me/Pictures')
+    expect(view.names).toEqual(['a.png'])
+  })
+
+  test('shows the folder it went to, not a slow rereading of the one it left', async () => {
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    const home = held('/home/me')
+    view.heard(['/home/me'])
+    await view.go('/home/me/Pictures')
+    home()
+    await new Promise((done) => setTimeout(done, 0))
+    expect(view.folder).toBe('/home/me/Pictures')
+    expect(view.names).toEqual(['a.png'])
   })
 })

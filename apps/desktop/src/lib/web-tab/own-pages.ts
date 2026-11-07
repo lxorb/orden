@@ -1,7 +1,9 @@
-export const HISTORY = 'nib://history'
+export const HISTORY = 'orden://history'
+
+const OLD_HISTORY = 'nib://history'
 
 export function isOwnPage(url: string | null | undefined): boolean {
-  return url === HISTORY
+  return url === HISTORY || url === OLD_HISTORY
 }
 
 export const HISTORY_MARK = `data:image/svg+xml,${encodeURIComponent(

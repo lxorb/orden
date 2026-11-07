@@ -401,7 +401,7 @@ describe('the channel', () => {
     await settle()
     stop()
 
-    expect(storage.getItem('nib:channel')).toBe('unstable')
+    expect(storage.getItem('orden:channel')).toBe('unstable')
 
     vi.resetModules()
     vi.doMock('./tauri', () => ({ isDesktop: true }))
@@ -557,7 +557,7 @@ describe('where a package manager keeps the install', () => {
     await settle()
 
     expect(next.ready).toBe('1.4.0')
-    expect(storage.getItem('nib:update-told')).toBe(null)
+    expect(storage.getItem('orden:update-told')).toBe(null)
     stopNext()
   })
 
@@ -568,7 +568,7 @@ describe('where a package manager keeps the install', () => {
 
     expect(updates.ready).toBe('1.4.0')
     expect(updates.managed).toBe(false)
-    expect(storage.getItem('nib:update-told')).toBe(null)
+    expect(storage.getItem('orden:update-told')).toBe(null)
     stop()
   })
 })

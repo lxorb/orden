@@ -18,7 +18,7 @@ What it checks, through the app's own automation endpoint (`eval`):
   cleanly; then the store is forgotten and its file is gone.
 * **A file's identity** through `file_identity`.
 
-The spaces are made in a temp folder named by `NIB_SPACES_DIR`; see docs/automation.md.
+The spaces are made in a temp folder named by `ORDEN_SPACES_DIR`; see docs/automation.md.
 Every launch goes through `run_probe`, off the screen and without the keyboard.
 
     npx vite build --mode drive                     # in apps/desktop
@@ -48,7 +48,7 @@ import urllib.request
 
 from probe_app import close_app, main_window, refuse_updating, run_probe
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "Sync store probe"
 ACCOUNT = "probe-account"
 
@@ -379,7 +379,7 @@ def main() -> int:
     if not exe.exists():
         raise SystemExit(f"no such exe: {exe}")
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-sync-store-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-sync-store-"))
     space = spaces / SPACE
     space.mkdir(parents=True, exist_ok=True)
     note = space / "Plan.md"

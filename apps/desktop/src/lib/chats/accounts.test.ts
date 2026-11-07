@@ -107,6 +107,63 @@ describe("other services' accounts", () => {
     expect(accounts.failed).toMatchObject([{ provider: 'fake', account: 'a@x.org' }])
   })
 
+  test('what a sign-in in the browser learnt is kept for the next launch, and what it keeps itself is forgotten on disconnect', async () => {
+    const signedIn: ChatProvider = {
+      ...provider,
+      id: 'browser',
+      fields: [{ key: 'name', label: 'Your name', kind: 'text', optional: true }],
+      kept: ['refresh'],
+      async connect(values, given) {
+        const address = values.address ?? 'b@x.org'
+        if (!values.address) await given.keepSecret(secretName('browser', address, 'refresh'), 'r')
+        const connection = await provider.connect({ address, password: 'right' }, given)
+        return { ...connection, account: { ...connection.account, keep: { address } } }
+      },
+    }
+    const hub = new Connected()
+    const accounts = new Accounts(host, hub, [signedIn])
+    expect(await accounts.connect('browser', { name: 'Bo' })).toBeNull()
+    expect(accounts.saved).toEqual([
+      { provider: 'browser', account: 'b@x.org', config: { address: 'b@x.org', name: 'Bo' } },
+    ])
+    expect([...vault.keys()]).toEqual([secretName('browser', 'b@x.org', 'refresh')])
+
+    given.length = 0
+    const next = new Accounts(host, new Connected(), [signedIn])
+    next.start()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(given).toEqual([{ address: 'b@x.org', password: 'right' }])
+
+    await next.disconnect('browser', 'b@x.org')
+    expect(vault.size).toBe(0)
+    expect(next.saved).toEqual([])
+  })
+
+  test('a service keeping its own session is told the account when linked again, and forgets it on disconnect', async () => {
+    const known: (string | undefined)[] = []
+    const forgotten: string[] = []
+    const own: ChatProvider = {
+      ...provider,
+      id: 'own',
+      fields: [{ key: 'address', label: 'Email address', kind: 'email' }],
+      connect: (values, given, account) => {
+        known.push(account)
+        return provider.connect({ ...values, password: 'right' }, given)
+      },
+      forget: (account) => {
+        forgotten.push(account)
+        return Promise.resolve()
+      },
+    }
+    await new Accounts(host, new Connected(), [own]).connect('own', { address: 'a@x.org' })
+    const next = new Accounts(host, new Connected(), [own])
+    next.start()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(known).toEqual([undefined, 'a@x.org'])
+    await next.disconnect('own', 'a@x.org')
+    expect(forgotten).toEqual(['a@x.org'])
+  })
+
   test("a conversation tab's words name it, and nothing else reads as one", () => {
     const key = { provider: 'mail', account: 'a@x.org', conversation: 'id\nwith a break@x' }
     expect(conversationKeyOf(conversationKey(key))).toEqual(key)

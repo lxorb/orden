@@ -402,7 +402,7 @@ test('a page that lands is photographed once, not once per report', async () => 
   arrive()
   await shown
   await settle()
-  const moved = await hearing('nib://web-tab')
+  const moved = await hearing('orden://web-tab')
   calls.length = 0
 
   const said = { tab: 'a', url: SITE, title: '', back: false, forward: false }
@@ -426,8 +426,8 @@ describe("a page's mark", () => {
     await shown
     await settle()
 
-    const moved = await hearing('nib://web-tab')
-    const iconed = await hearing('nib://web-icon')
+    const moved = await hearing('orden://web-tab')
+    const iconed = await hearing('orden://web-icon')
 
     const load = (loading: boolean) =>
       moved({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
@@ -504,8 +504,8 @@ describe("a page's mark", () => {
 
   test('what is not a mark is not heard', async () => {
     const { mark, page } = await loaded()
-    heard.get('nib://web-icon')?.({ payload: { tab: 'a', icon: 7 } })
-    heard.get('nib://web-icon')?.({ payload: null })
+    heard.get('orden://web-icon')?.({ payload: { tab: 'a', icon: 7 } })
+    heard.get('orden://web-icon')?.({ payload: null })
     expect(page.icon).toBeNull()
 
     mark(PLAIN)
@@ -570,7 +570,7 @@ describe("a page's dialog still waiting", () => {
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
     await shown
-    const tell = await hearing('nib://web-dialog')
+    const tell = await hearing('orden://web-dialog')
     tell({
       payload: { tab: 'a', id: 7, kind: 'alert', message: 'hello', text: '', origin: SITE },
     })
@@ -602,6 +602,106 @@ describe("a page's dialog still waiting", () => {
     await settle()
     expect(dialogs.open).toEqual([])
     expect(commands().sort()).toEqual(['web_dialog_answer', 'web_step', 'web_step'])
+  })
+})
+
+describe("a page's question still waiting", () => {
+  async function waiting() {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+    await settle()
+    const ask = await hearing('orden://web-ask')
+    ask({ payload: { tab: 'a', id: 11, origin: SITE, kind: 'location' } })
+    const tell = await hearing('orden://web-dialog')
+    tell({
+      payload: { tab: 'a', id: 12, kind: 'alert', message: 'hello', text: '', origin: SITE },
+    })
+    const { grants } = await import('./permissions.svelte')
+    const { dialogs } = await import('./dialogs.svelte')
+    expect(grants.asking.map((one) => one.id)).toEqual([11])
+    expect(dialogs.open.map((one) => one.id)).toEqual([12])
+    calls.length = 0
+    return { grants, dialogs, moved: await hearing('orden://web-tab') }
+  }
+
+  const answered = () =>
+    calls
+      .filter((one) => one.command === 'web_answer' || one.command === 'web_dialog_answer')
+      .map((one) => [one.command, one.args.id, one.args.allow ?? one.args.accept])
+
+  test('is let go before the page is sent elsewhere', async () => {
+    const { grants, dialogs } = await waiting()
+
+    await pages.go('a', 'https://elsewhere.example/')
+    await settle()
+
+    expect(grants.asking).toEqual([])
+    expect(dialogs.open).toEqual([])
+    expect(answered().sort()).toEqual([
+      ['web_answer', 11, false],
+      ['web_dialog_answer', 12, false],
+    ])
+  })
+
+  test('is let go when the page goes elsewhere by itself', async () => {
+    const { grants, dialogs, moved } = await waiting()
+
+    const said = { tab: 'a', url: '', title: '', back: false, forward: false }
+    moved({ payload: { ...said, loading: true } })
+    await settle()
+
+    expect(grants.asking).toEqual([])
+    expect(dialogs.open).toEqual([])
+    expect(answered()).toHaveLength(2)
+  })
+
+  test('is let go when the page lands on another site while still loading', async () => {
+    const { grants, moved } = await waiting()
+
+    const said = { title: '', back: false, forward: false, loading: true }
+    moved({ payload: { ...said, tab: 'a', url: SITE } })
+    await settle()
+    grants.asking = [{ id: 13, tab: 'a', site: SITE, ask: 'camera', privately: false }]
+    calls.length = 0
+
+    moved({ payload: { ...said, tab: 'a', url: SITE } })
+    await settle()
+    expect(grants.asking.map((one) => one.id)).toEqual([13])
+
+    moved({ payload: { ...said, tab: 'a', url: 'https://elsewhere.example/' } })
+    await settle()
+    expect(grants.asking).toEqual([])
+    expect(answered()).toEqual([['web_answer', 13, false]])
+  })
+
+  test('is let go when the page is unloaded or its engine has gone', async () => {
+    const { grants, dialogs } = await waiting()
+
+    await pages.park('a')
+    await settle()
+    expect(grants.asking).toEqual([])
+    expect(dialogs.open).toEqual([])
+    expect(answered()).toHaveLength(2)
+  })
+
+  test('from a tab not held here is refused, not left waiting', async () => {
+    const { grants, dialogs } = await waiting()
+
+    ;(await hearing('orden://web-ask'))({
+      payload: { tab: 'nowhere', id: 21, origin: SITE, kind: 'camera' },
+    })
+    ;(await hearing('orden://web-dialog'))({
+      payload: { tab: 'nowhere', id: 22, kind: 'alert', message: '', text: '', origin: SITE },
+    })
+    await settle()
+
+    expect(grants.asking.map((one) => one.id)).toEqual([11])
+    expect(dialogs.open.map((one) => one.id)).toEqual([12])
+    expect(answered().sort()).toEqual([
+      ['web_answer', 21, false],
+      ['web_dialog_answer', 22, false],
+    ])
   })
 })
 
@@ -1203,7 +1303,7 @@ describe('a page a person presses in or types into', () => {
     arrive()
     await shown
 
-    const chosen = await hearing('nib://web-chosen')
+    const chosen = await hearing('orden://web-chosen')
     chosen({ payload: { tab: 'b' } })
     await vi.waitFor(() => expect(did).toEqual(['activate b']))
 
@@ -1213,7 +1313,7 @@ describe('a page a person presses in or types into', () => {
   })
 
   test('chooses no tab it does not hold, and reads nothing else as one', async () => {
-    const chosen = await hearing('nib://web-chosen')
+    const chosen = await hearing('orden://web-chosen')
     chosen({ payload: { tab: 'elsewhere' } })
     chosen({ payload: {} })
     await settle()
@@ -1254,7 +1354,7 @@ describe('a tab that closes itself when its download starts', () => {
     arriveA()
     await shownA
 
-    const opening = await hearing('nib://web-open')
+    const opening = await hearing('orden://web-open')
     opening({ payload: { tab: 'a', url: FILE } })
     await settle()
 
@@ -1265,7 +1365,7 @@ describe('a tab that closes itself when its download starts', () => {
     await shownB
     await settle()
 
-    const download = await hearing('nib://web-download')
+    const download = await hearing('orden://web-download')
     download({ payload: { id, tab: 'b', url: FILE, name: 'slides.pdf', state: 'going' } })
   }
 
@@ -1294,7 +1394,7 @@ describe('a page whose process died', () => {
   }
 
   const crash = async (tab: string) => {
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({ payload: { tab, said: 'crashed' } })
     await settle()
   }
@@ -1366,7 +1466,7 @@ describe('a page whose process died', () => {
   test('one that did not arrive goes the same way, says why, and comes back with Reload', async () => {
     await livePage('failing')
     calls.length = 0
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({
       payload: {
         tab: 'failing',
@@ -1398,7 +1498,7 @@ describe('a page whose process died', () => {
 
   test('one the engine could not say the address of keeps the tab where it was going', async () => {
     await livePage('nameless')
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({
       payload: { tab: 'nameless', said: 'arrived', url: '', failure: 'other', bare: true },
     })
@@ -1411,7 +1511,7 @@ describe('a page whose process died', () => {
 
   test('one an engine drew its own page for stays', async () => {
     await livePage('drawn')
-    const page = await hearing('nib://web-page')
+    const page = await hearing('orden://web-page')
     page({
       payload: { tab: 'drawn', said: 'arrived', url: SITE, failure: 'other', bare: false },
     })

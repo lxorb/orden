@@ -50,7 +50,7 @@ test('a private tab’s page is never written down, by picture or by name', () =
 
   places.keepWindows({ [tab.id]: { x: 1, y: 2, w: 3, h: 4 } }, workspace.tabs)
   expect(places.windows[tab.id]).toEqual({ x: 1, y: 2, w: 3, h: 4 })
-  expect(localStorage.getItem('nib:overview-windows-2')).toBe('{}')
+  expect(localStorage.getItem('orden:overview-windows-2')).toBe('{}')
 })
 
 test('a private tab beside others takes nobody’s name, and leaves them theirs', () => {

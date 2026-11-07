@@ -1500,6 +1500,8 @@ export const ko: Dictionary = {
   Shorter: '더 짧게',
   Longer: '더 길게',
   'Fix grammar': '문법 고치기',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '선택한 단어가 더 이상 노트에 없어 아무것도 바꾸지 않았습니다.',
   'A cited report': '인용된 보고서',
   'A helper in the background': '백그라운드의 도우미',
   'A side question': '곁가지 질문',
@@ -2860,6 +2862,8 @@ export const ko: Dictionary = {
   'That could not be protected: {reason}': '보호할 수 없습니다: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name}을(를) 추가하지 않았습니다: 채팅에는 이미지와 2 MB 이하의 텍스트 파일만 추가할 수 있습니다.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name}을(를) 추가하지 않았습니다: 메시지 하나에는 이미지를 최대 20개까지 추가할 수 있습니다.',
   'Time tracker': '시간 기록',
   'Start timer': '타이머 시작',
   'Stop timer': '타이머 중지',
@@ -3391,9 +3395,46 @@ export const ko: Dictionary = {
   'You said': '직접 입력',
   Privacy: '개인 정보',
   'Send crash and freeze reports': '충돌 및 멈춤 보고서 보내기',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden이 충돌하거나 멈추면, 무엇을 하고 있었는지와 자체 코드의 어디에 있었는지를 이름, 경로, 주소, 비밀번호를 뺀 채 보냅니다. 메모는 절대 보내지 않습니다.',
-  'Turn off in Settings': '설정에서 끄기',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden이 충돌하거나 멈췄을 때 하던 일을 보냅니다. 메모, 이름, 경로, 비밀번호는 보내지 않습니다.',
+  'Send crash reports to help improve Orden': '충돌 보고서를 보내 Orden 개선에 도움 주기',
+  'Move to {space}?': '{space}(으)로 옮길까요?',
+  'macOS can start dictation with this key too.': 'macOS가 이 키로 받아쓰기도 시작할 수 있습니다.',
+  'QR code': 'QR 코드',
+  'Waiting…': '기다리는 중…',
+  Service: '서비스',
+  'I understand and want to connect anyway': '이해했으며 그래도 연결하겠습니다',
+  'Some changes have not reached your account yet':
+    '아직 계정에 도착하지 않은 변경 사항이 있습니다',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '변경 사항은 이 브라우저에 남고, 여기서 로그인하는 다른 사람에게는 보이지 않으며, 다시 로그인하면 올라갑니다.',
+  'Leave it empty to sign in with a QR code instead': '비워 두면 QR 코드로 로그인합니다',
+  'Telegram code': 'Telegram 코드',
+  'Sent to Telegram on your other device': '다른 기기의 Telegram으로 보냈습니다',
+  'Sent by SMS': 'SMS로 보냈습니다',
+  'You will get a call with the code': '코드를 알려 주는 전화가 걸려 옵니다',
+  'The code was wrong. Try again.': '코드가 틀렸습니다. 다시 시도하세요.',
+  'The code expired, so Telegram sent a new one.':
+    '코드가 만료되어 Telegram이 새 코드를 보냈습니다.',
+  'Two-step verification password': '2단계 인증 비밀번호',
+  'The password was wrong. Try again.': '비밀번호가 틀렸습니다. 다시 시도하세요.',
+  'Scan with Telegram on your phone': '휴대폰의 Telegram으로 스캔하세요',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > 설정 > 기기 > 데스크톱 기기 연결',
+  'Signing in to Telegram needs the app': 'Telegram에 로그인하려면 앱이 필요합니다',
+  'Telegram does not know this phone number': 'Telegram이 이 전화번호를 모릅니다',
+  'Too many tries. Wait a while and try again.':
+    '시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.',
+  'Too many wrong tries': '틀린 시도가 너무 많습니다',
+  'Signed out of Telegram. Connect again.': 'Telegram에서 로그아웃되었습니다. 다시 연결하세요.',
+  'Telegram cannot do that in this conversation': '이 대화에서는 Telegram이 그렇게 할 수 없습니다',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram은 그룹과 채널의 메시지를 모두에게서 삭제합니다',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram은 자체 앱에서만 그룹을 새 소유자에게 넘깁니다',
+  'That sticker is no longer available': '그 스티커는 더 이상 없습니다',
+  'Telegram is not set up in this build': '이 빌드에는 Telegram이 설정되어 있지 않습니다',
+  'Password manager': '비밀번호 관리자',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    '비밀번호를 보관하고 웹사이트에 채워 주는 Pass를 추가합니다. 꺼도 보관함은 그대로 남습니다.',
 }

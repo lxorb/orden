@@ -187,9 +187,9 @@ export function propertiesTable(properties: readonly Property[]): string {
 
 function row(property: Property): string {
   return (
-    `<div class="property nib-row is-short" role="row"` +
+    `<div class="property orden-row is-short" role="row"` +
     ` data-key="${escape(property.key)}" data-from="${property.from}" data-to="${property.to}">` +
-    `<span class="property-key nib-row-label" role="rowheader">${escape(property.key)}</span>` +
+    `<span class="property-key orden-row-label" role="rowheader">${escape(property.key)}</span>` +
     `<span class="property-value" role="cell">${value(property)}</span>` +
     `</div>`
   )

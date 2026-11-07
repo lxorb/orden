@@ -133,7 +133,7 @@
       <p class="state">
         {t('Signed out')}: {failure.reason}
         <button
-          class="nib-button is-quiet"
+          class="orden-button is-quiet"
           type="button"
           onclick={() => {
             const saved = accounts.saved.find(
@@ -153,7 +153,7 @@
       </p>
     {/if}
     {#if older !== null}
-      <button class="nib-button is-quiet more" type="button" onclick={() => void earlier()}
+      <button class="orden-button is-quiet more" type="button" onclick={() => void earlier()}
         >{t('More')}</button
       >
     {/if}
@@ -168,7 +168,7 @@
         <p class="words">{message.text}</p>
         {#each message.attachments as file (file.ref)}
           <button
-            class="nib-chip file"
+            class="orden-chip file"
             type="button"
             onclick={(event) =>
               void download(message, file.ref, file.name, file.type, event.currentTarget)}
@@ -188,14 +188,14 @@
       }}
     >
       <textarea
-        class="nib-field"
+        class="orden-field"
         bind:value={words}
         rows="3"
         aria-label={t('Reply')}
         placeholder={t('Reply')}
         onkeydown={keyed}></textarea>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
-      <button class="nib-button" type="submit" disabled={sending || !words.trim()}
+      <button class="orden-button" type="submit" disabled={sending || !words.trim()}
         >{t('Send')}</button
       >
     </form>

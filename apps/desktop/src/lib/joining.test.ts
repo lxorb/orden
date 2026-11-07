@@ -356,16 +356,16 @@ describe('a link that asks first', () => {
     joining.told = 'Ada'
     await joining.tell()
 
-    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+    expect(localStorage.getItem('orden:waiting')).toBe(TOKEN)
 
     world.through = { guest: { id: 'g1', name: 'Ada' }, space }
     await joining.walkThrough()
-    expect(localStorage.getItem('nib:waiting')).toBeNull()
+    expect(localStorage.getItem('orden:waiting')).toBeNull()
   })
 
   test('picks the wait back up on the next launch', async () => {
-    localStorage.setItem('nib:session', 'guest-session')
-    localStorage.setItem('nib:waiting', TOKEN)
+    localStorage.setItem('orden:session', 'guest-session')
+    localStorage.setItem('orden:waiting', TOKEN)
     world.path = '/'
 
     await account.restore()
@@ -381,8 +381,8 @@ describe('a link that asks first', () => {
   test('goes on asking after a launch whose first ask did not arrive', async () => {
     vi.useFakeTimers()
     try {
-      localStorage.setItem('nib:session', 'guest-session')
-      localStorage.setItem('nib:waiting', TOKEN)
+      localStorage.setItem('orden:session', 'guest-session')
+      localStorage.setItem('orden:waiting', TOKEN)
       world.path = '/'
       world.unreachable = true
 
@@ -415,7 +415,7 @@ describe('waiting on the owner', () => {
     await joining.walkThrough()
 
     expect(joining.step).toBe('waiting')
-    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+    expect(localStorage.getItem('orden:waiting')).toBe(TOKEN)
     expect(joining.error).toBe('the network is not there')
   })
 
@@ -436,7 +436,7 @@ describe('waiting on the owner', () => {
     await joining.walkThrough()
 
     expect(joining.step).toBe('gone')
-    expect(localStorage.getItem('nib:waiting')).toBeNull()
+    expect(localStorage.getItem('orden:waiting')).toBeNull()
   })
 
   test('covers the app while it is new', () => {
@@ -448,7 +448,7 @@ describe('waiting on the owner', () => {
 
     expect(joining.shown).toBe(false)
     expect(joining.step).toBe('waiting')
-    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+    expect(localStorage.getItem('orden:waiting')).toBe(TOKEN)
 
     world.through = { guest: { id: 'g1', name: 'Ada' }, space }
     await joining.walkThrough()
@@ -471,7 +471,7 @@ describe('waiting on the owner', () => {
 
     expect(joining.step).toBeNull()
     expect(joining.shown).toBe(false)
-    expect(localStorage.getItem('nib:waiting')).toBeNull()
+    expect(localStorage.getItem('orden:waiting')).toBeNull()
     expect(world.withdrawn).toEqual([{ key: TOKEN, token: 'guest-session' }])
   })
 
@@ -481,7 +481,7 @@ describe('waiting on the owner', () => {
 
     expect(joining.step).toBe('waiting')
     expect(joining.shown).toBe(true)
-    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+    expect(localStorage.getItem('orden:waiting')).toBe(TOKEN)
     expect(joining.error).toBe('offline')
   })
 
@@ -490,7 +490,7 @@ describe('waiting on the owner', () => {
     await joining.cancel()
 
     expect(joining.step).toBeNull()
-    expect(localStorage.getItem('nib:waiting')).toBeNull()
+    expect(localStorage.getItem('orden:waiting')).toBeNull()
   })
 
   test('says it is still waiting while closed, and opens again from there', () => {
@@ -529,7 +529,7 @@ describe('waiting on the owner', () => {
     await account.signOut()
 
     expect(joining.step).toBeNull()
-    expect(localStorage.getItem('nib:waiting')).toBeNull()
+    expect(localStorage.getItem('orden:waiting')).toBeNull()
   })
 
   test('asks once at a time, however often it is asked', async () => {
@@ -684,7 +684,7 @@ describe('a link to one file, followed with no account', () => {
 describe('a guest a link gave one file to, coming back', () => {
   beforeEach(() => {
     world.path = '/'
-    localStorage.setItem('nib:session', 'guest-session')
+    localStorage.setItem('orden:session', 'guest-session')
   })
 
   test('is back in the file, which no tab is kept of between launches', async () => {

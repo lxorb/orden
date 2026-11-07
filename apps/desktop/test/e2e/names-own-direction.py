@@ -11,7 +11,7 @@ NAMES = {"2024 report": ("2024", "report"), "(draft) plan": ("(draft)", "plan"),
 
 PLACES = {
     "tab": "[data-strip] .tab .label",
-    "file list": ".row[data-path] .nib-row-label",
+    "file list": ".row[data-path] .orden-row-label",
 }
 
 ORDER = """([selector, name, first, second]) => {
@@ -33,8 +33,8 @@ ORDER = """([selector, name, first, second]) => {
 
 def opened(browser: Browser, language: str) -> Page:
     page = DRIVE.page(browser, viewport={"width": 1300, "height": 600})
-    page.add_init_script("localStorage.setItem('nib:icon-tabs', 'no')")
-    page.add_init_script(f"localStorage.setItem('nib:language', '{language}')")
+    page.add_init_script("localStorage.setItem('orden:icon-tabs', 'no')")
+    page.add_init_script(f"localStorage.setItem('orden:language', '{language}')")
     DRIVE.open(page)
     DRIVE.seed(page, *[f"# {name}\n\nWords.\n" for name in NAMES])
     page.evaluate(

@@ -80,7 +80,7 @@
 </script>
 
 <div class="card">
-  <div class="nib-setting row">
+  <div class="orden-setting row">
     <span class="name">{t('Unlock with')}</span>
     <Select
       label={t('Unlock with')}
@@ -90,10 +90,10 @@
     />
   </div>
   {#if choosingPin}
-    <form class="nib-setting row" onsubmit={keptPin}>
+    <form class="orden-setting row" onsubmit={keptPin}>
       <span class="name">{t('New PIN')}</span>
       <input
-        class="nib-field is-value"
+        class="orden-field is-value"
         type="password"
         inputmode="numeric"
         autocomplete="off"
@@ -101,7 +101,7 @@
         aria-label={t('New PIN')}
         bind:value={pin}
       />
-      <button class="nib-chip" type="submit" disabled={busy || pin === ''}>{t('Use PIN')}</button>
+      <button class="orden-chip" type="submit" disabled={busy || pin === ''}>{t('Use PIN')}</button>
     </form>
     <p class="hint">
       {t(
@@ -109,7 +109,7 @@
       )}
     </p>
   {/if}
-  <div class="nib-setting row">
+  <div class="orden-setting row">
     <span class="name">{t('Lock after')}</span>
     <Select
       label={t('Lock after')}
@@ -118,7 +118,7 @@
       onchange={(value: string) => pass.setSetting('relockAfter', Number(value) as RelockAfter)}
     />
   </div>
-  <div class="nib-setting row">
+  <div class="orden-setting row">
     <span class="name">{t('Clear clipboard after')}</span>
     <Select
       label={t('Clear clipboard after')}
@@ -131,14 +131,14 @@
 </div>
 {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 
-<h3 class="nib-section">{t('Pass password')}</h3>
+<h3 class="orden-section">{t('Pass password')}</h3>
 <div class="card padded">
   {#if changing}
     <ChangePassword ondone={() => (changing = false)} oncancel={() => (changing = false)} />
   {:else}
-    <div class="nib-setting">
+    <div class="orden-setting">
       <span class="name">{t('It encrypts everything in Pass.')}</span>
-      <button class="nib-chip" type="button" onclick={() => (changing = true)}
+      <button class="orden-chip" type="button" onclick={() => (changing = true)}
         >{t('Change Pass password')}</button
       >
     </div>
@@ -150,42 +150,42 @@
   {/if}
 </div>
 
-<h3 class="nib-section">{t('Recovery key')}</h3>
+<h3 class="orden-section">{t('Recovery key')}</h3>
 <div class="card padded">
   {#if recovery}
     <output class="code">{recovery}</output>
     <div class="buttons">
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         onclick={() => recovery && void copyField(t('Recovery key'), recovery)}>{t('Copy')}</button
       >
-      <button class="nib-chip" type="button" onclick={() => recovery && downloaded(recovery)}
+      <button class="orden-chip" type="button" onclick={() => recovery && downloaded(recovery)}
         >{t('Download')}</button
       >
-      <button class="nib-button" type="button" onclick={() => (recovery = null)}
+      <button class="orden-button" type="button" onclick={() => (recovery = null)}
         >{t('I saved it')}</button
       >
     </div>
   {:else if askingRecovery}
-    <form class="nib-setting" onsubmit={madeRecovery}>
+    <form class="orden-setting" onsubmit={madeRecovery}>
       <span class="name">{t('Pass password')}</span>
       <input
-        class="nib-field is-value"
+        class="orden-field is-value"
         type="password"
         autocomplete="current-password"
         placeholder={t('Pass password')}
         aria-label={t('Pass password')}
         bind:value={recoveryPassword}
       />
-      <button class="nib-chip" type="submit" disabled={busy || recoveryPassword === ''}
+      <button class="orden-chip" type="submit" disabled={busy || recoveryPassword === ''}
         >{t('Make a new key')}</button
       >
     </form>
   {:else}
-    <div class="nib-setting">
+    <div class="orden-setting">
       <span class="name">{t('A new key stops the old one from opening Pass here.')}</span>
-      <button class="nib-chip" type="button" onclick={() => (askingRecovery = true)}
+      <button class="orden-chip" type="button" onclick={() => (askingRecovery = true)}
         >{t('New recovery key')}</button
       >
     </div>
@@ -223,7 +223,7 @@
     color: var(--muted);
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-3) 0 0;
   }
 

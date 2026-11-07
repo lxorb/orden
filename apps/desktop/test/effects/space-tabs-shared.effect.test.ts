@@ -53,12 +53,12 @@ test('the set every Global space shared becomes the first such space’s own', a
     workspace.persist()
   }
 
-  const session = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+  const session = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
     sets: { on: string; aside: Record<string, unknown> }
   }
   session.sets.aside = { global: session.sets.aside.home }
-  localStorage.setItem('nib:workspace', JSON.stringify(session))
-  localStorage.setItem('nib:space-tabs', JSON.stringify({ work: 'space' }))
+  localStorage.setItem('orden:workspace', JSON.stringify(session))
+  localStorage.setItem('orden:space-tabs', JSON.stringify({ work: 'space' }))
 
   await vi.dynamicImportSettled()
   vi.resetModules()
@@ -75,5 +75,5 @@ test('the set every Global space shared becomes the first such space’s own', a
 
   await workspace.showSpace('home')
   expect(onScreen()).toEqual(['Food.md'])
-  expect(localStorage.getItem('nib:space-tabs')).toBeNull()
+  expect(localStorage.getItem('orden:space-tabs')).toBeNull()
 })

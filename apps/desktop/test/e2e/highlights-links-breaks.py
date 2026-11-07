@@ -47,7 +47,7 @@ async (notes) => {
 
 WRITTEN = """
 () => {
-  const found = [...document.querySelectorAll('.cm-content .nib-highlight[class*="tone-"]')]
+  const found = [...document.querySelectorAll('.cm-content .orden-highlight[class*="tone-"]')]
   return found.map((one) => ({
     tone: [...one.classList].find((name) => name.startsWith('tone-')) ?? null,
     paint: getComputedStyle(one).backgroundColor,
@@ -182,7 +182,7 @@ def in_the_editor(page: Page) -> None:
     page.wait_for_timeout(300)
     box = page.evaluate(
         """() => {
-          const mark = document.querySelector('.cm-content .nib-highlight[class*="tone-"]')
+          const mark = document.querySelector('.cm-content .orden-highlight[class*="tone-"]')
           const box = mark.getBoundingClientRect()
           return { x: box.left + 4, y: box.top + box.height / 2 }
         }"""
@@ -230,26 +230,26 @@ def the_bar(page: Page) -> None:
     is_true(before is None, f"nothing is chosen to begin with, so the plain one: {before}")
 
     select(page, at(page, "A last paragraph"), at(page, "A last paragraph", 6))
-    wait_for(page, "document.querySelector('.nib-bar-at')", "the formatting bar")
+    wait_for(page, "document.querySelector('.orden-bar-at')", "the formatting bar")
     shot(page, "bar-actions")
 
     shape = page.evaluate(
         """() => {
-          const bar = document.querySelector('.nib-bar-at')
+          const bar = document.querySelector('.orden-bar-at')
           return { role: bar.getAttribute('role'), label: bar.getAttribute('aria-label') }
         }"""
     )
     is_true(shape["role"] == "toolbar", f"the bar says what it is: {shape}")
     is_true(bool(shape["label"]), "and it is named, since every button on it is one letter")
 
-    dots = page.locator(".nib-bar-at button.swatch")
+    dots = page.locator(".orden-bar-at button.swatch")
     is_true(dots.count() == 1, f"one dot beside the actions, not {dots.count()}")
     dots.first.click()
     page.wait_for_timeout(300)
-    opened = page.locator(".nib-bar-at button.swatch")
+    opened = page.locator(".orden-bar-at button.swatch")
     is_true(opened.count() == 6, f"the dot opens the six colours, not {opened.count()}")
     is_true(
-        page.locator(".nib-bar-at button.swatch.bare").count() == 1,
+        page.locator(".orden-bar-at button.swatch.bare").count() == 1,
         "and one of them is the highlight with no colour of its own",
     )
     shot(page, "bar-colours")
@@ -268,7 +268,7 @@ def the_bar(page: Page) -> None:
 
     select(page, at(page, "A plain"), at(page, "A plain", 7))
     page.wait_for_timeout(300)
-    page.locator('.nib-bar-at button[aria-label="Highlight"]').click()
+    page.locator('.orden-bar-at button[aria-label="Highlight"]').click()
     page.wait_for_timeout(400)
     text = page.evaluate("() => window.nib.state.doc.toString()")
     is_true("==\U0001F534 A plain==" in text, "the button writes the colour that stuck")
@@ -276,17 +276,17 @@ def the_bar(page: Page) -> None:
     page.evaluate("() => window.nibApp.modes.setHighlightTone(null)")
     select(page, at(page, "A closing"), at(page, "A closing", 9))
     page.wait_for_timeout(300)
-    page.locator(".nib-bar-at button.swatch").first.focus()
+    page.locator(".orden-bar-at button.swatch").first.focus()
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
     is_true(
-        page.locator(".nib-bar-at button.swatch").count() == 6,
+        page.locator(".orden-bar-at button.swatch").count() == 6,
         "Enter on the dot opens the colours",
     )
 
     inside = page.evaluate(
         """() => {
-          const bar = document.querySelector('.nib-bar-at')
+          const bar = document.querySelector('.orden-bar-at')
           return bar ? bar.contains(document.activeElement) : false
         }"""
     )
@@ -297,7 +297,7 @@ def the_bar(page: Page) -> None:
     moved = page.evaluate(
         """() => {
           const on = document.activeElement
-          const dots = [...document.querySelectorAll('.nib-bar-at button.swatch')]
+          const dots = [...document.querySelectorAll('.orden-bar-at button.swatch')]
           return dots.indexOf(on)
         }"""
     )
@@ -386,7 +386,7 @@ def the_long_mark(page: Page) -> None:
     page.wait_for_timeout(300)
     laid = page.evaluate(
         """() => {
-          const mark = document.querySelector('.cm-content .nib-highlight.tone-4')
+          const mark = document.querySelector('.cm-content .orden-highlight.tone-4')
           const scroller = document.querySelector('.cm-scroller')
           return {
             rows: mark ? new Set([...mark.getClientRects()].map((one) => Math.round(one.top))).size : 0,

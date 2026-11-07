@@ -152,7 +152,7 @@
   </div>
   <button
     type="button"
-    class="nib-glyph menu"
+    class="orden-glyph menu"
     tabindex="-1"
     aria-label={t('More')}
     title={t('More')}

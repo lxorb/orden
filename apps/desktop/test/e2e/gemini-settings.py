@@ -49,7 +49,7 @@ def check(what: str, held: bool) -> None:
 def drive(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 860}, reduced_motion="reduce")
     page.context.add_init_script(
-        f"localStorage.setItem('nib:ai-accounts', {json.dumps(json.dumps(ACCOUNTS))})"
+        f"localStorage.setItem('orden:ai-accounts', {json.dumps(json.dumps(ACCOUNTS))})"
     )
     asked: list[dict[str, str]] = []
 
@@ -85,7 +85,7 @@ def drive(browser) -> None:
     cli_card = sheet.locator('.card[data-account="gemini-cli"]')
     check("the key and the CLI are a card each", key_card.count() == 1 and cli_card.count() == 1)
     check("the CLI's card is the Gemini CLI's", cli_card.get_by_text("Gemini CLI", exact=True).count() == 1)
-    adding = sheet.locator("button.nib-action", has_text="Add Gemini")
+    adding = sheet.locator("button.orden-action", has_text="Add Gemini")
     check("Gemini can be added again by key", adding.count() >= 1)
 
     field = key_card.locator('input[type="password"]')
@@ -101,7 +101,7 @@ def drive(browser) -> None:
         pass
     try:
         page.wait_for_function(
-            "() => JSON.parse(localStorage.getItem('nib:ai-accounts')).accounts.find((one) => one.id === 'gemini')?.model",
+            "() => JSON.parse(localStorage.getItem('orden:ai-accounts')).accounts.find((one) => one.id === 'gemini')?.model",
             timeout=10_000,
         )
     except PlaywrightTimeout:
@@ -109,7 +109,7 @@ def drive(browser) -> None:
     quiet(page)
     shot(page, "02-models")
     chosen = page.evaluate(
-        "JSON.parse(localStorage.getItem('nib:ai-accounts')).accounts.find((one) => one.id === 'gemini').model"
+        "JSON.parse(localStorage.getItem('orden:ai-accounts')).accounts.find((one) => one.id === 'gemini').model"
     )
     check("the newest Pro that talks is picked first", chosen == "gemini-3.1-pro-preview")
     check("Google is asked with the key in its own header", any(one.get("x-goog-api-key") == "AIza-e2e-key" for one in asked))

@@ -1,6 +1,8 @@
 import { idNumber, inBase, readBase, readAutomations, repeatDue, type Row } from '@orden/bases'
 import { withProperties } from '@orden/bases/agent'
+import { frontMatterValue } from '@orden/markdown'
 import { insideOnly } from '../automation/inside'
+import { inTurn } from '../locks'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
 import { noteRowsOf, type RowsChange } from '../rows/store'
@@ -197,7 +199,15 @@ export function heard(
   else waiting.set(key, { space, path, removed: before, at })
 }
 
-export async function repeatTemplates() {
+const MAKING = 'orden:repeat-templates'
+
+const MAKING_PATIENCE = 60_000
+
+export function repeatTemplates(): Promise<void> {
+  return inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
+}
+
+async function makeRepeats() {
   const space = workspace.activeSpace
   if (!space || !rows.ready || !canWriteAt(space.root)) return
   const folder = joinPath(space.root, await templatesFolder(space.root))
@@ -206,7 +216,13 @@ export async function repeatTemplates() {
     if (row.kind !== 'note' || typeof row.note.repeat !== 'string') continue
     const path = insideSpace(space.root, row.path)
     if (within(folder, path, space.root) === null || workspace.documentAt(path)) continue
-    const due = repeatDue(row.note, today)
+    const template = await workspace.noteText(path)
+    if (template === null) continue
+    const note = { ...row.note }
+    const made = frontMatterValue(template, 'made')
+    if (made === null) delete note.made
+    else note.made = made
+    const due = repeatDue(note, today)
     if (!due) continue
 
     const said =
@@ -217,13 +233,13 @@ export async function repeatTemplates() {
     await invoke('create_folder', { path: to }).catch(() => undefined)
     const title = `${row.file.basename} ${due.day}`
     const name = await workspace.freeNameOnDisk(to, `${title}.md`)
-    const words = await templateWords(path, name.replace(/\.md$/i, ''))
-    const made = joinPath(to, name)
-    await writeFile(made, due.missed.length ? withProperties(words, { missed: due.missed }) : words)
-    await workspace.fileCame(made, 'file')
-
-    const template = await workspace.noteText(path)
-    if (template !== null) await writeFile(path, withProperties(template, { made: due.day }))
+    if (name === `${title}.md`) {
+      const words = await templateWords(path, title)
+      const at = joinPath(to, name)
+      await writeFile(at, due.missed.length ? withProperties(words, { missed: due.missed }) : words)
+      await workspace.fileCame(at, 'file')
+    }
+    await writeFile(path, withProperties(template, { made: due.day }))
   }
   await workspace.loadTree()
 }

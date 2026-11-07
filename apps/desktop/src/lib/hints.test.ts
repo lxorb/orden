@@ -98,7 +98,7 @@ describe('a hint', () => {
   })
 
   test('a sign-in card an earlier version put away is not read back (#415)', async () => {
-    localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'palette']))
+    localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'palette']))
     const { hints } = await restarted()
 
     expect(hints.seen).toEqual(['palette'])

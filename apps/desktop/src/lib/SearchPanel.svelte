@@ -236,12 +236,12 @@
 <div class="find" data-search={warm.said}>
   <div class="row">
     <div class="box">
-      <svg class="nib-field-mark mag" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+      <svg class="orden-field-mark mag" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
 
       <!-- svelte-ignore a11y_autofocus -->
       <input
         bind:this={field}
-        class="nib-field query"
+        class="orden-field query"
         class:wide={search.asks}
         value={search.text}
         oninput={typing}
@@ -259,8 +259,8 @@
         role="combobox"
         aria-label={t('Search this space')}
         aria-expanded={suggestions.length > 0}
-        aria-controls="nib-search-values"
-        aria-activedescendant={suggestions.length ? `nib-search-values-${active}` : undefined}
+        aria-controls="orden-search-values"
+        aria-activedescendant={suggestions.length ? `orden-search-values-${active}` : undefined}
         autofocus
       />
 
@@ -287,7 +287,7 @@
 
       {#if suggestions.length}
         <Suggest
-          id="nib-search-values"
+          id="orden-search-values"
           label={t('Values')}
           values={suggestions}
           typed={asking?.typed ?? ''}
@@ -327,7 +327,7 @@
   {#if search.replacing && writable}
     <div class="row" transition:fly={{ y: -6, duration: dur(130), easing: cubicOut }}>
       <input
-        class="nib-field query"
+        class="orden-field query"
         value={search.replacement}
         oninput={(event) => (search.replacement = event.currentTarget.value)}
         onkeydown={(event) => {
@@ -360,7 +360,7 @@
   >
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
-        <div class="nib-section note">
+        <div class="orden-section note">
           {#if group.loose}<span class="guess" title={t('Close match')}>~</span
             >{/if}{#if group.archived}<svg
               class="archived"
@@ -386,14 +386,14 @@
             {/if}
 
             <button
-              class="nib-row is-short hit"
+              class="orden-row is-short hit"
               onclick={(event) => void openHit(hit, event)}
               use:middleOpens={(event) => void openHit(hit, event)}
             >
               {#if task}
                 <input
                   type="checkbox"
-                  class="nib-checkbox"
+                  class="orden-checkbox"
                   checked={task.done}
                   aria-label={task.text}
                   onclick={(event) => ticked(event, hit)}
@@ -404,7 +404,7 @@
               {/each}
 
               {#if hit.page !== undefined}
-                <span class="nib-row-meta">{t('Page {page}', { page: hit.page })}</span>
+                <span class="orden-row-meta">{t('Page {page}', { page: hit.page })}</span>
               {/if}
             </button>
           </div>

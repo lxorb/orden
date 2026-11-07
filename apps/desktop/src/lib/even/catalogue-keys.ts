@@ -1,8 +1,8 @@
 import type { Dictionary } from '../i18n.svelte'
 
-const KEYS: readonly string[] = ['nib-even-catalogue-keys']
+const KEYS: readonly string[] = ['orden-even-catalogue-keys']
 
-export const KEYS_MARK = 'nib-even-catalogue-keys'
+export const KEYS_MARK = 'orden-even-catalogue-keys'
 
 export function rowsOf(
   column: Dictionary | readonly (Dictionary[string] | undefined)[],

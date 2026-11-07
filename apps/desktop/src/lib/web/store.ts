@@ -194,7 +194,7 @@ export interface RowChange {
   gone: string[]
 }
 
-const CHANNEL = 'nib:rows'
+const CHANNEL = 'orden:rows'
 
 let channel: BroadcastChannel | null = null
 

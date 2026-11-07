@@ -209,25 +209,25 @@
 {#snippet row(mark: string, label: string, count: number | null, target: PanelRow, late = false)}
   <button
     type="button"
-    class="nib-row"
+    class="orden-row"
     class:is-on={sameRow(chosen, target)}
     aria-pressed={sameRow(chosen, target)}
     onclick={(event) => press(event, target)}
     onauxclick={(event) => auxPress(event, target)}
     oncontextmenu={(event) => rowMenu(event, target)}
   >
-    <span class="nib-row-mark"
+    <span class="orden-row-mark"
       ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={mark} /></svg></span
     >
-    <span class="nib-row-label">{label}</span>
-    {#if count}<span class="nib-row-meta" class:late>{count}</span>{/if}
+    <span class="orden-row-label">{label}</span>
+    {#if count}<span class="orden-row-meta" class:late>{count}</span>{/if}
   </button>
 {/snippet}
 
 <div class="tasks" data-side={side}>
   {#if typing}
-    <div class="nib-row adding">
-      <span class="nib-row-mark"
+    <div class="orden-row adding">
+      <span class="orden-row-mark"
         ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></span
       >
       <!-- svelte-ignore a11y_autofocus -->
@@ -255,18 +255,18 @@
       />
     </div>
   {:else if writes}
-    <button type="button" class="nib-row adder" onclick={add}>
-      <span class="nib-row-mark"
+    <button type="button" class="orden-row adder" onclick={add}>
+      <span class="orden-row-mark"
         ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></span
       >
-      <span class="nib-row-label">{t('Add task')}</span>
+      <span class="orden-row-label">{t('Add task')}</span>
     </button>
   {/if}
 
   {@render row(TODAY_MARK, builtinName('todos'), counts.todos, { kind: 'todos' }, counts.overdue)}
 
   {#if favourites.length}
-    <p class="nib-section">{t('Favorites')}</p>
+    <p class="orden-section">{t('Favorites')}</p>
     {#each favourites as one (one.path)}
       {#if one.base}
         {@render row(VIEW_MARK, one.name, one.count, { kind: 'base', path: one.path })}
@@ -281,7 +281,7 @@
   {/if}
 
   {#if counts.labels.length}
-    <p class="nib-section">{t('Labels')}</p>
+    <p class="orden-section">{t('Labels')}</p>
     {#each counts.labels as one (one.tag)}
       {@render row(LABEL_MARK, one.tag, one.count, labelRow(one.tag))}
     {/each}
@@ -304,7 +304,7 @@
     border-top: 1px solid var(--line);
   }
 
-  .nib-row-mark svg {
+  .orden-row-mark svg {
     width: var(--icon-md);
     height: var(--icon-md);
     fill: none;

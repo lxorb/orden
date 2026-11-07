@@ -200,7 +200,7 @@ describe('a word with a colon after it', () => {
     ['tel:123'],
     ['about:blank'],
     ['ftp:example'],
-    ['nib://history'],
+    ['orden://history'],
     ['foo://bar'],
     ['chrome://settings'],
   ])('%s is an address no tab opens, and stays out of the search', (typed) => {
@@ -364,8 +364,8 @@ describe('a word that names a secret, in the languages a page is read in', () =>
 
 describe('what Enter does when the bar opens no page', () => {
   test('Orden’s own page opens, as its address is shown', () => {
-    expect(webAddress('nib://history')).toBeNull()
-    expect(unopened('nib://history')).toBe('own page')
+    expect(webAddress('orden://history')).toBeNull()
+    expect(unopened('orden://history')).toBe('own page')
     expect(unopened('  NIB://history ')).toBe('own page')
   })
 

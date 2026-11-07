@@ -75,24 +75,24 @@ describe('which stores', () => {
       c: 'site',
     })
     expect(oldChoices(null)).toEqual({})
-    expect(oldHistory('b')).toBe('nib:web-visits:b')
+    expect(oldHistory('b')).toBe('orden:web-visits:b')
   })
 })
 
 describe('the merge', () => {
   test('asks the crate for each store, folds the history, and is done for good', async () => {
-    kept.set('nib:web-data', JSON.stringify({ w: 'space' }))
-    kept.set('nib:web-visits:w', JSON.stringify([visit('https://a.example/')]))
-    kept.set('nib:web-visits', JSON.stringify([visit('https://b.example/')]))
+    kept.set('orden:web-data', JSON.stringify({ w: 'space' }))
+    kept.set('orden:web-visits:w', JSON.stringify([visit('https://a.example/')]))
+    kept.set('orden:web-visits', JSON.stringify([visit('https://b.example/')]))
 
     await mergeOld()
 
     expect(asked).toEqual([
       { command: 'web_merge', args: { from: 'space_w', origins: ['https://a.example'] } },
     ])
-    expect(kept.has('nib:web-data')).toBe(false)
-    expect(kept.has('nib:web-visits:w')).toBe(false)
-    const history = JSON.parse(kept.get('nib:web-visits') ?? '[]') as Visit[]
+    expect(kept.has('orden:web-data')).toBe(false)
+    expect(kept.has('orden:web-visits:w')).toBe(false)
+    const history = JSON.parse(kept.get('orden:web-visits') ?? '[]') as Visit[]
     expect(history.map((one) => one.url).sort()).toEqual([
       'https://a.example/',
       'https://b.example/',
@@ -100,7 +100,7 @@ describe('the merge', () => {
     expect(kept.get(MERGED)).toBeTruthy()
 
     asked.length = 0
-    kept.set('nib:web-data', JSON.stringify({ w: 'space' }))
+    kept.set('orden:web-data', JSON.stringify({ w: 'space' }))
     await mergeOld()
     expect(asked).toEqual([])
   })
@@ -112,11 +112,11 @@ describe('the merge', () => {
   })
 
   test('a store that could not be merged is tried again next launch, its choice kept', async () => {
-    kept.set('nib:web-data', JSON.stringify({ w: 'space' }))
+    kept.set('orden:web-data', JSON.stringify({ w: 'space' }))
     failing = 'no page could be made to restore into'
     await mergeOld()
     expect(kept.has(MERGED)).toBe(false)
-    expect(kept.has('nib:web-data')).toBe(true)
+    expect(kept.has('orden:web-data')).toBe(true)
   })
 })
 

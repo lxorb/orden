@@ -107,8 +107,8 @@ def shortcut(url: str, title: str) -> str:
 
 def space(port: int) -> pathlib.Path:
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-page-probe-"))
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-page-probe-"))
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     made = root / SPACE
     made.mkdir(parents=True)
@@ -363,7 +363,7 @@ def main() -> int:
         time.sleep(1)
         running, app = launch(args.exe, args.identifier, unlike=app.port)
 
-        app.ask("(localStorage.setItem('nib:language', 'en'), location.reload(), 1)")
+        app.ask("(localStorage.setItem('orden:language', 'en'), location.reload(), 1)")
         time.sleep(4)
         app.act("open", {"path": "Idea.md", "space": SPACE})
         time.sleep(2)
@@ -422,19 +422,19 @@ def main() -> int:
   const heard = []
   const I = window.__TAURI_INTERNALS__
   await I.invoke('plugin:event|listen', {{
-    event: 'nib://web-page',
+    event: 'orden://web-page',
     target: {{ kind: 'Any' }},
     handler: I.transformCallback((one) => one.payload.said === 'zoom' && heard.push(one.payload.factor)),
   }})
   const size = async (press) => {{
     document.querySelector('.webbar [aria-label="More"]').click()
     const rows = await wait(() => {{
-      const all = [...document.querySelectorAll('.menu .nib-row')]
+      const all = [...document.querySelectorAll('.menu .orden-row')]
       return all.length ? all : null
     }})
     if (press) rows.find((one) => one.textContent.trim() === press)?.click()
     await new Promise((go) => setTimeout(go, 300))
-    const said = [...document.querySelectorAll('.menu .nib-row')].map((one) => one.textContent.trim()).find((one) => one.endsWith('%'))
+    const said = [...document.querySelectorAll('.menu .orden-row')].map((one) => one.textContent.trim()).find((one) => one.endsWith('%'))
     key(window, {{ key: 'Escape' }})
     await new Promise((go) => setTimeout(go, 400))
     return said
@@ -445,7 +445,7 @@ def main() -> int:
     await new Promise((done) => setTimeout(done, 1500))
   }}
   const zoomed = await size('Zoom in')
-  const kept = localStorage.getItem('nib:web-zooms')
+  const kept = localStorage.getItem('orden:web-zooms')
   await go('http://localhost:{port}/find', 'Find page')
   const elsewhere = await size(null)
   await go('http://127.0.0.1:{port}/find', 'Find page')
@@ -467,11 +467,11 @@ def main() -> int:
     .querySelector(`[data-tab="${{tab.id}}"]`)
     .dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true, cancelable: true, clientX: 200, clientY: 20 }}))
   const row = await wait(() =>
-    [...document.querySelectorAll('.menu .nib-row')].find((one) => one.textContent.includes('Mute site')),
+    [...document.querySelectorAll('.menu .orden-row')].find((one) => one.textContent.includes('Mute site')),
   )
   row?.click()
   const muted = await wait(() => (glyph()?.getAttribute('aria-label') === 'Muted' ? 'Muted' : null), 10000)
-  return {{ loaded: true, playing, row: !!row, muted, kept: localStorage.getItem('nib:web-muted') }}
+  return {{ loaded: true, playing, row: !!row, muted, kept: localStorage.getItem('orden:web-muted') }}
 """,
         )
 

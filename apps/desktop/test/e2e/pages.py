@@ -35,7 +35,18 @@ PREPARE = """
   Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
     configurable: true,
     get() { return own.get.call(this) },
-    set(value) { window.__printed = value; own.set.call(this, value) },
+    set(value) {
+      window.__printed = value;
+      window.__drawn = null;
+      const frame = this;
+      frame.addEventListener('load', () => {
+        window.__drawn = [...frame.contentDocument.images].map((one) => ({
+          src: one.src.slice(0, 5),
+          shown: one.complete && one.naturalWidth > 0,
+        }));
+      }, { once: true });
+      own.set.call(this, value);
+    },
   });
 })();
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
@@ -76,8 +87,8 @@ AS_PHONE = """
 """
 
 NO_PEN_YET = """
-try { localStorage.setItem('nib:pen-seen', 'no') } catch {}
-try { localStorage.setItem('nib:finger-draws', 'no') } catch {}
+try { localStorage.setItem('orden:pen-seen', 'no') } catch {}
+try { localStorage.setItem('orden:finger-draws', 'no') } catch {}
 """
 
 def opened(page: Page, label: str, device: str | None = None) -> None:
@@ -437,6 +448,19 @@ def check_print(page: Page, label: str) -> None:
         fail(f"[{label}] printing handed over {sheets} sheets for {count} pages")
     else:
         say(f"[{label}] printing hands the print engine all {count} pages")
+    try:
+        page.wait_for_function("() => !!window.__drawn", timeout=30000)
+    except Exception:  # noqa: BLE001 - said below
+        fail(f"[{label}] the print frame never finished loading")
+        return
+    drawn = page.evaluate("() => window.__drawn")
+    size = page.evaluate("() => window.__printed.length")
+    if not all(one["shown"] for one in drawn) or any(one["src"] != "blob:" for one in drawn):
+        fail(f"[{label}] the printed sheets are not all pictures linked in and shown: {drawn}")
+    elif size > 2000 * max(1, count):
+        fail(f"[{label}] the print page carries its pictures inline: {size} characters")
+    else:
+        say(f"[{label}] every printed sheet is a linked picture that shows ({size} characters)")
 
 def check_lasso_held(page: Page, cdp, label: str) -> None:
     say("--- the lasso, held on its key ---")
@@ -765,9 +789,9 @@ def check_adding(page: Page, label: str) -> None:
     rows.nth(0).evaluate(
         """(row) => {
           const carried = new DataTransfer()
-          carried.setData('application/nib-page', '1')
-          carried.setData('text/nib-page', JSON.stringify({ note: '/elsewhere/Other.pages', page: 'p1' }))
-          carried.setData('text/nib-from-another-window', 'text/nib-page')
+          carried.setData('application/orden-page', '1')
+          carried.setData('text/orden-page', JSON.stringify({ note: '/elsewhere/Other.pages', page: 'p1' }))
+          carried.setData('text/orden-from-another-window', 'text/orden-page')
           const box = row.getBoundingClientRect()
           const at = { bubbles: true, cancelable: true, dataTransfer: carried, clientX: box.left + 4, clientY: box.top + 2 }
           row.dispatchEvent(new DragEvent('dragover', at))

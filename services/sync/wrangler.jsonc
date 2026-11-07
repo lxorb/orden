@@ -42,8 +42,8 @@
   ],
 
   "r2_buckets": [
-    { "binding": "NOTES", "bucket_name": "nib-notes" },
-    { "binding": "HOMES", "bucket_name": "nib-homes", "jurisdiction": "eu" },
+    { "binding": "NOTES", "bucket_name": "orden-notes" },
+    { "binding": "HOMES", "bucket_name": "orden-homes", "jurisdiction": "eu" },
   ],
 
   "ai": { "binding": "AI" },

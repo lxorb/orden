@@ -220,11 +220,11 @@ describe('every key in storage', () => {
 describe('the check itself', () => {
   test('finds a word read as JSON, through the constant that names it', () => {
     const found = audit([
-      { name: 'keys.ts', text: "export const SET_KEY = 'nib:icon-set'" },
+      { name: 'keys.ts', text: "export const SET_KEY = 'orden:icon-set'" },
       { name: 'a.ts', text: "import { SET_KEY } from './keys'\nkeep(SET_KEY, set)" },
       { name: 'b.ts', text: "import { SET_KEY } from './keys'\nconst said = stored(SET_KEY)" },
     ])
-    expect(found.wrong).toEqual(['nib:icon-set: read as json at b.ts:2, written as text'])
+    expect(found.wrong).toEqual(['orden:icon-set: read as json at b.ts:2, written as text'])
   })
 
   test('finds JSON handed to keep, and lets the two right pairs be', () => {
@@ -232,12 +232,12 @@ describe('the check itself', () => {
       {
         name: 'a.ts',
         text: [
-          "const ASKS = 'nib:ai-switch-asks'",
+          "const ASKS = 'orden:ai-switch-asks'",
           'keep(ASKS, JSON.stringify(true))',
-          "keep('nib:word', 'yes')",
-          "storedText('nib:word')",
-          'keepJson(`nib:list:${id}`, [1])',
-          'stored(`nib:list:${other}`)',
+          "keep('orden:word', 'yes')",
+          "storedText('orden:word')",
+          'keepJson(`orden:list:${id}`, [1])',
+          'stored(`orden:list:${other}`)',
         ].join('\n'),
       },
     ])

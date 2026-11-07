@@ -177,7 +177,7 @@ object Reminders {
 
   private fun ringing(context: Context, id: String, alarm: Alarm?): PendingIntent {
     val intent = Intent(context, ReminderReceiver::class.java).setAction(ACTION_RING)
-    intent.data = Uri.parse("nib-reminder://$id")
+    intent.data = Uri.parse("orden-reminder://$id")
     if (alarm != null) intent.putExtra(EXTRA_ALARM, toJson(listOf(alarm)).toString())
     return PendingIntent.getBroadcast(
       context,
@@ -191,7 +191,7 @@ object Reminders {
     val intent =
       Intent(context, ReminderReceiver::class.java)
         .setAction(act)
-        .setData(Uri.parse("nib-reminder://${alarm.id}/$act"))
+        .setData(Uri.parse("orden-reminder://${alarm.id}/$act"))
         .putExtra(EXTRA_ALARM, toJson(listOf(alarm)).toString())
     return PendingIntent.getBroadcast(
       context,

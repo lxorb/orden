@@ -172,7 +172,7 @@ def main() -> int:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
     args.out.mkdir(parents=True, exist_ok=True)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-protect-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-protect-"))
     (spaces / SPACE).mkdir()
     (spaces / SPACE / NOTE).write_text(f"# Diary\n\n{WORDS}\n", encoding="utf-8")
     config = config_of(args.identifier)
@@ -188,7 +188,7 @@ def main() -> int:
     log = open(args.out / "app.log", "wb")
     process = subprocess.Popen(
         [str(args.exe)],
-        env={**os.environ, "NIB_SPACES_DIR": str(spaces)},
+        env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)},
         cwd=str(args.exe.parent),
         stdout=log,
         stderr=subprocess.STDOUT,
@@ -231,13 +231,13 @@ def main() -> int:
         step(MENU % {"path": json.dumps(where["path"])}, "the row's menu")
         step(PRESS % {"where": json.dumps("[role=menuitem]"), "label": json.dumps("Protect")}, "Protect")
         time.sleep(1)
-        if app.eval(PRESS % {"where": json.dumps(".nib-screen button"), "label": json.dumps("Password")}):
+        if app.eval(PRESS % {"where": json.dumps(".orden-screen button"), "label": json.dumps("Password")}):
             print("chose the password over the device", flush=True)
         step(
-            TYPE % {"where": json.dumps(".nib-screen input[type=password]"), "count": 2, "words": json.dumps(PASSWORD)},
+            TYPE % {"where": json.dumps(".orden-screen input[type=password]"), "count": 2, "words": json.dumps(PASSWORD)},
             "the new password typed",
         )
-        step(PRESS % {"where": json.dumps(".nib-screen button[type=submit]"), "label": json.dumps("Protect")}, "the password's Protect")
+        step(PRESS % {"where": json.dumps(".orden-screen button[type=submit]"), "label": json.dumps("Protect")}, "the password's Protect")
         step(
             f"nib.workspace.protection.own({json.dumps(where['root'])}, {json.dumps(where['path'])})?.way === 'password'",
             "the note protected with the password",

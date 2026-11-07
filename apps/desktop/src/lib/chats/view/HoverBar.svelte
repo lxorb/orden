@@ -29,7 +29,7 @@
 </script>
 
 <div
-  class="bar nib-layer"
+  class="bar orden-layer"
   style:top="{top}px"
   role="toolbar"
   aria-label={message.body.slice(0, 40)}

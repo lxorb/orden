@@ -22,7 +22,7 @@ export function wallpaperSettings(): ThemeSetting[] {
     range('blur', t('Blur'), t('How much the picture is blurred.'), 0, 60, 28, 'px'),
     {
       ...range('dim', t('Dim'), t('How much the picture is darkened.'), 0, 90, 10, '%'),
-      paint: (value) => ({ '--nib-dim': `${String(value)}%` }),
+      paint: (value) => ({ '--orden-dim': `${String(value)}%` }),
     },
     range(
       'saturation',

@@ -303,6 +303,20 @@ export function collectAbbreviations(source: string): Map<string, string> {
 
 const FOOTNOTE_DEF = /\[\^[^\]\s]+\]:\s*\S/y
 
+const REF_STOPS = new WeakMap<Token[], number>()
+
+const A_REF_STOP = /[\]\s]/g
+
+function footnoteRefEnd(src: string, tokens: Token[]): number {
+  const left = REF_STOPS.get(tokens)
+  if (left !== undefined && src.length - left >= 2) return src.length - left
+
+  A_REF_STOP.lastIndex = 2
+  const at = A_REF_STOP.exec(src)?.index ?? src.length
+  REF_STOPS.set(tokens, src.length - at)
+  return at
+}
+
 function footnoteDefinition(src: string, at: number): number | null {
   const line = lineStart(src, at, { orString: true })
   return line !== null && matchesAt(FOOTNOTE_DEF, src, at) ? line : null
@@ -336,10 +350,11 @@ export const footnotes: MarkedExtension = remembering({
       name: 'footnoteRef',
       level: 'inline',
       start: (src: string) => src.indexOf('[^'),
-      tokenizer(src: string) {
-        const match = /^\[\^([^\]\s]+)\]/.exec(src)
-        if (!match) return undefined
-        return { type: 'footnoteRef', raw: match[0], id: match[1] }
+      tokenizer(src: string, tokens: Token[]) {
+        if (!src.startsWith('[^')) return undefined
+        const end = footnoteRefEnd(src, tokens)
+        if (end <= 2 || src.charAt(end) !== ']') return undefined
+        return { type: 'footnoteRef', raw: src.slice(0, end + 1), id: src.slice(2, end) }
       },
       renderer: (token: Tokens.Generic) => {
         const id = String(token.id)

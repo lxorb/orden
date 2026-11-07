@@ -1511,6 +1511,8 @@ export const ms: Dictionary = {
   Shorter: 'Lebih pendek',
   Longer: 'Lebih panjang',
   'Fix grammar': 'Perbaiki tatabahasa',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Perkataan yang dipilih tiada lagi dalam nota, jadi tiada apa-apa diganti.',
   'A cited report': 'Laporan dengan sitasi',
   'A helper in the background': 'Pembantu di latar belakang',
   'A side question': 'Soalan sampingan',
@@ -2895,6 +2897,8 @@ export const ms: Dictionary = {
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} tidak ditambah: sembang menerima gambar dan fail teks sehingga 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} tidak ditambah: satu mesej menerima paling banyak 20 gambar.',
   'Time tracker': 'Penjejak masa',
   'Start timer': 'Mulakan pemasa',
   'Stop timer': 'Hentikan pemasa',
@@ -3429,9 +3433,49 @@ export const ms: Dictionary = {
   'You said': 'Dinyatakan',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Hantar laporan ranap dan beku',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Apabila Orden ranap atau beku, ia menghantar apa yang sedang dilakukannya dan di mana dalam kodnya sendiri, tanpa nama, laluan, alamat dan kata laluan. Tidak sekali-kali nota anda.',
-  'Turn off in Settings': 'Matikan dalam Tetapan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Menghantar apa yang dilakukan Orden semasa ranap atau beku; tidak sekali-kali nota, nama, laluan atau kata laluan.',
+  'Send crash reports to help improve Orden':
+    'Hantar laporan ranap untuk membantu menambah baik Orden',
+  'Move to {space}?': 'Alihkan ke {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS juga boleh memulakan imlak dengan kekunci ini.',
+  'QR code': 'Kod QR',
+  'Waiting…': 'Menunggu…',
+  Service: 'Perkhidmatan',
+  'I understand and want to connect anyway': 'Saya faham dan tetap mahu menyambung',
+  'Some changes have not reached your account yet': 'Beberapa perubahan belum sampai ke akaun anda',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Perubahan itu kekal dalam pelayar ini, tidak dilihat oleh sesiapa lagi yang log masuk di sini, dan dihantar apabila anda log masuk semula.',
+  'Leave it empty to sign in with a QR code instead':
+    'Biarkan kosong untuk log masuk dengan kod QR',
+  'Telegram code': 'Kod Telegram',
+  'Sent to Telegram on your other device': 'Dihantar ke Telegram pada peranti anda yang lain',
+  'Sent by SMS': 'Dihantar melalui SMS',
+  'You will get a call with the code': 'Anda akan menerima panggilan dengan kod itu',
+  'The code was wrong. Try again.': 'Kod itu salah. Cuba lagi.',
+  'The code expired, so Telegram sent a new one.':
+    'Kod itu tamat tempoh, jadi Telegram menghantar yang baharu.',
+  'Two-step verification password': 'Kata laluan pengesahan dua langkah',
+  'The password was wrong. Try again.': 'Kata laluan itu salah. Cuba lagi.',
+  'Scan with Telegram on your phone': 'Imbas dengan Telegram pada telefon anda',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Tetapan > Peranti > Pautkan Peranti Desktop',
+  'Signing in to Telegram needs the app': 'Log masuk ke Telegram memerlukan aplikasi',
+  'Telegram does not know this phone number': 'Telegram tidak mengenali nombor telefon ini',
+  'Too many tries. Wait a while and try again.':
+    'Terlalu banyak cubaan. Tunggu sebentar dan cuba lagi.',
+  'Too many wrong tries': 'Terlalu banyak cubaan yang salah',
+  'Signed out of Telegram. Connect again.': 'Dilog keluar daripada Telegram. Sambung semula.',
+  'Telegram cannot do that in this conversation':
+    'Telegram tidak boleh melakukannya dalam perbualan ini',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram memadam mesej dalam kumpulan dan saluran untuk semua orang',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram menyerahkan kumpulan kepada pemilik baharu hanya dari aplikasinya sendiri',
+  'That sticker is no longer available': 'Pelekat itu tidak lagi tersedia',
+  'Telegram is not set up in this build': 'Telegram tidak disediakan dalam binaan ini',
+  'Password manager': 'Pengurus kata laluan',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Menambah Pass, yang menyimpan kata laluan dan mengisinya di laman web. Mematikannya mengekalkan peti besi anda.',
 }

@@ -19,7 +19,7 @@ WM_CLOSE = 0x0010
 
 APP_CLASS = "Tauri Window"
 
-OFF_SCREEN = "NIB_OFF_SCREEN"
+OFF_SCREEN = "ORDEN_OFF_SCREEN"
 
 LOOK_EVERY = 0.004
 
@@ -140,7 +140,7 @@ def identifier_of(exe: pathlib.Path, given: str | None = None) -> str:
 
     if given:
         return given
-    beside = exe.parent / "nib-probe-identifier.json"
+    beside = exe.parent / "orden-probe-identifier.json"
     if not beside.exists():
         raise SystemExit(f"which identifier was {exe} built under? pass --identifier")
     return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
@@ -190,8 +190,8 @@ def run_probe(
 
     refuse_updating(exe)
     environment = {**(os.environ if env is None else env), OFF_SCREEN: "1"}
-    if not environment.get("NIB_SPACES_DIR"):
-        raise SystemExit("a probe is launched with NIB_SPACES_DIR in a temp folder, never without")
+    if not environment.get("ORDEN_SPACES_DIR"):
+        raise SystemExit("a probe is launched with ORDEN_SPACES_DIR in a temp folder, never without")
 
     without_error_boxes()
     shown = subprocess.STARTUPINFO()

@@ -1507,6 +1507,8 @@ export const ja: Dictionary = {
   Shorter: '短く',
   Longer: '長く',
   'Fix grammar': '文法を直す',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '選んだ言葉がもうノートにないため、何も置き換えませんでした。',
   'A cited report': '出典付きレポート',
   'A helper in the background': '裏で動くヘルパー',
   'A side question': '補助質問',
@@ -2873,6 +2875,8 @@ export const ja: Dictionary = {
   'That could not be protected: {reason}': '保護できませんでした: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} は追加されませんでした: チャットに追加できるのは画像と 2 MB までのテキストファイルです。',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} は追加されませんでした: 1 通のメッセージに添付できる画像は 20 枚までです。',
   'Time tracker': 'タイムトラッカー',
   'Start timer': 'タイマーを開始',
   'Stop timer': 'タイマーを停止',
@@ -3410,9 +3414,48 @@ export const ja: Dictionary = {
   'You said': '自己申告',
   Privacy: 'プライバシー',
   'Send crash and freeze reports': 'クラッシュとフリーズのレポートを送信',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden がクラッシュまたはフリーズしたとき、何をしていて自身のコードのどこにいたかを、名前、パス、アドレス、パスワードを除いて送信します。メモは決して送りません。',
-  'Turn off in Settings': '設定でオフにする',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'クラッシュやフリーズ時に Orden が何をしていたかを送信します。メモ、名前、パス、パスワードは送りません。',
+  'Send crash reports to help improve Orden': 'クラッシュレポートを送信して Orden の改善に協力する',
+  'Move to {space}?': '{space} に移動しますか？',
+  'macOS can start dictation with this key too.':
+    'macOS はこのキーで音声入力も始めることがあります。',
+  'QR code': 'QR コード',
+  'Waiting…': '待機中…',
+  Service: 'サービス',
+  'I understand and want to connect anyway': '理解したうえで接続します',
+  'Some changes have not reached your account yet': 'まだアカウントに届いていない変更があります',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '変更はこのブラウザーに残り、ここでサインインするほかの人には見えず、もう一度サインインすると送られます。',
+  'Leave it empty to sign in with a QR code instead':
+    '空欄のままにすると QR コードでサインインします',
+  'Telegram code': 'Telegram のコード',
+  'Sent to Telegram on your other device': 'ほかの端末の Telegram に送信しました',
+  'Sent by SMS': 'SMS で送信しました',
+  'You will get a call with the code': 'コードを伝える電話がかかってきます',
+  'The code was wrong. Try again.': 'コードが違います。もう一度お試しください。',
+  'The code expired, so Telegram sent a new one.':
+    'コードの期限が切れたため、Telegram が新しいコードを送りました。',
+  'Two-step verification password': '2 段階認証のパスワード',
+  'The password was wrong. Try again.': 'パスワードが違います。もう一度お試しください。',
+  'Scan with Telegram on your phone': 'スマートフォンの Telegram でスキャン',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > 設定 > デバイス > デスクトップ端末をリンク',
+  'Signing in to Telegram needs the app': 'Telegram へのサインインにはアプリが必要です',
+  'Telegram does not know this phone number': 'Telegram はこの電話番号を知りません',
+  'Too many tries. Wait a while and try again.':
+    '試行回数が多すぎます。しばらく待ってからもう一度お試しください。',
+  'Too many wrong tries': '間違いが多すぎます',
+  'Signed out of Telegram. Connect again.':
+    'Telegram からサインアウトしました。もう一度接続してください。',
+  'Telegram cannot do that in this conversation': 'この会話では Telegram はそれを行えません',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram はグループとチャンネルのメッセージを全員から削除します',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram はグループの新しいオーナーへの譲渡を自身のアプリでしか行えません',
+  'That sticker is no longer available': 'そのステッカーはもう使えません',
+  'Telegram is not set up in this build': 'このビルドでは Telegram が設定されていません',
+  'Password manager': 'パスワードマネージャー',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'パスワードを保管し、ウェブサイトで入力する Pass を追加します。オフにしても保管庫は残ります。',
 }

@@ -54,11 +54,11 @@ def ask(tab, number):
     payload = {"tab": tab, "id": number, "origin": f"{SITE}/", "kind": "camera"}
     return run(
         "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', "
-        f"{{ event: 'nib://web-ask', payload: {json.dumps(payload)} }}).then(() => true, (e) => String(e))"
+        f"{{ event: 'orden://web-ask', payload: {json.dumps(payload)} }}).then(() => true, (e) => String(e))"
     )
 
 BUBBLE = "document.querySelector('.ask[role=\"dialog\"]') !== null"
-STORED = "localStorage.getItem('nib:web-grants') || ''"
+STORED = "localStorage.getItem('orden:web-grants') || ''"
 
 failures = []
 

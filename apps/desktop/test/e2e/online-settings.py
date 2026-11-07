@@ -100,7 +100,7 @@ NAMES = ["Fix the flaky upload test and the build that goes with it", "vim", "Te
 ROWS = """
 () => {
   const box = (one) => one.getBoundingClientRect()
-  return [...document.querySelectorAll('.online .nib-setting')].slice(1).map((row) => {
+  return [...document.querySelectorAll('.online .orden-setting')].slice(1).map((row) => {
     const name = row.querySelector('.name')
     const chips = [...row.querySelectorAll('button')]
     return {
@@ -110,7 +110,7 @@ ROWS = """
       nameWidth: box(name).width,
       chips: chips.map((chip) => ({
         label: chip.textContent.trim(),
-        chip: chip.classList.contains('nib-chip'),
+        chip: chip.classList.contains('orden-chip'),
         width: box(chip).width,
       })),
       lastRight: chips.length ? box(chips.at(-1)).right : 0,
@@ -159,7 +159,7 @@ MEASURE = """
   const box = (one) => one ? one.getBoundingClientRect() : null
   const pane = document.querySelector('.sheet .body')
   const online = document.querySelector('.online')
-  const row = online?.querySelector('.nib-setting')
+  const row = online?.querySelector('.orden-setting')
   const name = row?.querySelector('.name')
   const action = row?.querySelector('button')
   const meters = [...(online?.querySelectorAll('.meter') ?? [])].map((meter) => {
@@ -192,7 +192,7 @@ MEASURE = """
       height: box(action).height,
       right: box(action).right,
       label: action.textContent.trim(),
-      chip: action.classList.contains('nib-chip'),
+      chip: action.classList.contains('orden-chip'),
     },
     meters,
     past: past.map((one) => one.className || one.tagName),
@@ -273,7 +273,7 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
         check(f"[{name}] nothing in the pane runs past its side {seen['past']}", not seen["past"])
         check(f"[{name}] the pane does not scroll sideways", not seen["scrolls"])
 
-        every = f"document.querySelectorAll('.online .nib-setting').length === {len(SESSIONS) + 1}"
+        every = f"document.querySelectorAll('.online .orden-setting').length === {len(SESSIONS) + 1}"
         DRIVE.wait_for(page, every, f"[{name}] the sessions")
         listed = page.evaluate(ROWS)
         say(f"[{name}] sessions {json.dumps(listed)}")
@@ -299,8 +299,8 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
     page.context.close()
 
 def ending(page: Page, account: Account) -> None:
-    danger = "document.querySelector('button.nib-button.is-danger')"
-    last = page.locator(".online .nib-setting").last
+    danger = "document.querySelector('button.orden-button.is-danger')"
+    last = page.locator(".online .orden-setting").last
     last.get_by_role("button", name="End").click()
     DRIVE.wait_for(page, danger, "End's question")
     shot(page, "end-asked")
@@ -310,8 +310,8 @@ def ending(page: Page, account: Account) -> None:
 
     last.get_by_role("button", name="End").click()
     DRIVE.wait_for(page, danger, "End's question again")
-    page.locator("button.nib-button.is-danger").click()
-    DRIVE.wait_for(page, "document.querySelectorAll('.online .nib-setting').length === 3", "its row gone")
+    page.locator("button.orden-button.is-danger").click()
+    DRIVE.wait_for(page, "document.querySelectorAll('.online .orden-setting').length === 3", "its row gone")
     check("End ends the session no file names, by its own id", account.ended == ["s_orphan"])
     shot(page, "end-ended")
     account.sessions = [dict(one) for one in SESSIONS]

@@ -8,32 +8,32 @@ pub enum Asked {
     Front,
 }
 
-const BEHIND: &str = "nib-behind";
-const FRONT: &str = "nib-front";
+const BEHIND: &str = "orden-behind";
+const FRONT: &str = "orden-front";
 
-const FIND: &str = "nib-find";
-const FIND_NEXT: &str = "nib-find-next";
-const FIND_PREVIOUS: &str = "nib-find-previous";
-const ADDRESS: &str = "nib-address";
-const CTRL_D: &str = "nib-ctrl-d";
-const CTRL_SHIFT_D: &str = "nib-ctrl-shift-d";
-const CTRL_SPACE: &str = "nib-ctrl-space";
-const CTRL_SHIFT_SPACE: &str = "nib-ctrl-shift-space";
-const CTRL_H: &str = "nib-ctrl-h";
-const CTRL_SHIFT_DELETE: &str = "nib-ctrl-shift-delete";
+const FIND: &str = "orden-find";
+const FIND_NEXT: &str = "orden-find-next";
+const FIND_PREVIOUS: &str = "orden-find-previous";
+const ADDRESS: &str = "orden-address";
+const CTRL_D: &str = "orden-ctrl-d";
+const CTRL_SHIFT_D: &str = "orden-ctrl-shift-d";
+const CTRL_SPACE: &str = "orden-ctrl-space";
+const CTRL_SHIFT_SPACE: &str = "orden-ctrl-shift-space";
+const CTRL_H: &str = "orden-ctrl-h";
+const CTRL_SHIFT_DELETE: &str = "orden-ctrl-shift-delete";
 
-const ACTUAL: &str = "nib-actual-size";
+const ACTUAL: &str = "orden-actual-size";
 
-const INSTALL: &str = "nib-install-extension";
+const INSTALL: &str = "orden-install-extension";
 
-const ESCAPE: &str = "nib-escape";
+const ESCAPE: &str = "orden-escape";
 
-const TWICE_SHIFT: &str = "nib-twice-shift";
-const TWICE_CTRL: &str = "nib-twice-ctrl";
-const TWICE_ALT: &str = "nib-twice-alt";
+const TWICE_SHIFT: &str = "orden-twice-shift";
+const TWICE_CTRL: &str = "orden-twice-ctrl";
+const TWICE_ALT: &str = "orden-twice-alt";
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const PASSED: &str = "nib://web-passed";
+const PASSED: &str = "orden://web-passed";
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -100,10 +100,10 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 }
 
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
-const PRESSED_IN: &str = "nib-pressed";
+const PRESSED_IN: &str = "orden-pressed";
 
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
-const BLOCKED: &str = "nib-popup-blocked";
+const BLOCKED: &str = "orden-popup-blocked";
 
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const PAGE_SCRIPT: &str = r"(function () {
@@ -120,11 +120,11 @@ pub const PAGE_SCRIPT: &str = r"(function () {
       var name = args.length > 1 && args[1] != null ? String(args[1]) : '_blank'
       var features = args.length > 2 && args[2] != null ? String(args[2]).toLowerCase() : ''
       if (/(^|[\s,])no(opener|referrer)(?=$|[\s,=])/.test(features) && (name === '_blank' || name === '')) {
-        said(active ? 'nib-open-tab' : 'nib-popup-blocked', args[0])
+        said(active ? 'orden-open-tab' : 'orden-popup-blocked', args[0])
         return null
       }
       var opened = Reflect.apply(engine, self, args)
-      if (!opened && !active) said('nib-popup-blocked', args[0])
+      if (!opened && !active) said('orden-popup-blocked', args[0])
       return opened
     }
   })
@@ -158,7 +158,7 @@ pub const SCRIPT: &str = r"(function () {
     if (!link || typeof link.href !== 'string' || !/^https?:/i.test(link.href)) return
     if (front === 'blank' && (link.target || '').toLowerCase() !== '_blank') return
     event.preventDefault()
-    open(link.href, front || event.shiftKey ? 'nib-front' : 'nib-behind')
+    open(link.href, front || event.shiftKey ? 'orden-front' : 'orden-behind')
   }
 
   last('auxclick', function (event) {
@@ -173,7 +173,7 @@ pub const SCRIPT: &str = r"(function () {
     var method = event.submitter && event.submitter.getAttribute('formmethod') || form.method
     var target = by ? by.getAttribute('formtarget') : form.target
     if (String(method).toLowerCase() !== 'post' || target !== '_blank') return
-    var name = 'nib-post-' + (++posted)
+    var name = 'orden-post-' + (++posted)
     if (!windows('about:blank', name)) return
     if (by) by.setAttribute('formtarget', name)
     else form.target = name
@@ -195,16 +195,16 @@ pub const SCRIPT: &str = r"(function () {
   // activation, which the page's own `window.open` in the same press needs.
   addEventListener('pointerdown', function (event) {
     var asking = globalThis.nibAsked
-    if (event.isTrusted && typeof asking === 'function') asking(JSON.stringify(['', 'nib-pressed']))
+    if (event.isTrusted && typeof asking === 'function') asking(JSON.stringify(['', 'orden-pressed']))
   }, true)
 
-  addEventListener('nib-open-tab', function (event) {
-    if (typeof event.detail === 'string') open(event.detail, 'nib-front')
+  addEventListener('orden-open-tab', function (event) {
+    if (typeof event.detail === 'string') open(event.detail, 'orden-front')
   })
-  addEventListener('nib-popup-blocked', function (event) {
+  addEventListener('orden-popup-blocked', function (event) {
     var asking = globalThis.nibAsked
     if (typeof event.detail === 'string' && typeof asking === 'function')
-      asking(JSON.stringify([event.detail, 'nib-popup-blocked']))
+      asking(JSON.stringify([event.detail, 'orden-popup-blocked']))
   })
 
   last('keydown', function (event, stopped) {
@@ -215,25 +215,25 @@ pub const SCRIPT: &str = r"(function () {
     var code = event.keyCode
     var name = null
     if (stopped && code === 27) return
-    if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'nib-escape')
+    if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'orden-escape')
     if (ctrl && alt) return
-    else if (alt) name = code === 68 && !back ? 'nib-address' : null
-    else if (ctrl && code === 70 && !back) name = 'nib-find'
-    else if (ctrl && code === 76 && !back) name = 'nib-address'
-    else if (ctrl && (code === 48 || code === 96) && !back) name = 'nib-actual-size'
-    else if (ctrl && code === 68) name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'
-    else if (ctrl && code === 32) name = back ? 'nib-ctrl-shift-space' : 'nib-ctrl-space'
-    else if (ctrl && code === 72 && !back) name = 'nib-ctrl-h'
-    else if (ctrl && code === 46 && back) name = 'nib-ctrl-shift-delete'
-    else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
-    else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
-    if (!name || (stopped && /^nib-(find|actual)/.test(name))) return
+    else if (alt) name = code === 68 && !back ? 'orden-address' : null
+    else if (ctrl && code === 70 && !back) name = 'orden-find'
+    else if (ctrl && code === 76 && !back) name = 'orden-address'
+    else if (ctrl && (code === 48 || code === 96) && !back) name = 'orden-actual-size'
+    else if (ctrl && code === 68) name = back ? 'orden-ctrl-shift-d' : 'orden-ctrl-d'
+    else if (ctrl && code === 32) name = back ? 'orden-ctrl-shift-space' : 'orden-ctrl-space'
+    else if (ctrl && code === 72 && !back) name = 'orden-ctrl-h'
+    else if (ctrl && code === 46 && back) name = 'orden-ctrl-shift-delete'
+    else if (ctrl && code === 71) name = back ? 'orden-find-previous' : 'orden-find-next'
+    else if (!ctrl && code === 114) name = back ? 'orden-find-previous' : 'orden-find-next'
+    if (!name || (stopped && /^orden-(find|actual)/.test(name))) return
     event.preventDefault()
     open('about:blank', name)
   }, true)
 
   var within = 350
-  var twice = { Shift: 'nib-twice-shift', Control: 'nib-twice-ctrl', Alt: 'nib-twice-alt' }
+  var twice = { Shift: 'orden-twice-shift', Control: 'orden-twice-ctrl', Alt: 'orden-twice-alt' }
   var down = null
   var tap = null
   var asking = null
@@ -295,7 +295,7 @@ pub const SCRIPT: &str = r"(function () {
       if (!/^getOrRemoveButton/.test(button.id) && !(/chrome/i.test(said) && !/enterprise/i.test(said))) return
       event.preventDefault()
       event.stopImmediatePropagation()
-      open('about:blank', 'nib-install-extension')
+      open('about:blank', 'orden-install-extension')
     }, true)
   }
 })()";
@@ -625,7 +625,7 @@ pub fn script() -> String {
 }
 
 #[cfg(feature = "cef")]
-const STOPPED_ENGINE_KEYS: &str = "/^nib-(find|actual)/";
+const STOPPED_ENGINE_KEYS: &str = "/^orden-(find|actual)/";
 
 #[cfg(feature = "cef")]
 pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
@@ -733,16 +733,28 @@ mod tests {
 
     #[test]
     fn the_script_names_the_window_for_a_press_on_a_link() {
-        assert_eq!(placed("nib-behind", true, NONE, false), Some(Asked::Behind));
-        assert_eq!(placed("nib-front", true, SHIFT, false), Some(Asked::Front));
+        assert_eq!(
+            placed("orden-behind", true, NONE, false),
+            Some(Asked::Behind)
+        );
+        assert_eq!(
+            placed("orden-front", true, SHIFT, false),
+            Some(Asked::Front)
+        );
     }
 
     #[test]
     fn the_press_s_own_keys_outrank_the_keyboard_s() {
-        assert_eq!(placed("nib-behind", true, BOTH, false), Some(Asked::Behind));
-        assert_eq!(placed("nib-behind", true, SHIFT, true), Some(Asked::Behind));
-        assert_eq!(placed("nib-front", true, NONE, false), Some(Asked::Front));
-        assert_eq!(placed("nib-front", true, CTRL, true), Some(Asked::Front));
+        assert_eq!(
+            placed("orden-behind", true, BOTH, false),
+            Some(Asked::Behind)
+        );
+        assert_eq!(
+            placed("orden-behind", true, SHIFT, true),
+            Some(Asked::Behind)
+        );
+        assert_eq!(placed("orden-front", true, NONE, false), Some(Asked::Front));
+        assert_eq!(placed("orden-front", true, CTRL, true), Some(Asked::Front));
     }
 
     #[test]
@@ -751,7 +763,7 @@ mod tests {
         assert!(SCRIPT.contains("last('click'"));
         assert!(SCRIPT.contains("event.ctrlKey || event.shiftKey"));
         assert!(SCRIPT.contains("!event.altKey && !event.metaKey"));
-        for name in ["'nib-behind'", "'nib-front'"] {
+        for name in ["'orden-behind'", "'orden-front'"] {
             assert!(SCRIPT.contains(name), "{name}");
             assert!(
                 placed(name.trim_matches('\''), true, NONE, false).is_some(),
@@ -787,31 +799,31 @@ mod tests {
         assert_eq!(placed("", false, CTRL, false), None);
         assert_eq!(placed("", false, NONE, true), None);
         assert_eq!(
-            placed("nib-behind", false, NONE, false),
+            placed("orden-behind", false, NONE, false),
             Some(Asked::Behind)
         );
     }
 
     #[test]
     fn eight_names_ask_for_nib_s_answer_and_nothing_else_does() {
-        assert_eq!(sought("nib-find"), Some(Passed::Find));
-        assert_eq!(sought("nib-find-next"), Some(Passed::Next));
-        assert_eq!(sought("nib-find-previous"), Some(Passed::Previous));
-        assert_eq!(sought("nib-address"), Some(Passed::Address));
-        assert_eq!(sought("nib-twice-shift"), Some(Passed::ShiftTwice));
-        assert_eq!(sought("nib-twice-ctrl"), Some(Passed::CtrlTwice));
-        assert_eq!(sought("nib-twice-alt"), Some(Passed::AltTwice));
-        assert_eq!(sought("nib-install-extension"), Some(Passed::Install));
+        assert_eq!(sought("orden-find"), Some(Passed::Find));
+        assert_eq!(sought("orden-find-next"), Some(Passed::Next));
+        assert_eq!(sought("orden-find-previous"), Some(Passed::Previous));
+        assert_eq!(sought("orden-address"), Some(Passed::Address));
+        assert_eq!(sought("orden-twice-shift"), Some(Passed::ShiftTwice));
+        assert_eq!(sought("orden-twice-ctrl"), Some(Passed::CtrlTwice));
+        assert_eq!(sought("orden-twice-alt"), Some(Passed::AltTwice));
+        assert_eq!(sought("orden-install-extension"), Some(Passed::Install));
         for name in [
             "",
             "_blank",
-            "nib-behind",
-            "nib-front",
+            "orden-behind",
+            "orden-front",
             "NIB-FIND",
-            "nib-find ",
-            "nib-find-all",
-            "nib-twice-meta",
-            "nib-twice",
+            "orden-find ",
+            "orden-find-all",
+            "orden-twice-meta",
+            "orden-twice",
         ] {
             assert_eq!(sought(name), None, "{name:?}");
         }
@@ -819,7 +831,7 @@ mod tests {
 
     #[test]
     fn ctrl_d_let_go_by_goes_back_as_the_key_it_was() {
-        let key = chord("nib-ctrl-d").map(|one| serde_json::to_value(one).expect("a key"));
+        let key = chord("orden-ctrl-d").map(|one| serde_json::to_value(one).expect("a key"));
         let key = key.expect("Ctrl+D");
         assert_eq!(key["key"], "d");
         assert_eq!(key["code"], "KeyD");
@@ -828,34 +840,34 @@ mod tests {
 
         for name in [
             "",
-            "nib-find",
-            "nib-address",
+            "orden-find",
+            "orden-address",
             "NIB-CTRL-D",
-            "nib-ctrl-d ",
-            "nib-ctrl-f",
+            "orden-ctrl-d ",
+            "orden-ctrl-f",
         ] {
             assert!(chord(name).is_none(), "{name:?}");
         }
-        assert_eq!(sought("nib-ctrl-d"), None);
+        assert_eq!(sought("orden-ctrl-d"), None);
     }
 
     #[test]
     fn ctrl_shift_d_let_go_by_goes_back_with_its_shift() {
-        let key = chord("nib-ctrl-shift-d").map(|one| serde_json::to_value(one).expect("a key"));
+        let key = chord("orden-ctrl-shift-d").map(|one| serde_json::to_value(one).expect("a key"));
         let key = key.expect("Ctrl+Shift+D");
         assert_eq!(key["key"], "D");
         assert_eq!(key["code"], "KeyD");
         assert_eq!(key["ctrl"], true);
         assert_eq!(key["shift"], true);
         assert_eq!(key["down"], true);
-        assert_eq!(sought("nib-ctrl-shift-d"), None);
-        assert!(chord("nib-ctrl-shift-d ").is_none());
-        assert!(SCRIPT.contains("name = back ? 'nib-ctrl-shift-d' : 'nib-ctrl-d'"));
+        assert_eq!(sought("orden-ctrl-shift-d"), None);
+        assert!(chord("orden-ctrl-shift-d ").is_none());
+        assert!(SCRIPT.contains("name = back ? 'orden-ctrl-shift-d' : 'orden-ctrl-d'"));
     }
 
     #[test]
     fn ctrl_h_and_ctrl_shift_delete_let_go_by_go_back_as_the_keys_they_were() {
-        let history = chord("nib-ctrl-h").map(|one| serde_json::to_value(one).expect("a key"));
+        let history = chord("orden-ctrl-h").map(|one| serde_json::to_value(one).expect("a key"));
         let history = history.expect("Ctrl+H");
         assert_eq!(history["key"], "h");
         assert_eq!(history["code"], "KeyH");
@@ -863,23 +875,25 @@ mod tests {
         assert_eq!(history["shift"], false);
 
         let clear =
-            chord("nib-ctrl-shift-delete").map(|one| serde_json::to_value(one).expect("a key"));
+            chord("orden-ctrl-shift-delete").map(|one| serde_json::to_value(one).expect("a key"));
         let clear = clear.expect("Ctrl+Shift+Delete");
         assert_eq!(clear["key"], "Delete");
         assert_eq!(clear["code"], "Delete");
         assert_eq!(clear["ctrl"], true);
         assert_eq!(clear["shift"], true);
 
-        assert_eq!(sought("nib-ctrl-h"), None);
-        assert!(chord("nib-ctrl-delete").is_none());
-        assert!(
-            SCRIPT.contains("else if (ctrl && code === 46 && back) name = 'nib-ctrl-shift-delete'")
-        );
+        assert_eq!(sought("orden-ctrl-h"), None);
+        assert!(chord("orden-ctrl-delete").is_none());
+        assert!(SCRIPT
+            .contains("else if (ctrl && code === 46 && back) name = 'orden-ctrl-shift-delete'"));
     }
 
     #[test]
     fn ctrl_space_let_go_by_goes_back_as_the_space_switcher() {
-        for (name, shift) in [("nib-ctrl-space", false), ("nib-ctrl-shift-space", true)] {
+        for (name, shift) in [
+            ("orden-ctrl-space", false),
+            ("orden-ctrl-shift-space", true),
+        ] {
             let key = chord(name).map(|one| serde_json::to_value(one).expect("a key"));
             let key = key.expect(name);
             assert_eq!(key["key"], " ");
@@ -890,30 +904,30 @@ mod tests {
             assert_eq!(key["down"], true);
             assert_eq!(sought(name), None);
         }
-        assert!(chord("nib-alt-space").is_none());
+        assert!(chord("orden-alt-space").is_none());
         assert!(SCRIPT.contains(
-            "else if (ctrl && code === 32) name = back ? 'nib-ctrl-shift-space' : 'nib-ctrl-space'"
+            "else if (ctrl && code === 32) name = back ? 'orden-ctrl-shift-space' : 'orden-ctrl-space'"
         ));
     }
 
     #[test]
     fn the_script_asks_by_the_names_read_here() {
         for name in [
-            "'nib-find'",
-            "'nib-find-next'",
-            "'nib-find-previous'",
-            "'nib-address'",
-            "'nib-actual-size'",
-            "'nib-twice-shift'",
-            "'nib-twice-ctrl'",
-            "'nib-twice-alt'",
-            "'nib-ctrl-d'",
-            "'nib-ctrl-shift-d'",
-            "'nib-install-extension'",
-            "'nib-ctrl-space'",
-            "'nib-ctrl-shift-space'",
-            "'nib-ctrl-h'",
-            "'nib-ctrl-shift-delete'",
+            "'orden-find'",
+            "'orden-find-next'",
+            "'orden-find-previous'",
+            "'orden-address'",
+            "'orden-actual-size'",
+            "'orden-twice-shift'",
+            "'orden-twice-ctrl'",
+            "'orden-twice-alt'",
+            "'orden-ctrl-d'",
+            "'orden-ctrl-shift-d'",
+            "'orden-install-extension'",
+            "'orden-ctrl-space'",
+            "'orden-ctrl-shift-space'",
+            "'orden-ctrl-h'",
+            "'orden-ctrl-shift-delete'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }
@@ -922,9 +936,9 @@ mod tests {
     #[test]
     fn chromium_leaves_the_store_s_button_to_the_store() {
         let left = super::without_store_button(SCRIPT);
-        assert!(!left.contains("nib-install-extension"));
+        assert!(!left.contains("orden-install-extension"));
         assert!(!left.contains("chromewebstore"));
-        assert!(left.contains("'nib-ctrl-d'") && left.contains("'nib-twice-shift'"));
+        assert!(left.contains("'orden-ctrl-d'") && left.contains("'orden-twice-shift'"));
         assert!(left.trim_end().ends_with("})()"));
         assert_eq!(
             SCRIPT.len() - left.len(),
@@ -939,10 +953,10 @@ mod tests {
 
     #[test]
     fn escape_the_page_let_go_by_gives_back_a_screen_the_app_holds_and_nothing_else() {
-        assert_eq!(sought("nib-escape"), Some(Passed::Escape));
-        assert_eq!(placed("nib-escape", true, NONE, false), None);
+        assert_eq!(sought("orden-escape"), Some(Passed::Escape));
+        assert_eq!(placed("orden-escape", true, NONE, false), None);
         assert!(SCRIPT.contains(
-            "if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'nib-escape')"
+            "if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'orden-escape')"
         ));
         let keys = SCRIPT.find("last('keydown'").expect("the keys");
         assert!(SCRIPT.find("code === 27").is_some_and(|at| at > keys));
@@ -960,10 +974,16 @@ mod tests {
 
     #[test]
     fn ctrl_0_asks_by_a_name_of_its_own() {
-        assert!(actual("nib-actual-size"));
-        assert_eq!(sought("nib-actual-size"), None);
-        assert_eq!(placed("nib-actual-size", true, NONE, false), None);
-        for name in ["", "nib-find", "nib-actual", "NIB-ACTUAL-SIZE", "_blank"] {
+        assert!(actual("orden-actual-size"));
+        assert_eq!(sought("orden-actual-size"), None);
+        assert_eq!(placed("orden-actual-size", true, NONE, false), None);
+        for name in [
+            "",
+            "orden-find",
+            "orden-actual",
+            "NIB-ACTUAL-SIZE",
+            "_blank",
+        ] {
             assert!(!actual(name), "{name:?}");
         }
         assert!(SCRIPT.contains("ctrl && (code === 48 || code === 96) && !back"));

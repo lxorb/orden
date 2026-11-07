@@ -18,7 +18,7 @@ type SearchAway = (
   limit: number,
   onFound: (found: Found) => void,
   excluded: readonly string[],
-) => Promise<void>
+) => Promise<boolean>
 
 export const NOT_HERE = 'that note is not on this device, and the account could not be reached'
 
@@ -62,9 +62,10 @@ class KeptAway {
     limit: number,
     onFound: (found: Found) => void,
     excluded: readonly string[] = [],
-  ): Promise<void> {
-    if (!this.searching || !this.under(root).length || limit <= 0) return
-    await this.searching(root, query, terms, limit, onFound, excluded)
+  ): Promise<boolean> {
+    if (!this.under(root).length || limit <= 0) return true
+    if (!this.searching) return false
+    return await this.searching(root, query, terms, limit, onFound, excluded)
   }
 
   at(path: string): Away | null {

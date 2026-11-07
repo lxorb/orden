@@ -40,7 +40,7 @@ fn asks(app: &AppHandle) -> &'static Sender<Ask> {
         let (asks, asked) = mpsc::channel();
         let app = app.clone();
         let _ = std::thread::Builder::new()
-            .name("nib-portal-keys".into())
+            .name("orden-portal-keys".into())
             .spawn(move || run(&app, &asked));
         asks
     })
@@ -267,7 +267,7 @@ impl Portal {
         let bus = self.bus.clone();
         let app = app.clone();
         let _ = std::thread::Builder::new()
-            .name("nib-portal-presses".into())
+            .name("orden-portal-presses".into())
             .spawn(move || {
                 if let Err(error) = presses(&bus, &app) {
                     crate::logs::say(&app, "info", &format!("global keys: deaf ({error})"));

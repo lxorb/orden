@@ -3,7 +3,7 @@
 The small things people from Chrome, VS Code, Obsidian, Typora and Notion expect without
 thinking. Every row was checked against `main` at 5290c600 (2026-09-28). What already
 exists is left out, and so is anything on the parity list (memory
-`nib-gaps-2026-09-09.md`, `nib-parity-roadmap.md`), which is all on main now.
+`orden-gaps-2026-09-09.md`, `orden-parity-roadmap.md`), which is all on main now.
 
 Paths: `lib/` = `apps/desktop/src/lib`, `ed/` = `packages/editor/src`, `rs/` =
 `apps/desktop/src-tauri/src`. Size: S = hours, M = a day, L = more. Every batch keeps to
@@ -57,7 +57,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
 | Files | Ctrl+C / Ctrl+X, then Ctrl+V into the focused folder, copies or moves the selected notes | Explorer, VS Code | done `3864ecf8` | `onKey` (`lib/Tree.svelte:299-345`) handles only select all, delete, rename and move up/down | M | high |
-| Files | Dropping files or folders from Explorer onto the list copies them into the space | Explorer, VS Code, Obsidian | done `3864ecf8` | tree drops accept `text/nib-path` only (`lib/drag-paths.ts:46`); `dragDropEnabled: false` (`src-tauri/tauri.conf.json:22`) | M | high |
+| Files | Dropping files or folders from Explorer onto the list copies them into the space | Explorer, VS Code, Obsidian | done `3864ecf8` | tree drops accept `text/orden-path` only (`lib/drag-paths.ts:46`); `dragDropEnabled: false` (`src-tauri/tauri.conf.json:22`) | M | high |
 | Files | Ctrl+Z / Ctrl+Y with the list focused undoes or redoes the last file action | Explorer, VS Code | done `3864ecf8` | undo is only a menu row and a palette row (`lib/row-menu.ts:161`, `lib/commands.ts:899`) | S | high |
 | Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | done `3864ecf8`; the toggle went to Ctrl+Shift+Enter 2026-10-04, Ctrl+Space is the space switcher | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
 | Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | done `3864ecf8` | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
@@ -137,9 +137,9 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Files | Dragging a row into a note's text inserts a link to it | Obsidian | done 3e836808 | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/nib-path` | M | high |
+| Files | Dragging a row into a note's text inserts a link to it | Obsidian | done 3e836808 | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/orden-path` | M | high |
 | Files | Open in new tab and Open to the right in a row's menu | Obsidian, VS Code | done ef25c471 (Open to the side) | `rowMenu` (`lib/row-menu.ts:48`) has Open only | S | high |
-| Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | done ef25c471 | no row; the palette's "Copy link to this note" copies a `nib://` URI (`lib/commands.ts:924`) | S | med |
+| Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | done ef25c471 | no row; the palette's "Copy link to this note" copies a `orden://` URI (`lib/commands.ts:924`) | S | med |
 | Files | With several rows selected: Move, Add to Essentials and Open all, besides Delete | Explorer, Obsidian | done ef25c471 | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
 | Files | Collapse all folders | VS Code, Obsidian | done 5930123a | no command and no button | S | med |
 | Files | Reveal the open note: unfold its folders and scroll to it (a command and a tab row) | Obsidian, VS Code | done 5930123a, 2ab8bf2c | `lib/Tree.svelte:877-891` scrolls only when the row is already unfolded; `revealFolder` (`lib/workspace.svelte.ts:2764`) serves bookmarks only | S | med |
@@ -162,7 +162,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Web | A private tab | Chrome | missing | no code, and Ctrl+Shift+N is New window | L | med |
 | Web | Dragging a link or a picture out of a page onto the strip or the file list | Chrome | missing | page drags stay inside the webview (`rs/web_tabs.rs:895`) | L | med |
 | Tooltips | Hover titles carry the key, e.g. `Back (Alt+←)`, the panel tabs, the sidebar toggle, the find steps | Chrome, VS Code, Obsidian | done | one helper, `shortcuts.tooltip` (`lib/shortcuts.svelte.ts`), on the title bar, the strip, the panel tabs and tools, the sidebar foot, the web bar, the find bar, the canvas bar and the format bar; a rebinding shows at once. Downloads, clip, the dots and the theme switch have no key to say | M | med |
-| Files | Dragging a row out to Explorer or a mail | Explorer, VS Code | missing | a tree drag carries only `text/nib-*` types (`lib/drag-paths.ts`). Chromium's `DownloadURL` would reach Windows alone and cannot be driven without a real pointer; the whole of it is a drag-out bridge in the crate (OLE's CF_HDROP of a copy, AppKit's dragging session, GTK), proved on three systems | L | low |
+| Files | Dragging a row out to Explorer or a mail | Explorer, VS Code | missing | a tree drag carries only `text/orden-*` types (`lib/drag-paths.ts`). Chromium's `DownloadURL` would reach Windows alone and cannot be driven without a real pointer; the whole of it is a drag-out bridge in the crate (OLE's CF_HDROP of a copy, AppKit's dragging session, GTK), proved on three systems | L | low |
 | Tabs | Hover cards, tab groups, tab search, multi-select | Chrome | partial | hover cards and several tabs at once done (`lib/tab-strip/hover-card.svelte.ts`, `picking.svelte.ts`); tab search is the palette; no groups. See `docs/chrome-tabs.md` | L | low |
 
 ## Decisions for Emil

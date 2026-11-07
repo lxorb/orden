@@ -17,5 +17,5 @@ export async function signOut(): Promise<void> {
     if (answer === null) return
     if (answer === 'remove') await vault.leave()
   }
-  await account.signOut()
+  await account.signOut('asked')
 }

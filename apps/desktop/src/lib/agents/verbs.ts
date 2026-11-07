@@ -1,4 +1,4 @@
-export const AGENT_EVENT = 'nib://agent'
+export const AGENT_EVENT = 'orden://agent'
 
 export const BROWSER_VERBS = [
   'browser_tabs',

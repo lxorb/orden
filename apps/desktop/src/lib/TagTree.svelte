@@ -68,7 +68,7 @@
         {/if}
 
         <button
-          class="nib-row row"
+          class="orden-row row"
           class:nested={!node.children.length}
           data-tag={node.path}
           style:--level={depth}
@@ -76,8 +76,8 @@
           oncontextmenu={(event) => menu.show(event, menuFor(node), { title: node.name })}
           use:longPress={(event) => menu.show(event, menuFor(node), { title: node.name })}
         >
-          <span class="nib-row-label"><bdi>{node.name}</bdi></span>
-          <span class="nib-row-meta">{node.notes}</span>
+          <span class="orden-row-label"><bdi>{node.name}</bdi></span>
+          <span class="orden-row-meta">{node.notes}</span>
         </button>
       </div>
 

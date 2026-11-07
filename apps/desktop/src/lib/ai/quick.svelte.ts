@@ -1,8 +1,8 @@
-import type { EditorView } from '@orden/editor'
+import { documentOf, type EditorView, type SharedDoc, type Text } from '@orden/editor'
 import { quickSheet } from '../surfaces.svelte'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { type ContextKind, insertion } from './quick'
+import { carried, type ContextKind, insertion } from './quick'
 import type { Thread, Turn } from './chat/types'
 import type { Ended } from './commands/types'
 import { ai } from './store.svelte'
@@ -42,7 +42,7 @@ class Quick {
   private chat = $state.raw<Chat | null>(null)
   private failed = $state<string | null>(null)
 
-  private target: { view: EditorView; at: number } | null = null
+  private target: { view: EditorView; at: number; doc: Text; shows: SharedDoc | null } | null = null
 
   get ready(): boolean {
     return ai.providerFor('ask') !== null
@@ -118,7 +118,13 @@ class Quick {
     if (tab.kind !== 'note') return
     const view = views.of(workspace.panes.focusedId)
     const range = view?.state.selection.main
-    if (view) this.target = { view, at: range?.to ?? 0 }
+    if (view)
+      this.target = {
+        view,
+        at: range?.to ?? 0,
+        doc: view.state.doc,
+        shows: documentOf(view),
+      }
     const front = noteInFront(workspace.activeSpace?.root ?? null)
     const picked = selectionHere()
     const around: Around = { front, selection: picked.text, picked: picked.picked }
@@ -191,10 +197,17 @@ class Quick {
 
   async addToNote(text: string) {
     const target = this.target
-    if (target && !target.view.state.readOnly && target.view.dom.isConnected) {
+    if (
+      target &&
+      !target.view.state.readOnly &&
+      target.view.dom.isConnected &&
+      documentOf(target.view) === target.shows
+    ) {
       const { view } = target
       const doc = view.state.doc.toString()
-      const { from, insert, caret } = insertion(doc, Math.min(target.at, doc.length), text)
+      const at =
+        view.state.doc === target.doc ? target.at : carried(target.doc.toString(), doc, target.at)
+      const { from, insert, caret } = insertion(doc, Math.min(at, doc.length), text)
       view.dispatch({
         changes: { from, insert },
         selection: { anchor: caret },

@@ -129,7 +129,7 @@
 {/if}
 
 {#snippet heading(word: string, count: number)}
-  <p class="nib-section">{word}<span>{count}</span></p>
+  <p class="orden-section">{word}<span>{count}</span></p>
 {/snippet}
 
 {#snippet hits(rows: readonly Reference[])}

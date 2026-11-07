@@ -184,7 +184,7 @@ mod tests {
 
     fn folder(name: &str) -> PathBuf {
         let dir =
-            std::env::temp_dir().join(format!("nib-ai-threads-{name}-{}", std::process::id()));
+            std::env::temp_dir().join(format!("orden-ai-threads-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         dir
     }

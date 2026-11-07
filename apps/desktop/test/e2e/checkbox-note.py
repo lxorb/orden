@@ -44,8 +44,8 @@ def drive(browser: Browser) -> None:
         wrong(f"Todos shows {shown}, not the list's one todo")
 
     DRIVE.open_note(page, "Meeting")
-    wait_for(page, "!!document.querySelector('.nib-checkbox')", "the note's checkbox")
-    page.locator(".nib-checkbox").first.dispatch_event("mousedown")
+    wait_for(page, "!!document.querySelector('.orden-checkbox')", "the note's checkbox")
+    page.locator(".orden-checkbox").first.dispatch_event("mousedown")
     wait_for(page, f"() => window.nib.state.doc.toString().includes('- [x] Ask')", "the box ticked")
     page.wait_for_timeout(800)
     text = page.evaluate("() => window.nib.state.doc.toString()")

@@ -1,4 +1,4 @@
-export const HIDDEN = 'nib-typing'
+export const HIDDEN = 'orden-typing'
 
 const RULE = `.${HIDDEN} { cursor: none !important; }`
 

@@ -1,6 +1,6 @@
 import { invoke, isDesktop } from './tauri'
 
-const PRESSED = 'nib://notice'
+const PRESSED = 'orden://notice'
 
 const KEPT = 64
 
@@ -63,7 +63,7 @@ export function unshow(tag: string): void {
   if (id === undefined) return
   showing.delete(tag)
   answering.delete(id)
-  if (isDesktop) void invoke('notice_clear', { tag }).catch(() => undefined)
+  if (isDesktop) void invoke('notice_clear', { tag: plainTag(tag) }).catch(() => undefined)
 }
 
 const byWorker = new Map<string, Notice>()
@@ -113,6 +113,18 @@ function closeByTheWorker(tag: string): void {
     .catch(() => undefined)
 }
 
+const LONGEST_TAG = 64
+
+function plainTag(tag: string): string {
+  if (tag.length <= LONGEST_TAG && /^[A-Za-z0-9_-]+$/.test(tag)) return tag
+  let value = 0xcbf29ce484222325n
+  for (const byte of new TextEncoder().encode(tag)) {
+    value ^= BigInt(byte)
+    value = (value * 0x100000001b3n) & 0xffffffffffffffffn
+  }
+  return `tag-${value.toString(16).padStart(16, '0')}`
+}
+
 function shownByTheCrate(one: Notice): void {
   listening ??= import('./own-window').then(({ hearHere }) =>
     hearHere<unknown>(PRESSED, (event) => pressed(event.payload)),
@@ -133,7 +145,7 @@ function shownByTheCrate(one: Notice): void {
   void invoke('notice_show', {
     notice: {
       id,
-      tag: one.tag ?? id,
+      tag: one.tag === undefined ? id : plainTag(one.tag),
       title: one.title,
       body: one.body,
       from: one.from ?? '',

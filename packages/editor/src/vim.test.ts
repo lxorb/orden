@@ -37,7 +37,7 @@ function surface() {
 function modal(state: EditorState): boolean {
   return state
     .facet(EditorView.editorAttributes)
-    .some((attrs) => typeof attrs === 'object' && attrs.class === 'nib-vim')
+    .some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-vim')
 }
 
 describe('modal editing', () => {

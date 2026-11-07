@@ -156,6 +156,6 @@ export function lookOf(
     picture: token('--wallpaper-picture'),
     scrim: token('--wallpaper-scrim'),
     floor: token('--wallpaper-floor'),
-    dim: token('--nib-dim'),
+    dim: token('--orden-dim'),
   }
 }

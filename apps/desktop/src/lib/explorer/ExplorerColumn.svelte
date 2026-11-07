@@ -73,14 +73,14 @@
       {#if entry}
         <li style:top="{index * rowHeight}px" use:measure>
           <button
-            class="nib-row"
+            class="orden-row"
             class:is-on={lit === entry.name}
             class:is-quiet={entry.hidden}
             tabindex="-1"
             onclick={() => press(entry)}
           >
             <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
-            <span class="nib-row-label">{entry.name}</span>
+            <span class="orden-row-label">{entry.name}</span>
           </button>
         </li>
       {/if}

@@ -108,10 +108,10 @@ export class TaskChipsWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const row = document.createElement('span')
-    row.className = this.picks ? 'nib-task-chips' : 'nib-task-chips nib-task-chips-still'
+    row.className = this.picks ? 'orden-task-chips' : 'orden-task-chips orden-task-chips-still'
     for (const chip of this.chips) {
       const one = document.createElement('span')
-      one.className = 'nib-task-chip'
+      one.className = 'orden-task-chip'
       one.dataset.field = chip.field
       if (chip.tone) one.dataset.tone = chip.tone
       one.textContent = chip.text
@@ -201,10 +201,10 @@ export class CommentChipsWidget extends NibWidget {
 
   toDOM() {
     const row = document.createElement('span')
-    row.className = 'nib-task-chips nib-comment-chips'
+    row.className = 'orden-task-chips orden-comment-chips'
     for (const text of this.chips) {
       const one = document.createElement('span')
-      one.className = 'nib-task-chip'
+      one.className = 'orden-task-chip'
       one.textContent = text
       row.append(one)
     }

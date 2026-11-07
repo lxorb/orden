@@ -73,16 +73,16 @@ def note(page: Page) -> str:
 
 FIELDS = """() => {
   const composer = document.querySelector('.sheet .composer')
-  const label = document.querySelector('.sheet .adder .nib-row-label')
+  const label = document.querySelector('.sheet .adder .orden-row-label')
   if (!composer || !label) return null
   const style = getComputedStyle(composer)
   const box = composer.getBoundingClientRect()
-  const adder = label.closest('.nib-row').getBoundingClientRect()
+  const adder = label.closest('.orden-row').getBoundingClientRect()
   const line = parseFloat(style.lineHeight)
   const top = parseFloat(style.paddingTop)
   return {
     left: Math.round(box.left), labelLeft: Math.round(label.getBoundingClientRect().left),
-    height: Math.round(composer.closest('.nib-row').getBoundingClientRect().height),
+    height: Math.round(composer.closest('.orden-row').getBoundingClientRect().height),
     adderHeight: Math.round(adder.height),
     lineMiddle: Math.round(top + line / 2), middle: Math.round(box.height / 2),
     border: style.borderTopWidth,
@@ -105,14 +105,14 @@ def the_comment_field(page: Page) -> None:
         wrong(f"the comment field is still a box: border {fields['border']}")
 
 BORDER = """() => {
-  const row = document.querySelector('.sheet .composer').closest('.nib-row')
+  const row = document.querySelector('.sheet .composer').closest('.orden-row')
   row.getAnimations().forEach((one) => one.finish())
   return getComputedStyle(row).borderTopColor
 }"""
 
 RING = """() => {
   const composer = document.querySelector('.sheet .composer')
-  const row = composer.closest('.nib-row')
+  const row = composer.closest('.orden-row')
   const of = (one) => {
     const style = getComputedStyle(one)
     return { shadow: style.boxShadow, outline: style.outlineStyle, radius: style.borderTopLeftRadius }
@@ -143,7 +143,7 @@ def the_comment_ring(page: Page) -> None:
     if rest != "rgba(0, 0, 0, 0)":
         wrong(f"the comment row is a box under the pointer: {rest}")
     composer.focus()
-    page.evaluate("""() => document.querySelector('.sheet .composer').closest('.nib-row').getAnimations().forEach((one) => one.finish())""")
+    page.evaluate("""() => document.querySelector('.sheet .composer').closest('.orden-row').getAnimations().forEach((one) => one.finish())""")
     ring = page.evaluate(RING)
     say(f"[comment ring] {ring}")
     shot(page, "01b-comment-ring")
@@ -201,7 +201,7 @@ def the_view(page: Page) -> None:
         wrong("the sub-task's words were not read for a day")
     shot(page, "02-edited")
 
-    page.locator(".sheet .side .nib-row", has_text="p4").click()
+    page.locator(".sheet .side .orden-row", has_text="p4").click()
     page.locator(".menu [role=menuitem]", has_text="1").first.click()
     wait_for(page, f"() => ({TASK})('Call the bank again')?.priority === 1", "priority 1 written")
 
@@ -231,8 +231,8 @@ def the_view(page: Page) -> None:
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace; await ws.open(ws.activeSpace.root.replace(/[\\\\/]+$/, '') + '/Errands.md') }"
     )
-    wait_for(page, "document.querySelector('.cm-content .nib-comment-chips')", "the comment's chip in the note")
-    shown = page.locator(".cm-content .nib-comment-chips").first.inner_text()
+    wait_for(page, "document.querySelector('.cm-content .orden-comment-chips')", "the comment's chip in the note")
+    shown = page.locator(".cm-content .orden-comment-chips").first.inner_text()
     say(f"[comment chip] {shown!r}")
     if "[at::" in page.locator(".cm-content").inner_text():
         wrong("the comment's stamp is drawn as its raw field")

@@ -8,7 +8,7 @@ import { isTile } from '../workspace/bookmarks.svelte'
 import { workspace } from '../workspace.svelte'
 import { lettersFor, takenUnderAlt } from './letters'
 
-const STORAGE_KEY = 'nib:essential-letters'
+const STORAGE_KEY = 'orden:essential-letters'
 
 function readKept(): Record<string, string> {
   const value = stored(STORAGE_KEY)

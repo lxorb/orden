@@ -140,7 +140,7 @@ export function forgetHistories(): void {
   )
 }
 
-const LEGACY = 'nib:terminal-lines'
+const LEGACY = 'orden:terminal-lines'
 
 export function moveLegacy(open: readonly Place[]): void {
   const value = stored(LEGACY)

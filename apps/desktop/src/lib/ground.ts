@@ -1,11 +1,11 @@
 import { keep, storedText } from './stored'
 import { invoke, isDesktop } from './tauri'
 
-const KEY = 'nib:ground'
+const KEY = 'orden:ground'
 
 const NOTHING = 'rgba(0, 0, 0, 0)'
 
-export const MATERIAL_KEY = 'nib:material'
+export const MATERIAL_KEY = 'orden:material'
 
 export function stoodOnNothing(): boolean {
   return storedText(KEY) === NOTHING

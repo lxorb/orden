@@ -7,17 +7,18 @@ import { callerOf } from './caller'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
 
-const QUERY = 'nib'
+const QUERIES = ['orden', 'nib'] as const
 
 const MOST_LINKS = 1
 
 export async function startAutomation(): Promise<() => void> {
   if (!isNative) {
     const here = new URL(window.location.href)
-    const asked = here.searchParams.get(QUERY)
-    if (asked === null) return () => undefined
+    const query = QUERIES.find((one) => here.searchParams.has(one))
+    const asked = query === undefined ? null : here.searchParams.get(query)
+    if (query === undefined || asked === null) return () => undefined
 
-    here.searchParams.delete(QUERY)
+    here.searchParams.delete(query)
     window.history.replaceState(null, '', `${here.pathname}${here.search}${here.hash}`)
     await follow(asked)
 
@@ -38,14 +39,14 @@ export async function startAutomation(): Promise<() => void> {
   }
 
   stopping.push(
-    await hearHere<string[]>('nib://open-url', (event) => {
+    await hearHere<string[]>('orden://open-url', (event) => {
       void followAll(event.payload)
     }),
   )
 
   if (isDesktop) {
     stopping.push(
-      await hearHere<Request>('nib://automation', (event) => {
+      await hearHere<Request>('orden://automation', (event) => {
         const asked = event.payload
         if (typeof asked.id !== 'number') return
 
@@ -98,7 +99,7 @@ async function followAll(uris: readonly string[]) {
 async function follow(uri: string, depth = 0): Promise<void> {
   if (isFileUri(uri)) return
 
-  if (/^nib:\/\/chat\//i.test(uri.trim())) {
+  if (/^orden:\/\/chat\//i.test(uri.trim())) {
     const opening = __EVEN_PLUGIN__ ? null : import('../chats/view/open')
     await opening?.then(({ openChatLink }) => openChatLink(uri.trim()))
     return

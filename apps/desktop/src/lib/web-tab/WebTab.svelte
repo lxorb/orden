@@ -12,7 +12,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { hiddenKinds, settings } from '../settings.svelte'
+  import { hiddenKinds, passOn, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -472,11 +472,12 @@
     })
   })
 
-  onMount(() => {
-    if (isDesktop) void import('../pass/autofill').then(({ autofill }) => autofill.start())
+  $effect(() => {
+    if (isDesktop && passOn())
+      void import('../pass/autofill').then(({ autofill }) => autofill.start())
   })
 
-  const passBubble = $derived(passBubbles.of(tab.id))
+  const passBubble = $derived(passOn() ? passBubbles.of(tab.id) : null)
 
   onMount(() => {
     if (extending) void extensions.start()
@@ -687,11 +688,11 @@
     {#if page.blocked}
       <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
         <p>{t('Pop-up blocked')}</p>
-        <button class="nib-button is-quiet" onclick={() => pages.openBlocked(tab.id)}>
+        <button class="orden-button is-quiet" onclick={() => pages.openBlocked(tab.id)}>
           {t('Open')}
         </button>
         <button
-          class="nib-glyph"
+          class="orden-glyph"
           aria-label={t('Close')}
           title={t('Close')}
           onclick={() => (page.blocked = null)}
@@ -704,11 +705,11 @@
     {#if page.unplayable}
       <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
         <p>{t("This media can't play here")}</p>
-        <button class="nib-button is-quiet" onclick={() => void openExternal(page.at ?? address)}>
+        <button class="orden-button is-quiet" onclick={() => void openExternal(page.at ?? address)}>
           {t('Open in the browser')}
         </button>
         <button
-          class="nib-glyph"
+          class="orden-glyph"
           aria-label={t('Close')}
           title={t('Close')}
           onclick={() => (page.unplayable = false)}
@@ -798,10 +799,10 @@
         <p class="why">{page.failure.reason}</p>
       {/if}
       <div class="rows">
-        <button class="nib-button" onclick={() => void pages.step(tab.id, 'reload')}>
+        <button class="orden-button" onclick={() => void pages.step(tab.id, 'reload')}>
           {t('Reload')}
         </button>
-        <button class="nib-button is-quiet" onclick={() => void openExternal(address)}>
+        <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>
           {t('Open in the browser')}
         </button>
       </div>
@@ -851,14 +852,14 @@
 
         <div class="rows">
           <button
-            class="nib-button"
+            class="orden-button"
             onclick={() => {
               page.framing = 'frame'
             }}
           >
             {t('Show it here')}
           </button>
-          <button class="nib-button is-quiet" onclick={() => void openExternal(address)}>
+          <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>
             {t('Open in the browser')}
           </button>
         </div>

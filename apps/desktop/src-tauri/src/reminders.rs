@@ -87,7 +87,7 @@ pub struct Pressed {
 
 const ANSWERED_FOR_MS: i64 = 7 * 86_400_000;
 
-const PRESSED: &str = "nib://reminder";
+const PRESSED: &str = "orden://reminder";
 
 static LAUNCHED_QUIETLY: AtomicBool = AtomicBool::new(false);
 
@@ -206,32 +206,35 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
 
 fn may_schedule() -> bool {
     if crate::placement::away().is_some() {
-        return std::env::var_os("NIB_PROBE_REMINDERS").is_some();
+        return std::env::var_os("ORDEN_PROBE_REMINDERS").is_some();
     }
     true
 }
 
-#[tauri::command(async)]
-pub fn reminders_set(
+#[tauri::command]
+pub async fn reminders_set(
     webview: tauri::Webview,
     app: AppHandle,
     reminders: Vec<Planned>,
     words: Words,
 ) -> Result<bool, String> {
-    crate::agents::from_the_app(&webview)?;
-    if !may_schedule() {
-        return Ok(true);
-    }
+    crate::lane::off_the_runtime(move || -> Result<bool, String> {
+        crate::agents::from_the_app(&webview)?;
+        if !may_schedule() {
+            return Ok(true);
+        }
 
-    let now = now_ms();
-    let (wanted, moved) = in_state(|state| {
-        let kept = kept(state, &app);
-        let moved = moved(kept, &reminders);
-        let wanted = merge(kept, reminders, now, fresh_nonce);
-        save(&app, kept);
-        (wanted, moved)
-    });
-    Ok(handed(&app, &wanted, &moved, &words, now))
+        let now = now_ms();
+        let (wanted, moved) = in_state(|state| {
+            let kept = kept(state, &app);
+            let moved = moved(kept, &reminders);
+            let wanted = merge(kept, reminders, now, fresh_nonce);
+            save(&app, kept);
+            (wanted, moved)
+        });
+        Ok(handed(&app, &wanted, &moved, &words, now))
+    })
+    .await
 }
 
 fn handed(
@@ -474,7 +477,7 @@ mod tests {
         let open = link::link(Act::Open, "aa", "bb");
         assert!(quiet_launch(std::slice::from_ref(&done)));
         assert!(!quiet_launch(&[done.clone(), open]));
-        assert!(!quiet_launch(&[done, "nib://open?path=a".into()]));
+        assert!(!quiet_launch(&[done, "orden://open?path=a".into()]));
         assert!(!quiet_launch(&[]));
     }
 

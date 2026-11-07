@@ -27,7 +27,7 @@ describe('the rules a web card is drawn with', () => {
 
   test('reach a canvas card as well as a document', () => {
     for (const selector of cardSelectors()) {
-      expect(selector, selector).toContain(':is(#write, .nib-rendered)')
+      expect(selector, selector).toContain(':is(#write, .orden-rendered)')
       expect(selector, selector).not.toMatch(/(^|[^,(])\s*#write\s+\./)
     }
   })
@@ -36,7 +36,7 @@ describe('the rules a web card is drawn with', () => {
     const rendered = [...CANVAS_NODE.matchAll(/<div class="card page[^"]*"/g)].map((one) => one[0])
 
     expect(rendered.length).toBeGreaterThanOrEqual(3)
-    for (const one of rendered) expect(one, one).toContain('nib-rendered')
+    for (const one of rendered) expect(one, one).toContain('orden-rendered')
   })
 })
 

@@ -30,7 +30,7 @@ TREE = """
 """
 
 ARCHIVE = """
-() => [...document.querySelectorAll('.archive-head + ul .line .row .nib-row-label')].map(
+() => [...document.querySelectorAll('.archive-head + ul .line .row .orden-row-label')].map(
   (one) => one.textContent
 )
 """
@@ -63,8 +63,8 @@ def fresh(browser: Browser) -> Page:
 
 def row_menu(page: Page, name: str, choose: str) -> None:
     page.locator(f'.row[data-path$="/{name}"]').first.click(button="right")
-    wait_for(page, "document.querySelector('.rows .nib-row')", f"the menu of {name}")
-    page.locator(".rows .nib-row", has_text=choose).first.click()
+    wait_for(page, "document.querySelector('.rows .orden-row')", f"the menu of {name}")
+    page.locator(".rows .orden-row", has_text=choose).first.click()
     page.wait_for_timeout(500)
 
 def tree(page: Page) -> list[str]:
@@ -87,9 +87,9 @@ def drive(browser: Browser) -> None:
     shot(page, "02-archived")
 
     marks = page.evaluate(
-        """() => [...document.querySelectorAll('.cm-content .nib-link')].map((one) => ({
-          text: one.textContent, archived: one.classList.contains('nib-link-archived'),
-          missing: one.classList.contains('nib-link-missing'),
+        """() => [...document.querySelectorAll('.cm-content .orden-link')].map((one) => ({
+          text: one.textContent, archived: one.classList.contains('orden-link-archived'),
+          missing: one.classList.contains('orden-link-missing'),
         }))"""
     )
     say(f"the links in Keep: {json.dumps(marks)}")
@@ -154,7 +154,7 @@ def drive(browser: Browser) -> None:
         wrong("the strip stayed over a note that is no longer archived")
 
     row_menu(page, "Old", "Delete")
-    wait_for(page, "document.querySelector('[role=dialog], .nib-layer')", "the refusal")
+    wait_for(page, "document.querySelector('[role=dialog], .orden-layer')", "the refusal")
     said = page.evaluate("() => document.querySelector('[role=dialog]')?.textContent ?? ''")
     say(f"the refusal: {said.strip()[:80]!r}")
     shot(page, "07-refused")

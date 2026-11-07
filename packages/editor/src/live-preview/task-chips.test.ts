@@ -307,7 +307,7 @@ describe('a chip pressed', () => {
       }).state,
       parent: document.body,
     })
-    const chip = view.contentDOM.querySelectorAll('.nib-task-chip')[1]
+    const chip = view.contentDOM.querySelectorAll('.orden-task-chip')[1]
     chip?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
     view.dispatch({ changes: { from: 0, insert: 'new\n' } })
     picked({ priority: 1 })

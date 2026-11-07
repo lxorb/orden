@@ -184,7 +184,7 @@ export const KEY_BY_FIELD: Record<FieldName, string> = {
   block: 'block',
 }
 
-export const NIB_FIELDS: readonly FieldName[] = [
+export const ORDEN_FIELDS: readonly FieldName[] = [
   'time',
   'duration',
   'deadline',

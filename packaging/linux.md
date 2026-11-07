@@ -132,8 +132,8 @@ cannot be setuid, and NixOS allows the namespaces. An AppImage cannot carry a se
 helper: where user namespaces are restricted as well (Ubuntu 24.04's AppArmor), the
 runtime starts Chromium without a sandbox and says so in the log.
 
-**What a package reads from its environment.** No `NIB_CEF_ARGS`, `NIB_CEF_DEBUG_PORT` or
-`NIB_CEF_SANDBOX`: only a build with debug assertions does, which is what the drives run
+**What a package reads from its environment.** No `ORDEN_CEF_ARGS`, `ORDEN_CEF_DEBUG_PORT` or
+`ORDEN_CEF_SANDBOX`: only a build with debug assertions does, which is what the drives run
 (`from_run` in engine.rs).
 
 **Coming from WebKitGTK.** A machine that ran 0.16 or older and updates to a CEF build keeps

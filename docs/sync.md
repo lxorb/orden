@@ -518,7 +518,7 @@ Then a script, `scripts/nib-sync.mjs`, forty lines of fetch:
 - name: Pull the notes
   run: node scripts/nib-sync.mjs pull "Work" ./notes
   env:
-    NIB_TOKEN: ${{ secrets.NIB_TOKEN }}
+    ORDEN_TOKEN: ${{ secrets.ORDEN_TOKEN }}
 ```
 
 `pull` writes every note into the folder and remembers the cursor in

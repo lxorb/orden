@@ -40,9 +40,9 @@ def signed_in(
     browser: Browser, token: str, label: str, vault: bool = True
 ) -> tuple[BrowserContext, Page]:
     context = browser.new_context(viewport={"width": 1180, "height": 760}, reduced_motion="reduce")
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
     if vault:
-        context.add_init_script("localStorage.setItem('nib:ai-vault-browser', 'yes')")
+        context.add_init_script("localStorage.setItem('orden:ai-vault-browser', 'yes')")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")

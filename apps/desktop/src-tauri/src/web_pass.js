@@ -10,7 +10,7 @@
   const RETRIES = 50
   const RETRY = 200
   const MARK = 16
-  const MARK_NAME = 'nib-pass-mark'
+  const MARK_NAME = 'orden-pass-mark'
   const LEAST_SIDE = 10
   const LEAST_SHOWN = 0.5
 

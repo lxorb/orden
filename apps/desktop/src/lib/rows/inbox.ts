@@ -5,7 +5,7 @@ import { without } from '../records'
 import { forget, isRecord, isString, keepJson, stored } from '../stored'
 import type { KeptByPath } from '../workspace/file-ops'
 
-export const STORAGE_KEY = 'nib:inbox'
+export const STORAGE_KEY = 'orden:inbox'
 
 export const INBOX = INBOX_PATH
 

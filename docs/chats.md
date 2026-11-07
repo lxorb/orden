@@ -178,7 +178,7 @@ Each product's own help centre, read 2026-10-03; the links are in Sources.
 | 23 | Silent message | Telegram | none | later | rare |
 | 24 | Important, urgent | Teams | none | drop | a repeated ping is the opposite of calm |
 | 25 | Announcement post | Teams | none | drop | a chat where only the owner posts (#83) is the announcement channel |
-| 26 | Copy link to a message | Slack | `nib://chat/<chat>/<message>`, which a note links to as it links any address | must | |
+| 26 | Copy link to a message | Slack | `orden://chat/<chat>/<message>`, which a note links to as it links any address | must | |
 | 27 | Translate a message | WhatsApp | through the AI sidebar's provider | later | needs a provider |
 | 28 | Disappearing messages | Signal | none | drop | meaningless where the server keeps it |
 | 29 | Live block in a message | Teams | a note dropped in is a live card (#108) | should | Orden's version of Loop |
@@ -744,7 +744,7 @@ Settings, and one function decides.
   a Mac's notifications: the words go through the store's outbox into the same place (the
   message's replies, for a reply), and the chat is marked read up to it, as WhatsApp does.
   Presses are heard in the process (a toast's own activation, the notification centre's
-  delegate), never as a `nib://` link another program could write, and every notification
+  delegate), never as a `orden://` link another program could write, and every notification
   is taken off the screen as Orden quits, so no reply field is left in the action centre with
   nobody to answer it. Linux shows the plain notification.
 - **The tray**: while the account has any chat, closing the window keeps Orden in the tray
@@ -807,13 +807,13 @@ Settings, and one function decides.
   backlinks list the chat and the message, and a rename of the note is followed there too.
 - **A message becomes a task**: ⋯ **Add as task** on a row (or T, or `/task` in the composer)
   opens quick add (`docs/tasks.md` 5.6) filled with the message's words, `+Name` for a person
-  it mentioned, and a link back, `[thesis](nib://chat/c_…/01J…)`, as the task's description
+  it mentioned, and a link back, `[thesis](orden://chat/c_…/01J…)`, as the task's description
   line. Enter writes it to the inbox, or wherever `>Note` says. **Remind me** is the same
   with the reminder chip open.
 - **A message becomes a note**: **Save as note** makes a note named from the first words,
   with the message and its replies as quotes (name, time), attachments copied beside it, and
   a link back; it opens in a tab.
-- **Link a message from a note**: Copy link on a message copies `nib://chat/<chat>/<message>`;
+- **Link a message from a note**: Copy link on a message copies `orden://chat/<chat>/<message>`;
   in a note it opens the chat at the message. Outside Orden it is an address nothing else
   opens, which is honest: the message lives in the account, not in a file.
 - **A new tab's Chat card** (`lib/new-kinds.ts`, letter **M**, since C is the canvas's, at the end of the first line), the
@@ -1196,7 +1196,7 @@ function matches(query: SearchQuery, hit: Hit): boolean
 function mentionsIn(body: string, members: readonly Member[]): Mention[]
 function ulid(now: number, random: () => number): string
 function chatOf(text: string): Pointer | null; function chatText(pointer: Pointer): string
-function chatLink(chat: string, message?: string): string   // nib://chat/<chat>/<message>
+function chatLink(chat: string, message?: string): string   // orden://chat/<chat>/<message>
 ```
 
 The wire of 4.4 is `@orden/chats/wire`: `ClientFrame` and `ServerFrame` for the socket, as

@@ -378,7 +378,7 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
   if (!view || !modes.spellcheck) return []
 
   const on = event.target
-  if (on instanceof Element && on.closest('.nib-block-handle')) return []
+  if (on instanceof Element && on.closest('.orden-block-handle')) return []
 
   const word = wordUnder(view, event)
   if (word === null) return []
@@ -408,7 +408,7 @@ function linkEntries(
   path: string | null | undefined,
 ): MenuEntry[] {
   const target = event.target
-  const link = target instanceof Element ? target.closest('.nib-link') : null
+  const link = target instanceof Element ? target.closest('.orden-link') : null
   if (!link) return []
 
   const href = link.getAttribute('data-href')

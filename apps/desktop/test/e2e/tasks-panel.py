@@ -40,11 +40,11 @@ def panel_words(page: Page) -> list[str]:
 
 def chosen(page: Page) -> str:
     return page.evaluate(  # type: ignore[no-any-return]
-        "() => document.querySelector('.tasks .nib-row[aria-pressed=true] .nib-row-label')?.textContent.trim() ?? ''"
+        "() => document.querySelector('.tasks .orden-row[aria-pressed=true] .orden-row-label')?.textContent.trim() ?? ''"
     )
 
 def row(page: Page, name: str):  # type: ignore[no-untyped-def]
-    return page.locator(".tasks > .nib-row", has=page.locator(f".nib-row-label:text-is('{name}')")).first
+    return page.locator(".tasks > .orden-row", has=page.locator(f".orden-row-label:text-is('{name}')")).first
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
@@ -66,7 +66,7 @@ def drive(browser: Browser) -> None:
         ("Tasks", ["Call the bank", "Water the plants", "Read a book"]),
     ):
         row(page, name).click()
-        DRIVE.waited(page, f"() => document.querySelector('.tasks .nib-row[aria-pressed=true] .nib-row-label')?.textContent.trim() === {json.dumps(name)}", f"{name} chosen")
+        DRIVE.waited(page, f"() => document.querySelector('.tasks .orden-row[aria-pressed=true] .orden-row-label')?.textContent.trim() === {json.dumps(name)}", f"{name} chosen")
         quiet(page)
         words = sorted(panel_words(page))
         say(f"[{name}] chosen {chosen(page)!r}, list {json.dumps(words)}, tabs {page.evaluate(TABS)}")
@@ -107,7 +107,7 @@ def drive(browser: Browser) -> None:
     row(page, "home").click(button="middle")
     DRIVE.waited(page, f"() => ({TABS})() === {tabs + 2}", "the middle button opening a tab")
     row(page, "Errands").click(button="right")
-    page.locator(".nib-menu [role=menuitem], [role=menu] [role=menuitem]", has_text="Open in new tab").first.click()
+    page.locator(".orden-menu [role=menuitem], [role=menu] [role=menuitem]", has_text="Open in new tab").first.click()
     DRIVE.waited(page, f"() => ({TABS})() === {tabs + 3}", "Open in new tab opening a tab")
     shot(page, "02-opened")
     page.close()

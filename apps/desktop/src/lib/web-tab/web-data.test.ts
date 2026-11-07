@@ -102,7 +102,7 @@ describe('a web note’s own web data', () => {
     expect(ownStore('3f9a0c17e2b4d685')).toBe('note_3f9a0c17e2b4d685')
     expect(await webData.store(null)).toBeNull()
     expect(await webData.store('3f9a0c17e2b4d685')).toBe('note_3f9a0c17e2b4d685')
-    expect(webData.history()).toBe('nib:web-visits')
+    expect(webData.history()).toBe('orden:web-visits')
   })
 
   test('a fresh id is sixteen hex digits, another each time, and a name the crate takes', async () => {

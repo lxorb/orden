@@ -11,7 +11,7 @@ automation endpoint's `eval`, which the probe turns on in its own identifier's f
 
 * **prime**: a wiped profile, the spaces seeded on the disk, and one session that opens
   everything the way somebody would and closes the way they would.
-* **launch**: warm launches of that profile with `NIB_TRACE_STARTUP` on. What a launch
+* **launch**: warm launches of that profile with `ORDEN_TRACE_STARTUP` on. What a launch
   costs is read off the trace (window shown, first frame, the tab in front, the launch
   order done) and off the front web page itself, which tells this probe's own server
   the moment it has loaded.
@@ -91,7 +91,7 @@ WALLPAPER = """
   g.addColorStop(0, '#0b1a3a'); g.addColorStop(0.5, '#e86a3a'); g.addColorStop(1, '#fff3c4')
   c.fillStyle = g; c.fillRect(0, 0, 183, 114)
   const side = (floor, ground) => ({ floor, ground })
-  localStorage.setItem('nib:wallpaper', JSON.stringify({
+  localStorage.setItem('orden:wallpaper', JSON.stringify({
     picture: canvas.toDataURL('image/png'), blur: 28,
     dark: side(0.62, '#3a2a2a'), light: side(0.6, '#e9dcd2'),
   }))
@@ -229,9 +229,9 @@ def endpoint_of(identifier: str, pid: int, seconds: float) -> tuple[int, str]:
     raise SystemExit(f"the launch {pid} never wrote {path}")
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: bool):
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     if trace:
-        env["NIB_TRACE_STARTUP"] = "1"
+        env["ORDEN_TRACE_STARTUP"] = "1"
     begun = time.perf_counter()
     app = run_probe(exe, env=env, quiet=True)
     try:
@@ -280,7 +280,7 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
         if not ids:
             raise SystemExit(f"the spaces never came: {space_ids(window)}")
         window.ask(
-            f"localStorage.setItem('nib:space-tabs', {json.dumps(json.dumps({one: 'space' for one in ids.values()}))}) || 'kept'"
+            f"localStorage.setItem('orden:space-tabs', {json.dumps(json.dumps({one: 'space' for one in ids.values()}))}) || 'kept'"
         )
         terminals = 0
         for name in sorted(webs):
@@ -491,7 +491,7 @@ def main() -> int:
         raise SystemExit("a probe identifier, never the reader's")
     app_identifier = told.identifier
 
-    spaces = told.spaces or pathlib.Path(tempfile.mkdtemp(prefix="nib-heavy-spaces-"))
+    spaces = told.spaces or pathlib.Path(tempfile.mkdtemp(prefix="orden-heavy-spaces-"))
     spaces.mkdir(parents=True, exist_ok=True)
     port = told.port or switch.free_port()
     heard = Heard()

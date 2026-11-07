@@ -66,10 +66,10 @@
 </script>
 
 <button
-  class="nib-glyph toggle"
+  class="orden-glyph toggle"
   class:is-on={open}
   class:right={side === 'right'}
-  class:nib-said={unseen && !keyed}
+  class:orden-said={unseen && !keyed}
   data-side-toggle={side}
   title={shortcuts.tooltip(label, side === 'left' ? 'app.sidebar' : 'app.right-sidebar')}
   aria-label={label}

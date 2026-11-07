@@ -12,7 +12,7 @@ describe('a link dragged onto the strip from another app', () => {
 
   test('is not a file, nor one of the app s own drags', () => {
     expect(mayCarryAddress(['Files', 'text/uri-list'])).toBe(false)
-    expect(mayCarryAddress(['text/nib-path', 'text/plain'])).toBe(false)
+    expect(mayCarryAddress(['text/orden-path', 'text/plain'])).toBe(false)
     expect(mayCarryAddress(['text/html'])).toBe(false)
   })
 

@@ -10,7 +10,7 @@ export interface IndexRow {
 const NOTES = 'notes'
 const BY_SPACE = 'space'
 
-const nameOf = (account: string) => `nib-index:${account}`
+const nameOf = (account: string) => `orden-index:${account}`
 
 function database(account: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {

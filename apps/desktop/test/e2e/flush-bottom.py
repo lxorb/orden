@@ -54,7 +54,7 @@ def same_top_and_sides(label: str, before: dict, after: dict) -> None:
 def opened(browser: Browser, on: bool) -> Page:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 760})
     if on:
-        page.add_init_script("localStorage.setItem('nib:modes', JSON.stringify({ flushBottom: true }))")
+        page.add_init_script("localStorage.setItem('orden:modes', JSON.stringify({ flushBottom: true }))")
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nWords.\n")
     DRIVE.open_note(page, "Alpha")

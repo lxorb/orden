@@ -25,11 +25,11 @@
 
 {#if migrating.vaults}
   {#each migrating.vaults as vault (vault.path)}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark('obsidian', FolderOpen)}
       <span class="name" title={vault.path}>{vault.name}</span>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -40,12 +40,12 @@
     </div>
   {/each}
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     {@render mark(null, FolderOpen)}
     <span class="name">{t('Import a folder')}</span>
     <span class="pair">
       <button
-        class="nib-chip is-quiet"
+        class="orden-chip is-quiet"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -54,7 +54,7 @@
         {t('Back')}
       </button>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -66,11 +66,11 @@
   </div>
 {:else if migrating.profiles}
   {#each migrating.profiles as profile (profile.path)}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark(ZEN_LOGO, Globe)}
       <span class="name" title={profile.path}>{profile.name}</span>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -81,10 +81,10 @@
     </div>
   {/each}
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     <span class="name"></span>
     <button
-      class="nib-chip is-quiet"
+      class="orden-chip is-quiet"
       type="button"
       disabled={migrating.working}
       aria-busy={migrating.working}
@@ -95,11 +95,11 @@
   </div>
 {:else if migrating.browserProfiles}
   {#each migrating.browserProfiles as profile (profile.path)}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark(listed ? BROWSER_LOGOS[listed] : null, Globe)}
       <span class="name" title={profile.path}>{profile.name}</span>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -110,10 +110,10 @@
     </div>
   {/each}
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     <span class="name"></span>
     <button
-      class="nib-chip is-quiet"
+      class="orden-chip is-quiet"
       type="button"
       disabled={migrating.working}
       aria-busy={migrating.working}
@@ -124,14 +124,14 @@
   </div>
 {:else}
   {#if takingOver.offered}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark(null, Globe)}
       <span class="name">{t('Notes from nibeditor.com')}</span>
       {#if takingOver.state === 'nothing'}
         <span class="value">{t('Nothing there')}</span>
       {:else}
         <button
-          class="nib-chip"
+          class="orden-chip"
           type="button"
           disabled={takingOver.state === 'asking' || migrating.working}
           aria-busy={takingOver.state === 'asking' || migrating.working}
@@ -144,11 +144,11 @@
   {/if}
 
   {#if folders}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark('obsidian', FolderOpen)}
       <span class="name">{OBSIDIAN}</span>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -159,11 +159,11 @@
     </div>
   {/if}
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     {@render mark('notion', FolderOpen)}
     <span class="name">{NOTION}</span>
     <button
-      class="nib-chip"
+      class="orden-chip"
       type="button"
       disabled={migrating.working}
       aria-busy={migrating.working}
@@ -174,11 +174,11 @@
   </div>
 
   {#if zen}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark(ZEN_LOGO, Globe)}
       <span class="name">{ZEN}</span>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -190,11 +190,11 @@
   {/if}
 
   {#each migrating.browsers as found (found.browser)}
-    <div class="nib-setting">
+    <div class="orden-setting">
       {@render mark(BROWSER_LOGOS[found.browser], Globe)}
       <span class="name">{found.name}</span>
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -205,12 +205,12 @@
     </div>
   {/each}
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     {@render mark(null, FolderOpen)}
     <span class="name">{t('Another app')}</span>
     <span class="pair">
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -220,7 +220,7 @@
       </button>
       {#if folders}
         <button
-          class="nib-chip"
+          class="orden-chip"
           type="button"
           disabled={migrating.working}
           aria-busy={migrating.working}
@@ -234,7 +234,7 @@
 {/if}
 
 {#snippet mark(slug: string | null, fallback: IconNode)}
-  <span class="nib-setting-mark" aria-hidden="true"
+  <span class="orden-setting-mark" aria-hidden="true"
     ><Icon icon={slug === null ? null : readIcon(brandIcon(slug))} {fallback} /></span
   >
 {/snippet}

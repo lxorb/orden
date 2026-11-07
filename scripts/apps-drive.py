@@ -255,8 +255,8 @@ def main() -> int:
     config.mkdir(parents=True)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-apps-spaces-"))
-    process = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-apps-spaces-"))
+    process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     wrong: list[str] = []
     try:
         app = endpoint(config, process.pid, secret)

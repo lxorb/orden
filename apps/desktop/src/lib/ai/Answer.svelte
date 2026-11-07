@@ -7,6 +7,7 @@
 <script lang="ts">
   import { copyText } from '../clipboard'
   import { mathsWaiting } from '../markdown-view.svelte'
+  import { drawInPieces } from './answer-pieces'
   import { patchHtml } from './patch-html'
 
   const {
@@ -62,7 +63,7 @@
 {#if live}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="words nib-write nib-answer live"
+    class="words orden-write orden-answer live"
     dir="auto"
     class:waiting
     onclick={press}
@@ -72,19 +73,17 @@
 {:else}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="words nib-write nib-answer"
+    class="words orden-write orden-answer"
     dir="auto"
     class:waiting
     onclick={press}
     onauxclick={(event) => onfollow?.(event)}
-  >
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -- the renderer escapes every tag the model wrote; see ai/drawn.ts -->
-    {@html html}
-  </div>
+    {@attach (node: HTMLDivElement) => drawInPieces(node, html)}
+  ></div>
 {/if}
 
 <style>
-  .words:global(:is(#write, .nib-write)) {
+  .words:global(:is(#write, .orden-write)) {
     max-width: none;
     margin: 0;
     padding: 0;
@@ -95,28 +94,28 @@
     overflow-wrap: anywhere;
   }
 
-  .words:global(:is(#write, .nib-write)) > :global(:last-child) {
+  .words:global(:is(#write, .orden-write)) > :global(:last-child) {
     margin-bottom: 0;
   }
 
-  .words:global(:is(#write, .nib-write)) :global(:is(h1, h2, h3, h4, h5, h6)) {
+  .words:global(:is(#write, .orden-write)) :global(:is(h1, h2, h3, h4, h5, h6)) {
     margin: 1.2em 0 0.5em;
   }
 
-  .words:global(:is(#write, .nib-write)) > :global(:is(h1, h2, h3, h4, h5, h6):first-child) {
+  .words:global(:is(#write, .orden-write)) > :global(:is(h1, h2, h3, h4, h5, h6):first-child) {
     margin-top: 0;
   }
 
-  .words:global(:is(#write, .nib-write)) :global(a) {
+  .words:global(:is(#write, .orden-write)) :global(a) {
     cursor: default;
   }
 
-  .words:global(:is(#write, .nib-write)) :global(.task-list-item input[type='checkbox']) {
+  .words:global(:is(#write, .orden-write)) :global(.task-list-item input[type='checkbox']) {
     margin: 0;
     inset-inline-start: -1.6em;
   }
 
-  .words:global(:is(#write, .nib-write)) :global(.code) {
+  .words:global(:is(#write, .orden-write)) :global(.code) {
     margin: 1em 0;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
@@ -130,11 +129,11 @@
       calc(var(--row-height-sm) + 1px + 2 * var(--space-2) + var(--lines, 6) * 0.86em * 1.6);
   }
 
-  .words:global(:is(#write, .nib-write)) > :global(.code:first-child) {
+  .words:global(:is(#write, .orden-write)) > :global(.code:first-child) {
     margin-top: 0;
   }
 
-  .words:global(:is(#write, .nib-write)) :global(.code pre) {
+  .words:global(:is(#write, .orden-write)) :global(.code pre) {
     margin: 0;
     padding: var(--space-2) var(--space-3);
     border: 0;
@@ -250,7 +249,7 @@
     }
   }
 
-  .words:global(:is(#write, .nib-write)) :global(a[href^='#cite-']) {
+  .words:global(:is(#write, .orden-write)) :global(a[href^='#cite-']) {
     display: inline-block;
     min-width: 1.35em;
     margin-inline: 1px;
@@ -267,13 +266,13 @@
   }
 
   @media (hover: hover) {
-    .words:global(:is(#write, .nib-write)) :global(a[href^='#cite-']:hover) {
+    .words:global(:is(#write, .orden-write)) :global(a[href^='#cite-']:hover) {
       text-decoration: none;
       background: var(--surface-press);
     }
   }
 
-  :global([data-touch]) .words:global(:is(#write, .nib-write)) {
+  :global([data-touch]) .words:global(:is(#write, .orden-write)) {
     font-size: var(--text-base);
   }
 </style>

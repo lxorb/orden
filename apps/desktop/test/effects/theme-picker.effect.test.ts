@@ -48,7 +48,7 @@ const ROSE = {
 }
 
 const root = document.documentElement
-const sheet = () => document.getElementById('nib-user-theme')?.textContent ?? ''
+const sheet = () => document.getElementById('orden-user-theme')?.textContent ?? ''
 
 const storage = () =>
   Object.fromEntries(
@@ -200,14 +200,14 @@ test('Escape closes it and gives back exactly what was there', async () => {
   expect(theme.scheme).toBe('dark')
   expect(theme.accent).toBe('violet')
   expect(root.dataset.theme).toBe('dark')
-  expect(localStorage.getItem('nib:theme')).toBeNull()
+  expect(localStorage.getItem('orden:theme')).toBeNull()
 })
 
 test('a press outside does the same', async () => {
   await opened()
   pointAt(card('Rose'))
 
-  document.querySelector<HTMLElement>('.nib-scrim')?.click()
+  document.querySelector<HTMLElement>('.orden-scrim')?.click()
   flushSync()
 
   expect(picking.open).toBe(false)
@@ -223,7 +223,7 @@ test('a click keeps the theme, written down as Settings writes it, and closes', 
 
   expect(picking.open).toBe(false)
   expect(theme.id).toBe('file:rose')
-  expect(localStorage.getItem('nib:theme')).toBe('file:rose')
+  expect(localStorage.getItem('orden:theme')).toBe('file:rose')
   expect(sheet()).toContain('#2b1119')
 })
 
@@ -242,11 +242,11 @@ test('the arrows try each theme in turn, and Enter keeps the one they are on', a
   expect(theme.id).toBe('default')
   press('ArrowUp')
   expect(theme.id).toBe('glass')
-  expect(localStorage.getItem('nib:theme')).toBeNull()
+  expect(localStorage.getItem('orden:theme')).toBeNull()
 
   press('Enter')
   expect(picking.open).toBe(false)
-  expect(localStorage.getItem('nib:theme')).toBe('glass')
+  expect(localStorage.getItem('orden:theme')).toBe('glass')
 })
 
 test('typing narrows the cards and tries the first that answers', async () => {
@@ -288,16 +288,16 @@ test('the scheme and the accent are tried the same way and kept with a click', a
   )
   pointAt(light)
   expect(root.dataset.theme).toBe('light')
-  expect(localStorage.getItem('nib:theme-scheme')).toBeNull()
+  expect(localStorage.getItem('orden:theme-scheme')).toBeNull()
 
   light?.click()
   flushSync()
-  expect(localStorage.getItem('nib:theme-scheme')).toBe('light')
+  expect(localStorage.getItem('orden:theme-scheme')).toBe('light')
   expect(picking.open).toBe(true)
 
   const keptAccent = () =>
     (
-      JSON.parse(localStorage.getItem('nib:theme-settings') ?? '{}') as Record<
+      JSON.parse(localStorage.getItem('orden:theme-settings') ?? '{}') as Record<
         string,
         Record<string, unknown> | undefined
       >
@@ -320,7 +320,7 @@ test('the scheme and the accent are tried the same way and kept with a click', a
 test('draws the wallpaper with the picture the window would wear, and tries it on the app', async () => {
   const picture = 'data:image/png;base64,iVBORw0KGgo='
   localStorage.setItem(
-    'nib:wallpaper',
+    'orden:wallpaper',
     JSON.stringify({
       picture,
       blur: 28,
@@ -342,7 +342,7 @@ test('draws the wallpaper with the picture the window would wear, and tries it o
 
   pointAt(card('Wallpaper'))
   await expect.poll(sheet).toContain(`--wallpaper-picture: url("${picture}")`)
-  expect(localStorage.getItem('nib:theme')).toBeNull()
+  expect(localStorage.getItem('orden:theme')).toBeNull()
 
   leave(grid())
   await expect.poll(() => theme.id).toBe('default')

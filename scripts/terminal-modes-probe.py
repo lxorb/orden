@@ -78,7 +78,7 @@ def moved(window) -> None:
 
 def reporting(window) -> bool:
 
-    return window.run("document.querySelector('.nib-terminal .xterm').classList.contains('enable-mouse-events')") is True
+    return window.run("document.querySelector('.orden-terminal .xterm').classList.contains('enable-mouse-events')") is True
 
 def screen(window) -> str:
 
@@ -101,7 +101,7 @@ def prompted(window, after: str = "", seconds: float = 120.0) -> str:
 def quit_anyway(app, window) -> bool:
 
     user32.PostMessageW(main_window(app.pid), WM_CLOSE, 0, 0)
-    asked = "document.querySelector('[role=\"alertdialog\"] .nib-button.is-danger')"
+    asked = "document.querySelector('[role=\"alertdialog\"] .orden-button.is-danger')"
 
     def answered() -> bool:
         if app.poll() is not None:
@@ -139,10 +139,10 @@ def main() -> int:
     args = parsed.parse_args()
     exe = pathlib.Path(args.exe).resolve()
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-modes-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-modes-"))
     (spaces / "Modes probe").mkdir(parents=True, exist_ok=True)
     tabs.wipe(args.identifier)
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)

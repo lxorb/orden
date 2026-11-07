@@ -108,7 +108,7 @@
   {:else if property.kind === 'checkbox'}
     <input
       type="checkbox"
-      class="nib-checkbox"
+      class="orden-checkbox"
       checked={property.value.toLowerCase() === 'true'}
       disabled={!writable}
       aria-label={property.key}

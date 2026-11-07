@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 
 const SOURCE = readFileSync(join(import.meta.dirname, './SettingsPanel.svelte'), 'utf8')
 
-const RULE = /\.setting \.nib-segmented \{([^}]*)\}/.exec(SOURCE)?.[1]
+const RULE = /\.setting \.orden-segmented \{([^}]*)\}/.exec(SOURCE)?.[1]
 
 describe('a segmented setting', () => {
   test('is never narrower than the column its short choices line up in, while the row is wider', () => {

@@ -1,6 +1,6 @@
 import { keep, storedText } from './stored'
 
-const KEY = 'nib:side-toggles-inside'
+const KEY = 'orden:side-toggles-inside'
 
 class SideToggles {
   inside = $state(storedText(KEY) === 'yes')

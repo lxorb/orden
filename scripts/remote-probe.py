@@ -1,8 +1,8 @@
 """A terminal on another machine in the packaged app, against a stand-in `ssh`.
 
 Windows only, and never a real machine: there is no `sshd` here to reach, and a reader's
-own hosts are theirs. `NIB_SSH` points the crate at `scripts/fake-ssh.py` (through a
-one-line `.cmd`) and `NIB_SSH_CONFIG` at a config written here, so what is checked is
+own hosts are theirs. `ORDEN_SSH` points the crate at `scripts/fake-ssh.py` (through a
+one-line `.cmd`) and `ORDEN_SSH_CONFIG` at a config written here, so what is checked is
 everything on Orden's side of `ssh`:
 
 * the crate reads the config's hosts - a pattern and a `Match` left out, an `Include`
@@ -127,12 +127,12 @@ def main() -> int:
     shots = pathlib.Path(args.shots)
     shots.mkdir(parents=True, exist_ok=True)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-remote-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-remote-"))
     folder = spaces / SPACE
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "A note.md").write_text("# A note\n", encoding="utf-8")
 
-    own = pathlib.Path(tempfile.mkdtemp(prefix="nib-remote-ssh-"))
+    own = pathlib.Path(tempfile.mkdtemp(prefix="orden-remote-ssh-"))
     config = own / "config"
     config.write_text(CONFIG.replace("extra.d/*", str(own / "extra.d" / "*")), encoding="utf-8")
     (own / "extra.d").mkdir()
@@ -145,9 +145,9 @@ def main() -> int:
     tabs.wipe(args.identifier)
     environment = {
         **os.environ,
-        "NIB_SPACES_DIR": str(spaces),
-        "NIB_SSH": str(shim),
-        "NIB_SSH_CONFIG": str(config),
+        "ORDEN_SPACES_DIR": str(spaces),
+        "ORDEN_SSH": str(shim),
+        "ORDEN_SSH_CONFIG": str(config),
         "FAKE_SSH_LOG": str(log),
     }
 
@@ -225,15 +225,15 @@ def main() -> int:
             "at.dispatchEvent(new KeyboardEvent(type, { key, code: key === 't' ? 'KeyT' : 'ControlLeft', ctrlKey: ctrl, bubbles: true, cancelable: true })); "
             "return true })()"
         )
-        sheet = until(lambda: window.run("!!document.querySelector('.nib-screen [data-more], .nib-screen .kind')") is True, 10)
+        sheet = until(lambda: window.run("!!document.querySelector('.orden-screen [data-more], .orden-screen .kind')") is True, 10)
         check(bool(sheet), "Ctrl+T puts the kinds up")
         window.run(
-            "(() => { const box = document.querySelector('.nib-screen'); "
+            "(() => { const box = document.querySelector('.orden-screen'); "
             "(document.activeElement || box).dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', bubbles: true, cancelable: true })); "
             "window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true })); return true })()"
         )
         rows = lambda: window.run(
-            "JSON.stringify([...document.querySelectorAll('.picker .nib-row .nib-row-label')].map((one) => one.textContent))"
+            "JSON.stringify([...document.querySelectorAll('.picker .orden-row .orden-row-label')].map((one) => one.textContent))"
         )
         picked = until(lambda: isinstance(rows(), str) and "fakepi" in rows(), 10)
         check(bool(picked), f"and S the host picker: {rows()}")

@@ -4,7 +4,7 @@ import { isRecord, isString, keepJson } from '../stored'
 import { type EntryIds, entryIds } from './entry-ids'
 import { carried, moving } from './file-ops'
 
-const STORAGE_KEY = 'nib:bookmarks'
+const STORAGE_KEY = 'orden:bookmarks'
 
 export const MOST_BOOKMARKS = 60
 

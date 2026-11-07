@@ -91,7 +91,7 @@
 </script>
 
 {#snippet glyph(mark: IconNode, mirrored = false)}
-  <svg class:nib-mirror={mirrored} viewBox="0 0 24 24" aria-hidden="true">
+  <svg class:orden-mirror={mirrored} viewBox="0 0 24 24" aria-hidden="true">
     {#each mark as [tag, attrs], index (index)}
       <svelte:element this={tag} {...attrs} />
     {/each}
@@ -100,21 +100,21 @@
 
 <div class="bar">
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={shortcuts.tooltip(t('Back'), 'app.back')}
     aria-label={t('Back')}
     disabled={!view.canGoBack}
     onclick={() => view.back()}>{@render glyph(ArrowLeft, true)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={shortcuts.tooltip(t('Forward'), 'app.forward')}
     aria-label={t('Forward')}
     disabled={!view.canGoForward}
     onclick={() => view.forward()}>{@render glyph(ArrowRight, true)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     title={shortcuts.tooltip(t('Folder above'), 'explorer.parent')}
     aria-label={t('Folder above')}
     disabled={!view.canGoUp}
@@ -125,7 +125,7 @@
     <input
       bind:this={field}
       bind:value={typed}
-      class="nib-field path"
+      class="orden-field path"
       aria-label={t('Path')}
       spellcheck="false"
       autocomplete="off"
@@ -159,7 +159,7 @@
     <input
       bind:this={filterField}
       bind:value={view.filter}
-      class="nib-field filter"
+      class="orden-field filter"
       aria-label={t('Filter')}
       placeholder={t('Filter')}
       spellcheck="false"
@@ -168,14 +168,14 @@
     />
   {/if}
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={filtering || !!view.filter || !!view.search}
     title={shortcuts.tooltip(t('Filter'), 'explorer.filter')}
     aria-label={t('Filter')}
     onclick={() => (filtering = !filtering)}>{@render glyph(Search)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={explorerPrefs.view === 'list'}
     title={shortcuts.tooltip(t('List'), 'explorer.list')}
     aria-label={t('List')}
@@ -183,7 +183,7 @@
     onclick={() => explorerPrefs.show('list')}>{@render glyph(List)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={explorerPrefs.view === 'grid'}
     title={shortcuts.tooltip(t('Grid'), 'explorer.grid')}
     aria-label={t('Grid')}
@@ -191,7 +191,7 @@
     onclick={() => explorerPrefs.show('grid')}>{@render glyph(LayoutGrid)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={explorerPrefs.view === 'columns'}
     title={shortcuts.tooltip(t('Columns'), 'explorer.columns')}
     aria-label={t('Columns')}
@@ -199,7 +199,7 @@
     onclick={() => explorerPrefs.show('columns')}>{@render glyph(Columns)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={explorerPrefs.hidden}
     title={shortcuts.tooltip(t('Hidden files'), 'explorer.hidden')}
     aria-label={t('Hidden files')}
@@ -207,7 +207,7 @@
     onclick={() => explorerPrefs.toggleHidden()}>{@render glyph(Eye)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={explorerPrefs.places}
     title={t('Places')}
     aria-label={t('Places')}
@@ -215,7 +215,7 @@
     onclick={() => explorerPrefs.togglePlaces()}>{@render glyph(PanelLeft)}</button
   >
   <button
-    class="nib-glyph"
+    class="orden-glyph"
     class:is-on={explorerPrefs.preview}
     title={shortcuts.tooltip(t('Preview'), 'explorer.preview')}
     aria-label={t('Preview')}

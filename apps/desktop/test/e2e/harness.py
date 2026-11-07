@@ -28,23 +28,23 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 APP = ROOT / "apps" / "desktop"
-DIST = APP / os.environ.get("NIB_DIST", "dist")
-OWN_BUILD = "NIB_DIST" not in os.environ
-WORKER_DIST = APP / os.environ.get("NIB_WORKER_DIST", "dist-worker")
+DIST = APP / os.environ.get("ORDEN_DIST", "dist")
+OWN_BUILD = "ORDEN_DIST" not in os.environ
+WORKER_DIST = APP / os.environ.get("ORDEN_WORKER_DIST", "dist-worker")
 SERVICE = ROOT / "services" / "sync"
 MACHINE = ROOT / "services" / "machine"
 MACHINE_BUNDLE = MACHINE / "dist" / "machine.bin"
 SHOTS = HERE / "shots"
 
-POINTED = ".nib-build"
+POINTED = ".orden-build"
 
 SEED_PATH = "/seed.html"
 SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 
 BUILT_IN = (
-    "try { if (localStorage.getItem('nib:theme') === null) {"
-    " localStorage.setItem('nib:theme', 'default'); localStorage.setItem('nib:theme-moved', 'yes') }"
-    " if (localStorage.getItem('nib:renamed') === null) localStorage.setItem('nib:renamed', 'told') }"
+    "try { if (localStorage.getItem('orden:theme') === null) {"
+    " localStorage.setItem('orden:theme', 'default'); localStorage.setItem('orden:theme-moved', 'yes') }"
+    " if (localStorage.getItem('orden:renamed') === null) localStorage.setItem('orden:renamed', 'told') }"
     " catch {}"
 )
 
@@ -110,7 +110,7 @@ def _origin(url: str) -> str:
     parts = urllib.parse.urlsplit(url)
     return f"{parts.scheme}://{parts.netloc}"
 
-ENGINE = os.environ.get("NIB_ENGINE", "chromium")
+ENGINE = os.environ.get("ORDEN_ENGINE", "chromium")
 WEBKIT = ENGINE == "webkit"
 
 MOD = "Meta" if WEBKIT else "Control"
@@ -121,7 +121,7 @@ BUILD_PATIENCE = 600
 TEARDOWN = 90
 
 NEEDS = {
-    "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
+    "native": "a native probe build (Windows, ORDEN_PROBE_EXE and ORDEN_PROBE_IDENTIFIER)",
     "chromium": "Chromium's own DevTools, flags or routing, which WebKit does not have",
     "tab-stops": "Tab stopping at buttons, which a Mac leaves to Keyboard navigation, off on a runner",
 }
@@ -133,8 +133,8 @@ LAUNCHED = "nib: launch order finished"
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
-if os.environ.get("NIB_HANG_AFTER"):
-    faulthandler.dump_traceback_later(float(os.environ["NIB_HANG_AFTER"]), exit=False)
+if os.environ.get("ORDEN_HANG_AFTER"):
+    faulthandler.dump_traceback_later(float(os.environ["ORDEN_HANG_AFTER"]), exit=False)
 
 for _stream in (sys.stdout, sys.stderr):
     with contextlib.suppress(AttributeError, ValueError):
@@ -374,7 +374,7 @@ def tool(package: Path, name: str) -> list[str]:
 
 def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     kind = "worker" if served_by_worker else "plain"
-    if os.environ.get("NIB_SKIP_BUILD") and built(into, kind):
+    if os.environ.get("ORDEN_SKIP_BUILD") and built(into, kind):
         say(f"reusing the build in {into.name}")
         if served_by_worker:
             machine_bundle(fresh=False)
@@ -386,9 +386,9 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     environment = {**os.environ}
     environment.pop("NODE_ENV", None)
     if served_by_worker:
-        environment["VITE_NIB_API"] = ""
+        environment["VITE_ORDEN_API"] = ""
     else:
-        environment.pop("VITE_NIB_API", None)
+        environment.pop("VITE_ORDEN_API", None)
     done = subprocess.run(
         [*tool(APP, "vite"), "build", "--mode", "drive", "--outDir", str(into), "--emptyOutDir"],
         cwd=APP,
@@ -697,7 +697,7 @@ class Drive:
         self.failures: list[str] = []
         self.folder = folder
         self._stack = contextlib.ExitStack()
-        self.borrowed = os.environ.get("NIB_ORIGIN", "").rstrip("/")
+        self.borrowed = os.environ.get("ORDEN_ORIGIN", "").rstrip("/")
         self.served = served and not self.borrowed and not dev
         self.server = Served(folder) if self.served else None
         if self.borrowed:
@@ -763,7 +763,7 @@ class Drive:
             options.pop("channel", None)
             options.pop("args", None)
             return answering(play.webkit.launch(**options))
-        channel = os.environ.get("NIB_BROWSER", "chromium")
+        channel = os.environ.get("ORDEN_BROWSER", "chromium")
         options.setdefault("channel", channel)
         return answering(play.chromium.launch(**options))
 
@@ -777,7 +777,7 @@ class Drive:
             options.setdefault("service_workers", WEBKIT_WORKERS)
             context = play.webkit.launch_persistent_context(user_data_dir=str(profile), **options)
         else:
-            options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
+            options.setdefault("channel", os.environ.get("ORDEN_BROWSER", "chromium"))
             context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
@@ -839,7 +839,7 @@ class Drive:
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
         page.evaluate("() => window.nibApp.workspace.toggleReading()")
         self.wait_for(
-            page, "document.querySelector('article.nib-write')?.childElementCount", "the reading view", patience
+            page, "document.querySelector('article.orden-write')?.childElementCount", "the reading view", patience
         )
         self.settled(page)
 
@@ -1214,10 +1214,10 @@ class Worker:
         )
 
 def identifier_of(exe: Path, given: str | None = None) -> str | None:
-    said = given or os.environ.get("NIB_PROBE_IDENTIFIER")
+    said = given or os.environ.get("ORDEN_PROBE_IDENTIFIER")
     if said:
         return said
-    beside = exe.parent / "nib-probe-identifier.json"
+    beside = exe.parent / "orden-probe-identifier.json"
     with contextlib.suppress(OSError, ValueError, KeyError, TypeError):
         return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
     return None
@@ -1228,7 +1228,7 @@ def refused(exe: Path, identifier: str | None) -> str:
         if local and exe.resolve().is_relative_to((Path(local) / installed).resolve()):
             return f"{exe} is the installed nib"
     if not identifier:
-        return f"{exe} names no identifier (NIB_PROBE_IDENTIFIER, or --identifier to the drive)"
+        return f"{exe} names no identifier (ORDEN_PROBE_IDENTIFIER, or --identifier to the drive)"
     if identifier == RELEASE_IDENTIFIER or not identifier.startswith(RELEASE_IDENTIFIER + "."):
         return f"{exe} is built under {identifier}, not one of its own like {RELEASE_IDENTIFIER}.probe.<name>"
     return ""
@@ -1249,7 +1249,7 @@ class Native:
         self.drive = drive
         self.exe = exe
         self.spaces = probe_app.spaces_folder(drive.name)
-        self.env = {**os.environ, **(env or {}), "NIB_SPACES_DIR": str(self.spaces)}
+        self.env = {**os.environ, **(env or {}), "ORDEN_SPACES_DIR": str(self.spaces)}
         self.app: subprocess.Popen[bytes] | None = None
         drive.later(self.stop)
 
@@ -1278,10 +1278,10 @@ def needs_of(source: str) -> tuple[str, ...]:
 
 def missing(needs: Sequence[str]) -> str:
     for one in needs:
-        if one == "native" and not (sys.platform == "win32" and os.environ.get("NIB_PROBE_EXE")):
+        if one == "native" and not (sys.platform == "win32" and os.environ.get("ORDEN_PROBE_EXE")):
             return f"needs {NEEDS['native']}"
         if one == "native":
-            exe = Path(os.environ["NIB_PROBE_EXE"])
+            exe = Path(os.environ["ORDEN_PROBE_EXE"])
             if why := refused(exe, identifier_of(exe)):
                 return f"refused: {why}"
         if one == "chromium" and WEBKIT:

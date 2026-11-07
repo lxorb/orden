@@ -22,7 +22,7 @@ async () => {
   t.turns.push({ id: 'u1', role: 'you', at: Date.now(), parts: [{ kind: 'text', text: 'do' }], draft: { text: 'do' } })
   const m = { id: 'u1m', role: 'model', at: Date.now(), provider: t.provider, parts: [] }
   t.turns.push(m)
-  const agent = { id: 'nib-p4', name: 'x', thread: t.id }
+  const agent = { id: 'orden-p4', name: 'x', thread: t.id }
   const edit = async (q, r) => {
     await nap()
     await docs.notes.editNote(agent, { path: 'S4.md' }, [{ at: { quote: q }, replace: r }])

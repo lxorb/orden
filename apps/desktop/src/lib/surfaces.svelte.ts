@@ -3,6 +3,7 @@ import { door } from '@orden/markdown/door'
 import { warmCalls } from './api'
 import { breathe } from './breathe'
 import { startup } from './startup.svelte'
+import { storedText } from './stored'
 
 export function held<T>(load: () => Promise<{ default: T }>): () => Promise<T> {
   return door(() => load().then((one) => one.default))
@@ -206,18 +207,23 @@ export const keysMovedNotice = latched(() => {
   return import('./ai/KeysMoved.svelte')
 })
 
-export const OUTSIDE = 'nib:outside-folder'
+export const OUTSIDE = 'orden:outside-folder'
 
 export const outsideNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no spaces folder in the Even Realities plugin')
   return import('./OutsideFolder.svelte')
 })
 
-export const CRASHES_TOLD = 'nib:crash-reports-told'
+export const CRASH_REPORTS = 'orden:crash-reports'
 
-export const crashNotice = latched(() => {
+export const CRASHES_ASKED = 'orden:crash-reports-told'
+
+export const crashAskDue = (): boolean =>
+  storedText(CRASHES_ASKED) === null && storedText(CRASH_REPORTS) === null
+
+export const crashAsk = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no crash reports in the Even Realities plugin')
-  return import('./crash-reports/CrashNotice.svelte')
+  return import('./crash-reports/CrashAsk.svelte')
 })
 
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))

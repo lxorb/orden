@@ -32,7 +32,7 @@
 {#snippet arrow(sort: Sort, flip: () => void)}
   <button
     type="button"
-    class="nib-glyph"
+    class="orden-glyph"
     title={sort.direction === 'ASC' ? t('Ascending') : t('Descending')}
     aria-label={sort.direction === 'ASC' ? t('Ascending') : t('Descending')}
     onclick={flip}
@@ -70,7 +70,7 @@
       )}
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         title={t('Remove')}
         aria-label={t('Remove')}
         onclick={() =>
@@ -86,7 +86,7 @@
   {/each}
   <button
     type="button"
-    class="nib-row is-short adder"
+    class="orden-row is-short adder"
     onclick={() =>
       kit.change((base, index) =>
         setSort(base, index, [
@@ -95,7 +95,7 @@
         ]),
       )}
   >
-    <span class="nib-row-label">{t('Add a sort')}</span>
+    <span class="orden-row-label">{t('Add a sort')}</span>
   </button>
 {:else}
   {@const group = view?.groupBy}
@@ -169,7 +169,7 @@
     transform: rotate(180deg);
   }
 
-  .adder .nib-row-label {
+  .adder .orden-row-label {
     color: var(--muted);
   }
 </style>

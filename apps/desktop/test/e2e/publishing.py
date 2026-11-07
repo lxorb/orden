@@ -114,7 +114,7 @@ ALLOWED = [
 
 OWN_SCRIPT = "/s/"
 
-THEME_LINE = "nib:site-theme"
+THEME_LINE = "orden:site-theme"
 
 CHROME = re.compile(r"^(?:p\.back|p\.by|p\.present|footer)$")
 
@@ -180,7 +180,7 @@ def fresh(
 ) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900})
     if token:
-        context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+        context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))

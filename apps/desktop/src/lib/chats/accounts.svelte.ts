@@ -1,12 +1,19 @@
 import type { ChatProvider, Host } from '@orden/chats/provider'
 import { secretName } from '@orden/chats/provider'
 import { mailProvider } from '@orden/chats/mail'
+import { gmailProvider, microsoftProvider } from '@orden/chats/mail-oauth'
 import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
+import { telegram } from './providers/telegram'
 
-const KEY = 'nib:chat-accounts'
+const KEY = 'orden:chat-accounts'
 
-export const PROVIDERS: readonly ChatProvider[] = [mailProvider]
+const PROVIDERS: readonly ChatProvider[] = [
+  mailProvider,
+  gmailProvider,
+  microsoftProvider,
+  telegram,
+]
 
 export interface Saved {
   provider: string
@@ -44,8 +51,18 @@ export class Accounts {
     private readonly providers: readonly ChatProvider[] = PROVIDERS,
   ) {}
 
+  extra = $state.raw<readonly ChatProvider[]>([])
+
+  get offered(): readonly ChatProvider[] {
+    return [...this.providers, ...this.extra]
+  }
+
+  offer(provider: ChatProvider): void {
+    this.extra = [...this.extra.filter((one) => one.id !== provider.id), provider]
+  }
+
   providerOf(id: string): ChatProvider | undefined {
-    return this.providers.find((one) => one.id === id)
+    return this.offered.find((one) => one.id === id)
   }
 
   private keepSaved(next: readonly Saved[]): void {
@@ -73,7 +90,7 @@ export class Accounts {
       (it) => it.provider !== one.provider || it.account !== one.account,
     )
     try {
-      await this.hub.link(provider, values, this.host)
+      await this.hub.link(provider, values, this.host, one.account)
     } catch (error) {
       this.failed = [
         ...this.failed,
@@ -91,7 +108,7 @@ export class Accounts {
     try {
       const linked = await this.hub.link(provider, values, this.host)
       const account = linked.account.id
-      const config: Record<string, string> = {}
+      const config: Record<string, string> = { ...linked.account.keep }
       for (const field of provider.fields) {
         const value = values[field.key]
         if (value === undefined || value === '') continue
@@ -115,6 +132,10 @@ export class Accounts {
     for (const field of provider?.fields ?? []) {
       if (field.secret) await this.host.keepSecret(secretName(providerId, account, field.key), null)
     }
+    for (const kept of provider?.kept ?? []) {
+      await this.host.keepSecret(secretName(providerId, account, kept), null)
+    }
+    await provider?.forget?.(account, this.host).catch(() => undefined)
     this.failed = this.failed.filter((it) => it.provider !== providerId || it.account !== account)
     this.keepSaved(
       this.saved.filter((one) => one.provider !== providerId || one.account !== account),

@@ -50,7 +50,7 @@ function world() {
     events: { opened(): void; heard(data: string): void }
   }[] = []
   const made: LinkWorld = {
-    base: 'https://nib.test',
+    base: 'https://orden.test',
     token: () => 'tok',
     device: () => Promise.resolve('dev1'),
     socket: (url, _protocols, events) => {
@@ -87,7 +87,7 @@ describe('an application’s socket', () => {
     await Promise.resolve()
     const socket = sockets[0]
     if (!socket) throw new Error('no socket')
-    expect(socket.url).toBe('wss://nib.test/v2/apps/app-1/socket')
+    expect(socket.url).toBe('wss://orden.test/v2/apps/app-1/socket')
     socket.open = true
     socket.events.opened()
     expect(socket.sent).toEqual([JSON.stringify({ t: 'hello', hold: true, view })])

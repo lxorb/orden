@@ -28,7 +28,7 @@
   void import('@orden/themes/tokens.css?raw').then((one) => (tokens = one.default))
 
   const custom = $derived(
-    picking.open ? (document.getElementById('nib-custom-css')?.textContent ?? '') : '',
+    picking.open ? (document.getElementById('orden-custom-css')?.textContent ?? '') : '',
   )
 
   type Info = (typeof theme.all)[number]
@@ -47,7 +47,7 @@
 
   function dimOf(id: string): Record<string, string> {
     const dim = theme.keptFor(id, 'dim')
-    return typeof dim === 'number' ? { '--nib-dim': `${dim}%` } : {}
+    return typeof dim === 'number' ? { '--orden-dim': `${dim}%` } : {}
   }
 
   const shown = $derived.by(() => {
@@ -178,15 +178,15 @@
 {#if picking.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim is-clear scrim"
+    class="orden-scrim is-clear scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => picking.close()}
   ></div>
 
   <div
-    class="picker nib-host"
-    class:nib-layer={place !== null}
-    class:nib-screen={place === null && !viewport.touch}
+    class="picker orden-host"
+    class:orden-layer={place !== null}
+    class:orden-screen={place === null && !viewport.touch}
     class:sheet={viewport.touch}
     class:above={place?.above}
     class:rtl={place?.rtl}
@@ -206,7 +206,7 @@
     {#if viewport.touch}<div class="grip" aria-hidden="true"></div>{/if}
 
     <div class="head">
-      <div class="nib-field find">
+      <div class="orden-field find">
         <input
           value={picking.query}
           oninput={(event) => typed(event.currentTarget.value)}
@@ -217,15 +217,15 @@
           autocorrect="off"
           role="combobox"
           aria-expanded="true"
-          aria-controls="nib-theme-cards"
-          aria-activedescendant={cursor >= 0 ? `nib-theme-${cursor}` : undefined}
+          aria-controls="orden-theme-cards"
+          aria-activedescendant={cursor >= 0 ? `orden-theme-${cursor}` : undefined}
           aria-label={t('Search themes')}
           data-lands
         />
       </div>
 
       <div
-        class="nib-segmented modes"
+        class="orden-segmented modes"
         role="radiogroup"
         tabindex="-1"
         aria-label={t('Mode')}
@@ -264,7 +264,7 @@
 
     <div
       bind:this={grid}
-      id="nib-theme-cards"
+      id="orden-theme-cards"
       class="grid"
       style:--columns={COLUMNS}
       role="listbox"
@@ -283,7 +283,7 @@
           class="card"
           class:is-on={index === cursor}
           class:kept={one.id === picking.kept.id}
-          id="nib-theme-{index}"
+          id="orden-theme-{index}"
           role="option"
           tabindex="-1"
           aria-selected={index === cursor}
@@ -306,7 +306,7 @@
         type="button"
         class="card browse"
         class:is-on={browsing}
-        id="nib-theme-{shown.length}"
+        id="orden-theme-{shown.length}"
         role="option"
         tabindex="-1"
         aria-selected={browsing}
@@ -358,7 +358,7 @@
     transform-origin: top left;
   }
 
-  .picker.nib-screen {
+  .picker.orden-screen {
     transform-origin: top center;
   }
 

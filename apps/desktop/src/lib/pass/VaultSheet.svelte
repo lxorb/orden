@@ -62,19 +62,19 @@
   {#snippet mark()}<VaultMark {color} {icon} />{/snippet}
   <form class="vault-form" onsubmit={kept}>
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       placeholder={t('Name')}
       aria-label={t('Name')}
       bind:value={name}
       data-lands
     />
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       placeholder={t('Description')}
       aria-label={t('Description')}
       bind:value={description}
     />
-    <div class="nib-section">{t('Colour')}</div>
+    <div class="orden-section">{t('Colour')}</div>
     <div class="dots" role="radiogroup" aria-label={t('Colour')}>
       {#each VAULT_COLORS as one (one)}
         <button
@@ -90,12 +90,12 @@
         ></button>
       {/each}
     </div>
-    <div class="nib-section">{t('Icon')}</div>
+    <div class="orden-section">{t('Icon')}</div>
     <div class="icons" role="radiogroup" aria-label={t('Icon')}>
       {#each VAULT_ICONS as one (one)}
         <button
           type="button"
-          class="nib-glyph icon"
+          class="orden-glyph icon"
           class:on={icon === one}
           role="radio"
           aria-checked={icon === one}
@@ -109,8 +109,8 @@
     </div>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     <div class="buttons">
-      <button class="nib-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
-      <button class="nib-button" type="submit" disabled={!name.trim() || busy}>
+      <button class="orden-button is-quiet" type="button" onclick={close}>{t('Cancel')}</button>
+      <button class="orden-button" type="submit" disabled={!name.trim() || busy}>
         {editing ? t('Save') : t('Create vault')}
       </button>
     </div>
@@ -125,7 +125,7 @@
     padding: 0 var(--space-2) var(--space-2);
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-2) 0 0;
   }
 

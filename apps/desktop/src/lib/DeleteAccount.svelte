@@ -86,7 +86,7 @@
       }
     }
 
-    void account.signOut()
+    void account.signOut('kept')
     onend()
   }
 
@@ -118,10 +118,10 @@
         void prove()
       }}
     >
-      <label class="nib-setting setting">
+      <label class="orden-setting setting">
         <span class="name">{t('Code sent to')} <strong>{account.user?.email}</strong></span>
         <input
-          class="nib-field is-value code"
+          class="orden-field is-value code"
           bind:this={field}
           bind:value={code}
           placeholder="000000"
@@ -132,10 +132,10 @@
         />
       </label>
       {#if second}
-        <label class="nib-setting setting" transition:fade={{ duration: dur(130) }}>
+        <label class="orden-setting setting" transition:fade={{ duration: dur(130) }}>
           <span class="name">{t('App code to delete')}</span>
           <input
-            class="nib-field is-value code"
+            class="orden-field is-value code"
             bind:value={fromApp}
             placeholder="000000"
             aria-label={t('App code to delete')}
@@ -145,17 +145,17 @@
           />
         </label>
       {/if}
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <button
           type="button"
-          class="nib-chip is-quiet resend"
+          class="orden-chip is-quiet resend"
           disabled={busy || resendIn > 0}
           onclick={() => void mail()}
         >
           {resendIn > 0 ? t('Resend in {seconds}s', { seconds: resendIn }) : t('Send a new code')}
         </button>
-        <button type="button" class="nib-chip is-quiet" onclick={onend}>{t('Cancel')}</button>
-        <button type="submit" class="nib-chip" disabled={busy || !code.trim()}>
+        <button type="button" class="orden-chip is-quiet" onclick={onend}>{t('Cancel')}</button>
+        <button type="submit" class="orden-chip" disabled={busy || !code.trim()}>
           {t('Continue')}
         </button>
       </div>
@@ -166,10 +166,10 @@
         {t('Also gone for everyone in {spaces}.', { spaces: shared })}
       </p>
     {/if}
-    <button class="nib-action is-danger" disabled={busy} onclick={() => void leave()}>
+    <button class="orden-action is-danger" disabled={busy} onclick={() => void leave()}>
       {t('Delete now')}
     </button>
-    <button class="nib-action" disabled={busy} onclick={onend}>{t('Cancel')}</button>
+    <button class="orden-action" disabled={busy} onclick={onend}>{t('Cancel')}</button>
   {/if}
 
   {#if wrong}

@@ -42,7 +42,7 @@ vi.mock('./web-data.svelte', () => ({
   isCopying: (own: string) => copying.has(own),
   freshOwn: () => 'fedcba9876543210',
   ownStore: (own: string | null) => (own ? `note_${own}` : null),
-  webData: { history: () => 'nib:web-visits' },
+  webData: { history: () => 'orden:web-visits' },
 }))
 
 const tabs: { kind: string; path: string | null; apart: string | null; id: string }[] = []

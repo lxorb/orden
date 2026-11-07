@@ -120,7 +120,7 @@ def drive(browser: Browser, token: str) -> None:
             service_workers="allow",
         )
         if signed:
-            context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+            context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
         page = context.new_page()
         page.on("pageerror", lambda error, label=label: wrong(f"[{label}] page error: {error}"))
         page.goto(ORIGIN, wait_until="domcontentloaded")

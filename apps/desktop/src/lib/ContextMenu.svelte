@@ -150,7 +150,9 @@
     if (menu.open) spelling = { typed: '', typedAt: 0 }
   })
 
-  const rows = () => [...(element?.querySelectorAll<HTMLElement>('.nib-row:not(:disabled)') ?? [])]
+  const rows = () => [
+    ...(element?.querySelectorAll<HTMLElement>('.orden-row:not(:disabled)') ?? []),
+  ]
 
   function onKey(event: KeyboardEvent) {
     const list = rows()
@@ -207,7 +209,7 @@
   {#if viewport.touch}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
-      class="nib-scrim scrim"
+      class="orden-scrim scrim"
       class:is-clear={!sheet}
       transition:fade={{ duration: dur(130) }}
       onclick={() => menu.hide()}
@@ -216,7 +218,7 @@
 
   <div
     bind:this={element}
-    class="nib-layer nib-host menu"
+    class="orden-layer orden-host menu"
     class:touch={viewport.touch}
     class:sheet
     class:above
@@ -241,7 +243,7 @@
           <hr />
         {:else}
           <button
-            class="nib-row"
+            class="orden-row"
             role="menuitem"
             class:danger={item.danger}
             class:lit={index === menu.lit}
@@ -252,12 +254,14 @@
             onmousedown={(event) => menu.keepFocus && event.preventDefault()}
             onpointermove={() => menu.keepFocus && !item.disabled && (menu.lit = index)}
           >
-            <span class="nib-row-label">{item.label}</span>
+            <span class="orden-row-label">{item.label}</span>
             {#if item.checked}<span class="tick">✓</span>{/if}
             {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
             {#if item.more}
               <span class="more" data-more aria-hidden="true">
-                <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M6 3.5l4.5 4.5L6 12.5" /></svg>
+                <svg class="orden-mirror" viewBox="0 0 16 16"
+                  ><path d="M6 3.5l4.5 4.5L6 12.5" /></svg
+                >
               </span>
             {/if}
           </button>

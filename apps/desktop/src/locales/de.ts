@@ -1549,6 +1549,8 @@ export const de: Dictionary = {
   Shorter: 'Kürzer',
   Longer: 'Länger',
   'Fix grammar': 'Grammatik korrigieren',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Die gewählten Wörter stehen nicht mehr in der Notiz, deshalb wurde nichts ersetzt.',
   'A cited report': 'Ein Bericht mit Quellen',
   'A helper in the background': 'Ein Helfer im Hintergrund',
   'A side question': 'Eine Nebenfrage',
@@ -2982,6 +2984,8 @@ export const de: Dictionary = {
   'That could not be protected: {reason}': 'Das konnte nicht geschützt werden: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} wurde nicht hinzugefügt: Ein Chat nimmt Bilder und Textdateien bis 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} wurde nicht hinzugefügt: Eine Nachricht nimmt höchstens 20 Bilder.',
   'Time tracker': 'Zeiterfassung',
   'Start timer': 'Timer starten',
   'Stop timer': 'Timer anhalten',
@@ -3563,9 +3567,48 @@ export const de: Dictionary = {
   'You said': 'Deine Angaben',
   Privacy: 'Datenschutz',
   'Send crash and freeze reports': 'Absturz- und Hängerberichte senden',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Wenn Orden abstürzt oder hängt, sendet es, was es gerade tat und wo in seinem eigenen Code, ohne Namen, Pfade, Adressen und Passwörter. Nie deine Notizen.',
-  'Turn off in Settings': 'In den Einstellungen ausschalten',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Sendet, was Orden beim Absturz oder Hänger tat; nie Notizen, Namen, Pfade oder Passwörter.',
+  'Send crash reports to help improve Orden': 'Absturzberichte senden, um Orden zu verbessern',
+  'Move to {space}?': 'Nach {space} verschieben?',
+  'macOS can start dictation with this key too.':
+    'macOS kann mit dieser Taste auch das Diktieren starten.',
+  'QR code': 'QR-Code',
+  'Waiting…': 'Warten…',
+  Service: 'Dienst',
+  'I understand and want to connect anyway': 'Ich habe verstanden und möchte trotzdem verbinden',
+  'Some changes have not reached your account yet':
+    'Einige Änderungen sind noch nicht in deinem Konto angekommen',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Sie bleiben in diesem Browser, für alle anderen, die sich hier anmelden, unsichtbar, und werden hochgeladen, wenn du dich wieder anmeldest.',
+  'Leave it empty to sign in with a QR code instead':
+    'Leer lassen, um dich stattdessen mit einem QR-Code anzumelden',
+  'Telegram code': 'Telegram-Code',
+  'Sent to Telegram on your other device': 'An Telegram auf deinem anderen Gerät gesendet',
+  'Sent by SMS': 'Per SMS gesendet',
+  'You will get a call with the code': 'Du bekommst einen Anruf mit dem Code',
+  'The code was wrong. Try again.': 'Der Code war falsch. Versuch es noch einmal.',
+  'The code expired, so Telegram sent a new one.':
+    'Der Code ist abgelaufen, Telegram hat einen neuen gesendet.',
+  'Two-step verification password': 'Passwort der zweistufigen Bestätigung',
+  'The password was wrong. Try again.': 'Das Passwort war falsch. Versuch es noch einmal.',
+  'Scan with Telegram on your phone': 'Mit Telegram auf deinem Handy scannen',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Einstellungen > Geräte > Desktop-Gerät verbinden',
+  'Signing in to Telegram needs the app': 'Die Anmeldung bei Telegram braucht die App',
+  'Telegram does not know this phone number': 'Telegram kennt diese Telefonnummer nicht',
+  'Too many tries. Wait a while and try again.':
+    'Zu viele Versuche. Warte eine Weile und versuch es dann noch einmal.',
+  'Too many wrong tries': 'Zu viele falsche Versuche',
+  'Signed out of Telegram. Connect again.': 'Von Telegram abgemeldet. Verbinde dich erneut.',
+  'Telegram cannot do that in this conversation': 'Telegram kann das in dieser Unterhaltung nicht',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram löscht Nachrichten in Gruppen und Kanälen für alle',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram übergibt eine Gruppe nur in der eigenen App an einen neuen Eigentümer',
+  'That sticker is no longer available': 'Dieser Sticker ist nicht mehr verfügbar',
+  'Telegram is not set up in this build': 'Telegram ist in diesem Build nicht eingerichtet',
+  'Password manager': 'Passwortmanager',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Fügt Pass hinzu, das Passwörter aufbewahrt und auf Websites einträgt. Ausschalten behält deine Tresore.',
 }

@@ -8,6 +8,7 @@ export interface Spec {
   name: string | null
   icon?: string
   iconColor?: string
+  via?: string
 }
 
 const SSH = 'ssh:'
@@ -38,11 +39,14 @@ export function readSpec(text: string): Spec | null {
     ...(isString(value.icon) && value.icon && isString(value.iconColor) && value.iconColor
       ? { iconColor: value.iconColor }
       : {}),
+    ...(isString(value.via) && value.via && hostIdOf(value.shell) !== null
+      ? { via: value.via }
+      : {}),
   }
 }
 
 export function writeSpec(spec: Spec): string {
-  const { shell, folder, key, name, icon, iconColor } = spec
+  const { shell, folder, key, name, icon, iconColor, via } = spec
   return JSON.stringify({
     shell,
     folder,
@@ -50,6 +54,7 @@ export function writeSpec(spec: Spec): string {
     ...(name ? { name } : {}),
     ...(icon ? { icon } : {}),
     ...(icon && iconColor ? { iconColor } : {}),
+    ...(via && hostIdOf(shell) !== null ? { via } : {}),
   })
 }
 

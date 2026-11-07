@@ -9,7 +9,7 @@ interface Secrets {
 }
 
 function bridge(): Secrets | undefined {
-  const found: unknown = (globalThis as { __NIB_SYSTEM__?: unknown }).__NIB_SYSTEM__
+  const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
   if (typeof found !== 'object' || found === null) return undefined
 
   const shape = found as Partial<Secrets>

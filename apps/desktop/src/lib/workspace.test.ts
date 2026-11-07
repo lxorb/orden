@@ -1248,7 +1248,7 @@ describe('where a note was last looked at', () => {
     workspace.noteView(tab.id, 1, 77)
     workspace.close(tab.id)
 
-    const saved = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+    const saved = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       positions?: Record<string, { cursor: number; scroll: number }>
     }
     expect(saved.positions?.['/space/a.md']).toMatchObject({ cursor: 1, scroll: 77 })
@@ -1274,7 +1274,7 @@ describe('where a note was last looked at', () => {
     workspace.activate(last)
     now.mockRestore()
 
-    const saved = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+    const saved = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       positions?: Record<string, unknown>
     }
     const kept = Object.keys(saved.positions ?? {})
@@ -3342,7 +3342,7 @@ describe('a canvas that comes back after a restart', () => {
   test('and the session keeps no second copy of a plane that is on disk', async () => {
     await workspace.openCanvas('/space/plan.canvas')
 
-    const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+    const written = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       layout?: { frame: { pane?: { tabs?: { path: string | null; doc: string }[] } } }
     }
     const held = written.layout?.frame.pane?.tabs?.find((one) => one.path === '/space/plan.canvas')

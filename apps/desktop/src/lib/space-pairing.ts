@@ -1,9 +1,10 @@
 import { account } from './account.svelte'
 import { api } from './api'
+import { leaveSpaces, leftByAnother } from './left-spaces'
 import { forgetSeedSpace, seedSpaceRoot } from './seeded'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
-import { invoke } from './tauri'
+import { invoke, isNative } from './tauri'
 import { workspace } from './workspace.svelte'
 
 export interface Pairing {
@@ -43,8 +44,15 @@ async function untouchedDefault(): Promise<string | null> {
 
 async function pairOnce(token: string, pairing: Pairing): Promise<void> {
   const seeded = seedSpaceRoot()
+  const who = account.user?.id ?? null
+  const theirs = (root: string) => leftByAnother(root, who)
+  if (!isNative && workspace.spaces.some((space) => theirs(space.root))) {
+    await workspace.loadSpaces()
+  }
   const plan = planSpaces({
-    local: workspace.spaces.map((space) => ({ name: space.name, root: space.root })),
+    local: workspace.spaces
+      .filter((space) => !theirs(space.root))
+      .map((space) => ({ name: space.name, root: space.root })),
     remote: account.spaces.map((space) => ({
       id: space.id,
       name: space.name,
@@ -77,6 +85,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     for (const space of plan.upload) {
       const { space: remote } = await api.createSpace(token, space.name)
       pairing.pair(space.root, remote.id, false)
+      if (who) leaveSpaces(who, [space.root])
     }
   }
 
@@ -87,11 +96,23 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     const taken =
       shared(space.id) ||
       workspace.spaces.some(
-        (one) => one.name === space.name && paired().some((pair) => pair.root === one.root),
+        (one) =>
+          one.name === space.name &&
+          (theirs(one.root) || paired().some((pair) => pair.root === one.root)),
       )
 
     const root = await workspace.adoptSpace(space.name, taken)
     if (root) pairing.pair(root, space.id, shared(space.id))
+    if (root && who) leaveSpaces(who, [root])
+  }
+
+  if (who) {
+    leaveSpaces(who, [
+      ...plan.pair.map((one) => one.root),
+      ...paired()
+        .map((one) => one.root)
+        .filter((root) => !theirs(root)),
+    ])
   }
 
   const accountId = account.user?.id ?? null

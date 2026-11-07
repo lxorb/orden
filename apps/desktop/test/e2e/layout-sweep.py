@@ -92,7 +92,7 @@ CHECK = r"""
 
   // What a person reads in, and what is somebody's own writing: the note, a
   // drawing, a picture. Their layout is the note's, not the app's.
-  const OWN = '.cm-editor, #write, .nib-write, canvas, svg, iframe, video, img, [aria-hidden="true"], [inert], .nib-scrim, .sr-only'
+  const OWN = '.cm-editor, #write, .orden-write, canvas, svg, iframe, video, img, [aria-hidden="true"], [inert], .orden-scrim, .sr-only'
   const own = (el) => !!el.closest(OWN)
 
   // Where an element is a person can see: its box, cut by every ancestor that clips
@@ -311,7 +311,7 @@ CHECK = r"""
   // clear of the top is the layer's inset, and its last thing keeps at least half of
   // it below; a layer that starts on its own edge - a list, a bar - is not asked.
   for (const sheet of visible) {
-    if (!sheet.classList.contains('nib-screen')) continue
+    if (!sheet.classList.contains('orden-screen')) continue
     const kids = [...sheet.children].filter((k) => isShown.has(k) && inFlow(k))
     if (!kids.length) continue
     const s = css(sheet)
@@ -332,7 +332,7 @@ CHECK = r"""
 
   // ── A row of settings keeps a name a person can read ───────────────────
   for (const row of visible) {
-    if (!row.classList.contains('nib-setting')) continue
+    if (!row.classList.contains('orden-setting')) continue
     const name = row.querySelector(':scope > .name')
     if (!name || !isShown.has(name)) continue
     const width = name.getBoundingClientRect().width
@@ -378,7 +378,7 @@ class Browser:
             service_workers="block" if ENGINE == "webkit" else "allow",
         )
         if self.signed_in:
-            await context.add_init_script("try { localStorage.setItem('nib:session', 'sweep') } catch {}")
+            await context.add_init_script("try { localStorage.setItem('orden:session', 'sweep') } catch {}")
         own = re.escape(urlsplit(DRIVE.origin).netloc)
         await context.route(re.compile(rf"^https?://(?!{own}/)"), self.answer)
         with_sockets = getattr(context, "route_web_socket", None)
@@ -554,7 +554,7 @@ MENU = """
 """
 
 async def menus(one: Browser, page: Any, width: int, scheme: str) -> None:
-    for surface, selector in (("menu/file", ".nib-row:has(.nib-row-label)"), ("menu/tab", '[role="tab"]')):
+    for surface, selector in (("menu/file", ".orden-row:has(.orden-row-label)"), ("menu/tab", '[role="tab"]')):
         if not await page.evaluate(MENU, selector):
             continue
         try:
@@ -735,7 +735,7 @@ async def sweep() -> list[Browser]:
         if ENGINE == "webkit":
             browser = await play.webkit.launch()
         else:
-            browser = await play.chromium.launch(channel=os.environ.get("NIB_BROWSER", "chromium"))
+            browser = await play.chromium.launch(channel=os.environ.get("ORDEN_BROWSER", "chromium"))
         try:
             results = await asyncio.gather(*(sweep_one(one, browser) for one in kinds), return_exceptions=True)
         finally:

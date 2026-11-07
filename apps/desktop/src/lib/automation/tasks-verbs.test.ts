@@ -57,7 +57,7 @@ describe('the to-dos from a terminal and a link', () => {
     })
   })
 
-  test('nib://add-task adds to an inbox and nowhere else', async () => {
+  test('orden://add-task adds to an inbox and nowhere else', async () => {
     asked.length = 0
     expect(verbForAction('add-task')).toBe('tasks.add')
     expect(verbForAction('tasks.add')).toBeNull()

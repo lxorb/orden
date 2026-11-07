@@ -6,7 +6,7 @@
   import type { Tab } from '../workspace/documents.svelte'
   import { counted, isOwn } from './counted'
   import DayLanes from './DayLanes.svelte'
-  import { dayOf, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
+  import { counts, dayOf, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
   import Inside from './Inside.svelte'
   import { hoursShown, type Picked, unsaid } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
@@ -58,7 +58,9 @@
     ]),
   )
   const entries = $derived(
-    piecesIn(said, range[0], range[1], now).sort((one, other) => other.from - one.from),
+    piecesIn(said, range[0], range[1], now)
+      .filter((one) => one.span.end === null || counts(one.to - one.from))
+      .sort((one, other) => other.from - one.from),
   )
 
   const loose = $derived(view === 'day' ? unsaid(time.spans, minutes.list, ...range, now) : [])
@@ -107,7 +109,7 @@
   </div>
 
   <div class="bar">
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Time tracker')} use:segmented>
+    <div class="orden-segmented" role="radiogroup" aria-label={t('Time tracker')} use:segmented>
       {#each VIEWS as [id, label] (id)}
         <button
           type="button"
@@ -122,7 +124,7 @@
       {/each}
     </div>
     {#if view === 'reports'}
-      <div class="nib-segmented" role="radiogroup" aria-label={t('Reports')} use:segmented>
+      <div class="orden-segmented" role="radiogroup" aria-label={t('Reports')} use:segmented>
         {#each [['week', t('Week')], ['month', t('Month')]] as const as [id, label] (id)}
           <button
             type="button"
@@ -135,17 +137,17 @@
       </div>
     {/if}
     <div class="moving">
-      <button type="button" class="nib-chip" aria-label={t('Previous')} onclick={() => step(-1)}
+      <button type="button" class="orden-chip" aria-label={t('Previous')} onclick={() => step(-1)}
         >‹</button
       >
       <span class="title">{titled}</span>
-      <button type="button" class="nib-chip" aria-label={t('Next')} onclick={() => step(1)}
+      <button type="button" class="orden-chip" aria-label={t('Next')} onclick={() => step(1)}
         >›</button
       >
       {#if !current}
         <button
           type="button"
-          class="nib-chip"
+          class="orden-chip"
           onclick={() => {
             day = dayOf(Date.now())
             picked = null
@@ -155,7 +157,7 @@
     </div>
     <button
       type="button"
-      class="nib-chip more"
+      class="orden-chip more"
       aria-label={t('More')}
       title={t('More')}
       aria-haspopup="menu"
@@ -184,7 +186,7 @@
                 <li>
                   <button
                     type="button"
-                    class="nib-row"
+                    class="orden-row"
                     class:is-on={picked?.span === piece.span.id}
                     onclick={() =>
                       (picked = {
@@ -194,16 +196,16 @@
                       })}
                   >
                     <span class="dot" style:background={tintOf(piece.span.activity)}></span>
-                    <span class="nib-row-label"
+                    <span class="orden-row-label"
                       ><bdi>{nameOf(piece.span.activity, t('No activity'))}</bdi
                       >{#if piece.span.note}<span class="note">{piece.span.note}</span>{/if}</span
                     >
-                    <span class="nib-row-meta clock"
+                    <span class="orden-row-meta clock"
                       >{clock(piece.span.start)}–{piece.span.end === null
                         ? ''
                         : clock(piece.span.end)}</span
                     >
-                    <span class="nib-row-meta long">{length(piece.to - piece.from)}</span>
+                    <span class="orden-row-meta long">{length(piece.to - piece.from)}</span>
                   </button>
                 </li>
               {/each}

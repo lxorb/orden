@@ -304,7 +304,7 @@ mod tests {
         }
         for refused in [
             "file:///etc/passwd",
-            "nib://command?id=sign-out",
+            "orden://command?id=sign-out",
             "orden://command?id=publish",
             "javascript:alert(1)",
             "ms-settings:privacy",

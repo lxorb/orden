@@ -113,7 +113,7 @@ note both keep theirs, two setting one key, the later to arrive stands. It goes 
 entry through every rename and move, counts as a change a delete that had not seen it
 cannot take, and comes back with the entry from the account's trash.
 
-On a device the file list reads it from `nib:item-meta`, by path, so it is there at the
+On a device the file list reads it from `orden:item-meta`, by path, so it is there at the
 first paint and on a machine that is not signed in, and follows moves, renames and deletes
 like the other maps by path; the engine keeps the account's copy by id beside the tree (in
 `order:<space>`). Where the account keeps metadata, what this device set goes up as `meta`
@@ -283,7 +283,7 @@ account see what they always saw; a space's hidden file is taken in with the res
 when the space is converted (step 4e), and written out again by Export (step 4f).
 
 On a desktop every new space is one of these (step 4d), and there is no other kind:
-no switch makes a new space a folder, and a `nib:keep-spaces` an older build stored is
+no switch makes a new space a folder, and a `orden:keep-spaces` an older build stored is
 not read. A space is a folder of `.orden` in the spaces folder, named as the space, holding
 its bytes and its index hidden and one file named as the space too, which is the space's
 root - the address the rest of the app holds it by. A file, so nothing can be made under

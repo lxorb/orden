@@ -16,7 +16,7 @@
   }
 </script>
 
-<button type="button" class="nib-button is-quiet add" onclick={show}>
+<button type="button" class="orden-button is-quiet add" onclick={show}>
   <Glyph icon={Plus} />
   <span>{label ?? t('Add field')}</span>
 </button>

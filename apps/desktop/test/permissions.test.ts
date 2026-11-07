@@ -246,7 +246,7 @@ describe('webview labels', () => {
 
   test('the presenter window is granted nothing, because it calls nothing', () => {
     const label = /const LABEL = '([^']+)'/.exec(read('../src/lib/slides/presenter.ts'))?.[1]
-    expect(label).toBe('nib-presenter')
+    expect(label).toBe('orden-presenter')
 
     expect((capabilities.webviews ?? []).some((pattern) => matches(pattern, label ?? ''))).toBe(
       false,

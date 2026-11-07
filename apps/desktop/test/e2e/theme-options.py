@@ -77,9 +77,9 @@ async ([paint, side]) => {
 
 STAND_ON = """
 ([desk, material]) => {
-  document.getElementById('nib-desk')?.remove()
+  document.getElementById('orden-desk')?.remove()
   const style = document.createElement('style')
-  style.id = 'nib-desk'
+  style.id = 'orden-desk'
   style.textContent = `html { background: ${desk} !important; background-attachment: fixed !important; }`
   document.head.append(style)
   if (material) document.documentElement.dataset.translucent = material
@@ -110,7 +110,7 @@ BOXES = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
   const side = document.querySelector('.sidebar, aside')?.getBoundingClientRect()
-  const tree = [...document.querySelectorAll('.nib-row')].map((one) => one.getBoundingClientRect())
+  const tree = [...document.querySelectorAll('.orden-row')].map((one) => one.getBoundingClientRect())
   const lowest = Math.max(0, ...tree.filter((r) => side && r.left < side.right).map((r) => r.bottom))
   const lines = [...document.querySelectorAll('.cm-line')].map((one) => one.getBoundingClientRect())
   const editor = document.querySelector('.cm-editor')?.getBoundingClientRect()
@@ -164,7 +164,7 @@ def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> fl
 
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
-    also = os.environ.get("NIB_SHOTS_TOO")
+    also = os.environ.get("ORDEN_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
@@ -197,7 +197,7 @@ def dial(page: Any, id: str, value: Any) -> None:
 
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
-    page.add_init_script("localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette']))")
+    page.add_init_script("localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette']))")
     DRIVE.open(page)
     DRIVE.seed(page, note)
     DRIVE.open_note(page, name)
@@ -244,11 +244,11 @@ def wallpaper(browser: Any, scheme: str) -> None:
             measure(page, f"wallpaper {scheme} fit {fit}")
         dial(page, "fit", "fill")
 
-    before = page.evaluate("() => localStorage.getItem('nib:theme-settings')")
+    before = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     page.evaluate("() => window.nibApp.theme.try('dim', 70)")
     page.wait_for_timeout(200)
-    shown = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--nib-dim').trim()")
-    after = page.evaluate("() => localStorage.getItem('nib:theme-settings')")
+    shown = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--orden-dim').trim()")
+    after = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     (say if shown == "70%" and before == after else wrong)(
         f"wallpaper {scheme}: a dial being dragged shows {shown} and keeps nothing ({before == after})"
     )
@@ -256,7 +256,7 @@ def wallpaper(browser: Any, scheme: str) -> None:
 
     page.evaluate(TAKE, [PICTURES["dark"], "dark"])
     page.wait_for_timeout(600)
-    sheet = page.evaluate("() => document.getElementById('nib-user-theme')?.textContent ?? ''")
+    sheet = page.evaluate("() => document.getElementById('orden-user-theme')?.textContent ?? ''")
     (say if ":root[data-theme='dark']" in sheet else wrong)(f"wallpaper {scheme}: the dark side has a picture of its own")
     keep_shot(page, f"wallpaper-{scheme}-own-dark")
 
@@ -277,7 +277,7 @@ def wallpaper(browser: Any, scheme: str) -> None:
         page.mouse.up()
         page.wait_for_timeout(500)
         focus = page.evaluate("() => window.nibApp.wallpaper.held.main?.focus")
-        kept = page.evaluate("() => JSON.parse(localStorage.getItem('nib:wallpaper') || '{}').focus")
+        kept = page.evaluate("() => JSON.parse(localStorage.getItem('orden:wallpaper') || '{}').focus")
         near = focus and abs(focus[0] - 0.15) < 0.05 and abs(focus[1] - 0.85) < 0.05
         (say if near and kept == focus else wrong)(f"wallpaper {scheme}: a drag on the thumbnail moved the focal point to {focus}, kept {kept}")
     else:
@@ -389,7 +389,7 @@ def cost(browser: Any) -> None:
         say(f"cost on {look}: scrolling {results[look]['scroll']}; typing {results[look]['typing']}")
         page.context.close()
 
-    out = os.environ.get("NIB_SHOTS_TOO")
+    out = os.environ.get("ORDEN_SHOTS_TOO")
     if out:
         with open(os.path.join(out, "cost.json"), "w", encoding="utf-8") as file:
             json.dump(results, file, indent=2)

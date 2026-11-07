@@ -144,8 +144,8 @@ CHOOSE = """
 ROWS = """
 () =>
   Object.fromEntries(
-    [...document.querySelectorAll('.nib-row.row')].map((row) => [
-      row.querySelector('.nib-row-label')?.textContent ?? '',
+    [...document.querySelectorAll('.orden-row.row')].map((row) => [
+      row.querySelector('.orden-row-label')?.textContent ?? '',
       (row.querySelector('.mark svg path')?.getAttribute('d') ?? '').slice(0, 44),
     ]),
   )
@@ -212,7 +212,7 @@ def chooses(page: Page, scheme: str) -> None:
 
     say(f"[{scheme}] choosing an icon for {page.evaluate(CHOOSE)}")
     page.locator(".sheet").wait_for(state="visible", timeout=30_000)
-    page.locator(".sheet input.nib-field").fill("anchor")
+    page.locator(".sheet input.orden-field").fill("anchor")
     cell = page.locator('.sheet button[aria-label="anchor"]:has(svg)').first
     cell.wait_for(state="visible", timeout=30_000)
     cell.click()

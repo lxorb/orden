@@ -39,7 +39,7 @@ export class TableWidget extends NibWidget {
     const model = parseTable(this.source)
     if (!model) {
       const wrap = document.createElement('div')
-      wrap.className = 'nib-table-wrap'
+      wrap.className = 'orden-table-wrap'
       wrap.contentEditable = 'false'
       wrap.textContent = this.source
       return wrap

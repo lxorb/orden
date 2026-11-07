@@ -9,7 +9,7 @@ from playwright.sync_api import Browser
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-AGENT = "{ id: 'nib-moved', name: 'Fake' }"
+AGENT = "{ id: 'orden-moved', name: 'Fake' }"
 DOCS = "await import('/src/lib/agents/docs/index.ts')"
 TOUCHED = "await import('/src/lib/agents/docs/touched.ts')"
 
@@ -25,12 +25,12 @@ def drive(browser: Browser) -> None:
     page.evaluate("async (root) => window.nibApp.workspace.rename(root + '/Heron.md', 'Bird.md')", root)
     wait_for(page, "window.nibApp.workspace.active?.path?.endsWith('Bird.md')", "the new name")
 
-    tracked = page.evaluate(f"async () => [...({DOCS}).tracksOf('nib-moved').keys()]")
+    tracked = page.evaluate(f"async () => [...({DOCS}).tracksOf('orden-moved').keys()]")
     who = page.evaluate(f"async (path) => ({TOUCHED}).touchedBy(path).map((one) => one.id)", f"{root}/Bird.md")
     say(f"tracks {json.dumps(tracked)}, touched {who}")
     if tracked != [f"{root}/Bird.md"]:
         wrong(f"the track did not follow the note: {tracked}")
-    if who != ["nib-moved"]:
+    if who != ["orden-moved"]:
         wrong(f"the palette's row did not follow the note: {who}")
 
     undone = page.evaluate(

@@ -195,7 +195,7 @@ pointer and at 48 under a thumb, and neither needs a size of its own.
 
 ### A glyph that is a button
 
-`.nib-glyph` in `base.css`: a `--row-height` square, `--radius-row`, the row's
+`.orden-glyph` in `base.css`: a `--row-height` square, `--radius-row`, the row's
 own hover and press surfaces, and a mark of exactly `--icon-lg` that is never
 allowed to give way. 28px under a pointer, 56 under a thumb, which clears
 `--touch-target` without a number of its own.
@@ -250,9 +250,9 @@ is the platform's caption glyph, in the platform's box beside the other two.
 `--row-height-sm` is for a list that is read more than it is tapped: the
 outline, and a line of a search result. Everything else is `--row-height`.
 
-The row itself is drawn once, as `.nib-row` in `base.css`, with three parts: a
-`.nib-row-mark` of exactly `--icon-md`, a `.nib-row-label` that is the only part
-allowed to give way, and an optional `.nib-row-meta` pushed to the far end. No
+The row itself is drawn once, as `.orden-row` in `base.css`, with three parts: a
+`.orden-row-mark` of exactly `--icon-md`, a `.orden-row-label` that is the only part
+allowed to give way, and an optional `.orden-row-meta` pushed to the far end. No
 component draws that row again; a component may say how far a row is indented and
 how wide it is in the space it sits in, and nothing else.
 
@@ -292,10 +292,10 @@ and can still be offered the contrast theme; the accent is, because it follows t
 reader to whatever theme they choose next. An install an older build left on the
 built-in - which it wrote down for everybody, chosen or not - is moved to glass once,
 keeping its accent and scheme (the first look's accent only where it never chose one),
-and `nib:theme-moved` says so, so picking the built-in again sticks (Emil, 2026-10-13).
+and `orden:theme-moved` says so, so picking the built-in again sticks (Emil, 2026-10-13).
 The built-in is called Classic now that it is not the default; its id stays `default`,
 which stored choices, theme files and the registry name. And the accent the first look
-gives is kept as given (`nib:accent-given`) until one is picked, so a later first look's
+gives is kept as given (`orden:accent-given`) until one is picked, so a later first look's
 accent replaces it once and never replaces a pick; an install from the yellow day,
 before that key, counts its yellow as given only while its theme was never written down
 and no older build kept an accent under the old key. See `FIRST_LOOK` in
@@ -591,15 +591,15 @@ both a border and a background.
 Levels 2 and 3 are drawn once each, in `base.css`, because five components had a
 copy of one of them and the copies had already drifted:
 
-- **`.nib-bar`** is the small bar over the text: the format bar above a
+- **`.orden-bar`** is the small bar over the text: the format bar above a
   selection, the two actions a PDF offers, the canvas toolbar.
-- **`.nib-layer`** is a layer that **floats over** the app at `--radius-md`: the
+- **`.orden-layer`** is a layer that **floats over** the app at `--radius-md`: the
   context menu, the app menu, the list of spaces, the suggestions under a `[[`,
   a dropdown, the canvas and graph flyouts. The app menu and the dropdown used
   to light their surface a step brighter than the menus beside them, and the
   dropdown and the suggestions spent `--shadow-md` where the menus spent
   `--shadow-lg` - so two things doing one job sat at two heights and two shades.
-- **`.nib-screen`** is a surface that **replaces** part of the screen at
+- **`.orden-screen`** is a surface that **replaces** part of the screen at
   `--radius-lg`: the palette, the sheet a space is shared from, the one small
   modal the app asks its questions in, the sign-in panel, the word a link owes
   whoever followed it. Five components declared the same eight lines; one opened
@@ -688,10 +688,10 @@ one page: an export and a published note have exactly one and keep it. The app h
 several at once - panes side by side, a column of stacked notes, the card over a link,
 this slide and the next in the presenter's window - and each of them carried the id.
 
-So every page wears `.nib-write`, and only the page in the focused pane wears
+So every page wears `.orden-write`, and only the page in the focused pane wears
 `#write` as well: the one a reader is in, which is what a drive, a shortcut and a
 theme mean by it. The rules reach every page because the app reads each of them as
-`:is(#write, .nib-write)` where it puts them on the page - its own sheets in the
+`:is(#write, .orden-write)` where it puts them on the page - its own sheets in the
 build, a theme, custom.css and the code palette as they are injected - and `:is()`
 weighs what its heaviest argument weighs whichever one matched, so no rule wins or
 loses by it. See `write.ts` in @orden/themes; `test/write.test.ts` holds it.
@@ -841,7 +841,7 @@ What follows from it:
   `transform-origin`, which has no logical spelling. `--inset-start` and
   `--inset-end` are the notch, named by reading.
 - **A mark that points along a line is turned over rather than drawn twice**:
-  `.nib-mirror` in `base.css` on back, forward, a step into a list and a link that
+  `.orden-mirror` in `base.css` on back, forward, a step into a list and a link that
   leaves the app. A tick, a cross, a chevron pointing down and a magnifying glass
   are not marked, because they mean the same thing either way.
 - **A name is placed as one piece.** A row's label and a tab's name are
@@ -868,7 +868,7 @@ and that the note never followed the interface.
 
 The rounded square in front of a name that belongs to somewhere rather than to a
 file: a space's mark in the switcher and the header over the file list. A person
-is round; see *Faces* below. `.nib-badge` in `base.css`, at
+is round; see *Faces* below. `.orden-badge` in `base.css`, at
 `--row-height-sm` with a corner a third of its side and a mark of `--icon-md`
 inside it, so it is the same object at 24px under a pointer and at 48 under a
 thumb. What fills it is the caller's: `--badge-fill` and `--badge-ink` per badge,
@@ -914,7 +914,7 @@ you are in cannot come to wear on the header something its own row does not. The
 are one row written once too, `SpaceRow.svelte`, which the dropped list and the
 switcher Ctrl+Space stands in the middle of the window both draw: the badge, wearing
 the space's number at its corner only once a digit is typed or while Alt is held
-(`.nib-keytip`, the tab's Alt number's own look, so it moves nothing as it comes), the
+(`.orden-keytip`, the tab's Alt number's own look, so it moves nothing as it comes), the
 name with what was typed in bold, and the shared mark -
 an eye instead where the space is somebody else's and yours only to read. The title bar names no space (Emil, 2026-10-13: "remove this
 space switcher here"): with the panel shut, Ctrl+Space and the palette are the way
@@ -928,7 +928,7 @@ A dot is one fact: something is still under way. The light that is about work in
 progress rather than about a file - a request waiting to be let in - wears it, and so
 does a tab with no file yet: a new note, plane or
 page note has not been given a place, which is the one thing about it still to do
-(`.nib-unsaved`, see `UnsavedDot.svelte`). A tab with a file wears none - every note
+(`.orden-unsaved`, see `UnsavedDot.svelte`). A tab with a file wears none - every note
 writes itself a moment after it changes - and nor does a web tab nobody has kept,
 which is a browser tab with nothing unwritten in it.
 
@@ -979,7 +979,7 @@ highlight, at the size a bar's button is.
 
 ### Switches
 
-One thing that is on or off, `.nib-switch` in `base.css`: a 38x22 track and a
+One thing that is on or off, `.orden-switch` in `base.css`: a 38x22 track and a
 16px knob, 50x30 and 24 under a thumb, in one `[data-touch]` block rather than
 one per surface. A setting, an assistant's write access and a space's link had
 three copies of it between them. The row is the switch wherever a row can be -
@@ -1010,7 +1010,7 @@ Orden explains nothing in its own text, so a feature somebody has not found gets
 beside the control it lives behind, the way Google Docs and Notion point at theirs:
 one line saying what it does, pressed to do it, and a cross to put it away. At most
 one a session, not before the window has been open twenty seconds, never again once
-put away (`nib:hints`, per device), and none at all in Silent mode (Settings > General,
+put away (`orden:hints`, per device), and none at all in Silent mode (Settings > General,
 off out of the box, an account setting). There are two, in order: the graph, and the
 palette's keys. The store is `hints.svelte.ts`, the card `HintCard.svelte`, and both
 are fetched through a door, since no launch draws one.
@@ -1023,7 +1023,7 @@ panel's foot is a control, not a card, and stays.
 
 ### Section labels
 
-`.nib-section` in `base.css`: `--text-xs`, uppercase, `0.06em` of tracking,
+`.orden-section` in `base.css`: `--text-xs`, uppercase, `0.06em` of tracking,
 `--muted`, starting on the same left edge as the rows under it. Sized by what it
 says rather than by the row scale - margin and padding and no height - so under
 a thumb it stays a caption instead of becoming a 48px row with nothing in it to
@@ -1141,7 +1141,7 @@ The value controls in a view's table cell are `lib/properties/PropertyValue.svel
 ### The Tasks panel and the views
 
 The Tasks panel is the third tab of the list panel, a box with a tick in it, and it is
-navigation, never the work (docs/tasks.md 5.5). Its rows are `.nib-row`s with a mark,
+navigation, never the work (docs/tasks.md 5.5). Its rows are `.orden-row`s with a mark,
 the name and the count as the row's meta: the add row, Inbox, Today, Upcoming and the
 Logbook, then under section labels the space's `.base` files, the projects (every note
 with open tasks, the last written first, seven and then More) and the labels.
@@ -1152,9 +1152,9 @@ Today's list itself, worked through beside the note.
 
 A view tab (`lib/views/ViewTab.svelte`) is a head and a body. The head is the view's
 name, which is the menu of the base's views and what can be done to them; the layout
-switch, a `.nib-segmented` of seven marks drawn on the panel marks' 13 unit grid (list,
+switch, a `.orden-segmented` of seven marks drawn on the panel marks' 13 unit grid (list,
 table, cards, board, calendar, timeline, chart); the filter, the sort and the group as
-glyphs that light in the accent while set, each opening a `.nib-layer` under it; the
+glyphs that light in the accent while set, each opening a `.orden-layer` under it; the
 view's own search field; and the plus. The body swaps with the app's swap motion
 (`arrive` in slide.ts).
 
@@ -1187,7 +1187,7 @@ the head at the row's size and a hairline round it.
 The Chats panel (`lib/chats/view/ChatsPanel.svelte`) is the list panel's tab after Tasks,
 a speech bubble, shown while somebody is signed in. Like the Tasks panel it is
 navigation: a field that narrows the list, Activity (the reader's mentions, newest first)
-and Saved, then a section label, Chats, with its plus, and a `.nib-row` per chat with
+and Saved, then a section label, Chats, with its plus, and a `.orden-row` per chat with
 `#` for its mark. Discord's three states, and no other colour: read is `--muted`,
 unread is `--text-strong` at the strong weight with its count as the row's meta, a
 mention is a badge in the accent. A muted chat fades to 55%.
@@ -1197,23 +1197,23 @@ one message's replies beside them (on a phone, in their place).
 
 - **The head** is `#`, the name, the topic as a quiet line written in place, the first
   three faces overlapping (ringed in the ground, as the switcher's are) with the count,
-  and the pin. Each opens a `.nib-layer` under it (`Float.svelte`).
+  and the pin. Each opens a `.orden-layer` under it (`Float.svelte`).
 - **A row** is Discord's: a 32 px face and the name on the first row of a group (one
   person within five minutes), then only the words, with the time in the gutter on
-  hover. The words are the notes' renderer at the row's size (`.nib-rendered`), a
+  hover. The words are the notes' renderer at the row's size (`.orden-rendered`), a
   mention a wash of the accent and the reader's own a fill of it. Under them: pictures
   at the size the sender stated, a voice message as a pill with 64 bars and the accent
   filling them, a file as a card, a preview with a 3px accent edge, a poll as answers
   with bars of `--accent-soft`, reactions as round chips (the reader's own ringed in the
   accent, a new one popping from 80%), and the count of replies in the accent. A day is
   a centred label between hairlines; the New line is the accent's hairline with "New".
-- **The hover bar** is one `.nib-layer` riding the row under the pointer: three
+- **The hover bar** is one `.orden-layer` riding the row under the pointer: three
   reactions, the picker, Reply, Quote, ⋯.
 - **The composer** is a `--radius-lg` box with the ground inside it, ringed in
   `--accent-soft` while it has the keyboard and in the accent while it edits; ⊕, the
   words, ☺, and the microphone, which turns into ➤ and its chevron once there is
   something to send.
-- **Pills** are `.nib-pill`s at the top (the New line above, in the accent) and the foot
+- **Pills** are `.orden-pill`s at the top (the New line above, in the accent) and the foot
   (messages below).
 - **Motion**: an arrival rises 6 px over `dur(160)`, a reaction pops, the replies slide
   in 24 px, a jumped-to row's accent wash fades over a second; reduced motion makes each
@@ -1352,7 +1352,7 @@ a finger-sized number of its own. It gains two things: the raised
 in one `[data-touch]` block in the tokens rather than per component.
 
 `apps/desktop/test/one-of-each.test.ts` already refuses a second copy of a shared
-control. It gains the row: `.nib-row` is drawn in `base.css` and nowhere else,
+control. It gains the row: `.orden-row` is drawn in `base.css` and nowhere else,
 and no list paints a hover or a press of its own. It gains the badge and the
 switch on the same terms, and `SpaceMark.svelte`, which is the one answer to what
 goes inside a space's badge. And the cross: an X is drawn in `Cross.svelte` and
@@ -1374,7 +1374,7 @@ undone here got in:
   190ms however loudly the reader had asked for no movement, because `--dur-*`
   goes to zero under `prefers-reduced-motion` and a number does not.
 - **A focus ring drawn as a `box-shadow`.** The guard reads `outline` only, so
-  five components hand-copied `.nib-field:focus`'s two lines instead of wearing
+  five components hand-copied `.orden-field:focus`'s two lines instead of wearing
   the class, and one of them drew a 1px ring where the rest draw 3.
 - **A third weight.** The chrome has two - `--weight-row` and `--weight-strong`
   - and `550` had appeared twenty-five times, `500` twice and `650` once,

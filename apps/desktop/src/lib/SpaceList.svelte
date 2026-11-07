@@ -34,7 +34,7 @@
 {#each shown as { space, at } (space.id)}
   <div class="line" role="none">
     <button
-      class="nib-row"
+      class="orden-row"
       class:is-on={space.id === workspace.activeSpaceId}
       data-space-drop={space.id}
       data-lands={space.id === workspace.activeSpaceId ? '' : undefined}
@@ -65,7 +65,7 @@
     align-items: center;
   }
 
-  .line .nib-row {
+  .line .orden-row {
     flex: 1;
     min-width: 0;
   }

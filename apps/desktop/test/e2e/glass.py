@@ -131,9 +131,9 @@ MEASURE = """
 
 STAND_ON = """
 ([desk, material]) => {
-  document.getElementById('nib-desk')?.remove()
+  document.getElementById('orden-desk')?.remove()
   const style = document.createElement('style')
-  style.id = 'nib-desk'
+  style.id = 'orden-desk'
   style.textContent = `html { background: ${desk} !important; background-attachment: fixed !important; }`
   document.head.append(style)
   if (material) document.documentElement.dataset.translucent = material
@@ -188,7 +188,7 @@ FIRST_FRAME = """
   const look = () => {
     const app = document.getElementById('app')
     if (!app || !app.childElementCount) return requestAnimationFrame(look)
-    const sheet = document.getElementById('nib-user-theme')
+    const sheet = document.getElementById('orden-user-theme')
     window.__glassFirstFrame = !!sheet && sheet.textContent.includes('--glass-chrome')
   }
   requestAnimationFrame(look)
@@ -319,7 +319,7 @@ def first_look(browser: Browser, scheme: str) -> None:
     look = page.evaluate(
         "() => ({ id: window.nibApp.theme.id, accent: window.nibApp.theme.accent,"
         " scheme: window.nibApp.theme.scheme, current: window.nibApp.theme.current,"
-        " kept: localStorage.getItem('nib:theme') })"
+        " kept: localStorage.getItem('orden:theme') })"
     )
     shows(f"[{scheme}] a first launch is glass", look["id"], "glass")
     shows(f"[{scheme}] in green", look["accent"], "green")
@@ -333,8 +333,8 @@ def first_look(browser: Browser, scheme: str) -> None:
     context = browser.new_context(color_scheme=scheme, first_look=True)
     context.add_init_script(
         "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
-        " localStorage.setItem('nib:theme', 'default');"
-        " localStorage.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'teal' } })) } }"
+        " localStorage.setItem('orden:theme', 'default');"
+        " localStorage.setItem('orden:theme-settings', JSON.stringify({ '*': { accent: 'teal' } })) } }"
         " catch {}"
     )
     page = context.new_page()
@@ -351,8 +351,8 @@ def first_look(browser: Browser, scheme: str) -> None:
     context = browser.new_context(color_scheme=scheme, first_look=True)
     context.add_init_script(
         "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
-        " localStorage.setItem('nib:theme-moved', 'yes');"
-        " localStorage.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'yellow' } })) } }"
+        " localStorage.setItem('orden:theme-moved', 'yes');"
+        " localStorage.setItem('orden:theme-settings', JSON.stringify({ '*': { accent: 'yellow' } })) } }"
         " catch {}"
     )
     page = context.new_page()
@@ -415,7 +415,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.evaluate("() => window.nibApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     rows = page.evaluate(
-        "() => [...document.querySelectorAll('.nib-setting')].map((one) => one.textContent.trim())"
+        "() => [...document.querySelectorAll('.orden-setting')].map((one) => one.textContent.trim())"
     )
     shows(
         f"[{scheme}] Appearance has no Translucency row",
@@ -424,7 +424,7 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shot(page, f"{scheme}-glass-settings")
 
-    row = page.locator(".nib-setting", has_text="Tint colour")
+    row = page.locator(".orden-setting", has_text="Tint colour")
     shows(f"[{scheme}] the pair row offers seven and two of one's own", row.locator(".swatch").count(), 9)
     row.scroll_into_view_if_needed()
     shot(page, f"{scheme}-glass-pairs", clip=row.bounding_box())
@@ -458,7 +458,7 @@ def drive(browser: Browser, scheme: str) -> None:
         page.evaluate("() => window.__glassFirstFrame"),
         True,
     )
-    page.evaluate("() => localStorage.removeItem('nib:theme-sheet')")
+    page.evaluate("() => localStorage.removeItem('orden:theme-sheet')")
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.__glassFirstFrame !== undefined", "the first frame")
     say(

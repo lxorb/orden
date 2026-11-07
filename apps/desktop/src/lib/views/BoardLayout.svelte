@@ -742,7 +742,7 @@
   {#if renaming === name}
     <div class="head-field">
       <input
-        class="nib-field"
+        class="orden-field"
         value={name}
         aria-label={t('Rename')}
         onkeydown={(event) => {
@@ -876,7 +876,7 @@
         {/each}
       </div>
       {#each lanes as lane (groupName(lane))}
-        <p class="nib-section lane">{groupLabel(sub, lane, live.today, laneNames)}</p>
+        <p class="orden-section lane">{groupLabel(sub, lane, live.today, laneNames)}</p>
         <div class="row">
           {#each shownGroups as group (groupName(group.key))}
             {@render column(group, lane, rowsOf(group, lane))}
@@ -903,7 +903,7 @@
     {#if naming}
       <div class="add-column field">
         <input
-          class="nib-field"
+          class="orden-field"
           aria-label={t('New group')}
           placeholder={t('New group')}
           onkeydown={(event) => {
@@ -977,6 +977,10 @@
     gap: var(--space-1);
     overflow-x: auto;
     scrollbar-width: none;
+  }
+
+  .strip::-webkit-scrollbar {
+    display: none;
   }
 
   .switch {

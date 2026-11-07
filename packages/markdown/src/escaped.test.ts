@@ -87,7 +87,7 @@ function live(html: string): string[] {
   const out: string[] = []
   for (const element of holder.querySelectorAll('*')) {
     if (element.closest('.callout svg, [class*="embed"] svg')) continue
-    const cover = element.closest('.nib-cover') !== null
+    const cover = element.closest('.orden-cover') !== null
     if (!OURS.has(element.tagName)) out.push(element.tagName)
     if (element.tagName === 'INPUT' && element.getAttribute('type') !== 'checkbox')
       out.push('INPUT')

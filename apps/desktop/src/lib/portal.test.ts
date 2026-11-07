@@ -60,7 +60,7 @@ describe('the action', () => {
     const label = document.createElement('span')
     label.style.position = 'relative'
     const bubble = document.createElement('span')
-    bubble.className = 'nib-bubble'
+    bubble.className = 'orden-bubble'
     label.append(bubble)
     row.append(label)
     layer.append(row)

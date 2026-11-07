@@ -7,7 +7,7 @@
 </script>
 
 <span
-  class="nib-unsaved"
+  class="orden-unsaved"
   class:is-corner={corner}
   class:is-pressable={pressable}
   role="img"

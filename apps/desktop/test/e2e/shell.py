@@ -98,7 +98,7 @@ LANGUAGES = """
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-LAYERS = "[role=menu], .palette, .nib-screen.sheet"
+LAYERS = "[role=menu], .palette, .orden-screen.sheet"
 
 def dismiss(page) -> None:
     for _ in range(4):
@@ -163,7 +163,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         color_scheme=scheme,
         device_scale_factor=2,
         reduced_motion="reduce",
-        first_look=bool(os.environ.get("NIB_FIRST_LOOK")),
+        first_look=bool(os.environ.get("ORDEN_FIRST_LOOK")),
     )
     page = context.new_page()
     page.add_init_script(HIDE_CARET)
@@ -174,7 +174,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
-    if os.environ.get("NIB_FIRST_LOOK"):
+    if os.environ.get("ORDEN_FIRST_LOOK"):
         DRIVE.wait_for(
             page,
             "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')",
@@ -282,7 +282,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
     page.evaluate("() => window.nibApp.settings.show()")
-    page.wait_for_selector(".nib-screen.sheet, .sheet", state="visible", timeout=8000)
+    page.wait_for_selector(".orden-screen.sheet, .sheet", state="visible", timeout=8000)
     shot("settings")
 
     page.evaluate(

@@ -3,7 +3,7 @@ import { invoke, isMobile } from '../tauri'
 import { noteRootsMoved, ROOTS_MOVED } from './roots-moved'
 import { readSession } from './session'
 
-export const SPACES_ROOT = 'nib:spaces-root'
+export const SPACES_ROOT = 'orden:spaces-root'
 
 function parentOf(path: string): string {
   const cut = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
@@ -47,7 +47,7 @@ export function restate(was: string, now: string, storage: Storage = localStorag
   const keys: string[] = []
   for (let at = 0; at < storage.length; at++) {
     const key = storage.key(at)
-    if (key?.startsWith('nib:') && key !== SPACES_ROOT && key !== ROOTS_MOVED) keys.push(key)
+    if (key?.startsWith('orden:') && key !== SPACES_ROOT && key !== ROOTS_MOVED) keys.push(key)
   }
 
   for (const key of keys) {
@@ -88,7 +88,7 @@ export function settleRoot(
 export async function spacesMoved(): Promise<boolean> {
   if (!isMobile) return false
 
-  const roots = readSession(stored('nib:workspace'))?.spaces.map((space) => space.root) ?? []
+  const roots = readSession(stored('orden:workspace'))?.spaces.map((space) => space.root) ?? []
   try {
     const [now, listed] = await Promise.all([
       invoke<string>('spaces_root'),

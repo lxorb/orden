@@ -486,9 +486,9 @@ async function check(manifestPath, folders) {
 }
 
 async function viaApi(spaceName, prod) {
-  const api = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
-  const token = process.env.NIB_TOKEN ?? ''
-  if (!token) throw new Error('NIB_TOKEN is not set')
+  const api = (process.env.ORDEN_API || 'https://orden.so').replace(/\/$/, '')
+  const token = process.env.ORDEN_TOKEN ?? ''
+  if (!token) throw new Error('ORDEN_TOKEN is not set')
   if (/orden\.so|nibeditor\.com/.test(api) && !prod)
     throw new Error(`${api} is production: pass --prod once the manager has said yes`)
 

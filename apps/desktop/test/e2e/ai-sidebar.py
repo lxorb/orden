@@ -148,7 +148,7 @@ def type_and_send(page: Page, words: str, key: str = "Enter") -> None:
     page.keyboard.press(key)
 
 def switched(page: Page) -> None:
-    switch = page.locator('.nib-screen button:has-text("Switch")')
+    switch = page.locator('.orden-screen button:has-text("Switch")')
     switch.wait_for(state="visible", timeout=10_000)
     switch.click()
     switch.wait_for(state="hidden", timeout=10_000)
@@ -448,9 +448,9 @@ def flow(browser: Browser) -> None:
     page.locator(".ask .bar .what").click()
     waited(page, "document.querySelectorAll('.ask .changes .change').length === 2", "two changes listed")
     shot(page, "flow/02-listed")
-    page.locator(".ask .changes .change").first.locator(".nib-chip:not(.is-quiet)").click()
+    page.locator(".ask .changes .change").first.locator(".orden-chip:not(.is-quiet)").click()
     page.wait_for_timeout(300)
-    page.locator(".ask .changes .change").first.locator(".nib-chip.is-quiet").click()
+    page.locator(".ask .changes .change").first.locator(".orden-chip.is-quiet").click()
     page.wait_for_timeout(600)
     text = page.evaluate(NOTE_TEXT)
     kept = ["STRIKES" in text, "STANDS STILL" in text]
@@ -470,7 +470,7 @@ def flow(browser: Browser) -> None:
     waited(page, "document.querySelector('.ask .rewind')", "the rewind sheet")
     page.wait_for_timeout(300)
     shot(page, "flow/03-rewind")
-    page.locator(".ask .rewind .nib-row", has_text="Restore notes and conversation").click()
+    page.locator(".ask .rewind .orden-row", has_text="Restore notes and conversation").click()
     waited(page, f"document.querySelectorAll('.ask .said').length === {said - 1}", "the message rewound")
     page.wait_for_timeout(400)
     if "A HERON" in page.evaluate(NOTE_TEXT):
@@ -599,7 +599,7 @@ def shape(browser: Browser, scheme: str) -> None:
 
     page.locator(".ask .plus").click()
     waited(page, "document.querySelector('.menu [role=menuitem]')", "the + menu")
-    rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
+    rows = page.locator(".menu [role=menuitem] .orden-row-label").all_inner_texts()
     for row in ("Add photos and files", "Web search", "Mention", "Commands"):
         if row not in rows:
             wrong(f"the + menu has no {row!r}: {rows}")
@@ -662,7 +662,7 @@ def shape(browser: Browser, scheme: str) -> None:
     waited(page, "document.querySelectorAll('.ask .card .changes .change').length === 2", "the changes listed")
     page.wait_for_timeout(800)
     shot(page, f"{tag}05-steps-and-changes-side")
-    page.locator(".ask .card .bar .nib-chip:not(.is-quiet)").click()
+    page.locator(".ask .card .bar .orden-chip:not(.is-quiet)").click()
     waited(page, "!document.querySelector('.ask .card')", "the card gone once kept")
 
     page.evaluate(ASKING)

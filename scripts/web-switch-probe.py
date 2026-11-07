@@ -23,7 +23,7 @@ from probe_app import run_probe, sized
 PORT_FROM = 22300
 PORT_TO = 22399
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 
 SPACE = "Web switch probe"
 NOTE = "Idea"
@@ -93,7 +93,7 @@ def serve(port: int) -> Server:
 
 def spaces_root() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-switch-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-switch-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made

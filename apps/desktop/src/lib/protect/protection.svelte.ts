@@ -1,12 +1,20 @@
-import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
+import {
+  foldsIn,
+  insideItsSpace,
+  insideSpace,
+  movedTo,
+  pathKeyAs,
+  relativeTo,
+  within,
+} from '../space-paths'
 import { isRecord, keepJson, stored } from '../stored'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, moving } from '../workspace/file-ops'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
 
-export const STORAGE_KEY = 'nib:protected'
-const PASSWORD_KEY = 'nib:protect-password'
+export const STORAGE_KEY = 'orden:protected'
+const PASSWORD_KEY = 'orden:protect-password'
 
 export type Way = 'password' | 'device'
 
@@ -89,6 +97,11 @@ const synced = () =>
     ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
     : import('./synced')
 
+interface Shut {
+  folds: boolean
+  keys: { key: string; under: string }[]
+}
+
 function covers(key: string, at: string, root: string): boolean {
   return key === SPACE || within(key, at, root) !== null
 }
@@ -106,8 +119,39 @@ export class Protection {
     return `${String(this.revision)}:${String(unlocks.revision)}`
   }
 
+  private shutHeld: { spaces: Record<string, Kept>; revision: number; shut: Shut[] } | null = null
+
+  private shutNow(): Shut[] {
+    const spaces = this.spaces
+    const revision = unlocks.revision
+    const held = this.shutHeld
+    if (held?.spaces === spaces && held.revision === revision) return held.shut
+    const shut = Object.entries(spaces)
+      .map(([root, kept]) => {
+        const folds = foldsIn(root)
+        return {
+          folds,
+          keys: Object.entries(kept.ways)
+            .filter(([key, way]) => unlocks.shut([{ root, key, way }]))
+            .map(([key]) => pathKeyAs(key === SPACE ? root : insideSpace(root, key), folds))
+            .map((key) => ({ key, under: `${key}/` })),
+        }
+      })
+      .filter((one) => one.keys.length)
+    this.shutHeld = { spaces, revision, shut }
+    return shut
+  }
+
   locked(path: string | null | undefined): boolean {
-    return !!path && this.any && unlocks.shut(this.covering(path))
+    if (!path) return false
+    const shut = this.shutNow()
+    if (!shut.length) return false
+    const exact = pathKeyAs(path, false)
+    let folded: string | null = null
+    return shut.some(({ folds, keys }) => {
+      const at = folds ? (folded ??= exact.toLowerCase()) : exact
+      return keys.some(({ key, under }) => at === key || at.startsWith(under))
+    })
   }
 
   shutIn(root: string): string[] | null {

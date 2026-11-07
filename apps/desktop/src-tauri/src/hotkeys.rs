@@ -9,7 +9,7 @@ mod portal;
 #[cfg(any(target_os = "linux", test))]
 mod trigger;
 
-const EVENT: &str = "nib://global-keys";
+const EVENT: &str = "orden://global-keys";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Which {

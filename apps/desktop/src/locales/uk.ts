@@ -1598,6 +1598,8 @@ export const uk: Dictionary = {
   Shorter: 'Коротше',
   Longer: 'Довше',
   'Fix grammar': 'Виправити граматику',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Вибраних слів більше немає в нотатці, тож нічого не замінено.',
   'A cited report': 'Звіт із цитуванням',
   'A helper in the background': 'Помічник у фоновому режимі',
   'A side question': 'Додаткове питання',
@@ -3024,6 +3026,8 @@ export const uk: Dictionary = {
   'That could not be protected: {reason}': 'Не вдалося захистити: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не додано: чат приймає зображення й текстові файли до 2 МБ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} не додано: повідомлення приймає щонайбільше 20 зображень.',
   'Time tracker': 'Облік часу',
   'Start timer': 'Запустити таймер',
   'Stop timer': 'Зупинити таймер',
@@ -3633,9 +3637,48 @@ export const uk: Dictionary = {
   'You said': 'Вказано вами',
   Privacy: 'Конфіденційність',
   'Send crash and freeze reports': 'Надсилати звіти про збої та зависання',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Коли Orden падає або зависає, він надсилає, що робив і де у власному коді, без імен, шляхів, адрес і паролів. Ніколи ваші нотатки.',
-  'Turn off in Settings': 'Вимкнути в налаштуваннях',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Надсилає, що робив Orden під час збою чи зависання; ніколи нотатки, імена, шляхи чи паролі.',
+  'Send crash reports to help improve Orden':
+    'Надсилати звіти про збої, щоб допомогти покращити Orden',
+  'Move to {space}?': 'Перемістити в {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS може запускати цією клавішею й диктування.',
+  'QR code': 'QR-код',
+  'Waiting…': 'Очікування…',
+  Service: 'Сервіс',
+  'I understand and want to connect anyway': "Я розумію й однаково хочу під'єднати",
+  'Some changes have not reached your account yet':
+    'Деякі зміни ще не дійшли до вашого облікового запису',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Вони лишаються в цьому браузері, приховані від усіх, хто ввійде тут, і надійдуть, коли ви ввійдете знову.',
+  'Leave it empty to sign in with a QR code instead': 'Залиште порожнім, щоб увійти за QR-кодом',
+  'Telegram code': 'Код Telegram',
+  'Sent to Telegram on your other device': 'Надіслано в Telegram на іншому вашому пристрої',
+  'Sent by SMS': 'Надіслано SMS',
+  'You will get a call with the code': 'Вам зателефонують і повідомлять код',
+  'The code was wrong. Try again.': 'Код неправильний. Спробуйте ще раз.',
+  'The code expired, so Telegram sent a new one.':
+    'Термін дії коду минув, тож Telegram надіслав новий.',
+  'Two-step verification password': 'Пароль двоетапної перевірки',
+  'The password was wrong. Try again.': 'Пароль неправильний. Спробуйте ще раз.',
+  'Scan with Telegram on your phone': 'Відскануйте в Telegram на телефоні',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Налаштування > Пристрої > Під’єднати пристрій',
+  'Signing in to Telegram needs the app': 'Для входу в Telegram потрібен застосунок',
+  'Telegram does not know this phone number': 'Telegram не знає цього номера телефону',
+  'Too many tries. Wait a while and try again.':
+    'Забагато спроб. Зачекайте трохи й спробуйте знову.',
+  'Too many wrong tries': 'Забагато неправильних спроб',
+  'Signed out of Telegram. Connect again.': 'Ви вийшли з Telegram. Під’єднайтеся знову.',
+  'Telegram cannot do that in this conversation': 'Telegram не може зробити це в цій розмові',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram видаляє повідомлення в групах і каналах для всіх',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram передає групу новому власникові лише у власному застосунку',
+  'That sticker is no longer available': 'Цей стікер більше не доступний',
+  'Telegram is not set up in this build': 'Telegram не налаштовано в цій збірці',
+  'Password manager': 'Менеджер паролів',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Додає Pass, який зберігає паролі й заповнює їх на сайтах. Якщо вимкнути, ваші сховища залишаться.',
 }

@@ -234,8 +234,8 @@ describe('a new space', () => {
     }
     try {
       for (const stored of [null, 'off', 'on', 'no']) {
-        if (stored === null) localStorage.removeItem('nib:keep-spaces')
-        else localStorage.setItem('nib:keep-spaces', stored)
+        if (stored === null) localStorage.removeItem('orden:keep-spaces')
+        else localStorage.setItem('orden:keep-spaces', stored)
         const name = `Plain ${String(stored)}`
         expect(await call('create_space', { name })).toEqual({
           name,
@@ -428,8 +428,8 @@ describe('a space that is a folder', () => {
   test('is converted whatever this device has stored, one an older build turned back too', async () => {
     const { convertAll } = await import('./convert')
     for (const stored of [null, 'off', 'on']) {
-      if (stored === null) localStorage.removeItem('nib:keep-spaces')
-      else localStorage.setItem('nib:keep-spaces', stored)
+      if (stored === null) localStorage.removeItem('orden:keep-spaces')
+      else localStorage.setItem('orden:keep-spaces', stored)
       const name = `Notes ${String(stored)}`
       disk.dirs.add(`/spaces/${name}`)
       disk.files.set(`/spaces/${name}/Plan.md`, 'ship it')

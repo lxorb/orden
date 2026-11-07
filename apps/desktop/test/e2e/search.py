@@ -116,7 +116,7 @@ async ({ count, root }) => {
     ask.onsuccess = () => resolve(ask.result)
     ask.onerror = () => reject(ask.error)
   })
-  new BroadcastChannel('nib:rows').postMessage({ rows, gone: [] })
+  new BroadcastChannel('orden:rows').postMessage({ rows, gone: [] })
 
   return { ms: Math.round(performance.now() - began), bytes }
 }
@@ -318,8 +318,8 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(1600)
     shot("fence-editing")
     say(
-        f"[{name}] the fence drew {page.evaluate('() => document.querySelectorAll(String.raw`.nib-query .nib-row`).length')} rows"
-        f" under {page.evaluate('() => document.querySelectorAll(String.raw`.nib-query .nib-section`).length')} names"
+        f"[{name}] the fence drew {page.evaluate('() => document.querySelectorAll(String.raw`.orden-query .orden-row`).length')} rows"
+        f" under {page.evaluate('() => document.querySelectorAll(String.raw`.orden-query .orden-section`).length')} names"
     )
 
     page.evaluate(
@@ -329,17 +329,17 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     shot("fence-reading")
     say(
         f"[{name}] and in the reading view"
-        f" {page.evaluate('() => document.querySelectorAll(String.raw`.nib-query .nib-row`).length')} rows"
+        f" {page.evaluate('() => document.querySelectorAll(String.raw`.orden-query .orden-row`).length')} rows"
     )
 
-    box = page.locator(".nib-query input[data-task]")
+    box = page.locator(".orden-query input[data-task]")
     if box.count():
         was = box.count()
         box.first.click(force=True)
         page.wait_for_timeout(2000)
         say(
             f"[{name}] a box ticked in the fence: {was} open tasks became"
-            f" {page.locator('.nib-query input[data-task]').count()}"
+            f" {page.locator('.orden-query input[data-task]').count()}"
         )
         shot("fence-ticked")
     else:

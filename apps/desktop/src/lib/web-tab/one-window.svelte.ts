@@ -70,7 +70,7 @@ function start(): void {
   if (started || typeof BroadcastChannel !== 'function' || typeof window === 'undefined') return
   started = true
 
-  channel = new BroadcastChannel('nib:web-notes')
+  channel = new BroadcastChannel('orden:web-notes')
   channel.onmessage = (event: MessageEvent<Said>) => {
     heard(event.data)
   }

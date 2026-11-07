@@ -129,7 +129,7 @@ jobs:
       - name: Drives, as a Mac
         env:
           ONLY: ${{ inputs.only }}
-          NIB_ENGINE: webkit
+          ORDEN_ENGINE: webkit
         run: |
           python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 ${ONLY:+--only "$ONLY"}
 

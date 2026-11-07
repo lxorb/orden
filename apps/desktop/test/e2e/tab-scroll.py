@@ -218,7 +218,7 @@ def drive(browser: Browser) -> None:
         for icons in (True, False):
             page = DRIVE.page(browser, viewport={"width": 1600, "height": 800})
             page.context.add_init_script(
-                f"localStorage.setItem('nib:icon-tabs', {'yes' if icons else 'no'!r})"
+                f"localStorage.setItem('orden:icon-tabs', {'yes' if icons else 'no'!r})"
             )
             DRIVE.open(page)
             say(f"{step.__name__}, {'every tab but the open one its mark' if icons else 'as Chrome draws tabs'}")

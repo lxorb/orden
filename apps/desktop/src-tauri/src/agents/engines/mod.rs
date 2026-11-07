@@ -34,7 +34,7 @@ pub enum ReaderStore {
 pub const READER_STORE: ReaderStore = ReaderStore::Twin;
 
 pub fn reader_store() -> ReaderStore {
-    match std::env::var("NIB_AGENT_READER_STORE").as_deref() {
+    match std::env::var("ORDEN_AGENT_READER_STORE").as_deref() {
         Ok("blocked") => ReaderStore::Blocked,
         Ok("twin") => ReaderStore::Twin,
         _ => READER_STORE,

@@ -1,8 +1,55 @@
 diff --git a/dist/index.js b/dist/index.js
-index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a424e124417 100644
+index e5725e7b76c21832da1a3d2ed188ae042c06224c..1d61d2f6de04d80a5d612bddfe4969e23445d357 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -1391,6 +1391,7 @@ try {
+@@ -316,6 +316,19 @@ function isHorizontalRule(line, cx, breaking) {
+         return -1;
+     return count < 3 ? -1 : 1;
+ }
++// Patched (pnpm patch, see docs/patches.md): lists and quotes are read 100 deep at
++// most. Each one deeper reads the rest of its line again, so a line of `- - - …`
++// twenty thousand long took seconds; past that depth the line is a paragraph's.
++const NEST_DEEPEST = 100;
++function nestedTooDeep(cx) {
++    if (cx.stack.length < NEST_DEEPEST)
++        return false;
++    let deep = 0;
++    for (let block of cx.stack)
++        if (block.type == Type.ListItem || block.type == Type.Blockquote)
++            deep++;
++    return deep >= NEST_DEEPEST;
++}
+ function inList(cx, type) {
+     for (let i = cx.stack.length - 1; i >= 0; i--)
+         if (cx.stack[i].type == type)
+@@ -493,6 +506,8 @@ const DefaultBlockParsers = {
+         return true;
+     },
+     Blockquote(cx, line) {
++        if (nestedTooDeep(cx))
++            return false;
+         let size = isBlockquote(line);
+         if (size < 0)
+             return false;
+@@ -510,6 +525,8 @@ const DefaultBlockParsers = {
+         return true;
+     },
+     BulletList(cx, line) {
++        if (nestedTooDeep(cx))
++            return false;
+         let size = isBulletList(line, cx, false);
+         if (size < 0)
+             return false;
+@@ -522,6 +539,8 @@ const DefaultBlockParsers = {
+         return null;
+     },
+     OrderedList(cx, line) {
++        if (nestedTooDeep(cx))
++            return false;
+         let size = isOrderedList(line, cx, false);
+         if (size < 0)
+             return false;
+@@ -1391,6 +1410,7 @@ try {
      Punctuation = new RegExp("[\\p{S}|\\p{P}]", "u");
  }
  catch (_) { }
@@ -10,7 +57,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
  const DefaultInline = {
      Escape(cx, next, start) {
          if (next != 92 /* '\\' */ || start == cx.end - 1)
-@@ -1473,8 +1474,16 @@ const DefaultInline = {
+@@ -1473,8 +1493,16 @@ const DefaultInline = {
              return cx.append(elt(Type.HardBreak, start, start + 2));
          if (next == 32) {
              let pos = start + 1;
@@ -29,7 +76,20 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
              if (cx.char(pos) == 10 && pos >= start + 2)
                  return cx.append(elt(Type.HardBreak, start, pos + 1));
          }
-@@ -1506,8 +1515,11 @@ const DefaultInline = {
+@@ -1491,7 +1519,11 @@ const DefaultInline = {
+         if (next != 93 /* ']' */)
+             return -1;
+         // Scanning back to the next link/image start marker
+-        for (let i = cx.parts.length - 1; i >= 0; i--) {
++        // Patched (pnpm patch, see docs/patches.md): as far down as the last
++        // scan that found none, as cmark's `openers_bottom`: no marker below it
++        // can come back, and every `]` read the line back to its start again.
++        let bottom = Math.min(cx.linkBottom, cx.parts.length);
++        for (let i = cx.parts.length - 1; i >= bottom; i--) {
+             let part = cx.parts[i];
+             if (part instanceof InlineDelimiter && (part.type == LinkStart || part.type == ImageStart)) {
+                 // If this one has been set invalid (because it would produce
+@@ -1506,14 +1538,18 @@ const DefaultInline = {
                  let link = cx.parts[i] = finishLink(cx, content, part.type == LinkStart ? Type.Link : Type.Image, part.from, start + 1);
                  // Set any open-link markers before this link to invalid.
                  if (part.type == LinkStart)
@@ -42,7 +102,14 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
                          if (p instanceof InlineDelimiter && p.type == LinkStart)
                              p.side = 0 /* Mark.None */;
                      }
-@@ -1578,7 +1590,9 @@ function parseURL(text, start, offset) {
+                 return link.to;
+             }
+         }
++        cx.linkBottom = cx.parts.length;
+         return -1;
+     }
+ };
+@@ -1578,7 +1614,9 @@ function parseURL(text, start, offset) {
                  escaped = false;
              }
              else if (ch == 40 /* '(' */) {
@@ -53,7 +120,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
              }
              else if (ch == 41 /* ')' */) {
                  if (!depth)
-@@ -1603,6 +1617,9 @@ function parseLinkTitle(text, start, offset) {
+@@ -1603,6 +1641,9 @@ function parseLinkTitle(text, start, offset) {
              escaped = false;
          else if (ch == end)
              return elt(Type.LinkTitle, start + offset, pos + 1 + offset);
@@ -63,7 +130,15 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
          else if (ch == 92 /* '\\' */)
              escaped = true;
      }
-@@ -1708,6 +1725,9 @@ class InlineContext {
+@@ -1654,6 +1695,7 @@ class InlineContext {
+         @internal
+         */
+         this.parts = [];
++        this.linkBottom = 0;
+     }
+     /**
+     Get the character code at the given (document-relative)
+@@ -1708,6 +1750,9 @@ class InlineContext {
      appropriate node and updating the content of this.parts. @internal
      */
      resolveMarkers(from) {
@@ -73,7 +148,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
          // Scan forward, looking for closing tokens
          for (let i = from; i < this.parts.length; i++) {
              let close = this.parts[i];
-@@ -1715,9 +1735,11 @@ class InlineContext {
+@@ -1715,9 +1760,11 @@ class InlineContext {
                  continue;
              let emp = close.type == EmphasisUnderscore || close.type == EmphasisAsterisk;
              let closeSize = close.to - close.from;
@@ -86,7 +161,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
                  let part = this.parts[j];
                  if (part instanceof InlineDelimiter && (part.side & 1 /* Mark.Open */) && part.type == close.type &&
                      // Ignore emphasis delimiters where the character count doesn't match
-@@ -1727,8 +1749,10 @@ class InlineContext {
+@@ -1727,8 +1774,10 @@ class InlineContext {
                      break;
                  }
              }
@@ -98,7 +173,16 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
              let type = close.type.resolve, content = [];
              let start = open.from, end = close.to;
              // Emphasis marker effect depends on the character count. Size consumed is minimum of the two
-@@ -1883,7 +1907,9 @@ class FragmentCursor {
+@@ -1791,6 +1840,8 @@ class InlineContext {
+     takeContent(startIndex) {
+         let content = this.resolveMarkers(startIndex);
+         this.parts.length = startIndex;
++        if (this.linkBottom > startIndex)
++            this.linkBottom = startIndex;
+         return content;
+     }
+     /**
+@@ -1883,7 +1934,9 @@ class FragmentCursor {
              c.firstChild();
          }
          let rPos = pos + this.fragment.offset;
@@ -109,7 +193,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
              if (!c.parent())
                  return false;
          for (;;) {
-@@ -2205,11 +2231,15 @@ function autolinkURLEnd(text, from) {
+@@ -2205,11 +2258,15 @@ function autolinkURLEnd(text, from) {
      if (!m || lastTwoDomainWords.exec(m[0])[0].indexOf("_") > -1)
          return -1;
      let end = from + m[0].length;
@@ -127,7 +211,7 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..bbada1a8cd727d12e3839458ebd83a42
          else if (last == ";" && (m = /&(?:#\d+|#x[a-f\d]+|\w+);$/.exec(text.slice(from, end))))
              end = from + m.index;
          else
-@@ -2243,9 +2273,11 @@ const Autolink = {
+@@ -2243,9 +2300,11 @@ const Autolink = {
                      return -1;
                  if (m[1] || m[2]) { // www., http://
                      end = autolinkURLEnd(cx.text, pos + m[0].length);

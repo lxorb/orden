@@ -1,9 +1,9 @@
 # Backlog
 
 Everything Emil asked for in nib that is not on `main` yet, checked against `main` at
-4a0aa764 (2026-09-30). Sources: the memory files (`nib-task-queue.md`,
-`nib-feature-batches.md`, `nib-gaps-2026-09-09.md`, `nib-parity-roadmap.md`,
-`nib-browser-vision.md`, `nib-product-philosophy.md`, `nibeditor-naming-and-launch.md`,
+4a0aa764 (2026-09-30). Sources: the memory files (`orden-task-queue.md`,
+`orden-feature-batches.md`, `orden-gaps-2026-09-09.md`, `orden-parity-roadmap.md`,
+`orden-browser-vision.md`, `orden-product-philosophy.md`, `nibeditor-naming-and-launch.md`,
 `test-everything-after-pushes.md`), the open rows of `docs/power-user.md`,
 `docs/typora-parity.md` and every "What is left" in `docs/`, and the four unmerged
 branches. There are no TODO or FIXME comments in the code; every hit is Roam's or
@@ -74,7 +74,7 @@ among them. Runs now on the surfaces nobody is rebuilding, and again after the w
 | The areas the 09-17 hunt never reached: sync, sharing, collaboration, sign-in and publishing on a local Worker; the ten exports and twelve importers in depth; PDFs (viewer, highlights, search, embeds); touch and drag-and-drop of tabs and rows | batches, 2026-09-17 "NOT REACHED" | each area driven with evidence, every bug fixed at the cause with a failing-first test, a clean list | L | high | none |
 | Native re-check of what was only driven in the web build: address completion over a live page (#4), the Chrome strip's drag (#7), preview tabs for web, canvas, pages and PDF (#10), Ctrl and middle click inside a page with real input (#20) | task queue, 2026-09-27/28 | driven on a probe build through `run_probe`, CDP input on the probe's own webview, never the page-first key step | M | high | none |
 | The Apple round's changes to shared code (format bar, menus, tables, sheets, palette, first-run space chooser) re-driven on Windows and the web build | commits 2026-09-28/29 | no Windows or web regression, or each one fixed | M | high | none |
-| The Even plugin on the simulator after a month of strings and shell changes; repack and bump `even.app.json` only if the package changed | `nib-even-version-bump.md` | the simulator drive green, package under 8 MiB | S | med | none |
+| The Even plugin on the simulator after a month of strings and shell changes; repack and bump `even.app.json` only if the package changed | `orden-even-version-bump.md` | the simulator drive green, package under 8 MiB | S | med | none |
 | The q-errors-2 follow-ups: a blank folder note written over, `openNote` answering null silently | task queue #28, 2026-09-28 | reproduced or ruled out with a test | S | med | none |
 
 Off limits (report instead): saving and unsaved state, file associations and Ctrl+O, the
@@ -83,7 +83,7 @@ archive, the right sidebar, theme settings, CEF.
 
 ## 2. launch-2 - under one second, proven
 
-Emil's hard rule (`nib-product-philosophy.md`, 2026-09-14): nib opens in under a second
+Emil's hard rule (`orden-product-philosophy.md`, 2026-09-14): nib opens in under a second
 even on slower devices and looks fully loaded. Round 1 (e39f3741) put the window up in its
 own colour at 46 ms warm; round 2 was queued for a quiet machine and never ran.
 
@@ -107,14 +107,14 @@ own colour at 46 ms warm; round 2 was queued for a quiet machine and never ran.
 
 ## 4. browser-parity - Chrome's own features
 
-What `nib-browser-vision.md` (2026-09-13) keeps inside the browser and nib still lacks.
+What `orden-browser-vision.md` (2026-09-13) keeps inside the browser and nib still lacks.
 Everything here waits for the injection rework, the scroll fix and the default-browser
 work, which all rewrite the same files.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
 | History: every page a space's web data has visited, searchable, open, remove; Ctrl+H and a row in the dots | browser vision 2026-09-13; `docs/web-tabs.md` "What is left" | Chrome's shape, the per-space history rule kept, virtualised | M | high | #40 #41 #46 |
-| Delete browsing data: cookies, cache, site data and history for a time range, per space store or all | same | cleared through the engine's own call (WebView2 `ClearBrowsingDataAsync`, `WKWebsiteDataStore`), `nib:web-visits` cleared with it | M | high | same |
+| Delete browsing data: cookies, cache, site data and history for a time range, per space store or all | same | cleared through the engine's own call (WebView2 `ClearBrowsingDataAsync`, `WKWebsiteDataStore`), `orden:web-visits` cleared with it | M | high | same |
 | A private tab: an ephemeral profile that writes no history, visits or places, marked on the tab | power-user "Later"; browser vision "incognito as an ephemeral profile" | nothing it saw survives closing it; the key per Q3 | L | high | same |
 | A search engine choice: Google is hard-coded in `lib/web-tab/address.ts` | browser vision "address bar and search engine choice" | one row, Chrome's list plus a custom `%s` | S | med | none |
 | Dragging a link or a picture out of a page onto the strip (a tab) or the file list (a web note, a picture copied in) | power-user "Later" | both drops work; nothing else leaves the page | L | med | #40 #46 |
@@ -131,7 +131,7 @@ id (80b9de44) landed; two faults are left.
 | --- | --- | --- | --- | --- | --- |
 | One path value with one comparison and one normalisation (separators, case, composition) for `documentAt`, `everyPath`, positions, arranged, excluded, folder icons, bookmarks and the link index | batches, identity round 2026-09-17 ("remaining hole") | `Plan.md` and `plan.md` on Windows and macOS are one document everywhere; the bare `===` comparisons gone, a scan test holds it | L | high | #38 #39 #45, sync v2's mirror lane |
 | One file-operation event (created, moved, removed, with the old and new path) every store listens to, instead of the hand-written notifications per operation | batches, architecture verdict 2026-09-17 | a new store cannot forget a rename; the tests prove each store follows | L | high | same |
-| The three finished migrations out: `nib:pinned` to bookmarks, the theme-side and contrast reads, the legacy mirror shapes | batches #122, 2026-09-13 | deleted per Q17; the mirror one with sync v2 | S | low | Q17 |
+| The three finished migrations out: `orden:pinned` to bookmarks, the theme-side and contrast reads, the legacy mirror shapes | batches #122, 2026-09-13 | deleted per Q17; the mirror one with sync v2 | S | low | Q17 |
 | `lib/search/tags.ts` reads the front matter block through the shared reader, the last copy | batches #91, 2026-09-12 | one reader | S | low | none |
 
 ## 6. tabs-hints - tabs and hints like Chrome
@@ -148,7 +148,7 @@ id (80b9de44) landed; two faults are left.
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
 | 65 literal `z-index` values in the components onto a few tokens, with a guard | q-design, 2026-09-28 ("z-index tokens later") | one stack order, written once | M | med | #42 #50 |
-| The round button's 18 px corner, the close glyph drawn in two view boxes, two footer vocabularies (`.primary`, `.pill` beside `.nib-button`) | batches #78, #90, #122 | one of each, guarded by one-of-each | S | med | same |
+| The round button's 18 px corner, the close glyph drawn in two view boxes, two footer vocabularies (`.primary`, `.pill` beside `.orden-button`) | batches #78, #90, #122 | one of each, guarded by one-of-each | S | med | same |
 | `id="write"` twice in the presenter and in the hover card | batches #90 | ids unique, the themes still reach both | S | low | none |
 | The explanatory copy: every sentence that explains rather than names, listed; the obvious ones cut, the rest to Emil | q-design 2026-09-28; the philosophy | a list with a proposed cut per line | M | med | Emil reads the list |
 | Ink on an accent fill in dark mode (white is 3.98:1) | batches #78, #90, q-design | the token Emil picks in Q16 | S | med | Q16 |
@@ -157,7 +157,7 @@ id (80b9de44) landed; two faults are left.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
-| One harness for the 61 drives that each carry their own HTTP server: build once, serve, seed, wait on the handle, `NIB_SPACES_DIR` in a temp folder | batches, 2026-09-17 | every drive on it, `run-all.py` faster, new drives start from it | L | high | none |
+| One harness for the 61 drives that each carry their own HTTP server: build once, serve, seed, wait on the handle, `ORDEN_SPACES_DIR` in a temp folder | batches, 2026-09-17 | every drive on it, `run-all.py` faster, new drives start from it | L | high | none |
 | A nightly and on-demand CI job running `run-all.py` on the web build, shots uploaded, red on a failed drive | batches 2026-09-17 ("no CI job had ever run the drives"); only `smoke.py` runs | a nightly result nobody has to ask for | M | high | the harness |
 | Hygiene: `space-rename.py` hangs in teardown, `speed.py`'s canvas part times out after a full run, per-test budgets for `account.test.ts`, `canvas/ink.test.ts` and the Worker's `share-items.test.ts` | batches #116, 2026-09-14, 2026-09-17 | green alone and under load | S | med | none |
 
@@ -304,7 +304,7 @@ file (2bb7b06f), a rename keeping the note's id on the account (80b9de44), a cho
 reaching the app (904f7a0b), Ctrl+Shift+Z redo, `present` on the drive handle, the shipped
 build drivable (d4bdbad8), the audit fixers A1, A2, B, C1 and C2 (covers, properties, high
 contrast, footnotes, stacked tabs, `content:`, Lines, RSS, the recorder on desktop, window
-frame and translucency, Ctrl+=/-/0, `nib://append`), every power-user batch, links opening
+frame and translucency, Ctrl+=/-/0, `orden://append`), every power-user batch, links opening
 as nib tabs (f7afb642), the web tab's session login across restarts, the legacy recovery
 codes, the old `lxorb/nib` URLs (only the historical winget 0.4.0 manifest keeps them), and
 the unguarded storage reads.

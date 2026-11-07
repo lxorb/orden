@@ -13,7 +13,8 @@ const { written, template, moved, plan, before, writing, trusted, ran } = vi.hoi
 
 vi.mock('@orden/bases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/bases')>()),
-  repeatDue: () => ({ day: '2026-10-24', missed: [] }),
+  repeatDue: (note: { made?: unknown }) =>
+    note.made === '2026-10-24' ? null : { day: '2026-10-24', missed: [] },
   readBase: () => ({ nib: { id: 'tasks' } }),
   readAutomations: () => [],
 }))
@@ -41,9 +42,10 @@ vi.mock('../workspace.svelte', () => ({
     activeSpace: { id: 'shared', name: 'Shared', root: '/s/Shared' },
     documentAt: () => null,
     freeName: (_dir: string, wanted: string) => wanted,
-    freeNameOnDisk: (_dir: string, wanted: string) => Promise.resolve(wanted),
+    freeNameOnDisk: (dir: string, wanted: string) =>
+      Promise.resolve(written.has(`${dir}/${wanted}`) ? wanted.replace(/\.md$/, ' 2.md') : wanted),
     fileCame: async () => undefined,
-    noteText: async () => '---\nrepeat: daily\n---\n',
+    noteText: async (path: string) => written.get(path) ?? '---\nrepeat: daily\n---\n',
     loadTree: async () => undefined,
   },
 }))
@@ -169,6 +171,17 @@ describe("a repeating template's note", () => {
     await repeatTemplates()
 
     expect([...written.keys()].filter((path) => !path.includes('/Templates/'))).toEqual([])
+  })
+
+  test('is made once, while two windows make them at once or one still holds the old rows', async () => {
+    template.folder = 'Journal'
+    await Promise.all([repeatTemplates(), repeatTemplates()])
+    await repeatTemplates()
+
+    expect([...written.keys()].filter((path) => !path.includes('/Templates/'))).toEqual([
+      '/s/Shared/Journal/Daily 2026-10-24.md',
+    ])
+    expect(written.get('/s/Shared/Templates/Daily.md')).toContain('made: 2026-10-24')
   })
 })
 

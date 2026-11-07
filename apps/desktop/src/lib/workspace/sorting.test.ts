@@ -45,18 +45,18 @@ describe('the order a space is read in', () => {
   })
 
   test('what this machine chose before is taken over once, from where it kept it', () => {
-    store.set('nib:list-order', JSON.stringify({ [ROOT]: 'modified-desc', '/other': 'sideways' }))
+    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'modified-desc', '/other': 'sideways' }))
     const sorting = made()
     expect(sorting.of(ROOT)).toBe('modified-desc')
     expect(sorting.of('/other')).toBe('name')
     expect(JSON.parse(store.get(STORAGE_KEY) ?? '{}')[ROOT].mode).toBe('modified-desc')
 
-    store.set('nib:list-order', JSON.stringify({ [ROOT]: 'created-asc' }))
+    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'created-asc' }))
     expect(made().of(ROOT)).toBe('modified-desc')
   })
 
   test('meets an account that has none: this machine’s stands, and is sent up', async () => {
-    store.set('nib:list-order', JSON.stringify({ [ROOT]: 'manual' }))
+    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'manual' }))
     const sorting = made()
     sorting.adopt(ROOT, 'name', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
@@ -105,7 +105,7 @@ describe('a choice the account has not heard yet', () => {
 
 describe('an account whose listing says nothing of the order', () => {
   test('is not folded with nor sent to, and the order chosen here stands until it does', async () => {
-    store.set('nib:list-order', JSON.stringify({ [ROOT]: 'manual' }))
+    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'manual' }))
     const sorting = made()
     for (let pass = 0; pass < 3; pass++) sorting.adopt(ROOT, undefined, 'account')
     expect(sorting.of(ROOT)).toBe('manual')

@@ -122,9 +122,10 @@ const TOO_LONG: &str = "the print took too long";
 )]
 pub async fn print_page(
     webview: tauri::Webview,
-    html: String,
-    page: Option<PdfPage>,
+    request: tauri::ipc::Request<'_>,
 ) -> Result<(), String> {
+    let (html, page) = printed(&request)?;
+
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     {
         use tauri::Manager as _;
@@ -144,6 +145,19 @@ pub async fn print_page(
     }
 }
 
+#[derive(Deserialize)]
+struct Printing {
+    page: Option<PdfPage>,
+}
+
+fn printed(request: &tauri::ipc::Request<'_>) -> Result<(String, Option<PdfPage>), String> {
+    let (Printing { page }, bytes) =
+        crate::notes::raw_sent::<Printing>(request.headers(), request.body())?;
+    let html = String::from_utf8(bytes.into_owned())
+        .map_err(|_| "the page to print is not text".to_owned())?;
+    Ok((html, page))
+}
+
 async fn in_hidden_window<F>(
     app: &AppHandle,
     html: String,
@@ -159,7 +173,7 @@ where
         clock::now(),
         PRINTS.fetch_add(1, Ordering::Relaxed)
     );
-    let path = std::env::temp_dir().join(format!("nib-print-{job}.html"));
+    let path = std::env::temp_dir().join(format!("orden-print-{job}.html"));
     written_alone(&path, &fenced(&html)).map_err(|error| cannot("write", &path, &error))?;
 
     let Ok(url) = tauri::Url::from_file_path(&path) else {

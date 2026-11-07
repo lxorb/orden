@@ -116,7 +116,7 @@ test('open, the right side has the button and the bar has none', () => {
   workspace.closeRight()
   flushSync()
   const said = target.querySelector('header button[aria-label$="right sidebar"]')
-  expect(said?.classList.contains('nib-said')).toBe(true)
+  expect(said?.classList.contains('orden-said')).toBe(true)
 })
 
 test('with the toggles in the bar, open or shut the bar has the button and the side none', () => {
@@ -124,12 +124,12 @@ test('with the toggles in the bar, open or shut the bar has the button and the s
   workspace.showRight('outline')
   flushSync()
   const shown = () => target.querySelector('header button[aria-label$="right sidebar"]')
-  expect(shown()?.classList.contains('nib-said')).toBe(false)
+  expect(shown()?.classList.contains('orden-said')).toBe(false)
   expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(0)
 
   workspace.closeRight()
   flushSync()
-  expect(shown()?.classList.contains('nib-said')).toBe(false)
+  expect(shown()?.classList.contains('orden-said')).toBe(false)
 
   sideToggles.set(true)
   workspace.showRight('outline')

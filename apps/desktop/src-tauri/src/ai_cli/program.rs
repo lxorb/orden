@@ -75,9 +75,9 @@ pub fn find(tool: Tool) -> Option<Program> {
 
 fn named_outright(tool: Tool) -> Option<PathBuf> {
     let name = match tool {
-        Tool::ClaudeCode => "NIB_AI_CLAUDE_CODE",
-        Tool::Codex => "NIB_AI_CODEX",
-        Tool::Gemini => "NIB_AI_GEMINI",
+        Tool::ClaudeCode => "ORDEN_AI_CLAUDE_CODE",
+        Tool::Codex => "ORDEN_AI_CODEX",
+        Tool::Gemini => "ORDEN_AI_GEMINI",
     };
     std::env::var_os(name)
         .map(PathBuf::from)
@@ -173,7 +173,7 @@ mod tests {
     fn a_login_shell_that_leaves_something_holding_its_output_is_not_waited_for() {
         use std::os::unix::fs::PermissionsExt as _;
 
-        let dir = std::env::temp_dir().join(format!("nib-login-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("orden-login-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a folder");
         let shell = dir.join("shell");
         std::fs::write(

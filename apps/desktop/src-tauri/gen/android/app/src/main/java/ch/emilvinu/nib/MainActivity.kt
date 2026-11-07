@@ -38,7 +38,7 @@ class MainActivity : TauriActivity() {
     private const val EXTRA_READ = "ch.emilvinu.nib.read"
 
     private const val EXTRA_SEAL = "ch.emilvinu.nib.seal"
-    private const val SEALS = "nib-seal"
+    private const val SEALS = "orden-seal"
 
     @Synchronized
     private fun seal(context: Context): String {
@@ -133,7 +133,7 @@ class MainActivity : TauriActivity() {
 
   override fun onWebViewCreate(webView: WebView) {
     page = webView
-    webView.addJavascriptInterface(Bridge(), "__NIB_SYSTEM__")
+    webView.addJavascriptInterface(Bridge(), "__ORDEN_SYSTEM__")
 
     ViewCompat.setOnApplyWindowInsetsListener(webView) { _: View, insets: WindowInsetsCompat ->
       val keys = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
@@ -161,7 +161,7 @@ class MainActivity : TauriActivity() {
   private val secrets: SharedPreferences by lazy {
     EncryptedSharedPreferences.create(
       this,
-      "nib-secrets",
+      "orden-secrets",
       MasterKey.Builder(this).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
       EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
       EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,

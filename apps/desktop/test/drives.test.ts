@@ -207,7 +207,7 @@ describe('the activity a drive stands in for', () => {
   }
 
   function shimIn(text: string): string | null {
-    const at = text.indexOf('__NIB_SYSTEM__ = {')
+    const at = text.indexOf('__ORDEN_SYSTEM__ = {')
     return at === -1 ? null : text.slice(at)
   }
 

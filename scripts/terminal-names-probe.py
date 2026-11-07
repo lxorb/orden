@@ -112,7 +112,7 @@ def main() -> int:
     shots = pathlib.Path(args.shots)
     shots.mkdir(parents=True, exist_ok=True)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-terminal-names-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-terminal-names-"))
     folder = spaces / SPACE
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "A note.md").write_text("# A note\n", encoding="utf-8")
@@ -124,7 +124,7 @@ def main() -> int:
     say(f"spaces root {spaces}")
 
     tabs.wipe(args.identifier)
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)

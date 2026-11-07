@@ -11,7 +11,7 @@ DRIVE = Drive(__file__)
 say, wait_for = DRIVE.say, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 
-PAGES = int(os.environ.get("NIB_PDF_PAGES") or 1000)
+PAGES = int(os.environ.get("ORDEN_PDF_PAGES") or 1000)
 
 TURNED = 600
 

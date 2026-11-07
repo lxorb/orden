@@ -85,7 +85,7 @@ def fresh(browser: Browser, token: str, label: str) -> Page:
 
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
-    context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
 
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
@@ -232,6 +232,78 @@ def echo(one: Page, two: Page, at: int, said: str, label: str) -> float:
 
     raise SystemExit(f"{label} never arrived. one says {words(one)!r}, two says {words(two)!r}")
 
+def contrast(one: str, two: str) -> float:
+    def light(said: str) -> float:
+        parts = [float(part) for part in said[said.index("(") + 1 : said.index(")")].replace(",", " ").split()[:3]]
+        lit = [part / 255 for part in parts]
+        lit = [part / 12.92 if part <= 0.04045 else ((part + 0.055) / 1.055) ** 2.4 for part in lit]
+        return 0.2126 * lit[0] + 0.7152 * lit[1] + 0.0722 * lit[2]
+
+    lighter, darker = sorted((light(one), light(two)), reverse=True)
+    return (lighter + 0.05) / (darker + 0.05)
+
+DRAWN = f"""(at) => {{
+    const view = {FRONT}
+    const caret = document.querySelector('.cm-nib-caret')
+    const name = caret?.querySelector('.cm-nib-caret-name')
+    if (!caret || !name || getComputedStyle(name).opacity !== '1') return null
+    const node = view.domAtPos(at).node
+    const line = (node.nodeType === 1 ? node : node.parentElement).closest('.cm-line')
+    const bar = caret.getBoundingClientRect()
+    const tag = name.getBoundingClientRect()
+    const words = []
+    for (const other of document.querySelectorAll('.cm-content .cm-line')) {{
+        if (other === line) continue
+        const range = document.createRange()
+        range.selectNodeContents(other)
+        for (const box of range.getClientRects()) if (box.width > 0 && box.height > 0) words.push(box)
+    }}
+    const covered = words.filter((box) => box.left < tag.right - 0.5 && box.right > tag.left + 0.5
+        && box.top < tag.bottom - 0.5 && box.bottom > tag.top + 0.5).length
+    return {{
+        bar: [bar.left, bar.top, bar.width, bar.height].map(Math.round),
+        tag: [tag.left, tag.top, tag.right, tag.bottom].map(Math.round),
+        tall: parseFloat(getComputedStyle(line).lineHeight),
+        below: caret.classList.contains('is-below'),
+        covered,
+        ink: getComputedStyle(name).color,
+        paint: getComputedStyle(name).backgroundColor,
+        name: name.textContent,
+    }}
+}}"""
+
+def caret_drawn_well(page: Page, other: Page, at: int, label: str, failures: list[str]) -> None:
+    other.evaluate(f"(at) => {{ const view = {FRONT}; view.dispatch({{ selection: {{ anchor: at }} }}); view.focus() }}", at)
+    for scheme in ("light", "dark"):
+        page.emulate_media(color_scheme=scheme)
+        try:
+            drawn = wait_for(
+                page,
+                f"() => {{ const drawn = ({DRAWN})({at}); return drawn && Math.abs(drawn.bar[1] - "
+                f"{FRONT}.coordsAtPos({at}, 1).top) < 40 ? drawn : null }}",
+                f"[{label}] the other caret at {at}",
+            )
+        except SystemExit as gave_up:
+            failures.append(str(gave_up))
+            return
+        page.wait_for_timeout(250)
+        drawn = page.evaluate(DRAWN, at)
+        say(f"[{label} {scheme}] the other caret: {json.dumps(drawn)}")
+        page.locator(".cm-editor").first.screenshot(path=str(SHOTS / f"caret-{label}-{scheme}.png"))
+        left, top, _, tall = drawn["bar"]
+        if abs(tall - drawn["tall"]) > 1.5:
+            failures.append(f"[{label} {scheme}] the caret is {tall}px on a {drawn['tall']}px line")
+        joint = drawn["tag"][1] - (top + tall) if drawn["below"] else (top - drawn["tag"][3])
+        if abs(joint) > 1:
+            failures.append(f"[{label} {scheme}] the name is {joint}px off the caret")
+        if not drawn["tag"][0] - 1 <= left <= drawn["tag"][2] + 1:
+            failures.append(f"[{label} {scheme}] the name is not over the caret: {drawn}")
+        if drawn["covered"]:
+            failures.append(f"[{label} {scheme}] the name covers words on another line: {drawn}")
+        if contrast(drawn["ink"], drawn["paint"]) < 4.5:
+            failures.append(f"[{label} {scheme}] the name is hard to read: {drawn['ink']} on {drawn['paint']}")
+    page.emulate_media(color_scheme="light")
+
 def main() -> int:
     worker = Worker()
     failures: list[str] = []
@@ -323,6 +395,11 @@ def main() -> int:
             failures.append(f"the other caret's name went once it stopped ({named})")
         else:
             say("the other caret's name is still there once it stopped")
+
+        caret_drawn_well(one, two, 3, "top", failures)
+        last = len(here.rstrip("\n"))
+        caret_drawn_well(one, two, last, "end", failures)
+        caret_drawn_well(one, two, here.index("\n") + 3, "under", failures)
 
         one.locator(".strip").first.screenshot(path=str(SHOTS / "presence-dots.png"))
 

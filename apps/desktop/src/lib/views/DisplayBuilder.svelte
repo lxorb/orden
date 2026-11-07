@@ -180,14 +180,14 @@
 {#snippet fold(name: string, count: number, open: boolean, toggle: () => void)}
   <button type="button" class="fold" aria-expanded={open} onclick={toggle}>
     <span class="twist"><Twist {open} /></span>
-    <span class="nib-section">{name}</span>
+    <span class="orden-section">{name}</span>
     {#if count}<span class="badge">{count}</span>{/if}
   </button>
 {/snippet}
 
 <div class="display">
   <div class="top">
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Layout')} use:segmented>
+    <div class="orden-segmented" role="radiogroup" aria-label={t('Layout')} use:segmented>
       {#each LAYOUTS as one (one)}
         <button
           type="button"
@@ -208,7 +208,7 @@
   </div>
 
   <div
-    class="nib-setting pressable"
+    class="orden-setting pressable"
     role="switch"
     tabindex="0"
     aria-checked={view?.nib.showCompleted === true}
@@ -220,7 +220,8 @@
     }}
   >
     <span class="name">{t('Completed tasks')}</span>
-    <span class="nib-switch" class:on={view?.nib.showCompleted === true} aria-hidden="true"></span>
+    <span class="orden-switch" class:on={view?.nib.showCompleted === true} aria-hidden="true"
+    ></span>
   </div>
 
   {@render fold(t('Sort'), changed.sort, sortOpen, () => (sortOpen = !sortOpen))}
@@ -245,7 +246,7 @@
       {#if sortingShown !== 'smart' && sortingShown !== 'manual' && sortingShown !== 'default'}
         <button
           type="button"
-          class="nib-glyph"
+          class="orden-glyph"
           aria-label={sorting.down ? t('Descending') : t('Ascending')}
           title={sorting.down ? t('Descending') : t('Ascending')}
           onclick={() =>
@@ -366,7 +367,7 @@
 
   <button
     type="button"
-    class="nib-chip is-quiet reset"
+    class="orden-chip is-quiet reset"
     disabled={changed.total === 0}
     onclick={resetAll}>{t('Reset all')}</button
   >
@@ -433,7 +434,7 @@
     cursor: default;
   }
 
-  .fold .nib-section {
+  .fold .orden-section {
     margin: 0;
   }
 

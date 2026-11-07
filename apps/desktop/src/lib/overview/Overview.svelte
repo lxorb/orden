@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
-  import { t } from '../i18n.svelte'
+  import { key, t } from '../i18n.svelte'
   import { chorded } from '../keys'
   import { stillness } from '../motion'
   import { overlays } from '../overlays'
@@ -10,6 +10,7 @@
   import { tabOverview } from '../surfaces.svelte'
   import TabMark from '../TabMark.svelte'
   import { trap } from '../trap'
+  import { prompt } from '../prompt.svelte'
   import { pages } from '../web-tab/pages.svelte'
   import { isDraft } from '../workspace/drafts'
   import { type Tab, workspace } from '../workspace.svelte'
@@ -20,6 +21,7 @@
     eased,
     isOnView,
     lookingAt,
+    overlooking,
     pinched,
     type Point,
     showing,
@@ -37,6 +39,7 @@
   import { canWriteAt } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { mayCarry } from '../workspace/chat-carry'
+  import { TAB_KINDS } from '../workspace/tab-kinds'
   import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
   import { faces } from './faces.svelte'
@@ -65,7 +68,7 @@
   let height = $state(window.innerHeight)
 
   const MARGIN = 56
-  const ROW = 50
+  const ROW = 60
 
   let barBottom = $state(0)
 
@@ -97,6 +100,7 @@
   )
 
   let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
+  let unmoved = false
 
   function lookAtSpace() {
     placeNew([spaceKey])
@@ -104,7 +108,12 @@
     camera = lookingAt(place, screenRoom)
     const cell = cellBoxes.find((one) => one.key === spaceKey)
     if (!all || !cell) return
-    camera = lookingAt(wholeOf([cell]), screenRoom)
+    camera = overlooking(wholeOf([cell]), wholeOf(cellBoxes), screenRoom, windowWide())
+  }
+
+  function windowWide(): number {
+    const wide = resting.map((one) => one.w).sort((a, b) => a - b)
+    return wide[Math.floor(wide.length / 2)] ?? screenRoom.w * WIDEST
   }
 
   function wholeOf(cells: readonly Cell[]): Box {
@@ -224,6 +233,7 @@
   }
 
   function handTakes() {
+    unmoved = false
     flyGoal = null
     cancelAnimationFrame(flyFrame)
     flyFrame = 0
@@ -241,7 +251,7 @@
 
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
 
-  const ALL = 'nib:overview-spaces'
+  const ALL = 'orden:overview-spaces'
   let all = $state(storedText(ALL) !== 'this')
 
   function showAll(on: boolean) {
@@ -266,6 +276,7 @@
       placeNew(keys)
       for (const key of keys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
       apartAll()
+      if (unmoved && shown && out) lookAtSpace()
     })
   })
 
@@ -632,6 +643,7 @@
   let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
   let top = $state<HTMLElement>()
+  let band = $state<HTMLElement>()
   let under = $state<HTMLElement>()
 
   let opens: HTMLElement[] = []
@@ -650,7 +662,7 @@
 
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
-    for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
+    for (const one of [...opens, under, band, top]) one?.style.setProperty('--overview-open', value)
     for (const one of slides) one.style.setProperty('--overview-slide', value)
     if (ground) {
       ground.style.opacity = value
@@ -868,11 +880,15 @@
       void holding?.finally(() => (stood = true))
       measure()
       lookAtSpace()
+      unmoved = true
       const kept = places.camera
       const front =
         slots.find((one) => one.id === workspace.activeTabId) ??
         cellBoxes.find((one) => one.key === spaceKey)?.box
-      if (kept && (!front || isOnView(kept, front, screenRoom))) camera = kept
+      if (kept && (!front || isOnView(kept, front, screenRoom))) {
+        camera = kept
+        unmoved = false
+      }
       panesAsWindows.clear()
       riders.clear()
       const asWindows: Record<string, true> = {}
@@ -1203,6 +1219,7 @@
     const hand = held
     if (!hand) return
     dragged = true
+    const before = places.windows
     const lying = laid.slots
     const pushed = Object.entries(aside)
     aside = {}
@@ -1224,7 +1241,7 @@
           [hand.whole]: { ...place, x: place.x + box.x - was.x, y: place.y + box.y - was.y },
         })
       void settleApart(hand.whole, true)
-    } else if (hand.landing) drop(ids, hand.landing)
+    } else if (hand.landing) void carry(ids, hand.landing, before)
     else if (box) {
       void settleApart(hand.from, false)
       const own = lying.filter((one) => cellOf.get(one.id) === spaceKey)
@@ -1289,6 +1306,31 @@
     aimAll()
   }
 
+  async function carry(
+    ids: readonly string[],
+    landing: Landing & { kind: 'space' },
+    before: Readonly<Record<string, Box>>,
+  ) {
+    const asks = ids.some((id) => {
+      const tab = byId.get(id)
+      return !!tab && TAB_KINDS[tab.kind].asksToMove
+    })
+    if (asks) {
+      for (const id of ids) {
+        const box = before[id]
+        if (box) places.keepWindows({ [id]: box }, workspace.tabs)
+        else places.forgetWindow(id, workspace.tabs)
+      }
+      const space = workspace.spaces.find((one) => one.id === landing.key)?.name ?? ''
+      const sure = await prompt.confirm({
+        title: t('Move to {space}?', { space }),
+        confirmLabel: key('Move'),
+      })
+      if (!sure) return
+    }
+    drop(ids, landing)
+  }
+
   function drop(ids: readonly string[], landing: Landing) {
     if (landing.kind === 'space') {
       void import('../workspace/moving-space')
@@ -1342,6 +1384,7 @@
     if (!next) return
     event.preventDefault()
     at = next.tab.id
+    unmoved = false
     camera = showing(camera, next.slot, screenRoom)
     elements.get(next.tab.id)?.window.focus({ preventScroll: true })
   }
@@ -1538,7 +1581,7 @@
 {#if shown}
   {#if modes.overviewBlur}
     <div
-      class="nib-scrim ground is-blurred"
+      class="orden-scrim ground is-blurred"
       style:top="{barBottom}px"
       aria-hidden="true"
       bind:this={ground}
@@ -1600,6 +1643,14 @@
   >
     <div class="floor" style:top="{barBottom}px" aria-hidden="true"></div>
 
+    <div
+      class="band"
+      style:--overview-top="{barBottom}px"
+      style:--overview-row="{ROW}px"
+      aria-hidden="true"
+      bind:this={band}
+    ></div>
+
     <div class="top" style:--overview-top="{barBottom}px" bind:this={top}>
       {#if spaces.length > 1}
         <Select
@@ -1612,7 +1663,7 @@
           label={t('Spaces')}
         />
       {/if}
-      <button class="nib-button is-quiet tidy" type="button" onclick={() => void tidy()}
+      <button class="orden-button is-quiet tidy" type="button" onclick={() => void tidy()}
         >{t('Tidy up')}</button
       >
     </div>
@@ -1766,6 +1817,20 @@
     align-items: center;
     translate: -50% calc((1 - var(--overview-open, 0)) * -8px);
     opacity: var(--overview-open, 0);
+  }
+
+  .band {
+    position: fixed;
+    z-index: var(--z-bar);
+    top: var(--overview-top, 0px);
+    inset-inline: 0;
+    height: var(--overview-row);
+    opacity: var(--overview-open, 0);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(28px);
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent);
+    mask-image: linear-gradient(to bottom, black 80%, transparent);
   }
 
   .tidy {
@@ -1975,7 +2040,7 @@
       transform var(--dur-fast) var(--ease-out);
   }
 
-  .closer :global(.nib-cross) {
+  .closer :global(.orden-cross) {
     width: 12px;
     height: 12px;
     stroke-width: 2.25;

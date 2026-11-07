@@ -1,6 +1,6 @@
 import { keep, storedText } from '../stored'
 
-const KEY = 'nib:tab-preview-delay'
+const KEY = 'orden:tab-preview-delay'
 
 export const PREVIEW_DELAY = { initial: 500, least: 0, most: 2000, step: 100 } as const
 

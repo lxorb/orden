@@ -522,7 +522,7 @@ describe('the windows that have a strip of their own', () => {
   })
 
   test('and not the presenter, a print, or anything else', () => {
-    expect(documentWindows(['main', 'nib-presenter', 'print-3', 'nib-', 'nib-2a'])).toBe(1)
+    expect(documentWindows(['main', 'orden-presenter', 'print-3', 'nib-', 'nib-2a'])).toBe(1)
     expect(documentWindows([])).toBe(0)
   })
 })

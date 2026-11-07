@@ -65,7 +65,7 @@
 </script>
 
 <div class="card padded">
-  <div class="nib-setting">
+  <div class="orden-setting">
     <span class="name">{t('Import from')}</span>
     <Select
       label={t('Import from')}
@@ -78,7 +78,7 @@
       }}
     />
   </div>
-  <div class="nib-setting">
+  <div class="orden-setting">
     <span class="name">{file?.name ?? t('No file chosen')}</span>
     <input
       class="picker"
@@ -87,13 +87,13 @@
       bind:this={picker}
       onchange={(event) => void chosen(event)}
     />
-    <button class="nib-chip" type="button" onclick={() => picker?.click()}
+    <button class="orden-chip" type="button" onclick={() => picker?.click()}
       >{t('Choose a file')}</button
     >
   </div>
   {#if sealed && !imported}
     <form
-      class="nib-setting"
+      class="orden-setting"
       onsubmit={(event) => {
         event.preventDefault()
         void read()
@@ -101,14 +101,14 @@
     >
       <span class="name">{t('Passphrase')}</span>
       <input
-        class="nib-field is-value"
+        class="orden-field is-value"
         type="password"
         autocomplete="off"
         placeholder={t('Passphrase')}
         aria-label={t('Passphrase')}
         bind:value={passphrase}
       />
-      <button class="nib-chip" type="submit" disabled={busy || passphrase === ''}
+      <button class="orden-chip" type="submit" disabled={busy || passphrase === ''}
         >{t('Open')}</button
       >
     </form>
@@ -118,10 +118,10 @@
 {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
 
 {#if imported}
-  <h3 class="nib-section">{t('Ready to import')}</h3>
+  <h3 class="orden-section">{t('Ready to import')}</h3>
   <div class="card padded preview">
     {#each imported.vaults as vault, index (index)}
-      <div class="nib-setting">
+      <div class="orden-setting">
         <span class="name">{vault.name}</span>
         <span class="text meta"
           >{plural(vault.items.length, { one: '{count} item', other: '{count} items' })}</span
@@ -136,7 +136,7 @@
         })}
       </p>
     {/if}
-    <div class="nib-setting">
+    <div class="orden-setting">
       <span class="name">{t('Into')}</span>
       <Select
         label={t('Into')}
@@ -150,7 +150,7 @@
     </div>
     <div class="buttons">
       <button
-        class="nib-button"
+        class="orden-button"
         type="button"
         disabled={busy || counted === 0}
         onclick={() => void brought()}
@@ -188,7 +188,7 @@
     display: none;
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-3) 0 0;
   }
 

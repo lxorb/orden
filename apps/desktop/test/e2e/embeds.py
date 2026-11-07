@@ -70,9 +70,9 @@ COUNTS = """
 () => {
   const count = (selector) => document.querySelectorAll(selector).length
   return {
-    audio: count('audio.nib-embed-media, audio.embed-media'),
-    video: count('video.nib-embed-media, video.embed-media'),
-    cards: count('.nib-embed-file, figure.embed-file'),
+    audio: count('audio.orden-embed-media, audio.embed-media'),
+    video: count('video.orden-embed-media, video.embed-media'),
+    cards: count('.orden-embed-file, figure.embed-file'),
     web: count('.embed-web'),
     charts: count('.chart-svg'),
     bars: count('rect.chart-bar'),
@@ -82,7 +82,7 @@ COUNTS = """
     // A fence stays code either way, and the two surfaces spell that
     // differently: the reading view writes a `<pre>`, the editor colours the
     // lines where they are.
-    code: count('pre, .cm-line.nib-code'),
+    code: count('pre, .cm-line.orden-code'),
   }
 }
 """
@@ -91,9 +91,9 @@ BOXES = """
 () => {
   const seen = {}
   for (const [name, selector] of [
-    ['audio', 'audio.nib-embed-media, audio.embed-media'],
-    ['video', 'video.nib-embed-media, video.embed-media'],
-    ['card', '.nib-embed-file, figure.embed-file'],
+    ['audio', 'audio.orden-embed-media, audio.embed-media'],
+    ['video', 'video.orden-embed-media, video.embed-media'],
+    ['card', '.orden-embed-file, figure.embed-file'],
     ['web', '.embed-web'],
     ['chart', '.chart-svg'],
   ]) {

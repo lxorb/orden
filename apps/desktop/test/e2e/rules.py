@@ -37,14 +37,14 @@ async () => {
 
 RULE = """
 () => {
-  const line = document.querySelector('.cm-line:has(.nib-rule)')
+  const line = document.querySelector('.cm-line:has(.orden-rule)')
   if (!line) return null
 
   const before = getComputedStyle(line, '::before')
   return {
     classes: line.className,
     editor: document.querySelector('.cm-editor')?.className ?? '',
-    rules: [...line.querySelectorAll('.nib-rule')].length,
+    rules: [...line.querySelectorAll('.orden-rule')].length,
     content: before.content,
     width: before.width,
     height: before.height,
@@ -70,7 +70,7 @@ def shoot(browser: Browser, scheme: str) -> None:
         say(f"[{scheme}] wrote {page.evaluate(SEED)}")
         wait_for(
             page,
-            "() => !!document.querySelector('.cm-line:has(.nib-rule)')",
+            "() => !!document.querySelector('.cm-line:has(.orden-rule)')",
             f"[{scheme}] the rule",
         )
         page.wait_for_timeout(300)
@@ -78,7 +78,7 @@ def shoot(browser: Browser, scheme: str) -> None:
         rule = page.evaluate(RULE)
         say(f"[{scheme}] the rule line: {rule}")
 
-        box = page.locator(".cm-line:has(.nib-rule)").first.bounding_box()
+        box = page.locator(".cm-line:has(.orden-rule)").first.bounding_box()
         page.screenshot(
             path=str(SHOTS / f"rule-{scheme}.png"),
             clip={
@@ -125,7 +125,7 @@ def shoot(browser: Browser, scheme: str) -> None:
         if "\n---\n" not in written:
             raise SystemExit(f"[{scheme}] no rule survived in {written!r}")
 
-        worn = page.evaluate("() => !!document.querySelector('.cm-editor.nib-deck')")
+        worn = page.evaluate("() => !!document.querySelector('.cm-editor.orden-deck')")
         say(f"[{scheme}] the editor wears the deck class: {worn}")
     finally:
         page.context.close()

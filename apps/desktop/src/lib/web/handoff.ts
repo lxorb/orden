@@ -1,7 +1,8 @@
+import { carryKeys } from '../former-keys'
 import { keep, storedText } from '../stored'
 
-export const WEB: string = import.meta.env.VITE_NIB_WEB ?? 'https://orden.so'
-export const LEGACY_WEB: string = import.meta.env.VITE_NIB_LEGACY_WEB ?? 'https://nibeditor.com'
+export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://orden.so'
+export const LEGACY_WEB: string = import.meta.env.VITE_ORDEN_LEGACY_WEB ?? 'https://nibeditor.com'
 
 export const HANDOFF_PATH = '/handoff'
 
@@ -230,4 +231,5 @@ export async function unpack(handoff: Handoff): Promise<void> {
   for (const [key, value] of handoff.local) {
     if (!keep(key, value)) throw new Error('this browser keeps no more site data')
   }
+  carryKeys(localStorage)
 }

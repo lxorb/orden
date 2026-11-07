@@ -40,7 +40,7 @@ function when(): string {
 }
 
 const everyPage = {
-  postcssPlugin: 'nib-every-page',
+  postcssPlugin: 'orden-every-page',
   Rule(rule: { selector: string }) {
     const wide = everySurface(rule.selector)
     if (wide !== rule.selector) rule.selector = wide
@@ -55,7 +55,9 @@ export default defineConfig(({ command, mode }) => ({
     __APP_VERSION__: JSON.stringify(appVersion()),
     __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
     __CLAUDE_CODE__: JSON.stringify(
-      !['off', '0', 'false'].includes(process.env.NIB_CLAUDE_CODE ?? ''),
+      !['off', '0', 'false'].includes(
+        process.env.ORDEN_CLAUDE_CODE ?? process.env.NIB_CLAUDE_CODE ?? '',
+      ),
     ),
     __DRIVEABLE__: JSON.stringify(
       command === 'serve' || mode === 'drive' || mode === 'development',

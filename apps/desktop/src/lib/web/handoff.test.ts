@@ -77,7 +77,7 @@ describe('what the old address holds', () => {
     await write(db, 'meta', 'yes', 'seeded')
     await write(db, 'snapshots', { notePath: '/Notes/Mine.md', content: 'earlier' })
     db.close()
-    before.local.set('nib:session', '{"token":"t"}')
+    before.local.set('orden:session', '{"token":"t"}')
 
     const handoff = await pack()
 
@@ -89,7 +89,7 @@ describe('what the old address holds', () => {
     expect(notes?.stores.find((store) => store.name === 'snapshots')?.indexes).toEqual([
       { name: 'notePath', keyPath: 'notePath', unique: false, multiEntry: false },
     ])
-    expect(handoff.local).toEqual([['nib:session', '{"token":"t"}']])
+    expect(handoff.local).toEqual([['orden:session', '{"token":"t"}']])
   })
 
   test('is nothing at an address that was never used, and asking leaves nothing behind', async () => {
@@ -109,13 +109,13 @@ describe('the new address, given it', () => {
     await write(old, 'meta', 'yes', 'seeded')
     await write(old, 'snapshots', { notePath: '/Notes/Mine.md', content: 'earlier' })
     old.close()
-    before.local.set('nib:session', '{"token":"t"}')
+    before.local.set('orden:session', '{"token":"t"}')
     const handoff = await pack()
 
     at(now)
     const fresh = await opened('nib', 2, notesShape)
     await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome to Orden' })
-    now.local.set('nib:language', 'de')
+    now.local.set('orden:language', 'de')
 
     await unpack(handoff)
 
@@ -127,8 +127,8 @@ describe('the new address, given it', () => {
       { id: 1, notePath: '/Notes/Mine.md', content: 'earlier' },
     ])
     fresh.close()
-    expect(now.local.get('nib:session')).toBe('{"token":"t"}')
-    expect(now.local.get('nib:language')).toBe('de')
+    expect(now.local.get('orden:session')).toBe('{"token":"t"}')
+    expect(now.local.get('orden:language')).toBe('de')
   })
 
   test('lists what came over, when the old address had no listing of its own', async () => {
@@ -157,7 +157,7 @@ describe('the new address, given it', () => {
 
   test('makes a database it did not have, stores and indexes as they were', async () => {
     at(before)
-    const old = await opened('nib-pictures', 3, (db) => {
+    const old = await opened('orden-pictures', 3, (db) => {
       db.createObjectStore('kept', { keyPath: 'id' }).createIndex('by', 'at', { unique: true })
     })
     await write(old, 'kept', { id: 'a', at: 5 })
@@ -167,7 +167,7 @@ describe('the new address, given it', () => {
     at(now)
     await unpack(handoff)
 
-    const made = await opened('nib-pictures', 3, () => undefined)
+    const made = await opened('orden-pictures', 3, () => undefined)
     expect(made.version).toBe(3)
     const index = made.transaction('kept').objectStore('kept').index('by')
     expect(index.unique).toBe(true)

@@ -89,7 +89,7 @@ came in, and lands in it.
   the same space, and a web note already there pointing at the same page is not
   written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
   `import/zen-landing.ts`, and `scripts/zen-import-probe.py`, which reads a Zen of
-  its own through `NIB_ZEN_DIR`.
+  its own through `ORDEN_ZEN_DIR`.
 - **Every other browser's tabs and bookmarks** (#377). On a desktop there is a row for
   each browser the machine has a profile of: Firefox, then Chrome, Edge, Brave,
   Chromium, Vivaldi, Opera, Opera GX and Arc, which are all Chromium and keep the same
@@ -130,7 +130,7 @@ came in, and lands in it.
   says so. The crate hands over only the files it listed for a profile it listed
   (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie or a password, and
   `scripts/browser-import-probe.py` reads browsers of its own through
-  `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does.
+  `ORDEN_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does.
 
   Every browser's import, Zen's too, also brings (#1149, `import/browser-extras.ts`):
   the sites' marks out of the profile's own store of them (`favicons.sqlite`, a

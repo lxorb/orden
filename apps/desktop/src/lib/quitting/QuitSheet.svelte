@@ -36,10 +36,10 @@
 
 {#if quitAsk.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={stay}></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={stay}></div>
 
   <div
-    class="nib-screen sheet"
+    class="orden-screen sheet"
     use:trap
     role="alertdialog"
     aria-modal="true"
@@ -54,7 +54,7 @@
         <li>
           <button
             type="button"
-            class="nib-row is-short"
+            class="orden-row is-short"
             class:is-idle={!row.busy}
             onclick={() => quitAsk.answer(row)}
           >
@@ -75,10 +75,10 @@
         checked={quitAsk.never}
         onchange={(on: boolean) => (quitAsk.never = on)}
       />
-      <button type="button" class="nib-button is-quiet" data-lands onclick={stay}
+      <button type="button" class="orden-button is-quiet" data-lands onclick={stay}
         >{t('Cancel')}</button
       >
-      <button type="button" class="nib-button is-danger" onclick={() => quitAsk.answer('go')}
+      <button type="button" class="orden-button is-danger" onclick={() => quitAsk.answer('go')}
         >{t(going)}</button
       >
     </div>

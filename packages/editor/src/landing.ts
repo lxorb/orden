@@ -44,7 +44,7 @@ const marked = StateField.define<{ from: number; to: number } | null>({
         number <= doc.lineAt(held.to).number;
         number++
       ) {
-        marks.push(Decoration.line({ class: 'nib-landed' }).range(doc.line(number).from))
+        marks.push(Decoration.line({ class: 'orden-landed' }).range(doc.line(number).from))
       }
 
       return Decoration.set(marks, true)

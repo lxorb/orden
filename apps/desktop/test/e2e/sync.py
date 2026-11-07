@@ -101,7 +101,7 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
         device_scale_factor=2,
     )
 
-    context.add_init_script(f"try {{ localStorage.setItem('nib:session', '{token}') }} catch {{}}")
+    context.add_init_script(f"try {{ localStorage.setItem('orden:session', '{token}') }} catch {{}}")
 
     page = context.new_page()
     page.set_default_timeout(20000)
@@ -283,7 +283,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
     minted = request("/v1/mcp/token", token, {"readOnly": False})
     program = minted.get("token", "")
 
-    with tempfile.TemporaryDirectory(prefix="nib-ci-") as held:
+    with tempfile.TemporaryDirectory(prefix="orden-ci-") as held:
         folder = Path(held)
         done = subprocess.run(
             ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "pull", space, str(folder)],
@@ -291,7 +291,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
             text=True,
             encoding="utf-8",
             errors="replace",
-            env={**os.environ, "NIB_TOKEN": program, "NIB_API": ORIGIN},
+            env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
             check=False,
         )
 
@@ -307,7 +307,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                env={**os.environ, "NIB_TOKEN": program, "NIB_API": ORIGIN},
+                env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
                 check=False,
             )
             say(f"nib-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")

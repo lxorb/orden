@@ -21,7 +21,7 @@
     <Spark colour={activity.colourOf(approval.agent)} paused />
   {/if}
   <span class="reason">{reason}</span>
-  <button class="nib-button" onclick={done}>{t('Done')}</button>
+  <button class="orden-button" onclick={done}>{t('Done')}</button>
 </div>
 
 <style>

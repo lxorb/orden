@@ -57,7 +57,7 @@
 
 {#if invites.length}
   <section class="invites" aria-label={t('Invitations')}>
-    <h3 class="nib-section">{t('Invitations')}</h3>
+    <h3 class="orden-section">{t('Invitations')}</h3>
     {#each invites as invite (invite.vault)}
       {@const meta = metas[invite.vault] ?? null}
       <div class="invite" data-invite={invite.vault}>
@@ -81,13 +81,13 @@
         </span>
         <div class="buttons">
           <button
-            class="nib-button is-quiet is-soft"
+            class="orden-button is-quiet is-soft"
             type="button"
             disabled={busy !== null}
             onclick={() => void answered(invite, false)}>{t('Decline')}</button
           >
           <button
-            class="nib-button"
+            class="orden-button"
             type="button"
             disabled={busy !== null || invite.key === null}
             onclick={() => void answered(invite, true)}>{t('Accept')}</button
@@ -109,7 +109,7 @@
     border-bottom: 1px solid var(--line);
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-2) 0 0;
     padding: 0 var(--space-2);
   }

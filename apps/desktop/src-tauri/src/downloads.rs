@@ -9,9 +9,9 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
 use crate::paths::is_reserved;
 
-const MOVED: &str = "nib://web-download";
+const MOVED: &str = "orden://web-download";
 
-const DOWNLOADS_DIR: &str = "NIB_DOWNLOADS_DIR";
+const DOWNLOADS_DIR: &str = "ORDEN_DOWNLOADS_DIR";
 
 const LONGEST_NAME: usize = 180;
 
@@ -1164,7 +1164,7 @@ mod tests {
     }
 
     fn tmp() -> PathBuf {
-        std::env::temp_dir().join("nib-downloads-test-that-does-not-exist")
+        std::env::temp_dir().join("orden-downloads-test-that-does-not-exist")
     }
 
     #[test]

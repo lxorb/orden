@@ -3,6 +3,7 @@ import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { BASE, request } from '../api'
 import { log } from '../log'
+import { passOn } from '../settings.svelte'
 import { hub } from '../sync2/hub.svelte'
 import { deviceRows } from './device-rows'
 import { syncOnce } from './exchange'
@@ -116,16 +117,19 @@ export function startPassSync(): void {
   started = true
 
   let timer: ReturnType<typeof setTimeout> | undefined
+  const now = () => {
+    if (passOn()) void passSync.refresh()
+  }
   const soon = () => {
     clearTimeout(timer)
-    timer = setTimeout(() => void passSync.refresh(), SETTLE)
+    timer = setTimeout(now, SETTLE)
   }
   pass.onLocalChange(soon)
-  hub.on('pass', () => void passSync.refresh())
-  hub.opened(() => void passSync.refresh())
-  setInterval(() => void passSync.refresh(), EVERY)
+  hub.on('pass', now)
+  hub.opened(now)
+  setInterval(now, EVERY)
   if (typeof window !== 'undefined') {
-    window.addEventListener('focus', () => void passSync.refresh())
+    window.addEventListener('focus', now)
   }
   void invitesOf(deviceRows)
     .then((invites) => {
@@ -137,14 +141,14 @@ export function startPassSync(): void {
     $effect(() => {
       const who = account.user?.id ?? null
       untrack(() => {
-        if (who) void passSync.refresh()
+        if (who) now()
         else passSync.signedOut()
       })
     })
 
     $effect(() => {
       if (pass.state !== 'open') return
-      untrack(() => void passSync.refresh())
+      untrack(now)
     })
   })
 }

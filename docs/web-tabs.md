@@ -110,7 +110,7 @@ writing is `web-tab/favicons.ts`, fetched with the first mark.
 **What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a
 session's own walk, so both live in this device's own storage, keyed by the file's
-path - `nib:web-places`, beside the other things a device decides for itself. See
+path - `orden:web-places`, beside the other things a device decides for itself. See
 `lib/web-tab/place.ts`. The rule in one line: **the address is the document, and the
 place is the device's.**
 
@@ -324,7 +324,7 @@ webviews under one label is not a thing that can exist.
 `get_webview_window` only answers for a window whose webviews are all itself, so
 from the moment a web tab puts a second webview in the window it answers nothing at
 all - and everything that asked that way stopped working while a website was open:
-the `nib` command line said the app had no window, a `nib://` link never raised it,
+the `nib` command line said the app had no window, a `orden://` link never raised it,
 and a second launch handed its file over to a window that was never brought
 forward. Nothing in the crate asks that way now; `get_window` is the call, because a
 window is what all of them wanted.
@@ -687,8 +687,8 @@ used to hide every page in the window behind its still picture: a tab's hover ca
 the strip, a menu over the file list, the address field's suggestions. A page with no
 picture yet - and a picture is thrown away whenever the page changes size, which the
 notices row did as a toast came and went - was a blank pane for as long as the layer
-was up. Now each page asks which of the app's layers are over _it_ (`.nib-layer`,
-`.nib-bubble`, `.nib-screen`, `.nib-scrim` and the notices row's cards,
+was up. Now each page asks which of the app's layers are over _it_ (`.orden-layer`,
+`.orden-bubble`, `.orden-screen`, `.orden-scrim` and the notices row's cards,
 `web-tab/covers.ts`): one beside the page
 leaves it alone, and one over it is cut out of the page's window in its own rounded shape
 (`SetWindowRgn`, `src-tauri/src/web_cut.rs`), so the page stays live round it - scrolling,
@@ -1031,12 +1031,12 @@ listener is passive and reads, so the page scrolls as it did. It says it the way
 world already asks for the find: on `WebView2` as a window asked for under a name that
 carries it, which the crate reads and never opens. Not a binding: the engine puts one in a world
 only while the protocol's runtime domain is on, and turning that on for every page is
-exactly what sites that look for automation look for. The crate reads it into numbers and says it to the window as `nib://web-swipe`
+exactly what sites that look for automation look for. The crate reads it into numbers and says it to the window as `orden://web-swipe`
 (`web_swipe.rs`), the window runs the gesture (`src/lib/back-swipe`), and the step is the
 tab's own Back or Forward, along the same trail the arrows walk.
 
 **The arrow over a page** stands over the page's picture while the fingers are on: the room
-it comes in over covers the page the way a sheet's scrim does (`nib-swipe-room` in
+it comes in over covers the page the way a sheet's scrim does (`orden-swipe-room` in
 `covers.ts`), so the page's window is given an empty shape for the gesture and the arrow is
 the app's own HTML over a still of the page, soft edge, shadow and all. A picture older than
 a moment is put aside as the swipe begins and a fresh one taken (`freshen`); until it is in,
@@ -1063,7 +1063,7 @@ So the window reads the pad itself (`src-tauri/src/touchpad.rs`). A precision to
 a HID digitizer, and Windows hands any program that asks for them its raw reports: each
 frame says how many contacts it holds and whether each one is touching. A thread of the
 crate's own, with a window that is only a mailbox, puts the reports back into frames and
-says one number as it changes - the fingers on the pad - as `nib://touchpad`, and only
+says one number as it changes - the fingers on the pad - as `orden://touchpad`, and only
 while Orden is in front, but for a lift. Nothing else about the hand leaves the crate. From
 the first time it says so, a touchpad's stream is the time two fingers are down, and only
 their lift decides it (`told` in `gesture.ts`). The same for both of Windows' engines, since
@@ -1172,8 +1172,8 @@ desktop app leaves its web notes' tabs out (`tabsAlong`).
 
 ## The bar
 
-Back, forward, reload, the address, the dots. The same `.nib-glyph`
-squares the find bar is made of, the same `.nib-field`, the same row scale, in the
+Back, forward, reload, the address, the dots. The same `.orden-glyph`
+squares the find bar is made of, the same `.orden-field`, the same row scale, in the
 same place under the tab strip - a bar over the page would cover the first line of
 it.
 
@@ -1318,7 +1318,7 @@ What Chrome keeps inside the browser stays inside nib (Emil, 2026-09-13), and th
 were the ones still missing. Each is Chrome's shape, in Chrome's words, and each one's
 translations are Chromium's own.
 
-**History is a page in a tab, as `chrome://history` is.** Its address is `nib://history`,
+**History is a page in a tab, as `chrome://history` is.** Its address is `orden://history`,
 Orden's own scheme, which no tab may open as a site: a web tab on it draws the History page
 where a site would be and builds no webview (`web-tab/own-pages.ts`). Ctrl+H (Cmd+Y on a
 Mac, where Cmd+H hides the app), the dots' History row and the palette's Browsing history
@@ -1502,8 +1502,8 @@ the space has restored.
 ## The page itself
 
 What a browser does with the page in front of it without being asked, each on
-`WebView2`'s own event or call, and each said to the window as `nib://web-page` or
-`nib://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
+`WebView2`'s own event or call, and each said to the window as `orden://web-page` or
+`orden://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
 engines say nothing, and what each one does there is said with it.
 
 - **The card's corners.** What is open stands in a card with rounded corners (Window
@@ -1517,7 +1517,7 @@ engines say nothing, and what each one does there is said with it.
   keyboard, makes its tab and its pane the ones being worked in, as a press anywhere in
   the app's own page makes its pane's (#1080) - the page is a native view, and the press
   never reaches the app's HTML. One function says it, `page_chosen` in `web_tabs.rs`, heard by
-  the window as `nib://web-chosen`: each engine's word that the page has the keyboard
+  the window as `orden://web-chosen`: each engine's word that the page has the keyboard
   (`WebView2`'s `GotFocus`, the X server's `FocusIn` on CEF), the app's own page finding
   the keyboard gone to a page (a Mac's word), and a press heard in the page itself through
   nib's binding on Orden's own Chromium, for the page that has the keyboard already and of
@@ -1534,7 +1534,7 @@ engines say nothing, and what each one does there is said with it.
   see - listens last and, when nothing in the page took the
   key, asks for the bar under one of the window names `web_opens.rs` reads - find, next,
   previous, and the address field for Ctrl+L and Alt+D - for that tab alone, said to the
-  window as `nib://web-passed`. Never a command name, so a page can reach its own find
+  window as `orden://web-passed`. Never a command name, so a page can reach its own find
   and its own address field and nothing else (see `lib/web-tab/passed.svelte.ts`). The
   script answers after every handler the page has, including the ones the page added
   after it. A page the tab
@@ -1671,7 +1671,7 @@ desktop engines.
   `web_download_show` open only a file the crate itself saved and saw finish.
 - **A name is made safe on every platform**: no separators, nothing a file system
   refuses, no device name, no dot at either end, at most 180 characters with the
-  extension kept. `NIB_DOWNLOADS_DIR` points a probe at a folder of its own.
+  extension kept. `ORDEN_DOWNLOADS_DIR` points a probe at a folder of its own.
 - **Progress is `WebView2`'s and `WKWebView`'s.** On Windows `downloads::progress`
   listens to the operation the engine hands out a second time, after wry's handler, and
   matches it by the path that handler chose; it is also what Cancel reaches. On macOS wry
@@ -1683,7 +1683,7 @@ desktop engines.
   starts and when it ends, the ring sweeps rather than fills, and Cancel only takes the
   row away.
 - **A tab a page opened for a file closes again**, the way Chrome's does: `target="_blank"`
-  on a download link opens a tab through `nib://web-open`, the file starts in it, and the
+  on a download link opens a tab through `orden://web-open`, the file starts in it, and the
   reader is put back on the page that asked. Only a tab a page asked for that never
   showed a document of its own; see `downloaded` in `pages.svelte.ts`.
 - **A page closed while a file is on its way stays until the file is in**, out of sight.
@@ -2005,7 +2005,7 @@ quiet: a window nobody pressed for is not opened from its pages, and a framed wi
 browser process opens on its own is closed as it appears (`extensions/welcome.rs`). The
 extension is installed and runs; its options page is in Settings.
 
-**History is one list** (`nib:web-visits`, `visited.ts`), a note kept apart included, as
+**History is one list** (`orden:web-visits`, `visited.ts`), a note kept apart included, as
 Firefox keeps one history across containers. **Delete browsing data** clears the shared
 store and the own store of every web note kept apart that is open.
 
@@ -2027,7 +2027,7 @@ before its first page is built (`web-tab/merged.ts`, `web_merge` in
 - **the space's history** folded into the one history;
 - **nothing deleted**: the old stores stay on disk as they were.
 
-It is marked done (`nib:web-data-merged`) only once every store has merged, so a launch cut
+It is marked done (`orden:web-data-merged`) only once every store has merged, so a launch cut
 short tries again. Proved by
 `scripts/web-data-probe.py`, which signs a local site in through the build from before, in
 the shared store and in a space kept apart, and then opens the same note in the build after:
@@ -2223,13 +2223,13 @@ the camera.
 
 **The bubble answers the pointer and holds the keyboard.** Emil, 2026-09-28, of a mail
 site asking to show notifications: _"and this thing here is not clickable."_ For two
-weeks it was not. The card is `.nib-bubble`, the shape a one-sentence hint is drawn in,
+weeks it was not. The card is `.orden-bubble`, the shape a one-sentence hint is drawn in,
 and a hint lets every press through to the row it sits over - so both answers were
 drawn over the page's hole and every press landed on the hole. The native side was
 never in the way: the page is hidden while the bubble is up, and Windows sends a click
 there to the app's own webview. Every probe had pressed the buttons with `click()`,
 which skips the hit test a hand goes through. A bubble with something to press in it is
-now `.nib-bubble.is-pressable` - the site's question, the site information and the
+now `.orden-bubble.is-pressable` - the site's question, the site information and the
 downloads - and `bubble.test.ts` reads every component to keep it that way. The keyboard
 had the same shape of trouble: the page that asked held it, and a hidden webview keeps
 it, so Escape went to a page nobody could see. The bubble takes the keyboard back to the
@@ -2244,7 +2244,7 @@ because everything the engine hands out there belongs to the window's thread, so
 requests waiting for an answer live in a thread local on it and `web_answer` posts
 itself there; and the window deciding, because what a site was allowed belongs where
 the reader's other choices live. Grants are per origin and per kind, on the device and
-never on the account, in `nib:web-grants`. A private tab's answers are not among them
+never on the account, in `orden:web-grants`. A private tab's answers are not among them
 (#787): they are kept in memory for the private session, every private tab of the run,
 and forgotten when the last private tab closes, and they never answer a normal tab. A
 private tab is given what a normal one blocked and not what it allowed, Chrome's rule
@@ -2330,7 +2330,7 @@ inside the page is judged by, not only what somebody types. A window the page as
 for leaves the app the way every other link does: the system browser - and it is
 judged by the same rule first, because `window.open` names a scheme of the page's
 choosing and the system opens whatever is registered for one. A page is handed
-over; `nib://`, `file:`, `smb:` and whatever else a machine has registered are
+over; `orden://`, `file:`, `smb:` and whatever else a machine has registered are
 dropped, or a site could drive this app through its own links by asking for a
 window it was never going to get.
 
@@ -2435,7 +2435,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
 | `scripts/no-reload-probe.py` | the drive for Ctrl+Tab round ten pages: loads, the freeze, typed fields, memory, and Memory saver |
-| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
+| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `ORDEN_PERF=1`                                                                                                |
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page; and an `IndexedDB` record, a service worker, a notification permission granted in Orden's bubble and the site's zoom, all still there after the restart |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/globals-drive.py`                             | the same question on Linux, on every run of wayland.yml: a page and a frame may declare `ipc` and hold nothing of the app's, the app's page keeps the channel and a command goes down it, and quick add and the presenter's window are heard from the app's profile |

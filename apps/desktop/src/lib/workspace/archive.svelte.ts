@@ -3,7 +3,7 @@ import { isNumber, isRecord, keepJson } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
 import { carried, moving } from './file-ops'
 
-export const STORAGE_KEY = 'nib:archived'
+export const STORAGE_KEY = 'orden:archived'
 
 export type ArchiveMap = Record<string, number>
 

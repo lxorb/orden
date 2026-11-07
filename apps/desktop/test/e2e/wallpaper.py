@@ -51,11 +51,11 @@ async ([paint]) => {
   const blob = await new Promise((done) => canvas.toBlob(done, 'image/png'))
   const started = performance.now()
   const taken = await window.nibApp.wallpaper.take(blob)
-  return { taken, ms: Math.round(performance.now() - started), stored: localStorage.getItem('nib:wallpaper')?.length ?? 0 }
+  return { taken, ms: Math.round(performance.now() - started), stored: localStorage.getItem('orden:wallpaper')?.length ?? 0 }
 }
 """
 
-SHEET = "document.getElementById('nib-user-theme')?.textContent ?? ''"
+SHEET = "document.getElementById('orden-user-theme')?.textContent ?? ''"
 
 FILTERS = """
 () => [...document.querySelectorAll('*')]
@@ -70,7 +70,7 @@ EMPTY = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
   const side = document.querySelector('.sidebar, aside')?.getBoundingClientRect()
-  const tree = [...document.querySelectorAll('.nib-row')].map((one) => one.getBoundingClientRect())
+  const tree = [...document.querySelectorAll('.orden-row')].map((one) => one.getBoundingClientRect())
   const lowest = Math.max(0, ...tree.filter((r) => side && r.left < side.right).map((r) => r.bottom))
   const ink = (name) => {
     const probe = document.createElement('span')
@@ -114,7 +114,7 @@ def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> fl
 
 HOVERED = """
 () => {
-  const row = [...document.querySelectorAll('aside .nib-row')].find((one) => !one.classList.contains('is-on'))
+  const row = [...document.querySelectorAll('aside .orden-row')].find((one) => !one.classList.contains('is-on'))
   if (!row) return null
   const box = row.getBoundingClientRect()
   return { x: box.left + box.width / 2, y: box.top + box.height / 2, box: [box.right - 30, box.top + 3, box.right - 6, box.bottom - 3] }
@@ -151,7 +151,7 @@ def measure(page: Any, name: str) -> None:
 
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
-    also = os.environ.get("NIB_SHOTS_TOO")
+    also = os.environ.get("ORDEN_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
@@ -202,7 +202,7 @@ def drive(browser: Any) -> None:
             wait_for(page, "window.nibApp.wallpaper.held.main?.blur === 56", "the picture made at the new blur")
             wait_for(
                 page,
-                "JSON.parse(localStorage.getItem('nib:wallpaper')).blur === 56",
+                "JSON.parse(localStorage.getItem('orden:wallpaper')).blur === 56",
                 "the new blur kept once the dial rests",
             )
             after = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")
@@ -216,7 +216,7 @@ def drive(browser: Any) -> None:
                   const look = () => {
                     const app = document.getElementById('app')
                     if (!app || !app.childElementCount) return requestAnimationFrame(look)
-                    const sheet = document.getElementById('nib-user-theme')
+                    const sheet = document.getElementById('orden-user-theme')
                     window.__firstFramePicture = !!sheet && sheet.textContent.includes('--wallpaper-picture:')
                   }
                   requestAnimationFrame(look)

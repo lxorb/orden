@@ -167,7 +167,7 @@
   {:else if how === 'reading' && html}
     <div class="read" in:fade={arrive}>
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
-      <article class="page nib-write">{@html html}</article>
+      <article class="page orden-write">{@html html}</article>
     </div>
   {:else if how === 'scrollback' && screen}
     <pre class="screen" in:fade={arrive}>{screen.text}</pre>

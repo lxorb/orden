@@ -110,7 +110,7 @@ function strictnessAfter(was: EditorState, effects: readonly StateEffect<unknown
   return was.field(strictness, false) ?? false
 }
 
-const dim = Decoration.line({ class: 'nib-dim' })
+const dim = Decoration.line({ class: 'orden-dim' })
 
 const focusPlugin = ViewPlugin.fromClass(
   class {
@@ -205,7 +205,7 @@ function readOnlyExtensions(): Extension {
     EditorState.readOnly.of(true),
     noReveal.of(true),
     EditorView.contentAttributes.of({ tabindex: '0' }),
-    EditorView.editorAttributes.of({ class: 'nib-read-only' }),
+    EditorView.editorAttributes.of({ class: 'orden-read-only' }),
     EditorState.changeFilter.of(isExternal),
   ]
 }
@@ -215,28 +215,30 @@ const readOnlyFor = once((on: boolean): Extension => (on ? readOnlyExtensions() 
 const previewFor = once((source: boolean): Extension => (source ? [] : livePreview()))
 
 const focusFor = once((on: boolean): Extension =>
-  on ? [focusPlugin, editorClass('nib-focus-mode')] : [],
+  on ? [focusPlugin, editorClass('orden-focus-mode')] : [],
 )
 
 const typewriterFor = once((on: boolean): Extension =>
-  on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : [],
+  on ? [typewriterPlugin, editorClass('orden-typewriter-mode')] : [],
 )
 
 const ligaturesFor = once((scope: LigatureScope): Extension =>
-  scope === 'off' ? [] : [ligatures(scope), editorClass('nib-ligatures')],
+  scope === 'off' ? [] : [ligatures(scope), editorClass('orden-ligatures')],
 )
 
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 
-const headingNumbersFor = once((on: boolean): Extension => (on ? editorClass('nib-numbered') : []))
+const headingNumbersFor = once((on: boolean): Extension =>
+  on ? editorClass('orden-numbered') : [],
+)
 
 const codeLineNumbersFor = once((on: boolean): Extension =>
-  on ? editorClass('nib-line-numbers') : [],
+  on ? editorClass('orden-line-numbers') : [],
 )
 
 const bracketsFor = once((on: boolean): Extension => (on ? wrapSelection() : []))
 
-const deckFor = once((on: boolean): Extension => (on ? editorClass('nib-deck') : []))
+const deckFor = once((on: boolean): Extension => (on ? editorClass('orden-deck') : []))
 
 const RIGHT_TO_LEFT =
   /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
@@ -315,7 +317,7 @@ export const rightToLeftLines = lineDirections(Direction.RTL)
 
 const directionFor = once((rtl: boolean): Extension =>
   rtl
-    ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl'), rightToLeftLines]
+    ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('orden-rtl'), rightToLeftLines]
     : [EditorView.contentAttributes.of({ dir: 'ltr' }), leftToRightLines],
 )
 

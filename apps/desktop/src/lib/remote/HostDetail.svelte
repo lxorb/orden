@@ -90,8 +90,9 @@
 </script>
 
 <header class="who">
-  <button class="nib-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
-    <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
+  <button class="orden-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
+    <svg class="orden-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg
+    >
   </button>
   <HostMark colour={host.colour} />
   <span class="name">
@@ -111,11 +112,11 @@
 </header>
 
 <div class="card">
-  <label class="nib-setting">
+  <label class="orden-setting">
     <span class="name">{t('Address')}</span>
     {#if host.own}
       <input
-        class="nib-field is-value address"
+        class="orden-field is-value address"
         value={host.hostname
           ? said({ user: host.user, hostname: host.hostname, port: host.port })
           : ''}
@@ -129,9 +130,9 @@
     {/if}
   </label>
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     <span class="name">{t('Colour')}</span>
-    <div class="nib-setting-value is-wrapping">
+    <div class="orden-setting-value is-wrapping">
       <Swatches
         options={colours}
         label={t('Colour')}
@@ -141,7 +142,7 @@
     </div>
   </div>
 
-  <div class="nib-setting">
+  <div class="orden-setting">
     <span class="name">{t('Group')}</span>
     <Select
       plain
@@ -153,7 +154,7 @@
   </div>
 
   <div
-    class="nib-setting pressable"
+    class="orden-setting pressable"
     role="switch"
     tabindex="0"
     aria-checked={host.pinned}
@@ -161,7 +162,7 @@
     onkeydown={(event) => pressed(event, () => about({ pinned: !host.pinned }))}
   >
     <span class="name">{t('Pin')}</span>
-    <span class="nib-switch" class:on={host.pinned} aria-hidden="true"></span>
+    <span class="orden-switch" class:on={host.pinned} aria-hidden="true"></span>
   </div>
 </div>
 
@@ -171,10 +172,10 @@
 
 <div class="card">
   {#if host.own}
-    <button class="nib-action is-danger" onclick={() => void remove()}>{t('Remove')}</button>
+    <button class="orden-action is-danger" onclick={() => void remove()}>{t('Remove')}</button>
   {:else if remote.file}
     <button
-      class="nib-action"
+      class="orden-action"
       onclick={() => void invoke('remote_config_open').catch(() => undefined)}
       >{t('Open config')}</button
     >

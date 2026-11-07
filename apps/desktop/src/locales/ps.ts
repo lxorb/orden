@@ -1526,6 +1526,8 @@ export const ps: Dictionary = {
   Shorter: 'لنډ',
   Longer: 'اوږد',
   'Fix grammar': 'ګرامر سمول',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'غوره شوي ټکي نور په یادښت کې نشته، نو هېڅ ونه بدل شو.',
   'A cited report': 'یو حواله شوی راپور',
   'A helper in the background': 'په شالید کې یو مرسته کوونکی',
   'A side question': 'یو اړخیزه پوښتنه',
@@ -2919,6 +2921,8 @@ export const ps: Dictionary = {
   'That could not be protected: {reason}': 'خوندي نه شو: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ورنه کړل شو: چټ انځورونه او تر 2 MB پورې متني فایلونه مني.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ورنه کړل شو: یو پیغام تر 20 انځورونو پورې مني.',
   'Time tracker': 'د وخت څارونکی',
   'Start timer': 'ټایمر پیل کړئ',
   'Stop timer': 'ټایمر ودروئ',
@@ -3495,9 +3499,45 @@ export const ps: Dictionary = {
   'You said': 'ستاسو ویلي',
   Privacy: 'محرمیت',
   'Send crash and freeze reports': 'د ماتیدو او درېدو راپورونه ولېږه',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'کله چې Orden مات شي یا ودرېږي، دا لېږي چې څه یې کول او په خپل کوډ کې چېرته و، د نومونو، لارو، پتو او پټنومونو له لرې کولو سره. هېڅکله ستاسو یادښتونه نه.',
-  'Turn off in Settings': 'په امستنو کې یې بند کړئ',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'لېږي چې Orden د ماتېدو یا درېدو پر مهال څه کول؛ هېڅکله یادښتونه، نومونه، لارې یا پټنومونه نه.',
+  'Send crash reports to help improve Orden': 'د Orden د ښه کولو لپاره د ماتیدو راپورونه ولېږه',
+  'Move to {space}?': '{space} ته یې ولیږدوئ؟',
+  'macOS can start dictation with this key too.': 'macOS ښايي په دې کیلي سره ډیکټیشن هم پیل کړي.',
+  'QR code': 'QR کوډ',
+  'Waiting…': 'انتظار…',
+  Service: 'خدمت',
+  'I understand and want to connect anyway': 'پوهېږم او بیا هم غواړم وصل شم',
+  'Some changes have not reached your account yet': 'ځینې بدلونونه لا ستاسو حساب ته نه دي رسېدلي',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'دوی په دې براوزر کې پاتې کېږي، د هر هغه چا له سترګو پټ چې دلته ننوځي، او کله چې بیا ننوځئ لېږل کېږي.',
+  'Leave it empty to sign in with a QR code instead':
+    'پر ځای یې د QR کوډ له لارې ننوتلو لپاره خالي پرېږدئ',
+  'Telegram code': 'د Telegram کوډ',
+  'Sent to Telegram on your other device': 'ستاسو بلې وسیلې کې Telegram ته ولېږل شو',
+  'Sent by SMS': 'په SMS ولېږل شو',
+  'You will get a call with the code': 'تاسو ته به د کوډ سره زنګ درشي',
+  'The code was wrong. Try again.': 'کوډ غلط و. بیا هڅه وکړئ.',
+  'The code expired, so Telegram sent a new one.':
+    'د کوډ موده پای ته ورسېده، نو Telegram نوی ولېږه.',
+  'Two-step verification password': 'د دوه پړاوه تایید پټنوم',
+  'The password was wrong. Try again.': 'پټنوم غلط و. بیا هڅه وکړئ.',
+  'Scan with Telegram on your phone': 'په خپل تلیفون کې د Telegram سره یې سکن کړئ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram ته ننوتل اپ ته اړتیا لري',
+  'Telegram does not know this phone number': 'Telegram دا د تلیفون شمېره نه پېژني',
+  'Too many tries. Wait a while and try again.': 'ډېرې هڅې. لږ صبر وکړئ او بیا هڅه وکړئ.',
+  'Too many wrong tries': 'ډېرې غلطې هڅې',
+  'Signed out of Telegram. Connect again.': 'له Telegram څخه ووتلئ. بیا وصل شئ.',
+  'Telegram cannot do that in this conversation': 'Telegram په دې خبرو اترو کې دا نشي کولی',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram په ډلو او چینلونو کې پیغامونه د ټولو لپاره ړنګوي',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ډله نوي مالک ته یوازې له خپل اپ څخه سپاري',
+  'That sticker is no longer available': 'هغه سټیکر نور شتون نه لري',
+  'Telegram is not set up in this build': 'په دې جوړښت کې Telegram نه دی برابر شوی',
+  'Password manager': 'د پټنوم مدیر',
+  'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
+    'Pass ورزیاتوي چې پټنومونه ساتي او په وېبپاڼو کې يې ډکوي. بندول يې ستاسو خزانې ساتي.',
 }

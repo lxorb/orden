@@ -34,7 +34,7 @@ test('a tab let go of on a chat is dropped on it as its file, and the chat itsel
   const taken: string[] = []
   document.querySelector('[data-chat-drop]')?.addEventListener('drop', (event) => {
     const carried = (event as DragEvent).dataTransfer
-    taken.push(`${carried?.getData('text/nib-path')}${carried?.getData('text/nib-tab')}`)
+    taken.push(`${carried?.getData('text/orden-path')}${carried?.getData('text/orden-tab')}`)
   })
   let under = document.getElementById('words')
   document.elementFromPoint = () => under

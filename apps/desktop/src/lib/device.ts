@@ -1,7 +1,7 @@
 import { keep, storedText } from './stored'
 import { isMobile, isNative, platform } from './tauri'
 
-const STORAGE_KEY = 'nib:device'
+const STORAGE_KEY = 'orden:device'
 
 const LONGEST = 40
 

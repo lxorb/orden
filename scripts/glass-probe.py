@@ -109,9 +109,9 @@ def pressed(held: dict, command: str, settle: float = 1.2) -> None:
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: bool = False):
     endpoint = allow_eval(identifier)
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     if trace:
-        env["NIB_TRACE_STARTUP"] = "1"
+        env["ORDEN_TRACE_STARTUP"] = "1"
     app = run_probe(exe, env=env, quiet=True)
     held = waited_for(endpoint)
     until = time.monotonic() + 30
@@ -167,11 +167,11 @@ JSON.stringify((() => {
     const r = element.getBoundingClientRect()
     return [label, r.left, r.top, r.width, r.height]
   }
-  const rows = [...document.querySelectorAll('aside .nib-row-label')]
+  const rows = [...document.querySelectorAll('aside .orden-row-label')]
   return [
     box('a tab in the bar', document.querySelector('.tab:not(.active) .label')),
     box('a note in the list', rows.find((one) => one.textContent.trim().length > 3)),
-    box('the heading over the list', document.querySelector('aside .nib-section')),
+    box('the heading over the list', document.querySelector('aside .orden-section')),
   ].filter(Boolean).concat([[ 'scale', devicePixelRatio, 0, 0, 0 ]])
 })())
 """
@@ -201,9 +201,9 @@ def readings(held: dict, picture: pathlib.Path, where: str) -> None:
 
 DESK = """
 (() => {{
-  document.getElementById('nib-desk')?.remove()
+  document.getElementById('orden-desk')?.remove()
   const style = document.createElement('style')
-  style.id = 'nib-desk'
+  style.id = 'orden-desk'
   style.textContent = 'html {{ background: {desk} !important; }}'
   document.head.append(style)
   document.documentElement.dataset.translucent = '{material}'
@@ -212,7 +212,7 @@ DESK = """
 """
 
 UNDESK = """
-(() => { document.getElementById('nib-desk')?.remove(); return true })()
+(() => { document.getElementById('orden-desk')?.remove(); return true })()
 """
 
 def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
@@ -290,7 +290,7 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         rows = str(
             ran(
                 held,
-                "JSON.stringify([...document.querySelectorAll('.nib-setting')]"
+                "JSON.stringify([...document.querySelectorAll('.orden-setting')]"
                 ".map((one) => one.textContent.replace(/\\s+/g, ' ').trim()))",
             )
         )
@@ -370,7 +370,7 @@ def main() -> int:
 
     shutil.rmtree(SHOTS, ignore_errors=True)
     wipe(said.identifier)
-    with tempfile.TemporaryDirectory(prefix="nib-glass-probe-") as spaces:
+    with tempfile.TemporaryDirectory(prefix="orden-glass-probe-") as spaces:
         space = pathlib.Path(spaces) / "Notes"
         space.mkdir()
         (space / "A window with a desk behind it.md").write_text(NOTE, encoding="utf-8")

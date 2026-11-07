@@ -1,5 +1,6 @@
 import { listen } from '@tauri-apps/api/event'
 import { log } from '../log'
+import { crashAskDue } from '../surfaces.svelte'
 import { invoke } from '../tauri'
 import { updates } from '../updates.svelte'
 import { workspace } from '../workspace.svelte'
@@ -12,7 +13,7 @@ const SHAPED = 2000
 
 const AGAIN = 6 * 60 * 60 * 1000
 
-const TOLD = 'nib://crash-report'
+const TOLD = 'orden://crash-report'
 
 function kindsOf(tabs: readonly { kind: string }[]): Record<string, number> {
   const kinds: Record<string, number> = {}
@@ -58,13 +59,17 @@ export function watchForCrashes(sending: boolean): () => void {
   )
   let going = false
   const send = () => {
-    if (going) return
+    if (going || crashAskDue()) return
     going = true
     void sendWaiting(how)
       .catch((error: unknown) => log('warn', `crash reports: ${String(error)}`))
       .finally(() => (going = false))
   }
-  send()
+  const stopAnswer = $effect.root(() => {
+    $effect(() => {
+      if (!crashReports.asking) send()
+    })
+  })
   const again = setInterval(send, AGAIN)
   let unlisten: (() => void) | null = null
   void listen(TOLD, send).then((stop) => (unlisten = stop))
@@ -74,6 +79,7 @@ export function watchForCrashes(sending: boolean): () => void {
     clearInterval(again)
     clearTimeout(shaping)
     stopShape()
+    stopAnswer()
     unlisten?.()
     document.removeEventListener('visibilitychange', alive)
   }

@@ -16,8 +16,8 @@ pub enum Handed {
 impl Handed {
     fn event(self) -> &'static str {
         match self {
-            Self::Pages => "nib://open-pages",
-            Self::Pdfs => "nib://open-pdfs",
+            Self::Pages => "orden://open-pages",
+            Self::Pdfs => "orden://open-pdfs",
         }
     }
 }
@@ -465,7 +465,7 @@ mod tests {
         assert!(is_document_window("main"));
         assert!(is_document_window("nib-2"));
         assert!(is_document_window("nib-12"));
-        assert!(!is_document_window("nib-presenter"));
+        assert!(!is_document_window("orden-presenter"));
         assert!(!is_document_window("nib-"));
         assert!(!is_document_window("web-1"));
     }
@@ -547,7 +547,7 @@ mod tests {
 
     #[test]
     fn a_link_beside_a_token_is_read_again_without_it() {
-        let link = "nib://open?path=Inbox.md";
+        let link = "orden://open?path=Inbox.md";
         let read = Some(vec!["nib".to_owned(), link.to_owned()]);
         let last: Vec<String> = ["nib", link, "--activation-token=abc"]
             .map(String::from)

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { insertion } from './quick'
+import { carried, insertion } from './quick'
 
 describe('where an answer goes into the note', () => {
   const put = (doc: string, at: number, answer: string) => {
@@ -26,5 +26,19 @@ describe('where an answer goes into the note', () => {
     const doc = 'one\ntwo'
     const { from, insert, caret } = insertion(doc, 0, 'answer')
     expect((doc.slice(0, from) + insert).slice(0, caret).endsWith('answer')).toBe(true)
+  })
+})
+
+describe('where it was asked from, once the note changed meanwhile', () => {
+  test('stays put where the change came after it', () => {
+    expect(carried('one\ntwo', 'one\ntwo and more', 3)).toBe(3)
+  })
+
+  test('moves along with what came in before it', () => {
+    expect(carried('one\ntwo', 'zero\none\ntwo', 7)).toBe(12)
+  })
+
+  test('goes to the end of what changed where the change took its place', () => {
+    expect(carried('one\ntwo\nthree', 'one\nTWO!\nthree', 5)).toBe(8)
   })
 })

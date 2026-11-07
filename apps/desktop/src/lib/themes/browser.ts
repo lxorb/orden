@@ -267,7 +267,7 @@ export function paged(css: string): string {
   const clear = grounds.some((one) => (parsed(one.value)?.[1] ?? 1) < 1)
   const worth = sheets.filter((one) => one.css.trim())
   if (!worth.length) return ''
-  return `/*! nib-pages ${JSON.stringify({ clear, sheets: worth }).replace(/\//g, '\\/')} */\n`
+  return `/*! orden-pages ${JSON.stringify({ clear, sheets: worth }).replace(/\//g, '\\/')} */\n`
 }
 
 export function ordenCss(theme: BrowserTheme): string {

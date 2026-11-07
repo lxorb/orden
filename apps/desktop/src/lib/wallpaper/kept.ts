@@ -1,6 +1,6 @@
 import { heldDatabase } from '../held-database'
 
-const NAME = 'nib-wallpaper'
+const NAME = 'orden-wallpaper'
 const STORE = 'picture'
 
 export type Copy = 'source' | 'source-dark'

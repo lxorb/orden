@@ -32,6 +32,30 @@ export function lookingAt(what: Box, room: Box): Camera {
   }
 }
 
+const READABLE = 240
+
+type Span = readonly [start: number, size: number]
+
+function along(here: Span, whole: Span, room: Span, zoom: number): number {
+  const [from, inside] = room
+  if (whole[1] * zoom <= inside) return from + (inside - whole[1] * zoom) / 2 - whole[0] * zoom
+  const centred = from + inside / 2 - (here[0] + here[1] / 2) * zoom
+  const least = from + inside - (whole[0] + whole[1]) * zoom
+  return Math.min(from - whole[0] * zoom, Math.max(least, centred))
+}
+
+export function overlooking(here: Box, whole: Box, room: Box, window: number): Camera {
+  const near = lookingAt(here, room).zoom
+  const far = Math.min(near, lookingAt(whole, room).zoom)
+  const most = Math.max(far, FARTHEST, READABLE / Math.max(window, 1), Math.sqrt(near * far))
+  const zoom = Math.min(near, most)
+  return {
+    x: along([here.x, here.w], [whole.x, whole.w], [room.x, room.w], zoom),
+    y: along([here.y, here.h], [whole.y, whole.h], [room.y, room.h], zoom),
+    zoom,
+  }
+}
+
 export function zoomedAt(camera: Camera, point: Point, factor: number): Camera {
   const zoom = Math.min(NEAREST, Math.max(FARTHEST, camera.zoom * factor))
   const at = toCanvas(camera, point)

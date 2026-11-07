@@ -86,7 +86,7 @@ beforeEach(() => {
 
 test('listens before it asks, so no PDF falls between the two', async () => {
   await hearPdfs()
-  expect(world.asked).toEqual(['listen nib://open-pdfs', 'take_startup_pdfs'])
+  expect(world.asked).toEqual(['listen orden://open-pdfs', 'take_startup_pdfs'])
 })
 
 test('a PDF from outside every space opens unsaved, and the open space is left alone', async () => {
