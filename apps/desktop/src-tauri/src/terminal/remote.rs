@@ -147,6 +147,9 @@ fn ssh_setting(setting: &str) -> Option<(String, String)> {
     let setting = setting.trim_start();
     let at = setting.find(|one: char| one == '=' || one.is_whitespace())?;
     let key = setting[..at].to_ascii_lowercase();
+    if key.is_empty() || !key.bytes().all(|one| one.is_ascii_alphabetic()) {
+        return None;
+    }
     let value = setting[at..]
         .trim_start_matches(|one: char| one.is_whitespace())
         .strip_prefix('=')
@@ -717,6 +720,9 @@ mod tests {
         assert_eq!(ssh(&["-F", "/home/emil/work.conf", "pi"]), None);
         assert_eq!(ssh(&["-P", "work", "pi"]), None);
         assert_eq!(ssh(&["-S", "/tmp/sock-for-a", "pi"]), None);
+        assert_eq!(ssh(&["-o=HostName=10.0.0.5", "pi"]), None);
+        assert_eq!(ssh(&["-o", "\"RemoteCommand\" uptime", "pi"]), None);
+        assert_eq!(ssh(&["-o", "Host\"Name\" 1.2.3.4", "pi"]), None);
         assert_eq!(ssh(&["-oControlPath=/tmp/sock", "pi"]), None);
         assert_eq!(ssh(&["-o", "ProxyCommand=ssh -W a:22 jump", "pi"]), None);
         assert_eq!(

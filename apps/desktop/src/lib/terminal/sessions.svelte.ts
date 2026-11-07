@@ -369,13 +369,15 @@ class Session {
     if (pty !== this.pty) return
     const said = JSON.stringify(reached)
     if (this.underneath === null && (reached === null || said === this.unmatched)) return
+    const fresh = !remote.read
     await remote.ready()
     let host = reached && hostReached(remote.hosts, reached)
-    if (reached && !host) {
+    if (reached && !host && !fresh) {
       await remote.refresh()
       host = hostReached(remote.hosts, reached)
     }
     if (!host) this.unmatched = said
+    if (this.underneath !== null && host?.id === source.reached) return
     const still = await source.ssh()
     if (pty !== this.pty || JSON.stringify(still) !== JSON.stringify(reached)) return
     if (this.underneath !== null) {
