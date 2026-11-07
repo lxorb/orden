@@ -17,7 +17,7 @@ function alwaysKept(space: SpaceState, entry: EntryRow): boolean {
 }
 
 export function keptHere(core: Core, space: SpaceState, entry: EntryRow): boolean {
-  if (!space.keepsFew || core.crowded) return true
+  if (!space.keepsFew) return true
   return core.hasDoc(entry.id) || core.asked.has(entry.id) || alwaysKept(space, entry)
 }
 

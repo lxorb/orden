@@ -738,7 +738,6 @@ class Runner {
           offline = true
         })
       }
-      if (!isNative) engine.core.crowded = !(await aloneHere())
       await eachDue(
         this.due,
         () => this.current === engine,
