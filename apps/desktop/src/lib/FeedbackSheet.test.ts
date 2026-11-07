@@ -10,7 +10,7 @@ describe('the sheet', () => {
     const html = render(FeedbackSheet).body
     expect(html).toContain('Describe the issue')
     expect(html).toContain('Add images')
-    expect(html).toContain('accept="image/*"')
+    expect(html).not.toContain('type="file"')
     expect(html).not.toContain('Report received')
   })
 

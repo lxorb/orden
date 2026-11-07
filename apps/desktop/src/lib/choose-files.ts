@@ -1,5 +1,7 @@
 export const PICTURES = 'image/*,.png,.jpg,.jpeg,.gif,.webp,.avif,.svg,.bmp'
 
+const SAME_ASKING = 1000
+
 interface Asking {
   accept?: string
   multiple?: boolean
@@ -7,12 +9,25 @@ interface Asking {
   folder?: boolean
 }
 
+let asked: { at: number; files: Promise<File[]> } | null = null
+
 export function chooseFiles(asking: Asking = {}): Promise<File[]> {
   if (typeof document === 'undefined') return Promise.resolve([])
 
-  const { accept, multiple = false, camera = false, folder = false } = asking
+  const now = performance.now()
+  if (asked && now - asked.at < SAME_ASKING) return asked.files
 
-  return new Promise((settle) => {
+  const files = opened(asking)
+  const mine = { at: now, files }
+  asked = mine
+  void files.then(() => {
+    if (asked === mine) asked = null
+  })
+  return files
+}
+
+function opened({ accept, multiple = false, camera = false, folder = false }: Asking) {
+  return new Promise<File[]>((settle) => {
     const input = document.createElement('input')
     input.type = 'file'
     if (accept !== undefined) input.accept = accept
