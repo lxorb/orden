@@ -1,7 +1,13 @@
+import { account } from './account.svelte'
 import { api, ApiError } from './api'
 import { isRecord, keepJson, recordOf, stored } from './stored'
 
 const MOST = 200
+
+export function holder(): string | null {
+  if (account.user) return account.user.id
+  return account.guest ? `guest:${account.guest.id}` : null
+}
 
 type Ending = 'delete' | 'leave'
 

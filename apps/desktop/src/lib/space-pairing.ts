@@ -43,6 +43,11 @@ async function untouchedDefault(): Promise<string | null> {
   )
 }
 
+async function owedBy(): Promise<string | null> {
+  const { holder } = await import('./space-owed')
+  return holder()
+}
+
 async function orderOwed(token: string, who: string): Promise<boolean> {
   const { orderSent } = await import('./space-owed')
   return await orderSent(token, who)
@@ -76,7 +81,8 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     await workspace.loadSpaces()
   }
   const mirrors = pairing.pairs()
-  const ending = who === null ? new Set<string>() : await endsSettled(token, who)
+  const owes = await owedBy()
+  const ending = owes === null ? new Set<string>() : await endsSettled(token, owes)
   const kept = new Set(mirrors.map((one) => one.spaceId))
   const plan = planSpaces({
     local: workspace.spaces
@@ -125,7 +131,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
 
   const paired = () => pairing.pairs()
   for (const space of plan.adopt) {
-    if (who !== null && (await endsNow(who)).has(space.id)) continue
+    if (owes !== null && (await endsNow(owes)).has(space.id)) continue
     const taken =
       shared(space.id) ||
       workspace.spaces.some(
@@ -154,7 +160,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     if (!pair) continue
     const root = workspace.spaces.find((one) => samePath(one.root, pair.root))?.root ?? pair.root
 
-    const owed = who === null ? null : await iconSent(token, who, remote.id)
+    const owed = owes === null ? false : await iconSent(token, owes, remote.id)
     const unsaid = owed ? null : workspace.applyIcon(root, remote.icon ?? null, remote.tint)
     if (unsaid && remote.role === 'owner') {
       await api.setSpaceIcon(token, remote.id, remote.icon ?? null, unsaid).catch(() => undefined)
@@ -182,7 +188,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     )
   }
 
-  if (who !== null && (await orderOwed(token, who))) return
+  if (owes !== null && (await orderOwed(token, owes))) return
   const order = paired()
   workspace.applySpaceOrder(
     account.spaces.flatMap((space) => {

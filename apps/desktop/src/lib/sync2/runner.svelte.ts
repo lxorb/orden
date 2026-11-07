@@ -1203,11 +1203,11 @@ class Runner {
 
   private async named(spaceId: string, root: string) {
     const token = account.token
-    const accountId = account.user?.id
+    const { holder, sendName } = await import('../space-owed')
+    const accountId = holder()
     const listed = account.spaces.find((one) => one.id === spaceId)
     const name = workspace.spaces.find((one) => samePath(one.root, root))?.name ?? nameOf(root)
     if (!token || !accountId || listed?.role !== 'owner' || !name || listed.name === name) return
-    const { sendName } = await import('../space-owed')
     await sendName(token, accountId, spaceId, name)
     await account.loadSpaces().catch(() => undefined)
   }

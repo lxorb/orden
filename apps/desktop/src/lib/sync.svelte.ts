@@ -303,20 +303,20 @@ class Sync {
     }
 
     const token = account.token
-    const accountId = account.user?.id
+    const { endSpace, holder } = await import('./space-owed')
+    const accountId = holder()
     if (!token || !accountId || (!theirs && !mine)) return
 
-    const { endSpace } = await import('./space-owed')
     await endSpace(token, accountId, spaceId, theirs ? 'leave' : 'delete')
   }
 
   async pushIcon(root: string, icon: string | null, tint: string | null = null) {
     const token = account.token
-    const accountId = account.user?.id
     const spaceId = this.remoteIdFor(root)
+    const { holder, sendIcon } = await import('./space-owed')
+    const accountId = holder()
     if (!token || !accountId || spaceId === null) return
 
-    const { sendIcon } = await import('./space-owed')
     await sendIcon(token, accountId, spaceId, { icon, tint })
     await account.loadSpaces().catch(() => undefined)
   }
@@ -437,7 +437,8 @@ class Sync {
 
   async pushSpaceOrder() {
     const token = account.token
-    const accountId = account.user?.id
+    const { holder, sendOrder } = await import('./space-owed')
+    const accountId = holder()
     if (!token || !accountId) return
 
     const order = workspace.spaces
@@ -446,7 +447,6 @@ class Sync {
 
     if (!order.length) return
 
-    const { sendOrder } = await import('./space-owed')
     await sendOrder(token, accountId, order)
     await account.loadSpaces().catch(() => undefined)
   }

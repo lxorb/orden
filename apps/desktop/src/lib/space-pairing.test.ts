@@ -88,7 +88,7 @@ vi.mock('./workspace.svelte', () => ({
 const { account } = await import('./account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('./left-spaces')
-const { endSpace, endsOwed, iconOwed, sendIcon, sendOrder } = await import('./space-owed')
+const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } = await import('./space-owed')
 
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []
@@ -286,4 +286,24 @@ test('an order chosen while the account could not be reached is not undone by it
 
   await pairSpaces('token-a', held)
   expect(world.order).toEqual(['/Work', '/Home'])
+})
+
+test('a guest who left a space while away leaves it once the account answers', async () => {
+  world.spaces = []
+  account.user = null
+  account.guest = { id: 'g1', name: 'Ada' }
+  account.token = 'token-g'
+  account.spaces = [{ id: 'theirs', name: 'Theirs', role: 'write' }] as never
+  const who = holder()
+  expect(who).toBe('guest:g1')
+  world.online = false
+  await endSpace('token-g', who ?? '', 'theirs', 'leave')
+
+  world.online = true
+  const { pairing: held } = pairing()
+  await pairSpaces('token-g', held)
+
+  expect(world.ended).toEqual(['leave theirs'])
+  expect(world.adopted).toEqual([])
+  account.guest = null
 })
