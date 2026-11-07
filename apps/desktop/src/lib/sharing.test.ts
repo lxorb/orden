@@ -284,6 +284,7 @@ beforeEach(() => {
   world.closed = []
   world.showing = []
   rooms.present = {}
+  rooms.seen = {}
   sharedWithYou.stop()
   sharedWithYou.items = []
 
@@ -615,22 +616,33 @@ describe('what may be done before the account has listed its spaces', () => {
 
 describe('whether somebody else is in a note', () => {
   const open = (path: string, key: string) => ({ path, note: { key } })
+  const someone = (key: string) => ({ key, name: key, face: null, fill: '' })
 
   test('is nobody until a room says there is', () => {
     world.tabs = [open('Notes/plan.md', 'k1')]
     expect(othersIn('Notes/plan.md')).toBe(false)
   })
 
-  test('is somebody once a room counts one', () => {
+  test('is somebody once a room holds another account', () => {
     world.tabs = [open('Notes/plan.md', 'k1')]
     rooms.present = { k1: 1 }
+    rooms.seen = { k1: { people: [someone('them')], mine: 0 } }
 
     expect(othersIn('Notes/plan.md')).toBe(true)
   })
 
+  test('is nobody while only the reader’s own other devices are in the room', () => {
+    world.tabs = [open('Notes/plan.md', 'k1')]
+    rooms.present = { k1: 3 }
+    rooms.seen = { k1: { people: [], mine: 3 } }
+
+    expect(othersIn('Notes/plan.md')).toBe(false)
+  })
+
   test('and only about the note the room is for', () => {
     world.tabs = [open('Notes/plan.md', 'k1'), open('Notes/other.md', 'k2')]
-    rooms.present = { k1: 2 }
+    rooms.present = { k1: 2, k2: 1 }
+    rooms.seen = { k1: { people: [someone('them')], mine: 1 }, k2: { people: [], mine: 1 } }
 
     expect(othersIn('Notes/plan.md')).toBe(true)
     expect(othersIn('Notes/other.md')).toBe(false)
@@ -638,12 +650,14 @@ describe('whether somebody else is in a note', () => {
 
   test('is nobody for a note nothing has opened, which is most of them', () => {
     rooms.present = { k1: 3 }
+    rooms.seen = { k1: { people: [someone('them')], mine: 0 } }
     expect(othersIn('Notes/never-opened.md')).toBe(false)
   })
 
   test('and a note open in two panes is still one answer', () => {
     world.tabs = [open('Notes/plan.md', 'k1'), open('Notes/plan.md', 'k1')]
     rooms.present = { k1: 1 }
+    rooms.seen = { k1: { people: [someone('them')], mine: 0 } }
 
     expect(othersIn('Notes/plan.md')).toBe(true)
   })
