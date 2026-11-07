@@ -99,3 +99,50 @@ describe('what the line says went wrong', () => {
     expect(busy.trouble).toBe('That went to the print dialog')
   })
 })
+
+describe('work asked for again while it is still running', () => {
+  test('runs once, and can be asked for again once it is done', async () => {
+    let letGo: () => void = () => {
+      throw new Error('the held promise was never taken up')
+    }
+    const held = new Promise<void>((resolve) => {
+      letGo = resolve
+    })
+    const work = vi.fn(() => held)
+
+    busy.start('Printing', work, 'print')
+    busy.start('Printing', work, 'print')
+    expect(work).toHaveBeenCalledTimes(1)
+
+    letGo()
+    await vi.waitFor(() => expect(busy.active).toBe(false))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    busy.start('Printing', work, 'print')
+    expect(work).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => expect(busy.active).toBe(false))
+  })
+
+  test('can be asked for again after it failed', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    busy.start('Exporting', () => Promise.reject(new Error('no')), 'export-pdf')
+    await vi.waitFor(() => expect(busy.active).toBe(false))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const work = vi.fn(() => Promise.resolve())
+    busy.start('Exporting', work, 'export-pdf')
+    expect(work).toHaveBeenCalledTimes(1)
+    vi.restoreAllMocks()
+  })
+
+  test('does not hold back different work under the same words', () => {
+    const one = vi.fn(() => Promise.resolve())
+    const other = vi.fn(() => Promise.resolve())
+
+    busy.start('Exporting', one, 'export-pdf')
+    busy.start('Exporting', other, 'export-png')
+
+    expect(one).toHaveBeenCalledTimes(1)
+    expect(other).toHaveBeenCalledTimes(1)
+  })
+})
