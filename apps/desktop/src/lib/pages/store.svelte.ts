@@ -9,7 +9,7 @@ import {
   pageShowing,
   settled,
 } from '@orden/markdown/pages'
-import { type Camera, clampScale, zoomed } from '../camera'
+import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../camera'
 import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '../canvas/format'
 import { strokeBox } from '../canvas/ink'
 import type { KeptView } from '../canvas/place'
@@ -101,8 +101,12 @@ export class PagesStore extends CanvasStore {
     return pageShowing(this.pages, this.top, this.pane.height / this.camera.scale)
   }
 
+  protected override get closest(): number {
+    return PAPER_CLOSEST
+  }
+
   held(next: Camera): Camera {
-    const scale = clampScale(next.scale)
+    const scale = clampScale(next.scale, PAPER_CLOSEST)
     const across = this.pane.width / scale
     const slack = MARGIN / scale
     const widest = this.widest
@@ -165,14 +169,16 @@ export class PagesStore extends CanvasStore {
     const { width, height } = this.pane
     this.theirs()
     this.halt()
-    this.camera = this.held(zoomed(this.camera, width, height, width / 2, height / 2, by))
+    this.camera = this.held(
+      zoomed(this.camera, width, height, width / 2, height / 2, by, PAPER_CLOSEST),
+    )
   }
 
   zoomAt(at: { x: number; y: number }, by: number) {
     const { width, height } = this.pane
     this.theirs()
     this.halt()
-    this.camera = this.held(zoomed(this.camera, width, height, at.x, at.y, by))
+    this.camera = this.held(zoomed(this.camera, width, height, at.x, at.y, by, PAPER_CLOSEST))
   }
 
   get fitted(): number {
@@ -202,7 +208,7 @@ export class PagesStore extends CanvasStore {
 
     this.theirs()
     this.halt()
-    const wanted = clampScale(scale)
+    const wanted = clampScale(scale, PAPER_CLOSEST)
     this.camera = this.held({
       ...this.camera,
       y: this.top + this.pane.height / wanted / 2,

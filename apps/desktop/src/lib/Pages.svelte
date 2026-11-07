@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import CanvasBar from './CanvasBar.svelte'
+  import CanvasFind from './CanvasFind.svelte'
   import CanvasHands from './CanvasHands.svelte'
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
@@ -49,7 +50,9 @@
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
-  import { forgetPaper, outlineOf, paperAhead, paperPathOf } from './pages/paper'
+  import { type Found, matches } from './canvas/find'
+  import { forgetPaper, outlineOf, paperAhead, paperPathOf, textsOf } from './pages/paper'
+  import { placesOf } from './reading/find'
   import type { Highlight } from './pdf/highlights'
   import { marksFromOutside } from './pdf/sheets.svelte'
   import { loadHighlights } from './pdf/sidecar'
@@ -235,6 +238,122 @@
 
   const backing = $derived(pages.find((one) => one.file)?.file ?? null)
 
+  interface PaperHit {
+    paper: number
+    at: number
+    length: number
+  }
+
+  const MOST_HITS = 500
+
+  const AROUND = 24
+
+  let finding = $state(false)
+  let term = $state('')
+  let texts = $state.raw<readonly string[]>([])
+  let looking = $state.raw<PaperHit | null>(null)
+  let centring = false
+
+  $effect(() => {
+    const file = backing
+    const note = tab.note.path
+    if (!finding || !file) return
+
+    let mine = true
+    void textsOf({ file, note, root: workspace.rootHolding(note), shared: tab.note.shared }).then(
+      (read) => {
+        if (mine) texts = read
+      },
+    )
+    return () => {
+      mine = false
+    }
+  })
+
+  const paperHits = $derived.by((): PaperHit[] => {
+    const wanted = term.trim()
+    if (!finding || !wanted) return []
+
+    const out: PaperHit[] = []
+    for (const page of pages) {
+      if (page.file !== backing || !page.page) continue
+      for (const at of placesOf(texts[page.page - 1] ?? '', wanted)) {
+        out.push({ paper: page.page, at, length: wanted.length })
+        if (out.length >= MOST_HITS) return out
+      }
+    }
+    return out
+  })
+
+  const soughtOn = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const on = new Map<number, PaperHit[]>()
+    for (const hit of paperHits) {
+      const held = on.get(hit.paper)
+      if (held) held.push(hit)
+      else on.set(hit.paper, [hit])
+    }
+    return on
+  })
+
+  function hitId(hit: PaperHit): string {
+    return `paper:${hit.paper}:${hit.at}`
+  }
+
+  function around(hit: PaperHit): string {
+    const text = texts[hit.paper - 1] ?? ''
+    const from = Math.max(0, hit.at - AROUND)
+    const to = Math.min(text.length, hit.at + hit.length + AROUND)
+    const said = text.slice(from, to).replace(/\s+/g, ' ').trim()
+    return `${hit.paper} · ${from ? '…' : ''}${said}${to < text.length ? '…' : ''}`
+  }
+
+  const found = $derived<Found[]>(
+    finding
+      ? [
+          ...paperHits.map((hit) => ({ id: hitId(hit), says: around(hit) })),
+          ...matches(canvas, term).filter((one) => !pages.some((page) => page.id === one.id)),
+        ]
+      : [],
+  )
+
+  function pickFound(id: string) {
+    const hit = paperHits.find((one) => hitId(one) === id)
+    if (hit) {
+      looking = hit
+      centring = true
+      store.turnToPaper(hit.paper)
+      return
+    }
+
+    const node = canvas.nodes.find((one) => one.id === id)
+    if (!node) return
+    looking = null
+    store.pick(id)
+    store.camera = store.held({
+      ...camera,
+      x: node.x + node.width / 2,
+      y: node.y + node.height / 2,
+    })
+  }
+
+  function foundAt(box: { x: number; y: number; width: number; height: number }) {
+    if (!centring) return
+    centring = false
+    store.camera = store.held({
+      ...camera,
+      x: box.x + box.width / 2,
+      y: box.y + box.height / 2,
+    })
+  }
+
+  function stopFinding() {
+    finding = false
+    term = ''
+    looking = null
+    host?.focus({ preventScroll: true })
+  }
+
   $effect(() => {
     const file = backing
     const note = tab.note.path
@@ -276,6 +395,8 @@
   })
 
   const NO_MARKS: readonly Highlight[] = []
+
+  const NO_HITS: readonly PaperHit[] = []
 
   const marksOn = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
@@ -435,6 +556,11 @@
 
     const screen = screenAt(event)
     const one = gesture
+
+    if (!one && kind !== 'touch' && !eraser && onWords(event)) {
+      contacts.went(event.pointerId)
+      return
+    }
 
     if (one && driver?.touch && kind === 'touch' && driver.id !== event.pointerId) {
       if (!takesOver(one, driver.since, event.timeStamp)) return
@@ -959,8 +1085,23 @@
     else fall()
   }
 
+  function typing(target: EventTarget | null): boolean {
+    return (
+      target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement)
+    )
+  }
+
   function onkeydown(event: KeyboardEvent) {
-    if (store.editing !== null) return
+    if (store.editing !== null || typing(event.target)) return
+
+    if (shortcuts.pressed('canvas.find', event)) {
+      event.preventDefault()
+      finding = true
+      return
+    }
 
     const wanted = toolPressed(event)
     if (wanted && PAPER_TOOLS.has(wanted)) {
@@ -1015,7 +1156,16 @@
     if (event.key === 'Escape') store.clearPicked()
   }
 
-  function ondblclick() {
+  function onWords(event: Event): boolean {
+    return (
+      tools.which === 'select' &&
+      event.target instanceof Element &&
+      event.target.closest('.words') !== null
+    )
+  }
+
+  function ondblclick(event: MouseEvent) {
+    if (onWords(event)) return
     if (tools.which !== 'select' && tools.which !== 'hand') return
 
     store.halt()
@@ -1060,6 +1210,12 @@
         root={workspace.rootHolding(tab.note.path)}
         shared={tab.note.shared}
         {seen}
+        selectable={tools.which === 'select'}
+        sought={page.file === backing && page.page ? (soughtOn.get(page.page) ?? NO_HITS) : NO_HITS}
+        current={looking && looking.paper === page.page && page.file === backing
+          ? looking.at
+          : null}
+        onfound={foundAt}
         marks={page.file === backing && page.page ? (marksOn.get(page.page) ?? NO_MARKS) : NO_MARKS}
       />
     {/each}
@@ -1124,6 +1280,17 @@
       ondelete={deletePicked}
       ongroup={() => undefined}
       onmore={(event: MouseEvent) => showMenu(event)}
+    />
+  {/if}
+
+  {#if finding}
+    <CanvasFind
+      {canvas}
+      hits={found}
+      label={t('Find')}
+      onterm={(said: string) => (term = said)}
+      onpick={pickFound}
+      onclose={stopFinding}
     />
   {/if}
 

@@ -1,5 +1,5 @@
 import { idle } from '../breathe'
-import { type Camera, clampScale, framingBox, turnOf } from '../camera'
+import { type Camera, clampScale, CLOSEST, framingBox, turnOf } from '../camera'
 import { owesWords } from '../parting'
 import {
   type Canvas,
@@ -108,7 +108,11 @@ export class CanvasStore implements PlaneSurface {
   }
 
   set camera(next: Camera) {
-    this.tab.camera = { ...next, scale: clampScale(next.scale) }
+    this.tab.camera = { ...next, scale: clampScale(next.scale, this.closest) }
+  }
+
+  protected get closest(): number {
+    return CLOSEST
   }
 
   protected get keptView(): KeptView {

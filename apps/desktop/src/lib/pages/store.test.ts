@@ -204,6 +204,15 @@ describe('the two fits and the zoom in between', () => {
     expect(store.camera.scale).toBe(1)
   })
 
+  test('zooms in far past a canvas, to 3200%, and no further', () => {
+    const { store } = ofPages(2)
+    for (let step = 0; step < 40; step++) store.zoomBy(1.2)
+    expect(store.camera.scale).toBe(32)
+
+    store.camera = { ...store.camera, scale: 100 }
+    expect(store.camera.scale).toBe(32)
+  })
+
   test('the paper stays fitted while nobody has chosen a zoom', () => {
     const { store } = ofPages(2)
     store.measured(800, 722)

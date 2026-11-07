@@ -210,7 +210,7 @@ describe('a close-up of a page', () => {
     expect(held.views).toEqual([{ width: 3000, offsetX: -1500, offsetY: -4000 }])
   })
 
-  test('is never larger than a page may be', async () => {
+  test('is never larger than the largest screen needs', async () => {
     const asked = closeUpOf(
       AT,
       3,
@@ -221,7 +221,7 @@ describe('a close-up of a page', () => {
     await drawNext()
 
     const image = await asked
-    expect((image?.width ?? 0) * (image?.height ?? 0)).toBeLessThanOrEqual(16 * 1024 * 1024)
+    expect((image?.width ?? 0) * (image?.height ?? 0)).toBeLessThanOrEqual(64 * 1024 * 1024)
   })
 
   test('let go of while drawing, stops drawing and gives nothing', async () => {

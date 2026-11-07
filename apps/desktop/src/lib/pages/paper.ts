@@ -1,10 +1,11 @@
 import type { OpenPdf } from '../pdf/document'
-import { openBytes, openDocument } from '../pdf/document'
+import { openBytes, openDocument, pdfjs } from '../pdf/document'
 import { matrixOf, type Transform } from '../pdf/highlights'
 import { type PdfHeading, readOutline } from '../pdf/outline'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
+import { idle } from '../breathe'
 
 const SCALE = 2
 
@@ -15,6 +16,8 @@ const SHARP = 4
 const DENSITIES = [ROUGH, SCALE, SHARP]
 
 const MOST_PIXELS = 16 * 1024 * 1024
+
+const CLOSE_PIXELS = 64 * 1024 * 1024
 
 const KEPT = 24
 
@@ -33,6 +36,7 @@ interface Held {
   recent: string[]
   pixels: Map<string, number>
   gone: boolean
+  texts?: Promise<string[]> | undefined
 }
 
 interface Job {
@@ -333,7 +337,7 @@ export async function closeUpOf(
   const wide = part.width * whole.width
   const tall = part.height * whole.height
   const wanted = across / whole.width
-  const scale = Math.min(wanted, Math.sqrt(MOST_PIXELS / Math.max(1, wide * tall)))
+  const scale = Math.min(wanted, Math.sqrt(CLOSE_PIXELS / Math.max(1, wide * tall)))
   const view = page.getViewport({
     scale,
     offsetX: -part.x * whole.width * scale,
@@ -370,6 +374,83 @@ export async function closeUpOf(
   return 'transferToImageBitmap' in sheet
     ? sheet.transferToImageBitmap()
     : await createImageBitmap(sheet)
+}
+
+const READ_AT_ONCE = 20
+
+export function textsOf(at: PaperAt): Promise<string[]> {
+  const one = heldOf(at)
+  if (!one) return Promise.resolve([])
+
+  one.texts ??= readTexts(one).catch(() => {
+    one.texts = undefined
+    return []
+  })
+  return one.texts
+}
+
+async function readTexts(one: Held): Promise<string[]> {
+  const opened = await one.open
+  const texts: string[] = []
+
+  for (let number = 1; number <= opened.doc.numPages; number++) {
+    if (one.gone) return texts
+    if (number % READ_AT_ONCE === 0) await idle()
+    const content = await opened.doc
+      .getPage(number)
+      .then((page) => page.getTextContent())
+      .catch(() => null)
+    texts.push((content?.items ?? []).map((item) => ('str' in item ? item.str : '')).join(''))
+  }
+
+  return texts
+}
+
+export interface Words {
+  runs: string[]
+  divs: HTMLElement[]
+}
+
+export async function wordsInto(
+  at: PaperAt,
+  number: number,
+  width: number,
+  into: HTMLElement,
+  signal: AbortSignal,
+): Promise<Words | null> {
+  const gone = () => signal.aborted
+  const one = heldOf(at)
+  if (!one || gone()) return null
+
+  const opened = await one.open.catch(() => null)
+  if (!opened || gone() || number < 1 || number > opened.doc.numPages) return null
+
+  const read = await Promise.all([pdfjs(), opened.doc.getPage(number)])
+    .then(async ([library, page]) => ({ library, page, content: await page.getTextContent() }))
+    .catch(() => null)
+  if (!read || gone()) return null
+  const { library, page, content } = read
+
+  const view = page.getViewport({ scale: width / page.getViewport({ scale: 1 }).width })
+  into.replaceChildren()
+  into.style.setProperty('--total-scale-factor', String(view.scale))
+  const layer = new library.TextLayer({
+    textContentSource: content,
+    container: into,
+    viewport: view,
+  })
+  const stop = () => layer.cancel()
+  signal.addEventListener('abort', stop, { once: true })
+  try {
+    await layer.render()
+  } catch {
+    return null
+  } finally {
+    signal.removeEventListener('abort', stop)
+  }
+  if (gone()) return null
+
+  return { runs: layer.textContentItemsStr, divs: layer.textDivs }
 }
 
 let offscreen: boolean | undefined

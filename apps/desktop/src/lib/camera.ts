@@ -26,10 +26,12 @@ export function turnedBy(x: number, y: number, angle: number): { x: number; y: n
 export const CLOSEST = 4
 export const FURTHEST = 0.04
 
+export const PAPER_CLOSEST = 32
+
 export const SMALLEST_DOT = 1.1
 
-export function clampScale(scale: number): number {
-  return Math.min(CLOSEST, Math.max(FURTHEST, scale))
+export function clampScale(scale: number, closest = CLOSEST): number {
+  return Math.min(closest, Math.max(FURTHEST, scale))
 }
 
 export const NOTCH = 1.2
@@ -254,8 +256,9 @@ export function zoomed(
   screenX: number,
   screenY: number,
   by: number,
+  closest = CLOSEST,
 ): Camera {
-  const scale = clampScale(camera.scale * by)
+  const scale = clampScale(camera.scale * by, closest)
   const under = graphPoint(camera, width, height, screenX, screenY)
   const off = turnedBy(screenX - width / 2, screenY - height / 2, -turnOf(camera))
 

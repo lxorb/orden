@@ -1,15 +1,21 @@
 <script lang="ts">
   import type { Canvas } from './canvas/format'
-  import { matches } from './canvas/find'
+  import { type Found, matches } from './canvas/find'
   import { t } from './i18n.svelte'
   import Cross from './Cross.svelte'
 
   const {
     canvas,
+    hits,
+    label = t('Find on the canvas'),
+    onterm,
     onpick,
     onclose,
   }: {
     canvas: Canvas
+    hits?: readonly Found[]
+    label?: string
+    onterm?: (term: string) => void
     onpick: (id: string) => void
     onclose: () => void
   } = $props()
@@ -18,7 +24,11 @@
   let at = $state(0)
   let field = $state<HTMLInputElement>()
 
-  const found = $derived(matches(canvas, term))
+  const found = $derived(hits ?? matches(canvas, term))
+
+  $effect(() => {
+    onterm?.(term)
+  })
 
   const follows = (_value: unknown) => undefined
 
@@ -65,8 +75,8 @@
     bind:this={field}
     bind:value={term}
     type="text"
-    placeholder={t('Find on the canvas')}
-    aria-label={t('Find on the canvas')}
+    placeholder={label}
+    aria-label={label}
     spellcheck="false"
     autocapitalize="off"
     autocorrect="off"

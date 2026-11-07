@@ -2,8 +2,19 @@
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
   import { t } from './i18n.svelte'
-  import { closeUpOf, densityFor, type Part, paperOf, type PaperView, viewOf } from './pages/paper'
+  import {
+    closeUpOf,
+    densityFor,
+    type Part,
+    paperOf,
+    type PaperView,
+    viewOf,
+    type Words,
+    wordsInto,
+  } from './pages/paper'
   import { boxOf, COLOURS, type Highlight, toViewport } from './pdf/highlights'
+  import { wordsOfRuns } from './pdf/find'
+  import { locate } from './reading/find'
 
   const {
     page,
@@ -14,6 +25,10 @@
     shared = null,
     seen = null,
     marks = [],
+    selectable = false,
+    sought = [],
+    current = null,
+    onfound,
   }: {
     page: PageNode
     number: number
@@ -23,7 +38,16 @@
     shared?: string | null
     seen?: { x: number; y: number; width: number; height: number } | null
     marks?: readonly Highlight[]
+    selectable?: boolean
+    sought?: readonly Sought[]
+    current?: number | null
+    onfound?: (box: { x: number; y: number; width: number; height: number }) => void
   } = $props()
+
+  interface Sought {
+    at: number
+    length: number
+  }
 
   const LINES = 30
   const GRID = 19
@@ -145,6 +169,73 @@
 
   onDestroy(() => (paper = null))
 
+  const WORDS_AFTER = 200
+
+  let words = $state<HTMLDivElement>()
+  let read = $state.raw<Words | null>(null)
+
+  $effect(() => {
+    const layer = words
+    const file = page.file
+    const at = page.page
+    const wide = page.width
+    if (!layer || !file || !at || !wide) return
+
+    const leaving = new AbortController()
+    const timer = setTimeout(() => {
+      void wordsInto({ file, note: notePath, root, shared }, at, wide, layer, leaving.signal).then(
+        (found) => {
+          if (!leaving.signal.aborted) read = found
+        },
+      )
+    }, WORDS_AFTER)
+
+    return () => {
+      clearTimeout(timer)
+      leaving.abort()
+      layer.replaceChildren()
+      read = null
+    }
+  })
+
+  const hits = $derived.by(() => {
+    const layer = words
+    if (!read || !layer || !sought.length) return []
+
+    const found = wordsOfRuns(read.runs, read.divs)
+    const whole = layer.getBoundingClientRect()
+    if (!whole.width || !whole.height) return []
+
+    return sought.flatMap((one) => {
+      const from = locate(found.pieces, one.at)
+      const to = locate(found.pieces, one.at + one.length)
+      if (!from || !to) return []
+
+      const range = document.createRange()
+      range.setStart(from.piece.node, Math.min(from.into, from.piece.node.length))
+      range.setEnd(to.piece.node, Math.min(to.into, to.piece.node.length))
+      return [...range.getClientRects()].map((box) => ({
+        current: one.at === current,
+        left: ((box.left - whole.left) / whole.width) * 100,
+        top: ((box.top - whole.top) / whole.height) * 100,
+        width: (box.width / whole.width) * 100,
+        height: (box.height / whole.height) * 100,
+      }))
+    })
+  })
+
+  $effect(() => {
+    const shown = hits.find((one) => one.current)
+    if (!shown) return
+
+    onfound?.({
+      x: page.x + (shown.left / 100) * page.width,
+      y: page.y + (shown.top / 100) * page.height,
+      width: (shown.width / 100) * page.width,
+      height: (shown.height / 100) * page.height,
+    })
+  })
+
   let view = $state.raw<PaperView | null>(null)
 
   $effect(() => {
@@ -224,6 +315,19 @@
       ></canvas>
     {/if}
   {/if}
+  {#each hits as hit, index (index)}
+    <span
+      class="hit"
+      class:current={hit.current}
+      style:left="{hit.left}%"
+      style:top="{hit.top}%"
+      style:width="{hit.width}%"
+      style:height="{hit.height}%"
+    ></span>
+  {/each}
+  {#if backed}
+    <div class="words" class:live={selectable} bind:this={words}></div>
+  {/if}
   {#each shownMarks as mark, index (index)}
     <span
       class="mark"
@@ -268,6 +372,63 @@
   .sheet canvas.close {
     inset: auto;
     transition: none;
+  }
+
+  .words {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    text-align: initial;
+    line-height: 1;
+    text-size-adjust: none;
+    forced-color-adjust: none;
+    transform-origin: 0 0;
+    --min-font-size: 1;
+    --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+    --min-font-size-inv: calc(1 / var(--min-font-size));
+  }
+
+  .words :global(span),
+  .words :global(br) {
+    position: absolute;
+    color: transparent;
+    white-space: pre;
+    transform-origin: 0 0;
+  }
+
+  .words > :global(:not(.markedContent)),
+  .words :global(.markedContent span:not(.markedContent)) {
+    --font-height: 0;
+    --scale-x: 1;
+    --rotate: 0deg;
+    font-size: calc(var(--text-scale-factor) * var(--font-height));
+    transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+  }
+
+  .words :global(.markedContent) {
+    display: contents;
+  }
+
+  .words.live :global(span) {
+    pointer-events: auto;
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  .words :global(::selection) {
+    background: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .hit {
+    position: absolute;
+    border-radius: calc(1px * var(--unit));
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .hit.current {
+    background: color-mix(in srgb, var(--accent) 45%, transparent);
+    outline: calc(1px * var(--unit)) solid var(--accent);
   }
 
   .mark {
