@@ -1123,15 +1123,14 @@ class Worker:
         return self.log.read_text("utf-8", errors="replace") if self.log.exists() else ""
 
     def sql(self, statement: str) -> str:
-        self.prepare()
-        done = self.wrangler(
-            "d1", "execute", "nib", "--local", "--persist-to", str(self.state), f"--command={statement}"
-        )
-        if done.returncode != 0:
-            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-        return done.stdout
+        return self._execute(statement).stdout
 
     def query(self, statement: str) -> list[dict[str, Any]]:
+        done = self._execute(statement, "--json")
+        answer = json.loads(done.stdout)
+        return list(answer[0].get("results", [])) if answer else []
+
+    def _execute(self, statement: str, *how: str) -> subprocess.CompletedProcess[str]:
         self.prepare()
         for tries in range(10):
             done = self.wrangler(
@@ -1141,7 +1140,7 @@ class Worker:
                 "--local",
                 "--persist-to",
                 str(self.state),
-                "--json",
+                *how,
                 f"--command={statement}",
             )
             busy = "SQLITE_BUSY" in done.stdout + done.stderr
@@ -1150,8 +1149,7 @@ class Worker:
             time.sleep(0.2 * (tries + 1))
         if done.returncode != 0:
             raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
-        answer = json.loads(done.stdout)
-        return list(answer[0].get("results", [])) if answer else []
+        return done
 
     def request(
         self,
