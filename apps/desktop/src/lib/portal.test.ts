@@ -77,4 +77,20 @@ describe('the action', () => {
     hung.destroy?.()
     expect(bubble.isConnected).toBe(false)
   })
+
+  test('leaves the bubble untouched when it is placed again where it already is', async () => {
+    const { bubble } = holder()
+    const hung = hang(bubble, { ...below, stretch: true })
+    const touched: string[] = []
+    const watcher = new MutationObserver((records) => {
+      for (const one of records) touched.push(one.attributeName ?? '')
+    })
+    watcher.observe(bubble, { attributes: true })
+    hung.update?.({ ...below, stretch: true })
+    await new Promise((done) => requestAnimationFrame(() => done(undefined)))
+    await Promise.resolve()
+    expect(touched).toEqual([])
+    watcher.disconnect()
+    hung.destroy?.()
+  })
 })

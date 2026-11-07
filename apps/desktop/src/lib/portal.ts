@@ -111,8 +111,10 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
     if (!from.isConnected) return
     const at = boxOf(from)
     const seen = drawn(from) && inSight(at, clips.map(boxOf))
-    node.style.visibility = seen ? '' : 'hidden'
-    if (options.stretch) node.style.width = `${at.right - at.left}px`
+    const visibility = seen ? '' : 'hidden'
+    if (node.style.visibility !== visibility) node.style.visibility = visibility
+    const width = `${at.right - at.left}px`
+    if (options.stretch && node.style.width !== width) node.style.width = width
     const style = getComputedStyle(from)
     const inset =
       typeof options.inset === 'string'
@@ -129,7 +131,7 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
     const top = `${spot.top}px`
     if (node.style.left !== left) node.style.left = left
     if (node.style.top !== top) node.style.top = top
-    node.dataset.side = spot.side
+    if (node.dataset.side !== spot.side) node.dataset.side = spot.side
     if (moving()) soon()
   }
   const soon = () => {
