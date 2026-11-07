@@ -19,6 +19,11 @@ from typing import Any
 import crash_told
 
 PAGE = b"<!doctype html><title>a page</title><p>a page"
+STORM = (
+    b"<!doctype html><title>a storm</title><script>let n = 0; const every = setInterval(() => {"
+    b" for (let i = 0; i < 20; i++) window.open(location.origin + '/opened' + n++);"
+    b" if (n >= 400) clearInterval(every) }, 1)</script><p>a storm"
+)
 TABS = 3
 WATCHED = 10.0
 
@@ -27,11 +32,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
+        body = STORM if self.path == "/storm" else PAGE
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
-        self.send_header("content-length", str(len(PAGE)))
+        self.send_header("content-length", str(len(body)))
         self.end_headers()
-        self.wfile.write(PAGE)
+        self.wfile.write(body)
 
 def config_of(identifier: str) -> pathlib.Path:
     if sys.platform == "win32":
@@ -185,6 +191,16 @@ def main() -> int:
             wrong += watched(app, process.pid, count)
             if wrong:
                 break
+
+        if not wrong:
+            before = app.eval("return orden.workspace.tabs.length", 20).get("value")
+            app.eval(f"orden.workspace.openPage({json.dumps(f'{url}storm')}); return true", 20)
+            time.sleep(8)
+            after = app.eval("return orden.workspace.tabs.length", 20).get("value")
+            if not isinstance(before, int) or after != before + 1:
+                wrong.append(f"400 window.open calls without a gesture: {before} tabs became {after}, not {before} + the storm's own")
+            if why := window_answers(process.pid):
+                wrong.append(f"after the window.open storm: {why}")
     finally:
         process.kill()
         process.wait(20)
