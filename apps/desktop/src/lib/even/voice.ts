@@ -233,6 +233,7 @@ export class Voice {
   private trouble = ''
   private detail = ''
   private silence: ReturnType<typeof setTimeout> | undefined
+  private turn: Promise<unknown> = Promise.resolve()
 
   constructor(private readonly ears: Ears) {}
 
@@ -269,7 +270,21 @@ export class Voice {
     this.tell()
   }
 
-  async start(): Promise<boolean> {
+  private queued<T>(step: () => Promise<T>, otherwise: T): Promise<T> {
+    const next = this.turn.then(step).catch(() => otherwise)
+    this.turn = next
+    return next
+  }
+
+  start(): Promise<boolean> {
+    return this.queued(() => this.starting(), false)
+  }
+
+  stop(): Promise<void> {
+    return this.queued(() => this.stopping(), undefined)
+  }
+
+  private async starting(): Promise<boolean> {
     if (this.on) return true
 
     this.trouble = ''
@@ -308,7 +323,7 @@ export class Voice {
     return true
   }
 
-  async stop(): Promise<void> {
+  private async stopping(): Promise<void> {
     clearTimeout(this.silence)
     if (!this.on) return
 
@@ -431,7 +446,7 @@ export class Voice {
           this.hopeless = true
           this.dropRecogniser()
           this.wrong('the phone cannot listen', why)
-          void this.listenThere()
+          void this.queued(() => (this.on ? this.listenThere() : Promise.resolve(false)), false)
           return
         }
 
