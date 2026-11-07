@@ -20,6 +20,7 @@ function rig(content: string) {
       return Promise.resolve()
     },
     inside: (root, path) => `${root}/${path}`,
+    today: () => '2026-10-06',
   }
   const hash = rows.find((one) => one.kind === 'task')?.anchor?.hash ?? ''
   return { host, ticked, opened, hash }
@@ -53,6 +54,19 @@ describe('respond', () => {
       ),
     ).toBe(false)
     expect(edited.ticked).toEqual([])
+  })
+
+  test('pressed again once its repeating task is done, leaves the next occurrence for its own day (#1322)', async () => {
+    const one = rig(
+      '- [ ] Stretch 🔁 every day 📅 2026-10-07\n- [x] Stretch 🔁 every day 📅 2026-10-06\n',
+    )
+    expect(
+      await respond(
+        { act: 'done', space: 'Work', path: 'Plan.md', hash: one.hash, line: 0 },
+        one.host,
+      ),
+    ).toBe(false)
+    expect(one.ticked).toEqual([])
   })
 
   test('a press opens the note at the line the task is on now', async () => {
