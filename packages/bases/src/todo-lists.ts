@@ -1,4 +1,6 @@
+import { changedTask, type TaskChange } from '@orden/markdown/task-edits'
 import { carriedOwn } from './inbox'
+import { taskRowsOfText } from './task-rows'
 import type { Row } from './types'
 
 export const LIST_KEY = 'todo-list'
@@ -119,4 +121,27 @@ export function withDates(rows: Row[], meta: Meta): Row[] {
     }
   }
   return rows
+}
+
+export function writtenDates(text: string, meta: Meta): string {
+  const done = datesOf(meta?.[DONE_KEY])
+  const cancelled = datesOf(meta?.[CANCELLED_KEY])
+  if (!done.size && !cancelled.size) return text
+  const lines = text.split('\n')
+  for (const row of taskRowsOfText('', '', text)) {
+    const task = row.task
+    const at = row.anchor
+    if (!task || !at) continue
+    const change: TaskChange = {}
+    const doneOn = task.done && task.completed === undefined ? done.get(at.hash) : undefined
+    if (doneOn !== undefined) change.completed = doneOn
+    const cancelledOn =
+      task.cancelled && task.cancelledOn === undefined ? cancelled.get(at.hash) : undefined
+    if (cancelledOn !== undefined) change.cancelledOn = cancelledOn
+    const line = lines[at.line]
+    if (line === undefined || !Object.keys(change).length) continue
+    const ending = line.endsWith('\r') ? '\r' : ''
+    lines[at.line] = changedTask(line.slice(0, line.length - ending.length), change) + ending
+  }
+  return lines.join('\n')
 }

@@ -243,9 +243,21 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
   }
 }
 
-function withKept(note: Note): Note {
-  const meta = note.path === null ? null : workspace.itemMeta.of(note.path)
-  return meta ? { ...note, source: withOwnKeys(note.source, meta) } : note
+async function withKept(note: Note): Promise<Note> {
+  if (note.path === null) return note
+  const meta = workspace.itemMeta.of(note.path)
+  const owned = meta ? withOwnKeys(note.source, meta) : note.source
+  const { isListed } = await import('../rows/todo-lists')
+  if (!isListed(note.path)) return owned === note.source ? note : { ...note, source: owned }
+  const [{ LIST_KEY, LIST_VALUE, writtenDates }, { frontMatterEdits }, { appliedEdits }] =
+    await Promise.all([
+      import('@orden/bases/todo-lists'),
+      import('@orden/markdown/front-matter'),
+      import('@orden/markdown/edits'),
+    ])
+  const dated = writtenDates(owned, meta)
+  const edit = frontMatterEdits(dated, [[LIST_KEY, LIST_VALUE]])
+  return { ...note, source: edit ? appliedEdits(dated, [edit]) : dated }
 }
 
 export async function runExport(
@@ -253,7 +265,7 @@ export async function runExport(
   given: Note,
   options: RunOptions = {},
 ): Promise<string | null> {
-  const note = withKept(given)
+  const note = await withKept(given)
   await loadFor(note.source)
 
   if (id === 'pdf') return exportPdf(note, options)
