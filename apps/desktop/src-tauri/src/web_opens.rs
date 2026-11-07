@@ -17,6 +17,15 @@ pub struct Heard {
     pub unasked: bool,
 }
 
+impl Heard {
+    #[cfg_attr(not(any(windows, test)), allow(dead_code))]
+    pub const UNHEARD: Self = Self {
+        ours: false,
+        said: None,
+        unasked: true,
+    };
+}
+
 const WAITING: usize = 64;
 
 #[derive(Debug)]
@@ -477,7 +486,7 @@ mod heard {
     pub fn heard(tab: &str, url: &tauri::Url) -> Heard {
         HEARD
             .with_borrow_mut(|heard| heard.taken(tab, url.as_str()))
-            .unwrap_or_default()
+            .unwrap_or(Heard::UNHEARD)
     }
 
     fn ordens_own(name: &str) -> bool {
