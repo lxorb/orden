@@ -79,6 +79,8 @@
   const SECTIONS = $derived(GROUPS.flat())
   const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
 
+  const stacked = $derived(viewport.touch || viewport.narrow)
+
   let query = $state('')
   let accessDetail = $state(false)
 
@@ -336,13 +338,13 @@
   })
 
   function appear(node: Element) {
-    return viewport.touch
+    return stacked
       ? fly(node, { y: 40, duration: dur(240), easing: cubicOut })
       : scale(node, { duration: dur(200), start: 0.97, easing: cubicOut })
   }
 
   const enter = (x: number) =>
-    viewport.touch ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
+    stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
   $effect.pre(() => (settings.open ? overlays.show(() => (settings.open = false)) : undefined))
   $effect.pre(() => closeOnBack(settings.open, () => (settings.open = false)))
@@ -361,7 +363,7 @@
 
   <div
     class="orden-screen is-centred is-steady sheet"
-    class:phone={viewport.touch}
+    class:phone={stacked}
     style:height={pageHeight()}
     use:trap
     role="dialog"
@@ -369,7 +371,7 @@
     aria-label={t('Settings')}
     transition:appear
   >
-    {#if viewport.touch}
+    {#if stacked}
       <header class="bar">
         {#if !settings.listing}
           <button
@@ -391,9 +393,9 @@
       </header>
     {/if}
 
-    {#if !viewport.touch || settings.listing}
+    {#if !stacked || settings.listing}
       <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
-        {#if !viewport.touch}
+        {#if !stacked}
           <h1>{t('Settings')}</h1>
         {/if}
 
@@ -408,7 +410,7 @@
           />
         </label>
 
-        {#if viewport.touch && query}
+        {#if stacked && query}
           {@render results()}
         {:else}
           {#each GROUPS as group, index (index)}
@@ -416,7 +418,7 @@
               {#each group as item (item.id)}
                 <button
                   class="item orden-row"
-                  class:is-on={!viewport.touch && !query && settings.section === item.id}
+                  class:is-on={!stacked && !query && settings.section === item.id}
                   onclick={() => go(item.id)}
                 >
                   <svg class="glyph orden-row-mark" viewBox="0 0 16 16"
@@ -434,7 +436,7 @@
       </nav>
     {/if}
 
-    {#if !viewport.touch || !settings.listing}
+    {#if !stacked || !settings.listing}
       <div
         class="body"
         data-scrolls
@@ -442,7 +444,7 @@
         use:scrollbar={settings.section}
         in:fly={enter(24)}
       >
-        {#if query && !viewport.touch}
+        {#if query && !stacked}
           <div class="pane">
             <h2>{t('Search settings')}</h2>
             {@render results()}
@@ -450,7 +452,7 @@
         {:else}
           {#key settings.section}
             <div class="pane" in:arrive>
-              {#if !viewport.touch}
+              {#if !stacked}
                 <h2>{titleOf(settings.section)}</h2>
               {/if}
               {#if declared.problems.length}
