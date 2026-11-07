@@ -19,20 +19,14 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
 
   const touchedIds = new Set(changed)
   const at = noTimes()
-  const when = (id: string) => (touchedIds.has(id) ? now : (timeIn(before.at, id) ?? now))
+  const stamp = (id: string) => {
+    const when = touchedIds.has(id) ? now : timeIn(before.at, id)
+    if (when !== undefined) at[id] = when
+  }
 
-  for (const thing of after.nodes) {
-    const id = thing.id
-    at[id] = when(id)
-  }
-  for (const thing of after.edges) {
-    const id = thing.id
-    at[id] = when(id)
-  }
-  for (const thing of after.ink) {
-    const id = thing.id
-    at[id] = when(id)
-  }
+  for (const thing of after.nodes) stamp(thing.id)
+  for (const thing of after.edges) stamp(thing.id)
+  for (const thing of after.ink) stamp(thing.id)
 
   const gone = noTimes()
 

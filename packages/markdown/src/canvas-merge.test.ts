@@ -78,6 +78,19 @@ describe('stamping an edit', () => {
 })
 
 describe('merging two copies of a canvas', () => {
+  test('a canvas read without times keeps each side’s edit to its own card', () => {
+    const [a, b, c] = [card('a'), card('b'), card('c')]
+    const file = plane({ nodes: [a, b, c] })
+    const moved = stamped(file, { ...file, nodes: [a, b, { ...c, x: 200 }] }, 100)
+    const typed = stamped(file, { ...file, nodes: [card('a', 'typed'), b, c] }, 200)
+
+    for (const both of [merged(moved, typed, 1000), merged(typed, moved, 1000)]) {
+      expect(both.nodes.find((node) => node.id === 'a')).toMatchObject({ text: 'typed' })
+      expect(both.nodes.find((node) => node.id === 'c')?.x).toBe(200)
+    }
+    expect(typed.at).toEqual({ a: 200 })
+  })
+
   test('keeps everything both sides added', () => {
     const shared = stamped(plane(), plane({ nodes: [card('shared')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [...shared.nodes, card('mine')] }, 200)
@@ -448,11 +461,11 @@ describe('what stamping an edit compares', () => {
     expect(Object.keys(out.moved ?? {})).toHaveLength(1)
   })
 
-  test('a plane read from a file gets a time against everything on it', () => {
+  test('a plane read from a file times only what the edit touched, so the untouched lose to any edit elsewhere', () => {
     const arrived = plane({ nodes: [card('a'), card('b')], at: {} })
     const stampedNow = stamped(arrived, { ...arrived, nodes: [...arrived.nodes, card('c')] }, 3000)
 
-    expect(stampedNow.at).toEqual({ a: 3000, b: 3000, c: 3000 })
+    expect(stampedNow.at).toEqual({ c: 3000 })
   })
 })
 
@@ -469,7 +482,7 @@ describe('ids an object would answer from its prototype', () => {
     const before = readCanvas(OBSIDIAN)
     const after = stamped(before, { ...before, nodes: [...before.nodes, card('a')] }, 100)
 
-    expect(after.at).toEqual({ a: 100, constructor: 100, toString: 100 })
+    expect(after.at).toEqual({ a: 100 })
     expect(ids(readCanvas(writeCanvas(after)))).toEqual(['constructor', 'toString', 'a'])
   })
 
