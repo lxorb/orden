@@ -171,8 +171,9 @@
   }
 
   $effect(() => {
-    pagesState.arrived(tab.note.key, store)
-    return () => pagesState.gone(tab.note.key)
+    const id = tab.id
+    pagesState.arrived(id, store)
+    return () => pagesState.gone(id, store)
   })
 
   $effect(() => {

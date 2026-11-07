@@ -1,19 +1,25 @@
+import { SvelteMap } from 'svelte/reactivity'
 import type { PagesStore } from './store.svelte'
+import { workspace } from '../workspace.svelte'
 
 class Pages {
-  current = $state.raw<{ store: PagesStore } | null>(null)
-  private key: string | null = null
+  private readonly shown = new SvelteMap<string, PagesStore>()
 
-  arrived(key: string, store: PagesStore) {
-    this.key = key
-    this.current = { store }
+  get current(): { store: PagesStore } | null {
+    const store = this.of(workspace.panelTab?.id)
+    return store ? { store } : null
   }
 
-  gone(key: string) {
-    if (this.key !== key) return
+  of(tab: string | null | undefined): PagesStore | null {
+    return tab ? (this.shown.get(tab) ?? null) : null
+  }
 
-    this.key = null
-    this.current = null
+  arrived(tab: string, store: PagesStore) {
+    this.shown.set(tab, store)
+  }
+
+  gone(tab: string, store: PagesStore) {
+    if (this.shown.get(tab) === store) this.shown.delete(tab)
   }
 }
 

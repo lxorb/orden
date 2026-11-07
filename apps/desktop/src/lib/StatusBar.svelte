@@ -6,6 +6,7 @@
   import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
   import { views } from './views.svelte'
+  import { workspace } from './workspace.svelte'
 
   const {
     doc = '',
@@ -14,7 +15,7 @@
   }: { doc?: string; reading?: boolean; vimMode?: VimMode | null } = $props()
 
   const paper = $derived.by(() => {
-    const store = pages.current?.store
+    const store = pages.of(workspace.active?.id)
     return store ? { at: store.showing, count: store.pages.length } : null
   })
 
