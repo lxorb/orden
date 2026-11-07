@@ -18,6 +18,8 @@ const KINDS: [(&str, &str); 4] = [
 
 const MOST_BYTES: usize = 16 * 1024 * 1024;
 
+const CARRYING: Duration = Duration::from_secs(60);
+
 const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
 
 const OPTIONS: [&str; 9] = [
@@ -77,8 +79,7 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
         });
     }
 
-    let output = child
-        .wait_with_output()
+    let output = crate::printed::wait_output(child, CARRYING)
         .map_err(|error| format!("ssh did not finish: {error}"))?;
     let path = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     if output.status.success() && path.starts_with('/') {
@@ -252,5 +253,10 @@ mod tests {
         let refused = carried(sh, &run("echo Permission denied >&2; exit 255"), vec![1]);
         let said = refused.expect_err("refused");
         assert!(said.contains("Permission denied"));
+
+        let started = std::time::Instant::now();
+        let kept = carried(sh, &run("cat >/dev/null; sleep 30 & echo /b.png"), vec![1]);
+        assert_eq!(kept, Ok("/b.png".to_owned()));
+        assert!(started.elapsed() < Duration::from_secs(5));
     }
 }

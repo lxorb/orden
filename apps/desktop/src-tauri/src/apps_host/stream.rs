@@ -1635,12 +1635,11 @@ mod tests {
         use std::os::unix::process::CommandExt as _;
 
         let up = || {
-            Command::new("pactl")
-                .arg("info")
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .status()
-                .is_ok_and(|status| status.success())
+            crate::printed::output(
+                Command::new("pactl").arg("info"),
+                std::time::Duration::from_secs(5),
+            )
+            .is_ok_and(|said| said.status.success())
         };
         if up() || !super::super::installed::on_path("pulseaudio") {
             return None;
