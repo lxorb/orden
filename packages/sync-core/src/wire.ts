@@ -129,6 +129,7 @@ export const MOST_UPDATE_BYTES = 4 * 1024 * 1024
 
 export const PULL_BATCH = 200
 export const PUSH_BATCH = 50
+export const PUSH_BYTES = 6 * 1024 * 1024
 
 export type DocRefusal = 'role' | 'gone' | 'large'
 

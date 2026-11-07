@@ -9,7 +9,9 @@ import {
   opsResponseOf,
   PULL_BATCH,
   pullResponseOf,
+  MOST_UPDATE_BYTES,
   PUSH_BATCH,
+  PUSH_BYTES,
   pushResponseOf,
   type Op,
   type PullDoc,
@@ -689,16 +691,35 @@ async function pushDocs(
   const said = new Set<DocRefusal>()
   let pushed = 0
 
-  for (let at = 0; at < due.length; at += PUSH_BATCH) {
+  let at = 0
+  while (at < due.length) {
     const going: PushDoc[] = []
     const docs = new Map<string, Doc>()
     const before: Change[] = []
-    for (const entry of due.slice(at, at + PUSH_BATCH)) {
-      const doc = await core.doc(entry.id)
-      if (!doc) continue
+    let bytes = 0
+    while (at < due.length && going.length < PUSH_BATCH) {
+      const entry = due[at]
+      const doc = entry ? await core.doc(entry.id) : null
+      if (!doc) {
+        at += 1
+        continue
+      }
       doc.flush()
       const out = doc.outgoing(() => core.nextId('p'))
-      if (!out) continue
+      if (!out) {
+        at += 1
+        continue
+      }
+      if (out.update.byteLength > MOST_UPDATE_BYTES) {
+        at += 1
+        doc.land()
+        if (refusedAgain(core, doc.id, 'large')) said.add('large')
+        before.push(...core.docChanges(doc))
+        continue
+      }
+      if (going.length && bytes + out.update.byteLength > PUSH_BYTES) break
+      at += 1
+      bytes += out.update.byteLength
       docs.set(doc.id, doc)
       going.push({
         id: doc.id,
@@ -711,7 +732,12 @@ async function pushDocs(
       })
       before.push(...core.docChanges(doc))
     }
-    if (!going.length) continue
+    if (!going.length) {
+      if (before.length || said.size)
+        await core.commit([...before, ...refusalRows(core, space, said)])
+      said.clear()
+      continue
+    }
     await core.commit([...before, core.counterRow()])
     if (!alive()) return null
 

@@ -11,6 +11,7 @@ import { attach } from './binding'
 import { inline } from './classify'
 import { HERE } from './docs'
 import { Engine, relative } from './engine'
+import { Refused } from './transport'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
@@ -40,6 +41,7 @@ interface Device {
   routes: string[]
   online: boolean
   unanswered: Set<string>
+  refuses: ((route: string, body: Parameters<typeof frame>[0]) => boolean) | null
   engine: Engine
   launch(): Promise<Engine>
 }
@@ -103,6 +105,7 @@ async function device(
     routes: [],
     online: true,
     unanswered: new Set(),
+    refuses: null,
     engine: null as unknown as Engine,
     async launch() {
       const world: World = {
@@ -110,6 +113,7 @@ async function device(
         account: {
           ask: async (route, body) => {
             if (!made.online || route === 'prepare' || made.unanswered.has(route)) return null
+            if (made.refuses?.(route, body)) throw new Refused(400, 'not a request')
             made.routes.push(route)
             return unframe(await account.handle(id, route, frame(body)))
           },
@@ -1839,5 +1843,45 @@ describe('a note the disk will not read', () => {
     await desk.engine.pass(SPACE)
     await one.engine.pass(SPACE)
     expect(one.disk.files.get(path)).toContain('and the desk wrote this')
+  })
+})
+
+describe('notes pushed together that are larger than one request may carry', () => {
+  const MOST_BODY = 8 * 1024 * 1024
+  const seeded: Seeded[] = [
+    { id: 'b1', name: 'Big 1.md', text: '# Big 1\n' },
+    { id: 'b2', name: 'Big 2.md', text: '# Big 2\n' },
+    { id: 'b3', name: 'Big 3.md', text: '# Big 3\n' },
+    { id: 's1', name: 'Small.md', text: '# Small\n' },
+  ]
+
+  async function grown(sizes: Record<string, number>) {
+    const account = new ReferenceAccount(new Clock(), seeded)
+    const one = await device(account, 'd0', seeded)
+    one.refuses = (route, body) => route === 'push' && frame(body).byteLength > MOST_BODY
+    for (const note of seeded) {
+      const text = `${note.text}${'w'.repeat(sizes[note.id] ?? 10)}\n`
+      one.disk.files.set(`${ROOT}/${note.name}`, text)
+      await one.engine.saved(`${ROOT}/${note.name}`, text)
+    }
+    await one.engine.pass(SPACE)
+    return { account, one }
+  }
+
+  test('go in requests the account takes, and every one arrives', async () => {
+    const big = 3 * 1024 * 1024
+    const { account } = await grown({ b1: big, b2: big, b3: big })
+    for (const note of seeded) {
+      expect((await textOn(account, note.id)).length).toBeGreaterThan(note.id === 's1' ? 10 : big)
+    }
+  })
+
+  test('one too large to send is left here and said, and the rest still arrive', async () => {
+    const { account, one } = await grown({ b1: 9 * 1024 * 1024 })
+    expect(await textOn(account, 'b1')).toBe('# Big 1\n')
+    for (const id of ['b2', 'b3', 's1'])
+      expect((await textOn(account, id)).length).toBeGreaterThan(10)
+    const [log] = await one.engine.core.store.read([scan('log')])
+    expect(log.some((row) => row.failed === 'that note is too large')).toBe(true)
   })
 })
