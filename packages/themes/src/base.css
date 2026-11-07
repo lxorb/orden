@@ -2205,3 +2205,79 @@ select:focus-visible,
 figure.query {
   margin: 0;
 }
+
+@media (forced-colors: active) {
+  .nib-switch {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .nib-switch::after {
+    background: CanvasText;
+  }
+
+  .nib-switch.on {
+    border-color: Highlight;
+    background: Highlight;
+  }
+
+  .nib-switch.on::after {
+    background: HighlightText;
+  }
+
+  .nib-switch.off {
+    opacity: 1;
+    border-color: GrayText;
+  }
+
+  .nib-switch.off::after {
+    background: GrayText;
+  }
+
+  .nib-slider::-webkit-slider-runnable-track {
+    background:
+      linear-gradient(Highlight, Highlight) var(--dir-start) / var(--fill) 100% no-repeat,
+      GrayText;
+  }
+
+  .nib-slider::-webkit-slider-thumb {
+    background: CanvasText;
+  }
+
+  .nib-segmented {
+    border: 1px solid CanvasText;
+  }
+
+  .nib-segmented-thumb {
+    display: none;
+  }
+
+  .nib-segmented button.on,
+  .nib-segmented.has-thumb button.on {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .nib-row.is-on,
+  .nib-row.is-picked,
+  .nib-tile.is-on,
+  .nib-chip.is-on,
+  .nib-glyph.is-on {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .nib-badge.is-on {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+@media (forced-colors: active) and (hover: hover) {
+  .nib-row:hover {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+  }
+}
