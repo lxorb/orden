@@ -70,7 +70,10 @@
     untrack(() => thumbs.want(folder, wanted))
   })
 
-  $effect(() => () => thumbs.clear())
+  $effect(() => () => {
+    thumbs.clear()
+    clearTimeout(opening)
+  })
 
   const entryAt = $derived(cursorAt >= 0 ? cursorAt : 0)
 

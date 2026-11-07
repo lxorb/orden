@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
   import { plural, t } from '../i18n.svelte'
@@ -25,6 +26,9 @@
       : (view.rows.find((one) => one.name === view.picked.cursor) ?? null),
   )
   const path = $derived(entry ? view.pathOf(entry.name) : (view.listing?.path ?? null))
+  const same = $derived(
+    entry ? [entry.name, entry.folder, entry.size, entry.modified].join('\u0000') : null,
+  )
 
   let facts = $state<Facts | null>(null)
   const SETTLED_MS = 150
@@ -36,7 +40,7 @@
 
   $effect(() => {
     const at = path
-    const shown = entry
+    const shown = same === null ? null : untrack(() => entry)
     facts = null
     media = null
     text = null

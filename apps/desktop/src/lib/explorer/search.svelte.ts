@@ -26,7 +26,7 @@ export class Search {
   readonly root: string
   readonly query: string
   readonly job = identifier()
-  found = $state<Entry[]>([])
+  found = $state.raw<Entry[]>([])
   done = $state(false)
   cut = $state(false)
 
