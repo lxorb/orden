@@ -3496,4 +3496,5 @@ export const bn: Dictionary = {
     'Orden ক্র্যাশ বা আটকে গেলে কী করছিল তা পাঠায়; নোট, নাম, পাথ বা পাসওয়ার্ড কখনো নয়।',
   'Send crash reports to help improve Orden': 'Orden উন্নত করতে সাহায্য করতে ক্র্যাশ রিপোর্ট পাঠান',
   'Move to {space}?': '{space}-এ সরাবেন?',
+  'macOS can start dictation with this key too.': 'macOS এই কী দিয়েও ডিক্টেশন শুরু করতে পারে।',
 }

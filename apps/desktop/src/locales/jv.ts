@@ -3423,4 +3423,5 @@ export const jv: Dictionary = {
     'Ngirim apa sing ditindakake Orden nalika crash utawa macet; ora tau cathetan, jeneng, path utawa sandhi.',
   'Send crash reports to help improve Orden': 'Kirim laporan crash kanggo mbantu nambah apik Orden',
   'Move to {space}?': 'Pindhah menyang {space}?',
+  'macOS can start dictation with this key too.': 'macOS uga bisa miwiti dikte nganggo tombol iki.',
 }

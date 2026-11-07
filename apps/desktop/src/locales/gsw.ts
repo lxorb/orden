@@ -3525,4 +3525,6 @@ export const gsw: Dictionary = {
     'Schickt, was Orden bim Absturz oder Hänger gmacht het; nie Notize, Näme, Pfäd oder Passwörter.',
   'Send crash reports to help improve Orden': 'Absturzbricht schicke, zum Orden besser mache',
   'Move to {space}?': 'Nach {space} verschiebe?',
+  'macOS can start dictation with this key too.':
+    'macOS cha mit dere Taschte au s Diktiere starte.',
 }

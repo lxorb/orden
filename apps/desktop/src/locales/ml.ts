@@ -3550,4 +3550,6 @@ export const ml: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden മെച്ചപ്പെടുത്താൻ സഹായിക്കാൻ ക്രാഷ് റിപ്പോർട്ടുകൾ അയയ്ക്കുക',
   'Move to {space}?': '{space}-ലേക്ക് നീക്കണോ?',
+  'macOS can start dictation with this key too.':
+    'ഈ കീ ഉപയോഗിച്ച് macOS ഡിക്റ്റേഷനും തുടങ്ങിയേക്കാം.',
 }

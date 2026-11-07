@@ -3569,4 +3569,6 @@ export const de: Dictionary = {
     'Sendet, was Orden beim Absturz oder Hänger tat; nie Notizen, Namen, Pfade oder Passwörter.',
   'Send crash reports to help improve Orden': 'Absturzberichte senden, um Orden zu verbessern',
   'Move to {space}?': 'Nach {space} verschieben?',
+  'macOS can start dictation with this key too.':
+    'macOS kann mit dieser Taste auch das Diktieren starten.',
 }

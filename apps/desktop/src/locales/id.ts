@@ -3439,4 +3439,6 @@ export const id: Dictionary = {
   'Send crash reports to help improve Orden':
     'Kirim laporan crash untuk membantu meningkatkan Orden',
   'Move to {space}?': 'Pindahkan ke {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS juga bisa memulai dikte dengan tombol ini.',
 }

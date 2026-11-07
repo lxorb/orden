@@ -3511,4 +3511,6 @@ export const pa: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਲਈ ਕ੍ਰੈਸ਼ ਰਿਪੋਰਟਾਂ ਭੇਜੋ',
   'Move to {space}?': 'ਕੀ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
+  'macOS can start dictation with this key too.':
+    'macOS ਇਸ ਕੁੰਜੀ ਨਾਲ ਡਿਕਟੇਸ਼ਨ ਵੀ ਸ਼ੁਰੂ ਕਰ ਸਕਦਾ ਹੈ।',
 }

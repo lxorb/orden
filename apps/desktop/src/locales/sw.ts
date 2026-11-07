@@ -3544,4 +3544,6 @@ export const sw: Dictionary = {
   'Send crash reports to help improve Orden':
     'Tuma ripoti za kuharibika ili kusaidia kuboresha Orden',
   'Move to {space}?': 'Ihamishe kwenda {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS inaweza pia kuanzisha imla kwa kitufe hiki.',
 }

@@ -3539,4 +3539,6 @@ export const kn: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden ಅನ್ನು ಸುಧಾರಿಸಲು ನೆರವಾಗಲು ಕ್ರ್ಯಾಶ್ ವರದಿಗಳನ್ನು ಕಳುಹಿಸಿ',
   'Move to {space}?': '{space} ಗೆ ಸರಿಸುವುದೇ?',
+  'macOS can start dictation with this key too.':
+    'macOS ಈ ಕೀಲಿಯಿಂದ ಡಿಕ್ಟೇಶನ್ ಅನ್ನೂ ಪ್ರಾರಂಭಿಸಬಹುದು.',
 }

@@ -3501,4 +3501,5 @@ export const ps: Dictionary = {
     'لېږي چې Orden د ماتېدو یا درېدو پر مهال څه کول؛ هېڅکله یادښتونه، نومونه، لارې یا پټنومونه نه.',
   'Send crash reports to help improve Orden': 'د Orden د ښه کولو لپاره د ماتیدو راپورونه ولېږه',
   'Move to {space}?': '{space} ته یې ولیږدوئ؟',
+  'macOS can start dictation with this key too.': 'macOS ښايي په دې کیلي سره ډیکټیشن هم پیل کړي.',
 }

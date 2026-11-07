@@ -3339,4 +3339,5 @@ export const zhHant: Dictionary = {
     '傳送 Orden 當機或凍結時正在做什麼；絕不傳送筆記、名稱、路徑或密碼。',
   'Send crash reports to help improve Orden': '傳送當機報告，協助改善 Orden',
   'Move to {space}?': '移動到 {space}？',
+  'macOS can start dictation with this key too.': 'macOS 也可能用這個鍵開始聽寫。',
 }

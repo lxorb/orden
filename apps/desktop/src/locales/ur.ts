@@ -3497,4 +3497,5 @@ export const ur: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden کو بہتر بنانے میں مدد کے لیے کریش رپورٹیں بھیجیں',
   'Move to {space}?': '{space} میں منتقل کریں؟',
+  'macOS can start dictation with this key too.': 'macOS اس کلید سے ڈکٹیشن بھی شروع کر سکتا ہے۔',
 }

@@ -3397,4 +3397,5 @@ export const ko: Dictionary = {
     'Orden이 충돌하거나 멈췄을 때 하던 일을 보냅니다. 메모, 이름, 경로, 비밀번호는 보내지 않습니다.',
   'Send crash reports to help improve Orden': '충돌 보고서를 보내 Orden 개선에 도움 주기',
   'Move to {space}?': '{space}(으)로 옮길까요?',
+  'macOS can start dictation with this key too.': 'macOS가 이 키로 받아쓰기도 시작할 수 있습니다.',
 }

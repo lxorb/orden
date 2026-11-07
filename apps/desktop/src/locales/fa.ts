@@ -3506,4 +3506,6 @@ export const fa: Dictionary = {
     'می‌فرستد Orden هنگام خرابی یا هنگ چه می‌کرد؛ هرگز یادداشت، نام، مسیر یا گذرواژه.',
   'Send crash reports to help improve Orden': 'ارسال گزارش خرابی برای کمک به بهبود Orden',
   'Move to {space}?': 'به {space} منتقل شود؟',
+  'macOS can start dictation with this key too.':
+    'macOS ممکن است با این کلید دیکته را هم آغاز کند.',
 }

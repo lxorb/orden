@@ -3517,4 +3517,5 @@ export const te: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden ను మెరుగుపరచడంలో సహాయపడటానికి క్రాష్ నివేదికలను పంపు',
   'Move to {space}?': '{space}కి తరలించాలా?',
+  'macOS can start dictation with this key too.': 'ఈ కీతో macOS డిక్టేషన్‌ను కూడా ప్రారంభించవచ్చు.',
 }

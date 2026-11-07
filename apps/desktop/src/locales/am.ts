@@ -3436,4 +3436,5 @@ export const am: Dictionary = {
     'Orden ሲበላሽ ወይም ሲቆም ምን እየሰራ እንደነበር ይልካል፤ ማስታወሻዎች፣ ስሞች፣ መንገዶች ወይም የይለፍ ቃሎች አይላኩም።',
   'Send crash reports to help improve Orden': 'Ordenን ለማሻሻል እንዲረዳ የብልሽት ሪፖርቶችን ላክ',
   'Move to {space}?': 'ወደ {space} ይዛወር?',
+  'macOS can start dictation with this key too.': 'macOS በዚህ ቁልፍም ቃል መጻፍን ሊጀምር ይችላል።',
 }

@@ -3432,4 +3432,6 @@ export const my: Dictionary = {
   'Send crash reports to help improve Orden':
     'Orden ကို ပိုကောင်းအောင် ကူညီရန် ပျက်ကျမှု အစီရင်ခံစာများ ပို့ရန်',
   'Move to {space}?': '{space} သို့ ရွှေ့မလား?',
+  'macOS can start dictation with this key too.':
+    'macOS သည် ဤခလုတ်ဖြင့် အသံဖြင့်စာရိုက်ခြင်းကိုလည်း စတင်နိုင်သည်။',
 }
