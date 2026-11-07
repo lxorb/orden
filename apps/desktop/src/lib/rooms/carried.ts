@@ -177,6 +177,10 @@ export class CarriedPlaneRoom extends JoinedRoom {
     return this.door.caughtUp
   }
 
+  get awareness(): Awareness {
+    return this.door.awareness
+  }
+
   hand(at: Point | null, drawing: InkStroke | null) {
     this.door.announce(HAND, () => (at ? saidHand(at, drawing) : null))
   }

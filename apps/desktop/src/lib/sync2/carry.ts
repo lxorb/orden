@@ -54,7 +54,7 @@ export async function carry(
   if ('surface' in carried.on) {
     const room = new CarriedPlaneRoom({ ...entering, surface: carried.on.surface })
     rooms.carried.set(key, { live: carried.on.surface, room })
-    return room
+    return { hand: room.hand.bind(room), awareness: room.awareness }
   }
   const live = 'note' in carried.on ? carried.on.note.live : NOBODY
   const room = new CarriedRoom({ ...entering, note: live })
