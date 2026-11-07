@@ -24,6 +24,7 @@ export function settled<T extends Box & { id: string }>(
   windows: readonly T[],
   still: ReadonlySet<string>,
   named = 0,
+  keepTogether = true,
 ): T[] {
   const under = Math.max(APART_Y, named)
   const out = windows.map((one) => ({ ...one }))
@@ -38,7 +39,7 @@ export function settled<T extends Box & { id: string }>(
         if (!away) continue
         const holdA = still.has(a.id)
         const holdB = still.has(b.id)
-        if (holdA && holdB) continue
+        if (holdA && holdB && keepTogether) continue
         const shareB = holdA ? 1 : holdB ? 0 : 0.5
         b.x += away.x * shareB
         b.y += away.y * shareB

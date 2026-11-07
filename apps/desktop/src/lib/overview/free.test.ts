@@ -104,3 +104,13 @@ test('several windows held at once each stay under the hand, and the cell makes 
   expect(out.find((one) => one.id === 'a3')).toMatchObject(held.get('a3') ?? {})
   expect(clear(out)).toBe(true)
 })
+
+test('windows each kept where they were put are moved apart where they lie on each other, at rest', () => {
+  const windows = [at('a', 0, 0), at('b', 40, 30), at('c', 400, 0), at('d', 420, 20)]
+  const still = new Set(['a', 'b', 'c', 'd'])
+  expect(clear(settled(windows, still))).toBe(false)
+  const after = settled(windows, still, 0, false)
+  expect(clear(after)).toBe(true)
+  expect(after[0]).toEqual(windows[0])
+  expect(after[2]).toEqual(windows[2])
+})

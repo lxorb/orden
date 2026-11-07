@@ -15,7 +15,7 @@ export interface TabKindTraits {
   readonly exports: 'note' | 'canvas' | 'pages' | 'file' | 'none'
   readonly selection: 'words' | 'drawing' | 'terminal' | 'page' | null
   readonly outsideTitle: boolean
-  readonly preview: 'reading' | 'scrollback' | 'photograph' | 'picture'
+  readonly preview: 'reading' | 'scrollback' | 'photograph' | 'drawn' | 'picture'
   readonly panels: readonly TabPanel[]
 }
 
@@ -55,7 +55,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: [],
   },
   pdf: {
@@ -73,7 +73,7 @@ export const TAB_KINDS = {
     exports: 'file',
     selection: 'page',
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: ['outline', 'links'],
   },
   canvas: {
@@ -91,7 +91,7 @@ export const TAB_KINDS = {
     exports: 'canvas',
     selection: 'drawing',
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: ['links'],
   },
   pages: {
@@ -109,7 +109,7 @@ export const TAB_KINDS = {
     exports: 'pages',
     selection: 'drawing',
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: ['outline', 'links'],
   },
   web: {
@@ -163,7 +163,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: [],
   },
   chat: {
@@ -181,7 +181,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: [],
   },
   channel: {
@@ -199,7 +199,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: [],
   },
   application: {
@@ -235,7 +235,7 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
-    preview: 'picture',
+    preview: 'drawn',
     panels: [],
   },
 } as const satisfies Record<string, TabKindTraits>

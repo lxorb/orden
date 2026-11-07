@@ -21,12 +21,14 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   const from = [...pane.querySelectorAll('*')]
   const to = [...copy.querySelectorAll('*')]
   const canvases: [HTMLCanvasElement, HTMLCanvasElement][] = []
+  const frames: [HTMLVideoElement, Element][] = []
   const scrolls: [Element, number, number][] = []
   from.forEach((one, index) => {
     const twin = to[index]
     if (!twin) return
     if (one instanceof HTMLCanvasElement && twin instanceof HTMLCanvasElement)
       canvases.push([one, twin])
+    if (one instanceof HTMLVideoElement) frames.push([one, twin])
     if (one.scrollTop || one.scrollLeft) scrolls.push([twin, one.scrollTop, one.scrollLeft])
   })
 
@@ -37,6 +39,10 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   copy.style.width = `${box.width}px`
   copy.style.height = `${box.height}px`
 
+  for (const [video, twin] of frames) {
+    const still = frameOf(video)
+    if (still) twin.replaceWith(still)
+  }
   for (const one of copy.querySelectorAll('iframe, video, audio, object, embed, .cm-cursorLayer'))
     one.remove()
   for (const one of copy.querySelectorAll('[id]')) one.removeAttribute('id')
@@ -83,6 +89,13 @@ export function snapshotOf(paneId: string): (() => { html: string; w: number; h:
   const pane = paneBody(paneId)
   const box = shownBox(paneId)
   if (!pane || !box || box.width <= 0 || box.height <= 0) return null
+  return snapshotFrom(pane, box)
+}
+
+export function snapshotFrom(
+  pane: HTMLElement,
+  box: DOMRect,
+): () => { html: string; w: number; h: number } {
   const { copy, scrolls } = copyOf(pane, box)
   for (const [twin, top, left] of scrolls) twin.setAttribute(SCROLLED, `${top} ${left}`)
   return () => {
@@ -119,6 +132,21 @@ function scrolledTo(places: readonly [Element, number, number][]) {
     twin.scrollTop = top
     twin.scrollLeft = left
   }
+}
+
+function frameOf(video: HTMLVideoElement): HTMLCanvasElement | null {
+  if (!video.videoWidth || !video.videoHeight) return null
+  const canvas = document.createElement('canvas')
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  canvas.className = video.className
+  canvas.style.cssText = video.style.cssText
+  try {
+    canvas.getContext('2d')?.drawImage(video, 0, 0)
+  } catch {
+    return null
+  }
+  return canvas
 }
 
 function drawnOnto(canvas: HTMLCanvasElement, twin: HTMLCanvasElement) {

@@ -207,6 +207,31 @@ def drive(browser: Browser) -> None:
     shot(page, "again")
     stayed("again")
     at_rest(page, "again")
+
+    empty = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Empty A")
+    if not empty:
+        wrong("[empty carry] Empty A has no bubble")
+        page.close()
+        return
+    grab = [empty["label"][0] + empty["label"][2] / 2, empty["label"][1] + empty["label"][3] / 2]
+    page.mouse.move(grab[0], grab[1])
+    page.mouse.down()
+    for step in range(1, 31):
+        page.mouse.move(grab[0] + 6 * step, grab[1] + 3 * step)
+        page.wait_for_timeout(16)
+    page.wait_for_timeout(500)
+    carried = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Empty A")
+    page.mouse.up()
+    page.wait_for_timeout(1400)
+    shot(page, "empty-carried")
+    after = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Empty A")
+    moved = [after["box"][0] - empty["box"][0], after["box"][1] - empty["box"][1]] if after else [0, 0]
+    say(f"[empty carry] Empty A moved {moved[0]:.0f}, {moved[1]:.0f} on the canvas")
+    if not carried or abs(carried["box"][0] - empty["box"][0]) < 20:
+        wrong("[empty carry] the empty space's bubble did not follow its name")
+    if not after or abs(moved[0]) < 20:
+        wrong("[empty carry] the empty space did not stay where it was let go")
+    at_rest(page, "empty carried")
     page.close()
 
 if __name__ == "__main__":

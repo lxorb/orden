@@ -1,5 +1,6 @@
 import { peekHistory } from '../terminal/history'
 import { readSpec } from '../terminal/spec'
+import type { Tab } from '../workspace.svelte'
 
 export function readingFrom(doc: string, anchor: number | undefined, most: number): string {
   const at = Math.max(0, Math.min(anchor ?? 0, doc.length))
@@ -16,10 +17,11 @@ export function screenText(serialized: string, rows: number): string {
   return lines.slice(-Math.max(rows, 1)).join('\n')
 }
 
-export async function scrollbackOf(tab: {
-  doc: string
-  note: object
-}): Promise<{ text: string; cols: number } | null> {
+export async function scrollbackOf(tab: Tab): Promise<{ text: string; cols: number } | null> {
+  const live = __EVEN_PLUGIN__
+    ? null
+    : await import('../terminal/sessions.svelte').then((one) => one.screenOf(tab)).catch(() => null)
+  if (live) return live
   const home = (tab.note as { home?: string | null }).home ?? null
   const key = readSpec(tab.doc)?.key ?? ''
   const history = await peekHistory({ space: home, key })

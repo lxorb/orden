@@ -23,6 +23,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/Select.svelte .sheet': 'a touch screen only, and over its own .nib-scrim',
   'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
+  'lib/overview/Offstage.svelte .offstage': 'drawn off the window, where no page is',
   'lib/overview/Overview.svelte .under':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
   'lib/overview/Overview.svelte .floor':

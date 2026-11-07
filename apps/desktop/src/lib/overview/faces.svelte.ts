@@ -47,7 +47,8 @@ class Faces {
   }
 
   take(paneId: string, tab: Tab) {
-    if (tab.inPrivate || TAB_KINDS[tab.kind].preview !== 'picture') return
+    const how = TAB_KINDS[tab.kind].preview
+    if (tab.inPrivate || how === 'reading' || how === 'photograph') return
     const later = snapshotOf(paneId)
     if (!later) return
     setTimeout(() => {
@@ -56,6 +57,11 @@ class Faces {
       if (snapshot.html.length <= LARGEST)
         this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
     }, TAKE_LATER)
+  }
+
+  drew(tab: Tab, snapshot: { html: string; w: number; h: number }) {
+    if (tab.inPrivate || snapshot.html.length > LARGEST || !workspace.tabs.includes(tab)) return
+    this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
   }
 
   photographed(tab: Tab, shot: string) {
