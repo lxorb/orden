@@ -9,7 +9,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 UNEXPLAINED = """
 () => {
-  const pane = document.querySelector('[role="dialog"][aria-label="Settings"]')
+  const pane = document.querySelector('[role="region"][aria-label="Settings"]')
   const rows = [...pane.querySelectorAll('.orden-setting')].filter((row) =>
     !row.closest('.shortcut, .button, .extension') &&
     // A row's control, in the shapes Settings draws them in: a value - a dropdown or a
@@ -102,7 +102,7 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
     page.evaluate("() => window.ordenApp.settings.show('general')")
-    wait_for(page, "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Settings\"]')",
+    wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"]')",
              "the settings")
     every_pane(page)
     the_sentence(page)

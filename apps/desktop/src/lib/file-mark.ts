@@ -19,6 +19,7 @@ import Image from 'lucide/dist/esm/icons/image.mjs'
 import MessageSquare from 'lucide/dist/esm/icons/message-square.mjs'
 import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
 import Server from 'lucide/dist/esm/icons/server.mjs'
+import Cog from 'lucide/dist/esm/icons/settings.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Table from 'lucide/dist/esm/icons/table-2.mjs'
 import { isMarkdownPath } from './space-paths'
@@ -79,6 +80,7 @@ export type FileMark =
   | 'application'
   | 'key'
   | 'time'
+  | 'settings'
 
 export function fileMark(name: string): FileMark {
   if (isWebTarget(name)) return 'web'
@@ -114,6 +116,7 @@ export const MARKS: Record<FileMark, IconNode> = {
   application: Window,
   key: Key,
   time: Clock,
+  settings: Cog,
 }
 
 export function faceOf(mark: FileMark, chosen: boolean): 'mark' | 'letter' {

@@ -8,6 +8,7 @@ import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from '.
 import { isRecord, isString, keep, keepJson, stored, storedText, stringList } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
 import { viewport } from './viewport.svelte'
+import { settingsTab } from './settings/tab-hook'
 
 const PAGE_KEY = 'orden:page'
 const APPEARANCE_KEY = 'orden:export-appearance'
@@ -38,7 +39,6 @@ export type Section =
   | 'export'
 
 class Settings {
-  open = $state(false)
   section = $state<Section>('general')
   listing = $state(true)
   historyOpen = $state(false)
@@ -140,16 +140,29 @@ class Settings {
   space = $state<string | null>(null)
   landsOnField = $state(false)
 
+  get open(): boolean {
+    return settingsTab.seen()
+  }
+
+  set open(on: boolean) {
+    if (on) settingsTab.reveal()
+    else settingsTab.hide()
+  }
+
   show(section?: Section, space: string | null = null, landsOnField = false) {
+    if (section === undefined && space === null && settingsTab.present()) {
+      settingsTab.reveal()
+      return
+    }
     this.space = space
     this.landsOnField = landsOnField
     const moved = section === 'agents' || section === 'llm'
     this.at = moved ? 'access' : null
     this.section = moved ? 'ai' : (section ?? 'general')
     this.listing = section === undefined
-    this.open = true
     this.error = null
     connectors.freshToken = null
+    settingsTab.reveal()
   }
 }
 

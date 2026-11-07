@@ -6,6 +6,7 @@ import { settings } from '../../src/lib/settings.svelte'
 import { theme } from '../../src/lib/theme.svelte'
 import { store } from '../../src/lib/themes/store.svelte'
 import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
+import { workspace } from '../../src/lib/workspace.svelte'
 
 await Promise.all([
   import('@orden/themes/glass'),
@@ -90,6 +91,7 @@ async function opened() {
 }
 
 beforeEach(() => {
+  workspace.restored = true
   localStorage.clear()
   theme.files = [ROSE]
   theme.select('default')

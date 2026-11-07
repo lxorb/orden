@@ -367,11 +367,11 @@ CHECK = r"""
 """
 
 PANES = """
-() => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] nav .item')]
+() => [...document.querySelectorAll('[role="region"][aria-label="Settings"] nav .item')]
   .map((one) => one.textContent.trim()).filter(Boolean)
 """
 
-SETTINGS = '[role="dialog"][aria-label="Settings"]'
+SETTINGS = '[role="region"][aria-label="Settings"]'
 PALETTE = '[role="dialog"]:has(input[role="combobox"])'
 
 class Browser:

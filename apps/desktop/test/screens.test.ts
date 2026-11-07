@@ -96,7 +96,6 @@ describe('every layer in the middle of the window', () => {
       'lib/Palette.svelte',
       'lib/PromptSheet.svelte',
       'lib/QuickQuestion.svelte',
-      'lib/SettingsPanel.svelte',
       'lib/Sheet.svelte',
       'lib/SignIn.svelte',
       'lib/SpacePicker.svelte',

@@ -2,7 +2,6 @@
   import { i18n, t } from '../i18n.svelte'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
-  import { settings } from '../settings.svelte'
   import { within } from '../space-paths'
   import { runner } from '../sync2/runner.svelte'
   import { workspace } from '../workspace.svelte'
@@ -41,7 +40,6 @@
     const space = workspace.spaces.find((one) => within(one.root, path) !== null)
     if (space && space.id !== workspace.activeSpaceId) await workspace.showSpace(space.id)
     await workspace.openEntry(path, { activate: true })
-    settings.open = false
   }
 
   async function end(row: SessionRow) {

@@ -52,6 +52,7 @@
     emptySurface,
     explorerSurface,
     passSurface,
+    settingsSurface,
     timeSurface,
     findBar,
     graphSurface,
@@ -499,6 +500,14 @@
     {#key tab.id}
       {#await passSurface() then PassTab}
         <PassTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'settings'}
+    {#key tab.id}
+      {#await settingsSurface() then SettingsPanel}
+        <SettingsPanel />
       {:catch}
         {@render unreachable()}
       {/await}

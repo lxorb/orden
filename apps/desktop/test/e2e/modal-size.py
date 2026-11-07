@@ -111,11 +111,11 @@ BOX = """
 }
 """
 
-SETTINGS = '[role="dialog"][aria-label="Settings"]'
+SETTINGS = '[role="region"][aria-label="Settings"]'
 
 FRAME = """
 () => {
-  const body = document.querySelector('[role="dialog"][aria-label="Settings"] .body')
+  const body = document.querySelector('[role="region"][aria-label="Settings"] .body')
   const rows = [...body.querySelectorAll('.orden-setting')]
   if (rows.some((row) => row.textContent.includes('Orden’s own'))) return 'real'
   const mode = rows.find((row) => row.querySelector('.orden-segmented'))
@@ -138,13 +138,13 @@ FRAME = """
 
 NAV_SCROLLS = """
 () => {
-  const nav = document.querySelector('[role="dialog"][aria-label="Settings"] nav')
+  const nav = document.querySelector('[role="region"][aria-label="Settings"] nav')
   return nav ? nav.scrollHeight > nav.clientHeight + 1 : null
 }
 """
 
 PANES = """
-() => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] nav .item')]
+() => [...document.querySelectorAll('[role="region"][aria-label="Settings"] nav .item')]
   .map((one) => one.textContent.trim())
 """
 

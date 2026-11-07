@@ -3,7 +3,6 @@
   import { i18n, plural, t } from '../../i18n.svelte'
   import { dur, slide } from '../../motion'
   import { prompt } from '../../prompt.svelte'
-  import { settings } from '../../settings.svelte'
   import { workspace } from '../../workspace.svelte'
   import { keepInNote } from '../ui/keep'
   import { aboutOf, sessionMarkdown } from '../ui/session'
@@ -35,7 +34,6 @@
 
   async function keep(session: Session) {
     await keepInNote(sessionMarkdown(grant.name, [...session.calls].reverse()))
-    settings.open = false
   }
 
   async function clear() {

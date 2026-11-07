@@ -48,7 +48,7 @@ def shortcut_over_a_menu(browser: Browser) -> None:
     wait_for(page, f"({MENU})()", "a row in the file list to hold a menu")
     wait_for(page, f"({MENUS})() > 0", "the row's menu")
     page.keyboard.press("Control+Comma")
-    wait_for(page, "document.querySelector('[role=\"dialog\"] nav')", "Settings, from its shortcut")
+    wait_for(page, "document.querySelector('[role=\"region\"][aria-label=\"Settings\"] nav')", "Settings, from its shortcut")
     up = state(page)
     menus = page.evaluate(MENUS)
     say(f"[menu] Ctrl+, over a row's menu: {up}, {menus} menu(s) up")

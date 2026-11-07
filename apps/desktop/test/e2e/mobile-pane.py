@@ -14,13 +14,13 @@ PHONE_AGENT = (
 )
 
 LISTED = """
-() => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] nav button.item')]
+() => [...document.querySelectorAll('[role="region"][aria-label="Settings"] nav button.item')]
   .map((one) => one.innerText.trim())
 """
 
 def listed(page: Page) -> list[str]:
     page.evaluate("() => { window.ordenApp.settings.show('general'); window.ordenApp.settings.listing = true }")
-    wait_for(page, "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Settings\"] nav button')",
+    wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"] nav button')",
              "the settings' sections")
     wait_for(page, f"() => {LANDED}", "the settings' sheets")
     return page.evaluate(LISTED)

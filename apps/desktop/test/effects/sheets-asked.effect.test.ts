@@ -4,7 +4,7 @@ import { settings } from '../../src/lib/settings.svelte'
 import { reactive, root, watch } from './runes.svelte'
 
 function stores() {
-  return reactive({ share: false, publish: false, imports: false, icons: false })
+  return reactive({ settings: false, share: false, publish: false, imports: false, icons: false })
 }
 
 function latches() {
@@ -19,10 +19,7 @@ function latches() {
 }
 
 beforeEach(() => {
-  settings.open = false
   settings.historyOpen = false
-  settings.section = 'general'
-  settings.listing = true
 })
 
 test('nothing is fetched for a sheet nobody has opened', () => {
@@ -33,7 +30,7 @@ test('nothing is fetched for a sheet nobody has opened', () => {
   const stop = root(() => {
     watch(() => {
       runs++
-      if (settings.open) asked.settings = true
+      if (open.settings) asked.settings = true
       if (settings.historyOpen) asked.history = true
       if (open.share) asked.share = true
       if (open.publish) asked.publish = true
@@ -55,7 +52,7 @@ test('one sheet opening asks for that sheet and no other', () => {
 
   const stop = root(() => {
     watch(() => {
-      if (settings.open) asked.settings = true
+      if (open.settings) asked.settings = true
       if (settings.historyOpen) asked.history = true
       if (open.share) asked.share = true
       if (open.publish) asked.publish = true
@@ -65,15 +62,12 @@ test('one sheet opening asks for that sheet and no other', () => {
   })
 
   flushSync()
-  settings.show('editor')
+  settings.historyOpen = true
   flushSync()
 
-  expect(settings.section).toBe('editor')
-  expect(settings.listing).toBe(false)
-  expect(asked.settings).toBe(true)
   expect(asked).toStrictEqual({
-    settings: true,
-    history: false,
+    settings: false,
+    history: true,
     share: false,
     publish: false,
     imports: false,
@@ -90,31 +84,31 @@ test('a sheet closed and opened again is the sheet that is already here', () => 
 
   const stop = root(() => {
     watch(() => {
-      if (settings.open && !asked.settings) fetches.settings++
+      if (open.settings && !asked.settings) fetches.settings++
       if (open.share && !asked.share) fetches.share++
-      if (settings.open) asked.settings = true
+      if (open.settings) asked.settings = true
       if (open.share) asked.share = true
     })
   })
 
   flushSync()
-  settings.show()
+  open.settings = true
   flushSync()
   open.share = true
   flushSync()
   expect(fetches).toStrictEqual({ settings: 1, share: 1 })
 
-  settings.open = false
+  open.settings = false
   open.share = false
   flushSync()
   expect(asked.settings).toBe(true)
   expect(asked.share).toBe(true)
 
-  settings.show()
+  open.settings = true
   flushSync()
-  settings.open = false
+  open.settings = false
   flushSync()
-  settings.show()
+  open.settings = true
   flushSync()
   open.share = true
   flushSync()
@@ -136,7 +130,7 @@ test('the effect does not wake itself, however many latches it sets', () => {
   const stop = root(() => {
     watch(() => {
       runs++
-      if (settings.open) asked.settings = true
+      if (open.settings) asked.settings = true
       if (settings.historyOpen) asked.history = true
       if (open.share) asked.share = true
       if (open.publish) asked.publish = true
@@ -148,7 +142,7 @@ test('the effect does not wake itself, however many latches it sets', () => {
   flushSync()
   expect(runs).toBe(1)
 
-  settings.open = true
+  open.settings = true
   settings.historyOpen = true
   open.share = true
   open.publish = true

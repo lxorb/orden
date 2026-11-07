@@ -133,7 +133,7 @@ export const phoneYou = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/PhoneYou.svelte'),
 )
 
-export const settingsSheet = latched(() => import('./SettingsPanel.svelte'))
+export const settingsSurface = held(() => import('./SettingsPanel.svelte'))
 
 export const pagesNavigator = held(() =>
   __EVEN_PLUGIN__

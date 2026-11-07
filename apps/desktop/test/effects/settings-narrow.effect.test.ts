@@ -17,7 +17,6 @@ let shown: ReturnType<typeof mount> | undefined
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
-  settings.open = false
   viewport.narrow = false
 })
 
@@ -25,10 +24,9 @@ function open(narrow: boolean) {
   viewport.narrow = narrow
   settings.section = 'appearance'
   settings.listing = false
-  settings.open = true
   shown = mount(SettingsPanel, { target: document.body })
   flushSync()
-  return document.querySelector('[role="dialog"]')
+  return document.querySelector('[role="region"][aria-label="Settings"]')
 }
 
 test('a narrow window shows the list or a pane, one at a time, with a way back', () => {

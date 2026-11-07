@@ -2,6 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { settings } = await import('./settings.svelte')
+const { workspace } = await import('./workspace.svelte')
 const { reservedName } = await import('./reserved-name.svelte')
 const NameField = (await import('./NameField.svelte')).default
 
@@ -38,6 +39,7 @@ function typed(input: HTMLInputElement, words: string) {
 beforeEach(() => {
   oncommit.mockClear()
   oncancel.mockClear()
+  workspace.restored = true
   settings.open = false
   settings.landsOnField = false
   reservedName.dismiss()

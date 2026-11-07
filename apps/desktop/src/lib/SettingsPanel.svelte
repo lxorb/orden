@@ -1,9 +1,7 @@
 <script lang="ts">
   import { dropOver } from './drag-paths'
   import { closeOnBack } from './backstack.svelte'
-  import { overlays } from './overlays'
   import { cubicOut } from 'svelte/easing'
-  import type { EditorView } from '@orden/editor'
   import Swatches from './Swatches.svelte'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
@@ -54,14 +52,11 @@
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
   import { readableSize, usage } from './usage.svelte'
-  import { pageHeight, viewport } from './viewport.svelte'
+  import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
-  import { dur, fade, fly, scale, slide } from './motion'
+  import { dur, fly, slide } from './motion'
   import { waited } from './timing'
-  import { trap } from './trap'
   import Cross from './Cross.svelte'
-
-  const { view }: { view?: EditorView | undefined } = $props()
 
   const offered = new Offered()
 
@@ -83,7 +78,7 @@
   let query = $state('')
   let accessDetail = $state(false)
 
-  const panes = $derived(preferences(view))
+  const panes = $derived(preferences())
   const current = $derived(panes.find((one) => one.id === settings.section))
 
   const exportActions = () =>
@@ -113,14 +108,14 @@
     if (!SECTIONS.some((one) => one.id === settings.section)) settings.section = 'account'
   })
 
-  $effect(() => {
-    if (settings.open) return
+  $effect(() => () => {
     store.close()
+    rebind.forget()
     settings.landsOnField = false
   })
 
   $effect(() => {
-    if (!settings.open || settings.section !== 'account') leaving = false
+    if (settings.section !== 'account') leaving = false
   })
 
   let body = $state<HTMLElement>()
@@ -128,7 +123,7 @@
   $effect(() => {
     const label = landing.label
     const box = body
-    if (!label || !box || !settings.open) return
+    if (!label || !box) return
 
     query = ''
     const frame = requestAnimationFrame(() => {
@@ -329,151 +324,116 @@
   })
 
   $effect(() => {
-    if (!settings.open || settings.section !== 'shortcuts') rebind.forget()
+    if (settings.section !== 'shortcuts') rebind.forget()
   })
 
   $effect(() => {
-    if (settings.open && settings.section === 'shortcuts') globalKeys.follow()
+    if (settings.section === 'shortcuts') globalKeys.follow()
   })
-
-  function appear(node: Element) {
-    return stacked
-      ? fly(node, { y: 40, duration: dur(240), easing: cubicOut })
-      : scale(node, { duration: dur(200), start: 0.97, easing: cubicOut })
-  }
 
   const enter = (x: number) =>
     stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
-  $effect.pre(() => (settings.open ? overlays.show(() => (settings.open = false)) : undefined))
-  $effect.pre(() => closeOnBack(settings.open, () => (settings.open = false)))
-  $effect.pre(() =>
-    closeOnBack(settings.open && !settings.listing, () => (settings.listing = true)),
-  )
+  $effect.pre(() => closeOnBack(stacked && !settings.listing, () => (settings.listing = true)))
 </script>
 
-{#if settings.open}
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: dur(140) }}
-    onclick={() => (settings.open = false)}
-  ></div>
+<div
+  class="sheet"
+  class:phone={stacked}
+  role="region"
+  aria-label={t('Settings')}
+  data-region="editor"
+>
+  {#if stacked && !settings.listing}
+    <header class="bar">
+      <button class="orden-glyph" aria-label={t('Back')} onclick={() => (settings.listing = true)}>
+        <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+      </button>
 
-  <div
-    class="orden-screen is-centred is-steady sheet"
-    class:phone={stacked}
-    style:height={pageHeight()}
-    use:trap
-    role="dialog"
-    aria-modal="true"
-    aria-label={t('Settings')}
-    transition:appear
-  >
-    {#if stacked}
-      <header class="bar">
-        {#if !settings.listing}
-          <button
-            class="orden-glyph"
-            aria-label={t('Back')}
-            onclick={() => (settings.listing = true)}
-          >
-            <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
-          </button>
-        {/if}
+      <h1>{titleOf(settings.section)}</h1>
+    </header>
+  {/if}
 
-        <h1 class:inset={settings.listing}>
-          {settings.listing ? t('Settings') : titleOf(settings.section)}
-        </h1>
+  {#if !stacked || settings.listing}
+    <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
+      {#if !stacked}
+        <h1>{t('Settings')}</h1>
+      {/if}
 
-        <button class="orden-glyph" aria-label={t('Close')} onclick={() => (settings.open = false)}>
-          <Cross />
-        </button>
-      </header>
-    {/if}
+      <label class="orden-field search">
+        <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+        <input
+          bind:value={query}
+          placeholder={t('Search settings')}
+          spellcheck="false"
+          autocapitalize="off"
+          autocorrect="off"
+        />
+      </label>
 
-    {#if !stacked || settings.listing}
-      <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
-        {#if !stacked}
-          <h1>{t('Settings')}</h1>
-        {/if}
-
-        <label class="orden-field search">
-          <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
-          <input
-            bind:value={query}
-            placeholder={t('Search settings')}
-            spellcheck="false"
-            autocapitalize="off"
-            autocorrect="off"
-          />
-        </label>
-
-        {#if stacked && query}
-          {@render results()}
-        {:else}
-          {#each GROUPS as group, index (index)}
-            <div class="group">
-              {#each group as item (item.id)}
-                <button
-                  class="item orden-row"
-                  class:is-on={!stacked && !query && settings.section === item.id}
-                  onclick={() => go(item.id)}
+      {#if stacked && query}
+        {@render results()}
+      {:else}
+        {#each GROUPS as group, index (index)}
+          <div class="group">
+            {#each group as item (item.id)}
+              <button
+                class="item orden-row"
+                class:is-on={!stacked && !query && settings.section === item.id}
+                onclick={() => go(item.id)}
+              >
+                <svg class="glyph orden-row-mark" viewBox="0 0 16 16"
+                  ><path d={ICONS[item.id]} /></svg
                 >
-                  <svg class="glyph orden-row-mark" viewBox="0 0 16 16"
-                    ><path d={ICONS[item.id]} /></svg
-                  >
-                  <span class="orden-row-label">{item.label}</span>
-                  <svg class="chevron orden-mirror" viewBox="0 0 16 16"
-                    ><path d="M6 3l5 5-5 5" /></svg
-                  >
-                </button>
-              {/each}
-            </div>
-          {/each}
-        {/if}
-      </nav>
-    {/if}
-
-    {#if !stacked || !settings.listing}
-      <div
-        class="body"
-        data-scrolls
-        bind:this={body}
-        use:scrollbar={settings.section}
-        in:fly={enter(24)}
-      >
-        {#if query && !stacked}
-          <div class="pane">
-            <h2>{t('Search settings')}</h2>
-            {@render results()}
+                <span class="orden-row-label">{item.label}</span>
+                <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg
+                >
+              </button>
+            {/each}
           </div>
-        {:else}
-          {#key settings.section}
-            <div class="pane" in:arrive>
-              {#if !stacked}
-                <h2>{titleOf(settings.section)}</h2>
-              {/if}
-              {#if declared.problems.length}
-                <div class="hint bad declared-problems" role="alert">
-                  <strong>{t('The settings file has a problem')}</strong>
-                  {#each declared.problems as one, index (index)}<p>{one}</p>{/each}
-                </div>
-              {/if}
-              {@render pane()}
-            </div>
-          {/key}
-        {/if}
+        {/each}
+      {/if}
+    </nav>
+  {/if}
 
-        {#if settings.error}
-          <p class="hint bad" transition:slide={{ duration: dur(160) }}>{t(settings.error)}</p>
-        {/if}
-      </div>
-    {/if}
-  </div>
+  {#if !stacked || !settings.listing}
+    <div
+      class="body"
+      data-scrolls
+      bind:this={body}
+      use:scrollbar={settings.section}
+      in:fly={enter(24)}
+    >
+      {#if query && !stacked}
+        <div class="pane">
+          <h2>{t('Search settings')}</h2>
+          {@render results()}
+        </div>
+      {:else}
+        {#key settings.section}
+          <div class="pane" in:arrive>
+            {#if !stacked}
+              <h2>{titleOf(settings.section)}</h2>
+            {/if}
+            {#if declared.problems.length}
+              <div class="hint bad declared-problems" role="alert">
+                <strong>{t('The settings file has a problem')}</strong>
+                {#each declared.problems as one, index (index)}<p>{one}</p>{/each}
+              </div>
+            {/if}
+            {@render pane()}
+          </div>
+        {/key}
+      {/if}
 
-  <ThemeStore />
-{/if}
+      {#if settings.error}
+        <p class="hint bad" transition:slide={{ duration: dur(160) }}>{t(settings.error)}</p>
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<ThemeStore />
 
 {#snippet results()}
   {#if found.length}
@@ -789,7 +749,7 @@
             <button
               class="orden-tag"
               title={t('Remove')}
-              onclick={() => modes.toggleSpellWord(word, view)}
+              onclick={() => modes.toggleSpellWord(word)}
             >
               {word}<Cross small />
             </button>
@@ -804,7 +764,7 @@
         autocapitalize="off"
         autocomplete="off"
         onchange={(event) => {
-          modes.toggleSpellWord(event.currentTarget.value, view)
+          modes.toggleSpellWord(event.currentTarget.value)
           event.currentTarget.value = ''
         }}
       />
@@ -970,24 +930,12 @@
       </div>
       <p class="hint caption">{t('What the others in this space see.')}</p>
 
-      <button
-        class="orden-button"
-        onclick={() => {
-          settings.open = false
-          account.open = true
-        }}
-      >
+      <button class="orden-button" onclick={() => (account.open = true)}>
         {t('Sign in')}
       </button>
     {:else}
       <p class="lead">{t('Not signed in')}</p>
-      <button
-        class="orden-button"
-        onclick={() => {
-          settings.open = false
-          account.open = true
-        }}
-      >
+      <button class="orden-button" onclick={() => (account.open = true)}>
         {t('Sign in')}
       </button>
     {/if}
@@ -1065,7 +1013,7 @@
       label: t('Vim keys'),
       hint: t('Moves and edits in notes with Vim’s keys.'),
       get: () => modes.vim,
-      set: (on) => modes.setVimKeys(on, view),
+      set: (on) => modes.setVimKeys(on),
     })}
   </div>
 
@@ -1416,16 +1364,13 @@
 {/snippet}
 
 <style>
-  .scrim {
-    --scrim-z: var(--z-settings);
-  }
-
   .sheet {
-    --screen-width: var(--screen-panes);
-    z-index: var(--z-settings);
     display: grid;
-    grid-template-columns: clamp(10rem, 32%, 14rem) minmax(0, 1fr);
+    grid-template-columns: clamp(10rem, 28%, 15rem) minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
+    background: var(--surface);
   }
 
   nav {
@@ -1496,6 +1441,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    max-width: var(--screen-pair);
   }
 
   .pane h2 {
@@ -1920,26 +1866,24 @@
   }
 
   .sheet.phone {
-    inset: 0;
-    top: 0;
-    left: 0;
-    translate: none;
-    width: 100%;
-    height: 100dvh;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
+    display: flex;
+    flex-direction: column;
     background: var(--bg);
   }
 
+  .sheet.phone > nav,
+  .sheet.phone > .body {
+    flex: 1;
+    min-height: 0;
+  }
+
   .sheet.phone .bar {
+    flex: none;
     display: flex;
     align-items: center;
     gap: 2px;
-    height: calc(var(--touch-row) + var(--inset-top));
-    padding: var(--inset-top) 6px 0;
+    height: var(--touch-row);
+    padding: 0 6px;
     border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
@@ -1955,10 +1899,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .sheet.phone .bar h1.inset {
-    padding-inline-start: 10px;
   }
 
   .sheet.phone nav {

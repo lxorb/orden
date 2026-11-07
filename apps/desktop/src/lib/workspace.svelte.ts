@@ -134,6 +134,7 @@ import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { agentMarks } from './agent-marks.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
+import { settingsTab } from './settings/tab-hook'
 
 function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
@@ -586,6 +587,10 @@ class Workspace {
     } finally {
       this.restored = true
       ahead.forgetAhead()
+      if (this.settingsAsked) {
+        this.settingsAsked = false
+        this.openSettings()
+      }
     }
   }
 
@@ -1213,7 +1218,16 @@ class Workspace {
   }
 
   openUnsaved(
-    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application' | 'explorer' | 'pass' | 'time',
+    kind:
+      | 'note'
+      | 'canvas'
+      | 'pages'
+      | 'terminal'
+      | 'application'
+      | 'explorer'
+      | 'pass'
+      | 'time'
+      | 'settings',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
@@ -1460,6 +1474,36 @@ class Workspace {
     }
 
     this.persist()
+  }
+
+  private settingsAsked = false
+
+  openSettings() {
+    if (!this.restored) {
+      this.settingsAsked = true
+      return
+    }
+    const open = this.settingsTab
+    if (open) {
+      this.activate(open.id)
+      return
+    }
+    this.openUnsaved('settings', '', t('Settings'))
+  }
+
+  closeSettings() {
+    this.settingsAsked = false
+    const open = this.settingsTab
+    if (open) this.close(open.id, false)
+  }
+
+  get settingsTab(): Tab | null {
+    return this.tabs.find((tab) => tab.kind === 'settings') ?? null
+  }
+
+  get settingsShown(): boolean {
+    const tab = this.settingsTab
+    return tab !== null && this.panes.at(tab.paneId)?.activeTabId === tab.id
   }
 
   openChat() {
@@ -3984,7 +4028,7 @@ class Workspace {
       const before = this.active
       await this.openEntry(path)
       const tab = this.active
-      if (!tab || (tab === before && !samePath(tab.path, path))) continue
+      if (!tab || tab.kind === 'settings' || (tab === before && !samePath(tab.path, path))) continue
 
       this.moveTab(tab.id, landing.paneId, at)
       if (at !== null) at += 1
@@ -4109,6 +4153,11 @@ function shellWords(doc: string): object | null {
 }
 
 export const workspace = new Workspace()
+
+settingsTab.reveal = () => workspace.openSettings()
+settingsTab.hide = () => workspace.closeSettings()
+settingsTab.seen = () => workspace.settingsShown
+settingsTab.present = () => workspace.settingsTab !== null
 
 links.archivedIn = (root) => workspace.archive.keysOf(root)
 links.spaceOf = (path) => workspace.rootHolding(path)

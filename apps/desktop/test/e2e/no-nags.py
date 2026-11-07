@@ -74,7 +74,7 @@ def desktop(browser: Browser) -> None:
     page.evaluate("() => window.ordenApp.settings.show('account')")
     wait_for(
         page,
-        """() => [...document.querySelectorAll('[role="dialog"][aria-label="Settings"] button')]
+        """() => [...document.querySelectorAll('[role="region"][aria-label="Settings"] button')]
               .some((one) => one.innerText.trim() === 'Sign in')""",
         "Sign in in Settings > Account",
     )

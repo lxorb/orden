@@ -101,6 +101,7 @@ describe('the marks a row wears', () => {
     'application',
     'key',
     'time',
+    'settings',
   ]
 
   test('every kind of row has one, and a folder is not a kind of row', () => {

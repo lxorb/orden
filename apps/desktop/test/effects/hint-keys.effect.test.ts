@@ -12,7 +12,6 @@ globalThis.ResizeObserver = class {
 
 test('the `i` turns nothing, and no switch holds anything the keyboard can reach', () => {
   settings.section = 'markdown'
-  settings.open = true
   mount(SettingsPanel, { target: document.body })
   flushSync()
 

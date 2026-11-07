@@ -289,6 +289,25 @@ export const TAB_KINDS = {
     panels: [],
     asksToMove: false,
   },
+  settings: {
+    words: false,
+    extension: null,
+    statusBar: false,
+    mark: 'settings',
+    glyph: null,
+    liveMark: false,
+    editor: false,
+    takesDrops: false,
+    ownBar: false,
+    fileDocument: false,
+    plane: false,
+    exports: 'none',
+    selection: null,
+    outsideTitle: false,
+    preview: 'mark',
+    panels: [],
+    asksToMove: false,
+  },
 } as const satisfies Record<string, TabKindTraits>
 
 export type TabKind = keyof typeof TAB_KINDS

@@ -4,7 +4,6 @@ import type { Excerpt } from '@orden/sync-core/diverge'
 import { message, t } from '../i18n.svelte'
 import { howFor } from '../new-tab'
 import { overlays } from '../overlays'
-import { settings } from '../settings.svelte'
 import { syncMark, undoToastNotice } from '../surfaces.svelte'
 import { afterQuiet } from '../timing'
 import { workspace } from '../workspace.svelte'
@@ -157,7 +156,6 @@ class Asking {
 
   async revisit(note: Held) {
     this.again++
-    settings.open = false
     await workspace.open(note.path)
   }
 

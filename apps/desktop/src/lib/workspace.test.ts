@@ -5060,6 +5060,80 @@ describe('the words of the paper a page note holds', () => {
   })
 })
 
+describe('Settings', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.restored = true
+  })
+
+  test('opens as a tab of its own, not a sheet over the app', async () => {
+    const { settings } = await import('./settings.svelte')
+    settings.show()
+
+    const [tab] = workspace.tabs
+    expect(workspace.tabs).toHaveLength(1)
+    expect(tab?.kind).toBe('settings')
+    expect(tab?.path).toBeNull()
+    expect(workspace.active?.id).toBe(tab?.id)
+    expect(settings.open).toBe(true)
+  })
+
+  test('is one tab however often it is asked for, and asking brings it to the front', async () => {
+    const { settings } = await import('./settings.svelte')
+    settings.show()
+    const first = workspace.active?.id
+    await workspace.open('/space/a.md')
+    expect(settings.open).toBe(false)
+
+    settings.show('shortcuts')
+    settings.show()
+    settings.show('account')
+
+    expect(workspace.tabs.filter((one) => one.kind === 'settings').map((one) => one.id)).toEqual([
+      first,
+    ])
+    expect(workspace.active?.id).toBe(first)
+    expect(settings.open).toBe(true)
+  })
+
+  test('a page asked for is the one shown, and the button keeps the page it was left on', async () => {
+    const { settings } = await import('./settings.svelte')
+    settings.show('appearance')
+    expect(settings.section).toBe('appearance')
+    expect(settings.listing).toBe(false)
+
+    await workspace.open('/space/a.md')
+    settings.show()
+    expect(settings.section).toBe('appearance')
+
+    settings.open = false
+    settings.show()
+    expect(settings.section).toBe('general')
+  })
+
+  test('asked for before the tabs are back, it opens once they are', async () => {
+    vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
+    const { settings } = await import('./settings.svelte')
+    workspace.restored = false
+    settings.show('appearance')
+    expect(workspace.tabs).toHaveLength(0)
+
+    await workspace.restore()
+    expect(workspace.tabs.map((one) => one.kind)).toContain('settings')
+    expect(settings.section).toBe('appearance')
+    vi.unstubAllGlobals()
+  })
+
+  test('closing it leaves no tab, and it is no kind the new tab offers', async () => {
+    const { settings } = await import('./settings.svelte')
+    const { newKinds } = await import('./new-kinds')
+    settings.show()
+    settings.open = false
+    expect(workspace.tabs.some((one) => one.kind === 'settings')).toBe(false)
+    expect(newKinds().map((one) => one.mark)).not.toContain('settings')
+  })
+})
+
 describe('a space and its AGENTS.md', () => {
   const entry = (path: string, children: Entry[] | null = null): Entry => ({
     name: path.split('/').at(-1) ?? '',
@@ -5087,6 +5161,7 @@ describe('a space and its AGENTS.md', () => {
       entry('/space/sub', [entry(NESTED)]),
     ])
     const { settings } = await import('./settings.svelte')
+    workspace.restored = true
     settings.open = false
     sent.length = 0
   })
@@ -5097,7 +5172,7 @@ describe('a space and its AGENTS.md', () => {
     workspace.tree = null
   })
 
-  test('dropped against a pane side opens its settings and moves no other tab', async () => {
+  test('dropped against a pane side opens its settings tab and splits nothing', async () => {
     await workspace.open('/space/a.md')
     const [only] = workspace.panes.all
     if (!only) throw new Error('nothing opened')
@@ -5105,7 +5180,10 @@ describe('a space and its AGENTS.md', () => {
     await workspace.dropNotes([AGENTS], { kind: 'pane', paneId: only.id, zone: 'right' })
 
     expect(workspace.panes.count).toBe(1)
-    expect(workspace.tabsIn(only.id).map((tab) => tab.path)).toEqual(['/space/a.md'])
+    expect(workspace.tabsIn(only.id).map((tab) => tab.path ?? tab.kind)).toEqual([
+      '/space/a.md',
+      'settings',
+    ])
   })
 
   test('is on the disk still, and in the listing that says so', () => {

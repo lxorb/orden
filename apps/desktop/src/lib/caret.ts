@@ -14,6 +14,7 @@ export interface Showing {
     | 'explorer'
     | 'pass'
     | 'time'
+    | 'settings'
   reading: boolean
 }
 

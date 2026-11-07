@@ -77,7 +77,7 @@ def opened(made: Any, origin: str) -> Page:
 
 def import_pane(page: Page) -> None:
     page.evaluate("window.ordenApp.settings.show('import')")
-    wait_for(page, "!!document.querySelector('[role=dialog]')", "Settings > Import")
+    wait_for(page, "!!document.querySelector('[role=region][aria-label=Settings]')", "Settings > Import")
 
 def files(page: Page) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]

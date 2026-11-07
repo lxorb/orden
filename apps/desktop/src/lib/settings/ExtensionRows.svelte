@@ -3,7 +3,6 @@
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import { t } from '../i18n.svelte'
   import { dur, slide } from '../motion'
-  import { settings } from '../settings.svelte'
   import { workspace } from '../workspace.svelte'
   import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'
   import { extensions } from '../web-tab/extensions.svelte'
@@ -22,7 +21,6 @@
   async function options(id: string) {
     const page = await extensions.optionsOf(id)
     if (!page) return
-    settings.open = false
     workspace.openPage(page, 'front')
   }
 </script>

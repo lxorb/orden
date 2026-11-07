@@ -171,7 +171,7 @@ def phone(browser: Browser, dark: bool) -> None:
     page.locator('[role="menuitem"]:has-text("Settings")').wait_for(state="visible", timeout=5000)
     DRIVE.shot(page, f"{tag}you")
     page.locator('[role="menuitem"]:has-text("Settings")').tap()
-    wait_for(page, """document.querySelector('[role="dialog"][aria-label="Settings"]')""", "the settings")
+    wait_for(page, """document.querySelector('[role="region"][aria-label="Settings"]')""", "the settings")
     context.close()
 
 

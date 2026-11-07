@@ -13,7 +13,6 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-const { settings } = await import('../../src/lib/settings.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { connectFake } = await import('../../src/lib/sync2/fake-engine.svelte')
 const SyncPane = (await import('../../src/lib/SyncPane.svelte')).default
@@ -61,16 +60,14 @@ test('v2 has no rule, and lists the notes it holds', () => {
   expect(target.querySelector('.held')?.textContent).toContain('Plan')
 })
 
-test('a press on a held note opens it, out from under the settings', async () => {
+test('a press on a held note opens it in a tab of its own', async () => {
   const opened = vi.spyOn(workspace, 'open').mockResolvedValue(undefined)
   const fake = connectFake([PLAN])
   stop = fake.stop
-  settings.open = true
   flushSync()
 
   target.querySelector<HTMLButtonElement>('.held')?.click()
   await vi.waitFor(() => expect(opened).toHaveBeenCalledWith('/space/Plan.md'))
-  expect(settings.open).toBe(false)
 })
 
 test('the passes are the store’s, and a new one is read as it is written', async () => {

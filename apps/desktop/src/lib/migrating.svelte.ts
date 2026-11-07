@@ -194,8 +194,6 @@ async function spelledAs<T>(format: LinkFormat | undefined, read: () => Promise<
 
 export async function arrive(space: Space, open = true) {
   if (firstVisit.fresh) firstVisit.answered()
-  const { settings } = await import('./settings.svelte')
-  settings.open = false
   if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
   const note = open ? firstNote() : null
   if (note) await workspace.openEntry(note, { activate: true })

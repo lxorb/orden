@@ -4,6 +4,7 @@ import { account } from '../../src/lib/account.svelte'
 import { menu, type MenuItem } from '../../src/lib/menu.svelte'
 import { settings } from '../../src/lib/settings.svelte'
 import SidebarFoot from '../../src/lib/SidebarFoot.svelte'
+import { workspace } from '../../src/lib/workspace.svelte'
 
 afterEach(() => {
   account.user = null
@@ -11,7 +12,8 @@ afterEach(() => {
   settings.open = false
 })
 
-test('a press on the account opens its menu, and Settings in it opens the settings', () => {
+test('a press on the account opens its menu, and Settings in it opens the settings tab', () => {
+  workspace.restored = true
   account.user = { id: 'me', email: 'me@example.com', name: 'Emil' }
   const target = document.createElement('div')
   document.body.append(target)
@@ -28,6 +30,7 @@ test('a press on the account opens its menu, and Settings in it opens the settin
 
   rows.find((one) => one.label === 'Settings')?.run()
   expect(settings.open).toBe(true)
+  expect(workspace.active?.kind).toBe('settings')
 
   void unmount(foot, { outro: false })
   target.remove()

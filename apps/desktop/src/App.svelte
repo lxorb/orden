@@ -67,7 +67,6 @@
     renameNotice,
     joinPending,
     rewriteSheet,
-    settingsSheet,
     shareSheet,
     signInSheet,
     slidesStage,
@@ -184,7 +183,6 @@
   let middle = $state<HTMLElement>()
 
   $effect(() => {
-    if (settings.open) void settingsSheet.ask()
     if (settings.historyOpen) void historySheet.ask()
     if (share.open) void shareSheet.ask()
     if (iconChoice.target) void iconPicker.ask()
@@ -1015,11 +1013,6 @@
 {#if feedbackSheet.asked}
   {#await feedbackSheet.asked then FeedbackSheet}
     <FeedbackSheet />
-  {/await}
-{/if}
-{#if settingsSheet.asked}
-  {#await settingsSheet.asked then SettingsPanel}
-    <SettingsPanel {view} />
   {/await}
 {/if}
 {#if formatBarDoor.asked}

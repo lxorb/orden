@@ -46,11 +46,7 @@
   async function signInTo(kind: LocalKind) {
     const plan = plans.of(provider.id)
     if (!plan.program) return
-    const [{ signIn }, { settings }] = await Promise.all([
-      import('./local/signin'),
-      import('../settings.svelte'),
-    ])
-    settings.open = false
+    const { signIn } = await import('./local/signin')
     await signIn(kind, plan.program, plan.home)
     plans.watch({ id: provider.id, kind })
   }
