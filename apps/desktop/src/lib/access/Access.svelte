@@ -202,14 +202,8 @@
 
         {#if enrolled !== null}
           <div class="card">
-            <div
-              class="orden-setting pressable"
-              role="switch"
-              tabindex="0"
-              aria-checked={enrolled}
-              onclick={enroll}
-              onkeydown={pressed}
-            >
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+            <div class="orden-setting pressable" onclick={enroll}>
               <span class="name"
                 ><span class="orden-named"
                   >{t('Agents on this computer connect on their own')}<Hint
@@ -219,7 +213,15 @@
                   /></span
                 ></span
               >
-              <span class="orden-switch" class:on={enrolled} aria-hidden="true"></span>
+              <span
+                class="orden-switch"
+                class:on={enrolled}
+                role="switch"
+                tabindex="0"
+                aria-checked={enrolled}
+                aria-label={t('Agents on this computer connect on their own')}
+                onkeydown={pressed}
+              ></span>
             </div>
           </div>
         {/if}

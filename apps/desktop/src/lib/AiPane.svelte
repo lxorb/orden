@@ -170,19 +170,8 @@
 
 {#if !keysAreGuarded()}
   <div class="card">
-    <div
-      class="orden-setting setting"
-      role="switch"
-      tabindex="0"
-      aria-checked={browserVault.on}
-      aria-label={t('Keep this browser’s keys in the vault')}
-      onclick={() => void keepBrowserInVault(!browserVault.on)}
-      onkeydown={(event) => {
-        if (event.key !== ' ' && event.key !== 'Enter') return
-        event.preventDefault()
-        void keepBrowserInVault(!browserVault.on)
-      }}
-    >
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="orden-setting setting" onclick={() => void keepBrowserInVault(!browserVault.on)}>
       <span class="name"
         ><span class="orden-named"
           >{t('Keep this browser’s keys in the vault')}<Hint
@@ -190,7 +179,19 @@
           /></span
         ></span
       >
-      <span class="orden-switch" class:on={browserVault.on} aria-hidden="true"></span>
+      <span
+        class="orden-switch"
+        class:on={browserVault.on}
+        role="switch"
+        tabindex="0"
+        aria-checked={browserVault.on}
+        aria-label={t('Keep this browser’s keys in the vault')}
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          void keepBrowserInVault(!browserVault.on)
+        }}
+      ></span>
     </div>
   </div>
   <p class="hint caption">

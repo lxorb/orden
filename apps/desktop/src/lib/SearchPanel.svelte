@@ -384,20 +384,20 @@
               </button>
             {/if}
 
+            {#if task}
+              <input
+                type="checkbox"
+                class="orden-checkbox"
+                checked={task.done}
+                aria-label={task.text}
+                onclick={(event) => ticked(event, hit)}
+              />
+            {/if}
             <button
               class="orden-row is-short hit"
               onclick={(event) => void openHit(hit, event)}
               use:middleOpens={(event) => void openHit(hit, event)}
             >
-              {#if task}
-                <input
-                  type="checkbox"
-                  class="orden-checkbox"
-                  checked={task.done}
-                  aria-label={task.text}
-                  onclick={(event) => ticked(event, hit)}
-                />
-              {/if}
               {#each shown(hit, task) as piece, at (at)}
                 {#if piece.mark}<mark>{piece.text}</mark>{:else}{piece.text}{/if}
               {/each}
@@ -612,6 +612,12 @@
     display: flex;
     align-items: center;
     gap: var(--space-1);
+  }
+
+  .line > .orden-checkbox {
+    flex: none;
+    margin-block: 0;
+    margin-inline: var(--row-pad) 0;
   }
 
   .hit {
