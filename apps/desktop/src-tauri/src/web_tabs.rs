@@ -1491,8 +1491,9 @@ impl From<&Pane> for crate::web_follow::Bounds {
 #[tauri::command]
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
-    found(&app, &tab)?
-        .navigate(at)
+    let view = found(&app, &tab)?;
+    crate::web_dialogs::dismiss(&app, &tab);
+    view.navigate(at)
         .map_err(|error| format!("that address could not be opened: {error}"))
 }
 
@@ -1505,6 +1506,9 @@ pub fn web_step(
     by: Option<u32>,
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
+    if !matches!(step, Step::Stop) {
+        crate::web_dialogs::dismiss(&app, &tab);
+    }
     let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
 
     let by = match step {
@@ -2904,6 +2908,23 @@ mod tests {
             .and_then(|from| from.split("\n}\n").next())
             .expect("the popup's function");
         assert!(popup.contains(".incognito(private)"));
+    }
+
+    #[test]
+    fn a_page_s_waiting_dialog_is_let_go_before_it_is_sent_anywhere() {
+        let source = include_str!("web_tabs.rs");
+        for (command, moves) in [
+            ("pub fn web_navigate(", ".navigate(at)"),
+            ("pub fn web_step(", "view.reload()"),
+        ] {
+            let body = source
+                .split(command)
+                .nth(1)
+                .and_then(|from| from.split("\n}\n").next())
+                .expect("the command");
+            let dismissed = body.find("web_dialogs::dismiss(").expect("dialogs let go");
+            assert!(dismissed < body.find(moves).expect("the move"), "{command}");
+        }
     }
 
     #[test]
