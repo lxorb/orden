@@ -310,3 +310,63 @@ mod tests {
     }
   }
 }
+
+/// Writes [`REMOTE_DEBUGGING_ALLOWED`] into the profile's `Local State` before CEF starts,
+/// since the debugging server reads it while CEF initializes, before
+/// [`apply_global_preferences`] can run: a `false` kept by an earlier start without a
+/// transport would otherwise refuse the port this start asked for.
+pub(crate) fn local_state_allows_debugging(root: &std::path::Path, allowed: bool) {
+  let path = root.join("Local State");
+  let Ok(text) = std::fs::read_to_string(&path) else {
+    return;
+  };
+  let Some(written) = with_debugging(&text, allowed) else {
+    return;
+  };
+  let _ = std::fs::write(&path, written);
+}
+
+fn with_debugging(text: &str, allowed: bool) -> Option<String> {
+  let mut state: serde_json::Value = serde_json::from_str(text).ok()?;
+  let mut at = state.as_object_mut()?;
+  let mut path = REMOTE_DEBUGGING_ALLOWED.split('.').peekable();
+  while let Some(part) = path.next() {
+    if path.peek().is_none() {
+      if at.get(part) == Some(&serde_json::Value::Bool(allowed)) {
+        return None;
+      }
+      at.insert(part.to_string(), serde_json::Value::Bool(allowed));
+      break;
+    }
+    at = at
+      .entry(part.to_string())
+      .or_insert_with(|| serde_json::json!({}))
+      .as_object_mut()?;
+  }
+  serde_json::to_string(&state).ok()
+}
+
+#[cfg(test)]
+mod local_state_tests {
+  use super::with_debugging;
+
+  #[test]
+  fn a_start_that_asks_for_a_port_undoes_a_false_an_earlier_start_kept() {
+    let kept = r#"{"devtools":{"remote_debugging":{"allowed":false}},"other":1}"#;
+    let written = with_debugging(kept, true).expect("written");
+    let state: serde_json::Value = serde_json::from_str(&written).expect("json");
+    assert_eq!(state["devtools"]["remote_debugging"]["allowed"], true);
+    assert_eq!(state["other"], 1);
+  }
+
+  #[test]
+  fn nothing_is_written_when_the_state_already_says_so_or_is_not_json() {
+    assert_eq!(
+      with_debugging(r#"{"devtools":{"remote_debugging":{"allowed":true}}}"#, true),
+      None
+    );
+    assert_eq!(with_debugging("not json", true), None);
+    let fresh = with_debugging("{}", false).expect("written");
+    assert!(fresh.contains(r#""allowed":false"#));
+  }
+}
