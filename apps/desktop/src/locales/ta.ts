@@ -3604,7 +3604,6 @@ export const ta: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram குழுவைப் புதிய உரிமையாளருக்குத் தன் ஆப்பில் மட்டுமே ஒப்படைக்கிறது',
   'That sticker is no longer available': 'அந்த ஸ்டிக்கர் இனி கிடைக்காது',
-  'Telegram is not set up in this build': 'இந்த பில்டில் Telegram அமைக்கப்படவில்லை',
   'Password manager': 'கடவுச்சொல் நிர்வாகி',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'கடவுச்சொற்களை வைத்து இணையதளங்களில் நிரப்பும் Pass ஐச் சேர்க்கிறது. அணைத்தாலும் உங்கள் பெட்டகங்கள் இருக்கும்.',
@@ -3709,4 +3708,17 @@ export const ta: Dictionary = {
     'Authentication-இன் கீழ் திருப்பிவிடும் URI http://localhost உடன் Mobile and desktop applications-ஐச் சேர்த்து, பொது கிளையன்ட் ஓட்டங்களை அனுமதிக்கவும்',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions-இன் கீழ் ஒப்படைக்கப்பட்ட அனுமதிகள் IMAP.AccessAsUser.All, SMTP.Send மற்றும் offline_access-ஐச் சேர்த்து, பிறகு Application (client) ID-ஐ இங்கே ஒட்டவும்',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org இல், API development tools கீழ்',
+  'How to get your API ID and hash': 'API ID மற்றும் hash பெறுவது எப்படி',
+  'Sign in at my.telegram.org with your phone number':
+    'உங்கள் தொலைபேசி எண்ணுடன் my.telegram.org இல் உள்நுழையுங்கள்',
+  'Open API development tools and create an app with any name':
+    'API development tools ஐத் திறந்து ஏதேனும் பெயரில் ஒரு ஆப்பை உருவாக்குங்கள்',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id மற்றும் App api_hash ஐ இங்குள்ள புலங்களில் நகலெடுங்கள்',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org இலிருந்து API ID மற்றும் hash ஐ ஒட்டுங்கள்',
 }

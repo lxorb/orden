@@ -3593,7 +3593,6 @@ export const ha: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram tana miƙa ƙungiya ga sabon mai shi ne kawai daga manhajarta',
   'That sticker is no longer available': 'Wannan sitika ba ya samuwa yanzu',
-  'Telegram is not set up in this build': 'Ba a saita Telegram a wannan ginin ba',
   'Password manager': 'Manajan kalmomin sirri',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     "Yana ƙara Pass, wanda ke adana kalmomin sirri kuma yana cike su a shafukan yanar gizo. Kashe shi yana kiyaye ma'ajiyoyinka.",
@@ -3696,4 +3695,15 @@ export const ha: Dictionary = {
     "A ƙarƙashin Authentication, ƙara Mobile and desktop applications tare da URI na turawa http://localhost kuma ka ba da izinin hanyoyin abokin ciniki na jama'a",
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'A ƙarƙashin API permissions, ƙara izinin wakilci IMAP.AccessAsUser.All, SMTP.Send da offline_access, sannan ka liƙa Application (client) ID a nan',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'Daga my.telegram.org, a ƙarƙashin API development tools',
+  'How to get your API ID and hash': 'Yadda ake samun API ID da hash',
+  'Sign in at my.telegram.org with your phone number': 'Shiga my.telegram.org da lambar wayarka',
+  'Open API development tools and create an app with any name':
+    'Buɗe API development tools ka ƙirƙiri manhaja da kowane suna',
+  'Copy App api_id and App api_hash into the fields here':
+    'Kwafi App api_id da App api_hash zuwa filayen nan',
+  'Paste the API ID and hash from my.telegram.org': 'Liƙa API ID da hash daga my.telegram.org',
 }

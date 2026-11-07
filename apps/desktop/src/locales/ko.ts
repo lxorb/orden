@@ -3437,7 +3437,6 @@ export const ko: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram은 자체 앱에서만 그룹을 새 소유자에게 넘깁니다',
   'That sticker is no longer available': '그 스티커는 더 이상 없습니다',
-  'Telegram is not set up in this build': '이 빌드에는 Telegram이 설정되어 있지 않습니다',
   'Password manager': '비밀번호 관리자',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '비밀번호를 보관하고 웹사이트에 채워 주는 Pass를 추가합니다. 꺼도 보관함은 그대로 남습니다.',
@@ -3538,4 +3537,13 @@ export const ko: Dictionary = {
     'Authentication에서 리디렉션 URI http://localhost로 Mobile and desktop applications를 추가하고 공용 클라이언트 흐름을 허용하세요',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions에서 위임된 권한 IMAP.AccessAsUser.All, SMTP.Send, offline_access를 추가한 다음 Application (client) ID를 여기에 붙여 넣으세요',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools': 'my.telegram.org의 API development tools에서',
+  'How to get your API ID and hash': 'API ID와 hash 받는 방법',
+  'Sign in at my.telegram.org with your phone number': '전화번호로 my.telegram.org에 로그인하세요',
+  'Open API development tools and create an app with any name':
+    'API development tools를 열고 아무 이름으로나 앱을 만드세요',
+  'Copy App api_id and App api_hash into the fields here': 'App api_id와 App api_hash를 여기 칸에 복사하세요',
+  'Paste the API ID and hash from my.telegram.org': 'my.telegram.org의 API ID와 hash를 붙여 넣으세요',
 }

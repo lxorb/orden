@@ -4,6 +4,8 @@ import type { Host, Prompt, Screen } from '../provider'
 import type { Client, ClientState, Found, SentCode, Setup } from './client'
 import { API_HASH, API_ID } from './index'
 
+export const KEYS = { [API_ID]: '12345', [API_HASH]: '0123456789abcdef0123456789abcdef' }
+
 export function failure(text: string): Error {
   return Object.assign(new Error(text), { text, code: 400 })
 }
@@ -223,10 +225,6 @@ export class FakeHost implements Host {
   readonly asked: Prompt[] = []
   readonly shown: (Screen | null)[] = []
   replies: string[] = []
-  build: Record<string, string> = {
-    [API_ID]: '12345',
-    [API_HASH]: '0123456789abcdef0123456789abcdef',
-  }
   fetch = (() => Promise.reject(new Error('no network'))) as unknown as typeof fetch
   clock = 1_800_000_000_000
 

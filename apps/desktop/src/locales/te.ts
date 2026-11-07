@@ -3558,7 +3558,6 @@ export const te: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram సమూహాన్ని కొత్త యజమానికి తన యాప్ నుండే అప్పగిస్తుంది',
   'That sticker is no longer available': 'ఆ స్టిక్కర్ ఇక అందుబాటులో లేదు',
-  'Telegram is not set up in this build': 'ఈ బిల్డ్‌లో Telegram సెటప్ కాలేదు',
   'Password manager': 'పాస్‌వర్డ్ మేనేజర్',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'పాస్‌వర్డ్‌లను ఉంచి వెబ్‌సైట్లలో నింపే Pass ను జోడిస్తుంది. ఆఫ్ చేసినా మీ వాల్ట్‌లు అలాగే ఉంటాయి.',
@@ -3660,4 +3659,17 @@ export const te: Dictionary = {
     'Authentication కింద రీడైరెక్ట్ URI http://localhost తో Mobile and desktop applications జోడించి, పబ్లిక్ క్లయింట్ ఫ్లోలను అనుమతించండి',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions కింద డెలిగేటెడ్ అనుమతులు IMAP.AccessAsUser.All, SMTP.Send మరియు offline_access జోడించి, ఆపై Application (client) ID ని ఇక్కడ పేస్ట్ చేయండి',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org నుండి, API development tools కింద',
+  'How to get your API ID and hash': 'API ID మరియు hash ఎలా పొందాలి',
+  'Sign in at my.telegram.org with your phone number':
+    'మీ ఫోన్ నంబర్‌తో my.telegram.org లో సైన్ ఇన్ చేయండి',
+  'Open API development tools and create an app with any name':
+    'API development tools తెరిచి ఏ పేరుతోనైనా ఒక యాప్ సృష్టించండి',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id మరియు App api_hash ను ఇక్కడి ఫీల్డ్‌లలో కాపీ చేయండి',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org నుండి API ID మరియు hash అతికించండి',
 }

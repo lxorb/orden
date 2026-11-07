@@ -3537,7 +3537,6 @@ export const bn: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram শুধু নিজের অ্যাপ থেকেই গ্রুপ নতুন মালিককে দেয়',
   'That sticker is no longer available': 'ওই স্টিকারটি আর পাওয়া যায় না',
-  'Telegram is not set up in this build': 'এই বিল্ডে Telegram সেট আপ করা নেই',
   'Password manager': 'পাসওয়ার্ড ম্যানেজার',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass যোগ করে, যা পাসওয়ার্ড রাখে এবং ওয়েবসাইটে সেগুলো পূরণ করে। বন্ধ করলেও আপনার ভল্টগুলো থেকে যায়।',
@@ -3636,4 +3635,16 @@ export const bn: Dictionary = {
     'Authentication-এ রিডাইরেক্ট URI http://localhost সহ Mobile and desktop applications যোগ করুন এবং পাবলিক ক্লায়েন্ট ফ্লো চালু করুন',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions-এ ডেলিগেটেড অনুমতি IMAP.AccessAsUser.All, SMTP.Send ও offline_access যোগ করুন, তারপর Application (client) ID এখানে পেস্ট করুন',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org থেকে, API development tools-এর অধীনে',
+  'How to get your API ID and hash': 'API ID ও hash কীভাবে পাবেন',
+  'Sign in at my.telegram.org with your phone number':
+    'আপনার ফোন নম্বর দিয়ে my.telegram.org-এ সাইন ইন করুন',
+  'Open API development tools and create an app with any name':
+    'API development tools খুলুন এবং যেকোনো নামে একটি অ্যাপ তৈরি করুন',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id ও App api_hash এখানকার ঘরে কপি করুন',
+  'Paste the API ID and hash from my.telegram.org': 'my.telegram.org থেকে API ID ও hash পেস্ট করুন',
 }

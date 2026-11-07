@@ -159,8 +159,6 @@ export const host: Host = {
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),
   build: builtWith({
-    telegramApiId: import.meta.env.VITE_ORDEN_TELEGRAM_API_ID,
-    telegramApiHash: import.meta.env.VITE_ORDEN_TELEGRAM_API_HASH,
     slackClientId: import.meta.env.VITE_ORDEN_SLACK_CLIENT_ID,
     ordenServer: BASE,
   }),

@@ -3540,7 +3540,6 @@ export const ps: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram ډله نوي مالک ته یوازې له خپل اپ څخه سپاري',
   'That sticker is no longer available': 'هغه سټیکر نور شتون نه لري',
-  'Telegram is not set up in this build': 'په دې جوړښت کې Telegram نه دی برابر شوی',
   'Password manager': 'د پټنوم مدیر',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ورزیاتوي چې پټنومونه ساتي او په وېبپاڼو کې يې ډکوي. بندول يې ستاسو خزانې ساتي.',
@@ -3640,4 +3639,17 @@ export const ps: Dictionary = {
     'د Authentication لاندې Mobile and desktop applications د بیا لېږلو URI http://localhost سره ورزیات کړئ او د عامه پیرودونکي بهیرونو ته اجازه ورکړئ',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'د API permissions لاندې سپارل شوې اجازې IMAP.AccessAsUser.All، SMTP.Send او offline_access ورزیاتې کړئ، بیا Application (client) ID دلته ولګوئ',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'له my.telegram.org څخه، د API development tools لاندې',
+  'How to get your API ID and hash': 'API ID او hash څنګه ترلاسه کړئ',
+  'Sign in at my.telegram.org with your phone number':
+    'په خپل تلیفون شمېره my.telegram.org ته ننوځئ',
+  'Open API development tools and create an app with any name':
+    'API development tools پرانیزئ او په هر نوم یو اپ جوړ کړئ',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id او App api_hash دلته په ساحو کې کاپي کړئ',
+  'Paste the API ID and hash from my.telegram.org':
+    'له my.telegram.org څخه API ID او hash دلته ولګوئ',
 }

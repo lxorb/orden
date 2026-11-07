@@ -166,6 +166,26 @@ describe("other services' accounts", () => {
     expect(forgotten).toEqual(['a@x.org'])
   })
 
+  test('forgetting an account still finds its pasted secrets, and they go after it', async () => {
+    const seen: (string | null)[] = []
+    const keyed: ChatProvider = {
+      ...provider,
+      id: 'keyed',
+      fields: [
+        { key: 'address', label: 'Email address', kind: 'email' },
+        { key: 'password', label: 'Password', kind: 'password', secret: true },
+      ],
+      forget: async (account, given) => {
+        seen.push(await given.secret(secretName('keyed', account, 'password')))
+      },
+    }
+    const accounts = new Accounts(host, new Connected(), [keyed], () => true)
+    await accounts.connect('keyed', { address: 'a@x.org', password: 'right' })
+    await accounts.disconnect('keyed', 'a@x.org')
+    expect(seen).toEqual(['right'])
+    expect(vault.size).toBe(0)
+  })
+
   test('signing in again after a sign-out offers what was given before, never a secret, and takes the place of the account it replaces', async () => {
     await new Accounts(host, new Connected(), [provider], () => true).connect('fake', {
       address: 'a@x.org',

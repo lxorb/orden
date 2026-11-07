@@ -3473,7 +3473,6 @@ export const am: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram ቡድንን ለአዲስ ባለቤት የሚያስተላልፈው ከራሱ መተግበሪያ ብቻ ነው',
   'That sticker is no longer available': 'ያ ተለጣፊ ከእንግዲህ አይገኝም',
-  'Telegram is not set up in this build': 'Telegram በዚህ ግንባታ አልተዋቀረም',
   'Password manager': 'የይለፍ ቃል አቀናባሪ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Passን ያክላል፤ የይለፍ ቃላትን ያስቀምጣል በድር ጣቢያዎችም ይሞላል። ማጥፋቱ ካዝናዎችዎን ይጠብቃል።',
@@ -3571,4 +3570,15 @@ export const am: Dictionary = {
     'በAuthentication ስር Mobile and desktop applications ን ከማዞሪያ URI http://localhost ጋር ያክሉ እና የሕዝብ ደንበኛ ፍሰቶችን ይፍቀዱ',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'በAPI permissions ስር የተወከሉ ፈቃዶችን IMAP.AccessAsUser.All፣ SMTP.Send እና offline_access ያክሉ፣ ከዚያ Application (client) ID ን እዚህ ይለጥፉ',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'ከ my.telegram.org፣ በ API development tools ስር',
+  'How to get your API ID and hash': 'API ID እና hash እንዴት እንደሚገኙ',
+  'Sign in at my.telegram.org with your phone number': 'በስልክ ቁጥርዎ ወደ my.telegram.org ይግቡ',
+  'Open API development tools and create an app with any name':
+    'API development tools ይክፈቱ እና በማንኛውም ስም መተግበሪያ ይፍጠሩ',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id እና App api_hash ን እዚህ ባሉት መስኮች ይቅዱ',
+  'Paste the API ID and hash from my.telegram.org': 'ከ my.telegram.org የተገኘውን API ID እና hash ይለጥፉ',
 }

@@ -89,7 +89,7 @@ async (where) => {
   host.now = () => Date.now()
   host.replies = [client.code]
   const provider = telegramProvider(async () => client)
-  const linked = await connected.link(provider, { phone: '+41 79 000 00 01' }, host)
+  const linked = await connected.link(provider, { ...fake.KEYS, phone: '+41 79 000 00 01' }, host)
   window.__telegram = client
   openConversation({ provider: 'telegram', account: linked.account.id, conversation: 'u2' }, 'Mia')
 }

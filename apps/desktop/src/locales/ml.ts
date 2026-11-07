@@ -3593,7 +3593,6 @@ export const ml: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram ഗ്രൂപ്പ് പുതിയ ഉടമയ്ക്ക് സ്വന്തം ആപ്പിൽ നിന്നേ കൈമാറൂ',
   'That sticker is no longer available': 'ആ സ്റ്റിക്കർ ഇനി ലഭ്യമല്ല',
-  'Telegram is not set up in this build': 'ഈ ബിൽഡിൽ Telegram സജ്ജമാക്കിയിട്ടില്ല',
   'Password manager': 'പാസ്‌വേഡ് മാനേജർ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'പാസ്‌വേഡുകൾ സൂക്ഷിക്കുകയും വെബ്‌സൈറ്റുകളിൽ നിറയ്ക്കുകയും ചെയ്യുന്ന Pass ചേർക്കുന്നു. ഓഫാക്കിയാലും നിങ്ങളുടെ വോൾട്ടുകൾ നിലനിൽക്കും.',
@@ -3696,4 +3695,17 @@ export const ml: Dictionary = {
     'Authentication-ന് കീഴിൽ റീഡയറക്ട് URI http://localhost ഉപയോഗിച്ച് Mobile and desktop applications ചേർക്കുകയും പബ്ലിക് ക്ലയന്റ് ഫ്ലോകൾ അനുവദിക്കുകയും ചെയ്യുക',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions-ന് കീഴിൽ ഡെലിഗേറ്റഡ് അനുമതികൾ IMAP.AccessAsUser.All, SMTP.Send, offline_access എന്നിവ ചേർക്കുക, തുടർന്ന് Application (client) ID ഇവിടെ ഒട്ടിക്കുക',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org-ൽ, API development tools-ന് കീഴിൽ',
+  'How to get your API ID and hash': 'API ID-യും hash-ഉം എങ്ങനെ നേടാം',
+  'Sign in at my.telegram.org with your phone number':
+    'നിങ്ങളുടെ ഫോൺ നമ്പർ ഉപയോഗിച്ച് my.telegram.org-ൽ സൈൻ ഇൻ ചെയ്യുക',
+  'Open API development tools and create an app with any name':
+    'API development tools തുറന്ന് ഏതെങ്കിലും പേരിൽ ഒരു ആപ്പ് ഉണ്ടാക്കുക',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id-ഉം App api_hash-ഉം ഇവിടെയുള്ള ഫീൽഡുകളിലേക്ക് പകർത്തുക',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org-ൽ നിന്നുള്ള API ID-യും hash-ഉം ഒട്ടിക്കുക',
 }

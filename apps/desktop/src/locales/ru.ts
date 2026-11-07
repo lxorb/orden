@@ -3686,7 +3686,6 @@ export const ru: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram передаёт группу новому владельцу только в своём приложении',
   'That sticker is no longer available': 'Этот стикер больше недоступен',
-  'Telegram is not set up in this build': 'Telegram не настроен в этой сборке',
   'Password manager': 'Менеджер паролей',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Добавляет Pass, который хранит пароли и подставляет их на сайтах. При выключении ваши хранилища сохраняются.',
@@ -3786,4 +3785,16 @@ export const ru: Dictionary = {
     'В разделе Authentication добавьте Mobile and desktop applications с URI перенаправления http://localhost и разрешите потоки общедоступных клиентов',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'В разделе API permissions добавьте делегированные разрешения IMAP.AccessAsUser.All, SMTP.Send и offline_access, затем вставьте сюда Application (client) ID',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'С my.telegram.org, в разделе API development tools',
+  'How to get your API ID and hash': 'Как получить API ID и hash',
+  'Sign in at my.telegram.org with your phone number':
+    'Войдите на my.telegram.org по номеру телефона',
+  'Open API development tools and create an app with any name':
+    'Откройте API development tools и создайте приложение с любым названием',
+  'Copy App api_id and App api_hash into the fields here':
+    'Скопируйте App api_id и App api_hash в эти поля',
+  'Paste the API ID and hash from my.telegram.org': 'Вставьте API ID и hash с my.telegram.org',
 }

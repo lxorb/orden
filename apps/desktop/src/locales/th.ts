@@ -3412,7 +3412,6 @@ export const th: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram โอนกลุ่มให้เจ้าของใหม่ได้จากแอปของตัวเองเท่านั้น',
   'That sticker is no longer available': 'สติกเกอร์นั้นไม่มีแล้ว',
-  'Telegram is not set up in this build': 'ยังไม่ได้ตั้งค่า Telegram ในบิลด์นี้',
   'Password manager': 'ตัวจัดการรหัสผ่าน',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'เพิ่ม Pass ซึ่งเก็บรหัสผ่านและกรอกให้บนเว็บไซต์ ปิดแล้วห้องนิรภัยของคุณยังอยู่',
@@ -3510,4 +3509,16 @@ export const th: Dictionary = {
     'ใน Authentication ให้เพิ่ม Mobile and desktop applications ด้วย URI เปลี่ยนเส้นทาง http://localhost และอนุญาตโฟลว์ไคลเอนต์สาธารณะ',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'ใน API permissions ให้เพิ่มสิทธิ์แบบมอบหมาย IMAP.AccessAsUser.All, SMTP.Send และ offline_access แล้ววาง Application (client) ID ที่นี่',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'จาก my.telegram.org ใน API development tools',
+  'How to get your API ID and hash': 'วิธีรับ API ID และ hash',
+  'Sign in at my.telegram.org with your phone number':
+    'ลงชื่อเข้าใช้ my.telegram.org ด้วยหมายเลขโทรศัพท์ของคุณ',
+  'Open API development tools and create an app with any name':
+    'เปิด API development tools แล้วสร้างแอปด้วยชื่ออะไรก็ได้',
+  'Copy App api_id and App api_hash into the fields here':
+    'คัดลอก App api_id และ App api_hash มาใส่ช่องตรงนี้',
+  'Paste the API ID and hash from my.telegram.org': 'วาง API ID และ hash จาก my.telegram.org',
 }

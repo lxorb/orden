@@ -3580,7 +3580,6 @@ export const kn: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram ಗುಂಪನ್ನು ಹೊಸ ಮಾಲೀಕರಿಗೆ ತನ್ನ ಆ್ಯಪ್‌ನಿಂದ ಮಾತ್ರ ಹಸ್ತಾಂತರಿಸುತ್ತದೆ',
   'That sticker is no longer available': 'ಆ ಸ್ಟಿಕರ್ ಈಗ ಲಭ್ಯವಿಲ್ಲ',
-  'Telegram is not set up in this build': 'ಈ ಬಿಲ್ಡ್‌ನಲ್ಲಿ Telegram ಹೊಂದಿಸಿಲ್ಲ',
   'Password manager': 'ಪಾಸ್‌ವರ್ಡ್ ನಿರ್ವಾಹಕ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass ಅನ್ನು ಸೇರಿಸುತ್ತದೆ, ಅದು ಪಾಸ್‌ವರ್ಡ್‌ಗಳನ್ನು ಇಟ್ಟುಕೊಂಡು ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿ ತುಂಬುತ್ತದೆ. ಆಫ್ ಮಾಡಿದರೂ ನಿಮ್ಮ ವಾಲ್ಟ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.',
@@ -3682,4 +3681,16 @@ export const kn: Dictionary = {
     'Authentication ಅಡಿಯಲ್ಲಿ ಮರುನಿರ್ದೇಶನ URI http://localhost ಜೊತೆಗೆ Mobile and desktop applications ಸೇರಿಸಿ ಮತ್ತು ಸಾರ್ವಜನಿಕ ಕ್ಲೈಂಟ್ ಫ್ಲೋಗಳನ್ನು ಅನುಮತಿಸಿ',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions ಅಡಿಯಲ್ಲಿ ನಿಯೋಜಿತ ಅನುಮತಿಗಳು IMAP.AccessAsUser.All, SMTP.Send ಮತ್ತು offline_access ಸೇರಿಸಿ, ನಂತರ Application (client) ID ಅನ್ನು ಇಲ್ಲಿ ಅಂಟಿಸಿ',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org ನಿಂದ, API development tools ಅಡಿಯಲ್ಲಿ',
+  'How to get your API ID and hash': 'API ID ಮತ್ತು hash ಪಡೆಯುವುದು ಹೇಗೆ',
+  'Sign in at my.telegram.org with your phone number':
+    'ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆಯಿಂದ my.telegram.org ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ',
+  'Open API development tools and create an app with any name':
+    'API development tools ತೆರೆದು ಯಾವುದೇ ಹೆಸರಿನಲ್ಲಿ ಒಂದು ಆ್ಯಪ್ ರಚಿಸಿ',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id ಮತ್ತು App api_hash ಅನ್ನು ಇಲ್ಲಿನ ಕ್ಷೇತ್ರಗಳಿಗೆ ನಕಲಿಸಿ',
+  'Paste the API ID and hash from my.telegram.org': 'my.telegram.org ನಿಂದ API ID ಮತ್ತು hash ಅಂಟಿಸಿ',
 }

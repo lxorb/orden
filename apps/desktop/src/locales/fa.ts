@@ -3546,7 +3546,6 @@ export const fa: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram گروه را فقط در برنامهٔ خودش به مالک تازه می‌سپارد',
   'That sticker is no longer available': 'آن استیکر دیگر در دسترس نیست',
-  'Telegram is not set up in this build': 'Telegram در این نسخه تنظیم نشده است',
   'Password manager': 'مدیر گذرواژه',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Pass را می‌افزاید که گذرواژه‌ها را نگه می‌دارد و در وب‌سایت‌ها پر می‌کند. خاموش کردنش گاوصندوق‌هایتان را نگه می‌دارد.',
@@ -3647,4 +3646,17 @@ export const fa: Dictionary = {
     'در بخش Authentication، گزینهٔ Mobile and desktop applications را با نشانی بازگشت http://localhost بیفزایید و جریان‌های کلاینت عمومی را مجاز کنید',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'در بخش API permissions مجوزهای واگذارشدهٔ IMAP.AccessAsUser.All، SMTP.Send و offline_access را بیفزایید، سپس Application (client) ID را اینجا بچسبانید',
+  'API ID': 'شناسه API',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'از my.telegram.org، در API development tools',
+  'How to get your API ID and hash': 'چگونه شناسه API و hash را بگیرید',
+  'Sign in at my.telegram.org with your phone number':
+    'با شماره تلفن خود وارد my.telegram.org شوید',
+  'Open API development tools and create an app with any name':
+    'API development tools را باز کنید و برنامه‌ای با هر نامی بسازید',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id و App api_hash را در فیلدهای اینجا کپی کنید',
+  'Paste the API ID and hash from my.telegram.org':
+    'شناسه API و hash را از my.telegram.org جای‌گذاری کنید',
 }

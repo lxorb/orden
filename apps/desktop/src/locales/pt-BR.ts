@@ -3624,7 +3624,6 @@ export const ptBR: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'O Telegram só passa um grupo para um novo dono pelo próprio app',
   'That sticker is no longer available': 'Essa figurinha não está mais disponível',
-  'Telegram is not set up in this build': 'O Telegram não está configurado nesta versão',
   'Password manager': 'Gerenciador de senhas',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Adiciona o Pass, que guarda senhas e as preenche nos sites. Desativá-lo mantém seus cofres.',
@@ -3726,4 +3725,16 @@ export const ptBR: Dictionary = {
     'Em Authentication, adicione Mobile and desktop applications com o URI de redirecionamento http://localhost e permita fluxos de cliente público',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'Em API permissions, adicione as permissões delegadas IMAP.AccessAsUser.All, SMTP.Send e offline_access e cole aqui o Application (client) ID',
+  'API ID': 'ID da API',
+  'API hash': 'Hash da API',
+  'From my.telegram.org, under API development tools':
+    'Do my.telegram.org, em API development tools',
+  'How to get your API ID and hash': 'Como obter o ID e o hash da API',
+  'Sign in at my.telegram.org with your phone number':
+    'Entre no my.telegram.org com seu número de telefone',
+  'Open API development tools and create an app with any name':
+    'Abra API development tools e crie um app com qualquer nome',
+  'Copy App api_id and App api_hash into the fields here':
+    'Copie App api_id e App api_hash para os campos aqui',
+  'Paste the API ID and hash from my.telegram.org': 'Cole o ID e o hash da API do my.telegram.org',
 }

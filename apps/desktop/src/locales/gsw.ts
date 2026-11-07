@@ -3567,7 +3567,6 @@ export const gsw: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram git e Gruppe nur i de eigene App amne neue Bsitzer wiiter',
   'That sticker is no longer available': 'De Sticker git s nüme',
-  'Telegram is not set up in this build': 'Telegram isch i dem Build nöd iigrichtet',
   'Password manager': 'Passwortmanager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Füegt Pass dezue, wo Passwörter ufbewahrt und uf Websites ifüllt. Uusschalte bhaltet dini Tresor.',
@@ -3667,4 +3666,16 @@ export const gsw: Dictionary = {
     'Füeg under Authentication Mobile and desktop applications mit de Umleitigs-URI http://localhost dezue und erlaub öffentlichi Client-Flows',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'Füeg under API permissions di delegierte Berächtigunge IMAP.AccessAsUser.All, SMTP.Send und offline_access dezue und füeg dänn d Application (client) ID da ii',
+  'API ID': 'API-ID',
+  'API hash': 'API-Hash',
+  'From my.telegram.org, under API development tools':
+    'Vo my.telegram.org, under API development tools',
+  'How to get your API ID and hash': 'So überchunsch API-ID und Hash',
+  'Sign in at my.telegram.org with your phone number':
+    'Mäld di uf my.telegram.org mit dinere Telefonnummere aa',
+  'Open API development tools and create an app with any name':
+    'Mach API development tools uf und erstell en App mit irgendemne Name',
+  'Copy App api_id and App api_hash into the fields here':
+    'Kopier App api_id und App api_hash i d Fälder da',
+  'Paste the API ID and hash from my.telegram.org': 'Füeg API-ID und Hash vo my.telegram.org ii',
 }

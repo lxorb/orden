@@ -1,10 +1,10 @@
 import type { tl } from '@mtcute/core'
 import Long from 'long'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { Connection, ProviderEvent } from '../provider'
+import type { ChatProvider, Connection, ProviderEvent } from '../provider'
 import { secretName } from '../provider'
-import { channel, chat, dialog, failure, FakeHost, FakeTelegram, text, user } from './fake'
-import { API_ID, telegramProvider } from './index'
+import { channel, chat, dialog, failure, FakeHost, FakeTelegram, KEYS, text, user } from './fake'
+import { API_HASH, API_ID, telegramProvider } from './index'
 import { WORDS } from './login'
 
 const MIA = user(2, 'Mia', {
@@ -135,11 +135,19 @@ function sent(
   })
 }
 
-const provider = (fake: FakeTelegram) =>
+const bare = (fake: FakeTelegram) =>
   telegramProvider(async (setup) => {
     fake.setup = setup
     return fake
   })
+
+const provider = (fake: FakeTelegram): ChatProvider => {
+  const telegram = bare(fake)
+  return {
+    ...telegram,
+    connect: (config, host, account) => telegram.connect({ ...KEYS, ...config }, host, account),
+  }
+}
 
 async function linked(
   fake = world(),
@@ -157,15 +165,30 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('what the build gives', () => {
-  test('without an app id and hash Telegram is not offered', () => {
-    const host = new FakeHost()
-    const telegram = provider(new FakeTelegram())
-    expect(telegram.available(host)).toBe(true)
-    host.build = {}
-    expect(telegram.available(host)).toBe(false)
-    host.build = { [API_ID]: 'abc' }
-    expect(telegram.available(host)).toBe(false)
+describe('the pasted API ID and hash', () => {
+  test('Telegram is offered whatever the build, and asks for the id and hash as secrets', () => {
+    const telegram = bare(new FakeTelegram())
+    expect(telegram.available(new FakeHost())).toBe(true)
+    const fields = telegram.fields.filter((one) => one.key === API_ID || one.key === API_HASH)
+    expect(fields.map((one) => [one.key, one.secret, one.optional])).toEqual([
+      [API_ID, true, undefined],
+      [API_HASH, true, undefined],
+    ])
+  })
+
+  test('a missing or misshapen id or hash is refused before Telegram is dialled', async () => {
+    const fake = world()
+    const telegram = bare(fake)
+    for (const config of [
+      { phone: '+41790000001' },
+      { ...KEYS, [API_ID]: 'abc' },
+      { ...KEYS, [API_ID]: '0' },
+      { ...KEYS, [API_HASH]: 'not-a-hash' },
+    ])
+      await expect(telegram.connect(config, new FakeHost())).rejects.toThrow(
+        'Paste the API ID and hash from my.telegram.org',
+      )
+    expect(fake.setup).toBeNull()
   })
 
   test('the id and hash reach the client', async () => {
@@ -289,8 +312,11 @@ describe('signing in', () => {
   test('forgetting signs out at Telegram and wipes the session, also after the connection closed', async () => {
     const { fake, host, connection } = await linked()
     await connection.close()
+    for (const [key, value] of Object.entries(KEYS))
+      host.secrets.set(secretName('telegram', '1', key), value)
     const later = world()
     await provider(later).forget?.('1', host)
+    expect(later.setup).toEqual({ apiId: 12345, apiHash: KEYS[API_HASH], session: 'session-one' })
     expect(later.loggedOut).toBe(true)
     expect(fake.closed).toBe(true)
     expect(host.secrets.size).toBe(0)

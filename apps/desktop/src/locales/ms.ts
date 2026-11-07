@@ -3479,7 +3479,6 @@ export const ms: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram menyerahkan kumpulan kepada pemilik baharu hanya dari aplikasinya sendiri',
   'That sticker is no longer available': 'Pelekat itu tidak lagi tersedia',
-  'Telegram is not set up in this build': 'Telegram tidak disediakan dalam binaan ini',
   'Password manager': 'Pengurus kata laluan',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Menambah Pass, yang menyimpan kata laluan dan mengisinya di laman web. Mematikannya mengekalkan peti besi anda.',
@@ -3582,4 +3581,17 @@ export const ms: Dictionary = {
     'Di bawah Authentication, tambah Mobile and desktop applications dengan URI ubah hala http://localhost dan benarkan aliran klien awam',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'Di bawah API permissions, tambah kebenaran diwakilkan IMAP.AccessAsUser.All, SMTP.Send dan offline_access, kemudian tampal Application (client) ID di sini',
+  'API ID': 'ID API',
+  'API hash': 'Hash API',
+  'From my.telegram.org, under API development tools':
+    'Daripada my.telegram.org, di bawah API development tools',
+  'How to get your API ID and hash': 'Cara mendapatkan ID dan hash API',
+  'Sign in at my.telegram.org with your phone number':
+    'Log masuk di my.telegram.org dengan nombor telefon anda',
+  'Open API development tools and create an app with any name':
+    'Buka API development tools dan cipta aplikasi dengan sebarang nama',
+  'Copy App api_id and App api_hash into the fields here':
+    'Salin App api_id dan App api_hash ke dalam medan di sini',
+  'Paste the API ID and hash from my.telegram.org':
+    'Tampal ID dan hash API daripada my.telegram.org',
 }

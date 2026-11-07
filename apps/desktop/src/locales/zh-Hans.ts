@@ -3371,7 +3371,6 @@ export const zhHans: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram 只能在自己的应用中把群组转让给新群主',
   'That sticker is no longer available': '该贴纸已不可用',
-  'Telegram is not set up in this build': '此版本未设置 Telegram',
   'Password manager': '密码管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '添加 Pass，保管密码并在网站上填入。关闭后保险库仍会保留。',
@@ -3467,4 +3466,13 @@ export const zhHans: Dictionary = {
     '在 Authentication 下添加 Mobile and desktop applications，重定向 URI 为 http://localhost，并允许公共客户端流',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     '在 API permissions 下添加委托权限 IMAP.AccessAsUser.All、SMTP.Send 和 offline_access，然后将 Application (client) ID 粘贴到这里',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools': '来自 my.telegram.org 的 API development tools',
+  'How to get your API ID and hash': '如何获取 API ID 和 hash',
+  'Sign in at my.telegram.org with your phone number': '用你的手机号登录 my.telegram.org',
+  'Open API development tools and create an app with any name':
+    '打开 API development tools，用任意名称创建一个应用',
+  'Copy App api_id and App api_hash into the fields here': '把 App api_id 和 App api_hash 复制到这里的字段中',
+  'Paste the API ID and hash from my.telegram.org': '请粘贴来自 my.telegram.org 的 API ID 和 hash',
 }

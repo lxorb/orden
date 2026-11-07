@@ -3588,7 +3588,6 @@ export const sw: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram hukabidhi kikundi kwa mmiliki mpya kutoka programu yake tu',
   'That sticker is no longer available': 'Kibandiko hicho hakipatikani tena',
-  'Telegram is not set up in this build': 'Telegram haijawekwa katika toleo hili',
   'Password manager': 'Kidhibiti cha manenosiri',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Huongeza Pass, inayohifadhi manenosiri na kuyajaza kwenye tovuti. Kuizima huhifadhi makasha yako.',
@@ -3689,4 +3688,16 @@ export const sw: Dictionary = {
     'Chini ya Authentication, ongeza Mobile and desktop applications yenye URI ya kuelekeza http://localhost na uruhusu mitiririko ya mteja wa umma',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'Chini ya API permissions, ongeza ruhusa zilizokabidhiwa IMAP.AccessAsUser.All, SMTP.Send na offline_access, kisha ubandike Application (client) ID hapa',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'Kutoka my.telegram.org, chini ya API development tools',
+  'How to get your API ID and hash': 'Jinsi ya kupata API ID na hash',
+  'Sign in at my.telegram.org with your phone number':
+    'Ingia kwenye my.telegram.org kwa namba yako ya simu',
+  'Open API development tools and create an app with any name':
+    'Fungua API development tools na uunde programu kwa jina lolote',
+  'Copy App api_id and App api_hash into the fields here':
+    'Nakili App api_id na App api_hash kwenye sehemu hizi',
+  'Paste the API ID and hash from my.telegram.org': 'Bandika API ID na hash kutoka my.telegram.org',
 }

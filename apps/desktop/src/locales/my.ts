@@ -3473,7 +3473,6 @@ export const my: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram သည် အဖွဲ့ကို ပိုင်ရှင်အသစ်ထံ ၎င်း၏ကိုယ်ပိုင်အက်ပ်မှသာ လွှဲပေးသည်',
   'That sticker is no longer available': 'ထိုစတစ်ကာ မရနိုင်တော့ပါ',
-  'Telegram is not set up in this build': 'ဤ build တွင် Telegram ကို မသတ်မှတ်ရသေးပါ',
   'Password manager': 'စကားဝှက် စီမံသူ',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'စကားဝှက်များကို သိမ်းပြီး ဝဘ်ဆိုက်များတွင် ဖြည့်ပေးသော Pass ကို ထည့်သည်။ ပိတ်ထားလည်း သင့်သေတ္တာများ ကျန်ရှိနေမည်။',
@@ -3577,4 +3576,17 @@ export const my: Dictionary = {
     'Authentication အောက်တွင် redirect URI http://localhost ဖြင့် Mobile and desktop applications ကို ထည့်ပြီး public client flow များကို ခွင့်ပြုပါ',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions အောက်တွင် delegated ခွင့်ပြုချက် IMAP.AccessAsUser.All၊ SMTP.Send နှင့် offline_access ကို ထည့်ပါ၊ ထို့နောက် Application (client) ID ကို ဤနေရာတွင် ကူးထည့်ပါ',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org ၏ API development tools အောက်မှ',
+  'How to get your API ID and hash': 'API ID နှင့် hash ရယူနည်း',
+  'Sign in at my.telegram.org with your phone number':
+    'သင့်ဖုန်းနံပါတ်ဖြင့် my.telegram.org သို့ ဝင်ပါ',
+  'Open API development tools and create an app with any name':
+    'API development tools ကိုဖွင့်ပြီး မည်သည့်အမည်ဖြင့်မဆို အက်ပ်တစ်ခု ဖန်တီးပါ',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id နှင့် App api_hash ကို ဤနေရာရှိ အကွက်များထဲ ကူးထည့်ပါ',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org မှ API ID နှင့် hash ကို ကူးထည့်ပါ',
 }

@@ -3458,7 +3458,6 @@ export const ja: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram はグループの新しいオーナーへの譲渡を自身のアプリでしか行えません',
   'That sticker is no longer available': 'そのステッカーはもう使えません',
-  'Telegram is not set up in this build': 'このビルドでは Telegram が設定されていません',
   'Password manager': 'パスワードマネージャー',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'パスワードを保管し、ウェブサイトで入力する Pass を追加します。オフにしても保管庫は残ります。',
@@ -3561,4 +3560,13 @@ export const ja: Dictionary = {
     'Authentication で、リダイレクト URI http://localhost を指定して Mobile and desktop applications を追加し、パブリック クライアント フローを許可します',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions で、委任されたアクセス許可 IMAP.AccessAsUser.All、SMTP.Send、offline_access を追加し、Application (client) ID をここに貼り付けます',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools': 'my.telegram.org の API development tools から',
+  'How to get your API ID and hash': 'API ID と hash の入手方法',
+  'Sign in at my.telegram.org with your phone number': '電話番号で my.telegram.org にサインイン',
+  'Open API development tools and create an app with any name':
+    'API development tools を開き、任意の名前でアプリを作成',
+  'Copy App api_id and App api_hash into the fields here': 'App api_id と App api_hash をここの欄にコピー',
+  'Paste the API ID and hash from my.telegram.org': 'my.telegram.org の API ID と hash を貼り付けてください',
 }

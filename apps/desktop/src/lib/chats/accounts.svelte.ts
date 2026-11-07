@@ -165,13 +165,13 @@ export class Accounts {
   async disconnect(providerId: string, account: string): Promise<void> {
     await this.hub.unlink(providerId, account)
     const provider = this.providerOf(providerId)
+    await provider?.forget?.(account, this.host).catch(() => undefined)
     for (const field of provider?.fields ?? []) {
       if (field.secret) await this.host.keepSecret(secretName(providerId, account, field.key), null)
     }
     for (const kept of provider?.kept ?? []) {
       await this.host.keepSecret(secretName(providerId, account, kept), null)
     }
-    await provider?.forget?.(account, this.host).catch(() => undefined)
     this.failed = this.failed.filter((it) => it.provider !== providerId || it.account !== account)
     this.keepSaved(
       this.saved.filter((one) => one.provider !== providerId || one.account !== account),

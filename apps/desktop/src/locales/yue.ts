@@ -3364,7 +3364,6 @@ export const yue: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram 淨係喺自己嘅應用程式先可以將群組轉畀新擁有人',
   'That sticker is no longer available': '嗰張貼圖已經冇咗',
-  'Telegram is not set up in this build': '呢個版本未設定 Telegram',
   'Password manager': '密碼管理器',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     '加入 Pass，幫你保管密碼，喺網站度自動填入。關咗都會保留你嘅保險庫。',
@@ -3461,4 +3460,14 @@ export const yue: Dictionary = {
     '喺 Authentication 度加入 Mobile and desktop applications，重新導向 URI 用 http://localhost，再允許公用用戶端流程',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     '喺 API permissions 度加入委派權限 IMAP.AccessAsUser.All、SMTP.Send 同 offline_access，然後將 Application (client) ID 貼喺度',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    '喺 my.telegram.org 嘅 API development tools 度攞',
+  'How to get your API ID and hash': '點樣攞 API ID 同 hash',
+  'Sign in at my.telegram.org with your phone number': '用你個電話號碼登入 my.telegram.org',
+  'Open API development tools and create an app with any name':
+    '打開 API development tools，隨便改個名開一個 app',
+  'Copy App api_id and App api_hash into the fields here': '將 App api_id 同 App api_hash 抄落呢度啲欄',
+  'Paste the API ID and hash from my.telegram.org': '貼上 my.telegram.org 嘅 API ID 同 hash',
 }

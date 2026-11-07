@@ -3562,7 +3562,6 @@ export const tr: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram bir grubu yeni sahibine yalnızca kendi uygulamasında devreder',
   'That sticker is no longer available': 'Bu çıkartma artık kullanılamıyor',
-  'Telegram is not set up in this build': 'Telegram bu sürümde ayarlanmamış',
   'Password manager': 'Parola yöneticisi',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Parolaları saklayan ve web sitelerinde dolduran Pass’i ekler. Kapatmak kasalarınızı korur.',
@@ -3662,4 +3661,17 @@ export const tr: Dictionary = {
     'Authentication altında http://localhost yönlendirme URI’siyle Mobile and desktop applications ekleyin ve genel istemci akışlarına izin verin',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'API permissions altında IMAP.AccessAsUser.All, SMTP.Send ve offline_access temsilci izinlerini ekleyin, ardından Application (client) ID’yi buraya yapıştırın',
+  'API ID': 'API kimliği',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'my.telegram.org üzerinde, API development tools altında',
+  'How to get your API ID and hash': 'API kimliği ve hash nasıl alınır',
+  'Sign in at my.telegram.org with your phone number':
+    'my.telegram.org adresine telefon numaranla giriş yap',
+  'Open API development tools and create an app with any name':
+    'API development tools bölümünü aç ve herhangi bir adla uygulama oluştur',
+  'Copy App api_id and App api_hash into the fields here':
+    'App api_id ve App api_hash değerlerini buradaki alanlara kopyala',
+  'Paste the API ID and hash from my.telegram.org':
+    'my.telegram.org üzerindeki API kimliğini ve hash değerini yapıştır',
 }

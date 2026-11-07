@@ -3446,7 +3446,6 @@ export const vi: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Telegram chỉ chuyển nhóm cho chủ mới trong ứng dụng của chính nó',
   'That sticker is no longer available': 'Nhãn dán đó không còn nữa',
-  'Telegram is not set up in this build': 'Telegram chưa được thiết lập trong bản dựng này',
   'Password manager': 'Trình quản lý mật khẩu',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Thêm Pass, giữ mật khẩu và điền chúng trên các trang web. Tắt đi vẫn giữ các kho của bạn.',
@@ -3547,4 +3546,16 @@ export const vi: Dictionary = {
     'Trong Authentication, hãy thêm Mobile and desktop applications với URI chuyển hướng http://localhost và cho phép luồng ứng dụng khách công khai',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'Trong API permissions, hãy thêm các quyền ủy quyền IMAP.AccessAsUser.All, SMTP.Send và offline_access, rồi dán Application (client) ID vào đây',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'Từ my.telegram.org, trong API development tools',
+  'How to get your API ID and hash': 'Cách lấy API ID và hash',
+  'Sign in at my.telegram.org with your phone number':
+    'Đăng nhập my.telegram.org bằng số điện thoại của bạn',
+  'Open API development tools and create an app with any name':
+    'Mở API development tools và tạo một ứng dụng với tên bất kỳ',
+  'Copy App api_id and App api_hash into the fields here':
+    'Sao chép App api_id và App api_hash vào các ô ở đây',
+  'Paste the API ID and hash from my.telegram.org': 'Dán API ID và hash từ my.telegram.org',
 }

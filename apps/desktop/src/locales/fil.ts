@@ -3613,7 +3613,6 @@ export const fil: Dictionary = {
   'Telegram hands a group to a new owner only from its own app':
     'Sa sarili lang nitong app ipinapasa ng Telegram ang grupo sa bagong may-ari',
   'That sticker is no longer available': 'Wala na ang sticker na iyon',
-  'Telegram is not set up in this build': 'Hindi naka-set up ang Telegram sa build na ito',
   'Password manager': 'Password manager',
   'Adds Pass, which keeps passwords and fills them in on websites; turning it off keeps your vaults.':
     'Idinadagdag ang Pass, na nagtatago ng mga password at pinupunan ang mga ito sa mga website. Kapag pinatay, mananatili ang iyong mga vault.',
@@ -3715,4 +3714,17 @@ export const fil: Dictionary = {
     'Sa Authentication, idagdag ang Mobile and desktop applications na may redirect URI na http://localhost at payagan ang public client flows',
   'Under API permissions, add the delegated permissions IMAP.AccessAsUser.All, SMTP.Send and offline_access, then paste the Application (client) ID here':
     'Sa API permissions, idagdag ang delegated permissions na IMAP.AccessAsUser.All, SMTP.Send at offline_access, tapos i-paste dito ang Application (client) ID',
+  'API ID': 'API ID',
+  'API hash': 'API hash',
+  'From my.telegram.org, under API development tools':
+    'Mula sa my.telegram.org, sa API development tools',
+  'How to get your API ID and hash': 'Paano kunin ang API ID at hash',
+  'Sign in at my.telegram.org with your phone number':
+    'Mag-sign in sa my.telegram.org gamit ang numero ng iyong telepono',
+  'Open API development tools and create an app with any name':
+    'Buksan ang API development tools at gumawa ng app na may kahit anong pangalan',
+  'Copy App api_id and App api_hash into the fields here':
+    'Kopyahin ang App api_id at App api_hash sa mga field dito',
+  'Paste the API ID and hash from my.telegram.org':
+    'I-paste ang API ID at hash mula sa my.telegram.org',
 }
