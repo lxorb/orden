@@ -23,13 +23,6 @@ export const todayHere = (): string => dayOf(new Date())
 
 export const nowHere = (): string => nowOf(new Date())
 
-export const untilMidnightHere = (): number => untilMidnight(new Date())
-
-function untilMidnight(at: Date): number {
-  const next = new Date(at.getFullYear(), at.getMonth(), at.getDate() + 1)
-  return next.getTime() - at.getTime()
-}
-
 export function dateAt(day: string): Date {
   const [year = 1970, month = 1, date = 1] = day.split('-').map(Number)
   return new Date(year, month - 1, date, 12)

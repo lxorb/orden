@@ -3,6 +3,7 @@ import { t } from '../i18n.svelte'
 import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { afterQuiet } from '../timing'
+import { day } from '../views/day.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
 import { isTile } from '../workspace/bookmarks.svelte'
 import { frameWord, method, wordSaid } from './bridge'
@@ -108,7 +109,7 @@ export function watchWidgets(): () => void {
 
   const stop = $effect.root(() => {
     $effect(() => {
-      if (!workspace.protection.seen) return
+      if (!workspace.protection.seen || !day.today) return
       reread()
     })
     $effect(() => {
