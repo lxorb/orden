@@ -12,7 +12,7 @@ import type {
   Status,
 } from '../provider'
 import { secretName } from '../provider'
-import { bytesOf, Imap, itemsOf, quoted, type Untagged, type Value } from './imap'
+import { bytesOf, Imap, itemsOf, quoted, textOf, type Untagged, type Value } from './imap'
 import {
   type Address,
   buildMessage,
@@ -134,7 +134,7 @@ export function configOf(values: Readonly<Record<string, string>>): MailConfig {
 const filled = (value: string | undefined): string | undefined =>
   value?.trim() ? value.trim() : undefined
 
-const text = (value: Value | undefined): string => (typeof value === 'string' ? value : '')
+const text = textOf
 
 function addressList(value: Value | undefined): Address[] {
   if (!Array.isArray(value)) return []
@@ -325,7 +325,10 @@ class MailConnection {
       (one) => one.kind === 'FETCH' && Number(text(itemsOf(one.values).get('UID'))) === mail.uid,
     )
     const items = line ? itemsOf(line.values) : new Map<string, Value>()
-    const parsed = parseMessage(bytesOf(items.get('BODY[]') ?? undefined))
+    const raw = bytesOf(items.get('BODY[]') ?? undefined)
+    const parsed = this.host.parseMessage
+      ? await this.host.parseMessage(raw).catch(() => parseMessage(raw))
+      : parseMessage(raw)
     const read: Read = {
       text: withoutQuote(parsed.text),
       attachments: parsed.attachments.map((part) => ({

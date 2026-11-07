@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Host, ProviderEvent } from '../provider'
 import { secretName } from '../provider'
-import { ascii, fromBase64, latin } from './bytes'
+import { ascii, fromBase64, fromLatin, latin, Reader } from './bytes'
 import { FakeMail, nodeSocket } from './fake-server'
-import { itemsOf, parseValues, untaggedOf } from './imap'
+import { bytesOf, itemsOf, parseValues, textOf, untaggedOf } from './imap'
 import {
   addressesOf,
   buildMessage,
@@ -45,6 +45,41 @@ describe('IMAP responses', () => {
     ])
     expect(parseValues('{x} {12')).toEqual(['{x}', '{12'])
     expect(parseValues('(A {2}ok B)')).toEqual([['A', 'ok', 'B']])
+  })
+
+  test('a literal the connection held as bytes is read back as those bytes, and as words', () => {
+    const body = new Uint8Array([0x48, 0xe9, 0x00, 0xff, 0x0d, 0x0a])
+    const line = '* 4 FETCH (UID 9 ENVELOPE ({3}) BODY[] {6})'
+    const literals = new Map([
+      [line.indexOf('{3}') + 3, ascii('Mon')],
+      [line.indexOf('{6}') + 3, body],
+    ])
+    const items = itemsOf(untaggedOf(line, literals).values)
+    expect(bytesOf(items.get('BODY[]'))).toBe(body)
+    const envelope = items.get('ENVELOPE')
+    expect(Array.isArray(envelope) ? textOf(envelope[0]) : null).toBe('Mon')
+    expect(textOf(items.get('UID'))).toBe('9')
+  })
+
+  test('a long literal arriving in many pieces is copied a bounded number of times', () => {
+    const piece = 1024
+    const pieces = 256
+    const whole = new Uint8Array(piece * pieces).map((_, at) => (at * 31) & 0xff)
+    const copying = vi.spyOn(Uint8Array.prototype, 'set')
+    const reader = new Reader()
+    let copied = 0
+    reader.push(fromLatin(`* 1 FETCH (BODY[] {${whole.length}}\r\n`))
+    const head = reader.line()
+    let taken: Uint8Array | null = null
+    for (let at = 0; at < whole.length; at += piece) {
+      reader.push(whole.subarray(at, at + piece))
+      taken ??= reader.take(whole.length)
+    }
+    for (const call of copying.mock.calls) copied += call[0].length
+    copying.mockRestore()
+    expect(head).toBe(`* 1 FETCH (BODY[] {${whole.length}}`)
+    expect(taken).toEqual(whole)
+    expect(copied).toBeLessThan(whole.length * 4)
   })
 
   test('a FETCH line, by its items', () => {
@@ -268,6 +303,22 @@ describe('a mailbox, end to end against a server', () => {
 
   afterEach(async () => {
     await server.close()
+  })
+
+  test('a body is taken apart where the host says, off the window', async () => {
+    const parsed: number[] = []
+    const away: Host = {
+      ...host,
+      parseMessage: (bytes) => {
+        parsed.push(bytes.length)
+        return Promise.resolve(parseMessage(bytes))
+      },
+    }
+    const connection = await mailProvider.connect(config(), away)
+    const page = await connection.history('lunch@example.org', { limit: 20 })
+    expect(page.messages.map((one) => one.text)).toEqual(['At noon?', 'Yes!'])
+    expect(parsed).toHaveLength(2)
+    await connection.close()
   })
 
   test('lists its conversations by thread, reads one, and answers it', async () => {

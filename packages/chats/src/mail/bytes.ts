@@ -53,14 +53,20 @@ export function toBase64(bytes: Uint8Array): string {
   return out
 }
 
-export function fromBase64(text: string): Uint8Array {
-  const clean = text.replace(/[^A-Za-z0-9+/]/g, '')
-  const out = new Uint8Array(Math.floor((clean.length * 3) / 4))
+const SIXES = new Int8Array(256).fill(-1)
+for (let at = 0; at < B64.length; at++) SIXES[B64.charCodeAt(at)] = at
+
+export function fromBase64(text: string | Uint8Array): Uint8Array {
+  const length = text.length
+  const out = new Uint8Array(Math.floor((length * 3) / 4))
   let bits = 0
   let held = 0
   let at = 0
-  for (const char of clean) {
-    held = (held << 6) | B64.indexOf(char)
+  for (let read = 0; read < length; read++) {
+    const char = typeof text === 'string' ? text.charCodeAt(read) : (text[read] ?? 0)
+    const six = char < 256 ? (SIXES[char] ?? -1) : -1
+    if (six < 0) continue
+    held = ((held << 6) | six) & 0xffffff
     bits += 6
     if (bits >= 8) {
       bits -= 8
@@ -71,25 +77,57 @@ export function fromBase64(text: string): Uint8Array {
 }
 
 export class Reader {
-  private held: Uint8Array = new Uint8Array(0)
+  private held = new Uint8Array(0)
+  private start = 0
+  private end = 0
+  private looked = 0
 
   push(bytes: Uint8Array): void {
-    this.held = this.held.length ? concat([this.held, bytes]) : bytes
+    if (this.end + bytes.length > this.held.length) {
+      const kept = this.end - this.start
+      const room =
+        kept + bytes.length <= this.held.length / 2
+          ? this.held
+          : new Uint8Array(Math.max(1024, (kept + bytes.length) * 2))
+      if (room === this.held) this.held.copyWithin(0, this.start, this.end)
+      else room.set(this.held.subarray(this.start, this.end))
+      this.held = room
+      this.looked -= this.start
+      this.start = 0
+      this.end = kept
+    }
+    this.held.set(bytes, this.end)
+    this.end += bytes.length
   }
 
   line(): string | null {
-    const end = this.held.indexOf(10)
-    if (end < 0) return null
-    const cut = end > 0 && this.held[end - 1] === 13 ? end - 1 : end
-    const line = latin(this.held.subarray(0, cut))
-    this.held = this.held.subarray(end + 1)
+    const found = this.held.subarray(0, this.end).indexOf(10, Math.max(this.start, this.looked))
+    if (found < 0) {
+      this.looked = this.end
+      return null
+    }
+    const cut = found > this.start && this.held[found - 1] === 13 ? found - 1 : found
+    const line = latin(this.held.subarray(this.start, cut))
+    this.start = found + 1
+    this.looked = this.start
+    this.settle()
     return line
   }
 
   take(count: number): Uint8Array | null {
-    if (this.held.length < count) return null
-    const out = this.held.slice(0, count)
-    this.held = this.held.subarray(count)
+    if (this.end - this.start < count) return null
+    const out = this.held.slice(this.start, this.start + count)
+    this.start += count
+    this.looked = Math.max(this.looked, this.start)
+    this.settle()
     return out
+  }
+
+  private settle(): void {
+    if (this.start < this.end) return
+    this.start = 0
+    this.end = 0
+    this.looked = 0
+    if (this.held.length > 1 << 20) this.held = new Uint8Array(0)
   }
 }
