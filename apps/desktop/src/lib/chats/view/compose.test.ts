@@ -1,6 +1,15 @@
 import type { Member } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
-import { enterDoes, mentionAt, mentionChoices, mentionText, nibAsked, trimmed } from './compose'
+import { MOST_BODY } from '@orden/chats/limits'
+import {
+  asFile,
+  enterDoes,
+  mentionAt,
+  mentionChoices,
+  mentionText,
+  nibAsked,
+  trimmed,
+} from './compose'
 
 const plain = { shift: false, mod: false }
 
@@ -74,5 +83,15 @@ describe('mentions', () => {
 
   test('a message is sent without blank lines either side', () => {
     expect(trimmed('\n\nhey @Lu\n\nand @everyone  \n\n')).toBe('hey @Lu\n\nand @everyone')
+  })
+})
+
+describe('words longer than a message holds', () => {
+  test('go as a file of the same words, and words that fit go as they are', async () => {
+    expect(asFile('a'.repeat(MOST_BODY), 'Text')).toBeNull()
+    const long = 'The heron stands still. '.repeat(Math.ceil(MOST_BODY / 24) + 1)
+    const file = asFile(long, 'Text')
+    expect(file?.name).toBe('Text.md')
+    expect(await file?.text()).toBe(long)
   })
 })

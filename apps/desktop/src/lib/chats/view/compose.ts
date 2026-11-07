@@ -1,4 +1,5 @@
 import type { Member, Who } from '@orden/chats'
+import { MOST_BODY } from '@orden/chats/limits'
 
 export type EnterDoes = 'send' | 'line' | 'editor'
 
@@ -74,4 +75,10 @@ export function trimmed(text: string): string {
 
 function fold(text: string): string {
   return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+export function asFile(words: string, name: string): File | null {
+  return words.length > MOST_BODY
+    ? new File([words], `${name}.md`, { type: 'text/markdown' })
+    : null
 }

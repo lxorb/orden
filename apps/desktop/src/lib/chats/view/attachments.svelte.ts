@@ -33,22 +33,31 @@ export class Attachments {
   }
 
   add(files: readonly File[]): void {
-    for (const file of files.slice(0, MOST_FILES - this.list.length)) {
-      const id = (made += 1)
-      this.list = [
-        ...this.list,
-        {
-          id,
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          thumb: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-          ref: null,
-          failed: false,
-        },
-      ]
-      void this.send(id, file)
-    }
+    for (const file of files.slice(0, MOST_FILES - this.list.length)) void this.one(file)
+  }
+
+  async took(file: File): Promise<boolean> {
+    if (this.list.length >= MOST_FILES) return false
+    const id = await this.one(file)
+    return this.list.some((one) => one.id === id && one.ref !== null)
+  }
+
+  private async one(file: File): Promise<number> {
+    const id = (made += 1)
+    this.list = [
+      ...this.list,
+      {
+        id,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        thumb: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+        ref: null,
+        failed: false,
+      },
+    ]
+    await this.send(id, file)
+    return id
   }
 
   addRef(ref: FileRef): void {
