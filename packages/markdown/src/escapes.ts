@@ -1,3 +1,4 @@
+import { backpedal } from './backpedal'
 import { codeAndWords, PUNCTUATION } from './tags'
 import { OPENS_MARKUP } from './words'
 
@@ -19,20 +20,15 @@ const A_STRONG = /(\*\*|__)([^`*_[\]\\<%$=]+)\1/y
 
 const A_URL = /(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)(?:[a-zA-Z0-9-]+\.?)+[^\s<]*/y
 
-const TRAILING = /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/
-
 const AN_ADDRESS = /[hHfFw]/
 
 function addressAt(text: string, at: number): string | null {
   if (!AN_ADDRESS.test(text[at] ?? '')) return null
   A_URL.lastIndex = at
-  let address = A_URL.exec(text)?.[0]
-  if (!address) return null
+  const found = A_URL.exec(text)?.[0]
+  if (!found) return null
 
-  for (let before = ''; before !== address;) {
-    before = address
-    address = TRAILING.exec(address)?.[0] ?? ''
-  }
+  const address = backpedal(found)
   return address && !address.includes('%%') ? address : null
 }
 

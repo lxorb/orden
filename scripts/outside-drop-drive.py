@@ -244,7 +244,7 @@ class X11:
             for name in [
                 "XdndAware", "XdndProxy", "XdndEnter", "XdndPosition", "XdndStatus", "XdndLeave",
                 "XdndDrop", "XdndFinished", "XdndSelection", "XdndActionCopy", "text/uri-list",
-                "TARGETS", "_NET_WM_PID", "NIB_TIME",
+                "TARGETS", "_NET_WM_PID", "ORDEN_TIME",
             ]
         }
         self.top = None
@@ -326,7 +326,7 @@ class X11:
 
         X, atoms, display = self.X, self.atoms, self.display
         source = self.root.create_window(-10, -10, 1, 1, 0, X.CopyFromParent, X.InputOutput, event_mask=X.PropertyChangeMask)
-        source.change_property(atoms["NIB_TIME"], Xatom.STRING, 8, b"now")
+        source.change_property(atoms["ORDEN_TIME"], Xatom.STRING, 8, b"now")
         display.flush()
         stamp = X.CurrentTime
         until = time.monotonic() + 3
@@ -549,7 +549,7 @@ def main() -> int:
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-outside-spaces-"))
     outside = pathlib.Path(tempfile.mkdtemp(prefix="nib-outside-files-"))
-    process = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
+    process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     wrong: list[str] = []
     try:
         app = endpoint(config, process.pid, secret)

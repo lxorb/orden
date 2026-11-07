@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const DIALOG: &str = "nib://web-dialog";
+const DIALOG: &str = "orden://web-dialog";
 
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -59,7 +59,7 @@ mod engine {
     };
     use webview2_com::{
         ContentLoadingEventHandler, NavigationCompletedEventHandler,
-        ScriptDialogOpeningEventHandler,
+        NavigationStartingEventHandler, ScriptDialogOpeningEventHandler,
     };
     use windows_core::{HSTRING, PWSTR};
 
@@ -126,7 +126,15 @@ mod engine {
                     Ok(())
                 }
             }));
+            let starting = NavigationStartingEventHandler::create(Box::new({
+                let tab = tab.clone();
+                move |_, _| {
+                    forget(&tab);
+                    Ok(())
+                }
+            }));
             let mut token = 0i64;
+            let _ = core.add_NavigationStarting(&starting, &raw mut token);
             let _ = core.add_ContentLoading(&loading, &raw mut token);
             let _ = core.add_NavigationCompleted(&settled, &raw mut token);
 

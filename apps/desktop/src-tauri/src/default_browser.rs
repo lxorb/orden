@@ -20,9 +20,9 @@ const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
 )]
 const DESCRIPTION: &str = "Notes and the web in one window.";
 
-#[tauri::command(async)]
-pub fn default_browser(app: AppHandle) -> bool {
-    platform::is_default(&app)
+#[tauri::command]
+pub async fn default_browser(app: AppHandle) -> bool {
+    crate::lane::off_the_runtime(move || -> bool { platform::is_default(&app) }).await
 }
 
 #[tauri::command(async)]
@@ -661,29 +661,29 @@ mod tests {
     fn the_installer_forgets_the_old_names_and_keeps_the_prog_id() {
         let script = source("installer.nsh");
         for (at, old) in OLD_NAMES.iter().enumerate() {
-            let define = format!(r#"!define NIB_OLD_NAME_{} "{old}""#, at + 1);
+            let define = format!(r#"!define ORDEN_OLD_NAME_{} "{old}""#, at + 1);
             assert!(
                 script.contains(&define),
                 "installer.nsh does not say: {define}"
             );
         }
         assert!(
-            !script.contains("NIB_OLD_NAME_3"),
+            !script.contains("ORDEN_OLD_NAME_3"),
             "a third old name the app does not know"
         );
         let product = product_name(&source("tauri.conf.json"));
-        assert!(script.contains(&format!(r#"!define NIB_NAME "{product}""#)));
+        assert!(script.contains(&format!(r#"!define ORDEN_NAME "{product}""#)));
         for line in [
             r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${OLD}""#,
             r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${OLD}""#,
-            r#"DeleteRegKey SHCTX "${NIB_UNINSTKEYS}\${OLD}""#,
+            r#"DeleteRegKey SHCTX "${ORDEN_UNINSTKEYS}\${OLD}""#,
             r#"DeleteRegKey SHCTX "Software\${MANUFACTURER}\${OLD}""#,
-            r#"!insertmacro NIB_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}""#,
-            r#"!insertmacro NIB_RENAME_SHORTCUT "$DESKTOP" "${OLD}""#,
-            r#"!insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_1}""#,
-            r#"!insertmacro NIB_FIND_UNDER "${NIB_OLD_NAME_2}""#,
-            r#"StrCmp "$R6$R5" "${NIB_OLD_NAME_1}${MANUFACTURER}""#,
-            r#"StrCmp "$R6$R5" "${NIB_OLD_NAME_2}${MANUFACTURER}""#,
+            r#"!insertmacro ORDEN_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}""#,
+            r#"!insertmacro ORDEN_RENAME_SHORTCUT "$DESKTOP" "${OLD}""#,
+            r#"!insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_1}""#,
+            r#"!insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_2}""#,
+            r#"StrCmp "$R6$R5" "${ORDEN_OLD_NAME_1}${MANUFACTURER}""#,
+            r#"StrCmp "$R6$R5" "${ORDEN_OLD_NAME_2}${MANUFACTURER}""#,
         ] {
             assert!(script.contains(line), "installer.nsh does not say: {line}");
         }
@@ -696,13 +696,14 @@ mod tests {
             .expect("an install hook")
             .1;
         for at in 1..=OLD_NAMES.len() {
-            let forgotten = format!(r#"!insertmacro NIB_FORGET_OLD_NAME "${{NIB_OLD_NAME_{at}}}""#);
+            let forgotten =
+                format!(r#"!insertmacro ORDEN_FORGET_OLD_NAME "${{ORDEN_OLD_NAME_{at}}}""#);
             assert!(
                 install.contains(&forgotten),
                 "the install does not say: {forgotten}"
             );
             let browser =
-                format!(r#"!insertmacro NIB_FORGET_OLD_BROWSER "${{NIB_OLD_NAME_{at}}}""#);
+                format!(r#"!insertmacro ORDEN_FORGET_OLD_BROWSER "${{ORDEN_OLD_NAME_{at}}}""#);
             assert!(
                 uninstall.contains(&browser),
                 "the uninstall does not say: {browser}"
@@ -747,7 +748,7 @@ mod tests {
     fn a_mac_bundle_asks_for_the_two_web_schemes() {
         let config = source("tauri.macos.conf.json");
         assert!(config.contains(r#""schemes": ["http", "https"]"#));
-        assert!(config.contains(r#""schemes": ["nib"]"#));
+        assert!(config.contains(r#""schemes": ["orden", "nib"]"#));
         assert!(!config.contains("public.html"));
         assert!(!config.contains("fileAssociations"));
     }

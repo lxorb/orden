@@ -170,10 +170,10 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     inbox = wait(
         owner,
         "async () => { const text = await window.nibApp.workspace.noteText('/Team/.Inbox.md');"
-        " return text && text.includes('nib://chat/') ? text : null }",
+        " return text && text.includes('orden://chat/') ? text : null }",
         "[Emil] the task in the inbox, with its link",
     )
-    link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("nib://chat/")), "")
+    link = next((word for word in inbox.replace("(", " ").replace(")", " ").split() if word.startswith("orden://chat/")), "")
     say(f"the task landed in the inbox: {inbox.strip().splitlines()[-2:]}")
     owner.keyboard.press("Escape")
     came(owner, "() => !document.querySelector('.nib-scrim')", "[Emil] quick add put away")

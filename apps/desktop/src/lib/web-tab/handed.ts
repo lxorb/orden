@@ -5,7 +5,7 @@ import { isExtensionPage, isWebAddress } from './address'
 
 export async function hearPages(): Promise<() => void> {
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
-  const stop = await getCurrentWindow().listen<unknown>('nib://open-pages', (event) => {
+  const stop = await getCurrentWindow().listen<unknown>('orden://open-pages', (event) => {
     showPages(event.payload)
   })
 

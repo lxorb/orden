@@ -1479,6 +1479,8 @@ export const zhHans: Dictionary = {
   Shorter: '更短',
   Longer: '更长',
   'Fix grammar': '修正语法',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '所选文字已不在笔记中，因此没有替换任何内容。',
   'A cited report': '带引用的报告',
   'A helper in the background': '后台助手',
   'A side question': '附带问题',
@@ -2802,6 +2804,8 @@ export const zhHans: Dictionary = {
   'That could not be protected: {reason}': '无法保护：{reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '未添加 {name}：聊天只接受图片和 2 MB 以内的文本文件。',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '未添加 {name}：一条消息最多接受 20 张图片。',
   'Time tracker': '时间记录',
   'Start timer': '开始计时',
   'Stop timer': '停止计时',
@@ -3328,9 +3332,16 @@ export const zhHans: Dictionary = {
   'You said': '自述',
   Privacy: '隐私',
   'Send crash and freeze reports': '发送崩溃和卡死报告',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden 崩溃或卡死时，会发送它当时在做什么以及在自身代码中的位置，并去除名称、路径、地址和密码。绝不发送你的笔记。',
-  'Turn off in Settings': '在设置中关闭',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     '发送 Orden 崩溃或卡死时正在做什么；绝不发送笔记、名称、路径或密码。',
+  'Send crash reports to help improve Orden': '发送崩溃报告，帮助改进 Orden',
+  'Move to {space}?': '移动到 {space}？',
+  'macOS can start dictation with this key too.': 'macOS 也可能用这个键开始听写。',
+  'QR code': '二维码',
+  'Waiting…': '正在等待…',
+  Service: '服务',
+  'I understand and want to connect anyway': '我已了解，仍要连接',
+  'Some changes have not reached your account yet': '部分更改尚未到达你的账户',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '这些更改留在此浏览器中，在此登录的其他人看不到，你再次登录时会上传。',
 }

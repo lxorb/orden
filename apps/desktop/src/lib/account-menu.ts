@@ -12,7 +12,7 @@ export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true
   })
   const leave = () =>
     __EVEN_PLUGIN__
-      ? void account.signOut()
+      ? void account.signOut('asked')
       : void import('./ai/vault/leaving').then((one) => one.signOut())
   menu.show(
     at,

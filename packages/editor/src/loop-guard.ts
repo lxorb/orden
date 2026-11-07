@@ -1,4 +1,6 @@
+import type { SyntaxNode } from '@lezer/common'
 import { parser } from '@lezer/javascript'
+import { backtracksWildly } from '@orden/markdown/pattern-cost'
 
 export const LOOP_LIMIT = 3000
 
@@ -69,6 +71,87 @@ const PRELUDE = `;(function () {
 
 const UNREAD = 'Orden could not read this script, so it does not run it'
 
+const WILD =
+  'Orden does not run a script with a pattern that could take forever to match: it could not stop it'
+
+const MADE = new Set(['NewExpression', 'CallExpression'])
+
+const ESCAPES: Record<string, string> = {
+  n: '\n',
+  t: '\t',
+  r: '\r',
+  b: '\b',
+  f: '\f',
+  v: '\v',
+  '0': '\0',
+}
+
+function written(literal: string): string | null {
+  if (literal.startsWith('`') && literal.includes('${')) return null
+  let out = ''
+  try {
+    for (let at = 1; at < literal.length - 1; at++) {
+      const one = literal.charAt(at)
+      if (one !== '\\') {
+        out += one
+        continue
+      }
+      const next = literal.charAt(++at)
+      if (next === 'x') {
+        out += String.fromCharCode(Number.parseInt(literal.slice(at + 1, at + 3), 16))
+        at += 2
+      } else if (next === 'u' && literal.charAt(at + 1) === '{') {
+        const end = literal.indexOf('}', at)
+        out += String.fromCodePoint(Number.parseInt(literal.slice(at + 2, end), 16))
+        at = end
+      } else if (next === 'u') {
+        out += String.fromCharCode(Number.parseInt(literal.slice(at + 1, at + 5), 16))
+        at += 4
+      } else if (next === '\r' || next === '\n') {
+        if (next === '\r' && literal.charAt(at + 1) === '\n') at++
+      } else out += ESCAPES[next] ?? next
+    }
+  } catch {
+    return null
+  }
+  return out
+}
+
+function patternMade(code: string, node: { node: SyntaxNode }): [string, string] | null {
+  const callee = node.node.getChild('VariableName')
+  if (callee === null || code.slice(callee.from, callee.to) !== 'RegExp') return null
+  const args = node.node.getChild('ArgList')
+  const first = args?.firstChild?.nextSibling
+  if (!first || (first.name !== 'String' && first.name !== 'TemplateString')) return null
+  const source = written(code.slice(first.from, first.to))
+  if (source === null) return null
+  const second = first.nextSibling?.nextSibling
+  const flags =
+    second && (second.name === 'String' || second.name === 'TemplateString')
+      ? written(code.slice(second.from, second.to))
+      : ''
+  return [source, flags ?? '']
+}
+
+export function backtracks(code: string): boolean {
+  let wild = false
+  parser.parse(code).iterate({
+    enter(node) {
+      if (wild) return false
+      if (node.name === 'RegExp') {
+        const text = code.slice(node.from, node.to)
+        const end = text.lastIndexOf('/')
+        wild = backtracksWildly(text.slice(1, end), text.slice(end + 1))
+      } else if (MADE.has(node.name)) {
+        const made = patternMade(code, node)
+        if (made) wild = backtracksWildly(...made)
+      }
+      return undefined
+    },
+  })
+  return wild
+}
+
 const ELSEWHERE =
   'Orden does not run a script from elsewhere in a block: it could not stop one that never ends'
 
@@ -123,6 +206,7 @@ export function guardedBlock(html: string): string {
     }
     const safe = guarded(script.textContent)
     if (safe === null) refuse(script, UNREAD)
+    else if (backtracks(script.textContent)) refuse(script, WILD)
     else script.textContent = safe
   }
   const check = document.createElement('script')

@@ -245,7 +245,7 @@ pub fn made(dir: &Path) -> Result<(), String> {
     fs::create_dir_all(dir).map_err(|error| cannot("create", dir, &error))
 }
 
-pub(crate) const SPACES_DIR: &str = "NIB_SPACES_DIR";
+pub(crate) const SPACES_DIR: &str = "ORDEN_SPACES_DIR";
 
 pub(crate) fn folder_named(said: Option<&OsStr>) -> Option<PathBuf> {
     let path = PathBuf::from(said?);

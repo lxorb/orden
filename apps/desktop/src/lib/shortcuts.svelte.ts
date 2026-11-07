@@ -18,6 +18,7 @@ import {
   type AppContext,
   BROWSER_KEYS,
   BY_ID,
+  DICTATION_TAPS,
   FIXED_ENTRIES,
   SHORTCUTS,
   type Shortcut,
@@ -127,6 +128,9 @@ class Shortcuts {
     const taken = (list: string[]) => list.some((one) => sameCombination(one, key, this.platform))
     if (taken(SYSTEM_KEYS[this.platform]))
       return t('Your system takes this key before the app sees it.')
+    const said = key.trim().toLowerCase().split(/\s+/).join(' ')
+    if (DICTATION_TAPS[this.platform].some((one) => one.toLowerCase() === said))
+      return t('macOS can start dictation with this key too.')
     if (!isNative && taken(BROWSER_KEYS))
       return t('Your browser takes this key before the app sees it.')
 

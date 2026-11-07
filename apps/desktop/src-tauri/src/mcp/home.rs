@@ -1,9 +1,9 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-pub const IDENTIFIER: &str = env!("NIB_IDENTIFIER");
+pub const IDENTIFIER: &str = env!("ORDEN_IDENTIFIER");
 
-pub const VERSION: &str = env!("NIB_VERSION");
+pub const VERSION: &str = env!("ORDEN_VERSION");
 
 pub fn config_dir() -> Option<PathBuf> {
     base(|name| std::env::var_os(name)).map(|base| base.join(IDENTIFIER))

@@ -130,17 +130,20 @@ fn usable(id: &str) -> Result<(), String> {
     }
 }
 
-#[tauri::command(async)]
-pub fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, String> {
-    owner(&webview)?;
-    Ok(shells::detected()
-        .iter()
-        .map(shells::Shell::offered)
-        .collect())
+#[tauri::command]
+pub async fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, String> {
+    crate::lane::off_the_runtime(move || -> Result<Vec<shells::Offered>, String> {
+        owner(&webview)?;
+        Ok(shells::detected()
+            .iter()
+            .map(shells::Shell::offered)
+            .collect())
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn pty_spawn(
+#[tauri::command]
+pub async fn pty_spawn(
     webview: Webview,
     id: String,
     shell: String,
@@ -149,61 +152,64 @@ pub fn pty_spawn(
     rows: u16,
     output: Channel<InvokeResponseBody>,
 ) -> Result<Spawned, String> {
-    let owner = owner(&webview)?;
-    usable(&id)?;
-    let terminals = webview.state::<Terminals>();
-    if terminals.lock().contains_key(&id) {
-        return Err(format!("terminal {id} is already running"));
-    }
+    crate::lane::off_the_runtime(move || -> Result<Spawned, String> {
+        let owner = owner(&webview)?;
+        usable(&id)?;
+        let terminals = webview.state::<Terminals>();
+        if terminals.lock().contains_key(&id) {
+            return Err(format!("terminal {id} is already running"));
+        }
 
-    let host = remote::host_id(&shell);
-    let remote = host.is_some();
-    let launch = match host {
-        Some(host) => remote::connect(&webview, host)?,
-        None => shells::find(&shell)
-            .ok_or_else(|| format!("no shell {shell} here"))?
-            .launch(folder.as_deref(), &shells::ThisMachine),
-    };
-    let (session, started) = session::Session::open(&launch, cols, rows)?;
-    let pid = session.pid();
+        let host = remote::host_id(&shell);
+        let remote = host.is_some();
+        let launch = match host {
+            Some(host) => remote::connect(&webview, host)?,
+            None => shells::find(&shell)
+                .ok_or_else(|| format!("no shell {shell} here"))?
+                .launch(folder.as_deref(), &shells::ThisMachine),
+        };
+        let (session, started) = session::Session::open(&launch, cols, rows)?;
+        let pid = session.pid();
 
-    terminals.lock().insert(
-        id.clone(),
-        Held {
-            owner,
-            session: Arc::new(session),
-            remote,
-        },
-    );
+        terminals.lock().insert(
+            id.clone(),
+            Held {
+                owner,
+                session: Arc::new(session),
+                remote,
+            },
+        );
 
-    let app = webview.app_handle().clone();
-    started.run(
-        Box::new(move |out| {
-            let _ = match out {
-                Out::Bytes(bytes) => output.send(InvokeResponseBody::Raw(bytes)),
-                Out::Exit(exit) => {
-                    output.send(InvokeResponseBody::Json(format!("{{\"exit\":{exit}}}")))
-                }
-            };
-        }),
-        move |mine| {
-            let Some(terminals) = app.try_state::<Terminals>() else {
-                return;
-            };
-            let gone = {
-                let mut sessions = terminals.lock();
-                let this = sessions.get(&id).is_some_and(|held| mine(&held.session));
-                if this {
-                    sessions.remove(&id)
-                } else {
-                    None
-                }
-            };
-            drop(gone);
-        },
-    );
+        let app = webview.app_handle().clone();
+        started.run(
+            Box::new(move |out| {
+                let _ = match out {
+                    Out::Bytes(bytes) => output.send(InvokeResponseBody::Raw(bytes)),
+                    Out::Exit(exit) => {
+                        output.send(InvokeResponseBody::Json(format!("{{\"exit\":{exit}}}")))
+                    }
+                };
+            }),
+            move |mine| {
+                let Some(terminals) = app.try_state::<Terminals>() else {
+                    return;
+                };
+                let gone = {
+                    let mut sessions = terminals.lock();
+                    let this = sessions.get(&id).is_some_and(|held| mine(&held.session));
+                    if this {
+                        sessions.remove(&id)
+                    } else {
+                        None
+                    }
+                };
+                drop(gone);
+            },
+        );
 
-    Ok(Spawned { pid })
+        Ok(Spawned { pid })
+    })
+    .await
 }
 
 #[tauri::command]

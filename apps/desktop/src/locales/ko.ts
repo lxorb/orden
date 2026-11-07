@@ -1500,6 +1500,8 @@ export const ko: Dictionary = {
   Shorter: '더 짧게',
   Longer: '더 길게',
   'Fix grammar': '문법 고치기',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '선택한 단어가 더 이상 노트에 없어 아무것도 바꾸지 않았습니다.',
   'A cited report': '인용된 보고서',
   'A helper in the background': '백그라운드의 도우미',
   'A side question': '곁가지 질문',
@@ -2858,6 +2860,8 @@ export const ko: Dictionary = {
   'That could not be protected: {reason}': '보호할 수 없습니다: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name}을(를) 추가하지 않았습니다: 채팅에는 이미지와 2 MB 이하의 텍스트 파일만 추가할 수 있습니다.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name}을(를) 추가하지 않았습니다: 메시지 하나에는 이미지를 최대 20개까지 추가할 수 있습니다.',
   'Time tracker': '시간 기록',
   'Start timer': '타이머 시작',
   'Stop timer': '타이머 중지',
@@ -3389,9 +3393,17 @@ export const ko: Dictionary = {
   'You said': '직접 입력',
   Privacy: '개인 정보',
   'Send crash and freeze reports': '충돌 및 멈춤 보고서 보내기',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden이 충돌하거나 멈추면, 무엇을 하고 있었는지와 자체 코드의 어디에 있었는지를 이름, 경로, 주소, 비밀번호를 뺀 채 보냅니다. 메모는 절대 보내지 않습니다.',
-  'Turn off in Settings': '설정에서 끄기',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden이 충돌하거나 멈췄을 때 하던 일을 보냅니다. 메모, 이름, 경로, 비밀번호는 보내지 않습니다.',
+  'Send crash reports to help improve Orden': '충돌 보고서를 보내 Orden 개선에 도움 주기',
+  'Move to {space}?': '{space}(으)로 옮길까요?',
+  'macOS can start dictation with this key too.': 'macOS가 이 키로 받아쓰기도 시작할 수 있습니다.',
+  'QR code': 'QR 코드',
+  'Waiting…': '기다리는 중…',
+  Service: '서비스',
+  'I understand and want to connect anyway': '이해했으며 그래도 연결하겠습니다',
+  'Some changes have not reached your account yet':
+    '아직 계정에 도착하지 않은 변경 사항이 있습니다',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '변경 사항은 이 브라우저에 남고, 여기서 로그인하는 다른 사람에게는 보이지 않으며, 다시 로그인하면 올라갑니다.',
 }

@@ -164,7 +164,7 @@ def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> fl
 
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
-    also = os.environ.get("NIB_SHOTS_TOO")
+    also = os.environ.get("ORDEN_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
@@ -389,7 +389,7 @@ def cost(browser: Any) -> None:
         say(f"cost on {look}: scrolling {results[look]['scroll']}; typing {results[look]['typing']}")
         page.context.close()
 
-    out = os.environ.get("NIB_SHOTS_TOO")
+    out = os.environ.get("ORDEN_SHOTS_TOO")
     if out:
         with open(os.path.join(out, "cost.json"), "w", encoding="utf-8") as file:
             json.dump(results, file, indent=2)

@@ -2,7 +2,7 @@ import { overlays } from './overlays'
 import { invoke, isDesktop } from './tauri'
 import { IN_A_PAGE } from './trap'
 
-export const IN_PAGE = 'nib://keyboard-in-page'
+export const IN_PAGE = 'orden://keyboard-in-page'
 
 const PRESSED_THROUGH = [
   'button',

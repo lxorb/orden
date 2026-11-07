@@ -1549,6 +1549,8 @@ export const de: Dictionary = {
   Shorter: 'Kürzer',
   Longer: 'Länger',
   'Fix grammar': 'Grammatik korrigieren',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Die gewählten Wörter stehen nicht mehr in der Notiz, deshalb wurde nichts ersetzt.',
   'A cited report': 'Ein Bericht mit Quellen',
   'A helper in the background': 'Ein Helfer im Hintergrund',
   'A side question': 'Eine Nebenfrage',
@@ -2980,6 +2982,8 @@ export const de: Dictionary = {
   'That could not be protected: {reason}': 'Das konnte nicht geschützt werden: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} wurde nicht hinzugefügt: Ein Chat nimmt Bilder und Textdateien bis 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} wurde nicht hinzugefügt: Eine Nachricht nimmt höchstens 20 Bilder.',
   'Time tracker': 'Zeiterfassung',
   'Start timer': 'Timer starten',
   'Stop timer': 'Timer anhalten',
@@ -3561,9 +3565,18 @@ export const de: Dictionary = {
   'You said': 'Deine Angaben',
   Privacy: 'Datenschutz',
   'Send crash and freeze reports': 'Absturz- und Hängerberichte senden',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Wenn Orden abstürzt oder hängt, sendet es, was es gerade tat und wo in seinem eigenen Code, ohne Namen, Pfade, Adressen und Passwörter. Nie deine Notizen.',
-  'Turn off in Settings': 'In den Einstellungen ausschalten',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Sendet, was Orden beim Absturz oder Hänger tat; nie Notizen, Namen, Pfade oder Passwörter.',
+  'Send crash reports to help improve Orden': 'Absturzberichte senden, um Orden zu verbessern',
+  'Move to {space}?': 'Nach {space} verschieben?',
+  'macOS can start dictation with this key too.':
+    'macOS kann mit dieser Taste auch das Diktieren starten.',
+  'QR code': 'QR-Code',
+  'Waiting…': 'Warten…',
+  Service: 'Dienst',
+  'I understand and want to connect anyway': 'Ich habe verstanden und möchte trotzdem verbinden',
+  'Some changes have not reached your account yet':
+    'Einige Änderungen sind noch nicht in deinem Konto angekommen',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Sie bleiben in diesem Browser, für alle anderen, die sich hier anmelden, unsichtbar, und werden hochgeladen, wenn du dich wieder anmeldest.',
 }

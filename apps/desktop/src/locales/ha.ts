@@ -1547,6 +1547,8 @@ export const ha: Dictionary = {
   Shorter: 'Gajarta',
   Longer: 'Tsawaita',
   'Fix grammar': 'Gyara nahawu',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Kalmomin da aka zaɓa ba sa cikin bayanin kuma, don haka ba a maye gurbin komai ba.',
   'A cited report': 'Rahoto mai ambato',
   'A helper in the background': 'Mataimaki a bango',
   'A side question': 'Tambaya ta gefe',
@@ -2961,6 +2963,8 @@ export const ha: Dictionary = {
   'That could not be protected: {reason}': 'Ba a iya karewa ba: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Ba a ƙara {name} ba: hira tana karɓar hotuna da fayilolin rubutu har zuwa 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'Ba a ƙara {name} ba: saƙo ɗaya yana karɓar hotuna har zuwa 20.',
   'Time tracker': 'Mai bin diddigin lokaci',
   'Start timer': 'Fara agogon lokaci',
   'Stop timer': 'Tsayar da agogon lokaci',
@@ -3542,9 +3546,17 @@ export const ha: Dictionary = {
   'You said': 'Abin da kuka faɗa',
   Privacy: 'Sirri',
   'Send crash and freeze reports': 'Aika rahotannin faɗuwa da daskarewa',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Idan Orden ya faɗi ko ya daskare, yana aika abin da yake yi da inda yake a cikin lambarsa, ba tare da sunaye, hanyoyi, adireshi da kalmomin sirri ba. Ba bayananka ba har abada.',
-  'Turn off in Settings': 'Kashe a cikin Saituna',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Yana aika abin da Orden ke yi lokacin da ya faɗi ko ya daskare; ba bayanai, sunaye, hanyoyi ko kalmomin sirri ba.',
+  'Send crash reports to help improve Orden': 'Aika rahotannin faɗuwa don taimakawa inganta Orden',
+  'Move to {space}?': 'A matsar zuwa {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS na iya fara rubutu da murya da wannan maɓallin ma.',
+  'QR code': 'Lambar QR',
+  'Waiting…': 'Ana jira…',
+  Service: 'Sabis',
+  'I understand and want to connect anyway': 'Na fahimta kuma ina so in haɗa duk da haka',
+  'Some changes have not reached your account yet': 'Wasu canje-canje ba su isa asusunka ba tukuna',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Suna zama a wannan burauzar, ba tare da wani da ya shiga nan ya gan su ba, kuma za a tura su idan ka sake shiga.',
 }

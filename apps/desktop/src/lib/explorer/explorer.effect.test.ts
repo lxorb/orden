@@ -6,11 +6,14 @@ const DISK: Record<string, string[]> = {
   '/home/me': ['Music', 'Pictures', 'notes.txt', 'plan.pdf'],
   '/home/me/Pictures': ['a.png'],
   '/home/me/Music': [],
+  '/home/me/Sounds': ['a.mp3', 'b.mp3', 'c.mp3', 'd.mp3'],
   '/home': ['me'],
   '/': ['home'],
 }
 
 const opened: string[] = []
+
+const peeked: string[] = []
 
 vi.mock('./commands', () => ({
   CHANGED: 'explorer://changed',
@@ -72,7 +75,10 @@ vi.mock('./commands', () => ({
       mode: 'rw-r--r--',
       link: null,
     }),
-  peekAt: () => Promise.resolve({ bytes: new TextEncoder().encode('hello'), cut: false }),
+  peekAt: (path: string) => {
+    peeked.push(path)
+    return Promise.resolve({ bytes: new TextEncoder().encode('hello'), cut: false })
+  },
   searchBelow: () => Promise.resolve({ found: 0, cut: false, cancelled: false }),
   FOUND: 'explorer://found',
   PROGRESS: 'explorer://progress',
@@ -115,6 +121,7 @@ function press(key: string, more: KeyboardEventInit = {}) {
 
 beforeEach(() => {
   opened.length = 0
+  peeked.length = 0
   changed.length = 0
   target = document.createElement('div')
   document.body.append(target)
@@ -255,6 +262,21 @@ describe('a file explorer', () => {
     await settled()
     expect(view.filter).toBe('')
     expect(rows()).toHaveLength(4)
+  })
+
+  test('reads a film or a sound to look at only once the cursor rests on it', async () => {
+    const { view } = await explorer()
+    await view.go('/home/me/Sounds')
+    await settled()
+    press('a')
+    press(' ')
+    for (const name of ['b.mp3', 'c.mp3', 'd.mp3']) {
+      view.pick(name, 'one')
+      flushSync()
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await settled()
+    expect(peeked).toEqual(['/home/me/Sounds/d.mp3'])
   })
 
   test('looks at a file with Space, its words and its facts, and puts it away again', async () => {

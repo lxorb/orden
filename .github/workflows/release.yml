@@ -68,7 +68,7 @@ jobs:
       - id: wait
         env:
           GH_TOKEN: ${{ github.token }}
-          SETTLE_S: ${{ vars.NIB_CI_SETTLE_S || '300' }}
+          SETTLE_S: ${{ vars.ORDEN_CI_SETTLE_S || '300' }}
           LATER: >-
             [.workflow_runs[] | select(.run_number > $mine and .conclusion != "cancelled") | .run_number]
             | max // empty
@@ -118,6 +118,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
           ROLLING: ${{ needs.version.outputs.rolling }}
+          VITE_ORDEN_GOOGLE_CLIENT_ID: ${{ secrets.ORDEN_GOOGLE_CLIENT_ID }}
+          VITE_ORDEN_GOOGLE_CLIENT_SECRET: ${{ secrets.ORDEN_GOOGLE_CLIENT_SECRET }}
+          VITE_ORDEN_MICROSOFT_CLIENT_ID: ${{ secrets.ORDEN_MICROSOFT_CLIENT_ID }}
         run: |
           source scripts/edge-profile.sh
           if [ "$RUNNER_OS" = Windows ]; then
@@ -177,6 +180,9 @@ jobs:
         shell: bash
         env:
           ROLLING: ${{ needs.version.outputs.rolling }}
+          VITE_ORDEN_GOOGLE_CLIENT_ID: ${{ secrets.ORDEN_GOOGLE_CLIENT_ID }}
+          VITE_ORDEN_GOOGLE_CLIENT_SECRET: ${{ secrets.ORDEN_GOOGLE_CLIENT_SECRET }}
+          VITE_ORDEN_MICROSOFT_CLIENT_ID: ${{ secrets.ORDEN_MICROSOFT_CLIENT_ID }}
         run: |
           source scripts/edge-profile.sh
           pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle \

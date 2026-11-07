@@ -1501,6 +1501,8 @@ export const am: Dictionary = {
   Shorter: 'አሳጥር',
   Longer: 'አርዝም',
   'Fix grammar': 'ሰዋስው አስተካክል',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'የተመረጡት ቃላት ከእንግዲህ በማስታወሻው ውስጥ የሉም፣ ስለዚህ ምንም አልተተካም።',
   'A cited report': 'ምንጭ የተጠቀሰበት ዘገባ',
   'A helper in the background': 'ከበስተጀርባ ያለ ረዳት',
   'A side question': 'የጎን ጥያቄ',
@@ -2857,6 +2859,8 @@ export const am: Dictionary = {
   'That could not be protected: {reason}': 'ሊጠበቅ አልቻለም፦ {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} አልታከለም፦ ውይይት ምስሎችን እና እስከ 2 MB የሆኑ የጽሑፍ ፋይሎችን ይቀበላል።',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} አልታከለም፦ አንድ መልእክት እስከ 20 ምስሎች ይቀበላል።',
   'Time tracker': 'የጊዜ መከታተያ',
   'Start timer': 'ሰዓት ቆጣሪ ጀምር',
   'Stop timer': 'ሰዓት ቆጣሪ አቁም',
@@ -3428,9 +3432,16 @@ export const am: Dictionary = {
   'You said': 'የገለጹት',
   Privacy: 'ግላዊነት',
   'Send crash and freeze reports': 'የብልሽት እና የመቆም ሪፖርቶችን ላክ',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ሲበላሽ ወይም ሲቆም፣ ምን እየሰራ እንደነበር እና በራሱ ኮድ ውስጥ የት እንደነበር ይልካል፤ ስሞች፣ መንገዶች፣ አድራሻዎች እና የይለፍ ቃሎች ተወግደው። ማስታወሻዎችዎን በጭራሽ አይልክም።',
-  'Turn off in Settings': 'በቅንብሮች ውስጥ አጥፋ',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ሲበላሽ ወይም ሲቆም ምን እየሰራ እንደነበር ይልካል፤ ማስታወሻዎች፣ ስሞች፣ መንገዶች ወይም የይለፍ ቃሎች አይላኩም።',
+  'Send crash reports to help improve Orden': 'Ordenን ለማሻሻል እንዲረዳ የብልሽት ሪፖርቶችን ላክ',
+  'Move to {space}?': 'ወደ {space} ይዛወር?',
+  'macOS can start dictation with this key too.': 'macOS በዚህ ቁልፍም ቃል መጻፍን ሊጀምር ይችላል።',
+  'QR code': 'QR ኮድ',
+  'Waiting…': 'በመጠበቅ ላይ…',
+  Service: 'አገልግሎት',
+  'I understand and want to connect anyway': 'ተረድቻለሁ፣ ቢሆንም መገናኘት እፈልጋለሁ',
+  'Some changes have not reached your account yet': 'አንዳንድ ለውጦች ገና ወደ መለያዎ አልደረሱም',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'በዚህ አሳሽ ውስጥ ይቆያሉ፣ እዚህ ለሚገባ ሌላ ሰው አይታዩም፣ እና እንደገና ሲገቡ ይላካሉ።',
 }

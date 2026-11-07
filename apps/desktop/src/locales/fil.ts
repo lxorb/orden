@@ -1554,6 +1554,8 @@ export const fil: Dictionary = {
   Shorter: 'Paikliin',
   Longer: 'Pahabain',
   'Fix grammar': 'Ayusin ang gramatika',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Wala na sa tala ang mga napiling salita, kaya walang napalitan.',
   'A cited report': 'Ulat na may sanggunian',
   'A helper in the background': 'Katulong sa likod ng trabaho',
   'A side question': 'Isang karagdagang tanong',
@@ -2980,6 +2982,8 @@ export const fil: Dictionary = {
   'That could not be protected: {reason}': 'Hindi ito maprotektahan: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Hindi naidagdag ang {name}: tumatanggap ang chat ng mga larawan at text file na hanggang 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'Hindi naidagdag ang {name}: hanggang 20 larawan lang ang tinatanggap ng isang mensahe.',
   'Time tracker': 'Pansubaybay ng oras',
   'Start timer': 'Simulan ang timer',
   'Stop timer': 'Ihinto ang timer',
@@ -3561,9 +3565,19 @@ export const fil: Dictionary = {
   'You said': 'Sinabi mo',
   Privacy: 'Privacy',
   'Send crash and freeze reports': 'Magpadala ng ulat ng pag-crash at pag-freeze',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Kapag nag-crash o nag-freeze ang Orden, ipinapadala nito kung ano ang ginagawa nito at kung saan sa sarili nitong code, nang walang mga pangalan, path, address at password. Hindi kailanman ang iyong mga tala.',
-  'Turn off in Settings': 'I-off sa Settings',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Ipinapadala kung ano ang ginagawa ng Orden nang mag-crash o mag-freeze; hindi kailanman tala, pangalan, path o password.',
+  'Send crash reports to help improve Orden':
+    'Magpadala ng mga ulat ng pag-crash para makatulong na mapabuti ang Orden',
+  'Move to {space}?': 'Ilipat sa {space}?',
+  'macOS can start dictation with this key too.':
+    'Maaari ring simulan ng macOS ang pagdidikta gamit ang key na ito.',
+  'QR code': 'QR code',
+  'Waiting…': 'Naghihintay…',
+  Service: 'Serbisyo',
+  'I understand and want to connect anyway': 'Naiintindihan ko at gusto ko pa ring kumonekta',
+  'Some changes have not reached your account yet':
+    'May mga pagbabagong hindi pa nakakarating sa iyong account',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Mananatili ang mga ito sa browser na ito, hindi makikita ng sinumang ibang mag-sign in dito, at maipapadala kapag nag-sign in ka ulit.',
 }

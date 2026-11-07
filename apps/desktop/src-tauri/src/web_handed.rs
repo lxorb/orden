@@ -78,7 +78,7 @@ mod tests {
             "FILE:///etc/passwd",
             "javascript:alert(1)",
             "data:text/html,<script>1</script>",
-            "nib://open?path=Idea.md",
+            "orden://open?path=Idea.md",
             "mailto:me@example.com",
             "view-source:https://example.com",
             "ms-settings:defaultapps",
@@ -143,7 +143,7 @@ mod tests {
         let urls = [
             Url::parse("file:///Users/me/Notes/Idea.md").expect("an address"),
             Url::parse("https://example.com/").expect("an address"),
-            Url::parse("nib://search").expect("an address"),
+            Url::parse("orden://search").expect("an address"),
             Url::parse("http://example.org/x").expect("an address"),
         ];
         assert_eq!(

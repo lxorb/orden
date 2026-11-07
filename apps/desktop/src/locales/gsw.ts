@@ -1532,6 +1532,8 @@ export const gsw: Dictionary = {
   Shorter: 'Chürzer',
   Longer: 'Länger',
   'Fix grammar': 'Grammatik korrigiere',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Di gwählte Wörter staand nüme i de Notiz, drum isch nüt ersetzt worde.',
   'A cited report': 'E zitierte Bericht',
   'A helper in the background': 'E Helfer im Hintergrund',
   'A side question': 'E Nebenfrage',
@@ -2939,6 +2941,8 @@ export const gsw: Dictionary = {
   'That could not be protected: {reason}': 'Das hät nöd chöne gschützt wärde: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} isch nöd dezuegfüegt worde: En Chat nimmt Bilder und Textdateie bis 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} isch nöd dezuegfüegt worde: E Nachricht nimmt höchschtens 20 Bilder.',
   'Time tracker': 'Ziiterfassig',
   'Start timer': 'Timer starte',
   'Stop timer': 'Timer aahalte',
@@ -3517,9 +3521,17 @@ export const gsw: Dictionary = {
   'You said': 'Dini Aagabe',
   Privacy: 'Dateschutz',
   'Send crash and freeze reports': 'Absturz- und Hänger-Bricht schicke',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Wänn Orden abstürzt oder hanget, schickts, was es grad gmacht het und wo i sim eigete Code, ohni Näme, Pfäd, Adrässe und Passwörter. Nie dini Notize.',
-  'Turn off in Settings': 'I de Iistellige uusschalte',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Schickt, was Orden bim Absturz oder Hänger gmacht het; nie Notize, Näme, Pfäd oder Passwörter.',
+  'Send crash reports to help improve Orden': 'Absturzbricht schicke, zum Orden besser mache',
+  'Move to {space}?': 'Nach {space} verschiebe?',
+  'macOS can start dictation with this key too.':
+    'macOS cha mit dere Taschte au s Diktiere starte.',
+  'QR code': 'QR-Code',
+  'Waiting…': 'Am Warte…',
+  Service: 'Dienst',
+  'I understand and want to connect anyway': 'Ich ha s verstande und wott trotzdem verbinde',
+  'Some changes have not reached your account yet': 'Es paar Änderige sind no nöd i dim Konto acho',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Si bliibed i däm Browser, für alli andere, wo sich da aamelded, unsichtbar, und gönd ue, wänn du dich wider aameldisch.',
 }

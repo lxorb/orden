@@ -162,18 +162,25 @@ pub fn local_image(webview: Webview, request: tauri::ipc::Request<'_>) -> Result
     Ok(path.to_string_lossy().into_owned())
 }
 
-#[tauri::command(async)]
-pub fn remote_image(webview: Webview, request: tauri::ipc::Request<'_>) -> Result<String, String> {
+#[tauri::command]
+pub async fn remote_image(
+    webview: Webview,
+    request: tauri::ipc::Request<'_>,
+) -> Result<String, String> {
     super::owner(&webview)?;
     let (Pasted { kind, host }, bytes) = crate::notes::raw_sent(request.headers(), request.body())?;
     let host = host.ok_or("a picture for another machine needs which machine")?;
     let end = picture_of(&kind, &bytes)?;
+    let bytes = bytes.into_owned();
 
-    let (program, reach) = super::remote::reach(&webview, &host)?;
-    let mut args = Vec::from(OPTIONS.map(String::from));
-    args.extend(reach);
-    args.push(script(&fresh_name(end)?));
-    carried(&program, &args, bytes.into_owned())
+    crate::lane::off_the_runtime(move || {
+        let (program, reach) = super::remote::reach(&webview, &host)?;
+        let mut args = Vec::from(OPTIONS.map(String::from));
+        args.extend(reach);
+        args.push(script(&fresh_name(end)?));
+        carried(&program, &args, bytes)
+    })
+    .await
 }
 
 #[cfg(test)]

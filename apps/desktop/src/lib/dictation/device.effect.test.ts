@@ -74,7 +74,7 @@ beforeEach(() => {
 afterEach(() => {
   box.remove()
   delete (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
-  delete (globalThis as { __NIB_SYSTEM__?: unknown }).__NIB_SYSTEM__
+  delete (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
   delete (window as { __nibHeard?: unknown }).__nibHeard
   delete (window as { __nibFrame?: unknown }).__nibFrame
 })
@@ -154,7 +154,7 @@ describe('Android’s recogniser', () => {
     const held = { on: [] as boolean[], heard: null as ((json: string) => void) | null }
     phone = held
     Object.assign(globalThis, {
-      __NIB_SYSTEM__: {
+      __ORDEN_SYSTEM__: {
         askForTheFrame: () =>
           (window as { __nibFrame?: (word: string) => void }).__nibFrame?.('word'),
         listen: (_word: string, on: boolean) => {

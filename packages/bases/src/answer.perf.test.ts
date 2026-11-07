@@ -5,7 +5,7 @@ import { builtinView } from './builtins'
 import { contextAt, noteRow, taskRow } from './fixtures/rows'
 import type { Row } from './types'
 
-const CLOCKED = process.env.NIB_PERF === '1'
+const CLOCKED = process.env.ORDEN_PERF === '1'
 
 const context = contextAt()
 const days = ['2026-09-28', '2026-10-02', '2026-10-04', '2026-10-05', '2026-10-09', '2026-11-01']

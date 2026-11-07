@@ -320,6 +320,21 @@ describe('choosing a key', () => {
     expect(shortcuts.warning('Mod-Alt-b')).toBeNull()
     expect(shortcuts.warning(null)).toBeNull()
   })
+
+  test('Control pressed twice on a Mac is warned about, since macOS dictates with it too', () => {
+    const { shortcuts } = registry
+    const on = (platform: string, key: string) => {
+      const one = Object.create(shortcuts) as typeof shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      return one.warning(key)
+    }
+
+    expect(on('mac', 'Ctrl Ctrl')).toBe('macOS can start dictation with this key too.')
+    expect(on('mac', 'Alt Alt')).toBeNull()
+    expect(on('mac', 'Mod Mod')).toBeNull()
+    expect(on('win', 'Ctrl Ctrl')).toBeNull()
+    expect(on('win', 'Mod Mod')).toBeNull()
+  })
 })
 
 describe('what is written down', () => {

@@ -1525,6 +1525,8 @@ export const ur: Dictionary = {
   Shorter: 'مختصر',
   Longer: 'طویل',
   'Fix grammar': 'قواعد درست کریں',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'چنے گئے الفاظ اب نوٹ میں نہیں ہیں، اس لیے کچھ نہیں بدلا گیا۔',
   'A cited report': 'ماخذ کے ساتھ رپورٹ',
   'A helper in the background': 'پس منظر میں مددگار',
   'A side question': 'ضمنی سوال',
@@ -2912,6 +2914,8 @@ export const ur: Dictionary = {
   'That could not be protected: {reason}': 'محفوظ نہیں کیا جا سکا: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} شامل نہیں کیا گیا: چیٹ تصاویر اور 2 MB تک کی متنی فائلیں لیتی ہے۔',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} شامل نہیں کیا گیا: ایک پیغام میں زیادہ سے زیادہ 20 تصاویر آ سکتی ہیں۔',
   'Time tracker': 'وقت ٹریکر',
   'Start timer': 'ٹائمر شروع کریں',
   'Stop timer': 'ٹائمر روکیں',
@@ -3488,9 +3492,17 @@ export const ur: Dictionary = {
   'You said': 'آپ نے بتایا',
   Privacy: 'رازداری',
   'Send crash and freeze reports': 'کریش اور رکنے کی رپورٹیں بھیجیں',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'جب Orden کریش ہو یا رک جائے، تو یہ بھیجتا ہے کہ یہ کیا کر رہا تھا اور اپنے کوڈ میں کہاں تھا، نام، راستے، پتے اور پاس ورڈ ہٹا کر۔ آپ کے نوٹس کبھی نہیں۔',
-  'Turn off in Settings': 'ترتیبات میں بند کریں',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden کریش یا رکنے پر کیا کر رہا تھا یہ بھیجتا ہے؛ نوٹس، نام، راستے یا پاس ورڈ کبھی نہیں۔',
+  'Send crash reports to help improve Orden':
+    'Orden کو بہتر بنانے میں مدد کے لیے کریش رپورٹیں بھیجیں',
+  'Move to {space}?': '{space} میں منتقل کریں؟',
+  'macOS can start dictation with this key too.': 'macOS اس کلید سے ڈکٹیشن بھی شروع کر سکتا ہے۔',
+  'QR code': 'QR کوڈ',
+  'Waiting…': 'انتظار ہو رہا ہے…',
+  Service: 'سروس',
+  'I understand and want to connect anyway': 'میں سمجھتا ہوں اور پھر بھی جوڑنا چاہتا ہوں',
+  'Some changes have not reached your account yet': 'کچھ تبدیلیاں ابھی آپ کے اکاؤنٹ تک نہیں پہنچیں',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'وہ اسی براؤزر میں رہتی ہیں، یہاں سائن ان کرنے والے کسی اور کو نظر نہیں آتیں، اور آپ کے دوبارہ سائن ان کرنے پر بھیجی جاتی ہیں۔',
 }

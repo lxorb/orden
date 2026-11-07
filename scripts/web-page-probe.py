@@ -108,7 +108,7 @@ def shortcut(url: str, title: str) -> str:
 def space(port: int) -> pathlib.Path:
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-page-probe-"))
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     made = root / SPACE
     made.mkdir(parents=True)
@@ -422,7 +422,7 @@ def main() -> int:
   const heard = []
   const I = window.__TAURI_INTERNALS__
   await I.invoke('plugin:event|listen', {{
-    event: 'nib://web-page',
+    event: 'orden://web-page',
     target: {{ kind: 'Any' }},
     handler: I.transformCallback((one) => one.payload.said === 'zoom' && heard.push(one.payload.factor)),
   }})

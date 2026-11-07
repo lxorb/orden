@@ -1489,6 +1489,8 @@ export const th: Dictionary = {
   Shorter: 'สั้นลง',
   Longer: 'ยาวขึ้น',
   'Fix grammar': 'แก้ไวยากรณ์',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'คำที่เลือกไม่อยู่ในโน้ตแล้ว จึงไม่ได้แทนที่อะไร',
   'A cited report': 'รายงานพร้อมอ้างอิง',
   'A helper in the background': 'ผู้ช่วยเบื้องหลัง',
   'A side question': 'คำถามข้างเคียง',
@@ -2835,6 +2837,8 @@ export const th: Dictionary = {
   'That could not be protected: {reason}': 'ป้องกันไม่ได้: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'ไม่ได้เพิ่ม {name}: แชตรับรูปภาพและไฟล์ข้อความขนาดไม่เกิน 2 MB',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'ไม่ได้เพิ่ม {name}: ข้อความหนึ่งรับรูปภาพได้ไม่เกิน 20 รูป',
   'Time tracker': 'ตัวติดตามเวลา',
   'Start timer': 'เริ่มจับเวลา',
   'Stop timer': 'หยุดจับเวลา',
@@ -3366,9 +3370,16 @@ export const th: Dictionary = {
   'You said': 'ที่คุณระบุ',
   Privacy: 'ความเป็นส่วนตัว',
   'Send crash and freeze reports': 'ส่งรายงานการขัดข้องและการค้าง',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'เมื่อ Orden ขัดข้องหรือค้าง จะส่งว่ากำลังทำอะไรอยู่และอยู่ตรงไหนในโค้ดของตัวเอง โดยเอาชื่อ พาธ ที่อยู่ และรหัสผ่านออก ไม่ส่งโน้ตของคุณเลย',
-  'Turn off in Settings': 'ปิดในการตั้งค่า',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'ส่งสิ่งที่ Orden ทำอยู่ตอนขัดข้องหรือค้าง ไม่ส่งโน้ต ชื่อ พาธ หรือรหัสผ่าน',
+  'Send crash reports to help improve Orden': 'ส่งรายงานการขัดข้องเพื่อช่วยปรับปรุง Orden',
+  'Move to {space}?': 'ย้ายไปที่ {space} ไหม?',
+  'macOS can start dictation with this key too.': 'macOS อาจเริ่มการป้อนตามคำบอกด้วยปุ่มนี้ด้วย',
+  'QR code': 'คิวอาร์โค้ด',
+  'Waiting…': 'กำลังรอ…',
+  Service: 'บริการ',
+  'I understand and want to connect anyway': 'เข้าใจแล้วและยังต้องการเชื่อมต่อ',
+  'Some changes have not reached your account yet': 'การเปลี่ยนแปลงบางส่วนยังไปไม่ถึงบัญชีของคุณ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'การเปลี่ยนแปลงจะอยู่ในเบราว์เซอร์นี้ ไม่มีใครที่ลงชื่อเข้าใช้ที่นี่เห็น และจะส่งขึ้นไปเมื่อคุณลงชื่อเข้าใช้อีกครั้ง',
 }

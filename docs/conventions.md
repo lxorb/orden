@@ -217,7 +217,7 @@ points. What stands in front of all four, and so what a new caller has to keep:
 
 - **The window's own gestures.** The path came from `joinPath` off a space
   root, from the settings files the crate names, or from the file dialog.
-- **The local endpoint and every `nib://` link**, the two roads another
+- **The local endpoint and every `orden://` link**, the two roads another
   program has in. Both are judged by one function, `insideOnly` in
   `apps/desktop/src/lib/automation/inside.ts`: relative, `/` separators, no
   `..`, no drive letter, no control character, no name Windows keeps for a
@@ -252,7 +252,7 @@ points. What stands in front of all four, and so what a new caller has to keep:
 - **The phone**, whose spaces folder is inside the app's own external files
   directory and whose manifest asks for no storage permission. A share hands
   over bytes and a name, never a path, and Orden is no file manager's "Open
-  with": the manifest's one VIEW filter is the `nib://` link. The widget's
+  with": the manifest's one VIEW filter is the `orden://` link. The widget's
   `open` intent extra is an absolute path, judged against the spaces by
   `openable` in `apps/desktop/src/lib/mobile/handed.ts` and by `openable` in
   the crate.
@@ -313,7 +313,7 @@ each listens for). So a long-lived pull request such as #362 runs nothing until 
 marked ready, and is checked in full from then on; mark it a draft again to stop.
 
 **A burst of pushes to `unstable` builds once.** `release.yml`'s `settle` waits until the
-branch has been still for `NIB_CI_SETTLE_S` seconds (a repository variable, 300 by
+branch has been still for `ORDEN_CI_SETTLE_S` seconds (a repository variable, 300 by
 default), counted from the push, and then builds only if the push is still the branch's
 head: the newest push of a burst builds, and the ones before it end there. A tag or a
 dispatch does not wait. And a push to `unstable` that changes only documents, Markdown
@@ -381,8 +381,8 @@ if __name__ == "__main__":
 What that one import gives it, so that no drive writes any of it again:
 
 - **One build.** `--mode drive`, the release shape with the two handles a drive
-  steers by. A drive run by hand builds; `NIB_SKIP_BUILD=1` reuses
-  `apps/desktop/dist`; `NIB_DIST` names a folder built by hand - the other half of a
+  steers by. A drive run by hand builds; `ORDEN_SKIP_BUILD=1` reuses
+  `apps/desktop/dist`; `ORDEN_DIST` names a folder built by hand - the other half of a
   before-and-after - which is never rebuilt.
 - **An origin of its own.** A port the system hands out and
   `http://<drive>.localhost:<port>`, so no storage, service worker or cookie is
@@ -392,8 +392,8 @@ What that one import gives it, so that no drive writes any of it again:
   than read from the Windows registry. `DRIVE.answers` adds a route of the drive's
   own; `DRIVE.side` starts a second server, such as a fake OpenAI-compatible
   provider.
-- **The browser CI has.** Playwright's own Chromium, headless; `NIB_BROWSER=chrome`
-  drives the machine's own Chrome instead. `NIB_ENGINE=webkit` drives Playwright's
+- **The browser CI has.** Playwright's own Chromium, headless; `ORDEN_BROWSER=chrome`
+  drives the machine's own Chrome instead. `ORDEN_ENGINE=webkit` drives Playwright's
   WebKit, which is what a Mac, an iPhone and Linux run the app in: every key a drive
   presses is the Mac's (Cmd for Ctrl, and the registry's own Mac key where it has one),
   and a drive that needs Chromium's DevTools is skipped there, saying so.
@@ -419,11 +419,11 @@ What that one import gives it, so that no drive writes any of it again:
   every Worker on any port, several drives run their Workers side by side, and
   `dist` is never rebuilt under a drive that is still fetching from it.
 - **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
-  `run_probe`, off every screen, with `NIB_SPACES_DIR` in a temp folder. Never the
+  `run_probe`, off every screen, with `ORDEN_SPACES_DIR` in a temp folder. Never the
   reader's own nib: the installed exe, a build under the release identifier
   `ch.emilvinu.nib` (whose launch the running Orden would take) or one whose identifier
   nobody said is refused before it starts, and run-all.py skips a native drive
-  pointed at one (`NIB_PROBE_EXE`, `NIB_PROBE_IDENTIFIER`). Nothing is ended by its
+  pointed at one (`ORDEN_PROBE_EXE`, `ORDEN_PROBE_IDENTIFIER`). Nothing is ended by its
   name, only by the number of a process the harness started.
 
 A drive that needs what a machine may not have says so at its top -
@@ -536,7 +536,7 @@ cannot be, by construction:
   has never asked the window manager anything, rather than from the drive's windowing
   threads, and the proof below saw it hold: four launches were started by a process
   that could have taken the foreground, and not one of the four probes could.
-- **Held back from its first line**, under `NIB_OFF_SCREEN`
+- **Held back from its first line**, under `ORDEN_OFF_SCREEN`
   (`apps/desktop/src-tauri/src/foreground.rs`): the process locks the foreground where
   it could have taken it, every activation on the app's thread is refused - Orden's own
   Chromium's included, whose windows are that thread's - and every top-level window is
@@ -597,14 +597,14 @@ every look it was at -32000,-32000.
 A slow launch can only be measured on the machine that has one: the disk, the
 antivirus and the webview runtime are the three biggest terms in it and none of
 the three is in this repository. So the app says it itself. Set
-`NIB_TRACE_STARTUP` and every launch appends a page to `startup-trace.log` in the
+`ORDEN_TRACE_STARTUP` and every launch appends a page to `startup-trace.log` in the
 app's log folder - `%LOCALAPPDATA%\ch.emilvinu.nib\logs` on Windows,
 `~/Library/Logs/ch.emilvinu.nib` on macOS, `~/.local/share/ch.emilvinu.nib/logs`
 on Linux:
 
 ```powershell
-setx NIB_TRACE_STARTUP 1      # then start Orden the way you always do
-setx NIB_TRACE_STARTUP ""     # and off again
+setx ORDEN_TRACE_STARTUP 1      # then start Orden the way you always do
+setx ORDEN_TRACE_STARTUP ""     # and off again
 ```
 
 One page, one launch, two clocks on one axis: the crate's steps from before its
@@ -670,7 +670,7 @@ maximised are written to `window.json` beside the settings as it closes, and put
 into the window's config before it is built, so the first frame is already in the
 right place. A place on a screen that is no longer plugged in is pulled onto one
 that is. A window whose config names a place of its own, or any window of a run with
-`NIB_OFF_SCREEN` set, is a probe's: it is built hidden, sent there, shown without
+`ORDEN_OFF_SCREEN` set, is a probe's: it is built hidden, sent there, shown without
 coming forward and kept under every other window, so no frame of it is ever in front of
 anybody and the keyboard is never handed to it - and on Windows it is
 created off the screen in the first place, because tao hands an off-screen starting

@@ -1578,6 +1578,8 @@ export const fr: Dictionary = {
   Shorter: 'Plus court',
   Longer: 'Plus long',
   'Fix grammar': 'Corriger la grammaire',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Les mots choisis ne sont plus dans la note : rien n’a été remplacé.',
   'A cited report': 'Un rapport cité',
   'A helper in the background': 'Un assistant en arrière-plan',
   'A side question': 'Une question annexe',
@@ -3014,6 +3016,8 @@ export const fr: Dictionary = {
   'That could not be protected: {reason}': 'Impossible de protéger : {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} n’a pas été ajouté : une discussion accepte les images et les fichiers texte jusqu’à 2 Mo.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} n’a pas été ajouté : un message accepte jusqu’à 20 images.',
   'Time tracker': 'Suivi du temps',
   'Start timer': 'Lancer le minuteur',
   'Stop timer': 'Arrêter le minuteur',
@@ -3614,9 +3618,19 @@ export const fr: Dictionary = {
   'You said': 'Déclaré',
   Privacy: 'Confidentialité',
   'Send crash and freeze reports': 'Envoyer les rapports de plantage et de blocage',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Quand Orden plante ou se bloque, il envoie ce qu’il faisait et où dans son propre code, sans noms, chemins, adresses ni mots de passe. Jamais vos notes.',
-  'Turn off in Settings': 'Désactiver dans les réglages',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Envoie ce que faisait Orden lors d’un plantage ou d’un blocage ; jamais de notes, noms, chemins ni mots de passe.',
+  'Send crash reports to help improve Orden':
+    'Envoyer les rapports de plantage pour aider à améliorer Orden',
+  'Move to {space}?': 'Déplacer vers {space} ?',
+  'macOS can start dictation with this key too.':
+    'macOS peut aussi lancer la dictée avec cette touche.',
+  'QR code': 'Code QR',
+  'Waiting…': 'En attente…',
+  Service: 'Service',
+  'I understand and want to connect anyway': 'Je comprends et je veux quand même me connecter',
+  'Some changes have not reached your account yet':
+    'Certaines modifications ne sont pas encore arrivées sur votre compte',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Elles restent dans ce navigateur, hors de vue de toute autre personne qui s’y connecte, et partent quand vous vous reconnectez.',
 }

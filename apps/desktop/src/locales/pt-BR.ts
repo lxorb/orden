@@ -1555,6 +1555,8 @@ export const ptBR: Dictionary = {
   Shorter: 'Mais curto',
   Longer: 'Mais longo',
   'Fix grammar': 'Corrigir a gramática',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'As palavras escolhidas não estão mais na nota, então nada foi substituído.',
   'A cited report': 'Um relatório com citações',
   'A helper in the background': 'Um ajudante em segundo plano',
   'A side question': 'Uma pergunta lateral',
@@ -2979,6 +2981,8 @@ export const ptBR: Dictionary = {
   'That could not be protected: {reason}': 'Não foi possível proteger: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} não foi adicionado: um chat aceita imagens e arquivos de texto de até 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} não foi adicionado: uma mensagem aceita até 20 imagens.',
   'Time tracker': 'Controle de tempo',
   'Start timer': 'Iniciar cronômetro',
   'Stop timer': 'Parar cronômetro',
@@ -3573,9 +3577,19 @@ export const ptBR: Dictionary = {
   'You said': 'Informado',
   Privacy: 'Privacidade',
   'Send crash and freeze reports': 'Enviar relatórios de falhas e travamentos',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Quando o Orden falha ou trava, ele envia o que estava fazendo e onde no próprio código, sem nomes, caminhos, endereços e senhas. Nunca suas notas.',
-  'Turn off in Settings': 'Desativar nos Ajustes',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Envia o que o Orden fazia ao falhar ou travar; nunca notas, nomes, caminhos ou senhas.',
+  'Send crash reports to help improve Orden':
+    'Enviar relatórios de falhas para ajudar a melhorar o Orden',
+  'Move to {space}?': 'Mover para {space}?',
+  'macOS can start dictation with this key too.':
+    'O macOS também pode iniciar o ditado com esta tecla.',
+  'QR code': 'Código QR',
+  'Waiting…': 'Aguardando…',
+  Service: 'Serviço',
+  'I understand and want to connect anyway': 'Entendo e quero conectar mesmo assim',
+  'Some changes have not reached your account yet':
+    'Algumas alterações ainda não chegaram à sua conta',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Elas ficam neste navegador, fora da vista de qualquer outra pessoa que entrar aqui, e sobem quando você entrar de novo.',
 }

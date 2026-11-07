@@ -1603,6 +1603,8 @@ export const ru: Dictionary = {
   Shorter: 'Короче',
   Longer: 'Длиннее',
   'Fix grammar': 'Исправить грамматику',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Выбранных слов больше нет в заметке, поэтому ничего не заменено.',
   'A cited report': 'Отчёт с цитатами',
   'A helper in the background': 'Помощник на фоне',
   'A side question': 'Побочный вопрос',
@@ -3028,6 +3030,8 @@ export const ru: Dictionary = {
   'That could not be protected: {reason}': 'Не удалось защитить: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не добавлен: чат принимает изображения и текстовые файлы до 2 МБ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} не добавлен: сообщение принимает не больше 20 изображений.',
   'Time tracker': 'Учёт времени',
   'Start timer': 'Запустить таймер',
   'Stop timer': 'Остановить таймер',
@@ -3636,9 +3640,18 @@ export const ru: Dictionary = {
   'You said': 'Указано вами',
   Privacy: 'Конфиденциальность',
   'Send crash and freeze reports': 'Отправлять отчёты о сбоях и зависаниях',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Когда Orden падает или зависает, он отправляет, что делал и где в собственном коде, без имён, путей, адресов и паролей. Никогда ваши заметки.',
-  'Turn off in Settings': 'Выключить в настройках',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Отправляет, что делал Orden при сбое или зависании; никогда заметки, имена, пути или пароли.',
+  'Send crash reports to help improve Orden':
+    'Отправлять отчёты о сбоях, чтобы помочь улучшить Orden',
+  'Move to {space}?': 'Переместить в {space}?',
+  'macOS can start dictation with this key too.': 'macOS может запускать этой клавишей и диктовку.',
+  'QR code': 'QR-код',
+  'Waiting…': 'Ожидание…',
+  Service: 'Сервис',
+  'I understand and want to connect anyway': 'Я понимаю и всё равно хочу подключить',
+  'Some changes have not reached your account yet':
+    'Некоторые изменения ещё не дошли до вашего аккаунта',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Они остаются в этом браузере, скрытые от всех, кто войдёт здесь, и отправятся, когда вы войдёте снова.',
 }

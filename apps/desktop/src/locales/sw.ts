@@ -1544,6 +1544,8 @@ export const sw: Dictionary = {
   Shorter: 'Fupi zaidi',
   Longer: 'Ndefu zaidi',
   'Fix grammar': 'Sahihisha sarufi',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Maneno yaliyochaguliwa hayamo tena kwenye dokezo, kwa hiyo hakuna kilichobadilishwa.',
   'A cited report': 'Ripoti yenye vyanzo',
   'A helper in the background': 'Msaidizi nyuma ya pazia',
   'A side question': 'Swali la pembeni',
@@ -2957,6 +2959,8 @@ export const sw: Dictionary = {
   'That could not be protected: {reason}': 'Haikuweza kulindwa: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} haikuongezwa: gumzo hupokea picha na faili za maandishi hadi MB 2.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} haikuongezwa: ujumbe mmoja hupokea hadi picha 20.',
   'Time tracker': 'Kifuatiliaji cha muda',
   'Start timer': 'Anzisha kipima muda',
   'Stop timer': 'Simamisha kipima muda',
@@ -3535,9 +3539,19 @@ export const sw: Dictionary = {
   'You said': 'Ulichosema',
   Privacy: 'Faragha',
   'Send crash and freeze reports': 'Tuma ripoti za kuharibika na kukwama',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ikiharibika au kukwama, hutuma ilichokuwa ikifanya na mahali ilipokuwa katika msimbo wake, bila majina, njia, anwani na manenosiri. Kamwe si madokezo yako.',
-  'Turn off in Settings': 'Zima katika Mipangilio',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Hutuma Orden ilichokuwa ikifanya ilipoharibika au kukwama; kamwe si madokezo, majina, njia au manenosiri.',
+  'Send crash reports to help improve Orden':
+    'Tuma ripoti za kuharibika ili kusaidia kuboresha Orden',
+  'Move to {space}?': 'Ihamishe kwenda {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS inaweza pia kuanzisha imla kwa kitufe hiki.',
+  'QR code': 'Msimbo wa QR',
+  'Waiting…': 'Inasubiri…',
+  Service: 'Huduma',
+  'I understand and want to connect anyway': 'Ninaelewa na bado nataka kuunganisha',
+  'Some changes have not reached your account yet':
+    'Baadhi ya mabadiliko bado hayajafika kwenye akaunti yako',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Yanabaki kwenye kivinjari hiki, bila kuonekana na mtu mwingine yeyote anayeingia hapa, na yatatumwa utakapoingia tena.',
 }

@@ -9,7 +9,7 @@ import harness
 from harness import Drive
 from settling import HIDE_CARET, steady
 
-LABEL = os.environ.get("NIB_LABEL", "after")
+LABEL = os.environ.get("ORDEN_LABEL", "after")
 
 DRIVE = Drive(__file__, shots=f"access/{LABEL}")
 say, wrong = DRIVE.say, DRIVE.wrong

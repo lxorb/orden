@@ -12,7 +12,16 @@ import type {
   Status,
 } from '../provider'
 import { secretName } from '../provider'
-import { bytesOf, Imap, itemsOf, quoted, textOf, type Untagged, type Value } from './imap'
+import {
+  bytesOf,
+  Imap,
+  ImapError,
+  itemsOf,
+  quoted,
+  textOf,
+  type Untagged,
+  type Value,
+} from './imap'
 import {
   type Address,
   buildMessage,
@@ -22,7 +31,7 @@ import {
   parseMessage,
   withoutQuote,
 } from './mime'
-import { sendMail } from './smtp'
+import { sendMail, SmtpError } from './smtp'
 import { bareSubject, threadsOf } from './threads'
 
 const NEWEST = 300
@@ -51,6 +60,12 @@ interface Read {
   attachments: { ref: string; name: string; type: string; size: number; bytes: Uint8Array }[]
 }
 
+export interface Bearer {
+  fresh(force: boolean): Promise<string>
+}
+
+export class SignedOut extends Error {}
+
 export interface MailConfig {
   address: string
   name: string
@@ -58,6 +73,7 @@ export interface MailConfig {
   password: string
   imap: SocketAsk
   smtp: SocketAsk
+  bearer?: Bearer
 }
 
 type Security = SocketAsk['tls']
@@ -175,8 +191,9 @@ class MailConnection {
   }
 
   private connect(): Promise<Imap> {
+    if (this.stopped) return Promise.reject(new Error('the mailbox is closed'))
     if (this.main?.alive()) return Promise.resolve(this.main)
-    this.opening ??= Imap.open(this.open, this.config.imap, this.config.user, this.config.password)
+    this.opening ??= this.signIn()
       .then((imap) => {
         this.main = imap
         this.selected = null
@@ -187,6 +204,23 @@ class MailConnection {
       })
       .finally(() => (this.opening = null))
     return this.opening
+  }
+
+  private async signedIn<T>(run: (secret: string, bearer: boolean) => Promise<T>): Promise<T> {
+    const bearer = this.config.bearer
+    if (!bearer) return run(this.config.password, false)
+    try {
+      return await run(await bearer.fresh(false), true)
+    } catch (error) {
+      if (!refusedLogin(error)) throw error
+      return run(await bearer.fresh(true), true)
+    }
+  }
+
+  private signIn(): Promise<Imap> {
+    return this.signedIn((secret, bearer) =>
+      Imap.open(this.open, this.config.imap, this.config.user, secret, bearer),
+    )
   }
 
   private held<T>(run: (imap: Imap) => Promise<T>): Promise<T> {
@@ -397,12 +431,14 @@ class MailConnection {
       date: new Date(this.host.now()),
       ...(draft.attachments?.length ? { attachments: draft.attachments } : {}),
     })
-    await sendMail(
-      this.open,
-      this.config.smtp,
-      { user: this.config.user, password: this.config.password },
-      { from: this.config.address, to: recipients.map((one) => one.address) },
-      message,
+    await this.signedIn((password, bearer) =>
+      sendMail(
+        this.open,
+        this.config.smtp,
+        { user: this.config.user, password, bearer },
+        { from: this.config.address, to: recipients.map((one) => one.address) },
+        message,
+      ),
     )
     const box = this.sent
     if (box && !/gmail|googlemail/i.test(this.config.smtp.host)) {
@@ -495,22 +531,21 @@ class MailConnection {
     let wait = 5_000
     while (!this.stopped) {
       try {
-        const imap = await Imap.open(
-          this.open,
-          this.config.imap,
-          this.config.user,
-          this.config.password,
-        )
-        if (this.status !== 'online') this.tell({ t: 'status', status: 'online' })
-        wait = 5_000
-        await this.select('INBOX', imap)
-        await this.look()
-        await this.follow(imap)
-        await imap.close()
+        const imap = await this.signIn()
+        try {
+          if (this.status !== 'online') this.tell({ t: 'status', status: 'online' })
+          wait = 5_000
+          await this.select('INBOX', imap)
+          await this.look()
+          await this.follow(imap)
+        } finally {
+          await imap.close()
+        }
       } catch (error) {
         if (this.halted()) return
         const reason = error instanceof Error ? error.message : String(error)
-        const refused = /auth|login|password|credential|invalid/i.test(reason)
+        const refused =
+          error instanceof SignedOut || /auth|login|password|credential|invalid/i.test(reason)
         this.tell({ t: 'status', status: refused ? 'signed-out' : 'offline', reason })
         if (refused) return
         await new Promise((resolve) => setTimeout(resolve, wait))
@@ -567,6 +602,11 @@ class MailConnection {
   }
 }
 
+function refusedLogin(error: unknown): boolean {
+  if (error instanceof ImapError) return error.kind === 'NO'
+  return error instanceof SmtpError && [530, 534, 535].includes(error.code)
+}
+
 export function sentBox(lines: readonly Untagged[]): string | null {
   const boxes = lines
     .filter((one) => one.kind === 'LIST')
@@ -602,18 +642,27 @@ export const mailProvider: ChatProvider = {
     if (!config.password) {
       config.password = (await host.secret(secretName(MAIL, config.address, 'password'))) ?? ''
     }
-    const connection = new MailConnection(config, host, open)
-    await connection.begin()
-    const live: Connection = {
-      account: connection.account,
-      conversations: () => connection.conversations(),
-      history: (conversation, ask) => connection.history(conversation, ask),
-      send: (conversation, draft) => connection.send(conversation, draft),
-      start: (hear) => connection.hear(hear),
-      attachment: (conversation, message, ref) => connection.attachment(conversation, message, ref),
-      markRead: (conversation) => connection.markRead(conversation),
-      close: () => connection.close(),
-    }
-    return live
+    return linkedMail(config, host, open)
   },
+}
+
+export async function linkedMail(
+  config: MailConfig,
+  host: Host,
+  open: (ask: SocketAsk) => Promise<Socket>,
+  keep?: Readonly<Record<string, string>>,
+): Promise<Connection> {
+  const connection = new MailConnection(config, host, open)
+  await connection.begin()
+  const live: Connection = {
+    account: keep ? { ...connection.account, keep } : connection.account,
+    conversations: () => connection.conversations(),
+    history: (conversation, ask) => connection.history(conversation, ask),
+    send: (conversation, draft) => connection.send(conversation, draft),
+    start: (hear) => connection.hear(hear),
+    attachment: (conversation, message, ref) => connection.attachment(conversation, message, ref),
+    markRead: (conversation) => connection.markRead(conversation),
+    close: () => connection.close(),
+  }
+  return live
 }

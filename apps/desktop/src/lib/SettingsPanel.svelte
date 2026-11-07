@@ -933,7 +933,7 @@
           class="nib-action is-danger"
           onclick={() =>
             __EVEN_PLUGIN__
-              ? void account.signOut()
+              ? void account.signOut('asked')
               : void import('./ai/vault/leaving').then((one) => one.signOut())}
           >{t('Sign out')}</button
         >

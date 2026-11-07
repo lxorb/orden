@@ -1600,6 +1600,8 @@ export const pl: Dictionary = {
   Shorter: 'Krócej',
   Longer: 'Dłużej',
   'Fix grammar': 'Popraw gramatykę',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Wybranych słów nie ma już w notatce, więc niczego nie zastąpiono.',
   'A cited report': 'Raport z cytatami',
   'A helper in the background': 'Pomocnik w tle',
   'A side question': 'Poboczne pytanie',
@@ -3028,6 +3030,8 @@ export const pl: Dictionary = {
   'That could not be protected: {reason}': 'Nie udało się chronić: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Nie dodano {name}: czat przyjmuje obrazy i pliki tekstowe do 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'Nie dodano {name}: wiadomość przyjmuje najwyżej 20 obrazów.',
   'Time tracker': 'Śledzenie czasu',
   'Start timer': 'Uruchom licznik',
   'Stop timer': 'Zatrzymaj licznik',
@@ -3636,9 +3640,19 @@ export const pl: Dictionary = {
   'You said': 'Twoje wpisy',
   Privacy: 'Prywatność',
   'Send crash and freeze reports': 'Wysyłaj raporty o awariach i zawieszeniach',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Gdy Orden ulegnie awarii lub się zawiesi, wysyła, co robił i w którym miejscu własnego kodu, bez nazw, ścieżek, adresów i haseł. Nigdy twoich notatek.',
-  'Turn off in Settings': 'Wyłącz w Ustawieniach',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Wysyła, co robił Orden podczas awarii lub zawieszenia; nigdy notatek, nazw, ścieżek ani haseł.',
+  'Send crash reports to help improve Orden':
+    'Wysyłaj raporty o awariach, aby pomóc ulepszać Orden',
+  'Move to {space}?': 'Przenieść do {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS może tym klawiszem uruchomić też dyktowanie.',
+  'QR code': 'Kod QR',
+  'Waiting…': 'Oczekiwanie…',
+  Service: 'Usługa',
+  'I understand and want to connect anyway': 'Rozumiem i mimo to chcę połączyć',
+  'Some changes have not reached your account yet':
+    'Niektóre zmiany nie dotarły jeszcze na Twoje konto',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Zostają w tej przeglądarce, niewidoczne dla nikogo innego, kto się tu zaloguje, i trafią na konto, gdy zalogujesz się ponownie.',
 }

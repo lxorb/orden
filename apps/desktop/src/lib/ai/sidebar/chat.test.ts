@@ -963,6 +963,36 @@ describe('a chat while it answers', () => {
     expect(chat.heads.map((one) => one.id)).not.toContain(id)
   })
 
+  test('stays deleted once deleted in another window while it answers here', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, _on: unknown, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          signal?.addEventListener('abort', () => resolve())
+        }),
+    )
+    chat.text = 'go on'
+    chat.submit(around)
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+
+    kept.get('work')?.delete(id)
+    const { windows } = await import('../../windows')
+    ;(windows as unknown as { heard(said: unknown): void }).heard({
+      kind: 'thread-deleted',
+      from: 'another window',
+      id,
+      space: 'work',
+    })
+    await settled()
+
+    expect(kept.get('work')?.has(id)).toBe(false)
+    expect(chat.heads.map((one) => one.id)).not.toContain(id)
+    expect(chat.thread?.id).not.toBe(id)
+  })
+
   test('keeps a first message on its way in the space it was asked in', async () => {
     const chat = await launched()
     chat.here('work')

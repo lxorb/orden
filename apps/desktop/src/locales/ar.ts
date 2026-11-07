@@ -1628,6 +1628,8 @@ export const ar: Dictionary = {
   Shorter: 'أقصر',
   Longer: 'أطول',
   'Fix grammar': 'تصحيح القواعد',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'لم تعد الكلمات المختارة في الملاحظة، فلم يُستبدل شيء.',
   'A cited report': 'تقرير موثّق',
   'A helper in the background': 'مساعد في الخلفية',
   'A side question': 'سؤال جانبي',
@@ -3050,6 +3052,8 @@ export const ar: Dictionary = {
   'That could not be protected: {reason}': 'تعذّرت الحماية: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'لم تُضف {name}: تقبل المحادثة الصور والملفات النصية حتى 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'لم تُضف {name}: تقبل الرسالة 20 صورة على الأكثر.',
   'Time tracker': 'متتبّع الوقت',
   'Start timer': 'بدء المؤقّت',
   'Stop timer': 'إيقاف المؤقّت',
@@ -3683,9 +3687,17 @@ export const ar: Dictionary = {
   'You said': 'ما ذكرته',
   Privacy: 'الخصوصية',
   'Send crash and freeze reports': 'إرسال تقارير الأعطال والتجمّد',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'عندما يتعطّل Orden أو يتجمّد، يرسل ما كان يفعله وأين كان في شيفرته، بعد حذف الأسماء والمسارات والعناوين وكلمات المرور. لا يرسل ملاحظاتك أبدًا.',
-  'Turn off in Settings': 'إيقافه من الإعدادات',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'يرسل ما كان Orden يفعله عند تعطّله أو تجمّده؛ دون الملاحظات أو الأسماء أو المسارات أو كلمات المرور.',
+  'Send crash reports to help improve Orden': 'إرسال تقارير الأعطال للمساعدة في تحسين Orden',
+  'Move to {space}?': 'النقل إلى {space}؟',
+  'macOS can start dictation with this key too.':
+    'قد يبدأ macOS الإملاء الصوتي بهذا المفتاح أيضًا.',
+  'QR code': 'رمز QR',
+  'Waiting…': 'في الانتظار…',
+  Service: 'الخدمة',
+  'I understand and want to connect anyway': 'أفهم ذلك وأريد الاتصال على أي حال',
+  'Some changes have not reached your account yet': 'بعض التغييرات لم تصل إلى حسابك بعد',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'تبقى في هذا المتصفح، بعيدًا عن أعين أي شخص آخر يسجّل الدخول هنا، وتُرسل عندما تسجّل الدخول مجددًا.',
 }

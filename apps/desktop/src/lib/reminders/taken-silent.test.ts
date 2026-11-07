@@ -9,7 +9,7 @@ const taken = vi.fn((said: string) => (said === 'the word' ? '[]' : ''))
 const alarms = vi.fn()
 
 vi.stubGlobal('window', globalThis)
-vi.stubGlobal('__NIB_SYSTEM__', {
+vi.stubGlobal('__ORDEN_SYSTEM__', {
   insets: () => '{}',
   askForTheFrame: () => undefined,
   remindersTaken: taken,

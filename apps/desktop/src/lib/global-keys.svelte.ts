@@ -56,7 +56,7 @@ class Global {
       .then((keys) => (this.keys = keys))
       .catch(() => undefined)
     void import('@tauri-apps/api/event').then(({ listen }) =>
-      listen<GlobalKeys>('nib://global-keys', (event) => (this.keys = event.payload)),
+      listen<GlobalKeys>('orden://global-keys', (event) => (this.keys = event.payload)),
     )
   }
 

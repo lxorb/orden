@@ -23,6 +23,7 @@ import {
   spanOf,
   spanValue,
 } from './records'
+import { MINUTE } from './days'
 import { KEEP_MINUTES, type Minute } from './minutes'
 import type { TimeRecord } from './written'
 
@@ -147,9 +148,21 @@ export class TimeStore {
     this.reminding = this.ledger.get('pref', REMINDERS)?.value?.on !== false
   }
 
+  private spansChanged(rows: readonly Row[]): void {
+    const ids: Record<string, true> = Object.fromEntries(rows.map((row) => [row.id, true]))
+    const spans = this.spans.filter((one) => !Object.hasOwn(ids, one.id))
+    for (const id of Object.keys(ids)) {
+      const value = this.ledger.get('span', id)?.value
+      const span = value ? spanOf(id, value) : null
+      if (span) spans.push(span)
+    }
+    this.spans = spans.sort(byStart)
+  }
+
   private written(rows: readonly Row[]): void {
     if (!rows.length) return
-    this.shown()
+    if (rows.every((row) => row.kind === 'span')) this.spansChanged(rows)
+    else this.shown()
     void this.disk?.put(rows).catch((error: unknown) => {
       log('warn', `time records were not kept: ${String(error)}`)
     })
@@ -254,7 +267,9 @@ export class TimeStore {
 
   stop(at = Date.now()): void {
     const rows = this.running.map((span) =>
-      this.write('span', span.id, spanValue({ ...span, end: Math.max(at, span.start) })),
+      at >= span.start && at - span.start < MINUTE
+        ? this.write('span', span.id, null)
+        : this.write('span', span.id, spanValue({ ...span, end: Math.max(at, span.start) })),
     )
     this.written(rows)
   }

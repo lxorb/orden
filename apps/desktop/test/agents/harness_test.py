@@ -97,7 +97,7 @@ class EveryScenario(unittest.TestCase):
 class AHelpersAccount(unittest.TestCase):
     def test_claude_code_is_the_stand_in_that_says_you_asked(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
-            shim = pathlib.Path(stand_in(pathlib.Path(folder))["NIB_AI_CLAUDE_CODE"])
+            shim = pathlib.Path(stand_in(pathlib.Path(folder))["ORDEN_AI_CLAUDE_CODE"])
             script = pathlib.Path(re.findall(r'"([^"]+)" claude ', shim.read_text(encoding="utf-8"))[0])
         self.assertEqual(shim.name, "claude.cmd")
         self.assertIn("You asked: ", script.read_text(encoding="utf-8"))

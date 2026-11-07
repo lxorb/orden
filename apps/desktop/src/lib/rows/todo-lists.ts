@@ -45,11 +45,21 @@ export function unmakeList(path: string): void {
 
 const keyOf = (path: string) => path.replace(/\\/g, '/').normalize('NFC').toLowerCase()
 
-export function listsIn(root: string): string[] {
-  return workspace.notes
-    .filter((one) => isMarkdownPath(one.path) && within(root, one.path, root) !== null)
+let notesAway: (root: string) => readonly string[] = () => []
+
+export function notesAwayBy(read: (root: string) => readonly string[]): void {
+  notesAway = read
+}
+
+function notesIn(root: string): readonly string[] {
+  const here = workspace.notes
+    .filter((one) => within(root, one.path, root) !== null)
     .map((one) => relativeTo(root, one.path))
-    .filter((relative) => listedAt(root, relative))
+  return here.length ? here : notesAway(root)
+}
+
+export function listsIn(root: string): string[] {
+  return notesIn(root).filter((relative) => isMarkdownPath(relative) && listedAt(root, relative))
 }
 
 export function listNamed(root: string, said: string): string | null {

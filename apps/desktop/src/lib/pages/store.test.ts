@@ -279,3 +279,49 @@ describe('turning to a page', () => {
     expect(store.tall).toBe(60 * A4.height + 59 * GUTTER)
   })
 })
+
+describe('a glide to a page that is still going', () => {
+  function frames() {
+    const waiting = new Map<number, FrameRequestCallback>()
+    let next = 0
+    vi.stubGlobal('requestAnimationFrame', (run: FrameRequestCallback) => {
+      next += 1
+      waiting.set(next, run)
+      return next
+    })
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+      waiting.delete(id)
+    })
+
+    return () => {
+      for (let round = 0; round < 100 && waiting.size; round++) {
+        const due = [...waiting.entries()]
+        waiting.clear()
+        for (const [, run] of due) run(0)
+      }
+    }
+  }
+
+  test.each([
+    ['a page turned to', (store: InstanceType<typeof PagesStore>) => store.turnTo(2), 2],
+    ['a page fitted', (store: InstanceType<typeof PagesStore>) => store.fitPage(), 1],
+    ['a zoom', (store: InstanceType<typeof PagesStore>) => store.zoomBy(1.5), 1],
+  ])('gives way to %s', (_name, move, page) => {
+    vi.useFakeTimers()
+    const settle = frames()
+    const { store } = ofPages(6)
+
+    store.glideTo(6)
+    vi.advanceTimersByTime(100)
+    move(store)
+    const after = store.camera
+    vi.advanceTimersByTime(1000)
+    settle()
+
+    expect(store.camera).toEqual(after)
+    expect(store.showing).toBe(page)
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  })
+})

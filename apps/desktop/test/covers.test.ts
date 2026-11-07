@@ -28,6 +28,8 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
   'lib/overview/Overview.svelte .floor':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .band':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
   'lib/overview/Overview.svelte .top':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
   'lib/overview/Overview.svelte .window':

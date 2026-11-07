@@ -2,11 +2,11 @@ import { readCanvas } from '@orden/markdown/canvas'
 import { skim } from './json-skim'
 import type { ScannedNote } from './scan-note'
 
-const NIB_LAST = { last: 'nib' }
+const ORDEN_LAST = { last: 'nib' }
 const ICON_FIRST = { ahead: ['version', 'icon', 'iconColor'] }
 
 function indexed(content: string): string {
-  const top = skim(content, ['nodes', 'nib'], undefined, NIB_LAST)
+  const top = skim(content, ['nodes', 'nib'], undefined, ORDEN_LAST)
   if (!top) return ''
 
   const nodes = top.get('nodes')

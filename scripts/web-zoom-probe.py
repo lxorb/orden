@@ -114,7 +114,7 @@ def main() -> int:
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-zoom-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     made = root / SPACE
     made.mkdir(parents=True)
     (made / "Idea.md").write_text("# Idea\n\nA note to open the space on.\n", encoding="utf-8")

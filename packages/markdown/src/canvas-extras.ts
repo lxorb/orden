@@ -29,7 +29,7 @@ const EDGE_FIELDS = new Set([
 
 const TOP_FIELDS = new Set(['nodes', 'edges', 'nib'])
 
-const NIB_FIELDS = new Set([
+const ORDEN_FIELDS = new Set([
   'version',
   'icon',
   'iconColor',
@@ -155,7 +155,7 @@ export function extrasFrom(
   for (const [key, held] of Object.entries(parsed)) {
     if (!TOP_FIELDS.has(key)) out.top[key] = held
   }
-  if (isRecord(parsed.nib)) out.nib = beyond(parsed.nib, NIB_FIELDS) ?? {}
+  if (isRecord(parsed.nib)) out.nib = beyond(parsed.nib, ORDEN_FIELDS) ?? {}
 
   const unreadIn = (list: unknown, read: ReadonlySet<string>, known: ReadonlySet<string>) => {
     const unread = new Map<string, Fields>()

@@ -81,7 +81,7 @@ def ran(held: dict, code: str) -> object:
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path):
     path = allow_eval(identifier)
-    app = run_probe(exe, env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, quiet=True)
+    app = run_probe(exe, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, quiet=True)
     held = endpoint(path)
     until = time.monotonic() + 30
     while not main_window(app.pid) and time.monotonic() < until:

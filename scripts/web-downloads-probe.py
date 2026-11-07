@@ -356,10 +356,10 @@ def main() -> int:
     serve(port)
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-downloads-probe-"))
-    os.environ["NIB_SPACES_DIR"] = str(root / "spaces")
+    os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     arrive = root / "downloads"
     arrive.mkdir()
-    os.environ["NIB_DOWNLOADS_DIR"] = str(arrive)
+    os.environ["ORDEN_DOWNLOADS_DIR"] = str(arrive)
     folder: pathlib.Path = args.watch or arrive
     for stale in ours(folder):
         (folder / stale).unlink(missing_ok=True)
@@ -404,7 +404,7 @@ def main() -> int:
             if case in ("blank", "closed"):
                 time.sleep(1)
                 app.ask(
-                    "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', { event: 'nib://web-open',"
+                    "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', { event: 'orden://web-open',"
                     f" payload: {{ tab: '{tab}', url: '{at}/files/{'blank' if case == 'blank' else 'slow'}' }} }})"
                 )
             if case in ("slow", "stop", "closed"):

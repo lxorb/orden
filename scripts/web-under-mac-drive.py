@@ -363,15 +363,15 @@ def main() -> int:
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-under-spaces-"))
 
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     as_before = moves_as_before(args.exe, args.identifier, secret, env)
     print(f"moves the app's page heard with no page under it: {as_before}", flush=True)
     carry_url = url.replace("/under", "/carry")
     beside_wrong, beside_unverified = carried_alone(args.exe, args.identifier, secret, env, carry_url, args.out, "beside")
     under_wrong, under_unverified = carried_alone(
-        args.exe, args.identifier, secret, {**env, "NIB_PAGES_UNDER": "1"}, carry_url, args.out, "under"
+        args.exe, args.identifier, secret, {**env, "ORDEN_PAGES_UNDER": "1"}, carry_url, args.out, "under"
     )
-    env["NIB_PAGES_UNDER"] = "1"
+    env["ORDEN_PAGES_UNDER"] = "1"
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
     wrong: list[str] = []

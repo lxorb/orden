@@ -151,7 +151,7 @@ def measure(page: Any, name: str) -> None:
 
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
-    also = os.environ.get("NIB_SHOTS_TOO")
+    also = os.environ.get("ORDEN_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))

@@ -10,7 +10,7 @@ from pathlib import Path
 
 OUT = Path(sys.argv[1]).resolve()
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
-SPACES = Path(os.environ["NIB_SPACES_DIR"])
+SPACES = Path(os.environ["ORDEN_SPACES_DIR"])
 SECRET_WORDS = "sekretbytes4711"
 WORDS = "the words of the note"
 

@@ -1511,6 +1511,8 @@ export const id: Dictionary = {
   Shorter: 'Lebih pendek',
   Longer: 'Lebih panjang',
   'Fix grammar': 'Perbaiki tata bahasa',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Kata-kata yang dipilih sudah tidak ada di catatan, jadi tidak ada yang diganti.',
   'A cited report': 'Laporan dengan sitasi',
   'A helper in the background': 'Pembantu di latar',
   'A side question': 'Pertanyaan sampingan',
@@ -2895,6 +2897,8 @@ export const id: Dictionary = {
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} tidak ditambahkan: obrolan menerima gambar dan file teks hingga 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} tidak ditambahkan: satu pesan menerima paling banyak 20 gambar.',
   'Time tracker': 'Pelacak waktu',
   'Start timer': 'Mulai timer',
   'Stop timer': 'Hentikan timer',
@@ -3430,9 +3434,18 @@ export const id: Dictionary = {
   'You said': 'Menurut Anda',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Kirim laporan crash dan macet',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Saat Orden crash atau macet, ia mengirim apa yang sedang dilakukannya dan di mana dalam kodenya sendiri, tanpa nama, jalur, alamat, dan kata sandi. Tidak pernah catatan Anda.',
-  'Turn off in Settings': 'Matikan di Pengaturan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Mengirim apa yang dilakukan Orden saat crash atau macet; tidak pernah catatan, nama, jalur, atau kata sandi.',
+  'Send crash reports to help improve Orden':
+    'Kirim laporan crash untuk membantu meningkatkan Orden',
+  'Move to {space}?': 'Pindahkan ke {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS juga bisa memulai dikte dengan tombol ini.',
+  'QR code': 'Kode QR',
+  'Waiting…': 'Menunggu…',
+  Service: 'Layanan',
+  'I understand and want to connect anyway': 'Saya mengerti dan tetap ingin menghubungkan',
+  'Some changes have not reached your account yet': 'Beberapa perubahan belum sampai ke akun Anda',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Perubahan itu tetap di browser ini, tak terlihat oleh siapa pun yang masuk di sini, dan dikirim saat Anda masuk lagi.',
 }

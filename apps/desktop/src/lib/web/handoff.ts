@@ -1,7 +1,7 @@
 import { keep, storedText } from '../stored'
 
-export const WEB: string = import.meta.env.VITE_NIB_WEB ?? 'https://orden.so'
-export const LEGACY_WEB: string = import.meta.env.VITE_NIB_LEGACY_WEB ?? 'https://nibeditor.com'
+export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://orden.so'
+export const LEGACY_WEB: string = import.meta.env.VITE_ORDEN_LEGACY_WEB ?? 'https://nibeditor.com'
 
 export const HANDOFF_PATH = '/handoff'
 

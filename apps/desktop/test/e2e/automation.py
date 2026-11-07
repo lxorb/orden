@@ -98,7 +98,7 @@ def follow(page: Page, uri: str, label: str) -> dict:
     return page.evaluate(STATE)
 
 def drive_opening(page: Page) -> None:
-    state = follow(page, "nib://open?path=The plan.md", "open")
+    state = follow(page, "orden://open?path=The plan.md", "open")
     say(f"[open] {json.dumps({k: state[k] for k in ('active', 'address')})}")
     shot(page, "01-opened")
 
@@ -110,7 +110,7 @@ def drive_opening(page: Page) -> None:
         wrong(f"a link that worked said something went wrong: {state['trouble']!r}")
 
 def drive_heading(page: Page) -> None:
-    state = follow(page, "nib://open?path=The plan.md&heading=Later", "heading")
+    state = follow(page, "orden://open?path=The plan.md&heading=Later", "heading")
     say(f"[heading] the caret is on line {state['caret']}")
     shot(page, "02-heading")
 
@@ -120,7 +120,7 @@ def drive_heading(page: Page) -> None:
         wrong(f"the link did not land on the heading: line {state['caret']}")
 
 def drive_making(page: Page) -> None:
-    made = follow(page, "nib://new?name=From a link&content=# From a link%0A%0AWords.", "new")
+    made = follow(page, "orden://new?name=From a link&content=# From a link%0A%0AWords.", "new")
     say(f"[new] {json.dumps({k: made[k] for k in ('active', 'names')})}")
     shot(page, "03-made")
 
@@ -131,7 +131,7 @@ def drive_making(page: Page) -> None:
 
     added = follow(
         page,
-        "nib://new?path=From a link.md&content=More words.&append",
+        "orden://new?path=From a link.md&content=More words.&append",
         "append",
     )
     shot(page, "04-appended")
@@ -146,7 +146,7 @@ def drive_making(page: Page) -> None:
 def drive_appending(page: Page) -> None:
     added = follow(
         page,
-        "nib://append?path=From a link.md&content=A line from a link.",
+        "orden://append?path=From a link.md&content=A line from a link.",
         "append",
     )
     shot(page, "04b-appended-by-its-own-action")
@@ -164,7 +164,7 @@ def drive_appending(page: Page) -> None:
 
     fresh_note = follow(
         page,
-        "nib://append?path=inbox/Not there yet.md&content=The first line.",
+        "orden://append?path=inbox/Not there yet.md&content=The first line.",
         "append-new",
     )
     shot(page, "04c-appended-into-a-new-note")
@@ -175,7 +175,7 @@ def drive_appending(page: Page) -> None:
         wrong(f"the made note is missing the words: {fresh_note['text']!r}")
 
 def drive_searching(page: Page) -> None:
-    state = follow(page, "nib://search?query=happens", "search")
+    state = follow(page, "orden://search?query=happens", "search")
     say(f"[search] panel {state['panel']}, {state['hits']} hits for {state['query']!r}")
     shot(page, "05-searched")
 
@@ -189,27 +189,27 @@ def drive_searching(page: Page) -> None:
 def drive_refusals(page: Page) -> None:
     before = page.evaluate("() => window.nibApp.workspace.notes.length")
 
-    outside = follow(page, "nib://open?path=../../secrets.md", "outside")
+    outside = follow(page, "orden://open?path=../../secrets.md", "outside")
     shot(page, "06-refused-path")
     if not outside["trouble"]:
         wrong("a link pointing out of the space said nothing at all")
     if outside["active"] == "secrets.md":
         wrong("a link pointing out of the space opened something")
 
-    declined = follow(page, "nib://files.delete?path=Other.md&yes=true", "declined")
+    declined = follow(page, "orden://files.delete?path=Other.md&yes=true", "declined")
     shot(page, "07-declined")
     if not declined["trouble"]:
         wrong("a link asking to delete a note said nothing at all")
     if "Other.md" not in declined["names"]:
         wrong("a link deleted a note, which no link may do")
 
-    written = follow(page, "nib://files.write?path=Other.md&content=gone&yes=true", "write")
+    written = follow(page, "orden://files.write?path=Other.md&content=gone&yes=true", "write")
     if "A second note" not in (page.evaluate(READ_OTHER) or ""):
         wrong("a link wrote over a note, which no link may do")
     if not written["trouble"]:
         wrong("a link asking to write over a note said nothing at all")
 
-    again = follow(page, "nib://new?path=Other.md&content=gone", "again")
+    again = follow(page, "orden://new?path=Other.md&content=gone", "again")
     if "A second note" not in (page.evaluate(READ_OTHER) or ""):
         wrong("`new` wrote over a note that was already there")
     if not again["trouble"]:
@@ -246,7 +246,7 @@ def main() -> int:
         drive_refusals(page)
         page.context.close()
 
-    return DRIVE.verdict("a nib:// link opens, makes, appends and searches, and is refused where it should be")
+    return DRIVE.verdict("a orden:// link opens, makes, appends and searches, and is refused where it should be")
 
 if __name__ == "__main__":
     raise SystemExit(main())

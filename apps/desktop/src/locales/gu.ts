@@ -1517,6 +1517,8 @@ export const gu: Dictionary = {
   Shorter: 'ટૂંકું',
   Longer: 'લાંબું',
   'Fix grammar': 'વ્યાકરણ સુધારો',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'પસંદ કરેલા શબ્દો હવે નોંધમાં નથી, તેથી કંઈ બદલાયું નહીં.',
   'A cited report': 'ઉલ્લેખિત અહેવાલ',
   'A helper in the background': 'પાછળથી મદદગાર',
   'A side question': 'સાઇડ પ્રશ્ન',
@@ -2903,6 +2905,8 @@ export const gu: Dictionary = {
   'That could not be protected: {reason}': 'સુરક્ષિત કરી શકાયું નહીં: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ઉમેરાયું નહીં: ચેટ ચિત્રો અને 2 MB સુધીની ટેક્સ્ટ ફાઇલો લે છે.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ઉમેરાયું નહીં: એક સંદેશ વધુમાં વધુ 20 ચિત્રો લે છે.',
   'Time tracker': 'સમય ટ્રૅકર',
   'Start timer': 'ટાઇમર શરૂ કરો',
   'Stop timer': 'ટાઇમર બંધ કરો',
@@ -3478,9 +3482,17 @@ export const gu: Dictionary = {
   'You said': 'તમે કહ્યું',
   Privacy: 'ગોપનીયતા',
   'Send crash and freeze reports': 'ક્રેશ અને અટકી જવાના રિપોર્ટ મોકલો',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ક્રેશ થાય અથવા અટકી જાય ત્યારે, તે શું કરી રહ્યું હતું અને પોતાના કોડમાં ક્યાં હતું તે મોકલે છે, નામ, પાથ, સરનામાં અને પાસવર્ડ દૂર કરીને. તમારી નોંધો ક્યારેય નહીં.',
-  'Turn off in Settings': 'સેટિંગ્સમાં બંધ કરો',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ક્રેશ અથવા અટકી ગયું ત્યારે શું કરતું હતું તે મોકલે છે; નોંધો, નામ, પાથ કે પાસવર્ડ ક્યારેય નહીં.',
+  'Send crash reports to help improve Orden': 'Orden ને સુધારવામાં મદદ કરવા ક્રેશ રિપોર્ટ મોકલો',
+  'Move to {space}?': '{space} માં ખસેડવું છે?',
+  'macOS can start dictation with this key too.': 'macOS આ કી વડે ડિક્ટેશન પણ શરૂ કરી શકે છે.',
+  'QR code': 'QR કોડ',
+  'Waiting…': 'રાહ જોઈ રહ્યા છીએ…',
+  Service: 'સેવા',
+  'I understand and want to connect anyway': 'હું સમજું છું અને છતાં જોડાવા માંગુ છું',
+  'Some changes have not reached your account yet':
+    'કેટલાક ફેરફારો હજુ તમારા એકાઉન્ટ સુધી પહોંચ્યા નથી',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'તે આ બ્રાઉઝરમાં રહે છે, અહીં સાઇન ઇન કરનાર બીજા કોઈને દેખાતા નથી, અને તમે ફરી સાઇન ઇન કરો ત્યારે મોકલાય છે.',
 }

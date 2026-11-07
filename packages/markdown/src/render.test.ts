@@ -1001,16 +1001,16 @@ describe('the whole sweep', () => {
   })
 })
 
-describe('nesting deeper than the parser can follow', () => {
+describe('nesting thousands deep', () => {
   test.each([
-    ['> ', 20000],
-    ['- ', 5000],
+    ['> ', 20000, 'blockquote'],
+    ['- ', 5000, 'li'],
   ])(
-    '%j %i times is still drawn',
-    (mark, times) => {
+    '%j %i times is still drawn, 100 deep',
+    (mark, times, tag) => {
       const html = renderMarkdown(`${mark.repeat(times)}the words <b>`)
       expect(html).toContain('the words')
-      expect(html).not.toContain('<b>')
+      expect(html.split(`<${tag}>`)).toHaveLength(101)
     },
     30000,
   )

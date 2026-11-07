@@ -70,7 +70,7 @@ describe('what the page does with them', () => {
     let edges = '{"top":24,"right":0,"bottom":48,"left":0}'
     const window: Record<string, unknown> = {}
 
-    vi.stubGlobal('__NIB_SYSTEM__', {
+    vi.stubGlobal('__ORDEN_SYSTEM__', {
       insets: () => edges,
       bars: (dark: boolean) => void bars.push(dark),
     })

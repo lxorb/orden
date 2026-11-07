@@ -1574,6 +1574,8 @@ export const it: Dictionary = {
   Shorter: 'Più corto',
   Longer: 'Più lungo',
   'Fix grammar': 'Correggi la grammatica',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Le parole scelte non sono più nella nota, quindi non è stato sostituito nulla.',
   'A cited report': 'Un rapporto con le fonti',
   'A helper in the background': 'Un aiutante in background',
   'A side question': 'Una domanda a margine',
@@ -3007,6 +3009,8 @@ export const it: Dictionary = {
   'That could not be protected: {reason}': 'Impossibile proteggere: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} non è stato aggiunto: una chat accetta immagini e file di testo fino a 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} non è stato aggiunto: un messaggio accetta fino a 20 immagini.',
   'Time tracker': 'Monitoraggio del tempo',
   'Start timer': 'Avvia timer',
   'Stop timer': 'Ferma timer',
@@ -3608,9 +3612,19 @@ export const it: Dictionary = {
   'You said': 'Indicato',
   Privacy: 'Privacy',
   'Send crash and freeze reports': 'Invia rapporti di arresti e blocchi',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Quando Orden si arresta o si blocca, invia cosa stava facendo e dove nel proprio codice, senza nomi, percorsi, indirizzi e password. Mai le tue note.',
-  'Turn off in Settings': 'Disattiva nelle Impostazioni',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Invia cosa faceva Orden quando si è arrestato o bloccato; mai note, nomi, percorsi o password.',
+  'Send crash reports to help improve Orden':
+    'Invia i rapporti sugli arresti anomali per aiutare a migliorare Orden',
+  'Move to {space}?': 'Spostare in {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS può avviare la dettatura anche con questo tasto.',
+  'QR code': 'Codice QR',
+  'Waiting…': 'In attesa…',
+  Service: 'Servizio',
+  'I understand and want to connect anyway': 'Ho capito e voglio collegarmi comunque',
+  'Some changes have not reached your account yet':
+    'Alcune modifiche non sono ancora arrivate al tuo account',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Restano in questo browser, nascoste a chiunque altro acceda qui, e vengono inviate quando accedi di nuovo.',
 }

@@ -6,8 +6,8 @@ const MESSAGE = '01K6Z8Q3V8A0000000000000AB'
 
 describe('a chat link', () => {
   it('names a chat, or a message in it', () => {
-    expect(chatLink(CHAT)).toBe(`nib://chat/${CHAT}`)
-    expect(chatLink(CHAT, MESSAGE)).toBe(`nib://chat/${CHAT}/${MESSAGE}`)
+    expect(chatLink(CHAT)).toBe(`orden://chat/${CHAT}`)
+    expect(chatLink(CHAT, MESSAGE)).toBe(`orden://chat/${CHAT}/${MESSAGE}`)
   })
 
   it('reads back what it wrote', () => {
@@ -15,14 +15,18 @@ describe('a chat link', () => {
     expect(chatLinkOf(chatLink(CHAT, MESSAGE))).toEqual({ chat: CHAT, message: MESSAGE })
   })
 
+  it('still reads one written before the rename', () => {
+    expect(chatLinkOf(`nib://chat/${CHAT}/${MESSAGE}`)).toEqual({ chat: CHAT, message: MESSAGE })
+  })
+
   it.each([
     'https://orden.so',
-    'nib://chat/',
-    'nib://chat/c_123',
-    `nib://chat/${CHAT}/`,
-    `nib://chat/${CHAT}/${MESSAGE}/0`,
-    `nib://chat/${CHAT}/a b`,
-    `nib://note/${CHAT}`,
+    'orden://chat/',
+    'orden://chat/c_123',
+    `orden://chat/${CHAT}/`,
+    `orden://chat/${CHAT}/${MESSAGE}/0`,
+    `orden://chat/${CHAT}/a b`,
+    `orden://note/${CHAT}`,
   ])('is not a chat link: %s', (url) => {
     expect(chatLinkOf(url)).toBeNull()
   })

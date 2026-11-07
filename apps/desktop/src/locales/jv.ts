@@ -1506,6 +1506,8 @@ export const jv: Dictionary = {
   Shorter: 'Luwih cendhek',
   Longer: 'Luwih dawa',
   'Fix grammar': 'Ndandani paramasastra',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Tembung sing dipilih wis ora ana ing cathetan, mula ora ana sing diganti.',
   'A cited report': 'Laporan kanthi sitiran',
   'A helper in the background': 'Pitulung ing latar mburi',
   'A side question': 'Pitakon sisih',
@@ -2879,6 +2881,8 @@ export const jv: Dictionary = {
   'That could not be protected: {reason}': 'Ora bisa dilindhungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ora ditambahake: obrolan nampa gambar lan berkas teks nganti 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ora ditambahake: siji pesen nampa paling akeh 20 gambar.',
   'Time tracker': 'Pelacak wektu',
   'Start timer': 'Wiwiti timer',
   'Stop timer': 'Mandhegake timer',
@@ -3415,9 +3419,16 @@ export const jv: Dictionary = {
   'You said': 'Miturut sampeyan',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Kirim laporan crash lan macet',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Nalika Orden crash utawa macet, iku ngirim apa sing lagi ditindakake lan ing ngendi ing kodhe dhewe, tanpa jeneng, path, alamat lan sandhi. Ora tau cathetanmu.',
-  'Turn off in Settings': 'Pateni ing Setelan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Ngirim apa sing ditindakake Orden nalika crash utawa macet; ora tau cathetan, jeneng, path utawa sandhi.',
+  'Send crash reports to help improve Orden': 'Kirim laporan crash kanggo mbantu nambah apik Orden',
+  'Move to {space}?': 'Pindhah menyang {space}?',
+  'macOS can start dictation with this key too.': 'macOS uga bisa miwiti dikte nganggo tombol iki.',
+  'QR code': 'Kode QR',
+  'Waiting…': 'Ngenteni…',
+  Service: 'Layanan',
+  'I understand and want to connect anyway': 'Aku ngerti lan tetep pengin nyambung',
+  'Some changes have not reached your account yet': 'Sawetara owahan durung tekan akun sampeyan',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Owahan kuwi tetep ana ing browser iki, ora katon dening sapa wae sing mlebu ing kene, lan dikirim nalika sampeyan mlebu maneh.',
 }

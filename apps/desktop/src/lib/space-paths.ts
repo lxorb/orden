@@ -48,11 +48,17 @@ export function samePath(
   return a.length === b.length && holds(a, b, () => foldsAt(root ?? one))
 }
 
-export function pathKey(path: string, root?: string): string {
+export const foldsIn = (root: string): boolean => foldsAt(root)
+
+export function pathKeyAs(path: string, folds: boolean): string {
   const key = steps(path)
     .map((one) => one.normalize('NFC'))
     .join('/')
-  return foldsAt(root ?? path) ? key.toLowerCase() : key
+  return folds ? key.toLowerCase() : key
+}
+
+export function pathKey(path: string, root?: string): string {
+  return pathKeyAs(path, foldsAt(root ?? path))
 }
 
 export function pathKeys(paths: Iterable<string>, root?: string): Set<string> {

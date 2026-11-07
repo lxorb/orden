@@ -1523,6 +1523,8 @@ export const bn: Dictionary = {
   Shorter: 'ছোট',
   Longer: 'বড়',
   'Fix grammar': 'ব্যাকরণ ঠিক করুন',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'বেছে নেওয়া শব্দগুলো আর নোটে নেই, তাই কিছুই বদলানো হয়নি।',
   'A cited report': 'উদ্ধৃত প্রতিবেদন',
   'A helper in the background': 'পেছনে চলা সহকারী',
   'A side question': 'পার্শ্ব প্রশ্ন',
@@ -2912,6 +2914,8 @@ export const bn: Dictionary = {
   'That could not be protected: {reason}': 'সুরক্ষিত করা যায়নি: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} যোগ করা হয়নি: চ্যাটে ছবি এবং 2 MB পর্যন্ত টেক্সট ফাইল নেওয়া যায়।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} যোগ করা হয়নি: একটি বার্তায় সর্বোচ্চ 20টি ছবি নেওয়া যায়।',
   'Time tracker': 'সময় ট্র্যাকার',
   'Start timer': 'টাইমার শুরু করুন',
   'Stop timer': 'টাইমার থামান',
@@ -3488,9 +3492,17 @@ export const bn: Dictionary = {
   'You said': 'আপনি যা বলেছেন',
   Privacy: 'গোপনীয়তা',
   'Send crash and freeze reports': 'ক্র্যাশ ও আটকে যাওয়ার রিপোর্ট পাঠান',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ক্র্যাশ করলে বা আটকে গেলে, এটি কী করছিল এবং নিজের কোডের কোথায় ছিল তা পাঠায়, নাম, পাথ, ঠিকানা ও পাসওয়ার্ড বাদ দিয়ে। আপনার নোট কখনো নয়।',
-  'Turn off in Settings': 'সেটিংসে বন্ধ করুন',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ক্র্যাশ বা আটকে গেলে কী করছিল তা পাঠায়; নোট, নাম, পাথ বা পাসওয়ার্ড কখনো নয়।',
+  'Send crash reports to help improve Orden': 'Orden উন্নত করতে সাহায্য করতে ক্র্যাশ রিপোর্ট পাঠান',
+  'Move to {space}?': '{space}-এ সরাবেন?',
+  'macOS can start dictation with this key too.': 'macOS এই কী দিয়েও ডিক্টেশন শুরু করতে পারে।',
+  'QR code': 'QR কোড',
+  'Waiting…': 'অপেক্ষা করা হচ্ছে…',
+  Service: 'পরিষেবা',
+  'I understand and want to connect anyway': 'আমি বুঝেছি এবং তবুও সংযুক্ত করতে চাই',
+  'Some changes have not reached your account yet':
+    'কিছু পরিবর্তন এখনও আপনার অ্যাকাউন্টে পৌঁছায়নি',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'এগুলো এই ব্রাউজারে থাকে, এখানে সাইন ইন করা অন্য কেউ দেখতে পায় না, আর আপনি আবার সাইন ইন করলে পাঠানো হয়।',
 }

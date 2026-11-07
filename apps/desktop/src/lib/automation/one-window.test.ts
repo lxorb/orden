@@ -78,19 +78,19 @@ describe('with two windows open', () => {
   })
 
   test('a request of the endpoint runs once, in the window it was sent to', async () => {
-    sendTo('main', 'nib://automation', { id: 1, verb: 'run_terminal' })
+    sendTo('main', 'orden://automation', { id: 1, verb: 'run_terminal' })
     await vi.waitFor(() => expect(world.ran).toEqual(['run_terminal']))
   })
 
   test('one the crate has given up on and asked of another does not run', async () => {
     world.claims = false
-    sendTo('main', 'nib://automation', { id: 1, verb: 'run_terminal' })
+    sendTo('main', 'orden://automation', { id: 1, verb: 'run_terminal' })
     await new Promise((settled) => setTimeout(settled, 0))
     expect(world.ran).toEqual([])
   })
 
   test('a link runs once, in the window it was sent to', async () => {
-    sendTo('main', 'nib://open-url', ['nib://new?title=x'])
+    sendTo('main', 'orden://open-url', ['orden://new?title=x'])
     await Promise.resolve()
     expect(world.ran).toEqual(['new'])
   })
@@ -116,7 +116,7 @@ function sentToOneWindow(): Set<string> {
         events.add(name.replaceAll('"', ''))
         continue
       }
-      const value = new RegExp(`const ${name}: &str = "(nib://[^"]+)"`).exec(source)?.[1]
+      const value = new RegExp(`const ${name}: &str = "(orden://[^"]+)"`).exec(source)?.[1]
       if (value) events.add(value)
     }
   }
@@ -126,8 +126,8 @@ function sentToOneWindow(): Set<string> {
 describe('the audit of every event a window hears', () => {
   test('a file that names an event sent to one window hears it on that window alone', () => {
     const events = sentToOneWindow()
-    expect(events).toContain('nib://automation')
-    expect(events).toContain('nib://web-key')
+    expect(events).toContain('orden://automation')
+    expect(events).toContain('orden://web-key')
 
     const wrong: string[] = []
     for (const file of filesUnder(here, /\.(ts|svelte)$/)) {

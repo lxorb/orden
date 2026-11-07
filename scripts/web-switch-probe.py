@@ -23,7 +23,7 @@ from probe_app import run_probe, sized
 PORT_FROM = 22300
 PORT_TO = 22399
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 
 SPACE = "Web switch probe"
 NOTE = "Idea"

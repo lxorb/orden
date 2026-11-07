@@ -172,4 +172,118 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     open.current = null
     keptAway.clear()
   })
+
+  test('a search in another window hears each page as it is found, even from an older window', async () => {
+    const open = runner as unknown as Window & { parts: Map<string, (value: unknown) => void> }
+    const page = (name: string) => ({ hits: [{ path: `${ROOT}/${name}` }], loose: [] })
+    let finalIs: 'all' | 'nothing streamed' = 'all'
+    const saying = vi.spyOn(windows, 'say').mockImplementation((kind, what = {}) => {
+      if (kind !== 'sync-ask') return
+      const id = what.id as string
+      if (finalIs === 'all') open.parts.get(id)?.(page('a.md'))
+      queueMicrotask(() => open.asked.get(id)?.([page('a.md'), page('b.md')]))
+    })
+    keptAway.clear()
+    open.leaderId = 'the window syncing'
+    open.heardAway([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }])
+    const query = { text: 'a' } as never
+
+    const heard: string[] = []
+    const searching = keptAway.search(ROOT, query, [], 10, (found) =>
+      heard.push(...found.hits.map((one) => one.path)),
+    )
+    expect(heard).toEqual([`${ROOT}/a.md`])
+    await searching
+    expect(heard).toEqual([`${ROOT}/a.md`, `${ROOT}/b.md`])
+
+    finalIs = 'nothing streamed'
+    heard.length = 0
+    await keptAway.search(ROOT, query, [], 10, (found) =>
+      heard.push(...found.hits.map((one) => one.path)),
+    )
+    expect(heard).toEqual([`${ROOT}/a.md`, `${ROOT}/b.md`])
+
+    saying.mockRestore()
+    open.leaderId = null
+    keptAway.clear()
+  })
+
+  test('the window syncing answers a search at once, not after the writes waiting their turn', async () => {
+    const open = runner as unknown as Window & {
+      taking: Promise<unknown>
+      heardAsk(said: Record<string, unknown>): void
+    }
+    const said: { kind: string; value?: unknown }[] = []
+    const saying = vi.spyOn(windows, 'say').mockImplementation((kind, what = {}) => {
+      said.push({ kind, ...what })
+    })
+    keptAway.clear()
+    keptAway.keep([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }], () =>
+      Promise.resolve(true),
+    )
+    keptAway.answeredBy(new Map(), (_root, _query, _terms, _limit, onFound) => {
+      onFound({ hits: [{ path: `${ROOT}/a.md` }], loose: [] } as never)
+      return Promise.resolve(true)
+    })
+    const before = open.taking
+    open.taking = new Promise(() => undefined)
+
+    open.heardAsk({
+      kind: 'sync-ask',
+      id: 'q1',
+      from: 'another window',
+      what: 'search-away',
+      args: { root: ROOT, query: { text: 'a' }, terms: [], limit: 10, excluded: [] },
+    })
+    await vi.waitFor(() => expect(said.map((one) => one.kind)).toEqual(['sync-part', 'sync-said']))
+    expect(said[1]?.value).toEqual([{ hits: [{ path: `${ROOT}/a.md` }], loose: [] }])
+
+    open.taking = before
+    saying.mockRestore()
+    keptAway.clear()
+  })
+
+  test('another window waits for a long fetch for as long as the window syncing says it is still at it', async () => {
+    vi.useFakeTimers()
+    const open = runner as unknown as Window & {
+      alive: Map<string, () => void>
+      heardAsk(said: Record<string, unknown>): void
+      taking: Promise<unknown>
+    }
+    let asked = ''
+    const saying = vi.spyOn(windows, 'say').mockImplementation((kind, what = {}) => {
+      if (kind === 'sync-ask') asked = what.id as string
+    })
+    keptAway.clear()
+    open.leaderId = 'the window syncing'
+    open.heardAway([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }])
+    let brought: boolean | null = null
+    void keptAway.bringBack(`${ROOT}/a.md`).then((here) => (brought = here))
+    for (let at = 0; at < 6; at++) {
+      await vi.advanceTimersByTimeAsync(20_000)
+      open.alive.get(asked)?.()
+    }
+    expect(brought).toBeNull()
+    open.asked.get(asked)?.(true)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(brought).toBe(true)
+
+    saying.mockRestore()
+    const beats: string[] = []
+    const beating = vi.spyOn(windows, 'say').mockImplementation((kind) => void beats.push(kind))
+    const slow = vi
+      .spyOn(open, 'answering')
+      .mockImplementation(() => new Promise((done) => setTimeout(() => done(true), 25_000)))
+    open.heardAsk({ kind: 'sync-ask', id: 'f1', from: 'another', what: 'fetch-away', args: {} })
+    await vi.advanceTimersByTimeAsync(26_000)
+    expect(beats).toEqual(['sync-alive', 'sync-alive', 'sync-said'])
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(beats).toHaveLength(3)
+
+    slow.mockRestore()
+    beating.mockRestore()
+    open.leaderId = null
+    keptAway.clear()
+    vi.useRealTimers()
+  })
 })

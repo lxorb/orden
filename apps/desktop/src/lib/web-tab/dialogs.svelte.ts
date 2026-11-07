@@ -52,6 +52,10 @@ class Dialogs {
     for (const one of gone) void this.tell(one.id, false, null)
   }
 
+  refused(id: number) {
+    void this.tell(id, false, null)
+  }
+
   private async tell(id: number, accept: boolean, text: string | null): Promise<void> {
     if (!isDesktop) return
     await invoke('web_dialog_answer', { id, accept, text }).catch(() => undefined)

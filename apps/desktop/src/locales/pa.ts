@@ -1528,6 +1528,8 @@ export const pa: Dictionary = {
   Shorter: 'ਛੋਟਾ',
   Longer: 'ਲੰਮਾ',
   'Fix grammar': 'ਵਿਆਕਰਨ ਸੁਧਾਰੋ',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ਚੁਣੇ ਸ਼ਬਦ ਹੁਣ ਨੋਟ ਵਿੱਚ ਨਹੀਂ ਹਨ, ਇਸ ਲਈ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ ਗਿਆ।',
   'A cited report': 'ਹਵਾਲੇ ਵਾਲੀ ਰਿਪੋਰਟ',
   'A helper in the background': 'ਪਿਛੋਕੜ ਵਿੱਚ ਸਹਾਇਕ',
   'A side question': 'ਇੱਕ ਸਾਈਡ ਸਵਾਲ',
@@ -2926,6 +2928,8 @@ export const pa: Dictionary = {
   'That could not be protected: {reason}': 'ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਚੈਟ ਵਿੱਚ ਤਸਵੀਰਾਂ ਅਤੇ 2 MB ਤੱਕ ਦੀਆਂ ਟੈਕਸਟ ਫ਼ਾਈਲਾਂ ਹੀ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਇੱਕ ਸੁਨੇਹੇ ਵਿੱਚ ਵੱਧ ਤੋਂ ਵੱਧ 20 ਤਸਵੀਰਾਂ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
   'Time tracker': 'ਸਮਾਂ ਟਰੈਕਰ',
   'Start timer': 'ਟਾਈਮਰ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop timer': 'ਟਾਈਮਰ ਰੋਕੋ',
@@ -3502,9 +3506,18 @@ export const pa: Dictionary = {
   'You said': 'ਤੁਸੀਂ ਦੱਸਿਆ',
   Privacy: 'ਪਰਦੇਦਾਰੀ',
   'Send crash and freeze reports': 'ਕ੍ਰੈਸ਼ ਅਤੇ ਫ੍ਰੀਜ਼ ਰਿਪੋਰਟਾਂ ਭੇਜੋ',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'ਜਦੋਂ Orden ਕ੍ਰੈਸ਼ ਹੁੰਦਾ ਹੈ ਜਾਂ ਰੁਕ ਜਾਂਦਾ ਹੈ, ਇਹ ਭੇਜਦਾ ਹੈ ਕਿ ਇਹ ਕੀ ਕਰ ਰਿਹਾ ਸੀ ਅਤੇ ਆਪਣੇ ਕੋਡ ਵਿੱਚ ਕਿੱਥੇ ਸੀ, ਨਾਂ, ਪਾਥ, ਪਤੇ ਅਤੇ ਪਾਸਵਰਡ ਹਟਾ ਕੇ। ਤੁਹਾਡੇ ਨੋਟ ਕਦੇ ਨਹੀਂ।',
-  'Turn off in Settings': 'ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਬੰਦ ਕਰੋ',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ਕ੍ਰੈਸ਼ ਜਾਂ ਰੁਕਣ ਵੇਲੇ ਕੀ ਕਰ ਰਿਹਾ ਸੀ ਇਹ ਭੇਜਦਾ ਹੈ; ਨੋਟ, ਨਾਂ, ਪਾਥ ਜਾਂ ਪਾਸਵਰਡ ਕਦੇ ਨਹੀਂ।',
+  'Send crash reports to help improve Orden':
+    'Orden ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਲਈ ਕ੍ਰੈਸ਼ ਰਿਪੋਰਟਾਂ ਭੇਜੋ',
+  'Move to {space}?': 'ਕੀ {space} ਵਿੱਚ ਭੇਜਣਾ ਹੈ?',
+  'macOS can start dictation with this key too.':
+    'macOS ਇਸ ਕੁੰਜੀ ਨਾਲ ਡਿਕਟੇਸ਼ਨ ਵੀ ਸ਼ੁਰੂ ਕਰ ਸਕਦਾ ਹੈ।',
+  'QR code': 'QR ਕੋਡ',
+  'Waiting…': 'ਉਡੀਕ ਹੋ ਰਹੀ ਹੈ…',
+  Service: 'ਸੇਵਾ',
+  'I understand and want to connect anyway': 'ਮੈਂ ਸਮਝਦਾ ਹਾਂ ਅਤੇ ਫਿਰ ਵੀ ਜੋੜਨਾ ਚਾਹੁੰਦਾ ਹਾਂ',
+  'Some changes have not reached your account yet': 'ਕੁਝ ਬਦਲਾਅ ਹਾਲੇ ਤੁਹਾਡੇ ਖਾਤੇ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚੇ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'ਉਹ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਰਹਿੰਦੇ ਹਨ, ਇੱਥੇ ਸਾਈਨ ਇਨ ਕਰਨ ਵਾਲੇ ਕਿਸੇ ਹੋਰ ਨੂੰ ਨਹੀਂ ਦਿਸਦੇ, ਅਤੇ ਤੁਹਾਡੇ ਮੁੜ ਸਾਈਨ ਇਨ ਕਰਨ ’ਤੇ ਭੇਜੇ ਜਾਂਦੇ ਹਨ।',
 }

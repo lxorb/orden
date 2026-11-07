@@ -108,7 +108,7 @@ pub fn fetched(app: &tauri::AppHandle, target: &Path) -> Result<(), String> {
 }
 
 #[cfg(target_os = "macos")]
-const EVENT: &str = "nib://icloud";
+const EVENT: &str = "orden://icloud";
 
 #[cfg(target_os = "macos")]
 #[derive(Clone, serde::Serialize)]

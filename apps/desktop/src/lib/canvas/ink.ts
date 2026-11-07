@@ -394,7 +394,7 @@ export function inkPath(ring: readonly Point[]): string {
   return out.join(' ')
 }
 
-const NIB_DEPTH = 0.16
+const ORDEN_DEPTH = 0.16
 
 function ribbon(points: readonly InkPoint[], size: number, style: InkStyle): Point[] {
   const angle = ((style.nib ?? 0) * Math.PI) / 180
@@ -405,7 +405,7 @@ function ribbon(points: readonly InkPoint[], size: number, style: InkStyle): Poi
   const only = points.length === 1 ? points[0] : undefined
   if (only) {
     const width = half * (1 - style.thinning * (1 - only.pressure))
-    const depth = (size * NIB_DEPTH) / 2
+    const depth = (size * ORDEN_DEPTH) / 2
     const bx = -ay * depth
     const by = ax * depth
 

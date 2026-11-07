@@ -16,7 +16,7 @@ import urllib.request
 
 from probe_app import close_app, run_probe, main_window, sized
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "Order"
 SHOTS = pathlib.Path(__file__).resolve().parents[1] / "target" / "order-probe"
 

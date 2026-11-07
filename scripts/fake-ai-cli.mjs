@@ -293,7 +293,7 @@ function claudeSession() {
       tools: [],
       mcp_servers: servers,
       allowed,
-      token: !!process.env.NIB_MCP_TOKEN,
+      token: !!process.env.ORDEN_MCP_TOKEN,
       effort: state.effort,
       session_id: session,
     })
@@ -478,8 +478,8 @@ function appServer() {
     if (config['mcp_servers.orden.command']) {
       if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
       if (
-        !config['mcp_servers.orden.env_vars']?.includes('NIB_MCP_TOKEN') ||
-        !process.env.NIB_MCP_TOKEN
+        !config['mcp_servers.orden.env_vars']?.includes('ORDEN_MCP_TOKEN') ||
+        !process.env.ORDEN_MCP_TOKEN
       )
         return fail(id, 'nib mcp has no token')
     }
@@ -722,7 +722,7 @@ async function gemini() {
   }
   const orden = settings.mcpServers?.orden
   if (orden) {
-    const token = (orden.env?.NIB_MCP_TOKEN ?? '').replace(/^\$\{(\w+)\}$/, (_, name) =>
+    const token = (orden.env?.ORDEN_MCP_TOKEN ?? '').replace(/^\$\{(\w+)\}$/, (_, name) =>
       name in process.env ? `set:${process.env[name]}` : 'unset',
     )
     say({

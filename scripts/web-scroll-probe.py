@@ -367,7 +367,7 @@ def main() -> int:
     lines = lines_per_notch()
     pixels = round(lines * 100 / 3, 2)
     said: dict[str, object] = {"lines per notch": lines, "Chrome's notch in pixels": pixels}
-    env = {**os.environ, "NIB_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
     running = run_probe(args.exe, env=env, quiet=True)
     size: dict[str, object] = {}
     try:

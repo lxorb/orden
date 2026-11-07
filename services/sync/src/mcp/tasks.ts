@@ -7,6 +7,7 @@ import {
   listTasks,
   newTask,
   quickWords,
+  wallClock,
   noteName,
   placedEdit,
   placeIn,
@@ -53,7 +54,7 @@ import {
   spaceSource,
   spacesFor,
 } from './tools'
-import { dated, listsBy } from './dated'
+import { dated, listsBy, zoneOf } from './dated'
 import type { TokenRow } from './tokens'
 
 const MOST_READ = 2000
@@ -322,8 +323,8 @@ async function written(
   return put.path
 }
 
-function contextNow(): Context {
-  return clockOf(new Date(), 'UTC')
+function contextNow(zone: string | undefined): Context {
+  return clockOf(new Date(), zone ?? 'UTC')
 }
 
 async function baseText(env: Env, space: Space, path: string): Promise<string | null> {
@@ -392,7 +393,7 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
         : {}),
       isNote: (name) => names.has(name.toLowerCase()),
     },
-    contextNow(),
+    contextNow(await zoneOf(env, token.user_id)),
   )
   return partial ? { ...answer, partial } : answer
 }
@@ -402,10 +403,11 @@ async function spaceOf(
   token: TokenRow,
   args: Args,
   seen: Space[],
-): Promise<Space & { shut: Shut }> {
+): Promise<Space & { shut: Shut; zone: string }> {
   const asked = await askedSpace(env, token.user_id, args)
   if (typeof asked === 'string') throw new Said(asked)
-  const space = { ...asked, shut: await shutFor(env, token.user_id) }
+  const [shut, zone] = await Promise.all([shutFor(env, token.user_id), zoneOf(env, token.user_id)])
+  const space = { ...asked, shut, zone }
   seen.push(space)
   return space
 }
@@ -415,7 +417,7 @@ async function writableSpace(
   token: TokenRow,
   args: Args,
   seen: Space[],
-): Promise<Space & { shut: Shut }> {
+): Promise<Space & { shut: Shut; zone: string }> {
   if (token.read_only)
     throw new Said('This token may only read. Allow writing in Orden’s settings first.')
   const space = await spaceOf(env, token, args, seen)
@@ -428,14 +430,14 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
   return addTaskTo(env, await writableSpace(env, token, args, seen), args)
 }
 
-type Writable = Pick<Space, 'id' | 'name' | 'user_id'> & { shut?: Shut }
+type Writable = Pick<Space, 'id' | 'name' | 'user_id'> & { shut?: Shut; zone?: string }
 
 async function addTaskTo(
   env: Env,
   space: Writable,
   args: Args,
 ): Promise<{ at: string; space: string; path: string }> {
-  const read = newTask(args, quickWords(['en', 'de'], new Date()))
+  const read = newTask(args, quickWords(['en', 'de'], wallClock(new Date(), space.zone)))
   const { fields } = read
   const place = await placeNamed(env, space, words(args, 'note') ?? read.note)
   const path = place.path
@@ -512,7 +514,7 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
   const path = notePath(anchor.path)
   const done = typeof args.done === 'boolean' ? args.done : undefined
   const change = taskChange(args)
-  const today = contextNow().today
+  const today = contextNow(space.zone).today
   const editing = async () => {
     const held = await readOf(env, space, path)
     if (held === null) throw new Said(`No note at ${path}.`)
@@ -605,7 +607,7 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
     throw new Said('Say the path of a .base file, or the base as yaml.')
   }
   const { rows, partial } = await rowsOf(env, [space], space.shut)
-  const answer = queryBase(base, words(args, 'view'), rows, contextNow())
+  const answer = queryBase(base, words(args, 'view'), rows, contextNow(space.zone))
   return partial ? { ...answer, partial } : answer
 }
 

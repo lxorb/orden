@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { defaultLanguage, languageNames, nameOfLanguage, rewriteMessages, VERBS } from './rewrite'
+import {
+  defaultLanguage,
+  languageNames,
+  nameOfLanguage,
+  rewriteMessages,
+  stillThere,
+  VERBS,
+} from './rewrite'
 
 describe('the verbs', () => {
   test('are the four, with the two about length first', () => {
@@ -61,5 +68,29 @@ describe('the language a translation goes into', () => {
 
   test('is the app’s own language where nib has one', () => {
     expect(defaultLanguage('fr')).toBe('fr')
+  })
+})
+
+describe('where the rewrite goes', () => {
+  const before = 'A heron stands still.'
+
+  test('is where the words were chosen, while they are still there', () => {
+    const text = `Notes. ${before} The end.`
+    expect(stillThere(text, { from: 7, to: 28 }, before)).toEqual({ from: 7, to: 28 })
+  })
+
+  test('follows the words where the note changed above them meanwhile', () => {
+    const text = `Notes, synced from the phone. ${before} The end.`
+    expect(stillThere(text, { from: 7, to: 28 }, before)).toEqual({ from: 30, to: 51 })
+  })
+
+  test('takes the nearest of the words where they are there twice', () => {
+    const text = `${before} Middle words here. ${before}`
+    expect(stillThere(text, { from: 35, to: 56 }, before)).toEqual({ from: 41, to: 62 })
+  })
+
+  test('is nowhere once the words are gone, or the place is past the end', () => {
+    expect(stillThere('Notes.', { from: 7, to: 28 }, before)).toBeNull()
+    expect(stillThere('Notes. A heron flew off.', { from: 7, to: 28 }, before)).toBeNull()
   })
 })

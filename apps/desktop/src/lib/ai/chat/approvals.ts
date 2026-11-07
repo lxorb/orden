@@ -51,7 +51,7 @@ function questionIn(payload: unknown): { kind: string; approval: Record<string, 
 async function heard(on: (payload: unknown) => void): Promise<() => void> {
   if (!isDesktop) return () => undefined
   const { listen } = await import('@tauri-apps/api/event')
-  return listen<unknown>('nib://agent', ({ payload }) => on(payload))
+  return listen<unknown>('orden://agent', ({ payload }) => on(payload))
 }
 
 export const crateAnswers: Answers = {

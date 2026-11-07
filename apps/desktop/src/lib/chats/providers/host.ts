@@ -3,7 +3,10 @@ import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
 import { invoke, isDesktop } from '../../tauri'
+import { authorize, builtWith, post } from './authorize'
 import { parsedOffThread } from './mail-parse'
+import { screens } from './screens.svelte'
+import { sealedStore } from './sealed'
 
 let opened = 0
 
@@ -56,8 +59,16 @@ async function socket(ask: SocketAsk): Promise<Socket> {
 export const host: Host = {
   secret: (name) => readSecret(name),
   keepSecret: (name, value) => (value === null ? forgetKey(name, true) : writeSecret(name, value)),
-  ...(isDesktop ? { socket } : {}),
+  ...(isDesktop ? { socket, authorize, post } : {}),
   parseMessage: parsedOffThread,
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),
+  build: builtWith({
+    googleClientId: import.meta.env.VITE_ORDEN_GOOGLE_CLIENT_ID,
+    googleClientSecret: import.meta.env.VITE_ORDEN_GOOGLE_CLIENT_SECRET,
+    microsoftClientId: import.meta.env.VITE_ORDEN_MICROSOFT_CLIENT_ID,
+  }),
+  ask: screens.ask,
+  show: screens.show,
+  sealed: sealedStore({ read: readSecret, write: (name, value) => host.keepSecret(name, value) }),
 }

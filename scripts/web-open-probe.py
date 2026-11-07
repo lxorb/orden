@@ -23,7 +23,7 @@ from probe_app import run_probe, sized
 PORT_FROM = 23780
 PORT_TO = 23799
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 
 SPACE = "Web open probe"
 NOTE = "Idea"
@@ -38,7 +38,7 @@ user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32"
 
 def clocked() -> bool:
 
-    return os.environ.get("NIB_PERF") == "1"
+    return os.environ.get("ORDEN_PERF") == "1"
 
 def windows_of(pid: int) -> list[int]:
 
@@ -352,7 +352,7 @@ def main() -> int:
             wrong.append(f"{name}: {value} over a budget of {budget}")
 
     if not clocked():
-        print("\nthe clocks were read and not asserted on; set NIB_PERF=1 to hold them to a budget")
+        print("\nthe clocks were read and not asserted on; set ORDEN_PERF=1 to hold them to a budget")
 
     for one in wrong:
         print(f"WRONG: {one}")

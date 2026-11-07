@@ -1526,6 +1526,8 @@ export const ps: Dictionary = {
   Shorter: 'لنډ',
   Longer: 'اوږد',
   'Fix grammar': 'ګرامر سمول',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'غوره شوي ټکي نور په یادښت کې نشته، نو هېڅ ونه بدل شو.',
   'A cited report': 'یو حواله شوی راپور',
   'A helper in the background': 'په شالید کې یو مرسته کوونکی',
   'A side question': 'یو اړخیزه پوښتنه',
@@ -2917,6 +2919,8 @@ export const ps: Dictionary = {
   'That could not be protected: {reason}': 'خوندي نه شو: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ورنه کړل شو: چټ انځورونه او تر 2 MB پورې متني فایلونه مني.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ورنه کړل شو: یو پیغام تر 20 انځورونو پورې مني.',
   'Time tracker': 'د وخت څارونکی',
   'Start timer': 'ټایمر پیل کړئ',
   'Stop timer': 'ټایمر ودروئ',
@@ -3493,9 +3497,16 @@ export const ps: Dictionary = {
   'You said': 'ستاسو ویلي',
   Privacy: 'محرمیت',
   'Send crash and freeze reports': 'د ماتیدو او درېدو راپورونه ولېږه',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'کله چې Orden مات شي یا ودرېږي، دا لېږي چې څه یې کول او په خپل کوډ کې چېرته و، د نومونو، لارو، پتو او پټنومونو له لرې کولو سره. هېڅکله ستاسو یادښتونه نه.',
-  'Turn off in Settings': 'په امستنو کې یې بند کړئ',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'لېږي چې Orden د ماتېدو یا درېدو پر مهال څه کول؛ هېڅکله یادښتونه، نومونه، لارې یا پټنومونه نه.',
+  'Send crash reports to help improve Orden': 'د Orden د ښه کولو لپاره د ماتیدو راپورونه ولېږه',
+  'Move to {space}?': '{space} ته یې ولیږدوئ؟',
+  'macOS can start dictation with this key too.': 'macOS ښايي په دې کیلي سره ډیکټیشن هم پیل کړي.',
+  'QR code': 'QR کوډ',
+  'Waiting…': 'انتظار…',
+  Service: 'خدمت',
+  'I understand and want to connect anyway': 'پوهېږم او بیا هم غواړم وصل شم',
+  'Some changes have not reached your account yet': 'ځینې بدلونونه لا ستاسو حساب ته نه دي رسېدلي',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'دوی په دې براوزر کې پاتې کېږي، د هر هغه چا له سترګو پټ چې دلته ننوځي، او کله چې بیا ننوځئ لېږل کېږي.',
 }

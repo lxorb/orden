@@ -1511,6 +1511,8 @@ export const ms: Dictionary = {
   Shorter: 'Lebih pendek',
   Longer: 'Lebih panjang',
   'Fix grammar': 'Perbaiki tatabahasa',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Perkataan yang dipilih tiada lagi dalam nota, jadi tiada apa-apa diganti.',
   'A cited report': 'Laporan dengan sitasi',
   'A helper in the background': 'Pembantu di latar belakang',
   'A side question': 'Soalan sampingan',
@@ -2893,6 +2895,8 @@ export const ms: Dictionary = {
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} tidak ditambah: sembang menerima gambar dan fail teks sehingga 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} tidak ditambah: satu mesej menerima paling banyak 20 gambar.',
   'Time tracker': 'Penjejak masa',
   'Start timer': 'Mulakan pemasa',
   'Stop timer': 'Hentikan pemasa',
@@ -3427,9 +3431,18 @@ export const ms: Dictionary = {
   'You said': 'Dinyatakan',
   Privacy: 'Privasi',
   'Send crash and freeze reports': 'Hantar laporan ranap dan beku',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Apabila Orden ranap atau beku, ia menghantar apa yang sedang dilakukannya dan di mana dalam kodnya sendiri, tanpa nama, laluan, alamat dan kata laluan. Tidak sekali-kali nota anda.',
-  'Turn off in Settings': 'Matikan dalam Tetapan',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Menghantar apa yang dilakukan Orden semasa ranap atau beku; tidak sekali-kali nota, nama, laluan atau kata laluan.',
+  'Send crash reports to help improve Orden':
+    'Hantar laporan ranap untuk membantu menambah baik Orden',
+  'Move to {space}?': 'Alihkan ke {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS juga boleh memulakan imlak dengan kekunci ini.',
+  'QR code': 'Kod QR',
+  'Waiting…': 'Menunggu…',
+  Service: 'Perkhidmatan',
+  'I understand and want to connect anyway': 'Saya faham dan tetap mahu menyambung',
+  'Some changes have not reached your account yet': 'Beberapa perubahan belum sampai ke akaun anda',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Perubahan itu kekal dalam pelayar ini, tidak dilihat oleh sesiapa lagi yang log masuk di sini, dan dihantar apabila anda log masuk semula.',
 }

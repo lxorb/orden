@@ -75,9 +75,9 @@ pub fn find(tool: Tool) -> Option<Program> {
 
 fn named_outright(tool: Tool) -> Option<PathBuf> {
     let name = match tool {
-        Tool::ClaudeCode => "NIB_AI_CLAUDE_CODE",
-        Tool::Codex => "NIB_AI_CODEX",
-        Tool::Gemini => "NIB_AI_GEMINI",
+        Tool::ClaudeCode => "ORDEN_AI_CLAUDE_CODE",
+        Tool::Codex => "ORDEN_AI_CODEX",
+        Tool::Gemini => "ORDEN_AI_GEMINI",
     };
     std::env::var_os(name)
         .map(PathBuf::from)

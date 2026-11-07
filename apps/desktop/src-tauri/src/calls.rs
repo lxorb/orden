@@ -10,7 +10,7 @@ use syn::visit_mut::VisitMut;
 
 const DEEPEST: usize = 8;
 
-const AWAY: [&str; 2] = ["spawn", "spawn_blocking"];
+const AWAY: [&str; 3] = ["spawn", "spawn_blocking", "off_the_runtime"];
 
 const PEELED: [&str; 4] = ["unwrap", "expect", "unwrap_or_else", "map_err"];
 
@@ -2719,6 +2719,10 @@ fn away(tokens: &[TokenTree], at: usize) -> bool {
 }
 
 fn spoken(stream: TokenStream, said: &mut String) {
+    told(stream, said, false);
+}
+
+fn told(stream: TokenStream, said: &mut String, handed_to_an_await: bool) {
     let tokens: Vec<TokenTree> = stream.into_iter().collect();
     for (at, token) in tokens.iter().enumerate() {
         if away(&tokens, at) {
@@ -2734,11 +2738,22 @@ fn spoken(stream: TokenStream, said: &mut String) {
                     Delimiter::None => ("", ""),
                 };
                 said.push_str(open);
-                spoken(group.stream(), said);
+                let arguments = group.delimiter() == Delimiter::Parenthesis
+                    && at > 0
+                    && matches!(&tokens[at - 1], TokenTree::Ident(_))
+                    && awaited(&tokens, at - 1);
+                told(group.stream(), said, arguments);
                 said.push_str(close);
             }
             TokenTree::Punct(punct) => {
                 said.push(punct.as_char());
+                said.push(' ');
+            }
+            TokenTree::Ident(word)
+                if awaited(&tokens, at) || handed_to_an_await && handed(&tokens, at) =>
+            {
+                said.push_str("awaited_");
+                said.push_str(&word.to_string());
                 said.push(' ');
             }
             other => {
@@ -2747,6 +2762,21 @@ fn spoken(stream: TokenStream, said: &mut String) {
             }
         }
     }
+}
+
+fn handed(tokens: &[TokenTree], at: usize) -> bool {
+    matches!(tokens.get(at + 1), Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis)
+        && match tokens.get(at + 2) {
+            None => true,
+            Some(TokenTree::Punct(comma)) => comma.as_char() == ',',
+            Some(_) => false,
+        }
+}
+
+fn awaited(tokens: &[TokenTree], at: usize) -> bool {
+    matches!(tokens.get(at + 1), Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis)
+        && matches!(tokens.get(at + 2), Some(TokenTree::Punct(dot)) if dot.as_char() == '.')
+        && matches!(tokens.get(at + 3), Some(TokenTree::Ident(word)) if word == "await")
 }
 
 pub(crate) fn spaced(word: &str) -> String {

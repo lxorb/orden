@@ -78,7 +78,7 @@ def marks(page: Page) -> dict[str, float]:
     )
 
 def main() -> int:
-    slowed = float(os.environ.get("NIB_CPU") or 1)
+    slowed = float(os.environ.get("ORDEN_CPU") or 1)
     with DRIVE.session() as browser:
         context = browser.new_context(viewport={"width": 1180, "height": 820})
         context.add_init_script(OBSERVE)

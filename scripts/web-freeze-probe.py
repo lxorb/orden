@@ -82,7 +82,7 @@ from probe_app import run_probe, refuse_updating, sized
 PORT_FROM = 21500
 PORT_TO = 21599
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 
 SPACE = "Web freeze probe"
 NOTE = "A page in a tab"

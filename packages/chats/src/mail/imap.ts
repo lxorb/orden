@@ -116,7 +116,7 @@ export function quoted(text: string): string {
   return `"${text.replace(/[\\"]/g, (char) => `\\${char}`)}"`
 }
 
-class ImapError extends Error {
+export class ImapError extends Error {
   constructor(
     message: string,
     readonly kind: 'NO' | 'BAD' | 'BYE' | 'closed',
@@ -146,6 +146,7 @@ export class Imap {
   private counter = 0
   private pending: Pending | null = null
   private continued: (() => void) | null = null
+  private answering: (() => void) | null = null
   private queue: Promise<unknown> = Promise.resolve()
   private greeted: ((line: string) => void) | null = null
   private readonly greeting: Promise<string>
@@ -176,6 +177,7 @@ export class Imap {
     ask: SocketAsk,
     user: string,
     password: string,
+    bearer = false,
   ): Promise<Imap> {
     const socket = await open(ask)
     const imap = new Imap(socket)
@@ -193,7 +195,9 @@ export class Imap {
         imap.capabilities.clear()
         await imap.command('CAPABILITY')
       }
-      if (!/^\* PREAUTH/i.test(greeting)) await imap.login(user, password)
+      if (!/^\* PREAUTH/i.test(greeting)) {
+        await (bearer ? imap.bearer(user, password) : imap.login(user, password))
+      }
       if (!imap.capabilities.has('IMAP4REV1') || imap.capabilities.size < 2) {
         imap.capabilities.clear()
         await imap.command('CAPABILITY')
@@ -203,6 +207,23 @@ export class Imap {
       await imap.close()
       throw error
     }
+  }
+
+  private async bearer(user: string, token: string): Promise<void> {
+    if (!this.capabilities.has('AUTH=XOAUTH2')) {
+      throw new ImapError('the server does not take a sign-in token', 'NO')
+    }
+    const said = xoauth2(user, token)
+    if (this.capabilities.has('SASL-IR')) {
+      await this.command(`AUTHENTICATE XOAUTH2 ${said}`, undefined, () => '')
+      return
+    }
+    let first = true
+    await this.command('AUTHENTICATE XOAUTH2', undefined, () => {
+      const answer = first ? said : ''
+      first = false
+      return answer
+    })
   }
 
   private async login(user: string, password: string): Promise<void> {
@@ -227,18 +248,21 @@ export class Imap {
     this.capabilities = new Set(found[1].trim().toUpperCase().split(/\s+/))
   }
 
-  command(text: string, literal?: Uint8Array): Promise<Untagged[]> {
-    const run = this.queue.then(() => this.send(text, literal))
+  command(text: string, literal?: Uint8Array, answer?: () => string): Promise<Untagged[]> {
+    const run = this.queue.then(() => this.send(text, literal, answer))
     this.queue = run.catch(() => undefined)
     return run
   }
 
-  private send(text: string, literal?: Uint8Array): Promise<Untagged[]> {
+  private send(text: string, literal?: Uint8Array, answer?: () => string): Promise<Untagged[]> {
     if (this.closed) return Promise.reject(new ImapError('the connection is closed', 'closed'))
     const tag = `A${++this.counter}`
     this.silence.heard()
     return new Promise<Untagged[]>((done, failed) => {
       this.pending = { tag, untagged: [], done, failed }
+      this.answering = answer
+        ? () => void this.socket.write(ascii(`${answer()}\r\n`)).catch(failed)
+        : null
       if (!literal) {
         void this.socket.write(fromLatin(`${tag} ${text}\r\n`)).catch(failed)
         return
@@ -312,6 +336,10 @@ export class Imap {
       greeted(text)
       return
     }
+    if (text.startsWith('+') && this.answering) {
+      this.answering()
+      return
+    }
     if (text.startsWith('+')) {
       const next = this.continued
       this.continued = null
@@ -331,6 +359,7 @@ export class Imap {
     if (!pending || tagged?.[1] !== pending.tag) return
     this.pending = null
     this.continued = null
+    this.answering = null
     if (/\[CAPABILITY /i.test(text)) this.readCapabilities(text)
     const status = (tagged[2] ?? '').toUpperCase()
     if (status === 'OK') pending.done(pending.untagged)
@@ -365,6 +394,10 @@ export class Imap {
     this.end()
     await this.socket.close().catch(() => undefined)
   }
+}
+
+export function xoauth2(user: string, token: string): string {
+  return toBase64(new TextEncoder().encode(`user=${user}\x01auth=Bearer ${token}\x01\x01`))
 }
 
 export function bytesOf(value: Value | undefined): Uint8Array {

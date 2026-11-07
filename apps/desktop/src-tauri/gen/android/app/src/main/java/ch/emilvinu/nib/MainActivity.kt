@@ -133,7 +133,7 @@ class MainActivity : TauriActivity() {
 
   override fun onWebViewCreate(webView: WebView) {
     page = webView
-    webView.addJavascriptInterface(Bridge(), "__NIB_SYSTEM__")
+    webView.addJavascriptInterface(Bridge(), "__ORDEN_SYSTEM__")
 
     ViewCompat.setOnApplyWindowInsetsListener(webView) { _: View, insets: WindowInsetsCompat ->
       val keys = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom

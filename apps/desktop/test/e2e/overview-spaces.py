@@ -95,6 +95,18 @@ def drag(page: Page, start: dict, end: dict) -> None:
     page.mouse.up()
     page.wait_for_timeout(1000)
 
+def asked(page: Page, answer: str) -> str:
+    wait_for(page, "!!document.querySelector('.sheet form')", "the question before a note moves")
+    said = page.evaluate("() => document.querySelector('.sheet form').innerText")
+    page.locator(".sheet form button", has_text=answer).click()
+    wait_for(page, "!document.querySelector('.sheet form')", "the question answered")
+    page.wait_for_timeout(800)
+    return said
+
+def carry(page: Page, start: dict, end: dict) -> None:
+    drag(page, start, end)
+    asked(page, "Move")
+
 def all_spaces(page: Page) -> None:
     page.get_by_role("button", name="Tidy up").click()
     page.wait_for_timeout(1200)
@@ -126,7 +138,7 @@ def drive(browser: Browser) -> None:
 
     open_overview(page)
     all_spaces(page)
-    drag(page, box(page, "A2"), box(page, "B2"))
+    carry(page, box(page, "A2"), box(page, "B2"))
     if tab(page, "A2")["here"] or not tab(page, "A2")["path"].startswith(ids["beeRoot"]):
         wrong(f"the drag did not move the tab and its file: {tab(page, 'A2')}")
 
@@ -136,7 +148,7 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Control+z")
     wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "Ctrl+Z from the view")
     page.wait_for_timeout(400)
-    drag(page, box(page, "A2"), box(page, "B2"))
+    carry(page, box(page, "A2"), box(page, "B2"))
     page.locator(".toast button.undo").click()
     wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "the toast's Undo")
     page.wait_for_timeout(500)
@@ -153,7 +165,7 @@ def drive(browser: Browser) -> None:
         wrong("Escape did not put the view away")
     open_overview(page)
     all_spaces(page)
-    drag(page, box(page, "A2"), box(page, "B2"))
+    carry(page, box(page, "A2"), box(page, "B2"))
     close_overview(page)
     page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
     moved = tab(page, "A2")
@@ -177,7 +189,7 @@ def drive(browser: Browser) -> None:
     open_overview(page)
     all_spaces(page)
     before = box(page, "A2")
-    drag(page, before, box(page, "B2"))
+    carry(page, before, box(page, "B2"))
     told = page.evaluate(
         """() => {
           const word = [...document.querySelectorAll('.toast p')].find((one) => one.textContent === 'Not moved')

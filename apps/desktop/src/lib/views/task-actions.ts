@@ -125,15 +125,21 @@ export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   })
 }
 
+function tasksRoot(rows: readonly Row[]): string | null {
+  const tasks = rows.filter((row) => row.task)
+  const space = tasks[0]?.space
+  if (space === undefined || tasks.some((row) => row.space !== space)) return null
+  return workspace.spaces.find((one) => one.name === space)?.root ?? null
+}
+
 export function moveEntries(rows: readonly Row[]): MenuEntry[] {
   const tasks = rows.filter((row) => row.task)
-  const root = workspace.activeSpace?.root
-  const name = workspace.activeSpace?.name
+  const root = tasksRoot(tasks)
+  if (root === null) return []
   return placeEntries(
     (path) => void moveRowsTo(tasks, path),
-    (note) =>
-      root !== undefined &&
-      tasks.every((row) => row.space === name && samePath(insideSpace(root, row.path), note)),
+    (note) => tasks.every((row) => samePath(insideSpace(root, row.path), note)),
+    root,
   )
 }
 
@@ -168,7 +174,7 @@ export function taskMenu(
       priorityEntries(one ? task.priority : 0, (priority) => void prioritise(tasks, priority)),
     ),
     more(t('Labels'), () => labelEntries(tasks)),
-    ...(offersPlaces() ? [more(t('Move to'), () => moveEntries(tasks))] : []),
+    ...(offersPlaces(tasksRoot(tasks)) ? [more(t('Move to'), () => moveEntries(tasks))] : []),
     DIVIDER,
     { label: t('Duplicate'), run: () => void duplicateRows(tasks) },
     { label: t('Copy link'), run: () => void copyLinks(tasks) },

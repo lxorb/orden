@@ -1524,6 +1524,8 @@ export const hi: Dictionary = {
   Shorter: 'छोटा',
   Longer: 'लंबा',
   'Fix grammar': 'व्याकरण सुधारें',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'चुने गए शब्द अब नोट में नहीं हैं, इसलिए कुछ नहीं बदला गया।',
   'A cited report': 'स्रोतयुक्त रिपोर्ट',
   'A helper in the background': 'पृष्ठभूमि में सहायक',
   'A side question': 'साइड सवाल',
@@ -2918,6 +2920,8 @@ export const hi: Dictionary = {
   'That could not be protected: {reason}': 'सुरक्षित नहीं किया जा सका: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} नहीं जोड़ा गया: चैट में चित्र और 2 MB तक की टेक्स्ट फ़ाइलें ही जोड़ी जा सकती हैं।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} नहीं जोड़ा गया: एक संदेश में अधिकतम 20 चित्र जोड़े जा सकते हैं।',
   'Time tracker': 'समय ट्रैकर',
   'Start timer': 'टाइमर शुरू करें',
   'Stop timer': 'टाइमर रोकें',
@@ -3494,9 +3498,17 @@ export const hi: Dictionary = {
   'You said': 'आपने बताया',
   Privacy: 'गोपनीयता',
   'Send crash and freeze reports': 'क्रैश और फ़्रीज़ की रिपोर्ट भेजें',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'जब Orden क्रैश होता है या अटक जाता है, तो वह भेजता है कि वह क्या कर रहा था और अपने कोड में कहाँ था, नाम, पाथ, पते और पासवर्ड हटाकर। आपके नोट कभी नहीं।',
-  'Turn off in Settings': 'सेटिंग में बंद करें',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden के क्रैश या अटकने पर वह क्या कर रहा था, यह भेजता है; नोट, नाम, पाथ या पासवर्ड कभी नहीं।',
+  'Send crash reports to help improve Orden':
+    'Orden को बेहतर बनाने में मदद के लिए क्रैश रिपोर्ट भेजें',
+  'Move to {space}?': '{space} में ले जाएँ?',
+  'macOS can start dictation with this key too.': 'macOS इस कुंजी से डिक्टेशन भी शुरू कर सकता है।',
+  'QR code': 'QR कोड',
+  'Waiting…': 'प्रतीक्षा हो रही है…',
+  Service: 'सेवा',
+  'I understand and want to connect anyway': 'मैं समझता हूँ और फिर भी जोड़ना चाहता हूँ',
+  'Some changes have not reached your account yet': 'कुछ बदलाव अभी तक आपके खाते तक नहीं पहुँचे',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'वे इसी ब्राउज़र में रहते हैं, यहाँ साइन इन करने वाले किसी और को नहीं दिखते, और आपके दोबारा साइन इन करने पर भेजे जाते हैं।',
 }

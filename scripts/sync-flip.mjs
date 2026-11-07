@@ -2,7 +2,7 @@
 
 import { createInterface } from 'node:readline/promises'
 
-const API = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
+const API = (process.env.ORDEN_API || 'https://orden.so').replace(/\/$/, '')
 
 function say(words = '') {
   process.stdout.write(`${words}\n`)
@@ -134,8 +134,8 @@ async function main() {
   }
 
   const signedIn = flags['sign-in'] ? await signIn(flags['sign-in']) : null
-  const token = signedIn ?? process.env.NIB_TOKEN ?? ''
-  if (!token) throw new Error('NIB_TOKEN is not set (or pass --sign-in)')
+  const token = signedIn ?? process.env.ORDEN_TOKEN ?? ''
+  if (!token) throw new Error('ORDEN_TOKEN is not set (or pass --sign-in)')
 
   try {
     if (everybody) {

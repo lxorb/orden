@@ -1545,6 +1545,8 @@ export const ml: Dictionary = {
   Shorter: 'ചെറുതായി',
   Longer: 'നീട്ടി',
   'Fix grammar': 'വ്യാകരണം ശരിയാക്കുക',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'തിരഞ്ഞെടുത്ത വാക്കുകൾ ഇനി കുറിപ്പിൽ ഇല്ല, അതിനാൽ ഒന്നും മാറ്റിയില്ല.',
   'A cited report': 'ഉദ്ധൃതമായ റിപ്പോർട്ട്',
   'A helper in the background': 'പശ്ചാത്തലത്തിലെ ഒരു സഹായകൻ',
   'A side question': 'ഒരു അനുബന്ധ ചോദ്യം',
@@ -2963,6 +2965,8 @@ export const ml: Dictionary = {
   'That could not be protected: {reason}': 'സംരക്ഷിക്കാനായില്ല: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ചേർത്തില്ല: ചാറ്റിൽ ചിത്രങ്ങളും 2 MB വരെയുള്ള ടെക്സ്റ്റ് ഫയലുകളും മാത്രമേ ചേർക്കാനാകൂ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ചേർത്തില്ല: ഒരു സന്ദേശത്തിൽ പരമാവധി 20 ചിത്രങ്ങൾ മാത്രമേ ചേർക്കാനാകൂ.',
   'Time tracker': 'സമയ ട്രാക്കർ',
   'Start timer': 'ടൈമർ ആരംഭിക്കുക',
   'Stop timer': 'ടൈമർ നിർത്തുക',
@@ -3541,9 +3545,19 @@ export const ml: Dictionary = {
   'You said': 'നിങ്ങൾ പറഞ്ഞത്',
   Privacy: 'സ്വകാര്യത',
   'Send crash and freeze reports': 'ക്രാഷ്, ഫ്രീസ് റിപ്പോർട്ടുകൾ അയയ്ക്കുക',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden ക്രാഷ് ആകുമ്പോഴോ ഫ്രീസ് ആകുമ്പോഴോ, അത് എന്ത് ചെയ്യുകയായിരുന്നുവെന്നും സ്വന്തം കോഡിൽ എവിടെയായിരുന്നുവെന്നും പേരുകൾ, പാതകൾ, വിലാസങ്ങൾ, പാസ്‌വേഡുകൾ എന്നിവ നീക്കി അയയ്ക്കുന്നു. നിങ്ങളുടെ കുറിപ്പുകൾ ഒരിക്കലും ഇല്ല.',
-  'Turn off in Settings': 'ക്രമീകരണങ്ങളിൽ ഓഫാക്കുക',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden ക്രാഷ് ആകുമ്പോഴോ ഫ്രീസ് ആകുമ്പോഴോ എന്ത് ചെയ്യുകയായിരുന്നുവെന്ന് അയയ്ക്കുന്നു; കുറിപ്പുകൾ, പേരുകൾ, പാതകൾ, പാസ്‌വേഡുകൾ ഒരിക്കലുമില്ല.',
+  'Send crash reports to help improve Orden':
+    'Orden മെച്ചപ്പെടുത്താൻ സഹായിക്കാൻ ക്രാഷ് റിപ്പോർട്ടുകൾ അയയ്ക്കുക',
+  'Move to {space}?': '{space}-ലേക്ക് നീക്കണോ?',
+  'macOS can start dictation with this key too.':
+    'ഈ കീ ഉപയോഗിച്ച് macOS ഡിക്റ്റേഷനും തുടങ്ങിയേക്കാം.',
+  'QR code': 'QR കോഡ്',
+  'Waiting…': 'കാത്തിരിക്കുന്നു…',
+  Service: 'സേവനം',
+  'I understand and want to connect anyway': 'ഞാൻ മനസ്സിലാക്കുന്നു, എങ്കിലും ബന്ധിപ്പിക്കണം',
+  'Some changes have not reached your account yet':
+    'ചില മാറ്റങ്ങൾ ഇതുവരെ നിങ്ങളുടെ അക്കൗണ്ടിൽ എത്തിയിട്ടില്ല',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'അവ ഈ ബ്രൗസറിൽ തന്നെ തുടരും, ഇവിടെ സൈൻ ഇൻ ചെയ്യുന്ന മറ്റാർക്കും കാണാനാകില്ല, നിങ്ങൾ വീണ്ടും സൈൻ ഇൻ ചെയ്യുമ്പോൾ അയയ്ക്കും.',
 }

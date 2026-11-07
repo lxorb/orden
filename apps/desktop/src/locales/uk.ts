@@ -1598,6 +1598,8 @@ export const uk: Dictionary = {
   Shorter: 'Коротше',
   Longer: 'Довше',
   'Fix grammar': 'Виправити граматику',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Вибраних слів більше немає в нотатці, тож нічого не замінено.',
   'A cited report': 'Звіт із цитуванням',
   'A helper in the background': 'Помічник у фоновому режимі',
   'A side question': 'Додаткове питання',
@@ -3022,6 +3024,8 @@ export const uk: Dictionary = {
   'That could not be protected: {reason}': 'Не вдалося захистити: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не додано: чат приймає зображення й текстові файли до 2 МБ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} не додано: повідомлення приймає щонайбільше 20 зображень.',
   'Time tracker': 'Облік часу',
   'Start timer': 'Запустити таймер',
   'Stop timer': 'Зупинити таймер',
@@ -3631,9 +3635,19 @@ export const uk: Dictionary = {
   'You said': 'Вказано вами',
   Privacy: 'Конфіденційність',
   'Send crash and freeze reports': 'Надсилати звіти про збої та зависання',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Коли Orden падає або зависає, він надсилає, що робив і де у власному коді, без імен, шляхів, адрес і паролів. Ніколи ваші нотатки.',
-  'Turn off in Settings': 'Вимкнути в налаштуваннях',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Надсилає, що робив Orden під час збою чи зависання; ніколи нотатки, імена, шляхи чи паролі.',
+  'Send crash reports to help improve Orden':
+    'Надсилати звіти про збої, щоб допомогти покращити Orden',
+  'Move to {space}?': 'Перемістити в {space}?',
+  'macOS can start dictation with this key too.':
+    'macOS може запускати цією клавішею й диктування.',
+  'QR code': 'QR-код',
+  'Waiting…': 'Очікування…',
+  Service: 'Сервіс',
+  'I understand and want to connect anyway': "Я розумію й однаково хочу під'єднати",
+  'Some changes have not reached your account yet':
+    'Деякі зміни ще не дійшли до вашого облікового запису',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Вони лишаються в цьому браузері, приховані від усіх, хто ввійде тут, і надійдуть, коли ви ввійдете знову.',
 }

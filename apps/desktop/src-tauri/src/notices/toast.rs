@@ -89,7 +89,7 @@ mod tests {
         ));
         assert!(made.contains("<audio silent=\"true\"/>"));
         assert!(!made.contains("<actions>"));
-        assert!(!made.contains("nib://"));
+        assert!(!made.contains("orden://"));
     }
 
     #[test]

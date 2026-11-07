@@ -35,7 +35,7 @@ export async function listenForAgents(): Promise<() => void> {
   const { listen } = await import('@tauri-apps/api/event')
   const heard = door(() => import('./agents/ui/index').then(({ start }) => start()))
 
-  return listen<unknown>('nib://agent', ({ payload }) => {
+  return listen<unknown>('orden://agent', ({ payload }) => {
     void heard().then((hear) => hear(payload))
   })
 }

@@ -330,7 +330,7 @@ struct Places {
 
 fn places(webview: &Webview) -> Result<Places, String> {
     let home = dirs::home_dir().ok_or_else(|| "no home folder".to_owned())?;
-    let own = std::env::var_os("NIB_SSH_CONFIG").filter(|one| !one.is_empty());
+    let own = std::env::var_os("ORDEN_SSH_CONFIG").filter(|one| !one.is_empty());
     let config = own
         .clone()
         .map_or_else(|| home.join(".ssh").join("config"), PathBuf::from);
@@ -373,7 +373,7 @@ fn write_kept(path: &Path, kept: &Kept) -> Result<(), String> {
 }
 
 fn ssh_program() -> Option<PathBuf> {
-    if let Some(own) = std::env::var_os("NIB_SSH").filter(|one| !one.is_empty()) {
+    if let Some(own) = std::env::var_os("ORDEN_SSH").filter(|one| !one.is_empty()) {
         return Some(PathBuf::from(own));
     }
     let name = if cfg!(windows) { "ssh.exe" } else { "ssh" };
@@ -456,28 +456,31 @@ pub fn remote_keep(webview: Webview, kept: Kept) -> Result<Kept, String> {
     Ok(kept)
 }
 
-#[tauri::command(async)]
-pub fn remote_config_open(webview: Webview) -> Result<(), String> {
-    super::owner(&webview)?;
-    let path = places(&webview)?.config;
-    if !path.is_file() {
-        return Err("there is no ssh config".to_owned());
-    }
+#[tauri::command]
+pub async fn remote_config_open(webview: Webview) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        super::owner(&webview)?;
+        let path = places(&webview)?.config;
+        if !path.is_file() {
+            return Err("there is no ssh config".to_owned());
+        }
 
-    let mut command = if cfg!(windows) {
-        let mut notepad = std::process::Command::new("notepad.exe");
-        notepad.arg(&path);
-        notepad
-    } else if cfg!(target_os = "macos") {
-        let mut open = std::process::Command::new("open");
-        open.arg("-t").arg(&path);
-        open
-    } else {
-        let mut open = std::process::Command::new("xdg-open");
-        open.arg(&path);
-        open
-    };
-    command.spawn().map(drop).map_err(|error| error.to_string())
+        let mut command = if cfg!(windows) {
+            let mut notepad = std::process::Command::new("notepad.exe");
+            notepad.arg(&path);
+            notepad
+        } else if cfg!(target_os = "macos") {
+            let mut open = std::process::Command::new("open");
+            open.arg("-t").arg(&path);
+            open
+        } else {
+            let mut open = std::process::Command::new("xdg-open");
+            open.arg(&path);
+            open
+        };
+        command.spawn().map(drop).map_err(|error| error.to_string())
+    })
+    .await
 }
 
 #[cfg(test)]

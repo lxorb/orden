@@ -12,9 +12,12 @@ pub fn input_idle() -> Option<Input> {
     platform::system_input()
 }
 
-#[tauri::command(async)]
-pub fn device_name() -> Option<String> {
-    platform::computer_name().and_then(|name| shown(&name))
+#[tauri::command]
+pub async fn device_name() -> Option<String> {
+    crate::lane::off_the_runtime(|| -> Option<String> {
+        platform::computer_name().and_then(|name| shown(&name))
+    })
+    .await
 }
 
 const LONGEST: usize = 60;

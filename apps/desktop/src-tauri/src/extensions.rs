@@ -32,7 +32,7 @@ use library::Kept;
 use link::Store;
 use manifest::About;
 
-const CHANGED: &str = "nib://extensions";
+const CHANGED: &str = "orden://extensions";
 
 static WRITING: Mutex<()> = Mutex::new(());
 

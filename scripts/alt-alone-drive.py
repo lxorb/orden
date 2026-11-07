@@ -134,7 +134,7 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-alt-"))
     (spaces / "Alt").mkdir()
     (spaces / "Alt" / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
-    process = subprocess.Popen([str(args.exe)], env={**drive.os.environ, "NIB_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
+    process = subprocess.Popen([str(args.exe)], env={**drive.os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     wrong: list[str] = []
     try:
         app = drive.endpoint(config, process.pid, secret)

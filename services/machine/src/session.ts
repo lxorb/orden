@@ -167,7 +167,7 @@ export class Session {
         rows: this.screen.rows,
         base,
       },
-      { ...this.machine.env, NIB_SESSION: this.id },
+      { ...this.machine.env, ORDEN_SESSION: this.id },
     )
     if (this.over) return
     this.shell = hello.shell

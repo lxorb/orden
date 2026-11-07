@@ -1524,6 +1524,8 @@ export const mr: Dictionary = {
   Shorter: 'लहान',
   Longer: 'मोठे',
   'Fix grammar': 'व्याकरण सुधारा',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'निवडलेले शब्द आता टिपेत नाहीत, म्हणून काहीही बदलले नाही.',
   'A cited report': 'उद्धृत अहवाल',
   'A helper in the background': 'पार्श्वभूमीत मदतनीस',
   'A side question': 'उपप्रश्न',
@@ -2916,6 +2918,8 @@ export const mr: Dictionary = {
   'That could not be protected: {reason}': 'संरक्षित करता आले नाही: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} जोडले नाही: चॅटमध्ये चित्रे आणि 2 MB पर्यंतच्या मजकूर फाइल्स जोडता येतात.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} जोडले नाही: एका संदेशात जास्तीत जास्त 20 चित्रे जोडता येतात.',
   'Time tracker': 'वेळ ट्रॅकर',
   'Start timer': 'टायमर सुरू करा',
   'Stop timer': 'टायमर थांबवा',
@@ -3492,9 +3496,16 @@ export const mr: Dictionary = {
   'You said': 'तुम्ही सांगितलेले',
   Privacy: 'गोपनीयता',
   'Send crash and freeze reports': 'क्रॅश आणि अडकण्याचे अहवाल पाठवा',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden क्रॅश झाल्यावर किंवा अडकल्यावर, ते काय करत होते आणि स्वतःच्या कोडमध्ये कुठे होते हे नावे, पथ, पत्ते आणि पासवर्ड काढून पाठवते. तुमच्या नोट्स कधीच नाहीत.',
-  'Turn off in Settings': 'सेटिंग्जमध्ये बंद करा',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden क्रॅश किंवा अडकल्यावर काय करत होते ते पाठवते; नोट्स, नावे, पथ किंवा पासवर्ड कधीच नाही.',
+  'Send crash reports to help improve Orden': 'Orden सुधारण्यास मदत करण्यासाठी क्रॅश अहवाल पाठवा',
+  'Move to {space}?': '{space} मध्ये हलवायचे?',
+  'macOS can start dictation with this key too.': 'macOS या कीने डिक्टेशनही सुरू करू शकते.',
+  'QR code': 'QR कोड',
+  'Waiting…': 'प्रतीक्षा करत आहे…',
+  Service: 'सेवा',
+  'I understand and want to connect anyway': 'मला समजले आणि तरीही जोडायचे आहे',
+  'Some changes have not reached your account yet': 'काही बदल अजून तुमच्या खात्यात पोहोचलेले नाहीत',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'ते या ब्राउझरमध्येच राहतात, इथे साइन इन करणाऱ्या इतर कोणालाही दिसत नाहीत, आणि तुम्ही पुन्हा साइन इन केल्यावर पाठवले जातात.',
 }

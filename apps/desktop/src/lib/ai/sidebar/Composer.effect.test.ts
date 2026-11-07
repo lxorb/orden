@@ -40,6 +40,17 @@ vi.mock('./seams', async (importOriginal) => ({
     ]),
 }))
 
+const drawn = vi.hoisted(() => [] as string[])
+vi.mock('./picture', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./picture')>()),
+  chatPicture: (file: File) => {
+    drawn.push(file.name)
+    return new Promise((resolve) =>
+      setTimeout(() => resolve({ mime: 'image/png', data: 'AAAA' }), 5),
+    )
+  },
+}))
+
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -207,4 +218,21 @@ test('a file too large or not text says why it was not added', async () => {
     ]),
   )
   expect(panel.trouble).toBeNull()
+})
+
+test('pictures pasted all at once stop at as many as a message takes, and say so', async () => {
+  const field = composer()
+  const shots = Array.from(
+    { length: 30 },
+    (_, at) => new File(['x'], `shot-${String(at + 1)}.png`, { type: 'image/png' }),
+  )
+
+  pasted(field, shots)
+
+  expect(drawn).toHaveLength(20)
+  expect(panel.trouble).toContain('shot-30.png was not added')
+  await vi.waitFor(() => expect(panel.chips).toHaveLength(20))
+  pasted(field, [new File(['x'], 'one-more.png', { type: 'image/png' })])
+  expect(drawn).toHaveLength(20)
+  expect(panel.trouble).toContain('one-more.png was not added')
 })

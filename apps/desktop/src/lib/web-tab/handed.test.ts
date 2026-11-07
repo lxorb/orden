@@ -51,7 +51,7 @@ beforeEach(() => {
 
 test('listens before it asks, so no page falls between the two', async () => {
   await hearPages()
-  expect(world.asked).toEqual(['listen nib://open-pages', 'take_startup_pages'])
+  expect(world.asked).toEqual(['listen orden://open-pages', 'take_startup_pages'])
 })
 
 test('the pages the app was started for open as tabs in front, in order', async () => {
@@ -76,7 +76,7 @@ test('nothing but a page on the web opens anything', () => {
     'file:///C:/Users/me/Notes/Idea.md',
     'C:\\Users\\me\\Notes\\Idea.md',
     'javascript:alert(1)',
-    'nib://open?path=Idea.md',
+    'orden://open?path=Idea.md',
     'https://tauri.localhost/',
     42,
     null,

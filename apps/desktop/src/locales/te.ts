@@ -1532,6 +1532,8 @@ export const te: Dictionary = {
   Shorter: 'చిన్నగా',
   Longer: 'పెద్దగా',
   'Fix grammar': 'వ్యాకరణం సరిచేయి',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ఎంచుకున్న పదాలు ఇక గమనికలో లేవు, కాబట్టి ఏదీ మార్చలేదు.',
   'A cited report': 'ఉల్లేఖిత నివేదిక',
   'A helper in the background': 'నేపథ్యంలో సహాయకుడు',
   'A side question': 'పక్క ప్రశ్న',
@@ -2930,6 +2932,8 @@ export const te: Dictionary = {
   'That could not be protected: {reason}': 'రక్షించలేకపోయాం: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} జోడించబడలేదు: చాట్ చిత్రాలను మరియు 2 MB వరకు ఉన్న టెక్స్ట్ ఫైల్‌లను తీసుకుంటుంది.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} జోడించబడలేదు: ఒక సందేశం గరిష్ఠంగా 20 చిత్రాలను తీసుకుంటుంది.',
   'Time tracker': 'సమయ ట్రాకర్',
   'Start timer': 'టైమర్ ప్రారంభించండి',
   'Stop timer': 'టైమర్ ఆపండి',
@@ -3508,9 +3512,17 @@ export const te: Dictionary = {
   'You said': 'మీరు చెప్పినది',
   Privacy: 'గోప్యత',
   'Send crash and freeze reports': 'క్రాష్ మరియు ఫ్రీజ్ నివేదికలను పంపు',
-  'When Orden crashes or freezes, it sends what it was doing and where in its own code, with names, paths, addresses and passwords taken out, and never your notes.':
-    'Orden క్రాష్ అయినప్పుడు లేదా నిలిచిపోయినప్పుడు, అది ఏమి చేస్తోందో మరియు తన కోడ్‌లో ఎక్కడ ఉందో పేర్లు, మార్గాలు, చిరునామాలు మరియు పాస్‌వర్డ్‌లు తొలగించి పంపుతుంది. మీ నోట్స్ ఎప్పటికీ కాదు.',
-  'Turn off in Settings': 'సెట్టింగ్‌లలో ఆఫ్ చేయండి',
   'Sends what Orden was doing when it crashed or froze; never notes, names, paths or passwords.':
     'Orden క్రాష్ అయినప్పుడు లేదా నిలిచిపోయినప్పుడు ఏమి చేస్తోందో పంపుతుంది; నోట్స్, పేర్లు, మార్గాలు లేదా పాస్‌వర్డ్‌లు ఎప్పటికీ కాదు.',
+  'Send crash reports to help improve Orden':
+    'Orden ను మెరుగుపరచడంలో సహాయపడటానికి క్రాష్ నివేదికలను పంపు',
+  'Move to {space}?': '{space}కి తరలించాలా?',
+  'macOS can start dictation with this key too.': 'ఈ కీతో macOS డిక్టేషన్‌ను కూడా ప్రారంభించవచ్చు.',
+  'QR code': 'QR కోడ్',
+  'Waiting…': 'వేచి ఉంది…',
+  Service: 'సేవ',
+  'I understand and want to connect anyway': 'నాకు అర్థమైంది, అయినా కనెక్ట్ చేయాలనుకుంటున్నాను',
+  'Some changes have not reached your account yet': 'కొన్ని మార్పులు ఇంకా మీ ఖాతాకు చేరలేదు',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'అవి ఈ బ్రౌజర్‌లోనే ఉంటాయి, ఇక్కడ సైన్ ఇన్ చేసే మరెవరికీ కనిపించవు, మీరు మళ్లీ సైన్ ఇన్ చేసినప్పుడు పంపబడతాయి.',
 }

@@ -1,6 +1,6 @@
 # Automation
 
-Two ways to drive Orden from outside it: a `nib://` link, which is what a
+Two ways to drive Orden from outside it: a `orden://` link, which is what a
 shortcut, a launcher or another program can hand the system, and `orden`, which is
 the same app driven from a terminal.
 
@@ -12,27 +12,27 @@ one thing to undo, and syncs like any other edit. That is the whole design: a li
 and the command line can only do what somebody sitting in front of the app could
 do, and it happens the same way, so it is visible and undoable.
 
-## `nib://` links
+## `orden://` links
 
 | Link | What it does |
 | --- | --- |
-| `nib://open?path=notes/Plan.md` | opens that note |
-| `nib://open?path=Plan` | the same, found by name the way a `[[wikilink]]` is |
-| `nib://open?space=Day%20job&path=Plan.md` | switches to that space first |
-| `nib://open?path=Plan.md&heading=Later` | opens it and lands on the heading |
-| `nib://open?path=Plan.md&block=idea` | lands on the block named `^idea` |
-| `nib://new?name=Idea` | makes a note |
-| `nib://new?path=inbox/Idea.md&content=Words` | makes it at a path, with words in it |
-| `nib://new?path=inbox/Today.md&content=Words&append` | adds to the note that is there |
-| `nib://new?path=inbox/Today.md&content=Words&prepend` | adds it at the top instead |
-| `nib://new?name=Idea&content=Words&silent` | writes it without opening it |
-| `nib://append?path=Daily.md&content=Words` | adds the words to the end of that note, and makes it if it is not there |
-| `nib://add-task?text=Call%20mum%20%F0%9F%93%85%202026-10-06` | adds a to-do line to the open space's inbox (`Inbox.md`), or to `space`'s; the words may carry the Tasks plugin's marks, as quick add writes them |
-| `nib://search?query=tag:%23work` | opens the search panel on that query |
-| `nib://command?id=new` | runs one command out of the registry |
-| `nib://chat/c_3f9a…/01K6Z8…` | opens the chat at that message: what a message's Copy link writes. It is a place rather than a verb, so it takes no callbacks; one naming a chat this account does not reach, or one whose pointer is not on this device yet, says so on the line across the top (`docs/chats.md` 4.13) |
+| `orden://open?path=notes/Plan.md` | opens that note |
+| `orden://open?path=Plan` | the same, found by name the way a `[[wikilink]]` is |
+| `orden://open?space=Day%20job&path=Plan.md` | switches to that space first |
+| `orden://open?path=Plan.md&heading=Later` | opens it and lands on the heading |
+| `orden://open?path=Plan.md&block=idea` | lands on the block named `^idea` |
+| `orden://new?name=Idea` | makes a note |
+| `orden://new?path=inbox/Idea.md&content=Words` | makes it at a path, with words in it |
+| `orden://new?path=inbox/Today.md&content=Words&append` | adds to the note that is there |
+| `orden://new?path=inbox/Today.md&content=Words&prepend` | adds it at the top instead |
+| `orden://new?name=Idea&content=Words&silent` | writes it without opening it |
+| `orden://append?path=Daily.md&content=Words` | adds the words to the end of that note, and makes it if it is not there |
+| `orden://add-task?text=Call%20mum%20%F0%9F%93%85%202026-10-06` | adds a to-do line to the open space's inbox (`Inbox.md`), or to `space`'s; the words may carry the Tasks plugin's marks, as quick add writes them |
+| `orden://search?query=tag:%23work` | opens the search panel on that query |
+| `orden://command?id=new` | runs one command out of the registry |
+| `orden://chat/c_3f9a…/01K6Z8…` | opens the chat at that message: what a message's Copy link writes. It is a place rather than a verb, so it takes no callbacks; one naming a chat this account does not reach, or one whose pointer is not on this device yet, says so on the line across the top (`docs/chats.md` 4.13) |
 
-`nib://command` takes the ids the palette knows, minus the handful only somebody at
+`orden://command` takes the ids the palette knows, minus the handful only somebody at
 the keyboard may press: **Record**, **Dictate**, **Photo** and **Sign
 out**. A link is written by anybody and followed by a click, so a microphone, a
 camera and who this machine is signed in as are not things a page on the web gets
@@ -50,8 +50,8 @@ Written by hand, a path with a space or an ampersand in it has to be
 percent-encoded, and `+` means a space. **Copy link to this note** in the palette
 writes a correct one for whatever is open, with the heading the caret is in on it.
 
-Both spellings work: `nib://open?…` and `nib:open?…`. So does
-`nib://x-callback-url/open?…`, which is how the tools that invented the callbacks
+Both spellings work: `orden://open?…` and `nib:open?…`. So does
+`orden://x-callback-url/open?…`, which is how the tools that invented the callbacks
 below write it.
 
 ### Chaining, with x-callback-url
@@ -60,19 +60,19 @@ below write it.
 
 | Key | When |
 | --- | --- |
-| `x-success` | `nib://new`, `nib://append` or `nib://add-task` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
+| `x-success` | `orden://new`, `orden://append` or `orden://add-task` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
 | `x-error` | one of those did not, or the link named an action that does not exist. `error` is added |
 | `x-cancel` | the app knows what was asked for and will not do it from a link |
 
 ```
-nib://new?name=Standup&content=Notes&x-success=https://example.com/done
+orden://new?name=Standup&content=Notes&x-success=https://example.com/done
 ```
 
-**Only `nib://new`, `nib://append` and `nib://add-task` say anything back.** `open`, `search` and
+**Only `orden://new`, `orden://append` and `orden://add-task` say anything back.** `open`, `search` and
 `command` follow no callback at all, neither success nor error, and the log says so when
 a link carried one. Those two are the ones that changed something, and what they answer
 is the path the caller itself wrote plus whether the note was already there. A callback address is written by whoever wrote the link, so whatever a verb
-answers is read by them - and `nib://open?path=Plan` answers the path it landed on.
+answers is read by them - and `orden://open?path=Plan` answers the path it landed on.
 Said back, that is a question about somebody's space: a hundred of those links, each
 with an `x-success` of its own, is a listing of what a person keeps notes about, from
 a scheme that was only ever allowed to move a window. Success and error are both
@@ -83,7 +83,7 @@ x-callback-url exists for: file something from a shortcut and carry on. The colu
 `byLink` in verbs.ts, `'quiet'` or `'back'`, and a test pins which verbs are which.
 
 Only two kinds of address are followed: `http(s)`, which leaves through the system
-browser, and `nib://`, which is followed inside the app and at most one step deep.
+browser, and `orden://`, which is followed inside the app and at most one step deep.
 Nothing else, deliberately; see below.
 
 ### On each platform
@@ -94,10 +94,10 @@ Nothing else, deliberately; see below.
   itself at launch because there is no installer to do it.
 - **Android.** An intent filter on the one activity, which is `singleTask`, so a
   link goes to the window that is there.
-- **The web app.** A browser will not let a page register `nib://`, only
-  `web+nib://`, so that is what the manifest registers. The browser reopens the app
-  at `/?nib=<the link>`, the app follows it and takes it off the address so a
-  reload does not follow it twice. Everything above works, spelled `web+nib://`.
+- **The web app.** A browser will not let a page register `orden://`, only
+  `web+orden://`, so that is what the manifest registers. The browser reopens the app
+  at `/?orden=<the link>`, the app follows it and takes it off the address so a
+  reload does not follow it twice. Everything above works, spelled `web+orden://`.
 
 ## `orden`, the command line
 
@@ -287,7 +287,7 @@ None of the five confirms, and that is deliberate rather than missed. A confirma
 is a flag in the request, and a link writes the whole request: `&yes` is one word for
 anybody who writes the link. What keeps a link out of the rest is the column itself.
 
-**A link hears only about what it changed.** `nib://new` and `nib://append` answer
+**A link hears only about what it changed.** `orden://new` and `orden://append` answer
 their `x-success` with the path they wrote; the three verbs that change nothing answer
 no callback, so a link cannot ask whether a note exists and have the answer sent
 anywhere. Appending says whether the note was there already, which is the one fact
@@ -299,7 +299,7 @@ where they were. A link that came to nothing says so on the line across the top 
 the document, with the reason in the log.
 
 **A callback goes to two places.** `http(s)`, through the opener plugin, whose own
-scope is those; and `nib://`, followed inside the app, one step deep so a chain
+scope is those; and `orden://`, followed inside the app, one step deep so a chain
 cannot loop. Not `file:`, not `javascript:`, and not a scheme another program
 registered - allowing one would mean widening the opener's scope, and that scope is
 the reason a link in a note cannot open anything it likes today. If chaining into a
@@ -360,7 +360,7 @@ it, a probe's included, so the variable is still the rule.
 So the spaces root is a variable, and every probe and drive sets it:
 
 ```
-NIB_SPACES_DIR=/some/temp/folder
+ORDEN_SPACES_DIR=/some/temp/folder
 ```
 
 | | |

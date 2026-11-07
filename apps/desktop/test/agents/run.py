@@ -139,7 +139,7 @@ class Probe:
 
         self.exe = exe
         self.identifier = identifier
-        self.app = run_probe(exe, env={**os.environ, "NIB_SPACES_DIR": str(spaces), **(env or {})}, quiet=True)
+        self.app = run_probe(exe, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces), **(env or {})}, quiet=True)
         self.port, self.secret = endpoint(identifier, self.app.pid)
         until = time.perf_counter() + 90
         while time.perf_counter() < until and not main_window(self.app.pid):
@@ -176,7 +176,7 @@ def stand_in(folder: pathlib.Path) -> dict[str, str]:
 
     shim = folder / "claude.cmd"
     shim.write_text(f'@node "{ROOT / "scripts" / "fake-ai-cli.mjs"}" claude %*\n', encoding="utf-8")
-    return {"NIB_AI_CLAUDE_CODE": str(shim)}
+    return {"ORDEN_AI_CLAUDE_CODE": str(shim)}
 
 def dotted(value: Any, path: str) -> Any:
 
@@ -472,7 +472,7 @@ def road(via: str, probe: Probe, token: str, spaces: pathlib.Path) -> Any:
     clients.mkdir(parents=True, exist_ok=True)
     kept = {"agent": GRANT["id"], "token": token}
     (clients / Mcp.CLIENT).write_text(json.dumps(kept), encoding="utf-8")
-    process = run_probe(probe.exe, env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, args=["mcp"], piped=True)
+    process = run_probe(probe.exe, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, args=["mcp"], piped=True)
     return Mcp(process)
 
 def scenario_run(args: argparse.Namespace) -> int:
@@ -527,7 +527,7 @@ def launch_cost(args: argparse.Namespace) -> int:
                 trace = logs_dir(args.identifier) / "startup-trace.log"
                 if trace.exists():
                     trace.unlink()
-                probe = Probe(args.exe, args.identifier, spaces, env={"NIB_TRACE_STARTUP": "1"})
+                probe = Probe(args.exe, args.identifier, spaces, env={"ORDEN_TRACE_STARTUP": "1"})
                 time.sleep(12)
                 pids = family(probe.app.pid)
                 probe.close()
@@ -544,7 +544,7 @@ def launch_cost(args: argparse.Namespace) -> int:
 
     wrong: list[str] = []
     if not runs[False] or not runs[True]:
-        print("no trace was written; is this a build with NIB_TRACE_STARTUP?")
+        print("no trace was written; is this a build with ORDEN_TRACE_STARTUP?")
         return 1
     steps = {False: set(), True: set()}
     for agents, lines in runs.items():

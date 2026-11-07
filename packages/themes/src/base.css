@@ -1686,45 +1686,44 @@ select:focus-visible,
 }
 
 .nib-scrolls::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  display: none;
 }
 
 @media (pointer: fine) {
   @supports selector(::-webkit-scrollbar) {
-    :root:not([data-engine-bars]) ::-webkit-scrollbar,
-    :root:not([data-engine-bars])::-webkit-scrollbar {
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar {
       width: 11px;
       height: 11px;
     }
 
-    :root:not([data-engine-bars]) ::-webkit-scrollbar-track,
-    :root:not([data-engine-bars])::-webkit-scrollbar-track,
-    :root:not([data-engine-bars]) ::-webkit-scrollbar-corner,
-    :root:not([data-engine-bars])::-webkit-scrollbar-corner {
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar-track,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar-track,
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar-corner,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar-corner {
       background: transparent;
     }
 
-    :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb,
-    :root:not([data-engine-bars])::-webkit-scrollbar-thumb {
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar-thumb,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar-thumb {
       background-color: var(--scrollbar);
       background-clip: padding-box;
       border: 3px solid transparent;
       border-radius: 99px;
     }
 
-    :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb:hover,
-    :root:not([data-engine-bars])::-webkit-scrollbar-thumb:hover {
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar-thumb:hover,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar-thumb:hover {
       background-color: var(--scrollbar-hover);
     }
 
-    :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb:active,
-    :root:not([data-engine-bars])::-webkit-scrollbar-thumb:active {
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar-thumb:active,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar-thumb:active {
       background-color: var(--muted);
     }
 
-    :root:not([data-engine-bars]) ::-webkit-scrollbar-button,
-    :root:not([data-engine-bars])::-webkit-scrollbar-button {
+    :where(:root:not([data-engine-bars])) ::-webkit-scrollbar-button,
+    :where(:root:not([data-engine-bars]))::-webkit-scrollbar-button {
       display: none;
     }
   }

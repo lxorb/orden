@@ -3,8 +3,8 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, sep } from 'node:path'
 
-const API = process.env.NIB_API ?? 'https://orden.so'
-const TOKEN = process.env.NIB_TOKEN ?? ''
+const API = process.env.ORDEN_API ?? process.env.NIB_API ?? 'https://orden.so'
+const TOKEN = process.env.ORDEN_TOKEN ?? process.env.NIB_TOKEN ?? ''
 
 const NOTES = /\.(md|markdown|mdown|mkd|canvas)$/i
 
@@ -179,7 +179,7 @@ async function main() {
   const flags = new Set(process.argv.slice(2).filter((one) => one.startsWith('--')))
   const [what, name, third] = args
 
-  if (!TOKEN) throw new Error('NIB_TOKEN is not set')
+  if (!TOKEN) throw new Error('ORDEN_TOKEN is not set')
   if (!what || !name || !third) {
     throw new Error('usage: nib-sync.mjs pull|push <space> <folder> | back <space> <days> [--dry]')
   }

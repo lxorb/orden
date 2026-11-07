@@ -8,7 +8,7 @@ vi.mock('../tauri', async (importOriginal) => ({
 const taken = vi.fn((said: string) => (said === 'the word' ? '[]' : ''))
 
 vi.stubGlobal('window', globalThis)
-vi.stubGlobal('__NIB_SYSTEM__', {
+vi.stubGlobal('__ORDEN_SYSTEM__', {
   insets: () => '{}',
   askForTheFrame: () => {
     ;(globalThis as unknown as { __nibFrame: (word: string) => void }).__nibFrame('the word')

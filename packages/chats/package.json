@@ -7,10 +7,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./agent": "./src/agent.ts",
+    "./fake-provider": "./src/fake-provider.ts",
     "./ids": "./src/ids.ts",
     "./limits": "./src/limits.ts",
     "./links": "./src/links.ts",
     "./mail": "./src/mail/provider.ts",
+    "./mail-oauth": "./src/mail/oauth.ts",
     "./mime": "./src/mail/mime.ts",
     "./mentions": "./src/mentions.ts",
     "./notify": "./src/notify.ts",

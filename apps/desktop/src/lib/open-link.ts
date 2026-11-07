@@ -32,7 +32,9 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
 }
 
 export function settingsPane(href: string): 'import' | null {
-  return !__EVEN_PLUGIN__ && /^nib:\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
+  return !__EVEN_PLUGIN__ && /^(orden|nib):\/\/settings\/import\/?$/i.test(href.trim())
+    ? 'import'
+    : null
 }
 
 export function followHref(href: string, press: LinkPress): void {
@@ -42,7 +44,7 @@ export function followHref(href: string, press: LinkPress): void {
     return
   }
   const ask = tabAsk(press, true)
-  if (/^nib:\/\/chat\//i.test(href)) {
+  if (/^(orden|nib):\/\/chat\//i.test(href)) {
     const opening = __EVEN_PLUGIN__ ? null : import('./chats/view/open')
     void opening?.then(({ openChatLink }) => openChatLink(href, howFor(ask)))
     return

@@ -112,9 +112,9 @@ pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
 
 pub const SERVER: &str = "orden";
 
-pub const TOKEN_VAR: &str = "NIB_MCP_TOKEN";
+pub const TOKEN_VAR: &str = "ORDEN_MCP_TOKEN";
 
-pub const THREAD_VAR: &str = "NIB_MCP_THREAD";
+pub const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
 
 pub fn with_thread(params: &mut Value, thread: &str) {
     params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
@@ -773,8 +773,8 @@ mod tests {
         let orden = &plan["mcpServers"]["orden"];
         assert_eq!(orden["args"], json!(["mcp"]));
         assert_eq!(orden["trust"], true);
-        assert_eq!(orden["env"][TOKEN_VAR], "${NIB_MCP_TOKEN}");
-        assert_eq!(orden["env"][THREAD_VAR], "${NIB_MCP_THREAD}");
+        assert_eq!(orden["env"][TOKEN_VAR], "${ORDEN_MCP_TOKEN}");
+        assert_eq!(orden["env"][THREAD_VAR], "${ORDEN_MCP_THREAD}");
         let included = orden["includeTools"].as_array().expect("included");
         assert!(included.contains(&json!("read_note")));
         assert!(!included.contains(&json!("edit_note")));

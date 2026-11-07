@@ -21,7 +21,8 @@ impl Act {
     }
 }
 
-const HOST: &str = "nib://reminder";
+const HOST: &str = "orden://reminder";
+const OLD_HOST: &str = "nib://reminder";
 
 #[cfg_attr(
     not(windows),
@@ -34,18 +35,23 @@ pub fn link(act: Act, id: &str, nonce: &str) -> String {
     format!("{HOST}?act={}&id={id}&n={nonce}", act.word())
 }
 
+fn host_end(url: &str) -> Option<usize> {
+    [HOST, OLD_HOST]
+        .into_iter()
+        .find(|host| {
+            url.get(..host.len())
+                .is_some_and(|start| start.eq_ignore_ascii_case(host))
+        })
+        .map(str::len)
+}
+
 pub fn is_reminder(url: &str) -> bool {
-    url.trim()
-        .get(..HOST.len())
-        .is_some_and(|start| start.eq_ignore_ascii_case(HOST))
+    host_end(url.trim()).is_some()
 }
 
 pub fn parsed(url: &str) -> Option<(Act, String, String)> {
     let url = url.trim();
-    if !is_reminder(url) {
-        return None;
-    }
-    let query = url.get(HOST.len()..)?.strip_prefix('?')?;
+    let query = url.get(host_end(url)?..)?.strip_prefix('?')?;
 
     let (mut act, mut id, mut nonce) = (None, None, None);
     for pair in query.split('&') {
@@ -83,7 +89,7 @@ mod tests {
         let made = link(Act::Done, "00ff00ff00ff00ff", "abcdef0123456789");
         assert_eq!(
             made,
-            "nib://reminder?act=done&id=00ff00ff00ff00ff&n=abcdef0123456789"
+            "orden://reminder?act=done&id=00ff00ff00ff00ff&n=abcdef0123456789"
         );
         assert_eq!(
             parsed(&made),
@@ -100,14 +106,23 @@ mod tests {
     }
 
     #[test]
+    fn a_link_a_notice_was_given_before_the_rename_still_reads() {
+        assert_eq!(
+            parsed("nib://reminder?act=done&id=aa&n=bb"),
+            Some((Act::Done, "aa".to_string(), "bb".to_string()))
+        );
+        assert!(is_reminder("NIB://Reminder?act=open"));
+    }
+
+    #[test]
     fn anything_else_is_no_reminder() {
-        assert_eq!(parsed("nib://open?path=Plan.md"), None);
-        assert!(!is_reminder("nib://open?path=Plan.md"));
-        assert!(is_reminder("NIB://Reminder?act=done"));
-        assert_eq!(parsed("nib://reminder?act=delete&id=aa&n=bb"), None);
-        assert_eq!(parsed("nib://reminder?act=done&id=aa"), None);
-        assert_eq!(parsed("nib://reminder?act=done&id=aa&id=bb&n=cc"), None);
-        assert_eq!(parsed("nib://reminder?act=done&id=../x&n=cc"), None);
-        assert_eq!(parsed("nib://reminders?act=done&id=aa&n=cc"), None);
+        assert_eq!(parsed("orden://open?path=Plan.md"), None);
+        assert!(!is_reminder("orden://open?path=Plan.md"));
+        assert!(is_reminder("ORDEN://Reminder?act=done"));
+        assert_eq!(parsed("orden://reminder?act=delete&id=aa&n=bb"), None);
+        assert_eq!(parsed("orden://reminder?act=done&id=aa"), None);
+        assert_eq!(parsed("orden://reminder?act=done&id=aa&id=bb&n=cc"), None);
+        assert_eq!(parsed("orden://reminder?act=done&id=../x&n=cc"), None);
+        assert_eq!(parsed("orden://reminders?act=done&id=aa&n=cc"), None);
     }
 }
