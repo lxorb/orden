@@ -552,7 +552,7 @@ def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
             f"[{label}] every part of the sidebar button is drawn while it is {state} ({faint})",
         )
 
-def panel_ends(page: Page, label: str) -> None:
+def panel_ends(page: Page, label: str, phone: bool = False) -> None:
     head = page.evaluate(HEAD)
     say(f"[{label}] the head: {head}")
     if not head:
@@ -568,6 +568,12 @@ def panel_ends(page: Page, label: str) -> None:
             head["grow"] != "0",
             f"[{label}] and takes the width rather than being given the word's ({head['grow']})",
         )
+
+    if phone:
+        tabs = page.evaluate("() => document.querySelectorAll('[data-phone-tabs] [data-tab]').length")
+        say(f"[{label}] the tab bar in place of the foot: {tabs} tabs")
+        check(tabs > 0, f"[{label}] a phone's panel ends in its tab bar, not the foot")
+        return
 
     foot = page.evaluate(FOOT)
     say(f"[{label}] the foot: {foot}")
@@ -631,9 +637,9 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
 
-        panel_ends(page, label)
+        panel_ends(page, label, phone=True)
         page.locator("aside .head").first.screenshot(path=str(SHOTS / f"head-phone-{scheme}.png"))
-        page.locator("aside .foot").first.screenshot(path=str(SHOTS / f"foot-phone-{scheme}.png"))
+        page.locator("[data-phone-tabs]").first.screenshot(path=str(SHOTS / f"foot-phone-{scheme}.png"))
         say(f"[{label}] wrote head-phone-{scheme}.png and foot-phone-{scheme}.png")
 
         page.evaluate("() => window.nibApp.workspace.showPanel(null)")
