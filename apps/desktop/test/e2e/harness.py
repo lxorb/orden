@@ -1133,16 +1133,21 @@ class Worker:
 
     def query(self, statement: str) -> list[dict[str, Any]]:
         self.prepare()
-        done = self.wrangler(
-            "d1",
-            "execute",
-            "nib",
-            "--local",
-            "--persist-to",
-            str(self.state),
-            "--json",
-            f"--command={statement}",
-        )
+        for tries in range(10):
+            done = self.wrangler(
+                "d1",
+                "execute",
+                "nib",
+                "--local",
+                "--persist-to",
+                str(self.state),
+                "--json",
+                f"--command={statement}",
+            )
+            busy = "SQLITE_BUSY" in done.stdout + done.stderr
+            if done.returncode == 0 or not busy:
+                break
+            time.sleep(0.2 * (tries + 1))
         if done.returncode != 0:
             raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
         answer = json.loads(done.stdout)
