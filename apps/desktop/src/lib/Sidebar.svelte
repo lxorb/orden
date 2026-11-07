@@ -224,7 +224,7 @@
 
   $effect(() =>
     peek
-      ? overlays.show(
+      ? overlays.peek(
           () => peeker.hide(),
           () => [aside],
         )

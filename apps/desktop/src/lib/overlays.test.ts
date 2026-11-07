@@ -364,8 +364,14 @@ describe('what hides a web page', () => {
   }
 
   test('every layer on the stack is one somebody opened over the note', () => {
-    const callers = sources().filter((path) => read(path).includes('overlays.show('))
+    const callers = sources().filter((path) => /overlays\.(show|peek)\(/.test(read(path)))
     expect(callers.sort()).toEqual(Object.keys(LAYERS).sort())
+  })
+
+  test('what comes out under a resting pointer is a peek, and nothing opened by a press is', () => {
+    const peeks = sources().filter((path) => read(path).includes('overlays.peek('))
+    expect(peeks.sort()).toEqual(['lib/Sidebar.svelte', 'lib/tab-strip/hover-card.svelte.ts'])
+    for (const path of peeks) expect(read(path), path).not.toContain('overlays.show(')
   })
 
   test('full screen is a mode and not a layer, so a page fills it', () => {

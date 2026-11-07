@@ -4,6 +4,7 @@ interface Open {
   from: Opener | null
   said: string | null
   keepsFocus: boolean
+  peek: boolean
 }
 
 type Opener = Pick<Element, 'contains'> &
@@ -37,8 +38,23 @@ class Overlays {
     from: Opener | null = this.clicking,
     keepsFocus = false,
   ): () => void {
-    const entry: Open = { close, holds: holds ?? null, from, said: null, keepsFocus }
+    return this.push({ close, holds: holds ?? null, from, said: null, keepsFocus, peek: false })
+  }
+
+  peek(close: () => void, holds?: Holds): () => void {
+    return this.push({
+      close,
+      holds: holds ?? null,
+      from: null,
+      said: null,
+      keepsFocus: false,
+      peek: true,
+    })
+  }
+
+  private push(entry: Open): () => void {
     this.stack.push(entry)
+    const from = entry.from
     if (from?.setAttribute) {
       entry.said = from.getAttribute?.('aria-expanded') ?? null
       from.setAttribute('aria-expanded', 'true')
@@ -72,6 +88,10 @@ class Overlays {
 
   get depth(): number {
     return this.stack.length
+  }
+
+  get layers(): number {
+    return this.stack.filter((one) => !one.peek).length
   }
 
   pressed(press: Pointed) {

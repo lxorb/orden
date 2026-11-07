@@ -69,7 +69,24 @@ def drive(browser: Browser, kind: str) -> None:
         for other in shown[at + 1 :]:
             if overlap(one, other):
                 wrong(f"[{kind}] {one['name']!r} and {other['name']!r} are drawn over each other")
+    if kind == "desktop":
+        peek(page)
     context.close()
+
+def peek(page) -> None:
+    page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('tree'); ws.showPanel('tree'); ws.panel = null }")
+    wait_for(page, "window.nibApp.workspace.panel === null", "the list shut")
+    page.mouse.move(640, 400)
+    page.wait_for_timeout(200)
+    page.mouse.move(0, 400)
+    wait_for(page, "document.querySelector('.panels .column')?.classList.contains('floating')", "the shut list out under the pointer")
+    page.wait_for_timeout(400)
+    card = page.evaluate(
+        "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Personalize\"]')?.checkVisibility()"
+    )
+    say(f"[desktop] the card while the shut list is out: {'up' if card else 'gone'}")
+    if not card:
+        wrong("[desktop] the Personalize card went away while the shut list peeked out")
 
 def main() -> int:
     with DRIVE.session() as browser:
