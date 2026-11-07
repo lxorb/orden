@@ -377,6 +377,7 @@ export const ko: Dictionary = {
   'Whole word': '단어 단위',
   'Regular expression': '정규식',
   'No matches': '일치하는 것이 없습니다',
+  'Pattern too slow to search': '패턴이 너무 느려 검색할 수 없음',
   '{at} of {count}': '{count} 중 {at}',
   Icons: '아이콘',
   Emoji: 'Emoji',

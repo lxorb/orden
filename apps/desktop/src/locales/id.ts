@@ -376,6 +376,7 @@ export const id: Dictionary = {
   'Whole word': 'Kata utuh',
   'Regular expression': 'Ekspresi reguler',
   'No matches': 'Tidak ada yang cocok',
+  'Pattern too slow to search': 'Pola terlalu lambat untuk dicari',
   '{at} of {count}': '{at} dari {count}',
   Icons: 'Ikon',
   Emoji: 'Emoji',

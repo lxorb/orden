@@ -380,6 +380,7 @@ export const ta: Dictionary = {
   'Whole word': 'முழுச் சொல்',
   'Regular expression': 'ரெகெக்ஸ்',
   'No matches': 'பொருத்தம் இல்லை',
+  'Pattern too slow to search': 'தேடுவதற்கு வடிவம் மிகவும் மெதுவானது',
   '{at} of {count}': '{count} இல் {at}',
   Icons: 'சின்னங்கள்',
   Emoji: 'ஈமோஜி',

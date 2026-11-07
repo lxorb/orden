@@ -383,6 +383,7 @@ export const ml: Dictionary = {
   'Whole word': 'പൂർണ്ണ വാക്ക്',
   'Regular expression': 'റെജെക്സ്',
   'No matches': 'ചേരുന്നതില്ല',
+  'Pattern too slow to search': 'തിരയാൻ പാറ്റേൺ വളരെ മന്ദഗതിയിലാണ്',
   '{at} of {count}': '{count}ൽ {at}',
   Icons: 'ഐക്കണുകൾ',
   Emoji: 'ഇമോജി',

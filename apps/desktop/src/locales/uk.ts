@@ -383,6 +383,7 @@ export const uk: Dictionary = {
   'Whole word': 'Слово повністю',
   'Regular expression': 'Регулярний вираз',
   'No matches': 'Немає збігів',
+  'Pattern too slow to search': 'Шаблон занадто повільний для пошуку',
   '{at} of {count}': '{at} з {count}',
   Icons: 'Значки',
   Emoji: 'Емодзі',

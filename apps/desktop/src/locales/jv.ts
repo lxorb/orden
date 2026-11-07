@@ -376,6 +376,7 @@ export const jv: Dictionary = {
   'Whole word': 'Tembung wutuh',
   'Regular expression': 'Ekspresi reguler',
   'No matches': 'Ora ana sing cocog',
+  'Pattern too slow to search': 'Pola kelet banget kanggo digoleki',
   '{at} of {count}': '{at} saka {count}',
   Icons: 'Ikon',
   Emoji: 'Emoji',

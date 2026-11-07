@@ -379,6 +379,7 @@ export const pa: Dictionary = {
   'Whole word': 'ਪੂਰਾ ਸ਼ਬਦ',
   'Regular expression': 'ਨਿਯਮਤ ਸਮੀਕਰਨ',
   'No matches': 'ਕੁਝ ਨਹੀਂ ਮਿਲਿਆ',
+  'Pattern too slow to search': 'ਖੋਜਣ ਲਈ ਪੈਟਰਨ ਬਹੁਤ ਹੌਲੀ ਹੈ',
   '{at} of {count}': '{count} ਵਿੱਚੋਂ {at}',
   Icons: 'ਆਈਕਨ',
   Emoji: 'Emoji',

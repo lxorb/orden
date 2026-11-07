@@ -376,6 +376,7 @@ export const zhHans: Dictionary = {
   'Whole word': '全词匹配',
   'Regular expression': '正则表达式',
   'No matches': '无匹配',
+  'Pattern too slow to search': '模式太慢，无法搜索',
   '{at} of {count}': '{at}/{count}',
   Icons: '图标',
   Emoji: '表情',

@@ -381,6 +381,7 @@ export const gsw: Dictionary = {
   'Whole word': 'Ganzes Wort',
   'Regular expression': 'Regulärä Usdruck',
   'No matches': 'Nüt gfunde',
+  'Pattern too slow to search': 'Muschter z langsam zum Sueche',
   '{at} of {count}': '{at} vo {count}',
   Icons: 'Sinnbilder',
   Emoji: 'Emoji',

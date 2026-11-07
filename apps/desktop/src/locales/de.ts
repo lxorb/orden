@@ -382,6 +382,7 @@ export const de: Dictionary = {
   'Whole word': 'Ganzes Wort',
   'Regular expression': 'Regulärer Ausdruck',
   'No matches': 'Nichts gefunden',
+  'Pattern too slow to search': 'Muster zu langsam für die Suche',
   '{at} of {count}': '{at} von {count}',
   Icons: 'Symbole',
   Emoji: 'Emoji',

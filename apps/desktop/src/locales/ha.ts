@@ -382,6 +382,7 @@ export const ha: Dictionary = {
   'Whole word': 'Cikakkiyar kalma',
   'Regular expression': 'Bayanin tsari',
   'No matches': 'Babu abin da ya dace',
+  'Pattern too slow to search': 'Tsarin yana da jinkiri sosai don nema',
   '{at} of {count}': '{at} daga {count}',
   Icons: 'Alamomi',
   Emoji: 'Emoji',

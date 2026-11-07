@@ -381,6 +381,7 @@ export const tr: Dictionary = {
   'Whole word': 'Tam sözcük',
   'Regular expression': 'Düzenli ifade',
   'No matches': 'Eşleşme yok',
+  'Pattern too slow to search': 'Desen aramak için çok yavaş',
   '{at} of {count}': '{count} içinde {at}',
   Icons: 'Simgeler',
   Emoji: 'Emoji',

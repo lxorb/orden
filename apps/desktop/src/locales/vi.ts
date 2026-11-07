@@ -378,6 +378,7 @@ export const vi: Dictionary = {
   'Whole word': 'Trọn từ',
   'Regular expression': 'Biểu thức chính quy',
   'No matches': 'Không khớp',
+  'Pattern too slow to search': 'Mẫu quá chậm để tìm kiếm',
   '{at} of {count}': '{at} trên {count}',
   Icons: 'Biểu tượng',
   Emoji: 'Emoji',

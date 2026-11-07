@@ -380,6 +380,7 @@ export const te: Dictionary = {
   'Whole word': 'పూర్తి పదం',
   'Regular expression': 'రెగెక్స్',
   'No matches': 'సరిపోలిక లేదు',
+  'Pattern too slow to search': 'శోధించడానికి నమూనా చాలా నెమ్మదిగా ఉంది',
   '{at} of {count}': '{count}లో {at}',
   Icons: 'ఐకాన్‌లు',
   Emoji: 'ఎమోజీ',

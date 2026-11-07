@@ -380,6 +380,7 @@ export const fa: Dictionary = {
   'Whole word': 'واژه کامل',
   'Regular expression': 'عبارت باقاعده',
   'No matches': 'همسانی نیست',
+  'Pattern too slow to search': 'الگو برای جستجو بسیار کند است',
   '{at} of {count}': '{at} از {count}',
   Icons: 'نقشک‌ها',
   Emoji: 'Emoji',

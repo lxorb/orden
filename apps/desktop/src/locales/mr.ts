@@ -380,6 +380,7 @@ export const mr: Dictionary = {
   'Whole word': 'पूर्ण शब्द',
   'Regular expression': 'रेग्युलर एक्स्प्रेशन',
   'No matches': 'जुळणी नाही',
+  'Pattern too slow to search': 'शोधण्यासाठी पॅटर्न खूप मंद आहे',
   '{at} of {count}': '{count} पैकी {at}',
   Icons: 'चिन्हे',
   Emoji: 'इमोजी',

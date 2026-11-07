@@ -383,6 +383,7 @@ export const ar: Dictionary = {
   'Whole word': 'كلمة كاملة',
   'Regular expression': 'تعبير نمطي',
   'No matches': 'لا مطابقات',
+  'Pattern too slow to search': 'النمط بطيء جدًا للبحث',
   '{at} of {count}': '{at} من {count}',
   Icons: 'أيقونات',
   Emoji: 'رموز تعبيرية',

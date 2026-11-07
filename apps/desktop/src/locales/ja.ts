@@ -377,6 +377,7 @@ export const ja: Dictionary = {
   'Whole word': '単語単位',
   'Regular expression': '正規表現',
   'No matches': '一致なし',
+  'Pattern too slow to search': 'パターンが遅すぎて検索できません',
   '{at} of {count}': '{count} 件中 {at} 件目',
   Icons: 'アイコン',
   Emoji: '絵文字',

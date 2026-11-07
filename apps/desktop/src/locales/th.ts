@@ -376,6 +376,7 @@ export const th: Dictionary = {
   'Whole word': 'ทั้งคำ',
   'Regular expression': 'นิพจน์ปกติ',
   'No matches': 'ไม่พบ',
+  'Pattern too slow to search': 'รูปแบบช้าเกินกว่าจะค้นหา',
   '{at} of {count}': '{at} จาก {count}',
   Icons: 'ไอคอน',
   Emoji: 'อิโมจิ',

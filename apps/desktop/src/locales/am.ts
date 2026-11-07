@@ -377,6 +377,7 @@ export const am: Dictionary = {
   'Whole word': 'ሙሉ ቃል',
   'Regular expression': 'መደበኛ አገላለጽ',
   'No matches': 'የሚመሳሰል የለም',
+  'Pattern too slow to search': 'ንድፉ ለመፈለግ በጣም ቀርፋፋ ነው',
   '{at} of {count}': 'ከ{count} {at}',
   Icons: 'ምልክቶች',
   Emoji: 'Emoji',

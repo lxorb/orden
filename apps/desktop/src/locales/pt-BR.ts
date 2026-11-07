@@ -382,6 +382,7 @@ export const ptBR: Dictionary = {
   'Whole word': 'Palavra inteira',
   'Regular expression': 'Expressão regular',
   'No matches': 'Sem resultados',
+  'Pattern too slow to search': 'Padrão lento demais para pesquisar',
   '{at} of {count}': '{at} de {count}',
   Icons: 'Ícones',
   Emoji: 'Emoji',

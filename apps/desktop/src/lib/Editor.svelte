@@ -47,6 +47,7 @@
     opennote,
     nameblock,
     onfind,
+    onfindslow,
     focused,
     view = $bindable(),
   }: {
@@ -60,6 +61,7 @@
     opennote?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
     nameblock?: (path: string, line: number, from: Tab) => Promise<string | null>
     onfind?: (ask: FindAsk | null) => void
+    onfindslow?: (view: EditorView) => void
     focused: boolean
     view?: EditorView | undefined
   } = $props()
@@ -105,6 +107,7 @@
       carriedNotes: (transfer) => workspace.carriedNotes(transfer),
       carriedFiles: carriedIntoNotes,
       ...(onfind ? { onFind: onfind } : {}),
+      ...(onfindslow ? { onFindSlow: onfindslow } : {}),
       shortcuts: shortcuts.forEditor,
       trustedMarkup: trustsHtmlIn(one.note),
       cover: keptCoverOf(one.path),

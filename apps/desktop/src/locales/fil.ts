@@ -382,6 +382,7 @@ export const fil: Dictionary = {
   'Whole word': 'Buong salita',
   'Regular expression': 'Regular expression',
   'No matches': 'Walang tugma',
+  'Pattern too slow to search': 'Masyadong mabagal ang pattern para hanapin',
   '{at} of {count}': '{at} ng {count}',
   Icons: 'Mga icon',
   Emoji: 'Emoji',

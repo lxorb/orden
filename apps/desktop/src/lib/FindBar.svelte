@@ -20,6 +20,7 @@
     count,
     current,
     capped = false,
+    slow = false,
     flags,
     onflags,
     replacing = false,
@@ -37,6 +38,7 @@
     count: number
     current: number
     capped?: boolean
+    slow?: boolean
     flags?: FindFlags | undefined
     onflags?: ((flags: FindFlags) => void) | undefined
     replacing?: boolean
@@ -64,6 +66,7 @@
 
   const tally = $derived.by(() => {
     if (!query) return ''
+    if (slow) return t('Pattern too slow to search')
     if (!count) return t('No matches')
 
     const of = capped ? `${count}+` : `${count}`

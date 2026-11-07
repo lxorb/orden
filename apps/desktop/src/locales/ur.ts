@@ -380,6 +380,7 @@ export const ur: Dictionary = {
   'Whole word': 'پورا لفظ',
   'Regular expression': 'ریگولر ایکسپریشن',
   'No matches': 'کوئی مماثلت نہیں',
+  'Pattern too slow to search': 'پیٹرن تلاش کے لیے بہت سست ہے',
   '{at} of {count}': '{count} میں سے {at}',
   Icons: 'آئیکن',
   Emoji: 'ایموجی',

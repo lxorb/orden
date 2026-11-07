@@ -74,6 +74,7 @@ export interface StateOptions {
   carriedNotes?: (transfer: DataTransfer | null) => readonly string[]
   folds?: readonly FoldLines[]
   onFind?: (ask: FindAsk | null) => void
+  onFindSlow?: (view: EditorView) => void
   trustedMarkup?: boolean
   cover?: Cover | null
   moveCover?: (position: number) => void
@@ -130,7 +131,7 @@ export function editorState(options: StateOptions): EditorState {
       indentOnInput(),
       bracketMatching(),
       highlightActiveLine(),
-      findExtensions(options.onFind),
+      findExtensions(options.onFind, options.onFindSlow),
       EditorView.lineWrapping,
       ...(options.coveredBelow ? [coveredBelow(options.coveredBelow)] : []),
       EditorView.contentAttributes.of({ class: 'nib-write' }),
