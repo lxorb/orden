@@ -25,7 +25,7 @@ const MOST_EMBEDDED = 40_000
 const EMBED_MAX = 512
 
 export function embedOfBlock(state: EditorState, from: number, to: number): LinkSpan | null {
-  if (to - from > EMBED_MAX) return null
+  if (to - from > EMBED_MAX || state.sliceDoc(from, from + 3) !== '![[') return null
 
   const doc = state.doc
   const line = doc.lineAt(from)
