@@ -146,19 +146,40 @@ rooms.get('/:noteId', async (context) => {
 
 export type RoomAsk = 'push' | 'pull' | 'ingest'
 
+export const ROOM_PATIENCE = 15_000
+
+export const ROOM_LATE = Symbol('the room did not answer in time')
+
+async function inTime(
+  answer: Promise<Response>,
+  patience: number,
+): Promise<Response | typeof ROOM_LATE> {
+  let late: (value: typeof ROOM_LATE) => void = () => undefined
+  const waited = new Promise<typeof ROOM_LATE>((settle) => {
+    late = settle
+  })
+  const timer = setTimeout(() => late(ROOM_LATE), patience)
+  try {
+    return await Promise.race([answer, waited])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function askRoom(
   env: Env,
   target: { id: string; space_id: string; path: string; kind?: string; epoch?: number },
   ask: RoomAsk,
   body: Uint8Array,
-): Promise<Response | null> {
+  patience = ROOM_PATIENCE,
+): Promise<Response | typeof ROOM_LATE | null> {
   const namespace = env.ROOMS
   if (!namespace) return null
 
   for (let asked = 0; asked < 2; asked++) {
     try {
       const room = namespace.get(namespace.idFromName(target.id))
-      return await room.fetch(
+      const answer = room.fetch(
         new Request(`https://rooms.invalid/${target.id}`, {
           method: 'POST',
           headers: {
@@ -171,6 +192,7 @@ export async function askRoom(
           body,
         }),
       )
+      return await inTime(answer, patience)
     } catch {
       // A reset object: the loop asks the one that replaced it.
     }
@@ -186,7 +208,7 @@ export async function ingestInto(
 ): Promise<Ingested | null> {
   const body = new TextEncoder().encode(JSON.stringify({ text, ...writer }))
   const answer = await askRoom(env, target, 'ingest', body)
-  if (!answer?.ok) return null
+  if (answer === ROOM_LATE || !answer?.ok) return null
 
   return await answer.json<Ingested>()
 }

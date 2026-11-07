@@ -249,6 +249,46 @@ describe('a device moving to v2', () => {
     }
   })
 
+  test('a pull answered with none of its notes is a move to make again, and nothing written here is lost', async () => {
+    const base = 'First line.\n\nSecond line.\n'
+    const note = await v1Note('Plan.md', base)
+    await keepVersionNow(env, note.id, base, 'one')
+    await v1Write(
+      note.id,
+      'Plan.md',
+      'First line, edited elsewhere.\n\nSecond line.\n',
+      note.version,
+    )
+    let emptied = 0
+    const kit = await engine()
+    const device = await kit.testDevice({
+      fetch: async (request) => {
+        const answer = await app.fetch(request, env)
+        if (emptied > 0 || !request.url.endsWith('/v2/docs/pull') || !answer.ok) return answer
+        emptied += 1
+        return new Response(frame({ docs: [] }), { status: answer.status, headers: answer.headers })
+      },
+      token,
+      files: { 'Plan.md': 'First line.\n\nSecond line, edited here.\n' },
+    })
+    const core = device.engine.core
+    await core.commit(core.addSpace(space, device.root, 'owner'))
+    const state = core.spaces.get(space)
+    if (!state) throw new Error('the space was not added')
+    const v1 = { cursor: 0, notes: { 'Plan.md': { ...note, hash: await sha256(base) } } }
+
+    expect(await kit.firstPass(core, state, v1)).toBe(false)
+    expect(await kit.firstPass(core, state, v1)).toBe(true)
+    await rooms.settle()
+    expect((await device.engine.pass(space))?.finished).toBe(true)
+    await rooms.settle()
+
+    expect(device.disk.files.get(`${device.root}/Plan.md`)).toBe(
+      'First line, edited elsewhere.\n\nSecond line, edited here.\n',
+    )
+    expect(emptied).toBe(1)
+  })
+
   test('words written under v1 that never went up go up, and nothing is copied', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
     const { file } = await migrated(

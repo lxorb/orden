@@ -4,6 +4,7 @@ import {
   frame,
   type KeepRequest,
   MOST_UPDATE_BYTES,
+  PULL_BYTES,
   type PullAnswer,
   type PullDoc,
   type PushAnswer,
@@ -13,7 +14,7 @@ import {
 } from '@orden/sync-core'
 import { byteLength, sha256 } from '../crypto'
 import { noteKey } from '../notes'
-import { askRoom } from '../rooms'
+import { askRoom, ROOM_LATE } from '../rooms'
 import { seedOf, seedsAnything, snapshotKey } from '../rooms/epoch'
 import { noteKind } from '../rooms/kind'
 import { allows, reachedItem, reachedSpace, type Role } from '../spaces/space'
@@ -97,11 +98,16 @@ export async function documentOf(
   return { update, seq: seedsAnything(update) ? 1 : 0 }
 }
 
+const AT_ONCE = 6
+
+const PULL_PATIENCE = 25_000
+
 export async function pullDocs(
   env: Env,
   who: Whoever,
   docs: readonly PullDoc[],
-): Promise<PullAnswer[]> {
+  part = false,
+): Promise<PullAnswer[] | null> {
   const found = await reachedNotes(
     env,
     who,
@@ -109,12 +115,44 @@ export async function pullDocs(
   )
   await onEpochs(env, found)
 
-  const answers: PullAnswer[] = []
-  for (const doc of docs) answers.push(await pulled(env, found.get(doc.id), doc))
-  return answers
+  const answers = new Array<PullAnswer | null>(docs.length).fill(null)
+  const until = Date.now() + PULL_PATIENCE
+  let bytes = 0
+  const late = new Set<number>()
+  let next = 0
+  const enough = () => part && (bytes >= PULL_BYTES || Date.now() >= until)
+  const worker = async () => {
+    for (let at = next++; at < docs.length && !enough(); at = next++) {
+      const doc = docs[at]
+      if (!doc) continue
+      const one = await pulled(env, found.get(doc.id), doc)
+      if (!one) {
+        late.add(at)
+        continue
+      }
+      answers[at] = one
+      if ('update' in one) bytes += one.update.length
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(AT_ONCE, docs.length) }, worker))
+  if (late.size && !part) return null
+
+  const out: PullAnswer[] = []
+  let sent = 0
+  for (const one of answers) {
+    if (part && out.length && sent >= PULL_BYTES) break
+    if (!one) continue
+    out.push(one)
+    if ('update' in one) sent += one.update.length
+  }
+  return out
 }
 
-async function pulled(env: Env, found: Reached | undefined, doc: PullDoc): Promise<PullAnswer> {
+async function pulled(
+  env: Env,
+  found: Reached | undefined,
+  doc: PullDoc,
+): Promise<PullAnswer | null> {
   const note = found?.note
   if (!note || !DOCUMENT_KINDS.has(note.kind ?? 'note')) return { id: doc.id, refused: 'gone' }
 
@@ -126,6 +164,7 @@ async function pulled(env: Env, found: Reached | undefined, doc: PullDoc): Promi
     if (held) return { id: doc.id, update: diffUpdateV2(held.update, doc.sv), seq: held.seq }
 
     const answer = await askRoom(env, note, 'pull', frame({ sv: doc.sv }))
+    if (answer === ROOM_LATE) return null
     if (!answer?.ok) return { id: doc.id, refused: 'gone' }
     const said = roomAnswer(new Uint8Array(await answer.arrayBuffer()))
     const { update, seq } = said
@@ -140,8 +179,6 @@ function roomAnswer(bytes: Uint8Array): Record<string, unknown> {
   const value = unframe(bytes)
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
-
-const AT_ONCE = 6
 
 export async function pushDocs(
   env: Env,
@@ -203,7 +240,7 @@ async function pushed(
       name,
     }),
   )
-  if (!answer?.ok) return refused(doc.id, 'gone')
+  if (answer === ROOM_LATE || !answer?.ok) return refused(doc.id, 'gone')
 
   const said = roomAnswer(new Uint8Array(await answer.arrayBuffer()))
   const { ok, seq, sv, moved, at, epoch: newer } = said

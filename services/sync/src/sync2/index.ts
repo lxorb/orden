@@ -4,7 +4,7 @@ import { Hono } from 'hono'
 import { laterOf, pokeSpace } from '../hub/poke'
 import { mayChangeTree, mayKeepVersions, mayPushDocuments } from '../limits'
 import { remindRelisted } from '../push/relisted'
-import { NO_SUCH_NOTE, OUT_OF_SPACE, TOO_MANY_CHANGES } from '../refused'
+import { NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY, TOO_MANY_CHANGES } from '../refused'
 import { atLeast, refusal, spaceOf } from '../spaces/space'
 import type { Env, Variables } from '../types'
 import { deviceIn } from '../versions'
@@ -93,7 +93,9 @@ export const v2Docs = new Hono<App>()
 v2Docs.post('/pull', async (context) => {
   const request = pullRequestOf(await requestBody(context))
   if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
-  return answer(context, { docs: await pullDocs(context.env, context.get('who'), request.docs) })
+  const docs = await pullDocs(context.env, context.get('who'), request.docs, request.part)
+  if (!docs) return context.json({ error: ROOM_AWAY }, 503, { 'retry-after': '1' })
+  return answer(context, { docs })
 })
 
 v2Docs.post('/push', async (context) => {

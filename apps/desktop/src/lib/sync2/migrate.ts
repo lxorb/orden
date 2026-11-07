@@ -172,6 +172,7 @@ export async function firstPass(
             epoch: one.item.epoch ?? 1,
             sv: EMPTY_SV,
           })),
+          part: true,
         },
         space.id,
       )
@@ -184,7 +185,8 @@ export async function firstPass(
         }
       }
       const left = batch.filter((one) => !answered.has(one.entry.id))
-      batch = left.length < batch.length ? left : []
+      if (left.length === batch.length) return false
+      batch = left
     }
   }
 
