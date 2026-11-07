@@ -140,7 +140,15 @@ const wholeCharacters = EditorState.transactionFilter.of((made) => {
 })
 
 function documentState(doc: string | Text): EditorState {
-  return EditorState.create({ doc, extensions: [history(), marksKept, wholeCharacters] })
+  return EditorState.create({
+    doc,
+    extensions: [
+      history(),
+      marksKept,
+      wholeCharacters,
+      EditorState.allowMultipleSelections.of(true),
+    ],
+  })
 }
 
 export interface Heard {

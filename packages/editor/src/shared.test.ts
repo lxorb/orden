@@ -18,7 +18,7 @@ class Pane implements DocView {
     this.held = EditorState.create({
       doc: note.text,
       selection: EditorSelection.cursor(cursor),
-      extensions: [history(), sharing()],
+      extensions: [history(), sharing(), EditorState.allowMultipleSelections.of(true)],
     })
     note.join(this)
   }
@@ -133,6 +133,36 @@ describe('a document in two panes', () => {
 
     expect(note.undo(right)).toBe(true)
     expect(note.text.toString()).toBe('one two')
+  })
+
+  test('an undone edit at many carets puts every caret back', () => {
+    const note = new SharedDoc('one\ntwo\nthree')
+    const pane = new Pane(note)
+    const carets = EditorSelection.create(
+      [3, 7, 13].map((at) => EditorSelection.cursor(at)),
+      2,
+    )
+    const made = pane.state.update({ selection: carets }).state.update({
+      changes: [3, 7, 13].map((at) => ({ from: at, insert: '!' })),
+      selection: EditorSelection.create(
+        [4, 9, 16].map((at) => EditorSelection.cursor(at)),
+        2,
+      ),
+      userEvent: 'input.type',
+    })
+    pane.dispatch({ selection: carets })
+    note.selected(carets, 'select')
+    pane.dispatch({
+      changes: made.changes,
+      selection: made.state.selection,
+      userEvent: 'input.type',
+    })
+    note.local(made.changes, made.state.selection, pane, 'input.type')
+    expect(note.text.toString()).toBe('one!\ntwo!\nthree!')
+
+    expect(note.undo(pane)).toBe(true)
+    expect(pane.text).toBe('one\ntwo\nthree')
+    expect(pane.state.selection.ranges.map((range) => range.head)).toEqual([3, 7, 13])
   })
 
   test('puts an undone edit back', () => {
