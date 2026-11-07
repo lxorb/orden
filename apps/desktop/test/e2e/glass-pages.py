@@ -104,6 +104,20 @@ POINT = """
 }
 """
 
+BARE = """
+() => {
+  const bar = document.querySelector("header[data-chrome='top']")
+  if (!bar) return null
+  const box = bar.getBoundingClientRect()
+  const y = Math.round(box.top + box.height / 2)
+  for (let x = Math.round(box.right - 48); x > box.left; x -= 6) {
+    const hit = document.elementFromPoint(x, y)
+    if (hit && (hit === bar || hit.hasAttribute('data-tauri-drag-region'))) return [x, y]
+  }
+  return null
+}
+"""
+
 def luminance(colour: tuple[float, ...]) -> float:
     def channel(one: float) -> float:
         value = one / 255
@@ -152,7 +166,7 @@ def open_site(page: Page, name: str) -> None:
     DRIVE.settled(page)
 
 def measure(page: Page, picture: Image.Image, where: str, selector: str, at: str = "middle") -> None:
-    point = page.evaluate(POINT, [selector, at])
+    point = page.evaluate(BARE) if at == "bare" else page.evaluate(POINT, [selector, at])
     ink = page.evaluate(INK, selector)
     if point is None or ink is None:
         wrong(f"{where}: nothing at {selector}")
@@ -173,11 +187,11 @@ def drive(browser: Browser) -> None:
             picture = Image.open(io.BytesIO(path.read_bytes())).convert("RGB")
 
             label = f"[{scheme}, {name}]"
-            measure(page, picture, f"{label} the title bar", "header[data-chrome='top'] .drag")
+            measure(page, picture, f"{label} the title bar", "header[data-chrome='top'] .drag", "bare")
             measure(page, picture, f"{label} the list down the side", ".panels[data-chrome='start']", "foot")
             measure(page, picture, f"{label} the bar over the page", ".webbar", "start")
 
-            frame = page.evaluate(POINT, ["header[data-chrome='top'] .drag", "middle"])
+            frame = page.evaluate(BARE)
             if frame and name in DARK | LIGHT:
                 seen = picture.getpixel((frame[0], frame[1]))
                 dark = luminance(seen) <= MIDDLE
