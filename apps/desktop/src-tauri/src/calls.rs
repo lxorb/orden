@@ -14,7 +14,7 @@ const AWAY: [&str; 2] = ["spawn", "spawn_blocking"];
 
 const PEELED: [&str; 4] = ["unwrap", "expect", "unwrap_or_else", "map_err"];
 
-const MAIN: [&str; 8] = [
+const MAIN: [&str; 12] = [
     "run_on_main_thread",
     "with_webview",
     "on_window_event",
@@ -23,6 +23,10 @@ const MAIN: [&str; 8] = [
     "on_tray_icon_event",
     "on_page_load",
     "run",
+    "on_navigation",
+    "on_new_window",
+    "on_document_title_changed",
+    "on_download",
 ];
 
 const GUARDS: [&str; 3] = ["MutexGuard", "RwLockReadGuard", "RwLockWriteGuard"];
@@ -997,8 +1001,8 @@ impl Gathered {
         let mut takes: Vec<Vec<String>> = Vec::new();
         for found in &self.found {
             let mut keys = Vec::new();
-            for (key, receiver) in &found.locks.takes {
-                if self.locks_itself(found, receiver) {
+            for (key, call) in &found.locks.takes {
+                if !matches!(self.taken_as(found, call), Taken::Lock) {
                     continue;
                 }
                 let key = self.key(found, key);
@@ -1114,12 +1118,17 @@ impl Gathered {
         known: &Known<'_>,
     ) -> (Vec<String>, Vec<String>) {
         match guard {
-            Guard::Lock(_, receiver) if self.locks_itself(found, receiver) => self.guarded(
-                found,
-                &Guard::Method("lock".to_owned(), receiver.clone(), true),
-                known,
-            ),
-            Guard::Lock(key, _) => (vec![self.key(found, key)], Vec::new()),
+            Guard::Lock(key, call) => match self.taken_as(found, call) {
+                Taken::Lock => (vec![self.key(found, key)], Vec::new()),
+                Taken::Own(receiver) => self.guarded(
+                    found,
+                    &Guard::Method("lock".to_owned(), receiver, true),
+                    known,
+                ),
+                Taken::Not(method, receiver) => {
+                    self.guarded(found, &Guard::Method(method, receiver, true), known)
+                }
+            },
             Guard::Through(path, first, strict) => {
                 let called = self.resolve(found, path);
                 let relays = if *strict {
@@ -1171,10 +1180,36 @@ impl Gathered {
         }
     }
 
-    fn locks_itself(&self, found: &Found, receiver: &Chain) -> bool {
-        self.types(found, receiver, &mut Vec::new(), 0)
-            .iter()
-            .any(|one| !self.targets(one, "lock").is_empty())
+    fn taken_as(&self, found: &Found, call: &Chain) -> Taken {
+        let Some((Step::Method(method, _), steps)) = call.steps.split_last() else {
+            return Taken::Lock;
+        };
+        let receiver = Chain {
+            root: call.root.clone(),
+            steps: steps.to_vec(),
+        };
+        let tys = self.types(found, &receiver, &mut Vec::new(), 0);
+        if method == "lock" {
+            if tys.iter().any(|one| !self.targets(one, "lock").is_empty()) {
+                return Taken::Own(receiver);
+            }
+            return Taken::Lock;
+        }
+        let shared = tys.iter().any(|one| {
+            let mut at = Some(one);
+            while let Some(layer) = at {
+                if layer.last() == "RwLock" {
+                    return true;
+                }
+                at = layer.inside();
+            }
+            false
+        });
+        if shared {
+            Taken::Lock
+        } else {
+            Taken::Not(method.clone(), receiver)
+        }
     }
 
     fn resolve(&self, found: &Found, path: &[String]) -> Vec<String> {
@@ -1667,6 +1702,7 @@ impl Gathered {
         if self.owners.contains(&owner)
             || self.defs.contains_key(&owner)
             || self.known.contains(&here)
+            || self.statics.contains_key(&here)
         {
             found.push(here);
         }
@@ -2080,7 +2116,7 @@ fn guard_of(expr: &syn::Expr, owner: &str, module: &str) -> Option<Guard> {
     match at {
         syn::Expr::MethodCall(call) if locked(call) => Some(Guard::Lock(
             key_of(&call.receiver, owner, module),
-            chain_of(&call.receiver),
+            taking(call),
         )),
         syn::Expr::MethodCall(call) => Some(Guard::Method(
             call.method.to_string(),
@@ -2127,7 +2163,7 @@ impl<'a> Visit<'a> for Taking<'_> {
         if locked(call) {
             self.takes.push((
                 key_of(&call.receiver, self.owner, self.module),
-                chain_of(&call.receiver),
+                taking(call),
             ));
         }
         if AWAY.iter().any(|one| call.method == one) {
@@ -2167,7 +2203,7 @@ impl<'a> Visit<'a> for Temporaries<'_> {
         if locked(call) {
             self.found.push(Guard::Lock(
                 key_of(&call.receiver, self.owner, self.module),
-                chain_of(&call.receiver),
+                taking(call),
             ));
         } else if !AWAY.iter().any(|one| call.method == one) {
             self.found.push(Guard::Method(
@@ -2841,9 +2877,21 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
 }
 
 fn locked(call: &syn::ExprMethodCall) -> bool {
-    call.method == "lock"
+    ["lock", "read", "write"]
+        .iter()
+        .any(|one| call.method == one)
         && call.args.is_empty()
         && !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self"))
+}
+
+fn taking(call: &syn::ExprMethodCall) -> Chain {
+    chain_of(&call.receiver).then(Step::Method(call.method.to_string(), Vec::new()))
+}
+
+enum Taken {
+    Lock,
+    Own(Chain),
+    Not(String, Chain),
 }
 
 struct Released<'a> {

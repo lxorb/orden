@@ -981,7 +981,7 @@ mod tests {
         "crate::kept::kept_forget",
     ];
 
-    const WAITS: [&str; 30] = [
+    const WAITS: [&str; 38] = [
         "fs::",
         "File::",
         "OpenOptions",
@@ -1012,6 +1012,14 @@ mod tests {
         "thread::sleep",
         "SendMessageW",
         "TcpStream::connect",
+        ".exists()",
+        ".try_exists()",
+        ".is_file()",
+        ".is_dir()",
+        ".metadata()",
+        ".symlink_metadata()",
+        ".read_dir()",
+        "blocking::",
     ];
 
     const TARGETS: [calls::Target; 3] = [
@@ -1028,8 +1036,10 @@ mod tests {
         "crate::agents::quiet::destination",
     ];
 
-    const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 1] =
-        ["crate::default_browser::platform::make_default::main#0"];
+    const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 2] = [
+        "crate::default_browser::platform::make_default::main#0",
+        "crate::downloads::saving::main#0",
+    ];
 
     const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];
 
@@ -1162,7 +1172,9 @@ mod tests {
             "pub struct Inner {\n    shared: Mutex<u8>,\n}\n\n",
             "impl Inner {\n    fn lock(&self) -> MutexGuard<'_, u8> {\n        self.shared.lock().unwrap()\n    }\n}\n\n",
             "pub struct Peer {\n    inner: Arc<Inner>,\n}\n\n",
-            "#[tauri::command(async)]\npub fn slow(one: &One, peer: &Peer) {\n    let held = one.held.lock().unwrap();\n    let shared = peer.inner.lock();\n    fs::write(a, b);\n    drop(held);\n}\n\n",
+            "static SHARED: RwLock<u8> = RwLock::new(0);\n\n",
+            "#[tauri::command(async)]\npub fn slow(one: &One, peer: &Peer) {\n    let held = one.held.lock().unwrap();\n    let shared = peer.inner.lock();\n    let read = SHARED.read().unwrap();\n    fs::write(a, b);\n    drop(held);\n}\n\n",
+            "#[tauri::command]\npub fn written() {\n    *SHARED.write().unwrap() = 1;\n}\n\n",
             "#[tauri::command]\npub fn other(two: &Two) -> u8 {\n    *two.held.lock().unwrap()\n}\n\n",
             "#[tauri::command]\npub fn same(one: &One) -> u8 {\n    *one.held.lock().unwrap()\n}\n\n",
             "#[tauri::command]\npub fn inside(inner: &Inner) -> u8 {\n    *inner.shared.lock().unwrap()\n}\n",
@@ -1170,6 +1182,10 @@ mod tests {
         let own = calls::of(&[("crate", source)]);
         let waits = own.waiting(&WAITS, &[]);
         assert!(waits.contains("crate::same"));
+        assert!(
+            waits.contains("crate::written"),
+            "a read lock is held as a lock is"
+        );
         assert!(
             waits.contains("crate::inside"),
             "a type's own lock is the lock it hands out"
