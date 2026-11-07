@@ -45,6 +45,8 @@ mod chromium_pump;
 mod clock;
 mod code_blocks;
 #[cfg(desktop)]
+mod crashes;
+#[cfg(desktop)]
 mod default_browser;
 #[cfg(desktop)]
 mod dictation;
@@ -423,6 +425,14 @@ macro_rules! desktop_commands {
             gpu::gpu_seen,
             gpu::gpu_chosen,
             gpu::gpu_choose,
+            crashes::crash_reports_waiting,
+            crashes::crash_report_sent,
+            crashes::crash_report_unsent,
+            crashes::crash_report_js,
+            crashes::crash_alive,
+            crashes::crash_context,
+            crashes::crash_leaving,
+            crashes::crash_drill,
             kept::kept_write,
             kept::kept_forget,
             secure_dns::dns_chosen,
@@ -751,15 +761,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
-    #[cfg(feature = "cef")]
-    let builder = builder.on_web_content_process_terminate(|view, ended| {
-        use tauri::webview::WebContentProcessTerminationReason as Reason;
-        if !matches!(ended.reason, Reason::Normal) {
-            web_page::ended(view);
-        }
-    });
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
-    let builder = builder.on_web_content_process_terminate(web_page::ended);
+    let builder = pages_that_end(builder);
 
     #[cfg(desktop)]
     let builder = builder.setup(move |app| ready(app, ui.as_ref()));
@@ -773,6 +775,23 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             std::process::exit(1);
         })
         .run(on_event);
+}
+
+fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    #[cfg(feature = "cef")]
+    let builder = builder.on_web_content_process_terminate(|view, ended| {
+        use tauri::webview::WebContentProcessTerminationReason as Reason;
+        if !matches!(ended.reason, Reason::Normal) {
+            crashes::page_ended(view.label());
+            web_page::ended(view);
+        }
+    });
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    let builder = builder.on_web_content_process_terminate(|view: &tauri::Webview| {
+        crashes::page_ended(view.label());
+        web_page::ended(view);
+    });
+    builder
 }
 
 #[cfg(desktop)]
@@ -810,7 +829,9 @@ fn named(
     answer: impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static,
 ) -> impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static {
     move |invoke| {
-        let _doing = stall::doing(invoke.message.command());
+        let command = invoke.message.command();
+        crashes::crumb(command);
+        let _doing = stall::doing(command);
         answer(invoke)
     }
 }
@@ -840,6 +861,13 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     extensions::tabs::start(handle);
 }
 
+#[cfg(desktop)]
+fn first_of_all(handle: &tauri::AppHandle) {
+    crashes::start(handle);
+    trace::mark("crash reports");
+    paths::decide_spaces(handle);
+}
+
 fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
@@ -849,7 +877,7 @@ fn ready(
     let handle = app.handle();
 
     #[cfg(desktop)]
-    paths::decide_spaces(handle);
+    first_of_all(handle);
 
     #[cfg(desktop)]
     let web_first = ahead::start(handle);
@@ -1046,7 +1074,8 @@ mod tests {
         calls::Target::LINUX,
     ];
 
-    const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 5] = [
+    const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 6] = [
+        "crate::crashes::exit::ended_well",
         "crate::placement::keep",
         "crate::placement::read",
         "crate::extensions::webview2::reconcile",

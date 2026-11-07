@@ -40,6 +40,19 @@ impl Drop for Doing {
     }
 }
 
+pub fn doing_now() -> Option<String> {
+    let held = DOING.lock().ok()?;
+    (!held.is_empty()).then(|| held.iter().rev().cloned().collect::<Vec<_>>().join(" < "))
+}
+
+pub fn each_doing_now(mut each: impl FnMut(&str)) {
+    if let Ok(held) = DOING.try_lock() {
+        for one in held.iter().rev() {
+            each(one);
+        }
+    }
+}
+
 fn now_doing() -> String {
     DOING
         .lock()
@@ -64,15 +77,21 @@ pub fn start(app: &AppHandle) {
             }
             loop {
                 std::thread::sleep(LOOK);
-                watch_once(&app, &watched);
+                let answers = watch_once(&app, &watched);
+                #[cfg(desktop)]
+                crate::crashes::tick(answers);
+                #[cfg(not(desktop))]
+                let _ = answers;
             }
         });
 }
 
-fn watch_once(app: &AppHandle, watched: &Watched) {
+fn watch_once(app: &AppHandle, watched: &Watched) -> bool {
     let asked = Instant::now();
-    let Answer::Late(how) = watched.answers(STALL) else {
-        return;
+    let how = match watched.answers(STALL) {
+        Answer::Answered => return true,
+        Answer::Gone => return false,
+        Answer::Late(how) => how,
     };
 
     let what = match how {
@@ -89,6 +108,8 @@ fn watch_once(app: &AppHandle, watched: &Watched) {
     let marker = marker_dir(app).map(|dir| dir.join(MARKER));
     let since = crate::clock::now().saturating_sub(millis(asked.elapsed()));
     let mut written = false;
+    #[cfg(desktop)]
+    let mut freeze: Option<crate::crashes::freeze::Freeze> = None;
     while matches!(watched.answers(STALL), Answer::Late(_)) {
         let held = asked.elapsed();
         if held >= HUNG {
@@ -96,7 +117,16 @@ fn watch_once(app: &AppHandle, watched: &Watched) {
                 let _ = std::fs::write(marker, marked(since, held, &what));
             }
             written = true;
+            #[cfg(desktop)]
+            match freeze.as_mut() {
+                Some(freeze) => freeze.still(held),
+                None => freeze = Some(crate::crashes::freeze::began(&what, held)),
+            }
         }
+    }
+    #[cfg(desktop)]
+    if let Some(freeze) = freeze {
+        freeze.ended(asked.elapsed());
     }
 
     say(
@@ -112,6 +142,7 @@ fn watch_once(app: &AppHandle, watched: &Watched) {
             let _ = std::fs::remove_file(marker);
         }
     }
+    false
 }
 
 fn marker_dir(app: &AppHandle) -> Option<PathBuf> {
@@ -473,12 +504,13 @@ pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str
         };
         let handler = ProcessFailedEventHandler::create(Box::new(move |_, args| {
             let Some(args) = args else { return Ok(()) };
-            let (_, what) = failure_of(&args);
+            let (kind, what) = failure_of(&args);
             say(
                 &app,
                 "error",
                 &format!("stall: {whose} page {what} ({})", now_doing()),
             );
+            crate::crashes::page_failed(whose, kind.0, &what);
             Ok(())
         }));
         let mut token = 0i64;

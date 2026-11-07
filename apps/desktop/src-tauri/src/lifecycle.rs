@@ -141,6 +141,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
         RunEvent::Exit => {
+            crate::crashes::ended_well();
             crate::terminal::end_all(app);
             crate::apps_host::end_all(app);
             crate::ai_cli::end_all(app);
@@ -172,6 +173,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             }
             app.state::<crate::endpoint::Waiting>().forget(&label);
             app.state::<Installer>().gone(&label);
+            crate::crashes::window_gone(&label);
             crate::terminal::window_gone(app, &label);
             if let Some(sockets) = app.try_state::<crate::mail_socket::MailSockets>() {
                 sockets.end_where(&label);
