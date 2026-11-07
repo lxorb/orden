@@ -1,6 +1,6 @@
 import { backtracksWildly } from '@orden/markdown/pattern-cost'
 
-const TRIAL_MS = 300
+export const TRIAL_MS = 300
 
 export function scanPattern(source: string, flags: string, text: string, lines: boolean): number {
   const pattern = new RegExp(source, flags)
@@ -54,24 +54,27 @@ function shut(one: Worker) {
   if (worker === one) worker = null
 }
 
-function once(source: string, flags: string, text: string, lines: boolean): Promise<boolean> {
+function once(source: string, flags: string, text: string, lines: boolean): Promise<number | null> {
   const away = open()
-  if (!away) return Promise.resolve(!backtracksWildly(source, flags))
+  if (!away) return Promise.resolve(backtracksWildly(source, flags) ? null : 0)
 
   const id = ++asked
-  return new Promise<boolean>((settle) => {
+  return new Promise<number | null>((settle) => {
     let timer: ReturnType<typeof setTimeout> | undefined
+    let begun = 0
     const done = (quick: boolean) => {
       clearTimeout(timer)
       away.onmessage = null
       away.onerror = null
       if (!quick) shut(away)
-      settle(quick)
+      settle(quick ? performance.now() - begun : null)
     }
     away.onmessage = (event: MessageEvent<Said>) => {
       if (event.data.id !== id) return
-      if (event.data.begun) timer = setTimeout(() => done(false), TRIAL_MS)
-      else done(true)
+      if (event.data.begun) {
+        begun = performance.now()
+        timer = setTimeout(() => done(false), TRIAL_MS)
+      } else done(true)
     }
     away.onerror = (event) => {
       event.preventDefault()
@@ -79,19 +82,28 @@ function once(source: string, flags: string, text: string, lines: boolean): Prom
       away.onmessage = null
       away.onerror = null
       shut(away)
-      settle(true)
+      settle(0)
     }
     away.postMessage({ id, source, flags, text, lines })
   })
 }
 
-export function quickEnough(
+export function trialCost(
+  source: string,
+  flags: string,
+  text: string,
+  lines: boolean,
+): Promise<number | null> {
+  const turn = queue.then(() => once(source, flags, text, lines))
+  queue = turn.catch(() => undefined)
+  return turn
+}
+
+export async function quickEnough(
   source: string,
   flags: string,
   text: string,
   lines: boolean,
 ): Promise<boolean> {
-  const turn = queue.then(() => once(source, flags, text, lines))
-  queue = turn.catch(() => undefined)
-  return turn
+  return (await trialCost(source, flags, text, lines)) !== null
 }
