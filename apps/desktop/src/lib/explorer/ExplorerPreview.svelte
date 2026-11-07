@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fromBase64 } from '../bytes'
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
   import { plural, t } from '../i18n.svelte'
@@ -52,7 +51,7 @@
     if (shown && as === 'text') {
       void peekAt(at, MOST_TEXT)
         .then((read) => {
-          const words = textOf(fromBase64(read.bytes))
+          const words = textOf(read.bytes)
           if (!gone && words !== null) text = { words, cut: read.cut }
         })
         .catch(() => undefined)

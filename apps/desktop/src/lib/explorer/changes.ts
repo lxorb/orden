@@ -2,7 +2,6 @@ import { message, plural, t } from '../i18n.svelte'
 import type { Picked as Brought } from '../import/sources'
 import { fileClipboard } from '../list-landing.svelte'
 import { prompt } from '../prompt.svelte'
-import { fromBase64 } from '../bytes'
 import { nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -13,6 +12,7 @@ import {
   deleteForGood,
   listFolder,
   makeIn,
+  peekAt,
   renameTo,
   transfer,
   type Transferred,
@@ -260,12 +260,9 @@ function broughtFile(path: string, under: string): Brought {
     name: nameOf(under),
     ...(nested ? { webkitRelativePath: under } : {}),
     arrayBuffer: async () => {
-      const read = await invoke<{ bytes: string; cut: boolean }>('explorer_peek', {
-        path,
-        most: MOST_BROUGHT,
-      })
+      const read = await peekAt(path, MOST_BROUGHT)
       if (read.cut) throw new Error(t('This file is too large to bring into a space.'))
-      return fromBase64(read.bytes).buffer as ArrayBuffer
+      return read.bytes.slice().buffer
     },
   }
 }
