@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import {
+  carriedIntoNotes,
   carriedNothing,
   carry,
   carryFromExplorer,
@@ -98,6 +99,18 @@ describe('rows of the file explorer, carried where files are taken', () => {
 
     const hidden = { types: rows.types, getData: () => '' } as unknown as DataTransfer
     expect(outsideRows(hidden)).toEqual(['/home/me/Downloads/a.png', '/home/me/b.pdf'])
+    carriedNothing()
+  })
+
+  test('a note leaves PDFs alone, to open as page notes, and takes them along with other files', () => {
+    const pdfs = transfer()
+    carryFromExplorer(pdfs, ['/home/me/a.pdf', '/home/me/B.PDF'], false)
+    expect(carriedIntoNotes.carries(pdfs)).toBe(false)
+    expect(carriedIntoNotes.read(pdfs)).toBe(null)
+
+    const mixed = transfer()
+    carryFromExplorer(mixed, ['/home/me/a.pdf', '/home/me/b.png'], false)
+    expect(carriedIntoNotes.carries(mixed)).toBe(true)
     carriedNothing()
   })
 

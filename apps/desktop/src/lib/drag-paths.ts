@@ -90,6 +90,11 @@ export const carriedFiles: CarriedFiles = {
   },
 }
 
+export const carriedIntoNotes: CarriedFiles = {
+  carries: (transfer) => outsideRows(transfer).some((one) => !/\.pdf$/i.test(one)),
+  read: (transfer) => (carriedIntoNotes.carries(transfer) ? carriedFiles.read(transfer) : null),
+}
+
 export function isFileDrop(transfer: DataTransfer | null): boolean {
   return !!transfer?.types.includes('Files') && !isTreeDrag(transfer)
 }
