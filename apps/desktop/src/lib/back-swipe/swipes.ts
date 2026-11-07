@@ -44,6 +44,7 @@ interface Live {
   first: number
   at: number
   heardAt: number
+  scrolls: Record<Side, boolean>
   room: Room | null
 }
 
@@ -152,11 +153,13 @@ export function heard(step: Heard): void {
     first: step.at,
     at: step.at,
     heardAt: now,
+    scrolls: step.scrolls,
     room: null,
   }
   const one = live
   one.at = step.at
   one.heardAt = now
+  one.scrolls = step.scrolls
   clearTimeout(quiet)
   quiet = one.told
     ? setTimeout(() => end('dropped'), HOLD)
@@ -254,9 +257,30 @@ function scrollsUnder(event: WheelEvent, under: { tab: Tab; pane: HTMLElement; a
   return taken(chainOf(under.at, under.pane))
 }
 
+function pictured(target: EventTarget | null): Live | null {
+  const one = live
+  if (one?.tab.kind !== 'web' || one.source !== 'touchpad' || !one.shown) return null
+  if (!(target instanceof Element) || overlays.depth > 0 || target.closest('[data-chrome]')) {
+    return null
+  }
+  return target.closest<HTMLElement>('[data-pane]')?.dataset.pane === one.tab.paneId ? one : null
+}
+
 function wheeled(event: WheelEvent) {
   if (!swipeChoice.on || !fromTouchpad(event, live !== null)) return
   if (event.deltaX === 0 && event.deltaY === 0) return
+  const page = pictured(event.target)
+  if (page) {
+    heard({
+      tab: page.tab,
+      source: 'touchpad',
+      dx: event.deltaX,
+      dy: event.deltaY,
+      at: page.at + (event.timeStamp - page.heardAt),
+      scrolls: page.scrolls,
+    })
+    return
+  }
   const under = tabUnder(event.target)
   if (!under) return
   heard({
