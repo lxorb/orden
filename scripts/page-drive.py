@@ -62,11 +62,23 @@ def until(code, what, patience=20.0):
 def xdo(*words):
     subprocess.run(["xdotool", *map(str, words)], capture_output=True, check=False)
 
+def ours():
+    found = subprocess.run(
+        ["xdotool", "search", "--onlyvisible", "--name", "Orden"], capture_output=True, text=True, check=False
+    ).stdout.split()
+    best, area = None, 0
+    for one in found:
+        shape = subprocess.run(
+            ["xdotool", "getwindowgeometry", "--shell", one], capture_output=True, text=True, check=False
+        ).stdout
+        got = dict(line.split("=", 1) for line in shape.split() if "=" in line)
+        size = int(got.get("WIDTH", 0)) * int(got.get("HEIGHT", 0))
+        if size > area:
+            best, area = one, size
+    return best
+
 def origin():
-    found = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False)
-    said = subprocess.run(
-        ["xwininfo", "-id", found.stdout.split()[0]], capture_output=True, text=True, check=False
-    ).stdout
+    said = subprocess.run(["xwininfo", "-id", ours()], capture_output=True, text=True, check=False).stdout
     x = said.split("Absolute upper-left X:")[1].split()[0]
     y = said.split("Absolute upper-left Y:")[1].split()[0]
     return int(x), int(y)
@@ -169,8 +181,8 @@ def stale():
         if found.split():
             break
         time.sleep(0.1)
-    own = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False).stdout.split()
-    xdo("windowactivate", "--sync", own[0])
+    own = ours()
+    xdo("windowactivate", "--sync", own)
     run(HEAR)
     rows = run(ROWS) or []
     move(600, 400)
@@ -193,7 +205,7 @@ def stale():
     xdo("mouseup", 1)
     time.sleep(0.3)
     other.kill()
-    xdo("windowactivate", "--sync", own[0])
+    xdo("windowactivate", "--sync", own)
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.5)
@@ -354,7 +366,7 @@ def back():
         if found.split():
             break
         time.sleep(0.1)
-    own = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False).stdout.split()
+    own = ours()
     if not own or not found.split():
         fail(f"no windows to switch between: {own} {found.split()}")
         other.kill()
@@ -364,7 +376,7 @@ def back():
         xdo("windowactivate", "--sync", found.split()[0])
         time.sleep(0.6)
         away = run("document.hasFocus()")
-        xdo("windowactivate", "--sync", own[0])
+        xdo("windowactivate", "--sync", own)
         time.sleep(0.8)
         here = until("document.hasFocus()", f"the keyboard back in the window (round {round})", 5)
         run("window.__keys.length = 0; true")

@@ -57,7 +57,7 @@ for _ in $(seq 120); do
     status=1
     break
   fi
-  if xwininfo -root -tree 2>/dev/null | grep -qiE '"Orden|"Read me|"nib'; then
+  if xwininfo -root -tree 2>/dev/null | awk 'tolower($0) ~ /"(orden|read me|nib)/ && !/ 1x1\+/ { found = 1 } END { exit !found }'; then
     mapped=yes
     break
   fi
