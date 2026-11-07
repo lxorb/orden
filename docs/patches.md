@@ -10,11 +10,12 @@ requests upstream.
 | Package | Patch | What it fixes | Tests |
 | --- | --- | --- | --- |
 | `marked` 18.0.11 | `patches/marked@18.0.11.patch` | `emStrong` no longer walks the paragraph for emphasis nothing can close, and stops 32 deep (#547, #549); `link` reads a destination once, 32 parentheses deep at most, and a title in parentheses ends at another opening one, as cmark does (#1292) | `packages/markdown/src/emphasis.test.ts`, `packages/markdown/src/links.test.ts` |
+| `@codemirror/view` 6.43.11 | `patches/@codemirror__view@6.43.11.patch` | Reading back what was typed counts the positions of a line's tiles once, not once per hidden mark (#1305) | `packages/editor/src/long-line-typing.test.ts` |
 | `@lezer/markdown` 1.7.2 | `patches/@lezer__markdown@1.7.2.patch` | Links and addresses in a huge paragraph parse in linear time (#529); a destination is read 32 parentheses deep at most, a title in parentheses ends at another opening one, and a closer nothing opens is looked back for once, as cmark's `openers_bottom` (#1292) | `packages/editor/src/markdown/extensions.test.ts` |
 
 Only the file the app loads is patched: `lib/marked.esm.js`, which marked's
 `exports` gives for `import 'marked'` (the app, vitest and the sync worker all
-load it), and `dist/index.js` of `@lezer/markdown`. `lib/marked.esm.js` is
+load it), and `dist/index.js` of `@lezer/markdown` and `@codemirror/view`. `lib/marked.esm.js` is
 minified, so the patch appends its code after the last line and replaces
 `Tokenizer.prototype.emStrong` and `Tokenizer.prototype.link` from there; it calls the class by its minified
 name, which the file's `export{... y as Tokenizer ...}` gives.

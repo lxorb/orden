@@ -1,0 +1,55 @@
+diff --git a/dist/index.js b/dist/index.js
+index 1021312cb249ef4c52559c82500ce061e9d66b17..4679ba95632e2d0c6c8d750411fee4790eb287c5 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1731,6 +1731,8 @@ class ViewUpdate {
+ }
+ 
+ const noChildren = [];
++// The positions of the tiles a DOMReader is reading, while it reads.
++let readPositions = null;
+ class Tile {
+     constructor(dom, length, flags = 0) {
+         this.dom = dom;
+@@ -1766,6 +1768,11 @@ class Tile {
+         dom.cmTile = this;
+     }
+     get posAtStart() {
++        if (readPositions) {
++            let known = readPositions.get(this);
++            if (known !== undefined)
++                return known;
++        }
+         return this.parent ? this.parent.posBefore(this) : 0;
+     }
+     get posAtEnd() {
+@@ -4024,7 +4031,29 @@ class DOMReader {
+     readRange(start, end) {
+         if (!start)
+             return this;
++        let top = !readPositions;
++        if (top)
++            readPositions = new Map();
++        try {
++            return this.readRangeIn(start, end);
++        }
++        finally {
++            if (top)
++                readPositions = null;
++        }
++    }
++    readRangeIn(start, end) {
+         let parent = start.parentNode;
++        // Each widget asks for its position, which walks its parent's children: in a line
++        // of thousands that read every child once per child. They are counted once here.
++        let parentTile = Tile.get(parent);
++        if (parentTile && parentTile.isComposite() && parentTile.children.length && !readPositions.has(parentTile.children[0])) {
++            let pos = parentTile.posAtStart;
++            for (let child of parentTile.children) {
++                readPositions.set(child, pos);
++                pos += child.length + child.breakAfter;
++            }
++        }
+         for (let cur = start;;) {
+             this.findPointBefore(parent, cur);
+             let oldLen = this.text.length;
