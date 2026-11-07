@@ -13,8 +13,9 @@
   import { copyText } from './clipboard'
   import Cross from './Cross.svelte'
   import { t } from './i18n.svelte'
+  import { links } from './link-index.svelte'
   import { dur, LAYER } from './motion'
-  import { followHref, opensLink } from './open-link'
+  import { followHref, followNote, MIDDLE, opensLink } from './open-link'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
   import { settings } from './settings.svelte'
@@ -86,16 +87,38 @@
 
   function follow(event: MouseEvent) {
     if (!opensLink(event)) return
-    const href = (event.target as Element | null)?.closest('a')?.getAttribute('href')
-    if (!href) return
+    const anchor = (event.target as Element | null)?.closest('a')
+    const href = anchor?.getAttribute('href')
+    if (!anchor || !href) return
 
     event.preventDefault()
-    if (!/^[a-z][a-z\d+.-]*:/i.test(href)) return
+    if (href.startsWith('#')) return
+    const elsewhere = /^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')
+    if (!elsewhere && event.button === MIDDLE && !anchor.classList.contains('wikilink')) return
+    const from = workspace.panelTab?.path ?? null
     quick.close()
-    followHref(href, event)
+    if (elsewhere) followHref(href, event)
+    else
+      followNote({ path: href, target: href, heading: null, block: null, page: null }, event, from)
   }
 
   const pictures = new SvelteSet<string>()
+
+  function drawn(text: string, live: boolean): string {
+    const from = workspace.panelTab?.path ?? null
+    return answerHtml(text, {
+      resolveLink: (link) => {
+        const found = link.target
+          ? links.targetOf(from, { kind: 'wikilink', target: link.target })
+          : null
+        return found === null ? null : { href: found }
+      },
+      copy: t('Copy code'),
+      live,
+      from,
+      shown: pictures,
+    })
+  }
   const show = (src: string) => pictures.add(src)
 
   let copied = $state(false)
@@ -234,17 +257,12 @@
             {#if quick.running && at === turns.length - 1}
               <LiveAnswer
                 text={turn.text}
-                draw={(text: string) =>
-                  answerHtml(text, { copy: t('Copy code'), live: true, shown: pictures })}
+                draw={(text: string) => drawn(text, true)}
                 onfollow={follow}
                 onpicture={show}
               />
             {:else}
-              <Answer
-                html={answerHtml(turn.text, { copy: t('Copy code'), shown: pictures })}
-                onfollow={follow}
-                onpicture={show}
-              />
+              <Answer html={drawn(turn.text, false)} onfollow={follow} onpicture={show} />
             {/if}
           {/if}
         {/each}
