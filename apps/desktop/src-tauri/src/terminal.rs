@@ -7,12 +7,11 @@ pub mod shells;
 mod ssh_config;
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use serde::Serialize;
 use tauri::ipc::{Channel, InvokeResponseBody};
-use tauri::webview::PageLoadEvent;
 use tauri::{AppHandle, Manager, Webview};
 
 use session::{Out, Session};
@@ -21,6 +20,8 @@ use session::{Out, Session};
 pub struct Terminals {
     sessions: Mutex<HashMap<String, Held>>,
     closing: AtomicBool,
+    loads: Mutex<HashMap<String, u64>>,
+    tick: AtomicU64,
 }
 
 struct Held {
@@ -60,7 +61,26 @@ impl Terminals {
         Ok(with(&session))
     }
 
+    fn stamp(&self) -> u64 {
+        self.tick.load(Ordering::SeqCst)
+    }
+
+    fn ended_since(&self, owner: &str, stamp: u64) -> bool {
+        self.loads
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(owner)
+            .is_some_and(|ended| *ended > stamp)
+    }
+
     fn end_where(&self, owner: Option<&str>) {
+        if let Some(owner) = owner {
+            let ended = self.tick.fetch_add(1, Ordering::SeqCst) + 1;
+            self.loads
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .insert(owner.to_owned(), ended);
+        }
         let ending: Vec<Held> = {
             let mut sessions = self.lock();
             let ids: Vec<String> = sessions
@@ -83,15 +103,13 @@ impl Terminals {
 }
 
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    builder
-        .manage(Terminals::default())
-        .on_page_load(|webview, payload| {
-            if payload.event() == PageLoadEvent::Started {
-                if let Some(terminals) = webview.try_state::<Terminals>() {
-                    terminals.end_where(Some(webview.label()));
-                }
-            }
-        })
+    builder.manage(Terminals::default())
+}
+
+pub fn page_started(webview: &Webview) {
+    if let Some(terminals) = webview.try_state::<Terminals>() {
+        terminals.end_where(Some(webview.label()));
+    }
 }
 
 pub fn window_gone(app: &AppHandle, label: &str) {
@@ -158,6 +176,7 @@ pub async fn pty_spawn(
     rows: u16,
     output: Channel<InvokeResponseBody>,
 ) -> Result<Spawned, String> {
+    let stamp = webview.state::<Terminals>().stamp();
     crate::lane::off_the_runtime(move || -> Result<Spawned, String> {
         let owner = owner(&webview)?;
         usable(&id)?;
@@ -177,7 +196,7 @@ pub async fn pty_spawn(
         let (session, started) = session::Session::open(&launch, cols, rows)?;
         let pid = session.pid();
         let session = Arc::new(session);
-        if !kept_alone(&terminals, &id, owner, &session, remote) {
+        if !kept_alone(&terminals, &id, owner, stamp, &session, remote) {
             session.end();
             started.run(Box::new(|_| {}), |_| {});
             return Err(format!("terminal {id} is already running"));
@@ -219,11 +238,15 @@ fn kept_alone(
     terminals: &Terminals,
     id: &str,
     owner: String,
+    stamp: u64,
     session: &Arc<Session>,
     remote: bool,
 ) -> bool {
     let mut sessions = terminals.lock();
-    if terminals.closing.load(Ordering::SeqCst) || sessions.contains_key(id) {
+    if terminals.closing.load(Ordering::SeqCst)
+        || sessions.contains_key(id)
+        || terminals.ended_since(&owner, stamp)
+    {
         return false;
     }
     sessions.insert(
@@ -367,6 +390,7 @@ mod tests {
             &terminals,
             "t1",
             "main".to_owned(),
+            0,
             &first,
             false
         ));
@@ -374,6 +398,7 @@ mod tests {
             &terminals,
             "t1",
             "main".to_owned(),
+            0,
             &second,
             false
         ));
@@ -384,11 +409,50 @@ mod tests {
             &terminals,
             "t2",
             "main".to_owned(),
+            0,
             &second,
             false
         ));
         first.end();
         second.end();
+    }
+
+    #[test]
+    fn a_shell_started_for_a_page_since_reloaded_is_never_kept() {
+        let terminals = Terminals::default();
+        let stamp = terminals.stamp();
+        terminals.end_where(Some("main"));
+        let late = Arc::new(idle_shell());
+        assert!(!kept_alone(
+            &terminals,
+            "t1",
+            "main".to_owned(),
+            stamp,
+            &late,
+            false
+        ));
+        assert!(terminals.held("main", "t1").is_err());
+        let other = Arc::new(idle_shell());
+        assert!(kept_alone(
+            &terminals,
+            "t2",
+            "other".to_owned(),
+            stamp,
+            &other,
+            false
+        ));
+        let fresh = Arc::new(idle_shell());
+        assert!(kept_alone(
+            &terminals,
+            "t1",
+            "main".to_owned(),
+            terminals.stamp(),
+            &fresh,
+            false
+        ));
+        late.end();
+        other.end();
+        fresh.end();
     }
 
     #[test]

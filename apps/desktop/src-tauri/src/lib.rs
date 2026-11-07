@@ -845,6 +845,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     #[cfg(desktop)]
     let builder = builder.on_page_load(|webview, payload| {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
+            terminal::page_started(webview);
             if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
                 waiting.forget(webview.label());
             }
@@ -1066,6 +1067,51 @@ pub(crate) fn app_dir() -> std::path::PathBuf {
 #[cfg(test)]
 mod tests {
     use crate::calls;
+
+    fn app_page_load_hooks(text: &str) -> usize {
+        let mut signature = String::new();
+        let mut opening = false;
+        let mut hooks = 0;
+        for line in text.lines() {
+            let head = line.trim_start().split('(').next().unwrap_or_default();
+            if (head.starts_with("fn ") || head.starts_with("pub") || head.starts_with("async "))
+                && head.contains("fn ")
+            {
+                signature.clear();
+                opening = true;
+            }
+            if opening {
+                signature.push_str(line);
+                opening = !line.contains('{');
+            }
+            if line.contains(".on_page_load(") && signature.contains("tauri::Builder<") {
+                hooks += 1;
+            }
+        }
+        hooks
+    }
+
+    #[test]
+    fn the_app_has_one_page_load_hook_as_a_second_would_replace_it() {
+        let mut hooks = Vec::new();
+        let mut pending = vec![crate::app_dir().join("src")];
+        while let Some(dir) = pending.pop() {
+            for entry in std::fs::read_dir(&dir).expect("sources").flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    pending.push(path);
+                } else if path.extension().is_some_and(|ext| ext == "rs") {
+                    let text = std::fs::read_to_string(&path).expect("a source");
+                    for _ in 0..app_page_load_hooks(&text) {
+                        hooks.push(path.display().to_string());
+                    }
+                }
+            }
+        }
+        assert_eq!(hooks.len(), 1, "{hooks:?}");
+        let second = "fn a(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {\n    builder.on_page_load(|_, _| {})\n}\nfn b(view: WebviewBuilder) {\n    view.on_page_load(|_, _| {});\n}\n";
+        assert_eq!(app_page_load_hooks(second), 1);
+    }
 
     const EXCEPTED: [&str; 5] = [
         "crate::logs::write_log",
