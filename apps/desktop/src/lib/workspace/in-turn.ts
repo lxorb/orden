@@ -27,9 +27,14 @@ export async function keepVersion(path: string, content: string, source?: string
   await invoke('snapshot_note', { path, content, ...from }).catch(() => undefined)
 }
 
-export async function writeInTurn(path: string, content: string, arrived = false): Promise<void> {
+export async function writeInTurn(
+  path: string,
+  content: string,
+  arrived = false,
+  over?: string,
+): Promise<void> {
   if (isAccountInbox(path)) {
-    await (await accountInbox()).write(content)
+    await (await accountInbox()).write(content, over)
     return
   }
   await invoke('write_note', arrived ? { path, content, arrived } : { path, content })

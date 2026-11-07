@@ -43,11 +43,14 @@ export function keptOver(was: Kept | undefined, item: Kept): Kept {
 
 const MOST_PAGES = 50
 
+const READINGS = 16
+
 const CARRIED_STAMP = inboxStamp(0, 0, 'carried')
 
 export class InboxRecords {
   private held = new Map<string, Kept>()
   private seen = new Set<string>()
+  private readings = new Map<string, Item[]>()
   private last = 0
   private count = 0
   private cursor = 0
@@ -88,7 +91,14 @@ export class InboxRecords {
   text(): string {
     const items = this.items()
     for (const one of items) this.seen.add(one.id)
-    return rendered(items)
+    const text = rendered(items)
+    this.readings.delete(text)
+    this.readings.set(text, items)
+    if (this.readings.size > READINGS) {
+      const oldest = this.readings.keys().next().value
+      if (oldest !== undefined) this.readings.delete(oldest)
+    }
+    return text
   }
 
   get pending(): number {
@@ -178,8 +188,11 @@ export class InboxRecords {
     ])
   }
 
-  async write(markdown: string): Promise<void> {
-    const changes = changesTo(this.items(), markdown, this.newId, (id) => this.seen.has(id))
+  async write(markdown: string, over?: string): Promise<void> {
+    const read = over === undefined ? undefined : this.readings.get(over)
+    const changes = read
+      ? changesTo(read, markdown, this.newId, () => true)
+      : changesTo(this.items(), markdown, this.newId, (id) => this.seen.has(id))
     await this.change(
       datedChanges((id) => this.held.get(id)?.fields, changes, todayOf(new Date(this.now()))),
     )

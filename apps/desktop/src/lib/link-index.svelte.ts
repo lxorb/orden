@@ -1282,7 +1282,7 @@ class Links {
             const edit = oneEdit(before, words)
             if (late && edit) late.edited([edit], words)
             await keepIt(before)
-            await writeInTurn(target, words)
+            await writeInTurn(target, words, false, before)
             return words
           }).catch(refused)
       if (after === null) continue
@@ -1380,7 +1380,7 @@ class Links {
         await writeEdited(doc, absolute, after, knew, keepIt)
       } else {
         await keepIt()
-        await writeInTurn(absolute, after)
+        await writeInTurn(absolute, after, false, before)
       }
 
       this.noteSaved(absolute, after)

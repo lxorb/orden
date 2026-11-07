@@ -127,8 +127,8 @@ export class AccountInbox {
     if (this.server) this.sendSoon()
   }
 
-  async write(markdown: string): Promise<void> {
-    await (await this.ready()).write(markdown)
+  async write(markdown: string, over?: string): Promise<void> {
+    await (await this.ready()).write(markdown, over)
     this.wrote()
   }
 

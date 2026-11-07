@@ -102,6 +102,30 @@ describe('the inbox kept on a device', () => {
     expect(laptop.text()).toMatch(/From the phone/)
   })
 
+  test('a write made from an older reading neither takes over nor deletes a to-do that arrived since', async () => {
+    const clock = { at: 1000 }
+    const disk = memoryDisk()
+    const window = (name: string) =>
+      new InboxRecords(
+        disk,
+        name,
+        () => clock.at,
+        () => `${name}${(clock.at += 1)}`,
+      )
+    const one = window('one')
+    const two = window('two')
+    await one.write('- [ ] First\n')
+    await two.load()
+    const read = two.text()
+    await one.write(`${one.text()}- [ ] From the other window\n`)
+    await two.load()
+    two.text()
+    await two.write(`${read}- [ ] Mine\n`, read)
+    await one.load()
+    const lines = one.text().split('\n').filter(Boolean).sort()
+    expect(lines).toEqual(['- [ ] First', '- [ ] From the other window', '- [ ] Mine'])
+  })
+
   test('a to-do carried from an old file loses to every later change, on any device', async () => {
     const clock = { at: 1000 }
     const server = account()
