@@ -18,7 +18,7 @@ import { links } from '../link-index.svelte'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
 import { forgetIndex, type IndexStore, openIndex } from '../web/index-store'
-import { pathKey, samePath } from '../space-paths'
+import { nameOf, pathKey, samePath } from '../space-paths'
 import { followRoots } from '../workspace/roots-moved'
 import { oneWriteAt, type Said, windows } from '../windows'
 import { sheetArrived } from '../pdf/sheets.svelte'
@@ -1205,7 +1205,7 @@ class Runner {
     const token = account.token
     const accountId = account.user?.id
     const listed = account.spaces.find((one) => one.id === spaceId)
-    const name = workspace.spaces.find((one) => samePath(one.root, root))?.name
+    const name = workspace.spaces.find((one) => samePath(one.root, root))?.name ?? nameOf(root)
     if (!token || !accountId || listed?.role !== 'owner' || !name || listed.name === name) return
     const { sendName } = await import('../space-owed')
     await sendName(token, accountId, spaceId, name)

@@ -48,13 +48,13 @@ function engineWith(root: string) {
   }
 }
 
-async function renamed(role: string) {
+async function renamed(role: string, shown = true) {
   sent.length = 0
   vi.spyOn(account, 'loadSpaces').mockResolvedValue(undefined as never)
   account.token = 'session'
   account.user = { id: 'u1' } as never
   account.spaces = [{ id: 's1', name: 'Work', role }] as never
-  workspace.spaces = [{ id: 'local', name: 'Job', root: '/spaces/Job' }]
+  workspace.spaces = shown ? [{ id: 'local', name: 'Job', root: '/spaces/Job' }] : []
   open.local = false
   open.current = engineWith('/spaces/Work')
 
@@ -74,6 +74,10 @@ afterEach(() => {
 describe('a space renamed on this device', () => {
   test('takes its new name to the account', async () => {
     expect(await renamed('owner')).toEqual([['s1', 'Job']])
+  })
+
+  test('even where this window has not heard of the new folder yet', async () => {
+    expect(await renamed('owner', false)).toEqual([['s1', 'Job']])
   })
 
   test('but not one somebody else owns', async () => {
