@@ -57,7 +57,7 @@ ACTIVITY = """
     bytes: {},
     dictates: false,
     word: 'this launch, and no frame in it',
-    said: { widgets: [], done: 0, listen: [] },
+    said: { widgets: [], done: Number(sessionStorage.getItem('handed-done') ?? 0), listen: [] },
   }
   window.__android = held
 
@@ -86,6 +86,7 @@ ACTIVITY = """
       if (said !== held.word) return
       held.shared = ''
       held.said.done++
+      sessionStorage.setItem('handed-done', String(held.said.done))
     },
     widgets: (said, json) => {
       if (said === held.word) held.said.widgets.push(json)
@@ -219,6 +220,8 @@ def fresh(
         context.add_init_script(
             f"""
             (() => {{
+              if (sessionStorage.getItem('handed-once')) return
+              sessionStorage.setItem('handed-once', '1')
               window.__android.shared = {waiting}
               window.__android.bytes = {bytes_of}
             }})()
