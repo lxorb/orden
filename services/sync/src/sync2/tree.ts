@@ -1,4 +1,4 @@
-import { freePath } from '@orden/markdown/paths'
+import { freePath, uncounted } from '@orden/markdown/paths'
 import {
   applyOp,
   heldName,
@@ -910,7 +910,7 @@ function keyPrefix(given: string): string {
   const name = heldName(given)
   if (name.length > LONGEST_NAME - NUMBERED) return ''
   const dot = name.lastIndexOf('.')
-  const key = nameKey(dot > 0 ? name.slice(0, dot) : name)
+  const key = nameKey(uncounted(dot > 0 ? name.slice(0, dot) : name))
   return /[σς]$/u.test(key) ? key.slice(0, -1) : key
 }
 

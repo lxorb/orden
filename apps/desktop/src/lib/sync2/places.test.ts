@@ -424,3 +424,25 @@ describe('a folder the tree shows with nothing of it on this disk', () => {
     expect(space.folderAt('Work')).toBeUndefined()
   })
 })
+
+describe('two entries of one name beside one that holds its number', () => {
+  test('numbers the second past the number the other holds, never onto it (#1630)', () => {
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [
+        row('a', 'file', null, 'App.application', 'App.application'),
+        row('b', 'file', null, 'App.application', ''),
+        row('c', 'file', null, 'App 2.application', 'App 2.application'),
+      ],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: false } as never,
+    )
+
+    expect(Object.fromEntries(space.paths())).toEqual({
+      a: 'App.application',
+      b: 'App 3.application',
+      c: 'App 2.application',
+    })
+  })
+})

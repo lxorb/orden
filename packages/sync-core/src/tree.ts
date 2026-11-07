@@ -1,4 +1,4 @@
-import { freePath } from '@orden/markdown/paths'
+import { freeName as freeWhole, freePath } from '@orden/markdown/paths'
 import { type ItemMeta, patched, sameMeta } from './meta'
 import { type EntryKind, heldName, LONGEST_NAME, type Op, type OpResult, shortened } from './wire'
 
@@ -78,14 +78,10 @@ function freeName(
 ): string {
   const taken = takenIn(state, parent, except)
   const free = (candidate: string) => !taken.has(nameKey(candidate))
-  const first = (name: string): string => {
-    if (kind !== 'folder') return freePath(name, (candidate) => !free(candidate))
-    if (free(name)) return name
-    for (let counter = 2; ; counter += 1) {
-      const candidate = `${name} ${String(counter)}`
-      if (free(candidate)) return candidate
-    }
-  }
+  const first = (name: string): string =>
+    kind === 'folder'
+      ? freeWhole(name, (candidate) => !free(candidate))
+      : freePath(name, (candidate) => !free(candidate))
 
   let name = heldName(wanted)
   for (;;) {

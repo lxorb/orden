@@ -29,6 +29,21 @@ function live(state: TreeState, id: string): boolean {
 }
 
 describe('tree', () => {
+  test('a name already numbered is counted on, never numbered again (#1630)', () => {
+    const state = treeState()
+    create(state, 'a', 'App.application')
+    create(state, 'b', 'App 2.application')
+    const third = create(state, 'c', 'App 2.application')
+    expect('name' in third ? third.name : '').toBe('App 3.application')
+    mkdir(state, 'f', 'Work')
+    mkdir(state, 'g', 'Work 2')
+    const folder = mkdir(state, 'h', 'Work 2')
+    expect('name' in folder ? folder.name : '').toBe('Work 3')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'rename', id: 'b', name: 'App 2.application', seen }, OWNER)
+    expect(state.entries.get('b')?.name).toBe('App 2.application')
+  })
+
   test('the number of a name that is taken still leaves a name', () => {
     const state = treeState()
     const long = `${'x'.repeat(252)}.md`

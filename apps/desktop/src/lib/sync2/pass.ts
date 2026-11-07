@@ -23,7 +23,7 @@ import type { Doc } from './docs'
 import { MINE } from './docs'
 import { foldIn, readAgain } from './ingest'
 import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from './kinds'
-import { dropUnmade, made } from './create'
+import { dropUnmade, made, unstackedNames } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { keepingChange, keptHere } from './keeping'
 import { notWritten, project } from './project'
@@ -50,6 +50,7 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   const passed: Passed = { pulled: 0, pushed: 0, finished: false, full: false }
 
   await core.commit(flushAll(core))
+  await core.commit(unstackedNames(core, space))
   if (!alive()) return passed
   if (!(await sendKeeps(core, space, alive))) return passed
   const unsent = await sendMade(core, space, alive, passed)

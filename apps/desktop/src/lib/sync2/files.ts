@@ -192,7 +192,10 @@ export async function settleFiles(
       if (!entry.local_path) {
         const holder = space.at(path)
         if (holder && holder !== entry) continue
-        if (await core.world.disk.exists(full)) continue
+        if (await core.world.disk.exists(full)) {
+          await claimed(core, space, entry, path)
+          continue
+        }
       }
       const bytes = await blobs.down(space.id, entry.id)
       if (!alive() || bytes === null) return false
@@ -306,6 +309,23 @@ function waitingCreate(space: SpaceState, id: string): boolean {
   return space.outbox.some(
     (one) => one.record.t === 'op' && one.record.op.t === 'create' && one.record.op.id === id,
   )
+}
+
+export async function claimed(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  path: string,
+): Promise<boolean> {
+  entry.local_path = path
+  const here = await readBytes(core, space, entry)
+  if (!here || typeof here === 'string' || here.hash !== entry.file_key) {
+    entry.local_path = ''
+    return false
+  }
+  space.changed()
+  await written(core, entry, here.hash, here.bytes)
+  return true
 }
 
 async function written(core: Core, entry: EntryRow, hash: string, bytes: Uint8Array) {

@@ -1,3 +1,4 @@
+import { freeName as freeWhole } from '@orden/markdown/paths'
 import { invoke as crate } from '../native'
 import { joinPath, platform } from '../tauri'
 import { safeName } from '../web/paths'
@@ -117,12 +118,7 @@ async function mounted(root: string, folder: string) {
 }
 
 export function freeName(wanted: string, taken: readonly string[]): string {
-  const used = (one: string) => taken.some((name) => same(name, one))
-  if (!used(wanted)) return wanted
-  for (let counter = 2; ; counter += 1) {
-    const one = `${wanted} ${String(counter)}`
-    if (!used(one)) return one
-  }
+  return freeWhole(wanted, (one) => taken.some((name) => same(name, one)))
 }
 
 async function names(): Promise<string[]> {

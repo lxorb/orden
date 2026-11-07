@@ -17,6 +17,7 @@ const SPACE = 'sim'
 
 interface Device {
   account: ReferenceAccount
+  disk: MemoryDisk
   store: MemoryStore
   sent: { t: string; pos?: string }[]
   keeps: boolean
@@ -78,6 +79,7 @@ async function device(foldsCase = true): Promise<Device> {
 
   const made: Device = {
     account,
+    disk,
     store,
     sent: [],
     keeps: true,
@@ -290,5 +292,24 @@ describe("an item's metadata", () => {
     expect(one.engine.describedIn(ROOT)).toBeNull()
     expect(one.engine.keepsPlaces(ROOT)).toBe(true)
     expect((await one.account.view()).entries.map((entry) => entry.name)).toContain('New.md')
+  })
+})
+
+describe('a name that grew a run of " 2" (#1630)', () => {
+  test('is given back the name it grew from, on the account and on the disk', async () => {
+    const one = await device()
+    await one.engine.pass(SPACE)
+    const from = `${ROOT}/Plan.md`
+    const to = `${ROOT}/Plan 2 2 2.md`
+    await one.disk.move(from, to)
+    await one.engine.moved(from, to)
+
+    await one.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+
+    const names = (await one.account.view()).entries.map((entry) => entry.name).sort()
+    expect(names).toEqual(['Ideas.md', 'Plan.md'])
+    expect(one.disk.files.has(from)).toBe(true)
+    expect(one.disk.files.has(to)).toBe(false)
   })
 })

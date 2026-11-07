@@ -1,3 +1,4 @@
+import { freePath } from '@orden/markdown/paths'
 import { type OpResult, type Op } from '@orden/sync-core/wire'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { hash32 } from '@orden/sync-core/seed'
@@ -236,11 +237,15 @@ export class SpaceState {
     const walk = (parent: string | null, folder: string) => {
       const siblings = (children.get(parent) ?? []).sort((a, b) => (a.id < b.id ? -1 : 1))
       const taken = new Set<string>()
+      const own = new Set(
+        siblings.map((entry) => this.key(localName(entry.name, this.world.platform))),
+      )
       for (const entry of siblings) {
-        let name = localName(entry.name, this.world.platform)
-        for (let counter = 2; taken.has(this.key(name)); counter += 1) {
-          name = numbered(localName(entry.name, this.world.platform), counter)
-        }
+        const wanted = localName(entry.name, this.world.platform)
+        const name = freePath(
+          wanted,
+          (one) => taken.has(this.key(one)) || (one !== wanted && own.has(this.key(one))),
+        )
         taken.add(this.key(name))
         const path = joined(folder, name)
         out.set(entry.id, path)
@@ -315,6 +320,15 @@ export class SpaceState {
     for (const id of this.shownKeys().get(wanted) ?? []) {
       const entry = this.entries.get(id)
       if (entry && !entry.local_path && entry.seq !== null && holdsDocument(entry.kind))
+        return entry
+    }
+    return null
+  }
+
+  awaitedAt(path: string): EntryRow | null {
+    for (const id of this.shownKeys().get(this.key(path)) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry?.kind === 'file' && !entry.local_path && entry.seq !== null && this.isLive(id))
         return entry
     }
     return null
@@ -454,13 +468,6 @@ function positionAfter(
   }
   if (op.t === 'move' && before !== after) return undefined
   return had
-}
-
-function numbered(name: string, counter: number): string {
-  const dot = name.lastIndexOf('.')
-  return dot > 0
-    ? `${name.slice(0, dot)} ${String(counter)}${name.slice(dot)}`
-    : `${name} ${String(counter)}`
 }
 
 export interface Settling {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { conflictPath, freePath, numbered, withoutForbidden } from './paths'
+import { conflictPath, freeName, freePath, numbered, unstacked, withoutForbidden } from './paths'
 
 describe('stepping a name that is taken', () => {
   test('leaves the first one as it is', () => {
@@ -37,9 +37,37 @@ describe('the first spelling nobody has', () => {
     expect(freePath('Idea.md', (one) => taken.has(one))).toBe('Idea 4.md')
   })
 
+  test('counts a numbered name on instead of numbering it again (#1630)', () => {
+    const taken = new Set(['App.application', 'App 2.application'])
+    expect(freePath('App 2.application', (one) => taken.has(one))).toBe('App 3.application')
+    expect(freePath('a/App 2.application', (one) => taken.has(one.slice(2)))).toBe(
+      'a/App 3.application',
+    )
+    expect(freeName('Work 2', (one) => one === 'Work 2')).toBe('Work 3')
+  })
+
+  test('leaves a year or a long number in a name as part of the name', () => {
+    expect(freePath('Plan 2026.md', (one) => one === 'Plan 2026.md')).toBe('Plan 2026 2.md')
+  })
+
   test('asks the caller, so a caller that ignores case gets one answer', () => {
     const taken = new Set(['idea.md'])
     expect(freePath('Idea.md', (one) => taken.has(one.toLowerCase()))).toBe('Idea 2.md')
+  })
+})
+
+describe('a name that grew a run of numbers', () => {
+  test('is the name it grew from (#1630)', () => {
+    expect(unstacked('AbaClient Manager 2 2 2 2 2 2 2.application')).toBe(
+      'AbaClient Manager.application',
+    )
+    expect(unstacked('a/b/Notes 2 2')).toBe('a/b/Notes')
+  })
+
+  test('leaves one number, or numbers that are not a run, alone', () => {
+    expect(unstacked('Plan 2.md')).toBe('Plan 2.md')
+    expect(unstacked('Plan 3 2.md')).toBe('Plan 3 2.md')
+    expect(unstacked('2 2.md')).toBe('2 2.md')
   })
 })
 

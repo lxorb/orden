@@ -21,7 +21,7 @@ import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
-import { waitsForBytes } from './files'
+import { claimed, waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { away, awayUnder, keepingChange, type LettingGo, trim, used, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
@@ -409,6 +409,8 @@ export class Engine implements AskedEngine {
       return null
     }
     if (folder && placed.space.folderAt(placed.path) !== undefined) return null
+    const awaited = folder ? null : placed.space.awaitedAt(placed.path)
+    if (awaited && (await claimed(this.core, placed.space, awaited, placed.path))) return null
     if (!folder && (await this.heldPaper(path))) return null
     const { id, changes } = await made(this.core, placed.space, {
       path: placed.path,

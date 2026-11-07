@@ -1,4 +1,5 @@
 import { carriedOwn } from '@orden/bases/inbox'
+import { unstacked } from '@orden/markdown/paths'
 import { fileMade } from './files'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { kindOfName } from '@orden/sync-core/tree'
@@ -169,7 +170,15 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
 
 function keptName(space: SpaceState, entry: EntryRow, from: string, to: string): string {
   const had = space.shown().entries.get(entry.id)?.name
-  return had !== undefined && nameOf(from) === nameOf(to) ? had : nameOf(to)
+  const name = nameOf(to)
+  return had !== undefined && (nameOf(from) === name || placedAs(space, entry.id, name))
+    ? had
+    : name
+}
+
+function placedAs(space: SpaceState, id: string, name: string): boolean {
+  const placed = space.paths().get(id)
+  return placed !== undefined && nameOf(placed) === name
 }
 
 export function intended(
@@ -480,11 +489,38 @@ export async function restored(
 
   const now = space.shown().entries.get(id)
   const name = nameOf(path)
-  if (!stays && now && !now.deleted && space.key(space.spelled(now.name)) !== space.key(name)) {
+  if (
+    !stays &&
+    now &&
+    !now.deleted &&
+    space.key(space.spelled(now.name)) !== space.key(name) &&
+    !placedAs(space, id, name)
+  ) {
     const seen = space.row.cursor
     changes.push(...queue(core, space, { op: core.nextId('o'), t: 'rename', id, name, seen }))
   }
   if (space.gone.delete(id)) changes.push(put('meta', goneRow(space.id, space.gone)))
   space.changed()
+  return changes
+}
+
+const unstacking = new WeakMap<SpaceState, Set<string>>()
+
+export function unstackedNames(core: Core, space: SpaceState): Change[] {
+  if (space.row.role === 'read') return []
+  const tried = unstacking.get(space) ?? new Set<string>()
+  unstacking.set(space, tried)
+  const changes: Change[] = []
+  for (const entry of space.shown().entries.values()) {
+    if (entry.deleted || tried.has(entry.id) || !space.entries.has(entry.id)) continue
+    const name = unstacked(entry.name)
+    if (name === entry.name) continue
+    tried.add(entry.id)
+    const seen = space.row.cursor
+    changes.push(
+      ...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }),
+    )
+  }
+  if (changes.length) space.changed()
   return changes
 }
