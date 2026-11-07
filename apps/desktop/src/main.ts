@@ -22,6 +22,7 @@ if (isMobile) {
 }
 
 document.documentElement.toggleAttribute('data-engine-bars', isDesktop && platform() === 'linux')
+document.documentElement.toggleAttribute('data-skips-unseen', 'userAgentData' in navigator)
 
 const target = document.getElementById('app')
 if (!target) throw new Error('index.html has no #app to mount into')

@@ -122,6 +122,12 @@
     overflow: hidden;
   }
 
+  :global([data-skips-unseen]) .words :global(.code) {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto
+      calc(var(--row-height-sm) + 1px + 2 * var(--space-2) + var(--lines, 6) * 0.86em * 1.6);
+  }
+
   .words:global(:is(#write, .nib-write)) > :global(.code:first-child) {
     margin-top: 0;
   }

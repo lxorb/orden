@@ -6,7 +6,9 @@ import { answerHtml, inLineGroups, LINES_A_GROUP, withCodeBars } from './drawn'
 describe('withCodeBars', () => {
   it('puts a bar with the language and a copy button over a fenced block', () => {
     const html = answerHtml('```ts\nlet a = 1\n```', { copy: 'Copy code' })
-    expect(html).toContain('<div class="code"><div class="code-bar"><span>ts</span>')
+    expect(html).toContain(
+      '<div class="code" style="--lines: 1"><div class="code-bar"><span>ts</span>',
+    )
     expect(html).toContain('aria-label="Copy code"')
     expect(html).toMatch(/<pre><code class="language-ts">[\s\S]*let[\s\S]*<\/code><\/pre><\/div>/)
   })
@@ -23,6 +25,24 @@ describe('withCodeBars', () => {
 
   it('escapes the label it is handed', () => {
     expect(withCodeBars('<pre><code>x</code></pre>', 'a"b')).toContain('title="a&#34;b"')
+  })
+
+  it('tells a finished block its lines, so it can be laid out only once it is in sight', () => {
+    const lines = (n: number) =>
+      Array.from({ length: n }, (_, at) => `line ${String(at)}`).join('\n')
+    const html = answerHtml(`\`\`\`\n${lines(3)}\n\`\`\`\n\n\`\`\`js\n${lines(40)}\n\`\`\``, {
+      copy: 'Copy code',
+    })
+    expect(html.match(/<div class="code" style="--lines: (\d+)">/g)).toEqual([
+      '<div class="code" style="--lines: 3">',
+      '<div class="code" style="--lines: 40">',
+    ])
+    expect(withCodeBars('<pre><code>a\nb</code></pre>', 'Copy', true)).toContain('--lines: 2')
+  })
+
+  it('leaves a streaming block unsized, so each new line patches it in place', () => {
+    const html = answerHtml('```\none\ntwo\n```', { copy: 'Copy code', live: true })
+    expect(html).toContain('<div class="code"><div class="code-bar">')
   })
 
   it('draws no bar where no label is asked for', () => {
