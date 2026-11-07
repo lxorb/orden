@@ -258,7 +258,9 @@ mod tests {
             program(&terminal),
             Some(
                 terminal
-                    .join("Contents/MacOS/Terminal")
+                    .join("Contents")
+                    .join("MacOS")
+                    .join("Terminal")
                     .to_string_lossy()
                     .into_owned()
             )
