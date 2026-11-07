@@ -15,7 +15,7 @@ export function tokenRow(touch: boolean): number {
 }
 
 export function measuredRow(list: HTMLElement, least: number): number {
-  const first = list.firstElementChild
+  const first = list.querySelector(':scope > [data-row]:not(.away)')
   if (!(first instanceof HTMLElement)) return least
 
   const tall = first.getBoundingClientRect().height
