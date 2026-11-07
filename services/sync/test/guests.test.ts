@@ -593,7 +593,8 @@ describe('a guest session', () => {
       [`/v1/spaces/${space}`, 'PATCH'],
       [`/v1/spaces/${space}`, 'DELETE'],
     ] as const) {
-      const { status } = await call(env, path, { method, token: guest })
+      const body = method === 'PATCH' ? { name: 'Renamed' } : undefined
+      const { status } = await call(env, path, { method, token: guest, body })
       expect(status, path).toBe(403)
     }
   })

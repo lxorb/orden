@@ -98,6 +98,7 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'GET', path: /^\/v1\/spaces$/ },
   { method: 'GET', path: /^\/v1\/shared$/ },
   { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
+  { method: 'PATCH', path: /^\/v1\/spaces\/[^/]+$/ },
   { method: 'GET', path: /^\/v1\/spaces\/[^/]+\/changes$/ },
   { method: 'POST', path: /^\/v1\/spaces\/[^/]+\/notes$/ },
   {

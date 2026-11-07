@@ -174,6 +174,26 @@ const ROUTES: Route[] = [
       call(env, `/v1/spaces/${space}/files`, { method: 'PUT', token, body: { files: [] } }),
   },
   {
+    what: "choosing the space's icon",
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}`, {
+        method: 'PATCH',
+        token,
+        body: { icon: 'Book', tint: 'red' },
+      }),
+  },
+  {
+    what: 'renaming the space with its icon',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}`, {
+        method: 'PATCH',
+        token,
+        body: { name: 'X', icon: 'Book' },
+      }),
+  },
+  {
     what: 'renaming the space',
     needs: 'owner',
     go: (token) =>
@@ -368,6 +388,54 @@ const HOLDERS: { as: string; role: 'read' | 'write' | 'owner'; token: () => stri
   { as: 'a guest who may write', role: 'write', token: () => guestWriter },
   { as: 'a guest who may read', role: 'read', token: () => guestReader },
 ]
+
+describe("a shared space's icon", () => {
+  test("a member with full access sets it for everyone in the space, and the name stays the owner's", async () => {
+    writer = await invite(WRITER, 'write')
+    reader = await invite(READER, 'read')
+
+    const set = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token: writer,
+      body: { icon: 'Rocket', tint: 'blue' },
+    })
+    expect(set.status).toBe(200)
+    expect(set.json.space).toMatchObject({ icon: 'Rocket', tint: 'blue', role: 'write' })
+    expect(set.json.space.blog.dns).toEqual([])
+
+    for (const token of [owner, writer, reader]) {
+      const listed = await call(env, '/v1/spaces', { token })
+      expect(listed.json.spaces.find((one: { id: string }) => one.id === space)).toMatchObject({
+        name: SHARED,
+        icon: 'Rocket',
+        tint: 'blue',
+      })
+    }
+
+    const named = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token: writer,
+      body: { name: 'Theirs', icon: 'Book' },
+    })
+    expect(named.status).toBe(403)
+    const kept = await call(env, '/v1/spaces', { token: owner })
+    expect(kept.json.spaces.find((one: { id: string }) => one.id === space)).toMatchObject({
+      name: SHARED,
+      icon: 'Rocket',
+    })
+  })
+
+  test('a member who may only read cannot change it', async () => {
+    reader = await invite(READER, 'read')
+
+    const set = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token: reader,
+      body: { icon: 'Rocket' },
+    })
+    expect(set.status).toBe(403)
+  })
+})
 
 describe('every route that names a space', () => {
   beforeEach(async () => {

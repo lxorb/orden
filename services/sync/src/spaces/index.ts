@@ -25,6 +25,7 @@ import {
   notesAmong,
   onceSharedAmong,
   presentSpace,
+  refusal,
   sharedAmong,
   spaceOf,
   type Role,
@@ -160,7 +161,7 @@ spaces.put('/order', async (context) => {
   return context.json({ ok: true })
 })
 
-spaces.patch('/:id', atLeast('owner'), async (context) => {
+spaces.patch('/:id', atLeast('write'), async (context) => {
   const space = spaceOf(context)
 
   const body = await readBody(context)
@@ -168,6 +169,9 @@ spaces.patch('/:id', atLeast('owner'), async (context) => {
   const chosen = body.nullableText('icon', ID_LIMIT)
   const painted = body.nullableText('tint', ID_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
+  if (name !== undefined && space.role !== 'owner') {
+    return context.json({ error: refusal('owner') }, 403)
+  }
 
   const label = name === undefined ? space.name : spaceName(name)
   if (!label) return context.json({ error: 'give the space a name' }, 400)
@@ -198,7 +202,9 @@ spaces.patch('/:id', atLeast('owner'), async (context) => {
     .bind(label, icon, tint, now(), space.id)
     .run()
 
-  return context.json({ space: presentSpace({ ...space, name: label, icon, tint }, context.env) })
+  return context.json({
+    space: presentSpace({ ...space, name: label, icon, tint }, context.env, space.role),
+  })
 })
 
 spaces.delete('/:id', atLeast('owner'), async (context) => {
