@@ -1,4 +1,3 @@
-import { fromBase64 } from '../bytes'
 import { endingOf } from './order'
 
 export type Shown = 'picture' | 'sound' | 'film' | 'text' | null
@@ -35,14 +34,13 @@ export function shownAs(name: string, size: number): Shown {
   return 'text'
 }
 
-export function mediaUrl(name: string, read: { bytes: string; cut: boolean }): string | null {
+export function mediaUrl(name: string, read: { bytes: Uint8Array; cut: boolean }): string | null {
   const known = KINDS[endingOf(name)]
   if (!known || read.cut) return null
-  const bytes = fromBase64(read.bytes)
-  return URL.createObjectURL(new Blob([bytes.slice().buffer], { type: known.type }))
+  return URL.createObjectURL(new Blob([read.bytes.slice().buffer], { type: known.type }))
 }
 
-export function pictureUrl(name: string, read: { bytes: string; cut: boolean }): string | null {
+export function pictureUrl(name: string, read: { bytes: Uint8Array; cut: boolean }): string | null {
   return KINDS[endingOf(name)]?.shown === 'picture' ? mediaUrl(name, read) : null
 }
 

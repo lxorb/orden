@@ -72,7 +72,7 @@ vi.mock('./commands', () => ({
       mode: 'rw-r--r--',
       link: null,
     }),
-  peekAt: () => Promise.resolve({ size: 5, bytes: 'aGVsbG8=', cut: false }),
+  peekAt: () => Promise.resolve({ bytes: new TextEncoder().encode('hello'), cut: false }),
   searchBelow: () => Promise.resolve({ found: 0, cut: false, cancelled: false }),
   FOUND: 'explorer://found',
   PROGRESS: 'explorer://progress',

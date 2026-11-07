@@ -145,13 +145,13 @@ export function factsOf(path: string): Promise<Facts> {
 }
 
 export interface Peek {
-  size: number
-  bytes: string
+  bytes: Uint8Array
   cut: boolean
 }
 
-export function peekAt(path: string, most: number): Promise<Peek> {
-  return invoke<Peek>('explorer_peek', { path, most })
+export async function peekAt(path: string, most: number): Promise<Peek> {
+  const read = new Uint8Array(await invoke<ArrayBuffer>('explorer_peek', { path, most }))
+  return { bytes: read.subarray(0, Math.max(0, read.length - 1)), cut: read.at(-1) === 1 }
 }
 
 export interface Count {

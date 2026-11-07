@@ -2,8 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use base64::Engine as _;
 use serde::Serialize;
+use tauri::ipc::Response;
 use tauri::{AppHandle, Manager as _};
 
 use super::reach::{judged, Explored, Fences, Use};
@@ -272,29 +272,23 @@ fn letters(meta: &fs::Metadata) -> String {
         .collect()
 }
 
-#[derive(Serialize)]
-pub struct Peek {
-    pub size: u64,
-    pub bytes: String,
-    pub cut: bool,
-}
-
 #[tauri::command(async)]
-pub fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Peek, String> {
+pub fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Response, String> {
     use std::io::Read as _;
     let path = asked(&app, &path, Use::Look)?;
     let file = fs::File::open(&path).map_err(|why| format!("{}: {why}", path.display()))?;
-    let size = file.metadata().map_or(0, |meta| meta.len());
-    let most = most.min(MOST_PEEKED);
     let mut bytes = Vec::new();
-    file.take(most)
+    file.take(most.min(MOST_PEEKED) + 1)
         .read_to_end(&mut bytes)
         .map_err(|why| format!("{}: {why}", path.display()))?;
-    Ok(Peek {
-        size,
-        cut: size > bytes.len() as u64,
-        bytes: base64::engine::general_purpose::STANDARD.encode(&bytes),
-    })
+    Ok(Response::new(peeked(bytes, most.min(MOST_PEEKED))))
+}
+
+fn peeked(mut bytes: Vec<u8>, most: u64) -> Vec<u8> {
+    let cut = bytes.len() as u64 > most;
+    bytes.truncate(usize::try_from(most).unwrap_or(usize::MAX));
+    bytes.push(u8::from(cut));
+    bytes
 }
 
 #[tauri::command(async)]
@@ -311,8 +305,16 @@ pub fn explorer_reveal(app: AppHandle, path: String) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{entries, Kind};
+    use super::{entries, peeked, Kind};
     use std::fs;
+
+    #[test]
+    fn a_peek_is_the_bytes_and_one_last_byte_that_says_whether_more_were_there() {
+        assert_eq!(peeked(b"four".to_vec(), 8), b"four\0");
+        assert_eq!(peeked(b"four".to_vec(), 4), b"four\0");
+        assert_eq!(peeked(b"fours".to_vec(), 4), b"four\x01");
+        assert_eq!(peeked(Vec::new(), 4), b"\0");
+    }
 
     #[test]
     fn a_folder_lists_what_it_holds_and_says_what_each_is() {
