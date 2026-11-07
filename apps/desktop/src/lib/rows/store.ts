@@ -40,6 +40,17 @@ export interface Host {
 
 const CHUNK = 250
 
+const CARRIED = 10 * 60_000
+
+const MOST_LEFT = 500
+
+interface Left {
+  hash: string
+  cancelled: boolean
+  day: string
+  at: number
+}
+
 interface Held {
   root: string
   name: string
@@ -149,9 +160,47 @@ export class RowsStore {
 
   private settle(held: Held, relative: string, was: Row[] | null, now: Row[], at: number) {
     if (!this.host.dated) return
+    if (was !== null) this.leaving(was, now, at)
     const meta = this.host.meta?.(held.root, relative) ?? null
-    const patch = datesChanged(was, now, meta, todayOf(new Date(at)))
+    const arrived = (hash: string, cancelled: boolean) => this.arrived(hash, cancelled, at)
+    const patch = datesChanged(was, now, meta, todayOf(new Date(at)), arrived)
     if (patch) this.host.dated(held.root, relative, patch)
+  }
+
+  private left: Left[] = []
+
+  private leaving(was: readonly Row[], now: readonly Row[], at: number) {
+    const closed = (rows: readonly Row[], cancelled: boolean) => {
+      const out = new Map<string, (string | undefined)[]>()
+      for (const row of rows) {
+        const task = row.task
+        const hash = row.anchor?.hash
+        if (!task || hash === undefined || (cancelled ? !task.cancelled : !task.done)) continue
+        const day = cancelled ? task.cancelledOn : task.completed
+        out.set(hash, [...(out.get(hash) ?? []), day])
+      }
+      return out
+    }
+    for (const cancelled of [false, true]) {
+      const after = closed(now, cancelled)
+      for (const [hash, days] of closed(was, cancelled)) {
+        const gone = days.length - (after.get(hash)?.length ?? 0)
+        for (const day of days.slice(days.length - Math.max(0, gone))) {
+          if (day !== undefined) this.left.push({ hash, cancelled, day, at })
+        }
+      }
+    }
+    this.left = this.left.filter((one) => at - one.at < CARRIED).slice(-MOST_LEFT)
+  }
+
+  private arrived(hash: string, cancelled: boolean, at: number): string | undefined {
+    for (let index = this.left.length - 1; index >= 0; index--) {
+      const one = this.left[index]
+      if (one?.hash !== hash || one.cancelled !== cancelled || at - one.at >= CARRIED) continue
+      this.left.splice(index, 1)
+      return one.day
+    }
+    return undefined
   }
 
   indexed(root: string, scans: readonly ScannedNote[]) {
