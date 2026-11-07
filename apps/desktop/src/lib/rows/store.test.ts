@@ -587,6 +587,48 @@ describe('the rows of a todo list and of a note (#1229, #1228)', () => {
     expect(done?.task?.text).toBe('Post the letter')
   })
 
+  test('ticking a todo reads its rows once with the day it took, not again from disk', async () => {
+    const path = `${WORK}/Errands.md`
+    const reads: string[] = []
+    const holder: { store?: RowsStore } = {}
+    const meta = new Map<string, Record<string, string>>([['Errands.md', { 'todo-list': 'yes' }]])
+    const { store, answer, settled, disk, heard } = rig(
+      { [path]: '- [ ] Post the letter\n' },
+      null,
+      [],
+      {
+        read: (at) => {
+          reads.push(at)
+          return Promise.resolve(disk.get(at) ?? null)
+        },
+        meta: (_root, at) => meta.get(at) ?? null,
+        list: (_root, _at, said) => said?.['todo-list'] === 'yes',
+        dated: (root, at, patch) => {
+          const now = Object.entries({ ...meta.get(at), ...patch }).filter(
+            (one): one is [string, string] => one[1] !== null,
+          )
+          meta.set(at, Object.fromEntries(now))
+          holder.store?.described(`${root}/${at}`)
+        },
+      },
+    )
+    holder.store = store
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+    heard.length = 0
+    reads.length = 0
+
+    disk.set(path, '- [x] Post the letter\n')
+    store.saved(path, '- [x] Post the letter\n')
+    const done = store.of().find((row) => row.task?.text === 'Post the letter')
+    expect(done?.task?.completed).toBe(todayOf(new Date(42)))
+    await settled()
+    expect(reads).toEqual([])
+    expect(heard.length).toBeLessThanOrEqual(2)
+  })
+
   test('a todo ticked on another device takes no day here: the device that ticked it keeps it', async () => {
     const path = `${WORK}/Errands.md`
     const { store, answer, settled, dated, disk } = listed({

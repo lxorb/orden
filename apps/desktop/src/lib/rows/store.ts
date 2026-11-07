@@ -155,8 +155,18 @@ export class RowsStore {
         readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
       )
     })
-    if (settles) this.settle(held, relative, was ?? null, held.files.get(key) ?? [], now)
+    if (!settles) return
+    const settling = { held, key, again: false }
+    this.settling = settling
+    try {
+      this.settle(held, relative, was ?? null, held.files.get(key) ?? [], now)
+    } finally {
+      this.settling = null
+    }
+    if (settling.again) this.saved(path, content, false)
   }
+
+  private settling: { held: Held; key: string; again: boolean } | null = null
 
   private settle(held: Held, relative: string, was: Row[] | null, now: Row[], at: number) {
     if (!this.host.dated) return
@@ -394,6 +404,12 @@ export class RowsStore {
   }
 
   described(path: string): void {
+    const settling = this.settling
+    const relative = settling && within(settling.held.root, path, settling.held.root)
+    if (settling && relative && pathKey(relative, settling.held.root) === settling.key) {
+      settling.again = true
+      return
+    }
     void this.fileCame(path, false)
   }
 
