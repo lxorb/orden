@@ -39,6 +39,7 @@ vi.mock('./paint', async (original) => {
 
 beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
+  vi.spyOn(performance, 'now').mockReturnValue(0)
 })
 
 const { FILE_WEIGHT, FILLED_A_FRAME, InkTiles, OUTLINE_WEIGHT, TILE } = await import('./tiles')
@@ -381,6 +382,23 @@ describe('a plane seen whole, arriving', () => {
     const layer = context()
 
     expect(settle(() => tiles.paint(layer.ctx, strokes, view(1000, 1000), palette))).toHaveLength(1)
+  })
+
+  test('a machine too slow for a frame of budget stops filling when the frame is spent, and the rest follow', () => {
+    const strokes = plane(200, 20)
+    const { made, make } = surfaces()
+    const tiles = new InkTiles(make)
+    const layer = context()
+    const at = view(1000, 1000)
+
+    let clock = 0
+    const ticking = vi.spyOn(performance, 'now').mockImplementation(() => (clock += 4))
+    try {
+      expect(settle(() => tiles.paint(layer.ctx, strokes, at, palette)).length).toBeGreaterThan(1)
+    } finally {
+      ticking.mockReturnValue(0)
+    }
+    check(made, strokes, at)
   })
 })
 
