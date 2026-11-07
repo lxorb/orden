@@ -10,7 +10,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...original,
     api: new Proxy(original.api, {
-      get: (target, key) =>
+      get: (target, key): unknown =>
         key === 'renameSpace'
           ? (_token: string, id: string, name: string) => {
               if (!line.up) return Promise.reject(new TypeError('Failed to fetch'))
@@ -50,7 +50,7 @@ function engineWith(root: string) {
 
 async function renamed(role: string, shown = true) {
   sent.length = 0
-  vi.spyOn(account, 'loadSpaces').mockResolvedValue(undefined as never)
+  vi.spyOn(account, 'loadSpaces').mockResolvedValue(undefined)
   account.token = 'session'
   account.user = { id: 'u1' } as never
   account.spaces = [{ id: 's1', name: 'Work', role }] as never

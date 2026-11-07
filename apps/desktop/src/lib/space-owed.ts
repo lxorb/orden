@@ -46,9 +46,8 @@ class Shelf<T> {
 
   put(accountId: string, spaceId: string, value: T) {
     const all = this.held()
-    const owed = { ...all[accountId] }
-    delete owed[spaceId]
-    all[accountId] = { ...owed, [spaceId]: value }
+    const owed = Object.entries(all[accountId] ?? {}).filter(([one]) => one !== spaceId)
+    all[accountId] = Object.fromEntries([...owed, [spaceId, value]])
     this.kept(all)
   }
 
@@ -56,7 +55,7 @@ class Shelf<T> {
     const all = this.held()
     const owed = all[accountId]
     if (!owed || JSON.stringify(owed[spaceId]) !== JSON.stringify(value)) return
-    delete owed[spaceId]
+    all[accountId] = Object.fromEntries(Object.entries(owed).filter(([one]) => one !== spaceId))
     this.kept(all)
   }
 }

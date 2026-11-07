@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const world = vi.hoisted(() => ({
-  mirrors: {} as Record<string, string>,
-}))
+const world = vi.hoisted((): { mirrors: Record<string, string> } => ({ mirrors: {} }))
 
 vi.mock('./sync.svelte', () => ({
   sync: {
@@ -39,7 +37,7 @@ const ICON = 'Choose an icon'
 function labels(id: string): string[] {
   const space = workspace.spaces.find((one) => one.id === id)
   if (!space) throw new Error(id)
-  return spaceMenu(space).flatMap((one) => (one && 'label' in one ? [String(one.label)] : []))
+  return spaceMenu(space).flatMap((one) => (one && 'label' in one ? [one.label] : []))
 }
 
 beforeEach(() => {
