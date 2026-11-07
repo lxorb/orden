@@ -18,6 +18,9 @@ patchedDependencies:
   marked@18.0.11:
     hash: 50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f
     path: patches/marked@18.0.11.patch
+  turndown@7.2.4:
+    hash: 9c3466f99138b32b2a649e68540007ba8b44bc619185905053f931ea9ec9ec5c
+    path: patches/turndown@7.2.4.patch
 
 importers:
 
@@ -441,7 +444,7 @@ importers:
         version: 2.2.0
       turndown:
         specifier: ^7.2.4
-        version: 7.2.4
+        version: 7.2.4(patch_hash=9c3466f99138b32b2a649e68540007ba8b44bc619185905053f931ea9ec9ec5c)
       turndown-plugin-gfm:
         specifier: ^1.0.2
         version: 1.0.2
@@ -6952,7 +6955,7 @@ snapshots:
 
   turndown-plugin-gfm@1.0.2: {}
 
-  turndown@7.2.4:
+  turndown@7.2.4(patch_hash=9c3466f99138b32b2a649e68540007ba8b44bc619185905053f931ea9ec9ec5c):
     dependencies:
       '@mixmark-io/domino': 2.2.0
 

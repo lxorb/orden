@@ -62,7 +62,8 @@
     "patchedDependencies": {
       "@codemirror/view@6.43.11": "patches/@codemirror__view@6.43.11.patch",
       "@lezer/markdown@1.7.2": "patches/@lezer__markdown@1.7.2.patch",
-      "marked@18.0.11": "patches/marked@18.0.11.patch"
+      "marked@18.0.11": "patches/marked@18.0.11.patch",
+      "turndown@7.2.4": "patches/turndown@7.2.4.patch"
     }
   }
 }
