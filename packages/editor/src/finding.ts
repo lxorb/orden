@@ -151,7 +151,7 @@ async function verdictOn(
       continue
     }
     if (view.state.doc === doc) return { doc, quick: true }
-    base = { doc, spent }
+    base = { doc, spent: base ? spent : 0 }
   }
 }
 
