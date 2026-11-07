@@ -4,6 +4,7 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import type { DecorationSet } from '@codemirror/view'
 import { describe, expect, test, vi } from 'vitest'
 import { blockDecorations, buildBlockDecorations } from './blocks'
+import { TocWidget } from './toc'
 import { dragFreeze } from './dragging'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
@@ -60,6 +61,36 @@ function widgetsIn(set: DecorationSet): unknown[] {
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n'
 
 describe('the blocks drawn after an edit', () => {
+  test('in a note with a contents list, look again at the list and the edit, and no more', () => {
+    const doc = `[toc]\n\n${Array.from({ length: 80 }, (_, i) => `## H${i}\n\npara ${i}\n\n${TABLE}\n`).join('')}`
+    let current = state(doc, doc.length)
+    const contents = (set: DecorationSet) =>
+      widgetsIn(set).flatMap((widget) =>
+        widget instanceof TocWidget
+          ? [
+              (widget as unknown as { entries: readonly { text: string }[] }).entries.map(
+                (one) => one.text,
+              ),
+            ]
+          : [],
+      )
+    const before = widgetsIn(current.field(blockDecorations).decorations)
+    looked.paragraphs = 0
+
+    const at = doc.indexOf('## H40') + 4
+    current = parsed(current.update({ changes: { from: at, insert: 'renamed ' } }).state)
+    current = parsed(
+      current.update({ changes: { from: current.doc.length, insert: '\n## Last\n' } }).state,
+    )
+
+    const after = current.field(blockDecorations).decorations
+    expect(looked.paragraphs).toBeLessThan(10)
+    expect(widgetsIn(after).filter((widget, index) => widget === before[index])).toHaveLength(80)
+    expect(contents(after)).toEqual(contents(buildBlockDecorations(current)))
+    expect(contents(after)[0]).toContain('Hrenamed 40')
+    expect(contents(after)[0]?.at(-1)).toBe('Last')
+  })
+
   test('only the blocks around the edit are looked at again', () => {
     const doc = Array.from({ length: 60 }, (_, i) => `para ${i}\n\n${TABLE}\n`).join('')
     let current = state(doc, 2)

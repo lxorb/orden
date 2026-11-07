@@ -10,13 +10,23 @@ export interface Heading {
   from: number
 }
 
+const NO_HEADINGS_INSIDE = new Set([
+  'Paragraph',
+  'FencedCode',
+  'CodeBlock',
+  'Table',
+  'HTMLBlock',
+  'CommentBlock',
+  'FrontMatter',
+])
+
 export function headings(state: EditorState): Heading[] {
   const found: Heading[] = []
 
   syntaxTree(state).iterate({
     enter: (node) => {
       const level = headingLevel(node.name)
-      if (level === null) return true
+      if (level === null) return !NO_HEADINGS_INSIDE.has(node.name)
 
       found.push({ level, text: headingText(state.doc.lineAt(node.from).text), from: node.from })
       return false

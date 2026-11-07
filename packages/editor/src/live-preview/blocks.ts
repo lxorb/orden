@@ -366,7 +366,6 @@ function touched(regions: readonly Span[], from: number, to: number) {
 function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean): Blocks | null {
   const state = transaction.state
   if (state.facet(numberEquations)) return null
-  if (value.toc && transaction.docChanged) return null
 
   const oldTree = syntaxTree(transaction.startState)
   const newTree = syntaxTree(state)
@@ -379,6 +378,12 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   if (oldEnd !== newTree.length) {
     const from = Math.min(oldEnd, newTree.length)
     wanted.push({ from, to: state.doc.length })
+  }
+  if (value.toc) {
+    value.decorations.between(0, transaction.startState.doc.length, (from, to, decoration) => {
+      if (!((decoration.spec as { widget?: unknown }).widget instanceof TocWidget)) return
+      wanted.push({ from: changes.mapPos(from, -1), to: changes.mapPos(to, 1) })
+    })
   }
 
   const was = transaction.startState.selection.ranges
