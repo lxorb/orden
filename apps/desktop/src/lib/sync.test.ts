@@ -1586,12 +1586,12 @@ describe('a pass that fails partway through', () => {
 })
 
 describe('a v2 space whose role is not known yet', () => {
-  async function unknown() {
+  async function unknown(kept: string | null = null) {
     await signIn()
     const forgotten: string[] = []
     const runner = {
       remoteIdFor: (root: string) => (root === '/Plan' ? 's-Plan' : null),
-      roleKept: () => null,
+      roleKept: () => kept,
       forget: (root: string) => {
         forgotten.push(root)
         return Promise.resolve()
@@ -1619,9 +1619,9 @@ describe('a v2 space whose role is not known yet', () => {
     }
   })
 
-  test('is deleted from the account once the listing says it is this account’s', async () => {
+  test('is deleted from the account once the listing is in and this device made it', async () => {
     const { roleOf } = await import('./sharing.svelte')
-    const { done } = await unknown()
+    const { done } = await unknown('owner')
     try {
       account.listed = true
       const role = roleOf('/Plan')
@@ -1629,6 +1629,22 @@ describe('a v2 space whose role is not known yet', () => {
       await sync.forget('/Plan', role)
 
       expect(fake.remote.calls).toContain('deleteSpace s-Plan')
+    } finally {
+      done()
+    }
+  })
+
+  test('is not deleted from the account when the listing leaves it out and it was not this device’s', async () => {
+    const { roleOf } = await import('./sharing.svelte')
+    const { forgotten, done } = await unknown('write')
+    try {
+      account.listed = true
+      const role = roleOf('/Plan')
+      expect(role).toBeNull()
+      await sync.forget('/Plan', role)
+
+      expect(forgotten).toEqual(['/Plan'])
+      expect(fake.remote.calls).not.toContain('deleteSpace s-Plan')
     } finally {
       done()
     }

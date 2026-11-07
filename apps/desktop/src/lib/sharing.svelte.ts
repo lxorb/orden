@@ -30,9 +30,9 @@ export function roleOf(root: string): SpaceRole | null {
   const id = sync.remoteIdFor(root)
   const listed = id ? account.spaces.find((one) => one.id === id) : undefined
   if (listed) return listed.role
-  if (id && account.listed) return 'owner'
 
   const kept = (id ? roleIn(sync.roleKept(root)) : null) ?? remembered(root)
+  if (id && account.listed) return kept === 'owner' ? 'owner' : null
   if (kept) return kept
 
   return id ? null : 'owner'

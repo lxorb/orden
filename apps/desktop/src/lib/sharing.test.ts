@@ -1416,3 +1416,34 @@ describe('the files other people shared with you', () => {
     expect(sharedWithYou.items.map((one) => one.id)).toEqual(['n2'])
   })
 })
+
+describe('a paired space the account no longer lists', () => {
+  test('is not the reader’s to write once they are taken out of it', () => {
+    world.mirrors = { Team: 'space-1' }
+    world.kept = { Team: 'write' }
+    account.spaces = []
+    account.listed = true
+
+    expect(roleOf('Team')).toBe(null)
+    expect(canWriteAt('Team/plan.md')).toBe(false)
+  })
+
+  test('and not theirs either when nothing was kept of it', () => {
+    world.mirrors = { Team: 'space-1' }
+    account.spaces = []
+    account.listed = true
+
+    expect(roleOf('Team')).toBe(null)
+    expect(canWriteAt('Team/plan.md')).toBe(false)
+  })
+
+  test('stays the reader’s own when it was theirs, as one just made here is', () => {
+    world.mirrors = { Mine: 'space-2' }
+    world.kept = { Mine: 'owner' }
+    account.spaces = []
+    account.listed = true
+
+    expect(roleOf('Mine')).toBe('owner')
+    expect(canWriteAt('Mine/plan.md')).toBe(true)
+  })
+})
