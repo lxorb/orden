@@ -40,6 +40,7 @@ const {
   ensureInbox,
   INBOX,
   inboxes,
+  inboxMarkedBy,
   inboxOf,
   isInternalInbox,
   OLD_INBOX,
@@ -130,6 +131,25 @@ describe('the inbox of a space', () => {
     expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/.Inbox.md`)
     expect(made).toEqual([`${ROOT}/.Inbox.md`])
     expect(disk.has(`${ROOT}/Inbox.md`)).toBe(false)
+  })
+
+  test('marked by another device is used once it is there, and never made before it arrives (#1469)', async () => {
+    const made: string[] = []
+    const make = (path: string) => {
+      made.push(path)
+      disk.set(path, '')
+      return Promise.resolve()
+    }
+    inboxMarkedBy((root) => (root === ROOT ? 'Inbox.md' : null))
+    try {
+      expect(inboxOf(ROOT)).toBe('Inbox.md')
+      expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/.Inbox.md`)
+      disk.set(`${ROOT}/Inbox.md`, '- [ ] arrived\n')
+      expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/Inbox.md`)
+      expect(made).toEqual([`${ROOT}/.Inbox.md`])
+    } finally {
+      inboxMarkedBy(() => null)
+    }
   })
 
   test('that is there and will not read is refused, never made again over itself', async () => {

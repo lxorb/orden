@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { carriedOwn, INBOX_PATH, withTasksOf } from './inbox'
+import { carriedOwn, INBOX_PATH, markedInbox, withTasksOf } from './inbox'
 import { rowsOfText } from './note-rows'
 
 describe("the space's own inbox", () => {
@@ -23,6 +23,22 @@ describe("the space's own inbox", () => {
       'note',
       'task',
     ])
+  })
+})
+
+describe('the inbox a space chose', () => {
+  test('is the note marked so, the first by path when two are, never the own one', () => {
+    expect(markedInbox([])).toBeNull()
+    expect(
+      markedInbox([
+        ['Work.md', { 'todo-list': 'yes' }],
+        ['Todoist/Inbox.md', { inbox: 'yes' }],
+        ['Inbox.md', { inbox: 'yes', 'todo-list': 'yes' }],
+        ['.Inbox.md', { inbox: 'yes' }],
+        ['Gone.md', null],
+      ]),
+    ).toBe('Inbox.md')
+    expect(markedInbox([['.Inbox.md', { inbox: 'yes' }]])).toBeNull()
   })
 })
 

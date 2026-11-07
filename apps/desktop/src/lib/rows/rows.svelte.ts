@@ -1,4 +1,5 @@
 import type { Row } from '@orden/bases'
+import { markedInbox } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'
@@ -7,7 +8,7 @@ import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
-import { hearInboxChosen, INBOX, inboxes, inboxOf } from './inbox'
+import { hearInboxChosen, INBOX, inboxes, inboxMarkedBy, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { hearOldLists, keepInboxListed } from './old-lists'
@@ -36,8 +37,14 @@ const store = new RowsStore({
 
 links.hearSaves((path, content, arrived) => store.saved(path, content, !arrived))
 workspace.itemMeta.hear((path) => store.described(path))
+const marks = new WeakMap<object, string | null>()
+inboxMarkedBy((root) => {
+  const items = workspace.itemMeta.itemsOf(root)
+  if (!marks.has(items)) marks.set(items, markedInbox(Object.entries(items)))
+  return marks.get(items) ?? null
+})
 hearInboxChosen((root) => {
-  keepInboxListed(root, workspace)
+  keepInboxListed(root, workspace, true)
   store.again(root)
 })
 hearOldLists((paths) => {

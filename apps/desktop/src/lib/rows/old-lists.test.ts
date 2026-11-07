@@ -64,7 +64,9 @@ vi.mock('../workspace.svelte', async () => {
 const { workspace } = await import('../workspace.svelte')
 const { RowsStore } = await import('./store')
 const { listedAt, listNamed, listsIn, unmakeList } = await import('./todo-lists')
-const { hearOldLists, markOldListsSoon } = await import('./old-lists')
+const { hearOldLists, keepInboxListed, markOldListsSoon } = await import('./old-lists')
+const { chosenInbox, inboxMarkedBy, inboxOf } = await import('./inbox')
+const { markedInbox } = await import('@orden/bases/inbox')
 
 const OLD_SPACE = {
   'Projects/Garden.md': '- [ ] Plant the tulips\n- [x] Buy soil\n',
@@ -256,7 +258,31 @@ describe('a space made before todo lists were marked (#1333)', () => {
 
     markOldListsSoon(ROOT, true, workspace)
     await settled()
+    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes', inbox: 'yes' })
+  })
+
+  test('the inbox a device chose is marked for every device and the account, and only one is (#1469)', async () => {
+    seed({ 'Inbox.md': '- [ ] Call the bank\n', 'Todoist/Inbox.md': '- [ ] Old\n' })
+    workspace.itemMeta.set(`${ROOT}/Todoist/Inbox.md`, { 'todo-list': 'yes', inbox: 'yes' }, ROOT)
+    stored.set('nib:inbox', JSON.stringify({ [ROOT]: 'Inbox.md' }))
+
+    markOldListsSoon(ROOT, true, workspace)
+    await settled()
     expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
+
+    keepInboxListed(ROOT, workspace, true)
+    expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes', inbox: 'yes' })
+    expect(workspace.itemMeta.of(`${ROOT}/Todoist/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
+
+    stored.delete('nib:inbox')
+    expect(chosenInbox(ROOT)).toBeNull()
+    inboxMarkedBy((root) => markedInbox(Object.entries(workspace.itemMeta.itemsOf(root))))
+    try {
+      expect(chosenInbox(ROOT)).toBe('Inbox.md')
+      expect(inboxOf(ROOT)).toBe('Inbox.md')
+    } finally {
+      inboxMarkedBy(() => null)
+    }
   })
 
   test('a Projects note stopped before the marking stays stopped, and is not marked', async () => {

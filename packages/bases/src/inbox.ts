@@ -6,6 +6,21 @@ export function carriedOwn(relative: string): boolean {
   return relative.replace(/\\/g, '/').replace(/^\/+/, '') === INBOX_PATH
 }
 
+export const INBOX_KEY = 'inbox'
+
+export const INBOX_VALUE = 'yes'
+
+export function markedInbox(
+  notes: Iterable<readonly [string, Readonly<Record<string, string>> | null | undefined]>,
+): string | null {
+  let first: string | null = null
+  for (const [path, meta] of notes) {
+    if (meta?.[INBOX_KEY] !== INBOX_VALUE || carriedOwn(path)) continue
+    if (first === null || path < first) first = path
+  }
+  return first
+}
+
 function blocks(text: string): string[] {
   const out: string[] = []
   let block: string[] = []
