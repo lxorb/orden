@@ -2858,6 +2858,8 @@ export const ko: Dictionary = {
   'That could not be protected: {reason}': '보호할 수 없습니다: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name}을(를) 추가하지 않았습니다: 채팅에는 이미지와 2 MB 이하의 텍스트 파일만 추가할 수 있습니다.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name}을(를) 추가하지 않았습니다: 메시지 하나에는 이미지를 최대 20개까지 추가할 수 있습니다.',
   'Time tracker': '시간 기록',
   'Start timer': '타이머 시작',
   'Stop timer': '타이머 중지',

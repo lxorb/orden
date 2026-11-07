@@ -2795,6 +2795,8 @@ export const yue: Dictionary = {
   'That could not be protected: {reason}': '保護唔到：{reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '冇加到 {name}：傾偈只收圖片同 2 MB 以內嘅文字檔。',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '冇加到 {name}：一個訊息最多收 20 張圖片。',
   'Time tracker': '時間記錄',
   'Start timer': '開始計時',
   'Stop timer': '停止計時',

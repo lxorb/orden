@@ -2879,6 +2879,8 @@ export const jv: Dictionary = {
   'That could not be protected: {reason}': 'Ora bisa dilindhungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ora ditambahake: obrolan nampa gambar lan berkas teks nganti 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ora ditambahake: siji pesen nampa paling akeh 20 gambar.',
   'Time tracker': 'Pelacak wektu',
   'Start timer': 'Wiwiti timer',
   'Stop timer': 'Mandhegake timer',

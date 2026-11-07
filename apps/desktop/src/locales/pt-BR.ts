@@ -2979,6 +2979,8 @@ export const ptBR: Dictionary = {
   'That could not be protected: {reason}': 'Não foi possível proteger: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} não foi adicionado: um chat aceita imagens e arquivos de texto de até 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} não foi adicionado: uma mensagem aceita até 20 imagens.',
   'Time tracker': 'Controle de tempo',
   'Start timer': 'Iniciar cronômetro',
   'Stop timer': 'Parar cronômetro',

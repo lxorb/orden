@@ -3022,6 +3022,8 @@ export const uk: Dictionary = {
   'That could not be protected: {reason}': 'Не вдалося захистити: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не додано: чат приймає зображення й текстові файли до 2 МБ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} не додано: повідомлення приймає щонайбільше 20 зображень.',
   'Time tracker': 'Облік часу',
   'Start timer': 'Запустити таймер',
   'Stop timer': 'Зупинити таймер',

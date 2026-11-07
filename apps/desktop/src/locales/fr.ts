@@ -3014,6 +3014,8 @@ export const fr: Dictionary = {
   'That could not be protected: {reason}': 'Impossible de protéger : {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} n’a pas été ajouté : une discussion accepte les images et les fichiers texte jusqu’à 2 Mo.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} n’a pas été ajouté : un message accepte jusqu’à 20 images.',
   'Time tracker': 'Suivi du temps',
   'Start timer': 'Lancer le minuteur',
   'Stop timer': 'Arrêter le minuteur',

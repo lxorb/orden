@@ -3050,6 +3050,8 @@ export const ar: Dictionary = {
   'That could not be protected: {reason}': 'تعذّرت الحماية: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'لم تُضف {name}: تقبل المحادثة الصور والملفات النصية حتى 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'لم تُضف {name}: تقبل الرسالة 20 صورة على الأكثر.',
   'Time tracker': 'متتبّع الوقت',
   'Start timer': 'بدء المؤقّت',
   'Stop timer': 'إيقاف المؤقّت',

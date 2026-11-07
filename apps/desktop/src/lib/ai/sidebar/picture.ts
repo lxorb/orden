@@ -1,4 +1,7 @@
-import { type Drawing, pictureOf } from '../../feedback-pictures'
+import type { Drawing } from '../../feedback-pictures'
+import { pictureOf } from '../../pictures-away'
+
+export const MOST_CHAT_PICTURES = 20
 
 export interface ChatPicture {
   mime: string
@@ -6,7 +9,7 @@ export interface ChatPicture {
 }
 
 export async function chatPicture(file: Blob, drawing?: Drawing): Promise<ChatPicture | null> {
-  const picture = await (drawing ? pictureOf(file, drawing) : pictureOf(file)).catch(() => null)
+  const picture = await pictureOf(file, drawing).catch(() => null)
   if (!picture) return null
   const comma = picture.dataUrl.indexOf(',')
   const mime = picture.dataUrl.slice('data:'.length, picture.dataUrl.indexOf(';'))

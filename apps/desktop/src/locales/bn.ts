@@ -2912,6 +2912,8 @@ export const bn: Dictionary = {
   'That could not be protected: {reason}': 'সুরক্ষিত করা যায়নি: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} যোগ করা হয়নি: চ্যাটে ছবি এবং 2 MB পর্যন্ত টেক্সট ফাইল নেওয়া যায়।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} যোগ করা হয়নি: একটি বার্তায় সর্বোচ্চ 20টি ছবি নেওয়া যায়।',
   'Time tracker': 'সময় ট্র্যাকার',
   'Start timer': 'টাইমার শুরু করুন',
   'Stop timer': 'টাইমার থামান',

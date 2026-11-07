@@ -2912,6 +2912,8 @@ export const ur: Dictionary = {
   'That could not be protected: {reason}': 'محفوظ نہیں کیا جا سکا: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} شامل نہیں کیا گیا: چیٹ تصاویر اور 2 MB تک کی متنی فائلیں لیتی ہے۔',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} شامل نہیں کیا گیا: ایک پیغام میں زیادہ سے زیادہ 20 تصاویر آ سکتی ہیں۔',
   'Time tracker': 'وقت ٹریکر',
   'Start timer': 'ٹائمر شروع کریں',
   'Stop timer': 'ٹائمر روکیں',

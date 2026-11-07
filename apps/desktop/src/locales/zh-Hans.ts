@@ -2802,6 +2802,8 @@ export const zhHans: Dictionary = {
   'That could not be protected: {reason}': '无法保护：{reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '未添加 {name}：聊天只接受图片和 2 MB 以内的文本文件。',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '未添加 {name}：一条消息最多接受 20 张图片。',
   'Time tracker': '时间记录',
   'Start timer': '开始计时',
   'Stop timer': '停止计时',

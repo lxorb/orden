@@ -3028,6 +3028,8 @@ export const pl: Dictionary = {
   'That could not be protected: {reason}': 'Nie udało się chronić: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Nie dodano {name}: czat przyjmuje obrazy i pliki tekstowe do 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    'Nie dodano {name}: wiadomość przyjmuje najwyżej 20 obrazów.',
   'Time tracker': 'Śledzenie czasu',
   'Start timer': 'Uruchom licznik',
   'Stop timer': 'Zatrzymaj licznik',

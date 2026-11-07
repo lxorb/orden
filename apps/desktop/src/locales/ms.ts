@@ -2893,6 +2893,8 @@ export const ms: Dictionary = {
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} tidak ditambah: sembang menerima gambar dan fail teks sehingga 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} tidak ditambah: satu mesej menerima paling banyak 20 gambar.',
   'Time tracker': 'Penjejak masa',
   'Start timer': 'Mulakan pemasa',
   'Stop timer': 'Hentikan pemasa',

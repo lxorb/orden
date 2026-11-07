@@ -2918,6 +2918,8 @@ export const hi: Dictionary = {
   'That could not be protected: {reason}': 'सुरक्षित नहीं किया जा सका: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} नहीं जोड़ा गया: चैट में चित्र और 2 MB तक की टेक्स्ट फ़ाइलें ही जोड़ी जा सकती हैं।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} नहीं जोड़ा गया: एक संदेश में अधिकतम 20 चित्र जोड़े जा सकते हैं।',
   'Time tracker': 'समय ट्रैकर',
   'Start timer': 'टाइमर शुरू करें',
   'Stop timer': 'टाइमर रोकें',

@@ -2917,6 +2917,8 @@ export const ps: Dictionary = {
   'That could not be protected: {reason}': 'خوندي نه شو: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ورنه کړل شو: چټ انځورونه او تر 2 MB پورې متني فایلونه مني.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ورنه کړل شو: یو پیغام تر 20 انځورونو پورې مني.',
   'Time tracker': 'د وخت څارونکی',
   'Start timer': 'ټایمر پیل کړئ',
   'Stop timer': 'ټایمر ودروئ',
