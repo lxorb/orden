@@ -363,6 +363,20 @@ function touched(regions: readonly Span[], from: number, to: number) {
   return near !== undefined && near.from <= to
 }
 
+const MOST_SETTLED = 64
+
+function fewer(wanted: Span[]): Span[] {
+  if (wanted.length <= MOST_SETTLED) return wanted
+
+  let from = Infinity
+  let to = -Infinity
+  for (const one of wanted) {
+    from = Math.min(from, one.from, one.to)
+    to = Math.max(to, one.from, one.to)
+  }
+  return [{ from, to }]
+}
+
 function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean): Blocks | null {
   const state = transaction.state
   if (state.facet(numberEquations)) return null
@@ -394,7 +408,7 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
     if ((before && crosses([before], was)) || crosses([span], now)) wanted.push(span)
   })
 
-  const regions = merged(wanted.map((region) => settle(transaction, region)))
+  const regions = merged(fewer(wanted).map((region) => settle(transaction, region)))
   const first = regions[0]
   const last = regions[regions.length - 1]
   if (!first || !last) return { ...value, spans, chosen }

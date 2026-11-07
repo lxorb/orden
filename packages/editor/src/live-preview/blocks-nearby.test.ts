@@ -8,6 +8,7 @@ import { TocWidget } from './toc'
 import { dragFreeze } from './dragging'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
+import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
 
 const looked = vi.hoisted(() => ({ paragraphs: 0 }))
 
@@ -225,5 +226,42 @@ describe('the blocks drawn after an edit', () => {
       same(`edited where the parse stops at ${share}`)
     }
     expect(short).toBeGreaterThan(3)
+  })
+
+  test('after a replace of every match, are what drawing the whole note would draw', () => {
+    const doc = Array.from({ length: 300 }, (_, at) =>
+      at % 7 === 0 ? `- a list a ${at}` : at % 11 === 0 ? `$$\na\n$$` : `a b a b ${at}`,
+    ).join('\n\n')
+    const before = state(doc)
+    const changes = [...doc.matchAll(/a/g)].map((one) => ({
+      from: one.index,
+      to: one.index + 1,
+      insert: 'zz',
+    }))
+    const after = parsed(before.update({ changes }).state)
+    const text = after.doc.toString()
+    expect(described(after.field(blockDecorations).decorations, text)).toEqual(
+      described(buildBlockDecorations(after), text),
+    )
+  })
+
+  test('a replace of every match is drawn in time that grows with the matches', () => {
+    const made = new Map<number, { base: EditorState; spec: TransactionSpec }>()
+    const replaced = (lines: number) => {
+      let one = made.get(lines)
+      if (!one) {
+        const doc = Array.from({ length: lines }, (_, at) => `a b a b a ${at}`).join('\n')
+        const changes = [...doc.matchAll(/a/g)].map((found) => ({
+          from: found.index,
+          to: found.index + 1,
+          insert: 'zz',
+        }))
+        one = { base: state(doc), spec: { changes } }
+        made.set(lines, one)
+      }
+      return one.base.update(one.spec).state.field(blockDecorations)
+    }
+
+    expect(growth(replaced, 400)).toBeLessThan(GROWS_AT_MOST)
   })
 })
