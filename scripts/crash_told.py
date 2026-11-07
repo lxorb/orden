@@ -40,12 +40,18 @@ def ask(port: int, secret: str, code: str, seconds: float = 10) -> object:
         return None
 
 
-def tell(port: int, secret: str, settle: float = 2.0) -> bool:
+def tell(port: int, secret: str, watch: float = 20.0) -> bool:
     first = ask(port, secret, CODE)
     if first is None:
         return False
-    time.sleep(settle)
-    ask(port, secret, CODE)
+    began = time.monotonic()
+    said = [str(first)]
+    while time.monotonic() - began < watch:
+        time.sleep(0.5)
+        now = ask(port, secret, CODE)
+        if now == "answered":
+            said.append(f"answered at {time.monotonic() - began:.1f} s")
+    print(f"crash_told: {', '.join(said)}", flush=True)
     return True
 
 
