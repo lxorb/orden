@@ -345,6 +345,21 @@ export class Tree {
     return out
   }
 
+  placed(): Set<string> {
+    const out = new Set<string>()
+    for (const entry of this.state.entries.values()) {
+      const before = this.before.get(entry.id)
+      if (
+        before?.parent !== entry.parent ||
+        before.name !== entry.name ||
+        before.deleted !== entry.deleted
+      ) {
+        out.add(entry.id)
+      }
+    }
+    return out
+  }
+
   relisted(): string[] {
     const out: string[] = []
     for (const entry of this.state.entries.values()) {
@@ -727,6 +742,7 @@ export interface Changed<T> {
   cursor: number
   changed: boolean
   relisted: string[]
+  tree: Tree
 }
 
 const ATTEMPTS = 6
@@ -743,7 +759,7 @@ export async function changeTree<T>(
     if (opIds.length) tree.remember(await answeredBefore(env, spaceId, opIds))
     const value = await work(tree)
     const batch = tree.statements(env)
-    if (!batch) return { value, cursor: tree.state.cursor, changed: false, relisted: [] }
+    if (!batch) return { value, cursor: tree.state.cursor, changed: false, relisted: [], tree }
 
     try {
       await env.DB.batch(batch)
@@ -752,6 +768,7 @@ export async function changeTree<T>(
         cursor: tree.state.cursor,
         changed: tree.state.cursor >= tree.next,
         relisted: tree.relisted(),
+        tree,
       }
     } catch (error) {
       if (attempt + 1 >= ATTEMPTS || !(await cursorMoved(env, spaceId, tree.next))) throw error

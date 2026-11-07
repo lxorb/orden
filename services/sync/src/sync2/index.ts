@@ -51,7 +51,7 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
   const asker = who.kind === 'user' ? who.user.id : null
   const done = await applyOps(context.env, space, asker, device, request.ops)
   if (done.changed) {
-    await reproject(context.env, space.id)
+    await reproject(context.env, space.id, done.tree)
     await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
   }
   await remindRelisted(context.env, space.id, done.relisted).catch(() => undefined)

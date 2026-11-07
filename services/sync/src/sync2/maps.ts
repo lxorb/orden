@@ -395,14 +395,32 @@ export async function backfillMaps(env: Env, spaceId: string): Promise<void> {
   for (const [map, value] of values) await v1Wrote(env, space, map, value, '')
 }
 
-export async function reproject(env: Env, spaceId: string): Promise<void> {
+function keyedBy(one: Kept): string | null {
+  if (one.map === 'icon' || one.map === 'order') return one.key.startsWith(PATH) ? null : one.key
+  if (one.map === 'bookmark' && isRecord(one.value)) return bookmarkId(one.value.id)
+  return null
+}
+
+function moves(tree: Tree, placed: ReadonlySet<string>, id: string): boolean {
+  const seen = new Set<string>()
+  for (let at: string | null = id; at !== null && !seen.has(at);) {
+    if (placed.has(at)) return true
+    seen.add(at)
+    at = tree.entry(at)?.parent ?? null
+  }
+  return false
+}
+
+export async function reproject(env: Env, spaceId: string, after: Tree): Promise<void> {
   const kept = await keptIn(env, spaceId)
-  const byTree = (one: Kept) =>
-    one.map === 'icon' ||
-    one.map === 'order' ||
-    (one.map === 'bookmark' && isRecord(one.value) && bookmarkId(one.value.id) !== null)
-  if (!kept.some(byTree)) return
-  const columns = projected(kept, await readTree(env, spaceId))
+  const keys = kept.flatMap((one) => {
+    const key = one.value === null ? null : keyedBy(one)
+    return key === null ? [] : [key]
+  })
+  if (!keys.length) return
+  const placed = after.placed()
+  if (!keys.some((key) => moves(after, placed, key))) return
+  const columns = projected(kept, after)
   if (!fitting(columns)) return
   await env.DB.batch(writing(env, spaceId, [], columns, '', 0))
 }
