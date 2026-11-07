@@ -112,6 +112,8 @@ struct Progress<'a> {
 pub struct Moved {
     pub from: String,
     pub to: String,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub stayed: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -165,21 +167,35 @@ pub async fn explorer_transfer(
     folder: String,
     how: How,
     clash: Clash,
+    staying: Option<Vec<String>>,
 ) -> Result<Transferred, String> {
     crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
         let folder = asked(&app, &folder, Use::Into)?;
-        let using = if how == How::Move {
-            Use::Change
-        } else {
-            Use::Look
+        let staying: HashSet<&str> = staying.iter().flatten().map(String::as_str).collect();
+        let how_of = |one: &str| {
+            if staying.contains(one) {
+                How::Copy
+            } else {
+                how
+            }
         };
-        let froms: Vec<PathBuf> = sources
-            .iter()
-            .map(|one| asked(&app, one, using))
-            .collect::<Result<_, _>>()?;
+        let mut hows = HashMap::new();
+        let mut froms = Vec::new();
+        for one in &sources {
+            let item = how_of(one);
+            let using = if item == How::Move {
+                Use::Change
+            } else {
+                Use::Look
+            };
+            let from = asked(&app, one, using)?;
+            hows.insert(from.clone(), item);
+            froms.push(from);
+        }
         let running = Job::begin(&job);
         let mut out = Transferred::default();
-        let plan = planned(&froms, &folder, how, clash, &mut out);
+        let item_how = |from: &Path| hows.get(from).copied().unwrap_or(how);
+        let plan = planned_by(&froms, &folder, &item_how, clash, &mut out);
         let mut meter = Meter {
             app: Some(&app),
             job: &job,
@@ -203,10 +219,12 @@ pub async fn explorer_transfer(
                     }
                 }
             }
-            match carried(&from, &to, how, &running, &mut meter) {
+            let item = item_how(&from);
+            match carried(&from, &to, item, &running, &mut meter) {
                 Ok(()) => out.done.push(Moved {
                     from: from.display().to_string(),
                     to: to.display().to_string(),
+                    stayed: item != how,
                 }),
                 Err(Stop::Cancelled) => {
                     out.cancelled = true;
@@ -229,10 +247,21 @@ fn failed(path: &Path, why: String) -> Failed {
     }
 }
 
+#[cfg(test)]
 fn planned(
     froms: &[PathBuf],
     folder: &Path,
     how: How,
+    clash: Clash,
+    out: &mut Transferred,
+) -> Vec<(PathBuf, PathBuf)> {
+    planned_by(froms, folder, &|_| how, clash, out)
+}
+
+fn planned_by(
+    froms: &[PathBuf],
+    folder: &Path,
+    how: &dyn Fn(&Path) -> How,
     clash: Clash,
     out: &mut Transferred,
 ) -> Vec<(PathBuf, PathBuf)> {
@@ -255,7 +284,7 @@ fn planned(
             continue;
         }
         if same(from, &to) {
-            if how == How::Move {
+            if how(from) == How::Move {
                 continue;
             }
             to = free(&to);
@@ -362,7 +391,7 @@ fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -
     }
     if how == How::Move {
         let bytes = weight(from, running);
-        if fs::rename(from, to).is_ok() {
+        if crate::carry::rename_new(from, to).is_ok() {
             meter.add(bytes, "");
             return Ok(());
         }
@@ -474,6 +503,7 @@ pub async fn explorer_put(
                 Ok(()) => out.done.push(Moved {
                     from: from.display().to_string(),
                     to: to.display().to_string(),
+                    stayed: false,
                 }),
                 Err(Stop::Cancelled) => {
                     out.cancelled = true;

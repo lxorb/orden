@@ -163,11 +163,9 @@ export async function carry(
     }
     const clash = await clashFor([...inside, ...outside], folder)
     if (clash === null) return
-    if (outside.length) await across(outside, folder, how, clash, tell)
-    if (inside.length) {
-      const done = await across(inside, folder, 'copy', clash, tell)
-      if (how === 'move' && done.length) await workspace.removeMany(done)
-    }
+    const staying = how === 'move' ? inside : []
+    const stayed = await across([...outside, ...inside], folder, how, clash, tell, staying)
+    if (stayed.length) await workspace.removeMany(stayed)
   })
   await view?.reload()
 }
@@ -178,6 +176,7 @@ async function across(
   how: 'copy' | 'move',
   clash: Clash,
   tell: (said: string) => void,
+  staying: readonly string[],
 ): Promise<string[]> {
   const label =
     how === 'move'
@@ -185,18 +184,21 @@ async function across(
       : plural(sources.length, { one: 'Copying {count} item', other: 'Copying {count} items' })
   let done: Transferred
   try {
-    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash))
+    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying))
   } catch (error) {
     tell(message(error, 'could not copy this'))
     return []
   }
+  const went = done.done.filter((one) => !one.stayed).map(({ from, to }) => ({ from, to }))
+  const kept = done.done.filter((one) => one.stayed).map(({ from, to }) => ({ from, to }))
   const steps: OutsideStep[] = []
   if (done.replaced.length) steps.push({ op: 'replaced', tickets: done.replaced })
-  if (done.done.length) steps.push({ op: how === 'move' ? 'moved' : 'copied', pairs: done.done })
+  if (went.length) steps.push({ op: how === 'move' ? 'moved' : 'copied', pairs: went })
+  if (kept.length) steps.push({ op: 'copied', pairs: kept })
   record(steps)
   const [failed] = done.failed
   if (failed) tell(`${nameOf(failed.path)}: ${failed.why}`)
-  return done.done.map((one) => one.from)
+  return kept.map((one) => one.from)
 }
 
 async function clashFor(sources: readonly string[], folder: string): Promise<Clash | null> {

@@ -9,17 +9,26 @@ const crate = {
   ),
   makeIn: vi.fn((folder: string, name: string) => Promise.resolve(`${folder}/${name}`)),
   clashesIn: vi.fn((): Promise<string[]> => Promise.resolve([])),
-  transfer: vi.fn((_job: string, sources: string[], folder: string) =>
-    Promise.resolve({
-      done: sources.map((from) => ({
-        from,
-        to: `${folder}/${from.slice(from.lastIndexOf('/') + 1)}`,
-      })),
-      replaced: [],
-      skipped: [],
-      failed: [],
-      cancelled: false,
-    }),
+  transfer: vi.fn(
+    (
+      _job: string,
+      sources: string[],
+      folder: string,
+      _how?: string,
+      _clash?: string,
+      staying: string[] = [],
+    ) =>
+      Promise.resolve({
+        done: sources.map((from) => ({
+          from,
+          to: `${folder}/${from.slice(from.lastIndexOf('/') + 1)}`,
+          ...(staying.includes(from) ? { stayed: true } : {}),
+        })),
+        replaced: [],
+        skipped: [],
+        failed: [],
+        cancelled: false,
+      }),
   ),
   deleteForGood: vi.fn(() => Promise.resolve()),
   listFolder: vi.fn(() => Promise.reject(new Error('not a folder'))),
@@ -165,14 +174,51 @@ describe("a file explorer's changes", () => {
       expect.any(String),
       ['/home/me/Orden/Work/plan.md'],
       '/home/me/Downloads',
-      'copy',
+      'move',
       'keep',
+      ['/home/me/Orden/Work/plan.md'],
     )
     expect(workspace.removeMany).toHaveBeenCalledWith(['/home/me/Orden/Work/plan.md'])
     expect(recorded).toEqual([
       {
         kind: 'outside',
         steps: [
+          {
+            op: 'copied',
+            pairs: [{ from: '/home/me/Orden/Work/plan.md', to: '/home/me/Downloads/plan.md' }],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('carry what is in a space and what is not in one go, so neither replaces the other', async () => {
+    answer = 'replace'
+    crate.clashesIn.mockResolvedValueOnce(['plan.md'])
+    await carry(
+      view() as never,
+      ['/home/me/Orden/Work/plan.md', '/home/me/Music/plan.md'],
+      '/home/me/Downloads',
+      'move',
+    )
+    expect(crate.transfer).toHaveBeenCalledTimes(1)
+    expect(crate.transfer).toHaveBeenCalledWith(
+      expect.any(String),
+      ['/home/me/Music/plan.md', '/home/me/Orden/Work/plan.md'],
+      '/home/me/Downloads',
+      'move',
+      'replace',
+      ['/home/me/Orden/Work/plan.md'],
+    )
+    expect(workspace.removeMany).toHaveBeenCalledWith(['/home/me/Orden/Work/plan.md'])
+    expect(recorded).toEqual([
+      {
+        kind: 'outside',
+        steps: [
+          {
+            op: 'moved',
+            pairs: [{ from: '/home/me/Music/plan.md', to: '/home/me/Downloads/plan.md' }],
+          },
           {
             op: 'copied',
             pairs: [{ from: '/home/me/Orden/Work/plan.md', to: '/home/me/Downloads/plan.md' }],
