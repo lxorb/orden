@@ -46,6 +46,14 @@ export function setKind(kind: KindName, on: boolean) {
   share()
 }
 
+export function setWord(word: string, on: boolean) {
+  const hidden = hiddenKinds.hidden
+  if (on === hidden.includes(word)) return
+  hiddenKinds.hidden = on ? [...hidden, word] : hidden.filter((one) => one !== word)
+  settle()
+  share()
+}
+
 export function receive(remote: AccountSettings) {
   const theirs = remote.hiddenKinds
   if (theirs === undefined) {

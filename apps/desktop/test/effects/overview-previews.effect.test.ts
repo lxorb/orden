@@ -11,6 +11,7 @@ vi.mock('../../src/lib/surfaces.svelte', async (original) => {
     chatSurface: drawn,
     conversationSurface: drawn,
     explorerSurface: drawn,
+    timeSurface: drawn,
     graphSurface: drawn,
     pagesSurface: drawn,
     viewSurface: drawn,

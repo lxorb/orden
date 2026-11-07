@@ -3514,4 +3514,25 @@ export const ml: Dictionary = {
   'Can edit': 'എഡിറ്റ് ചെയ്യാം',
   'Can manage': 'നിയന്ത്രിക്കാം',
   '{from} invited you: {role}': '{from} നിങ്ങളെ ക്ഷണിച്ചു: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'ടൈമർ ചേർക്കുന്നു, മുന്നിലുള്ള ആപ്പ്, സൈറ്റ്, ടാബ് എന്നിവയും കമ്പ്യൂട്ടർ എത്ര തിരക്കിലാണെന്നും രേഖപ്പെടുത്തുന്നു.',
+  Apps: 'ആപ്പുകൾ',
+  Battery: 'ബാറ്ററി',
+  Break: 'ഇടവേള',
+  'Daily average': 'ദിവസ ശരാശരി',
+  'Drag across the day to see what happened in that time.':
+    'ആ സമയത്ത് എന്ത് സംഭവിച്ചുവെന്ന് കാണാൻ ദിവസത്തിന് കുറുകെ വലിക്കുക.',
+  'Not said': 'പറഞ്ഞിട്ടില്ല',
+  'Nothing recorded yet.': 'ഇതുവരെ ഒന്നും രേഖപ്പെടുത്തിയിട്ടില്ല.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'ഇതുവരെ ഒന്നും രേഖപ്പെടുത്തിയിട്ടില്ല. നിങ്ങൾ എന്തിലാണ് പ്രവർത്തിക്കുന്നതെന്ന് പറഞ്ഞ് ടൈമർ ആരംഭിക്കുക, അല്ലെങ്കിൽ ഇവയിലൊന്നിൽ നിന്ന് തുടങ്ങുക.',
+  'Open time tracker': 'സമയ ട്രാക്കർ തുറക്കുക',
+  Recent: 'സമീപകാലം',
+  'Record this as': 'ഇങ്ങനെ രേഖപ്പെടുത്തുക',
+  'Record what happens': 'സംഭവിക്കുന്നത് രേഖപ്പെടുത്തുക',
+  Reports: 'റിപ്പോർട്ടുകൾ',
+  'Since {time}': '{time} മുതൽ',
+  Study: 'പഠനം',
+  'What are you working on?': 'നിങ്ങൾ എന്തിലാണ് പ്രവർത്തിക്കുന്നത്?',
+  'You said': 'നിങ്ങൾ പറഞ്ഞത്',
 }

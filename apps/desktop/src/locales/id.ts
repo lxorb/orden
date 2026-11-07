@@ -3403,4 +3403,25 @@ export const id: Dictionary = {
   'Can edit': 'Dapat mengedit',
   'Can manage': 'Dapat mengelola',
   '{from} invited you: {role}': '{from} mengundang Anda: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Menambahkan timer dan mencatat aplikasi, situs, dan tab yang ada di depan serta seberapa sibuk komputer.',
+  Apps: 'Aplikasi',
+  Battery: 'Baterai',
+  Break: 'Istirahat',
+  'Daily average': 'Rata-rata harian',
+  'Drag across the day to see what happened in that time.':
+    'Seret di sepanjang hari untuk melihat apa yang terjadi pada waktu itu.',
+  'Not said': 'Tidak disebutkan',
+  'Nothing recorded yet.': 'Belum ada yang tercatat.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Belum ada yang tercatat. Tulis apa yang sedang Anda kerjakan dan mulai timer, atau mulai dengan salah satu ini.',
+  'Open time tracker': 'Buka pelacak waktu',
+  Recent: 'Terbaru',
+  'Record this as': 'Catat sebagai',
+  'Record what happens': 'Catat yang terjadi',
+  Reports: 'Laporan',
+  'Since {time}': 'Sejak {time}',
+  Study: 'Belajar',
+  'What are you working on?': 'Sedang mengerjakan apa?',
+  'You said': 'Menurut Anda',
 }

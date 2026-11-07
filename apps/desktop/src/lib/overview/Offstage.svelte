@@ -13,6 +13,7 @@
     conversationIn,
     conversationSurface,
     explorerSurface,
+    timeSurface,
     pagesSurface,
     viewSurface,
   } from '../surfaces.svelte'
@@ -124,6 +125,8 @@
             tab={current}
             focused={false}
           />{/await}
+      {:else if current.kind === 'time'}
+        {#await timeSurface() then TimeTab}<TimeTab tab={current} />{/await}
       {/if}
     {/key}
   </div>

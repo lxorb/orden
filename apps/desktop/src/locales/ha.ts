@@ -3515,4 +3515,25 @@ export const ha: Dictionary = {
   'Can edit': 'Zai iya gyara',
   'Can manage': 'Zai iya sarrafawa',
   '{from} invited you: {role}': '{from} ya gayyace ku: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Yana ƙara agogon lokaci kuma yana rubuta manhaja, shafin yanar gizo da shafin da ke gaba, da aikin kwamfuta.',
+  Apps: 'Manhajoji',
+  Battery: 'Batir',
+  Break: 'Hutu',
+  'Daily average': 'Matsakaicin kowace rana',
+  'Drag across the day to see what happened in that time.':
+    'Ja a kan ranar don ganin abin da ya faru a wannan lokacin.',
+  'Not said': 'Ba a faɗa ba',
+  'Nothing recorded yet.': 'Ba a rubuta komai ba tukuna.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Ba a rubuta komai ba tukuna. Faɗi abin da kuke yi kuma ku fara agogon lokaci, ko ku fara da ɗaya daga cikin waɗannan.',
+  'Open time tracker': 'Buɗe mai bin diddigin lokaci',
+  Recent: 'Na kwanan nan',
+  'Record this as': 'Rubuta a matsayin',
+  'Record what happens': 'Rubuta abin da ke faruwa',
+  Reports: 'Rahotanni',
+  'Since {time}': 'Tun {time}',
+  Study: 'Nazari',
+  'What are you working on?': 'Me kuke yi?',
+  'You said': 'Abin da kuka faɗa',
 }

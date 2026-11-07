@@ -3465,4 +3465,25 @@ export const mr: Dictionary = {
   'Can edit': 'संपादित करू शकतात',
   'Can manage': 'व्यवस्थापित करू शकतात',
   '{from} invited you: {role}': '{from} यांनी तुम्हाला आमंत्रित केले: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'एक टायमर जोडतो आणि समोरचे ॲप, साइट आणि टॅब आणि संगणक किती व्यस्त आहे हे नोंदवतो.',
+  Apps: 'ॲप्स',
+  Battery: 'बॅटरी',
+  Break: 'विश्रांती',
+  'Daily average': 'दैनिक सरासरी',
+  'Drag across the day to see what happened in that time.':
+    'त्या वेळेत काय घडले ते पाहण्यासाठी दिवसावर ओढा.',
+  'Not said': 'सांगितलेले नाही',
+  'Nothing recorded yet.': 'अजून काहीही नोंदवलेले नाही.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'अजून काहीही नोंदवलेले नाही. तुम्ही कशावर काम करत आहात ते सांगा आणि टायमर सुरू करा, किंवा यांपैकी एकाने सुरुवात करा.',
+  'Open time tracker': 'वेळ ट्रॅकर उघडा',
+  Recent: 'अलीकडील',
+  'Record this as': 'म्हणून नोंदवा',
+  'Record what happens': 'जे घडते ते नोंदवा',
+  Reports: 'अहवाल',
+  'Since {time}': '{time} पासून',
+  Study: 'अभ्यास',
+  'What are you working on?': 'तुम्ही कशावर काम करत आहात?',
+  'You said': 'तुम्ही सांगितलेले',
 }

@@ -3534,4 +3534,25 @@ export const de: Dictionary = {
   'Can edit': 'Kann bearbeiten',
   'Can manage': 'Kann verwalten',
   '{from} invited you: {role}': '{from} hat dich eingeladen: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Fügt einen Timer hinzu und erfasst App, Website und Tab im Vordergrund und wie ausgelastet der Computer ist.',
+  Apps: 'Apps',
+  Battery: 'Akku',
+  Break: 'Pause',
+  'Daily average': 'Tagesdurchschnitt',
+  'Drag across the day to see what happened in that time.':
+    'Zieh über den Tag, um zu sehen, was in dieser Zeit passiert ist.',
+  'Not said': 'Nicht angegeben',
+  'Nothing recorded yet.': 'Noch nichts erfasst.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Noch nichts erfasst. Sag, woran du arbeitest, und starte den Timer, oder beginne mit einem davon.',
+  'Open time tracker': 'Zeiterfassung öffnen',
+  Recent: 'Zuletzt',
+  'Record this as': 'Erfassen als',
+  'Record what happens': 'Erfassen, was passiert',
+  Reports: 'Berichte',
+  'Since {time}': 'Seit {time}',
+  Study: 'Lernen',
+  'What are you working on?': 'Woran arbeitest du?',
+  'You said': 'Deine Angaben',
 }

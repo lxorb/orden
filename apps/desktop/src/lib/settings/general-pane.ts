@@ -29,9 +29,12 @@ import { quickAdd } from '../quick-add/asked.svelte'
 import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
+import { setWord } from '../kind-choice'
+import { hiddenKinds, TIME_WORD, timeOn } from '../settings.svelte'
 import type { Field, Group, Pane } from './fields'
 import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
+import { among } from './hold'
 import { versionField } from './version.svelte'
 
 function twoWayFields(): Field[] {
@@ -605,6 +608,28 @@ export function generalPane(): Pane {
                       },
                     ]
                   : []),
+              ],
+            },
+          ]),
+      ...(__EVEN_PLUGIN__
+        ? []
+        : [
+            {
+              title: t('Time tracker'),
+              fields: [
+                {
+                  kind: 'switch' as const,
+                  key: 'general.timeTracker',
+                  store: { ...among(hiddenKinds, 'hidden', TIME_WORD), shared: 'hiddenKinds' },
+                  label: t('Time tracker'),
+                  hint: t(
+                    'Adds a timer and records the app, site and tab in front and how busy the computer is.',
+                  ),
+                  words: ['time', 'tracking', 'timer', 'hours', 'activity', 'screen time', 'toggl'],
+                  initial: false,
+                  get: () => timeOn(),
+                  set: (on: boolean) => setWord(TIME_WORD, on),
+                },
               ],
             },
           ]),

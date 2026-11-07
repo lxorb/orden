@@ -3546,4 +3546,25 @@ export const ptBR: Dictionary = {
   'Can edit': 'Pode editar',
   'Can manage': 'Pode gerenciar',
   '{from} invited you: {role}': '{from} convidou você: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Adiciona um cronômetro e registra o app, o site e a aba em primeiro plano e o quanto o computador está ocupado.',
+  Apps: 'Apps',
+  Battery: 'Bateria',
+  Break: 'Pausa',
+  'Daily average': 'Média diária',
+  'Drag across the day to see what happened in that time.':
+    'Arraste ao longo do dia para ver o que aconteceu nesse período.',
+  'Not said': 'Não informado',
+  'Nothing recorded yet.': 'Nada registrado ainda.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Nada registrado ainda. Diga no que você está trabalhando e inicie o cronômetro, ou comece com uma destas.',
+  'Open time tracker': 'Abrir controle de tempo',
+  Recent: 'Recentes',
+  'Record this as': 'Registrar como',
+  'Record what happens': 'Registrar o que acontece',
+  Reports: 'Relatórios',
+  'Since {time}': 'Desde as {time}',
+  Study: 'Estudo',
+  'What are you working on?': 'No que você está trabalhando?',
+  'You said': 'Informado',
 }

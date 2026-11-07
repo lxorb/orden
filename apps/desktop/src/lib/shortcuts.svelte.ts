@@ -233,7 +233,7 @@ class Shortcuts {
     if (event.defaultPrevented) return false
 
     for (const entry of SHORTCUTS) {
-      if (entry.scope !== 'app' || !entry.run) continue
+      if (entry.scope !== 'app' || !entry.run || entry.shown?.() === false) continue
 
       const key = this.keyFor(entry.id)
       if (!key || !matchesCombination(key, event, this.platform)) continue

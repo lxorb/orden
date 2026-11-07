@@ -3563,4 +3563,25 @@ export const ptPT: Dictionary = {
   'Can edit': 'Pode editar',
   'Can manage': 'Pode gerir',
   '{from} invited you: {role}': '{from} enviou-lhe um convite: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Adiciona um cronómetro e regista a app, o site e o separador em primeiro plano e o quão ocupado está o computador.',
+  Apps: 'Apps',
+  Battery: 'Bateria',
+  Break: 'Pausa',
+  'Daily average': 'Média diária',
+  'Drag across the day to see what happened in that time.':
+    'Arraste ao longo do dia para ver o que aconteceu nesse período.',
+  'Not said': 'Não indicado',
+  'Nothing recorded yet.': 'Ainda nada registado.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Ainda nada registado. Indique em que está a trabalhar e inicie o cronómetro, ou comece com uma destas.',
+  'Open time tracker': 'Abrir registo de tempo',
+  Recent: 'Recentes',
+  'Record this as': 'Registar como',
+  'Record what happens': 'Registar o que acontece',
+  Reports: 'Relatórios',
+  'Since {time}': 'Desde as {time}',
+  Study: 'Estudo',
+  'What are you working on?': 'Em que está a trabalhar?',
+  'You said': 'Indicado',
 }

@@ -11,26 +11,28 @@ const span = (id: string, start: number, end: number, change: Partial<Span> = {}
   tags: [],
   note: '',
   source: 'manual',
-  space: null,
-  site: null,
+  place: null,
   label: null,
   device: null,
   ...change,
 })
 
-const rule = (activity: string, change: Partial<Rule>): Rule => ({
-  id: `r-${activity}`,
+const rule = (activity: string, lane: Rule['lane'], place: string): Rule => ({
+  id: `r-${activity}-${place}`,
   activity,
-  space: null,
-  site: null,
-  ...change,
+  lane,
+  place,
 })
 
 const SPANS = [
   span('timer', 0, HOUR, { source: 'timer', activity: 'uni' }),
-  span('space', 0, 2 * HOUR, { source: 'space', space: 'uni-space', label: 'Uni' }),
-  span('site', HOUR, 3 * HOUR, { source: 'site', site: 'moodle.ethz.ch', label: 'moodle.ethz.ch' }),
-  span('other', 5 * HOUR, 6 * HOUR, { source: 'site', site: 'news.org', label: 'news.org' }),
+  span('space', 0, 2 * HOUR, { source: 'space', place: 'uni-space', label: 'Uni' }),
+  span('site', HOUR, 3 * HOUR, {
+    source: 'site',
+    place: 'moodle.ethz.ch',
+    label: 'moodle.ethz.ch',
+  }),
+  span('other', 5 * HOUR, 6 * HOUR, { source: 'site', place: 'news.org', label: 'news.org' }),
 ]
 
 describe('what counts towards an activity', () => {
@@ -39,7 +41,7 @@ describe('what counts towards an activity', () => {
   })
 
   test('and time in a space or on a site a rule counts as one', () => {
-    const rules = [rule('uni', { space: 'uni-space' }), rule('uni', { site: 'moodle.ethz.ch' })]
+    const rules = [rule('uni', 'space', 'uni-space'), rule('uni', 'site', 'moodle.ethz.ch')]
     const pieces = piecesIn(counted(SPANS, rules), 0, 24 * HOUR, 24 * HOUR)
     expect(totalsOf(pieces)).toEqual([{ activity: 'uni', ms: 3 * HOUR }])
   })

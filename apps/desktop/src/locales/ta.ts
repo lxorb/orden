@@ -3524,4 +3524,25 @@ export const ta: Dictionary = {
   'Can edit': 'திருத்தலாம்',
   'Can manage': 'நிர்வகிக்கலாம்',
   '{from} invited you: {role}': '{from} உங்களை அழைத்துள்ளார்: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'டைமரைச் சேர்த்து, முன்னால் உள்ள ஆப், தளம், தாவல், கணினி எவ்வளவு பரபரப்பாக உள்ளது என்பதைப் பதிவுசெய்யும்.',
+  Apps: 'ஆப்கள்',
+  Battery: 'பேட்டரி',
+  Break: 'இடைவேளை',
+  'Daily average': 'தினசரி சராசரி',
+  'Drag across the day to see what happened in that time.':
+    'அந்த நேரத்தில் என்ன நடந்தது என்பதைப் பார்க்க நாளின் மீது இழுக்கவும்.',
+  'Not said': 'சொல்லப்படவில்லை',
+  'Nothing recorded yet.': 'இதுவரை எதுவும் பதிவாகவில்லை.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'இதுவரை எதுவும் பதிவாகவில்லை. நீங்கள் எதில் வேலை செய்கிறீர்கள் என்று சொல்லி டைமரைத் தொடங்குங்கள், அல்லது இவற்றில் ஒன்றுடன் தொடங்குங்கள்.',
+  'Open time tracker': 'நேரக் கண்காணிப்பைத் திற',
+  Recent: 'சமீபத்தியவை',
+  'Record this as': 'இவ்வாறு பதிவுசெய்',
+  'Record what happens': 'நடப்பதைப் பதிவுசெய்',
+  Reports: 'அறிக்கைகள்',
+  'Since {time}': '{time} முதல்',
+  Study: 'படிப்பு',
+  'What are you working on?': 'நீங்கள் எதில் வேலை செய்கிறீர்கள்?',
+  'You said': 'நீங்கள் சொன்னது',
 }

@@ -10,6 +10,7 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import type { IconNode } from 'lucide'
+import Clock from 'lucide/dist/esm/icons/clock.mjs'
 import File from 'lucide/dist/esm/icons/file.mjs'
 import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Folder from 'lucide/dist/esm/icons/folder.mjs'
@@ -77,6 +78,7 @@ export type FileMark =
   | 'chat'
   | 'application'
   | 'key'
+  | 'time'
 
 export function fileMark(name: string): FileMark {
   if (isWebTarget(name)) return 'web'
@@ -111,6 +113,7 @@ export const MARKS: Record<FileMark, IconNode> = {
   chat: MessageSquare,
   application: Window,
   key: Key,
+  time: Clock,
 }
 
 export function faceOf(mark: FileMark, chosen: boolean): 'mark' | 'letter' {

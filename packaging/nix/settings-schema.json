@@ -468,6 +468,11 @@
     "default": true,
     "description": "Paints terminals in the theme’s colours; off keeps one fixed palette."
   },
+  "general.timeTracker": {
+    "type": "boolean",
+    "default": false,
+    "description": "Adds a timer and records the app, site and tab in front and how busy the computer is."
+  },
   "general.undatedInToday": {
     "type": "boolean",
     "default": false,
@@ -1562,6 +1567,10 @@
   "shortcuts.time-stop": {
     "type": "string",
     "description": "The key that runs Stop timer, as the keys file writes it; empty for none."
+  },
+  "shortcuts.time-tab": {
+    "type": "string",
+    "description": "The key that runs Open time tracker, as the keys file writes it; empty for none."
   },
   "shortcuts.tree-delete": {
     "type": "string",

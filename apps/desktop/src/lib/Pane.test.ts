@@ -22,6 +22,7 @@ describe('a surface a pane is filled with', () => {
       'passSurface',
       'readingSurface',
       'terminalSurface',
+      'timeSurface',
       'viewSurface',
       'webSurface',
     ])

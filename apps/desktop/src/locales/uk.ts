@@ -3604,4 +3604,25 @@ export const uk: Dictionary = {
   'Can edit': 'Може редагувати',
   'Can manage': 'Може керувати',
   '{from} invited you: {role}': '{from} запрошує вас: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Додає таймер і записує програму, сайт і вкладку на передньому плані та завантаженість комп’ютера.',
+  Apps: 'Програми',
+  Battery: 'Батарея',
+  Break: 'Перерва',
+  'Daily average': 'У середньому за день',
+  'Drag across the day to see what happened in that time.':
+    'Проведіть по дню, щоб побачити, що відбувалося в цей час.',
+  'Not said': 'Не вказано',
+  'Nothing recorded yet.': 'Поки нічого не записано.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Поки нічого не записано. Напишіть, чим ви зайняті, і запустіть таймер або почніть з одного з цих занять.',
+  'Open time tracker': 'Відкрити облік часу',
+  Recent: 'Нещодавні',
+  'Record this as': 'Записати як',
+  'Record what happens': 'Записувати, що відбувається',
+  Reports: 'Звіти',
+  'Since {time}': 'З {time}',
+  Study: 'Навчання',
+  'What are you working on?': 'Чим ви зайняті?',
+  'You said': 'Вказано вами',
 }

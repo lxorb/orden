@@ -29,8 +29,7 @@ const span = (id: string, start: number, end: number | null, activity: string | 
     tags: [],
     note: '',
     source: 'manual',
-    space: null,
-    site: null,
+    place: null,
     label: null,
     device: null,
   }) satisfies Span

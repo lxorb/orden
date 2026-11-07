@@ -3381,4 +3381,25 @@ export const ja: Dictionary = {
   'Can edit': '編集可',
   'Can manage': '管理可',
   '{from} invited you: {role}': '{from} から招待されました: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'タイマーを追加し、前面のアプリ、サイト、タブとコンピュータの稼働状況を記録します。',
+  Apps: 'アプリ',
+  Battery: 'バッテリー',
+  Break: '休憩',
+  'Daily average': '1日の平均',
+  'Drag across the day to see what happened in that time.':
+    '1日の上をドラッグすると、その時間に何があったかを確認できます。',
+  'Not said': '未申告',
+  'Nothing recorded yet.': 'まだ記録がありません。',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'まだ記録がありません。取り組んでいることを入力してタイマーを開始するか、次のいずれかから始めましょう。',
+  'Open time tracker': 'タイムトラッカーを開く',
+  Recent: '最近',
+  'Record this as': '次として記録',
+  'Record what happens': '起きたことを記録',
+  Reports: 'レポート',
+  'Since {time}': '{time} から',
+  Study: '勉強',
+  'What are you working on?': '何に取り組んでいますか？',
+  'You said': '自己申告',
 }

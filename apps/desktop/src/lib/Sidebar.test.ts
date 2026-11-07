@@ -19,6 +19,7 @@ vi.mock('./surfaces.svelte', () => ({
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
+const { hiddenKinds, TIME_WORD } = await import('./settings.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
 const PhoneTabs = (await import('./phone/PhoneTabs.svelte')).default
 const PhoneYou = (await import('./phone/PhoneYou.svelte')).default
@@ -52,7 +53,7 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    expect(strip('left')).toEqual(['Files', 'Time tracker'])
+    expect(strip('left')).toEqual(['Files'])
     expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Tasks', 'Scratchpad'])
   })
 
@@ -60,11 +61,18 @@ describe('the panel tabs', () => {
     open('# Head\n')
     workspace.movePanel('outline', 'left')
 
-    expect(strip('left')).toEqual(['Files', 'Outline', 'Time tracker'])
+    expect(strip('left')).toEqual(['Files', 'Outline'])
     expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Scratchpad'])
     workspace.movePanel('outline', 'right')
     expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Outline', 'Scratchpad'])
     workspace.right = [...STARTS_RIGHT]
+  })
+
+  test('hold the time tracker only once Settings turns it on', () => {
+    hiddenKinds.hidden = [TIME_WORD]
+    expect(strip('left')).toEqual(['Files', 'Time tracker'])
+    hiddenKinds.hidden = []
+    expect(strip('left')).toEqual(['Files'])
   })
 
   function row(panel: Parameters<typeof workspace.showPanel>[0]) {

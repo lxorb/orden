@@ -1,3 +1,4 @@
+import { ACCENTS } from '../accents'
 import { log } from '../log'
 import { afterQuiet } from '../timing'
 import { openTimeDisk, type TimeDisk } from './disk'
@@ -11,10 +12,10 @@ import {
   goalId,
   goalOf,
   goalValue,
-  type Lanes,
-  lanesOf,
+  type Lane,
   LONGEST_NAME,
   type Per,
+  recordingOf,
   type Rule,
   ruleOf,
   ruleValue,
@@ -22,6 +23,7 @@ import {
   spanOf,
   spanValue,
 } from './records'
+import { KEEP_MINUTES, type Minute } from './minutes'
 import type { TimeRecord } from './written'
 
 const CURSOR = 'cursor'
@@ -52,7 +54,7 @@ export class TimeStore {
   activities = $state.raw<Activity[]>([])
   spans = $state.raw<Span[]>([])
   rules = $state.raw<Rule[]>([])
-  tracking = $state.raw<Lanes>(lanesOf(null))
+  recording = $state(true)
   goals = $state.raw<Goal[]>([])
   reminding = $state(true)
   ready = $state(false)
@@ -137,7 +139,7 @@ export class TimeStore {
       .live('rule')
       .flatMap((row) => (row.value ? [ruleOf(row.id, row.value)] : []))
       .filter((one): one is Rule => one !== null)
-    this.tracking = lanesOf(this.ledger.get('pref', TRACKING)?.value)
+    this.recording = recordingOf(this.ledger.get('pref', TRACKING)?.value)
     this.goals = this.ledger
       .live('goal')
       .flatMap((row) => (row.value ? [goalOf(row.id, row.value)] : []))
@@ -162,11 +164,24 @@ export class TimeStore {
     return this.activities.find((one) => one.id === id) ?? null
   }
 
+  named(name: string): Activity | null {
+    const wanted = name.trim().toLocaleLowerCase()
+    return this.activities.find((one) => one.name.toLocaleLowerCase() === wanted) ?? null
+  }
+
+  startNamed(name: string, at = Date.now()): Span | null {
+    const said = name.trim()
+    if (!said) return null
+    const found = this.named(said)
+    if (found?.archived) this.changeActivity(found.id, { archived: false })
+    return this.start((found ?? this.addActivity(said)).id, at)
+  }
+
   addActivity(name: string, tint: string | null = null, parent: string | null = null): Activity {
     const activity: Activity = {
       id: crypto.randomUUID(),
       name: name.trim().slice(0, LONGEST_NAME),
-      tint,
+      tint: tint ?? ACCENTS[this.activities.length % ACCENTS.length]?.id ?? null,
       parent,
       archived: false,
       order: (this.activities.at(-1)?.order ?? 0) + 1,
@@ -210,8 +225,7 @@ export class TimeStore {
       tags: [],
       note: '',
       source: 'manual',
-      space: null,
-      site: null,
+      place: null,
       label: null,
       device: this.device || null,
       ...fields,
@@ -245,9 +259,20 @@ export class TimeStore {
     this.written(rows)
   }
 
-  track(change: Partial<Lanes>): void {
-    const next = { ...this.tracking, ...change }
-    this.written([this.write('pref', TRACKING, { spaces: next.spaces, sites: next.sites })])
+  record(on: boolean): void {
+    this.written([this.write('pref', TRACKING, { on })])
+  }
+
+  async minutes(from: number, to: number): Promise<Minute[]> {
+    await this.opening
+    return (await this.disk?.minutes(from, to).catch(() => [])) ?? []
+  }
+
+  keepMinutes(minutes: readonly Minute[], now = Date.now()): void {
+    if (!minutes.length) return
+    void this.disk?.keepMinutes(minutes, now - KEEP_MINUTES).catch((error: unknown) => {
+      log('warn', `time minutes were not kept: ${String(error)}`)
+    })
   }
 
   remind(on: boolean): void {
@@ -280,22 +305,17 @@ export class TimeStore {
     return rows.length
   }
 
-  ruleFor(lane: 'space' | 'site', key: string): Rule | null {
-    return this.rules.find((one) => (lane === 'space' ? one.space : one.site) === key) ?? null
+  ruleFor(lane: Lane, place: string): Rule | null {
+    return this.rules.find((one) => one.lane === lane && one.place === place) ?? null
   }
 
-  countAs(lane: 'space' | 'site', key: string, activity: string | null): void {
-    const was = this.ruleFor(lane, key)
+  countAs(lane: Lane, place: string, activity: string | null): void {
+    const was = this.ruleFor(lane, place)
     if (activity === null) {
       if (was) this.written([this.write('rule', was.id, null)])
       return
     }
-    const rule: Rule = {
-      id: was?.id ?? crypto.randomUUID(),
-      activity,
-      space: lane === 'space' ? key : null,
-      site: lane === 'site' ? key : null,
-    }
+    const rule: Rule = { id: was?.id ?? crypto.randomUUID(), activity, lane, place }
     this.written([this.write('rule', rule.id, ruleValue(rule))])
   }
 

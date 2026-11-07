@@ -2,7 +2,7 @@ import { TIME_ID, TIME_KIND } from '@orden/sync-core/time'
 import { isRecord } from '../stored'
 import type { Activity, Span } from './records'
 
-const HEAD = ['start', 'end', 'minutes', 'activity', 'tags', 'note', 'source', 'space', 'site']
+const HEAD = ['start', 'end', 'minutes', 'activity', 'tags', 'note', 'source', 'place']
 
 function cell(value: string): string {
   const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
@@ -25,8 +25,7 @@ export function csvOf(
       span.tags.join(', '),
       span.note,
       span.source,
-      span.source === 'space' ? (span.label ?? '') : '',
-      span.site ?? '',
+      span.label ?? span.place ?? '',
     ]
   })
   return [HEAD, ...rows].map((row) => row.map(cell).join(',')).join('\r\n') + '\r\n'

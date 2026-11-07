@@ -71,7 +71,7 @@
   import { overlays } from './overlays'
   import { fullscreen } from './fullscreen.svelte'
   import { alone } from './alone.svelte'
-  import { hiddenKinds } from './settings.svelte'
+  import { hiddenKinds, timeOn } from './settings.svelte'
   import { canWriteAt } from './sharing.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
@@ -142,7 +142,7 @@
     const open = workspace.openOn(side)
     const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
     if (open) lastShown = open
-    if (workspace.fills(chosen)) return chosen
+    if (workspace.fills(chosen) && (chosen !== 'time' || timeOn())) return chosen
     return mine.find((one) => one.id !== 'scratchpad')?.id ?? chosen
   })
 
@@ -279,6 +279,7 @@
             one.id === id &&
             workspace.fills(id) &&
             (id !== 'chats' || !!account.accountToken) &&
+            (id !== 'time' || timeOn()) &&
             (id !== 'ask' || !__EVEN_PLUGIN__),
         ),
     )
@@ -339,7 +340,7 @@
     const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
     if (id !== 'tree') {
       const making =
-        id === 'time' && !__EVEN_PLUGIN__
+        id === 'time' && !__EVEN_PLUGIN__ && timeOn()
           ? import('./time/menu').then(({ trackingMenu }) => trackingMenu())
           : Promise.resolve([])
       void Promise.all([own, making]).then(([{ panelMenu }, rows]) =>

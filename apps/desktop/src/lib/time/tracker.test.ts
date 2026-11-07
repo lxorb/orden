@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { GAP, type Lane, type Place, type Seen, siteOf, Tracker, WRITE_EVERY } from './tracker'
+import type { Lane } from './records'
+import { GAP, type Place, siteOf, Tracker, WRITE_EVERY } from './tracker'
 
 interface Written {
   id: string
@@ -29,18 +30,25 @@ function tracked() {
 const UNI: Place = { key: 'uni', name: 'Uni' }
 const HOME: Place = { key: 'home', name: 'Home' }
 const MOODLE: Place = { key: 'moodle.ethz.ch', name: 'moodle.ethz.ch' }
-const BOTH = { spaces: true, sites: true }
+const FIREFOX: Place = { key: 'firefox', name: 'Firefox' }
 
-const at = (seconds: number, change: Partial<Seen> = {}): Seen => ({
-  at: seconds * 1000,
-  active: true,
-  space: UNI,
-  site: null,
-  ...change,
-})
+interface Looked {
+  active?: boolean
+  space?: Place | null
+  site?: Place | null
+  app?: Place | null
+}
 
-function walk(tracker: Tracker, from: number, to: number, change: Partial<Seen> = {}) {
-  for (let second = from; second <= to; second += 15) tracker.seen(at(second, change), BOTH)
+const at = (seconds: number, change: Looked = {}) => {
+  const { active = true, space = UNI, site = null, app = null } = change
+  return {
+    at: seconds * 1000,
+    places: active ? { space, site, app } : {},
+  }
+}
+
+function walk(tracker: Tracker, from: number, to: number, change: Looked = {}) {
+  for (let second = from; second <= to; second += 15) tracker.seen(at(second, change))
 }
 
 const lasting = (span: Written | undefined) => (span ? (span.end - span.start) / 1000 : null)
@@ -65,7 +73,7 @@ describe('time counted by itself', () => {
     expect(lasting(spans[0])).toBe(15)
     walk(counting, 0, 300)
     expect(moves.length).toBeLessThanOrEqual(1 + 300_000 / WRITE_EVERY)
-    counting.seen(at(315, { active: false }), BOTH)
+    counting.seen(at(315, { active: false }))
     expect(moves.at(-1)).toBe(300_000)
   })
 
@@ -92,8 +100,8 @@ describe('time counted by itself', () => {
     walk(tracker, 75, 120, { space: HOME, site: MOODLE })
     tracker.flush()
     expect(spans.map((one) => [one.lane, one.key, lasting(one)])).toEqual([
-      ['space', 'uni', 60],
       ['site', 'moodle.ethz.ch', 120],
+      ['space', 'uni', 60],
       ['space', 'home', 45],
     ])
   })
@@ -106,12 +114,15 @@ describe('time counted by itself', () => {
     expect(spans.filter((one) => one.lane === 'site').map(lasting)).toEqual([60])
   })
 
-  test('counts nothing in a lane switched off', () => {
+  test('keeps the app in front in a lane of its own, beside the space', () => {
     const { spans, tracker } = tracked()
-    for (let second = 0; second <= 60; second += 15) {
-      tracker.seen(at(second, { site: MOODLE }), { spaces: false, sites: true })
-    }
-    expect(spans.map((one) => one.lane)).toEqual(['site'])
+    walk(tracker, 0, 60, { app: FIREFOX })
+    walk(tracker, 75, 120, { app: null })
+    tracker.flush()
+    expect(spans.map((one) => [one.lane, one.key, lasting(one)])).toEqual([
+      ['app', 'firefox', 60],
+      ['space', 'uni', 120],
+    ])
   })
 
   test('opens a new span when the one it was lengthening is gone', () => {

@@ -3656,4 +3656,25 @@ export const ar: Dictionary = {
   'Can edit': 'يمكنه التعديل',
   'Can manage': 'يمكنه الإدارة',
   '{from} invited you: {role}': 'دعاك {from}: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'يضيف مؤقّتًا ويسجّل التطبيق والموقع والتبويب في الواجهة ومدى انشغال الحاسوب.',
+  Apps: 'التطبيقات',
+  Battery: 'البطارية',
+  Break: 'استراحة',
+  'Daily average': 'المتوسط اليومي',
+  'Drag across the day to see what happened in that time.':
+    'اسحب على امتداد اليوم لترى ما حدث في ذلك الوقت.',
+  'Not said': 'غير مذكور',
+  'Nothing recorded yet.': 'لم يُسجَّل شيء بعد.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'لم يُسجَّل شيء بعد. اكتب ما تعمل عليه وابدأ المؤقّت، أو ابدأ بأحد هذه.',
+  'Open time tracker': 'فتح متتبّع الوقت',
+  Recent: 'الأخيرة',
+  'Record this as': 'تسجيل هذا كـ',
+  'Record what happens': 'تسجيل ما يحدث',
+  Reports: 'التقارير',
+  'Since {time}': 'منذ {time}',
+  Study: 'دراسة',
+  'What are you working on?': 'على ماذا تعمل؟',
+  'You said': 'ما ذكرته',
 }

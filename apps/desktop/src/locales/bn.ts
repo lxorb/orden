@@ -3461,4 +3461,25 @@ export const bn: Dictionary = {
   'Can edit': 'সম্পাদনা করতে পারেন',
   'Can manage': 'পরিচালনা করতে পারেন',
   '{from} invited you: {role}': '{from} আপনাকে আমন্ত্রণ জানিয়েছেন: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'একটি টাইমার যোগ করে এবং সামনের অ্যাপ, সাইট ও ট্যাব আর কম্পিউটার কতটা ব্যস্ত তা রেকর্ড করে।',
+  Apps: 'অ্যাপ',
+  Battery: 'ব্যাটারি',
+  Break: 'বিরতি',
+  'Daily average': 'দৈনিক গড়',
+  'Drag across the day to see what happened in that time.':
+    'ওই সময়ে কী হয়েছে দেখতে দিনের উপর টেনে নিন।',
+  'Not said': 'বলা হয়নি',
+  'Nothing recorded yet.': 'এখনও কিছু রেকর্ড হয়নি।',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'এখনও কিছু রেকর্ড হয়নি। আপনি কী নিয়ে কাজ করছেন বলুন এবং টাইমার শুরু করুন, অথবা এগুলোর একটি দিয়ে শুরু করুন।',
+  'Open time tracker': 'সময় ট্র্যাকার খুলুন',
+  Recent: 'সাম্প্রতিক',
+  'Record this as': 'হিসেবে রেকর্ড করুন',
+  'Record what happens': 'যা ঘটে তা রেকর্ড করুন',
+  Reports: 'রিপোর্ট',
+  'Since {time}': '{time} থেকে',
+  Study: 'পড়াশোনা',
+  'What are you working on?': 'আপনি কী নিয়ে কাজ করছেন?',
+  'You said': 'আপনি যা বলেছেন',
 }

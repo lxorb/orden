@@ -3467,4 +3467,25 @@ export const hi: Dictionary = {
   'Can edit': 'संपादित कर सकते हैं',
   'Can manage': 'प्रबंधित कर सकते हैं',
   '{from} invited you: {role}': '{from} ने आपको न्योता दिया: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'एक टाइमर जोड़ता है और सामने वाला ऐप, साइट और टैब, और कंप्यूटर कितना व्यस्त है, यह रिकॉर्ड करता है।',
+  Apps: 'ऐप',
+  Battery: 'बैटरी',
+  Break: 'ब्रेक',
+  'Daily average': 'दैनिक औसत',
+  'Drag across the day to see what happened in that time.':
+    'उस समय क्या हुआ, यह देखने के लिए दिन पर खींचें।',
+  'Not said': 'नहीं बताया',
+  'Nothing recorded yet.': 'अभी तक कुछ रिकॉर्ड नहीं हुआ।',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'अभी तक कुछ रिकॉर्ड नहीं हुआ। बताएँ कि आप किस पर काम कर रहे हैं और टाइमर शुरू करें, या इनमें से किसी एक से शुरुआत करें।',
+  'Open time tracker': 'समय ट्रैकर खोलें',
+  Recent: 'हाल के',
+  'Record this as': 'इस रूप में रिकॉर्ड करें',
+  'Record what happens': 'जो होता है उसे रिकॉर्ड करें',
+  Reports: 'रिपोर्ट',
+  'Since {time}': '{time} से',
+  Study: 'पढ़ाई',
+  'What are you working on?': 'आप किस पर काम कर रहे हैं?',
+  'You said': 'आपने बताया',
 }

@@ -3587,4 +3587,25 @@ export const fr: Dictionary = {
   'Can edit': 'Peut modifier',
   'Can manage': 'Peut gérer',
   '{from} invited you: {role}': '{from} vous a invité : {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Ajoute un minuteur et enregistre l’app, le site et l’onglet au premier plan, ainsi que l’activité de l’ordinateur.',
+  Apps: 'Apps',
+  Battery: 'Batterie',
+  Break: 'Pause',
+  'Daily average': 'Moyenne par jour',
+  'Drag across the day to see what happened in that time.':
+    'Faites glisser sur la journée pour voir ce qui s’est passé pendant ce temps.',
+  'Not said': 'Non déclaré',
+  'Nothing recorded yet.': 'Rien d’enregistré pour l’instant.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Rien d’enregistré pour l’instant. Indiquez ce que vous faites et lancez le minuteur, ou commencez par l’une de ces activités.',
+  'Open time tracker': 'Ouvrir le suivi du temps',
+  Recent: 'Récents',
+  'Record this as': 'Enregistrer comme',
+  'Record what happens': 'Enregistrer ce qui se passe',
+  Reports: 'Rapports',
+  'Since {time}': 'Depuis {time}',
+  Study: 'Études',
+  'What are you working on?': 'Sur quoi travaillez-vous ?',
+  'You said': 'Déclaré',
 }

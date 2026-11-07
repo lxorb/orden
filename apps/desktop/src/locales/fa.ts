@@ -3471,4 +3471,25 @@ export const fa: Dictionary = {
   'Can edit': 'می‌تواند ویرایش کند',
   'Can manage': 'می‌تواند مدیریت کند',
   '{from} invited you: {role}': '{from} شما را دعوت کرد: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'یک زمان‌سنج می‌افزاید و برنامه، سایت و زبانهٔ جلو و میزان مشغول بودن رایانه را ثبت می‌کند.',
+  Apps: 'برنامه‌ها',
+  Battery: 'باتری',
+  Break: 'استراحت',
+  'Daily average': 'میانگین روزانه',
+  'Drag across the day to see what happened in that time.':
+    'روی روز بکشید تا ببینید در آن بازه چه گذشته است.',
+  'Not said': 'گفته‌نشده',
+  'Nothing recorded yet.': 'هنوز چیزی ثبت نشده است.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'هنوز چیزی ثبت نشده است. بگویید روی چه کاری کار می‌کنید و زمان‌سنج را شروع کنید، یا با یکی از این‌ها آغاز کنید.',
+  'Open time tracker': 'گشودن ثبت زمان',
+  Recent: 'اخیر',
+  'Record this as': 'ثبت به‌عنوان',
+  'Record what happens': 'ثبت آنچه رخ می‌دهد',
+  Reports: 'گزارش‌ها',
+  'Since {time}': 'از {time}',
+  Study: 'مطالعه',
+  'What are you working on?': 'روی چه کاری کار می‌کنید؟',
+  'You said': 'گفتهٔ شما',
 }

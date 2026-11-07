@@ -3,18 +3,12 @@ import { DIVIDER, type MenuEntry } from '../menu-item'
 import { time } from './time.svelte'
 
 export function trackingMenu(): MenuEntry[] {
-  const lanes = time.tracking
   const keeping = () => import('./keeping')
   return [
     {
-      label: t('Time in spaces'),
-      checked: lanes.spaces,
-      run: () => time.track({ spaces: !lanes.spaces }),
-    },
-    {
-      label: t('Time on websites'),
-      checked: lanes.sites,
-      run: () => time.track({ sites: !lanes.sites }),
+      label: t('Record what happens'),
+      checked: time.recording,
+      run: () => time.record(!time.recording),
     },
     {
       label: t('Reminders'),

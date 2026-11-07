@@ -3534,4 +3534,25 @@ export const fil: Dictionary = {
   'Can edit': 'Puwedeng mag-edit',
   'Can manage': 'Puwedeng mamahala',
   '{from} invited you: {role}': 'Inimbitahan ka ni {from}: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Nagdaragdag ng timer at itinatala ang app, site at tab na nasa harap at kung gaano kaabala ang computer.',
+  Apps: 'Mga app',
+  Battery: 'Baterya',
+  Break: 'Pahinga',
+  'Daily average': 'Karaniwan bawat araw',
+  'Drag across the day to see what happened in that time.':
+    'I-drag sa kahabaan ng araw para makita ang nangyari sa oras na iyon.',
+  'Not said': 'Hindi sinabi',
+  'Nothing recorded yet.': 'Wala pang naitala.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Wala pang naitala. Sabihin kung ano ang ginagawa mo at simulan ang timer, o magsimula sa isa sa mga ito.',
+  'Open time tracker': 'Buksan ang pansubaybay ng oras',
+  Recent: 'Kamakailan',
+  'Record this as': 'Itala bilang',
+  'Record what happens': 'Itala ang nangyayari',
+  Reports: 'Mga ulat',
+  'Since {time}': 'Mula {time}',
+  Study: 'Pag-aaral',
+  'What are you working on?': 'Ano ang ginagawa mo?',
+  'You said': 'Sinabi mo',
 }

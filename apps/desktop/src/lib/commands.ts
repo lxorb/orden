@@ -83,7 +83,7 @@ import { archiveEntry, DIVIDER, listEntry } from './menu.svelte'
 import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { type KindName, settings } from './settings.svelte'
+import { type KindName, settings, timeOn } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -1504,6 +1504,28 @@ export function appCommands(view?: EditorView): Command[] {
             hint: shortcuts.hint('app.tasks'),
             run: () => void import('./todos-entry').then(({ showTodos }) => showTodos()),
           },
+          ...(timeOn()
+            ? [
+                {
+                  id: 'time-tab',
+                  label: t('Open time tracker'),
+                  hint: shortcuts.hint('time.tab'),
+                  run: () => void import('./time/open').then(({ openTime }) => openTime()),
+                },
+                {
+                  id: 'time-start',
+                  label: t('Start timer'),
+                  hint: shortcuts.hint('time.start'),
+                  run: () => void import('./time/commands').then(({ startTimer }) => startTimer()),
+                },
+                {
+                  id: 'time-stop',
+                  label: t('Stop timer'),
+                  hint: shortcuts.hint('time.stop'),
+                  run: () => void import('./time/commands').then(({ stopTimer }) => stopTimer()),
+                },
+              ]
+            : []),
         ]),
     {
       id: 'region-next',

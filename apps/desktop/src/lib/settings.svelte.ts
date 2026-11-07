@@ -223,3 +223,9 @@ class HiddenKinds {
 }
 
 export const hiddenKinds = new HiddenKinds()
+
+export const TIME_WORD = 'shown-time'
+
+export function timeOn(): boolean {
+  return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(TIME_WORD)
+}

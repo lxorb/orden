@@ -3400,4 +3400,25 @@ export const ms: Dictionary = {
   'Can edit': 'Boleh edit',
   'Can manage': 'Boleh urus',
   '{from} invited you: {role}': '{from} menjemput anda: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Menambah pemasa dan merekod apl, laman dan tab di hadapan serta tahap kesibukan komputer.',
+  Apps: 'Apl',
+  Battery: 'Bateri',
+  Break: 'Rehat',
+  'Daily average': 'Purata harian',
+  'Drag across the day to see what happened in that time.':
+    'Seret merentasi hari untuk melihat apa yang berlaku pada masa itu.',
+  'Not said': 'Tidak dinyatakan',
+  'Nothing recorded yet.': 'Belum ada yang direkodkan.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Belum ada yang direkodkan. Nyatakan perkara yang anda sedang lakukan dan mulakan pemasa, atau mulakan dengan salah satu daripada ini.',
+  'Open time tracker': 'Buka penjejak masa',
+  Recent: 'Terkini',
+  'Record this as': 'Rekodkan sebagai',
+  'Record what happens': 'Rekod apa yang berlaku',
+  Reports: 'Laporan',
+  'Since {time}': 'Sejak {time}',
+  Study: 'Belajar',
+  'What are you working on?': 'Apa yang anda sedang lakukan?',
+  'You said': 'Dinyatakan',
 }

@@ -137,7 +137,12 @@ export function start(): () => void {
 
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
 
-  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./time/start.svelte'))
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('right')
+      .then(() => import('./time-gate.svelte'))
+      .then(({ whenTimeOn }) => whenTimeOn(() => void import('./time/start.svelte')))
+  }
 
   if (!__EVEN_PLUGIN__) {
     void startup.turn('right').then(() => import('./scratchpad/start.svelte'))

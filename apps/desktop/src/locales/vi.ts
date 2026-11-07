@@ -3371,4 +3371,25 @@ export const vi: Dictionary = {
   'Can edit': 'Có thể sửa',
   'Can manage': 'Có thể quản lý',
   '{from} invited you: {role}': '{from} đã mời bạn: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Thêm bộ hẹn giờ và ghi lại ứng dụng, trang web và tab ở phía trước cùng mức độ bận của máy tính.',
+  Apps: 'Ứng dụng',
+  Battery: 'Pin',
+  Break: 'Nghỉ',
+  'Daily average': 'Trung bình mỗi ngày',
+  'Drag across the day to see what happened in that time.':
+    'Kéo trên ngày để xem điều gì đã diễn ra trong khoảng thời gian đó.',
+  'Not said': 'Chưa nêu',
+  'Nothing recorded yet.': 'Chưa ghi lại gì.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Chưa ghi lại gì. Cho biết bạn đang làm gì rồi bắt đầu hẹn giờ, hoặc bắt đầu với một trong những mục này.',
+  'Open time tracker': 'Mở theo dõi thời gian',
+  Recent: 'Gần đây',
+  'Record this as': 'Ghi lại là',
+  'Record what happens': 'Ghi lại những gì diễn ra',
+  Reports: 'Báo cáo',
+  'Since {time}': 'Từ {time}',
+  Study: 'Học',
+  'What are you working on?': 'Bạn đang làm gì?',
+  'You said': 'Bạn đã nêu',
 }

@@ -3461,4 +3461,25 @@ export const ur: Dictionary = {
   'Can edit': 'ترمیم کر سکتے ہیں',
   'Can manage': 'انتظام کر سکتے ہیں',
   '{from} invited you: {role}': '{from} نے آپ کو مدعو کیا: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'ایک ٹائمر شامل کرتا ہے اور سامنے والی ایپ، سائٹ اور ٹیب، اور کمپیوٹر کتنا مصروف ہے، یہ ریکارڈ کرتا ہے۔',
+  Apps: 'ایپس',
+  Battery: 'بیٹری',
+  Break: 'وقفہ',
+  'Daily average': 'روزانہ اوسط',
+  'Drag across the day to see what happened in that time.':
+    'دن پر گھسیٹیں تاکہ دیکھ سکیں اس وقت میں کیا ہوا۔',
+  'Not said': 'نہیں بتایا',
+  'Nothing recorded yet.': 'ابھی تک کچھ ریکارڈ نہیں ہوا۔',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'ابھی تک کچھ ریکارڈ نہیں ہوا۔ بتائیں آپ کس پر کام کر رہے ہیں اور ٹائمر شروع کریں، یا ان میں سے کسی ایک سے شروع کریں۔',
+  'Open time tracker': 'وقت ٹریکر کھولیں',
+  Recent: 'حالیہ',
+  'Record this as': 'بطور ریکارڈ کریں',
+  'Record what happens': 'جو ہو رہا ہے ریکارڈ کریں',
+  Reports: 'رپورٹس',
+  'Since {time}': '{time} سے',
+  Study: 'مطالعہ',
+  'What are you working on?': 'آپ کس پر کام کر رہے ہیں؟',
+  'You said': 'آپ نے بتایا',
 }

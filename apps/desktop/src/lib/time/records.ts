@@ -17,9 +17,13 @@ export interface Activity {
   order: number
 }
 
-type Source = 'manual' | 'timer' | 'space' | 'site'
+export type Lane = 'app' | 'site' | 'space' | 'tab'
 
-const SOURCES: readonly Source[] = ['manual', 'timer', 'space', 'site']
+export const LANES: readonly Lane[] = ['app', 'site', 'space', 'tab']
+
+type Source = 'manual' | 'timer' | Lane
+
+const SOURCES: readonly Source[] = ['manual', 'timer', ...LANES]
 
 export interface Span {
   id: string
@@ -29,8 +33,7 @@ export interface Span {
   tags: string[]
   note: string
   source: Source
-  space: string | null
-  site: string | null
+  place: string | null
   label: string | null
   device: string | null
 }
@@ -80,8 +83,7 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
     tags: tagsOf(value.tags),
     note: textOr(value.note, LONGEST_NOTE),
     source: SOURCES.find((one) => one === value.source) ?? 'manual',
-    space: idOr(value.space),
-    site: textOr(value.site, 253) || null,
+    place: textOr(value.place ?? value.space ?? value.site, 253) || null,
     label: textOr(value.label, LONGEST_NAME) || null,
     device: idOr(value.device),
   }
@@ -105,8 +107,7 @@ export function spanValue(span: Span): Record<string, unknown> {
     tags: span.tags,
     note: span.note,
     source: span.source,
-    space: span.space,
-    site: span.site,
+    place: span.place,
     label: span.label,
     device: span.device,
   }
@@ -115,29 +116,28 @@ export function spanValue(span: Span): Record<string, unknown> {
 export interface Rule {
   id: string
   activity: string
-  space: string | null
-  site: string | null
+  lane: Lane
+  place: string
 }
 
 export function ruleOf(id: string, value: Record<string, unknown>): Rule | null {
   const activity = idOr(value.activity)
-  const space = textOr(value.space, 253) || null
-  const site = textOr(value.site, 253) || null
-  if (!activity || (space === null) === (site === null)) return null
-  return { id, activity, space, site }
+  const old =
+    typeof value.space === 'string' ? 'space' : typeof value.site === 'string' ? 'site' : null
+  const lane = LANES.find((one) => one === value.lane) ?? old
+  const place = textOr(value.place ?? (lane ? value[lane] : null), 253)
+  if (!activity || !lane || !place) return null
+  return { id, activity, lane, place }
 }
 
 export function ruleValue(rule: Rule): Record<string, unknown> {
-  return { activity: rule.activity, space: rule.space, site: rule.site }
+  return { activity: rule.activity, lane: rule.lane, place: rule.place }
 }
 
-export interface Lanes {
-  spaces: boolean
-  sites: boolean
-}
-
-export function lanesOf(value: Record<string, unknown> | null | undefined): Lanes {
-  return { spaces: value?.spaces !== false, sites: value?.sites !== false }
+export function recordingOf(value: Record<string, unknown> | null | undefined): boolean {
+  if (!value) return true
+  if (typeof value.on === 'boolean') return value.on
+  return value.spaces !== false || value.sites !== false
 }
 
 export type Per = 'day' | 'week'

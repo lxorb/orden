@@ -3362,4 +3362,25 @@ export const ko: Dictionary = {
   'Can edit': '편집 가능',
   'Can manage': '관리 가능',
   '{from} invited you: {role}': '{from}님이 초대했습니다: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    '타이머를 추가하고 앞에 있는 앱, 사이트, 탭과 컴퓨터가 얼마나 바쁜지 기록합니다.',
+  Apps: '앱',
+  Battery: '배터리',
+  Break: '휴식',
+  'Daily average': '일일 평균',
+  'Drag across the day to see what happened in that time.':
+    '하루를 가로질러 드래그하면 그 시간에 무슨 일이 있었는지 볼 수 있습니다.',
+  'Not said': '입력 안 함',
+  'Nothing recorded yet.': '아직 기록된 내용이 없습니다.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    '아직 기록된 내용이 없습니다. 무엇을 하고 있는지 입력하고 타이머를 시작하거나, 아래 중 하나로 시작하세요.',
+  'Open time tracker': '시간 기록 열기',
+  Recent: '최근',
+  'Record this as': '다음으로 기록',
+  'Record what happens': '일어나는 일 기록',
+  Reports: '리포트',
+  'Since {time}': '{time}부터',
+  Study: '공부',
+  'What are you working on?': '무엇을 하고 있나요?',
+  'You said': '직접 입력',
 }
