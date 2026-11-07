@@ -9,7 +9,7 @@ import urllib.request
 from pathlib import Path
 
 OUT = Path(sys.argv[1]).resolve()
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 SPACES = Path(os.environ["ORDEN_SPACES_DIR"])
 SECRET_WORDS = "sekretbytes4711"
 WORDS = "the words of the note"

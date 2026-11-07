@@ -10,7 +10,7 @@ from pathlib import Path
 
 OUT, LABEL = Path(sys.argv[1]), sys.argv[2]
 SINCE = int(sys.argv[3]) if len(sys.argv) > 3 else 0
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 ANSWERED = re.compile(r"a worker answered at (\d+)")
 
 def endpoint():

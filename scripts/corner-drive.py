@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 PAGES = 8772
 MAGENTA = (255, 0, 255)
 

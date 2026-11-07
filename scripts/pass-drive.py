@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from devtools import Session, targets  # noqa: E402
 
 OUT = Path(sys.argv[1])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 DEBUG = int(os.environ["ORDEN_CEF_DEBUG_PORT"])
 PORTS = {"mark": 8781, "three": 8783, "wrong": 8784}
 SECRET = "JBSWY3DPEHPK3PXPJBSWY3DP"

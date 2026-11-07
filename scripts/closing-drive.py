@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 
 OUT, PHASE = Path(sys.argv[1]), sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "so.orden.Orden"
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 PORT_PAGES = 8768
 SITE = f"http://127.0.0.1:{PORT_PAGES}"
 PAGES = ["plain?1", "slow?1", "plain?2", "slow?2", "plain?3", "slow?3", "plain?4", "slow?4"]
