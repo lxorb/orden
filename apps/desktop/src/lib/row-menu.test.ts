@@ -194,17 +194,54 @@ describe('a chat', () => {
 })
 
 describe('a paper', () => {
-  test('holds nothing, wears nothing and duplicates as a paper', () => {
+  test('holds nothing, wears an icon and duplicates as a paper', () => {
     expect(labels(paper)).toEqual([
       'Open',
       'Open in new tab',
       'Open to the side',
       'Rename',
+      'Choose an icon',
       'Archive',
       'Protect',
       'Duplicate',
       'Delete',
     ])
+  })
+})
+
+describe('a file with nowhere of its own to write an icon', () => {
+  const kinds = [
+    '/s/paper.pdf',
+    '/s/photo.png',
+    '/s/Mail.application',
+    '/s/Table.base',
+    '/s/Old.webloc',
+  ]
+
+  test('still offers the picker, every kind of it', () => {
+    for (const path of kinds) expect(labels(note(path)), path).toContain('Choose an icon')
+  })
+
+  test('wears the icon from the space, and puts it down again', async () => {
+    const { iconChoice } = await import('./icon-choice.svelte')
+    const { chosenIcon } = await import('./chosen-icon')
+    const { wear } = await import('./icon-target')
+    const press = (path: string, label: string) =>
+      rowMenu(note(path))
+        .find((one) => one?.label === label)
+        ?.run()
+
+    for (const path of kinds) {
+      press(path, 'Choose an icon')
+      const asked = iconChoice.target
+      expect(asked, path).not.toBeNull()
+      if (asked) wear(asked, 'rocket', null)
+      iconChoice.close()
+      expect(chosenIcon(path), path).toBe('rocket')
+
+      press(path, path.endsWith('.webloc') ? 'Reset to site icon' : 'Remove icon')
+      expect(chosenIcon(path), path).toBeNull()
+    }
   })
 })
 
@@ -257,6 +294,7 @@ describe('a file the account has a copy of', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
+      'Choose an icon',
       'Archive',
       'Protect',
       'Share',

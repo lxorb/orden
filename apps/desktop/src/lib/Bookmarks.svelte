@@ -8,8 +8,9 @@
   import BookmarkTile from './BookmarkTile.svelte'
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
+  import { folderNote } from './folder-notes'
   import { t } from './i18n.svelte'
-  import { bookmarkEntry, DIVIDER, type MenuEntry, menu } from './menu.svelte'
+  import { bookmarkEntry, DIVIDER, iconEntries, type MenuEntry, menu } from './menu.svelte'
   import { dur, scale } from './motion'
   import Twist from './Twist.svelte'
   import { longPress } from './longpress'
@@ -40,6 +41,8 @@
     label: string
     note: string | null
     path: string | null
+    face: string | null
+    folder: boolean
     kind: Mark | null
     active: boolean
     front: boolean
@@ -77,6 +80,8 @@
         label: mark.text,
         note: null,
         path: null,
+        face: null,
+        folder: false,
         kind: null,
         active: false,
         front: false,
@@ -89,12 +94,15 @@
     if (!entry || (!basesOn() && isBaseTarget(entry.path))) return null
 
     const named = mark.kind === 'heading' || mark.kind === 'block'
+    const own = entry.is_dir ? folderNote(entry) : null
     return {
       ...shared,
       label: named ? mark.text : rowName(entry.name, entry.is_dir),
       note: named ? rowName(entry.name, entry.is_dir) : null,
       path: entry.path,
-      kind: entry.is_dir ? 'file' : fileMark(entry.name),
+      face: own?.path ?? entry.path,
+      folder: entry.is_dir && !own,
+      kind: own ? fileMark(own.name) : entry.is_dir ? 'file' : fileMark(entry.name),
       active:
         !entry.is_dir &&
         (mark.kind === 'note'
@@ -282,12 +290,17 @@
 
   function rowMenu(row: Row, unloading: MenuEntry[] = []): MenuEntry[] {
     const group = row.mark.kind === 'group'
+    const icons =
+      row.mark.kind === 'note' || row.mark.kind === 'folder'
+        ? iconEntries(row.face, row.folder)
+        : []
 
     return [
       ...(row.mark.kind === 'note' && row.path
         ? [{ label: t('Open in new tab'), run: () => pressed(row, 'front') }, DIVIDER]
         : []),
       ...(unloading.length ? [...unloading, DIVIDER] : []),
+      ...(icons.length ? [...icons, DIVIDER] : []),
       ...(group
         ? [
             { label: t('Rename'), run: () => void renameGroup(row.mark) },
@@ -462,8 +475,8 @@
                 ondragend={endDrag}
                 ondrop={(event) => drop(event, row)}
               >
-                {#if row.kind && row.path}
-                  <FileMark mark={row.kind} path={row.path} />
+                {#if row.kind && row.face}
+                  <FileMark mark={row.kind} path={row.face} />
                 {:else if row.kind}
                   <FileMark mark={row.kind} />
                 {:else if row.mark.kind === 'graph'}

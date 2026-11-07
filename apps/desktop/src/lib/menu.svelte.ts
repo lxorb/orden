@@ -143,21 +143,21 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
   const term = !__EVEN_PLUGIN__ && isTermTarget(path)
   const kept =
     chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
-  if (!folder && !kept) return []
+  const mapped = folder || !kept
 
   const take = () =>
-    folder
+    mapped
       ? workspace.setFolderIcon(path, null)
       : void import('./file-icon').then((one) => one.setFileIcon(path, null))
 
   return [
     {
       label: t('Choose an icon'),
-      run: () => (folder ? iconChoice.folder(path) : iconChoice.file(path)),
+      run: () => (mapped ? iconChoice.folder(path) : iconChoice.file(path)),
     },
     ...(chosenIcon(path) === null
       ? []
-      : [{ label: web ? t('Reset to site icon') : t('Remove icon'), run: take }]),
+      : [{ label: isWebTarget(path) ? t('Reset to site icon') : t('Remove icon'), run: take }]),
   ]
 }
 
