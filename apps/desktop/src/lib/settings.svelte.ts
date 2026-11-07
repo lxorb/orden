@@ -232,6 +232,8 @@ export function timeOn(): boolean {
 
 export const PASS_WORD = 'shown-pass'
 
+const passOnly = typeof document !== 'undefined' && document.documentElement.dataset.only === 'pass'
+
 export function passOn(): boolean {
-  return !__EVEN_PLUGIN__ && hiddenKinds.hidden.includes(PASS_WORD)
+  return !__EVEN_PLUGIN__ && (passOnly || hiddenKinds.hidden.includes(PASS_WORD))
 }

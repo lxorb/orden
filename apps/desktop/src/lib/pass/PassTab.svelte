@@ -2,7 +2,7 @@
   import { blank } from '@orden/pass/envelope'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
-  import { onMount, untrack } from 'svelte'
+  import { onMount, type Snippet, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { dur, fade } from '../motion'
   import { shortcuts } from '../shortcuts.svelte'
@@ -32,7 +32,11 @@
   import VaultSheet from './VaultSheet.svelte'
   import { flagName } from './flag-words'
 
-  const { tab, focused = false }: { tab: Tab | null; focused?: boolean } = $props()
+  const {
+    tab,
+    focused = false,
+    corner,
+  }: { tab: Tab | null; focused?: boolean; corner?: Snippet<[PassUi]> } = $props()
 
   const ui = new PassUi(untrack(() => tab))
 
@@ -166,7 +170,7 @@
     <div class="columns">
       {#if shows.side}
         <aside class="column side">
-          <PassSide {ui} />
+          <PassSide {ui} {corner} />
         </aside>
       {/if}
       {#if shows.list}

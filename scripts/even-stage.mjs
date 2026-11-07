@@ -30,7 +30,15 @@ if (to !== from) {
 writeFileSync(join(to, 'index.html'), page)
 writeFileSync(join(to, 'even.html'), page)
 
-for (const stray of ['manifest.webmanifest', 'sw.js', 'registerSW.js']) {
+for (const stray of [
+  'manifest.webmanifest',
+  'sw.js',
+  'registerSW.js',
+  'pass.webmanifest',
+  'pass-192.png',
+  'pass-256.png',
+  'pass-512.png',
+]) {
   rmSync(join(to, stray), { force: true })
 }
 

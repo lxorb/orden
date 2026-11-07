@@ -229,6 +229,17 @@ describe('the other places the mark appears', () => {
       expect(picture(ROOT, 'apps/desktop/public', `icon-${size}.png`).size).toBe(size)
   })
 
+  test('Pass on the web carries its own at the sizes its manifest says', () => {
+    const manifest = JSON.parse(
+      readFileSync(join(ROOT, 'apps/desktop/public/pass.webmanifest'), 'utf8'),
+    ) as { icons: { src: string; sizes: string }[] }
+    expect(manifest.icons.length).toBeGreaterThan(0)
+    for (const icon of manifest.icons) {
+      const size = Number(icon.sizes.split('x')[0])
+      expect(picture(ROOT, 'apps/desktop/public', icon.src.slice(1)).size, icon.src).toBe(size)
+    }
+  })
+
   test('the Even icons are greyscale', () => {
     for (const file of [
       'icon-24.png',

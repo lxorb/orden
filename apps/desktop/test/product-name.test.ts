@@ -154,7 +154,9 @@ describe('the name a reader sees', () => {
       'quick-add.html',
       'even.html',
       'handoff.html',
+      'pass.html',
       'public/manifest.webmanifest',
+      'public/pass.webmanifest',
       'even.app.json',
     ]) {
       const text = readFileSync(join(APP, name), 'utf8').replace(/<!--[\s\S]*?-->/g, '')

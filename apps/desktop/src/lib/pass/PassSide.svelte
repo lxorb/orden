@@ -1,6 +1,7 @@
 <script lang="ts">
   import { report } from '@orden/pass/monitor'
   import type { Folder, Vault } from '@orden/pass/types'
+  import type { Snippet } from 'svelte'
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
   import FolderMark from 'lucide/dist/esm/icons/folder.mjs'
@@ -27,7 +28,11 @@
   import { folderEntries, vaultEntries } from './vault-menu'
   import VaultMark from './VaultMark.svelte'
 
-  const { ui, onchosen }: { ui: PassUi; onchosen?: () => void } = $props()
+  const {
+    ui,
+    onchosen,
+    corner,
+  }: { ui: PassUi; onchosen?: () => void; corner?: Snippet<[PassUi]> | undefined } = $props()
 
   const view = $derived(ui.view)
   const live = $derived(pass.items.filter((one) => one.trashed === null))
@@ -213,20 +218,23 @@
 
   <div class="foot">
     <SyncBadge onadopt={() => (ui.sheet = { kind: 'adopt' })} />
-    <button
-      class="orden-row"
-      class:is-on={view.page === 'settings'}
-      type="button"
-      onclick={() => void ui.goTo('settings').then(() => onchosen?.())}
-    >
-      <Glyph icon={Settings} class="orden-row-mark" />
-      <span class="orden-row-label">{t('Settings')}</span>
-    </button>
+    {#if !corner}
+      <button
+        class="orden-row"
+        class:is-on={view.page === 'settings'}
+        type="button"
+        onclick={() => void ui.goTo('settings').then(() => onchosen?.())}
+      >
+        <Glyph icon={Settings} class="orden-row-mark" />
+        <span class="orden-row-label">{t('Settings')}</span>
+      </button>
+    {/if}
     <button class="orden-row" type="button" onclick={() => pass.lock()}>
       <Glyph icon={Lock} class="orden-row-mark" />
       <span class="orden-row-label">{t('Lock')}</span>
     </button>
   </div>
+  {#if corner}{@render corner(ui)}{/if}
 </nav>
 
 <style>

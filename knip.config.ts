@@ -67,6 +67,8 @@ export default {
         'src/handoff.ts',
         'pass-link.html',
         'src/pass-link.ts',
+        'pass.html',
+        'src/pass-web.ts',
         'src/lib/pass/test-device.ts',
         'src/site/site.ts',
         'src/lib/ai/review/index.ts',

@@ -26,6 +26,7 @@ const PAGES: Record<string, string> = {
   'quick-add.html': read('../quick-add.html'),
   'even.html': read('../even.html'),
   'handoff.html': read('../handoff.html'),
+  'pass.html': read('../pass.html'),
 }
 
 const VITE = read('../vite.config.ts')

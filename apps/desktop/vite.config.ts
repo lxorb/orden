@@ -90,6 +90,7 @@ export default defineConfig(({ command, mode }) => ({
         quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
         handoff: resolve(import.meta.dirname, 'handoff.html'),
         passLink: resolve(import.meta.dirname, 'pass-link.html'),
+        pass: resolve(import.meta.dirname, 'pass.html'),
       },
     },
   },

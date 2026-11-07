@@ -16,6 +16,18 @@
   import { SCRATCHPAD_MARK } from './panel-marks'
   import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'
 
+  const {
+    theming = true,
+    scratch = true,
+    onwho = showAccount,
+    onsettings = () => settings.show(),
+  }: {
+    theming?: boolean
+    scratch?: boolean
+    onwho?: (event: MouseEvent) => void
+    onsettings?: () => void
+  } = $props()
+
   const who = $derived(account.name)
 
   const pick = (event: MouseEvent) =>
@@ -30,7 +42,7 @@
     aria-label={who ?? t('Sign in')}
     disabled={account.restoring}
     aria-haspopup="menu"
-    onclick={showAccount}
+    onclick={onwho}
   >
     <AccountBadge />
     <span class="orden-row-label">{who ?? t('Sign in')}</span>
@@ -67,7 +79,7 @@
       >
     </button>
 
-    {#if !viewport.touch}
+    {#if theming && !viewport.touch}
       <button
         class="orden-glyph act"
         title={theme.current === 'dark' ? t('Light') : t('Dark')}
@@ -91,7 +103,7 @@
       </button>
     {/if}
 
-    {#if viewport.touch && !__EVEN_PLUGIN__}
+    {#if scratch && viewport.touch && !__EVEN_PLUGIN__}
       <button
         class="orden-glyph act"
         class:is-on={pad.on}
@@ -108,7 +120,7 @@
       class="orden-glyph act"
       title={shortcuts.tooltip(t('Settings'), 'app.settings')}
       aria-label={t('Settings')}
-      onclick={() => settings.show()}
+      onclick={onsettings}
     >
       <svg class="gear" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3.2" />
