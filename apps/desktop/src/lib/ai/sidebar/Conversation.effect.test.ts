@@ -160,3 +160,24 @@ test('Show all shows the rest in place, and no archived chat', () => {
   void shown.close()
   panel.heads = []
 })
+
+test('Show all over a thousand chats draws the rows in sight, not every one', () => {
+  panel.turns = []
+  panel.heads = Array.from({ length: 1000 }, (_, at) => ({
+    id: `c${at}`,
+    title: `chat ${at}`,
+    updated: 1000 - at,
+    state: 'done',
+    provider: 'p',
+    model: 'm',
+  }))
+  const shown = draw()
+  shown.target.querySelector<HTMLButtonElement>('.recent .all')?.click()
+  flushSync()
+  const drawn = shown.target.querySelectorAll('.recent .item')
+  expect(drawn.length).toBeGreaterThan(3)
+  expect(drawn.length).toBeLessThan(60)
+  expect(drawn[0]?.querySelector('.title')?.textContent).toBe('chat 0')
+  void shown.close()
+  panel.heads = []
+})

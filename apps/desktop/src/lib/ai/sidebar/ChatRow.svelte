@@ -7,6 +7,7 @@
   import Icon from '../../Icon.svelte'
   import { brandIcon, readIcon } from '../../icons'
   import { i18n, t } from '../../i18n.svelte'
+  import type { Place } from '../../row-window'
   import type { ThreadHead } from '../chat/types'
   import { providerBrand } from '../provider-brand'
   import type { SessionState } from '../session-state'
@@ -27,6 +28,7 @@
     onarchive,
     onmenu,
     onpoint,
+    place,
   }: {
     head: ThreadHead
     state: SessionState
@@ -39,6 +41,7 @@
     onarchive: () => void
     onmenu?: (event: MouseEvent) => void
     onpoint?: () => void
+    place?: Place
   } = $props()
 
   const brand = $derived(providerBrand(ai.provider(head.provider)?.kind, head.model))
@@ -46,7 +49,14 @@
   const archived = $derived(state === 'archived')
 </script>
 
-<li class="item" class:has-menu={!!onmenu} role="presentation">
+<li
+  class="item"
+  class:has-menu={!!onmenu}
+  class:away={place?.away !== undefined}
+  style:top={place?.away === undefined ? undefined : `${place.away}px`}
+  data-at={place?.at}
+  role="presentation"
+>
   <button
     class="row"
     class:lit
@@ -122,6 +132,12 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .item.away {
+    position: absolute;
+    left: 0;
+    right: 0;
   }
 
   .row {
