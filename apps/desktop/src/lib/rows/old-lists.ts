@@ -48,7 +48,7 @@ async function markOldLists(root: string, workspace: Lists): Promise<void> {
   const unmarked = workspace.notes
     .map((note) => relativeTo(root, note.path))
     .filter((relative) => inProjects(root, relative))
-    .filter((relative) => meta.valueOf(insideSpace(root, relative), LIST_KEY, root) !== LIST_VALUE)
+    .filter((relative) => meta.valueOf(insideSpace(root, relative), LIST_KEY, root) === null)
   const patches: Record<string, MetaPatch> = {}
   if (!done) {
     for (const relative of unmarked) patches[relative] = { [LIST_KEY]: LIST_VALUE }

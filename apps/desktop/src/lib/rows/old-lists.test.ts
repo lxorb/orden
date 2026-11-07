@@ -231,4 +231,17 @@ describe('a space made before todo lists were marked (#1333)', () => {
     await settled()
     expect(workspace.itemMeta.of(`${ROOT}/Inbox.md`)).toEqual({ 'todo-list': 'yes' })
   })
+
+  test('a Projects note stopped before the marking stays stopped, and is not marked', async () => {
+    seed(OLD_SPACE)
+    expect(listedAt(ROOT, 'Projects/Garden.md')).toBe(true)
+    unmakeList(`${ROOT}/Projects/Garden.md`)
+    expect(listedAt(ROOT, 'Projects/Garden.md')).toBe(false)
+
+    markOldListsSoon(ROOT, true, workspace)
+    await settled()
+
+    expect(listedAt(ROOT, 'Projects/Garden.md')).toBe(false)
+    expect(listedAt(ROOT, 'Projects/Work/Work.md')).toBe(true)
+  })
 })

@@ -5,6 +5,7 @@ import type { Row } from './types'
 
 export const LIST_KEY = 'todo-list'
 export const LIST_VALUE = 'yes'
+export const STOPPED_VALUE = 'no'
 export const DONE_KEY = 'done-on'
 export const CANCELLED_KEY = 'cancelled-on'
 export const MARKED_KEY = 'todo-lists'
