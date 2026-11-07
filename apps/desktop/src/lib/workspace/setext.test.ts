@@ -28,15 +28,34 @@ vi.mock('../stored', () => ({
   },
 }))
 
-const { dropSetext, SETEXT_GONE } = await import('./setext')
+const { dropSetext, SETEXT_GONE, SETEXT_KEY } = await import('./setext')
 const { FileActions } = await import('./undo.svelte')
-type HoldsNotes = import('./note-text').HoldsNotes
+type HoldsNotes = import('./note-text').HoldsNotes & import('./setext').MarksNotes
+type ItemMeta = import('@orden/sync-core/meta').ItemMeta
+type MetaPatch = import('@orden/sync-core/meta').MetaPatch
 
 const SPACE = '/space'
 
-function space(notes: Record<string, string>): HoldsNotes {
+const signedOut = () => false
+const signedIn = () => true
+
+let marked: Record<string, MetaPatch>[] = []
+
+function space(
+  notes: Record<string, string>,
+  items: Record<string, ItemMeta> = {},
+  describes = true,
+): HoldsNotes {
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
   return {
+    itemMeta: {
+      describes: () => describes,
+      fromEngine: () => Promise.resolve(),
+      itemsOf: () => items,
+      setMany: (_: string, patches: Record<string, MetaPatch>) => {
+        marked.push(patches)
+      },
+    },
     activeSpace: { id: 's', name: 'Space', root: SPACE },
     notes: Object.keys(notes).map((path) => ({ path })),
     documents: [],
@@ -52,6 +71,7 @@ function space(notes: Record<string, string>): HoldsNotes {
 beforeEach(() => {
   disk.clear()
   kept.clear()
+  marked = []
 })
 
 describe('a space written with underlined headings', () => {
@@ -62,11 +82,12 @@ describe('a space written with underlined headings', () => {
       [`${SPACE}/c.md`]: '```\nnot\n---\n```\n',
     })
 
-    expect(await dropSetext(ws, SPACE, 0)).toBe(1)
+    expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(1)
     expect(disk.get(`${SPACE}/a.md`)).toBe('# Title\n\nwords\n\n## Part\n')
     expect(disk.get(`${SPACE}/b.md`)).toBe('# Already\n\ntext\n\n---\n')
     expect(disk.get(`${SPACE}/c.md`)).toBe('```\nnot\n---\n```\n')
     expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
+    expect(marked).toEqual([{ 'a.md': { [SETEXT_KEY]: 'gone' } }])
     expect(ws.undone.stack).toEqual([])
   })
 
@@ -86,7 +107,7 @@ describe('a space written with underlined headings', () => {
       documentAt: (path: string) => open.find((one) => one.path === path) ?? null,
     } as unknown as HoldsNotes
 
-    expect(await dropSetext(writing, SPACE, 0)).toBe(1)
+    expect(await dropSetext(writing, SPACE, signedOut, 0)).toBe(1)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
     expect(disk.get(`${SPACE}/b.md`)).toBe('# Other\n')
     expect(disk.get(`${SPACE}/c.md`)).toBe('Third\n=====\n')
@@ -97,7 +118,36 @@ describe('a space written with underlined headings', () => {
     const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' })
     kept.set(SETEXT_GONE, [SPACE])
 
-    expect(await dropSetext(ws, SPACE, 0)).toBe(0)
+    expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
+  })
+
+  test('is left alone on a device that comes to it after another device rewrote it', async () => {
+    const ws = space(
+      { [`${SPACE}/a.md`]: 'A rule since\n\n---\n', [`${SPACE}/b.md`]: 'Words\n---\n' },
+      { 'old.md': { [SETEXT_KEY]: 'gone' } },
+    )
+
+    expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
+    expect(disk.get(`${SPACE}/b.md`)).toBe('Words\n---\n')
+    expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
+    expect(marked).toEqual([])
+  })
+
+  test('marks a note for the other devices even when nothing needed rewriting', async () => {
+    const ws = space({ [`${SPACE}/a.md`]: '# Fine\n', [`${SPACE}/b.md`]: 'also fine\n' })
+
+    expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
+    expect(marked).toEqual([{ 'a.md': { [SETEXT_KEY]: 'gone' } }])
+    expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
+  })
+
+  test('waits, signed in, until the account says what its notes are marked with', async () => {
+    const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' }, {}, false)
+
+    expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
+    expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
+    expect(kept.get(SETEXT_GONE)).toBeUndefined()
+    expect(marked).toEqual([])
   })
 })

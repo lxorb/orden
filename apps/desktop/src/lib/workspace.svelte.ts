@@ -2117,7 +2117,7 @@ class Workspace {
       void startup.turn('index').then(() =>
         import('./workspace/setext').then(
           ({ dropSetext }) =>
-            dropSetext(this, root).catch((error: unknown) => {
+            dropSetext(this, root, () => account.signedIn).catch((error: unknown) => {
               log('error', `setext headings in ${root} not rewritten - ${String(error)}`)
             }),
           unfetched,
