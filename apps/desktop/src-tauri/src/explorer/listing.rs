@@ -205,13 +205,31 @@ pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
     .await
 }
 
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "GetLogicalDrives is Win32's own call and has no safe wrapper"
+)]
+fn drive_letters() -> u32 {
+    unsafe { windows::Win32::Storage::FileSystem::GetLogicalDrives() }
+}
+
+#[cfg_attr(
+    not(windows),
+    allow(dead_code, reason = "only Windows names its disks by letter")
+)]
+fn lettered(letters: u32) -> Vec<PathBuf> {
+    (b'A'..=b'Z')
+        .zip(0..)
+        .filter(|(_, at)| letters & (1 << at) != 0)
+        .map(|(letter, _)| PathBuf::from(format!("{}:\\", char::from(letter))))
+        .collect()
+}
+
 fn disks() -> Vec<PathBuf> {
     #[cfg(windows)]
     {
-        (b'A'..=b'Z')
-            .map(|letter| PathBuf::from(format!("{}:\\", char::from(letter))))
-            .filter(|drive| fs::metadata(drive).is_ok())
-            .collect()
+        lettered(drive_letters())
     }
     #[cfg(not(windows))]
     {
@@ -410,5 +428,15 @@ mod tests {
             seen += 1;
         }
         assert!(seen >= 3);
+    }
+
+    #[test]
+    fn the_disks_windows_says_it_has_are_named_without_being_touched() {
+        let named = super::lettered(0b101 | (1 << 25));
+        assert_eq!(
+            named,
+            ["A:\\", "C:\\", "Z:\\"].map(std::path::PathBuf::from)
+        );
+        assert!(super::lettered(0).is_empty());
     }
 }
