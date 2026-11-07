@@ -97,6 +97,34 @@ describe('the rows of every space', () => {
     expect(tasks(store.of())).toHaveLength(2)
   })
 
+  test('a thousand notes the account indexes at once tell a settled listener once', async () => {
+    const { store, answer, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Ship it\n' })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+
+    let told = 0
+    let seen = 0
+    const stop = store.settled(() => {
+      told += 1
+      seen = store.of().length
+    })
+    store.indexed(
+      WORK,
+      Array.from({ length: 1000 }, (_, at) => scanned(`Away ${at}.md`, `- [ ] Task ${at}\n`)),
+    )
+    expect(told).toBe(0)
+    await Promise.resolve()
+    expect(told).toBe(1)
+    expect(seen).toBe(store.of().length)
+
+    stop()
+    store.indexed(WORK, [scanned('Late.md', '- [ ] Late\n')])
+    await settled()
+    expect(told).toBe(1)
+  })
+
   test("an Obsidian vault's tasks say their 📅 is a deadline", async () => {
     const { store, answer, settled } = rig(
       {

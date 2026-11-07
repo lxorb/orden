@@ -31,7 +31,7 @@
   let today = $state(todayHere())
   $effect(() =>
     untrack(() =>
-      rows.watch(() => {
+      rows.settled(() => {
         all = rows.shown()
         today = todayHere()
       }),

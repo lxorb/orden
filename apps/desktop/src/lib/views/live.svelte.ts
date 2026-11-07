@@ -91,8 +91,8 @@ export class LiveView {
     const scope = this.source.scope ?? undefined
     this.rows = store.shown(scope)
     this.stops.push(
-      store.watch((change) => {
-        if (scope === undefined || change.space === scope) this.rows = store.shown(scope)
+      store.settled(() => {
+        this.rows = store.shown(scope)
       }),
       $effect.root(() => {
         $effect(() => {

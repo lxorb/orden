@@ -101,6 +101,7 @@ vi.mock('../rows/rows.svelte', () => ({
     of: (space?: string) => shown.filter((row) => space === undefined || row.space === space),
     at: () => [],
     watch: () => () => undefined,
+    settled: () => () => undefined,
     inbox: () => Promise.resolve(null),
     write: async (row: Row, change: import('../rows/write').RowChange) => {
       const { writeRow } = await import('../rows/write')
