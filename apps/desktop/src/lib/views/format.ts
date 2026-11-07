@@ -22,9 +22,9 @@ export interface Shown {
 
 function number(value: number, options: Intl.NumberFormatOptions): string {
   try {
-    return new Intl.NumberFormat(i18n.language, options).format(value)
+    return i18n.amount(value, options)
   } catch {
-    return new Intl.NumberFormat(i18n.language).format(value)
+    return i18n.amount(value)
   }
 }
 

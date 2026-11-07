@@ -192,12 +192,13 @@ function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.D
   return made
 }
 
-function numberFormat(locale: string): Intl.NumberFormat {
-  const kept = numbers.get(locale)
+function numberFormat(locale: string, options: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  const at = `${locale} ${JSON.stringify(options)}`
+  const kept = numbers.get(at)
   if (kept) return kept
 
-  const made = new Intl.NumberFormat(locale)
-  numbers.set(locale, made)
+  const made = new Intl.NumberFormat(locale, options)
+  numbers.set(at, made)
   return made
 }
 
@@ -293,8 +294,8 @@ class I18n {
     return dateFormat(this.language, options).format(at)
   }
 
-  amount(value: number): string {
-    return numberFormat(this.language).format(value)
+  amount(value: number, options?: Intl.NumberFormatOptions): string {
+    return numberFormat(this.language, options).format(value)
   }
 }
 
