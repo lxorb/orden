@@ -196,6 +196,43 @@ describe('a note too large to be one', () => {
   })
 })
 
+describe('a name Windows keeps for a device', () => {
+  const refusal = /is a name Windows keeps for a device, so a note or folder cannot be called it/
+
+  test('is refused for a note or a folder made, renamed or copied to it, in the desktop’s words', async () => {
+    const crate = readFileSync(
+      fileURLToPath(new URL('../../../src-tauri/src/paths.rs', import.meta.url)),
+      'utf8',
+    )
+    expect(crate).toContain(
+      'is a name Windows keeps for a device, so a note or folder cannot be called it',
+    )
+    await write('/Notes/Plan.md', '# Plan')
+
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/Plan.md', to: '/Notes/nul.md' }),
+    ).rejects.toThrow(refusal)
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/Plan.md', to: '/Notes/CON .md' }),
+    ).rejects.toThrow(refusal)
+    await expect(webInvoke('create_folder', { path: '/Notes/COM¹' })).rejects.toThrow(refusal)
+    await expect(write('/Notes/lpt1.md', 'x')).rejects.toThrow(refusal)
+    await expect(
+      webInvoke('copy_path', { from: '/Notes/Plan.md', to: '/Notes/conin$.md' }),
+    ).rejects.toThrow(refusal)
+    expect(paths()).toEqual(['/Notes/Plan.md'])
+  })
+
+  test('is still written and moved for a note that came with it', async () => {
+    await webInvoke('write_note', { path: '/Notes/aux.md', content: 'came', arrived: true })
+    await write('/Notes/aux.md', 'still written')
+    await webInvoke('create_folder', { path: '/Notes/Kept' })
+    await webInvoke('rename_note', { from: '/Notes/aux.md', to: '/Notes/Kept/aux.md' })
+    expect(await read('/Notes/Kept/aux.md')).toBe('still written')
+    await webInvoke('create_folder', { path: '/Notes/PRN', arrived: true })
+  })
+})
+
 describe('versions of a note', () => {
   const keep = (content: string, source?: string) =>
     webInvoke('snapshot_note', { path: '/Notes/Plane.canvas', content, source })
