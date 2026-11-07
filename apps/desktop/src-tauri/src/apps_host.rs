@@ -636,6 +636,7 @@ pub fn end_all(app: &AppHandle) {
     for running in &all {
         end(running, std::time::Duration::ZERO);
     }
+    std::thread::spawn(move || drop(all));
 }
 
 fn allowed_file(app: &AppHandle) -> Option<PathBuf> {
