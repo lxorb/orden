@@ -12,6 +12,7 @@ const WHOLE_MOST = 256 * 1024
 export interface Wanted {
   path: string
   name: string
+  stamp?: string
 }
 
 type Read = (path: string, most: number) => Promise<Peek>
@@ -42,7 +43,7 @@ async function shrunk(name: string, read: Peek): Promise<string | null> {
 export class Thumbs {
   readonly shown = new SvelteMap<string, string>()
   #folder: string | null = null
-  #asked = new Set<string>()
+  #asked = new Map<string, string>()
   #wanted = new Set<string>()
   #waiting: Wanted[] = []
   #running = 0
@@ -66,8 +67,9 @@ export class Thumbs {
       return kept
     })
     for (const one of wanted) {
-      if (this.#asked.has(one.path)) continue
-      this.#asked.add(one.path)
+      const stamp = one.stamp ?? ''
+      if (this.#asked.get(one.path) === stamp) continue
+      this.#asked.set(one.path, stamp)
       this.#waiting.push(one)
     }
     this.#next()
@@ -85,6 +87,8 @@ export class Thumbs {
     while (this.#running < AT_ONCE) {
       const one = this.#waiting.shift()
       if (!one) return
+      const stamp = one.stamp ?? ''
+      if (this.#asked.get(one.path) !== stamp) continue
       this.#running++
       const folder = this.#folder
       void this.#read(one.path, THUMB_MOST)
@@ -92,11 +96,13 @@ export class Thumbs {
         .catch(() => null)
         .then((url) => {
           if (!url) return
-          if (folder !== this.#folder || !this.#asked.has(one.path)) {
+          if (folder !== this.#folder || this.#asked.get(one.path) !== stamp) {
             URL.revokeObjectURL(url)
             return
           }
+          const before = this.shown.get(one.path)
           this.shown.set(one.path, url)
+          if (before) URL.revokeObjectURL(before)
           this.#trim()
         })
         .finally(() => {
