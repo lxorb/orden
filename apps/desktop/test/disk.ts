@@ -67,7 +67,12 @@ export class Disk {
         this.files.set(this.spelled(path) ?? path, text(args.content))
         return undefined
       case 'write_bytes':
-        this.files.set(this.spelled(path) ?? path, atob(text(args.base64)))
+        this.files.set(
+          this.spelled(path) ?? path,
+          args.bytes instanceof Uint8Array
+            ? String.fromCharCode(...args.bytes)
+            : atob(text(args.base64)),
+        )
         return undefined
       case 'rename_note': {
         const from = this.spelled(text(args.from))

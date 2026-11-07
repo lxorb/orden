@@ -167,15 +167,9 @@ pub fn sync_store_forget(app: AppHandle, account: String) -> Result<(), String> 
 }
 
 fn sent_bytes(body: &InvokeBody) -> Result<Vec<u8>, String> {
-    match body {
-        InvokeBody::Raw(bytes) => Ok(bytes.clone()),
-        InvokeBody::Json(serde_json::Value::Array(numbers)) => numbers
-            .iter()
-            .map(|one| one.as_u64().and_then(|number| u8::try_from(number).ok()))
-            .collect::<Option<Vec<u8>>>()
-            .ok_or_else(|| "the sync store was sent something that is not bytes".to_owned()),
-        InvokeBody::Json(_) => Err("the sync store was sent something that is not bytes".into()),
-    }
+    crate::notes::bytes_sent(body)
+        .map(std::borrow::Cow::into_owned)
+        .ok_or_else(|| "the sync store was sent something that is not bytes".to_owned())
 }
 
 fn with_store<T>(

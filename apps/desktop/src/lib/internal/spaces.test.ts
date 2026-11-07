@@ -75,7 +75,9 @@ const disk = vi.hoisted(() => {
         mkdirs(parentOf(path))
         files.set(
           path,
-          Uint8Array.from(atob(args.base64 as string), (one) => one.charCodeAt(0)),
+          args.bytes instanceof Uint8Array
+            ? args.bytes
+            : Uint8Array.from(atob(args.base64 as string), (one) => one.charCodeAt(0)),
         )
         return undefined
       }
@@ -407,7 +409,7 @@ describe('a space that is a folder', () => {
     const write = disk.crate
     disk.crate = (command, args) => {
       if (command === 'write_bytes' && String(args.path).includes('/.entries/')) {
-        return write(command, { ...args, base64: 'AA==' })
+        return write(command, { ...args, bytes: Uint8Array.of(0) })
       }
       return write(command, args)
     }

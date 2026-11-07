@@ -108,7 +108,12 @@ vi.mock('./tauri', async (importOriginal) => ({
         return undefined
       }
       case 'write_bytes':
-        files.set(path, atob(text(args?.base64)))
+        files.set(
+          path,
+          args?.bytes instanceof Uint8Array
+            ? String.fromCharCode(...args.bytes)
+            : atob(text(args?.base64)),
+        )
         return undefined
       case 'copy_path': {
         const from = text(args?.from)

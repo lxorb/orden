@@ -1,5 +1,5 @@
 import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
-import { fileBytes, toBase64 } from '../bytes'
+import { fileBytes } from '../bytes'
 import { CanvasStore } from '../canvas/store.svelte'
 import { log } from '../log'
 import { nameFromTitle } from '../note-name'
@@ -47,7 +47,7 @@ export async function keepPaper(ws: Drafts, note: NoteDoc, path: string): Promis
 
   try {
     const paper = paperOf(path)
-    await invoke('write_bytes', { path: paper, base64: toBase64(await fileBytes(from)) })
+    await invoke('write_bytes', { path: paper, bytes: await fileBytes(from) })
     const named = (plane: Canvas) => paperNamed(plane, from, nameOf(paper))
     const drawing = CanvasStore.drawing(note, ws.tabs)
     if (drawing) drawing.relinked(named)

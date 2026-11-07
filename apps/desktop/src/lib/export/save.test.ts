@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { toBase64 } from '../bytes'
 
 const calls: { command: string; args: Record<string, unknown> }[] = []
 
@@ -44,7 +43,7 @@ function written(): Map<string, unknown> {
   return new Map(
     calls
       .filter((one) => one.command === 'write_note' || one.command === 'write_bytes')
-      .map((one) => [String(one.args.path), one.args.content ?? one.args.base64]),
+      .map((one) => [String(one.args.path), one.args.content ?? one.args.bytes]),
   )
 }
 
@@ -57,13 +56,11 @@ describe('writing a file', () => {
     ])
   })
 
-  test('bytes go through the byte writer, as base64', async () => {
+  test('bytes go through the byte writer, as bytes', async () => {
     const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 1, 2])
     await writeFile('C:/notes/Note.docx', bytes)
 
-    expect(calls).toEqual([
-      { command: 'write_bytes', args: { path: 'C:/notes/Note.docx', base64: toBase64(bytes) } },
-    ])
+    expect(calls).toEqual([{ command: 'write_bytes', args: { path: 'C:/notes/Note.docx', bytes } }])
   })
 
   test('either way the link index is told, so an export saved into a space is linkable', async () => {
@@ -78,13 +75,12 @@ describe('writing a file', () => {
     expect(calls.map((one) => one.command)).toEqual(['write_bytes'])
   })
 
-  test('a picture of any size crosses as one string rather than as digits', async () => {
+  test('a picture of any size crosses as its bytes, neither as digits nor as base64', async () => {
     const big = new Uint8Array(60_000).map((_, at) => at % 256)
     await writeFile('C:/big.png', big)
 
-    const base64 = calls[0]?.args.base64
-    expect(typeof base64).toBe('string')
-    expect(String(base64).length).toBeLessThan(big.length * 2)
+    expect(calls[0]?.args.bytes).toBe(big)
+    expect(calls[0]?.args.base64).toBeUndefined()
   })
 
   test('an empty file is still a file', async () => {
@@ -148,7 +144,7 @@ describe('a note with files beside it', () => {
     })
 
     expect(written().has('/out/assets/image.png')).toBe(false)
-    expect(written().get('/out/assets/image 2.png')).toBe(toBase64(picture))
+    expect(written().get('/out/assets/image 2.png')).toEqual(picture)
     expect(written().get('/out/Trip.md')).toBe('# Trip\n![](assets/image 2.png)\n')
   })
 
@@ -166,6 +162,6 @@ describe('a note with files beside it', () => {
     })
 
     expect([...written().keys()].sort()).toEqual(['/out/Holiday 2 2.png', '/out/Holiday.png'])
-    expect(written().get('/out/Holiday.png')).toBe(toBase64(page(1)))
+    expect(written().get('/out/Holiday.png')).toEqual(page(1))
   })
 })

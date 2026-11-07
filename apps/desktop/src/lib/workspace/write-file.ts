@@ -29,10 +29,10 @@ export async function writeFile(path: string, content: string): Promise<void> {
   wroteHere(path)
 }
 
-export async function writeBytes(path: string, base64: string): Promise<void> {
+export async function writeBytes(path: string, bytes: Uint8Array): Promise<void> {
   const ear = hearing
   const was = ear ? await ear.there(path) : true
-  await invoke('write_bytes', { path, base64 })
+  await invoke('write_bytes', { path, bytes })
   await links.cameBack(path, false)
   if (ear && !was) await ear.made(path)
 }
