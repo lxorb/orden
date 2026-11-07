@@ -1319,10 +1319,33 @@ impl Gathered {
         let mut called = HashSet::new();
         for (receiver, method) in methods {
             for ty in self.types(found, receiver, &mut Vec::new(), 0) {
-                called.extend(self.targets(&ty, method));
+                if method == "drop" {
+                    self.dropping(&ty, &mut called, 0);
+                } else {
+                    called.extend(self.targets(&ty, method));
+                }
             }
         }
         called
+    }
+
+    fn dropping(&self, ty: &Ty, called: &mut HashSet<String>, depth: usize) {
+        if depth > TYPED_DEEPEST {
+            return;
+        }
+        if self.is_def(&ty.name) {
+            called.extend(self.landing(&format!("{}::drop", ty.name), 0));
+        }
+        if let Some(def) = self.defs.get(&ty.name) {
+            for raw in def.fields.values() {
+                if let Some(field) = self.def_ty(&ty.name, raw) {
+                    self.dropping(&field, called, depth + 1);
+                }
+            }
+        }
+        for one in &ty.args {
+            self.dropping(one, called, depth + 1);
+        }
     }
 
     fn targets(&self, ty: &Ty, method: &str) -> Vec<String> {
@@ -2744,9 +2767,18 @@ impl<'a> Visit<'a> for Methods {
     }
 
     fn visit_expr_call(&mut self, call: &'a syn::ExprCall) {
-        if matches!(&*call.func, syn::Expr::Path(path) if path.path.segments.last().is_some_and(|one| AWAY.iter().any(|away| one.ident == away)))
-        {
+        let Some(last) = (match &*call.func {
+            syn::Expr::Path(path) => path.path.segments.last(),
+            _ => None,
+        }) else {
+            syn::visit::visit_expr_call(self, call);
             return;
+        };
+        if AWAY.iter().any(|away| last.ident == away) {
+            return;
+        }
+        if let (true, Some(dropped)) = (last.ident == "drop", call.args.first()) {
+            self.found.push((chain_of(dropped), "drop".to_owned()));
         }
         syn::visit::visit_expr_call(self, call);
     }
