@@ -1209,6 +1209,54 @@ mod tests {
     }
 
     #[test]
+    fn a_lock_taken_again_under_itself_or_in_the_other_order_is_found() {
+        let source = concat!(
+            "static ONE: Mutex<u8> = Mutex::new(0);\n\nstatic TWO: Mutex<u8> = Mutex::new(0);\n\nstatic ASKED: Mutex<u8> = Mutex::new(0);\n\nstatic FIRST: Mutex<u8> = Mutex::new(0);\n\n",
+            "fn one() -> u8 {\n    *ONE.lock().unwrap()\n}\n\n",
+            "fn asked() -> u8 {\n    *ASKED.lock().unwrap()\n}\n\n",
+            "fn first() -> u8 {\n    *FIRST.lock().unwrap()\n}\n\n",
+            "pub fn again() {\n    if let Some(seen) = Some(*ONE.lock().unwrap()) {\n        one();\n    }\n}\n\n",
+            "pub fn forth() {\n    let one = ONE.lock().unwrap();\n    *TWO.lock().unwrap() = *one;\n}\n\n",
+            "pub fn back() {\n    let two = TWO.lock().unwrap();\n    one();\n    drop(two);\n}\n\n",
+            "pub fn condition() {\n    if *ASKED.lock().unwrap() == 0 {\n        asked();\n    }\n}\n\n",
+            "pub fn before() {\n    *holder(first()).lock().unwrap() = 1;\n}\n\n",
+            "fn holder(_: u8) -> &'static Mutex<u8> {\n    &FIRST\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let found = own.lock_orders(&[]).join("\n");
+        assert!(
+            found.contains(
+                "crate::again holds crate::ONE and calls on to crate::one, which takes it again"
+            ),
+            "{found}"
+        );
+        assert!(
+            found.contains("crate::forth holds crate::ONE and takes crate::TWO under it"),
+            "{found}"
+        );
+        assert!(found.contains("crate::back holds crate::TWO"), "{found}");
+        assert!(!found.contains("crate::condition"), "{found}");
+        assert!(!found.contains("crate::before"), "{found}");
+    }
+
+    #[test]
+    fn no_lock_is_taken_again_or_in_the_other_order_under_another() {
+        let mut found: Vec<String> = Vec::new();
+        for target in TARGETS {
+            let own = own_on(target);
+            found.extend(
+                own.lock_orders(&[])
+                    .into_iter()
+                    .map(|one| format!("{target:?} {one}")),
+            );
+        }
+        assert!(
+            found.is_empty(),
+            "locks that wait on each other: {found:#?}"
+        );
+    }
+
+    #[test]
     fn a_lock_held_across_a_wait_is_a_wait_for_whoever_takes_it() {
         let source = concat!(
             "static HELD: Mutex<u8> = Mutex::new(0);\n\n",

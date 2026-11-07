@@ -286,7 +286,8 @@ impl Link {
 
             let seen = self.seen_now();
             if seen.standing == Standing::Paired && seen.window.is_none() {
-                if let Some(endpoint) = self.held().endpoint.clone() {
+                let endpoint = self.held().endpoint.clone();
+                if let Some(endpoint) = endpoint {
                     self.ask_window(&endpoint, Duration::ZERO);
                 }
             }
