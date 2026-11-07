@@ -37,10 +37,10 @@ function row(task: Row, root: string): string {
   if (!fields || !task.anchor) return ''
   const where = `data-path="${escapeAll(insideSpace(root, task.path))}" data-line="${task.anchor.line}" data-hash="${escapeAll(task.anchor.hash)}"`
   const box =
-    `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
+    `<input type="checkbox" class="orden-checkbox" data-task ${where}` +
     `${fields.done ? ' checked' : ''} aria-label="${escapeAll(fields.text)}">`
   const title = `title="${escapeAll(shownName(task.file.name))}"`
-  return `<button type="button" class="nib-row is-short" ${where} ${title}>${box}${escapeAll(fields.text)}</button>`
+  return `<button type="button" class="orden-row is-short" ${where} ${title}>${box}${escapeAll(fields.text)}</button>`
 }
 
 function drawn(
@@ -58,16 +58,16 @@ function drawn(
       if (!rows.length) return ''
       const name = groupName(group.key)
       const head = name
-        ? `<p class="nib-section">${escapeAll(name)}<span>${group.rows.length}</span></p>`
+        ? `<p class="orden-section">${escapeAll(name)}<span>${group.rows.length}</span></p>`
         : ''
       return head + rows.map((one) => row(one, root)).join('')
     })
     .join('')
   const unreadLines = unread.length
-    ? `<p class="nib-query-none">${unread.map((line) => escapeAll(line)).join('<br>')}</p>`
+    ? `<p class="orden-query-none">${unread.map((line) => escapeAll(line)).join('<br>')}</p>`
     : ''
-  const body = groups || `<p class="nib-query-none">${escapeAll(nothing)}</p>`
-  return `<div class="nib-query">${body}${unreadLines}</div>`
+  const body = groups || `<p class="orden-query-none">${escapeAll(nothing)}</p>`
+  return `<div class="orden-query">${body}${unreadLines}</div>`
 }
 
 export async function tasksRowsHtml(
@@ -87,7 +87,7 @@ export async function tasksRowsHtml(
   const { base: read, unsupported } = readTasksQuery(code)
   const guarded = stranger || !trustsHtmlAt(root)
   const refused = guarded ? refusedPattern(read) : null
-  if (refused !== null) return `<p class="nib-query-none">${escapeAll(refused)}</p>`
+  if (refused !== null) return `<p class="orden-query-none">${escapeAll(refused)}</p>`
   const base = { ...read, guarded }
   const now = new Date()
   const stamp = new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString()

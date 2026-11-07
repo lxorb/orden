@@ -67,7 +67,7 @@ function here(chosenOn?: string) {
 
 const buttons = () => [...target.querySelectorAll<HTMLButtonElement>('button')]
 const names = (within: ParentNode) =>
-  [...within.querySelectorAll('.nib-row-label')].map((one) => one.textContent.trim())
+  [...within.querySelectorAll('.orden-row-label')].map((one) => one.textContent.trim())
 
 function press(key: string, held: KeyboardEventInit = {}) {
   const at = document.activeElement ?? document.body

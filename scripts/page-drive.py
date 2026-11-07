@@ -87,7 +87,7 @@ def picture(name):
 
 ROWS = """[...document.querySelectorAll('aside:not(.right) .row')].map((row) => {
   const box = row.getBoundingClientRect()
-  return { name: row.querySelector('.nib-row-label')?.textContent.trim(), x: box.x, y: box.y, height: box.height }
+  return { name: row.querySelector('.orden-row-label')?.textContent.trim(), x: box.x, y: box.y, height: box.height }
 }).sort((a, b) => a.y - b.y)"""
 
 def dragged(start, end, y):

@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn a_secrets_file_is_the_owners_alone_and_reads_back() {
-        let folder = std::env::temp_dir().join(format!("nib-secrets-{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("orden-secrets-{}", std::process::id()));
         let path = folder.join(super::FILE);
         assert!(read_file(&path).unwrap().is_empty());
         let mut kept = std::collections::BTreeMap::new();

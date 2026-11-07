@@ -766,7 +766,7 @@ mod tests {
             }
         }
 
-        let scratch = Scratch(r"Software\nib-tests");
+        let scratch = Scratch(r"Software\orden-tests");
         let at = format!(r"{}\default-browser-{}", scratch.0, std::process::id());
         let root = CURRENT_USER.create(&at).expect("a test key");
         let exe = std::env::current_exe().expect("this test's own program");
@@ -857,7 +857,7 @@ mod tests {
             }
         }
 
-        let scheme = format!("nib-test-{}", std::process::id());
+        let scheme = format!("orden-test-{}", std::process::id());
         let scratch = Scratch(scheme.clone());
         assert_eq!(handler_of(&scheme), None, "a scheme nothing registered");
 

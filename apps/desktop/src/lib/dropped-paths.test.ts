@@ -18,7 +18,7 @@ describe('the paths of files dropped on the page', () => {
     })
 
     expect(paths).toEqual(['C:\\far\\paper.pdf'])
-    expect(posted).toEqual(['nib-dropped-paths paper.pdf'])
+    expect(posted).toEqual(['orden-dropped-paths paper.pdf'])
     expect(waited).toEqual([50, 50])
   })
 

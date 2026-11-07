@@ -59,7 +59,7 @@ function rows(): { label: string; marked: boolean; tooltip: string; said: string
       label: one.querySelector('.text')?.textContent ?? '',
       marked: !!mark,
       tooltip: mark?.getAttribute('title') ?? '',
-      said: one.querySelector('.nib-said')?.textContent ?? '',
+      said: one.querySelector('.orden-said')?.textContent ?? '',
     }
   })
 }

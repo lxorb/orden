@@ -134,7 +134,7 @@
 
   {#snippet foot()}
     <button
-      class="nib-button go"
+      class="orden-button go"
       disabled={!publish.confirmed || !publish.ready}
       onclick={() => void publish.publish(siteIcon(markBox))}
     >
@@ -245,7 +245,7 @@
 
     <h3>{t('Address')}</h3>
     {#if offerDomain}
-      <div class="nib-segmented" role="radiogroup" aria-label={t('Address')} use:segmented>
+      <div class="orden-segmented" role="radiogroup" aria-label={t('Address')} use:segmented>
         <button
           type="button"
           role="radio"
@@ -329,7 +329,7 @@
           {/each}
           <span class="hint">{t('Add these at your registrar, then verify.')}</span>
           <button
-            class="nib-action"
+            class="orden-action"
             disabled={publish.busy || !blog?.domain}
             onclick={() => void publish.verifyDomain()}
           >
@@ -359,7 +359,7 @@
       </label>
       <div class="row">
         <span class="name">{t('Tab icon')}</span>
-        <span class="mark nib-badge" bind:this={markBox}>
+        <span class="mark orden-badge" bind:this={markBox}>
           <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
         </span>
       </div>
@@ -437,7 +437,7 @@
       </label>
       {#if publish.hasPassword}
         <button
-          class="nib-action is-danger"
+          class="orden-action is-danger"
           disabled={publish.busy}
           onclick={() => void publish.removePassword()}
         >
@@ -480,20 +480,22 @@
                 .map(([question, said]) => `${question}: ${said}`)
                 .join(' · ')}
             </span>
-            <button class="nib-chip" onclick={() => void publish.forget(one)}>{t('Delete')}</button>
+            <button class="orden-chip" onclick={() => void publish.forget(one)}
+              >{t('Delete')}</button
+            >
           </div>
         {/each}
       </div>
 
       <div class="card">
-        <button class="nib-action" onclick={() => void saveAnswers()}>
+        <button class="orden-action" onclick={() => void saveAnswers()}>
           {t('Save as CSV')}
         </button>
       </div>
     {/if}
 
     <div class="card">
-      <button class="nib-action is-danger" onclick={() => void publish.unpublish()}>
+      <button class="orden-action is-danger" onclick={() => void publish.unpublish()}>
         {t('Stop publishing')}
       </button>
     </div>
@@ -625,7 +627,7 @@
     color: var(--muted);
   }
 
-  .nib-segmented {
+  .orden-segmented {
     width: 100%;
   }
 

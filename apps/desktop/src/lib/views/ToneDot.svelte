@@ -33,7 +33,7 @@
     onclick={() => (open = !open)}
   ></button>
   {#if open}
-    <span class="pick nib-layer">
+    <span class="pick orden-layer">
       <CanvasColours
         colour={tone ?? null}
         wheel={false}

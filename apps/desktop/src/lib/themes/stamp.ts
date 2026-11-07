@@ -5,7 +5,7 @@ export interface Stamp {
   version: string
 }
 
-export const STAMP_LINE = /^\s*\/\*!\s*nib-theme\s*(\{.*?\})\s*\*\//
+export const STAMP_LINE = /^\s*\/\*!\s*orden-theme\s*(\{.*?\})\s*\*\//
 
 export function stamped(stamp: Stamp, css: string): string {
   const clean = (text: string) => text.replace(/[/*\\]/g, '').replace(/\p{Cc}/gu, '')
@@ -16,7 +16,7 @@ export function stamped(stamp: Stamp, css: string): string {
     version: clean(stamp.version),
   }
 
-  return `/*! nib-theme ${JSON.stringify(said).replace(/\//g, '\\/')} */\n${css}\n`
+  return `/*! orden-theme ${JSON.stringify(said).replace(/\//g, '\\/')} */\n${css}\n`
 }
 
 export function stampOf(css: string): Stamp | null {

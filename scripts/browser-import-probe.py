@@ -185,7 +185,7 @@ def safari_tabs(at: pathlib.Path) -> None:
 
 def browsers_home() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-browsers-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-browsers-probe-"))
     firefox = made / "firefox"
     profile = firefox / "Profiles" / "x1.default-release"
     (profile / "sessionstore-backups").mkdir(parents=True)

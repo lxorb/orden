@@ -43,7 +43,7 @@ async (note) => {
 
 STATE = """
 () => ({
-  marks: document.querySelectorAll('.nib-folded').length,
+  marks: document.querySelectorAll('.orden-folded').length,
   folds: window.nibApp.workspace.active?.folds ?? [],
   shown: [...document.querySelectorAll('.cm-content .cm-line')]
     .map((line) => line.textContent.trim())
@@ -52,7 +52,7 @@ STATE = """
 """
 
 ROWS = """
-() => [...document.querySelectorAll('.palette .nib-row')].map((one) =>
+() => [...document.querySelectorAll('.palette .orden-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """

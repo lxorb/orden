@@ -121,20 +121,20 @@ export class ImageWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const frame = document.createElement('span')
-    frame.className = 'nib-image-frame is-loading'
+    frame.className = 'orden-image-frame is-loading'
     frame.contentEditable = 'false'
 
     const box = document.createElement('span')
-    box.className = 'nib-image-box'
+    box.className = 'orden-image-box'
     frame.append(box)
 
     const image = document.createElement('img')
-    image.className = 'nib-image'
+    image.className = 'orden-image'
     image.draggable = false
     box.append(image)
 
     const missing = document.createElement('span')
-    missing.className = 'nib-image-missing'
+    missing.className = 'orden-image-missing'
     missing.title = uiLabel('imageNotFound')
     const path = document.createElement('span')
     missing.append(icon(ICONS.missing), path)
@@ -142,7 +142,7 @@ export class ImageWidget extends NibWidget {
 
     for (const corner of ['nw', 'ne', 'sw', 'se']) {
       const handle = document.createElement('span')
-      handle.className = 'nib-image-handle'
+      handle.className = 'orden-image-handle'
       handle.dataset.corner = corner
       handle.title = uiLabel('dragToResize')
       handle.addEventListener('pointerdown', (event) =>
@@ -152,7 +152,7 @@ export class ImageWidget extends NibWidget {
     }
 
     const badge = document.createElement('span')
-    badge.className = 'nib-image-badge'
+    badge.className = 'orden-image-badge'
     box.append(badge)
 
     const toolbar = this.toolbar(view, frame)
@@ -237,7 +237,7 @@ export class ImageWidget extends NibWidget {
 
   private inToolbar(event: Event): boolean {
     const target = event.target
-    return target instanceof Element && target.closest('.nib-image-tools') !== null
+    return target instanceof Element && target.closest('.orden-image-tools') !== null
   }
 
   private toolbar(
@@ -245,10 +245,10 @@ export class ImageWidget extends NibWidget {
     frame: HTMLElement,
   ): { tools: HTMLElement; alt: HTMLInputElement; size: HTMLButtonElement } {
     const tools = document.createElement('span')
-    tools.className = 'nib-image-tools'
+    tools.className = 'orden-image-tools'
 
     const alt = document.createElement('input')
-    alt.className = 'nib-image-alt'
+    alt.className = 'orden-image-alt'
     alt.type = 'text'
     alt.placeholder = uiLabel('describeImage')
     alt.spellcheck = false
@@ -288,7 +288,7 @@ export class ImageWidget extends NibWidget {
     tools.append(alt)
 
     const separator = document.createElement('span')
-    separator.className = 'nib-image-tools-gap'
+    separator.className = 'orden-image-tools-gap'
     tools.append(separator)
 
     const button = (
@@ -299,7 +299,7 @@ export class ImageWidget extends NibWidget {
     ) => {
       const control = document.createElement('button')
       control.type = 'button'
-      control.className = `nib-image-tool ${className}`
+      control.className = `orden-image-tool ${className}`
       control.title = title
       control.setAttribute('aria-label', title)
       control.append(content)
@@ -317,21 +317,21 @@ export class ImageWidget extends NibWidget {
       return control
     }
 
-    const size = button('nib-image-size', '', '', (image) => {
+    const size = button('orden-image-size', '', '', (image) => {
       if (image.zoom !== 100 || image.width) {
         rewrite(view, image, withZoom(image, 100), 'input.image.resize')
       }
       view.focus()
     })
 
-    button('nib-image-open', uiLabel('openImage'), icon(ICONS.open), (image) => {
+    button('orden-image-open', uiLabel('openImage'), icon(ICONS.open), (image) => {
       const picture = partsOf(frame)?.image
       if (picture && !frame.classList.contains('is-broken')) {
         openLightbox(view, picture.src, image.alt)
       }
     })
 
-    const copy = button('nib-image-copy', uiLabel('copyLink'), icon(ICONS.link), (image) => {
+    const copy = button('orden-image-copy', uiLabel('copyLink'), icon(ICONS.link), (image) => {
       navigator.clipboard
         .writeText(image.src)
         .then(() => {
@@ -347,7 +347,7 @@ export class ImageWidget extends NibWidget {
         .catch(() => undefined)
     })
 
-    button('nib-image-source', uiLabel('editMarkdown'), icon(ICONS.source), (image) => {
+    button('orden-image-source', uiLabel('editMarkdown'), icon(ICONS.source), (image) => {
       view.focus()
       view.dispatch({
         selection: EditorSelection.cursor(sourceCaret(view.state, image)),
@@ -356,7 +356,7 @@ export class ImageWidget extends NibWidget {
       })
     })
 
-    button('nib-image-delete', uiLabel('deleteImage'), icon(ICONS.trash), (image) =>
+    button('orden-image-delete', uiLabel('deleteImage'), icon(ICONS.trash), (image) =>
       remove(view, image),
     )
 

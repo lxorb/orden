@@ -127,12 +127,12 @@ def main() -> int:
     shots = pathlib.Path(args.shots)
     shots.mkdir(parents=True, exist_ok=True)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-remote-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-remote-"))
     folder = spaces / SPACE
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "A note.md").write_text("# A note\n", encoding="utf-8")
 
-    own = pathlib.Path(tempfile.mkdtemp(prefix="nib-remote-ssh-"))
+    own = pathlib.Path(tempfile.mkdtemp(prefix="orden-remote-ssh-"))
     config = own / "config"
     config.write_text(CONFIG.replace("extra.d/*", str(own / "extra.d" / "*")), encoding="utf-8")
     (own / "extra.d").mkdir()
@@ -225,15 +225,15 @@ def main() -> int:
             "at.dispatchEvent(new KeyboardEvent(type, { key, code: key === 't' ? 'KeyT' : 'ControlLeft', ctrlKey: ctrl, bubbles: true, cancelable: true })); "
             "return true })()"
         )
-        sheet = until(lambda: window.run("!!document.querySelector('.nib-screen [data-more], .nib-screen .kind')") is True, 10)
+        sheet = until(lambda: window.run("!!document.querySelector('.orden-screen [data-more], .orden-screen .kind')") is True, 10)
         check(bool(sheet), "Ctrl+T puts the kinds up")
         window.run(
-            "(() => { const box = document.querySelector('.nib-screen'); "
+            "(() => { const box = document.querySelector('.orden-screen'); "
             "(document.activeElement || box).dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', bubbles: true, cancelable: true })); "
             "window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true })); return true })()"
         )
         rows = lambda: window.run(
-            "JSON.stringify([...document.querySelectorAll('.picker .nib-row .nib-row-label')].map((one) => one.textContent))"
+            "JSON.stringify([...document.querySelectorAll('.picker .orden-row .orden-row-label')].map((one) => one.textContent))"
         )
         picked = until(lambda: isinstance(rows(), str) and "fakepi" in rows(), 10)
         check(bool(picked), f"and S the host picker: {rows()}")

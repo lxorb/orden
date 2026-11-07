@@ -44,14 +44,14 @@ const carrying = StateField.define<Carrying | null>({
         number <= doc.lineAt(held.span.to).number;
         number++
       ) {
-        marks.push(Decoration.line({ class: 'nib-block-lifted' }).range(doc.line(number).from))
+        marks.push(Decoration.line({ class: 'orden-block-lifted' }).range(doc.line(number).from))
       }
 
       if (held.at !== null) {
         const landing = held.at >= doc.length ? doc.line(doc.lines) : doc.lineAt(held.at)
         marks.push(
           Decoration.line({
-            class: held.at >= doc.length ? 'nib-block-under' : 'nib-block-over',
+            class: held.at >= doc.length ? 'orden-block-under' : 'orden-block-over',
           }).range(landing.from),
         )
       }
@@ -102,12 +102,12 @@ class BlockHandleWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const slot = document.createElement('span')
-    slot.className = 'nib-block-slot'
+    slot.className = 'orden-block-slot'
     slot.contentEditable = 'false'
 
     const mark = document.createElement('button')
     mark.type = 'button'
-    mark.className = 'nib-block-handle'
+    mark.className = 'orden-block-handle'
     mark.setAttribute('aria-label', label('blockHandle'))
     mark.tabIndex = -1
     mark.append(grip())

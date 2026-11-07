@@ -131,7 +131,7 @@
 
 {#if count}
   <button
-    class="nib-section archive-head"
+    class="orden-section archive-head"
     class:dropping
     aria-expanded={archiveList.open}
     onclick={() => archiveList.toggle()}
@@ -167,7 +167,7 @@
         >
           <div class="line" class:holds={row.holds}>
             <button
-              class="nib-row row"
+              class="orden-row row"
               class:is-on={workspace.active?.path === row.markPath}
               style:--level={row.depth}
               onclick={(event) => open(row, howFor(tabAsk(event), { preview: true }))}
@@ -183,10 +183,10 @@
                 })}
             >
               <FileMark mark={row.mark} path={row.markPath} />
-              <span class="nib-row-label"
+              <span class="orden-row-label"
                 ><bdi>{rowName(row.entry.name, row.entry.is_dir)}</bdi></span
               >
-              {#if row.from}<span class="nib-row-meta">{row.from}</span>{/if}
+              {#if row.from}<span class="orden-row-meta">{row.from}</span>{/if}
             </button>
 
             {#if row.holds}

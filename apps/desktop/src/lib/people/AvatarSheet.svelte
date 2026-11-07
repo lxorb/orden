@@ -237,11 +237,11 @@
     </div>
 
     {#if stream}
-      <button class="nib-button shutter" onclick={() => void shutter()}>{t('Take photo')}</button>
+      <button class="orden-button shutter" onclick={() => void shutter()}>{t('Take photo')}</button>
     {:else}
       <div class="controls">
         <input
-          class="nib-slider zoom"
+          class="orden-slider zoom"
           type="range"
           min="1"
           max={MOST_ZOOM}
@@ -253,7 +253,7 @@
           oninput={(event) => zoomTo(clampZoom(Number(event.currentTarget.value)))}
         />
         <button
-          class="nib-glyph"
+          class="orden-glyph"
           title={t('Rotate')}
           aria-label={t('Rotate')}
           disabled={!picture}
@@ -270,7 +270,7 @@
   </div>
 
   {#snippet foot()}
-    <button class="nib-button" disabled={!picture || busy || !!stream} onclick={() => void keep()}
+    <button class="orden-button" disabled={!picture || busy || !!stream} onclick={() => void keep()}
       >{t('Keep')}</button
     >
   {/snippet}

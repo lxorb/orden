@@ -311,11 +311,11 @@ fn key(app: &AppHandle, on: bool) {
 const TRAY: &str = "nib-agents";
 
 #[cfg(any(windows, target_os = "macos"))]
-const OPEN: &str = "nib-agents-open";
+const OPEN: &str = "orden-agents-open";
 #[cfg(any(windows, target_os = "macos"))]
-const STOP: &str = "nib-agents-stop";
+const STOP: &str = "orden-agents-stop";
 #[cfg(any(windows, target_os = "macos"))]
-const QUIT: &str = "nib-agents-quit";
+const QUIT: &str = "orden-agents-quit";
 
 #[cfg(any(windows, target_os = "macos"))]
 fn tray(app: &AppHandle, on: bool, agents: bool, words: &Words) {

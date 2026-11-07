@@ -88,7 +88,7 @@
 
   {#snippet foot()}
     <button
-      class="nib-button is-quiet both"
+      class="orden-button is-quiet both"
       class:is-pressing={asking.answering === 'both'}
       aria-busy={asking.answering === 'both'}
       disabled={asking.answering !== null && asking.answering !== 'both'}
@@ -127,7 +127,7 @@
     {/if}
 
     <button
-      class="nib-button keep"
+      class="orden-button keep"
       class:is-pressing={asking.answering === whose}
       aria-busy={asking.answering === whose}
       aria-describedby={head}

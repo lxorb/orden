@@ -245,7 +245,7 @@
         <span class="quiet" data-matched>{t('Checked')}</span>
       {:else}
         <button
-          class="nib-button is-soft"
+          class="orden-button is-soft"
           type="button"
           disabled={busy}
           onclick={() => match(found)}>{t('Codes match')}</button
@@ -270,7 +270,7 @@
       {#if managing}
         <form class="invite" onsubmit={invited}>
           <input
-            class="nib-field is-value"
+            class="orden-field is-value"
             type="email"
             autocomplete="off"
             placeholder={t('Email address')}
@@ -284,7 +284,7 @@
             options={roles}
             onchange={(next: string) => (role = next as InvitedRole)}
           />
-          <button class="nib-button" type="submit" disabled={busy || !EMAIL.test(email.trim())}
+          <button class="orden-button" type="submit" disabled={busy || !EMAIL.test(email.trim())}
             >{t('Invite')}</button
           >
         </form>
@@ -300,11 +300,11 @@
         {/if}
       {/if}
 
-      <h3 class="nib-section">{t('Members')}</h3>
+      <h3 class="orden-section">{t('Members')}</h3>
       <div class="card members" aria-busy={reading}>
         {#each members as member (member.email)}
           <div class="member" data-member={member.email}>
-            <div class="nib-setting row">
+            <div class="orden-setting row">
               <span class="who">
                 <span class="name"
                   >{nameOf(member)}{member.email === me ? ` (${t('you')})` : ''}</span
@@ -329,7 +329,7 @@
               {/if}
               {#if member.state === 'confirm' && managing}
                 <button
-                  class="nib-chip"
+                  class="orden-chip"
                   type="button"
                   disabled={busy}
                   onclick={() => void confirmed(member)}>{t('Confirm')}</button
@@ -337,7 +337,7 @@
               {/if}
               {#if member.pub !== null && member.email !== me}
                 <button
-                  class="nib-chip"
+                  class="orden-chip"
                   type="button"
                   aria-pressed={member.email in codes}
                   onclick={() => void shownCode(member)}>{t('Safety code')}</button
@@ -345,7 +345,7 @@
               {/if}
               {#if changeable(member)}
                 <button
-                  class="nib-glyph"
+                  class="orden-glyph"
                   type="button"
                   disabled={busy}
                   aria-label={t('Remove {name}', { name: nameOf(member) })}
@@ -385,14 +385,14 @@
       <div class="buttons">
         {#if owning}
           <button
-            class="nib-button is-quiet"
+            class="orden-button is-quiet"
             type="button"
             disabled={busy || heirs.length === 0}
             onclick={() => void handedOn()}>{t('Transfer ownership')}</button
           >
         {:else}
           <button
-            class="nib-button is-quiet danger"
+            class="orden-button is-quiet danger"
             type="button"
             disabled={busy}
             onclick={() => void left()}>{t('Leave vault')}</button

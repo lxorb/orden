@@ -38,7 +38,7 @@
 </script>
 
 <div
-  class="ask nib-bubble is-pressable nib-host"
+  class="ask orden-bubble is-pressable orden-host"
   role="dialog"
   aria-label={shownSite(asking.site)}
   tabindex="-1"
@@ -54,10 +54,10 @@
   <p class="which">{WANTS[asking.ask]()}</p>
 
   <div class="rows">
-    <button class="nib-button is-quiet" onclick={() => grants.answer(asking, false)}>
+    <button class="orden-button is-quiet" onclick={() => grants.answer(asking, false)}>
       {t('Don’t allow')}
     </button>
-    <button class="nib-button" onclick={() => grants.answer(asking, true)}>{t('Allow')}</button>
+    <button class="orden-button" onclick={() => grants.answer(asking, true)}>{t('Allow')}</button>
   </div>
 </div>
 

@@ -361,12 +361,12 @@
         {@const name = groupName(item.group.key)}
         {@const section = project && typeof item.group.key === 'string' ? item.group.key : null}
         <div
-          class="nib-section head"
+          class="orden-section head"
           use:droppable={(row, _at, _box, from) => kit.drop(row, item.group.key, undefined, from)}
         >
           {#if section !== null && renaming === section}
             <input
-              class="nib-field naming"
+              class="orden-field naming"
               value={section}
               aria-label={t('Rename')}
               use:focusSoon
@@ -410,7 +410,7 @@
           {#if ((property === 'formula.overdue' && item.group.key === true) || item.group.key === 'overdue') && item.count}
             <button
               type="button"
-              class="nib-chip is-quiet act"
+              class="orden-chip is-quiet act"
               onclick={(event) => scheduleDeadline(item.group.rows, event.currentTarget, kit)}
               >{t('Reschedule')}</button
             >
@@ -477,7 +477,7 @@
   {#if project}
     {#if naming}
       <input
-        class="nib-field naming end"
+        class="orden-field naming end"
         placeholder={t('Section')}
         aria-label={t('Add section')}
         use:focusSoon

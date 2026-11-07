@@ -139,7 +139,7 @@
         }
       }}
     />
-    <button class="nib-button is-quiet" onclick={onclear}>{t('Delete browsing data')}</button>
+    <button class="orden-button is-quiet" onclick={onclear}>{t('Delete browsing data')}</button>
   </div>
 
   <div
@@ -167,7 +167,7 @@
             {@const mark = siteMark(null, visit.url)}
             <div class="line" role="listitem" style:top={`${String(index * rowHeight)}px`}>
               <button
-                class="nib-row page"
+                class="orden-row page"
                 data-row={index}
                 title={visit.url}
                 onclick={(event) => onopen(visit.url, tabAsk(event))}
@@ -177,15 +177,15 @@
                 oncontextmenu={(event) => rowMenu(event, visit)}
                 onkeydown={(event) => rowKey(event, visit, index)}
               >
-                <span class="nib-row-meta when">{i18n.when(visit.last, CLOCK)}</span>
-                <span class="nib-row-mark">
+                <span class="orden-row-meta when">{i18n.when(visit.last, CLOCK)}</span>
+                <span class="orden-row-mark">
                   {#if mark}<img src={mark} alt="" draggable="false" />{/if}
                 </span>
-                <span class="nib-row-label"><bdi>{titleOf(visit)}</bdi></span>
-                <span class="nib-row-meta host">{hostOf(visit.url)}</span>
+                <span class="orden-row-label"><bdi>{titleOf(visit)}</bdi></span>
+                <span class="orden-row-meta host">{hostOf(visit.url)}</span>
               </button>
               <button
-                class="nib-glyph gone"
+                class="orden-glyph gone"
                 title={t('Remove from history')}
                 aria-label={t('Remove from history')}
                 onclick={() => remove(visit)}
@@ -299,7 +299,7 @@
     text-align: start;
   }
 
-  .nib-row-mark img {
+  .orden-row-mark img {
     width: var(--icon-md);
     height: var(--icon-md);
     border-radius: 3px;

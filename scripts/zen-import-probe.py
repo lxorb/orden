@@ -80,7 +80,7 @@ PROFILES_INI = (
 
 def zen_home() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-zen-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-zen-probe-"))
     (made / "profiles.ini").write_text(PROFILES_INI, encoding="utf-8")
     first = made / "Profiles" / "b2.Default (release)"
     first.mkdir(parents=True)
@@ -93,7 +93,7 @@ def zen_home() -> pathlib.Path:
     return made
 
 PRESS = """(async () => {
-  const row = [...document.querySelectorAll('.nib-setting')]
+  const row = [...document.querySelectorAll('.orden-setting')]
     .find((one) => one.querySelector('.name')?.textContent?.trim() === %s)
   const button = row?.querySelector('button')
   if (!button || button.disabled) return 'no row'
@@ -101,7 +101,7 @@ PRESS = """(async () => {
   return 'pressed'
 })()"""
 
-ROWS = """JSON.stringify([...document.querySelectorAll('.nib-setting .name')]
+ROWS = """JSON.stringify([...document.querySelectorAll('.orden-setting .name')]
   .map((one) => one.textContent.trim()))"""
 
 HELD = """JSON.stringify({

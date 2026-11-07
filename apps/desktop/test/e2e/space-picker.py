@@ -11,10 +11,10 @@ UP = "!!document.querySelector('.picker[data-spaces-open]')"
 NAMES = ["Journal", "ETH", "Lab", "Reading", "Recipes", "Taxes", "Travel", "Uni", "VIS", "Work", "Zettel"]
 
 HERE = "() => window.nibApp.workspace.activeSpace?.name"
-ROWS = """() => [...document.querySelectorAll('.picker .nib-row')].map((one) => [
+ROWS = """() => [...document.querySelectorAll('.picker .orden-row')].map((one) => [
   one.querySelector('.place')?.textContent,
-  one.querySelector('.nib-row-label')?.textContent,
-  one.querySelector('.nib-row-label b')?.textContent ?? null,
+  one.querySelector('.orden-row-label')?.textContent,
+  one.querySelector('.orden-row-label b')?.textContent ?? null,
 ])"""
 
 def key(page: Page, chord: str = "Control+Space") -> None:
@@ -148,7 +148,7 @@ def switching(page: Page, scheme: str) -> None:
 
 STANDING = """() => {
   const at = document.activeElement
-  return at?.closest?.('.picker') ? (at.querySelector('.nib-row-label')?.textContent ?? '') : null
+  return at?.closest?.('.picker') ? (at.querySelector('.orden-row-label')?.textContent ?? '') : null
 }"""
 
 def walking(page: Page, scheme: str) -> None:

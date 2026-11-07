@@ -4,12 +4,12 @@
   const evaluate = self.eval
   const Async = Object.getPrototypeOf(async () => undefined).constructor
 
-  const block = document.getElementById('nib-block')
+  const block = document.getElementById('orden-block')
   if (block && block.getAttribute('type') === 'application/json') {
     runBlock(JSON.parse(block.textContent))
   }
 
-  const program = document.getElementById('nib-frame')
+  const program = document.getElementById('orden-frame')
   if (program && program.getAttribute('type') === 'text/plain') {
     evaluate(program.textContent)
   }

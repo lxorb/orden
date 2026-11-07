@@ -53,7 +53,7 @@ function surface(doc: string, cursor = doc.length) {
 function readOnlyClass(state: EditorState): boolean {
   return state
     .facet(EditorView.editorAttributes)
-    .some((attrs) => typeof attrs === 'object' && attrs.class === 'nib-read-only')
+    .some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-read-only')
 }
 
 function concealed(state: EditorState): string[] {
@@ -274,12 +274,12 @@ function direction(state: EditorState): string | undefined {
 
 describe('the classes the stylesheet works from', () => {
   const modes: [string, (view: EditorView, on: boolean) => void, string][] = [
-    ['focus mode', setFocusMode, 'nib-focus-mode'],
-    ['typewriter mode', setTypewriterMode, 'nib-typewriter-mode'],
-    ['ligatures', (view, on) => setLigatures(view, on ? 'all' : 'off'), 'nib-ligatures'],
-    ['numbered headings', setHeadingNumbers, 'nib-numbered'],
-    ['code line numbers', setCodeLineNumbers, 'nib-line-numbers'],
-    ['right to left', setRightToLeft, 'nib-rtl'],
+    ['focus mode', setFocusMode, 'orden-focus-mode'],
+    ['typewriter mode', setTypewriterMode, 'orden-typewriter-mode'],
+    ['ligatures', (view, on) => setLigatures(view, on ? 'all' : 'off'), 'orden-ligatures'],
+    ['numbered headings', setHeadingNumbers, 'orden-numbered'],
+    ['code line numbers', setCodeLineNumbers, 'orden-line-numbers'],
+    ['right to left', setRightToLeft, 'orden-rtl'],
   ]
 
   for (const [name, set, className] of modes) {
@@ -312,12 +312,12 @@ describe('the classes the stylesheet works from', () => {
     setTypewriterMode(view, true)
 
     expect(editorClasses(view.state)).toEqual(
-      expect.arrayContaining(['nib-focus-mode', 'nib-typewriter-mode']),
+      expect.arrayContaining(['orden-focus-mode', 'orden-typewriter-mode']),
     )
 
     setFocusMode(view, false)
-    expect(editorClasses(view.state)).toContain('nib-typewriter-mode')
-    expect(editorClasses(view.state)).not.toContain('nib-focus-mode')
+    expect(editorClasses(view.state)).toContain('orden-typewriter-mode')
+    expect(editorClasses(view.state)).not.toContain('orden-focus-mode')
   })
 })
 
@@ -356,7 +356,7 @@ describe('applying every mode again', () => {
       effects: modeEffects({ ...DEFAULTS, numbers: true }),
     }).state
 
-    expect(editorClasses(after)).toContain('nib-numbered')
+    expect(editorClasses(after)).toContain('orden-numbered')
   })
 })
 
@@ -438,7 +438,7 @@ describe('a document too long to parse', () => {
     const again = long.update({ effects: modeEffects({ ...DEFAULTS, numbers: true }) }).state
 
     expect(parsedFully(again)).toBe(false)
-    expect(editorClasses(again)).toContain('nib-numbered')
+    expect(editorClasses(again)).toContain('orden-numbered')
   })
 
   test('and strict mode on a short one is still strict', () => {

@@ -41,7 +41,7 @@ async function awayAndBack(lost: boolean) {
 
 function layer(): () => void {
   const box = document.createElement('div')
-  box.className = 'nib-layer'
+  box.className = 'orden-layer'
   const field = document.createElement('input')
   box.append(field)
   document.body.append(box)

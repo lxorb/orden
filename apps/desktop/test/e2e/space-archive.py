@@ -31,13 +31,13 @@ async () => {
 
 HERE = "() => window.nibApp.workspace.activeSpace?.name ?? null"
 
-SWITCHER_ROWS = """() => [...document.querySelectorAll('.nib-layer.spaces > .line .nib-row-label')]
+SWITCHER_ROWS = """() => [...document.querySelectorAll('.orden-layer.spaces > .line .orden-row-label')]
   .map((one) => one.textContent.trim())"""
 
-ARCHIVED_ROWS = """() => [...document.querySelectorAll('[data-archived-spaces] .nib-row-label')]
+ARCHIVED_ROWS = """() => [...document.querySelectorAll('[data-archived-spaces] .orden-row-label')]
   .map((one) => one.textContent.trim())"""
 
-PICKER_ROWS = """() => [...document.querySelectorAll('.picker .nib-row-label')]
+PICKER_ROWS = """() => [...document.querySelectorAll('.picker .orden-row-label')]
   .map((one) => one.textContent.trim())"""
 
 TASK = "() => window.tasks.rows.of().some((one) => one.task?.text === 'Pack the bags')"
@@ -57,14 +57,14 @@ PALETTE = """() => window.nibApp.workspace.shownSpaces.map((one) => one.name)"""
 def switcher(page: Page) -> None:
     page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     page.wait_for_timeout(200)
-    if not page.locator(".nib-layer.spaces").count():
+    if not page.locator(".orden-layer.spaces").count():
         page.locator("aside button.name").first.click()
-    wait_for(page, "document.querySelector('.nib-layer.spaces')", "the list of spaces")
+    wait_for(page, "document.querySelector('.orden-layer.spaces')", "the list of spaces")
     page.wait_for_timeout(300)
 
 def closed(page: Page) -> None:
     page.keyboard.press("Escape")
-    wait_for(page, "!document.querySelector('.nib-layer.spaces')", "the list of spaces closed")
+    wait_for(page, "!document.querySelector('.orden-layer.spaces')", "the list of spaces closed")
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(
@@ -80,9 +80,9 @@ def drive(browser: Browser) -> None:
         wrong(f"the drive is in {page.evaluate(HERE)!r}, not Old")
 
     switcher(page)
-    page.locator(".nib-layer.spaces > .line").filter(has_text="Old").locator(".more").click()
+    page.locator(".orden-layer.spaces > .line").filter(has_text="Old").locator(".more").click()
     wait_for(page, "document.querySelector('[role=menu].menu')", "Old's menu")
-    entries = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
+    entries = page.locator(".menu [role=menuitem] .orden-row-label").all_inner_texts()
     say(f"Old's menu: {entries}")
     if "Archive" not in entries:
         wrong("Old's menu does not offer Archive")
@@ -119,7 +119,7 @@ def drive(browser: Browser) -> None:
         wrong("Old is gone from the spaces themselves")
 
     switcher(page)
-    page.locator("[data-archived-spaces] .nib-row", has_text="Old").first.click()
+    page.locator("[data-archived-spaces] .orden-row", has_text="Old").first.click()
     wait_for(page, f"({HERE})() === 'Old'", "Old open again")
     switcher(page)
     rows, archived = page.evaluate(SWITCHER_ROWS), page.evaluate(ARCHIVED_ROWS)

@@ -58,14 +58,14 @@ function engineBarRedrawn(scroller: HTMLElement) {
 
 export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): OverlayScrollbar {
   const bar = document.createElement('div')
-  bar.className = 'nib-scrollbar'
+  bar.className = 'orden-scrollbar'
   const thumb = document.createElement('div')
-  thumb.className = 'nib-scrollbar-thumb'
+  thumb.className = 'orden-scrollbar-thumb'
   bar.append(thumb)
 
   if (getComputedStyle(host).position === 'static') host.style.position = 'relative'
   host.append(bar)
-  scroller.classList.add('nib-scrolls')
+  scroller.classList.add('orden-scrolls')
   engineBarRedrawn(scroller)
 
   const box = { top: -1, height: -1, end: -1 }
@@ -179,7 +179,7 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       scroller.removeEventListener('scroll', onScroll)
       scroller.removeEventListener('pointerenter', light)
       thumb.removeEventListener('pointerdown', grab)
-      scroller.classList.remove('nib-scrolls')
+      scroller.classList.remove('orden-scrolls')
       engineBarRedrawn(scroller)
       bar.remove()
     },

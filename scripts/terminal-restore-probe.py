@@ -96,12 +96,12 @@ def main() -> int:
     shots = pathlib.Path(args.shots)
     shots.mkdir(parents=True, exist_ok=True)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-restore-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-restore-"))
     (spaces / SPACE).mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "Before.md").write_text("# Before\n\nWords.\n", encoding="utf-8")
     (spaces / SPACE / "After.md").write_text("# After\n\nWords.\n", encoding="utf-8")
     here = pathlib.Path(tempfile.mkdtemp(prefix="nib restore here "))
-    marker = f"nib-marker-{secrets.token_hex(4)}"
+    marker = f"orden-marker-{secrets.token_hex(4)}"
     say(f"spaces root {spaces}, shell goes to {here}, marker {marker}")
 
     tabs.wipe(args.identifier)

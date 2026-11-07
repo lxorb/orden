@@ -2,14 +2,14 @@ import type { CarriedFiles } from '@orden/editor'
 import type { Action } from 'svelte/action'
 import type { Platform } from './keys'
 
-const ONE = 'text/nib-path'
-const MANY = 'text/nib-paths'
-const BOOKMARK = 'text/nib-bookmark'
-const SECTION = 'text/nib-section'
-const TAB = 'text/nib-tab'
-const EXPLORER = 'text/nib-explorer'
-const PAGE = 'text/nib-page'
-const HERE = `text/nib-from-${crypto.randomUUID()}`
+const ONE = 'text/orden-path'
+const MANY = 'text/orden-paths'
+const BOOKMARK = 'text/orden-bookmark'
+const SECTION = 'text/orden-section'
+const TAB = 'text/orden-tab'
+const EXPLORER = 'text/orden-explorer'
+const PAGE = 'text/orden-page'
+const HERE = `text/orden-from-${crypto.randomUUID()}`
 
 let carrying: readonly string[] = []
 
@@ -66,7 +66,7 @@ export function isTreeDrag(transfer: DataTransfer | null): boolean {
 }
 
 export function mayCarryAddress(types: readonly string[]): boolean {
-  if (types.includes('Files') || types.some((one) => one.startsWith('text/nib-'))) return false
+  if (types.includes('Files') || types.some((one) => one.startsWith('text/orden-'))) return false
   return types.includes('text/uri-list') || types.includes('text/plain')
 }
 

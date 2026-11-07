@@ -219,7 +219,7 @@ WATCH = """
 window.__arrow = false
 window.__watching?.disconnect()
 window.__watching = new MutationObserver(() => {
-  if (document.querySelector('.nib-swipe')) window.__arrow = true
+  if (document.querySelector('.orden-swipe')) window.__arrow = true
 })
 window.__watching.observe(document.body, { childList: true, subtree: true })
 return true
@@ -240,7 +240,7 @@ def main() -> int:
 
     page_probe.wipe(args.identifier)
     server, port = serve()
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-swipe-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-swipe-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     space = root / SPACE
     space.mkdir(parents=True)

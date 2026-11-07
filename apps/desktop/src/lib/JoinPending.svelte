@@ -15,7 +15,7 @@
 </script>
 
 {#if joining.aside}
-  <div class="nib-bar pending">
+  <div class="orden-bar pending">
     <button type="button" class="open" onclick={() => joining.reopen()}>
       {#if joining.step === 'waiting'}<span class="pulse"></span>{/if}
       {said}
@@ -23,7 +23,7 @@
     {#if joining.step === 'asking'}
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Dismiss')}
         title={t('Dismiss')}
         onclick={() => joining.dismiss()}

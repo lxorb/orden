@@ -54,7 +54,7 @@ afterEach(() => {
 
 const field = () => target.querySelector('input')
 const rows = () => [...target.querySelectorAll('[role="option"]')]
-const labels = () => rows().map((one) => one.querySelector('.nib-row-label')?.textContent ?? '')
+const labels = () => rows().map((one) => one.querySelector('.orden-row-label')?.textContent ?? '')
 
 function type(text: string) {
   const input = field()
@@ -78,7 +78,7 @@ test('finds a command with no mark in front of it', () => {
 test('finds a setting by its own name, and says which pane it is in', () => {
   type('check spelling')
   const first = rows()[0]
-  expect(first?.querySelector('.nib-row-label')?.textContent).toBe('Check spelling')
+  expect(first?.querySelector('.orden-row-label')?.textContent).toBe('Check spelling')
   expect(first?.querySelector('.where')?.textContent).toBe('Spelling')
 })
 
@@ -86,7 +86,7 @@ test('draws the letters the words were found at', () => {
   type('reopen')
   const first = rows()[0]
   expect(
-    [...(first?.querySelectorAll('.nib-row-label b') ?? [])].map((one) => one.textContent),
+    [...(first?.querySelectorAll('.orden-row-label b') ?? [])].map((one) => one.textContent),
   ).toEqual(['Reopen'])
 })
 
@@ -94,13 +94,13 @@ test('flips a switch where it stands, and stays up to show it', () => {
   const before = modes.closeBrackets
   type('close brackets')
   expect(labels()[0]).toBe('Close brackets and quotes')
-  expect(rows()[0]?.querySelector('.nib-switch')?.classList.contains('on')).toBe(before)
+  expect(rows()[0]?.querySelector('.orden-switch')?.classList.contains('on')).toBe(before)
 
   press('Enter')
 
   expect(modes.closeBrackets).toBe(!before)
   expect(field()).not.toBeNull()
-  expect(rows()[0]?.querySelector('.nib-switch')?.classList.contains('on')).toBe(!before)
+  expect(rows()[0]?.querySelector('.orden-switch')?.classList.contains('on')).toBe(!before)
   if (modes.closeBrackets !== before) modes.toggleCloseBrackets(undefined)
 })
 

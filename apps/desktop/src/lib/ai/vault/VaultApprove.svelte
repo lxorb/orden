@@ -32,7 +32,7 @@
 
 {#if asking}
   <div
-    class="approve nib-bubble is-pressable nib-host"
+    class="approve orden-bubble is-pressable orden-host"
     role="dialog"
     aria-label={t('{device} wants your AI accounts', { device })}
     tabindex="-1"
@@ -41,7 +41,7 @@
   >
     <p class="what">
       <span
-        class="nib-badge"
+        class="orden-badge"
         style:--badge-fill={accentFor(device, theme.current)}
         style:--badge-ink="var(--accent-ink)"
         aria-hidden="true">{initial(device)}</span
@@ -50,10 +50,10 @@
       <span class="digits">{asking.digits}</span>
     </p>
     <div class="rows">
-      <button class="nib-button is-quiet" onclick={() => void vault.deny(asking.id)}>
+      <button class="orden-button is-quiet" onclick={() => void vault.deny(asking.id)}>
         {t('Don’t allow')}
       </button>
-      <button class="nib-button" onclick={() => void vault.allow(asking.id)}>{t('Allow')}</button>
+      <button class="orden-button" onclick={() => void vault.allow(asking.id)}>{t('Allow')}</button>
     </div>
   </div>
 {/if}

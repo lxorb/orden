@@ -252,7 +252,7 @@ def overview(app: App, hole: tuple[float, float, float, float], ratio: float, ou
     film = Film()
     time.sleep(0.4)
     for _ in range(2):
-        app.eval("document.querySelector('button.nib-glyph.overview')?.click(); return true")
+        app.eval("document.querySelector('button.orden-glyph.overview')?.click(); return true")
         time.sleep(1.8)
     frames = film.stop()
     log = app.eval(OPENED) or []
@@ -361,7 +361,7 @@ def main() -> int:
     config.mkdir(parents=True)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-under-spaces-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))
 
     env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     as_before = moves_as_before(args.exe, args.identifier, secret, env)
@@ -431,7 +431,7 @@ def main() -> int:
         if not near(colour_at(image, middle, ratio), COLOUR):
             wrong.append(f"the page is not drawn in its hole: {colour_at(image, middle, ratio)} at {middle}")
         app.eval(
-            "window.__layerHit = 0; const one = document.createElement('div'); one.className = 'nib-layer'; one.id = 'drive-layer';"
+            "window.__layerHit = 0; const one = document.createElement('div'); one.className = 'orden-layer'; one.id = 'drive-layer';"
             f"Object.assign(one.style, {{ position: 'fixed', left: '{pane['x'] + pane['width'] * 0.75 - 60}px',"
             f" top: '{pane['y'] + pane['height'] * 0.45 - 60}px', width: '120px', height: '120px',"
             " background: 'rgb(0,160,0)', zIndex: 9999 }); one.addEventListener('click', () => window.__layerHit++);"

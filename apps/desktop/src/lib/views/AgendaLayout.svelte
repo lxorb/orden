@@ -26,7 +26,7 @@
 <div class="agenda">
   {#each days.dated as [day, rows] (day)}
     <p
-      class="nib-section"
+      class="orden-section"
       class:late={day < live.today}
       use:droppable={(row) => kit.drop(row, day, property)}
     >
@@ -37,7 +37,7 @@
     {/each}
   {/each}
   {#if days.undated.length}
-    <p class="nib-section" use:droppable={(row) => kit.drop(row, null, property)}>
+    <p class="orden-section" use:droppable={(row) => kit.drop(row, null, property)}>
       {t('No date')}<span>{days.undated.length}</span>
     </p>
     {#each days.undated as row (`${row.space}:${rowId(row)}`)}

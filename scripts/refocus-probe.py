@@ -102,7 +102,7 @@ def main() -> int:
     )
 
     said: dict[str, object] = {}
-    logged = pathlib.Path(tempfile.mkdtemp(prefix="nib-refocus-probe-")) / "stderr.txt"
+    logged = pathlib.Path(tempfile.mkdtemp(prefix="orden-refocus-probe-")) / "stderr.txt"
     running = None
     try:
         with logged.open("wb") as errors:

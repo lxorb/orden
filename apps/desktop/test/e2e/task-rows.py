@@ -182,12 +182,12 @@ def scheduler(page: Page, days: dict[str, str]) -> None:
     wait_for(page, "document.querySelector('.scheduler')", "the scheduler")
     shot(page, "02-scheduler")
     labels = page.evaluate(
-        "() => [...document.querySelectorAll('.scheduler .quick .nib-row-label')].map((one) => one.textContent)"
+        "() => [...document.querySelectorAll('.scheduler .quick .orden-row-label')].map((one) => one.textContent)"
     )
     say(f"[quick] {json.dumps(labels)}")
     if "Tomorrow" not in labels:
         wrong("the scheduler has no Tomorrow")
-    page.locator(".scheduler .quick .nib-row", has_text="Tomorrow").click()
+    page.locator(".scheduler .quick .orden-row", has_text="Tomorrow").click()
     wait_for(
         page,
         f"() => ({TASK})('Water the plants')?.due === '{days['tomorrow']}'",
@@ -219,7 +219,7 @@ def reschedule(page: Page, days: dict[str, str]) -> None:
     open_today(page)
     page.locator(".view-tab .head .act", has_text="Reschedule").click()
     wait_for(page, "document.querySelector('.scheduler')", "the scheduler for what is overdue")
-    page.locator(".scheduler .quick .nib-row", has_text="Today").click()
+    page.locator(".scheduler .quick .orden-row", has_text="Today").click()
     wait_for(
         page,
         f"() => ['Call the bank', 'Pay the dentist'].every((words) => ({TASK})(words)?.deadline === '{days['today']}')",
@@ -270,7 +270,7 @@ def repeating(page: Page, days: dict[str, str]) -> None:
     page.locator(vitamins).hover()
     page.locator(f"{vitamins} .act[aria-label='Schedule']").click()
     wait_for(page, "document.querySelector('.scheduler')", "the scheduler")
-    page.locator(".scheduler .quick .nib-row", has_text="Skip").click()
+    page.locator(".scheduler .quick .orden-row", has_text="Skip").click()
     wait_for(
         page,
         f"() => ({TASK})('Take the vitamins')?.due === '{days['tomorrow']}' && !({TASK})('Take the vitamins')?.done",

@@ -284,7 +284,7 @@ def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
 def chrome_reference(port: int, width: int, height: int, pixels: float) -> dict[str, object]:
 
     page_probe = borrowed()
-    data = pathlib.Path(tempfile.mkdtemp(prefix="nib-scroll-chrome-"))
+    data = pathlib.Path(tempfile.mkdtemp(prefix="orden-scroll-chrome-"))
     chrome = subprocess.Popen(
         [
             str(CHROME),
@@ -355,7 +355,7 @@ def main() -> int:
     page_probe.wipe(args.identifier)
     server, port = serve()
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-scroll-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-scroll-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     space = root / SPACE
     space.mkdir(parents=True)

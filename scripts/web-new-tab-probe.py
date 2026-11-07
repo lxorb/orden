@@ -42,7 +42,7 @@ ASKING = """<!doctype html>
   const to = location.origin + '/target-' + how
   if (how === 'plain') window.open(to)
   if (how === 'blank') window.open(to, '_blank')
-  if (how === 'behind') window.open(to, 'nib-behind')
+  if (how === 'behind') window.open(to, 'orden-behind')
   if (how === 'popup') window.open(location.origin + '/popup', 'signin', 'width=480,height=520,left=40,top=40')
 </script>
 """
@@ -99,7 +99,7 @@ def free_port() -> int:
 
 def space() -> pathlib.Path:
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-new-tab-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-new-tab-probe-"))
     os.environ[SPACES_DIR] = str(root)
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     made = root / SPACE

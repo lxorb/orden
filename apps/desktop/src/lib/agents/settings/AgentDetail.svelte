@@ -112,7 +112,7 @@
 
 {#snippet toggle(label: string, on: boolean, flip: () => void)}
   <div
-    class="nib-setting pressable"
+    class="orden-setting pressable"
     role="switch"
     tabindex="0"
     aria-checked={on}
@@ -122,13 +122,14 @@
     }}
   >
     <span class="name">{label}</span>
-    <span class="nib-switch" class:on aria-hidden="true"></span>
+    <span class="orden-switch" class:on aria-hidden="true"></span>
   </div>
 {/snippet}
 
 <header class="who">
-  <button class="nib-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
-    <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
+  <button class="orden-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
+    <svg class="orden-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg
+    >
   </button>
   <AgentMark name={grant.name} />
   <span class="name">
@@ -225,14 +226,14 @@
 <h3>{t('Sites')}</h3>
 <div class="card">
   {#each sites as { site, rule, always } (site)}
-    <div class="nib-setting site">
+    <div class="orden-setting site">
       <span class="name">
         <span class="what"><bdi>{chatNames[site] ?? site}</bdi></span>
         {#if always.length}
           <span class="always">
             {#each always as category (category)}
               <button
-                class="nib-tag"
+                class="orden-tag"
                 title={t('Remove')}
                 onclick={() => {
                   change((one) => withoutAlways(one, site, category))
@@ -245,7 +246,7 @@
         {/if}
       </span>
       {#if rule}
-        <div class="nib-setting-value">
+        <div class="orden-setting-value">
           <Select
             value={rule}
             options={ruleChoices}
@@ -257,7 +258,7 @@
           />
         </div>
         <button
-          class="nib-glyph is-danger"
+          class="orden-glyph is-danger"
           aria-label={t('Remove')}
           title={t('Remove')}
           onclick={() => {
@@ -281,11 +282,11 @@
 <h3>{t('Limits')}</h3>
 <div class="card">
   {#each LIMIT_NAMES as limit (limit)}
-    <div class="nib-setting sliding">
+    <div class="orden-setting sliding">
       <span class="name">{LIMIT_WORDS[limit]()}</span>
       <span class="value">{limitValue(limit, limitOf(limit))}</span>
       <input
-        class="slider nib-slider"
+        class="slider orden-slider"
         type="range"
         min={LIMITS[limit].min}
         max={LIMITS[limit].max}
@@ -307,7 +308,7 @@
 </div>
 
 <div class="card">
-  <button class="nib-action is-danger" onclick={() => void remove()}>{t('Remove')}</button>
+  <button class="orden-action is-danger" onclick={() => void remove()}>{t('Remove')}</button>
 </div>
 
 <style>

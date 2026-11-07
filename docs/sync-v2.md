@@ -360,7 +360,7 @@ different things in the same place.**
 | the same picture file replaced on two devices while apart | cannot merge: the modal, when opened | as below |
 
 **The divergence modal.** A sheet over the note, in the existing sheet shape
-(`.nib-layer`, the scrim, `--dur-*`), with the note's name as its title and two cards side
+(`.orden-layer`, the scrim, `--dur-*`), with the note's name as its title and two cards side
 by side, each a version:
 
 ```
@@ -1644,7 +1644,7 @@ are gone, and the web tables below stay unread (section 6).
 | `blobs/<hash>` | pictures, PDFs, and now every file in a space |
 | `web/<user>/<key>` | an encrypted web manifest |
 | `web/<user>/chunks/<name>` | an encrypted chunk |
-| `<backup id>.tar.zst` in `nib-homes` (`eu`) | an online terminal machine's home, its latest backup |
+| `<backup id>.tar.zst` in `orden-homes` (`eu`) | an online terminal machine's home, its latest backup |
 
 ### Quotas, limits and mail
 
@@ -1850,7 +1850,7 @@ the file's row - so the browser keeps the tree whole and only the words it uses 
 - **What every note is asked about.** Links, backlinks, the graph, tags, icons, the rows of
   tasks and bases read each note's scan: from the words here where they are, and from the
   account's `POST /v2/spaces/:space/index` for the rest (the same `@orden/scan` code over
-  the account's copy), kept by id in `nib-index:<account>` and asked again when the feed's
+  the account's copy), kept by id in `orden-index:<account>` and asked again when the feed's
   `docSeq` passes the scan's (`indexing.ts`). A note let go of leaves its scan from the
   words in hand. A search walks the notes here and asks `POST /v2/spaces/:space/search` for
   the rest, a page at a time, with the same matcher; offline it finds what is here.
@@ -2066,7 +2066,7 @@ then the first killed, and the second taking the lease 30 s later.
 ## 13. The implementation plan
 
 Eight lanes on disjoint files, in three waves; the briefs are in the manager's scratchpad
-under `sync-design/lanes/`. Every lane follows `nib-agent-rules.md`, reads this document
+under `sync-design/lanes/`. Every lane follows `orden-agent-rules.md`, reads this document
 first, lands on main behind the flags, and keeps v1 green.
 
 | lane | owns | depends on | wave |

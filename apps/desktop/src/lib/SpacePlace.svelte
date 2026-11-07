@@ -23,7 +23,7 @@
 <span class="at">
   {@render children()}
   {#if typing || held}
-    <span class="nib-keytip place" aria-hidden="true" in:keytipIn out:keytipOut
+    <span class="orden-keytip place" aria-hidden="true" in:keytipIn out:keytipOut
       >{#if hit}<b>{number.slice(0, hit)}</b>{/if}{number.slice(hit)}</span
     >
   {/if}

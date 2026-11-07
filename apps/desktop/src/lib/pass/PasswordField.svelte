@@ -46,7 +46,7 @@
     </div>
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={shown ? t('Hide') : t('Show')}
       title={shown ? t('Hide') : t('Show')}
       onclick={() => (shown = !shown)}
@@ -55,7 +55,7 @@
     </button>
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={t('Generate password')}
       title={t('Generate password')}
       onclick={generate}
@@ -106,7 +106,7 @@
     letter-spacing: 0.02em;
   }
 
-  .nib-glyph {
+  .orden-glyph {
     flex: none;
     color: var(--muted-strong);
   }

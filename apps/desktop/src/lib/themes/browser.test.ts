@@ -40,7 +40,7 @@ describe('a browser theme as an Orden theme', () => {
       body { background-color: #22242a80 !important; }
       @-moz-document url(about:blank), url-prefix("https://www.google.") { img { filter: none; } }
       @-moz-document domain(example.org) { p { color: red; } }`)
-    const said = JSON.parse(/nib-pages (.*) \*\/\n$/.exec(line)?.[1] ?? '') as {
+    const said = JSON.parse(/orden-pages (.*) \*\/\n$/.exec(line)?.[1] ?? '') as {
       clear: boolean
       sheets: { match: string; css: string }[]
     }

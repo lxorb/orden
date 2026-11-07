@@ -39,7 +39,7 @@
 >
   <form onsubmit={made}>
     <input
-      class="nib-field"
+      class="orden-field"
       type="password"
       autocomplete="new-password"
       placeholder={t('Pass password')}
@@ -49,7 +49,7 @@
     />
     <StrengthMeter {password} />
     <input
-      class="nib-field"
+      class="orden-field"
       type="password"
       autocomplete="new-password"
       placeholder={t('Type it again')}
@@ -65,7 +65,7 @@
       <p class="wrong" role="alert">{wrong}</p>
     {/if}
     <button
-      class="nib-button"
+      class="orden-button"
       type="submit"
       disabled={busy || password.length < LEAST || again !== password}
       aria-busy={busy}

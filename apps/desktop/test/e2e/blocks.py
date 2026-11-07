@@ -33,7 +33,7 @@ async ([note]) => {
 """
 
 MARKS = """
-() => [...document.querySelectorAll('.nib-block-handle')].map((mark) => {
+() => [...document.querySelectorAll('.orden-block-handle')].map((mark) => {
   const line = mark.closest('.cm-line')
   const box = line.getBoundingClientRect()
   const rect = mark.getBoundingClientRect()
@@ -48,8 +48,8 @@ MARKS = """
 """
 
 ROWS = """
-() => [...document.querySelectorAll('.rows .nib-row')].map((row) => ({
-  label: row.querySelector('.nib-row-label')?.textContent ?? '',
+() => [...document.querySelectorAll('.rows .orden-row')].map((row) => ({
+  label: row.querySelector('.orden-row-label')?.textContent ?? '',
   off: row.disabled,
 }))
 """
@@ -101,17 +101,17 @@ def line_of(page: Page, words: str):
 def press_mark(page: Page, words: str) -> None:
     line_of(page, words).hover()
     page.wait_for_timeout(250)
-    line_of(page, words).locator(".nib-block-handle").click()
+    line_of(page, words).locator(".orden-block-handle").click()
     page.wait_for_timeout(400)
 
 def choose(page: Page, label: str) -> None:
-    page.locator(".rows .nib-row", has_text=label).first.click()
+    page.locator(".rows .orden-row", has_text=label).first.click()
     page.wait_for_timeout(500)
 
 def drive_marks(browser: Browser) -> None:
     page = fresh(browser, "desktop")
 
-    resting = page.evaluate("() => getComputedStyle(document.querySelector('.nib-block-handle')).opacity")
+    resting = page.evaluate("() => getComputedStyle(document.querySelector('.orden-block-handle')).opacity")
     say(f"[desktop] a mark nobody is pointing at: opacity {resting}")
     if resting != "0":
         wrong(f"the mark is not calm: opacity {resting}")
@@ -230,7 +230,7 @@ def drive_drag(browser: Browser) -> None:
 
     line_of(page, "A quote to move").hover()
     page.wait_for_timeout(300)
-    mark = line_of(page, "A quote to move").locator(".nib-block-handle").bounding_box()
+    mark = line_of(page, "A quote to move").locator(".orden-block-handle").bounding_box()
     target = line_of(page, "The first paragraph").bounding_box()
     if not mark or not target:
         raise SystemExit("nothing to drag")
@@ -242,8 +242,8 @@ def drive_drag(browser: Browser) -> None:
 
     drawn = page.evaluate(
         """() => ({
-          lifted: document.querySelectorAll('.cm-line.nib-block-lifted').length,
-          over: document.querySelectorAll('.cm-line.nib-block-over').length,
+          lifted: document.querySelectorAll('.cm-line.orden-block-lifted').length,
+          over: document.querySelectorAll('.cm-line.orden-block-over').length,
         })"""
     )
     say(f"[drag] while it is carried: {json.dumps(drawn)}")
@@ -262,7 +262,7 @@ def drive_drag(browser: Browser) -> None:
         wrong("the quote did not move above the paragraph it was dropped on")
     if "> A quote to move around.\n\nThe first paragraph" not in text:
         wrong(f"the blank line between the blocks did not survive the move:\n{text[:200]}")
-    if page.evaluate("() => document.querySelectorAll('.cm-line.nib-block-lifted').length"):
+    if page.evaluate("() => document.querySelectorAll('.cm-line.orden-block-lifted').length"):
         wrong("the block is still being carried after the button came up")
 
     page.context.close()
@@ -271,7 +271,7 @@ def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
 
     marks = page.evaluate(
-        "() => [...document.querySelectorAll('.nib-block-handle')]"
+        "() => [...document.querySelectorAll('.orden-block-handle')]"
         ".map((mark) => getComputedStyle(mark).display)"
     )
     say(f"[phone] the marks: {json.dumps(sorted(set(marks)))}")

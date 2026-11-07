@@ -1333,7 +1333,7 @@ exec node '{}' {name} \"$@\"
             Some(Effort::Xhigh),
             codex_app::From {
                 fork_of: None,
-                thread: Some("nib-thread-1"),
+                thread: Some("orden-thread-1"),
                 without: &[],
             },
         )
@@ -1629,7 +1629,7 @@ exec node '{}' {name} \"$@\"
             folder: folder.to_path_buf(),
             caps,
             token: tools.map(|_| "abc123".to_owned()),
-            thread: Some("nib-thread-1".to_owned()),
+            thread: Some("orden-thread-1".to_owned()),
             mode: tools,
             without: Vec::new(),
         };

@@ -26,17 +26,17 @@
   <output class="code" aria-label={t('Recovery key')}>{code}</output>
   <div class="row">
     <button
-      class="nib-button is-quiet is-soft"
+      class="orden-button is-quiet is-soft"
       type="button"
       onclick={() => void copyField(t('Recovery key'), code)}
     >
       <Glyph icon={Copy} />{t('Copy')}
     </button>
-    <button class="nib-button is-quiet is-soft" type="button" onclick={saved}>
+    <button class="orden-button is-quiet is-soft" type="button" onclick={saved}>
       <Glyph icon={Download} />{t('Download')}
     </button>
   </div>
-  <button class="nib-button" type="button" onclick={ondone}>{t('I saved it')}</button>
+  <button class="orden-button" type="button" onclick={ondone}>{t('I saved it')}</button>
 </Gate>
 
 <style>

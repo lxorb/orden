@@ -21,7 +21,7 @@ afterEach(() => {
 })
 
 test('is said and not shown, named for a screen reader, and still opens the list', () => {
-  expect(toggle.classList.contains('nib-said')).toBe(true)
+  expect(toggle.classList.contains('orden-said')).toBe(true)
   expect(toggle.getAttribute('aria-label')).toBe('Show left sidebar')
   expect(toggle.tabIndex).toBe(0)
   toggle.click()
@@ -33,10 +33,10 @@ test('is seen while the keyboard is on it, and said again once it leaves', () =>
   toggle.matches = (selector: string) => selector === ':focus-visible'
   toggle.focus()
   flushSync()
-  expect(toggle.classList.contains('nib-said')).toBe(false)
+  expect(toggle.classList.contains('orden-said')).toBe(false)
   toggle.blur()
   flushSync()
-  expect(toggle.classList.contains('nib-said')).toBe(true)
+  expect(toggle.classList.contains('orden-said')).toBe(true)
 })
 
 test('the drawer head on a phone says it and does not show it, and the bar shows a way back', async () => {
@@ -70,7 +70,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
     workspace.showPanel('tree')
     flushSync()
     const inHead = host.querySelector<HTMLButtonElement>('.head [data-side-toggle="left"]')!
-    expect(inHead.classList.contains('nib-said')).toBe(true)
+    expect(inHead.classList.contains('orden-said')).toBe(true)
     expect(inHead.getAttribute('aria-label')).toBe('Hide left sidebar')
     expect(host.querySelector('header [data-side-toggle="left"]')).toBeNull()
 
@@ -79,7 +79,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
     expect(workspace.openOn('left')).toBeFalsy()
 
     const back = host.querySelector<HTMLButtonElement>('header [data-phone-back]')!
-    expect(back.classList.contains('nib-said')).toBe(false)
+    expect(back.classList.contains('orden-said')).toBe(false)
     expect(back.getAttribute('aria-label')).toBe('Back')
     back.click()
     flushSync()
@@ -89,7 +89,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
     workspace.showPanel('tree')
     flushSync()
     expect(
-      host.querySelector('.head [data-side-toggle="left"]')?.classList.contains('nib-said'),
+      host.querySelector('.head [data-side-toggle="left"]')?.classList.contains('orden-said'),
     ).toBe(false)
   } finally {
     fullscreen.on = false

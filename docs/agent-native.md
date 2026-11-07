@@ -1757,7 +1757,7 @@ tab there is in the reader's store itself (`engines::TWINS`).
 ## 13. The implementation plan
 
 Eight lanes on disjoint files, in three waves. Briefs are in the manager's scratchpad under
-`agent-browser/lanes/`. Every lane reads this document first, follows `nib-agent-rules.md`,
+`agent-browser/lanes/`. Every lane reads this document first, follows `orden-agent-rules.md`,
 and keeps the reader's window out of every probe (the family watch, every process under
 the app, is in `scripts/probe_app.py`'s `run_probe`).
 

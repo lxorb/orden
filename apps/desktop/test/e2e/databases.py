@@ -158,7 +158,7 @@ def menu_row(page: Page, label: str) -> None:
 
 def more_row(page: Page, label: str) -> None:
     page.locator(".view-tab .head [aria-label=Settings]").first.click()
-    page.locator(f".view-tab .settings .nib-row:has-text({json.dumps(label)})").first.click()
+    page.locator(f".view-tab .settings .orden-row:has-text({json.dumps(label)})").first.click()
 
 def the_builders(page: Page) -> None:
     open_view(page, "All")

@@ -22,18 +22,18 @@
   {#if part.result?.text}<p>{part.result.text}</p>{/if}
   <Asked {part} />
   <div class="answers">
-    <button class="nib-button" disabled={answering} onclick={() => void answer(true)}
+    <button class="orden-button" disabled={answering} onclick={() => void answer(true)}
       >{t('Approve')}</button
     >
     {#if thread && alwaysOffered(part.result?.category)}
       <button
-        class="nib-button is-quiet"
+        class="orden-button is-quiet"
         disabled={answering}
         title={t('Always in this thread')}
         onclick={() => void answer(true, true)}>{t('Always')}</button
       >
     {/if}
-    <button class="nib-button is-quiet" disabled={answering} onclick={() => void answer(false)}
+    <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}
       >{t('Deny')}</button
     >
   </div>

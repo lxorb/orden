@@ -6,6 +6,7 @@ import { settings } from '../settings.svelte'
 import { trustsHtmlIn } from '../sharing.svelte'
 import { theme } from '../theme.svelte'
 import { invoke, isNative } from '../tauri'
+import { carriedCss } from '../themes/carried'
 import { workspace } from '../workspace.svelte'
 import type { RunOptions } from './run'
 
@@ -36,8 +37,16 @@ export async function look(): Promise<
 
   const file = theme.active.path
   const sheets = await Promise.all([
-    file ? invoke<string>('read_theme', { path: file }).catch(() => '') : '',
-    isNative ? invoke<string>('read_custom_css').catch(() => '') : '',
+    file
+      ? invoke<string>('read_theme', { path: file })
+          .then(carriedCss)
+          .catch(() => '')
+      : '',
+    isNative
+      ? invoke<string>('read_custom_css')
+          .then(carriedCss)
+          .catch(() => '')
+      : '',
   ])
 
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }

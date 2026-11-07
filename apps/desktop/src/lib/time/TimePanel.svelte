@@ -75,25 +75,27 @@
     </p>
     <div class="starters">
       {#each starters as name (name)}
-        <button type="button" class="nib-chip" onclick={() => time.startNamed(name)}>{name}</button>
+        <button type="button" class="orden-chip" onclick={() => time.startNamed(name)}
+          >{name}</button
+        >
       {/each}
     </div>
   {:else}
-    <p class="nib-section">{t('Recent')}</p>
+    <p class="orden-section">{t('Recent')}</p>
     <ul>
       {#each recent as one (one.id)}
         {@const on = time.running.some((span) => span.activity === one.id)}
         <li class:on>
           <button
             type="button"
-            class="nib-row is-short"
+            class="orden-row is-short"
             class:is-on={on}
             title={t('Start timer')}
             onclick={() => time.start(one.id)}
           >
             <span class="dot" style:background={tintOf(one.id)}></span>
-            <span class="nib-row-label"><bdi>{one.name}</bdi></span>
-            <span class="nib-row-meta">{todayOf(one.id) ? length(todayOf(one.id)) : ''}</span>
+            <span class="orden-row-label"><bdi>{one.name}</bdi></span>
+            <span class="orden-row-meta">{todayOf(one.id) ? length(todayOf(one.id)) : ''}</span>
             <svg class="play" viewBox="0 0 12 12" aria-hidden="true"
               ><path d="M3.5 2.2v7.6L9.8 6z" /></svg
             >
@@ -102,13 +104,13 @@
       {/each}
     </ul>
 
-    <p class="nib-section">{t('Today')}<span>{length(whole)}</span></p>
+    <p class="orden-section">{t('Today')}<span>{length(whole)}</span></p>
     <div class="today">
       <Strip from={shown[0]} to={shown[1]} spans={own} minutes={minutes.list} {now} hours />
     </div>
   {/if}
 
-  <button type="button" class="nib-button is-quiet open" onclick={() => openTime()}
+  <button type="button" class="orden-button is-quiet open" onclick={() => openTime()}
     >{t('Open time tracker')}</button
   >
 </div>

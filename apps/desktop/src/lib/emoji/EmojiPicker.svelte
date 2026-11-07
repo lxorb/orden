@@ -106,7 +106,7 @@
 
 <div class="picker">
   <div class="bar">
-    <label class="nib-field">
+    <label class="orden-field">
       <input
         bind:this={field}
         bind:value={query}
@@ -119,7 +119,7 @@
     </label>
     <button
       type="button"
-      class="nib-glyph tone"
+      class="orden-glyph tone"
       aria-label={t('Skin tone')}
       title={t('Skin tone')}
       aria-expanded={toning}

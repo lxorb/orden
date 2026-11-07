@@ -250,7 +250,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     for section in ["sync", "account"]:
         page.evaluate("() => window.nibApp.publish.close()")
         page.evaluate(f"() => window.nibApp.settings.show('{section}')")
-        page.wait_for_selector(".nib-screen.sheet", timeout=15000)
+        page.wait_for_selector(".orden-screen.sheet", timeout=15000)
         page.wait_for_timeout(900)
         shot(section)
 
@@ -438,7 +438,7 @@ def diagrams() -> list[str]:
     return sources
 
 def dressing(token: str, space: str) -> None:
-    css = b"#write{--nib-drive:1}"
+    css = b"#write{--orden-drive:1}"
     digest = hashlib.sha256(css).hexdigest()
 
     put = urllib.request.Request(

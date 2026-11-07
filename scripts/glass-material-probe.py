@@ -112,7 +112,7 @@ def main() -> int:
     options = parser.parse_args()
 
     wipe(options.identifier)
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-material-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-material-"))
     app, held = started(options.exe, options.identifier, spaces)
     try:
         hwnd = main_window(app.pid)

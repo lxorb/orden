@@ -180,7 +180,7 @@ def serve(port: int, other: str) -> None:
     threading.Thread(target=made.serve_forever, daemon=True).start()
 
 def space(port: int) -> tuple[pathlib.Path, pathlib.Path]:
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-agent-probe-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     os.environ["ORDEN_DOWNLOADS_DIR"] = str(root / "downloads")
     (root / "downloads").mkdir()

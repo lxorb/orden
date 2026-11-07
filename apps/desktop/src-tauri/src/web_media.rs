@@ -2,7 +2,7 @@
 
 const SCRIPT: &str = include_str!("web_media.js");
 
-pub const UNPLAYABLE: &str = "nib-media-unplayable";
+pub const UNPLAYABLE: &str = "orden-media-unplayable";
 
 const HEARD: &str = "orden://web-unplayable";
 

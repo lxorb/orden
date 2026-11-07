@@ -153,7 +153,7 @@
   <div class="bar">
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={t('Back')}
       onclick={() => (anchor = stepped(mode, anchor, -1))}
     >
@@ -161,18 +161,18 @@
     </button>
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={t('Forward')}
       onclick={() => (anchor = stepped(mode, anchor, 1))}
     >
       <svg viewBox="0 0 13 13"><path d="m5 2.5 4 4-4 4" /></svg>
     </button>
     <span class="title">{title}</span>
-    <button type="button" class="nib-chip is-quiet" onclick={() => (anchor = live.today)}
+    <button type="button" class="orden-chip is-quiet" onclick={() => (anchor = live.today)}
       >{t('Today')}</button
     >
     <span class="spring"></span>
-    <div class="nib-segmented modes" role="tablist">
+    <div class="orden-segmented modes" role="tablist">
       {#each CALENDAR_MODES as one (one)}
         <button
           type="button"

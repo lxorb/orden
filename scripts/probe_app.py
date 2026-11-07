@@ -140,7 +140,7 @@ def identifier_of(exe: pathlib.Path, given: str | None = None) -> str:
 
     if given:
         return given
-    beside = exe.parent / "nib-probe-identifier.json"
+    beside = exe.parent / "orden-probe-identifier.json"
     if not beside.exists():
         raise SystemExit(f"which identifier was {exe} built under? pass --identifier")
     return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])

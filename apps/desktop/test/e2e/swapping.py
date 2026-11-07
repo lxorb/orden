@@ -12,7 +12,7 @@ FRAMES = """
 async () => {
   const seen = []
   const look = () => {
-    const thumb = document.querySelector('.nib-segmented-thumb')
+    const thumb = document.querySelector('.orden-segmented-thumb')
     const panels = [...document.querySelectorAll('aside .body')]
     const box = (one) => {
       const style = getComputedStyle(one)

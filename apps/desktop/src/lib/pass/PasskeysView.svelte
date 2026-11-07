@@ -30,7 +30,7 @@
 
 {#if content.passkeys.length}
   <section class="card" aria-label={t('Passkeys')}>
-    <h3 class="nib-section">{t('Passkeys')}</h3>
+    <h3 class="orden-section">{t('Passkeys')}</h3>
     {#each content.passkeys as key (key.id)}
       <div class="line" data-passkey={key.rpId}>
         <Glyph icon={KeyRound} />
@@ -44,7 +44,7 @@
         </span>
         {#if editable}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             type="button"
             aria-label={t('Remove the passkey for {site}', { site: key.rpId })}
             title={t('Remove')}
@@ -65,7 +65,7 @@
     overflow: hidden;
   }
 
-  .card > .nib-section {
+  .card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }

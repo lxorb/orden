@@ -333,7 +333,7 @@ describe('a button of a row in a space shared to be read', () => {
     const { kit } = viewOver(null)
     const props = { row: theirNote(), property: 'button.Ship', editor: 'button', kit }
     const html = render(Cell, { props: props as never }).body
-    expect(html).toMatch(/<button[^>]*class="nib-chip press[^>]*disabled/)
+    expect(html).toMatch(/<button[^>]*class="orden-chip press[^>]*disabled/)
   })
 
   test('and a press of it does nothing', async () => {
@@ -358,7 +358,7 @@ describe('a button of a row in a space shared to be read', () => {
         kit,
       } as never,
     }).body
-    expect(html).not.toMatch(/<button[^>]*class="nib-chip press[^>]*disabled/)
+    expect(html).not.toMatch(/<button[^>]*class="orden-chip press[^>]*disabled/)
   })
 })
 

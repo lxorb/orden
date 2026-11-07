@@ -58,7 +58,7 @@
     <div class="list">
       {#each list as one (one.id)}
         <button
-          class="choice nib-button is-quiet"
+          class="choice orden-button is-quiet"
           data-pass-choice={one.id}
           onclick={() => void autofill.choose(tab, one.id)}
         >
@@ -71,7 +71,7 @@
 {/snippet}
 
 <div
-  class="fill nib-bubble is-pressable nib-host"
+  class="fill orden-bubble is-pressable orden-host"
   role="dialog"
   aria-label={label}
   tabindex="-1"
@@ -93,16 +93,16 @@
       <p class="which">{t('Nothing in Pass for this site yet.')}</p>
     {/if}
     <div class="rows">
-      <button class="nib-button is-quiet" onclick={() => opened(bubble.tab)}>
+      <button class="orden-button is-quiet" onclick={() => opened(bubble.tab)}>
         {t('Open Pass')}
       </button>
       {#if bubble.alias}
-        <button class="nib-button is-quiet" onclick={() => void autofill.alias(bubble.tab)}>
+        <button class="orden-button is-quiet" onclick={() => void autofill.alias(bubble.tab)}>
           {t('Use an alias')}
         </button>
       {/if}
       {#if bubble.generate}
-        <button class="nib-button" onclick={() => void autofill.generate(bubble.tab)}>
+        <button class="orden-button" onclick={() => void autofill.generate(bubble.tab)}>
           {t('Generate password')}
         </button>
       {/if}
@@ -111,7 +111,7 @@
     <p class="what">{t('Pass is locked')}</p>
     <p class="which">{t('Unlock Pass to fill this page.')}</p>
     <div class="rows">
-      <button class="nib-button" onclick={() => opened(bubble.tab)}>{t('Unlock Pass')}</button>
+      <button class="orden-button" onclick={() => opened(bubble.tab)}>{t('Unlock Pass')}</button>
     </div>
   {:else if bubble?.kind === 'save'}
     <p class="what">
@@ -124,21 +124,21 @@
     </p>
     <div class="rows">
       {#if !bubble.update}
-        <button class="nib-button is-quiet" onclick={() => autofill.never(bubble.tab)}>
+        <button class="orden-button is-quiet" onclick={() => autofill.never(bubble.tab)}>
           {t('Never for this site')}
         </button>
       {/if}
-      <button class="nib-button is-quiet" onclick={() => autofill.dismiss(bubble.tab)}>
+      <button class="orden-button is-quiet" onclick={() => autofill.dismiss(bubble.tab)}>
         {t('Not now')}
       </button>
-      <button class="nib-button" onclick={() => void autofill.save(bubble.tab)}>
+      <button class="orden-button" onclick={() => void autofill.save(bubble.tab)}>
         {bubble.update ? t('Update') : t('Save')}
       </button>
     </div>
   {:else if bubble?.kind === 'signing'}
     <p class="what">{t('Signing in as {name}…', { name: bubble.name })}</p>
     <div class="rows">
-      <button class="nib-button" onclick={() => autofill.stop(bubble.tab)}>{t('Stop')}</button>
+      <button class="orden-button" onclick={() => autofill.stop(bubble.tab)}>{t('Stop')}</button>
     </div>
   {/if}
 </div>

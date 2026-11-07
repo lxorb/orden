@@ -54,7 +54,7 @@
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
       <p
-        class="nib-section"
+        class="orden-section"
         use:droppable={(row, _at, _box, from) => kit.drop(row, group.key, undefined, from)}
       >
         {groupLabel(property, group.key, live.today, names)}<span>{group.rows.length}</span>

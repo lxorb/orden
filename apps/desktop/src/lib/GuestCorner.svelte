@@ -61,12 +61,14 @@
     aria-expanded={open}
     onclick={toggle}
   >
-    <span class="face nib-badge" style:--badge-fill={fill} aria-hidden="true">{initial(name)}</span>
+    <span class="face orden-badge" style:--badge-fill={fill} aria-hidden="true"
+      >{initial(name)}</span
+    >
   </button>
 
   {#if open}
     <div
-      class="pop nib-layer"
+      class="pop orden-layer"
       role="dialog"
       aria-label={t('Account')}
       transition:fly={{ y: -6, duration: LAYER.rise, easing: cubicOut }}
@@ -75,7 +77,7 @@
         <span class="caption">{t('Your name')}</span>
         <input
           bind:this={field}
-          class="nib-field"
+          class="orden-field"
           value={name}
           placeholder={t('Your name')}
           spellcheck="false"
@@ -86,7 +88,7 @@
       {#if error}
         <p class="error caption" role="alert">{error}</p>
       {/if}
-      <button class="nib-button" onclick={signIn}>{t('Sign in')}</button>
+      <button class="orden-button" onclick={signIn}>{t('Sign in')}</button>
     </div>
   {/if}
 </div>

@@ -10,7 +10,7 @@
 </script>
 
 <span
-  class="nib-badge vault-mark"
+  class="orden-badge vault-mark"
   aria-hidden="true"
   style:--badge-fill="color-mix(in srgb, {ink} 18%, transparent)"
   style:--badge-ink={ink}

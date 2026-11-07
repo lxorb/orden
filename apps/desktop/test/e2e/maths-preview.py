@@ -35,7 +35,7 @@ the end
 PREVIEW = """
 () => {
   const view = window.nib
-  const dom = view.dom.querySelector('.nib-maths-preview')
+  const dom = view.dom.querySelector('.orden-maths-preview')
   if (!dom || dom.hidden) return null
   const box = dom.getBoundingClientRect()
   const scroller = view.scrollDOM.getBoundingClientRect()
@@ -47,10 +47,10 @@ PREVIEW = """
     scroller: { top: scroller.top, bottom: scroller.bottom, left: scroller.left, right: scroller.right },
     caret: caret && { top: caret.top, bottom: caret.bottom },
     katex: !!dom.querySelector('.katex'),
-    text: dom.querySelector('.nib-maths-preview-body')?.textContent ?? '',
-    error: dom.querySelector('.nib-maths-preview-error:not([hidden])')?.textContent ?? null,
-    stale: dom.classList.contains('nib-maths-preview-stale'),
-    below: dom.classList.contains('nib-maths-preview-below'),
+    text: dom.querySelector('.orden-maths-preview-body')?.textContent ?? '',
+    error: dom.querySelector('.orden-maths-preview-error:not([hidden])')?.textContent ?? null,
+    stale: dom.classList.contains('orden-maths-preview-stale'),
+    below: dom.classList.contains('orden-maths-preview-below'),
     background: style.backgroundColor,
     hiddenFromReaders: dom.getAttribute('aria-hidden') === 'true',
   }
@@ -92,7 +92,7 @@ def check_inside(seen: dict, label: str) -> None:
 def open_note(page: Page) -> None:
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Maths first")
-    wait_for(page, "() => document.querySelectorAll('.nib-math-block').length === 1", "the formulas")
+    wait_for(page, "() => document.querySelectorAll('.orden-math-block').length === 1", "the formulas")
 
 def desktop(page: Page, scheme: str) -> None:
     open_note(page)
@@ -179,7 +179,7 @@ def desktop(page: Page, scheme: str) -> None:
     if not seen or not seen["katex"]:
         wrong(f"[{scheme}] no preview in a callout: {seen}")
 
-    cell = page.locator(".nib-table td", has_text="pi").first
+    cell = page.locator(".orden-table td", has_text="pi").first
     cell.click()
     page.wait_for_timeout(150)
     page.evaluate(
@@ -192,7 +192,7 @@ def desktop(page: Page, scheme: str) -> None:
     )
     page.wait_for_timeout(200)
     seen = page.evaluate(
-        "() => { const d = document.querySelector('.nib-maths-preview');"
+        "() => { const d = document.querySelector('.orden-maths-preview');"
         " return d && !d.hidden && !!d.querySelector('.katex') }"
     )
     if not seen:

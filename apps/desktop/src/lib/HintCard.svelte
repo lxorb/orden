@@ -46,13 +46,13 @@
 {#if hints.current === hint}
   <div
     bind:this={bubble}
-    class="nib-bubble is-pressable hint"
+    class="orden-bubble is-pressable hint"
     role="status"
     use:hang={{ side, gap: 4, inset: '--space-2' }}
     transition:fly={{ y: side === 'above' ? 4 : -4, duration: dur(180), easing: cubicOut }}
   >
     <button class="say" onclick={press}>{text}</button>
-    <button class="nib-glyph shut" aria-label={t('Dismiss')} onclick={() => hints.dismiss(hint)}>
+    <button class="orden-glyph shut" aria-label={t('Dismiss')} onclick={() => hints.dismiss(hint)}>
       <Cross small />
     </button>
   </div>

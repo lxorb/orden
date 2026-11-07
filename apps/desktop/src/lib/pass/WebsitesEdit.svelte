@@ -56,7 +56,7 @@
       </div>
       <button
         type="button"
-        class="nib-glyph"
+        class="orden-glyph"
         aria-label={t('Remove')}
         title={t('Remove')}
         onclick={() => remove(at)}
@@ -65,7 +65,7 @@
       </button>
     </div>
   {/each}
-  <button type="button" class="nib-button is-quiet add" onclick={add}>
+  <button type="button" class="orden-button is-quiet add" onclick={add}>
     <Glyph icon={Plus} />
     <span>{t('Add website')}</span>
   </button>
@@ -113,7 +113,7 @@
     max-width: 40%;
   }
 
-  .nib-glyph :global(.nib-cross) {
+  .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);
     stroke-width: 1.5;

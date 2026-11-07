@@ -59,7 +59,7 @@ STATE = """
 () => ({
   active: window.nibApp.workspace.active?.kind ?? null,
   navigator: !!document.querySelector('.navigator'),
-  headings: [...(document.querySelector('.heading')?.closest('ul')?.querySelectorAll('.heading .nib-row-label') ?? [])].map((one) => one.textContent.trim()),
+  headings: [...(document.querySelector('.heading')?.closest('ul')?.querySelectorAll('.heading .orden-row-label') ?? [])].map((one) => one.textContent.trim()),
   counter: document.querySelector('footer .page')?.textContent?.trim() ?? null,
 })
 """

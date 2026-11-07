@@ -33,7 +33,7 @@
 
 {#if asking}
   <div
-    class="pairing nib-bubble is-pressable nib-host"
+    class="pairing orden-bubble is-pressable orden-host"
     role="dialog"
     aria-label={client}
     tabindex="-1"
@@ -42,7 +42,7 @@
   >
     <p class="what">
       <span
-        class="nib-badge"
+        class="orden-badge"
         style:--badge-fill={accentFor(client, theme.current)}
         style:--badge-ink="var(--accent-ink)"
         aria-hidden="true">{initial(client)}</span
@@ -50,8 +50,9 @@
       <span class="client">{t('{client} wants to connect', { client })}</span>
     </p>
     <div class="rows">
-      <button class="nib-button is-quiet" onclick={() => answer(false)}>{t('Don’t allow')}</button>
-      <button class="nib-button" onclick={() => answer(true)}>{t('Allow')}</button>
+      <button class="orden-button is-quiet" onclick={() => answer(false)}>{t('Don’t allow')}</button
+      >
+      <button class="orden-button" onclick={() => answer(true)}>{t('Allow')}</button>
     </div>
   </div>
 {/if}

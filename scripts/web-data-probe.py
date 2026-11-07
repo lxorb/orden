@@ -218,7 +218,7 @@ def main() -> int:
     page_probe.wipe(args.identifier)
     port = serve()
     a, b = f"http://127.0.0.1:{port}", f"http://localhost:{port}"
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-web-data-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-web-data-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     (root / SPACE).mkdir(parents=True)
     (root / SPACE / "Site.url").write_text(page_probe.shortcut(f"{b}/home", "Site"), encoding="utf-8")

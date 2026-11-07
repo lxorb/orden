@@ -774,7 +774,7 @@ SIDEBAR = r"""
   aside: !!document.querySelector('aside'),
   rows: document.querySelectorAll('aside .row').length,
   find: !!document.querySelector('.find'),
-  sheet: !!document.querySelector('.nib-screen.sheet'),
+  sheet: !!document.querySelector('.orden-screen.sheet'),
   palette: !!document.querySelector('.palette'),
   space: window.nibApp?.workspace?.activeSpace?.root ?? null,
 })
@@ -1056,7 +1056,7 @@ async (path) => {
   return {
     'links-panel': shown,
     'links-rows': rows,
-    sections: document.querySelectorAll('.nib-section').length,
+    sections: document.querySelectorAll('.orden-section').length,
     loaf: window.__marks.loaf.filter((one) => one.ms >= 50),
   }
 }

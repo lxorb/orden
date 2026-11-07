@@ -426,8 +426,8 @@
     if (current >= ranges.length) current = 0
     const here = ranges[current]
 
-    paint(painter, 'nib-find', ranges)
-    paint(painter, 'nib-find-here', here ? [here] : [])
+    paint(painter, 'orden-find', ranges)
+    paint(painter, 'orden-find-here', here ? [here] : [])
 
     const box = scroller
     if (!here || !box) return
@@ -451,15 +451,15 @@
     query = ''
     cancelAnimationFrame(painting)
     painting = 0
-    paint(painter, 'nib-find', [])
-    paint(painter, 'nib-find-here', [])
+    paint(painter, 'orden-find', [])
+    paint(painter, 'orden-find-here', [])
     scroller?.focus({ preventScroll: true })
   }
 
   $effect(() => () => {
     cancelAnimationFrame(painting)
-    paint(painter, 'nib-find', [])
-    paint(painter, 'nib-find-here', [])
+    paint(painter, 'orden-find', [])
+    paint(painter, 'orden-find-here', [])
   })
 
   function onKeydown(event: KeyboardEvent) {
@@ -494,7 +494,7 @@
 
   <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
   <div
-    class="scroller nib-host"
+    class="scroller orden-host"
     tabindex="-1"
     use:scrollbar={tab.id}
     bind:this={scroller}
@@ -505,7 +505,7 @@
   >
     <article
       id={focused ? 'write' : undefined}
-      class="page nib-write"
+      class="page orden-write"
       dir={direction}
       aria-label={tab.shown}
       bind:this={surface}

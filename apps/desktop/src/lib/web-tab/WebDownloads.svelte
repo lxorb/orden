@@ -31,7 +31,7 @@
 
 <div
   bind:this={bubble}
-  class="downloads nib-bubble is-pressable"
+  class="downloads orden-bubble is-pressable"
   role="dialog"
   aria-label={t('Downloads')}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
@@ -41,7 +41,7 @@
       {@const share = fraction(one)}
       <li class:failed={one.state === 'failed'}>
         <button
-          class="nib-row file"
+          class="orden-row file"
           disabled={one.state !== 'done'}
           title={one.name}
           onclick={() => {
@@ -68,7 +68,7 @@
 
         {#if one.state === 'going'}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             title={t('Cancel')}
             aria-label={t('Cancel')}
             onclick={() => void downloads.cancel(one.id)}
@@ -81,7 +81,7 @@
           </button>
         {:else if one.state === 'done'}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             title={showWords}
             aria-label={showWords}
             onclick={() => {

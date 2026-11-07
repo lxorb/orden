@@ -76,7 +76,7 @@ function pageFrame(card: HTMLElement, title: string): HTMLIFrameElement | null {
   return frame
 }
 
-const SIZED = 'nib-html-frame'
+const SIZED = 'orden-html-frame'
 
 const LEAST_HEIGHT = 40
 const MOST_HEIGHT = 2400
@@ -113,13 +113,13 @@ export function frameDocument(parts: {
   const block =
     parts.block === undefined
       ? ''
-      : `<script type="application/json" id="nib-block">${literal(parts.block)}</script>\n`
+      : `<script type="application/json" id="orden-block">${literal(parts.block)}</script>\n`
 
   return `<!doctype html>
 <meta charset="utf-8">
 ${parts.head}
 <body>
-${block}<script type="text/plain" id="nib-frame">${parts.program}</script>
+${block}<script type="text/plain" id="orden-frame">${parts.program}</script>
 <script>${parts.script}</script>
 `
 }

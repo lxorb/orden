@@ -17,7 +17,7 @@ const DEVICE = 'e2edevice01'
 const windows = process.platform === 'win32'
 const WRANGLER = join(SYNC, 'node_modules/wrangler/bin/wrangler.js')
 
-const state = mkdtempSync(join(tmpdir(), 'nib-online-e2e-'))
+const state = mkdtempSync(join(tmpdir(), 'orden-online-e2e-'))
 const vars = join(state, 'dev.vars')
 let worker = null
 const opened = []

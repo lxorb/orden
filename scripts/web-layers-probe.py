@@ -94,7 +94,7 @@ def over(
     }
 
 LEFT = """JSON.stringify([...document.querySelectorAll(
-  '.nib-layer, .nib-bubble, .nib-screen, .nib-scrim, [data-notices] > *')].map((one) => {
+  '.orden-layer, .orden-bubble, .orden-screen, .orden-scrim, [data-notices] > *')].map((one) => {
     const box = one.getBoundingClientRect()
     return [one.className, Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height), one.checkVisibility({ opacityProperty: true, visibilityProperty: true })]
   }))"""
@@ -179,7 +179,7 @@ STRANGER = """(() => {
   if (!hole) return 'no hole'
   const box = hole.getBoundingClientRect()
   const layer = document.createElement('div')
-  layer.className = 'nib-layer probe-layer'
+  layer.className = 'orden-layer probe-layer'
   Object.assign(layer.style, { position: 'fixed', left: `${box.x + 80}px`, top: `${box.y + 80}px`,
     width: '240px', height: '140px', zIndex: '50' })
   document.body.append(layer)

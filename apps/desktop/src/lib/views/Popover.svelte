@@ -28,7 +28,7 @@
       ? overlays.show(onclose, () => [
           layer,
           ...document.querySelectorAll(
-            '[data-opens-popover], .nib-layer, [role=listbox], [role=menu]',
+            '[data-opens-popover], .orden-layer, [role=listbox], [role=menu]',
           ),
         ])
       : undefined,
@@ -37,7 +37,7 @@
 
 {#if open}
   <div
-    class="pop nib-layer"
+    class="pop orden-layer"
     class:start
     bind:this={layer}
     role="dialog"

@@ -969,7 +969,7 @@
   {@const named = workspace.naming}
   {#if named?.path === entry.path}
     <div
-      class="nib-row row"
+      class="orden-row row"
       class:is-quiet={unwritten}
       class:is-on={workspace.active?.path === opens}
       class:is-picked={workspace.isSelected(entry.path)}
@@ -992,7 +992,7 @@
     </div>
   {:else}
     <button
-      class="nib-row row"
+      class="orden-row row"
       data-path={entry.path}
       class:is-left-out={workspace.excluded.has(entry.path)}
       class:is-cut={fileClipboard.isCut(entry.path)}
@@ -1028,7 +1028,7 @@
       onpointerenter={() => entry.evicted && keptAway.ahead(entry.path)}
     >
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
-      <span class="nib-row-label"><bdi>{name}</bdi></span>
+      <span class="orden-row-label"><bdi>{name}</bdi></span>
       {#if !__EVEN_PLUGIN__ && entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}
@@ -1045,7 +1045,7 @@
 {/snippet}
 
 {#snippet twist(entry: Entry)}
-  <span class="nib-row-meta twist">
+  <span class="orden-row-meta twist">
     <Twist open={standsOpen(entry, isOpen)} />
   </span>
 {/snippet}

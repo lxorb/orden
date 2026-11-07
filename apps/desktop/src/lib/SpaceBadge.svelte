@@ -5,6 +5,6 @@
   const { space, on = false }: { space: Space; on?: boolean } = $props()
 </script>
 
-<span class="nib-badge" class:is-on={on} aria-hidden="true">
+<span class="orden-badge" class:is-on={on} aria-hidden="true">
   <SpaceMark id={space.id} name={space.name} />
 </span>

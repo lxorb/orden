@@ -110,7 +110,7 @@
   <div class="card">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="nib-setting setting"
+      class="orden-setting setting"
       use:dropOver={(event) => event.preventDefault()}
       ondrop={(event) => {
         event.preventDefault()
@@ -128,30 +128,30 @@
         size={32}
       />
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Picture')}<Hint text={t('The picture the others see beside your name.')} /></span
         ></span
       >
       <span class="ends">
-        <button class="nib-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}
+        <button class="orden-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}
           >{t('Change')}</button
         >
         {#if user.avatar}
-          <button class="nib-chip" onclick={() => void kept(removeFace)}>{t('Remove')}</button>
+          <button class="orden-chip" onclick={() => void kept(removeFace)}>{t('Remove')}</button>
         {/if}
       </span>
     </div>
 
-    <label class="nib-setting setting">
+    <label class="orden-setting setting">
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Pronouns')}<Hint
             text={t('Shown to the others beside your name, such as she/her.')}
           /></span
         ></span
       >
       <input
-        class="nib-field is-value"
+        class="orden-field is-value"
         value={user.pronouns ?? ''}
         placeholder={t('Optional')}
         maxlength="40"
@@ -161,16 +161,16 @@
       />
     </label>
 
-    <label class="nib-setting setting is-tall">
+    <label class="orden-setting setting is-tall">
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Bio')}<Hint
             text={t('A few words about you that the others see on your profile.')}
           /></span
         ></span
       >
       <textarea
-        class="nib-field is-value"
+        class="orden-field is-value"
         rows="3"
         maxlength="190"
         placeholder={t('A few words about you')}
@@ -179,18 +179,18 @@
       ></textarea>
     </label>
 
-    <div class="nib-setting setting is-tall">
+    <div class="orden-setting setting is-tall">
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Status')}<Hint
             text={t('What you are up to, shown to the others beside your name until it clears.')}
           /></span
         ></span
       >
-      <span class="nib-field is-value">
+      <span class="orden-field is-value">
         <button
           type="button"
-          class="nib-glyph"
+          class="orden-glyph"
           aria-label={t('Emoji')}
           title={t('Emoji')}
           onclick={(event) => pickEmoji(event.currentTarget)}
@@ -206,7 +206,7 @@
         {#if [status?.emoji, status?.text].some(Boolean)}
           <button
             type="button"
-            class="nib-glyph"
+            class="orden-glyph"
             aria-label={t('Clear')}
             title={t('Clear')}
             onclick={() => withStatus({ emoji: '', text: '' })}><Cross /></button
@@ -231,13 +231,13 @@
     {/if}
 
     {#if status}
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name"
-          ><span class="nib-named"
+          ><span class="orden-named"
             >{t('Clear after')}<Hint text={t('When your status is taken away again.')} /></span
           ></span
         >
-        <div class="nib-setting-value">
+        <div class="orden-setting-value">
           <Select
             value={clears}
             options={CLEARS.map((one) => ({ value: one, label: t(CLEAR_WORDS[one]) }))}
@@ -253,7 +253,7 @@
     {/if}
 
     <div
-      class="nib-setting setting pressable"
+      class="orden-setting setting pressable"
       role="switch"
       tabindex="0"
       aria-checked={status?.quiet ?? false}
@@ -265,22 +265,22 @@
       }}
     >
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Do not disturb')}<Hint
             text={t('Silences chat notifications and shows the others you are busy.')}
           /></span
         ></span
       >
-      <span class="nib-switch" class:on={status?.quiet ?? false} aria-hidden="true"></span>
+      <span class="orden-switch" class:on={status?.quiet ?? false} aria-hidden="true"></span>
     </div>
 
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Accent')}<Hint text={t('The colour the others see beside your name.')} /></span
         ></span
       >
-      <div class="nib-setting-value is-wrapping">
+      <div class="orden-setting-value is-wrapping">
         <Swatches
           options={accents}
           label={t('Accent')}
@@ -291,7 +291,7 @@
     </div>
 
     <div
-      class="nib-setting setting pressable"
+      class="orden-setting setting pressable"
       role="switch"
       tabindex="0"
       aria-checked={user.hidden ?? false}
@@ -303,13 +303,13 @@
       }}
     >
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Appear offline')}<Hint
             text={t('The others see you as offline even while you are here.')}
           /></span
         ></span
       >
-      <span class="nib-switch" class:on={user.hidden ?? false} aria-hidden="true"></span>
+      <span class="orden-switch" class:on={user.hidden ?? false} aria-hidden="true"></span>
     </div>
   </div>
   {#if wrong}<p class="wrong">{wrong}</p>{/if}

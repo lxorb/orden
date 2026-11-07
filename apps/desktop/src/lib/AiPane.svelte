@@ -163,7 +163,7 @@
   {#if ai.defaultVendor === vendor}
     <span class="hint">{t('Default')}</span>
   {:else}
-    <button class="nib-chip" onclick={() => ai.setDefault(vendor)}>{t('Make default')}</button>
+    <button class="orden-chip" onclick={() => ai.setDefault(vendor)}>{t('Make default')}</button>
   {/if}
 {/snippet}
 
@@ -172,7 +172,7 @@
 {#if !keysAreGuarded()}
   <div class="card">
     <div
-      class="nib-setting setting"
+      class="orden-setting setting"
       role="switch"
       tabindex="0"
       aria-checked={browserVault.on}
@@ -185,13 +185,13 @@
       }}
     >
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Keep this browser’s keys in the vault')}<Hint
             text={t('Syncs this browser’s AI keys with your other devices through the vault.')}
           /></span
         ></span
       >
-      <span class="nib-switch" class:on={browserVault.on} aria-hidden="true"></span>
+      <span class="orden-switch" class:on={browserVault.on} aria-hidden="true"></span>
     </div>
   </div>
   <p class="hint caption">
@@ -203,13 +203,13 @@
 
 {#if vault.standing === 'offered'}
   <div class="card" transition:slide={{ duration: dur(160) }}>
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name">
         {t('{device} offers this device your AI vault', { device: vault.offeredBy })}
       </span>
       <div class="row">
         {#if vault.digits}<span class="hint digits">{vault.digits}</span>{/if}
-        <button class="nib-chip" onclick={() => void vault.join()}>{t('Join')}</button>
+        <button class="orden-chip" onclick={() => void vault.join()}>{t('Join')}</button>
       </div>
     </div>
   </div>
@@ -217,7 +217,7 @@
 
 {#if vault.standing === 'waiting' || vault.standing === 'stranded'}
   <div class="card" transition:slide={{ duration: dur(160) }}>
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name">
         {vault.standing === 'waiting' ? t('Allow this device on another one') : t('Start over')}
       </span>
@@ -225,7 +225,9 @@
         {#if vault.standing === 'waiting'}
           <span class="hint digits">{vault.digits || '…'}</span>
         {:else}
-          <button class="nib-chip" onclick={() => void vault.startOver()}>{t('Start over')}</button>
+          <button class="orden-chip" onclick={() => void vault.startOver()}
+            >{t('Start over')}</button
+          >
         {/if}
       </div>
     </div>
@@ -236,11 +238,11 @@
   <h3>{t('Devices with your AI vault')}</h3>
   {#each vault.allowed as one (one.id)}
     <div class="card boxed" data-device={one.id} transition:slide={{ duration: dur(160) }}>
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name">{one.name}</span>
         <div class="row">
           {#if one.mine}<span class="hint">{t('This device')}</span>{/if}
-          <button class="nib-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}
+          <button class="orden-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}
             >{t('Remove')}</button
           >
         </div>
@@ -252,7 +254,11 @@
 {#if ai.accounts.length}
   {#each ai.vendors as vendor (vendor)}
     {@const mine = ai.accountsOf(vendor)}
-    <div class="nib-setting setting" data-vendor={vendor} transition:slide={{ duration: dur(160) }}>
+    <div
+      class="orden-setting setting"
+      data-vendor={vendor}
+      transition:slide={{ duration: dur(160) }}
+    >
       <span class="name strong"
         >{#if mine[0]}<ProviderMark account={mine[0]} />{/if}{named(vendor)}</span
       >
@@ -266,7 +272,7 @@
         data-account={provider.id}
         transition:slide={{ duration: dur(160) }}
       >
-        <div class="nib-setting setting">
+        <div class="orden-setting setting">
           <span class="name strong">
             {provider.kind === 'compatible' ? t(KIND_NAMES.compatible) : labelOf(provider)}
           </span>
@@ -274,18 +280,20 @@
             {#if using}
               <span class="hint on">{t('In use')}</span>
             {:else if mine.length > 1}
-              <button class="nib-chip" onclick={() => ai.activate(provider.id)}>{t('Use')}</button>
+              <button class="orden-chip" onclick={() => ai.activate(provider.id)}>{t('Use')}</button
+              >
             {/if}
-            <button class="nib-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button
+            <button class="orden-chip is-quiet" onclick={() => forget(provider)}
+              >{t('Remove')}</button
             >
           </div>
         </div>
 
         {#if provider.kind !== 'compatible' && mine.length > 1}
-          <label class="nib-setting setting">
+          <label class="orden-setting setting">
             <span class="name">{t('Name')}</span>
             <input
-              class="nib-field is-value"
+              class="orden-field is-value"
               value={provider.name}
               placeholder={accountName({ ...provider, name: '' })}
               spellcheck="false"
@@ -295,10 +303,10 @@
         {/if}
 
         {#if provider.kind === 'compatible'}
-          <label class="nib-setting setting">
+          <label class="orden-setting setting">
             <span class="name">{t('Name')}</span>
             <input
-              class="nib-field is-value"
+              class="orden-field is-value"
               value={provider.name}
               placeholder={t('OpenAI-compatible')}
               spellcheck="false"
@@ -306,10 +314,10 @@
             />
           </label>
 
-          <label class="nib-setting setting">
+          <label class="orden-setting setting">
             <span class="name">{t('Base URL')}</span>
             <input
-              class="nib-field is-value"
+              class="orden-field is-value"
               value={provider.baseUrl ?? ''}
               placeholder={EXAMPLE_URL}
               spellcheck="false"
@@ -330,18 +338,18 @@
           {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
             <PlanRows {provider} kind="chatgpt" {refresh} trouble={said(provider)} />
           {:else}
-            <div class="nib-setting setting">
+            <div class="orden-setting setting">
               <span class="name">{t('API key')}</span>
               {#if keyed[provider.id]}
                 <div class="row">
                   <span class="hint">{t('Set')}</span>
-                  <button class="nib-chip is-quiet" onclick={() => void drop(provider)}
+                  <button class="orden-chip is-quiet" onclick={() => void drop(provider)}
                     >{t('Remove')}</button
                   >
                 </div>
               {:else}
                 <input
-                  class="nib-field is-value"
+                  class="orden-field is-value"
                   type="password"
                   value=""
                   placeholder={provider.kind === 'compatible'
@@ -361,10 +369,10 @@
             </div>
           {/if}
 
-          <div class="nib-setting setting">
+          <div class="orden-setting setting">
             <span class="name">{t('Model')}</span>
             {#if models[provider.id]?.length}
-              <div class="nib-setting-value">
+              <div class="orden-setting-value">
                 <Select
                   value={provider.model}
                   options={(models[provider.id] ?? []).map((one) => ({ value: one, label: one }))}
@@ -377,7 +385,7 @@
               <div class="row">
                 {#if provider.model}<span class="hint">{provider.model}</span>{/if}
                 <button
-                  class="nib-chip"
+                  class="orden-chip"
                   disabled={asking === provider.id || !reachable(provider, ready(provider))}
                   onclick={() => void refresh(provider)}
                 >
@@ -403,7 +411,7 @@
 
 <div class="card">
   {#each addable as kind (kind)}
-    <button class="nib-action adding" onclick={() => add(kind)}>
+    <button class="orden-action adding" onclick={() => add(kind)}>
       <ProviderMark account={{ kind, name: '' }} />
       {t('Add {name}', { name: t(KIND_NAMES[kind]) })}
     </button>
@@ -414,15 +422,15 @@
   <h3 transition:slide={{ duration: dur(160) }}>{t('Used for')}</h3>
   <div class="card" transition:slide={{ duration: dur(160) }}>
     {#each FEATURES as feature (feature.id)}
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name"
-          ><span class="nib-named"
+          ><span class="orden-named"
             >{t(feature.label)}<Hint
               text={t('Which of your AI accounts this feature asks.')}
             /></span
           ></span
         >
-        <div class="nib-setting-value">
+        <div class="orden-setting-value">
           <Select
             value={ai.uses[feature.id] ?? ''}
             options={[
@@ -442,15 +450,15 @@
 {#if canDictate()}
   <h3>{t('Dictation')}</h3>
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name"
-        ><span class="nib-named"
+        ><span class="orden-named"
           >{t('Dictate with')}<Hint
             text={t('Where your voice goes to be turned into words.')}
           /></span
         ></span
       >
-      <div class="nib-setting-value">
+      <div class="orden-setting-value">
         <Select
           value={engines.chosen ?? ''}
           options={[
@@ -465,9 +473,9 @@
       </div>
     </div>
     {#if local.fits}
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name"
-          ><span class="nib-named"
+          ><span class="orden-named"
             >{t('Speech model')}<Hint
               text={t('{model}, on this computer. Nothing you say leaves it.', {
                 model: local.machine?.model.name ?? '',
@@ -475,7 +483,7 @@
             /></span
           ></span
         >
-        <div class="nib-setting-value">
+        <div class="orden-setting-value">
           {#if local.fetching}
             <span class="caption"
               >{t('Downloading {percent}%', {
@@ -485,11 +493,11 @@
               })}</span
             >
           {:else if local.ready}
-            <button class="nib-chip is-quiet" onclick={() => void local.remove()}
+            <button class="orden-chip is-quiet" onclick={() => void local.remove()}
               >{t('Remove')}</button
             >
           {:else}
-            <button class="nib-chip" onclick={() => void local.fetch()}
+            <button class="orden-chip" onclick={() => void local.fetch()}
               >{t('Download ({size})', {
                 size: `${Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB`,
               })}</button
@@ -524,7 +532,7 @@
 {#if glassesKey.set}
   <h3>{t('OpenAI key')}</h3>
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name">{t('Used by the glasses')}</span>
       <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
     </div>

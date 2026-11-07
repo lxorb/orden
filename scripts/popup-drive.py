@@ -195,16 +195,16 @@ def choose_space(name, round_):
         fail(f"round {round_}: the space switcher did not open", f"{round_}-switcher-shut")
         return
     over_the_page()
-    row = box(f"{SPACES} [role=menuitem] .nib-row-label", name)
+    row = box(f"{SPACES} [role=menuitem] .orden-row-label", name)
     if not isinstance(row, dict):
         fail(f"round {round_}: no row for the space {name}", f"{round_}-switcher-row")
         return
     under = run(
-        f"(() => {{ const r = [...document.querySelectorAll('{SPACES} [role=menuitem] .nib-row-label')]"
+        f"(() => {{ const r = [...document.querySelectorAll('{SPACES} [role=menuitem] .orden-row-label')]"
         f".find((o) => o.textContent.trim() === {json.dumps(name)}); if (!r) return null;"
         " const b = r.getBoundingClientRect(); const on = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);"
         " if (!on) return 'nothing'; if (on.closest('[data-spaces-open]')) return 'the row';"
-        " const card = on.closest('.nib-bubble, .nib-layer'); const one = card || on;"
+        " const card = on.closest('.orden-bubble, .orden-layer'); const one = card || on;"
         " return (one.getAttribute('class') || one.tagName) + ': ' + one.textContent.trim().slice(0, 60) })()"
     )
     press(row)

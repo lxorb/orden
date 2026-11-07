@@ -18,7 +18,7 @@
 
 {#if tips.shown}
   <div
-    class="tip nib-bubble"
+    class="tip orden-bubble"
     role="tooltip"
     bind:clientWidth={width}
     bind:clientHeight={height}

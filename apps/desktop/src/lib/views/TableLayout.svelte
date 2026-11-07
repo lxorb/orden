@@ -260,7 +260,7 @@
     {#each lines.slice(shown.first, shown.last + 1) as line, offset (line.id)}
       {@const index = shown.first + offset}
       {#if line.kind === 'head'}
-        <div class="nib-section group" role="row">
+        <div class="orden-section group" role="row">
           <span>{line.label}</span><span>{line.count}</span>
         </div>
       {:else if line.kind === 'sums'}

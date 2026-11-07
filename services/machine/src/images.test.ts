@@ -138,7 +138,7 @@ describe('where nibd is root', () => {
           '/bin/sh',
           '-c',
           AS_USER_SCRIPT,
-          'nib-image',
+          'orden-image',
           `${ID}.png`,
         ],
         env: { HOME: home, PATH: '/usr/local/bin:/usr/bin:/bin' },

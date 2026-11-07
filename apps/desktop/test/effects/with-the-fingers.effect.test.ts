@@ -130,7 +130,7 @@ describe("the swipe's arrow, while the fingers are on", () => {
             travel: 300 * run.progress,
           })
           flushSync()
-          const circle = target.querySelector('.nib-swipe')
+          const circle = target.querySelector('.orden-swipe')
           if (!circle) throw new Error('no arrow')
           expect(easing(circle, target.querySelector('.track') ?? circle)).toEqual([])
           expect(getComputedStyle(circle).opacity).toBe('1')

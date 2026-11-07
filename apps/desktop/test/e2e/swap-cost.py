@@ -53,7 +53,7 @@ def main() -> int:
         )
 
         page.evaluate("() => window.nibApp.settings.show()")
-        page.wait_for_selector(".nib-screen.sheet", timeout=15000)
+        page.wait_for_selector(".orden-screen.sheet", timeout=15000)
         page.wait_for_timeout(500)
         run(
             page,

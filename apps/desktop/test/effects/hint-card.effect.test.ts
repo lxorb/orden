@@ -30,11 +30,11 @@ afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
   host.remove()
-  for (const one of document.querySelectorAll('.nib-bubble')) one.remove()
+  for (const one of document.querySelectorAll('.orden-bubble')) one.remove()
 })
 
 function card(): HTMLElement | null {
-  return document.querySelector('.nib-bubble.hint')
+  return document.querySelector('.orden-bubble.hint')
 }
 
 test('a card drawn once the session has settled stays up', () => {

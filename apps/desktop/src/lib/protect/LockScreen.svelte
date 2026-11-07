@@ -50,7 +50,7 @@
   <span class="mark" aria-hidden="true"><Icon icon={null} fallback={Lock} /></span>
   <p class="name">{nameOf(path)}</p>
   {#if device}
-    <button class="nib-button" class:is-quiet={password} disabled={busy} onclick={byDevice}>
+    <button class="orden-button" class:is-quiet={password} disabled={busy} onclick={byDevice}>
       {t('Use {way}', { way: deviceName() })}
     </button>
   {/if}
@@ -59,7 +59,7 @@
       <input
         bind:this={field}
         bind:value={typed}
-        class="nib-field"
+        class="orden-field"
         type="password"
         autocomplete="current-password"
         placeholder={t('Password')}
@@ -67,7 +67,7 @@
         aria-invalid={wrong}
         oninput={() => (wrong = false)}
       />
-      <button class="nib-button" type="submit" disabled={busy || !typed}>{t('Unlock')}</button>
+      <button class="orden-button" type="submit" disabled={busy || !typed}>{t('Unlock')}</button>
     </form>
   {/if}
   {#if wrong}
@@ -124,7 +124,7 @@
     width: min(100%, 320px);
   }
 
-  .unlock .nib-field {
+  .unlock .orden-field {
     flex: 1;
     min-width: 0;
   }

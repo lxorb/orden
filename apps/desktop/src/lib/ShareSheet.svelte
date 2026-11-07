@@ -95,7 +95,7 @@
     {#if got}
       <got.default face={worn} onpress={press} />
     {:else}
-      <span class="nib-badge" aria-hidden="true">{initial(worn.name)}</span>
+      <span class="orden-badge" aria-hidden="true">{initial(worn.name)}</span>
     {/if}
   {/await}
 {/snippet}
@@ -119,7 +119,7 @@
 
   <div class="card">
     <form
-      class="nib-field compose"
+      class="orden-field compose"
       class:bad={share.wrongAddress}
       onsubmit={(event) => {
         event.preventDefault()
@@ -156,7 +156,7 @@
           disabled={share.busy}
           transition:scale={{ duration: dur(130), start: 0.6 }}
         >
-          <svg class="nib-mirror" viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
+          <svg class="orden-mirror" viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
         </button>
       {/if}
     </form>
@@ -195,14 +195,14 @@
               <small>{person.email ?? t('Guest')}</small>
             </span>
             <button
-              class="nib-chip"
+              class="orden-chip"
               disabled={share.busy}
               onclick={() => void share.accept(person)}
             >
               {t('Accept')}
             </button>
             <button
-              class="nib-chip is-quiet"
+              class="orden-chip is-quiet"
               disabled={share.busy}
               onclick={() => void share.decline(person)}
             >
@@ -268,14 +268,14 @@
       >
         <span class="name">{t('Link')}</span>
         <span class="dot" class:on={!!link} aria-hidden="true"></span>
-        <span class="nib-switch" class:on={!!link} aria-hidden="true"></span>
+        <span class="orden-switch" class:on={!!link} aria-hidden="true"></span>
       </div>
 
       <hr class="line" />
 
       <div class="linkbody" class:off={!link}>
         <div class="row">
-          <span class="nib-badge" aria-hidden="true">
+          <span class="orden-badge" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="9" />
               <path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18" />
@@ -310,7 +310,7 @@
         >
           <span class="under" aria-hidden="true"></span>
           <span class="name asks">{t('Ask first')}</span>
-          <span class="nib-switch" class:on={link?.mode === 'approval'} aria-hidden="true"></span>
+          <span class="orden-switch" class:on={link?.mode === 'approval'} aria-hidden="true"></span>
         </div>
 
         <div class="row">
@@ -318,7 +318,7 @@
         </div>
 
         <button
-          class="nib-action is-danger"
+          class="orden-action is-danger"
           disabled={!link || share.busy}
           onclick={() => link && void share.reset(link.role, link.mode)}
         >

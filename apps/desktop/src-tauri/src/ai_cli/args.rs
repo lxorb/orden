@@ -682,10 +682,10 @@ mod tests {
         assert_eq!(words["config"], json!({}));
 
         let mut helped = codex_thread(Some(Mode::Full), None, &[], &nib, &folder);
-        with_thread(&mut helped, "nib-thread-1");
+        with_thread(&mut helped, "orden-thread-1");
         assert_eq!(
             helped["config"]["mcp_servers.orden.env"],
-            json!({ THREAD_VAR: "nib-thread-1" })
+            json!({ THREAD_VAR: "orden-thread-1" })
         );
     }
 

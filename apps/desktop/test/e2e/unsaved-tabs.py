@@ -20,7 +20,7 @@ STATE = """
     tabs: ws.tabs.map((one) => ({ kind: one.kind, path: one.path, shown: one.shown })),
     files: ws.files.map((one) => one.path.slice(ws.activeSpace.root.length + 1)),
     front: front ? { kind: front.kind, path: front.path, doc: front.doc } : null,
-    dotted: !!(front && document.querySelector(`[data-tab="${front.id}"] .nib-unsaved`)),
+    dotted: !!(front && document.querySelector(`[data-tab="${front.id}"] .orden-unsaved`)),
   }
 }
 """
@@ -86,7 +86,7 @@ def drive(browser: Browser, scheme: str) -> None:
 
     page.locator('[role="dialog"] .where').click()
     page.keyboard.type("Trips")
-    wait_for(page, "document.querySelector('[role=\"dialog\"] .nib-row')", "the places")
+    wait_for(page, "document.querySelector('[role=\"dialog\"] .orden-row')", "the places")
     DRIVE.shot(page, f"{scheme}-03-places")
     page.keyboard.press("Enter")
     page.keyboard.press("Enter")

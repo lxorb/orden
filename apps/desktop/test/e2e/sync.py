@@ -283,7 +283,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
     minted = request("/v1/mcp/token", token, {"readOnly": False})
     program = minted.get("token", "")
 
-    with tempfile.TemporaryDirectory(prefix="nib-ci-") as held:
+    with tempfile.TemporaryDirectory(prefix="orden-ci-") as held:
         folder = Path(held)
         done = subprocess.run(
             ["node", str(ROOT / "scripts" / "nib-sync.mjs"), "pull", space, str(folder)],

@@ -123,7 +123,7 @@
 
 {#snippet searchGlyph()}
   <button
-    class="nib-glyph search"
+    class="orden-glyph search"
     data-overview-keeps
     title={shortcuts.tooltip(t('Search'), 'app.palette')}
     aria-label={t('Search notes and commands')}
@@ -137,7 +137,7 @@
 
 {#snippet overviewGlyph()}
   <button
-    class="nib-glyph overview"
+    class="orden-glyph overview"
     data-overview-keeps
     class:is-on={tabOverview.open}
     aria-pressed={tabOverview.open}
@@ -253,7 +253,7 @@
   {#if viewport.touch}
     {#if phone && !listless}
       <button
-        class="nib-glyph back"
+        class="orden-glyph back"
         data-phone-back
         aria-label={t('Back')}
         onclick={() => workspace.toggleSidebar()}
@@ -268,7 +268,7 @@
       {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
       <span class="name">{title}</span>
       {#if showing && isDraft(showing.note)}
-        <button class="nib-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
+        <button class="orden-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
           ><UnsavedDot pressable /></button
         >
       {/if}
@@ -278,7 +278,7 @@
     {#if phone}
       {#if showing}
         <button
-          class="nib-glyph more"
+          class="orden-glyph more"
           data-phone-more
           aria-label={t('More')}
           aria-haspopup="menu"
@@ -498,7 +498,7 @@
     stroke-width: 1.4;
   }
 
-  :global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.nib-said))) {
+  :global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) {
     padding-inline-start: var(--inset-start);
   }
 

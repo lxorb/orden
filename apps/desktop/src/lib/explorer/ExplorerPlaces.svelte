@@ -65,7 +65,7 @@
 </script>
 
 {#snippet mark(drawn: IconNode)}
-  <svg class="nib-row-mark" viewBox="0 0 24 24" aria-hidden="true">
+  <svg class="orden-row-mark" viewBox="0 0 24 24" aria-hidden="true">
     {#each drawn as [tag, attrs], index (index)}
       <svelte:element this={tag} {...attrs} />
     {/each}
@@ -84,7 +84,7 @@
     {#each rows as row (row.path)}
       <li>
         <button
-          class="nib-row place"
+          class="orden-row place"
           class:is-on={here !== null && samePath(row.path, here)}
           class:is-taking={taking === row.path}
           title={row.path}
@@ -100,7 +100,7 @@
           }}
         >
           {@render mark(row.mark)}
-          <span class="nib-row-label">{row.name}</span>
+          <span class="orden-row-label">{row.name}</span>
         </button>
       </li>
     {/each}

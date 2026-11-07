@@ -211,7 +211,7 @@ def main() -> int:
     if not exe.exists():
         raise SystemExit(f"no such exe: {exe}")
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-autosave-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-autosave-"))
     space = spaces / SPACE
     space.mkdir(parents=True, exist_ok=True)
     (space / "Plan.md").write_text("# Plan\n\nWords.\n", encoding="utf-8")

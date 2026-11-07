@@ -34,7 +34,7 @@ SYSTEM = """
 """
 
 SPACERS = """
-() => [...document.querySelectorAll('.cm-line.nib-code-open, .cm-line.nib-code-close, .cm-line.nib-frontmatter')].map((line) => {
+() => [...document.querySelectorAll('.cm-line.orden-code-open, .cm-line.orden-code-close, .cm-line.orden-frontmatter')].map((line) => {
   const style = getComputedStyle(line)
   const sides = ['Top', 'Bottom', 'Left', 'Right'].filter((side) => parseFloat(style[`border${side}Width`]) > 2)
   return { line: line.className, sides: sides.map((side) => [side, style[`border${side}Color`]]) }
@@ -45,10 +45,10 @@ CONTROLS = """
 () => {
   const style = (one) => getComputedStyle(one)
   return {
-    switches: [...document.querySelectorAll('[role=dialog] .nib-switch')].filter((one) => one.checkVisibility()).map((one) => ({
+    switches: [...document.querySelectorAll('[role=dialog] .orden-switch')].filter((one) => one.checkVisibility()).map((one) => ({
       on: one.classList.contains('on'), edge: style(one).borderTopColor, edgeWide: style(one).borderTopWidth, ground: style(one).backgroundColor,
     })),
-    segments: [...document.querySelectorAll('[role=dialog] .nib-segmented button')].filter((one) => one.checkVisibility()).map((one) => ({
+    segments: [...document.querySelectorAll('[role=dialog] .orden-segmented button')].filter((one) => one.checkVisibility()).map((one) => ({
       on: one.classList.contains('on'), ground: style(one).backgroundColor, words: one.textContent.trim(),
     })),
     swatches: [...document.querySelectorAll('[role=dialog] .swatch:not(.picked)')].filter((one) => one.checkVisibility()).map((one) => getComputedStyle(one, one.classList.contains('active') ? '::after' : null).backgroundColor),
@@ -61,7 +61,7 @@ def system(page: Page) -> dict[str, str]:
 
 def track_ends(page: Page, canvas: str) -> list[str]:
     bad = []
-    for at, slider in enumerate(page.locator("[role=dialog] .nib-slider").all()):
+    for at, slider in enumerate(page.locator("[role=dialog] .orden-slider").all()):
         if not slider.is_visible():
             continue
         picture = Image.open(io.BytesIO(slider.screenshot())).convert("RGB")
@@ -85,7 +85,7 @@ WORDS_BOX = """
 
 def words_unseen(page: Page) -> list[str]:
     bad = []
-    for button in page.locator("[role=dialog] .nib-segmented button.on").all():
+    for button in page.locator("[role=dialog] .orden-segmented button.on").all():
         if not button.is_visible():
             continue
         picture = Image.open(io.BytesIO(button.screenshot())).convert("RGB")
@@ -112,7 +112,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
         " const found = ws.notes.find((one) => one.name.startsWith('Plan')); await ws.openEntry(found.path, { activate: true }) }",
         NOTE,
     )
-    wait_for(page, "document.querySelector('.cm-line.nib-code-open')", "the code block")
+    wait_for(page, "document.querySelector('.cm-line.orden-code-open')", "the code block")
     page.wait_for_timeout(400)
     colours = system(page)
     say(f"[{scheme}] system colours {json.dumps(colours)}")
@@ -120,7 +120,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
 
     page.evaluate("() => window.nib.dispatch({ selection: { anchor: window.nib.state.doc.length } })")
     page.wait_for_timeout(300)
-    marks = page.evaluate("() => [...document.querySelectorAll('.cm-content .nib-highlight')].map((one) => [one.textContent, getComputedStyle(one).backgroundColor])")
+    marks = page.evaluate("() => [...document.querySelectorAll('.cm-content .orden-highlight')].map((one) => [one.textContent, getComputedStyle(one).backgroundColor])")
     if len(marks) != 2:
         wrong(f"[{scheme}] the note's two highlights are not both marked: {marks}")
     for words, colour in marks:
@@ -128,7 +128,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
             wrong(f"[{scheme}] the highlight {words!r} is painted {colour}, not the system's mark {colours['mark']}")
 
     edge = page.evaluate(
-        "() => { const s = getComputedStyle(document.querySelector('.cm-line.nib-code-open'), '::after'); return [s.borderTopStyle, s.borderTopColor, s.borderLeftStyle] }"
+        "() => { const s = getComputedStyle(document.querySelector('.cm-line.orden-code-open'), '::after'); return [s.borderTopStyle, s.borderTopColor, s.borderLeftStyle] }"
     )
     if edge[0] != "solid" or edge[1] != colours["text"] or edge[2] != "solid":
         wrong(f"[{scheme}] the code block has no edge of its own to tell it from the words: {edge}")
@@ -144,7 +144,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     field.focus()
     page.keyboard.type("x")
     ring = page.evaluate(
-        "() => { const on = document.activeElement; const held = on.closest('.nib-field') ?? on; const s = getComputedStyle(held); return [s.outlineStyle, s.outlineColor] }"
+        "() => { const on = document.activeElement; const held = on.closest('.orden-field') ?? on; const s = getComputedStyle(held); return [s.outlineStyle, s.outlineColor] }"
     )
     if ring[0] == "none" or ring[1] != colours["highlight"]:
         wrong(f"[{scheme}] the field being typed in looks like every other field: {ring}")
@@ -177,9 +177,9 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     page.evaluate("() => { window.nibApp.settings.open = false }")
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Shift+P")
-    wait_for(page, "document.querySelector('.palette .nib-row.is-on')", "the palette's current row")
+    wait_for(page, "document.querySelector('.palette .orden-row.is-on')", "the palette's current row")
     current = page.evaluate(
-        "() => { const s = getComputedStyle(document.querySelector('.palette .nib-row.is-on')); return [s.outlineStyle, s.outlineColor, s.backgroundColor] }"
+        "() => { const s = getComputedStyle(document.querySelector('.palette .orden-row.is-on')); return [s.outlineStyle, s.outlineColor, s.backgroundColor] }"
     )
     if current[0] == "none" and current[2] != colours["highlight"]:
         wrong(f"[{scheme}] the palette's current row looks like every other: {current}")

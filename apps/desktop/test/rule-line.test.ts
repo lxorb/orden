@@ -19,13 +19,13 @@ const SHEET = rules(readFileSync(EDITOR, 'utf8'))
 
 describe('the rule that breaks a slide', () => {
   test('is styled at all, so the deck still says where it breaks', () => {
-    const found = SHEET.filter((one) => one.selector.includes('nib-slide-break'))
+    const found = SHEET.filter((one) => one.selector.includes('orden-slide-break'))
     expect(found.length).toBeGreaterThan(0)
   })
 
   test('changes the colour of the hairline and nothing else', () => {
     for (const one of SHEET) {
-      if (!one.selector.includes('nib-slide-break')) continue
+      if (!one.selector.includes('orden-slide-break')) continue
 
       expect(one.selector, one.selector).not.toMatch(/::?(before|after)\b/)
       expect(one.body, one.selector).not.toMatch(/\bcontent\s*:/)

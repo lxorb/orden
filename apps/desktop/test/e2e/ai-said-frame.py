@@ -15,7 +15,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 THEMES = ("default", "glass", "wallpaper", "contrast")
 SCHEMES = ("light", "dark")
-SHEET = "document.getElementById('nib-user-theme')?.textContent ?? ''"
+SHEET = "document.getElementById('orden-user-theme')?.textContent ?? ''"
 SETUP = """(base) => {
   const ai = window.nibApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)

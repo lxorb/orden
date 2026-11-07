@@ -15,7 +15,7 @@ function mounted() {
   const parent = document.createElement('div')
   document.body.append(parent)
   editor = createEditor({ parent, doc: NOTE })
-  const table = parent.querySelector<HTMLElement>('.nib-table-wrap')
+  const table = parent.querySelector<HTMLElement>('.orden-table-wrap')
   if (!table) throw new Error('no table was drawn')
 
   return table
@@ -43,7 +43,7 @@ test('a row has its controls while its first cell is written in', () => {
   const table = mounted()
   enter(firstCell(table, 0))
 
-  const rows = table.querySelector('.nib-table-rows')
+  const rows = table.querySelector('.orden-table-rows')
   expect(rows?.classList.contains('is-shown')).toBe(true)
   expect(rows?.querySelectorAll('button')).toHaveLength(4)
 })
@@ -55,14 +55,14 @@ test('and keeps them once the caret has gone again', () => {
 
   pass(firstCell(table, 0), 'mouse')
 
-  expect(table.querySelector('.nib-table-rows')?.classList.contains('is-shown')).toBe(true)
+  expect(table.querySelector('.orden-table-rows')?.classList.contains('is-shown')).toBe(true)
 })
 
 test('what they do lands on the row they were brought up for', () => {
   const table = mounted()
   pass(firstCell(table, 1), 'mouse')
 
-  const up = table.querySelector<HTMLButtonElement>('.nib-table-rows button')
+  const up = table.querySelector<HTMLButtonElement>('.orden-table-rows button')
   up?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
 
   expect(editor?.state.doc.toString()).toBe(
@@ -75,6 +75,6 @@ test('a finger passing over a cell brings neither bar up', () => {
   pass(firstCell(table, 0), 'touch')
   pass(table.querySelector('th'), 'touch')
 
-  expect(table.querySelector('.nib-table-rows')?.classList.contains('is-shown')).toBe(false)
-  expect(table.querySelector('.nib-table-columns')?.classList.contains('is-shown')).toBe(false)
+  expect(table.querySelector('.orden-table-rows')?.classList.contains('is-shown')).toBe(false)
+  expect(table.querySelector('.orden-table-columns')?.classList.contains('is-shown')).toBe(false)
 })

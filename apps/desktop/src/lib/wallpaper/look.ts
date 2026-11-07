@@ -172,7 +172,7 @@ export function wallpaperRule(
   const root: string[] = [
     ...pictureLines(pictures.light, dials.fit),
     `--wallpaper-grain: ${grainOf(dials.grain)};`,
-    `--nib-dim: ${dials.dim}%;`,
+    `--orden-dim: ${dials.dim}%;`,
     `--empty-ground: ${dials.empty ? 'transparent' : 'var(--content-ground)'};`,
     ...(dials.content === 'opaque' ? [] : ['--content-inner: transparent;']),
   ]

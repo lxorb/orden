@@ -10,7 +10,7 @@ beforeAll(() => {
 })
 
 const ROWS = {
-  types: ['text/nib-explorer'],
+  types: ['text/orden-explorer'],
   files: [],
   items: [],
   getData: () => '',

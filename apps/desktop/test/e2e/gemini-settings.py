@@ -85,7 +85,7 @@ def drive(browser) -> None:
     cli_card = sheet.locator('.card[data-account="gemini-cli"]')
     check("the key and the CLI are a card each", key_card.count() == 1 and cli_card.count() == 1)
     check("the CLI's card is the Gemini CLI's", cli_card.get_by_text("Gemini CLI", exact=True).count() == 1)
-    adding = sheet.locator("button.nib-action", has_text="Add Gemini")
+    adding = sheet.locator("button.orden-action", has_text="Add Gemini")
     check("Gemini can be added again by key", adding.count() >= 1)
 
     field = key_card.locator('input[type="password"]')

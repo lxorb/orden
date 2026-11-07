@@ -161,8 +161,8 @@
     {/if}
 
     {#if parent}
-      <button class="nib-row is-short up" onclick={() => void chat.openThread(parent.id)}>
-        <span class="nib-row-label">↰ {parent.title || t('Untitled')}</span>
+      <button class="orden-row is-short up" onclick={() => void chat.openThread(parent.id)}>
+        <span class="orden-row-label">↰ {parent.title || t('Untitled')}</span>
       </button>
     {/if}
 
@@ -187,9 +187,9 @@
           </ChatWindow>
           {#if here === 'side' && !all && chats.length > recent.length}
             <li>
-              <button class="nib-row is-short all" onclick={() => (all = true)}>
-                <span class="nib-row-label">{t('Show all')}</span>
-                <span class="nib-row-meta">{chats.length}</span>
+              <button class="orden-row is-short all" onclick={() => (all = true)}>
+                <span class="orden-row-label">{t('Show all')}</span>
+                <span class="orden-row-meta">{chats.length}</span>
               </button>
             </li>
           {/if}
@@ -218,7 +218,7 @@
             {#if thread && !turn.steered}
               <span class="tools">
                 <button
-                  class="nib-glyph tool"
+                  class="orden-glyph tool"
                   title={t('Copy')}
                   aria-label={t('Copy')}
                   onclick={() => void copy(turn.id, words)}
@@ -235,7 +235,7 @@
                 </button>
                 {#if !running}
                   <button
-                    class="nib-glyph tool"
+                    class="orden-glyph tool"
                     title={t('Edit')}
                     aria-label={t('Edit')}
                     onclick={() => chat.startEdit(turn.id)}
@@ -243,7 +243,7 @@
                     <svg viewBox="0 0 13 13"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
                   </button>
                   <button
-                    class="nib-glyph tool"
+                    class="orden-glyph tool"
                     title={t('Rewind')}
                     aria-label={t('Rewind')}
                     onclick={() => chat.rewind(turn.id)}
@@ -296,7 +296,7 @@
 
   {#if !atEnd && turns.length}
     <button
-      class="down nib-layer"
+      class="down orden-layer"
       title={t('Scroll to the end')}
       aria-label={t('Scroll to the end')}
       onclick={down}
@@ -358,7 +358,7 @@
     list-style: none;
   }
 
-  .all .nib-row-label {
+  .all .orden-row-label {
     color: var(--muted);
   }
 

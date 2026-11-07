@@ -29,7 +29,7 @@ BARS = """() => {
   const found = []
   const seen = []
   for (const e of all) {
-    const own = e.classList.contains('nib-scrolls')
+    const own = e.classList.contains('orden-scrolls')
     const engine = gutter(e)
     seen.push(`${named(e)} ${own ? 'own' : 'engine'} ${engine}px`)
     if (own && engine > 0) found.push(`${named(e)}: its own bar beside the engine's ${engine}px one`)
@@ -77,7 +77,7 @@ def drive(browser: Browser) -> None:
     looked(page, "a long list")
 
     page.evaluate("() => window.nibApp.workspace.createCanvas()")
-    wait_for(page, "document.querySelector('.canvas, [data-canvas], .nib-canvas')", "the canvas", 20)
+    wait_for(page, "document.querySelector('.canvas, [data-canvas], .orden-canvas')", "the canvas", 20)
     page.wait_for_timeout(600)
     looked(page, "a canvas")
 

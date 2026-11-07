@@ -177,7 +177,7 @@ def main() -> int:
 
     glass.wipe(said.identifier)
     try:
-        with tempfile.TemporaryDirectory(prefix="nib-glass-pages-") as spaces:
+        with tempfile.TemporaryDirectory(prefix="orden-glass-pages-") as spaces:
             space = pathlib.Path(spaces) / "Notes"
             space.mkdir()
             (space / "Read me.md").write_text("# Read me\n\nWords.\n", encoding="utf-8")

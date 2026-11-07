@@ -95,16 +95,16 @@
 
 {#if read && account}
   <div class="card">
-    <div class="nib-setting row">
+    <div class="orden-setting row">
       <span class="mark"><Glyph icon={AtSign} /></span>
       <span class="name">{NAMES[account.provider]}</span>
-      <button class="nib-chip" type="button" onclick={() => void disconnect()}
+      <button class="orden-chip" type="button" onclick={() => void disconnect()}
         >{t('Disconnect')}</button
       >
     </div>
     {#if options}
       {#if options.mailboxes.length}
-        <div class="nib-setting row">
+        <div class="orden-setting row">
           <span class="name">{t('Default mailbox')}</span>
           <Select
             label={t('Default mailbox')}
@@ -115,7 +115,7 @@
         </div>
       {/if}
       {#if options.suffixes.length}
-        <div class="nib-setting row">
+        <div class="orden-setting row">
           <span class="name">{t('Default domain')}</span>
           <Select
             label={t('Default domain')}
@@ -131,7 +131,7 @@
   </div>
 {:else if read}
   <form class="card" onsubmit={(event) => void connect(event)}>
-    <div class="nib-setting row">
+    <div class="orden-setting row">
       <span class="name">{t('Alias service')}</span>
       <Select
         label={t('Alias service')}
@@ -142,7 +142,7 @@
     </div>
     <div class="key">
       <input
-        class="nib-field is-value"
+        class="orden-field is-value"
         type="password"
         autocomplete="off"
         placeholder={t('API key')}
@@ -150,12 +150,12 @@
         bind:value={key}
       />
       <button
-        class="nib-chip"
+        class="orden-chip"
         type="button"
         disabled={!key.trim() || testing}
         onclick={() => void test()}>{t('Test connection')}</button
       >
-      <button class="nib-button" type="submit" disabled={!key.trim() || testing}
+      <button class="orden-button" type="submit" disabled={!key.trim() || testing}
         >{t('Connect')}</button
       >
     </div>

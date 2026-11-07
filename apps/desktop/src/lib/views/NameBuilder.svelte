@@ -12,7 +12,7 @@
 
 <!-- svelte-ignore a11y_autofocus -->
 <input
-  class="nib-field"
+  class="orden-field"
   value={base ? (displayName(base, column) ?? '') : ''}
   placeholder={propertyName(column)}
   aria-label={t('Rename')}

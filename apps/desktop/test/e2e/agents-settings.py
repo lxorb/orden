@@ -89,11 +89,11 @@ def body_to(page, where: str) -> None:
     )
     quiet(page)
 
-MEMORY = ".agents .nib-setting.sliding:has-text('Browser memory limit')"
+MEMORY = ".agents .orden-setting.sliding:has-text('Browser memory limit')"
 
 SLIDE = """
 ([label, value]) => {
-  const row = [...document.querySelectorAll('.agents .nib-setting.sliding')].find(
+  const row = [...document.querySelectorAll('.agents .orden-setting.sliding')].find(
     (one) => one.querySelector('.name')?.textContent?.trim() === label,
   )
   const range = row.querySelector('input[type=range]')

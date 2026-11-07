@@ -138,7 +138,7 @@
 
   {#if fault === 'agents' && space}
     <span
-      class="nib-bubble is-pressable reason held"
+      class="orden-bubble is-pressable reason held"
       aria-live="polite"
       use:hang={{ side: 'below', gap: 4, stretch: true }}
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
@@ -172,7 +172,7 @@
     </span>
   {:else if reason}
     <span
-      class="nib-bubble reason"
+      class="orden-bubble reason"
       aria-live="polite"
       use:hang={{ side: 'below', gap: 4 }}
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}>{reason}</span

@@ -14,11 +14,11 @@
 
 <div class="strength" class:is-shown={judged !== null}>
   <div
-    class="nib-meter"
+    class="orden-meter"
     class:is-full={judged?.strength === 'vulnerable'}
     class:is-near={judged?.strength === 'weak'}
   >
-    <div class="nib-meter-fill" style:width="{filled}%"></div>
+    <div class="orden-meter-fill" style:width="{filled}%"></div>
   </div>
   {#if judged}
     <span class="word" data-strength={judged.strength}>{strengthWord(judged.strength)}</span>
@@ -33,7 +33,7 @@
     min-height: 16px;
   }
 
-  .nib-meter {
+  .orden-meter {
     flex: 1;
   }
 

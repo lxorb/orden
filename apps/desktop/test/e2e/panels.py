@@ -45,7 +45,7 @@ HOLD = (
 
 PANEL = """
 ([side, hold]) => ({
-  rows: [...document.querySelectorAll(`${side} .body .row.heading .nib-row-label`)].map(
+  rows: [...document.querySelectorAll(`${side} .body .row.heading .orden-row-label`)].map(
     (one) => one.textContent,
   ),
   holding: document.querySelector(`${side} .body .holding`)?.textContent ?? null,

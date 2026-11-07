@@ -146,14 +146,14 @@
   {#each jobs.list.filter((one) => one.shown) as job (job.id)}
     <div class="job" role="status">
       <span class="what">{job.label}</span>
-      <div class="nib-meter">
+      <div class="orden-meter">
         <div
-          class="nib-meter-fill"
+          class="orden-meter-fill"
           style:width="{job.total ? Math.min(100, (job.bytes / job.total) * 100) : 0}%"
         ></div>
       </div>
       <span class="far">{readableSize(job.bytes)} / {readableSize(job.total)}</span>
-      <button type="button" class="nib-button is-quiet" onclick={() => jobs.cancel(job.id)}
+      <button type="button" class="orden-button is-quiet" onclick={() => jobs.cancel(job.id)}
         >{t('Cancel')}</button
       >
     </div>

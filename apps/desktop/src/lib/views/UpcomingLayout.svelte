@@ -67,7 +67,7 @@
     <span class="month">{month}</span>
     <button
       type="button"
-      class="nib-chip is-quiet"
+      class="orden-chip is-quiet"
       onclick={() => {
         from = live.today
         show(live.today)
@@ -75,7 +75,7 @@
     >
   </div>
   <div class="strip">
-    <button type="button" class="nib-glyph" aria-label={t('Back')} onclick={() => step(-1)}>
+    <button type="button" class="orden-glyph" aria-label={t('Back')} onclick={() => step(-1)}>
       <svg viewBox="0 0 13 13"><path d="M8 2.5 4 6.5l4 4" /></svg>
     </button>
     {#each week as day (day)}
@@ -92,7 +92,7 @@
         <span class="count">{counts.get(day) ?? ''}</span>
       </button>
     {/each}
-    <button type="button" class="nib-glyph" aria-label={t('Forward')} onclick={() => step(1)}>
+    <button type="button" class="orden-glyph" aria-label={t('Forward')} onclick={() => step(1)}>
       <svg viewBox="0 0 13 13"><path d="m5 2.5 4 4-4 4" /></svg>
     </button>
   </div>

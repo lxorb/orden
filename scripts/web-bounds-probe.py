@@ -64,7 +64,7 @@ HOLES = """(() => {
   const over = (box) => holes.some((hole) => box.left < hole.right && hole.left < box.right
     && box.top < hole.bottom && hole.top < box.bottom)
   const layers = [...document.querySelectorAll(
-    '.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, [data-notices] > *, .nib-scrim')]
+    '.orden-layer, .orden-bubble, .orden-screen, .orden-swipe, [data-notices] > *, .orden-scrim')]
     .filter((one) => { const box = one.getBoundingClientRect(); return box.width > 0 && box.height > 0 && over(box) })
     .map((one) => one.className.toString().slice(0, 60))
   return JSON.stringify({
@@ -239,7 +239,7 @@ def menu_over_the_edge(probe: Probe) -> dict[str, object]:
     probe.app.ask(
         f"""(() => {{
   const one = document.createElement('div')
-  one.className = 'nib-layer probe-layer'
+  one.className = 'orden-layer probe-layer'
   one.style.cssText = 'position:fixed;left:{x}px;top:{y}px;width:{width}px;height:{height}px;border-radius:{radius}px;background:#888;z-index:99999'
   document.body.append(one)
   window.dispatchEvent(new PointerEvent('pointerdown'))
@@ -432,7 +432,7 @@ def main() -> int:
         probe.check("menu gone")
 
         app.ask(
-            "(() => { const one = document.createElement('div'); one.className = 'nib-layer probe-layer';"
+            "(() => { const one = document.createElement('div'); one.className = 'orden-layer probe-layer';"
             " one.style.cssText = 'position:fixed;right:40px;top:120px;width:220px;height:160px;border-radius:12px;background:#888';"
             " document.body.append(one); window.dispatchEvent(new PointerEvent('pointerdown')); return 'ok' })()"
         )

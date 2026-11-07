@@ -38,7 +38,7 @@ STATE = """
 DOTTED = """
 () => {
   const id = window.nibApp.workspace.active?.id
-  return !!document.querySelector(`[data-tab="${id}"] .nib-unsaved`)
+  return !!document.querySelector(`[data-tab="${id}"] .orden-unsaved`)
 }
 """
 
@@ -64,7 +64,7 @@ NEW_TAB = """
   const tab = ws.active
   const pane = document.querySelector(`[data-pane="${ws.panes.focusedId}"]`)
   const here = pane?.querySelector('[data-new-here]')
-  const name = (one) => one.querySelector('.nib-row-label')?.textContent.trim()
+  const name = (one) => one.querySelector('.orden-row-label')?.textContent.trim()
   const at = document.activeElement
   return {
     newTab: !!tab && ws.isNewTab(tab),
@@ -91,8 +91,8 @@ HERE = """
   const round = (n) => Math.round(n * 100) / 100
 
   return {
-    buttons: buttons.map((one) => one.querySelector('.nib-row-label')?.textContent.trim()),
-    on: document.activeElement?.querySelector('.nib-row-label')?.textContent.trim() ?? null,
+    buttons: buttons.map((one) => one.querySelector('.orden-row-label')?.textContent.trim()),
+    on: document.activeElement?.querySelector('.orden-row-label')?.textContent.trim() ?? null,
     // Each mark's artwork in its own 24 unit grid: where it starts down the box and
     // how much of it it fills. Read off the drawing with `getBBox` rather than off
     // the screen, so it is the ink and not the stroke around it. This is twice the
@@ -144,7 +144,7 @@ def palette(page) -> None:
 
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
-    row = page.locator(".nib-row").first
+    row = page.locator(".orden-row").first
     if row.count():
         row.click()
         page.wait_for_timeout(250)

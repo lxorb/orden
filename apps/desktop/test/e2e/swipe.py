@@ -88,9 +88,9 @@ def notes(browser: Browser, scheme: str) -> None:
     for across, name in ((7, "half"), (14, "armed")):
         page.evaluate(HOLD, across)
         DRIVE.settled(page)
-        if page.locator(".nib-swipe").count() != 1:
+        if page.locator(".orden-swipe").count() != 1:
             wrong(f"{scheme}: no arrow {name} way along a sweep")
-        if (page.locator(".nib-swipe.armed").count() == 1) != (name == "armed"):
+        if (page.locator(".orden-swipe.armed").count() == 1) != (name == "armed"):
             wrong(f"{scheme}: the arrow {name} way along is armed wrong")
         shot(page, f"{scheme}-{name}")
         page.evaluate("clearInterval(window.__holding)")
@@ -110,7 +110,7 @@ def notes(browser: Browser, scheme: str) -> None:
     lifted(page)
     on(page, "Alpha", "back on Alpha")
     say(f"ok   {scheme}: a long sweep to the right goes back")
-    if page.locator(".nib-swipe").count() != 0:
+    if page.locator(".orden-swipe").count() != 0:
         wrong(f"{scheme}: the arrow stayed after it went")
 
     sweep(page, x, y, -700)
@@ -126,7 +126,7 @@ def notes(browser: Browser, scheme: str) -> None:
     page.close()
 
 WHERE = """() => {
-  const circle = document.querySelector('.nib-swipe')
+  const circle = document.querySelector('.orden-swipe')
   const arrow = circle?.querySelector('.arrow')
   if (!circle || !arrow) return null
   const at = (box) => [box.x, box.y, box.width, box.height].map((one) => one * devicePixelRatio)
@@ -147,7 +147,7 @@ def close_up(browser: Browser, scale: float) -> None:
                 wrong(f"at {scale}x: the arrow sits between pixels of the screen: {where}")
             else:
                 say(f"ok   at {scale}x: the arrow {name} way along is on whole pixels")
-            box = page.locator(".nib-swipe").bounding_box()
+            box = page.locator(".orden-swipe").bounding_box()
             if box is not None:
                 shot(
                     page,
@@ -193,7 +193,7 @@ PAGE = f"""<!doctype html>
 <script>
   window.said = []
   window.open = (url, name) => {{
-    if (String(name).startsWith('nib-swipe:')) window.said.push(JSON.parse(String(name).slice(10)))
+    if (String(name).startsWith('orden-swipe:')) window.said.push(JSON.parse(String(name).slice(10)))
     return null
   }}
   document.getElementById('row').scrollLeft = 200
@@ -279,7 +279,7 @@ def page_script(browser: Browser) -> None:
     page.close()
 
 SHORT_OF_THE_EDGE = """() => {
-  const table = document.querySelector('.nib-table-scroll')
+  const table = document.querySelector('.orden-table-scroll')
   if (!table) return null
   table.scrollLeft = 4
   return { left: table.scrollLeft, x: document.querySelector('.cm-content').getBoundingClientRect().x }
@@ -288,7 +288,7 @@ SHORT_OF_THE_EDGE = """() => {
 ARROW_SEEN = """() => {
   window.__arrow = false
   const look = () => {
-    if (document.querySelector('.nib-swipe')) window.__arrow = true
+    if (document.querySelector('.orden-swipe')) window.__arrow = true
     window.__looking = requestAnimationFrame(look)
   }
   look()
@@ -307,11 +307,11 @@ def latched(browser: Browser) -> None:
         "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",
         "what hears a swipe",
     )
-    wait_for(page, "document.querySelector('.nib-table-scroll')", "the wide table")
+    wait_for(page, "document.querySelector('.orden-table-scroll')", "the wide table")
     DRIVE.settled(page)
 
     before = page.evaluate(SHORT_OF_THE_EDGE)
-    box = page.locator(".nib-table-scroll").first.bounding_box()
+    box = page.locator(".orden-table-scroll").first.bounding_box()
     if before is None or box is None:
         wrong("no wide table on screen")
         page.close()
@@ -321,7 +321,7 @@ def latched(browser: Browser) -> None:
     lifted(page)
     after = page.evaluate(
         """() => ({
-          left: document.querySelector('.nib-table-scroll').scrollLeft,
+          left: document.querySelector('.orden-table-scroll').scrollLeft,
           x: document.querySelector('.cm-content').getBoundingClientRect().x,
           arrow: window.__arrow,
         })"""

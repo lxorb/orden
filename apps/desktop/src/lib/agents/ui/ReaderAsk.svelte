@@ -22,7 +22,7 @@
       }}
     >
       <input
-        class="nib-input"
+        class="orden-input"
         bind:value={typed}
         placeholder={question.placeholder ?? ''}
         aria-label={question.message}
@@ -31,16 +31,16 @@
   {/if}
 
   <div class="rows">
-    <button class="nib-button is-quiet" onclick={() => asking.answer(question.id, null)}>
+    <button class="orden-button is-quiet" onclick={() => asking.answer(question.id, null)}>
       {t('Dismiss')}
     </button>
     {#if question.kind === 'text'}
-      <button class="nib-button" onclick={() => asking.answer(question.id, typed)}>
+      <button class="orden-button" onclick={() => asking.answer(question.id, typed)}>
         {t('Send')}
       </button>
     {:else}
       {#each question.choices as choice (choice)}
-        <button class="nib-button" onclick={() => asking.answer(question.id, choice)}>
+        <button class="orden-button" onclick={() => asking.answer(question.id, choice)}>
           {choice}
         </button>
       {/each}

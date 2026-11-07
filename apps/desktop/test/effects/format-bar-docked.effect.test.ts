@@ -55,7 +55,7 @@ async function settled() {
   flushSync()
 }
 
-const docked = () => target.querySelector('.nib-bar.docked') !== null
+const docked = () => target.querySelector('.orden-bar.docked') !== null
 
 test('docks while the note has the keyboard', async () => {
   note.focus()

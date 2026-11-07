@@ -109,7 +109,7 @@ async function explorer() {
 }
 
 function rows(): string[] {
-  return [...target.querySelectorAll('.entry .nib-row-label')].map((one) => one.textContent)
+  return [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
 }
 
 function press(key: string, more: KeyboardEventInit = {}) {
@@ -137,7 +137,7 @@ describe('a file explorer', () => {
   test('lists the home folder, folders first, with the places beside it', async () => {
     await explorer()
     expect(rows()).toEqual(['Music', 'Pictures', 'notes.txt', 'plan.pdf'])
-    const places = [...target.querySelectorAll('.place .nib-row-label')].map(
+    const places = [...target.querySelectorAll('.place .orden-row-label')].map(
       (one) => one.textContent,
     )
     expect(places).toEqual(['Home', 'Computer'])
@@ -313,7 +313,9 @@ describe('a file explorer', () => {
     await settled()
     const sheet = target.querySelector('.many')
     expect(sheet?.textContent).toContain('plan.pdf')
-    const [find, replace] = [...target.querySelectorAll<HTMLInputElement>('.many input.nib-field')]
+    const [find, replace] = [
+      ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
+    ]
     if (!find || !replace) return
     find.value = 'n'
     find.dispatchEvent(new Event('input', { bubbles: true }))

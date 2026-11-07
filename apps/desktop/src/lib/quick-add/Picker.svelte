@@ -59,7 +59,7 @@
 ></div>
 <ul
   bind:this={list}
-  class="nib-layer picker"
+  class="orden-layer picker"
   role="menu"
   tabindex="-1"
   style:left="{at.left}px"
@@ -74,7 +74,7 @@
       <li role="none">
         <button
           type="button"
-          class="nib-row is-short"
+          class="orden-row is-short"
           class:is-on={walkable[cursor] === index}
           role="menuitemradio"
           aria-checked={row.checked === true}
@@ -84,7 +84,7 @@
           onclick={() => choose(row)}
         >
           <span class="tick">{row.checked ? '✓' : ''}</span>
-          <span class="nib-row-label">{row.label}</span>
+          <span class="orden-row-label">{row.label}</span>
         </button>
       </li>
     {/if}

@@ -93,7 +93,7 @@
 {#if kit.adds}
   <div class="add-row">
     {#if plain}
-      <div class="nib-row adding">
+      <div class="orden-row adding">
         <span class="plus" aria-hidden="true">
           <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
         </span>
@@ -120,11 +120,11 @@
         />
       </div>
     {:else}
-      <button type="button" class="nib-row adder" onclick={start}>
+      <button type="button" class="orden-row adder" onclick={start}>
         <span class="plus" aria-hidden="true">
           <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
         </span>
-        <span class="nib-row-label">{label}</span>
+        <span class="orden-row-label">{label}</span>
       </button>
     {/if}
     {#if editing}

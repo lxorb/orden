@@ -409,7 +409,7 @@ each has it (✓), partly (~) or not (-).
 | `if`, `now`, `today`, `date`, `duration`, `number`, `list`, `link`, `file`, `max`, `min`                                 | ✓                            | ✓                              | must                 |                                                                                                         |
 | string, number, list, date, link, file, object and regexp methods                                                        | ✓                            | ✓                              | must                 | the functions page, every one                                                                           |
 | `image`, `icon`, `html`                                                                                                  | ✓                            | ~                              | must, html should    | `html` is escaped outside the reader's own spaces (trust.ts)                                            |
-| `let`, `lets`, user functions                                                                                            | -                            | ✓                              | later                | Bases has none; a nib-only formula would not open in Obsidian                                           |
+| `let`, `lets`, user functions                                                                                            | -                            | ✓                              | later                | Bases has none; a orden-only formula would not open in Obsidian                                           |
 | `random`                                                                                                                 | ✓                            | -                              | must                 |                                                                                                         |
 | **Platform**                                                                                                             |                              |                                |                      |                                                                                                         |
 | 10,000 rows                                                                                                              | ~                            | ~                              | must                 | 5.17                                                                                                    |
@@ -765,7 +765,7 @@ navigation, never a list of tasks itself, the way Todoist's sidebar is:
   card's menu has Move to, Alt and an arrow carries it, and on a phone the columns are pages
   a finger swipes through. A task's card is a line of words and a line of meta, no room
   left over.
-- **Rows** are `.nib-row`s with the existing section labels; counts are the badge shape; no
+- **Rows** are `.orden-row`s with the existing section labels; counts are the badge shape; no
   sentence anywhere. Bookmarked views and notes come first, as favourites.
 - **A press chooses a row** (#374): it is marked, and its list is drawn in the panel under
   the rows; no tab opens. **A tab is asked for**: Ctrl or Cmd and a press, the middle
@@ -909,7 +909,7 @@ Smart dates and From any app.
 The global window is `quick-add.html` with `Window.svelte`, a page of its own carrying none of
 the app, made by `src-tauri/src/quick_add.rs` on the first press of the key and hidden rather
 than closed after it. The key is `app.quick-add`, registered by the window that holds the
-`nib-quick-add-answering` lock after the launch order (`anywhere.svelte.ts`); the window asks
+`orden-quick-add-answering` lock after the launch order (`anywhere.svelte.ts`); the window asks
 that page for the space's notes and hands it the task over a broadcast channel (`channel.ts`),
 so it is granted nothing and writes nothing itself. The global shortcut plugin is added once
 for it and the agents' stop (`hotkeys.rs`). A probe never registers the reader's key: under
@@ -933,7 +933,7 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
   initial.
 - **The caret on the line shows the source**, as every mark does, and the chips give way to
   the emoji and brackets as written.
-- **A chip pressed** opens its picker as a small layer (`.nib-layer`): the date chip a
+- **A chip pressed** opens its picker as a small layer (`.orden-layer`): the date chip a
   calendar with Today, Tomorrow, Next week, No date and the time; the repeat chip the rule
   in words with presets. Every pick is one edit of exactly the characters that change.
 - **Typing a date in words at the end of a task** (`... tomorrow`) offers the chip in the
@@ -1295,7 +1295,7 @@ nib:
 - **`nib.rows`**: `notes` (Bases' own, the default), `tasks`, or `both`. A view of tasks in
   Obsidian shows the notes those tasks are in, which is the graceful version of the same
   question.
-- **nib-only view types** (`calendar`, `timeline`, `chart`, `form`) are drawn by Orden; Obsidian
+- **orden-only view types** (`calendar`, `timeline`, `chart`, `form`) are drawn by Orden; Obsidian
   shows its own message for an unknown layout, for that view only. Where a community plugin
   already named the type, Orden uses the same name and options.
 - **`this`** is the note that embeds the base, the base itself when opened, and the note in

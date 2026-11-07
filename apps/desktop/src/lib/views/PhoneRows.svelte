@@ -22,7 +22,7 @@
 <div class="rows">
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
-      <p class="nib-section">
+      <p class="orden-section">
         {groupLabel(property, group.key, live.today, names)}<span>{group.rows.length}</span>
       </p>
     {/if}

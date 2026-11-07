@@ -72,7 +72,7 @@
 
 <Gate icon={Lock} title={t('Pass is locked')}>
   {#if way === 'device'}
-    <button class="nib-button" type="button" disabled={busy} onclick={() => void opened()}>
+    <button class="orden-button" type="button" disabled={busy} onclick={() => void opened()}>
       {t('Use {way}', { way: deviceName() })}
     </button>
   {:else}
@@ -80,7 +80,7 @@
       <input
         bind:this={field}
         bind:value={typed}
-        class="nib-field"
+        class="orden-field"
         type={way === 'recovery' ? 'text' : 'password'}
         inputmode={way === 'pin' ? 'numeric' : undefined}
         autocomplete={way === 'password' ? 'current-password' : 'off'}
@@ -98,7 +98,7 @@
         aria-invalid={wrong}
         oninput={() => (wrong = false)}
       />
-      <button class="nib-button" type="submit" disabled={busy || typed === ''} aria-busy={busy}>
+      <button class="orden-button" type="submit" disabled={busy || typed === ''} aria-busy={busy}>
         {busy ? t('Unlocking…') : t('Unlock')}
       </button>
     </form>
@@ -115,17 +115,17 @@
     </p>
   {/if}
   {#if way !== 'password'}
-    <button class="nib-action" type="button" onclick={() => use('password')}
+    <button class="orden-action" type="button" onclick={() => use('password')}
       >{t('Use password')}</button
     >
   {/if}
   {#if way === 'password' && pass.settings.lock !== 'password'}
-    <button class="nib-action" type="button" onclick={() => use(pass.settings.lock)}>
+    <button class="orden-action" type="button" onclick={() => use(pass.settings.lock)}>
       {pass.settings.lock === 'pin' ? t('Use PIN') : t('Use {way}', { way: deviceName() })}
     </button>
   {/if}
   {#if way !== 'recovery'}
-    <button class="nib-action" type="button" onclick={() => use('recovery')}
+    <button class="orden-action" type="button" onclick={() => use('recovery')}
       >{t('Use recovery key')}</button
     >
   {/if}

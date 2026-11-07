@@ -35,7 +35,7 @@
 
 <button
   type="button"
-  class="nib-tile tile"
+  class="orden-tile tile"
   class:is-on={active}
   class:is-front={front}
   class:is-unloaded={unloaded}
@@ -51,9 +51,9 @@
   {...rest}
 >
   {#if face === 'letter'}
-    <span class="nib-tile-letter" aria-hidden="true">{initialOf(name)}</span>
+    <span class="orden-tile-letter" aria-hidden="true">{initialOf(name)}</span>
   {:else}
-    <span class="nib-tile-face" aria-hidden="true"><FileMark {mark} {path} /></span>
+    <span class="orden-tile-face" aria-hidden="true"><FileMark {mark} {path} /></span>
   {/if}
 </button>
 

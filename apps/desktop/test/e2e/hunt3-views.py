@@ -80,7 +80,7 @@ def drive_shared(page: Page) -> None:
     shared(page, "Tasks.md", f"# Shared tasks\n\n{RISKY_TASKS}")
     DRIVE.reading(page)
     page.wait_for_timeout(800)
-    said = page.evaluate("() => document.querySelector('.nib-query')?.innerText ?? document.querySelector('.nib-query-none')?.innerText ?? ''")
+    said = page.evaluate("() => document.querySelector('.orden-query')?.innerText ?? document.querySelector('.orden-query-none')?.innerText ?? ''")
     say(f"[shared tasks, reading] {said!r}")
     if "(a+)+" not in said:
         wrong(f"a tasks fence in a file shared on its own was not refused: {said!r}")
@@ -90,7 +90,7 @@ def scroll_of(page: Page) -> dict:
     return page.evaluate(
         """() => {
           const anchor = document.getElementById('^abc')
-          const box = document.querySelector('article.nib-write')?.closest('[class*="reading"]') ?? null
+          const box = document.querySelector('article.orden-write')?.closest('[class*="reading"]') ?? null
           const top = anchor ? anchor.getBoundingClientRect().top : null
           return { top, height: innerHeight, box: !!box }
         }"""
@@ -166,10 +166,10 @@ def drive_ticks(page: Page) -> None:
     page.wait_for_timeout(1000)
     DRIVE.open_note(page, "Fence note")
     DRIVE.reading(page)
-    wait_for(page, "document.querySelectorAll('.nib-query input[data-task]').length >= 2", "the rows")
+    wait_for(page, "document.querySelectorAll('.orden-query input[data-task]').length >= 2", "the rows")
     done = page.evaluate(
         """async () => {
-          const box = (words) => [...document.querySelectorAll('.nib-query input[data-task]')]
+          const box = (words) => [...document.querySelectorAll('.orden-query input[data-task]')]
             .find((one) => one.getAttribute('aria-label').startsWith(words))
           const alpha = box('Alpha')
           const bravo = box('Bravo')

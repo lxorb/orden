@@ -21,7 +21,7 @@ export type Message =
   | { kind: 'gone' }
 
 const CHANNEL = 'orden:presenter'
-const LABEL = 'nib-presenter'
+const LABEL = 'orden-presenter'
 
 function messageOf(value: unknown): Message | null {
   if (typeof value !== 'object' || value === null) return null

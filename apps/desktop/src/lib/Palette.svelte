@@ -355,7 +355,7 @@
 
   $effect(() => {
     follows(cursor)
-    list?.querySelector('.nib-row.is-on')?.scrollIntoView({ block: 'nearest' })
+    list?.querySelector('.orden-row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
   let kept: Look | null = null
@@ -519,17 +519,17 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={dismiss}></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={dismiss}></div>
 
   <div
-    class="nib-screen palette"
+    class="orden-screen palette"
     use:trap
     role="dialog"
     aria-modal="true"
     aria-label={t('Search notes and commands')}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    <div class="field nib-field">
+    <div class="field orden-field">
       <input
         bind:this={input}
         bind:value={query}
@@ -540,8 +540,8 @@
         autocorrect="off"
         role="combobox"
         aria-expanded={results.length > 0}
-        aria-controls="nib-palette-list"
-        aria-activedescendant={results.length ? `nib-palette-${cursor}` : undefined}
+        aria-controls="orden-palette-list"
+        aria-activedescendant={results.length ? `orden-palette-${cursor}` : undefined}
         aria-label={t('Search notes and commands')}
       />
       {#if viewport.touch}
@@ -554,7 +554,7 @@
         bind:this={list}
         use:scrollbar
         use:wholeRows={results}
-        id="nib-palette-list"
+        id="orden-palette-list"
         role="listbox"
         aria-label={t('Search notes and commands')}
       >
@@ -562,11 +562,11 @@
           {@const where = whereOf(row)}
           {@const hint = hintOf(row)}
           {@const head = browsed?.heads.get(index)}
-          {#if head}<li role="none" class="nib-section">{head}</li>{/if}
+          {#if head}<li role="none" class="orden-section">{head}</li>{/if}
           <li role="none">
             <button
-              class="nib-row"
-              id="nib-palette-{index}"
+              class="orden-row"
+              id="orden-palette-{index}"
               role="option"
               tabindex="-1"
               aria-selected={index === cursor}
@@ -615,7 +615,7 @@
                   ><Icon icon={null} fallback={Server} /></span
                 >
               {/if}
-              <span class="nib-row-label"
+              <span class="orden-row-label"
                 ><bdi
                   >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' || mode === 'hosts' ? term : '') as piece, at (at)}{#if piece.hit}<b
                         >{piece.text}</b
@@ -626,7 +626,7 @@
               {#if where}<span class="where">{where}</span>{/if}
               {#if row.kind === 'setting' && row.setting.field?.kind === 'switch'}
                 <span class="flip" aria-hidden="true"
-                  ><span class="nib-switch" class:on={row.setting.field.get()}></span></span
+                  ><span class="orden-switch" class:on={row.setting.field.get()}></span></span
                 >
               {:else if row.kind === 'setting' && settingValue(row.setting.field)}
                 <span class="value">{settingValue(row.setting.field)}</span>
@@ -733,11 +733,11 @@
     stroke: none;
   }
 
-  .nib-row-label {
+  .orden-row-label {
     padding-inline-start: calc(var(--depth) * var(--space-3));
   }
 
-  .nib-row-label b {
+  .orden-row-label b {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }

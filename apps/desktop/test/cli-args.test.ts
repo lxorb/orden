@@ -19,7 +19,7 @@ async function sent(
   })
   await new Promise<void>((settle) => server.listen(0, '127.0.0.1', settle))
   const { port } = server.address() as AddressInfo
-  const file = join(mkdtempSync(join(tmpdir(), 'nib-cli-')), 'automation.json')
+  const file = join(mkdtempSync(join(tmpdir(), 'orden-cli-')), 'automation.json')
   writeFileSync(file, JSON.stringify({ port, secret: 's', pid: 1 }))
 
   const child = spawn(process.execPath, [CLI, ...words], {

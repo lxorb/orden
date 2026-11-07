@@ -60,7 +60,7 @@
   <p class="meta">
     {t('Only the vaults you own are exported. A vault shared with you stays with its owner.')}
   </p>
-  <div class="nib-segmented" role="radiogroup" aria-label={t('Format')} use:segmented>
+  <div class="orden-segmented" role="radiogroup" aria-label={t('Format')} use:segmented>
     {#each FORMATS as one (one.id)}
       <button
         type="button"
@@ -75,7 +75,7 @@
   </div>
   {#if format === 'sealed'}
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       type="password"
       autocomplete="new-password"
       placeholder={t('Passphrase for the file')}
@@ -83,7 +83,7 @@
       bind:value={passphrase}
     />
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       type="password"
       autocomplete="new-password"
       placeholder={t('Type it again')}
@@ -97,7 +97,7 @@
     </p>
   {/if}
   <input
-    class="nib-field is-value"
+    class="orden-field is-value"
     type="password"
     autocomplete="current-password"
     placeholder={t('Pass password')}
@@ -108,7 +108,7 @@
   {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
   {#if saved}<p class="meta" role="status">{saved}</p>{/if}
   <div class="buttons">
-    <button class="nib-button" type="submit" disabled={!ready || busy} aria-busy={busy}
+    <button class="orden-button" type="submit" disabled={!ready || busy} aria-busy={busy}
       >{t('Export')}</button
     >
   </div>

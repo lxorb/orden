@@ -40,13 +40,13 @@
   {#each rows as one (one.agent)}
     <li role="presentation">
       <button
-        class="nib-row agent"
+        class="orden-row agent"
         class:is-on={agentOpen.id === one.agent}
         data-agent={one.agent}
         onclick={() => open(one.agent)}
       >
         <Spark colour={one.colour} turning={one.acting} paused={one.stopped} />
-        <span class="nib-row-label">
+        <span class="orden-row-label">
           <span class="name">{one.name}</span>
           {#if one.asking}
             <span class="asking">{one.asking}</span>
@@ -76,7 +76,7 @@
     width: 100%;
   }
 
-  .nib-row-label {
+  .orden-row-label {
     display: flex;
     flex-direction: column;
     min-width: 0;

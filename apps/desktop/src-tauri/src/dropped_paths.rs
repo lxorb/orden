@@ -161,7 +161,7 @@ unsafe fn paths_handed_over(
     unsafe {
         let mut said = PWSTR::null();
         if args.TryGetWebMessageAsString(&raw mut said).is_err()
-            || webview2_com::take_pwstr(said) != "nib-dropped-paths"
+            || webview2_com::take_pwstr(said) != "orden-dropped-paths"
         {
             return Vec::new();
         }
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn what_was_dropped_is_taken_once_while_fresh_and_read_for_a_while() {
-        let far = std::env::temp_dir().join("nib-dropped").join("away.pdf");
+        let far = std::env::temp_dir().join("orden-dropped").join("away.pdf");
         let said = far.to_string_lossy().into_owned();
         assert_eq!(dropped_readable(&said), None);
 

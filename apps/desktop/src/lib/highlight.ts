@@ -43,7 +43,7 @@ export function paletteCss(palette: CodePalette): string {
   return colours.map(([name, colour]) => `#write .hl-${name} { color: ${colour}; }`).join('\n')
 }
 
-const PALETTE_ID = 'nib-code-palette'
+const PALETTE_ID = 'orden-code-palette'
 
 export function paintCodePalette(id: string) {
   const palette = CODE_PALETTES.find((one) => one.id === id) ?? CODE_PALETTES.at(0)

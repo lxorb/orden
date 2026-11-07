@@ -125,13 +125,13 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => (open = false)}
   ></div>
 
   <div
-    class="nib-screen is-centred is-steady sheet"
+    class="orden-screen is-centred is-steady sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -144,7 +144,7 @@
       <ul class="versions" use:scrollbar>
         {#each rows as row (row.month ?? row.version?.at)}
           {#if row.month}
-            <li class="month"><p class="nib-section">{row.month}</p></li>
+            <li class="month"><p class="orden-section">{row.month}</p></li>
           {:else if row.version}
             {@const version = row.version}
             <li>
@@ -191,7 +191,7 @@
         {/if}
 
         {#if canWriteIn(previewOf?.note)}
-          <button class="nib-button" onclick={() => void restore()}>
+          <button class="orden-button" onclick={() => void restore()}>
             {t('Restore this version')}
           </button>
         {/if}
@@ -410,7 +410,7 @@
     color: var(--text-strong);
   }
 
-  .nib-button {
+  .orden-button {
     align-self: flex-start;
   }
 

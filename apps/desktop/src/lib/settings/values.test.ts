@@ -16,7 +16,7 @@ function svelteFiles(dir: string): string[] {
 
 const PANES = svelteFiles(LIB)
   .map((path) => ({ path: path.slice(LIB.length), source: readFileSync(path, 'utf8') }))
-  .filter((one) => one.source.includes('nib-setting'))
+  .filter((one) => one.source.includes('orden-setting'))
 
 const styleOf = (source: string) => /<style>([\s\S]*)<\/style>/.exec(source)?.[1] ?? ''
 
@@ -24,7 +24,7 @@ const NOT_VALUES = [
   /placeholder=\{t\('Search (settings|shortcuts|commands)'\)\}/,
   /class="title"/,
   /rows="12"/,
-  /class="slider nib-slider"/,
+  /class="slider orden-slider"/,
 ]
 
 describe('a setting', () => {
@@ -58,7 +58,7 @@ describe('a setting', () => {
     const bare = PANES.flatMap(({ path, source }) =>
       [...source.matchAll(/<(input|textarea)\b([^>]*?)\/?>/g)]
         .map((hit) => hit[2] ?? '')
-        .filter((tag) => !/class="[^"]*\bnib-field\b/.test(tag))
+        .filter((tag) => !/class="[^"]*\borden-field\b/.test(tag))
         .filter((tag) => !/type="(checkbox|range|color|file|hidden|radio)"/.test(tag))
         .filter((tag) => !NOT_VALUES.some((reason) => reason.test(tag)))
         .map((tag) => `${path}: ${tag.trim().split(/\s+/).slice(0, 3).join(' ')}`),
@@ -74,13 +74,13 @@ describe('the value box', () => {
   test('is one column wide, said once', () => {
     expect(tokens).toMatch(/--setting-value:\s*14rem/)
     expect(base).toMatch(
-      /\.nib-setting > \.nib-field\.is-value \{[^}]*inline-size:\s*var\(--setting-value\)/,
+      /\.orden-setting > \.orden-field\.is-value \{[^}]*inline-size:\s*var\(--setting-value\)/,
     )
   })
 
   test('is the shape the dropdown closes into as well', () => {
     const select = readFileSync(join(LIB, 'Select.svelte'), 'utf8')
-    expect(select).toMatch(/class="trigger nib-field is-value"/)
+    expect(select).toMatch(/class="trigger orden-field is-value"/)
     expect(styleOf(select)).not.toMatch(/\n {2}\.trigger \{[^}]*border:/)
   })
 })
@@ -96,18 +96,20 @@ describe('Settings > Account', () => {
   })
 
   test('keeps a status in one field, the emoji pressed inside it', () => {
-    const status = /<span class="nib-field is-value">([\s\S]*?)<\/span>\n/.exec(markup)?.[1]
+    const status = /<span class="orden-field is-value">([\s\S]*?)<\/span>\n/.exec(markup)?.[1]
     expect(status).toMatch(/aria-label=\{t\('Emoji'\)\}/)
     expect(status).toMatch(/aria-label=\{t\('Status'\)\}/)
   })
 
   test('asks when a status clears only while there is one', () => {
-    expect(markup).toMatch(/\{#if status\}\s*<div class="nib-setting setting">[\s\S]*?Clear after/)
+    expect(markup).toMatch(
+      /\{#if status\}\s*<div class="orden-setting setting">[\s\S]*?Clear after/,
+    )
   })
 
   test('changes and removes a picture with the same kind of button', () => {
     const picture = markup.slice(markup.indexOf("t('Picture')"), markup.indexOf("t('Pronouns')"))
     const kinds = new Set([...picture.matchAll(/<button\s+class="([^"]+)"/g)].map((hit) => hit[1]))
-    expect([...kinds]).toEqual(['nib-chip'])
+    expect([...kinds]).toEqual(['orden-chip'])
   })
 })

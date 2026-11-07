@@ -48,7 +48,7 @@ const ROSE = {
 }
 
 const root = document.documentElement
-const sheet = () => document.getElementById('nib-user-theme')?.textContent ?? ''
+const sheet = () => document.getElementById('orden-user-theme')?.textContent ?? ''
 
 const storage = () =>
   Object.fromEntries(
@@ -207,7 +207,7 @@ test('a press outside does the same', async () => {
   await opened()
   pointAt(card('Rose'))
 
-  document.querySelector<HTMLElement>('.nib-scrim')?.click()
+  document.querySelector<HTMLElement>('.orden-scrim')?.click()
   flushSync()
 
   expect(picking.open).toBe(false)

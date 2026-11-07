@@ -155,7 +155,7 @@
   <div class="head">
     <button
       type="button"
-      class="nib-glyph"
+      class="orden-glyph"
       aria-label={t('Cancel')}
       title={t('Cancel')}
       onclick={cancel}
@@ -184,7 +184,7 @@
         />
       </div>
     {/if}
-    <button type="submit" class="nib-button save" disabled={!canSave} aria-busy={saving}>
+    <button type="submit" class="orden-button save" disabled={!canSave} aria-busy={saving}>
       {isNew ? t('Create') : t('Save')}
     </button>
   </div>
@@ -294,7 +294,7 @@
     flex: none;
   }
 
-  .nib-glyph :global(.nib-cross) {
+  .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);
     stroke-width: 1.5;

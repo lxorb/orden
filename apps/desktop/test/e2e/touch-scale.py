@@ -131,7 +131,7 @@ TAGS = [
     ["tag row", "aside .line .row"],
     ["tag twist", "aside .twist"],
     ["search find bar row", "aside .find .row"],
-    ["find bar field", ".findbar .nib-field"],
+    ["find bar field", ".findbar .orden-field"],
     ["find bar step", ".findbar .act"],
     ["find bar flag", ".findbar .flag"],
 ]
@@ -145,7 +145,7 @@ PALETTE = [
 
 BROWSE = [
     ["palette browse row", ".palette ul li button"],
-    ["palette browse head", ".palette .nib-section"],
+    ["palette browse head", ".palette .orden-section"],
 ]
 
 CONTEXT = [
@@ -319,7 +319,7 @@ def one(
     page.wait_for_timeout(300)
 
     page.evaluate("() => window.nibApp.settings.show()")
-    page.wait_for_selector(".nib-screen.sheet", timeout=15000)
+    page.wait_for_selector(".orden-screen.sheet", timeout=15000)
     page.wait_for_timeout(900)
     rows.update(measure(page, SETTINGS))
     shot(page, f"{label}-{name}-settings-{scheme}")

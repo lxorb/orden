@@ -132,7 +132,7 @@
     query = ''
     const frame = requestAnimationFrame(() => {
       landing.label = null
-      const row = [...box.querySelectorAll<HTMLElement>('.nib-setting')].find((one) =>
+      const row = [...box.querySelectorAll<HTMLElement>('.orden-setting')].find((one) =>
         one.querySelector('.name')?.textContent.trim().startsWith(label),
       )
       if (!row) return
@@ -354,13 +354,13 @@
 {#if settings.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
-    class="nib-scrim scrim"
+    class="orden-scrim scrim"
     transition:fade={{ duration: dur(140) }}
     onclick={() => (settings.open = false)}
   ></div>
 
   <div
-    class="nib-screen is-centred is-steady sheet"
+    class="orden-screen is-centred is-steady sheet"
     class:phone={viewport.touch}
     style:height={pageHeight()}
     use:trap
@@ -373,11 +373,11 @@
       <header class="bar">
         {#if !settings.listing}
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             aria-label={t('Back')}
             onclick={() => (settings.listing = true)}
           >
-            <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+            <svg class="orden-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
           </button>
         {/if}
 
@@ -385,7 +385,7 @@
           {settings.listing ? t('Settings') : titleOf(settings.section)}
         </h1>
 
-        <button class="nib-glyph" aria-label={t('Close')} onclick={() => (settings.open = false)}>
+        <button class="orden-glyph" aria-label={t('Close')} onclick={() => (settings.open = false)}>
           <Cross />
         </button>
       </header>
@@ -397,8 +397,8 @@
           <h1>{t('Settings')}</h1>
         {/if}
 
-        <label class="nib-field search">
-          <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+        <label class="orden-field search">
+          <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
           <input
             bind:value={query}
             placeholder={t('Search settings')}
@@ -415,15 +415,16 @@
             <div class="group">
               {#each group as item (item.id)}
                 <button
-                  class="item nib-row"
+                  class="item orden-row"
                   class:is-on={!viewport.touch && !query && settings.section === item.id}
                   onclick={() => go(item.id)}
                 >
-                  <svg class="glyph nib-row-mark" viewBox="0 0 16 16"
+                  <svg class="glyph orden-row-mark" viewBox="0 0 16 16"
                     ><path d={ICONS[item.id]} /></svg
                   >
-                  <span class="nib-row-label">{item.label}</span>
-                  <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg
+                  <span class="orden-row-label">{item.label}</span>
+                  <svg class="chevron orden-mirror" viewBox="0 0 16 16"
+                    ><path d="M6 3l5 5-5 5" /></svg
                   >
                 </button>
               {/each}
@@ -480,9 +481,9 @@
         {#if hit.kind === 'field'}
           {@render row(hit.field, hit.pane.label)}
         {:else}
-          <button class="nib-setting setting link" onclick={() => go(hit.section)}>
+          <button class="orden-setting setting link" onclick={() => go(hit.section)}>
             <span class="name">{hit.label}<small>{titleOf(hit.section)}</small></span>
-            <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
+            <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
           </button>
         {/if}
       {/each}
@@ -516,7 +517,7 @@
     {@const locked = field.locked?.() ?? false}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
-      class="nib-setting setting"
+      class="orden-setting setting"
       class:declared={!!field.declared}
       class:pressable={!locked}
       onclick={() => {
@@ -525,7 +526,7 @@
     >
       {@render named(field, where)}
       <span
-        class="nib-switch"
+        class="orden-switch"
         class:on={held}
         class:off={locked}
         role="switch"
@@ -543,11 +544,11 @@
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}
     {@const held = Math.max(field.get(), least)}
-    <div class="nib-setting setting sliding" class:declared={!!field.declared}>
+    <div class="orden-setting setting sliding" class:declared={!!field.declared}>
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
       <input
-        class="slider nib-slider"
+        class="slider orden-slider"
         class:floored={least > field.min}
         type="range"
         min={field.min}
@@ -564,9 +565,9 @@
     </div>
   {:else if field.kind === 'segmented'}
     {@const held = field.get()}
-    <div class="nib-setting setting" class:declared={!!field.declared}>
+    <div class="orden-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <div class="nib-segmented" role="radiogroup" aria-label={field.label} use:segmented>
+      <div class="orden-segmented" role="radiogroup" aria-label={field.label} use:segmented>
         {#each field.options as one (one.value)}
           <button
             type="button"
@@ -582,9 +583,9 @@
       </div>
     </div>
   {:else if field.kind === 'swatches'}
-    <div class="nib-setting setting" class:declared={!!field.declared}>
+    <div class="orden-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <div class="nib-setting-value is-wrapping">
+      <div class="orden-setting-value is-wrapping">
         <Swatches
           options={field.options}
           label={field.label}
@@ -595,7 +596,7 @@
       </div>
     </div>
   {:else if field.kind === 'picture'}
-    <div class="nib-setting setting" class:declared={!!field.declared}>
+    <div class="orden-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
       <span class="pictures">
         {#each field.sides as side, index (index)}
@@ -623,7 +624,7 @@
             {#if side.own()}
               <button
                 type="button"
-                class="nib-glyph drop"
+                class="orden-glyph drop"
                 title={t('Remove picture')}
                 aria-label="{t('Remove picture')}: {side.label}"
                 onclick={() => side.remove()}><Cross /></button
@@ -636,7 +637,7 @@
   {:else if field.kind === 'value'}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
-      class="nib-setting setting pressable"
+      class="orden-setting setting pressable"
       class:declared={!!field.declared}
       title={t('Copy')}
       onclick={() => field.press()}
@@ -655,7 +656,7 @@
     </div>
   {:else if field.kind === 'text'}
     {#if field.font}
-      <div class="nib-setting setting" class:declared={!!field.declared}>
+      <div class="orden-setting setting" class:declared={!!field.declared}>
         {@render named(field, where)}
         <FontPicker
           value={field.get()}
@@ -666,10 +667,10 @@
         />
       </div>
     {:else}
-      <label class="nib-setting setting" class:declared={!!field.declared}>
+      <label class="orden-setting setting" class:declared={!!field.declared}>
         {@render named(field, where)}
         <input
-          class="nib-field is-value"
+          class="orden-field is-value"
           type="text"
           value={field.get()}
           placeholder={field.placeholder}
@@ -682,9 +683,9 @@
       </label>
     {/if}
   {:else if field.kind === 'select'}
-    <div class="nib-setting setting" class:declared={!!field.declared}>
+    <div class="orden-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <div class="nib-setting-value">
+      <div class="orden-setting-value">
         <Select
           value={field.get()}
           options={field.options}
@@ -700,7 +701,7 @@
 {#snippet browserRow()}
   <h3>{t('Browser')}</h3>
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
           >{t('Default browser')}<Hint
@@ -710,7 +711,7 @@
       >
       <DefaultBrowser />
     </div>
-    <div class="nib-setting setting" class:declared={declared.holds('general.searchEngine')}>
+    <div class="orden-setting setting" class:declared={declared.holds('general.searchEngine')}>
       <span class="name"
         ><span class="what"
           >{t('Search engine')}<Hint
@@ -718,7 +719,7 @@
           /></span
         >{#if declared.holds('general.searchEngine')}{@render fileNote()}{/if}</span
       >
-      <div class="nib-setting-value">
+      <div class="orden-setting-value">
         <Select
           value={customising ? CUSTOM : searchEngine.id}
           options={[
@@ -736,7 +737,7 @@
     </div>
     {#if customising || searchEngine.id === CUSTOM}
       <label
-        class="nib-setting setting"
+        class="orden-setting setting"
         class:declared={declared.holds('general.searchEngineAddress')}
         transition:slide={{ duration: dur(160) }}
       >
@@ -748,7 +749,7 @@
           >{#if declared.holds('general.searchEngineAddress')}{@render fileNote()}{/if}</span
         >
         <input
-          class="nib-field is-value"
+          class="orden-field is-value"
           type="url"
           value={searchEngine.custom}
           placeholder="https://example.com/search?q=%s"
@@ -775,7 +776,7 @@
 {#snippet dictionary()}
   <h3>{t('Your words')}</h3>
   <div class="card">
-    <div class="nib-setting setting words">
+    <div class="orden-setting setting words">
       <span class="name"
         ><span class="what"
           >{t('Words')}<Hint text={t('Words the spelling check never marks as wrong.')} /></span
@@ -785,7 +786,7 @@
         <div class="chips">
           {#each modes.spellWords as word (word)}
             <button
-              class="nib-tag"
+              class="orden-tag"
               title={t('Remove')}
               onclick={() => modes.toggleSpellWord(word, view)}
             >
@@ -795,7 +796,7 @@
         </div>
       {/if}
       <input
-        class="nib-field is-value add"
+        class="orden-field is-value add"
         type="text"
         placeholder={t('Add a word')}
         spellcheck="false"
@@ -858,7 +859,7 @@
 
     {#if resettable(current)}
       <div class="card">
-        <button class="nib-action" onclick={() => resetPane(current)}
+        <button class="orden-action" onclick={() => resetPane(current)}
           >{t('Reset to defaults')}</button
         >
       </div>
@@ -867,7 +868,7 @@
     {#if account.user}
       <h3>{t('Account')}</h3>
       <div class="card">
-        <label class="nib-setting setting">
+        <label class="orden-setting setting">
           <span class="name"
             ><span class="what"
               >{t('Display name')}<Hint
@@ -876,16 +877,16 @@
             ></span
           >
           <input
-            class="nib-field is-value"
+            class="orden-field is-value"
             value={account.user.name ?? ''}
             placeholder={t('Your name')}
             spellcheck="false"
             onchange={(event) => void rename(event.currentTarget.value)}
           />
         </label>
-        <div class="nib-setting setting">
+        <div class="orden-setting setting">
           <span class="name">{t('Email')}</span>
-          <span class="nib-field is-value is-read">{account.user.email}</span>
+          <span class="orden-field is-value is-read">{account.user.email}</span>
         </div>
       </div>
 
@@ -899,14 +900,17 @@
       <div class="card">
         <div class="stack">
           <div
-            class="nib-meter"
+            class="orden-meter"
             class:is-full={usage.nearlyFull}
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={usage.limit}
             aria-valuenow={usage.used}
           >
-            <div class="nib-meter-fill" style:width="{Math.min(100, usage.fraction * 100)}%"></div>
+            <div
+              class="orden-meter-fill"
+              style:width="{Math.min(100, usage.fraction * 100)}%"
+            ></div>
           </div>
           <p class="hint">
             {t('{used} of {limit} used.', {
@@ -932,7 +936,7 @@
 
       <div class="card">
         <button
-          class="nib-action is-danger"
+          class="orden-action is-danger"
           onclick={() =>
             __EVEN_PLUGIN__
               ? void account.signOut('asked')
@@ -944,7 +948,7 @@
             <flow.default onend={() => (leaving = false)} />
           {/await}
         {:else}
-          <button class="nib-action is-danger" onclick={() => (leaving = true)}
+          <button class="orden-action is-danger" onclick={() => (leaving = true)}
             >{t('Delete account')}</button
           >
         {/if}
@@ -952,10 +956,10 @@
     {:else if account.guest}
       <h3>{t('Account')}</h3>
       <div class="card">
-        <label class="nib-setting setting">
+        <label class="orden-setting setting">
           <span class="name">{t('Your name')}</span>
           <input
-            class="nib-field is-value"
+            class="orden-field is-value"
             value={account.guest.name}
             placeholder={t('Your name')}
             spellcheck="false"
@@ -966,7 +970,7 @@
       <p class="hint caption">{t('What the others in this space see.')}</p>
 
       <button
-        class="nib-button"
+        class="orden-button"
         onclick={() => {
           settings.open = false
           account.open = true
@@ -977,7 +981,7 @@
     {:else}
       <p class="lead">{t('Not signed in')}</p>
       <button
-        class="nib-button"
+        class="orden-button"
         onclick={() => {
           settings.open = false
           account.open = true
@@ -1026,7 +1030,7 @@
   <h3>{t('This note')}</h3>
   <div class="card">
     {#each exportActions() as action (action.id)}
-      <button class="nib-action" disabled={action.disabled} onclick={action.run}>
+      <button class="orden-action" disabled={action.disabled} onclick={action.run}>
         {action.label}
       </button>
     {/each}
@@ -1035,7 +1039,7 @@
 
 {#snippet keyboard()}
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
           >{t('Shortcuts')}<Hint
@@ -1043,7 +1047,7 @@
           /></span
         ></span
       >
-      <div class="nib-setting-value">
+      <div class="orden-setting-value">
         <Select
           value={shortcuts.preset}
           options={presetChoices}
@@ -1064,8 +1068,8 @@
     })}
   </div>
 
-  <label class="nib-field search">
-    <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+  <label class="orden-field search">
+    <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
     <input
       bind:value={keyFilter}
       placeholder={t('Search shortcuts')}
@@ -1083,7 +1087,7 @@
         {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
         {@const reach = noteFor(globalKeys.keys, entry.id, shown(key))}
         {@const held = declared.holds(shortcutKey(entry.id))}
-        <div class="nib-setting setting shortcut" class:declared={held}>
+        <div class="orden-setting setting shortcut" class:declared={held}>
           <span class="name">
             {entry.label()}
             {#if held}{@render fileNote()}{/if}
@@ -1112,7 +1116,7 @@
               {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
             </button>
             <button
-              class="nib-glyph revert"
+              class="orden-glyph revert"
               disabled={!shortcuts.changed(entry.id)}
               title={t('Reset')}
               aria-label={t('Reset')}
@@ -1133,8 +1137,9 @@
                 name: rebind.clash.holders.map((one) => one.label()).join(', '),
               })}
             </span>
-            <button class="nib-chip" onclick={() => rebind.takeOver()}>{t('Take it over')}</button>
-            <button class="nib-chip is-quiet" onclick={() => (rebind.clash = null)}
+            <button class="orden-chip" onclick={() => rebind.takeOver()}>{t('Take it over')}</button
+            >
+            <button class="orden-chip is-quiet" onclick={() => (rebind.clash = null)}
               >{t('Cancel')}</button
             >
           </div>
@@ -1148,7 +1153,7 @@
   <p class="hint">{t('Esc stops recording, Backspace takes the key away.')}</p>
 
   <div class="card">
-    <button class="nib-action" onclick={() => shortcuts.resetAll()}
+    <button class="orden-action" onclick={() => shortcuts.resetAll()}
       >{t('Reset all shortcuts')}</button
     >
   </div>
@@ -1174,7 +1179,7 @@
   <div class="card">
     {#each toolbar.ids as id, at (id)}
       <div
-        class="nib-setting setting button"
+        class="orden-setting setting button"
         class:landing={dropAt === at}
         role="group"
         aria-label={nameFor(id)}
@@ -1191,7 +1196,7 @@
         {@render mark(id)}
         <span class="name">{nameFor(id)}</span>
         <button
-          class="nib-glyph revert"
+          class="orden-glyph revert"
           disabled={at === 0}
           title={t('Move up')}
           aria-label={t('Move up')}
@@ -1200,7 +1205,7 @@
           <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
         </button>
         <button
-          class="nib-glyph revert"
+          class="orden-glyph revert"
           disabled={at === toolbar.ids.length - 1}
           title={t('Move down')}
           aria-label={t('Move down')}
@@ -1209,7 +1214,7 @@
           <svg viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>
         </button>
         <button
-          class="nib-glyph revert"
+          class="orden-glyph revert"
           title={t('Take it off')}
           aria-label={t('Take it off')}
           onclick={() => toolbar.remove(id)}
@@ -1223,14 +1228,14 @@
   </div>
 
   <div class="card">
-    <button class="nib-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
+    <button class="orden-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
       {t('Reset the bar')}
     </button>
   </div>
 
   <h3>{t('Pulling down')}</h3>
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
           >{t('A pull past the top runs')}<Hint
@@ -1238,7 +1243,7 @@
           /></span
         ></span
       >
-      <div class="nib-setting-value">
+      <div class="orden-setting-value">
         <Select
           value={pull.id}
           options={pullChoices}
@@ -1251,8 +1256,8 @@
   </div>
 
   <h3>{t('Everything else')}</h3>
-  <label class="nib-field search">
-    <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+  <label class="orden-field search">
+    <svg class="orden-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
     <input
       bind:value={barFilter}
       placeholder={t('Search commands')}
@@ -1266,11 +1271,11 @@
     <h3>{group.label}</h3>
     <div class="card">
       {#each group.rows as entry (entry.id)}
-        <div class="nib-setting setting button">
+        <div class="orden-setting setting button">
           {@render mark(entry.id)}
           <span class="name">{entry.label()}</span>
           <button
-            class="nib-glyph revert"
+            class="orden-glyph revert"
             title={t('Put it on the bar')}
             aria-label={t('Put it on the bar')}
             onclick={() => toolbar.add(entry.id)}
@@ -1289,7 +1294,7 @@
   <h3>{t('Questions')}</h3>
   <div class="card">
     {#if glassesKey.set && !replacingKey}
-      <div class="nib-setting setting keyed">
+      <div class="orden-setting setting keyed">
         <span class="name"
           ><span class="what"
             >{t('OpenAI key')}<Hint
@@ -1299,15 +1304,15 @@
         >
         <div class="row">
           <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
-          <button class="nib-chip" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
-          <button class="nib-chip is-quiet" onclick={() => void offered.remove()}
+          <button class="orden-chip" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
+          <button class="orden-chip is-quiet" onclick={() => void offered.remove()}
             >{t('Remove')}</button
           >
         </div>
       </div>
     {:else}
       <!-- svelte-ignore a11y_autofocus -->
-      <label class="nib-setting setting">
+      <label class="orden-setting setting">
         <span class="name"
           ><span class="what"
             >{t('OpenAI key')}<Hint
@@ -1316,7 +1321,7 @@
           ></span
         >
         <input
-          class="nib-field is-value"
+          class="orden-field is-value"
           type="password"
           value=""
           placeholder="sk-"
@@ -1332,7 +1337,7 @@
     {/if}
 
     {#if offered.models.length}
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name"
           ><span class="what"
             >{t('Model')}<Hint
@@ -1340,7 +1345,7 @@
             /></span
           ></span
         >
-        <div class="nib-setting-value">
+        <div class="orden-setting-value">
           <Select
             value={modes.glassesModel}
             options={offered.models.map((one) => ({ value: one, label: one }))}
@@ -1350,7 +1355,7 @@
           />
         </div>
       </div>
-      <div class="nib-setting setting">
+      <div class="orden-setting setting">
         <span class="name"
           ><span class="what"
             >{t('Reasoning')}<Hint
@@ -1358,7 +1363,7 @@
             /></span
           ></span
         >
-        <div class="nib-setting-value">
+        <div class="orden-setting-value">
           <Select
             value={modes.glassesEffort}
             options={EFFORT_WORDS.map((one) => ({ value: one.value, label: t(one.label) }))}
@@ -1380,16 +1385,16 @@
 
 {#snippet appearanceExtras()}
   <div class="card">
-    <div class="nib-setting setting">
+    <div class="orden-setting setting">
       <span class="name">{t('Themes')}</span>
-      <button class="nib-chip" onclick={() => store.show()}>{t('Browse')}</button>
+      <button class="orden-chip" onclick={() => store.show()}>{t('Browse')}</button>
     </div>
   </div>
 
   {#if isDesktop}
     <h3>{t('Custom')}</h3>
     <div class="card">
-      <button class="nib-action" onclick={() => theme.reload()}
+      <button class="orden-action" onclick={() => theme.reload()}
         >{t('Reload themes and custom CSS')}</button
       >
       <BrowserThemes />
@@ -1477,7 +1482,7 @@
     display: none;
   }
 
-  .item .nib-row-label {
+  .item .orden-row-label {
     white-space: normal;
   }
 
@@ -1552,7 +1557,7 @@
     color: var(--muted);
   }
 
-  .setting .nib-segmented {
+  .setting .orden-segmented {
     flex: none;
     min-width: min(var(--setting-value), 100%);
   }
@@ -1632,7 +1637,7 @@
     box-shadow: inset 0 2px 0 var(--accent);
   }
 
-  .body :global(.nib-setting.landed) {
+  .body :global(.orden-setting.landed) {
     border-radius: var(--radius-row);
     background: var(--accent-soft);
     box-shadow: 0 0 0 var(--space-2) var(--accent-soft);
@@ -1793,7 +1798,7 @@
     color: var(--danger);
   }
 
-  .nib-button {
+  .orden-button {
     align-self: flex-start;
   }
 
@@ -2052,8 +2057,8 @@
   }
 
   .sheet.phone .setting + .setting::before,
-  .sheet.phone :global(.nib-action + .setting::before),
-  .sheet.phone :global(.nib-action + .nib-action::before) {
+  .sheet.phone :global(.orden-action + .setting::before),
+  .sheet.phone :global(.orden-action + .orden-action::before) {
     content: '';
     position: absolute;
     top: 0;
@@ -2100,17 +2105,17 @@
     width: 100%;
   }
 
-  .sheet.phone :global(.nib-action) {
+  .sheet.phone :global(.orden-action) {
     position: relative;
     padding: var(--space-2) var(--touch-pad);
     color: var(--accent);
   }
 
-  .sheet.phone :global(.nib-action.is-danger) {
+  .sheet.phone :global(.orden-action.is-danger) {
     color: var(--danger);
   }
 
-  .sheet.phone :global(.nib-action:active:not(:disabled)) {
+  .sheet.phone :global(.orden-action:active:not(:disabled)) {
     background: var(--surface-press);
   }
 
@@ -2144,7 +2149,7 @@
     font-size: var(--touch-text);
   }
 
-  .sheet.phone .nib-button {
+  .sheet.phone .orden-button {
     align-self: stretch;
   }
 </style>

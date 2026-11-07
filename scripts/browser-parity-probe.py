@@ -190,7 +190,7 @@ def go(app: App, tab: str, url: str) -> None:
     time.sleep(2.5)
 
 def history_rows(app: App) -> list[str]:
-    said = app.ask("[...document.querySelectorAll('.history .page .nib-row-label')].map((one) => one.textContent)")
+    said = app.ask("[...document.querySelectorAll('.history .page .orden-row-label')].map((one) => one.textContent)")
     return said if isinstance(said, list) else []
 
 def visits(app: App) -> list[str]:
@@ -212,7 +212,7 @@ def main() -> int:
     port = free_port()
     serve(port)
     site = f"http://127.0.0.1:{port}"
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-browser-parity-spaces-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-browser-parity-spaces-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root)
     made = root / SPACE
     (made / "Read").mkdir(parents=True)
@@ -328,13 +328,13 @@ def main() -> int:
         before = read(app, tab)
         said["before the clearing"] = before
         key(app, "Delete", "Delete", shift=True)
-        dialog = until(lambda: app.ask("!!document.querySelector('.nib-screen [role=switch]')"))
+        dialog = until(lambda: app.ask("!!document.querySelector('.orden-screen [role=switch]')"))
         checks["Ctrl+Shift+Delete opens the dialog"] = dialog is True
         app.ask(
-            "(() => { const all = [...document.querySelectorAll('.nib-screen button')];"
+            "(() => { const all = [...document.querySelectorAll('.orden-screen button')];"
             " const it = all.find((one) => one.textContent.trim() === 'Delete data'); it.click(); return !!it })()"
         )
-        gone = until(lambda: app.ask("!document.querySelector('.nib-screen [role=switch]')"), 30)
+        gone = until(lambda: app.ask("!document.querySelector('.orden-screen [role=switch]')"), 30)
         checks["the dialog closes once the engine has answered"] = gone is True
         go(app, tab, f"{site}/plain")
         after = read(app, tab)

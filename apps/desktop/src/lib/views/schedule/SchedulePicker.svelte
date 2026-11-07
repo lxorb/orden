@@ -187,7 +187,7 @@
 </script>
 
 <div
-  class="nib-scrim catch"
+  class="orden-scrim catch"
   class:is-clear={!phone}
   role="presentation"
   onpointerdown={onclose}
@@ -195,7 +195,7 @@
 ></div>
 <div
   bind:this={layer}
-  class="scheduler nib-layer"
+  class="scheduler orden-layer"
   class:sheet={phone}
   role="dialog"
   aria-label={t('Date')}
@@ -217,9 +217,9 @@
       onfocus={() => (cursor = -1)}
     />
     {#if preview}
-      <button type="button" class="nib-row is-short preview" onclick={() => pick(preview)}>
-        <span class="nib-row-mark"><Glyph icon={Calendar} /></span>
-        <span class="nib-row-label">{previewWords(preview)}</span>
+      <button type="button" class="orden-row is-short preview" onclick={() => pick(preview)}>
+        <span class="orden-row-mark"><Glyph icon={Calendar} /></span>
+        <span class="orden-row-label">{previewWords(preview)}</span>
       </button>
     {/if}
   </div>
@@ -228,7 +228,7 @@
     {#each rows as row, index (row.label)}
       <button
         type="button"
-        class="nib-row is-short"
+        class="orden-row is-short"
         class:is-on={row.day !== null && row.day === due}
         role="menuitem"
         data-row={index}
@@ -236,10 +236,10 @@
         onfocus={() => (cursor = index)}
         onclick={() => choose(row)}
       >
-        <span class="nib-row-mark"><Glyph icon={row.icon} /></span>
-        <span class="nib-row-label">{row.label}</span>
+        <span class="orden-row-mark"><Glyph icon={row.icon} /></span>
+        <span class="orden-row-label">{row.label}</span>
         {#if row.day}
-          <span class="nib-row-meta"
+          <span class="orden-row-meta"
             >{i18n.when(dateAt(row.day), {
               weekday: 'short',
               ...(row.day > addDays(today, 6) ? { day: 'numeric', month: 'short' } : {}),
@@ -255,19 +255,19 @@
       <span class="month-name">{monthName}</span>
       <button
         type="button"
-        class="nib-glyph step"
+        class="orden-glyph step"
         aria-label={t('Previous month')}
         onclick={() => (month = addMonths(month, -1))}><Glyph icon={ChevronLeft} /></button
       >
       <button
         type="button"
-        class="nib-glyph step today-dot"
+        class="orden-glyph step today-dot"
         aria-label={t('Today')}
         onclick={() => (month = `${today.slice(0, 8)}01`)}><span class="dot"></span></button
       >
       <button
         type="button"
-        class="nib-glyph step"
+        class="orden-glyph step"
         aria-label={t('Next month')}
         onclick={() => (month = addMonths(month, 1))}><Glyph icon={ChevronRight} /></button
       >
@@ -343,7 +343,7 @@
         {#if time !== undefined}
           <button
             type="button"
-            class="nib-glyph"
+            class="orden-glyph"
             aria-label={t('No time')}
             onclick={() => keep({ time: null })}><Cross /></button
           >
@@ -353,7 +353,7 @@
         {#each DURATIONS as minutes (minutes)}
           <button
             type="button"
-            class="nib-chip"
+            class="orden-chip"
             class:is-on={duration === minutes}
             aria-pressed={duration === minutes}
             onclick={() => keep({ minutes: duration === minutes ? null : minutes })}
@@ -367,23 +367,23 @@
       {#each REPEATS as kind (kind)}
         <button
           type="button"
-          class="nib-row is-short"
+          class="orden-row is-short"
           class:is-on={repeatKind === kind}
           role="menuitemradio"
           aria-checked={repeatKind === kind}
           onclick={() => pick({ due: repeatDay, recurrence: repeatRule(kind, repeatDay) })}
         >
-          <span class="nib-row-label">{repeatLabel(kind, repeatDay)}</span>
+          <span class="orden-row-label">{repeatLabel(kind, repeatDay)}</span>
         </button>
       {/each}
       {#if recurrence !== undefined}
         <button
           type="button"
-          class="nib-row is-short"
+          class="orden-row is-short"
           role="menuitem"
           onclick={() => pick({ due: repeatDay, recurrence: null })}
         >
-          <span class="nib-row-label">{t('No repeat')}</span>
+          <span class="orden-row-label">{t('No repeat')}</span>
         </button>
       {/if}
     </div>

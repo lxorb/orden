@@ -309,8 +309,8 @@ test('rows of the file explorer dropped on a local terminal are their paths too'
 
   const rows = JSON.stringify(['/etc/hosts', '/tmp/a b'])
   const transfer = {
-    types: ['text/nib-explorer', 'text/plain'],
-    getData: (type: string) => (type === 'text/nib-explorer' ? rows : ''),
+    types: ['text/orden-explorer', 'text/plain'],
+    getData: (type: string) => (type === 'text/orden-explorer' ? rows : ''),
     files: [] as unknown as FileList,
   }
   expect(drop(session, transfer)).toBe(true)

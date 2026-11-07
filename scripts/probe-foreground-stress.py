@@ -242,7 +242,7 @@ def main() -> int:
 
     front = Front()
     runs: list[dict] = []
-    with tempfile.TemporaryDirectory(prefix="nib-front-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="orden-front-") as scratch:
         made: set[str] = set()
         for at, (kind, cold) in enumerate(plan(told.launches)):
             spaces = pathlib.Path(scratch) / kind

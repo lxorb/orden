@@ -355,7 +355,7 @@ def main() -> int:
     port = free_port()
     serve(port)
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-downloads-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-downloads-probe-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     arrive = root / "downloads"
     arrive.mkdir()

@@ -152,8 +152,8 @@ def fresh(browser: Browser, scheme: str) -> Page:
 def open_site(page: Page, name: str) -> None:
     address = f"{DRIVE.origin}/glass/{name}.html"
     page.evaluate("(address) => window.nibApp.workspace.openPage(address)", address)
-    wait_for(page, "document.querySelector('.web .card .nib-button')", f"the {name} card")
-    page.click(".web .card .nib-button")
+    wait_for(page, "document.querySelector('.web .card .orden-button')", f"the {name} card")
+    page.click(".web .card .orden-button")
     wait_for(page, f"document.querySelector('iframe[data-web-tab]')?.src?.endsWith('/glass/{name}.html')", "the frame")
     wait_for(page, "document.querySelector('.webbar.grounded')", f"the {name} page's colour on its bar")
     if name in LATE:

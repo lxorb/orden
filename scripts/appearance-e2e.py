@@ -252,7 +252,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         pane = ran(
             held,
-            "(() => { const rows = [...document.querySelectorAll('.nib-setting')]"
+            "(() => { const rows = [...document.querySelectorAll('.orden-setting')]"
             ".map((one) => one.textContent.replace(/\\s+/g, ' ').trim());"
             " return JSON.stringify(rows.filter((one) => /Frame|Translucency/.test(one))) })()",
         )

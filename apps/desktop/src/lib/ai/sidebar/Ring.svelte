@@ -71,7 +71,7 @@
 {#if bands}
   <div class="ring">
     <button
-      class="nib-glyph knob"
+      class="orden-glyph knob"
       class:warn={bands.warn}
       aria-haspopup="dialog"
       aria-expanded={open}
@@ -95,7 +95,7 @@
 
     {#if open}
       <div
-        class="tray nib-layer"
+        class="tray orden-layer"
         role="dialog"
         aria-label={t('Context')}
         tabindex="-1"
@@ -138,7 +138,7 @@
           <span class="much">≈ {say(bands.next)}</span>
         </div>
         <button
-          class="nib-button is-quiet compact"
+          class="orden-button is-quiet compact"
           disabled={!head?.kept || chat.busy}
           onclick={compact}>{t('Compact now')}</button
         >

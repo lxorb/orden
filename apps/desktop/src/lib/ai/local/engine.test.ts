@@ -224,7 +224,7 @@ describe('a call that asks the reader, in a program’s session', () => {
     await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
 
     raise('edit_note')
-    raise('read_note', 'nib-somebody-else')
+    raise('read_note', 'orden-somebody-else')
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
     raise('read_note')
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({

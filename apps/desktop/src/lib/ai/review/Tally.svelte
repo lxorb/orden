@@ -2,7 +2,7 @@
   const { added, removed }: { added: number; removed: number } = $props()
 </script>
 
-<span class="nib-row-meta tally">
+<span class="orden-row-meta tally">
   {#if added || !removed}<ins>+{added}</ins>{/if}
   {#if removed}<del>−{removed}</del>{/if}
 </span>

@@ -259,7 +259,7 @@
     </button>
   {:else}
     {#if open}
-      <div class="nib-layer panel" style:--pop="{popAt}px">
+      <div class="orden-layer panel" style:--pop="{popAt}px">
         {#if open === 'pen'}
           <CanvasPen {nib} />
         {:else if open === 'rub'}

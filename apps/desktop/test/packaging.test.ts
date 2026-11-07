@@ -167,7 +167,7 @@ esac
       built?: string[]
       held?: string[]
     }) {
-      const at = mkdtempSync(join(tmpdir(), 'nib-prune-'))
+      const at = mkdtempSync(join(tmpdir(), 'orden-prune-'))
       mkdirSync(join(at, 'bin'))
       mkdirSync(join(at, 'scripts'))
       writeFileSync(join(at, 'scripts', 'prune-edge.sh'), repo('scripts', 'prune-edge.sh'))
@@ -276,7 +276,7 @@ esac
   })
 
   test('names every Linux package in the manifest, by its architecture and kind', () => {
-    const at = mkdtempSync(join(tmpdir(), 'nib-manifest-'))
+    const at = mkdtempSync(join(tmpdir(), 'orden-manifest-'))
     for (const [arch, kinds] of [
       ['x64', ['AppImage', 'deb', 'rpm']],
       ['arm64', ['AppImage', 'deb', 'rpm']],
@@ -1077,7 +1077,7 @@ describe('the packaging bump', () => {
   }
 
   test('finds every line it rewrites in the files as committed, and again in what it wrote', () => {
-    const at = mkdtempSync(join(tmpdir(), 'nib-bump-'))
+    const at = mkdtempSync(join(tmpdir(), 'orden-bump-'))
     mkdirSync(join(at, 'scripts'))
     cpSync(join(HERE, 'scripts', 'bump-packaging.mjs'), join(at, 'scripts', 'bump-packaging.mjs'))
     cpSync(ROOT, join(at, 'packaging'), { recursive: true })

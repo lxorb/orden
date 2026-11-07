@@ -230,7 +230,7 @@ def main() -> int:
     shots = pathlib.Path(args.shots)
     shots.mkdir(parents=True, exist_ok=True)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-terminal-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-terminal-"))
     (spaces / SPACE / "inside").mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
     say(f"spaces root {spaces}")
@@ -309,8 +309,8 @@ def main() -> int:
         note = str(spaces / SPACE / "A note.md")
         window.run(
             "(() => { const transfer = new DataTransfer(); "
-            f"transfer.setData('text/nib-path', {json.dumps(note)}); "
-            "const host = document.querySelector('.nib-terminal'); const box = host.getBoundingClientRect(); "
+            f"transfer.setData('text/orden-path', {json.dumps(note)}); "
+            "const host = document.querySelector('.orden-terminal'); const box = host.getBoundingClientRect(); "
             "host.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2, bubbles: true, cancelable: true })); "
             "return true })()"
         )
@@ -344,7 +344,7 @@ def main() -> int:
         cards = until(
             lambda: (lambda said: said if isinstance(said, str) and "New terminal" in said else None)(
                 window.run(
-                    "JSON.stringify([...document.querySelectorAll('[data-new-here] .kind .nib-row-label')]"
+                    "JSON.stringify([...document.querySelectorAll('[data-new-here] .kind .orden-row-label')]"
                     ".map((one) => one.textContent.trim()))"
                 )
             ),
@@ -422,8 +422,8 @@ def main() -> int:
         gone = until(lambda: power not in window.open_tabs(), 15)
         check(bool(gone), "exit in PowerShell closes its own tab")
 
-        window.typed("\x1becho nib-before-restart\r")
-        until(lambda: "nib-before-restart" in window.rows(), 10)
+        window.typed("\x1becho orden-before-restart\r")
+        until(lambda: "orden-before-restart" in window.rows(), 10)
         running = shells_of(app.pid)
         time.sleep(3.0)
         check(close_app(app), "the window closes with a shell running in it, asking nothing")
@@ -451,7 +451,7 @@ def main() -> int:
             first = window.rows()[:1]
             check(bool(first) and first[0].startswith("Restored "), "under a line saying when")
             check(
-                any("nib-before-restart" in row for row in above(window)),
+                any("orden-before-restart" in row for row in above(window)),
                 "and its last lines above that",
             )
 

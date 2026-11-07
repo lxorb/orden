@@ -1,9 +1,9 @@
 import type { Remind } from '@orden/markdown/task-line'
 import type { Entry } from './entry'
 
-export const CHANNEL = 'nib-quick-add'
+export const CHANNEL = 'orden-quick-add'
 
-export const ANSWERING = 'nib-quick-add-answering'
+export const ANSWERING = 'orden-quick-add-answering'
 
 export type Said =
   | { kind: 'hello' }

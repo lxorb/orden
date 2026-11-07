@@ -13,11 +13,11 @@
 <div class="status" class:failed={failed || held !== null} role="status">
   <p>{statusLine(status)}</p>
   {#if held}
-    <button type="button" class="nib-button" onclick={onretry}
+    <button type="button" class="orden-button" onclick={onretry}
       >{held.taken ? t('Take back') : t('Take over')}</button
     >
   {:else if failed}
-    <button type="button" class="nib-button" onclick={onretry}
+    <button type="button" class="orden-button" onclick={onretry}
       >{gone ? t('New online terminal') : t('Try again')}</button
     >
   {:else}

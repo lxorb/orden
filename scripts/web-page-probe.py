@@ -107,7 +107,7 @@ def shortcut(url: str, title: str) -> str:
 
 def space(port: int) -> pathlib.Path:
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-page-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-page-probe-"))
     os.environ["ORDEN_SPACES_DIR"] = str(root)
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     made = root / SPACE
@@ -429,12 +429,12 @@ def main() -> int:
   const size = async (press) => {{
     document.querySelector('.webbar [aria-label="More"]').click()
     const rows = await wait(() => {{
-      const all = [...document.querySelectorAll('.menu .nib-row')]
+      const all = [...document.querySelectorAll('.menu .orden-row')]
       return all.length ? all : null
     }})
     if (press) rows.find((one) => one.textContent.trim() === press)?.click()
     await new Promise((go) => setTimeout(go, 300))
-    const said = [...document.querySelectorAll('.menu .nib-row')].map((one) => one.textContent.trim()).find((one) => one.endsWith('%'))
+    const said = [...document.querySelectorAll('.menu .orden-row')].map((one) => one.textContent.trim()).find((one) => one.endsWith('%'))
     key(window, {{ key: 'Escape' }})
     await new Promise((go) => setTimeout(go, 400))
     return said
@@ -467,7 +467,7 @@ def main() -> int:
     .querySelector(`[data-tab="${{tab.id}}"]`)
     .dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true, cancelable: true, clientX: 200, clientY: 20 }}))
   const row = await wait(() =>
-    [...document.querySelectorAll('.menu .nib-row')].find((one) => one.textContent.includes('Mute site')),
+    [...document.querySelectorAll('.menu .orden-row')].find((one) => one.textContent.includes('Mute site')),
   )
   row?.click()
   const muted = await wait(() => (glyph()?.getAttribute('aria-label') === 'Muted' ? 'Muted' : null), 10000)

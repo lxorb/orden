@@ -59,7 +59,7 @@ SPACE = "Agent harness"
 GRANT: dict[str, Any] = {
     "id": "harness",
     "name": "Harness",
-    "client": "nib-agent-harness",
+    "client": "orden-agent-harness",
     "scopes": [
         "context",
         "notes.read",
@@ -165,7 +165,7 @@ class Probe:
             self.app.kill()
 
 def made_spaces() -> pathlib.Path:
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-harness-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-agent-harness-"))
     space = root / SPACE
     space.mkdir(parents=True)
     (space / "Idea.md").write_text("# Idea\n\nA note to open the space on.\n", encoding="utf-8")
@@ -480,7 +480,7 @@ def scenario_run(args: argparse.Namespace) -> int:
     spaces = made_spaces()
     site = Site()
     _, token = seeded(args.identifier, agents=True)
-    programs = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-harness-ai-"))
+    programs = pathlib.Path(tempfile.mkdtemp(prefix="orden-agent-harness-ai-"))
     probe = Probe(args.exe, args.identifier, spaces, env=stand_in(programs))
     report: dict[str, Any] = {"via": args.via, "exe": str(args.exe), "scenarios": {}}
     failed = 0

@@ -206,7 +206,7 @@ async ([notePath, note, otherPath, other, assetPath, assetData]) => {
 """
 
 ROWS = """() =>
-  [...document.querySelectorAll('.palette .nib-row .nib-row-label')]
+  [...document.querySelectorAll('.palette .orden-row .orden-row-label')]
     .map((row) => row.textContent.trim())
 """
 

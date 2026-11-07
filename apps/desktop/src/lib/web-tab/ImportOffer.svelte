@@ -80,7 +80,7 @@
     <span class="browsers">
       {#each offered as one (one.id)}
         <button
-          class="nib-chip"
+          class="orden-chip"
           type="button"
           disabled={migrating.working}
           aria-busy={migrating.working}
@@ -98,7 +98,7 @@
       {/each}
     </span>
     <button
-      class="nib-glyph"
+      class="orden-glyph"
       type="button"
       aria-label={t('No thanks')}
       title={t('No thanks')}

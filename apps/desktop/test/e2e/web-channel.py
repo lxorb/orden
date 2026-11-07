@@ -20,7 +20,7 @@ PATIENCE = 60
 ROOT = harness.APP.parent.parent
 
 MARK = "header .channel"
-ROW = ".sheet .nib-segmented[aria-label='Web version']"
+ROW = ".sheet .orden-segmented[aria-label='Web version']"
 
 def wait(page: Page, script: str, what: str) -> object:
     until = time.monotonic() + PATIENCE
@@ -33,7 +33,7 @@ def wait(page: Page, script: str, what: str) -> object:
 
 def both_builds(worker: harness.Worker) -> Path:
     worker.prepare()
-    edge = Path(tempfile.mkdtemp(prefix="nib-web-edge-")) / "dist"
+    edge = Path(tempfile.mkdtemp(prefix="orden-web-edge-")) / "dist"
     DRIVE.later(lambda: shutil.rmtree(edge.parent, ignore_errors=True))
     said = os.environ.get("VITE_ORDEN_CHANNEL")
     os.environ["VITE_ORDEN_CHANNEL"] = "unstable"
@@ -45,7 +45,7 @@ def both_builds(worker: harness.Worker) -> Path:
         else:
             os.environ["VITE_ORDEN_CHANNEL"] = said
 
-    folder = Path(tempfile.mkdtemp(prefix="nib-web-channel-")) / "dist"
+    folder = Path(tempfile.mkdtemp(prefix="orden-web-channel-")) / "dist"
     DRIVE.later(lambda: shutil.rmtree(folder.parent, ignore_errors=True))
     shutil.copytree(harness.WORKER_DIST, folder)
     done = subprocess.run(

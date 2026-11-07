@@ -80,7 +80,7 @@ class Mcp:
 
     PROTOCOL = "2025-06-18"
 
-    CLIENT = "nib-agent-harness"
+    CLIENT = "orden-agent-harness"
 
     def __init__(self, process: subprocess.Popen[bytes]) -> None:
         self.process = process

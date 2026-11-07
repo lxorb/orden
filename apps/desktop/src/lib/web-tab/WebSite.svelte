@@ -110,7 +110,7 @@
 
 <div
   bind:this={bubble}
-  class="site nib-bubble is-pressable"
+  class="site orden-bubble is-pressable"
   role="dialog"
   aria-label={shownSite(site)}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
@@ -126,7 +126,7 @@
 
   {#if https}
     <button
-      class="nib-button is-quiet how"
+      class="orden-button is-quiet how"
       class:risky={!secure}
       aria-expanded={showingCertificate}
       onclick={() => (showingCertificate = !showingCertificate)}
@@ -149,7 +149,7 @@
           {#each certificate.chain as link, index (index)}
             <li style:--depth={index}>
               <button
-                class="nib-button is-quiet"
+                class="orden-button is-quiet"
                 class:chosen={index === at}
                 aria-pressed={index === at}
                 data-role={role(link, index)}
@@ -194,7 +194,7 @@
         <li>
           <span>{NAMES[ask]()}</span>
           <button
-            class="nib-button is-quiet"
+            class="orden-button is-quiet"
             onclick={() =>
               grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}
           >
@@ -205,7 +205,7 @@
     </ul>
 
     <button
-      class="nib-button is-quiet reset"
+      class="orden-button is-quiet reset"
       onclick={() => {
         grants.forget(site, privately)
         onclose()

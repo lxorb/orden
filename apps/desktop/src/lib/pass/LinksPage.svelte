@@ -76,7 +76,7 @@
   <section class="links" aria-label={t('Secure links')} data-scrolls>
     <header class="head">
       <h2 class="title">{t('Secure links')}</h2>
-      <button class="nib-chip" type="button" disabled={busy || expired === 0} onclick={sweep}
+      <button class="orden-chip" type="button" disabled={busy || expired === 0} onclick={sweep}
         >{t('Remove all expired links')}</button
       >
     </header>
@@ -91,7 +91,7 @@
         {#each rows as link (link.id)}
           {@const item = itemOf(link)}
           {@const over = isExpired(link, now)}
-          <div class="nib-setting row" role="listitem" data-link={link.id} class:is-over={over}>
+          <div class="orden-setting row" role="listitem" data-link={link.id} class:is-over={over}>
             {#if item}<ItemMark content={item.content} />{/if}
             <span class="what">
               <span class="name"
@@ -104,7 +104,7 @@
               </span>
             </span>
             <button
-              class="nib-glyph"
+              class="orden-glyph"
               type="button"
               disabled={busy}
               aria-label={t('Remove link')}

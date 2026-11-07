@@ -7,7 +7,7 @@
 
 {#each numbers.worn as one (one.id)}
   <span
-    class="nib-keytip numeral"
+    class="orden-keytip numeral"
     style:translate="{one.x}px {one.y}px"
     aria-hidden="true"
     in:keytipIn

@@ -14,7 +14,7 @@
 
 {#if card}
   <div
-    class="nib-bubble card"
+    class="orden-bubble card"
     class:sliding={card.sliding}
     style:translate="{card.x}px {card.y}px"
     aria-hidden="true"
@@ -29,7 +29,7 @@
             {#if card.where}<span class="site">{card.where}</span>{/if}
             {#if card.from}
               <span class="from">
-                <span class="nib-badge mark"><SpaceMark {...card.from} /></span>
+                <span class="orden-badge mark"><SpaceMark {...card.from} /></span>
                 <span class="site">{card.from.name}</span>
               </span>
             {/if}

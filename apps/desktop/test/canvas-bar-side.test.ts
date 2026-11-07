@@ -10,7 +10,7 @@ describe('the canvas bar against a side', () => {
     )?.[1] ?? ''
 
   test('has the panel before the bar', () => {
-    expect(svelte.indexOf('class="nib-layer panel"')).toBeLessThan(svelte.indexOf('class="bar"'))
+    expect(svelte.indexOf('class="orden-layer panel"')).toBeLessThan(svelte.indexOf('class="bar"'))
   })
 
   test('opens the panel to the right of a bar on the left, and to the left of one on the right', () => {

@@ -1,7 +1,7 @@
 import type { PadDisk } from './sync'
 import { heldDatabase } from '../held-database'
 
-const NAME = 'nib-pad'
+const NAME = 'orden-pad'
 const KEPT = 'kept'
 
 function settled<T>(request: IDBRequest<T>): Promise<T> {

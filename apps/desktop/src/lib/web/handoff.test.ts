@@ -157,7 +157,7 @@ describe('the new address, given it', () => {
 
   test('makes a database it did not have, stores and indexes as they were', async () => {
     at(before)
-    const old = await opened('nib-pictures', 3, (db) => {
+    const old = await opened('orden-pictures', 3, (db) => {
       db.createObjectStore('kept', { keyPath: 'id' }).createIndex('by', 'at', { unique: true })
     })
     await write(old, 'kept', { id: 'a', at: 5 })
@@ -167,7 +167,7 @@ describe('the new address, given it', () => {
     at(now)
     await unpack(handoff)
 
-    const made = await opened('nib-pictures', 3, () => undefined)
+    const made = await opened('orden-pictures', 3, () => undefined)
     expect(made.version).toBe(3)
     const index = made.transaction('kept').objectStore('kept').index('by')
     expect(index.unique).toBe(true)

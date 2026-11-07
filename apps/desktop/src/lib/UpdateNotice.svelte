@@ -93,19 +93,19 @@
     {/await}
 
     <div class="actions">
-      <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+      <button class="orden-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
     </div>
   {:else if system}
     <p>{t('Orden {version} is available.', { version })}</p>
 
     <div class="actions">
-      <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
-      <button class="nib-button" disabled={restarting} onclick={restart}>{t('Update')}</button>
+      <button class="orden-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+      <button class="orden-button" disabled={restarting} onclick={restart}>{t('Update')}</button>
     </div>
   {:else if news}
     <p>{t('Orden {version} is available.', { version })}</p>
     <button
-      class="nib-glyph shut"
+      class="orden-glyph shut"
       aria-label={t('Dismiss')}
       title={t('Dismiss')}
       onclick={ondismiss}
@@ -116,8 +116,8 @@
     <p>{t('Orden {version} is ready to install.', { version })}</p>
 
     <div class="actions">
-      <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
-      <button class="nib-button" disabled={restarting} onclick={restart}
+      <button class="orden-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+      <button class="orden-button" disabled={restarting} onclick={restart}
         >{moving ? t('Move to Applications') : t('Restart now')}</button
       >
     </div>
@@ -165,7 +165,7 @@
     flex: none;
   }
 
-  .nib-button {
+  .orden-button {
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-sm);
   }
@@ -183,7 +183,7 @@
     justify-content: flex-end;
   }
 
-  :global([data-touch]) .nib-button {
+  :global([data-touch]) .orden-button {
     min-height: var(--touch-target);
     padding: 0 var(--space-4);
   }

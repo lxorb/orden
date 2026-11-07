@@ -17,7 +17,7 @@
 
 <svelte:window onpointerdown={outside} />
 
-<span class="explain nib-mark nib-hint" bind:this={host}
+<span class="explain orden-mark orden-hint" bind:this={host}
   >&#8288;<button
     type="button"
     aria-label={text}
@@ -48,7 +48,7 @@
 
   {#if open}
     <span
-      class="nib-bubble sentence"
+      class="orden-bubble sentence"
       aria-hidden="true"
       use:hang={{ side: 'below', gap: 6, inset: -3 }}
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}>{text}</span
@@ -61,12 +61,12 @@
     position: relative;
   }
 
-  :global(:has(> .nib-hint)) {
+  :global(:has(> .orden-hint)) {
     --mark-gap: 5px;
     --mark-size: 16px;
   }
 
-  :global([data-touch] :has(> .nib-hint)) {
+  :global([data-touch] :has(> .orden-hint)) {
     --mark-size: var(--touch-icon);
   }
 

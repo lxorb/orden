@@ -233,7 +233,7 @@ mod tests {
     #[test]
     fn a_kept_picture_lies_in_its_folder_and_old_ones_go() {
         let folder =
-            std::env::temp_dir().join(format!("nib-terminal-pictures-{}", std::process::id()));
+            std::env::temp_dir().join(format!("orden-terminal-pictures-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
 
         let path = kept(&folder, "nib-0011223344556677.png", &[1, 2, 3]).expect("kept");

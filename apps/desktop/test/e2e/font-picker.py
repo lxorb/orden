@@ -8,7 +8,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 def row_input(page: Page, name: str):
-    return page.locator('[role="dialog"][aria-label="Settings"] .nib-setting', has_text=name).locator("input")
+    return page.locator('[role="dialog"][aria-label="Settings"] .orden-setting', has_text=name).locator("input")
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 860})

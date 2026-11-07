@@ -51,7 +51,7 @@
   <div class="poll">
     <!-- svelte-ignore a11y_autofocus -->
     <input
-      class="nib-field"
+      class="orden-field"
       bind:value={question}
       maxlength={LONGEST_QUESTION}
       placeholder={t('Question')}
@@ -60,7 +60,7 @@
     />
     {#each answers as answer, index (index)}
       <input
-        class="nib-field"
+        class="orden-field"
         value={answer}
         maxlength={LONGEST_ANSWER}
         placeholder={t('Answer')}
@@ -79,9 +79,9 @@
       onclick={() => (several = !several)}
     >
       <span>{t('Several answers')}</span>
-      <span class="nib-switch" class:on={several} aria-hidden="true"></span>
+      <span class="orden-switch" class:on={several} aria-hidden="true"></span>
     </button>
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Poll')} use:segmented>
+    <div class="orden-segmented" role="radiogroup" aria-label={t('Poll')} use:segmented>
       {#each ENDS as one (one.label)}
         <button
           type="button"
@@ -91,7 +91,7 @@
         >
       {/each}
     </div>
-    <button type="button" class="nib-button send" disabled={!ready} onclick={send}
+    <button type="button" class="orden-button send" disabled={!ready} onclick={send}
       >{t('Send')}</button
     >
   </div>

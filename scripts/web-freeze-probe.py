@@ -220,7 +220,7 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
 
 def spaces_root() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-freeze-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-freeze-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made

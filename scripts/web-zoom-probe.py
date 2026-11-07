@@ -77,7 +77,7 @@ PRELUDE = r"""
 const menuSize = async () => {
   document.querySelector('.webbar [aria-label="More"]').click()
   const rows = await wait(() => {
-    const all = [...document.querySelectorAll('.menu .nib-row')]
+    const all = [...document.querySelectorAll('.menu .orden-row')]
     return all.length ? all : null
   })
   const said = (rows ?? []).map((one) => one.textContent.trim()).find((one) => one.endsWith('%'))
@@ -112,7 +112,7 @@ def main() -> int:
     home = f"http://127.0.0.1:{port}"
     other = f"http://localhost:{port}"
 
-    root = pathlib.Path(tempfile.mkdtemp(prefix="nib-zoom-probe-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="orden-zoom-probe-"))
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     os.environ["ORDEN_SPACES_DIR"] = str(root)
     made = root / SPACE
@@ -239,7 +239,7 @@ def main() -> int:
         try:
             tools.call(
                 "Runtime.evaluate",
-                {"expression": "open('about:blank', 'nib-actual-size'), 1", "userGesture": True},
+                {"expression": "open('about:blank', 'orden-actual-size'), 1", "userGesture": True},
             )
         finally:
             tools.close()

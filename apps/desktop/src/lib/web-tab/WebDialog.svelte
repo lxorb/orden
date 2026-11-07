@@ -32,7 +32,7 @@
 </script>
 
 <div
-  class="dialog nib-bubble is-pressable"
+  class="dialog orden-bubble is-pressable"
   role="alertdialog"
   aria-label={dialog.site}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
@@ -56,18 +56,18 @@
         dialogs.answer(dialog, true, text)
       }}
     >
-      <input class="nib-field" bind:this={field} bind:value={text} spellcheck="false" />
+      <input class="orden-field" bind:this={field} bind:value={text} spellcheck="false" />
     </form>
   {/if}
 
   <div class="rows">
     {#if dialog.kind !== 'alert'}
-      <button class="nib-button is-quiet" onclick={() => dialogs.answer(dialog, false)}>
+      <button class="orden-button is-quiet" onclick={() => dialogs.answer(dialog, false)}>
         {t('Cancel')}
       </button>
     {/if}
     <button
-      class="nib-button"
+      class="orden-button"
       bind:this={answering}
       onclick={() => dialogs.answer(dialog, true, text)}
     >
@@ -122,7 +122,7 @@
     margin: var(--space-1) 0 0;
   }
 
-  form .nib-field {
+  form .orden-field {
     width: 100%;
   }
 

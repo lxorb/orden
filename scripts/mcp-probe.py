@@ -71,8 +71,8 @@ from probe_app import (
 PORT_FROM = 23600
 PORT_TO = 23639
 
-CLIENT = {"name": "nib-mcp-probe", "title": "MCP probe", "version": "1"}
-REFUSED = {"name": "nib-mcp-probe-refused", "title": "MCP probe refused", "version": "1"}
+CLIENT = {"name": "orden-mcp-probe", "title": "MCP probe", "version": "1"}
+REFUSED = {"name": "orden-mcp-probe-refused", "title": "MCP probe refused", "version": "1"}
 CLAUDE = {"name": "claude-code", "title": "Claude Code", "version": "probe"}
 
 PROTOCOL = "2025-06-18"
@@ -408,7 +408,7 @@ class Drive:
         tools = mcp.tools()
         self.check("the grant's tools after the Allow", "browser_snapshot" in tools and "browser_open" in tools, f"{len(tools)} tools")
         self.check("scripts not granted, not listed", "browser_evaluate" not in tools)
-        kept = self.folder / "agents" / "clients" / "nib-mcp-probe"
+        kept = self.folder / "agents" / "clients" / "orden-mcp-probe"
         self.check("the token is kept under the client's name", kept.is_file())
 
         hwnd = main_window(pid)
@@ -541,7 +541,7 @@ class Drive:
         said = text(mcp.call("agent_status"))
         self.check("only agent_status is left", tools == ["agent_status"], str(tools))
         self.check("and it says why", "removed" in said, said)
-        self.check("the kept token is gone", not (self.folder / "agents" / "clients" / "nib-mcp-probe").exists())
+        self.check("the kept token is gone", not (self.folder / "agents" / "clients" / "orden-mcp-probe").exists())
 
     def denied(self) -> None:
         print("denied: Don't allow", flush=True)
@@ -576,7 +576,7 @@ class Drive:
         self.check("paired as Claude Code", paired)
         pre.close()
 
-        room = pathlib.Path(tempfile.mkdtemp(prefix="nib-mcp-claude-"))
+        room = pathlib.Path(tempfile.mkdtemp(prefix="orden-mcp-claude-"))
         add = [
             claude, "mcp", "add", "--scope", "project", "nib",
             "-e", f"{OFF_SCREEN}=1", "-e", f"ORDEN_SPACES_DIR={self.env['ORDEN_SPACES_DIR']}",
@@ -632,7 +632,7 @@ def main() -> int:
         raise SystemExit("the probe is running already: this drive starts it through nib mcp")
     fresh(folder)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-mcp-probe-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-mcp-probe-"))
     (spaces / "MCP probe").mkdir()
     (spaces / "MCP probe" / "Plan.md").write_text("# Plan\n\nShip the thing.\n", encoding="utf-8")
     port = free_port()

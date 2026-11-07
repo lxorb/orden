@@ -12,9 +12,9 @@ const entry = (path: string, is_dir = false) => {
 }
 
 function drop(paths: string[]) {
-  const words: Record<string, string> = { 'text/nib-paths': JSON.stringify(paths) }
+  const words: Record<string, string> = { 'text/orden-paths': JSON.stringify(paths) }
   const transfer = {
-    types: paths.length ? ['text/nib-path'] : [],
+    types: paths.length ? ['text/orden-path'] : [],
     getData: (one: string) => words[one] ?? '',
   }
   const event = { dataTransfer: transfer, preventDefault: vi.fn() }
@@ -39,7 +39,7 @@ test('a note and a folder dropped on the panel are chips, each once', () => {
 
 test('a web tab let go of on the panel is its page', () => {
   workspace.tabs = [{ id: 'w', shown: 'Svelte' }] as never
-  const getData = (one: string) => (one === 'text/nib-tab' ? 'w' : '')
+  const getData = (one: string) => (one === 'text/orden-tab' ? 'w' : '')
   dropRows({ dataTransfer: { types: [], getData }, preventDefault: vi.fn() } as never)
   expect(chat.chips).toContainEqual({ kind: 'tab', id: 'w', label: 'Svelte', word: 'tab' })
 })

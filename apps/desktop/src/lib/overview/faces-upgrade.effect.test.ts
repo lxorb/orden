@@ -6,7 +6,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 function writtenBefore(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib-overview-faces', 1)
+    const request = indexedDB.open('orden-overview-faces', 1)
     request.onupgradeneeded = () => request.result.createObjectStore('face')
     request.onerror = () => reject(request.error ?? new Error('not opened'))
     request.onsuccess = () => {

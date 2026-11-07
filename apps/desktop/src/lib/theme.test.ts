@@ -857,8 +857,8 @@ describe('an accent the first look gave', () => {
   })
 })
 
-const DIALLED = `:root { --nib-setting-warmth: range "Warmth" 0 100 40 %; }`
-const WARMTH = { '--nib-setting-warmth': 'range "Warmth" 0 100 40 %' }
+const DIALLED = `:root { --orden-setting-warmth: range "Warmth" 0 100 40 %; }`
+const WARMTH = { '--orden-setting-warmth': 'range "Warmth" 0 100 40 %' }
 
 describe('the settings a theme offers', () => {
   test('are the app’s own on a theme that brings no palette of its own', () => {
@@ -929,7 +929,7 @@ describe('the settings a theme offers', () => {
 
     expect(theme.settings.map((one) => one.id)).toEqual(['accent', 'warmth'])
     expect(theme.values.warmth).toBe(40)
-    expect(painted['--nib-warmth']).toBe('40%')
+    expect(painted['--orden-warmth']).toBe('40%')
   })
 
   test('are kept when the theme is switched away from, and found again when it is back', async () => {
@@ -942,12 +942,12 @@ describe('the settings a theme offers', () => {
 
     theme.select('default')
     await settled()
-    expect(painted['--nib-warmth']).toBeUndefined()
+    expect(painted['--orden-warmth']).toBeUndefined()
 
     theme.select('file:warm')
     await settled(() => theme.settings.length > 1)
     expect(theme.values.warmth).toBe(75)
-    expect(painted['--nib-warmth']).toBe('75%')
+    expect(painted['--orden-warmth']).toBe('75%')
   })
 
   test('and a setting the theme has stopped offering is simply not read', async () => {
@@ -966,7 +966,7 @@ describe('the settings a theme offers', () => {
     await settled(() => theme.settings.length === 1)
 
     expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
-    expect(painted['--nib-warmth']).toBeUndefined()
+    expect(painted['--orden-warmth']).toBeUndefined()
 
     folder.files.clear()
     installed('warm', 'Warm', DIALLED)
@@ -1170,7 +1170,7 @@ describe('a dial being dragged', () => {
     const before = kept.getItem('orden:theme-settings')
 
     theme.try('dim', 55)
-    expect(painted['--nib-dim']).toBe('55%')
+    expect(painted['--orden-dim']).toBe('55%')
     expect(theme.values.dim).toBe(55)
     expect(theme.previewing).toBe(true)
     expect(kept.getItem('orden:theme-settings')).toBe(before)
@@ -1223,7 +1223,7 @@ describe('the wallpaper theme', () => {
     await settled(() => injected().startsWith(wallpaperCss))
 
     expect(injected()).not.toContain('--wallpaper-picture:')
-    expect(injected()).toContain('--nib-dim: 10%;')
+    expect(injected()).toContain('--orden-dim: 10%;')
     expect(wallpaperCss).not.toMatch(/--accent\s*:/)
     expect(theme.accentIsTheme).toBe(false)
   })
@@ -1287,7 +1287,7 @@ describe('the wallpaper theme', () => {
     expect(theme.settings.map((one) => one.id)).toEqual(['accent', ...DIALS])
     expect(theme.settings.filter((one) => one.own === true).map((one) => one.id)).toEqual(DIALS)
     theme.set('dim', 35)
-    expect(painted['--nib-dim']).toBe('35%')
+    expect(painted['--orden-dim']).toBe('35%')
     expect(theme.keptFor('wallpaper', 'dim')).toBe(35)
   })
 })

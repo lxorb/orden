@@ -72,10 +72,10 @@
   }
 </script>
 
-<span class="picker nib-setting-value" bind:this={host}>
+<span class="picker orden-setting-value" bind:this={host}>
   <input
     bind:this={field}
-    class="nib-field is-value"
+    class="orden-field is-value"
     type="text"
     role="combobox"
     aria-expanded={open}
@@ -103,7 +103,7 @@
   />
 
   {#if open && shown.length}
-    <ul id={`${id}-list`} class="nib-layer list" role="listbox" aria-label={label}>
+    <ul id={`${id}-list`} class="orden-layer list" role="listbox" aria-label={label}>
       {#each shown as one, at (one.name)}
         <li
           id={`${id}-${at}`}

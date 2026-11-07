@@ -15,7 +15,7 @@ SCALE = 2
 ARABIC = {"Noto Naskh Arabic", "Noto Naskh Arabic UI", "Geeza Pro", "Segoe UI", "Noto Sans Arabic", "Tahoma"}
 
 LABELS = [
-    ("a segmented button", ".sheet .nib-segmented button"),
+    ("a segmented button", ".sheet .orden-segmented button"),
     ("a pane in Settings", ".sheet nav button"),
 ]
 

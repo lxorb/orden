@@ -88,7 +88,7 @@
 
 {#if name !== undefined}
   <input
-    class="nib-field"
+    class="orden-field"
     value={name}
     aria-label={t('Name')}
     onchange={(event) => rename(event.currentTarget.value)}
@@ -96,7 +96,7 @@
 {/if}
 <input
   bind:this={field}
-  class="nib-field expression"
+  class="orden-field expression"
   class:wrong={!reads}
   value={typed}
   aria-label={t('Formula')}
@@ -120,7 +120,7 @@
     {#each offers as offer (offer)}
       <button
         type="button"
-        class="nib-chip offer"
+        class="orden-chip offer"
         onmousedown={(event) => event.preventDefault()}
         onclick={() => take(offer)}>{offer}</button
       >

@@ -153,7 +153,7 @@
   <div class="cards">
     <div class="card is-first" class:is-bad={found.compromised.length > 0}>
       <button
-        class="nib-row press"
+        class="orden-row press"
         type="button"
         disabled={!found.compromised.length}
         onclick={() => opened('compromised', found.compromised)}
@@ -178,9 +178,9 @@
         {/if}
       </button>
       {#if !pass.settings.checkBreaches}
-        <button class="nib-button check" type="button" onclick={turnOn}>{t('Check')}</button>
+        <button class="orden-button check" type="button" onclick={turnOn}>{t('Check')}</button>
       {:else if wrong}
-        <button class="nib-chip check" type="button" onclick={() => void check()}>
+        <button class="orden-chip check" type="button" onclick={() => void check()}>
           {t('Try again')}
         </button>
       {/if}
@@ -189,7 +189,7 @@
     {#each cards as card (card.flag)}
       <div class="card" class:is-bad={card.ids.length > 0 && card.flag !== 'excluded'}>
         <button
-          class="nib-row press"
+          class="orden-row press"
           type="button"
           data-flag={card.flag}
           disabled={!card.ids.length}
@@ -207,7 +207,7 @@
     {/each}
   </div>
 
-  <h3 class="nib-section">{t('Dark web monitoring')}</h3>
+  <h3 class="orden-section">{t('Dark web monitoring')}</h3>
   <div class="card dark">
     <div class="press is-static">
       <span class="mark"><Glyph icon={Radar} /></span>
@@ -219,20 +219,20 @@
     {#if keyRead && key === ''}
       <form class="key" onsubmit={keptKey}>
         <input
-          class="nib-field is-value"
+          class="orden-field is-value"
           type="password"
           autocomplete="off"
           placeholder={t('API key')}
           aria-label={t('API key')}
           bind:value={typedKey}
         />
-        <button class="nib-button" type="submit" disabled={!typedKey.trim()}>{t('Save')}</button>
+        <button class="orden-button" type="submit" disabled={!typedKey.trim()}>{t('Save')}</button>
       </form>
     {:else if key !== ''}
       <div class="emails">
         {#each emails as email (email)}
           {@const said = breaches[email]}
-          <div class="nib-setting email">
+          <div class="orden-setting email">
             <span class="name">{email}</span>
             {#if typeof said === 'string'}
               <span class="text bad">{said}</span>
@@ -248,11 +248,11 @@
           <p class="quiet">{t('No email addresses in your logins')}</p>
         {/each}
         <div class="buttons">
-          <button class="nib-button is-quiet" type="button" onclick={() => void forgetKey()}
+          <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}
             >{t('Remove key')}</button
           >
           <button
-            class="nib-button"
+            class="orden-button"
             type="button"
             disabled={!emails.length}
             onclick={() => void lookUp()}>{t('Check')}</button
@@ -365,7 +365,7 @@
     align-self: flex-start;
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-5) 0 var(--space-2);
   }
 

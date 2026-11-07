@@ -117,7 +117,7 @@ def main() -> int:
     parsed.add_argument("--most", type=float, default=3.0)
     args = parsed.parse_args()
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-tools-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-tools-"))
     (spaces / "Tools probe").mkdir(parents=True, exist_ok=True)
     (spaces / "Tools probe" / "A note.md").write_text("# A note\n", encoding="utf-8")
     environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}

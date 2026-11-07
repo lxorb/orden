@@ -92,7 +92,7 @@ describe('the look of things the browser also has an opinion about', () => {
     )
 
     expect(themed.length).toBeGreaterThan(4)
-    expect(loud, `these beat .nib-scrolls::-webkit-scrollbar: ${loud.join(', ')}`).toEqual([])
+    expect(loud, `these beat .orden-scrolls::-webkit-scrollbar: ${loud.join(', ')}`).toEqual([])
   })
 
   test('no component restyles a dropdown on its own', () => {
@@ -193,7 +193,7 @@ describe('the paper a note is written on', () => {
 })
 
 describe('what a side shows', () => {
-  const FLOATING = ['nib-layer', 'nib-screen', 'nib-bubble']
+  const FLOATING = ['orden-layer', 'orden-screen', 'orden-bubble']
   const sidebar = readFileSync(join(SOURCE, 'lib/Sidebar.svelte'), 'utf8')
   const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
   const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {

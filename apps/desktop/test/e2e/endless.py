@@ -66,9 +66,9 @@ A block that makes a frame of its own to run what it says:
 
 <div id="nested">nothing yet</div>
 <script>
-const own = [...document.scripts].find((one) => !one.type && one !== document.currentScript && one.textContent.includes('nib-frame'))
+const own = [...document.scripts].find((one) => !one.type && one !== document.currentScript && one.textContent.includes('orden-frame'))
 const child = document.createElement('iframe')
-child.srcdoc = '<script type="text/plain" id="nib-frame">while (true) {}</' + 'script><script>' + own.textContent + '</' + 'script>'
+child.srcdoc = '<script type="text/plain" id="orden-frame">while (true) {}</' + 'script><script>' + own.textContent + '</' + 'script>'
 document.body.append(child)
 document.getElementById('nested').textContent = 'made a frame'
 </script>
@@ -141,7 +141,7 @@ def fence(page: Page) -> None:
     if not answers(page, "while the fence ran"):
         return
     typed_lands(page, " typed while it ran")
-    lines = page.evaluate("() => [...document.querySelectorAll('.nib-run-line')].map((one) => one.textContent)")
+    lines = page.evaluate("() => [...document.querySelectorAll('.orden-run-line')].map((one) => one.textContent)")
     say(f"[fence] while it runs: {json.dumps(lines)}")
     if not any("started" in (line or "") for line in lines):
         wrong("the fence printed nothing before its loop")
@@ -150,7 +150,7 @@ def fence(page: Page) -> None:
         DRIVE.wait_for(
             page,
             "!document.querySelector('iframe[title=\"nib runner\"]')"
-            " && /tim/i.test(document.querySelector('.nib-run-state')?.textContent ?? '')",
+            " && /tim/i.test(document.querySelector('.orden-run-state')?.textContent ?? '')",
             "the run to be stopped as timed out",
             30,
         )

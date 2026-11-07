@@ -20,10 +20,10 @@
 
 {#if crashReports.asking}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={go}></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={go}></div>
 
   <div
-    class="nib-screen is-centred sheet"
+    class="orden-screen is-centred sheet"
     use:trap
     role="dialog"
     aria-modal="true"
@@ -31,10 +31,10 @@
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <label class="tick">
-      <input type="checkbox" class="nib-checkbox" bind:checked={sending} />
+      <input type="checkbox" class="orden-checkbox" bind:checked={sending} />
       <span>{words}</span>
     </label>
-    <button type="button" class="nib-button" data-lands onclick={go}>{t('Continue')}</button>
+    <button type="button" class="orden-button" data-lands onclick={go}>{t('Continue')}</button>
   </div>
 {/if}
 

@@ -7,7 +7,7 @@ expect="$3"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
 support="$HOME/Library/Application Support/ch.emilvinu.nib"
 endpoint="$support/automation.json"
-mount="/tmp/nib-image-$where"
+mount="/tmp/orden-image-$where"
 
 hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$dmg" >/dev/null
 source_app="$(find "$mount" -maxdepth 1 -name '*.app' | head -1)"
@@ -96,7 +96,7 @@ echo "notice: $notice"
 case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; logs; quit_app; exit 1 ;; esac
 
 log_before="$(ls -t "$HOME/Library/Logs/ch.emilvinu.nib" 2>/dev/null | head -1)"
-say_eval "[...document.querySelectorAll('.notice .nib-button')].at(-1).click(), 'pressed'"
+say_eval "[...document.querySelectorAll('.notice .orden-button')].at(-1).click(), 'pressed'"
 
 for _ in $(seq 60); do running "$app" || break; sleep 1; done
 back=no

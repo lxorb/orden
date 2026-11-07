@@ -211,11 +211,11 @@ def over_a_drawing(browser: Browser) -> None:
 
         page.locator(CARD).tap()
         page.evaluate("() => { window.nibApp.viewport.keyboard = 300; window.nibApp.viewport.typing = true }")
-        wait_for(page, "document.querySelector('.nib-bar.docked')", f"the strip over the keyboard on a {kind}")
+        wait_for(page, "document.querySelector('.orden-bar.docked')", f"the strip over the keyboard on a {kind}")
         page.keyboard.type("Pad words")
         page.keyboard.press("Home")
         page.keyboard.press("Shift+End")
-        bold = page.locator(".nib-bar.docked button[aria-label='Bold']").first
+        bold = page.locator(".orden-bar.docked button[aria-label='Bold']").first
         if bold.count():
             bold.tap()
             page.wait_for_timeout(300)

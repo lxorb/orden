@@ -16,7 +16,7 @@ SEED = """async (names) => {
 PATHS = "() => window.nibApp.workspace.notes.map((one) => one.path.split('/').slice(-2).join('/')).sort()"
 ROWS = """() => [...document.querySelectorAll('aside:not(.right) .row')]
   .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
-  .map((one) => one.querySelector('.nib-row-label').textContent.trim())"""
+  .map((one) => one.querySelector('.orden-row-label').textContent.trim())"""
 
 def row(page: Page, name: str):
     return page.locator("aside:not(.right) .row", has_text=name).first

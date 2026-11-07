@@ -39,7 +39,7 @@ def toggling(page: Page, scheme: str) -> None:
     page.keyboard.type("deselect all")
     page.wait_for_timeout(200)
     hint = page.evaluate(
-        "() => [...document.querySelectorAll('.palette .nib-row')].find((one) => one.textContent.includes('Deselect all tabs'))?.querySelector('kbd')?.textContent ?? null"
+        "() => [...document.querySelectorAll('.palette .orden-row')].find((one) => one.textContent.includes('Deselect all tabs'))?.querySelector('kbd')?.textContent ?? null"
     )
     say(f"[{scheme}] the Deselect all tabs row wears {hint!r}")
     key = "⇧⌘D" if harness.WEBKIT else "Ctrl+Shift+D"

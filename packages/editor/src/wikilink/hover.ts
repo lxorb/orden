@@ -73,15 +73,15 @@ export const notePreviews = hoverTooltip(
 function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
   return (view: EditorView): TooltipView => {
     const dom = document.createElement('div')
-    dom.className = 'nib-note-preview'
+    dom.className = 'orden-note-preview'
 
     const name = document.createElement('div')
-    name.className = 'nib-note-preview-name'
+    name.className = 'orden-note-preview-name'
     name.textContent = linkTarget(link)
     dom.append(name)
 
     const body = document.createElement('div')
-    body.className = 'nib-note-preview-body nib-write'
+    body.className = 'orden-note-preview-body orden-write'
     body.textContent = label('loadingNote')
     dom.append(body)
 

@@ -136,7 +136,7 @@ def main() -> int:
 
     for folder in (config_dir(told.identifier), local_dir(told.identifier)):
         shutil.rmtree(folder, ignore_errors=True)
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-not-responding-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-not-responding-"))
     (spaces / "Notes").mkdir()
     (spaces / "Notes" / "A note.md").write_text("# A note\n", encoding="utf-8")
     env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}

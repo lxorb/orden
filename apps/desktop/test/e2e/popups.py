@@ -56,7 +56,7 @@ def check(
         if not gone(page, popup, f"{name} to close on {how}"):
             said = page.evaluate(
                 "() => ({ depth: window.nibApp.overlays.depth, pressed: window.__pressed ?? [],"
-                " layers: [...document.querySelectorAll('.nib-layer, .nib-bubble, .nib-scrim')]"
+                " layers: [...document.querySelectorAll('.orden-layer, .orden-bubble, .orden-scrim')]"
                 ".map((one) => one.className) })"
             )
             wrong(f"{name}: {how} left it open: {said}")
@@ -68,7 +68,7 @@ def check(
         say(f"{name}: closed by {how}")
 
 SPOTS = ((0.5, 0.5), (0.2, 0.3), (0.8, 0.3), (0.2, 0.75), (0.8, 0.75), (0.5, 0.1), (0.5, 0.9))
-FLOATING = (".cluster", ".over", ".nib-bubble", "[role=listbox]", ".canvas [data-id]")
+FLOATING = (".cluster", ".over", ".orden-bubble", "[role=listbox]", ".canvas [data-id]")
 
 def press_past(page: Page, area: str, popup: str) -> None:
     clear = page.evaluate(
@@ -208,7 +208,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(800)
     site = page.locator('[data-opens="site"]').first
     if site.count() and site.is_enabled():
-        check(page, "a site's information", lambda: site.click(), ".site.nib-bubble", ".web")
+        check(page, "a site's information", lambda: site.click(), ".site.orden-bubble", ".web")
     else:
         say("a site's information: this build has no page to say anything about")
     page.evaluate(
@@ -218,7 +218,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(300)
     saving = page.locator('[data-opens="downloads"]').first
     if saving.count():
-        check(page, "the downloads", lambda: saving.click(), ".downloads.nib-bubble", ".web")
+        check(page, "the downloads", lambda: saving.click(), ".downloads.orden-bubble", ".web")
     else:
         say("the downloads: nothing has been downloaded in this build")
 

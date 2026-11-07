@@ -38,7 +38,7 @@ describe("a note's properties (#1210)", () => {
   test('the editor draws no properties block and hides no front matter', () => {
     expect(source(EDITOR).filter((path) => OFFERS.test(read(path)))).toEqual([])
     const sheets = files(THEMES, (path) => path.endsWith('.css'))
-    expect(sheets.filter((path) => read(path).includes('.nib-propert'))).toEqual([])
+    expect(sheets.filter((path) => read(path).includes('.orden-propert'))).toEqual([])
   })
 
   test('no catalogue keeps their strings', () => {

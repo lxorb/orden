@@ -111,7 +111,7 @@
     overflow: visible;
   }
 
-  .host :global(:is(#write, .nib-write)) {
+  .host :global(:is(#write, .orden-write)) {
     max-width: none;
     min-height: 0;
     margin: 0;

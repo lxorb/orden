@@ -44,7 +44,7 @@
       )}
     </p>
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       type="password"
       autocomplete="current-password"
       placeholder={t('Pass password')}
@@ -54,8 +54,8 @@
     />
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     <div class="buttons">
-      <button class="nib-button is-quiet" type="button" onclick={close}>{t('Later')}</button>
-      <button class="nib-button" type="submit" disabled={busy || password === ''}
+      <button class="orden-button is-quiet" type="button" onclick={close}>{t('Later')}</button>
+      <button class="orden-button" type="submit" disabled={busy || password === ''}
         >{t('Use that Pass')}</button
       >
     </div>

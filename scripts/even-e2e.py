@@ -1328,11 +1328,11 @@ def main() -> int:
 
             marks = page.evaluate(
                 """
-                () => [...document.querySelectorAll('.spaces .nib-row')].map((one) => {
-                  const badge = one.querySelector('.nib-badge')
+                () => [...document.querySelectorAll('.spaces .orden-row')].map((one) => {
+                  const badge = one.querySelector('.orden-badge')
                   const path = badge ? badge.querySelector('svg path') : null
                   return {
-                    name: (one.querySelector('.nib-row-label')?.textContent ?? '').trim(),
+                    name: (one.querySelector('.orden-row-label')?.textContent ?? '').trim(),
                     shape: badge ? badge.querySelectorAll('svg path').length : 0,
                     // The half that cannot be seen in the DOM: an element in the
                     // wrong namespace is there, is the right size, and draws nothing

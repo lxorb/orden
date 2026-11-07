@@ -57,8 +57,8 @@ def until(page: Page, check: str, what: str) -> None:
 
 def archived(page: Page) -> None:
     page.locator('aside .row[data-path$="/Plan.md"]').first.click(button="right")
-    wait_for(page, "document.querySelector('.rows .nib-row')", "the menu of Plan")
-    page.locator(".rows .nib-row", has_text="Archive").first.click()
+    wait_for(page, "document.querySelector('.rows .orden-row')", "the menu of Plan")
+    page.locator(".rows .orden-row", has_text="Archive").first.click()
     page.locator(".archive-head").wait_for(state="visible", timeout=PATIENCE * 1000)
     page.wait_for_timeout(400)
 

@@ -193,7 +193,7 @@ describe('the rule', () => {
       expect(rule).toMatch(new RegExp(`--wallpaper-paper-${side}: \\d+%;`))
       expect(rule).toMatch(new RegExp(`--wallpaper-terminal-${side}: \\d+%;`))
     }
-    expect(rule).toContain('--nib-dim: 10%;')
+    expect(rule).toContain('--orden-dim: 10%;')
     expect(rule).toContain('--empty-ground: transparent;')
     expect(rule).toContain('--content-inner: transparent;')
     expect(rule).not.toContain(":root[data-theme='dark']")

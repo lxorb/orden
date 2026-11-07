@@ -421,7 +421,7 @@ def mark_pressed(port):
     try:
         box = until(
             lambda: session.value(
-                "(() => { const one = document.querySelector('nib-pass-mark'); if (!one) return null; "
+                "(() => { const one = document.querySelector('orden-pass-mark'); if (!one) return null; "
                 "const box = one.getBoundingClientRect(); return box.width ? [box.x + box.width / 2, box.y + box.height / 2] : null })()"
             ),
             10,

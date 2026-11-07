@@ -47,7 +47,7 @@ describe('the labels it follows', () => {
     const base = read('../../../../packages/themes/src/base.css')
     for (const one of [
       rule(panel, '.setting .name .what'),
-      rule(base, '.nib-setting .name .nib-named'),
+      rule(base, '.orden-setting .name .orden-named'),
     ]) {
       expect(one).toContain('display: block')
       expect(one).not.toMatch(/display: (inline-)?flex|align-items|gap:/)

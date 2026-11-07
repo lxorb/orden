@@ -146,7 +146,7 @@
           })}
         </p>
       {:else}
-        <button type="button" class="nib-button is-quiet" onclick={countNow} disabled={!!counting}
+        <button type="button" class="orden-button is-quiet" onclick={countNow} disabled={!!counting}
           >{counting ? t('Counting…') : t('Count what it holds')}</button
         >
       {/if}

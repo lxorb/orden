@@ -39,7 +39,7 @@
           >{one.text}</button
         >
         <button
-          class="nib-glyph small"
+          class="orden-glyph small"
           title={t('Send into the running answer')}
           aria-label={t('Send into the running answer')}
           onclick={() => chat.steerQueued(one.id)}
@@ -47,7 +47,7 @@
           <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
         </button>
         <button
-          class="nib-glyph small"
+          class="orden-glyph small"
           title={t('Remove')}
           aria-label={t('Remove')}
           onclick={() => chat.unqueue(one.id)}

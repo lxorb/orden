@@ -542,7 +542,7 @@
     {/if}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="composer nib-field"
+      class="composer orden-field"
       onclick={(event) => {
         if (event.target === event.currentTarget) field?.focus()
       }}
@@ -623,7 +623,7 @@
 
       <div class="controls">
         <button
-          class="nib-glyph plus"
+          class="orden-glyph plus"
           title={t('Add')}
           aria-label={t('Add')}
           aria-haspopup="menu"

@@ -110,7 +110,7 @@ const marks = new Map<string, Decoration>()
 function markFor(glyph: string): Decoration {
   let mark = marks.get(glyph)
   if (!mark) {
-    mark = Decoration.mark({ class: 'nib-lig', attributes: { 'data-glyph': glyph } })
+    mark = Decoration.mark({ class: 'orden-lig', attributes: { 'data-glyph': glyph } })
     marks.set(glyph, mark)
   }
   return mark

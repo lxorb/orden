@@ -80,7 +80,7 @@
           <span class="name">{file.name}</span>
           <span class="meta">{readableSize(file.size)}</span>
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             type="button"
             aria-label={t('Remove {name}', { name: file.name })}
             title={t('Remove')}
@@ -99,7 +99,7 @@
           <span class="name">{file.name}</span>
           <span class="meta">{readableSize(file.bytes.length)}</span>
           <button
-            class="nib-glyph"
+            class="orden-glyph"
             type="button"
             aria-label={t('Remove {name}', { name: file.name })}
             title={t('Remove')}
@@ -115,7 +115,11 @@
     </div>
   {/if}
   <input class="picker" type="file" multiple bind:this={picker} onchange={chosen} tabindex="-1" />
-  <button class="nib-button is-quiet is-soft attach" type="button" onclick={() => picker?.click()}>
+  <button
+    class="orden-button is-quiet is-soft attach"
+    type="button"
+    onclick={() => picker?.click()}
+  >
     <Glyph icon={Paperclip} />{t('Attach file')}
   </button>
   {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}

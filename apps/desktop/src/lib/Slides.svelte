@@ -434,7 +434,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div
-  class="deck nib-host"
+  class="deck orden-host"
   tabindex="-1"
   data-move={move ?? 'none'}
   data-still={still ? 'yes' : 'no'}
@@ -448,7 +448,7 @@
   <div class="stage">
     {#key place.slide}
       <div class="slide" data-shape={current?.shape ?? 'prose'}>
-        <div class="nib-write" bind:this={page}>
+        <div class="orden-write" bind:this={page}>
           <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, through the renderer the reading view and every export use -->
           {@html current?.html ?? ''}
         </div>

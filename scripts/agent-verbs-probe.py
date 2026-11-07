@@ -51,11 +51,11 @@ assert _spec is not None and _spec.loader is not None
 mcp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(mcp)
 
-CLIENT = {"name": "nib-verbs-probe", "title": "Verbs probe", "version": "1"}
+CLIENT = {"name": "orden-verbs-probe", "title": "Verbs probe", "version": "1"}
 
 SPACE = "Verbs probe"
 
-MARK = "nib-verbs-probe-42"
+MARK = "orden-verbs-probe-42"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
@@ -207,7 +207,7 @@ def main() -> int:
         raise SystemExit("the probe is running already")
     mcp.fresh(folder)
 
-    spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-verbs-probe-"))
+    spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-verbs-probe-"))
     (spaces / SPACE).mkdir()
     (spaces / SPACE / "Plan.md").write_text("# Plan\n\nThe plan.\n", encoding="utf-8")
     (spaces / SPACE / "Later.md").write_text("# Later\n\nSomeday.\n", encoding="utf-8")

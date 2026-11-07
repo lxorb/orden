@@ -21,7 +21,7 @@ export class BulletWidget extends NibWidget {
 
   toDOM() {
     const dot = document.createElement('span')
-    dot.className = 'nib-bullet'
+    dot.className = 'orden-bullet'
     dot.dataset.depth = String(Math.min(this.depth, 2))
     return dot
   }
@@ -43,7 +43,7 @@ export class CheckboxWidget extends NibWidget {
   toDOM(view: EditorView) {
     const box = document.createElement('input')
     box.type = 'checkbox'
-    box.className = 'nib-checkbox'
+    box.className = 'orden-checkbox'
     box.checked = this.checked
     box.setAttribute('aria-label', uiLabel('taskDone'))
 
@@ -77,7 +77,7 @@ export class RuleWidget extends NibWidget {
 
   toDOM() {
     const rule = document.createElement('span')
-    rule.className = 'nib-rule'
+    rule.className = 'orden-rule'
     return rule
   }
 }
@@ -102,7 +102,7 @@ export class CalloutWidget extends NibWidget {
 
   toDOM() {
     const label = document.createElement('span')
-    label.className = 'nib-callout-label'
+    label.className = 'orden-callout-label'
     label.dataset.callout = this.type
 
     const icon = calloutIcon(this.look)
@@ -142,30 +142,30 @@ export class FenceHeaderWidget extends NibWidget {
 
   toDOM(view: EditorView) {
     const bar = document.createElement('span')
-    bar.className = 'nib-fence-header'
+    bar.className = 'orden-fence-header'
     bar.contentEditable = 'false'
 
     const row = document.createElement('span')
-    row.className = 'nib-fence-row'
+    row.className = 'orden-fence-row'
     bar.append(row)
 
     if (this.caption) {
       const said = document.createElement('span')
-      said.className = 'nib-fence-caption'
+      said.className = 'orden-fence-caption'
       said.textContent = this.caption
       row.append(said)
     }
 
     const controls = document.createElement('span')
-    controls.className = 'nib-fence-controls'
+    controls.className = 'orden-fence-controls'
     row.append(controls)
 
     const label = document.createElement('button')
-    label.className = 'nib-fence-language'
+    label.className = 'orden-fence-language'
     label.type = 'button'
     label.title = uiLabel('setLanguage')
     label.textContent = this.language || 'plain'
-    if (!this.language) label.classList.add('nib-fence-unset')
+    if (!this.language) label.classList.add('orden-fence-unset')
 
     const edit = () => this.editLanguage(view, label, bar)
     label.addEventListener('mousedown', (event) => {
@@ -181,7 +181,7 @@ export class FenceHeaderWidget extends NibWidget {
     else if (isAiLanguage(this.language)) controls.append(this.askButton(view))
 
     const copy = document.createElement('button')
-    copy.className = 'nib-fence-copy'
+    copy.className = 'orden-fence-copy'
     copy.type = 'button'
     copy.title = uiLabel('copy')
     copy.setAttribute('aria-label', uiLabel('copyCode'))
@@ -209,12 +209,12 @@ export class FenceHeaderWidget extends NibWidget {
       navigator.clipboard
         .writeText(fenceCodeAt(view.state, this.blockFrom))
         .then(() => {
-          copy.classList.add('nib-fence-copied')
+          copy.classList.add('orden-fence-copied')
           copy.title = uiLabel('copied')
           draw(TICK)
 
           window.setTimeout(() => {
-            copy.classList.remove('nib-fence-copied')
+            copy.classList.remove('orden-fence-copied')
             copy.title = uiLabel('copy')
             draw(SHEETS)
           }, 1400)
@@ -234,9 +234,9 @@ export class FenceHeaderWidget extends NibWidget {
     const over = (event: Event) => {
       const target = event.target
       const line = target instanceof Element ? target.closest('.cm-line') : null
-      bar.classList.toggle('nib-fence-hover', !!line && FenceHeaderWidget.holds(bar, line))
+      bar.classList.toggle('orden-fence-hover', !!line && FenceHeaderWidget.holds(bar, line))
     }
-    const leave = () => bar.classList.remove('nib-fence-hover')
+    const leave = () => bar.classList.remove('orden-fence-hover')
 
     view.contentDOM.addEventListener('mouseover', over)
     view.contentDOM.addEventListener('mouseleave', leave)
@@ -251,9 +251,9 @@ export class FenceHeaderWidget extends NibWidget {
   private static holds(bar: Element, line: Element): boolean {
     let current: Element | null = bar.closest('.cm-line')
 
-    while (current?.classList.contains('nib-code')) {
+    while (current?.classList.contains('orden-code')) {
       if (current === line) return true
-      if (current.classList.contains('nib-code-close')) break
+      if (current.classList.contains('orden-code-close')) break
       current = current.nextElementSibling
     }
 
@@ -262,7 +262,7 @@ export class FenceHeaderWidget extends NibWidget {
 
   private glyphButton(title: string, spoken: string, path: string, press: () => void): HTMLElement {
     const button = document.createElement('button')
-    button.className = 'nib-fence-run'
+    button.className = 'orden-fence-run'
     button.type = 'button'
     button.title = title
     button.setAttribute('aria-label', spoken)
@@ -306,7 +306,7 @@ export class FenceHeaderWidget extends NibWidget {
 
   private editLanguage(view: EditorView, label: HTMLElement, dom: HTMLElement) {
     const field = document.createElement('input')
-    field.className = 'nib-fence-language-input'
+    field.className = 'orden-fence-language-input'
     field.value = this.language
     field.placeholder = uiLabel('fenceLanguage')
     field.spellcheck = false
@@ -354,7 +354,7 @@ export class PageBreakWidget extends NibWidget {
 
   toDOM() {
     const rule = document.createElement('span')
-    rule.className = 'nib-page-break'
+    rule.className = 'orden-page-break'
     rule.dataset.label = 'page break'
     return rule
   }
@@ -371,7 +371,7 @@ export class EmojiWidget extends NibWidget {
 
   toDOM() {
     const span = document.createElement('span')
-    span.className = 'nib-emoji'
+    span.className = 'orden-emoji'
     span.textContent = this.character
     return span
   }

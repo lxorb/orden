@@ -211,8 +211,8 @@ def tooltips(page: Page) -> None:
     page.evaluate("() => window.nibApp.shortcuts.reset('app.sidebar')")
 
     page.locator('.cm-line:has-text("Words about")').first.dblclick()
-    if wait_for(page, "document.querySelector('.nib-bar-at')", "the format bar", 10):
-        keyed(page, '.nib-bar-at button[aria-label="Bold"]', "Bold", "Ctrl+B")
+    if wait_for(page, "document.querySelector('.orden-bar-at')", "the format bar", 10):
+        keyed(page, '.orden-bar-at button[aria-label="Bold"]', "Bold", "Ctrl+B")
     page.keyboard.press("ArrowRight")
 
     page.locator(".cm-content").first.click()

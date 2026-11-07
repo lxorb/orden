@@ -32,7 +32,7 @@ describe('a draft an agent wrote in, given its place', () => {
     workspace.openBlank()
     const tab = workspace.tabs.at(-1)
     if (!tab) throw new Error('no tab')
-    const agent = { id: 'nib-draft', name: 'X' }
+    const agent = { id: 'orden-draft', name: 'X' }
     await docs.notes.writeNote(agent, { path: '', tab: tab.id }, '# hello\n\nAGENT WORDS\n')
     expect([...docs.tracksOf(agent.id).keys()]).toEqual([`unsaved:${tab.note.key}`])
 
@@ -48,7 +48,7 @@ describe('a draft an agent wrote in, given its place', () => {
 describe('a note deleted and another made at its name', () => {
   test('the new note has a track of its own, and the old has its own back', async () => {
     await fresh({ '/s/n.md': '# n\n\nold words\n' })
-    const agent = { id: 'nib-remade', name: 'X' }
+    const agent = { id: 'orden-remade', name: 'X' }
     await docs.notes.editNote(agent, { path: 'n.md' }, [{ at: { quote: 'old' }, replace: 'OLD' }])
     const oldId = docs.tracksOf(agent.id).get('/s/n.md')?.ids[0]
     if (!oldId) throw new Error('no edit')

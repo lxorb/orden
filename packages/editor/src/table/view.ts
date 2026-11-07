@@ -152,11 +152,11 @@ export class TableView {
     this.widths = model.header.map(() => null)
     this.editable = !editor.state.readOnly
 
-    this.dom = element('div', 'nib-table-wrap')
+    this.dom = element('div', 'orden-table-wrap')
     this.dom.contentEditable = 'false'
 
-    this.scroller = element('div', 'nib-table-scroll')
-    this.table = element('table', 'nib-table')
+    this.scroller = element('div', 'orden-table-scroll')
+    this.table = element('table', 'orden-table')
     this.scroller.append(this.table)
 
     this.alignButtons = {
@@ -329,7 +329,7 @@ export class TableView {
       const at = { row: -1, column }
       const th = this.cell(text, at, 'th', sameCell(at, focus?.at))
 
-      const grip = element('span', 'nib-table-resize')
+      const grip = element('span', 'orden-table-resize')
       grip.contentEditable = 'false'
       grip.title = label('dragToResize')
       grip.addEventListener('mousedown', (event) => this.startResize(event, th, column))
@@ -375,7 +375,7 @@ export class TableView {
   private fitWidth() {
     const { fitted } = this
     const fixed = this.windowed() && fitted !== null
-    this.table.classList.toggle('nib-table-windowed', fixed)
+    this.table.classList.toggle('orden-table-windowed', fixed)
     this.table.style.width = fixed
       ? `${fitted.reduce((sum, one, column) => sum + (this.widths[column] ?? one), 0)}px`
       : ''
@@ -413,7 +413,7 @@ export class TableView {
   }
 
   private gap(from: number, to: number): HTMLTableRowElement {
-    const tr = element('tr', 'nib-table-gap')
+    const tr = element('tr', 'orden-table-gap')
     tr.setAttribute('aria-hidden', 'true')
     const td = element('td')
     td.colSpan = Math.max(1, this.model.header.length)
@@ -463,7 +463,8 @@ export class TableView {
 
     if (this.gaps) {
       this.gaps.disconnect()
-      for (const one of wanted) if (one.classList.contains('nib-table-gap')) this.gaps.observe(one)
+      for (const one of wanted)
+        if (one.classList.contains('orden-table-gap')) this.gaps.observe(one)
     }
   }
 
@@ -483,7 +484,8 @@ export class TableView {
     window.addEventListener('resize', this.schedule, { passive: true })
     if (typeof IntersectionObserver !== 'undefined') {
       this.gaps = new IntersectionObserver(this.schedule, { rootMargin: '50%' })
-      for (const one of this.body?.querySelectorAll('.nib-table-gap') ?? []) this.gaps.observe(one)
+      for (const one of this.body?.querySelectorAll('.orden-table-gap') ?? [])
+        this.gaps.observe(one)
     }
     this.schedule()
   }
@@ -802,13 +804,17 @@ export class TableView {
   }
 
   private buildRowBar(): HTMLElement {
-    const bar = element('div', 'nib-table-rows')
+    const bar = element('div', 'orden-table-rows')
     bar.contentEditable = 'false'
     bar.append(
-      button('nib-table-btn', 'moveRowUp', 'M1 6l4-4 4 4', () => this.moveRowBy(this.barRow, -1)),
-      button('nib-table-btn', 'moveRowDown', 'M1 4l4 4 4-4', () => this.moveRowBy(this.barRow, 1)),
-      button('nib-table-btn', 'insertRow', 'M5 1v8M1 5h8', () => this.insertRowAfter(this.barRow)),
-      button('nib-table-btn nib-table-btn-danger', 'deleteRow', 'M1 1l8 8M9 1l-8 8', () =>
+      button('orden-table-btn', 'moveRowUp', 'M1 6l4-4 4 4', () => this.moveRowBy(this.barRow, -1)),
+      button('orden-table-btn', 'moveRowDown', 'M1 4l4 4 4-4', () =>
+        this.moveRowBy(this.barRow, 1),
+      ),
+      button('orden-table-btn', 'insertRow', 'M5 1v8M1 5h8', () =>
+        this.insertRowAfter(this.barRow),
+      ),
+      button('orden-table-btn orden-table-btn-danger', 'deleteRow', 'M1 1l8 8M9 1l-8 8', () =>
         this.deleteRow(this.barRow),
       ),
     )
@@ -816,7 +822,7 @@ export class TableView {
   }
 
   private buildColumnBar(): HTMLElement {
-    const bar = element('div', 'nib-table-columns')
+    const bar = element('div', 'orden-table-columns')
     bar.contentEditable = 'false'
     bar.append(
       this.alignButtons.left,
@@ -848,7 +854,7 @@ export class TableView {
   ): HTMLButtonElement {
     const key =
       name in ALIGN_LABELS ? ALIGN_LABELS[name as keyof typeof ALIGN_LABELS] : (name as LabelKey)
-    const className = danger ? 'nib-table-btn nib-table-btn-danger' : 'nib-table-btn'
+    const className = danger ? 'orden-table-btn orden-table-btn-danger' : 'orden-table-btn'
     return button(className, key, path, () => onPress(this.barColumn))
   }
 

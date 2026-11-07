@@ -4,14 +4,14 @@ image=$1
 secret=ci-$RANDOM-$RANDOM
 cleanup() {
   docker logs nib-machine >machine.log 2>&1 || true
-  docker rm -f nib-machine nib-traced >/dev/null 2>&1 || true
+  docker rm -f nib-machine orden-traced >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 docker run -d --name nib-machine -e NIBD_SECRET="$secret" -e TZ=Europe/Zurich \
   -p 127.0.0.1:7680:7680 "$image"
 
-docker run -d --name nib-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
+docker run -d --name orden-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
   -p 127.0.0.1:7681:7680 --entrypoint bash "$image" -c '
     set -e
     apt-get update -qq && apt-get install -y -qq strace >/dev/null
@@ -68,7 +68,7 @@ docker exec -u nib -w /home/nib nib-machine bash -lc '
   [ "$checked" -ge 2 ]
 '
 
-docker exec nib-traced cat /tmp/trace >trace.log
+docker exec orden-traced cat /tmp/trace >trace.log
 python3 - trace.log <<'PY'
 import re, sys
 ran, touched = set(), {}

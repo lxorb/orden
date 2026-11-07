@@ -57,7 +57,7 @@
     {/if}
   </div>
   {#snippet foot()}
-    <button class="nib-chip" onclick={takeOver}>{t('Take over')}</button>
+    <button class="orden-chip" onclick={takeOver}>{t('Take over')}</button>
   {/snippet}
 </Sheet>
 

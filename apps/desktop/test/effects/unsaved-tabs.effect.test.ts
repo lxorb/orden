@@ -78,7 +78,7 @@ function strip() {
   flushSync()
 }
 
-const dotOn = (tabId: string) => target.querySelector(`[data-tab="${tabId}"] .nib-unsaved`)
+const dotOn = (tabId: string) => target.querySelector(`[data-tab="${tabId}"] .orden-unsaved`)
 
 test('a new note wears the dot, a new web tab none, and a saved note loses it', async () => {
   workspace.openBlank()

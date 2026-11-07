@@ -72,7 +72,7 @@
 </div>
 
 <div class="card">
-  <div class="nib-setting row">
+  <div class="orden-setting row">
     <span class="name">{t('Default vault')}</span>
     <Select
       label={t('Default vault')}
@@ -86,14 +86,14 @@
   </div>
 </div>
 
-<h3 class="nib-section">{t('Excluded sites')}</h3>
+<h3 class="orden-section">{t('Excluded sites')}</h3>
 <div class="card">
   {#each sites as [site, pausedFor] (site)}
     <div class="site">
       <div class="site-head">
         <span class="host">{site}</span>
         <button
-          class="nib-glyph"
+          class="orden-glyph"
           type="button"
           aria-label={t('Remove {site}', { site })}
           title={t('Remove {site}', { site })}
@@ -115,12 +115,12 @@
   {/each}
   <form class="add" onsubmit={added}>
     <input
-      class="nib-field is-value"
+      class="orden-field is-value"
       placeholder="example.com"
       aria-label={t('Site to exclude')}
       bind:value={typed}
     />
-    <button class="nib-chip" type="submit" disabled={!typed.trim()}>{t('Exclude')}</button>
+    <button class="orden-chip" type="submit" disabled={!typed.trim()}>{t('Exclude')}</button>
   </form>
 </div>
 
@@ -165,7 +165,7 @@
     padding: var(--space-2) var(--space-3);
   }
 
-  .nib-section {
+  .orden-section {
     margin: var(--space-3) 0 0;
   }
 </style>

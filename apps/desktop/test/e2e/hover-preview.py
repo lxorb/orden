@@ -70,9 +70,9 @@ BLOCKS = """
 (root) => {
   if (!root) return null
 
-  const fence = root.querySelector('.nib-code')
-  const header = root.querySelector('.nib-fence-header')
-  const callout = root.querySelector('.nib-callout')
+  const fence = root.querySelector('.orden-code')
+  const header = root.querySelector('.orden-fence-header')
+  const callout = root.querySelector('.orden-callout')
   const table = root.querySelector('table')
   const said = (node) => (node ? getComputedStyle(node) : null)
   const fenceStyle = said(fence)
@@ -82,35 +82,35 @@ BLOCKS = """
   // colour rather than by class, because which class a token wears is the
   // highlighter's business and changes with the theme.
   const ink = said(root).color
-  const token = [...root.querySelectorAll('.nib-code span')].find(
+  const token = [...root.querySelectorAll('.orden-code span')].find(
     (one) => one.textContent.trim() && getComputedStyle(one).color !== ink,
   )
 
   return {
     fence: !!fence,
-    caption: root.querySelector('.nib-fence-caption')?.textContent?.trim() ?? null,
-    language: root.querySelector('.nib-fence-language')?.textContent?.trim() ?? null,
+    caption: root.querySelector('.orden-fence-caption')?.textContent?.trim() ?? null,
+    language: root.querySelector('.orden-fence-language')?.textContent?.trim() ?? null,
     header: !!header,
     keyword: token?.textContent?.trim() ?? null,
     keywordColour: token ? getComputedStyle(token).color : null,
     fenceBackground: fenceStyle?.backgroundColor ?? null,
     fenceRadius: fenceStyle?.borderTopLeftRadius ?? null,
-    callout: callout ? [...callout.classList].find((one) => one.startsWith('nib-callout-')) : null,
-    calloutFolds: !!root.querySelector('.nib-folded, .nib-callout .nib-fold'),
+    callout: callout ? [...callout.classList].find((one) => one.startsWith('orden-callout-')) : null,
+    calloutFolds: !!root.querySelector('.orden-folded, .orden-callout .orden-fold'),
     calloutIcon: !!root.querySelector('.callout-icon'),
     calloutBar: calloutStyle?.borderLeftWidth ?? null,
     table: !!table,
     tableBorders: said(table)?.borderCollapse ?? null,
     maths: !!root.querySelector('.katex'),
-    tasks: root.querySelectorAll('.nib-checkbox, input[type=checkbox]').length,
-    ticked: root.querySelectorAll('.nib-task-done').length,
+    tasks: root.querySelectorAll('.orden-checkbox, input[type=checkbox]').length,
+    ticked: root.querySelectorAll('.orden-task-done').length,
     // The first picture that names a file. A surface draws more than one `img` -
     // a widget puts an empty one up while it works out where the file is - so the
     // first element is not the answer; the first address is.
     picture:
       [...root.querySelectorAll('img')].map((one) => one.getAttribute('src')).find(Boolean) ??
       null,
-    footnotes: root.querySelectorAll('.nib-footnote').length,
+    footnotes: root.querySelectorAll('.orden-footnote').length,
     raw: root.textContent.includes('tags:'),
   }
 }
@@ -118,17 +118,17 @@ BLOCKS = """
 
 INSIDE = """
 () => {
-  const card = document.querySelector('.nib-note-preview')
+  const card = document.querySelector('.orden-note-preview')
   if (!card) return null
 
-  const body = card.querySelector('.nib-note-preview-body')
+  const body = card.querySelector('.orden-note-preview-body')
   const inner = body.querySelector('.cm-content')
   const box = card.getBoundingClientRect()
 
   return {
     // The scope: the body is a writing surface, like every other place a note is
     // read or written in this app - by the class, since the id is the pane's.
-    scope: body.classList.contains('nib-write') && body.id !== 'write' ? 'write' : body.id,
+    scope: body.classList.contains('orden-write') && body.id !== 'write' ? 'write' : body.id,
     words: (inner ?? body).textContent.slice(0, 40),
     // The lines inside the card's own box, which is what a reader sees of it. The
     // card holds the whole note - what is typed in it goes back to the file - so
@@ -142,7 +142,7 @@ INSIDE = """
       .map((one) => one.textContent)
       .join(' ')
       .slice(0, 160),
-    name: card.querySelector('.nib-note-preview-name')?.textContent ?? null,
+    name: card.querySelector('.orden-note-preview-name')?.textContent ?? null,
     // The card is the note, so there is an editor in it and it can be typed in.
     written: body.dataset.written ?? 'no',
     editor: !!inner,
@@ -254,14 +254,14 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
         "document.querySelector('.cm-content').getBoundingClientRect().height > 0",
         f"[{label}] the pane to have a size",
     )
-    drawn = f"document.querySelectorAll('.cm-content .nib-link').length > {which}"
+    drawn = f"document.querySelectorAll('.cm-content .orden-link').length > {which}"
     until = time.monotonic() + 30
     while time.monotonic() < until and not page.evaluate(f"() => !!({drawn})"):
         page.wait_for_timeout(100)
     if not page.evaluate(f"() => !!({drawn})"):
         say(f"[{label}] the pane: {json.dumps(page.evaluate(PANE), ensure_ascii=False)}")
 
-    links = page.locator(".cm-content .nib-link")
+    links = page.locator(".cm-content .orden-link")
     found = links.count()
     if found < which + 1:
         wrong(f"[{label}] the note draws {found} links, so there is none to rest on")
@@ -279,7 +279,7 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
         link.hover(position={"x": 3, "y": 3}, force=True)
 
         try:
-            page.wait_for_selector(".nib-note-preview-body > *", timeout=10_000)
+            page.wait_for_selector(".orden-note-preview-body > *", timeout=10_000)
             break
         except Exception:
             say(f"[{label}] no card on the link yet, resting on it again")
@@ -321,7 +321,7 @@ def drive_desktop(browser: Browser) -> None:
         wrong(f"the block is not marked as its language: {card['language']!r}")
     if card["keyword"] is None:
         wrong("nothing in the code block is coloured: the fence was never highlighted")
-    if card["callout"] != "nib-callout-tip":
+    if card["callout"] != "orden-callout-tip":
         wrong(f"the callout is a plain quote: {card['callout']!r}")
     if not card["calloutFolds"]:
         wrong("a callout that folds is not foldable here")

@@ -40,7 +40,7 @@ describe('the row a name is being typed on', () => {
 
   test('is the same row it was a moment ago', () => {
     for (const part of [
-      'class="nib-row row"',
+      'class="orden-row row"',
       '<FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />',
       'style:--level={depth}',
       'class:is-on=',
@@ -127,17 +127,17 @@ describe('what the field draws', () => {
   })
 
   test('nothing at all about a name that can be written', () => {
-    expect(draw({})).not.toContain('nib-bubble')
+    expect(draw({})).not.toContain('orden-bubble')
   })
 
   test('and the reason a name cannot be, in the shared bubble', () => {
     const body = draw({ value: 'Work/Plan' })
-    expect(body).toContain('nib-bubble')
+    expect(body).toContain('orden-bubble')
     expect(body).toContain('A name cannot hold a slash')
   })
 
   test('while an empty field is a name nobody has finished, not a mistake', () => {
-    expect(draw({ value: '' })).not.toContain('nib-bubble')
+    expect(draw({ value: '' })).not.toContain('orden-bubble')
   })
 
   test('and a name already taken says so', () => {

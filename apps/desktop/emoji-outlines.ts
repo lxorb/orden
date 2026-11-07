@@ -120,7 +120,7 @@ export function notoOutlines(): Record<string, string> {
 
 export function emojiOutlines() {
   return {
-    name: 'nib-emoji-outlines',
+    name: 'orden-emoji-outlines',
     resolveId: (source: string) => (source === NOTO_OUTLINES ? RESOLVED : null),
     load: (id: string) =>
       id === RESOLVED ? `export default ${JSON.stringify(notoOutlines())}\n` : null,

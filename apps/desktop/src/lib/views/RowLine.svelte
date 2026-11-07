@@ -52,7 +52,7 @@
 </script>
 
 <div
-  class="nib-row line"
+  class="orden-row line"
   class:is-on={selected}
   class:finished={!!task && (task.done || task.cancelled)}
   class:toned={tone !== null}
@@ -96,7 +96,13 @@
     </span>
   {/if}
   {#if where}
-    <button type="button" class="nib-row-meta where" onclick={open} tabindex="-1" title={t('Open')}>
+    <button
+      type="button"
+      class="orden-row-meta where"
+      onclick={open}
+      tabindex="-1"
+      title={t('Open')}
+    >
       {#if elsewhere}<span class="space">{elsewhere}</span>{/if}
       {row.kind === 'task' ? row.file.basename : row.file.folder}{#if section}<span
           class="sep"

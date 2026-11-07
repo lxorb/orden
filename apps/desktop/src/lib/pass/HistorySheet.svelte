@@ -64,18 +64,18 @@
   {:else}
     <div class="versions">
       {#each versions as version (version.rev)}
-        <div class="nib-setting version">
+        <div class="orden-setting version">
           <span class="name">
             <span class="title">{version.content.title || t('Untitled')}</span>
             <span class="when">{when(version.modified)}</span>
           </span>
-          <button class="nib-chip" type="button" onclick={() => void restored(version.rev)}>
+          <button class="orden-chip" type="button" onclick={() => void restored(version.rev)}>
             {t('Restore')}
           </button>
         </div>
       {/each}
     </div>
-    <button class="nib-action is-danger" type="button" onclick={() => void cleared()}
+    <button class="orden-action is-danger" type="button" onclick={() => void cleared()}
       >{t('Clear history')}</button
     >
   {/if}

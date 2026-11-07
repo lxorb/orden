@@ -1,7 +1,7 @@
 param(
   [Alias('Pid')]
   [int]$ProcessId = 0,
-  [string]$Out = "$env:TEMP\nib-window.png",
+  [string]$Out = "$env:TEMP\orden-window.png",
   [switch]$ListOnly
 )
 

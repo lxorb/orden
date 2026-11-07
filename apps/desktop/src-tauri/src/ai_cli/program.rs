@@ -173,7 +173,7 @@ mod tests {
     fn a_login_shell_that_leaves_something_holding_its_output_is_not_waited_for() {
         use std::os::unix::fs::PermissionsExt as _;
 
-        let dir = std::env::temp_dir().join(format!("nib-login-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("orden-login-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a folder");
         let shell = dir.join("shell");
         std::fs::write(

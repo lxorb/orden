@@ -31,7 +31,7 @@ const pattern = once((joined: string): RegExp | null => {
   return new RegExp(`(?<![\\p{L}\\p{N}])(?:${escaped.join('|')})(?![\\p{L}\\p{N}])`, 'giu')
 })
 
-const known = Decoration.mark({ attributes: { spellcheck: 'false' }, class: 'nib-known-word' })
+const known = Decoration.mark({ attributes: { spellcheck: 'false' }, class: 'orden-known-word' })
 
 export function knownRanges(
   text: string,

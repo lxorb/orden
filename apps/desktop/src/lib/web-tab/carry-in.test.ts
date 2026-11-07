@@ -41,7 +41,7 @@ const hole = {
 
 const prevented = new WeakMap<DragEvent, ReturnType<typeof vi.fn>>()
 
-function dragAt(x: number, y: number, types = ['text/nib-path', 'text/nib-paths']) {
+function dragAt(x: number, y: number, types = ['text/orden-path', 'text/orden-paths']) {
   const prevent = vi.fn()
   const event = {
     clientX: x,
@@ -150,11 +150,11 @@ describe('a page the shell tells of the drag itself', () => {
   test('takes rows of the file explorer as it takes rows of the file list', async () => {
     carryToPages(['/home/me/Downloads/scan.pdf'], look)
     await settled()
-    const rows = dragAt(300, 250, ['text/nib-explorer', 'text/plain'])
+    const rows = dragAt(300, 250, ['text/orden-explorer', 'text/plain'])
     overPage('a', hole, rows, 1)
     expect(preventedOf(rows)).toHaveBeenCalled()
     await settled()
-    const drop = dragAt(300, 250, ['text/nib-explorer', 'text/plain'])
+    const drop = dragAt(300, 250, ['text/orden-explorer', 'text/plain'])
     droppedOnPage('a', hole, drop, 1)
     expect(preventedOf(drop)).toHaveBeenCalled()
     await settled()

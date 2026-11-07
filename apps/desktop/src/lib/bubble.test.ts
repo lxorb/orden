@@ -59,7 +59,7 @@ function holdsAPress(bubble: Node): boolean {
 const bubbles = components(SRC).flatMap((file) => {
   const tree = parse(readFileSync(file, 'utf8'), { modern: true })
   return [...elements(tree.fragment)]
-    .filter((one) => classOf(one).split(/\s+/).includes('nib-bubble'))
+    .filter((one) => classOf(one).split(/\s+/).includes('orden-bubble'))
     .map((one) => ({
       file: file.slice(SRC.length).replaceAll('\\', '/'),
       presses: holdsAPress(one),
@@ -91,7 +91,7 @@ describe('a bubble', () => {
 
   test('is told apart by the one rule that turns the pointer back on', () => {
     const css = readFileSync(BASE, 'utf8')
-    expect(css).toMatch(/\.nib-bubble \{[^}]*pointer-events: none;/)
-    expect(css).toMatch(/\.nib-bubble\.is-pressable \{\s*pointer-events: auto;\s*\}/)
+    expect(css).toMatch(/\.orden-bubble \{[^}]*pointer-events: none;/)
+    expect(css).toMatch(/\.orden-bubble\.is-pressable \{\s*pointer-events: auto;\s*\}/)
   })
 })

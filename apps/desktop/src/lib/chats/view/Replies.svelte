@@ -93,11 +93,11 @@
     <Glyph name="replies" />
     <span class="title">{t('Replies')}</span>
     <span class="count">{amount(replies.messages.length)}</span>
-    <button type="button" class="nib-glyph" aria-label={t('Close')} onclick={onclose}
+    <button type="button" class="orden-glyph" aria-label={t('Close')} onclick={onclose}
       ><Glyph name="close" /></button
     >
   </header>
-  <div class="list nib-scrolls" bind:this={scroller}>
+  <div class="list orden-scrolls" bind:this={scroller}>
     {#if replies.parent}
       <MessageRow
         message={replies.parent}

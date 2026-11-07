@@ -209,7 +209,7 @@ describe('the rows as markup', () => {
 
   test('one row per key, wearing the row every list in the app wears', () => {
     const html = table('---\ntitle: A plan\ntags: [one, two]\n---\n')
-    expect(html.match(/class="property nib-row is-short"/g)).toHaveLength(2)
+    expect(html.match(/class="property orden-row is-short"/g)).toHaveLength(2)
     expect(html).toContain('>title<')
     expect(html).toContain('class="property-chip">one<')
     expect(html).toContain('class="property-chip">two<')

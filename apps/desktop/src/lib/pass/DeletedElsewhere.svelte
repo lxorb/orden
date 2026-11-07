@@ -41,13 +41,13 @@
 
 {#if gone.length}
   <section class="gone" aria-label={t('Deleted on another device')}>
-    <h3 class="nib-section">{t('Deleted on another device')}</h3>
+    <h3 class="orden-section">{t('Deleted on another device')}</h3>
     {#each gone as item (item.id)}
       <div class="one" data-gone={item.id}>
         <ItemMark content={item.content} />
         <span class="name">{item.content.title || t('Untitled')}</span>
         <button
-          class="nib-button is-soft"
+          class="orden-button is-soft"
           type="button"
           disabled={busy}
           onclick={() => void restored(item)}>{t('Restore')}</button
@@ -68,7 +68,7 @@
     border-top: 1px solid var(--line);
   }
 
-  .nib-section {
+  .orden-section {
     margin: 0;
   }
 

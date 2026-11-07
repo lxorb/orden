@@ -32,7 +32,7 @@ function page(playsH264 = false) {
   return { asked, failed, sourceFailed }
 }
 
-const SAID = JSON.stringify(['', 'nib-media-unplayable'])
+const SAID = JSON.stringify(['', 'orden-media-unplayable'])
 const NO_DECODER = 'PipelineStatus::DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no streams'
 
 test('a file with no decoder is said', () => {

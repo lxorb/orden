@@ -24,7 +24,7 @@
     display: contents;
   }
 
-  :global(:is(.nib-row-label, :has(+ .nib-row-label)):has(~ .foreign)) {
+  :global(:is(.orden-row-label, :has(+ .orden-row-label)):has(~ .foreign)) {
     opacity: 0.5;
   }
 </style>

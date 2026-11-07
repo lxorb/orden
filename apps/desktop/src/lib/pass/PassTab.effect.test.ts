@@ -102,7 +102,7 @@ describe('the Pass tab', () => {
 
     const { menu } = await import('../menu.svelte')
     const chosen = (label: string) => {
-      target.querySelector<HTMLButtonElement>('.bar .nib-chip')?.click()
+      target.querySelector<HTMLButtonElement>('.bar .orden-chip')?.click()
       flushSync()
       const row = menu.items.find((one) => one !== null && one.label === label)
       if (!row) throw new Error(`no ${label} in the menu`)

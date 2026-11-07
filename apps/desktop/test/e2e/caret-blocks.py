@@ -92,9 +92,9 @@ STATE = """
 () => ({
   head: window.nib.state.selection.main.head,
   widgets: {
-    formula: document.querySelectorAll('.nib-math-block').length,
-    diagram: document.querySelectorAll('.nib-diagram').length,
-    contents: document.querySelectorAll('.nib-toc').length,
+    formula: document.querySelectorAll('.orden-math-block').length,
+    diagram: document.querySelectorAll('.orden-diagram').length,
+    contents: document.querySelectorAll('.orden-toc').length,
   },
 })
 """
@@ -145,9 +145,9 @@ def drive(playwright, profile: Path) -> None:
         wait_for(page, "() => !!window.nib", "the editor")
         wait_for(
             page,
-            "() => document.querySelectorAll('.nib-math-block').length === 1"
-            " && document.querySelectorAll('.nib-diagram').length === 1"
-            " && document.querySelectorAll('.nib-toc').length === 1",
+            "() => document.querySelectorAll('.orden-math-block').length === 1"
+            " && document.querySelectorAll('.orden-diagram').length === 1"
+            " && document.querySelectorAll('.orden-toc').length === 1",
             "the three blocks to be drawn",
         )
         page.locator(".cm-content").first.screenshot(path=str(SHOTS / "drawn.png"))

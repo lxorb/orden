@@ -102,7 +102,7 @@ def serve(port: int) -> Server:
 
 def spaces_root() -> pathlib.Path:
 
-    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-open-probe-"))
+    made = pathlib.Path(tempfile.mkdtemp(prefix="orden-open-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made

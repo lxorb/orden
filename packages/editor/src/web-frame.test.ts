@@ -43,21 +43,21 @@ describe('the document a block of the note’s own HTML runs in', () => {
 
   test('carries the block as data, and runs nothing inline', () => {
     const made = htmlFrameDocument('<div id="dial"></div>\n<script>run()</script>', SCRIPT)
-    const block = /<script type="application\/json" id="nib-block">([\s\S]*?)<\/script>/.exec(
+    const block = /<script type="application\/json" id="orden-block">([\s\S]*?)<\/script>/.exec(
       made,
     )?.[1]
     expect(JSON.parse(block ?? '""')).toBe('<div id="dial"></div>\n<script>run()</script>')
     const scripts = [...made.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
     expect(scripts).toEqual([
-      'type="application/json" id="nib-block"',
-      'type="text/plain" id="nib-frame"',
+      'type="application/json" id="orden-block"',
+      'type="text/plain" id="orden-frame"',
       '',
     ])
   })
 
   test('and the one program that says how tall it turned out', () => {
     const made = htmlFrameDocument('<p>words</p>', SCRIPT)
-    expect(made).toContain('nib-html-frame')
+    expect(made).toContain('orden-html-frame')
     expect(made).toContain('postMessage')
   })
 
@@ -76,7 +76,7 @@ describe('the document a block of the note’s own HTML runs in', () => {
 })
 
 describe('how tall an interactive block may say it is', () => {
-  const said = (height: unknown) => frameHeight({ nib: 'nib-html-frame', height })
+  const said = (height: unknown) => frameHeight({ nib: 'orden-html-frame', height })
 
   test('what it asked for, within reason', () => {
     expect(said(320)).toBe(320)
@@ -87,12 +87,12 @@ describe('how tall an interactive block may say it is', () => {
 
   test('and nothing at all from a message that is not one of ours', () => {
     expect(frameHeight({ height: 300 })).toBe(null)
-    expect(frameHeight({ nib: 'nib-run', height: 300 })).toBe(null)
+    expect(frameHeight({ nib: 'orden-run', height: 300 })).toBe(null)
     expect(said('300')).toBe(null)
     expect(said(Number.NaN)).toBe(null)
     expect(said(Number.POSITIVE_INFINITY)).toBe(null)
     expect(frameHeight(null)).toBe(null)
-    expect(frameHeight('nib-html-frame')).toBe(null)
+    expect(frameHeight('orden-html-frame')).toBe(null)
   })
 })
 

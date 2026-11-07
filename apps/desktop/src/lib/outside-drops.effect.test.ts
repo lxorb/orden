@@ -144,7 +144,7 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
     await vi.waitFor(() => expect(opened).toEqual([['/far/paper.pdf']]))
 
     expect(read).toEqual([])
-    expect(heard[0]).toBe('dragenter pane 20,30 text/nib-explorer+Files')
+    expect(heard[0]).toBe('dragenter pane 20,30 text/orden-explorer+Files')
     expect(heard.some((one) => one.startsWith('drop'))).toBe(false)
   })
 
@@ -255,9 +255,9 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
     outside.moved({ position: { x: 80, y: 60 } })
 
     expect(heard.filter((said) => !said.startsWith('dragover'))).toEqual([
-      'dragenter one 20,30 text/nib-explorer+Files',
-      'dragenter two 40,30 text/nib-explorer+Files',
-      'dragleave one 40,30 text/nib-explorer+Files',
+      'dragenter one 20,30 text/orden-explorer+Files',
+      'dragenter two 40,30 text/orden-explorer+Files',
+      'dragleave one 40,30 text/orden-explorer+Files',
     ])
   })
 })

@@ -86,8 +86,8 @@ vi.mock('./diagrams', () => ({
     return Promise.resolve(
       `<svg aria-roledescription="flowchart-v2" role="graphics-document document"` +
         ` viewBox="0 0 302.5 118" style="max-width: 302.5px;"` +
-        ` xmlns="http://www.w3.org/2000/svg" width="100%" id="nib-export-1">` +
-        `<style>#nib-export-1 .node rect{fill:${scheme === 'light' ? '#eee' : '#111'}}</style>` +
+        ` xmlns="http://www.w3.org/2000/svg" width="100%" id="orden-export-1">` +
+        `<style>#orden-export-1 .node rect{fill:${scheme === 'light' ? '#eee' : '#111'}}</style>` +
         `<g class="root"><text>${language}: ${code.trim()}</text></g></svg>`,
     )
   },

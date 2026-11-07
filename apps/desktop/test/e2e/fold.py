@@ -57,8 +57,8 @@ async ([first, second]) => {
 
 STATE = """
 () => ({
-  hinges: document.querySelectorAll('.nib-fold-hinge').length,
-  marks: document.querySelectorAll('.nib-folded').length,
+  hinges: document.querySelectorAll('.orden-fold-hinge').length,
+  marks: document.querySelectorAll('.orden-folded').length,
   lines: document.querySelectorAll('.cm-content .cm-line').length,
   shown: [...document.querySelectorAll('.cm-content .cm-line')]
     .map((line) => line.textContent.trim())
@@ -67,7 +67,7 @@ STATE = """
 """
 
 PLACEMENT = """
-() => [...document.querySelectorAll('.nib-fold-hinge')].map((hinge) => {
+() => [...document.querySelectorAll('.orden-fold-hinge')].map((hinge) => {
   const line = hinge.closest('.cm-line')
   const box = line.getBoundingClientRect()
   const mark = hinge.getBoundingClientRect()
@@ -96,8 +96,8 @@ MOTION = """
 
   return {
     moving: moving.length,
-    marks: document.querySelectorAll('.nib-folded').length,
-    folded: document.querySelector(selector)?.querySelector('.nib-fold-hinge')?.dataset.folded
+    marks: document.querySelectorAll('.orden-folded').length,
+    folded: document.querySelector(selector)?.querySelector('.orden-fold-hinge')?.dataset.folded
       ?? null,
     tall: Math.round(document.querySelector('.cm-content').getBoundingClientRect().height),
     lines: lines.length,
@@ -107,7 +107,7 @@ MOTION = """
 
 PRESS = """
 (selector) => {
-  const hinge = document.querySelector(selector).querySelector('.nib-fold-hinge')
+  const hinge = document.querySelector(selector).querySelector('.orden-fold-hinge')
   const box = hinge.getBoundingClientRect()
   // Where the pointer would be, because the press reaches the editor as well as
   // the chevron and an event at 0,0 would leave a selection behind it.
@@ -267,9 +267,9 @@ def drive_pointer(browser: Browser) -> None:
     if before["marks"]:
         wrong("something is folded in a note nobody has folded")
 
-    heading = page.locator(".cm-line.nib-h1").first
+    heading = page.locator(".cm-line.orden-h1").first
     hidden = page.evaluate(
-        "() => getComputedStyle(document.querySelector('.nib-fold-hinge')).opacity"
+        "() => getComputedStyle(document.querySelector('.orden-fold-hinge')).opacity"
     )
     say(f"[desktop] a chevron nobody is pointing at: opacity {hidden}")
     if hidden != "0":
@@ -278,14 +278,14 @@ def drive_pointer(browser: Browser) -> None:
     heading.hover()
     page.wait_for_timeout(400)
     shown = page.evaluate(
-        "() => getComputedStyle(document.querySelector('.nib-fold-hinge')).opacity"
+        "() => getComputedStyle(document.querySelector('.orden-fold-hinge')).opacity"
     )
     say(f"[desktop] under the pointer: opacity {shown}")
     if shown != "1":
         wrong(f"the chevron does not come when the pointer is on the line: opacity {shown}")
     shot(page, "02-hover")
 
-    page.locator(".nib-fold-hinge").first.click()
+    page.locator(".orden-fold-hinge").first.click()
     page.wait_for_timeout(600)
     after = state(page)
     say(f"[desktop] folded by pointer: {json.dumps({k: after[k] for k in ('marks', 'lines')})}")
@@ -310,7 +310,7 @@ def drive_pointer(browser: Browser) -> None:
     if not any(one.startswith("# Chapter one") for one in revealed["shown"]):
         wrong("the heading did not show its own source with the caret on it")
 
-    page.locator(".nib-fold-hinge").first.click()
+    page.locator(".orden-fold-hinge").first.click()
     page.wait_for_timeout(500)
     if state(page)["marks"]:
         wrong("a second click did not open the fold")
@@ -326,14 +326,14 @@ def drive_pointer(browser: Browser) -> None:
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Alt+BracketLeft")
     try:
-        page.wait_for_function("document.querySelectorAll('.nib-folded').length > 0", timeout=5000, polling=50)
+        page.wait_for_function("document.querySelectorAll('.orden-folded').length > 0", timeout=5000, polling=50)
     except Exception:  # noqa: BLE001 - nothing folded, which the check below says
         pass
     caret = page.evaluate(
         """() => {
           const head = window.nib.state.selection.main.head
           const line = window.nib.state.doc.lineAt(head)
-          return { line: line.number, text: line.text, marks: document.querySelectorAll('.nib-folded').length }
+          return { line: line.number, text: line.text, marks: document.querySelectorAll('.orden-folded').length }
         }"""
     )
     say(f"[desktop] folded by keyboard: {json.dumps(caret)}")
@@ -350,12 +350,12 @@ def drive_pointer(browser: Browser) -> None:
     shot(page, "07-palette")
     page.keyboard.press("Enter")
 
-    together = page.evaluate(MOTION, ".cm-line.nib-h1")
+    together = page.evaluate(MOTION, ".cm-line.orden-h1")
     say(f"[desktop] folding everything: {json.dumps(together)}")
     if together["moving"] < 1:
         wrong("folding everything moved nothing")
 
-    wait_for(page, "() => document.querySelectorAll('.nib-folded').length >= 2", "the marks of everything folded", 15)
+    wait_for(page, "() => document.querySelectorAll('.orden-folded').length >= 2", "the marks of everything folded", 15)
     page.wait_for_timeout(300)
     outline = state(page)
     say(f"[desktop] the outline: {json.dumps(outline['shown'])}")
@@ -400,7 +400,7 @@ def drive_pointer(browser: Browser) -> None:
     page.locator(".cm-content").click()
     page.keyboard.press("Control+Alt+BracketRight")
 
-    apart = page.evaluate(MOTION, ".cm-line.nib-h1")
+    apart = page.evaluate(MOTION, ".cm-line.orden-h1")
     say(f"[desktop] unfolding everything: {json.dumps(apart)}")
     if apart["moving"] < 1:
         wrong("unfolding everything moved nothing")
@@ -429,7 +429,7 @@ def drive_pointer(browser: Browser) -> None:
     page.keyboard.press("Control+Alt+BracketRight")
     page.wait_for_timeout(700)
     audit_placement(page, "desktop", "beside their blocks")
-    page.locator(".cm-line.nib-code-open").first.hover()
+    page.locator(".cm-line.orden-code-open").first.hover()
     page.wait_for_timeout(300)
     shot(page, "14-chevron-beside-a-fence")
 
@@ -440,8 +440,8 @@ def drive_pointer(browser: Browser) -> None:
     page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
     page.wait_for_timeout(400)
 
-    drive_motion(page, "desktop", ".cm-line.nib-code-open", 16)
-    drive_motion(page, "desktop", ".cm-line.nib-h1", 19)
+    drive_motion(page, "desktop", ".cm-line.orden-code-open", 16)
+    drive_motion(page, "desktop", ".cm-line.orden-h1", 19)
 
     page.context.close()
 
@@ -451,7 +451,7 @@ def drive_finger(browser: Browser) -> None:
 
     box = page.evaluate(
         """() => {
-          const hinge = document.querySelector('.nib-fold-hinge')
+          const hinge = document.querySelector('.orden-fold-hinge')
           const style = getComputedStyle(hinge)
           const rect = hinge.getBoundingClientRect()
           return { opacity: style.opacity, width: rect.width, height: rect.height }
@@ -466,7 +466,7 @@ def drive_finger(browser: Browser) -> None:
 
     audit_placement(page, "phone", "at a thumb's size")
 
-    page.locator(".nib-fold-hinge").first.tap()
+    page.locator(".orden-fold-hinge").first.tap()
     page.wait_for_timeout(700)
     tapped = state(page)
     say(f"[phone] tapped: {tapped['marks']} marks")
@@ -480,7 +480,7 @@ def drive_still(browser: Browser) -> None:
     page = fresh(browser, "still", finger=False, still=True)
     open_chapter(page, "still")
 
-    pressed = page.evaluate(PRESS, ".cm-line.nib-h1")
+    pressed = page.evaluate(PRESS, ".cm-line.orden-h1")
     say(f"[still] pressed: {json.dumps(pressed)}")
     shot(page, "30-still-folded")
 

@@ -31,7 +31,7 @@
 
 <div class="holder">
   <div
-    class="nib-bar bar"
+    class="orden-bar bar"
     role="toolbar"
     aria-label={t('{count} selected', { count: amount(rows.length) })}
   >

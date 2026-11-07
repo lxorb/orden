@@ -55,7 +55,7 @@ def none_of_it(page: Page, when: str) -> None:
         wrong(f"{when}: the palette offers {rows}")
     page.evaluate("() => { const ws = window.nibApp.workspace; for (const one of [...ws.tabs]) ws.close(one.id, false) }")
     wait_for(page, "document.querySelector('.here .kind')", "the empty pane's kinds")
-    cards = page.evaluate("() => [...document.querySelectorAll('.here .kind .nib-row-label')].map((one) => one.textContent.trim())")
+    cards = page.evaluate("() => [...document.querySelectorAll('.here .kind .orden-row-label')].map((one) => one.textContent.trim())")
     if not cards:
         wrong(f"{when}: no new tab to look at")
     page.keyboard.press("k")

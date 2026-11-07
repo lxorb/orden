@@ -76,8 +76,8 @@ function drawn() {
 describe("a note's cover in the editor", () => {
   test('is a block holding the band, not the band itself', () => {
     const { block } = drawn()
-    expect(block.className).toBe('nib-cover-block')
-    expect(block.children.map((one) => one.className)).toEqual(['nib-cover'])
+    expect(block.className).toBe('orden-cover-block')
+    expect(block.children.map((one) => one.className)).toEqual(['orden-cover'])
     expect(block.children[0]?.children.map((one) => one.tag)).toEqual(['img', 'div'])
   })
 
@@ -112,17 +112,17 @@ describe("the cover's stylesheets", () => {
   }
 
   test('give the band a margin below it, which is what the block has to hold', () => {
-    expect(body(sheet('document.css'), '#write .nib-cover')).toMatch(/\bmargin\s*:/)
+    expect(body(sheet('document.css'), '#write .orden-cover')).toMatch(/\bmargin\s*:/)
   })
 
   test('give the blocks over a note no margin of their own, outside the box the editor measures', () => {
-    for (const selector of ['#write .nib-cover-block', '.nib-toc']) {
+    for (const selector of ['#write .orden-cover-block', '.orden-toc']) {
       expect(body(sheet('editor.css'), selector), selector).not.toMatch(/\bmargin/)
     }
   })
 
   test('make the block hold its margins inside the box the editor measures', () => {
-    const block = body(sheet('editor.css'), '#write .nib-cover-block')
+    const block = body(sheet('editor.css'), '#write .orden-cover-block')
     expect(block).toMatch(/\bdisplay\s*:\s*flow-root\b/)
     expect(block).not.toMatch(/\bmargin/)
   })

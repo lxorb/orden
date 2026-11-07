@@ -53,7 +53,7 @@
   <span class="spring"></span>
   <button
     type="button"
-    class="nib-glyph tool"
+    class="orden-glyph tool"
     aria-label={t('More')}
     title={t('More')}
     onclick={onmenu}
@@ -69,7 +69,7 @@
   {#if canAdd}
     <button
       type="button"
-      class="nib-glyph tool"
+      class="orden-glyph tool"
       aria-label={t('New page')}
       title={t('New page')}
       onclick={onadd}

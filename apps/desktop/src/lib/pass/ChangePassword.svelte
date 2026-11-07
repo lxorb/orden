@@ -32,7 +32,7 @@
 <form class="change" onsubmit={changed}>
   {#if asksOld}
     <input
-      class="nib-field"
+      class="orden-field"
       type="password"
       autocomplete="current-password"
       placeholder={t('Current Pass password')}
@@ -43,7 +43,7 @@
     />
   {/if}
   <input
-    class="nib-field"
+    class="orden-field"
     type="password"
     autocomplete="new-password"
     placeholder={t('New Pass password')}
@@ -52,7 +52,7 @@
   />
   <StrengthMeter {password} />
   <input
-    class="nib-field"
+    class="orden-field"
     type="password"
     autocomplete="new-password"
     placeholder={t('Type it again')}
@@ -69,9 +69,9 @@
   {/if}
   <div class="buttons">
     {#if oncancel}
-      <button class="nib-button is-quiet" type="button" onclick={oncancel}>{t('Cancel')}</button>
+      <button class="orden-button is-quiet" type="button" onclick={oncancel}>{t('Cancel')}</button>
     {/if}
-    <button class="nib-button" type="submit" disabled={busy || !ready} aria-busy={busy}>
+    <button class="orden-button" type="submit" disabled={busy || !ready} aria-busy={busy}>
       {t('Change password')}
     </button>
   </div>

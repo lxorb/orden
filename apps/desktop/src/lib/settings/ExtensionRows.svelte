@@ -29,7 +29,7 @@
 </script>
 
 {#each extensions.list as one (one.id)}
-  <div class="nib-setting setting extension">
+  <div class="orden-setting setting extension">
     <button
       class="name"
       aria-expanded={opened === one.id}
@@ -62,7 +62,7 @@
       aria-label={one.name}
       onclick={() => void extensions.enable(one.id, !one.enabled)}
     >
-      <span class="nib-switch" class:on={one.enabled} aria-hidden="true"></span>
+      <span class="orden-switch" class:on={one.enabled} aria-hidden="true"></span>
     </button>
   </div>
   {#if opened === one.id}
@@ -82,11 +82,11 @@
       {/if}
       <div class="rows">
         {#if one.options}
-          <button class="nib-chip is-quiet" onclick={() => void options(one.id)}>
+          <button class="orden-chip is-quiet" onclick={() => void options(one.id)}>
             {t('Options')}
           </button>
         {/if}
-        <button class="nib-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>
+        <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>
           {t('Remove')}
         </button>
       </div>
@@ -94,9 +94,9 @@
   {/if}
 {/each}
 
-<form class="nib-setting setting" onsubmit={add}>
+<form class="orden-setting setting" onsubmit={add}>
   <input
-    class="nib-field"
+    class="orden-field"
     type="url"
     bind:value={link}
     placeholder={t('Paste a Chrome Web Store or Firefox Add-ons link')}

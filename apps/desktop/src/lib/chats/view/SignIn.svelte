@@ -46,7 +46,7 @@
         <p class="wait">{t('Waiting…')}</p>
       {/if}
     {:else if screen.kind === 'link'}
-      <button type="button" class="nib-button" onclick={() => openHref(screen.url)}
+      <button type="button" class="orden-button" onclick={() => openHref(screen.url)}
         >{t('Open')}</button
       >
     {:else}
@@ -62,7 +62,7 @@
       <span>{t(asking.prompt.label)}</span>
       <!-- svelte-ignore a11y_autofocus -->
       <input
-        class="nib-field"
+        class="orden-field"
         type={asking.prompt.kind === 'password'
           ? 'password'
           : asking.prompt.kind === 'phone'
@@ -81,10 +81,10 @@
     </label>
     {#if asking.prompt.note}<p class="note">{t(asking.prompt.note)}</p>{/if}
     <div class="actions">
-      <button class="nib-button is-quiet" type="button" onclick={() => asking.cancel()}
+      <button class="orden-button is-quiet" type="button" onclick={() => asking.cancel()}
         >{t('Cancel')}</button
       >
-      <button class="nib-button" type="submit" disabled={!value.trim()}>{t('Continue')}</button>
+      <button class="orden-button" type="submit" disabled={!value.trim()}>{t('Continue')}</button>
     </div>
   </form>
 {/if}
