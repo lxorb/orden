@@ -1,3 +1,4 @@
+import { freePath } from '@orden/markdown/paths'
 import { message, plural, t } from '../i18n.svelte'
 import type { Picked as Brought } from '../import/sources'
 import { fileClipboard } from '../list-landing.svelte'
@@ -41,13 +42,12 @@ export function changeable(view: ExplorerView): boolean {
   return !!listing && !listing.own && (!listing.spaces || inASpace(listing.path))
 }
 
-export function freeName(taken: readonly string[], name: string): string {
-  const names = new Set(taken.map((one) => one.toLowerCase()))
-  if (!names.has(name.toLowerCase())) return name
-  for (let count = 2; ; count++) {
-    const next = `${name} ${count}`
-    if (!names.has(next.toLowerCase())) return next
-  }
+export function takenNames(names: readonly string[]): Set<string> {
+  return new Set(names.map((one) => one.toLowerCase()))
+}
+
+export function freeName(taken: ReadonlySet<string>, name: string): string {
+  return freePath(name, (candidate) => taken.has(candidate.toLowerCase()))
 }
 
 export async function newFolder(view: ExplorerView) {
@@ -56,7 +56,7 @@ export async function newFolder(view: ExplorerView) {
   try {
     let path: string
     if (inASpace(folder)) {
-      path = joinPath(folder, freeName(view.names, t('New folder')))
+      path = joinPath(folder, freeName(takenNames(view.names), t('New folder')))
       await invoke('create_folder', { path })
       await workspace.loadTree()
     } else {
