@@ -308,6 +308,26 @@ describe('a file explorer', () => {
     ])
   })
 
+  test('draws only the rows of a long folder in columns that can be seen', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    const kept = DISK['/home/me/Pictures'] ?? []
+    DISK['/home/me/Pictures'] = Array.from({ length: 5000 }, (_, at) => `p${at}.png`)
+    try {
+      await explorer()
+      press('3', { ctrlKey: true })
+      await settled()
+      press('ArrowDown')
+      press('ArrowDown')
+      await settled()
+      const drawn = target.querySelectorAll('.column li')
+      expect(drawn.length).toBeGreaterThan(0)
+      expect(drawn.length).toBeLessThan(100)
+    } finally {
+      DISK['/home/me/Pictures'] = kept
+      explorerPrefs.show('list')
+    }
+  })
+
   test('walks into a folder and back out with the sideways arrows in columns', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     const { view } = await explorer()
