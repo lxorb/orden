@@ -44,7 +44,7 @@ SEED_PAGE = "<!doctype html><title>seed</title><p>seeding"
 BUILT_IN = (
     "try { if (localStorage.getItem('orden:theme') === null) {"
     " localStorage.setItem('orden:theme', 'default'); localStorage.setItem('orden:theme-moved', 'yes') }"
-    " if (localStorage.getItem('orden:renamed') === null) localStorage.setItem('orden:renamed', 'told')"
+    " if (localStorage.getItem('orden:renamed') === null) localStorage.setItem('orden:renamed', 'told');"
     " if (localStorage.getItem('orden:crash-reports-told') === null) {"
     " localStorage.setItem('orden:crash-reports-told', 'true'); localStorage.setItem('orden:crash-reports', 'false') } }"
     " catch {}"
