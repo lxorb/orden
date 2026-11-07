@@ -51,6 +51,18 @@ export function windowsPath(root: string): boolean {
 
 type Placed = (row: EntryRow, from: string, to: string) => void
 
+function added(map: Map<string, Set<string>>, key: string, id: string) {
+  const ids = map.get(key)
+  if (ids) ids.add(id)
+  else map.set(key, new Set([id]))
+}
+
+function taken(map: Map<string, Set<string>>, key: string, id: string) {
+  const ids = map.get(key)
+  ids?.delete(id)
+  if (ids?.size === 0) map.delete(key)
+}
+
 const watched = new WeakMap<EntryRow, { path: string; maps: Set<Entries> }>()
 
 function watch(row: EntryRow, map: Entries) {
@@ -124,6 +136,7 @@ export class SpaceState {
   private pathsCache: Map<string, string> | null = null
   private placedCache: Map<string, { folder: string; names: string[] }> | null = null
   private readonly holding = new Map<string, Set<string>>()
+  private readonly within = new Map<string, Set<string>>()
   private readonly keys = new Map<string, string>()
   private shownAt: { paths: Map<string, string>; keys: Map<string, string[]> } | null = null
 
@@ -310,27 +323,32 @@ export class SpaceState {
   private keyOf(path: string): string {
     let key = this.keys.get(path)
     if (key === undefined) {
-      if (this.keys.size > this.holding.size * 4 + 64) this.keys.clear()
+      if (this.keys.size > (this.holding.size + this.within.size) * 4 + 64) this.keys.clear()
       key = this.key(path)
       this.keys.set(path, key)
     }
     return key
   }
 
+  inside(folder: string): EntryRow[] {
+    const out: EntryRow[] = []
+    for (const id of this.within.get(this.key(folder)) ?? []) {
+      const entry = this.entries.get(id)
+      if (entry?.local_path) out.push(entry)
+    }
+    return out
+  }
+
   private hold(id: string, path: string) {
     if (!path) return
-    const key = this.keyOf(path)
-    const ids = this.holding.get(key) ?? new Set<string>()
-    ids.add(id)
-    this.holding.set(key, ids)
+    added(this.holding, this.keyOf(path), id)
+    for (let at = folderOf(path); at; at = folderOf(at)) added(this.within, this.keyOf(at), id)
   }
 
   private unhold(id: string, path: string) {
     if (!path) return
-    const key = this.keyOf(path)
-    const ids = this.holding.get(key)
-    ids?.delete(id)
-    if (ids?.size === 0) this.holding.delete(key)
+    taken(this.holding, this.keyOf(path), id)
+    for (let at = folderOf(path); at; at = folderOf(at)) taken(this.within, this.keyOf(at), id)
   }
 
   private shownKeys(): Map<string, string[]> {
@@ -576,10 +594,8 @@ function depth(path: string): number {
 function carry(space: SpaceState, entry: EntryRow, to: string, moved: Set<EntryRow>) {
   const from = entry.local_path
   if (entry.kind === 'folder') {
-    const inside = space.key(`${from}${SEP}`)
-    for (const one of space.entries.values()) {
-      if (one === entry || !one.local_path) continue
-      if (!space.key(one.local_path).startsWith(inside)) continue
+    for (const one of space.inside(from)) {
+      if (one === entry) continue
       one.local_path = `${to}${one.local_path.slice(from.length)}`
       moved.add(one)
     }
@@ -589,9 +605,7 @@ function carry(space: SpaceState, entry: EntryRow, to: string, moved: Set<EntryR
 }
 
 function forgetUnder(space: SpaceState, folder: string, moved: Set<EntryRow>, how: Settling) {
-  const inside = space.key(`${folder}${SEP}`)
-  for (const one of space.entries.values()) {
-    if (!one.local_path || !space.key(one.local_path).startsWith(inside)) continue
+  for (const one of space.inside(folder)) {
     one.local_path = ''
     moved.add(one)
     if (one.kind !== 'folder') how.forget(one.id)
@@ -599,10 +613,5 @@ function forgetUnder(space: SpaceState, folder: string, moved: Set<EntryRow>, ho
 }
 
 function holdsKept(space: SpaceState, folder: EntryRow, how: Settling): boolean {
-  const inside = space.key(`${folder.local_path}${SEP}`)
-  for (const one of space.entries.values()) {
-    if (!one.local_path || !space.key(one.local_path).startsWith(inside)) continue
-    if (one.kind !== 'folder' && how.keeps(one.id)) return true
-  }
-  return false
+  return space.inside(folder.local_path).some((one) => one.kind !== 'folder' && how.keeps(one.id))
 }

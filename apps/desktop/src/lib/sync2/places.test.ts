@@ -245,7 +245,18 @@ describe('what a space holds at a path', () => {
       seed = (seed * 1103515245 + 12345) % 2147483648
       return seed % most
     }
-    const names = ['a.md', 'A.md', 'b.md', 'Ä.md', 'Ä.md', 'f/a.md', 'F/A.md', '']
+    const names = [
+      'a.md',
+      'A.md',
+      'b.md',
+      'Ä.md',
+      'Ä.md',
+      'f/a.md',
+      'F/A.md',
+      'f/g/b.md',
+      'F/G',
+      '',
+    ]
     const made = () =>
       new SpaceState(
         { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
@@ -292,6 +303,18 @@ describe('what a space holds at a path', () => {
       for (const path of names.filter(Boolean)) {
         expect(space.at(path)?.id ?? null).toBe(walked(path)?.id ?? null)
       }
+      for (const folder of ['f', 'F', 'f/G', 'a.md']) {
+        const inside = space.key(`${folder}/`)
+        const under = [...space.entries.values()]
+          .filter((one) => one.local_path && space.key(one.local_path).startsWith(inside))
+          .map((one) => one.id)
+        expect(
+          space
+            .inside(folder)
+            .map((one) => one.id)
+            .sort(),
+        ).toEqual(under.sort())
+      }
     }
     expect(JSON.parse(JSON.stringify([...space.entries.values()]))).toEqual(
       [...space.entries.values()].map((one) => ({ ...one })),
@@ -320,6 +343,58 @@ describe('an ask for what a space holds at a path', () => {
       expect(space.at(`moved ${String(at)}.md`)).toBe(entry)
     }
     expect(walks).not.toHaveBeenCalled()
+  })
+})
+
+describe('a tree of many folders gone from the account', () => {
+  test('leaves the disk without a walk of every entry for each folder', async () => {
+    const rows = [
+      row('top', 'folder', null, 'Top', 'Top'),
+      row('keep', 'note', null, 'Keep.md', 'Keep.md'),
+    ]
+    for (let f = 0; f < 300; f++) {
+      rows.push(row(`f${String(f)}`, 'folder', 'top', `F${String(f)}`, `Top/F${String(f)}`))
+      for (let n = 0; n < 5; n++) {
+        rows.push(
+          row(
+            `n${String(f)}-${String(n)}`,
+            'note',
+            `f${String(f)}`,
+            `N${String(n)}.md`,
+            `Top/F${String(f)}/N${String(n)}.md`,
+          ),
+        )
+      }
+    }
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      rows.reverse(),
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+    const top = space.entries.get('top')
+    if (top) top.deleted = true
+    space.changed()
+    const disk = new MemoryDisk()
+    for (const one of rows) {
+      if (one.kind === 'folder') await disk.mkdir(`/r/${one.local_path}`)
+      else disk.files.set(`/r/${one.local_path}`, 'x')
+    }
+    const walks = vi.spyOn(space.entries, 'values')
+    const forgotten: string[] = []
+    await settle(space, {
+      disk,
+      join: (root, path) => `${root}/${path}`,
+      keeps: () => false,
+      forget: (id) => forgotten.push(id),
+    })
+
+    expect(walks.mock.calls.length).toBeLessThan(10)
+    expect(forgotten).toHaveLength(1500)
+    expect(
+      [...space.entries.values()].filter((one) => one.local_path).map((one) => one.id),
+    ).toEqual(['keep'])
   })
 })
 
