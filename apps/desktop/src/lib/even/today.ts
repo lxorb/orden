@@ -1,17 +1,17 @@
 import { shownWords } from '@orden/markdown/escapes'
+import { type Ticked, TaskTurns } from '../task-turns'
 import type { Row } from './shell'
 
 interface Held {
   id: string
-  at: string
-  space: string
   text: string
   done: boolean
+  turns: TaskTurns
 }
 
 export interface TodayHost {
   load: () => Promise<readonly { at: string; space: string; text: string }[]>
-  tick: (at: string, space: string, done: boolean) => Promise<boolean>
+  tick: (at: string, space: string, done: boolean) => Promise<Ticked | null>
   redraw: () => void
 }
 
@@ -40,10 +40,9 @@ export class Today {
       .then((tasks) => {
         this.held = tasks.map((one) => ({
           id: `${one.space}\n${one.at}`,
-          at: one.at,
-          space: one.space,
           text: one.text,
           done: false,
+          turns: new TaskTurns(one.at, (at, done) => this.host.tick(at, one.space, done)),
         }))
         this.host.redraw()
       })
@@ -55,14 +54,11 @@ export class Today {
     if (!one) return
     one.done = !one.done
     const done = one.done
-    void this.host
-      .tick(one.at, one.space, done)
-      .catch(() => false)
-      .then((found) => {
-        if (found || one.done !== done) return
-        one.done = !done
-        this.host.redraw()
-      })
+    void one.turns.turn(done).then((landed) => {
+      if (landed || one.done !== done) return
+      one.done = !done
+      this.host.redraw()
+    })
   }
 }
 

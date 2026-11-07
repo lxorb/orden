@@ -98,7 +98,9 @@ describe("the reader's own task actions", () => {
   test('a recurring task ticked writes its next line above, in one edit', async () => {
     const { tasks } = await listed()
     expect(tasks.map((one) => one.text)).toEqual(['Water the plants'])
-    expect(await tickTask(tasks[0]?.at ?? '', 'Home', true)).toBe(true)
+    expect(await tickTask(tasks[0]?.at ?? '', 'Home', true)).toMatchObject({
+      at: expect.stringMatching(/^Plan.md#2:/),
+    })
     const lines = files.get('/s/Home/Plan.md')?.split('\n') ?? []
     expect(lines[1]).toMatch(/^- \[ \] Water the plants 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
     expect(lines[2]).toBe(`- [x] Water the plants 🔁 every day 📅 ${today}`)
@@ -109,12 +111,38 @@ describe("the reader's own task actions", () => {
     const was = files.get('/s/Home/Plan.md')
     share.readOnly = true
 
-    expect(await tickTask(tasks[0]?.at ?? '', 'Home', true)).toBe(false)
+    expect(await tickTask(tasks[0]?.at ?? '', 'Home', true)).toBeNull()
     expect(files.get('/s/Home/Plan.md')).toBe(was)
   })
 
   test('nothing ticked where the task or the space is not there', async () => {
-    expect(await tickTask('Plan.md#1:nothing', 'Home', true)).toBe(false)
-    expect(await tickTask('Plan.md#1:nothing', 'Elsewhere', true)).toBe(false)
+    expect(await tickTask('Plan.md#1:nothing', 'Home', true)).toBeNull()
+    expect(await tickTask('Plan.md#1:nothing', 'Elsewhere', true)).toBeNull()
+  })
+
+  test('a recurring tick says where the ticked line went, so unticking there finds it', async () => {
+    const { tasks } = await listed()
+    const ticked = await tickTask(tasks[0]?.at ?? '', 'Home', true)
+    expect(await tickTask(ticked?.at ?? '', 'Home', false)).not.toBeNull()
+    const lines = files.get('/s/Home/Plan.md')?.split('\n') ?? []
+    expect(lines[1]).toMatch(/^- \[ \] Water the plants 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
+    expect(lines[2]).toBe(`- [ ] Water the plants 🔁 every day 📅 ${today}`)
+  })
+
+  test('a tick taken back leaves the note as it was, its next repeat gone too', async () => {
+    const was = files.get('/s/Home/Plan.md')
+    const { tasks } = await listed()
+    const ticked = await tickTask(tasks[0]?.at ?? '', 'Home', true)
+    expect(await ticked?.back()).toBe(true)
+    expect(files.get('/s/Home/Plan.md')).toBe(was)
+  })
+
+  test('a tick is not taken back over what was written after it', async () => {
+    const { tasks } = await listed()
+    const ticked = await tickTask(tasks[0]?.at ?? '', 'Home', true)
+    const after = `${files.get('/s/Home/Plan.md')}- [ ] Something new\n`
+    files.set('/s/Home/Plan.md', after)
+    expect(await ticked?.back()).toBe(false)
+    expect(files.get('/s/Home/Plan.md')).toBe(after)
   })
 })
