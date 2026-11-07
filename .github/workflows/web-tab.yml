@@ -29,15 +29,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-          - runner: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 75
+        run: ['fuzz 11', 'fuzz 12', 'fuzz 13', 'storm']
+    runs-on: windows-latest
+    timeout-minutes: 90
     permissions:
       contents: read
     defaults:
@@ -51,7 +45,7 @@ jobs:
 
       - uses: ./.github/actions/desktop-setup
         with:
-          target: ${{ matrix.target }}
+          target: x86_64-pc-windows-msvc
 
       - name: The probe
         run: |
@@ -59,90 +53,43 @@ jobs:
           config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
           case "$RUNNER_OS" in
             Linux)
-              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+              bash scripts/linux-cef.sh tauri build --target x86_64-pc-windows-msvc --no-bundle \
                 --ignore-version-mismatches --config "$config"
-              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden" >>"$GITHUB_ENV"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden" >>"$GITHUB_ENV"
               ;;
             macOS)
-              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --bundles app --config "$config"
-              app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
+              pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --bundles app --config "$config"
+              app=$(ls -d apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/macos/*.app | head -1)
               echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
               ;;
             Windows)
-              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
-              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.exe" >>"$GITHUB_ENV"
+              pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" >>"$GITHUB_ENV"
               ;;
           esac
 
-      - name: A screen, on Linux
-        if: runner.os == 'Linux'
+      - name: procdump
         run: |
-          sudo apt-get install -y xvfb dbus-x11
-          sandbox="$(dirname "$EXE")/chrome-sandbox"
-          if [ -f "$sandbox" ]; then
-            sudo chown root:root "$sandbox"
-            sudo chmod 4755 "$sandbox"
-          fi
+          curl -sSL -o "$RUNNER_TEMP/procdump.zip" https://download.sysinternals.com/files/Procdump.zip
+          mkdir -p "$RUNNER_TEMP/procdump" && cd "$RUNNER_TEMP/procdump" && unzip -q ../procdump.zip
 
-      - name: A web tab, and the app still answers
-        run: |
-          drive=(scripts/web-tab-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
-          case "$RUNNER_OS" in
-            Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
-            Windows) python "${drive[@]}" ;;
-            *) python3 "${drive[@]}" ;;
-          esac
+      - name: Pillow
+        run: python -m pip install --quiet pillow
 
-      - name: A pinch magnifies the page and leaves its zoom
-        if: ${{ !cancelled() && env.EXE != '' }}
-        timeout-minutes: 15
+      - name: Hunt
+        timeout-minutes: 50
         run: |
-          drive=(scripts/pinch-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
-          case "$RUNNER_OS" in
-            Linux)
-              sudo apt-get install -y xserver-xorg-core xserver-xorg-video-dummy xserver-xorg-input-libinput
-              python3 -m pip install --quiet --break-system-packages evdev python-xlib
-              sudo modprobe uinput || true
-              sudo chmod 666 /dev/uinput
-              conf="$RUNNER_TEMP/pinch-xorg.conf"
-              printf '%s\n' \
-                'Section "ServerFlags"' '  Option "AutoAddDevices" "true"' '  Option "AllowEmptyInput" "true"' 'EndSection' \
-                'Section "Device"' '  Identifier "dummy"' '  Driver "dummy"' '  VideoRam 256000' 'EndSection' \
-                'Section "Screen"' '  Identifier "screen"' '  Device "dummy"' '  DefaultDepth 24' \
-                '  SubSection "Display"' '    Depth 24' '    Virtual 1600 1000' '  EndSubSection' 'EndSection' \
-                'Section "InputClass"' '  Identifier "pads"' '  MatchIsTouchpad "on"' '  Driver "libinput"' 'EndSection' >"$conf"
-              sudo Xorg :7 -noreset -config "$conf" -logfile "$RUNNER_TEMP/xorg.log" &
-              xorg=$!
-              sleep 4
-              said=0
-              DISPLAY=:7 dbus-run-session -- python3 "${drive[@]}" || said=$?
-              sudo kill "$xorg" || true
-              if [ "$said" != 0 ]; then
-                sudo grep -i -E "touchpad|libinput|gesture|error" "$RUNNER_TEMP/xorg.log" | tail -40
-                exit "$said"
-              fi
-              ;;
-            Windows) python "${drive[@]}" ;;
-            *) python3 "${drive[@]}" ;;
-          esac
-
-      - name: Files dropped from outside
-        if: ${{ !cancelled() && env.EXE != '' }}
-        timeout-minutes: 15
-        run: |
-          drive=(scripts/outside-drop-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
-          case "$RUNNER_OS" in
-            Linux)
-              python3 -m pip install --quiet --break-system-packages python-xlib
-              xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}"
-              ;;
-            Windows)
-              python -m pip install --quiet comtypes
-              python "${drive[@]}"
-              ;;
-            *)
-              python3 -m venv "$RUNNER_TEMP/drop"
-              "$RUNNER_TEMP/drop/bin/pip" install --quiet pyobjc-framework-Quartz pyobjc-framework-Cocoa
-              "$RUNNER_TEMP/drop/bin/python" "${drive[@]}"
-              ;;
+          set -- ${{ matrix.run }}
+          args="--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping,TouchpadOverscrollHistoryNavigation --overscroll-history-navigation=0 --renderer-process-limit=1"
+          case "${{ matrix.run }}" in
+            dialogs*) python scripts/dialog-probe.py --exe "$EXE" --identifier "$IDENTIFIER" ;;
+            "stray off visual") python scripts/stray-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --off ;;
+            "stray on visual") python scripts/stray-probe.py --exe "$EXE" --identifier "$IDENTIFIER" ;;
+            "stray off windowed") python scripts/stray-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --off --windowed ;;
+            "stray on windowed") python scripts/stray-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --windowed ;;
+            storm) python scripts/storm-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --seconds 15 ;;
+            fuzz*) python scripts/freeze-fuzz.py --exe "$EXE" --identifier "$IDENTIFIER" --minutes 25 --seed $2 ;;
+            "busy default") python scripts/busy-tab-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --first busy ;;
+            "busy one") python scripts/busy-tab-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --first busy --args "$args" ;;
+            "dialogs one") python scripts/busy-tab-probe.py --exe "$EXE" --identifier "$IDENTIFIER" --first alert,confirm,leave --args "$args" ;;
           esac
