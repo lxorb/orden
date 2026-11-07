@@ -276,17 +276,23 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
-    fn reads_this_process_from_the_kernel() {
-        let me = std::process::id();
-        let before = totals(Whose::Tree(me)).unwrap();
+    fn reads_a_busy_process_from_the_kernel() {
+        let mut busy = std::process::Command::new("sh")
+            .args(["-c", "while :; do :; done"])
+            .spawn()
+            .unwrap();
+        let pid = busy.id();
+        let before = totals(Whose::Tree(pid)).unwrap();
+        std::thread::sleep(Duration::from_millis(300));
+        let after = totals(Whose::Tree(pid)).unwrap();
+        let _ = busy.kill();
+        let _ = busy.wait();
         assert!(before.memory > 0);
-        let until = Instant::now() + Duration::from_millis(200);
-        let mut spin = 0_u64;
-        while Instant::now() < until {
-            spin = spin.wrapping_add(1);
-        }
-        assert!(spin > 0);
-        let after = totals(Whose::Tree(me)).unwrap();
-        assert!(after.ticks >= before.ticks);
+        assert!(
+            after.ticks > before.ticks,
+            "{} then {}",
+            before.ticks,
+            after.ticks
+        );
     }
 }
