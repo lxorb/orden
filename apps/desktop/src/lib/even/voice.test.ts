@@ -214,6 +214,42 @@ describe('listening', () => {
     expect(voice.listening).toBe(false)
   })
 
+  test('closes it when asked to stop while the glasses were still opening it', async () => {
+    let opened: (answer: boolean) => void = () => undefined
+    const microphone = vi.fn(
+      (open: boolean) =>
+        new Promise<boolean>((resolve) => {
+          if (open) opened = resolve
+          else resolve(true)
+        }),
+    )
+    const { ears: one } = ears({ microphone })
+    const voice = new Voice(one)
+
+    const starting = voice.start()
+    const stopping = voice.stop()
+    await vi.waitFor(() => {
+      expect(microphone).toHaveBeenCalledTimes(1)
+    })
+    opened(true)
+
+    expect(await starting).toBe(true)
+    await stopping
+    expect(microphone.mock.calls).toEqual([[true], [false]])
+    expect(voice.listening).toBe(false)
+  })
+
+  test('ends as it was last asked when turned on, off and on quickly', async () => {
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+
+    const asked = [voice.start(), voice.stop(), voice.start()]
+    await Promise.all(asked)
+
+    expect(vi.mocked(one.microphone).mock.calls).toEqual([[true], [false], [true]])
+    expect(voice.listening).toBe(true)
+  })
+
   test('opens the microphone whatever the account has, and says nothing about it', async () => {
     const { ears: one, failed } = ears()
     const voice = new Voice(one)
