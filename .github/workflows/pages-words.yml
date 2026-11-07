@@ -1,0 +1,80 @@
+name: pages-words
+
+on:
+  push:
+    branches: ['tmp/ci-hunt-canvas*']
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src/lib/Pages.svelte
+      - apps/desktop/src/lib/PagesPage.svelte
+      - apps/desktop/src/lib/pages/**
+      - apps/desktop/src/lib/pdf/**
+      - scripts/pages-words-drive.py
+      - .github/workflows/pages-words.yml
+  workflow_dispatch:
+
+concurrency:
+  group: pages-words-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  words:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.pages-words
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          case "$RUNNER_OS" in
+            macOS)
+              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --bundles app --config "$config"
+              app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
+              echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+              ;;
+            Windows)
+              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.exe" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: A PDF's words chosen and kept sharp in a page note
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/pages-words-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Windows) python "${drive[@]}" ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/drive"
+              "$RUNNER_TEMP/drive/bin/pip" install --quiet pyobjc-framework-Quartz
+              "$RUNNER_TEMP/drive/bin/python" "${drive[@]}"
+              ;;
+          esac

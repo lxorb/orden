@@ -1,5 +1,13 @@
 import type { Words } from '../reading/find'
 
+export function runsOfItems(items: readonly object[]): string[] {
+  return items.flatMap((item) => {
+    if (!('str' in item) || typeof item.str !== 'string') return []
+    const ends = 'hasEOL' in item && item.hasEOL === true && !/\s$/.test(item.str)
+    return [ends ? `${item.str} ` : item.str]
+  })
+}
+
 export function textOfRuns(runs: readonly string[]): string {
   return runs.join('')
 }

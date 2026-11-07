@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import os
 
-from playwright.sync_api import Browser
+from playwright.sync_api import Browser, Page
 
 from harness import Drive
 
@@ -101,8 +101,7 @@ def across(page, box) -> None:
     page.mouse.up()
 
 
-def drive(browser: Browser) -> None:
-    context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=2)
+def opened(context) -> Page | None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
@@ -111,11 +110,109 @@ def drive(browser: Browser) -> None:
     pdf = f"{root}/Words.pdf"
     if not page.evaluate(SEED, {"path": pdf, "data": base64.b64encode(paper()).decode("ascii")}):
         wrong("the PDF never reached the space")
-        return
+        return None
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
     wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 60", "the page's words", 20)
     page.evaluate(COPIED)
+    return page
+
+
+def menu_rows(page: Page) -> list[str]:
+    return [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
+
+
+def by_pen_and_finger(browser: Browser) -> None:
+    context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=2, has_touch=True, permissions=["clipboard-read", "clipboard-write"])
+    page = opened(context)
+    if not page:
+        return
+    cdp = context.new_cdp_session(page)
+
+    line = page.evaluate(SPAN, "Line 8:")
+    y = line["y"] + line["height"] / 2
+
+    def pen(what: str, x: float) -> None:
+        cdp.send("Input.dispatchMouseEvent", {"type": what, "x": x, "y": y, "button": "left", "buttons": 0 if what == "mouseReleased" else 1, "clickCount": 1, "pointerType": "pen", "force": 0.5})
+
+    pen("mousePressed", line["x"] + 1)
+    for step in range(1, 13):
+        pen("mouseMoved", line["x"] + 1 + (line["width"] - 2) * step / 12)
+        page.wait_for_timeout(10)
+    pen("mouseReleased", line["x"] + line["width"] - 1)
+    page.wait_for_timeout(300)
+    chosen = page.evaluate("() => String(getSelection())")
+    say(f"a pen drawn over line 8 in Select: {chosen!r}")
+    if "Line 8: the kestrel hangs above the field." not in chosen:
+        wrong(f"a pen in Select over a line of the PDF chose {chosen!r}")
+    if page.evaluate(INK):
+        wrong("choosing words with a pen drew ink")
+    rows = menu_rows(page)
+    if not any(one.startswith("Copy") for one in rows):
+        wrong(f"after a pen chose words, its menu has no Copy ({rows})")
+    shot(page, "pen-chosen")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+
+    line = page.evaluate(SPAN, "Line 10:")
+    y = line["y"] + line["height"] / 2
+    x = line["x"] + line["width"] * 0.38
+    before = page.evaluate("() => window.ordenApp.pages.current.store.camera.y")
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y, "id": 1}]})
+    for step in range(1, 9):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": y - 12 * step, "id": 1}]})
+        page.wait_for_timeout(10)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    page.wait_for_timeout(300)
+    chosen = page.evaluate("() => String(getSelection())")
+    moved = page.evaluate("() => window.ordenApp.pages.current.store.camera.y") != before
+    say(f"a finger swept over words: moved {moved}, chose {chosen!r}")
+    if chosen.strip():
+        wrong(f"a finger swept over words chose {chosen!r} instead of moving the page")
+    if not moved:
+        wrong("a finger swept over words did not move the page")
+
+    line = page.evaluate(SPAN, "Line 10:")
+    y = line["y"] + line["height"] / 2
+    x = line["x"] + line["width"] * 0.38
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y, "id": 1}]})
+    page.wait_for_timeout(800)
+    held = page.evaluate("() => String(getSelection())")
+    end = line["x"] + line["width"] - 1
+    for step in range(1, 11):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x + (end - x) * step / 10, "y": y, "id": 1}]})
+        page.wait_for_timeout(10)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    page.wait_for_timeout(400)
+    chosen = page.evaluate("() => String(getSelection())")
+    say(f"a finger held on 'kestrel' chose {held!r}, then dragged to the line's end: {chosen!r}")
+    if held != "kestrel":
+        wrong(f"a finger held on a word chose {held!r}")
+    if "kestrel hangs above the field." not in chosen or "Line 10" in chosen:
+        wrong(f"a finger held and dragged chose {chosen!r}")
+    rows = menu_rows(page)
+    if not any(one.startswith("Copy") for one in rows):
+        wrong(f"after a finger chose words, its menu has no Copy ({rows})")
+    else:
+        page.locator("[role=menu] [role=menuitem]", has_text="Copy").first.click()
+        page.wait_for_timeout(300)
+        copied = page.evaluate("() => navigator.clipboard.readText().catch(() => window.__copied.join(' '))")
+        say(f"Copy from the menu: {copied!r}")
+        if "kestrel hangs above the field." not in copied:
+            wrong(f"Copy after a finger chose words copied {copied!r}")
+    shot(page, "finger-chosen")
+    if page.evaluate(INK):
+        wrong("choosing words with a finger drew ink")
+    context.close()
+
+
+def drive(browser: Browser) -> None:
+    if not WEBKIT:
+        by_pen_and_finger(browser)
+    context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=2)
+    page = opened(context)
+    if not page:
+        return
 
     line = page.evaluate(SPAN, "Line 3:")
     if not line:
@@ -149,6 +246,24 @@ def drive(browser: Browser) -> None:
         wrong(f"with the pen, a stroke over words left {page.evaluate(INK)} strokes")
     page.keyboard.press("v")
 
+    page.evaluate("() => { getSelection().removeAllRanges(); const store = window.ordenApp.pages.current.store; store.pickAll(store.canvas.ink.map((one) => one.id)) }")
+    page.wait_for_timeout(200)
+    before = page.evaluate("() => window.ordenApp.pages.current.store.canvas.ink[0].points[0].y")
+    y = line["y"] + line["height"] / 2
+    x = line["x"] + line["width"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    for step in range(1, 9):
+        page.mouse.move(x, y + 5 * step)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+    after = page.evaluate("() => window.ordenApp.pages.current.store.canvas.ink[0].points[0].y")
+    chosen = page.evaluate("() => String(getSelection())")
+    say(f"a stroke picked over words, dragged: from {before:.0f} to {after:.0f}, chose {chosen!r}")
+    if after <= before or chosen.strip():
+        wrong(f"dragging a picked stroke that lies over words chose {chosen!r} and moved it from {before} to {after}")
+    page.evaluate("() => window.ordenApp.pages.current.store.clearPicked()")
+
     page.evaluate("() => window.ordenApp.pages.current.store.zoomTo(3)")
     page.wait_for_timeout(600)
     page.locator(".pages").first.focus()
@@ -156,6 +271,10 @@ def drive(browser: Browser) -> None:
     wait_for(page, "!!document.querySelector('.pages .find input')", "the find bar", 10)
     page.keyboard.type("line 52:", delay=10)
     page.wait_for_timeout(400)
+    said = page.evaluate("() => document.querySelector('.pages .hits')?.textContent ?? ''")
+    say(f"the find list says {said[:80]!r}")
+    if "field. Line 52" not in said:
+        wrong(f"the find list runs one line of the PDF into the next: {said[:80]!r}")
     page.keyboard.press("Enter")
     wait_for(page, "!!document.querySelector('.pages .sheet .hit.current')", "the found words marked", 10)
     page.wait_for_timeout(400)

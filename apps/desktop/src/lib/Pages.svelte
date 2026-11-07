@@ -52,6 +52,8 @@
   import { stillness } from './motion'
   import { type Found, matches } from './canvas/find'
   import { forgetPaper, outlineOf, paperAhead, paperPathOf, textsOf } from './pages/paper'
+  import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
+  import { copyText } from './clipboard'
   import { placesOf } from './reading/find'
   import type { Highlight } from './pdf/highlights'
   import { marksFromOutside } from './pdf/sheets.svelte'
@@ -477,6 +479,7 @@
       }
     | { kind: 'drag'; id: number; from: Point; offset: Point; moved: boolean }
     | { kind: 'pinch'; ids: [number, number]; screens: [Point, Point]; apart: number }
+    | { kind: 'choose'; id: number; held: Chosen }
 
   let gesture = $state.raw<Gesture | null>(null)
   let predicted = $state.raw<InkPoint[]>([])
@@ -557,7 +560,7 @@
     const screen = screenAt(event)
     const one = gesture
 
-    if (!one && kind !== 'touch' && !eraser && onWords(event)) {
+    if (!one && kind === 'mouse' && onWords(event)) {
       contacts.went(event.pointerId)
       return
     }
@@ -586,6 +589,14 @@
     }
     driver = { id: event.pointerId, touch: kind === 'touch', screen, since: event.timeStamp }
     store.halt()
+
+    if (event.target instanceof Element && event.target.closest('.words.live')) {
+      event.preventDefault()
+    }
+    if (kind === 'pen' && !eraser && onWords(event)) {
+      if (choose(event.pointerId, event.clientX, event.clientY, false)) return
+    }
+    if (kind !== 'mouse' && chosenIn(host)) getSelection()?.removeAllRanges()
 
     const point = planeAt(event)
     const page = pageAt(pages, point)
@@ -746,7 +757,17 @@
   function pagesMenu(point: Point): MenuEntry[] {
     const page = pageAt(pages, point)
     const ink = writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
+    const chosen = chosenIn(host)
     const groups: MenuEntry[][] = [
+      chosen
+        ? [
+            {
+              label: t('Copy'),
+              hint: shortcuts.hint('fixed.copy'),
+              run: () => void copyText(chosen),
+            },
+          ]
+        : [],
       ink
         ? [
             { label: t('Duplicate'), run: duplicatePicked },
@@ -790,10 +811,32 @@
     showMenu(event)
   }
 
+  function choose(id: number, x: number, y: number, word: boolean): boolean {
+    const at = caretAt(document, x, y)
+    const selection = getSelection()
+    if (!at || !selection) return false
+
+    const held = word ? wordAround(at) : { from: at, to: at }
+    chooseTo(selection, held, at)
+    gesture = { kind: 'choose', id, held }
+    return true
+  }
+
   function held(event: MouseEvent) {
     const busy = gesture?.kind
-    if (busy === 'draw' || busy === 'erase' || busy === 'lasso') return
+    if (busy === 'draw' || busy === 'erase' || busy === 'lasso' || busy === 'choose') return
     const one = gesture
+    if (
+      one?.kind === 'pan' &&
+      !one.moved &&
+      driver?.touch &&
+      tools.which === 'select' &&
+      document.elementFromPoint(event.clientX, event.clientY)?.closest('.words.live') &&
+      choose(one.id, event.clientX, event.clientY, true)
+    ) {
+      endPull()
+      return
+    }
     const at = planeAt(event)
     gesture =
       one?.kind === 'pan' && !one.moved && driver?.touch && writable && pageAt(pages, at)
@@ -807,6 +850,13 @@
 
     const one = gesture
     if (!one) return
+
+    if (one.kind === 'choose') {
+      const at = one.id === event.pointerId ? caretAt(document, event.clientX, event.clientY) : null
+      const selection = getSelection()
+      if (at && selection) chooseTo(selection, one.held, at)
+      return
+    }
 
     const screen = screenAt(event)
 
@@ -950,6 +1000,12 @@
       return
     }
 
+    if (one?.kind === 'choose' && one.id === event.pointerId) {
+      finish()
+      if (chosenIn(host)) showMenu(event)
+      return
+    }
+
     if (one?.id === event.pointerId) finish()
   }
 
@@ -961,10 +1017,18 @@
       one?.kind === 'pinch' ? one.ids.includes(event.pointerId) : one?.id === event.pointerId
     if (!mine) return
 
+    const by = driver
     gesture = null
     driver = null
     predicted = []
     endPull()
+    if ((one?.kind === 'choose' || by?.touch) && chosenIn(host)) showMenu(placed(event))
+  }
+
+  function placed(event: PointerEvent): MouseEvent {
+    if (event.clientX || event.clientY) return event
+    const box = getSelection()?.getRangeAt(0).getBoundingClientRect()
+    return new MouseEvent('contextmenu', { clientX: box?.left ?? 0, clientY: box?.bottom ?? 0 })
   }
 
   function sameView(one: Camera, other: Camera): boolean {
@@ -1156,11 +1220,12 @@
     if (event.key === 'Escape') store.clearPicked()
   }
 
-  function onWords(event: Event): boolean {
+  function onWords(event: MouseEvent): boolean {
     return (
       tools.which === 'select' &&
       event.target instanceof Element &&
-      event.target.closest('.words') !== null
+      event.target.closest('.words') !== null &&
+      !(caught && inside(planeAt(event), caught))
     )
   }
 

@@ -6,6 +6,7 @@ import { PDF_TO_CSS } from '../pdf/pages'
 import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
 import { idle } from '../breathe'
+import { runsOfItems, textOfRuns } from '../pdf/find'
 
 const SCALE = 2
 
@@ -400,7 +401,7 @@ async function readTexts(one: Held): Promise<string[]> {
       .getPage(number)
       .then((page) => page.getTextContent())
       .catch(() => null)
-    texts.push((content?.items ?? []).map((item) => ('str' in item ? item.str : '')).join(''))
+    texts.push(textOfRuns(runsOfItems(content?.items ?? [])))
   }
 
   return texts
@@ -450,7 +451,7 @@ export async function wordsInto(
   }
   if (gone()) return null
 
-  return { runs: layer.textContentItemsStr, divs: layer.textDivs }
+  return { runs: runsOfItems(content.items), divs: layer.textDivs }
 }
 
 let offscreen: boolean | undefined
