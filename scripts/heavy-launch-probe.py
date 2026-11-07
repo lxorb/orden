@@ -18,7 +18,7 @@ automation endpoint's `eval`, which the probe turns on in its own identifier's f
 * **use**: a minute of what Emil does - switching spaces, Ctrl+Tab through the tabs,
   terminals printing, the Ask panel - while this probe asks the window's thread and the
   page's main thread every 100 ms whether they answer. A stall is either one away for
-  longer than a frame. What Orden's own stall recorder wrote to nib.log is printed after.
+  longer than a frame. What Orden's own stall recorder wrote to its log is printed after.
 
     python scripts/heavy-launch-probe.py --exe path/to/orden.exe \\
         --identifier so.orden.Orden.probe.<name> [--runs 5] [--only prime,launch,use]
@@ -414,7 +414,8 @@ class Pulse:
 
 def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float) -> dict:
 
-    log = launch_drive.local(identifier) / "logs" / "nib.log"
+    logs = launch_drive.local(identifier) / "logs"
+    log = logs / "orden.log" if (logs / "orden.log").exists() or not (logs / "nib.log").exists() else logs / "nib.log"
     before = log.read_text(encoding="utf-8", errors="replace") if log.exists() else ""
     app, window, hwnd, _ = started(exe, identifier, spaces, trace=False)
     page: list[float] = []
@@ -462,7 +463,7 @@ def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float
             f"90th {sorted(page)[int(len(page) * 0.9)]:.0f} ms, longest {max(page):.0f} ms ({len(page)} asked)"
         )
     lines = [line for line in written.splitlines() if line.strip()]
-    print(f"  nib.log during the run: {len(lines)} lines")
+    print(f"  {log.name} during the run: {len(lines)} lines")
     for line in lines[-40:]:
         print(f"    {line[:300]}")
     return {"window": [took for _, took in stalls], "page": page, "log": lines}

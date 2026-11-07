@@ -59,7 +59,7 @@ pub fn start(app: &AppHandle) {
     let version = app.package_info().version.to_string();
     report::settle(Facts {
         dir: dir.clone(),
-        log: logs.join("nib.log"),
+        log: logs.join(crate::logs::FILE),
         app: App {
             version: version.clone(),
             channel: String::new(),

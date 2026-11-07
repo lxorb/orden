@@ -37,7 +37,7 @@ AS_DEVICE = """
   root.toggleAttribute('data-touch', device !== 'desktop')
   root.toggleAttribute('data-drawer', drawer)
   root.toggleAttribute('data-narrow', narrow)
-  if (window.__nibInsets) window.__nibInsets()
+  if (window.__ordenInsets) window.__ordenInsets()
 }
 """
 

@@ -252,7 +252,7 @@ fn handed(
         let system = macos::Requests::start(app, words);
         system
             .and_then(|system| schedule::make_so(&system, wanted, moved, words, now))
-            .map_err(|error| eprintln!("nib: reminders: {error}"))
+            .map_err(|error| eprintln!("orden: reminders: {error}"))
             .is_ok()
     }
     #[cfg(not(any(windows, target_os = "macos")))]

@@ -23,7 +23,7 @@ const mobile = read(HERE, '..', '..', '..', 'docs', 'mobile.md')
 const lockLayout = () => read(ANDROID, 'res', 'layout', 'widget_notes_lock.xml')
 
 const rowsIn = (text: string) =>
-  [...text.matchAll(/@\+id\/nib_row_(\d+)/g)].map((one) => Number(one[1]))
+  [...text.matchAll(/@\+id\/orden_row_(\d+)/g)].map((one) => Number(one[1]))
 
 const commands = read(SOURCE, 'lib', 'commands.ts')
 const bridge = read(SOURCE, 'lib', 'mobile', 'bridge.ts')
@@ -80,7 +80,7 @@ describe('what the app asks the phone for', () => {
   })
 })
 
-describe('what another app may share with nib', () => {
+describe('what another app may share with Orden', () => {
   test('one thing and several things, each copied into a space', () => {
     expect(manifest).toContain('android.intent.action.SEND"')
     expect(manifest).toContain('android.intent.action.SEND_MULTIPLE"')
@@ -198,7 +198,7 @@ describe('the home screen widget', () => {
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     expect(most).toBeGreaterThan(0)
 
-    const inProvider = [...widgets.matchAll(/R\.id\.nib_row_(\d+)/g)].map((one) => Number(one[1]))
+    const inProvider = [...widgets.matchAll(/R\.id\.orden_row_(\d+)/g)].map((one) => Number(one[1]))
 
     expect(rowsIn(layout)).toEqual([...Array(most).keys()])
     expect(inProvider).toEqual([...Array(most).keys()])
@@ -238,11 +238,11 @@ describe('the lock screen widget', () => {
   test('is the same drawing, cut short', () => {
     const lock = lockLayout()
 
-    for (const id of ['nib_title', 'nib_search', 'nib_new', 'nib_empty']) {
+    for (const id of ['orden_title', 'orden_search', 'orden_new', 'orden_empty']) {
       expect(lock, id).toContain(`@+id/${id}`)
     }
     expect(lock).toContain('@drawable/widget_page')
-    expect(lock).toContain('@style/NibWidgetRow')
+    expect(lock).toContain('@style/OrdenWidgetRow')
 
     const shorter = rowsIn(lock)
     expect(shorter.length).toBeGreaterThan(0)
@@ -293,7 +293,7 @@ describe('the bridge the page talks over', () => {
   test('asks for this launch’s word before a key or the microphone', () => {
     expect(activity).toContain('private val frame: String = UUID.randomUUID()')
     expect(activity).toContain('fun askForTheFrame()')
-    expect(activity).toContain('window.__nibFrame?.(')
+    expect(activity).toContain('window.__ordenFrame?.(')
 
     for (const name of GUARDED) {
       const found = new RegExp(`fun ${name}\\(\\s*said: String`).test(activity)
@@ -303,7 +303,7 @@ describe('the bridge the page talks over', () => {
       )
     }
 
-    expect(page).toContain(`answer('__nibFrame'`)
+    expect(page).toContain(`answer('__ordenFrame'`)
     for (const call of [
       'const said = await frameWord()',
       'if (!said) throw new NoWord()',
@@ -334,7 +334,7 @@ describe('the bridge the page talks over', () => {
   })
 
   test('every line the activity runs in the page is answered', () => {
-    const called = [...activity.matchAll(/window\.(__nib\w+)/g)].map((one) => one[1])
+    const called = [...activity.matchAll(/window\.(__orden\w+)/g)].map((one) => one[1])
     expect(called.length).toBeGreaterThan(2)
 
     for (const name of called) {
@@ -378,7 +378,7 @@ describe('the Today widget', () => {
     const state = read(SOURCE, 'lib', 'mobile', 'widgets.svelte.ts')
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     const ids = (kind: string, text: string) =>
-      [...text.matchAll(new RegExp(String.raw`nib_today_${kind}_(\d+)`, 'g'))].map((one) =>
+      [...text.matchAll(new RegExp(String.raw`orden_today_${kind}_(\d+)`, 'g'))].map((one) =>
         Number(one[1]),
       )
 

@@ -292,7 +292,7 @@ the rule against a second sync implementation.
   an alarm fifteen minutes on. Done and a press on the notification need the page,
   which owns the one write path: each is queued in the preferences and handed over the
   next time the page asks (`remindersTaken`) - at once when Orden is open
-  (`window.__nibReminders`), and a press opens Orden to do it. A Done pressed with Orden
+  (`window.__ordenReminders`), and a press opens Orden to do it. A Done pressed with Orden
   closed is ticked the next time Orden opens; the notification goes at once.
 - **One ring per reminder.** A reminder's id is the one every device and the Worker make
   for it (`reminderId` in `@orden/markdown/task-reminders`), and the phone remembers the

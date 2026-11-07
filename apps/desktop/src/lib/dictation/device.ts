@@ -68,7 +68,7 @@ export class DeviceSession {
   private async openPhone(): Promise<void> {
     const listen = method('listen')
     if (!listen) return
-    answer('__nibHeard', (json: string) => this.phoneSaid(json))
+    answer('__ordenHeard', (json: string) => this.phoneSaid(json))
     const word = await frameWord()
     if (!word) throw new Error(key('That microphone could not be opened.'))
     listen(word, true)
@@ -222,7 +222,7 @@ export class DeviceSession {
     this.hooks.level(0)
     const listen = method('listen')
     if (listen) {
-      answer('__nibHeard', undefined)
+      answer('__ordenHeard', undefined)
       void frameWord().then((word) => listen(word, false))
     }
     if (this.web) {

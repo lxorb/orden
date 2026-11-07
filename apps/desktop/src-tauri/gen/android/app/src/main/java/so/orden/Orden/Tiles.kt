@@ -6,7 +6,7 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 
-abstract class NibTile : TileService() {
+abstract class OrdenTile : TileService() {
   protected abstract val command: String
 
   override fun onStartListening() {
@@ -40,14 +40,14 @@ abstract class NibTile : TileService() {
   }
 }
 
-class NewNoteTile : NibTile() {
+class NewNoteTile : OrdenTile() {
   override val command = "new"
 }
 
-class SearchTile : NibTile() {
+class SearchTile : OrdenTile() {
   override val command = "search-space"
 }
 
-class RecordTile : NibTile() {
+class RecordTile : OrdenTile() {
   override val command = "record"
 }

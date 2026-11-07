@@ -2130,9 +2130,9 @@ prototypes, so neither side can see or break the other. A web tab is built that 
 
 **Pass's channel is in Orden's world only.** The page script that finds sign-in forms
 (`web_pass.js`, docs/pass.md "In a web tab") talks to the app through a binding named
-`nibPass`, added with `executionContextName: "nib"` on Orden's Chromium and `WebView2` and
+`ordenPass`, added with `executionContextName: "orden"` on Orden's Chromium and `WebView2` and
 as a script message handler in the `nib` `WKContentWorld` on a Mac. The page's own world
-has no `nibPass` and no `__nibPass`: a site cannot post a form the reader never sent, ask
+has no `ordenPass` and no `__ordenPass`: a site cannot post a form the reader never sent, ask
 for a fill, or learn that Pass is there. The app places every message by the engine's own
 frame tree (the frame and its origin are the engine's, never the page's words), and a fill
 is sent back into that frame's Orden world only, after its origin is checked again.

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 let asked = 0
 const say = (word: string): void => {
-  ;(globalThis as unknown as { __nibFrame: (word: string) => void }).__nibFrame(word)
+  ;(globalThis as unknown as { __ordenFrame: (word: string) => void }).__ordenFrame(word)
 }
 
 beforeEach(() => {

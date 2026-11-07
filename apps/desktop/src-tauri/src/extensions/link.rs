@@ -76,7 +76,7 @@ fn store_of(url: &Url) -> Option<Store> {
     not(feature = "cef"),
     allow(
         dead_code,
-        reason = "only nib's own Chromium installs through the store's own page"
+        reason = "only Orden's own Chromium installs through the store's own page"
     )
 )]
 pub fn page_of(store: Store, id: &str) -> String {

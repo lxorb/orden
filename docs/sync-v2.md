@@ -1047,7 +1047,7 @@ also makes it portable between a Windows WebView2 and a Mac WebKit.
 | cookies out | `Storage.getCookies` over `CallDevToolsProtocolMethod` (has `partitionKey`), filtered to the site | `WKHTTPCookieStore.getAllCookies` | `webkit_cookie_manager_get_all_cookies` (2.42+) |
 | cookies in | `Storage.setCookies` after `Storage.clearCookies` for the site's domains | `setCookie`, `deleteCookie` | `webkit_cookie_manager_replace_cookies` for the site |
 | localStorage, sessionStorage, IndexedDB out | a script in an **isolated world** of a page on the origin (`Page.createIsolatedWorld` + `Runtime.evaluate`) | a script in a `WKContentWorld` | a script in an isolated world (`webkit_script_world_new`) |
-| the same in | a hidden restore view in the same store, navigated to `https://<origin>/__nib_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` |
+| the same in | a hidden restore view in the same store, navigated to `https://<origin>/__orden_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` |
 | sessionStorage in | a document-created script on the tab's first load after a restore, guarded by origin | the same with a `WKUserScript` at document start | a user script |
 | trail and scroll | Orden's own (`place.ts`) | Orden's own (`interactionState` is WebKit-only and opaque, so not used) | Orden's own |
 

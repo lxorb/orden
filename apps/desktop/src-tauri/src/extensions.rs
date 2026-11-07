@@ -44,7 +44,7 @@ static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::defaul
 
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
+    allow(dead_code, reason = "only what Orden hands WebView2 can fail to load")
 )]
 fn went_wrong(id: &str, why: &str) {
     let mut problems = PROBLEMS.lock().unwrap_or_else(PoisonError::into_inner);
@@ -54,7 +54,7 @@ fn went_wrong(id: &str, why: &str) {
 
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
+    allow(dead_code, reason = "only what Orden hands WebView2 can fail to load")
 )]
 fn went_right(id: &str) {
     PROBLEMS
@@ -75,7 +75,7 @@ pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     not(all(windows, not(feature = "cef"))),
     allow(
         dead_code,
-        reason = "an environment option of WebView2's; nib's own Chromium keeps agents' stores apart by profile"
+        reason = "an environment option of WebView2's; Orden's own Chromium keeps agents' stores apart by profile"
     )
 )]
 pub fn in_store(store: Option<&str>) -> bool {
@@ -252,7 +252,7 @@ pub enum Done {
         not(feature = "cef"),
         allow(
             dead_code,
-            reason = "only nib's own Chromium sends the reader to the store"
+            reason = "only Orden's own Chromium sends the reader to the store"
         )
     )]
     Store {

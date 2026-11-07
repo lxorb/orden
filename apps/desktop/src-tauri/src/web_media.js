@@ -5,7 +5,7 @@
   const NO_DECODER = 'DEMUXER_ERROR_NO_SUPPORTED_STREAMS'
 
   function say() {
-    const asked = globalThis.nibAsked
+    const asked = globalThis.ordenAsked
     if (typeof asked === 'function') asked(JSON.stringify(['', 'orden-media-unplayable']))
   }
 

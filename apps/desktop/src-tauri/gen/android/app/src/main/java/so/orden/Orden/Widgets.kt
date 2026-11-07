@@ -30,7 +30,7 @@ class NotesWidget : AppWidgetProvider() {
 
   companion object {
     private val ROWS =
-      intArrayOf(R.id.nib_row_0, R.id.nib_row_1, R.id.nib_row_2, R.id.nib_row_3, R.id.nib_row_4)
+      intArrayOf(R.id.orden_row_0, R.id.orden_row_1, R.id.orden_row_2, R.id.orden_row_3, R.id.orden_row_4)
 
     private val LOCK_ROWS = ROWS.copyOfRange(0, 3)
 
@@ -62,10 +62,10 @@ class NotesWidget : AppWidgetProvider() {
         )
       val rows = if (lock) LOCK_ROWS else ROWS
 
-      views.setTextViewText(R.id.nib_title, state.title)
-      views.setOnClickPendingIntent(R.id.nib_title, command(context, "", 1))
-      views.setOnClickPendingIntent(R.id.nib_new, command(context, "new", 2))
-      views.setOnClickPendingIntent(R.id.nib_search, command(context, "search-space", 3))
+      views.setTextViewText(R.id.orden_title, state.title)
+      views.setOnClickPendingIntent(R.id.orden_title, command(context, "", 1))
+      views.setOnClickPendingIntent(R.id.orden_new, command(context, "new", 2))
+      views.setOnClickPendingIntent(R.id.orden_search, command(context, "search-space", 3))
 
       for ((at, row) in rows.withIndex()) {
         val note = state.notes.getOrNull(at)
@@ -80,8 +80,8 @@ class NotesWidget : AppWidgetProvider() {
       }
 
       val empty = state.notes.isEmpty()
-      views.setViewVisibility(R.id.nib_empty, if (empty) View.VISIBLE else View.GONE)
-      if (empty) views.setOnClickPendingIntent(R.id.nib_empty, command(context, "new", 4))
+      views.setViewVisibility(R.id.orden_empty, if (empty) View.VISIBLE else View.GONE)
+      if (empty) views.setOnClickPendingIntent(R.id.orden_empty, command(context, "new", 4))
 
       return views
     }
@@ -127,7 +127,7 @@ class NotesWidget : AppWidgetProvider() {
         val title = json.optString("title")
         Rows(if (title.isEmpty()) context.getString(R.string.app_name) else title, notes)
       } catch (error: Exception) {
-        Log.w("nib", "the widget's notes could not be read: ${error.message}")
+        Log.w("orden", "the widget's notes could not be read: ${error.message}")
         Rows(context.getString(R.string.app_name), emptyList())
       }
     }
@@ -139,7 +139,7 @@ class NotesWidget : AppWidgetProvider() {
 }
 
 object WidgetNotes {
-  private const val STORE = "nib.widgets"
+  private const val STORE = "orden.widgets"
   private const val KEY = "notes"
 
   fun write(context: Context, json: String) {

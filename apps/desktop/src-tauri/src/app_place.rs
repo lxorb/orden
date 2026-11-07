@@ -151,14 +151,14 @@ mod tests {
     #[test]
     fn the_program_is_inside_its_app() {
         assert_eq!(
-            bundle_of(Path::new("/Applications/nibeditor.app/Contents/MacOS/nib")),
-            Some(PathBuf::from("/Applications/nibeditor.app"))
+            bundle_of(Path::new("/Applications/Orden.app/Contents/MacOS/orden")),
+            Some(PathBuf::from("/Applications/Orden.app"))
         );
         for exe in [
-            "/Users/a/code/nib/target/release/orden",
-            "/Applications/nibeditor.app/Contents/Resources/nib",
-            "/Applications/nibeditor/Contents/MacOS/nib",
-            "nib",
+            "/Users/a/code/orden/target/release/orden",
+            "/Applications/Orden.app/Contents/Resources/orden",
+            "/Applications/Orden/Contents/MacOS/orden",
+            "orden",
         ] {
             assert_eq!(bundle_of(Path::new(exe)), None, "{exe}");
         }
@@ -166,18 +166,18 @@ mod tests {
 
     #[test]
     fn a_copy_on_the_disk_image_or_translocated_is_stuck() {
-        let image = Path::new("/Volumes/nibeditor/nibeditor.app");
+        let image = Path::new("/Volumes/Orden/Orden.app");
         assert!(stuck_at(image, true));
         let moved =
-            Path::new("/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/nibeditor.app");
+            Path::new("/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/Orden.app");
         assert!(stuck_at(moved, false));
     }
 
     #[test]
     fn a_copy_in_applications_is_not() {
-        assert!(!stuck_at(Path::new("/Applications/nibeditor.app"), false));
+        assert!(!stuck_at(Path::new("/Applications/Orden.app"), false));
         assert!(!stuck_at(
-            Path::new("/Users/a/Applications/nibeditor.app"),
+            Path::new("/Users/a/Applications/Orden.app"),
             false
         ));
     }

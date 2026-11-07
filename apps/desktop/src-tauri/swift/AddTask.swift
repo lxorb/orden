@@ -1,8 +1,8 @@
 import AppIntents
 import Foundation
 
-@_silgen_name("nib_add_to_inbox")
-private func nibAddToInbox(_ text: UnsafePointer<CChar>) -> Int32
+@_silgen_name("orden_add_to_inbox")
+private func ordenAddToInbox(_ text: UnsafePointer<CChar>) -> Int32
 
 private struct NotAdded: Error, CustomLocalizedStringResourceConvertible {
     var localizedStringResource: LocalizedStringResource { "The task could not be added." }
@@ -21,13 +21,13 @@ struct AddTaskIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let added = text.withCString { nibAddToInbox($0) }
+        let added = text.withCString { ordenAddToInbox($0) }
         guard added == 0 else { throw NotAdded() }
         return .result(dialog: "Added.")
     }
 }
 
-struct NibShortcuts: AppShortcutsProvider {
+struct OrdenShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AddTaskIntent(),

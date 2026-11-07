@@ -122,7 +122,7 @@ def opened_as_a_tab(address, pane, what, seconds=20):
         fail(f"{what}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
     if panes != [pane]:
         fail(f"{what}: not one tab in the reader's pane {pane}, but in {panes}")
-        for log in Path.home().rglob("nib.log"):
+        for log in [*Path.home().rglob("orden.log"), *Path.home().rglob("nib.log")]:
             if "so.orden.Orden" in str(log):
                 said = [line for line in log.read_text(errors="replace").splitlines() if "extensions" in line]
                 print(f"{log}: {said[-10:]}")

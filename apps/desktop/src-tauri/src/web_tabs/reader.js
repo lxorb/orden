@@ -20,7 +20,7 @@
       for (let index = 0; index < picked.rangeCount; index += 1) {
         body.append(picked.getRangeAt(index).cloneContents())
       }
-      root.setAttribute('data-nib-selection', '')
+      root.setAttribute('data-orden-selection', '')
     } else {
       body = document.body ? document.body.cloneNode(true) : document.createElement('body')
     }

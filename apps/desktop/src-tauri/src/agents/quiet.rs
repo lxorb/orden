@@ -625,7 +625,7 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
         .map_or_else(|| std::ffi::OsString::from("download"), ToOwned::to_owned);
     let folder = crate::downloads::folder(app)
         .ok()?
-        .join("nib agents")
+        .join("Orden agents")
         .join(agent);
     crate::paths::made(&folder).ok()?;
     let name = crate::downloads::clean_name(&name);

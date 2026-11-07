@@ -46,7 +46,7 @@ mod tests {
     use tauri::Url;
 
     fn line(args: &[&str]) -> Vec<String> {
-        std::iter::once("nib.exe")
+        std::iter::once("orden.exe")
             .chain(args.iter().copied())
             .map(str::to_owned)
             .collect()
@@ -128,7 +128,7 @@ mod tests {
     #[test]
     fn nothing_after_the_flag_is_nothing() {
         assert!(pages_in(&line(&[LINK_FLAG])).is_empty());
-        assert!(pages_in(&["nib.exe".to_owned()]).is_empty());
+        assert!(pages_in(&["orden.exe".to_owned()]).is_empty());
         assert!(pages_in(&[]).is_empty());
     }
 

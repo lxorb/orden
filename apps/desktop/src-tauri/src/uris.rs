@@ -173,24 +173,24 @@ mod tests {
     fn a_link_goes_to_the_window_in_front_and_never_to_one_hidden_while_another_shows() {
         let windows = [
             window("main", false, false, true),
-            window("nib-2", false, true, true),
+            window("orden-2", false, true, true),
         ];
-        assert_eq!(link_window(&windows).as_deref(), Some("nib-2"));
+        assert_eq!(link_window(&windows).as_deref(), Some("orden-2"));
 
         let windows = [
             window("main", false, true, true),
-            window("nib-2", true, true, true),
+            window("orden-2", true, true, true),
         ];
-        assert_eq!(link_window(&windows).as_deref(), Some("nib-2"));
+        assert_eq!(link_window(&windows).as_deref(), Some("orden-2"));
 
         let windows = [
-            window("nib-3", false, true, true),
+            window("orden-3", false, true, true),
             window("main", false, true, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
 
         let windows = [
-            window("nib-2", false, false, true),
+            window("orden-2", false, false, true),
             window("main", false, false, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
@@ -203,7 +203,7 @@ mod tests {
         let windows = [window("main", true, true, false)];
         assert_eq!(link_window(&windows), None);
         let windows = [
-            window("nib-3", true, true, false),
+            window("orden-3", true, true, false),
             window("main", false, true, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));

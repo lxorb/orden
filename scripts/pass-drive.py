@@ -424,9 +424,9 @@ def thrown_pressing(text):
 
 def nothing_in_page_world(port):
     said = in_page(
-        port, "JSON.stringify([typeof window.nibPass, typeof window.__nibPass, typeof window.ipc])"
+        port, "JSON.stringify([typeof window.ordenPass, typeof window.__ordenPass, typeof window.ipc])"
     )
-    note(f"the page's own world has nibPass, __nibPass, ipc: {said}")
+    note(f"the page's own world has ordenPass, __ordenPass, ipc: {said}")
     if said != '["undefined","undefined","undefined"]':
         fail(f"the page's own world is handed Pass's channel: {said}")
 

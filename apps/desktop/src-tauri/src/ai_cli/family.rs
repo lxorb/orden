@@ -60,7 +60,7 @@ impl Family {
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[allow(
     unsafe_code,
-    reason = "killpg is the system's own call and has no safe wrapper in the crates nib uses"
+    reason = "killpg is the system's own call and has no safe wrapper in the crates Orden uses"
 )]
 fn end_group(pid: u32) {
     let Ok(group) = libc::pid_t::try_from(pid) else {
@@ -89,7 +89,7 @@ fn quiet(command: &mut Command) -> &mut Command {
 #[cfg(windows)]
 #[allow(
     unsafe_code,
-    reason = "a job object is Win32's own and has no safe wrapper in the crates nib uses"
+    reason = "a job object is Win32's own and has no safe wrapper in the crates Orden uses"
 )]
 fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
     use std::os::windows::io::{AsRawHandle as _, FromRawHandle as _, OwnedHandle};
@@ -123,7 +123,7 @@ fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
 #[cfg(windows)]
 #[allow(
     unsafe_code,
-    reason = "a job object is Win32's own and has no safe wrapper in the crates nib uses"
+    reason = "a job object is Win32's own and has no safe wrapper in the crates Orden uses"
 )]
 fn end_job(job: &std::os::windows::io::OwnedHandle) {
     use std::os::windows::io::AsRawHandle as _;

@@ -108,7 +108,7 @@ impl Claude {
     }
 
     fn id(&self) -> String {
-        format!("nib-{}", self.next.fetch_add(1, Ordering::SeqCst))
+        format!("orden-{}", self.next.fetch_add(1, Ordering::SeqCst))
     }
 
     fn control(&self, request: Value, to: Option<&'static str>) -> String {
@@ -217,10 +217,10 @@ fn refusal(id: &str, request: &Value) -> String {
         json!({
             "subtype": "success",
             "request_id": id,
-            "response": { "behavior": "deny", "message": "nib asks at its own tools" },
+            "response": { "behavior": "deny", "message": "Orden asks at its own tools" },
         })
     } else {
-        json!({ "subtype": "error", "request_id": id, "error": "not answered by nib" })
+        json!({ "subtype": "error", "request_id": id, "error": "not answered by Orden" })
     };
     json!({ "type": "control_response", "response": response }).to_string()
 }
@@ -303,9 +303,9 @@ mod tests {
     #[test]
     fn a_reply_goes_to_who_asked_and_a_request_of_its_own_is_refused() {
         let held: Waiting = Arc::default();
-        waiting(&held).insert("nib-1".into(), Asked::Window("context"));
+        waiting(&held).insert("orden-1".into(), Asked::Window("context"));
         let said = read(
-            r#"{"type":"control_response","response":{"subtype":"success","request_id":"nib-1","response":{"totalTokens":5}}}"#,
+            r#"{"type":"control_response","response":{"subtype":"success","request_id":"orden-1","response":{"totalTokens":5}}}"#,
             &held,
             None,
         );
@@ -318,7 +318,7 @@ mod tests {
             })
         );
         assert!(read(
-            r#"{"type":"control_response","response":{"subtype":"success","request_id":"nib-1"}}"#,
+            r#"{"type":"control_response","response":{"subtype":"success","request_id":"orden-1"}}"#,
             &held,
             None
         )

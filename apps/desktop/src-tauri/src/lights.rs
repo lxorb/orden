@@ -65,7 +65,7 @@ mod native {
 
     use super::spot;
 
-    const PREFIX: &str = "NibLights_";
+    const PREFIX: &str = "OrdenLights_";
 
     thread_local! {
         static PLACING: Cell<bool> = const { Cell::new(false) };
@@ -93,7 +93,7 @@ mod native {
 
     define_class!(
         #[unsafe(super(NSObject))]
-        #[name = "NibLightsWatch"]
+        #[name = "OrdenLightsWatch"]
         #[ivars = Held]
         struct Watch;
     );
@@ -143,7 +143,7 @@ mod native {
         ])
     }
 
-    fn nibs_frame(window: &NSWindow) -> bool {
+    fn ordens_frame(window: &NSWindow) -> bool {
         window.titlebarAppearsTransparent()
             && window
                 .styleMask()
@@ -200,7 +200,7 @@ mod native {
 
         adopt(&holder);
 
-        let spots = if nibs_frame(window) {
+        let spots = if ordens_frame(window) {
             centred(window, &lights, &holder)
         } else if let Some(watch) = watch_on(window) {
             watch.ivars().own

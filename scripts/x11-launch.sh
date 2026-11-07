@@ -87,7 +87,7 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   sleep 15
   python3 "$here/idle-cpu.py" "$app" 20 | tee "$out/idle.txt"
   [ "${PIPESTATUS[0]}" = 0 ] || status=1
-  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
+  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
 if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
@@ -118,8 +118,8 @@ wait "$app" 2>/dev/null || true
 [ -n "$wm" ] && kill "$wm" 2>/dev/null || true
 kill "$xvfb" 2>/dev/null || true
 [ -n "$site" ] && kill "$site" 2>/dev/null || true
-find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name 'nib.log' -exec cp {} "$out/nib.log" \; 2>/dev/null || true
-[ -f "$out/nib.log" ] && { echo "::group::nib.log"; cat "$out/nib.log"; echo "::endgroup::"; }
+find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec cp {} "$out/app.log" \; 2>/dev/null || true
+[ -f "$out/app.log" ] && { echo "::group::the app's log"; cat "$out/app.log"; echo "::endgroup::"; }
 echo "::group::orden's output"
 cat "$out/orden.log"
 echo "::endgroup::"

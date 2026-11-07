@@ -215,7 +215,7 @@ pub fn build(
 ) -> Result<(), String> {
     if !WINDOWLESS.get().copied().unwrap_or(false) {
         return Err(
-            "nib's own Chromium makes agents' pages from the launch after the first agent was paired: quit nib and open it again"
+            "Orden's own Chromium makes agents' pages from the launch after the first agent was paired: quit Orden and open it again"
                 .into(),
         );
     }

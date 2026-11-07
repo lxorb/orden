@@ -11,10 +11,10 @@ HERE = pathlib.Path(__file__).resolve().parent
 DUMP = (HERE / "dump.js").read_text(encoding="utf-8")
 RESTORE = (HERE / "restore.js").read_text(encoding="utf-8")
 
-ORIGIN = "https://corpus.nib.test"
+ORIGIN = "https://corpus.orden.test"
 
 CORPUS = r"""
-globalThis.nibCorpus = async function nibCorpus() {
+globalThis.ordenCorpus = async function ordenCorpus() {
   const shared = { x: 1 }
   const cyclic = { name: 'self' }
   cyclic.self = cyclic
@@ -83,7 +83,7 @@ globalThis.nibCorpus = async function nibCorpus() {
   }
 }
 
-globalThis.nibKeys = function nibKeys() {
+globalThis.ordenKeys = function ordenKeys() {
   return [
     -Infinity, -1.5, 0, 7, Infinity,
     '', 'a', 'zé', '𝄞',
@@ -114,8 +114,8 @@ async function opened(name, version, upgrade) {
   return answered(request)
 }
 
-globalThis.nibSeed = async function nibSeed() {
-  const corpus = await nibCorpus()
+globalThis.ordenSeed = async function ordenSeed() {
+  const corpus = await ordenCorpus()
   localStorage.setItem('token', 'abc.def')
   localStorage.setItem('unicode ✓', 'value 𝄞')
   localStorage.setItem('empty', '')
@@ -133,7 +133,7 @@ globalThis.nibSeed = async function nibSeed() {
 
   db = await opened('keys', 3, (made) => made.createObjectStore('k'))
   transaction = db.transaction('k', 'readwrite')
-  nibKeys().forEach((key, at) => transaction.objectStore('k').put(at, key))
+  ordenKeys().forEach((key, at) => transaction.objectStore('k').put(at, key))
   await done(transaction)
   db.close()
 
@@ -177,7 +177,7 @@ globalThis.nibSeed = async function nibSeed() {
 }
 
 /** What arrived, against the corpus built again here: a list of what differs. */
-globalThis.nibCheck = async function nibCheck() {
+globalThis.ordenCheck = async function ordenCheck() {
   const problems = []
   const tagOf = (value) => Object.prototype.toString.call(value).slice(8, -1)
 
@@ -298,7 +298,7 @@ globalThis.nibCheck = async function nibCheck() {
     }
   }
 
-  const corpus = await nibCorpus()
+  const corpus = await ordenCorpus()
   let db = await answered(indexedDB.open('values'))
   let store = db.transaction('plain').objectStore('plain')
   for (const [name, value] of Object.entries(corpus)) {
@@ -310,7 +310,7 @@ globalThis.nibCheck = async function nibCheck() {
 
   db = await answered(indexedDB.open('keys'))
   const keys = await answered(db.transaction('k').objectStore('k').getAllKeys())
-  const expectedKeys = nibKeys()
+  const expectedKeys = ordenKeys()
   if (keys.length !== expectedKeys.length) problems.push(`keys: ${keys.length} of ${expectedKeys.length}`)
   for (const key of expectedKeys) {
     if (!keys.some((one) => indexedDB.cmp(one, key) === 0)) problems.push(`keys: ${String(key)} is missing`)
@@ -357,11 +357,11 @@ globalThis.nibCheck = async function nibCheck() {
 
 def dumped(page: Page, most: dict[str, int]) -> dict[str, object]:
 
-    listed = json.loads(page.evaluate("(a) => nibDump('list', a)", json.dumps({"session": True})))
+    listed = json.loads(page.evaluate("(a) => ordenDump('list', a)", json.dumps({"session": True})))
     databases = {}
     for one in sorted(listed["databases"], key=lambda db: db["name"]):
         asked = {"name": one["name"], "most": most.get(one["name"], 16 * 1024 * 1024)}
-        databases[one["name"]] = page.evaluate("(a) => nibDump('database', a)", json.dumps(asked))
+        databases[one["name"]] = page.evaluate("(a) => ordenDump('database', a)", json.dumps(asked))
     listed["databases"] = sorted(listed["databases"], key=lambda db: db["name"])
     return {"list": listed, "databases": databases}
 
@@ -388,7 +388,7 @@ def round_trip(engine: str) -> list[str]:
         one, first = fresh_page(playwright, engine, f"{here}/one")
         two, second = fresh_page(playwright, engine, f"{here}/two")
         try:
-            first.evaluate("nibSeed()")
+            first.evaluate("ordenSeed()")
             most = {"big": 1000}
             before = dumped(first, most)
 
@@ -402,16 +402,16 @@ def round_trip(engine: str) -> list[str]:
             if json.loads(before["databases"]["big"]).get("size", 0) < 200000:
                 problems.append("the skipped database's size is not all of it")
 
-            second.evaluate("() => nibRestore('clear', '{}')")
-            second.evaluate("(a) => nibRestore('local', a)", json.dumps(before["list"]["local"]))
+            second.evaluate("() => ordenRestore('clear', '{}')")
+            second.evaluate("(a) => ordenRestore('local', a)", json.dumps(before["list"]["local"]))
             second.evaluate(
-                "(a) => nibRestore('session', a)", json.dumps(before["list"]["session"])
+                "(a) => ordenRestore('session', a)", json.dumps(before["list"]["session"])
             )
             for name, text in before["databases"].items():
                 if name in skipped:
                     continue
                 database = json.loads(text)["db"]
-                second.evaluate("(a) => nibRestore('database', a)", json.dumps(database))
+                second.evaluate("(a) => ordenRestore('database', a)", json.dumps(database))
             after = dumped(second, most)
 
             for key in ("local", "session"):
@@ -426,7 +426,7 @@ def round_trip(engine: str) -> list[str]:
                 if text != after["databases"].get(name):
                     problems.append(f"{name} is not the same bytes after the round trip")
 
-            problems.extend(second.evaluate("nibCheck()"))
+            problems.extend(second.evaluate("ordenCheck()"))
             sizes = {name: len(text) for name, text in before["databases"].items()}
             print(f"{engine}: dumped {sizes}")
         finally:

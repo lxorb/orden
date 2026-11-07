@@ -41,7 +41,7 @@ from devtools import Session, debugged, port, targets
 from probe_app import close_app, refuse_updating, run_probe
 
 IDENTIFIER = "so.orden.Orden.probe.chats-notify"
-GROUP = "nib.notices"
+GROUP = "orden.notices"
 CHAT = "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"
 
 PATIENCE = 90.0

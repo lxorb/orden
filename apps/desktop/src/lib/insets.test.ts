@@ -81,7 +81,7 @@ describe('what the page does with them', () => {
     expect(page.written.get('--inset-top')).toBe('24px')
 
     edges = '{"top":0,"right":48,"bottom":0,"left":48}'
-    const again = window.__nibInsets
+    const again = window.__ordenInsets
     expect(typeof again).toBe('function')
     ;(again as () => void)()
     expect(page.written.get('--inset-top')).toBe('0px')

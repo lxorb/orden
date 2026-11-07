@@ -53,7 +53,7 @@ pub struct Host {
     running: Running,
     state: Arc<Mutex<State>>,
     ended: Arc<AtomicBool>,
-    nib: PathBuf,
+    orden: PathBuf,
     folder: PathBuf,
 }
 
@@ -65,7 +65,7 @@ impl Host {
     pub fn start(
         command: Command,
         idle: Duration,
-        nib: PathBuf,
+        orden: PathBuf,
         folder: PathBuf,
     ) -> io::Result<Self> {
         let state: Arc<Mutex<State>> = Arc::default();
@@ -98,7 +98,7 @@ impl Host {
             running,
             state,
             ended,
-            nib,
+            orden,
             folder,
         };
         let introduce = {
@@ -144,7 +144,7 @@ impl Host {
         if state.routes.contains_key(id) {
             return Err(format!("{id} is already open"));
         }
-        let mut params = codex_thread(mode, model, from.without, &self.nib, &self.folder);
+        let mut params = codex_thread(mode, model, from.without, &self.orden, &self.folder);
         if let (Some(thread), Some(_)) = (from.thread, mode) {
             with_thread(&mut params, thread);
         }
@@ -373,8 +373,8 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
         (None, Some(id)) => answered(&mut state, running, id, &message),
         (Some(method), None) => {
             let params = &message["params"];
-            if let Some(nib) = nib_of(&state, params) {
-                if let Some(route) = state.routes.get_mut(&nib) {
+            if let Some(orden) = orden_of(&state, params) {
+                if let Some(route) = state.routes.get_mut(&orden) {
                     match method {
                         "turn/started" => {
                             route.turn = params["turn"]["id"].as_str().map(str::to_owned);
@@ -390,7 +390,7 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
     }
 }
 
-fn nib_of(state: &State, params: &Value) -> Option<String> {
+fn orden_of(state: &State, params: &Value) -> Option<String> {
     let thread = params["threadId"].as_str()?;
     state.threads.get(thread).cloned()
 }
@@ -400,7 +400,7 @@ fn route_line(state: &State, params: &Value, line: &str) {
         line: line.to_owned(),
     };
     if params["threadId"].is_string() {
-        if let Some(route) = nib_of(state, params).and_then(|nib| state.routes.get(&nib)) {
+        if let Some(route) = orden_of(state, params).and_then(|orden| state.routes.get(&orden)) {
             (route.output)(message());
         }
     } else {
@@ -429,9 +429,9 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
                 let _ = running.write_line(&line);
             }
         }
-        Waiter::Started(nib) => started(state, running, &nib, result, error),
-        Waiter::Reply(nib, to) => {
-            if let Some(route) = state.routes.get_mut(&nib) {
+        Waiter::Started(orden) => started(state, running, &orden, result, error),
+        Waiter::Reply(orden, to) => {
+            if let Some(route) = state.routes.get_mut(&orden) {
                 if to == "turn" && error.is_none() {
                     route.turn = result["turn"]["id"].as_str().map(str::to_owned);
                 }
@@ -449,10 +449,16 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     }
 }
 
-fn started(state: &mut State, running: &Running, nib: &str, result: Value, error: Option<String>) {
+fn started(
+    state: &mut State,
+    running: &Running,
+    orden: &str,
+    result: Value,
+    error: Option<String>,
+) {
     let thread = result["thread"]["id"].as_str().map(str::to_owned);
     let Some(thread) = thread.filter(|_| error.is_none()) else {
-        if let Some(route) = state.routes.remove(nib) {
+        if let Some(route) = state.routes.remove(orden) {
             (route.output)(Message::End(Ended {
                 err: error.unwrap_or_else(|| "Codex did not start the thread".to_owned()),
                 ..Ended::default()
@@ -460,8 +466,8 @@ fn started(state: &mut State, running: &Running, nib: &str, result: Value, error
         }
         return;
     };
-    state.threads.insert(thread.clone(), nib.to_owned());
-    let Some(route) = state.routes.get_mut(nib) else {
+    state.threads.insert(thread.clone(), orden.to_owned());
+    let Some(route) = state.routes.get_mut(orden) else {
         return;
     };
     route.thread = Some(thread);
@@ -472,8 +478,8 @@ fn started(state: &mut State, running: &Running, nib: &str, result: Value, error
         error: None,
     });
     for say in queued {
-        if let Err(error) = say_now(state, running, nib, say) {
-            if let Some(route) = state.routes.get(nib) {
+        if let Err(error) = say_now(state, running, orden, say) {
+            if let Some(route) = state.routes.get(orden) {
                 (route.output)(Message::Reply {
                     to: "said".to_owned(),
                     result: Value::Null,
@@ -497,7 +503,7 @@ fn refusal(id: &Value, method: &str) -> String {
         _ => {
             return json!({
                 "id": id,
-                "error": { "code": -32601, "message": "not answered by nib" },
+                "error": { "code": -32601, "message": "not answered by Orden" },
             })
             .to_string()
         }

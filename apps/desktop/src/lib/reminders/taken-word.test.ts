@@ -11,7 +11,7 @@ vi.stubGlobal('window', globalThis)
 vi.stubGlobal('__ORDEN_SYSTEM__', {
   insets: () => '{}',
   askForTheFrame: () => {
-    ;(globalThis as unknown as { __nibFrame: (word: string) => void }).__nibFrame('the word')
+    ;(globalThis as unknown as { __ordenFrame: (word: string) => void }).__ordenFrame('the word')
   },
   remindersTaken: taken,
 })

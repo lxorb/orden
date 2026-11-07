@@ -183,7 +183,7 @@ fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
 
 #[tauri::command(async)]
 pub fn same_pdf(app: AppHandle, from: String, space: String) -> Result<Option<String>, String> {
-    let pdf = handed_pdf(&app, &from).ok_or_else(|| format!("{from} was not handed to nib"))?;
+    let pdf = handed_pdf(&app, &from).ok_or_else(|| format!("{from} was not handed to Orden"))?;
     let root = a_space(&app, &space)?;
     Ok(same_in(&root, &pdf).map(|there| there.to_string_lossy().into_owned()))
 }
@@ -231,7 +231,7 @@ mod tests {
     use tauri::Url;
 
     fn line(args: &[&str]) -> Vec<String> {
-        std::iter::once("nib.exe")
+        std::iter::once("orden.exe")
             .chain(args.iter().copied())
             .map(str::to_owned)
             .collect()
@@ -326,7 +326,7 @@ mod tests {
         let name = std::ffi::OsStr::from_bytes(b"x\xff.pdf");
         file(&dir.path().join(name), b"%PDF");
 
-        let args = [std::ffi::OsString::from("nib"), name.to_owned()];
+        let args = [std::ffi::OsString::from("orden"), name.to_owned()];
         assert_eq!(pdfs_in(&args, dir.path()), vec![dir.path().join(name)]);
     }
 
@@ -408,7 +408,7 @@ mod tests {
     }
 
     #[test]
-    fn windows_offers_nib_for_a_pdf_and_claims_nothing() {
+    fn windows_offers_orden_for_a_pdf_and_claims_nothing() {
         let script = source("installer.nsh");
         let (install, uninstall) = script
             .split_once("!macro ORDEN_PDF_FORGET")

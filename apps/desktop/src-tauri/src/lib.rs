@@ -708,7 +708,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     if foreground::hold() {
         eprintln!(
-            "nib: this probe started able to take the foreground; it is locked (see src-tauri/src/foreground.rs)"
+            "orden: this probe started able to take the foreground; it is locked (see src-tauri/src/foreground.rs)"
         );
     }
 
@@ -817,7 +817,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     builder
         .build(context)
         .unwrap_or_else(|error| {
-            eprintln!("Nib could not start: {error}");
+            eprintln!("Orden could not start: {error}");
             std::process::exit(1);
         })
         .run(on_event);
@@ -1056,7 +1056,7 @@ fn watched(handle: &tauri::AppHandle) {
         handle,
         "info",
         &format!(
-            "started nib {} (pid {})",
+            "started Orden {} (pid {})",
             handle.package_info().version,
             std::process::id()
         ),

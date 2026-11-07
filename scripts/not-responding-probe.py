@@ -81,7 +81,8 @@ def local_dir(identifier: str) -> pathlib.Path:
 
 def log_of(identifier: str) -> str:
     try:
-        return (local_dir(identifier) / "logs" / "nib.log").read_text(encoding="utf-8", errors="replace")
+        logs = local_dir(identifier) / "logs"
+        return (logs / "orden.log" if (logs / "orden.log").exists() else logs / "nib.log").read_text(encoding="utf-8", errors="replace")
     except OSError:
         return ""
 

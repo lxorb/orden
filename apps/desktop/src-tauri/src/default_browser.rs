@@ -213,7 +213,7 @@ mod platform {
 
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
         let exe =
-            std::env::current_exe().map_err(|error| format!("could not find nib: {error}"))?;
+            std::env::current_exe().map_err(|error| format!("could not find Orden: {error}"))?;
         let name = app.package_info().name.clone();
         write(CURRENT_USER, &registration(&name, &exe.to_string_lossy()))?;
 
@@ -287,7 +287,7 @@ mod platform {
         for value in values {
             root.create(&value.key)
                 .and_then(|key| key.set_string(&value.name, &value.data))
-                .map_err(|error| format!("could not register nib: {error}"))?;
+                .map_err(|error| format!("could not register Orden: {error}"))?;
         }
         Ok(())
     }
@@ -452,7 +452,7 @@ mod tests {
     }
 
     #[test]
-    fn nib_takes_the_two_web_schemes_and_nothing_else() {
+    fn orden_takes_the_two_web_schemes_and_nothing_else() {
         let table = registration("Orden", EXE);
 
         let schemes: Vec<&str> = values_under(&table, r"\URLAssociations")

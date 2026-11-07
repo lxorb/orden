@@ -128,5 +128,5 @@ void answerAll()
 if (isDesktop) {
   void hearHere('orden://reminder', () => void answerAll())
 } else {
-  answer('__nibReminders', () => void answerAll())
+  answer('__ordenReminders', () => void answerAll())
 }
