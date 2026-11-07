@@ -32,7 +32,7 @@
   import { trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
   import { viewport } from './viewport.svelte'
-  import { carriedFiles } from './drag-paths'
+  import { carriedIntoNotes } from './drag-paths'
   import { type Tab, workspace } from './workspace.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
@@ -103,7 +103,7 @@
         : {}),
       writeLink: pickedLink,
       carriedNotes: (transfer) => workspace.carriedNotes(transfer),
-      carriedFiles,
+      carriedFiles: carriedIntoNotes,
       ...(onfind ? { onFind: onfind } : {}),
       shortcuts: shortcuts.forEditor,
       trustedMarkup: trustsHtmlIn(one.note),
