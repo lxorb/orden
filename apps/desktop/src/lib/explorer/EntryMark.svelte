@@ -1,12 +1,15 @@
 <script lang="ts">
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
+  import { nameOf } from '../space-paths'
   import { kindIcons } from './kind-icons'
+  import { ordenOpens } from './open'
 
-  const { name, folder }: { name: string | null; folder: boolean } = $props()
+  const { path, folder }: { path: string | null; folder: boolean } = $props()
 
-  const mark = $derived(name === null || folder ? 'folder' : fileMark(name))
-  const icon = $derived(mark === 'file' && name !== null ? kindIcons.of(name) : null)
+  const own = $derived(path === null || folder || ordenOpens(path))
+  const icon = $derived(own || path === null ? null : kindIcons.of(nameOf(path)))
+  const mark = $derived(path === null || folder ? 'folder' : fileMark(nameOf(path)))
 </script>
 
 {#if icon}
@@ -14,7 +17,7 @@
     <img src={icon} alt="" draggable="false" />
   </span>
 {:else}
-  <FileMark {mark} />
+  <FileMark mark={own ? mark : 'file'} />
 {/if}
 
 <style>

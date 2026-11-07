@@ -111,7 +111,7 @@
       <pre class="words">{text.words}</pre>
     {:else}
       <span class="big">
-        <EntryMark name={entry?.name ?? null} folder={!entry || entry.folder} />
+        <EntryMark path={entry ? view.pathOf(entry.name) : null} folder={!entry || entry.folder} />
       </span>
     {/if}
   </div>

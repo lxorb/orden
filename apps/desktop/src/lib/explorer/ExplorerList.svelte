@@ -107,7 +107,7 @@
 
   function open(entry: Entry) {
     if (entry.folder) void view.go(view.pathOf(entry.name))
-    else void openFile(view.pathOf(entry.name), entry.name)
+    else void openFile(view.pathOf(entry.name))
   }
 
   function page(): number {
@@ -443,13 +443,13 @@
                 {#if thumbs.shown.has(view.pathOf(entry.name))}
                   <img src={thumbs.shown.get(view.pathOf(entry.name))} alt="" draggable="false" />
                 {:else}
-                  <EntryMark name={entry.name} folder={entry.folder} />
+                  <EntryMark path={view.pathOf(entry.name)} folder={entry.folder} />
                 {/if}
               </span>
             {/if}
             <span class="name">
               {#if !grid}
-                <EntryMark name={entry.name} folder={entry.folder} />
+                <EntryMark path={view.pathOf(entry.name)} folder={entry.folder} />
               {/if}
               {#if view.renaming === entry.name}
                 <input

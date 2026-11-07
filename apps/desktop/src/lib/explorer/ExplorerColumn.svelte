@@ -60,7 +60,7 @@
   function press(entry: Entry) {
     const path = joinPath(listed ?? folder, entry.name)
     if (entry.folder) void view.go(path)
-    else void openFile(path, entry.name)
+    else void openFile(path)
   }
 </script>
 
@@ -82,7 +82,7 @@
             tabindex="-1"
             onclick={() => press(entry)}
           >
-            <EntryMark name={entry.name} folder={entry.folder} />
+            <EntryMark path={joinPath(listed ?? folder, entry.name)} folder={entry.folder} />
             <span class="orden-row-label">{entry.name}</span>
           </button>
         </li>
