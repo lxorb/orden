@@ -1,5 +1,8 @@
 import type { Socket, SocketAsk } from '../provider'
 import { ascii, Reader, toBase64 } from './bytes'
+import { Silence } from './silence'
+
+export const SMTP_SILENCE = 600_000
 
 class SmtpError extends Error {
   constructor(
@@ -23,10 +26,16 @@ class Talk {
   private readonly replies: Reply[] = []
   private ended: string | null = null
   private readonly stop: () => void
+  private readonly silence = new Silence(
+    SMTP_SILENCE,
+    () => this.waiting !== null,
+    () => this.gone('the mail server stopped answering'),
+  )
 
   constructor(readonly socket: Socket) {
     this.stop = socket.read(
       (bytes) => {
+        this.silence.heard()
         this.reader.push(bytes)
         for (let line = this.reader.line(); line !== null; line = this.reader.line()) {
           this.lines.push(line)
@@ -39,17 +48,21 @@ class Talk {
           else this.replies.push(reply)
         }
       },
-      (reason) => {
-        this.ended = reason ?? 'the connection closed'
-        this.failing?.(new SmtpError(this.ended, 0))
-      },
+      (reason) => this.gone(reason ?? 'the connection closed'),
     )
+  }
+
+  private gone(reason: string): void {
+    this.ended ??= reason
+    this.silence.stop()
+    this.failing?.(new SmtpError(this.ended, 0))
   }
 
   reply(): Promise<Reply> {
     const held = this.replies.shift()
     if (held) return Promise.resolve(held)
     if (this.ended) return Promise.reject(new SmtpError(this.ended, 0))
+    this.silence.heard()
     return new Promise((resolve, reject) => {
       this.waiting = resolve
       this.failing = reject
@@ -70,6 +83,7 @@ class Talk {
   }
 
   close(): void {
+    this.silence.stop()
     this.stop()
   }
 }

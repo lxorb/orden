@@ -1,5 +1,6 @@
 import type { Socket, SocketAsk } from '../provider'
 import { ascii, concat, fromLatin, latin, Reader, toBase64 } from './bytes'
+import { Silence } from './silence'
 
 export type Value = string | null | Uint8Array | Value[]
 
@@ -131,6 +132,8 @@ interface Pending {
   failed: (error: Error) => void
 }
 
+export const SILENCE = 120_000
+
 export class Imap {
   capabilities = new Set<string>()
   hear: (one: Untagged) => void = () => undefined
@@ -148,6 +151,15 @@ export class Imap {
   private readonly greeting: Promise<string>
   private closed = false
   private stop: () => void = () => undefined
+  private idling = false
+  private readonly silence = new Silence(
+    SILENCE,
+    () => this.greeted !== null || (this.pending !== null && !this.idling),
+    () => {
+      this.end('the mail server stopped answering')
+      void this.socket.close().catch(() => undefined)
+    },
+  )
 
   private constructor(private readonly socket: Socket) {
     this.greeting = new Promise((resolve) => (this.greeted = resolve))
@@ -224,6 +236,7 @@ export class Imap {
   private send(text: string, literal?: Uint8Array): Promise<Untagged[]> {
     if (this.closed) return Promise.reject(new ImapError('the connection is closed', 'closed'))
     const tag = `A${++this.counter}`
+    this.silence.heard()
     return new Promise<Untagged[]>((done, failed) => {
       this.pending = { tag, untagged: [], done, failed }
       if (!literal) {
@@ -250,17 +263,24 @@ export class Imap {
     const finished = new Promise<Untagged[]>((done, failed) => {
       this.pending = { tag, untagged: [], done, failed }
     })
-    this.continued = entered
+    this.continued = () => {
+      this.idling = true
+      entered()
+    }
     this.queue = finished.catch(() => undefined)
+    this.silence.heard()
     await this.socket.write(ascii(`${tag} IDLE\r\n`))
     await Promise.race([ready, finished])
     return async () => {
+      this.idling = false
+      this.silence.heard()
       if (!this.closed) await this.socket.write(ascii('DONE\r\n')).catch(() => undefined)
       await finished.catch(() => undefined)
     }
   }
 
   private arrived(bytes: Uint8Array): void {
+    this.silence.heard()
     this.reader.push(bytes)
     for (;;) {
       if (this.wanting !== null) {
@@ -323,6 +343,7 @@ export class Imap {
   private end(reason?: string): void {
     if (this.closed) return
     this.closed = true
+    this.silence.stop()
     this.stop()
     this.pending?.failed(new ImapError(reason ?? 'the connection closed', 'closed'))
     this.pending = null
