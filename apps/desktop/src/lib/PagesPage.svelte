@@ -65,10 +65,6 @@
     const want = part
     if (!want) {
       closeUp = null
-      if (close) {
-        close.width = 0
-        close.height = 0
-      }
       return
     }
 
@@ -179,15 +175,17 @@
 >
   {#if backed}
     <canvas bind:this={sheet} class:there={!!paper}></canvas>
-    <canvas
-      bind:this={close}
-      class="close"
-      class:there={!!closeUp}
-      style:left="{(closeUp?.x ?? 0) * 100}%"
-      style:top="{(closeUp?.y ?? 0) * 100}%"
-      style:width="{(closeUp?.width ?? 0) * 100}%"
-      style:height="{(closeUp?.height ?? 0) * 100}%"
-    ></canvas>
+    {#if part}
+      <canvas
+        bind:this={close}
+        class="close"
+        class:there={!!closeUp}
+        style:left="{(closeUp?.x ?? 0) * 100}%"
+        style:top="{(closeUp?.y ?? 0) * 100}%"
+        style:width="{(closeUp?.width ?? 0) * 100}%"
+        style:height="{(closeUp?.height ?? 0) * 100}%"
+      ></canvas>
+    {/if}
   {/if}
   {#if lost}
     <span class="missing">{t('The paper could not be read')}</span>
