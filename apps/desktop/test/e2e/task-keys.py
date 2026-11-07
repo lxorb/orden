@@ -174,11 +174,28 @@ SWIPE = """([words, by, lift]) => {
   )
   const box = node.getBoundingClientRect()
   const y = box.top + box.height / 2
-  const at = (x) => new Touch({ identifier: 1, target: node, clientX: x, clientY: y })
-  const fire = (type, x) => node.dispatchEvent(new TouchEvent(type, {
-    bubbles: true, cancelable: true,
-    touches: type === 'touchend' ? [] : [at(x)], changedTouches: [at(x)],
-  }))
+  const point = (x) => ({ identifier: 1, target: node, clientX: x, clientY: y, pageX: x, pageY: y, screenX: x, screenY: y })
+  const at = (x) => {
+    try {
+      return new Touch(point(x))
+    } catch {
+      return point(x)
+    }
+  }
+  const fire = (type, x) => {
+    const touches = type === 'touchend' ? [] : [at(x)]
+    const changedTouches = [at(x)]
+    let event
+    try {
+      event = new TouchEvent(type, { bubbles: true, cancelable: true, touches, changedTouches })
+    } catch {
+      event = new Event(type, { bubbles: true, cancelable: true })
+    }
+    if (event.touches?.length !== touches.length) {
+      Object.defineProperties(event, { touches: { value: touches }, changedTouches: { value: changedTouches } })
+    }
+    node.dispatchEvent(event)
+  }
   const start = box.left + 60
   fire('touchstart', start)
   for (let step = 1; step <= 8; step++) fire('touchmove', start + (by * step) / 8)
