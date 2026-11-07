@@ -190,7 +190,6 @@
       <textarea
         class="nib-field"
         bind:value={words}
-        dir="auto"
         rows="3"
         aria-label={t('Reply')}
         placeholder={t('Reply')}

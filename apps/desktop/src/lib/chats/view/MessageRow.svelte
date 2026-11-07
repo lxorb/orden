@@ -499,6 +499,7 @@
   }
 
   .body :global(pre) {
+    direction: ltr;
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-sm);
     background: var(--code-block-bg-color, var(--surface-2));

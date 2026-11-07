@@ -162,7 +162,6 @@
           use:grow={quick.question}
           use:dictating={voiceField}
           data-lands
-          dir="auto"
           rows="1"
           placeholder={t('Ask')}
           aria-label={t('Quick question')}
