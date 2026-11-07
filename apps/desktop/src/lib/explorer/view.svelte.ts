@@ -31,7 +31,7 @@ import { samePath } from '../space-paths'
 export class ExplorerView {
   readonly tab: Tab
   spec = $state<Spec | null>(null)
-  listing = $state<Listing | null>(null)
+  listing = $state.raw<Listing | null>(null)
   wrong = $state<string | null>(null)
   picked = $state<Picked>(NOTHING)
   renaming = $state<string | null>(null)
@@ -42,16 +42,13 @@ export class ExplorerView {
   filter = $state('')
   search = $state<Search | null>(null)
 
+  readonly #sorted = $derived<Entry[]>(
+    this.listing ? ordered(this.listing.entries, explorerPrefs.sort, explorerPrefs.hidden) : [],
+  )
   readonly rows = $derived<Entry[]>(
     this.search
       ? ordered(this.search.found, explorerPrefs.sort, true)
-      : this.listing
-        ? ordered(
-            filtered(this.listing.entries, this.filter),
-            explorerPrefs.sort,
-            explorerPrefs.hidden,
-          )
-        : [],
+      : filtered(this.#sorted, this.filter),
   )
   readonly names = $derived(this.rows.map((one) => one.name))
 
@@ -59,6 +56,9 @@ export class ExplorerView {
   #went = 0
   #landed = 0
   #reread = 0
+  #rereading = false
+  #again = false
+  #alive = false
 
   constructor(tab: Tab) {
     this.tab = tab
@@ -70,6 +70,7 @@ export class ExplorerView {
   }
 
   async appear() {
+    this.#alive = true
     hearChanges()
     if (this.listing) {
       await this.reload()
@@ -105,6 +106,29 @@ export class ExplorerView {
   }
 
   async reload() {
+    if (this.#rereading) {
+      this.#again = true
+      return
+    }
+    this.#rereading = true
+    try {
+      do {
+        this.#again = false
+        const began = Date.now()
+        await this.#readAgain()
+        if (this.#wantsAgain()) await rest(Math.min(Date.now() - began, MOST_REST))
+      } while (this.#wantsAgain())
+    } finally {
+      this.#rereading = false
+      this.#again = false
+    }
+  }
+
+  #wantsAgain(): boolean {
+    return this.#again && this.#alive
+  }
+
+  async #readAgain() {
     const folder = this.folder
     if (!folder || this.#landed !== this.#went) return
     const went = this.#went
@@ -180,6 +204,11 @@ export class ExplorerView {
   }
 
   stop() {
+    this.#alive = false
+    this.#unwatch()
+  }
+
+  #unwatch() {
     if (this.#watched) void unwatchFolder(this.#watched)
     this.#watched = null
   }
@@ -208,7 +237,7 @@ export class ExplorerView {
     this.tab.name = folderName(listing.path)
     this.tab.note.replace(writeSpec(this.spec), false)
     workspace.scheduleSession()
-    this.watch(listing.path)
+    if (this.#alive) this.watch(listing.path)
   }
 
   private take(listing: Listing) {
@@ -219,7 +248,7 @@ export class ExplorerView {
 
   private watch(folder: string) {
     if (this.#watched !== null && samePath(this.#watched, folder)) return
-    this.stop()
+    this.#unwatch()
     this.#watched = folder
     watchFolder(folder).catch(() => undefined)
   }
@@ -231,6 +260,12 @@ export class ExplorerView {
 }
 
 const SAID_FOR = 6000
+
+const MOST_REST = 2000
+
+function rest(ms: number): Promise<void> {
+  return new Promise((done) => setTimeout(done, ms))
+}
 
 function fresh(folder: string): Spec {
   return { folder, back: [], ahead: [] }

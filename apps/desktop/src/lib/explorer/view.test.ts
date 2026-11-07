@@ -9,6 +9,7 @@ const DISK: Record<string, string[]> = {
 }
 
 const listed: string[] = []
+const watched: string[] = []
 
 const slow = new Map<string, Promise<void>>()
 
@@ -50,7 +51,10 @@ vi.mock('./commands', () => ({
       })),
     }))
   },
-  watchFolder: () => Promise.resolve(),
+  watchFolder: (path: string) => {
+    watched.push(path)
+    return Promise.resolve()
+  },
   unwatchFolder: () => Promise.resolve(),
   listPlaces: () => Promise.resolve([{ kind: 'home', path: '/home/me', name: null }]),
 }))
@@ -76,6 +80,7 @@ function tabWith(doc: string) {
 
 beforeEach(() => {
   listed.length = 0
+  watched.length = 0
 })
 
 describe('a file explorer', () => {
@@ -168,5 +173,31 @@ describe('a file explorer', () => {
     await new Promise((done) => setTimeout(done, 0))
     expect(view.folder).toBe('/home/me/Pictures')
     expect(view.names).toEqual(['a.png'])
+  })
+
+  test('a folder that keeps changing is read once at a time, and once more after', async () => {
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    listed.length = 0
+    const home = held('/home/me')
+    const first = view.reload()
+    for (let at = 0; at < 50; at += 1) void view.reload()
+    expect(listed).toEqual(['/home/me'])
+    home()
+    await first
+    expect(listed).toEqual(['/home/me', '/home/me'])
+  })
+
+  test('a folder that lists after its tab was put away is not watched', async () => {
+    const view = viewOf(tabWith('') as never)
+    await view.appear()
+    watched.length = 0
+    const music = held('/home/me/Music')
+    const going = view.go('/home/me/Music')
+    view.stop()
+    music()
+    await going
+    expect(view.folder).toBe('/home/me/Music')
+    expect(watched).toEqual([])
   })
 })
