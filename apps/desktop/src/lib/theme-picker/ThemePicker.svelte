@@ -64,6 +64,16 @@
 
   const COLUMNS = 3
 
+  const seeing = $derived(
+    picking.pointed.id !== null
+      ? 'id'
+      : picking.pointed.scheme !== null
+        ? 'scheme'
+        : picking.pointed.accent !== null
+          ? 'accent'
+          : null,
+  )
+
   const keptScheme = $derived<SchemeChoice>(theme.switchable ? picking.kept.scheme : theme.current)
 
   const place = $derived.by(() => {
@@ -189,6 +199,7 @@
     class:sheet={viewport.touch}
     class:above={place?.above}
     class:rtl={place?.rtl}
+    data-seeing={seeing}
     style:left={place?.left}
     style:top={place && !place.above ? `${place.y}px` : undefined}
     style:bottom={place?.above ? `${place.y}px` : undefined}
@@ -344,7 +355,7 @@
   }
 
   .picker {
-    --picker-width: var(--screen-ask);
+    --picker-width: var(--screen-list);
     --screen-width: var(--picker-width);
 
     position: fixed;
@@ -355,6 +366,36 @@
     max-height: calc(100dvh - 16px);
     overflow: hidden;
     transform-origin: top left;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  .picker[data-seeing] {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .head,
+  .grid {
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .picker[data-seeing='id'] .head,
+  .picker[data-seeing='id'] .card:not(.is-on),
+  .picker[data-seeing='id'] .foot,
+  .picker[data-seeing='scheme'] .grid,
+  .picker[data-seeing='scheme'] .foot,
+  .picker[data-seeing='accent'] .head,
+  .picker[data-seeing='accent'] .grid {
+    opacity: 0.08;
+  }
+
+  .picker[data-seeing='id'] .card.is-on {
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
   }
 
   .picker.orden-screen {
@@ -436,7 +477,9 @@
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
+      color var(--dur-fast) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
 
   .card.is-on {

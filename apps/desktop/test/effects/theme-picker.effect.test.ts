@@ -105,39 +105,23 @@ afterEach(() => {
   store.close()
 })
 
-test('a right click on the light and dark switch opens it', async () => {
+test('the themes button in the sidebar foot opens it over itself, in place of a light and dark switch', async () => {
   const target = document.createElement('div')
   document.body.append(target)
   const foot = mount(SidebarFoot, { target })
   flushSync()
 
-  const button = target.querySelector<HTMLElement>(`[aria-label="Light"]`)
+  expect(target.querySelector('[aria-label="Light"], [aria-label="Dark"]')).toBeNull()
+  const button = target.querySelector<HTMLElement>('[aria-label="Themes"]')
   button?.dispatchEvent(
-    new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 200, clientY: 700 }),
+    new MouseEvent('click', { bubbles: true, cancelable: true, clientX: 200, clientY: 700 }),
   )
   await expect.poll(() => picking.open).toBe(true)
   flushSync()
 
   expect(dialog()).not.toBeNull()
   expect(picking.at?.x).toBe(200)
-
-  void unmount(foot, { outro: false })
-  target.remove()
-})
-
-test('and so does the switch of a theme with one side, which cannot flip it', async () => {
-  theme.files = [{ ...ROSE, id: 'file:paper', name: 'Paper', variants: ['light'] }]
-  theme.select('file:paper')
-
-  const target = document.createElement('div')
-  document.body.append(target)
-  const foot = mount(SidebarFoot, { target })
-  flushSync()
-
-  const button = target.querySelector<HTMLElement>('.acts button[aria-disabled]')
-  expect(button?.getAttribute('aria-disabled')).toBe('true')
-  button?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
-  await expect.poll(() => picking.open).toBe(true)
+  expect(theme.current).toBe('dark')
 
   void unmount(foot, { outro: false })
   target.remove()
@@ -182,6 +166,25 @@ test('moving off the cards gives the kept one back', async () => {
   expect(theme.id).toBe('default')
   expect(sheet()).toBe('')
   expect(picking.open).toBe(true)
+})
+
+test('turns see-through while a theme is tried, all but the card pointed at, and solid again after', async () => {
+  await opened()
+  expect(dialog()?.dataset.seeing).toBeUndefined()
+
+  pointAt(card('Rose'))
+  expect(dialog()?.dataset.seeing).toBe('id')
+  expect(card('Rose')?.classList.contains('is-on')).toBe(true)
+
+  leave(grid())
+  expect(dialog()?.dataset.seeing).toBeUndefined()
+
+  press('ArrowRight')
+  expect(dialog()?.dataset.seeing).toBe('id')
+  expect(theme.id).not.toBe('default')
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  expect(theme.id).toBe('default')
 })
 
 test('Escape closes it and gives back exactly what was there', async () => {

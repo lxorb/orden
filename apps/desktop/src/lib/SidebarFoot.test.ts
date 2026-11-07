@@ -22,17 +22,18 @@ describe('the foot of the sidebar', () => {
     }
   })
 
-  test('in a desktop browser offers the app to download and the theme switch', () => {
+  test('in a desktop browser offers the app to download and the themes, not a light and dark switch', () => {
     const html = drawn('desktop')
     expect(html).toContain('aria-label="Download the app"')
-    expect(html).toMatch(/aria-label="(Light|Dark)"/)
+    expect(html).toContain('aria-label="Themes"')
+    expect(html).not.toMatch(/aria-label="(Light|Dark)"/)
   })
 
   for (const device of ['phone', 'tablet'] as const) {
     test(`on a ${device} has neither, and keeps feedback and the settings`, () => {
       const html = drawn(device)
       expect(html).not.toContain('Download the app')
-      expect(html).not.toMatch(/aria-label="(Light|Dark)"/)
+      expect(html).not.toContain('aria-label="Themes"')
       expect(html).toContain('aria-label="Send feedback"')
       expect(html).toContain('aria-label="Settings"')
     })

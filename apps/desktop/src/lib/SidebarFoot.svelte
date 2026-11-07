@@ -4,13 +4,11 @@
   import AccountBadge from './AccountBadge.svelte'
   import { DOWNLOAD_URL } from './links'
   import { arriving } from './arriving.svelte'
-  import { longPress } from './longpress'
   import { dur, fade } from './motion'
   import { settings } from './settings.svelte'
   import { showFeedback } from './surfaces.svelte'
   import { t } from './i18n.svelte'
   import { isNative, openExternal } from './tauri'
-  import { theme } from './theme.svelte'
   import { viewport } from './viewport.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { SCRATCHPAD_MARK } from './panel-marks'
@@ -82,24 +80,20 @@
     {#if theming && !viewport.touch}
       <button
         class="orden-glyph act"
-        title={theme.current === 'dark' ? t('Light') : t('Dark')}
-        aria-label={theme.current === 'dark' ? t('Light') : t('Dark')}
-        aria-disabled={!theme.switchable}
-        onclick={() => theme.toggle()}
-        oncontextmenu={pick}
-        use:longPress={pick}
+        title={t('Themes')}
+        aria-label={t('Themes')}
+        aria-haspopup="dialog"
+        onclick={pick}
       >
-        {#if theme.current === 'dark'}
-          <svg viewBox="0 0 14 14"
-            ><circle cx="7" cy="7" r="3" /><path
-              d="M7 0v2M7 12v2M0 7h2M12 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M11.5 2.5l-1.4 1.4M3.9 10.1l-1.4 1.4"
-            /></svg
-          >
-        {:else}
-          <svg viewBox="0 0 14 14"
-            ><path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" /></svg
-          >
-        {/if}
+        <svg class="themes" viewBox="0 0 24 24">
+          <path
+            d="M12 2.5a9.5 9.5 0 0 0 0 19c.9 0 1.6-.7 1.6-1.6 0-.42-.17-.8-.42-1.07-.28-.28-.42-.62-.42-1.07a1.56 1.56 0 0 1 1.59-1.59h1.9c2.9 0 5.28-2.38 5.28-5.28C21.5 6.31 17.2 2.5 12 2.5z"
+          />
+          <circle class="dot" cx="13.5" cy="7" r="1.1" />
+          <circle class="dot" cx="17.2" cy="10.6" r="1.1" />
+          <circle class="dot" cx="9" cy="7.8" r="1.1" />
+          <circle class="dot" cx="7.1" cy="12.4" r="1.1" />
+        </svg>
       </button>
     {/if}
 
@@ -220,6 +214,15 @@
 
   .act .gear {
     stroke-width: 1.6;
+  }
+
+  .act .themes {
+    stroke-width: 1.6;
+  }
+
+  .act .themes .dot {
+    fill: currentColor;
+    stroke: none;
   }
 
   .act .bug {

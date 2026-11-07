@@ -336,7 +336,7 @@ describe('what hides a web page', () => {
     'lib/save-place/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
     'lib/settings/BrowserThemes.svelte': 'sheet',
     'lib/settings/FontPicker.svelte': 'dropdown',
-    'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
+    'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the themes button or the note',
     'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
     'lib/views/ToneDot.svelte': "a tone's colours, beside its dot",
     'lib/views/schedule/SchedulePicker.svelte': "a task's scheduler, beside what asked for it",

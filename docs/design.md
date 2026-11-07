@@ -1261,26 +1261,26 @@ three on every device, because it is one component: the account at the left as a
 face and a name - their picture, round, once they chose one - opening the account
 pane - signing in, the name a shared space
 shows, storage and signing out are all there, so who you are is one place rather
-than a sheet here and a pane there; then the theme and the settings at the right,
-where a switch goes. The theme is off while the theme in force has only the one
-scheme. The settings button carries no sync light any more: Emil, 2026-10-06 (#206),
+than a sheet here and a pane there; then the themes and the settings at the right,
+where a switch goes. The themes button opens the theme picker; the light and dark
+switch that stood there came off at the owner's word (#1635). The settings button carries no sync light any more: Emil, 2026-10-06 (#206),
 _"indicator dot next to settings should be removed (it blinks sometimes)"_. What a
 pass did is the Sync pane's to say. The GitHub mark does not come back: it is a row
 in Help.
 
 ### The theme picker
 
-A right click on the light and dark switch, a finger held on it, or Switch theme in
-the palette: every theme as a card of Orden in its own colours, a theme with both
+The themes button in the panel's foot, or Switch theme in the palette: every theme as a card of Orden in its own colours, a theme with both
 schemes cut on the diagonal the way a Mac draws Auto, the three schemes as marks at
 the top and the accents as dots at the foot. Pointing - the pointer or the arrows -
 puts that theme, scheme or accent on the whole app at once and writes nothing down;
 moving off, Escape, a press outside and Back all put the kept look back exactly, and
-a click keeps it the way Settings does. VS Code's colour theme list is the model,
+a click keeps it the way Settings does. While something is tried the picker turns
+see-through but for what is pointed at, so the app behind it shows the look whole. VS Code's colour theme list is the model,
 with the cards it lacks and the pointer trying as well as the keys.
 
 Over the app without dimming it, since the app is what is being judged, and never in
-the launch: the switch fetches the picker as it is pressed. A card is painted inline
+the launch: the button fetches the picker as it is pressed. A card is painted inline
 from colours worked out of the sheets' text rather than by the page, which answers
 for the window's own theme on everything that carries the scheme attribute. See
 `apps/desktop/src/lib/theme-picker/`.
