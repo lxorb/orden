@@ -167,6 +167,7 @@ export type KindName =
   | 'online'
   | 'application'
   | 'explorer'
+  | 'pass'
   | 'web'
   | 'private'
 
@@ -180,6 +181,7 @@ export function kindsHere(): KindName[] {
   if (modes.coder) here.push('online')
   if (modes.coder) here.push('application')
   if (isDesktop) here.push('explorer')
+  here.push('pass')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here

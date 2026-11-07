@@ -85,6 +85,7 @@ export default defineConfig(({ command, mode }) => ({
         presenter: resolve(import.meta.dirname, 'presenter.html'),
         quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
         handoff: resolve(import.meta.dirname, 'handoff.html'),
+        passLink: resolve(import.meta.dirname, 'pass-link.html'),
       },
     },
   },

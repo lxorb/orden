@@ -1,7 +1,8 @@
 import { chunks } from '../bound'
 import type { Env } from '../types'
 
-export type HubAsk = 'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai'
+export type HubAsk =
+  'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai' | 'pass'
 
 export const HUB_AWAY = 'sync is not answering - try again'
 

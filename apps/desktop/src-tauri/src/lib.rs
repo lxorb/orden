@@ -136,6 +136,8 @@ mod page_style;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
+#[cfg(any(desktop, target_os = "ios"))]
+mod pass_stretch;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
@@ -224,6 +226,8 @@ mod web_media;
 mod web_opens;
 #[cfg(desktop)]
 mod web_page;
+#[cfg(desktop)]
+mod web_pass;
 #[cfg(desktop)]
 mod web_pause;
 #[cfg(desktop)]
@@ -469,6 +473,7 @@ macro_rules! desktop_commands {
             pdf::print_page,
             owner::owner_can,
             owner::owner_check,
+            pass_stretch::pass_stretch,
             secrets::secret_forget,
             secrets::secret_read,
             secrets::secret_write,
@@ -534,6 +539,7 @@ macro_rules! desktop_commands {
             web_tabs::web_step,
             web_tabs::web_trail,
             web_tabs::web_clip,
+            web_pass::web_pass_fill,
             web_tabs::web_close,
             web_tabs::web_look,
             web_tabs::web_scroll,
@@ -725,6 +731,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.invoke_handler(commands![
         owner::owner_can,
         owner::owner_check,
+        pass_stretch::pass_stretch,
         secrets::secret_forget,
         secrets::secret_read,
         secrets::secret_write,

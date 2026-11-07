@@ -206,6 +206,7 @@ test('nothing is excused that is in the registry after all, or is no layer any m
 })
 
 const PLACED_INSIDE: Record<string, string> = {
+  'lib/pass/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
   'lib/web-tab/WebAsk.svelte .ask':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',
   'lib/web-tab/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',

@@ -99,6 +99,7 @@ describe('the marks a row wears', () => {
     'base',
     'chat',
     'application',
+    'key',
   ]
 
   test('every kind of row has one, and a folder is not a kind of row', () => {
@@ -119,10 +120,16 @@ describe('the marks a row wears', () => {
       .filter(Array.isArray)
       .map((one) => JSON.stringify(one))
 
-    const resized = ['canvas', 'application', 'pdf']
+    const resized = ['canvas', 'application', 'pdf', 'key']
     for (const name of MARK_NAMES.filter((one) => !resized.includes(one))) {
       expect(library, name).toContain(JSON.stringify(MARKS[name]))
     }
+  })
+
+  test("Pass's key reaches from the grid's top line to its bottom one, as the rest do", () => {
+    const [ring, shaft] = MARKS.key
+    expect(ring).toEqual(['circle', { cx: '8', cy: '16', r: '6' }])
+    expect(shaft).toEqual(['path', { d: 'm12.25 11.75 9.75-9.75' }])
   })
 
   test('the canvas is that drawing on the grid the rest of the set fills', () => {

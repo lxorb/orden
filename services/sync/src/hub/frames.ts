@@ -18,6 +18,7 @@ export type FromHub =
   | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
   | { t: 'terms' }
   | { t: 'ai' }
+  | { t: 'pass' }
   | ChatPoke
 
 type Fields = Record<string, unknown>

@@ -4,6 +4,7 @@
   import { fade } from 'svelte/transition'
   import { agentMarks } from '../agent-marks.svelte'
   import Cross from '../Cross.svelte'
+  import Door from '../Door.svelte'
   import { fullscreen } from '../fullscreen.svelte'
   import { chrome, landed } from '../glass/chrome.svelte'
   import { t } from '../i18n.svelte'
@@ -16,7 +17,7 @@
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
   import { swiping } from '../back-swipe/shown.svelte'
-  import { findBar } from '../surfaces.svelte'
+  import { findBar, passFill } from '../surfaces.svelte'
   import { invoke, isDesktop, openExternal } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
@@ -62,6 +63,7 @@
   import { clearingAsked } from './clearing-asked.svelte'
   import { importOffer } from './import-offer.svelte'
   import { firstVisit } from '../first-visit.svelte'
+  import { passBubbles } from '../pass/fill-bubbles.svelte'
   import WebAsk from './WebAsk.svelte'
   import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
@@ -471,6 +473,12 @@
   })
 
   onMount(() => {
+    if (isDesktop) void import('../pass/autofill').then(({ autofill }) => autofill.start())
+  })
+
+  const passBubble = $derived(passBubbles.of(tab.id))
+
+  onMount(() => {
     if (extending) void extensions.start()
     return () => {
       if (extensions.popped?.tab === tab.id) extensions.close()
@@ -736,6 +744,10 @@
         onpress={(one: Extension) => void pressExtension(one, null)}
         onclose={() => (showingExtensions = false)}
       />
+    {:else}
+      <Door open={passBubble !== null} load={() => passFill()}>
+        {#snippet children(PassFill)}<PassFill bubble={passBubble} />{/snippet}
+      </Door>
     {/if}
   </div>
 

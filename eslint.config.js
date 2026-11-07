@@ -124,6 +124,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/web_tabs/*.js',
       'apps/desktop/src-tauri/src/web_swipe.js',
       'apps/desktop/src-tauri/src/web_media.js',
+      'apps/desktop/src-tauri/src/web_pass.js',
       'apps/desktop/src-tauri/src/window_drag.js',
       'apps/desktop/src-tauri/src/page_drag.js',
       'apps/desktop/src-tauri/src/gpu.js',

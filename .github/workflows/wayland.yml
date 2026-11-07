@@ -189,6 +189,15 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - name: Pass fills, saves and signs in by itself on a web tab's pages, under sway
+        if: always()
+        env:
+          OUT: wayland-out/pass
+          PASS: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: A private tab's permission answer kept from normal tabs, under sway
         if: always()
         env:

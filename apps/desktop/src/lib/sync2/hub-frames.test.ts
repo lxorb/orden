@@ -3,7 +3,7 @@ import { BEAT_ANSWER, readHubFrame } from './hub-frames'
 
 describe('readHubFrame', () => {
   test('reads every frame the hub sends', () => {
-    const frames = [{ t: 'poke', space: 's1', seq: 3 }, { t: 'terms' }, { t: 'ai' }]
+    const frames = [{ t: 'poke', space: 's1', seq: 3 }, { t: 'terms' }, { t: 'ai' }, { t: 'pass' }]
     for (const frame of frames) expect(readHubFrame(JSON.stringify(frame))).toEqual(frame)
   })
 

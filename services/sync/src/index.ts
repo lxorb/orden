@@ -7,7 +7,7 @@ import { accountById, auth, presentUser, requireWhoever, sessions } from './auth
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
-import { blogRootOf, isOwnOrigin } from './hosts'
+import { blogRootOf, isAppHost, isOwnOrigin } from './hosts'
 import { serveApp, servePage, switchChannel } from './channel'
 import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
@@ -33,6 +33,8 @@ import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
 import { devices } from './hub/devices'
 import { aiVault } from './ai/vault'
+import { openLink, pass, sweepPassLinks } from './pass'
+import { servePassLink } from './pass/link-page'
 import { hubDoor } from './hub/door'
 import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
@@ -113,6 +115,7 @@ app.route('/v1/join', join)
 app.route('/v1/feedback', feedback)
 
 app.route('/v1/crashes', crashes)
+app.route('/v1/pass-link', openLink)
 
 app.use('/.well-known/*', anyOrigin)
 app.route('/.well-known', oauthMetadata)
@@ -232,6 +235,7 @@ app.route('/v2/devices', devices)
 app.route('/v2/apps/catalogue', appCatalogues)
 app.route('/v2/apps/ice', appIce)
 app.route('/v2/ai', aiVault)
+app.route('/v2/pass', pass)
 
 app.route('/v2/spaces', v2Spaces)
 app.route('/v2/spaces', v2Maps)
@@ -254,6 +258,14 @@ app.route('/v2/online/admin', onlineAdmin)
 app.route('/v2/online', online)
 
 app.get('/health', (context) => context.json({ ok: true }))
+
+app.get('/pass-link/:id', async (context, next) => {
+  if (isAppHost(context.env, context.req.url)) {
+    return await servePassLink(context.env, context.req.raw)
+  }
+  await next()
+  return undefined
+})
 
 app.get('/even', (context) => servePlugin(context.env, context.req.raw))
 app.get('/even/', (context) => servePlugin(context.env, context.req.raw))
@@ -313,6 +325,7 @@ function scheduled(event: ScheduledEvent, given: Env, context: ExecutionContext)
   context.waitUntil(expireClients(env, at))
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
+  context.waitUntil(sweepPassLinks(env, at))
   context.waitUntil(sweepTreeOps(env, at))
   context.waitUntil(sweepAnswers(env, at))
   context.waitUntil(sweepChats(env, at))

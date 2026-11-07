@@ -1474,6 +1474,31 @@ export function appCommands(view?: EditorView): Command[] {
       ? []
       : [
           {
+            id: 'pass',
+            label: t('Pass'),
+            hint: shortcuts.hint('app.pass'),
+            run: () => void import('./pass/open').then((one) => one.openPass()),
+          },
+          {
+            id: 'pass-lock',
+            label: t('Lock Pass'),
+            run: () => void import('./pass/open').then((one) => one.lockPass()),
+          },
+          {
+            id: 'pass-new-login',
+            label: t('New login'),
+            run: () => void import('./pass/open').then((one) => one.openPass('new-login')),
+          },
+          {
+            id: 'pass-generate',
+            label: t('Generate password'),
+            run: () => void import('./pass/open').then((one) => one.openPass('generator')),
+          },
+        ]),
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          {
             id: 'todos',
             label: t('Tasks'),
             hint: shortcuts.hint('app.tasks'),

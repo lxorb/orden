@@ -83,11 +83,12 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
     'New page note',
     'Online terminal',
     'New application',
+    'Pass',
     'New web note',
   ])
   expect([...target.querySelectorAll('.line')].map(names)).toEqual([
     ['New note', 'New canvas', 'New page note'],
-    ['Online terminal', 'New application'],
+    ['Online terminal', 'New application', 'Pass'],
     ['New web note'],
   ])
 })
@@ -102,6 +103,7 @@ test('each wearing its letter, which a screen reader is told as its key', () => 
     'P',
     'O',
     'A',
+    'K',
     'W',
   ])
   expect(buttons().map((one) => one.getAttribute('aria-keyshortcuts'))).toEqual([
@@ -110,6 +112,7 @@ test('each wearing its letter, which a screen reader is told as its key', () => 
     'P',
     'O',
     'A',
+    'K',
     'W',
   ])
 })
@@ -210,5 +213,5 @@ test('is one stop for Tab, whichever button the keyboard is on', () => {
   makers()
   here()
 
-  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1])
+  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1])
 })

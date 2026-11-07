@@ -319,6 +319,7 @@ describe('what hides a web page', () => {
     'lib/SpacePicker.svelte': 'dialog',
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/overview/Overview.svelte': 'dialog',
+    'lib/pass/PassFill.svelte': "Pass's offer to fill, save or sign in, under a web tab's bar",
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
     'lib/ai/sidebar/Composer.svelte': "the AI's model or context, over its composer",

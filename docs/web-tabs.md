@@ -2127,6 +2127,16 @@ prototypes, so neither side can see or break the other. A web tab is built that 
    `alert()` shows - in Orden's own card rather than a window of the engine's; see "The page
    itself".
 
+**Pass's channel is in nib's world only.** The page script that finds sign-in forms
+(`web_pass.js`, docs/pass.md "In a web tab") talks to the app through a binding named
+`nibPass`, added with `executionContextName: "nib"` on Orden's Chromium and `WebView2` and
+as a script message handler in the `nib` `WKContentWorld` on a Mac. The page's own world
+has no `nibPass` and no `__nibPass`: a site cannot post a form the reader never sent, ask
+for a fill, or learn that Pass is there. The app places every message by the engine's own
+frame tree (the frame and its origin are the engine's, never the page's words), and a fill
+is sent back into that frame's nib world only, after its origin is checked again.
+`scripts/pass-drive.py` checks both on the real app.
+
 Measured on the probe on 2026-09-30, `scripts/web-globals-probe.py --real`, on the build
 before and after:
 

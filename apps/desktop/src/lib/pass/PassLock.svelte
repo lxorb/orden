@@ -1,0 +1,140 @@
+<script lang="ts">
+  import Lock from 'lucide/dist/esm/icons/lock.mjs'
+  import { plural, t } from '../i18n.svelte'
+  import { deviceName } from '../protect/device'
+  import Gate from './Gate.svelte'
+  import { pass, PIN_TRIES, type Unlock } from './store.svelte'
+
+  const { focused = false }: { focused?: boolean } = $props()
+
+  type Way = 'password' | 'pin' | 'device' | 'recovery'
+
+  let way = $state<Way>(pass.settings.lock)
+  let typed = $state('')
+  let busy = $state(false)
+  let wrong = $state(false)
+  let shaking = $state(false)
+  let field = $state<HTMLInputElement>()
+
+  $effect(() => {
+    if (pass.settings.lock === 'password' && (way === 'pin' || way === 'device')) way = 'password'
+  })
+
+  $effect(() => {
+    if (focused && way !== 'device') field?.focus({ preventScroll: true })
+  })
+
+  function asked(): Unlock {
+    switch (way) {
+      case 'password':
+        return { password: typed }
+      case 'pin':
+        return { pin: typed }
+      case 'recovery':
+        return { recovery: typed }
+      case 'device':
+        return { device: true }
+    }
+  }
+
+  async function opened(event?: SubmitEvent) {
+    event?.preventDefault()
+    if (busy || (way !== 'device' && typed === '')) return
+    busy = true
+    const ok = await pass.unlock(asked())
+    busy = false
+    wrong = !ok
+    if (ok) return
+    typed = ''
+    shaking = false
+    requestAnimationFrame(() => (shaking = true))
+    field?.focus()
+  }
+
+  function use(next: Way) {
+    way = next
+    typed = ''
+    wrong = false
+  }
+
+  const wrongWord = $derived.by(() => {
+    switch (way) {
+      case 'pin':
+        return t('Wrong PIN')
+      case 'recovery':
+        return t('That recovery key does not open Pass')
+      case 'password':
+      case 'device':
+        return t('Wrong password')
+    }
+  })
+</script>
+
+<Gate icon={Lock} title={t('Pass is locked')}>
+  {#if way === 'device'}
+    <button class="nib-button" type="button" disabled={busy} onclick={() => void opened()}>
+      {t('Use {way}', { way: deviceName() })}
+    </button>
+  {:else}
+    <form class:shake={shaking} onsubmit={opened} onanimationend={() => (shaking = false)}>
+      <input
+        bind:this={field}
+        bind:value={typed}
+        class="nib-field"
+        type={way === 'recovery' ? 'text' : 'password'}
+        inputmode={way === 'pin' ? 'numeric' : undefined}
+        autocomplete={way === 'password' ? 'current-password' : 'off'}
+        spellcheck="false"
+        placeholder={way === 'pin'
+          ? t('PIN')
+          : way === 'recovery'
+            ? t('Recovery key')
+            : t('Pass password')}
+        aria-label={way === 'pin'
+          ? t('PIN')
+          : way === 'recovery'
+            ? t('Recovery key')
+            : t('Pass password')}
+        aria-invalid={wrong}
+        oninput={() => (wrong = false)}
+      />
+      <button class="nib-button" type="submit" disabled={busy || typed === ''} aria-busy={busy}>
+        {busy ? t('Unlocking…') : t('Unlock')}
+      </button>
+    </form>
+  {/if}
+  {#if wrong}
+    <p class="wrong" role="alert">{wrongWord}</p>
+  {/if}
+  {#if pass.error}
+    <p class="wrong" role="alert">{pass.error}</p>
+  {/if}
+  {#if way === 'pin' && pass.pinTries < PIN_TRIES}
+    <p class="tries">
+      {plural(pass.pinTries, { one: '{count} try left', other: '{count} tries left' })}
+    </p>
+  {/if}
+  {#if way !== 'password'}
+    <button class="nib-action" type="button" onclick={() => use('password')}
+      >{t('Use password')}</button
+    >
+  {/if}
+  {#if way === 'password' && pass.settings.lock !== 'password'}
+    <button class="nib-action" type="button" onclick={() => use(pass.settings.lock)}>
+      {pass.settings.lock === 'pin' ? t('Use PIN') : t('Use {way}', { way: deviceName() })}
+    </button>
+  {/if}
+  {#if way !== 'recovery'}
+    <button class="nib-action" type="button" onclick={() => use('recovery')}
+      >{t('Use recovery key')}</button
+    >
+  {/if}
+</Gate>
+
+<style>
+  .tries {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--callout-warning);
+  }
+</style>

@@ -123,7 +123,7 @@ const FACTS_BODY: &str = r"
   }
   const plainName = (one) => {
     const words = text(ownWords(one))
-    return text(labelOf(one) || (words.length > 60 ? '' : words) || (read(one, 'tagName') === 'INPUT' ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || (words ? '' : onlyPicture(one)))
+    return text(labelOf(one) || (words.length > 60 ? '' : words) || (read(one, 'tagName') === 'INPUT' && ['button', 'submit', 'reset', 'image'].includes(String(read(one, 'type')).toLowerCase()) ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || (words ? '' : onlyPicture(one)))
   }
   // A design system's inner button, with its label on the host round its shadow root.
   const hostLabel = (one) => {
@@ -138,7 +138,7 @@ const FACTS_BODY: &str = r"
     const label = labelOf(one)
     const words = text(read(one, 'innerText'))
     const both = label && words && !call(one, 'hasAttribute', 'aria-label') && !label.toLowerCase().includes(words.toLowerCase()) ? label + ' ' + words : label || words
-    const said = text((both || (read(one, 'tagName') === 'INPUT' ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || '') + ' ' + pictured(one))
+    const said = text((both || (read(one, 'tagName') === 'INPUT' && ['button', 'submit', 'reset'].includes(String(read(one, 'type')).toLowerCase()) ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || '') + ' ' + pictured(one))
     return said || hostLabel(one)
   }
   const nameOf = (one) => (call(one, 'matches', CONTROLS) ? controlName(one) : plainName(one)).slice(0, 200)

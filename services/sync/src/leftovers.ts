@@ -144,6 +144,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
   const versions = new Map<string, string>()
   const blobs = new Map<string, string>()
   const chats = new Map<string, string>()
+  const passFiles = new Map<string, string>()
 
   for (const name of names) {
     const [kind, ...rest] = name.split('/')
@@ -153,6 +154,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     else if (kind === 'versions') versions.set(name, last)
     else if (kind === 'blobs') blobs.set(name, last)
     else if (kind === 'chats') chats.set(name, last)
+    else if (kind === 'pass') passFiles.set(name, rest.slice(1).join('/'))
   }
 
   const notes = await askIn(
@@ -168,7 +170,14 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
   const heldBlobs = await askIn(env, 'select distinct hash as one from blobs where hash in', blobs)
   const heldChats = await askIn(env, 'select id as one from chats where id in', chats)
 
-  return new Set([...notes, ...heldVersions, ...heldBlobs, ...heldChats])
+  const heldPassFiles = await askIn(
+    env,
+    `select item_id || '/' || file_id || '/' || part as one from pass_file_parts
+      where item_id || '/' || file_id || '/' || part in`,
+    passFiles,
+  )
+
+  return new Set([...notes, ...heldVersions, ...heldBlobs, ...heldChats, ...heldPassFiles])
 }
 
 async function askIn(

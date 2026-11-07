@@ -85,6 +85,17 @@ const ROWS: Record<KindName, () => NewKindRow> = {
         inPane(paneId, () => import('./explorer/open').then((one) => one.openExplorer()))
     },
   }),
+  pass: () => ({
+    kind: 'pass',
+    line: 'run',
+    label: () => kindLabel('pass'),
+    mark: 'key',
+    letter: 'k',
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./pass/open').then((one) => one.openPass()))
+    },
+  }),
   terminal: () => terminalRow(),
   remote: () => remoteRow(),
   online: () => onlineRow(),
