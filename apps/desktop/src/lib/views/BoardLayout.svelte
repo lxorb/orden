@@ -979,6 +979,10 @@
     scrollbar-width: none;
   }
 
+  .strip::-webkit-scrollbar {
+    display: none;
+  }
+
   .switch {
     flex: none;
     display: inline-flex;

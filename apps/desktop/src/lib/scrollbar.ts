@@ -48,6 +48,14 @@ export interface OverlayScrollbar {
   stop(): void
 }
 
+function engineBarRedrawn(scroller: HTMLElement) {
+  const { overflowX, overflowY } = scroller.style
+  scroller.style.overflow = 'hidden'
+  scroller.getBoundingClientRect()
+  scroller.style.overflowX = overflowX
+  scroller.style.overflowY = overflowY
+}
+
 export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): OverlayScrollbar {
   const bar = document.createElement('div')
   bar.className = 'nib-scrollbar'
@@ -58,6 +66,7 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
   if (getComputedStyle(host).position === 'static') host.style.position = 'relative'
   host.append(bar)
   scroller.classList.add('nib-scrolls')
+  engineBarRedrawn(scroller)
 
   const box = { top: -1, height: -1, end: -1 }
   let held = false
@@ -171,6 +180,7 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       scroller.removeEventListener('pointerenter', light)
       thumb.removeEventListener('pointerdown', grab)
       scroller.classList.remove('nib-scrolls')
+      engineBarRedrawn(scroller)
       bar.remove()
     },
   }

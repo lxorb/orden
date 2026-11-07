@@ -835,6 +835,10 @@
     scrollbar-width: none;
   }
 
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
   .tab {
     display: flex;
     flex: none;

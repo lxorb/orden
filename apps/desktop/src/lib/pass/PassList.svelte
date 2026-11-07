@@ -406,6 +406,10 @@
     scrollbar-width: none;
   }
 
+  .pinned::-webkit-scrollbar {
+    display: none;
+  }
+
   .pin {
     flex: none;
     display: flex;
