@@ -7,7 +7,7 @@
   import { scrollbar } from './scrollbar'
   import { canWriteIn } from './sharing.svelte'
   import { readableSize } from './usage.svelte'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { when } from './when'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -93,10 +93,7 @@
     let said = ''
 
     for (const version of versions) {
-      const month = new Date(version.at).toLocaleDateString(undefined, {
-        month: 'long',
-        year: 'numeric',
-      })
+      const month = i18n.when(version.at, { month: 'long', year: 'numeric' })
 
       if (month !== said) {
         out.push({ month })

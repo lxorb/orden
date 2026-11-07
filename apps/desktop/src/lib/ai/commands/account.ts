@@ -1,4 +1,4 @@
-import { t } from '../../i18n.svelte'
+import { i18n, t } from '../../i18n.svelte'
 import { invoke } from '../../tauri'
 import { isLocal, KIND_NAMES, type Provider } from '../providers'
 import type { Thread } from '../chat/types'
@@ -54,7 +54,9 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
   let limit = null
   if (provider && isLocal(provider.kind)) limit = (await plansOf()).of(provider.id).limit
   else if (provider?.kind === 'chatgpt') limit = (await plansOf()).chatgptLimit
-  const until = limit?.until ? new Date(limit.until).toLocaleString() : limit?.untilWords
+  const until = limit?.until
+    ? i18n.when(limit.until, { dateStyle: 'medium', timeStyle: 'short' })
+    : limit?.untilWords
   const standing =
     limit && limit.state !== 'fine'
       ? [limit.state === 'reached' ? t('At its limit') : t('Near its limit'), until]

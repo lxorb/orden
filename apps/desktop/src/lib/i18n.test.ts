@@ -582,6 +582,26 @@ describe('dates and numbers', () => {
   test('build one formatter per shape', () => {
     expect(i18n.amount(1000)).toBe(i18n.amount(1000))
   })
+
+  test('take options, such as a currency', () => {
+    expect(i18n.amount(12.5, { style: 'currency', currency: 'EUR' })).toBe(
+      new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' }).format(12.5),
+    )
+  })
+
+  test('are never left to the machine’s language in the app', () => {
+    const OWN_PAGE = /[/\\]pass[/\\]link-page\.ts$/
+    const machine = sourceFiles(SOURCE)
+      .filter((path) => !OWN_PAGE.test(path))
+      .flatMap((path) =>
+        [
+          ...readFileSync(path, 'utf8').matchAll(
+            /\.toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/g,
+          ),
+        ].map(() => path.slice(SOURCE.length)),
+      )
+    expect(machine).toEqual([])
+  })
 })
 
 describe('a failure', () => {
