@@ -69,6 +69,18 @@ describe('a line diff', () => {
     expect(work.cells).toBe(1)
   })
 
+  test('a short text against a very long one stops at a bounded amount of work', () => {
+    const before = Array.from({ length: 1000 }, (_, at) => `old ${at}`).join('\n')
+    const after = Array.from({ length: 100_000 }, (_, at) => `new ${at}`).join('\n')
+
+    workDone()
+    const rows = lineDiff(before, after)
+    const work = workDone()
+
+    expect(diffCount(rows)).toEqual({ added: 100_000, removed: 1000 })
+    expect(work.cells).toBeLessThanOrEqual(8_000_000)
+  })
+
   test('two texts with nothing in common read as one replacement', () => {
     const before = Array.from({ length: 2000 }, (_, at) => `old ${at}`).join('\n')
     const after = Array.from({ length: 2000 }, (_, at) => `new ${at}`).join('\n')
