@@ -1,4 +1,4 @@
-import type { Parser } from '@lezer/common'
+import { type Parser, type Tree, TreeFragment } from '@lezer/common'
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
 import { escape } from './html'
 
@@ -23,11 +23,29 @@ function escapeCode(text: string): string {
   return text.replace(/[&<>]/g, (character) => IN_CODE[character] ?? character)
 }
 
+const lastParsed = new WeakMap<Parser, { code: string; tree: Tree }>()
+
+function parsed(code: string, parser: Parser): Tree {
+  const last = lastParsed.get(parser)
+  if (last?.code === code) return last.tree
+
+  const end = last?.code.length ?? 0
+  const fragments =
+    last && code.length > end && code.startsWith(last.code)
+      ? TreeFragment.applyChanges(TreeFragment.addTree(last.tree), [
+          { fromA: end, toA: end, fromB: end, toB: code.length },
+        ])
+      : undefined
+  const tree = parser.parse(code, fragments)
+  lastParsed.set(parser, { code, tree })
+  return tree
+}
+
 export function highlightCode(code: string, parser: Parser): string {
   let out = ''
   let last = 0
 
-  highlightTree(parser.parse(code), codeHighlighter, (from, to, classes) => {
+  highlightTree(parsed(code, parser), codeHighlighter, (from, to, classes) => {
     out += escapeCode(code.slice(last, from))
     out += `<span class="${classes}">${escapeCode(code.slice(from, to))}</span>`
     last = to

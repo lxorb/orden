@@ -1,7 +1,7 @@
 import { loadMaths } from '@orden/markdown/engines'
 import { TexDelimiters } from '@orden/markdown/streamed'
 import { beforeAll, describe, expect, it, test, vi } from 'vitest'
-import { answerHtml, withCodeBars } from './drawn'
+import { answerHtml, inLineGroups, LINES_A_GROUP, withCodeBars } from './drawn'
 
 describe('withCodeBars', () => {
   it('puts a bar with the language and a copy button over a fenced block', () => {
@@ -123,5 +123,38 @@ describe('an answer, drawn as a note is', () => {
     const html = answerHtml('<b>bold</b>\n\n<iframe src="https://example.com"></iframe>')
     expect(html).not.toContain('<b>')
     expect(html).not.toContain('<iframe')
+  })
+})
+
+describe('a long block of code while it arrives', () => {
+  const lines = (count: number) =>
+    Array.from({ length: count }, (_, at) => `line ${at} & more`).join('\n')
+
+  test('is drawn in groups of lines, so a line more touches only the last group', () => {
+    const html = answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}`, { live: true })
+
+    expect(html.match(/<span class="code-lines">/g)).toHaveLength(3)
+    expect(html.replace(/<\/?span[^>]*>/g, '')).toBe(
+      answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}\n\`\`\``),
+    )
+  })
+
+  test('is one piece while it is short, and once it has arrived', () => {
+    expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP - 1)}`, { live: true })).not.toContain(
+      'code-lines',
+    )
+    expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 3)}\n\`\`\``)).not.toContain('code-lines')
+  })
+
+  test('closes a token that runs across groups and opens it again after', () => {
+    const comment = `<span class="hl-comment">/*${'\n'.repeat(LINES_A_GROUP + 4)}*/</span>`
+    const code = `<pre><code>a\n${comment}\n</code></pre>`
+
+    const grouped = inLineGroups(code)
+    const [first = '', second = ''] = grouped.split('<span class="code-lines">').slice(1)
+
+    expect(first.endsWith('</span></span>')).toBe(true)
+    expect(second.startsWith('<span class="hl-comment">')).toBe(true)
+    expect(grouped.replace(/<[^>]+>/g, '')).toBe(code.replace(/<[^>]+>/g, ''))
   })
 })
