@@ -1,5 +1,5 @@
 ;(function () {
-  if (self.origin !== 'null') return
+  if (self.origin !== 'null' || self.parent !== self.top) return
 
   const evaluate = self.eval
   const Async = Object.getPrototypeOf(async () => undefined).constructor
