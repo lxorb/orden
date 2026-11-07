@@ -3,6 +3,7 @@ import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { links } from '../link-index.svelte'
 import { homeRoot } from '../rows/home.svelte'
+import { forgetSessionOwner, sessionOwner } from '../session-owner'
 import { insideSpace } from '../space-paths'
 import { keep, storedText } from '../stored'
 import { accountInbox } from './account.svelte'
@@ -39,10 +40,12 @@ accountInbox.hear(() => {
   soon = setTimeout(() => void told(), 0)
 })
 
+account.forgetWithSession(forgetSessionOwner)
+
 $effect.root(() => {
   $effect(() => {
-    const owner = account.user?.id ?? null
-    const token = account.accountToken
+    const owner = sessionOwner(account)
+    const token = account.token
     untrack(
       () =>
         void accountInbox.opened({

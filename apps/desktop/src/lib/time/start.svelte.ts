@@ -1,15 +1,18 @@
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { RECONCILE_INTERVAL } from '../backoff'
+import { forgetSessionOwner, sessionOwner } from '../session-owner'
 import { timeDevice } from './device'
 import { timeOn } from '../settings.svelte'
 import { accountServer } from './server'
 import { time } from './time.svelte'
 
+account.forgetWithSession(forgetSessionOwner)
+
 $effect.root(() => {
   $effect(() => {
-    const owner = account.user?.id ?? null
-    const token = account.accountToken
+    const owner = sessionOwner(account)
+    const token = account.token
     untrack(
       () =>
         void time.opened({
