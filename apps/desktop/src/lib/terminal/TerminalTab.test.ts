@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { expect, test } from 'vitest'
 
-const SOURCE = readFileSync(fileURLToPath(new URL('./TerminalTab.svelte', import.meta.url)), 'utf8')
+const SOURCE = readFileSync(join(import.meta.dirname, './TerminalTab.svelte'), 'utf8')
 const XTERM = readFileSync(
   createRequire(import.meta.url).resolve('@xterm/xterm/css/xterm.css'),
   'utf8',

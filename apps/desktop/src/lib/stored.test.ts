@@ -112,7 +112,7 @@ function sourceFiles(directory: string, found: string[] = []): string[] {
   return found
 }
 
-const HERE = fileURLToPath(new URL('./stored.ts', import.meta.url))
+const HERE = join(import.meta.dirname, './stored.ts')
 
 function writesItself(): string[] {
   const writing = /localStorage\.(setItem|removeItem|clear)\(/

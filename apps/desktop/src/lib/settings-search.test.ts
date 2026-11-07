@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import type { Pane } from './preferences'
 import { type Place, search } from './settings-search'
@@ -135,7 +136,7 @@ describe('searching the settings', () => {
 })
 
 describe('the hand-written panes the search knows about', () => {
-  const source = readFileSync(new URL('./settings/places.ts', import.meta.url), 'utf8')
+  const source = readFileSync(join(import.meta.dirname, './settings/places.ts'), 'utf8')
 
   test('name how long the account keeps a note’s history', () => {
     expect(source).toContain("label: t('History on the account')")

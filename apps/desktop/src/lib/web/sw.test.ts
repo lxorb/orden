@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { beforeEach, describe, expect, test } from 'vitest'
 
-const SW = new URL('../../../public/sw.js', import.meta.url)
+const SW = join(import.meta.dirname, '../../../public/sw.js')
 const SOURCE = readFileSync(SW, 'utf8')
 
 const ORIGIN = 'http://127.0.0.1:18967'

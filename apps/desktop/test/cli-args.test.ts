@@ -4,10 +4,9 @@ import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 
-const CLI = fileURLToPath(new URL('../../cli/nib.mjs', import.meta.url))
+const CLI = join(import.meta.dirname, '../../cli/nib.mjs')
 
 async function sent(
   words: string[],

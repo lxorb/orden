@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const asked: boolean[] = []
@@ -221,10 +222,7 @@ describe('Escape', () => {
 
 describe('what is kept of it', () => {
   test('and nothing about it is written down', () => {
-    const source = readFileSync(
-      fileURLToPath(new URL('./fullscreen.svelte.ts', import.meta.url)),
-      'utf8',
-    )
+    const source = readFileSync(join(import.meta.dirname, './fullscreen.svelte.ts'), 'utf8')
 
     expect(source).not.toContain('localStorage')
     expect(source).not.toContain('persist')

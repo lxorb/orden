@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { opensAt, spelled, type Walk, walk } from './list-keys'
 
@@ -110,7 +110,7 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
   })
 
   test('and the pointer has a highlight of its own to move', () => {
-    const source = readFileSync(fileURLToPath(new URL('./Select.svelte', import.meta.url)), {
+    const source = readFileSync(join(import.meta.dirname, './Select.svelte'), {
       encoding: 'utf8',
     })
 

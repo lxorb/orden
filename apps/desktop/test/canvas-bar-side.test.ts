@@ -1,12 +1,9 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 describe('the canvas bar against a side', () => {
-  const svelte = readFileSync(
-    fileURLToPath(new URL('../src/lib/CanvasBar.svelte', import.meta.url)),
-    'utf8',
-  )
+  const svelte = readFileSync(join(import.meta.dirname, '../src/lib/CanvasBar.svelte'), 'utf8')
   const rule = (selector: string) =>
     new RegExp(`(?<!,)\\n  ${selector.replace(/[.()[\]']/g, '\\$&')} \\{([^}]*)\\}`).exec(
       svelte,

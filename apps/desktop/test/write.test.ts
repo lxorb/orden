@@ -6,7 +6,7 @@ import { everySurface } from '@orden/themes/write'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const EDITOR = fileURLToPath(new URL('../../../packages/editor/src/', import.meta.url))
-const CONFIG = fileURLToPath(new URL('../vite.config.ts', import.meta.url))
+const CONFIG = join(import.meta.dirname, '../vite.config.ts')
 
 function files(dir: string): string[] {
   const out: string[] = []

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { render } from 'svelte/server'
 import type { TabKind } from './workspace/documents.svelte'
 
@@ -146,8 +146,8 @@ describe('a tab holding a website', () => {
 })
 
 describe('one box for every kind', () => {
-  const source = readFileSync(fileURLToPath(new URL('./TabMark.svelte', import.meta.url)), 'utf8')
-  const mark = readFileSync(fileURLToPath(new URL('./FileMark.svelte', import.meta.url)), 'utf8')
+  const source = readFileSync(join(import.meta.dirname, './TabMark.svelte'), 'utf8')
+  const mark = readFileSync(join(import.meta.dirname, './FileMark.svelte'), 'utf8')
 
   test('is the box the file list draws a mark in', () => {
     for (const rule of ['width: var(--icon-md)', 'height: var(--icon-md)']) {

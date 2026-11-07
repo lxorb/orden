@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const SURFACE = /\.surface \{([^}]*)\}/.exec(
-  readFileSync(fileURLToPath(new URL('./Editor.svelte', import.meta.url)), 'utf8'),
+  readFileSync(join(import.meta.dirname, './Editor.svelte'), 'utf8'),
 )?.[1]
 
 describe('the pane the editor is in', () => {

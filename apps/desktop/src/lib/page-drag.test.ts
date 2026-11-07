@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
-const script = readFileSync(new URL('../../src-tauri/src/page_drag.js', import.meta.url), 'utf8')
+const script = readFileSync(join(import.meta.dirname, '../../src-tauri/src/page_drag.js'), 'utf8')
 
 function page(html = '') {
   const dom = new JSDOM(

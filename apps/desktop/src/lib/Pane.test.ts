@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { conversationKey } from './chats/conversation-key'
 import { TAB_KINDS } from './workspace/tab-kinds'
 
-const SOURCE = readFileSync(fileURLToPath(new URL('./Pane.svelte', import.meta.url)), 'utf8')
+const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
 
 const SURFACES = [...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
 
@@ -29,10 +29,7 @@ describe('a surface a pane is filled with', () => {
   })
 
   test("tells another service's conversation by the words its tab is opened with", () => {
-    const surfaces = readFileSync(
-      fileURLToPath(new URL('./surfaces.svelte.ts', import.meta.url)),
-      'utf8',
-    )
+    const surfaces = readFileSync(join(import.meta.dirname, './surfaces.svelte.ts'), 'utf8')
     const key = conversationKey({ provider: 'mail', account: 'a', conversation: 'c' })
     const head = key.slice(0, key.indexOf('\n'))
     expect(surfaces).toContain(`words.startsWith('${head}\\n')`)

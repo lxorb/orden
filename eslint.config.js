@@ -170,6 +170,15 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "NewExpression[callee.name='URL'][arguments.1.object.type='MetaProperty'][arguments.0.value=/\\.(ts|js|mjs|svelte)$/]:not(MemberExpression > NewExpression.object)",
+          message:
+            'Name a file a test reads with join(import.meta.dirname, …): knip takes new URL(…, import.meta.url) for an entry and stops checking what the file exports.',
+        },
+      ],
     },
   },
   {

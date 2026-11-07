@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const HTML = readFileSync(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8')
@@ -7,7 +8,7 @@ const TOKENS = readFileSync(
   fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)),
   'utf8',
 )
-const GROUND = readFileSync(fileURLToPath(new URL('../src/lib/ground.ts', import.meta.url)), 'utf8')
+const GROUND = readFileSync(join(import.meta.dirname, '../src/lib/ground.ts'), 'utf8')
 
 function background(scheme: 'dark' | 'light'): string {
   const block = TOKENS.split(`[data-theme='${scheme}']`).at(1) ?? ''

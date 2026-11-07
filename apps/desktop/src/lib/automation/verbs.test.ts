@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -104,10 +104,7 @@ describe('what a link may ask for', () => {
 
 describe('the command line', () => {
   test('names every verb in its help, in the spelling a terminal takes', async () => {
-    const usage = readFileSync(
-      fileURLToPath(new URL('../../../../cli/nib.mjs', import.meta.url)),
-      'utf8',
-    )
+    const usage = readFileSync(join(import.meta.dirname, '../../../../cli/nib.mjs'), 'utf8')
 
     const missing = (await verbs())
       .filter((verb) => !verb.includes('_') && !verb.startsWith('agent.'))

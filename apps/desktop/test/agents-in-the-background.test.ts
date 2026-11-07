@@ -45,7 +45,7 @@ describe('an agent at work, in the background', () => {
 
   test('a tab an agent shows of itself lands behind; only the reader’s press brings it forward', () => {
     const activity = readFileSync(
-      fileURLToPath(new URL('../src/lib/agents/ui/activity.svelte.ts', import.meta.url)),
+      join(import.meta.dirname, '../src/lib/agents/ui/activity.svelte.ts'),
       'utf8',
     )
     expect(activity).toMatch(/void this\.show\(said\.tab, false\)/)
