@@ -12,6 +12,7 @@ import { EditorView } from '@codemirror/view'
 import type { TextEdit } from '@orden/markdown/edits'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
+import { GROWS_AT_MOST } from '../../../../scripts/growth'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { tickLines } from '../task-tick'
 import {
@@ -217,6 +218,34 @@ describe('a box ticked', () => {
     undo(view)
     expect(view.state.doc.toString()).toBe(note)
   })
+
+  test('every box of a long list ticked at once takes time that grows with the list', async () => {
+    const quick: TaskHelp = {
+      ...HELP,
+      tick: (_note, line) => {
+        const from = line * 9
+        return Promise.resolve([{ from: from + 3, to: from + 4, insert: 'x' }])
+      },
+    }
+    const timed = async (count: number) => {
+      const note = Array.from({ length: count }, () => '- [ ] Go').join('\n')
+      const view = viewOf(stateOf(note, 0))
+      const lines = Array.from({ length: count }, (_, at) => at + 1)
+      const start = performance.now()
+      await tickLines(view as unknown as EditorView, quick, view.state.doc, lines)
+      expect(view.state.doc.line(count).text).toBe('- [x] Go')
+      return performance.now() - start
+    }
+    const least = async (count: number) => {
+      let best = Infinity
+      for (let round = 0; round < 3; round++) best = Math.min(best, await timed(count))
+      return best
+    }
+
+    await least(4_000)
+    const ratio = (await least(16_000)) / Math.max(await least(4_000), 0.05)
+    expect(ratio).toBeLessThan(GROWS_AT_MOST)
+  }, 30_000)
 
   test('is dropped where the note changed while the engine was being asked', async () => {
     const note = '- [ ] Go\n'

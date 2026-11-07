@@ -79,13 +79,23 @@ function changeBetween(before: TaskFields, after: TaskFields): TaskChange {
   return change
 }
 
-function linesOf(note: string): { text: string; from: number }[] {
-  const out: { text: string; from: number }[] = []
+interface NoteLine {
+  text: string
+  from: number
+}
+
+let lastRead: { note: string; lines: readonly NoteLine[] } | null = null
+
+function linesOf(note: string): readonly NoteLine[] {
+  if (lastRead?.note === note) return lastRead.lines
+
+  const out: NoteLine[] = []
   let from = 0
   for (const text of note.split('\n')) {
     out.push({ text: text.replace(/\r$/, ''), from })
     from += text.length + 1
   }
+  lastRead = { note, lines: out }
   return out
 }
 

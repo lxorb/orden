@@ -68,12 +68,17 @@ export async function tickLines(
 
     const note = doc.toString()
     const edits: TextEdit[] = []
+    const reached = new Set<number>()
 
     for (const { number } of ticked) {
-      const line = doc.line(number)
-      const reached = edits.some((edit) => edit.from <= line.to && edit.to >= line.from)
-      if (reached) continue
-      edits.push(...(await help.tick(note, number - 1)))
+      if (reached.has(number)) continue
+      for (const edit of await help.tick(note, number - 1)) {
+        edits.push(edit)
+        const last = doc.lineAt(Math.min(edit.to, doc.length)).number
+        for (let at = doc.lineAt(Math.min(edit.from, doc.length)).number; at <= last; at++) {
+          reached.add(at)
+        }
+      }
     }
 
     if (view.state.doc !== doc) {

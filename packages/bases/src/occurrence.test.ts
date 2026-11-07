@@ -2,6 +2,7 @@ import { appliedEdits } from '@orden/markdown/edits'
 import { readTask } from '@orden/markdown/task-line'
 import { describe, expect, test } from 'vitest'
 import { finish, nextOccurrence, skip, tick } from './occurrence'
+import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 
 const ticked = (note: string, line: number, today: string, skipPast = true) =>
   appliedEdits(note, tick(note, line, today, { skipPast }))
@@ -254,5 +255,16 @@ describe('a repeat for so many times', () => {
     )
     const last = '- [ ] Pill 🔁 every week for 1 time 📅 2026-10-14'
     expect(skip(last, '2026-10-14')).toEqual([])
+  })
+})
+
+describe('ticking every task of a long list', () => {
+  test('reads the note once, not once for each task', () => {
+    const ticked = (count: number) => {
+      const note = Array.from({ length: count }, (_, at) => `- [ ] task ${at} #t`).join('\n')
+      for (let at = 0; at < count; at++) tick(note, at, '2026-11-07')
+    }
+
+    expect(growth(ticked, 1_000)).toBeLessThan(GROWS_AT_MOST)
   })
 })
