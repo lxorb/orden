@@ -637,7 +637,7 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
         .map(|(_, one)| one.path.clone())
         .collect();
     Some(crate::downloads::free_path(&folder, &name, |path| {
-        path.exists() || taken.iter().any(|one| std::path::Path::new(one) == path)
+        crate::downloads::on_disk(path) || taken.iter().any(|one| std::path::Path::new(one) == path)
     }))
 }
 
