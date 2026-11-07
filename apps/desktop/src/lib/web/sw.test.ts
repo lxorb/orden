@@ -209,6 +209,29 @@ describe('the asset worker', () => {
     expect(all?.headers.get('accept-ranges')).toBe('bytes')
   })
 
+  test('a file opened on its own is sandboxed, so nothing in it runs as the app', async () => {
+    const svg = await worker.fetch(`${ORIGIN}/asset/Work/assets/diagram.svg`)
+    const policy = svg?.headers.get('content-security-policy') ?? ''
+    expect(policy.split(';')[0]).toBe('sandbox')
+    expect(policy).toContain("default-src 'none'")
+    expect(svg?.headers.get('x-content-type-options')).toBe('nosniff')
+
+    const piece = await worker.fetch(`${ORIGIN}/asset/Work/assets/diagram.svg`, 'GET', 'bytes=0-3')
+    expect(piece?.headers.get('content-security-policy')).toBe(policy)
+
+    const odd = load([{ path: '/Work/page', type: 'text/html', data: PIXEL, modified: 1 }])
+    const html = await odd.fetch(`${ORIGIN}/asset/Work/page`)
+    expect(html?.headers.get('content-type')).toBe('text/html')
+    expect(html?.headers.get('content-security-policy')).toBe(policy)
+  })
+
+  test('a PDF keeps the viewer that reads it, and is still never sniffed', async () => {
+    const pdf = load([{ path: '/Work/a.pdf', type: 'application/pdf', data: PIXEL, modified: 1 }])
+    const answer = await pdf.fetch(`${ORIGIN}/asset/Work/a.pdf`)
+    expect(answer?.headers.get('content-security-policy')).toBeNull()
+    expect(answer?.headers.get('x-content-type-options')).toBe('nosniff')
+  })
+
   test('a name with a space in it is the row it was encoded from', async () => {
     const answer = await worker.fetch(`${ORIGIN}/asset/Work/Read%20me/a%20b.png`)
     expect(answer?.status).toBe(200)

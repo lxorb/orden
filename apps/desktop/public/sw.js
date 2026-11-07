@@ -31,6 +31,9 @@ const TYPES = {
 
 const UNKNOWN_TYPE = 'application/octet-stream'
 
+const ALONE =
+  "sandbox; default-src 'none'; img-src 'self' data: blob:; media-src 'self'; style-src 'unsafe-inline'; font-src 'self' data:"
+
 const HASHED = /^[0-9a-f]{16,}\.[a-z0-9]+$/i
 const FOREVER = 'public, max-age=31536000, immutable'
 const EVERY_TIME = 'no-cache'
@@ -60,10 +63,13 @@ async function answer(request) {
   const bytes = decode(row.data)
   if (!bytes) return missing()
 
+  const type = typeOf(path, row.type)
   const headers = {
-    'Content-Type': typeOf(path, row.type),
+    'Content-Type': type,
     'Cache-Control': HASHED.test(nameOf(path)) ? FOREVER : EVERY_TIME,
     'Accept-Ranges': 'bytes',
+    'X-Content-Type-Options': 'nosniff',
+    ...(type === 'application/pdf' ? {} : { 'Content-Security-Policy': ALONE }),
   }
   const asked = request.headers.get('Range')
   const span = asked === null ? undefined : spanOf(asked, bytes.length)
