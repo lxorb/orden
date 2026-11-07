@@ -52,4 +52,18 @@ describe('a todo pressed twice before its row comes back', () => {
     await Promise.all([tickRows([row], TODAY), tickRows([row], TODAY), tickRows([row], TODAY)])
     expect(lines()).toHaveLength(2)
   })
+
+  test('with others, done or cancelled, ticks the open ones and leaves the rest (#1281)', async () => {
+    const text = '- [ ] Post it\n- [x] Bread\n- [-] Gym\n'
+    disk.set('/n/Plan.md', text)
+    const rows = ['- [ ] Post it', '- [x] Bread', '- [-] Gym'].map((one, at) =>
+      taskRow('Plan.md', one, at),
+    )
+    await tickRows(rows, TODAY)
+    expect(lines()[0]).toMatch(/^- \[x\] Post it/)
+    expect(lines().slice(1)).toEqual(['- [x] Bread', '- [-] Gym'])
+    const done = ['- [x] Post it', '- [x] Bread'].map((one, at) => taskRow('Plan.md', one, at))
+    await tickRows(done, TODAY)
+    expect(lines()).toEqual(['- [ ] Post it', '- [ ] Bread', '- [-] Gym'])
+  })
 })
