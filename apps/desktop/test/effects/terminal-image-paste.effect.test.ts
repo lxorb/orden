@@ -204,7 +204,7 @@ test('in a remote terminal Alt+V carries the clipboard’s picture over and past
 
   press(session, 'v', 'alt')
   await vi.waitFor(() => expect(typed.join('')).toBe(PATH))
-  expect(carried).toEqual([{ host: 'pi', kind: 'png', base64: 'AQID' }])
+  expect(carried).toEqual([{ host: 'pi', kind: 'png', bytes: new Uint8Array([1, 2, 3]) }])
   expect(heard).toEqual([])
 })
 
@@ -245,7 +245,7 @@ test('a picture pasted into a local terminal is kept on this computer and its pa
 
   paste(session, { picture: new Uint8Array([1, 2, 3]) })
   await vi.waitFor(() => expect(typed.join('')).toBe(KEPT))
-  expect(kept).toEqual([{ kind: 'png', base64: 'AQID' }])
+  expect(kept).toEqual([{ kind: 'png', bytes: new Uint8Array([1, 2, 3]) }])
   expect(carried).toEqual([])
 
   typed.length = 0
@@ -267,7 +267,7 @@ test('so is one pasted from the menu when the clipboard holds no text', async ()
   if (!row || !('run' in row)) throw new Error('no Paste row')
   row.run()
   await vi.waitFor(() => expect(typed.join('')).toBe(KEPT))
-  expect(kept).toEqual([{ kind: 'png', base64: 'Bw==' }])
+  expect(kept).toEqual([{ kind: 'png', bytes: new Uint8Array([7]) }])
 })
 
 test('a picture this computer could not keep says so, and nothing is pasted', async () => {
@@ -323,7 +323,7 @@ test('a picture dropped from another app on a remote terminal is carried over', 
   const picture = Object.assign(pictureFile(new Uint8Array([5])), { name: 'shot.png' })
   expect(drop(session, { types: ['Files'], files: [picture] as unknown as FileList })).toBe(true)
   await vi.waitFor(() => expect(typed.join('')).toBe(PATH))
-  expect(carried).toEqual([{ host: 'pi', kind: 'png', base64: 'BQ==' }])
+  expect(carried).toEqual([{ host: 'pi', kind: 'png', bytes: new Uint8Array([5]) }])
 })
 
 test('a host that refuses the picture says so across the top, and nothing is pasted', async () => {

@@ -1,4 +1,3 @@
-import { toBase64 } from '../bytes'
 import {
   caughtFiles,
   carriedNothing,
@@ -91,7 +90,7 @@ async function writeInto(view: ExplorerView, files: readonly Picked[], folder: s
         taken.push(name)
         tops.set(top, name)
       }
-      const bytes = toBase64(new Uint8Array(await file.arrayBuffer()))
+      const bytes = new Uint8Array(await file.arrayBuffer())
       await invoke('explorer_write', { folder, under: [name, ...rest].join('/'), bytes })
     }
   } catch (error) {

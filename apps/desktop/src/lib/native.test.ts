@@ -48,6 +48,20 @@ describe('bytes on their way to a file', () => {
     })
   })
 
+  test('a picture pasted into a terminal and a file dropped on the explorer go the same way', async () => {
+    const bytes = new Uint8Array([1, 2, 3])
+    await invoke('local_image', { kind: 'png', bytes })
+    await invoke('remote_image', { host: 'pi', kind: 'png', bytes })
+    await invoke('explorer_write', { folder: '/a', under: 'b/c.bin', bytes })
+
+    expect(handed.map((one) => one.args)).toEqual([bytes, bytes, bytes])
+    expect(handed.map((one) => one.options)).toEqual(
+      [{ kind: 'png' }, { host: 'pi', kind: 'png' }, { folder: '/a', under: 'b/c.bin' }].map(
+        (rest) => ({ headers: { 'Orden-Args': encodeURIComponent(JSON.stringify(rest)) } }),
+      ),
+    )
+  })
+
   test('base64 and every other command go on unchanged', async () => {
     await invoke('write_bytes', { path: '/a.png', base64: 'AQI=' })
     await invoke('read_note', { path: '/a.md' }, { headers: { x: '1' } })
