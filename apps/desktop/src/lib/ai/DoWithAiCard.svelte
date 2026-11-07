@@ -98,7 +98,6 @@
     >
     <textarea
       class="nib-field ask"
-      dir="auto"
       rows="3"
       value={taskWords}
       placeholder={DEFAULT_ASK}

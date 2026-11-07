@@ -1254,6 +1254,11 @@ select option {
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
+textarea,
+input:is(:not([type]), [type='text'], [type='search'], [type='email'], [type='url']) {
+  unicode-bidi: plaintext;
+}
+
 input.nib-field,
 textarea.nib-field {
   display: block;
