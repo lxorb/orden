@@ -84,6 +84,19 @@ def put_note(ask: Callable[[str], Any], root: str) -> Any:
         f" : await nib.workspace.noteFrom({json.dumps(WORDS)}, {json.dumps(root)})"
     )
 
+def where(note: str, root: str) -> str:
+    return (
+        "const crate = window.__TAURI_INTERNALS__.invoke; const note = %s, root = %s;"
+        " const cut = root.replace(/[\\\\/]+$/, ''); const at = Math.max(cut.lastIndexOf('/'), cut.lastIndexOf('\\\\'));"
+        " const sep = cut.includes('\\\\') ? '\\\\' : '/';"
+        " const work = cut.slice(0, at) + sep + '.work' + sep + cut.slice(at + 1) + note.slice(cut.length);"
+        " const asked = async (path) => crate('path_taken', { path }).then((one) => String(one), (e) => 'error ' + e);"
+        " const carried = await crate('page_carry', { files: nib.workspace.dragPayload(note), addresses: [] }).then((one) => 'carried ' + one, (e) => 'refused ' + e);"
+        " await crate('page_carry_end').catch(() => undefined);"
+        " return { note: await asked(note), work, worked: await asked(work), payload: nib.workspace.dragPayload(note), carried }"
+        % (json.dumps(note), json.dumps(root))
+    )
+
 def wrong_drop(said: dict[str, Any]) -> list[str]:
     files = said.get("files")
     if not isinstance(files, list) or not files:
@@ -147,7 +160,10 @@ def carried(
     dragged(start, screen(*zone_of(pane)), midway)
     said = heard(until(f"return {TITLES}", 10))
     print(f"[carry {name}] the page heard {said}", flush=True)
-    wrong += [f"[carry {name}] {one}" for one in wrong_drop(said)]
+    missed = wrong_drop(said)
+    wrong += [f"[carry {name}] {one}" for one in missed]
+    if missed:
+        print(f"[carry {name}] where the note is: {ask(where(note, root))}", flush=True)
 
     dragged(start, screen(*field_of(pane)))
     said = heard(until(f"return {TITLES}", 10))
