@@ -16,6 +16,7 @@ import {
 } from './fold'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
+import { GROWS_AT_MOST, measuredGrowth } from '../../../scripts/growth'
 
 function state(doc: string, cursor = 0): EditorState {
   return parsed(
@@ -448,4 +449,21 @@ describe('an indented block', () => {
 
     expect(foldOpenedBy(listed, listed.doc.line(2))).toBe(null)
   })
+})
+
+describe('folding a note of thousands of headings', () => {
+  test('folds one level more or less in time that grows with the headings', () => {
+    const note = (count: number) =>
+      Array.from({ length: count }, (_, at) => `${'#'.repeat((at % 3) + 1)} H${at}\n\ntext\n`).join(
+        '\n',
+      )
+    const step = (count: number) => {
+      let folded = ran(foldHeadings, state(note(count))).state
+      folded = ran(foldMore, folded).state
+      const started = performance.now()
+      ran(foldLess, ran(foldMore, folded).state)
+      return performance.now() - started
+    }
+    expect(measuredGrowth(step, 1_500)).toBeLessThan(GROWS_AT_MOST)
+  }, 60_000)
 })

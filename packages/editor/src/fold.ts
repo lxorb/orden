@@ -133,18 +133,24 @@ function foldableBlocks(state: EditorState): Block[] {
 
   const blocks: Block[] = []
   const holding: FoldRange[] = []
+  const shutFrom = new Set(shut.map((one) => one.from))
+  let before = 0
+  let reach = -1
 
   for (let number = 1; number <= state.doc.lines; number++) {
     const range = foldOpenedBy(state, state.doc.line(number))
     if (!range) continue
 
     while (holding.length && (holding.at(-1)?.to ?? 0) < range.to) holding.pop()
+    for (let next = shut[before]; next && next.from < range.from; next = shut[++before]) {
+      reach = Math.max(reach, next.to)
+    }
 
     blocks.push({
       ...range,
       depth: holding.length,
-      folded: shut.some((one) => one.from === range.from),
-      hidden: shut.some((one) => one.from < range.from && one.to >= range.to),
+      folded: shutFrom.has(range.from),
+      hidden: reach >= range.to,
     })
     holding.push(range)
   }
