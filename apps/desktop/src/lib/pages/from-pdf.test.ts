@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import {
   adoptBeside,
   asDraft,
+  asItself,
   asPageNote,
   paperNamed,
   paperOutside,
@@ -198,5 +199,22 @@ describe('a PDF from outside every space, as a page note nobody has saved', () =
 
     expect(pagesOf(named).map((page) => page.file)).toEqual(['Paper.pages.pdf', 'Paper.pages.pdf'])
     expect(paperNamed(named, '/downloads/Paper.pdf', 'Paper.pages.pdf')).toBe(named)
+  })
+})
+
+describe('a PDF with no pages', () => {
+  const none = () => Promise.resolve([])
+
+  test('is not turned into a page note, and stays where it was', async () => {
+    const { files, moves, how } = disk({ '/s/Empty.pdf': '%PDF' })
+
+    await expect(asPageNote('/s/Empty.pdf', { ...how, sizes: none })).rejects.toThrow(/no pages/)
+    expect(moves).toEqual([])
+    expect([...files.keys()]).toEqual(['/s/Empty.pdf'])
+  })
+
+  test('opens as no blank page, read where it lies or from outside', async () => {
+    await expect(asItself('/s/Empty.pdf', none)).rejects.toThrow(/no pages/)
+    await expect(asDraft('/downloads/Empty.pdf', none)).rejects.toThrow(/no pages/)
   })
 })

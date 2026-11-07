@@ -42,6 +42,7 @@ import { chooseFiles, PICTURES } from '../choose-files'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
+import { busy } from '../busy.svelte'
 import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
 import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
@@ -256,49 +257,50 @@ export const run = {
 
   async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
     if (!notePath || store.readOnly) return
-    const mode = await prompt.choose({
-      title: t('Import PDF'),
-      detail: t('Choose how to add the pages to the canvas.'),
-      options: [
-        { id: 'single', label: t('Single page'), primary: true },
-        { id: 'all', label: t('All pages') },
-      ],
-    })
-    if (!mode) return
 
     const bytes = new Uint8Array(await file.arrayBuffer())
     const library = await pdfjs()
     const task = loading(library, bytes)
-    const doc = await task.promise
-    let pages: number[]
-    if (mode === 'single') {
-      const selected =
-        doc.numPages === 1
-          ? '1'
-          : await prompt.find({
-              title: t('Choose a page'),
-              placeholder: t('Search'),
-              options: Array.from({ length: doc.numPages }, (_, index) => ({
-                id: String(index + 1),
-                label: `${t('Page')} ${index + 1}`,
-              })),
-            })
-      if (!selected) {
-        await task.destroy().catch(() => undefined)
-        return
-      }
-      pages = [Number(selected)]
-    } else {
-      pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
-    }
-
-    const root = canvasRoot(store)
-    if (!root) {
-      await task.destroy().catch(() => undefined)
-      return
-    }
 
     try {
+      const doc = await task.promise.catch(() => null)
+      if (!doc?.numPages) {
+        busy.failed(t('That file could not be read'))
+        return
+      }
+
+      const mode = await prompt.choose({
+        title: t('Import PDF'),
+        detail: t('Choose how to add the pages to the canvas.'),
+        options: [
+          { id: 'single', label: t('Single page'), primary: true },
+          { id: 'all', label: t('All pages') },
+        ],
+      })
+      if (!mode) return
+
+      let pages: number[]
+      if (mode === 'single') {
+        const selected =
+          doc.numPages === 1
+            ? '1'
+            : await prompt.find({
+                title: t('Choose a page'),
+                placeholder: t('Search'),
+                options: Array.from({ length: doc.numPages }, (_, index) => ({
+                  id: String(index + 1),
+                  label: `${t('Page')} ${index + 1}`,
+                })),
+              })
+        if (!selected) return
+        pages = [Number(selected)]
+      } else {
+        pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
+      }
+
+      const root = canvasRoot(store)
+      if (!root) return
+
       const made: Parameters<typeof withNode>[1][] = []
       let y = at.y
       for (const number of pages) {
