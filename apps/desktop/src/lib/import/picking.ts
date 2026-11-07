@@ -73,6 +73,8 @@ function named(file: File, path: string): Picked {
   return {
     name: file.name,
     webkitRelativePath: path,
+    size: file.size,
+    slice: (start, end) => file.slice(start, end),
     arrayBuffer: () => file.arrayBuffer(),
   }
 }

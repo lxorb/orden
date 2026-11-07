@@ -68,7 +68,19 @@ export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
   if (paths.length) void carry(view, paths, folder, how)
 }
 
-async function writeInto(view: ExplorerView, files: readonly Picked[], folder: string) {
+export const WRITTEN_AT_ONCE = 8 * 1024 * 1024
+
+async function* pieces(file: Picked): AsyncGenerator<Uint8Array> {
+  if (!file.slice || file.size === undefined) {
+    yield new Uint8Array(await file.arrayBuffer())
+    return
+  }
+  for (let at = 0; at === 0 || at < file.size; at += WRITTEN_AT_ONCE) {
+    yield new Uint8Array(await file.slice(at, at + WRITTEN_AT_ONCE).arrayBuffer())
+  }
+}
+
+export async function writeInto(view: ExplorerView, files: readonly Picked[], folder: string) {
   if (!files.length || !changeable(view)) return
   if (inASpace(folder)) {
     await workspace.bringIn(files, folder)
@@ -90,8 +102,12 @@ async function writeInto(view: ExplorerView, files: readonly Picked[], folder: s
         taken.push(name)
         tops.set(top, name)
       }
-      const bytes = new Uint8Array(await file.arrayBuffer())
-      await invoke('explorer_write', { folder, under: [name, ...rest].join('/'), bytes })
+      const under = [name, ...rest].join('/')
+      let more = false
+      for await (const bytes of pieces(file)) {
+        await invoke('explorer_write', { folder, under, bytes, ...(more ? { more } : {}) })
+        more = true
+      }
     }
   } catch (error) {
     view.tell(message(error, 'could not copy this'))

@@ -46,8 +46,14 @@ pub async fn explorer_write(
     app: AppHandle,
     request: tauri::ipc::Request<'_>,
 ) -> Result<String, String> {
-    let (Written { folder, under }, bytes) =
-        crate::notes::raw_sent(request.headers(), request.body())?;
+    let (
+        Written {
+            folder,
+            under,
+            more,
+        },
+        bytes,
+    ) = crate::notes::raw_sent(request.headers(), request.body())?;
     let bytes = bytes.into_owned();
     crate::lane::off_the_runtime(move || {
         let folder = asked(&app, &folder, Use::Into)?;
@@ -55,8 +61,12 @@ pub async fn explorer_write(
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
         }
-        let mut file =
-            fs::File::create_new(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        let opened = if more {
+            fs::OpenOptions::new().append(true).open(&path)
+        } else {
+            fs::File::create_new(&path)
+        };
+        let mut file = opened.map_err(|why| format!("{}: {why}", path.display()))?;
         std::io::Write::write_all(&mut file, &bytes)
             .map_err(|why| format!("{}: {why}", path.display()))?;
         Ok(path.display().to_string())
@@ -68,6 +78,8 @@ pub async fn explorer_write(
 struct Written {
     folder: String,
     under: String,
+    #[serde(default)]
+    more: bool,
 }
 
 pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
