@@ -10,6 +10,7 @@ vi.mock('../link-index.svelte', () => ({
     }),
     targetOf: (_from: string | null, link: { target: string }) =>
       link.target.toLowerCase() === 'plan' ? 'Plan.md' : null,
+    fileFor: (name: string) => (name === 'kept.png' ? '/space/pictures/kept.png' : null),
   },
 }))
 
@@ -46,6 +47,27 @@ describe('a card on the plane', () => {
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, false)).not.toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
+  })
+})
+
+describe('a picture in a card', () => {
+  const sources = (html: string) =>
+    [...html.matchAll(/<img [^>]*src="([^"]*)"/g)].map((one) => one[1])
+
+  test('is found beside the plane, as a note finds its pictures', () => {
+    const [src] = sources(cardHtml('![a](pictures/a.png)\n', '/space/Board.canvas', true))
+    expect(src).not.toBe('pictures/a.png')
+    expect(src).toContain('/space/pictures/a.png')
+  })
+
+  test('named alone is found wherever the space keeps it', () => {
+    const [src] = sources(cardHtml('![[kept.png]]\n', '/space/Board.canvas', false))
+    expect(src).toContain('/space/pictures/kept.png')
+  })
+
+  test('on the network is left where it is', () => {
+    const html = cardHtml('![a](https://x.test/a.png)\n', '/space/Board.canvas', true)
+    expect(sources(html)).toEqual(['https://x.test/a.png'])
   })
 })
 

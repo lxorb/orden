@@ -8,6 +8,7 @@ vi.mock('../link-index.svelte', () => ({
     version: 1,
     index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),
     targetOf: () => null,
+    fileFor: () => null,
   },
 }))
 vi.mock('../export/save', () => ({

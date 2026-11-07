@@ -5,7 +5,7 @@ import { isPicturePath } from '../space-paths'
 import { assetUrl, joinPath } from '../tauri'
 import { enginesArrived } from '../engines.svelte'
 import { links } from '../link-index.svelte'
-import { pointer } from '../reading/render'
+import { pointer, withPictures } from '../reading/render'
 
 const MOST = 600
 
@@ -22,11 +22,15 @@ export function cardHtml(text: string, canvasPath: string | null, trusted: boole
   const held = cache.get(key)
   if (held !== undefined) return held
 
-  const html = renderMarkdown(text, {
-    footnotes: true,
-    escapeHtml: !trusted,
-    resolveLink: pointer({ text, path: canvasPath }),
-  })
+  const card = { text, path: canvasPath }
+  const html = withPictures(
+    renderMarkdown(text, {
+      footnotes: true,
+      escapeHtml: !trusted,
+      resolveLink: pointer(card),
+    }),
+    card,
+  )
 
   if (cache.size >= MOST) cache.clear()
   cache.set(key, html)
