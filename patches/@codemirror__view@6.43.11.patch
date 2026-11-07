@@ -1,5 +1,5 @@
 diff --git a/dist/index.js b/dist/index.js
-index 1021312cb249ef4c52559c82500ce061e9d66b17..4679ba95632e2d0c6c8d750411fee4790eb287c5 100644
+index 1021312..63d0184 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -1731,6 +1731,8 @@ class ViewUpdate {
@@ -23,7 +23,33 @@ index 1021312cb249ef4c52559c82500ce061e9d66b17..4679ba95632e2d0c6c8d750411fee479
          return this.parent ? this.parent.posBefore(this) : 0;
      }
      get posAtEnd() {
-@@ -4024,7 +4031,29 @@ class DOMReader {
+@@ -2754,11 +2761,14 @@ class TileUpdate {
+                             throw new RangeError("Decorations that replace line breaks may not be specified via plugins");
+                     }
+                     markCount = active.length;
+-                    if (openStart > active.length) {
++                    let widget = deco.widget || (deco.block ? NullWidget.block : NullWidget.inline);
++                    // A point that starts under a point of higher precedence is open at the start of
++                    // the range without having been drawn: the tile before it belongs to the other one.
++                    let open = b.afterWidget || b.lastBlock;
++                    if (openStart > active.length && !(open && open.isWidget() && !open.widget.compare(widget))) {
+                         b.continueWidget(to - from);
+                     }
+                     else {
+-                        let widget = deco.widget || (deco.block ? NullWidget.block : NullWidget.inline);
+                         let flags = widgetFlags(deco);
+                         let tile = this.cache.findWidget(widget, to - from, flags) || WidgetTile.of(widget, this.view, to - from, flags);
+                         if (deco.block) {
+@@ -2768,7 +2778,7 @@ class TileUpdate {
+                         }
+                         else {
+                             b.ensureLine(pendingLineAttrs);
+-                            b.addInlineWidget(tile, active, openStart);
++                            b.addInlineWidget(tile, active, Math.min(openStart, active.length));
+                         }
+                     }
+                     pendingLineAttrs = null;
+@@ -4024,7 +4034,29 @@ class DOMReader {
      readRange(start, end) {
          if (!start)
              return this;
