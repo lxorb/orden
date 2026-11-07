@@ -1,0 +1,38 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index e9a36ce6254bda9de2311ee582d53370c7afc879..2ca65298a07101e6c4e613b87a5a45cfb62189ae 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -2037,8 +2037,12 @@ class StructureCursor {
+                     this.done = true;
+                 // Moved to next node
+             }
+-            else {
+-                break;
++            // Patched (pnpm patch, see docs/patches.md): the child holding `pos` is a
++            // buffer, or none holds it. Each later call read the children from the first
++            // again, so a long paragraph checked its nodes in quadratic time; go on to the
++            // first child after it, or past this node.
++            else if (!cursor.enter(p, 2, exports.IterMode.IgnoreOverlays | exports.IterMode.ExcludeBuffers) && !cursor.next(false)) {
++                this.done = true;
+             }
+         }
+     }
+diff --git a/dist/index.js b/dist/index.js
+index 8b29bb351cae09b8f8a594858e4ed12f877fd4f3..de87ce2941ff7ffe5860bc096501de7b48f4b7bd 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2035,8 +2035,12 @@ class StructureCursor {
+                     this.done = true;
+                 // Moved to next node
+             }
+-            else {
+-                break;
++            // Patched (pnpm patch, see docs/patches.md): the child holding `pos` is a
++            // buffer, or none holds it. Each later call read the children from the first
++            // again, so a long paragraph checked its nodes in quadratic time; go on to the
++            // first child after it, or past this node.
++            else if (!cursor.enter(p, 2, IterMode.IgnoreOverlays | IterMode.ExcludeBuffers) && !cursor.next(false)) {
++                this.done = true;
+             }
+         }
+     }
