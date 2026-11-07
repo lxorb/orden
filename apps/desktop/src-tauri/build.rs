@@ -46,7 +46,9 @@ mod app_intents {
         .to_owned();
         let deployment = env::var("MACOSX_DEPLOYMENT_TARGET").unwrap_or_else(|_| "13.3".into());
         let triple = format!("{arch}-apple-macosx{deployment}");
-        let sdk = xcrun(&["--sdk", "macosx", "--show-sdk-path"]);
+        println!("cargo:rerun-if-env-changed=SDKROOT");
+        let sdk = env::var("SDKROOT")
+            .unwrap_or_else(|_| xcrun(&["--sdk", "macosx", "--show-sdk-path"]));
         let toolchain = PathBuf::from(xcrun(&["--find", "swiftc"]))
             .ancestors()
             .nth(3)
