@@ -748,7 +748,7 @@ fn kept_folder_named(root: &Path, name: &str, path: &str) -> PathBuf {
     let dir = root.join(name);
     let was = root.join(folder_key_as(Naming::Cased, path));
     if !dir.exists() && fs::read_to_string(was.join(ORIGIN)).is_ok_and(|origin| origin == path) {
-        let _ = fs::rename(was, &dir);
+        let _ = crate::carry::rename_new(&was, &dir);
     }
     dir
 }

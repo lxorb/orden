@@ -110,11 +110,16 @@ pub async fn explorer_rename(app: AppHandle, path: String, name: String) -> Resu
 }
 
 pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
-    let same = crate::paths::inside(from, to) && crate::paths::inside(to, from);
-    if !same && fs::symlink_metadata(to).is_ok() {
+    let taken = fs::symlink_metadata(to).is_ok();
+    if taken && !crate::notes::same_entry(from, to) {
         return Err(format!("{} is there already", to.display()));
     }
-    fs::rename(from, to).map_err(|why| format!("{}: {why}", from.display()))
+    let moved = if taken {
+        fs::rename(from, to)
+    } else {
+        crate::carry::rename_new(from, to)
+    };
+    moved.map_err(|why| format!("{}: {why}", from.display()))
 }
 
 #[tauri::command]

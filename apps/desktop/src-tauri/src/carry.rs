@@ -15,13 +15,108 @@ pub fn copy_whole(source: &Path, target: &Path) -> Result<(), String> {
 }
 
 pub fn move_whole(source: &Path, target: &Path, verb: &str) -> Result<(), String> {
-    moved_by(
-        source,
-        target,
-        verb,
-        |from, to| fs::rename(from, to),
-        taken_away,
-    )
+    moved_by(source, target, verb, rename_new, taken_away)
+}
+
+pub fn rename_new(from: &Path, to: &Path) -> io::Result<()> {
+    match renamed_unless_taken(from, to) {
+        Err(error) if unsupported(&error) => {}
+        done => return done,
+    }
+    if fs::symlink_metadata(to).is_ok() {
+        return Err(io::ErrorKind::AlreadyExists.into());
+    }
+    fs::rename(from, to)
+}
+
+fn unsupported(error: &io::Error) -> bool {
+    matches!(error.kind(), io::ErrorKind::Unsupported)
+        || error
+            .raw_os_error()
+            .is_some_and(|code| UNSUPPORTED.contains(&code))
+}
+
+#[cfg(target_os = "linux")]
+const UNSUPPORTED: [i32; 2] = [libc::EINVAL, libc::ENOSYS];
+#[cfg(target_os = "macos")]
+const UNSUPPORTED: [i32; 2] = [libc::EINVAL, libc::ENOTSUP];
+#[cfg(windows)]
+const UNSUPPORTED: [i32; 2] = [3, 206];
+#[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
+const UNSUPPORTED: [i32; 0] = [];
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn c_path(path: &Path) -> io::Result<std::ffi::CString> {
+    use std::os::unix::ffi::OsStrExt as _;
+
+    Ok(std::ffi::CString::new(path.as_os_str().as_bytes())?)
+}
+
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code, reason = "renameat2 has no wrapper in std")]
+fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
+    let (from, to) = (c_path(from)?, c_path(to)?);
+    let done = unsafe {
+        libc::syscall(
+            libc::SYS_renameat2,
+            libc::AT_FDCWD,
+            from.as_ptr(),
+            libc::AT_FDCWD,
+            to.as_ptr(),
+            libc::RENAME_NOREPLACE,
+        )
+    };
+    if done == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code, reason = "renamex_np has no wrapper in std")]
+fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
+    let (from, to) = (c_path(from)?, c_path(to)?);
+    let done = unsafe { libc::renamex_np(from.as_ptr(), to.as_ptr(), libc::RENAME_EXCL) };
+    if done == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "a move that never replaces has no wrapper in std"
+)]
+fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
+    use std::os::windows::ffi::OsStrExt as _;
+    use windows::core::PCWSTR;
+    use windows::Win32::Storage::FileSystem::{MoveFileExW, MOVE_FILE_FLAGS};
+
+    let wide = |path: &Path| -> Vec<u16> { path.as_os_str().encode_wide().chain([0]).collect() };
+    let (from, to) = (wide(from), wide(to));
+    let done = unsafe {
+        MoveFileExW(
+            PCWSTR(from.as_ptr()),
+            PCWSTR(to.as_ptr()),
+            MOVE_FILE_FLAGS(0),
+        )
+    };
+    done.map_err(|error| {
+        let code = error.code().0;
+        if code.cast_unsigned() & 0xFFFF_0000 == 0x8007_0000 {
+            io::Error::from_raw_os_error(code & 0xFFFF)
+        } else {
+            io::Error::other(error)
+        }
+    })
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
+fn renamed_unless_taken(_: &Path, _: &Path) -> io::Result<()> {
+    Err(io::ErrorKind::Unsupported.into())
 }
 
 fn moved_by(
@@ -184,7 +279,7 @@ impl Drop for Unreadable {
 
 #[cfg(test)]
 mod tests {
-    use super::{copy_whole, move_whole, moved_by, taken_away, unreadable};
+    use super::{copy_whole, move_whole, moved_by, rename_new, taken_away, unreadable};
     use crate::paths::link_to;
     use std::fs;
     use std::io;
@@ -381,6 +476,45 @@ mod tests {
             "mine"
         );
         assert!(!target.join("Trip.md").exists());
+    }
+
+    #[test]
+    fn a_move_never_writes_over_what_is_there() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Idea.md");
+        fs::write(&source, "new").expect("a note");
+        let target = dir.path().join("Plan.md");
+        fs::write(&target, "old").expect("a note already there");
+
+        assert!(move_whole(&source, &target, "move").is_err());
+        assert!(rename_new(&source, &target).is_err());
+        assert_eq!(fs::read_to_string(&target).expect("kept"), "old");
+        assert_eq!(fs::read_to_string(&source).expect("kept"), "new");
+
+        let folder = trip(dir.path());
+        let taken = dir.path().join("Taken");
+        fs::create_dir_all(&taken).expect("an empty folder already there");
+        assert!(move_whole(&folder, &taken, "move").is_err());
+        whole_trip(&folder);
+        assert!(fs::read_dir(&taken)
+            .expect("still a folder")
+            .next()
+            .is_none());
+    }
+
+    #[test]
+    fn a_move_never_writes_over_a_link_that_leads_nowhere() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = trip(dir.path());
+        let target = dir.path().join("Dangling");
+        if !link_to(&dir.path().join("Gone"), &target) {
+            return;
+        }
+
+        assert!(!target.exists(), "the link leads somewhere");
+        assert!(move_whole(&source, &target, "move").is_err());
+        assert!(fs::symlink_metadata(&target).is_ok_and(|kind| kind.is_symlink()));
+        whole_trip(&source);
     }
 
     #[cfg(target_os = "linux")]

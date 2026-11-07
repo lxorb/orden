@@ -10,7 +10,7 @@ use tauri::AppHandle;
 #[cfg(any(target_os = "macos", test))]
 pub mod icloud;
 
-use crate::carry::{copy_whole, move_whole};
+use crate::carry::{copy_whole, move_whole, rename_new};
 use crate::clock;
 use crate::paths::{
     at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, is_pdf, made,
@@ -295,10 +295,10 @@ fn respell(source: &Path, target: &Path) -> Result<(), String> {
         return Err("something already lives there".into());
     }
 
-    fs::rename(source, &step).map_err(|error| cannot("rename", source, &error))?;
+    rename_new(source, &step).map_err(|error| cannot("rename", source, &error))?;
 
-    fs::rename(&step, target).map_err(|error| {
-        let _ = fs::rename(&step, source);
+    rename_new(&step, target).map_err(|error| {
+        let _ = rename_new(&step, source);
         cannot("rename", source, &error)
     })
 }
