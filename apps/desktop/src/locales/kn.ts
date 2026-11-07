@@ -3610,4 +3610,28 @@ export const kn: Dictionary = {
   'Remove from chat': 'ಚಾಟ್‌ನಿಂದ ತೆಗೆದುಹಾಕಿ',
   'Sign in again': 'ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ',
   'Finish signing in in your browser': 'ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸೈನ್ ಇನ್ ಮುಗಿಸಿ',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp ಇತರ ಆ್ಯಪ್‌ಗಳನ್ನು ಅನುಮತಿಸುವುದಿಲ್ಲ. Orden ಅನಧಿಕೃತ ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನವಾಗಿ ಸಂಪರ್ಕಗೊಳ್ಳುತ್ತದೆ, ಇದು WhatsApp ನಿಯಮಗಳನ್ನು ಉಲ್ಲಂಘಿಸುತ್ತದೆ, ಮತ್ತು WhatsApp ನಿಮ್ಮ ಸಂಖ್ಯೆಯನ್ನು ನಿಷೇಧಿಸಬಹುದು, ವಿಶೇಷವಾಗಿ ನೀವು Orden ನಿಂದ ಸಂದೇಶ ಕಳುಹಿಸಿದಾಗ. Orden ಲಿಂಕ್ ಆಗಿರಲು ನಿಮ್ಮ ಫೋನ್ ಕನಿಷ್ಠ ಪ್ರತಿ 14 ದಿನಕ್ಕೊಮ್ಮೆ WhatsApp ತೆರೆಯಬೇಕು.',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp‌ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
+  'Scan with WhatsApp on your phone': 'ನಿಮ್ಮ ಫೋನ್‌ನ WhatsApp‌ನಿಂದ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'ನಿಮ್ಮ ಫೋನ್‌ನ WhatsApp‌ನಲ್ಲಿ Settings > Linked devices > Link a device > Link with phone number instead ತೆರೆಯಿರಿ, ಮತ್ತು ಈ ಕೋಡ್ ನಮೂದಿಸಿ',
+  'The QR code expired. Try again.': 'QR ಕೋಡ್ ಅವಧಿ ಮುಗಿದಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'ಈ ಲಿಂಕ್‌ನೊಂದಿಗೆ WhatsApp ಬೇರೆಡೆ ತೆರೆಯಲಾಗಿದೆ. ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ಇನ್ನು Orden ನ ಈ ಆವೃತ್ತಿಯನ್ನು ಸ್ವೀಕರಿಸುವುದಿಲ್ಲ. Orden ಅಪ್‌ಡೇಟ್ ಮಾಡಿ.',
+  'WhatsApp refused this connection': 'WhatsApp ಈ ಸಂಪರ್ಕವನ್ನು ನಿರಾಕರಿಸಿದೆ',
+  'WhatsApp needs the Orden app': 'WhatsApp‌ಗೆ Orden ಆ್ಯಪ್ ಬೇಕು',
+  'That number is not on WhatsApp': 'ಆ ಸಂಖ್ಯೆ WhatsApp‌ನಲ್ಲಿ ಇಲ್ಲ',
+  'WhatsApp cannot do that in this conversation': 'ಈ ಸಂಭಾಷಣೆಯಲ್ಲಿ WhatsApp ಅದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp ಹೊಸ ಗುಂಪು ಮಾಲೀಕರನ್ನು ತನ್ನದೇ ಆ್ಯಪ್‌ನಿಂದ ಮಾತ್ರ ನೇಮಿಸುತ್ತದೆ',
+  'That message is no longer here': 'ಆ ಸಂದೇಶ ಈಗ ಇಲ್ಲಿ ಇಲ್ಲ',
+  'That file is no longer on WhatsApp': 'ಆ ಫೈಲ್ ಈಗ WhatsApp‌ನಲ್ಲಿ ಇಲ್ಲ',
+  'The file is damaged': 'ಫೈಲ್ ಹಾಳಾಗಿದೆ',
+  'WhatsApp is not connected right now': 'WhatsApp ಈಗ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ',
+  'That poll no longer takes votes': 'ಆ ಸಮೀಕ್ಷೆ ಇನ್ನು ಮತಗಳನ್ನು ಸ್ವೀಕರಿಸುವುದಿಲ್ಲ',
 }

@@ -3510,4 +3510,29 @@ export const id: Dictionary = {
   'Remove from chat': 'Keluarkan dari obrolan',
   'Sign in again': 'Masuk lagi',
   'Finish signing in in your browser': 'Selesaikan masuk di browser kamu',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp tidak mengizinkan aplikasi lain. Orden terhubung sebagai perangkat tertaut tidak resmi, yang melanggar ketentuan WhatsApp, dan WhatsApp dapat memblokir nomor Anda, terutama jika Anda mengirim pesan dari Orden. Ponsel Anda harus membuka WhatsApp setidaknya setiap 14 hari agar Orden tetap tertaut.',
+  'Signed out of WhatsApp. Connect again.': 'Keluar dari WhatsApp. Hubungkan lagi.',
+  'Scan with WhatsApp on your phone': 'Pindai dengan WhatsApp di ponsel Anda',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Setelan > Perangkat tertaut > Tautkan perangkat',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Di WhatsApp pada ponsel Anda, buka Setelan > Perangkat tertaut > Tautkan perangkat > Tautkan dengan nomor telepon saja, lalu masukkan kode ini',
+  'The QR code expired. Try again.': 'Kode QR kedaluwarsa. Coba lagi.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp dibuka dengan tautan ini di tempat lain. Hubungkan lagi.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp tidak lagi menerima versi Orden ini. Perbarui Orden.',
+  'WhatsApp refused this connection': 'WhatsApp menolak koneksi ini',
+  'WhatsApp needs the Orden app': 'WhatsApp memerlukan aplikasi Orden',
+  'That number is not on WhatsApp': 'Nomor itu tidak ada di WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp tidak bisa melakukan itu di percakapan ini',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp hanya menetapkan pemilik grup baru dari aplikasinya sendiri',
+  'That message is no longer here': 'Pesan itu sudah tidak ada',
+  'That file is no longer on WhatsApp': 'File itu sudah tidak ada di WhatsApp',
+  'The file is damaged': 'File rusak',
+  'WhatsApp is not connected right now': 'WhatsApp sedang tidak terhubung',
+  'That poll no longer takes votes': 'Polling itu tidak lagi menerima suara',
 }

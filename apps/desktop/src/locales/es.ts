@@ -3675,4 +3675,29 @@ export const es: Dictionary = {
   'Remove from chat': 'Quitar del chat',
   'Sign in again': 'Volver a iniciar sesión',
   'Finish signing in in your browser': 'Termina de iniciar sesión en tu navegador',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp no permite otras apps. Orden se conecta como dispositivo vinculado no oficial, lo que incumple las condiciones de WhatsApp, y WhatsApp puede bloquear tu número, sobre todo si envías mensajes desde Orden. Tu teléfono tiene que abrir WhatsApp al menos cada 14 días para que Orden siga vinculado.',
+  'Signed out of WhatsApp. Connect again.': 'Sesión de WhatsApp cerrada. Vuelve a conectarte.',
+  'Scan with WhatsApp on your phone': 'Escanea con WhatsApp en tu teléfono',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Ajustes > Dispositivos vinculados > Vincular un dispositivo',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'En WhatsApp en tu teléfono, abre Ajustes > Dispositivos vinculados > Vincular un dispositivo > Vincular con el número de teléfono y escribe este código',
+  'The QR code expired. Try again.': 'El código QR caducó. Inténtalo de nuevo.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp se abrió con este vínculo en otro lugar. Vuelve a conectarte.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ya no acepta esta versión de Orden. Actualiza Orden.',
+  'WhatsApp refused this connection': 'WhatsApp rechazó esta conexión',
+  'WhatsApp needs the Orden app': 'WhatsApp necesita la app de Orden',
+  'That number is not on WhatsApp': 'Ese número no está en WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp no puede hacer eso en esta conversación',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp solo nombra un nuevo propietario del grupo desde su propia app',
+  'That message is no longer here': 'Ese mensaje ya no está',
+  'That file is no longer on WhatsApp': 'Ese archivo ya no está en WhatsApp',
+  'The file is damaged': 'El archivo está dañado',
+  'WhatsApp is not connected right now': 'WhatsApp no está conectado ahora',
+  'That poll no longer takes votes': 'Esa encuesta ya no acepta votos',
 }

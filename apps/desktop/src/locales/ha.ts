@@ -3622,4 +3622,29 @@ export const ha: Dictionary = {
   'Remove from chat': 'Cire daga hira',
   'Sign in again': 'Sake shiga',
   'Finish signing in in your browser': 'Kammala shiga a cikin burauzarka',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    "WhatsApp ba ya yarda da wasu manhajoji ba. Orden yana haɗuwa a matsayin na'urar da aka haɗa ba bisa hukuma ba, wanda ya saɓa wa sharuɗɗan WhatsApp, kuma WhatsApp na iya hana lambarka, musamman idan kana aika saƙonni daga Orden. Dole wayarka ta buɗe WhatsApp aƙalla duk bayan kwanaki 14 don Orden ya ci gaba da haɗuwa.",
+  'Signed out of WhatsApp. Connect again.': 'An fita daga WhatsApp. Sake haɗawa.',
+  'Scan with WhatsApp on your phone': 'Duba da WhatsApp a wayarka',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'A WhatsApp a wayarka, buɗe Settings > Linked devices > Link a device > Link with phone number instead, sannan ka shigar da wannan lambar',
+  'The QR code expired. Try again.': 'Lambar QR ta ƙare. Sake gwadawa.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'An buɗe WhatsApp da wannan haɗin a wani wuri. Sake haɗawa.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ba ya karɓar wannan sigar Orden kuma. Sabunta Orden.',
+  'WhatsApp refused this connection': 'WhatsApp ya ƙi wannan haɗin',
+  'WhatsApp needs the Orden app': 'WhatsApp yana buƙatar manhajar Orden',
+  'That number is not on WhatsApp': 'Wannan lambar ba ta kan WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp ba zai iya yin hakan a wannan tattaunawar ba',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp yana naɗa sabon mai rukuni ne daga manhajarsa kawai',
+  'That message is no longer here': 'Wannan saƙon ba ya nan kuma',
+  'That file is no longer on WhatsApp': 'Wannan fayil ba ya kan WhatsApp kuma',
+  'The file is damaged': 'Fayil ɗin ya lalace',
+  'WhatsApp is not connected right now': 'WhatsApp ba a haɗa shi a yanzu ba',
+  'That poll no longer takes votes': "Wannan zaɓen ba ya karɓar ƙuri'u kuma",
 }

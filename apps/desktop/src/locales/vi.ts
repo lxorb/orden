@@ -3476,4 +3476,29 @@ export const vi: Dictionary = {
   'Remove from chat': 'Xóa khỏi cuộc trò chuyện',
   'Sign in again': 'Đăng nhập lại',
   'Finish signing in in your browser': 'Hoàn tất đăng nhập trong trình duyệt của bạn',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp không cho phép ứng dụng khác. Orden kết nối như một thiết bị liên kết không chính thức, điều này vi phạm điều khoản của WhatsApp, và WhatsApp có thể cấm số điện thoại của bạn, nhất là khi bạn gửi tin nhắn từ Orden. Điện thoại của bạn phải mở WhatsApp ít nhất 14 ngày một lần để Orden vẫn được liên kết.',
+  'Signed out of WhatsApp. Connect again.': 'Đã đăng xuất khỏi WhatsApp. Hãy kết nối lại.',
+  'Scan with WhatsApp on your phone': 'Quét bằng WhatsApp trên điện thoại',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Cài đặt > Thiết bị đã liên kết > Liên kết thiết bị',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Trong WhatsApp trên điện thoại, mở Cài đặt > Thiết bị đã liên kết > Liên kết thiết bị > Liên kết bằng số điện thoại, rồi nhập mã này',
+  'The QR code expired. Try again.': 'Mã QR đã hết hạn. Hãy thử lại.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp đã được mở bằng liên kết này ở nơi khác. Hãy kết nối lại.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp không còn chấp nhận phiên bản Orden này. Hãy cập nhật Orden.',
+  'WhatsApp refused this connection': 'WhatsApp đã từ chối kết nối này',
+  'WhatsApp needs the Orden app': 'WhatsApp cần ứng dụng Orden',
+  'That number is not on WhatsApp': 'Số đó không dùng WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp không thể làm điều đó trong cuộc trò chuyện này',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp chỉ chỉ định chủ nhóm mới từ ứng dụng của chính nó',
+  'That message is no longer here': 'Tin nhắn đó không còn nữa',
+  'That file is no longer on WhatsApp': 'Tệp đó không còn trên WhatsApp',
+  'The file is damaged': 'Tệp bị hỏng',
+  'WhatsApp is not connected right now': 'WhatsApp hiện không được kết nối',
+  'That poll no longer takes votes': 'Cuộc thăm dò ý kiến đó không còn nhận phiếu bầu',
 }

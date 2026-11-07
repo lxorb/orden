@@ -3442,4 +3442,28 @@ export const th: Dictionary = {
   'Remove from chat': 'นำออกจากแชท',
   'Sign in again': 'ลงชื่อเข้าใช้อีกครั้ง',
   'Finish signing in in your browser': 'ลงชื่อเข้าใช้ให้เสร็จในเบราว์เซอร์ของคุณ',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp ไม่อนุญาตให้ใช้แอปอื่น Orden เชื่อมต่อเป็นอุปกรณ์ที่เชื่อมโยงแบบไม่เป็นทางการ ซึ่งละเมิดข้อกำหนดของ WhatsApp และ WhatsApp อาจแบนหมายเลขของคุณ โดยเฉพาะเมื่อคุณส่งข้อความจาก Orden โทรศัพท์ของคุณต้องเปิด WhatsApp อย่างน้อยทุก 14 วันเพื่อให้ Orden ยังเชื่อมโยงอยู่',
+  'Signed out of WhatsApp. Connect again.': 'ออกจากระบบ WhatsApp แล้ว เชื่อมต่ออีกครั้ง',
+  'Scan with WhatsApp on your phone': 'สแกนด้วย WhatsApp บนโทรศัพท์ของคุณ',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > การตั้งค่า > อุปกรณ์ที่เชื่อมโยง > เชื่อมโยงอุปกรณ์',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'ใน WhatsApp บนโทรศัพท์ของคุณ เปิด การตั้งค่า > อุปกรณ์ที่เชื่อมโยง > เชื่อมโยงอุปกรณ์ > เชื่อมโยงด้วยหมายเลขโทรศัพท์แทน แล้วป้อนรหัสนี้',
+  'The QR code expired. Try again.': 'รหัส QR หมดอายุแล้ว ลองอีกครั้ง',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'มีการเปิด WhatsApp ด้วยการเชื่อมโยงนี้ที่อื่น เชื่อมต่ออีกครั้ง',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ไม่รับ Orden เวอร์ชันนี้อีกต่อไป อัปเดต Orden',
+  'WhatsApp refused this connection': 'WhatsApp ปฏิเสธการเชื่อมต่อนี้',
+  'WhatsApp needs the Orden app': 'WhatsApp ต้องใช้แอป Orden',
+  'That number is not on WhatsApp': 'หมายเลขนั้นไม่ได้ใช้ WhatsApp',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp ทำสิ่งนั้นในการสนทนานี้ไม่ได้',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp แต่งตั้งเจ้าของกลุ่มคนใหม่ได้จากแอปของตัวเองเท่านั้น',
+  'That message is no longer here': 'ข้อความนั้นไม่อยู่แล้ว',
+  'That file is no longer on WhatsApp': 'ไฟล์นั้นไม่อยู่ใน WhatsApp แล้ว',
+  'The file is damaged': 'ไฟล์เสียหาย',
+  'WhatsApp is not connected right now': 'WhatsApp ไม่ได้เชื่อมต่ออยู่ในขณะนี้',
+  'That poll no longer takes votes': 'โพลนั้นไม่รับคะแนนโหวตแล้ว',
 }

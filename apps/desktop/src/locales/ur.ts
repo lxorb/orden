@@ -3567,4 +3567,28 @@ export const ur: Dictionary = {
   'Remove from chat': 'چیٹ سے ہٹائیں',
   'Sign in again': 'دوبارہ سائن ان کریں',
   'Finish signing in in your browser': 'اپنے براؤزر میں سائن ان مکمل کریں',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp دوسری ایپس کی اجازت نہیں دیتا۔ Orden ایک غیر سرکاری لنک شدہ ڈیوائس کے طور پر جڑتا ہے، جو WhatsApp کی شرائط کی خلاف ورزی ہے، اور WhatsApp آپ کا نمبر بین کر سکتا ہے، خاص طور پر جب آپ Orden سے پیغام بھیجتے ہیں۔ Orden کو لنک رکھنے کے لیے آپ کے فون کو کم از کم ہر 14 دن میں WhatsApp کھولنا ہوگا۔',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp سے سائن آؤٹ ہو گئے۔ دوبارہ جڑیں۔',
+  'Scan with WhatsApp on your phone': 'اپنے فون پر WhatsApp سے اسکین کریں',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'اپنے فون پر WhatsApp میں Settings > Linked devices > Link a device > Link with phone number instead کھولیں، اور یہ کوڈ درج کریں',
+  'The QR code expired. Try again.': 'QR کوڈ کی میعاد ختم ہو گئی۔ دوبارہ کوشش کریں۔',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp اس لنک کے ساتھ کہیں اور کھولا گیا۔ دوبارہ جڑیں۔',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp اب Orden کا یہ ورژن قبول نہیں کرتا۔ Orden اپ ڈیٹ کریں۔',
+  'WhatsApp refused this connection': 'WhatsApp نے یہ کنکشن مسترد کر دیا',
+  'WhatsApp needs the Orden app': 'WhatsApp کو Orden ایپ درکار ہے',
+  'That number is not on WhatsApp': 'وہ نمبر WhatsApp پر نہیں ہے',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp اس گفتگو میں یہ نہیں کر سکتا',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp نیا گروپ مالک صرف اپنی ایپ سے بناتا ہے',
+  'That message is no longer here': 'وہ پیغام اب یہاں نہیں ہے',
+  'That file is no longer on WhatsApp': 'وہ فائل اب WhatsApp پر نہیں ہے',
+  'The file is damaged': 'فائل خراب ہے',
+  'WhatsApp is not connected right now': 'WhatsApp ابھی جڑا ہوا نہیں ہے',
+  'That poll no longer takes votes': 'وہ پول اب ووٹ قبول نہیں کرتا',
 }

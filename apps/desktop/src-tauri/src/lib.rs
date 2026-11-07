@@ -271,6 +271,8 @@ mod web_worlds;
 #[cfg(desktop)]
 mod window_drag;
 #[cfg(desktop)]
+mod wire_socket;
+#[cfg(desktop)]
 mod zen_profiles;
 
 use paths::Picked;
@@ -516,6 +518,10 @@ macro_rules! desktop_commands {
             oauth_loopback::oauth_loopback_close,
             oauth_loopback::oauth_post,
             chat_request::chat_request,
+            wire_socket::wire_socket_open,
+            wire_socket::wire_socket_send,
+            wire_socket::wire_socket_send_text,
+            wire_socket::wire_socket_close,
             terminal::terminal_shells,
             terminal::pty_spawn,
             terminal::pty_write,
@@ -750,6 +756,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.manage(oauth_loopback::Loopbacks::default());
 
     #[cfg(desktop)]
+    let builder = builder.manage(wire_socket::WireSockets::default());
+
+    #[cfg(desktop)]
     let builder = builder
         .manage(explorer::reach::Explored::default())
         .manage(explorer::watch::Watching::default());
@@ -828,6 +837,9 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
                 waiting.forget(webview.label());
             }
             if let Some(sockets) = webview.try_state::<mail_socket::MailSockets>() {
+                sockets.end_where(webview.label());
+            }
+            if let Some(sockets) = webview.try_state::<wire_socket::WireSockets>() {
                 sockets.end_where(webview.label());
             }
         }

@@ -3567,4 +3567,28 @@ export const bn: Dictionary = {
   'Remove from chat': 'চ্যাট থেকে সরান',
   'Sign in again': 'আবার সাইন ইন করুন',
   'Finish signing in in your browser': 'আপনার ব্রাউজারে সাইন ইন শেষ করুন',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp অন্য অ্যাপ অনুমোদন করে না। Orden একটি অনানুষ্ঠানিক লিঙ্ক করা ডিভাইস হিসেবে সংযুক্ত হয়, যা WhatsApp-এর শর্ত ভঙ্গ করে, এবং WhatsApp আপনার নম্বর নিষিদ্ধ করতে পারে, বিশেষ করে আপনি Orden থেকে মেসেজ পাঠালে। Orden লিঙ্ক রাখতে আপনার ফোনে অন্তত প্রতি 14 দিনে একবার WhatsApp খুলতে হবে।',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp থেকে সাইন আউট হয়েছে। আবার সংযুক্ত করুন।',
+  'Scan with WhatsApp on your phone': 'আপনার ফোনের WhatsApp দিয়ে স্ক্যান করুন',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'আপনার ফোনের WhatsApp-এ Settings > Linked devices > Link a device > Link with phone number instead খুলুন, এবং এই কোডটি লিখুন',
+  'The QR code expired. Try again.': 'QR কোডের মেয়াদ শেষ হয়েছে। আবার চেষ্টা করুন।',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'এই লিঙ্ক দিয়ে WhatsApp অন্য কোথাও খোলা হয়েছে। আবার সংযুক্ত করুন।',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp আর Orden-এর এই সংস্করণ গ্রহণ করে না। Orden আপডেট করুন।',
+  'WhatsApp refused this connection': 'WhatsApp এই সংযোগ প্রত্যাখ্যান করেছে',
+  'WhatsApp needs the Orden app': 'WhatsApp-এর জন্য Orden অ্যাপ লাগবে',
+  'That number is not on WhatsApp': 'ওই নম্বরটি WhatsApp-এ নেই',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp এই কথোপকথনে তা করতে পারে না',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp শুধু নিজের অ্যাপ থেকেই নতুন গ্রুপ মালিক নির্ধারণ করে',
+  'That message is no longer here': 'ওই মেসেজটি আর এখানে নেই',
+  'That file is no longer on WhatsApp': 'ওই ফাইলটি আর WhatsApp-এ নেই',
+  'The file is damaged': 'ফাইলটি নষ্ট হয়ে গেছে',
+  'WhatsApp is not connected right now': 'WhatsApp এখন সংযুক্ত নেই',
+  'That poll no longer takes votes': 'ওই পোলে আর ভোট নেওয়া হয় না',
 }

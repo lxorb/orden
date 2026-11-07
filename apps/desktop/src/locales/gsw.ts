@@ -3596,4 +3596,28 @@ export const gsw: Dictionary = {
   'Remove from chat': 'Us em Chat entferne',
   'Sign in again': 'Wider aamälde',
   'Finish signing in in your browser': 'Schliess d Aamäldig i dim Browser ab',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp erlaubt kei anderi Apps. Orden verbindet sich als inoffiziells verknüpfts Grät, das verstosst gäge d Nutzigsbedingige vo WhatsApp, und WhatsApp cha dini Nummere sperre, ehnder wänn du us Orden Nachrichte schicksch. Dis Handy mues WhatsApp mindestens alli 14 Täg öffne, dass Orden verknüpft blibt.',
+  'Signed out of WhatsApp. Connect again.': 'Vo WhatsApp abgmäldet. Verbind di nomal.',
+  'Scan with WhatsApp on your phone': 'Mit WhatsApp uf dim Handy scanne',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Iistellige > Verknüpfti Grät > Grät hinzuefüege',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Öffne i WhatsApp uf dim Handy Iistellige > Verknüpfti Grät > Grät hinzuefüege > Stattdäm mit Telefonnummere verknüpfe und gib dä Code ii',
+  'The QR code expired. Try again.': 'De QR-Code isch abgloffe. Probier nomal.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp isch mit dere Verknüpfig neumet anders göffnet worde. Verbind di nomal.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp nimmt die Version vo Orden nüme aa. Aktualisier Orden.',
+  'WhatsApp refused this connection': 'WhatsApp hät die Verbindig abglehnt',
+  'WhatsApp needs the Orden app': 'WhatsApp bruucht d Orden-App',
+  'That number is not on WhatsApp': 'Die Nummere isch nöd uf WhatsApp',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp cha das i dem Gspröch nöd',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp macht en neue Gruppebsitzer nur i de eigene App',
+  'That message is no longer here': 'Die Nachricht isch nüme da',
+  'That file is no longer on WhatsApp': 'Die Datei isch nüme uf WhatsApp',
+  'The file is damaged': 'D Datei isch kaputt',
+  'WhatsApp is not connected right now': 'WhatsApp isch grad nöd verbunde',
+  'That poll no longer takes votes': 'Die Umfrag nimmt kei Stimme meh aa',
 }

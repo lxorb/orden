@@ -1,4 +1,4 @@
-import type { Host, Socket, SocketAsk } from '@orden/chats/provider'
+import type { Host, Socket, SocketAsk, WireAsk, WireSocket } from '@orden/chats/provider'
 import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
@@ -57,10 +57,55 @@ async function socket(ask: SocketAsk): Promise<Socket> {
   }
 }
 
+async function wire(ask: WireAsk): Promise<WireSocket> {
+  const id = `w${Date.now().toString(36)}-${++opened}`
+  const output = new Channel<unknown>()
+  const early: (Uint8Array | string)[] = []
+  let ended: { reason: string } | null = null
+  let hear: ((data: Uint8Array | string) => void) | null = null
+  let end: ((reason?: string) => void) | null = null
+  const heard = (data: Uint8Array | string) => {
+    if (hear) hear(data)
+    else early.push(data)
+  }
+  output.onmessage = (message) => {
+    if (message instanceof ArrayBuffer) heard(new Uint8Array(message))
+    else if (isRecord(message) && typeof message.text === 'string') heard(message.text)
+    else if (isRecord(message) && typeof message.end === 'string') {
+      ended = { reason: message.end }
+      end?.(message.end)
+    }
+  }
+  await invoke('wire_socket_open', {
+    id,
+    url: ask.url,
+    headers: ask.headers ?? {},
+    protocols: ask.protocols ?? [],
+    output,
+  })
+  return {
+    send: (data) =>
+      typeof data === 'string'
+        ? invoke('wire_socket_send_text', { id, text: data })
+        : invoke('wire_socket_send', { id, bytes: data }),
+    read(listener, finished) {
+      hear = listener
+      end = finished
+      for (const data of early.splice(0)) listener(data)
+      if (ended) finished(ended.reason)
+      return () => {
+        hear = null
+        end = null
+      }
+    },
+    close: () => invoke('wire_socket_close', { id }),
+  }
+}
+
 export const host: Host = {
   secret: (name) => readSecret(name),
   keepSecret: (name, value) => (value === null ? forgetKey(name, true) : writeSecret(name, value)),
-  ...(isDesktop ? { socket, authorize, post, request } : {}),
+  ...(isDesktop ? { socket, authorize, post, request, wire } : {}),
   parseMessage: parsedOffThread,
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),

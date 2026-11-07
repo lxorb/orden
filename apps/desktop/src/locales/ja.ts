@@ -3489,4 +3489,29 @@ export const ja: Dictionary = {
   'Remove from chat': 'チャットから外す',
   'Sign in again': 'もう一度サインイン',
   'Finish signing in in your browser': 'ブラウザでサインインを完了してください',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp は他のアプリを認めていません。Orden は非公式のリンク済みデバイスとして接続するため WhatsApp の利用規約に違反し、WhatsApp があなたの電話番号を利用停止にする可能性があります。Orden からメッセージを送るとその可能性が高まります。Orden のリンクを保つには、14 日に 1 回以上スマートフォンで WhatsApp を開く必要があります。',
+  'Signed out of WhatsApp. Connect again.':
+    'WhatsApp からログアウトしました。もう一度接続してください。',
+  'Scan with WhatsApp on your phone': 'スマートフォンの WhatsApp でスキャン',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > 設定 > リンク済みデバイス > デバイスをリンク',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'スマートフォンの WhatsApp で「設定 > リンク済みデバイス > デバイスをリンク > 代わりに電話番号でリンク」を開き、このコードを入力してください',
+  'The QR code expired. Try again.': 'QR コードの有効期限が切れました。もう一度お試しください。',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'このリンクで WhatsApp が別の場所で開かれました。もう一度接続してください。',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp はこのバージョンの Orden を受け付けなくなりました。Orden をアップデートしてください。',
+  'WhatsApp refused this connection': 'WhatsApp がこの接続を拒否しました',
+  'WhatsApp needs the Orden app': 'WhatsApp には Orden アプリが必要です',
+  'That number is not on WhatsApp': 'その番号は WhatsApp を利用していません',
+  'WhatsApp cannot do that in this conversation': 'この会話では WhatsApp はそれを行えません',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp はグループの新しいオーナーを自身のアプリでしか指定できません',
+  'That message is no longer here': 'そのメッセージはもうありません',
+  'That file is no longer on WhatsApp': 'そのファイルはもう WhatsApp にありません',
+  'The file is damaged': 'ファイルが破損しています',
+  'WhatsApp is not connected right now': 'WhatsApp は現在接続されていません',
+  'That poll no longer takes votes': 'その投票はもう受け付けていません',
 }

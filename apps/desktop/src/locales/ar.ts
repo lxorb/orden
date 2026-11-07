@@ -3761,4 +3761,28 @@ export const ar: Dictionary = {
   'Remove from chat': 'إزالة من الدردشة',
   'Sign in again': 'سجّل الدخول مجددًا',
   'Finish signing in in your browser': 'أكمل تسجيل الدخول في متصفحك',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'لا يسمح WhatsApp بالتطبيقات الأخرى. يتصل Orden كجهاز مرتبط غير رسمي، وهذا يخالف شروط WhatsApp، وقد يحظر WhatsApp رقمك، خاصةً عند إرسال الرسائل من Orden. يجب أن يفتح هاتفك WhatsApp مرة واحدة على الأقل كل 14 يومًا ليبقى Orden مرتبطًا.',
+  'Signed out of WhatsApp. Connect again.': 'تم تسجيل الخروج من WhatsApp. اتصل مرة أخرى.',
+  'Scan with WhatsApp on your phone': 'امسحه باستخدام WhatsApp على هاتفك',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > الإعدادات > الأجهزة المرتبطة > ربط جهاز',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'في WhatsApp على هاتفك، افتح الإعدادات > الأجهزة المرتبطة > ربط جهاز > الربط برقم الهاتف بدلاً من ذلك، وأدخل هذا الرمز',
+  'The QR code expired. Try again.': 'انتهت صلاحية رمز QR. حاول مرة أخرى.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'تم فتح WhatsApp بهذا الربط في مكان آخر. اتصل مرة أخرى.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'لم يعد WhatsApp يقبل هذا الإصدار من Orden. حدّث Orden.',
+  'WhatsApp refused this connection': 'رفض WhatsApp هذا الاتصال',
+  'WhatsApp needs the Orden app': 'يحتاج WhatsApp إلى تطبيق Orden',
+  'That number is not on WhatsApp': 'هذا الرقم غير موجود على WhatsApp',
+  'WhatsApp cannot do that in this conversation': 'لا يستطيع WhatsApp فعل ذلك في هذه المحادثة',
+  'WhatsApp makes a new group owner only from its own app':
+    'لا يعيّن WhatsApp مالكًا جديدًا للمجموعة إلا من تطبيقه',
+  'That message is no longer here': 'تلك الرسالة لم تعد موجودة',
+  'That file is no longer on WhatsApp': 'ذلك الملف لم يعد موجودًا على WhatsApp',
+  'The file is damaged': 'الملف تالف',
+  'WhatsApp is not connected right now': 'WhatsApp غير متصل الآن',
+  'That poll no longer takes votes': 'ذلك الاستطلاع لم يعد يقبل الأصوات',
 }

@@ -3642,4 +3642,28 @@ export const fil: Dictionary = {
   'Remove from chat': 'Alisin sa chat',
   'Sign in again': 'Mag-sign in ulit',
   'Finish signing in in your browser': 'Tapusin ang pag-sign in sa iyong browser',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'Hindi pinapayagan ng WhatsApp ang ibang app. Kumokonekta ang Orden bilang hindi opisyal na naka-link na device, na labag sa mga tuntunin ng WhatsApp, at maaaring i-ban ng WhatsApp ang iyong numero, lalo na kapag nagpapadala ka ng mga mensahe mula sa Orden. Kailangang buksan ng iyong telepono ang WhatsApp kahit isang beses bawat 14 na araw para manatiling naka-link ang Orden.',
+  'Signed out of WhatsApp. Connect again.': 'Na-sign out sa WhatsApp. Kumonekta ulit.',
+  'Scan with WhatsApp on your phone': 'I-scan gamit ang WhatsApp sa iyong telepono',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Sa WhatsApp sa iyong telepono, buksan ang Settings > Linked devices > Link a device > Link with phone number instead, at ilagay ang code na ito',
+  'The QR code expired. Try again.': 'Nag-expire ang QR code. Subukan ulit.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'Binuksan ang WhatsApp gamit ang link na ito sa ibang lugar. Kumonekta ulit.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'Hindi na tinatanggap ng WhatsApp ang bersyong ito ng Orden. I-update ang Orden.',
+  'WhatsApp refused this connection': 'Tinanggihan ng WhatsApp ang koneksyong ito',
+  'WhatsApp needs the Orden app': 'Kailangan ng WhatsApp ang Orden app',
+  'That number is not on WhatsApp': 'Wala sa WhatsApp ang numerong iyan',
+  'WhatsApp cannot do that in this conversation': 'Hindi iyan magagawa ng WhatsApp sa usapang ito',
+  'WhatsApp makes a new group owner only from its own app':
+    'Sa sarili lang nitong app nagtatalaga ang WhatsApp ng bagong may-ari ng grupo',
+  'That message is no longer here': 'Wala na rito ang mensaheng iyan',
+  'That file is no longer on WhatsApp': 'Wala na sa WhatsApp ang file na iyan',
+  'The file is damaged': 'Sira ang file',
+  'WhatsApp is not connected right now': 'Hindi nakakonekta ang WhatsApp ngayon',
+  'That poll no longer takes votes': 'Hindi na tumatanggap ng boto ang poll na iyan',
 }

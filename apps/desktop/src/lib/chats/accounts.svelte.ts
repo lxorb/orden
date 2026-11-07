@@ -6,6 +6,7 @@ import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
 import { slack } from './providers/slack'
 import { telegram } from './providers/telegram'
+import { whatsapp } from './providers/whatsapp'
 
 const KEY = 'orden:chat-accounts'
 
@@ -15,6 +16,7 @@ const PROVIDERS: readonly ChatProvider[] = [
   microsoftProvider,
   telegram,
   slack,
+  whatsapp,
 ]
 
 export interface Saved {

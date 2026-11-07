@@ -3394,4 +3394,27 @@ export const yue: Dictionary = {
   'Remove from chat': '移出聊天',
   'Sign in again': '再登入',
   'Finish signing in in your browser': '喺你嘅瀏覽器完成登入',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp 唔准其他應用程式。Orden 會用非官方嘅已連結裝置方式連線，咁樣違反 WhatsApp 嘅條款，WhatsApp 可能會封你個號碼；喺 Orden 傳訊息嘅話風險更高。你部手機最少每 14 日要開一次 WhatsApp，Orden 先可以保持連結。',
+  'Signed out of WhatsApp. Connect again.': '已經登出咗 WhatsApp，請重新連線。',
+  'Scan with WhatsApp on your phone': '用手機嘅 WhatsApp 掃描',
+  'WhatsApp > Settings > Linked devices > Link a device': 'WhatsApp > 設定 > 已連結裝置 > 連結裝置',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    '喺手機嘅 WhatsApp 打開「設定 > 已連結裝置 > 連結裝置 > 改用電話號碼連結」，然後輸入呢個代碼',
+  'The QR code expired. Try again.': 'QR 碼過咗期，請再試吓。',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp 喺第度用呢個連結開咗，請重新連線。',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp 唔再接受呢個版本嘅 Orden，請更新 Orden。',
+  'WhatsApp refused this connection': 'WhatsApp 拒絕咗呢個連線',
+  'WhatsApp needs the Orden app': 'WhatsApp 要用 Orden 應用程式',
+  'That number is not on WhatsApp': '呢個號碼冇用 WhatsApp',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp 喺呢個對話做唔到呢樣嘢',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp 淨係可以喺自己嘅應用程式指定新群組擁有者',
+  'That message is no longer here': '嗰條訊息已經唔喺度',
+  'That file is no longer on WhatsApp': '嗰個檔案已經唔喺 WhatsApp',
+  'The file is damaged': '檔案壞咗',
+  'WhatsApp is not connected right now': 'WhatsApp 而家未連線',
+  'That poll no longer takes votes': '嗰個投票已經唔再收票',
 }
