@@ -845,9 +845,15 @@ function spaceCommands(): Command[] {
             label: t('Export this space as Markdown and folders'),
             run: () =>
               busy.start(t('Exporting'), async () => {
-                const { exportSpace } = await import('./internal/export')
+                const [{ exportSpace }, { listedAt }] = await Promise.all([
+                  import('./internal/export'),
+                  import('./rows/todo-lists'),
+                ])
                 const items = workspace.itemMeta.itemsOf(space.root)
-                await exportSpace(space.root, space.name, (path) => items[path] ?? null)
+                const metaOf = (path: string) => items[path] ?? null
+                await exportSpace(space.root, space.name, metaOf, (path) =>
+                  listedAt(space.root, path, metaOf(path)),
+                )
               }),
           },
         ]

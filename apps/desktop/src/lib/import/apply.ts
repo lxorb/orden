@@ -10,6 +10,7 @@ import { sha256 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 
+import { listKeyTaken } from './listed'
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
 import { canvasFollowed, isCanvas, linksFollowed } from './rewrite'
@@ -49,8 +50,11 @@ export async function applyImport(
       const path = joinPath(target.root, file.path)
 
       if (file.kind === 'note') {
-        await writeFile(path, file.text)
-        wrote[path] = await sha256(file.text)
+        const taken = listKeyTaken(file.text)
+        const text = taken?.text ?? file.text
+        await writeFile(path, text)
+        wrote[path] = await sha256(text)
+        if (taken) workspace.itemMeta.set(path, taken.meta)
       } else await writeBytes(path, file.bytes)
 
       paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))

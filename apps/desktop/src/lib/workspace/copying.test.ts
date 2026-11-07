@@ -32,7 +32,7 @@ vi.mock('./write-file', () => ({
     told.push(`copy ${from} -> ${to}`)
   },
   writeBytes: async () => undefined,
-  writeFile: async () => undefined,
+  writeFile: async (path: string, content: string) => void disk.set(path, content),
 }))
 vi.mock('../views/copied', () => ({
   numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
@@ -47,7 +47,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void stored.delete(key),
 })
 
-const { copyRows } = await import('./copying')
+const { bringIn, copyRows } = await import('./copying')
 const { ItemMetaStore } = await import('./item-meta.svelte')
 
 const meta = new ItemMetaStore((path) => (path?.startsWith('/t/') ? '/t' : '/s'))
@@ -172,5 +172,30 @@ describe('a copy keeps what Orden keeps about the item', () => {
     await copyRows(ws as never, [{ from: '/s/Plan.md', into: '/t' }])
 
     expect(meta.of('/t/Plan.md', '/t')).toEqual({ 'todo-list': 'yes' })
+  })
+})
+
+describe('a note dropped in from outside', () => {
+  test('that says it is a todo list is one by its metadata, the key out of its words (#1344)', async () => {
+    disk.clear()
+    const ws = rig([])
+    const picked = (name: string, text: string) => ({
+      name,
+      arrayBuffer: async () => new TextEncoder().encode(text).buffer,
+    })
+
+    await bringIn(
+      ws as never,
+      [
+        picked('Errands.md', '---\ntodo-list: yes\n---\n- [x] Post it ✅ 2026-11-01\n'),
+        picked('Plain.md', '---\ntitle: Plain\n---\n- [ ] Read\n'),
+      ],
+      '/s/In',
+    )
+
+    expect(disk.get('/s/In/Errands.md')).toBe('- [x] Post it ✅ 2026-11-01\n')
+    expect(disk.get('/s/In/Plain.md')).toBe('---\ntitle: Plain\n---\n- [ ] Read\n')
+    expect(meta.of('/s/In/Errands.md')).toEqual({ 'todo-list': 'yes' })
+    expect(meta.of('/s/In/Plain.md')).toBeNull()
   })
 })

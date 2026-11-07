@@ -13,7 +13,6 @@ import {
 import { t } from '../i18n.svelte'
 import { pageSetupFor, paperInches, type PaperTwips, paperTwips, runningDate } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
-import { withOwnKeys } from '../own-keys'
 import { nameOf } from '../space-paths'
 import { invoke, isDesktop, isNative } from '../tauri'
 import { documentOf, picturesIn } from './document'
@@ -245,19 +244,12 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
 
 async function withKept(note: Note): Promise<Note> {
   if (note.path === null) return note
-  const meta = workspace.itemMeta.of(note.path)
-  const owned = meta ? withOwnKeys(note.source, meta) : note.source
-  const { isListed } = await import('../rows/todo-lists')
-  if (!isListed(note.path)) return owned === note.source ? note : { ...note, source: owned }
-  const [{ LIST_KEY, LIST_VALUE, writtenDates }, { frontMatterEdits }, { appliedEdits }] =
-    await Promise.all([
-      import('@orden/bases/todo-lists'),
-      import('@orden/markdown/front-matter'),
-      import('@orden/markdown/edits'),
-    ])
-  const dated = writtenDates(owned, meta)
-  const edit = frontMatterEdits(dated, [[LIST_KEY, LIST_VALUE]])
-  return { ...note, source: edit ? appliedEdits(dated, [edit]) : dated }
+  const [{ isListed }, { keptText }] = await Promise.all([
+    import('../rows/todo-lists'),
+    import('./kept'),
+  ])
+  const source = await keptText(note.source, workspace.itemMeta.of(note.path), isListed(note.path))
+  return source === note.source ? note : { ...note, source }
 }
 
 export async function runExport(

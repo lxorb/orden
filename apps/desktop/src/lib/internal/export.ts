@@ -69,13 +69,21 @@ async function freeFolder(picked: string, name: string): Promise<string> {
 
 type MetaOf = (path: string) => ItemMeta | null
 
-async function bytesOut(file: { path: string; read: () => Promise<Uint8Array> }, metaOf: MetaOf) {
+type ListedOf = (path: string) => boolean
+
+async function bytesOut(
+  file: { path: string; read: () => Promise<Uint8Array> },
+  metaOf: MetaOf,
+  listedOf: ListedOf,
+) {
   const bytes = await file.read()
-  const meta = /\.(md|markdown)$/i.test(file.path) ? metaOf(file.path) : null
-  if (!meta) return bytes
-  const { withOwnKeys } = await import('../own-keys')
+  if (!/\.(md|markdown)$/i.test(file.path)) return bytes
+  const meta = metaOf(file.path)
+  const listed = listedOf(file.path)
+  if (!meta && !listed) return bytes
+  const { keptText } = await import('../export/kept')
   const text = new TextDecoder().decode(bytes)
-  const written = withOwnKeys(text, meta)
+  const written = await keptText(text, meta, listed)
   return written === text ? bytes : new TextEncoder().encode(written)
 }
 
@@ -84,11 +92,12 @@ export async function exportSpaceTo(
   name: string,
   picked: string,
   metaOf: MetaOf = () => null,
+  listedOf: ListedOf = () => false,
 ): Promise<string> {
   const into = await freeFolder(picked, name)
   for (const file of await filesOf(root)) {
     const path = joinPath(into, file.path)
-    await crate('write_bytes', { path, bytes: await bytesOut(file, metaOf) })
+    await crate('write_bytes', { path, bytes: await bytesOut(file, metaOf, listedOf) })
   }
   return into
 }
@@ -97,11 +106,12 @@ export async function exportSpace(
   root: string,
   name: string,
   metaOf: MetaOf = () => null,
+  listedOf: ListedOf = () => false,
 ): Promise<string | null> {
   const given = (await import('../dialog-answer')).dialogAnswer()
   const picked = given
     ? await given(true)
     : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
   if (typeof picked !== 'string') return null
-  return exportSpaceTo(root, name, picked, metaOf)
+  return exportSpaceTo(root, name, picked, metaOf, listedOf)
 }
