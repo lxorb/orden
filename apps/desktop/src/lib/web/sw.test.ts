@@ -22,7 +22,7 @@ interface OpenWindow {
 }
 
 interface Worker {
-  fetch(url: string, method?: string): Promise<Response | null>
+  fetch(url: string, method?: string, range?: string): Promise<Response | null>
   press(data: unknown): Promise<{ closed: boolean; opened: string[] }>
 }
 
@@ -96,13 +96,13 @@ function load(
   new Function('self', 'indexedDB', SOURCE)(self, indexedDB)
 
   return {
-    fetch: (url: string, method = 'GET') => {
+    fetch: (url: string, method = 'GET', range?: string) => {
       const heard = listeners.get('fetch')
       if (!heard) throw new Error('the worker never listened for a fetch')
 
       let answered: Promise<Response> | null = null
       heard({
-        request: { method, url },
+        request: { method, url, headers: new Headers(range === undefined ? {} : { Range: range }) },
         respondWith: (given: Promise<Response>) => {
           answered = given
         },
@@ -160,6 +160,53 @@ describe('the asset worker', () => {
     const bytes = new Uint8Array((await answer?.arrayBuffer()) ?? new ArrayBuffer(0))
     expect([...bytes.subarray(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47])
     expect(answer?.headers.get('content-length')).toBe(String(bytes.length))
+  })
+
+  test('a piece asked for is the piece, so a player can read where it seeks', async () => {
+    const whole = new Uint8Array(
+      (await (await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`))?.arrayBuffer()) ??
+        new ArrayBuffer(0),
+    )
+    const size = whole.length
+    const piece = async (range: string) => {
+      const answer = await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`, 'GET', range)
+      const bytes = new Uint8Array((await answer?.arrayBuffer()) ?? new ArrayBuffer(0))
+      return {
+        status: answer?.status,
+        range: answer?.headers.get('content-range'),
+        length: answer?.headers.get('content-length'),
+        bytes: [...bytes],
+      }
+    }
+
+    expect(await piece('bytes=0-1')).toEqual({
+      status: 206,
+      range: `bytes 0-1/${size}`,
+      length: '2',
+      bytes: [...whole.subarray(0, 2)],
+    })
+    expect(await piece('bytes=10-')).toMatchObject({
+      status: 206,
+      range: `bytes 10-${size - 1}/${size}`,
+      bytes: [...whole.subarray(10)],
+    })
+    expect(await piece('bytes=-4')).toMatchObject({
+      status: 206,
+      range: `bytes ${size - 4}-${size - 1}/${size}`,
+      bytes: [...whole.subarray(size - 4)],
+    })
+    expect(await piece(`bytes=5-${size + 100}`)).toMatchObject({
+      status: 206,
+      range: `bytes 5-${size - 1}/${size}`,
+    })
+    expect(await piece(`bytes=${size}-`)).toMatchObject({ status: 416, range: `bytes */${size}` })
+    expect(await piece('bytes=-0')).toMatchObject({ status: 416 })
+    expect(await piece('bytes=0-1,4-5')).toMatchObject({ status: 200, bytes: [...whole] })
+    expect(await piece('bytes=9-3')).toMatchObject({ status: 200, bytes: [...whole] })
+    expect(await piece('lines=1-2')).toMatchObject({ status: 200, bytes: [...whole] })
+
+    const all = await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`)
+    expect(all?.headers.get('accept-ranges')).toBe('bytes')
   })
 
   test('a name with a space in it is the row it was encoded from', async () => {
