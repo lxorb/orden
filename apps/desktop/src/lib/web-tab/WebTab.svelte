@@ -338,10 +338,10 @@
 
       importOffer.dropped(tab.id)
 
-      const held = pages.of(tab.id)
-      held.typing = false
+      const held = pages.peek(tab.id)
+      if (held) held.typing = false
 
-      if (held.filling) {
+      if (held?.filling) {
         held.filling = false
         void invoke('web_unfill', { tab: tab.id }).catch(() => undefined)
         void filling.give(tab.id)

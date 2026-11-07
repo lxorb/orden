@@ -134,3 +134,18 @@ test.each([
     workspace.close(other.id)
   }
 })
+
+test('a web tab closed before its pane lets go leaves no page behind', () => {
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no tab')
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+
+  workspace.close(tab.id)
+  void unmount(app)
+  flushSync()
+
+  expect(pages.each().map(([id]) => id)).not.toContain(tab.id)
+})
