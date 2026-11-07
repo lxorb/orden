@@ -7,6 +7,7 @@ import {
   canPublish,
   canShare,
   canTrustAgain,
+  canWriteAt,
   isShared,
   roleOf,
   share,
@@ -80,7 +81,9 @@ export function spaceMenu(space: Space): MenuEntry[] {
 
   return trim([
     ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
-    { label: t('Choose an icon'), run: () => iconChoice.space(space.id) },
+    ...(canWriteAt(space.root)
+      ? [{ label: t('Choose an icon'), run: () => iconChoice.space(space.id) }]
+      : []),
     ...(__EVEN_PLUGIN__
       ? []
       : [{ label: t('Settings'), run: () => settings.show('space', space.root) }]),
