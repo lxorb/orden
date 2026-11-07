@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { carry } from '../src/machines/bundle'
 import { call, type TestEnv, testEnv } from './harness'
 
-const BYTES = new TextEncoder().encode('install.sh and nibd, gzipped')
-const SHA = createHash('sha256').update('install.sh and nibd, gzipped').digest('hex')
+const BYTES = new TextEncoder().encode('install.sh and ordend, gzipped')
+const SHA = createHash('sha256').update('install.sh and ordend, gzipped').digest('hex')
 
 let env: TestEnv
 
@@ -26,7 +26,7 @@ describe('the machine bundle', () => {
     const bundle = await call(env, `/v2/online/machine/${SHA}.bin`)
     expect(bundle.status).toBe(200)
     expect(bundle.headers.get('cache-control')).toContain('immutable')
-    expect(bundle.text).toBe('install.sh and nibd, gzipped')
+    expect(bundle.text).toBe('install.sh and ordend, gzipped')
 
     expect((await call(env, `/v2/online/machine/${'0'.repeat(64)}.bin`)).status).toBe(404)
   })

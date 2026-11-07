@@ -198,7 +198,7 @@ describe('bytes under a hash that is not theirs', () => {
         raw: drawing,
         headers: {
           'content-type': 'image/svg+xml',
-          'x-nib-diagram': new URLSearchParams(said).toString(),
+          'x-orden-diagram': new URLSearchParams(said).toString(),
         },
       })
 
@@ -221,7 +221,7 @@ describe('bytes under a hash that is not theirs', () => {
       raw: drawing,
       headers: {
         'content-type': 'image/svg+xml',
-        'x-nib-diagram': new URLSearchParams(fence).toString(),
+        'x-orden-diagram': new URLSearchParams(fence).toString(),
       },
     })
     expect(drawn.status).toBe(201)

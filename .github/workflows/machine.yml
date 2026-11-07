@@ -39,27 +39,27 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: nibd
+      - name: ordend
         run: pnpm --filter @orden/machine build
 
       - name: Image
         id: image
-        run: docker build -t nib-machine:ci services/machine
+        run: docker build -t orden-machine:ci services/machine
 
       - name: Booted and driven
         working-directory: services/machine
-        run: test/image.sh nib-machine:ci
+        run: test/image.sh orden-machine:ci
 
       - name: End to end through the Worker
         if: ${{ !cancelled() && steps.image.outcome == 'success' }}
         run: |
-          docker run -d --name nib-e2e -e NIBD_SECRET=dev -e ORDEN_AGENTS=0 \
-            -p 127.0.0.1:7680:7680 nib-machine:ci
+          docker run -d --name orden-e2e -e ORDEND_SECRET=dev -e ORDEN_AGENTS=0 \
+            -p 127.0.0.1:7680:7680 orden-machine:ci
           node scripts/online-e2e.mjs
 
       - name: What the end-to-end machine said
         if: failure()
-        run: docker logs nib-e2e || true
+        run: docker logs orden-e2e || true
 
       - name: What the machine said
         if: failure()
@@ -86,7 +86,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: nibd and the bundle
+      - name: ordend and the bundle
         run: pnpm --filter @orden/machine build
 
       - name: Installed as cloud-init installs it
@@ -95,12 +95,12 @@ jobs:
           bundle="$RUNNER_TEMP/bundle"
           mkdir -p "$bundle"
           tar -xzf services/machine/dist/machine.bin -C "$bundle"
-          sudo install -d -m 755 /etc/nibd
-          printf 'NIBD_SECRET=ci-secret\nTZ=Europe/Zurich\n' | sudo tee /etc/nibd/env >/dev/null
-          sudo chmod 600 /etc/nibd/env
+          sudo install -d -m 755 /etc/ordend
+          printf 'ORDEND_SECRET=ci-secret\nTZ=Europe/Zurich\n' | sudo tee /etc/ordend/env >/dev/null
+          sudo chmod 600 /etc/ordend/env
           sudo bash "$bundle/install.sh" --server
 
-      - name: nibd answers, on the loopback alone, and comes back when it ends
+      - name: ordend answers, on the loopback alone, and comes back when it ends
         run: |
           set -euo pipefail
           health() { curl -fs --max-time 3 http://127.0.0.1:7680/health >/dev/null; }
@@ -115,30 +115,30 @@ jobs:
           [ "$(link -H 'Authorization: Bearer ci-secret')" = 101 ]
           outside=$(hostname -I | awk '{print $1}')
           ! curl -fs --max-time 3 "http://$outside:7680/health"
-          before=$(systemctl show -p MainPID --value nibd)
+          before=$(systemctl show -p MainPID --value ordend)
           sudo kill -KILL "$before"
           for _ in $(seq 1 30); do
             sleep 1
-            now=$(systemctl show -p MainPID --value nibd)
+            now=$(systemctl show -p MainPID --value ordend)
             [ "$now" != 0 ] && [ "$now" != "$before" ] && health && break
           done
-          [ "$(systemctl show -p MainPID --value nibd)" != "$before" ]
+          [ "$(systemctl show -p MainPID --value ordend)" != "$before" ]
           health
-          echo "nibd started again by systemd"
+          echo "ordend started again by systemd"
 
-      - name: A program goes on through every restart of nibd
+      - name: A program goes on through every restart of ordend
         working-directory: services/machine
         env:
-          NIBD_SURVIVE_URL: ws://127.0.0.1:7680
-          NIBD_SECRET: ci-secret
-          NIBD_SURVIVE_CGROUP: '1'
-          NIBD_SURVIVE_RESTARTS: '["sudo systemctl restart nibd", "sudo systemctl kill -s KILL nibd"]'
+          ORDEND_SURVIVE_URL: ws://127.0.0.1:7680
+          ORDEND_SECRET: ci-secret
+          ORDEND_SURVIVE_CGROUP: '1'
+          ORDEND_SURVIVE_RESTARTS: '["sudo systemctl restart ordend", "sudo systemctl kill -s KILL ordend"]'
         run: pnpm exec vitest run --config vitest.image.config.ts test/survive.drive.ts
 
       - name: Claude Code and Codex, checked against their makers'
         run: |
           set -euo pipefail
-          sudo systemctl start nib-agents.service
+          sudo systemctl start orden-agents.service
           sudo -u nib -i bash -lc '
             set -euo pipefail
             claude --version
@@ -158,13 +158,13 @@ jobs:
           sudo sshd -T | grep -qx 'permitrootlogin no'
           sudo sshd -T | grep -qx 'passwordauthentication no'
           grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
-          grep -q 'Automatic-Reboot "false"' /etc/apt/apt.conf.d/52nib-upgrades
+          grep -q 'Automatic-Reboot "false"' /etc/apt/apt.conf.d/52orden-upgrades
           swapon --show=NAME --noheadings | grep -q swap
-          systemctl is-enabled nibd cloudflared nib-agents
+          systemctl is-enabled ordend cloudflared orden-agents
           [ "$(sudo passwd -S root | cut -d' ' -f2)" = L ]
-          [ "$(stat -c %a /etc/nibd/env)" = 600 ]
+          [ "$(stat -c %a /etc/ordend/env)" = 600 ]
           cloudflared --version
 
       - name: What the machine said
         if: failure()
-        run: sudo journalctl -u nibd -u nib-agents -u cloudflared --no-pager | tail -n 300
+        run: sudo journalctl -u ordend -u orden-agents -u cloudflared --no-pager | tail -n 300

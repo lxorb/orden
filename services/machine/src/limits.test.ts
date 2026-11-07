@@ -42,7 +42,7 @@ test('where the tools are missing, the shell runs plainly rather than not at all
 })
 
 test('the user is read from the password file', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'nibd-passwd-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ordend-passwd-'))
   const passwd = join(dir, 'passwd')
   writeFileSync(
     passwd,
@@ -55,12 +55,12 @@ test('the user is read from the password file', () => {
 })
 
 test('with no cgroup filesystem to write, there is no cgroup, and nothing fails', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'nibd-cgroup-'))
+  const dir = mkdtempSync(join(tmpdir(), 'ordend-cgroup-'))
   expect(Cgroups.open(4096, dir)).toBeNull()
   rmSync(dir, { recursive: true })
 })
 
-test('the sessions get the machine’s memory less what nibd keeps for itself', () => {
+test('the sessions get the machine’s memory less what ordend keeps for itself', () => {
   const gib = 1024 * 1024 * 1024
   expect(memoryMax('MemTotal:        4194304 kB\nMemFree:  100 kB\n')).toBe(4 * gib - gib / 2)
   expect(memoryMax('MemTotal:         524288 kB\n')).toBeNull()

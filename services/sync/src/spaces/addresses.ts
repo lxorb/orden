@@ -155,8 +155,12 @@ export function ours(env: Env, domain: string): boolean {
   return roots.some((root) => domain === root || domain.endsWith(`.${root}`))
 }
 
-export function proofName(domain: string): string {
-  return `_nib-verify.${domain}`
+function proofName(domain: string): string {
+  return `_orden-verify.${domain}`
+}
+
+export function proofNames(domain: string): string[] {
+  return [proofName(domain), `_nib-verify.${domain}`]
 }
 
 export function dnsRecords(

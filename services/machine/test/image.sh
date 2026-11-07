@@ -3,15 +3,15 @@ set -euo pipefail
 image=$1
 secret=ci-$RANDOM-$RANDOM
 cleanup() {
-  docker logs nib-machine >machine.log 2>&1 || true
-  docker rm -f nib-machine orden-traced >/dev/null 2>&1 || true
+  docker logs orden-machine >machine.log 2>&1 || true
+  docker rm -f orden-machine orden-traced >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-docker run -d --name nib-machine -e NIBD_SECRET="$secret" -e TZ=Europe/Zurich \
+docker run -d --name orden-machine -e ORDEND_SECRET="$secret" -e TZ=Europe/Zurich \
   -p 127.0.0.1:7680:7680 "$image"
 
-docker run -d --name orden-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
+docker run -d --name orden-traced --cap-add SYS_PTRACE -e ORDEND_SECRET="$secret" \
   -p 127.0.0.1:7681:7680 --entrypoint bash "$image" -c '
     set -e
     apt-get update -qq && apt-get install -y -qq strace >/dev/null
@@ -21,30 +21,30 @@ docker run -d --name orden-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" 
     chown -R nib:nib /home/nib
     exec strace -f -qq -o /tmp/trace \
       -e trace=open,openat,openat2,creat,execve,stat,lstat,newfstatat,statx,readlink,readlinkat,chdir,getdents64 \
-      node /opt/nibd/nibd.cjs'
+      node /opt/ordend/ordend.cjs'
 
-NIBD_URL=ws://127.0.0.1:7680 NIBD_TRACED_URL=ws://127.0.0.1:7681 NIBD_SECRET=$secret \
+ORDEND_URL=ws://127.0.0.1:7680 ORDEND_TRACED_URL=ws://127.0.0.1:7681 ORDEND_SECRET=$secret \
   pnpm exec vitest run --config vitest.image.config.ts
 
-NIBD_SURVIVE_URL=ws://127.0.0.1:7680 NIBD_SECRET=$secret \
-  NIBD_SURVIVE_RESTARTS='["docker exec nib-machine pkill -KILL -f /opt/nibd/nibd.cjs"]' \
+ORDEND_SURVIVE_URL=ws://127.0.0.1:7680 ORDEND_SECRET=$secret \
+  ORDEND_SURVIVE_RESTARTS='["docker exec orden-machine pkill -KILL -f /opt/ordend/ordend.cjs"]' \
   pnpm exec vitest run --config vitest.image.config.ts test/survive.drive.ts
 
-before=$(docker exec nib-machine pgrep -f /opt/nibd/nibd.cjs)
-docker exec nib-machine pkill -KILL -f /opt/nibd/nibd.cjs
+before=$(docker exec orden-machine pgrep -f /opt/ordend/ordend.cjs)
+docker exec orden-machine pkill -KILL -f /opt/ordend/ordend.cjs
 again=
 for _ in $(seq 1 30); do
   sleep 1
-  now=$(docker exec nib-machine pgrep -f /opt/nibd/nibd.cjs || true)
+  now=$(docker exec orden-machine pgrep -f /opt/ordend/ordend.cjs || true)
   if [ -n "$now" ] && [ "$now" != "$before" ] && curl -fs http://127.0.0.1:7680/health >/dev/null; then
     again=1
     break
   fi
 done
-[ -n "$again" ] && [ "$(docker inspect -f '{{.State.Running}}' nib-machine)" = true ]
-echo "nibd started again in the same machine"
+[ -n "$again" ] && [ "$(docker inspect -f '{{.State.Running}}' orden-machine)" = true ]
+echo "ordend started again in the same machine"
 
-docker exec -u nib -w /home/nib nib-machine bash -lc '
+docker exec -u nib -w /home/nib orden-machine bash -lc '
   set -euo pipefail
   version=$(claude --version | cut -d" " -f1)
   case "$(uname -m)" in x86_64) platform=linux-x64 ;; aarch64) platform=linux-arm64 ;; esac
@@ -81,7 +81,7 @@ for line in open(sys.argv[1], encoding="utf-8", errors="replace"):
         touched.setdefault(pid, line.strip())
 bad = {pid: line for pid, line in touched.items() if pid not in ran}
 for line in bad.values():
-    print("nibd itself:", line)
-print(f"{len(touched)} processes touched the agents files; {len(bad)} of them were nibd")
+    print("ordend itself:", line)
+print(f"{len(touched)} processes touched the agents files; {len(bad)} of them were ordend")
 sys.exit(1 if bad or not touched else 0)
 PY

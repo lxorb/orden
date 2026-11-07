@@ -153,7 +153,7 @@ describe('the account keeps what a note said', () => {
         method: 'PUT',
         token: who,
         body: { content, baseVersion },
-        headers: { 'x-nib-device': device },
+        headers: { 'x-orden-device': device },
       })
     }
 
@@ -175,7 +175,7 @@ describe('the account keeps what a note said', () => {
         method: 'PUT',
         token: who,
         body: { content, baseVersion },
-        headers: { 'x-nib-device': 'Mac desktop' },
+        headers: { 'x-orden-device': 'Mac desktop' },
       })
     }
 
@@ -242,7 +242,7 @@ describe('the account keeps what a note said', () => {
       method: 'PUT',
       token,
       body: { content: '# Four', baseVersion: 1 },
-      headers: { 'x-nib-device': 'the laptop' },
+      headers: { 'x-orden-device': 'the laptop' },
     })
 
     const held = await call<VersionView>(env, `/v1/notes/${note}/versions`, { token })
@@ -861,7 +861,7 @@ describe('putting a space back to a moment', () => {
     const done = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
       token,
       body: { at: Date.now() - 9 * 60 * 1000 },
-      headers: { 'x-nib-device': 'the laptop' },
+      headers: { 'x-orden-device': 'the laptop' },
     })
 
     expect(done.json.notes).toBe(2)

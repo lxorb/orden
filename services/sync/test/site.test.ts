@@ -688,10 +688,13 @@ describe('a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-    const old = ticket.replace('__Host-', '')
+    const old = ticket.replace('__Host-orden_site', 'nib_site')
 
     const read = await page('/plan', { headers: { cookie: old } })
     expect(read.text).toContain('Words.')
+
+    const named = ticket.replace('__Host-orden_site', '__Host-nib_site')
+    expect((await page('/plan', { headers: { cookie: named } })).text).toContain('Words.')
 
     const behind = await page('/plan', { headers: { cookie: `nib_site=0.0; ${old}` } })
     expect(behind.text).toContain('Words.')

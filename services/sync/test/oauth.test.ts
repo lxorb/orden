@@ -481,7 +481,7 @@ describe('connecting', () => {
 
     expect(tokens.status).toBe(200)
     expect(tokens.json.token_type).toBe('Bearer')
-    expect(tokens.json.access_token).toMatch(/^nib_/)
+    expect(tokens.json.access_token).toMatch(/^orden_/)
     expect(tokens.json.refresh_token).toBeTruthy()
     expect(tokens.json.scope).toBe('notes:read')
     expect(tokens.headers.get('cache-control')).toBe('no-store')

@@ -22,7 +22,7 @@ export async function askChat(
       return await log.fetch(
         new Request(init.url ?? `https://chats.invalid/${chat}`, {
           method: init.body === undefined ? 'GET' : 'POST',
-          headers: { ...headers, 'x-nib-chat-ask': ask, 'x-nib-chat': chat },
+          headers: { ...headers, 'x-orden-chat-ask': ask, 'x-orden-chat': chat },
           ...(init.body === undefined ? {} : { body: init.body }),
         }),
       )
@@ -65,7 +65,7 @@ export async function chatsRevoked(
     for (const some of chunks(results, AT_ONCE)) {
       await Promise.all(
         some.map((one) =>
-          tell(env, one.chat, 'revoke', { 'x-nib-revoked': who, 'x-nib-role': role }),
+          tell(env, one.chat, 'revoke', { 'x-orden-revoked': who, 'x-orden-role': role }),
         ),
       )
     }
@@ -96,7 +96,7 @@ export async function closeChats(
   for (const round of chunks(open, AT_ONCE)) {
     await Promise.all(
       round.map((one) =>
-        tell(env, one.chat_id, 'revoke', { 'x-nib-revoked': one.who, 'x-nib-role': 'none' }),
+        tell(env, one.chat_id, 'revoke', { 'x-orden-revoked': one.who, 'x-orden-role': 'none' }),
       ),
     )
   }

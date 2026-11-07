@@ -6,6 +6,8 @@ export const UNKNOWN_APP = 'no such application on this account'
 
 export const HOST_PROTOCOL = 'nib.role.host'
 
+export const HOST_PROTOCOLS: readonly string[] = ['orden.role.host', 'nib.role.host']
+
 export const MOST_SIGNAL = 64 * 1024
 
 export interface View {

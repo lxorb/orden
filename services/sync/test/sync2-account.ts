@@ -78,7 +78,7 @@ export class WorkerAccount implements AccountAdapter {
   async handle(device: string, route: Route, body: Uint8Array): Promise<Uint8Array> {
     await this.ready
     const token = await this.session(device)
-    const headers = { authorization: `Bearer ${token}`, accept: OCTETS, 'x-nib-device': device }
+    const headers = { authorization: `Bearer ${token}`, accept: OCTETS, 'x-orden-device': device }
 
     let request: Request
     if (route === 'feed') {

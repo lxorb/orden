@@ -385,8 +385,8 @@ describe('the routes', () => {
         fetch: (request: Request) => {
           asked.push({
             chat,
-            ask: request.headers.get('x-nib-chat-ask'),
-            who: request.headers.get('x-nib-profile'),
+            ask: request.headers.get('x-orden-chat-ask'),
+            who: request.headers.get('x-orden-profile'),
           })
           return Promise.resolve(new Response(null, { status: 204 }))
         },

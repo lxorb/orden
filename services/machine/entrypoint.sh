@@ -18,29 +18,29 @@ if [ -n "${TZ:-}" ] && [ -f "/usr/share/zoneinfo/$TZ" ]; then
   echo "$TZ" >/etc/timezone
 fi
 
-mkdir -p /home/nib /var/lib/nibd /run/nibd
+mkdir -p /home/nib /var/lib/ordend /run/ordend
 chown nib:nib /home/nib
 install -d -o nib -g nib /home/nib/.local /home/nib/.local/bin
-chmod 700 /var/lib/nibd
+chmod 700 /var/lib/ordend
 
 if [ "${ORDEN_AGENTS:-1}" != 0 ]; then
   setpriv --reuid=nib --regid=nib --init-groups \
     env -i HOME=/home/nib USER=nib LOGNAME=nib PATH=/usr/local/bin:/usr/bin:/bin \
     NODE_EXTRA_CA_CERTS=$bundle SSL_CERT_FILE=$bundle LANG=C.UTF-8 \
-    nice -n 10 /usr/local/bin/nib-agents >/tmp/nib-agents.log 2>&1 &
+    nice -n 10 /usr/local/bin/orden-agents >/tmp/orden-agents.log 2>&1 &
 fi
 
-nibd=
+ordend=
 stopping=
-trap 'stopping=1; [ -n "$nibd" ] && kill -TERM "$nibd" 2>/dev/null' TERM INT
+trap 'stopping=1; [ -n "$ordend" ] && kill -TERM "$ordend" 2>/dev/null' TERM INT
 ends=()
 while :; do
-  node /opt/nibd/nibd.cjs &
-  nibd=$!
+  node /opt/ordend/ordend.cjs &
+  ordend=$!
   code=0
-  wait "$nibd" || code=$?
+  wait "$ordend" || code=$?
   if [ -n "$stopping" ]; then
-    wait "$nibd" 2>/dev/null || true
+    wait "$ordend" 2>/dev/null || true
     exit 0
   fi
   [ "$code" = 0 ] && exit 0
@@ -50,7 +50,7 @@ while :; do
     [ $((now - at)) -lt 600 ] && recent+=("$at")
   done
   ends=("${recent[@]}")
-  echo "nib-entrypoint: nibd ended with $code (${#ends[@]} in ten minutes)" >&2
+  echo "orden-entrypoint: ordend ended with $code (${#ends[@]} in ten minutes)" >&2
   [ "${#ends[@]}" -ge 5 ] && exit "$code"
   sleep 1
 done

@@ -2,30 +2,30 @@
 
 exports[`cloud-init > as a server gets it, its secrets redacted 1`] = `
 "#cloud-config
-# A nib online terminal machine (docs/online-terminal.md 4.15).
-hostname: nib
+# An Orden online terminal machine (docs/online-terminal.md 4.15).
+hostname: orden
 disable_root: true
 ssh_pwauth: false
 package_update: true
 package_upgrade: true
 write_files:
-  - path: /etc/nibd/env
+  - path: /etc/ordend/env
     owner: root:root
     permissions: '0600'
     content: |
-      NIBD_SECRET=<nibd secret>
+      ORDEND_SECRET=<ordend secret>
       TZ=Europe/Zurich
   - path: /etc/cloudflared/env
     owner: root:root
     permissions: '0600'
     content: |
       TUNNEL_TOKEN=<tunnel token>
-  - path: /etc/nib/machine
+  - path: /etc/orden/machine
     owner: root:root
     permissions: '0644'
     content: |
       ORDEN_ORIGIN=https://nibeditor.com
 runcmd:
-  - [bash, -c, "set -euo pipefail; curl -fsSL --retry 10 --retry-delay 3 -o /root/machine.bin https://nibeditor.com/v2/online/machine/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin; echo 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  /root/machine.bin' | sha256sum -c -; mkdir -p /root/machine /opt/nibd; tar -xzf /root/machine.bin -C /root/machine; echo bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb >/opt/nibd/bundle; bash /root/machine/install.sh --server; rm -rf /root/machine /root/machine.bin; rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i"]
+  - [bash, -c, "set -euo pipefail; curl -fsSL --retry 10 --retry-delay 3 -o /root/machine.bin https://nibeditor.com/v2/online/machine/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin; echo 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  /root/machine.bin' | sha256sum -c -; mkdir -p /root/machine /opt/ordend; tar -xzf /root/machine.bin -C /root/machine; echo bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb >/opt/ordend/bundle; bash /root/machine/install.sh --server; rm -rf /root/machine /root/machine.bin; rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i"]
 "
 `;

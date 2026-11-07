@@ -199,6 +199,8 @@ export interface SnapshotPage {
 
 export const ROOM_V2 = 'nib.v2'
 
+export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
+
 export type RoomNews =
   { t: 'ack'; seq: number; sv: Uint8Array } | { t: 'epoch'; epoch: number; epochBase: string }
 
@@ -207,9 +209,26 @@ export const NEW_EPOCH = 4001
 export const BEAT = 'beat'
 export const BEAT_ANSWER = 'ok'
 
-export const FENCE_HEADER = 'x-nib-fence'
+export const FENCE_HEADER = 'x-orden-fence'
+
+export const TOKEN_PROTOCOL = 'nib.token.'
 
 export const DEVICE_PROTOCOL = 'nib.device.'
+
+const DEVICE_PROTOCOLS = ['orden.device.', 'nib.device.']
+
+export interface OfferedDevice {
+  device: string
+  protocol: string
+}
+
+export function deviceOffered(header: string | undefined): OfferedDevice | null {
+  for (const protocol of (header ?? '').split(',').map((one) => one.trim())) {
+    const prefix = DEVICE_PROTOCOLS.find((one) => protocol.startsWith(one))
+    if (prefix) return { device: protocol.slice(prefix.length), protocol }
+  }
+  return null
+}
 
 export type DeviceFrame =
   | { t: 'hello'; device: string; name: string; platform: string; app: string }

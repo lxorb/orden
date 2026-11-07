@@ -16,7 +16,7 @@ import { signIn, type TestEnv, testEnv } from './harness'
 const ID = 'm_0123456789abcdef0123456789abcdef'
 const HOSTNAME = 'm-0123456789abcdef0123456789abcdef.nibeditor.com'
 const SECRET = 'a'.repeat(64)
-const BOOT = { NIBD_SECRET: SECRET, TZ: 'Europe/Zurich' }
+const BOOT = { ORDEND_SECRET: SECRET, TZ: 'Europe/Zurich' }
 
 let env: TestEnv
 let cloud: Cloud
@@ -77,7 +77,7 @@ describe('a Hetzner machine', () => {
     await host().start(ID, 'machine', BOOT)
 
     expect(cloud.tunnels).toEqual([
-      expect.objectContaining({ name: 'nib-machine-0123456789abcdef0123456789abcdef' }),
+      expect.objectContaining({ name: 'orden-machine-0123456789abcdef0123456789abcdef' }),
     ])
     expect(cloud.tunnels[0]?.config).toEqual({
       ingress: [
@@ -97,18 +97,18 @@ describe('a Hetzner machine', () => {
       }),
     ])
     expect(cloud.firewalls).toEqual([
-      expect.objectContaining({ labels: { 'nib-machine': ID }, rules: [] }),
+      expect.objectContaining({ labels: { 'orden-machine': ID }, rules: [] }),
     ])
 
     expect(cloud.servers).toHaveLength(1)
     const server = cloud.servers[0]
     expect(server).toMatchObject({
-      name: 'nib-0123456789abcdef0123456789abcdef',
+      name: 'orden-0123456789abcdef0123456789abcdef',
       location: 'nbg1',
-      labels: { 'nib-machine': ID },
+      labels: { 'orden-machine': ID },
       firewall: cloud.firewalls[0]?.id,
     })
-    expect(server?.userData).toContain(`NIBD_SECRET=${SECRET}`)
+    expect(server?.userData).toContain(`ORDEND_SECRET=${SECRET}`)
     expect(server?.userData).toContain(`TUNNEL_TOKEN=eyJ-token-of-${cloud.tunnels[0]?.id ?? ''}`)
     expect(server?.userData).toContain('TZ=Europe/Zurich')
 
@@ -148,6 +148,23 @@ describe('a Hetzner machine', () => {
     expect(cloud.tunnels).toHaveLength(1)
     expect(cloud.firewalls).toHaveLength(1)
     expect(cloud.servers).toHaveLength(1)
+  })
+
+  test('a server made before the rename is found under its old label and tunnel', async () => {
+    const former = ['nib', 'machine'].join('-')
+    const machine = host()
+    await machine.start(ID, 'machine', BOOT)
+    for (const one of [...cloud.servers, ...cloud.firewalls]) one.labels = { [former]: ID }
+    for (const one of cloud.tunnels) one.name = one.name.replace('orden-machine', former)
+    cloud.asked.length = 0
+
+    await machine.start(ID, 'machine', BOOT)
+    expect(cloud.asked.filter((one) => one.startsWith('POST'))).toEqual([])
+
+    await machine.remove(ID)
+    expect(cloud.servers).toEqual([])
+    expect(cloud.firewalls).toEqual([])
+    expect(cloud.tunnels).toEqual([])
   })
 
   test('a server that was switched off is switched on', async () => {
@@ -217,7 +234,7 @@ describe('a Hetzner machine', () => {
     expect(await machine.running(ID)).toBe(true)
   })
 
-  test('links through its hostname with nibd’s secret and the Access service token', async () => {
+  test('links through its hostname with ordend’s secret and the Access service token', async () => {
     const socket = await host().link(ID)
     expect(socket).toBeTruthy()
     expect(cloud.asked).toEqual([`GET https://${HOSTNAME}/link`])
@@ -229,7 +246,7 @@ describe('a Hetzner machine', () => {
 
     cloud.asked.length = 0
     cloud.linkStatus = 401
-    await expect(host().link(ID)).rejects.toThrow('nibd answered 401')
+    await expect(host().link(ID)).rejects.toThrow('ordend answered 401')
     expect(cloud.asked).toHaveLength(1)
   })
 

@@ -105,7 +105,7 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
     ),
   ])
 
-  await askHub(env, user, 'revoke', { 'x-nib-device': device })
+  await askHub(env, user, 'revoke', { 'x-orden-device': device })
   return true
 }
 
@@ -125,7 +125,7 @@ export async function devicesEnded(
     for (const { id } of results) await endDevice(env, user, id)
   }
 
-  await askHub(env, user, 'revoke', { 'x-nib-sessions': sessions.join(',') })
+  await askHub(env, user, 'revoke', { 'x-orden-sessions': sessions.join(',') })
 }
 
 export const devices = new Hono<{ Bindings: Env; Variables: Variables }>()

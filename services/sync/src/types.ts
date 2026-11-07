@@ -17,7 +17,7 @@ export interface Env {
   MACHINES?: DurableObjectNamespace
   HOMES?: R2Bucket
   MACHINE_EGRESS?: string
-  MACHINE_DEV_NIBD?: string
+  MACHINE_DEV_ORDEND?: string
   MACHINE_DEV_SECRET?: string
 
   HETZNER_TOKEN?: string

@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 function aHome(): string {
-  const home = mkdtempSync(join(tmpdir(), 'nibd-home-'))
+  const home = mkdtempSync(join(tmpdir(), 'ordend-home-'))
   homes.push(home)
   return home
 }
@@ -30,7 +30,7 @@ function aHome(): string {
 const ID = '0123456789abcdef0123'
 const OTHER = 'fedcba9876543210fedc'
 const bytes = (...values: number[]) => new Uint8Array(values)
-const folderIn = (home: string) => join(home, '.cache', 'nib', 'images')
+const folderIn = (home: string) => join(home, '.cache', 'orden', 'images')
 const aDayAgo = () => (Date.now() - 25 * 60 * 60_000) / 1000
 
 function old(path: string) {
@@ -38,7 +38,7 @@ function old(path: string) {
   utimesSync(path, aDayAgo(), aDayAgo())
 }
 
-describe('where nibd is the user already', () => {
+describe('where ordend is the user already', () => {
   const images = (now = () => Date.now()) => {
     const home = aHome()
     return { home, pictures: new Images(home, null, { now }) }
@@ -110,7 +110,7 @@ describe('where nibd is the user already', () => {
   })
 })
 
-describe('where nibd is root', () => {
+describe('where ordend is root', () => {
   const NIB: User = { name: 'nib', uid: 1000, gid: 1000, home: '', shell: '/bin/bash' }
 
   test('the write is a process of the user’s, and root touches nothing in the home', async () => {

@@ -118,7 +118,7 @@ function hold(spec: Spec, env: Record<string, string>): void {
       if (client === socket) pty.resume()
     })
     socket.on('error', () => {
-      // A `nibd` that went away mid-write; its close below lets the pty go on.
+      // A `ordend` that went away mid-write; its close below lets the pty go on.
     })
     socket.on('close', () => {
       if (client !== socket) return

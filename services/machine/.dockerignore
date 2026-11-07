@@ -1,9 +1,9 @@
 *
-!dist/nibd.cjs
+!dist/ordend.cjs
 !dist/hold.cjs
 !package.json
 !install.sh
 !entrypoint.sh
 !agents.sh
 !profile.sh
-!nib-open
+!orden-open

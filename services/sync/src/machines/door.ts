@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { tokenOf } from '@orden/rooms'
+import { deviceOffered, type OfferedDevice } from '@orden/sync-core'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import { SIGN_IN } from '../refused'
@@ -11,16 +12,14 @@ import { DOOR, reachedOf, type Row, WHO } from './reach'
 import { refusedSocket } from './refuse'
 import { serviceOf } from './service'
 
-const DEVICE_PROTOCOL = 'nib.device.'
 const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
 
 export const NOT_FOUND = 'not found'
 const AWAY = 'the machine is not answering - try again'
 
-function deviceProtocol(header: string | undefined): string | null {
-  const offered = (header ?? '').split(',').map((one) => one.trim())
-  const id = offered.find((one) => one.startsWith(DEVICE_PROTOCOL))?.slice(DEVICE_PROTOCOL.length)
-  return id && DEVICE.test(id) ? id : null
+function deviceProtocol(header: string | undefined): OfferedDevice | null {
+  const offered = deviceOffered(header)
+  return offered && DEVICE.test(offered.device) ? offered : null
 }
 
 export const onlineDoor = new Hono<{ Bindings: Env }>()
@@ -44,11 +43,13 @@ onlineDoor.get('/:term/socket', async (context) => {
     return context.json({ error: SIGN_IN }, 401)
   }
 
-  const device = deviceProtocol(offered)
-  if (!device) return context.json({ error: 'an online terminal socket names its device' }, 400)
+  const named = deviceProtocol(offered)
+  const device = named?.device
+  if (!named || !device)
+    return context.json({ error: 'an online terminal socket names its device' }, 400)
 
   const reached = row ? reachedOf(row) : null
-  if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
+  if (!reached) return refusedSocket('gone', named.protocol)
 
   const [wake, name] = await Promise.all([
     reached.owns ? whyNotWake(env, reached.owner, at, service).then((why) => why ?? 'yes') : 'no',
@@ -56,18 +57,18 @@ onlineDoor.get('/:term/socket', async (context) => {
   ])
   const answer = await askMachine(env, reached.machine, 'join', {
     upgrade: 'websocket',
-    'x-nib-user': reached.owner,
-    'x-nib-who': reached.who,
-    'x-nib-device': device,
-    'x-nib-device-name': name,
-    'x-nib-term': reached.term,
-    'x-nib-session': reached.session,
-    'x-nib-guest': reached.guest ? 'yes' : 'no',
-    'x-nib-role': reached.role ?? '',
-    'x-nib-owns': reached.owns ? 'yes' : 'no',
-    'x-nib-typing': reached.typing,
-    'x-nib-wake': wake,
-    'x-nib-login': hash,
+    'x-orden-user': reached.owner,
+    'x-orden-who': reached.who,
+    'x-orden-device': device,
+    'x-orden-device-name': name,
+    'x-orden-term': reached.term,
+    'x-orden-session': reached.session,
+    'x-orden-guest': reached.guest ? 'yes' : 'no',
+    'x-orden-role': reached.role ?? '',
+    'x-orden-owns': reached.owns ? 'yes' : 'no',
+    'x-orden-typing': reached.typing,
+    'x-orden-wake': wake,
+    'x-orden-login': hash,
   })
 
   if (!answer || (answer.status === 101 && !answer.webSocket)) {
@@ -76,7 +77,7 @@ onlineDoor.get('/:term/socket', async (context) => {
   }
 
   const headers = new Headers(answer.headers)
-  headers.set('sec-websocket-protocol', `${DEVICE_PROTOCOL}${device}`)
+  headers.set('sec-websocket-protocol', named.protocol)
   return new Response(answer.body, {
     status: answer.status,
     statusText: answer.statusText,

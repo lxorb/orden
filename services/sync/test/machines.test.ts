@@ -9,7 +9,7 @@ import { reachAgain } from '../src/machines/reach'
 import { eraseAccount } from '../src/erase'
 import { purgeExpired } from '../src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { doorway, fire, join, machine, type MachineSocket, nibd, say } from './machine-fakes'
+import { doorway, fire, join, machine, type MachineSocket, ordend, say } from './machine-fakes'
 
 const DEVICE = 'device-laptop'
 
@@ -240,12 +240,12 @@ describe('the door', () => {
     add(DEVICE, OWNER, 'Emil’s MacBook')
     door.asked.length = 0
     await knock('term-1', owner)
-    const name = door.asked[0]?.headers.get('x-nib-device-name') ?? ''
+    const name = door.asked[0]?.headers.get('x-orden-device-name') ?? ''
     expect(decodeURIComponent(name)).toBe('Emil’s MacBook')
 
     door.asked.length = 0
     await knock('term-1', writer)
-    expect(door.asked[0]?.headers.get('x-nib-device-name')).toBe('')
+    expect(door.asked[0]?.headers.get('x-orden-device-name')).toBe('')
   })
 
   test('a session is made once per file, on the maker’s own machine', async () => {
@@ -270,12 +270,12 @@ describe('the door', () => {
       expect((await knock('term-1', token)).status, name).toBe(200)
       const [asked] = door.asked
       expect(asked?.id).toBe(term.machine)
-      expect(asked?.headers.get('x-nib-session')).toBe(term.session)
+      expect(asked?.headers.get('x-orden-session')).toBe(term.session)
       seen[name] = {
-        role: asked?.headers.get('x-nib-role') ?? '',
-        owns: asked?.headers.get('x-nib-owns') ?? '',
-        guest: asked?.headers.get('x-nib-guest') ?? '',
-        typing: asked?.headers.get('x-nib-typing') ?? '',
+        role: asked?.headers.get('x-orden-role') ?? '',
+        owns: asked?.headers.get('x-orden-owns') ?? '',
+        guest: asked?.headers.get('x-orden-guest') ?? '',
+        typing: asked?.headers.get('x-orden-typing') ?? '',
       }
     }
 
@@ -318,9 +318,9 @@ describe('the door', () => {
   test('only the owner’s socket may wake the machine', async () => {
     const { owner, writer } = await made()
     await knock('term-1', owner)
-    expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('yes')
+    expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('yes')
     await knock('term-1', writer)
-    expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('no')
+    expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('no')
   })
 
   test('with no file id (a device on sync v1), a session of the owner’s alone', async () => {
@@ -335,8 +335,8 @@ describe('the door', () => {
 
     door.asked.length = 0
     expect((await knock(alone.json.session, owner)).status).toBe(200)
-    expect(door.asked[0]?.headers.get('x-nib-owns')).toBe('yes')
-    expect(door.asked[0]?.headers.get('x-nib-session')).toBe(alone.json.session)
+    expect(door.asked[0]?.headers.get('x-orden-owns')).toBe('yes')
+    expect(door.asked[0]?.headers.get('x-orden-session')).toBe(alone.json.session)
     expect(refusal(await knock(alone.json.session, writer))).toBe('gone')
 
     const stranger = await session('stranger@example.com')
@@ -394,20 +394,20 @@ describe('the door', () => {
       token: owner,
       body: { typing: 'writers' },
     })
-    expect(door.asked[0]?.headers.get('x-nib-machine')).toBe('typing')
+    expect(door.asked[0]?.headers.get('x-orden-machine')).toBe('typing')
     expect(door.asked[0]?.id).toBe(term.machine)
   })
 
   const signedOut = () =>
     door.asked
-      .filter((one) => one.headers.get('x-nib-machine') === 'signedout')
-      .map((one) => ({ id: one.id, logins: one.headers.get('x-nib-logins')?.split(',') ?? [] }))
+      .filter((one) => one.headers.get('x-orden-machine') === 'signedout')
+      .map((one) => ({ id: one.id, logins: one.headers.get('x-orden-logins')?.split(',') ?? [] }))
 
   test('lets a socket in with the sign-in it arrived with, for the machine to end it by', async () => {
     const { owner } = await made()
     door.asked.length = 0
     await knock('term-1', owner)
-    expect(door.asked[0]?.headers.get('x-nib-login')).toBe(await sha256(owner))
+    expect(door.asked[0]?.headers.get('x-orden-login')).toBe(await sha256(owner))
   })
 
   test('ending every other session tells the machine, the owner’s own sockets included', async () => {
@@ -472,10 +472,10 @@ describe('the door', () => {
       token: owner,
     })
     expect(out.status).toBeLessThan(300)
-    const revoked = door.asked.find((one) => one.headers.get('x-nib-machine') === 'revoke')
+    const revoked = door.asked.find((one) => one.headers.get('x-orden-machine') === 'revoke')
     expect(revoked?.id).toBe(term.machine)
-    expect(revoked?.headers.get('x-nib-who')).toBe(idOf(WRITER))
-    expect(revoked?.headers.get('x-nib-terms')).toBe('term-1')
+    expect(revoked?.headers.get('x-orden-who')).toBe(idOf(WRITER))
+    expect(revoked?.headers.get('x-orden-terms')).toBe('term-1')
   })
 
   test('Settings’ list is every session with what the machine says of it, and those no row names', async () => {
@@ -524,8 +524,8 @@ describe('the door', () => {
     const ended = await call(env, '/v2/online/terms/s_orphan', { method: 'DELETE', token: owner })
     expect(ended.status).toBe(200)
     expect(door.asked.at(-1)?.id).toBe(term.machine)
-    expect(door.asked.at(-1)?.headers.get('x-nib-machine')).toBe('end')
-    expect(door.asked.at(-1)?.headers.get('x-nib-session')).toBe('s_orphan')
+    expect(door.asked.at(-1)?.headers.get('x-orden-machine')).toBe('end')
+    expect(door.asked.at(-1)?.headers.get('x-orden-session')).toBe('s_orphan')
   })
 
   test('a file moved to another space keeps its session, and a copy beside it gets its own', async () => {
@@ -626,8 +626,8 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
 
     door.asked.length = 0
     expect((await knock('term-1', writer)).status).toBe(200)
-    expect(door.asked[0]?.headers.get('x-nib-session')).toBe(old.session)
-    expect(door.asked[0]?.headers.get('x-nib-role')).toBe('write')
+    expect(door.asked[0]?.headers.get('x-orden-session')).toBe(old.session)
+    expect(door.asked[0]?.headers.get('x-orden-role')).toBe('write')
     expect(refusal(await knock(old.session, writer))).toBe('gone')
   })
 
@@ -640,8 +640,8 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     door.asked.length = 0
     const knocked = await knock(old.session, owner)
     expect(refusal(knocked)).toBeNull()
-    expect(door.asked[0]?.headers.get('x-nib-session')).toBe(old.session)
-    expect(door.asked[0]?.headers.get('x-nib-owns')).toBe('yes')
+    expect(door.asked[0]?.headers.get('x-orden-session')).toBe(old.session)
+    expect(door.asked[0]?.headers.get('x-orden-owns')).toBe('yes')
 
     const again = await reachAgain(env, old.machine, [
       { who: idOf(OWNER), term: old.session, guest: false },
@@ -777,8 +777,8 @@ describe('emptying the trash of a .term file', () => {
     ).ended_at
   const ends = () =>
     door.asked
-      .filter((one) => one.headers.get('x-nib-machine') === 'end')
-      .map((one) => ({ machine: one.id, session: one.headers.get('x-nib-session') }))
+      .filter((one) => one.headers.get('x-orden-machine') === 'end')
+      .map((one) => ({ machine: one.id, session: one.headers.get('x-orden-session') }))
 
   async function two() {
     const people = await world()
@@ -945,7 +945,7 @@ describe('a machine', () => {
   const machineRow = () =>
     env.db.prepare('select * from machines where id = ?').get(ID) as Record<string, unknown>
 
-  test('wakes for its owner’s socket, links nibd and opens the session', async () => {
+  test('wakes for its owner’s socket, links ordend and opens the session', async () => {
     const running = await machine(env, ID, user)
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
 
@@ -995,13 +995,13 @@ describe('a machine', () => {
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
     const bytes = (text: string) => new TextEncoder().encode(text)
 
-    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hello') })
-    await nibd(running, { t: 'out', session: 'session-1', seq: 5, data: bytes(' world') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hello') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 5, data: bytes(' world') })
     expect(owner.bytes).toHaveLength(2)
 
     const reader = await join(running, { who: 'reader' })
     await say(running, reader, { t: 'hello', cols: 80, rows: 24 })
-    await nibd(running, {
+    await ordend(running, {
       t: 'screen',
       session: 'session-1',
       seq: 11,
@@ -1009,7 +1009,7 @@ describe('a machine', () => {
       rows: 24,
       data: 'hello world',
     })
-    await nibd(running, { t: 'out', session: 'session-1', seq: 11, data: bytes('!') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 11, data: bytes('!') })
     expect(reader.of('screen')).toEqual([
       { t: 'screen', seq: 11, cols: 80, rows: 24, data: 'hello world' },
     ])
@@ -1022,7 +1022,7 @@ describe('a machine', () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
-    await nibd(running, { t: 'ended', session: 'session-1', code: 0 })
+    await ordend(running, { t: 'ended', session: 'session-1', code: 0 })
     running.host.link_?.take()
 
     const reader = await join(running, { who: 'reader', role: 'read' })
@@ -1044,7 +1044,7 @@ describe('a machine', () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
-    await nibd(running, { t: 'ended', session: 'session-1', code: 0 })
+    await ordend(running, { t: 'ended', session: 'session-1', code: 0 })
     running.host.link_?.take()
     running.state.drop(owner as never)
 
@@ -1118,7 +1118,7 @@ describe('a machine', () => {
       { t: 'in', session: 'session-1', data: new TextEncoder().encode('b') },
     ])
 
-    void running.machine.fromNibd({
+    void running.machine.fromOrdend({
       t: 'out',
       session: 'session-1',
       seq: 0,
@@ -1151,7 +1151,11 @@ describe('a machine', () => {
 
     await running.machine.fetch(
       new Request('https://machine.invalid/typing', {
-        headers: { 'x-nib-machine': 'typing', 'x-nib-term': 'term-1', 'x-nib-typing': 'writers' },
+        headers: {
+          'x-orden-machine': 'typing',
+          'x-orden-term': 'term-1',
+          'x-orden-typing': 'writers',
+        },
       }),
     )
     expect(writer.of('role').at(-1)).toEqual({ t: 'role', type: true })
@@ -1184,7 +1188,7 @@ describe('a machine', () => {
 
     await running.machine.fetch(
       new Request('https://machine.invalid/signedout', {
-        headers: { 'x-nib-machine': 'signedout', 'x-nib-logins': 'l-laptop' },
+        headers: { 'x-orden-machine': 'signedout', 'x-orden-logins': 'l-laptop' },
       }),
     )
     expect(laptop.closedWith?.code).toBe(4401)
@@ -1207,7 +1211,7 @@ describe('a machine', () => {
     )
     env.db.prepare('delete from sessions where token_hash = ?').run(await sha256(laptopToken))
 
-    await nibd(running, {
+    await ordend(running, {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0, net: 0, homeBytes: 1000 },
     })
@@ -1225,10 +1229,10 @@ describe('a machine', () => {
     await running.machine.fetch(
       new Request('https://machine.invalid/revoke', {
         headers: {
-          'x-nib-machine': 'revoke',
-          'x-nib-who': 'writer',
-          'x-nib-role': 'none',
-          'x-nib-terms': 'term-1',
+          'x-orden-machine': 'revoke',
+          'x-orden-who': 'writer',
+          'x-orden-role': 'none',
+          'x-orden-terms': 'term-1',
         },
       }),
     )
@@ -1237,10 +1241,10 @@ describe('a machine', () => {
     await running.machine.fetch(
       new Request('https://machine.invalid/revoke', {
         headers: {
-          'x-nib-machine': 'revoke',
-          'x-nib-who': 'other',
-          'x-nib-role': 'read',
-          'x-nib-terms': 'term-1',
+          'x-orden-machine': 'revoke',
+          'x-orden-who': 'other',
+          'x-orden-role': 'read',
+          'x-orden-terms': 'term-1',
         },
       }),
     )
@@ -1254,7 +1258,7 @@ describe('a machine', () => {
     const reader = await join(running, { who: idOf(READER), role: 'read' })
     env.db.prepare('delete from space_members where email = ?').run(READER)
 
-    await nibd(running, {
+    await ordend(running, {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0, net: 0, homeBytes: 1000 },
     })
@@ -1267,7 +1271,7 @@ describe('a machine', () => {
   test('sleeps 15 idle minutes after the last sign of use, saving as it goes', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
-    await nibd(running, {
+    await ordend(running, {
       t: 'activity',
       activity: { at: Date.now(), output: 10, cpu: 0.5, net: 0, homeBytes: 4096 },
     })
@@ -1386,7 +1390,7 @@ describe('a machine', () => {
     expect(owner.of('link')).toEqual([{ t: 'link', up: false }])
     expect(events()).toEqual(
       expect.arrayContaining([
-        { kind: 'failed', detail: 'link: Error nibd answered 401' },
+        { kind: 'failed', detail: 'link: Error ordend answered 401' },
         { kind: 'sleep', detail: 'restart' },
         { kind: 'wake', detail: 'snapshot' },
       ]),
@@ -1551,7 +1555,7 @@ describe('a machine', () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const writer = await join(running, { who: 'writer', role: 'write', typing: 'writers' })
-    await nibd(running, {
+    await ordend(running, {
       t: 'screen',
       session: 'session-1',
       seq: 0,
@@ -1586,17 +1590,17 @@ describe('a machine', () => {
 
     await say(running, phone, { t: 'in', data: 'x' })
     await say(running, writer, { t: 'in', data: 'y' })
-    await nibd(running, { t: 'browse', session: 'session-1', url })
+    await ordend(running, { t: 'browse', session: 'session-1', url })
     expect(phone.of('browse')).toEqual([{ t: 'browse', url }])
     expect(laptop.of('browse')).toEqual([])
     expect(writer.of('browse')).toEqual([])
     expect(reader.of('browse')).toEqual([])
 
     await say(running, laptop, { t: 'in', data: 'z' })
-    await nibd(running, { t: 'browse', session: 'session-1', url })
+    await ordend(running, { t: 'browse', session: 'session-1', url })
     expect(laptop.of('browse')).toHaveLength(1)
 
-    await nibd(running, { t: 'browse', session: 'session-2', url })
+    await ordend(running, { t: 'browse', session: 'session-2', url })
     expect(laptop.of('browse')).toHaveLength(1)
     expect(phone.of('browse')).toHaveLength(1)
   })
@@ -1605,7 +1609,7 @@ describe('a machine', () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     for (let one = 0; one < 15; one++) {
-      await nibd(running, {
+      await ordend(running, {
         t: 'browse',
         session: 'session-1',
         url: `https://a.b/${String(one)}`,
@@ -1613,7 +1617,7 @@ describe('a machine', () => {
     }
     expect(owner.of('browse')).toHaveLength(10)
     vi.setSystemTime(Date.now() + 60_000)
-    await nibd(running, { t: 'browse', session: 'session-1', url: 'https://a.b/next' })
+    await ordend(running, { t: 'browse', session: 'session-1', url: 'https://a.b/next' })
     expect(owner.of('browse')).toHaveLength(11)
   })
 
@@ -1634,7 +1638,7 @@ describe('a machine', () => {
     await say(running, owner, { t: 'callback', url })
     expect(running.host.link_?.take()).toEqual([{ t: 'callback', session: 'session-1', url }])
 
-    await nibd(running, { t: 'called', session: 'session-1', url, status: 302 })
+    await ordend(running, { t: 'called', session: 'session-1', url, status: 302 })
     expect(owner.of('called')).toEqual([{ t: 'called', url, status: 302 }])
     expect(writer.of('called')).toEqual([])
   })
@@ -1662,8 +1666,8 @@ describe('a machine', () => {
       },
     ])
 
-    const path = '/home/nib/.cache/nib/images/0123456789abcdef0123.png'
-    await nibd(running, { t: 'image', session: 'session-1', id, path })
+    const path = '/home/nib/.cache/orden/images/0123456789abcdef0123.png'
+    await ordend(running, { t: 'image', session: 'session-1', id, path })
     expect(owner.of('image')).toEqual([{ t: 'image', id, path }])
     expect(reader.of('image')).toEqual([])
   })
@@ -1678,7 +1682,7 @@ describe('a machine', () => {
       owner as unknown as WebSocket,
       new TextEncoder().encode(secret).buffer as ArrayBuffer,
     )
-    await nibd(running, {
+    await ordend(running, {
       t: 'out',
       session: 'session-1',
       seq: 0,
@@ -1836,7 +1840,7 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
   })
 
-  test('the health path: a nibd that keeps going quiet is restarted through its link', async () => {
+  test('the health path: a ordend that keeps going quiet is restarted through its link', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
@@ -1856,7 +1860,7 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
   })
 
-  test('a nibd that ended is linked again within seconds of being back', async () => {
+  test('a ordend that ended is linked again within seconds of being back', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
@@ -1899,7 +1903,7 @@ describe('a machine on a server of its own', () => {
     expect(gaps.at(-1)).toBe(10_000)
   })
 
-  test('a link that closes twice in a minute is made again both times, and nibd keeps its shells', async () => {
+  test('a link that closes twice in a minute is made again both times, and ordend keeps its shells', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, socket, { t: 'hello', cols: 80, rows: 24 })
@@ -1916,7 +1920,7 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
   })
 
-  test('a nibd that will not link is waited for, then the server power-cycled', async () => {
+  test('a ordend that will not link is waited for, then the server power-cycled', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
@@ -1941,24 +1945,24 @@ describe('a machine on a server of its own', () => {
     expect(states.slice(states.indexOf('awake') + 1)).not.toContain('asleep')
   })
 
-  test('its owner’s Stop is Restart: nibd starts again, the server stays', async () => {
+  test('its owner’s Stop is Restart: ordend starts again, the server stays', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     door.asked.length = 0
     const answer = await call(env, '/v2/online/machine/stop', { token: owner, body: {} })
     expect(answer.status).toBe(200)
-    expect(door.asked.at(-1)?.headers.get('x-nib-machine')).toBe('restart')
+    expect(door.asked.at(-1)?.headers.get('x-orden-machine')).toBe('restart')
 
     await running.machine.fetch(
       new Request('https://machine.invalid/restart', {
-        headers: { 'x-nib-machine': 'restart', 'x-nib-who': user },
+        headers: { 'x-orden-machine': 'restart', 'x-orden-who': user },
       }),
     )
     expect(running.host.link_?.sent.at(-1)).toEqual({ t: 'restart' })
     expect(await running.machine.state()).toBe('awake')
   })
 
-  test('an End said while nibd cannot be reached is said once it is, so no program runs on', async () => {
+  test('an End said while ordend cannot be reached is said once it is, so no program runs on', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     if (running.host.link_) running.host.link_.silent = true
@@ -1968,7 +1972,7 @@ describe('a machine on a server of its own', () => {
 
     await running.machine.fetch(
       new Request('https://machine.invalid/end', {
-        headers: { 'x-nib-machine': 'end', 'x-nib-session': 'session-1' },
+        headers: { 'x-orden-machine': 'end', 'x-orden-session': 'session-1' },
       }),
     )
     running.host.failLinks = 0
@@ -1985,13 +1989,13 @@ describe('a machine on a server of its own', () => {
     expect(running.host.link_?.sent).not.toContainEqual({ t: 'close', session: 'session-1' })
   })
 
-  test('Settings’ list is what nibd says it has, asked down the link; nothing without one', async () => {
+  test('Settings’ list is what ordend says it has, asked down the link; nothing without one', async () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const ask = () =>
       running.machine.fetch(
         new Request('https://machine.invalid/sessions', {
-          headers: { 'x-nib-machine': 'sessions' },
+          headers: { 'x-orden-machine': 'sessions' },
         }),
       )
     const asked = ask()
@@ -1999,7 +2003,7 @@ describe('a machine on a server of its own', () => {
       expect(running.host.link_?.sent).toContainEqual({ t: 'list' })
     })
     const sessions = [{ session: 'session-1', program: 'vim', title: null, alive: true, at: 3 }]
-    await nibd(running, { t: 'sessions', sessions })
+    await ordend(running, { t: 'sessions', sessions })
     expect(await (await asked).json()).toEqual({ sessions })
 
     const unanswered = ask()
@@ -2011,7 +2015,7 @@ describe('a machine on a server of its own', () => {
     const running = await server()
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await running.machine.fetch(
-      new Request('https://machine.invalid/reboot', { headers: { 'x-nib-machine': 'reboot' } }),
+      new Request('https://machine.invalid/reboot', { headers: { 'x-orden-machine': 'reboot' } }),
     )
     expect(running.host.calls.at(-1)).toBe('reboot')
     expect(await running.machine.state()).toBe('starting')
@@ -2031,10 +2035,10 @@ describe('a machine on a server of its own', () => {
       homeBytes: 1,
       disk: { used, total: 160e9 },
     })
-    await nibd(running, { t: 'activity', activity: activity(100e9) })
+    await ordend(running, { t: 'activity', activity: activity(100e9) })
     expect(socket.of('note')).toEqual([])
-    await nibd(running, { t: 'activity', activity: activity(150e9) })
-    await nibd(running, { t: 'activity', activity: activity(151e9) })
+    await ordend(running, { t: 'activity', activity: activity(150e9) })
+    await ordend(running, { t: 'activity', activity: activity(151e9) })
     expect(socket.of('note')).toEqual([{ t: 'note', note: 'disk' }])
 
     const late = await join(running, { who: user, owns: true, role: 'owner' })
@@ -2053,11 +2057,11 @@ describe('a machine on a server of its own', () => {
       )
       .run()
     await knock('term-1', owner)
-    expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('yes')
+    expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('yes')
 
     env.db.prepare('update machines set server_id = null where id = ?').run(ID)
     await knock('term-1', owner)
-    expect(door.asked.at(-1)?.headers.get('x-nib-wake')).toBe('budget')
+    expect(door.asked.at(-1)?.headers.get('x-orden-wake')).toBe('budget')
 
     env.db.prepare('delete from machine_usage').run()
     const { budgetLeft, mayCost } = await import('../src/machines/budget')
@@ -2115,7 +2119,7 @@ describe('a machine on a server of its own', () => {
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     const answer = await running.machine.fetch(
       new Request('https://machine.invalid/erase', {
-        headers: { 'x-nib-machine': 'erase', 'x-nib-id': ID },
+        headers: { 'x-orden-machine': 'erase', 'x-orden-id': ID },
       }),
     )
     expect(answer.status).toBe(204)
@@ -2128,7 +2132,7 @@ describe('a machine on a server of its own', () => {
     running.host.remove = () => Promise.reject(new Error('rate_limit_exceeded'))
     const answer = await running.machine.fetch(
       new Request('https://machine.invalid/erase', {
-        headers: { 'x-nib-machine': 'erase', 'x-nib-id': ID },
+        headers: { 'x-orden-machine': 'erase', 'x-orden-id': ID },
       }),
     )
     expect(answer.status).toBe(503)
@@ -2145,17 +2149,17 @@ describe('a machine on a server of its own', () => {
     })
 
     expect((await admin(`/machines/${ID}/reboot`)).status).toBe(200)
-    expect(asked()?.get('x-nib-machine')).toBe('reboot')
+    expect(asked()?.get('x-orden-machine')).toBe('reboot')
 
     expect((await admin(`/machines/${ID}/host`, { host: 'cloudflare' })).json).toEqual({
       host: 'cloudflare',
     })
-    expect(asked()?.get('x-nib-host')).toBe('cloudflare')
+    expect(asked()?.get('x-orden-host')).toBe('cloudflare')
     expect((await admin(`/machines/${ID}/host`, { host: 'aws' })).status).toBe(400)
 
     const { Cloud } = await import('./hetzner-cloud')
     const cloud = new Cloud()
-    cloud.firewalls.push({ id: 5, name: 'nib-server', labels: { 'nib-machine': ID }, rules: [] })
+    cloud.firewalls.push({ id: 5, name: 'nib-server', labels: { 'orden-machine': ID }, rules: [] })
     vi.stubGlobal('fetch', cloud.fetch)
     try {
       expect((await admin(`/machines/${ID}/ssh`, { key: 'not a key' })).status).toBe(400)
@@ -2173,7 +2177,7 @@ describe('a machine on a server of its own', () => {
     }
 
     expect((await admin(`/machines/${ID}/remove`)).json).toEqual({ removed: true })
-    expect(asked()?.get('x-nib-machine')).toBe('erase')
+    expect(asked()?.get('x-orden-machine')).toBe('erase')
     expect(
       env.db.prepare('select server_id, price_month, state from machines where id = ?').get(ID),
     ).toEqual({ server_id: null, price_month: null, state: 'asleep' })
@@ -2189,7 +2193,7 @@ describe('a machine on a server of its own', () => {
     await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await running.machine.fetch(
       new Request('https://machine.invalid/host', {
-        headers: { 'x-nib-machine': 'host', 'x-nib-host': 'hetzner' },
+        headers: { 'x-orden-machine': 'host', 'x-orden-host': 'hetzner' },
       }),
     )
     expect(running.host.calls).toEqual([
@@ -2215,7 +2219,7 @@ describe('the hub’s machine frame', () => {
 
     await made.fetch(
       new Request('https://hub.invalid/machine', {
-        headers: { 'x-nib-hub': 'machine', 'x-nib-state': 'starting' },
+        headers: { 'x-orden-hub': 'machine', 'x-orden-state': 'starting' },
       }),
     )
     expect(laptop.take()).toEqual([{ t: 'machine', state: 'starting' }])
@@ -2226,7 +2230,7 @@ describe('the hub’s machine frame', () => {
     expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
 
     await made.fetch(
-      new Request('https://hub.invalid/terms', { headers: { 'x-nib-hub': 'terms' } }),
+      new Request('https://hub.invalid/terms', { headers: { 'x-orden-hub': 'terms' } }),
     )
     expect(laptop.take()).toEqual([{ t: 'terms' }])
     expect(guest.take()).toEqual([])
@@ -2235,10 +2239,10 @@ describe('the hub’s machine frame', () => {
 })
 
 describe('the dev host', () => {
-  test('drives a nibd on this computer and refuses any other address', async () => {
+  test('drives a ordend on this computer and refuses any other address', async () => {
     const { DevHost } = await import('../src/machines/host')
-    const local = testEnv({ MACHINE_DEV_NIBD: 'http://127.0.0.1:7680', MACHINE_DEV_SECRET: 's' })
-    const remote = testEnv({ MACHINE_DEV_NIBD: 'http://203.0.113.9:7680' })
+    const local = testEnv({ MACHINE_DEV_ORDEND: 'http://127.0.0.1:7680', MACHINE_DEV_SECRET: 's' })
+    const remote = testEnv({ MACHINE_DEV_ORDEND: 'http://203.0.113.9:7680' })
     expect(DevHost.of(local)).toBeInstanceOf(DevHost)
     expect(DevHost.of(remote)).toBeNull()
     expect(DevHost.of(env)).toBeNull()
@@ -2305,7 +2309,7 @@ describe('one device at a time (issue 1055)', () => {
       { t: 'held', by: 'laptop’s screen', since: at, taken: false },
     ])
     running.host.link_?.take()
-    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
     expect(laptop.bytes).toHaveLength(1)
     expect(phone.bytes).toHaveLength(0)
 
@@ -2319,7 +2323,7 @@ describe('one device at a time (issue 1055)', () => {
   test('Take over hands it to the new device at once; the old one is told and can take it back', async () => {
     const running = await machine(env, ID, user)
     const laptop = await on(running, 'laptop')
-    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build…') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build…') })
     const phone = await on(running, 'phone')
     running.host.link_?.take()
 
@@ -2335,7 +2339,7 @@ describe('one device at a time (issue 1055)', () => {
     expect(told).toContainEqual({ t: 'want', session: 'session-1', since: 0 })
     expect(told).toContainEqual({ t: 'size', session: 'session-1', cols: 40, rows: 20 })
     expect(told.filter((one) => one.t === 'close' || one.t === 'open')).toEqual([])
-    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build… done') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('build… done') })
     expect(phone.bytes).toHaveLength(1)
     expect(laptop.bytes).toHaveLength(1)
 
@@ -2358,7 +2362,7 @@ describe('one device at a time (issue 1055)', () => {
     const phone = await on(running, 'phone')
     await say(running, phone, { t: 'take' })
     await say(running, phone, { t: 'hello', cols: 80, rows: 24, hold: true })
-    await nibd(running, {
+    await ordend(running, {
       t: 'screen',
       session: 'session-1',
       seq: 5000,
@@ -2458,7 +2462,7 @@ describe('one device at a time (issue 1055)', () => {
     await say(running, reader, { t: 'hello', cols: 80, rows: 24, hold: true })
     const older = await join(running, { who: user, owns: true, role: 'owner', device: 'old' })
     await say(running, older, { t: 'hello', cols: 80, rows: 24 })
-    await nibd(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
+    await ordend(running, { t: 'out', session: 'session-1', seq: 0, data: bytes('hi') })
 
     expect(reader.of('held')).toEqual([])
     expect(older.of('held')).toEqual([])
@@ -2475,7 +2479,7 @@ describe('one device at a time (issue 1055)', () => {
     expect(hold(running)).not.toBeNull()
     await running.machine.fetch(
       new Request('https://machine.invalid/end', {
-        headers: { 'x-nib-machine': 'end', 'x-nib-session': 'session-1' },
+        headers: { 'x-orden-machine': 'end', 'x-orden-session': 'session-1' },
       }),
     )
     expect(hold(running)).toBeNull()

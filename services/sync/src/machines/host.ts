@@ -4,8 +4,8 @@ import { mayCost } from './budget'
 import { HetznerHost, setupOf } from './hetzner-host'
 import { serviceOf } from './service'
 
-const NIBD_PORT = 7680
-const LINK_URL = 'http://nibd/link'
+const ORDEND_PORT = 7680
+const LINK_URL = 'http://ordend/link'
 
 const BACKSTOP = 20 * 60 * 1000
 
@@ -119,7 +119,7 @@ class ContainerHost implements MachineHost {
     let last: unknown = null
     for (let tried = 0; tried < LINK_TRIES; tried++) {
       try {
-        const answer = await this.container.getTcpPort(NIBD_PORT).fetch(LINK_URL, {
+        const answer = await this.container.getTcpPort(ORDEND_PORT).fetch(LINK_URL, {
           headers: { upgrade: 'websocket', authorization: `Bearer ${secret ?? ''}` },
         })
         const socket = answer.webSocket
@@ -127,13 +127,13 @@ class ContainerHost implements MachineHost {
           socket.accept()
           return socket
         }
-        last = new Error(`nibd answered ${String(answer.status)}`)
+        last = new Error(`ordend answered ${String(answer.status)}`)
       } catch (error) {
         last = error
       }
       await wait(LINK_WAIT)
     }
-    throw last instanceof Error ? last : new Error('nibd did not answer')
+    throw last instanceof Error ? last : new Error('ordend did not answer')
   }
 
   async snapshot(id: string): Promise<string> {
@@ -162,7 +162,7 @@ export class DevHost implements MachineHost {
   ) {}
 
   static of(env: Env): DevHost | null {
-    const address = env.MACHINE_DEV_NIBD
+    const address = env.MACHINE_DEV_ORDEND
     if (!address) return null
     const host = new URL(address).hostname
     if (host !== '127.0.0.1' && host !== 'localhost' && host !== '[::1]') return null
@@ -186,7 +186,7 @@ export class DevHost implements MachineHost {
       headers: { upgrade: 'websocket', authorization: `Bearer ${this.secret}` },
     })
     const socket = answer.webSocket
-    if (!socket) throw new Error(`nibd answered ${String(answer.status)}`)
+    if (!socket) throw new Error(`ordend answered ${String(answer.status)}`)
     socket.accept()
     return socket
   }

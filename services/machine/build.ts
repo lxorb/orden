@@ -3,7 +3,7 @@ import { gzipSync } from 'node:zlib'
 import { build } from 'esbuild'
 
 for (const [entry, outfile] of [
-  ['src/main.ts', 'dist/nibd.cjs'],
+  ['src/main.ts', 'dist/ordend.cjs'],
   ['src/hold.ts', 'dist/hold.cjs'],
 ] as const) {
   await build({
@@ -21,16 +21,16 @@ for (const [entry, outfile] of [
 
 const BUNDLE: readonly [string, string, boolean][] = [
   ['install.sh', 'install.sh', true],
-  ['nibd.cjs', 'dist/nibd.cjs', false],
+  ['ordend.cjs', 'dist/ordend.cjs', false],
   ['hold.cjs', 'dist/hold.cjs', false],
   ['package.json', 'package.json', false],
   ['agents.sh', 'agents.sh', true],
   ['profile.sh', 'profile.sh', false],
-  ['nib-open', 'nib-open', true],
-  ['nib-update', 'nib-update', true],
-  ['server/nibd.service', 'server/nibd.service', false],
+  ['orden-open', 'orden-open', true],
+  ['orden-update', 'orden-update', true],
+  ['server/ordend.service', 'server/ordend.service', false],
   ['server/cloudflared.service', 'server/cloudflared.service', false],
-  ['server/nib-agents.service', 'server/nib-agents.service', false],
+  ['server/orden-agents.service', 'server/orden-agents.service', false],
 ]
 
 const BLOCK = 512

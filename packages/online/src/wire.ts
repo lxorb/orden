@@ -170,7 +170,7 @@ export interface SessionNow {
 
 const MOST_LISTED = 64
 
-export type NibdFrame =
+export type OrdendFrame =
   | { t: 'out'; session: string; seq: number; data: Uint8Array }
   | {
       t: 'screen'
@@ -202,7 +202,7 @@ export const QUIET_FOR = 20_000
 
 export const SILENT_FOR = 40_000
 
-export function linkFrame(value: MachineFrame | NibdFrame): Uint8Array {
+export function linkFrame(value: MachineFrame | OrdendFrame): Uint8Array {
   return frame(value)
 }
 
@@ -475,7 +475,7 @@ export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   }
 }
 
-export function nibdFrameOf(bytes: Uint8Array): NibdFrame | null {
+export function ordendFrameOf(bytes: Uint8Array): OrdendFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
   switch (value.t) {

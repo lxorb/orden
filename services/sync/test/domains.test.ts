@@ -83,7 +83,7 @@ describe("a domain of one's own", () => {
         name: 'notes.example.com',
         value: 'cname.orden.so',
       }),
-      expect.objectContaining({ type: 'TXT', name: '_nib-verify.notes.example.com' }),
+      expect.objectContaining({ type: 'TXT', name: '_orden-verify.notes.example.com' }),
     ])
   })
 
@@ -285,7 +285,7 @@ describe("a domain of one's own", () => {
 })
 
 describe('proving a domain is yours', () => {
-  const RECORD = '_nib-verify.notes.example.com'
+  const RECORD = '_orden-verify.notes.example.com'
 
   test('a claim serves nothing until the record is there', async () => {
     await publish({ domain: 'notes.example.com' })
@@ -350,6 +350,14 @@ describe('proving a domain is yours', () => {
 
     expect((await verify()).status).toBe(409)
     expect((await status()).json.state).toBe('unproved')
+  })
+
+  test('is proved by a record added under the name it had before the rename', async () => {
+    await publish({ domain: 'notes.example.com' })
+    cloudflare.txt('_nib-verify.notes.example.com', [(await wanted()).value])
+
+    expect((await verify()).status).toBe(200)
+    expect((await status()).json.state).not.toBe('unproved')
   })
 
   test('is proved with the token among the other records at that name', async () => {
@@ -486,7 +494,7 @@ describe('what to add at the registrar', () => {
         name: 'notes.example.com',
         value: 'cname.orden.so',
       }),
-      expect.objectContaining({ type: 'TXT', name: '_nib-verify.notes.example.com' }),
+      expect.objectContaining({ type: 'TXT', name: '_orden-verify.notes.example.com' }),
     ])
   })
 
@@ -497,7 +505,7 @@ describe('what to add at the registrar', () => {
     expect(response.json.dns[0]!.type).toBe('CNAME')
     expect(response.json.dns[0]!.value).toBe('cname.orden.so')
     expect(response.json.dns[0]!.note).toMatch(/ALIAS/)
-    expect(response.json.dns[1]!.name).toBe('_nib-verify.example.com')
+    expect(response.json.dns[1]!.name).toBe('_orden-verify.example.com')
   })
 
   test('never names a placeholder address', async () => {

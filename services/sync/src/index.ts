@@ -68,6 +68,7 @@ import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
 import { steadyEnv } from './steady'
 import type { Env, Variables, Whoever } from './types'
+import { SAID } from './said'
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
@@ -80,7 +81,7 @@ const appOrigins = cors({
     ) || isOwnOrigin(context.env, origin)
       ? origin
       : '',
-  allowHeaders: ['authorization', 'content-type', 'x-nib-device', 'x-nib-diagram'],
+  allowHeaders: ['authorization', 'content-type', ...SAID(['device', 'diagram'])],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 86400,
 })

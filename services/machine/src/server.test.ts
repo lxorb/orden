@@ -1,16 +1,16 @@
 import type { AddressInfo } from 'node:net'
 import { afterEach, expect, test } from 'vitest'
 import { WebSocket } from 'ws'
-import { linkFrame, nibdFrameOf, type MachineFrame, type NibdFrame } from '@orden/online/wire'
-import type { Nibd } from './nibd'
+import { linkFrame, ordendFrameOf, type MachineFrame, type OrdendFrame } from '@orden/online/wire'
+import type { Ordend } from './ordend'
 import { serve } from './server'
 
 const SECRET = 'a-secret-for-this-boot'
 
 function fake() {
   const received: MachineFrame[] = []
-  let send: ((frame: NibdFrame) => void) | null = null
-  const nibd = {
+  let send: ((frame: OrdendFrame) => void) | null = null
+  const ordend = {
     attach: (to: typeof send) => {
       send = to
     },
@@ -20,7 +20,11 @@ function fake() {
     },
     pause: () => undefined,
   }
-  return { nibd: nibd as unknown as Nibd, received, say: (frame: NibdFrame) => send?.(frame) }
+  return {
+    ordend: ordend as unknown as Ordend,
+    received,
+    say: (frame: OrdendFrame) => send?.(frame),
+  }
 }
 
 const servers: { close: () => void }[] = []
@@ -30,7 +34,7 @@ afterEach(() => {
 
 async function started(secret = SECRET) {
   const machine = fake()
-  const server = serve(machine.nibd, secret)
+  const server = serve(machine.ordend, secret)
   servers.push(server)
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const { port } = server.address() as AddressInfo
@@ -47,9 +51,9 @@ function linked(url: string, secret: string | null): Promise<WebSocket> {
   })
 }
 
-function next(socket: WebSocket): Promise<NibdFrame | null> {
+function next(socket: WebSocket): Promise<OrdendFrame | null> {
   return new Promise((resolve) => {
-    socket.once('message', (data: Buffer) => resolve(nibdFrameOf(new Uint8Array(data))))
+    socket.once('message', (data: Buffer) => resolve(ordendFrameOf(new Uint8Array(data))))
   })
 }
 
@@ -123,9 +127,9 @@ test('a ping is answered at once, before anything else is done with it', async (
 
 test('a link that pinged and then fell silent is dropped and let go of', async () => {
   const attached: unknown[] = []
-  const { nibd } = fake()
-  ;(nibd as unknown as { attach: (to: unknown) => void }).attach = (to) => attached.push(to)
-  const server = serve(nibd, SECRET, { silentFor: 300 })
+  const { ordend } = fake()
+  ;(ordend as unknown as { attach: (to: unknown) => void }).attach = (to) => attached.push(to)
+  const server = serve(ordend, SECRET, { silentFor: 300 })
   servers.push(server)
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const { port } = server.address() as AddressInfo
@@ -139,7 +143,7 @@ test('a link that pinged and then fell silent is dropped and let go of', async (
 
 test('a link that never pinged is never judged by its silence', async () => {
   const machine = fake()
-  const server = serve(machine.nibd, SECRET, { silentFor: 100 })
+  const server = serve(machine.ordend, SECRET, { silentFor: 100 })
   servers.push(server)
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const { port } = server.address() as AddressInfo

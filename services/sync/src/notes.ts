@@ -44,6 +44,7 @@ import {
   versionsOf,
   versionKey,
 } from './versions'
+import { said } from './said'
 
 const TOO_LARGE = 'that note is too large'
 
@@ -410,7 +411,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
       space.id,
       path,
       content,
-      deviceIn(context.req.header('x-nib-device')),
+      deviceIn(said((name) => context.req.header(name), 'device')),
       device,
     )
   } catch (error) {
@@ -606,7 +607,7 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
     })
   }
 
-  const asking = deviceIn(context.req.header('x-nib-device'))
+  const asking = deviceIn(said((name) => context.req.header(name), 'device'))
   const device = await deviceOf(context)
 
   let written = 0
@@ -701,7 +702,7 @@ notes.put('/notes/:id', async (context) => {
   let written: Awaited<ReturnType<typeof writeWords>>
   try {
     written = await writeWords(context.env, note, content, placed ? note.path : path, {
-      name: deviceIn(context.req.header('x-nib-device')),
+      name: deviceIn(said((name) => context.req.header(name), 'device')),
       device,
       ...(base === undefined ? {} : { base }),
     })

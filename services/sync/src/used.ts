@@ -173,7 +173,7 @@ async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<s
     done.asks -= chats.length
     for (const chat of chats) {
       const answer = await askChat(env, chat.id, 'held-files', {
-        'x-nib-held-by': `user:${userId}`,
+        'x-orden-held-by': `user:${userId}`,
       })
       if (!answer?.ok) {
         found = null

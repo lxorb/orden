@@ -14,6 +14,7 @@ export {
   syncUpdate,
   TEXT,
   tokenOf,
+  tokenProtocolOf,
   unattended,
 } from './wire'
 export { fold, type Replacement } from './fold'

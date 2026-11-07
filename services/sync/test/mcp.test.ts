@@ -43,7 +43,7 @@ describe('handing out a token', () => {
     const made = await call(env, '/v1/mcp/token', { token, body: { readOnly: true } })
 
     expect(made.status).toBe(200)
-    expect(made.json.token).toMatch(/^nib_/)
+    expect(made.json.token).toMatch(/^orden_/)
 
     const asked = await call(env, '/v1/mcp/token', { token })
     expect(asked.json.exists).toBe(true)

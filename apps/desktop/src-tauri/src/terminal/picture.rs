@@ -44,7 +44,7 @@ fn fresh_name(end: &str) -> Result<String, String> {
 
     let mut random = [0u8; 8];
     getrandom::fill(&mut random).map_err(|error| error.to_string())?;
-    let mut name = String::from("nib-");
+    let mut name = String::from("orden-");
     for byte in random {
         let _ = write!(name, "{byte:02x}");
     }
@@ -53,7 +53,7 @@ fn fresh_name(end: &str) -> Result<String, String> {
 
 fn script(name: &str) -> String {
     format!(
-        "sh -c 'd=\"${{XDG_CACHE_HOME:-$HOME/.cache}}/nib/images\"; umask 077; \
+        "sh -c 'd=\"${{XDG_CACHE_HOME:-$HOME/.cache}}/orden/images\"; umask 077; \
          mkdir -p \"$d\" && cat > \"$d/{name}\" && printf %s \"$d/{name}\"'"
     )
 }
@@ -110,7 +110,10 @@ fn is_ours(name: &str) -> bool {
     let Some((stem, end)) = name.rsplit_once('.') else {
         return false;
     };
-    let Some(hex) = stem.strip_prefix("nib-") else {
+    let Some(hex) = stem
+        .strip_prefix("orden-")
+        .or_else(|| stem.strip_prefix("nib-"))
+    else {
         return false;
     };
     hex.len() == 16
@@ -206,28 +209,29 @@ mod tests {
     fn a_name_is_never_a_path_or_a_word_a_shell_reads_twice() {
         let name = fresh_name("png").expect("a name");
         let plain = |byte: u8| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'.';
-        assert_eq!(name.len(), "nib-".len() + 16 + ".png".len());
+        assert_eq!(name.len(), "orden-".len() + 16 + ".png".len());
         assert!(name.bytes().all(plain));
         assert_ne!(name, fresh_name("png").expect("another"));
     }
 
     #[test]
     fn the_host_runs_one_quoted_word_and_says_the_path_back() {
-        let line = script("nib-0011223344556677.png");
+        let line = script("orden-0011223344556677.png");
         assert!(line.starts_with("sh -c '") && line.ends_with('\''));
         assert_eq!(line.matches('\'').count(), 2);
-        assert!(line.contains("cat > \"$d/nib-0011223344556677.png\""));
-        assert!(line.contains("printf %s \"$d/nib-0011223344556677.png\""));
+        assert!(line.contains("cat > \"$d/orden-0011223344556677.png\""));
+        assert!(line.contains("printf %s \"$d/orden-0011223344556677.png\""));
     }
 
     #[test]
     fn only_our_own_pictures_are_ours_to_forget() {
+        assert!(is_ours("orden-0011223344556677.png"));
+        assert!(is_ours("orden-aabbccddeeff0011.jpg"));
         assert!(is_ours("nib-0011223344556677.png"));
-        assert!(is_ours("nib-aabbccddeeff0011.jpg"));
-        assert!(!is_ours("nib-0011223344556677.jpeg"));
-        assert!(!is_ours("nib-00112233.png"));
+        assert!(!is_ours("orden-0011223344556677.jpeg"));
+        assert!(!is_ours("orden-00112233.png"));
         assert!(!is_ours("holiday.png"));
-        assert!(!is_ours("nib-0011223344556677"));
+        assert!(!is_ours("orden-0011223344556677"));
     }
 
     #[test]
@@ -236,10 +240,10 @@ mod tests {
             std::env::temp_dir().join(format!("orden-terminal-pictures-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
 
-        let path = kept(&folder, "nib-0011223344556677.png", &[1, 2, 3]).expect("kept");
-        assert_eq!(path, folder.join("nib-0011223344556677.png"));
+        let path = kept(&folder, "orden-0011223344556677.png", &[1, 2, 3]).expect("kept");
+        assert_eq!(path, folder.join("orden-0011223344556677.png"));
         assert_eq!(std::fs::read(&path).expect("read"), vec![1, 2, 3]);
-        assert!(kept(&folder, "nib-0011223344556677.png", &[4]).is_err());
+        assert!(kept(&folder, "orden-0011223344556677.png", &[4]).is_err());
         std::fs::write(folder.join("mine.png"), [9]).expect("write");
 
         forget_old(&folder, SystemTime::now() + KEPT + Duration::from_secs(60));

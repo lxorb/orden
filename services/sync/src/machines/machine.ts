@@ -36,8 +36,8 @@ import {
   type MachineFrame,
   MOST_INPUT,
   MOST_SOCKETS,
-  nibdFrameOf,
-  type NibdFrame,
+  ordendFrameOf,
+  type OrdendFrame,
   outFrame,
   PING_EVERY,
   QUIET_FOR,
@@ -247,39 +247,39 @@ export class Machine implements DurableObject {
   async fetch(request: Request): Promise<Response> {
     const headers = request.headers
     await this.remember(headers)
-    switch (headers.get('x-nib-machine') ?? '') {
+    switch (headers.get('x-orden-machine') ?? '') {
       case 'join':
         return this.join(headers)
       case 'start':
         await this.wake()
         return Response.json({ state: await this.state() })
       case 'stop':
-        await this.sleep(downOf(headers.get('x-nib-reason')))
+        await this.sleep(downOf(headers.get('x-orden-reason')))
         return Response.json({ state: await this.state() })
       case 'state':
         return Response.json({ state: await this.state() })
       case 'typing':
-        this.retype(headers.get('x-nib-term') ?? '', headers.get('x-nib-typing'))
+        this.retype(headers.get('x-orden-term') ?? '', headers.get('x-orden-typing'))
         return new Response(null, { status: 204 })
       case 'signedout':
-        this.signedOut((headers.get('x-nib-logins') ?? '').split(',').filter(Boolean))
+        this.signedOut((headers.get('x-orden-logins') ?? '').split(',').filter(Boolean))
         return new Response(null, { status: 204 })
       case 'revoke':
-        this.revoke(headers.get('x-nib-who') ?? '', headers.get('x-nib-role'), headers)
+        this.revoke(headers.get('x-orden-who') ?? '', headers.get('x-orden-role'), headers)
         return new Response(null, { status: 204 })
       case 'end':
-        await this.end(headers.get('x-nib-session') ?? '')
+        await this.end(headers.get('x-orden-session') ?? '')
         return new Response(null, { status: 204 })
       case 'erase':
-        return await this.erase(headers.get('x-nib-id'))
+        return await this.erase(headers.get('x-orden-id'))
       case 'restart':
-        await this.restartNibd(headers.get('x-nib-who'))
+        await this.restartOrdend(headers.get('x-orden-who'))
         return Response.json({ state: await this.state() })
       case 'reboot':
         await this.reboot()
         return Response.json({ state: await this.state() })
       case 'host':
-        await this.move(headers.get('x-nib-host') === 'hetzner' ? 'hetzner' : 'cloudflare')
+        await this.move(headers.get('x-orden-host') === 'hetzner' ? 'hetzner' : 'cloudflare')
         return Response.json({ state: await this.state() })
       case 'sessions':
         return Response.json({ sessions: await this.sessions() })
@@ -289,8 +289,8 @@ export class Machine implements DurableObject {
   }
 
   private async remember(headers: Headers): Promise<void> {
-    const id = headers.get('x-nib-id')
-    const user = headers.get('x-nib-user')
+    const id = headers.get('x-orden-id')
+    const user = headers.get('x-orden-user')
     if (!id || !user) return
     const known = await this.ctx.storage.get<Me>(ME)
     if (known?.id !== id || known.user !== user) await this.ctx.storage.put(ME, { id, user })
@@ -300,7 +300,7 @@ export class Machine implements DurableObject {
     const pair = new WebSocketPair()
     aside(
       'machine enter',
-      this.enter(pair[1], viewerFrom(headers), headers.get('x-nib-wake') ?? 'no'),
+      this.enter(pair[1], viewerFrom(headers), headers.get('x-orden-wake') ?? 'no'),
     )
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
@@ -658,8 +658,8 @@ export class Machine implements DurableObject {
           : data instanceof Uint8Array
             ? data
             : null
-      const frame = bytes ? nibdFrameOf(bytes) : null
-      if (frame) aside('machine nibd', this.fromNibd(frame))
+      const frame = bytes ? ordendFrameOf(bytes) : null
+      if (frame) aside('machine ordend', this.fromOrdend(frame))
     })
     link.addEventListener('close', () => {
       if (this.link === link) aside('machine recover', this.recover())
@@ -703,7 +703,7 @@ export class Machine implements DurableObject {
     }
   }
 
-  async fromNibd(frame: NibdFrame): Promise<void> {
+  async fromOrdend(frame: OrdendFrame): Promise<void> {
     switch (frame.t) {
       case 'out':
         this.out(frame.session, frame.seq, frame.data)
@@ -862,7 +862,7 @@ export class Machine implements DurableObject {
     await audit(this.env, me.id, 'restart', { detail: 'silent' })
   }
 
-  private async restartNibd(who: string | null): Promise<void> {
+  private async restartOrdend(who: string | null): Promise<void> {
     const me = await this.me()
     if (!me || !this.link) return
     this.tell('', { t: 'restart' })
@@ -899,7 +899,7 @@ export class Machine implements DurableObject {
     await this.ctx.storage.setAlarm(now + nextLook(waiting, now))
   }
 
-  private async waitForNibd(): Promise<void> {
+  private async waitForOrdend(): Promise<void> {
     const me = await this.me()
     const waiting = await this.ctx.storage.get<Provision>(PROVISION)
     if (!me || !waiting) return
@@ -923,7 +923,7 @@ export class Machine implements DurableObject {
       await this.failed(
         me,
         'link',
-        new Error(`nibd did not answer in ${String(Math.round(waited / MINUTE))} minutes`),
+        new Error(`ordend did not answer in ${String(Math.round(waited / MINUTE))} minutes`),
       )
       await this.ctx.storage.delete(PROVISION)
       await this.setState('asleep', 'restart')
@@ -1109,7 +1109,7 @@ export class Machine implements DurableObject {
     )
       .bind(me.user)
       .first<{ zone: string }>()
-    return { NIBD_SECRET: secret, TZ: zone?.zone ?? 'UTC' }
+    return { ORDEND_SECRET: secret, NIBD_SECRET: secret, TZ: zone?.zone ?? 'UTC' }
   }
 
   private async restoreHome(me: Me, backup: string): Promise<void> {
@@ -1133,7 +1133,7 @@ export class Machine implements DurableObject {
   async alarm(): Promise<void> {
     const state = await this.state()
     if (state === 'starting' && (await this.ctx.storage.get<Provision>(PROVISION))) {
-      await this.waitForNibd()
+      await this.waitForOrdend()
       return
     }
     if (state !== 'awake') return
@@ -1388,7 +1388,7 @@ export class Machine implements DurableObject {
   }
 
   private revoke(who: string, role: string | null, headers: Headers): void {
-    const terms = new Set((headers.get('x-nib-terms') ?? '').split(',').filter(Boolean))
+    const terms = new Set((headers.get('x-orden-terms') ?? '').split(',').filter(Boolean))
     for (const socket of this.ctx.getWebSockets(who)) {
       const viewer = viewerOf(socket)
       if (!viewer || viewer.owns || !terms.has(viewer.term)) continue
@@ -1476,7 +1476,7 @@ export class Machine implements DurableObject {
       .bind(me.id, state)
       .run()
     this.everybody({ t: 'machine', state, ...(reason ? { reason } : {}) })
-    await askHub(this.env, me.user, 'machine', { 'x-nib-state': state })
+    await askHub(this.env, me.user, 'machine', { 'x-orden-state': state })
   }
 
   private people(session: string, except?: WebSocket): void {
@@ -1535,21 +1535,21 @@ function drives(viewer: Viewer): boolean {
 }
 
 function viewerFrom(headers: Headers): Viewer {
-  const role = headers.get('x-nib-role')
+  const role = headers.get('x-orden-role')
   return {
-    who: headers.get('x-nib-who') ?? '',
-    device: headers.get('x-nib-device') ?? '',
-    term: headers.get('x-nib-term') ?? '',
-    session: headers.get('x-nib-session') ?? '',
-    guest: headers.get('x-nib-guest') === 'yes',
+    who: headers.get('x-orden-who') ?? '',
+    device: headers.get('x-orden-device') ?? '',
+    term: headers.get('x-orden-term') ?? '',
+    session: headers.get('x-orden-session') ?? '',
+    guest: headers.get('x-orden-guest') === 'yes',
     role: role === 'owner' || role === 'write' || role === 'read' ? role : null,
-    owns: headers.get('x-nib-owns') === 'yes',
-    typing: headers.get('x-nib-typing') === 'writers' ? 'writers' : 'owner',
+    owns: headers.get('x-orden-owns') === 'yes',
+    typing: headers.get('x-orden-typing') === 'writers' ? 'writers' : 'owner',
     cols: 80,
     rows: 24,
     seen: Date.now(),
-    login: headers.get('x-nib-login') ?? '',
-    name: unescaped(headers.get('x-nib-device-name') ?? ''),
+    login: headers.get('x-orden-login') ?? '',
+    name: unescaped(headers.get('x-orden-device-name') ?? ''),
   }
 }
 

@@ -679,8 +679,8 @@ to have happened.
 **The door, and a reader in a room.** The query at the top of
 `services/sync/src/rooms/index.ts` now answers three things in one round trip -
 whether the session is live, whether the note is in a space the person behind it
-can reach, and what they may do there - and passes the room two: `x-nib-write`,
-which is the bit, and `x-nib-who`, which is an id and nothing else. The room keeps
+can reach, and what they may do there - and passes the room two: `x-orden-write`,
+which is the bit, and `x-orden-who`, which is an id and nothing else. The room keeps
 both on the socket, beside the carets that socket announced, so an object that
 slept still knows. A message that would change the text is then dropped before it
 reaches the protocol; `isEdit` in `@orden/rooms` is what tells one apart, and a

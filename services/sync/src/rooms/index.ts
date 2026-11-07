@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { NO_SUCH_NOTE, ROOM_AWAY, SIGN_IN } from '../refused'
-import { subprotocol, tokenOf } from '@orden/rooms'
-import { ROOM_V2 } from '@orden/sync-core'
+import { subprotocol, tokenOf, tokenProtocolOf } from '@orden/rooms'
+import { ROOM_V2_NAMES } from '@orden/sync-core'
 import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
@@ -108,19 +108,19 @@ rooms.get('/:noteId', async (context) => {
     context.req.url,
     {
       upgrade: 'websocket',
-      'x-nib-note': noteId,
-      'x-nib-space': allowed.space_id,
-      'x-nib-kind': noteKind({
+      'x-orden-note': noteId,
+      'x-orden-space': allowed.space_id,
+      'x-orden-kind': noteKind({
         path: allowed.path ?? '',
         kind: allowed.kind,
         epoch: allowed.epoch,
       }),
-      'x-nib-write': allowed.role === 'write' || allowed.role === 'owner' ? 'yes' : 'no',
-      'x-nib-who': allowed.who,
-      'x-nib-login': hash,
-      'x-nib-epoch': String(allowed.epoch ?? 0),
-      'x-nib-v2': offers(offered, ROOM_V2) ? 'yes' : 'no',
-      'x-nib-device-id': allowed.guest
+      'x-orden-write': allowed.role === 'write' || allowed.role === 'owner' ? 'yes' : 'no',
+      'x-orden-who': allowed.who,
+      'x-orden-login': hash,
+      'x-orden-epoch': String(allowed.epoch ?? 0),
+      'x-orden-v2': offers(offered, ROOM_V2_NAMES) ? 'yes' : 'no',
+      'x-orden-device-id': allowed.guest
         ? `guest:${allowed.guest}`
         : (allowed.bound ?? `session:${hash.slice(0, 16)}`),
     },
@@ -134,7 +134,7 @@ rooms.get('/:noteId', async (context) => {
   }
 
   const headers = new Headers(answer.headers)
-  headers.set('sec-websocket-protocol', subprotocol(token ?? ''))
+  headers.set('sec-websocket-protocol', tokenProtocolOf(offered) ?? subprotocol(token ?? ''))
 
   return new Response(answer.body, {
     status: answer.status,
@@ -183,11 +183,11 @@ export async function askRoom(
         new Request(`https://rooms.invalid/${target.id}`, {
           method: 'POST',
           headers: {
-            'x-nib-doc': ask,
-            'x-nib-note': target.id,
-            'x-nib-space': target.space_id,
-            'x-nib-kind': noteKind(target),
-            'x-nib-epoch': String(target.epoch ?? 0),
+            'x-orden-doc': ask,
+            'x-orden-note': target.id,
+            'x-orden-space': target.space_id,
+            'x-orden-kind': noteKind(target),
+            'x-orden-epoch': String(target.epoch ?? 0),
           },
           body,
         }),
@@ -217,8 +217,8 @@ function protocolsIn(header: string | undefined): string[] {
   return (header ?? '').split(',').map((one) => one.trim())
 }
 
-function offers(header: string | undefined, protocol: string): boolean {
-  return protocolsIn(header).includes(protocol)
+function offers(header: string | undefined, names: readonly string[]): boolean {
+  return protocolsIn(header).some((one) => names.includes(one))
 }
 
 const MOST_OPEN = 50
@@ -260,7 +260,7 @@ export async function roomsRevoked(
 
     await Promise.all(
       results.map(({ note_id: noteId }) =>
-        tell(namespace, noteId, { 'x-nib-revoked': who, 'x-nib-role': role }),
+        tell(namespace, noteId, { 'x-orden-revoked': who, 'x-orden-role': role }),
       ),
     )
 
@@ -315,7 +315,7 @@ export async function closeRooms(
   for (const round of chunks(open, MOST_OPEN)) {
     await Promise.all(
       round.map((one) =>
-        tell(namespace, one.note_id, { 'x-nib-revoked': one.who, 'x-nib-role': 'none' }),
+        tell(namespace, one.note_id, { 'x-orden-revoked': one.who, 'x-orden-role': 'none' }),
       ),
     )
   }
@@ -328,7 +328,7 @@ export async function eraseRooms(env: Env, noteIds: readonly string[]): Promise<
   const emptied: string[] = []
   for (const round of chunks(noteIds, MOST_OPEN)) {
     const heard = await Promise.all(
-      round.map((noteId) => tell(namespace, noteId, { 'x-nib-erase': 'yes' })),
+      round.map((noteId) => tell(namespace, noteId, { 'x-orden-erase': 'yes' })),
     )
     emptied.push(...round.filter((_, at) => heard[at]))
   }

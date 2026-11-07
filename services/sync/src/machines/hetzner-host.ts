@@ -10,7 +10,25 @@ import { type Access, Tunnels } from './tunnel'
 const SERVER_TYPE = 'cx43'
 const LOCATIONS: readonly Place[] = ['nbg1', 'fsn1']
 
-const LABEL = 'nib-machine'
+const LABEL = 'orden-machine'
+
+const LABELS = [LABEL, 'nib-machine']
+
+async function serverOfMachine(hetzner: Hetzner, id: string) {
+  for (const key of LABELS) {
+    const found = await hetzner.serverLabelled(key, id)
+    if (found) return found
+  }
+  return null
+}
+
+export async function firewallOfMachine(hetzner: Hetzner, id: string): Promise<number | null> {
+  for (const key of LABELS) {
+    const found = await hetzner.firewallLabelled(key, id)
+    if (found !== null) return found
+  }
+  return null
+}
 
 const UNAVAILABLE = new Set([
   'resource_unavailable',
@@ -87,8 +105,9 @@ export function namesOf(id: string, domain: string) {
     .slice(0, 40)
   return {
     hostname: `m-${slug}.${domain}`,
-    server: `nib-${slug}`,
-    tunnel: `nib-machine-${slug}`,
+    server: `orden-${slug}`,
+    tunnel: `orden-machine-${slug}`,
+    formerTunnel: `nib-machine-${slug}`,
   }
 }
 
@@ -143,11 +162,12 @@ export class HetznerHost implements MachineHost {
     const setup = this.need()
     const names = this.names(id)
 
-    const tunnel = await setup.tunnels.tunnel(names.tunnel)
+    const tunnel =
+      (await setup.tunnels.found(names.formerTunnel)) ?? (await setup.tunnels.tunnel(names.tunnel))
     await setup.tunnels.route(tunnel, names.hostname, setup.access)
     await setup.tunnels.hostname(names.hostname, tunnel)
 
-    const found = await setup.hetzner.serverLabelled(LABEL, id)
+    const found = await serverOfMachine(setup.hetzner, id)
     if (found) {
       if (found.status === 'off') await setup.hetzner.powerOn(found.id)
       await this.record(id, {
@@ -157,7 +177,7 @@ export class HetznerHost implements MachineHost {
       return
     }
 
-    const secret = env.NIBD_SECRET
+    const secret = env.ORDEND_SECRET
     const bundle = await bundleSha()
     if (!secret) throw new Error('no link secret for the new server')
     if (!bundle) throw new Error('this Worker carries no machine bundle')
@@ -181,7 +201,7 @@ export class HetznerHost implements MachineHost {
       throw new HostRefused('budget')
 
     const firewall =
-      (await setup.hetzner.firewallLabelled(LABEL, id)) ??
+      (await firewallOfMachine(setup.hetzner, id)) ??
       (await setup.hetzner.createFirewall(
         names.server,
         { [LABEL]: id },
@@ -242,7 +262,7 @@ export class HetznerHost implements MachineHost {
 
   async running(id: string): Promise<boolean> {
     if (!this.setup) return false
-    const server = await this.setup.hetzner.serverLabelled(LABEL, id)
+    const server = await serverOfMachine(this.setup.hetzner, id)
     return server?.status === 'running'
   }
 
@@ -268,13 +288,13 @@ export class HetznerHost implements MachineHost {
           socket.accept()
           return socket
         }
-        last = new Error(`nibd answered ${String(answer.status)}`)
+        last = new Error(`ordend answered ${String(answer.status)}`)
         if (answer.status === 401 || answer.status === 403) break
       } catch (error) {
         last = error
       }
     }
-    throw last instanceof Error ? last : new Error('nibd did not answer')
+    throw last instanceof Error ? last : new Error('ordend did not answer')
   }
 
   snapshot(): Promise<string> {
@@ -295,7 +315,7 @@ export class HetznerHost implements MachineHost {
 
   async reboot(id: string): Promise<void> {
     const setup = this.need()
-    const server = await setup.hetzner.serverLabelled(LABEL, id)
+    const server = await serverOfMachine(setup.hetzner, id)
     if (!server) throw new Error('the machine has no server')
     await setup.hetzner.reset(server.id)
     await this.record(id, { server_status: 'starting' })
@@ -305,11 +325,12 @@ export class HetznerHost implements MachineHost {
     if (!this.setup) return
     const { hetzner, tunnels } = this.setup
     const names = this.names(id)
-    const server = await hetzner.serverLabelled(LABEL, id)
+    const server = await serverOfMachine(hetzner, id)
     if (server) await hetzner.deleteServer(server.id)
-    const firewall = await hetzner.firewallLabelled(LABEL, id)
+    const firewall = await firewallOfMachine(hetzner, id)
     if (firewall !== null) await deleteWhenFree(hetzner, firewall)
     await tunnels.remove(names.tunnel, names.hostname)
+    await tunnels.remove(names.formerTunnel, names.hostname)
   }
 }
 

@@ -61,8 +61,8 @@ interface Grant {
 }
 
 async function issue(env: Env, grant: Grant, replacing?: { refresh_hash: string }) {
-  const access = `nib_${randomToken()}`
-  const refresh = `nibr_${randomToken()}`
+  const access = `orden_${randomToken()}`
+  const refresh = `ordenr_${randomToken()}`
   const hashes = {
     access: await sha256(access),
     refresh: await sha256(refresh),

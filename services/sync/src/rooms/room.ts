@@ -301,40 +301,40 @@ export class NoteRoom implements DurableObject {
   }
 
   async fetch(request: Request): Promise<Response> {
-    if (request.headers.get('x-nib-erase')) return await this.erase()
+    if (request.headers.get('x-orden-erase')) return await this.erase()
 
     const openOf = request.headers.get(OPEN_HEADER)
     if (openOf) return openAnswer(this.hasSocketOf(openOf))
 
-    const revoked = request.headers.get('x-nib-revoked')
-    if (revoked) return await this.revoke(revoked, request.headers.get('x-nib-role') === 'read')
+    const revoked = request.headers.get('x-orden-revoked')
+    if (revoked) return await this.revoke(revoked, request.headers.get('x-orden-role') === 'read')
 
-    const noteId = request.headers.get('x-nib-note')
-    const spaceId = request.headers.get('x-nib-space')
+    const noteId = request.headers.get('x-orden-note')
+    const spaceId = request.headers.get('x-orden-space')
     if (!noteId || !spaceId) return new Response('no note', { status: 400 })
 
-    const kind = kindOf(request.headers.get('x-nib-kind'))
+    const kind = kindOf(request.headers.get('x-orden-kind'))
     const held: Held = { noteId, spaceId, kind }
 
-    const asked = request.headers.get('x-nib-doc')
+    const asked = request.headers.get('x-orden-doc')
     if (asked === 'push' || asked === 'pull' || asked === 'ingest') {
       const body = new Uint8Array(await request.arrayBuffer())
       await this.askSignIns()
       await this.arrive(held)
-      await this.caughtUpWithEpoch(epochIn(request.headers.get('x-nib-epoch')))
+      await this.caughtUpWithEpoch(epochIn(request.headers.get('x-orden-epoch')))
       if (asked === 'push') return octets(await this.push(body))
       if (asked === 'pull') return octets(await this.pull(body))
       return Response.json(await this.ingest(body))
     }
 
-    const device = request.headers.get('x-nib-device-id')
-    const login = request.headers.get('x-nib-login')
-    const epoch = epochIn(request.headers.get('x-nib-epoch'))
+    const device = request.headers.get('x-orden-device-id')
+    const login = request.headers.get('x-orden-login')
+    const epoch = epochIn(request.headers.get('x-orden-epoch'))
     const pair = new WebSocketPair()
     await this.enter(pair[1], held, {
-      writes: writesOf(request.headers.get('x-nib-write')),
-      who: request.headers.get('x-nib-who') ?? '',
-      v2: request.headers.get('x-nib-v2') === 'yes',
+      writes: writesOf(request.headers.get('x-orden-write')),
+      who: request.headers.get('x-orden-who') ?? '',
+      v2: request.headers.get('x-orden-v2') === 'yes',
       ...(device ? { device } : {}),
       ...(login ? { login } : {}),
       ...(epoch === undefined ? {} : { epoch }),

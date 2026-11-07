@@ -56,6 +56,15 @@ describe('the hub door', () => {
     expect((await knock([], false)).status).toBe(426)
   })
 
+  test('lets a device in under the new names, and answers in them', async () => {
+    const token = await session('a@example.com')
+    const answer = await knock([`orden.token.${token}`, `orden.device.${DEVICE}`])
+
+    expect(answer.status).toBe(200)
+    expect(answer.headers.get('sec-websocket-protocol')).toBe(`orden.device.${DEVICE}`)
+    expect(door.asked[0]?.headers.get('x-orden-device')).toBe(DEVICE)
+  })
+
   test('lets an account in to its own hub, as the device it names', async () => {
     const token = await session('a@example.com')
     const answer = await knock([subprotocol(token), `nib.device.${DEVICE}`])
@@ -65,11 +74,11 @@ describe('the hub door', () => {
 
     const [asked] = door.asked
     expect(asked?.id).toBe(userId('a@example.com'))
-    expect(asked?.headers.get('x-nib-hub')).toBe('join')
-    expect(asked?.headers.get('x-nib-device')).toBe(DEVICE)
-    expect(asked?.headers.get('x-nib-who')).toBe(userId('a@example.com'))
-    expect(asked?.headers.get('x-nib-guest')).toBe('no')
-    expect(asked?.headers.get('x-nib-session')).toBe(
+    expect(asked?.headers.get('x-orden-hub')).toBe('join')
+    expect(asked?.headers.get('x-orden-device')).toBe(DEVICE)
+    expect(asked?.headers.get('x-orden-who')).toBe(userId('a@example.com'))
+    expect(asked?.headers.get('x-orden-guest')).toBe('no')
+    expect(asked?.headers.get('x-orden-session')).toBe(
       (
         env.db
           .prepare('select id from sessions where user_id = ?')
@@ -154,8 +163,8 @@ describe('the hub door', () => {
     expect(answer.status).toBe(200)
 
     const asked = door.asked.at(-1)
-    expect(asked?.headers.get('x-nib-guest')).toBe('yes')
-    expect(asked?.headers.get('x-nib-session')).toBe(await sha256(guest))
+    expect(asked?.headers.get('x-orden-guest')).toBe('yes')
+    expect(asked?.headers.get('x-orden-session')).toBe(await sha256(guest))
     expect(asked?.id).toBe(joined.json.guest.id)
     expect(asked?.id).not.toBe(userId('owner@example.com'))
   })

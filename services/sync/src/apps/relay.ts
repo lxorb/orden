@@ -69,7 +69,7 @@ export class AppRelay implements DurableObject {
   }
 
   fetch(request: Request): Response {
-    if (request.headers.get('x-nib-app') !== 'join')
+    if (request.headers.get('x-orden-app') !== 'join')
       return new Response('not something an application does', { status: 400 })
     const pair = new WebSocketPair()
     aside('app enter', this.enter(pair[1], partyFrom(request.headers)))
@@ -261,16 +261,16 @@ export class AppRelay implements DurableObject {
 function partyFrom(headers: Headers): Party {
   let name = ''
   try {
-    name = decodeURIComponent(headers.get('x-nib-device-name') ?? '')
+    name = decodeURIComponent(headers.get('x-orden-device-name') ?? '')
   } catch {
     // Not escaped words: no name.
   }
-  const login = headers.get('x-nib-login')
+  const login = headers.get('x-orden-login')
   return {
-    role: headers.get('x-nib-role') === 'host' ? 'host' : 'viewer',
-    session: headers.get('x-nib-app-id') ?? '',
-    device: headers.get('x-nib-device') ?? '',
-    who: headers.get('x-nib-who') ?? '',
+    role: headers.get('x-orden-role') === 'host' ? 'host' : 'viewer',
+    session: headers.get('x-orden-app-id') ?? '',
+    device: headers.get('x-orden-device') ?? '',
+    who: headers.get('x-orden-who') ?? '',
     ...(login ? { login } : {}),
     name,
     seen: Date.now(),

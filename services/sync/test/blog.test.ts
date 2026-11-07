@@ -113,9 +113,9 @@ describe('publishing', () => {
   test('a note and its hover card are two answers to a cache', async () => {
     await publish({ subdomain: 'field' })
 
-    for (const headers of [{}, { 'x-nib-preview': '1' }]) {
+    for (const headers of [{}, { 'x-orden-preview': '1' }]) {
       const response = await call(env, '/hello-world', { host: 'field.nibeditor.com', headers })
-      expect(response.headers.get('vary')).toContain('x-nib-preview')
+      expect(response.headers.get('vary')).toContain('x-orden-preview')
     }
   })
 
@@ -286,7 +286,7 @@ describe('a published note cannot script the reader', () => {
     for (const [path, headers] of [
       ['/nasty', {}],
       ['/nasty?slides', {}],
-      ['/nasty', { 'x-nib-preview': '1' }],
+      ['/nasty', { 'x-orden-preview': '1' }],
     ] as const) {
       const response = await call(env, path, { host: 'field.nibeditor.com', headers })
       for (const live of ['<img src=x', '<style x=y', '<input ""', '<iframe src=x']) {

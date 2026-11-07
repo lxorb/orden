@@ -147,7 +147,7 @@ describe('chats through the connector', () => {
     const said = await tool(key, 'post_message', { chat: 'thesis', text: 'Looks good @Lucile' })
     expect(said).toMatch(/^Posted in #thesis as /)
     const posted = (await state(owner))[0]
-    expect(posted).toMatchObject({ body: 'Looks good @Lucile', via: { agent: 'nib connector' } })
+    expect(posted).toMatchObject({ body: 'Looks good @Lucile', via: { agent: 'Orden connector' } })
     expect(posted).toHaveProperty('mentions', [expect.stringMatching(/^user:/)])
 
     expect(await tool(key, 'react', { chat, message: posted?.id ?? '', emoji: '👍' })).toMatch(

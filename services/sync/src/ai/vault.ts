@@ -22,7 +22,7 @@ const NOT_THE_KEY = 'not the vault key'
 export const aiVault = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 function told(env: Env, user: string, from: string): Promise<unknown> {
-  return askHub(env, user, 'ai', { 'x-nib-from': from }).catch(() => null)
+  return askHub(env, user, 'ai', { 'x-orden-from': from }).catch(() => null)
 }
 
 async function authHash(auth: string): Promise<string | null> {

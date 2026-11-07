@@ -74,7 +74,7 @@ tunnel's route again, so Access can also be added later.
    is in R2 under the row's `backup_key` from then on.
 2. Open an online terminal (Ctrl+T, Escape to leave the address field, then O). The first start makes the tunnel, the hostname,
    the firewall and the server; the terminal says _Starting machine…_ for the five to ten
-   minutes cloud-init takes (packages, node, cloudflared, nibd, swap), and is live after.
+   minutes cloud-init takes (packages, node, cloudflared, ordend, swap), and is live after.
    Then Claude Code and Codex install in the background.
 3. `select at, kind, detail from machine_events where machine = '<id>' order by at desc`:
    `wake fresh`, no `failed`. Settings > Online terminal: _CX43 · 8 vCPU · 16 GB · 160 GB ·
@@ -83,15 +83,15 @@ tunnel's route again, so Access can also be added later.
 ### 6. Prove it
 
 1. From outside: `curl -s -o /dev/null -w '%{http_code}' https://m-<id without m_>.nibeditor.com/health`
-   is 302 or 403 (Access), never 200 (200 only while step 3 is not done: then `nibd`'s secret
+   is 302 or 403 (Access), never 200 (200 only while step 3 is not done: then `ordend`'s secret
    is the one lock). In the Hetzner console the server's firewall has no
    inbound rule.
 2. In the terminal: `df -h ~` says about 150 GB; `nproc` 8; `uname -m` x86_64;
-   `systemctl is-active nibd cloudflared` both active; `sudo cat /var/log/cloud-init-output.log | grep -c NIBD_SECRET` is 0.
+   `systemctl is-active ordend cloudflared` both active; `sudo cat /var/log/cloud-init-output.log | grep -c ORDEND_SECRET` is 0.
 3. Close every tab, wait an hour, open one: the same shell, `sleep 9999` still running (no
    sleep on a server).
-4. `sudo systemctl kill -s KILL nibd` with `sleep 9999` running in a terminal: within seconds
-   `relink`, and the same `sleep` still running on the same screen (systemd restarts nibd; the
+4. `sudo systemctl kill -s KILL ordend` with `sleep 9999` running in a terminal: within seconds
+   `relink`, and the same `sleep` still running on the same screen (systemd restarts ordend; the
    sleep's holder is not in its unit, `docs/online-terminal.md` 4.16).
 5. Settings > Online terminal > **Restart**: a `restart` row, the terminal back in seconds.
 6. Admin Reboot, `POST /v2/online/admin/machines/<id>/reboot`: `reboot`, then `wake restart`
@@ -153,10 +153,10 @@ and the container application, which the first `wrangler deploy` of the machines
 
 ## Steps
 
-1. **Lanes on main**, gate green: `@orden/online`, the machine's image and `nibd` (lane `online-nibd`),
+1. **Lanes on main**, gate green: `@orden/online`, the machine's image and `ordend` (lane `online-ordend`),
    this Worker lane, the client.
-2. **The image's two requirements from this lane**: `nibd` listens on port **7680** and takes
-   the link at `GET /link` with `authorization: Bearer <NIBD_SECRET>` (the secret is in the
+2. **The image's two requirements from this lane**: `ordend` listens on port **7680** and takes
+   the link at `GET /link` with `authorization: Bearer <ORDEND_SECRET>` (the secret is in the
    start environment, new every boot); and the image carries `sandbox-shim` for the home
    backups:
    `COPY --from=docker.io/cloudflare/sandbox:1.0.0 /usr/local/bin/sandbox-shim /usr/local/bin/sandbox-shim`
@@ -170,7 +170,7 @@ and the container application, which the first `wrangler deploy` of the machines
 5. **Move the machines into the deployed config** (done 2026-10-05): the `MACHINES`
    binding, the `v3` migration tag, the `containers` block, the `HOMES` bucket and
    `MACHINE_EGRESS` are in `wrangler.jsonc`, and `main` is `src/machines/entry.ts`; CI's
-   deploy job builds nibd first. CI then builds the image with Docker (the deploy job runs on
+   deploy job builds ordend first. CI then builds the image with Docker (the deploy job runs on
    `ubuntu-latest`, which has it), pushes it to `registry.cloudflare.com` and makes the
    container application `nib-sync-machines`. **This is the first moment anything costs
    money.** Locally, `wrangler deploy --dry-run --containers-rollout=none` proves the bundle and the bindings without Docker.
@@ -180,7 +180,7 @@ and the container application, which the first `wrangler deploy` of the machines
    `wrangler d1 execute nib --remote --command "update online_service set value = 'on' where key = 'online'"`
    or `POST /v2/online/admin/service {"online": true}` signed in as Emil.
 8. **Prove on the real host** what could not be proved locally: a cold start and the link
-   to `nibd` within the link's 10 seconds; a sleep writing the home to `orden-homes` and a
+   to `ordend` within the link's 10 seconds; a sleep writing the home to `orden-homes` and a
    snapshot; a wake restoring from the snapshot, and (with `snapshot_at` set back 31 days)
    from the backup; egress as chosen above. Then a week of Emil's own use before the
    allow-list grows.
@@ -203,24 +203,24 @@ and the container application, which the first `wrangler deploy` of the machines
 ## Checks after the health changes go live
 
 1. Open a terminal; in `machine_events`, a `wake` and no `failed`.
-2. `kill -STOP $(pgrep -f nibd.cjs)` in the machine (as root, `sudo`): within about 25
+2. `kill -STOP $(pgrep -f ordend.cjs)` in the machine (as root, `sudo`): within about 25
    seconds the terminal shows _Starting machine…_, then `relink` fails and the machine
    restarts (`failed` with `link: …`, `sleep restart`, `wake snapshot`); the screen comes back
    with the dim line from the last save. `kill -CONT` is not needed: the stop ended it.
-3. `sudo pkill -KILL -f nibd.cjs`: within seconds a `relink` row, no restart, the same disk.
+3. `sudo pkill -KILL -f ordend.cjs`: within seconds a `relink` row, no restart, the same disk.
 4. Stop the machine from Settings: `snapshot` then `backup` (or a `failed` row saying why),
    then `sleep`. Time it; the backup's time is the number for "a backup can be slow".
 5. Push anything while a terminal is open: the terminal shows _Starting machine…_ for a
    moment and comes back, with a `relink` row and no `failed`.
 
-## A drive against a local `nibd`, before any of that
+## A drive against a local `ordend`, before any of that
 
-No container and no Cloudflare resource: the `Machine` object drives a `nibd` already running
+No container and no Cloudflare resource: the `Machine` object drives a `ordend` already running
 on this computer (`DevHost` in services/sync/src/machines/host.ts).
 
-1. Start `nibd` with a secret, listening on `127.0.0.1:7680` (`NIBD_SECRET=dev`).
+1. Start `ordend` with a secret, listening on `127.0.0.1:7680` (`ORDEND_SECRET=dev`).
 2. In services/sync, a `.dev.vars` (never committed):
-   `MACHINE_DEV_NIBD="http://127.0.0.1:7680"` and `MACHINE_DEV_SECRET="dev"`. Any address
+   `MACHINE_DEV_ORDEND="http://127.0.0.1:7680"` and `MACHINE_DEV_SECRET="dev"`. Any address
    that is not this computer's is ignored.
 3. `pnpm wrangler d1 migrations apply nib --local`, then switch the service on locally:
    `pnpm wrangler d1 execute nib --local --command "update online_service set value = 'on' where key = 'online'"`
@@ -230,11 +230,11 @@ on this computer (`DevHost` in services/sync/src/machines/host.ts).
 
 Start, link, input, output, screens, sizes, Resume and the minute's sleep all run for real;
 the backup and snapshot are skipped (the dev host keeps none). workerd has no jurisdictions,
-so with `MACHINE_DEV_NIBD` set the `Machine` objects are asked outside the EU one (ask.ts).
+so with `MACHINE_DEV_ORDEND` set the `Machine` objects are asked outside the EU one (ask.ts).
 
 `scripts/online-e2e.mjs` is all of this in one command, against a machine booted from the
 image: CI's machine workflow runs it on every pull request into `main` that changes the
-image, nibd or the Worker's machines (a session made as sync v1 makes one, typing, a
+image, ordend or the Worker's machines (a session made as sync v1 makes one, typing, a
 reconnect with `since`, a late joiner's screen).
 
 ## Kill switches, for reference

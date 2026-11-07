@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { dirname } from 'node:path'
 import { isWebUrl } from '@orden/online/urls'
 
-export const OPEN_SOCKET = '/run/nibd/open.sock'
+export const OPEN_SOCKET = '/run/ordend/open.sock'
 
 const MOST_BODY = 16 * 1024
 
@@ -56,7 +56,7 @@ export function serveOpener(opener: Opener, now: () => number = Date.now): Serve
 
   return createServer((request, response) => {
     if (request.method !== 'POST' || request.url !== '/open') {
-      answer(response, 404, 'nib-open only opens addresses\n')
+      answer(response, 404, 'orden-open only opens addresses\n')
       return
     }
     void bodyOf(request).then((body) => {
@@ -76,7 +76,7 @@ export function serveOpener(opener: Opener, now: () => number = Date.now): Serve
         return
       }
       if (!opener.open(asked.url, asked.session)) {
-        answer(response, 503, 'no nib is connected to this machine\n')
+        answer(response, 503, 'no Orden is connected to this machine\n')
         return
       }
       answer(response, 202, '')

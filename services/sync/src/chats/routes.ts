@@ -33,11 +33,11 @@ export const chats = new Hono<App>()
 
 export function asking(reached: Reached, device?: string): Record<string, string> {
   return {
-    'x-nib-space': reached.space,
-    'x-nib-who': reached.id,
-    'x-nib-guest': reached.guest ? 'yes' : 'no',
-    'x-nib-role': reached.role,
-    ...(device ? { 'x-nib-device': device.slice(0, 200) } : {}),
+    'x-orden-space': reached.space,
+    'x-orden-who': reached.id,
+    'x-orden-guest': reached.guest ? 'yes' : 'no',
+    'x-orden-role': reached.role,
+    ...(device ? { 'x-orden-device': device.slice(0, 200) } : {}),
   }
 }
 

@@ -20,15 +20,21 @@ const UPDATE = 2
 
 const TOKEN = 'nib.token.'
 
+const TOKENS = ['orden.token.', 'nib.token.']
+
 export function subprotocol(token: string): string {
   return `${TOKEN}${token}`
 }
 
-export function tokenOf(header: string | undefined): string | null {
+export function tokenProtocolOf(header: string | undefined): string | null {
   const offered = (header ?? '').split(',').map((one) => one.trim())
-  const carrying = offered.find((one) => one.startsWith(TOKEN))
+  return offered.find((one) => TOKENS.some((prefix) => one.startsWith(prefix))) ?? null
+}
 
-  return carrying ? carrying.slice(TOKEN.length) : null
+export function tokenOf(header: string | undefined): string | null {
+  const carrying = tokenProtocolOf(header)
+  const prefix = TOKENS.find((one) => carrying?.startsWith(one))
+  return carrying && prefix ? carrying.slice(prefix.length) : null
 }
 
 function framed(kind: number, write: (encoder: encoding.Encoder) => void): Uint8Array {

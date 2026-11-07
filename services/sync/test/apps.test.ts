@@ -237,8 +237,8 @@ describe('an application’s door', () => {
 
     await knock(owner)
     await knock(owner, true)
-    expect(asked.map((one) => one.get('x-nib-role'))).toEqual(['viewer', 'host'])
-    expect(asked[0]?.get('x-nib-app-id')).toBe('app-1')
+    expect(asked.map((one) => one.get('x-orden-role'))).toEqual(['viewer', 'host'])
+    expect(asked[0]?.get('x-orden-app-id')).toBe('app-1')
 
     env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
     expect((await knock(owner)).status).toBe(404)
@@ -271,7 +271,7 @@ describe('an application’s door', () => {
     vi.setSystemTime(Date.now() + 31_000)
 
     await knock(owner)
-    expect(asked[0]?.get('x-nib-login')).toBe(await sha256(owner))
+    expect(asked[0]?.get('x-orden-login')).toBe(await sha256(owner))
 
     env.db.prepare("update spaces set deleted = 1 where id = 'space-1'").run()
     expect((await knock(owner)).status).toBe(404)

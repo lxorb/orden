@@ -15,9 +15,9 @@ export const NAMED = /^[a-z0-9]{16,64}\.(png|jpg|gif|webp)$/
 
 export const AS_USER_SCRIPT = [
   'umask 077',
-  'd="$HOME/.cache/nib/images"',
+  'd="$HOME/.cache/orden/images"',
   'mkdir -p "$d" || exit 1',
-  `find "$d" -maxdepth 1 -type f -mmin +${String(KEPT / 60_000)} -regextype posix-extended -regex '.*/[a-z0-9]{16,64}\\.(png|jpg|gif|webp)' -delete 2>/dev/null`,
+  `find "$d" "$HOME/.cache/nib/images" -maxdepth 1 -type f -mmin +${String(KEPT / 60_000)} -regextype posix-extended -regex '.*/[a-z0-9]{16,64}\\.(png|jpg|gif|webp)' -delete 2>/dev/null`,
   'set -C',
   'cat > "$d/$1" || exit 1',
   'printf %s "$d/$1"',
@@ -122,14 +122,15 @@ export class Images {
     const [file = SETPRIV, ...args] = command
     const env = { HOME: user.home, PATH: '/usr/local/bin:/usr/bin:/bin' }
     const { code, out } = await this.run(file, args, env, bytes)
-    const path = join(user.home, '.cache', 'nib', 'images', name)
+    const path = join(user.home, '.cache', 'orden', 'images', name)
     return code === 0 && out === path ? path : null
   }
 
   private written(name: string, bytes: Uint8Array): string {
-    const folder = join(this.home, '.cache', 'nib', 'images')
+    const folder = join(this.home, '.cache', 'orden', 'images')
     mkdirSync(folder, { recursive: true, mode: 0o700 })
     this.clear(folder)
+    this.clear(join(this.home, '.cache', 'nib', 'images'))
     const path = join(folder, name)
     writeFileSync(path, bytes, { mode: 0o600, flag: 'wx' })
     return path
@@ -137,7 +138,13 @@ export class Images {
 
   private clear(folder: string): void {
     const before = this.now() - KEPT
-    for (const name of readdirSync(folder)) {
+    let names: string[]
+    try {
+      names = readdirSync(folder)
+    } catch {
+      return
+    }
+    for (const name of names) {
       if (!NAMED.test(name)) continue
       const path = join(folder, name)
       try {

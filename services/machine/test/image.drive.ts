@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { bytes, healthy, linked, until } from './link'
 
-const URL = process.env.NIBD_URL ?? ''
-const TRACED = process.env.NIBD_TRACED_URL ?? ''
-const SECRET = process.env.NIBD_SECRET ?? ''
+const URL = process.env.ORDEND_URL ?? ''
+const TRACED = process.env.ORDEND_TRACED_URL ?? ''
+const SECRET = process.env.ORDEND_SECRET ?? ''
 
 async function ran(url: string, session: string, command: string): Promise<string> {
   const link = await linked(url, SECRET)
@@ -74,7 +74,7 @@ describe.runIf(URL)('a browser on the owner’s computer', () => {
     )
     link.close()
 
-    expect(text).toContain('browser=nib-open program=nib')
+    expect(text).toContain('browser=orden-open program=orden')
     expect(text).toContain('open=0')
     expect(text).toContain('sensible=0')
     expect(text).toMatch(/file=[1-9]/)

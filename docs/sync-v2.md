@@ -1237,7 +1237,7 @@ in `/v2/devices` are gone (section 6). The lists are kept as they were built.
   nonce}`, `{t:'key-wanted-old', device, name}`, `{t:'key', wrapped, generation}`,
   `{t:'key-denied'}`. A `want-key` that carries `pub` is a computer from before the
   commitment, answered `{t:'refused', to:'want-key-old'}`.
-- `PUT /v2/web/:key` (header `x-nib-fence`), the manifest; `PUT /v2/web/chunks/:name`, a
+- `PUT /v2/web/:key` (header `x-orden-fence`), the manifest; `PUT /v2/web/chunks/:name`, a
   chunk; `GET` of both. `409 fenced`, `413` past the ceilings, `507` past the web quota.
 - `GET /v2/devices`, `PATCH /v2/devices/:id` (a name), `DELETE /v2/devices/:id` (ends its
   sessions, revokes its key, closes its sockets and rooms).
@@ -1264,10 +1264,10 @@ in `/v2/devices` are gone (section 6). The lists are kept as they were built.
   alive at once. A pending `want-key` lives while the asking device is connected and 15
   minutes after; asking again with the same `pub` is not counted again.
 - `PUT /v2/web/:key`: raw `application/octet-stream` (not the wire envelope), headers
-  `x-nib-fence`, `x-nib-generation`, `x-nib-chunks` (the chunk names it references,
+  `x-orden-fence`, `x-orden-generation`, `x-orden-chunks` (the chunk names it references,
   comma-separated, at most 64, each uploaded first). Answers `{ version }`; the device is the
-  one whose session made the request. `GET` answers the bytes with `x-nib-version`,
-  `x-nib-fence`, `x-nib-generation`. `PUT /v2/web/chunks/:name` answers `{ name, stored }`.
+  one whose session made the request. `GET` answers the bytes with `x-orden-version`,
+  `x-orden-fence`, `x-orden-generation`. `PUT /v2/web/chunks/:name` answers `{ name, stored }`.
   Keys and names are `[A-Za-z0-9_-]{16,128}`. Chunks no manifest names are collected an
   hour after their last upload.
 - `GET /v2/devices` answers `{ devices: [{ id, name, platform, app, createdAt, lastSeenAt,
@@ -1370,7 +1370,7 @@ where it adds to the routes of this section:
 - `POST /v2/docs/push`: 50 documents, 600 requests a minute; each goes to its room, six
   at a time. An `ok` names the version and state vector right after the push applied,
   not the room's latest, so words a socket typed meanwhile still meet the device as
-  `moved`. `x-nib-device` names the version the settle writes. A push to a note of a
+  `moved`. `x-orden-device` names the version the settle writes. A push to a note of a
   space nobody prepared prepares it first.
 - `POST /v2/docs/pull`: 200 documents; the bucket's `crdt/<note>` (V2 encoding, with
   `seq`, `epoch`, `epochBase` and `at` as custom metadata) when the room has written

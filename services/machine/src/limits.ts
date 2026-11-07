@@ -11,13 +11,13 @@ import { sessionStates } from './proc'
 
 export const PIDS_MAX = 4096
 
-const KEPT_FOR_NIBD = 512 * 1024 * 1024
+const KEPT_FOR_ORDEND = 512 * 1024 * 1024
 
 export function memoryMax(meminfo: string): number | null {
   const kib = Number(/^MemTotal:\s+(\d+) kB$/m.exec(meminfo)?.[1])
   if (!Number.isSafeInteger(kib) || kib <= 0) return null
-  const most = kib * 1024 - KEPT_FOR_NIBD
-  return most >= KEPT_FOR_NIBD ? most : null
+  const most = kib * 1024 - KEPT_FOR_ORDEND
+  return most >= KEPT_FOR_ORDEND ? most : null
 }
 
 export interface User {
@@ -82,7 +82,7 @@ export class Cgroups {
 
   static open(pidsMax: number, root = '/sys/fs/cgroup'): Cgroups | null {
     if (!existsSync(join(root, 'cgroup.controllers'))) return null
-    const base = join(root, 'nibd')
+    const base = join(root, existsSync(join(root, 'nibd')) ? 'nibd' : 'ordend')
     try {
       mkdirSync(base, { recursive: true })
       enable(root, '+pids')

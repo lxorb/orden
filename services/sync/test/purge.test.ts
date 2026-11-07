@@ -262,7 +262,7 @@ describe('a room erased while its object lives', () => {
     expect(memory().getText(TEXT).toJSON()).toContain('TOP SECRET')
 
     const erased = await room.fetch(
-      new Request('https://room/', { headers: { 'x-nib-erase': 'yes' } }),
+      new Request('https://room/', { headers: { 'x-orden-erase': 'yes' } }),
     )
     expect(erased.status).toBe(204)
     expect(first.closed).toBe(true)

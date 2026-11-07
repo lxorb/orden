@@ -82,7 +82,7 @@ async function preview(href: string): Promise<string | null> {
   if (kept !== undefined) return kept
 
   try {
-    const answer = await fetch(href, { headers: { 'x-nib-preview': '1' } })
+    const answer = await fetch(href, { headers: { 'x-orden-preview': '1' } })
     if (!answer.ok) return null
 
     const page = new DOMParser().parseFromString(await answer.text(), 'text/html')

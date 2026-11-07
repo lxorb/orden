@@ -7,9 +7,9 @@ export const PASSWORD_LIMIT = 200
 
 const LASTS = 30 * 24 * 60 * 60 * 1000
 
-const TICKET = '__Host-nib_site'
+const TICKET = '__Host-orden_site'
 
-const OLD_TICKET = 'nib_site'
+const OLD_TICKETS = ['__Host-nib_site', 'nib_site']
 
 export const SITE_ROUNDS = 100_000
 
@@ -92,7 +92,7 @@ function ticketsIn(header: string | null): string[] {
     const [name, ...rest] = part.trim().split('=')
     const value = rest.join('=')
     if (name === TICKET && value) current.push(value)
-    if (name === OLD_TICKET && value) old.push(value)
+    if (name && OLD_TICKETS.includes(name) && value) old.push(value)
   }
 
   return [...current, ...old]

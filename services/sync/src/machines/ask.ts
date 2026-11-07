@@ -26,7 +26,7 @@ export async function askMachine(
   if (!namespace) return null
 
   const place =
-    typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_NIBD
+    typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_ORDEND
       ? namespace.jurisdiction('eu')
       : namespace
 
@@ -35,7 +35,7 @@ export async function askMachine(
       const machine = place.get(place.idFromName(id))
       return await machine.fetch(
         new Request(`https://machine.invalid/${ask}`, {
-          headers: { ...headers, 'x-nib-machine': ask, 'x-nib-id': id },
+          headers: { ...headers, 'x-orden-machine': ask, 'x-orden-id': id },
         }),
       )
     } catch {
