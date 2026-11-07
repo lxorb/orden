@@ -93,6 +93,29 @@ function grewFrom(was: readonly InkStroke[], now: readonly InkStroke[]): boolean
   return true
 }
 
+function changed(
+  was: readonly InkStroke[],
+  now: readonly InkStroke[],
+): { gone: InkStroke[]; added: InkStroke[] } {
+  const shortest = Math.min(was.length, now.length)
+  let head = 0
+  while (head < shortest && was[head] === now[head]) head++
+  let tail = 0
+  while (tail < shortest - head && was[was.length - 1 - tail] === now[now.length - 1 - tail]) {
+    tail++
+  }
+
+  const before = was.slice(head, was.length - tail)
+  const after = now.slice(head, now.length - tail)
+  const had = new Set(before)
+  const has = new Set(after)
+
+  return {
+    gone: before.filter((stroke) => !has.has(stroke)),
+    added: after.filter((stroke) => !had.has(stroke)),
+  }
+}
+
 function sameOrder(was: ReadonlyMap<string, number>, now: ReadonlyMap<string, number>): boolean {
   let last = -1
   for (const kind of now.keys()) {
@@ -237,10 +260,9 @@ export class InkTiles {
         if (!this.#order.has(kind)) this.#order.set(kind, this.#order.size)
       }
     } else {
-      const before = new Set(was)
-      const after = new Set(strokes)
-      gone = was.filter((stroke) => !after.has(stroke))
-      added = strokes.filter((stroke) => !before.has(stroke))
+      const delta = changed(was, strokes)
+      gone = delta.gone
+      added = delta.added
 
       const order = firstSeen(strokes)
       if (!sameOrder(this.#order, order)) {
