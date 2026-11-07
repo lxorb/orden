@@ -190,6 +190,11 @@ impl Desktop {
     )]
     pub fn run(&self, argv: &[String], folder: &Path) -> Result<Program, String> {
         let said = |error: windows::core::Error| error.to_string();
+        if !spoken_to_cmd(argv) {
+            return Err(
+                "a batch file's words cannot carry quotes, percent signs or line breaks".to_owned(),
+            );
+        }
         let mut line = wide(&command_line(argv));
         let mut desktop = wide(&format!("{}\\{}", station(), self.name));
         let folder = wide(&folder.to_string_lossy());
@@ -336,10 +341,30 @@ pub fn kill(pid: u32) {
 }
 
 pub fn command_line(argv: &[String]) -> String {
+    let batch = argv.first().is_some_and(|program| is_batch(program));
     argv.iter()
-        .map(|word| quoted(word))
+        .map(|word| {
+            if batch {
+                format!("\"{word}\"")
+            } else {
+                quoted(word)
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+fn is_batch(program: &str) -> bool {
+    std::path::Path::new(program.trim_end_matches(['.', ' ']))
+        .extension()
+        .is_some_and(|one| one.eq_ignore_ascii_case("bat") || one.eq_ignore_ascii_case("cmd"))
+}
+
+pub fn spoken_to_cmd(argv: &[String]) -> bool {
+    !argv.first().is_some_and(|program| is_batch(program))
+        || argv
+            .iter()
+            .all(|word| !word.contains(['"', '%', '\r', '\n', '\0']))
 }
 
 fn quoted(word: &str) -> String {
@@ -535,6 +560,41 @@ mod tests {
                 .map(|one| (*one).to_owned())
                 .collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn a_batch_file_hears_every_word_quoted_so_cmd_runs_none_of_them() {
+        let words = |all: &[&str]| all.iter().map(|one| (*one).to_owned()).collect::<Vec<_>>();
+        assert_eq!(
+            command_line(&words(&["C:\\a&b\\run.bat", "x&calc", "y|z"])),
+            "\"C:\\a&b\\run.bat\" \"x&calc\" \"y|z\""
+        );
+        assert_eq!(
+            command_line(&words(&["C:\\x\\run.CMD. ", "a^b"])),
+            "\"C:\\x\\run.CMD. \" \"a^b\""
+        );
+        assert!(spoken_to_cmd(&words(&["C:\\x\\run.bat", "a&b"])));
+        assert!(!spoken_to_cmd(&words(&["C:\\x\\run.bat", "a\"&calc&\""])));
+        assert!(!spoken_to_cmd(&words(&["C:\\x\\run.cmd", "%PATH%"])));
+        assert!(!spoken_to_cmd(&words(&["C:\\x\\run.bat.", "a\nb"])));
+        assert!(spoken_to_cmd(&words(&["C:\\x\\app.exe", "say \"%hi%\""])));
+    }
+
+    #[test]
+    fn a_batch_file_run_on_a_desktop_runs_only_itself() {
+        let folder = tempfile::tempdir().expect("a folder");
+        let script = folder.path().join("said.bat");
+        std::fs::write(&script, "@echo %1> \"%~dp0said.txt\"\r\n").expect("the script");
+        let desktop = Desktop::start(640, 480).expect("a desktop");
+        let argv = vec![
+            script.to_string_lossy().into_owned(),
+            "x&echo.>pwned.txt".to_owned(),
+        ];
+        let program = desktop.run(&argv, folder.path()).expect("it ran");
+        program.wait();
+        assert!(!folder.path().join("pwned.txt").exists());
+        let said = std::fs::read_to_string(folder.path().join("said.txt")).expect("it said");
+        assert_eq!(said.trim(), "\"x&echo.>pwned.txt\"");
     }
 
     #[test]
