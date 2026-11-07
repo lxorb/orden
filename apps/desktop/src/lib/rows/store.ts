@@ -94,6 +94,23 @@ export class RowsStore {
     return () => this.listeners.delete(listener)
   }
 
+  settled(listener: () => void): () => void {
+    let due = false
+    let live = true
+    const stop = this.watch(() => {
+      if (due) return
+      due = true
+      queueMicrotask(() => {
+        due = false
+        if (live) listener()
+      })
+    })
+    return () => {
+      live = false
+      stop()
+    }
+  }
+
   spacesAre(spaces: readonly SpaceName[]) {
     for (const [key, held] of this.spaces) {
       if (!spaces.some((one) => samePath(one.root, held.root))) this.forget(key)

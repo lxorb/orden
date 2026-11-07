@@ -53,8 +53,9 @@
   let all = $state.raw<readonly Row[]>(untrack(() => rows.of(shown.ref.space)))
   $effect(() =>
     untrack(() =>
-      rows.watch((change) => {
-        if (change.space === viewing.shown?.ref.space) all = rows.of(change.space)
+      rows.settled(() => {
+        const space = viewing.shown?.ref.space
+        if (space !== undefined) all = rows.of(space)
       }),
     ),
   )

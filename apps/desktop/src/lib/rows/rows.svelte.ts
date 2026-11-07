@@ -73,6 +73,7 @@ export const rows = {
       : store.of(space),
   at: (path: string): readonly Row[] => store.at(path),
   watch: (listener: RowsListener): (() => void) => store.watch(listener),
+  settled: (listener: () => void): (() => void) => store.settled(listener),
   get ready(): boolean {
     return store.ready
   },

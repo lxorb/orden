@@ -59,6 +59,7 @@ vi.mock('../../rows/rows.svelte', () => ({
     of: (space?: string) => [WORK, HOME].filter((row) => store.together || row.space === space),
     at: () => [],
     watch: () => () => undefined,
+    settled: () => () => undefined,
   },
 }))
 
