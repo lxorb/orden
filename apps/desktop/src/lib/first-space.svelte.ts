@@ -38,7 +38,7 @@ class FirstSpace {
 
   private async arrive(space: Space, note: string | null) {
     if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
-    if (note) await workspace.openEntry(note, { activate: !workspace.tabs.length })
+    if (note) await workspace.openFirst(note)
     if (!viewport.drawer) workspace.showPanel('tree')
   }
 }
