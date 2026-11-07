@@ -9,7 +9,7 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from carry_page import NOTE, PANE, TITLES, WORDS, field_of, heard, into_field, row_box, wrong_drop, zone_of  # noqa: E402
+from carry_page import NOTE, PANE, TITLES, WORDS, field_of, heard, into_field, put_note, row_box, wrong_drop, zone_of  # noqa: E402
 
 OUT, APP = Path(sys.argv[1]), sys.argv[2]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
@@ -108,9 +108,10 @@ time.sleep(2)
 root = until("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
-note = Path(root) / NOTE
-note.write_text(WORDS, encoding="utf-8")
-if not until(f"void nib.workspace.loadTree(), !!nib.workspace.entryAt({json.dumps(str(note))})"):
+note = put_note(run, root)
+if not isinstance(note, str):
+    sys.exit(f"::error::the app put no note in the space: {note}")
+if not until(f"void nib.workspace.loadTree(), !!nib.workspace.entryAt({json.dumps(note)})"):
     sys.exit("::error::the file list never showed the note put in the space")
 
 run(f"nib.workspace.openPage({json.dumps(URL)}); true")
@@ -118,7 +119,7 @@ if not until(f"({TITLES}) !== ''", 40):
     sys.exit("::error::the page never loaded")
 time.sleep(2)
 pane = until(PANE)
-row = until(row_box(str(note)))
+row = until(row_box(note))
 if not isinstance(pane, dict) or not isinstance(row, dict):
     sys.exit(f"::error::no page or no row to drag: page {pane}, row {row}")
 print(f"carry: the row at {row}, the page at {pane}", flush=True)
