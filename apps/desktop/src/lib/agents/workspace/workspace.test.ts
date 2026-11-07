@@ -104,7 +104,7 @@ const workspace = {
     listsMarked: () => true,
     of: (path: string) => (lists.has(path) ? { 'todo-list': 'yes' } : null),
     set: (path: string, patch: Record<string, string | null>) =>
-      patch['todo-list'] ? lists.add(path) : lists.delete(path),
+      patch['todo-list'] === 'yes' ? lists.add(path) : lists.delete(path),
   },
   get shownSpaces() {
     return this.spaces
@@ -1709,6 +1709,25 @@ describe('to-dos and bases', () => {
     })
     expect(files.get('/s/Home/Meeting.md')).toBe('- [ ] Ask about the budget\n')
     expect(lists.has('/s/Home/Projects/Meeting.md')).toBe(true)
+    files.delete('/s/Home/Meeting.md')
+  })
+
+  test('a note made a to-do list by its path, and a note again, never the inbox', async () => {
+    files.set('/s/Home/Meeting.md', '- [ ] Ask about the budget\n')
+    expect(
+      await call('update_task', { space: 'Home', at: 'Meeting.md', todo_list: true }),
+    ).toMatchObject({ result: { path: 'Meeting.md', todo_list: true, space: 'Home' } })
+    expect(lists.has('/s/Home/Meeting.md')).toBe(true)
+    await call('update_task', { space: 'Home', at: 'Meeting', todo_list: false })
+    expect(lists.has('/s/Home/Meeting.md')).toBe(false)
+    expect(
+      await call('update_task', { space: 'Home', at: '.Inbox.md', todo_list: false }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(
+      await call('update_task', { space: 'Home', at: 'Nowhere', todo_list: true }),
+    ).toMatchObject({ code: 'no_such_file' })
+    expect(lists.has('/s/Home/Nowhere.md')).toBe(false)
+    expect(docs.writeNote).not.toHaveBeenCalled()
     files.delete('/s/Home/Meeting.md')
   })
 

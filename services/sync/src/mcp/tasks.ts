@@ -21,8 +21,10 @@ import {
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
 import { INBOX_PATH, taskHash } from '@orden/bases'
-import { meansInbox } from '@orden/bases/inbox'
+import { carriedOwn, meansInbox } from '@orden/bases/inbox'
 import {
+  CANCELLED_KEY,
+  DONE_KEY,
   inOldFolder,
   isTodoList,
   LIST_KEY,
@@ -31,15 +33,20 @@ import {
   MARKED_VALUE,
   type Meta,
   OLD_FOLDER,
+  STOPPED_VALUE,
   withDates,
 } from '@orden/bases/todo-lists'
-import { type ItemMeta, metaFromText } from '@orden/sync-core/meta'
+import { type ItemMeta, type MetaPatch, metaFromText } from '@orden/sync-core/meta'
 import { appliedEdits } from '@orden/markdown/edits'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { taskLine } from '@orden/markdown/task-edits'
 import { objectIn } from '../body'
+import { pokeNow } from '../hub/poke'
 import { cleanPath, MOVED } from '../notes'
+import { remindRelisted } from '../push/relisted'
 import { blobKey } from '../sync2/files'
+import { describeById } from '../sync2/ops'
+import { prepareSpace } from '../sync2/prepare'
 import type { Env, Note } from '../types'
 import {
   askedSpace,
@@ -90,7 +97,7 @@ export const TASK_TOOLS = [
   {
     name: 'update_task',
     description:
-      'Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `""` takes a field off, priority is 1 (p1) to 4, `move_to` {note?, under?} moves it with its sub-tasks.',
+      'Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `""` takes a field off, priority is 1 (p1) to 4, `move_to` {note?, under?} moves it with its sub-tasks. `todo_list` true makes the note of `at` (its path will do) a to-do list, false a note again.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -111,6 +118,7 @@ export const TASK_TOOLS = [
         assignee: string,
         tags: { type: 'array', items: string },
         move_to: { type: 'object', properties: { note: string, under: string } },
+        todo_list: { type: 'boolean' },
       },
       required: ['space', 'at'],
     },
@@ -168,15 +176,35 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
   return results
 }
 
-async function listsBy(env: Env, spaceId: string): Promise<(path: string, meta: Meta) => boolean> {
-  const folder = await env.DB.prepare(
-    `select meta from folders where space_id = ? and parent_id is null and deleted = 0
-        and lower(name) = lower(?) limit 1`,
+interface Lists {
+  listed: (path: string, meta: Meta) => boolean
+  home: string
+}
+
+const DEEPEST = 64
+
+async function listsBy(env: Env, spaceId: string): Promise<Lists> {
+  const { results } = await env.DB.prepare(
+    `with recursive up(meta, parent, path, depth) as (
+       select meta, parent_id, name, 0 from folders
+        where space_id = ?1 and deleted = 0 and meta like ?2
+       union all
+       select up.meta, f.parent_id, f.name || '/' || up.path, up.depth + 1
+         from up join folders f on f.id = up.parent
+        where f.space_id = ?1 and f.deleted = 0 and up.depth < ?3
+     )
+     select meta, path from up where parent is null`,
   )
-    .bind(spaceId, OLD_FOLDER)
-    .first<{ meta: string | null }>()
-  const marked = metaFromText(folder?.meta)?.[MARKED_KEY] === MARKED_VALUE
-  return (path, meta) => isTodoList(path, meta) || inOldFolder(path, meta, marked)
+    .bind(spaceId, `%${MARKED_KEY}%`, DEEPEST)
+    .all<{ meta: string | null; path: string }>()
+  const marked = results
+    .filter((one) => metaFromText(one.meta)?.[MARKED_KEY] === MARKED_VALUE)
+    .map((one) => one.path)
+    .sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
+  return {
+    listed: (path, meta) => isTodoList(path, meta) || inOldFolder(path, meta, marked.length > 0),
+    home: marked[0] ?? OLD_FOLDER,
+  }
 }
 
 async function rowsOf(
@@ -191,7 +219,7 @@ async function rowsOf(
     const held = (await notesOf(env, space)).filter(
       (one) => MARKDOWN.test(one.path) && !shut(space.id, one.path),
     )
-    const listedBy = await listsBy(env, space.id)
+    const { listed: listedBy } = await listsBy(env, space.id)
     if (held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
@@ -216,6 +244,8 @@ interface Place {
 
 const LISTED: ItemMeta = { [LIST_KEY]: LIST_VALUE }
 
+const STOPPED: MetaPatch = { [LIST_KEY]: STOPPED_VALUE, [DONE_KEY]: null, [CANCELLED_KEY]: null }
+
 const keyOf = (path: string) => path.normalize('NFC').toLowerCase()
 
 async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<Place> {
@@ -229,9 +259,9 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
     .all<{ path: string; meta: string | null }>()
   const there = results.find((one) => keyOf(one.path) === keyOf(path))
   if (there === undefined && meansInbox(named)) return { path: INBOX_PATH }
-  const listedBy = await listsBy(env, space.id)
+  const lists = await listsBy(env, space.id)
   const listed = (one: { path: string; meta: string | null }) =>
-    listedBy(one.path, metaFromText(one.meta))
+    lists.listed(one.path, metaFromText(one.meta))
   if (there !== undefined) {
     if (listed(there)) return { path: there.path }
     throw new Said(
@@ -246,7 +276,7 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
   const taken = new Set(results.map((one) => keyOf(one.path)))
   const stem = name.replace(MARKDOWN, '')
   for (let count = 1; ; count++) {
-    const made = `${OLD_FOLDER}/${count === 1 ? stem : `${stem} ${count}`}.md`
+    const made = `${lists.home}/${count === 1 ? stem : `${stem} ${count}`}.md`
     if (!taken.has(keyOf(made))) return { path: made, made: LISTED }
   }
 }
@@ -434,8 +464,44 @@ async function addTaskTo(
   })
 }
 
+const ANCHORED = /#\d+:[0-9a-z]+$/
+
+async function listNote(
+  env: Env,
+  space: Writable,
+  asked: string,
+  listing: boolean,
+): Promise<{ path: string; todo_list: boolean; space: string }> {
+  const path = notePath(asked)
+  if (!listing && carriedOwn(path)) throw new Said(`${path} is the inbox, always a to-do list.`)
+  const note = await env.DB.prepare(
+    "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
+  )
+    .bind(space.id, path)
+    .first<{ id: string }>()
+  if (!note) throw new Said(`No note at ${path}.`)
+  const held = await env.DB.prepare('select prepared_at from spaces where id = ?')
+    .bind(space.id)
+    .first<{ prepared_at: number | null }>()
+  if (!held?.prepared_at) await prepareSpace(env, space.id)
+  const done = await describeById(env, space.id, undefined, note.id, listing ? LISTED : STOPPED)
+  if ('refused' in done.value) throw new Said(changedWhileWriting(path))
+  if (done.changed) await pokeNow(env, space.id, done.cursor)
+  await remindRelisted(env, space.id, done.relisted).catch(() => undefined)
+  return { path, todo_list: listing, space: space.name }
+}
+
 async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   const space = await writableSpace(env, token, args, seen)
+  const listing = typeof args.todo_list === 'boolean' ? args.todo_list : undefined
+  if (listing === undefined) return await changed(env, space, args)
+  const at = words(args, 'at') ?? ''
+  if (!ANCHORED.test(at)) return await listNote(env, space, at, listing)
+  const said = await changed(env, space, args)
+  return { ...said, ...(await listNote(env, space, readAt(at).path, listing)) }
+}
+
+async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
   const anchor = readAt(args.at)
   const path = notePath(anchor.path)
   const done = typeof args.done === 'boolean' ? args.done : undefined

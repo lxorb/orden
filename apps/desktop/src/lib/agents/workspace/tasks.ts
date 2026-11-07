@@ -1,6 +1,6 @@
 import { type Base, type Context, INBOX_PATH, type Row } from '@orden/bases'
 import { seen } from './guarded'
-import { meansInbox } from '@orden/bases/inbox'
+import { carriedOwn, meansInbox } from '@orden/bases/inbox'
 import {
   AgentError,
   clockOf,
@@ -218,7 +218,40 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   return done({ at: `${note.relative}#${placedAt}:${hash}`, space: place.space.name })
 }
 
+const ANCHORED = /#\d+:[0-9a-z]+$/
+
+async function listNote(
+  call: Call,
+  path: string,
+  listing: boolean,
+): Promise<{ path: string; todo_list: boolean; space: string }> {
+  const place = placeOf(call)
+  const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
+  const root = place.space.root
+  const { inboxOf } = await import('../../rows/inbox')
+  const inbox = inboxOf(root).normalize('NFC').toLowerCase()
+  if (
+    !listing &&
+    (carriedOwn(note.relative) || note.relative.normalize('NFC').toLowerCase() === inbox)
+  )
+    throw new Refused('bad_arguments', `${note.relative} is the inbox, always a to-do list`)
+  const full = insideSpace(root, note.relative)
+  if ((await workspace.noteText(full)) === null && !(await there(full)))
+    throw new Refused('no_such_file', `there is no ${note.relative} in ${place.space.name}`)
+  const { makeList, unmakeList } = await import('../../rows/todo-lists')
+  if (listing) makeList(full)
+  else unmakeList(full)
+  return { path: note.relative, todo_list: listing, space: place.space.name }
+}
+
 export async function updateTask(call: Call): Promise<AgentAnswer> {
+  const listing = typeof call.args.todo_list === 'boolean' ? call.args.todo_list : undefined
+  const named = typeof call.args.at === 'string' ? call.args.at.trim() : ''
+  if (listing !== undefined && !ANCHORED.test(named)) {
+    const question = await asked(call, null, `Change whether ${named} is a to-do list`)
+    if (question) return question
+    return done(await listNote(call, named, listing))
+  }
   const place = placeOf(call)
   const anchor = (() => {
     try {
@@ -265,7 +298,8 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
     if (moveTo !== undefined && moveTo !== null) {
       said = { ...said, ...(await moved(call, place, note, readAt(said.at), moveTo)) }
     }
-    return done({ ...said, space: place.space.name })
+    const listed = listing === undefined ? {} : await listNote(call, anchor.path, listing)
+    return done({ ...said, ...listed, space: place.space.name })
   } catch (error) {
     refused(error)
   }

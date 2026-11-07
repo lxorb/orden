@@ -793,7 +793,7 @@
   },
   {
     "name": "update_task",
-    "description": "Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `\"\"` takes a field off, priority is 1 (p1) to 4, `move_to` moves it with its sub-tasks. `comment` writes a comment under it.",
+    "description": "Change one to-do by its `at`. `done` ticks it, and a recurring one writes its next line (`next`). Dates are YYYY-MM-DD, `\"\"` takes a field off, priority is 1 (p1) to 4, `move_to` moves it with its sub-tasks. `comment` writes a comment under it. `todo_list` true makes the note of `at` (its path will do) a to-do list, false a note again.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -832,7 +832,8 @@
             "note": { "type": "string" },
             "under": { "type": "string" }
           }
-        }
+        },
+        "todo_list": { "type": "boolean" }
       },
       "required": ["at"]
     },

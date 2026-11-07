@@ -6,7 +6,7 @@ import {
   type OpContext,
   type OpResult,
 } from '@orden/sync-core'
-import type { ItemMeta } from '@orden/sync-core/meta'
+import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
@@ -207,6 +207,19 @@ export async function moveByPath(
     return 'id' in result ? tree.pathOf(id) : null
   })
   return value
+}
+
+export async function describeById(
+  env: Env,
+  spaceId: string,
+  device: string | undefined,
+  id: string,
+  meta: MetaPatch,
+): Promise<Changed<OpResult>> {
+  const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
+  return await changeTree(env, spaceId, device, (tree) =>
+    tree.apply({ op: newId(), t: 'meta', id, meta, seen: SAW_EVERYTHING }, context),
+  )
 }
 
 export async function deleteById(
