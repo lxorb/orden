@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
   import { t } from './i18n.svelte'
-  import { densityFor, paperOf } from './pages/paper'
+  import { closeUpOf, densityFor, type Part, paperOf } from './pages/paper'
 
   const {
     page,
@@ -11,6 +11,7 @@
     notePath,
     root,
     shared = null,
+    seen = null,
   }: {
     page: PageNode
     number: number
@@ -18,6 +19,7 @@
     notePath: string | null
     root: string | null
     shared?: string | null
+    seen?: { x: number; y: number; width: number; height: number } | null
   } = $props()
 
   const LINES = 30
@@ -29,9 +31,76 @@
 
   const backed = $derived(!!page.file && !!page.page)
 
-  const density = $derived(
-    densityFor((typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1) / unit),
-  )
+  const wanted = $derived((typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1) / unit)
+
+  const density = $derived(densityFor(wanted))
+
+  const CLOSE_UP = 160
+
+  const STRETCH = 1.1
+
+  let close = $state<HTMLCanvasElement>()
+  let paperWide = $state(0)
+  let closeUp = $state.raw<Part | null>(null)
+
+  const part = $derived.by((): Part | null => {
+    if (!backed || !paperWide || !seen || !page.width || !page.height) return null
+    if (wanted <= (paperWide / page.width) * STRETCH) return null
+
+    const left = Math.max(0, Math.floor(seen.x - page.x))
+    const top = Math.max(0, Math.floor(seen.y - page.y))
+    const right = Math.min(page.width, Math.ceil(seen.x + seen.width - page.x))
+    const bottom = Math.min(page.height, Math.ceil(seen.y + seen.height - page.y))
+    if (right <= left || bottom <= top) return null
+
+    return {
+      x: left / page.width,
+      y: top / page.height,
+      width: (right - left) / page.width,
+      height: (bottom - top) / page.height,
+    }
+  })
+
+  $effect(() => {
+    const want = part
+    if (!want) {
+      closeUp = null
+      if (close) {
+        close.width = 0
+        close.height = 0
+      }
+      return
+    }
+
+    const file = page.file
+    const at = page.page
+    if (!file || !at) return
+
+    const across = page.width * wanted
+    const leaving = new AbortController()
+    const timer = setTimeout(() => {
+      void closeUpOf({ file, note: notePath, root, shared }, at, want, across, leaving.signal).then(
+        (image) => {
+          if (!image) return
+          if (leaving.signal.aborted || !close) {
+            image.close()
+            return
+          }
+
+          close.width = image.width
+          close.height = image.height
+          close.getContext('2d')?.drawImage(image, 0, 0)
+          image.close()
+          closeUp = want
+        },
+      )
+    }, CLOSE_UP)
+
+    return () => {
+      clearTimeout(timer)
+      leaving.abort()
+    }
+  })
 
   $effect(() => {
     if (!backed) return
@@ -72,6 +141,7 @@
     element.width = image.width
     element.height = image.height
     element.getContext('2d')?.drawImage(image, 0, 0)
+    paperWide = image.width
   })
 
   onDestroy(() => (paper = null))
@@ -109,6 +179,15 @@
 >
   {#if backed}
     <canvas bind:this={sheet} class:there={!!paper}></canvas>
+    <canvas
+      bind:this={close}
+      class="close"
+      class:there={!!closeUp}
+      style:left="{(closeUp?.x ?? 0) * 100}%"
+      style:top="{(closeUp?.y ?? 0) * 100}%"
+      style:width="{(closeUp?.width ?? 0) * 100}%"
+      style:height="{(closeUp?.height ?? 0) * 100}%"
+    ></canvas>
   {/if}
   {#if lost}
     <span class="missing">{t('The paper could not be read')}</span>
@@ -139,6 +218,11 @@
 
   .sheet canvas.there {
     opacity: 1;
+  }
+
+  .sheet canvas.close {
+    inset: auto;
+    transition: none;
   }
 
   .missing {

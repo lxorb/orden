@@ -5,6 +5,8 @@ const held = vi.hoisted(() => ({
   opened: 0,
   closed: 0,
   release: [] as (() => void)[],
+  views: [] as { width: number; offsetX: number; offsetY: number }[],
+  cancelled: 0,
 }))
 
 vi.mock('../pdf/document', () => ({
@@ -21,16 +23,41 @@ vi.mock('../pdf/document', () => ({
         numPages: 1000,
         getPage: (number: number) =>
           Promise.resolve({
-            getViewport: ({ scale }: { scale: number }) => ({
-              width: 600 * scale,
-              height: 800 * scale,
-            }),
-            render: ({ viewport }: { viewport: { width: number } }) => ({
-              promise: new Promise<void>((done) => {
+            getViewport: ({
+              scale,
+              offsetX = 0,
+              offsetY = 0,
+            }: {
+              scale: number
+              offsetX?: number
+              offsetY?: number
+            }) => ({ width: 600 * scale, height: 800 * scale, offsetX, offsetY }),
+            render: ({
+              canvas,
+              viewport,
+            }: {
+              canvas: { width: number; height: number }
+              viewport: { width: number; offsetX: number; offsetY: number }
+            }) => {
+              let fail: (why: Error) => void = () => undefined
+              const promise = new Promise<void>((done, failed) => {
+                fail = failed
                 held.drawn.push(`${String(number)} at ${String(Math.round(viewport.width))}`)
+                held.views.push({
+                  width: canvas.width,
+                  offsetX: viewport.offsetX,
+                  offsetY: viewport.offsetY,
+                })
                 held.release.push(done)
-              }),
-            }),
+              })
+              return {
+                promise,
+                cancel: () => {
+                  held.cancelled++
+                  fail(new Error('cancelled'))
+                },
+              }
+            },
             cleanup: () => undefined,
           }),
       },
@@ -53,7 +80,7 @@ class Sheet {
   }
 }
 
-const { densityFor, forgetPaper, holdPaper, paperOf } = await import('./paper')
+const { closeUpOf, densityFor, forgetPaper, holdPaper, paperOf } = await import('./paper')
 
 const AT = { file: 'Thick.pages.pdf', note: '/s/Thick.pages', root: '/s' }
 
@@ -71,6 +98,7 @@ beforeEach(() => {
   vi.stubGlobal('OffscreenCanvas', Sheet)
   held.drawn = []
   held.release = []
+  held.views = []
 })
 
 afterEach(async () => {
@@ -167,6 +195,45 @@ describe('the pages of a paper', () => {
     for (let number = 1; number <= 5; number++) await drawNext()
 
     expect(held.opened - before).toBe(1)
+  })
+})
+
+describe('a close-up of a page', () => {
+  test('draws only the part of the page asked for, at the pixels asked for', async () => {
+    const part = { x: 0.25, y: 0.5, width: 0.5, height: 0.25 }
+    const asked = closeUpOf(AT, 3, part, 6000, new AbortController().signal)
+    await drawNext()
+
+    const image = await asked
+    expect(image?.width).toBe(3000)
+    expect(image?.height).toBe(2000)
+    expect(held.views).toEqual([{ width: 3000, offsetX: -1500, offsetY: -4000 }])
+  })
+
+  test('is never larger than a page may be', async () => {
+    const asked = closeUpOf(
+      AT,
+      3,
+      { x: 0, y: 0, width: 1, height: 1 },
+      60_000,
+      new AbortController().signal,
+    )
+    await drawNext()
+
+    const image = await asked
+    expect((image?.width ?? 0) * (image?.height ?? 0)).toBeLessThanOrEqual(16 * 1024 * 1024)
+  })
+
+  test('let go of while drawing, stops drawing and gives nothing', async () => {
+    const leaving = new AbortController()
+    const cancelled = held.cancelled
+    const asked = closeUpOf(AT, 3, { x: 0, y: 0, width: 0.5, height: 0.5 }, 6000, leaving.signal)
+    await settle()
+    leaving.abort()
+
+    expect(await asked).toBeNull()
+    expect(held.cancelled).toBe(cancelled + 1)
+    held.release = []
   })
 })
 
