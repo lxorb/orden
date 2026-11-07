@@ -1110,6 +1110,86 @@ mod tests {
         assert!(late.is_empty(), "the window's thread waits in {late:#?}");
     }
 
+    const ASKS_THE_WINDOW_S_THREAD: [&str; 27] = [
+        ".inner_size(",
+        ".outer_size(",
+        ".inner_position(",
+        ".outer_position(",
+        ".scale_factor(",
+        ".is_visible(",
+        ".is_focused(",
+        ".is_maximized(",
+        ".is_minimized(",
+        ".is_fullscreen(",
+        ".is_decorated(",
+        ".is_resizable(",
+        ".is_enabled(",
+        ".is_always_on_top(",
+        ".is_devtools_open(",
+        ".current_monitor(",
+        ".primary_monitor(",
+        ".available_monitors(",
+        ".monitor_from_point(",
+        ".cursor_position(",
+        ".hwnd(",
+        ".window_handle(",
+        ".bounds(",
+        ".cookies(",
+        "WebviewWindowBuilder::new(",
+        "WebviewBuilder::new(",
+        ".add_child(",
+    ];
+
+    fn asks_the_window_s_thread(said: &str) -> bool {
+        let says = |word: &str| said.contains(&calls::spaced(word));
+        says("run_on_main_thread(")
+            && [".recv(", ".recv_timeout(", ".blocking_recv("]
+                .iter()
+                .any(|word| says(word))
+            || ASKS_THE_WINDOW_S_THREAD.iter().any(|word| says(word))
+    }
+
+    #[test]
+    fn a_lock_held_while_asking_the_window_s_thread_is_followed_to_it() {
+        let source = concat!(
+            "static HELD: Mutex<u8> = Mutex::new(0);\n\nstatic SENT: Mutex<u8> = Mutex::new(0);\n\nstatic FREE: Mutex<u8> = Mutex::new(0);\n\n",
+            "#[tauri::command(async)]\npub fn asks(window: Window) {\n    let held = HELD.lock().unwrap();\n    let _ = window.inner_size();\n    drop(held);\n}\n\n",
+            "#[tauri::command(async)]\npub fn sends(app: AppHandle) {\n    let held = SENT.lock().unwrap();\n    let (told, heard) = channel();\n    let _ = app.run_on_main_thread(move || told.send(1));\n    let _ = heard.recv();\n    drop(held);\n}\n\n",
+            "#[tauri::command(async)]\npub fn frees(window: Window) {\n    let held = FREE.lock().unwrap();\n    drop(held);\n    let _ = window.inner_size();\n}\n\n",
+            "pub fn started(app: &App) {\n    app.on_window_event(|window, event| {\n        *HELD.lock().unwrap() = 1;\n        *SENT.lock().unwrap() = 1;\n        *FREE.lock().unwrap() = 1;\n    });\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let asking = own.saying(asks_the_window_s_thread);
+        let found = own
+            .taking_held(asks_the_window_s_thread, &asking, &[])
+            .join("\n");
+        assert!(found.contains("crate::HELD"), "{found}");
+        assert!(found.contains("crate::SENT"), "{found}");
+        assert!(!found.contains("crate::FREE"), "{found}");
+    }
+
+    #[test]
+    fn the_window_s_thread_takes_no_lock_held_while_asking_it() {
+        let mut late: Vec<String> = Vec::new();
+        for target in TARGETS {
+            let own = own_on(target);
+            let asking = own.saying(asks_the_window_s_thread);
+            late.extend(
+                own.taking_held(
+                    asks_the_window_s_thread,
+                    &asking,
+                    &SMALL_ON_THE_WINDOW_S_THREAD,
+                )
+                .into_iter()
+                .map(|one| format!("{target:?} {one}")),
+            );
+        }
+        assert!(
+            late.is_empty(),
+            "the window's thread could wait for itself in {late:#?}"
+        );
+    }
+
     #[test]
     fn a_lock_held_across_a_wait_is_a_wait_for_whoever_takes_it() {
         let source = concat!(
