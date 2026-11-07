@@ -22,7 +22,17 @@ import {
 import { rowsOfText } from '@orden/bases/rows'
 import { INBOX_PATH, taskHash } from '@orden/bases'
 import { meansInbox } from '@orden/bases/inbox'
-import { isTodoList, LIST_KEY, LIST_VALUE, withDates } from '@orden/bases/todo-lists'
+import {
+  inOldFolder,
+  isTodoList,
+  LIST_KEY,
+  LIST_VALUE,
+  MARKED_KEY,
+  MARKED_VALUE,
+  type Meta,
+  OLD_FOLDER,
+  withDates,
+} from '@orden/bases/todo-lists'
 import { type ItemMeta, metaFromText } from '@orden/sync-core/meta'
 import { appliedEdits } from '@orden/markdown/edits'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
@@ -158,6 +168,17 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
   return results
 }
 
+async function listsBy(env: Env, spaceId: string): Promise<(path: string, meta: Meta) => boolean> {
+  const folder = await env.DB.prepare(
+    `select meta from folders where space_id = ? and parent_id is null and deleted = 0
+        and lower(name) = lower(?) limit 1`,
+  )
+    .bind(spaceId, OLD_FOLDER)
+    .first<{ meta: string | null }>()
+  const marked = metaFromText(folder?.meta)?.[MARKED_KEY] === MARKED_VALUE
+  return (path, meta) => isTodoList(path, meta) || inOldFolder(path, meta, marked)
+}
+
 async function rowsOf(
   env: Env,
   spaces: readonly Space[],
@@ -170,6 +191,7 @@ async function rowsOf(
     const held = (await notesOf(env, space)).filter(
       (one) => MARKDOWN.test(one.path) && !shut(space.id, one.path),
     )
+    const listedBy = await listsBy(env, space.id)
     if (held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
@@ -178,7 +200,7 @@ async function rowsOf(
       const bodies = await Promise.all(batch.map((one) => noteBody(env, space.id, one.id)))
       batch.forEach((one, index) => {
         const meta = metaFromText(one.meta)
-        const listed = isTodoList(one.path, meta)
+        const listed = listedBy(one.path, meta)
         const read = rowsOfText(space.name, one.path, bodies[index] ?? '')
         rows.push(...withDates(read, meta).filter((row) => listed || row.kind !== 'task'))
       })
@@ -196,8 +218,6 @@ const LISTED: ItemMeta = { [LIST_KEY]: LIST_VALUE }
 
 const keyOf = (path: string) => path.normalize('NFC').toLowerCase()
 
-const PROJECTS = 'Projects'
-
 async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<Place> {
   if (named === undefined) return { path: INBOX_PATH }
   const path = notePath(named)
@@ -209,8 +229,9 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
     .all<{ path: string; meta: string | null }>()
   const there = results.find((one) => keyOf(one.path) === keyOf(path))
   if (there === undefined && meansInbox(named)) return { path: INBOX_PATH }
+  const listedBy = await listsBy(env, space.id)
   const listed = (one: { path: string; meta: string | null }) =>
-    isTodoList(one.path, metaFromText(one.meta))
+    listedBy(one.path, metaFromText(one.meta))
   if (there !== undefined) {
     if (listed(there)) return { path: there.path }
     throw new Said(
@@ -225,7 +246,7 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
   const taken = new Set(results.map((one) => keyOf(one.path)))
   const stem = name.replace(MARKDOWN, '')
   for (let count = 1; ; count++) {
-    const made = `${PROJECTS}/${count === 1 ? stem : `${stem} ${count}`}.md`
+    const made = `${OLD_FOLDER}/${count === 1 ? stem : `${stem} ${count}`}.md`
     if (!taken.has(keyOf(made))) return { path: made, made: LISTED }
   }
 }

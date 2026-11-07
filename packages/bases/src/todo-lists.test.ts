@@ -6,6 +6,7 @@ import {
   datesOf,
   datesText,
   DONE_KEY,
+  inOldFolder,
   isTodoList,
   LIST_KEY,
   LIST_VALUE,
@@ -20,6 +21,15 @@ describe('a todo list (#1229)', () => {
     expect(isTodoList('.Inbox.md', null)).toBe(true)
     expect(isTodoList('Lists/Inbox.md', null, 'Lists/Inbox.md')).toBe(true)
     expect(isTodoList('Errands.md', { [LIST_KEY]: LIST_VALUE })).toBe(true)
+  })
+
+  test('is a note in Projects carrying no mark, until the space is marked (#1333)', () => {
+    expect(inOldFolder('Projects/Garden.md', null, false)).toBe(true)
+    expect(inOldFolder('projects/Work/Hiring.md', { icon: 'star' }, false)).toBe(true)
+    expect(inOldFolder('Projects/Garden.md', null, true)).toBe(false)
+    expect(inOldFolder('Projects/Garden.md', { [LIST_KEY]: 'no' }, false)).toBe(false)
+    expect(inOldFolder('Garden.md', null, false)).toBe(false)
+    expect(inOldFolder('Projects/plan.canvas', null, false)).toBe(false)
   })
 
   test('is never a note by where it is, the Projects folder included', () => {
