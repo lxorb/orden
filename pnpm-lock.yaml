@@ -13,7 +13,7 @@ patchedDependencies:
     hash: 45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f
     path: patches/@codemirror__view@6.43.11.patch
   '@lezer/markdown@1.7.2':
-    hash: 266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f
+    hash: 35eda8fa700dc7cc88a6bbe657e6356fcdbb881d1fe2abb6bf1d97d9d977b23d
     path: patches/@lezer__markdown@1.7.2.patch
   '@replit/codemirror-vim-core@0.1.0':
     hash: 154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4
@@ -330,7 +330,7 @@ importers:
         version: 1.5.4
       '@lezer/markdown':
         specifier: ^1.7.2
-        version: 1.7.2(patch_hash=266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f)
+        version: 1.7.2(patch_hash=35eda8fa700dc7cc88a6bbe657e6356fcdbb881d1fe2abb6bf1d97d9d977b23d)
       '@orden/markdown':
         specifier: workspace:*
         version: link:../markdown
@@ -4201,7 +4201,7 @@ snapshots:
       '@codemirror/state': 6.7.2
       '@codemirror/view': 6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f)
       '@lezer/common': 1.5.2
-      '@lezer/markdown': 1.7.2(patch_hash=266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f)
+      '@lezer/markdown': 1.7.2(patch_hash=35eda8fa700dc7cc88a6bbe657e6356fcdbb881d1fe2abb6bf1d97d9d977b23d)
 
   '@codemirror/lang-php@6.0.2':
     dependencies:
@@ -4880,7 +4880,7 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.2
 
-  '@lezer/markdown@1.7.2(patch_hash=266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f)':
+  '@lezer/markdown@1.7.2(patch_hash=35eda8fa700dc7cc88a6bbe657e6356fcdbb881d1fe2abb6bf1d97d9d977b23d)':
     dependencies:
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
