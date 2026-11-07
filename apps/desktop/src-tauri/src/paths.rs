@@ -181,10 +181,11 @@ fn held_moved(from: &Path, to: &Path, clear: bool) {
     }
 
     let source = highlights_of(from);
+    if clear {
+        let _ = fs::remove_file(highlights_of(to));
+    }
     if source.exists() {
         let _ = crate::carry::move_whole(&source, &highlights_of(to), "move");
-    } else if clear {
-        let _ = fs::remove_file(highlights_of(to));
     }
 }
 
@@ -1768,6 +1769,26 @@ mod tests {
 
         drop_held(&now);
         assert!(!highlights_of(&now).exists());
+    }
+
+    #[test]
+    fn a_pdf_moved_where_old_highlights_lie_brings_its_own() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let was = here.join("paper.pdf");
+        let now = here.join("renamed.pdf");
+        std::fs::write(&was, b"%PDF-1.4").expect("a pdf");
+        std::fs::write(highlights_of(&was), "mine").expect("its highlights");
+        std::fs::write(highlights_of(&now), "left over").expect("highlights of a PDF gone");
+
+        std::fs::rename(&was, &now).expect("the move");
+        move_held(&was, &now);
+
+        assert!(!highlights_of(&was).exists());
+        assert_eq!(
+            std::fs::read_to_string(highlights_of(&now)).expect("its own"),
+            "mine"
+        );
     }
 
     #[test]
