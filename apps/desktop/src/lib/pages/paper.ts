@@ -289,6 +289,27 @@ function sheetOf(width: number, height: number): HTMLCanvasElement | OffscreenCa
   return paper
 }
 
+const holders = new Map<string, number>()
+
+export function holdPaper(at: PaperAt): () => void {
+  const key = keyOf(at)
+  holders.set(key, (holders.get(key) ?? 0) + 1)
+
+  let holding = true
+  return () => {
+    if (!holding) return
+    holding = false
+
+    const left = (holders.get(key) ?? 1) - 1
+    if (left > 0) {
+      holders.set(key, left)
+      return
+    }
+    holders.delete(key)
+    forgetPaper(at)
+  }
+}
+
 export function forgetPaper(at: PaperAt) {
   const key = keyOf(at)
   const one = held.get(key)

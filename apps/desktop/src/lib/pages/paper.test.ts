@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const held = vi.hoisted(() => ({
   drawn: [] as string[],
   opened: 0,
+  closed: 0,
   release: [] as (() => void)[],
 }))
 
@@ -12,7 +13,10 @@ vi.mock('../pdf/document', () => ({
     held.opened++
     return Promise.resolve({
       hash: 'hash',
-      close: () => Promise.resolve(),
+      close: () => {
+        held.closed++
+        return Promise.resolve()
+      },
       doc: {
         numPages: 1000,
         getPage: (number: number) =>
@@ -49,7 +53,7 @@ class Sheet {
   }
 }
 
-const { densityFor, forgetPaper, paperOf } = await import('./paper')
+const { densityFor, forgetPaper, holdPaper, paperOf } = await import('./paper')
 
 const AT = { file: 'Thick.pages.pdf', note: '/s/Thick.pages', root: '/s' }
 
@@ -163,5 +167,38 @@ describe('the pages of a paper', () => {
     for (let number = 1; number <= 5; number++) await drawNext()
 
     expect(held.opened - before).toBe(1)
+  })
+})
+
+describe('a paper shown on cards', () => {
+  const CARD = { file: 'Scan.pdf', note: '/s/Board.canvas', root: '/s' }
+
+  test('stays open while a card shows it, and is let go with the last of them', async () => {
+    const one = holdPaper(CARD)
+    const other = holdPaper(CARD)
+    const first = paperOf(CARD, 1, new AbortController().signal)
+    await drawNext()
+    expect(await first).not.toBeNull()
+    const opened = held.opened
+    const closed = held.closed
+
+    one()
+    one()
+    await settle()
+    expect(held.closed).toBe(closed)
+    const again = paperOf(CARD, 1, new AbortController().signal)
+    await settle()
+    expect(held.release).toHaveLength(0)
+    expect(await again).toBe(await first)
+
+    other()
+    await settle()
+    expect(held.closed).toBe(closed + 1)
+
+    const anew = paperOf(CARD, 1, new AbortController().signal)
+    await drawNext()
+    expect(await anew).not.toBeNull()
+    expect(held.opened).toBe(opened + 1)
+    forgetPaper(CARD)
   })
 })

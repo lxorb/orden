@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { paperOf } from './pages/paper'
+  import { holdPaper, paperOf } from './pages/paper'
   import FileMark from './FileMark.svelte'
 
   const { file, note, root }: { file: string; note: string | null; root: string | null } = $props()
@@ -9,12 +9,17 @@
 
   $effect(() => {
     let alive = true
-    void paperOf({ file, note, root }, 1).then((drawn) => {
+    const at = { file, note, root }
+    const release = holdPaper(at)
+    const leaving = new AbortController()
+    void paperOf(at, 1, leaving.signal).then((drawn) => {
       if (alive) paper = drawn?.image ?? null
     })
     return () => {
       alive = false
       paper = null
+      leaving.abort()
+      release()
     }
   })
 
