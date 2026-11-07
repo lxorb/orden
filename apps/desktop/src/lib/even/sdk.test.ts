@@ -439,7 +439,7 @@ describe('a host that never answers', () => {
     expect(await settled(glasses.start({}))).toEqual({ value: 'unknown' })
     expect(await settled(glasses.rebuild({}))).toEqual({ value: false })
     expect(await settled(glasses.microphone(true))).toEqual({ value: false })
-    expect(await settled(glasses.words({ id: 5, name: 'nibBody' }, 'hello'))).toEqual({
+    expect(await settled(glasses.words({ id: 5, name: 'ordenBody' }, 'hello'))).toEqual({
       error: SILENT,
     })
     expect(await settled(glasses.leave())).toEqual({ value: undefined })
@@ -454,7 +454,7 @@ describe('a host that never answers', () => {
     put(host)
     const glasses = await connectGlasses()
 
-    expect(await glasses?.words({ id: 5, name: 'nibBody' }, 'hello')).toBe(true)
+    expect(await glasses?.words({ id: 5, name: 'ordenBody' }, 'hello')).toBe(true)
     expect(vi.getTimerCount()).toBe(0)
     vi.useRealTimers()
   })
@@ -498,6 +498,6 @@ describe('a host that says no', () => {
     put(new Refusing())
     const glasses = await connectGlasses()
 
-    await expect(glasses?.words({ id: 5, name: 'nibBody' }, 'hello')).rejects.toThrow('refused')
+    await expect(glasses?.words({ id: 5, name: 'ordenBody' }, 'hello')).rejects.toThrow('refused')
   })
 })

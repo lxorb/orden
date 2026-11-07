@@ -25,7 +25,7 @@ export function parseRunMessage(data: unknown, run: number): RunMessage | null {
   if (typeof data !== 'object' || data === null) return null
 
   const message = data as Record<string, unknown>
-  if (message.nib !== KIND || message.run !== run) return null
+  if (message.orden !== KIND || message.run !== run) return null
   if (!Array.isArray(message.lines)) return null
 
   const lines: RunLine[] = []
@@ -65,7 +65,7 @@ function runnerProgram(code: string, run: number): string {
 
   function said(text) {
     parent.postMessage(
-      { nib: '${KIND}', run: RUN, lines: [{ level: 'exception', text: text }], ready: true, done: true },
+      { orden: '${KIND}', run: RUN, lines: [{ level: 'exception', text: text }], ready: true, done: true },
       '*',
     )
   }
@@ -98,7 +98,7 @@ const WORKER = `self.onmessage = function (event) {
 
   function post(batch, ready, done) {
     self.postMessage(
-      { nib: '${KIND}', run: RUN, lines: batch, ready: ready === true, done: done === true },
+      { orden: '${KIND}', run: RUN, lines: batch, ready: ready === true, done: done === true },
     )
   }
 

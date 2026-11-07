@@ -85,7 +85,7 @@ export function frameHeight(data: unknown): number | null {
   if (typeof data !== 'object' || data === null) return null
 
   const message = data as Record<string, unknown>
-  if (message.nib !== SIZED) return null
+  if (message.orden !== SIZED) return null
 
   const asked = message.height
   if (typeof asked !== 'number' || !Number.isFinite(asked)) return null
@@ -94,7 +94,7 @@ export function frameHeight(data: unknown): number | null {
 }
 
 const REPORT = `(function(){
-var post=function(){parent.postMessage({nib:'${SIZED}',height:document.body.scrollHeight},'*')}
+var post=function(){parent.postMessage({orden:'${SIZED}',height:document.body.scrollHeight},'*')}
 if(window.ResizeObserver){new ResizeObserver(post).observe(document.body)}
 addEventListener('load',post)
 post()

@@ -13,11 +13,11 @@ const CAPTURE: Container = { id: 1, name: 'orden' }
 const EMPTY = ' '
 
 const IDS: Record<BandName, Container> = {
-  head: { id: 2, name: 'nibHead' },
-  rule: { id: 3, name: 'nibRule' },
-  nums: { id: 4, name: 'nibNums' },
-  body: { id: 5, name: 'nibBody' },
-  mic: { id: 7, name: 'nibMic' },
+  head: { id: 2, name: 'ordenHead' },
+  rule: { id: 3, name: 'ordenRule' },
+  nums: { id: 4, name: 'ordenNums' },
+  body: { id: 5, name: 'ordenBody' },
+  mic: { id: 7, name: 'ordenMic' },
 }
 
 const ORDER: readonly BandName[] = ['head', 'rule', 'nums', 'body', 'mic']

@@ -86,7 +86,7 @@ describe('the frame script', () => {
     await settled()
     await settled()
 
-    expect(heard).toContainEqual(expect.objectContaining({ nib: 'orden-html-frame' }))
+    expect(heard).toContainEqual(expect.objectContaining({ orden: 'orden-html-frame' }))
   })
 
   test('runs nothing anywhere but an opaque origin', async () => {

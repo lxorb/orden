@@ -23,10 +23,10 @@ const MOST: Record<Kind, number> = {
   package: 0,
   identifier: 8,
   scheme: 21,
-  key: 112,
+  key: 69,
   variable: 18,
-  dashed: 245,
-  word: 1800,
+  dashed: 209,
+  word: 1381,
 }
 
 const ALIASES_GONE_BY = 'v0.22.0'
@@ -36,7 +36,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/cli/orden.mjs': ['NIB_', 'nib is the same command'],
   'apps/cli/package.json': ['"nib"'],
   'apps/desktop/public/manifest.webmanifest': ['web+nib'],
-  'apps/desktop/public/sw.js': ["'nib'"],
+  'apps/desktop/public/sw.js': ["'nib'", 'nibNotice'],
   'apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml': ['android:scheme="nib"'],
   'apps/desktop/src-tauri/linux/nib': ['/usr/bin/orden'],
   'apps/desktop/src-tauri/src/agents/grants.rs': ['"nib-"'],
@@ -125,7 +125,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'apps/desktop/src/lib/web/handoff.test.ts': ['nib-handoff'],
   'apps/desktop/src/lib/web/handoff.ts': ["'nib-handoff'", "'nib'"],
   'apps/desktop/src/lib/web/store.ts': ["'nib'"],
-  'apps/desktop/src/lib/web/sw.test.ts': ["'nib'"],
+  'apps/desktop/src/lib/web/sw.test.ts': ["'nib'", 'nibNotice'],
   'apps/desktop/src/lib/web/sync-store.ts': ['nib-sync:'],
   'apps/desktop/src/lib/welcome.ts': ['Welcome to Nib', "'nib://'"],
   'apps/desktop/src/lib/workspace.test.ts': ['Welcome to Nib'],

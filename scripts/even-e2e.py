@@ -663,16 +663,16 @@ def main() -> int:
             open_note(page, "Even Realities glasses")
 
             bands = page.evaluate("window.__bands()")
-            body = bands.get("nibBody", "")
+            body = bands.get("ordenBody", "")
             report.ok("sets the note into the body band", "panel is 576" in body, body[:40])
             report.ok(
                 "puts the heading in the head band, not in the body",
-                bands.get("nibHead", "").startswith("EVEN REALITIES GLASSES"),
-                bands.get("nibHead", ""),
+                bands.get("ordenHead", "").startswith("EVEN REALITIES GLASSES"),
+                bands.get("ordenHead", ""),
             )
             report.ok(
                 "draws the heavy rule under a first level heading",
-                set(bands.get("nibRule", "").strip()) == {"═"},
+                set(bands.get("ordenRule", "").strip()) == {"═"},
             )
             report.ok(
                 "never sends more rows than the panel holds",
@@ -681,13 +681,13 @@ def main() -> int:
             )
             report.ok(
                 "carries the line numbers in a column of their own",
-                bands.get("nibNums", "").strip() != "",
-                bands.get("nibNums", "").replace("\n", "|"),
+                bands.get("ordenNums", "").strip() != "",
+                bands.get("ordenNums", "").replace("\n", "|"),
             )
             report.ok(
                 "says which page of how many in the top right, beside the microphone",
-                re.search(r"\S {2,}1/\d+$", bands.get("nibHead", "").rstrip()) is not None,
-                bands.get("nibHead", "").rstrip(),
+                re.search(r"\S {2,}1/\d+$", bands.get("ordenHead", "").rstrip()) is not None,
+                bands.get("ordenHead", "").rstrip(),
             )
             report.ok(
                 "keeps the last line of the panel for the note",
@@ -696,14 +696,14 @@ def main() -> int:
             )
             screens.append({"name": "glasses-1", "lineNumbers": True, **naming(bands)})
 
-            before = bands.get("nibHead", "")
+            before = bands.get("ordenHead", "")
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(500)
             turned = page.evaluate("window.__bands()")
             report.ok(
                 "a scroll off a temple turns the page",
-                turned.get("nibHead") != before and turned.get("nibBody") != body,
-                turned.get("nibHead", "").rstrip(),
+                turned.get("ordenHead") != before and turned.get("ordenBody") != body,
+                turned.get("ordenHead", "").rstrip(),
             )
 
             report.ok(
@@ -743,7 +743,7 @@ def main() -> int:
             sent = [one["name"] for one in page.evaluate("window.__even.calls") if one["method"] == "words"]
             report.ok(
                 "a page turn sends only the bands that changed",
-                "nibRule" not in sent and "nibBody" in sent,
+                "ordenRule" not in sent and "ordenBody" in sent,
                 ", ".join(sent),
             )
             report.say(f"a page turn is {len(sent)} bands, about {len(sent) * 83} ms of radio")
@@ -756,21 +756,21 @@ def main() -> int:
             side = page.evaluate("window.__bands()")
             report.ok(
                 "a tap opens the sidebar, with the space at the top",
-                side.get("nibHead", "").startswith("Notes"),
-                side.get("nibHead", ""),
+                side.get("ordenHead", "").startswith("Notes"),
+                side.get("ordenHead", ""),
             )
             report.ok(
                 "the sidebar lists the notes with a cursor on one",
-                "▶ " in side.get("nibBody", ""),
-                side.get("nibBody", "").replace("\n", " | "),
+                "▶ " in side.get("ordenBody", ""),
+                side.get("ordenBody", "").replace("\n", " | "),
             )
             report.ok(
                 "the sidebar never lists a canvas",
-                "A canvas" not in side.get("nibBody", ""),
+                "A canvas" not in side.get("ordenBody", ""),
             )
             report.ok(
                 "the sidebar lists a folder as a label",
-                "Inbox" in side.get("nibBody", ""),
+                "Inbox" in side.get("ordenBody", ""),
             )
             screens.append({"name": "sidebar", "lineNumbers": True, **naming(side)})
 
@@ -779,8 +779,8 @@ def main() -> int:
             moved = page.evaluate("window.__bands()")
             report.ok(
                 "a scroll in the sidebar moves the cursor",
-                moved.get("nibBody") != side.get("nibBody"),
-                moved.get("nibHead", "").rstrip(),
+                moved.get("ordenBody") != side.get("ordenBody"),
+                moved.get("ordenHead", "").rstrip(),
             )
 
             page.evaluate("window.__even.calls = []")
@@ -790,8 +790,8 @@ def main() -> int:
             left = [one for one in page.evaluate("window.__even.calls") if one["method"] == "leave"]
             report.ok(
                 "a double tap closes the sidebar instead of leaving the app",
-                not left and not after.get("nibHead", "").startswith("Notes"),
-                after.get("nibHead", ""),
+                not left and not after.get("ordenHead", "").startswith("Notes"),
+                after.get("ordenHead", ""),
             )
 
             page.evaluate("window.__even.calls = []")
@@ -807,7 +807,7 @@ def main() -> int:
             page.evaluate("window.__gesture('hold')")
             page.wait_for_timeout(400)
             modal = page.evaluate("window.__bands()")
-            rows = modal.get("nibBody", "")
+            rows = modal.get("ordenBody", "")
             report.ok(
                 "a hold offers switch space, change note and the microphone",
                 "Switch space" in rows and "Change note" in rows and "Voice" in rows,
@@ -820,8 +820,8 @@ def main() -> int:
             spaces = page.evaluate("window.__bands()")
             report.ok(
                 "switch space lists the spaces",
-                spaces.get("nibHead", "").startswith("Spaces"),
-                spaces.get("nibBody", "").replace("\n", " | "),
+                spaces.get("ordenHead", "").startswith("Spaces"),
+                spaces.get("ordenBody", "").replace("\n", " | "),
             )
             screens.append({"name": "spaces", "lineNumbers": True, **naming(spaces)})
 
@@ -833,15 +833,15 @@ def main() -> int:
             tree = page.evaluate("window.__bands()")
             report.ok(
                 "the notes open with the cursor on the note the reader is in",
-                "▶ Even Realities glasses" in tree.get("nibBody", ""),
-                tree.get("nibBody", "").replace("\n", " | "),
+                "▶ Even Realities glasses" in tree.get("ordenBody", ""),
+                tree.get("ordenBody", "").replace("\n", " | "),
             )
             page.evaluate("window.__gesture('up')")
             page.wait_for_timeout(200)
             report.ok(
                 "change note is the tree, with a folder shut",
-                tree.get("nibHead", "").startswith("Notes") and "▶ Inbox" in tree.get("nibBody", ""),
-                tree.get("nibBody", "").replace("\n", " | "),
+                tree.get("ordenHead", "").startswith("Notes") and "▶ Inbox" in tree.get("ordenBody", ""),
+                tree.get("ordenBody", "").replace("\n", " | "),
             )
 
             page.evaluate("window.__gesture('tap')")
@@ -849,8 +849,8 @@ def main() -> int:
             opened = page.evaluate("window.__bands()")
             report.ok(
                 "a tap on a folder opens it where it stands",
-                "▼ Inbox" in opened.get("nibBody", "") and "Reading list" in opened.get("nibBody", ""),
-                opened.get("nibBody", "").replace("\n", " | "),
+                "▼ Inbox" in opened.get("ordenBody", "") and "Reading list" in opened.get("ordenBody", ""),
+                opened.get("ordenBody", "").replace("\n", " | "),
             )
             screens.append({"name": "notes", "lineNumbers": True, **naming(opened)})
 
@@ -860,8 +860,8 @@ def main() -> int:
             switched = page.evaluate("window.__bands()")
             report.ok(
                 "a tap on a note opens it on the glasses",
-                "READING LIST" in switched.get("nibHead", ""),
-                switched.get("nibHead", ""),
+                "READING LIST" in switched.get("ordenHead", ""),
+                switched.get("ordenHead", ""),
             )
 
             def open_settings():
@@ -874,7 +874,7 @@ def main() -> int:
 
             open_settings()
             settings = page.evaluate("window.__bands()")
-            rows = settings.get("nibBody", "")
+            rows = settings.get("ordenBody", "")
             report.ok(
                 "a hold reaches the settings, with every setting and what it says now",
                 "Line numbers" in rows and "New page at" in rows and "On" in rows,
@@ -889,7 +889,7 @@ def main() -> int:
 
             seen = []
             for _step in range(40):
-                seen.append(page.evaluate("window.__bands()").get("nibBody", ""))
+                seen.append(page.evaluate("window.__bands()").get("ordenBody", ""))
                 page.evaluate("window.__gesture('down')")
             report.ok(
                 "and the reset at the foot of them",
@@ -903,14 +903,14 @@ def main() -> int:
             off = page.evaluate("window.__bands()")
             report.ok(
                 "a tap on a toggle flips it, and the row says so at once",
-                "Off" in off.get("nibBody", ""),
-                off.get("nibBody", "").replace(chr(10), " | "),
+                "Off" in off.get("ordenBody", ""),
+                off.get("ordenBody", "").replace(chr(10), " | "),
             )
             page.evaluate("window.__gesture('tap')")
             page.wait_for_timeout(400)
             report.ok(
                 "off and then on again is the same as never having touched it",
-                "On" in page.evaluate("window.__bands()").get("nibBody", ""),
+                "On" in page.evaluate("window.__bands()").get("ordenBody", ""),
             )
             page.evaluate("window.__gesture('double')")
             page.evaluate("window.__gesture('double')")
@@ -920,13 +920,13 @@ def main() -> int:
             paged = page.evaluate("window.__bands()")
             report.ok(
                 "the page number is there, because Orden turns every page",
-                re.search(r"\d+/\d+$", paged.get("nibHead", "").rstrip()) is not None,
-                paged.get("nibHead", "").rstrip(),
+                re.search(r"\d+/\d+$", paged.get("ordenHead", "").rstrip()) is not None,
+                paged.get("ordenHead", "").rstrip(),
             )
 
             def walk_to(word: str) -> bool:
                 for _one in range(40):
-                    rows_now = page.evaluate("window.__bands()").get("nibBody", "")
+                    rows_now = page.evaluate("window.__bands()").get("ordenBody", "")
                     on = next((one for one in rows_now.split(chr(10)) if one.startswith("▶")), "")
                     if word in on:
                         return True
@@ -943,7 +943,7 @@ def main() -> int:
             page.wait_for_timeout(700)
 
             def numbered() -> tuple[int, int]:
-                said = page.evaluate("window.__bands()").get("nibHead", "").rstrip()
+                said = page.evaluate("window.__bands()").get("ordenHead", "").rstrip()
                 found = re.search(r"(\d+)/(\d+)$", said)
                 return (int(found[1]), int(found[2])) if found else (0, 0)
 
@@ -955,7 +955,7 @@ def main() -> int:
             now, still = numbered()
             report.ok(
                 "a flick turns a whole page, and the number counts it",
-                turned.get("nibBody") != first.get("nibBody")
+                turned.get("ordenBody") != first.get("ordenBody")
                 and now == was + 1
                 and still == count,
                 f"{was}/{count} then {now}/{still}",
@@ -968,8 +968,8 @@ def main() -> int:
             page.wait_for_timeout(500)
             report.ok(
                 "lights the corner while it is listening",
-                page.evaluate("window.__bands()").get("nibMic", "").strip() == "\u25cf",
-                page.evaluate("window.__bands()").get("nibMic", ""),
+                page.evaluate("window.__bands()").get("ordenMic", "").strip() == "\u25cf",
+                page.evaluate("window.__bands()").get("ordenMic", ""),
             )
 
             for said, wanted, what in [
@@ -985,9 +985,9 @@ def main() -> int:
                 heard = page.evaluate("window.__bands()")
                 report.ok(
                     f'hears "{said}" and {wanted}',
-                    said.split()[0] in heard.get("nibHead", "").lower()
-                    or what in heard.get("nibHead", ""),
-                    heard.get("nibHead", "").rstrip(),
+                    said.split()[0] in heard.get("ordenHead", "").lower()
+                    or what in heard.get("ordenHead", ""),
+                    heard.get("ordenHead", "").rstrip(),
                 )
 
             page.evaluate("window.__even.calls = []; window.__heardAt = 0; window.__wroteAt = 0")
@@ -1018,8 +1018,8 @@ def main() -> int:
             asking = page.evaluate("window.__bands()")
             report.ok(
                 "puts the question up while the model is working",
-                "what did i decide" in asking.get("nibHead", "").lower(),
-                asking.get("nibHead", ""),
+                "what did i decide" in asking.get("ordenHead", "").lower(),
+                asking.get("ordenHead", ""),
             )
             report.ok(
                 "and puts nothing over the note on the phone while it waits",
@@ -1032,8 +1032,8 @@ def main() -> int:
             answered = page.evaluate("window.__bands()")
             report.ok(
                 "opens the answer on the glasses, one sentence first",
-                "firmware font" in answered.get("nibBody", ""),
-                answered.get("nibBody", "").split("\n")[0],
+                "firmware font" in answered.get("ordenBody", ""),
+                answered.get("ordenBody", "").split("\n")[0],
             )
             asked = page.evaluate("window.__asked")
             sent = asked[0] if asked else {}
@@ -1060,14 +1060,14 @@ def main() -> int:
             page.screenshot(path=str(OUT / "phone-answer.png"))
             screens.append({"name": "answer", "lineNumbers": True, **naming(answered)})
 
-            first = answered.get("nibBody", "").split("\n")[0]
+            first = answered.get("ordenBody", "").split("\n")[0]
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(300)
             scrolled = page.evaluate("window.__bands()")
             report.ok(
                 "a scroll goes down the answer a line at a time",
-                scrolled.get("nibBody", "").split("\n")[0] != first,
-                scrolled.get("nibBody", "").split("\n")[0],
+                scrolled.get("ordenBody", "").split("\n")[0] != first,
+                scrolled.get("ordenBody", "").split("\n")[0],
             )
 
             page.evaluate("window.__gesture('double')")
@@ -1075,9 +1075,9 @@ def main() -> int:
             closed = page.evaluate("window.__bands()")
             report.ok(
                 "a double tap closes the answer, back to the note",
-                "firmware font only" not in closed.get("nibBody", "")
-                and closed.get("nibNums", "").strip() != "",
-                closed.get("nibHead", "").rstrip(),
+                "firmware font only" not in closed.get("ordenBody", "")
+                and closed.get("ordenNums", "").strip() != "",
+                closed.get("ordenHead", "").rstrip(),
             )
 
             open_note(page, "Even Realities glasses")
@@ -1090,7 +1090,7 @@ def main() -> int:
             whole = []
             for _page in range(12):
                 bands = page.evaluate("window.__bands()")
-                whole.append(f"{bands.get('nibHead', '')}\n{bands.get('nibBody', '')}")
+                whole.append(f"{bands.get('ordenHead', '')}\n{bands.get('ordenBody', '')}")
                 page.evaluate("window.__gesture('down')")
                 page.wait_for_timeout(180)
 
@@ -1132,7 +1132,7 @@ def main() -> int:
             drawn = []
             for _page in range(6):
                 bands = page.evaluate("window.__bands()")
-                drawn.append(bands.get("nibBody", ""))
+                drawn.append(bands.get("ordenBody", ""))
                 if _page == 0:
                     screens.append({"name": "scripts", "lineNumbers": False, **naming(bands)})
                 page.evaluate("window.__gesture('down')")
@@ -1373,7 +1373,7 @@ def main() -> int:
             page.evaluate("window.__gesture('hold')")
             page.wait_for_timeout(500)
             held = page.evaluate("window.__bands()")
-            asked = held.get("nibBody", "")
+            asked = held.get("ordenBody", "")
             report.ok(
                 "a reader whose script the firmware cannot draw gets an English panel",
                 "Switch space" in asked and "Settings" in asked,
@@ -1407,14 +1407,14 @@ def main() -> int:
                 page.wait_for_timeout(500)
                 return bands
 
-            rows_de = panel_in("de").get("nibBody", "")
+            rows_de = panel_in("de").get("ordenBody", "")
             report.ok(
                 "a reader in German reads the panel in German",
                 "Zeilennummern" in rows_de and "□" not in rows_de,
                 rows_de.replace(chr(10), " | ")[:90],
             )
 
-            rows_yue = panel_in("yue").get("nibBody", "")
+            rows_yue = panel_in("yue").get("ordenBody", "")
             report.ok(
                 "and a reader in Cantonese reads it in Cantonese, box free",
                 "空行" in rows_yue and "□" not in rows_yue,
@@ -1494,12 +1494,12 @@ def open_note(page, name: str) -> None:
 
 def naming(bands: dict) -> dict:
     return {
-        "head": bands.get("nibHead", ""),
-        "rule": bands.get("nibRule", ""),
-        "nums": bands.get("nibNums", ""),
-        "body": bands.get("nibBody", ""),
+        "head": bands.get("ordenHead", ""),
+        "rule": bands.get("ordenRule", ""),
+        "nums": bands.get("ordenNums", ""),
+        "body": bands.get("ordenBody", ""),
         "foot": "",
-        "mic": bands.get("nibMic", ""),
+        "mic": bands.get("ordenMic", ""),
     }
 
 if __name__ == "__main__":

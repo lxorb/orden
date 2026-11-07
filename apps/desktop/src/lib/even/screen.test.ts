@@ -12,7 +12,7 @@ class Lens {
     rebuild: () => Promise.resolve(true),
     words: (container: Container, words: string) => {
       this.sent.push({ name: container.name, words })
-      if (container.name !== 'nibBody' || this.holding) return Promise.resolve(true)
+      if (container.name !== 'ordenBody' || this.holding) return Promise.resolve(true)
 
       return new Promise<boolean>((resolve) => {
         this.holding = () => {
@@ -29,7 +29,7 @@ class Lens {
 const VIEW: View = { head: 'Note', rule: '─', body: 'the words', nums: '', mic: '' }
 
 function bodies(lens: Lens): number {
-  return lens.sent.filter((one) => one.name === 'nibBody').length
+  return lens.sent.filter((one) => one.name === 'ordenBody').length
 }
 
 describe('what the panel believes the glasses show', () => {
@@ -92,6 +92,6 @@ describe('turning line numbers on when the glasses cannot', () => {
 
     await expect(panel.renumber(true)).resolves.toBe(false)
     await panel.show({ ...VIEW, nums: '1' })
-    expect(lens.sent.map((one) => one.name)).not.toContain('nibNums')
+    expect(lens.sent.map((one) => one.name)).not.toContain('ordenNums')
   })
 })

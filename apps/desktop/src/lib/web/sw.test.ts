@@ -299,14 +299,21 @@ describe('the asset worker', () => {
 describe('a notice the worker showed, pressed', () => {
   test('brings the open window forward and tells it which notice it was', async () => {
     const window: OpenWindow = { focused: 0, said: [] }
-    const pressed = await load([], { windows: [window] }).press({ nibNotice: 'c_2' })
+    const pressed = await load([], { windows: [window] }).press({ ordenNotice: 'c_2' })
 
     expect(pressed).toEqual({ closed: true, opened: [] })
-    expect(window).toEqual({ focused: 1, said: [{ nibNotice: 'c_2' }] })
+    expect(window).toEqual({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
+  })
+
+  test('knows a notice shown before the rename by its old tag', async () => {
+    const window: OpenWindow = { focused: 0, said: [] }
+    await load([], { windows: [window] }).press({ nibNotice: 'c_2' })
+
+    expect(window).toEqual({ focused: 1, said: [{ ordenNotice: 'c_2' }] })
   })
 
   test('opens Orden when no window of it is open', async () => {
-    expect(await load([]).press({ nibNotice: 'c_2' })).toEqual({ closed: true, opened: ['/'] })
+    expect(await load([]).press({ ordenNotice: 'c_2' })).toEqual({ closed: true, opened: ['/'] })
   })
 
   test('tells nothing of a notice it did not name', async () => {
