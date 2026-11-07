@@ -82,6 +82,18 @@ export async function serveApp(assets: Assets, request: Request): Promise<Respon
   return root ? outOf(root, page) : page
 }
 
+export async function servePass(assets: Assets, request: Request): Promise<Response> {
+  const url = new URL(request.url)
+  const page = request.method === 'GET' || request.method === 'HEAD'
+  if (page && (url.pathname === '/' || url.pathname === '/index.html')) {
+    return servePage(assets, request, '/pass.html')
+  }
+  const found = await serveApp(assets, request)
+  if (!page || !found.headers.get('content-type')?.includes('text/html')) return found
+  if (found.status >= 300 && found.status < 400) return found
+  return servePage(assets, request, '/pass.html')
+}
+
 export async function servePage(assets: Assets, request: Request, file: string): Promise<Response> {
   const url = new URL(request.url)
   const ask = (path: string) => {

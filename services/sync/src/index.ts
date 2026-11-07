@@ -7,8 +7,8 @@ import { accountById, auth, presentUser, requireWhoever, sessions } from './auth
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
-import { blogRootOf, isAppHost, isOwnOrigin } from './hosts'
-import { serveApp, servePage, switchChannel } from './channel'
+import { blogRootOf, isAppHost, isOwnOrigin, passHost } from './hosts'
+import { serveApp, servePage, servePass, switchChannel } from './channel'
 import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
@@ -283,6 +283,15 @@ function servePlugin(env: Env, request: Request): Promise<Response> | Response {
 
 app.all('*', async (context) => {
   const url = new URL(context.req.url)
+
+  if (hostnameOf(url.host) === passHost(context.env)) {
+    const switched = switchChannel(context.req.raw)
+    if (switched) return switched
+    const assets = context.env.ASSETS
+    if (assets) return unframed(await servePass(assets, context.req.raw))
+    return context.text('Not found', 404)
+  }
+
   const space = await spaceForHost(context.env, url.host)
 
   if (space) return serveBlog(context.env, space, url, context.req.raw)

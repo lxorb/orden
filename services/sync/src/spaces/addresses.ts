@@ -1,4 +1,4 @@
-import { blogRoots, origins } from '../hosts'
+import { blogRoots, origins, passHost } from '../hosts'
 import type { Env, Space } from '../types'
 
 export const SUBDOMAIN = /^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$/
@@ -134,7 +134,11 @@ const RESERVED = new Set([
 ])
 
 export function reserved(env: Env, subdomain: string): boolean {
-  return RESERVED.has(subdomain) || subdomain === env.BLOG_CNAME_TARGET.split('.')[0]
+  return (
+    RESERVED.has(subdomain) ||
+    subdomain === env.BLOG_CNAME_TARGET.split('.')[0] ||
+    blogRoots(env).some((root) => `${subdomain}.${root}` === passHost(env))
+  )
 }
 
 export function cleanDomain(input: string): string {

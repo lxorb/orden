@@ -33,6 +33,7 @@ export interface Env {
   BLOG_CNAME_TARGET: string
   APP_ORIGIN: string
   OTHER_ORIGINS?: string
+  PASS_ORIGIN?: string
   MACHINE_DOMAIN?: string
 
   CF_ZONE_ID?: string

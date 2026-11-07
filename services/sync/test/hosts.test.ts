@@ -78,6 +78,33 @@ describe('the web app under the new name', () => {
   })
 })
 
+describe('Pass under its own name', () => {
+  const PASS = 'https://pass.orden.so'
+
+  test('may call the API under either name', async () => {
+    for (const host of ['nibeditor.com', 'orden.so']) {
+      const response = await call(env, '/v1/me', { host, headers: { origin: PASS } })
+      expect(response.headers.get('access-control-allow-origin'), host).toBe(PASS)
+    }
+    expect(isOwnOrigin(env, 'http://pass.orden.so')).toBe(false)
+    expect(isOwnOrigin(env, 'https://pass.orden.so.evil.example')).toBe(false)
+  })
+
+  test('is not one of the names a connector finds the server under', () => {
+    expect(origins(env)).not.toContain(PASS)
+    expect(originAt(env, `${PASS}/.well-known/x`)).toBe(NEW)
+  })
+
+  test('cannot be taken as a site', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    const space = (await call(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space.id
+    for (const body of [{ subdomain: 'pass' }, { domain: 'pass.orden.so' }]) {
+      const response = await call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body })
+      expect(response.status, JSON.stringify(body)).toBeGreaterThanOrEqual(400)
+    }
+  })
+})
+
 describe('a published site', () => {
   let token: string
   let space: string

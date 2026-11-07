@@ -22,9 +22,18 @@ export function origins(env: Env): string[] {
   return [...new Set(all)]
 }
 
+function passOrigin(env: Env): string | null {
+  return env.PASS_ORIGIN ? originOf(env.PASS_ORIGIN) : null
+}
+
+export function passHost(env: Env): string | null {
+  const origin = passOrigin(env)
+  return origin === null ? null : new URL(origin).hostname
+}
+
 export function isOwnOrigin(env: Env, origin: string): boolean {
   const asked = originOf(origin)
-  return asked !== null && origins(env).includes(asked)
+  return asked !== null && (origins(env).includes(asked) || asked === passOrigin(env))
 }
 
 export function isAppHost(env: Env, url: string): boolean {

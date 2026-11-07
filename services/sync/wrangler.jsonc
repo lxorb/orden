@@ -63,6 +63,7 @@
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
     "APP_ORIGIN": "https://orden.so",
     "OTHER_ORIGINS": "https://nibeditor.com",
+    "PASS_ORIGIN": "https://pass.orden.so",
     "OTHER_BLOG_ROOTS": "nibeditor.com",
     "MACHINE_DOMAIN": "nibeditor.com",
     "MAIL_FROM": "Orden <nib@nibeditor.com>",

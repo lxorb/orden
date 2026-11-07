@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { serveApp, switchChannel } from '../src/channel'
-import { call, testEnv, type TestEnv } from './harness'
+import { call, signIn, testEnv, type TestEnv } from './harness'
 
 function assets(files: Record<string, string>): { fetch(request: Request): Promise<Response> } {
   const binding = {
@@ -186,5 +186,66 @@ describe('?channel=', () => {
       expect(answer.status).toBe(302)
       expect(answer.headers.get('location'), path).toBe('/evil.example/x')
     }
+  })
+})
+
+describe('Pass under its own name', () => {
+  const PASS = {
+    ...BOTH,
+    '/pass.html': 'stable pass',
+    '/pass.webmanifest': 'stable pass manifest',
+    '/_unstable/pass.html': 'unstable pass',
+  }
+  const host = 'pass.orden.so'
+
+  test('is Pass at every page, and the app nowhere', async () => {
+    env = testEnv({ ASSETS: assets(PASS) })
+    for (const path of ['/', '/index.html', '/s/some/where', '/handoff']) {
+      const page = await call(env, path, { host })
+      expect(page.text, path).toBe('stable pass')
+    }
+    expect((await call(env, '/', { host: 'Pass.Orden.so.' })).text).toBe('stable pass')
+    expect((await call(env, '/')).text).toBe('stable index')
+    expect((await call(env, '/', { host: 'orden.so' })).text).toBe('stable index')
+  })
+
+  test('serves its own files as they are', async () => {
+    env = testEnv({ ASSETS: assets(PASS) })
+    expect((await call(env, '/pass.webmanifest', { host })).text).toBe('stable pass manifest')
+    expect((await call(env, '/sw.js', { host })).text).toBe('stable sw')
+  })
+
+  test('follows the channel the browser chose', async () => {
+    env = testEnv({ ASSETS: assets(PASS) })
+    expect((await call(env, '/', { host, headers: ON_EDGE })).text).toBe('unstable pass')
+    const answer = await call(env, '/?channel=unstable', { host })
+    expect(answer.status).toBe(302)
+  })
+
+  test('is no other site’s to frame', async () => {
+    env = testEnv({ ASSETS: assets(PASS) })
+    const page = await call(env, '/', { host })
+    expect(page.headers.get('x-frame-options')).toBe('DENY')
+  })
+
+  test('is not a site somebody published under the same name', async () => {
+    env = testEnv({ ASSETS: assets(PASS) })
+    const token = await signIn(env, 'a@b.dev')
+    const space = (await call(env, '/v1/spaces', { token, body: { name: 'Taken' } })).json.space.id
+    env.db
+      .prepare('update spaces set blog_subdomain = ?, blog_enabled = 1 where id = ?')
+      .run('pass', space)
+    expect((await call(env, '/', { host })).text).toBe('stable pass')
+  })
+
+  test('answers the API it calls', async () => {
+    env = testEnv({ ASSETS: assets(PASS) })
+    expect((await call(env, '/health', { host })).json).toEqual({ ok: true })
+  })
+
+  test('is only there when it has a name', async () => {
+    env = testEnv({ ASSETS: assets(PASS), PASS_ORIGIN: '' })
+    const page = await call(env, '/', { host })
+    expect(page.status).toBe(302)
   })
 })

@@ -261,6 +261,7 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
     BLOG_CNAME_TARGET: 'cname.orden.so',
     APP_ORIGIN: 'https://orden.so',
     OTHER_ORIGINS: 'https://nibeditor.com',
+    PASS_ORIGIN: 'https://pass.orden.so',
     MACHINE_DOMAIN: 'nibeditor.com',
     ...overrides,
     db: database,
