@@ -85,6 +85,39 @@ const HOST_LOOK = 50
 
 const READY = 'flutterInAppWebViewPlatformReady'
 
+export const PATIENCE = 8_000
+
+export const SILENT = 'the glasses did not answer in time'
+
+function answered<T>(asked: () => Promise<T>, otherwise: () => T): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      try {
+        resolve(otherwise())
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error(String(error)))
+      }
+    }, PATIENCE)
+
+    Promise.resolve()
+      .then(asked)
+      .then(
+        (value) => {
+          clearTimeout(timer)
+          resolve(value)
+        },
+        (error: unknown) => {
+          clearTimeout(timer)
+          reject(error instanceof Error ? error : new Error(String(error)))
+        },
+      )
+  })
+}
+
+function silent(): never {
+  throw new Error(SILENT)
+}
+
 async function waitForHost(): Promise<boolean> {
   if (hosted()) return true
 
@@ -156,12 +189,18 @@ export async function connectStore(): Promise<Store | null> {
 
   return {
     async read(key) {
-      const found = await bridge.getLocalStorage(key)
+      const found = await answered(
+        () => bridge.getLocalStorage(key),
+        () => null,
+      )
       return typeof found === 'string' && found !== '' ? found : null
     },
 
     async write(key, value) {
-      const answer = await bridge.setLocalStorage(key, value)
+      const answer = await answered(
+        () => bridge.setLocalStorage(key, value),
+        () => false,
+      )
       return answer === true || answer === 0 || answer === 'success'
     },
   }
@@ -276,25 +315,40 @@ function glassesOf(bridge: Bridge): Glasses {
 
   return {
     async start(page) {
-      return madeOf(await bridge.createStartUpPageContainer(page))
+      return madeOf(
+        await answered(
+          () => bridge.createStartUpPageContainer(page),
+          () => 'unknown',
+        ),
+      )
     },
 
     async rebuild(page) {
-      const answer = await bridge.rebuildPageContainer(page)
+      const answer = await answered(
+        () => bridge.rebuildPageContainer(page),
+        () => false,
+      )
       return answer === true || answer === 0 || answer === 'success'
     },
 
     async words(container, content) {
-      const answer = await bridge.textContainerUpgrade({
-        containerID: container.id,
-        containerName: container.name,
-        content,
-      })
+      const answer = await answered(
+        () =>
+          bridge.textContainerUpgrade({
+            containerID: container.id,
+            containerName: container.name,
+            content,
+          }),
+        silent,
+      )
       return answer === true
     },
 
     async microphone(open) {
-      const answer = await bridge.audioControl(open, 'glasses')
+      const answer = await answered(
+        () => bridge.audioControl(open, 'glasses'),
+        () => false,
+      )
       return answer === true || answer === 0 || answer === 'success'
     },
 
@@ -318,7 +372,10 @@ function glassesOf(bridge: Bridge): Glasses {
     },
 
     async leave() {
-      await bridge.shutDownPageContainer(1)
+      await answered(
+        () => bridge.shutDownPageContainer(1),
+        () => undefined,
+      )
     },
   }
 }
