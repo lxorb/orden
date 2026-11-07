@@ -70,7 +70,14 @@ fn is_hidden(name: &str, meta: &fs::Metadata) -> bool {
 }
 
 pub(super) fn entry(path: &Path) -> Option<Entry> {
-    let meta = fs::symlink_metadata(path).ok()?;
+    described(path, &fs::symlink_metadata(path).ok()?)
+}
+
+pub(super) fn listed(one: &fs::DirEntry) -> Option<Entry> {
+    described(&one.path(), &one.metadata().ok()?)
+}
+
+fn described(path: &Path, meta: &fs::Metadata) -> Option<Entry> {
     let name = path.file_name()?.to_string_lossy().into_owned();
     let link = meta.file_type().is_symlink();
     let folder = if link {
@@ -86,7 +93,7 @@ pub(super) fn entry(path: &Path) -> Option<Entry> {
         Kind::File
     };
     Some(Entry {
-        hidden: is_hidden(&name, &meta),
+        hidden: is_hidden(&name, meta),
         name,
         kind,
         folder,
@@ -104,7 +111,7 @@ pub(super) fn entries(folder: &Path, most: usize) -> Result<(Vec<Entry>, bool), 
         if out.len() >= most {
             return Ok((out, true));
         }
-        if let Some(found) = entry(&one.path()) {
+        if let Some(found) = listed(&one) {
             out.push(found);
         }
     }
@@ -375,5 +382,33 @@ mod tests {
         std::os::unix::fs::symlink(dir.path().join("real"), dir.path().join("to")).expect("a link");
         let found = entry(&dir.path().join("to")).expect("an entry");
         assert_eq!((found.kind, found.folder), (Kind::Link, true));
+    }
+
+    #[test]
+    fn a_listed_entry_says_what_a_look_at_its_path_says() {
+        use super::{entry, listed};
+
+        let dir = tempfile::tempdir().expect("a folder");
+        fs::create_dir(dir.path().join("Folder")).expect("a folder");
+        fs::write(dir.path().join("a.txt"), "four").expect("a file");
+        fs::write(dir.path().join(".hidden"), "").expect("a hidden file");
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(dir.path().join("Folder"), dir.path().join("to"))
+            .expect("a link");
+        let mut seen = 0;
+        for one in fs::read_dir(dir.path()).expect("listed").flatten() {
+            let (by_listing, by_path) = (
+                listed(&one).expect("listed"),
+                entry(&one.path()).expect("looked at"),
+            );
+            assert_eq!(
+                format!("{by_listing:?}"),
+                format!("{by_path:?}"),
+                "{:?}",
+                one.path()
+            );
+            seen += 1;
+        }
+        assert!(seen >= 3);
     }
 }
