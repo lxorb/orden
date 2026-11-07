@@ -3658,4 +3658,28 @@ export const ta: Dictionary = {
   'The file is damaged': 'கோப்பு சேதமடைந்துள்ளது',
   'WhatsApp is not connected right now': 'WhatsApp இப்போது இணைக்கப்படவில்லை',
   'That poll no longer takes votes': 'அந்த வாக்கெடுப்பு இனி வாக்குகளை ஏற்காது',
+  'Device name': 'சாதனப் பெயர்',
+  'How this computer is listed under linked devices in Signal':
+    'Signal இல் இணைக்கப்பட்ட சாதனங்களில் இந்தக் கணினி தோன்றும் பெயர்',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden signal-cli வழியாக ஒரு சாதனமாக Signal உடன் இணைகிறது; signal-cli ஐ Signal உருவாக்கவோ அங்கீகரிக்கவோ இல்லை. முதல் முறை Orden signal-cli மற்றும் Java ஐப் பதிவிறக்குகிறது (சுமார் 190 MB).',
+  'Scan this with Signal on your phone': 'உங்கள் ஃபோனில் உள்ள Signal மூலம் இதை ஸ்கேன் செய்யுங்கள்',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal இல்: அமைப்புகள் > இணைக்கப்பட்ட சாதனங்கள் > புதிய சாதனத்தை இணை',
+  'Signal is sending your contacts and groups':
+    'Signal உங்கள் தொடர்புகளையும் குழுக்களையும் அனுப்புகிறது',
+  'The code ran out before it was scanned. Try again.':
+    'ஸ்கேன் செய்வதற்கு முன் குறியீடு காலாவதியானது. மீண்டும் முயலுங்கள்.',
+  'Signed out of Signal. Link Orden again.':
+    'Signal இலிருந்து வெளியேறியது. Orden ஐ மீண்டும் இணைக்கவும்.',
+  'Signal changes only your own messages': 'Signal உங்கள் சொந்தச் செய்திகளை மட்டுமே மாற்றும்',
+  'Signal groups have admins, not owners':
+    'Signal குழுக்களில் உரிமையாளர்கள் அல்ல, நிர்வாகிகள் உள்ளனர்',
+  'That is something only a Signal group has': 'இது Signal குழுவில் மட்டுமே உள்ளது',
+  'Signal needs the system keyring to keep its keys':
+    'Signal தன் விசைகளை வைத்திருக்க கணினியின் கீசெயின் தேவை',
+  'Downloading signal-cli': 'signal-cli பதிவிறக்கப்படுகிறது',
+  'signal-cli does not run on this computer': 'signal-cli இந்தக் கணினியில் இயங்காது',
+  'The download is not the file it should be; nothing was kept':
+    'பதிவிறக்கம் எதிர்பார்த்த கோப்பு அல்ல; எதுவும் வைக்கப்படவில்லை',
 }

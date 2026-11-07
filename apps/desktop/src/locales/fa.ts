@@ -3600,4 +3600,25 @@ export const fa: Dictionary = {
   'The file is damaged': 'فایل آسیب دیده است',
   'WhatsApp is not connected right now': 'WhatsApp الان وصل نیست',
   'That poll no longer takes votes': 'آن نظرسنجی دیگر رأی نمی‌پذیرد',
+  'Device name': 'نام دستگاه',
+  'How this computer is listed under linked devices in Signal':
+    'نامی که این رایانه با آن در دستگاه‌های پیوندشده Signal دیده می‌شود',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden از راه signal-cli به‌عنوان یک دستگاه به Signal پیوند می‌خورد؛ signal-cli ساخته یا تأییدشده Signal نیست. بار نخست، Orden signal-cli و Java را بارگیری می‌کند (حدود ۱۹۰ مگابایت).',
+  'Scan this with Signal on your phone': 'این را با Signal روی تلفنتان اسکن کنید',
+  'In Signal: Settings > Linked devices > Link new device':
+    'در Signal: تنظیمات > دستگاه‌های پیوندشده > پیوند دستگاه جدید',
+  'Signal is sending your contacts and groups': 'Signal در حال فرستادن مخاطبان و گروه‌های شماست',
+  'The code ran out before it was scanned. Try again.':
+    'کد پیش از اسکن منقضی شد. دوباره تلاش کنید.',
+  'Signed out of Signal. Link Orden again.': 'از Signal خارج شدید. Orden را دوباره پیوند دهید.',
+  'Signal changes only your own messages': 'Signal فقط پیام‌های خودتان را تغییر می‌دهد',
+  'Signal groups have admins, not owners': 'گروه‌های Signal مدیر دارند، نه مالک',
+  'That is something only a Signal group has': 'این فقط در گروه‌های Signal هست',
+  'Signal needs the system keyring to keep its keys':
+    'Signal برای نگه‌داشتن کلیدهایش به جاکلیدی سیستم نیاز دارد',
+  'Downloading signal-cli': 'در حال بارگیری signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli روی این رایانه اجرا نمی‌شود',
+  'The download is not the file it should be; nothing was kept':
+    'فایل بارگیری‌شده همان فایل مورد انتظار نیست؛ چیزی نگه داشته نشد',
 }

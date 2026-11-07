@@ -3634,4 +3634,27 @@ export const kn: Dictionary = {
   'The file is damaged': 'ಫೈಲ್ ಹಾಳಾಗಿದೆ',
   'WhatsApp is not connected right now': 'WhatsApp ಈಗ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ',
   'That poll no longer takes votes': 'ಆ ಸಮೀಕ್ಷೆ ಇನ್ನು ಮತಗಳನ್ನು ಸ್ವೀಕರಿಸುವುದಿಲ್ಲ',
+  'Device name': 'ಸಾಧನದ ಹೆಸರು',
+  'How this computer is listed under linked devices in Signal':
+    'Signal ನ ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನಗಳಲ್ಲಿ ಈ ಕಂಪ್ಯೂಟರ್ ಕಾಣುವ ಹೆಸರು',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden signal-cli ಮೂಲಕ ಸಾಧನವಾಗಿ Signal ಗೆ ಲಿಂಕ್ ಆಗುತ್ತದೆ; signal-cli ಅನ್ನು Signal ತಯಾರಿಸುವುದಿಲ್ಲ, ಅನುಮೋದಿಸುವುದಿಲ್ಲ. ಮೊದಲ ಬಾರಿ Orden signal-cli ಮತ್ತು Java ಅನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡುತ್ತದೆ (ಸುಮಾರು 190 MB).',
+  'Scan this with Signal on your phone': 'ನಿಮ್ಮ ಫೋನ್‌ನ Signal ನಿಂದ ಇದನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal ನಲ್ಲಿ: ಸೆಟ್ಟಿಂಗ್‌ಗಳು > ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನಗಳು > ಹೊಸ ಸಾಧನ ಲಿಂಕ್ ಮಾಡಿ',
+  'Signal is sending your contacts and groups':
+    'Signal ನಿಮ್ಮ ಸಂಪರ್ಕಗಳು ಮತ್ತು ಗುಂಪುಗಳನ್ನು ಕಳುಹಿಸುತ್ತಿದೆ',
+  'The code ran out before it was scanned. Try again.':
+    'ಸ್ಕ್ಯಾನ್ ಆಗುವ ಮೊದಲೇ ಕೋಡ್ ಅವಧಿ ಮುಗಿಯಿತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  'Signed out of Signal. Link Orden again.':
+    'Signal ನಿಂದ ಸೈನ್ ಔಟ್ ಆಗಿದೆ. Orden ಅನ್ನು ಮತ್ತೆ ಲಿಂಕ್ ಮಾಡಿ.',
+  'Signal changes only your own messages': 'Signal ನಿಮ್ಮ ಸ್ವಂತ ಸಂದೇಶಗಳನ್ನು ಮಾತ್ರ ಬದಲಾಯಿಸುತ್ತದೆ',
+  'Signal groups have admins, not owners': 'Signal ಗುಂಪುಗಳಲ್ಲಿ ಮಾಲೀಕರಲ್ಲ, ನಿರ್ವಾಹಕರಿರುತ್ತಾರೆ',
+  'That is something only a Signal group has': 'ಇದು Signal ಗುಂಪಿನಲ್ಲಿ ಮಾತ್ರ ಇರುತ್ತದೆ',
+  'Signal needs the system keyring to keep its keys':
+    'Signal ತನ್ನ ಕೀಲಿಗಳನ್ನು ಇಡಲು ಸಿಸ್ಟಮ್ ಕೀಚೈನ್ ಬೇಕು',
+  'Downloading signal-cli': 'signal-cli ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ',
+  'signal-cli does not run on this computer': 'signal-cli ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಚಲಿಸುವುದಿಲ್ಲ',
+  'The download is not the file it should be; nothing was kept':
+    'ಡೌನ್‌ಲೋಡ್ ನಿರೀಕ್ಷಿತ ಫೈಲ್ ಅಲ್ಲ; ಏನನ್ನೂ ಉಳಿಸಿಲ್ಲ',
 }

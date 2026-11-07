@@ -3594,4 +3594,25 @@ export const ps: Dictionary = {
   'The file is damaged': 'فایل خراب دی',
   'WhatsApp is not connected right now': 'WhatsApp اوس وصل نه دی',
   'That poll no longer takes votes': 'هغه نظرپوښتنه نور رایې نه مني',
+  'Device name': 'د وسیلې نوم',
+  'How this computer is listed under linked devices in Signal':
+    'دا کمپیوټر د Signal په تړل شویو وسیلو کې په کوم نوم ښکاري',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden د signal-cli له لارې د یوې وسیلې په توګه له Signal سره تړل کیږي، چې Signal یې نه جوړوي او نه یې تاییدوي. په لومړي ځل Orden signal-cli او Java ښکته کوي (نږدې ۱۹۰ MB).',
+  'Scan this with Signal on your phone': 'دا په خپل تلیفون کې د Signal په مرسته سکین کړئ',
+  'In Signal: Settings > Linked devices > Link new device':
+    'په Signal کې: امستنې > تړل شوې وسیلې > نوې وسیله وتړئ',
+  'Signal is sending your contacts and groups': 'Signal ستاسو اړیکې او ډلې لیږي',
+  'The code ran out before it was scanned. Try again.':
+    'کوډ له سکین کیدو مخکې پای ته ورسید. بیا هڅه وکړئ.',
+  'Signed out of Signal. Link Orden again.': 'له Signal څخه ووتلئ. Orden بیا وتړئ.',
+  'Signal changes only your own messages': 'Signal یوازې ستاسو خپل پیغامونه بدلوي',
+  'Signal groups have admins, not owners': 'د Signal ډلې مدیران لري، نه مالکان',
+  'That is something only a Signal group has': 'دا یوازې د Signal ډله لري',
+  'Signal needs the system keyring to keep its keys':
+    'Signal د خپلو کیلیو ساتلو لپاره د سیسټم کیلي ځنځیر ته اړتیا لري',
+  'Downloading signal-cli': 'signal-cli ښکته کیږي',
+  'signal-cli does not run on this computer': 'signal-cli په دې کمپیوټر نه چلیږي',
+  'The download is not the file it should be; nothing was kept':
+    'ښکته شوې دوتنه تمه شوې دوتنه نه ده؛ هیڅ ونه ساتل شو',
 }

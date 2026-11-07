@@ -198,7 +198,7 @@ fn named(name: &str) -> Result<String, String> {
     }
 }
 
-fn filed(name: &str, identifier: &str) -> Result<String, String> {
+pub(crate) fn filed(name: &str, identifier: &str) -> Result<String, String> {
     let name = named(name)?;
     Ok(if identifier == SHIPPED {
         name

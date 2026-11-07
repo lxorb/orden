@@ -3616,4 +3616,25 @@ export const tr: Dictionary = {
   'The file is damaged': 'Dosya bozuk',
   'WhatsApp is not connected right now': 'WhatsApp şu anda bağlı değil',
   'That poll no longer takes votes': 'O anket artık oy kabul etmiyor',
+  'Device name': 'Cihaz adı',
+  'How this computer is listed under linked devices in Signal':
+    'Bu bilgisayarın Signal’deki bağlı cihazlarda görünen adı',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden, Signal’e signal-cli aracılığıyla bir cihaz olarak bağlanır; signal-cli Signal tarafından yapılmaz veya desteklenmez. Orden ilk seferde signal-cli ve Java’yı indirir (yaklaşık 190 MB).',
+  'Scan this with Signal on your phone': 'Bunu telefonunuzdaki Signal ile tarayın',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal’de: Ayarlar > Bağlı cihazlar > Yeni cihaz bağla',
+  'Signal is sending your contacts and groups': 'Signal kişilerinizi ve gruplarınızı gönderiyor',
+  'The code ran out before it was scanned. Try again.':
+    'Kod taranmadan önce süresi doldu. Tekrar deneyin.',
+  'Signed out of Signal. Link Orden again.': 'Signal oturumu kapandı. Orden’i yeniden bağlayın.',
+  'Signal changes only your own messages': 'Signal yalnızca kendi mesajlarınızı değiştirir',
+  'Signal groups have admins, not owners': 'Signal gruplarında sahip değil yöneticiler vardır',
+  'That is something only a Signal group has': 'Bu yalnızca Signal gruplarında olur',
+  'Signal needs the system keyring to keep its keys':
+    'Signal anahtarlarını saklamak için sistem anahtarlığına ihtiyaç duyar',
+  'Downloading signal-cli': 'signal-cli indiriliyor',
+  'signal-cli does not run on this computer': 'signal-cli bu bilgisayarda çalışmıyor',
+  'The download is not the file it should be; nothing was kept':
+    'İndirilen dosya beklenen dosya değil; hiçbir şey saklanmadı',
 }

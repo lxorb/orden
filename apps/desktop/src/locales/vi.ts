@@ -3501,4 +3501,25 @@ export const vi: Dictionary = {
   'The file is damaged': 'Tệp bị hỏng',
   'WhatsApp is not connected right now': 'WhatsApp hiện không được kết nối',
   'That poll no longer takes votes': 'Cuộc thăm dò ý kiến đó không còn nhận phiếu bầu',
+  'Device name': 'Tên thiết bị',
+  'How this computer is listed under linked devices in Signal':
+    'Tên máy tính này hiển thị trong thiết bị đã liên kết của Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden liên kết với Signal như một thiết bị qua signal-cli, phần mềm không do Signal làm hay xác nhận. Lần đầu, Orden tải signal-cli và Java (khoảng 190 MB).',
+  'Scan this with Signal on your phone': 'Quét mã này bằng Signal trên điện thoại',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Trong Signal: Cài đặt > Thiết bị đã liên kết > Liên kết thiết bị mới',
+  'Signal is sending your contacts and groups': 'Signal đang gửi danh bạ và nhóm của bạn',
+  'The code ran out before it was scanned. Try again.':
+    'Mã đã hết hạn trước khi được quét. Hãy thử lại.',
+  'Signed out of Signal. Link Orden again.': 'Đã đăng xuất khỏi Signal. Hãy liên kết lại Orden.',
+  'Signal changes only your own messages': 'Signal chỉ thay đổi tin nhắn của chính bạn',
+  'Signal groups have admins, not owners': 'Nhóm Signal có quản trị viên, không có chủ sở hữu',
+  'That is something only a Signal group has': 'Chỉ nhóm Signal mới có điều này',
+  'Signal needs the system keyring to keep its keys':
+    'Signal cần chuỗi khóa của hệ thống để giữ khóa của nó',
+  'Downloading signal-cli': 'Đang tải signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli không chạy trên máy tính này',
+  'The download is not the file it should be; nothing was kept':
+    'Tệp tải về không phải tệp mong đợi; không giữ lại gì',
 }

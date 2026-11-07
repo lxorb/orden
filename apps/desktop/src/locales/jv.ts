@@ -3518,4 +3518,25 @@ export const jv: Dictionary = {
   'The file is damaged': 'Berkasé rusak',
   'WhatsApp is not connected right now': 'WhatsApp saiki ora kesambung',
   'That poll no longer takes votes': 'Polling kuwi wis ora nampa swara',
+  'Device name': 'Jeneng piranti',
+  'How this computer is listed under linked devices in Signal':
+    'Jeneng komputer iki ing piranti sing disambung ing Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden nyambung menyang Signal minangka piranti liwat signal-cli, sing ora digawe utawa didhukung Signal. Kaping pisanan, Orden ngundhuh signal-cli lan Java (kira-kira 190 MB).',
+  'Scan this with Signal on your phone': 'Pindai iki nganggo Signal ing telpon sampeyan',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Ing Signal: Setelan > Piranti sing disambung > Sambungake piranti anyar',
+  'Signal is sending your contacts and groups': 'Signal lagi ngirim kontak lan grup sampeyan',
+  'The code ran out before it was scanned. Try again.':
+    'Kode wis kadaluwarsa sadurunge dipindai. Coba maneh.',
+  'Signed out of Signal. Link Orden again.': 'Wis metu saka Signal. Sambungake Orden maneh.',
+  'Signal changes only your own messages': 'Signal mung ngganti pesen sampeyan dhewe',
+  'Signal groups have admins, not owners': 'Grup Signal duwe admin, dudu sing nduwèni',
+  'That is something only a Signal group has': 'Kuwi mung ana ing grup Signal',
+  'Signal needs the system keyring to keep its keys':
+    'Signal butuh gantungan kunci sistem kanggo nyimpen kunciné',
+  'Downloading signal-cli': 'Ngundhuh signal-cli',
+  'signal-cli does not run on this computer': 'signal-cli ora mlaku ing komputer iki',
+  'The download is not the file it should be; nothing was kept':
+    'Undhuhan dudu berkas sing dikarepake; ora ana sing disimpen',
 }

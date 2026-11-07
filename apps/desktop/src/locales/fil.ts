@@ -3666,4 +3666,26 @@ export const fil: Dictionary = {
   'The file is damaged': 'Sira ang file',
   'WhatsApp is not connected right now': 'Hindi nakakonekta ang WhatsApp ngayon',
   'That poll no longer takes votes': 'Hindi na tumatanggap ng boto ang poll na iyan',
+  'Device name': 'Pangalan ng device',
+  'How this computer is listed under linked devices in Signal':
+    'Ang pangalan ng computer na ito sa mga naka-link na device sa Signal',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Naka-link ang Orden sa Signal bilang device sa pamamagitan ng signal-cli, na hindi gawa o inendorso ng Signal. Sa unang beses, dina-download ng Orden ang signal-cli at Java (mga 190 MB).',
+  'Scan this with Signal on your phone': 'I-scan ito gamit ang Signal sa iyong telepono',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Sa Signal: Settings > Mga naka-link na device > Mag-link ng bagong device',
+  'Signal is sending your contacts and groups':
+    'Ipinapadala ng Signal ang iyong mga contact at grupo',
+  'The code ran out before it was scanned. Try again.':
+    'Nag-expire ang code bago ito na-scan. Subukan ulit.',
+  'Signed out of Signal. Link Orden again.': 'Naka-sign out sa Signal. I-link ulit ang Orden.',
+  'Signal changes only your own messages': 'Sariling mensahe mo lang ang binabago ng Signal',
+  'Signal groups have admins, not owners': 'May mga admin ang mga grupo sa Signal, hindi may-ari',
+  'That is something only a Signal group has': 'Grupo lang sa Signal ang mayroon nito',
+  'Signal needs the system keyring to keep its keys':
+    'Kailangan ng Signal ang keyring ng system para itago ang mga susi nito',
+  'Downloading signal-cli': 'Dina-download ang signal-cli',
+  'signal-cli does not run on this computer': 'Hindi tumatakbo ang signal-cli sa computer na ito',
+  'The download is not the file it should be; nothing was kept':
+    'Hindi ang inaasahang file ang na-download; walang itinago',
 }

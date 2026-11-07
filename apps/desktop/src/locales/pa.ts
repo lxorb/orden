@@ -3606,4 +3606,26 @@ export const pa: Dictionary = {
   'The file is damaged': 'ਫ਼ਾਈਲ ਖ਼ਰਾਬ ਹੈ',
   'WhatsApp is not connected right now': 'WhatsApp ਇਸ ਵੇਲੇ ਕਨੈਕਟ ਨਹੀਂ ਹੈ',
   'That poll no longer takes votes': 'ਉਹ ਪੋਲ ਹੁਣ ਵੋਟਾਂ ਨਹੀਂ ਲੈਂਦਾ',
+  'Device name': 'ਡਿਵਾਈਸ ਦਾ ਨਾਮ',
+  'How this computer is listed under linked devices in Signal':
+    'Signal ਦੇ ਲਿੰਕ ਕੀਤੇ ਡਿਵਾਈਸਾਂ ਵਿੱਚ ਇਹ ਕੰਪਿਊਟਰ ਕਿਸ ਨਾਮ ਨਾਲ ਦਿਖਦਾ ਹੈ',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden signal-cli ਰਾਹੀਂ ਇੱਕ ਡਿਵਾਈਸ ਵਜੋਂ Signal ਨਾਲ ਲਿੰਕ ਹੁੰਦਾ ਹੈ, ਜਿਸਨੂੰ Signal ਨਾ ਬਣਾਉਂਦਾ ਹੈ ਨਾ ਸਮਰਥਨ ਕਰਦਾ ਹੈ। ਪਹਿਲੀ ਵਾਰ Orden signal-cli ਅਤੇ Java ਡਾਊਨਲੋਡ ਕਰਦਾ ਹੈ (ਲਗਭਗ 190 MB)।',
+  'Scan this with Signal on your phone': 'ਆਪਣੇ ਫ਼ੋਨ ਉੱਤੇ Signal ਨਾਲ ਇਸਨੂੰ ਸਕੈਨ ਕਰੋ',
+  'In Signal: Settings > Linked devices > Link new device':
+    'Signal ਵਿੱਚ: ਸੈਟਿੰਗਾਂ > ਲਿੰਕ ਕੀਤੇ ਡਿਵਾਈਸ > ਨਵਾਂ ਡਿਵਾਈਸ ਲਿੰਕ ਕਰੋ',
+  'Signal is sending your contacts and groups': 'Signal ਤੁਹਾਡੇ ਸੰਪਰਕ ਅਤੇ ਗਰੁੱਪ ਭੇਜ ਰਿਹਾ ਹੈ',
+  'The code ran out before it was scanned. Try again.':
+    'ਸਕੈਨ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਕੋਡ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+  'Signed out of Signal. Link Orden again.':
+    'Signal ਤੋਂ ਸਾਈਨ ਆਊਟ ਹੋ ਗਏ। Orden ਨੂੰ ਦੁਬਾਰਾ ਲਿੰਕ ਕਰੋ।',
+  'Signal changes only your own messages': 'Signal ਸਿਰਫ਼ ਤੁਹਾਡੇ ਆਪਣੇ ਸੁਨੇਹੇ ਬਦਲਦਾ ਹੈ',
+  'Signal groups have admins, not owners': 'Signal ਗਰੁੱਪਾਂ ਵਿੱਚ ਮਾਲਕ ਨਹੀਂ, ਐਡਮਿਨ ਹੁੰਦੇ ਹਨ',
+  'That is something only a Signal group has': 'ਇਹ ਸਿਰਫ਼ Signal ਗਰੁੱਪ ਵਿੱਚ ਹੁੰਦਾ ਹੈ',
+  'Signal needs the system keyring to keep its keys':
+    'Signal ਨੂੰ ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਰੱਖਣ ਲਈ ਸਿਸਟਮ ਕੀਚੇਨ ਚਾਹੀਦੀ ਹੈ',
+  'Downloading signal-cli': 'signal-cli ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ',
+  'signal-cli does not run on this computer': 'signal-cli ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਨਹੀਂ ਚੱਲਦਾ',
+  'The download is not the file it should be; nothing was kept':
+    'ਡਾਊਨਲੋਡ ਉਮੀਦ ਵਾਲੀ ਫ਼ਾਈਲ ਨਹੀਂ ਹੈ; ਕੁਝ ਵੀ ਨਹੀਂ ਰੱਖਿਆ ਗਿਆ',
 }

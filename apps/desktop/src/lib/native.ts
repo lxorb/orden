@@ -15,6 +15,7 @@ const RAW = new Set([
   'print_page',
   'print_pdf',
   'chat_request',
+  'sidecar_write',
 ])
 
 export function invoke<T>(command: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {

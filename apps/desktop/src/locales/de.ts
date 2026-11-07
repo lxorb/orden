@@ -3665,4 +3665,25 @@ export const de: Dictionary = {
   'The file is damaged': 'Die Datei ist beschädigt',
   'WhatsApp is not connected right now': 'WhatsApp ist gerade nicht verbunden',
   'That poll no longer takes votes': 'Diese Umfrage nimmt keine Stimmen mehr an',
+  'Device name': 'Gerätename',
+  'How this computer is listed under linked devices in Signal':
+    'So erscheint dieser Computer in Signal unter den gekoppelten Geräten',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden koppelt sich über signal-cli als Gerät mit Signal; signal-cli stammt nicht von Signal und wird von Signal nicht unterstützt. Beim ersten Mal lädt Orden signal-cli und Java herunter (etwa 190 MB).',
+  'Scan this with Signal on your phone': 'Scanne dies mit Signal auf deinem Handy',
+  'In Signal: Settings > Linked devices > Link new device':
+    'In Signal: Einstellungen > Gekoppelte Geräte > Neues Gerät koppeln',
+  'Signal is sending your contacts and groups': 'Signal sendet deine Kontakte und Gruppen',
+  'The code ran out before it was scanned. Try again.':
+    'Der Code ist abgelaufen, bevor er gescannt wurde. Versuche es erneut.',
+  'Signed out of Signal. Link Orden again.': 'Von Signal abgemeldet. Kopple Orden erneut.',
+  'Signal changes only your own messages': 'Signal ändert nur deine eigenen Nachrichten',
+  'Signal groups have admins, not owners': 'Signal-Gruppen haben Admins, keine Eigentümer',
+  'That is something only a Signal group has': 'Das gibt es nur in Signal-Gruppen',
+  'Signal needs the system keyring to keep its keys':
+    'Signal braucht den Schlüsselbund des Systems, um seine Schlüssel aufzubewahren',
+  'Downloading signal-cli': 'signal-cli wird heruntergeladen',
+  'signal-cli does not run on this computer': 'signal-cli läuft auf diesem Computer nicht',
+  'The download is not the file it should be; nothing was kept':
+    'Der Download ist nicht die erwartete Datei; nichts wurde behalten',
 }

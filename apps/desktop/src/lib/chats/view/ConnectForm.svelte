@@ -27,6 +27,7 @@
     phone: t('Phone number'),
     token: t('User token'),
     appToken: t('App-level token'),
+    device: t('Device name'),
   }
 
   let chosen = $state(0)

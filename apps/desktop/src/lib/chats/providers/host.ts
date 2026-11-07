@@ -1,4 +1,4 @@
-import type { Host, Socket, SocketAsk, WireAsk, WireSocket } from '@orden/chats/provider'
+import type { Host, Socket, SocketAsk, Stream, WireAsk, WireSocket } from '@orden/chats/provider'
 import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
 import { Channel } from '../../native'
 import { isRecord } from '../../stored'
@@ -21,9 +21,18 @@ export async function writtenInPieces(
     await write(bytes.subarray(at, at + PIECE))
 }
 
-async function socket(ask: SocketAsk): Promise<Socket> {
-  const id = `m${Date.now().toString(36)}-${++opened}`
-  const output = new Channel<unknown>()
+export function oneAtATime(
+  write: (bytes: Uint8Array) => Promise<void>,
+): (bytes: Uint8Array) => Promise<void> {
+  let queue: Promise<unknown> = Promise.resolve()
+  return (bytes) => {
+    const next = queue.then(() => write(bytes))
+    queue = next.catch(() => undefined)
+    return next
+  }
+}
+
+function heard(output: Channel): Pick<Stream, 'read'> {
   const early: Uint8Array[] = []
   let ended: { reason: string } | null = null
   let hear: ((bytes: Uint8Array) => void) | null = null
@@ -38,10 +47,7 @@ async function socket(ask: SocketAsk): Promise<Socket> {
       end?.(message.end)
     }
   }
-  await invoke('mail_socket_open', { id, host: ask.host, port: ask.port, tls: ask.tls, output })
   return {
-    write: (bytes) =>
-      writtenInPieces(bytes, (piece) => invoke('mail_socket_write', { id, bytes: piece })),
     read(listener, finished) {
       hear = listener
       end = finished
@@ -52,6 +58,18 @@ async function socket(ask: SocketAsk): Promise<Socket> {
         end = null
       }
     },
+  }
+}
+
+async function socket(ask: SocketAsk): Promise<Socket> {
+  const id = `m${Date.now().toString(36)}-${++opened}`
+  const output = new Channel<unknown>()
+  const { read } = heard(output)
+  await invoke('mail_socket_open', { id, host: ask.host, port: ask.port, tls: ask.tls, output })
+  return {
+    write: (bytes) =>
+      writtenInPieces(bytes, (piece) => invoke('mail_socket_write', { id, bytes: piece })),
+    read,
     startTls: () => invoke('mail_socket_tls', { id }),
     close: () => invoke('mail_socket_close', { id }),
   }
@@ -102,10 +120,41 @@ async function wire(ask: WireAsk): Promise<WireSocket> {
   }
 }
 
+const DOWNLOADING = 'Downloading signal-cli'
+
+async function installed(program: string): Promise<void> {
+  if (await invoke<boolean>('sidecar_ready', { program })) return
+  const progress = new Channel<{ done: number; total: number }>()
+  const shown = (note?: string) =>
+    screens.show({ kind: 'wait', label: DOWNLOADING, ...(note ? { note } : {}) })
+  progress.onmessage = ({ done, total }) =>
+    shown(total > 0 ? `${Math.floor((done / total) * 100)} %` : undefined)
+  shown()
+  try {
+    await invoke('sidecar_fetch', { program, progress })
+  } finally {
+    screens.show(null)
+  }
+}
+
+async function sidecar(program: string, args: readonly string[]): Promise<Stream> {
+  await installed(program)
+  const output = new Channel<unknown>()
+  const { read } = heard(output)
+  const id = await invoke<string>('sidecar_open', { program, args: [...args], output })
+  return {
+    write: oneAtATime((bytes) =>
+      writtenInPieces(bytes, (piece) => invoke('sidecar_write', { id, bytes: piece })),
+    ),
+    read,
+    close: () => invoke('sidecar_close', { id }),
+  }
+}
+
 export const host: Host = {
   secret: (name) => readSecret(name),
   keepSecret: (name, value) => (value === null ? forgetKey(name, true) : writeSecret(name, value)),
-  ...(isDesktop ? { socket, authorize, post, request, wire } : {}),
+  ...(isDesktop ? { socket, authorize, post, request, wire, sidecar } : {}),
   parseMessage: parsedOffThread,
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),

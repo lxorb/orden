@@ -3527,4 +3527,23 @@ export const am: Dictionary = {
   'The file is damaged': 'ፋይሉ ተበላሽቷል',
   'WhatsApp is not connected right now': 'WhatsApp አሁን አልተገናኘም',
   'That poll no longer takes votes': 'ያ የሕዝብ አስተያየት ከእንግዲህ ድምጽ አይቀበልም',
+  'Device name': 'የመሣሪያ ስም',
+  'How this computer is listed under linked devices in Signal':
+    'ይህ ኮምፒውተር በ Signal የተገናኙ መሣሪያዎች ውስጥ የሚታይበት ስም',
+  'Orden links to Signal as a device through signal-cli, which Signal does not make or endorse. The first time, Orden downloads signal-cli and Java (about 190 MB).':
+    'Orden በ signal-cli በኩል እንደ መሣሪያ ከ Signal ጋር ይገናኛል፤ signal-cli በ Signal የተሠራ ወይም የተደገፈ አይደለም። ለመጀመሪያ ጊዜ Orden signal-cli እና Java ያወርዳል (ወደ 190 MB ገደማ)።',
+  'Scan this with Signal on your phone': 'ይህን በስልክዎ ላይ ባለው Signal ይቃኙ',
+  'In Signal: Settings > Linked devices > Link new device':
+    'በ Signal ውስጥ፦ ቅንብሮች > የተገናኙ መሣሪያዎች > አዲስ መሣሪያ ያገናኙ',
+  'Signal is sending your contacts and groups': 'Signal እውቂያዎችዎን እና ቡድኖችዎን እየላከ ነው',
+  'The code ran out before it was scanned. Try again.': 'ኮዱ ከመቃኘቱ በፊት ጊዜው አልፏል። እንደገና ይሞክሩ።',
+  'Signed out of Signal. Link Orden again.': 'ከ Signal ወጥተዋል። Orden ን እንደገና ያገናኙ።',
+  'Signal changes only your own messages': 'Signal የራስዎን መልዕክቶች ብቻ ይቀይራል',
+  'Signal groups have admins, not owners': 'የ Signal ቡድኖች አስተዳዳሪዎች አሏቸው እንጂ ባለቤቶች የላቸውም',
+  'That is something only a Signal group has': 'ይህ ያለው በ Signal ቡድን ብቻ ነው',
+  'Signal needs the system keyring to keep its keys': 'Signal ቁልፎቹን ለማስቀመጥ የሥርዓቱን የቁልፍ ሰንሰለት ይፈልጋል',
+  'Downloading signal-cli': 'signal-cli በመውረድ ላይ',
+  'signal-cli does not run on this computer': 'signal-cli በዚህ ኮምፒውተር ላይ አይሠራም',
+  'The download is not the file it should be; nothing was kept':
+    'የወረደው የሚጠበቀው ፋይል አይደለም፤ ምንም አልተቀመጠም',
 }
