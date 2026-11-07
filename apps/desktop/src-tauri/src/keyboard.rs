@@ -55,10 +55,10 @@ impl Homes {
     }
 
     #[cfg_attr(
-        not(windows),
+        not(any(windows, feature = "cef")),
         allow(
             dead_code,
-            reason = "a Mac and Linux keep a window's keyboard across activation themselves"
+            reason = "a Mac keeps a window's keyboard across activation itself"
         )
     )]
     fn home(&self, window: &str) -> Option<&str> {
@@ -124,6 +124,17 @@ pub fn hold_for_layer(app: &AppHandle, window: &str) {
 pub fn closed(page: &str) {
     homes(|all| all.closed(page));
     native::let_go_of(page);
+}
+
+#[cfg(feature = "cef")]
+pub fn window_came_back(app: &AppHandle, window: &str) {
+    if crate::placement::away().is_some() {
+        return;
+    }
+    let home = homes(|all| all.home(window).map(str::to_string));
+    if !home.is_some_and(|page| native::take(app, &page)) {
+        let _ = native::take(app, window);
+    }
 }
 
 pub fn no_hidden_menu<R: tauri::Runtime>(window: &tauri::Window<R>) {
@@ -865,6 +876,22 @@ mod tests {
             webview2.contains("all.insert(window, platform.controller())"),
             "the window's own page is never kept"
         );
+    }
+
+    #[test]
+    fn chromium_on_linux_gives_the_keyboard_back_as_its_window_comes_back() {
+        let life = include_str!("lifecycle.rs");
+        let focused = &life[life
+            .find("event: WindowEvent::Focused(true)")
+            .expect("the window's focus")..];
+        let focused = &focused[..focused.find("RunEvent::").expect("its end")];
+        assert!(focused.contains("crate::keyboard::window_came_back(app, &label)"));
+        let source = include_str!("keyboard.rs");
+        let back = &source[source
+            .find("pub fn window_came_back(")
+            .expect("window_came_back")..];
+        let back = &back[..back.find("\n}\n").expect("its end")];
+        assert!(back.contains("all.home(window)") && back.contains("native::take(app, window)"));
     }
 
     #[test]

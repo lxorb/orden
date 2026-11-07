@@ -161,6 +161,8 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(window) = app.get_window(&label) {
                 crate::keyboard::no_hidden_menu(&window);
             }
+            #[cfg(feature = "cef")]
+            crate::keyboard::window_came_back(app, &label);
         }
 
         RunEvent::WindowEvent {
