@@ -96,6 +96,7 @@ class Worker:
                 "--assets",
                 str(self.assets),
                 "--show-interactive-dev-session=false",
+                "--enable-containers=false",
             ],
             cwd=SERVICE,
             stdout=self.opened,
