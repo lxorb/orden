@@ -339,6 +339,21 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     found
 }
 
+#[cfg(all(test, target_os = "linux"))]
+#[allow(
+    unsafe_code,
+    reason = "one thread is asked through the system's own call"
+)]
+fn one_thread(target: usize, within: Duration) -> Vec<usize> {
+    start();
+    let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut silent = 0;
+    asking(target, &mut silent, within, |signal| {
+        i32::try_from(target)
+            .is_ok_and(|tid| unsafe { libc::tgkill(libc::getpid(), tid, signal) == 0 })
+    })
+}
+
 #[cfg(target_os = "macos")]
 static MAIN: std::sync::OnceLock<libc::pthread_t> = std::sync::OnceLock::new();
 
@@ -466,20 +481,20 @@ mod tests {
     ) -> usize {
         let (told, heard) = mpsc::channel::<()>();
         let (ready, readied) = mpsc::channel::<()>();
+        let (named, which) = mpsc::channel::<usize>();
         let waiter = std::thread::Builder::new()
             .name(name.to_owned())
-            .spawn(move || waiting(ready, heard))
+            .spawn(move || {
+                named.send(super::this_thread()).expect("named");
+                waiting(ready, heard);
+            })
             .expect("a thread");
+        let target = which.recv().expect("the thread");
         readied.recv().expect("readied");
-        let threads = super::every_thread(Duration::from_secs(10));
+        let ips = super::one_thread(target, Duration::from_secs(10));
         told.send(()).expect("told");
         let _ = waiter.join();
-        threads
-            .iter()
-            .find(|one| one.name == name)
-            .expect("the thread")
-            .ips
-            .len()
+        ips.len()
     }
 
     #[test]
