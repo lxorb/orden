@@ -22,6 +22,7 @@
   import { firstLine } from './body'
   import type { ChatPage } from './chat.svelte'
   import {
+    asFile,
     enterDoes,
     mentionAt,
     mentionChoices,
@@ -199,7 +200,7 @@
   }
 
   async function send() {
-    const words = text()
+    let words = text()
     if (!attachments.ready) return
     if (aside?.kind === 'edit') {
       page.edit(aside.message, words)
@@ -207,6 +208,12 @@
       return
     }
     if (!words.trim() && !attachments.refs.length) return
+    const long = asFile(words, t('Text'))
+    if (long) {
+      if (!(await attachments.took(long))) return
+      setText('')
+      words = ''
+    }
     const question = nibAsked(words)
     if (question !== null && !attachments.refs.length) {
       setText('')
@@ -328,10 +335,13 @@
 
   function onPaste(event: ClipboardEvent) {
     const files = [...(event.clipboardData?.files ?? [])]
-    if (!files.length) return
+    const long = files.length
+      ? null
+      : asFile(event.clipboardData?.getData('text/plain') ?? '', t('Text'))
+    if (!files.length && !long) return
     event.preventDefault()
     event.stopPropagation()
-    attachments.add(files)
+    attachments.add(long ? [long] : files)
   }
 
   function attach(event: MouseEvent) {
