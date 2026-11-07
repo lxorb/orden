@@ -293,7 +293,10 @@ def one(
     page.wait_for_timeout(300)
 
     shut_drawer(page)
-    page.click("header .search")
+    if page.locator("header .search").count():
+        page.click("header .search")
+    else:
+        page.keyboard.press("Control+o")
     page.wait_for_timeout(600)
     rows.update(measure(page, BROWSE))
     shot(page, f"{label}-{name}-browse-{scheme}")
