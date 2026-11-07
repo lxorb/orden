@@ -78,7 +78,7 @@ function same(one: unknown, other: unknown): boolean {
   return one.length === other.length && one.every((value, at) => value === other[at])
 }
 
-function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z: number) {
+function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z?: number): boolean {
   const fields = fieldsOf(thing)
   const held = plane.get(thing.id)
 
@@ -87,9 +87,9 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z: number) 
     for (const [key, value] of Object.entries(fields)) made.set(key, shared(key, value))
     made.set(KIND, kindOf(thing))
     made.set(AT, at)
-    made.set(Z, z)
+    if (z !== undefined) made.set(Z, z)
     plane.set(thing.id, made)
-    return
+    return true
   }
 
   for (const [key, value] of Object.entries(fields)) {
@@ -107,6 +107,7 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z: number) 
   }
 
   if (held.get(AT) !== at) held.set(AT, at)
+  return false
 }
 
 const WORDS = 'text'
@@ -122,21 +123,6 @@ function rewrite(text: Y.Text, wanted: string) {
   if (change.insert) text.insert(change.from, change.insert)
 }
 
-function nextPlace(plane: Y.Map<Y.Map<unknown>>): number {
-  let highest = -1
-  for (const record of plane.values()) {
-    const z = record.get(Z)
-    if (typeof z === 'number' && z > highest) highest = z
-  }
-
-  return highest + 1
-}
-
-function placeIn(plane: Y.Map<Y.Map<unknown>>, id: string): number | null {
-  const z = plane.get(id)?.get(Z)
-  return typeof z === 'number' ? z : null
-}
-
 interface Placing {
   id: string
   z: number
@@ -148,8 +134,69 @@ function under(one: Placing, other: Placing): boolean {
   return one.id < other.id
 }
 
-function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: readonly Thing[]) {
-  if (before === after) return
+interface Hunk {
+  at: number
+  was: readonly Thing[]
+  is: readonly Thing[]
+}
+
+const REACH = 48
+const HUNKS = 64
+
+function resync(
+  before: readonly Thing[],
+  from: number,
+  after: readonly Thing[],
+  to: number,
+): [number, number] | null {
+  const left = before.length - from
+  const right = after.length - to
+
+  for (let reach = 1; reach <= REACH; reach++) {
+    for (let dropped = 0; dropped <= reach; dropped++) {
+      const added = reach - dropped
+      if (dropped > left || added > right) continue
+      if (dropped === left && added === right) return [dropped, added]
+      if (dropped < left && added < right && before[from + dropped] === after[to + added]) {
+        return [dropped, added]
+      }
+    }
+  }
+
+  return null
+}
+
+function walked(before: readonly Thing[], after: readonly Thing[]): Hunk[] | null {
+  const hunks: Hunk[] = []
+  let from = 0
+  let to = 0
+
+  while (from < before.length || to < after.length) {
+    if (from < before.length && to < after.length && before[from] === after[to]) {
+      from++
+      to++
+      continue
+    }
+
+    const step = resync(before, from, after, to)
+    if (!step || hunks.length === HUNKS) return null
+    const [dropped, added] = step
+    hunks.push({
+      at: to,
+      was: before.slice(from, from + dropped),
+      is: after.slice(to, to + added),
+    })
+    from += dropped
+    to += added
+  }
+
+  return hunks
+}
+
+function hunksOf(before: readonly Thing[], after: readonly Thing[]): Hunk[] {
+  if (before === after) return []
+  const hunks = walked(before, after)
+  if (hunks) return hunks
 
   let head = 0
   const shortest = Math.min(before.length, after.length)
@@ -163,7 +210,66 @@ function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: 
     tail++
   }
 
-  const middle = after.slice(head, after.length - tail)
+  return [
+    {
+      at: head,
+      was: before.slice(head, before.length - tail),
+      is: after.slice(head, after.length - tail),
+    },
+  ]
+}
+
+function slotted(
+  plane: Y.Map<Y.Map<unknown>>,
+  after: readonly Thing[],
+  hunk: Hunk,
+  fresh: ReadonlySet<string>,
+): boolean {
+  const near = (thing: Thing | undefined): Placing | null | undefined => {
+    if (!thing) return undefined
+    const record = plane.get(thing.id)
+    return record ? { id: thing.id, z: placeOf(record), record } : null
+  }
+
+  const floor = near(after[hunk.at - 1])
+  if (floor === null) return false
+  let low = floor
+  let run: Placing[] = []
+
+  const settle = (high: Placing | undefined): boolean => {
+    if (low && high && !under(low, high)) return false
+    if (run.length && !between(run, low?.z, high?.z)) return false
+    run = []
+    low = high
+    return true
+  }
+
+  for (const thing of hunk.is) {
+    const record = plane.get(thing.id)
+    if (!record) return false
+    const place = { id: thing.id, z: placeOf(record), record }
+    if (fresh.has(thing.id)) run.push(place)
+    else if (!settle(place)) return false
+  }
+
+  const ceiling = near(after[hunk.at + hunk.is.length])
+  return ceiling !== null && settle(ceiling)
+}
+
+function restack(
+  plane: Y.Map<Y.Map<unknown>>,
+  after: readonly Thing[],
+  hunks: readonly Hunk[],
+  fresh: ReadonlySet<string>,
+) {
+  const first = hunks[0]
+  const last = hunks[hunks.length - 1]
+  if (!first || !last) return
+  if (hunks.every((hunk) => slotted(plane, after, hunk, fresh))) return
+
+  const head = first.at
+  const end = last.at + last.is.length
+  const middle = after.slice(head, end)
   if (!middle.length) return
 
   const placed = (thing: Thing | undefined): Placing[] => {
@@ -172,10 +278,13 @@ function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: 
   }
 
   const [floor] = placed(after[head - 1])
-  const [ceiling] = placed(after[after.length - tail])
+  const [ceiling] = placed(after[end])
   const places = middle.flatMap(placed)
   const inside = places.filter(
-    (place) => (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)),
+    (place) =>
+      !fresh.has(place.id) &&
+      (!floor || under(floor, place)) &&
+      (!ceiling || under(place, ceiling)),
   )
 
   const kept = standing(inside, under)
@@ -195,7 +304,7 @@ function restack(plane: Y.Map<Y.Map<unknown>>, before: readonly Thing[], after: 
     }
   }
 
-  for (const thing of after.slice(after.length - tail)) {
+  for (const thing of after.slice(end)) {
     const [place] = placed(thing)
     if (!place) continue
     if (between(waiting, low, place.z)) return
@@ -254,30 +363,29 @@ export function seedPlane(doc: Y.Doc, canvas: Canvas) {
 export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   const plane = planeOf(doc)
   const buried = buriedOf(doc)
-  const was = things(before)
-  const is = things(after)
-
-  let place: number | null = null
-  const placeFor = (id: string): number => {
-    const held = placeIn(plane, id)
-    if (held !== null) return held
-
-    place = place === null ? nextPlace(plane) : place + 1
-    return place
+  const nodes = hunksOf(before.nodes, after.nodes)
+  const edges = hunksOf(before.edges, after.edges)
+  const ink = hunksOf(before.ink, after.ink)
+  const was = new Map<string, Thing>()
+  const is = new Map<string, Thing>()
+  for (const hunk of [...nodes, ...edges, ...ink]) {
+    for (const thing of hunk.was) was.set(thing.id, thing)
+    for (const thing of hunk.is) is.set(thing.id, thing)
   }
 
+  const fresh = new Set<string>()
   for (const [id, thing] of is) {
     if (was.get(id) === thing && plane.has(id)) continue
-    put(plane, thing, after.at[id] ?? 0, placeFor(id))
+    if (put(plane, thing, after.at[id] ?? 0)) fresh.add(id)
   }
 
   for (const id of was.keys()) {
     if (!is.has(id)) plane.delete(id)
   }
 
-  restack(plane, before.nodes, after.nodes)
-  restack(plane, before.edges, after.edges)
-  restack(plane, before.ink, after.ink)
+  restack(plane, after.nodes, nodes, fresh)
+  restack(plane, after.edges, edges, fresh)
+  restack(plane, after.ink, ink, fresh)
 
   if (after.moved !== before.moved) {
     for (const [id, when] of Object.entries(after.moved ?? {})) {
@@ -287,7 +395,7 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   }
 
   for (const [id, when] of Object.entries(after.gone)) {
-    if (!is.has(id) && buried.get(id) !== when) buried.set(id, when)
+    if (!plane.has(id) && buried.get(id) !== when) buried.set(id, when)
   }
 
   if (after.extras !== before.extras) {
@@ -298,7 +406,7 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
 
   if (buried.size) {
     for (const id of [...buried.keys()]) {
-      if (is.has(id)) buried.delete(id)
+      if (plane.has(id)) buried.delete(id)
     }
   }
 }

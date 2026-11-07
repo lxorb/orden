@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import * as Y from 'yjs'
 import {
   type Canvas,
@@ -662,5 +662,90 @@ describe('the order of the stack in a room', () => {
     const held = readPlane(one.doc)
     one.doc.transact(() => pushPlane(one.doc, held, merged(away, held, 6000)), 'join')
     expect(order(readPlane(one.doc))).toEqual(['c', 'a', 'b'])
+  })
+})
+
+describe('what an edit on a heavy plane reads', () => {
+  const heavy = (count: number) => {
+    const one = new Device()
+    one.edit(
+      withInk(
+        emptyCanvas(),
+        Array.from({ length: count }, (_, at) => stroke(`s${at}`)),
+      ),
+    )
+    return one
+  }
+  const ids = (canvas: Canvas) => canvas.ink.map((one) => one.id)
+  const reading = (edit: () => void) => {
+    const get = vi.spyOn(Y.Map.prototype, 'get')
+    try {
+      edit()
+      return get.mock.calls.length
+    } finally {
+      get.mockRestore()
+    }
+  }
+
+  test('strokes cut far apart read only those strokes and their neighbours, not the plane', () => {
+    const one = heavy(600)
+    const cut = new Set([3, 300, 596])
+    const after = one.canvas.ink.flatMap((thing, at) =>
+      cut.has(at) ? [stroke(`${thing.id}a`), stroke(`${thing.id}b`)] : [thing],
+    )
+    const places = new Map([...planeOf(one.doc)].map(([id, record]) => [id, record.get('z')]))
+
+    const reads = reading(() => one.edit(withInk(one.canvas, after), 2000))
+
+    expect(reads).toBeLessThan(100)
+    expect(ids(readPlane(one.doc))).toEqual(ids(withInk(one.canvas, after)))
+    expect(planeOf(one.doc).get('s299')?.get('z')).toBe(places.get('s299'))
+    expect(planeOf(one.doc).has('s300')).toBe(false)
+  })
+
+  test('a stroke drawn on top reads only the one beneath it', () => {
+    const one = heavy(600)
+    const reads = reading(() =>
+      one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('new')]), 2000),
+    )
+
+    expect(reads).toBeLessThan(20)
+    expect(ids(readPlane(one.doc)).at(-1)).toBe('new')
+  })
+
+  test('things rubbed out read nothing of what stays', () => {
+    const one = heavy(600)
+    const after = one.canvas.ink.filter((_, at) => at !== 10 && at !== 500)
+    const reads = reading(() => one.edit(withInk(one.canvas, after), 2000))
+
+    expect(reads).toBeLessThan(20)
+    expect(readPlane(one.doc).ink).toHaveLength(598)
+    expect(readPlane(one.doc).gone).toEqual({ s10: 2000, s500: 2000 })
+  })
+
+  test('a file whose order the room does not hold still turns the room to its order', () => {
+    const doc = new Y.Doc()
+    seedPlane(doc, withInk(emptyCanvas(), [stroke('c'), stroke('a'), stroke('b')]))
+    const file = withInk(emptyCanvas(), [stroke('a'), stroke('b'), stroke('c')])
+    const next = withInk(emptyCanvas(), [stroke('a'), stroke('n'), stroke('b'), stroke('c')])
+
+    doc.transact(() => pushPlane(doc, file, next))
+
+    expect(ids(readPlane(doc))).toEqual(['a', 'n', 'b', 'c'])
+  })
+
+  test('a stroke slipped between two that share a place still lands between them', () => {
+    const one = new Device()
+    const two = new Device()
+    one.edit(withInk(emptyCanvas(), [stroke('a')]))
+    carry(one, two)
+    one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('x')]), 2000)
+    two.edit(withInk(two.canvas, [...two.canvas.ink, stroke('y')]), 2000)
+    both(one, two)
+    const [a, x, y] = one.canvas.ink
+
+    one.edit(withInk(one.canvas, [a!, x!, stroke('m'), y!]), 3000)
+
+    expect(ids(readPlane(one.doc))).toEqual(['a', 'x', 'm', 'y'])
   })
 })
