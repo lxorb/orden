@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { steppedKey } from './direction'
   import { t } from './i18n.svelte'
@@ -12,7 +11,7 @@
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { walked } from './walk'
-  import { dur } from './motion'
+  import { dur, fade, fly, scale } from './motion'
 
   let element = $state<HTMLDivElement>()
   let position = $state({ x: 0, y: 0 })

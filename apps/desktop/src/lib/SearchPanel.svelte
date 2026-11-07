@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { shownName } from './note-name'
@@ -20,7 +19,7 @@
   import { isScratchpad } from './scratchpad/is.svelte'
   import { canWriteAt } from './sharing.svelte'
   import { type Entry, workspace } from './workspace.svelte'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
 

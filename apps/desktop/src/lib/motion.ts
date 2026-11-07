@@ -1,3 +1,15 @@
+import {
+  fade as fading,
+  type FadeParams,
+  fly as flying,
+  type FlyParams,
+  scale as scaling,
+  type ScaleParams,
+  slide as sliding,
+  type SlideParams,
+  type TransitionConfig,
+} from 'svelte/transition'
+
 const STILL = '(prefers-reduced-motion: reduce)'
 
 const query =
@@ -26,3 +38,17 @@ export const LAYER = {
   },
   start: 0.97,
 } as const
+
+function moving<Params extends { delay?: number; duration?: number }>(
+  move: (node: Element, params?: Params) => TransitionConfig,
+): (node: Element, params?: Params) => TransitionConfig {
+  return (node, params) => {
+    const { delay = 0, duration } = params ?? {}
+    return duration === 0 ? { delay, duration } : move(node, params)
+  }
+}
+
+export const fade = moving<FadeParams>(fading)
+export const fly = moving<FlyParams>(flying)
+export const scale = moving<ScaleParams>(scaling)
+export const slide = moving<SlideParams>(sliding)

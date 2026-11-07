@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { roving } from './roving'
@@ -12,7 +11,7 @@
   import { workspace } from './workspace.svelte'
   import TagTree from './TagTree.svelte'
   import Twist from './Twist.svelte'
-  import { dur } from './motion'
+  import { dur, slide } from './motion'
 
   const { nodes, depth = 0 }: { nodes: TagNode[]; depth?: number } = $props()
 

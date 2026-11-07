@@ -110,6 +110,25 @@ export default tseslint.config(
     },
   },
   {
+    files: ['apps/**/*.{ts,svelte}'],
+    ignores: ['apps/desktop/src/lib/motion.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'svelte/transition',
+              importNames: ['blur', 'draw', 'fade', 'fly', 'scale', 'slide'],
+              message:
+                'Take a transition from lib/motion: one that does not move leaves the layout alone.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs,ts}', 'apps/cli/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },

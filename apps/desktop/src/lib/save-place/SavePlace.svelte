@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { scale } from 'svelte/transition'
   import FileMark from '../FileMark.svelte'
   import { rank } from '../fuzzy'
   import { t } from '../i18n.svelte'
-  import { LAYER } from '../motion'
+  import { LAYER, scale } from '../motion'
   import { overlays } from '../overlays'
   import { selectAll } from '../select-all'
   import { canWriteAt } from '../sharing.svelte'

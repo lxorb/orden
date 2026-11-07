@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { fade, scale as growing } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { dur } from './motion'
+  import { dur, fade, scale as growing } from './motion'
 
   const { zoom }: { zoom: number } = $props()
 

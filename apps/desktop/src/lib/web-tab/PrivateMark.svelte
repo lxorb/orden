@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import HatGlasses from 'lucide/dist/esm/icons/hat-glasses.mjs'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
 
   const { large = false }: { large?: boolean } = $props()
 </script>

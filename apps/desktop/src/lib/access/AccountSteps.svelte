@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { MCP_URL } from '../api'
   import { connectors } from '../connectors.svelte'
@@ -8,7 +7,7 @@
   import Outward from '../Outward.svelte'
   import { t } from '../i18n.svelte'
   import { openExternal } from '../tauri'
-  import { dur } from '../motion'
+  import { dur, fly, slide } from '../motion'
 
   const { client }: { client: 'claude' | 'chatgpt' | 'other' } = $props()
 

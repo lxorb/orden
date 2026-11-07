@@ -5,7 +5,6 @@
   import { staysOn } from './caret'
   import Door from './Door.svelte'
   import { views } from './views.svelte'
-  import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
   import {
@@ -75,7 +74,7 @@
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './icons'
-  import { dur, stillness } from './motion'
+  import { dur, fade, stillness } from './motion'
   import Cross from './Cross.svelte'
 
   const { paneId, caption = false }: { paneId: string; caption?: boolean } = $props()

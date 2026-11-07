@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { IconNode } from 'lucide'
   import type { Snippet } from 'svelte'
-  import { fade } from 'svelte/transition'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
   import Glyph from './Glyph.svelte'
 
   const {

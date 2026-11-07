@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, slide } from '../../motion'
   import { afterQuiet } from '../../timing'
   import { workspace } from '../../workspace.svelte'
   import { ACTIVE_FOR } from './marks'

@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { arriving } from './arriving.svelte'
   import { t } from './i18n.svelte'
   import Sweep from './Sweep.svelte'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
   import { workspace } from './workspace.svelte'
 
   const initial = $derived((account.name ?? '?').trim().charAt(0).toUpperCase())

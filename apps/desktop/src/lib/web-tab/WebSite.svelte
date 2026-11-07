@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
@@ -7,7 +6,7 @@
   import { i18n, t } from '../i18n.svelte'
   import { shownSite } from './idn'
   import { invoke } from '../tauri'
-  import { dur } from '../motion'
+  import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import type { Ask } from './permissions.svelte'
   import { ASKS, grants } from './permissions.svelte'

@@ -1,8 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { i18n, key, t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import { chat } from './chat.svelte'
   import { hostHere } from './host'
   import { tokens } from './numbers'

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fade, fly } from 'svelte/transition'
-  import { dur } from '../motion'
+  import { dur, fade, fly } from '../motion'
   import SpaceMark from '../SpaceMark.svelte'
   import type { Shown } from './hover-card.svelte'
 

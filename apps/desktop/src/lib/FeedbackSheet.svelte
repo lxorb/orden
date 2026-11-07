@@ -1,6 +1,5 @@
 <script lang="ts">
   import { dropOver } from './drag-paths'
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
   import Cross from './Cross.svelte'
@@ -8,7 +7,7 @@
   import { MOST_PICTURES, type Picture, picturesAmong } from './feedback-pictures'
   import { pictureOf } from './pictures-away'
   import { t } from './i18n.svelte'
-  import { LAYER } from './motion'
+  import { fade, LAYER, scale } from './motion'
   import { followHref } from './open-link'
   import { overlays } from './overlays'
   import { trap } from './trap'

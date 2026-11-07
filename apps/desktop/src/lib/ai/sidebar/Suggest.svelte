@@ -1,8 +1,7 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { keepFocus } from '../../focus'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import MentionMark from './MentionMark.svelte'
   import type { Row } from './mentions'
 

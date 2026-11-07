@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileIcon from 'lucide/dist/esm/icons/file.mjs'
   import CircleAlert from 'lucide/dist/esm/icons/circle-alert.mjs'
   import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fly } from '../motion'
   import { overlays } from '../overlays'
   import { showLabel } from '../reveal'
   import { downloads, type Download } from './downloads.svelte'

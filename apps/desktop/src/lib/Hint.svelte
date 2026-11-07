@@ -1,9 +1,8 @@
 <script lang="ts">
   import Help from 'lucide/dist/esm/icons/circle-question-mark.mjs'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { hang } from './portal'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
 
   const { text }: { text: string } = $props()
 

@@ -1,9 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
-  import { LAYER } from '../motion'
+  import { fly, LAYER } from '../motion'
   import { overlays } from '../overlays'
 
   const {

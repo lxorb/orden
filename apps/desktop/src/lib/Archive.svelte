@@ -1,6 +1,5 @@
 <script lang="ts">
   import { flip } from 'svelte/animate'
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { standing } from './archive-plan'
   import { archiveList } from './archive-list.svelte'
@@ -12,7 +11,7 @@
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
-  import { dur } from './motion'
+  import { dur, slide } from './motion'
   import { howFor, middleOpens, type OpenHow, tabAsk } from './new-tab'
   import { rowName } from './note-name'
   import { UNARCHIVE_MARK } from './archive-marks'

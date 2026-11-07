@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
-
   import { account } from './account.svelte'
   import { api, type RemoteSession, type SecondState } from './api'
   import Copyable from './Copyable.svelte'
   import CopyButton from './CopyButton.svelte'
   import { i18n, t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
 
   let factor = $state<SecondState | null>(null)
   let sessions = $state<RemoteSession[]>([])

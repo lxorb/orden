@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
   import { domainNotice } from './domain-status'
   import { i18n, t } from './i18n.svelte'
   import { publish } from './publishing.svelte'
@@ -15,7 +14,7 @@
   import { readableSize } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
-  import { dur } from './motion'
+  import { dur, slide } from './motion'
 
   const blog = $derived(publish.blog)
   const published = $derived(publish.published)

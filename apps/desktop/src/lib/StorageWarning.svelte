@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { readableSize, usage } from './usage.svelte'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import { told } from './said.svelte'
 
   const words = $derived(

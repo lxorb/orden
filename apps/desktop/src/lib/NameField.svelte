@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { hang } from './portal'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import { type NameFault, nameFault, nameToCommit } from './naming'
   import { caretAtEnd, selectAll, selectStem } from './select-all'
 

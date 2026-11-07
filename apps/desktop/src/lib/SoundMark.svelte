@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
 
   const { muted = false }: { muted?: boolean } = $props()
 </script>

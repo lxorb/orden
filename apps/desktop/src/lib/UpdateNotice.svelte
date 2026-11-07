@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
   import { t } from './i18n.svelte'
   import { type Channel, restartToUpdate } from './updater'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import { log } from './log'
   import { told } from './said.svelte'
 

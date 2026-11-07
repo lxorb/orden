@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { message, t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import type { Thread } from '../chat/types'
   import { checkpoints } from './changes'
   import type { Choice } from './plan'

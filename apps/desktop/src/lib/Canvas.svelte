@@ -1,6 +1,5 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { fade } from 'svelte/transition'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
   import CanvasFind from './CanvasFind.svelte'
@@ -92,7 +91,7 @@
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { followNote } from './open-link'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
   import { rooms } from './rooms.svelte'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'

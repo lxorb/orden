@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { scale } from 'svelte/transition'
-  import { dur } from '../motion'
+  import { dur, scale } from '../motion'
   import { dragging } from './drag.svelte'
 </script>
 

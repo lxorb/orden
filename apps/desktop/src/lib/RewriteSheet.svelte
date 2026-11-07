@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import { rewriting } from './ai/rewriting.svelte'
   import { languageNames, VERBS } from './ai/rewrite'
   import { diffCount, lineDiff, trimmed } from './diff'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'

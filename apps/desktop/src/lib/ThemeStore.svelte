@@ -1,6 +1,5 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
-  import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { plural, t } from './i18n.svelte'
   import { overlays } from './overlays'
@@ -11,7 +10,7 @@
   import type { StoreTheme } from './themes/registry'
   import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
   import { PAINT, store } from './themes/store.svelte'
-  import { dur, LAYER } from './motion'
+  import { dur, fade, fly, LAYER, scale } from './motion'
   import { trap } from './trap'
   import Cross from './Cross.svelte'
 

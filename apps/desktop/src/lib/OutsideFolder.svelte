@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { importing } from './importing.svelte'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import { told } from './said.svelte'
   import { forget, isRecord, isString, stored } from './stored'
   import { OUTSIDE } from './surfaces.svelte'

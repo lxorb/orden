@@ -1,11 +1,10 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { fade, fly } from 'svelte/transition'
   import Thinking from '../Thinking.svelte'
   import { copyText } from '../../clipboard'
   import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fade, fly } from '../../motion'
   import type { Place } from '../../row-window'
   import { scrollbar } from '../../scrollbar'
   import { settings } from '../../settings.svelte'

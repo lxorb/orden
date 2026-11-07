@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
-  import { dur } from './motion'
+  import { dur, fly, scale } from './motion'
   import { renamed } from './renamed.svelte'
   import { told } from './said.svelte'
 

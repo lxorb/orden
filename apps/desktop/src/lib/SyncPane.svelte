@@ -1,13 +1,11 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
-
   import { account } from './account.svelte'
   import { api } from './api'
   import { amount, plural, t } from './i18n.svelte'
   import { when } from './when'
   import { log } from './log'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
-  import { dur } from './motion'
+  import { dur, fade } from './motion'
   import Select from './Select.svelte'
   import { record } from './sync/record.svelte'
   import type { Answer, Clash } from './sync/conflicts'

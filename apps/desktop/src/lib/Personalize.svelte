@@ -1,11 +1,10 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { account } from './account.svelte'
   import Cross from './Cross.svelte'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import { overlays } from './overlays'
   import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
   import { settings } from './settings.svelte'

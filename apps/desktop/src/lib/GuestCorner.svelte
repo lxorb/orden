@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { accentColour } from './accents'
   import { account } from './account.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { initial } from './icons'
   import { message, t } from './i18n.svelte'
-  import { LAYER } from './motion'
+  import { fly, LAYER } from './motion'
   import { overlays } from './overlays'
   import { deviceAccent } from './rooms/who'
   import { theme } from './theme.svelte'

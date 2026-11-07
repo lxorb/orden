@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../../FileMark.svelte'
   import { t } from '../../i18n.svelte'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import { pages, siteMark } from '../../web-tab/pages.svelte'
   import { workspace } from '../../workspace.svelte'
   import type { Approval } from '../verbs'

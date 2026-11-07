@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { account } from '../account.svelte'
   import AgentDetail from '../agents/settings/AgentDetail.svelte'
@@ -10,7 +9,7 @@
   import { reach } from '../agents/settings/reach.svelte'
   import { connectors } from '../connectors.svelte'
   import { i18n, t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, slide } from '../motion'
   import { settings } from '../settings.svelte'
   import { arrive, segmented } from '../slide'
   import { keep, storedText } from '../stored'

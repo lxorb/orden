@@ -93,3 +93,30 @@ describe('how a layer arrives', () => {
     expect(LAYER.rise).toBe(0)
   })
 })
+
+describe('a transition that does not move', () => {
+  const node = {} as Element
+  const style = { opacity: '1', transform: 'none' }
+
+  test('reads no style off its element, so the page is not laid out for it', async () => {
+    const { fade, fly, scale, slide } = await motion(true)
+    const read = vi.fn(() => style)
+    vi.stubGlobal('getComputedStyle', read)
+
+    for (const move of [fade, fly, scale, slide]) {
+      expect(move(node, { duration: 0 })).toEqual({ delay: 0, duration: 0 })
+    }
+    expect(fly(node, { duration: 0, delay: 40 })).toEqual({ delay: 40, duration: 0 })
+    expect(read).not.toHaveBeenCalled()
+  })
+
+  test('while one that moves reads where it starts from', async () => {
+    const { fly } = await motion(false)
+    const read = vi.fn(() => style)
+    vi.stubGlobal('getComputedStyle', read)
+
+    expect(fly(node, { duration: 120, y: 8 }).duration).toBe(120)
+    expect(fly(node).duration).toBe(400)
+    expect(read).toHaveBeenCalledTimes(2)
+  })
+})

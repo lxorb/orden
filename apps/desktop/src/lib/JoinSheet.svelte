@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
   import { t } from './i18n.svelte'
-  import { dur, LAYER } from './motion'
+  import { dur, fade, LAYER, scale } from './motion'
   import { overlays } from './overlays'
   import { trap } from './trap'
 

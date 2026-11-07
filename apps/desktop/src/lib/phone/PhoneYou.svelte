@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import { account } from '../account.svelte'
   import { showAccount } from '../account-menu'
   import AccountBadge from '../AccountBadge.svelte'
   import { arriving } from '../arriving.svelte'
   import { t } from '../i18n.svelte'
-  import { dur } from '../motion'
+  import { dur, fade } from '../motion'
   import { scratchFromDrawer } from '../scratchpad/is.svelte'
   import { showFeedback } from '../surfaces.svelte'
 

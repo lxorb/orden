@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { dur } from './motion'
+  import { dur, fly } from './motion'
   import type { Piece } from './palette/pieces'
 
   const {

@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { accentFor } from '../../accents'
   import { t } from '../../i18n.svelte'
   import { initial } from '../../icons'
-  import { dur } from '../../motion'
+  import { dur, fly } from '../../motion'
   import { overlays } from '../../overlays'
   import { theme } from '../../theme.svelte'
   import type { Vault } from './vault.svelte'
