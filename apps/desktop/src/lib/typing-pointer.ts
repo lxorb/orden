@@ -45,16 +45,24 @@ function deepest(event: Event): Element | null {
   return first instanceof Element ? first : null
 }
 
+export interface PointerWorld {
+  watch(changed: () => void): () => void
+  at(x: number, y: number): Element | null
+}
+
 export class TypingPointer {
   private hidden = false
   private held = false
   private touched = false
   private under: Element | null = null
   private worn: Element | null = null
+  private point: { x: number; y: number } | null = null
+  private unwatch: (() => void) | null = null
 
   constructor(
     private readonly listening: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>,
     private readonly mac: boolean,
+    private readonly world: PointerWorld | null = null,
   ) {}
 
   handleEvent(event: Event): void {
@@ -90,11 +98,20 @@ export class TypingPointer {
     this.hidden = true
     this.wear(this.under)
     this.listening.addEventListener('pointermove', this, true)
+    this.unwatch = this.world?.watch(() => this.replaced()) ?? null
   }
 
   over(event: Event): void {
     this.under = deepest(event)
+    const { clientX, clientY } = event as PointerEvent
+    this.point = { x: clientX, y: clientY }
     if (this.hidden) this.wear(this.under)
+  }
+
+  private replaced(): void {
+    if (!this.hidden || !this.point || this.worn?.isConnected !== false) return
+    this.under = this.world?.at(this.point.x, this.point.y) ?? null
+    this.wear(this.under)
   }
 
   private wear(one: Element | null): void {
@@ -129,6 +146,8 @@ export class TypingPointer {
     this.at = null
     this.wear(null)
     this.listening.removeEventListener('pointermove', this, true)
+    this.unwatch?.()
+    this.unwatch = null
   }
 }
 
@@ -140,7 +159,14 @@ export function hidePointerWhileTyping(): () => void {
   document.head.append(style)
 
   const mac = /Mac|iPhone|iPad/.test(navigator.userAgent)
-  const pointer = new TypingPointer(window, mac)
+  const pointer = new TypingPointer(window, mac, {
+    watch: (changed) => {
+      const watching = new MutationObserver(changed)
+      watching.observe(document, { childList: true, subtree: true })
+      return () => watching.disconnect()
+    },
+    at: (x, y) => document.elementFromPoint(x, y),
+  })
   const events = ['keydown', 'pointerover', 'pointerdown', 'pointerup', 'pointercancel'] as const
   for (const one of events) window.addEventListener(one, pointer, true)
   window.addEventListener('blur', pointer)
