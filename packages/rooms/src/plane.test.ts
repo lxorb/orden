@@ -723,6 +723,23 @@ describe('what an edit on a heavy plane reads', () => {
     expect(readPlane(one.doc).gone).toEqual({ s10: 2000, s500: 2000 })
   })
 
+  test('a change from another device reads only what it changed, and reads as a fresh read does', () => {
+    const one = heavy(600)
+    const two = new Device()
+    carry(one, two)
+    const after = one.canvas.ink.flatMap((thing, at) =>
+      at === 3 || at === 300 ? [stroke(`${thing.id}a`), stroke(`${thing.id}b`)] : [thing],
+    )
+    one.edit(withInk(one.canvas, after.slice(0, -1)), 2000)
+
+    const reads = reading(() => carry(one, two))
+
+    expect(reads).toBeLessThan(400)
+    expect(ids(two.canvas)).toEqual(ids(readPlane(two.doc)))
+    expect(two.canvas.at).toEqual(readPlane(two.doc).at)
+    expect(two.canvas.gone).toEqual(readPlane(two.doc).gone)
+  })
+
   test('a file whose order the room does not hold still turns the room to its order', () => {
     const doc = new Y.Doc()
     seedPlane(doc, withInk(emptyCanvas(), [stroke('c'), stroke('a'), stroke('b')]))
