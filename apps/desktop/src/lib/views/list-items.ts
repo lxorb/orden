@@ -32,7 +32,10 @@ function tree(
   shut: ReadonlySet<string>,
   parentOf?: (row: Row) => string | null,
 ): { row: Row; depth: number; parent: boolean }[] {
-  const present = new Set(rows.map(foldKey))
+  const keys = new Map<Row, string>()
+  for (const row of rows) keys.set(row, foldKey(row))
+  const keyOf = (row: Row) => keys.get(row) ?? foldKey(row)
+  const present = new Set(keys.values())
   const children = new Map<string, Row[]>()
   const roots: Row[] = []
   for (const row of rows) {
@@ -43,21 +46,25 @@ function tree(
         : `${row.path}#${parent}`
       : (parentOf?.(row) ?? null)
     const parentKey = said === null ? null : `${row.space}\n${said}`
-    if (parentKey !== null && present.has(parentKey)) {
-      children.set(parentKey, [...(children.get(parentKey) ?? []), row])
-    } else roots.push(row)
+    if (parentKey === null || !present.has(parentKey)) {
+      roots.push(row)
+      continue
+    }
+    const siblings = children.get(parentKey)
+    if (siblings) siblings.push(row)
+    else children.set(parentKey, [row])
   }
 
   const reached = new Set<string>()
   const reach = (row: Row) => {
-    const key = foldKey(row)
+    const key = keyOf(row)
     if (reached.has(key)) return
     reached.add(key)
     for (const child of children.get(key) ?? []) reach(child)
   }
   for (const root of roots) reach(root)
   for (const row of rows) {
-    if (reached.has(foldKey(row))) continue
+    if (reached.has(keyOf(row))) continue
     roots.push(row)
     reach(row)
   }
@@ -65,14 +72,14 @@ function tree(
   const out: { row: Row; depth: number; parent: boolean }[] = []
   const placed = new Set<string>()
   const walk = (row: Row, depth: number) => {
-    const key = foldKey(row)
+    const key = keyOf(row)
     placed.add(key)
-    const under = (children.get(key) ?? []).filter((child) => !placed.has(foldKey(child)))
+    const under = (children.get(key) ?? []).filter((child) => !placed.has(keyOf(child)))
     out.push({ row, depth, parent: under.length > 0 })
     if (shut.has(key)) return
-    for (const child of under) if (!placed.has(foldKey(child))) walk(child, depth + 1)
+    for (const child of under) if (!placed.has(keyOf(child))) walk(child, depth + 1)
   }
-  for (const root of roots) if (!placed.has(foldKey(root))) walk(root, 0)
+  for (const root of roots) if (!placed.has(keyOf(root))) walk(root, 0)
   return out
 }
 
