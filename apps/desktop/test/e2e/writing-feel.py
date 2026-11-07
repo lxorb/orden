@@ -166,43 +166,45 @@ def the_schemes(page: Page) -> None:
 
 
 def the_pointer(page: Page) -> None:
-    hidden = "() => getComputedStyle(document.body).cursor === 'none'"
-    under = """
-    () => {
-      const line = [...document.querySelectorAll('.cm-line')].find((one) =>
-        one.textContent.startsWith('The last line'))
-      return getComputedStyle(line).cursor
-    }
-    """
+    at = {"x": 0.0, "y": 0.0}
+
+    def hidden() -> str:
+        return (
+            f"(() => {{ const one = document.elementFromPoint({at['x']}, {at['y']});"
+            " return !!one && getComputedStyle(one).cursor === 'none' })()"
+        )
+
+    def move(x: float, y: float) -> None:
+        at["x"], at["y"] = x, y
+        page.mouse.move(x, y)
 
     line = page.locator(".cm-line", has_text="The last line")
     box = line.bounding_box()
     assert box is not None
-    page.mouse.click(box["x"] + box["width"] - 4, box["y"] + box["height"] / 2)
+    at["x"], at["y"] = box["x"] + box["width"] - 4, box["y"] + box["height"] / 2
+    page.mouse.click(at["x"], at["y"])
     quiet(page)
-    is_true(not page.evaluate(hidden), "the pointer was hidden before anything was typed")
+    is_true(not page.evaluate(hidden()), "the pointer was hidden before anything was typed")
 
     page.keyboard.press("ArrowLeft")
     page.keyboard.press("Control+b")
     page.keyboard.press("Control+b")
-    is_true(not page.evaluate(hidden), "a shortcut or an arrow hid the pointer")
+    is_true(not page.evaluate(hidden()), "a shortcut or an arrow hid the pointer")
 
     page.keyboard.type(" more")
-    wait_for(page, hidden.replace("() => ", ""), "the pointer to hide", patience=3)
-    is_true(page.evaluate(under) == "none", f"the line under it shows {page.evaluate(under)}")
+    wait_for(page, hidden(), "the pointer to hide", patience=3)
 
-    page.mouse.move(box["x"] + 40, box["y"] + 3)
-    page.mouse.move(box["x"] + 60, box["y"] + 5)
-    wait_for(page, f"!({hidden.replace('() => ', '')})", "the pointer to come back", patience=3)
-    is_true(page.evaluate(under) != "none", "the pointer did not come back after a move")
+    move(box["x"] + 40, box["y"] + 3)
+    move(box["x"] + 60, box["y"] + 5)
+    wait_for(page, f"!{hidden()}", "the pointer to come back", patience=3)
 
     page.mouse.down()
     page.keyboard.type("x")
-    is_true(not page.evaluate(hidden), "typing with a button held hid the pointer")
+    is_true(not page.evaluate(hidden()), "typing with a button held hid the pointer")
     page.mouse.up()
     page.keyboard.press("Backspace")
-    wait_for(page, hidden.replace("() => ", ""), "Backspace to hide the pointer", patience=3)
-    page.mouse.move(box["x"] + 80, box["y"] + 6)
+    wait_for(page, hidden(), "Backspace to hide the pointer", patience=3)
+    move(box["x"] + 80, box["y"] + 6)
     page.keyboard.press("Control+z")
     quiet(page)
 
