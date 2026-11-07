@@ -14,7 +14,8 @@ import {
   type SyncStore,
   type TableName,
 } from '../sync2/store'
-import { carryDatabase } from './carry-database'
+import { databaseName } from './carry-database'
+import { FORMER_NAME } from './store'
 import { keptForGood } from './kept-for-good.svelte'
 
 const SCHEMA = 1
@@ -93,9 +94,9 @@ function forget(name: string): Promise<void> {
 }
 
 async function database(account: string): Promise<IDBDatabase> {
-  await carryDatabase(formerNameOf(account), nameOf(account)).catch(() => undefined)
+  const name = await databaseName(formerNameOf(account), nameOf(account), FORMER_NAME)
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(nameOf(account), SCHEMA)
+    const request = indexedDB.open(name, SCHEMA)
     request.onupgradeneeded = () => made(request.result)
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new StoreError('the sync store would not open'))

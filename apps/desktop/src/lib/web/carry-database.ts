@@ -1,11 +1,65 @@
 import { type DatabaseDump, dump, existing, finished, shaped } from './database-dump'
 
+const ANSWERED_WITHIN = 400
+
+let alive: Promise<boolean> | null = null
+
+function formerTabOpen(channel: string): Promise<boolean> {
+  return (alive ??= askedFormer(channel))
+}
+
+function askedFormer(channel: string): Promise<boolean> {
+  if (typeof BroadcastChannel !== 'function') return Promise.resolve(false)
+  return new Promise((resolve) => {
+    const me = crypto.randomUUID()
+    const line = new BroadcastChannel(channel)
+    const done = (open: boolean) => {
+      clearTimeout(timer)
+      line.close()
+      resolve(open)
+    }
+    const timer = setTimeout(() => done(false), ANSWERED_WITHIN)
+    line.onmessage = (event: MessageEvent<unknown>) => {
+      const said = event.data as { kind?: unknown; from?: unknown } | null
+      if (said?.kind !== 'hello' && typeof said?.from === 'string' && said.from !== me) done(true)
+    }
+    line.postMessage({ kind: 'hello', from: me })
+  })
+}
+
+export async function databaseName(from: string, to: string, former: string): Promise<string> {
+  if (from === to || typeof indexedDB === 'undefined') return to
+  if (await formerTabOpen(`${former}:windows`)) return (await existing(to).then(closed)) ? to : from
+  await carryDatabase(from, to).catch(() => undefined)
+  return to
+}
+
+function closed(db: IDBDatabase | null): boolean {
+  db?.close()
+  return db !== null
+}
+
 export async function carryDatabase(from: string, to: string): Promise<void> {
   if (from === to || typeof indexedDB === 'undefined') return
   const old = await dump(from)
   if (!old) return
-  if (old.stores.some((store) => store.keys.length > 0)) await merged(old, to)
+  if (old.stores.some((store) => store.keys.length > 0)) {
+    await merged(old, to)
+    if (!(await holdsAll(old, to))) return
+  }
   await removed(from)
+}
+
+async function holdsAll(old: DatabaseDump, to: string): Promise<boolean> {
+  const now = await dump(to)
+  if (!now) return false
+  return old.stores.every((store) => {
+    if (!store.keys.length) return true
+    const there = now.stores.find((one) => one.name === store.name)
+    if (!there) return false
+    const keys = new Set(there.keys.map((key) => JSON.stringify(key)))
+    return store.keys.every((key) => keys.has(JSON.stringify(key)))
+  })
 }
 
 async function merged(old: DatabaseDump, to: string): Promise<void> {
