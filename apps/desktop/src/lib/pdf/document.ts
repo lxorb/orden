@@ -4,6 +4,7 @@ import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { door } from '@orden/markdown/door'
 import { fileBytes, sha256 } from '../bytes'
 import { PDF_TO_CSS } from './pages'
+import { streamsIterate } from './streams'
 
 type Library = typeof import('pdfjs-dist')
 
@@ -28,6 +29,7 @@ export const pdfjs: () => Promise<Library> = door(() =>
         worker: legacyWorkerUrl,
       }))
   ).then(({ library, worker }) => {
+    streamsIterate()
     library.GlobalWorkerOptions.workerSrc = worker
     return library
   }),
