@@ -385,6 +385,7 @@ export const fr: Dictionary = {
   'Whole word': 'Mot entier',
   'Regular expression': 'Expression régulière',
   'No matches': 'Aucun résultat',
+  'Pattern too slow to search': 'Motif trop lent pour la recherche',
   '{at} of {count}': '{at} sur {count}',
   Icons: 'Icônes',
   Emoji: 'Émoji',

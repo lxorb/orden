@@ -379,6 +379,7 @@ export const my: Dictionary = {
   'Whole word': 'စကားလုံးအပြည့်',
   'Regular expression': 'ပုံမှန်အသုံးအနှုန်း',
   'No matches': 'ကိုက်ညီမှုမရှိ',
+  'Pattern too slow to search': 'ရှာဖွေရန် ပုံစံ အလွန်နှေးသည်',
   '{at} of {count}': '{count} အထဲ {at}',
   Icons: 'အိုင်ကွန်များ',
   Emoji: 'အီမိုဂျီ',

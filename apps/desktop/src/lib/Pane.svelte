@@ -4,6 +4,7 @@
     type EditorView,
     type FindAsk,
     type FindSpec,
+    findReady,
     findTally,
     type FindTally,
     findNext as findNextMatch,
@@ -149,7 +150,11 @@
     if (!asked) return
 
     await setFind(asked, next)
-    tally = findTally(asked.state)
+    if (asked === view) tally = findTally(asked.state)
+  }
+
+  function tallySlow(slowed: EditorView) {
+    if (slowed === view) tally = findTally(slowed.state)
   }
 
   function openFinding(ask: FindAsk) {
@@ -165,30 +170,43 @@
     view?.focus()
   }
 
-  function stepFinding(by: number) {
-    if (!view) return
-
-    if (by < 0) findPreviousMatch(view)
-    else findNextMatch(view)
-    tally = findTally(view.state)
+  async function ready(): Promise<EditorView | null> {
+    const asked = view
+    if (!asked || !(await findReady(asked)) || asked !== view) {
+      if (asked && asked === view) tally = findTally(asked.state)
+      return null
+    }
+    return asked
   }
 
-  function selectEvery() {
-    if (view && selectEveryMatch(view)) shutFinding()
+  async function stepFinding(by: number) {
+    const asked = await ready()
+    if (!asked) return
+
+    if (by < 0) findPreviousMatch(asked)
+    else findNextMatch(asked)
+    tally = findTally(asked.state)
   }
 
-  function replaceOne() {
-    if (!view) return
-
-    replaceHere(view)
-    tally = findTally(view.state)
+  async function selectEvery() {
+    const asked = await ready()
+    if (asked && selectEveryMatch(asked)) shutFinding()
   }
 
-  function replaceEvery() {
-    if (!view) return
+  async function replaceOne() {
+    const asked = await ready()
+    if (!asked) return
 
-    replaceEverywhere(view)
-    tally = findTally(view.state)
+    replaceHere(asked)
+    tally = findTally(asked.state)
+  }
+
+  async function replaceEvery() {
+    const asked = await ready()
+    if (!asked) return
+
+    replaceEverywhere(asked)
+    tally = findTally(asked.state)
   }
 
   let searchedIn: string | null = null
@@ -360,6 +378,7 @@
         count={tally.count}
         current={tally.current}
         capped={tally.capped}
+        slow={tally.slow ?? false}
         flags={spec}
         onflags={(flags: FindFlags) => void look({ ...spec, ...flags })}
         {replacing}
@@ -368,10 +387,10 @@
           replacing = open
         }}
         onreplacement={(typed: string) => void look({ ...spec, replace: typed })}
-        onreplace={canReplace ? replaceOne : undefined}
-        onreplaceall={canReplace ? replaceEvery : undefined}
-        onstep={stepFinding}
-        onselectall={selectEvery}
+        onreplace={canReplace ? () => void replaceOne() : undefined}
+        onreplaceall={canReplace ? () => void replaceEvery() : undefined}
+        onstep={(by: number) => void stepFinding(by)}
+        onselectall={() => void selectEvery()}
         onclose={shutFinding}
         onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
@@ -528,6 +547,7 @@
               opennote={followNote}
               nameblock={nameBlock}
               onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+              onfindslow={tallySlow}
               onselection={(current: EditorView) => {
                 views.moved(current)
                 placement.remember(current)
@@ -557,6 +577,7 @@
         opennote={followNote}
         nameblock={nameBlock}
         onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+        onfindslow={tallySlow}
         onselection={(current: EditorView) => {
           views.moved(current)
           placement.remember(current)

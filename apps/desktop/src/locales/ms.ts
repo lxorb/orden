@@ -377,6 +377,7 @@ export const ms: Dictionary = {
   'Whole word': 'Perkataan penuh',
   'Regular expression': 'Ungkapan biasa',
   'No matches': 'Tiada padanan',
+  'Pattern too slow to search': 'Corak terlalu perlahan untuk dicari',
   '{at} of {count}': '{at} daripada {count}',
   Icons: 'Ikon',
   Emoji: 'Emoji',

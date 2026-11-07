@@ -376,6 +376,7 @@ export const yue: Dictionary = {
   'Whole word': '全詞匹配',
   'Regular expression': '正則表達式',
   'No matches': '冇匹配項',
+  'Pattern too slow to search': '呢個模式太慢，搜尋唔到',
   '{at} of {count}': '{at}/{count}',
   Icons: '圖標',
   Emoji: '表情',

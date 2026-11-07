@@ -379,6 +379,7 @@ export const ps: Dictionary = {
   'Whole word': 'بشپړه کلمه',
   'Regular expression': 'منظم څرګندون',
   'No matches': 'سارې نشته',
+  'Pattern too slow to search': 'بڼه د لټون لپاره ډېره ورو ده',
   '{at} of {count}': '{at} له {count}',
   Icons: 'نښې',
   Emoji: 'Emoji',

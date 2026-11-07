@@ -380,6 +380,7 @@ export const bn: Dictionary = {
   'Whole word': 'পুরো শব্দ',
   'Regular expression': 'রেগুলার এক্সপ্রেশন',
   'No matches': 'কিছু মেলেনি',
+  'Pattern too slow to search': 'প্যাটার্নটি খোঁজার জন্য খুব ধীর',
   '{at} of {count}': '{count}-এর {at}',
   Icons: 'আইকন',
   Emoji: 'ইমোজি',

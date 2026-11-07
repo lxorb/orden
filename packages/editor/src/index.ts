@@ -51,6 +51,7 @@ export {
   findNext,
   findPrevious,
   type FindSpec,
+  findReady,
   findTally,
   type FindTally,
   loadFind,

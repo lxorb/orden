@@ -383,6 +383,7 @@ export const pl: Dictionary = {
   'Whole word': 'Całe słowo',
   'Regular expression': 'Wyrażenie regularne',
   'No matches': 'Brak dopasowań',
+  'Pattern too slow to search': 'Wzorzec zbyt wolny do wyszukiwania',
   '{at} of {count}': '{at} z {count}',
   Icons: 'Ikony',
   Emoji: 'Emoji',

@@ -382,6 +382,7 @@ export const kn: Dictionary = {
   'Whole word': 'ಪೂರ್ಣ ಪದ',
   'Regular expression': 'ರೆಜೆಕ್ಸ್',
   'No matches': 'ಹೊಂದಿಕೆ ಇಲ್ಲ',
+  'Pattern too slow to search': 'ಹುಡುಕಲು ಮಾದರಿ ತುಂಬಾ ನಿಧಾನವಾಗಿದೆ',
   '{at} of {count}': '{count}ರಲ್ಲಿ {at}',
   Icons: 'ಐಕಾನ್‌ಗಳು',
   Emoji: 'ಎಮೋಜಿ',

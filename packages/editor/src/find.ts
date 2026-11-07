@@ -56,9 +56,12 @@ export interface FindTally {
   count: number
   current: number
   capped: boolean
+  slow?: boolean
 }
 
 export const NO_TALLY: FindTally = { count: 0, current: -1, capped: false }
+
+export const SLOW_TALLY: FindTally = { ...NO_TALLY, slow: true }
 
 const engine = new Compartment()
 
@@ -74,7 +77,10 @@ export const loadFind: () => Promise<typeof import('./finding')> = door(() =>
   }),
 )
 
-export function findExtensions(onFind?: (ask: FindAsk | null) => void): Extension {
+export function findExtensions(
+  onFind?: (ask: FindAsk | null) => void,
+  onSlow?: (view: EditorView) => void,
+): Extension {
   return [
     findShown,
     engine.of(loaded ? loaded.searching() : []),
@@ -87,6 +93,13 @@ export function findExtensions(onFind?: (ask: FindAsk | null) => void): Extensio
                 if (effect.is(findAsked)) onFind(effect.value)
               }
             }
+          }),
+        ]
+      : []),
+    ...(onSlow
+      ? [
+          EditorView.updateListener.of((update) => {
+            if (loaded?.slow(update.state) && !loaded.slow(update.startState)) onSlow(update.view)
           }),
         ]
       : []),
@@ -111,11 +124,22 @@ export function closeFind(view: EditorView) {
 
 export async function setFind(view: EditorView, spec: FindSpec): Promise<void> {
   const found = loaded ?? (await loadFind())
-  found.setQuery(view, spec)
+  await found.setQuery(view, spec)
 }
 
 export function findTally(state: EditorState): FindTally {
   return loaded ? loaded.tally(state) : NO_TALLY
+}
+
+export function findReady(view: EditorView): Promise<boolean> {
+  return loaded ? loaded.clear(view) : Promise.resolve(true)
+}
+
+function once(found: typeof import('./finding'), view: EditorView, run: Command): boolean {
+  if (found.cleared(view.state)) return run(view)
+  void found.clear(view).then((quick) => quick && found.asked(view.state) && run(view))
+
+  return true
 }
 
 function steps(move: (found: typeof import('./finding')) => Command): Command {
@@ -123,7 +147,7 @@ function steps(move: (found: typeof import('./finding')) => Command): Command {
     const found = loaded
     if (!found?.asked(view.state)) return openFind(view)
 
-    return move(found)(view)
+    return once(found, view, move(found))
   }
 }
 
@@ -133,19 +157,19 @@ export const findPrevious = steps((found) => found.previous)
 export function replaceHere(view: EditorView): boolean {
   if (!loaded?.asked(view.state)) return false
 
-  return loaded.replaceOne(view)
+  return once(loaded, view, loaded.replaceOne)
 }
 
 export function replaceEverywhere(view: EditorView): boolean {
   if (!loaded?.asked(view.state)) return false
 
-  return loaded.replaceEvery(view)
+  return once(loaded, view, loaded.replaceEvery)
 }
 
 export function selectEveryMatch(view: EditorView): boolean {
   if (!loaded?.asked(view.state)) return false
 
-  return loaded.selectEvery(view)
+  return once(loaded, view, loaded.selectEvery)
 }
 
 function lazily(pick: (found: typeof import('./finding')) => Command): Command {

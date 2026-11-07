@@ -383,6 +383,7 @@ export const ru: Dictionary = {
   'Whole word': 'Слово целиком',
   'Regular expression': 'Регулярное выражение',
   'No matches': 'Нет совпадений',
+  'Pattern too slow to search': 'Шаблон слишком медленный для поиска',
   '{at} of {count}': '{at} из {count}',
   Icons: 'Значки',
   Emoji: 'Эмодзи',

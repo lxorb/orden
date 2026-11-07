@@ -384,6 +384,7 @@ export const es: Dictionary = {
   'Whole word': 'Palabra completa',
   'Regular expression': 'Expresión regular',
   'No matches': 'Sin resultados',
+  'Pattern too slow to search': 'Patrón demasiado lento para buscar',
   '{at} of {count}': '{at} de {count}',
   Icons: 'Iconos',
   Emoji: 'Emoji',

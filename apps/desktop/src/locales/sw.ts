@@ -382,6 +382,7 @@ export const sw: Dictionary = {
   'Whole word': 'Neno kamili',
   'Regular expression': 'Usemi wa kawaida',
   'No matches': 'Hakuna kinacholingana',
+  'Pattern too slow to search': 'Mchoro ni wa polepole mno kutafutwa',
   '{at} of {count}': '{at} ya {count}',
   Icons: 'Aikoni',
   Emoji: 'Emoji',

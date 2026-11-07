@@ -376,6 +376,7 @@ export const zhHant: Dictionary = {
   'Whole word': '全字相符',
   'Regular expression': '正規表示式',
   'No matches': '沒有相符項',
+  'Pattern too slow to search': '模式太慢，無法搜尋',
   '{at} of {count}': '{at}/{count}',
   Icons: '圖示',
   Emoji: '表情',

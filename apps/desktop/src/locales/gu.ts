@@ -379,6 +379,7 @@ export const gu: Dictionary = {
   'Whole word': 'આખો શબ્દ',
   'Regular expression': 'નિયમિત અભિવ્યક્તિ',
   'No matches': 'કંઈ મળતું નથી',
+  'Pattern too slow to search': 'પેટર્ન શોધવા માટે ખૂબ ધીમી છે',
   '{at} of {count}': '{count}માંથી {at}',
   Icons: 'આઇકન',
   Emoji: 'Emoji',
