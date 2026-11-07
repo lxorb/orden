@@ -265,7 +265,7 @@ fn read(mut reader: Box<dyn Read + Send>, stream: &Stream) {
     loop {
         {
             let mut flow = stream.lock();
-            while !flow.ended && flow.unseen + flow.waiting.len() > MOST_UNSEEN {
+            while !flow.ended && !flow.drained && flow.unseen + flow.waiting.len() > MOST_UNSEEN {
                 flow = stream.wait(flow);
             }
         }
@@ -457,6 +457,27 @@ mod tests {
         }
 
         (String::from_utf8_lossy(&bytes).into_owned(), None)
+    }
+
+    #[test]
+    fn output_nobody_will_see_is_read_to_its_end_once_the_shell_is_gone() {
+        let stream = Arc::new(Stream::default());
+        {
+            let mut flow = stream.lock();
+            flow.unseen = MOST_UNSEEN + 1;
+            flow.exit = Some(0);
+        }
+        let reading = Arc::clone(&stream);
+        let (done, finished) = std::sync::mpsc::channel();
+        thread::spawn(move || {
+            read(Box::new(std::io::Cursor::new(vec![7_u8; 4096])), &reading);
+            let _ = done.send(());
+        });
+        linger(&stream);
+        assert!(
+            finished.recv_timeout(Duration::from_secs(5)).is_ok(),
+            "the reader still waits for a window that will never say it saw the output"
+        );
     }
 
     #[test]
