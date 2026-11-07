@@ -242,4 +242,48 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     saying.mockRestore()
     keptAway.clear()
   })
+
+  test('another window waits for a long fetch for as long as the window syncing says it is still at it', async () => {
+    vi.useFakeTimers()
+    const open = runner as unknown as Window & {
+      alive: Map<string, () => void>
+      heardAsk(said: Record<string, unknown>): void
+      taking: Promise<unknown>
+    }
+    let asked = ''
+    const saying = vi.spyOn(windows, 'say').mockImplementation((kind, what = {}) => {
+      if (kind === 'sync-ask') asked = what.id as string
+    })
+    keptAway.clear()
+    open.leaderId = 'the window syncing'
+    open.heardAway([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }])
+    let brought: boolean | null = null
+    void keptAway.bringBack(`${ROOT}/a.md`).then((here) => (brought = here))
+    for (let at = 0; at < 6; at++) {
+      await vi.advanceTimersByTimeAsync(20_000)
+      open.alive.get(asked)?.()
+    }
+    expect(brought).toBeNull()
+    open.asked.get(asked)?.(true)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(brought).toBe(true)
+
+    saying.mockRestore()
+    const beats: string[] = []
+    const beating = vi.spyOn(windows, 'say').mockImplementation((kind) => void beats.push(kind))
+    const slow = vi
+      .spyOn(open, 'answering')
+      .mockImplementation(() => new Promise((done) => setTimeout(() => done(true), 25_000)))
+    open.heardAsk({ kind: 'sync-ask', id: 'f1', from: 'another', what: 'fetch-away', args: {} })
+    await vi.advanceTimersByTimeAsync(26_000)
+    expect(beats).toEqual(['sync-alive', 'sync-alive', 'sync-said'])
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(beats).toHaveLength(3)
+
+    slow.mockRestore()
+    beating.mockRestore()
+    open.leaderId = null
+    keptAway.clear()
+    vi.useRealTimers()
+  })
 })

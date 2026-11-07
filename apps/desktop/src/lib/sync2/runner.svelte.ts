@@ -66,7 +66,9 @@ type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
 const ASKS_AT_MOST = 30_000
 
-const SEARCH_QUIET_AT_MOST = 120_000
+const ASK_ALIVE_EVERY = 10_000
+
+const ASK_LONGEST = 10 * 60_000
 
 const SIGN_OUT_WAITS = 10_000
 
@@ -1297,6 +1299,7 @@ class Runner {
   private taking: Promise<unknown> = Promise.resolve()
 
   private readonly parts = new Map<string, (value: unknown) => void>()
+  private readonly alive = new Map<string, () => void>()
 
   private ask(
     what: string,
@@ -1309,16 +1312,20 @@ class Runner {
       let timer: ReturnType<typeof setTimeout> | undefined
       const done = (value: unknown) => {
         clearTimeout(timer)
+        clearTimeout(longest)
         this.asked.delete(id)
         this.parts.delete(id)
+        this.alive.delete(id)
         resolve(value)
       }
       const wait = () => {
         clearTimeout(timer)
-        timer = setTimeout(() => done(null), part ? SEARCH_QUIET_AT_MOST : ASKS_AT_MOST)
+        timer = setTimeout(() => done(null), ASKS_AT_MOST)
       }
       wait()
+      const longest = setTimeout(() => done(null), ASK_LONGEST)
       this.asked.set(id, done)
+      this.alive.set(id, wait)
       if (part) {
         this.parts.set(id, (value) => {
           wait()
@@ -1371,6 +1378,9 @@ class Runner {
         if (said.to === windows.me && typeof said.id === 'string') {
           this.parts.get(said.id)?.(said.value)
         }
+      }),
+      this.hear('sync-alive', (said) => {
+        if (said.to === windows.me && typeof said.id === 'string') this.alive.get(said.id)?.()
       }),
       this.hear('sync-light', (said) => {
         if (this.engine) return
@@ -1437,12 +1447,19 @@ class Runner {
   }
 
   private heardAsk(said: Said) {
+    const beat = setInterval(() => {
+      this.say('sync-alive', { id: said.id, to: said.from })
+    }, ASK_ALIVE_EVERY)
     const answer = async () => {
-      this.say('sync-said', {
-        id: said.id,
-        to: said.from,
-        value: await this.answering(said).catch(() => null),
-      })
+      try {
+        this.say('sync-said', {
+          id: said.id,
+          to: said.from,
+          value: await this.answering(said).catch(() => null),
+        })
+      } finally {
+        clearInterval(beat)
+      }
     }
     if (said.what === 'search-away') void answer()
     else this.inTurn(answer)
