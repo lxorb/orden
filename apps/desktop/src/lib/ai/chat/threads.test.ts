@@ -61,6 +61,7 @@ const { other } = (await import('../../windows')) as unknown as {
 }
 
 const {
+  answerFreed,
   branchThread,
   chatsOf,
   claimAnswer,
@@ -646,4 +647,36 @@ describe('a thread two windows hold', () => {
     expect(gone).toEqual([thread.id])
     stop()
   })
+})
+
+describe('a window whose Web Locks hang, refuse or throw', () => {
+  const broken = {
+    hang: () => new Promise<never>(() => undefined),
+    refuse: () => Promise.reject(new DOMException('no', 'SecurityError')),
+    throw: () => {
+      throw new DOMException('no', 'SecurityError')
+    },
+  }
+
+  for (const [how, request] of Object.entries(broken)) {
+    test(`still answers and still reads when they ${how}`, async () => {
+      vi.useFakeTimers()
+      const had = Object.getOwnPropertyDescriptor(navigator, 'locks')
+      Object.defineProperty(navigator, 'locks', {
+        configurable: true,
+        value: { request, query: request },
+      })
+      onTestFinished(() => {
+        if (had) Object.defineProperty(navigator, 'locks', had)
+        else Reflect.deleteProperty(navigator, 'locks')
+        vi.useRealTimers()
+      })
+      const claimed = claimAnswer(`broken-${how}`)
+      const freed = answerFreed(`broken-${how}`)
+      await vi.advanceTimersByTimeAsync(10_000)
+      await expect(claimed).resolves.toBe(true)
+      await expect(freed).resolves.toBeUndefined()
+      unclaimAnswer(`broken-${how}`)
+    })
+  }
 })
