@@ -3382,4 +3382,29 @@ export const th: Dictionary = {
   'Some changes have not reached your account yet': 'การเปลี่ยนแปลงบางส่วนยังไปไม่ถึงบัญชีของคุณ',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'การเปลี่ยนแปลงจะอยู่ในเบราว์เซอร์นี้ ไม่มีใครที่ลงชื่อเข้าใช้ที่นี่เห็น และจะส่งขึ้นไปเมื่อคุณลงชื่อเข้าใช้อีกครั้ง',
+  'Leave it empty to sign in with a QR code instead':
+    'เว้นว่างไว้เพื่อลงชื่อเข้าใช้ด้วยคิวอาร์โค้ดแทน',
+  'Telegram code': 'รหัส Telegram',
+  'Sent to Telegram on your other device': 'ส่งไปที่ Telegram บนอุปกรณ์อื่นของคุณแล้ว',
+  'Sent by SMS': 'ส่งทาง SMS แล้ว',
+  'You will get a call with the code': 'คุณจะได้รับสายแจ้งรหัส',
+  'The code was wrong. Try again.': 'รหัสไม่ถูกต้อง ลองอีกครั้ง',
+  'The code expired, so Telegram sent a new one.': 'รหัสหมดอายุ Telegram จึงส่งรหัสใหม่ให้',
+  'Two-step verification password': 'รหัสผ่านการยืนยันสองขั้นตอน',
+  'The password was wrong. Try again.': 'รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง',
+  'Scan with Telegram on your phone': 'สแกนด้วย Telegram บนโทรศัพท์ของคุณ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > การตั้งค่า > อุปกรณ์ > เชื่อมต่ออุปกรณ์เดสก์ท็อป',
+  'Signing in to Telegram needs the app': 'การลงชื่อเข้าใช้ Telegram ต้องใช้แอป',
+  'Telegram does not know this phone number': 'Telegram ไม่รู้จักหมายเลขโทรศัพท์นี้',
+  'Too many tries. Wait a while and try again.': 'ลองหลายครั้งเกินไป รอสักครู่แล้วลองอีกครั้ง',
+  'Too many wrong tries': 'ลองผิดหลายครั้งเกินไป',
+  'Signed out of Telegram. Connect again.': 'ออกจากระบบ Telegram แล้ว เชื่อมต่ออีกครั้ง',
+  'Telegram cannot do that in this conversation': 'Telegram ทำแบบนั้นในบทสนทนานี้ไม่ได้',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram ลบข้อความในกลุ่มและช่องสำหรับทุกคน',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram โอนกลุ่มให้เจ้าของใหม่ได้จากแอปของตัวเองเท่านั้น',
+  'That sticker is no longer available': 'สติกเกอร์นั้นไม่มีแล้ว',
+  'Telegram is not set up in this build': 'ยังไม่ได้ตั้งค่า Telegram ในบิลด์นี้',
 }

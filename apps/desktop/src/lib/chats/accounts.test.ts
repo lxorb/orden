@@ -139,6 +139,31 @@ describe("other services' accounts", () => {
     expect(next.saved).toEqual([])
   })
 
+  test('a service keeping its own session is told the account when linked again, and forgets it on disconnect', async () => {
+    const known: (string | undefined)[] = []
+    const forgotten: string[] = []
+    const own: ChatProvider = {
+      ...provider,
+      id: 'own',
+      fields: [{ key: 'address', label: 'Email address', kind: 'email' }],
+      connect: (values, given, account) => {
+        known.push(account)
+        return provider.connect({ ...values, password: 'right' }, given)
+      },
+      forget: (account) => {
+        forgotten.push(account)
+        return Promise.resolve()
+      },
+    }
+    await new Accounts(host, new Connected(), [own]).connect('own', { address: 'a@x.org' })
+    const next = new Accounts(host, new Connected(), [own])
+    next.start()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(known).toEqual([undefined, 'a@x.org'])
+    await next.disconnect('own', 'a@x.org')
+    expect(forgotten).toEqual(['a@x.org'])
+  })
+
   test("a conversation tab's words name it, and nothing else reads as one", () => {
     const key = { provider: 'mail', account: 'a@x.org', conversation: 'id\nwith a break@x' }
     expect(conversationKeyOf(conversationKey(key))).toEqual(key)

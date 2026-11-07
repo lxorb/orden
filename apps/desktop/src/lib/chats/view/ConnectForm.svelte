@@ -14,6 +14,7 @@
     imapHost: t('IMAP server'),
     smtpHost: t('SMTP server'),
     user: t('User name'),
+    phone: t('Phone number'),
   }
 
   let chosen = $state(0)

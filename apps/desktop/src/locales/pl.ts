@@ -3655,4 +3655,29 @@ export const pl: Dictionary = {
     'Niektóre zmiany nie dotarły jeszcze na Twoje konto',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Zostają w tej przeglądarce, niewidoczne dla nikogo innego, kto się tu zaloguje, i trafią na konto, gdy zalogujesz się ponownie.',
+  'Leave it empty to sign in with a QR code instead': 'Zostaw puste, aby zalogować się kodem QR',
+  'Telegram code': 'Kod Telegrama',
+  'Sent to Telegram on your other device': 'Wysłano do Telegrama na Twoim drugim urządzeniu',
+  'Sent by SMS': 'Wysłano SMS-em',
+  'You will get a call with the code': 'Otrzymasz połączenie z kodem',
+  'The code was wrong. Try again.': 'Kod był błędny. Spróbuj ponownie.',
+  'The code expired, so Telegram sent a new one.': 'Kod wygasł, więc Telegram wysłał nowy.',
+  'Two-step verification password': 'Hasło weryfikacji dwuetapowej',
+  'The password was wrong. Try again.': 'Hasło było błędne. Spróbuj ponownie.',
+  'Scan with Telegram on your phone': 'Zeskanuj Telegramem na telefonie',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Ustawienia > Urządzenia > Połącz urządzenie stacjonarne',
+  'Signing in to Telegram needs the app': 'Logowanie do Telegrama wymaga aplikacji',
+  'Telegram does not know this phone number': 'Telegram nie zna tego numeru telefonu',
+  'Too many tries. Wait a while and try again.':
+    'Za dużo prób. Odczekaj chwilę i spróbuj ponownie.',
+  'Too many wrong tries': 'Za dużo błędnych prób',
+  'Signed out of Telegram. Connect again.': 'Wylogowano z Telegrama. Połącz się ponownie.',
+  'Telegram cannot do that in this conversation': 'Telegram nie może tego zrobić w tej rozmowie',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram usuwa wiadomości w grupach i kanałach dla wszystkich',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram przekazuje grupę nowemu właścicielowi tylko we własnej aplikacji',
+  'That sticker is no longer available': 'Ta naklejka nie jest już dostępna',
+  'Telegram is not set up in this build': 'Telegram nie jest skonfigurowany w tej wersji',
 }

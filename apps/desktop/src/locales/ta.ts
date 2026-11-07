@@ -3570,4 +3570,32 @@ export const ta: Dictionary = {
     'சில மாற்றங்கள் இன்னும் உங்கள் கணக்கை அடையவில்லை',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'அவை இந்த உலாவியிலேயே இருக்கும், இங்கே உள்நுழையும் வேறு யாருக்கும் தெரியாது, நீங்கள் மீண்டும் உள்நுழையும்போது அனுப்பப்படும்.',
+  'Leave it empty to sign in with a QR code instead':
+    'பதிலாக QR குறியீட்டால் உள்நுழைய காலியாக விடவும்',
+  'Telegram code': 'Telegram குறியீடு',
+  'Sent to Telegram on your other device': 'உங்கள் மற்ற சாதனத்திலுள்ள Telegram-க்கு அனுப்பப்பட்டது',
+  'Sent by SMS': 'SMS மூலம் அனுப்பப்பட்டது',
+  'You will get a call with the code': 'குறியீட்டைச் சொல்லும் அழைப்பு வரும்',
+  'The code was wrong. Try again.': 'குறியீடு தவறு. மீண்டும் முயலவும்.',
+  'The code expired, so Telegram sent a new one.':
+    'குறியீடு காலாவதியானதால் Telegram புதியதை அனுப்பியது.',
+  'Two-step verification password': 'இரண்டு படி சரிபார்ப்பு கடவுச்சொல்',
+  'The password was wrong. Try again.': 'கடவுச்சொல் தவறு. மீண்டும் முயலவும்.',
+  'Scan with Telegram on your phone': 'உங்கள் தொலைபேசியிலுள்ள Telegram-ஆல் ஸ்கேன் செய்யவும்',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram-இல் உள்நுழைய ஆப் தேவை',
+  'Telegram does not know this phone number': 'Telegram-க்கு இந்தத் தொலைபேசி எண் தெரியாது',
+  'Too many tries. Wait a while and try again.':
+    'அதிக முயற்சிகள். சிறிது நேரம் காத்திருந்து மீண்டும் முயலவும்.',
+  'Too many wrong tries': 'அதிக தவறான முயற்சிகள்',
+  'Signed out of Telegram. Connect again.':
+    'Telegram-இலிருந்து வெளியேறினீர்கள். மீண்டும் இணைக்கவும்.',
+  'Telegram cannot do that in this conversation': 'இந்த உரையாடலில் Telegram அதைச் செய்ய முடியாது',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram குழுக்கள் மற்றும் சேனல்களில் செய்திகளை எல்லோருக்கும் நீக்குகிறது',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram குழுவைப் புதிய உரிமையாளருக்குத் தன் ஆப்பில் மட்டுமே ஒப்படைக்கிறது',
+  'That sticker is no longer available': 'அந்த ஸ்டிக்கர் இனி கிடைக்காது',
+  'Telegram is not set up in this build': 'இந்த பில்டில் Telegram அமைக்கப்படவில்லை',
 }

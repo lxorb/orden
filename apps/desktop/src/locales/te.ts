@@ -3525,4 +3525,32 @@ export const te: Dictionary = {
   'Some changes have not reached your account yet': 'కొన్ని మార్పులు ఇంకా మీ ఖాతాకు చేరలేదు',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'అవి ఈ బ్రౌజర్‌లోనే ఉంటాయి, ఇక్కడ సైన్ ఇన్ చేసే మరెవరికీ కనిపించవు, మీరు మళ్లీ సైన్ ఇన్ చేసినప్పుడు పంపబడతాయి.',
+  'Leave it empty to sign in with a QR code instead':
+    'బదులుగా QR కోడ్‌తో సైన్ ఇన్ చేయడానికి ఖాళీగా వదలండి',
+  'Telegram code': 'Telegram కోడ్',
+  'Sent to Telegram on your other device': 'మీ మరో పరికరంలోని Telegram‌కు పంపబడింది',
+  'Sent by SMS': 'SMS ద్వారా పంపబడింది',
+  'You will get a call with the code': 'కోడ్ చెప్పే కాల్ మీకు వస్తుంది',
+  'The code was wrong. Try again.': 'కోడ్ తప్పు. మళ్లీ ప్రయత్నించండి.',
+  'The code expired, so Telegram sent a new one.':
+    'కోడ్ గడువు ముగిసింది, కాబట్టి Telegram కొత్తది పంపింది.',
+  'Two-step verification password': 'రెండు దశల ధృవీకరణ పాస్‌వర్డ్',
+  'The password was wrong. Try again.': 'పాస్‌వర్డ్ తప్పు. మళ్లీ ప్రయత్నించండి.',
+  'Scan with Telegram on your phone': 'మీ ఫోన్‌లోని Telegram‌తో స్కాన్ చేయండి',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram‌లో సైన్ ఇన్ చేయడానికి యాప్ కావాలి',
+  'Telegram does not know this phone number': 'Telegram‌కు ఈ ఫోన్ నంబర్ తెలియదు',
+  'Too many tries. Wait a while and try again.':
+    'చాలా ప్రయత్నాలు. కొంతసేపు ఆగి మళ్లీ ప్రయత్నించండి.',
+  'Too many wrong tries': 'చాలా తప్పు ప్రయత్నాలు',
+  'Signed out of Telegram. Connect again.':
+    'Telegram నుండి సైన్ అవుట్ అయ్యారు. మళ్లీ కనెక్ట్ చేయండి.',
+  'Telegram cannot do that in this conversation': 'ఈ సంభాషణలో Telegram అది చేయలేదు',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram సమూహాలు, ఛానెల్‌లలో సందేశాలను అందరికీ తొలగిస్తుంది',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram సమూహాన్ని కొత్త యజమానికి తన యాప్ నుండే అప్పగిస్తుంది',
+  'That sticker is no longer available': 'ఆ స్టిక్కర్ ఇక అందుబాటులో లేదు',
+  'Telegram is not set up in this build': 'ఈ బిల్డ్‌లో Telegram సెటప్ కాలేదు',
 }

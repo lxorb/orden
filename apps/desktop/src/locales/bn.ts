@@ -3505,4 +3505,31 @@ export const bn: Dictionary = {
     'কিছু পরিবর্তন এখনও আপনার অ্যাকাউন্টে পৌঁছায়নি',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'এগুলো এই ব্রাউজারে থাকে, এখানে সাইন ইন করা অন্য কেউ দেখতে পায় না, আর আপনি আবার সাইন ইন করলে পাঠানো হয়।',
+  'Leave it empty to sign in with a QR code instead':
+    'এর বদলে QR কোড দিয়ে সাইন ইন করতে খালি রাখুন',
+  'Telegram code': 'Telegram কোড',
+  'Sent to Telegram on your other device': 'আপনার অন্য ডিভাইসের Telegram-এ পাঠানো হয়েছে',
+  'Sent by SMS': 'SMS-এ পাঠানো হয়েছে',
+  'You will get a call with the code': 'আপনি কোড জানিয়ে একটি কল পাবেন',
+  'The code was wrong. Try again.': 'কোড ভুল ছিল। আবার চেষ্টা করুন।',
+  'The code expired, so Telegram sent a new one.':
+    'কোডের মেয়াদ শেষ, তাই Telegram নতুন একটি পাঠিয়েছে।',
+  'Two-step verification password': 'দুই-ধাপ যাচাইয়ের পাসওয়ার্ড',
+  'The password was wrong. Try again.': 'পাসওয়ার্ড ভুল ছিল। আবার চেষ্টা করুন।',
+  'Scan with Telegram on your phone': 'আপনার ফোনের Telegram দিয়ে স্ক্যান করুন',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram-এ সাইন ইন করতে অ্যাপ লাগবে',
+  'Telegram does not know this phone number': 'Telegram এই ফোন নম্বর চেনে না',
+  'Too many tries. Wait a while and try again.':
+    'অনেক বেশি চেষ্টা। কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন।',
+  'Too many wrong tries': 'অনেক বেশি ভুল চেষ্টা',
+  'Signed out of Telegram. Connect again.': 'Telegram থেকে সাইন আউট হয়েছে। আবার সংযুক্ত করুন।',
+  'Telegram cannot do that in this conversation': 'Telegram এই কথোপকথনে এটা করতে পারে না',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram গ্রুপ ও চ্যানেলের বার্তা সবার জন্য মুছে দেয়',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram শুধু নিজের অ্যাপ থেকেই গ্রুপ নতুন মালিককে দেয়',
+  'That sticker is no longer available': 'ওই স্টিকারটি আর পাওয়া যায় না',
+  'Telegram is not set up in this build': 'এই বিল্ডে Telegram সেট আপ করা নেই',
 }

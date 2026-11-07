@@ -21,6 +21,8 @@ interface ImportMetaEnv {
   readonly VITE_ORDEN_GOOGLE_CLIENT_ID?: string
   readonly VITE_ORDEN_GOOGLE_CLIENT_SECRET?: string
   readonly VITE_ORDEN_MICROSOFT_CLIENT_ID?: string
+  readonly VITE_ORDEN_TELEGRAM_API_ID?: string
+  readonly VITE_ORDEN_TELEGRAM_API_HASH?: string
 }
 
 declare module 'virtual:noto-outlines' {

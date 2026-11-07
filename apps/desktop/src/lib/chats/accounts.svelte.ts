@@ -4,10 +4,16 @@ import { mailProvider } from '@orden/chats/mail'
 import { gmailProvider, microsoftProvider } from '@orden/chats/mail-oauth'
 import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
+import { telegram } from './providers/telegram'
 
 const KEY = 'nib:chat-accounts'
 
-const PROVIDERS: readonly ChatProvider[] = [mailProvider, gmailProvider, microsoftProvider]
+const PROVIDERS: readonly ChatProvider[] = [
+  mailProvider,
+  gmailProvider,
+  microsoftProvider,
+  telegram,
+]
 
 export interface Saved {
   provider: string
@@ -84,7 +90,7 @@ export class Accounts {
       (it) => it.provider !== one.provider || it.account !== one.account,
     )
     try {
-      await this.hub.link(provider, values, this.host)
+      await this.hub.link(provider, values, this.host, one.account)
     } catch (error) {
       this.failed = [
         ...this.failed,
@@ -129,6 +135,7 @@ export class Accounts {
     for (const kept of provider?.kept ?? []) {
       await this.host.keepSecret(secretName(providerId, account, kept), null)
     }
+    await provider?.forget?.(account, this.host).catch(() => undefined)
     this.failed = this.failed.filter((it) => it.provider !== providerId || it.account !== account)
     this.keepSaved(
       this.saved.filter((one) => one.provider !== providerId || one.account !== account),

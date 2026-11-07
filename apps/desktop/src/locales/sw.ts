@@ -3554,4 +3554,32 @@ export const sw: Dictionary = {
     'Baadhi ya mabadiliko bado hayajafika kwenye akaunti yako',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Yanabaki kwenye kivinjari hiki, bila kuonekana na mtu mwingine yeyote anayeingia hapa, na yatatumwa utakapoingia tena.',
+  'Leave it empty to sign in with a QR code instead':
+    'Acha wazi ili kuingia kwa msimbo wa QR badala yake',
+  'Telegram code': 'Msimbo wa Telegram',
+  'Sent to Telegram on your other device': 'Umetumwa kwa Telegram kwenye kifaa chako kingine',
+  'Sent by SMS': 'Umetumwa kwa SMS',
+  'You will get a call with the code': 'Utapigiwa simu yenye msimbo',
+  'The code was wrong. Try again.': 'Msimbo haukuwa sahihi. Jaribu tena.',
+  'The code expired, so Telegram sent a new one.':
+    'Msimbo umeisha muda, kwa hiyo Telegram imetuma mpya.',
+  'Two-step verification password': 'Nenosiri la uthibitishaji wa hatua mbili',
+  'The password was wrong. Try again.': 'Nenosiri halikuwa sahihi. Jaribu tena.',
+  'Scan with Telegram on your phone': 'Changanua kwa Telegram kwenye simu yako',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Kuingia kwenye Telegram kunahitaji programu',
+  'Telegram does not know this phone number': 'Telegram haijui nambari hii ya simu',
+  'Too many tries. Wait a while and try again.':
+    'Majaribio mengi mno. Subiri kidogo kisha ujaribu tena.',
+  'Too many wrong tries': 'Majaribio mengi mno yasiyo sahihi',
+  'Signed out of Telegram. Connect again.': 'Umetoka kwenye Telegram. Unganisha tena.',
+  'Telegram cannot do that in this conversation':
+    'Telegram haiwezi kufanya hivyo kwenye mazungumzo haya',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram hufuta ujumbe katika vikundi na chaneli kwa kila mtu',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram hukabidhi kikundi kwa mmiliki mpya kutoka programu yake tu',
+  'That sticker is no longer available': 'Kibandiko hicho hakipatikani tena',
+  'Telegram is not set up in this build': 'Telegram haijawekwa katika toleo hili',
 }

@@ -67,6 +67,8 @@ export const host: Host = {
     googleClientId: import.meta.env.VITE_ORDEN_GOOGLE_CLIENT_ID,
     googleClientSecret: import.meta.env.VITE_ORDEN_GOOGLE_CLIENT_SECRET,
     microsoftClientId: import.meta.env.VITE_ORDEN_MICROSOFT_CLIENT_ID,
+    telegramApiId: import.meta.env.VITE_ORDEN_TELEGRAM_API_ID,
+    telegramApiHash: import.meta.env.VITE_ORDEN_TELEGRAM_API_HASH,
   }),
   ask: screens.ask,
   show: screens.show,

@@ -3534,4 +3534,31 @@ export const gsw: Dictionary = {
   'Some changes have not reached your account yet': 'Es paar Änderige sind no nöd i dim Konto acho',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Si bliibed i däm Browser, für alli andere, wo sich da aamelded, unsichtbar, und gönd ue, wänn du dich wider aameldisch.',
+  'Leave it empty to sign in with a QR code instead':
+    'Läär la, zum di stattdäm mit emne QR-Code aamälde',
+  'Telegram code': 'Telegram-Code',
+  'Sent to Telegram on your other device': 'Ad Telegram uf dim andere Grät gschickt',
+  'Sent by SMS': 'Per SMS gschickt',
+  'You will get a call with the code': 'Du überchunsch en Aaruef mit em Code',
+  'The code was wrong. Try again.': 'De Code isch falsch gsi. Probier nomal.',
+  'The code expired, so Telegram sent a new one.':
+    'De Code isch abgloffe, drum hät Telegram en neue gschickt.',
+  'Two-step verification password': 'Passwort vo de zweistufige Bestätigung',
+  'The password was wrong. Try again.': 'S Passwort isch falsch gsi. Probier nomal.',
+  'Scan with Telegram on your phone': 'Mit Telegram uf dim Handy scanne',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Iistellige > Grät > Desktop-Grät verbinde',
+  'Signing in to Telegram needs the app': 'Zum di bi Telegram aamälde bruchts d App',
+  'Telegram does not know this phone number': 'Telegram kennt die Telefonnummere nöd',
+  'Too many tries. Wait a while and try again.':
+    'Z vill Versüech. Wart es Wiili und probier dänn nomal.',
+  'Too many wrong tries': 'Z vill falschi Versüech',
+  'Signed out of Telegram. Connect again.': 'Vo Telegram abgmäldet. Verbind di nomal.',
+  'Telegram cannot do that in this conversation': 'Telegram cha das i dem Gspröch nöd',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram löscht Nachrichte i Gruppe und Kanäl für alli',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram git e Gruppe nur i de eigene App amne neue Bsitzer wiiter',
+  'That sticker is no longer available': 'De Sticker git s nüme',
+  'Telegram is not set up in this build': 'Telegram isch i dem Build nöd iigrichtet',
 }

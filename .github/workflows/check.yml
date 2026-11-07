@@ -522,6 +522,10 @@ jobs:
     permissions:
       contents: read
 
+    env:
+      VITE_ORDEN_TELEGRAM_API_ID: ${{ secrets.ORDEN_TELEGRAM_API_ID }}
+      VITE_ORDEN_TELEGRAM_API_HASH: ${{ secrets.ORDEN_TELEGRAM_API_HASH }}
+
     concurrency:
       group: deploy
       cancel-in-progress: false

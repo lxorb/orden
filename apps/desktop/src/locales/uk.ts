@@ -3650,4 +3650,30 @@ export const uk: Dictionary = {
     'Деякі зміни ще не дійшли до вашого облікового запису',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'Вони лишаються в цьому браузері, приховані від усіх, хто ввійде тут, і надійдуть, коли ви ввійдете знову.',
+  'Leave it empty to sign in with a QR code instead': 'Залиште порожнім, щоб увійти за QR-кодом',
+  'Telegram code': 'Код Telegram',
+  'Sent to Telegram on your other device': 'Надіслано в Telegram на іншому вашому пристрої',
+  'Sent by SMS': 'Надіслано SMS',
+  'You will get a call with the code': 'Вам зателефонують і повідомлять код',
+  'The code was wrong. Try again.': 'Код неправильний. Спробуйте ще раз.',
+  'The code expired, so Telegram sent a new one.':
+    'Термін дії коду минув, тож Telegram надіслав новий.',
+  'Two-step verification password': 'Пароль двоетапної перевірки',
+  'The password was wrong. Try again.': 'Пароль неправильний. Спробуйте ще раз.',
+  'Scan with Telegram on your phone': 'Відскануйте в Telegram на телефоні',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Налаштування > Пристрої > Під’єднати пристрій',
+  'Signing in to Telegram needs the app': 'Для входу в Telegram потрібен застосунок',
+  'Telegram does not know this phone number': 'Telegram не знає цього номера телефону',
+  'Too many tries. Wait a while and try again.':
+    'Забагато спроб. Зачекайте трохи й спробуйте знову.',
+  'Too many wrong tries': 'Забагато неправильних спроб',
+  'Signed out of Telegram. Connect again.': 'Ви вийшли з Telegram. Під’єднайтеся знову.',
+  'Telegram cannot do that in this conversation': 'Telegram не може зробити це в цій розмові',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram видаляє повідомлення в групах і каналах для всіх',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram передає групу новому власникові лише у власному застосунку',
+  'That sticker is no longer available': 'Цей стікер більше не доступний',
+  'Telegram is not set up in this build': 'Telegram не налаштовано в цій збірці',
 }

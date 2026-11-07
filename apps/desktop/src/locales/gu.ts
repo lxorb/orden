@@ -3495,4 +3495,30 @@ export const gu: Dictionary = {
     'કેટલાક ફેરફારો હજુ તમારા એકાઉન્ટ સુધી પહોંચ્યા નથી',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'તે આ બ્રાઉઝરમાં રહે છે, અહીં સાઇન ઇન કરનાર બીજા કોઈને દેખાતા નથી, અને તમે ફરી સાઇન ઇન કરો ત્યારે મોકલાય છે.',
+  'Leave it empty to sign in with a QR code instead': 'તેના બદલે QR કોડથી સાઇન ઇન કરવા ખાલી રાખો',
+  'Telegram code': 'Telegram કોડ',
+  'Sent to Telegram on your other device': 'તમારા બીજા ડિવાઇસ પરના Telegram પર મોકલ્યો',
+  'Sent by SMS': 'SMS થી મોકલ્યો',
+  'You will get a call with the code': 'તમને કોડ કહેતો કૉલ આવશે',
+  'The code was wrong. Try again.': 'કોડ ખોટો હતો. ફરી પ્રયાસ કરો.',
+  'The code expired, so Telegram sent a new one.':
+    'કોડની મુદત પૂરી થઈ, તેથી Telegram એ નવો મોકલ્યો.',
+  'Two-step verification password': 'બે-પગલાં ચકાસણી પાસવર્ડ',
+  'The password was wrong. Try again.': 'પાસવર્ડ ખોટો હતો. ફરી પ્રયાસ કરો.',
+  'Scan with Telegram on your phone': 'તમારા ફોન પરના Telegram થી સ્કેન કરો',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'Telegram માં સાઇન ઇન કરવા ઍપ જોઈએ',
+  'Telegram does not know this phone number': 'Telegram આ ફોન નંબર જાણતું નથી',
+  'Too many tries. Wait a while and try again.':
+    'ઘણા બધા પ્રયાસ. થોડી વાર રાહ જોઈને ફરી પ્રયાસ કરો.',
+  'Too many wrong tries': 'ઘણા બધા ખોટા પ્રયાસ',
+  'Signed out of Telegram. Connect again.': 'Telegram માંથી સાઇન આઉટ થયા. ફરી કનેક્ટ કરો.',
+  'Telegram cannot do that in this conversation': 'Telegram આ વાતચીતમાં એ કરી શકતું નથી',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram જૂથ અને ચેનલના સંદેશા બધા માટે કાઢી નાખે છે',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram જૂથ નવા માલિકને ફક્ત પોતાની ઍપમાંથી સોંપે છે',
+  'That sticker is no longer available': 'તે સ્ટિકર હવે ઉપલબ્ધ નથી',
+  'Telegram is not set up in this build': 'આ બિલ્ડમાં Telegram સેટ નથી',
 }

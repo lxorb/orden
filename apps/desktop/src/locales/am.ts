@@ -3444,4 +3444,28 @@ export const am: Dictionary = {
   'Some changes have not reached your account yet': 'አንዳንድ ለውጦች ገና ወደ መለያዎ አልደረሱም',
   'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
     'በዚህ አሳሽ ውስጥ ይቆያሉ፣ እዚህ ለሚገባ ሌላ ሰው አይታዩም፣ እና እንደገና ሲገቡ ይላካሉ።',
+  'Leave it empty to sign in with a QR code instead': 'በምትኩ በQR ኮድ ለመግባት ባዶ ይተዉት',
+  'Telegram code': 'የTelegram ኮድ',
+  'Sent to Telegram on your other device': 'በሌላው መሣሪያዎ ላይ ወዳለው Telegram ተልኳል',
+  'Sent by SMS': 'በSMS ተልኳል',
+  'You will get a call with the code': 'ኮዱን የሚነግር ጥሪ ይደርስዎታል',
+  'The code was wrong. Try again.': 'ኮዱ ትክክል አልነበረም። እንደገና ይሞክሩ።',
+  'The code expired, so Telegram sent a new one.': 'ኮዱ ጊዜው አልፏል፣ ስለዚህ Telegram አዲስ ልኳል።',
+  'Two-step verification password': 'የሁለት ደረጃ ማረጋገጫ የይለፍ ቃል',
+  'The password was wrong. Try again.': 'የይለፍ ቃሉ ትክክል አልነበረም። እንደገና ይሞክሩ።',
+  'Scan with Telegram on your phone': 'በስልክዎ ላይ ባለው Telegram ይቃኙ',
+  'Telegram > Settings > Devices > Link Desktop Device':
+    'Telegram > Settings > Devices > Link Desktop Device',
+  'Signing in to Telegram needs the app': 'ወደ Telegram ለመግባት መተግበሪያው ያስፈልጋል',
+  'Telegram does not know this phone number': 'Telegram ይህን ስልክ ቁጥር አያውቅም',
+  'Too many tries. Wait a while and try again.': 'በጣም ብዙ ሙከራዎች። ትንሽ ቆይተው እንደገና ይሞክሩ።',
+  'Too many wrong tries': 'በጣም ብዙ የተሳሳቱ ሙከራዎች',
+  'Signed out of Telegram. Connect again.': 'ከTelegram ወጥተዋል። እንደገና ይገናኙ።',
+  'Telegram cannot do that in this conversation': 'Telegram በዚህ ውይይት ይህን ማድረግ አይችልም',
+  'Telegram removes messages in groups and channels for everyone':
+    'Telegram በቡድኖችና በቻናሎች ያሉ መልዕክቶችን ለሁሉም ይሰርዛል',
+  'Telegram hands a group to a new owner only from its own app':
+    'Telegram ቡድንን ለአዲስ ባለቤት የሚያስተላልፈው ከራሱ መተግበሪያ ብቻ ነው',
+  'That sticker is no longer available': 'ያ ተለጣፊ ከእንግዲህ አይገኝም',
+  'Telegram is not set up in this build': 'Telegram በዚህ ግንባታ አልተዋቀረም',
 }
