@@ -424,7 +424,13 @@ class Chat implements Panel {
     this.listing = false
     this.popover = null
     agentOpen.id = null
-    if (this.open && !this.open.turns.length) {
+    const open = this.open
+    if (
+      open &&
+      !open.turns.length &&
+      !this.running.includes(open.id) &&
+      !this.queued[open.id]?.length
+    ) {
       this.focus()
       return
     }
