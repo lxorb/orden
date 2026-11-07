@@ -125,7 +125,7 @@ export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   })
 }
 
-export function tasksRoot(rows: readonly Row[]): string | null {
+function tasksRoot(rows: readonly Row[]): string | null {
   const tasks = rows.filter((row) => row.task)
   const space = tasks[0]?.space
   if (space === undefined || tasks.some((row) => row.space !== space)) return null
