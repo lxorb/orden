@@ -214,10 +214,21 @@ test('a file too large or not text says why it was not added', async () => {
   pasted(field, [new File(['plain words'], 'notes.txt', { type: 'text/plain' })])
   await vi.waitFor(() =>
     expect(panel.chips).toEqual([
-      { kind: 'words', id: 'notes.txt', label: 'notes.txt', text: 'plain words' },
+      { kind: 'words', id: expect.any(String), label: 'notes.txt', text: 'plain words' },
     ]),
   )
   expect(panel.trouble).toBeNull()
+})
+
+test('two files of one name are both added, each with its own words', async () => {
+  panel.chips = []
+  const field = composer()
+
+  pasted(field, [new File(['first'], 'notes.txt', { type: 'text/plain' })])
+  await vi.waitFor(() => expect(panel.chips).toHaveLength(1))
+  pasted(field, [new File(['second'], 'notes.txt', { type: 'text/plain' })])
+  await vi.waitFor(() => expect(panel.chips).toHaveLength(2))
+  expect((panel.chips as { text?: string }[]).map((one) => one.text)).toEqual(['first', 'second'])
 })
 
 test('pictures pasted all at once stop at as many as a message takes, and say so', async () => {
