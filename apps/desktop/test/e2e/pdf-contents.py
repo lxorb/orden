@@ -133,6 +133,17 @@ def drive(browser: Browser) -> None:
             wrong(f"the highlight is not where the PDF says: {box}")
     else:
         shot(page, "no-mark")
+
+    page.evaluate("() => { window.nibApp.pages.current.store.readOnly = true }")
+    page.wait_for_timeout(300)
+    nav = page.locator(".navigator").first
+    nav.locator(".page").first.click(button="right")
+    page.wait_for_timeout(300)
+    offered = page.evaluate("() => ({ add: !!document.querySelector('.navigator .add'), menu: [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim()) })")
+    if offered["add"] or offered["menu"]:
+        wrong(f"[read-only] the page thumbnails still offer edits that do nothing: {offered}")
+    else:
+        say("ok   [read-only] the page thumbnails offer no edits")
     context.close()
 
 
