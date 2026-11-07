@@ -43,6 +43,10 @@ SWP_NOACTIVATE = 0x0010
 
 GW_OWNER = 4
 
+GWL_EXSTYLE = -20
+WS_EX_LAYERED = 0x0008_0000
+LWA_ALPHA = 0x0000_0002
+
 UNDRAWN = frozenset({"Tao Thread Event Target", "Winit Thread Event Target"})
 UNDRAWN_SUFFIX = "-sic"
 
@@ -73,6 +77,14 @@ if user32 is not None and kernel32 is not None:
         ctypes.c_int,
         ctypes.c_int,
         wintypes.UINT,
+    ]
+    user32.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+    user32.GetWindowLongW.restype = ctypes.c_long
+    user32.GetLayeredWindowAttributes.argtypes = [
+        wintypes.HWND,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.POINTER(wintypes.DWORD),
     ]
     user32.SetThreadDpiAwarenessContext.restype = ctypes.c_void_p
     user32.SetThreadDpiAwarenessContext.argtypes = [ctypes.c_void_p]
@@ -246,6 +258,22 @@ def on_a_screen(box: tuple[int, int, int, int], screens: Iterable[tuple[int, int
         for s_left, s_top, s_right, s_bottom in screens
     )
 
+def draws_nothing(ex_style: int, flags: int, alpha: int) -> bool:
+    return bool(ex_style & WS_EX_LAYERED) and bool(flags & LWA_ALPHA) and alpha == 0
+
+def see_through(hwnd: int) -> bool:
+
+    if user32 is None:
+        return False
+    ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE) & 0xFFFF_FFFF
+    if not ex_style & WS_EX_LAYERED:
+        return False
+    alpha = ctypes.c_ubyte()
+    flags = wintypes.DWORD()
+    if not user32.GetLayeredWindowAttributes(hwnd, None, ctypes.byref(alpha), ctypes.byref(flags)):
+        return False
+    return draws_nothing(ex_style, flags.value, alpha.value)
+
 def in_view(look: Look, pids: Collection[int]) -> list[str]:
 
     found: list[str] = []
@@ -258,7 +286,7 @@ def in_view(look: Look, pids: Collection[int]) -> list[str]:
             found.append(f"{one.kind} 0x{one.hwnd:X} of pid {one.pid} is the window in front, at {where}")
         elif one.kind in UNDRAWN or one.kind.endswith(UNDRAWN_SUFFIX):
             continue
-        elif one.visible and on_a_screen(one.box, look.screens):
+        elif one.visible and on_a_screen(one.box, look.screens) and not see_through(one.hwnd):
             found.append(f"{one.kind} 0x{one.hwnd:X} of pid {one.pid} is on a screen at {where}")
     return found
 
