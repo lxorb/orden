@@ -106,12 +106,15 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 launch::Handed::Pages,
                 crate::web_handed::pages_among(&urls),
             );
-            let pdfs = crate::handed_pdfs::pdfs_among(&urls);
-            launch::hand_over(
-                app,
-                launch::Handed::Pdfs,
-                crate::handed_pdfs::admit_handed(app, pdfs),
-            );
+            let app = app.clone();
+            std::thread::spawn(move || {
+                let pdfs = crate::handed_pdfs::pdfs_among(&urls);
+                launch::hand_over(
+                    &app,
+                    launch::Handed::Pdfs,
+                    crate::handed_pdfs::admit_handed(&app, pdfs),
+                );
+            });
         }
 
         #[cfg(target_os = "macos")]
