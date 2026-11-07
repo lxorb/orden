@@ -61,6 +61,7 @@ const PATH = '/Notes/Both.md'
 function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<string, string>) {
   let failing = false
   let reachable = true
+  let live = false
   let moved: (() => void) | null = null
   const documents: NoteDoc[] = []
   const heard: FileOp[] = []
@@ -84,6 +85,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
       note.dirty = true
     },
     joined: () => null,
+    livesWith: () => live,
     noteSaved: () => undefined,
     read: async (path) => {
       await Promise.resolve()
@@ -124,6 +126,9 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
   const outOfReach = (on: boolean) => {
     reachable = !on
   }
+  const liveWithOthers = (on: boolean) => {
+    live = on
+  }
   const renamedSoon = (note: NoteDoc, to: string) => {
     moved = () => {
       note.path = to
@@ -142,6 +147,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     documents,
     failRead,
     outOfReach,
+    liveWithOthers,
     renamedSoon,
   }
 }
@@ -175,6 +181,21 @@ describe('one note in two windows', () => {
     expect(inB.latest).toBe(`${BASE}FROM-A `)
     expect(inB.dirty).toBe(false)
     expect(b.owed).toEqual([])
+  })
+
+  test('a note that edits live with the writer leaves its words to the live document', async () => {
+    const { wires, a, b } = twoWindows()
+    const inA = a.open(BASE)
+    const inB = b.open(BASE)
+    b.liveWithOthers(true)
+    a.type(inA, 'FROM-A ')
+    b.type(inB, 'FROM-A ')
+    b.type(inB, 'MORE ')
+    await a.save(inA)
+    await wires.deliver()
+
+    expect(inB.latest).toBe(`${BASE}FROM-A MORE `)
+    expect(inB.onDisk).toBe(`${BASE}FROM-A `)
   })
 
   test('a window that starts hearing late takes in what was written before it listened', async () => {

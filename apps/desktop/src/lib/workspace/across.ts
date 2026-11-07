@@ -22,6 +22,7 @@ export interface Desk {
   owed(note: NoteDoc): void
   draftOf(note: NoteDoc): void
   joined(note: NoteDoc): Joined | null
+  livesWith(note: NoteDoc, from: string): boolean
   noteSaved(path: string, text: string, arrived?: boolean): void
   read(path: string): Promise<string | null>
   exists(path: string): Promise<boolean>
@@ -67,8 +68,8 @@ export class Across {
     windows.hear('list-again', () => this.listAgain())
     windows.hear('spaces-again', () => this.inTurn(() => this.desk.loadSpaces()))
     windows.hear('file-op', ({ op }) => this.inTurn(() => this.heardOp(op as FileOp)))
-    windows.hear('words', ({ path, text }) =>
-      this.inTurn(() => this.heardWords(String(path), String(text))),
+    windows.hear('words', ({ path, text, from }) =>
+      this.inTurn(() => this.heardWords(String(path), String(text), String(from))),
     )
     this.inTurn(() => this.caughtUp())
   }
@@ -192,10 +193,14 @@ export class Across {
     }
   }
 
-  private async heardWords(path: string, text: string) {
+  private async heardWords(path: string, text: string, from: string) {
     this.desk.noteSaved(path, text, true)
     const note = this.desk.documents.find((one) => samePath(one.path, path))
     if (!note) return
+    if (asText(note) && this.desk.livesWith(note, from)) {
+      note.onDisk = unixLines(text)
+      return
+    }
     await this.fromDisk(note, path)
   }
 
@@ -268,6 +273,7 @@ export async function startAcross(): Promise<Across> {
       workspace.scheduleSession()
     },
     joined: (note) => sync.engine?.joinedOf(note) ?? null,
+    livesWith: (note, from) => sync.engine?.livesWith(note, from) ?? false,
     noteSaved: (path, text, arrived) => links.noteSaved(path, text, arrived),
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
     exists: onDisk,

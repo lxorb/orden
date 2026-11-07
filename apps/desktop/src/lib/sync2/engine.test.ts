@@ -414,6 +414,7 @@ describe('an open note', () => {
         owed: () => undefined,
         draftOf: () => undefined,
         joined: () => null,
+        livesWith: () => false,
         noteSaved: () => undefined,
         read: (at) => Promise.resolve(one.disk.files.get(at) ?? null),
         exists: (at) => Promise.resolve(one.disk.files.has(at)),
