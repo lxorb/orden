@@ -22,6 +22,12 @@ describe('a paste into a terminal', () => {
     expect(spokenPath('/home/me/notes.md', '/bin/bash')).toBe('/home/me/notes.md')
   })
 
+  test('a dropped name never runs anything in the shell it lands in', () => {
+    expect(spokenPath('C:\\x\\$(calc) `a`.txt', 'pwsh')).toBe("'C:\\x\\$(calc) `a`.txt'")
+    expect(spokenPath("C:\\x\\it's $env:HOME", 'powershell')).toBe("'C:\\x\\it''s $env:HOME'")
+    expect(spokenPath('/home/me/$(id) `id`.txt', 'ssh:box')).toBe("'/home/me/$(id) `id`.txt'")
+  })
+
   test('asks first only for lines a shell without bracketed paste would run', () => {
     expect(asksFirst('a\nb', false)).toBe(true)
     expect(asksFirst('a\nb', true)).toBe(false)

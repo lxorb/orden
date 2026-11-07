@@ -36,15 +36,21 @@ export function asksFirst(text: string, bracketed: boolean): boolean {
 
 export function spokenPath(path: string, shell: string): string {
   const drive = /^([A-Za-z]):[\\/](.*)$/.exec(path)
-  const posix = shell.startsWith('wsl:') || shell === 'git-bash' || shell.startsWith('/')
+  const posix =
+    shell.startsWith('wsl:') ||
+    shell === 'git-bash' ||
+    shell.startsWith('/') ||
+    shell.startsWith('ssh:')
+  const powershell = shell === 'pwsh' || shell === 'powershell'
 
   let spoken = path
-  if (drive?.[1] !== undefined && posix) {
+  if (drive?.[1] !== undefined && (shell.startsWith('wsl:') || shell === 'git-bash')) {
     const rest = (drive[2] ?? '').replace(/\\/g, '/')
     const letter = drive[1].toLowerCase()
     spoken = shell.startsWith('wsl:') ? `/mnt/${letter}/${rest}` : `/${letter}/${rest}`
   }
 
   if (/^[\w\-./\\:~+@%,=]+$/.test(spoken)) return spoken
-  return posix ? `'${spoken.replace(/'/g, "'\\''")}'` : `"${spoken}"`
+  if (posix) return `'${spoken.replace(/'/g, "'\\''")}'`
+  return powershell ? `'${spoken.replace(/['‘’‚‛]/g, '$&$&')}'` : `"${spoken}"`
 }
