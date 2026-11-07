@@ -78,8 +78,11 @@ export function mayLiveOn(panel: Panel, side: PanelSide): boolean {
   return side === 'right' || !RIGHT_ONLY.includes(panel)
 }
 
-export function leftPanelFrom(saved: Panel | null | undefined): Panel | null {
-  return saved && mayLiveOn(saved, 'left') ? saved : null
+export function leftPanelFrom(
+  saved: Panel | null | undefined,
+  right: readonly Panel[] = [],
+): Panel | null {
+  return saved && mayLiveOn(saved, 'left') && sideOf(right, saved) === 'left' ? saved : null
 }
 
 export const PANELS: readonly Panel[] = [
