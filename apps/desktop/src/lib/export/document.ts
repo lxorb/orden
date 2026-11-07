@@ -99,7 +99,7 @@ function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[
         continue
       }
     }
-    if (passing === null) out.push(...spansOfToken(token, marks))
+    if (passing === null) for (const span of spansOfToken(token, marks)) out.push(span)
   }
 
   return out.filter(

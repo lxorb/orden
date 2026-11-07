@@ -357,7 +357,7 @@ function alignWord(align: Align | undefined): string {
 
 function tableRtf(block: Extract<Block, { kind: 'table' }>, sheet: Sheet, frame: Frame): string {
   const rows = block.head.length ? [block.head, ...block.rows] : block.rows
-  const columns = Math.max(1, ...rows.map((row) => row.length))
+  const columns = rows.reduce((most, row) => Math.max(most, row.length), 1)
   const edges = Array.from(
     { length: columns },
     (_, at) => frame.indent + Math.round((sheet.column * (at + 1)) / columns),

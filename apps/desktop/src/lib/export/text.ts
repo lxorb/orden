@@ -76,33 +76,33 @@ function blockLines(blocks: readonly Block[], indent = ''): string[] {
         break
 
       case 'paragraph':
-        out.push(...wrapped(textOf(block.spans), indent))
+        pushAll(out, wrapped(textOf(block.spans), indent))
         break
 
       case 'code':
-        out.push(...block.code.split('\n').map((line) => `${indent}${line}`))
+        for (const line of block.code.split('\n')) out.push(`${indent}${line}`)
         break
 
       case 'maths':
-        out.push(...block.tex.split('\n').map((line) => `${indent}${line}`))
+        for (const line of block.tex.split('\n')) out.push(`${indent}${line}`)
         break
 
       case 'quote': {
         const body = blockLines(block.blocks)
-        const lines = block.label ? [block.label, ...body] : body
-        out.push(...lines.map((line) => `${indent}> ${line}`.trimEnd()))
+        if (block.label) out.push(`${indent}> ${block.label}`.trimEnd())
+        for (const line of body) out.push(`${indent}> ${line}`.trimEnd())
         break
       }
 
       case 'list':
         block.items.forEach((item, at) => {
           const marker = block.ordered ? `${block.start + at}. ` : '- '
-          out.push(...itemLines(item, marker, indent))
+          pushAll(out, itemLines(item, marker, indent))
         })
         break
 
       case 'table':
-        out.push(...tableLines(block).map((line) => `${indent}${line}`))
+        for (const line of tableLines(block)) out.push(`${indent}${line}`)
         break
 
       case 'terms':
@@ -125,6 +125,10 @@ function blockLines(blocks: readonly Block[], indent = ''): string[] {
   return out
 }
 
+function pushAll(out: string[], lines: readonly string[]) {
+  for (const line of lines) out.push(line)
+}
+
 function wrapped(text: string, indent: string): string[] {
   return text.split('\n').map((line) => `${indent}${line}`.trimEnd())
 }
@@ -135,7 +139,7 @@ export function toPlainText(doc: Doc): string {
   const heads = first?.kind === 'heading' && textOf(first.spans).trim() === doc.title.trim()
 
   if (doc.named && !heads) lines.push(doc.title, '')
-  lines.push(...blockLines(doc.blocks))
+  pushAll(lines, blockLines(doc.blocks))
 
   if (doc.notes.length) {
     lines.push('', '-'.repeat(32), '')

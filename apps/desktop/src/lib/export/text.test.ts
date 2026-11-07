@@ -170,3 +170,26 @@ describe('a note with almost nothing in it', () => {
     expect(plain('')).toBe('\n')
   })
 })
+
+describe('a very long note', { timeout: 30_000 }, () => {
+  const MANY = 200_000
+  const last = (source: string) =>
+    toPlainText(documentOf(source, 'Long.md'))
+      .split('\n')
+      .filter((line) => line.includes(String(MANY - 1)))
+
+  test('of more code lines than a call can take as arguments is written whole', () => {
+    const code = Array.from({ length: MANY }, (_, at) => `line ${at}`).join('\n')
+    expect(last(`\`\`\`\n${code}\n\`\`\`\n`)).toEqual([`line ${MANY - 1}`])
+  })
+
+  test('of more list items than a call can take as arguments is written whole', () => {
+    const items = Array.from({ length: MANY }, (_, at) => `- item ${at}`).join('\n')
+    expect(last(`${items}\n`)).toEqual([`- item ${MANY - 1}`])
+  })
+
+  test('of more table rows than a call can take as arguments is written whole', () => {
+    const rows = Array.from({ length: MANY }, (_, at) => `| ${at} |`).join('\n')
+    expect(last(`| n |\n| - |\n${rows}\n`)).toHaveLength(1)
+  })
+})

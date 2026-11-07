@@ -555,3 +555,11 @@ describe('a coloured highlight', () => {
     for (const emoji of ['🔴', '🟠', '🟢', '🔵', '🟣']) expect(COLOURED).not.toContain(emoji)
   })
 })
+
+describe('a very long table', { timeout: 30_000 }, () => {
+  test('of more rows than a call can take as arguments is written whole', () => {
+    const rows = Array.from({ length: 200_000 }, (_, at) => `| ${at} | x |`).join('\n')
+    const rtf = toRtf(documentOf(`| n | x |\n| - | - |\n${rows}\n`, 'Long.md'), [], PAPER)
+    expect(rtf).toContain('199999')
+  })
+})

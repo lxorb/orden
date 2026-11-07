@@ -269,3 +269,12 @@ describe('words that open a note under a rule', () => {
     expect(reformat('---\nPriorität: _a_\n---\n')).toBe('---\nPriorität: _a_\n---\n')
   })
 })
+
+describe('tidying a very long document', { timeout: 30_000 }, () => {
+  test('keeps a table of more rows than a call can take as arguments', () => {
+    const rows = Array.from({ length: 200_000 }, (_, at) => `| ${at} |`).join('\n')
+    const tidied = reformat(`---\ntitle: Long\n---\n\n| n |\n| - |\n${rows}\n`)
+    expect(tidied).toContain('| 199999 |')
+    expect(tidied.startsWith('---\ntitle: Long\n---')).toBe(true)
+  })
+})

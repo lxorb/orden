@@ -36,7 +36,7 @@ export function reformat(source: string): string {
 
   const matter = readFrontMatter(source)
   if (matter) {
-    out.push(...lines.slice(0, matter))
+    for (const line of lines.slice(0, matter)) out.push(line)
     index = matter
   }
 
@@ -60,7 +60,7 @@ export function reformat(source: string): string {
 
     const table = tables.has(index) ? readTable(lines, index) : null
     if (table) {
-      out.push(...table.text.split('\n'))
+      for (const row of table.text.split('\n')) out.push(row)
       index = table.next
       blanks = 0
       continue
