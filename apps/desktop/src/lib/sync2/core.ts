@@ -21,7 +21,14 @@ import {
   wantOneKey,
   wantOneOf,
   wantOneRow,
-  Wants,
+  keepingRow,
+  Tracked,
+  usedOneKey,
+  usedOneOf,
+  usedOneRow,
+  type Wanted,
+  type Wants,
+  type Used,
   type Against,
   type DocNumbers,
   type Gone,
@@ -120,6 +127,7 @@ export class Core {
     const orderings = new Map<string, Ordering>()
     const gones = new Map<string, Gone>()
     const keepings = new Map<string, Keeping>()
+    const useds = new Map<string, [string, Used][]>()
     for (const row of meta) {
       const keeping = keepingOf(row)
       if (keeping) keepings.set(keeping.space, keeping.keeping)
@@ -142,6 +150,12 @@ export class Core {
       }
       const one = wantOneOf(row)
       if (one) core.wanted(one.space).took(one.id, one.wanted)
+      const usedHere = usedOneOf(row)
+      if (usedHere) {
+        const list = useds.get(usedHere.space) ?? []
+        list.push([usedHere.id, usedHere.used])
+        useds.set(usedHere.space, list)
+      }
     }
     if (!store.opened.wasClean) {
       core.generation += 1
@@ -168,6 +182,7 @@ export class Core {
       )
       state.gone = gones.get(space.space_id) ?? state.gone
       state.keeping = keepings.get(space.space_id) ?? state.keeping
+      for (const [id, one] of useds.get(space.space_id) ?? []) state.keeping.used.took(id, one)
       core.spaces.set(space.space_id, state)
     }
 
@@ -247,6 +262,9 @@ export class Core {
       if (this.hasDoc(entry.id)) changes.push(...this.forgetChanges(entry.id))
     }
     this.spaces.delete(spaceId)
+    for (const id of new Set([...space.keeping.used.keys(), ...space.keeping.used.dirty])) {
+      changes.push(remove('meta', usedOneKey(spaceId, id)))
+    }
     const wants = this.wants.get(spaceId)
     for (const id of new Set([...(wants?.keys() ?? []), ...(wants?.dirty ?? [])])) {
       changes.push(remove('meta', wantOneKey(spaceId, id)))
@@ -301,7 +319,7 @@ export class Core {
   wanted(space: string): Wants {
     let wanted = this.wants.get(space)
     if (!wanted) {
-      wanted = new Wants()
+      wanted = new Tracked<Wanted>()
       this.wants.set(space, wanted)
     }
     return wanted
@@ -321,6 +339,22 @@ export class Core {
         )
       }
       wants.dirty.clear()
+    }
+    for (const space of this.spaces.values()) {
+      const used = space.keeping.used
+      if (used.inOneRow) {
+        changes.push(put('meta', keepingRow(space.id, space.keeping)))
+        used.inOneRow = false
+      }
+      for (const id of used.dirty) {
+        const one = used.get(id)
+        changes.push(
+          one
+            ? put('meta', usedOneRow(space.id, id, one))
+            : remove('meta', usedOneKey(space.id, id)),
+        )
+      }
+      used.dirty.clear()
     }
     return changes
   }

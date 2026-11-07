@@ -169,11 +169,11 @@ export function wantOneOf(row: MetaRow): { space: string; id: string; wanted: Wa
   }
 }
 
-export class Wants extends Map<string, Wanted> {
+export class Tracked<V> extends Map<string, V> {
   readonly dirty = new Set<string>()
   inOneRow = false
 
-  override set(id: string, one: Wanted): this {
+  override set(id: string, one: V): this {
     this.dirty.add(id)
     return super.set(id, one)
   }
@@ -189,10 +189,12 @@ export class Wants extends Map<string, Wanted> {
     super.clear()
   }
 
-  took(id: string, one: Wanted): void {
+  took(id: string, one: V): void {
     super.set(id, one)
   }
 }
+
+export type Wants = Tracked<Wanted>
 
 export interface Ordering {
   on: boolean
@@ -336,9 +338,14 @@ export function againstOf(bytes: Uint8Array): Against | null {
   return null
 }
 
+export interface Used {
+  at: number
+  size: number
+}
+
 export interface Keeping {
   on: boolean
-  used: Map<string, { at: number; size: number }>
+  used: Tracked<Used>
   going: Set<string>
   refused?: boolean
 }
@@ -354,13 +361,14 @@ export function keepingOf(row: MetaRow): { space: string; keeping: Keeping } | n
   try {
     const value: unknown = JSON.parse(row.value)
     if (!isRecord(value)) return null
-    const used = new Map<string, { at: number; size: number }>()
+    const used = new Tracked<Used>()
     if (isRecord(value.used)) {
       for (const [id, one] of Object.entries(value.used)) {
         if (!Array.isArray(one)) continue
         const [at, size] = one as unknown[]
         if (typeof at === 'number' && typeof size === 'number') used.set(id, { at, size })
       }
+      used.inOneRow = true
     }
     const going = new Set(
       Array.isArray(value.going)
@@ -380,9 +388,34 @@ export function keepingRow(space: string, keeping: Keeping): MetaRow {
     key: keepKey(space),
     value: JSON.stringify({
       on: keeping.on,
-      used: Object.fromEntries([...keeping.used].map(([id, one]) => [id, [one.at, one.size]])),
       going: [...keeping.going],
       ...(keeping.refused ? { refused: true } : {}),
     }),
+  }
+}
+
+const USED = 'used:'
+
+export function usedOneKey(space: string, id: string): string {
+  return `${USED}${space}/${id}`
+}
+
+export function usedOneRow(space: string, id: string, one: Used): MetaRow {
+  return { key: usedOneKey(space, id), value: JSON.stringify([one.at, one.size]) }
+}
+
+export function usedOneOf(row: MetaRow): { space: string; id: string; used: Used } | null {
+  if (!row.key.startsWith(USED) || typeof row.value !== 'string') return null
+  const named = row.key.slice(USED.length)
+  const cut = named.indexOf('/')
+  if (cut <= 0 || cut === named.length - 1) return null
+  try {
+    const value: unknown = JSON.parse(row.value)
+    if (!Array.isArray(value)) return null
+    const [at, size] = value as unknown[]
+    if (typeof at !== 'number' || typeof size !== 'number') return null
+    return { space: named.slice(0, cut), id: named.slice(cut + 1), used: { at, size } }
+  } catch {
+    return null
   }
 }

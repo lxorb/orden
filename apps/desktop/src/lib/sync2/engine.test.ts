@@ -219,6 +219,44 @@ describe('what a space still wants pulled', () => {
     expect(kept.has('w0')).toBe(false)
   })
 
+  test('what a browser used is written by the note that changed, and an older single row moves over', async () => {
+    const one = await device()
+    one.engine.stop()
+    const older = one.store.open()
+    await older.write([
+      put('meta', {
+        key: `keep:${SPACE}`,
+        value: JSON.stringify({ on: true, used: { old: [5, 10] }, going: [] }),
+      }),
+    ])
+    await older.cleanExit(true)
+    const again = await one.launch()
+    const space = again.core.spaces.get(SPACE)
+    if (!space) throw new Error('no space')
+    expect(space.keeping.used.get('old')).toEqual({ at: 5, size: 10 })
+    expect(space.keeping.on).toBe(true)
+
+    const batches = metaWritten(one)
+    for (let at = 0; at < 300; at++) space.keeping.used.set(`u${String(at)}`, { at, size: 1 })
+    await again.core.commit([])
+    const from = batches.length
+    for (let at = 0; at < 30; at++) {
+      space.keeping.used.delete(`u${String(at)}`)
+      await again.core.commit([])
+    }
+    const ours = (batch: string[]) => batch.filter((key) => key.includes('used:'))
+    for (const batch of batches.slice(from)) expect(ours(batch)).toHaveLength(1)
+    const row = one.store.rows('meta').find((meta) => meta.key === `keep:${SPACE}`)
+    expect(String(row?.value)).not.toContain('old')
+
+    again.stop()
+    const third = (await one.launch()).core.spaces.get(SPACE)
+    expect(third?.keeping.used.size).toBe(271)
+    expect(third?.keeping.used.get('old')).toEqual({ at: 5, size: 10 })
+    expect(third?.keeping.used.has('u0')).toBe(false)
+    expect(third?.keeping.on).toBe(true)
+  })
+
   test('kept in one row by an older version is read, and moved to a row per note', async () => {
     const one = await device()
     one.engine.stop()
