@@ -1010,6 +1010,8 @@
         editing={store.editing === node.id}
         readOnly={store.readOnly}
         offset={store.isPicked(node.id) ? dragging : { x: 0, y: 0 }}
+        scale={camera.scale}
+        {seen}
         ontext={(text: string) => store.edit(withText(canvas, node.id, text))}
         onleave={() => (store.editing = null)}
       />

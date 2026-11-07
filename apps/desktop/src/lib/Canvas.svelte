@@ -365,6 +365,12 @@
 
   const cards = $derived(shown.nodes.filter((node) => overlaps(boxOf(node), inView)))
 
+  const watched = $derived.by(() => {
+    const across = spanX / camera.scale / 2
+    const down = spanY / camera.scale / 2
+    return { x: camera.x - across, y: camera.y - down, width: across * 2, height: down * 2 }
+  })
+
   const far = $derived(
     camera.scale < FAR_SCALE ||
       cards.length > MOST_CARDS ||
@@ -1592,6 +1598,8 @@
           editing={store.editing === node.id}
           readOnly={store.readOnly}
           offset={STILL}
+          scale={camera.scale}
+          seen={watched}
           ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
           onleave={() => (store.editing = null)}
           onfollow={followNote}
