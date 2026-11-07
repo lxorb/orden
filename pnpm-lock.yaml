@@ -16,8 +16,11 @@ patchedDependencies:
     hash: 266bd173d958b30ce9713d0171992ac95b9ac9297eb4b27b4612db64d946e74f
     path: patches/@lezer__markdown@1.7.2.patch
   '@replit/codemirror-vim-core@0.1.0':
-    hash: 749ae57d12019871e480e9fa9311d19b0a29f086c7701aa0c93bca713117bf41
+    hash: 154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4
     path: patches/@replit__codemirror-vim-core@0.1.0.patch
+  '@replit/codemirror-vim@6.4.0':
+    hash: 9fe25c95f69340bf78ea784bffcd9fee7d20c105c7218c3275ece1fd110faf42
+    path: patches/@replit__codemirror-vim@6.4.0.patch
   marked@18.0.11:
     hash: 50c3c79112ba71da47c19e83bf667e9011c43dd12b05dd0d41e225fb9c47741f
     path: patches/marked@18.0.11.patch
@@ -342,7 +345,7 @@ importers:
         version: 6.0.0(@codemirror/autocomplete@6.20.3)(@codemirror/lang-css@6.3.1)(@codemirror/lang-html@6.4.12)(@codemirror/lang-javascript@6.2.5)(@codemirror/language@6.12.4)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f))(@lezer/common@1.5.2)(@lezer/highlight@1.2.3)(@lezer/javascript@1.5.4)(@lezer/lr@1.4.10)
       '@replit/codemirror-vim':
         specifier: ^6.4.0
-        version: 6.4.0(@codemirror/commands@6.11.0)(@codemirror/language@6.12.4)(@codemirror/search@6.7.2)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f))
+        version: 6.4.0(patch_hash=9fe25c95f69340bf78ea784bffcd9fee7d20c105c7218c3275ece1fd110faf42)(@codemirror/commands@6.11.0)(@codemirror/language@6.12.4)(@codemirror/search@6.7.2)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f))
       codemirror-lang-elixir:
         specifier: ^4.0.1
         version: 4.0.1
@@ -5145,16 +5148,16 @@ snapshots:
       '@lezer/javascript': 1.5.4
       '@lezer/lr': 1.4.10
 
-  '@replit/codemirror-vim-core@0.1.0(patch_hash=749ae57d12019871e480e9fa9311d19b0a29f086c7701aa0c93bca713117bf41)': {}
+  '@replit/codemirror-vim-core@0.1.0(patch_hash=154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4)': {}
 
-  '@replit/codemirror-vim@6.4.0(@codemirror/commands@6.11.0)(@codemirror/language@6.12.4)(@codemirror/search@6.7.2)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f))':
+  '@replit/codemirror-vim@6.4.0(patch_hash=9fe25c95f69340bf78ea784bffcd9fee7d20c105c7218c3275ece1fd110faf42)(@codemirror/commands@6.11.0)(@codemirror/language@6.12.4)(@codemirror/search@6.7.2)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f))':
     dependencies:
       '@codemirror/commands': 6.11.0
       '@codemirror/language': 6.12.4
       '@codemirror/search': 6.7.2
       '@codemirror/state': 6.7.2
       '@codemirror/view': 6.43.11(patch_hash=45b8b1a4ab2e991aac8179d4f447b2cb57c453d19331111aa5e20f5f1c2dd38f)
-      '@replit/codemirror-vim-core': 0.1.0(patch_hash=749ae57d12019871e480e9fa9311d19b0a29f086c7701aa0c93bca713117bf41)
+      '@replit/codemirror-vim-core': 0.1.0(patch_hash=154d5ece6f8e5a6a147dc035fe28de5c27022df90c6c99f9b3a85c8be0ecd2a4)
 
   '@rolldown/binding-android-arm-eabi@1.2.7':
     optional: true
