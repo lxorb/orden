@@ -100,3 +100,32 @@ describe('which strokes are near a part of the plane', () => {
     expect(ids(grid.near({ x: 0, y: 0, width: 100, height: 100 }))).toEqual(['here'])
   })
 })
+
+describe('a stroke stretched across much of the plane', () => {
+  const huge = stroke('huge', -4e8, -4e8, 8e8, 8e8)
+
+  test('is filed, found and let go at once, not cell by cell', () => {
+    const grid = new InkGrid()
+    const near = stroke('near', 10, 10)
+    const started = performance.now()
+    grid.add(huge)
+    grid.add(near)
+
+    expect(ids(grid.near({ x: 0, y: 0, width: 256, height: 256 }))).toEqual(['huge', 'near'])
+    expect(ids(grid.near({ x: 5e8, y: 5e8, width: 256, height: 256 }))).toEqual([])
+
+    grid.remove(huge)
+    grid.remove(stroke('never', -4e8, 0, 8e8, 1))
+    expect(ids(grid.near({ x: 0, y: 0, width: 256, height: 256 }))).toEqual(['near'])
+    expect(performance.now() - started).toBeLessThan(1000)
+  })
+
+  test('and a part of the plane asked about that is as wide finds each stroke once', () => {
+    const grid = new InkGrid()
+    const strokes = [huge, stroke('a', 0, 0, 600, 600), stroke('b', 9e6, 9e6)]
+    for (const one of strokes) grid.add(one)
+    const wide = { x: -1e7, y: -1e7, width: 2e7, height: 2e7 }
+
+    expect(ids(grid.near(wide))).toEqual(walked(strokes, wide))
+  })
+})
