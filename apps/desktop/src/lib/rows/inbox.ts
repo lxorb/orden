@@ -32,10 +32,20 @@ function keyOf(all: Record<string, string>, root: string): string | undefined {
   return Object.keys(all).find((one) => samePath(one, root))
 }
 
-export function chosenInbox(root: string): string | null {
+let marked: (root: string) => string | null = () => null
+
+export function inboxMarkedBy(by: (root: string) => string | null): void {
+  marked = by
+}
+
+export function ownInbox(root: string): string | null {
   const all = read()
   const key = keyOf(all, root)
   return (key === undefined ? undefined : all[key]) ?? null
+}
+
+export function chosenInbox(root: string): string | null {
+  return ownInbox(root) ?? marked(root)
 }
 
 export function inboxOf(root: string): string {
@@ -63,8 +73,10 @@ export async function ensureInbox(
 ): Promise<string> {
   const path = insideSpace(root, inboxOf(root))
   const there = await readIfThere(path)
-  if (there === null) await made(path)
-  return path
+  if (there !== null) return path
+  const own = ownInbox(root) === null ? insideSpace(root, INBOX) : path
+  if (own === path || (await readIfThere(own)) === null) await made(own)
+  return own
 }
 
 export const inboxes: KeptByPath = {

@@ -1,3 +1,4 @@
+import { INBOX_KEY, INBOX_VALUE } from '@orden/bases/inbox'
 import { LIST_KEY, LIST_VALUE, MARKED_KEY, MARKED_VALUE } from '@orden/bases/todo-lists'
 import type { SpaceLinks } from '@orden/scan/note'
 import type { MetaPatch } from '@orden/sync-core/meta'
@@ -7,7 +8,7 @@ import { onDisk } from '../on-disk'
 import { insideSpace, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import type { ItemMetaStore } from '../workspace/item-meta.svelte'
-import { chosenInbox } from './inbox'
+import { chosenInbox, ownInbox } from './inbox'
 import { inProjects, projectsOf } from './projects'
 
 export interface Lists {
@@ -23,12 +24,23 @@ export function hearOldLists(then: (paths: readonly string[]) => void): () => vo
   return () => hearing.delete(then)
 }
 
-export function keepInboxListed(root: string, workspace: Lists): void {
-  const inbox = chosenInbox(root)
-  if (inbox === null) return
-  const path = insideSpace(root, inbox)
-  if (workspace.itemMeta.valueOf(path, LIST_KEY, root) === LIST_VALUE) return
-  workspace.itemMeta.set(path, { [LIST_KEY]: LIST_VALUE }, root)
+export function keepInboxListed(root: string, workspace: Lists, chose = false): void {
+  const own = ownInbox(root)
+  const items = workspace.itemMeta.itemsOf(root)
+  const others = Object.entries(items)
+    .filter(([, meta]) => meta[INBOX_KEY] === INBOX_VALUE)
+    .map(([path]) => path)
+    .filter((path) => own === null || !samePath(path, own, root))
+  const patches: Record<string, MetaPatch> = {}
+  if (chose) for (const path of others) patches[path] = { [INBOX_KEY]: null }
+  const inbox = own ?? chosenInbox(root)
+  if (inbox !== null) {
+    const wanted: Record<string, string> = { [LIST_KEY]: LIST_VALUE }
+    if (own !== null && (chose || !others.length)) wanted[INBOX_KEY] = INBOX_VALUE
+    const had = items[inbox]
+    if (Object.entries(wanted).some(([key, value]) => had?.[key] !== value)) patches[inbox] = wanted
+  }
+  if (Object.keys(patches).length) workspace.itemMeta.setMany(root, patches)
 }
 
 let line: Promise<void> = Promise.resolve()

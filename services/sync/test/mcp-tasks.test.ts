@@ -110,6 +110,26 @@ describe('the to-dos, with Orden closed', () => {
     expect((await metaOf('Thesis.md'))?.['done-on']).toBe(`${taskHash('Outline')}:${day}`)
   })
 
+  test('a task with no note goes to the inbox the space chose, and Inbox lists it (#1469)', async () => {
+    const key = await connector()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Inbox.md', content: '- [ ] Call the bank\n' },
+    })
+    env.db
+      .prepare("update notes set meta = ? where space_id = ? and path = 'Inbox.md'")
+      .run('{"todo-list":"yes","inbox":"yes"}', space)
+
+    const added = await json(key, 'add_task', { space: 'Work', text: 'Water the plants' })
+    expect(added.at).toMatch(/^Inbox\.md#/)
+    expect(await read(key, 'Inbox.md')).toContain('- [ ] Water the plants')
+    const inbox = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
+    expect(inbox.tasks.map((one) => one.text).sort()).toEqual(['Call the bank', 'Water the plants'])
+    expect(
+      await tool(key, 'update_task', { space: 'Work', at: 'Inbox.md', todo_list: false }),
+    ).toContain('is the inbox')
+  })
+
   test('a limit is a whole number of tasks, one or more', async () => {
     const key = await connector()
     await tool(key, 'add_task', { space: 'Work', note: 'one.md', text: 'first' })

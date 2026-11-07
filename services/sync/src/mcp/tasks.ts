@@ -21,7 +21,7 @@ import {
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
 import { INBOX_PATH, taskHash } from '@orden/bases'
-import { carriedOwn, meansInbox } from '@orden/bases/inbox'
+import { carriedOwn, INBOX_KEY, markedInbox, meansInbox } from '@orden/bases/inbox'
 import {
   CANCELLED_KEY,
   DONE_KEY,
@@ -212,8 +212,18 @@ const STOPPED: MetaPatch = { [LIST_KEY]: STOPPED_VALUE, [DONE_KEY]: null, [CANCE
 
 const keyOf = (path: string) => path.normalize('NFC').toLowerCase()
 
+async function inboxIn(env: Env, spaceId: string): Promise<string> {
+  const { results } = await env.DB.prepare(
+    `select path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
+      and meta like ?`,
+  )
+    .bind(spaceId, `%"${INBOX_KEY}"%`)
+    .all<{ path: string; meta: string | null }>()
+  return markedInbox(results.map((one) => [one.path, metaFromText(one.meta)])) ?? INBOX_PATH
+}
+
 async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<Place> {
-  if (named === undefined) return { path: INBOX_PATH }
+  if (named === undefined) return { path: await inboxIn(env, space.id) }
   const path = notePath(named)
   const { results } = await env.DB.prepare(
     `select path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
@@ -222,7 +232,7 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
     .bind(space.id, MOST_READ)
     .all<{ path: string; meta: string | null }>()
   const there = results.find((one) => keyOf(one.path) === keyOf(path))
-  if (there === undefined && meansInbox(named)) return { path: INBOX_PATH }
+  if (there === undefined && meansInbox(named)) return { path: await inboxIn(env, space.id) }
   const lists = await listsBy(env, space.id)
   const listed = (one: { path: string; meta: string | null }) =>
     lists.listed(one.path, metaFromText(one.meta))
@@ -374,7 +384,9 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
       ...(base ? { base: { base: base.base } } : view ? { view } : {}),
       ...(filter ? { filter } : {}),
       ...(typeof args.limit === 'number' ? { limit: args.limit } : {}),
-      inboxes: spaces.map((space) => ({ space: space.name, path: INBOX_PATH })),
+      inboxes: await Promise.all(
+        spaces.map(async (space) => ({ space: space.name, path: await inboxIn(env, space.id) })),
+      ),
       ...(view?.trim().toLowerCase() === 'today' && (await undatedInToday(env, token.user_id))
         ? { undated: true }
         : {}),
@@ -457,7 +469,8 @@ async function listNote(
 ): Promise<{ path: string; todo_list: boolean; space: string }> {
   const path = notePath(asked)
   mayReach(space, path)
-  if (!listing && carriedOwn(path)) throw new Said(`${path} is the inbox, always a to-do list.`)
+  if (!listing && (carriedOwn(path) || path === (await inboxIn(env, space.id))))
+    throw new Said(`${path} is the inbox, always a to-do list.`)
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
   )
