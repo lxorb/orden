@@ -617,6 +617,29 @@ describe('an <iframe> a note wrote', () => {
     expect(published).toContain('&lt;p&gt;My caption paragraph&lt;/p&gt;')
     expect(published).not.toContain('<iframe')
   })
+
+  test('many that never close are read in time that grows with their number', () => {
+    const timed = (count: number) => {
+      const source = `${'<iframe src="https://field.example.test/plan">'.repeat(count)}\n`
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        const start = performance.now()
+        renderMarkdown(source)
+        least = Math.min(least, performance.now() - start)
+      }
+      return least
+    }
+    timed(500)
+    expect(timed(8_000) / timed(2_000)).toBeLessThan(9)
+  })
+
+  test('each of several in a row is its own card, closed or not', () => {
+    const html = renderMarkdown(
+      `${TAG}${TAG.replace('plan', 'one')}<iframe src="https://field.example.test/two">\n`,
+    )
+    expect(html.match(/class="embed-web[^"]*embed-page"/g)).toHaveLength(3)
+    expect(html).not.toContain('<iframe')
+  })
 })
 
 describe('the markup of a document that is the reader’s own', () => {
