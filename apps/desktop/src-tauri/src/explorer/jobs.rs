@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::io::{Read as _, Write as _};
 use std::path::{Path, PathBuf};
@@ -29,6 +29,10 @@ const MOST_WALKED: usize = 500_000;
 static RUNNING: LazyLock<Mutex<HashMap<String, Arc<AtomicBool>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
+static CANCELLED_EARLY: Mutex<VecDeque<String>> = Mutex::new(VecDeque::new());
+
+const MOST_CANCELLED_EARLY: usize = 64;
+
 struct Job {
     id: String,
     stop: Arc<AtomicBool>,
@@ -36,7 +40,11 @@ struct Job {
 
 impl Job {
     fn begin(id: &str) -> Self {
-        let stop = Arc::new(AtomicBool::new(false));
+        let early = CANCELLED_EARLY.lock().is_ok_and(|mut early| {
+            let was = early.iter().position(|one| one == id);
+            was.and_then(|at| early.remove(at)).is_some()
+        });
+        let stop = Arc::new(AtomicBool::new(early));
         if let Ok(mut running) = RUNNING.lock() {
             running.insert(id.to_owned(), Arc::clone(&stop));
         }
@@ -64,7 +72,14 @@ pub fn explorer_cancel(job: String) {
     if let Ok(running) = RUNNING.lock() {
         if let Some(stop) = running.get(&job) {
             stop.store(true, Ordering::Relaxed);
+            return;
         }
+    }
+    if let Ok(mut early) = CANCELLED_EARLY.lock() {
+        if early.len() >= MOST_CANCELLED_EARLY {
+            early.pop_front();
+        }
+        early.push_back(job);
     }
 }
 
@@ -114,33 +129,36 @@ pub struct Transferred {
     pub cancelled: bool,
 }
 
-#[tauri::command(async)]
-pub fn explorer_clashes(
+#[tauri::command]
+pub async fn explorer_clashes(
     app: AppHandle,
     sources: Vec<String>,
     folder: String,
 ) -> Result<Vec<String>, String> {
-    let folder = asked(&app, &folder, Use::Into)?;
-    let mut out = Vec::new();
-    for one in &sources {
-        let from = asked(&app, one, Use::Look)?;
-        let Some(name) = from.file_name() else {
-            continue;
-        };
-        let to = folder.join(name);
-        if !same(&from, &to) && fs::symlink_metadata(&to).is_ok() {
-            out.push(name.to_string_lossy().into_owned());
+    crate::lane::off_the_runtime(move || -> Result<Vec<String>, String> {
+        let folder = asked(&app, &folder, Use::Into)?;
+        let mut out = Vec::new();
+        for one in &sources {
+            let from = asked(&app, one, Use::Look)?;
+            let Some(name) = from.file_name() else {
+                continue;
+            };
+            let to = folder.join(name);
+            if !same(&from, &to) && fs::symlink_metadata(&to).is_ok() {
+                out.push(name.to_string_lossy().into_owned());
+            }
         }
-    }
-    Ok(out)
+        Ok(out)
+    })
+    .await
 }
 
 fn same(one: &Path, other: &Path) -> bool {
     inside(one, other) && inside(other, one)
 }
 
-#[tauri::command(async)]
-pub fn explorer_transfer(
+#[tauri::command]
+pub async fn explorer_transfer(
     app: AppHandle,
     job: String,
     sources: Vec<String>,
@@ -148,57 +166,60 @@ pub fn explorer_transfer(
     how: How,
     clash: Clash,
 ) -> Result<Transferred, String> {
-    let folder = asked(&app, &folder, Use::Into)?;
-    let using = if how == How::Move {
-        Use::Change
-    } else {
-        Use::Look
-    };
-    let froms: Vec<PathBuf> = sources
-        .iter()
-        .map(|one| asked(&app, one, using))
-        .collect::<Result<_, _>>()?;
-    let running = Job::begin(&job);
-    let mut out = Transferred::default();
-    let plan = planned(&froms, &folder, how, clash, &mut out);
-    let mut meter = Meter {
-        app: Some(&app),
-        job: &job,
-        total: plan.iter().map(|(from, _)| weight(from, &running)).sum(),
-        bytes: 0,
-        items: 0,
-        count: plan.len(),
-        said: None,
-    };
-    for (from, to) in plan {
-        if running.stopped() {
-            out.cancelled = true;
-            break;
-        }
-        if clash == Clash::Replace && fs::symlink_metadata(&to).is_ok() {
-            match bin::trash(&to) {
-                Ok(ticket) => out.replaced.push(ticket),
-                Err(why) => {
-                    out.failed.push(failed(&from, why));
-                    continue;
-                }
-            }
-        }
-        match carried(&from, &to, how, &running, &mut meter) {
-            Ok(()) => out.done.push(Moved {
-                from: from.display().to_string(),
-                to: to.display().to_string(),
-            }),
-            Err(Stop::Cancelled) => {
+    crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
+        let folder = asked(&app, &folder, Use::Into)?;
+        let using = if how == How::Move {
+            Use::Change
+        } else {
+            Use::Look
+        };
+        let froms: Vec<PathBuf> = sources
+            .iter()
+            .map(|one| asked(&app, one, using))
+            .collect::<Result<_, _>>()?;
+        let running = Job::begin(&job);
+        let mut out = Transferred::default();
+        let plan = planned(&froms, &folder, how, clash, &mut out);
+        let mut meter = Meter {
+            app: Some(&app),
+            job: &job,
+            total: plan.iter().map(|(from, _)| weight(from, &running)).sum(),
+            bytes: 0,
+            items: 0,
+            count: plan.len(),
+            said: None,
+        };
+        for (from, to) in plan {
+            if running.stopped() {
                 out.cancelled = true;
                 break;
             }
-            Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
+            if clash == Clash::Replace && fs::symlink_metadata(&to).is_ok() {
+                match bin::trash(&to) {
+                    Ok(ticket) => out.replaced.push(ticket),
+                    Err(why) => {
+                        out.failed.push(failed(&from, why));
+                        continue;
+                    }
+                }
+            }
+            match carried(&from, &to, how, &running, &mut meter) {
+                Ok(()) => out.done.push(Moved {
+                    from: from.display().to_string(),
+                    to: to.display().to_string(),
+                }),
+                Err(Stop::Cancelled) => {
+                    out.cancelled = true;
+                    break;
+                }
+                Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
+            }
+            meter.items += 1;
         }
-        meter.items += 1;
-    }
-    meter.say(true);
-    Ok(out)
+        meter.say(true);
+        Ok(out)
+    })
+    .await
 }
 
 fn failed(path: &Path, why: String) -> Failed {
@@ -390,63 +411,66 @@ pub struct Pair {
     pub to: String,
 }
 
-#[tauri::command(async)]
-pub fn explorer_put(
+#[tauri::command]
+pub async fn explorer_put(
     app: AppHandle,
     job: String,
     pairs: Vec<Pair>,
     how: How,
 ) -> Result<Transferred, String> {
-    let using = if how == How::Move {
-        Use::Change
-    } else {
-        Use::Look
-    };
-    let judged: Vec<(PathBuf, PathBuf)> = pairs
-        .iter()
-        .map(|one| {
-            Ok((
-                asked(&app, &one.from, using)?,
-                asked(&app, &one.to, Use::Change)?,
-            ))
-        })
-        .collect::<Result<_, String>>()?;
-    let running = Job::begin(&job);
-    let mut out = Transferred::default();
-    let mut meter = Meter {
-        app: Some(&app),
-        job: &job,
-        total: judged.iter().map(|(from, _)| weight(from, &running)).sum(),
-        bytes: 0,
-        items: 0,
-        count: judged.len(),
-        said: None,
-    };
-    for (from, to) in judged {
-        if running.stopped() {
-            out.cancelled = true;
-            break;
-        }
-        if fs::symlink_metadata(&to).is_ok() {
-            out.failed
-                .push(failed(&from, format!("{} is there already", to.display())));
-            continue;
-        }
-        match carried(&from, &to, how, &running, &mut meter) {
-            Ok(()) => out.done.push(Moved {
-                from: from.display().to_string(),
-                to: to.display().to_string(),
-            }),
-            Err(Stop::Cancelled) => {
+    crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
+        let using = if how == How::Move {
+            Use::Change
+        } else {
+            Use::Look
+        };
+        let judged: Vec<(PathBuf, PathBuf)> = pairs
+            .iter()
+            .map(|one| {
+                Ok((
+                    asked(&app, &one.from, using)?,
+                    asked(&app, &one.to, Use::Change)?,
+                ))
+            })
+            .collect::<Result<_, String>>()?;
+        let running = Job::begin(&job);
+        let mut out = Transferred::default();
+        let mut meter = Meter {
+            app: Some(&app),
+            job: &job,
+            total: judged.iter().map(|(from, _)| weight(from, &running)).sum(),
+            bytes: 0,
+            items: 0,
+            count: judged.len(),
+            said: None,
+        };
+        for (from, to) in judged {
+            if running.stopped() {
                 out.cancelled = true;
                 break;
             }
-            Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
+            if fs::symlink_metadata(&to).is_ok() {
+                out.failed
+                    .push(failed(&from, format!("{} is there already", to.display())));
+                continue;
+            }
+            match carried(&from, &to, how, &running, &mut meter) {
+                Ok(()) => out.done.push(Moved {
+                    from: from.display().to_string(),
+                    to: to.display().to_string(),
+                }),
+                Err(Stop::Cancelled) => {
+                    out.cancelled = true;
+                    break;
+                }
+                Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
+            }
+            meter.items += 1;
         }
-        meter.items += 1;
-    }
-    meter.say(true);
-    Ok(out)
+        meter.say(true);
+        Ok(out)
+    })
+    .await
 }
 
 #[derive(Serialize, Default)]
@@ -457,32 +481,35 @@ pub struct Count {
     pub cancelled: bool,
 }
 
-#[tauri::command(async)]
-pub fn explorer_count(app: AppHandle, job: String, path: String) -> Result<Count, String> {
-    let root = asked(&app, &path, Use::Look)?;
-    let running = Job::begin(&job);
-    let mut out = Count::default();
-    let mut waiting = vec![root];
-    while let Some(folder) = waiting.pop() {
-        if running.stopped() {
-            out.cancelled = true;
-            break;
-        }
-        for one in fs::read_dir(&folder).into_iter().flatten().flatten() {
-            match one.file_type() {
-                Ok(kind) if kind.is_dir() => {
-                    out.folders += 1;
-                    waiting.push(one.path());
+#[tauri::command]
+pub async fn explorer_count(app: AppHandle, job: String, path: String) -> Result<Count, String> {
+    crate::lane::off_the_runtime(move || -> Result<Count, String> {
+        let root = asked(&app, &path, Use::Look)?;
+        let running = Job::begin(&job);
+        let mut out = Count::default();
+        let mut waiting = vec![root];
+        while let Some(folder) = waiting.pop() {
+            if running.stopped() {
+                out.cancelled = true;
+                break;
+            }
+            for one in fs::read_dir(&folder).into_iter().flatten().flatten() {
+                match one.file_type() {
+                    Ok(kind) if kind.is_dir() => {
+                        out.folders += 1;
+                        waiting.push(one.path());
+                    }
+                    Ok(_) => {
+                        out.files += 1;
+                        out.bytes += one.metadata().map_or(0, |meta| meta.len());
+                    }
+                    Err(_) => {}
                 }
-                Ok(_) => {
-                    out.files += 1;
-                    out.bytes += one.metadata().map_or(0, |meta| meta.len());
-                }
-                Err(_) => {}
             }
         }
-    }
-    Ok(out)
+        Ok(out)
+    })
+    .await
 }
 
 #[derive(Serialize, Clone)]
@@ -505,52 +532,55 @@ pub struct Searched {
     pub cancelled: bool,
 }
 
-#[tauri::command(async)]
-pub fn explorer_search(
+#[tauri::command]
+pub async fn explorer_search(
     app: AppHandle,
     job: String,
     folder: String,
     query: String,
     hidden: bool,
 ) -> Result<Searched, String> {
-    let root = asked(&app, &folder, Use::Look)?;
-    let running = Job::begin(&job);
-    let explored = app.state::<Explored>();
-    let mut out = Searched::default();
-    let mut batch = Vec::new();
-    let mut said = Instant::now();
-    let send = |batch: &mut Vec<Found>| {
-        if !batch.is_empty() {
-            let _ = app.emit(
-                FOUND,
-                Finding {
-                    job: &job,
-                    found: batch,
-                },
-            );
-            batch.clear();
-        }
-    };
-    walk_matching(
-        &root,
-        &query,
-        hidden,
-        &running,
-        &mut out,
-        |folder, found| {
-            explored.saw(folder);
-            batch.push(Found {
-                within: folder.display().to_string(),
-                entry: found,
-            });
-            if said.elapsed() >= EVERY {
-                said = Instant::now();
-                send(&mut batch);
+    crate::lane::off_the_runtime(move || -> Result<Searched, String> {
+        let root = asked(&app, &folder, Use::Look)?;
+        let running = Job::begin(&job);
+        let explored = app.state::<Explored>();
+        let mut out = Searched::default();
+        let mut batch = Vec::new();
+        let mut said = Instant::now();
+        let send = |batch: &mut Vec<Found>| {
+            if !batch.is_empty() {
+                let _ = app.emit(
+                    FOUND,
+                    Finding {
+                        job: &job,
+                        found: batch,
+                    },
+                );
+                batch.clear();
             }
-        },
-    );
-    send(&mut batch);
-    Ok(out)
+        };
+        walk_matching(
+            &root,
+            &query,
+            hidden,
+            &running,
+            &mut out,
+            |folder, found| {
+                explored.saw(folder);
+                batch.push(Found {
+                    within: folder.display().to_string(),
+                    entry: found,
+                });
+                if said.elapsed() >= EVERY {
+                    said = Instant::now();
+                    send(&mut batch);
+                }
+            },
+        );
+        send(&mut batch);
+        Ok(out)
+    })
+    .await
 }
 
 fn walk_matching(
@@ -707,6 +737,17 @@ mod tests {
         assert!(matches!(copied, Err(Stop::Cancelled)));
         assert!(!to.exists());
         assert!(from.join("a.txt").is_file());
+    }
+
+    #[test]
+    fn a_job_cancelled_before_it_began_begins_stopped_and_only_once() {
+        files_tab_cancel_named("test-early");
+        assert!(Job::begin("test-early").stopped());
+        assert!(!Job::begin("test-early").stopped());
+        for one in 0..200 {
+            files_tab_cancel_named(&format!("test-gone-{one}"));
+        }
+        assert!(super::CANCELLED_EARLY.lock().expect("the list").len() <= 64);
     }
 
     fn files_tab_cancel_named(job: &str) {

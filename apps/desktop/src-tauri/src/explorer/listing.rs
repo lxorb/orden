@@ -126,20 +126,23 @@ pub(super) fn asked(app: &AppHandle, path: &str, using: Use) -> Result<PathBuf, 
     )
 }
 
-#[tauri::command(async)]
-pub fn explorer_list(app: AppHandle, path: String) -> Result<Listing, String> {
-    let folder = asked(&app, &path, Use::List)?;
-    let (entries, cut) = entries(&folder, MOST_LISTED)?;
-    app.state::<Explored>().saw(&folder);
-    let fences = Fences::of(&app);
-    Ok(Listing {
-        path: folder.display().to_string(),
-        parent: folder.parent().map(|one| one.display().to_string()),
-        entries,
-        own: fences.in_own(&folder, &real),
-        spaces: fences.in_spaces(&folder),
-        cut,
+#[tauri::command]
+pub async fn explorer_list(app: AppHandle, path: String) -> Result<Listing, String> {
+    crate::lane::off_the_runtime(move || -> Result<Listing, String> {
+        let folder = asked(&app, &path, Use::List)?;
+        let (entries, cut) = entries(&folder, MOST_LISTED)?;
+        app.state::<Explored>().saw(&folder);
+        let fences = Fences::of(&app);
+        Ok(Listing {
+            path: folder.display().to_string(),
+            parent: folder.parent().map(|one| one.display().to_string()),
+            entries,
+            own: fences.in_own(&folder, &real),
+            spaces: fences.in_spaces(&folder),
+            cut,
+        })
     })
+    .await
 }
 
 #[derive(Serialize)]
@@ -149,47 +152,50 @@ pub struct Place {
     pub name: Option<String>,
 }
 
-#[tauri::command(async)]
-pub fn explorer_places(app: AppHandle) -> Vec<Place> {
-    let paths = app.path();
-    let mut out: Vec<Place> = [
-        ("home", paths.home_dir().ok()),
-        ("desktop", paths.desktop_dir().ok()),
-        ("documents", paths.document_dir().ok()),
-        ("downloads", paths.download_dir().ok()),
-        ("pictures", paths.picture_dir().ok()),
-        ("music", paths.audio_dir().ok()),
-        ("videos", paths.video_dir().ok()),
-        ("spaces", crate::paths::spaces_dir(&app).ok()),
-    ]
-    .into_iter()
-    .filter_map(|(kind, path)| {
-        let path = path.filter(|one| one.is_dir())?;
-        Some(Place {
-            kind,
-            path: path.display().to_string(),
-            name: None,
+#[tauri::command]
+pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
+    crate::lane::off_the_runtime(move || -> Vec<Place> {
+        let paths = app.path();
+        let mut out: Vec<Place> = [
+            ("home", paths.home_dir().ok()),
+            ("desktop", paths.desktop_dir().ok()),
+            ("documents", paths.document_dir().ok()),
+            ("downloads", paths.download_dir().ok()),
+            ("pictures", paths.picture_dir().ok()),
+            ("music", paths.audio_dir().ok()),
+            ("videos", paths.video_dir().ok()),
+            ("spaces", crate::paths::spaces_dir(&app).ok()),
+        ]
+        .into_iter()
+        .filter_map(|(kind, path)| {
+            let path = path.filter(|one| one.is_dir())?;
+            Some(Place {
+                kind,
+                path: path.display().to_string(),
+                name: None,
+            })
         })
-    })
-    .collect();
-    if cfg!(unix) {
-        out.push(Place {
-            kind: "root",
-            path: "/".to_owned(),
-            name: None,
-        });
-    }
-    out.extend(disks().into_iter().map(|path| {
-        Place {
-            kind: "disk",
-            name: path
-                .file_name()
-                .map(|one| one.to_string_lossy().into_owned())
-                .or_else(|| Some(path.display().to_string())),
-            path: path.display().to_string(),
+        .collect();
+        if cfg!(unix) {
+            out.push(Place {
+                kind: "root",
+                path: "/".to_owned(),
+                name: None,
+            });
         }
-    }));
-    out
+        out.extend(disks().into_iter().map(|path| {
+            Place {
+                kind: "disk",
+                name: path
+                    .file_name()
+                    .map(|one| one.to_string_lossy().into_owned())
+                    .or_else(|| Some(path.display().to_string())),
+                path: path.display().to_string(),
+            }
+        }));
+        out
+    })
+    .await
 }
 
 fn disks() -> Vec<PathBuf> {
@@ -235,24 +241,28 @@ pub struct Facts {
     pub link: Option<String>,
 }
 
-#[tauri::command(async)]
-pub fn explorer_facts(app: AppHandle, path: String) -> Result<Facts, String> {
-    let path = asked(&app, &path, Use::Look)?;
-    let meta = fs::symlink_metadata(&path).map_err(|why| format!("{}: {why}", path.display()))?;
-    let entry = entry(&path).ok_or_else(|| format!("{} is gone", path.display()))?;
-    #[cfg(unix)]
-    let mode = Some(letters(&meta));
-    #[cfg(not(unix))]
-    let mode = None;
-    Ok(Facts {
-        entry,
-        path: path.display().to_string(),
-        created: meta.created().ok().map(millis),
-        accessed: meta.accessed().ok().map(millis),
-        readonly: meta.permissions().readonly(),
-        mode,
-        link: fs::read_link(&path).ok().map(|to| to.display().to_string()),
+#[tauri::command]
+pub async fn explorer_facts(app: AppHandle, path: String) -> Result<Facts, String> {
+    crate::lane::off_the_runtime(move || -> Result<Facts, String> {
+        let path = asked(&app, &path, Use::Look)?;
+        let meta =
+            fs::symlink_metadata(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        let entry = entry(&path).ok_or_else(|| format!("{} is gone", path.display()))?;
+        #[cfg(unix)]
+        let mode = Some(letters(&meta));
+        #[cfg(not(unix))]
+        let mode = None;
+        Ok(Facts {
+            entry,
+            path: path.display().to_string(),
+            created: meta.created().ok().map(millis),
+            accessed: meta.accessed().ok().map(millis),
+            readonly: meta.permissions().readonly(),
+            mode,
+            link: fs::read_link(&path).ok().map(|to| to.display().to_string()),
+        })
     })
+    .await
 }
 
 #[cfg(unix)]
@@ -272,16 +282,19 @@ fn letters(meta: &fs::Metadata) -> String {
         .collect()
 }
 
-#[tauri::command(async)]
-pub fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Response, String> {
-    use std::io::Read as _;
-    let path = asked(&app, &path, Use::Look)?;
-    let file = fs::File::open(&path).map_err(|why| format!("{}: {why}", path.display()))?;
-    let mut bytes = Vec::new();
-    file.take(most.min(MOST_PEEKED) + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|why| format!("{}: {why}", path.display()))?;
-    Ok(Response::new(peeked(bytes, most.min(MOST_PEEKED))))
+#[tauri::command]
+pub async fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Response, String> {
+    crate::lane::off_the_runtime(move || -> Result<Response, String> {
+        use std::io::Read as _;
+        let path = asked(&app, &path, Use::Look)?;
+        let file = fs::File::open(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        let mut bytes = Vec::new();
+        file.take(most.min(MOST_PEEKED) + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|why| format!("{}: {why}", path.display()))?;
+        Ok(Response::new(peeked(bytes, most.min(MOST_PEEKED))))
+    })
+    .await
 }
 
 fn peeked(mut bytes: Vec<u8>, most: u64) -> Vec<u8> {
@@ -291,16 +304,22 @@ fn peeked(mut bytes: Vec<u8>, most: u64) -> Vec<u8> {
     bytes
 }
 
-#[tauri::command(async)]
-pub fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
-    let path = asked(&app, &path, Use::Look)?;
-    tauri_plugin_opener::open_path(&path, None::<&str>).map_err(|why| why.to_string())
+#[tauri::command]
+pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let path = asked(&app, &path, Use::Look)?;
+        tauri_plugin_opener::open_path(&path, None::<&str>).map_err(|why| why.to_string())
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn explorer_reveal(app: AppHandle, path: String) -> Result<(), String> {
-    let path = asked(&app, &path, Use::Look)?;
-    tauri_plugin_opener::reveal_item_in_dir(&path).map_err(|why| why.to_string())
+#[tauri::command]
+pub async fn explorer_reveal(app: AppHandle, path: String) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let path = asked(&app, &path, Use::Look)?;
+        tauri_plugin_opener::reveal_item_in_dir(&path).map_err(|why| why.to_string())
+    })
+    .await
 }
 
 #[cfg(test)]
