@@ -372,6 +372,41 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(false)
   })
 
+  test('never drops words the app writes into a note while letting go of it', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    await browser.engine.fetch(`${ROOT}/Ideas.md`)
+    const at = `${ROOT}/Ideas.md`
+    const later = `${SEEDED[1]?.text ?? ''}\nwritten by the app meanwhile\n`
+
+    let queue = Promise.resolve()
+    const turn = <T>(_path: string, run: () => Promise<T>): Promise<T> => {
+      const going = queue.then(run)
+      queue = going.then(
+        () => undefined,
+        () => undefined,
+      )
+      return going
+    }
+    let writing: Promise<void> = Promise.resolve()
+    const how = {
+      drop: (path: string) => {
+        browser.disk.files.delete(path)
+        return Promise.resolve()
+      },
+      leaving: () => {
+        writing = turn(at, () => browser.disk.write(at, later))
+        return Promise.resolve()
+      },
+      turn,
+    }
+    await browser.engine.trim(0, how)
+    await writing
+
+    expect(browser.disk.files.get(at)).toBe(later)
+  })
+
   test('a let-go cut short drops the rest of the row at the next trim', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')

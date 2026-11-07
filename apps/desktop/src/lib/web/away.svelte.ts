@@ -68,6 +68,12 @@ class KeptAway {
     return await this.searching(root, query, terms, limit, onFound, excluded)
   }
 
+  went(path: string) {
+    const at = normalise(path)
+    if (this.files.has(at)) return
+    this.files = new Map([...this.files, [at, { id: '', path, size: 0, modified: 0 }]])
+  }
+
   at(path: string): Away | null {
     return this.files.get(normalise(path)) ?? null
   }

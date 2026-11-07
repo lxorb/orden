@@ -68,6 +68,7 @@ function mayLetGo(core: Core, space: SpaceState, entry: EntryRow): boolean {
 export interface LettingGo {
   drop(path: string): Promise<void>
   leaving?(one: Leaving): Promise<void>
+  turn?(path: string, run: () => Promise<boolean>): Promise<boolean>
 }
 
 export interface Leaving {
@@ -114,6 +115,19 @@ async function letGo(
   how: LettingGo,
 ): Promise<boolean> {
   const full = core.world.join(space.row.root, entry.local_path)
+  const run = () => lettingGo(core, space, entry, how, full)
+  return how.turn ? await how.turn(full, run) : await run()
+}
+
+async function lettingGo(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  how: LettingGo,
+  full: string,
+): Promise<boolean> {
+  if (!mayLetGo(core, space, entry)) return false
+  if (core.world.join(space.row.root, entry.local_path) !== full) return false
   const text = await core.world.disk.read(full)
   if (text !== null && (await core.world.digest(unixLines(text))) !== entry.written_hash)
     return false

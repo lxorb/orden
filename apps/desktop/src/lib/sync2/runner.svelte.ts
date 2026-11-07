@@ -1124,6 +1124,11 @@ class Runner {
         const indexing = this.indexing
         const went = await engine.trim(await keptBudget(), {
           ...lettingGo,
+          drop: async (path: string) => {
+            await lettingGo.drop(path)
+            keptAway.went(path)
+          },
+          turn: (path: string, run: () => Promise<boolean>) => oneWriteAt(path, run),
           ...(indexing ? { leaving: (one: Leaving) => indexing.leaving(one) } : {}),
         })
         if (went) await this.awayHeard(engine, false)
