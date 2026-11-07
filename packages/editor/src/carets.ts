@@ -1,4 +1,5 @@
 import {
+  EditorSelection,
   type EditorState,
   type Extension,
   type Range,
@@ -6,13 +7,15 @@ import {
   StateField,
 } from '@codemirror/state'
 import {
+  BlockType,
   Decoration,
   type DecorationSet,
   EditorView,
+  type LayerMarker,
+  layer,
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import { NibWidget } from './live-preview/widget'
 
 export interface Peer {
   id: number
@@ -26,46 +29,6 @@ export interface Peer {
 export const setPeers = StateEffect.define<readonly Peer[]>()
 
 export const setAgents = StateEffect.define<readonly Peer[]>()
-
-class Caret extends NibWidget {
-  constructor(
-    private readonly name: string,
-    private readonly colour: string,
-    private readonly at: number,
-    private readonly passing: boolean,
-    private readonly face?: string,
-  ) {
-    super()
-  }
-
-  override eq(other: Caret): boolean {
-    return (
-      other.name === this.name &&
-      other.colour === this.colour &&
-      other.at === this.at &&
-      other.passing === this.passing &&
-      other.face === this.face
-    )
-  }
-
-  override toDOM(): HTMLElement {
-    const caret = document.createElement('span')
-    caret.className = 'cm-nib-caret'
-    if (this.passing) caret.classList.add('is-passing')
-    caret.style.setProperty('--peer', this.colour)
-
-    const tag = caret.appendChild(document.createElement('span'))
-    tag.className = 'cm-nib-caret-name'
-    if (this.face) {
-      const face = tag.appendChild(document.createElement('span'))
-      face.className = 'cm-nib-caret-face'
-      face.style.backgroundImage = `url("${this.face}")`
-    }
-    tag.append(this.name)
-
-    return caret
-  }
-}
 
 interface Present {
   peers: readonly Peer[]
@@ -82,7 +45,6 @@ function marksFor(
 ): DecorationSet {
   const length = state.doc.length
   const marks: Range<Decoration>[] = []
-  const agent = new Set(agents)
 
   for (const peer of [...peers, ...agents]) {
     const head = Math.min(Math.max(0, peer.head), length)
@@ -96,13 +58,6 @@ function marksFor(
         }).range(Math.min(anchor, head), Math.max(anchor, head)),
       )
     }
-
-    marks.push(
-      Decoration.widget({
-        widget: new Caret(peer.name, peer.colour, head, agent.has(peer), peer.face),
-        side: 1,
-      }).range(head),
-    )
   }
 
   return Decoration.set(marks, true)
@@ -117,8 +72,8 @@ const present = StateField.define<Present>({
     const moved = (peers: readonly Peer[]) =>
       peers.map((peer) => ({
         ...peer,
-        head: transaction.changes.mapPos(within(peer.head, before)),
-        anchor: transaction.changes.mapPos(within(peer.anchor, before)),
+        head: transaction.changes.mapPos(within(peer.head, before), 1),
+        anchor: transaction.changes.mapPos(within(peer.anchor, before), 1),
       }))
     const placed = (peers: readonly Peer[]) => {
       const length = transaction.state.doc.length
@@ -150,17 +105,237 @@ const present = StateField.define<Present>({
   provide: (field) => EditorView.decorations.from(field, (held) => held.marks),
 })
 
+export interface Shown {
+  peer: Peer
+  head: number
+  passing: boolean
+}
+
+export function caretsAt(state: EditorState): Shown[] {
+  const held = state.field(present, false)
+  if (!held) return []
+  const length = state.doc.length
+  const agents = new Set(held.agents)
+  return [...held.peers, ...held.agents]
+    .map((peer) => ({
+      peer,
+      head: Math.min(Math.max(0, peer.head), length),
+      passing: agents.has(peer),
+    }))
+    .sort((one, two) => one.head - two.head)
+}
+
+export type Side = 'above' | 'below'
+
+export function sideFor(room: boolean, above: boolean, below: boolean): Side {
+  if (!room) return 'below'
+  return above && !below ? 'below' : 'above'
+}
+
+export function inkOn(colour: string): string {
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(colour.trim())?.[1]
+  if (!hex) return 'var(--accent-ink)'
+  const full = hex.length === 3 ? hex.replace(/./g, '$&$&') : hex
+  const [r = 0, g = 0, b = 0] = [0, 2, 4].map((at) => {
+    const one = Number.parseInt(full.slice(at, at + 2), 16) / 255
+    return one <= 0.04045 ? one / 12.92 : ((one + 0.055) / 1.055) ** 2.4
+  })
+  const light = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return (light + 0.05) / 0.05 >= 1.05 / (light + 0.05) ? '#0b0d10' : '#ffffff'
+}
+
+const NAME_TALL = 16
+const NAME_GAP = 4
+
+class CaretMarker implements LayerMarker {
+  constructor(
+    readonly key: number,
+    readonly name: string,
+    readonly colour: string,
+    readonly face: string | undefined,
+    readonly passing: boolean,
+    readonly head: number,
+    readonly left: number,
+    readonly top: number,
+    readonly tall: number,
+    readonly side: Side,
+    readonly shift: number,
+  ) {}
+
+  eq(other: CaretMarker): boolean {
+    return (
+      other.key === this.key &&
+      other.name === this.name &&
+      other.colour === this.colour &&
+      other.face === this.face &&
+      other.passing === this.passing &&
+      other.head === this.head &&
+      other.left === this.left &&
+      other.top === this.top &&
+      other.tall === this.tall &&
+      other.side === this.side &&
+      other.shift === this.shift
+    )
+  }
+
+  draw(): HTMLElement {
+    const caret = document.createElement('div')
+    caret.className = 'cm-nib-caret'
+    if (this.passing) caret.classList.add('is-passing')
+
+    const tag = caret.appendChild(document.createElement('span'))
+    tag.className = 'cm-nib-caret-name'
+    if (this.face) {
+      const face = tag.appendChild(document.createElement('span'))
+      face.className = 'cm-nib-caret-face'
+      face.style.backgroundImage = `url("${this.face}")`
+    }
+    tag.append(this.name)
+
+    this.place(caret)
+    return caret
+  }
+
+  update(dom: HTMLElement, was: CaretMarker): boolean {
+    if (
+      !(was instanceof CaretMarker) ||
+      was.key !== this.key ||
+      was.name !== this.name ||
+      was.face !== this.face ||
+      was.passing !== this.passing ||
+      (this.passing && was.head !== this.head)
+    ) {
+      return false
+    }
+    this.place(dom)
+    return true
+  }
+
+  private place(caret: HTMLElement) {
+    caret.style.left = `${this.left}px`
+    caret.style.top = `${this.top}px`
+    caret.style.height = `${this.tall}px`
+    caret.style.setProperty('--peer', this.colour)
+    caret.style.setProperty('--peer-ink', inkOn(this.colour))
+    caret.classList.toggle('is-below', this.side === 'below')
+    caret.classList.toggle('is-shifted', this.shift < 0)
+    const tag = caret.firstElementChild as HTMLElement | null
+    if (tag) tag.style.left = `${this.shift}px`
+  }
+}
+
+let ruler: CanvasRenderingContext2D | null | undefined
+
+function widthOf(view: EditorView, name: string, face: boolean): number {
+  if (ruler === undefined) {
+    try {
+      ruler = document.createElement('canvas').getContext('2d')
+    } catch {
+      ruler = null
+    }
+  }
+  const font = getComputedStyle(view.dom).getPropertyValue('--font-ui').trim() || 'sans-serif'
+  let words = name.length * 6.5
+  if (ruler) {
+    ruler.font = `600 10px ${font}`
+    words = ruler.measureText(name).width + name.length * 0.2
+  }
+  return Math.ceil(words + 10 + (face ? 15 : 0))
+}
+
+function lineTall(view: EditorView, head: number, text: number): number {
+  const { node } = view.domAtPos(head)
+  const element = node instanceof Element ? node : node.parentElement
+  const line = element?.closest('.cm-line')
+  const said = line ? Number.parseFloat(getComputedStyle(line).lineHeight) : Number.NaN
+  return Number.isFinite(said) && said > text ? said : text
+}
+
+function crowded(view: EditorView, from: number, to: number, y: number): boolean {
+  const height = y - view.documentTop
+  if (height < 0 || height > view.contentHeight) return false
+  const block = view.lineBlockAtHeight(height)
+  if (block.type !== BlockType.Text) return true
+  const at = view.posAtCoords({ x: from, y }, false)
+  const start = view.coordsAtPos(view.moveToLineBoundary(EditorSelection.cursor(at), false).head, 1)
+  const end = view.coordsAtPos(view.moveToLineBoundary(EditorSelection.cursor(at), true).head, -1)
+  if (!start || !end || y < start.top - 1 || y > start.bottom + 1) return false
+  return start.left < to && end.right > from
+}
+
+function caretMarkers(view: EditorView): CaretMarker[] {
+  const shown = caretsAt(view.state)
+  if (!shown.length) return []
+
+  const scroller = view.scrollDOM.getBoundingClientRect()
+  const base = {
+    left: scroller.left - view.scrollDOM.scrollLeft * view.scaleX,
+    top: scroller.top - view.scrollDOM.scrollTop * view.scaleY,
+  }
+  const edge = scroller.left + view.scrollDOM.clientWidth * view.scaleX - NAME_GAP
+  const markers: CaretMarker[] = []
+
+  for (const { peer, head, passing } of shown) {
+    if (head < view.viewport.from || head > view.viewport.to) continue
+    const at = view.coordsAtPos(head, 1) ?? view.coordsAtPos(head, -1)
+    if (!at) continue
+
+    const tall = lineTall(view, head, at.bottom - at.top)
+    const top = (at.top + at.bottom) / 2 - tall / 2
+    const wide = widthOf(view, peer.name, !!peer.face)
+    const shift = Math.min(0, Math.max(-wide, edge - (at.left + wide)))
+    const from = at.left + shift
+    const to = from + wide
+    const side = sideFor(
+      top - NAME_TALL >= base.top,
+      crowded(view, from, to, top - NAME_TALL / 2),
+      crowded(view, from, to, top + tall + NAME_TALL / 2),
+    )
+
+    markers.push(
+      new CaretMarker(
+        peer.id,
+        peer.name,
+        peer.colour,
+        peer.face,
+        passing,
+        head,
+        Math.round(at.left - base.left),
+        Math.round(top - base.top),
+        Math.round(tall),
+        side,
+        Math.round(shift),
+      ),
+    )
+  }
+
+  return markers
+}
+
+const caretLayer = layer({
+  above: true,
+  class: 'cm-orden-carets',
+  markers: caretMarkers,
+  update: (update: ViewUpdate) =>
+    update.docChanged ||
+    update.viewportChanged ||
+    update.geometryChanged ||
+    update.startState.field(present, false) !== update.state.field(present, false),
+})
+
 const AGENT_SHOWN = '3.4s'
 
 const style = EditorView.baseTheme({
+  '.cm-orden-carets': {
+    pointerEvents: 'none',
+  },
+
   '.cm-nib-caret': {
-    position: 'relative',
-    display: 'inline-block',
-    width: 0,
-    height: '1.15em',
-    borderLeft: '2px solid var(--peer)',
+    position: 'absolute',
+    width: '2px',
     marginLeft: '-1px',
-    verticalAlign: 'text-bottom',
+    borderRadius: '1px',
+    background: 'var(--peer)',
     pointerEvents: 'none',
   },
 
@@ -171,30 +346,45 @@ const style = EditorView.baseTheme({
 
   '.cm-nib-caret-name': {
     position: 'absolute',
-    left: '-1px',
     bottom: '100%',
-    padding: '0 4px 1px',
-    borderRadius: '3px 3px 3px 0',
+    display: 'flex',
+    alignItems: 'center',
+    boxSizing: 'border-box',
+    width: 'max-content',
+    height: `${NAME_TALL}px`,
+    padding: '0 5px',
+    borderRadius: '4px 4px 4px 0',
     background: 'var(--peer)',
-    color: 'var(--accent-ink)',
-    font: `500 10px/1.5 var(--font-ui)`,
+    color: 'var(--peer-ink)',
+    font: `600 10px/1 var(--font-ui)`,
     letterSpacing: '0.02em',
     whiteSpace: 'nowrap',
+    textAlign: 'left',
+    direction: 'ltr',
     WebkitUserSelect: 'none',
     userSelect: 'none',
     pointerEvents: 'none',
     animation: 'cm-nib-caret-name var(--dur-base) var(--ease-out)',
   },
 
+  '.cm-nib-caret.is-below .cm-nib-caret-name': {
+    top: '100%',
+    bottom: 'auto',
+    borderRadius: '0 4px 4px 4px',
+  },
+
+  '.cm-nib-caret.is-shifted .cm-nib-caret-name': {
+    borderRadius: '4px',
+  },
+
   '.cm-nib-caret-face': {
-    display: 'inline-block',
-    width: '13px',
-    height: '13px',
+    flex: 'none',
+    width: '12px',
+    height: '12px',
     margin: '0 3px 0 -2px',
     borderRadius: '50%',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    verticalAlign: '-2px',
   },
 
   '.cm-nib-caret.is-passing': {
@@ -211,7 +401,7 @@ const style = EditorView.baseTheme({
   },
 
   '@keyframes cm-nib-caret-name': {
-    from: { opacity: 0, transform: 'translateY(2px)' },
+    from: { opacity: 0 },
   },
 })
 
@@ -241,7 +431,7 @@ interface Held {
   left: number
 }
 
-function layer(side: 'above' | 'below'): HTMLElement {
+function heldRow(side: 'above' | 'below'): HTMLElement {
   const one = document.createElement('div')
   one.className = `cm-nib-held is-${side}`
   one.setAttribute('aria-hidden', 'true')
@@ -253,6 +443,7 @@ function pill(one: Peer): HTMLElement {
   tag.className = 'cm-nib-held-name'
   tag.dataset.peer = String(one.id)
   tag.style.setProperty('--peer', one.colour)
+  tag.style.setProperty('--peer-ink', inkOn(one.colour))
   tag.append(one.name)
   return tag
 }
@@ -261,8 +452,8 @@ function heldCarets(): Extension {
   return [
     ViewPlugin.fromClass(
       class {
-        private readonly above = layer('above')
-        private readonly below = layer('below')
+        private readonly above = heldRow('above')
+        private readonly below = heldRow('below')
         private drawn = ''
         private readonly look = () => this.view.requestMeasure(this.measure)
 
@@ -382,7 +573,7 @@ const heldStyle = EditorView.baseTheme({
     padding: '0 5px 1px 4px',
     borderRadius: '3px',
     background: 'var(--peer)',
-    color: 'var(--accent-ink)',
+    color: 'var(--peer-ink)',
     font: `500 10px/1.5 var(--font-ui)`,
     letterSpacing: '0.02em',
     whiteSpace: 'nowrap',
@@ -402,7 +593,7 @@ const heldStyle = EditorView.baseTheme({
 })
 
 export function remoteCarets(): Extension {
-  return [present, style, heldCarets()]
+  return [present, caretLayer, style, heldCarets()]
 }
 
 export function peersOf(state: EditorState): readonly Peer[] {
