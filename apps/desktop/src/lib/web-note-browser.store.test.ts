@@ -22,8 +22,8 @@ vi.mock('./tauri', async (importOriginal) => ({
           ? 'bplist00\u00d1\u0001\u0002SURL'
           : command === 'read_note'
             ? '[InternetShortcut]\r\n'
-            : command === 'file_stamp' && args?.path === BINARY
-              ? { modified: 1, size: 1 }
+            : command === 'path_exists' && args?.path === BINARY
+              ? true
               : undefined,
     ),
 }))
