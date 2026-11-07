@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::io::{Read as _, Write as _};
 use std::path::{Path, PathBuf};
@@ -13,7 +13,7 @@ use super::bin::{self, Ticket};
 use super::changes::gone;
 use super::listing::{asked, listed, Entry};
 use super::reach::{Explored, Use};
-use crate::paths::{free_spot, inside};
+use crate::paths::{first_spot, inside, path_key, taken};
 
 const PROGRESS: &str = "explorer://progress";
 
@@ -237,11 +237,17 @@ fn planned(
     out: &mut Transferred,
 ) -> Vec<(PathBuf, PathBuf)> {
     let mut plan = Vec::new();
+    let mut landing = HashSet::new();
     for from in froms {
         let Some(name) = from.file_name() else {
             continue;
         };
         let is_file = !fs::symlink_metadata(from).is_ok_and(|meta| meta.is_dir());
+        let free = |to: &Path| {
+            first_spot(to, is_file, |one| {
+                !taken(one, is_file) && !landing.contains(&path_key(one))
+            })
+        };
         let mut to = folder.join(name);
         if inside(from, folder) {
             out.failed
@@ -252,7 +258,13 @@ fn planned(
             if how == How::Move {
                 continue;
             }
-            to = free_spot(&to, is_file);
+            to = free(&to);
+        } else if landing.contains(&path_key(&to)) {
+            if clash == Clash::Skip {
+                out.skipped.push(from.display().to_string());
+                continue;
+            }
+            to = free(&to);
         } else if fs::symlink_metadata(&to).is_ok() {
             match clash {
                 Clash::Replace => {}
@@ -260,9 +272,10 @@ fn planned(
                     out.skipped.push(from.display().to_string());
                     continue;
                 }
-                Clash::Keep => to = free_spot(&to, is_file),
+                Clash::Keep => to = free(&to),
             }
         }
+        landing.insert(path_key(&to));
         plan.push((from.clone(), to));
     }
     plan
@@ -344,6 +357,9 @@ impl Meter<'_> {
 }
 
 fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -> Result<(), Stop> {
+    if fs::symlink_metadata(to).is_ok() {
+        return Err(Stop::Failed(format!("{} is already there", to.display())));
+    }
     if how == How::Move {
         let bytes = weight(from, running);
         if fs::rename(from, to).is_ok() {
@@ -782,5 +798,51 @@ mod tests {
             all += 1;
         });
         assert_eq!(all, 2);
+    }
+
+    #[test]
+    fn two_things_of_one_name_never_land_on_each_other() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let (one, other, into) = (
+            dir.path().join("one"),
+            dir.path().join("other"),
+            dir.path().join("into"),
+        );
+        for folder in [&one, &other, &into] {
+            fs::create_dir_all(folder).expect("a folder");
+        }
+        fs::write(one.join("a.txt"), "one").expect("a");
+        fs::write(other.join("a.txt"), "other").expect("a");
+        let from = vec![one.join("a.txt"), other.join("a.txt")];
+
+        for clash in [Clash::Keep, Clash::Replace] {
+            let mut out = Transferred::default();
+            let plan = planned(&from, &into, How::Move, clash, &mut out);
+            assert_eq!(
+                plan,
+                [
+                    (one.join("a.txt"), into.join("a.txt")),
+                    (other.join("a.txt"), into.join("a 2.txt")),
+                ]
+            );
+        }
+        let mut out = Transferred::default();
+        let plan = planned(&from, &into, How::Move, Clash::Skip, &mut out);
+        assert_eq!(plan, [(one.join("a.txt"), into.join("a.txt"))]);
+        assert_eq!(out.skipped.len(), 1);
+
+        let running = Job::begin("test-land");
+        let mut counted = meter();
+        let to = into.join("a.txt");
+        assert!(carried(&one.join("a.txt"), &to, How::Move, &running, &mut counted).is_ok());
+        for how in [How::Move, How::Copy] {
+            let again = carried(&other.join("a.txt"), &to, how, &running, &mut counted);
+            assert!(matches!(again, Err(Stop::Failed(_))));
+            assert_eq!(fs::read_to_string(&to).expect("kept"), "one");
+            assert_eq!(
+                fs::read_to_string(other.join("a.txt")).expect("kept"),
+                "other"
+            );
+        }
     }
 }
