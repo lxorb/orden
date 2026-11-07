@@ -6,6 +6,10 @@ const PRODUCT_VERSION: &str = "140.0.0.0";
 
 const MOST_BYTES: usize = 256 * 1024 * 1024;
 
+const CONNECTING: std::time::Duration = std::time::Duration::from_secs(20);
+
+const SILENT: std::time::Duration = std::time::Duration::from_secs(60);
+
 #[cfg(not(feature = "cef"))]
 fn service(store: Store, response: &str, x: &str) -> Result<String, String> {
     match store {
@@ -22,6 +26,8 @@ fn service(store: Store, response: &str, x: &str) -> Result<String, String> {
 pub fn client() -> Result<reqwest::Client, String> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
+        .connect_timeout(CONNECTING)
+        .read_timeout(SILENT)
         .build()
         .map_err(|error| error.to_string())
 }
@@ -52,7 +58,11 @@ pub async fn newer(
 }
 
 pub async fn download(url: &str) -> Result<Vec<u8>, String> {
-    let response = client()?
+    capped(url, MOST_BYTES).await
+}
+
+async fn capped(url: &str, most: usize) -> Result<Vec<u8>, String> {
+    let mut response = client()?
         .get(url)
         .send()
         .await
@@ -60,15 +70,18 @@ pub async fn download(url: &str) -> Result<Vec<u8>, String> {
         .map_err(offline)?;
     if response
         .content_length()
-        .is_some_and(|length| length > MOST_BYTES as u64)
+        .is_some_and(|length| length > most as u64)
     {
         return Err("that extension is too large".into());
     }
-    let bytes = response.bytes().await.map_err(offline)?;
-    if bytes.len() > MOST_BYTES {
-        return Err("that extension is too large".into());
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(offline)? {
+        if bytes.len() + chunk.len() > most {
+            return Err("that extension is too large".into());
+        }
+        bytes.extend_from_slice(&chunk);
     }
-    Ok(bytes.to_vec())
+    Ok(bytes)
 }
 
 pub fn offline(error: reqwest::Error) -> String {
@@ -113,7 +126,39 @@ pub fn later(a: &str, b: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{later, update_in};
+    use super::{capped, later, update_in};
+    use std::io::{Read as _, Write as _};
+
+    fn serving(chunks: usize) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a port");
+        let address = listener.local_addr().expect("its address");
+        std::thread::spawn(move || {
+            let (mut socket, _) = listener.accept().expect("the client");
+            let mut asked = [0_u8; 4096];
+            let _ = socket.read(&mut asked);
+            let _ = socket.write_all(
+                b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n",
+            );
+            for _ in 0..chunks {
+                if socket.write_all(b"400\r\n").is_err()
+                    || socket.write_all(&[7_u8; 1024]).is_err()
+                    || socket.write_all(b"\r\n").is_err()
+                {
+                    return;
+                }
+            }
+            let _ = socket.write_all(b"0\r\n\r\n");
+        });
+        format!("http://{address}/x.crx")
+    }
+
+    #[test]
+    fn a_download_that_says_no_length_is_cut_off_at_the_most_it_may_be() {
+        let small = tauri::async_runtime::block_on(capped(&serving(2), 4096));
+        assert_eq!(small.map(|bytes| bytes.len()), Ok(2048));
+        let large = tauri::async_runtime::block_on(capped(&serving(64), 4096));
+        assert_eq!(large, Err("that extension is too large".to_owned()));
+    }
 
     #[test]
     fn an_update_answer_says_the_version_and_the_file() {
