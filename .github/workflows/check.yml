@@ -42,6 +42,7 @@ jobs:
 
       - name: Two windows of one app on one note and one canvas
         run: |
+          (cd services/machine && node build.ts)
           python scripts/windows-live-probe.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --log worker.log
 
       - if: always()
