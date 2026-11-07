@@ -86,21 +86,30 @@ function domainOf(url: URL): string {
   return url.hostname.toLowerCase().replace(/^www\./, '')
 }
 
-export function isIframeTag(html: string): boolean {
-  return /^\s*<\/?iframe\b/i.test(html)
-}
+const OPENING = /\s*<\/?iframe\b(?:"[^"]*"|'[^']*'|[^'">])*>?/iy
 
-export function splitIframe(html: string): { tag: string; rest: string } {
-  const opening = /^\s*<\/?iframe\b(?:"[^"]*"|'[^']*'|[^'">])*>?/i.exec(html)
-  if (!opening) return { tag: '', rest: html }
+const CLOSING = /<\/iframe\s*>/gi
 
-  let end = opening[0].length
-  if (!/^\s*<\//.test(opening[0])) {
-    const closing = /<\/iframe\s*>/i.exec(html.slice(end))
-    if (closing) end += closing.index + closing[0].length
+export function iframesAhead(html: string): { tags: string[]; rest: string } {
+  const tags: string[] = []
+  let at = 0
+  let closers = true
+  for (;;) {
+    OPENING.lastIndex = at
+    const opening = OPENING.exec(html)
+    if (!opening) break
+
+    let end = at + opening[0].length
+    if (closers && !/^\s*<\//.test(opening[0])) {
+      CLOSING.lastIndex = end
+      const closing = CLOSING.exec(html)
+      if (closing) end = closing.index + closing[0].length
+      else closers = false
+    }
+    tags.push(html.slice(at, end))
+    at = end
   }
-
-  return { tag: html.slice(0, end), rest: html.slice(end) }
+  return { tags, rest: html.slice(at) }
 }
 
 export function iframeCard(tag: string): string | null {

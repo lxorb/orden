@@ -25,7 +25,7 @@ import {
 } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
-import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
+import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
   type EmbedResolver,
   type Embeds,
@@ -255,13 +255,8 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
       html(token: Tokens.HTML | Tokens.Tag) {
         const written = options.escapeHtml ? token.text : blockMarksOff(token.text)
-        let text = written
-        let cards = ''
-        while (isIframeTag(text)) {
-          const { tag, rest } = splitIframe(text)
-          cards += iframeCard(tag) ?? ''
-          text = rest
-        }
+        const { tags, rest: text } = iframesAhead(written)
+        const cards = tags.map((tag) => iframeCard(tag) ?? '').join('')
         if (text !== written && !text.trim()) return cards
         if (options.escapeHtml) return cards + escape(text)
 
