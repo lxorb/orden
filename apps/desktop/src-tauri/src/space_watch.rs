@@ -209,12 +209,14 @@ pub fn working_watch(app: AppHandle, root: String, news: Channel<News>) -> Resul
     let judged = judged_working(&app, &root)?;
     let key = judged.given.clone();
     let spelled = vec![judged.clone()];
-    let made = armed(vec![judged])?.start(Box::new(move |heard| {
-        news.send(self::news(&spelled, heard)).is_ok()
-    }))?;
-    let old = app.state::<Working>().lock().insert(key, made);
-    drop(old);
-    Ok(())
+    let ready = armed(vec![judged])?;
+    let working = app.state::<Working>();
+    let mut running = working.lock();
+    ready.start_in(
+        &mut running,
+        key,
+        Box::new(move |heard| news.send(self::news(&spelled, heard)).is_ok()),
+    )
 }
 
 #[tauri::command(async)]
