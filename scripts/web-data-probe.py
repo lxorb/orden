@@ -222,7 +222,7 @@ def main() -> int:
     atexit.register(shutil.rmtree, root, ignore_errors=True)
     (root / SPACE).mkdir(parents=True)
     (root / SPACE / "Site.url").write_text(page_probe.shortcut(f"{b}/home", "Site"), encoding="utf-8")
-    env = {**os.environ, "NIB_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
     said: dict[str, object] = {}
     failed: list[str] = []
 

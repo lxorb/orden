@@ -32,13 +32,13 @@ ORIGINS = FOLDER / ".handoff-origins"
 
 def built() -> None:
     said = ORIGINS.read_text(encoding="utf-8") if ORIGINS.exists() else ""
-    if os.environ.get("NIB_SKIP_BUILD") and (FOLDER / "index.html").exists() and said == f"{OLD} {NEW}":
+    if os.environ.get("ORDEN_SKIP_BUILD") and (FOLDER / "index.html").exists() and said == f"{OLD} {NEW}":
         say(f"reusing the build in {FOLDER.name}")
         return
     say(f"building the web app into {FOLDER.name} for {OLD} and {NEW}")
-    environment = {**os.environ, "VITE_NIB_WEB": NEW, "VITE_NIB_LEGACY_WEB": OLD}
+    environment = {**os.environ, "VITE_ORDEN_WEB": NEW, "VITE_ORDEN_LEGACY_WEB": OLD}
     environment.pop("NODE_ENV", None)
-    environment.pop("VITE_NIB_API", None)
+    environment.pop("VITE_ORDEN_API", None)
     done = subprocess.run(
         [*tool(APP, "vite"), "build", "--mode", "drive", "--outDir", str(FOLDER), "--emptyOutDir"],
         cwd=APP,

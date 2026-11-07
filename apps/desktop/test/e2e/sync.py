@@ -291,7 +291,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
             text=True,
             encoding="utf-8",
             errors="replace",
-            env={**os.environ, "NIB_TOKEN": program, "NIB_API": ORIGIN},
+            env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
             check=False,
         )
 
@@ -307,7 +307,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                env={**os.environ, "NIB_TOKEN": program, "NIB_API": ORIGIN},
+                env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
                 check=False,
             )
             say(f"nib-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")

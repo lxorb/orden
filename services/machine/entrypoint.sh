@@ -23,7 +23,7 @@ chown nib:nib /home/nib
 install -d -o nib -g nib /home/nib/.local /home/nib/.local/bin
 chmod 700 /var/lib/nibd
 
-if [ "${NIB_AGENTS:-1}" != 0 ]; then
+if [ "${ORDEN_AGENTS:-1}" != 0 ]; then
   setpriv --reuid=nib --regid=nib --init-groups \
     env -i HOME=/home/nib USER=nib LOGNAME=nib PATH=/usr/local/bin:/usr/bin:/bin \
     NODE_EXTRA_CA_CERTS=$bundle SSL_CERT_FILE=$bundle LANG=C.UTF-8 \

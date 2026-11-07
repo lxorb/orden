@@ -68,7 +68,7 @@ jobs:
       - id: wait
         env:
           GH_TOKEN: ${{ github.token }}
-          SETTLE_S: ${{ vars.NIB_CI_SETTLE_S || '300' }}
+          SETTLE_S: ${{ vars.ORDEN_CI_SETTLE_S || '300' }}
           LATER: >-
             [.workflow_runs[] | select(.run_number > $mine and .conclusion != "cancelled") | .run_number]
             | max // empty

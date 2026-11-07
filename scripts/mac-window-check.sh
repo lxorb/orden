@@ -5,7 +5,7 @@ app="$1"
 identifier="ch.emilvinu.nib.probe.mac-window"
 cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
 support="$HOME/Library/Application Support/$identifier"
-export NIB_ENDPOINT="$support/automation.json"
+export ORDEN_ENDPOINT="$support/automation.json"
 shots="${SHOTS:-mac-window-shots}"
 mkdir -p "$shots"
 
@@ -13,7 +13,7 @@ say_eval() { node "$cli" eval "$1" --yes 2>&1; }
 running() { pgrep -f "$app/Contents/MacOS/" >/dev/null; }
 up() {
   for _ in $(seq 60); do
-    [ -f "$NIB_ENDPOINT" ] && running && node "$cli" verbs >/dev/null 2>&1 && return 0
+    [ -f "$ORDEN_ENDPOINT" ] && running && node "$cli" verbs >/dev/null 2>&1 && return 0
     sleep 1
   done
   echo "nothing answered from $app"
@@ -44,7 +44,7 @@ read_place() { say_eval "await $where" | tail -1; }
 rm -rf "$support"
 open "$app"
 up || exit 1
-python3 - "$NIB_ENDPOINT" <<'PY'
+python3 - "$ORDEN_ENDPOINT" <<'PY'
 import json, sys
 path = sys.argv[1]
 held = json.load(open(path))

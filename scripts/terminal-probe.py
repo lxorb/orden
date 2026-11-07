@@ -236,7 +236,7 @@ def main() -> int:
     say(f"spaces root {spaces}")
 
     tabs.wipe(args.identifier)
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)

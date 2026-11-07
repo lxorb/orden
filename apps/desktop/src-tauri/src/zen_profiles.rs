@@ -14,7 +14,7 @@ use crate::paths::folder_named;
 
 pub type ZenProfile = Profile;
 
-const ZEN_DIR: &str = "NIB_ZEN_DIR";
+const ZEN_DIR: &str = "ORDEN_ZEN_DIR";
 
 const SESSIONS: [&str; 4] = [
     "zen-sessions.jsonlz4",

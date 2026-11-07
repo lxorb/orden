@@ -38,7 +38,7 @@ const UNSEEN: f64 = 0.01;
 
 pub fn on() -> bool {
     static ON: OnceLock<bool> = OnceLock::new();
-    *ON.get_or_init(|| std::env::var_os("NIB_PAGES_UNDER").is_some_and(|said| said == "1"))
+    *ON.get_or_init(|| std::env::var_os("ORDEN_PAGES_UNDER").is_some_and(|said| said == "1"))
 }
 
 struct Held {

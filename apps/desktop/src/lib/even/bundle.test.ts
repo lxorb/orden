@@ -55,7 +55,7 @@ beforeAll(() => {
       cwd: app,
       stdio: 'pipe',
       shell: process.platform === 'win32',
-      env: { ...process.env, NODE_ENV: 'production', NIB_EVEN_CONTENTS: contents },
+      env: { ...process.env, NODE_ENV: 'production', ORDEN_EVEN_CONTENTS: contents },
     },
   )
   execFileSync('node', [resolve(app, '../../scripts/even-stage.mjs'), staged, staged], {

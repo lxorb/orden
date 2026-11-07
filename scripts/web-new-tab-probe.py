@@ -24,7 +24,7 @@ from probe_app import close_app, run_probe, main_window
 PORT_FROM = 23900
 PORT_TO = 23919
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "New tab probe"
 NOTE = "Idea"
 

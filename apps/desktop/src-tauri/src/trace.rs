@@ -8,7 +8,7 @@ use tauri::AppHandle;
 use crate::clock;
 use crate::paths::log_dir;
 
-const SWITCH: &str = "NIB_TRACE_STARTUP";
+const SWITCH: &str = "ORDEN_TRACE_STARTUP";
 
 const FILE: &str = "startup-trace.log";
 

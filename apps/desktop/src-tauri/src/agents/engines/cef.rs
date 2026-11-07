@@ -29,7 +29,7 @@ static WINDOWLESS: OnceLock<bool> = OnceLock::new();
 
 pub fn windowless_wanted(config: &Path) -> bool {
     *WINDOWLESS.get_or_init(|| {
-        std::env::var_os("NIB_AGENT_PAGES").is_some_and(|said| said == "1")
+        std::env::var_os("ORDEN_AGENT_PAGES").is_some_and(|said| said == "1")
             || std::fs::read_to_string(config.join("agents.json")).is_ok_and(|text| paired(&text))
     })
 }

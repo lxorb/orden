@@ -119,8 +119,8 @@ endpoint() {
 }
 command=("$@")
 if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${PASS:-0}" = 1 ]; then
-  NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
-  export NIB_CEF_DEBUG_PORT
+  ORDEN_CEF_DEBUG_PORT=${ORDEN_CEF_DEBUG_PORT:-9339}
+  export ORDEN_CEF_DEBUG_PORT
 fi
 if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ] || [ "${GLOBALS:-0}" = 1 ]; then
   mkdir -p "$out/site"
@@ -228,8 +228,8 @@ if [ "${DNS:-0}" = 1 ]; then
 fi
 if [ "${DOWNLOAD:-0}" = 1 ]; then
   mkdir -p "$out/downloads"
-  NIB_DOWNLOADS_DIR="$(cd "$out/downloads" && pwd)"
-  export NIB_DOWNLOADS_DIR
+  ORDEN_DOWNLOADS_DIR="$(cd "$out/downloads" && pwd)"
+  export ORDEN_DOWNLOADS_DIR
   python3 "$here/download-server.py" 8765 "$out/served.txt" > "$out/site.log" 2>&1 &
   site_pid=$!
   endpoint
@@ -244,8 +244,8 @@ if [ "${CARRY:-0}" = 1 ]; then
 fi
 if [ "${WATCH:-0}" = 1 ]; then
   mkdir -p "$out/spaces"
-  NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
-  export NIB_SPACES_DIR
+  ORDEN_SPACES_DIR="$(cd "$out/spaces" && pwd)"
+  export ORDEN_SPACES_DIR
   endpoint
 fi
 ext_name="Orden run extension"
@@ -275,8 +275,8 @@ icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8,
     "background": {"service_worker": "background.js"},
 }))
 MAKE
-  NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd),disable-features=DisableLoadExtensionCommandLineSwitch"
-  export NIB_CEF_ARGS
+  ORDEN_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd),disable-features=DisableLoadExtensionCommandLineSwitch"
+  export ORDEN_CEF_ARGS
 fi
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
 [ "${KILL:-0}" = 1 ] && endpoint
@@ -284,8 +284,8 @@ fi
 [ "${PDFMARK:-0}" = 1 ] && endpoint
 if [ "${EXPORTPDF:-0}" = 1 ]; then
   mkdir -p "$out/spaces"
-  NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
-  export NIB_SPACES_DIR
+  ORDEN_SPACES_DIR="$(cd "$out/spaces" && pwd)"
+  export ORDEN_SPACES_DIR
   endpoint
 fi
 [ "${CLOSING:-0}" = 1 ] && endpoint
@@ -374,7 +374,7 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
 fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
-  python3 "$here/compositing-check.py" "$NIB_CEF_DEBUG_PORT" || status=1
+  python3 "$here/compositing-check.py" "$ORDEN_CEF_DEBUG_PORT" || status=1
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
@@ -423,7 +423,7 @@ fi
 
 if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
   sleep 3
-  python3 "$here/download-drive.py" "$out" "$NIB_DOWNLOADS_DIR" "$out/served.txt" || status=1
+  python3 "$here/download-drive.py" "$out" "$ORDEN_DOWNLOADS_DIR" "$out/served.txt" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${GLOBALS:-0}" = 1 ]; then
@@ -460,7 +460,7 @@ if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
   }
   sleep 3
   if python3 "$here/extensions-drive.py" "$out" installed "$ext_name"; then
-    unset NIB_CEF_ARGS
+    unset ORDEN_CEF_ARGS
     if started_again again; then
       python3 "$here/extensions-drive.py" "$out" again "$ext_name" || status=1
     else
@@ -495,7 +495,7 @@ if [ "$status" = 0 ] && [ "${WATCH:-0}" = 1 ]; then
   sleep 5
   space=$(python3 "$here/watch-drive.py" "$out" where - | tail -1)
   if [ -z "$space" ] || [ ! -d "$space" ]; then
-    echo "::error::the app made no working folder for its space in $NIB_SPACES_DIR: $space"
+    echo "::error::the app made no working folder for its space in $ORDEN_SPACES_DIR: $space"
     status=1
   else
     echo "the space: $space"

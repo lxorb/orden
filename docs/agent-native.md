@@ -634,7 +634,7 @@ risk at its worst (9.6). So:
   Playwright's `storageState` has the same two edges. Emil has not chosen between this and
   **blocking**, where an agent's tab is never in the reader's store and opens in its own,
   signed out, saying so in the answer; `engines::READER_STORE` is the switch, the twin is
-  the default, and `NIB_AGENT_READER_STORE=blocked` turns one run to the other. Measured
+  the default, and `ORDEN_AGENT_READER_STORE=blocked` turns one run to the other. Measured
   (`agent-tab-probe.py`, both engines): a cookie the reader's tab set is in the twin's
   page, and the agent's own cookie never reaches the reader's tab.
 - A site can be set to **agent store only** in the agent's grant (mail, banking), and the
@@ -1527,7 +1527,7 @@ already has a server called `nib` is left alone, whatever it points at; the swit
 Settings > AI > Access ("Agents on this computer connect on their own", on by default)
 takes the entry out again, only where it names this app's program. Only the app somebody
 installed does this - a release under the shipped identifier, never a probe or a
-development build - and a test does it in homes of its own (`NIB_ENROLL_HOME`), never the
+development build - and a test does it in homes of its own (`ORDEN_ENROLL_HOME`), never the
 reader's. The first call is the pairing in 9.1, allowed once and remembered; and a client
 paired since 2026-10-12 gets what the AI panel's own agent has: the terminal and helpers
 (`agents`, docs/ai.md "Helpers") as well as the rest of 9.1's defaults. Grants made before

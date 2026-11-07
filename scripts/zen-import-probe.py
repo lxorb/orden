@@ -16,7 +16,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-ZEN_DIR = "NIB_ZEN_DIR"
+ZEN_DIR = "ORDEN_ZEN_DIR"
 
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)

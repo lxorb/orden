@@ -109,9 +109,9 @@ def pressed(held: dict, command: str, settle: float = 1.2) -> None:
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: bool = False):
     endpoint = allow_eval(identifier)
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     if trace:
-        env["NIB_TRACE_STARTUP"] = "1"
+        env["ORDEN_TRACE_STARTUP"] = "1"
     app = run_probe(exe, env=env, quiet=True)
     held = waited_for(endpoint)
     until = time.monotonic() + 30

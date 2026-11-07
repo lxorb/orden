@@ -247,7 +247,7 @@ def main() -> int:
     (space / "Alpha.md").write_text("# Alpha\n\nThe first note.\n", encoding="utf-8")
     (space / "Beta.md").write_text("# Beta\n\nThe second note.\n", encoding="utf-8")
     (space / "Site.url").write_text(page_probe.shortcut(f"http://127.0.0.1:{port}/one", "Site"), encoding="utf-8")
-    env = {**os.environ, "NIB_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(root), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
 
     said: dict[str, object] = {}
     failed: list[str] = []

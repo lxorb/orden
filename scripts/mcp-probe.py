@@ -347,7 +347,7 @@ class Drive:
         self.exe = exe
         self.folder = config_dir(identifier)
         self.site = site
-        self.env = {**os.environ, OFF_SCREEN: "1", "NIB_SPACES_DIR": str(spaces)}
+        self.env = {**os.environ, OFF_SCREEN: "1", "ORDEN_SPACES_DIR": str(spaces)}
         self.family = Family(exe)
         self.results: list[tuple[str, bool, str]] = []
 
@@ -579,7 +579,7 @@ class Drive:
         room = pathlib.Path(tempfile.mkdtemp(prefix="nib-mcp-claude-"))
         add = [
             claude, "mcp", "add", "--scope", "project", "nib",
-            "-e", f"{OFF_SCREEN}=1", "-e", f"NIB_SPACES_DIR={self.env['NIB_SPACES_DIR']}",
+            "-e", f"{OFF_SCREEN}=1", "-e", f"ORDEN_SPACES_DIR={self.env['ORDEN_SPACES_DIR']}",
             "--", str(self.exe), "mcp",
         ]
         print("  " + subprocess.list2cmdline(add), flush=True)

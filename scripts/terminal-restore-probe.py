@@ -9,7 +9,7 @@ paint over, the prompt in the folder the old one was in.
     python scripts/terminal-restore-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
 
 Build the exe as `scripts/probe_app.py` says. Every launch is `run_probe`'s: off the screen,
-never taking the keyboard, with `NIB_SPACES_DIR` in a folder of this run's own. The app is
+never taking the keyboard, with `ORDEN_SPACES_DIR` in a folder of this run's own. The app is
 closed the way a person closes it, and nothing is ended by name.
 """
 
@@ -105,7 +105,7 @@ def main() -> int:
     say(f"spaces root {spaces}, shell goes to {here}, marker {marker}")
 
     tabs.wipe(args.identifier)
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)

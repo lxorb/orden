@@ -5,8 +5,8 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, extname, join } from 'node:path'
 
-const API = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
-const TOKEN = process.env.NIB_TOKEN ?? ''
+const API = (process.env.ORDEN_API || process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
+const TOKEN = process.env.ORDEN_TOKEN ?? process.env.NIB_TOKEN ?? ''
 
 const AT_ONCE = 6
 
@@ -315,7 +315,7 @@ async function sums(root, index) {
 async function main() {
   const args = process.argv.slice(2)
   const root = args.find((one) => !one.startsWith('--'))
-  if (!TOKEN) throw new Error('NIB_TOKEN is not set')
+  if (!TOKEN) throw new Error('ORDEN_TOKEN is not set')
   if (!root) throw new Error('usage: account-backup.mjs <folder> [--no-history]')
 
   await mkdir(root, { recursive: true })

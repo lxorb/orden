@@ -10,7 +10,7 @@ machine can read it, through Windows PowerShell's WinRT.
 
 **It never pops up on anybody's screen.** The app is a probe with an identifier of its
 own (never `ch.emilvinu.nib`), and a probe shows a notice only when started with
-`NIB_PROBE_NOTICES`, which only this script sets, and then straight into the action centre
+`ORDEN_PROBE_NOTICES`, which only this script sets, and then straight into the action centre
 with no banner (`SuppressPopup`). On the way out - pass, fail or crash - every toast of
 that id is taken off and the id's registration removed, and the run fails if one is left.
 A press cannot be made from outside the process that showed the toast, so what a press and
@@ -249,7 +249,7 @@ def main() -> int:
         wipe_profile()
         register_id()
         held = setting()
-        environment = debugged({**os.environ, "NIB_SPACES_DIR": str(spaces), "NIB_PROBE_NOTICES": "1"})
+        environment = debugged({**os.environ, "ORDEN_SPACES_DIR": str(spaces), "ORDEN_PROBE_NOTICES": "1"})
         app = run_probe(exe, env=environment)
         page = the_page()
 

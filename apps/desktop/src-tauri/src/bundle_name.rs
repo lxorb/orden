@@ -49,7 +49,7 @@ pub fn carry_over() {
     use std::os::unix::process::CommandExt as _;
     use std::process::{Command, Stdio};
 
-    if env!("NIB_IDENTIFIER") != "ch.emilvinu.nib" {
+    if env!("ORDEN_IDENTIFIER") != "ch.emilvinu.nib" {
         return;
     }
     let Some((from, to)) = std::env::current_exe().ok().and_then(|exe| renamed(&exe)) else {

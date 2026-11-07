@@ -957,7 +957,7 @@ fn waited<T>(page: &Page<'_>, heard: &Receiver<T>, most: Duration) -> Result<T, 
 }
 
 thread_local! {
-    static NIB_WORLD: std::cell::OnceCell<Retained<WKContentWorld>> = const { std::cell::OnceCell::new() };
+    static ORDEN_WORLD: std::cell::OnceCell<Retained<WKContentWorld>> = const { std::cell::OnceCell::new() };
 }
 
 #[allow(
@@ -965,7 +965,7 @@ thread_local! {
     reason = "a content world is asked for by name through the Objective-C runtime"
 )]
 fn nib_world(mtm: MainThreadMarker) -> Retained<WKContentWorld> {
-    NIB_WORLD.with(|held| {
+    ORDEN_WORLD.with(|held| {
         held.get_or_init(|| unsafe {
             WKContentWorld::worldWithName(&NSString::from_str(crate::web_worlds::WORLD), mtm)
         })

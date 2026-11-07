@@ -120,7 +120,7 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-tools-"))
     (spaces / "Tools probe").mkdir(parents=True, exist_ok=True)
     (spaces / "Tools probe" / "A note.md").write_text("# A note\n", encoding="utf-8")
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     exe = pathlib.Path(args.exe).resolve()
     tabs.wipe(args.identifier)

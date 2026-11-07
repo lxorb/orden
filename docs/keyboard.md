@@ -501,7 +501,7 @@ back. Chrome's F11 has no Escape at all; here it is the one the issue asked for,
 the rule Escape keeps everywhere else (one level back, never two). Outside a web page a
 small button in the corner stays as well, fading once nothing has moved; over a web page
 nothing is drawn, since nothing of the app's can be drawn over a page, and F11 and Escape
-are the way out, as in Chrome. A run sent off the screen (`NIB_OFF_SCREEN`) never puts its
+are the way out, as in Chrome. A run sent off the screen (`ORDEN_OFF_SCREEN`) never puts its
 window over one: the crate keeps what was asked and leaves the window where it is; see
 `src-tauri/src/full_screen.rs`.
 
@@ -848,7 +848,7 @@ reached for daily climbs over something that merely matches as well, and a note 
 from the file list counts as much as one chosen here. Nothing about it is read at launch.
 
 `lib/palette/eval.test.ts` holds the order to fifty-odd real queries on a space shaped
-like Emil's (`NIB_EVAL=1` prints them): the row meant is first for 98% of them and in the
+like Emil's (`ORDEN_EVAL=1` prints them): the row meant is first for 98% of them and in the
 first three for all, where the palette before this, which listed notes and nothing else
 without a `>`, had 28%.
 

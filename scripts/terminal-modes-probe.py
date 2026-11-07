@@ -142,7 +142,7 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-modes-"))
     (spaces / "Modes probe").mkdir(parents=True, exist_ok=True)
     tabs.wipe(args.identifier)
-    environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
 
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)

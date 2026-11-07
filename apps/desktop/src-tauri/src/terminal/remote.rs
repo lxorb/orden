@@ -184,7 +184,7 @@ struct Places {
 
 fn places(webview: &Webview) -> Result<Places, String> {
     let home = dirs::home_dir().ok_or_else(|| "no home folder".to_owned())?;
-    let own = std::env::var_os("NIB_SSH_CONFIG").filter(|one| !one.is_empty());
+    let own = std::env::var_os("ORDEN_SSH_CONFIG").filter(|one| !one.is_empty());
     let config = own
         .clone()
         .map_or_else(|| home.join(".ssh").join("config"), PathBuf::from);
@@ -227,7 +227,7 @@ fn write_kept(path: &Path, kept: &Kept) -> Result<(), String> {
 }
 
 fn ssh_program() -> Option<PathBuf> {
-    if let Some(own) = std::env::var_os("NIB_SSH").filter(|one| !one.is_empty()) {
+    if let Some(own) = std::env::var_os("ORDEN_SSH").filter(|one| !one.is_empty()) {
         return Some(PathBuf::from(own));
     }
     let name = if cfg!(windows) { "ssh.exe" } else { "ssh" };

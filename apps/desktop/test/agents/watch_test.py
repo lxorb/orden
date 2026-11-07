@@ -212,7 +212,7 @@ class TheSystemsBoxes(unittest.TestCase):
             mock.patch.object(probe_app, "_started_bare", lambda argv, **how: said.append("start") or FakeApp(0)),
             mock.patch.object(probe_app.threading, "Thread"),
         ):
-            probe_app.run_probe(pathlib.Path("nib.exe"), env={"NIB_SPACES_DIR": "x"})
+            probe_app.run_probe(pathlib.Path("nib.exe"), env={"ORDEN_SPACES_DIR": "x"})
         self.assertEqual(said, ["mode", "start"])
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ import { candidates } from './kinds'
 import { LONGEST, MOST, ranked } from './rank'
 import { command, file, setting, visit, world } from './world.fixture'
 
-const CLOCKED = process.env.NIB_PERF === '1'
+const CLOCKED = process.env.ORDEN_PERF === '1'
 
 const WORDS = ['plan', 'lecture', 'tax', 'notes', 'draft', 'ideas', 'meeting', 'journal']
 

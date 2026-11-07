@@ -91,7 +91,7 @@ def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
     spaces = WORK / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 
-    return run_probe(app, env={**os.environ, "NIB_SPACES_DIR": str(spaces)})
+    return run_probe(app, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)})
 
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
     until = time.monotonic() + patience

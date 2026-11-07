@@ -11,7 +11,7 @@ automation endpoint's `eval`, which the probe turns on in its own identifier's f
 
 * **prime**: a wiped profile, the spaces seeded on the disk, and one session that opens
   everything the way somebody would and closes the way they would.
-* **launch**: warm launches of that profile with `NIB_TRACE_STARTUP` on. What a launch
+* **launch**: warm launches of that profile with `ORDEN_TRACE_STARTUP` on. What a launch
   costs is read off the trace (window shown, first frame, the tab in front, the launch
   order done) and off the front web page itself, which tells this probe's own server
   the moment it has loaded.
@@ -229,9 +229,9 @@ def endpoint_of(identifier: str, pid: int, seconds: float) -> tuple[int, str]:
     raise SystemExit(f"the launch {pid} never wrote {path}")
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: bool):
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     if trace:
-        env["NIB_TRACE_STARTUP"] = "1"
+        env["ORDEN_TRACE_STARTUP"] = "1"
     begun = time.perf_counter()
     app = run_probe(exe, env=env, quiet=True)
     try:

@@ -46,7 +46,7 @@ ${block([`TUNNEL_TOKEN=${boot.tunnel}`])}`,
     owner: root:root
     permissions: '0644'
     content: |
-${block([`NIB_ORIGIN=${origin}`])}`,
+${block([`ORDEN_ORIGIN=${origin}`])}`,
   ]
   if (key) {
     files.push(`  - path: /etc/nibd/ssh_key

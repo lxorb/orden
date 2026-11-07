@@ -679,7 +679,7 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
 
 - **The machine's browser is its owner's.** `nib-open` (services/machine) is `xdg-open`,
   `sensible-browser`, `x-www-browser`, `www-browser` and `$BROWSER` on the machine. It posts
-  the address and `$NIB_SESSION` to `nibd` on a Unix socket (`/run/nibd/open.sock`, every
+  the address and `$ORDEN_SESSION` to `nibd` on a Unix socket (`/run/nibd/open.sock`, every
   user of the machine may write, since every user is its owner), which says `browse
   {session, url}` up the link; `Machine` sends `browse {url}` to **one** socket of the
   machine's owner on that session - the device that typed there last, else the one seen

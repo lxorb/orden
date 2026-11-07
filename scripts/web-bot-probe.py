@@ -139,7 +139,7 @@ def main() -> int:
     port = bp.free_port()
     serve(port)
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-bot-probe-spaces-"))
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     (root / "Bot probe").mkdir()
     (root / "Bot probe" / "Idea.md").write_text("# Idea\n", encoding="utf-8")
 

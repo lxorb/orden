@@ -145,7 +145,7 @@ def main() -> int:
     probe.wipe(args.identifier)
     site = f"http://127.0.0.1:{serve()}/chat"
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-web-note-mark-"))
-    os.environ["NIB_SPACES_DIR"] = str(root / "spaces")
+    os.environ["ORDEN_SPACES_DIR"] = str(root / "spaces")
     space = root / "spaces" / SPACE
     space.mkdir(parents=True)
     (space / "A note.md").write_text("# A note\n", encoding="utf-8")

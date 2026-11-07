@@ -19,7 +19,7 @@ What it checks, through the app's own automation endpoint:
   space - and the tab becomes that file in place.
 
 The page is served from here, on a port of its own, so nothing is asked of anybody's
-network. The space is made in a temp folder named by `NIB_SPACES_DIR`, so the run
+network. The space is made in a temp folder named by `ORDEN_SPACES_DIR`, so the run
 touches nothing of anybody's; see docs/automation.md.
 
     python scripts/new-tabs-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
@@ -56,7 +56,7 @@ from probe_app import run_probe, refuse_updating
 
 PORT = 23760
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 SPACE = "New tabs probe"
 
 HERE = pathlib.Path(__file__).resolve().parent

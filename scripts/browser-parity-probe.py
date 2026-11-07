@@ -213,7 +213,7 @@ def main() -> int:
     serve(port)
     site = f"http://127.0.0.1:{port}"
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-browser-parity-spaces-"))
-    os.environ["NIB_SPACES_DIR"] = str(root)
+    os.environ["ORDEN_SPACES_DIR"] = str(root)
     made = root / SPACE
     (made / "Read").mkdir(parents=True)
     (made / f"{NOTE}.md").write_text(f"# {NOTE}\n\nA note to start from.\n", encoding="utf-8")

@@ -24,6 +24,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-tags: true
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
@@ -127,13 +129,13 @@ jobs:
         run: python3 apps/desktop/test/e2e/smoke.py
 
       - name: The launch hands the thread back
-        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
+        run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
 
       - name: A thousand pages open at once
-        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/big-pdf.py
+        run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/big-pdf.py
 
       - name: Nothing is laid out so it cannot be read
-        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/layout-sweep.py
+        run: ORDEN_SKIP_BUILD=1 python3 apps/desktop/test/e2e/layout-sweep.py
 
       - name: A release carries no handle
         run: |
@@ -179,7 +181,7 @@ jobs:
 
       - name: The core drives, as a Mac
         env:
-          NIB_ENGINE: webkit
+          ORDEN_ENGINE: webkit
         run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,new-tabs,find-bar,hover-preview,frames,handed,callouts,highlights-links-breaks,task-rows
 
       - if: failure()
@@ -214,7 +216,7 @@ jobs:
 
       - name: The floor, on a Mac
         env:
-          NIB_ENGINE: webkit
+          ORDEN_ENGINE: webkit
         run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,find-bar,hover-preview
 
       - if: failure()

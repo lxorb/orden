@@ -188,7 +188,7 @@ def main() -> int:
     log = open(args.out / "app.log", "wb")
     process = subprocess.Popen(
         [str(args.exe)],
-        env={**os.environ, "NIB_SPACES_DIR": str(spaces)},
+        env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)},
         cwd=str(args.exe.parent),
         stdout=log,
         stderr=subprocess.STDOUT,

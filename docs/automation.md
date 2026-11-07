@@ -360,7 +360,7 @@ it, a probe's included, so the variable is still the rule.
 So the spaces root is a variable, and every probe and drive sets it:
 
 ```
-NIB_SPACES_DIR=/some/temp/folder
+ORDEN_SPACES_DIR=/some/temp/folder
 ```
 
 | | |

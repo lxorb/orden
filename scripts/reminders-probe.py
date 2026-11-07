@@ -11,7 +11,7 @@ any program on the machine can read it, through Windows PowerShell's WinRT.
 probe with an identifier of its own (never `ch.emilvinu.nib`), and on the way out - pass,
 fail or crash - every toast on that id's schedule is taken off and the id's registration
 removed, and the run fails if one is left. A probe schedules nothing at all unless it is
-started with `NIB_PROBE_REMINDERS`, which only this script sets; see reminders.rs.
+started with `ORDEN_PROBE_REMINDERS`, which only this script sets; see reminders.rs.
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
       --config '{"identifier":"ch.emilvinu.nib.probe.reminders","version":"99.0.0",
@@ -137,7 +137,7 @@ def main() -> int:
         unschedule()
         wipe_profile()
         register_id()
-        environment = {**os.environ, "NIB_SPACES_DIR": str(spaces), "NIB_PROBE_REMINDERS": "1"}
+        environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), "ORDEN_PROBE_REMINDERS": "1"}
         app = run_probe(exe, env=environment)
 
         found: list[str] = []

@@ -13,7 +13,7 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.
 failures = []
 
 FIREFOX = "https://addons.mozilla.org/en-US/firefox/addon/sponsorblock/"
-DEBUG_PORT = int(os.environ.get("NIB_CEF_DEBUG_PORT", "9339"))
+DEBUG_PORT = int(os.environ.get("ORDEN_CEF_DEBUG_PORT", "9339"))
 
 def fail(what):
     print(f"::error::{PHASE}: {what}")

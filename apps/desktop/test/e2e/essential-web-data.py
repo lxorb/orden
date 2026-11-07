@@ -123,7 +123,7 @@ def drive(_browser: object) -> None:
     if sys.platform != "win32":
         raise SystemExit("this probe drives a Windows build")
 
-    exe = Path(os.environ["NIB_PROBE_EXE"])
+    exe = Path(os.environ["ORDEN_PROBE_EXE"])
     identifier = identifier_of(exe)
     native = Native(DRIVE, exe)
     switch = borrowed("switch", "web-switch-probe.py")

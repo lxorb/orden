@@ -687,7 +687,7 @@ function writtenEdge(edge: CanvasEdge): Record<string, unknown> {
   }
 }
 
-const NIB_VERSION = 1
+const ORDEN_VERSION = 1
 
 const TABS = ['', '\t', '\t\t', '\t\t\t']
 
@@ -802,7 +802,7 @@ function ownRuns(canvas: Canvas): string[][] {
     listed(edges, 1),
     [
       closes(1, edges.length) +
-        (nib ? `,\n\t"nib": {\n\t\t"version": ${NIB_VERSION}${icon}${tint}` : '') +
+        (nib ? `,\n\t"nib": {\n\t\t"version": ${ORDEN_VERSION}${icon}${tint}` : '') +
         opens('pages', 2, pages.length),
     ],
     listed(pages.map(pageText), 2),
@@ -849,7 +849,7 @@ export function canvasIconEdit(
 
   const file = JSON.parse(text) as Record<string, unknown>
   const rest: Record<string, unknown> = { ...(isRecord(file.nib) ? file.nib : {}) }
-  const version = rest.version ?? NIB_VERSION
+  const version = rest.version ?? ORDEN_VERSION
   delete rest.version
   delete rest.icon
   delete rest.iconColor

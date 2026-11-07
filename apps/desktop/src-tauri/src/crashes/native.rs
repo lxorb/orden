@@ -536,7 +536,7 @@ mod tests {
     use crate::crashes::stacks::{place_of, Place};
     use std::path::Path;
 
-    const CHILD: &str = "NIB_CRASH_TEST_CHILD";
+    const CHILD: &str = "ORDEN_CRASH_TEST_CHILD";
 
     #[inline(never)]
     #[allow(unsafe_code, reason = "the test crashes on purpose")]

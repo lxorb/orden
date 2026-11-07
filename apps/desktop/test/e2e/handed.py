@@ -67,7 +67,7 @@ ACTIVITY = """
     return cut ? btoa(cut) : ''
   }
 
-  window.__NIB_SYSTEM__ = {
+  window.__ORDEN_SYSTEM__ = {
     insets: () => '{"top":24,"right":0,"bottom":48,"left":0}',
     // Into the page itself, whoever asked, which is what makes it a word only the
     // page has: the activity runs this line in the main frame.
@@ -659,7 +659,7 @@ def on_a_desktop(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    if page.evaluate("() => '__NIB_SYSTEM__' in window"):
+    if page.evaluate("() => '__ORDEN_SYSTEM__' in window"):
         wrong("the drive left an activity behind on a desktop")
 
     page.evaluate(

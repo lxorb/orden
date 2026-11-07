@@ -17,7 +17,7 @@ const STAYS: f64 = 64.0;
 
 const MOST: u64 = 512;
 
-const OFF_SCREEN: &str = "NIB_OFF_SCREEN";
+const OFF_SCREEN: &str = "ORDEN_OFF_SCREEN";
 
 const OFF: f64 = -32000.0;
 

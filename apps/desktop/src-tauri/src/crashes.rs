@@ -28,7 +28,7 @@ const MOST_JS: usize = 10;
 
 const ALIVE_EVERY: Duration = Duration::from_secs(30);
 
-const DRILL: &str = "NIB_CRASH_DRILL";
+const DRILL: &str = "ORDEN_CRASH_DRILL";
 
 const QUIET: [&str; 4] = [
     "write_log",

@@ -167,7 +167,7 @@ describe('what the palette puts first', () => {
     return { query, expected, within, now, then }
   })
 
-  if (process.env.NIB_EVAL === '1') {
+  if (process.env.ORDEN_EVAL === '1') {
     const shown = (at: number | null) => (at === null ? '-' : String(at))
     for (const one of results) {
       console.log(

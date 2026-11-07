@@ -22,7 +22,7 @@ from probe_app import close_app, run_probe, main_window, sized
 PORT_FROM = 22300
 PORT_TO = 22399
 
-SPACES_DIR = "NIB_SPACES_DIR"
+SPACES_DIR = "ORDEN_SPACES_DIR"
 
 SPACE = "Web session probe"
 NOTE = "Idea"

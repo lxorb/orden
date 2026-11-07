@@ -163,7 +163,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         color_scheme=scheme,
         device_scale_factor=2,
         reduced_motion="reduce",
-        first_look=bool(os.environ.get("NIB_FIRST_LOOK")),
+        first_look=bool(os.environ.get("ORDEN_FIRST_LOOK")),
     )
     page = context.new_page()
     page.add_init_script(HIDE_CARET)
@@ -174,7 +174,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
-    if os.environ.get("NIB_FIRST_LOOK"):
+    if os.environ.get("ORDEN_FIRST_LOOK"):
         DRIVE.wait_for(
             page,
             "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')",

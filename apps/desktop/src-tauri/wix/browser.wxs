@@ -19,13 +19,13 @@
      found wins: an install of Nib that 0.12 updated is remembered under nibeditor. -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
-    <Property Id="NIB_OLD_INSTALLDIR">
+    <Property Id="ORDEN_OLD_INSTALLDIR">
       <RegistrySearch Id="NibOldInstallDirNsis" Root="HKCU" Key="Software\Emil Vinu\Nib" Type="raw" />
       <RegistrySearch Id="NibOldInstallDirMsi" Root="HKCU" Key="Software\Emil Vinu\Nib" Name="InstallDir" Type="raw" />
       <RegistrySearch Id="NibeditorOldInstallDirNsis" Root="HKCU" Key="Software\Emil Vinu\nibeditor" Type="raw" />
       <RegistrySearch Id="NibeditorOldInstallDirMsi" Root="HKCU" Key="Software\Emil Vinu\nibeditor" Name="InstallDir" Type="raw" />
     </Property>
-    <SetProperty Id="INSTALLDIR" Value="[NIB_OLD_INSTALLDIR]" After="AppSearch" Sequence="both">NIB_OLD_INSTALLDIR AND NOT INSTALLDIR AND NOT Installed</SetProperty>
+    <SetProperty Id="INSTALLDIR" Value="[ORDEN_OLD_INSTALLDIR]" After="AppSearch" Sequence="both">ORDEN_OLD_INSTALLDIR AND NOT INSTALLDIR AND NOT Installed</SetProperty>
 
     <!-- The old install's shortcuts, under either old name. The template keeps an
          upgraded product's shortcuts on purpose (RemoveShortcuts is skipped while one
