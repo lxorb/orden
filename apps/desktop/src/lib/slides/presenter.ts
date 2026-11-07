@@ -15,22 +15,34 @@ export interface Stage {
 }
 
 export type Message =
-  | { kind: 'stage'; stage: Stage }
-  | { kind: 'move'; by: number }
+  | { kind: 'stage'; show: string; took: number; stage: Stage }
+  | { kind: 'move'; show: string; by: number }
   | { kind: 'here' }
-  | { kind: 'gone' }
+  | { kind: 'gone'; show: string }
+
+export interface Lead {
+  show: string
+  took: number
+}
+
+export function leads(lead: Lead | null, show: string, took: number): boolean {
+  return lead === null || lead.show === show || took > lead.took
+}
 
 const CHANNEL = 'orden:presenter'
 const LABEL = 'orden-presenter'
 
-function messageOf(value: unknown): Message | null {
+export function messageOf(value: unknown): Message | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
 
-  if (said.kind === 'gone') return { kind: 'gone' }
   if (said.kind === 'here') return { kind: 'here' }
-  if (said.kind === 'move' && typeof said.by === 'number') return { kind: 'move', by: said.by }
-  if (said.kind !== 'stage') return null
+  if (typeof said.show !== 'string') return null
+  if (said.kind === 'gone') return { kind: 'gone', show: said.show }
+  if (said.kind === 'move' && typeof said.by === 'number') {
+    return { kind: 'move', show: said.show, by: said.by }
+  }
+  if (said.kind !== 'stage' || typeof said.took !== 'number') return null
 
   const stage = said.stage
   if (typeof stage !== 'object' || stage === null) return null
@@ -47,6 +59,8 @@ function messageOf(value: unknown): Message | null {
 
   return {
     kind: 'stage',
+    show: said.show,
+    took: said.took,
     stage: {
       slide: one.slide,
       next: one.next,

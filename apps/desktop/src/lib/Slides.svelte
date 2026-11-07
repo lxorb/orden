@@ -284,7 +284,7 @@
       case 'p':
       case 'P':
         event.preventDefault()
-        void openPresenter()
+        takePresenter()
         return
       default:
         return
@@ -375,9 +375,19 @@
 
   let channel: Channel | null = null
   const started = Date.now()
+  const deckId = crypto.randomUUID()
+  let others: string[] = []
+  let took = $state(0)
+
+  function takePresenter() {
+    took = Date.now()
+    void openPresenter()
+  }
 
   const broadcast = $derived<Message>({
     kind: 'stage',
+    show: deckId,
+    took,
     stage: {
       slide: current?.html ?? '',
       next: next?.html ?? '',
@@ -398,22 +408,33 @@
         return
       }
 
-      if (message.kind === 'move') {
+      if (message.kind === 'stage') {
+        if (!others.includes(message.show)) others = [...others, message.show]
+        return
+      }
+
+      if (message.kind === 'gone') {
+        others = others.filter((one) => one !== message.show)
+        return
+      }
+
+      if (message.show === deckId) {
         if (message.by > 0) onwards()
         else backwards()
       }
     })
     channel = line
+    line.send({ kind: 'here' })
 
     void secondScreen().then((other) => {
-      if (other) void openPresenter()
+      if (other) takePresenter()
     })
 
     return () => {
-      line.send({ kind: 'gone' })
+      line.send({ kind: 'gone', show: deckId })
       line.close()
       channel = null
-      void closePresenter()
+      if (others.length === 0) void closePresenter()
     }
   })
 
