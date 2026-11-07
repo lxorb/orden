@@ -180,6 +180,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           }
 
           if (node.to - node.from > TOC_MAX) return false
+          if (!/\[toc\]/i.test(doc.sliceString(node.from, node.to))) return false
           const line = doc.lineAt(node.from)
           if (!/\[toc\]/i.test(line.text)) return false
 
