@@ -23,7 +23,7 @@ import { t } from '../i18n.svelte'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
-import { cssColour, paperIsLocked, paperPicture, sharpness, svgToPng } from './raster'
+import { cssColour, paperIsLocked, paperPicture, paperUnder, sharpness, svgToPng } from './raster'
 import { escapeAll } from '@orden/markdown/html'
 
 function saidLocked(): void {
@@ -156,6 +156,7 @@ export function pageSvg(
   index: number,
   plain = false,
   paper: string | null = null,
+  ground = true,
 ): string {
   const strokes = inkOn(out.canvas, page).map((stroke) => moved(stroke, -page.x, -page.y))
   const palette = paperPalette(out.palette)
@@ -177,7 +178,7 @@ export function pageSvg(
     `<title>${label.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`,
     cards ? `<style>${plain ? localFaces() : ''}${styles(palette)}</style>` : '',
     `<defs><clipPath id="sheet"><rect width="${page.width}" height="${page.height}"/></clipPath>${ruling}</defs>`,
-    `<rect width="${page.width}" height="${page.height}" fill="#ffffff"/>`,
+    ground ? `<rect width="${page.width}" height="${page.height}" fill="#ffffff"/>` : '',
     paper
       ? `<image href="${paper}" width="${page.width}" height="${page.height}" preserveAspectRatio="none"/>`
       : '',
@@ -190,14 +191,19 @@ export function pageSvg(
   ].join('')
 }
 
-async function paperBehind(out: PagesOut, page: PageNode): Promise<string | null> {
+async function paperAt(out: PagesOut, page: PageNode) {
   if (!page.file || page.page === undefined) return null
   const at = { file: page.file, note: out.path, root: out.root, shared: out.shared ?? null }
   if (await paperIsLocked(at)) {
     saidLocked()
     return null
   }
-  return paperPicture(at, page.page)
+  return { at, number: page.page }
+}
+
+async function paperBehind(out: PagesOut, page: PageNode): Promise<string | null> {
+  const paper = await paperAt(out, page)
+  return paper ? paperPicture(paper.at, paper.number) : null
 }
 
 function moved(stroke: InkStroke, byX: number, byY: number): InkStroke {
@@ -254,8 +260,10 @@ export async function exportPagesPng(given: PagesOut): Promise<string | undefine
   const entries: { path: string; body: Uint8Array }[] = []
 
   for (const [at, page] of pages.entries()) {
-    const svg = await inlinedSvg(pageSvg(out, page, at + 1, true, await paperBehind(out, page)))
-    const bytes = await svgToPng(svg, page.width, page.height)
+    const paper = await paperAt(out, page)
+    const svg = await inlinedSvg(pageSvg(out, page, at + 1, true, null, !paper))
+    const under = paper ? () => paperUnder(paper.at, paper.number) : null
+    const bytes = await svgToPng(svg, page.width, page.height, under)
     if (!bytes) continue
 
     entries.push({ path: `${name}/${name} ${numbered(at + 1, pages.length)}.png`, body: bytes })

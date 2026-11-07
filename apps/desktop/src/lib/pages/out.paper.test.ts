@@ -10,6 +10,7 @@ const PIXEL =
 const held = vi.hoisted(() => ({
   bytes: null as Uint8Array | null,
   drawn: [] as string[],
+  under: [] as unknown[],
   asked: [] as number[],
   at: [] as unknown[],
   locked: false,
@@ -18,9 +19,15 @@ const held = vi.hoisted(() => ({
 
 vi.mock('../bytes', () => ({ fileBytes: () => Promise.resolve(held.bytes) }))
 vi.mock('./raster', () => ({
-  svgToPng: (svg: string) => {
+  svgToPng: async (
+    svg: string,
+    _width: number,
+    _height: number,
+    under: (() => unknown) | null = null,
+  ) => {
     held.drawn.push(svg)
-    return Promise.resolve(new Uint8Array([1]))
+    held.under.push(under ? await under() : null)
+    return new Uint8Array([1])
   },
   cssColour: (colour: string) => colour,
   sharpness: (_width: number, _height: number, wanted: number) => wanted,
@@ -29,6 +36,11 @@ vi.mock('./raster', () => ({
     held.asked.push(number)
     held.at.push(at)
     return Promise.resolve(number <= 2 ? PIXEL : null)
+  },
+  paperUnder: (at: unknown, number: number) => {
+    held.asked.push(number)
+    held.at.push(at)
+    return Promise.resolve(number <= 2 ? { width: 1, page: number } : null)
   },
 }))
 vi.mock('../export/zip', () => ({
@@ -91,6 +103,7 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
 afterEach(() => {
   held.bytes = null
   held.drawn = []
+  held.under = []
   held.asked = []
   held.at = []
   held.locked = false
@@ -108,11 +121,18 @@ describe('a sheet made from a paper, as a picture', () => {
     expect(held.asked).toEqual([1, 2])
   })
 
-  test('and in the picture a PNG is rasterised from', async () => {
+  test('and under the picture a PNG is rasterised from, drawn as it is rather than encoded into it', async () => {
     await exportPagesPng(out(paperNote()))
 
     expect(held.drawn).toHaveLength(2)
-    expect(held.drawn[0]).toContain(`<image href="${PIXEL}"`)
+    expect(held.under).toEqual([
+      { width: 1, page: 1 },
+      { width: 1, page: 2 },
+    ])
+    expect(held.drawn[0]).not.toContain('<image')
+    expect(held.drawn[0]).not.toContain('fill="#ffffff"')
+    expect(held.drawn[0]).toContain('<path')
+    expect(held.asked).toEqual([1, 2])
   })
 
   test('a sheet of its own has no paper to ask for', async () => {
