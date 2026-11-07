@@ -453,7 +453,7 @@ export async function pullNow(
   ids: ReadonlySet<string>,
   alive: () => boolean,
 ): Promise<boolean> {
-  for (let round = 0; round < ROUNDS; round += 1) {
+  for (let round = 0; round <= 2 * ids.size; round += 1) {
     const pulled = await pullDocs(core, space, alive, ids)
     if (pulled === null) return false
     if (!pulled) break
