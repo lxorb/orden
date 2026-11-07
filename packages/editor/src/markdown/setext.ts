@@ -39,6 +39,13 @@ export function setextEdits(text: string): SetextEdit[] {
       const level = LEVEL[node.name]
       if (!level) return true
 
+      if (
+        level === 2 &&
+        /^[ \t>]*-[ \t]*$/.test(text.slice(text.lastIndexOf('\n', node.to - 1) + 1, node.to))
+      ) {
+        return false
+      }
+
       const said = words(text, node)
       if (said) edits.push({ from: node.from, to: node.to, insert: `${'#'.repeat(level)} ${said}` })
       return false

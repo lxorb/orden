@@ -5,7 +5,7 @@ describe('a note written with underlined headings', () => {
   test.each([
     ['Title\n=====\n\nbody', '# Title\n\nbody'],
     ['Title\n-----\n\nbody', '## Title\n\nbody'],
-    ['Title\n-\nbody', '## Title\nbody'],
+    ['Title\n--\nbody', '## Title\nbody'],
     ['intro\n\nOne\n===\n\nTwo\n---\n', 'intro\n\n# One\n\n## Two\n'],
     ['first line\nsecond line\n---', '## first line second line'],
     ['> Quoted\n> ---\n> after', '> ## Quoted\n> after'],
@@ -24,6 +24,9 @@ describe('a note written with underlined headings', () => {
     '    indented\n    ---',
     '| a | b |\n| --- | --- |\n| c | d |',
     'text\n- item',
+    'Groceries\n-',
+    'Groceries\n- \n',
+    '> Quoted\n> -\n',
     '',
   ])('%j is left alone', (text) => {
     expect(setextEdits(text)).toEqual([])

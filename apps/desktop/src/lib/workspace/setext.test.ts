@@ -70,6 +70,29 @@ describe('a space written with underlined headings', () => {
     expect(ws.undone.stack).toEqual([])
   })
 
+  test('leaves a note alone that is being written in, or open in a room shared with others', async () => {
+    const ws = space({
+      [`${SPACE}/a.md`]: 'Title\n=====\n',
+      [`${SPACE}/b.md`]: 'Other\n=====\n',
+      [`${SPACE}/c.md`]: 'Third\n=====\n',
+      [`${SPACE}/d.md`]: 'Fourth\n=====\n',
+    })
+    const typed = { path: `${SPACE}/a.md`, dirty: false, revision: 2, shared: null }
+    const unsaved = { path: `${SPACE}/c.md`, dirty: true, revision: 0, shared: null }
+    const live = { path: `${SPACE}/d.md`, dirty: false, revision: 0, shared: 'room' }
+    const open = [typed, unsaved, live]
+    const writing = {
+      ...ws,
+      documentAt: (path: string) => open.find((one) => one.path === path) ?? null,
+    } as unknown as HoldsNotes
+
+    expect(await dropSetext(writing, SPACE, 0)).toBe(1)
+    expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
+    expect(disk.get(`${SPACE}/b.md`)).toBe('# Other\n')
+    expect(disk.get(`${SPACE}/c.md`)).toBe('Third\n=====\n')
+    expect(disk.get(`${SPACE}/d.md`)).toBe('Fourth\n=====\n')
+  })
+
   test('is not walked again once it has been', async () => {
     const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' })
     kept.set(SETEXT_GONE, [SPACE])
