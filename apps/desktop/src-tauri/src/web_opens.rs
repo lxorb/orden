@@ -717,7 +717,30 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
     }
 }
 
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[allow(
+    unsafe_code,
+    reason = "the runtime hands the page over as a bare pointer, and WebKit's preferences are set through it"
+)]
+pub fn listen(
+    webview: &tauri::webview::PlatformWebview,
+    _app: tauri::AppHandle,
+    _tab: String,
+    _window: String,
+) {
+    use objc2::rc::Retained;
+    use objc2_web_kit::WKWebView;
+
+    if let Some(view) = unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) } {
+        unsafe {
+            view.configuration()
+                .preferences()
+                .setJavaScriptCanOpenWindowsAutomatically(false);
+        }
+    }
+}
+
+#[cfg(any(all(not(windows), not(target_os = "macos")), feature = "cef"))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: tauri::AppHandle,
