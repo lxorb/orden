@@ -33,6 +33,9 @@ patchedDependencies:
   marked@18.0.11:
     hash: 8abc7ccca48028f503ff94a3c0d9a0f33f82adb0bb47c0af00ee4f1891fc6f45
     path: patches/marked@18.0.11.patch
+  style-mod@4.1.3:
+    hash: 9bd7b503353269b4b53eb5c263d11325b11038bca50e388890668f7383e20d50
+    path: patches/style-mod@4.1.3.patch
   turndown@7.2.4:
     hash: 9c3466f99138b32b2a649e68540007ba8b44bc619185905053f931ea9ec9ec5c
     path: patches/turndown@7.2.4.patch
@@ -4355,7 +4358,7 @@ snapshots:
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.10
-      style-mod: 4.1.3
+      style-mod: 4.1.3(patch_hash=9bd7b503353269b4b53eb5c263d11325b11038bca50e388890668f7383e20d50)
 
   '@codemirror/legacy-modes@6.5.4':
     dependencies:
@@ -4381,7 +4384,7 @@ snapshots:
     dependencies:
       '@codemirror/state': 6.7.2
       crelt: 1.0.7
-      style-mod: 4.1.3
+      style-mod: 4.1.3(patch_hash=9bd7b503353269b4b53eb5c263d11325b11038bca50e388890668f7383e20d50)
       w3c-keyname: 2.2.8
 
   '@cspotcode/source-map-support@0.8.1':
@@ -7008,7 +7011,7 @@ snapshots:
 
   strip-json-comments@5.0.3: {}
 
-  style-mod@4.1.3: {}
+  style-mod@4.1.3(patch_hash=9bd7b503353269b4b53eb5c263d11325b11038bca50e388890668f7383e20d50): {}
 
   stylis@4.4.0: {}
 
