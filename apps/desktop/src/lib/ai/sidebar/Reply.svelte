@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { SvelteSet } from 'svelte/reactivity'
   import type { EditorView } from '@orden/editor'
   import { dollarMaths } from '@orden/markdown/streamed'
@@ -65,7 +66,7 @@
 
   function drawn(text: string, still: boolean): string {
     const source = citationLinks(text, sources.length)
-    const from = workspace.panelTab?.path ?? null
+    const from = untrack(() => workspace.panelTab?.path ?? null)
     return answerHtml(source, {
       resolveLink: (link) => {
         const found = link.target

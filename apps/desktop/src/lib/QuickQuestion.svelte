@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { SvelteSet } from 'svelte/reactivity'
   import { cubicOut } from 'svelte/easing'
   import { fade, fly, scale } from 'svelte/transition'
@@ -105,7 +106,7 @@
   const pictures = new SvelteSet<string>()
 
   function drawn(text: string, live: boolean): string {
-    const from = workspace.panelTab?.path ?? null
+    const from = untrack(() => workspace.panelTab?.path ?? null)
     return answerHtml(text, {
       resolveLink: (link) => {
         const found = link.target
