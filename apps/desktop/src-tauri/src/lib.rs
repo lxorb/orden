@@ -251,6 +251,8 @@ mod web_reload;
 #[cfg(desktop)]
 mod web_state;
 #[cfg(desktop)]
+mod web_steady;
+#[cfg(desktop)]
 mod web_stores;
 #[cfg(desktop)]
 mod web_swipe;
