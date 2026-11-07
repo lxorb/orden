@@ -5,7 +5,7 @@ import type { StageSlide } from './render'
 
 const world = vi.hoisted(() => ({
   trusted: [] as boolean[],
-  saved: [] as string[],
+  saved: [] as Blob[],
 }))
 
 vi.mock('./render', () => ({
@@ -16,7 +16,7 @@ vi.mock('./render', () => ({
 }))
 vi.mock('../export/save', () => ({
   chooseTarget: () => Promise.resolve(null),
-  download: (_name: string, payload: { text: string }) => world.saved.push(payload.text),
+  download: (_name: string, payload: { pieces: Blob }) => world.saved.push(payload.pieces),
 }))
 
 function slide(html: string, over: Partial<StageSlide> = {}): StageSlide {
@@ -187,6 +187,6 @@ describe('the content policy a deck carries', () => {
   test('the saved file is the page that carries it', async () => {
     world.saved = []
     await exportDeck({ text: '# Plan', path: null, trusted: true }, 'Plan.md')
-    expect(world.saved.at(0)).toContain('Content-Security-Policy')
+    expect(await world.saved.at(0)?.text()).toContain('Content-Security-Policy')
   })
 })

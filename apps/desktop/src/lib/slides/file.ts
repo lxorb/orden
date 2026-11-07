@@ -10,11 +10,11 @@ import {
 import { CODE_PALETTES } from '@orden/editor'
 import { proseCss, slidesCss, tokensCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
-import { inlineImages } from '../export'
+import { pageBytes } from '../bytes'
 import { writtenPdf } from '../export/print'
 import { printWithPictures, wholeSheet } from '../export/sheet'
 import { titleOf } from '../export/document'
-import { chooseTarget, download } from '../export/save'
+import { chooseTarget, download, writeFile } from '../export/save'
 import { mathCss } from '../math-fonts'
 import { paletteCss } from '../highlight'
 import type { StageSlide } from './render'
@@ -124,28 +124,23 @@ async function deckPage(note: Note, name: string, options: DeckExport): Promise<
   return buildDeckHtml(slides, titleOf(note.text, name), options)
 }
 
-async function renderDeck(note: Note, name: string, options: DeckExport): Promise<string> {
-  const html = await deckPage(note, name, options)
-  return options.resolveImage ? inlineImages(html, options.resolveImage) : html
-}
-
 export async function exportDeck(
   note: Note,
   name: string,
   options: DeckExport = {},
 ): Promise<string | undefined> {
-  const html = await renderDeck(note, name, options)
+  const whole = await wholeSheet(await deckPage(note, name, options), options.resolveImage)
   const file = `${name.replace(/\.[^.]+$/, '')}.html`
 
   if (!isDesktop) {
-    download(file, { text: html, mime: 'text/html' })
+    download(file, { pieces: new Blob([whole], { type: 'text/html' }) })
     return file
   }
 
   const target = await chooseTarget(name, 'html', 'HTML')
   if (!target) return
 
-  await invoke('write_note', { path: target, content: html })
+  await writeFile(target, await pageBytes(whole))
   return target
 }
 

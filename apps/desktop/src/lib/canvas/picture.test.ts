@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
 
-const world = vi.hoisted(() => ({ saved: [] as string[], printed: [] as string[] }))
+const world = vi.hoisted(() => ({ saved: [] as Blob[], printed: [] as string[] }))
 
 vi.mock('../link-index.svelte', () => ({
   links: {
@@ -13,7 +13,7 @@ vi.mock('../link-index.svelte', () => ({
 }))
 vi.mock('../export/save', () => ({
   chooseTarget: () => Promise.resolve(null),
-  download: (_name: string, payload: { text: string }) => world.saved.push(payload.text),
+  download: (_name: string, payload: { pieces: Blob }) => world.saved.push(payload.pieces),
 }))
 
 vi.mock('../settings.svelte', () => ({ settings: { exportAppearance: 'light' } }))
@@ -88,7 +88,40 @@ describe('a picture of somebody else’s plane', () => {
     })
 
     expect(world.saved).toHaveLength(1)
-    expect(world.saved[0]).not.toMatch(/<im(g|age) [^>]*onerror/)
+    expect(await world.saved[0]?.text()).not.toMatch(/<im(g|age) [^>]*onerror/)
+  })
+})
+
+describe('a picture of a plane with pictures on it, saved', () => {
+  test('goes out in pieces with each picture written in where it sits', async () => {
+    world.saved = []
+    await exportCanvasSvg({
+      canvas: readCanvas(
+        JSON.stringify({
+          nodes: [
+            {
+              id: 'a',
+              type: 'text',
+              text: '<img src="pict">',
+              x: 0,
+              y: 0,
+              width: 200,
+              height: 100,
+            },
+          ],
+          edges: [],
+        }),
+      ),
+      palette: {},
+      path: null,
+      root: null,
+      name: 'Board.canvas',
+      trusted: true,
+    })
+
+    const saved = world.saved[0]
+    expect(saved?.type).toBe('image/svg+xml')
+    expect(await saved?.text()).toContain('<img src="data:image/png;base64,pict"')
   })
 })
 
@@ -108,7 +141,7 @@ describe('the colours of a picture leaving the app', () => {
   })
   const saved = async () => {
     await exportCanvasSvg(drawing())
-    return world.saved.at(-1) ?? ''
+    return (await world.saved.at(-1)?.text()) ?? ''
   }
 
   test('are the ones Appearance chooses, whichever side the window is on', async () => {
