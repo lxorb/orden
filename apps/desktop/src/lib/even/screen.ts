@@ -64,6 +64,7 @@ function skeleton(lineNumbers: boolean): unknown {
 
 export class Panel {
   private held = new Map<BandName, string>()
+  private era = 0
   private started = false
   private made: Made = 'unknown'
   private numbered: boolean
@@ -88,12 +89,13 @@ export class Panel {
 
     this.numbered = lineNumbers
     const rebuilt = await this.glasses.rebuild(skeleton(lineNumbers))
-    if (rebuilt) this.held = new Map()
+    if (rebuilt) this.forget()
 
     return rebuilt
   }
 
   async show(view: View): Promise<number> {
+    const era = this.era
     let sent = 0
 
     for (const name of ORDER) {
@@ -103,7 +105,7 @@ export class Panel {
       if (this.held.get(name) === words) continue
 
       const ok = await this.glasses.words(IDS[name], words)
-      if (ok) this.held.set(name, words)
+      if (ok && era === this.era) this.held.set(name, words)
       sent++
     }
 
@@ -111,6 +113,7 @@ export class Panel {
   }
 
   forget(): void {
+    this.era += 1
     this.held = new Map()
   }
 }
