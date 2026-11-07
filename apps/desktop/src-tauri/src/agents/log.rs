@@ -10,6 +10,8 @@ use tauri::{AppHandle, Manager as _};
 
 const KEPT_DAYS: u64 = 30;
 
+const MOST_SAID: usize = 1_000;
+
 #[derive(Serialize)]
 pub struct Line<'a> {
     pub at: u64,
@@ -38,6 +40,7 @@ pub fn write(app: &AppHandle, mut line: Line<'_>) {
     if SENSITIVE.replace(false) {
         line.args = redacted(line.args);
     }
+    line.args = shortened(line.args);
     let Ok(folder) = folder(app) else {
         return;
     };
@@ -72,7 +75,27 @@ pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
         .unwrap_or_default()
         .lines()
         .filter_map(|line| serde_json::from_str(line).ok())
+        .map(shortened)
         .collect()
+}
+
+fn shortened(value: Value) -> Value {
+    match value {
+        Value::String(said) => match said.char_indices().nth(MOST_SAID) {
+            Some((cut, _)) => {
+                let count = said.chars().count();
+                Value::String(format!("{}… ({count} characters)", &said[..cut]))
+            }
+            None => Value::String(said),
+        },
+        Value::Array(all) => Value::Array(all.into_iter().map(shortened).collect()),
+        Value::Object(all) => Value::Object(
+            all.into_iter()
+                .map(|(key, one)| (key, shortened(one)))
+                .collect(),
+        ),
+        other => other,
+    }
 }
 
 pub fn days(app: &AppHandle) -> Vec<String> {
@@ -194,6 +217,23 @@ pub fn date(ms: u64) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn a_long_word_is_kept_short_wherever_it_is_said() {
+        let long = "ü".repeat(MOST_SAID + 5);
+        let kept = shortened(json!({
+            "path": "Notes/a.md",
+            "text": long,
+            "edits": [{ "insert_after": long }],
+            "count": 3,
+        }));
+        let cut = format!("{}… ({} characters)", "ü".repeat(MOST_SAID), MOST_SAID + 5);
+        assert_eq!(kept["path"], "Notes/a.md");
+        assert_eq!(kept["text"], cut.as_str());
+        assert_eq!(kept["edits"][0]["insert_after"], cut.as_str());
+        assert_eq!(kept["count"], 3);
+        assert_eq!(shortened(json!("short")), json!("short"));
+    }
 
     #[test]
     fn a_day_is_its_utc_date() {
