@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { type Mention, mentionAt, ranked, sameMention } from './mentions'
+import { growth } from '../../../../../../scripts/growth'
+import { type Mention, mentionAt, mentionOf, ranked, sameMention } from './mentions'
 
 const hovering: Mention = { kind: 'note', id: '/s/Hovering.md', label: 'Hovering' }
 const herons: Mention = { kind: 'note', id: '/s/Herons.md', label: 'Herons' }
@@ -38,4 +39,13 @@ describe('the candidates', () => {
     expect(sameMention(hovering, { ...hovering, label: 'x' })).toBe(true)
     expect(sameMention(hovering, herons)).toBe(false)
   })
+})
+
+test('a word after the @ longer than any name is weighed against none, so each key stays quick', () => {
+  const notes = Array.from({ length: 2_000 }, (_, at) =>
+    mentionOf({ path: `plan ${String(at)}.md`, name: `plan ${String(at)}.md`, is_dir: false }),
+  )
+  expect(ranked(notes, 'p'.repeat(20_000))).toEqual([])
+  expect(growth((count) => ranked(notes, 'p'.repeat(count)), 400, 16)).toBeLessThan(4)
+  expect(ranked(notes, 'plan1').length).toBeGreaterThan(0)
 })

@@ -34,6 +34,8 @@ export interface Row {
 
 const MOST = 8
 
+const LONGEST = 256
+
 function scoreOf(mention: Mention, query: string): number | null {
   const scores = [mention.label, mention.word ?? '']
     .filter(Boolean)
@@ -50,6 +52,7 @@ function scoreOf(mention: Mention, query: string): number | null {
 export function ranked(candidates: readonly Mention[], query: string, most = MOST): Mention[] {
   const typed = query.trim()
   if (!typed) return candidates.slice(0, most)
+  if (typed.length > LONGEST) return []
   return candidates
     .map((one, at) => ({ one, at, score: scoreOf(one, typed) }))
     .filter((row): row is { one: Mention; at: number; score: number } => row.score !== null)
