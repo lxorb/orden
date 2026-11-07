@@ -44,10 +44,17 @@ async function untouchedDefault(): Promise<string | null> {
 }
 
 async function endsSettled(token: string, who: string): Promise<Set<string>> {
-  const { endsOwed, settleEnds } = await import('./space-ends')
+  const { endsOwed, settleEnds } = await import('./space-owed')
   const owed = endsOwed(who)
   if (owed.size) await settleEnds(token, who)
   return owed
+}
+
+async function iconSent(token: string, who: string, spaceId: string): Promise<boolean> {
+  const { iconOwed, sendIcon } = await import('./space-owed')
+  const owed = iconOwed(who, spaceId)
+  if (owed) await sendIcon(token, who, spaceId, owed)
+  return owed !== null
 }
 
 async function pairOnce(token: string, pairing: Pairing): Promise<void> {
@@ -135,7 +142,8 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     if (!pair) continue
     const root = workspace.spaces.find((one) => samePath(one.root, pair.root))?.root ?? pair.root
 
-    const unsaid = workspace.applyIcon(root, remote.icon ?? null, remote.tint)
+    const owed = who === null ? null : await iconSent(token, who, remote.id)
+    const unsaid = owed ? null : workspace.applyIcon(root, remote.icon ?? null, remote.tint)
     if (unsaid && remote.role === 'owner') {
       await api.setSpaceIcon(token, remote.id, remote.icon ?? null, unsaid).catch(() => undefined)
       await account.loadSpaces().catch(() => undefined)

@@ -306,16 +306,18 @@ class Sync {
     const accountId = account.user?.id
     if (!token || !accountId || (!theirs && !mine)) return
 
-    const { endSpace } = await import('./space-ends')
+    const { endSpace } = await import('./space-owed')
     await endSpace(token, accountId, spaceId, theirs ? 'leave' : 'delete')
   }
 
   async pushIcon(root: string, icon: string | null, tint: string | null = null) {
     const token = account.token
+    const accountId = account.user?.id
     const spaceId = this.remoteIdFor(root)
-    if (!token || spaceId === null) return
+    if (!token || !accountId || spaceId === null) return
 
-    await api.setSpaceIcon(token, spaceId, icon, tint).catch(() => undefined)
+    const { sendIcon } = await import('./space-owed')
+    await sendIcon(token, accountId, spaceId, { icon, tint })
     await account.loadSpaces().catch(() => undefined)
   }
 

@@ -20,7 +20,11 @@ vi.mock('./api', async (importOriginal) => ({
       world.made.push(name)
       return Promise.resolve({ space: { id: `made-${name}`, name } })
     },
-    setSpaceIcon: () => Promise.resolve(),
+    setSpaceIcon: (_token: string, id: string, icon: string | null) => {
+      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+      world.ended.push(`icon ${id} ${icon}`)
+      return Promise.resolve({ space: { id } })
+    },
     deleteSpace: (_token: string, id: string) => {
       if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
       world.ended.push(`delete ${id}`)
@@ -77,7 +81,7 @@ vi.mock('./workspace.svelte', () => ({
 const { account } = await import('./account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('./left-spaces')
-const { endSpace, endsOwed } = await import('./space-ends')
+const { endSpace, endsOwed, iconOwed, sendIcon } = await import('./space-owed')
 
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []
@@ -210,5 +214,31 @@ describe('the order the account keeps', () => {
     await pairSpaces('token-a', held)
 
     expect(world.order).toEqual(['/Home', '/Job'])
+  })
+})
+
+describe('an icon chosen while the account could not be reached', () => {
+  test('stays, and reaches the account once it answers', async () => {
+    world.spaces = [{ id: '1', name: 'Work', root: '/Work' }]
+    signedIn('a', ['Work'])
+    world.online = false
+    await sendIcon('token-a', 'a', 'a-Work', { icon: 'star', tint: null })
+    const { pairs, pairing: held } = pairing()
+    pairs.push({ root: '/Work', spaceId: 'a-Work', shared: false })
+
+    await pairSpaces('token-a', held)
+
+    expect(world.icons).toEqual([])
+    expect(iconOwed('a', 'a-Work')).toEqual({ icon: 'star', tint: null })
+
+    world.online = true
+    await pairSpaces('token-a', held)
+
+    expect(world.icons).toEqual([])
+    expect(world.ended).toEqual(['icon a-Work star'])
+    expect(iconOwed('a', 'a-Work')).toBeNull()
+
+    await pairSpaces('token-a', held)
+    expect(world.icons).toEqual(['/Work'])
   })
 })
