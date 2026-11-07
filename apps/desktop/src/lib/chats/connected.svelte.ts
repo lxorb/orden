@@ -54,6 +54,12 @@ function heardInto(linked: Linked, event: ProviderEvent): Linked {
       }
       return { ...linked, conversations: next }
     }
+    case 'deleted':
+    case 'changed':
+    case 'typing':
+    case 'presence':
+    case 'read':
+      return linked
   }
 }
 
