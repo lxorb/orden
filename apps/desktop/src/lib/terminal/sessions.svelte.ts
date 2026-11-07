@@ -633,6 +633,16 @@ class Session {
     keepHistory(this.place(), history)
   }
 
+  screenNow(): { text: string; cols: number } | null {
+    if (!this.drawn) return null
+    const buffer = this.term.buffer.active
+    const lines: string[] = []
+    for (let y = buffer.viewportY; y < buffer.viewportY + this.term.rows; y++)
+      lines.push(buffer.getLine(y)?.translateToString(true) ?? '')
+    while (lines.length && !lines[lines.length - 1]?.trim()) lines.pop()
+    return lines.length ? { text: lines.join('\n'), cols: this.term.cols } : null
+  }
+
   private snapshot(): History | null {
     if (!this.drawn) return null
     const text = fitted((lines) =>
@@ -1330,6 +1340,10 @@ const sessions = new Map<string, Session>()
 
 export async function usageOfTab(tab: Tab): Promise<Usage | null> {
   return (await sessions.get(tab.id)?.usage()) ?? null
+}
+
+export function screenOf(tab: Tab): { text: string; cols: number } | null {
+  return sessions.get(tab.id)?.screenNow() ?? null
 }
 
 export function sessionOf(tab: Tab): Session {

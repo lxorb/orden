@@ -180,6 +180,43 @@ test('a window put by hand is found again by the next run, whose tabs have new i
   expect(places.windows[`${first?.id}-again`]).toEqual({ x: 3000, y: 10, w: 300, h: 200 })
 })
 
+test('windows kept where they were put on each other open apart, with nothing to drag', async () => {
+  const { places } = await import('../../src/lib/overview/places.svelte')
+  const kept = Object.fromEntries(
+    workspace.tabs.map((one, index) => [
+      one.id,
+      { x: 100 + index * 30, y: 100 + index * 20, w: 300, h: 200 },
+    ]),
+  )
+  places.keepWindows(kept, workspace.tabs)
+  await opened()
+  const boxes = windows().map((one) => {
+    const [x, y, sx, sy] = (
+      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+), ([-\d.]+)\)/.exec(
+        one.style.transform,
+      ) ?? []
+    )
+      .slice(1)
+      .map(Number)
+    return {
+      x: x ?? 0,
+      y: y ?? 0,
+      w: parseFloat(one.style.width) * (sx ?? 1),
+      h: parseFloat(one.style.height) * (sy ?? 1),
+    }
+  })
+  expect(boxes.length).toBeGreaterThan(2)
+  for (const [i, one] of boxes.entries())
+    for (const [j, other] of boxes.entries())
+      if (i < j)
+        expect(
+          one.x < other.x + other.w - 0.5 &&
+            other.x < one.x + one.w - 0.5 &&
+            one.y < other.y + other.h - 0.5 &&
+            other.y < one.y + one.h - 0.5,
+        ).toBe(false)
+})
+
 test('a window’s cross closes its tab the strip’s way, which asks where that asks, and the view stays', async () => {
   await opened()
   const closing = vi.spyOn(workspace, 'closeAsking')

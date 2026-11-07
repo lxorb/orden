@@ -342,7 +342,7 @@
       const box = put[slot.id]
       return box ? { ...slot, x: box.x, y: box.y, w: box.w, h: box.h } : slot
     })
-    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)))
+    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), 0, false)
   })
 
   const cellOf = $derived.by(() => {
@@ -357,9 +357,9 @@
 
   const slots = $derived.by((): Slot[] => {
     const id = held?.id
-    if (!heldBoxes.size || !id) return resting
-    const key = cellOf.get(id)
-    const made = roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key)
+    const key = id ? cellOf.get(id) : undefined
+    const made =
+      heldBoxes.size && id ? roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key) : resting
     if (!Object.keys(aside).length) return made
     return made.map((slot) => {
       const by = offsetOf(cellOf.get(slot.id) ?? '')
@@ -584,6 +584,12 @@
   }
 
   let onTheWay = $state(false)
+
+  const stageSize = $derived.by(() => {
+    const boxes = Object.values(panes).filter((one) => one.w > 0 && one.h > 0)
+    const widest = boxes.sort((a, b) => b.w * b.h - a.w * a.h)[0]
+    return { w: Math.round(widest?.w ?? 1200), h: Math.round(widest?.h ?? 800) }
+  })
 
   function landed() {
     if (!onTheWay) return
@@ -1391,6 +1397,18 @@
       event.target.setPointerCapture(event.pointerId)
       return
     }
+    if (space) {
+      handTakes()
+      carrying = {
+        key: space,
+        pointer: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        moving: false,
+      }
+      event.target.setPointerCapture(event.pointerId)
+      return
+    }
     handTakes()
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     event.target.setPointerCapture(event.pointerId)
@@ -1407,7 +1425,48 @@
     return null
   }
 
+  let carrying = $state<{
+    key: string
+    pointer: number
+    x: number
+    y: number
+    moving: boolean
+  } | null>(null)
+
+  function carried(event: PointerEvent) {
+    const one = carrying
+    if (one?.pointer !== event.pointerId) return
+    const dx = event.clientX - one.x
+    const dy = event.clientY - one.y
+    if (!one.moving && !isDrag(dx, dy)) return
+    one.moving = true
+    const by = { x: dx / camera.zoom, y: dy / camera.zoom }
+    const outline = outlineAt(one.key)
+    if (!outline) return
+    const others = cellBoxes.flatMap((cell) => {
+      const shape = cell.key === one.key ? null : outlineAt(cell.key)
+      return shape ? [{ key: cell.key, outline: shape }] : []
+    })
+    const pushed = pushedAside(shifted(outline, by.x, by.y), others, CELLS_APART, aside)
+    aside = { ...pushed, [one.key]: by }
+  }
+
+  function setDown(event: PointerEvent) {
+    const one = carrying
+    if (one?.pointer !== event.pointerId) return
+    carrying = null
+    const moves = Object.entries(aside)
+    aside = {}
+    if (!one.moving || event.type !== 'pointerup') return
+    for (const [key, by] of moves) {
+      const place = places.at(key)
+      if (place) places.arrange({ [key]: { ...place, x: place.x + by.x, y: place.y + by.y } })
+    }
+    void settleApart(one.key, true)
+  }
+
   function dragging(event: PointerEvent) {
+    if (carrying) return carried(event)
     if (pressed?.whole && pressed.pointer === event.pointerId) return moved(event)
     if (!touching.size && event.buttons === 0 && event.target instanceof HTMLElement) {
       const floor = event.target.closest<HTMLElement>('.floor')
@@ -1434,6 +1493,7 @@
   }
 
   function letGo(event: PointerEvent) {
+    if (carrying) return setDown(event)
     if (pressed?.whole && pressed.pointer === event.pointerId) {
       if (event.type === 'pointerup') up(event)
       else cancelled()
@@ -1608,6 +1668,15 @@
       {/if}
     {/each}
   </div>
+  {#if !__EVEN_PLUGIN__ && out && !onTheWay}
+    {#await import('./Offstage.svelte') then Offstage}
+      <Offstage.default
+        tabs={windows.flatMap(({ tab }) => (asPanes[tab.id] ? [] : [tab]))}
+        width={stageSize.w}
+        height={stageSize.h}
+      />
+    {/await}
+  {/if}
 {/if}
 
 <style>
