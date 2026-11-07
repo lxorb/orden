@@ -45,6 +45,7 @@ export function versionField(): Field {
     hint: t('The version of Orden that is running; press to copy it.'),
     words: ['version', 'about', 'build', 'release', 'number', 'installed'],
     get: () => (version.copied ? t('Copied') : version.said()),
+    does: t('Copy'),
     press: () => void version.copy(),
   }
 }

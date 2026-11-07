@@ -167,6 +167,7 @@ describe('choosing the rest', () => {
       hint: '',
       label: 'Version',
       get: () => '0.16.1-779',
+      does: 'Copy',
       press: () => (pressed += 1),
     }
     const { asked, hands: with_ } = hands()

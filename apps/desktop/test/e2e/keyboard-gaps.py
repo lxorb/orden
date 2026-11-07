@@ -457,21 +457,25 @@ def toggle_order(page: Page) -> None:
         if inside:
             wrong(f"Tab from the {side} toggle went into the sidebar a second time: {at}")
 
+VERSION = (
+    "[...document.querySelectorAll('.setting.pressable')]"
+    ".find((row) => row.querySelector('.what')?.textContent.trim().startsWith('Version'))"
+    "?.querySelector('.value.said')"
+)
+
 def version_row(page: Page) -> None:
     if not harness.WEBKIT:
         page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.evaluate("() => window.nibApp.settings.show()")
-    wait_for(page, "document.querySelector('.setting.pressable')", "the version's row")
+    wait_for(page, f"!!{VERSION}", "the version's row")
     quiet(page)
     axe_says(page, "settings")
-    value = ".setting.pressable .value.said"
-    page.evaluate("(value) => document.querySelector(value).focus()", value)
+    page.evaluate(f"() => {VERSION}.focus()")
     seen = page.evaluate(
-        """(value) => {
-          const one = document.querySelector(value)
-          return { held: document.activeElement === one, role: one.getAttribute('role'), row: one.closest('.setting').getAttribute('role') }
-        }""",
-        value,
+        f"""() => {{
+          const one = {VERSION}
+          return {{ held: document.activeElement === one, role: one.getAttribute('role'), row: one.closest('.setting').getAttribute('role') }}
+        }}"""
     )
     say(f"[version] {seen}")
     if not seen["held"] or seen["role"] != "button" or seen["row"] is not None:
@@ -479,7 +483,7 @@ def version_row(page: Page) -> None:
         press(page, "Escape")
         return
     at = press(page, "Enter")
-    wait_for(page, f"document.querySelector({json.dumps(value)}).textContent === 'Copied'", "the row to say it copied")
+    wait_for(page, f"{VERSION}?.textContent === 'Copied'", "the row to say it copied")
     say(f"[version] Enter on it: Copied, the keyboard on {at}")
     press(page, "Escape")
 
