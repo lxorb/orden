@@ -1,5 +1,5 @@
 import type { Context, Row } from '@orden/bases'
-import { type Shut, shutFor } from '../protected'
+import { PROTECTED, type Shut, shutFor } from '../protected'
 import {
   AgentError,
   clockOf,
@@ -281,7 +281,12 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
   }
 }
 
+function mayReach(space: Writable, path: string): void {
+  if (space.shut?.(space.id, path)) throw new Said(PROTECTED(path))
+}
+
 async function wordsAt(env: Env, space: Writable, path: string): Promise<string | null> {
+  mayReach(space, path)
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
   )
@@ -295,6 +300,7 @@ async function readOf(
   space: Writable,
   path: string,
 ): Promise<{ note: Note; words: string } | null> {
+  mayReach(space, path)
   const read = await noteRead(env, space.id, path)
   if (read === MOVED) throw new Moved(path)
   return read
@@ -335,6 +341,7 @@ async function written(
   read: Note | null,
   made?: ItemMeta,
 ): Promise<string> {
+  mayReach(space, path)
   const put = await putNote(env, space, path, words, undefined, read, made)
   if (put === MOVED) throw new Moved(path)
   if (typeof put === 'string') throw new Said(put)
@@ -356,11 +363,12 @@ async function baseText(env: Env, space: Space, path: string): Promise<string | 
   return object ? object.text() : null
 }
 
-async function readBaseAt(env: Env, space: Space, asked: string) {
+async function readBaseAt(env: Env, space: Space & Writable, asked: string) {
   const path = asked.replace(/\\/g, '/').replace(/^\/+/, '').trim()
   if (!/\.base$/i.test(path) || path.split('/').some((part) => !part || part === '..')) {
     throw new Said(`${asked} is not a .base file.`)
   }
+  mayReach(space, path)
   const text = await baseText(env, space, path)
   if (text === null) throw new Said(`No base at ${path}.`)
   try {
@@ -413,14 +421,25 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   return partial ? { ...answer, partial } : answer
 }
 
-async function spaceOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Space> {
-  const space = await askedSpace(env, token.user_id, args)
-  if (typeof space === 'string') throw new Said(space)
+async function spaceOf(
+  env: Env,
+  token: TokenRow,
+  args: Args,
+  seen: Space[],
+): Promise<Space & { shut: Shut }> {
+  const asked = await askedSpace(env, token.user_id, args)
+  if (typeof asked === 'string') throw new Said(asked)
+  const space = { ...asked, shut: await shutFor(env, token.user_id) }
   seen.push(space)
   return space
 }
 
-async function writableSpace(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<Space> {
+async function writableSpace(
+  env: Env,
+  token: TokenRow,
+  args: Args,
+  seen: Space[],
+): Promise<Space & { shut: Shut }> {
   if (token.read_only)
     throw new Said('This token may only read. Allow writing in Orden’s settings first.')
   const space = await spaceOf(env, token, args, seen)
@@ -433,7 +452,7 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
   return addTaskTo(env, await writableSpace(env, token, args, seen), args)
 }
 
-type Writable = Pick<Space, 'id' | 'name' | 'user_id'>
+type Writable = Pick<Space, 'id' | 'name' | 'user_id'> & { shut?: Shut }
 
 async function addTaskTo(
   env: Env,
@@ -473,6 +492,7 @@ async function listNote(
   listing: boolean,
 ): Promise<{ path: string; todo_list: boolean; space: string }> {
   const path = notePath(asked)
+  mayReach(space, path)
   if (!listing && carriedOwn(path)) throw new Said(`${path} is the inbox, always a to-do list.`)
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
@@ -593,7 +613,7 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
   } else {
     throw new Said('Say the path of a .base file, or the base as yaml.')
   }
-  const { rows, partial } = await rowsOf(env, [space], await shutFor(env, token.user_id))
+  const { rows, partial } = await rowsOf(env, [space], space.shut)
   const answer = queryBase(base, words(args, 'view'), rows, contextNow())
   return partial ? { ...answer, partial } : answer
 }

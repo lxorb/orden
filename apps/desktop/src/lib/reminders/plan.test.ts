@@ -75,6 +75,24 @@ describe('plan', () => {
     expect(planned).toEqual(all.slice(0, MOST))
   })
 
+  test('a reminder in a protected note says no word of it, and plans again when it is protected', () => {
+    const rows = [
+      ...rowsIn('Work', 'Diary/Plan.md', '- [ ] Call the bank [time:: 16:00] 📅 2026-10-06\n'),
+      ...rowsIn('Work', 'Open.md', '- [ ] Water the plants [time:: 09:00] 📅 2026-10-05\n'),
+    ]
+    const open = plan(rows, NOW, 0)
+    const hidden = plan(rows, NOW, 0, MOST, (row) =>
+      row.path.startsWith('Diary/') ? 'A protected note has a reminder' : null,
+    )
+    expect(hidden.map((one) => [one.title, one.body, one.path])).toEqual([
+      ['Water the plants', 'Open', 'Open.md'],
+      ['A protected note has a reminder', '', 'Diary/Plan.md'],
+    ])
+    expect(JSON.stringify(hidden)).not.toContain('bank')
+    expect(hidden.map((one) => one.id)).toEqual(open.map((one) => one.id))
+    expect(samePlan(open, hidden)).toBe(false)
+  })
+
   test('the automatic reminder follows the setting', () => {
     const rows = rowsIn('W', 'P.md', '- [ ] Call [time:: 16:00] [remind:: 1h] 📅 2026-10-06\n')
     expect(plan(rows, NOW, 30).map((one) => one.at)).toEqual([at(6, 15), at(6, 15, 30)])

@@ -1,4 +1,6 @@
 import { untrack } from 'svelte'
+import type { Row } from '@orden/bases'
+import { t } from '../i18n.svelte'
 import { answer, wordSaid } from '../mobile/bridge'
 import { modes } from '../modes.svelte'
 import { hearHere } from '../own-window'
@@ -56,6 +58,13 @@ async function answered(press: Pressed) {
   await respond(press, pressHost).catch(() => false)
 }
 
+function hidden(row: Row): string | null {
+  const root = pressHost.rootOf(row.space)
+  if (root === null || !workspace.protection.covering(insideSpace(root, row.path)).length)
+    return null
+  return t('A protected note has a reminder')
+}
+
 const ringer = new Ringer({
   now: () => Date.now(),
   later,
@@ -69,6 +78,7 @@ const scheduler = new Scheduler({
   ready: () => rows.ready,
   watch: (listener) => rows.watch(listener),
   auto: () => auto,
+  hidden,
   now: () => Date.now(),
   hand,
   ring(plan) {
@@ -93,6 +103,10 @@ $effect.root(() => {
       auto = minutes < 0 ? null : minutes
       scheduler.changed()
     })
+  })
+  $effect(() => {
+    if (!workspace.protection.seen) return
+    untrack(() => scheduler.changed())
   })
   $effect(() => {
     const held = quickAdd.held

@@ -19,7 +19,7 @@ import { fits } from '../storage'
 import { hashOfBytes } from '../sync2/files'
 import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
-import { type Shut, shutFor } from '../protected'
+import { PROTECTED, type Shut, shutFor } from '../protected'
 
 const MOST_SPACES = 500
 const MOST_NOTES = 1000
@@ -422,9 +422,6 @@ export async function putNote(
 function notACanvas(path: string): string {
   return `${path} is a canvas. Write JSON Canvas into it, or leave it as it is.`
 }
-
-const PROTECTED = (path: string) =>
-  `${path} is protected. The reader can open it in Orden; an agent cannot.`
 
 export async function callTool(
   env: Env,

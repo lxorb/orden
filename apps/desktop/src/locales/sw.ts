@@ -2854,6 +2854,7 @@ export const sw: Dictionary = {
     'AI yako huandaa rasimu ya jibu kwa mtindo wako na kupendekeza kazi, na hakuna kinachotumwa wala kuongezwa hadi ukichague.',
   'Use draft': 'Tumia rasimu',
   Protected: 'Imelindwa',
+  'A protected note has a reminder': 'Dokezo lililolindwa lina kikumbusho',
   'Wrong password': 'Nenosiri si sahihi',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Imelindwa, haijasimbwa: inazuia tu kufunguliwa kwa bahati mbaya.',

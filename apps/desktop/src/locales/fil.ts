@@ -2876,6 +2876,7 @@ export const fil: Dictionary = {
     'Gumagawa ang iyong AI ng draft na sagot sa iyong istilo at nagmumungkahi ng gawain, at walang ipinapadala o idinadagdag hanggang piliin mo ito.',
   'Use draft': 'Gamitin ang draft',
   Protected: 'Protektado',
+  'A protected note has a reminder': 'May paalala ang isang protektadong tala',
   'Wrong password': 'Maling password',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Protektado, hindi naka-encrypt: pinipigilan lang nitong mabuksan ito nang hindi sinasadya.',

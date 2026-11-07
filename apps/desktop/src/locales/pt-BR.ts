@@ -2868,6 +2868,7 @@ export const ptBR: Dictionary = {
     'Sua IA escreve um rascunho de resposta no seu estilo e sugere uma tarefa, e nada é enviado ou adicionado até você escolher.',
   'Use draft': 'Usar rascunho',
   Protected: 'Protegido',
+  'A protected note has a reminder': 'Uma nota protegida tem um lembrete',
   'Wrong password': 'Senha incorreta',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Protegido, não criptografado: só impede que seja aberto por engano.',

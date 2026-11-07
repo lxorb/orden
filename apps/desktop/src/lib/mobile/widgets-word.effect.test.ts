@@ -25,6 +25,7 @@ vi.mock('../workspace.svelte', () => ({
     archive: new Set(),
     activeSpace: { name: 'Home' },
     spaces: [],
+    protection: { seen: '' },
   },
 }))
 vi.mock('../task-actions', () => ({ listed: () => Promise.resolve({ tasks: [] }) }))

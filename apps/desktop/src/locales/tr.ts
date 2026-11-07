@@ -2833,6 +2833,7 @@ export const tr: Dictionary = {
     'Yapay zekânız kendi tarzınızda bir yanıt taslağı yazıp bir görev önerir ve siz seçene kadar hiçbir şey gönderilmez ya da eklenmez.',
   'Use draft': 'Taslağı kullan',
   Protected: 'Korumalı',
+  'A protected note has a reminder': 'Korumalı bir notta anımsatıcı var',
   'Wrong password': 'Yanlış parola',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Korumalı, şifrelenmiş değil: yalnızca yanlışlıkla açılmasını önler.',

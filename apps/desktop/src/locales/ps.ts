@@ -2813,6 +2813,7 @@ export const ps: Dictionary = {
     'ستاسو AI ستاسو په سبک د ځواب مسوده لیکي او یو کار وړاندیز کوي، او تر هغو چې تاسو یې غوره نه کړئ هېڅ نه لېږل کېږي او نه ورزیاتېږي.',
   'Use draft': 'مسوده وکاروئ',
   Protected: 'خوندي',
+  'A protected note has a reminder': 'یو خوندي یادښت یادونه لري',
   'Wrong password': 'ناسم پټنوم',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'خوندي، نه کوډ شوی: دا یوازې د ناڅاپي پرانیستلو مخه نیسي.',

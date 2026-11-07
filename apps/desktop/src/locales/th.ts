@@ -2753,6 +2753,7 @@ export const th: Dictionary = {
     'AI ของคุณร่างคำตอบในสไตล์ของคุณและแนะนำงาน โดยไม่มีอะไรถูกส่งหรือเพิ่มจนกว่าคุณจะเลือก',
   'Use draft': 'ใช้ร่าง',
   Protected: 'ป้องกันไว้',
+  'A protected note has a reminder': 'โน้ตที่ป้องกันไว้มีการเตือนความจำ',
   'Wrong password': 'รหัสผ่านไม่ถูกต้อง',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'ป้องกันไว้ แต่ไม่ได้เข้ารหัส: แค่กันไม่ให้เปิดโดยไม่ตั้งใจ',

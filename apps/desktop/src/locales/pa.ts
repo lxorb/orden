@@ -2823,6 +2823,7 @@ export const pa: Dictionary = {
     'ਤੁਹਾਡਾ AI ਤੁਹਾਡੇ ਅੰਦਾਜ਼ ਵਿੱਚ ਜਵਾਬ ਦਾ ਖਰੜਾ ਲਿਖਦਾ ਹੈ ਅਤੇ ਇੱਕ ਕੰਮ ਸੁਝਾਉਂਦਾ ਹੈ, ਅਤੇ ਤੁਹਾਡੇ ਚੁਣਨ ਤੱਕ ਕੁਝ ਵੀ ਭੇਜਿਆ ਜਾਂ ਜੋੜਿਆ ਨਹੀਂ ਜਾਂਦਾ।',
   'Use draft': 'ਖਰੜਾ ਵਰਤੋ',
   Protected: 'ਸੁਰੱਖਿਅਤ',
+  'A protected note has a reminder': 'ਇੱਕ ਸੁਰੱਖਿਅਤ ਨੋਟ ਵਿੱਚ ਯਾਦ-ਦਹਾਨੀ ਹੈ',
   'Wrong password': 'ਗਲਤ ਪਾਸਵਰਡ',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'ਸੁਰੱਖਿਅਤ, ਇਨਕ੍ਰਿਪਟ ਨਹੀਂ: ਇਹ ਸਿਰਫ਼ ਗਲਤੀ ਨਾਲ ਖੁੱਲ੍ਹਣ ਤੋਂ ਰੋਕਦਾ ਹੈ।',

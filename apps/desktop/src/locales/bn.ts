@@ -2809,6 +2809,7 @@ export const bn: Dictionary = {
     'আপনার AI আপনার ধাঁচে একটি উত্তরের খসড়া লেখে ও একটি কাজের পরামর্শ দেয়, আর আপনি বেছে না নেওয়া পর্যন্ত কিছুই পাঠানো বা যোগ করা হয় না।',
   'Use draft': 'খসড়া ব্যবহার করুন',
   Protected: 'সুরক্ষিত',
+  'A protected note has a reminder': 'একটি সুরক্ষিত নোটে একটি রিমাইন্ডার আছে',
   'Wrong password': 'ভুল পাসওয়ার্ড',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'সুরক্ষিত, এনক্রিপ্ট করা নয়: এটি কেবল ভুলবশত খোলা আটকায়।',

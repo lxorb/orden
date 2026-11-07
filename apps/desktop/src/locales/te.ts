@@ -2827,6 +2827,7 @@ export const te: Dictionary = {
     'మీ AI మీ శైలిలో జవాబు ముసాయిదా రాసి ఒక పనిని సూచిస్తుంది, మరియు మీరు ఎంచుకునే వరకు ఏదీ పంపబడదు లేదా జోడించబడదు.',
   'Use draft': 'ముసాయిదా వాడండి',
   Protected: 'రక్షించబడింది',
+  'A protected note has a reminder': 'రక్షించబడిన నోట్‌లో ఒక రిమైండర్ ఉంది',
   'Wrong password': 'తప్పు పాస్‌వర్డ్',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'రక్షించబడింది, ఎన్‌క్రిప్ట్ చేయలేదు: ఇది పొరపాటున తెరవడాన్ని మాత్రమే ఆపుతుంది.',

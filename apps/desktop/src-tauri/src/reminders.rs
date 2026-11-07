@@ -141,10 +141,7 @@ fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Ke
 
 fn moved(kept: &HashMap<String, Kept>, plan: &[Planned]) -> Vec<String> {
     plan.iter()
-        .filter(|one| {
-            kept.get(&one.id)
-                .is_some_and(|held| held.planned.at != one.at)
-        })
+        .filter(|one| kept.get(&one.id).is_some_and(|held| held.planned != **one))
         .map(|one| one.id.clone())
         .collect()
 }
@@ -418,16 +415,26 @@ mod tests {
     }
 
     #[test]
-    fn a_reminder_is_moved_only_when_its_moment_is_another() {
+    fn a_reminder_is_moved_only_when_its_moment_or_its_words_are_another() {
         let mut kept = HashMap::new();
         merge(
             &mut kept,
-            vec![planned("a", 2000), planned("b", 3000)],
+            vec![planned("a", 2000), planned("b", 3000), planned("d", 5000)],
             1000,
             || "n".to_owned(),
         );
-        let plan = [planned("a", 2000), planned("b", 6600), planned("c", 4000)];
-        assert_eq!(moved(&kept, &plan), ["b"]);
+        let hidden = Planned {
+            title: "A protected note has a reminder".to_owned(),
+            body: String::new(),
+            ..planned("d", 5000)
+        };
+        let plan = [
+            planned("a", 2000),
+            planned("b", 6600),
+            planned("c", 4000),
+            hidden,
+        ];
+        assert_eq!(moved(&kept, &plan), ["b", "d"]);
     }
 
     #[test]

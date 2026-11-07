@@ -2910,6 +2910,7 @@ export const ru: Dictionary = {
     'Ваш ИИ пишет черновик ответа в вашем стиле и предлагает задачу, и ничего не отправляется и не добавляется, пока вы не выберете.',
   'Use draft': 'Взять черновик',
   Protected: 'Защищено',
+  'A protected note has a reminder': 'В защищённой заметке есть напоминание',
   'Wrong password': 'Неверный пароль',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Защищено, но не зашифровано: это лишь не даёт открыть случайно.',

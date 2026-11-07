@@ -2811,6 +2811,7 @@ export const ms: Dictionary = {
     'AI anda mendraf balasan mengikut gaya anda dan mencadangkan tugas, dan tiada apa-apa dihantar atau ditambah sehingga anda memilihnya.',
   'Use draft': 'Guna draf',
   Protected: 'Dilindungi',
+  'A protected note has a reminder': 'Nota yang dilindungi mempunyai peringatan',
   'Wrong password': 'Kata laluan salah',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Dilindungi, bukan disulitkan: ini hanya menghalangnya daripada dibuka secara tidak sengaja.',

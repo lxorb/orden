@@ -2812,6 +2812,7 @@ export const id: Dictionary = {
     'AI Anda membuat draf balasan dengan gaya Anda dan menyarankan tugas, dan tidak ada yang dikirim atau ditambahkan sampai Anda memilihnya.',
   'Use draft': 'Pakai draf',
   Protected: 'Dilindungi',
+  'A protected note has a reminder': 'Catatan yang dilindungi memiliki pengingat',
   'Wrong password': 'Kata sandi salah',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Dilindungi, bukan dienkripsi: ini hanya mencegahnya terbuka tanpa sengaja.',

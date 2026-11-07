@@ -19,7 +19,12 @@ const { taskRow } = await import('../../src/lib/views/fixture')
 const row = taskRow(PLAN, '- [ ] water the plants', 3, { space: 'Mine' })
 
 vi.mock('../../src/lib/rows/rows.svelte', () => ({
-  rows: { of: () => [row], watch: () => () => undefined, settled: () => () => undefined },
+  rows: {
+    of: () => [row],
+    shown: () => [row],
+    watch: () => () => undefined,
+    settled: () => () => undefined,
+  },
 }))
 
 const subtasks: string[] = []

@@ -81,6 +81,9 @@ function covers(ways: Record<string, Way> | undefined, path: string): boolean {
 
 export type Shut = (spaceId: string, path: string) => boolean
 
+export const PROTECTED = (path: string) =>
+  `${path} is protected. The reader can open it in Orden; an agent cannot.`
+
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
   return (spaceId, path) => covers(held.spaces[spaceId], path)

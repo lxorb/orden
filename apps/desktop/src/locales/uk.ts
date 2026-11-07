@@ -2904,6 +2904,7 @@ export const uk: Dictionary = {
     'Ваш ШІ пише чернетку відповіді у вашому стилі й пропонує завдання, і нічого не надсилається й не додається, доки ви не оберете.',
   'Use draft': 'Узяти чернетку',
   Protected: 'Захищено',
+  'A protected note has a reminder': 'У захищеній нотатці є нагадування',
   'Wrong password': 'Неправильний пароль',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Захищено, але не зашифровано: це лише не дає відкрити випадково.',

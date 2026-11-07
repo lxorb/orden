@@ -2776,6 +2776,7 @@ export const ko: Dictionary = {
     'AI가 당신의 문체로 답장 초안을 쓰고 할 일을 제안하며, 직접 고르기 전에는 아무것도 보내거나 추가하지 않습니다.',
   'Use draft': '초안 사용',
   Protected: '보호됨',
+  'A protected note has a reminder': '보호된 노트에 알림이 있습니다',
   'Wrong password': '비밀번호가 틀렸습니다',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     '보호일 뿐 암호화가 아닙니다. 실수로 열리는 것만 막아 줍니다.',

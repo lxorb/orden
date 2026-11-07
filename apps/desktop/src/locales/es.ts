@@ -2887,6 +2887,7 @@ export const es: Dictionary = {
     'Tu IA redacta una respuesta con tu estilo y sugiere una tarea, y no se envía ni se añade nada hasta que lo elijas.',
   'Use draft': 'Usar borrador',
   Protected: 'Protegido',
+  'A protected note has a reminder': 'Una nota protegida tiene un recordatorio',
   'Wrong password': 'Contraseña incorrecta',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Protegido, no cifrado: solo evita que se abra por accidente.',

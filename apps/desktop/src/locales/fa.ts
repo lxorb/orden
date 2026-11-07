@@ -2817,6 +2817,7 @@ export const fa: Dictionary = {
     'هوش مصنوعی شما پاسخی به سبک شما پیش‌نویس می‌کند و کاری پیشنهاد می‌دهد، و تا شما انتخاب نکنید چیزی فرستاده یا افزوده نمی‌شود.',
   'Use draft': 'استفاده از پیش‌نویس',
   Protected: 'محافظت‌شده',
+  'A protected note has a reminder': 'یک یادداشت محافظت‌شده یادآوری دارد',
   'Wrong password': 'گذرواژهٔ نادرست',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'محافظت‌شده، نه رمزگذاری‌شده: فقط از باز شدن تصادفی آن جلوگیری می‌کند.',

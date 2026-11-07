@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/push/keys'
-import { MOST_TRIES, remindersIn, sendDue, TRY_AGAIN_AFTER } from '../src/push/reminders'
+import {
+  MOST_TRIES,
+  remindersIn,
+  sendDue,
+  SHUT_TITLE,
+  TRY_AGAIN_AFTER,
+} from '../src/push/reminders'
 import { forgetAccess } from '../src/push/fcm'
 import { encrypted } from '../src/push/webpush'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -349,6 +355,32 @@ describe('sending', () => {
     expect(await sendDue(env, AT + 60_000, fcm.send)).toBe(0)
     await save('Plan 2.md', '')
     expect(kept().filter((one) => one.sent_at !== null)).toHaveLength(1)
+  })
+
+  test('a reminder in a protected note pushes no word of it', async () => {
+    env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    await save('Diary/Plan.md', TASK)
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token,
+      body: { protected: { Diary: 'password' } },
+    })
+
+    const fcm = recorded(
+      () => Response.json({ access_token: 'access', expires_in: 3600 }),
+      () => Response.json({ name: 'projects/nib-test/messages/1' }),
+    )
+    expect(await sendDue(env, AT, fcm.send)).toBe(1)
+    const said = fcm.asked[1]?.init?.body as string
+    const sent = JSON.parse(said) as { message: { data: Record<string, string> } }
+    expect(sent.message.data).toMatchObject({
+      kind: 'reminder',
+      title: SHUT_TITLE,
+      body: '',
+      path: 'Diary/Plan.md',
+    })
+    expect(said).not.toContain('Call the bank')
   })
 
   test('a subscription its service no longer has is dropped', async () => {

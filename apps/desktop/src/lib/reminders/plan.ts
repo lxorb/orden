@@ -14,25 +14,30 @@ export interface Reminder {
   line: number
 }
 
+export type Hidden = (row: Row) => string | null
+
 export function plan(
   rows: readonly Row[],
   now: number,
   auto: number | null,
   most = MOST,
+  hidden: Hidden = () => null,
 ): Reminder[] {
   const found: Reminder[] = []
   for (const row of rows) {
     const task = row.task
     if (row.kind !== 'task' || !task || !row.anchor) continue
 
+    let shut: string | null | undefined
     for (const wall of remindTimes(task, auto, task.dueReads)) {
       const at = momentOf(wall)
       if (!(at > now)) continue
+      if (shut === undefined) shut = hidden(row)
       found.push({
         id: reminderId(row.space, row.path, row.anchor.hash, wall),
         at,
-        title: plainWords(task.text),
-        body: row.file.basename,
+        title: shut ?? plainWords(task.text),
+        body: shut === null ? row.file.basename : '',
         space: row.space,
         path: row.path,
         hash: row.anchor.hash,
@@ -48,6 +53,12 @@ export function plan(
 export function samePlan(a: readonly Reminder[], b: readonly Reminder[]): boolean {
   return (
     a.length === b.length &&
-    a.every((one, at) => one.id === b[at]?.id && one.at === b[at].at && one.title === b[at].title)
+    a.every(
+      (one, at) =>
+        one.id === b[at]?.id &&
+        one.at === b[at].at &&
+        one.title === b[at].title &&
+        one.body === b[at].body,
+    )
   )
 }

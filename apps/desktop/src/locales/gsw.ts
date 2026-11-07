@@ -2835,6 +2835,7 @@ export const gsw: Dictionary = {
     'Dini KI entwirft e Antwort i dim Stil und schlaat e Ufgab vor, und nüt wird gschickt oder dezuegfüegt, bevor du s uswählsch.',
   'Use draft': 'Entwurf bruuche',
   Protected: 'Gschützt',
+  'A protected note has a reminder': 'E gschützti Notiz het e Erinnerig',
   'Wrong password': 'Falsches Passwort',
   'Protected, not encrypted: this only keeps it from being opened by accident.':
     'Gschützt, nöd verschlüsslet: Das verhindert nur, dass s us Versehe ufgaht.',
