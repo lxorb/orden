@@ -21,6 +21,7 @@ import { forgetIndex, type IndexStore, openIndex } from '../web/index-store'
 import { pathKey, samePath } from '../space-paths'
 import { followRoots } from '../workspace/roots-moved'
 import { oneWriteAt, type Said, windows } from '../windows'
+import { sheetArrived } from '../pdf/sheets.svelte'
 import { waited } from '../timing'
 import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
@@ -960,8 +961,9 @@ class Runner {
         this.own.delete(`removed:${path}`)
       }
     },
-    written: () => {
+    written: (path) => {
       this.treeStale()
+      sheetArrived(path)
     },
     writing: async (path, text, write) => {
       if (windows.alone) {
