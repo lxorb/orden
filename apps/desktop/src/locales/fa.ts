@@ -2352,6 +2352,8 @@ export const fa: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} هنوز نمی‌تواند برنامه‌ای را روی نمایشگر جداگانهٔ خودش اجرا کند.',
   '{device} needs Xvfb to run an application.': '{device} برای اجرای برنامه به Xvfb نیاز دارد.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} به اجازهٔ ضبط صفحه و دسترس‌پذیری نیاز دارد.',
   '{device} did not allow this program.': '{device} اجازهٔ این برنامه را نداد.',
   '{device} does not have this application.': '{device} این برنامه را ندارد.',
   '{device} cannot start a Store application on a desktop of its own.':

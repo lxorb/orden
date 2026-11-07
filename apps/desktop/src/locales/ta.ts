@@ -2386,6 +2386,8 @@ export const ta: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} இன்னும் ஒரு பயன்பாட்டை அதன் சொந்த காட்சியில் இயக்க முடியாது.',
   '{device} needs Xvfb to run an application.': 'பயன்பாட்டை இயக்க {device}-க்கு Xvfb தேவை.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}க்கு திரைப் பதிவு மற்றும் அணுகல்தன்மை அனுமதி தேவை.',
   '{device} did not allow this program.': '{device} இந்த நிரலை அனுமதிக்கவில்லை.',
   '{device} does not have this application.': '{device}-இல் இந்தப் பயன்பாடு இல்லை.',
   '{device} cannot start a Store application on a desktop of its own.':

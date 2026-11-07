@@ -2348,6 +2348,8 @@ export const hi: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} अभी किसी ऐप्लिकेशन को उसके अपने डिस्प्ले पर नहीं चला सकता।',
   '{device} needs Xvfb to run an application.': 'ऐप्लिकेशन चलाने के लिए {device} को Xvfb चाहिए।',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} को स्क्रीन रिकॉर्डिंग और एक्सेसिबिलिटी की अनुमति चाहिए।',
   '{device} did not allow this program.': '{device} ने इस प्रोग्राम की अनुमति नहीं दी।',
   '{device} does not have this application.': '{device} पर यह ऐप्लिकेशन नहीं है।',
   '{device} cannot start a Store application on a desktop of its own.':

@@ -2397,6 +2397,8 @@ export const ptBR: Dictionary = {
     '{device} ainda não consegue rodar um aplicativo em uma tela própria.',
   '{device} needs Xvfb to run an application.':
     '{device} precisa do Xvfb para rodar um aplicativo.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} precisa de Gravação de Tela e Acessibilidade.',
   '{device} did not allow this program.': '{device} não permitiu este programa.',
   '{device} does not have this application.': '{device} não tem este aplicativo.',
   '{device} cannot start a Store application on a desktop of its own.':

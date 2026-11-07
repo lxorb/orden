@@ -2327,6 +2327,8 @@ export const jv: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} durung bisa mbukak aplikasi ing layar dhéwé.',
   '{device} needs Xvfb to run an application.': '{device} butuh Xvfb kanggo mbukak aplikasi.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} butuh idin Rekaman Layar lan Aksesibilitas.',
   '{device} did not allow this program.': '{device} ora ngidini program iki.',
   '{device} does not have this application.': '{device} ora duwé aplikasi iki.',
   '{device} cannot start a Store application on a desktop of its own.':

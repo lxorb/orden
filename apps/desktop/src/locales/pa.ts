@@ -2355,6 +2355,8 @@ export const pa: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} ਅਜੇ ਕਿਸੇ ਐਪਲੀਕੇਸ਼ਨ ਨੂੰ ਉਸਦੇ ਆਪਣੇ ਡਿਸਪਲੇ ’ਤੇ ਨਹੀਂ ਚਲਾ ਸਕਦਾ।',
   '{device} needs Xvfb to run an application.': 'ਐਪਲੀਕੇਸ਼ਨ ਚਲਾਉਣ ਲਈ {device} ਨੂੰ Xvfb ਚਾਹੀਦਾ ਹੈ।',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} ਨੂੰ ਸਕ੍ਰੀਨ ਰਿਕਾਰਡਿੰਗ ਅਤੇ ਪਹੁੰਚਯੋਗਤਾ ਦੀ ਇਜਾਜ਼ਤ ਚਾਹੀਦੀ ਹੈ।',
   '{device} did not allow this program.': '{device} ਨੇ ਇਸ ਪ੍ਰੋਗਰਾਮ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਦਿੱਤੀ।',
   '{device} does not have this application.': '{device} ’ਤੇ ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਨਹੀਂ ਹੈ।',
   '{device} cannot start a Store application on a desktop of its own.':

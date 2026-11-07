@@ -2364,6 +2364,8 @@ export const tr: Dictionary = {
     '{device} henüz bir uygulamayı kendine ait bir ekranda çalıştıramıyor.',
   '{device} needs Xvfb to run an application.':
     '{device} bir uygulamayı çalıştırmak için Xvfb’ye ihtiyaç duyuyor.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} için Ekran Kaydı ve Erişilebilirlik izni gerekiyor.',
   '{device} did not allow this program.': '{device} bu programa izin vermedi.',
   '{device} does not have this application.': '{device} cihazında bu uygulama yok.',
   '{device} cannot start a Store application on a desktop of its own.':

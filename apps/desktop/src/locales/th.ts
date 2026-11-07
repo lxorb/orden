@@ -2301,6 +2301,8 @@ export const th: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} ยังเรียกใช้แอปพลิเคชันบนจอแสดงผลของตัวเองไม่ได้',
   '{device} needs Xvfb to run an application.': '{device} ต้องใช้ Xvfb เพื่อเรียกใช้แอปพลิเคชัน',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} ต้องได้รับอนุญาตการบันทึกหน้าจอและการช่วยการเข้าถึง',
   '{device} did not allow this program.': '{device} ไม่อนุญาตโปรแกรมนี้',
   '{device} does not have this application.': '{device} ไม่มีแอปพลิเคชันนี้',
   '{device} cannot start a Store application on a desktop of its own.':

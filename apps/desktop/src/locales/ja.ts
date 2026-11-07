@@ -2333,6 +2333,8 @@ export const ja: Dictionary = {
     '{device} はまだアプリケーションを専用の画面で実行できません。',
   '{device} needs Xvfb to run an application.':
     'アプリケーションを実行するには {device} に Xvfb が必要です。',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} には画面収録とアクセシビリティの許可が必要です。',
   '{device} did not allow this program.': '{device} はこのプログラムを許可しませんでした。',
   '{device} does not have this application.': '{device} にはこのアプリケーションがありません。',
   '{device} cannot start a Store application on a desktop of its own.':

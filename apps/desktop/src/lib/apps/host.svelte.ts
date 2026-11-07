@@ -349,7 +349,7 @@ async function appWorld(): Promise<{
     world: {
       device: deviceId,
       serves,
-      cannot: platform() === 'linux' || platform() === 'windows' ? null : 'isolation',
+      cannot: ['linux', 'windows', 'macos'].includes(platform()) ? null : 'isolation',
       files: () => applicationFiles(untrack(() => workspace.tree)),
       read: (path) => native.invoke<string>('read_note', { path }).catch(() => null),
       idOf: async (path) => {

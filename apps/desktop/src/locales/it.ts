@@ -2421,6 +2421,8 @@ export const it: Dictionary = {
     '{device} non può ancora eseguire un’applicazione su uno schermo tutto suo.',
   '{device} needs Xvfb to run an application.':
     '{device} ha bisogno di Xvfb per eseguire un’applicazione.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} ha bisogno di Registrazione schermo e Accessibilità.',
   '{device} did not allow this program.': '{device} non ha permesso questo programma.',
   '{device} does not have this application.': '{device} non ha questa applicazione.',
   '{device} cannot start a Store application on a desktop of its own.':

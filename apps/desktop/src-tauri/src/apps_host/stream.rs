@@ -263,7 +263,7 @@ impl Peer {
         drive(&mut shared);
     }
 
-    #[cfg(test)]
+    #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
     pub fn ended(&self) -> bool {
         self.inner.over()
     }
@@ -1234,6 +1234,7 @@ mod tests {
         ));
     }
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn vp8(frame: &[u8]) -> (bool, Option<(u16, u16)>) {
         let key = frame.first().is_some_and(|tag| (tag & 1) == 0);
         let size = (key && frame.len() >= 10 && frame[3..6] == [0x9d, 0x01, 0x2a]).then(|| {
@@ -1245,12 +1246,14 @@ mod tests {
         (key, size)
     }
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     struct Viewer {
         rtc: Rtc,
         socket: UdpSocket,
         local: SocketAddr,
     }
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     impl Viewer {
         fn connect(
             display: String,

@@ -2383,6 +2383,8 @@ export const ha: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} ba zai iya gudanar da manhaja a kan nunin kansa ba tukuna.',
   '{device} needs Xvfb to run an application.': '{device} na buƙatar Xvfb don gudanar da manhaja.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} yana buƙatar izinin Rikodin Allo da Samun Dama.',
   '{device} did not allow this program.': '{device} bai yarda da wannan shirin ba.',
   '{device} does not have this application.': '{device} ba shi da wannan manhaja.',
   '{device} cannot start a Store application on a desktop of its own.':
