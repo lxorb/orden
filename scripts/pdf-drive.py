@@ -47,11 +47,12 @@ def run(code):
 def printed(html, name):
     target = SPACES / f"{name}.pdf"
     page = {"width": 8.27, "height": 11.69, "margin": 1, "landscape": False}
-    args = json.dumps({"html": html, "output": str(target), "page": page})
+    args = json.dumps(json.dumps({"output": str(target), "page": page}))
     key = json.dumps(name)
     run(
         f"(window.__pdf ??= {{}})[{key}] = 'waiting'; window.__TAURI_INTERNALS__.invoke('print_pdf', "
-        f"{args}).then(() => {{ window.__pdf[{key}] = 'written' }}, "
+        f"new TextEncoder().encode({json.dumps(html)}), {{ headers: {{ 'Orden-Args': encodeURIComponent({args}) }} }})"
+        f".then(() => {{ window.__pdf[{key}] = 'written' }}, "
         f"(error) => {{ window.__pdf[{key}] = 'refused: ' + error }}); true"
     )
     said = "waiting"
