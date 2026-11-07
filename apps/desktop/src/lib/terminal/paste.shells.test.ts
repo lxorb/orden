@@ -47,6 +47,20 @@ const SHELLS: Shell[] = [
   },
 ]
 
+function drawn(count: number): string[] {
+  const letters = '\'"\\$`;&|<>(){}[]*?!#~%@,=^ ‘’‚‛xyé'
+  let seed = 1611
+  const next = () => {
+    seed = (seed * 48_271) % 2_147_483_647
+    return seed
+  }
+  return Array.from({ length: count }, () =>
+    Array.from({ length: 1 + (next() % 12) }, () => letters.charAt(next() % letters.length)).join(
+      '',
+    ),
+  )
+}
+
 const NAMES = [
   "it's here",
   "a\\';touch PWNED;#",
@@ -62,6 +76,7 @@ const NAMES = [
   'a\\\\b\\',
   '‘quoted’ ‚low‛',
   'a"b"c',
+  ...drawn(200),
 ]
 
 const room = mkdtempSync(join(tmpdir(), 'orden-said-'))
