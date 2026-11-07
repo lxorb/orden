@@ -104,7 +104,10 @@ def settled_with_nothing_left(browser: Browser, device: str) -> None:
     DRIVE.open(page)
     signed_out(page, device)
     page.evaluate(OPEN_LEFT)
-    wait_for(page, "() => !!document.querySelector('.foot .who')", "the panel's foot")
+    if device == "phone":
+        wait_for(page, "() => !!document.querySelector('[data-phone-tabs]')", "the tab bar")
+    else:
+        wait_for(page, "() => !!document.querySelector('.foot .who')", "the panel's foot")
     wait_for(page, SETTLED, "the session to settle", PATIENCE)
     wait_for(page, STILL, "the window to stop moving")
     DRIVE.settled(page)
