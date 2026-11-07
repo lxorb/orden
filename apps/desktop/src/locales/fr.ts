@@ -3629,4 +3629,8 @@ export const fr: Dictionary = {
   'Waiting…': 'En attente…',
   Service: 'Service',
   'I understand and want to connect anyway': 'Je comprends et je veux quand même me connecter',
+  'Some changes have not reached your account yet':
+    'Certaines modifications ne sont pas encore arrivées sur votre compte',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Elles restent dans ce navigateur, hors de vue de toute autre personne qui s’y connecte, et partent quand vous vous reconnectez.',
 }

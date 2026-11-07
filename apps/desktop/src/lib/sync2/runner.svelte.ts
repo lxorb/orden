@@ -61,6 +61,8 @@ import { eachDue, reachable, sentAll } from './rounds'
 import { Refused } from './transport'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../usage.svelte'
+import { forgetAccount, leaveSpaces } from '../left-spaces'
+import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
@@ -622,13 +624,42 @@ class Runner {
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
   }
 
-  signedOut(accountId: string): Promise<void> {
-    this.leaving ??= this.leave(accountId).finally(() => (this.leaving = null))
+  signedOut(accountId: string, keepHere = false): Promise<void> {
+    this.leaving ??= this.leave(accountId, keepHere).finally(() => (this.leaving = null))
     return this.leaving
   }
 
-  private async leave(accountId: string): Promise<void> {
+  async sentBeforeLeaving(): Promise<boolean> {
+    if (isNative) return true
+    await workspace.writeNow().catch(() => undefined)
+    const engine = this.engine
+    if (!engine) {
+      await Promise.race([this.passNow().catch(() => false), waited(SIGN_OUT_WAITS)])
+      return true
+    }
+    const roots = ownRoots(this.accountId)
+    const until = Date.now() + SIGN_OUT_WAITS
+    for (let round = 0; ; round += 1) {
+      if (!(await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))).length)
+        return true
+      if (round >= SENDING_ROUNDS || Date.now() >= until || this.status === 'offline') break
+      if (this.engine !== engine) return true
+      await Promise.race([this.passNow().catch(() => false), waited(until - Date.now())])
+    }
+    return await leaveUnsent()
+  }
+
+  private async leave(accountId: string, keepHere: boolean): Promise<void> {
     const engine = this.current
+    const roots = ownRoots(accountId)
+    if (keepHere) forgetAccount(accountId)
+    else leaveSpaces(accountId, roots)
+    let sent: string[] = []
+    if (engine && !this.local && !isNative && !keepHere) {
+      await workspace.writesSettled().catch(() => undefined)
+      const unsent = await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))
+      sent = roots.filter((root) => !unsent.includes(root))
+    }
     if (engine) {
       try {
         const done = await this.kept(engine)
@@ -651,7 +682,12 @@ class Runner {
     this.firsts.clear()
     if (led) {
       forgetMadeDeviceId(accountId)
-      await forgetSyncStore(accountId).finally(() => this.letGoLead())
+      try {
+        await forgetSyncStore(accountId)
+        if (sent.length) await dropLeft(sent)
+      } finally {
+        this.letGoLead()
+      }
       if (!isNative) await forgetIndex(accountId)
       return
     }
@@ -1801,10 +1837,12 @@ async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   }
 }
 
-account.forgetWithSession(() => {
+account.forgetWithSession((keepHere) => {
   const id = runner.accountNow
-  if (id) void runner.signedOut(id)
+  if (id) void runner.signedOut(id, keepHere)
 })
+
+account.askBeforeLeaving(() => runner.sentBeforeLeaving())
 
 function pageNotes(engine: Engine): Carried[] {
   const out: Carried[] = []

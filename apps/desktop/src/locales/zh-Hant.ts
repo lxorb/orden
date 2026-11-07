@@ -3344,4 +3344,7 @@ export const zhHant: Dictionary = {
   'Waiting…': '等待中…',
   Service: '服務',
   'I understand and want to connect anyway': '我已了解，仍要連接',
+  'Some changes have not reached your account yet': '部分變更尚未送達你的帳戶',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '這些變更會留在此瀏覽器中，在此登入的其他人看不到，你再次登入時會上傳。',
 }

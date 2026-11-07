@@ -3608,4 +3608,8 @@ export const es: Dictionary = {
   'Waiting…': 'Esperando…',
   Service: 'Servicio',
   'I understand and want to connect anyway': 'Lo entiendo y quiero conectar de todos modos',
+  'Some changes have not reached your account yet':
+    'Algunos cambios aún no han llegado a tu cuenta',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Se quedan en este navegador, fuera de la vista de cualquier otra persona que inicie sesión aquí, y se suben cuando vuelvas a iniciar sesión.',
 }

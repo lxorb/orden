@@ -86,7 +86,7 @@
       }
     }
 
-    void account.signOut()
+    void account.signOut('kept')
     onend()
   }
 

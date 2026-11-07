@@ -3491,4 +3491,8 @@ export const gu: Dictionary = {
   'Waiting…': 'રાહ જોઈ રહ્યા છીએ…',
   Service: 'સેવા',
   'I understand and want to connect anyway': 'હું સમજું છું અને છતાં જોડાવા માંગુ છું',
+  'Some changes have not reached your account yet':
+    'કેટલાક ફેરફારો હજુ તમારા એકાઉન્ટ સુધી પહોંચ્યા નથી',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'તે આ બ્રાઉઝરમાં રહે છે, અહીં સાઇન ઇન કરનાર બીજા કોઈને દેખાતા નથી, અને તમે ફરી સાઇન ઇન કરો ત્યારે મોકલાય છે.',
 }

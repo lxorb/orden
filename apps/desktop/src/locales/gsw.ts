@@ -3531,4 +3531,7 @@ export const gsw: Dictionary = {
   'Waiting…': 'Am Warte…',
   Service: 'Dienst',
   'I understand and want to connect anyway': 'Ich ha s verstande und wott trotzdem verbinde',
+  'Some changes have not reached your account yet': 'Es paar Änderige sind no nöd i dim Konto acho',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Si bliibed i däm Browser, für alli andere, wo sich da aamelded, unsichtbar, und gönd ue, wänn du dich wider aameldisch.',
 }

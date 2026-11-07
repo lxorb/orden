@@ -3442,4 +3442,7 @@ export const ms: Dictionary = {
   'Waiting…': 'Menunggu…',
   Service: 'Perkhidmatan',
   'I understand and want to connect anyway': 'Saya faham dan tetap mahu menyambung',
+  'Some changes have not reached your account yet': 'Beberapa perubahan belum sampai ke akaun anda',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Perubahan itu kekal dalam pelayar ini, tidak dilihat oleh sesiapa lagi yang log masuk di sini, dan dihantar apabila anda log masuk semula.',
 }

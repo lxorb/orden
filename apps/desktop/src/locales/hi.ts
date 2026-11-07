@@ -3508,4 +3508,7 @@ export const hi: Dictionary = {
   'Waiting…': 'प्रतीक्षा हो रही है…',
   Service: 'सेवा',
   'I understand and want to connect anyway': 'मैं समझता हूँ और फिर भी जोड़ना चाहता हूँ',
+  'Some changes have not reached your account yet': 'कुछ बदलाव अभी तक आपके खाते तक नहीं पहुँचे',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'वे इसी ब्राउज़र में रहते हैं, यहाँ साइन इन करने वाले किसी और को नहीं दिखते, और आपके दोबारा साइन इन करने पर भेजे जाते हैं।',
 }

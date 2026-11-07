@@ -3438,4 +3438,7 @@ export const my: Dictionary = {
   'Waiting…': 'စောင့်နေသည်…',
   Service: 'ဝန်ဆောင်မှု',
   'I understand and want to connect anyway': 'နားလည်ပါသည်၊ သို့သော် ချိတ်ဆက်လိုပါသည်',
+  'Some changes have not reached your account yet': 'အပြောင်းအလဲအချို့ သင့်အကောင့်သို့ မရောက်သေးပါ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '၎င်းတို့သည် ဤဘရောက်ဇာတွင် ကျန်ရှိပြီး ဤနေရာတွင် ဝင်ရောက်သူ အခြားမည်သူမျှ မမြင်ရဘဲ သင်ပြန်ဝင်သောအခါ ပို့ပါမည်။',
 }

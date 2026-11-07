@@ -3646,4 +3646,8 @@ export const uk: Dictionary = {
   'Waiting…': 'Очікування…',
   Service: 'Сервіс',
   'I understand and want to connect anyway': "Я розумію й однаково хочу під'єднати",
+  'Some changes have not reached your account yet':
+    'Деякі зміни ще не дійшли до вашого облікового запису',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Вони лишаються в цьому браузері, приховані від усіх, хто ввійде тут, і надійдуть, коли ви ввійдете знову.',
 }

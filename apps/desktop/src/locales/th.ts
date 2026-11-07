@@ -3379,4 +3379,7 @@ export const th: Dictionary = {
   'Waiting…': 'กำลังรอ…',
   Service: 'บริการ',
   'I understand and want to connect anyway': 'เข้าใจแล้วและยังต้องการเชื่อมต่อ',
+  'Some changes have not reached your account yet': 'การเปลี่ยนแปลงบางส่วนยังไปไม่ถึงบัญชีของคุณ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'การเปลี่ยนแปลงจะอยู่ในเบราว์เซอร์นี้ ไม่มีใครที่ลงชื่อเข้าใช้ที่นี่เห็น และจะส่งขึ้นไปเมื่อคุณลงชื่อเข้าใช้อีกครั้ง',
 }

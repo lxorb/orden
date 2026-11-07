@@ -3650,4 +3650,8 @@ export const ru: Dictionary = {
   'Waiting…': 'Ожидание…',
   Service: 'Сервис',
   'I understand and want to connect anyway': 'Я понимаю и всё равно хочу подключить',
+  'Some changes have not reached your account yet':
+    'Некоторые изменения ещё не дошли до вашего аккаунта',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Они остаются в этом браузере, скрытые от всех, кто войдёт здесь, и отправятся, когда вы войдёте снова.',
 }

@@ -3502,4 +3502,7 @@ export const ur: Dictionary = {
   'Waiting…': 'انتظار ہو رہا ہے…',
   Service: 'سروس',
   'I understand and want to connect anyway': 'میں سمجھتا ہوں اور پھر بھی جوڑنا چاہتا ہوں',
+  'Some changes have not reached your account yet': 'کچھ تبدیلیاں ابھی آپ کے اکاؤنٹ تک نہیں پہنچیں',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'وہ اسی براؤزر میں رہتی ہیں، یہاں سائن ان کرنے والے کسی اور کو نظر نہیں آتیں، اور آپ کے دوبارہ سائن ان کرنے پر بھیجی جاتی ہیں۔',
 }

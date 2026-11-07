@@ -3512,4 +3512,7 @@ export const fa: Dictionary = {
   'Waiting…': 'در انتظار…',
   Service: 'سرویس',
   'I understand and want to connect anyway': 'متوجه شدم و با این حال می‌خواهم وصل شوم',
+  'Some changes have not reached your account yet': 'برخی تغییرات هنوز به حساب شما نرسیده‌اند',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'در این مرورگر می‌مانند، از دید هر کس دیگری که اینجا وارد می‌شود پنهان‌اند و وقتی دوباره وارد شوید فرستاده می‌شوند.',
 }

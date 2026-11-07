@@ -3575,4 +3575,8 @@ export const de: Dictionary = {
   'Waiting…': 'Warten…',
   Service: 'Dienst',
   'I understand and want to connect anyway': 'Ich habe verstanden und möchte trotzdem verbinden',
+  'Some changes have not reached your account yet':
+    'Einige Änderungen sind noch nicht in deinem Konto angekommen',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Sie bleiben in diesem Browser, für alle anderen, die sich hier anmelden, unsichtbar, und werden hochgeladen, wenn du dich wieder anmeldest.',
 }

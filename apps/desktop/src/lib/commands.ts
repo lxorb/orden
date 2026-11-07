@@ -1192,7 +1192,7 @@ export function appCommands(view?: EditorView): Command[] {
           byHand: true,
           run: () =>
             __EVEN_PLUGIN__
-              ? void account.signOut()
+              ? void account.signOut('asked')
               : void import('./ai/vault/leaving').then((one) => one.signOut()),
         }
       : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },

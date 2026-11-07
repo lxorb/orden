@@ -3341,4 +3341,7 @@ export const zhHans: Dictionary = {
   'Waiting…': '正在等待…',
   Service: '服务',
   'I understand and want to connect anyway': '我已了解，仍要连接',
+  'Some changes have not reached your account yet': '部分更改尚未到达你的账户',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    '这些更改留在此浏览器中，在此登录的其他人看不到，你再次登录时会上传。',
 }

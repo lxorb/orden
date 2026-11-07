@@ -3517,4 +3517,7 @@ export const pa: Dictionary = {
   'Waiting…': 'ਉਡੀਕ ਹੋ ਰਹੀ ਹੈ…',
   Service: 'ਸੇਵਾ',
   'I understand and want to connect anyway': 'ਮੈਂ ਸਮਝਦਾ ਹਾਂ ਅਤੇ ਫਿਰ ਵੀ ਜੋੜਨਾ ਚਾਹੁੰਦਾ ਹਾਂ',
+  'Some changes have not reached your account yet': 'ਕੁਝ ਬਦਲਾਅ ਹਾਲੇ ਤੁਹਾਡੇ ਖਾਤੇ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚੇ',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'ਉਹ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਰਹਿੰਦੇ ਹਨ, ਇੱਥੇ ਸਾਈਨ ਇਨ ਕਰਨ ਵਾਲੇ ਕਿਸੇ ਹੋਰ ਨੂੰ ਨਹੀਂ ਦਿਸਦੇ, ਅਤੇ ਤੁਹਾਡੇ ਮੁੜ ਸਾਈਨ ਇਨ ਕਰਨ ’ਤੇ ਭੇਜੇ ਜਾਂਦੇ ਹਨ।',
 }

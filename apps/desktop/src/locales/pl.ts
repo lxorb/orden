@@ -3651,4 +3651,8 @@ export const pl: Dictionary = {
   'Waiting…': 'Oczekiwanie…',
   Service: 'Usługa',
   'I understand and want to connect anyway': 'Rozumiem i mimo to chcę połączyć',
+  'Some changes have not reached your account yet':
+    'Niektóre zmiany nie dotarły jeszcze na Twoje konto',
+  'They stay in this browser, out of sight of anyone else who signs in here, and go up when you sign in again.':
+    'Zostają w tej przeglądarce, niewidoczne dla nikogo innego, kto się tu zaloguje, i trafią na konto, gdy zalogujesz się ponownie.',
 }
