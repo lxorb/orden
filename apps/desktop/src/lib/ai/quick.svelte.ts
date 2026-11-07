@@ -37,6 +37,7 @@ class Quick {
   open = $state(false)
   question = $state('')
   context = $state<Context | null>(null)
+  texts = $state<Mention[]>([])
   private thread = $state.raw<Thread | null>(null)
   private chat = $state.raw<Chat | null>(null)
   private failed = $state<string | null>(null)
@@ -97,6 +98,7 @@ class Quick {
   private reset() {
     this.question = ''
     this.context = null
+    this.texts = []
     this.target = null
     this.thread = null
     this.failed = null
@@ -132,25 +134,41 @@ class Quick {
     this.context = null
   }
 
+  take(label: string, text: string) {
+    this.failed = null
+    this.texts = [...this.texts, { kind: 'words', id: crypto.randomUUID(), label, text }]
+  }
+
+  refuse(why: string) {
+    this.failed = why
+  }
+
+  dropText(id: string) {
+    this.texts = this.texts.filter((one) => one.id !== id)
+  }
+
   stop() {
     if (this.thread) this.chat?.stopIn(this.thread.id)
   }
 
   async ask() {
     const question = this.question.trim()
-    if (!question || this.running || !this.ready) return
+    const texts = this.texts
+    if ((!question && !texts.length) || this.running || !this.ready) return
     this.question = ''
+    this.texts = []
 
     this.failed = null
     const chat = await chatStore()
     this.chat = chat
     if (!this.open) return
     let ended: Promise<Ended>
-    if (this.thread) ended = chat.sendIn(this.thread, question, [], nothing())
+    if (this.thread) ended = chat.sendIn(this.thread, question, texts, nothing())
     else {
       const context = this.context
       this.context = null
-      const started = chat.startHere(question, context?.chips ?? [], context?.around ?? nothing())
+      const chips = [...(context?.chips ?? []), ...texts]
+      const started = chat.startHere(question, chips, context?.around ?? nothing())
       this.thread = started.thread
       chat.watch(started.thread)
       ended = started.ended

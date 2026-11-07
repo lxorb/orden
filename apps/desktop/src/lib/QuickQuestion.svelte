@@ -20,6 +20,7 @@
   import { settings } from './settings.svelte'
   import { trap } from './trap'
   import { grow } from './grow'
+  import { longPaste } from './long-paste'
   import DictateButton from './dictation/DictateButton.svelte'
   import { canDictate } from './dictation/engines.svelte'
   import { dictating } from './dictation/keys'
@@ -63,6 +64,19 @@
     const box = talk
     if (box && atEnd) box.scrollTop = box.scrollHeight
   })
+
+  function onPaste(event: ClipboardEvent) {
+    const text = longPaste(event)
+    if (text === null) return
+    const name = t('Text')
+    if (text.length > 2_000_000) {
+      quick.refuse(
+        t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', { name }),
+      )
+      return
+    }
+    quick.take(name, text)
+  }
 
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return
@@ -129,6 +143,7 @@
           placeholder={t('Ask')}
           aria-label={t('Quick question')}
           spellcheck="false"
+          onpaste={onPaste}
           onkeydown={onKey}></textarea>
 
         {#if canDictate()}
@@ -146,7 +161,7 @@
             class="go"
             title={t('Ask')}
             aria-label={t('Ask')}
-            disabled={!quick.question.trim()}
+            disabled={!quick.question.trim() && !quick.texts.length}
             onclick={() => void quick.ask()}
           >
             <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
@@ -154,24 +169,43 @@
         {/if}
       </div>
 
-      {#if quick.context}
-        {@const context = quick.context}
+      {#if quick.context !== null || quick.texts.length > 0}
         <div class="chips" transition:fade={{ duration: dur(120) }}>
-          <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
-            <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
-            <span class="what">{context.name}</span>
-            <button
-              class="drop"
-              title={t('Remove')}
-              aria-label={t('Remove')}
-              onclick={() => {
-                quick.drop()
-                field?.focus()
-              }}
-            >
-              <Cross small />
-            </button>
-          </span>
+          {#if quick.context}
+            {@const context = quick.context}
+            <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
+              <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
+              <span class="what">{context.name}</span>
+              <button
+                class="drop"
+                title={t('Remove')}
+                aria-label={t('Remove')}
+                onclick={() => {
+                  quick.drop()
+                  field?.focus()
+                }}
+              >
+                <Cross small />
+              </button>
+            </span>
+          {/if}
+          {#each quick.texts as one (one.id)}
+            <span class="chip" title={one.label}>
+              <svg viewBox="0 0 13 13"><path d={MARKS.selection} /></svg>
+              <span class="what">{one.label}</span>
+              <button
+                class="drop"
+                title={t('Remove')}
+                aria-label={t('Remove')}
+                onclick={() => {
+                  quick.dropText(one.id)
+                  field?.focus()
+                }}
+              >
+                <Cross small />
+              </button>
+            </span>
+          {/each}
         </div>
       {/if}
     {:else}
@@ -391,6 +425,8 @@
   .chips {
     flex: none;
     display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
     padding: var(--space-2) var(--quick-inset) var(--quick-inset);
   }
 
