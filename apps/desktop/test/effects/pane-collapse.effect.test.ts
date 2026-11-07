@@ -90,13 +90,14 @@ beforeEach(() => {
   document.body.append(target)
 })
 
-afterEach(() => {
+afterEach(async () => {
   process.off('uncaughtException', heard)
   process.off('unhandledRejection', heard)
   if (shown) void unmount(shown, { outro: false })
   shown = null
   target.remove()
   viewport.device = 'desktop'
+  await vi.dynamicImportSettled()
 })
 
 async function settle() {
