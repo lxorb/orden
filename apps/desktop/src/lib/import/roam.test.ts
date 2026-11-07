@@ -228,3 +228,18 @@ describe("Roam's checkboxes", () => {
     expect(roamText('{{TODO}} Ring and {{[[DONE]]}}')).toBe('[ ] Ring and [x] ')
   })
 })
+
+describe('a very long page', { timeout: 30_000 }, () => {
+  test('of more nested blocks than a call can take as arguments comes in whole', async () => {
+    const children = Array.from({ length: 200_000 }, (_, at) => ({
+      string: `Block ${at}`,
+      uid: `u${at}`,
+    }))
+    const graph = JSON.stringify([
+      { title: 'Long', children: [{ string: 'Top', uid: 'top', children }] },
+    ])
+    const plan = await readRoam([file('graph.json', graph)])
+
+    expect(noteAt(plan, 'Long.md')).toContain('- Block 199999')
+  })
+})

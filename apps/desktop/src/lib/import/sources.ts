@@ -59,7 +59,7 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
     const bytes = new Uint8Array(await one.arrayBuffer())
     if (inside.length && (!parts || !path.toLowerCase().endsWith('.zip')))
       found.push(sourceOf(path, bytes))
-    else found.push(...(await expand(path, bytes, 0)))
+    else for (const source of await expand(path, bytes, 0)) found.push(source)
   }
 
   return found
@@ -85,7 +85,9 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
 
   for (const entry of entries) {
     if (parts && entry.path.toLowerCase().endsWith('.zip')) {
-      inside.push(...(await expand(entry.path, await entry.read(), depth + 1)))
+      for (const source of await expand(entry.path, await entry.read(), depth + 1)) {
+        inside.push(source)
+      }
       continue
     }
 

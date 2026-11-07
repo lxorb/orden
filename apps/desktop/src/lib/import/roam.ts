@@ -180,9 +180,11 @@ function linesOf(
     }
 
     if (shown) {
-      out.push(...linesOf(graph.under.get(shown), next, graph, new Set([...here, shown])))
+      for (const line of linesOf(graph.under.get(shown), next, graph, new Set([...here, shown]))) {
+        out.push(line)
+      }
     }
-    out.push(...linesOf(block.children, next, graph, here))
+    for (const line of linesOf(block.children, next, graph, here)) out.push(line)
   }
 
   return out
