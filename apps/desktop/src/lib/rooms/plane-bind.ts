@@ -42,6 +42,8 @@ export class PlaneBinding {
         return
       }
 
+      if (events[0]?.transaction.origin === HERE) return
+
       const ids = changedIn(events)
       if (ids.size) this.surface.arrived(readPlane(doc, this.surface.canvas, ids))
     }
