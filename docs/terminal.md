@@ -200,16 +200,26 @@ group of Orden's own, which goes before the config's.
 the window, no field, every host numbered, a digit connecting at once where only one host can
 be meant, letters finding a host by its name, its other names or its address and waiting for
 Enter, Backspace taking one back. The pinned hosts first, then the five connected to most lately
-(newest first), then the rest under their groups' names, a line between; when each was last
+(newest first) - never the last of a group's own, so a group keeps its name and its Open all -
+then the rest under their groups' names, a line between; when each was last
 connected to at the row's end, quietly. An address typed that no host has - `emil@10.0.0.5`,
 `box:2222` - is a row of its own, and choosing it keeps it as a host made in Orden, the way a
 browser keeps what was typed in its history. A digit is always a host's number, so an address
 that starts with one is typed into Shift Shift or Settings instead. With no hosts at all the
 one row is Add host, which is Settings, Remote. A right click on a host pins it.
 
+**A group opens whole.** A group's name in the picker has **Open all** at its end on hover, and
+in its right-click menu: every host in the group - its pinned and recent ones too - as a tab of
+its own in the space being worked in, the first in front and the rest behind it in the group's
+order, which is what Chrome's Open all on a bookmarks folder and iTerm2's Open All on a tag do,
+and what Open all on a folder of notes does here. Ten or more ask first, with how many tabs it
+will be, as Chrome does past fifteen. A tab behind connects the first time it is looked at
+(`openAll` in `lib/remote/open.ts`).
+
 **Shift Shift.** Every host is a row of the palette, found by the same names; `ssh` and a
 space narrows the palette to the hosts alone, and `ssh user@box` that no host is offers to
-connect to it, which keeps it (`lib/palette/mode.ts`, `lib/palette/kinds.ts`).
+connect to it, which keeps it (`lib/palette/mode.ts`, `lib/palette/kinds.ts`). Each group is a
+row too, found by its name and by its hosts', and choosing it is the picker's Open all.
 
 **The tab** is a terminal tab like any other, whose words name the host as its shell:
 `{"shell":"ssh:pi"}`. A host is an id to the window as a shell is: the crate finds `pi` in the
@@ -222,6 +232,30 @@ It is called by the host's name - a rename still wins - and wears a server in th
 Settings gave the host (`Tab.running`'s `host` and `colour`; `lib/terminal/naming.ts`). What a
 remote shell titles itself and what runs there are not asked: nothing on this side can see it,
 and the host is what the tab is.
+
+**`ssh` typed in a local tab** makes the tab that host's while it runs, with the connection
+left alone. When the program in front is `ssh` (asked as above), the crate reads what it was
+started with - `/proc/<pid>/cmdline` on Linux, `KERN_PROCARGS2` on a Mac, the process's command
+line on Windows - and reads it as `ssh` does: the options that take a value, before the host and
+after it, `-l`, `-p` and `-o User` or `Port`, the first of each winning over the next and over
+the destination's own, which is `user@host` or `ssh://user@host:port`; a `-o HostName`, another
+config (`-F`), a tag (`-P`), a socket (`-S`, `ControlPath`) or a `ProxyCommand` is left a program, since the tab would name a machine it may not be
+on, and so is a `SessionType`, `RemoteCommand` or `ForkAfterAuthentication` that opens no session. Only the destination goes to the window,
+never the arguments, which can name a key. An `ssh` that opens no session here - a command after
+the host, `-N`, `-W`, `-f`, `-G` - is left a program (`ssh_destination` in
+`src-tauri/src/terminal/remote.rs`, `pty_ssh`). The window finds the host by its name, another of
+its names or its address, with a user and a port that are not the host's own ruling it out
+(`hostReached` in `lib/remote/hosts.ts`); an address no host has changes nothing and keeps
+nothing. The tab's words then say `{"shell":"ssh:pi","via":"pwsh"}`: it is called by the host,
+wears its colour, counts as connected to it, and a picture pasted goes over to it. The shell
+under it is still this machine's, so it is asked after as before, and when `ssh` is no longer
+in front - `exit`, a dropped connection - the words are the local shell's again and the tab is
+what it was, with no Reconnect. Whatever starts it again - a restart, Reopen closed tab,
+Duplicate, a split, Open another - starts `ssh` for the host, as a remote tab of its own: the
+local shell that was under it belonged to that one run. A duplicate or a split of a terminal on
+this machine is words of its own, never the original's, so `ssh` in one pane leaves the other
+what it is (`copyOf` in `lib/workspace.svelte.ts`) (`adopt` and `giveBack` in
+`lib/terminal/sessions.svelte.ts`).
 
 **A connection that drops** - `ssh` ending with anything but 0 - leaves its lines readable and a
 quiet bar at the foot, **Reconnect**, which Enter is too. Never by itself: Tabby's reconnect
@@ -585,7 +619,7 @@ test/weight.test.ts).
 | `apps/desktop/src-tauri/src/terminal.rs`           | the commands, who may call them, and every way a session ends                                                                                                                                                                    |
 | `apps/desktop/src-tauri/src/terminal/shells.rs`    | which shells there are, how each starts and how it says its folder                                                                                                                                                               |
 | `apps/desktop/src-tauri/src/terminal/session.rs`   | one shell in one pty, and its four threads                                                                                                                                                                                       |
-| `apps/desktop/src-tauri/src/terminal/process.rs`   | whether anything besides the shell runs, and where it is                                                                                                                                                                         |
+| `apps/desktop/src-tauri/src/terminal/process.rs`   | whether anything besides the shell runs, where it is, and what the program in front was started with                                                                                                                                                                         |
 | `apps/desktop/src/lib/new-kinds.ts`                | the terminal as a kind a new tab can be, and its chevron                                                                                                                                                                         |
 | `apps/desktop/src/lib/terminal/two-ways.ts`        | every app command on a key a shell reads, in a terminal - Ctrl+T, Ctrl+N, Ctrl+W, Ctrl+Space and the rest: asked once, and the answer kept per command (docs/keyboard.md, _A terminal_; #426) |
 | `apps/desktop/src/lib/terminal/open.ts`            | making one: which shell, which folder, where in the strip                                                                                                                                                                        |

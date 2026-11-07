@@ -259,6 +259,12 @@ pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, Strin
 }
 
 #[tauri::command(async)]
+pub fn pty_ssh(webview: Webview, id: String) -> Result<Option<remote::Destination>, String> {
+    let owner = owner(&webview)?;
+    webview.state::<Terminals>().with(&owner, &id, Session::ssh)
+}
+
+#[tauri::command(async)]
 pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
     webview

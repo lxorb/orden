@@ -9,6 +9,7 @@ import {
   NOTHING_KEPT,
   type Own,
   said,
+  withAbout,
 } from './hosts'
 
 function readAnswer(value: unknown): { config: ConfigHost[]; kept: Kept; file: string | null } {
@@ -101,6 +102,10 @@ class Remote {
     }
     await this.keep((kept) => ({ ...kept, own: [...kept.own, own] }))
     return this.byId(own.id)
+  }
+
+  reached(id: string): void {
+    void this.keep((kept) => withAbout(kept, id, { last: Date.now() }))
   }
 
   connected(id: string): void {

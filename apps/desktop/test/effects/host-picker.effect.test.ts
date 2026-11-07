@@ -20,6 +20,18 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
+const confirmed: { title: string; detail?: string }[] = []
+let sure = true
+
+vi.mock('../../src/lib/prompt.svelte', () => ({
+  prompt: {
+    confirm: (options: { title: string; detail?: string }) => {
+      confirmed.push(options)
+      return Promise.resolve(sure)
+    },
+  },
+}))
+
 Element.prototype.animate = () => {
   const animation = {
     cancel: () => undefined,
@@ -63,6 +75,8 @@ beforeEach(() => {
     groups: [],
   }
   asked.length = 0
+  confirmed.length = 0
+  sure = true
   workspace.panes.collapse()
   workspace.tabs = []
   target = document.createElement('div')
@@ -130,9 +144,9 @@ test('no field: the pinned host, the recent one, then the rest by group, numbere
   expect(numbers()).toEqual(['1', '2', '3', '4'])
   dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }))
   await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
-  expect([...(dialog()?.querySelectorAll('.head') ?? [])].map((one) => one.textContent)).toEqual([
-    'Home',
-  ])
+  expect(
+    [...(dialog()?.querySelectorAll('.head > span') ?? [])].map((one) => one.textContent),
+  ).toEqual(['Home'])
   expect(dialog()?.querySelectorAll('hr').length).toBe(2)
   expect(rows()[3]?.querySelector('.detail')?.textContent).toBe('emil@10.0.0.5')
   expect(rows()[1]?.querySelector('.nib-row-meta')).not.toBe(null)
@@ -198,4 +212,40 @@ test('Escape and the scrim put it away, and a digit no host has is refused', asy
   flushSync()
   expect(hostPicker.open).toBe(false)
   expect(workspace.tabs).toHaveLength(0)
+})
+
+test("a group's Open all opens every host in it, the first in front and the rest behind it", async () => {
+  await opened()
+  const head = [...(dialog()?.querySelectorAll<HTMLElement>('.head') ?? [])].find((one) =>
+    one.textContent.includes('Home'),
+  )
+  head?.querySelector<HTMLButtonElement>('.all')?.click()
+
+  await vi.waitFor(() => expect(workspace.tabs.length).toBe(2))
+  expect(hostPicker.open).toBe(false)
+  expect(workspace.tabs.map((tab) => readSpec(tab.doc)?.shell)).toEqual(['ssh:pi', 'ssh:nas'])
+  expect(workspace.activeTabId).toBe(workspace.tabs[0]?.id)
+})
+
+test('a group of ten or more asks before it opens them all, and opens nothing on No', async () => {
+  config = Array.from({ length: 10 }, (_, at) => ({
+    id: `lab${String(at)}`,
+    also: [],
+    group: 'Lab',
+  }))
+  kept = { own: [], about: {}, order: [], groups: [] }
+  await opened()
+  const all = () => dialog()?.querySelector<HTMLButtonElement>('.head .all')
+
+  sure = false
+  all()?.click()
+  await vi.waitFor(() => expect(confirmed).toHaveLength(1))
+  expect(confirmed[0]).toMatchObject({ title: 'Open all', detail: '10 tabs' })
+  await new Promise((settle) => setTimeout(settle, 20))
+  expect(workspace.tabs).toHaveLength(0)
+
+  sure = true
+  await opened()
+  all()?.click()
+  await vi.waitFor(() => expect(workspace.tabs).toHaveLength(10))
 })
