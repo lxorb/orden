@@ -222,6 +222,12 @@ describe('the sheet a plane of one’s own is printed on', () => {
     expect(page).not.toContain('frame-src')
   })
 
+  test('links a picture of the space instead of writing it into the sheet', async () => {
+    const page = await printed('<img src="pict" alt="p">')
+    expect(page).toMatch(/<img src="blob:[^"]+" alt="p"/)
+    expect(page).not.toContain('data:image')
+  })
+
   test('keeps markup of one’s own, handlers under that policy', async () => {
     const page = await printed('<u>mine</u> <img src="x.png" onerror="alert(1)">')
     expect(page).toContain('<u')

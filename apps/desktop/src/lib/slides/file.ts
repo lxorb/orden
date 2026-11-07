@@ -10,8 +10,9 @@ import {
 import { CODE_PALETTES } from '@orden/editor'
 import { proseCss, slidesCss, tokensCss } from '@orden/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
-import { inlineImages, printInFrame } from '../export'
+import { inlineImages } from '../export'
 import { writtenPdf } from '../export/print'
+import { printWithPictures } from '../export/sheet'
 import { titleOf } from '../export/document'
 import { chooseTarget, download } from '../export/save'
 import { mathCss } from '../math-fonts'
@@ -116,12 +117,15 @@ ${script}</body>
 
 export type DeckExport = DeckOptions & { resolveImage?: (src: string) => string }
 
-async function renderDeck(note: Note, name: string, options: DeckExport): Promise<string> {
+async function deckPage(note: Note, name: string, options: DeckExport): Promise<string> {
   const { deckHtml } = await import('./render')
 
   const slides = await deckHtml(note, options.scheme ?? 'dark', note.trusted)
-  const html = buildDeckHtml(slides, titleOf(note.text, name), options)
+  return buildDeckHtml(slides, titleOf(note.text, name), options)
+}
 
+async function renderDeck(note: Note, name: string, options: DeckExport): Promise<string> {
+  const html = await deckPage(note, name, options)
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
 }
 
@@ -154,12 +158,12 @@ export async function exportDeckPdf(
   const target = native ? await chooseTarget(name, 'pdf', 'PDF') : null
   if (native && !target) return
 
-  const html = await renderDeck(note, name, { ...options, interactive: false })
+  const printed = { ...options, interactive: false }
 
   if (target) {
-    if (await writtenPdf(html, target, DECK_PAPER)) return target
+    if (await writtenPdf(await renderDeck(note, name, printed), target, DECK_PAPER)) return target
   }
 
-  await printInFrame(html, DECK_PAPER)
+  await printWithPictures(await deckPage(note, name, printed), options.resolveImage, DECK_PAPER)
   return
 }
