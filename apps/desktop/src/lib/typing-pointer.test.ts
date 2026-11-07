@@ -247,6 +247,37 @@ describe('the pointer', () => {
     expect(listened.has('pointermove')).toBe(false)
   })
 
+  test('moves at once onto what replaced the element it was hidden on', () => {
+    const watching: { changed: (() => void) | null } = { changed: null }
+    const after = new FakeElement()
+    const asked: number[][] = []
+    const watched = new TypingPointer(listening, false, {
+      watch: (one) => {
+        watching.changed = one
+        return () => (watching.changed = null)
+      },
+      at: (x, y) => {
+        asked.push([x, y])
+        return after as unknown as Element
+      },
+    })
+    watched.handleEvent(pointer('pointerover', { clientX: 40, clientY: 70 }))
+    watched.handleEvent(key({ key: 'a' }))
+    expect(hidden()).toBe(true)
+
+    watching.changed?.()
+    expect(asked).toEqual([])
+
+    Object.assign(under, { isConnected: false })
+    watching.changed?.()
+    expect(asked).toEqual([[40, 70]])
+    expect(after.worn.has(HIDDEN)).toBe(true)
+
+    watched.handleEvent(pointer('pointerdown'))
+    expect(after.worn.size).toBe(0)
+    expect(watching.changed).toBeNull()
+  })
+
   test('stays hidden on what comes under it while it rests', () => {
     typing.handleEvent(key({ key: 'a' }))
     const next = new FakeElement()
