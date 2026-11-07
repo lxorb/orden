@@ -437,6 +437,7 @@ export async function settleDisk(core: Core, space: SpaceState) {
     busy: (id) => core.inHand.has(id),
   })
   await core.commit([...core.entryChanges(moved), ...forgets])
+  if (moved.length) core.events.placed?.({ moved: moved.length })
 }
 
 function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {

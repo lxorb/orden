@@ -2026,3 +2026,24 @@ describe('notes pushed together that are larger than one request may carry', () 
     expect(log.some((row) => row.failed === 'that note is too large')).toBe(true)
   })
 })
+
+describe('a note another device renames', () => {
+  test('is said to be placed once this device holds it at its new name, so an open note joins it again', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+    await there.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Renamed.md`)
+    await there.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Renamed.md`)
+    await there.engine.pass(SPACE)
+
+    const found: (string | null)[] = []
+    here.engine.on('placed', () => {
+      found.push(here.engine.entryAt(`${ROOT}/Renamed.md`)?.id ?? null)
+    })
+    await here.engine.pass(SPACE)
+
+    expect(here.disk.files.has(`${ROOT}/Renamed.md`)).toBe(true)
+    expect(found.length).toBeGreaterThan(0)
+    expect(found.every((id) => id === PLAN)).toBe(true)
+  })
+})

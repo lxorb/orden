@@ -34,7 +34,13 @@ class FakeEngine implements Engine {
   log: LogRow[] = []
   spaces: SpaceRow[] = []
 
-  private readonly listeners: Listeners = { resurrected: [], pass: [], unsynced: [], file: [] }
+  private readonly listeners: Listeners = {
+    resurrected: [],
+    pass: [],
+    unsynced: [],
+    file: [],
+    placed: [],
+  }
 
   readonly store = {
     read: <const Q extends readonly Query[]>(queries: Q): Promise<Answers<Q>> =>

@@ -62,6 +62,7 @@ export class Engine implements AskedEngine {
     pass: new Set(),
     unsynced: new Set(),
     file: new Set(),
+    placed: new Set(),
   }
 
   private constructor(
@@ -72,6 +73,7 @@ export class Engine implements AskedEngine {
     core.events.resurrected = (event) => this.emit('resurrected', event)
     core.events.unsynced = (event) => this.emit('unsynced', event)
     core.events.file = (event) => this.emit('file', event)
+    core.events.placed = (event) => this.emit('placed', event)
     core.events.held = () => {
       void this.held.refresh()
       for (const [id, told] of [...this.unheld]) {
@@ -608,6 +610,7 @@ export class Engine implements AskedEngine {
       busy: (id) => this.core.inHand.has(id),
     })
     await this.core.commit([...this.core.entryChanges(changed), ...forgets])
+    if (changed.length) this.core.events.placed?.({ moved: changed.length })
   }
 
   foldWritten(path: string): Promise<void> {

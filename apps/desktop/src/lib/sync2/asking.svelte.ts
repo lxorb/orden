@@ -49,6 +49,7 @@ export interface EngineEvents {
   unsynced: Unsynced
   file: { id: string; text: string }
   pass: LogRow
+  placed: { moved: number }
 }
 
 export interface ForeignCopies {

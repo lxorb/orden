@@ -375,6 +375,7 @@ class Runner {
     )
     rooms.drawn = () => this.rebind()
     this.stops.push(() => (rooms.drawn = null))
+    this.stops.push(engine.on('placed', () => this.rebind()))
     if (isDesktop) {
       const { watchFolders } = await import('./watching')
       const watched = watchFolders({

@@ -71,6 +71,7 @@ export interface CoreEvents {
   held: () => void
   unsynced: (event: { id: string; name: string }) => void
   file: (event: { id: string; text: string }) => void
+  placed: (event: { moved: number }) => void
 }
 
 export class Core {
