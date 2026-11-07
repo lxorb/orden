@@ -47,6 +47,12 @@ const waiting = new Map<
 
 const SETTLE = 80
 
+const runs = new Set<Promise<void>>()
+
+export async function settledRuns(): Promise<void> {
+  while (runs.size) await Promise.allSettled([...runs])
+}
+
 const keyOf = (space: string, path: string) => `${space}\n${path}`
 
 function clock() {
@@ -157,7 +163,8 @@ function settling(key: string, space: string, path: string, before: readonly Row
     removed: before,
     timer: setTimeout(() => {
       waiting.delete(key)
-      void run(space, path, before)
+      const one: Promise<void> = run(space, path, before).finally(() => runs.delete(one))
+      runs.add(one)
     }, SETTLE),
   })
 }

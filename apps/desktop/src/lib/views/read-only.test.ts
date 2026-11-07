@@ -123,7 +123,7 @@ const { kitFor } = await import('./kit')
 const { moveRowsTo, tickRow, writeEach } = await import('./act')
 const { offersPlaces, placeEntries } = await import('./project-actions')
 const { addNote } = await import('./add')
-const { heard, readHeld, repeatTemplates } = await import('./running')
+const { heard, readHeld, repeatTemplates, settledRuns } = await import('./running')
 const { contextFor } = await import('./context')
 const { columnsOf } = await import('./columns')
 const Cell = (await import('./Cell.svelte')).default
@@ -409,7 +409,7 @@ describe('the runner, in a space shared to be read', () => {
     } finally {
       vi.useRealTimers()
     }
-    await new Promise((done) => setTimeout(done, 20))
+    await settledRuns()
   }
 
   test("runs none of a base's automations", async () => {
@@ -421,7 +421,7 @@ describe('the runner, in a space shared to be read', () => {
   test("which run where the space is the reader's own", async () => {
     readOnly.clear()
     await settle('Bug 2.md')
-    await vi.waitFor(() => expect(folders).toEqual([`${THEIRS.root}/Done`]))
+    expect(folders).toEqual([`${THEIRS.root}/Done`])
     expect(written).toContain(`${THEIRS.root}/Bug 2.md`)
   })
 })
