@@ -198,7 +198,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/canvas/ink.ts', "the canvas's ink"],
     ['/lib/Graph.svelte', 'the graph'],
     ['/lib/graph-layout.ts', "the graph's layout"],
-    ['/lib/Pdf.svelte', 'the PDF viewer'],
     ['/lib/Pages.svelte', 'the pages surface'],
     ['/lib/PagesNavigator.svelte', "the pages surface's thumbnails"],
     ['/lib/web-tab/WebTab.svelte', 'the web tab'],

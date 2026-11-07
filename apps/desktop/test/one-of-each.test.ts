@@ -232,7 +232,6 @@ describe('the ring a keyboard leaves', () => {
       'lib/AppMenuPanel.svelte',
       'lib/Canvas.svelte',
       'lib/ContextMenu.svelte',
-      'lib/Pdf.svelte',
       'lib/Reading.svelte',
       'lib/Slides.svelte',
       'lib/agents/ui/PairingBubble.svelte',
