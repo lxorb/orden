@@ -72,4 +72,11 @@ describe('the inbox a task with no place goes to', () => {
     expect([...disk.keys()]).toEqual([`${ROOT}/Lists/Todo.md`])
     expect(listed).toEqual(['tree'])
   })
+
+  test('asked for twice at once, is made once, so the first task written into it stays', async () => {
+    const [one, two] = await Promise.all([inboxNote(ROOT), inboxNote(ROOT)])
+    expect(one).toBe(`${ROOT}/.Inbox.md`)
+    expect(two).toBe(one)
+    expect(came).toEqual([`${ROOT}/.Inbox.md`])
+  })
 })
