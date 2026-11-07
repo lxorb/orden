@@ -299,6 +299,17 @@ export function claimAnswer(id: string): Promise<boolean> {
   })
 }
 
+async function answerHeld(id: string): Promise<boolean | null> {
+  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
+  if (!locks) return null
+  try {
+    const { held = [] } = await locks.query()
+    return held.some((one) => one.name === `orden-ai-answer:${id}`)
+  } catch {
+    return null
+  }
+}
+
 export function answerFreed(id: string): Promise<void> {
   const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
   if (!locks) return Promise.resolve()
@@ -552,7 +563,7 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
   }
   const thread = threadIn(value)
   if (!thread?.elsewhere) return thread
-  if (await saidAnswering(id)) {
+  if ((await answerHeld(id)) ?? (await saidAnswering(id))) {
     readHere.set(id, ownFields(thread))
     return thread
   }

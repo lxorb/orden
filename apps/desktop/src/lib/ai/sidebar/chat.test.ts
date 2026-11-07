@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
 import type { Draft, EngineEvent, Part, Thread, Turn } from '../chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
@@ -2124,12 +2124,14 @@ describe('where a chat stands', () => {
   })
 
   test('so is one of those in hand here, opened or asked after', async () => {
-    const { keepThread, newThread } = await import('../chat/threads')
+    const { claimAnswer, keepThread, newThread, unclaimAnswer } = await import('../chat/threads')
     const thread = newThread('work', 'p', 'm')
     thread.title = 'Plan'
     thread.state = 'running'
     thread.answering = 'a1'
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
+    expect(await claimAnswer(thread.id)).toBe(true)
+    onTestFinished(() => unclaimAnswer(thread.id))
     await keepThread(thread)
 
     const chat = await launched()

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
 
 const disk = new Map<string, { head: unknown; body: string }>()
 const writes: string[] = []
@@ -63,6 +63,7 @@ const { other } = (await import('../../windows')) as unknown as {
 const {
   branchThread,
   chatsOf,
+  claimAnswer,
   deleteThread,
   findParents,
   forgetSpace,
@@ -73,6 +74,7 @@ const {
   otherWindowDeleted,
   readThread,
   threadIn,
+  unclaimAnswer,
   unreadOf,
   writeThread,
 } = await import('./threads')
@@ -344,9 +346,33 @@ describe('whether anybody is answering is asked, not read off the clock', () => 
     expect(writes).toHaveLength(before + 1)
   })
 
+  test('an answer whose lock nobody holds is over at once, without asking the windows', async () => {
+    const thread = answeringOne()
+    inFile(thread)
+    const asked: unknown[] = []
+    const stop = other.hear('thread-answering?', (said) => asked.push(said.id))
+    const had = Object.getOwnPropertyDescriptor(navigator, 'locks')
+    Object.defineProperty(navigator, 'locks', {
+      configurable: true,
+      value: { query: () => Promise.resolve({ held: [{ name: 'orden-ai-answer:another' }] }) },
+    })
+    try {
+      const read = await readThread('work', thread.id)
+      expect(read?.elsewhere).toBeUndefined()
+      expect(read?.turns[0]?.parts.at(-1)).toEqual({ kind: 'notice', code: 'stopped', text: '' })
+      expect(asked).toEqual([])
+    } finally {
+      if (had) Object.defineProperty(navigator, 'locks', had)
+      else Reflect.deleteProperty(navigator, 'locks')
+      stop()
+    }
+  })
+
   test('a window that says so is left to answer, and takes the name given here', async () => {
     const thread = answeringOne()
     inFile(thread)
+    expect(await claimAnswer(thread.id)).toBe(true)
+    onTestFinished(() => unclaimAnswer(thread.id))
     const stop = other.hear('thread-answering?', (said) =>
       other.say('thread-answering', { id: said.id }),
     )
