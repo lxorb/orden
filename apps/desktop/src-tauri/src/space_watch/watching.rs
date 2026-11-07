@@ -1,6 +1,6 @@
 use notify::event::{AccessKind, AccessMode};
 use notify::{ErrorKind, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
@@ -145,6 +145,27 @@ impl Armed {
             self.unwatched[at] = arm(&mut self.watcher, root);
         }
         self
+    }
+
+    pub fn start_in(
+        self,
+        running: &mut HashMap<PathBuf, Watch>,
+        key: PathBuf,
+        sink: Sink,
+    ) -> Result<(), String> {
+        let mut old = running.remove(&key);
+        match self.replacing(&mut old).start(sink) {
+            Ok(made) => {
+                running.insert(key, made);
+                Ok(())
+            }
+            Err(error) => {
+                if let Some(old) = old {
+                    running.insert(key, old);
+                }
+                Err(error)
+            }
+        }
     }
 }
 
@@ -573,6 +594,47 @@ mod tests {
         let first = until_quiet(&heard);
         assert!(first[0].scan);
         assert_eq!(first[0].unwatched, None);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_watch_armed_again_for_the_same_folder_takes_the_old_ones_place_past_the_limit() {
+        use super::{armed, Unwatched};
+        use std::collections::HashMap;
+
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = fs::canonicalize(dir.path()).expect("a real path");
+        fs::create_dir(root.join("Deep")).expect("a folder");
+        let spelled = || {
+            vec![Root {
+                given: root.clone(),
+                real: root.clone(),
+            }]
+        };
+
+        let mut running = HashMap::new();
+        armed(spelled())
+            .expect("armed")
+            .start_in(&mut running, root.clone(), Box::new(|_| true))
+            .expect("started");
+        let mut made = armed(spelled()).expect("armed");
+        made.unwatched[0] = Some(Unwatched::Limit);
+
+        let (tell, heard) = channel();
+        made.start_in(
+            &mut running,
+            root.clone(),
+            Box::new(move |one| tell.send(one).is_ok()),
+        )
+        .expect("started");
+
+        assert_eq!(running.len(), 1);
+        assert_eq!(holders(&root.join("Deep")), 1, "the old one's are free");
+        let first = until_quiet(&heard);
+        assert!(first[0].scan);
+        assert_eq!(first[0].unwatched, None);
+        fs::write(root.join("Deep").join("Later.md"), "words").expect("a note");
+        assert_eq!(said(&until_quiet(&heard)), ["created Deep/Later.md"]);
     }
 
     #[cfg(target_os = "linux")]
