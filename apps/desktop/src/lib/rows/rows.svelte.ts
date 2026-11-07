@@ -14,7 +14,7 @@ import { inboxNote } from './inbox-note'
 import { hearOldLists, keepInboxListed } from './old-lists'
 import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
-import { listedAt } from './todo-lists'
+import { listedAt, notesAwayBy } from './todo-lists'
 import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
 
@@ -62,6 +62,13 @@ if (!__EVEN_PLUGIN__) {
     (change) => void (moving ??= import('./inbox-moving')).then((one) => one.heard(change)),
   )
 }
+
+notesAwayBy((root) =>
+  store
+    .of(root)
+    .filter((row) => row.kind === 'note')
+    .map((row) => row.path),
+)
 
 $effect.root(() => {
   $effect(() => {

@@ -86,7 +86,7 @@ export function sectionMenu(
       label: t('Duplicate'),
       run: () => write((text) => duplicatedSection(text, name, t('{name} (copy)', { name }))),
     },
-    ...(offersPlaces()
+    ...(offersPlaces(workspace.rootHolding(path))
       ? [
           {
             label: t('Move to'),
@@ -96,6 +96,7 @@ export function sectionMenu(
                 placeEntries(
                   (target) => void moveSection(path, name, target),
                   (note) => samePath(note, path),
+                  workspace.rootHolding(path),
                 ),
               ),
           },
