@@ -196,6 +196,25 @@ describe('the to-dos, with Orden closed', () => {
     expect(again.tasks.map((one) => one.text)).toContain('Post it')
   })
 
+  test('a Projects note from before lists were marked is one until a device marks the space (#1370)', async () => {
+    const key = await connector()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Projects/Garden.md', content: '- [ ] Plant the tulips\n' },
+    })
+    const texts = async () =>
+      (await json(key, 'list_tasks', { space: 'Work' })).tasks.map((one) => one.text)
+    expect(await texts()).toContain('Plant the tulips')
+    const made = await json(key, 'add_task', { space: 'Work', note: 'Garden', text: 'Buy soil' })
+    expect(made.path).toBe('Projects/Garden.md')
+
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    env.db
+      .prepare("update folders set meta = ? where space_id = ? and name = 'Projects'")
+      .run('{"todo-lists":"marked"}', space)
+    expect(await texts()).not.toContain('Plant the tulips')
+  })
+
   test('a space shared to read is listed and never written', async () => {
     const owner = await signIn(env, 'x@y.dev')
     const theirs = await call(env, '/v1/spaces', { token: owner, body: { name: 'Club' } })

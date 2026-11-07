@@ -1,4 +1,4 @@
-import { LIST_KEY, LIST_VALUE } from '@orden/bases/todo-lists'
+import { LIST_KEY, LIST_VALUE, MARKED_KEY, MARKED_VALUE } from '@orden/bases/todo-lists'
 import type { MetaPatch } from '@orden/sync-core/meta'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
@@ -6,9 +6,6 @@ import { insideSpace, relativeTo, samePath } from '../space-paths'
 import type { ItemMetaStore } from '../workspace/item-meta.svelte'
 import { chosenInbox } from './inbox'
 import { inProjects, projectsOf } from './projects'
-
-export const MARKED_KEY = 'todo-lists'
-export const MARKED_VALUE = 'marked'
 
 export interface Lists {
   readonly itemMeta: ItemMetaStore
