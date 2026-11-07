@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { MemoryDisk } from './memory-disk'
 import { settle, SpaceState } from './places'
+import type { EntryRow } from './store'
 
 const row = (id: string, kind: string, parent: string | null, name: string, local: string) => ({
   id,
@@ -245,13 +246,15 @@ describe('what a space holds at a path', () => {
       return seed % most
     }
     const names = ['a.md', 'A.md', 'b.md', 'Ä.md', 'Ä.md', 'f/a.md', 'F/A.md', '']
-    const space = new SpaceState(
-      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
-      [],
-      [],
-      'd',
-      { platform: 'linux', foldsCase: true } as never,
-    )
+    const made = () =>
+      new SpaceState(
+        { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+        [],
+        [],
+        'd',
+        { platform: 'linux', foldsCase: true } as never,
+      )
+    const space = made()
     const walked = (path: string) => {
       const wanted = space.key(path)
       for (const entry of space.entries.values()) {
@@ -259,18 +262,64 @@ describe('what a space holds at a path', () => {
       }
       return null
     }
-    for (let step = 0; step < 3000; step++) {
+    const letGo: EntryRow[] = []
+    let other = made()
+    for (let step = 0; step < 6000; step++) {
       const id = `e${String(random(12))}`
       const name = names[random(names.length)] ?? ''
       const held = space.entries.get(id)
-      const what = random(4)
-      if (what === 0) space.entries.delete(id)
-      else if (what === 1 || !held) space.entries.set(id, row(id, 'note', null, 'x.md', name))
-      else held.local_path = name
+      const what = random(9)
+      if (what === 0) {
+        if (held) letGo.push(held)
+        space.entries.delete(id)
+      } else if (what === 1 || !held) {
+        if (held) letGo.push(held)
+        space.entries.set(id, row(id, 'note', null, 'x.md', name))
+      } else if (what === 2 && letGo.length) {
+        const gone = letGo[random(letGo.length)]
+        if (gone && space.entries.get(gone.id) !== gone) gone.local_path = name
+      } else if (what === 3) {
+        space.entries.set(id, held)
+      } else if (what === 4) {
+        other.entries.set(id, held)
+        if (random(5) === 0) other = made()
+      } else if (what === 5 && random(40) === 0) {
+        letGo.push(...space.entries.values())
+        space.entries.clear()
+      } else if (what === 6) {
+        Object.assign(held, { local_path: name })
+      } else held.local_path = name
       for (const path of names.filter(Boolean)) {
         expect(space.at(path)?.id ?? null).toBe(walked(path)?.id ?? null)
       }
     }
+    expect(JSON.parse(JSON.stringify([...space.entries.values()]))).toEqual(
+      [...space.entries.values()].map((one) => ({ ...one })),
+    )
+    expect(structuredClone([...space.entries.values()])).toEqual([...space.entries.values()])
+  })
+})
+
+describe('an ask for what a space holds at a path', () => {
+  test('does not walk every entry, so a sync of many notes is not slowed by each one', () => {
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      Array.from({ length: 2000 }, (_, at) =>
+        row(`e${String(at)}`, 'note', null, 'x.md', `Note ${String(at)}.md`),
+      ),
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+    const walks = vi.spyOn(space.entries, 'values')
+    for (let at = 0; at < 2000; at++) {
+      expect(space.at(`note ${String(at)}.MD`)?.id).toBe(`e${String(at)}`)
+      const entry = space.entries.get(`e${String(at)}`)
+      if (entry) entry.local_path = `Moved ${String(at)}.md`
+      expect(space.at(`Note ${String(at)}.md`)).toBeNull()
+      expect(space.at(`moved ${String(at)}.md`)).toBe(entry)
+    }
+    expect(walks).not.toHaveBeenCalled()
   })
 })
 

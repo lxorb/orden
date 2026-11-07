@@ -49,8 +49,72 @@ export function windowsPath(root: string): boolean {
   return /^[a-zA-Z]:/.test(root) || root.includes('\\')
 }
 
+type Placed = (row: EntryRow, from: string, to: string) => void
+
+const watched = new WeakMap<EntryRow, { path: string; maps: Set<Entries> }>()
+
+function watch(row: EntryRow, map: Entries) {
+  const had = watched.get(row)
+  if (had) {
+    had.maps.add(map)
+    return
+  }
+  const slot = { path: row.local_path, maps: new Set([map]) }
+  watched.set(row, slot)
+  Object.defineProperty(row, 'local_path', {
+    configurable: true,
+    enumerable: true,
+    get: () => slot.path,
+    set: (to: string) => {
+      const from = slot.path
+      slot.path = to
+      if (from !== to) for (const one of slot.maps) one.moved(row, from, to)
+    },
+  })
+}
+
+class Entries extends Map<string, EntryRow> {
+  constructor(
+    private readonly placed: Placed,
+    rows: readonly EntryRow[],
+  ) {
+    super()
+    for (const row of rows) this.set(row.id, row)
+  }
+
+  moved(row: EntryRow, from: string, to: string) {
+    if (super.get(row.id) === row) this.placed(row, from, to)
+  }
+
+  override set(id: string, row: EntryRow): this {
+    const had = super.get(id)
+    if (had === row) return this
+    if (had) this.letGo(had)
+    super.set(id, row)
+    watch(row, this)
+    this.placed(row, '', row.local_path)
+    return this
+  }
+
+  override delete(id: string): boolean {
+    const had = super.get(id)
+    if (had) this.letGo(had)
+    return super.delete(id)
+  }
+
+  override clear() {
+    for (const row of super.values()) this.letGo(row)
+    super.clear()
+  }
+
+  private letGo(row: EntryRow) {
+    this.placed(row, row.local_path, '')
+    watched.get(row)?.maps.delete(this)
+  }
+}
+
 export class SpaceState {
-  entries: Map<string, EntryRow>
+  readonly entries: Map<string, EntryRow>
   outbox: Outboxed[]
   ordering: Ordering
   gone: Gone = new Map()
@@ -60,8 +124,6 @@ export class SpaceState {
   private pathsCache: Map<string, string> | null = null
   private placedCache: Map<string, { folder: string; names: string[] }> | null = null
   private readonly holding = new Map<string, Set<string>>()
-  private heldIds: string[] = []
-  private heldPaths: string[] = []
   private readonly keys = new Map<string, string>()
   private shownAt: { paths: Map<string, string>; keys: Map<string, string[]> } | null = null
 
@@ -74,7 +136,10 @@ export class SpaceState {
     ordering: Ordering = emptyOrdering(),
     private readonly lastByMe: (id: string) => boolean = () => false,
   ) {
-    this.entries = new Map(entries.map((entry) => [entry.id, entry]))
+    this.entries = new Entries((row, from, to) => {
+      this.unhold(row.id, from)
+      this.hold(row.id, to)
+    }, entries)
     this.outbox = [...outbox]
     this.ordering = ordering
   }
@@ -223,7 +288,7 @@ export class SpaceState {
 
   at(path: string): EntryRow | null {
     const wanted = this.key(path)
-    const held = this.holders().get(wanted)
+    const held = this.holding.get(wanted)
     if (held?.size === 1) {
       const [id] = held
       const entry = id === undefined ? undefined : this.entries.get(id)
@@ -242,37 +307,10 @@ export class SpaceState {
     return null
   }
 
-  private holders(): Map<string, Set<string>> {
-    let at = 0
-    for (const entry of this.entries.values()) {
-      if (this.heldIds[at] !== entry.id) return this.heldAgain()
-      const was = this.heldPaths[at] ?? ''
-      if (was !== entry.local_path) {
-        this.unhold(entry.id, was)
-        this.hold(entry.id, entry.local_path)
-        this.heldPaths[at] = entry.local_path
-      }
-      at += 1
-    }
-    return at === this.heldIds.length ? this.holding : this.heldAgain()
-  }
-
-  private heldAgain(): Map<string, Set<string>> {
-    this.holding.clear()
-    if (this.keys.size > this.entries.size * 4) this.keys.clear()
-    this.heldIds = []
-    this.heldPaths = []
-    for (const entry of this.entries.values()) {
-      this.heldIds.push(entry.id)
-      this.heldPaths.push(entry.local_path)
-      this.hold(entry.id, entry.local_path)
-    }
-    return this.holding
-  }
-
   private keyOf(path: string): string {
     let key = this.keys.get(path)
     if (key === undefined) {
+      if (this.keys.size > this.holding.size * 4 + 64) this.keys.clear()
       key = this.key(path)
       this.keys.set(path, key)
     }
