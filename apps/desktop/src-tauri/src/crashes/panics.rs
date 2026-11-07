@@ -13,6 +13,7 @@ pub fn panicking() -> bool {
 pub fn install() {
     let before = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
+        let _walking = stacks::walking();
         PANICKING.store(true, Ordering::Release);
         report::keep_now(&panicked(info), false);
         before(info);

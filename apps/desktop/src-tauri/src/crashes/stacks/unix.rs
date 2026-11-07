@@ -50,6 +50,7 @@ extern "C" fn step(context: *mut UnwindContext, held: *mut c_void) -> c_int {
     reason = "the system unwinder walks this thread's own stack"
 )]
 pub fn trace(ips: &mut [usize]) -> usize {
+    let _walking = walking();
     let mut gathered = Gathered { ips, len: 0 };
     unsafe {
         _Unwind_Backtrace(step, (&raw mut gathered).cast());
@@ -79,6 +80,47 @@ static ANSWER: [AtomicUsize; MOST_FRAMES] = [const { AtomicUsize::new(0) }; MOST
 
 static ASKING: Mutex<()> = Mutex::new(());
 
+const MOST_WALKING: usize = 32;
+
+static WALKING: [AtomicUsize; MOST_WALKING] = [const { AtomicUsize::new(0) }; MOST_WALKING];
+
+pub struct Walking(Option<usize>);
+
+impl Drop for Walking {
+    fn drop(&mut self) {
+        if let Some(at) = self.0 {
+            WALKING[at].store(0, Ordering::Release);
+        }
+    }
+}
+
+pub fn walking() -> Walking {
+    let me = this_thread();
+    if me == 0 || is_walking(me) {
+        return Walking(None);
+    }
+    Walking(WALKING.iter().position(|slot| {
+        slot.compare_exchange(0, me, Ordering::AcqRel, Ordering::Relaxed)
+            .is_ok()
+    }))
+}
+
+fn is_walking(me: usize) -> bool {
+    WALKING
+        .iter()
+        .any(|slot| slot.load(Ordering::Acquire) == me)
+}
+
+#[cfg(target_os = "linux")]
+fn unwinding() -> bool {
+    std::thread::panicking()
+}
+
+#[cfg(target_os = "macos")]
+fn unwinding() -> bool {
+    false
+}
+
 static INSTALLED: Once = Once::new();
 
 #[cfg(target_os = "linux")]
@@ -95,11 +137,16 @@ fn this_thread() -> usize {
 
 extern "C" fn answer(_signal: c_int) {
     let asked = ASKED.load(Ordering::Acquire);
-    if TARGET.load(Ordering::Acquire) != this_thread() {
+    let me = this_thread();
+    if TARGET.load(Ordering::Acquire) != me {
         return;
     }
     let mut ips = [0usize; MOST_FRAMES];
-    let len = trace(&mut ips);
+    let len = if is_walking(me) || unwinding() {
+        0
+    } else {
+        trace(&mut ips)
+    };
     for (at, ip) in ips[..len].iter().enumerate() {
         ANSWER[at].store(*ip, Ordering::Relaxed);
     }
@@ -411,5 +458,64 @@ mod tests {
             .status()
             .expect("the child ran");
         assert!(status.success(), "the child ended with {status}");
+    }
+
+    fn frames_of(
+        name: &str,
+        waiting: impl FnOnce(mpsc::Sender<()>, mpsc::Receiver<()>) + Send + 'static,
+    ) -> usize {
+        let (told, heard) = mpsc::channel::<()>();
+        let (ready, readied) = mpsc::channel::<()>();
+        let waiter = std::thread::Builder::new()
+            .name(name.to_owned())
+            .spawn(move || waiting(ready, heard))
+            .expect("a thread");
+        readied.recv().expect("readied");
+        let threads = super::every_thread(Duration::from_secs(10));
+        told.send(()).expect("told");
+        let _ = waiter.join();
+        threads
+            .iter()
+            .find(|one| one.name == name)
+            .expect("the thread")
+            .ips
+            .len()
+    }
+
+    #[test]
+    fn a_thread_already_walking_its_stack_is_not_walked_again_inside_itself() {
+        let frames = frames_of("orden walking", |ready, heard| {
+            let _walking = super::walking();
+            ready.send(()).expect("ready");
+            let _ = heard.recv();
+        });
+        assert_eq!(frames, 0);
+        let frames = frames_of("orden walked", |ready, heard| {
+            drop(super::walking());
+            ready.send(()).expect("ready");
+            let _ = heard.recv();
+        });
+        assert!(frames >= 3, "only {frames} frames");
+    }
+
+    struct WaitsWhileUnwinding {
+        ready: mpsc::Sender<()>,
+        heard: mpsc::Receiver<()>,
+    }
+
+    impl Drop for WaitsWhileUnwinding {
+        fn drop(&mut self) {
+            self.ready.send(()).expect("ready");
+            let _ = self.heard.recv();
+        }
+    }
+
+    #[test]
+    fn a_thread_unwinding_from_a_panic_is_not_walked_inside_its_unwinder() {
+        let frames = frames_of("orden unwinding", |ready, heard| {
+            let _waits = WaitsWhileUnwinding { ready, heard };
+            std::panic::resume_unwind(Box::new("unwinding"));
+        });
+        assert_eq!(frames, 0);
     }
 }

@@ -46,6 +46,12 @@ pub fn is_main() -> bool {
     MAIN.load(Ordering::Relaxed) == unsafe { GetCurrentThreadId() }
 }
 
+pub struct Walking;
+
+pub fn walking() -> Walking {
+    Walking
+}
+
 pub fn trace(ips: &mut [usize]) -> usize {
     let mut held = [std::ptr::null_mut(); MOST_FRAMES];
     let room = ips.len().min(held.len());

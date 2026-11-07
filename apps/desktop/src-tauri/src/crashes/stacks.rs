@@ -115,6 +115,10 @@ pub fn mark_main() {
     here_on::mark_main();
 }
 
+pub fn walking() -> here_on::Walking {
+    here_on::walking()
+}
+
 pub fn here() -> Vec<usize> {
     let mut ips = [0usize; MOST_FRAMES];
     let len = here_on::trace(&mut ips);
