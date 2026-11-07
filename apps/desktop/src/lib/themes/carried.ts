@@ -1,11 +1,8 @@
-const OLD = /(?<![\w-])(\.nib-|#nib-|--nib-)(?=[a-z0-9])/g
-
-const NAMED = /(\[\s*(?:class|id)\s*[~|^$*]?=\s*["']?\s*)nib-(?=[a-z0-9])/gi
-
-const NEW: Record<string, string> = { '.nib-': '.orden-', '#nib-': '#orden-', '--nib-': '--orden-' }
+const OLD =
+  /(?<![\w-])(\.|#|--)nib-(?=[a-z0-9])|(\[\s*(?:class|id)\s*[~|^$*]?=\s*["']?\s*)nib-(?=[a-z0-9])/g
 
 export function carriedCss(css: string): string {
-  return css.replace(OLD, (old) => NEW[old] ?? old).replace(NAMED, '$1orden-')
+  return css.replace(OLD, (_, lead?: string, named?: string) => `${lead ?? named ?? ''}orden-`)
 }
 
 export function carriedToken(token: string): string {
