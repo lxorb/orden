@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 class FakeElement {
   isContentEditable = false
+  readonly worn = new Set<string>()
+  readonly classList = {
+    add: (name: string) => this.worn.add(name),
+    remove: (name: string) => this.worn.delete(name),
+  }
 }
 class FakeInput extends FakeElement {
   type = 'text'
@@ -12,6 +17,7 @@ class FakeTextArea extends FakeElement {
   readOnly = false
   disabled = false
 }
+vi.stubGlobal('Element', FakeElement)
 vi.stubGlobal('HTMLElement', FakeElement)
 vi.stubGlobal('HTMLInputElement', FakeInput)
 vi.stubGlobal('HTMLTextAreaElement', FakeTextArea)
@@ -43,7 +49,11 @@ function key({ key, target = note, altGraph = false, ...held }: Key): KeyboardEv
   return event as unknown as KeyboardEvent
 }
 
-function pointer(type: string, fields: Partial<PointerEvent> = {}): PointerEvent {
+function pointer(
+  type: string,
+  fields: Partial<PointerEvent> = {},
+  over: FakeElement = under,
+): PointerEvent {
   return {
     type,
     pointerType: 'mouse',
@@ -51,17 +61,12 @@ function pointer(type: string, fields: Partial<PointerEvent> = {}): PointerEvent
     movementY: 0,
     clientX: 0,
     clientY: 0,
+    composedPath: () => [over],
     ...fields,
-  } as PointerEvent
+  } as unknown as PointerEvent
 }
 
-const classes = new Set<string>()
-const root = {
-  classList: {
-    add: (name: string) => classes.add(name),
-    remove: (name: string) => classes.delete(name),
-  },
-}
+let under = new FakeElement()
 const listened = new Set<string>()
 const listening = {
   addEventListener: (type: string) => listened.add(type),
@@ -70,12 +75,13 @@ const listening = {
 
 let typing: InstanceType<typeof TypingPointer>
 
-const hidden = () => classes.has(HIDDEN)
+const hidden = () => under.worn.has(HIDDEN)
 
 beforeEach(() => {
-  classes.clear()
+  under = new FakeElement()
   listened.clear()
-  typing = new TypingPointer(root as unknown as Element, listening, false)
+  typing = new TypingPointer(listening, false)
+  typing.handleEvent(pointer('pointerover'))
 })
 
 describe('a key that writes', () => {
@@ -217,16 +223,43 @@ describe('the pointer', () => {
 
   test('costs a hundred keys in a row one change to the page', () => {
     let changes = 0
-    const counting = {
-      classList: {
-        add: () => changes++,
-        remove: () => changes++,
-      },
-    }
-    const counted = new TypingPointer(counting as unknown as Element, listening, false)
+    const counting = Object.assign(new FakeElement(), {
+      classList: { add: () => changes++, remove: () => changes++ },
+    })
+    const counted = new TypingPointer(listening, false)
+    counted.handleEvent(pointer('pointerover', {}, counting))
 
     for (let n = 0; n < 100; n++) counted.handleEvent(key({ key: 'a' }))
 
     expect(changes).toBe(1)
+  })
+
+  test('is hidden on the one element under it, so the rest of the page is not restyled', () => {
+    const field = Object.assign(new FakeElement(), { isContentEditable: true })
+    typing.handleEvent(key({ key: 'a', target: field }))
+    expect(hidden()).toBe(true)
+    expect(field.worn.size).toBe(0)
+  })
+
+  test('is left as it is before it has been over the window', () => {
+    const fresh = new TypingPointer(listening, false)
+    fresh.handleEvent(key({ key: 'a' }))
+    expect(listened.has('pointermove')).toBe(false)
+  })
+
+  test('stays hidden on what comes under it while it rests', () => {
+    typing.handleEvent(key({ key: 'a' }))
+    const next = new FakeElement()
+    typing.handleEvent(pointer('pointerover', {}, next))
+    expect(next.worn.has(HIDDEN)).toBe(true)
+    expect(hidden()).toBe(false)
+
+    const after = new FakeElement()
+    typing.handleEvent(pointer('pointermove', {}, after))
+    expect(after.worn.has(HIDDEN)).toBe(true)
+    expect(next.worn.size).toBe(0)
+
+    typing.handleEvent(pointer('pointermove', { movementX: 2 }, after))
+    expect(after.worn.size).toBe(0)
   })
 })

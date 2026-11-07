@@ -1,6 +1,6 @@
 export const HIDDEN = 'nib-typing'
 
-const RULE = `:root.${HIDDEN}, :root.${HIDDEN} * { cursor: none !important; }`
+const RULE = `.${HIDDEN} { cursor: none !important; }`
 
 const WRITING_KEYS = new Set(['Enter', 'Backspace', 'Delete'])
 
@@ -40,13 +40,19 @@ export function takesWords(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && target.isContentEditable
 }
 
+function deepest(event: Event): Element | null {
+  const first = event.composedPath()[0]
+  return first instanceof Element ? first : null
+}
+
 export class TypingPointer {
   private hidden = false
   private held = false
   private touched = false
+  private under: Element | null = null
+  private worn: Element | null = null
 
   constructor(
-    private readonly root: Element,
     private readonly listening: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>,
     private readonly mac: boolean,
   ) {}
@@ -55,6 +61,9 @@ export class TypingPointer {
     switch (event.type) {
       case 'keydown':
         this.typed(event as KeyboardEvent)
+        return
+      case 'pointerover':
+        this.over(event)
         return
       case 'pointerdown':
         this.pressed(event as PointerEvent)
@@ -76,10 +85,23 @@ export class TypingPointer {
   typed(event: KeyboardEvent): void {
     if (this.hidden || this.held || this.touched) return
     if (!writes(event, this.mac) || !takesWords(event.target)) return
+    if (!this.under) return
 
     this.hidden = true
-    this.root.classList.add(HIDDEN)
+    this.wear(this.under)
     this.listening.addEventListener('pointermove', this, true)
+  }
+
+  over(event: Event): void {
+    this.under = deepest(event)
+    if (this.hidden) this.wear(this.under)
+  }
+
+  private wear(one: Element | null): void {
+    if (this.worn === one) return
+    this.worn?.classList.remove(HIDDEN)
+    one?.classList.add(HIDDEN)
+    this.worn = one
   }
 
   pressed(event: PointerEvent): void {
@@ -97,6 +119,7 @@ export class TypingPointer {
       return
     }
     this.at ??= { x: event.clientX, y: event.clientY }
+    this.over(event)
   }
 
   show(): void {
@@ -104,7 +127,7 @@ export class TypingPointer {
 
     this.hidden = false
     this.at = null
-    this.root.classList.remove(HIDDEN)
+    this.wear(null)
     this.listening.removeEventListener('pointermove', this, true)
   }
 }
@@ -117,8 +140,8 @@ export function hidePointerWhileTyping(): () => void {
   document.head.append(style)
 
   const mac = /Mac|iPhone|iPad/.test(navigator.userAgent)
-  const pointer = new TypingPointer(document.documentElement, window, mac)
-  const events = ['keydown', 'pointerdown', 'pointerup', 'pointercancel'] as const
+  const pointer = new TypingPointer(window, mac)
+  const events = ['keydown', 'pointerover', 'pointerdown', 'pointerup', 'pointercancel'] as const
   for (const one of events) window.addEventListener(one, pointer, true)
   window.addEventListener('blur', pointer)
 
