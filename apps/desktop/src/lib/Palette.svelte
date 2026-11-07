@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
+  import { typeAhead } from './palette/type-ahead'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@orden/editor'
@@ -331,7 +332,9 @@
   })
 
   $effect(() => {
-    if (open) input?.focus()
+    if (!open) return
+    input?.focus()
+    typeAhead.letGo(input ?? null)
   })
 
   $effect(() => {
@@ -424,7 +427,9 @@
 
     const key = row.kind === 'note' ? null : rowKey(row)
     if (key) frecency.use(key)
-    if (chosen === 'close') dismiss()
+    if (chosen !== 'close') return
+    if (row.kind === 'command') typeAhead.hold(input ?? null)
+    dismiss()
   }
 
   function forget(row: Row) {
