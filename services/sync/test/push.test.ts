@@ -153,6 +153,34 @@ describe('reminders kept from the notes', () => {
     expect(kept()).toEqual([])
   })
 
+  test('come and go when a device marks a note a list or stops it, without a save', async () => {
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    const made = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Meeting.md', content: TASK },
+    })
+    const id = (made.json as { note: { id: string } }).note.id
+    const prepared = await call<{ cursor: number }>(env, `/v2/spaces/${space}/prepare`, {
+      token,
+      method: 'POST',
+    })
+    const meta = (said: Record<string, string | null>, op: string) =>
+      call(env, `/v2/spaces/${space}/ops`, {
+        token,
+        body: { ops: [{ op, t: 'meta', id, meta: said, seen: prepared.json.cursor }] },
+      })
+    expect(kept()).toEqual([])
+
+    expect((await meta({ 'todo-list': 'yes' }, 'mark')).status).toBe(200)
+    expect(kept()).toMatchObject([{ at: AT, title: 'Call the bank', body: 'Meeting' }])
+
+    expect((await meta({ icon: 'star' }, 'icon')).status).toBe(200)
+    expect(kept()).toHaveLength(1)
+
+    expect((await meta({ 'todo-list': null }, 'unmark')).status).toBe(200)
+    expect(kept()).toEqual([])
+  })
+
   test('a ticked task takes its reminder away', async () => {
     await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
     const made = await save('Plan.md', TASK)
