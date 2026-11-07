@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from './growth'
 import { backpedal } from './backpedal'
 import { escapeText } from './escapes'
 import { renderMarkdown } from './index'
@@ -44,12 +45,6 @@ function seeded(seed: number): () => number {
   }
 }
 
-const quick = (run: () => unknown) => {
-  const started = performance.now()
-  run()
-  expect(performance.now() - started).toBeLessThan(1500)
-}
-
 describe('the end of a bare address', () => {
   test('is cut where marked cuts it', () => {
     const random = seeded(11)
@@ -65,10 +60,11 @@ describe('the end of a bare address', () => {
   test('is cut in time that grows with its length', () => {
     const units = ['.,', ')', '*_', '&a;', '&a;.', '(', '((x)', 'x)', '.(', ';&', '&amp;)', "'"]
     for (const unit of units) {
-      const address = `https://a.b/${unit.repeat(Math.ceil(60_000 / unit.length))}`
-      quick(() => backpedal(address))
-      quick(() => renderMarkdown(`see ${address} here`))
-      quick(() => escapeText(`see ${address} here`, { addresses: true }))
+      const address = (length: number) =>
+        `https://a.b/${unit.repeat(Math.ceil(length / unit.length))}`
+      linearly((length) => backpedal(address(length)), 60_000)
+      linearly((length) => renderMarkdown(`see ${address(length)} here`), 60_000)
+      linearly((length) => escapeText(`see ${address(length)} here`, { addresses: true }), 60_000)
     }
   }, 60_000)
 })

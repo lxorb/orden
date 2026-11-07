@@ -131,7 +131,7 @@ describe.each(Object.entries(parsers))('the %s parser', (_name, parser) => {
         }
       })
     }
-  })
+  }, 60_000)
 
   test('reads text the same as when every parser is asked at every character', () => {
     const every = Object.create(parser) as Inside

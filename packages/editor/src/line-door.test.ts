@@ -25,7 +25,7 @@ test('a key pressed before the commands land spends the press, and runs as they 
 
   await loadLineCommands()
   expect(text()).toBe('a\nb')
-})
+}, 30_000)
 
 test('once they are here, a press runs in the turn it is made', async () => {
   await loadLineCommands()

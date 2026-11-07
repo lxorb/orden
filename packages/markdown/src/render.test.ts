@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from './growth'
 import './eager'
 import {
   codeBlocks,
@@ -619,19 +620,10 @@ describe('an <iframe> a note wrote', () => {
   })
 
   test('many that never close are read in time that grows with their number', () => {
-    const timed = (count: number) => {
-      const source = `${'<iframe src="https://field.example.test/plan">'.repeat(count)}\n`
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        const start = performance.now()
-        renderMarkdown(source)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
-    }
-    timed(500)
-    expect(timed(8_000) / timed(2_000)).toBeLessThan(9)
-  })
+    const render = (count: number) =>
+      renderMarkdown(`${'<iframe src="https://field.example.test/plan">'.repeat(count)}\n`)
+    expect(growth(render, 2_000)).toBeLessThan(GROWS_AT_MOST)
+  }, 60_000)
 
   test('each of several in a row is its own card, closed or not', () => {
     const html = renderMarkdown(

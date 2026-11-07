@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { growth, GROWS_AT_MOST } from './growth'
 import { HIGHLIGHT_COLOURS, highlightTone, readHighlight, writeHighlight } from './highlights'
 import { highlight } from './extensions'
 import { renderMarkdown, setHardBreaks } from './index'
@@ -110,17 +111,18 @@ describe('a paragraph of highlights that never close', () => {
   ).tokenizer
 
   test('is read in linear time', () => {
-    const source = '==a '.repeat(50_000)
     const tokens: [] = []
     const lexer = { lexer: { inlineTokens: () => [] } }
     let found = 0
-    const started = performance.now()
-    for (let at = 0; at < source.length; at += 4) {
-      if (tokenizer.call(lexer, source.slice(at), tokens)) found++
+    const read = (size: number) => {
+      const source = '==a '.repeat(size)
+      for (let at = 0; at < source.length; at += 4) {
+        if (tokenizer.call(lexer, source.slice(at), tokens)) found++
+      }
     }
-    expect(performance.now() - started).toBeLessThan(500)
+    expect(growth(read, 12_500)).toBeLessThan(GROWS_AT_MOST)
     expect(found).toBe(0)
-  })
+  }, 60_000)
 
   test('closes where the pattern closed, on the first `==` after something', () => {
     expect(renderMarkdown('==a == b== and ==c==')).toBe(

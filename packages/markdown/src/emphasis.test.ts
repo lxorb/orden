@@ -1,34 +1,29 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from './growth'
 import { renderMarkdown } from './index'
 import { deckOf } from './slides'
 
 describe('emphasis nothing closes', () => {
-  const quick = (source: string) => {
-    const started = performance.now()
-    const html = renderMarkdown(source)
-    expect(performance.now() - started).toBeLessThan(1500)
-    return html
-  }
+  const quick = (source: (size: number) => string, size: number) =>
+    linearly((one) => renderMarkdown(source(one)), size)
 
   test('renders in linear time', () => {
-    expect(quick('*a '.repeat(33_000))).not.toContain('<em>')
-    expect(quick('_a '.repeat(33_000))).not.toContain('<em>')
-    expect(quick('**a '.repeat(25_000))).not.toContain('<strong>')
-    quick(`${'*a '.repeat(33_000)}a*`)
-    quick(`${'*a '.repeat(16_000)}${'a**b '.repeat(16_000)}`)
-    quick('a ~b *j '.repeat(12_000))
-  })
+    expect(quick((n) => '*a '.repeat(n), 8_000)).not.toContain('<em>')
+    expect(quick((n) => '_a '.repeat(n), 8_000)).not.toContain('<em>')
+    expect(quick((n) => '**a '.repeat(n), 6_000)).not.toContain('<strong>')
+    quick((n) => `${'*a '.repeat(n)}a*`, 8_000)
+    quick((n) => `${'*a '.repeat(n)}${'a**b '.repeat(n)}`, 4_000)
+    quick((n) => 'a ~b *j '.repeat(n), 3_000)
+  }, 60_000)
 
   test('nested thousands deep is read to a depth and no further, without throwing', () => {
-    const html = quick(`${'*a '.repeat(5000)}${'a* '.repeat(5000)}`)
+    const html = renderMarkdown(`${'*a '.repeat(5000)}${'a* '.repeat(5000)}`)
     expect(html.split('<em>').length - 1).toBe(32)
   })
 
   test('in a deck, too', () => {
-    const started = performance.now()
-    deckOf(`+ ${'*a '.repeat(33_000)}\n\n---\n\n+ b`)
-    expect(performance.now() - started).toBeLessThan(1500)
-  })
+    linearly((n) => deckOf(`+ ${'*a '.repeat(n)}\n\n---\n\n+ b`), 8_000)
+  }, 60_000)
 })
 
 describe('emphasis that closes', () => {

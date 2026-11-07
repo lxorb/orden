@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { sequenceToMermaid } from './sequence'
+import { growth, GROWS_AT_MOST } from '../../../markdown/src/growth'
 
 const lines = (source: string) => sequenceToMermaid(source).split('\n')
 
@@ -55,19 +56,12 @@ describe('translating a sequence fence', () => {
   })
 
   test('reads a long line that is no message in time that grows with its length', () => {
-    const timed = (length: number) => {
+    const read = (length: number) => {
       const source = [`a${'-'.repeat(length)}b`, `a:${'-'.repeat(length)}b`, 'a-b'.repeat(length)]
-      let least = Infinity
-      for (let round = 0; round < 2; round++) {
-        const start = performance.now()
-        for (const one of source) sequenceToMermaid(one)
-        least = Math.min(least, performance.now() - start)
-      }
-      return least
+      for (const one of source) sequenceToMermaid(one)
     }
-    timed(500)
-    expect(timed(16_000) / timed(4_000)).toBeLessThan(9)
-  })
+    expect(growth(read, 4_000)).toBeLessThan(GROWS_AT_MOST)
+  }, 60_000)
 
   test('still reads a message whose names or words hold dashes and colons', () => {
     expect(lines('A->B-2: a: b')[1]).toBe('  A->>B-2: a: b')

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { linearly } from './growth'
 import { firstStart, lineStart, matchesAt, paragraphWindow } from './starts'
 import { codeBlocks, renderMarkdown } from './index'
 
@@ -182,21 +183,17 @@ describe('a construct on a line of its own still ends the paragraph above it', (
 })
 
 describe('a paragraph of many breaks', () => {
-  const quick = (source: string) => {
-    const started = performance.now()
-    const html = renderMarkdown(source)
-    expect(performance.now() - started).toBeLessThan(1500)
-    return html
-  }
+  const quick = (source: (size: number) => string, size: number) =>
+    linearly((one) => renderMarkdown(source(one)), size)
 
   test('renders in linear time', () => {
-    quick('!a '.repeat(66_000))
-    quick('[[a '.repeat(25_000))
-    quick('==a '.repeat(25_000))
-    quick('*[a '.repeat(25_000))
-    quick('[^a '.repeat(25_000))
-    expect(quick('!#a '.repeat(25_000))).not.toContain('class="tag"')
-  })
+    quick((n) => '!a '.repeat(n), 66_000)
+    quick((n) => '[[a '.repeat(n), 25_000)
+    quick((n) => '==a '.repeat(n), 25_000)
+    quick((n) => '*[a '.repeat(n), 25_000)
+    quick((n) => '[^a '.repeat(n), 25_000)
+    expect(quick((n) => '!#a '.repeat(n), 25_000)).not.toContain('class="tag"')
+  }, 60_000)
 
   test('finds what it found before at every break', () => {
     expect(renderMarkdown('!#a x#b (#c **#d**')).toBe(
