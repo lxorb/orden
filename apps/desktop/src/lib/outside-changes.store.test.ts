@@ -467,3 +467,24 @@ describe('the highlights beside a PDF, changed by another program', () => {
     expect(marksFromOutside('/s/Paper.pdf')).toBe(before + 3)
   })
 })
+
+describe('a PDF changed by another program', () => {
+  const stat = { size: 1, mtime: 1, id: null, dir: false }
+  const AT = { file: 'Paper.pdf', note: '/s/Paper.pages', root: '/s' }
+
+  test('tells the page notes drawing it to draw it again, and nothing for its highlights', async () => {
+    const { paperEdition } = await import('./pages/paper')
+    const before = paperEdition(AT)
+
+    await heardChange({ kind: 'modified', path: '/s/Paper.pdf.highlights.json', ...stat })
+    await heardChange({ kind: 'modified', path: '/s/Other.pdf', ...stat })
+    await vi.waitFor(() => expect(paperEdition({ ...AT, file: 'Other.pdf' })).toBe(1))
+    expect(paperEdition(AT)).toBe(before)
+
+    await heardChange({ kind: 'modified', path: '/s/Paper.pdf', ...stat })
+    await vi.waitFor(() => expect(paperEdition(AT)).toBe(before + 1))
+    await heardChange({ kind: 'removed', path: '/s/Paper.pdf', dir: false, id: null })
+    await heardChange({ kind: 'created', path: '/s/Paper.pdf', ...stat })
+    await vi.waitFor(() => expect(paperEdition(AT)).toBe(before + 2))
+  })
+})

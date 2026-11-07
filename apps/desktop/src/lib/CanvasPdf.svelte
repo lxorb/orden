@@ -1,6 +1,14 @@
 <script lang="ts">
   import type { Box } from './canvas/geometry'
-  import { closeUpOf, densityFor, holdPaper, type Paper, paperOf, type Part } from './pages/paper'
+  import {
+    closeUpOf,
+    densityFor,
+    holdPaper,
+    type Paper,
+    paperEdition,
+    paperOf,
+    type Part,
+  } from './pages/paper'
   import FileMark from './FileMark.svelte'
   import { pixelRatio } from './pixel-ratio.svelte'
 
@@ -53,6 +61,7 @@
   $effect(() => {
     const at = { file, note, root }
     const asked = density
+    paperEdition(at)
     const leaving = new AbortController()
     void paperOf(at, 1, leaving.signal, false, asked).then((drawn) => {
       if (!leaving.signal.aborted && drawn) paper = drawn
@@ -99,6 +108,7 @@
     }
 
     const at = { file, note, root }
+    paperEdition(at)
     const leaving = new AbortController()
     const timer = setTimeout(() => {
       void closeUpOf(at, 1, want, across, leaving.signal).then((image) => {

@@ -80,7 +80,8 @@ class Sheet {
   }
 }
 
-const { closeUpOf, densityFor, forgetPaper, holdPaper, paperOf } = await import('./paper')
+const { closeUpOf, densityFor, forgetPaper, holdPaper, paperEdition, paperOf, paperRewritten } =
+  await import('./paper')
 
 const AT = { file: 'Thick.pages.pdf', note: '/s/Thick.pages', root: '/s' }
 
@@ -267,5 +268,40 @@ describe('a paper shown on cards', () => {
     expect(await anew).not.toBeNull()
     expect(held.opened).toBe(opened + 1)
     forgetPaper(CARD)
+  })
+})
+
+describe('a paper written again on disk', () => {
+  test('is read again, its pages drawn from the new file', async () => {
+    const opened = held.opened
+    const first = paperOf(AT, 1, new AbortController().signal)
+    await drawNext()
+    await first
+    expect(held.opened).toBe(opened + 1)
+
+    const edition = paperEdition(AT)
+    paperRewritten('/s/Thick.pages.pdf')
+    expect(paperEdition(AT)).toBe(edition + 1)
+
+    const again = paperOf(AT, 1, new AbortController().signal)
+    await drawNext()
+    await again
+    expect(held.opened).toBe(opened + 2)
+  })
+
+  test('another file written leaves it as it was', async () => {
+    const opened = held.opened
+    const first = paperOf(AT, 1, new AbortController().signal)
+    await drawNext()
+    await first
+    const edition = paperEdition(AT)
+
+    paperRewritten('/s/Other.pdf')
+    const again = paperOf(AT, 1, new AbortController().signal)
+    await settle()
+
+    expect(paperEdition(AT)).toBe(edition)
+    expect(held.opened).toBe(opened + 1)
+    expect(await again).not.toBeNull()
   })
 })

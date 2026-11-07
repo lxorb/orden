@@ -51,7 +51,14 @@
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
   import { type Found, matches } from './canvas/find'
-  import { forgetPaper, outlineOf, paperAhead, paperPathOf, textsOf } from './pages/paper'
+  import {
+    forgetPaper,
+    outlineOf,
+    paperAhead,
+    paperEdition,
+    paperPathOf,
+    textsOf,
+  } from './pages/paper'
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
   import { copyText } from './clipboard'
   import { placesOf } from './reading/find'
@@ -261,12 +268,12 @@
     const note = tab.note.path
     if (!finding || !file) return
 
+    const at = { file, note, root: workspace.rootHolding(note), shared: tab.note.shared }
+    paperEdition(at)
     let mine = true
-    void textsOf({ file, note, root: workspace.rootHolding(note), shared: tab.note.shared }).then(
-      (read) => {
-        if (mine) texts = read
-      },
-    )
+    void textsOf(at).then((read) => {
+      if (mine) texts = read
+    })
     return () => {
       mine = false
     }
@@ -364,6 +371,7 @@
 
     let mine = true
     const at = { file, note, root: workspace.rootHolding(note), shared }
+    paperEdition(at)
     void outlineOf(at).then((rows) => {
       if (mine) store.outline = rows
     })

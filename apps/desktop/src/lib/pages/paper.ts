@@ -7,6 +7,8 @@ import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
 import { idle } from '../breathe'
 import { runsOfItems, textOfRuns } from '../pdf/find'
+import { pathKey } from '../space-paths'
+import { SvelteMap } from 'svelte/reactivity'
 
 const SCALE = 2
 
@@ -489,8 +491,29 @@ export function holdPaper(at: PaperAt): () => void {
   }
 }
 
+const editions = new SvelteMap<string, number>()
+
+export function paperEdition(at: PaperAt): number {
+  let edition = 0
+  for (const place of paperPlaces(at.file, at.note, at.root)) {
+    edition += editions.get(pathKey(place)) ?? 0
+  }
+  return edition
+}
+
+export function paperRewritten(path: string): void {
+  const wanted = pathKey(path)
+  for (const key of [...held.keys()]) {
+    if (key.split('\n').some((place) => pathKey(place) === wanted)) forgetKey(key)
+  }
+  editions.set(wanted, (editions.get(wanted) ?? 0) + 1)
+}
+
 export function forgetPaper(at: PaperAt) {
-  const key = keyOf(at)
+  forgetKey(keyOf(at))
+}
+
+function forgetKey(key: string) {
   const one = held.get(key)
   if (!one) return
 

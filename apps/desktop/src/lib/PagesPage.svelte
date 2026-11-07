@@ -6,6 +6,7 @@
     closeUpOf,
     densityFor,
     type Part,
+    paperEdition,
     paperOf,
     type PaperView,
     viewOf,
@@ -101,6 +102,7 @@
     if (!file || !at) return
 
     const across = page.width * wanted
+    paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
     const timer = setTimeout(() => {
       void closeUpOf({ file, note: notePath, root, shared }, at, want, across, leaving.signal).then(
@@ -134,6 +136,7 @@
     if (!file || !at) return
 
     const asking = tries
+    paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
     void paperOf({ file, note: notePath, root, shared }, at, leaving.signal, false, density).then(
       (drawn) => {
@@ -181,6 +184,7 @@
     const at = page.page
     const wide = page.width
     if (!layer || !file || !at || !wide) return
+    paperEdition({ file, note: notePath, root, shared })
 
     const leaving = new AbortController()
     const timer = setTimeout(() => {

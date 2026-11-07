@@ -94,6 +94,10 @@ async function came(path: string, dir: boolean) {
 export async function heardChange(change: SpaceChange): Promise<void> {
   if (dotted(change.path)) return
   if (!change.dir) sheetArrived(change.path)
+  if (!change.dir && change.kind !== 'removed' && /\.pdf$/i.test(change.path)) {
+    const path = change.path
+    void import('../pages/paper').then(({ paperRewritten }) => paperRewritten(path))
+  }
   if (change.kind === 'removed') return gone(change.path, change.dir)
   if (change.kind === 'renamed') {
     await moved(change.from, change.path, change.dir)
