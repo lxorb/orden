@@ -133,6 +133,7 @@ def main() -> int:
 
     app = run_probe(exe, env=environment)
     phases: list[str] = []
+    failed_columns = True
     try:
         hwnd = terminal.until(lambda: main_window(app.pid), 120, 0.25)
         if not hwnd:
@@ -236,6 +237,34 @@ def main() -> int:
             )
             time.sleep(1.5)
         time.sleep(10)
+
+        phase("columns")
+        window.run(
+            "(() => { const press = new KeyboardEvent('keydown', { key: '3', ctrlKey: true, bubbles: true, cancelable: true });"
+            " document.activeElement.dispatchEvent(press); return true })()"
+        )
+        time.sleep(3)
+        scroll = (
+            "(async () => { const out = [];"
+            " for (const column of document.querySelectorAll('.explorer .column')) {"
+            " for (let at = 1; at <= 30; at++) { column.scrollTop = (column.scrollHeight - column.clientHeight) * at / 30;"
+            " await new Promise((done) => requestAnimationFrame(() => done())) }"
+            " await new Promise((done) => setTimeout(done, 300));"
+            " const box = column.getBoundingClientRect();"
+            " const shown = [...column.querySelectorAll('li')].filter((one) => { const r = one.getBoundingClientRect(); return r.bottom > box.top && r.top < box.bottom }).length;"
+            " out.push([column.scrollHeight > column.clientHeight + 1, shown]) }"
+            " return out })()"
+        )
+        scrolled = window.run(scroll)
+        print("columns", scrolled, flush=True)
+        if not isinstance(scrolled, list) or not scrolled:
+            print("the columns were never shown", flush=True)
+            failed_columns = True
+        else:
+            failed_columns = any(long and shown == 0 for long, shown in scrolled)
+            if failed_columns:
+                print("a column scrolled to its end shows no rows", flush=True)
+        time.sleep(3)
         watch.going = False
         time.sleep(1.5)
     finally:
@@ -246,7 +275,7 @@ def main() -> int:
             app.kill()
 
     worst = 0.0
-    failed = False
+    failed = failed_columns
     for name in phases:
         pump, beat, missed = watch.report(name)
         hang = watch.longest_hang(name)
