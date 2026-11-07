@@ -38,6 +38,17 @@ export function pressedThrough(at: Element): boolean {
   return at.matches(PRESSED_THROUGH)
 }
 
+const DRAGGED = new Set(['insertFromDrop', 'deleteByDrag'])
+
+function strayed(event: InputEvent): void {
+  const at = event.target
+  const keyboard = document.activeElement
+  if (!(at instanceof Node) || DRAGGED.has(event.inputType)) return
+  if (adrift(keyboard) || at.contains(keyboard)) return
+  event.preventDefault()
+  getSelection()?.removeAllRanges()
+}
+
 class KeyboardHome {
   private here: HTMLElement | null = null
   private last: Element | null = null
@@ -55,6 +66,7 @@ class KeyboardHome {
     addEventListener('pointerdown', () => this.pressed(), capture)
     addEventListener('focusin', (event) => this.focused(event), capture)
     addEventListener('keydown', (event) => this.typed(event), capture)
+    addEventListener('beforeinput', (event) => strayed(event), capture)
     addEventListener('blur', (event) => this.window(event, false), capture)
     addEventListener('focus', (event) => this.window(event, true), capture)
     overlays.watch(() => {
