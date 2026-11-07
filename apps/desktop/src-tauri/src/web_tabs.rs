@@ -1701,6 +1701,7 @@ pub async fn web_close(
         if let Some(view) = closing.get_webview(&label) {
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
+            ask::forget(&named);
             crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
@@ -1849,11 +1850,12 @@ mod ask {
         COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT, COREWEBVIEW2_PERMISSION_STATE_ALLOW,
         COREWEBVIEW2_PERMISSION_STATE_DENY,
     };
-    use webview2_com::PermissionRequestedEventHandler;
+    use webview2_com::{NavigationStartingEventHandler, PermissionRequestedEventHandler};
 
     use super::{Asked, ASKED};
 
     struct Waiting {
+        tab: String,
         args: ICoreWebView2PermissionRequestedEventArgs,
         deferral: ICoreWebView2Deferral,
     }
@@ -1890,6 +1892,16 @@ mod ask {
                 return;
             };
 
+            let leaving = NavigationStartingEventHandler::create(Box::new({
+                let tab = tab.clone();
+                move |_, _| {
+                    forget(&tab);
+                    Ok(())
+                }
+            }));
+            let mut token = 0i64;
+            let _ = core.add_NavigationStarting(&leaving, &raw mut token);
+
             let handler =
                 PermissionRequestedEventHandler::create(Box::new(move |_sender, args| {
                     let Some(args) = args else {
@@ -1920,13 +1932,14 @@ mod ask {
                         held.insert(
                             id,
                             Waiting {
+                                tab: tab.clone(),
                                 args: args.clone(),
                                 deferral,
                             },
                         );
                     });
 
-                    let _ = app.emit_to(
+                    let told = app.emit_to(
                         window.as_str(),
                         ASKED,
                         Asked {
@@ -1936,6 +1949,9 @@ mod ask {
                             kind: kind.to_string(),
                         },
                     );
+                    if told.is_err() {
+                        answer(id, false);
+                    }
 
                     Ok(())
                 }));
@@ -2015,6 +2031,18 @@ mod ask {
                 COREWEBVIEW2_PERMISSION_STATE_DENY
             });
             let _ = waiting.deferral.Complete();
+        }
+    }
+
+    pub fn forget(tab: &str) {
+        let gone: Vec<u64> = WAITING.with_borrow(|held| {
+            held.iter()
+                .filter(|(_, one)| one.tab == tab)
+                .map(|(id, _)| *id)
+                .collect()
+        });
+        for id in gone {
+            answer(id, false);
         }
     }
 }
@@ -2255,6 +2283,18 @@ mod ask {
             WKPermissionDecision::Deny
         },));
     }
+
+    pub fn forget(tab: &str) {
+        let gone: Vec<u64> = WAITING.with_borrow(|held| {
+            held.iter()
+                .filter(|(_, one)| one.tab == tab)
+                .map(|(id, _)| *id)
+                .collect()
+        });
+        for id in gone {
+            answer(id, false);
+        }
+    }
 }
 
 #[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
@@ -2267,6 +2307,8 @@ mod ask {
     pub fn own(_webview: &PlatformWebview, _ours: Vec<String>) {}
 
     pub fn answer(_id: u64, _allow: bool) {}
+
+    pub fn forget(_tab: &str) {}
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
@@ -2925,6 +2967,32 @@ mod tests {
             let dismissed = body.find("web_dialogs::dismiss(").expect("dialogs let go");
             assert!(dismissed < body.find(moves).expect("the move"), "{command}");
         }
+    }
+
+    #[test]
+    fn a_page_s_waiting_question_is_let_go_when_it_leaves_or_closes() {
+        let source = include_str!("web_tabs.rs");
+        let close = source
+            .split("pub async fn web_close(")
+            .nth(1)
+            .and_then(|from| from.split("\n}\n").next())
+            .expect("the close");
+        assert!(close.contains("ask::forget(&named)"));
+
+        let asking = source
+            .split("mod ask {")
+            .nth(1)
+            .and_then(|from| from.split("pub fn listen(").nth(1))
+            .and_then(|from| from.split("\n    }\n").next())
+            .expect("the windows asks");
+        let leaving = asking
+            .find("add_NavigationStarting")
+            .expect("let go as it leaves");
+        assert!(leaving < asking.find("add_PermissionRequested").expect("heard"));
+        assert!(asking.contains("forget(&tab)"));
+
+        let dialogs = include_str!("web_dialogs.rs");
+        assert!(dialogs.contains("add_NavigationStarting(&starting"));
     }
 
     #[test]
