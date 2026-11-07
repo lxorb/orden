@@ -18,40 +18,50 @@ pub(super) fn bad_name(name: &str) -> Option<String> {
     None
 }
 
-#[tauri::command(async)]
-pub fn explorer_make(
+#[tauri::command]
+pub async fn explorer_make(
     app: AppHandle,
     folder: String,
     name: String,
     file: bool,
 ) -> Result<String, String> {
-    if let Some(why) = bad_name(&name) {
-        return Err(why);
-    }
-    let folder = asked(&app, &folder, Use::Into)?;
-    let path = crate::paths::free_spot(&folder.join(name.trim()), file);
-    if file {
-        fs::File::create_new(&path).map_err(|why| format!("{}: {why}", path.display()))?;
-    } else {
-        fs::create_dir(&path).map_err(|why| format!("{}: {why}", path.display()))?;
-    }
-    Ok(path.display().to_string())
+    crate::lane::off_the_runtime(move || -> Result<String, String> {
+        if let Some(why) = bad_name(&name) {
+            return Err(why);
+        }
+        let folder = asked(&app, &folder, Use::Into)?;
+        let path = crate::paths::free_spot(&folder.join(name.trim()), file);
+        if file {
+            fs::File::create_new(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        } else {
+            fs::create_dir(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        }
+        Ok(path.display().to_string())
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn explorer_write(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<String, String> {
+#[tauri::command]
+pub async fn explorer_write(
+    app: AppHandle,
+    request: tauri::ipc::Request<'_>,
+) -> Result<String, String> {
     let (Written { folder, under }, bytes) =
         crate::notes::raw_sent(request.headers(), request.body())?;
-    let folder = asked(&app, &folder, Use::Into)?;
-    let path = placed(&folder, &under)?;
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
-    }
-    let mut file =
-        fs::File::create_new(&path).map_err(|why| format!("{}: {why}", path.display()))?;
-    std::io::Write::write_all(&mut file, &bytes)
-        .map_err(|why| format!("{}: {why}", path.display()))?;
-    Ok(path.display().to_string())
+    let bytes = bytes.into_owned();
+    crate::lane::off_the_runtime(move || {
+        let folder = asked(&app, &folder, Use::Into)?;
+        let path = placed(&folder, &under)?;
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
+        }
+        let mut file =
+            fs::File::create_new(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        std::io::Write::write_all(&mut file, &bytes)
+            .map_err(|why| format!("{}: {why}", path.display()))?;
+        Ok(path.display().to_string())
+    })
+    .await
 }
 
 #[derive(serde::Deserialize)]
@@ -70,18 +80,21 @@ pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
         .fold(folder.to_path_buf(), |path, step| path.join(step)))
 }
 
-#[tauri::command(async)]
-pub fn explorer_rename(app: AppHandle, path: String, name: String) -> Result<String, String> {
-    if let Some(why) = bad_name(&name) {
-        return Err(why);
-    }
-    let from = asked(&app, &path, Use::Change)?;
-    let to = from
-        .parent()
-        .map(|folder| folder.join(name.trim()))
-        .ok_or_else(|| format!("{} has no folder", from.display()))?;
-    renamed(&from, &to)?;
-    Ok(to.display().to_string())
+#[tauri::command]
+pub async fn explorer_rename(app: AppHandle, path: String, name: String) -> Result<String, String> {
+    crate::lane::off_the_runtime(move || -> Result<String, String> {
+        if let Some(why) = bad_name(&name) {
+            return Err(why);
+        }
+        let from = asked(&app, &path, Use::Change)?;
+        let to = from
+            .parent()
+            .map(|folder| folder.join(name.trim()))
+            .ok_or_else(|| format!("{} has no folder", from.display()))?;
+        renamed(&from, &to)?;
+        Ok(to.display().to_string())
+    })
+    .await
 }
 
 pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
@@ -92,16 +105,19 @@ pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
     fs::rename(from, to).map_err(|why| format!("{}: {why}", from.display()))
 }
 
-#[tauri::command(async)]
-pub fn explorer_trash(app: AppHandle, paths: Vec<String>) -> Result<Vec<Ticket>, Trashing> {
-    let mut went = Vec::new();
-    for one in &paths {
-        match asked(&app, one, Use::Change).and_then(|path| bin::trash(&path)) {
-            Ok(ticket) => went.push(ticket),
-            Err(why) => return Err(Trashing { why, went }),
+#[tauri::command]
+pub async fn explorer_trash(app: AppHandle, paths: Vec<String>) -> Result<Vec<Ticket>, Trashing> {
+    crate::lane::off_the_runtime(move || -> Result<Vec<Ticket>, Trashing> {
+        let mut went = Vec::new();
+        for one in &paths {
+            match asked(&app, one, Use::Change).and_then(|path| bin::trash(&path)) {
+                Ok(ticket) => went.push(ticket),
+                Err(why) => return Err(Trashing { why, went }),
+            }
         }
-    }
-    Ok(went)
+        Ok(went)
+    })
+    .await
 }
 
 #[derive(serde::Serialize, Debug)]
@@ -110,26 +126,32 @@ pub struct Trashing {
     pub went: Vec<Ticket>,
 }
 
-#[tauri::command(async)]
-pub fn explorer_untrash(app: AppHandle, tickets: Vec<Ticket>) -> Vec<String> {
-    tickets
-        .iter()
-        .filter(|ticket| asked(&app, &ticket.path, Use::Change).is_ok())
-        .filter_map(|ticket| bin::untrash(ticket).ok())
-        .map(|path| path.display().to_string())
-        .collect()
+#[tauri::command]
+pub async fn explorer_untrash(app: AppHandle, tickets: Vec<Ticket>) -> Vec<String> {
+    crate::lane::off_the_runtime(move || -> Vec<String> {
+        tickets
+            .iter()
+            .filter(|ticket| asked(&app, &ticket.path, Use::Change).is_ok())
+            .filter_map(|ticket| bin::untrash(ticket).ok())
+            .map(|path| path.display().to_string())
+            .collect()
+    })
+    .await
 }
 
-#[tauri::command(async)]
-pub fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), String> {
-    let judged: Vec<PathBuf> = paths
-        .iter()
-        .map(|one| asked(&app, one, Use::Change))
-        .collect::<Result<_, _>>()?;
-    for path in judged {
-        gone(&path)?;
-    }
-    Ok(())
+#[tauri::command]
+pub async fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), String> {
+    crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let judged: Vec<PathBuf> = paths
+            .iter()
+            .map(|one| asked(&app, one, Use::Change))
+            .collect::<Result<_, _>>()?;
+        for path in judged {
+            gone(&path)?;
+        }
+        Ok(())
+    })
+    .await
 }
 
 pub(super) fn gone(path: &Path) -> Result<(), String> {
