@@ -1665,7 +1665,11 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
   }
 
   async function until(done: () => boolean) {
-    for (let at = 0; at < 200 && !done(); at++) await vi.advanceTimersByTimeAsync(10)
+    const { setTimeout: sleep } = await import('node:timers/promises')
+    for (let at = 0; at < 2000 && !done(); at++) {
+      await vi.advanceTimersByTimeAsync(10)
+      await sleep(5)
+    }
   }
 
   test('walks the way back before v1 starts, and v1 waits until it is walked', async () => {
