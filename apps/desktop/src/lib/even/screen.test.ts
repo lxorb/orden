@@ -77,3 +77,21 @@ describe('what the panel believes the glasses show', () => {
     expect(bodies(lens)).toBe(1)
   })
 })
+
+describe('turning line numbers on when the glasses cannot', () => {
+  const refusing = (lens: Lens, how: () => Promise<boolean>): Panel =>
+    new Panel({ ...lens.glasses, rebuild: how }, false)
+
+  test.each([
+    ['refuse', () => Promise.reject(new Error('refused'))],
+    ['say no', () => Promise.resolve(false)],
+  ])('when they %s, settles and keeps the page they show', async (_how, how) => {
+    const lens = new Lens()
+    lens.holding = () => undefined
+    const panel = refusing(lens, how)
+
+    await expect(panel.renumber(true)).resolves.toBe(false)
+    await panel.show({ ...VIEW, nums: '1' })
+    expect(lens.sent.map((one) => one.name)).not.toContain('nibNums')
+  })
+})
