@@ -361,7 +361,7 @@
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
       if (text.includes('\u0000')) refused()
-      else addChip({ kind: 'words', id: file.name, label: file.name, text })
+      else addChip({ kind: 'words', id: crypto.randomUUID(), label: file.name, text })
     }
     reader.onerror = unread
     reader.readAsText(file)
