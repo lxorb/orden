@@ -436,7 +436,7 @@ pub(crate) fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
     if crate::launch::is_document_window(webview.label()) {
         Ok(())
     } else {
-        Err("only nib's own window may ask that".into())
+        Err("only Orden's own window may ask that".into())
     }
 }
 

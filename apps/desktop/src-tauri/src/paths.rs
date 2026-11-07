@@ -1142,24 +1142,27 @@ mod tests {
 
     #[test]
     fn a_path_is_inside_the_folder_it_starts_with() {
-        let root = path(&["notes", "Nib"]);
+        let root = path(&["notes", "Orden"]);
         assert!(inside(&root, &root));
-        assert!(inside(&root, &path(&["notes", "Nib", "Work", "a.md"])));
+        assert!(inside(&root, &path(&["notes", "Orden", "Work", "a.md"])));
         assert!(!inside(&root, &path(&["notes", "Nibble", "a.md"])));
         assert!(!inside(&root, &path(&["notes"])));
     }
 
     #[test]
     fn climbing_out_of_the_folder_does_not_count_as_inside() {
-        let root = path(&["notes", "Nib"]);
-        assert!(!inside(&root, &path(&["notes", "Nib", "..", "secret.md"])));
+        let root = path(&["notes", "Orden"]);
         assert!(!inside(
             &root,
-            &path(&["notes", "Nib", "Work", "..", "..", "secret.md"])
+            &path(&["notes", "Orden", "..", "secret.md"])
+        ));
+        assert!(!inside(
+            &root,
+            &path(&["notes", "Orden", "Work", "..", "..", "secret.md"])
         ));
         assert!(inside(
             &root,
-            &path(&["notes", "Nib", "Work", "..", "Home", "a.md"])
+            &path(&["notes", "Orden", "Work", "..", "Home", "a.md"])
         ));
     }
 
@@ -1170,12 +1173,12 @@ mod tests {
 
     #[test]
     fn the_gate_takes_a_path_inside_the_spaces_folder_and_nothing_else() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |one: &[&str]| judged(&root, &path(one).to_string_lossy());
 
-        let note = ["Documents", "Nib", "Work", "a.md"];
+        let note = ["Documents", "Orden", "Work", "a.md"];
         assert_eq!(said(&note), Ok(path(&note)));
-        assert!(said(&["Documents", "Nib"]).is_ok());
+        assert!(said(&["Documents", "Orden"]).is_ok());
         assert!(said(&["Documents", "Secrets", "a.md"]).is_err());
         assert!(said(&["Documents", "Nibble", "a.md"]).is_err());
         assert!(said(&["Documents"]).is_err());
@@ -1184,33 +1187,33 @@ mod tests {
 
     #[test]
     fn the_gate_refuses_a_path_that_climbs_out_of_the_spaces_folder() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |one: &[&str]| judged(&root, &path(one).to_string_lossy());
 
-        assert!(said(&["Documents", "Nib", "..", "secret.md"]).is_err());
-        assert!(said(&["Documents", "Nib", "Work", "..", "..", "..", "secret.md"]).is_err());
-        assert!(said(&["Documents", "Nib", "Work", "..", "Home", "a.md"]).is_ok());
+        assert!(said(&["Documents", "Orden", "..", "secret.md"]).is_err());
+        assert!(said(&["Documents", "Orden", "Work", "..", "..", "..", "secret.md"]).is_err());
+        assert!(said(&["Documents", "Orden", "Work", "..", "Home", "a.md"]).is_ok());
     }
 
     #[test]
     fn the_gate_refuses_the_trash_it_stands_beside() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |one: &[&str]| judged(&root, &path(one).to_string_lossy());
 
         assert!(said(&[".trash"]).is_err());
-        assert!(said(&["Documents", "Nib", ".trash"]).is_err());
-        assert!(said(&["Documents", "Nib", ".trash", "1-0", "a.md"]).is_err());
-        assert!(said(&["Documents", "Nib", ".trashy.md"]).is_ok());
+        assert!(said(&["Documents", "Orden", ".trash"]).is_err());
+        assert!(said(&["Documents", "Orden", ".trash", "1-0", "a.md"]).is_err());
+        assert!(said(&["Documents", "Orden", ".trashy.md"]).is_ok());
     }
 
     #[test]
     fn the_gate_refuses_a_stream_only_where_a_colon_is_one() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |naming| {
             judged_as(
                 naming,
                 &root,
-                &path(&["Documents", "Nib", "Work", "a.md:x.md"]).to_string_lossy(),
+                &path(&["Documents", "Orden", "Work", "a.md:x.md"]).to_string_lossy(),
             )
         };
         assert!(said(Naming::Win32).is_err());
@@ -1220,9 +1223,9 @@ mod tests {
 
     #[test]
     fn the_gate_refuses_the_trash_however_the_file_system_spells_it() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |naming, one: &[&str]| {
-            let mut parts = vec!["Documents", "Nib"];
+            let mut parts = vec!["Documents", "Orden"];
             parts.extend_from_slice(one);
             judged_as(naming, &root, &path(&parts).to_string_lossy())
         };
@@ -1259,10 +1262,10 @@ mod tests {
 
     #[test]
     fn a_short_name_in_the_folder_guarded_is_no_bar() {
-        let root = path(&["Users", "RUNNER~1", "Temp", "Nib"]);
-        let under = path(&["Users", "RUNNER~1", "Temp", "Nib", "Work", "Plan.md"]);
-        let alias = path(&["Users", "RUNNER~1", "Temp", "Nib", "WORK~1", "Plan.md"]);
-        let stream = path(&["Users", "RUNNER~1", "Temp", "Nib", "Plan.md:hidden"]);
+        let root = path(&["Users", "RUNNER~1", "Temp", "Orden"]);
+        let under = path(&["Users", "RUNNER~1", "Temp", "Orden", "Work", "Plan.md"]);
+        let alias = path(&["Users", "RUNNER~1", "Temp", "Orden", "WORK~1", "Plan.md"]);
+        let stream = path(&["Users", "RUNNER~1", "Temp", "Orden", "Plan.md:hidden"]);
 
         assert!(inside_as(Naming::Win32, &root, &under));
         assert!(inside_as(Naming::Win32, &root, &root));
@@ -1272,9 +1275,9 @@ mod tests {
 
     #[test]
     fn containment_folds_case_no_wider_than_the_file_system() {
-        let root = path(&["Users", "kim", "Nib"]);
-        let kelvin = path(&["Users", "\u{212a}im", "Nib", "x.md"]);
-        let upper = path(&["Users", "KIM", "Nib", "x.md"]);
+        let root = path(&["Users", "kim", "Orden"]);
+        let kelvin = path(&["Users", "\u{212a}im", "Orden", "x.md"]);
+        let upper = path(&["Users", "KIM", "Orden", "x.md"]);
 
         assert!(!inside_as(Naming::Win32, &root, &kelvin));
         assert!(inside_as(Naming::Win32, &root, &upper));
@@ -1284,28 +1287,28 @@ mod tests {
 
     #[test]
     fn a_space_is_a_folder_directly_inside_the_spaces_folder() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |one: &[&str]| judged_space(&root, &path(one).to_string_lossy());
 
-        assert!(said(&["Documents", "Nib", "Work"]).is_ok());
-        assert!(said(&["Documents", "Nib", "Work", "2026"]).is_err());
-        assert!(said(&["Documents", "Nib"]).is_err());
+        assert!(said(&["Documents", "Orden", "Work"]).is_ok());
+        assert!(said(&["Documents", "Orden", "Work", "2026"]).is_err());
+        assert!(said(&["Documents", "Orden"]).is_err());
         assert!(said(&["Documents"]).is_err());
-        assert!(said(&["Documents", "Nib", ".trash"]).is_err());
+        assert!(said(&["Documents", "Orden", ".trash"]).is_err());
     }
 
     #[test]
     fn a_space_outside_ascii_is_a_space_like_any_other() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
 
         assert!(judged(
             &root,
-            &path(&["Documents", "Nib", "メモ", "考え.md"]).to_string_lossy()
+            &path(&["Documents", "Orden", "メモ", "考え.md"]).to_string_lossy()
         )
         .is_ok());
         assert!(judged_space(
             &root,
-            &path(&["Documents", "Nib", "Ideen über alles"]).to_string_lossy()
+            &path(&["Documents", "Orden", "Ideen über alles"]).to_string_lossy()
         )
         .is_ok());
         assert!(judged(
@@ -1334,7 +1337,7 @@ mod tests {
 
     #[test]
     fn nothing_outside_the_spaces_is_let_in_unless_the_way_in_says_so() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let said = |one: &[&str], beyond: bool| {
             judged_beyond(&root, &path(one).to_string_lossy(), |_| beyond)
         };
@@ -1343,10 +1346,10 @@ mod tests {
         assert!(said(&outside, false).is_err());
         assert_eq!(said(&outside, true), Ok(path(&outside)));
 
-        let note = ["Documents", "Nib", "Work", "a.md"];
+        let note = ["Documents", "Orden", "Work", "a.md"];
         assert_eq!(said(&note, false), Ok(path(&note)));
-        assert!(said(&["Documents", "Nib", ".trash", "1-0", "a.md"], true).is_err());
-        assert!(said(&["Documents", "Nib", "..", "Downloads", "Idea.md"], false).is_err());
+        assert!(said(&["Documents", "Orden", ".trash", "1-0", "a.md"], true).is_err());
+        assert!(said(&["Documents", "Orden", "..", "Downloads", "Idea.md"], false).is_err());
     }
 
     #[test]
@@ -1381,8 +1384,8 @@ mod tests {
 
     #[test]
     fn names_the_space_a_folder_belongs_to() {
-        let spaces = path(&["Documents", "Nib"]);
-        let space = path(&["Documents", "Nib", "Notes"]);
+        let spaces = path(&["Documents", "Orden"]);
+        let space = path(&["Documents", "Orden", "Notes"]);
 
         assert_eq!(space_root(&spaces, &space), Some(space.clone()));
         assert_eq!(
@@ -1401,8 +1404,8 @@ mod tests {
 
     #[test]
     fn a_working_folder_of_a_kept_space_is_a_space_of_its_own() {
-        let spaces = path(&["Documents", "Nib"]);
-        let working = path(&["Documents", "Nib", ".orden", ".work", "Notes"]);
+        let spaces = path(&["Documents", "Orden"]);
+        let working = path(&["Documents", "Orden", ".orden", ".work", "Notes"]);
 
         assert_eq!(space_root(&spaces, &working), Some(working.clone()));
         assert_eq!(
@@ -1410,14 +1413,14 @@ mod tests {
             Some(working)
         );
         assert_eq!(
-            space_root(&spaces, &path(&["Documents", "Nib", ".orden", "Notes"])),
-            Some(path(&["Documents", "Nib", ".orden"]))
+            space_root(&spaces, &path(&["Documents", "Orden", ".orden", "Notes"])),
+            Some(path(&["Documents", "Orden", ".orden"]))
         );
     }
 
     #[test]
     fn nothing_outside_the_spaces_folder_belongs_to_a_space() {
-        let spaces = path(&["Documents", "Nib"]);
+        let spaces = path(&["Documents", "Orden"]);
 
         assert_eq!(space_root(&spaces, &path(&["elsewhere", "notes"])), None);
         assert_eq!(space_root(&spaces, &spaces), None);
@@ -1427,8 +1430,8 @@ mod tests {
     #[cfg(windows)]
     fn windows_paths_differ_in_case_without_differing_in_meaning() {
         assert!(inside(
-            Path::new(r"C:\Users\me\Documents\Nib"),
-            Path::new(r"c:\users\me\documents\nib\Work\a.md")
+            Path::new(r"C:\Users\me\Documents\Orden"),
+            Path::new(r"c:\users\me\documents\orden\Work\a.md")
         ));
     }
 
@@ -1732,8 +1735,8 @@ mod tests {
     #[test]
     fn highlights_sit_beside_the_pdf_under_its_whole_name() {
         assert_eq!(
-            highlights_of(&path(&["Nib", "Notes", "paper.pdf"])),
-            path(&["Nib", "Notes", "paper.pdf.highlights.json"])
+            highlights_of(&path(&["Orden", "Notes", "paper.pdf"])),
+            path(&["Orden", "Notes", "paper.pdf.highlights.json"])
         );
         assert_ne!(
             highlights_of(Path::new("paper.pdf")),
@@ -1743,7 +1746,7 @@ mod tests {
 
     #[test]
     fn a_sidecar_never_leaves_the_folder_its_pdf_is_in() {
-        let root = path(&["Documents", "Nib"]);
+        let root = path(&["Documents", "Orden"]);
         let pdf = root.join("Notes").join("paper.pdf");
 
         assert_eq!(highlights_of(&pdf).parent(), pdf.parent());
@@ -1953,8 +1956,8 @@ mod tests {
     #[test]
     fn a_page_note_holds_the_paper_named_after_it() {
         assert_eq!(
-            paper_of(&path(&["Nib", "Lecture 4.pages"])),
-            path(&["Nib", "Lecture 4.pages.pdf"])
+            paper_of(&path(&["Orden", "Lecture 4.pages"])),
+            path(&["Orden", "Lecture 4.pages.pdf"])
         );
 
         let dir = tempfile::tempdir().expect("a temp folder");

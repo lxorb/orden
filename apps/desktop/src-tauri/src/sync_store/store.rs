@@ -40,7 +40,7 @@ impl Refused {
         match self {
             Self::Damaged(why) | Self::Other(why) => why.clone(),
             Self::Newer(schema) => format!(
-                "the sync store is at schema {schema}, which a newer nib wrote; this one knows {}",
+                "the sync store is at schema {schema}, which a newer Orden wrote; this one knows {}",
                 MIGRATIONS.len()
             ),
         }
@@ -630,7 +630,7 @@ mod tests {
         drop(conn);
 
         let Err(refused) = Store::open(&path) else {
-            panic!("a store from a newer nib was opened");
+            panic!("a store from a newer Orden was opened");
         };
         assert!(matches!(refused, Refused::Newer(2)), "{}", refused.said());
         let conn = Connection::open(&path).expect("the file");
@@ -641,7 +641,7 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("its shape");
-        assert_eq!(columns, 3, "left as the newer nib made it");
+        assert_eq!(columns, 3, "left as the newer Orden made it");
     }
 
     #[test]
@@ -822,7 +822,7 @@ mod tests {
     }
 
     #[test]
-    fn what_nib_wrote_is_kept_small_and_read_back_whole() {
+    fn what_orden_wrote_is_kept_small_and_read_back_whole() {
         let dir = tempfile::tempdir().expect("a folder");
         let mut store = opened(&dir.path().join("a.db"));
         let text = "# Plan\n\nThe same line of prose, written again.\n".repeat(400);

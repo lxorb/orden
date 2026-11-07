@@ -1,9 +1,9 @@
 <resources>
-    <style name="Theme.nib" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.orden" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/launch</item>
     </style>
 
-    <style name="NibWidgetRow">
+    <style name="OrdenWidgetRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">44dp</item>
         <item name="android:gravity">center_vertical</item>
@@ -15,7 +15,7 @@
         <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="NibWidgetTask">
+    <style name="OrdenWidgetTask">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">44dp</item>
         <item name="android:orientation">horizontal</item>
@@ -23,7 +23,7 @@
         <item name="android:paddingEnd">14dp</item>
     </style>
 
-    <style name="NibWidgetBox">
+    <style name="OrdenWidgetBox">
         <item name="android:layout_width">44dp</item>
         <item name="android:layout_height">44dp</item>
         <item name="android:gravity">center</item>
@@ -32,7 +32,7 @@
         <item name="android:textSize">18sp</item>
     </style>
 
-    <style name="NibWidgetTaskWords">
+    <style name="OrdenWidgetTaskWords">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>

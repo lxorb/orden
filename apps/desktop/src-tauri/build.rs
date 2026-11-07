@@ -27,7 +27,7 @@ mod app_intents {
 
     const SOURCES: &[&str] = &["swift/AddTask.swift"];
 
-    const MODULE: &str = "NibIntents";
+    const MODULE: &str = "OrdenIntents";
 
     const PROTOCOLS: &str = r#"["AppIntent","AppEntity","AppEnum","EntityQuery","TransientAppEntity","AppShortcutsProvider","AppIntentsPackage","DynamicOptionsProvider"]"#;
 

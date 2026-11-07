@@ -38,7 +38,7 @@ import time
 from probe_app import close_app, refuse_updating, run_probe
 
 IDENTIFIER = "so.orden.Orden.probe.reminders"
-GROUP = "nib.reminders"
+GROUP = "orden.reminders"
 SPACE = "Reminders probe"
 
 OUT_MINUTES = 20

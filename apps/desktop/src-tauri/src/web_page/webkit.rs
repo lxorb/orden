@@ -25,7 +25,7 @@ struct Held {
 define_class!(
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
-    #[name = "NibWebPageNavigation"]
+    #[name = "OrdenWebPageNavigation"]
     #[ivars = Held]
     struct Watcher;
 

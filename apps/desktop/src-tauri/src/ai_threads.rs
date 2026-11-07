@@ -21,7 +21,7 @@ fn ours(webview: &tauri::Webview) -> Result<(), String> {
     if own && label == webview.window().label() {
         Ok(())
     } else {
-        Err("only nib's own window may ask that".into())
+        Err("only Orden's own window may ask that".into())
     }
 }
 

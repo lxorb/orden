@@ -2097,7 +2097,7 @@ mod ask {
     define_class!(
         #[unsafe(super(NSObject))]
         #[thread_kind = MainThreadOnly]
-        #[name = "NibWebCaptureDelegate"]
+        #[name = "OrdenWebCaptureDelegate"]
         #[ivars = Held]
         struct Gate;
 
@@ -2842,7 +2842,7 @@ mod tests {
     }
 
     #[test]
-    fn nib_s_page_scripts_leave_the_page_s_world_alone() {
+    fn orden_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
             opening(None, "https://a.example/page", true),
             opening(
@@ -2918,7 +2918,7 @@ mod tests {
         for place in [None, Some(Place { x: 0.0, y: 940.0 })] {
             let opened = opening(place, "https://a.example/page", false);
             assert!(!opened.contains(crate::web_pass::script()));
-            assert!(!opened.contains("__nibPass"));
+            assert!(!opened.contains("__ordenPass"));
         }
     }
 
@@ -3066,7 +3066,7 @@ mod tests {
     fn the_reader_writes_the_marks_the_window_reads_it_by() {
         let said = reader(true);
         assert!(said.contains("`<!DOCTYPE html>${root.outerHTML}`"));
-        assert!(said.contains("data-nib-selection"));
+        assert!(said.contains("data-orden-selection"));
         assert!(said.contains("input[type=password]"));
         assert!(said.contains("removeAttribute('value')"));
     }

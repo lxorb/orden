@@ -859,7 +859,7 @@ mod tests {
     use super::{line_at, line_starts, Matcher, Note};
     use crate::query::Query;
 
-    const NOTE: &str = "---\nstatus: done\nproject: Nib\n---\n\n# Meeting notes #work/2026\n\nAlpha met Beta on Monday.\nGamma was away.\n\n## Later\n\nBeta wrote it up. #done\n\n```\n#notatag\n```\n";
+    const NOTE: &str = "---\nstatus: done\nproject: Orden\n---\n\n# Meeting notes #work/2026\n\nAlpha met Beta on Monday.\nGamma was away.\n\n## Later\n\nBeta wrote it up. #done\n\n```\n#notatag\n```\n";
 
     const CLOSE: &str = "alpha here\nbeta there\n\nalpha and beta\n";
 
@@ -1040,8 +1040,8 @@ mod tests {
 
     #[test]
     fn content_asks_the_notes_own_words_and_not_its_front_matter() {
-        assert!(answers(&text("nib"), NOTE));
-        assert!(!answers(&content("nib"), NOTE));
+        assert!(answers(&text("orden"), NOTE));
+        assert!(!answers(&content("orden"), NOTE));
         assert!(answers(&text("status"), NOTE));
         assert!(!answers(&content("status"), NOTE));
         assert!(answers(&content("alpha"), NOTE));

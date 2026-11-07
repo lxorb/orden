@@ -55,7 +55,7 @@ function start(view: EditorView): void {
   if (phone) {
     listening = true
     hold()
-    answer('__nibHeard', (json: string) => said(json, view))
+    answer('__ordenHeard', (json: string) => said(json, view))
     void frameWord().then((word) => {
       if (!listening) return
       if (word) phone(word, true)
@@ -105,7 +105,7 @@ function stop(): void {
   const phone = method('listen')
   if (phone) {
     void frameWord().then((word) => phone(word, false))
-    answer('__nibHeard', undefined)
+    answer('__ordenHeard', undefined)
   }
 
   if (browser) {

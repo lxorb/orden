@@ -159,7 +159,7 @@ impl Shell {
         let mut env = vec![
             ("TERM".to_owned(), "xterm-256color".to_owned()),
             ("COLORTERM".to_owned(), "truecolor".to_owned()),
-            ("TERM_PROGRAM".to_owned(), "nib".to_owned()),
+            ("TERM_PROGRAM".to_owned(), "orden".to_owned()),
         ];
 
         let home = machine
@@ -223,12 +223,12 @@ const CMD_PROMPT: &str = "$E]133;A$E\\$E]9;9;$P$E\\$P$G";
 
 const BASH_PROMPT: &str = r#"printf '\e]133;A\e\\\e]7;file://%s\e\\' "$PWD""#;
 
-const POWERSHELL_PROMPT: &str = "$global:__nibPrompt = $function:prompt; \
+const POWERSHELL_PROMPT: &str = "$global:__ordenPrompt = $function:prompt; \
 function global:prompt { \
 [Console]::Write([char]27 + ']133;A' + [char]27 + '\\'); \
 $here = $executionContext.SessionState.Path.CurrentLocation; \
 if ($here.Provider.Name -eq 'FileSystem') { [Console]::Write([char]27 + ']9;9;' + $here.ProviderPath + [char]27 + '\\') }; \
-& $global:__nibPrompt }";
+& $global:__ordenPrompt }";
 
 fn powershell_args(first: Option<&str>) -> Vec<String> {
     let command = match first {
@@ -913,7 +913,7 @@ mod tests {
     }
 
     #[test]
-    fn every_prompt_nib_teaches_is_marked() {
+    fn every_prompt_orden_teaches_is_marked() {
         assert!(BASH_PROMPT.starts_with(r"printf '\e]133;A\e\\"));
         assert!(POWERSHELL_PROMPT
             .contains("function global:prompt { [Console]::Write([char]27 + ']133;A'"));
@@ -934,7 +934,7 @@ mod tests {
             ["-NoExit".to_owned(), "-Command".to_owned()]
         );
         assert!(launch.args[2].contains("]9;9;"));
-        assert!(launch.args[2].contains("& $global:__nibPrompt"));
+        assert!(launch.args[2].contains("& $global:__ordenPrompt"));
         assert!(!launch.args[2].contains('"'));
     }
 

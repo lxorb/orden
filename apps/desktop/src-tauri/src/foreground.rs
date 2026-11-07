@@ -96,7 +96,7 @@ mod held {
     pub fn every_thread_or_say() {
         if on_every_thread(0).is_none() {
             eprintln!(
-                "nib: the system refused the window-event hook ({}); a window another \
+                "orden: the system refused the window-event hook ({}); a window another \
                  thread makes is not held off the screens",
                 in_context_refusal()
                     .map_or_else(|| "this module".to_owned(), |code| code.to_string())

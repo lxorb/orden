@@ -232,7 +232,7 @@ mod tests {
     }
 
     #[test]
-    fn a_stranger_on_the_port_is_not_nib() {
+    fn a_stranger_on_the_port_is_not_orden() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
         let port = listener.local_addr().expect("its address").port();
         let heard = std::thread::spawn(move || {
@@ -256,7 +256,7 @@ mod tests {
     }
 
     #[test]
-    fn nobody_on_the_port_is_not_nib() {
+    fn nobody_on_the_port_is_not_orden() {
         let port = TcpListener::bind("127.0.0.1:0")
             .and_then(|one| one.local_addr())
             .expect("a port")

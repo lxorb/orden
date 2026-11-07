@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn a_second_one_is_a_folder_of_nibs_made_on_first_use() {
+    fn a_second_one_is_a_folder_of_ordens_made_on_first_use() {
         let dir = root("second");
         let home = under(&dir, Tool::ClaudeCode, Some("claude-code-2"))
             .expect("read")

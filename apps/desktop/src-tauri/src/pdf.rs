@@ -452,7 +452,7 @@ mod printer {
     define_class!(
         #[unsafe(super(NSObject))]
         #[thread_kind = MainThreadOnly]
-        #[name = "NibPdfPrinted"]
+        #[name = "OrdenPdfPrinted"]
         #[ivars = Waiting]
         struct Printed;
 

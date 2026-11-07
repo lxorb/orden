@@ -84,7 +84,7 @@ fn file(app: &AppHandle) -> Result<std::path::PathBuf, String> {
 
 fn page(marks: &[Mark]) -> String {
     let mut out = format!(
-        "\n=== nib {} launched {} ===\n",
+        "\n=== Orden {} launched {} ===\n",
         env!("CARGO_PKG_VERSION"),
         STARTED.1
     );
@@ -116,7 +116,7 @@ fn page(marks: &[Mark]) -> String {
 
 fn line(marks: &[Mark]) -> String {
     let mut out = format!(
-        "{{\"nib\":\"{}\",\"launched\":{},\"steps\":[",
+        "{{\"orden\":\"{}\",\"launched\":{},\"steps\":[",
         env!("CARGO_PKG_VERSION"),
         STARTED.1
     );

@@ -308,7 +308,7 @@ fn key(app: &AppHandle, on: bool) {
 }
 
 #[cfg(any(windows, target_os = "macos"))]
-const TRAY: &str = "nib-agents";
+const TRAY: &str = "orden-agents";
 
 #[cfg(any(windows, target_os = "macos"))]
 const OPEN: &str = "orden-agents-open";

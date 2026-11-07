@@ -522,7 +522,7 @@
   },
   {
     "name": "search_notes",
-    "description": "Find notes containing some text, as nib's search finds them, one space/path: line a line.",
+    "description": "Find notes containing some text, as Orden's search finds them, one space/path: line a line.",
     "inputSchema": {
       "type": "object",
       "properties": { "query": { "type": "string" }, "space": { "type": "string" } },
@@ -1184,7 +1184,7 @@
   },
   {
     "name": "run_command",
-    "description": "Run one command of nib's palette by id. Those that publish, share or change settings ask the reader first; those only a person at the keyboard may run are refused. A file dialog it opens is answered by path, as files reads and writes.",
+    "description": "Run one command of Orden's palette by id. Those that publish, share or change settings ask the reader first; those only a person at the keyboard may run are refused. A file dialog it opens is answered by path, as files reads and writes.",
     "inputSchema": {
       "type": "object",
       "properties": { "id": { "type": "string" }, "path": { "type": "string" } },
@@ -1193,7 +1193,7 @@
   },
   {
     "name": "read_setting",
-    "description": "One of nib's settings, by the settings file's key (appearance.accent, editor.textSize), with its choices; a pane's name (appearance, editor, general) lists its settings. Also theme, language and a space's web data.",
+    "description": "One of Orden's settings, by the settings file's key (appearance.accent, editor.textSize), with its choices; a pane's name (appearance, editor, general) lists its settings. Also theme, language and a space's web data.",
     "inputSchema": {
       "type": "object",
       "properties": { "key": { "type": "string" } },
@@ -1371,7 +1371,7 @@
   },
   {
     "name": "run_agent",
-    "description": "Start a helper on any model the reader's AI accounts offer, Claude's or OpenAI's, as you would a subagent of your own. It has none of your conversation: give it the whole task. It works with these nib tools in your mode, and its final answer is the result; while it still works, call agent_result.",
+    "description": "Start a helper on any model the reader's AI accounts offer, Claude's or OpenAI's, as you would a subagent of your own. It has none of your conversation: give it the whole task. It works with these Orden tools in your mode, and its final answer is the result; while it still works, call agent_result.",
     "inputSchema": {
       "type": "object",
       "properties": {

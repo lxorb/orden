@@ -29,7 +29,7 @@ test('a reminder’s presses are asked for without a word that never comes', asy
   expect(await asked).toEqual([])
   expect(taken).toHaveBeenCalledWith('')
 
-  ;(globalThis as unknown as { __nibFrame: (word: string) => void }).__nibFrame('the word')
+  ;(globalThis as unknown as { __ordenFrame: (word: string) => void }).__ordenFrame('the word')
   await take()
   expect(taken).toHaveBeenLastCalledWith('the word')
 })

@@ -375,7 +375,7 @@ mod tests {
 
         drop_in(dir.path(), id).expect("dropped");
         assert!(waiting_in(dir.path()).is_empty());
-        assert!(drop_in(dir.path(), "../nib.log").is_err());
+        assert!(drop_in(dir.path(), "../orden.log").is_err());
     }
 
     #[test]
@@ -407,7 +407,7 @@ mod tests {
     #[test]
     fn the_log_of_a_run_is_the_lines_written_during_it() {
         let dir = tempfile::tempdir().expect("a folder");
-        let log = dir.path().join("nib.log");
+        let log = dir.path().join("orden.log");
         std::fs::write(
             &log,
             "2026-10-03T22:11:00.000Z INFO  before\n2026-10-03T22:11:03.685Z WARN  during\n2026-10-03T22:12:00.000Z INFO  after\n",

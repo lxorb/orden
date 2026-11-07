@@ -9,7 +9,7 @@ use windows::UI::Notifications::{
 use super::toast::{self, REPLY_ARGUMENT, REPLY_INPUT};
 use super::{Act, Notice};
 
-const GROUP: &str = "nib.notices";
+const GROUP: &str = "orden.notices";
 
 fn failed(error: &windows::core::Error) -> String {
     error.message()

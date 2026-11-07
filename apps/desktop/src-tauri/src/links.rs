@@ -1509,8 +1509,8 @@ mod tests {
     #[test]
     fn the_index_keeps_each_tag_once_folded_and_without_the_hash() {
         assert_eq!(
-            note_tags("#Work/Nib twice: #work/nib and #plans"),
-            vec!["work/nib".to_string(), "plans".to_string()]
+            note_tags("#Work/Orden twice: #work/orden and #plans"),
+            vec!["work/orden".to_string(), "plans".to_string()]
         );
         assert!(note_tags("nothing here").is_empty());
     }

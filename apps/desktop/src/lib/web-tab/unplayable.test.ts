@@ -12,9 +12,9 @@ const NO_SOURCE = 3
 
 function page(playsH264 = false) {
   const dom = new JSDOM('<video id="one"></video>', { runScripts: 'outside-only' })
-  const inside = dom.window as unknown as Window & typeof globalThis & { nibAsked?: unknown }
+  const inside = dom.window as unknown as Window & typeof globalThis & { ordenAsked?: unknown }
   const asked: string[] = []
-  inside.nibAsked = (said: string) => void asked.push(said)
+  inside.ordenAsked = (said: string) => void asked.push(said)
   inside.HTMLMediaElement.prototype.canPlayType = () => (playsH264 ? 'probably' : '')
   inside.eval(script)
 

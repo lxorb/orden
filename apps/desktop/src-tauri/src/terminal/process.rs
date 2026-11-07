@@ -507,7 +507,7 @@ mod tests {
     #[test]
     fn a_shell_at_its_prompt_is_not_busy() {
         let listed = [
-            process(10, 1, "nib.exe"),
+            process(10, 1, "orden.exe"),
             process(11, 10, "conhost.exe"),
             process(20, 10, "pwsh.exe"),
         ];

@@ -18,7 +18,7 @@ const STORE_PROFILE: &str = "store-";
     not(feature = "cef"),
     allow(
         dead_code,
-        reason = "only nib's own Chromium has profiles to name; the name is kept beside the layout it belongs to"
+        reason = "only Orden's own Chromium has profiles to name; the name is kept beside the layout it belongs to"
     )
 )]
 const APP_PROFILE: &str = "app";
@@ -179,7 +179,7 @@ fn switches(written: &str) -> Vec<(String, Option<String>)> {
     all(not(feature = "cef"), target_os = "macos"),
     allow(
         dead_code,
-        reason = "a Mac's own engine is handed a store identifier rather than a folder; the folder is what the other two desktops and nib's own Chromium use"
+        reason = "a Mac's own engine is handed a store identifier rather than a folder; the folder is what the other two desktops and Orden's own Chromium use"
     )
 )]
 pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {

@@ -104,7 +104,7 @@ fn login_path() -> Option<&'static OsStr> {
 }
 
 #[cfg(any(unix, test))]
-const MARK: &str = "__nib_path__=";
+const MARK: &str = "__orden_path__=";
 
 #[cfg(any(unix, test))]
 pub fn marked_path(printed: &str) -> Option<&str> {
@@ -236,9 +236,9 @@ mod tests {
 
     #[test]
     fn the_login_shell_s_path_is_the_marked_line() {
-        let printed = "Welcome\n[oh-my-zsh] update\n\n__nib_path__=/opt/homebrew/bin:/usr/bin\n";
+        let printed = "Welcome\n[oh-my-zsh] update\n\n__orden_path__=/opt/homebrew/bin:/usr/bin\n";
         assert_eq!(marked_path(printed), Some("/opt/homebrew/bin:/usr/bin"));
         assert_eq!(marked_path("no mark here"), None);
-        assert_eq!(marked_path("__nib_path__=\n"), None);
+        assert_eq!(marked_path("__orden_path__=\n"), None);
     }
 }

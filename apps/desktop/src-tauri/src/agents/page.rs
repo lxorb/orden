@@ -752,7 +752,7 @@ impl Page<'_> {
             .map_err(|why| stale(&why))?
             .pointer("/frameTree/frame/id")
             .and_then(Value::as_str)
-            .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for nib"))?
+            .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for Orden"))?
             .to_string(),
         };
         self.world_of_frame(session, &frame)
@@ -779,7 +779,7 @@ impl Page<'_> {
         let world = made
             .get("executionContextId")
             .and_then(Value::as_i64)
-            .ok_or_else(|| Answer::error(Code::Failed, "the page has no world for nib"))?;
+            .ok_or_else(|| Answer::error(Code::Failed, "the page has no world for Orden"))?;
         self.worlds
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -3697,7 +3697,7 @@ mod tests {
         assert!(!line_readable(Some(&limits), &theirs, &shop));
         assert!(line_readable(
             Some(&limits),
-            &line(Some("nib")),
+            &line(Some("orden")),
             &Whence::Orden
         ));
         assert!(line_readable(None, &line(None), &bank));

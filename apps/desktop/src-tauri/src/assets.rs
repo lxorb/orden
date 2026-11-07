@@ -277,25 +277,25 @@ mod tests {
 
     #[test]
     fn the_space_folder_is_reached_from_a_note_in_it() {
-        let space = path(&["Nib", "Notes"]);
+        let space = path(&["Orden", "Notes"]);
 
         assert_eq!(
             asset_dir(&space, "assets", &space),
-            Ok(path(&["Nib", "Notes", "assets"]))
+            Ok(path(&["Orden", "Notes", "assets"]))
         );
         assert_eq!(
             asset_dir(&space.join("Work"), "../assets", &space),
-            Ok(path(&["Nib", "Notes", "assets"]))
+            Ok(path(&["Orden", "Notes", "assets"]))
         );
         assert_eq!(
             asset_dir(&space.join("Work").join("2026"), "../../assets", &space),
-            Ok(path(&["Nib", "Notes", "assets"]))
+            Ok(path(&["Orden", "Notes", "assets"]))
         );
     }
 
     #[test]
     fn no_folder_at_all_is_the_note_s_own() {
-        let space = path(&["Nib", "Notes"]);
+        let space = path(&["Orden", "Notes"]);
         let here = space.join("Work");
 
         assert_eq!(asset_dir(&here, "", &space), Ok(here.clone()));
@@ -303,17 +303,17 @@ mod tests {
 
     #[test]
     fn a_folder_named_after_the_note_sits_beside_it() {
-        let space = path(&["Nib", "Notes"]);
+        let space = path(&["Orden", "Notes"]);
 
         assert_eq!(
             asset_dir(&space, "Read me", &space),
-            Ok(path(&["Nib", "Notes", "Read me"]))
+            Ok(path(&["Orden", "Notes", "Read me"]))
         );
     }
 
     #[test]
     fn a_folder_that_climbs_out_of_the_space_is_refused() {
-        let space = path(&["Nib", "Notes"]);
+        let space = path(&["Orden", "Notes"]);
 
         assert!(asset_dir(&space, "../assets", &space).is_err());
         assert!(asset_dir(&space, "../../elsewhere", &space).is_err());
@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn a_hidden_folder_is_refused() {
-        let spaces = path(&["Documents", "Nib"]);
+        let spaces = path(&["Documents", "Orden"]);
 
         assert!(asset_dir(&spaces, ".trash", &spaces).is_err());
         assert!(asset_dir(&spaces, ".trash/1700000000000-0", &spaces).is_err());
@@ -337,7 +337,7 @@ mod tests {
 
     #[test]
     fn a_folder_that_is_not_relative_is_refused() {
-        let space = path(&["Nib", "Notes"]);
+        let space = path(&["Orden", "Notes"]);
 
         assert!(asset_dir(&space, "/etc", &space).is_err());
         if cfg!(windows) {

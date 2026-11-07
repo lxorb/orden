@@ -49,7 +49,7 @@ pub fn clear_leftovers(app: &AppHandle) {
     }
     std::thread::spawn(move || {
         if let Some(engine) = retire_engine(&places) {
-            eprintln!("nib: engine: the choice said {engine}; running on the system's");
+            eprintln!("orden: engine: the choice said {engine}; running on the system's");
         }
     });
 }

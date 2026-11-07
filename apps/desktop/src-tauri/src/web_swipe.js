@@ -7,7 +7,7 @@
 
   function say(said) {
     const words = JSON.stringify(said)
-    const bound = globalThis.nibSwiped
+    const bound = globalThis.ordenSwiped
     if (typeof bound === 'function') bound(words)
     else open('about:blank', 'orden-swipe:' + words)
   }

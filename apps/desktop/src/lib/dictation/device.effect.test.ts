@@ -75,8 +75,8 @@ afterEach(() => {
   box.remove()
   delete (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
   delete (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
-  delete (window as { __nibHeard?: unknown }).__nibHeard
-  delete (window as { __nibFrame?: unknown }).__nibFrame
+  delete (window as { __ordenHeard?: unknown }).__ordenHeard
+  delete (window as { __ordenFrame?: unknown }).__ordenFrame
 })
 
 describe('the web’s recogniser', () => {
@@ -156,7 +156,7 @@ describe('Android’s recogniser', () => {
     Object.assign(globalThis, {
       __ORDEN_SYSTEM__: {
         askForTheFrame: () =>
-          (window as { __nibFrame?: (word: string) => void }).__nibFrame?.('word'),
+          (window as { __ordenFrame?: (word: string) => void }).__ordenFrame?.('word'),
         listen: (_word: string, on: boolean) => {
           held.on.push(on)
           return on
@@ -167,7 +167,7 @@ describe('Android’s recogniser', () => {
   })
 
   const said = (json: object) =>
-    (window as { __nibHeard?: (text: string) => void }).__nibHeard?.(JSON.stringify(json))
+    (window as { __ordenHeard?: (text: string) => void }).__ordenHeard?.(JSON.stringify(json))
 
   test('is turned on through the activity, with the page’s word', async () => {
     const one = new DeviceSession(field, hooks())

@@ -16,7 +16,7 @@ struct Held {
 define_class!(
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
-    #[name = "NibCarriedDrag"]
+    #[name = "OrdenCarriedDrag"]
     #[ivars = Held]
     struct CarriedDrag;
 

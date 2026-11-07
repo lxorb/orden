@@ -175,9 +175,9 @@ mod tests {
 
     #[test]
     fn a_plan_reads_back_whatever_the_page_left_out() {
-        let written = r#"{"root":"C:\\Nib\\Work","options":{"sort":"name","showHidden":false},"notes":["C:\\Nib\\Work\\Plan.md"]}"#;
+        let written = r#"{"root":"C:\\Orden\\Work","options":{"sort":"name","showHidden":false},"notes":["C:\\Orden\\Work\\Plan.md"]}"#;
         let plan: Plan = serde_json::from_str(written).expect("a plan");
-        assert_eq!(plan.root.as_deref(), Some("C:\\Nib\\Work"));
+        assert_eq!(plan.root.as_deref(), Some("C:\\Orden\\Work"));
         assert_eq!(plan.notes.len(), 1);
 
         let bare: Plan = serde_json::from_str("{}").expect("an empty plan");
@@ -192,7 +192,7 @@ mod tests {
         let plan = Plan {
             root: Some("C:\\".repeat(100)),
             options: serde_json::json!({ "sort": "modified", "descending": true }),
-            notes: vec!["C:\\Users\\somebody\\Documents\\Nib\\Space\\note.md".repeat(4); 24],
+            notes: vec!["C:\\Users\\somebody\\Documents\\Orden\\Space\\note.md".repeat(4); 24],
             web: true,
         };
         let bytes = serde_json::to_vec(&plan).expect("written");

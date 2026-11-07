@@ -39,7 +39,7 @@ fn signed_by_a_team() -> bool {
 
 #[allow(unsafe_code)]
 #[no_mangle]
-pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
+pub extern "C" fn orden_add_to_inbox(text: *const c_char) -> i32 {
     if text.is_null() {
         return 1;
     }
@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn a_task_waits_for_the_app_and_writes_into_no_space() {
         let dir = tempfile::tempdir().unwrap();
-        let spaces = dir.path().join("Nib");
+        let spaces = dir.path().join("Orden");
         fs::create_dir_all(spaces.join("Notes")).unwrap();
         let folder = dir.path().join(ADDED);
 

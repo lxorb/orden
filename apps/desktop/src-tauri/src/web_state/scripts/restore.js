@@ -1,4 +1,4 @@
-globalThis.nibRestore = async function nibRestore(op, argsJson) {
+globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
   const args = JSON.parse(argsJson)
 
   function bytes(text) {

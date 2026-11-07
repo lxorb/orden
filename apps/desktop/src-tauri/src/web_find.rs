@@ -23,7 +23,7 @@ struct Found {
 
 const LOOKED: &str = r"(function (term, back, fresh) {
   try {
-    var state = window.__nibFound || (window.__nibFound = { at: -1 })
+    var state = window.__ordenFound || (window.__ordenFound = { at: -1 })
     var selection = window.getSelection()
     if (fresh) {
       state.at = -1

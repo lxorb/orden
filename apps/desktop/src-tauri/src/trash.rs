@@ -173,7 +173,7 @@ pub fn space_renamed(app: &AppHandle, from: &Path, to: &Path) {
     let moved = trash_dir(app)
         .and_then(|dir| follows(&dir, &from.to_string_lossy(), &to.to_string_lossy()));
     if let Err(error) = moved {
-        eprintln!("nib: the trash did not follow a space's new name: {error}");
+        eprintln!("orden: the trash did not follow a space's new name: {error}");
     }
 }
 
@@ -492,8 +492,8 @@ mod tests {
     #[test]
     fn purging_cannot_reach_outside_the_trash() {
         let dir = tempfile::tempdir().expect("a temp folder");
-        let trash = dir.path().join("Nib").join(".trash");
-        let elsewhere = dir.path().join("Nib").join("Notes");
+        let trash = dir.path().join("Orden").join(".trash");
+        let elsewhere = dir.path().join("Orden").join("Notes");
         std::fs::create_dir_all(&trash).expect("the trash");
         std::fs::create_dir_all(&elsewhere).expect("a space beside it");
         std::fs::write(elsewhere.join("Idea.md"), "mine").expect("a note in it");
@@ -539,7 +539,7 @@ mod tests {
         assert!(is_name(".secret.md"));
         assert!(is_name(".gitignore"));
 
-        let base = path(&["Documents", "Nib"]);
+        let base = path(&["Documents", "Orden"]);
         assert_eq!(
             restore_target(&base, &entry("1-0", ".secret.md", "Work/.secret.md")),
             Ok(base.join("Work").join(".secret.md"))
@@ -548,7 +548,7 @@ mod tests {
 
     #[test]
     fn restoring_lands_back_inside_the_notes_folder() {
-        let base = path(&["Documents", "Nib"]);
+        let base = path(&["Documents", "Orden"]);
 
         assert_eq!(
             restore_target(&base, &entry("1-0", "Idea.md", "Work/Idea.md")),

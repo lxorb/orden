@@ -189,12 +189,12 @@ pub const SCRIPT: &str = r"(function () {
     else if (event.button === 0 && !event.altKey && !event.metaKey) asked(event, 'blank')
   })
 
-  // A press anywhere in the page chooses its tab and its pane, said through nib's own
+  // A press anywhere in the page chooses its tab and its pane, said through Orden's own
   // binding where there is one (#1080): the window system says nothing of a press into a
   // page that has the keyboard already. Never as a window: that would spend the press's
   // activation, which the page's own `window.open` in the same press needs.
   addEventListener('pointerdown', function (event) {
-    var asking = globalThis.nibAsked
+    var asking = globalThis.ordenAsked
     if (event.isTrusted && typeof asking === 'function') asking(JSON.stringify(['', 'orden-pressed']))
   }, true)
 
@@ -202,7 +202,7 @@ pub const SCRIPT: &str = r"(function () {
     if (typeof event.detail === 'string') open(event.detail, 'orden-front')
   })
   addEventListener('orden-popup-blocked', function (event) {
-    var asking = globalThis.nibAsked
+    var asking = globalThis.ordenAsked
     if (typeof event.detail === 'string' && typeof asking === 'function')
       asking(JSON.stringify([event.detail, 'orden-popup-blocked']))
   })
@@ -305,7 +305,7 @@ const STORE_END: &str = "    }, true)\n  }\n";
 
 #[cfg_attr(
     not(feature = "cef"),
-    allow(dead_code, reason = "only nib's own Chromium leaves it out")
+    allow(dead_code, reason = "only Orden's own Chromium leaves it out")
 )]
 fn without_store_button(script: &str) -> String {
     let Some(start) = script.find(STORE_PART) else {
@@ -430,7 +430,7 @@ mod heard {
         UNASKED.with_borrow_mut(|unasked| unasked.remove(tab))
     }
 
-    fn nibs_own(name: &str) -> bool {
+    fn ordens_own(name: &str) -> bool {
         crate::web_swipe::named(name).is_some()
             || sought(name).is_some()
             || chord(name).is_some()
@@ -527,7 +527,7 @@ mod heard {
                     })
                     .unwrap_or_default();
 
-                if nibs_own(&name) {
+                if ordens_own(&name) {
                     OURS.with_borrow_mut(|ours| ours.insert(asking.clone()));
                 }
                 if let Some(payload) = crate::web_swipe::named(&name) {
@@ -606,7 +606,7 @@ mod heard {
 }
 
 #[cfg(feature = "cef")]
-pub const BINDING: &str = "nibAsked";
+pub const BINDING: &str = "ordenAsked";
 
 #[cfg(feature = "cef")]
 pub fn script() -> String {
@@ -616,7 +616,7 @@ pub fn script() -> String {
             concat!(
                 "var opening = window.open.bind(window)\n  ",
                 "var open = function (url, name) {\n    ",
-                "if (typeof nibAsked === 'function') nibAsked(JSON.stringify([url, name]))\n    ",
+                "if (typeof ordenAsked === 'function') ordenAsked(JSON.stringify([url, name]))\n    ",
                 "else if (url !== 'about:blank') opening(url, name)\n  }",
             ),
             1,
@@ -723,10 +723,10 @@ mod tests {
     #[test]
     fn on_chromium_the_script_asks_through_the_binding_where_there_is_one() {
         let script = super::script();
-        assert!(script.contains("typeof nibAsked === 'function'"));
+        assert!(script.contains("typeof ordenAsked === 'function'"));
         assert!(script.contains(super::BINDING));
         assert!(!script.contains("var open = window.open.bind(window)"));
-        assert!(!script.contains("var open = typeof nibAsked"));
+        assert!(!script.contains("var open = typeof ordenAsked"));
         assert!(SCRIPT.contains(super::STOPPED_ENGINE_KEYS));
         assert!(!script.contains(super::STOPPED_ENGINE_KEYS));
     }
@@ -805,7 +805,7 @@ mod tests {
     }
 
     #[test]
-    fn eight_names_ask_for_nib_s_answer_and_nothing_else_does() {
+    fn eight_names_ask_for_orden_s_answer_and_nothing_else_does() {
         assert_eq!(sought("orden-find"), Some(Passed::Find));
         assert_eq!(sought("orden-find-next"), Some(Passed::Next));
         assert_eq!(sought("orden-find-previous"), Some(Passed::Previous));
@@ -819,7 +819,7 @@ mod tests {
             "_blank",
             "orden-behind",
             "orden-front",
-            "NIB-FIND",
+            "ORDEN-FIND",
             "orden-find ",
             "orden-find-all",
             "orden-twice-meta",
@@ -842,7 +842,7 @@ mod tests {
             "",
             "orden-find",
             "orden-address",
-            "NIB-CTRL-D",
+            "ORDEN-CTRL-D",
             "orden-ctrl-d ",
             "orden-ctrl-f",
         ] {
@@ -981,7 +981,7 @@ mod tests {
             "",
             "orden-find",
             "orden-actual",
-            "NIB-ACTUAL-SIZE",
+            "ORDEN-ACTUAL-SIZE",
             "_blank",
         ] {
             assert!(!actual(name), "{name:?}");

@@ -379,7 +379,7 @@ impl Heard {
     }
 
     pub fn say(&mut self, level: &str, text: String) {
-        self.line(level, text, Some("nib".to_string()), Whence::Orden);
+        self.line(level, text, Some("orden".to_string()), Whence::Orden);
     }
 
     fn line(&mut self, level: &str, text: String, source: Option<String>, whence: Whence) {

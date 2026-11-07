@@ -139,7 +139,7 @@ def stalls(identifier: str) -> list[str]:
         pathlib.Path(os.environ.get("XDG_DATA_HOME") or home / ".local" / "share") / identifier,
     ]
     lines: list[str] = []
-    for log in (one for folder in folders for one in folder.glob("**/nib.log")):
+    for log in (one for folder in folders for name in ("orden.log", "nib.log") for one in folder.glob(f"**/{name}")):
         lines += [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if "stall" in line]
     return lines[-20:]
 

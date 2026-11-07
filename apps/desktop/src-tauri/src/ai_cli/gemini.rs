@@ -53,14 +53,17 @@ impl Gemini {
         id: &str,
         model: Option<&str>,
         idle: Duration,
-        nib: Option<&Path>,
+        orden: Option<&Path>,
         output: Output,
     ) -> Result<Self, String> {
         let files = launch.folder.join("gemini").join(id);
         crate::paths::made(&files)?;
-        let mode = launch.mode.filter(|_| nib.is_some());
-        let settings =
-            args::gemini_settings(mode, &launch.without, nib.unwrap_or_else(|| Path::new("")));
+        let mode = launch.mode.filter(|_| orden.is_some());
+        let settings = args::gemini_settings(
+            mode,
+            &launch.without,
+            orden.unwrap_or_else(|| Path::new("")),
+        );
         std::fs::write(files.join("settings.json"), settings.to_string())
             .map_err(|error| error.to_string())?;
         std::fs::write(files.join("system.md"), args::session_system(launch.mode))

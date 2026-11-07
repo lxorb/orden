@@ -71,7 +71,7 @@ ACTIVITY = """
     insets: () => '{"top":24,"right":0,"bottom":48,"left":0}',
     // Into the page itself, whoever asked, which is what makes it a word only the
     // page has: the activity runs this line in the main frame.
-    askForTheFrame: () => window.__nibFrame?.(held.word),
+    askForTheFrame: () => window.__ordenFrame?.(held.word),
     bars: () => undefined,
     handed: (said) => {
       if (said !== held.word) return ''
@@ -399,7 +399,7 @@ def hand(page: Page, share: dict) -> None:
         """([shared, bytes]) => {
              window.__android.shared = shared
              window.__android.bytes = bytes
-             window.__nibHanded()
+             window.__ordenHanded()
            }""",
         [json.dumps(share), {}],
     )
@@ -409,7 +409,7 @@ def tile(page: Page, command: str) -> None:
     page.evaluate(
         """(command) => {
              window.__android.handed = JSON.stringify({ command, open: '' })
-             window.__nibHanded()
+             window.__ordenHanded()
            }""",
         command,
     )
@@ -452,7 +452,7 @@ def a_tile_and_a_widget_row(page: Page, note: str) -> None:
     page.evaluate(
         """(path) => {
              window.__android.handed = JSON.stringify({ command: '', open: path })
-             window.__nibHanded()
+             window.__ordenHanded()
            }""",
         note,
     )
@@ -606,7 +606,7 @@ def dictation(page: Page, phone: bool) -> None:
 
     if phone:
         page.evaluate(
-            """() => window.__nibHeard(JSON.stringify({ state: 'listening', text: 'and then we left' }))"""
+            """() => window.__ordenHeard(JSON.stringify({ state: 'listening', text: 'and then we left' }))"""
         )
     else:
         page.evaluate("() => window.__speech.hear('and then we left', true)")

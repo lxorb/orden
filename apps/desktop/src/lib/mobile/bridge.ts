@@ -49,7 +49,7 @@ export function frameWord(): Promise<string> {
 
   const asking = new Promise<string>((said) => {
     const timer = setTimeout(() => said(''), PATIENCE)
-    answer('__nibFrame', (text: string) => {
+    answer('__ordenFrame', (text: string) => {
       if (!text) return
       known = text
       heard(text)

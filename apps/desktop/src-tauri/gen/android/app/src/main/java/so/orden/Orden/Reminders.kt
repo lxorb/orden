@@ -20,7 +20,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object Reminders {
-  private const val STORE = "nib.reminders"
+  private const val STORE = "orden.reminders"
   private const val PLAN = "plan"
   private const val WORDS = "words"
   private const val PRESSES = "presses"
@@ -43,7 +43,7 @@ object Reminders {
       try {
         JSONObject(json)
       } catch (error: Exception) {
-        Log.w("nib", "a reminders plan that could not be read: ${error.message}")
+        Log.w("orden", "a reminders plan that could not be read: ${error.message}")
         return
       }
     val plan = alarmsOf(read.optJSONArray("reminders") ?: JSONArray())
@@ -84,7 +84,7 @@ object Reminders {
             .setData(Uri.parse("package:${activity.packageName}"))
         )
       } catch (error: Exception) {
-        Log.w("nib", "the exact alarms switch could not be opened: ${error.message}")
+        Log.w("orden", "the exact alarms switch could not be opened: ${error.message}")
       }
     }
   }
@@ -150,7 +150,7 @@ object Reminders {
     try {
       NotificationManagerCompat.from(context).notify(alarm.id, code, notification)
     } catch (error: SecurityException) {
-      Log.w("nib", "a reminder could not be shown: ${error.message}")
+      Log.w("orden", "a reminder could not be shown: ${error.message}")
     }
   }
 

@@ -89,7 +89,7 @@ mod tests {
 
     const OWN: [&str; 2] = ["agent_pair", "agent_bye"];
 
-    const PROBE: &str = "__nib_probe";
+    const PROBE: &str = "__orden_probe";
 
     fn names() -> BTreeSet<&'static str> {
         table().iter().map(|tool| tool.name.as_str()).collect()
@@ -260,9 +260,9 @@ mod tests {
                     };
                     let mut bogus = full.clone();
                     let bad = if inside_a_list {
-                        json!(["__nib_bogus"])
+                        json!(["__orden_bogus"])
                     } else {
-                        json!("__nib_bogus")
+                        json!("__orden_bogus")
                     };
                     at(&mut bogus, &place)[key.as_str()] = bad;
                     let Some(Err(why)) = Verb::read(verb, bogus) else {

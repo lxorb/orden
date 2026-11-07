@@ -1,5 +1,5 @@
 ;(function () {
-  if (globalThis.__nibPass) return
+  if (globalThis.__ordenPass) return
 
   const QUIET = 150
   const LONGEST_QUIET = 1000
@@ -186,10 +186,10 @@
   }
 
   function channel() {
-    const bound = globalThis.nibPass
+    const bound = globalThis.ordenPass
     if (typeof bound === 'function') return bound
     const handlers = globalThis.webkit && globalThis.webkit.messageHandlers
-    const handler = handlers && handlers.nibPass
+    const handler = handlers && handlers.ordenPass
     if (handler && typeof handler.postMessage === 'function') {
       return (words) => handler.postMessage(words)
     }
@@ -1020,7 +1020,7 @@
     return last !== null
   }
 
-  globalThis.__nibPass = Object.freeze({ fill })
+  globalThis.__ordenPass = Object.freeze({ fill })
 
   observer.observe(document, WATCHED)
   if (document.readyState === 'loading') {

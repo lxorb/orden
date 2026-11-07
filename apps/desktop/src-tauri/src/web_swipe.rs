@@ -10,7 +10,7 @@ pub fn script() -> &'static str {
 }
 
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
-pub const BINDING: &str = "nibSwiped";
+pub const BINDING: &str = "ordenSwiped";
 
 #[cfg(any(not(feature = "cef"), test))]
 const NAMED: &str = "orden-swipe:";
@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn the_binding_is_nib_s_world_s_alone() {
+    fn the_binding_is_orden_s_world_s_alone() {
         assert_eq!(binding()["name"], BINDING);
         assert_eq!(binding()["executionContextName"], crate::web_worlds::WORLD);
     }

@@ -59,7 +59,7 @@ fn now_doing() -> String {
         .ok()
         .filter(|held| !held.is_empty())
         .map_or_else(
-            || "nothing of nib's own".to_owned(),
+            || "nothing of Orden's own".to_owned(),
             |held| held.iter().rev().cloned().collect::<Vec<_>>().join(" < "),
         )
 }
@@ -68,7 +68,7 @@ pub fn start(app: &AppHandle) {
     let app = app.clone();
     let watched = Watched::this_thread(&app);
     let _ = std::thread::Builder::new()
-        .name("nib stall watch".to_owned())
+        .name("stall watch".to_owned())
         .spawn(move || {
             if let Some(dir) = marker_dir(&app) {
                 if let Some(said) = last_run(&dir.join(MARKER)) {
@@ -170,7 +170,7 @@ fn last_run(marker: &Path) -> Option<String> {
     let _ = std::fs::remove_file(marker);
     let left: Marked = serde_json::from_str(&text).ok()?;
     Some(format!(
-        "stall: nib was not responding for {} when it was ended ({}), since {}",
+        "stall: Orden was not responding for {} when it was ended ({}), since {}",
         seconds(Duration::from_millis(left.held)),
         left.doing,
         crate::clock::iso(left.since)
@@ -525,7 +525,7 @@ static GONE: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
 
 #[allow(
     dead_code,
-    reason = "no engine nib runs on notes its page gone yet; WebKitGTK's did, and CEF's will"
+    reason = "no engine Orden runs on notes its page gone yet; WebKitGTK's did, and CEF's will"
 )]
 fn gone(label: &str) {
     GONE.lock()
@@ -571,7 +571,7 @@ mod tests {
         }
         assert_eq!(now_doing(), "web_open");
         drop(outer);
-        assert_eq!(now_doing(), "nothing of nib's own");
+        assert_eq!(now_doing(), "nothing of Orden's own");
     }
 
     #[test]
@@ -603,7 +603,7 @@ mod tests {
 
         assert_eq!(
             last_run(&marker).as_deref(),
-            Some("stall: nib was not responding for 41.0 s when it was ended (web_open), since 2026-10-03T22:11:03.685Z")
+            Some("stall: Orden was not responding for 41.0 s when it was ended (web_open), since 2026-10-03T22:11:03.685Z")
         );
         assert!(!marker.exists());
         assert_eq!(last_run(&marker), None);

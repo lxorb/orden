@@ -62,7 +62,7 @@ class MainActivity : TauriActivity() {
     @Volatile private var live: java.lang.ref.WeakReference<MainActivity>? = null
 
     fun reminded() {
-      live?.get()?.tell("window.__nibReminders?.()")
+      live?.get()?.tell("window.__ordenReminders?.()")
     }
   }
 
@@ -97,7 +97,7 @@ class MainActivity : TauriActivity() {
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
-    if (read(intent)) tell("window.__nibHanded?.()")
+    if (read(intent)) tell("window.__ordenHanded?.()")
   }
 
   override fun onDestroy() {
@@ -149,7 +149,7 @@ class MainActivity : TauriActivity() {
       edges =
         "{\"top\":${css(bars.top)},\"right\":${css(bars.right)}," +
           "\"bottom\":${css(maxOf(0, bars.bottom - keys))},\"left\":${css(bars.left)}}"
-      webView.evaluateJavascript("window.__nibInsets?.()", null)
+      webView.evaluateJavascript("window.__ordenInsets?.()", null)
       insets
     }
 
@@ -174,7 +174,7 @@ class MainActivity : TauriActivity() {
   }
 
   fun heard(json: String) {
-    tell("window.__nibHeard?.(${JSONObject.quote(json)})")
+    tell("window.__ordenHeard?.(${JSONObject.quote(json)})")
   }
 
   private fun ownerAsks(): Boolean =
@@ -182,7 +182,7 @@ class MainActivity : TauriActivity() {
       getSystemService(KeyguardManager::class.java)?.isDeviceSecure == true
 
   private fun owned(yes: Boolean) {
-    tell("window.__nibOwner?.('${if (yes) "yes" else "no"}')")
+    tell("window.__ordenOwner?.('${if (yes) "yes" else "no"}')")
   }
 
   @Suppress("DEPRECATION")
@@ -236,7 +236,7 @@ class MainActivity : TauriActivity() {
 
     @JavascriptInterface
     fun askForTheFrame() {
-      tell("window.__nibFrame?.(${JSONObject.quote(frame)})")
+      tell("window.__ordenFrame?.(${JSONObject.quote(frame)})")
     }
 
     @JavascriptInterface

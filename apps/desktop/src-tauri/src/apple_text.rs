@@ -1174,7 +1174,7 @@ mod tests {
     }
 
     #[test]
-    fn a_highlight_is_nibs_own_mark_with_no_circle_in_front_of_it() {
+    fn a_highlight_is_ordens_own_mark_with_no_circle_in_front_of_it() {
         let said = as_markdown("Marked", &[run(6, &[number(14, 3)])]);
 
         assert_eq!(said, "==Marked==");
