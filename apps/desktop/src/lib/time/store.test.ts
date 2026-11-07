@@ -4,6 +4,8 @@ import { openTimeDisk } from './disk'
 import { FakeTimeServer, OLD_SERVER } from './fake-server'
 import { TimeStore } from './store.svelte'
 
+const M = 60_000
+
 let owners = 0
 const owner = () => `owner-${(owners += 1)}`
 
@@ -19,17 +21,32 @@ describe('the time a person records', () => {
     const uni = store.addActivity('Uni', 'teal')
     const sport = store.addActivity('Sport')
 
-    store.start(uni.id, 1000)
+    store.start(uni.id, M)
     expect(store.running.map((one) => one.activity)).toEqual([uni.id])
-    store.start(sport.id, 5000)
+    store.start(sport.id, 5 * M)
     expect(store.running.map((one) => one.activity)).toEqual([sport.id])
-    store.stop(9000)
+    store.stop(9 * M)
     expect(store.running).toEqual([])
     expect(store.spans.map((one) => [one.activity, one.start, one.end, one.source])).toEqual([
-      [uni.id, 1000, 5000, 'timer'],
-      [sport.id, 5000, 9000, 'timer'],
+      [uni.id, M, 5 * M, 'timer'],
+      [sport.id, 5 * M, 9 * M, 'timer'],
     ])
     expect(store.latest().map((one) => one.name)).toEqual(['Sport', 'Uni'])
+  })
+
+  test('a timer stopped or changed within its first minute keeps nothing', async () => {
+    const store = await opened(owner(), null)
+    const uni = store.addActivity('Uni')
+    const sport = store.addActivity('Sport')
+
+    store.start(uni.id, 10 * M)
+    store.start(sport.id, 10 * M + 1000)
+    store.stop(10 * M + 50_000)
+    expect(store.spans).toEqual([])
+
+    store.start(uni.id, 20 * M)
+    store.stop(20 * M - 1000)
+    expect(store.spans.map((one) => [one.start, one.end])).toEqual([[20 * M, 20 * M]])
   })
 
   test('a span added by hand is edited and taken away, and refuses to end before it starts', async () => {
@@ -41,6 +58,19 @@ describe('the time a person records', () => {
     expect(store.span(span.id)?.end).toBe(300)
     store.removeSpan(span.id)
     expect(store.spans).toEqual([])
+  })
+
+  test('keeps its spans in order of their start as each is added, moved or taken away', async () => {
+    const store = await opened(owner(), null)
+    const late = store.addSpan({ start: 300, end: 400 })
+    const early = store.addSpan({ start: 100, end: 150 })
+    const middle = store.addSpan({ start: 200, end: 250 })
+    store.changeSpan(late.id, { start: 50 })
+    store.removeSpan(middle.id)
+    expect(store.spans.map((one) => [one.id, one.start])).toEqual([
+      [late.id, 50],
+      [early.id, 100],
+    ])
   })
 
   test('taking an activity away leaves its spans without one', async () => {
@@ -65,18 +95,18 @@ describe('the time a person records', () => {
     const server = new FakeTimeServer()
     const who = owner()
     const one = await opened(who, server)
-    one.start(one.addActivity('Uni').id, 10)
+    one.start(one.addActivity('Uni').id, 10 * M)
     await one.exchange()
 
     const other = new TimeStore((one) => openTimeDisk(one === null ? null : `${one}-elsewhere`))
     await other.opened({ owner: who, server, device: 'there' })
     await other.exchange()
     expect(other.running.map((span) => span.device)).toEqual(['here'])
-    other.stop(20)
+    other.stop(20 * M)
     await other.exchange()
     await one.exchange()
     expect(one.running).toEqual([])
-    expect(one.spans[0]?.end).toBe(20)
+    expect(one.spans[0]?.end).toBe(20 * M)
     expect(one.kept).toBe(true)
   })
 
@@ -141,13 +171,13 @@ describe('the time a person records', () => {
   test('starts a timer by name, finding the activity whatever its case, or making it', async () => {
     const store = await opened(owner(), null)
     const uni = store.addActivity('Uni')
-    store.startNamed('  uni ', 1000)
-    store.startNamed('Reading', 2000)
-    store.startNamed('   ', 3000)
+    store.startNamed('  uni ', M)
+    store.startNamed('Reading', 2 * M)
+    store.startNamed('   ', 3 * M)
     expect(store.activities.map((one) => one.name)).toEqual(['Uni', 'Reading'])
     expect(store.spans.map((one) => [one.activity, one.start, one.end])).toEqual([
-      [uni.id, 1000, 2000],
-      [store.named('reading')?.id, 2000, null],
+      [uni.id, M, 2 * M],
+      [store.named('reading')?.id, 2 * M, null],
     ])
     expect(new Set(store.activities.map((one) => one.tint)).size).toBe(2)
   })

@@ -13,9 +13,9 @@ interface Written {
 function tracked() {
   const spans: Written[] = []
   const tracker = new Tracker({
-    opened: (lane, place, at) => {
+    opened: (lane, place, start, end) => {
       const id = `s${spans.length}`
-      spans.push({ id, lane, key: place.key, start: at, end: at })
+      spans.push({ id, lane, key: place.key, start, end })
       return id
     },
     moved: (id, end) => {
@@ -133,6 +133,19 @@ describe('time counted by itself', () => {
     tracker.flush()
     expect(spans).toHaveLength(1)
     expect(spans[0]?.end).toBe(195_000)
+  })
+
+  test('writes nothing of a place in front for one look only, as tabs passed through', () => {
+    const { spans, tracker } = tracked()
+    walk(tracker, 0, 60)
+    tracker.seen(at(75, { space: HOME }))
+    walk(tracker, 90, 120)
+    tracker.seen(at(135, { space: HOME }))
+    tracker.flush()
+    expect(spans.map((one) => [one.key, lasting(one)])).toEqual([
+      ['uni', 60],
+      ['uni', 30],
+    ])
   })
 
   test('starts over when the clock goes back', () => {

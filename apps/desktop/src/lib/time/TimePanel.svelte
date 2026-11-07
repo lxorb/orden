@@ -190,5 +190,6 @@
   .open {
     align-self: stretch;
     margin-top: var(--space-1);
+    border: 1px solid var(--line-strong);
   }
 </style>
