@@ -238,6 +238,20 @@ describe('front matter', () => {
   })
 })
 
+describe('a regular expression that backtracks without end', () => {
+  const RUN = `${'a'.repeat(27)}!`
+
+  test('finds nothing, and at once, rather than hang the page', () => {
+    const started = Date.now()
+    expect(answers('/(a+)+b/', { body: RUN })).toBe(false)
+    expect(Date.now() - started).toBeLessThan(1500)
+  })
+
+  test('leaves a pattern that runs in time alone', () => {
+    expect(marked('/a+!/', { body: RUN })).toEqual([RUN])
+  })
+})
+
 describe('regular expressions', () => {
   test('match what they describe', () => {
     expect(answers('/G[a-z]+a/')).toBe(true)

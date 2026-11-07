@@ -1,5 +1,6 @@
 import { type Extension, Prec } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
+import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
 import { tickTaskAtCaret } from './commands'
 import {
@@ -13,6 +14,10 @@ import {
 import { once } from './once'
 import { redoEdit, undoEdit } from './shared'
 import { modeOf, vimCommands, vimReport } from './vim'
+
+Object.assign(Vim, {
+  patternGuard: (pattern: RegExp) => !backtracksWildly(pattern.source, pattern.flags),
+})
 
 const unmap = Vim.unmap as (keys: string, context?: string) => boolean | undefined
 

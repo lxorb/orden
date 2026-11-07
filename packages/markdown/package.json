@@ -38,6 +38,7 @@
     "./pages": "./src/pages.ts",
     "./papers": "./src/papers.ts",
     "./paths": "./src/paths.ts",
+    "./pattern-cost": "./src/pattern-cost.ts",
     "./properties": "./src/properties.ts",
     "./property-edits": "./src/property-edits.ts",
     "./providers": "./src/providers.ts",

@@ -1,0 +1,42 @@
+diff --git a/vim.js b/vim.js
+index 3cafa6bcf0c99f2ae25a5da8936d3f29445f2d6d..6582f6614eb7e791150f32a76ce794d3e138037d 100644
+--- a/vim.js
++++ b/vim.js
+@@ -827,6 +827,9 @@ export function initVim(CM) {
+ 
+     suppressErrorLogging: false,
+ 
++    /** @type {((pattern: RegExp) => boolean) | null} */
++    patternGuard: null,
++
+     InsertModeKey: InsertModeKey,
+     /**@type {(lhs: string, rhs: string, ctx: string) => void} */
+     map: function(lhs, rhs, ctx) {
+@@ -5264,6 +5267,9 @@ export function initVim(CM) {
+     }
+     var regexp = new RegExp(regexPart,
+         (ignoreCase || forceIgnoreCase) ? 'im' : 'm');
++    if (vimApi.patternGuard && !vimApi.patternGuard(regexp)) {
++      throw new Error('Pattern too slow to search');
++    }
+     return regexp;
+   }
+ 
+@@ -5786,6 +5792,9 @@ export function initVim(CM) {
+             queryString = vimGlobalState.registerController.getRegister('/')?.toString() || "";
+           }
+           var query = new RegExp(queryString);
++          if (vimApi.patternGuard && !vimApi.patternGuard(query)) {
++            throw new Error('Pattern too slow to search');
++          }
+           var cursor = cm.getSearchCursor(query, new Pos(line + (forward ? 1 : 0), 0));
+           if (forward) {
+             cursor.findNext(); 
+@@ -6120,6 +6129,7 @@ export function initVim(CM) {
+           }
+           if (opts[2]) {
+             pattern = new RegExp(opts[2].substr(1, opts[2].length - 2), ignoreCase ? 'i' : '');
++            if (vimApi.patternGuard && !vimApi.patternGuard(pattern)) { return 'Pattern too slow to search'; }
+           }
+         }
+       }

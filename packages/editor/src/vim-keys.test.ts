@@ -89,3 +89,20 @@ describe('Enter on a task in normal mode', () => {
     expect(view.state.doc.toString()).not.toContain('[x]')
   })
 })
+
+describe('a pattern that backtracks without end', () => {
+  test('is refused by a substitution rather than hang the page, and one that runs in time is not', () => {
+    const run = `${'a'.repeat(27)}!`
+    const view = viewOf(run, 0)
+    const cm = getCM(view) as Parameters<typeof Vim.handleEx>[0] | null
+    if (!cm) throw new Error('no Vim in the view')
+
+    const started = Date.now()
+    Vim.handleEx(cm, 's/(a+)+b/x/')
+    expect(Date.now() - started).toBeLessThan(1500)
+    expect(view.state.doc.toString()).toBe(run)
+
+    Vim.handleEx(cm, 's/a+!/x/')
+    expect(view.state.doc.toString()).toBe('x')
+  })
+})

@@ -1,3 +1,4 @@
+import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import type { GraphNode } from './graph'
 import { aKindOfLine, type Query } from '@orden/scan/search/query'
 
@@ -68,7 +69,7 @@ function folded(text: string, fold: boolean): string {
 
 function compiled(source: string, fold: boolean): RegExp | null {
   try {
-    return new RegExp(source, fold ? 'iu' : 'u')
+    return backtracksWildly(source, 'u') ? null : new RegExp(source, fold ? 'iu' : 'u')
   } catch {
     return null
   }

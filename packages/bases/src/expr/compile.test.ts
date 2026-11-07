@@ -444,6 +444,17 @@ describe('a pattern in a base somebody else could have written', () => {
     }
   })
 
+  test('a base of the reader still refuses a pattern that backtracks without end', () => {
+    const own = readBase(
+      'formulas:\n  f: "/(a+)+b/.matches(note.x)"\n  g: "/a+!/.matches(note.x)"\nviews:\n  - type: table\n    name: T\n',
+    )
+    const row = noteRow('A.md', { x: `${'a'.repeat(27)}!` })
+    const started = Date.now()
+    expect(cellValue(own, 'formula.f', row, context)).toBeNull()
+    expect(Date.now() - started).toBeLessThan(1500)
+    expect(cellValue(own, 'formula.g', row, context)).toBe(true)
+  })
+
   test('the flag is no part of the file', () => {
     const base = readBase('views:\n  - type: table\n    name: T\n')
     expect(writeBase({ ...base, guarded: true })).toBe(writeBase(base))
