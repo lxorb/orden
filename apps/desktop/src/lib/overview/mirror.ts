@@ -102,7 +102,7 @@ export function snapshotFrom(
     for (const canvas of copy.querySelectorAll('canvas')) {
       try {
         const picture = document.createElement('img')
-        picture.src = canvas.toDataURL('image/webp', 0.7)
+        picture.src = pictureOf(canvas)
         picture.className = canvas.className
         picture.style.cssText = canvas.style.cssText
         picture.setAttribute('width', String(canvas.width))
@@ -117,6 +117,18 @@ export function snapshotFrom(
 }
 
 const SCROLLED = 'data-overview-scrolled'
+
+const PICTURE = 512
+
+function pictureOf(canvas: HTMLCanvasElement): string {
+  const by = PICTURE / Math.max(canvas.width, canvas.height, 1)
+  if (by >= 1) return canvas.toDataURL('image/webp', 0.7)
+  const small = document.createElement('canvas')
+  small.width = Math.max(1, Math.round(canvas.width * by))
+  small.height = Math.max(1, Math.round(canvas.height * by))
+  small.getContext('2d')?.drawImage(canvas, 0, 0, small.width, small.height)
+  return small.toDataURL('image/webp', 0.7)
+}
 
 export function scrolledBack(root: Element) {
   const places: [Element, number, number][] = []
