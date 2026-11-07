@@ -8,7 +8,7 @@ import type {
   Picture,
   ShellWords,
 } from '../verbs'
-import type { Source } from './source'
+import type { LogRead, Source } from './source'
 
 function grantFor(id: string, name: string): Grant {
   return {
@@ -178,9 +178,14 @@ export class FakeCrate implements Source {
     return Promise.resolve({ ...approval })
   }
 
-  log(day: string): Promise<unknown[]> {
-    this.asked.push({ command: 'log', args: [day] })
-    return Promise.resolve([...this.lines])
+  log(day: string, from: number): Promise<LogRead> {
+    this.asked.push({ command: 'log', args: [day, from] })
+    const fresh = from > this.lines.length
+    return Promise.resolve({
+      lines: this.lines.slice(fresh ? 0 : from),
+      to: this.lines.length,
+      fresh,
+    })
   }
 
   adopt(agentTab: string, tab: string): Promise<void> {

@@ -359,6 +359,7 @@ macro_rules! desktop_commands {
             agents::agents_dialog_path,
             agents::agents_state,
             agents::agents_log,
+            agents::agents_log_after,
             agents::agents_log_days,
             agents::agents_log_clear,
             agents::agents_adopt,

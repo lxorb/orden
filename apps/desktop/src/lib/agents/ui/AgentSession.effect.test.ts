@@ -13,7 +13,7 @@ vi.spyOn(workspace, 'openPage').mockImplementation((url: string) => {
   return `reader-${String(opened.pages.length)}`
 })
 const { FakeCrate } = await import('./fake')
-const { ended, start } = await import('./live.svelte')
+const { ended, start, started } = await import('./live.svelte')
 const AgentSession = (await import('./AgentSession.svelte')).default
 
 afterEach(() => {
@@ -102,5 +102,20 @@ test('the view closes when the agent closes the tab', async () => {
   fake.emit({ kind: 'closed', agent: 'claude-code', id: tab.id })
   await settle()
   expect(sheet()).toBeNull()
+  close()
+})
+
+test("the day's log is read on from where the last read stopped, not whole each time", async () => {
+  const { fake, tab, close } = await drawn()
+  const activity = started(fake)
+  fake.act('claude-code', tab.id, 'browser_click')
+  await activity.readLog()
+  fake.act('claude-code', tab.id, 'browser_type')
+  fake.act('claude-code', tab.id, 'browser_snapshot')
+  await activity.readLog()
+
+  const from = fake.asked.filter((one) => one.command === 'log').map((one) => one.args[1])
+  expect(from.at(-1)).toBe(fake.lines.length - 2)
+  expect(activity.lines).toEqual(fake.lines)
   close()
 })
