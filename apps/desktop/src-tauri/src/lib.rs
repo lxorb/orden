@@ -981,7 +981,7 @@ mod tests {
         "crate::kept::kept_forget",
     ];
 
-    const WAITS: [&str; 9] = [
+    const WAITS: [&str; 30] = [
         "fs::",
         "File::",
         "OpenOptions",
@@ -991,14 +991,56 @@ mod tests {
         "delete_credential",
         "canonicalize",
         "tauri_plugin_opener::",
+        ".resize(",
+        "CreateToolhelp32Snapshot",
+        "EnumProcesses",
+        ".wait(",
+        ".wait_timeout(",
+        ".wait_while(",
+        ".wait_timeout_while(",
+        "WaitForSingleObject",
+        "WaitForMultipleObjects",
+        "MsgWaitForMultipleObjects",
+        "wait_for_async_operation",
+        "wait_with_pump",
+        ".recv(",
+        ".recv_timeout(",
+        ".join()",
+        "block_on",
+        "blocking_recv",
+        "blocking_lock",
+        "thread::sleep",
+        "SendMessageW",
+        "TcpStream::connect",
     ];
+
+    const TARGETS: [calls::Target; 3] = [
+        calls::Target::WINDOWS,
+        calls::Target::MACOS,
+        calls::Target::LINUX,
+    ];
+
+    const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 5] = [
+        "crate::placement::keep",
+        "crate::placement::read",
+        "crate::extensions::webview2::reconcile",
+        "crate::engine::web_store",
+        "crate::agents::quiet::destination",
+    ];
+
+    const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 1] =
+        ["crate::default_browser::platform::make_default::main#0"];
 
     const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];
 
     const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["crate::quick_add::bring_up"];
 
     fn own() -> calls::Crate {
-        let own = calls::read(&crate::app_dir().join("src").join("lib.rs"));
+        own_on(calls::Target::WINDOWS)
+    }
+
+    fn own_on(target: calls::Target) -> calls::Crate {
+        let own = calls::read(&crate::app_dir().join("src").join("lib.rs"), target);
         assert!(
             own.modules() > 20,
             "only {} modules were read",
@@ -1009,21 +1051,110 @@ mod tests {
 
     #[test]
     fn a_command_that_waits_says_async() {
-        let own = own();
-        let waits = own.reaching(&WAITS, &[]);
-
+        let mut seen: Vec<String> = Vec::new();
+        for target in TARGETS {
+            let own = own_on(target);
+            let waits = own.waiting(&WAITS, &[]);
+            seen.extend(own.commands().iter().cloned());
+            let late: Vec<String> = own
+                .commands()
+                .iter()
+                .filter(|path| waits.contains(path) && !EXCEPTED.contains(&path.as_str()))
+                .map(|path| own.chain(path, &WAITS, &waits).join(" -> "))
+                .collect();
+            assert!(
+                late.is_empty(),
+                "on {target:?} {late:#?} wait without saying async"
+            );
+        }
         for excepted in EXCEPTED {
             assert!(
-                own.commands().iter().any(|one| one == excepted),
+                seen.iter().any(|one| one == excepted),
                 "{excepted} is no command on the calling thread"
             );
         }
-        let late: Vec<&String> = own
-            .commands()
+    }
+
+    #[test]
+    fn nothing_the_window_s_thread_runs_waits() {
+        let mut late: Vec<String> = Vec::new();
+        for target in TARGETS {
+            let own = own_on(target);
+            assert!(own.mains().len() > 5, "only {:?}", own.mains());
+            let waits = own.waiting(&WAITS, &SMALL_ON_THE_WINDOW_S_THREAD);
+            late.extend(
+                own.mains()
+                    .iter()
+                    .filter(|path| {
+                        waits.contains(path)
+                            && !OPENS_ON_THE_WINDOW_S_THREAD.contains(&path.as_str())
+                    })
+                    .map(|path| {
+                        format!(
+                            "{target:?} {}",
+                            own.chain(path, &WAITS, &waits).join(" -> ")
+                        )
+                    }),
+            );
+        }
+        assert!(late.is_empty(), "the window's thread waits in {late:#?}");
+    }
+
+    #[test]
+    fn a_lock_held_across_a_wait_is_a_wait_for_whoever_takes_it() {
+        let source = concat!(
+            "static HELD: Mutex<u8> = Mutex::new(0);\n\n",
+            "static FREE: Mutex<u8> = Mutex::new(0);\n\n",
+            "#[tauri::command(async)]\npub fn slow() {\n    let held = HELD.lock().unwrap();\n    fs::write(one, two);\n    drop(held);\n}\n\n",
+            "#[tauri::command]\npub fn quick() -> u8 {\n    *HELD.lock().unwrap()\n}\n\n",
+            "#[tauri::command(async)]\npub fn let_go() {\n    let held = FREE.lock().unwrap();\n    drop(held);\n    fs::write(one, two);\n}\n\n",
+            "#[tauri::command]\npub fn free() -> u8 {\n    let read = *FREE.lock().unwrap();\n    read\n}\n\n",
+            "fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {\n    held.lock().unwrap()\n}\n\n",
+            "#[tauri::command(async)]\npub fn opening() {\n    let open = lock(&FREE);\n    let _ = Command::new(one).spawn();\n}\n\n",
+            "#[tauri::command]\npub fn closing() {\n    lock(&HELD).take();\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        assert!(waits.contains("crate::quick") && waits.contains("crate::closing"));
+        assert!(
+            waits.contains("crate::free"),
+            "a guard a helper hands out is held as well"
+        );
+        let quiet = concat!(
+            "static FREE: Mutex<u8> = Mutex::new(0);\n\n",
+            "#[tauri::command(async)]\npub fn let_go() {\n    let held = FREE.lock().unwrap();\n    drop(held);\n    fs::write(one, two);\n}\n\n",
+            "#[tauri::command]\npub fn free() -> u8 {\n    let read = *FREE.lock().unwrap();\n    read\n}\n",
+        );
+        let own = calls::of(&[("crate", quiet)]);
+        assert!(!own.waiting(&WAITS, &[]).contains("crate::free"));
+    }
+
+    #[test]
+    fn what_the_window_s_thread_runs_is_followed_and_a_thread_s_is_not() {
+        let source = concat!(
+            "#[tauri::command]\npub fn away() {\n    std::thread::spawn(move || fs::write(one, two));\n}\n\n",
+            "pub fn later(app: &AppHandle) {\n    let _ = app.run_on_main_thread(move || {\n        fs::write(one, two);\n    });\n}\n\n",
+            "pub fn on_page(app: &AppHandle, then: impl FnOnce() + Send + 'static) {\n    let _ = app.run_on_main_thread(move || then());\n}\n\n",
+            "pub fn handed(app: &AppHandle) {\n    on_page(app, move || {\n        let _ = Command::new(one).status();\n    });\n}\n\n",
+            "pub fn pumped(view: &Webview) {\n    with_platform!(view, move |platform| {\n        Handler::wait_for_async_operation(one, two);\n    });\n}\n\n",
+            "#[cfg(target_os = \"macos\")]\npub fn elsewhere(app: &AppHandle) {\n    let _ = app.run_on_main_thread(move || {\n        fs::write(one, two);\n    });\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        assert!(!waits.contains("crate::away"));
+        let waiting: Vec<&String> = own
+            .mains()
             .iter()
-            .filter(|path| waits.contains(*path) && !EXCEPTED.contains(&path.as_str()))
+            .filter(|one| waits.contains(one))
             .collect();
-        assert!(late.is_empty(), "{late:?} wait without saying async");
+        assert_eq!(
+            waiting,
+            [
+                "crate::later::main#0",
+                "crate::handed::passed#0",
+                "crate::pumped::main#0"
+            ]
+        );
     }
 
     #[test]
