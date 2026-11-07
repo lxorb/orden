@@ -205,10 +205,11 @@ async function rewriteEach(
 }
 
 export async function tickRows(asked: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
-  const many = asked.filter((row) => !ticking.has(row))
+  const open = (row: Row) => !!row.task && !row.task.done && !row.task.cancelled
+  const opening = asked.some(open)
+  const many = asked.filter((row) => !ticking.has(row) && (!opening || open(row)))
   if (!many.length) return asked.length > 0
   for (const row of many) ticking.add(row)
-  const opening = many.some((row) => row.task && !row.task.done)
   const ticked = await rewriteEach(
     many,
     (before, inNote) => {
