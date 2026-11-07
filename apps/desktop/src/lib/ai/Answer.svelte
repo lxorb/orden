@@ -7,6 +7,7 @@
 <script lang="ts">
   import { copyText } from '../clipboard'
   import { mathsWaiting } from '../markdown-view.svelte'
+  import { drawInPieces } from './answer-pieces'
   import { patchHtml } from './patch-html'
 
   const {
@@ -77,10 +78,8 @@
     class:waiting
     onclick={press}
     onauxclick={(event) => onfollow?.(event)}
-  >
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -- the renderer escapes every tag the model wrote; see ai/drawn.ts -->
-    {@html html}
-  </div>
+    {@attach (node: HTMLDivElement) => drawInPieces(node, html)}
+  ></div>
 {/if}
 
 <style>
