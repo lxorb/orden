@@ -1,3 +1,6 @@
+import type { InkStroke, PageNode } from '../canvas/format'
+import { strokeBox } from '../canvas/ink'
+
 export interface Sheet {
   width: number
   height: number
@@ -73,4 +76,52 @@ function rowAt(tops: readonly number[], y: number): number {
   }
 
   return low
+}
+
+export interface SheetDrawn {
+  x: number
+  y: number
+  width: number
+  height: number
+  file: string | null
+  page: number | null
+  ink: readonly InkStroke[]
+  palette: unknown
+}
+
+export function sheetDrawn(
+  page: PageNode,
+  ink: readonly InkStroke[],
+  palette: unknown,
+): SheetDrawn {
+  const { x, y, width, height } = page
+  return {
+    x,
+    y,
+    width,
+    height,
+    file: page.file ?? null,
+    page: page.page ?? null,
+    palette,
+    ink: ink.filter((stroke) => {
+      const box = strokeBox(stroke)
+      return (
+        box.x < x + width && x < box.x + box.width && box.y < y + height && y < box.y + box.height
+      )
+    }),
+  }
+}
+
+export function sameSheet(one: SheetDrawn, other: SheetDrawn): boolean {
+  return (
+    one.x === other.x &&
+    one.y === other.y &&
+    one.width === other.width &&
+    one.height === other.height &&
+    one.file === other.file &&
+    one.page === other.page &&
+    one.palette === other.palette &&
+    one.ink.length === other.ink.length &&
+    one.ink.every((stroke, at) => stroke === other.ink[at])
+  )
 }
