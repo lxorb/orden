@@ -137,11 +137,9 @@ fn changed(change: impl FnOnce(&mut Running)) {
 
 fn write() {
     let Some(path) = PATH.get() else { return };
-    let text = {
-        let held = MINE.lock().unwrap_or_else(PoisonError::into_inner);
-        let Some(mine) = held.as_ref() else { return };
-        serde_json::to_vec(mine).unwrap_or_default()
-    };
+    let held = MINE.lock().unwrap_or_else(PoisonError::into_inner);
+    let Some(mine) = held.as_ref() else { return };
+    let text = serde_json::to_vec(mine).unwrap_or_default();
     let partial = path.with_extension("part");
     if std::fs::write(&partial, text).is_ok() {
         let _ = std::fs::rename(&partial, path);
@@ -172,7 +170,8 @@ pub fn leaving() {
 }
 
 pub fn ended_well() {
-    *MINE.lock().unwrap_or_else(PoisonError::into_inner) = None;
+    let mut held = MINE.lock().unwrap_or_else(PoisonError::into_inner);
+    *held = None;
     if let Some(path) = PATH.get() {
         let _ = std::fs::remove_file(path);
     }
