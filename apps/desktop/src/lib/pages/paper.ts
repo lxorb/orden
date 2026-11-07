@@ -275,6 +275,71 @@ async function draw(one: Held, number: number, density: number): Promise<Paper |
   }
 }
 
+export interface Part {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export async function closeUpOf(
+  at: PaperAt,
+  number: number,
+  part: Part,
+  across: number,
+  signal: AbortSignal,
+): Promise<ImageBitmap | null> {
+  const gone = () => signal.aborted
+  const one = heldOf(at)
+  if (!one || gone()) return null
+
+  const opened = await one.open.catch(() => null)
+  if (!opened || gone() || number < 1 || number > opened.doc.numPages) return null
+
+  const page = await opened.doc.getPage(number)
+  const whole = page.getViewport({ scale: 1 })
+  const wide = part.width * whole.width
+  const tall = part.height * whole.height
+  const wanted = across / whole.width
+  const scale = Math.min(wanted, Math.sqrt(MOST_PIXELS / Math.max(1, wide * tall)))
+  const view = page.getViewport({
+    scale,
+    offsetX: -part.x * whole.width * scale,
+    offsetY: -part.y * whole.height * scale,
+  })
+
+  const sheet = sheetOf(
+    Math.max(1, Math.floor(wide * scale)),
+    Math.max(1, Math.floor(tall * scale)),
+  )
+  const ctx = sheet?.getContext('2d') ?? null
+  if (!sheet || !ctx || gone()) {
+    page.cleanup()
+    return null
+  }
+
+  const task = page.render({
+    canvas: sheet as HTMLCanvasElement,
+    canvasContext: ctx as CanvasRenderingContext2D,
+    viewport: view,
+  })
+  const stop = () => task.cancel()
+  signal.addEventListener('abort', stop, { once: true })
+  try {
+    await task.promise
+  } catch {
+    return null
+  } finally {
+    signal.removeEventListener('abort', stop)
+    page.cleanup()
+  }
+  if (gone()) return null
+
+  return 'transferToImageBitmap' in sheet
+    ? sheet.transferToImageBitmap()
+    : await createImageBitmap(sheet)
+}
+
 let offscreen: boolean | undefined
 
 function sheetOf(width: number, height: number): HTMLCanvasElement | OffscreenCanvas | null {

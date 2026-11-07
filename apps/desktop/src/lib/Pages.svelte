@@ -128,6 +128,13 @@
 
   const near = $derived(pages.slice(sight.from, sight.to))
 
+  const seen = $derived.by(() => {
+    const turned = turnOf(view) ? Math.hypot(width, height) : 0
+    const across = (turned || width) / view.scale / 2
+    const down = (turned || height) / view.scale / 2
+    return { x: view.x - across, y: view.y - down, width: across * 2, height: down * 2 }
+  })
+
   $effect(() => {
     store.measured(width, height)
   })
@@ -969,6 +976,7 @@
         notePath={tab.note.path}
         root={workspace.rootHolding(tab.note.path)}
         shared={tab.note.shared}
+        {seen}
       />
     {/each}
 
