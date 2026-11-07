@@ -3,11 +3,10 @@ import { taskAt } from '@orden/markdown/tasks'
 import { LONGEST_META_VALUE } from '@orden/sync-core/meta'
 import { flowItem, scalar } from '@orden/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
-import { onDisk as there } from '../../on-disk'
 import { OWN_KEYS } from '../../own-keys'
 import { notePath } from '../../space-paths'
 import { joinPath } from '../../tauri'
-import { writeFile } from '../../workspace/write-file'
+import { writeIfAbsent } from '../../workspace/write-file'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
 import { DocError, type NoteRead, notes } from '../docs'
@@ -279,7 +278,14 @@ export function madeOrChanged<Made, Changed>(
   const path = onDisk(place, relative)
   const turn = (making.get(path) ?? Promise.resolve())
     .catch(() => undefined)
-    .then(async () => ((await workspace.noteText(path)) === null ? make() : change()))
+    .then(async () => {
+      if ((await workspace.noteText(path)) !== null) return change()
+      return make().catch(async (error: unknown) => {
+        const came = error instanceof Refused && error.code === 'exists'
+        if (came && (await workspace.noteText(path)) !== null) return change()
+        throw error
+      })
+    })
   making.set(path, turn)
   void turn
     .catch(() => undefined)
@@ -292,13 +298,12 @@ export function madeOrChanged<Made, Changed>(
 export async function made(place: Place, relative: string, words: string, open: Call | null) {
   const path = onDisk(place, relative)
   writableAt(place, path)
-  if (await there(path)) {
+  if (!(await writeIfAbsent(path, words))) {
     throw new Refused(
       'exists',
       `${relative} is there and would not read, and nothing is written over it`,
     )
   }
-  await writeFile(path, words)
 
   if (place.open) {
     await workspace.loadTree()

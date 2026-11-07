@@ -4,10 +4,13 @@ const order: string[] = []
 const said: { kind: string; path: string; text: string }[] = []
 let alone = false
 
+let there = false
+
 vi.mock('../tauri', () => ({
+  isNative: false,
   invoke: (command: string) => {
     order.push(command)
-    return Promise.resolve()
+    return Promise.resolve(command === 'path_exists' ? there : undefined)
   },
 }))
 vi.mock('../link-index.svelte', () => ({
@@ -31,12 +34,13 @@ vi.mock('../windows', () => ({
   },
 }))
 
-const { writeFile } = await import('./write-file')
+const { writeFile, writeIfAbsent } = await import('./write-file')
 
 afterEach(() => {
   order.length = 0
   said.length = 0
   alone = false
+  there = false
 })
 
 describe('a file written', () => {
@@ -57,5 +61,21 @@ describe('a file written', () => {
     await writeFile('/s/a.md', 'words')
     expect(said).toEqual([])
     expect(order).toContain('write_note')
+  })
+
+  test('only if absent, looked for and written in one turn, and never over a note that is there', async () => {
+    expect(await writeIfAbsent('/s/a.md', '')).toBe(true)
+    expect(order).toEqual([
+      'turn /s/a.md',
+      'path_exists',
+      'write_note',
+      'said',
+      'turn over /s/a.md',
+      'index /s/a.md',
+    ])
+    order.length = 0
+    there = true
+    expect(await writeIfAbsent('/s/a.md', '')).toBe(false)
+    expect(order).toEqual(['turn /s/a.md', 'path_exists', 'turn over /s/a.md'])
   })
 })
