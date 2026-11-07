@@ -60,6 +60,7 @@
     textsOf,
   } from './pages/paper'
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './pages/choose'
+  import { RightPan } from './canvas/right-pan'
   import { copyText } from './clipboard'
   import { placesOf } from './reading/find'
   import type { Highlight } from './pdf/highlights'
@@ -451,6 +452,8 @@
 
   const contacts = new Contacts()
 
+  const right = new RightPan()
+
   function kindOf(event: PointerEvent) {
     return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
   }
@@ -557,7 +560,16 @@
 
     const { kind, eraser } = kindOf(event)
     const pen = kind === 'pen'
-    if (event.button === 2 && !pen) return
+    if (event.button === 2 && !pen) {
+      if (right.down(event)) {
+        try {
+          host?.setPointerCapture(event.pointerId)
+        } catch {
+          // The events keep coming; they are only not promised to this element.
+        }
+      }
+      return
+    }
 
     contacts.came(event.pointerId, { pen, eraser })
     stylus.saw(event)
@@ -814,6 +826,7 @@
 
   function oncontextmenu(event: MouseEvent) {
     event.preventDefault()
+    if (right.ownsMenu(event.timeStamp)) return
     const kind = (event as PointerEvent).pointerType
     if (kind === 'touch' || kind === 'pen') return
     showMenu(event)
@@ -855,6 +868,18 @@
 
   function onpointermove(event: PointerEvent) {
     pointing = planeAt(event)
+
+    if (right.holding) {
+      const by = right.move(event)
+      if (by) {
+        store.camera = store.held({
+          ...camera,
+          x: camera.x - by.dx / camera.scale,
+          y: camera.y - by.dy / camera.scale,
+        })
+      }
+      return
+    }
 
     const one = gesture
     if (!one) return
@@ -990,6 +1015,13 @@
   function onpointerup(event: PointerEvent) {
     contacts.went(event.pointerId)
 
+    const lifted = right.up(event)
+    if (lifted) {
+      if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
+      if (lifted === 'menu') showMenu(event)
+      return
+    }
+
     const one = gesture
     if (one?.kind === 'pinch') {
       const which = one.ids.indexOf(event.pointerId)
@@ -1019,6 +1051,7 @@
 
   function onpointercancel(event: PointerEvent) {
     contacts.went(event.pointerId)
+    right.cancel()
 
     const one = gesture
     const mine =

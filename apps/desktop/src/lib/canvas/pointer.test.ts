@@ -1142,13 +1142,35 @@ describe('holding the shape of what is resized', () => {
     expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: true })
   })
 
-  test('is what a picture gets on a touch screen without being asked', () => {
+  test('is what a picture gets from a corner without being asked', () => {
+    for (const handle of ['nw', 'ne', 'se', 'sw'] as const) {
+      const { machine } = play(
+        [down({ hit: hit({ handle }) })],
+        context({ picked: ['a'], aspect: true }),
+      )
+
+      expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: true })
+    }
+  })
+
+  test('a picture pulled by a side stretches one way only', () => {
+    for (const handle of ['n', 'e', 's', 'w'] as const) {
+      const { machine } = play(
+        [down({ hit: hit({ handle }) })],
+        context({ picked: ['a'], aspect: true }),
+      )
+
+      expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: false })
+    }
+  })
+
+  test('Shift lets the corner of a picture pull it out of shape', () => {
     const { machine } = play(
-      [down({ hit: hit({ handle: 'se' }) })],
+      [down({ shift: true, hit: hit({ handle: 'se' }) })],
       context({ picked: ['a'], aspect: true }),
     )
 
-    expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: true })
+    expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: false })
   })
 
   test('is not what anything else gets', () => {

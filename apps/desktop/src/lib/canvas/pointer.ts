@@ -548,7 +548,7 @@ function select(machine: Machine, input: Down, context: Context): Step {
           screen: input.screen,
           dx: 0,
           dy: 0,
-          aspect: input.shift || context.aspect,
+          aspect: context.aspect ? hit.handle.length === 2 && !input.shift : input.shift,
         },
       },
       effects: [],

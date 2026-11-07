@@ -99,6 +99,7 @@
   import { modes } from './modes.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
+  import { RightPan } from './canvas/right-pan'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -425,8 +426,7 @@
   const picked = $derived(store.pickedSet)
 
   const holdsShape = $derived(
-    viewport.touch &&
-      store.picked.length > 0 &&
+    store.picked.length > 0 &&
       store.picked.every((id) => {
         const node = store.canvas.nodes.find((one) => one.id === id)
         return node?.type === 'file' && isPicture(node.file)
@@ -926,6 +926,8 @@
 
   let lastPen = false
 
+  const right = new RightPan()
+
   const GRACE = 160
   let doubting: { id: number; timer: number } | null = null
 
@@ -954,7 +956,10 @@
 
     lastPen = pen
 
-    if (event.button === 2 && !pen) return
+    if (event.button === 2 && !pen) {
+      if (right.down(event)) capture(event.pointerId)
+      return
+    }
 
     const point = planeAt(event)
     at = point
@@ -1010,6 +1015,12 @@
 
   function onPointerMove(event: PointerEvent) {
     note('move', event)
+
+    if (right.holding) {
+      const by = right.move(event)
+      if (by) store.camera = panned(camera, by.dx, by.dy)
+      return
+    }
 
     const floating = hovering(event) || !contacts.has(event.pointerId)
 
@@ -1072,6 +1083,13 @@
 
   function onPointerUp(event: PointerEvent) {
     note('up', event)
+
+    const lifted = right.up(event)
+    if (lifted) {
+      if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
+      if (lifted === 'menu') showMenu(planeAt(event), false, event.buttons)
+      return
+    }
     if (event.pointerType === 'touch') touchUpAt = performance.now()
     stopHolding()
     rubAt = null
@@ -1117,6 +1135,7 @@
 
   function onPointerCancel(event: PointerEvent) {
     note('cancel', event)
+    right.cancel()
     stopHolding()
     rubAt = null
 
@@ -1240,6 +1259,7 @@
 
   function onContextMenu(event: MouseEvent) {
     event.preventDefault()
+    if (right.ownsMenu(event.timeStamp)) return
     if (lastPen || (hand.penSeen && viewport.touch)) return
 
     showMenu(planeAt(event), false, event.buttons)
