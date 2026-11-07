@@ -7,6 +7,8 @@ const world = vi.hoisted(() => ({
   started: [] as { engine: string; words: readonly string[] }[],
   finished: 0,
   cancelled: 0,
+  slow: false,
+  done: [] as (() => void)[],
   stored: new Map<string, string>(),
   local: { fits: false, ready: false, keepsUp: true, fetched: 0 },
 }))
@@ -17,7 +19,9 @@ vi.mock('./listening', () => ({
     return Promise.resolve({
       finish: () => {
         world.finished++
-        return Promise.resolve()
+        return world.slow
+          ? new Promise<void>((resolve) => world.done.push(resolve))
+          : Promise.resolve()
       },
       cancel: () => world.cancelled++,
     })
@@ -132,6 +136,8 @@ beforeEach(() => {
   world.started = []
   world.finished = 0
   world.cancelled = 0
+  world.slow = false
+  world.done = []
   world.stored.clear()
   world.local = { fits: false, ready: false, keepsUp: true, fetched: 0 }
   engines.choose(null)
@@ -276,6 +282,27 @@ describe('with an engine chosen', () => {
     expect(world.cancelled).toBe(1)
     expect(voice.of(owner)).toBe('idle')
     expect(reached).toBe(false)
+  })
+
+  test('a finish still writing down when Escape and a new start come leaves the new listening alone', async () => {
+    world.slow = true
+    press(0)
+    await settle()
+    key('keydown', { key: 'v', altKey: true })
+    await settle()
+    expect(voice.of(owner)).toBe('finishing')
+    key('keydown', { key: 'Escape' })
+    expect(voice.of(owner)).toBe('idle')
+    press(0)
+    await settle()
+    expect(voice.of(owner)).toBe('listening')
+    const cancelled = world.cancelled
+
+    for (const done of world.done) done()
+    await settle()
+
+    expect(voice.of(owner)).toBe('listening')
+    expect(world.cancelled).toBe(cancelled)
   })
 
   test('Enter finishes, then is the field’s own Enter', async () => {
