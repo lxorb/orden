@@ -9,17 +9,20 @@ import {
 import { insideSpace, isMarkdownPath, relativeTo, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { inboxOf } from './inbox'
-import { projectsOf } from './projects'
+import { inProjects, projectsOf } from './projects'
+
+const byFolder = (root: string, relative: string) =>
+  !workspace.itemMeta.listsMarked(root) && inProjects(root, relative)
 
 export function listedAt(root: string, relative: string, meta?: Meta): boolean {
   const said = meta === undefined ? workspace.itemMeta.of(insideSpace(root, relative), root) : meta
-  return isTodoList(relative, said, inboxOf(root))
+  return isTodoList(relative, said, inboxOf(root)) || byFolder(root, relative)
 }
 
 export function isListed(path: string): boolean {
   const root = workspace.rootHolding(path)
   if (root === null) return false
-  return isTodoList(relativeTo(root, path), workspace.itemMeta.of(path, root), inboxOf(root))
+  return listedAt(root, relativeTo(root, path))
 }
 
 export function makeList(path: string): void {

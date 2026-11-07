@@ -14,6 +14,7 @@ vi.mock('../workspace.svelte', () => ({
     recent: [],
     rootHolding: (path: string) => '/' + (path.split('/')[1] ?? ''),
     itemMeta: {
+      listsMarked: () => true,
       of: (path: string) => (lists.has(path) ? { 'todo-list': 'yes' } : null),
       set: (path: string, patch: Record<string, string | null>) =>
         patch['todo-list'] ? lists.add(path) : lists.delete(path),

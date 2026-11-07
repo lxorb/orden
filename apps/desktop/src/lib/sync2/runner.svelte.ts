@@ -827,6 +827,8 @@ class Runner {
     if (!workspace.itemMeta.describes(root)) return
     const { moveOwnKeysSoon } = await import('../workspace/own-keys-moved')
     moveOwnKeysSoon(root, workspace, true)
+    const { markOldListsSoon } = await import('../rows/old-lists')
+    markOldListsSoon(root, true, workspace)
   }
 
   private reorders = -1

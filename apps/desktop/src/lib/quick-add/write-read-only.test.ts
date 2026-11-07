@@ -36,6 +36,7 @@ vi.mock('../workspace.svelte', () => ({
     recent: [],
     rootHolding: (path: string) => (path.startsWith(`${MINE}/`) ? MINE : SPACE),
     itemMeta: {
+      listsMarked: () => true,
       of: (path: string) => (path === `${SPACE}/Plan.md` ? { 'todo-list': 'yes' } : null),
       set: () => undefined,
     },

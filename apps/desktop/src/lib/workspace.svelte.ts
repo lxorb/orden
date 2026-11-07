@@ -2127,6 +2127,10 @@ class Workspace {
         ({ moveOwnKeysSoon }) => moveOwnKeysSoon(root, this, account.signedIn),
         unfetched,
       )
+      void import('./rows/old-lists').then(
+        ({ markOldListsSoon }) => markOldListsSoon(root, !account.signedIn, this),
+        unfetched,
+      )
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       const listed = this.files
       const tree = this.tree

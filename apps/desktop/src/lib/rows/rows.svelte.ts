@@ -10,6 +10,7 @@ import { keeping } from '../workspace/file-ops'
 import { hearInboxChosen, INBOX, inboxes, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
+import { hearOldLists } from './old-lists'
 import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
 import { listedAt } from './todo-lists'
@@ -36,6 +37,9 @@ const store = new RowsStore({
 links.hearSaves((path, content) => store.saved(path, content))
 workspace.itemMeta.hear((path) => store.described(path))
 hearInboxChosen((root) => store.again(root))
+hearOldLists((paths) => {
+  for (const path of paths) store.described(path)
+})
 links.listsBy((root, relative) => listedAt(root, relative))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
