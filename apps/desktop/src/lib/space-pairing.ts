@@ -43,6 +43,11 @@ async function untouchedDefault(): Promise<string | null> {
   )
 }
 
+async function endsNow(who: string): Promise<Set<string>> {
+  const { endsOwed } = await import('./space-owed')
+  return endsOwed(who)
+}
+
 async function endsSettled(token: string, who: string): Promise<Set<string>> {
   const { endsOwed, settleEnds, settleNames } = await import('./space-owed')
   await settleNames(token, who)
@@ -115,6 +120,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
 
   const paired = () => pairing.pairs()
   for (const space of plan.adopt) {
+    if (who !== null && (await endsNow(who)).has(space.id)) continue
     const taken =
       shared(space.id) ||
       workspace.spaces.some(

@@ -9,6 +9,7 @@ const world = vi.hoisted(() => ({
   icons: [] as string[],
   ended: [] as string[],
   order: [] as string[],
+  onMade: null as (() => Promise<void>) | null,
   online: true,
   adopted: [] as { name: string; fresh: boolean }[],
 }))
@@ -16,9 +17,10 @@ const world = vi.hoisted(() => ({
 vi.mock('./api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api')>()),
   api: {
-    createSpace: (_token: string, name: string) => {
+    createSpace: async (_token: string, name: string) => {
       world.made.push(name)
-      return Promise.resolve({ space: { id: `made-${name}`, name } })
+      await world.onMade?.()
+      return { space: { id: `made-${name}`, name } }
     },
     setSpaceIcon: (_token: string, id: string, icon: string | null) => {
       if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
@@ -115,6 +117,7 @@ beforeEach(() => {
   world.icons = []
   world.ended = []
   world.online = true
+  world.onMade = null
 })
 
 describe('signing in on a device another account signed out of', () => {
@@ -241,4 +244,17 @@ describe('an icon chosen while the account could not be reached', () => {
     await pairSpaces('token-a', held)
     expect(world.icons).toEqual(['/Work'])
   })
+})
+
+test('a space deleted while the device pairs is not brought back by that same pairing', async () => {
+  world.spaces = [{ id: '2', name: 'Fresh', root: '/Fresh' }]
+  signedIn('a', ['Gone'])
+  world.online = false
+  world.onMade = () => endSpace('token-a', 'a', 'a-Gone', 'delete')
+  const { pairing: held } = pairing()
+
+  await pairSpaces('token-a', held)
+
+  expect(world.made).toEqual(['Fresh'])
+  expect(world.adopted).toEqual([])
 })
