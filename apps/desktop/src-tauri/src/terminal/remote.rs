@@ -478,7 +478,10 @@ pub async fn remote_config_open(webview: Webview) -> Result<(), String> {
             open.arg(&path);
             open
         };
-        command.spawn().map(drop).map_err(|error| error.to_string())
+        command
+            .spawn()
+            .map(crate::printed::left_running)
+            .map_err(|error| error.to_string())
     })
     .await
 }

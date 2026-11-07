@@ -22,7 +22,7 @@ pub async fn open_shortcuts() -> Result<(), String> {
             std::process::Command::new("/usr/bin/open")
                 .args(["-b", "com.apple.shortcuts"])
                 .spawn()
-                .map(drop)
+                .map(crate::printed::left_running)
                 .map_err(|error| format!("could not open Shortcuts: {error}"))
         }
         #[cfg(not(target_os = "macos"))]
