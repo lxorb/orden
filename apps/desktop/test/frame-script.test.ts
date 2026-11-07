@@ -97,6 +97,20 @@ describe('the frame script', () => {
     expect(window.said).toBeUndefined()
   })
 
+  test('runs nothing in a frame a block made inside its own', () => {
+    const dom = new JSDOM(
+      `<!doctype html><body><script type="text/plain" id="nib-frame">window.made = 5</script>
+      <script type="application/json" id="nib-block">${JSON.stringify(said('one'))}</script>`,
+      { url: 'about:blank', runScripts: 'outside-only' },
+    )
+    const window = dom.window as DOMWindow & Record<string, unknown>
+    Object.defineProperty(window, 'parent', { configurable: true, value: {} })
+    window.eval(SCRIPT)
+
+    expect(window.made).toBeUndefined()
+    expect(window.said).toBeUndefined()
+  })
+
   test('refuses a loop in code a block makes from text, and runs the rest of it', async () => {
     const window = framed(`<script>
       const refused = []

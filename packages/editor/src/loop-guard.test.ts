@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
-import { guarded, guardedBlock, LOOP_LIMIT } from './loop-guard'
+import { backtracks, guarded, guardedBlock, LOOP_LIMIT } from './loop-guard'
 
 function compiled(...parts: string[]): (...args: unknown[]) => unknown {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the guarded code is what is under test
@@ -110,6 +110,34 @@ describe('what a block holds that cannot be guarded', () => {
     expect(out.querySelector('svg a')?.attributes).toHaveLength(0)
     expect(out.querySelector('img')?.getAttribute('src')).toBe('x.png')
     expect(out.querySelector('img')?.hasAttribute('onerror')).toBe(false)
+  })
+
+  test('a script with a pattern that could backtrack without end is not run but says why', () => {
+    for (const code of [
+      '/^(\\w+\\s?)+$/.test(text)',
+      'const p = /(a+)+b/i',
+      "new RegExp('(a|aa)+$')",
+      'RegExp("(\\\\s*\\\\w+)*$", "g")',
+      'new RegExp(`(x+x+)+y`)',
+    ]) {
+      expect(backtracks(code), code).toBe(true)
+      const scripts = [...scriptsOf(`<script>${code}</script>`).querySelectorAll('script')]
+      expect(scripts[1]?.textContent, code).toContain('forever to match')
+    }
+  })
+
+  test('a script whose patterns end, or are made as it runs, is run', () => {
+    for (const code of [
+      '/^[a-z]+(-[a-z]+)*$/.test(text)',
+      "text.replace(/\\d{4}-\\d{2}/g, '')",
+      "const p = '(a+)+b'",
+      'new RegExp(asked)',
+      'new RegExp(`(${asked})+`)',
+      "new Thing('(a+)+b')",
+      'const x = 4 / 2 / 1',
+    ]) {
+      expect(backtracks(code), code).toBe(false)
+    }
   })
 
   test('an address that only mentions javascript is kept', () => {
