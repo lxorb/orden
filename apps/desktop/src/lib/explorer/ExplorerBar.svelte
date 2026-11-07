@@ -4,6 +4,7 @@
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import ArrowUp from 'lucide/dist/esm/icons/arrow-up.mjs'
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
+  import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
   import PanelLeft from 'lucide/dist/esm/icons/panel-left.mjs'
   import PanelRight from 'lucide/dist/esm/icons/panel-right.mjs'
   import Search from 'lucide/dist/esm/icons/search.mjs'
@@ -204,7 +205,8 @@
     title={shortcuts.tooltip(t('Hidden files'), 'explorer.hidden')}
     aria-label={t('Hidden files')}
     aria-pressed={explorerPrefs.hidden}
-    onclick={() => explorerPrefs.toggleHidden()}>{@render glyph(Eye)}</button
+    onclick={() => explorerPrefs.toggleHidden()}
+    >{@render glyph(explorerPrefs.hidden ? Eye : EyeOff)}</button
   >
   <button
     class="orden-glyph"

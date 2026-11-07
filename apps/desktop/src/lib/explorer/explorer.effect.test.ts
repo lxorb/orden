@@ -310,6 +310,25 @@ describe('a file explorer', () => {
     expect(explorerPrefs.view).toBe('list')
   })
 
+  test('the hidden files button wears an open eye while they are shown and a shut one while not', async () => {
+    const { explorerPrefs } = await import('./prefs.svelte')
+    await explorer()
+    const button = () =>
+      target.querySelector<HTMLButtonElement>('button[aria-label="Hidden files"]')
+    const shut = () => !!button()?.querySelector('path[d="m2 2 20 20"]')
+    expect(explorerPrefs.hidden).toBe(false)
+    expect(button()?.getAttribute('aria-pressed')).toBe('false')
+    expect(shut()).toBe(true)
+    button()?.click()
+    await settled()
+    expect(explorerPrefs.hidden).toBe(true)
+    expect(button()?.getAttribute('aria-pressed')).toBe('true')
+    expect(shut()).toBe(false)
+    button()?.click()
+    await settled()
+    expect(shut()).toBe(true)
+  })
+
   test('renames several at once with F2, one name each from what is found and replaced', async () => {
     await explorer()
     press('n')
