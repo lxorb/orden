@@ -44,10 +44,24 @@
 
   const follows = (..._values: unknown[]) => undefined
 
+  let atEnd = true
+
+  function onScroll() {
+    const box = talk
+    if (box) atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 24
+  }
+
+  const asked = $derived(turns.filter((one) => one.role === 'you').length)
+
+  $effect(() => {
+    follows(asked)
+    atEnd = true
+  })
+
   $effect(() => {
     follows(last?.text.length, waiting, quick.trouble)
     const box = talk
-    if (box) box.scrollTop = box.scrollHeight
+    if (box && atEnd) box.scrollTop = box.scrollHeight
   })
 
   function onKey(event: KeyboardEvent) {
@@ -175,7 +189,7 @@
     {/if}
 
     {#if turns.length || quick.trouble}
-      <div class="talk" bind:this={talk} use:scrollbar>
+      <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
         {#each turns as turn, at (at)}
           {#if turn.role === 'you'}
             <p class="said" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>{turn.text}</p>
