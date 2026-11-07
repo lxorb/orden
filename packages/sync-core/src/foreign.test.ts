@@ -88,7 +88,7 @@ describe('inForeignCopy', () => {
   test('a copy, or anything inside one, either separator', () => {
     expect(inForeignCopy('Work/Plan (# Name clash 2026-10-05 a1b2c3C #).md')).toBe(true)
     expect(inForeignCopy('Work (# Name clash 2026-10-05 a1b2c3C #)/Plan.md')).toBe(true)
-    expect(inForeignCopy('C:\\Nib\\Work (# Name clash 2026-10-05 a1b2c3C #)\\Plan.md')).toBe(true)
+    expect(inForeignCopy('C:\\Orden\\Work (# Name clash 2026-10-05 a1b2c3C #)\\Plan.md')).toBe(true)
   })
 
   test('a note of somebody’s own, at any depth', () => {

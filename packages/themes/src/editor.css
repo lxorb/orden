@@ -157,14 +157,14 @@
   box-decoration-break: clone;
 }
 
-.cm-editor .cm-nib-selection,
+.cm-editor .cm-orden-selection,
 .cm-editor .cm-selectionLayer {
   z-index: var(--z-raised) !important;
   mix-blend-mode: screen;
   pointer-events: none;
 }
 
-[data-theme='light'] .cm-editor .cm-nib-selection,
+[data-theme='light'] .cm-editor .cm-orden-selection,
 [data-theme='light'] .cm-editor .cm-selectionLayer {
   mix-blend-mode: multiply;
 }

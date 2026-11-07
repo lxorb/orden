@@ -43,7 +43,7 @@ describe('the folder a note would become', () => {
   })
 
   test('and a path a desktop wrote with backslashes keeps them', () => {
-    expect(folderFor('C:\\Nib\\Notes\\A.md')).toBe('C:\\Nib\\Notes\\A')
+    expect(folderFor('C:\\Orden\\Notes\\A.md')).toBe('C:\\Orden\\Notes\\A')
   })
 
   test('and a file that is not a note answers itself back', () => {
@@ -59,12 +59,12 @@ describe('the note a folder would be drawn as', () => {
   })
 
   test('and keeps the separator the platform wrote', () => {
-    expect(folderNotePath('C:\\Nib\\Notes\\A')).toBe('C:\\Nib\\Notes\\A\\A.md')
+    expect(folderNotePath('C:\\Orden\\Notes\\A')).toBe('C:\\Orden\\Notes\\A\\A.md')
   })
 
   test('and a note sitting in the folder it names is that note', () => {
     expect(isFolderNote('/s/A/A.md')).toBe(true)
-    expect(isFolderNote('C:\\Nib\\A\\A.markdown')).toBe(true)
+    expect(isFolderNote('C:\\Orden\\A\\A.markdown')).toBe(true)
   })
 
   test('while a note beside its folder, or any other note in it, is not', () => {
@@ -182,12 +182,12 @@ describe('the way back out', () => {
   })
 
   test('and a path a desktop wrote with backslashes comes back up the same way', () => {
-    const entry = folder('C:\\Nib\\Notes\\A', [note('C:\\Nib\\Notes\\A\\A.md')])
+    const entry = folder('C:\\Orden\\Notes\\A', [note('C:\\Orden\\Notes\\A\\A.md')])
 
     expect(unnesting(entry)).toEqual({
-      note: 'C:\\Nib\\Notes\\A\\A.md',
-      into: 'C:\\Nib\\Notes',
-      folder: 'C:\\Nib\\Notes\\A',
+      note: 'C:\\Orden\\Notes\\A\\A.md',
+      into: 'C:\\Orden\\Notes',
+      folder: 'C:\\Orden\\Notes\\A',
     })
   })
 })

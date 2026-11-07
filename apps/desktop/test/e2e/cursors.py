@@ -35,7 +35,7 @@ STATE = """
     window.orden.state.doc.sliceString(one.from, one.to),
   ),
   carets: document.querySelectorAll('.cm-cursorLayer .cm-cursor').length,
-  blocks: document.querySelectorAll('.cm-nib-selection-block').length,
+  blocks: document.querySelectorAll('.cm-orden-selection-block').length,
   doc: window.orden.state.doc.toString(),
 })
 """

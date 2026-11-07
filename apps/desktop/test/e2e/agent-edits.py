@@ -41,7 +41,7 @@ async ([edits, agent]) => {
         (error) => window.__agent.failed.push(`${word}: ${error.code ?? ''} ${error.message}`),
       )
       await new Promise((go) => setTimeout(go, 150))
-      if (document.querySelector('.cm-nib-caret.is-passing')) window.__agent.carets++
+      if (document.querySelector('.cm-orden-caret.is-passing')) window.__agent.carets++
     }
   }
   void run()

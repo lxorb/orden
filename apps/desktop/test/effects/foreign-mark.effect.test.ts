@@ -21,7 +21,7 @@ afterEach(() => {
 })
 
 test('another sync tool’s copy says which tool, and that it is not synced', () => {
-  draw('C:\\Nib\\Work\\Hackathon List (# Name clash 2026-10-05 k3x9qaC #).md')
+  draw('C:\\Orden\\Work\\Hackathon List (# Name clash 2026-10-05 k3x9qaC #).md')
   draw('/home/emil/Nib/Plan.sync-conflict-20231012-143052-CEIVOCO.md')
 
   expect(labels()).toEqual([
