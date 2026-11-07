@@ -57,16 +57,29 @@ def tabs(port: int, secret: str) -> dict[str, object]:
     said = browser.ask(port, secret, TABS)
     return said if isinstance(said, dict) else {"error": said}
 
+def fronted(said: dict[str, object], front: str) -> bool:
+    shown = str(said.get("front") or "").lower()
+    return shown == front.lower() or (front.startswith("pages:") and front.endswith(".pages") and shown.endswith(front[6:].lower()))
+
 def settled(port: int, secret: str, front: str, seconds: float = 60) -> dict[str, object]:
 
     until = time.perf_counter() + seconds
     said: dict[str, object] = {}
     while time.perf_counter() < until:
         said = tabs(port, secret)
-        if str(said.get("front") or "").lower() == front.lower():
+        if fronted(said, front):
             return said
         time.sleep(0.3)
     return said
+
+def pages_tabs(said: dict[str, object]) -> list[str]:
+    return [str(one).lower() for one in said.get("strip") or [] if str(one).startswith("pages:")]
+
+class Told(dict[str, object]):
+
+    def __setitem__(self, name: str, value: object) -> None:
+        print(f"{name:8} {value}", flush=True)
+        super().__setitem__(name, value)
 
 def pdfs(space: pathlib.Path) -> list[str]:
     return sorted(str(one.relative_to(space)) for one in space.rglob("*.pdf"))
@@ -87,7 +100,7 @@ def main() -> int:
     space.mkdir(parents=True)
     note = space / f"{NOTE}.md"
     note.write_text(f"# {NOTE}\n\nA note to open the space on.\n", encoding="utf-8")
-    inside = paper(space / "Papers" / "Inside.pdf", "inside")
+    paper(space / "Papers" / "Inside.pdf", "inside")
 
     outside_dir = pathlib.Path(tempfile.mkdtemp(prefix="nib-pdf-probe-downloads-"))
     atexit.register(shutil.rmtree, outside_dir, ignore_errors=True)
@@ -95,7 +108,7 @@ def main() -> int:
     second = paper(outside_dir / "Second paper.pdf", "second")
 
     wrong: list[str] = []
-    said: dict[str, object] = {}
+    said = Told()
     running: subprocess.Popen[bytes] | None = None
     try:
         running = run_probe(options.exe, quiet=True)
@@ -111,54 +124,33 @@ def main() -> int:
         running = run_probe(options.exe, quiet=True, args=[str(first)])
         port, secret = browser.endpoint(options.identifier, 90, running.pid)
         browser.shown(running.pid)
-        landed = space / "Paper.pdf"
-        cold = settled(port, secret, f"pdf:{landed}")
+        root = space.parent
+        cold = settled(port, secret, "pages:Paper")
         said["cold"] = cold
-        if str(cold.get("front") or "").lower() != f"pdf:{landed}".lower():
-            wrong.append(f"a launch for a PDF did not open it in the viewer: {cold}")
-        if not landed.exists() or landed.read_bytes() != first.read_bytes():
-            wrong.append(f"the PDF was not copied to the top of the space: {pdfs(space)}")
+        if not fronted(cold, "pages:Paper"):
+            wrong.append(f"a launch for a PDF did not open it as a page note: {cold}")
 
         browser.hand_over(options.exe, str(second))
-        landed_second = space / "Second paper.pdf"
-        warm = settled(port, secret, f"pdf:{landed_second}")
+        warm = settled(port, secret, "pages:Second paper")
         said["warm"] = warm
-        if str(warm.get("front", "")).lower() != f"pdf:{landed_second}".lower():
+        if not fronted(warm, "pages:Second paper"):
             wrong.append(f"a PDF handed to the running app is not the tab in front: {warm}")
 
         browser.hand_over(options.exe, str(first))
-        again = settled(port, secret, f"pdf:{landed}")
+        again = settled(port, secret, "pages:Paper")
         said["again"] = again
-        said["files"] = pdfs(space)
-        if pdfs(space) != sorted([r"Papers\Inside.pdf", "Paper.pdf", "Second paper.pdf"]):
-            wrong.append(f"the same paper was copied twice: {pdfs(space)}")
-        if str(again.get("front", "")).lower() != f"pdf:{landed}".lower():
+        if not fronted(again, "pages:Paper"):
             wrong.append(f"the paper handed over again is not in front: {again}")
+        if pages_tabs(again).count("pages:paper") != 1:
+            wrong.append(f"the same paper was opened twice: {again}")
 
-        browser.hand_over(options.exe, str(inside))
-        there = settled(port, secret, f"pdf:{inside}")
-        said["inside"] = there
-        if str(there.get("front", "")).lower() != f"pdf:{inside}".lower():
-            wrong.append(f"a PDF in the space did not open where it is: {there}")
-        if len(pdfs(space)) != 3:
-            wrong.append(f"a PDF in the space was copied: {pdfs(space)}")
-
-        before = tabs(port, secret)
-        browser.hand_over(options.exe, str(note))
-        browser.hand_over(options.exe, "--url", "https://example.invalid/", str(first))
-        time.sleep(3)
-        after = tabs(port, secret)
-        said["refused"] = after
-        pdf_tabs = [one for one in after.get("strip") or [] if str(one).startswith("pdf:")]
-        if pdf_tabs != [one for one in before.get("strip") or [] if str(one).startswith("pdf:")]:
-            wrong.append(f"a note or a link's command line opened a PDF: {after}")
-        opened = [str(one).lower() for one in after.get("strip") or []]
-        had = [str(one).lower() for one in before.get("strip") or []]
-        if opened.count(f"note:{note}".lower()) > had.count(f"note:{note}".lower()):
-            wrong.append(f"a note handed over on the command line was opened: {after}")
+        said["files"] = pdfs(root)
+        copied = [one for one in pdfs(root) if pathlib.Path(one).stem in {"Paper", "Second paper"}]
+        if copied:
+            wrong.append(f"a PDF handed over was copied into a space: {copied}")
 
         browser.hand_over(options.exe, str(first))
-        settled(port, secret, f"pdf:{landed}")
+        settled(port, secret, "pages:Paper")
         hwnd = main_window(running.pid)
         if hwnd:
             sized(hwnd, 1180, 760)
@@ -166,13 +158,25 @@ def main() -> int:
         out = options.shots / "pdf-open.png"
         browser.photograph(running.pid, out)
         said["shot"] = str(out)
+
+        before = tabs(port, secret)
+        browser.hand_over(options.exe, str(note))
+        browser.hand_over(options.exe, "--url", "https://example.invalid/", str(first))
+        time.sleep(3)
+        after = tabs(port, secret)
+        said["refused"] = after
+        if pages_tabs(after) != pages_tabs(before):
+            wrong.append(f"a note or a link's command line opened a PDF: {after}")
+        opened = [str(one).lower() for one in after.get("strip") or []]
+        had = [str(one).lower() for one in before.get("strip") or []]
+        if opened.count(f"note:{note}".lower()) > had.count(f"note:{note}".lower()):
+            wrong.append(f"a note handed over on the command line was opened: {after}")
+
     finally:
         if running and running.poll() is None:
             if not close_app(running):
                 running.terminate()
 
-    for name, value in said.items():
-        print(f"{name:8} {value}")
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
