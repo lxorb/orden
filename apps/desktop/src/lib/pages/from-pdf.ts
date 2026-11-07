@@ -11,6 +11,14 @@ import { folderOf, nameOf, placesOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import { holderOf, paperOf } from './held'
 
+type Sizes = (path: string) => Promise<{ width: number; height: number }[]>
+
+async function sized(pdf: string, sizes: Sizes): Promise<{ width: number; height: number }[]> {
+  const all = await sizes(pdf)
+  if (!all.length) throw new Error(`${pdf} has no pages`)
+  return all
+}
+
 export interface Turning {
   root: string | null
   exists(path: string): Promise<boolean>
@@ -18,7 +26,7 @@ export interface Turning {
   write(path: string, text: string): Promise<void>
   move(from: string, to: string): Promise<void>
   discard(path: string): Promise<void>
-  sizes(path: string): Promise<{ width: number; height: number }[]>
+  sizes: Sizes
 }
 
 export async function asPageNote(pdf: string, how: Turning): Promise<string> {
@@ -28,9 +36,10 @@ export async function asPageNote(pdf: string, how: Turning): Promise<string> {
   const wanted = holder ?? pdf.replace(/\.pdf$/i, '.pages')
   if (!holder && (await how.exists(wanted)) && (await movedIn(pdf, wanted, how))) return wanted
 
+  const sizes = await sized(pdf, how.sizes)
   const note = holder ?? (await freeNote(wanted, how))
   const paper = holder ? pdf : paperOf(note)
-  await how.write(note, writeCanvas(pagesFromPdf(nameOf(paper), await how.sizes(pdf))))
+  await how.write(note, writeCanvas(pagesFromPdf(nameOf(paper), sizes)))
   if (holder) return note
 
   try {
@@ -56,18 +65,12 @@ export async function noteHolding(
   return text !== null && besideIts(text, note, pdf, how.root) ? note : null
 }
 
-export async function asItself(
-  pdf: string,
-  sizes: (path: string) => Promise<{ width: number; height: number }[]>,
-): Promise<string> {
-  return writeCanvas(pagesFromPdf(nameOf(pdf), await sizes(pdf)))
+export async function asItself(pdf: string, sizes: Sizes): Promise<string> {
+  return writeCanvas(pagesFromPdf(nameOf(pdf), await sized(pdf, sizes)))
 }
 
-export async function asDraft(
-  pdf: string,
-  sizes: (path: string) => Promise<{ width: number; height: number }[]>,
-): Promise<string> {
-  return writeCanvas(pagesFromPdf(pdf, await sizes(pdf)))
+export async function asDraft(pdf: string, sizes: Sizes): Promise<string> {
+  return writeCanvas(pagesFromPdf(pdf, await sized(pdf, sizes)))
 }
 
 export function paperOutside(text: string, inSpace: (path: string) => boolean): string | null {
