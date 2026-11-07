@@ -38,7 +38,7 @@ import {
   NO_TALLY,
   SLOW_TALLY,
 } from './find'
-import { quickEnough } from './find-trial'
+import { TRIAL_MS, trialCost } from './find-trial'
 
 interface Vetting {
   doc: Text
@@ -71,19 +71,83 @@ function flagsOf(query: SearchQuery): string {
   return query.caseSensitive ? 'gmu' : 'gmui'
 }
 
-const tried = new WeakMap<Text, Map<string, Promise<boolean>>>()
+const tried = new WeakMap<Text, Map<string, Promise<number | null>>>()
 
-function quickOn(query: SearchQuery, doc: Text): Promise<boolean> {
+function costOn(query: SearchQuery, doc: Text): Promise<number | null> {
   const flags = flagsOf(query)
   const key = `${flags}\0${query.search}`
   let held = tried.get(doc)
-  if (!held) tried.set(doc, (held = new Map<string, Promise<boolean>>()))
+  if (!held) tried.set(doc, (held = new Map<string, Promise<number | null>>()))
   let verdict = held.get(key)
   if (!verdict) {
-    verdict = quickEnough(query.search, flags, doc.toString(), !MULTILINE.test(query.search))
+    verdict = trialCost(query.search, flags, doc.toString(), !MULTILINE.test(query.search))
     held.set(key, verdict)
   }
   return verdict
+}
+
+const BLOCK = 4096
+
+function sameFromStart(was: Text, now: Text): number {
+  const end = Math.min(was.length, now.length)
+  for (let at = 0; at < end; at += BLOCK) {
+    const one = was.sliceString(at, Math.min(end, at + BLOCK))
+    const two = now.sliceString(at, Math.min(end, at + BLOCK))
+    if (one === two) continue
+    let same = 0
+    while (one[same] === two[same]) same++
+    return at + same
+  }
+  return end
+}
+
+function sameFromEnd(was: Text, now: Text, most: number): number {
+  for (let at = 0; at < most; at += BLOCK) {
+    const size = Math.min(most, at + BLOCK)
+    const one = was.sliceString(was.length - size, was.length - at)
+    const two = now.sliceString(now.length - size, now.length - at)
+    if (one === two) continue
+    let same = 0
+    while (one[one.length - 1 - same] === two[two.length - 1 - same]) same++
+    return at + same
+  }
+  return most
+}
+
+function linesChanged(was: Text, now: Text): string {
+  const start = sameFromStart(was, now)
+  const end = now.length - sameFromEnd(was, now, Math.min(was.length, now.length) - start)
+  if (start === was.length && start === now.length) return ''
+  return now.sliceString(now.lineAt(start).from, now.lineAt(end).to)
+}
+
+interface Verdict {
+  doc: Text
+  quick: boolean
+}
+
+async function verdictOn(
+  view: EditorView,
+  query: SearchQuery,
+  still: () => boolean,
+): Promise<Verdict | null> {
+  const lines = !MULTILINE.test(query.search)
+  let base: { doc: Text; spent: number } | null = null
+  for (;;) {
+    const { doc } = view.state
+    const cost: number | null = base
+      ? await trialCost(query.search, flagsOf(query), linesChanged(base.doc, doc), true)
+      : await costOn(query, doc)
+    if (!still()) return null
+    if (cost === null) return { doc: view.state.doc, quick: false }
+    const spent: number = cost + (base?.spent ?? 0)
+    if (base && spent > TRIAL_MS) {
+      base = null
+      continue
+    }
+    if (view.state.doc === doc) return { doc, quick: true }
+    base = lines ? { doc, spent } : null
+  }
 }
 
 export function cleared(state: EditorState): boolean {
@@ -106,12 +170,14 @@ export function clear(view: EditorView): Promise<boolean> {
       const { state } = view
       if (cleared(state)) return true
       const query = getSearchQuery(state)
-      const quick = await quickOn(query, state.doc)
-      if (view.state.doc !== state.doc || getSearchQuery(view.state) !== query) continue
+      const verdict = await verdictOn(view, query, () => getSearchQuery(view.state) === query)
+      if (!verdict) continue
       view.dispatch({
-        effects: quick ? vetted.of(state.doc) : [setSearchQuery.of(NOTHING), refused.of(null)],
+        effects: verdict.quick
+          ? vetted.of(verdict.doc)
+          : [setSearchQuery.of(NOTHING), refused.of(null)],
       })
-      return quick
+      return verdict.quick
     }
   })().finally(() => running.delete(view))
   running.set(view, made)
@@ -222,16 +288,16 @@ export async function setQuery(view: EditorView, spec: FindSpec): Promise<void> 
   const turn = (asking.get(view) ?? 0) + 1
   asking.set(view, turn)
 
-  for (;;) {
-    const { doc } = view.state
-    const quick = !query.regexp || !query.valid || (await quickOn(query, doc))
-    if (asking.get(view) !== turn) return
-    if (view.state.doc !== doc) continue
-    view.dispatch({
-      effects: quick ? setSearchQuery.of(query) : [setSearchQuery.of(NOTHING), refused.of(null)],
-    })
-    return
-  }
+  const verdict =
+    !query.regexp || !query.valid
+      ? { quick: true }
+      : await verdictOn(view, query, () => asking.get(view) === turn)
+  if (!verdict) return
+  view.dispatch({
+    effects: verdict.quick
+      ? setSearchQuery.of(query)
+      : [setSearchQuery.of(NOTHING), refused.of(null)],
+  })
 }
 
 export function asked(state: EditorState): boolean {

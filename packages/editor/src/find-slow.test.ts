@@ -149,3 +149,52 @@ describe('finding with a pattern that would hang the page', () => {
     expect(view.state.doc.toString()).toBe('x x x')
   })
 })
+
+describe('finding in a note that is being written into', () => {
+  async function whileWriting(view: EditorView, run: () => Promise<unknown>): Promise<boolean> {
+    let writing = true
+    const pen = setInterval(() => {
+      view.dispatch({ changes: { from: view.state.doc.length, insert: 'and a little more\n' } })
+    }, 2)
+    const stop = setTimeout(() => (writing = false), 10_000)
+    try {
+      await run()
+      return writing
+    } finally {
+      clearInterval(pen)
+      clearTimeout(stop)
+    }
+  }
+
+  const LONG = 'a line of the note that is long enough to take a while\n'.repeat(150_000)
+
+  test('sets a pattern before the writing stops', async () => {
+    const view = viewOf(LONG)
+    const answered = await whileWriting(view, () =>
+      setFind(view, { ...NO_FIND, query: 'no+te', regexp: true }),
+    )
+
+    expect(answered).toBe(true)
+    expect(getSearchQuery(view.state).search).toBe('no+te')
+  }, 30_000)
+
+  test('is ready to step before the writing stops', async () => {
+    const view = viewOf(LONG)
+    await setFind(view, { ...NO_FIND, query: 'no+te', regexp: true })
+    const answered = await whileWriting(view, () => findReady(view))
+
+    expect(answered).toBe(true)
+  }, 30_000)
+
+  test('still refuses a pattern that hangs on what is written', async () => {
+    const view = viewOf(LONG)
+    await setFind(view, { ...NO_FIND, query: WILD, regexp: true })
+    expect(findTally(view.state).slow).toBeUndefined()
+
+    view.dispatch({ changes: { from: 0, insert: `${RUN}\n` } })
+    const answered = await whileWriting(view, () => findReady(view))
+
+    expect(answered).toBe(true)
+    expect(findTally(view.state)).toMatchObject({ slow: true })
+  }, 30_000)
+})
