@@ -1,5 +1,4 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import { SvelteMap } from 'svelte/reactivity'
 
 export interface PdfHeading {
   title: string
@@ -48,5 +47,3 @@ async function pageOf(doc: Reading, dest: Item['dest']): Promise<number | null> 
     return null
   }
 }
-
-export const pdfOutlines = new SvelteMap<string, readonly PdfHeading[]>()

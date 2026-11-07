@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { readOutline } from './outline.svelte'
+import { readOutline } from './outline'
 
 const ref = (page: number) => ({ num: page * 10, gen: 0 })
 

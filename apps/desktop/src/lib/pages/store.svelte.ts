@@ -14,6 +14,7 @@ import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '
 import { strokeBox } from '../canvas/ink'
 import type { KeptView } from '../canvas/place'
 import { CanvasStore } from '../canvas/store.svelte'
+import type { PdfHeading } from '../pdf/outline'
 import { stillness } from '../motion'
 import type { Tab } from '../workspace/documents.svelte'
 
@@ -30,6 +31,8 @@ export class PagesStore extends CanvasStore {
   }
 
   pane = $state.raw<{ width: number; height: number }>({ width: 0, height: 0 })
+
+  outline = $state.raw<readonly PdfHeading[]>([])
 
   private get chose(): boolean {
     return this.tab.zoomChosen
@@ -125,6 +128,12 @@ export class PagesStore extends CanvasStore {
 
   get viewBottom(): number {
     return this.camera.y + this.pane.height / this.camera.scale / 2
+  }
+
+  turnToPaper(paper: number) {
+    const at = this.pages.findIndex((one) => one.page === paper)
+    this.halt()
+    this.turnTo(at >= 0 ? at + 1 : paper)
   }
 
   turnTo(number: number) {

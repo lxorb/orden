@@ -94,7 +94,6 @@ import { FileOps, keeping, type Kind } from './workspace/file-ops'
 import * as composing from './workspace/composing'
 import * as panels from './workspace/panels'
 import { type Filling, fills } from './panel-tab'
-import { pdfOutlines } from './pdf/outline.svelte'
 import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as ahead from './workspace/ahead'
@@ -492,7 +491,6 @@ class Workspace {
       markdown: tab.kind === 'note' && (tab.path === null || isMarkdownPath(tab.path)),
       headings: this.headings.length,
       footnotes: this.footnotes.length,
-      contents: pdfOutlines.get(tab.id)?.length ?? 0,
     }
   })
 

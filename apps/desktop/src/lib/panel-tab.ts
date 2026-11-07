@@ -8,7 +8,6 @@ export interface Filling {
   markdown: boolean
   headings: number
   footnotes: number
-  contents: number
 }
 
 interface Entry {
@@ -38,7 +37,8 @@ const PANELS: Record<PanelTab, Entry> = {
     fills: (tab) =>
       declared('outline', tab) &&
       (tab.kind === 'pages' ||
-        (tab.kind === 'pdf' ? tab.contents > 0 : tab.markdown && tab.headings + tab.footnotes > 0)),
+        tab.kind === 'pdf' ||
+        (tab.markdown && tab.headings + tab.footnotes > 0)),
   },
   links: { tab: null, fills: (tab) => declared('links', tab) },
 }
