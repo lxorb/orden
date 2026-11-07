@@ -246,6 +246,46 @@ mod tests {
         }
     }
 
+    const RACING: &str = "ORDEN_EXIT_RACE_DIR";
+
+    #[test]
+    fn a_quit_while_the_marker_is_being_written_never_leaves_it_behind() {
+        if let Some(dir) = std::env::var_os(RACING) {
+            let dir = std::path::Path::new(&dir);
+            for round in 0..300 {
+                super::begin(dir, "1.0.0");
+                let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+                let writing = {
+                    let stop = stop.clone();
+                    std::thread::spawn(move || {
+                        while !stop.load(std::sync::atomic::Ordering::SeqCst) {
+                            super::alive();
+                        }
+                    })
+                };
+                std::thread::sleep(std::time::Duration::from_micros(200 + round % 7 * 50));
+                super::ended_well();
+                stop.store(true, std::sync::atomic::Ordering::SeqCst);
+                writing.join().expect("the writer");
+                assert!(!marker(dir).exists(), "left behind in round {round}");
+            }
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a folder");
+        let status = std::process::Command::new(std::env::current_exe().expect("the tests"))
+            .args([
+                "--exact",
+                "crashes::exit::tests::a_quit_while_the_marker_is_being_written_never_leaves_it_behind",
+                "--test-threads=1",
+            ])
+            .env(RACING, dir.path())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .expect("the child ran");
+        assert!(status.success(), "the marker was left behind");
+    }
+
     #[test]
     fn a_run_that_ended_without_quitting_is_reported_once_it_is_seen() {
         let dir = tempfile::tempdir().expect("a folder");

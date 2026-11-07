@@ -644,6 +644,47 @@ mod tests {
         assert_eq!(found, Some(wanted));
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    #[test]
+    fn the_kernel_says_a_command_line_near_the_longest_windows_takes() {
+        let long = "x".repeat(30_000);
+        #[cfg(windows)]
+        let (mut child, wanted) = {
+            let args = vec![
+                "-NoProfile".to_owned(),
+                "-Command".to_owned(),
+                format!("Start-Sleep 6 #{long}"),
+            ];
+            let child = std::process::Command::new("powershell.exe")
+                .args(&args)
+                .stdout(std::process::Stdio::null())
+                .spawn()
+                .unwrap();
+            (child, args)
+        };
+        #[cfg(unix)]
+        let (mut child, wanted) = {
+            let args = vec!["-c".to_owned(), "sleep 6; true".to_owned(), long];
+            let child = std::process::Command::new("sh")
+                .args(&args)
+                .spawn()
+                .unwrap();
+            (child, args)
+        };
+        let mut found = None;
+        for _ in 0..100 {
+            found = arguments_of(child.id());
+            if found.as_ref() == Some(&wanted) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        let _ = child.kill();
+        let _ = child.wait();
+        assert_eq!(found.as_ref().map(Vec::len), Some(wanted.len()));
+        assert!(found == Some(wanted), "the long line came back changed");
+    }
+
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn the_kernel_says_where_a_process_is() {
