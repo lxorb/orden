@@ -569,6 +569,30 @@ mod tests {
     }
 
     #[test]
+    fn a_new_window_is_handed_only_to_a_page_still_open() {
+        let sources = [
+            "windows/wry/src/webview2/mod.rs",
+            "src/agents/quiet.rs",
+            "src/web_tabs.rs",
+            "src/extensions/popup.rs",
+        ];
+        let mut unchecked = Vec::new();
+        for source in sources {
+            let text = std::fs::read_to_string(crate::app_dir().join(source)).unwrap_or_default();
+            for (at, _) in text.match_indices(".SetNewWindow(") {
+                let before = &text[at.saturating_sub(240)..at];
+                if !before.contains("still_open(") {
+                    unchecked.push(source);
+                }
+            }
+        }
+        assert!(
+            unchecked.is_empty(),
+            "a new window handed to a page that may have closed: {unchecked:?}"
+        );
+    }
+
+    #[test]
     fn nothing_pumps_inside_with_webview() {
         let root = crate::app_dir().join("src");
         let mut sources = vec![root];

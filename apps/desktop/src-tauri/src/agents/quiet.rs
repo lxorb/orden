@@ -121,6 +121,7 @@ impl Said {
 
 #[cfg(all(windows, not(feature = "cef")))]
 struct Asked {
+    opener: ICoreWebView2,
     args: ICoreWebView2NewWindowRequestedEventArgs,
     deferral: ICoreWebView2Deferral,
 }
@@ -409,8 +410,8 @@ fn settle(label: &str, number: Option<u64>, said: Said) {
 fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
     let app = app.clone();
     let label = owner.label.clone();
-    let handler = NewWindowRequestedEventHandler::create(Box::new(move |_, args| {
-        let Some(args) = args else {
+    let handler = NewWindowRequestedEventHandler::create(Box::new(move |opener, args| {
+        let (Some(opener), Some(args)) = (opener, args) else {
             return Ok(());
         };
         let url = unsafe { text(|out| args.Uri(out)) };
@@ -436,6 +437,7 @@ fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             held.insert(
                 tab.clone(),
                 Asked {
+                    opener: opener.clone(),
                     args: args.clone(),
                     deferral,
                 },
@@ -459,7 +461,9 @@ pub fn hand_over(tab: &str, made: Option<&ICoreWebView2>) {
         return;
     };
     unsafe {
-        if let Some(core) = made {
+        if let Some(core) =
+            made.filter(|core| wry::still_open(&asked.opener) && wry::still_open(core))
+        {
             let _ = asked.args.SetNewWindow(core);
         }
         let _ = asked.deferral.Complete();
