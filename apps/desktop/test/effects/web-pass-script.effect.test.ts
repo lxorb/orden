@@ -36,8 +36,8 @@ interface Said {
 
 type Inside = Window &
   typeof globalThis & {
-    nibPass?: (words: string) => void
-    __nibPass: { fill(asked: unknown): boolean }
+    ordenPass?: (words: string) => void
+    __ordenPass: { fill(asked: unknown): boolean }
   }
 
 function laidOut(inside: Inside) {
@@ -71,7 +71,7 @@ async function page(html: string, url = 'https://a.example/login') {
     return root
   }
   laidOut(inside)
-  inside.nibPass = (words: string) => void said.push(JSON.parse(words) as Said)
+  inside.ordenPass = (words: string) => void said.push(JSON.parse(words) as Said)
   inside.eval(script)
   const document = inside.document
   await new Promise<void>((done) => {
@@ -90,7 +90,7 @@ async function page(html: string, url = 'https://a.example/login') {
     if (!found) throw new Error(`no ${role} field`)
     return found.field
   }
-  const fill = (asked: unknown) => inside.__nibPass.fill(asked)
+  const fill = (asked: unknown) => inside.__ordenPass.fill(asked)
   const input = (selector: string) => document.querySelector<HTMLInputElement>(selector)!
   const trusted = (target: EventTarget, event: Event) => {
     const said = jsdomUtils.implForWrapper(event)
@@ -545,7 +545,7 @@ test('a message waits for the channel when the engine has not put it in yet', as
   laidOut(inside)
   inside.eval(script)
   const said: string[] = []
-  inside.nibPass = (words: string) => void said.push(words)
+  inside.ordenPass = (words: string) => void said.push(words)
   await settled()
   expect(said.map((one) => (JSON.parse(one) as Said).kind)).toEqual(['forms'])
 })

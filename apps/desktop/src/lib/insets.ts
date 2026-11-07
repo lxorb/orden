@@ -44,7 +44,7 @@ export function startInsets(): void {
   }
 
   read()
-  answer('__nibInsets', read)
+  answer('__ordenInsets', read)
 }
 
 export function tintSystemBars(dark: boolean): void {

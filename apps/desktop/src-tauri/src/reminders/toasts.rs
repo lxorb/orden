@@ -8,7 +8,7 @@ use windows::UI::Notifications::{
 use super::schedule::System;
 use super::{toast, Planned, Words};
 
-const GROUP: &str = "nib.reminders";
+const GROUP: &str = "orden.reminders";
 
 const EPOCH_GAP_MS: i64 = 11_644_473_600_000;
 

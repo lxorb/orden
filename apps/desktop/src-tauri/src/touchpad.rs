@@ -375,7 +375,7 @@ mod tests {
     }
 
     #[test]
-    fn the_window_hears_changes_and_only_a_lift_while_nib_is_behind() {
+    fn the_window_hears_changes_and_only_a_lift_while_orden_is_behind() {
         assert_eq!(telling(0, 2, true), Some(2));
         assert_eq!(telling(2, 2, true), None);
         assert_eq!(telling(2, 0, true), Some(0));

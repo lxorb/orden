@@ -51,7 +51,7 @@ pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
 fn place(name: &str) -> Result<Option<PathBuf>, String> {
     let refused = || {
         Err(format!(
-            "that extension has a file nib will not write: {name}"
+            "that extension has a file Orden will not write: {name}"
         ))
     };
     if name.is_empty()
@@ -101,7 +101,7 @@ fn contents(zip: &[u8], entry: &Entry<'_>) -> Result<Vec<u8>, String> {
         }
         _ => {
             return Err(format!(
-                "that extension's archive packs {} a way nib cannot read",
+                "that extension's archive packs {} a way Orden cannot read",
                 entry.name
             ))
         }
@@ -127,7 +127,7 @@ fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     let count = usize::from(u16_at(zip, end + 10));
     let mut at = u32_at(zip, end + 16) as usize;
     if u32_at(zip, end + 16) == u32::MAX {
-        return Err("that extension's archive is a zip64, which nib does not read".into());
+        return Err("that extension's archive is a zip64, which Orden does not read".into());
     }
 
     let mut entries = Vec::with_capacity(count.min(MOST_FILES + 1));

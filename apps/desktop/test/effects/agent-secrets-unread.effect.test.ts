@@ -18,7 +18,7 @@ const SECRET = 'hunter2-hunter2'
 function window(html: string) {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://a.example/' })
   return dom.window as unknown as Window &
-    typeof globalThis & { nibAgent: { tree(most: number): { nodes: Record<string, unknown>[] } } }
+    typeof globalThis & { ordenAgent: { tree(most: number): { nodes: Record<string, unknown>[] } } }
 }
 
 test("an agent's facts never name a field after what was typed in it", () => {
@@ -43,8 +43,8 @@ test("an agent's snapshot of a password field says it is filled and not how long
   const [first, second] = inside.document.querySelectorAll('input')
   if (!first || !second) throw new Error('no fields')
   first.value = SECRET
-  inside.eval(`${FIELDS}\n${agent}\nglobalThis.nibAgent = globalThis.nibAgentOf(describe, 1)`)
-  const said = JSON.stringify(inside.nibAgent.tree(1000))
+  inside.eval(`${FIELDS}\n${agent}\nglobalThis.ordenAgent = globalThis.ordenAgentOf(describe, 1)`)
+  const said = JSON.stringify(inside.ordenAgent.tree(1000))
   expect(said).not.toContain(SECRET)
   expect(said).not.toContain('•'.repeat(2))
   expect(said).toContain('"value":{"value":"•"}')
@@ -63,8 +63,8 @@ test("an agent's snapshot hides a card's number, its code and a one-time code as
   }
   const city = inside.document.getElementById('city') as HTMLInputElement
   city.value = 'Zurich'
-  inside.eval(`${FIELDS}\n${agent}\nglobalThis.nibAgent = globalThis.nibAgentOf(describe, 1)`)
-  const said = JSON.stringify(inside.nibAgent.tree(1000))
+  inside.eval(`${FIELDS}\n${agent}\nglobalThis.ordenAgent = globalThis.ordenAgentOf(describe, 1)`)
+  const said = JSON.stringify(inside.ordenAgent.tree(1000))
   expect(said).not.toContain(SECRET)
   expect(said.split('"value":{"value":"•"}')).toHaveLength(5)
   expect(said).toContain('Zurich')

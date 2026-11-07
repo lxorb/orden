@@ -121,7 +121,7 @@ impl Armed {
             Arc::clone(&watcher),
         );
         std::thread::Builder::new()
-            .name("nib space watch".into())
+            .name("Orden space watch".into())
             .spawn(move || work(&settling, &working, &using, sink, unwatched))
             .map_err(|error| format!("could not start watching the spaces: {error}"))?;
 
@@ -172,7 +172,7 @@ impl Armed {
 fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
     let error = watch_tree(watcher, &root.real).err()?;
     eprintln!(
-        "nib: could not watch all of {}: {error}",
+        "orden: could not watch all of {}: {error}",
         root.given.display()
     );
     Some(if matches!(error.kind, ErrorKind::MaxFilesWatch) {

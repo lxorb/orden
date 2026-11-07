@@ -9,7 +9,7 @@ use tauri::{
 
 use super::answer::PATIENCE;
 
-pub(crate) const PATH: &str = "/__nib_restore";
+pub(crate) const PATH: &str = "/__orden_restore";
 
 const VISIT: Duration = Duration::from_secs(15);
 

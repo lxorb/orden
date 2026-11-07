@@ -2,7 +2,7 @@
     any(feature = "cef", target_os = "macos"),
     allow(
         dead_code,
-        reason = "a Mac's own engine is handed an identifier rather than a folder, and nib's own Chromium keeps every store in its primary profile; the folder is what Windows and Linux use"
+        reason = "a Mac's own engine is handed an identifier rather than a folder, and Orden's own Chromium keeps every store in its primary profile; the folder is what Windows and Linux use"
     )
 )]
 pub(crate) const STORES: &str = "web-stores";

@@ -396,9 +396,9 @@ mod tests {
     }
 
     const SAYS_OK: &str = if cfg!(windows) {
-        "echo nib-%COMSPEC:~0,0%ok"
+        "echo orden-%COMSPEC:~0,0%ok"
     } else {
-        r#"echo nib-""ok"#
+        r#"echo orden-""ok"#
     };
 
     const ENTER: &str = if cfg!(windows) { "\r" } else { "\n" };
@@ -485,8 +485,8 @@ mod tests {
         let (held, heard) = started(80, 24);
 
         line(&held, SAYS_OK);
-        let (said, _) = printed_until(&held, &heard, "nib-ok");
-        assert!(said.contains("nib-ok"), "the shell printed: {said:?}");
+        let (said, _) = printed_until(&held, &heard, "orden-ok");
+        assert!(said.contains("orden-ok"), "the shell printed: {said:?}");
 
         held.lock()
             .expect("the session")
@@ -513,7 +513,7 @@ mod tests {
     fn a_session_ended_by_the_window_kills_its_shell() {
         let (held, heard) = started(80, 24);
         line(&held, SAYS_OK);
-        let _ = printed_until(&held, &heard, "nib-ok");
+        let _ = printed_until(&held, &heard, "orden-ok");
 
         let session = held.lock().expect("the session").take().expect("running");
         let pid = session.pid().expect("a pid");
@@ -540,7 +540,7 @@ mod tests {
     fn ctrl_c_interrupts_what_is_running() {
         let (held, heard) = started(80, 24);
         line(&held, SAYS_OK);
-        let _ = printed_until(&held, &heard, "nib-ok");
+        let _ = printed_until(&held, &heard, "orden-ok");
 
         let long = if cfg!(windows) {
             "ping -n 30 127.0.0.1"
@@ -572,7 +572,7 @@ mod tests {
     fn a_program_that_ends_leaves_the_shell_idle() {
         let (held, heard) = started(80, 24);
         line(&held, SAYS_OK);
-        let _ = printed_until(&held, &heard, "nib-ok");
+        let _ = printed_until(&held, &heard, "orden-ok");
 
         let short = if cfg!(windows) {
             "ping -n 4 127.0.0.1 > NUL"
@@ -607,7 +607,7 @@ mod tests {
     fn a_shell_at_its_prompt_is_not_busy() {
         let (held, heard) = started(80, 24);
         line(&held, SAYS_OK);
-        let _ = printed_until(&held, &heard, "nib-ok");
+        let _ = printed_until(&held, &heard, "orden-ok");
 
         let session = held.lock().expect("the session").take().expect("running");
         assert!(!session.busy());

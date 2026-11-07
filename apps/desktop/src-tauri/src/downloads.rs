@@ -644,7 +644,7 @@ mod progress {
     define_class!(
         #[unsafe(super(NSObject))]
         #[thread_kind = MainThreadOnly]
-        #[name = "NibWebDownloadWatcher"]
+        #[name = "OrdenWebDownloadWatcher"]
         #[ivars = Held]
         struct Watcher;
 

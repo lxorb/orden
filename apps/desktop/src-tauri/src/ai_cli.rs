@@ -536,7 +536,7 @@ pub async fn ai_cli_open(
                 if opening.effort.is_some() {
                     return Err("Gemini CLI has no effort to set".to_owned());
                 }
-                let nib = match opening.mode {
+                let orden = match opening.mode {
                     Some(_) => Some(crate::mcp::program::program()?),
                     None => None,
                 };
@@ -553,7 +553,7 @@ pub async fn ai_cli_open(
                     mode: opening.mode,
                     without: opening.without.clone(),
                 };
-                let gemini = Gemini::start(launch, &id, model, IDLE, nib.as_deref(), output)?;
+                let gemini = Gemini::start(launch, &id, model, IDLE, orden.as_deref(), output)?;
                 On::Gemini(Box::new(gemini))
             }
         };
@@ -590,10 +590,10 @@ fn claude_command(
     home: Option<&Home>,
 ) -> Result<Command, String> {
     let caps = caps_of(program, folder);
-    let config = folder.join("nib-mcp.json");
+    let config = folder.join("orden-mcp.json");
     if opening.mode.is_some() {
-        let nib = crate::mcp::program::program()?;
-        std::fs::write(&config, args::mcp_config(&nib).to_string())
+        let orden = crate::mcp::program::program()?;
+        std::fs::write(&config, args::mcp_config(&orden).to_string())
             .map_err(|error| error.to_string())?;
     }
     let shape = Shape {
@@ -635,8 +635,8 @@ fn host_for(
     if let Some(token) = token {
         command.env(args::TOKEN_VAR, token);
     }
-    let nib = crate::mcp::program::program()?;
-    let host = Host::start(command, IDLE, nib, folder.to_path_buf())
+    let orden = crate::mcp::program::program()?;
+    let host = Host::start(command, IDLE, orden, folder.to_path_buf())
         .map_err(|error| format!("codex could not be started: {error}"))?;
     let host = Arc::new(host);
     let mut hosts = lock(&asks.hosts);
@@ -848,7 +848,7 @@ exec node '{}' {name} \"$@\"
     }
 
     #[test]
-    fn nib_connects_itself_to_an_agent_once_and_lets_go_only_of_its_own() {
+    fn orden_connects_itself_to_an_agent_once_and_lets_go_only_of_its_own() {
         if !node() {
             eprintln!("no node here; skipped");
             return;
@@ -858,7 +858,7 @@ exec node '{}' {name} \"$@\"
         for one in [".claude", ".codex"] {
             std::fs::create_dir_all(home.join(one)).expect("a home");
         }
-        let nib = dir.path().join("orden.exe");
+        let orden = dir.path().join("orden.exe");
         for (tool, kept) in [
             (Tool::ClaudeCode, home.join(".claude").join("fake-mcp.json")),
             (Tool::Codex, home.join(".codex").join("fake-mcp.json")),
@@ -870,34 +870,34 @@ exec node '{}' {name} \"$@\"
                     .and_then(|text| serde_json::from_str(&text).ok())
                     .unwrap_or_else(|| serde_json::json!({}))
             };
-            let ours = || serde_json::json!([nib.to_string_lossy(), "mcp"]);
-            let elsewhere = || serde_json::json!(["C:/elsewhere/nib.exe", "mcp"]);
+            let ours = || serde_json::json!([orden.to_string_lossy(), "mcp"]);
+            let elsewhere = || serde_json::json!(["C:/elsewhere/orden.exe", "mcp"]);
             let start = |with: Value| std::fs::write(&kept, with.to_string()).expect("kept");
 
             std::fs::remove_file(&kept).ok();
-            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
-            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
+            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(
                 servers(),
                 serde_json::json!({ "orden": ours() }),
                 "{tool:?}"
             );
-            enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(servers(), serde_json::json!({}), "{tool:?}");
 
             let theirs = serde_json::json!({ "orden": elsewhere() });
             start(theirs.clone());
-            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
-            enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
+            enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(servers(), theirs, "{tool:?}");
 
             for enrolling in [true, false] {
                 start(serde_json::json!({ "nib": ours() }));
                 for _ in 0..2 {
                     if enrolling {
-                        enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+                        enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
                     } else {
-                        enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
+                        enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
                     }
                 }
                 assert_eq!(
@@ -908,7 +908,7 @@ exec node '{}' {name} \"$@\"
             }
 
             start(serde_json::json!({ "nib": ours(), "orden": ours() }));
-            enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(
                 servers(),
                 serde_json::json!({ "orden": ours() }),
@@ -916,13 +916,13 @@ exec node '{}' {name} \"$@\"
             );
 
             start(serde_json::json!({ "nib": elsewhere() }));
-            enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(
                 servers(),
                 serde_json::json!({ "nib": elsewhere() }),
                 "{tool:?}"
             );
-            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(
                 servers(),
                 serde_json::json!({ "nib": elsewhere(), "orden": ours() }),
@@ -931,11 +931,11 @@ exec node '{}' {name} \"$@\"
 
             let kept_both = serde_json::json!({ "nib": ours(), "orden": elsewhere() });
             start(kept_both.clone());
-            enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(servers(), kept_both, "{tool:?}");
 
             start(serde_json::json!({ "nib": ours(), "orden": elsewhere() }));
-            enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
+            enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
             assert_eq!(
                 servers(),
                 serde_json::json!({ "orden": elsewhere() }),
@@ -1158,7 +1158,7 @@ exec node '{}' {name} \"$@\"
     }
 
     fn claude_session(mode: &str, shape: Shape, folder: &Path) -> (Claude, Receiver<Message>) {
-        let config = folder.join("nib-mcp.json");
+        let config = folder.join("orden-mcp.json");
         std::fs::write(
             &config,
             args::mcp_config(Path::new("orden.exe")).to_string(),
@@ -1275,7 +1275,7 @@ exec node '{}' {name} \"$@\"
         }
         let dir = tempfile::tempdir().expect("a folder");
         let pids = dir.path().join("pids");
-        let config = dir.path().join("nib-mcp.json");
+        let config = dir.path().join("orden-mcp.json");
         let args = args::claude_session(Shape::default(), &full_caps(), &config).expect("args");
         let mut command = fake(Tool::ClaudeCode, "hang", &args);
         command.env("FAKE_AI_CLI_PIDS", &pids);
@@ -1481,7 +1481,7 @@ exec node '{}' {name} \"$@\"
             "--input-format --effort --restricted --permission-mode --permission-prompts \
              --no-session-persistence --safe-mode",
         );
-        let config = PathBuf::from("ai").join("nib-mcp.json");
+        let config = PathBuf::from("ai").join("orden-mcp.json");
         let one = Shape {
             mode: Some(Mode::Full),
             model: Some("opus"),
@@ -1594,7 +1594,7 @@ exec node '{}' {name} \"$@\"
             effort: Some(Effort::Low),
             ..Shape::default()
         };
-        let config = dir.path().join("nib-mcp.json");
+        let config = dir.path().join("orden-mcp.json");
         let args = args::claude_session(shape, &caps, &config).expect("args");
         let mut session = command(&program, &args, dir.path(), None);
         session.envs(args::CLAUDE_SESSION_ENV);
@@ -1636,9 +1636,9 @@ exec node '{}' {name} \"$@\"
             mode: tools,
             without: Vec::new(),
         };
-        let nib = tools.map(|_| PathBuf::from("orden.exe"));
+        let orden = tools.map(|_| PathBuf::from("orden.exe"));
         let gemini =
-            Gemini::start(launch, "g-1", None, IDLE, nib.as_deref(), output).expect("started");
+            Gemini::start(launch, "g-1", None, IDLE, orden.as_deref(), output).expect("started");
         (gemini, heard)
     }
 

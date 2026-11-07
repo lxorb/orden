@@ -153,7 +153,7 @@ async fn copied(
     fresh: bool,
 ) -> Result<bool, String> {
     let listing = quoted(r#"{"session":false}"#)?;
-    let list = format!("nibDump('list', {listing})");
+    let list = format!("ordenDump('list', {listing})");
 
     global.visit(origin).await?;
     let there: Listed = parsed(&isolated::run(global.view(), DUMP, &list).await?)?;
@@ -182,7 +182,7 @@ async fn copied(
         let text = isolated::run(
             old.view(),
             DUMP,
-            &format!("nibDump('database', {})", quoted(&args)?),
+            &format!("ordenDump('database', {})", quoted(&args)?),
         )
         .await?;
         let dumped: Dumped<'_> = parsed(&text)?;
@@ -196,7 +196,7 @@ async fn copied(
         isolated::run(
             global.view(),
             RESTORE,
-            &format!("nibRestore('local', {})", quoted(&items)?),
+            &format!("ordenRestore('local', {})", quoted(&items)?),
         )
         .await?;
     }
@@ -204,7 +204,7 @@ async fn copied(
         isolated::run(
             global.view(),
             RESTORE,
-            &format!("nibRestore('database', {})", quoted(database)?),
+            &format!("ordenRestore('database', {})", quoted(database)?),
         )
         .await?;
     }

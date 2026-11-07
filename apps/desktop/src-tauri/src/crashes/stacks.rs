@@ -204,7 +204,7 @@ mod tests {
         let (told, heard) = mpsc::channel::<()>();
         let (ready, readied) = mpsc::channel::<()>();
         let waiter = std::thread::Builder::new()
-            .name("nib test waiter".to_owned())
+            .name("Orden test waiter".to_owned())
             .spawn(move || {
                 ready.send(()).expect("ready");
                 let _ = heard.recv();
@@ -220,7 +220,7 @@ mod tests {
         assert!(threads.len() >= 2, "only {} threads", threads.len());
         let found = threads
             .iter()
-            .find(|one| one.name.contains("nib test waiter"))
+            .find(|one| one.name.contains("Orden test waiter"))
             .expect("the waiting thread");
         assert!(found.ips.len() >= 3, "only {} frames", found.ips.len());
     }

@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use tauri::AppHandle;
 
-const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function (one) { if (!one.paused) { one.pause(); one.setAttribute('data-nib-paused', '') } })";
+const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function (one) { if (!one.paused) { one.pause(); one.setAttribute('data-orden-paused', '') } })";
 
-const PLAY: &str = "document.querySelectorAll('[data-nib-paused]').forEach(function (one) { one.removeAttribute('data-nib-paused'); one.play().catch(function () {}) })";
+const PLAY: &str = "document.querySelectorAll('[data-orden-paused]').forEach(function (one) { one.removeAttribute('data-orden-paused'); one.play().catch(function () {}) })";
 
 type Said = tauri::async_runtime::Sender<bool>;
 
@@ -155,7 +155,7 @@ mod tests {
     #[test]
     fn what_is_paused_is_marked_and_only_that_plays_again() {
         assert!(PAUSE.contains("if (!one.paused)"));
-        assert!(PAUSE.contains("data-nib-paused"));
-        assert!(PLAY.starts_with("document.querySelectorAll('[data-nib-paused]')"));
+        assert!(PAUSE.contains("data-orden-paused"));
+        assert!(PLAY.starts_with("document.querySelectorAll('[data-orden-paused]')"));
     }
 }

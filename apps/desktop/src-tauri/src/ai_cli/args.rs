@@ -45,7 +45,7 @@ the request, briefly."
         }
         Some(Mode::Auto) => {
             "You are the reader's agent inside Orden, their notes app and web browser. \
-Do what they ask with the nib tools: most changes are made at once and shown to them to keep \
+Do what they ask with the Orden tools: most changes are made at once and shown to them to keep \
 or undo, and a call that sends, deletes or publishes may wait for their approval. Name the \
 note or page a claim comes from as a [[wikilink]] or its address. Change part of a note with \
 edit_note rather than write_note, since they may be typing in it. Reply in the language of \
@@ -127,10 +127,10 @@ pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] = [
     ("MCP_TOOL_TIMEOUT", "600000"),
 ];
 
-pub fn mcp_config(nib: &Path) -> Value {
+pub fn mcp_config(orden: &Path) -> Value {
     json!({
         "mcpServers": {
-            SERVER: { "type": "stdio", "command": nib, "args": ["mcp"] }
+            SERVER: { "type": "stdio", "command": orden, "args": ["mcp"] }
         }
     })
 }
@@ -308,14 +308,14 @@ pub fn codex_thread(
     mode: Option<Mode>,
     model: Option<&str>,
     without: &[String],
-    nib: &Path,
+    orden: &Path,
     folder: &Path,
 ) -> Value {
     let mut config = serde_json::Map::new();
     if let Some(mode) = mode {
         let (listed, left) = tools_of(mode, without);
         let key = |name: &str| format!("mcp_servers.{SERVER}.{name}");
-        config.insert(key("command"), json!(nib));
+        config.insert(key("command"), json!(orden));
         config.insert(key("args"), json!(["mcp"]));
         config.insert(key("env_vars"), json!([TOKEN_VAR]));
         config.insert(key("startup_timeout_sec"), json!(30));
@@ -361,7 +361,7 @@ const GEMINI_BUILTINS: [&str; 14] = [
     "activate_skill",
 ];
 
-pub fn gemini_settings(mode: Option<Mode>, without: &[String], nib: &Path) -> Value {
+pub fn gemini_settings(mode: Option<Mode>, without: &[String], orden: &Path) -> Value {
     let mut settings = json!({
         "tools": { "exclude": GEMINI_BUILTINS },
         "skills": { "enabled": false },
@@ -371,7 +371,7 @@ pub fn gemini_settings(mode: Option<Mode>, without: &[String], nib: &Path) -> Va
     if let Some(mode) = mode {
         let (listed, left) = tools_of(mode, without);
         let mut server = json!({
-            "command": nib,
+            "command": orden,
             "args": ["mcp"],
             "env": {
                 TOKEN_VAR: format!("${{{TOKEN_VAR}}}"),
@@ -456,7 +456,7 @@ mod tests {
         --effort <level>\n  --restricted\n  --permission-mode <mode>";
 
     fn config() -> PathBuf {
-        PathBuf::from("ai").join("nib-mcp.json")
+        PathBuf::from("ai").join("orden-mcp.json")
     }
 
     fn value_of<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
@@ -465,7 +465,7 @@ mod tests {
     }
 
     #[test]
-    fn claude_runs_with_no_tools_no_servers_and_nib_s_prompt() {
+    fn claude_runs_with_no_tools_no_servers_and_orden_s_prompt() {
         let args = ask(None, &Caps::default()).expect("args");
         assert_eq!(value_of(&args, "--tools"), Some(""));
         assert!(args.contains(&"--strict-mcp-config".to_owned()));
@@ -517,7 +517,7 @@ mod tests {
     }
 
     #[test]
-    fn a_session_lists_only_nib_and_only_its_mode_s_tools() {
+    fn a_session_lists_only_orden_and_only_its_mode_s_tools() {
         let caps = Caps::from_help(CLAUDE_HELP);
         let shape = |mode| Shape {
             mode: Some(mode),
@@ -578,9 +578,9 @@ mod tests {
         assert!(denied.contains("mcp__orden__browser_navigate"));
         assert!(denied.contains("mcp__orden__write_note"));
 
-        let nib = PathBuf::from("orden");
+        let orden = PathBuf::from("orden");
         let folder = PathBuf::from("ai");
-        let thread = codex_thread(Some(Mode::Auto), None, &without, &nib, &folder);
+        let thread = codex_thread(Some(Mode::Auto), None, &without, &orden, &folder);
         let enabled = thread["config"]["mcp_servers.orden.enabled_tools"]
             .as_array()
             .expect("enabled")
@@ -645,10 +645,16 @@ mod tests {
     }
 
     #[test]
-    fn a_codex_thread_adds_nib_alone_with_its_mode_s_tools() {
-        let nib = PathBuf::from("orden.exe");
+    fn a_codex_thread_adds_orden_alone_with_its_mode_s_tools() {
+        let orden = PathBuf::from("orden.exe");
         let folder = PathBuf::from("ai");
-        let plan = codex_thread(Some(Mode::Plan), Some("gpt-5.1-codex"), &[], &nib, &folder);
+        let plan = codex_thread(
+            Some(Mode::Plan),
+            Some("gpt-5.1-codex"),
+            &[],
+            &orden,
+            &folder,
+        );
         assert_eq!(plan["sandbox"], "read-only");
         assert_eq!(plan["approvalPolicy"], "never");
         assert_eq!(plan["ephemeral"], true);
@@ -667,21 +673,21 @@ mod tests {
             .keys()
             .all(|key| key.starts_with("mcp_servers.orden.")));
 
-        let agent = codex_thread(Some(Mode::Full), None, &[], &nib, &folder);
+        let agent = codex_thread(Some(Mode::Full), None, &[], &orden, &folder);
         assert!(agent["config"]["mcp_servers.orden.enabled_tools"].is_null());
-        let approve = codex_thread(Some(Mode::Approve), None, &[], &nib, &folder);
+        let approve = codex_thread(Some(Mode::Approve), None, &[], &orden, &folder);
         assert!(approve["config"]["mcp_servers.orden.enabled_tools"].is_null());
         assert_eq!(approve["approvalPolicy"], "never");
         assert_eq!(agent["approvalPolicy"], "never");
-        let auto = codex_thread(Some(Mode::Auto), None, &[], &nib, &folder);
+        let auto = codex_thread(Some(Mode::Auto), None, &[], &orden, &folder);
         assert_eq!(auto["approvalPolicy"], "never");
         assert_eq!(auto["sandbox"], "read-only");
         assert!(auto["config"]["mcp_servers.orden.enabled_tools"].is_null());
         assert!(agent.get("model").is_none());
-        let words = codex_thread(None, None, &[], &nib, &folder);
+        let words = codex_thread(None, None, &[], &orden, &folder);
         assert_eq!(words["config"], json!({}));
 
-        let mut helped = codex_thread(Some(Mode::Full), None, &[], &nib, &folder);
+        let mut helped = codex_thread(Some(Mode::Full), None, &[], &orden, &folder);
         with_thread(&mut helped, "orden-thread-1");
         assert_eq!(
             helped["config"]["mcp_servers.orden.env"],
@@ -768,8 +774,8 @@ mod tests {
 
     #[test]
     fn gemini_s_settings_lend_orden_by_name_with_its_mode_s_tools_and_no_token() {
-        let nib = PathBuf::from("orden.exe");
-        let plan = gemini_settings(Some(Mode::Plan), &[], &nib);
+        let orden = PathBuf::from("orden.exe");
+        let plan = gemini_settings(Some(Mode::Plan), &[], &orden);
         let orden = &plan["mcpServers"]["orden"];
         assert_eq!(orden["args"], json!(["mcp"]));
         assert_eq!(orden["trust"], true);
@@ -783,9 +789,9 @@ mod tests {
         assert!(excluded.contains(&json!("run_shell_command")));
         assert!(excluded.contains(&json!("write_file")));
 
-        let full = gemini_settings(Some(Mode::Full), &[], &nib);
+        let full = gemini_settings(Some(Mode::Full), &[], &orden);
         assert!(full["mcpServers"]["orden"]["includeTools"].is_null());
-        let words = gemini_settings(None, &[], &nib);
+        let words = gemini_settings(None, &[], &orden);
         assert!(words.get("mcpServers").is_none());
         assert!(!words.to_string().contains("orden.exe"));
     }

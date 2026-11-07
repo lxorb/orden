@@ -15,7 +15,7 @@ use tauri::AppHandle;
 
 use super::{Act, Notice};
 
-pub const CATEGORY: &str = "nib.notice.reply";
+pub const CATEGORY: &str = "orden.notice.reply";
 const SEND: &str = "send";
 
 const PREFIX: &str = "notice.";

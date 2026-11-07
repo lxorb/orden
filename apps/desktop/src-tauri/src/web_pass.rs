@@ -11,7 +11,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter as _, Manager as _};
 
-pub(crate) const BINDING: &str = "nibPass";
+pub(crate) const BINDING: &str = "ordenPass";
 
 const SCRIPT: &str = include_str!("web_pass.js");
 
@@ -36,7 +36,7 @@ const MARK: &str = "orden://pass-mark";
 const SUBMITTED: &str = "orden://pass-submitted";
 
 const FILL: &str =
-    "function (asked) { var pass = globalThis.__nibPass; return pass ? pass.fill(asked) : false }";
+    "function (asked) { var pass = globalThis.__ordenPass; return pass ? pass.fill(asked) : false }";
 
 const KINDS: [&str; 8] = [
     "login", "username", "password", "totp", "signup", "change", "card", "identity",
@@ -657,7 +657,7 @@ mod engine {
     define_class!(
         #[unsafe(super(NSObject))]
         #[thread_kind = MainThreadOnly]
-        #[name = "NibPassMessages"]
+        #[name = "OrdenPassMessages"]
         #[ivars = Held]
         struct Messages;
 
@@ -720,7 +720,7 @@ mod engine {
         unsafe_code,
         reason = "a content world is named through the Objective-C runtime"
     )]
-    fn nib_world(mtm: MainThreadMarker) -> Retained<WKContentWorld> {
+    fn orden_world(mtm: MainThreadMarker) -> Retained<WKContentWorld> {
         unsafe { WKContentWorld::worldWithName(&NSString::from_str(crate::web_worlds::WORLD), mtm) }
     }
 
@@ -742,7 +742,7 @@ mod engine {
         };
         let messages = Messages::alloc(mtm).set_ivars(Held { app, tab, window });
         let messages: Retained<Messages> = unsafe { msg_send![super(messages), init] };
-        let world = nib_world(mtm);
+        let world = orden_world(mtm);
         let name = NSString::from_str(super::BINDING);
         unsafe {
             let content = view.configuration().userContentController();
@@ -814,7 +814,7 @@ mod engine {
                     &NSString::from_str(&body),
                     None,
                     Some(&info),
-                    &nib_world(mtm),
+                    &orden_world(mtm),
                     Some(&done),
                 );
             }
@@ -1187,8 +1187,8 @@ mod tests {
     #[test]
     fn the_script_is_handed_over_whole_and_answers_to_the_binding() {
         assert!(script().starts_with("(function ()"));
-        assert!(script().contains("globalThis.nibPass"));
-        assert!(script().contains("__nibPass"));
-        assert!(super::FILL.contains("__nibPass"));
+        assert!(script().contains("globalThis.ordenPass"));
+        assert!(script().contains("__ordenPass"));
+        assert!(super::FILL.contains("__ordenPass"));
     }
 }

@@ -325,8 +325,8 @@ mod tests {
     #[test]
     fn nests_as_deep_as_somebody_writes_it() {
         assert_eq!(
-            tags_in("#work/nib/canvas/deep/deeper"),
-            vec!["#work/nib/canvas/deep/deeper"]
+            tags_in("#work/orden/canvas/deep/deeper"),
+            vec!["#work/orden/canvas/deep/deeper"]
         );
     }
 
@@ -417,24 +417,24 @@ mod tests {
     #[test]
     fn reads_a_list_on_the_key() {
         assert_eq!(
-            tags_in("---\ntags: work/nib, other\n---\n\nwords\n"),
-            vec!["#work/nib", "#other"]
+            tags_in("---\ntags: work/orden, other\n---\n\nwords\n"),
+            vec!["#work/orden", "#other"]
         );
     }
 
     #[test]
     fn reads_a_list_in_brackets() {
         assert_eq!(
-            tags_in("---\ntags: [work/nib, other]\n---\n\nwords\n"),
-            vec!["#work/nib", "#other"]
+            tags_in("---\ntags: [work/orden, other]\n---\n\nwords\n"),
+            vec!["#work/orden", "#other"]
         );
     }
 
     #[test]
     fn reads_items_under_the_key() {
         assert_eq!(
-            tags_in("---\ntags:\n  - work/nib\n  - other\n---\n\nwords\n"),
-            vec!["#work/nib", "#other"]
+            tags_in("---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n"),
+            vec!["#work/orden", "#other"]
         );
     }
 
@@ -450,23 +450,23 @@ mod tests {
     #[test]
     fn takes_the_hash_as_optional_in_the_front_matter() {
         assert_eq!(
-            tags_in("---\ntags: [#work/nib]\n---\n\nwords\n"),
-            vec!["#work/nib"]
+            tags_in("---\ntags: [#work/orden]\n---\n\nwords\n"),
+            vec!["#work/orden"]
         );
     }
 
     #[test]
     fn takes_either_spelling_of_the_key() {
         assert_eq!(
-            tags_in("---\ntag: work/nib\n---\n\nwords\n"),
-            vec!["#work/nib"]
+            tags_in("---\ntag: work/orden\n---\n\nwords\n"),
+            vec!["#work/orden"]
         );
     }
 
     #[test]
     fn reads_nothing_under_another_key() {
         assert_eq!(
-            tags_in("---\nstatus: done\nproject: Nib\n---\n\nwords\n"),
+            tags_in("---\nstatus: done\nproject: Orden\n---\n\nwords\n"),
             Vec::<String>::new()
         );
     }
@@ -482,8 +482,8 @@ mod tests {
     #[test]
     fn counts_both_halves_of_a_note() {
         assert_eq!(
-            tags_in("---\ntags: [work]\n---\n\nwords #nib\n"),
-            vec!["#work", "#nib"]
+            tags_in("---\ntags: [work]\n---\n\nwords #orden\n"),
+            vec!["#work", "#orden"]
         );
     }
 
@@ -494,8 +494,8 @@ mod tests {
             vec!["#work"]
         );
         assert_eq!(
-            tags_in("---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n"),
-            vec!["#work", "#nib"]
+            tags_in("---\r\ntags:\r\n  - work\r\n---\r\nx #orden\r\n"),
+            vec!["#work", "#orden"]
         );
     }
 

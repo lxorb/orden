@@ -1,4 +1,4 @@
-globalThis.nibAgentOf = (describe, base) => {
+globalThis.ordenAgentOf = (describe, base) => {
   const ids = new WeakMap()
   const nodes = new Map()
   let next = base

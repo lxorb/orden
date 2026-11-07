@@ -323,7 +323,8 @@ class Heartbeat:
 
 def log_lines(identifier: str) -> list[str]:
 
-    path = local_dir(identifier) / "logs" / "nib.log"
+    logs = local_dir(identifier) / "logs"
+    path = logs / "orden.log" if (logs / "orden.log").is_file() else logs / "nib.log"
     if not path.is_file():
         return []
     return path.read_text(encoding="utf-8", errors="replace").splitlines()

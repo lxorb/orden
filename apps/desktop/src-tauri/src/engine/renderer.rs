@@ -189,10 +189,13 @@ mod tests {
                 .map(std::ffi::OsString::from)
                 .collect::<Vec<_>>()
         };
-        assert_eq!(super::told_version(args(&["nib", "--type=renderer"])), None);
+        assert_eq!(
+            super::told_version(args(&["orden", "--type=renderer"])),
+            None
+        );
         assert_eq!(
             super::told_version(args(&[
-                "nib",
+                "orden",
                 "--tauri-cef-api-version=1",
                 "--tauri-cef-api-version=2",
                 "--tauri-cef-api-version=x",

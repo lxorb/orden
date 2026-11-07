@@ -161,7 +161,7 @@ fn returned(window: &str) {
             "unknown"
         };
         eprintln!(
-            "nib: keyboard: {window} back to {}, its own page {own}; held",
+            "orden: keyboard: {window} back to {}, its own page {own}; held",
             home.as_deref().unwrap_or("its own page")
         );
         return;

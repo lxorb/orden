@@ -92,7 +92,7 @@ mod tests {
         let (stop, stopping) = mpsc::channel::<()>();
         let (ready, readied) = mpsc::channel::<()>();
         let frozen = std::thread::Builder::new()
-            .name("nib test frozen".to_owned())
+            .name("Orden test frozen".to_owned())
             .spawn(move || {
                 ready.send(()).expect("ready");
                 let _ = stopping.recv();
@@ -113,7 +113,7 @@ mod tests {
         let thread = report
             .threads
             .iter()
-            .find(|one| one.name.contains("nib test frozen"))
+            .find(|one| one.name.contains("Orden test frozen"))
             .expect("the frozen thread");
         assert!(thread.frames.len() >= 3);
         assert!(thread
@@ -129,8 +129,8 @@ mod tests {
             "The window did not answer for 41 s (web_open), 97% of a core busy"
         );
         assert_eq!(
-            summary("nothing of nib's own", Duration::from_secs(5), None),
-            "The window did not answer for 5 s (nothing of nib's own)"
+            summary("nothing of Orden's own", Duration::from_secs(5), None),
+            "The window did not answer for 5 s (nothing of Orden's own)"
         );
         assert_eq!(
             busy(

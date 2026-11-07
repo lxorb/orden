@@ -251,10 +251,10 @@ mod hook {
                     let module =
                         HINSTANCE::from(GetModuleHandleW(None).expect("the test's own module"));
                     let classes: [(PCWSTR, WNDPROC); 4] = [
-                        (w!("nib test top"), Some(plain)),
-                        (w!("nib test page"), Some(page)),
+                        (w!("Orden test top"), Some(plain)),
+                        (w!("Orden test page"), Some(page)),
                         (w!("Chrome_RenderWidgetHostHWND"), Some(plain)),
-                        (w!("nib test other"), Some(plain)),
+                        (w!("Orden test other"), Some(plain)),
                     ];
                     for (name, answer) in classes {
                         RegisterClassW(&WNDCLASSW {
@@ -283,15 +283,15 @@ mod hook {
                             .expect("a window of the test's own")
                         };
                     let none = WINDOW_EX_STYLE::default();
-                    let top = make(none, w!("nib test top"), WS_OVERLAPPED, HWND::default());
-                    let page = make(none, w!("nib test page"), WS_CHILD, top);
+                    let top = make(none, w!("Orden test top"), WS_OVERLAPPED, HWND::default());
+                    let page = make(none, w!("Orden test page"), WS_CHILD, top);
                     let input = make(
                         WS_EX_TRANSPARENT,
                         w!("Chrome_RenderWidgetHostHWND"),
                         WS_CHILD,
                         page,
                     );
-                    let other = make(none, w!("nib test other"), WS_CHILD, page);
+                    let other = make(none, w!("Orden test other"), WS_CHILD, page);
                     Self {
                         top,
                         page,

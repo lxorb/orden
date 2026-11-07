@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-pub(crate) const WORLD: &str = "nib";
+pub(crate) const WORLD: &str = "orden";
 
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 const MARK: &str = "void 0";
@@ -123,7 +123,7 @@ impl Cleared {
             (true, None) => "the runtime's scripts taken back".to_string(),
         };
         let ours = if self.ours {
-            "in nib's world"
+            "in Orden's world"
         } else {
             "missing"
         };
@@ -132,7 +132,7 @@ impl Cleared {
         } else {
             ", not in other sites' frames"
         };
-        format!("{swept}, nib's own {ours}{frames}")
+        format!("{swept}, Orden's own {ours}{frames}")
     }
 }
 
@@ -787,12 +787,12 @@ mod tests {
         };
         assert_eq!(
             all.said(),
-            "14 of the runtime's scripts taken back, nib's own in nib's world"
+            "14 of the runtime's scripts taken back, Orden's own in Orden's world"
         );
         let none = Cleared::default();
         assert_eq!(
             none.said(),
-            "the runtime's scripts left in, nib's own missing, not in other sites' frames"
+            "the runtime's scripts left in, Orden's own missing, not in other sites' frames"
         );
     }
 
@@ -810,7 +810,7 @@ mod tests {
     }
 
     #[test]
-    fn nib_s_scripts_are_registered_in_nib_s_world_and_never_the_page_s() {
+    fn orden_s_scripts_are_registered_in_orden_s_world_and_never_the_page_s() {
         let asked: serde_json::Value =
             serde_json::from_str(&registering("(function () {})()")).expect("json");
         assert_eq!(asked["worldName"], WORLD);
@@ -833,7 +833,7 @@ mod tests {
 
     #[cfg(feature = "cef")]
     #[test]
-    fn a_document_arriving_has_nib_s_binding_put_in_its_world() {
+    fn a_document_arriving_has_orden_s_binding_put_in_its_world() {
         let again = super::engine::bound_again("Page.frameNavigated");
         let names: Vec<&str> = again
             .iter()
@@ -848,7 +848,7 @@ mod tests {
     }
 
     #[test]
-    fn a_frame_from_another_site_is_followed_and_held_until_it_has_nib_s_world() {
+    fn a_frame_from_another_site_is_followed_and_held_until_it_has_orden_s_world() {
         let asked: serde_json::Value = serde_json::from_str(&attaching(IN_THE_PAGE)).expect("json");
         assert_eq!(asked["autoAttach"], true);
         assert_eq!(asked["waitForDebuggerOnStart"], true);
@@ -877,7 +877,7 @@ mod tests {
     }
 
     #[test]
-    fn a_frame_is_given_nib_s_world_and_always_let_go_last() {
+    fn a_frame_is_given_orden_s_world_and_always_let_go_last() {
         let sent = in_frame("(function () {})()");
         let methods: Vec<&str> = sent.iter().map(|(method, _)| *method).collect();
         assert_eq!(

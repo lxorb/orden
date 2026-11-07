@@ -91,7 +91,7 @@ pub fn said(app: &tauri::AppHandle) {
             app,
             "warn",
             &format!(
-                "stall: a launch ended the nib before it, which was not responding (pid {pid})"
+                "stall: a launch ended the Orden before it, which was not responding (pid {pid})"
             ),
         );
     }

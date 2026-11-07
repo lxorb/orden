@@ -34,8 +34,8 @@ export async function deviceSays(reason: string): Promise<boolean> {
   if (!ask) return (await invoke<unknown>('owner_check', { reason })) === true
   const word = await frameWord()
   return new Promise((resolve) => {
-    answer('__nibOwner', (said: string) => {
-      answer('__nibOwner', undefined)
+    answer('__ordenOwner', (said: string) => {
+      answer('__ordenOwner', undefined)
       resolve(said === 'yes')
     })
     ask(word, reason)

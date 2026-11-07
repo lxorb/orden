@@ -53,7 +53,7 @@ fn get_args(name: &str) -> Vec<OsString> {
     ["mcp", "get", name].map(OsString::from).to_vec()
 }
 
-fn add_args(tool: Tool, nib: &Path) -> Vec<OsString> {
+fn add_args(tool: Tool, orden: &Path) -> Vec<OsString> {
     let mut args: Vec<OsString> = match tool {
         Tool::ClaudeCode | Tool::Gemini => vec!["mcp", "add", "--scope", "user", NAME, "--"],
         Tool::Codex => vec!["mcp", "add", NAME, "--"],
@@ -61,7 +61,7 @@ fn add_args(tool: Tool, nib: &Path) -> Vec<OsString> {
     .into_iter()
     .map(OsString::from)
     .collect();
-    args.extend([nib.as_os_str().to_owned(), OsString::from("mcp")]);
+    args.extend([orden.as_os_str().to_owned(), OsString::from("mcp")]);
     args
 }
 
@@ -100,13 +100,13 @@ enum Held {
     Theirs,
 }
 
-fn held(program: &Program, name: &str, folder: &Path, nib: &Path, home: Option<&Path>) -> Held {
+fn held(program: &Program, name: &str, folder: &Path, orden: &Path, home: Option<&Path>) -> Held {
     match entry(program, name, folder, home) {
         None => Held::None,
-        Some(said) if said.contains(nib.to_string_lossy().as_ref()) => Held::Ours,
+        Some(said) if said.contains(orden.to_string_lossy().as_ref()) => Held::Ours,
         Some(said)
             if crate::mcp::program::command_in(&said)
-                .is_some_and(|command| crate::mcp::program::older_copy(command, nib)) =>
+                .is_some_and(|command| crate::mcp::program::older_copy(command, orden)) =>
         {
             Held::Older
         }
@@ -121,42 +121,51 @@ fn remove(program: &Program, tool: Tool, name: &str, folder: &Path, home: Option
     );
 }
 
-pub fn carry_over(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
-    if held(program, NAME, folder, nib, home) == Held::Older {
+pub fn carry_over(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
+    if held(program, NAME, folder, orden, home) == Held::Older {
         remove(program, tool, NAME, folder, home);
-        let _ = run_to_end(homed(program, &add_args(tool, nib), folder, home), TELLING);
+        let _ = run_to_end(
+            homed(program, &add_args(tool, orden), folder, home),
+            TELLING,
+        );
     }
     if !matches!(
-        held(program, OLD_NAME, folder, nib, home),
+        held(program, OLD_NAME, folder, orden, home),
         Held::Ours | Held::Older
     ) {
         return;
     }
-    if held(program, NAME, folder, nib, home) == Held::None {
-        let _ = run_to_end(homed(program, &add_args(tool, nib), folder, home), TELLING);
+    if held(program, NAME, folder, orden, home) == Held::None {
+        let _ = run_to_end(
+            homed(program, &add_args(tool, orden), folder, home),
+            TELLING,
+        );
     }
-    if held(program, NAME, folder, nib, home) == Held::Ours {
+    if held(program, NAME, folder, orden, home) == Held::Ours {
         remove(program, tool, OLD_NAME, folder, home);
     }
 }
 
-pub fn enroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
-    carry_over(program, tool, folder, nib, home);
+pub fn enroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
+    carry_over(program, tool, folder, orden, home);
     if entry(program, NAME, folder, home).is_some()
         || matches!(
-            held(program, OLD_NAME, folder, nib, home),
+            held(program, OLD_NAME, folder, orden, home),
             Held::Ours | Held::Older
         )
     {
         return;
     }
-    let _ = run_to_end(homed(program, &add_args(tool, nib), folder, home), TELLING);
+    let _ = run_to_end(
+        homed(program, &add_args(tool, orden), folder, home),
+        TELLING,
+    );
 }
 
-pub fn unenroll(program: &Program, tool: Tool, folder: &Path, nib: &Path, home: Option<&Path>) {
+pub fn unenroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     for name in [NAME, OLD_NAME] {
         if matches!(
-            held(program, name, folder, nib, home),
+            held(program, name, folder, orden, home),
             Held::Ours | Held::Older
         ) {
             remove(program, tool, name, folder, home);
@@ -168,7 +177,7 @@ fn each(app: &AppHandle, act: fn(&Program, Tool, &Path, &Path, Option<&Path>)) {
     let Ok(folder) = super::workroom(app) else {
         return;
     };
-    let Ok(nib) = crate::mcp::program::program() else {
+    let Ok(orden) = crate::mcp::program::program() else {
         return;
     };
     let _ = std::thread::Builder::new()
@@ -177,7 +186,7 @@ fn each(app: &AppHandle, act: fn(&Program, Tool, &Path, &Path, Option<&Path>)) {
             let home = test_home();
             for tool in [Tool::ClaudeCode, Tool::Codex] {
                 if let Some(found) = program::find(tool) {
-                    act(&found, tool, &folder, &nib, home.as_deref());
+                    act(&found, tool, &folder, &orden, home.as_deref());
                 }
             }
         });
@@ -221,7 +230,7 @@ mod tests {
 
     #[test]
     fn each_program_is_added_the_way_it_adds_a_server_itself() {
-        let nib = Path::new("C:/Orden/orden.exe");
+        let orden = Path::new("C:/Orden/orden.exe");
         let line = |args: Vec<OsString>| {
             args.iter()
                 .map(|one| one.to_string_lossy().into_owned())
@@ -229,11 +238,11 @@ mod tests {
                 .join(" ")
         };
         assert_eq!(
-            line(add_args(Tool::ClaudeCode, nib)),
+            line(add_args(Tool::ClaudeCode, orden)),
             "mcp add --scope user orden -- C:/Orden/orden.exe mcp"
         );
         assert_eq!(
-            line(add_args(Tool::Codex, nib)),
+            line(add_args(Tool::Codex, orden)),
             "mcp add orden -- C:/Orden/orden.exe mcp"
         );
         assert_eq!(

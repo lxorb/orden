@@ -686,7 +686,7 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
         .unwrap_or_else(PoisonError::into_inner)
         .push((id.to_string(), reader.to_string()));
     close(app, id);
-    Err("an agent's page on nib's own Chromium has no window: the tab loads its address".into())
+    Err("an agent's page on Orden's own Chromium has no window: the tab loads its address".into())
 }
 
 #[cfg(all(target_os = "macos", not(feature = "cef")))]

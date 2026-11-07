@@ -255,8 +255,8 @@ mod tests {
     use crate::paths::{folder_key, ORIGIN};
     use std::fs;
 
-    const OLD: &str = "/var/mobile/Containers/Data/Application/03742EE0/Documents/Nib";
-    const NEW: &str = "/var/mobile/Containers/Data/Application/853E8E51/Documents/Nib";
+    const OLD: &str = "/var/mobile/Containers/Data/Application/03742EE0/Documents/Orden";
+    const NEW: &str = "/var/mobile/Containers/Data/Application/853E8E51/Documents/Orden";
 
     fn kept_at(root: &std::path::Path, note: &str) -> std::path::PathBuf {
         let dir = root.join(folder_key(note));

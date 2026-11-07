@@ -1,4 +1,4 @@
-globalThis.nibDump = async function nibDump(op, argsJson) {
+globalThis.ordenDump = async function ordenDump(op, argsJson) {
   const args = JSON.parse(argsJson)
 
   class Unmovable extends Error {}

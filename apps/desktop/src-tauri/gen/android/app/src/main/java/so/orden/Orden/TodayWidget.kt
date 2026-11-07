@@ -20,27 +20,27 @@ class TodayWidget : AppWidgetProvider() {
   companion object {
     private val ROWS =
       intArrayOf(
-        R.id.nib_today_row_0,
-        R.id.nib_today_row_1,
-        R.id.nib_today_row_2,
-        R.id.nib_today_row_3,
-        R.id.nib_today_row_4,
+        R.id.orden_today_row_0,
+        R.id.orden_today_row_1,
+        R.id.orden_today_row_2,
+        R.id.orden_today_row_3,
+        R.id.orden_today_row_4,
       )
     private val BOXES =
       intArrayOf(
-        R.id.nib_today_box_0,
-        R.id.nib_today_box_1,
-        R.id.nib_today_box_2,
-        R.id.nib_today_box_3,
-        R.id.nib_today_box_4,
+        R.id.orden_today_box_0,
+        R.id.orden_today_box_1,
+        R.id.orden_today_box_2,
+        R.id.orden_today_box_3,
+        R.id.orden_today_box_4,
       )
     private val WORDS =
       intArrayOf(
-        R.id.nib_today_text_0,
-        R.id.nib_today_text_1,
-        R.id.nib_today_text_2,
-        R.id.nib_today_text_3,
-        R.id.nib_today_text_4,
+        R.id.orden_today_text_0,
+        R.id.orden_today_text_1,
+        R.id.orden_today_text_2,
+        R.id.orden_today_text_3,
+        R.id.orden_today_text_4,
       )
 
     fun refresh(context: Context) {
@@ -55,9 +55,9 @@ class TodayWidget : AppWidgetProvider() {
     private fun drawn(context: Context, state: Today): RemoteViews {
       val views = RemoteViews(context.packageName, R.layout.widget_today)
 
-      views.setTextViewText(R.id.nib_today_title, state.title)
-      views.setOnClickPendingIntent(R.id.nib_today_title, command(context, "", 100))
-      views.setOnClickPendingIntent(R.id.nib_today_add, command(context, "quick-add", 101))
+      views.setTextViewText(R.id.orden_today_title, state.title)
+      views.setOnClickPendingIntent(R.id.orden_today_title, command(context, "", 100))
+      views.setOnClickPendingIntent(R.id.orden_today_add, command(context, "quick-add", 101))
 
       for ((at, row) in ROWS.withIndex()) {
         val task = state.tasks.getOrNull(at)
@@ -75,8 +75,8 @@ class TodayWidget : AppWidgetProvider() {
       }
 
       val empty = state.tasks.isEmpty()
-      views.setViewVisibility(R.id.nib_today_empty, if (empty) View.VISIBLE else View.GONE)
-      views.setTextViewText(R.id.nib_today_empty, state.empty)
+      views.setViewVisibility(R.id.orden_today_empty, if (empty) View.VISIBLE else View.GONE)
+      views.setTextViewText(R.id.orden_today_empty, state.empty)
 
       return views
     }
@@ -132,7 +132,7 @@ class TodayWidget : AppWidgetProvider() {
         val title = today.optString("title")
         Today(if (title.isEmpty()) fallback.title else title, today.optString("empty"), tasks)
       } catch (error: Exception) {
-        Log.w("nib", "the widget's tasks could not be read: ${error.message}")
+        Log.w("orden", "the widget's tasks could not be read: ${error.message}")
         fallback
       }
     }

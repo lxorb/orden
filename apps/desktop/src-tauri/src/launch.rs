@@ -515,7 +515,7 @@ mod tests {
     #[test]
     fn a_launch_token_travels_with_the_arguments_and_is_taken_off_them() {
         let argv: Vec<String> = [
-            "nib",
+            "orden",
             "https://orden.so",
             "--activation-token=abc",
             "--quick-add",
@@ -525,20 +525,20 @@ mod tests {
         assert_eq!(token_in(&argv).as_deref(), Some("abc"));
         assert_eq!(
             without_ours(&argv),
-            vec!["nib".to_owned(), "https://orden.so".to_owned()]
+            vec!["orden".to_owned(), "https://orden.so".to_owned()]
         );
-        let bare: Vec<String> = ["nib", "--activation-token="].map(String::from).into();
+        let bare: Vec<String> = ["orden", "--activation-token="].map(String::from).into();
         assert_eq!(token_in(&bare), None);
     }
 
     #[test]
     fn an_agents_launch_asks_for_no_window() {
-        let agent: Vec<String> = ["nib", BACKGROUND_FLAG].map(String::from).into();
+        let agent: Vec<String> = ["orden", BACKGROUND_FLAG].map(String::from).into();
         assert!(in_background(&agent));
-        assert_eq!(without_ours(&agent), vec!["nib".to_owned()]);
+        assert_eq!(without_ours(&agent), vec!["orden".to_owned()]);
         for reader in [
-            vec!["nib"],
-            vec!["nib", "https://orden.so"],
+            vec!["orden"],
+            vec!["orden", "https://orden.so"],
             vec![BACKGROUND_FLAG],
         ] {
             let argv: Vec<String> = reader.into_iter().map(String::from).collect();
@@ -549,16 +549,16 @@ mod tests {
     #[test]
     fn a_link_beside_a_token_is_read_again_without_it() {
         let link = "orden://open?path=Inbox.md";
-        let read = Some(vec!["nib".to_owned(), link.to_owned()]);
-        let last: Vec<String> = ["nib", link, "--activation-token=abc"]
+        let read = Some(vec!["orden".to_owned(), link.to_owned()]);
+        let last: Vec<String> = ["orden", link, "--activation-token=abc"]
             .map(String::from)
             .into();
         assert_eq!(unread_link(&last), read);
-        let first: Vec<String> = ["nib", "--activation-token=abc", link]
+        let first: Vec<String> = ["orden", "--activation-token=abc", link]
             .map(String::from)
             .into();
         assert_eq!(unread_link(&first), read);
-        let bare: Vec<String> = ["nib", link].map(String::from).into();
+        let bare: Vec<String> = ["orden", link].map(String::from).into();
         assert_eq!(unread_link(&bare), None);
     }
 
