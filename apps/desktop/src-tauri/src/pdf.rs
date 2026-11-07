@@ -122,9 +122,10 @@ const TOO_LONG: &str = "the print took too long";
 )]
 pub async fn print_page(
     webview: tauri::Webview,
-    html: String,
-    page: Option<PdfPage>,
+    request: tauri::ipc::Request<'_>,
 ) -> Result<(), String> {
+    let (html, page) = printed(&request)?;
+
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     {
         use tauri::Manager as _;
@@ -142,6 +143,19 @@ pub async fn print_page(
         let _ = (webview, html, page);
         Err("the print dialog here is the page's own".into())
     }
+}
+
+#[derive(Deserialize)]
+struct Printing {
+    page: Option<PdfPage>,
+}
+
+fn printed(request: &tauri::ipc::Request<'_>) -> Result<(String, Option<PdfPage>), String> {
+    let (Printing { page }, bytes) =
+        crate::notes::raw_sent::<Printing>(request.headers(), request.body())?;
+    let html = String::from_utf8(bytes.into_owned())
+        .map_err(|_| "the page to print is not text".to_owned())?;
+    Ok((html, page))
 }
 
 async fn in_hidden_window<F>(
