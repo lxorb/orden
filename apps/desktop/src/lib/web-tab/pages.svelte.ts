@@ -1,7 +1,7 @@
 import { landed } from '../glass/chrome.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
-import { isExtensionPage, isWebAddress } from './address'
+import { isExtensionPage, isWebAddress, originKey } from './address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import type { NotArrived } from './heard'
@@ -33,6 +33,11 @@ function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
 function dropGrants(tab: string, privateLeft: boolean): void {
   if (!__EVEN_PLUGIN__)
     void pagePermissions().then(({ grants }) => grants.dropped(tab, privateLeft))
+}
+
+function leftPage(tab: string): void {
+  dropGrants(tab, true)
+  dropDialogs(tab)
 }
 
 function sleeping() {
@@ -701,6 +706,7 @@ class Pages {
     page.loading = false
     page.playing = false
     clearTimeout(page.resting)
+    leftPage(tabId)
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
@@ -718,6 +724,7 @@ class Pages {
     page.forward = false
     page.shot = null
     clearTimeout(page.resting)
+    leftPage(tabId)
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
@@ -837,7 +844,7 @@ class Pages {
 
     if (!page.live) return
 
-    dropDialogs(tabId)
+    leftPage(tabId)
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -857,7 +864,7 @@ class Pages {
     }
     if (!isDesktop || !page?.live) return
     page.upgrade = null
-    if (step !== 'stop') dropDialogs(tabId)
+    if (step !== 'stop') leftPage(tabId)
 
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }
@@ -1014,12 +1021,14 @@ class Pages {
         const said = readAsked(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
         if (said && page) grants.heard({ ...said, privately: page.inPrivate })
+        else if (said) grants.refused(said.id)
       })
 
       const { dialogs, readDialog } = await pageDialogs()
       await listen('nib://web-dialog', (event) => {
         const said = readDialog(event.payload)
         if (said && this.held.has(said.tab)) dialogs.heard(said)
+        else if (said) dialogs.refused(said.id)
       })
 
       await listen('nib://web-open', (event) => {
@@ -1082,6 +1091,8 @@ class Pages {
 
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
+        const elsewhere = moved && originKey(said.url) !== originKey(page.at ?? '')
+        if ((said.loading && !was) || elsewhere) leftPage(said.tab)
         if (moved || (said.loading && !was)) {
           page.unplayable = false
           page.blocked = null

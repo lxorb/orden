@@ -164,6 +164,10 @@ class Grants {
     for (const one of gone) void this.tell(one.id, false)
   }
 
+  refused(id: number) {
+    void this.tell(id, false)
+  }
+
   private async tell(id: number, allow: boolean): Promise<void> {
     if (!isDesktop) return
     await invoke('web_answer', { id, allow }).catch(() => undefined)

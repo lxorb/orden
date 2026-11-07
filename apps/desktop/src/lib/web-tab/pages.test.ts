@@ -605,6 +605,106 @@ describe("a page's dialog still waiting", () => {
   })
 })
 
+describe("a page's question still waiting", () => {
+  async function waiting() {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+    await settle()
+    const ask = await hearing('nib://web-ask')
+    ask({ payload: { tab: 'a', id: 11, origin: SITE, kind: 'location' } })
+    const tell = await hearing('nib://web-dialog')
+    tell({
+      payload: { tab: 'a', id: 12, kind: 'alert', message: 'hello', text: '', origin: SITE },
+    })
+    const { grants } = await import('./permissions.svelte')
+    const { dialogs } = await import('./dialogs.svelte')
+    expect(grants.asking.map((one) => one.id)).toEqual([11])
+    expect(dialogs.open.map((one) => one.id)).toEqual([12])
+    calls.length = 0
+    return { grants, dialogs, moved: await hearing('nib://web-tab') }
+  }
+
+  const answered = () =>
+    calls
+      .filter((one) => one.command === 'web_answer' || one.command === 'web_dialog_answer')
+      .map((one) => [one.command, one.args.id, one.args.allow ?? one.args.accept])
+
+  test('is let go before the page is sent elsewhere', async () => {
+    const { grants, dialogs } = await waiting()
+
+    await pages.go('a', 'https://elsewhere.example/')
+    await settle()
+
+    expect(grants.asking).toEqual([])
+    expect(dialogs.open).toEqual([])
+    expect(answered().sort()).toEqual([
+      ['web_answer', 11, false],
+      ['web_dialog_answer', 12, false],
+    ])
+  })
+
+  test('is let go when the page goes elsewhere by itself', async () => {
+    const { grants, dialogs, moved } = await waiting()
+
+    const said = { tab: 'a', url: '', title: '', back: false, forward: false }
+    moved({ payload: { ...said, loading: true } })
+    await settle()
+
+    expect(grants.asking).toEqual([])
+    expect(dialogs.open).toEqual([])
+    expect(answered()).toHaveLength(2)
+  })
+
+  test('is let go when the page lands on another site while still loading', async () => {
+    const { grants, moved } = await waiting()
+
+    const said = { title: '', back: false, forward: false, loading: true }
+    moved({ payload: { ...said, tab: 'a', url: SITE } })
+    await settle()
+    grants.asking = [{ id: 13, tab: 'a', site: SITE, ask: 'camera', privately: false }]
+    calls.length = 0
+
+    moved({ payload: { ...said, tab: 'a', url: SITE } })
+    await settle()
+    expect(grants.asking.map((one) => one.id)).toEqual([13])
+
+    moved({ payload: { ...said, tab: 'a', url: 'https://elsewhere.example/' } })
+    await settle()
+    expect(grants.asking).toEqual([])
+    expect(answered()).toEqual([['web_answer', 13, false]])
+  })
+
+  test('is let go when the page is unloaded or its engine has gone', async () => {
+    const { grants, dialogs } = await waiting()
+
+    await pages.park('a')
+    await settle()
+    expect(grants.asking).toEqual([])
+    expect(dialogs.open).toEqual([])
+    expect(answered()).toHaveLength(2)
+  })
+
+  test('from a tab not held here is refused, not left waiting', async () => {
+    const { grants, dialogs } = await waiting()
+
+    ;(await hearing('nib://web-ask'))({
+      payload: { tab: 'nowhere', id: 21, origin: SITE, kind: 'camera' },
+    })
+    ;(await hearing('nib://web-dialog'))({
+      payload: { tab: 'nowhere', id: 22, kind: 'alert', message: '', text: '', origin: SITE },
+    })
+    await settle()
+
+    expect(grants.asking.map((one) => one.id)).toEqual([11])
+    expect(dialogs.open.map((one) => one.id)).toEqual([12])
+    expect(answered().sort()).toEqual([
+      ['web_answer', 21, false],
+      ['web_dialog_answer', 22, false],
+    ])
+  })
+})
+
 describe('a tab that has closed', () => {
   test('is not given a page again by anything that asks after it', async () => {
     const shown = pages.show('closed', SITE, PANE)
