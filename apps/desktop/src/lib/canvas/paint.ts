@@ -171,6 +171,62 @@ export function fillInk(
   }
 }
 
+function sketch(path: Path2D, stroke: InkStroke, step: number) {
+  const [first] = stroke.points
+  if (!first) return
+
+  path.moveTo(first.x, first.y)
+  let last = first
+  for (const point of stroke.points) {
+    if (Math.abs(point.x - last.x) + Math.abs(point.y - last.y) < step) continue
+    path.lineTo(point.x, point.y)
+    last = point
+  }
+
+  const end = stroke.points[stroke.points.length - 1] ?? first
+  if (last === first) path.lineTo(first.x + step / 4, first.y)
+  else if (last !== end) path.lineTo(end.x, end.y)
+}
+
+export function paintSketch(
+  ctx: Paintable,
+  strokes: readonly InkStroke[],
+  view: View,
+  palette: Palette,
+) {
+  wipe(ctx, view.width * view.ratio, view.height * view.ratio)
+  place(ctx, view)
+
+  const step = 1 / (view.camera.scale * view.ratio)
+  const box = seen(view)
+  const order = firstSeen(strokes)
+  const batches = new Map<string, { stroke: InkStroke; path: Path2D }>()
+
+  for (const stroke of strokes) {
+    if (!meets(strokeBox(stroke), box)) continue
+    const kind = `${inkKind(stroke)}\n${stroke.size}`
+    let batch = batches.get(kind)
+    if (!batch) {
+      batch = { stroke, path: new Path2D() }
+      batches.set(kind, batch)
+    }
+    sketch(batch.path, stroke, step)
+  }
+
+  const rank = (stroke: InkStroke) => order.get(inkKind(stroke)) ?? order.size
+  const ranked = [...batches.values()].sort((one, other) => rank(one.stroke) - rank(other.stroke))
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (const { stroke, path } of ranked) {
+    inkStyle(ctx, stroke, palette)
+    ctx.strokeStyle = ctx.fillStyle
+    ctx.lineWidth = stroke.size
+    ctx.stroke(path)
+  }
+
+  plain(ctx)
+}
+
 export function firstSeen(strokes: readonly InkStroke[]): Map<string, number> {
   const order = new Map<string, number>()
   for (const stroke of strokes) {
@@ -200,27 +256,6 @@ export function paintPicked(
   for (const stroke of strokes) {
     if (picked.has(stroke.id) && meets(strokeBox(stroke), box)) ctx.stroke(pathOf(stroke))
   }
-
-  plain(ctx)
-}
-
-export function paintInk(
-  ctx: Paintable,
-  strokes: readonly InkStroke[],
-  view: View,
-  palette: Palette,
-) {
-  wipe(ctx, view.width * view.ratio, view.height * view.ratio)
-  place(ctx, view)
-
-  const box = seen(view)
-  const order = firstSeen(strokes)
-  fillInk(
-    ctx,
-    strokes.filter((stroke) => meets(strokeBox(stroke), box)),
-    palette,
-    (kind) => order.get(kind) ?? order.size,
-  )
 
   plain(ctx)
 }
