@@ -518,11 +518,11 @@ describe('full screen, left by the window', () => {
 describe('the windows that have a strip of their own', () => {
   test('are the first window and the ones opened after it', () => {
     expect(documentWindows(['main'])).toBe(1)
-    expect(documentWindows(['main', 'nib-2', 'nib-17'])).toBe(3)
+    expect(documentWindows(['main', 'orden-2', 'orden-17'])).toBe(3)
   })
 
   test('and not the presenter, a print, or anything else', () => {
-    expect(documentWindows(['main', 'orden-presenter', 'print-3', 'nib-', 'nib-2a'])).toBe(1)
+    expect(documentWindows(['main', 'orden-presenter', 'print-3', 'orden-', 'orden-2a'])).toBe(1)
     expect(documentWindows([])).toBe(0)
   })
 })

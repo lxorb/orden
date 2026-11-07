@@ -948,7 +948,7 @@ mod tests {
     fn a_request_is_taken_once_by_the_window_it_is_asked_of() {
         let waiting = Waiting::default();
         waiting.ask_of(7, "main");
-        assert!(!waiting.claim(7, "nib-2"));
+        assert!(!waiting.claim(7, "orden-2"));
         assert!(waiting.claim(7, "main"));
         assert!(!waiting.claim(7, "main"));
 
@@ -993,18 +993,30 @@ mod tests {
 
     #[test]
     fn a_window_that_does_not_listen_is_passed_over_for_one_that_does() {
-        let open = || vec!["main".to_owned(), "nib-2".to_owned(), "nib-3".to_owned()];
+        let open = || {
+            vec![
+                "main".to_owned(),
+                "orden-2".to_owned(),
+                "orden-3".to_owned(),
+            ]
+        };
         let waiting = Waiting::default();
         let now = std::time::Duration::ZERO;
-        waiting.listens("nib-2");
-        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("nib-2"));
+        waiting.listens("orden-2");
+        assert_eq!(
+            waiting.listener_within(now, open).as_deref(),
+            Some("orden-2")
+        );
 
         waiting.listens("main");
         assert_eq!(waiting.listener_within(now, open).as_deref(), Some("main"));
 
         waiting.forget("main");
         assert!(!waiting.hears("main"));
-        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("nib-2"));
+        assert_eq!(
+            waiting.listener_within(now, open).as_deref(),
+            Some("orden-2")
+        );
 
         assert_eq!(
             waiting

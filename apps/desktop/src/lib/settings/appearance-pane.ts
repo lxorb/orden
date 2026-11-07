@@ -350,7 +350,7 @@ export function appearancePane(): Pane {
                   hint: t('Orden’s own title bar, or the window frame of your system.'),
                   words: ['title bar', 'window'],
                   options: [
-                    { value: 'nib', label: t('Orden’s own') },
+                    { value: 'orden', label: t('Orden’s own') },
                     { value: 'system', label: t('The system’s') },
                   ],
                   initial: DEFAULTS.frame,

@@ -186,7 +186,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         say(f"its window is {hwnd}")
 
         bare = frame_of(hwnd)
-        if frame_said(held) != "nib":
+        if frame_said(held) != "orden":
             wrong(f"a window came up saying its frame is {frame_said(held)!r}")
         else:
             say(f"nib's own frame: {bare}px between the window and its client area")
@@ -215,7 +215,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         shot(process.pid, "02-system-frame")
 
-        framed_as(held, "nib")
+        framed_as(held, "orden")
         if frame_of(hwnd) != bare:
             wrong(f"going back to Orden's own frame left {frame_of(hwnd) - bare}px of the system's")
 
@@ -299,7 +299,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         shot(process.pid, "04-remembered")
 
-        framed_as(held, "nib")
+        framed_as(held, "orden")
         translucent_as(held, False)
     finally:
         process.terminate()
