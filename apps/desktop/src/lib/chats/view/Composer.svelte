@@ -217,7 +217,7 @@
       setText('')
       words = ''
     }
-    const question = page.can.nib ? nibAsked(words) : null
+    const question = page.can.orden ? nibAsked(words) : null
     if (question !== null && !attachments.refs.length) {
       setText('')
       store().keepDraft(draftKey, '')

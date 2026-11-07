@@ -47,7 +47,7 @@ export interface ChatAbilities {
   link: boolean
   schedule: boolean
   unsend: boolean
-  nib: boolean
+  orden: boolean
   stickers: boolean
   gifs: boolean
   formatting: Formatting

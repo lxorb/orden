@@ -31,7 +31,7 @@ export const ORDEN_CAN: ChatAbilities = {
   link: true,
   schedule: true,
   unsend: true,
-  nib: true,
+  orden: true,
   stickers: false,
   gifs: false,
   formatting: 'markdown',
