@@ -4,7 +4,7 @@ use std::fs;
 use std::io::{Read, Write as _};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU16, AtomicU64, AtomicUsize, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender};
 use std::sync::{Condvar, Mutex};
 use std::time::{Duration, Instant};
@@ -23,6 +23,10 @@ const PATIENCE: Duration = Duration::from_secs(30);
 const SLOWEST: Duration = Duration::from_secs(10);
 
 const SECRET_BYTES: usize = 32;
+
+const MOST_AT_ONCE: usize = 32;
+
+static OPEN: AtomicUsize = AtomicUsize::new(0);
 
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
@@ -161,17 +165,49 @@ pub fn start(app: &AppHandle) {
         };
 
         for incoming in listener.incoming() {
-            let Ok(stream) = incoming else { continue };
+            let Ok(mut stream) = incoming else { continue };
 
+            let Some(admitted) = Admitted::into(&OPEN) else {
+                turn_away(&mut stream);
+                continue;
+            };
             let app = app.clone();
             let secret = kept.secret.clone();
             let port = kept.port;
             let eval = kept.eval;
-            std::thread::spawn(move || {
-                let _ = answer(&app, stream, &secret, port, eval);
-            });
+            let _ = std::thread::Builder::new()
+                .name("automation".to_owned())
+                .spawn(move || {
+                    let _admitted = admitted;
+                    let _ = answer(&app, stream, &secret, port, eval);
+                });
         }
     });
+}
+
+struct Admitted(&'static AtomicUsize);
+
+impl Admitted {
+    fn into(open: &'static AtomicUsize) -> Option<Self> {
+        let admitted = Self(open);
+        (open.fetch_add(1, Ordering::SeqCst) < MOST_AT_ONCE).then_some(admitted)
+    }
+}
+
+impl Drop for Admitted {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+fn turn_away(stream: &mut TcpStream) {
+    if stream.set_nonblocking(true).is_ok() {
+        let _ = say(
+            stream,
+            503,
+            &refused("too many callers at once; ask again in a moment"),
+        );
+    }
 }
 
 #[tauri::command]
@@ -256,7 +292,7 @@ fn answer(
     stream.set_read_timeout(Some(SLOWEST))?;
     stream.set_write_timeout(Some(SLOWEST))?;
 
-    let Some(request) = read_request(&mut stream)? else {
+    let Some(request) = read_request(&mut stream, SLOWEST)? else {
         return say(
             &mut stream,
             400,
@@ -543,7 +579,8 @@ impl Request {
     }
 }
 
-fn read_request(stream: &mut impl Read) -> std::io::Result<Option<Request>> {
+fn read_request(stream: &mut impl Read, within: Duration) -> std::io::Result<Option<Request>> {
+    let deadline = Instant::now() + within;
     let mut bytes: Vec<u8> = Vec::new();
     let mut chunk = [0_u8; 8192];
 
@@ -555,7 +592,7 @@ fn read_request(stream: &mut impl Read) -> std::io::Result<Option<Request>> {
         }
         scanned = bytes.len().saturating_sub(3);
 
-        if bytes.len() > MOST_BYTES {
+        if bytes.len() > MOST_BYTES || Instant::now() > deadline {
             return Ok(None);
         }
 
@@ -584,6 +621,9 @@ fn read_request(stream: &mut impl Read) -> std::io::Result<Option<Request>> {
 
     let mut body = bytes[ends + 4..].to_vec();
     while body.len() < length {
+        if Instant::now() > deadline {
+            return Ok(None);
+        }
         let read = stream.read(&mut chunk)?;
         if read == 0 {
             break;
@@ -666,8 +706,10 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 mod tests {
     use super::{
         as_hex, awaited, find, is_json, is_local, parse_head, read_request, reason, refused,
-        same_secret, Kept, Request, Waiting, MOST_BYTES, SECRET_BYTES,
+        same_secret, Admitted, Kept, Request, Waiting, MOST_AT_ONCE, MOST_BYTES, SECRET_BYTES,
+        SLOWEST,
     };
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
     use std::time::{Duration, Instant};
 
@@ -724,7 +766,48 @@ mod tests {
     }
 
     fn read(said: &[u8]) -> Option<Request> {
-        read_request(&mut std::io::Cursor::new(said.to_vec())).expect("a cursor cannot fail")
+        read_request(&mut std::io::Cursor::new(said.to_vec()), SLOWEST)
+            .expect("a cursor cannot fail")
+    }
+
+    struct Trickle(Duration);
+
+    impl std::io::Read for Trickle {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            std::thread::sleep(self.0);
+            buf[0] = b'a';
+            Ok(1)
+        }
+    }
+
+    #[test]
+    fn a_caller_trickling_a_byte_at_a_time_is_let_go_when_its_time_is_up() {
+        let started = Instant::now();
+
+        let read = read_request(
+            &mut Trickle(Duration::from_millis(2)),
+            Duration::from_millis(100),
+        )
+        .expect("a trickle cannot fail");
+
+        assert!(read.is_none());
+        assert!(started.elapsed() < Duration::from_secs(2));
+    }
+
+    #[test]
+    fn no_more_callers_are_answered_at_once_than_the_endpoint_allows() {
+        static OPEN: AtomicUsize = AtomicUsize::new(0);
+
+        let mut held: Vec<Admitted> = (0..MOST_AT_ONCE)
+            .map(|_| Admitted::into(&OPEN).expect("room for one more"))
+            .collect();
+        assert!(Admitted::into(&OPEN).is_none());
+
+        drop(held.pop());
+        let again = Admitted::into(&OPEN);
+        assert!(again.is_some());
+        drop(again);
+        assert_eq!(OPEN.load(Ordering::SeqCst), MOST_AT_ONCE - 1);
     }
 
     #[test]
