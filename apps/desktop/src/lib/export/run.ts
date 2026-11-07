@@ -5,9 +5,9 @@ import {
   buildBody,
   buildStyles,
   type HtmlOptions,
+  inlineImages,
   prepareEmbeds,
   prepareFences,
-  printInFrame,
   renderNote,
 } from '../export'
 import { t } from '../i18n.svelte'
@@ -21,6 +21,7 @@ import { toMarkdown } from './markdown'
 import { fileNameFor } from './naming'
 import { writtenPdf } from './print'
 import { type Picture, readPictures, sourcesIn } from './pictures'
+import { printWithPictures } from './sheet'
 import { chooseTarget, deliver, type Payload } from './save'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'
@@ -76,14 +77,16 @@ async function exportPdf(note: Note, options: RunOptions): Promise<string | null
   const target = native ? await chooseTarget(note.name, 'pdf', 'PDF') : null
   if (native && !target) return null
 
-  const html = await pageOf(note, { ...options, scheme: 'light' })
+  const { resolveImage, ...plain } = options
+  const html = await pageOf(note, { ...plain, scheme: 'light' })
   const page = paperInches(pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP))
 
   if (target) {
-    if (await writtenPdf(html, target, page)) return target
+    const whole = resolveImage ? await inlineImages(html, resolveImage) : html
+    if (await writtenPdf(whole, target, page)) return target
   }
 
-  await printInFrame(html, page)
+  await printWithPictures(html, resolveImage, page)
   return null
 }
 

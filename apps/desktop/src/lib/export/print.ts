@@ -23,14 +23,17 @@ export async function writtenPdf(
 }
 
 async function printNote(): Promise<void> {
-  const { printInFrame, renderNote } = await import('../export')
+  const [{ renderNote }, { printWithPictures }] = await Promise.all([
+    import('../export'),
+    import('./sheet'),
+  ])
 
   const target = openTarget()
-  const options = await renderOptions(target)
+  const { resolveImage, ...options } = await renderOptions(target)
   const html = await renderNote(target.source, target.name, { ...options, scheme: 'light' })
   const page = paperInches(pageSetupFor(target.source, options.page ?? DEFAULT_PAGE_SETUP))
 
-  await printInFrame(html, page)
+  await printWithPictures(html, resolveImage, page)
 }
 
 const PRINTABLE: ReadonlySet<string> = new Set(

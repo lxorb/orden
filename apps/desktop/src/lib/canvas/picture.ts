@@ -1,6 +1,7 @@
 import { escapeAll } from '@orden/markdown/html'
-import { assetsOf, inlineImages, localSources, printInFrame, SHEET_POLICY } from '../export'
+import { assetsOf, inlineImages, localSources, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
+import { printWithPictures } from '../export/sheet'
 import { chooseTarget, download, handOver } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
 import {
@@ -365,19 +366,19 @@ function chosenPalette(drawing: Drawing): Palette {
 
 const DRAWN = /(<image\b[^>]*?\bhref=")([^"]*)(")/g
 
-export async function inlinedSvg(svg: string): Promise<string> {
-  const back = (src: string) => assetPath(src) ?? src
+const fromAsset = (src: string) => assetPath(src) ?? src
 
+export async function inlinedSvg(svg: string): Promise<string> {
   try {
     const drawn = [...svg.matchAll(DRAWN)].map((match) => `<img src="${match[2] ?? ''}">`)
-    const found = await assetsOf(localSources(drawn.join('')), back)
+    const found = await assetsOf(localSources(drawn.join('')), fromAsset)
     return await inlineImages(
       svg.replace(
         DRAWN,
         (_whole: string, before: string, src: string, after: string) =>
           `${before}${found.get(src) ?? src}${after}`,
       ),
-      back,
+      fromAsset,
     )
   } catch {
     return svg
@@ -414,8 +415,16 @@ export async function exportCanvasPng(drawing: Drawing) {
   return name
 }
 
-async function sheetOf(drawing: Drawing) {
-  const svg = await readySvg(drawing, paletteOf('light'))
+async function sheetOf(drawing: Drawing, inline: boolean) {
+  const drawn = canvasSvg(
+    drawing.canvas,
+    paletteOf('light'),
+    drawing.path,
+    drawing.root,
+    false,
+    drawing.trusted,
+  )
+  const svg = inline ? await inlinedSvg(drawn) : drawn
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
   const height = Number(size?.[4] ?? 600)
@@ -426,19 +435,19 @@ async function sheetOf(drawing: Drawing) {
 }
 
 export async function printCanvas(drawing: Drawing) {
-  const { html, page } = await sheetOf(drawing)
-  await printInFrame(html, page)
+  const { html, page } = await sheetOf(drawing, false)
+  await printWithPictures(html, fromAsset, page)
 }
 
 export async function exportCanvasPdf(drawing: Drawing) {
-  const { html, page } = await sheetOf(drawing)
-
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
 
   if (target) {
+    const { html, page } = await sheetOf(drawing, true)
     if (await writtenPdf(html, target, page)) return target
   }
 
-  await printInFrame(html, page)
+  const { html, page } = await sheetOf(drawing, false)
+  await printWithPictures(html, fromAsset, page)
 }
