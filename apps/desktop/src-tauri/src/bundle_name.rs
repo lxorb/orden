@@ -103,12 +103,12 @@ mod tests {
     #[test]
     fn anything_else_keeps_its_name() {
         for exe in [
-            "/Applications/Orden.app/Contents/MacOS/nib",
+            "/Applications/Orden.app/Contents/MacOS/orden",
             "/Applications/Nib Copy.app/Contents/MacOS/nib",
             "/Applications/nibeditor 2.app/Contents/MacOS/nib",
             "/Applications/Nib.app/Contents/Resources/nib",
             "/Applications/nibeditor.app/Contents/Resources/nib",
-            "/Users/a/code/nib/target/release/nib",
+            "/Users/a/code/nib/target/release/orden",
             "nib",
         ] {
             assert_eq!(renamed(Path::new(exe)), None, "{exe}");

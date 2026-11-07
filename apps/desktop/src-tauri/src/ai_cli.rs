@@ -858,7 +858,7 @@ exec node '{}' {name} \"$@\"
         for one in [".claude", ".codex"] {
             std::fs::create_dir_all(home.join(one)).expect("a home");
         }
-        let nib = dir.path().join("nib.exe");
+        let nib = dir.path().join("orden.exe");
         for (tool, kept) in [
             (Tool::ClaudeCode, home.join(".claude").join("fake-mcp.json")),
             (Tool::Codex, home.join(".codex").join("fake-mcp.json")),
@@ -1159,8 +1159,11 @@ exec node '{}' {name} \"$@\"
 
     fn claude_session(mode: &str, shape: Shape, folder: &Path) -> (Claude, Receiver<Message>) {
         let config = folder.join("nib-mcp.json");
-        std::fs::write(&config, args::mcp_config(Path::new("nib.exe")).to_string())
-            .expect("config");
+        std::fs::write(
+            &config,
+            args::mcp_config(Path::new("orden.exe")).to_string(),
+        )
+        .expect("config");
         let args = args::claude_session(shape, &full_caps(), &config).expect("args");
         let mut command = fake(Tool::ClaudeCode, mode, &args);
         command.envs(args::CLAUDE_SESSION_ENV);
@@ -1300,7 +1303,7 @@ exec node '{}' {name} \"$@\"
         Host::start(
             command,
             IDLE,
-            PathBuf::from("nib.exe"),
+            PathBuf::from("orden.exe"),
             folder.to_path_buf(),
         )
         .expect("started")
@@ -1542,7 +1545,7 @@ exec node '{}' {name} \"$@\"
         let host = Host::start(
             command,
             IDLE,
-            PathBuf::from("nib.exe"),
+            PathBuf::from("orden.exe"),
             dir.path().to_path_buf(),
         )
         .expect("started");
@@ -1633,7 +1636,7 @@ exec node '{}' {name} \"$@\"
             mode: tools,
             without: Vec::new(),
         };
-        let nib = tools.map(|_| PathBuf::from("nib.exe"));
+        let nib = tools.map(|_| PathBuf::from("orden.exe"));
         let gemini =
             Gemini::start(launch, "g-1", None, IDLE, nib.as_deref(), output).expect("started");
         (gemini, heard)

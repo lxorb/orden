@@ -74,19 +74,19 @@ jobs:
 
       - name: Through the endpoint
         run: |
-          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/nib.exe \
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/orden.exe \
             --identifier "$IDENTIFIER" --via endpoint --out endpoint.json
 
-      - name: Through nib mcp
+      - name: Through orden mcp
         if: always()
         run: |
-          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/nib.exe \
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/orden.exe \
             --identifier "$IDENTIFIER" --via mcp --out mcp.json
 
       - name: What an agent set up costs the launch
         if: always()
         run: |
-          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/nib.exe \
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/orden.exe \
             --identifier "$IDENTIFIER" --launch-cost 3
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

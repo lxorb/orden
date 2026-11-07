@@ -162,11 +162,11 @@ mod tests {
         })
     }
 
-    const DEB_EXE: &str = "/usr/bin/nib";
+    const DEB_EXE: &str = "/usr/bin/orden";
 
     #[test]
     fn an_appimage_updates_itself() {
-        let exe = "/tmp/.mount_OrdenX/usr/bin/nib";
+        let exe = "/tmp/.mount_OrdenX/usr/bin/orden";
         let vars = [("APPIMAGE", "/home/a/Orden.AppImage")];
         assert_eq!(
             on("linux", exe, Some(BundleType::AppImage), &vars, &[]),
@@ -214,7 +214,7 @@ mod tests {
         assert_eq!(
             on(
                 "linux",
-                "/snap/orden/12/usr/bin/nib",
+                "/snap/orden/12/usr/bin/orden",
                 Some(BundleType::Deb),
                 &vars,
                 &[]
@@ -225,7 +225,7 @@ mod tests {
         assert_eq!(
             on(
                 "linux",
-                "/tmp/.mount_x/usr/bin/nib",
+                "/tmp/.mount_x/usr/bin/orden",
                 Some(BundleType::AppImage),
                 &vars,
                 &[]
@@ -236,7 +236,7 @@ mod tests {
 
     #[test]
     fn the_nix_store_is_nixs_even_for_the_appimage_it_wraps() {
-        let exe = "/nix/store/abc-orden-0.15.0-extracted/usr/bin/nib";
+        let exe = "/nix/store/abc-orden-0.15.0-extracted/usr/bin/orden";
         let vars = [("APPIMAGE", "/nix/store/abc-orden.AppImage")];
         assert_eq!(
             on("linux", exe, Some(BundleType::AppImage), &vars, &[]),
@@ -248,7 +248,7 @@ mod tests {
     #[test]
     fn a_build_of_nobodys_updates_itself() {
         assert_eq!(
-            on("linux", "/home/a/orden/target/debug/nib", None, &[], &[]),
+            on("linux", "/home/a/orden/target/debug/orden", None, &[], &[]),
             None
         );
     }
@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn chocolatey_is_known_by_its_record_of_the_msi() {
-        let exe = r"C:\Program Files\Orden\nib.exe";
+        let exe = r"C:\Program Files\Orden\orden.exe";
         let vars = [("ChocolateyInstall", r"C:\ProgramData\chocolatey")];
         let record = [r"C:\ProgramData\chocolatey\lib\nib"];
         assert_eq!(
@@ -282,7 +282,7 @@ mod tests {
             on("windows", exe, Some(BundleType::Msi), &vars, &record),
             Some(Manager::Choco)
         );
-        let exe = r"C:\Users\A\AppData\Local\Orden\nib.exe";
+        let exe = r"C:\Users\A\AppData\Local\Orden\orden.exe";
         assert_eq!(
             on("windows", exe, Some(BundleType::Nsis), &vars, &record),
             None
@@ -295,7 +295,7 @@ mod tests {
         assert_eq!(
             on(
                 "windows",
-                r"C:\Program Files\Orden\nib.exe",
+                r"C:\Program Files\Orden\orden.exe",
                 Some(BundleType::Msi),
                 &vars,
                 &[]
@@ -305,7 +305,7 @@ mod tests {
         assert_eq!(
             on(
                 "windows",
-                r"C:\Users\A\AppData\Local\Orden\nib.exe",
+                r"C:\Users\A\AppData\Local\Orden\orden.exe",
                 Some(BundleType::Nsis),
                 &[],
                 &[]
@@ -316,7 +316,7 @@ mod tests {
 
     #[test]
     fn homebrew_is_known_by_its_caskroom() {
-        let exe = "/Applications/Orden.app/Contents/MacOS/nib";
+        let exe = "/Applications/Orden.app/Contents/MacOS/orden";
         for room in ["/opt/homebrew/Caskroom/orden", "/usr/local/Caskroom/nib"] {
             assert_eq!(
                 on("macos", exe, Some(BundleType::App), &[], &[room]),

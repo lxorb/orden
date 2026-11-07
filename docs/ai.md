@@ -116,7 +116,7 @@ stdin, `--resume <session>` from the second turn on; Orden's system prompt by
 `GEMINI_SYSTEM_MD`, its workroom trusted for the run (`GEMINI_CLI_TRUST_WORKSPACE`, else
 a headless run in an untrusted folder exits), and its settings by
 `GEMINI_CLI_SYSTEM_SETTINGS_PATH`: the built-in
-tools excluded, skills and hooks off, and for a sidebar thread `nib mcp` alone
+tools excluded, skills and hooks off, and for a sidebar thread `orden mcp` alone
 (`--allowed-mcp-server-names orden`, `includeTools` for the mode, the token by
 `${ORDEN_MCP_TOKEN}` from the environment). Its models are its aliases (Auto, Pro, Flash,
 Flash-Lite); it has no effort, no steering and no pictures from Orden.
@@ -133,7 +133,7 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
   `CLAUDE.md`, sign-in and model as always) and `--permission-prompts none`. Orden's own
   one-line system prompt replaces the coding agent's.
 - **Claude Code, a sidebar thread**: the same, kept open with turns on stdin
-  (`--input-format stream-json`), with one tool: `nib mcp` (`--mcp-config`), only the
+  (`--input-format stream-json`), with one tool: `orden mcp` (`--mcp-config`), only the
   mode's verbs allowed and the rest left out (`--allowedTools`, `--disallowedTools`),
   everything else refused without asking (`--permission-mode dontAsk`), so Claude Code
   itself never prompts in any mode. `--restricted`
@@ -145,16 +145,16 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
 - **Codex**: `app-server`, read-only and asking nobody (`sandbox_mode`,
   `approval_policy`), the shell tool, web search and MCP servers off, `AGENTS.md`
   unread, nothing in its history; each thread ephemeral, with Orden's instructions, and
-  for a sidebar thread `nib mcp` alone with the mode's verbs (`enabled_tools`), sent on
+  for a sidebar thread `orden mcp` alone with the mode's verbs (`enabled_tools`), sent on
   stdin. The crate is the app-server's only client: every request is written there,
   and every request the app-server makes of its client (an approval, an elicitation, a
   token refresh) is answered no.
-- **The tool's token**: `nib mcp` proves itself with a token lent to the sidebar's
+- **The tool's token**: `orden mcp` proves itself with a token lent to the sidebar's
   built-in grant ("nib · Claude Code" in Settings > Agents) for the thread's mode, one per
   provider and mode, made once per run of the app, kept in memory, and handed over in the
   program's environment (`ORDEN_MCP_TOKEN`), never on a command line or in a file. The
   endpoint knows the mode by it, so Agent asks nothing and Approve asks before every
-  change, at Orden's own verbs; in Approve `nib mcp` holds the call open while the reader
+  change, at Orden's own verbs; in Approve `orden mcp` holds the call open while the reader
   answers in the thread (docs/ai-sidebar.md 4.4). It stands in for pairing, so the
   reader's own pairing of their own Claude Code is never read or touched.
 - **Agent mode** gives a program nothing more than Orden's verbs: never `bypassPermissions`,
@@ -170,7 +170,7 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
 
 The Ask panel hands a question the passages it found itself, so no question needs a
 program to read the notes. The sidebar's agent reads them with Orden's own MCP server
-(`nib mcp`) under the grant Settings > Agents gives it, never a folder.
+(`orden mcp`) under the grant Settings > Agents gives it, never a folder.
 
 ### Honest about whose plan it is
 
@@ -204,7 +204,7 @@ so the list reads as what they are.
 
 Settings > AI is one page in two groups. **Accounts**: the providers and their accounts
 below, and Used for. **Access**: everything that can reach the notes, in one list - the
-agents on this computer, through `nib mcp` (docs/agent-native.md 9.1, 10), and the apps
+agents on this computer, through `orden mcp` (docs/agent-native.md 9.1, 10), and the apps
 connected through the account's connector - each row saying what it reaches and when it
 was last used; an agent's row opens its grant. Under the list, one **Connect** chooser
 over both roads (Claude Code, Codex, Antigravity, Claude, ChatGPT, Other), each way only
@@ -486,10 +486,10 @@ subagent tool of its own (`--tools ""`), so this is its subagent tool.
   first; an exact id or name wins, then one that holds the word; a word nobody has is
   refused with the models there are (`helpers/route.ts`).
 - **How it is waited for**: a call waits twenty seconds in the window, under the half
-  minute the endpoint gives it; `nib mcp` then holds the call open and asks `agent_result`
+  minute the endpoint gives it; `orden mcp` then holds the call open and asks `agent_result`
   until the helper has ended, up to nine of the ten minutes each program gives a tool, and
   the model is told to call `agent_result` past that. The API loop waits outright.
-- **Which thread**: a panel session's `nib mcp` is told its thread beside its token
+- **Which thread**: a panel session's `orden mcp` is told its thread beside its token
   (`ORDEN_MCP_THREAD`, per Claude Code session and per Codex thread), so a helper is its
   thread's: in its mode, and stopped with it.
 - **Limits**: two deep under the thread the reader started (Claude Code's own is three),

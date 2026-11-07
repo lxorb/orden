@@ -162,7 +162,7 @@ jobs:
           name: symbols-${{ matrix.label }}-${{ needs.version.outputs.version }}
           if-no-files-found: warn
           retention-days: 90
-          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib.pdb
+          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.pdb
 
   mac:
     needs: [version, settle]
@@ -198,7 +198,7 @@ jobs:
           name: mac-half-${{ matrix.target }}
           if-no-files-found: error
           retention-days: 1
-          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib
+          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: matrix.target == 'aarch64-apple-darwin'
@@ -242,10 +242,10 @@ jobs:
         shell: bash
         run: |
           mkdir -p "$UNIVERSAL"
-          lipo -create -output "$UNIVERSAL/nib" \
-            halves/mac-half-aarch64-apple-darwin/nib halves/mac-half-x86_64-apple-darwin/nib
-          chmod 755 "$UNIVERSAL/nib"
-          lipo -info "$UNIVERSAL/nib"
+          lipo -create -output "$UNIVERSAL/orden" \
+            halves/mac-half-aarch64-apple-darwin/orden halves/mac-half-x86_64-apple-darwin/orden
+          chmod 755 "$UNIVERSAL/orden"
+          lipo -info "$UNIVERSAL/orden"
 
       - name: Apple signing
         shell: bash

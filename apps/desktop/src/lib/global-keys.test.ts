@@ -6,7 +6,7 @@ const keys = (over: Partial<GlobalKeys>): GlobalKeys => ({
   change: true,
   held: {},
   refused: [],
-  run: 'nib',
+  run: 'orden',
   ...over,
 })
 
@@ -25,7 +25,7 @@ describe('what a shortcut row says about other apps', () => {
     expect(said?.text).toContain('orden --quick-add')
     expect(said?.change).toBe(false)
     expect(noteFor(keys({ reach: 'none' }), 'agents.stop', null)?.text).toContain(
-      'nib --stop-agents',
+      'orden --stop-agents',
     )
   })
 

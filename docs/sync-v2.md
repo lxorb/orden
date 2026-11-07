@@ -472,7 +472,7 @@ disappears, because a device never arrives holding only a file any more: it arri
 the document it edited.
 
 The markdown on the account (`notes` row, R2 body) stays the canonical *read* form:
-publishing, the connector, the glasses, search, `nib-sync.mjs` and the versions read it,
+publishing, the connector, the glasses, search, `orden-sync.mjs` and the versions read it,
 and the room's settle writes it exactly as today. The Yjs document is the canonical *merge*
 form.
 
@@ -534,7 +534,7 @@ time it wakes; a device whose file already reads as `epoch_base` builds the same
 without downloading anything.
 
 **Once a note has an epoch, its room is the only thing that writes it.** A v1 push, the
-connector, a rollback and `nib-sync.mjs` all hand their text to the room's `ingest` instead
+connector, a rollback and `orden-sync.mjs` all hand their text to the room's `ingest` instead
 of calling `saveNote` themselves. So the room always wakes and seeds from the body
 `epoch_base` names before anything changes that body, and nothing has to keep old bodies
 around for seeding.
@@ -753,7 +753,7 @@ checks membership, where `/i/:hash` stays for published pages.
 
 Folders become rows with ids. A note's place is `folder_id` and `name`; `path` stays as a
 column the account derives and keeps current, because publishing, the connector and
-`nib-sync.mjs` read it. Operations name ids, carry an operation id (idempotent) and the
+`orden-sync.mjs` read it. Operations name ids, carry an operation id (idempotent) and the
 space cursor the device had seen (`seen`):
 
 | op | fields |
@@ -1604,7 +1604,7 @@ are gone, and the web tables below stay unread (section 6).
 - `NoteRoom` (existing class, no new tag): HTTP `push`, `pull`, `keep` for its note; durable
   log writes for HTTP pushes; `ACK` and `EPOCH` messages; the R2 snapshot at each settle;
   `ingest(text, baseVersion?)` for whole-text writers (v1 PUT, connector, rollback,
-  `nib-sync.mjs`), which applies `textops(current, text)` under the room's own client id
+  `orden-sync.mjs`), which applies `textops(current, text)` under the room's own client id
   (`hash32(noteId, 'account')`, safe because the room is the only writer of that id and
   persists before it settles); seeding epoch 1 from the current body the first time it
   wakes at an epoch its storage does not hold (section 11, step 3).

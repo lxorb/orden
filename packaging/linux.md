@@ -37,16 +37,17 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 ```
 Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
 Depends: libgtk-4-1 (>= 4.14), libnss3, libnspr4, ... (`bundle.linux.deb.depends`)
-usr/bin/nib -> ../share/Orden/nib
-usr/share/Orden/nib, libcef.so, icudtl.dat, v8_context_snapshot.bin, *.pak, locales/en-US*.pak
+usr/bin/orden -> ../share/Orden/orden
+usr/bin/nib and usr/share/Orden/nib, a script that runs orden, for the release after the rename (nib up to 0.20)
+usr/share/Orden/orden, libcef.so, icudtl.dat, v8_context_snapshot.bin, *.pak, locales/en-US*.pak
 usr/share/Orden/libvk_swiftshader.so, vk_swiftshader_icd.json, libvulkan.so.1
 usr/share/Orden/chrome-sandbox (setuid root)
 usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop up to 0.13)
-usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
+usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/orden.png (nib.png up to 0.20)
 ```
 
 The program is beside the engine it runs on, CEF, in `/usr/share/Orden`, where it finds
-`libcef.so` and Chromium finds its resources; `/usr/bin/nib` is a link to it. The `.rpm`
+`libcef.so` and Chromium finds its resources; `/usr/bin/orden` is a link to it. The `.rpm`
 is laid out the same way. Two empty files go in beside them as well, `libEGL.so` and
 `libGLESv2.so`: CEF 154 links ANGLE into `libcef.so` and no longer ships the two, and
 the bundler still copies them by name (see `scripts/linux-cef.sh`). Chromium only loads

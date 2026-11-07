@@ -53,7 +53,7 @@ export function places(): Place[] {
     all.push({
       section: 'ai',
       label: t('Agents'),
-      text: ['MCP', 'nib mcp', 'Claude Code', 'Codex', 'token', t('Create a token')],
+      text: ['MCP', 'orden mcp', 'Claude Code', 'Codex', 'token', t('Create a token')],
     })
   }
 

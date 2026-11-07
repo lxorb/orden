@@ -25,7 +25,7 @@ const copy = <T>(value: T): T => structuredClone(value)
 export class FakeCrate implements AgentsCrate {
   grants: Grant[] = []
   log = new Map<string, unknown[]>()
-  path: string | null = 'C:\\Users\\you\\AppData\\Local\\Nib\\nib.exe'
+  path: string | null = 'C:\\Users\\you\\AppData\\Local\\Orden\\orden.exe'
   writes = 0
   failing: Error | null = null
   private listeners = new Set<(event: Heard) => void>()

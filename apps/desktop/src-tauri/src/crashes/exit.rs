@@ -296,7 +296,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         std::fs::write(
             dir.path().join(crate::crashes::native::STUB),
-            "orden-crash 1\nat 5000\nversion 1.0.0\nwhat SIGSEGV\ncode 0x1\naddress 0x0\nthread main\nmain 1\nframe nib\t0x10\t\n",
+            "orden-crash 1\nat 5000\nversion 1.0.0\nwhat SIGSEGV\ncode 0x1\naddress 0x0\nthread main\nmain 1\nframe orden\t0x10\t\n",
         )
         .expect("a stub");
         let found = after_last_run(dir.path(), &before(Some(last(90_000)), 10));

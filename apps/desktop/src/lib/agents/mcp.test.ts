@@ -8,18 +8,20 @@ import { AGENT_WINDOW_VERBS, BROWSER_VERBS } from './verbs'
 
 describe('the line that adds Orden to a client', () => {
   it('names the installed exe in quotes on Windows, at user scope', () => {
-    expect(mcpLine('C:\\Users\\me\\AppData\\Local\\Nib\\nib.exe')).toBe(
-      'claude mcp add --scope user orden -- "C:\\Users\\me\\AppData\\Local\\Nib\\nib.exe" mcp',
+    expect(mcpLine('C:\\Users\\me\\AppData\\Local\\Orden\\orden.exe')).toBe(
+      'claude mcp add --scope user orden -- "C:\\Users\\me\\AppData\\Local\\Orden\\orden.exe" mcp',
     )
-    expect(mcpLine('C:\\Program Files\\Nib\\nib.exe', 'codex')).toBe(
-      'codex mcp add orden -- "C:\\Program Files\\Nib\\nib.exe" mcp',
+    expect(mcpLine('C:\\Program Files\\Orden\\orden.exe', 'codex')).toBe(
+      'codex mcp add orden -- "C:\\Program Files\\Orden\\orden.exe" mcp',
     )
   })
 
   it('quotes a path elsewhere only when the shell would split it', () => {
-    expect(mcpLine('/usr/bin/nib')).toBe('claude mcp add --scope user orden -- /usr/bin/nib mcp')
-    expect(mcpLine('/Applications/Nib.app/Contents/MacOS/nib', 'codex')).toBe(
-      'codex mcp add orden -- /Applications/Nib.app/Contents/MacOS/nib mcp',
+    expect(mcpLine('/usr/bin/orden')).toBe(
+      'claude mcp add --scope user orden -- /usr/bin/orden mcp',
+    )
+    expect(mcpLine('/Applications/Orden.app/Contents/MacOS/orden', 'codex')).toBe(
+      'codex mcp add orden -- /Applications/Orden.app/Contents/MacOS/orden mcp',
     )
     expect(mcpLine("/home/a/Apps/Emil's Nib.AppImage")).toBe(
       "claude mcp add --scope user orden -- '/home/a/Apps/Emil'\\''s Nib.AppImage' mcp",
@@ -27,8 +29,8 @@ describe('the line that adds Orden to a client', () => {
   })
 
   it('is an entry for a client configured by file', () => {
-    expect(JSON.parse(mcpLine('C:\\Nib\\nib.exe', 'json'))).toEqual({
-      mcpServers: { orden: { command: 'C:\\Nib\\nib.exe', args: ['mcp'] } },
+    expect(JSON.parse(mcpLine('C:\\Orden\\orden.exe', 'json'))).toEqual({
+      mcpServers: { orden: { command: 'C:\\Orden\\orden.exe', args: ['mcp'] } },
     })
   })
 })

@@ -3,7 +3,7 @@ set -u
 
 app="$1"
 identifier="so.orden.Orden.probe.mac-window"
-cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
+cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/orden.mjs"
 support="$HOME/Library/Application Support/$identifier"
 export ORDEN_ENDPOINT="$support/automation.json"
 shots="${SHOTS:-mac-window-shots}"

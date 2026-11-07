@@ -41,7 +41,7 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
    and an estimate (marked ≈) for the draft. Hover for numbers, click for the breakdown;
    compaction is automatic near the top and `/compact` by hand.
 5. **The agent is Orden's own agent with Orden's own tools.** Whether Orden runs the loop (keys and
-   the ChatGPT plan) or Claude Code and Codex do, the tools are the `nib mcp` verbs, under a
+   the ChatGPT plan) or Claude Code and Codex do, the tools are the `orden mcp` verbs, under a
    grant in Settings > Agents, through the same policy as any agent: the always-ask list,
    untrusted marks, the stop key. Never a folder, never a shell of the reader's.
 6. **Edits land live and are reviewed after**, Cursor's and Copilot's way: every note the
@@ -688,19 +688,19 @@ Two roads to the same tools:
   policy path in the window. A compatible server that refuses tools leaves the thread
   answering in words, and says so in a line.
 - **Claude Code and Codex: they run the loop, and Orden is their only tool.** Claude Code gets
-  `--mcp-config` naming `nib mcp` alone (with the built-in agent's token), still
+  `--mcp-config` naming `orden mcp` alone (with the built-in agent's token), still
   `--tools ""` and `--strict-mcp-config`, so none of its own file, shell or web tools and
   none of the reader's MCP servers; Codex gets `mcp_servers` with `nib` alone, its shell
   tool off, read-only sandbox. This is the road `docs/ai.md` already promises: "One that
-  ever does gets nib's own MCP server (`nib mcp`) with the grant Settings > Agents gives
+  ever does gets nib's own MCP server (`orden mcp`) with the grant Settings > Agents gives
   it, never a folder." The crate still writes every argument (`apps/desktop/src-tauri/src/ai_cli/args.rs`).
   Neither program prompts in any mode: in the three permission modes every Orden verb is allowed in
   advance (`--permission-mode dontAsk`, Codex's `approvalPolicy: never`), which within a
   toolset of Orden's verbs alone is what `bypassPermissions` and Full Access would be,
   without lifting a sandbox nothing uses or tripping a managed setting that forbids them.
-  What asks is nib: the token `nib mcp` is handed is lent for the thread's mode
+  What asks is nib: the token `orden mcp` is handed is lent for the thread's mode
   (`ai_agent::lend`), so the endpoint supervises the session as that mode says, and in
-  Approve `nib mcp` holds the program's call open while the reader answers in the row (up
+  Approve `orden mcp` holds the program's call open while the reader answers in the row (up
   to seven minutes; each program gives a Orden tool ten).
 
 `@web` is the one tool that is the provider's rather than Orden's, turned on per message.
@@ -977,7 +977,7 @@ names a tool, a model, an effort, a mode and a thread, never a flag. What change
 
 - **Claude Code** runs as a session: `-p --input-format stream-json --output-format
   stream-json --verbose --include-partial-messages`, `--effort` where the version has it,
-  `--mcp-config` naming `nib mcp` alone, `--tools ""`, `--strict-mcp-config`, the mode's
+  `--mcp-config` naming `orden mcp` alone, `--tools ""`, `--strict-mcp-config`, the mode's
   verbs in `--allowedTools` and the rest in `--disallowedTools`, `--permission-mode
   dontAsk`, `--permission-prompts none`, `--no-session-persistence`, `--restricted`, nib's
   system line per mode, and `CLAUDE_CODE_DISABLE_CLAUDE_MDS`. Not `--safe-mode`: measured
@@ -1056,7 +1056,7 @@ run(context) }`.
 | lane | owns | builds | tests | wave |
 | --- | --- | --- | --- | --- |
 | **1 `ai-chat-engine`** | `lib/ai/chat/` (new), additions to `apps/desktop/src/lib/ai/providers.ts` and `apps/desktop/src/lib/ai/stream.ts` | the types above; the thread store (crate-kept files per space, a `ai_threads` read/write pair in `src-tauri/src/ai_threads.rs`); the API adapter for Anthropic Messages, OpenAI Responses (keys and the ChatGPT plan: `store: false`, `stream: true`, tools in a namespace), chat completions; the tool loop calling the crate as the built-in agent; effort mapping and refusal learning; the model catalogue with capabilities and windows (4.9); usage and the ≈ estimate; compaction (server where offered, own summary otherwise) | unit tests against recorded provider streams and a fake crate: every adapter's text, thinking, tool and usage events, effort refused and stepped, compaction swaps, transcript round-trip; `complete.test.ts` and `seam.test.ts` untouched and green | 1 |
-| **2 `ai-cli-sessions`** | `apps/desktop/src-tauri/src/ai_cli/` (new `session.rs`, `codex_app.rs`; `args.rs`), `apps/desktop/src-tauri/src/ai_cli.rs`, `apps/desktop/src/lib/ai/local/`, `scripts/fake-ai-cli.mjs` | the Claude Code session (stream-json in, `--effort`, `--mcp-config` with `nib mcp` alone and the built-in token, interrupt, idle end, reseed); Codex on the app-server (thread, turn, steer, interrupt, compact, goal, fork, `model/list`, token usage); both as `Engine` adapters; the fake CLI speaking both protocols | cargo tests over the fake through the real spawn, stream, stop and timeout; a test that no argument comes from the window but tool, model, effort, mode and thread; the args table test extended; `cargo test real_claude -- --ignored` read-only; a draft-PR CI before main | 1 |
+| **2 `ai-cli-sessions`** | `apps/desktop/src-tauri/src/ai_cli/` (new `session.rs`, `codex_app.rs`; `args.rs`), `apps/desktop/src-tauri/src/ai_cli.rs`, `apps/desktop/src/lib/ai/local/`, `scripts/fake-ai-cli.mjs` | the Claude Code session (stream-json in, `--effort`, `--mcp-config` with `orden mcp` alone and the built-in token, interrupt, idle end, reseed); Codex on the app-server (thread, turn, steer, interrupt, compact, goal, fork, `model/list`, token usage); both as `Engine` adapters; the fake CLI speaking both protocols | cargo tests over the fake through the real spawn, stream, stop and timeout; a test that no argument comes from the window but tool, model, effort, mode and thread; the args table test extended; `cargo test real_claude -- --ignored` read-only; a draft-PR CI before main | 1 |
 | **3 `ai-review`** | `lib/ai/review/` (new), `review/` in the editor package (new), the sidebar agent's grant in `apps/desktop/src-tauri/src/agents/grants.rs` | the built-in grant per provider and its mode views (4.4), **Ask before edits** as `needs_approval` with the change; the changes list, per-change Keep and Undo mapped through later edits, the gutter marks and tints, checkpoints, rewind with its five choices and Redo, edit-and-resend; Follow | unit tests on `test-desk.ts`: undo of one change among the reader's typing and the agent's later edits, rewind across three notes, a created note to Recently deleted, a kept change leaving no mark; grant tests for each mode's tool list | 2 |
 | **4 `ai-sidebar-ui`** | `lib/ai/sidebar/` (new), the Ask panel (replaced), `apps/desktop/src/lib/Sidebar.svelte` and `apps/desktop/src/lib/surfaces.svelte.ts` (the slot), keys in `apps/desktop/src/lib/shortcuts/registry.ts`, `apps/desktop/src/locales` | the panel of 4.1: thread header and list with search, messages with parts, folded thinking and tool rows, the changes bar (drawing lane 3's list), queue chips with reorder, the field with chips, `@` menu and `/` menu (drawing lane 5's registry), mode chip, model popover, ring and tray, voice; Continue in the panel from the quick question; Open as a tab; motion; all strings in every catalogue | component tests; a drive `test/e2e/ai-sidebar.py` against the fake provider of `apps/desktop/test/e2e/ai.py`: a send, a stop, a queued and a steered message, a model and effort switch, the ring filling, an edit kept and one undone, a rewind; the Ask drive green in Approve mode; `weight.test.ts` unchanged | 2 |
 | **5 `ai-commands`** | `lib/ai/commands/` (new) | the registry of section 3, table-driven, with synonyms, arguments and availability per provider; custom commands and agent profiles from front matter (4.7); the runners: `/goal` and its evaluator, `/loop`, `/subtask`, `/bg`, `/batch`, `/deep-research`, `/init`, `/memory` and remembering, `/export`, `/usage`, `/status`, `/doctor`, the verbs of 3.5 | a table test that every row of section 3 is registered, no name or synonym is taken twice, every command is available or dimmed with a reason for each of the six provider kinds, and none of 3.7 is registered; the goal loop against a fake engine through met, impossible, budget, no-progress and a fatal error; front-matter commands found, argued and overridden | 2 |
@@ -1089,7 +1089,7 @@ Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`. Lane 2's one change in
   it is in the first paint, and keeps one per setup and program, since an engine holds
   its threads' sessions; `registerLocalEngine(kind, load)` takes a loader of a setup.
 - **Events** are the API engine's: `turn` for the reader's message and the model's,
-  `part` as each grows (text, thinking, a `tool` row per `nib mcp` call with the verb's
+  `part` as each grows (text, thinking, a `tool` row per `orden mcp` call with the verb's
   own name and its answer), `model`, `usage` (the program's own counts; `window` from
   Claude Code's `modelUsage` or Codex's `modelContextWindow`), `limit`, and `done` once.
   Notices it writes: `model`, `compacted`, `stopped`, `error`.
@@ -1115,7 +1115,7 @@ Agreed by lane 2 against lane 1's `lib/ai/chat/types.ts`. Lane 2's one change in
   `goal.turns` and `goal.tokens` from them and draws the same chip on both roads.
 - **The grant.** The crate asks `ai_agent::grant_for` for the provider's built-in grant,
   the one the API loop uses (`nib-<provider id>`, with the same two choices from
-  `lib/ai/chat/choices.ts`), and issues its token for `nib mcp`; lane 3's grant work
+  `lib/ai/chat/choices.ts`), and issues its token for `orden mcp`; lane 3's grant work
   applies to both roads unchanged.
 
 ### 6.5 Where lane 5 meets the panel, the review and the sessions
@@ -1195,7 +1195,7 @@ which draws a thread changed outside a send again and writes it down: a rewind c
 turns, and Redo and a branch put turns back. Lane 5's `Panel` already has this shape.
 
 Underneath: an edit's thread is the one its call said it runs for (`ai_agent_call` and
-`nib mcp` both carry it, and the agent's step keeps it), since two threads of one provider
+`orden mcp` both carry it, and the agent's step keeps it), since two threads of one provider
 can run at once as one agent; only an edit whose call said none goes by the thread that was
 answering for its provider when it was made (`lib/ai/chat/sends.ts`, written by
 `engineFor`). Its checkpoint is the reader's latest message before it. A note made, moved

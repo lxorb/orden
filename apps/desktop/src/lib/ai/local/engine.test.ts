@@ -543,10 +543,10 @@ describe('a Codex thread', () => {
       code: null,
       timedOut: false,
       stopped: false,
-      err: 'nib mcp has no token',
+      err: 'orden mcp has no token',
     })
     const events = await sending
-    expect(events.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'nib mcp has no token' })
+    expect(events.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'orden mcp has no token' })
   })
 })
 

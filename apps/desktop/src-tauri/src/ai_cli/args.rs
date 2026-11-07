@@ -578,7 +578,7 @@ mod tests {
         assert!(denied.contains("mcp__orden__browser_navigate"));
         assert!(denied.contains("mcp__orden__write_note"));
 
-        let nib = PathBuf::from("nib");
+        let nib = PathBuf::from("orden");
         let folder = PathBuf::from("ai");
         let thread = codex_thread(Some(Mode::Auto), None, &without, &nib, &folder);
         let enabled = thread["config"]["mcp_servers.orden.enabled_tools"]
@@ -646,7 +646,7 @@ mod tests {
 
     #[test]
     fn a_codex_thread_adds_nib_alone_with_its_mode_s_tools() {
-        let nib = PathBuf::from("nib.exe");
+        let nib = PathBuf::from("orden.exe");
         let folder = PathBuf::from("ai");
         let plan = codex_thread(Some(Mode::Plan), Some("gpt-5.1-codex"), &[], &nib, &folder);
         assert_eq!(plan["sandbox"], "read-only");
@@ -691,7 +691,7 @@ mod tests {
 
     #[test]
     fn the_mcp_config_names_orden_alone_and_no_token() {
-        let config = mcp_config(Path::new("nib.exe"));
+        let config = mcp_config(Path::new("orden.exe"));
         let servers = config["mcpServers"].as_object().expect("servers");
         assert_eq!(servers.len(), 1);
         assert_eq!(servers["orden"]["args"], json!(["mcp"]));
@@ -768,7 +768,7 @@ mod tests {
 
     #[test]
     fn gemini_s_settings_lend_orden_by_name_with_its_mode_s_tools_and_no_token() {
-        let nib = PathBuf::from("nib.exe");
+        let nib = PathBuf::from("orden.exe");
         let plan = gemini_settings(Some(Mode::Plan), &[], &nib);
         let orden = &plan["mcpServers"]["orden"];
         assert_eq!(orden["args"], json!(["mcp"]));
@@ -787,6 +787,6 @@ mod tests {
         assert!(full["mcpServers"]["orden"]["includeTools"].is_null());
         let words = gemini_settings(None, &[], &nib);
         assert!(words.get("mcpServers").is_none());
-        assert!(!words.to_string().contains("nib.exe"));
+        assert!(!words.to_string().contains("orden.exe"));
     }
 }

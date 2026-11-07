@@ -231,7 +231,7 @@ jobs:
               bash -ec ". $check" 2>&1 | tee userns.log | grep -q 'No usable sandbox'
             fi
           fi
-          nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
+          nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/orden" | head -80
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate "result/share/applications/$pname.desktop"
           cat "result/share/applications/$pname.desktop"
           for size in 32x32 128x128 256x256; do

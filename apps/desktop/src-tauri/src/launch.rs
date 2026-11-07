@@ -569,14 +569,18 @@ mod tests {
         std::fs::write(&note, "# Idea").expect("a note");
         let note = note.to_string_lossy().to_string();
 
-        assert!(handed_by(&["nib.exe".into(), note.clone()]).is_empty());
+        assert!(handed_by(&["orden.exe".into(), note.clone()]).is_empty());
         assert_eq!(
-            handed_by(&["nib.exe".into(), note.clone(), "https://example.com".into()]),
+            handed_by(&[
+                "orden.exe".into(),
+                note.clone(),
+                "https://example.com".into()
+            ]),
             vec!["https://example.com/".to_owned()]
         );
 
         let pages = handed_by(&[
-            "nib.exe".into(),
+            "orden.exe".into(),
             "--url".into(),
             "https://example.com/".into(),
             note,

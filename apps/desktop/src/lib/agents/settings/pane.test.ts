@@ -18,7 +18,7 @@ describe('the pane over the crate', () => {
     const pane = await opened(seeded(now))
     expect(pane.ready).toBe(true)
     expect(pane.grants.map((one) => one.id)).toEqual(['claude-code', 'codex', 'nightly-backup'])
-    expect(pane.program).toContain('nib.exe')
+    expect(pane.program).toContain('orden.exe')
     expect(pane.last.get('claude-code')).toBe(now - 39 * 60_000)
     expect(pane.last.get('codex')).toBe(now - 26 * 60 * 60 * 1000)
     expect(pane.last.has('nightly-backup')).toBe(false)

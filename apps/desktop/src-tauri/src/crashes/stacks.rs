@@ -193,10 +193,10 @@ mod tests {
     #[test]
     fn a_module_is_named_by_its_file_alone() {
         let mut place = Place::new();
-        place.name_module(b"C:\\Users\\someone\\AppData\\Local\\Orden\\nib.exe");
-        assert_eq!(place.module(), b"nib.exe");
-        place.name_module(b"/home/someone/.local/bin/nib");
-        assert_eq!(place.module(), b"nib");
+        place.name_module(b"C:\\Users\\someone\\AppData\\Local\\Orden\\orden.exe");
+        assert_eq!(place.module(), b"orden.exe");
+        place.name_module(b"/home/someone/.local/bin/orden");
+        assert_eq!(place.module(), b"orden");
     }
 
     #[test]

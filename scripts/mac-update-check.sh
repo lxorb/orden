@@ -4,7 +4,7 @@ set -u
 dmg="$1"
 where="$2"
 expect="$3"
-cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/nib.mjs"
+cli="$(cd "$(dirname "$0")/.." && pwd)/apps/cli/orden.mjs"
 mount="/tmp/orden-image-$where"
 
 hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$dmg" >/dev/null
@@ -102,7 +102,7 @@ say_eval "[...document.querySelectorAll('.notice .orden-button')].at(-1).click()
 for _ in $(seq 60); do running "$app" || break; sleep 1; done
 back=no
 for _ in $(seq 60); do
-  if running "$app" || pgrep -f "/Contents/MacOS/nib" >/dev/null; then back=yes; break; fi
+  if running "$app" || pgrep -f "/Contents/MacOS/(nib|orden)" >/dev/null; then back=yes; break; fi
   sleep 1
 done
 echo "came back by itself: $back"

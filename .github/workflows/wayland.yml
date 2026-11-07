@@ -97,6 +97,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder libnss3-tools
+      - name: The .deb runs as orden, and as nib for the release after the rename
+        run: |
+          test -x /usr/bin/orden
+          test -x /usr/bin/nib
+          grep -qx 'exec /usr/bin/orden "$@"' /usr/bin/nib
+          grep -qx 'exec /usr/bin/orden "$@"' /usr/share/Orden/nib
       - name: The .deb gives no file type an icon or a definition, Orden owning none
         run: |
           if dpkg-deb -c packages/deb/*.deb | grep -E '/mimetypes/|/mime/packages/'; then
@@ -109,13 +115,13 @@ jobs:
           PORTAL: '1'
           KEYS: 'the desktop portal, version 2'
           QUICK_ADD_FLOATS: '1'
-        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page where its tab is, on every screen, under the app's layers
         env:
           OUT: wayland-out/drive
           DRIVE: '1'
           COLD: '4'
-        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page where its tab is, on a desktop scaled for X11 applications
         if: always()
         env:
@@ -123,180 +129,180 @@ jobs:
           DRIVE: '1'
           DPI: '128'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A light page on its white ground in the app's dark scheme, under sway
         if: always()
         env:
           OUT: wayland-out/ground
           GROUND: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The first start asks about crash reports once, and the answer is kept
         if: always()
         env:
           OUT: wayland-out/crash-ask
           CRASH_ASK: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The editor's text size changed from Settings, under sway
         if: always()
         env:
           OUT: wayland-out/textsize
           TEXTSIZE: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Tabs switched in the dark without a white frame, under sway
         if: always()
         env:
           OUT: wayland-out/flash
           FLASH: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A site's certificate from its popover, under sway
         if: always()
         env:
           OUT: wayland-out/cert
           CERT: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The pages' DNS chosen in Settings, over HTTPS, under sway
         if: always()
         env:
           OUT: wayland-out/dns
           DNS: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A download stopped on its way, and the same name again, under sway
         if: always()
         env:
           OUT: wayland-out/download
           DOWNLOAD: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's extensions in the bar and in Settings, under sway
         if: always()
         env:
           OUT: wayland-out/extensions
           EXTENSIONS: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Pass fills, saves and signs in by itself on a web tab's pages, under sway
         if: always()
         env:
           OUT: wayland-out/pass
           PASS: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A private tab's permission answer kept from normal tabs, under sway
         if: always()
         env:
           OUT: wayland-out/grants
           GRANTS: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A device's name refused for a note and a folder, under sway
         if: always()
         env:
           OUT: wayland-out/reserved
           RESERVED: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A page note made from a PDF wears the PDF's mark, under sway
         if: always()
         env:
           OUT: wayland-out/pdf-mark
           PDFMARK: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A space watched past a folder nobody may read and past the limit, under sway
         if: always()
         env:
           OUT: wayland-out/watch
           WATCH: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A note let go of on a site in a web tab is a file there, under sway
         if: always()
         env:
           OUT: wayland-out/carry
           CARRY: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden" "$HOME/.cache/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page in the app's scheme, under sway
         if: always()
         env:
           OUT: wayland-out/scheme
           SCHEME: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: What the app took in survives a kill, under sway
         if: always()
         env:
           OUT: wayland-out/kill
           KILL: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page has its card's rounded corners, under sway
         if: always()
         env:
           OUT: wayland-out/corner
           CORNER: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A press into a web tab's page chooses its tab and its pane, under sway
         if: always()
         env:
           OUT: wayland-out/choosing
           CHOOSING: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Every way a page opens a window does what it asked for, under sway
         if: always()
         env:
           OUT: wayland-out/opens
           OPENS: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Web tabs closed one after another while their pages come up, under sway
         if: always()
         env:
@@ -304,45 +310,45 @@ jobs:
           CLOSING: '1'
           RUST_BACKTRACE: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page has its worker answer it, opened and after a restart, under sway
         if: always()
         env:
           OUT: wayland-out/worker
           WORKER: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's session cookie is there after a restart, under sway
         if: always()
         env:
           OUT: wayland-out/session
           SESSION: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Export PDF writes pages and words and nothing from the disk, under sway
         if: always()
         env:
           OUT: wayland-out/pdf
           EXPORTPDF: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Popups chosen from over a web tab's page, under sway
         if: always()
         env:
           OUT: wayland-out/popups
           POPUP: '1'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Popups chosen from over a web tab's page, under sway, scaled
         if: always()
         env:
@@ -350,9 +356,9 @@ jobs:
           POPUP: '1'
           DPI: '128'
         run: |
-          pkill -f /usr/share/Orden/nib || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The window moved by its strip and resized by its edge, under sway
         if: always()
         env:
@@ -360,10 +366,10 @@ jobs:
           DRAG: '1'
           IDLE: '1'
         run: |
-          echo "left of the runs before:"; pgrep -a nib || true
-          pkill -f /usr/share/Orden/nib || true
+          echo "left of the runs before:"; pgrep -a orden || true
+          pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: What
         if: always()
         env:
@@ -371,7 +377,7 @@ jobs:
           CHECK: '1'
         run: |
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -466,16 +472,18 @@ jobs:
           sudo apt-get install -y ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
       - name: The id the edge build keeps its files under
         run: |
-          id=$(grep -aoE '"identifier": ?"[^"]+"' /usr/bin/nib | head -1 | sed -E 's/.*"([^"]+)"$/\1/')
+          bin=$(command -v orden || command -v nib)
+          id=$(grep -aoE '"identifier": ?"[^"]+"' "$(readlink -f "$bin")" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')
           test -n "$id"
           echo "DRIVEN_ID=$id" >> "$GITHUB_ENV"
+          echo "DRIVEN_BIN=$bin" >> "$GITHUB_ENV"
           echo "the edge build is $id"
       - name: What
         env:
           OUT: wayland-out/418-webkitgtk
           CHECK: '1'
           CLASS: ''
-        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+        run: dbus-run-session -- bash scripts/wayland-launch.sh "$DRIVEN_BIN"
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -579,6 +587,12 @@ jobs:
         run: |
           dnf install -y ./packages/rpm/*.rpm sway xorg-x11-server-Xwayland mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
+      - name: The .rpm runs as orden, and as nib for the release after the rename
+        run: |
+          test -x /usr/bin/orden
+          test -x /usr/bin/nib
+          grep -qx 'exec /usr/bin/orden "$@"' /usr/bin/nib
+          grep -qx 'exec /usr/bin/orden "$@"' /usr/share/Orden/nib
       - name: The .rpm gives no file type an icon or a definition, Orden owning none
         run: |
           if rpm -qlp packages/rpm/*.rpm | grep -E '/mimetypes/|/mime/packages/'; then
@@ -589,7 +603,7 @@ jobs:
         env:
           OUT: wayland-out
           ORDEN_CEF_SANDBOX: disabled
-        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

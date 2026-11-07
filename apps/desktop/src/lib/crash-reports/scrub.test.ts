@@ -40,7 +40,7 @@ function base(kind: string): CrashReport {
 }
 
 const FRAMES = [
-  { module: 'nib.exe', offset: '0x1a2b3c' },
+  { module: 'orden.exe', offset: '0x1a2b3c' },
   { module: String.raw`C:\Users\anna\AppData\Local\Orden\WebView2Loader.dll`, offset: '0x10' },
   { module: 'ntdll.dll', offset: '0x9f0e4', symbol: 'NtWaitForSingleObject' },
 ]
@@ -55,7 +55,7 @@ const REPORTS: CrashReport[] = [
   },
   {
     ...base('crash'),
-    summary: 'EXCEPTION_ACCESS_VIOLATION at 0x10 in nib.exe',
+    summary: 'EXCEPTION_ACCESS_VIOLATION at 0x10 in orden.exe',
     threads: [{ name: 'main', main: true, crashed: true, frames: FRAMES }],
   },
   {
@@ -111,7 +111,7 @@ test('what helps to debug stays', () => {
   expect(panic.where).toBe('src/web_tabs.rs:120:9')
   expect(panic.doing).toBe('web_open < web_place')
   expect(panic.threads?.[0]?.frames.map((one) => one.module)).toEqual([
-    'nib.exe',
+    'orden.exe',
     'WebView2Loader.dll',
     'ntdll.dll',
   ])

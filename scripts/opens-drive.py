@@ -232,7 +232,7 @@ else:
             in subprocess.run(["xwininfo", "-id", one.group(1)], capture_output=True, text=True).stdout
         ]
 
-CLASS = os.environ.get("CLASS", "nib")
+CLASS = os.environ.get("CLASS", "orden")
 
 def ours():
     return sum(1 for name, _title in shown() if name == CLASS)

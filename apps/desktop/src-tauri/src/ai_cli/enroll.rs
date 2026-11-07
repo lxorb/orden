@@ -221,7 +221,7 @@ mod tests {
 
     #[test]
     fn each_program_is_added_the_way_it_adds_a_server_itself() {
-        let nib = Path::new("C:/nib/nib.exe");
+        let nib = Path::new("C:/Orden/orden.exe");
         let line = |args: Vec<OsString>| {
             args.iter()
                 .map(|one| one.to_string_lossy().into_owned())
@@ -230,11 +230,11 @@ mod tests {
         };
         assert_eq!(
             line(add_args(Tool::ClaudeCode, nib)),
-            "mcp add --scope user orden -- C:/nib/nib.exe mcp"
+            "mcp add --scope user orden -- C:/Orden/orden.exe mcp"
         );
         assert_eq!(
             line(add_args(Tool::Codex, nib)),
-            "mcp add orden -- C:/nib/nib.exe mcp"
+            "mcp add orden -- C:/Orden/orden.exe mcp"
         );
         assert_eq!(
             line(remove_args(Tool::ClaudeCode, OLD_NAME)),

@@ -6,6 +6,8 @@ const NAMES: [&str; 2] = ["orden", "nib"];
 
 const BUNDLES: [&str; 3] = ["Orden.app", "Nib.app", "nibeditor.app"];
 
+const FORMER: [&str; 2] = ["nib", "nib.exe"];
+
 pub fn program() -> Result<PathBuf, String> {
     let exe = std::env::current_exe()
         .map_err(|error| format!("this program cannot find itself: {error}"))?;
@@ -67,7 +69,15 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or_default();
-    let ours = |name: &str| NAMES.contains(&name) || name == ".nib-wrapped";
+    if FORMER.contains(&name)
+        && path
+            .parent()
+            .is_some_and(|folder| Some(folder) == now.parent())
+    {
+        return true;
+    }
+    let ours =
+        |name: &str| NAMES.contains(&name) || name == ".orden-wrapped" || name == ".nib-wrapped";
     if let Some(copy) = store_copy(path) {
         let package = copy
             .file_name()
@@ -79,7 +89,7 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
         return named && ours(name);
     }
     if command.starts_with("/tmp/.mount_") {
-        return command.ends_with("/usr/bin/nib");
+        return command.ends_with("/usr/bin/orden") || command.ends_with("/usr/bin/nib");
     }
     let bundle = path
         .parent()
@@ -187,6 +197,8 @@ mod tests {
         let now = Path::new("/run/current-system/sw/bin/orden");
         for older in [
             "/nix/store/zzz-orden-0.14.0/bin/.nib-wrapped",
+            "/nix/store/zzz-orden-0.16.0/bin/.orden-wrapped",
+            "/tmp/.mount_OrdenAb/usr/bin/orden",
             "/nix/store/yyy-nib-0.13.1/bin/nib",
             "/tmp/.mount_NibAbCd/usr/bin/nib",
             "/home/e/Apps/Nib-0.13.1-linux-x64.AppImage",
@@ -216,6 +228,31 @@ mod tests {
         ] {
             assert!(!older_copy(theirs, now), "{theirs}");
         }
+    }
+
+    #[test]
+    fn the_program_under_its_former_name_beside_this_one_is_an_older_copy() {
+        for (older, now) in [
+            ("/usr/share/Orden/nib", "/usr/share/Orden/orden"),
+            (
+                "/Applications/Orden.app/Contents/MacOS/nib",
+                "/Applications/Orden.app/Contents/MacOS/orden",
+            ),
+            (
+                "/home/e/.local/Orden/nib.exe",
+                "/home/e/.local/Orden/orden.exe",
+            ),
+        ] {
+            assert!(older_copy(older, Path::new(now)), "{older}");
+        }
+        assert!(!older_copy(
+            "/usr/local/bin/nib",
+            Path::new("/usr/share/Orden/orden")
+        ));
+        assert!(!older_copy(
+            "/usr/share/Orden/nibble",
+            Path::new("/usr/share/Orden/orden")
+        ));
     }
 
     #[test]

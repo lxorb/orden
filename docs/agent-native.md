@@ -26,7 +26,7 @@ And later the same day:
 1. **One agent surface for all of Orden**, served on this machine by the app itself: the
    browser, the notes (open ones with their unsaved words, their selection and what is on
    screen), the tree, the tabs, canvases, PDFs, versions and a short list of settings. It is
-   an MCP server reached as `nib mcp`, which is the installed app's own binary speaking
+   an MCP server reached as `orden mcp`, which is the installed app's own binary speaking
    stdio, so Claude Code needs one line and no Node, no port and no key pasted anywhere.
 2. **An agent's own tab is a page nobody sees, and it is not a hidden page.** It is a
    webview shown to the engine and placed outside the window's client area, where Windows
@@ -306,7 +306,7 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
 ## 4. The shape of it
 
 ```
- Claude Code / Desktop / Codex ... ──stdio──► nib mcp  (the app's own binary, no UI)
+ Claude Code / Desktop / Codex ... ──stdio──► orden mcp  (the app's own binary, no UI)
                                                   │  per-agent token, MCP JSON-RPC
                                                   ▼
                                    127.0.0.1:<port>  endpoint.rs   (exists; secret, Host, Origin)
@@ -542,7 +542,7 @@ denied site and the stop answer exactly as they do for a press.
   over; a reader's page put away to give the memory back is clipped as its address, as
   the button clips it. A reader's tab behind another one has no picture.
   On a Mac it is `WKWebView`'s road (12.2), the PDF the page as laid out on one sheet.
-- **Measured** by `scripts/capture-probe.py`, end to end over `nib mcp`: a clip 35 to
+- **Measured** by `scripts/capture-probe.py`, end to end over `orden mcp`: a clip 35 to
   45 ms, a picture 120 to 145 ms, a PDF 115 to 130 ms, a refusal 8 to 12 ms. It proves
   the note's words are `browser_read`'s article words with no field's value, that the
   page saw no script and no global of Orden's while it was clipped, the password field grey
@@ -892,7 +892,7 @@ and per-space stores by its root, and a move by the crate's rename with that ind
 rewrite. Only `workspace_tabs` with `workspace.focus` ever brings another space in front.
 
 A call that names no space is about the space in the window, except a call of an AI panel
-thread's (it says its thread, `ai_agent_call` and `nib mcp` alike): that one is about the
+thread's (it says its thread, `ai_agent_call` and `orden mcp` alike): that one is about the
 thread's own space, where the thread stays when the reader moves on (docs/ai-sidebar.md
 4.11), so a `/batch`, `/subtask`, `/fork` or `run_agent` helper keeps to the notes it was
 given. Only the verbs about the tabs in the window keep to the space in front; a tab named
@@ -1077,7 +1077,7 @@ the reader's own agents hold and a third party is granted (`process.rs`).
   goodbye, when it has not called for the ten minutes that make it gone, and when the
   reader presses the stop, for everyone or for that agent.
 - **Bounded**: a `run` waits two minutes at most (`timeout_ms`, a minute unless it says),
-  inside the time `nib mcp` waits for an answer, and longer work is `start` and `read`; a
+  inside the time `orden mcp` waits for an answer, and longer work is `start` and `read`; a
   started program keeps the last megabyte of what it printed, one answer holds 100 000
   bytes of it, and an agent has at most eight running. What a program printed is its
   words, marked untrusted (9.6).
@@ -1280,9 +1280,9 @@ way that does (`agents/workspace/explorer.ts`).
 ### 9.1 An agent is a grant
 
 **Settings > Agents** lists them. An agent is added the first time a client connects
-through `nib mcp`: a bubble in Orden - the client's name as it gives it (`Claude Code`), its
+through `orden mcp`: a bubble in Orden - the client's name as it gives it (`Claude Code`), its
 mark, **Don't allow** and **Allow** - the same bubble a site's question is asked in. Allow
-makes a token for that client, kept by `nib mcp` in the app's config folder under the
+makes a token for that client, kept by `orden mcp` in the app's config folder under the
 client's name, so the question is asked once per client. A pasted token (for a client on
 another machine, or a script) is the same grant made by hand.
 
@@ -1320,7 +1320,7 @@ hands. The one decision is `Grant::asks` and `Grant::holds` in the crate, and
 `fullPermissions` and `asked` in `lib/agents/workspace/asks.ts`, which every guard reads.
 
 **A client connected over MCP manages its own permissions** (#1099). Claude Code, Codex and
-any other agent that connects through `nib mcp` or with a pasted token has a permission
+any other agent that connects through `orden mcp` or with a pasted token has a permission
 system of its own, which the reader set up there and which answers for what it does; Orden
 asking again was a second question on every call. So such a caller is Full permissions
 whatever its grant kept says: `connected` in `agents/mod.rs` lays `autonomous` over the
@@ -1509,7 +1509,7 @@ Prompt injection is unsolved, and Orden does not pretend otherwise. What it does
 
 ## 10. Where the tools live
 
-|                    | the local server (`nib mcp`)                             | the account connector (`services/sync/src/mcp`)                                                                                                                                                           |
+|                    | the local server (`orden mcp`)                             | the account connector (`services/sync/src/mcp`)                                                                                                                                                           |
 | ------------------ | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | runs               | on this machine, while Orden runs                        | on the Worker, always                                                                                                                                                                                     |
 | reaches            | everything above: live notes, the browser, the workspace | the account's notes: `list_spaces`, `list_notes`, `read_note`, `search_notes`, `list_backlinks`, `write_note`, and the to-dos and bases: `list_tasks`, `add_task`, `update_task`, `query_base`, `add_row` |
@@ -1533,12 +1533,12 @@ paired since 2026-10-12 gets what the AI panel's own agent has: the terminal and
 (`agents`, docs/ai.md "Helpers") as well as the rest of 9.1's defaults. Grants made before
 keep their terminal as they were. See `src-tauri/src/ai_cli/enroll.rs`.
 
-**`nib mcp` is the app's own binary in a mode with no window**: `main.rs` reads its
+**`orden mcp` is the app's own binary in a mode with no window**: `main.rs` reads its
 arguments before anything of Tauri starts, and `mcp` is a loop over stdin and stdout that
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,
 as `orden screenshot` finds them). It starts in a few milliseconds and opens no webview. If
 Orden is not running it starts it with no window on screen and waits for the endpoint. So the installed app
-is the whole of it: `claude mcp add orden -- "%LOCALAPPDATA%\Orden\nib.exe" mcp` (an
+is the whole of it: `claude mcp add orden -- "%LOCALAPPDATA%\Orden\orden.exe" mcp` (an
 install from before a rename keeps `%LOCALAPPDATA%\Nib` or `%LOCALAPPDATA%\nibeditor`,
 so a line pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
 (`docs/automation.md`); not a fixed HTTP port, which something else can be sitting on. A
@@ -1557,13 +1557,13 @@ local one writing one note merge instead of overwriting each other.
 
 **As built** (`src-tauri/src/mcp/`, std and serde only):
 
-- **The line** is `claude mcp add --scope user nib -- "<nib.exe>" mcp` (user scope, so Orden is
-  there in every folder Claude Code starts in), `codex mcp add nib -- "<nib.exe>" mcp`, or
+- **The line** is `claude mcp add --scope user orden -- "<orden.exe>" mcp` (user scope, so Orden is
+  there in every folder Claude Code starts in), `codex mcp add orden -- "<orden.exe>" mcp`, or
   the `mcpServers` entry for a client configured by file; `src/lib/agents/mcp.ts` writes
   all three for Settings > Agents from the crate's `mcp_program` (the installed exe, or an
   AppImage's own path).
 - **Which Orden.** The identifier comes from the build (build.rs reads the config the way
-  tauri-build does), so a probe's `nib mcp` reaches that probe and never the reader's own
+  tauri-build does), so a probe's `orden mcp` reaches that probe and never the reader's own
   Orden. A port in `automation.json` is asked once with no credential, and only Orden's own 401
   counts, before a secret or a token goes to it.
 - **Pairing without holding anybody up.** `initialize` is answered at once with the
@@ -1607,7 +1607,7 @@ is still off, and an agent's token never reaches it.
 ## 11. Performance
 
 - **Nothing at launch.** No agent webview exists until `browser_open`; the crate's agent
-  state is built on the first agent request; `nib mcp` is a process only while a client
+  state is built on the first agent request; `orden mcp` is a process only while a client
   runs it; the endpoint's thread already exists.
 - **Nothing in the first paint.** Everything the window does for agents is
   `lib/agents/`, imported on the first agent request the dispatcher sees, and the frame,
@@ -1769,7 +1769,7 @@ the app, is in `scripts/probe_app.py`'s `run_probe`).
 | `agent-mcp` | `main.rs`'s `mcp` mode, the tool schemas and descriptions, the untrusted marking, the pairing, `needs_approval` | `agent-core`'s verb contract (13.1), which it can build against a fake | 2 |
 | `agent-workspace-tools` | `lib/automation/` agent verbs: tree, tabs, bookmarks, spaces without switching, search, versions, canvases, PDFs and highlights, settings allowlist, `capture_to_note`; `run_terminal` when the terminal lands | `agent-core`'s token and scope check | 2 |
 | `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the agent's row and session in the Ask panel, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
-| `agent-settings-ui` | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `nib mcp`, locales | `agent-core`'s grant shape | 2 |
+| `agent-settings-ui` | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `orden mcp`, locales | `agent-core`'s grant shape | 2 |
 | `agent-engines` | `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first | `agent-core` | 3 |
 
 At most eight agents run at once and no wave needs more than five. Wave 1 can start now.
@@ -1855,7 +1855,7 @@ Each has a recommendation, and the design above assumes it.
 11. **Showing an agent's tab.** Recommendation: **Show on its thumbnail makes it a tab of
     yours beside the one in front, without reloading**; the agent keeps working in it,
     framed, and nothing is handed back.
-12. **How the local server is installed.** Recommendation: **`nib mcp`, the app's own
+12. **How the local server is installed.** Recommendation: **`orden mcp`, the app's own
     binary**, with the line to paste in Settings > Agents; an HTTP address only if a client
     needs one.
 13. **An agent and sync v2's leases.** Recommendation: **an agent's tab in your store holds

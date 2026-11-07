@@ -104,7 +104,7 @@ Nothing else, deliberately; see below.
 `orden` drives the app that is running. It is a Node script with no dependencies:
 
 ```sh
-node apps/cli/nib.mjs files list
+node apps/cli/orden.mjs files list
 pnpm --filter @orden/cli link --global && orden files list
 ```
 
@@ -115,7 +115,7 @@ It ships in no installer, on purpose. The only way an installer can carry a comm
 is as a sidecar, which is a second compiled binary in every bundle on every
 platform for something almost nobody runs; a Node script adds nothing to any
 download. Node is already this repository's answer for driving Orden without the app
-(`scripts/nib-sync.mjs`), so this sits beside it.
+(`scripts/orden-sync.mjs`), so this sits beside it.
 
 There is no browser build of `orden` and there will not be: a tab has no socket to
 listen on. Run against the web app it says so rather than failing to connect.
@@ -410,6 +410,6 @@ close leaves the app running for ever. Both are `scripts/probe_app.py`.
 | `src/lib/automation/answers.ts` | the verbs that answer a question |
 | `src/lib/automation/start.ts` | the listeners, and the callbacks |
 | `src/lib/automation/link.ts` | writing a link to what is open |
-| `apps/cli/nib.mjs` | words in a terminal into a request, and the answer printed |
+| `apps/cli/orden.mjs` | words in a terminal into a request, and the answer printed |
 | `src-tauri/swift/AddTask.swift` | the Mac's Add task intent and its App Shortcut |
 | `src-tauri/src/siri.rs` | where a task from Shortcuts goes, and whether Shortcuts lists the app |

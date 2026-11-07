@@ -104,7 +104,7 @@ describe('what a link may ask for', () => {
 
 describe('the command line', () => {
   test('names every verb in its help, in the spelling a terminal takes', async () => {
-    const usage = readFileSync(join(import.meta.dirname, '../../../../cli/nib.mjs'), 'utf8')
+    const usage = readFileSync(join(import.meta.dirname, '../../../../cli/orden.mjs'), 'utf8')
 
     const missing = (await verbs())
       .filter((verb) => !verb.includes('_') && !verb.startsWith('agent.'))

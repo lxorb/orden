@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 
-const CLI = join(import.meta.dirname, '../../cli/nib.mjs')
+const CLI = join(import.meta.dirname, '../../cli/orden.mjs')
 
 async function sent(
   words: string[],

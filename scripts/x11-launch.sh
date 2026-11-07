@@ -75,9 +75,9 @@ for one in re.finditer(r"^\s+(0x[0-9a-f]+) \"(.*)\": \(\"([^\"]*)\"", sys.stdin.
     shown = subprocess.run(["xwininfo", "-id", one.group(1)], capture_output=True, text=True).stdout
     if "IsViewable" in shown and (one.group(3) != sys.argv[1] or one.group(2).endswith("Chromium")):
         print(one.group(0).strip())
-' "${CLASS:-nib}" || true)
+' "${CLASS:-orden}" || true)
   if [ -n "$strangers" ]; then
-    echo "::error::a window not under the desktop entry's name, ${CLASS:-nib}, or Chromium's own:"
+    echo "::error::a window not under the desktop entry's name, ${CLASS:-orden}, or Chromium's own:"
     echo "$strangers"
     status=1
   fi

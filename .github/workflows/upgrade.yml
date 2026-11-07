@@ -222,4 +222,4 @@ jobs:
           ls -la "$HOME/Applications" || true
           find "$HOME/Library/Logs" -path '*so.orden.Orden*' -type f -exec sh -c 'echo "== $1"; tail -80 "$1"' sh {} \; || true
           find "$HOME/Library/Logs/DiagnosticReports" -newer /tmp/old -type f -exec sh -c 'echo "== $1"; head -80 "$1"' sh {} \; || true
-          log show --last 5m --predicate 'process == "nib" OR eventMessage CONTAINS "Orden.app"' --style compact 2>/dev/null | tail -80 || true
+          log show --last 5m --predicate 'process == "orden" OR process == "nib" OR eventMessage CONTAINS "Orden.app"' --style compact 2>/dev/null | tail -80 || true
