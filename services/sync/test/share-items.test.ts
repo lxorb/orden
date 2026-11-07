@@ -279,8 +279,8 @@ describe('the room door', () => {
       })
 
       expect(answer.status, who).toBe(200)
-      expect(door.asked.at(-1)?.get('x-nib-write'), who).toBe(writes)
-      expect(door.asked.at(-1)?.get('x-nib-space'), who).toBe(space)
+      expect(door.asked.at(-1)?.get('x-orden-write'), who).toBe(writes)
+      expect(door.asked.at(-1)?.get('x-orden-space'), who).toBe(space)
     }
 
     const refused = await call(env, `/rooms/${other}`, {
@@ -313,7 +313,7 @@ describe('the room door', () => {
     })
 
     expect(answer.status).toBe(200)
-    expect(door.asked.at(-1)?.get('x-nib-write')).toBe('yes')
+    expect(door.asked.at(-1)?.get('x-orden-write')).toBe('yes')
   })
 })
 

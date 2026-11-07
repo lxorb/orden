@@ -36,7 +36,7 @@ describe('the doors', () => {
     await call(env, `/rooms/${note}`, {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
     })
-    expect(door.asked.at(-1)?.get('x-nib-login')).toBe(await sha256(token))
+    expect(door.asked.at(-1)?.get('x-orden-login')).toBe(await sha256(token))
   })
 })
 
@@ -120,7 +120,11 @@ describe('a chat', () => {
     const held = logs.of('c_one')
     await held.log.fetch(
       new Request('https://chats.invalid/', {
-        headers: { 'x-nib-chat-ask': 'events', 'x-nib-chat': 'c_one', 'x-nib-space': 'space-1' },
+        headers: {
+          'x-orden-chat-ask': 'events',
+          'x-orden-chat': 'c_one',
+          'x-orden-space': 'space-1',
+        },
       }),
     )
     const person: Person = { id: 'user-1', guest: false, who: 'user:user-1', role: 'owner' }

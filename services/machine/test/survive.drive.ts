@@ -2,9 +2,9 @@ import { execSync } from 'node:child_process'
 import { describe, expect, test } from 'vitest'
 import { bytes, healthy, linked, until, type Link } from './link'
 
-const URL = process.env.NIBD_SURVIVE_URL ?? ''
-const SECRET = process.env.NIBD_SECRET ?? ''
-const RESTARTS = (JSON.parse(process.env.NIBD_SURVIVE_RESTARTS ?? '[]') as unknown[]).filter(
+const URL = process.env.ORDEND_SURVIVE_URL ?? ''
+const SECRET = process.env.ORDEND_SECRET ?? ''
+const RESTARTS = (JSON.parse(process.env.ORDEND_SURVIVE_RESTARTS ?? '[]') as unknown[]).filter(
   (one): one is string => typeof one === 'string',
 )
 const SESSION = 's_survive'
@@ -20,7 +20,7 @@ async function joined(): Promise<Link> {
 }
 
 describe.runIf(URL)('a program on the machine', () => {
-  test('goes on through every restart of nibd', async () => {
+  test('goes on through every restart of ordend', async () => {
     let link = await joined()
     link.send({
       t: 'in',
@@ -30,7 +30,8 @@ describe.runIf(URL)('a program on the machine', () => {
       ),
     })
     await until(() => ticks(link.text(SESSION)).length >= 3, 120_000)
-    if (process.env.NIBD_SURVIVE_CGROUP) expect(link.text(SESSION)).toContain(`/nibd/${SESSION}`)
+    if (process.env.ORDEND_SURVIVE_CGROUP)
+      expect(link.text(SESSION)).toContain(`/ordend/${SESSION}`)
     console.log(/holder-kb=\s*\d+/.exec(link.text(SESSION))?.[0])
 
     for (const restart of ['the link', ...RESTARTS]) {

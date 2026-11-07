@@ -640,6 +640,6 @@ describe('a form on a site behind a password', () => {
     const said = await letIn(machine)
 
     expect(said.status).toBe(303)
-    expect(said.headers.get('set-cookie')).toContain('nib_site=')
+    expect(said.headers.get('set-cookie')).toContain('orden_site=')
   })
 })

@@ -10,7 +10,7 @@ const SYNC = join(ROOT, 'services/sync')
 const CONFIG = 'wrangler.jsonc'
 const PORT = Number(process.env.E2E_PORT ?? 8788)
 const BASE = `http://127.0.0.1:${PORT}`
-const NIBD = process.env.E2E_NIBD ?? 'http://127.0.0.1:7680'
+const ORDEND = process.env.E2E_ORDEND ?? 'http://127.0.0.1:7680'
 const TOKEN = 'e2e-token-0123456789abcdef'
 const USER = 'e2e-user'
 const DEVICE = 'e2edevice01'
@@ -169,16 +169,16 @@ async function roundTrips(on, label) {
 async function main() {
   log('state in', state)
   await until(
-    'nibd at ' + NIBD,
+    'ordend at ' + ORDEND,
     () =>
-      fetch(NIBD + '/health').then(
+      fetch(ORDEND + '/health').then(
         (answer) => answer.ok,
         () => false,
       ),
     120_000,
   )
   mkdirSync(join(ROOT, 'apps/desktop/dist'), { recursive: true })
-  writeFileSync(vars, `MACHINE_DEV_NIBD="${NIBD}"\nMACHINE_DEV_SECRET="dev"\n`)
+  writeFileSync(vars, `MACHINE_DEV_ORDEND="${ORDEND}"\nMACHINE_DEV_SECRET="dev"\n`)
 
   wrangler([
     'd1',

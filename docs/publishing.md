@@ -439,7 +439,7 @@ hover preview does. Fetched when the pointer has been still for a third of a
 second, kept for the rest of the visit, forty pages at most. A long press is the
 gesture where there is no pointer.
 
-The page being previewed is fetched with `x-nib-preview`, which is how the Worker
+The page being previewed is fetched with `x-orden-preview`, which is how the Worker
 knows to answer with the note and none of the furniture: no navigation to draw
 inside a card the size of a paragraph.
 

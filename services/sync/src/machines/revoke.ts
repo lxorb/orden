@@ -25,10 +25,10 @@ export async function machinesRevoked(
   await Promise.all(
     results.map((one) =>
       askMachine(env, one.machine, 'revoke', {
-        'x-nib-user': one.owner,
-        'x-nib-who': who,
-        'x-nib-role': role,
-        'x-nib-terms': one.terms,
+        'x-orden-user': one.owner,
+        'x-orden-who': who,
+        'x-orden-role': role,
+        'x-orden-terms': one.terms,
       }),
     ),
   )
@@ -61,7 +61,7 @@ export async function machinesSignedOut(
 
   await Promise.all(
     results.map((one) =>
-      askMachine(env, one.machine, 'signedout', { 'x-nib-logins': ended.join(',') }),
+      askMachine(env, one.machine, 'signedout', { 'x-orden-logins': ended.join(',') }),
     ),
   )
 }

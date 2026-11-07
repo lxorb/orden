@@ -17,7 +17,7 @@ const boot = {
 }
 
 const redacted = (text: string) =>
-  text.replaceAll(SECRET, '<nibd secret>').replaceAll(TUNNEL, '<tunnel token>')
+  text.replaceAll(SECRET, '<ordend secret>').replaceAll(TUNNEL, '<tunnel token>')
 
 describe('cloud-init', () => {
   test('as a server gets it, its secrets redacted', () => {
@@ -31,7 +31,7 @@ describe('cloud-init', () => {
     expect(files.split(TUNNEL)).toHaveLength(2)
     expect(commands).not.toContain(SECRET)
     expect(commands).not.toContain(TUNNEL)
-    for (const path of ['/etc/nibd/env', '/etc/cloudflared/env']) {
+    for (const path of ['/etc/ordend/env', '/etc/cloudflared/env']) {
       expect(files).toContain(`- path: ${path}\n    owner: root:root\n    permissions: '0600'`)
     }
     expect(commands).toContain(`echo '${BUNDLE}  /root/machine.bin' | sha256sum -c -`)
@@ -43,7 +43,7 @@ describe('cloud-init', () => {
   test('an emergency key is written only when there is one, and only a key', () => {
     expect(cloudInit(boot)).not.toContain('ssh_key')
     const keyed = cloudInit({ ...boot, sshKey: KEY })
-    expect(keyed).toContain('- path: /etc/nibd/ssh_key')
+    expect(keyed).toContain('- path: /etc/ordend/ssh_key')
     expect(keyed).toContain(KEY)
     expect(cloudInit({ ...boot, sshKey: 'rm -rf / #' })).not.toContain('ssh_key')
     expect(sshKeyOf(`${KEY}\nssh-rsa AAAA second`)).toBeNull()

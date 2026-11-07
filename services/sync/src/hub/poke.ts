@@ -44,7 +44,7 @@ async function poking(env: Env, spaceId: string, seq: number, from: string): Pro
       env,
       results.map((one) => one.id),
       'poke',
-      { 'x-nib-space': spaceId, 'x-nib-seq': String(seq), 'x-nib-from': from },
+      { 'x-orden-space': spaceId, 'x-orden-seq': String(seq), 'x-orden-from': from },
     )
   } catch (error) {
     note(`poke ${spaceId}`, error, null)

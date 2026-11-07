@@ -348,7 +348,7 @@ socket told it may not type swallows the keys and still shows the screen.
 notifications are every terminal's (below); what the machine adds:
 
 - **A browser that is yours.** The machine has no screen, so `xdg-open`,
-  `sensible-browser` and `$BROWSER` there are `nib-open`, which hands the address to the
+  `sensible-browser` and `$BROWSER` there are `orden-open`, which hands the address to the
   machine's owner's Orden - on the device that typed in that session last - where it opens
   as a link from this terminal would: a web tab beside it, in front while the terminal is
   what they look at and behind otherwise; the system browser on a phone; and in the browser
@@ -492,7 +492,7 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   and Ctrl+V is the shell's off Windows. On another machine, a Remote host or the online
   one, the clipboard the agent reads is that machine's, which is empty. So there the
   picture is **carried over**: written to a file in that user's cache
-  (`~/.cache/nib/images`) and pasted as its path, which an agent takes as an image the way
+  (`~/.cache/orden/images`) and pasted as its path, which an agent takes as an image the way
   it takes one dragged onto a terminal - VS Code Remote's answer to the same. Three ways in,
   each one a terminal already has: the agent's key with a picture on the clipboard (with
   none, the key goes to the shell as it would have); a paste with a picture and no text
@@ -629,7 +629,7 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/keys.ts`            | which keys the app has                                                                                                                                                                                                           |
 | `apps/desktop/src/lib/terminal/signals.ts` | what a program says to the terminal: the clipboard (OSC 52) and a notification (OSC 9, OSC 777, the bell) |
 | `apps/desktop/src/lib/online/opening.svelte.ts` | an address the machine asked a browser for: where it opens, and a sign-in's way back |
-| `services/machine/nib-open`, `services/machine/src/opener.ts` | the machine's browser: `xdg-open` and `$BROWSER`, and nibd's endpoint for them |
+| `services/machine/orden-open`, `services/machine/src/opener.ts` | the machine's browser: `xdg-open` and `$BROWSER`, and ordend's endpoint for them |
 | `apps/desktop/src/lib/terminal/paste.ts`           | what a paste becomes                                                                                                                                                                                                             |
 | `apps/desktop/src/lib/terminal/images.ts` | a picture into a terminal on another machine: carried over, and its path pasted |
 | `apps/desktop/src-tauri/src/terminal/picture.rs` | a picture carried to a Remote host, through a second `ssh` |

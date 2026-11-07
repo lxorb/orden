@@ -17,7 +17,7 @@ export async function membersOf(env: Env, vault: string): Promise<string[]> {
 }
 
 export async function tell(env: Env, users: readonly string[], from: string): Promise<void> {
-  await tellHubs(env, [...new Set(users)], 'pass', { 'x-nib-from': from }).catch(() => undefined)
+  await tellHubs(env, [...new Set(users)], 'pass', { 'x-orden-from': from }).catch(() => undefined)
 }
 
 export async function tellVault(

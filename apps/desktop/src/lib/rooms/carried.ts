@@ -1,6 +1,6 @@
 import { setPeers, type SharedDoc } from '@orden/editor'
 import { readSync, receive, syncStep1Of, syncStep2Of, TEXT } from '@orden/rooms'
-import { NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core/wire'
+import { DEVICE_PROTOCOL, NEW_EPOCH, roomNews, ROOM_V2 } from '@orden/sync-core/wire'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { InkStroke } from '../canvas/format'
@@ -31,7 +31,7 @@ class CarryingDoor extends RoomDoor {
     opening: Opening,
     private readonly carrying: Carrying,
   ) {
-    super(opening, carrying.doc, [ROOM_V2, `nib.device.${carrying.device}`])
+    super(opening, carrying.doc, [ROOM_V2, `${DEVICE_PROTOCOL}${carrying.device}`])
   }
 
   protected override greet() {

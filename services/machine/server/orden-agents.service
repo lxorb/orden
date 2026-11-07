@@ -12,7 +12,7 @@ Group=nib
 Environment=HOME=/home/nib USER=nib LOGNAME=nib LANG=C.UTF-8
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
 Nice=10
-ExecStart=/usr/local/bin/nib-agents
+ExecStart=/usr/local/bin/orden-agents
 
 [Install]
 WantedBy=multi-user.target

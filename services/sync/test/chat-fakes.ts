@@ -178,7 +178,7 @@ export function chatLogs(env: Env): {
       fetch: (request: Request) => {
         asked.push({
           chat: String(id),
-          ask: request.headers.get('x-nib-chat-ask') ?? '',
+          ask: request.headers.get('x-orden-chat-ask') ?? '',
           headers: request.headers,
         })
         return of(String(id)).log.fetch(request)
@@ -197,7 +197,11 @@ export async function open(
 ): Promise<ChatSocket> {
   await held.log.fetch(
     new Request('https://chats.invalid/', {
-      headers: { 'x-nib-chat-ask': 'events', 'x-nib-chat': where.chat, 'x-nib-space': where.space },
+      headers: {
+        'x-orden-chat-ask': 'events',
+        'x-orden-chat': where.chat,
+        'x-orden-space': where.space,
+      },
     }),
   )
   const socket = new ChatSocket()

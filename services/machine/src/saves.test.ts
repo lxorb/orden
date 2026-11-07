@@ -6,7 +6,7 @@ import { Saves, isSessionId, type Saved } from './saves'
 
 let state: string
 beforeEach(() => {
-  state = mkdtempSync(join(tmpdir(), 'nibd-saves-'))
+  state = mkdtempSync(join(tmpdir(), 'ordend-saves-'))
 })
 afterEach(() => {
   rmSync(state, { recursive: true, force: true })

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import type { NibdFrame, Restored, SessionNow } from '@orden/online/wire'
+import type { OrdendFrame, Restored, SessionNow } from '@orden/online/wire'
 import { Coalescer } from './coalesce'
 import { Held, socketOf } from './held'
 import type { Hello } from './hold-wire'
@@ -19,7 +19,7 @@ export interface Machine {
   cgroups: Cgroups | null
   holder: string
   holds: string
-  send(frame: NibdFrame): void
+  send(frame: OrdendFrame): void
 }
 
 const PROGRAM_EVERY = 1000
@@ -41,7 +41,7 @@ export class Session {
   private sentProgram = ''
   private asking: ReturnType<typeof setTimeout> | null = null
   private askedAt = 0
-  private holding: NibdFrame[] | null = null
+  private holding: OrdendFrame[] | null = null
   private over = false
   private answering: Promise<void> = Promise.resolve()
   private scanner = new Scanner()
@@ -221,7 +221,7 @@ export class Session {
     this.emit({ t: 'out', session: this.id, seq, data: bytes })
   }
 
-  private emit(frame: NibdFrame): void {
+  private emit(frame: OrdendFrame): void {
     if (this.holding) this.holding.push(frame)
     else this.machine.send(frame)
   }
@@ -265,7 +265,7 @@ export class Session {
       return
     }
     const seq = this.ring.end
-    const holding: NibdFrame[] = []
+    const holding: OrdendFrame[] = []
     this.holding = holding
     const screen = await this.screen.serialized()
     this.machine.send({

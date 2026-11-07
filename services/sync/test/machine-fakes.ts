@@ -1,5 +1,5 @@
 import type { MachineHost } from '@orden/online'
-import { linkFrame, type MachineFrame, type NibdFrame } from '@orden/online/wire'
+import { linkFrame, type MachineFrame, type OrdendFrame } from '@orden/online/wire'
 import { unframe } from '@orden/sync-core/wire'
 import { Machine, type Viewer } from '../src/machines/machine'
 import type { Env } from '../src/types'
@@ -19,7 +19,7 @@ class FakeLink {
     if (frame.t === 'ping' && !this.silent) queueMicrotask(() => this.say({ t: 'pong' }))
   }
 
-  say(frame: NibdFrame) {
+  say(frame: OrdendFrame) {
     const bytes = linkFrame(frame)
     const data = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
     for (const one of this.listeners.get('message') ?? []) one({ data })
@@ -87,7 +87,7 @@ class FakeHost implements MachineHost {
     this.calls.push('link')
     if (this.failLinks > 0) {
       this.failLinks -= 1
-      return Promise.reject(new Error('nibd answered 401'))
+      return Promise.reject(new Error('ordend answered 401'))
     }
     this.link_ = new FakeLink()
     this.link_.onSleep = this.onSleep
@@ -166,10 +166,10 @@ export async function machine(env: Env, id: string, user: string): Promise<Runni
   })
   const host = new FakeHost()
   const made = new Machine(state as unknown as DurableObjectState, env, host)
-  host.onSleep = () => void made.fromNibd({ t: 'saved' })
+  host.onSleep = () => void made.fromOrdend({ t: 'saved' })
   await made.fetch(
     new Request('https://machine.invalid/state', {
-      headers: { 'x-nib-machine': 'state', 'x-nib-id': id, 'x-nib-user': user },
+      headers: { 'x-orden-machine': 'state', 'x-orden-id': id, 'x-orden-user': user },
     }),
   )
   return { machine: made, state, host }
@@ -208,8 +208,8 @@ export async function say(running: Running, socket: MachineSocket, frame: unknow
   )
 }
 
-export async function nibd(running: Running, frame: NibdFrame) {
-  await running.machine.fromNibd(frame)
+export async function ordend(running: Running, frame: OrdendFrame) {
+  await running.machine.fromOrdend(frame)
 }
 
 export async function fire(running: Running): Promise<boolean> {
@@ -232,7 +232,7 @@ export function doorway(): {
     get: (id: unknown) => ({
       fetch: (request: Request) => {
         asked.push({ id: String(id), headers: request.headers })
-        const ask = request.headers.get('x-nib-machine') ?? ''
+        const ask = request.headers.get('x-orden-machine') ?? ''
         return Promise.resolve(Response.json(answers.get(ask) ?? { state: 'asleep' }))
       },
     }),

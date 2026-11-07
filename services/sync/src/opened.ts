@@ -4,7 +4,7 @@ const OPEN_FOR = 24 * 60 * 60 * 1000
 
 const ASKED_AT_ONCE = 10
 
-export const OPEN_HEADER = 'x-nib-open'
+export const OPEN_HEADER = 'x-orden-open'
 interface OpenAnswer {
   open: boolean
 }

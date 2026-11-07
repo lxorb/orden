@@ -10,8 +10,8 @@ import {
   type MachineFrame,
   machineFrameOf,
   MOST_INPUT,
-  type NibdFrame,
-  nibdFrameOf,
+  type OrdendFrame,
+  ordendFrameOf,
   outFrame,
   outOf,
   type ServerFrame,
@@ -89,7 +89,7 @@ describe('the app socket', () => {
     { t: 'called', url: 'http://localhost:1/x', status: 0 },
     { t: 'note', note: 'restore' },
     { t: 'note', note: 'disk' },
-    { t: 'image', id: '0123456789abcdef0123', path: '/home/nib/.cache/nib/images/x.png' },
+    { t: 'image', id: '0123456789abcdef0123', path: '/home/nib/.cache/orden/images/x.png' },
     { t: 'image', id: '0123456789abcdef0123', path: null },
     { t: 'held', by: 'Emil’s MacBook', since: 1_759_000_000_000, taken: false },
     { t: 'held', by: '', since: 1, taken: true },
@@ -255,11 +255,11 @@ describe('the link', () => {
     },
   ]
 
-  it.each(machines)('nibd reads back what the Machine sent: %j', (one) => {
+  it.each(machines)('ordend reads back what the Machine sent: %j', (one) => {
     expect(machineFrameOf(linkFrame(one))).toEqual(one)
   })
 
-  const nibds: NibdFrame[] = [
+  const ordends: OrdendFrame[] = [
     { t: 'out', session: 's_1', seq: 0, data: bytes(104, 105) },
     { t: 'out', session: 's_1', seq: 2 ** 33, data: bytes(0, 255) },
     { t: 'screen', session: 's_1', seq: 10, cols: 80, rows: 24, data: '\u001b[?1049h' },
@@ -296,7 +296,7 @@ describe('the link', () => {
       t: 'image',
       session: 's_1',
       id: '0123456789abcdef0123',
-      path: '/home/nib/.cache/nib/images/a.png',
+      path: '/home/nib/.cache/orden/images/a.png',
     },
     { t: 'image', session: 's_1', id: '0123456789abcdef0123', path: null },
     {
@@ -309,8 +309,8 @@ describe('the link', () => {
     { t: 'sessions', sessions: [] },
   ]
 
-  it.each(nibds)('the Machine reads back what nibd sent: %j', (one) => {
-    expect(nibdFrameOf(linkFrame(one))).toEqual(one)
+  it.each(ordends)('the Machine reads back what ordend sent: %j', (one) => {
+    expect(ordendFrameOf(linkFrame(one))).toEqual(one)
   })
 
   it('carries bytes on the link as bytes, not escaped', () => {
@@ -329,16 +329,16 @@ describe('the link', () => {
       'a callback anywhere but loopback',
       { t: 'callback', session: 's', url: 'http://10.0.0.1:1/' },
     ],
-  ])('nibd drops a frame with %s', (_, value) => {
+  ])('ordend drops a frame with %s', (_, value) => {
     expect(machineFrameOf(frame(value as object))).toBeNull()
   })
 
-  it('nibd drops input larger than a frame may be', () => {
+  it('ordend drops input larger than a frame may be', () => {
     const data = new Uint8Array(MOST_INPUT + 1)
     expect(machineFrameOf(linkFrame({ t: 'in', session: 's', data }))).toBeNull()
   })
 
-  it('nibd drops a part of a picture larger than a frame may carry', () => {
+  it('ordend drops a part of a picture larger than a frame may carry', () => {
     const part = (size: number) =>
       linkFrame({
         t: 'image',
@@ -374,12 +374,12 @@ describe('the link', () => {
       { t: 'sessions', sessions: [{ session: 's_1', program: null, title: null, at: null }] },
     ],
   ])('the Machine drops a frame with %s', (_, value) => {
-    expect(nibdFrameOf(frame(value as object))).toBeNull()
+    expect(ordendFrameOf(frame(value as object))).toBeNull()
   })
 
   it('drops bytes that are not an envelope at all', () => {
     expect(machineFrameOf(bytes(9, 9, 9))).toBeNull()
-    expect(nibdFrameOf(bytes())).toBeNull()
+    expect(ordendFrameOf(bytes())).toBeNull()
   })
 })
 

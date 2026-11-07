@@ -24,6 +24,7 @@ import { makeFirstSpace } from './spaces/first'
 import { startingVersion } from './sync2/rollout'
 import { deviceIn } from './versions'
 import type { Env, User, Variables, Whoever } from './types'
+import { said } from './said'
 
 const CODE_TTL = 10 * 60 * 1000
 const RESEND_GAP = 30 * 1000
@@ -295,7 +296,11 @@ auth.post('/verify', async (context) => {
   }
 
   return context.json({
-    token: await openSession(context.env, user.id, deviceIn(context.req.header('x-nib-device'))),
+    token: await openSession(
+      context.env,
+      user.id,
+      deviceIn(said((name) => context.req.header(name), 'device')),
+    ),
     user: presentUser(user),
   })
 })
@@ -319,7 +324,11 @@ auth.post('/second', async (context) => {
   await spendHalf(context.env, holding ?? '')
 
   return context.json({
-    token: await openSession(context.env, user.id, deviceIn(context.req.header('x-nib-device'))),
+    token: await openSession(
+      context.env,
+      user.id,
+      deviceIn(said((name) => context.req.header(name), 'device')),
+    ),
     user: presentUser(user),
   })
 })
@@ -443,7 +452,7 @@ auth.post('/signout', async (context) => {
       await roomsSignedOut(context.env, guest.guest_id)
       await machinesSignedOut(context.env, guest.guest_id, [await sha256(token)])
       await askHub(context.env, guest.guest_id, 'revoke', {
-        'x-nib-sessions': await sha256(token),
+        'x-orden-sessions': await sha256(token),
       })
     }
   }

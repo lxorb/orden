@@ -31,7 +31,7 @@ export class AccountHub implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const headers = request.headers
-    switch (headers.get('x-nib-hub') ?? '') {
+    switch (headers.get('x-orden-hub') ?? '') {
       case 'join':
         return this.join(headers)
       case 'poke':
@@ -64,7 +64,7 @@ export class AccountHub implements DurableObject {
   }
 
   private others(headers: Headers, t: 'ai' | 'pass'): void {
-    const from = headers.get('x-nib-from') ?? ''
+    const from = headers.get('x-orden-from') ?? ''
     for (const { socket, attached } of everySocket(this.ctx)) {
       if (!attached.guest && attached.device !== from) say(socket, { t })
     }
@@ -73,10 +73,10 @@ export class AccountHub implements DurableObject {
   private join(headers: Headers): Response {
     const pair = new WebSocketPair()
     this.enter(pair[1], {
-      device: headers.get('x-nib-device') ?? '',
-      who: headers.get('x-nib-who') ?? '',
-      session: headers.get('x-nib-session') ?? '',
-      guest: headers.get('x-nib-guest') === 'yes',
+      device: headers.get('x-orden-device') ?? '',
+      who: headers.get('x-orden-who') ?? '',
+      session: headers.get('x-orden-session') ?? '',
+      guest: headers.get('x-orden-guest') === 'yes',
     })
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
@@ -156,11 +156,11 @@ export class AccountHub implements DurableObject {
   }
 
   private revoke(headers: Headers): Response {
-    const device = headers.get('x-nib-device') ?? ''
+    const device = headers.get('x-orden-device') ?? ''
     for (const socket of this.ctx.getWebSockets(device)) {
       socket.close(1008, 'this device was signed out')
     }
-    const sessions = headers.get('x-nib-sessions')?.split(',') ?? []
+    const sessions = headers.get('x-orden-sessions')?.split(',') ?? []
     for (const { socket, attached } of everySocket(this.ctx)) {
       if (sessions.includes(attached.session)) socket.close(1008, 'this device was signed out')
     }
@@ -175,9 +175,9 @@ export class AccountHub implements DurableObject {
   }
 
   private poke(headers: Headers): void {
-    const space = headers.get('x-nib-space') ?? ''
-    const seq = Number(headers.get('x-nib-seq') ?? '')
-    const from = headers.get('x-nib-from') ?? ''
+    const space = headers.get('x-orden-space') ?? ''
+    const seq = Number(headers.get('x-orden-seq') ?? '')
+    const from = headers.get('x-orden-from') ?? ''
     if (!space || !Number.isSafeInteger(seq)) return
 
     for (const { socket, attached } of everySocket(this.ctx)) {
@@ -186,7 +186,7 @@ export class AccountHub implements DurableObject {
   }
 
   private machine(headers: Headers): void {
-    const state = headers.get('x-nib-state')
+    const state = headers.get('x-orden-state')
     if (state !== 'asleep' && state !== 'starting' && state !== 'awake' && state !== 'stopping') {
       return
     }
@@ -196,13 +196,13 @@ export class AccountHub implements DurableObject {
   }
 
   private chat(headers: Headers): void {
-    const chat = headers.get('x-nib-chat') ?? ''
-    const seq = Number(headers.get('x-nib-seq') ?? '')
-    const at = Number(headers.get('x-nib-at') ?? '')
-    const by = headers.get('x-nib-by')
+    const chat = headers.get('x-orden-chat') ?? ''
+    const seq = Number(headers.get('x-orden-seq') ?? '')
+    const at = Number(headers.get('x-orden-at') ?? '')
+    const by = headers.get('x-orden-by')
     if (!chat || !isWho(by) || !Number.isSafeInteger(seq) || !Number.isSafeInteger(at)) return
 
-    const mention = headers.get('x-nib-mention') === 'yes'
+    const mention = headers.get('x-orden-mention') === 'yes'
     for (const { socket } of everySocket(this.ctx)) {
       say(socket, { t: 'chat', chat, seq, at, by, mention })
     }

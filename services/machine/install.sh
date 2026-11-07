@@ -77,41 +77,53 @@ user() {
 }
 
 files() {
-  local nibd="$here/nibd.cjs"
-  [ -f "$nibd" ] || nibd="$here/dist/nibd.cjs"
+  local ordend="$here/ordend.cjs"
+  [ -f "$ordend" ] || ordend="$here/dist/ordend.cjs"
 
-  install -d /opt/nibd
+  local opt=/opt/ordend main=ordend state=/var/lib/ordend run=/run/ordend former=
+  if [ ! -d /opt/ordend ] && [ -d /opt/nibd ]; then
+    opt=/opt/nibd main=nibd state=/var/lib/nibd run=/run/nibd former=1
+  fi
+
+  install -d "$opt"
   local pty
   pty=$(node -p "require('$here/package.json').dependencies['node-pty']")
-  if [ "$(cat /opt/nibd/pty 2>/dev/null)" != "$pty" ]; then
-    rm -rf /opt/nibd/pty.new /opt/nibd/node_modules.old
-    install -d /opt/nibd/pty.new
-    (cd /opt/nibd/pty.new && npm install --omit=dev --no-audit --no-fund --no-save "node-pty@$pty")
-    if [ -d /opt/nibd/node_modules ]; then mv /opt/nibd/node_modules /opt/nibd/node_modules.old; fi
-    mv /opt/nibd/pty.new/node_modules /opt/nibd/node_modules
-    rm -rf /opt/nibd/pty.new /opt/nibd/node_modules.old
-    echo "$pty" >/opt/nibd/pty
+  if [ "$(cat "$opt/pty" 2>/dev/null)" != "$pty" ]; then
+    rm -rf "$opt/pty.new" "$opt/node_modules.old"
+    install -d "$opt/pty.new"
+    (cd "$opt/pty.new" && npm install --omit=dev --no-audit --no-fund --no-save "node-pty@$pty")
+    if [ -d "$opt/node_modules" ]; then mv "$opt/node_modules" "$opt/node_modules.old"; fi
+    mv "$opt/pty.new/node_modules" "$opt/node_modules"
+    rm -rf "$opt/pty.new" "$opt/node_modules.old"
+    echo "$pty" >"$opt/pty"
   fi
-  (cd /opt/nibd && node -e "require('node-pty')")
+  (cd "$opt" && node -e "require('node-pty')")
   local program
-  for program in nibd hold; do
-    local built="${nibd%/nibd.cjs}/$program.cjs"
-    install -m 644 "$built" "/opt/nibd/$program.cjs.new"
-    mv "/opt/nibd/$program.cjs.new" "/opt/nibd/$program.cjs"
+  for program in ordend hold; do
+    local built="${ordend%/ordend.cjs}/$program.cjs" kept=$program
+    [ "$program" = ordend ] && kept=$main
+    install -m 644 "$built" "$opt/$kept.cjs.new"
+    mv "$opt/$kept.cjs.new" "$opt/$kept.cjs"
   done
 
-  install -m 644 "$here/profile.sh" /etc/profile.d/nib.sh
-  install -m 755 "$here/agents.sh" /usr/local/bin/nib-agents
-  install -m 755 "$here/nib-open" /usr/local/bin/nib-open
-  for name in xdg-open sensible-browser x-www-browser www-browser; do
-    ln -sf nib-open "/usr/local/bin/$name"
+  install -m 644 "$here/profile.sh" /etc/profile.d/orden.sh
+  rm -f /etc/profile.d/nib.sh
+  install -m 755 "$here/agents.sh" /usr/local/bin/orden-agents
+  install -m 755 "$here/orden-open" /usr/local/bin/orden-open
+  for name in nib-open xdg-open sensible-browser x-www-browser www-browser; do
+    ln -sf orden-open "/usr/local/bin/$name"
   done
-  mkdir -p /var/lib/nibd /run/nibd
-  chmod 700 /var/lib/nibd
+  mkdir -p "$state" "$run"
+  chmod 700 "$state"
 
   if [ -d /etc/systemd/system ] && [ "$mode" != image ]; then
-    install -m 755 "$here/nib-update" /usr/local/bin/nib-update
-    install -m 644 "$here"/server/*.service /etc/systemd/system/
+    install -m 755 "$here/orden-update" /usr/local/bin/orden-update
+    if [ -n "$former" ]; then
+      ln -sf orden-update /usr/local/bin/nib-update
+      ln -sf orden-agents /usr/local/bin/nib-agents
+    else
+      install -m 644 "$here"/server/*.service /etc/systemd/system/
+    fi
   fi
 }
 
@@ -129,7 +141,7 @@ server() {
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 EOF
-  cat >/etc/apt/apt.conf.d/52nib-upgrades <<'EOF'
+  cat >/etc/apt/apt.conf.d/52orden-upgrades <<'EOF'
 Unattended-Upgrade::Automatic-Reboot "false";
 EOF
 
@@ -138,20 +150,20 @@ EOF
     swapon /swapfile
     grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >>/etc/fstab
   fi
-  echo 'vm.swappiness = 10' >/etc/sysctl.d/90-nib.conf
+  echo 'vm.swappiness = 10' >/etc/sysctl.d/90-orden.conf
   sysctl -q --system || true
 
   passwd -l root >/dev/null
   install -d -m 755 /etc/ssh/sshd_config.d
-  cat >/etc/ssh/sshd_config.d/01-nib.conf <<'EOF'
+  cat >/etc/ssh/sshd_config.d/01-orden.conf <<'EOF'
 PermitRootLogin no
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 AllowUsers nib
 EOF
-  if [ -s /etc/nibd/ssh_key ]; then
+  if [ -s /etc/ordend/ssh_key ]; then
     install -d -m 700 -o nib -g nib /home/nib/.ssh
-    install -m 600 -o nib -g nib /etc/nibd/ssh_key /home/nib/.ssh/authorized_keys
+    install -m 600 -o nib -g nib /etc/ordend/ssh_key /home/nib/.ssh/authorized_keys
     systemctl enable --now ssh.service >/dev/null 2>&1 || true
     systemctl reload ssh.service >/dev/null 2>&1 || true
   else
@@ -159,15 +171,15 @@ EOF
   fi
 
   local zone
-  zone=$(sed -n 's/^TZ=//p' /etc/nibd/env 2>/dev/null || true)
+  zone=$(sed -n 's/^TZ=//p' /etc/ordend/env 2>/dev/null || true)
   if [ -n "$zone" ] && [ -f "/usr/share/zoneinfo/$zone" ]; then
     timedatectl set-timezone "$zone" 2>/dev/null || ln -sf "/usr/share/zoneinfo/$zone" /etc/localtime
   fi
 
   systemctl daemon-reload
-  systemctl enable nibd.service nib-agents.service cloudflared.service
-  systemctl restart nibd.service
-  systemctl start --no-block nib-agents.service
+  systemctl enable ordend.service orden-agents.service cloudflared.service
+  systemctl restart ordend.service
+  systemctl start --no-block orden-agents.service
   systemctl restart cloudflared.service || true
 }
 

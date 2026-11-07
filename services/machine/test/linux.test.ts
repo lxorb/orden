@@ -4,10 +4,10 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
-import type { NibdFrame } from '@orden/online/wire'
+import type { OrdendFrame } from '@orden/online/wire'
 import { KEPT } from '../src/ring'
 import { sessionProcesses } from '../src/proc'
-import { Nibd } from '../src/nibd'
+import { Ordend } from '../src/ordend'
 import type { Saved } from '../src/saves'
 import { Session, type Machine } from '../src/session'
 import { cells, terminal, text, written } from './cells'
@@ -25,8 +25,8 @@ let holds: string
 const ended: { end: () => void }[] = []
 
 beforeAll(() => {
-  home = mkdtempSync(join(tmpdir(), 'nibd-home-'))
-  holds = mkdtempSync(join(tmpdir(), 'nibd-holds-'))
+  home = mkdtempSync(join(tmpdir(), 'ordend-home-'))
+  holds = mkdtempSync(join(tmpdir(), 'ordend-holds-'))
   if (!linux) return
   const built = spawnSync(process.execPath, ['build.ts'], { cwd: here, stdio: 'inherit' })
   expect(built.status).toBe(0)
@@ -39,8 +39,8 @@ afterAll(() => {
   rmSync(holds, { recursive: true, force: true })
 })
 
-function machine(pidsMax = 4096): Machine & { frames: NibdFrame[] } {
-  const frames: NibdFrame[] = []
+function machine(pidsMax = 4096): Machine & { frames: OrdendFrame[] } {
+  const frames: OrdendFrame[] = []
   return {
     holder: HOLDER,
     holds,
@@ -87,7 +87,7 @@ async function running(one: Session): Promise<number> {
   return one.pid ?? 0
 }
 
-function watcher(frames: NibdFrame[], from = 0) {
+function watcher(frames: OrdendFrame[], from = 0) {
   const term = terminal(COLS, ROWS)
   let read = from
   let next = 0
@@ -109,7 +109,7 @@ function watcher(frames: NibdFrame[], from = 0) {
   }
 }
 
-async function settled(frames: NibdFrame[], quiet = 600): Promise<void> {
+async function settled(frames: OrdendFrame[], quiet = 600): Promise<void> {
   let seen = -1
   let since = Date.now()
   await until(() => {
@@ -121,7 +121,7 @@ async function settled(frames: NibdFrame[], quiet = 600): Promise<void> {
   }, 60_000)
 }
 
-async function typed(one: Session, frames: NibdFrame[], keys: string): Promise<void> {
+async function typed(one: Session, frames: OrdendFrame[], keys: string): Promise<void> {
   one.input(bytes(keys))
   await settled(frames)
 }
@@ -263,11 +263,11 @@ describe.runIf(linux)('a session', () => {
   })
 })
 
-function said(frames: NibdFrame[]): string {
+function said(frames: OrdendFrame[]): string {
   return Buffer.from(collected(frames, 0, Infinity)).toString('utf8')
 }
 
-function collected(frames: NibdFrame[], from: number, to: number): Uint8Array {
+function collected(frames: OrdendFrame[], from: number, to: number): Uint8Array {
   const parts: Uint8Array[] = []
   for (const frame of frames) {
     if (frame.t !== 'out') continue
@@ -286,7 +286,7 @@ const TICKING = 'n=0; while :; do n=$((n+1)); echo tick-$n; sleep 0.2; done\r'
 
 async function follow(
   term: ReturnType<typeof terminal>,
-  frames: readonly NibdFrame[],
+  frames: readonly OrdendFrame[],
   next: number,
 ): Promise<number> {
   for (const frame of frames) {
@@ -300,7 +300,7 @@ async function follow(
   return next
 }
 
-async function screenOf(one: Session, frames: NibdFrame[]) {
+async function screenOf(one: Session, frames: OrdendFrame[]) {
   const asked = frames.length
   await one.want(0)
   const answer = frames.slice(asked).find((frame) => frame.t === 'screen')
@@ -310,7 +310,7 @@ async function screenOf(one: Session, frames: NibdFrame[]) {
   return { answer, drawn }
 }
 
-describe.runIf(linux)('through a restart of nibd', () => {
+describe.runIf(linux)('through a restart of ordend', () => {
   test('a program goes on, and a device is sent exactly what it missed', async () => {
     const before = machine()
     const first = new Session('s_on', COLS, ROWS, before)
@@ -365,7 +365,7 @@ describe.runIf(linux)('through a restart of nibd', () => {
     again.input(bytes(':q!\r'))
   })
 
-  test('a shell that ended while nibd was away is said ended when it comes back', async () => {
+  test('a shell that ended while ordend was away is said ended when it comes back', async () => {
     const before = machine()
     const first = new Session('s_gone', COLS, ROWS, before)
     first.input(bytes('sleep 1; exit 3\r'))
@@ -397,15 +397,15 @@ describe.runIf(linux)('through a restart of nibd', () => {
   })
 })
 
-function outOf(frames: readonly NibdFrame[]): Uint8Array[] {
+function outOf(frames: readonly OrdendFrame[]): Uint8Array[] {
   return frames.flatMap((frame) => (frame.t === 'out' ? [frame.data] : []))
 }
 
 describe.runIf(linux)('the machine', () => {
   test('lists every session, and every holder still running that nobody opened since', async () => {
-    const state = mkdtempSync(join(tmpdir(), 'nibd-state-'))
+    const state = mkdtempSync(join(tmpdir(), 'ordend-state-'))
     const options = { ...machine(), state, activityEvery: 60_000, homeEvery: 60 * 60_000 }
-    const first = new Nibd(options)
+    const first = new Ordend(options)
     await first.receive({ t: 'open', session: 's_listed', cols: COLS, rows: ROWS })
     await first.receive({ t: 'in', session: 's_listed', data: bytes('sleep 600\r') })
     await until(async () =>
@@ -414,7 +414,7 @@ describe.runIf(linux)('the machine', () => {
     expect((await first.list()).find((one) => one.session === 's_listed')?.at).toBeGreaterThan(0)
     first.stop()
 
-    const second = new Nibd(options)
+    const second = new Ordend(options)
     ended.push({ end: () => second.stop(true) })
     expect(await second.list()).toContainEqual({
       session: 's_listed',
@@ -429,19 +429,19 @@ describe.runIf(linux)('the machine', () => {
   })
 
   test('counts the output and the CPU of the last stretch', async () => {
-    const state = mkdtempSync(join(tmpdir(), 'nibd-state-'))
-    const frames: NibdFrame[] = []
-    const nibd = new Nibd({
+    const state = mkdtempSync(join(tmpdir(), 'ordend-state-'))
+    const frames: OrdendFrame[] = []
+    const ordend = new Ordend({
       ...machine(),
       state,
       activityEvery: 60_000,
       homeEvery: 60 * 60_000,
     })
-    ended.push({ end: () => nibd.stop(true) })
-    nibd.attach((frame) => frames.push(frame))
-    await nibd.receive({ t: 'open', session: 's_busy', cols: COLS, rows: ROWS })
-    nibd.activity()
-    await nibd.receive({
+    ended.push({ end: () => ordend.stop(true) })
+    ordend.attach((frame) => frames.push(frame))
+    await ordend.receive({ t: 'open', session: 's_busy', cols: COLS, rows: ROWS })
+    ordend.activity()
+    await ordend.receive({
       t: 'in',
       session: 's_busy',
       data: bytes('timeout 3 sh -c "while :; do :; done"; echo spun\r'),
@@ -449,21 +449,21 @@ describe.runIf(linux)('the machine', () => {
     await until(() =>
       frames.some((frame) => frame.t === 'out' && Buffer.from(frame.data).includes('spun\r\n')),
     )
-    const activity = nibd.activity()
+    const activity = ordend.activity()
     expect(activity.output).toBeGreaterThan(0)
     expect(activity.cpu).toBeGreaterThan(0.01)
-    expect(nibd.activity().output).toBe(0)
+    expect(ordend.activity().output).toBe(0)
     rmSync(state, { recursive: true, force: true })
   })
 })
 
-describe.runIf(linux)('nibd, the program', () => {
+describe.runIf(linux)('ordend, the program', () => {
   const SECRET = 'boot-secret'
   let state: string
   let child: ChildProcess | null = null
 
   beforeAll(() => {
-    state = mkdtempSync(join(tmpdir(), 'nibd-boot-'))
+    state = mkdtempSync(join(tmpdir(), 'ordend-boot-'))
   })
   afterAll(() => {
     child?.kill('SIGKILL')
@@ -471,15 +471,15 @@ describe.runIf(linux)('nibd, the program', () => {
   })
 
   async function booted(url: string, port: number): Promise<ChildProcess> {
-    const started = spawn(process.execPath, [join(here, 'dist', 'nibd.cjs')], {
+    const started = spawn(process.execPath, [join(here, 'dist', 'ordend.cjs')], {
       env: {
         ...process.env,
         HOME: home,
         SHELL: '/bin/bash',
-        NIBD_SECRET: SECRET,
-        NIBD_PORT: String(port),
-        NIBD_HOST: '127.0.0.1',
-        NIBD_STATE: state,
+        ORDEND_SECRET: SECRET,
+        ORDEND_PORT: String(port),
+        ORDEND_HOST: '127.0.0.1',
+        ORDEND_STATE: state,
       },
       stdio: 'inherit',
     })
@@ -505,7 +505,7 @@ describe.runIf(linux)('nibd, the program', () => {
     return { link, screen, drawn }
   }
 
-  test('a program goes on through SIGTERM, SIGKILL and a restart of nibd, its screen with it', async () => {
+  test('a program goes on through SIGTERM, SIGKILL and a restart of ordend, its screen with it', async () => {
     const port = await freePort()
     const url = `ws://127.0.0.1:${String(port)}`
     child = await booted(url, port)
@@ -515,7 +515,7 @@ describe.runIf(linux)('nibd, the program', () => {
       t: 'in',
       session: 's_kept',
       data: bytes(
-        'cd /tmp; echo kept-$((40+2)) "secret=${NIBD_SECRET:-none}" "hold=${NIBD_HOLD:-none}"; sleep 2; echo after-$((3+4))\r',
+        'cd /tmp; echo kept-$((40+2)) "secret=${ORDEND_SECRET:-none}" "hold=${ORDEND_HOLD:-none}"; sleep 2; echo after-$((3+4))\r',
       ),
     })
     await until(() => link.text('s_kept').includes('kept-42'))
@@ -582,7 +582,7 @@ describe.runIf(linux)('nibd, the program', () => {
     back.link.close()
   })
 
-  test('ending a session no open asked for since nibd started ends its program too', async () => {
+  test('ending a session no open asked for since ordend started ends its program too', async () => {
     const port = await freePort()
     const url = `ws://127.0.0.1:${String(port)}`
     child?.kill('SIGKILL')

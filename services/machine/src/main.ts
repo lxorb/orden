@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
 import { dirname, join } from 'node:path'
 import { Cgroups, PIDS_MAX, userOf } from './limits'
-import { Nibd } from './nibd'
+import { Ordend } from './ordend'
 import { listenOpener, OPEN_SOCKET, serveOpener } from './opener'
 import { serve } from './server'
 import { watch } from './watchdog'
@@ -27,17 +27,23 @@ function numberOf(value: string | undefined, fallback: number): number {
   return value && Number.isSafeInteger(number) && number > 0 ? number : fallback
 }
 
+function said(name: string): string | undefined {
+  return process.env[`ORDEND_${name}`] ?? process.env[`NIBD_${name}`]
+}
+
 function main(): void {
   const env = process.env
-  const secret = env.NIBD_SECRET ?? ''
+  const secret = said('SECRET') ?? ''
+  delete env.ORDEND_SECRET
   delete env.NIBD_SECRET
+  const former = !existsSync('/opt/ordend') && existsSync('/opt/nibd')
 
   const root = process.getuid?.() === 0
-  const user = root ? userOf(env.NIBD_USER ?? 'nib') : null
+  const user = root ? userOf(said('USER') ?? 'nib') : null
   const home = user?.home ?? homedir()
   const shell = user?.shell ?? env.SHELL ?? (existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh')
   const name = user?.name ?? userInfo().username
-  const pidsMax = numberOf(env.NIBD_PIDS_MAX, PIDS_MAX)
+  const pidsMax = numberOf(said('PIDS_MAX'), PIDS_MAX)
 
   const sessionEnv: Record<string, string> = {
     HOME: home,
@@ -46,39 +52,39 @@ function main(): void {
     SHELL: shell,
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
-    TERM_PROGRAM: 'nib',
+    TERM_PROGRAM: 'orden',
     LANG: 'C.UTF-8',
-    BROWSER: 'nib-open',
+    BROWSER: 'orden-open',
   }
   for (const key of PASSED) {
     const value = env[key]
     if (value) sessionEnv[key] = value
   }
 
-  const nibd = new Nibd({
-    state: env.NIBD_STATE ?? '/var/lib/nibd',
+  const ordend = new Ordend({
+    state: said('STATE') ?? (former ? '/var/lib/nibd' : '/var/lib/ordend'),
     home,
     shell,
     user,
     env: sessionEnv,
     pidsMax,
     cgroups: root ? Cgroups.open(pidsMax) : null,
-    activityEvery: numberOf(env.NIBD_ACTIVITY_MS, 30_000),
-    homeEvery: numberOf(env.NIBD_HOME_MS, 60 * 60_000),
-    saveEvery: numberOf(env.NIBD_SAVE_MS, 5 * 60_000),
+    activityEvery: numberOf(said('ACTIVITY_MS'), 30_000),
+    homeEvery: numberOf(said('HOME_MS'), 60 * 60_000),
+    saveEvery: numberOf(said('SAVE_MS'), 5 * 60_000),
     holder: join(dirname(process.argv[1] ?? '.'), 'hold.cjs'),
     restart: () => {
-      nibd.stop()
+      ordend.stop()
       process.exit(RESTART)
     },
   })
   watch()
 
-  const server = serve(nibd, secret)
-  server.listen(numberOf(env.NIBD_PORT, PORT), env.NIBD_HOST ?? '0.0.0.0')
+  const server = serve(ordend, secret)
+  server.listen(numberOf(said('PORT'), PORT), said('HOST') ?? '0.0.0.0')
   listenOpener(
-    serveOpener({ open: (url, session) => nibd.open(url, session) }),
-    env.NIBD_OPEN ?? OPEN_SOCKET,
+    serveOpener({ open: (url, session) => ordend.open(url, session) }),
+    said('OPEN') ?? (former ? '/run/nibd/open.sock' : OPEN_SOCKET),
   )
 
   let stopping = false
@@ -86,8 +92,8 @@ function main(): void {
     if (stopping) return
     stopping = true
     setTimeout(() => process.exit(0), 8000).unref()
-    void nibd.saveAll().finally(() => {
-      nibd.stop()
+    void ordend.saveAll().finally(() => {
+      ordend.stop()
       process.exit(0)
     })
   }

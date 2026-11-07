@@ -21,7 +21,7 @@ export async function askHub(
     try {
       const hub = namespace.get(namespace.idFromName(id))
       return await hub.fetch(
-        new Request(`https://hub.invalid/${ask}`, { headers: { ...headers, 'x-nib-hub': ask } }),
+        new Request(`https://hub.invalid/${ask}`, { headers: { ...headers, 'x-orden-hub': ask } }),
       )
     } catch {
       // A reset object: the loop asks the one that replaced it.

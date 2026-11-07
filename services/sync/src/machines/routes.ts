@@ -74,7 +74,7 @@ async function ensureMachine(env: Env, userId: string): Promise<MachineRow> {
   return made
 }
 
-const asked = (machine: MachineRow) => ({ 'x-nib-user': machine.user_id })
+const asked = (machine: MachineRow) => ({ 'x-orden-user': machine.user_id })
 
 function serverOf(machine: MachineRow) {
   if (machine.server_id === null || !machine.spec) return null
@@ -147,7 +147,7 @@ online.post('/machine/stop', async (context) => {
   if (machine.host === 'hetzner') {
     const answer = await askMachine(context.env, machine.id, 'restart', {
       ...asked(machine),
-      'x-nib-who': user.id,
+      'x-orden-who': user.id,
     })
     return context.json({
       state: answer ? (await answer.json<{ state: string }>()).state : machine.state,
@@ -156,7 +156,7 @@ online.post('/machine/stop', async (context) => {
   await audit(context.env, machine.id, 'stop', { who: user.id, detail: 'stopped' })
   await askMachine(context.env, machine.id, 'stop', {
     ...asked(machine),
-    'x-nib-reason': 'stopped',
+    'x-orden-reason': 'stopped',
   })
   return context.json({ state: 'asleep' })
 })
@@ -263,7 +263,7 @@ async function makeSession(
 async function machineSessions(env: Env, userId: string): Promise<Map<string, SessionNow> | null> {
   const machine = await machineOf(env, userId)
   if (!machine) return null
-  const answer = await askMachine(env, machine.id, 'sessions', { 'x-nib-user': userId })
+  const answer = await askMachine(env, machine.id, 'sessions', { 'x-orden-user': userId })
   const said = answer?.ok ? await answer.json<{ sessions: SessionNow[] | null }>() : null
   return said?.sessions ? new Map(said.sessions.map((one) => [one.session, one])) : null
 }
@@ -350,9 +350,9 @@ online.patch('/terms/:term', async (context) => {
     .run()
   await audit(context.env, own.machine, 'typing', { who: user.id, detail: typing })
   await askMachine(context.env, own.machine, 'typing', {
-    'x-nib-user': user.id,
-    'x-nib-term': term,
-    'x-nib-typing': typing,
+    'x-orden-user': user.id,
+    'x-orden-term': term,
+    'x-orden-typing': typing,
   })
   return context.json({ typing })
 })
@@ -373,8 +373,8 @@ online.delete('/terms/:term', async (context) => {
       .run()
     await audit(context.env, machine.id, 'ended', { who: user.id })
     await askMachine(context.env, machine.id, 'end', {
-      'x-nib-user': user.id,
-      'x-nib-session': term,
+      'x-orden-user': user.id,
+      'x-orden-session': term,
     })
     await askHub(context.env, user.id, 'terms')
     return context.json({ ok: true })
@@ -385,8 +385,8 @@ online.delete('/terms/:term', async (context) => {
     .run()
   await audit(context.env, own.machine, 'ended', { who: user.id })
   await askMachine(context.env, own.machine, 'end', {
-    'x-nib-user': user.id,
-    'x-nib-session': own.session,
+    'x-orden-user': user.id,
+    'x-orden-session': own.session,
   })
   await askHub(context.env, user.id, 'terms')
   return context.json({ ok: true })

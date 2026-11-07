@@ -37,6 +37,7 @@ import { keepAnswer } from './spaces/answers'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './blog/site'
 import type { Env, Note, Space } from './types'
+import { SAID, said } from './said'
 
 export { slugFor } from './blog/paths'
 
@@ -377,7 +378,7 @@ ${shell.right ?? ''}
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': options.locked ? 'private, no-store' : 'public, max-age=60',
-      vary: 'x-nib-preview',
+      vary: SAID(['preview']).join(', '),
       'content-security-policy': csp({
         scripts,
         ...(shell.counter ? { counter: new URL(counterUrl(shell.counter)).origin } : {}),
@@ -810,7 +811,7 @@ async function served(
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
   const slides = url.searchParams.has(SLIDES_QUERY)
-  const preview = request.headers.get('x-nib-preview') === '1'
+  const preview = said((name) => request.headers.get(name), 'preview') === '1'
 
   if (slug === 'favicon.svg') return favicon(space, site)
   if (slug === 'robots.txt') return robots(url.origin, !!site.password)

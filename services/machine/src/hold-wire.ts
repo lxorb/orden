@@ -1,6 +1,6 @@
 export const HOLD_VERSION = 1
 
-export const HOLD_SPEC = 'NIBD_HOLD'
+export const HOLD_SPEC = 'ORDEND_HOLD'
 
 export interface Spec {
   socket: string

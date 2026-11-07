@@ -10,7 +10,7 @@ import type { TokenRow } from './tokens'
 
 const string = { type: 'string' }
 
-const VIA = { agent: 'nib connector' }
+const VIA = { agent: 'Orden connector' }
 
 const MOST_LISTED = 500
 

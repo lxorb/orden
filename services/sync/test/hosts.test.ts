@@ -286,10 +286,10 @@ describe('a machine', () => {
     delete single.MACHINE_DOMAIN
     expect(machineDomain(single)).toBe('orden.so')
 
-    const outward = vi.fn(() => Promise.resolve(new Response('nibd')))
+    const outward = vi.fn(() => Promise.resolve(new Response('ordend')))
     vi.stubGlobal('fetch', outward)
     const answer = await worker.fetch(new Request(`https://m-${HEX}.nibeditor.com/link`), moved)
-    expect(await answer.text()).toBe('nibd')
+    expect(await answer.text()).toBe('ordend')
     expect(outward).toHaveBeenCalledTimes(1)
     vi.unstubAllGlobals()
 

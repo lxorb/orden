@@ -2,7 +2,7 @@ import { mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Activity } from '@orden/online/types'
 import { isLoopbackUrl } from '@orden/online/urls'
-import type { MachineFrame, NibdFrame, SessionNow } from '@orden/online/wire'
+import type { MachineFrame, OrdendFrame, SessionNow } from '@orden/online/wire'
 import { diskOf, Meter, homeSize } from './activity'
 import { Held, socketOf } from './held'
 import { Images } from './images'
@@ -39,13 +39,13 @@ async function call(url: string): Promise<number> {
   }
 }
 
-export class Nibd {
+export class Ordend {
   private readonly sessions = new Map<string, Session>()
   private readonly opening = new Map<string, Promise<void>>()
   private readonly saves: Saves
   private readonly options: Options
   private readonly meter = new Meter(Date.now())
-  private link: ((frame: NibdFrame) => void) | null = null
+  private link: ((frame: OrdendFrame) => void) | null = null
   private homeBytes = 0
   private lastTyped: string | null = null
   private readonly timers: ReturnType<typeof setInterval>[] = []
@@ -79,11 +79,11 @@ export class Nibd {
     void this.measure()
   }
 
-  attach(send: ((frame: NibdFrame) => void) | null): void {
+  attach(send: ((frame: OrdendFrame) => void) | null): void {
     this.link = send
   }
 
-  private send(frame: NibdFrame): void {
+  private send(frame: OrdendFrame): void {
     this.link?.(frame)
   }
 

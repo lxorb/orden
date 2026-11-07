@@ -143,24 +143,24 @@ export class ChatLog implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const headers = request.headers
-    const ask = (headers.get('x-nib-chat-ask') ?? '') as ChatAsk
+    const ask = (headers.get('x-orden-chat-ask') ?? '') as ChatAsk
 
     if (ask === 'erase') return await this.erase()
     if (ask === 'open') return openAnswer(this.hasSocketOf(headers.get(OPEN_HEADER) ?? ''))
     if (ask === 'revoke') {
-      return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
+      return await this.revoke(headers.get('x-orden-revoked') ?? '', headers.get('x-orden-role'))
     }
     if (ask === 'held-files') {
-      return Response.json({ hashes: this.heldFilesOf(headers.get('x-nib-held-by') ?? '') })
+      return Response.json({ hashes: this.heldFilesOf(headers.get('x-orden-held-by') ?? '') })
     }
     await this.askSignIns()
     if (ask === 'profile') {
-      const who = headers.get('x-nib-profile')
+      const who = headers.get('x-orden-profile')
       if (isWho(who)) this.everyone({ t: 'profile', who })
       return new Response(null, { status: 204 })
     }
 
-    this.remember(headers.get('x-nib-chat'), headers.get('x-nib-space'))
+    this.remember(headers.get('x-orden-chat'), headers.get('x-orden-space'))
     const query = new URL(request.url).searchParams
     if (ask === 'events') return Response.json(this.eventsPage(query))
     if (ask === 'state') return Response.json(this.statePage(query))
@@ -172,7 +172,7 @@ export class ChatLog implements DurableObject {
     switch (ask) {
       case 'join': {
         const pair = new WebSocketPair()
-        await this.enter(pair[1], person, headers.get('x-nib-login') ?? undefined)
+        await this.enter(pair[1], person, headers.get('x-orden-login') ?? undefined)
         return new Response(null, { status: 101, webSocket: pair[0] })
       }
       case 'send': {
@@ -925,11 +925,11 @@ export class ChatLog implements DurableObject {
           id,
         )
         await askHub(this.env, id, 'chat', {
-          'x-nib-chat': chat,
-          'x-nib-seq': String(row.seq),
-          'x-nib-at': String(row.at ?? now),
-          'x-nib-by': row.by ?? '',
-          'x-nib-mention': row.mention === 1 ? 'yes' : 'no',
+          'x-orden-chat': chat,
+          'x-orden-seq': String(row.seq),
+          'x-orden-at': String(row.at ?? now),
+          'x-orden-by': row.by ?? '',
+          'x-orden-mention': row.mention === 1 ? 'yes' : 'no',
         })
       }),
     )
@@ -1136,11 +1136,11 @@ export class ChatLog implements DurableObject {
 }
 
 function personOf(headers: Headers): Person | null {
-  const id = headers.get('x-nib-who') ?? ''
+  const id = headers.get('x-orden-who') ?? ''
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return null
-  const guest = headers.get('x-nib-guest') === 'yes'
-  const role = headers.get('x-nib-role')
-  const device = headers.get('x-nib-device')
+  const guest = headers.get('x-orden-guest') === 'yes'
+  const role = headers.get('x-orden-role')
+  const device = headers.get('x-orden-device')
   return {
     id,
     guest,

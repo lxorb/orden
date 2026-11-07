@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { subprotocol, tokenOf } from '@orden/rooms'
-import { DEVICE_PROTOCOL } from '@orden/sync-core'
+import { subprotocol, tokenOf, tokenProtocolOf } from '@orden/rooms'
+import { deviceOffered, type OfferedDevice } from '@orden/sync-core'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import { SIGN_IN } from '../refused'
@@ -11,10 +11,9 @@ import { NO_SUCH_CHAT } from './routes'
 
 const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
 
-function deviceIn(header: string | undefined): string | null {
-  const offered = (header ?? '').split(',').map((one) => one.trim())
-  const id = offered.find((one) => one.startsWith(DEVICE_PROTOCOL))?.slice(DEVICE_PROTOCOL.length)
-  return id && DEVICE.test(id) ? id : null
+function deviceIn(header: string | undefined): OfferedDevice | null {
+  const offered = deviceOffered(header)
+  return offered && DEVICE.test(offered.device) ? offered : null
 }
 
 export const chatDoor = new Hono<{ Bindings: Env }>()
@@ -31,16 +30,17 @@ chatDoor.get('/:chat/socket', async (context) => {
 
   if (!live) return context.json({ error: SIGN_IN }, 401)
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
-  const device = deviceIn(offered)
+  const named = deviceIn(offered)
+  const device = named?.device ?? null
 
   const answer = await askChat(context.env, chat, 'join', {
     upgrade: 'websocket',
-    'x-nib-space': reached.space,
-    'x-nib-who': reached.id,
-    'x-nib-guest': reached.guest ? 'yes' : 'no',
-    'x-nib-role': reached.role,
-    ...(device ? { 'x-nib-device': device } : {}),
-    'x-nib-login': await sha256(token),
+    'x-orden-space': reached.space,
+    'x-orden-who': reached.id,
+    'x-orden-guest': reached.guest ? 'yes' : 'no',
+    'x-orden-role': reached.role,
+    ...(device ? { 'x-orden-device': device } : {}),
+    'x-orden-login': await sha256(token),
   })
 
   if (!answer || (answer.status === 101 && !answer.webSocket)) {
@@ -49,7 +49,10 @@ chatDoor.get('/:chat/socket', async (context) => {
   }
 
   const headers = new Headers(answer.headers)
-  headers.set('sec-websocket-protocol', device ? `${DEVICE_PROTOCOL}${device}` : subprotocol(token))
+  headers.set(
+    'sec-websocket-protocol',
+    named?.protocol ?? tokenProtocolOf(offered) ?? subprotocol(token),
+  )
   return new Response(answer.body, {
     status: answer.status,
     statusText: answer.statusText,

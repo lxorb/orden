@@ -1,13 +1,12 @@
 import { Hono } from 'hono'
 import { tokenOf } from '@orden/rooms'
+import { deviceOffered, type OfferedDevice } from '@orden/sync-core'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import { SIGN_IN } from '../refused'
 import type { Env } from '../types'
 import { DEVICE } from './frames'
 import { askHub, HUB_AWAY } from './reach'
-
-const DEVICE_PROTOCOL = 'nib.device.'
 
 const WHO = `with me as (
   select s.user_id as user_id, s.id as session_id, null as guest_id
@@ -21,10 +20,9 @@ select me.user_id as user_id, me.session_id as session_id, me.guest_id as guest_
        (select 1 from sessions b where b.id = d.session_id and b.expires_at > ?2) as bound_alive
   from me left join devices d on d.id = ?3`
 
-function deviceProtocol(header: string | undefined): string | null {
-  const offered = (header ?? '').split(',').map((one) => one.trim())
-  const id = offered.find((one) => one.startsWith(DEVICE_PROTOCOL))?.slice(DEVICE_PROTOCOL.length)
-  return id && DEVICE.test(id) ? id : null
+function deviceProtocol(header: string | undefined): OfferedDevice | null {
+  const offered = deviceOffered(header)
+  return offered && DEVICE.test(offered.device) ? offered : null
 }
 
 export const hubDoor = new Hono<{ Bindings: Env }>()
@@ -36,7 +34,8 @@ hubDoor.get('/', async (context) => {
 
   const offered = context.req.header('sec-websocket-protocol')
   const token = tokenOf(offered)
-  const device = deviceProtocol(offered)
+  const named = deviceProtocol(offered)
+  const device = named?.device ?? null
 
   const tokenHash = await sha256(token ?? '')
   const row = await context.env.DB.prepare(WHO)
@@ -52,7 +51,7 @@ hubDoor.get('/', async (context) => {
 
   const who = row?.user_id ?? row?.guest_id
   if (!row || !who) return context.json({ error: SIGN_IN }, 401)
-  if (!device) return context.json({ error: 'a hub socket names its device' }, 400)
+  if (!named || !device) return context.json({ error: 'a hub socket names its device' }, 400)
 
   if (row.user_id) {
     if (row.owner && row.owner !== row.user_id) {
@@ -65,10 +64,10 @@ hubDoor.get('/', async (context) => {
 
   const answer = await askHub(context.env, who, 'join', {
     upgrade: 'websocket',
-    'x-nib-device': device,
-    'x-nib-who': who,
-    'x-nib-session': row.session_id ?? tokenHash,
-    'x-nib-guest': row.user_id ? 'no' : 'yes',
+    'x-orden-device': device,
+    'x-orden-who': who,
+    'x-orden-session': row.session_id ?? tokenHash,
+    'x-orden-guest': row.user_id ? 'no' : 'yes',
   })
 
   if (!answer || (answer.status === 101 && !answer.webSocket)) {
@@ -79,7 +78,7 @@ hubDoor.get('/', async (context) => {
   }
 
   const headers = new Headers(answer.headers)
-  headers.set('sec-websocket-protocol', `${DEVICE_PROTOCOL}${device}`)
+  headers.set('sec-websocket-protocol', named.protocol)
 
   return new Response(answer.body, {
     status: answer.status,

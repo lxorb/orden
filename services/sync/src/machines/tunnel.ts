@@ -1,6 +1,6 @@
 const API = 'https://api.cloudflare.com/client/v4'
 
-const NIBD = 'http://127.0.0.1:7680'
+const ORDEND = 'http://127.0.0.1:7680'
 
 class TunnelError extends Error {
   constructor(
@@ -63,13 +63,18 @@ export class Tunnels {
     return (said as { result?: unknown }).result
   }
 
-  async tunnel(name: string): Promise<string> {
+  async found(name: string): Promise<string | null> {
     const found = await this.ask(
       'GET',
       `/accounts/${this.account}/cfd_tunnel?name=${encodeURIComponent(name)}&is_deleted=false`,
     )
     const first: unknown = Array.isArray(found) ? found[0] : null
-    if (isRecord(first) && typeof first.id === 'string') return first.id
+    return isRecord(first) && typeof first.id === 'string' ? first.id : null
+  }
+
+  async tunnel(name: string): Promise<string> {
+    const found = await this.found(name)
+    if (found) return found
     const made = await this.ask('POST', `/accounts/${this.account}/cfd_tunnel`, {
       name,
       config_src: 'cloudflare',
@@ -92,7 +97,7 @@ export class Tunnels {
         ingress: [
           {
             hostname,
-            service: NIBD,
+            service: ORDEND,
             originRequest: access
               ? { access: { required: true, teamName: access.team, audTag: [access.aud] } }
               : {},
@@ -121,7 +126,7 @@ export class Tunnels {
       name: hostname,
       content,
       proxied: true,
-      comment: 'nib online terminal machine',
+      comment: 'Orden online terminal machine',
     })
     if (!isRecord(made) || typeof made.id !== 'string') {
       throw new TunnelError(502, 0, 'the made record did not read')

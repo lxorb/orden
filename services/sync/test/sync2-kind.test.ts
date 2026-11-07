@@ -193,7 +193,7 @@ describe('a note renamed to a canvas', () => {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
     })
     expect(answer.status).toBe(200)
-    expect(door.asked.map((one) => one.get('x-nib-kind'))).toEqual(['words'])
+    expect(door.asked.map((one) => one.get('x-orden-kind'))).toEqual(['words'])
   })
 })
 

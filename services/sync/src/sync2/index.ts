@@ -16,6 +16,7 @@ import { reproject } from './maps'
 import { applyOps } from './ops'
 import { preparedSpace, prepareSpace } from './prepare'
 import { indexItems, searchPage } from './reading'
+import { said } from '../said'
 
 interface App {
   Bindings: Env
@@ -110,7 +111,7 @@ v2Docs.post('/push', async (context) => {
     context.env,
     who,
     await deviceOf(context),
-    deviceIn(context.req.header('x-nib-device')),
+    deviceIn(said((name) => context.req.header(name), 'device')),
     request.docs,
   )
   return answer(context, { docs })

@@ -17,6 +17,7 @@ import {
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
 import { handedTo, ownOtherwise, type Reading, reading, unreadUses, usedElsewhere } from './used'
+import { said } from './said'
 
 const LIMITS: Record<string, number> = {
   'image/png': 16 * 1024 * 1024,
@@ -67,11 +68,11 @@ blobs.put('/:hash', async (context) => {
 
   const verified = (await hashOfBytes(body)) === hash && !spellsADiagramName(body)
   if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
-  const said = context.req.header('x-nib-diagram')
+  const drawn = said((name) => context.req.header(name), 'diagram')
   if (
     !verified &&
-    said !== undefined &&
-    !(await drawnFrom(context.env, context.get('who'), hash, said))
+    drawn !== undefined &&
+    !(await drawnFrom(context.env, context.get('who'), hash, drawn))
   ) {
     return context.json({ error: WRONG_BYTES }, 400)
   }

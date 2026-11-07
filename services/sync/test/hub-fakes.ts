@@ -151,7 +151,7 @@ export function hubs(env: Env): {
       fetch: (request: Request) => {
         asked.push({
           id: String(id),
-          ask: request.headers.get('x-nib-hub') ?? '',
+          ask: request.headers.get('x-orden-hub') ?? '',
           headers: request.headers,
         })
         return of(String(id)).hub.fetch(request)

@@ -15,7 +15,7 @@ export interface TokenRow {
 }
 
 function mint(): string {
-  return `nib_${randomToken()}`
+  return `orden_${randomToken()}`
 }
 
 function liveToken(at: string): string {

@@ -99,7 +99,7 @@ test('a hello that says what no hello is, or a newer kind, is passed over', () =
 
 test('what a holder runs is read back whole, and anything else is no spec', () => {
   const spec = {
-    socket: '/var/lib/nibd/holds/s_1.sock',
+    socket: '/var/lib/ordend/holds/s_1.sock',
     cgroup: null,
     file: '/bin/bash',
     args: ['-l'],
@@ -109,8 +109,8 @@ test('what a holder runs is read back whole, and anything else is no spec', () =
     base: 0,
   }
   expect(specOf(JSON.stringify(spec))).toEqual(spec)
-  expect(specOf(JSON.stringify({ ...spec, cgroup: '/sys/fs/cgroup/nibd/s_1' }))?.cgroup).toBe(
-    '/sys/fs/cgroup/nibd/s_1',
+  expect(specOf(JSON.stringify({ ...spec, cgroup: '/sys/fs/cgroup/ordend/s_1' }))?.cgroup).toBe(
+    '/sys/fs/cgroup/ordend/s_1',
   )
   expect(specOf(undefined)).toBeNull()
   expect(specOf('{')).toBeNull()

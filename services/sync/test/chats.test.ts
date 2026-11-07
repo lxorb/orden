@@ -768,12 +768,12 @@ describe('chats', () => {
       expect(
         asks()
           .find((one) => one.id === ids.writer)
-          ?.headers.get('x-nib-mention'),
+          ?.headers.get('x-orden-mention'),
       ).toBe('yes')
       expect(
         asks()
           .find((one) => one.id === ids.reader)
-          ?.headers.get('x-nib-mention'),
+          ?.headers.get('x-orden-mention'),
       ).toBe('no')
 
       running.asked.length = 0
@@ -787,7 +787,7 @@ describe('chats', () => {
       await fire(logs.of(chat))
       const coalesced = asks().filter((one) => one.id === ids.writer)
       expect(coalesced).toHaveLength(1)
-      expect(coalesced[0]?.headers.get('x-nib-seq')).toBe('3')
+      expect(coalesced[0]?.headers.get('x-orden-seq')).toBe('3')
     })
 
     test('a hub tells every device of the account, with no words', async () => {
@@ -1622,11 +1622,11 @@ describe('chats', () => {
       ] as const) {
         expect((await knock(people[who])).status, who).toBe(200)
         const told = door.asked.at(-1)
-        expect(told?.get('x-nib-role'), who).toBe(role)
-        expect(told?.get('x-nib-chat-ask'), who).toBe('join')
-        expect(told?.get('x-nib-space'), who).toBe(spaceId)
-        expect(told?.get('x-nib-device'), who).toBe('device-one')
-        expect(told?.get('x-nib-login'), who).toBe(await sha256(people[who]))
+        expect(told?.get('x-orden-role'), who).toBe(role)
+        expect(told?.get('x-orden-chat-ask'), who).toBe('join')
+        expect(told?.get('x-orden-space'), who).toBe(spaceId)
+        expect(told?.get('x-orden-device'), who).toBe('device-one')
+        expect(told?.get('x-orden-login'), who).toBe(await sha256(people[who]))
       }
       expect((await knock(people.stranger)).status).toBe(404)
       expect((await knock('not-a-session')).status).toBe(401)

@@ -1,5 +1,6 @@
-import { HOST_PROTOCOL, UNKNOWN_APP } from '@orden/online/apps'
+import { HOST_PROTOCOLS, UNKNOWN_APP } from '@orden/online/apps'
 import { tokenOf } from '@orden/rooms'
+import { deviceOffered } from '@orden/sync-core'
 import { Hono } from 'hono'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
@@ -9,7 +10,6 @@ import { deviceName } from '../locks/device-name'
 import { WHO } from '../machines/reach'
 import { appsOn } from './catalogue'
 
-const DEVICE_PROTOCOL = 'nib.device.'
 const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
 const AWAY = 'the application is not answering - try again'
 
@@ -44,10 +44,9 @@ appsDoor.get('/:app/socket', async (context) => {
     return context.json({ error: 'an application is a websocket' }, 426)
   }
 
-  const device = offered
-    .find((one) => one.startsWith(DEVICE_PROTOCOL))
-    ?.slice(DEVICE_PROTOCOL.length)
-  if (!device || !DEVICE.test(device)) {
+  const named = deviceOffered(offered.join(', '))
+  const device = named?.device
+  if (!named || !device || !DEVICE.test(device)) {
     return context.json({ error: 'an application socket names its device' }, 400)
   }
 
@@ -57,19 +56,19 @@ appsDoor.get('/:app/socket', async (context) => {
   ])
   if (!owned) return context.json({ error: UNKNOWN_APP }, 404)
 
-  const host = offered.includes(HOST_PROTOCOL)
+  const host = offered.some((one) => HOST_PROTOCOLS.includes(one))
   const answer = await namespace
     .get(namespace.idFromName(`${who}:${app}`))
     .fetch('https://app.invalid/join', {
       headers: {
         upgrade: 'websocket',
-        'x-nib-app': 'join',
-        'x-nib-app-id': app,
-        'x-nib-who': who,
-        'x-nib-login': hash,
-        'x-nib-device': device,
-        'x-nib-device-name': name,
-        'x-nib-role': host ? 'host' : 'viewer',
+        'x-orden-app': 'join',
+        'x-orden-app-id': app,
+        'x-orden-who': who,
+        'x-orden-login': hash,
+        'x-orden-device': device,
+        'x-orden-device-name': name,
+        'x-orden-role': host ? 'host' : 'viewer',
       },
     })
     .catch((error: unknown) => {
@@ -79,6 +78,6 @@ appsDoor.get('/:app/socket', async (context) => {
   if (!answer?.webSocket) return context.json({ error: AWAY }, 503, { 'retry-after': '1' })
 
   const headers = new Headers(answer.headers)
-  headers.set('sec-websocket-protocol', `${DEVICE_PROTOCOL}${device}`)
+  headers.set('sec-websocket-protocol', named.protocol)
   return new Response(answer.body, { status: answer.status, headers, webSocket: answer.webSocket })
 })

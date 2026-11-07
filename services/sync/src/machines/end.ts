@@ -47,8 +47,8 @@ export async function tellEnded(
   for (const one of ended) {
     await audit(env, one.machine, 'ended', { who })
     await askMachine(env, one.machine, 'end', {
-      'x-nib-user': one.user_id,
-      'x-nib-session': one.session,
+      'x-orden-user': one.user_id,
+      'x-orden-session': one.session,
     })
   }
   for (const owner of new Set(ended.map((one) => one.user_id))) {

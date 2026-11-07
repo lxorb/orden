@@ -1,3 +1,4 @@
+import { DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core/wire'
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { BASE } from '../api'
@@ -181,28 +182,32 @@ export class Hub {
     const url = `${BASE.replace(/^http/, 'ws')}/v2/hub`
     let socket: HubSocket | null = null
     try {
-      socket = this.world.socket(url, [`nib.token.${token}`, `nib.device.${device}`], {
-        opened: () => {
-          clearTimeout(this.opening)
-          this.tries = 0
-          this.quiet = 0
-          void this.hello()
-          this.stopBeat?.()
-          this.stopBeat = this.world.every(BEAT_EVERY, () => this.beat(socket))
+      socket = this.world.socket(
+        url,
+        [`${TOKEN_PROTOCOL}${token}`, `${DEVICE_PROTOCOL}${device}`],
+        {
+          opened: () => {
+            clearTimeout(this.opening)
+            this.tries = 0
+            this.quiet = 0
+            void this.hello()
+            this.stopBeat?.()
+            this.stopBeat = this.world.every(BEAT_EVERY, () => this.beat(socket))
+          },
+          heard: (text) => {
+            if (this.socket === socket) this.quiet = 0
+            const frame = readHubFrame(text)
+            if (!frame) return
+            this.hear(frame)
+            this.channel?.post({ k: 'frame', frame } satisfies Relayed)
+          },
+          closed: (code) => {
+            if (this.socket !== socket) return
+            this.lost(null)
+            if (code !== ENDED) this.again()
+          },
         },
-        heard: (text) => {
-          if (this.socket === socket) this.quiet = 0
-          const frame = readHubFrame(text)
-          if (!frame) return
-          this.hear(frame)
-          this.channel?.post({ k: 'frame', frame } satisfies Relayed)
-        },
-        closed: (code) => {
-          if (this.socket !== socket) return
-          this.lost(null)
-          if (code !== ENDED) this.again()
-        },
-      })
+      )
     } catch {
       this.again()
       return

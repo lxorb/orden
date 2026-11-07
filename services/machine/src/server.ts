@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { WebSocketServer, type WebSocket } from 'ws'
 import { linkFrame, machineFrameOf, SILENT_FOR } from '@orden/online/wire'
-import type { Nibd } from './nibd'
+import type { Ordend } from './ordend'
 
 const BEHIND = 8 * 1024 * 1024
 const CAUGHT_UP = 1024 * 1024
@@ -24,7 +24,7 @@ export interface Options {
   silentFor?: number
 }
 
-export function serve(nibd: Nibd, secret: string, options: Options = {}): Server {
+export function serve(ordend: Ordend, secret: string, options: Options = {}): Server {
   const silentFor = options.silentFor ?? SILENT_FOR
   const sockets = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 })
   let current: WebSocket | null = null
@@ -34,8 +34,8 @@ export function serve(nibd: Nibd, secret: string, options: Options = {}): Server
 
   const watch = setInterval(() => {
     const behind = current?.bufferedAmount ?? 0
-    if (!paused && behind > BEHIND) nibd.pause((paused = true))
-    else if (paused && behind < CAUGHT_UP) nibd.pause((paused = false))
+    if (!paused && behind > BEHIND) ordend.pause((paused = true))
+    else if (paused && behind < CAUGHT_UP) ordend.pause((paused = false))
     if (current && pinged && Date.now() - heard > silentFor) current.terminate()
   }, 50)
   watch.unref()
@@ -45,7 +45,7 @@ export function serve(nibd: Nibd, secret: string, options: Options = {}): Server
     current = socket
     heard = Date.now()
     pinged = false
-    nibd.attach((frame) => {
+    ordend.attach((frame) => {
       if (socket.readyState === socket.OPEN) socket.send(linkFrame(frame))
     })
     socket.on('message', (data, binary) => {
@@ -55,13 +55,13 @@ export function serve(nibd: Nibd, secret: string, options: Options = {}): Server
       if (frame?.t === 'ping') {
         if (current === socket) pinged = true
         if (socket.readyState === socket.OPEN) socket.send(linkFrame({ t: 'pong' }))
-      } else if (frame) void nibd.receive(frame)
+      } else if (frame) void ordend.receive(frame)
     })
     socket.on('close', () => {
       if (current !== socket) return
       current = null
-      nibd.attach(null)
-      if (paused) nibd.pause((paused = false))
+      ordend.attach(null)
+      if (paused) ordend.pause((paused = false))
     })
   })
 

@@ -3,4 +3,4 @@ case ":$PATH:" in
   *":$HOME/.local/bin:"*) ;;
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
-export BROWSER=nib-open
+export BROWSER=orden-open

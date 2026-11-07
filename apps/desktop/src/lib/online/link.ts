@@ -6,7 +6,7 @@ import {
   serverFrameOf,
   socketPath,
 } from '@orden/online/wire'
-import { BEAT } from '@orden/sync-core/wire'
+import { BEAT, DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core/wire'
 import { BEAT_EVERY, linkDelay } from '../backoff'
 
 export interface LinkSocket {
@@ -121,7 +121,11 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
         const url = `${this.world.base.replace(/^http/, 'ws')}${this.path(this.name)}`
         let socket: LinkSocket | null = null
         try {
-          const protocols = [`nib.token.${token}`, `nib.device.${device}`, ...this.role()]
+          const protocols = [
+            `${TOKEN_PROTOCOL}${token}`,
+            `${DEVICE_PROTOCOL}${device}`,
+            ...this.role(),
+          ]
           socket = this.world.socket(url, protocols, {
             opened: () => {
               if (this.socket !== socket || !socket) return

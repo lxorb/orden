@@ -42,12 +42,12 @@ describe('a request to the account', () => {
   test('that answers is read whole, status and headers too', async () => {
     vi.stubGlobal('fetch', () =>
       Promise.resolve(
-        new Response('{"ok":true}', { status: 201, headers: { 'x-nib-cursor': '7' } }),
+        new Response('{"ok":true}', { status: 201, headers: { 'x-orden-cursor': '7' } }),
       ),
     )
     const response = await fetchInTime(new Request('https://orden.so/v2/spaces'))
     expect(response.status).toBe(201)
-    expect(response.headers.get('x-nib-cursor')).toBe('7')
+    expect(response.headers.get('x-orden-cursor')).toBe('7')
     expect(await response.json()).toEqual({ ok: true })
   })
 

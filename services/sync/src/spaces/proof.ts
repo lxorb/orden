@@ -3,7 +3,7 @@ import { NO_ADDRESS } from '../refused'
 import { txtAt } from '../dns'
 import { claimDomain, releaseDomain } from '../hostnames'
 import type { Env, Space } from '../types'
-import { proofName } from './addresses'
+import { proofNames } from './addresses'
 
 export function newProof(): string {
   return `orden-verify=${randomToken()}`
@@ -15,6 +15,14 @@ const TRUSTED_FOR = 3 * PROVED_FOR
 
 const NOT_YET = 'that record is not answering yet'
 
+async function proofAt(domain: string): Promise<{ asked: boolean; values: string[] }> {
+  const found = await Promise.all(proofNames(domain).map((name) => txtAt(name)))
+  return {
+    asked: found.every((one) => one.asked),
+    values: found.flatMap((one) => (one.asked ? one.values : [])),
+  }
+}
+
 export async function proveDomain(
   env: Env,
   space: Space,
@@ -23,8 +31,8 @@ export async function proveDomain(
   const token = space.blog_domain_token
   if (!domain || !token) return { ok: false, error: NO_ADDRESS }
 
-  const found = await txtAt(proofName(domain))
-  if (!found.asked || !found.values.includes(token)) return { ok: false, error: NOT_YET }
+  const found = await proofAt(domain)
+  if (!found.values.includes(token)) return { ok: false, error: NOT_YET }
 
   await env.DB.prepare('update spaces set blog_domain_verified_at = ? where id = ?')
     .bind(now(), space.id)
@@ -53,9 +61,7 @@ export async function recheckDomains(env: Env, at: number): Promise<number> {
   let lost = 0
 
   for (const space of results) {
-    const found = await txtAt(proofName(space.blog_domain))
-
-    if (!found.asked) continue
+    const found = await proofAt(space.blog_domain)
 
     if (found.values.includes(space.blog_domain_token)) {
       await env.DB.prepare('update spaces set blog_domain_verified_at = ? where id = ?')
@@ -63,6 +69,8 @@ export async function recheckDomains(env: Env, at: number): Promise<number> {
         .run()
       continue
     }
+
+    if (!found.asked) continue
 
     if (at - space.blog_domain_verified_at < TRUSTED_FOR) continue
 

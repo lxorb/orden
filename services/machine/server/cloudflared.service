@@ -2,7 +2,7 @@
 # out to Cloudflare, so the server's firewall lets nothing in at all. Its token is this
 # machine's tunnel's alone, written by cloud-init into a file only root reads.
 [Unit]
-Description=Cloudflare Tunnel to nibd
+Description=Cloudflare Tunnel to ordend
 After=network-online.target
 Wants=network-online.target
 ConditionPathExists=/etc/cloudflared/env

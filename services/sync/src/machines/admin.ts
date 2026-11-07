@@ -6,7 +6,7 @@ import { audit } from './audit'
 import { spentThisMonth } from './budget'
 import { sshKeyOf } from './cloudinit'
 import { Hetzner } from './hetzner'
-import { firewallRules, hetznerMissing } from './hetzner-host'
+import { firewallOfMachine, firewallRules, hetznerMissing } from './hetzner-host'
 import { NOT_FOUND } from './door'
 import { monthOf } from '@orden/online'
 import { serviceOf, setService } from './service'
@@ -84,8 +84,8 @@ onlineAdmin.post('/allow', async (context) => {
         detail: 'account',
       })
       await askMachine(context.env, machine.id, 'stop', {
-        'x-nib-user': user.id,
-        'x-nib-reason': 'off',
+        'x-orden-user': user.id,
+        'x-orden-reason': 'off',
       })
     }
   }
@@ -109,8 +109,8 @@ onlineAdmin.post('/machines/:id/stop', async (context) => {
     detail: flag ? 'flag' : 'stopped',
   })
   await askMachine(context.env, id, 'stop', {
-    'x-nib-user': row.user_id,
-    'x-nib-reason': flag ? 'flag' : 'stopped',
+    'x-orden-user': row.user_id,
+    'x-orden-reason': flag ? 'flag' : 'stopped',
   })
   return context.json({ held: flag ? 'flag' : 'stopped' })
 })
@@ -129,7 +129,7 @@ onlineAdmin.post('/machines/:id/reboot', async (context) => {
     .first<{ user_id: string; host: string }>()
   if (!row) return context.json({ error: NOT_FOUND }, 404)
   if (row.host !== 'hetzner') return context.json({ error: 'only a server reboots' }, 409)
-  const answer = await askMachine(context.env, id, 'reboot', { 'x-nib-user': row.user_id })
+  const answer = await askMachine(context.env, id, 'reboot', { 'x-orden-user': row.user_id })
   return context.json({ state: answer ? (await answer.json<{ state: string }>()).state : null })
 })
 
@@ -146,8 +146,8 @@ onlineAdmin.post('/machines/:id/host', async (context) => {
   if (!row) return context.json({ error: NOT_FOUND }, 404)
   await audit(context.env, id, 'host', { who: context.get('user').id, detail: host })
   const answer = await askMachine(context.env, id, 'host', {
-    'x-nib-user': row.user_id,
-    'x-nib-host': host,
+    'x-orden-user': row.user_id,
+    'x-orden-host': host,
   })
   if (!answer) {
     await context.env.DB.prepare('update machines set host = ? where id = ?').bind(host, id).run()
@@ -171,7 +171,7 @@ onlineAdmin.post('/machines/:id/ssh', async (context) => {
   const token = context.env.HETZNER_TOKEN
   if (token) {
     const hetzner = new Hetzner(token)
-    const firewall = await hetzner.firewallLabelled('nib-machine', id)
+    const firewall = await firewallOfMachine(hetzner, id)
     if (firewall !== null) await hetzner.setFirewallRules(firewall, firewallRules(key !== null))
   }
   return context.json({ ssh: key !== null })
@@ -183,7 +183,7 @@ onlineAdmin.post('/machines/:id/remove', async (context) => {
     .bind(id)
     .first<{ user_id: string }>()
   if (!row) return context.json({ error: NOT_FOUND }, 404)
-  const answer = await askMachine(context.env, id, 'erase', { 'x-nib-user': row.user_id })
+  const answer = await askMachine(context.env, id, 'erase', { 'x-orden-user': row.user_id })
   if (answer && !answer.ok) return context.json({ error: 'the server is still there' }, 503)
   await context.env.DB.prepare(
     `update machines set server_id = null, server_status = null, price_month = null,

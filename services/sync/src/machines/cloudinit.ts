@@ -32,24 +32,24 @@ export function cloudInit(boot: Boot): string {
   const key = boot.sshKey === null ? null : sshKeyOf(boot.sshKey)
 
   const files = [
-    `  - path: /etc/nibd/env
+    `  - path: /etc/ordend/env
     owner: root:root
     permissions: '0600'
     content: |
-${block([`NIBD_SECRET=${boot.secret}`, `TZ=${zone}`])}`,
+${block([`ORDEND_SECRET=${boot.secret}`, `TZ=${zone}`])}`,
     `  - path: /etc/cloudflared/env
     owner: root:root
     permissions: '0600'
     content: |
 ${block([`TUNNEL_TOKEN=${boot.tunnel}`])}`,
-    `  - path: /etc/nib/machine
+    `  - path: /etc/orden/machine
     owner: root:root
     permissions: '0644'
     content: |
 ${block([`ORDEN_ORIGIN=${origin}`])}`,
   ]
   if (key) {
-    files.push(`  - path: /etc/nibd/ssh_key
+    files.push(`  - path: /etc/ordend/ssh_key
     owner: root:root
     permissions: '0600'
     content: |
@@ -61,17 +61,17 @@ ${block([key])}`)
     'set -euo pipefail',
     `curl -fsSL --retry 10 --retry-delay 3 -o /root/machine.bin ${bundle}`,
     `echo '${boot.bundle}  /root/machine.bin' | sha256sum -c -`,
-    'mkdir -p /root/machine /opt/nibd',
+    'mkdir -p /root/machine /opt/ordend',
     'tar -xzf /root/machine.bin -C /root/machine',
-    `echo ${boot.bundle} >/opt/nibd/bundle`,
+    `echo ${boot.bundle} >/opt/ordend/bundle`,
     'bash /root/machine/install.sh --server',
     'rm -rf /root/machine /root/machine.bin',
     'rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i',
   ].join('; ')
 
   return `#cloud-config
-# A nib online terminal machine (docs/online-terminal.md 4.15).
-hostname: nib
+# An Orden online terminal machine (docs/online-terminal.md 4.15).
+hostname: orden
 disable_root: true
 ssh_pwauth: false
 package_update: true

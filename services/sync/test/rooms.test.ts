@@ -737,8 +737,8 @@ describe('the door to a room', () => {
       })
 
       expect(answer.status, who).toBe(200)
-      expect(door.asked.at(-1)?.get('x-nib-write'), who).toBe(writes)
-      expect(door.asked.at(-1)?.get('x-nib-space'), who).toBe(spaceId)
+      expect(door.asked.at(-1)?.get('x-orden-write'), who).toBe(writes)
+      expect(door.asked.at(-1)?.get('x-orden-space'), who).toBe(spaceId)
     }
 
     const outside = await signIn(env, 'nobody@example.com')
@@ -769,7 +769,7 @@ describe('the door to a room', () => {
         },
       })
       expect(answer.status).toBe(200)
-      return door.asked.at(-1)?.get('x-nib-device-id')
+      return door.asked.at(-1)?.get('x-orden-device-id')
     }
 
     const hash = await sha256(token)
@@ -830,8 +830,8 @@ describe('the door to a room', () => {
       })
 
       expect(answer.status, role).toBe(200)
-      expect(door.asked.at(-1)?.get('x-nib-write'), role).toBe(writes)
-      expect(door.asked.at(-1)?.get('x-nib-space'), role).toBe(spaceId)
+      expect(door.asked.at(-1)?.get('x-orden-write'), role).toBe(writes)
+      expect(door.asked.at(-1)?.get('x-orden-space'), role).toBe(spaceId)
     }
 
     const boardId = (
@@ -849,8 +849,8 @@ describe('the door to a room', () => {
     })
 
     expect(drawing.status).toBe(200)
-    expect(door.asked.at(-1)?.get('x-nib-kind')).toBe('plane')
-    expect(door.asked.at(-1)?.get('x-nib-write')).toBe('yes')
+    expect(door.asked.at(-1)?.get('x-orden-kind')).toBe('plane')
+    expect(door.asked.at(-1)?.get('x-orden-write')).toBe('yes')
 
     const waiting = await call(env, `/rooms/${noteId}`, {
       headers: {
@@ -925,7 +925,7 @@ describe('the door to a room', () => {
         headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
       })
 
-      expect(door.asked.at(-1)?.get('x-nib-kind'), path).toBe(kind)
+      expect(door.asked.at(-1)?.get('x-orden-kind'), path).toBe(kind)
     }
   })
 
@@ -973,8 +973,8 @@ describe('the door to a room', () => {
 
       expect(answer.status, said).toBe(200)
       expect(door.asked, said).toHaveLength(1)
-      expect(door.asked[0]?.get('x-nib-space'), said).toBe(spaceId)
-      expect(door.asked[0]?.get('x-nib-write'), said).toBe(writes)
+      expect(door.asked[0]?.get('x-orden-space'), said).toBe(spaceId)
+      expect(door.asked[0]?.get('x-orden-write'), said).toBe(writes)
     }
   })
 
@@ -1013,7 +1013,7 @@ describe('the door to a room', () => {
     })
 
     expect(answer.status).toBe(200)
-    expect(door.asked[0]?.get('x-nib-write')).toBe('yes')
+    expect(door.asked[0]?.get('x-orden-write')).toBe('yes')
     expect(env.widest().count).toBeLessThan(20)
   })
 })
@@ -2247,8 +2247,8 @@ describe('telling the rooms somebody has been taken out of a space', () => {
 
     expect(door.asked).toHaveLength(open)
     for (const headers of door.asked) {
-      expect(headers.get('x-nib-revoked')).toBe('u1')
-      expect(headers.get('x-nib-role')).toBe('none')
+      expect(headers.get('x-orden-revoked')).toBe('u1')
+      expect(headers.get('x-orden-role')).toBe('none')
     }
   })
 
@@ -2260,7 +2260,7 @@ describe('telling the rooms somebody has been taken out of a space', () => {
     await roomsRevoked(told, 's1', 'u1', 'read', 'note-0001')
 
     expect(door.asked).toHaveLength(1)
-    expect(door.asked[0]?.get('x-nib-role')).toBe('read')
+    expect(door.asked[0]?.get('x-orden-role')).toBe('read')
   })
 })
 
@@ -2288,8 +2288,8 @@ describe('ending a session', () => {
     await call(out, '/v1/auth/signout', { method: 'POST', token })
 
     expect(door.asked).toHaveLength(1)
-    expect(door.asked[0]?.get('x-nib-revoked')).toBe(who)
-    expect(door.asked[0]?.get('x-nib-role')).toBe('none')
+    expect(door.asked[0]?.get('x-orden-revoked')).toBe(who)
+    expect(door.asked[0]?.get('x-orden-role')).toBe('none')
   })
 
   test('and so does ending every session but this one', async () => {
@@ -2300,7 +2300,7 @@ describe('ending a session', () => {
     await call(out, '/v1/sessions', { method: 'DELETE', token })
 
     expect(door.asked).toHaveLength(1)
-    expect(door.asked[0]?.get('x-nib-revoked')).toBe(who)
+    expect(door.asked[0]?.get('x-orden-revoked')).toBe(who)
   })
 })
 

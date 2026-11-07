@@ -58,7 +58,7 @@ Each has a recommendation, and the design below assumes it.
    (**O**), renamed, moved, bookmarked and trashed like a note. It names one shell session on
    its owner's machine. Every Orden that opens it - another computer of the same person, a phone,
    the browser at orden.so, a colleague in the space - shows the same session.
-3. **One shell, many screens.** In the machine, a small daemon, `nibd`, owns every session's
+3. **One shell, many screens.** In the machine, a small daemon, `ordend`, owns every session's
    pty and keeps its screen in a headless xterm.js, so a late joiner is sent the screen as it
    is (colours, modes, the program on the second screen) and then the stream; a reconnect is
    sent only what it missed. The `Machine` object is the one door: it checks the space's role
@@ -206,10 +206,10 @@ hours a month: two hours a day at the keyboard and two of an agent working alone
 What it costs Orden in design, and how each is met:
 
 - **No memory across a sleep.** Processes end; files are kept by snapshot and backup (4.3),
-  screens by `nibd` (4.6), and an agent's conversation by the agent itself (`claude --continue`,
+  screens by `ordend` (4.6), and an agent's conversation by the agent itself (`claude --continue`,
   4.7). Fly would keep the processes; it is the fallback behind the same interface if this
   proves to matter more than egress control.
-- **Restarts nobody asked for** ("host server restarts occur irregularly"). `nibd` saves on
+- **Restarts nobody asked for** ("host server restarts occur irregularly"). `ordend` saves on
   SIGTERM, which waits up to 15 minutes; the tab offers Resume.
 - **Snapshots are per image and expire in 30 days**, so the home is also backed up to R2,
   which outlives both (4.3).
@@ -255,7 +255,7 @@ services/machine/Dockerfile, around 1.5 GB, so a cold start stays in Cloudflare'
   every sign-in method left in, as Anthropic's terms for "preinstalling or running Claude Code
   in your products or services (e.g. in hosted sandboxes ...)" require - terms Emil accepted
   for nibeditor on 2026-10-01 ([Anthropic][cc-legal]).
-- **`nibd`** (4.6), the one program of Orden's in the machine, as root, started by the image's
+- **`ordend`** (4.6), the one program of Orden's in the machine, as root, started by the image's
   entrypoint, which also puts Cloudflare's per-instance CA into the trust store (4.8) and sets
   `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE` and `REQUESTS_CA_BUNDLE` for everything after it.
 
@@ -268,18 +268,18 @@ Three layers, each for what the one under it cannot do:
 
 | layer | what | when | kept | restores |
 | --- | --- | --- | --- | --- |
-| **the disk** | the whole root filesystem: the home, what `apt` installed, `nibd`'s saved screens | while awake | until the machine sleeps | - |
+| **the disk** | the whole root filesystem: the home, what `apt` installed, `ordend`'s saved screens | while awake | until the machine sleeps | - |
 | **a snapshot** (`snapshotContainer`) | the writable root filesystem, without memory or processes | as the machine sleeps, on SIGTERM, and every 6 awake hours | 30 days from its making or last restore; only on the same image | every wake, in one step |
 | **a backup** (R2 directory backup) | `/home/nib`, compressed | nightly while the machine was awake that day, and before an image change | until the home is deleted (decision 9) | when there is no usable snapshot: after 30 asleep days, after an image upgrade, after a lost snapshot |
 
 So a wake within 30 days on the same image finds the machine exactly as it went to sleep,
 `apt` installs included; anything later finds its **home** as it was and a fresh system around
 it - Codespaces' `/workspaces` rule, but for the whole home, and said once on the screen
-("Restored from 2 Oct; packages reinstall"). `~/.nib/packages` (a plain list, kept by `nibd`
+("Restored from 2 Oct; packages reinstall"). `~/.nib/packages` (a plain list, kept by `ordend`
 from `apt` history) is offered to put them back with one command.
 
 The **home quota** is 5 GB on the free allowance (an 8 GB disk less the image), measured by
-`nibd` and enforced by the disk itself: past 90% the terminal's tab mark says so, at 100% writes
+`ordend` and enforced by the disk itself: past 90% the terminal's tab mark says so, at 100% writes
 fail as they would on a full disk. **Download home** in Settings is the latest backup as one
 `.tar.zst`, by a signed R2 address, so leaving is always possible. **Reset machine** is a fresh
 system from the image with the home put back; **Delete machine** is everything, asked first.
@@ -298,12 +298,12 @@ at 20 minutes and decides itself, on an alarm every minute while awake, with one
   monitor overnight does not keep a machine awake;
 - **something in it is working**: in the last 15 minutes a session printed anything, or the
   machine used more than 5% of its CPU, or moved more than 50 KB a minute over the network
-  (`nibd`'s `activity`, every 30 seconds). This is what an agent looks like while it works:
+  (`ordend`'s `activity`, every 30 seconds). This is what an agent looks like while it works:
   it prints, it thinks on the network, it runs builds. A long build that prints nothing still
   uses the CPU, which Codespaces does not count;
 - **Keep awake** is on (not on the free allowance; 4.9).
 
-Otherwise, 15 minutes after the last of them, it sleeps: `nibd` saves every session's screen
+Otherwise, 15 minutes after the last of them, it sleeps: `ordend` saves every session's screen
 and which program was in front, the snapshot is taken, the instance stops. An agent at its own
 prompt waiting for an answer is not working, so it sleeps with the machine; that is the price
 of a machine that costs nothing asleep, and Resume (4.7) is what makes it cheap to pay.
@@ -353,19 +353,19 @@ another device of the same person opens the same file and so the same session.
 
 ```
 nib (desktop, phone, browser)          Worker                     the machine (microVM)
-  xterm.js  ── socket ──►  Machine (Durable Object, eu)  ── one link ──►  nibd
+  xterm.js  ── socket ──►  Machine (Durable Object, eu)  ── one link ──►  ordend
   xterm.js  ── socket ──►     door: role, typing, quotas                 ├ pty 1 + headless xterm
   xterm.js  ── socket ──►     fan-out, presence, sizes                   ├ pty 2 + headless xterm
                                                                          └ activity, saves
 ```
 
-**`nibd`** owns the ptys and the truth of every screen. One per machine, in node (the same
+**`ordend`** owns the ptys and the truth of every screen. One per machine, in node (the same
 `@xterm/headless` and serialise addon the app's xterm.js reads, so a screen sent is a screen
 drawn byte for byte), with `node-pty`:
 
 - a session is a pty running the user's login shell as `nib` in the home, plus a **headless
   xterm** fed every byte it prints, with 5,000 lines of scrollback (the local terminal's);
-  the pty is a holder's of its own, which outlives `nibd` (4.16);
+  the pty is a holder's of its own, which outlives `ordend` (4.16);
 - output is sent on at most once a frame and at once after a quiet one, as the local engine's
   sender does (`docs/terminal.md`, _The engine_), and at once for the first two reads after a
   key even inside a busy frame, so an echo never waits behind a spinner's frame; as binary
@@ -375,19 +375,19 @@ drawn byte for byte), with `node-pty`:
   (`/proc` and the foreground process group), so the tab is named and marked as a local one is;
 - it reports `activity` (output, CPU, network) every 30 seconds, and the home's size hourly;
 - on `sleep` or SIGTERM it writes each screen's serialisation and program to
-  `/var/lib/nibd`, so the next boot draws them above a fresh prompt with the dim line saying
+  `/var/lib/ordend`, so the next boot draws them above a fresh prompt with the dim line saying
   when they are from - the local terminal's restore, `docs/terminal.md`.
 
-**`Machine`** is the one door and the one fan-out. It holds one link to `nibd` (the SDK's
+**`Machine`** is the one door and the one fan-out. It holds one link to `ordend` (the SDK's
 `containerFetch` to its port, upgraded) while anyone is connected or the machine is working,
 and the people's sockets through the WebSocket hibernation API. The SDK's own `terminal()`
-([terminals][cf-sb-term]) is the same shape for one viewer, with a raw replay buffer; `nibd`
+([terminals][cf-sb-term]) is the same shape for one viewer, with a raw replay buffer; `ordend`
 is what adds many viewers, roles, sizes and whole screens. For every socket `Machine` asks, in
 one query as the rooms do, whether the person reaches the `.term`'s space and as what, and whether
 the account owns the machine. Everything typed is checked against that before it is passed on.
 
 **Joining late, and coming back.** A new socket says `hello` with the `seq` it last drew, if
-any. If `nibd` still holds everything after it, only that is sent; otherwise the **screen**
+any. If `ordend` still holds everything after it, only that is sent; otherwise the **screen**
 (the headless terminal serialised: the visible rows, the scrollback, colours, the cursor, the
 second screen and every mode a program switched on), and then the stream from its `seq`. A
 ring of raw output would draw a full-screen program's half-escapes as garbage; this is
@@ -438,15 +438,15 @@ terminal's selection is a local thing.
   is let in only to be told `refused gone` and closed with 4404: a page never sees a
   refused upgrade's status, and would try a 404 again forever (2026-10-07). Its tab says
   "This terminal is gone" and offers New online terminal, which takes the tab's place.
-- Between `Machine` and `nibd`, one socket, every frame naming its session: `open`, `in`,
+- Between `Machine` and `ordend`, one socket, every frame naming its session: `open`, `in`,
   `size`, `want {since}`, `close`, `sleep`; and back `out`, `screen`, `program`, `ended`,
-  `activity`, `saved`. `nibd` takes the link only with the secret `Machine` hands it at boot.
+  `activity`, `saved`. `ordend` takes the link only with the secret `Machine` hands it at boot.
 - The hub gains one frame, `{t:'machine', state}`, to every device of the owner, so a status
   dot changes everywhere at once; a `.term` reaches the space's other devices as any file does.
 
 **Bounds.** 25 sockets a session; 100 input frames a second a person, 64 KB a frame; a
 socket more than 1 MB behind is sent a fresh screen instead of the backlog; output is coalesced
-in `nibd`, so a flood is sixty frames a second, not one per read.
+in `ordend`, so a flood is sixty frames a second, not one per read.
 
 ### 4.7 Unattended agents
 
@@ -469,7 +469,7 @@ things it keeps to on the desktop:
 - the binary is Anthropic's, unmodified, with every sign-in method left in;
 - every person signs in with their own credentials, and Orden never pays for, resells or routes
   anybody's usage;
-- **no code of Orden's reads a token**: `nibd` never opens anything under `~/.claude` or
+- **no code of Orden's reads a token**: `ordend` never opens anything under `~/.claude` or
   `~/.codex`, the Worker never sees the providers' traffic decrypted (4.8), and the backups are
   bytes Orden stores and never parses;
 - Orden says "runs Claude Code" in plain words, and never uses its name or logo as its own.
@@ -506,7 +506,7 @@ reach each other: no private network is configured, and `deniedHosts` holds ever
 range and the metadata addresses.
 
 **Ceilings by the instance type**: ½ vCPU, 2 GiB of memory and an 8 GB disk on the free
-allowance; a process limit of 4,096 (`nibd` sets `pids.max` on the sessions' cgroup), so a
+allowance; a process limit of 4,096 (`ordend` sets `pids.max` on the sessions' cgroup), so a
 fork bomb ends in its own session.
 
 **Egress.** `enableInternet = false`, so nothing leaves on any port but HTTP and HTTPS: no mail
@@ -527,7 +527,7 @@ session 25, input 100 frames a second a person; egress 20 GB a month on the free
 **Abuse**:
 
 - **mining**: CPU is metered and capped (10 vCPU-hours a month free), so it earns nothing;
-  `Machine` also flags a machine above 80% CPU for an hour with nobody connected, and `nibd`
+  `Machine` also flags a machine above 80% CPU for an hour with nobody connected, and `ordend`
   reports known miners' process names (a cheap signal a root user can hide, never the only one);
 - **mail and scanning**: impossible with the internet off (above);
 - **HTTP floods and scraping**: the egress cap, and a flag past 1 GB an hour;
@@ -536,7 +536,7 @@ session 25, input 100 frames a second a person; egress 20 GB a month on the free
 
 **Secrets.** Cloudflare's advice is to "assume that the code uses everything it can reach"
 ([security][cf-sb-sec]), so Orden puts none of its own in a machine: no Worker secret, no
-account token, no key of Orden's. `nibd`'s link secret is per boot and opens only `nibd`. A
+account token, no key of Orden's. `ordend`'s link secret is per boot and opens only `ordend`. A
 person's own secrets are theirs, in their home; Settings never offers to inject any (Codespaces' secrets are a
 later feature, if ever). Backups are encrypted at rest by R2; the operator could read a home,
 as any host could, and Orden's code never does - stated in the terms, as chats state their own.
@@ -586,7 +586,7 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
 - **a paid tier**, through Stripe (Orden takes no payment today): for example CHF 6 a month for
   150 awake hours, 20 GB of home, a 1 vCPU / 4 GiB machine, and **Keep awake** for CHF 20 more
   (a small machine always on costs about $17.70, 3.3);
-- **bring your own machine**: `nibd` installed on a server of the person's own, dialling out to
+- **bring your own machine**: `ordend` installed on a server of the person's own, dialling out to
   their `Machine`, so sharing and every screen work the same at no cost to Orden. Remote (SSH)
   already covers using one's own server alone;
 - **bring your own cloud key**: the person's own Cloudflare or Fly account running their
@@ -617,7 +617,7 @@ home, egress) and the reset date; the machine's mark on a tab turns amber at 80%
   program, the file), the file's name and when it last printed under that, and at the end
   **Open** (its tab, or a new one, in its space) and **End** (asked first; its program ends,
   and a tab on it says the terminal is gone). What the account keeps (`term_sessions`) is
-  joined with what `nibd` has (`list`, answered `sessions`), so a session no file names any
+  joined with what `ordend` has (`list`, answered `sessions`), so a session no file names any
   more is listed too, and can be ended by its own id. The account's hub says `terms` to the
   owner's devices whenever a session is made or ended or its shell ends, and the list asks
   again; see `lib/online/sessions.svelte.ts` and `listing.ts`.
@@ -677,16 +677,16 @@ link there it should open in my browser" - after `claude` printed its sign-in ad
 copied by hand. VS Code Remote and Codespaces solved the same: a `BROWSER` helper that opens
 on the person's computer, port forwarding for the sign-in's way back, and the clipboard.
 
-- **The machine's browser is its owner's.** `nib-open` (services/machine) is `xdg-open`,
+- **The machine's browser is its owner's.** `orden-open` (services/machine) is `xdg-open`,
   `sensible-browser`, `x-www-browser`, `www-browser` and `$BROWSER` on the machine. It posts
-  the address and `$ORDEN_SESSION` to `nibd` on a Unix socket (`/run/nibd/open.sock`, every
+  the address and `$ORDEN_SESSION` to `ordend` on a Unix socket (`/run/ordend/open.sock`, every
   user of the machine may write, since every user is its owner), which says `browse
   {session, url}` up the link; `Machine` sends `browse {url}` to **one** socket of the
   machine's owner on that session - the device that typed there last, else the one seen
   last - and to nobody else: a watcher is never sent a page by somebody else's machine.
   Only `http` and `https` (`isWebUrl` in `@orden/online/urls`), at most ten a minute at
-  `nibd` and at `Machine`, six a minute a terminal in the app. With no Orden connected,
-  `nib-open` fails and the program prints the address, as it does on any headless box.
+  `ordend` and at `Machine`, six a minute a terminal in the app. With no Orden connected,
+  `orden-open` fails and the program prints the address, as it does on any headless box.
 - **Where it opens** is where a link from the terminal opens (`lib/online/opening.svelte.ts`):
   a web tab beside the terminal on a desktop - in front while the terminal is what the
   person looks at, behind while an agent works alone - the system browser on a phone, and
@@ -697,7 +697,7 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   listener, `http://localhost:<49152-65535>/callback`; Codex to `localhost:1455`. That page
   is on the machine. So a tab opened for an address whose query names a loopback page is
   watched, and when it lands on that origin - and only that one (`isCallbackOf`) - the app
-  says `callback {url}`; `Machine` passes it on for the owner alone, and `nibd` makes the
+  says `callback {url}`; `Machine` passes it on for the owner alone, and `ordend` makes the
   one GET on the machine, loopback only, ten seconds at most, redirects not followed, and
   answers `called {url, status}`. On a 2xx or 3xx the tab closes and the terminal is in
   front again, where the program says it is signed in; otherwise the tab stays to show the
@@ -716,13 +716,13 @@ on the person's computer, port forwarding for the sign-in's way back, and the cl
   a picture's row dropped on the terminal carries the picture up: `image {id, kind, part,
   last}` frames of at most `IMAGE_PART` bytes (`MOST_INPUT` once base64), paced and
   counted as input and refused where input would be; `Machine` passes the bytes down the
-  link, and the file is written into the user's `~/.cache/nib/images` **as the user**:
-  `nibd` is root and the home is theirs, where any folder on the way could be a link to
+  link, and the file is written into the user's `~/.cache/orden/images` **as the user**:
+  `ordend` is root and the home is theirs, where any folder on the way could be a link to
   `/etc` and a check before the write is a race, so the folder, the clearing and the write
   are one `sh` run through the shells' own `setpriv` (`asUser` in limits.ts), the bytes on
   its input and the path said back, and nothing of root's touches the home. The file is
   `0600`, never written through (`set -C`), and only pictures of Orden's own naming
-  (`NAMED`) are cleared after a day; `services/machine/src/images.ts`. `nibd` then
+  (`NAMED`) are cleared after a day; `services/machine/src/images.ts`. `ordend` then
   answers `image {id, path}`, which `Machine` sends to the sockets that may type. The app
   pastes the path, which the agent takes as an image. 16 MB at most (`MOST_IMAGE`). See
   docs/terminal.md, _Keys, copying, links, finding_.
@@ -742,10 +742,10 @@ nowhere, new terminals loading for ever - and the Stop that followed saved neith
 the disk. An awake machine either works or says it does not, and comes back by itself
 (Kubernetes' liveness probe, systemd's watchdog, mosh's "last contact").
 
-- **The link is pinged.** `Machine` pings `nibd` every 5 s (`PING_EVERY`); a link that says
+- **The link is pinged.** `Machine` pings `ordend` every 5 s (`PING_EVERY`); a link that says
   nothing at all for 20 s (`QUIET_FOR`: no pong, no output, no activity) is dead whether or
   not it ever closes. (Until issue 208 it was a ping every 15 s and 40 s of silence: a dead
-  link looked live for up to 55 s.) `nibd` drops a link that pinged and then fell silent for
+  link looked live for up to 55 s.) `ordend` drops a link that pinged and then fell silent for
   40 s (`SILENT_FOR`, longer, so a `Machine` deployed before it is never dropped between its
   pings), so ptys paused behind a half-open link are read again.
 - **A dead link is made again** (`recover`): every socket is told `starting` at once, the
@@ -757,12 +757,12 @@ the disk. An awake machine either works or says it does not, and comes back by i
   after one sets the inactivity timeout and the backups' route again (Cloudflare stops a
   container whose object went quiet without them), and a wake that finds an instance still
   running (a sleep a deploy cut short) links to it as it is.
-- **`nibd` watches itself.** A worker thread ends `nibd` when its event loop has not turned
+- **`ordend` watches itself.** A worker thread ends `ordend` when its event loop has not turned
   for a minute (`watchdog.ts`); the entrypoint starts it again in the same machine, so the
   disk and the home stay, and every program goes on in its holder (4.16).
   Five ends in ten minutes end the machine instead, which `Machine` answers with a restart.
   The sessions' cgroup gets the machine's memory less 512 MiB, so a build that eats it all
-  is ended by the kernel inside the sessions, not by a machine thrashing around `nibd`.
+  is ended by the kernel inside the sessions, not by a machine thrashing around `ordend`.
 - **The app's socket beats** every 10 s, answered by the runtime without waking the object;
   three unanswered beats drop and reopen it. Where half a minute would be felt it looks at
   once (issue 208): the network coming back (`online`), the window looked at again, a
@@ -805,22 +805,22 @@ killed, and the warning that a firewall change can lock its owner out).
   container's, with `alwaysOn` set, so `Machine` is one class for both.
 - **Made from the Worker**, through the Hetzner Cloud API with `HETZNER_TOKEN`, and safe to
   ask again at any point: the tunnel and its hostname first, then the server, found by its
-  label `nib-machine=<id>` and made only where there is none - `cx43`, `ubuntu-24.04`, in
+  label `orden-machine=<id>` and made only where there is none - `cx43`, `ubuntu-24.04`, in
   **Nuremberg** (`nbg1`: a connection in 16.6 ms from ETH Zurich against Falkenstein's 18.4
   ms, measured 2026-10-06), in Falkenstein (`fsn1`) where Nuremberg has none to give. Its
   firewall has **no inbound rule at all**; outbound is open. IPv4 as well as IPv6, since
   GitHub has no IPv6.
 - **The way in is a Cloudflare Tunnel.** `cloudflared` on the server dials out to Cloudflare;
-  `m-<id>.nibeditor.com` is a proxied CNAME to the tunnel, whose one route is `nibd` on the
-  server's loopback (`127.0.0.1:7680`; `nibd` listens nowhere else). `Machine` links to
+  `m-<id>.nibeditor.com` is a proxied CNAME to the tunnel, whose one route is `ordend` on the
+  server's loopback (`127.0.0.1:7680`; `ordend` listens nowhere else). `Machine` links to
   `https://m-<id>.nibeditor.com/link` past three locks: a **Cloudflare Access** application on
   `m-*.nibeditor.com` lets through only requests carrying its one **service token** (the
   Worker's `MACHINE_ACCESS_ID` and `MACHINE_ACCESS_SECRET`); `cloudflared` checks the Access
-  token again against the application's audience (`originRequest.access`); and `nibd` takes
+  token again against the application's audience (`originRequest.access`); and `ordend` takes
   the link only with the machine's own secret. The zone's catch-all Worker route matches these
   names too, so the Worker hands a request for one on to its origin untouched
   (`isMachineHost`), which is the tunnel. **Weighed and left**: a public address with TLS and a
-  pinned certificate - an open port, certificates to issue and rotate on the box, and `nibd`'s
+  pinned certificate - an open port, certificates to issue and rotate on the box, and `ordend`'s
   HTTP server facing the internet; and Workers VPC, whose bindings are fixed at deploy and
   cannot name a tunnel made for one person at run time.
 - **What is installed is said once.** `services/machine/install.sh` installs the system (apt's
@@ -829,16 +829,16 @@ killed, and the warning that a firewall change can lock its owner out).
   Cloudflare image; cloud-init runs it with `--server`, which adds `cloudflared` from
   Cloudflare's signed repository, the systemd units, unattended security upgrades (never an
   automatic reboot), 4 GB of swap, and SSH shut: no root, no passwords, off unless a key is set.
-- **`nibd` reaches the server reproducibly.** `pnpm --filter @orden/machine build` writes,
-  beside `nibd.cjs`, `dist/machine.bin`: `nibd`, `install.sh`, the scripts and the units as one
+- **`ordend` reaches the server reproducibly.** `pnpm --filter @orden/machine build` writes,
+  beside `ordend.cjs`, `dist/machine.bin`: `ordend`, `install.sh`, the scripts and the units as one
   deterministic gzipped tar. The Worker **carries it inside itself** (a Data module of
   `entry.ts`) and serves it at `/v2/online/machine/<sha256>.bin`, its hash at
   `/v2/online/machine/current`; cloud-init fetches it and checks the hash before anything in
-  it runs. So the `nibd` a server runs is the one built with the Worker that links to it.
-  Before every start of `nibd`, `nib-update` asks the Worker for the hash and puts a newer
+  it runs. So the `ordend` a server runs is the one built with the Worker that links to it.
+  Before every start of `ordend`, `orden-update` asks the Worker for the hash and puts a newer
   bundle in place (`install.sh --files`), checked the same way: a Restart picks up a deploy.
 - **Secrets.** The machine's link secret is made once, with the server, and kept in
-  `Machine`'s storage and in `/etc/nibd/env` (root's, `0600`). The tunnel's token is asked of
+  `Machine`'s storage and in `/etc/ordend/env` (root's, `0600`). The tunnel's token is asked of
   Cloudflare as the server is made, handed to it, and never kept by the Worker
   (`/etc/cloudflared/env`, `0600`). Both travel in cloud-init's `write_files` only, which
   cloud-init never logs; no command it runs carries one, and its own copy of the user data is
@@ -847,17 +847,17 @@ killed, and the warning that a firewall change can lock its owner out).
 - **Always on.** No sleep, snapshot, backup or restore: the disk is a disk, and processes
   survive everything but a reboot. `awake` and the allowance are not asked; only a kill switch
   (the service, the account, a hold) puts the machine down, and then it is only unlinked - the
-  server runs on. It is `awake` once `nibd` answers. A server being made is `starting` for its
+  server runs on. It is `awake` once `ordend` answers. A server being made is `starting` for its
   first boot's few minutes, waited for on the alarm every 10 seconds (never inside a request),
   and `starting` is said again each time, so a waiting terminal keeps waiting. One whose
-  `nibd` stopped answering is looked for sooner (`nextLook`): after a second, then at half
-  the time waited so far, up to the same 10 seconds - a `nibd` that ended is started again
+  `ordend` stopped answering is looked for sooner (`nextLook`): after a second, then at half
+  the time waited so far, up to the same 10 seconds - a `ordend` that ended is started again
   by systemd in about three, and a flat 10 s made a Restart take fifteen (issue 208).
 - **The health path** (4.14) on a server: a link that goes quiet or closes is made again; a
-  `nibd` whose link goes quiet again within five minutes is told `restart` down the fresh link
+  `ordend` whose link goes quiet again within five minutes is told `restart` down the fresh link
   - one that merely closed is not counted, since a close says more of the way there (the
-  edge, the tunnel) than of `nibd` (issue 208) (it saves every screen and ends, and systemd
-  starts it again, `nib-update` first, every program going on in its holder, 4.16); one that
+  edge, the tunnel) than of `ordend` (issue 208) (it saves every screen and ends, and systemd
+  starts it again, `orden-update` first, every program going on in its holder, 4.16); one that
   will not link is
   waited for while systemd restarts it, and after three minutes the server is **power-cycled**
   through the API; ten minutes after that it is `asleep` with `restart`, which its terminals
@@ -865,17 +865,17 @@ killed, and the warning that a firewall change can lock its owner out).
   **Remove** (the server, its firewall, its tunnel and its hostname deleted, the row kept, so
   the next terminal makes a new server). Erasing the account deletes all of it through
   `leftovers`, which asks again the next night if Hetzner would not yet.
-- **systemd** runs `nibd` (`Restart=always`, never given up on, `OOMScoreAdjust=-900`; the
-  sessions' cgroup is fenced by `nibd` to the machine's memory less 512 MiB), `cloudflared`
-  (the same) and `nib-agents` (Claude Code by Anthropic's checksum-checking installer and Codex
-  by npm, as the user, at every boot). `nibd`'s own watchdog is the `WatchdogSec` it cannot
+- **systemd** runs `ordend` (`Restart=always`, never given up on, `OOMScoreAdjust=-900`; the
+  sessions' cgroup is fenced by `ordend` to the machine's memory less 512 MiB), `cloudflared`
+  (the same) and `orden-agents` (Claude Code by Anthropic's checksum-checking installer and Codex
+  by npm, as the user, at every boot). `ordend`'s own watchdog is the `WatchdogSec` it cannot
   have, since node cannot speak `sd_notify`.
 - **Cost.** A fixed monthly price, read from Hetzner's API as the server is made - the type's
   gross monthly price in its location and the IPv4 address's - and kept on the row. The budget
   breaker becomes: no server is **made** whose price would take the month's fixed prices (in US
   dollars at 1.25 to the euro, deliberately high) and the containers' estimate past the
   ceiling. A server that exists is never refused its link for the budget.
-- **The disk is said.** `nibd` reports the filesystem the home is on (`statfs`) every 30
+- **The disk is said.** `ordend` reports the filesystem the home is on (`statfs`) every 30
   seconds, on every host. Settings › Online terminal shows the server in one line - _CX43 · 8
   vCPU · 16 GB · 160 GB · €16.49 a month_ - and its disk as the one bar, amber at 80%. Every
   online terminal says one quiet line, once, when its machine's disk is 90% full or has less
@@ -887,23 +887,23 @@ killed, and the warning that a firewall change can lock its owner out).
 - **Left out**: moving a Cloudflare home onto the server by itself (it stays in R2, to be
   fetched by hand); several servers per person; any other size.
 
-### 4.16 A program outlives `nibd`
+### 4.16 A program outlives `ordend`
 
 Issue 222, Emil, 2026-10-07: after coming back to a terminal, "the program that was running
 before is just not running anymore, as if cancelled", on several terminals and several times.
 
-Every program ended with `nibd`, which held every pty itself: a SIGTERM ended each session's
-processes, a `nibd` killed outright hung up on them, and the next one drew the screens back
-above fresh shells. And on a server `nibd` restarts far more often than the machine does:
+Every program ended with `ordend`, which held every pty itself: a SIGTERM ended each session's
+processes, a `ordend` killed outright hung up on them, and the next one drew the screens back
+above fresh shells. And on a server `ordend` restarts far more often than the machine does:
 
 - the health path's restart of a link that went quiet twice in five minutes (4.15), which
   until issue 208 (2026-10-08) was any relink, and every deploy of the Worker relinks: the
   day the issue was written had dozens;
 - the owner's Restart, which is Stop on a server;
-- systemd restarting `nibd.service`: on Ubuntu 24.04 needrestart restarts every service
+- systemd restarting `ordend.service`: on Ubuntu 24.04 needrestart restarts every service
   whose libraries a security update replaced, unattended, after the nightly upgrade
   ([needrestart][needrestart]), and node is linked against glibc;
-- `nibd`'s own watchdog, a crash, the kernel.
+- `ordend`'s own watchdog, a crash, the kernel.
 
 **Studied**: tmux and screen (a server owns the ptys and a client leaving ends nothing; one
 server for every session, so its crash ends them all), dtach and abduco (one small process a
@@ -915,15 +915,15 @@ copy, [VS Code][vscode-grace]), Codespaces (the idle stop ends every process, 2.
 systemd's `KillMode`, which ends whatever is left in a unit's cgroup as the unit stops - why
 tmux started from a service dies with it unless it is moved to a scope of its own.
 
-- **A holder per shell** (`services/machine/src/hold.ts`), dtach's shape: `nibd` starts one
+- **A holder per shell** (`services/machine/src/hold.ts`), dtach's shape: `ordend` starts one
   detached, in a session of its own, and it moves itself into the session's cgroup (the one
   `pids.max`, `memory.max` and End's `cgroup.kill` already used) before the shell exists, so
-  neither a signal to `nibd` nor systemd stopping `nibd`'s unit reaches it or anything the
-  shell started. It listens on `/var/lib/nibd/holds/<session>.sock`, which only root reaches,
-  and reads the pty whether anybody is attached or not, so a program never waits on a `nibd`
+  neither a signal to `ordend` nor systemd stopping `ordend`'s unit reaches it or anything the
+  shell started. It listens on `/var/lib/ordend/holds/<session>.sock`, which only root reaches,
+  and reads the pty whether anybody is attached or not, so a program never waits on a `ordend`
   that is restarting.
 - **What dtach leaves out, kept**: the last 4 MB of output, numbered by the session's own
-  offsets. The next `nibd` draws the screen from its last save - every five minutes and as it
+  offsets. The next `ordend` draws the screen from its last save - every five minutes and as it
   stops, now the whole terminal with the second screen and every mode - and the holder sends
   what it printed after it, so the screen goes on as though nothing happened and a device
   that drew up to an offset is sent exactly what it missed. Where the holder no longer has
@@ -932,17 +932,17 @@ tmux started from a service dies with it unless it is moved to a scope of its ow
 - **Nothing says anything happened**: no date line and no Resume; the terminal says
   _Starting machine…_ for the seconds the link takes.
 - **End** ends the holder with everything in its cgroup, a session nobody opened since the
-  restart included, and an End said while `nibd` cannot be reached is said on the next link.
-  A shell that ends while `nibd` is away is said ended when it is back: its holder waits.
+  restart included, and an End said while `ordend` cannot be reached is said on the next link.
+  A shell that ends while `ordend` is away is said ended when it is back: its holder waits.
 - **What still ends a program**: a reboot (the admin's, Hetzner's, or the power-cycle after
-  three minutes in which nobody reached `nibd`, 4.15), the sessions' memory running out, End,
+  three minutes in which nobody reached `ordend`, 4.15), the sessions' memory running out, End,
   emptying the trash, and on Cloudflare a sleep (4.4, for the cost). After any of those the
   screen comes back above a fresh shell with the date line and Resume, as before.
 - **What it costs**: a node process a shell (the machine workflow prints how much), eight at
-  most. A holder runs the code it was started with until its shell ends, so `nibd` and its
+  most. A holder runs the code it was started with until its shell ends, so `ordend` and its
   holders speak words that only grow (`hold-wire.ts`), and node-pty is swapped in by a rename
   rather than written over under the holders that have it loaded.
-- **The first restart after this is deployed** still ends the shells there are: a `nibd`
+- **The first restart after this is deployed** still ends the shells there are: a `ordend`
   without holders started them.
 
 ### 4.17 One device at a time
@@ -964,7 +964,7 @@ reopened on every device, and **one device at a time** drives it.
   its tab shows its last screen dimmed under _Open on <device> since <time>_ and **Take over**,
   or _Taken over by <device>_ and **Take back**. Enter is the button.
 - **Take over** (`take`) hands it on at once: the old holder is told `held` with `taken`, the new
-  one `hold`, and says hello again with what it last drew, so `nibd` sends the rest or the whole
+  one `hold`, and says hello again with what it last drew, so `ordend` sends the rest or the whole
   screen with its scrollback. Nothing restarts; the pty takes the holder's size.
 - **Let go**: closing the tab says `leave`, free at once. A socket that closed, or said nothing -
   not even the runtime-answered beat - for `HOLD_QUIET` (45 s, then closed with 4408), keeps it
@@ -995,7 +995,7 @@ is services/machine/.
 `deploy` job), so the `containers` block, the `Machine` binding and its migration tag stay in
 services/sync/wrangler.machines.jsonc, which CI does not deploy, and the routes answer 404
 while `online` is off. No lane creates a Cloudflare resource, pushes an image or spends money;
-everything is tested against a fake host and a local `nibd`. Going live is the checklist in 6.3.
+everything is tested against a fake host and a local `ordend`. Going live is the checklist in 6.3.
 
 ### 6.1 The interfaces the lanes meet at
 
@@ -1031,7 +1031,7 @@ The host behind `Machine` is one interface, so the SDK (or Fly) is one file:
 interface MachineHost {
   start(id: string, image: string, env: Record<string, string>): Promise<void>
   stop(id: string, grace: number): Promise<void>
-  link(id: string): Promise<WebSocket>              // to nibd
+  link(id: string): Promise<WebSocket>              // to ordend
   snapshot(id: string): Promise<string>
   backup(id: string, dir: string): Promise<string>
   restore(id: string, from: { snapshot?: string; backup?: string }): Promise<void>
@@ -1046,18 +1046,18 @@ interface MachineHost {
 `ContainerHost` and `DevHost` are in `machines/host.ts`, `HetznerHost` in
 `machines/hetzner-host.ts`; `hostOf` picks one by `machines.host`.
 
-`nibd` is told nothing of Orden's accounts: it speaks the link protocol and nothing else.
+`ordend` is told nothing of Orden's accounts: it speaks the link protocol and nothing else.
 
 ### 6.2 The lanes
 
 | lane | owns | builds | tests | wave |
 | --- | --- | --- | --- | --- |
 | **1 `online-core`** | packages/online (new); `packages/sync-core/src/tree.ts` (the `term` kind) | the types above; `awake`, `sizeOf`, `mayType`; the wire frames and codecs; the `.term` text read and written; usage arithmetic (4.9) | `awake` as a table of every case of 4.4 (active vs idle watchers, on screen or not, output, CPU, network, each allowance, the budget, `off`) plus property tests (more activity never sleeps sooner); `sizeOf` with phones watching and typing; `mayType` for every row of 4.6's table and a guest at each role; codec round trips; `tree.test.ts` with `.term` entries moved, renamed, trashed | 1 |
-| **2 `online-nibd`** | services/machine/ (new): `nibd` in node, the `Dockerfile`, the entrypoint (CA, environment, first-boot installs of Claude Code and Codex) | ptys with `node-pty`; a headless xterm per session; frames numbered by offset and the last megabyte kept; screens serialised for joiners; program and title in front; `activity` and the home's size; saving screens on `sleep` and SIGTERM and drawing them after a boot; the process limit; the link secret | on Linux in CI (`ubuntu-latest`): a session's echo; a late joiner's screen equal to a client that saw everything, with vim on the second screen and colours mid-stream (the serialised screen and the stream after it compared cell by cell); a reconnect inside and outside the kept megabyte; activity counted; screens back after SIGTERM and a restart; a fork bomb contained; the image built and `nibd` answering in it with `docker run`, no cloud | 1 |
+| **2 `online-ordend`** | services/machine/ (new): `ordend` in node, the `Dockerfile`, the entrypoint (CA, environment, first-boot installs of Claude Code and Codex) | ptys with `node-pty`; a headless xterm per session; frames numbered by offset and the last megabyte kept; screens serialised for joiners; program and title in front; `activity` and the home's size; saving screens on `sleep` and SIGTERM and drawing them after a boot; the process limit; the link secret | on Linux in CI (`ubuntu-latest`): a session's echo; a late joiner's screen equal to a client that saw everything, with vim on the second screen and colours mid-stream (the serialised screen and the stream after it compared cell by cell); a reconnect inside and outside the kept megabyte; activity counted; screens back after SIGTERM and a restart; a fork bomb contained; the image built and `ordend` answering in it with `docker run`, no cloud | 1 |
 | **3 `online-machine`** | `machines/` in the Worker (new): `Machine`, its routes, the door, `MachineHost` over the Sandbox SDK and a fake; `wrangler.machines.jsonc` (new); migration `00xx_machines.sql` (`machines`, `machine_usage`, `machine_events`, `term_sessions`, `users.online`); the hub's `machine` frame (`hub/frames.ts`); `guestMayReach`; `erase.ts` and `leftovers` for the new tables | 4.1, 4.3, 4.4 and 4.6's server side: start, wake, the minute alarm with `awake`, sleep with save, snapshot, backup and restore by the rules of 4.3; the fan-out with hibernating sockets; the door through the rooms' one query; revocation closing sockets; Download home; the trash rule of 4.5; the egress configuration of 4.8, with the day-one proof that providers' traffic never reaches a handler | route tests against real SQL with the fake host: 4.6's table for five holders (two guests); a socket refused typing; revocation; a copied `.term` reaching nothing; sleep and wake through the fake with the alarm driven by a clock; restore choosing snapshot or backup; `erase.test.ts` with the new tables; `wrangler deploy --dry-run --config wrangler.machines.jsonc` | 1 |
 | **4 `online-guard`** | `machines/limits.ts`, `machines/meter.ts`, `machines/admin.ts`, `machines/budget.ts` (new, in the Worker); the `limits` rows; the abuse flags; the terms page text (`terms.ts` in the Worker, new) | 4.8's rate limits, flags, kill switches (machine, account, service), the budget breaker, the audit writes and reads; 4.9's meter and allowance; the allow-list | each limit at its edge; the breaker refusing a wake and giving ten minutes; the service switch stopping every machine at the next alarm; a flag stopping and holding a machine; the audit never holding input (a test that types a secret and finds it nowhere in D1) | 2 |
-| **5 `online-client`** | `lib/online/` (new: the socket, the screen cache, the people popover, Resume, the phone's key row); the `online` kind in `lib/new-kinds.ts`, `lib/openers.ts` and `lib/file-mark.ts`; the terminal surface's source switch in `lib/terminal/` (one seam: a pty or a socket); `lib/terminal/naming.ts` and `marks.ts` (the cloud corner); Settings › Online terminal (new pane); `lib/sync2/kinds.ts` (a `.term` entry) | 4.10 and 4.11: the card on O, the tab, its name and mark, faces and the typing dot, the cursor's colour and flag, the size rule's scaling, the cached screen, waking on screen, Resume, Move to space, restore, the Settings pane and meter, the phone's keys and pinch | component tests per surface; a drive `test/e2e/online.py` against the Worker with the fake host and a local `nibd`: two browsers on one shared space, one typing and the other seeing it within 100 ms, the typist's colour, a reader refused typing, a late joiner's screen equal to the typist's, the phone width scaling, a restart restoring the tab and its screen; `weight.test.ts` unchanged; probes only through `run_probe()` with the lane's own identifier | 2 |
-| **6 `online-agent`** | services/machine/ (the agents' first-boot install, with lane 2); `lib/online/resume.ts`; the waiting notice through `docs/chats.md` lane 6's push module; `docs/ai.md` (a section on hosted machines) | 4.7: Claude Code and Codex installed unmodified into the home and kept updating; the sign-in links; Resume for both; the title-based waiting notice | in the image in CI: `claude --version` and `codex --version` run, the installers' checksums verified, no file under `~/.claude` or `~/.codex` opened by `nibd` (an `strace`-style test over a scripted session); Resume typing exactly the documented command; `docs/ai.md`'s rules unchanged | 3 |
+| **5 `online-client`** | `lib/online/` (new: the socket, the screen cache, the people popover, Resume, the phone's key row); the `online` kind in `lib/new-kinds.ts`, `lib/openers.ts` and `lib/file-mark.ts`; the terminal surface's source switch in `lib/terminal/` (one seam: a pty or a socket); `lib/terminal/naming.ts` and `marks.ts` (the cloud corner); Settings › Online terminal (new pane); `lib/sync2/kinds.ts` (a `.term` entry) | 4.10 and 4.11: the card on O, the tab, its name and mark, faces and the typing dot, the cursor's colour and flag, the size rule's scaling, the cached screen, waking on screen, Resume, Move to space, restore, the Settings pane and meter, the phone's keys and pinch | component tests per surface; a drive `test/e2e/online.py` against the Worker with the fake host and a local `ordend`: two browsers on one shared space, one typing and the other seeing it within 100 ms, the typist's colour, a reader refused typing, a late joiner's screen equal to the typist's, the phone width scaling, a restart restoring the tab and its screen; `weight.test.ts` unchanged; probes only through `run_probe()` with the lane's own identifier | 2 |
+| **6 `online-agent`** | services/machine/ (the agents' first-boot install, with lane 2); `lib/online/resume.ts`; the waiting notice through `docs/chats.md` lane 6's push module; `docs/ai.md` (a section on hosted machines) | 4.7: Claude Code and Codex installed unmodified into the home and kept updating; the sign-in links; Resume for both; the title-based waiting notice | in the image in CI: `claude --version` and `codex --version` run, the installers' checksums verified, no file under `~/.claude` or `~/.codex` opened by `ordend` (an `strace`-style test over a scripted session); Resume typing exactly the documented command; `docs/ai.md`'s rules unchanged | 3 |
 
 **Wave 1** is lanes 1, 2 and 3: a pure package, the machine's own code and the Worker, which
 meet at 6.1 and nothing else. **Wave 2** is lanes 4 and 5 once 1 and 3 are on main (2 may

@@ -14,7 +14,7 @@ const slot = new BigInt64Array(workerData.slot)
 setInterval(() => {
   const late = Date.now() - Number(Atomics.load(slot, 0))
   if (late <= workerData.limit) return
-  try { writeSync(2, 'nibd: the event loop has not turned for ' + late + ' ms; ending\\n') } catch {}
+  try { writeSync(2, 'ordend: the event loop has not turned for ' + late + ' ms; ending\\n') } catch {}
   process.kill(process.pid, 'SIGKILL')
 }, workerData.beat)
 `
