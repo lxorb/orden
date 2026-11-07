@@ -61,4 +61,42 @@ describe('a page note as a PDF', () => {
     expect(at.x).toBeCloseTo(225, 0)
     expect(at.y).toBeCloseTo(150, 0)
   })
+
+  test('cuts a long page too tall for one sheet into sheets, each ruled by a pattern', async () => {
+    const [page] = emptyPages('long').nodes as PageNode[]
+    const long = { ...page!, height: 120000, pattern: 'dots' as const }
+    const point = (y: number) => ({ x: long.x + 100, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+    const stroke = {
+      id: 'low',
+      tool: 'pen' as const,
+      color: '#000000',
+      size: 4,
+      points: [point(long.y + 119000), point(long.y + 119100)],
+    }
+    const canvas = { ...emptyPages('long'), nodes: [long], ink: [stroke] }
+    const bytes = await pagesPdf({
+      canvas,
+      palette: {},
+      name: 'Long',
+      path: '/notes/Long.canvas',
+      root: '/notes',
+    })
+    const doc = await PDFDocument.load(bytes!)
+    const sheets = doc.getPages()
+    const text = (at: number) => {
+      const sheet = sheets[at]!
+      return (sheet.node.Contents() as PDFArray)
+        .asArray()
+        .map((one) => decodePDFRawStream(sheet.doc.context.lookup(one) as PDFRawStream).decode())
+        .map((one) => new TextDecoder().decode(one))
+        .join('\n')
+    }
+
+    expect(sheets).toHaveLength(7)
+    expect(Math.max(...sheets.map((one) => one.getHeight()))).toBeLessThanOrEqual(14400)
+    expect(text(0)).toContain('/Pattern cs')
+    expect(text(0).length).toBeLessThan(2000)
+    expect(text(0)).not.toMatch(/ l$/m)
+    expect(text(6)).toMatch(/ l$/m)
+  })
 })

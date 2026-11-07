@@ -23,6 +23,7 @@ vi.mock('./raster', () => ({
     return Promise.resolve(new Uint8Array([1]))
   },
   cssColour: (colour: string) => colour,
+  sharpness: (_width: number, _height: number, wanted: number) => wanted,
   paperIsLocked: () => Promise.resolve(held.locked),
   paperPicture: (at: unknown, number: number) => {
     held.asked.push(number)

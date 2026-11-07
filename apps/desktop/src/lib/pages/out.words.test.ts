@@ -58,6 +58,7 @@ vi.mock('./raster', () => ({
     return Promise.resolve(raster.refuse ? null : raster.png)
   },
   cssColour: (colour: string) => colour,
+  sharpness: (_width: number, _height: number, wanted: number) => wanted,
 }))
 vi.mock('../link-index.svelte', () => ({
   links: {
@@ -264,8 +265,9 @@ describe('the ruling of a page', () => {
     const ruled = await contentOf(bytes, 0)
     const blank = await contentOf(bytes, 1)
 
-    expect((ruled.match(/ re$/gm) ?? []).length).toBeGreaterThan(20)
-    expect((blank.match(/ re$/gm) ?? []).length).toBeLessThan(3)
+    expect(ruled).toMatch(/^\/Pattern cs$/m)
+    expect(ruled).toMatch(/^\/Ruling-?\d* scn$/m)
+    expect(blank).not.toMatch(/Pattern/)
   })
 })
 
