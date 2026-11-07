@@ -162,6 +162,22 @@ describe('a plane bound to a room', () => {
     expect(two.canvas.ink[0]?.points).toHaveLength(300)
   })
 
+  test('a stroke drawn here is not read back out of the room, which holds it already', () => {
+    const one = Device.opening(emptyCanvas())
+    const two = Device.joining(one)
+    const arrived = one.arrivals
+
+    one.edit(drawn(stroke('drawn')))
+    expect(one.arrivals).toBe(arrived)
+    expect(one.inRoom.ink.map((held) => held.id)).toEqual(['drawn'])
+
+    carry(one, two)
+    expect(two.arrivals).toBeGreaterThan(0)
+    one.undo()
+    expect(one.arrivals).toBe(arrived + 1)
+    expect(one.canvas.ink).toEqual([])
+  })
+
   test('two devices drawing at once keep both strokes, in the same order', () => {
     const one = Device.opening(drawn(stroke('base')))
     const two = Device.joining(one)
