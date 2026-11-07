@@ -113,13 +113,26 @@ export function placeEntries(
   const lists = listsIn(root)
     .map((relative) => insideSpace(root, relative))
     .filter((note) => !samePath(note, inbox))
-    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+  const named = (note: string) => nameOf(note).replace(/\.md$/i, '')
+  const seen = new Map<string, number>()
   for (const note of lists) {
-    out.push({
-      label: nameOf(note).replace(/\.md$/i, ''),
-      checked: here(note),
-      run: () => go(note),
-    })
+    const key = named(note).toLowerCase()
+    seen.set(key, (seen.get(key) ?? 0) + 1)
+  }
+  const folder = projectsFolder(root)
+  const placeOf = (note: string) => {
+    const under = within(folder, note)
+    return under !== null && under !== '' ? under : (within(root, note) ?? note)
+  }
+  const labelOf = (note: string) =>
+    (seen.get(named(note).toLowerCase()) ?? 0) < 2
+      ? named(note)
+      : placeOf(note).replace(/\.md$/i, '').split('/').join(' / ')
+  const labelled = lists
+    .map((note) => ({ note, label: labelOf(note) }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+  for (const { note, label } of labelled) {
+    out.push({ label, checked: here(note), run: () => go(note) })
   }
   return out
 }
