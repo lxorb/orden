@@ -309,7 +309,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/slides.ts', "a deck's renderer"],
     ['/lib/preview-card.ts', 'the editor in a link card'],
     ['/lib/reading/drawn.ts', 'a paper or a plane drawn in a note'],
-    ['/lib/AppMenuPanel.svelte', 'the app menu'],
     ['/lib/query-block.ts', "a query fence's rows"],
     ['/lib/note-cover.ts', "a note's cover, written"],
     ['/lib/themes/store.svelte.ts', "the theme gallery's store"],

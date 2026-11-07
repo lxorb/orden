@@ -200,8 +200,6 @@ export const outsideNotice = latched(() => {
 
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
-export const appMenuPanel = latched(() => import('./AppMenuPanel.svelte'))
-
 export const undoToastNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no undo toast in the Even Realities plugin')
   return import('./UndoToast.svelte')
