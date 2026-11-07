@@ -84,10 +84,10 @@ describe('the rest of an address, in the field', () => {
   })
 
   test('and a site somebody typed over one a link led to twice as often', () => {
-    const followed = visit('https://news.example.com/', { visits: 8 })
-    const typed = visit('https://nib.example.com/', { visits: 1, typed: 1 })
+    const followed = visit('https://oak.example.com/', { visits: 8 })
+    const typed = visit('https://orden.example.com/', { visits: 1, typed: 1 })
 
-    expect(completion([followed, typed], 'n', NOW)?.url).toBe('https://nib.example.com/')
+    expect(completion([followed, typed], 'o', NOW)?.url).toBe('https://orden.example.com/')
   })
 })
 

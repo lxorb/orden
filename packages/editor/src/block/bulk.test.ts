@@ -21,7 +21,7 @@ import {
   turnBlocksInto,
 } from './commands'
 import { shaped, wordsOf } from './shape'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 const NOTE = [
@@ -45,7 +45,7 @@ function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
       doc,
       selection: EditorSelection.range(from, to),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         ...extra,
       ],
     }),

@@ -85,13 +85,13 @@ const GROUPS: MenuGroup[] = [
 ]
 
 const WORDS = {
-  app: 'Nib',
-  about: 'About Nib',
+  app: 'Orden',
+  about: 'About Orden',
   services: 'Services',
-  hide: 'Hide Nib',
+  hide: 'Hide Orden',
   hideOthers: 'Hide others',
   showAll: 'Show all',
-  quit: 'Quit Nib',
+  quit: 'Quit Orden',
   window: 'Window',
   minimize: 'Minimize',
   zoom: 'Zoom',
@@ -208,7 +208,7 @@ describe('a key a menu row can show', () => {
 describe('the strip', () => {
   test('is the app menu, the app’s own groups, then Window just before Help', () => {
     expect(bar().map((one) => one.id)).toEqual([
-      'nib',
+      'orden',
       'file',
       'edit',
       'format',
@@ -219,23 +219,23 @@ describe('the strip', () => {
   })
 
   test('opens with the app’s own menu, the way every Mac app does', () => {
-    expect(read(menu(bar(), 'nib'))).toEqual([
-      '[About] About Nib',
+    expect(read(menu(bar(), 'orden'))).toEqual([
+      '[About] About Orden',
       '---',
       'Settings…',
       '---',
       '[Services] Services',
       '---',
-      '[Hide] Hide Nib',
+      '[Hide] Hide Orden',
       '[HideOthers] Hide others',
       '[ShowAll] Show all',
       '---',
-      '[Quit] Quit Nib',
+      '[Quit] Quit Orden',
     ])
   })
 
   test('where Settings has its key, and File no longer has it', () => {
-    expect(itemIn(menu(bar(), 'nib'), 'Settings…').accelerator).toBe('Cmd+,')
+    expect(itemIn(menu(bar(), 'orden'), 'Settings…').accelerator).toBe('Cmd+,')
     expect(read(menu(bar(), 'file'))).not.toContain('Settings')
   })
 
@@ -442,11 +442,11 @@ describe('the strip, changed', () => {
     const after = bar({
       groups: GROUPS.map((one) => (one.id === 'view' ? view : one.id === 'file' ? file : one)),
       keyFor: (command) => (command === 'format.bold' ? 'Mod-Shift-b' : (KEYS[command] ?? null)),
-      words: { ...WORDS, quit: 'Nib beenden' },
+      words: { ...WORDS, quit: 'Orden beenden' },
     })
 
     expect(changesBetween(before, after)).toEqual([
-      { id: 'nib.quit', text: 'Nib beenden' },
+      { id: 'orden.quit', text: 'Orden beenden' },
       { id: 'file.5', enabled: true },
       { id: 'format.0', accelerator: 'Cmd+Shift+B' },
       { id: 'view.0', checked: true },
@@ -609,7 +609,7 @@ describe('the words a Mac writes its menus in', () => {
     const file = menu(bar({ groups }), 'file')
 
     expect(read(file)).toContain('Rename…')
-    expect(read(menu(bar(), 'nib'))).toContain('Settings…')
+    expect(read(menu(bar(), 'orden'))).toContain('Settings…')
   })
 
   test('finding is a submenu of Edit, where the rows were', () => {

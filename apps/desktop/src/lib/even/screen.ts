@@ -9,7 +9,7 @@ import {
 import type { Container, Glasses, Made } from './sdk'
 import type { View } from './shell'
 
-const CAPTURE: Container = { id: 1, name: 'nib' }
+const CAPTURE: Container = { id: 1, name: 'orden' }
 const EMPTY = ' '
 
 const IDS: Record<BandName, Container> = {

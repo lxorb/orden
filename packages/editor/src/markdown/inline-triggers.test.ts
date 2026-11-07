@@ -2,7 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { type Tree } from '@lezer/common'
 import { InlineContext, type MarkdownParser } from '@lezer/markdown'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions, nibMarkdownParser } from './extensions'
+import { ordenMarkdownExtensions, ordenMarkdownParser } from './extensions'
 
 type Inline = ((cx: InlineContext, next: number, pos: number) => number) & { triggers?: string }
 
@@ -19,8 +19,8 @@ const Context = InlineContext as unknown as new (
 ) => InlineContext
 
 const parsers: Record<string, MarkdownParser> = {
-  orden: nibMarkdownParser,
-  editor: markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
+  orden: ordenMarkdownParser,
+  editor: markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language
     .parser as MarkdownParser,
 }
 
@@ -146,7 +146,7 @@ describe.each(Object.entries(parsers))('the %s parser', (_name, parser) => {
 describe('an address in text', () => {
   function urls(text: string): string[] {
     const out: string[] = []
-    nibMarkdownParser.parse(text).iterate({
+    ordenMarkdownParser.parse(text).iterate({
       enter: (node) => {
         if (node.name === 'URL') out.push(text.slice(node.from, node.to))
       },

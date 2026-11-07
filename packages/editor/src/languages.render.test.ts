@@ -3,7 +3,7 @@ import { LanguageDescription } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
 import { fenceLanguages } from './languages'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 
 const highlighter = tagHighlighter([
   { tag: tags.keyword, class: 'keyword' },
@@ -28,7 +28,7 @@ async function colouring(word: string, code: string) {
   const parser = markdown({
     base: markdownLanguage,
     codeLanguages: languages,
-    extensions: nibMarkdownExtensions,
+    extensions: ordenMarkdownExtensions,
   }).language.parser
 
   const from = document.indexOf(code)
@@ -86,8 +86,8 @@ const fences: [string, string, string[]][] = [
     ['comment', 'keyword', 'property', 'type'],
   ],
   ['console', '$ echo "done"\nDone in 2s', ['string']],
-  ['jsonc', '{\n  "name": "nib"\n}', ['property', 'string']],
-  ['helm', 'metadata:\n  name: nib\n  replicas: 3', ['property']],
+  ['jsonc', '{\n  "name": "orden"\n}', ['property', 'string']],
+  ['helm', 'metadata:\n  name: orden\n  replicas: 3', ['property']],
   ['proto', 'message Note {\n  string id = 1;\n}', ['keyword', 'number']],
   ['env', 'API_KEY=secret\n# a note\nPORT=8080', ['comment', 'property']],
   ['ini', '[server]\nhost = localhost\nport = 8080', ['property']],

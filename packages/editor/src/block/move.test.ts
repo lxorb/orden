@@ -7,7 +7,7 @@ import { describe, expect, test } from 'vitest'
 import { moveBlockDown, moveBlocks, moveBlockUp } from './commands'
 import { landing, moveBlock } from './move'
 import { blockAt } from './span'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 function viewOf(doc: string, caret: number) {
@@ -16,7 +16,7 @@ function viewOf(doc: string, caret: number) {
       doc,
       selection: EditorSelection.cursor(caret),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         history(),
       ],
     }),
@@ -48,7 +48,7 @@ function read(doc: string): string[] {
   const state = parsed(
     EditorState.create({
       doc,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
   const found: string[] = []
@@ -65,7 +65,7 @@ function dropped(doc: string, words: string, before: string | null): string | nu
   const state = parsed(
     EditorState.create({
       doc,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
   const span = blockAt(state, doc.indexOf(words) + 1)
@@ -274,7 +274,7 @@ describe('front matter', () => {
     const state = parsed(
       EditorState.create({
         doc,
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
     const span = blockAt(state, 1)
@@ -317,7 +317,7 @@ describe('where a drop lands', () => {
     const state = parsed(
       EditorState.create({
         doc,
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
     const span = blockAt(state, doc.indexOf('Bravo'))!

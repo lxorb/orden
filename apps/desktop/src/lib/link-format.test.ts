@@ -8,7 +8,7 @@ import { rewriteLinks } from './import/rewrite'
 const PLAN = { name: 'Plan', path: 'ideas/Plan.md', from: 'journal/Monday.md' }
 
 describe('a link to a note', () => {
-  test('is a wikilink until the setting says otherwise, which is what nib always wrote', () => {
+  test('is a wikilink until the setting says otherwise, which is what Orden always wrote', () => {
     expect(formatLink(PLAN, 'wikilink')).toBe('[[Plan]]')
     expect(LINK_FORMATS[0]).toBe('wikilink')
   })

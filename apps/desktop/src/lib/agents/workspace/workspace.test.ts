@@ -1278,7 +1278,7 @@ describe('the notes, on the road', () => {
   test('an edit says the AI panel thread that asked for it', async () => {
     const asker = callerOf(
       {
-        id: 'nib-anthropic',
+        id: 'orden-anthropic',
         name: 'Claude',
         scopes: EVERY,
         spaces: 'all',
@@ -1294,7 +1294,7 @@ describe('the notes, on the road', () => {
       asker,
     )
     expect(docs.editNote).toHaveBeenCalledWith(
-      { id: 'nib-anthropic', name: 'Claude', thread: 'thread-1' },
+      { id: 'orden-anthropic', name: 'Claude', thread: 'thread-1' },
       { path: 'Soup.md', space: 'home' },
       [{ at: { task: 'Buy milk' }, replace: '- [x] Buy milk' }],
       'r1',
@@ -2063,7 +2063,7 @@ describe('a panel thread works in its own space', () => {
   const fromHome = () =>
     callerOf(
       {
-        id: 'nib-anthropic',
+        id: 'orden-anthropic',
         name: 'Claude',
         scopes: EVERY,
         spaces: 'all',
@@ -2153,7 +2153,7 @@ describe('a panel thread works in its own space', () => {
   test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
     const onlyHome = callerOf(
       {
-        id: 'nib-x',
+        id: 'orden-x',
         name: 'X',
         scopes: EVERY,
         spaces: ['Home'],
@@ -2193,7 +2193,7 @@ describe('a panel thread works in its own space', () => {
         { path: 'Broth', content: 'x' },
         callerOf(
           {
-            id: 'nib-x',
+            id: 'orden-x',
             name: 'X',
             scopes: EVERY,
             spaces: ['Work'],
@@ -2239,7 +2239,7 @@ describe('run_agent from a narrower grant', () => {
   })
 
   test('a thread and a helper are a built-in grant’s by its mark, never its name', async () => {
-    const named = { id: 'nib-foo', name: 'x', scopes: FULL, spaces: ['Work'], mode: 'confirm' }
+    const named = { id: 'orden-foo', name: 'x', scopes: FULL, spaces: ['Work'], mode: 'confirm' }
     expect(callerOf(named, 'thread-1')).not.toHaveProperty('thread')
     expect(await call('run_agent', { prompt: 'x' }, callerOf(named))).toMatchObject({
       code: 'not_granted',
@@ -2251,7 +2251,7 @@ describe('run_agent from a narrower grant', () => {
     expect(outside).not.toHaveProperty('thread')
     const panel = callerOf(
       {
-        id: 'nib-anthropic',
+        id: 'orden-anthropic',
         name: 'Claude',
         scopes: FULL,
         spaces: 'all',
@@ -2269,7 +2269,7 @@ describe('a note the reader protected', () => {
     const { protection } = await import('../../protect/protection.svelte')
     const books = 'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n'
     files.set('/s/Home/Books.base', books)
-    files.set('/s/Home/Shelf.base', `${books}nib:\n  template: '[[Books/Dune]]'\n`)
+    files.set('/s/Home/Shelf.base', `${books}orden:\n  template: '[[Books/Dune]]'\n`)
     files.set('/s/Home/Books/Dune.md', '---\nstatus: reading\n---\nthe secret words\n')
     files.set('/s/Home/Books/Emma.md', '---\nstatus: reading\n---\n')
     protection.set('/s/Home', '/s/Home/Books/Dune.md', 'password')

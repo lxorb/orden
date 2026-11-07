@@ -1,16 +1,24 @@
-const OLD = 'nib:'
-const NEW = 'orden:'
+const RENAMED: readonly (readonly [string, string])[] = [
+  ['nib:', 'orden:'],
+  ['nib.', 'orden.'],
+]
+
+function renamedOf(key: string | null): string | null {
+  const pair = key === null ? undefined : RENAMED.find(([old]) => key.startsWith(old))
+  return key !== null && pair ? pair[1] + key.slice(pair[0].length) : null
+}
 
 export function carryKeys(storage: Storage): void {
   const old: string[] = []
   for (let at = 0; at < storage.length; at++) {
     const key = storage.key(at)
-    if (key?.startsWith(OLD)) old.push(key)
+    if (key !== null && renamedOf(key) !== null) old.push(key)
   }
 
   for (const key of old) {
     const value = storage.getItem(key)
-    const renamed = NEW + key.slice(OLD.length)
+    const renamed = renamedOf(key)
+    if (renamed === null) continue
     try {
       if (value !== null && storage.getItem(renamed) === null) storage.setItem(renamed, value)
     } catch {

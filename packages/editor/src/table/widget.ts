@@ -1,5 +1,5 @@
 import type { EditorView } from '@codemirror/view'
-import { NibWidget } from '../live-preview/widget'
+import { OrdenWidget } from '../live-preview/widget'
 import { parseTable } from './model'
 import { TableView } from './view'
 
@@ -15,7 +15,7 @@ export function tableViewAt(editor: EditorView, from: number): TableView | null 
   return null
 }
 
-export class TableWidget extends NibWidget {
+export class TableWidget extends OrdenWidget {
   constructor(
     readonly source: string,
     readonly from: number,

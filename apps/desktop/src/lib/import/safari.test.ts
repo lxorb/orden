@@ -30,7 +30,7 @@ function space(files: Partial<{ bookmarks: unknown; tabs: unknown; session: unkn
   return { sidebar, space: sidebarImport(sidebar, NOW, null).spaces[0] }
 }
 
-describe("Safari's tabs, bookmarks and Reading List as nib's", () => {
+describe("Safari's tabs, bookmarks and Reading List as Orden's", () => {
   test('puts the pinned tab first as an Essential, a tab group as a folder, the window’s own tabs at the top', () => {
     const { space: safari } = space({ tabs: TABS, bookmarks: BOOKMARKS })
     expect(safari?.order['']).toEqual([

@@ -21,7 +21,7 @@ import { fenceLanguage } from './languages'
 import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
-import { nibMarkdownExtensions, NoSetextHeadings } from './markdown/extensions'
+import { ordenMarkdownExtensions, NoSetextHeadings } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
@@ -58,7 +58,7 @@ const markdownFor = once((strict: boolean): Extension =>
   markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
     codeLanguages: fenceLanguage,
-    extensions: strict ? [NoSetextHeadings] : nibMarkdownExtensions,
+    extensions: strict ? [NoSetextHeadings] : ordenMarkdownExtensions,
     addKeymap: false,
     pasteURLAsLink: false,
   }),

@@ -1,6 +1,6 @@
 import { GFM, parser } from '@lezer/markdown'
 import type { SyntaxNodeRef } from '@lezer/common'
-import { nibMarkdownExtensions, NoSetextHeadings } from './extensions'
+import { ordenMarkdownExtensions, NoSetextHeadings } from './extensions'
 
 export interface SetextEdit {
   from: number
@@ -12,7 +12,7 @@ const UNDERLINE = /^[ \t>]*(?:[-*+]|\d+[.)])?[ \t]*(?:=+|-+)[ \t]*$/m
 
 const withSetext = parser.configure([
   GFM,
-  ...nibMarkdownExtensions.filter((one) => one !== NoSetextHeadings),
+  ...ordenMarkdownExtensions.filter((one) => one !== NoSetextHeadings),
 ])
 
 const LEVEL: Readonly<Record<string, number>> = { SetextHeading1: 1, SetextHeading2: 2 }

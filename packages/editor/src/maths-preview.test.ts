@@ -2,7 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { noReveal } from './live-preview/reveal'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { GAP, mathsAtCaret, mathsInText, place } from './maths-preview'
 import { parsed } from '../test/parsed'
 
@@ -17,7 +17,7 @@ function at(written: string, ...extensions: Extension[]) {
       doc,
       selection,
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         ...extensions,
       ],
     }),

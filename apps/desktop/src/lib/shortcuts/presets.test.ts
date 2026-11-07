@@ -207,7 +207,7 @@ describe('the Obsidian keyboard', () => {
     expect(keys['edit.follow-link']).toBe('Alt-Enter')
   })
 
-  test('leaves what Nib and Obsidian already agree on alone', () => {
+  test('leaves what Orden and Obsidian already agree on alone', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
     for (const id of ['app.reading', 'app.new', 'app.close', 'format.link']) {
@@ -322,7 +322,7 @@ describe('the VS Code keyboard', () => {
     }
   })
 
-  test('grows and shrinks the selection on Shift+Alt and an arrow, as Nib already does', () => {
+  test('grows and shrinks the selection on Shift+Alt and an arrow, as Orden already does', () => {
     expect(keys()['edit.expand-selection']).toBeUndefined()
     expect(keyUnder(keys(), 'edit.expand-selection', 'win')).toBe('Shift-Alt-ArrowRight')
     expect(keyUnder(keys(), 'edit.shrink-selection', 'linux')).toBe('Shift-Alt-ArrowLeft')

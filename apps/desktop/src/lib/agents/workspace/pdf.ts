@@ -113,7 +113,7 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
         highlights: [...now.highlights, mark],
       }))
       if (!written) {
-        throw new Refused('failed', 'the highlights beside that PDF were written by a newer nib')
+        throw new Refused('failed', 'the highlights beside that PDF were written by a newer Orden')
       }
       marksWritten(path)
       const comment = maybe(call, 'comment') === null ? {} : { comment: 'not kept' }

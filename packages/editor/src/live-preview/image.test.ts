@@ -21,7 +21,7 @@ import {
   snapPercent,
   sourceCaret,
 } from './image'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 function state(doc: string, selection: { anchor: number; head?: number } = { anchor: 0 }) {
@@ -29,7 +29,7 @@ function state(doc: string, selection: { anchor: number; head?: number } = { anc
     EditorState.create({
       doc,
       selection: EditorSelection.single(selection.anchor, selection.head ?? selection.anchor),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 }
@@ -273,7 +273,7 @@ describe('keys beside an image', () => {
         ]),
         extensions: [
           EditorState.allowMultipleSelections.of(true),
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         ],
       }),
     )

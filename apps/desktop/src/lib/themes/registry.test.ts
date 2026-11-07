@@ -4,7 +4,7 @@ import { isNewer, readIndex } from './registry'
 const entry = (patch: Record<string, unknown> = {}) => ({
   id: 'warm-paper',
   name: 'Warm Paper',
-  author: 'Nib',
+  author: 'Orden',
   version: '1.0.0',
   description: 'Ink on cream.',
   tags: ['light', 'warm'],

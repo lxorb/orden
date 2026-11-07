@@ -2,7 +2,7 @@ import { EditorSelection } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { imageResolver } from '../../images'
 import { label as uiLabel } from '../../labels'
-import { NibWidget } from '../widget'
+import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
 import {
   imageAt,
@@ -102,7 +102,7 @@ function remove(view: EditorView, image: ImageSpan) {
   })
 }
 
-export class ImageWidget extends NibWidget {
+export class ImageWidget extends OrdenWidget {
   constructor(readonly spec: ImageSpec) {
     super()
   }

@@ -12,10 +12,10 @@ function drawn(nodes: readonly TagNode[], depth = 0): string[] {
 
 describe('building the tree', () => {
   test('makes a node of every segment', () => {
-    expect(drawn(tagTree([tag('#work'), tag('#work/nib'), tag('#work/nib/canvas')]))).toEqual([
+    expect(drawn(tagTree([tag('#work'), tag('#work/orden'), tag('#work/orden/canvas')]))).toEqual([
       'work 1',
-      '  work/nib 1',
-      '    work/nib/canvas 1',
+      '  work/orden 1',
+      '    work/orden/canvas 1',
     ])
   })
 
@@ -32,17 +32,17 @@ describe('building the tree', () => {
   })
 
   test('and joins the tags that share one', () => {
-    expect(drawn(tagTree([tag('#work', 2), tag('#work/nib'), tag('#work/lab')]))).toEqual([
+    expect(drawn(tagTree([tag('#work', 2), tag('#work/orden'), tag('#work/lab')]))).toEqual([
       'work 2',
       '  work/lab 1',
-      '  work/nib 1',
+      '  work/orden 1',
     ])
   })
 
   test('and takes the number on a row as given rather than adding the children up', () => {
-    expect(drawn(tagTree([tag('#work', 5), tag('#work/nib', 2)]))).toEqual([
+    expect(drawn(tagTree([tag('#work', 5), tag('#work/orden', 2)]))).toEqual([
       'work 5',
-      '  work/nib 2',
+      '  work/orden 2',
     ])
   })
 
@@ -53,7 +53,10 @@ describe('building the tree', () => {
   })
 
   test('folded, so one spelling is one node', () => {
-    expect(drawn(tagTree([tag('#Work/Nib'), tag('#work/nib')]))).toEqual(['work 0', '  work/nib 2'])
+    expect(drawn(tagTree([tag('#Work/Orden'), tag('#work/orden')]))).toEqual([
+      'work 0',
+      '  work/orden 2',
+    ])
   })
 
   test('and a level nothing mentioned is still a parent, with nothing of its own', () => {
@@ -71,33 +74,33 @@ describe('building the tree', () => {
 
 describe('a node being renamed', () => {
   test('keeps its parent', () => {
-    expect(renamedTo('work/nib', 'core')).toBe('work/core')
+    expect(renamedTo('work/orden', 'core')).toBe('work/core')
     expect(renamedTo('work', 'jobs')).toBe('jobs')
   })
 
   test('folded, since the tree is', () => {
-    expect(renamedTo('work/nib', 'Core')).toBe('work/core')
+    expect(renamedTo('work/orden', 'Core')).toBe('work/core')
   })
 
   test('and a name with slashes moves it', () => {
-    expect(renamedTo('work/nib', 'core/nib')).toBe('work/core/nib')
+    expect(renamedTo('work/orden', 'core/orden')).toBe('work/core/orden')
   })
 
   test('but never inside itself, which would never stop', () => {
-    expect(renamedTo('work', 'work/nib')).toBeNull()
-    expect(renamedTo('work/nib', 'nib')).toBeNull()
+    expect(renamedTo('work', 'work/orden')).toBeNull()
+    expect(renamedTo('work/orden', 'orden')).toBeNull()
   })
 
   test('and an empty name is not a rename', () => {
-    expect(renamedTo('work/nib', '  ')).toBeNull()
-    expect(renamedTo('work/nib', '///')).toBeNull()
+    expect(renamedTo('work/orden', '  ')).toBeNull()
+    expect(renamedTo('work/orden', '///')).toBeNull()
   })
 })
 
 describe('a node being lifted', () => {
   test('leaves its parent behind', () => {
-    expect(liftedFrom('work/nib/canvas')).toBe('work/nib')
-    expect(liftedFrom('work/nib')).toBe('work')
+    expect(liftedFrom('work/orden/canvas')).toBe('work/orden')
+    expect(liftedFrom('work/orden')).toBe('work')
   })
 
   test('and a node at the top has nowhere to go', () => {

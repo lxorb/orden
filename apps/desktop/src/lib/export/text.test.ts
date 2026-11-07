@@ -61,7 +61,7 @@ describe('prose', () => {
   })
 
   test('writes a link whose words are its address only once', () => {
-    expect(plain('<https://nib.dev>\n').trim()).toBe('https://nib.dev')
+    expect(plain('<https://orden.dev>\n').trim()).toBe('https://orden.dev')
   })
 
   test('keeps inline maths as the TeX it was written as', () => {

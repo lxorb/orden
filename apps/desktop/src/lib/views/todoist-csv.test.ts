@@ -32,7 +32,7 @@ describe('a project as Todoist’s CSV', () => {
     expect(csv).toContain('Book the room @venue')
   })
 
-  test('comes back through nib’s own importer as it was', () => {
+  test('comes back through Orden’s own importer as it was', () => {
     const plan = planOf(csvProject('Launch', csv, 0))
     const file = plan.files[0]
     const text = file?.kind === 'note' ? file.text : ''
@@ -65,7 +65,7 @@ describe('a task’s description in Todoist’s CSV', () => {
     expect(csv).toContain(`"${said.join('\n').replace(/"/g, '""')}"`)
   })
 
-  test('comes back through nib’s own importer whole', () => {
+  test('comes back through Orden’s own importer whole', () => {
     const plan = planOf(csvProject('Launch', csv, 0))
     const file = plan.files[0]
     const text = file?.kind === 'note' ? file.text : ''

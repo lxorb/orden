@@ -415,7 +415,7 @@ describe('pandoc formats', () => {
     }
   })
 
-  test('leave out the three Nib writes itself', () => {
+  test('leave out the three Orden writes itself', () => {
     const ids = PANDOC_FORMATS.map((format) => format.id)
     for (const own of ['docx', 'rtf', 'epub']) {
       expect(ids, own).not.toContain(own)

@@ -3,7 +3,7 @@ import { account } from '../account.svelte'
 import { api, type AccountSettings } from '../api'
 import { isBoolean, isRecord, keepJson, stored } from '../stored'
 
-const KEY = 'nib.chat-hush'
+const KEY = 'orden.chat-hush'
 
 export const WEEKDAYS = [1, 2, 3, 4, 5]
 export const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6]

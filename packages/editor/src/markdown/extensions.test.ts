@@ -1,18 +1,18 @@
 import fenceTable from '../../../markdown/src/fence-table.json'
-import { nibMarkdownParser } from './extensions'
+import { ordenMarkdownParser } from './extensions'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
-import { nibMarkdownExtensions } from './extensions'
+import { ordenMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 
 function stateFor(doc: string): EditorState {
   return parsed(
     EditorState.create({
       doc,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 }
@@ -47,7 +47,7 @@ function names(doc: string): string[] {
 }
 
 describe('front matter being typed', () => {
-  const language = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })
+  const language = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
   const top = (state: EditorState): string => {
     const out: string[] = []
     const tree = ensureSyntaxTree(state, state.doc.length, 5000) ?? syntaxTree(state)
@@ -110,7 +110,7 @@ describe('a fence, as every parser of a note reads it', () => {
     const code = new Set<number>()
     const text = note.replaceAll('\r\n', '\n')
     const lineOf = (at: number) => text.slice(0, at).split('\n').length - 1
-    nibMarkdownParser.parse(text).iterate({
+    ordenMarkdownParser.parse(text).iterate({
       enter(node) {
         if (node.name !== 'FencedCode') return
         for (let at = lineOf(node.from); at <= lineOf(node.to); at++) code.add(at)
@@ -277,7 +277,7 @@ describe('fenced code', () => {
   test('many fences that never close are read in time that grows with their number', () => {
     const lines = (count: number) =>
       Array.from({ length: count }, (_, i) => `${'~'.repeat(3 + (i % 7))}a\n`).join('')
-    expect(growth((count) => nibMarkdownParser.parse(lines(count)), 2_000)).toBeLessThan(
+    expect(growth((count) => ordenMarkdownParser.parse(lines(count)), 2_000)).toBeLessThan(
       GROWS_AT_MOST,
     )
   }, 60_000)
@@ -478,8 +478,8 @@ describe('fenced code while editing', () => {
 
 describe('a long paragraph', () => {
   test('parses in time that grows with its length', () => {
-    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
-      .parser
+    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
+      .language.parser
     const log = (lines: number) => {
       let doc = ''
       for (let line = 0; line < lines; line++) {
@@ -501,8 +501,8 @@ describe('a long paragraph', () => {
   }, 60_000)
 
   test('full of dollar signs that close nothing parses in time that grows with its length', () => {
-    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
-      .parser
+    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
+      .language.parser
     let maths = 0
     const read = (count: number) => {
       maths = 0
@@ -522,7 +522,7 @@ describe('a long paragraph', () => {
       (length: number) => `https://a.b/${')'.repeat(length)}\n`,
     ]
     for (const run of runs) {
-      expect(growth((length) => nibMarkdownParser.parse(run(length)), 16_000)).toBeLessThan(
+      expect(growth((length) => ordenMarkdownParser.parse(run(length)), 16_000)).toBeLessThan(
         GROWS_AT_MOST,
       )
     }
@@ -530,7 +530,7 @@ describe('a long paragraph', () => {
 
   test('a line of list or quote marks thousands deep parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
-      nibMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
+      ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
     for (const unit of ['- ', '* ', '1. ', '> ', '> - ']) {
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
     }
@@ -552,8 +552,8 @@ describe('a long paragraph', () => {
   })
 
   test('repeating what opens a link or emphasis parses in time that grows with its length', () => {
-    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
-      .parser
+    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
+      .language.parser
     const parsed = (unit: string) => (length: number) =>
       parser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
     for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a ']) {
@@ -563,7 +563,7 @@ describe('a long paragraph', () => {
 
   test('repeating what closes a link nothing opened parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
-      nibMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
+      ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
     for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*']) {
       expect(growth(parsed(unit), 32_000), unit).toBeLessThan(GROWS_AT_MOST)
     }

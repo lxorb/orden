@@ -7,11 +7,11 @@ import {
 import { ensureSyntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions, nibMarkdownParser } from './extensions'
+import { ordenMarkdownExtensions, ordenMarkdownParser } from './extensions'
 
 function names(text: string): string[] {
   const out: string[] = []
-  nibMarkdownParser.parse(text).iterate({
+  ordenMarkdownParser.parse(text).iterate({
     enter: (node) => {
       out.push(node.name)
     },
@@ -53,7 +53,7 @@ function blocksOf(state: EditorState): string[] {
 describe('a line with something under it', () => {
   test('typing words, Enter and a dash keeps the words a paragraph, and the dash starts a list', () => {
     let state = EditorState.create({
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     })
     state = typed(state, 'text')
     state = entered(state)

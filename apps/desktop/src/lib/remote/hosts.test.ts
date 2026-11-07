@@ -29,7 +29,7 @@ const CONFIG: ConfigHost[] = [
 const kept = (more: Partial<Kept> = {}): Kept => ({ ...NOTHING_KEPT, ...more })
 
 describe('the list', () => {
-  test("the config's hosts in its order, then nib's own, each saying where it is", () => {
+  test("the config's hosts in its order, then Orden's own, each saying where it is", () => {
     const hosts = hostsOf(
       CONFIG,
       kept({ own: [{ id: 'n-1', name: 'Box', hostname: 'box', user: 'me' }] }),
@@ -47,7 +47,7 @@ describe('the list', () => {
     expect(hosts.map((one) => one.own)).toEqual([false, false, false, false, true])
   })
 
-  test("Settings' order goes first, and a group set in nib before the config's", () => {
+  test("Settings' order goes first, and a group set in Orden before the config's", () => {
     const hosts = hostsOf(
       CONFIG,
       kept({ order: ['build', 'pi'], about: { nas: { group: 'Storage', colour: '3' } } }),
@@ -179,7 +179,7 @@ describe('a destination typed', () => {
 })
 
 describe('Settings', () => {
-  test('what nib knows is changed, and a field taken out when it is cleared', () => {
+  test('what Orden knows is changed, and a field taken out when it is cleared', () => {
     const one = withAbout(NOTHING_KEPT, 'pi', { colour: '2', pinned: true })
     expect(one.about.pi).toEqual({ colour: '2', pinned: true })
 
@@ -187,7 +187,7 @@ describe('Settings', () => {
     expect(cleared.about.pi).toBeUndefined()
   })
 
-  test('a host made here changes, and goes with everything nib knew about it', () => {
+  test('a host made here changes, and goes with everything Orden knew about it', () => {
     const start = kept({
       own: [{ id: 'n-1', name: 'Box', hostname: 'box', user: 'me', port: 22 }],
       about: { 'n-1': { pinned: true } },

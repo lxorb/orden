@@ -3,7 +3,7 @@ import { syntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { buildDecorations } from './live-preview/decorate'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { tagOpener, tagTitle } from './tag-press'
 import { parsed } from '../test/parsed'
 
@@ -19,7 +19,7 @@ function state(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(at),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }), more],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), more],
     }),
     upTo,
   )
@@ -66,8 +66,8 @@ describe('what the parser reads as a tag', () => {
   })
 
   test('nested is one tag, and it stops where the name does', () => {
-    expect(parsedTags('#work/nib/canvas, then #tag. And #tag’s')).toEqual([
-      '#work/nib/canvas',
+    expect(parsedTags('#work/orden/canvas, then #tag. And #tag’s')).toEqual([
+      '#work/orden/canvas',
       '#tag',
       '#tag',
     ])
@@ -93,7 +93,7 @@ describe('what the parser reads as a tag', () => {
       '#fenced',
       '```',
       '',
-      'https://nib.dev/#top and <https://nib.dev/#also> and <a href="#x">',
+      'https://orden.dev/#top and <https://orden.dev/#also> and <a href="#x">',
     ].join('\n')
 
     expect(parsedTags(doc)).toEqual([])
@@ -106,8 +106,8 @@ describe('what the parser reads as a tag', () => {
 
 describe('a tag in the preview', () => {
   test('is a pill carrying its name, the hash inside it', () => {
-    expect(pills('Filed under #work/nib today')).toEqual([
-      { text: '#work/nib', className: 'tag', tag: 'work/nib' },
+    expect(pills('Filed under #work/orden today')).toEqual([
+      { text: '#work/orden', className: 'tag', tag: 'work/orden' },
     ])
   })
 
@@ -120,7 +120,7 @@ describe('a tag in the preview', () => {
   })
 
   test('is left to the link it is written in', () => {
-    expect(pills('[see #this](https://nib.dev) and ![#alt](pic.png)')).toEqual([])
+    expect(pills('[see #this](https://orden.dev) and ![#alt](pic.png)')).toEqual([])
   })
 
   test('promises a press only in an editor that can answer one', () => {

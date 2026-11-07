@@ -54,10 +54,10 @@ describe('the addresses a note can show rather than link to', () => {
 
   test('the other rows', () => {
     expect(frame('https://vimeo.com/123456')).toBe('https://player.vimeo.com/video/123456')
-    expect(frame('https://x.com/nib/status/1234567890')).toBe(
+    expect(frame('https://x.com/orden/status/1234567890')).toBe(
       'https://platform.twitter.com/embed/Tweet.html?id=1234567890',
     )
-    expect(frame('https://twitter.com/nib/status/1234567890')).toContain('id=1234567890')
+    expect(frame('https://twitter.com/orden/status/1234567890')).toContain('id=1234567890')
     expect(frame('https://open.spotify.com/track/abc123')).toBe(
       'https://open.spotify.com/embed/track/abc123',
     )
@@ -66,7 +66,7 @@ describe('the addresses a note can show rather than link to', () => {
     )
     expect(frame('https://soundcloud.com/artist/track')).toContain('w.soundcloud.com/player/?url=')
     expect(frame('https://www.figma.com/design/abc/Name')).toContain(
-      'figma.com/embed?embed_host=nib',
+      'figma.com/embed?embed_host=orden',
     )
     expect(frame('https://codepen.io/someone/pen/abcDEF')).toBe(
       'https://codepen.io/someone/embed/abcDEF?default-tab=result',
@@ -115,7 +115,7 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     ['https://drive.google.com/file/d/1A2b3C4d5E6f7G8hI9j/view?usp=sharing', 'drive'],
     ['https://miro.com/app/board/uXjVNZvHEJI=/', 'miro'],
     ['https://www.twitch.tv/videos/1234567890', 'twitch'],
-    ['https://www.tiktok.com/@nib/video/7212345678901234567', 'tiktok'],
+    ['https://www.tiktok.com/@orden/video/7212345678901234567', 'tiktok'],
     ['https://gist.github.com/someone/4060606e8f4a4d3c9b1a', 'gist'],
     ['https://form.typeform.com/to/u6nXL7', 'typeform'],
     ['https://sketchfab.com/3d-models/a-thing-0d8e5c1e0f7f4a0a9e5b2a7b0e3c1d2f', 'sketchfab'],
@@ -148,7 +148,7 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
   test('a page of a listed provider that is not a thing to show is a link', () => {
     expect(webEmbed('https://miro.com/pricing')).toBe(null)
     expect(webEmbed('https://drive.google.com/drive/folders/1A2b3C')).toBe(null)
-    expect(webEmbed('https://www.tiktok.com/@nib')).toBe(null)
+    expect(webEmbed('https://www.tiktok.com/@orden')).toBe(null)
     expect(webEmbed('https://form.typeform.com/')).toBe(null)
   })
 
@@ -163,7 +163,7 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     for (const address of [
       'https://miro.com/app/board/a%2f..%2fevil/',
       'https://form.typeform.com/to/a%26b',
-      'https://www.tiktok.com/@nib/video/1?a=b#c',
+      'https://www.tiktok.com/@orden/video/1?a=b#c',
     ]) {
       const framed = frame(address)
       if (framed === null) continue
@@ -171,7 +171,7 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
       expect(framed, address).not.toContain('%2f')
       expect(new URL(framed).hostname, address).not.toBe('example.test')
     }
-    expect(frame('https://www.tiktok.com/@nib/video/1?a=b#c')).toBe(
+    expect(frame('https://www.tiktok.com/@orden/video/1?a=b#c')).toBe(
       'https://www.tiktok.com/embed/v2/1',
     )
   })

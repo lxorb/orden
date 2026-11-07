@@ -5,7 +5,7 @@ import { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '@orden/markdown/eager'
 import { parsed } from '../../../test/parsed'
-import { nibMarkdownExtensions } from '../../markdown/extensions'
+import { ordenMarkdownExtensions } from '../../markdown/extensions'
 import { livePreview } from '..'
 
 const DOC = 'words\n\n![A cat](cat.png)\n\nend'
@@ -34,7 +34,7 @@ function typedAlt(text: string): EditorView {
         doc: DOC,
         selection: EditorSelection.cursor(DOC.length),
         extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           livePreview(),
         ],
       }),

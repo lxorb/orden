@@ -113,7 +113,7 @@ export async function mergeOld(): Promise<void> {
       await invoke('web_merge', { from: one.from, origins: one.origins })
     } catch (error) {
       whole = false
-      console.warn(`nib: ${one.from} could not be merged into the shared web data`, error)
+      console.warn(`orden: ${one.from} could not be merged into the shared web data`, error)
     }
   }
   if (!whole) return

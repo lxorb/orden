@@ -23,7 +23,7 @@ describe('the change a write that asked would make', () => {
 
   test('is a new note’s every line, in the space it names', async () => {
     const shown = await previewOf(
-      'mcp__nib__create_note',
+      'mcp__orden__create_note',
       { path: 'New', space: 'Work', content: 'a\nb' },
       spaces,
       undefined,

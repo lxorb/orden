@@ -2,7 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { imageResolver } from '../../images'
-import { nibMarkdownExtensions } from '../../markdown/extensions'
+import { ordenMarkdownExtensions } from '../../markdown/extensions'
 import { parsed } from '../../../test/parsed'
 import { deletePicture, pictureAt, pictureUrl } from './pressed'
 
@@ -11,7 +11,7 @@ function state(doc: string, readOnly = false) {
     EditorState.create({
       doc,
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         imageResolver.of((src) => `asset://space/${src}`),
         EditorState.readOnly.of(readOnly),
       ],

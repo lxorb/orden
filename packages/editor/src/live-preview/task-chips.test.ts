@@ -12,7 +12,7 @@ import { EditorView } from '@codemirror/view'
 import type { TextEdit } from '@orden/markdown/edits'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { tickLines } from '../task-tick'
 import {
   noteIndex,
@@ -65,7 +65,7 @@ function stateOf(doc: string, cursor: number, help: TaskHelp | null = null) {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         history(),
         taskHint,
         ...(help
@@ -331,7 +331,7 @@ describe('a note made a todo list, or no longer one, while it is open', () => {
         doc,
         selection: EditorSelection.cursor(cursor),
         extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           taskHint,
           noteIndexExtension(plain),
         ],

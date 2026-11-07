@@ -11,7 +11,7 @@ class BackStack {
 
     const layer = { id: this.next++, close }
     this.layers.push(layer)
-    history.pushState({ nibLayer: layer.id }, '')
+    history.pushState({ ordenLayer: layer.id }, '')
 
     return () => {
       const at = this.layers.indexOf(layer)
@@ -19,7 +19,7 @@ class BackStack {
 
       this.layers.splice(at, 1)
 
-      const ours = (history.state as { nibLayer?: number } | null)?.nibLayer
+      const ours = (history.state as { ordenLayer?: number } | null)?.ordenLayer
       if (typeof ours !== 'number') return
 
       this.pending++

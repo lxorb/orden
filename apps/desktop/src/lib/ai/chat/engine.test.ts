@@ -383,7 +383,7 @@ describe('Always in a thread', () => {
 })
 
 describe('where the reader is', () => {
-  test('goes with every message, as nib’s own verbs said it, and stays with it', async () => {
+  test('goes with every message, as Orden’s own verbs said it, and stays with it', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     where = 'Space: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.'
@@ -583,7 +583,7 @@ describe('compaction', () => {
     expect(sent[2]?.headers['anthropic-beta']).toContain('compact-2026-09-04')
   })
 
-  test('nib’s own summary where the provider has none, and on its own near the top', async () => {
+  test('Orden’s own summary where the provider has none, and on its own near the top', async () => {
     const said = (words: string) =>
       lines(
         { choices: [{ delta: { content: words } }] },

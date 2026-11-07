@@ -41,7 +41,7 @@ beforeEach(() => {
   told.lists = []
 })
 
-describe('the dictionaries on nib’s own Chromium', () => {
+describe('the dictionaries on Orden’s own Chromium', () => {
   test('are a switch apiece, the reader’s own language on to begin with', () => {
     expect(row('Deutsch').get()).toBe(false)
     expect(row('Français').get()).toBe(false)

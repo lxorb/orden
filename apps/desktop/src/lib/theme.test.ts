@@ -168,7 +168,7 @@ const PAIR = `[data-theme=light] { --bg: #fff; }\n[data-theme=dark] { --bg: #000
 const ONLY_LIGHT = `[data-theme=light] { color-scheme: light; --bg: #fff; }`
 
 function installed(id: string, name: string, css: string, version = '1.0.0') {
-  folder.files.set(id, stamped({ id, name, author: 'Nib', version }, css))
+  folder.files.set(id, stamped({ id, name, author: 'Orden', version }, css))
 }
 
 beforeEach(() => {

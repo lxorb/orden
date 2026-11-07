@@ -151,7 +151,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'same_pdf': {
         const words = outside.get(text(args?.from))
         const root = text(args?.space)
-        if (words === undefined) throw new Error('not handed to nib')
+        if (words === undefined) throw new Error('not handed to Orden')
         const there = [...files].find(([one, held]) => one.startsWith(`${root}/`) && held === words)
         return there?.[0] ?? null
       }
@@ -718,7 +718,7 @@ describe('files dropped from outside', () => {
   })
 })
 
-describe('a PDF opened with nib', () => {
+describe('a PDF opened with Orden', () => {
   const OUTSIDE = '/downloads/Paper.pdf'
   const writing = () => sent.filter((one) => /^(write|rename|copy|create|delete|trash)/.test(one))
 

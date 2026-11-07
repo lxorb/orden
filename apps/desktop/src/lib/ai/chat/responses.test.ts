@@ -120,7 +120,7 @@ describe('the request', () => {
     expect(plan.tools).toEqual([
       expect.objectContaining({
         type: 'namespace',
-        name: 'nib',
+        name: 'orden',
         tools: [
           {
             type: 'function',

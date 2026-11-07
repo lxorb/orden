@@ -95,7 +95,7 @@ describe('a failure', () => {
 })
 
 describe('a session turn', () => {
-  test('thinks, calls nib’s tools by their own names and hears their answers', () => {
+  test('thinks, calls Orden’s tools by their own names and hears their answers', () => {
     const read = claudeReader()
     expect(
       read(
@@ -104,7 +104,7 @@ describe('a session turn', () => {
     ).toBe('Hmm.')
     expect(
       read(
-        '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"u1","name":"mcp__nib__read_note","input":{"path":"Herons.md"}}]}}',
+        '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"u1","name":"mcp__orden__read_note","input":{"path":"Herons.md"}}]}}',
       ).tool,
     ).toEqual({ id: 'u1', name: 'read_note', args: { path: 'Herons.md' } })
     expect(

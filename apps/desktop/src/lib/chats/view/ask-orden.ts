@@ -1,4 +1,4 @@
-export async function askNib(chat: string, question: string, parent?: string): Promise<void> {
+export async function askOrden(chat: string, question: string, parent?: string): Promise<void> {
   const [{ chat: panel }, { revealChat }, { draftReply }] = await Promise.all([
     import('../../ai/sidebar/chat.svelte'),
     import('../../ai/sidebar/reveal'),

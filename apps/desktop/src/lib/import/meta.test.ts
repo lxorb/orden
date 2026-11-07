@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { dayOf, frontMatterFor, noteText, tagName } from './meta'
 
 describe('front matter for an imported note', () => {
-  test('writes the day it was made under the key nib already reads', () => {
+  test('writes the day it was made under the key Orden already reads', () => {
     expect(frontMatterFor({ date: '2026-01-02' })).toBe('---\ndate: 2026-01-02\n---\n\n')
   })
 

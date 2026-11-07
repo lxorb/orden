@@ -16,7 +16,7 @@ function html(source: string): string {
 
 describe('a table cell', () => {
   test('renders bold, which is what a plain-text cell got wrong', () => {
-    expect(html('**Nib**')).toBe('<strong>Nib</strong>')
+    expect(html('**Orden**')).toBe('<strong>Orden</strong>')
   })
 
   test('renders italic', () => {
@@ -32,7 +32,7 @@ describe('a table cell', () => {
   })
 
   test('keeps the text around a construct', () => {
-    expect(html('use **Nib** daily')).toBe('use <strong>Nib</strong> daily')
+    expect(html('use **Orden** daily')).toBe('use <strong>Orden</strong> daily')
   })
 
   test('handles several in one cell', () => {

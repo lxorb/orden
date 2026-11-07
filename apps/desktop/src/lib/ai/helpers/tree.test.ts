@@ -107,8 +107,8 @@ const asked = (from: Thread) => ({
 })
 
 const editBy = (thread: string) => ({
-  id: 'nib-codex:1',
-  agent: 'nib-codex',
+  id: 'orden-codex:1',
+  agent: 'orden-codex',
   path: '/n/Projects/A.md',
   at: 5,
   spots: [],

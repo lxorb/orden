@@ -20,9 +20,9 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { formerRoot, hasMoved, rebased, restate, settleRoot, SPACES_ROOT } = await import('./moved')
 
 const OLD =
-  '/var/mobile/Containers/Data/Application/03742EE0-9B69-4F07-9D03-0AAB3201676B/Documents/Nib'
+  '/var/mobile/Containers/Data/Application/03742EE0-9B69-4F07-9D03-0AAB3201676B/Documents/Orden'
 const NEW =
-  '/var/mobile/Containers/Data/Application/853E8E51-0429-47D9-985E-E17A80F259DF/Documents/Nib'
+  '/var/mobile/Containers/Data/Application/853E8E51-0429-47D9-985E-E17A80F259DF/Documents/Orden'
 
 beforeEach(() => localStorage.clear())
 
@@ -79,8 +79,8 @@ describe('saying a stored path again under the new folder', () => {
   })
 
   test('rewrites a Windows path as JSON escapes it', () => {
-    const was = 'C:\\Users\\a\\Documents\\Nib'
-    const now = 'D:\\Users\\a\\Documents\\Nib'
+    const was = 'C:\\Users\\a\\Documents\\Orden'
+    const now = 'D:\\Users\\a\\Documents\\Orden'
     const text = JSON.stringify({ tab: `${was}\\Notes\\a.md` })
 
     expect(JSON.parse(rebased(text, was, now))).toEqual({ tab: `${now}\\Notes\\a.md` })

@@ -4,7 +4,7 @@ import { EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { highlightTree } from '@lezer/highlight'
 import { describe, expect, test } from 'vitest'
-import { nibHighlightStyle, nibTheme } from './theme'
+import { ordenHighlightStyle, ordenEditorTheme } from './theme'
 
 const BOLD = 600
 
@@ -29,7 +29,7 @@ function classesOver(doc: string, word: string): string {
 
   const at = doc.indexOf(word)
   let found = ''
-  highlightTree(tree!, [nibHighlightStyle], (from, to, classes) => {
+  highlightTree(tree!, [ordenHighlightStyle], (from, to, classes) => {
     if (from <= at && to >= at + word.length) found = classes
   })
 
@@ -38,7 +38,7 @@ function classesOver(doc: string, word: string): string {
 
 describe('the writing surface', () => {
   test('is as tall as the pane holding it, and scrolls the note inside that', () => {
-    const rules = rulesOf(nibTheme)
+    const rules = rulesOf(ordenEditorTheme)
 
     expect(rules).toMatch(/\.\S+ \{[^}]*height: 100%/)
 
@@ -53,7 +53,7 @@ describe('the words between the stars', () => {
   })
 
   test('are heavy enough that a browser draws them bold', () => {
-    const rules = nibHighlightStyle.module?.getRules() ?? ''
+    const rules = ordenHighlightStyle.module?.getRules() ?? ''
     const [className = ''] = classesOver('a **bold** word', 'bold').split(' ')
     const weight = Number(/font-weight:\s*(\d+)/.exec(blockFor(rules, className))?.[1] ?? 0)
 
@@ -61,7 +61,7 @@ describe('the words between the stars', () => {
   })
 
   test('are heavier than the words around them', () => {
-    const rules = nibHighlightStyle.module?.getRules() ?? ''
+    const rules = ordenHighlightStyle.module?.getRules() ?? ''
     const [bold = ''] = classesOver('a **bold** word', 'bold').split(' ')
     const [plain = ''] = classesOver('a *leaning* word', 'leaning').split(' ')
 

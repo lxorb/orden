@@ -4,7 +4,7 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import '@orden/markdown/eager'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { trustedMarkup } from '../markup'
 import { livePreview } from '.'
 
@@ -25,7 +25,7 @@ function viewOf(doc: string, trusted = false): EditorView {
       doc,
       selection: EditorSelection.cursor(doc.length),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         trustedMarkup(trusted),
         livePreview(),
       ],
@@ -63,7 +63,7 @@ test('a note swapped in for another is the one drawn', () => {
     EditorState.create({
       doc: next,
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         livePreview(),
       ],
     }),

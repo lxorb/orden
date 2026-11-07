@@ -65,7 +65,7 @@ beforeEach(() => {
 describe('the space a search holds', () => {
   test("leaves the app's own notes out, warm or cold, as the crate's walk does", async () => {
     write('.Inbox.md', '- [ ] wind the clock')
-    write('.nib/Draft.md', 'wind')
+    write('.orden/Draft.md', 'wind')
 
     expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
     await space.fill(ROOT)

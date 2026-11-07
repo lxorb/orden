@@ -37,7 +37,7 @@ function space(
   return sidebarImport(sidebar, NOW, { text: 'none' }).spaces[0]
 }
 
-describe("Chrome's tabs and bookmarks as nib's", () => {
+describe("Chrome's tabs and bookmarks as Orden's", () => {
   test('puts the pinned tab first as an Essential, then the tabs and groups in order', () => {
     const chrome = space()
     expect(chrome?.name).toBe('Chrome')

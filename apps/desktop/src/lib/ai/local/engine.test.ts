@@ -139,7 +139,7 @@ const claudeTurn = (text: string, window = 200000) => [
     type: 'assistant',
     message: {
       content: [
-        { type: 'tool_use', id: 'u1', name: 'mcp__nib__read_note', input: { path: 'Herons.md' } },
+        { type: 'tool_use', id: 'u1', name: 'mcp__orden__read_note', input: { path: 'Herons.md' } },
       ],
     },
   }),
@@ -192,7 +192,7 @@ describe('a call that asks the reader, in a program’s session', () => {
     return {
       built,
       given,
-      raise: (verb: string, agent = 'nib-cc', category = 'writing') =>
+      raise: (verb: string, agent = 'orden-cc', category = 'writing') =>
         hear?.({ id: 'q1', agent, verb, category }),
     }
   }
@@ -245,7 +245,7 @@ describe('a call that asks the reader, in a program’s session', () => {
     await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
     const verb = (on.turns.at(-1)?.parts[1] as { verb: string }).verb
     on.always = [verb]
-    raise(verb, 'nib-cc', 'terminal')
+    raise(verb, 'orden-cc', 'terminal')
     expect(given).toEqual([])
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({
       state: 'asking',
@@ -322,7 +322,7 @@ describe('a Claude Code thread', () => {
     expect(on.title).toBe('what waits?')
   })
 
-  test('opens one session with nib’s tools in the thread’s mode, and keeps it', async () => {
+  test('opens one session with Orden’s tools in the thread’s mode, and keeps it', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE, { model: 'opus', effort: 'high' })
     await send(CLAUDE, on, 'one', built)
@@ -573,7 +573,7 @@ describe('a question put to Codex', () => {
     expect(opened[0]?.closed).toBe(true)
   })
 
-  test('at the plan’s limit says so in nib’s words', async () => {
+  test('at the plan’s limit says so in Orden’s words', async () => {
     const { askLocal } = await import('./ask')
     answer = () => [
       JSON.stringify({
@@ -777,7 +777,7 @@ describe('a program’s own goal', () => {
     ])
   })
 
-  test('Claude Code has no paused goal: a pause clears it there, and nib keeps the condition', async () => {
+  test('Claude Code has no paused goal: a pause clears it there, and Orden keeps the condition', async () => {
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'hi', built)

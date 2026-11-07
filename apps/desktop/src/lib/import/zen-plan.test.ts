@@ -17,7 +17,7 @@ function spaces() {
   return zenImport(session(), NOW).spaces
 }
 
-describe("Zen's spaces as nib's", () => {
+describe("Zen's spaces as Orden's", () => {
   test('is a space for every Zen space, named, dressed and in order', () => {
     expect(spaces().map((one) => [one.name, one.icon, one.tint])).toEqual([
       ['Home', '🏡', null],

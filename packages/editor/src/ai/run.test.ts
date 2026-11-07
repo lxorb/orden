@@ -1,7 +1,7 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState, type TransactionSpec } from '@codemirror/state'
 import { afterEach, describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 import { setLabels } from '../labels'
 import { ANSWER_CLOSE, ANSWER_OPEN } from './block'
@@ -23,7 +23,7 @@ class Fake {
       EditorState.create({
         doc,
         extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           aiExtension,
         ],
       }),
@@ -237,7 +237,7 @@ describe('asking', () => {
       EditorState.create({
         doc: PLAIN,
         extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           aiExtension,
           EditorState.readOnly.of(true),
         ],

@@ -18,7 +18,7 @@ lang: de
 ## Prose
 
 Words with **bold**, *italic*, \`code()\`, ~~gone~~, ==marked==, H~2~O, x^2^, a
-[link](https://nib.dev/a?b=1&c=2), a note[^one] and $E=mc^2$ in it.
+[link](https://orden.dev/a?b=1&c=2), a note[^one] and $E=mc^2$ in it.
 
 [^one]: The footnote's own words.
 
@@ -306,7 +306,7 @@ describe('runs', () => {
   })
 
   test('writes a link as a field carrying the real address', () => {
-    expect(RTF).toContain('{\\field{\\*\\fldinst{HYPERLINK "https://nib.dev/a?b=1&c=2"}}')
+    expect(RTF).toContain('{\\field{\\*\\fldinst{HYPERLINK "https://orden.dev/a?b=1&c=2"}}')
     expect(RTF).toContain('{\\fldrslt{\\cf3\\ul link}}}')
   })
 
@@ -321,13 +321,13 @@ describe('runs', () => {
       blocks: [
         {
           kind: 'paragraph',
-          spans: [{ text: 'link', href: 'https://nib.dev/a" \\l "x' }],
+          spans: [{ text: 'link', href: 'https://orden.dev/a" \\l "x' }],
         },
       ],
     }
 
     const out = toRtf(doc, [], PAPER)
-    expect(out).toContain('HYPERLINK "https://nib.dev/a%22 \\\\l %22x"')
+    expect(out).toContain('HYPERLINK "https://orden.dev/a%22 \\\\l %22x"')
   })
 
   test('flows a wrapped line, and keeps a break that was asked for', () => {

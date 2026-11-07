@@ -7,7 +7,7 @@ import { MarkdownParser } from '@lezer/markdown'
 import { htmlGrammar } from '@orden/lang-html'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { measuredGrowth } from '../../../../scripts/growth'
-import { nibMarkdownExtensions } from './extensions'
+import { ordenMarkdownExtensions } from './extensions'
 
 const js = LRLanguage.define({ parser: javascript })
 
@@ -42,7 +42,7 @@ beforeAll(async () => {
   extensions = markdown({
     base: markdownLanguage,
     codeLanguages: () => js,
-    extensions: nibMarkdownExtensions,
+    extensions: ordenMarkdownExtensions,
     htmlTagLanguage: grammar.html({ matchClosingTags: false }),
   })
 })
@@ -97,7 +97,7 @@ describe('a long paragraph typed into', () => {
 
       const tree = ensureSyntaxTree(state, state.doc.length, 1e9)!
       const fresh = (markdownLanguage.parser as MarkdownParser)
-        .configure(nibMarkdownExtensions)
+        .configure(ordenMarkdownExtensions)
         .parse(state.doc.toString())
       expect(shape(tree)).toBe(shape(fresh))
       const text = state.doc.toString()

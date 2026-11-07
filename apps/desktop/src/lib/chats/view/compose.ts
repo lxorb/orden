@@ -30,10 +30,10 @@ export function mentionAt(text: string, caret: number): { from: number; query: s
   return { from: caret - query.length - 1, query }
 }
 
-export type Special = 'nib' | 'here' | 'everyone'
+export type Special = 'orden' | 'here' | 'everyone'
 
-export function nibAsked(words: string): string | null {
-  const found = /^\s*@nib(?:\s+([\s\S]*))?$/i.exec(words)
+export function ordenAsked(words: string): string | null {
+  const found = /^\s*@(?:orden|nib)(?:\s+([\s\S]*))?$/i.exec(words)
   return found ? (found[1] ?? '').trim() : null
 }
 
@@ -59,8 +59,8 @@ export function mentionChoices(
             .some((word) => word.startsWith(wanted)),
       ),
   )
-  const specials = (['nib', 'here', 'everyone'] as const).filter(
-    (one) => one.startsWith(wanted) && (first || one !== 'nib'),
+  const specials = (['orden', 'here', 'everyone'] as const).filter(
+    (one) => one.startsWith(wanted) && (first || one !== 'orden'),
   )
   return [...starts, ...inside, ...specials].slice(0, 8)
 }

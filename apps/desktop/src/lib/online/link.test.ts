@@ -18,7 +18,7 @@ function fakeWorld(token: string | null = 'tok') {
   const backs: (() => void)[] = []
 
   const world: LinkWorld = {
-    base: 'https://nib.test',
+    base: 'https://orden.test',
     token: () => token,
     device: () => Promise.resolve('dev1'),
     socket: (url, protocols, events) => {
@@ -126,7 +126,7 @@ describe('the socket to an online session', () => {
     await settle()
 
     const socket = opened(found)
-    expect(socket.url).toBe('wss://nib.test/v2/online/t1/socket')
+    expect(socket.url).toBe('wss://orden.test/v2/online/t1/socket')
     expect(socket.protocols).toEqual(['nib.token.tok', 'nib.device.dev1'])
     expect(socket.sent).toEqual([text({ t: 'hello', cols: 100, rows: 30, hold: true })])
     expect(heard).toEqual([{ t: 'open' }])

@@ -78,7 +78,7 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
   }
 
   const shown = lines.slice(-MOST_LINES)
-  const name = call.caller.agent?.name ?? 'nib'
+  const name = call.caller.agent?.name ?? 'orden'
   const section = `## ${name}, ${day}\n\n${shown.map(lineOf).join('\n')}`
 
   const question = await asked(call, null, `Write the log of ${day} into ${relative}`)

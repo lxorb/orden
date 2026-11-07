@@ -143,7 +143,7 @@ describe('a note', () => {
     expect(await runner.holds('/Notes/a.md')).toBe(false)
   })
 
-  test('written by another program since nib last wrote it is not', async () => {
+  test('written by another program since Orden last wrote it is not', async () => {
     await inStep('/Notes/a.md', 'note', '# a')
     disk.set('/Notes/a.md', '# a\nadded in another editor')
 

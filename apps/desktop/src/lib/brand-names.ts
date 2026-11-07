@@ -35,7 +35,7 @@ export const CALLED: Readonly<Record<string, string>> = {
 }
 
 export const ALSO: Readonly<Record<string, string>> = {
-  orden: 'nib notes app',
+  orden: 'notes app',
   anthropic: 'claude ai',
   claude: 'claude code anthropic ai',
   openai: 'chatgpt gpt codex ai',

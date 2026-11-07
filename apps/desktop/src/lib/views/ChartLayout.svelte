@@ -14,7 +14,7 @@
   } from './chart'
   import { toneColour } from './chips'
   import { displayName, knownProperties, toneOf } from './columns'
-  import { setNibOption } from './edit'
+  import { setOrdenOption } from './edit'
   import type { Kit } from './kit'
   import { dayWords } from '@orden/editor/task-days'
   import { chartName, groupLabel, measureName, noteNames, propertyName } from './words'
@@ -64,7 +64,7 @@
   }
 
   const set = (key: string, value: unknown) =>
-    kit.change((base, at) => setNibOption(base, at, key, value))
+    kit.change((base, at) => setOrdenOption(base, at, key, value))
 
   const numeric = $derived(
     live.base ? knownProperties(live.base, view?.orden.rows ?? 'notes', live.rows) : [],

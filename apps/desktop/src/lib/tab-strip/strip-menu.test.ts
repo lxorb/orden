@@ -42,7 +42,7 @@ afterEach(() => {
 })
 
 describe("the empty strip's menu", () => {
-  test("is Chrome's rows there that nib has, and nothing else", () => {
+  test("is Chrome's rows there that Orden has, and nothing else", () => {
     expect(stripMenu(PANE).map((one) => one?.label ?? '-')).toEqual([
       'New tab',
       'Reopen closed tab',

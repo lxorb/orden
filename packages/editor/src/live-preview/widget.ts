@@ -1,6 +1,6 @@
 import { WidgetType } from '@codemirror/view'
 
-export abstract class NibWidget extends WidgetType {
+export abstract class OrdenWidget extends WidgetType {
   override destroy(dom: HTMLElement) {
     const undo = TEARDOWN.get(dom)
     TEARDOWN.delete(dom)

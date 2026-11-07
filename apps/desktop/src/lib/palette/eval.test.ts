@@ -43,7 +43,7 @@ const FILES = [
   'Uni/Exchange application.md',
   'Home/Tax 2026.md',
   'Home/Flat.md',
-  'Projects/nib roadmap.md',
+  'Projects/orden roadmap.md',
   'Projects/Battlecode art.md',
   'Journal/2026-09-29.md',
   'Journal/2026-09-30.md',
@@ -57,7 +57,7 @@ const MOODLE = 'https://moodle-app2.let.ethz.ch/'
 const WORLD = world({
   files: FILES,
   tabs: [
-    tab('t1', 'nib roadmap', { path: `${ROOT}/Projects/nib roadmap.md` }),
+    tab('t1', 'orden roadmap', { path: `${ROOT}/Projects/orden roadmap.md` }),
     tab('t2', 'Moodle', { kind: 'web', url: MOODLE }),
     tab('t3', 'YouTube', { kind: 'web', url: 'https://www.youtube.com/' }),
     tab('t4', 'Plan', { path: `${ROOT}/Plan.md` }),
@@ -99,7 +99,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['attention', 'Attention is all you need.pdf', 1],
   ['board', 'Board.canvas', 1],
   ['09-30', '2026-09-30', 1],
-  ['roadmap', 'tab nib roadmap', 1],
+  ['roadmap', 'tab orden roadmap', 1],
   ['moodle', 'tab Moodle', 1],
   ['youtube', 'tab YouTube', 1],
   ['new', '> New note', 1],

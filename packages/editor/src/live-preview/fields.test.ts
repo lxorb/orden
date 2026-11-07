@@ -4,7 +4,7 @@ import { EditorSelection, EditorState, StateEffect } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { livePreview } from '.'
 
 beforeAll(() => {
@@ -44,7 +44,7 @@ function viewOf(doc: string) {
       doc,
       selection: EditorSelection.cursor(doc.length),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         livePreview(),
         leavesMidUpdate,
       ],

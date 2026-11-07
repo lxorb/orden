@@ -112,7 +112,7 @@ export const selectWord: StateCommand = (target) => {
   return true
 }
 
-export const nibBindings: BindingSpec[] = [
+export const ordenBindings: BindingSpec[] = [
   { id: 'format.bold', key: 'Mod-b', run: toggleWrap('**'), preventDefault: true },
   { id: 'format.italic', key: 'Mod-i', run: toggleWrap('*'), preventDefault: true },
   { id: 'format.underline', key: 'Mod-u', run: toggleWrap('<u>', '</u>'), preventDefault: true },
@@ -340,4 +340,4 @@ export const unclaimedKeymap: KeyBinding[] = [
   { key: 'Tab', run: indentItems, shift: outdentItems },
 ].filter((binding) => !adopted.has(binding))
 
-export const nibKeymap: KeyBinding[] = bindings(nibBindings, {})
+export const ordenKeymap: KeyBinding[] = bindings(ordenBindings, {})

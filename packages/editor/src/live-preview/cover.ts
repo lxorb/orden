@@ -5,7 +5,7 @@ import { imageResolver } from '../images'
 import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
 import { coverMover, keptCover } from './kept-cover'
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 
 const STEP = 5
 
@@ -35,7 +35,7 @@ function writePosition(view: EditorView, position: number) {
   })
 }
 
-export class CoverWidget extends NibWidget {
+export class CoverWidget extends OrdenWidget {
   constructor(private readonly cover: Cover) {
     super()
   }

@@ -19,12 +19,12 @@ vi.mock('../native', () => ({
       case 'shortcuts_left_inbox':
         return Promise.resolve(disk.left)
       case 'spaces_root':
-        return Promise.resolve('/Nib')
+        return Promise.resolve('/Orden')
       case 'read_tree':
         return Promise.resolve({
           children: disk.backups.map((name) => ({
             name,
-            path: `/Nib/.orden/.backups/${name}`,
+            path: `/Orden/.orden/.backups/${name}`,
             is_dir: true,
           })),
         })
@@ -45,17 +45,18 @@ vi.mock('../own-window', () => ({ hearHere: () => Promise.resolve(() => undefine
 
 vi.mock('../internal/spaces', () => ({
   HOME: '.orden',
-  keptCameFrom: () => Promise.resolve([{ root: '/Nib/.orden/Notes/Notes', from: '/Nib/Notes' }]),
+  keptCameFrom: () =>
+    Promise.resolve([{ root: '/Orden/.orden/Notes/Notes', from: '/Orden/Notes' }]),
 }))
 
 vi.mock('../internal/roots', () => ({
   mountOf: (path: string) =>
-    path === '/Nib/.orden/Notes/Notes'
+    path === '/Orden/.orden/Notes/Notes'
       ? {
           inside: '',
           mount: {
             folder: {
-              name: '/Nib/.orden/Notes',
+              name: '/Orden/.orden/Notes',
               readText: (rel: string) => Promise.resolve(disk.kept.get(rel) ?? null),
             },
           },
@@ -99,18 +100,18 @@ describe('a task from Shortcuts', () => {
 })
 
 describe('a task an older build wrote into the folder a space was moved out of', () => {
-  const OLD = '/Nib/Notes/.Inbox.md'
+  const OLD = '/Orden/Notes/.Inbox.md'
 
   test('is picked up once: only what was written after the move', async () => {
     disk.left = OLD
     disk.backups = ['Notes 20261101 101010', 'Notes 20261105 090000', 'Other 20261106 000000']
-    disk.notes.set('/Nib/.orden/.backups/Notes 20261105 090000/.Inbox.md', '- [ ] old\n')
+    disk.notes.set('/Orden/.orden/.backups/Notes 20261105 090000/.Inbox.md', '- [ ] old\n')
     disk.notes.set(OLD, '- [ ] old\n- [ ] new one\n- [x] done\n')
     disk.kept.set('.Inbox.md', '- [x] old\n')
 
     expect(await takeAdded(add)).toBe(1)
     expect(added).toEqual(['new one'])
-    expect(disk.notes.get(`/Nib/.orden/Notes/${TAKEN}`)).toBe(disk.notes.get(OLD))
+    expect(disk.notes.get(`/Orden/.orden/Notes/${TAKEN}`)).toBe(disk.notes.get(OLD))
 
     expect(await takeAdded(add)).toBe(0)
     expect(added).toEqual(['new one'])
@@ -129,8 +130,8 @@ describe('a task an older build wrote into the folder a space was moved out of',
   })
 
   test('is left alone in a folder that is still a space', async () => {
-    disk.left = '/Nib/Work/.Inbox.md'
-    disk.notes.set('/Nib/Work/.Inbox.md', '- [ ] live\n')
+    disk.left = '/Orden/Work/.Inbox.md'
+    disk.notes.set('/Orden/Work/.Inbox.md', '- [ ] live\n')
     expect(await takeAdded(add)).toBe(0)
     expect(added).toEqual([])
   })

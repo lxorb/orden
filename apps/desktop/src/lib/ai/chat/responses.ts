@@ -17,7 +17,7 @@ import {
 } from './wire'
 import type { Part, ToolOutput, Usage } from './types'
 
-const NAMESPACE = 'nib'
+const NAMESPACE = 'orden'
 
 type Item = Record<string, unknown>
 
@@ -107,7 +107,7 @@ function toolsOf(tools: readonly ToolDef[], plan: boolean, web: boolean): unknow
     {
       type: 'namespace',
       name: NAMESPACE,
-      description: 'The reader’s nib: notes, tabs and pages.',
+      description: 'The reader’s Orden: notes, tabs and pages.',
       tools: functions,
     },
     ...search,

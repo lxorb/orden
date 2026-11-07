@@ -34,7 +34,7 @@ import {
 import { selectWord } from './keymap'
 import { indentItems, moveLineOver, outdentItems } from './list-keys'
 import { clearFormatting, marksAcross } from './marks'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
 function apply(
@@ -120,7 +120,7 @@ describe('a block that holds its lines', () => {
       EditorState.create({
         doc: '$$\na\nb\n$$',
         selection: EditorSelection.cursor(4),
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
     let next = state
@@ -791,7 +791,7 @@ describe('marks over a selection that holds what is not words', () => {
       EditorState.create({
         doc,
         selection: EditorSelection.range(0, doc.length),
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
     let next = state

@@ -8,7 +8,7 @@ const entry = (fields: Partial<Entry['fields']> = {}, more: Partial<Entry> = {})
 })
 
 describe('the line', () => {
-  test("in nib's order, the Tasks plugin's fields last", () => {
+  test("in Orden's order, the Tasks plugin's fields last", () => {
     expect(
       linesOf(
         entry({

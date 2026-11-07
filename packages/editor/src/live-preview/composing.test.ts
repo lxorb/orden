@@ -6,7 +6,7 @@ import { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import '@orden/markdown/eager'
 import { livePreviewDecorations } from './decorate'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
@@ -26,7 +26,7 @@ function viewOf(doc: string, at: number): EditorView {
       doc,
       selection: EditorSelection.cursor(at),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         livePreviewDecorations,
       ],
     }),

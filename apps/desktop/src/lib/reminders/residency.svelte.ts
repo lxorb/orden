@@ -3,7 +3,7 @@ import { keep, storedText } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
 import { keptInTray } from '../parting'
 
-const KEY = 'nib.tray'
+const KEY = 'orden.tray'
 
 type Choice = 'auto' | 'on' | 'off'
 

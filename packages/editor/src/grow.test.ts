@@ -3,14 +3,14 @@ import { EditorSelection, EditorState, type StateCommand } from '@codemirror/sta
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { expandSelection, shrinkSelection } from './grow'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 
 function stateOf(doc: string, caret: number): EditorState {
   return parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(caret),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 }

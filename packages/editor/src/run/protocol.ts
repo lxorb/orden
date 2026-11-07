@@ -48,7 +48,7 @@ export function parseRunMessage(data: unknown, run: number): RunMessage | null {
 export function runnerDocument(code: string, run: number, script: string): string {
   return frameDocument({
     head: `<meta http-equiv="Content-Security-Policy" content="${RUNNER_POLICY}">
-<title>nib runner</title>`,
+<title>Orden runner</title>`,
     program: runnerProgram(code, run),
     script,
   })

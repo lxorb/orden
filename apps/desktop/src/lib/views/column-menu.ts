@@ -19,13 +19,13 @@ import {
 } from './columns'
 import {
   freeFormulaName,
-  setBaseNib,
+  setBaseOrden,
   setColumns,
   setFormula,
   setProperty,
   setSort,
   setSummary,
-  setViewNib,
+  setViewOrden,
 } from './edit'
 import { FORMATS } from './format'
 import type { Kit } from './kit'
@@ -99,7 +99,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
             }
             const property = 'id'
             kit.change((b, at) =>
-              setColumns(setBaseNib(b, 'id', { property, prefix: '' }), at, [
+              setColumns(setBaseOrden(b, 'id', { property, prefix: '' }), at, [
                 ...columns,
                 `note.${property}`,
               ]),
@@ -239,7 +239,7 @@ export function columnMenu(
                 const was = b.views[i]?.orden.required ?? []
                 const key = bare(column)
                 const next = was.includes(key) ? was.filter((one) => one !== key) : [...was, key]
-                return setViewNib(b, i, 'required', next.length ? next : undefined)
+                return setViewOrden(b, i, 'required', next.length ? next : undefined)
               }),
           },
         ]
@@ -249,11 +249,11 @@ export function columnMenu(
           place < frozen
             ? {
                 label: t('Unfreeze'),
-                run: () => kit.change((b, i) => setViewNib(b, i, 'freeze', undefined)),
+                run: () => kit.change((b, i) => setViewOrden(b, i, 'freeze', undefined)),
               }
             : {
                 label: t('Freeze up to here'),
-                run: () => kit.change((b, i) => setViewNib(b, i, 'freeze', place + 1)),
+                run: () => kit.change((b, i) => setViewOrden(b, i, 'freeze', place + 1)),
               },
         ]
       : []),

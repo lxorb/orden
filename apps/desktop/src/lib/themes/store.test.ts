@@ -74,7 +74,7 @@ function entry(patch: Record<string, unknown> = {}) {
   return {
     id: 'warm-paper',
     name: 'Warm Paper',
-    author: 'Nib',
+    author: 'Orden',
     version: '1.0.0',
     description: 'Ink on cream.',
     tags: ['light', 'warm'],
@@ -163,7 +163,7 @@ describe('what the grid shows', () => {
   })
 
   test('what was searched for is still sorted', () => {
-    const found = arrange(catalogue, 'Nib', 'newest')
+    const found = arrange(catalogue, 'Orden', 'newest')
     expect(found.map((one) => one.name)).toEqual(['Amber', 'Zinc'])
   })
 

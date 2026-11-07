@@ -17,8 +17,8 @@ describe('a page as markdown', () => {
   })
 
   test('a tag comes back as the tag, whichever element drew it', () => {
-    const read = renderMarkdown('Filed #work/nib and #reading', { tagHref: (tag) => `#${tag}` })
-    expect(htmlToMarkdown(read)).toBe('Filed #work/nib and #reading')
+    const read = renderMarkdown('Filed #work/orden and #reading', { tagHref: (tag) => `#${tag}` })
+    expect(htmlToMarkdown(read)).toBe('Filed #work/orden and #reading')
     expect(htmlToMarkdown(renderMarkdown('#first words'))).toBe('#first words')
     expect(htmlToMarkdown('<p><a href="#idea" class="tag" target="_blank">#idea</a></p>')).toBe(
       '#idea',
@@ -776,10 +776,10 @@ describe('a page as markdown', () => {
     const seen: string[] = []
     const markdown = htmlToMarkdown(
       '<p><img src="a.png" alt="one"></p><p><img src="b.png" alt="two"></p>',
-      { image: (source) => `nib:${seen.push(source) - 1}` },
+      { image: (source) => `orden:${seen.push(source) - 1}` },
     )
 
-    expect(markdown).toBe('![one](nib:0)\n\n![two](nib:1)')
+    expect(markdown).toBe('![one](orden:0)\n\n![two](orden:1)')
     expect(seen).toEqual(['a.png', 'b.png'])
   })
 

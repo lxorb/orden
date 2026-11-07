@@ -105,6 +105,6 @@ const style = EditorView.baseTheme({
   '.cm-selectionBackground': { display: 'none' },
 })
 
-export function nibSelection(): Extension {
+export function ordenSelection(): Extension {
   return [drawSelection(), shapes, style]
 }

@@ -318,21 +318,21 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
 
   const app: NativeSubmenu = {
     kind: 'submenu',
-    id: 'nib',
+    id: 'orden',
     text: words.app,
     enabled: true,
     items: [
-      { kind: 'system', id: 'nib.about', item: 'About', text: say(words.about) },
-      { kind: 'rule', id: 'nib.rule-1' },
-      ...(settings ? [item({ ...settings, asks: true }, 'nib.settings')] : []),
-      { kind: 'rule', id: 'nib.rule-2' },
-      { kind: 'system', id: 'nib.services', item: 'Services', text: say(words.services) },
-      { kind: 'rule', id: 'nib.rule-3' },
-      { kind: 'system', id: 'nib.hide', item: 'Hide', text: say(words.hide) },
-      { kind: 'system', id: 'nib.hide-others', item: 'HideOthers', text: say(words.hideOthers) },
-      { kind: 'system', id: 'nib.show-all', item: 'ShowAll', text: say(words.showAll) },
-      { kind: 'rule', id: 'nib.rule-4' },
-      { kind: 'system', id: 'nib.quit', item: 'Quit', text: say(words.quit) },
+      { kind: 'system', id: 'orden.about', item: 'About', text: say(words.about) },
+      { kind: 'rule', id: 'orden.rule-1' },
+      ...(settings ? [item({ ...settings, asks: true }, 'orden.settings')] : []),
+      { kind: 'rule', id: 'orden.rule-2' },
+      { kind: 'system', id: 'orden.services', item: 'Services', text: say(words.services) },
+      { kind: 'rule', id: 'orden.rule-3' },
+      { kind: 'system', id: 'orden.hide', item: 'Hide', text: say(words.hide) },
+      { kind: 'system', id: 'orden.hide-others', item: 'HideOthers', text: say(words.hideOthers) },
+      { kind: 'system', id: 'orden.show-all', item: 'ShowAll', text: say(words.showAll) },
+      { kind: 'rule', id: 'orden.rule-4' },
+      { kind: 'system', id: 'orden.quit', item: 'Quit', text: say(words.quit) },
     ],
   }
 

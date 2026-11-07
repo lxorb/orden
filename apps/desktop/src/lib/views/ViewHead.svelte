@@ -13,7 +13,7 @@
   import ColourBuilder from './ColourBuilder.svelte'
   import { grouped } from './column-menu'
   import { copyCsv, saveCsv } from './csv'
-  import { addView, freeViewName, removeView, renameView, setBaseNib, setViewNib } from './edit'
+  import { addView, freeViewName, removeView, renameView, setBaseOrden, setViewOrden } from './edit'
   import FilterBuilder from './FilterBuilder.svelte'
   import type { Kit } from './kit'
   import { switched } from './layout'
@@ -220,7 +220,7 @@
                   checked: (view?.orden.lines ?? 1) === one.lines,
                   run: () =>
                     kit.change((b, at) =>
-                      setViewNib(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
+                      setViewOrden(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
                     ),
                 })),
               ),
@@ -240,7 +240,7 @@
         ? [
             grouped(event, t('Default template'), () =>
               templateRows(view?.orden.template ?? base.orden.template, (link) =>
-                kit.change((b, at) => setViewNib(b, at, 'template', link ?? undefined)),
+                kit.change((b, at) => setViewOrden(b, at, 'template', link ?? undefined)),
               ),
             ),
           ]
@@ -252,7 +252,7 @@
         label: view?.orden.locked ? t('Unlock view') : t('Lock view'),
         run: () =>
           kit.change(
-            (b, at) => setViewNib(b, at, 'locked', view?.orden.locked ? undefined : true),
+            (b, at) => setViewOrden(b, at, 'locked', view?.orden.locked ? undefined : true),
             true,
           ),
       },
@@ -262,7 +262,7 @@
               label: base.orden.locked ? t('Unlock base') : t('Lock base'),
               run: () =>
                 kit.change(
-                  (b) => setBaseNib(b, 'locked', base.orden.locked ? undefined : true),
+                  (b) => setBaseOrden(b, 'locked', base.orden.locked ? undefined : true),
                   true,
                 ),
             },
@@ -419,7 +419,7 @@
         aria-label={t('Unlock view')}
         onclick={() =>
           kit.change(
-            (b, at) => setBaseNib(setViewNib(b, at, 'locked', undefined), 'locked', undefined),
+            (b, at) => setBaseOrden(setViewOrden(b, at, 'locked', undefined), 'locked', undefined),
             true,
           )}
       >

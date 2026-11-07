@@ -4,7 +4,7 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { afterEach, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { definitionOf, definitionWords, followFootnote, footnoteAt } from './footnotes'
 import { livePreview } from '.'
 
@@ -35,7 +35,7 @@ function viewOf(doc: string, cursor = doc.length) {
         doc,
         selection: EditorSelection.cursor(cursor),
         extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           livePreview(),
         ],
       }),

@@ -136,7 +136,7 @@ describe('the rewind plan', () => {
       you('m1', 10),
       model('a1', 11, [
         tool(
-          'mcp__nib__create_note',
+          'mcp__orden__create_note',
           { path: 'Plan', space: 'Work' },
           '{"path":"Plan.md","created":true}',
         ),
@@ -151,7 +151,7 @@ describe('the rewind plan', () => {
 
     const clicked = [you('m1', 10), model('a1', 11, [tool('browser_click', { ref: 'e1' })])]
     expect(planFor({ turns: clicked }, 'm1', [])?.lasting).toBe(true)
-    expect(verbOf('mcp__nib__edit_note')).toBe('edit_note')
+    expect(verbOf('mcp__orden__edit_note')).toBe('edit_note')
   })
 
   test('takes a note moved or deleted since back, rather than calling it lasting', () => {
@@ -159,7 +159,7 @@ describe('the rewind plan', () => {
       you('m1', 10),
       model('a1', 11, [
         tool(
-          'mcp__nib__move_file',
+          'mcp__orden__move_file',
           { path: 'Plan', to: 'Old/Plan' },
           '{"from":"Plan.md","to":"Old/Plan.md"}',
         ),
@@ -175,12 +175,12 @@ describe('the rewind plan', () => {
     expect(plan?.lasting).toBe(false)
     expect(plan?.choices[0]).toBe('both')
     expect(plan?.files).toEqual([
-      { id: 'mcp__nib__move_file', kind: 'moved', from: 'Plan.md', path: 'Old/Plan.md' },
+      { id: 'mcp__orden__move_file', kind: 'moved', from: 'Plan.md', path: 'Old/Plan.md' },
       { id: 'trash_file', kind: 'trashed', path: 'Herons.md', space: 'Work' },
     ])
     expect(fileChangesOf(turns, new Set(['trash_file']))).toHaveLength(1)
     expect(
-      planFor({ turns }, 'm1', [], new Set(['mcp__nib__move_file', 'trash_file']))?.files,
+      planFor({ turns }, 'm1', [], new Set(['mcp__orden__move_file', 'trash_file']))?.files,
     ).toEqual([])
   })
 })

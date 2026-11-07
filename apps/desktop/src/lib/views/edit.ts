@@ -18,7 +18,10 @@ function withView(base: Base, at: number, change: (view: View) => View): Base {
   return { ...base, views }
 }
 
-function withNib(view: View, change: { [K in keyof OrdenView]?: OrdenView[K] | undefined }): View {
+function withOrden(
+  view: View,
+  change: { [K in keyof OrdenView]?: OrdenView[K] | undefined },
+): View {
   const orden: OrdenView = { ...view.orden }
   for (const [key, value] of Object.entries(change) as [keyof OrdenView, unknown][]) {
     if (value === undefined) Reflect.deleteProperty(orden, key)
@@ -43,7 +46,7 @@ export const setGroup = (base: Base, at: number, group: Sort | undefined): Base 
   withView(base, at, (view) => (group ? { ...view, groupBy: group } : lacking(view, 'groupBy')))
 
 export const setSubGroup = (base: Base, at: number, sub: Sort | undefined): Base =>
-  withView(base, at, (view) => withNib(view, { subGroupBy: sub }))
+  withView(base, at, (view) => withOrden(view, { subGroupBy: sub }))
 
 export const setFilter = (base: Base, at: number, filters: Filter | undefined): Base =>
   withView(base, at, (view) => {
@@ -54,7 +57,7 @@ export const setFilter = (base: Base, at: number, filters: Filter | undefined): 
   })
 
 export const setShowCompleted = (base: Base, at: number, shown: boolean): Base =>
-  withView(base, at, (view) => withNib(view, { showCompleted: shown ? true : undefined }))
+  withView(base, at, (view) => withOrden(view, { showCompleted: shown ? true : undefined }))
 
 export const setColumns = (base: Base, at: number, order: string[]): Base =>
   withView(base, at, (view) => ({ ...view, order }))
@@ -72,7 +75,7 @@ export function setHidden(base: Base, at: number, group: string, hidden: boolean
   return withView(base, at, (view) => {
     const was = view.orden.hidden ?? []
     const next = hidden ? [...new Set([...was, group])] : was.filter((one) => one !== group)
-    return withNib(view, { hidden: next.length ? next : undefined })
+    return withOrden(view, { hidden: next.length ? next : undefined })
   })
 }
 
@@ -82,7 +85,7 @@ export function setManualOrder(base: Base, at: number, group: string, ids: strin
       ...view.orden.order,
       [group]: mergedOrder(view.orden.order?.[group] ?? [], ids),
     }
-    return withNib(view, { order })
+    return withOrden(view, { order })
   })
 }
 
@@ -109,15 +112,15 @@ export function mergedOrder(stored: readonly string[], shown: readonly string[])
   return stored.flatMap((id) => (shownSet.has(id) ? (runs[next++] ?? []) : [id]))
 }
 
-export function setNibOption(base: Base, at: number, key: string, value: unknown): Base {
+export function setOrdenOption(base: Base, at: number, key: string, value: unknown): Base {
   return withView(base, at, (view) => {
     if (key === 'date' || key === 'end') {
-      return withNib(view, { [key]: typeof value === 'string' ? value : undefined })
+      return withOrden(view, { [key]: typeof value === 'string' ? value : undefined })
     }
     const kept = { ...view.orden.kept }
     if (value === undefined) Reflect.deleteProperty(kept, key)
     else kept[key] = value
-    return withNib(view, { kept })
+    return withOrden(view, { kept })
   })
 }
 
@@ -169,16 +172,16 @@ export function setViewOption(base: Base, at: number, key: string, value: unknow
   })
 }
 
-export function setViewNib<K extends Exclude<keyof OrdenView, 'kept'>>(
+export function setViewOrden<K extends Exclude<keyof OrdenView, 'kept'>>(
   base: Base,
   at: number,
   key: K,
   value: OrdenView[K] | undefined,
 ): Base {
-  return withView(base, at, (view) => withNib(view, { [key]: value }))
+  return withView(base, at, (view) => withOrden(view, { [key]: value }))
 }
 
-export function setBaseNib<K extends 'template' | 'id' | 'locked'>(
+export function setBaseOrden<K extends 'template' | 'id' | 'locked'>(
   base: Base,
   key: K,
   value: OrdenBase[K] | undefined,
@@ -310,7 +313,7 @@ export function placeColumn(
   const index = rest.indexOf(target)
   if (index === -1) return base
   rest.splice(after ? index + 1 : index, 0, moving)
-  return setViewNib(base, at, 'groups', rest)
+  return setViewOrden(base, at, 'groups', rest)
 }
 
 export function prunedOrder(base: Base, at: number, group: string, alive: (id: string) => boolean) {
@@ -322,6 +325,6 @@ export function prunedOrder(base: Base, at: number, group: string, alive: (id: s
     const order = { ...view.orden.order }
     if (kept.length) order[group] = kept
     else Reflect.deleteProperty(order, group)
-    return withNib(view, { order: Object.keys(order).length ? order : undefined })
+    return withOrden(view, { order: Object.keys(order).length ? order : undefined })
   })
 }

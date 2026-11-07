@@ -41,7 +41,7 @@ describe('pictures carried to another machine', () => {
   })
 
   test('are spelled for the shell they land in, as a kept one on Windows is', async () => {
-    const kept = 'C:\\Users\\Emil Vinu\\AppData\\Local\\nib\\images\\nib-1.png'
+    const kept = 'C:\\Users\\Emil Vinu\\AppData\\Local\\orden\\images\\orden-1.png'
     expect(
       await carried(
         machine(() => kept),
@@ -55,7 +55,7 @@ describe('pictures carried to another machine', () => {
         [picture(1)],
         'wsl:Ubuntu',
       ),
-    ).toBe("'/mnt/c/Users/Emil Vinu/AppData/Local/nib/images/nib-1.png'")
+    ).toBe("'/mnt/c/Users/Emil Vinu/AppData/Local/orden/images/orden-1.png'")
   })
 
   test('one larger than a paste carries is never sent, and the line says so', async () => {

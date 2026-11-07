@@ -31,7 +31,7 @@ beforeEach(() => {
   workspace.activeSpaceId = 's'
 })
 
-test('a web note on the phone opens in the browser, not in nib', async () => {
+test('a web note on the phone opens in the browser, not in Orden', async () => {
   await workspace.openWeb(SITE)
 
   expect(handed).toEqual(['https://example.com/site'])

@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { NibWidget } from '../src/live-preview/widget'
+import { OrdenWidget } from '../src/live-preview/widget'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
@@ -18,7 +18,7 @@ function sourceFiles(dir: string): string[] {
   return out
 }
 
-class Example extends NibWidget {
+class Example extends OrdenWidget {
   toDOM() {
     return {} as HTMLElement
   }
@@ -70,7 +70,7 @@ describe('every widget', () => {
     expect(taken).toEqual(['first', 'second'])
   })
 
-  test('extends NibWidget rather than WidgetType', () => {
+  test('extends OrdenWidget rather than WidgetType', () => {
     const offenders = sourceFiles(SOURCE)
       .filter((path) => !path.endsWith(join('live-preview', 'widget.ts')))
       .filter((path) => /class\s+\w+\s+extends\s+WidgetType\b/.test(readFileSync(path, 'utf8')))

@@ -2,7 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { buildBlockDecorations } from '../live-preview/blocks'
 import { buildDecorations } from '../live-preview/decorate'
 import { linkAt } from './at'
@@ -65,7 +65,7 @@ function state(doc: string, cursor: number, notes = SPACE) {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         noteIndex.of(notes),
       ],
     }),

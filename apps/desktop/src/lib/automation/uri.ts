@@ -14,7 +14,7 @@ export interface Followable {
   callbacks: Callbacks
 }
 
-export function isNibUri(text: string): boolean {
+export function isOrdenUri(text: string): boolean {
   const folded = text.trim().toLowerCase()
   return SCHEMES.some((scheme) => folded.startsWith(scheme))
 }
@@ -55,9 +55,9 @@ export function readUri(uri: string): Followable | null {
   return { action, args, callbacks }
 }
 
-export function callbackKind(url: string | null): 'external' | 'nib' | null {
+export function callbackKind(url: string | null): 'external' | 'orden' | null {
   if (!url) return null
-  if (isNibUri(url)) return 'nib'
+  if (isOrdenUri(url)) return 'orden'
 
   return /^https?:\/\//i.test(url) ? 'external' : null
 }

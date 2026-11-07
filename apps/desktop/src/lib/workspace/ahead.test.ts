@@ -12,7 +12,7 @@ vi.mock('../tauri', async (importOriginal) => ({
 }))
 
 function arrived(answer: unknown) {
-  vi.stubGlobal('window', { nibEarly: Promise.resolve(answer) })
+  vi.stubGlobal('window', { ordenEarly: Promise.resolve(answer) })
 }
 
 const ROOT = 'C:\\Orden\\Work'

@@ -5,7 +5,7 @@ import { parseQuery } from './query'
 
 const NOTE = `---
 status: done
-project: Nib
+project: Orden
 ---
 
 # Meeting notes #work/2026
@@ -133,8 +133,8 @@ describe('path and file', () => {
 
 describe('content', () => {
   test('asks the note’s own words and not its front matter', () => {
-    expect(answers('nib')).toBe(true)
-    expect(answers('content:nib')).toBe(false)
+    expect(answers('orden')).toBe(true)
+    expect(answers('content:orden')).toBe(false)
     expect(answers('status')).toBe(true)
     expect(answers('content:status')).toBe(false)
     expect(answers('content:alpha')).toBe(true)
@@ -183,29 +183,29 @@ describe('tags', () => {
   })
 
   test('match at every depth, and narrow as the path grows', () => {
-    const deep = { body: 'words #work/nib/canvas/edges more\n' }
+    const deep = { body: 'words #work/orden/canvas/edges more\n' }
 
     expect(answers('tag:work', deep)).toBe(true)
-    expect(answers('tag:work/nib', deep)).toBe(true)
-    expect(answers('tag:work/nib/canvas', deep)).toBe(true)
-    expect(answers('tag:work/nib/canvas/edges', deep)).toBe(true)
+    expect(answers('tag:work/orden', deep)).toBe(true)
+    expect(answers('tag:work/orden/canvas', deep)).toBe(true)
+    expect(answers('tag:work/orden/canvas/edges', deep)).toBe(true)
     expect(answers('tag:work/ni', deep)).toBe(false)
-    expect(answers('tag:work/nib/canvas/edges/deeper', deep)).toBe(false)
+    expect(answers('tag:work/orden/canvas/edges/deeper', deep)).toBe(false)
   })
 
   test('and come out of the front matter as well as the words', () => {
-    const listed = { body: '---\ntags: [work/nib, other]\n---\n\nwords\n' }
+    const listed = { body: '---\ntags: [work/orden, other]\n---\n\nwords\n' }
 
     expect(answers('tag:work', listed)).toBe(true)
-    expect(answers('tag:work/nib', listed)).toBe(true)
+    expect(answers('tag:work/orden', listed)).toBe(true)
     expect(answers('tag:other', listed)).toBe(true)
     expect(answers('tag:missing', listed)).toBe(false)
   })
 
   test('written as items under the key, which is Obsidian’s other spelling', () => {
-    const items = { body: '---\ntags:\n  - work/nib\n  - other\n---\n\nwords\n' }
+    const items = { body: '---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n' }
 
-    expect(answers('tag:work/nib', items)).toBe(true)
+    expect(answers('tag:work/orden', items)).toBe(true)
     expect(answers('tag:other', items)).toBe(true)
   })
 })

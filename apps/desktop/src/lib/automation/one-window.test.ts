@@ -74,7 +74,7 @@ describe('with two windows open', () => {
     world.ran.length = 0
     world.claims = true
     await openWindow('main')
-    await openWindow('nib-2')
+    await openWindow('orden-2')
   })
 
   test('a request of the endpoint runs once, in the window it was sent to', async () => {

@@ -11,7 +11,7 @@ import { label } from '../labels'
 import { dayWords, timeWords, todayHere } from '../task-days'
 import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
 import { noteIndex } from '../wikilink/notes'
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 
 export interface TaskChip {
   field:
@@ -94,7 +94,7 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
   return out
 }
 
-export class TaskChipsWidget extends NibWidget {
+export class TaskChipsWidget extends OrdenWidget {
   constructor(
     private readonly chips: readonly TaskChip[],
     readonly picks = true,
@@ -190,7 +190,7 @@ export function commentDrawing(
   return hide.length ? { hide, chips } : null
 }
 
-export class CommentChipsWidget extends NibWidget {
+export class CommentChipsWidget extends OrdenWidget {
   constructor(readonly chips: readonly string[]) {
     super()
   }

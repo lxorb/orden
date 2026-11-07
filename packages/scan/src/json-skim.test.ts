@@ -36,8 +36,8 @@ describe('a few keys of a JSON object', () => {
   test('look inside a value the same way, given where it is', () => {
     const text =
       '{"orden":{"version":1,"ink":[{"id":"s","points":[1,2,3]}],"icon":"pen","iconColor":"red"}}'
-    const nib = skim(text, ['orden'])?.get('orden')
-    const inner = nib && skim(text, ['icon', 'iconColor'], nib)
+    const orden = skim(text, ['orden'])?.get('orden')
+    const inner = orden && skim(text, ['icon', 'iconColor'], orden)
 
     expect(
       inner && Object.fromEntries([...inner].map(([key, at]) => [key, text.slice(at.from, at.to)])),
@@ -74,8 +74,8 @@ describe('a few keys of a JSON object', () => {
 
     const parse = vi.spyOn(JSON, 'parse')
     const top = skim(text, ['nodes', 'orden'])
-    const nib = top?.get('orden')
-    const icon = nib && skim(text, ['icon'], nib)?.get('icon')
+    const orden = top?.get('orden')
+    const icon = orden && skim(text, ['icon'], orden)?.get('icon')
 
     expect(icon && text.slice(icon.from, icon.to)).toBe('"rocket"')
     expect(parse).not.toHaveBeenCalled()

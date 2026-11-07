@@ -250,7 +250,7 @@ export function commands(panel: Panel): readonly PanelCommand[] {
     synonyms: [...row.synonyms],
     ...(row.args ? { args: row.args } : {}),
     description: t(row.description),
-    source: 'nib',
+    source: 'orden',
     available: (kind) => availability(row.name, kind, ready),
     run: (context) => guarded(host, context, RUNS[row.name]),
   }))

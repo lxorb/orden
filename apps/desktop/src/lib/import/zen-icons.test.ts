@@ -13,7 +13,7 @@ describe("a Zen space's icon", () => {
     expect(zenIcon('chrome://browser/skin/zen-icons/selectable/people.svg')).toBe('users')
   })
 
-  test('is nothing where nib has nothing to draw', () => {
+  test('is nothing where Orden has nothing to draw', () => {
     expect(zenIcon('chrome://browser/skin/zen-icons/selectable/baseball.svg')).toBeNull()
     expect(zenIcon('chrome://browser/skin/zen-icons/selectable/../../../evil.svg')).toBeNull()
     expect(zenIcon('a word')).toBeNull()

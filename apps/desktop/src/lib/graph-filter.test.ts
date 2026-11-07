@@ -11,7 +11,7 @@ const node = (id: string, tags: string[] = []): GraphNode => ({
   tags,
 })
 
-const PLAN = node('work/Plan.md', ['work/nib', 'later'])
+const PLAN = node('work/Plan.md', ['work/orden', 'later'])
 const DIARY = node('Diary.md', ['diary'])
 const SHOPPING = node('house/Shopping list.md')
 
@@ -50,7 +50,7 @@ describe('a query over the picture of a space', () => {
 
   test('tag: asks the tags, and reads their slashes as a path', () => {
     expect(kept('tag:work')).toEqual(['Plan'])
-    expect(kept('tag:work/nib')).toEqual(['Plan'])
+    expect(kept('tag:work/orden')).toEqual(['Plan'])
     expect(kept('tag:wor')).toEqual([])
     expect(kept('tag:diary')).toEqual(['Diary'])
   })

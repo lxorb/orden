@@ -100,7 +100,7 @@ export { blockAt, type BlockKind, type BlockShape, type BlockSpan } from './bloc
 export { landed } from './landing'
 export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'
-export { nibHighlightStyle, nibTheme } from './theme'
+export { ordenHighlightStyle, ordenEditorTheme } from './theme'
 export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'
 export { type CarriedFiles, imageResolver, type ImageSink } from './images'
@@ -162,7 +162,7 @@ export { onVimMode, setVim, setVimCommands, type VimCommands, type VimMode } fro
 export { flushTableEdits } from './table/widget'
 export { insertTableToEdit, tableBindings } from './table/keymap'
 export { imageBindings } from './live-preview/image'
-export { nibBindings, nibKeymap, selectWord, standardBindings, unclaimedKeymap } from './keymap'
+export { ordenBindings, ordenKeymap, selectWord, standardBindings, unclaimedKeymap } from './keymap'
 export {
   type BindingSpec,
   bindings,

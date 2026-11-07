@@ -27,7 +27,7 @@ describe('where a pressed link goes', () => {
     expect(place('https://svelte.dev/docs', { button: 1, shiftKey: true })).toBe('here')
   })
 
-  test('Shift on its own opens it in front, since a nib window holds no one page', () => {
+  test('Shift on its own opens it in front, since an Orden window holds no one page', () => {
     expect(place('https://svelte.dev/docs', { shiftKey: true })).toBe('here')
   })
 

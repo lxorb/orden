@@ -20,7 +20,7 @@ describe('the tags in a note', () => {
   })
 
   test('and a slash is part of the tag, to any depth', () => {
-    expect(tagsIn('#work/nib/canvas/deep/deeper')).toEqual(['#work/nib/canvas/deep/deeper'])
+    expect(tagsIn('#work/orden/canvas/deep/deeper')).toEqual(['#work/orden/canvas/deep/deeper'])
     expect(tagsIn('#a-b #c_d #e/f')).toEqual(['#a-b', '#c_d', '#e/f'])
   })
 
@@ -116,27 +116,27 @@ describe('the tags in the front matter', () => {
   const front = (lines: string) => tagsIn(`---\n${lines}\n---\n\nwords\n`)
 
   test('are read from a list on the key', () => {
-    expect(front('tags: work/nib, other')).toEqual(['#work/nib', '#other'])
+    expect(front('tags: work/orden, other')).toEqual(['#work/orden', '#other'])
   })
 
   test('and from one in brackets, which is how Obsidian writes it', () => {
-    expect(front('tags: [work/nib, other]')).toEqual(['#work/nib', '#other'])
+    expect(front('tags: [work/orden, other]')).toEqual(['#work/orden', '#other'])
   })
 
   test('and from items under the key', () => {
-    expect(front('tags:\n  - work/nib\n  - other')).toEqual(['#work/nib', '#other'])
+    expect(front('tags:\n  - work/orden\n  - other')).toEqual(['#work/orden', '#other'])
   })
 
   test('with the hash optional, since YAML reads one as a comment', () => {
-    expect(front('tags: [#work/nib]')).toEqual(['#work/nib'])
+    expect(front('tags: [#work/orden]')).toEqual(['#work/orden'])
   })
 
   test('under either spelling of the key', () => {
-    expect(front('tag: work/nib')).toEqual(['#work/nib'])
+    expect(front('tag: work/orden')).toEqual(['#work/orden'])
   })
 
   test('and nothing under a key that is not the one', () => {
-    expect(front('status: done\nproject: Nib')).toEqual([])
+    expect(front('status: done\nproject: Orden')).toEqual([])
   })
 
   test('while the block itself is not read for hashes', () => {
@@ -144,7 +144,7 @@ describe('the tags in the front matter', () => {
   })
 
   test('and both halves of a note count', () => {
-    expect(tagsIn('---\ntags: [work]\n---\n\nwords #nib\n')).toEqual(['#work', '#nib'])
+    expect(tagsIn('---\ntags: [work]\n---\n\nwords #orden\n')).toEqual(['#work', '#orden'])
   })
 
   test('in a note written with CRLF endings, as tags.rs reads it', () => {
@@ -160,14 +160,14 @@ describe('where a tag sits', () => {
   })
 
   test('and asking for a node answers the span of that node alone', () => {
-    const body = 'a #work/nib/canvas here'
-    expect(tagSpans(body, 'work/nib')).toEqual([{ from: 3, to: 11 }])
-    expect(body.slice(3, 11)).toBe('work/nib')
+    const body = 'a #work/orden/canvas here'
+    expect(tagSpans(body, 'work/orden')).toEqual([{ from: 3, to: 13 }])
+    expect(body.slice(3, 13)).toBe('work/orden')
   })
 
   test('so a rename keeps whatever hung off the node', () => {
-    const body = '#work/nib and #work/nib/canvas'
-    const spans = tagSpans(body, 'work/nib')
+    const body = '#work/orden and #work/orden/canvas'
+    const spans = tagSpans(body, 'work/orden')
     expect(spans).toHaveLength(2)
 
     let out = ''
@@ -180,11 +180,11 @@ describe('where a tag sits', () => {
   })
 
   test('and a longer segment is not the node', () => {
-    expect(tagSpans('#work/nibble', 'work/nib')).toEqual([])
+    expect(tagSpans('#work/ordenly', 'work/orden')).toEqual([])
   })
 
   test('folded, because the operator is', () => {
-    expect(tagSpans('#Work/Nib', 'work/nib')).toEqual([{ from: 1, to: 9 }])
+    expect(tagSpans('#Work/Orden', 'work/orden')).toEqual([{ from: 1, to: 11 }])
   })
 })
 
@@ -212,11 +212,11 @@ describe('what taking a tag away has to cut', () => {
   })
 
   test('and everything under the node', () => {
-    expect(without('a #work/nib b #work/nib/canvas c', 'work/nib')).toBe('a b c')
+    expect(without('a #work/orden b #work/orden/canvas c', 'work/orden')).toBe('a b c')
   })
 
   test('but not a tag that only starts the same way', () => {
-    expect(without('#work/nibble', 'work/nib')).toBe('#work/nibble')
+    expect(without('#work/ordenly', 'work/orden')).toBe('#work/ordenly')
   })
 
   test('and a list item that held nothing else goes with its line', () => {

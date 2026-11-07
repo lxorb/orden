@@ -255,7 +255,7 @@ describe('the shape of the sheet', () => {
 })
 
 describe('the stamp an installed theme carries', () => {
-  const stamp = { id: 'warm-paper', name: 'Warm Paper', author: 'Nib', version: '1.2.0' }
+  const stamp = { id: 'warm-paper', name: 'Warm Paper', author: 'Orden', version: '1.2.0' }
 
   test('goes on the front and comes back off', () => {
     const file = stamped(stamp, tokens('--bg: #000;'))

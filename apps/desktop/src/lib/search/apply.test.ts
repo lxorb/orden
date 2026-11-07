@@ -27,7 +27,7 @@ const changes = (query: string, hits: Hit[], replacement: string) =>
 
 describe('what a replacement would do', () => {
   test('never touches a file that is not a note', async () => {
-    const made = await changes('nib', [hit('/space/Docs.url', 2)], 'orden')
+    const made = await changes('star', [hit('/space/Docs.url', 2)], 'moon')
 
     expect(made).toEqual([])
   })

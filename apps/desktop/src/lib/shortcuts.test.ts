@@ -3,8 +3,8 @@ import {
   type BindingSpec,
   defaultKeyFor,
   imageBindings,
-  nibBindings,
-  nibKeymap,
+  ordenBindings,
+  ordenKeymap,
   standardBindings,
   tableBindings,
 } from '@orden/editor'
@@ -93,7 +93,7 @@ describe('every shortcut there is', () => {
   })
 
   test.each([
-    ['the markdown bindings', nibBindings],
+    ['the markdown bindings', ordenBindings],
     ['the ones taken over from CodeMirror', standardBindings],
     ['the table bindings', tableBindings],
     ['the picture bindings', imageBindings],
@@ -124,7 +124,7 @@ describe('every shortcut there is', () => {
         platform,
       ).toEqual([])
       const editor = [
-        ...nibBindings,
+        ...ordenBindings,
         ...standardBindings,
         ...tableBindings,
         ...imageBindings,
@@ -175,7 +175,12 @@ describe('every shortcut there is', () => {
   })
 
   test('starts each on the key the editor installs it with', () => {
-    for (const spec of [...nibBindings, ...standardBindings, ...tableBindings, ...imageBindings]) {
+    for (const spec of [
+      ...ordenBindings,
+      ...standardBindings,
+      ...tableBindings,
+      ...imageBindings,
+    ]) {
       const entry = registry.SHORTCUTS.find((one) => one.id === spec.id)!
       for (const platform of PLATFORMS) {
         expect(defaultKeyFor(entry, platform), spec.id).toBe(defaultKeyFor(spec, platform))
@@ -183,9 +188,9 @@ describe('every shortcut there is', () => {
     }
   })
 
-  test.each(PLATFORMS)('holds a key for everything nibKeymap binds (%s)', (platform) => {
+  test.each(PLATFORMS)('holds a key for everything ordenKeymap binds (%s)', (platform) => {
     const listed = registry.SHORTCUTS.map((one) => defaultKeyFor(one, platform))
-    for (const binding of nibKeymap) {
+    for (const binding of ordenKeymap) {
       const key = binding[platform] ?? binding.key
       if (key) expect(listed, key).toContain(key)
     }
@@ -352,7 +357,7 @@ describe('what is written down', () => {
     const { shortcuts } = await restarted()
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
-    const italic = nibBindings.find((one) => one.id === 'format.italic')
+    const italic = ordenBindings.find((one) => one.id === 'format.italic')
     if (!italic) throw new Error('the editor no longer binds format.italic')
     expect(shortcuts.keyFor('format.italic')).toBe(defaultKeyFor(italic, 'win'))
   })

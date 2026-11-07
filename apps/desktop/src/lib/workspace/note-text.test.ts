@@ -176,9 +176,9 @@ describe('a replacement across the space', () => {
     const change = {
       path: `${SPACE}/Docs.url`,
       before: shortcut,
-      after: shortcut.replace('Nib', 'Orden'),
-      edits: [{ from: 20, to: 23, insert: 'Orden' }],
-      back: [{ from: 20, to: 25, insert: 'Nib' }],
+      after: shortcut.replace('star', 'moon'),
+      edits: [{ from: 31, to: 35, insert: 'moon' }],
+      back: [{ from: 31, to: 35, insert: 'star' }],
     }
 
     await replaceInNotes(ws, [change])

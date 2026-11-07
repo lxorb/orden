@@ -55,15 +55,15 @@ describe('a note as a command', () => {
 
   test('takes its arguments in every way Claude Code writes them', () => {
     const body = (text: string) => ({ body: text, arguments: ['project', 'week'] })
-    expect(expand(body('Summarize $project for week $week.'), 'nib 40')).toBe(
-      'Summarize nib for week 40.',
+    expect(expand(body('Summarize $project for week $week.'), 'orden 40')).toBe(
+      'Summarize orden for week 40.',
     )
     expect(expand(body('All: $ARGUMENTS'), ' a "b c" ')).toBe('All: a "b c"')
     expect(expand(body('$ARGUMENTS[0] then $ARGUMENTS[1]'), 'a "b c"')).toBe('a then b c')
     expect(expand(body('$1 and $2'), 'x y')).toBe('x and y')
     expect(expand(body('No placeholder.'), 'tail words')).toBe('No placeholder.\n\ntail words')
     expect(expand(body('No placeholder.'), '')).toBe('No placeholder.')
-    expect(expand(body('$projects stays'), 'nib')).toBe('$projects stays\n\nnib')
+    expect(expand(body('$projects stays'), 'orden')).toBe('$projects stays\n\norden')
   })
 
   test('splits its words as a shell does, and names as a command can be typed', () => {

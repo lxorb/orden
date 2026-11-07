@@ -54,7 +54,7 @@ describe('an answer', () => {
 
   test('knows its server by the name the crate gives it, and by the old one', () => {
     expect(crateServer).toBeTruthy()
-    for (const server of [crateServer, 'nib']) {
+    for (const server of [crateServer, 'orden']) {
       const item = { type: 'mcpToolCall', id: 'c', server, tool: 'move_file', arguments: {} }
       expect(codexReader()(said('item/started', { ...turn, item })).tool?.name).toBe('move_file')
     }

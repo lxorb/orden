@@ -97,7 +97,7 @@ export function pinnedOf(list: readonly Extension[]): Extension[] {
 
 export const UPDATE_EVERY = 5 * 60 * 60 * 1000
 
-const LOOKED = 'nib.extensions.looked'
+const LOOKED = 'orden.extensions.looked'
 
 export function updateDue(last: number | null, now: number): boolean {
   return last === null || now - last >= UPDATE_EVERY || now < last

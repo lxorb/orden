@@ -13,7 +13,7 @@ import {
   type Tooltip,
 } from '@codemirror/view'
 import { label } from '../labels'
-import { NibWidget } from '../live-preview/widget'
+import { OrdenWidget } from '../live-preview/widget'
 import { type SharedDoc, sharedOf } from '../shared'
 
 export interface ReviewMark {
@@ -39,7 +39,7 @@ export function setReviewActions(act: (id: string, keep: boolean) => void) {
 
 const SHOWN = 120
 
-class Removed extends NibWidget {
+class Removed extends OrdenWidget {
   constructor(
     private readonly words: string,
     private readonly fading: boolean,

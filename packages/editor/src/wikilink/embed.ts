@@ -15,7 +15,7 @@ import { label } from '../labels'
 import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { BaseWidget } from '../live-preview/render'
-import { NibWidget } from '../live-preview/widget'
+import { OrdenWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
 import { type FileDrawing, jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
@@ -44,7 +44,7 @@ export function embedOfBlock(state: EditorState, from: number, to: number): Link
   return link && { ...link, kind: 'wikilink', from, to }
 }
 
-export class EmbedWidget extends NibWidget {
+export class EmbedWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly path: string | null,
@@ -155,7 +155,7 @@ export function embedWidget(
   return new EmbedWidget(link, path)
 }
 
-export class EmbedImageWidget extends NibWidget {
+export class EmbedImageWidget extends OrdenWidget {
   constructor(private readonly link: LinkSpan) {
     super()
   }
@@ -193,7 +193,7 @@ export class EmbedImageWidget extends NibWidget {
   }
 }
 
-export class EmbedMediaWidget extends NibWidget {
+export class EmbedMediaWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly kind: 'audio' | 'video',
@@ -241,7 +241,7 @@ export class EmbedMediaWidget extends NibWidget {
   }
 }
 
-export class EmbedFileWidget extends NibWidget {
+export class EmbedFileWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly kind: 'pdf' | 'canvas',

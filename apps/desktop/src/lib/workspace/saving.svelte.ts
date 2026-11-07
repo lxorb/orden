@@ -435,7 +435,7 @@ export class Saving {
     for (let move = this.syncMoving.get(note); move; move = this.syncMoving.get(note)) await move
 
     if (note.arrivals !== holding) {
-      console.warn(`nib: a write of ${path} was refused - those words are another note’s now`)
+      console.warn(`orden: a write of ${path} was refused - those words are another note’s now`)
       return
     }
 

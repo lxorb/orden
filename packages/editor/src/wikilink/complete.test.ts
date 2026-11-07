@@ -3,7 +3,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer } from './block-namer'
 import { wikilinkCompletions } from './complete'
 import {
@@ -74,7 +74,7 @@ function state(
       doc,
       selection: EditorSelection.cursor(at),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         noteIndex.of(index),
         blockNamer.of((path, line) => Promise.resolve(`from-${path.replace(/\W/g, '')}-${line}`)),
         ...(write ? [linkWriter.of(write)] : []),

@@ -6,7 +6,7 @@ import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'
 import { trustedMarkup } from '../markup'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 const PARK = '\n\nx'
@@ -17,7 +17,7 @@ function state(doc: string, cursor: number, trusted = false) {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         trustedMarkup(trusted),
       ],
     }),
@@ -350,7 +350,7 @@ describe('images', () => {
       EditorState.create({
         doc,
         selection: EditorSelection.range(0, doc.length),
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownParser } from './markdown/extensions'
+import { ordenMarkdownParser } from './markdown/extensions'
 import { reformat } from './reformat'
 
 describe('tidying a document', () => {
@@ -204,7 +204,7 @@ describe('what the parser calls front matter', () => {
   const kids = (source: string) => {
     const names: string[] = []
     for (
-      let node = nibMarkdownParser.parse(source).topNode.firstChild;
+      let node = ordenMarkdownParser.parse(source).topNode.firstChild;
       node;
       node = node.nextSibling
     )
@@ -231,7 +231,7 @@ describe('words that open a note under a rule', () => {
   const kids = (source: string) => {
     const names: string[] = []
     for (
-      let node = nibMarkdownParser.parse(source).topNode.firstChild;
+      let node = ordenMarkdownParser.parse(source).topNode.firstChild;
       node;
       node = node.nextSibling
     )

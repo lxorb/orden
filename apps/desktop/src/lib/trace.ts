@@ -21,7 +21,7 @@ export function factsOfLaunch(said: () => string): void {
 
 export function mark(step: string): void {
   if (STEPS.length >= MOST) return
-  STEPS.push({ step, at: performance.mark(`nib: ${step}`).startTime })
+  STEPS.push({ step, at: performance.mark(`orden: ${step}`).startTime })
 }
 
 export function markPainted(step: string): void {

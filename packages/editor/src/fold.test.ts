@@ -14,7 +14,7 @@ import {
   unfoldEverything,
   withFolds,
 } from './fold'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 import { GROWS_AT_MOST, measuredGrowth } from '../../../scripts/growth'
 
@@ -24,7 +24,7 @@ function state(doc: string, cursor = 0): EditorState {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         folding(),
       ],
     }),

@@ -3,7 +3,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { deleteLine, insertLineAbove, joinLines, reverseLines, sortLines } from './lines'
 
 function run(command: StateCommand, marked: string): { took: boolean; note: string } {
@@ -18,7 +18,7 @@ function run(command: StateCommand, marked: string): { took: boolean; note: stri
     EditorState.create({
       doc,
       selection,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 

@@ -3,7 +3,7 @@ import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { type BlockEdit, copyBlock, cutBlock, moveBlock } from './move'
 import { blockAt, blocksIn, type BlockSpan } from './span'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 const NOTE = [
@@ -32,7 +32,7 @@ function state(doc = NOTE): EditorState {
   return parsed(
     EditorState.create({
       doc,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 }

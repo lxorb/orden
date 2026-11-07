@@ -4,7 +4,7 @@ import { backtracksWildly, patternJudge } from '@orden/markdown/pattern-cost'
 
 export const LOOP_LIMIT = 3000
 
-const SPIN = '__nibSpin'
+const SPIN = '__ordenSpin'
 
 const LOOPS = new Set(['ForStatement', 'WhileStatement', 'DoStatement'])
 

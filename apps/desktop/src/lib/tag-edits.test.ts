@@ -2,12 +2,12 @@ import { describe, expect, test } from 'vitest'
 import { tagChange, tagChanges } from './tag-edits'
 
 const NOTE = `---
-tags: [work/nib, other]
+tags: [work/orden, other]
 ---
 
 # Notes
 
-A line about #work/nib and one about #work/nib/canvas.
+A line about #work/orden and one about #work/orden/canvas.
 Nothing here about #working.
 `
 
@@ -16,29 +16,29 @@ const change = (from: string, to: string | null, body = NOTE) =>
 
 describe('renaming a tag in one note', () => {
   test('rewrites the node and leaves what hung off it', () => {
-    const made = change('work/nib', 'work/core')
+    const made = change('work/orden', 'work/core')
     expect(made?.after).toContain('tags: [work/core, other]')
     expect(made?.after).toContain('about #work/core and one about #work/core/canvas')
   })
 
   test('and leaves a tag that only starts the same way', () => {
-    expect(change('work/nib', 'work/core')?.after).toContain('#working')
+    expect(change('work/orden', 'work/core')?.after).toContain('#working')
   })
 
   test('reaching a whole subtree from its root', () => {
     const made = change('work', 'jobs')
-    expect(made?.after).toContain('tags: [jobs/nib, other]')
-    expect(made?.after).toContain('#jobs/nib/canvas')
+    expect(made?.after).toContain('tags: [jobs/orden, other]')
+    expect(made?.after).toContain('#jobs/orden/canvas')
   })
 
   test('as edits the size of the words that changed, not of the note', () => {
-    const made = change('work/nib', 'work/core')
+    const made = change('work/orden', 'work/core')
     expect(made?.edits).toHaveLength(3)
     for (const edit of made?.edits ?? []) expect(edit.insert).toBe('work/core')
   })
 
   test('with the way back, so undoing it moves no caret', () => {
-    const made = change('work/nib', 'work/core')
+    const made = change('work/orden', 'work/core')
     if (!made) throw new Error('nothing changed')
 
     let out = ''
@@ -52,28 +52,28 @@ describe('renaming a tag in one note', () => {
 
   test('and nothing at all for a note that never said it', () => {
     expect(change('absent', 'present')).toBeNull()
-    expect(change('work/nib', 'work/core', '# Just a heading\n')).toBeNull()
+    expect(change('work/orden', 'work/core', '# Just a heading\n')).toBeNull()
   })
 })
 
 describe('taking a tag away', () => {
   test('takes the hash and the space with it', () => {
-    const made = change('work/nib', null)
+    const made = change('work/orden', null)
     expect(made?.after).toContain('A line about and one about.')
   })
 
   test('and the list entry it was, leaving the others', () => {
-    expect(change('work/nib', null)?.after).toContain('tags: [other]')
+    expect(change('work/orden', null)?.after).toContain('tags: [other]')
   })
 
   test('and everything under the node', () => {
-    const made = change('work/nib', null)
-    expect(made?.after).not.toContain('#work/nib')
+    const made = change('work/orden', null)
+    expect(made?.after).not.toContain('#work/orden')
     expect(made?.after).toContain('#working')
   })
 
   test('with the way back, which puts every one of them back', () => {
-    const made = change('work/nib', null)
+    const made = change('work/orden', null)
     if (!made) throw new Error('nothing changed')
 
     let out = ''
@@ -88,13 +88,13 @@ describe('taking a tag away', () => {
 
 describe('across a space', () => {
   const notes: Record<string, string> = {
-    '/space/a.md': 'about #work/nib\n',
+    '/space/a.md': 'about #work/orden\n',
     '/space/b.md': 'about #other\n',
-    '/space/c.md': '---\ntags:\n  - work/nib/canvas\n---\n\nwords\n',
+    '/space/c.md': '---\ntags:\n  - work/orden/canvas\n---\n\nwords\n',
   }
 
   test('only the notes that said it are changed', async () => {
-    const made = await tagChanges(Object.keys(notes), 'work/nib', 'work/core', (path) =>
+    const made = await tagChanges(Object.keys(notes), 'work/orden', 'work/core', (path) =>
       Promise.resolve(notes[path] ?? null),
     )
 
@@ -104,7 +104,7 @@ describe('across a space', () => {
   })
 
   test('and a note that cannot be read is not one of them', async () => {
-    const made = await tagChanges(['/space/gone.md'], 'work/nib', 'work/core', () =>
+    const made = await tagChanges(['/space/gone.md'], 'work/orden', 'work/core', () =>
       Promise.resolve(null),
     )
     expect(made).toEqual([])

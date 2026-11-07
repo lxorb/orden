@@ -1,6 +1,6 @@
 import type { Base, Row } from '@orden/bases'
 import { editorOf, knownProperties, optionsOf } from './columns'
-import { setGroup, setLayout, setNibOption } from './edit'
+import { setGroup, setLayout, setOrdenOption } from './edit'
 import type { Layout } from './words'
 
 export function switched(base: Base, at: number, layout: Layout, rows: readonly Row[]): Base {
@@ -23,7 +23,7 @@ export function switched(base: Base, at: number, layout: Layout, rows: readonly 
     const date = knownProperties(base, kinds, rows).find(
       (one) => one.startsWith('note.') && editorOf(base, one, rows) === 'date',
     )
-    next = setNibOption(next, at, 'date', date ?? 'file.ctime')
+    next = setOrdenOption(next, at, 'date', date ?? 'file.ctime')
   }
   return next
 }

@@ -226,7 +226,7 @@ describe('the ending a name wears', () => {
     expect(endingOf('Board.CANVAS')).toBe('.CANVAS')
   })
 
-  test('or the file own extension, for a file nib did not write', () => {
+  test('or the file own extension, for a file Orden did not write', () => {
     expect(endingOf('report.pdf')).toBe('.pdf')
     expect(endingOf('shot.png')).toBe('.png')
     expect(endingOf('notes.txt')).toBe('.txt')

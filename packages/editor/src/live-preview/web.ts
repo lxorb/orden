@@ -1,7 +1,7 @@
 import { embedClicks } from '../web-frame'
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 
-export class WebEmbedWidget extends NibWidget {
+export class WebEmbedWidget extends OrdenWidget {
   constructor(private readonly card: string) {
     super()
   }

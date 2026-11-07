@@ -49,7 +49,7 @@ const CARET_KEYS = [
   '<PageDown>',
 ]
 
-export function takeBackNibKeys(): string[] {
+export function takeBackOrdenKeys(): string[] {
   const taken: string[] = []
   let bindings = 0
   const sweep = (keys: string) => {
@@ -66,7 +66,7 @@ export function takeBackNibKeys(): string[] {
   return taken
 }
 
-takeBackNibKeys()
+takeBackOrdenKeys()
 
 function moveByScreenLine(keys: string, forward: boolean, context: string) {
   Vim.mapCommand(keys, 'motion', 'moveByDisplayLines', { forward }, { context })

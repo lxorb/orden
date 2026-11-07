@@ -4,14 +4,14 @@ import { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { describe, expect, test } from 'vitest'
 import { fenceCaption, fenceCode, fenceCodeAt, fenceLanguage } from './fence'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
 function fence(doc: string): { state: EditorState; node: SyntaxNode } {
   const state = parsed(
     EditorState.create({
       doc,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 

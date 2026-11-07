@@ -1196,8 +1196,8 @@ describe('a sheet opened on another file while the first is still being read', (
     world.notes = { [PLAN]: 'note-1', [DIARY]: 'note-2' }
     account.spaces = [remote('space-1', 'owner')]
     world.sharingOf = {
-      'note-1': shareOf('ada@example.com', 'https://nib.test/plan'),
-      'note-2': shareOf('bob@example.com', 'https://nib.test/diary'),
+      'note-1': shareOf('ada@example.com', 'https://orden.test/plan'),
+      'note-2': shareOf('bob@example.com', 'https://orden.test/diary'),
     }
     world.holding = true
   })
@@ -1224,7 +1224,7 @@ describe('a sheet opened on another file while the first is still being read', (
     await land(1, 0)
     await both
 
-    expect(share.who?.link?.url).toBe('https://nib.test/diary')
+    expect(share.who?.link?.url).toBe('https://orden.test/diary')
   })
 
   test('and the first answer landing leaves the sheet waiting on its own', async () => {

@@ -239,7 +239,7 @@ describe('the links in a vault', () => {
     expect(text).toBe('Back to [Home](../Index.md), or [[Index|here]].\n')
   })
 
-  test('to a name two notes share stay as written and go where nib reads them', async () => {
+  test('to a name two notes share stay as written and go where Orden reads them', async () => {
     const text = await noteFrom(
       'People/benf.md',
       file('Expansions/All/Themes/LaTeX.md', '# Theme\n'),
@@ -262,7 +262,7 @@ describe('the links in a vault', () => {
     )
   })
 
-  test('nib would read as another note stay wikilinks, with the folder in', async () => {
+  test('Orden would read as another note stay wikilinks, with the folder in', async () => {
     const text = await noteFrom(
       'People/Jawuj.md',
       file('Expansions/Themes/Blur.md', '# Theme\n'),

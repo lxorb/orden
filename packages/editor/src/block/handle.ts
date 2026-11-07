@@ -7,7 +7,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import { label } from '../labels'
-import { NibWidget } from '../live-preview/widget'
+import { OrdenWidget } from '../live-preview/widget'
 import { landing, moveBlock } from './move'
 import { blockAt, blocksIn, type BlockSpan } from './span'
 
@@ -95,7 +95,7 @@ function landingFor(view: EditorView, span: BlockSpan, y: number): number | null
 
 const A_DRAG = 4
 
-class BlockHandleWidget extends NibWidget {
+class BlockHandleWidget extends OrdenWidget {
   override eq() {
     return true
   }

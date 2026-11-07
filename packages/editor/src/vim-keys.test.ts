@@ -6,7 +6,7 @@ import { EditorView } from '@codemirror/view'
 import { getCM, Vim } from '@replit/codemirror-vim'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { loadVim } from './vim'
-import { modalEditing, takeBackNibKeys } from './vim-mode'
+import { modalEditing, takeBackOrdenKeys } from './vim-mode'
 import { GROWS_AT_MOST, measuredGrowth } from '../../../scripts/growth'
 
 beforeAll(async () => {
@@ -42,7 +42,7 @@ function press(view: EditorView, key: string) {
 
 describe("Vim's own keys that stand for others", () => {
   test('still find what they stand for once the app has taken its keys back', () => {
-    takeBackNibKeys()
+    takeBackOrdenKeys()
     const view = viewOf('one two', 0)
     const cm = getCM(view)
     if (!cm) throw new Error('no Vim in the view')

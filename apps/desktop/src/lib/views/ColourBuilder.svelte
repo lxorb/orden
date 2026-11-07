@@ -4,7 +4,7 @@
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
   import { displayName, holdsOf, knownProperties } from './columns'
-  import { setViewNib } from './edit'
+  import { setViewOrden } from './edit'
   import { expressionOf, type Operator, OPERATORS, rowOf, takesValue } from './filter-rows'
   import type { Kit } from './kit'
   import ToneDot from './ToneDot.svelte'
@@ -37,7 +37,7 @@
   }
 
   function write(next: ColourRule[]) {
-    kit.change((base, at) => setViewNib(base, at, 'colour', colourExpression(next)))
+    kit.change((base, at) => setViewOrden(base, at, 'colour', colourExpression(next)))
   }
 
   function change(at: number, rule: ColourRule) {

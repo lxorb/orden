@@ -11,7 +11,7 @@ function compiled(...parts: string[]): (...args: unknown[]) => unknown {
 function runs(code: string, rounds = 5): number {
   let asked = 0
   const spin = () => ++asked > rounds
-  compiled('__nibSpin', guarded(code) ?? '')(spin)
+  compiled('__ordenSpin', guarded(code) ?? '')(spin)
   return asked
 }
 
@@ -33,7 +33,7 @@ describe('a loop in a block', () => {
     let total = 0
     const add = (n: number) => (total += n)
     compiled(
-      '__nibSpin',
+      '__ordenSpin',
       'add',
       guarded('for (let i = 1; i <= 4; i++) add(i)') ?? '',
     )(() => false, add)
@@ -60,8 +60,8 @@ describe('a block of a note’s own HTML', () => {
     const scripts = [...holder.content.querySelectorAll('script')].map((one) => one.textContent)
 
     expect(scripts).toHaveLength(2)
-    expect(scripts[0]).toContain("defineProperty(globalThis, '__nibSpin'")
-    expect(scripts[1]).toBe('while (true) {if(__nibSpin())break;}')
+    expect(scripts[0]).toContain("defineProperty(globalThis, '__ordenSpin'")
+    expect(scripts[1]).toBe('while (true) {if(__ordenSpin())break;}')
     expect(holder.content.querySelector('#dial')?.textContent).toBe('x')
   })
 
@@ -74,7 +74,7 @@ describe('a block of a note’s own HTML', () => {
     const out = guardedBlock(
       '<script type="module">for (;;) {}</script><script type="text/template">for (;;) {}</script>',
     )
-    expect(out).toContain('<script type="module">for (;;) {if(__nibSpin())break;}</script>')
+    expect(out).toContain('<script type="module">for (;;) {if(__ordenSpin())break;}</script>')
     expect(out).toContain('<script type="text/template">for (;;) {}</script>')
   })
 })
@@ -170,7 +170,7 @@ describe('the check the frame runs first', () => {
 
     const global = globalThis as Record<string, unknown>
     expect(() => {
-      global.__nibSpin = () => false
+      global.__ordenSpin = () => false
     }).toThrow()
   })
 

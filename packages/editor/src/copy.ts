@@ -2,7 +2,8 @@ import type { EditorState, Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { door } from '@orden/markdown/door'
 
-const OURS = 'data-nib="markdown"'
+const OURS = 'data-orden="markdown"'
+const FORMER = 'data-nib="markdown"'
 
 export const MOST_DRAWN = 256 * 1024
 
@@ -22,7 +23,7 @@ function selected(state: EditorState): string {
 }
 
 export function ourOwn(html: string): boolean {
-  return html.includes(OURS)
+  return html.includes(OURS) || html.includes(FORMER)
 }
 
 export function copiedFlavours(

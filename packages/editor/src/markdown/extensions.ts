@@ -15,7 +15,7 @@ import { FencedCode } from './fences'
 
 export const NoSetextHeadings: MarkdownConfig = { remove: ['SetextHeading'] }
 
-export const nibMarkdownExtensions = [
+export const ordenMarkdownExtensions = [
   Wikilink,
   PercentComment,
   Highlight,
@@ -30,4 +30,4 @@ export const nibMarkdownExtensions = [
   NoSetextHeadings,
 ]
 
-export const nibMarkdownParser = parser.configure([GFM, ...nibMarkdownExtensions])
+export const ordenMarkdownParser = parser.configure([GFM, ...ordenMarkdownExtensions])

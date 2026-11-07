@@ -129,7 +129,7 @@ async function ownFor(tab: Tab, url: string): Promise<string | null> {
         origins: origins ? [origins] : [],
       }),
     ).catch((error: unknown) => {
-      console.warn('nib: a saved tab’s web data could not be copied', error)
+      console.warn('orden: a saved tab’s web data could not be copied', error)
     })
   }
   return own

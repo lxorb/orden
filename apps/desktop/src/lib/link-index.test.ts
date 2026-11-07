@@ -616,7 +616,7 @@ describe('a space of two thousand notes', () => {
 describe('what the editor is told about the tags', () => {
   test('every tag of the space, with the notes under each', async () => {
     await space({
-      'Plan.md': '---\ntags: [work/nib]\n---\n\n# Plan\n\nwords #work/nib again\n',
+      'Plan.md': '---\ntags: [work/orden]\n---\n\n# Plan\n\nwords #work/orden again\n',
       'One.md': 'filed under #work\n',
       'Two.md': 'and #reading\n',
     })
@@ -624,7 +624,7 @@ describe('what the editor is told about the tags', () => {
     expect(links.index(null).tags).toEqual([
       { tag: 'work', notes: 2 },
       { tag: 'reading', notes: 1 },
-      { tag: 'work/nib', notes: 1 },
+      { tag: 'work/orden', notes: 1 },
     ])
   })
 
@@ -1112,7 +1112,7 @@ describe('the icon a note says it wears', () => {
 describe("a space's tags", () => {
   test('come off the index without a row being read', async () => {
     await space({
-      'Plan.md': '#work/nib and #paper, and #work again\n',
+      'Plan.md': '#work/orden and #paper, and #work again\n',
       'Ink.md': '#paper on #paper\n',
       'Kestrel.md': 'nothing tagged here\n',
     })
@@ -1121,7 +1121,7 @@ describe("a space's tags", () => {
     expect(links.spaceTags).toEqual([
       { tag: 'paper', notes: 2 },
       { tag: 'work', notes: 1 },
-      { tag: 'work/nib', notes: 1 },
+      { tag: 'work/orden', notes: 1 },
     ])
 
     expect(links.spaceTags).toEqual(links.spaceTags)
@@ -1135,12 +1135,12 @@ describe("a space's tags", () => {
   })
 
   test('and a note under two branches of one tag counts once for the branch', async () => {
-    await space({ 'Plan.md': '#work/nib and #work/lab\n' })
+    await space({ 'Plan.md': '#work/orden and #work/lab\n' })
 
     expect(links.spaceTags).toEqual([
       { tag: 'work', notes: 1 },
       { tag: 'work/lab', notes: 1 },
-      { tag: 'work/nib', notes: 1 },
+      { tag: 'work/orden', notes: 1 },
     ])
   })
 
@@ -1154,13 +1154,13 @@ describe("a space's tags", () => {
   })
 
   test('and are the same list the editor is handed for its own popup', async () => {
-    await space({ 'Plan.md': '#work/nib\n', 'Ink.md': '#paper\n' })
+    await space({ 'Plan.md': '#work/orden\n', 'Ink.md': '#paper\n' })
 
     expect(links.index(at('Plan.md')).tags).toEqual(links.spaceTags)
     expect(links.spaceTags).toEqual([
       { tag: 'paper', notes: 1 },
       { tag: 'work', notes: 1 },
-      { tag: 'work/nib', notes: 1 },
+      { tag: 'work/orden', notes: 1 },
     ])
   })
 })

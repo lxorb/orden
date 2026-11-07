@@ -104,8 +104,8 @@ describe('the markers a reader may turn on', () => {
   })
 
   test('keep inline code marked unless the reader says otherwise', () => {
-    expect(shown(`run ${TICKS}nib${TICKS} now`, {})).toBe('run ‘nib‘ now')
-    expect(shown(`run ${TICKS}nib${TICKS} now`, { code: false })).toBe('run nib now')
+    expect(shown(`run ${TICKS}orden${TICKS} now`, {})).toBe('run ‘orden‘ now')
+    expect(shown(`run ${TICKS}orden${TICKS} now`, { code: false })).toBe('run orden now')
   })
 
   test('keep a fence marked unless the reader says otherwise', () => {

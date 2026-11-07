@@ -7,7 +7,7 @@ const QUERIES = [
   'garden',
   '"a phrase" -not OR other',
   '(a OR b) c',
-  'path:Projects file:Plan tag:work content:nib',
+  'path:Projects file:Plan tag:work content:orden',
   '/gard(en)?/i case: Word',
   'line:(a b) block:(c d) section:(e f)',
   'task-todo: task-done:(x) task:(y)',

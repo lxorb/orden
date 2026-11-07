@@ -8,7 +8,7 @@ function file(path: string, body: string): Source {
 }
 
 describe("Bear's closed tags", () => {
-  test('become tags nib can hold', () => {
+  test('become tags Orden can hold', () => {
     expect(bearTags('#two words# and #work#')).toBe('#two-words and #work')
     expect(bearTags('a line\n#home/kitchen#')).toBe('a line\n#home/kitchen')
   })
@@ -37,14 +37,14 @@ describe("Bear's closed tags", () => {
 })
 
 describe("Bear's other spellings", () => {
-  test('an underline is one, rather than the lowered text nib reads a tilde as', () => {
+  test('an underline is one, rather than the lowered text Orden reads a tilde as', () => {
     expect(bearWords('~under~ and ~~struck~~ and `~/path~`')).toBe(
       '<u>under</u> and ~~struck~~ and `~/path~`',
     )
     expect(bearWords('https://example.com/~me/~notes')).toBe('https://example.com/~me/~notes')
   })
 
-  test("Bear 1's highlight is nib's, and a name with colons in it is not one", () => {
+  test("Bear 1's highlight is Orden's, and a name with colons in it is not one", () => {
     expect(bearWords('::marked:: in std::vector::size')).toBe('==marked== in std::vector::size')
   })
 })
@@ -127,7 +127,7 @@ describe('a Bear backup', () => {
     expect(text).toContain('[elsewhere](bear://x-callback-url/open-note?id=GONE)')
   })
 
-  test("a link to a heading, which Bear writes with a slash, is nib's link to that heading", async () => {
+  test("a link to a heading, which Bear writes with a slash, is Orden's link to that heading", async () => {
     const plan = await readBear([
       file(
         'Welcome.md',

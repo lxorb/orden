@@ -171,7 +171,7 @@ describe('Claude Code on this machine', () => {
     expect(asked.some((one) => one.command === 'ai_cli_stop')).toBe(true)
   })
 
-  test('the plan at its limit is said in nib’s words, and kept for the pane', async () => {
+  test('the plan at its limit is said in Orden’s words, and kept for the pane', async () => {
     lines = [
       '{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","rateLimitType":"five_hour"}}',
       '{"type":"result","is_error":true,"result":"You\'ve hit your limit"}',

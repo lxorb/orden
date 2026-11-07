@@ -24,7 +24,7 @@ function slide(html: string, over: Partial<StageSlide> = {}): StageSlide {
 }
 
 const DECK = [
-  slide('<h1>Nib</h1>', { shape: 'title' }),
+  slide('<h1>Orden</h1>', { shape: 'title' }),
   slide('<p>Words.</p>'),
   slide('<ul><li>a</li><li>b</li></ul>', { fragments: [0, 1] }),
   slide('<h2>Detail</h2>', { vertical: true }),

@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
 import { edgeBeside } from './stepping'
 import { dragFreeze } from './dragging'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 function state(doc: string, cursor = 0) {
@@ -13,7 +13,7 @@ function state(doc: string, cursor = 0) {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dragFreeze,
         blockDecorations,
       ],

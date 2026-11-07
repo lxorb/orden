@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { frontMatter } from '@orden/markdown'
 import { isDeck } from '@orden/markdown/slide-breaks'
 import { inCodeSpan, keepsStraightQuotes, smartReplacement, typingBreak } from './typography'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
 function type(line: string, character: string): string {
@@ -153,7 +153,7 @@ function at(marked: string): boolean {
   const state = parsed(
     EditorState.create({
       doc,
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
   return keepsStraightQuotes(state, caret)

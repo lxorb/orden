@@ -2,7 +2,7 @@ import type { SyntaxNode, Tree } from '@lezer/common'
 import type { StateCommand } from '@codemirror/state'
 import { closesFence, fenceMark } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { nibMarkdownParser } from './markdown/extensions'
+import { ordenMarkdownParser } from './markdown/extensions'
 import { parseTable, serializeTable } from './table/model'
 
 const VERBATIM = new Set([
@@ -27,7 +27,7 @@ const VERBATIM = new Set([
 export function reformat(source: string): string {
   const lines = source.split('\n')
   const out: string[] = []
-  const tree = nibMarkdownParser.parse(source)
+  const tree = ordenMarkdownParser.parse(source)
   const kept = verbatim(tree, lines)
   const tables = tableStarts(tree, lines)
 

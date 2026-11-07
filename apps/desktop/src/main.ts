@@ -34,7 +34,7 @@ if (isMobile && (await (await import('./lib/workspace/moved')).spacesMoved())) {
   await new Promise<never>(() => undefined)
 }
 
-const outside: unknown = await (window as { nibOutside?: Promise<unknown> }).nibOutside
+const outside: unknown = await (window as { ordenOutside?: Promise<unknown> }).ordenOutside
 if (
   isDesktop &&
   typeof outside === 'string' &&

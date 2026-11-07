@@ -9,7 +9,7 @@ const NOTE = `# Handbook
 
 [toc]
 
-Prose with **strong**, *slight*, a [link](https://nib.dev), $E=mc^2$ and a note[^1].
+Prose with **strong**, *slight*, a [link](https://orden.dev), $E=mc^2$ and a note[^1].
 
 Guard: a < b && c > d
 
@@ -67,7 +67,7 @@ const PICTURES: Picture[] = [
 const MODIFIED = '2026-09-04T12:34:56.789Z'
 
 const BASE: EpubOptions = {
-  title: 'Nib Handbook',
+  title: 'Orden Handbook',
   author: 'Ada Lovelace',
   lang: 'de',
   identifier: 'urn:uuid:7f1c9f5e-0000-4000-8000-0123456789ab',
@@ -243,7 +243,7 @@ describe('the package', () => {
   test('says what the book is', () => {
     expect(book.opf).toContain('<package version="3.0" unique-identifier="pub-id"')
     expect(book.opf).toContain(`<dc:identifier id="pub-id">${BASE.identifier}</dc:identifier>`)
-    expect(book.opf).toContain('<dc:title>Nib Handbook</dc:title>')
+    expect(book.opf).toContain('<dc:title>Orden Handbook</dc:title>')
     expect(book.opf).toContain('<dc:language>de</dc:language>')
     expect(book.opf).toContain('<dc:creator>Ada Lovelace</dc:creator>')
   })

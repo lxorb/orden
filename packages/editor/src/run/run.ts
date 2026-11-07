@@ -39,7 +39,7 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
   frame.setAttribute('sandbox', 'allow-scripts')
   frame.setAttribute('aria-hidden', 'true')
   frame.setAttribute('tabindex', '-1')
-  frame.title = 'nib runner'
+  frame.title = 'Orden runner'
   frame.style.cssText =
     'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;visibility:hidden'
 

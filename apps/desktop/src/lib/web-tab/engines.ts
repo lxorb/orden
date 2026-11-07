@@ -61,7 +61,7 @@ function rootOf(search: string): string | null {
 
 export function isEngineAddress(url: string): boolean {
   const said = url.trim()
-  return said.includes(WORDS) && isWebAddress(said.replaceAll(WORDS, 'nib'))
+  return said.includes(WORDS) && isWebAddress(said.replaceAll(WORDS, 'orden'))
 }
 
 export function engineFor(name: string | null, search: string | null): Engine | null {
@@ -75,7 +75,7 @@ export function engineFor(name: string | null, search: string | null): Engine | 
 
 function siteOf(search: string): string | null {
   try {
-    return new URL(search.replaceAll(WORDS, 'nib')).hostname.replace(/^www\./, '')
+    return new URL(search.replaceAll(WORDS, 'orden')).hostname.replace(/^www\./, '')
   } catch {
     return null
   }

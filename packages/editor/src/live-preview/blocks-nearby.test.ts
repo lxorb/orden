@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { blockDecorations, buildBlockDecorations } from './blocks'
 import { TocWidget } from './toc'
 import { dragFreeze } from './dragging'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 const looked = vi.hoisted(() => ({ paragraphs: 0 }))
@@ -28,7 +28,7 @@ function state(doc: string, cursor = 0) {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dragFreeze,
         blockDecorations,
       ],
@@ -201,7 +201,7 @@ describe('the blocks drawn after an edit', () => {
       doc,
       selection: EditorSelection.cursor(0),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dragFreeze,
         blockDecorations,
       ],

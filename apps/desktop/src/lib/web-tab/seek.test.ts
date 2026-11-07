@@ -332,10 +332,10 @@ describe('an ask', () => {
   test("for a step walks an open bar's matches", () => {
     const one = new Page()
     one.find.open = true
-    one.find.query = 'nib'
+    one.find.query = 'orden'
     answer('t1', one, 'previous')
     expect(called).toEqual([
-      { command: 'web_find', args: { tab: 't1', term: 'nib', look: 'previous' } },
+      { command: 'web_find', args: { tab: 't1', term: 'orden', look: 'previous' } },
     ])
   })
 

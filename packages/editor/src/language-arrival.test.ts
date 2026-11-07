@@ -3,7 +3,7 @@ import { LanguageDescription } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
 import { fenceLanguage, fenceLanguages } from './languages'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 
 const highlighter = tagHighlighter([
   { tag: tags.keyword, class: 'keyword' },
@@ -20,7 +20,7 @@ function coloured(word: string, code: string): number {
   const parser = markdown({
     base: markdownLanguage,
     codeLanguages: fenceLanguage,
-    extensions: nibMarkdownExtensions,
+    extensions: ordenMarkdownExtensions,
   }).language.parser
 
   const from = document.indexOf(code)

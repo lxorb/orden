@@ -4,7 +4,7 @@ import { noUsage } from '../chat/usage'
 import { attachedIn, bandsOf } from './ring'
 
 describe('the ring', () => {
-  test('fits what nib sent inside the provider’s own count', () => {
+  test('fits what Orden sent inside the provider’s own count', () => {
     const usage = { ...noUsage(100_000), input: 40_000, output: 2_000 }
     const bands = bandsOf(usage, 100_000, 'x'.repeat(4_000), 5_000, 1_000)
     expect(bands.used).toBe(42_000)

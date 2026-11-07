@@ -94,6 +94,7 @@ const KNOWN_SCHEMES = new Set([
   'blob',
   'filesystem',
   'view-source',
+  'orden',
   'nib',
 ])
 

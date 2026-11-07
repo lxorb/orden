@@ -153,7 +153,7 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
     if (existing) return existing
 
     const entry: Entry = {
-      name: basename(path) || 'Nib',
+      name: basename(path) || 'Orden',
       path,
       is_dir: true,
       modified: 0,
@@ -931,7 +931,8 @@ async function writePaperText(path: string, content: string): Promise<void> {
   if (content) await meta.put(paperKey(wanted, content.length), content)
 }
 
-const SCRATCHPAD = '/.nib/Scratchpad.md'
+const SCRATCHPAD = '/.orden/Scratchpad.md'
+const FORMER_SCRATCHPAD = '/.nib/Scratchpad.md'
 
 const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
@@ -1227,7 +1228,10 @@ export async function webInvoke<T>(
       return ((await meta.get('snippets.json')) ?? '{}') as T
 
     case 'scratchpad_path': {
-      if (!(await files.get(SCRATCHPAD))) await writeNote(SCRATCHPAD, '')
+      if (!(await files.get(SCRATCHPAD))) {
+        const kept = await textRow(FORMER_SCRATCHPAD)
+        await writeNote(SCRATCHPAD, kept?.content ?? '')
+      }
       return SCRATCHPAD as T
     }
 

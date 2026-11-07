@@ -102,7 +102,7 @@ describe('the blocks a card is painted from', () => {
   const theme = {
     id: 'warm-paper',
     name: 'Warm Paper',
-    author: 'Nib',
+    author: 'Orden',
     version: '1.0.0',
     description: '',
     tags: [],

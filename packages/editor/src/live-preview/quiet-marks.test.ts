@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import '@orden/markdown/eager'
 import { buildDecorations } from './decorate'
 import { quietMarks } from './reveal'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 function concealed(doc: string, cursor: number, quiet: boolean): string[] {
@@ -13,7 +13,7 @@ function concealed(doc: string, cursor: number, quiet: boolean): string[] {
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         quietMarks.of(quiet),
       ],
     }),

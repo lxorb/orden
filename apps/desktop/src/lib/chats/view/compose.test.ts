@@ -7,7 +7,7 @@ import {
   mentionAt,
   mentionChoices,
   mentionText,
-  nibAsked,
+  ordenAsked,
   trimmed,
 } from './compose'
 
@@ -61,10 +61,10 @@ describe('mentions', () => {
   })
 
   test('offers the reader’s own agent at the start of a message, and nowhere else', () => {
-    const first = mentionChoices('n', members, 'user:emil', true)
-    expect(first).toEqual(['nib'])
-    expect(mentionChoices('n', members, 'user:emil')).toEqual([])
-    expect(mentionText('nib')).toBe('@nib ')
+    const first = mentionChoices('o', members, 'user:emil', true)
+    expect(first).toEqual(['orden'])
+    expect(mentionChoices('o', members, 'user:emil')).toEqual([])
+    expect(mentionText('orden')).toBe('@orden ')
   })
 
   test('writes the name the chat shows', () => {
@@ -73,12 +73,12 @@ describe('mentions', () => {
     expect(mentionText('here')).toBe('@here ')
   })
 
-  test('@nib first is a question to the reader’s agent, not a message', () => {
-    expect(nibAsked('@nib what did we decide?')).toBe('what did we decide?')
-    expect(nibAsked(' @NIB\nsum it up ')).toBe('sum it up')
-    expect(nibAsked('@nib')).toBe('')
-    expect(nibAsked('thanks @nib')).toBeNull()
-    expect(nibAsked('@nibble')).toBeNull()
+  test('@orden first is a question to the reader’s agent, not a message', () => {
+    expect(ordenAsked('@orden what did we decide?')).toBe('what did we decide?')
+    expect(ordenAsked(' @NIB\nsum it up ')).toBe('sum it up')
+    expect(ordenAsked('@orden')).toBe('')
+    expect(ordenAsked('thanks @orden')).toBeNull()
+    expect(ordenAsked('@nibble')).toBeNull()
   })
 
   test('a message is sent without blank lines either side', () => {

@@ -3,7 +3,7 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { completionExtensions, loadCompletion } from './completion'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { modeExtensions } from './modes'
 import { parsed } from '../test/parsed'
 
@@ -21,7 +21,7 @@ function type(
       doc,
       selection: EditorSelection.range(selection.anchor, selection.head),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         modeExtensions(),
         completionExtensions(),
       ],

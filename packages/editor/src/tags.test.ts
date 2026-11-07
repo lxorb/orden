@@ -2,14 +2,14 @@ import { CompletionContext, type CompletionResult } from '@codemirror/autocomple
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { tagCompletions } from './tags'
 import { type NoteIndex, noteIndex, type SpaceTag } from './wikilink/notes'
 
 const TAGS: SpaceTag[] = [
   { tag: 'work', notes: 12 },
-  { tag: 'work/nib', notes: 7 },
-  { tag: 'work/nib/canvas', notes: 2 },
+  { tag: 'work/ink', notes: 7 },
+  { tag: 'work/ink/canvas', notes: 2 },
   { tag: 'reading', notes: 4 },
 ]
 
@@ -22,7 +22,7 @@ function state(doc: string, at: number, space = index()): EditorState {
     doc,
     selection: EditorSelection.cursor(at),
     extensions: [
-      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+      markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
       noteIndex.of(space),
     ],
   })
@@ -42,8 +42,8 @@ describe('a hash in the middle of a line', () => {
   test('offers every tag the space uses, most carried first', () => {
     expect(labels(rowsAt('Filed under #'))).toEqual([
       'work',
-      'work/nib',
-      'work/nib/canvas',
+      'work/ink',
+      'work/ink/canvas',
       'reading',
     ])
   })
@@ -55,16 +55,16 @@ describe('a hash in the middle of a line', () => {
   test('starts the popup past the hash, so a chosen row is the name', () => {
     const found = rowsAt('Filed under #wo')
     expect(found?.from).toBe('Filed under #'.length)
-    expect(labels(found)).toEqual(['work', 'work/nib', 'work/nib/canvas'])
+    expect(labels(found)).toEqual(['work', 'work/ink', 'work/ink/canvas'])
   })
 
   test('narrows to the level under a slash, segment by segment', () => {
-    expect(labels(rowsAt('#work/'))).toEqual(['work/nib', 'work/nib/canvas'])
-    expect(labels(rowsAt('#work/nib/'))).toEqual(['work/nib/canvas'])
+    expect(labels(rowsAt('#work/'))).toEqual(['work/ink', 'work/ink/canvas'])
+    expect(labels(rowsAt('#work/ink/'))).toEqual(['work/ink/canvas'])
   })
 
   test('finds a nested one by its last segment alone', () => {
-    expect(labels(rowsAt('#canvas'))).toEqual(['work/nib/canvas'])
+    expect(labels(rowsAt('#canvas'))).toEqual(['work/ink/canvas'])
   })
 
   test('answers after an opening bracket as well, which is where a tag can sit', () => {
@@ -73,7 +73,7 @@ describe('a hash in the middle of a line', () => {
 
   test('is not a tag in the middle of a word', () => {
     expect(rowsAt('C#')).toBeNull()
-    expect(rowsAt('https://nib.dev/#read')).toBeNull()
+    expect(rowsAt('https://orden.dev/#read')).toBeNull()
   })
 
   test('offers nothing until the app has said what the tags are', () => {
@@ -81,7 +81,7 @@ describe('a hash in the middle of a line', () => {
   })
 
   test('closes once what is typed is no longer a name', () => {
-    expect(rowsAt('#work nib')).toBeNull()
+    expect(rowsAt('#work orden')).toBeNull()
   })
 })
 
@@ -89,7 +89,7 @@ describe('a hash that opens a line', () => {
   test('waits for a letter, because `# ` there is a heading', () => {
     expect(rowsAt('#')).toBeNull()
     expect(rowsAt('  #')).toBeNull()
-    expect(labels(rowsAt('#w'))).toEqual(['work', 'work/nib', 'work/nib/canvas'])
+    expect(labels(rowsAt('#w'))).toEqual(['work', 'work/ink', 'work/ink/canvas'])
   })
 
   test('and is nothing at all once the space after it makes it a heading', () => {
@@ -130,7 +130,7 @@ describe('the front matter', () => {
     const at = FRONT.indexOf('tags: work') + 'tags: wo'.length
     const found = rowsAt(FRONT, at)
 
-    expect(labels(found)).toEqual(['work', 'work/nib', 'work/nib/canvas'])
+    expect(labels(found)).toEqual(['work', 'work/ink', 'work/ink/canvas'])
     expect(found?.from).toBe(FRONT.indexOf('tags: work') + 'tags: '.length)
   })
 

@@ -23,8 +23,8 @@ describe('the line that adds Orden to a client', () => {
     expect(mcpLine('/Applications/Orden.app/Contents/MacOS/orden', 'codex')).toBe(
       'codex mcp add orden -- /Applications/Orden.app/Contents/MacOS/orden mcp',
     )
-    expect(mcpLine("/home/a/Apps/Emil's Nib.AppImage")).toBe(
-      "claude mcp add --scope user orden -- '/home/a/Apps/Emil'\\''s Nib.AppImage' mcp",
+    expect(mcpLine("/home/a/Apps/Emil's Orden.AppImage")).toBe(
+      "claude mcp add --scope user orden -- '/home/a/Apps/Emil'\\''s Orden.AppImage' mcp",
     )
   })
 

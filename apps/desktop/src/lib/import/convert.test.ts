@@ -98,7 +98,7 @@ describe('both rewrites together', () => {
     expect(converted(text, ['Another.md'])).toEqual({ text, changes: 0 })
   })
 
-  test("Roam's own wikilinks are already nib's, so nothing is done to them", () => {
+  test("Roam's own wikilinks are already Orden's, so nothing is done to them", () => {
     const text = 'See [[The plan]] and [[Ideas]].'
 
     expect(converted(text, ['The plan.md', 'Ideas.md']).changes).toBe(0)

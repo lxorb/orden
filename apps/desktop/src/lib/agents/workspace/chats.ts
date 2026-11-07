@@ -21,7 +21,8 @@ async function chatsStore(): Promise<Chats> {
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
-  if (!chats.me) throw new Refused('not_found', 'chats need nib’s account, and nobody is signed in')
+  if (!chats.me)
+    throw new Refused('not_found', 'chats need Orden’s account, and nobody is signed in')
   return chats
 }
 

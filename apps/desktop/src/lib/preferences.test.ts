@@ -352,7 +352,7 @@ describe('the spelling dictionaries', () => {
     expect([...DICTIONARIES]).toEqual(inLanguageOrder(DICTIONARIES))
   })
 
-  test('are the platform’s where nib cannot choose them, and the pane says so', () => {
+  test('are the platform’s where Orden cannot choose them, and the pane says so', () => {
     const spelling = pane('spelling')
     expect(spelling.groups.flatMap((group) => group.fields).map((one) => one.label)).toEqual([
       'Check spelling',

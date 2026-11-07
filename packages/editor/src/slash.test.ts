@@ -2,7 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import type { CompletionContext } from '@codemirror/autocomplete'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { afterEach, describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { setBlocks, slashCompletions } from './slash'
 import { parsed } from '../test/parsed'
 
@@ -17,7 +17,7 @@ function completionsFor(doc: string, at = doc.length) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(at),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
 
@@ -57,7 +57,7 @@ describe('a slash on a line', () => {
   test('is not a menu in the middle of a word', () => {
     setBlocks(() => BLOCKS)
     expect(completionsFor('and/or')).toBeNull()
-    expect(completionsFor('https://nib.dev')).toBeNull()
+    expect(completionsFor('https://orden.dev')).toBeNull()
     expect(completionsFor('24/7')).toBeNull()
   })
 

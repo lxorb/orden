@@ -6,7 +6,7 @@ const internals = (window as unknown as { __TAURI_INTERNALS__?: Internals }).__T
 
 if (internals) {
   Object.assign(window, {
-    nibEarly: internals.invoke('launch_ahead').catch(() => null),
-    nibOutside: internals.invoke('outside_spaces').catch(() => null),
+    ordenEarly: internals.invoke('launch_ahead').catch(() => null),
+    ordenOutside: internals.invoke('outside_spaces').catch(() => null),
   })
 }

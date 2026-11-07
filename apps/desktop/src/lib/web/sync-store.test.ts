@@ -166,7 +166,7 @@ describe('the browser sync store', () => {
     await store.close()
   })
 
-  test('keeps what nib wrote whole', async () => {
+  test('keeps what Orden wrote whole', async () => {
     const store = await openWeb(account())
     const text = '# Plan\n\nThe same line of prose, written again.\n'.repeat(400)
     await store.write([put('written', { id: 'n', text })])

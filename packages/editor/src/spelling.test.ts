@@ -6,7 +6,7 @@ const quiet = (text: string, words: readonly string[]) =>
 
 describe('which words a dictionary may hold', () => {
   test('a word of a language, however it is spelled', () => {
-    for (const word of ['nib', 'Obsidian', 'CodeMirror', 'naïve', "don't", 'l’an', 'a1', 'x_y']) {
+    for (const word of ['orden', 'Obsidian', 'CodeMirror', 'naïve', "don't", 'l’an', 'a1', 'x_y']) {
       expect(isSpellWord(word), word).toBe(true)
     }
   })
@@ -29,16 +29,16 @@ describe('which words a dictionary may hold', () => {
 
 describe('the checker turned off over a known word', () => {
   test('wherever it appears', () => {
-    expect(quiet('nib and nib again', ['nib'])).toEqual(['nib', 'nib'])
+    expect(quiet('orden and orden again', ['orden'])).toEqual(['orden', 'orden'])
   })
 
   test('whatever case it was written in', () => {
-    expect(quiet('Nib and NIB', ['nib'])).toEqual(['Nib', 'NIB'])
+    expect(quiet('Orden and ORDEN', ['orden'])).toEqual(['Orden', 'ORDEN'])
   })
 
   test('but never inside a longer word', () => {
-    expect(quiet('nibble', ['nib'])).toEqual([])
-    expect(quiet('unnib', ['nib'])).toEqual([])
+    expect(quiet('ordenly', ['orden'])).toEqual([])
+    expect(quiet('unorden', ['orden'])).toEqual([])
   })
 
   test('and an accent or an apostrophe is part of a word, not a boundary', () => {
@@ -47,11 +47,11 @@ describe('the checker turned off over a known word', () => {
   })
 
   test('one word out of a list of them', () => {
-    expect(quiet('nib and Zug and Bern', ['zug', 'bern'])).toEqual(['Zug', 'Bern'])
+    expect(quiet('orden and Zug and Bern', ['zug', 'bern'])).toEqual(['Zug', 'Bern'])
   })
 
   test('nothing at all with an empty list', () => {
-    expect(quiet('nib', [])).toEqual([])
+    expect(quiet('orden', [])).toEqual([])
   })
 
   test('and nothing for a word that is not a word', () => {
@@ -60,7 +60,7 @@ describe('the checker turned off over a known word', () => {
   })
 
   test('the ranges come back in order, which a decoration set insists on', () => {
-    const found = knownRanges('nib nib nib', ['nib'])
-    expect(found.map((one) => one.from)).toEqual([0, 4, 8])
+    const found = knownRanges('orden orden orden', ['orden'])
+    expect(found.map((one) => one.from)).toEqual([0, 6, 12])
   })
 })

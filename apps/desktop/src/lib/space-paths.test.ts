@@ -84,7 +84,7 @@ describe('an absolute path from somewhere else', () => {
 
   test('and nothing at all when it is inside none of them', () => {
     expect(insideAnyOf(roots, '/etc/passwd')).toBeNull()
-    expect(insideAnyOf(roots, '/data/data/com.nib.app/databases/notes.db')).toBeNull()
+    expect(insideAnyOf(roots, '/data/data/com.orden.app/databases/notes.db')).toBeNull()
     expect(insideAnyOf([], '/notes/work/Plan.md')).toBeNull()
   })
 

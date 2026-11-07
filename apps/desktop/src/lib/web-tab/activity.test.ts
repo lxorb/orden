@@ -54,7 +54,7 @@ describe('activity', () => {
     expect(said).toEqual([false, true])
   })
 
-  test('counts typing into a web page, which the system hears while nib is in front', async () => {
+  test('counts typing into a web page, which the system hears while Orden is in front', async () => {
     const one = activity()
     one.start()
     now += IDLE_AFTER + 1

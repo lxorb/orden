@@ -425,7 +425,7 @@ describe('what Orden keeps beyond the spec', () => {
     expect(isShape(undefined)).toBe(false)
   })
 
-  test('still opens a canvas whose nib block is nonsense', () => {
+  test('still opens a canvas whose orden block is nonsense', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
@@ -894,7 +894,7 @@ describe('words with no card round them (#421)', () => {
     orden: { words: string[] }
   }
 
-  test('are a card to anybody reading the spec, and listed as words under nib', () => {
+  test('are a card to anybody reading the spec, and listed as words under orden', () => {
     expect(parsed.nodes.map((node) => node.type)).toEqual(['text', 'text'])
     expect(parsed.nodes.some((node) => 'bare' in node)).toBe(false)
     expect(parsed.orden.words).toEqual(['words'])
@@ -949,7 +949,7 @@ describe('something locked in place (#643)', () => {
     orden: { locked: string[]; shapes: Record<string, unknown>[] }
   }
 
-  test('is the record it was to anybody reading the spec, and listed as locked under nib', () => {
+  test('is the record it was to anybody reading the spec, and listed as locked under orden', () => {
     expect(parsed.nodes.some((node) => 'locked' in node)).toBe(false)
     expect(parsed.orden.shapes.some((shape) => 'locked' in shape)).toBe(false)
     expect(parsed.orden.locked).toEqual(['photo', 'box'])

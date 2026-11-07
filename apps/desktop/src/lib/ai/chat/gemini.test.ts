@@ -240,7 +240,7 @@ describe('a call made and answered', () => {
     expect(first?.url).toBe(`${ROOT}/models/gemini-3-flash:streamGenerateContent?alt=sse`)
     expect(first?.headers['x-goog-api-key']).toBe('AIza-test')
     expect(first?.body).toMatchObject({
-      systemInstruction: { parts: [{ text: expect.stringContaining('nib') as string }] },
+      systemInstruction: { parts: [{ text: expect.stringContaining('Orden') as string }] },
       contents: [{ role: 'user', parts: [{ text: 'What is in Birds.md?' }] }],
       tools: [
         {

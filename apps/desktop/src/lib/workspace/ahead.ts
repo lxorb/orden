@@ -42,7 +42,7 @@ let answer: Promise<Answer | null> | null = null
 
 function received(): Promise<Answer | null> {
   answer ??= Promise.resolve(
-    (window as unknown as { nibEarly?: Promise<unknown> }).nibEarly ?? null,
+    (window as unknown as { ordenEarly?: Promise<unknown> }).ordenEarly ?? null,
   ).then(answerOf, () => null)
   return answer
 }

@@ -31,7 +31,7 @@ describe('Claude Code’s list', () => {
 })
 
 describe('Codex’s list', () => {
-  test('is its shown models, their efforts on nib’s scale, pictures and Fast', () => {
+  test('is its shown models, their efforts on Orden’s scale, pictures and Fast', () => {
     const models = modelsIn('codex', {
       data: [
         {

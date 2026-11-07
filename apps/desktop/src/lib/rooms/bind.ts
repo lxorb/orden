@@ -39,7 +39,7 @@ export function replacements(delta: readonly Op[]): Replacement[] {
 }
 
 export function moved(what: string) {
-  console.warn(`nib: ${what} was refused - the document is on another note now`)
+  console.warn(`orden: ${what} was refused - the document is on another note now`)
 }
 
 export function replace(text: Y.Text, change: Replacement) {

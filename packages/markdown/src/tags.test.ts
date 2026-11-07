@@ -11,7 +11,7 @@ function drawn(source: string, options: Parameters<typeof renderMarkdown>[1] = {
 describe('what a tag is', () => {
   test('a letter after the hash, then letters, digits and the joining three', () => {
     expect(tagNameAt('#work', 0)).toBe('work')
-    expect(tagNameAt('#work/nib-2_b, then', 0)).toBe('work/nib-2_b')
+    expect(tagNameAt('#work/orden-2_b, then', 0)).toBe('work/orden-2_b')
     expect(tagNameAt('#Überblick', 0)).toBe('Überblick')
     expect(tagNameAt('#日本語', 0)).toBe('日本語')
   })
@@ -79,7 +79,7 @@ describe('a tag on a page', () => {
   })
 
   test('nested is one tag', () => {
-    expect(drawn('Under #work/nib/canvas today')).toEqual(['work/nib/canvas'])
+    expect(drawn('Under #work/orden/canvas today')).toEqual(['work/orden/canvas'])
   })
 
   test('opening a paragraph, a heading, an item, a cell and a bracket', () => {
@@ -103,16 +103,18 @@ describe('a tag on a page', () => {
   test('left alone in code, maths, addresses, links, headings and mid-word', () => {
     expect(drawn('`#code` and\n\n```\n#fenced\n```')).toEqual([])
     expect(drawn('$#x$')).toEqual([])
-    expect(drawn('https://nib.dev/#top and <https://nib.dev/#also>')).toEqual([])
-    expect(drawn('[see #this](https://nib.dev) and [[Note#Heading]]')).toEqual([])
+    expect(drawn('https://orden.dev/#top and <https://orden.dev/#also>')).toEqual([])
+    expect(drawn('[see #this](https://orden.dev) and [[Note#Heading]]')).toEqual([])
     expect(drawn('# Heading\n\nC#sharp and a#b')).toEqual([])
     expect(drawn('#42 and \\#escaped')).toEqual([])
   })
 
   test('a link on a surface that says where one goes, and words everywhere else', () => {
-    const html = renderMarkdown('A #work/nib tag', { tagHref: (tag) => `#tag:${tag}` })
+    const html = renderMarkdown('A #work/orden tag', { tagHref: (tag) => `#tag:${tag}` })
 
-    expect(html).toContain('<a class="tag" href="#tag:work/nib" data-tag="work/nib">#work/nib</a>')
+    expect(html).toContain(
+      '<a class="tag" href="#tag:work/orden" data-tag="work/orden">#work/orden</a>',
+    )
     expect(renderMarkdown('A #work tag', { escapeHtml: true })).toContain(
       '<span class="tag" data-tag="work">#work</span>',
     )
@@ -130,7 +132,7 @@ describe('a tag on a page', () => {
 })
 
 describe('a name a tag can be renamed to', () => {
-  test.each(['work', 'work/nib', 'a-b', 'a_b', 'Größe', '2024/q1', 'x2024'])(
+  test.each(['work', 'work/orden', 'a-b', 'a_b', 'Größe', '2024/q1', 'x2024'])(
     '%s is one',
     (name) => {
       expect(isTagName(name)).toBe(true)

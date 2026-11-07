@@ -125,7 +125,7 @@ class Bridge {
       },
       (error: unknown) => {
         this.health = 'failed'
-        console.warn('nib for g2:', why(error))
+        console.warn('Orden for g2:', why(error))
       },
     )
 
@@ -151,7 +151,7 @@ class Bridge {
     const made = await panel.open()
     if (made !== 'made') {
       this.health = 'failed'
-      console.warn('nib for g2: the page was not made:', made)
+      console.warn('Orden for g2: the page was not made:', made)
       return undefined
     }
 
@@ -470,7 +470,7 @@ class Bridge {
         this.health = 'live'
       } catch (error) {
         this.health = 'stalled'
-        console.warn('nib for g2:', why(error))
+        console.warn('Orden for g2:', why(error))
         return
       }
     }

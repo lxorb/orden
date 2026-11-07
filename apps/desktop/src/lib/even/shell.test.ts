@@ -81,7 +81,7 @@ class Fake implements World {
     row('Meeting notes', { depth: 1 }),
     row('Reading list'),
   ]
-  spaceRows: Row[] = [row('Work'), row('Home'), row('Nib')]
+  spaceRows: Row[] = [row('Work'), row('Home'), row('Orden')]
   treeRows: Row[] = [row('Inbox', { folder: true, open: false }), row('Reading list')]
   on = false
   readonly opened: string[] = []
@@ -162,7 +162,7 @@ describe('what a gesture does', () => {
   })
 
   test('a list of spaces opens on the space the reader is in', () => {
-    world.space_ = 'Nib'
+    world.space_ = 'Orden'
     shell.show('spaces')
 
     expect(shell.screen).toEqual({ kind: 'spaces', at: 2 })

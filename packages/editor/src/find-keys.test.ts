@@ -2,7 +2,7 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { findExtensions, findShown, findTally, NO_TALLY, termAt } from './find'
-import { nibBindings, standardBindings } from './keymap'
+import { ordenBindings, standardBindings } from './keymap'
 
 function pressed(run: (view: EditorView) => boolean, doc = 'the wind, and the wind') {
   let state = EditorState.create({
@@ -41,7 +41,7 @@ describe('the find keys before the engine is here', () => {
   test('Control+F puts the bar up, and says the press is spent', () => {
     expect(findTally(EditorState.create({ doc: 'the wind' }))).toEqual(NO_TALLY)
 
-    const find = [...nibBindings, ...standardBindings].find((one) => one.id === 'edit.find')
+    const find = [...ordenBindings, ...standardBindings].find((one) => one.id === 'edit.find')
     expect(find?.key).toBe('Mod-f')
 
     const { answered, sent, state } = pressed((view) => find?.run(view) ?? false)
@@ -62,7 +62,7 @@ describe('the find keys before the engine is here', () => {
   })
 
   test('and a key held down asks again without opening a second bar', () => {
-    const find = [...nibBindings, ...standardBindings].find((one) => one.id === 'edit.find')
+    const find = [...ordenBindings, ...standardBindings].find((one) => one.id === 'edit.find')
     let state = EditorState.create({
       doc: 'the wind, and the wind',
       extensions: [findExtensions()],
@@ -88,7 +88,7 @@ describe('the find keys before the engine is here', () => {
   })
 
   test('and a step with nothing to step through opens the bar rather than a panel', () => {
-    const step = [...nibBindings, ...standardBindings].find((one) => one.id === 'edit.find-next')
+    const step = [...ordenBindings, ...standardBindings].find((one) => one.id === 'edit.find-next')
     expect(step?.key).toBe('Mod-g')
 
     const { answered, sent, state } = pressed((view) => step?.run(view) ?? false)
@@ -99,7 +99,7 @@ describe('the find keys before the engine is here', () => {
   })
 
   test('and goto-line spends the press', () => {
-    const goto = [...nibBindings, ...standardBindings].find((one) => one.id === 'edit.goto-line')
+    const goto = [...ordenBindings, ...standardBindings].find((one) => one.id === 'edit.goto-line')
     expect(goto?.key).toBe('Mod-Alt-g')
 
     const { answered } = pressed((view) => goto?.run(view) ?? false)

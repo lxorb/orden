@@ -1,7 +1,7 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownExtensions } from '../markdown/extensions'
+import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 import { dropSpacing } from './snap'
 
@@ -13,7 +13,7 @@ function stateOf(doc: string, dragged: string): EditorState {
       selection:
         from < 0 ? EditorSelection.cursor(0) : EditorSelection.range(from, from + dragged.length),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dropSpacing,
       ],
     }),

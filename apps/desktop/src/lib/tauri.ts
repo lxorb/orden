@@ -14,7 +14,7 @@ export function platform(): string {
 
   if (!found && isNative) {
     console.error(
-      'nib cannot tell which operating system it is on: window.__TAURI_OS_PLUGIN_INTERNALS__.platform is not there, and the os plugin registered in src-tauri/src/lib.rs is what writes it.',
+      'Orden cannot tell which operating system it is on: window.__TAURI_OS_PLUGIN_INTERNALS__.platform is not there, and the os plugin registered in src-tauri/src/lib.rs is what writes it.',
     )
   }
 

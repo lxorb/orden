@@ -74,9 +74,9 @@ describe('the space as a graph', () => {
   })
 
   test('a note carries its tags into the picture', () => {
-    const graph = space({ 'One.md': '#Work/Nib and #plans', 'Two.md': 'nothing' })
+    const graph = space({ 'One.md': '#Work/Orden and #plans', 'Two.md': 'nothing' })
 
-    expect(graph.nodes.find((node) => node.name === 'One')?.tags).toEqual(['work/nib', 'plans'])
+    expect(graph.nodes.find((node) => node.name === 'One')?.tags).toEqual(['work/orden', 'plans'])
     expect(graph.nodes.find((node) => node.name === 'Two')?.tags).toEqual([])
   })
 

@@ -158,8 +158,8 @@ describe('callOf', () => {
 describe('keywordIn', () => {
   it('finds whole words in any case, phrases too', () => {
     expect(keywordIn('Is the Deadline moved?', ['deadline'])).toBe('deadline')
-    expect(keywordIn('nib, again', ['nib'])).toBe('nib')
-    expect(keywordIn('a nibble', ['nib'])).toBeNull()
+    expect(keywordIn('orden, again', ['orden'])).toBe('orden')
+    expect(keywordIn('an ordenly one', ['orden'])).toBeNull()
     expect(keywordIn('see the final draft today', ['final draft'])).toBe('final draft')
     expect(keywordIn('Grüße aus Zürich', ['zürich'])).toBe('zürich')
     expect(keywordIn('c++ or rust', ['c++'])).toBe('c++')

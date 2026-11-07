@@ -4,7 +4,7 @@ import { EditorState, type Transaction } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { classHighlighter, highlightTree } from '@lezer/highlight'
 import { htmlGrammar } from '@orden/lang-html'
-import { nibMarkdownExtensions } from './extensions'
+import { ordenMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 
 const NOTE = [
@@ -23,7 +23,7 @@ const NOTE = [
 function language() {
   return markdown({
     base: markdownLanguage,
-    extensions: nibMarkdownExtensions,
+    extensions: ordenMarkdownExtensions,
     addKeymap: false,
   })
 }

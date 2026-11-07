@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { EditorState } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
-import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
+import { ordenBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { bindings, boundKeymap, defaultKeyFor, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
 import { imageBindings } from './live-preview/image'
 
-const ALL = [...nibBindings, ...standardBindings, ...tableBindings, ...imageBindings]
+const ALL = [...ordenBindings, ...standardBindings, ...tableBindings, ...imageBindings]
 
 function keysIn(state: EditorState): string[] {
   return state
@@ -18,19 +18,19 @@ function keysIn(state: EditorState): string[] {
 
 describe('building the keymap', () => {
   test('uses the default where nothing was chosen', () => {
-    const bold = bindings(nibBindings, {}).find((one) => one.key === 'Mod-b')
+    const bold = bindings(ordenBindings, {}).find((one) => one.key === 'Mod-b')
     expect(bold).toBeDefined()
   })
 
   test('uses the chosen key where there is one', () => {
-    const built = bindings(nibBindings, { 'format.bold': 'Mod-Alt-b' })
+    const built = bindings(ordenBindings, { 'format.bold': 'Mod-Alt-b' })
 
     expect(built.some((one) => one.key === 'Mod-Alt-b')).toBe(true)
     expect(built.some((one) => one.key === 'Mod-b')).toBe(false)
   })
 
   test('leaves out what was unbound rather than binding it to everything', () => {
-    const built = bindings(nibBindings, { 'format.bold': null })
+    const built = bindings(ordenBindings, { 'format.bold': null })
 
     expect(built.some((one) => one.key === 'Mod-b')).toBe(false)
     expect(built.every((one) => one.key ?? one.mac ?? one.win ?? one.linux)).toBe(true)
@@ -43,13 +43,13 @@ describe('building the keymap', () => {
     const next = bindings(standardBindings, {}).find((one) => one.key === 'Mod-g')
     expect(next?.shift).toBeUndefined()
 
-    const previous = bindings(nibBindings, {}).find((one) => one.key === 'Mod-Shift-g')
+    const previous = bindings(ordenBindings, {}).find((one) => one.key === 'Mod-Shift-g')
     expect(typeof previous?.run).toBe('function')
   })
 
   test('and no longer scopes a key to a panel the editor does not have', () => {
-    const scoped = [...bindings(standardBindings, {}), ...bindings(nibBindings, {})].filter((one) =>
-      (one.scope ?? '').includes('search-panel'),
+    const scoped = [...bindings(standardBindings, {}), ...bindings(ordenBindings, {})].filter(
+      (one) => (one.scope ?? '').includes('search-panel'),
     )
 
     expect(scoped).toEqual([])
@@ -69,7 +69,7 @@ describe('building the keymap', () => {
   })
 
   test('keeps a key off the one platform that has none', () => {
-    const list = nibBindings.find((one) => one.id === 'paragraph.bullet-list')!
+    const list = ordenBindings.find((one) => one.id === 'paragraph.bullet-list')!
     expect(defaultKeyFor(list, 'mac')).toBeNull()
 
     const [built] = bindings([list], {})
@@ -80,7 +80,7 @@ describe('building the keymap', () => {
   })
 
   test('still binds a key the reader chose there', () => {
-    const list = nibBindings.find((one) => one.id === 'paragraph.bullet-list')!
+    const list = ordenBindings.find((one) => one.id === 'paragraph.bullet-list')!
     const [built] = bindings([list], { 'paragraph.bullet-list': 'Mod-Alt-l' })
     expect(built?.key).toBe('Mod-Alt-l')
   })

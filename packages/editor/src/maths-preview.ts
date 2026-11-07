@@ -5,7 +5,7 @@ import type { SyntaxNode, Tree } from '@lezer/common'
 import { loadMaths, mathsEngine } from '@orden/markdown/engines'
 import { drawMaths } from './live-preview/render'
 import { noReveal } from './live-preview/reveal'
-import { nibMarkdownParser } from './markdown/extensions'
+import { ordenMarkdownParser } from './markdown/extensions'
 
 export interface MathsSpan {
   from: number
@@ -54,7 +54,7 @@ export function mathsAtCaret(state: EditorState): MathsSpan | null {
 export function mathsInText(text: string, offset: number): MathsSpan | null {
   return spanOf(
     (from, to) => text.slice(from, to),
-    mathsNode(nibMarkdownParser.parse(text), offset),
+    mathsNode(ordenMarkdownParser.parse(text), offset),
   )
 }
 

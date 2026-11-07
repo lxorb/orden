@@ -26,7 +26,7 @@ function planned(session: unknown = SESSION, bookmarks: unknown = BOOKMARKS) {
   return sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox', WORDS), NOW, CONTAINERS)
 }
 
-describe("Firefox's tabs and bookmarks as nib's", () => {
+describe("Firefox's tabs and bookmarks as Orden's", () => {
   test('is one space, named as asked', () => {
     expect(planned().spaces.map((one) => one.name)).toEqual(['Firefox'])
   })

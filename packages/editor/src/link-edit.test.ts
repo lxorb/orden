@@ -4,7 +4,7 @@ import { syntaxTree } from '@codemirror/language'
 import { EditorState, type StateCommand } from '@codemirror/state'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { editLink, linkPartsAt, removeLink } from './link-edit'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
 function state(doc: string, readOnly = false) {
@@ -12,7 +12,7 @@ function state(doc: string, readOnly = false) {
     EditorState.create({
       doc,
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         EditorState.readOnly.of(readOnly),
       ],
     }),
@@ -131,7 +131,7 @@ describe('editing a link by a label, in a long note', () => {
     parsed(
       EditorState.create({
         doc: long,
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
       100,
     )
@@ -202,7 +202,7 @@ describe('undoing an edit of a label', () => {
       EditorState.create({
         doc,
         extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
           history(),
         ],
       }),

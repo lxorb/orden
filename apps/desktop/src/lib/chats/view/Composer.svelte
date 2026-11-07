@@ -26,7 +26,7 @@
     mentionAt,
     mentionChoices,
     mentionText,
-    nibAsked,
+    ordenAsked,
     type Special,
   } from './compose'
   import Glyph from './Glyph.svelte'
@@ -217,12 +217,12 @@
       setText('')
       words = ''
     }
-    const question = page.can.orden ? nibAsked(words) : null
+    const question = page.can.orden ? ordenAsked(words) : null
     if (question !== null && !attachments.refs.length) {
       setText('')
       store().keepDraft(draftKey, '')
-      const { askNib } = await import('./nib')
-      await askNib(page.id, question, parent)
+      const { askOrden } = await import('./ask-orden')
+      await askOrden(page.id, question, parent)
       return
     }
     if (/(?:^|\s)@(?:here|everyone)\b/.test(words) && page.members.length > ASK_EVERYONE_PAST) {

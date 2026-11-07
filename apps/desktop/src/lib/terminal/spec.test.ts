@@ -51,8 +51,8 @@ describe('where a new terminal starts', () => {
   })
 
   test('beside a file in no space', () => {
-    expect(startingFolder('/config/nib/custom.css', '/Notes', roots)).toBe('/config/nib')
-    expect(startingFolder('C:\\config\\nib\\custom.css', null, [])).toBe('C:\\config\\nib')
+    expect(startingFolder('/config/orden/custom.css', '/Notes', roots)).toBe('/config/orden')
+    expect(startingFolder('C:\\config\\orden\\custom.css', null, [])).toBe('C:\\config\\orden')
   })
 
   test('and at home with neither', () => {

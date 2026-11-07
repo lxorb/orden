@@ -4,7 +4,7 @@ import { loadFor } from '@orden/markdown/engines'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { copiedFlavours, readyToCopy } from './copy'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { delimitedToTable, pastedMarkdown } from './paste'
 import { placed, plainly } from './paste-place'
 import { linkedPaste } from './paste-link'
@@ -111,7 +111,7 @@ describe('an address pasted over a selection', () => {
       EditorState.create({
         doc: marked.replace(/[«»]/g, ''),
         selection: EditorSelection.range(from, to),
-        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
 

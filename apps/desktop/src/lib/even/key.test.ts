@@ -176,7 +176,7 @@ describe('the line under the field', () => {
     expect(server.asked).toEqual(['put nonsense'])
   })
 
-  test('says so where the key can use nothing Nib asks for', async () => {
+  test('says so where the key can use nothing Orden asks for', async () => {
     server.models = []
     const offered = new Offered()
     await offered.take('sk-proj-example-4f2a')

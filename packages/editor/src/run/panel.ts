@@ -8,7 +8,7 @@ import {
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { label } from '../labels'
 import { pressedByKey } from '../press'
-import { NibWidget } from '../live-preview/widget'
+import { OrdenWidget } from '../live-preview/widget'
 import type { RunLine } from './protocol'
 
 export type RunStatus = 'running' | 'done' | 'stopped' | 'timeout'
@@ -147,7 +147,7 @@ function fill(text: string, name: string, value: string | number): string {
   return text.replace(`{${name}}`, String(value))
 }
 
-class RunPanelWidget extends NibWidget {
+class RunPanelWidget extends OrdenWidget {
   constructor(private readonly panel: RunPanel) {
     super()
   }

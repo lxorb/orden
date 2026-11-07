@@ -46,6 +46,21 @@ test('what was kept under the old name is kept under the new one, and the old ke
   })
 })
 
+test('a key named with a dot after the old name is carried too, and a word that only starts like it is left', () => {
+  const held = new Held()
+  held.setItem('nib.chat-hush', '{}')
+  held.setItem('nib.tray', 'menu')
+  held.setItem('nibble:x', 'kept')
+
+  carryKeys(held)
+
+  expect(Object.fromEntries(held.items)).toEqual({
+    'nibble:x': 'kept',
+    'orden.chat-hush': '{}',
+    'orden.tray': 'menu',
+  })
+})
+
 test('a value already kept under the new name is never written over', () => {
   const held = new Held()
   held.setItem('orden:theme-scheme', 'light')

@@ -238,16 +238,16 @@ describe('the review', () => {
     expect((under as Thread & { helpers?: string[] }).helpers).toEqual([second.id])
     const edit = (id: string, thread: string) => ({
       id,
-      agent: 'nib-claude-code',
+      agent: 'orden-claude-code',
       path: '/n/a.md',
       at: 5,
       spots: [],
       thread,
     })
-    const edits = [edit('nib-claude-code:1', first.id), edit('nib-claude-code:2', second.id)]
+    const edits = [edit('orden-claude-code:1', first.id), edit('orden-claude-code:2', second.id)]
     expect(changesOf(top, edits, () => null, new Set()).map((one) => one.id)).toEqual([
-      'nib-claude-code:1',
-      'nib-claude-code:2',
+      'orden-claude-code:1',
+      'orden-claude-code:2',
     ])
   })
 })

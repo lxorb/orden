@@ -31,9 +31,9 @@ describe('reading a note for the index', () => {
 
   test('reads the front matter tags of a note written with CRLF endings', () => {
     expect(scanNote('N.md', '---\r\ntags: [work]\r\n---\r\nx\r\n').tags).toEqual(['work'])
-    expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n').tags).toEqual([
+    expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #orden\r\n').tags).toEqual([
       'work',
-      'nib',
+      'orden',
     ])
   })
 
@@ -161,8 +161,8 @@ describe('reading a canvas for the index', () => {
   test('stops at the icon of a plane in the order this app writes one', () => {
     const cards =
       '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
-    const nib = '"orden":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
-    const read = scanCanvas('Board.canvas', `{${cards},"edges":[],${nib}`)
+    const orden = '"orden":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
+    const read = scanCanvas('Board.canvas', `{${cards},"edges":[],${orden}`)
 
     expect(read.icon).toBe('rocket')
     expect(read.iconColor).toBe('violet')

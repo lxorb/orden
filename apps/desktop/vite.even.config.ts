@@ -98,11 +98,11 @@ const KATEX_SHEET = /\/katex\/dist\/katex(?:\.min)?\.css$/
 const OLDER_FACES = /,\s*url\([^)]+\.(?:woff|ttf)\)\s*format\(["'](?:woff|truetype)["']\)/g
 
 function withoutWhatTheGlassesCannotUse() {
-  const absent = '\0nib-absent'
-  const runner = '\0nib-no-running'
-  const catalogue = '\0nib-no-catalogue:'
-  const emoji = '\0nib-slim-emoji:'
-  const noFrames = '\0nib-no-frame-script'
+  const absent = '\0orden-absent'
+  const runner = '\0orden-no-running'
+  const catalogue = '\0orden-no-catalogue:'
+  const emoji = '\0orden-slim-emoji:'
+  const noFrames = '\0orden-no-frame-script'
 
   return {
     name: 'orden-even-without',
@@ -178,7 +178,7 @@ function onlyTheRowsItAsksFor(): Plugin {
     transform(code, id) {
       if (!CATALOGUE.test(id.replace(/\\/g, '/'))) return null
 
-      return `import { rowsOf as nibRowsOf } from ${JSON.stringify(KEYS_MODULE)}\n${handedTo(code, 'nibRowsOf')}`
+      return `import { rowsOf as ordenRowsOf } from ${JSON.stringify(KEYS_MODULE)}\n${handedTo(code, 'ordenRowsOf')}`
     },
     renderStart() {
       keys = undefined

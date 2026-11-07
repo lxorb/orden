@@ -1,5 +1,5 @@
 import type { SyntaxNode } from '@lezer/common'
-import { nibMarkdownParser } from '../markdown/extensions'
+import { ordenMarkdownParser } from '../markdown/extensions'
 
 const TAGS: Record<string, string> = {
   StrongEmphasis: 'strong',
@@ -31,7 +31,7 @@ export type Inline = { text: string } | { tag: string; href?: string; children: 
 export function parseInline(source: string): Inline[] {
   if (!source) return []
 
-  const top = nibMarkdownParser.parse(source).topNode
+  const top = ordenMarkdownParser.parse(source).topNode
   const paragraph = top.firstChild ?? top
 
   return walk(paragraph, source, paragraph.from, paragraph.to)

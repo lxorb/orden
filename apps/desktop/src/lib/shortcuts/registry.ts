@@ -2,7 +2,7 @@ import {
   type BindingSpec,
   type EditorView,
   imageBindings,
-  nibBindings,
+  ordenBindings,
   standardBindings,
   tableBindings,
 } from '@orden/editor'
@@ -183,7 +183,7 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
 }
 
 const EDITOR_SPECS: BindingSpec[] = [
-  ...nibBindings,
+  ...ordenBindings,
   ...standardBindings,
   ...tableBindings,
   ...imageBindings,

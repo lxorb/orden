@@ -96,7 +96,7 @@ describe('a base changed from the head', () => {
     expect(writeBase(setFilter(set, 0, undefined), source)).not.toContain('xor')
   })
 
-  test('keeps nib’s own keys under nib, and takes one away with undefined', () => {
+  test('keeps Orden’s own keys under orden, and takes one away with undefined', () => {
     const shown = setShowCompleted(base, 0, true)
     expect(shown.views[0]?.orden.showCompleted).toBe(true)
     expect(setShowCompleted(shown, 0, false).views[0]?.orden).not.toHaveProperty('showCompleted')

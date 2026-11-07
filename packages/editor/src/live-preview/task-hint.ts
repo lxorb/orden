@@ -2,7 +2,7 @@ import { type EditorState, StateField, type Transaction } from '@codemirror/stat
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { taskAt } from '@orden/markdown/tasks'
 import { type DayTyped, noteIndex } from '../wikilink/notes'
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 
 interface Hint {
   day: DayTyped
@@ -28,7 +28,7 @@ function hintAt(state: EditorState): Hint | null {
   return { day, from: line.from + task.marker + day.from, to: main.head }
 }
 
-class HintWidget extends NibWidget {
+class HintWidget extends OrdenWidget {
   constructor(private readonly text: string) {
     super()
   }

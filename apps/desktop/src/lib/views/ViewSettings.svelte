@@ -7,7 +7,7 @@
   import ArrangeBuilder from './ArrangeBuilder.svelte'
   import { CARD_SIZES, sizeOf } from './board'
   import { displayName, knownProperties } from './columns'
-  import { setColumns, setViewNib } from './edit'
+  import { setColumns, setViewOrden } from './edit'
   import type { Kit } from './kit'
   import { switched } from './layout'
   import { type Layout, LAYOUTS, layoutName, layoutOf, propertyName } from './words'
@@ -131,7 +131,7 @@
   {#if board}
     {@render setting(t('Colour columns'), view?.orden.colourColumns !== false, () =>
       kit.change((one, at) =>
-        setViewNib(
+        setViewOrden(
           one,
           at,
           'colourColumns',
@@ -141,7 +141,7 @@
     )}
     {@render setting(t('Hide empty groups'), view?.orden.hideEmpty === true, () =>
       kit.change((one, at) =>
-        setViewNib(one, at, 'hideEmpty', view?.orden.hideEmpty ? undefined : true),
+        setViewOrden(one, at, 'hideEmpty', view?.orden.hideEmpty ? undefined : true),
       ),
     )}
     <p class="orden-section">{t('Card size')}</p>
@@ -154,7 +154,7 @@
           role="radio"
           aria-checked={on}
           class:on
-          onclick={() => kit.change((one, at) => setViewNib(one, at, 'cardSize', size))}
+          onclick={() => kit.change((one, at) => setViewOrden(one, at, 'cardSize', size))}
           >{SIZES[size]}</button
         >
       {/each}
@@ -172,7 +172,7 @@
           class:on={kinds === one.kind}
           onclick={() =>
             kit.change((base, at) =>
-              setViewNib(base, at, 'rows', one.kind === 'notes' ? undefined : one.kind),
+              setViewOrden(base, at, 'rows', one.kind === 'notes' ? undefined : one.kind),
             )}>{one.label}</button
         >
       {/each}

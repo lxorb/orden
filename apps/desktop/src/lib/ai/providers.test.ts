@@ -280,7 +280,7 @@ describe('the model a provider starts on', () => {
     expect(firstModel('gemini', ['gemini-embedding-2', 'imagen-4.0-generate'])).toBeNull()
   })
 
-  test('is another server’s first, nib knowing nothing of its names', () => {
+  test('is another server’s first, Orden knowing nothing of its names', () => {
     expect(firstModel('compatible', ['llama3', 'babbage-like'])).toBe('llama3')
     expect(firstModel('compatible', [])).toBeNull()
   })

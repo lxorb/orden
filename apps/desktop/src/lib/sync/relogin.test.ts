@@ -218,7 +218,7 @@ async function asks(
 }
 
 async function syncedThenSignedOut(content: string) {
-  const me = await person('me@nib.dev')
+  const me = await person('me@orden.dev')
   const spaceId = await spaceOf(me.token)
   const laptop = new world.Device()
   laptop.disk.set(NOTE, content)
@@ -236,9 +236,9 @@ function later() {
 describe('signing back in to the same account', () => {
   test('untouched here, written there: the account’s words come down, nothing asked', async () => {
     const { me, spaceId, laptop, saved, mirror } = await syncedThenSignedOut('# Plan\n\none\n')
-    await elsewhere((await person('me@nib.dev')).token, spaceId, '# Plan\n\none\ntwo\n')
+    await elsewhere((await person('me@orden.dev')).token, spaceId, '# Plan\n\none\ntwo\n')
 
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(back.id).toBe(me.id)
     expect(await asks(laptop, back.token, back.id, saved)).toBe(false)
 
@@ -251,7 +251,7 @@ describe('signing back in to the same account', () => {
     const { spaceId, laptop, saved, mirror } = await syncedThenSignedOut('# Plan\n\none\n')
     types(laptop, NOTE, '# Plan\n\none\noffline\n')
 
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(await asks(laptop, back.token, back.id, saved)).toBe(false)
 
     await pass(laptop, mirror, back.token)
@@ -263,9 +263,9 @@ describe('signing back in to the same account', () => {
     const start = '# Plan\n\nfirst line\n\nsecond line\n'
     const { spaceId, laptop, saved, mirror } = await syncedThenSignedOut(start)
     types(laptop, NOTE, '# Plan\n\nfirst line, here\n\nsecond line\n')
-    await elsewhere((await person('me@nib.dev')).token, spaceId, `${start}\nthird, there\n`)
+    await elsewhere((await person('me@orden.dev')).token, spaceId, `${start}\nthird, there\n`)
 
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(await asks(laptop, back.token, back.id, saved)).toBe(false)
 
     await pass(laptop, mirror, back.token)
@@ -281,9 +281,9 @@ describe('signing back in to the same account', () => {
     later()
     laptop.disk.set(NOTE, '# Plan\n\nfirst line, here\n\nsecond line\n')
     laptop.kept.clear()
-    await elsewhere((await person('me@nib.dev')).token, spaceId, `${start}\nthird, there\n`)
+    await elsewhere((await person('me@orden.dev')).token, spaceId, `${start}\nthird, there\n`)
 
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(await asks(laptop, back.token, back.id, saved)).toBe(false)
 
     await pass(laptop, mirror, back.token)
@@ -299,9 +299,9 @@ describe('signing back in to the same account', () => {
     const mine = '# Plan\n\nWe meet on Thursday at the station to argue about the price.\n'
     const theirs = '# Plan\n\nWe meet on Friday in the park to celebrate the release party.\n'
     types(laptop, NOTE, mine)
-    await elsewhere((await person('me@nib.dev')).token, spaceId, theirs)
+    await elsewhere((await person('me@orden.dev')).token, spaceId, theirs)
 
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(await asks(laptop, back.token, back.id, saved)).toBe(false)
 
     await pass(laptop, mirror, back.token)
@@ -314,7 +314,7 @@ describe('signing back in to the same account', () => {
 describe('signing in with notes of unknown standing', () => {
   test('another account’s, meeting other words at one path: asks', async () => {
     const { laptop, saved } = await syncedThenSignedOut('# Plan\n\nmine\n')
-    const other = await person('other@nib.dev')
+    const other = await person('other@orden.dev')
     const theirs = await spaceOf(other.token)
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token: other.token,
@@ -326,13 +326,13 @@ describe('signing in with notes of unknown standing', () => {
 
   test('another account’s, meeting nothing: joins without a word', async () => {
     const { laptop, saved } = await syncedThenSignedOut('# Plan\n\nmine\n')
-    const other = await person('other@nib.dev')
+    const other = await person('other@orden.dev')
 
     expect(await asks(laptop, other.token, other.id, saved)).toBe(false)
   })
 
   test('no record, other words at one path: asks', async () => {
-    const me = await person('me@nib.dev')
+    const me = await person('me@orden.dev')
     const spaceId = await spaceOf(me.token)
     await call(env, `/v1/spaces/${spaceId}/notes`, {
       token: me.token,
@@ -347,9 +347,9 @@ describe('signing in with notes of unknown standing', () => {
   test('no record, an older copy of the account’s note: brought up to date, nothing asked', async () => {
     const { spaceId, laptop } = await syncedThenSignedOut('# Plan\n\none\n')
     later()
-    await elsewhere((await person('me@nib.dev')).token, spaceId, '# Plan\n\none\ntwo\n')
+    await elsewhere((await person('me@orden.dev')).token, spaceId, '# Plan\n\none\ntwo\n')
 
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(await asks(laptop, back.token, back.id, null)).toBe(false)
 
     await pass(laptop, newMirror(spaceId, ROOT), back.token)
@@ -359,7 +359,7 @@ describe('signing in with notes of unknown standing', () => {
 
   test('no record, the same words: paired, nothing asked', async () => {
     const { spaceId, laptop } = await syncedThenSignedOut('# Plan\n\none\n')
-    const back = await person('me@nib.dev')
+    const back = await person('me@orden.dev')
     expect(await asks(laptop, back.token, back.id, null)).toBe(false)
 
     const mirror = newMirror(spaceId, ROOT)
@@ -371,7 +371,7 @@ describe('signing in with notes of unknown standing', () => {
 
 describe('signing in on a device that holds nothing', () => {
   test('downloads the account, nothing asked', async () => {
-    const me = await person('me@nib.dev')
+    const me = await person('me@orden.dev')
     const spaceId = await spaceOf(me.token)
     await call(env, `/v1/spaces/${spaceId}/notes`, {
       token: me.token,

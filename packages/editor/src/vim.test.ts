@@ -11,7 +11,7 @@ import { CodeMirror, Vim } from '@replit/codemirror-vim'
 import { modeExtensions } from './modes'
 import { type DocView, SharedDoc, sharing } from './shared'
 import { loadVim, setVim } from './vim'
-import { plainNormalEnter, takeBackNibKeys } from './vim-mode'
+import { plainNormalEnter, takeBackOrdenKeys } from './vim-mode'
 
 beforeAll(() => loadVim())
 
@@ -137,7 +137,7 @@ describe("Vim's undo", () => {
 
 describe('the keys Orden keeps for itself', () => {
   test('are gone from Vim by the time anything imports it, and Ctrl+Q is not one', () => {
-    expect(takeBackNibKeys()).toEqual([])
+    expect(takeBackOrdenKeys()).toEqual([])
 
     expect(unmap('<C-q>')).toBe(true)
   })

@@ -3,7 +3,7 @@ import { EditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import { markTags } from './markdown/tags'
 
-export const nibTheme = EditorView.theme({
+export const ordenEditorTheme = EditorView.theme({
   '&': {
     height: '100%',
     backgroundColor: 'transparent',
@@ -42,7 +42,7 @@ export const nibTheme = EditorView.theme({
   },
 })
 
-export const nibHighlightStyle = HighlightStyle.define([
+export const ordenHighlightStyle = HighlightStyle.define([
   { tag: tags.heading1, fontWeight: '620' },
   { tag: tags.heading2, fontWeight: '620' },
   { tag: tags.heading3, fontWeight: '620' },

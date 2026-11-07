@@ -178,7 +178,7 @@ beforeEach(() => {
   marks.length = 0
 })
 
-describe('a Firefox profile brought into nib', () => {
+describe('a Firefox profile brought into Orden', () => {
   test('is a space of its tabs, its pinned tab an Essential, its bookmarks a folder', async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
 
@@ -257,7 +257,7 @@ const CHROME: BrowserProfile = {
 
 const bookmarksFile = () => toBase64(new TextEncoder().encode(JSON.stringify(chromium.BOOKMARKS)))
 
-describe('a Chrome profile brought into nib', () => {
+describe('a Chrome profile brought into Orden', () => {
   test('is a space of its tabs and groups, its pinned tab an Essential, its bookmarks a folder', async () => {
     files.set('Bookmarks', bookmarksFile())
     files.set('Sessions/Session_13436813666016900', chromium.SESSION)
@@ -307,7 +307,7 @@ describe('a Chrome profile brought into nib', () => {
   })
 })
 
-describe('an Arc profile brought into nib', () => {
+describe('an Arc profile brought into Orden', () => {
   const ARC_PROFILE: BrowserProfile = {
     browser: 'arc',
     name: 'Default',
@@ -342,7 +342,7 @@ const SAFARI: BrowserProfile = {
   files: [],
 }
 
-describe('Safari brought into nib', () => {
+describe('Safari brought into Orden', () => {
   test('is a space of its tab groups, its pinned tab, its bookmarks and its Reading List', async () => {
     safari = { bookmarks: safariFiles.BOOKMARKS, tabs: safariFiles.TABS, session: null }
 

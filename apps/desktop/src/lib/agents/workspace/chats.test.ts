@@ -139,7 +139,7 @@ describe('the chats an agent sees', () => {
     const { answerThreadSpaces } = await import('../../automation/caller')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
-      id: 'nib-claude',
+      id: 'orden-claude',
       built_in: true,
       name: 'Claude Code',
       scopes: ['chats.read'],
@@ -171,7 +171,7 @@ describe('the chats an agent sees', () => {
     const { answerThreadSpaces } = await import('../../automation/caller')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
-      id: 'nib-claude',
+      id: 'orden-claude',
       built_in: true,
       name: 'Claude Code',
       scopes: ['chats.read'],
@@ -201,7 +201,7 @@ describe('the chats an agent sees', () => {
     const { answerThreadSpaces } = await import('../../automation/caller')
     answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
     const grant = {
-      id: 'nib-claude',
+      id: 'orden-claude',
       built_in: true,
       name: 'Claude Code',
       scopes: ['chats.read'],

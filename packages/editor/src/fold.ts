@@ -20,7 +20,7 @@ import {
 } from './fold-motion'
 import { iconElement } from './icon'
 import { label } from './labels'
-import { NibWidget } from './live-preview/widget'
+import { OrdenWidget } from './live-preview/widget'
 
 export type FoldLines = readonly [head: number, last: number]
 
@@ -283,7 +283,7 @@ function chevron(): SVGElement {
   return iconElement(CHEVRON)
 }
 
-class FoldWidget extends NibWidget {
+class FoldWidget extends OrdenWidget {
   constructor(private readonly folded: boolean) {
     super()
   }

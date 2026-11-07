@@ -253,7 +253,7 @@ export class Hub {
       JSON.stringify({
         t: 'hello',
         device,
-        name: name || platform() || 'nib',
+        name: name || platform() || 'orden',
         platform: platform() || 'web',
         app: __APP_VERSION__,
       } satisfies FromDevice),

@@ -47,7 +47,7 @@ export function sourceOf(call: Call): string | undefined {
 
 export function writerOf(call: Call): Writer {
   const caller = call.caller
-  if (!caller.agent) return { id: 'cli', name: 'nib' }
+  if (!caller.agent) return { id: 'cli', name: 'orden' }
   const { id, name } = caller.agent
   return caller.thread ? { id, name, thread: caller.thread } : { id, name }
 }

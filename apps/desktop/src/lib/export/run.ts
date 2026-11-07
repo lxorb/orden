@@ -230,7 +230,7 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
         title: doc.title,
         author: doc.author,
         lang: doc.lang,
-        identifier: `urn:nib:${encodeURIComponent(note.path ?? doc.title)}`,
+        identifier: `urn:orden:${encodeURIComponent(note.path ?? doc.title)}`,
         modified: (options.now ?? new Date().toISOString()).replace(/\.\d+Z$/, 'Z'),
         body,
         css,

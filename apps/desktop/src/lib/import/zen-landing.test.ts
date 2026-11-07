@@ -119,7 +119,7 @@ beforeEach(() => {
   readOnly.clear()
 })
 
-describe('Zen brought into nib', () => {
+describe('Zen brought into Orden', () => {
   test('makes a space of every Zen space, in its order, with its icon and Essentials', async () => {
     const first = await landZen(PROFILE)
 
@@ -191,7 +191,7 @@ describe('Zen brought into nib', () => {
   })
 })
 
-describe('a Zen up to 1.17 brought into nib', () => {
+describe('a Zen up to 1.17 brought into Orden', () => {
   test('takes its spaces and its Essentials out of Places, which its session lacks', async () => {
     firefoxSession = ZEN_1_17
     places = ZEN_1_17_PLACES

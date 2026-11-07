@@ -198,11 +198,11 @@ describe('list items that wait for a click', () => {
 
 describe('what a slide is made of', () => {
   test('headings alone are a title', () => {
-    expect(deckOf('# Nib\n\n## slides')[0]?.shape).toBe('title')
+    expect(deckOf('# Orden\n\n## slides')[0]?.shape).toBe('title')
   })
 
   test('a heading with words under it is prose', () => {
-    expect(deckOf('# Nib\n\nWords.')[0]?.shape).toBe('prose')
+    expect(deckOf('# Orden\n\nWords.')[0]?.shape).toBe('prose')
   })
 
   test('one picture and nothing else fills the stage', () => {

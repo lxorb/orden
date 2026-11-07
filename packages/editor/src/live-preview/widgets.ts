@@ -1,5 +1,5 @@
 import { calloutIconParts } from '@orden/markdown/callouts'
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 import { iconElement } from '../icon'
 import { fenceCodeAt } from '../fence'
@@ -10,7 +10,7 @@ import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
 import { noteIndex } from '../wikilink/notes'
 
-export class BulletWidget extends NibWidget {
+export class BulletWidget extends OrdenWidget {
   constructor(private readonly depth: number) {
     super()
   }
@@ -27,7 +27,7 @@ export class BulletWidget extends NibWidget {
   }
 }
 
-export class CheckboxWidget extends NibWidget {
+export class CheckboxWidget extends OrdenWidget {
   constructor(
     private readonly checked: boolean,
     private readonly from: number,
@@ -70,7 +70,7 @@ export class CheckboxWidget extends NibWidget {
   }
 }
 
-export class RuleWidget extends NibWidget {
+export class RuleWidget extends OrdenWidget {
   override eq() {
     return true
   }
@@ -87,7 +87,7 @@ function calloutIcon(look: string | null): SVGElement | null {
   return parts ? iconElement(parts, 'callout-icon') : null
 }
 
-export class CalloutWidget extends NibWidget {
+export class CalloutWidget extends OrdenWidget {
   constructor(
     private readonly type: string,
     private readonly look: string | null,
@@ -118,7 +118,7 @@ export class CalloutWidget extends NibWidget {
   }
 }
 
-export class FenceHeaderWidget extends NibWidget {
+export class FenceHeaderWidget extends OrdenWidget {
   constructor(
     private readonly language: string,
     private readonly caption: string,
@@ -347,7 +347,7 @@ export class FenceHeaderWidget extends NibWidget {
   }
 }
 
-export class PageBreakWidget extends NibWidget {
+export class PageBreakWidget extends OrdenWidget {
   override eq() {
     return true
   }
@@ -360,7 +360,7 @@ export class PageBreakWidget extends NibWidget {
   }
 }
 
-export class EmojiWidget extends NibWidget {
+export class EmojiWidget extends OrdenWidget {
   constructor(private readonly character: string) {
     super()
   }

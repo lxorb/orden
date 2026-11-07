@@ -8,7 +8,7 @@ import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { foldLines, folding } from './fold'
 import { unclaimedKeymap } from './keymap'
 import { loadLineCommands } from './line-door'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 import { loadVim } from './vim'
 import { modalEditing, normalTab } from './vim-mode'
 
@@ -31,7 +31,7 @@ function viewOf(doc: string, at: number): EditorView {
       doc,
       selection: EditorSelection.cursor(at),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         folding(),
         modalEditing(true),
         keymap.of(unclaimedKeymap),

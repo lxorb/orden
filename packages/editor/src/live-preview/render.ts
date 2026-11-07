@@ -3,7 +3,7 @@ import { chartFigure } from '@orden/markdown/chart'
 import { DIAGRAM_LANGUAGES } from '@orden/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@orden/markdown/engines'
 import type { BaseAsk, NoteIndex } from '../wikilink/notes'
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 import 'katex/dist/katex.min.css'
 import { sequenceToMermaid } from './sequence'
 
@@ -27,7 +27,7 @@ export function prepare(tex: string): string {
     })
 }
 
-abstract class PictureWidget extends NibWidget {
+abstract class PictureWidget extends OrdenWidget {
   override ignoreEvent() {
     return false
   }
@@ -155,7 +155,7 @@ export class ChartWidget extends PictureWidget {
   }
 }
 
-export class QueryWidget extends NibWidget {
+export class QueryWidget extends OrdenWidget {
   constructor(
     private readonly code: string,
     private readonly index: NoteIndex,
@@ -192,7 +192,7 @@ export class QueryWidget extends NibWidget {
   }
 }
 
-export class BaseWidget extends NibWidget {
+export class BaseWidget extends OrdenWidget {
   constructor(
     private readonly ask: BaseAsk,
     private readonly index: NoteIndex,

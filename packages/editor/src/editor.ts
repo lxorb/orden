@@ -41,10 +41,10 @@ import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
 import { closeFence, leaveQuote } from './commands'
 import { refuseControlCharacters } from './control'
-import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
+import { ordenBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
 import { richPaste } from './paste'
-import { nibSelection } from './selection/layer'
+import { ordenSelection } from './selection/layer'
 import { steppingKeymap } from './live-preview/stepping'
 import { openTail, openTailDown } from './tail'
 import { modeExtensions } from './modes'
@@ -52,7 +52,7 @@ import { parseAhead } from './parse-ahead'
 import { documentOf, fromInput, type SharedDoc, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
-import { nibHighlightStyle, nibTheme } from './theme'
+import { ordenHighlightStyle, ordenEditorTheme } from './theme'
 
 export interface StateOptions {
   doc?: string
@@ -122,7 +122,7 @@ export function editorState(options: StateOptions): EditorState {
       landing(),
       remoteCarets(),
       ...carried,
-      nibSelection(),
+      ordenSelection(),
       EditorState.allowMultipleSelections.of(true),
       EditorView.clickAddsSelectionRange.of((event) => event.altKey && !event.shiftKey),
       rectangularSelection({ eventFilter: (event) => event.altKey && event.shiftKey }),
@@ -135,7 +135,7 @@ export function editorState(options: StateOptions): EditorState {
       EditorView.lineWrapping,
       ...(options.coveredBelow ? [coveredBelow(options.coveredBelow)] : []),
       EditorView.contentAttributes.of({ class: 'orden-write' }),
-      syntaxHighlighting(nibHighlightStyle),
+      syntaxHighlighting(ordenHighlightStyle),
       codeThemeExtension(options.codeTheme),
       modeExtensions(text.length),
       mathsPreview,
@@ -161,7 +161,7 @@ export function editorState(options: StateOptions): EditorState {
       noteDrops,
       ...(carriedNotes ? [noteCarrier.of(carriedNotes)] : []),
       ...(editPreview ? [previewEditor.of(editPreview)] : []),
-      nibTheme,
+      ordenEditorTheme,
       Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
       Prec.high(
         keymap.of([
@@ -171,7 +171,7 @@ export function editorState(options: StateOptions): EditorState {
         ]),
       ),
       shortcutExtensions(options.shortcuts),
-      boundKeymap([...tableBindings, ...nibBindings, ...standardBindings]),
+      boundKeymap([...tableBindings, ...ordenBindings, ...standardBindings]),
       keymap.of([{ key: 'ArrowDown', run: openTailDown }]),
       keymap.of(steppingKeymap),
       keymap.of(unclaimedKeymap),

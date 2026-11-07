@@ -5,7 +5,7 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { Direction, EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { firstStrong, leftToRightLines, rightToLeftLines } from './modes'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 
 beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
@@ -24,7 +24,7 @@ function viewOf(doc: string, rtl = false): EditorView {
       doc,
       selection: EditorSelection.cursor(0),
       extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         EditorView.contentAttributes.of({ dir: rtl ? 'rtl' : 'ltr' }),
         rtl ? rightToLeftLines : leftToRightLines,
       ],

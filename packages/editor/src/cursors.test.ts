@@ -3,7 +3,7 @@ import { EditorSelection, type EditorState, type StateCommand } from '@codemirro
 import { beforeAll, describe, expect, test } from 'vitest'
 import { editorState } from './editor'
 import { loadFind } from './find'
-import { nibKeymap, selectWord, unclaimedKeymap } from './keymap'
+import { ordenKeymap, selectWord, unclaimedKeymap } from './keymap'
 
 beforeAll(async () => {
   await loadFind()
@@ -81,7 +81,7 @@ describe('every one like it', () => {
 
 describe('the keys these are on', () => {
   test('are the ones the settings list holds', () => {
-    const keys = nibKeymap.map((binding) => binding.key)
+    const keys = ordenKeymap.map((binding) => binding.key)
 
     expect(keys).toContain('Mod-Alt-Shift-ArrowUp')
     expect(keys).toContain('Mod-Alt-Shift-ArrowDown')

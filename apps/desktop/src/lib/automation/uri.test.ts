@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { callbackKind, isFileUri, isNibUri, readUri, withOutcome } from './uri'
+import { callbackKind, isFileUri, isOrdenUri, readUri, withOutcome } from './uri'
 
 describe('reading a link', () => {
   test('takes the action and the arguments', () => {
@@ -19,7 +19,7 @@ describe('reading a link', () => {
   test('still reads a link written before the rename, for one release', () => {
     expect(readUri('nib://open?path=A.md')?.action).toBe('open')
     expect(readUri('web+nib://open?path=A.md')?.action).toBe('open')
-    expect(isNibUri('NIB://Open')).toBe(true)
+    expect(isOrdenUri('NIB://Open')).toBe(true)
   })
 
   test('reads the x-callback-url spelling as the plain action', () => {
@@ -65,9 +65,9 @@ describe('reading a link', () => {
   })
 
   test('says which strings are ours at all', () => {
-    expect(isNibUri('orden://open')).toBe(true)
-    expect(isNibUri(' web+orden://open ')).toBe(true)
-    expect(isNibUri('file:///etc/passwd')).toBe(false)
+    expect(isOrdenUri('orden://open')).toBe(true)
+    expect(isOrdenUri(' web+orden://open ')).toBe(true)
+    expect(isOrdenUri('file:///etc/passwd')).toBe(false)
   })
 })
 
@@ -75,7 +75,7 @@ describe('where a link may go afterwards', () => {
   test('the web, and this app itself', () => {
     expect(callbackKind('https://example.com/done')).toBe('external')
     expect(callbackKind('http://127.0.0.1/done')).toBe('external')
-    expect(callbackKind('orden://open?path=A.md')).toBe('nib')
+    expect(callbackKind('orden://open?path=A.md')).toBe('orden')
   })
 
   test('and nowhere else, whatever it is', () => {
@@ -125,6 +125,6 @@ describe('a file the Finder opened', () => {
     expect(isFileUri('file:///Users/me/Notes/Idea.md')).toBe(true)
     expect(isFileUri(' FILE:///Users/me/Idea.md')).toBe(true)
     expect(isFileUri('orden://open?path=Idea.md')).toBe(false)
-    expect(isNibUri('file:///Users/me/Notes/Idea.md')).toBe(false)
+    expect(isOrdenUri('file:///Users/me/Notes/Idea.md')).toBe(false)
   })
 })

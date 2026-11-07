@@ -1107,14 +1107,14 @@ describe('installed themes', () => {
   })
 
   test('comes back with its stamp, which is what the dropdown reads its name from', async () => {
-    const css = stamped({ id: 'rose', name: 'Rose', author: 'Nib', version: '2.0.0' }, ':root {}')
+    const css = stamped({ id: 'rose', name: 'Rose', author: 'Orden', version: '2.0.0' }, ':root {}')
     await webInvoke('write_theme', { id: 'rose', css })
 
     const listed = await webInvoke<{ id: string; path: string }[]>('list_themes')
     expect(listed).toHaveLength(1)
 
     const read = await webInvoke<string>('read_theme', { path: listed[0]?.path ?? '' })
-    expect(stampOf(read)).toEqual({ id: 'rose', name: 'Rose', author: 'Nib', version: '2.0.0' })
+    expect(stampOf(read)).toEqual({ id: 'rose', name: 'Rose', author: 'Orden', version: '2.0.0' })
   })
 })
 
@@ -1229,8 +1229,8 @@ describe('reading a whole space for the link index', () => {
   test("leaves the app's own files out, the inbox among them, as the crate's scan does", async () => {
     await write('/Notes/Idea.md', '[[Plan]]')
     await write('/Notes/.Inbox.md', '- [ ] buy eggs [[Idea]]')
-    await write('/Notes/.nib/Draft.md', 'x')
-    await write('/Notes/.nib/shot.png', '')
+    await write('/Notes/.orden/Draft.md', 'x')
+    await write('/Notes/.orden/shot.png', '')
 
     const found = await webInvoke<{ notes: { path: string }[]; files: string[] }>('scan_links', {
       root: '/Notes',
@@ -1582,5 +1582,23 @@ describe('a note kept away', () => {
     await webInvoke('let_go_note', { path: '/Notes/Plan.md' })
     expect(disk.files.has('/Notes/Plan.md')).toBe(false)
     expect(disk.snapshots).toEqual([])
+  })
+})
+
+describe('the scratchpad', () => {
+  test('lives under the new name and starts empty', async () => {
+    const path = await webInvoke<string>('scratchpad_path')
+
+    expect(path).toBe('/.orden/Scratchpad.md')
+    expect(await read(path)).toBe('')
+  })
+
+  test('brings the words written under the old name, which stay where they were', async () => {
+    await write('/.nib/Scratchpad.md', 'kept words')
+
+    const path = await webInvoke<string>('scratchpad_path')
+
+    expect(await read(path)).toBe('kept words')
+    expect(await read('/.nib/Scratchpad.md')).toBe('kept words')
   })
 })

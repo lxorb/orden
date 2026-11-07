@@ -179,7 +179,7 @@ async function message(
   for (const one of edits) {
     await editNote(
       fake.desk.desk,
-      { id: `nib-${thread.provider}`, name: 'nib', thread: by },
+      { id: `orden-${thread.provider}`, name: 'orden', thread: by },
       { path: one.path },
       [{ at: one.at, replace: one.replace }],
     )
@@ -359,7 +359,7 @@ describe('a rewind', () => {
         {
           kind: 'tool',
           id: 'c1',
-          verb: 'mcp__nib__create_folder',
+          verb: 'mcp__orden__create_folder',
           args: { path: 'Projects' },
           state: 'ok',
           result: { text: '{"path":"Projects","made":false}', images: [], error: false },
@@ -394,7 +394,7 @@ describe('a rewind over a thread that did things in any order', () => {
       clock += 10
       await editNote(
         fake.desk.desk,
-        { id: `nib-${thread.provider}`, name: 'nib', thread: thread.id },
+        { id: `orden-${thread.provider}`, name: 'orden', thread: thread.id },
         { path },
         [{ at: { quote: from }, replace: to }],
       )
@@ -869,7 +869,7 @@ describe('a helper on another provider', () => {
     await message(thread, 'ask', [])
     await message(helper, 'go', [{ path: 'x.md', at: { quote: 'two' }, replace: 'TWO' }])
 
-    expect(review.changes(thread).map((one) => one.agent)).toEqual([`nib-${helper.provider}`])
+    expect(review.changes(thread).map((one) => one.agent)).toEqual([`orden-${helper.provider}`])
   })
 })
 

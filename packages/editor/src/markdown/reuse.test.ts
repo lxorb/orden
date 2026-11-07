@@ -1,13 +1,13 @@
 import { type Tree, TreeFragment } from '@lezer/common'
 import { describe, expect, test } from 'vitest'
-import { nibMarkdownParser } from './extensions'
+import { ordenMarkdownParser } from './extensions'
 
 function edited(doc: string, tree: Tree, at: number, removed: number, inserted: string) {
   const next = doc.slice(0, at) + inserted + doc.slice(at + removed)
   const fragments = TreeFragment.applyChanges(TreeFragment.addTree(tree), [
     { fromA: at, toA: at + removed, fromB: at, toB: at + inserted.length },
   ])
-  return { next, tree: nibMarkdownParser.parse(next, fragments) }
+  return { next, tree: ordenMarkdownParser.parse(next, fragments) }
 }
 
 function shape(tree: Tree): string {
@@ -36,7 +36,7 @@ describe('parsing again after an edit', () => {
     test(`keeps the items of a long ${kind} list when the paragraph after it changes`, () => {
       const items = Array.from({ length: 400 }, (_, i) => line(i))
       const doc = `# K\n\n${items.join('')}\nend\n`
-      const tree = nibMarkdownParser.parse(doc)
+      const tree = ordenMarkdownParser.parse(doc)
       const inside = `# K\n\n${items.slice(0, 201).join('')}`.length
       const before = itemAt(tree, inside)
       expect(before).not.toBeNull()
@@ -44,7 +44,7 @@ describe('parsing again after an edit', () => {
       const after = edited(doc, tree, doc.indexOf('end\n') + 3, 0, 'q')
 
       expect(itemAt(after.tree, inside)).toBe(before)
-      expect(shape(after.tree)).toBe(shape(nibMarkdownParser.parse(after.next)))
+      expect(shape(after.tree)).toBe(shape(ordenMarkdownParser.parse(after.next)))
     })
   }
 
@@ -72,14 +72,14 @@ describe('parsing again after an edit', () => {
     ]
     for (let round = 0; round < 60; round++) {
       let doc = Array.from({ length: 120 }, () => pieces[random(pieces.length)]).join('')
-      let tree = nibMarkdownParser.parse(doc)
+      let tree = ordenMarkdownParser.parse(doc)
       for (let step = 0; step < 8; step++) {
         const at = random(doc.length + 1)
         const removed = Math.min(random(6), doc.length - at)
         const piece = pieces[random(pieces.length)] ?? ''
         const after = edited(doc, tree, at, removed, piece.slice(random(3)))
         expect(shape(after.tree), `round ${round} step ${step}`).toBe(
-          shape(nibMarkdownParser.parse(after.next)),
+          shape(ordenMarkdownParser.parse(after.next)),
         )
         doc = after.next
         tree = after.tree

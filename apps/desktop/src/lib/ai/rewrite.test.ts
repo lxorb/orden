@@ -66,7 +66,7 @@ describe('the language a translation goes into', () => {
     expect(defaultLanguage('xx')).toBe('en')
   })
 
-  test('is the app’s own language where nib has one', () => {
+  test('is the app’s own language where Orden has one', () => {
     expect(defaultLanguage('fr')).toBe('fr')
   })
 })

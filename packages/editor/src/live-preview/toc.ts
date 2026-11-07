@@ -1,4 +1,4 @@
-import { NibWidget } from './widget'
+import { OrdenWidget } from './widget'
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
@@ -36,7 +36,7 @@ export function headings(state: EditorState): Heading[] {
   return found
 }
 
-export class TocWidget extends NibWidget {
+export class TocWidget extends OrdenWidget {
   constructor(private readonly entries: Heading[]) {
     super()
   }
