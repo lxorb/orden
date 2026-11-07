@@ -183,12 +183,24 @@ export async function renderNote(
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
 }
 
-export function printInFrame(html: string, page?: PaperInches): Promise<void> {
-  if (isDesktop && platform() === 'macos') {
-    return invoke('print_page', { html, page: page ?? null }).then(
-      () => undefined,
-      () => undefined,
-    )
+export function printsInFrame(): boolean {
+  return !(isDesktop && platform() === 'macos')
+}
+
+async function bytesOf(html: string | Blob): Promise<Uint8Array> {
+  return typeof html === 'string'
+    ? new TextEncoder().encode(html)
+    : new Uint8Array(await html.arrayBuffer())
+}
+
+export function printInFrame(html: string | Blob, page?: PaperInches): Promise<void> {
+  if (!printsInFrame()) {
+    return bytesOf(html)
+      .then((bytes) => invoke('print_page', { bytes, page: page ?? null }))
+      .then(
+        () => undefined,
+        () => undefined,
+      )
   }
 
   return new Promise((resolve) => {
@@ -198,6 +210,8 @@ export function printInFrame(html: string, page?: PaperInches): Promise<void> {
     frame.setAttribute('aria-hidden', 'true')
     frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;'
 
+    const link = typeof html === 'string' ? null : URL.createObjectURL(html)
+
     let done = false
     const finish = () => {
       if (done) return
@@ -205,6 +219,7 @@ export function printInFrame(html: string, page?: PaperInches): Promise<void> {
 
       const ours = document.activeElement === frame
       frame.remove()
+      if (link) URL.revokeObjectURL(link)
       if (ours && from instanceof HTMLElement && from.isConnected) from.focus()
 
       resolve()
@@ -226,7 +241,8 @@ export function printInFrame(html: string, page?: PaperInches): Promise<void> {
 
     frame.addEventListener('load', () => void show().catch(finish))
 
-    frame.srcdoc = html
+    if (link) frame.src = link
+    else if (typeof html === 'string') frame.srcdoc = html
     document.body.append(frame)
   })
 }
