@@ -2,6 +2,7 @@ import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { RECONCILE_INTERVAL } from '../backoff'
 import { timeDevice } from './device'
+import { timeOn } from '../settings.svelte'
 import { accountServer } from './server'
 import { time } from './time.svelte'
 
@@ -21,10 +22,10 @@ $effect.root(() => {
 })
 
 if (typeof window !== 'undefined') {
-  void import('./tracking.svelte')
+  void import('./sense.svelte')
   void import('./reminding')
   const again = () => {
-    if (document.visibilityState === 'visible') void time.exchange()
+    if (timeOn() && document.visibilityState === 'visible') void time.exchange()
   }
   document.addEventListener('visibilitychange', again)
   window.addEventListener('online', again)

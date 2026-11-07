@@ -3304,4 +3304,25 @@ export const zhHant: Dictionary = {
   'Can edit': '可編輯',
   'Can manage': '可管理',
   '{from} invited you: {role}': '{from} 邀請了你：{role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    '新增計時器，並記錄前景的應用程式、網站和分頁，以及電腦的忙碌程度。',
+  Apps: '應用程式',
+  Battery: '電池',
+  Break: '休息',
+  'Daily average': '每日平均',
+  'Drag across the day to see what happened in that time.':
+    '在一天上拖曳，查看那段時間發生了什麼。',
+  'Not said': '未說明',
+  'Nothing recorded yet.': '尚無記錄。',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    '尚無記錄。說說你在做什麼，然後開始計時，或從以下其中一項開始。',
+  'Open time tracker': '開啟時間記錄',
+  Recent: '最近',
+  'Record this as': '記為',
+  'Record what happens': '記錄實際情況',
+  Reports: '報告',
+  'Since {time}': '自 {time} 起',
+  Study: '學習',
+  'What are you working on?': '你在做什麼？',
+  'You said': '自述',
 }

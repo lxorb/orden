@@ -3481,4 +3481,25 @@ export const te: Dictionary = {
   'Can edit': 'సవరించగలరు',
   'Can manage': 'నిర్వహించగలరు',
   '{from} invited you: {role}': '{from} మిమ్మల్ని ఆహ్వానించారు: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'ఒక టైమర్‌ను జోడించి, ముందున్న యాప్, సైట్, ట్యాబ్‌లను, కంప్యూటర్ ఎంత బిజీగా ఉందో రికార్డ్ చేస్తుంది.',
+  Apps: 'యాప్‌లు',
+  Battery: 'బ్యాటరీ',
+  Break: 'విరామం',
+  'Daily average': 'రోజువారీ సగటు',
+  'Drag across the day to see what happened in that time.':
+    'ఆ సమయంలో ఏమి జరిగిందో చూడటానికి రోజుపై లాగండి.',
+  'Not said': 'చెప్పలేదు',
+  'Nothing recorded yet.': 'ఇంకా ఏమీ రికార్డ్ కాలేదు.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'ఇంకా ఏమీ రికార్డ్ కాలేదు. మీరు దేనిపై పని చేస్తున్నారో చెప్పి టైమర్ ప్రారంభించండి, లేదా వీటిలో ఒకదానితో మొదలుపెట్టండి.',
+  'Open time tracker': 'సమయ ట్రాకర్ తెరువు',
+  Recent: 'ఇటీవలివి',
+  'Record this as': 'ఇలా రికార్డ్ చేయి',
+  'Record what happens': 'జరిగేదాన్ని రికార్డ్ చేయి',
+  Reports: 'నివేదికలు',
+  'Since {time}': '{time} నుండి',
+  Study: 'అధ్యయనం',
+  'What are you working on?': 'మీరు దేనిపై పని చేస్తున్నారు?',
+  'You said': 'మీరు చెప్పినది',
 }

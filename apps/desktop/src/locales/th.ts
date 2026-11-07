@@ -3339,4 +3339,25 @@ export const th: Dictionary = {
   'Can edit': 'แก้ไขได้',
   'Can manage': 'จัดการได้',
   '{from} invited you: {role}': '{from} เชิญคุณ: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'เพิ่มตัวจับเวลา และบันทึกแอป เว็บไซต์ และแท็บที่อยู่ด้านหน้า รวมถึงความยุ่งของคอมพิวเตอร์',
+  Apps: 'แอป',
+  Battery: 'แบตเตอรี่',
+  Break: 'พัก',
+  'Daily average': 'เฉลี่ยต่อวัน',
+  'Drag across the day to see what happened in that time.':
+    'ลากไปตามวันเพื่อดูว่าเกิดอะไรขึ้นในช่วงนั้น',
+  'Not said': 'ไม่ได้ระบุ',
+  'Nothing recorded yet.': 'ยังไม่มีการบันทึก',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'ยังไม่มีการบันทึก บอกว่าคุณกำลังทำอะไรแล้วเริ่มจับเวลา หรือเริ่มด้วยหนึ่งในรายการเหล่านี้',
+  'Open time tracker': 'เปิดตัวติดตามเวลา',
+  Recent: 'ล่าสุด',
+  'Record this as': 'บันทึกเป็น',
+  'Record what happens': 'บันทึกสิ่งที่เกิดขึ้น',
+  Reports: 'รายงาน',
+  'Since {time}': 'ตั้งแต่ {time}',
+  Study: 'เรียน',
+  'What are you working on?': 'คุณกำลังทำอะไรอยู่',
+  'You said': 'ที่คุณระบุ',
 }

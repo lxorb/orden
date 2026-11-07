@@ -3503,4 +3503,25 @@ export const kn: Dictionary = {
   'Can edit': 'ಸಂಪಾದಿಸಬಹುದು',
   'Can manage': 'ನಿರ್ವಹಿಸಬಹುದು',
   '{from} invited you: {role}': '{from} ನಿಮ್ಮನ್ನು ಆಮಂತ್ರಿಸಿದ್ದಾರೆ: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'ಟೈಮರ್ ಸೇರಿಸಿ, ಮುಂದೆ ಇರುವ ಆ್ಯಪ್, ಸೈಟ್, ಟ್ಯಾಬ್ ಹಾಗೂ ಕಂಪ್ಯೂಟರ್ ಎಷ್ಟು ಕಾರ್ಯನಿರತವಾಗಿದೆ ಎಂದು ದಾಖಲಿಸುತ್ತದೆ.',
+  Apps: 'ಆ್ಯಪ್‌ಗಳು',
+  Battery: 'ಬ್ಯಾಟರಿ',
+  Break: 'ವಿರಾಮ',
+  'Daily average': 'ದೈನಂದಿನ ಸರಾಸರಿ',
+  'Drag across the day to see what happened in that time.':
+    'ಆ ಸಮಯದಲ್ಲಿ ಏನಾಯಿತು ಎಂದು ನೋಡಲು ದಿನದ ಮೇಲೆ ಎಳೆಯಿರಿ.',
+  'Not said': 'ಹೇಳಿಲ್ಲ',
+  'Nothing recorded yet.': 'ಇನ್ನೂ ಏನೂ ದಾಖಲಾಗಿಲ್ಲ.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'ಇನ್ನೂ ಏನೂ ದಾಖಲಾಗಿಲ್ಲ. ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ ಎಂದು ಹೇಳಿ ಟೈಮರ್ ಆರಂಭಿಸಿ, ಅಥವಾ ಇವುಗಳಲ್ಲಿ ಒಂದರಿಂದ ಆರಂಭಿಸಿ.',
+  'Open time tracker': 'ಸಮಯ ಟ್ರ್ಯಾಕರ್ ತೆರೆಯಿರಿ',
+  Recent: 'ಇತ್ತೀಚಿನವು',
+  'Record this as': 'ಹೀಗೆ ದಾಖಲಿಸಿ',
+  'Record what happens': 'ನಡೆಯುವುದನ್ನು ದಾಖಲಿಸಿ',
+  Reports: 'ವರದಿಗಳು',
+  'Since {time}': '{time} ರಿಂದ',
+  Study: 'ಅಧ್ಯಯನ',
+  'What are you working on?': 'ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ?',
+  'You said': 'ನೀವು ಹೇಳಿದ್ದು',
 }

@@ -1,4 +1,5 @@
 import type { Row } from './ledger'
+import { type Minute, minuteValue } from './minutes'
 
 export interface TimeDisk {
   rows(): Promise<Row[]>
@@ -6,11 +7,14 @@ export interface TimeDisk {
   read(key: string): Promise<unknown>
   keep(key: string, value: unknown): Promise<void>
   clear(): Promise<void>
+  minutes(from: number, to: number): Promise<Minute[]>
+  keepMinutes(minutes: readonly Minute[], before: number): Promise<void>
   close(): void
 }
 
 const ROWS = 'rows'
 const META = 'meta'
+const MINUTES = 'minutes'
 
 const nameFor = (owner: string | null): string =>
   owner === null ? 'nib-time' : `nib-time:${owner}`
@@ -32,10 +36,12 @@ function finished(tx: IDBTransaction): Promise<void> {
 
 function opened(name: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(name, 1)
+    const request = indexedDB.open(name, 2)
     request.onupgradeneeded = () => {
-      request.result.createObjectStore(ROWS, { keyPath: 'key' })
-      request.result.createObjectStore(META)
+      const db = request.result
+      if (!db.objectStoreNames.contains(ROWS)) db.createObjectStore(ROWS, { keyPath: 'key' })
+      if (!db.objectStoreNames.contains(META)) db.createObjectStore(META)
+      if (!db.objectStoreNames.contains(MINUTES)) db.createObjectStore(MINUTES, { keyPath: 'at' })
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the time store did not open'))
@@ -80,6 +86,18 @@ export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
       const tx = db.transaction([ROWS, META], 'readwrite')
       tx.objectStore(ROWS).clear()
       tx.objectStore(META).clear()
+      await finished(tx)
+    },
+    minutes: async (from, to) => {
+      const range = IDBKeyRange.bound(from, to, false, true)
+      const all = await settled(db.transaction(MINUTES).objectStore(MINUTES).getAll(range))
+      return all.map(minuteValue).filter((one): one is Minute => one !== null)
+    },
+    keepMinutes: async (minutes, before) => {
+      const tx = db.transaction(MINUTES, 'readwrite')
+      const store = tx.objectStore(MINUTES)
+      for (const minute of minutes) store.put(minute)
+      store.delete(IDBKeyRange.upperBound(before, true))
       await finished(tx)
     },
     close: () => db.close(),

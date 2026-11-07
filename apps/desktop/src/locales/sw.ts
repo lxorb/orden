@@ -3508,4 +3508,25 @@ export const sw: Dictionary = {
   'Can edit': 'Anaweza kuhariri',
   'Can manage': 'Anaweza kusimamia',
   '{from} invited you: {role}': '{from} amekualika: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Huongeza kipima muda na kurekodi programu, tovuti na kichupo kilicho mbele na jinsi kompyuta ilivyo na shughuli.',
+  Apps: 'Programu',
+  Battery: 'Betri',
+  Break: 'Mapumziko',
+  'Daily average': 'Wastani wa kila siku',
+  'Drag across the day to see what happened in that time.':
+    'Buruta kwenye siku ili kuona kilichotokea katika muda huo.',
+  'Not said': 'Haikutajwa',
+  'Nothing recorded yet.': 'Bado hakuna kilichorekodiwa.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Bado hakuna kilichorekodiwa. Sema unachofanyia kazi kisha uanzishe kipima muda, au anza na mojawapo ya hizi.',
+  'Open time tracker': 'Fungua kifuatiliaji cha muda',
+  Recent: 'Za hivi karibuni',
+  'Record this as': 'Rekodi kama',
+  'Record what happens': 'Rekodi kinachotokea',
+  Reports: 'Ripoti',
+  'Since {time}': 'Tangu {time}',
+  Study: 'Masomo',
+  'What are you working on?': 'Unafanyia kazi nini?',
+  'You said': 'Ulichosema',
 }

@@ -3475,4 +3475,25 @@ export const pa: Dictionary = {
   'Can edit': 'ਸੋਧ ਸਕਦੇ ਹਨ',
   'Can manage': 'ਪ੍ਰਬੰਧ ਕਰ ਸਕਦੇ ਹਨ',
   '{from} invited you: {role}': '{from} ਨੇ ਤੁਹਾਨੂੰ ਸੱਦਿਆ: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'ਇੱਕ ਟਾਈਮਰ ਜੋੜਦਾ ਹੈ ਅਤੇ ਸਾਹਮਣੇ ਵਾਲੀ ਐਪ, ਸਾਈਟ ਅਤੇ ਟੈਬ, ਅਤੇ ਕੰਪਿਊਟਰ ਕਿੰਨਾ ਰੁੱਝਿਆ ਹੈ, ਇਹ ਦਰਜ ਕਰਦਾ ਹੈ।',
+  Apps: 'ਐਪਾਂ',
+  Battery: 'ਬੈਟਰੀ',
+  Break: 'ਬ੍ਰੇਕ',
+  'Daily average': 'ਰੋਜ਼ਾਨਾ ਔਸਤ',
+  'Drag across the day to see what happened in that time.':
+    'ਉਸ ਸਮੇਂ ਕੀ ਹੋਇਆ, ਇਹ ਦੇਖਣ ਲਈ ਦਿਨ ਉੱਤੇ ਖਿੱਚੋ।',
+  'Not said': 'ਨਹੀਂ ਦੱਸਿਆ',
+  'Nothing recorded yet.': 'ਹਾਲੇ ਕੁਝ ਦਰਜ ਨਹੀਂ ਹੋਇਆ।',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'ਹਾਲੇ ਕੁਝ ਦਰਜ ਨਹੀਂ ਹੋਇਆ। ਦੱਸੋ ਕਿ ਤੁਸੀਂ ਕਿਸ ਉੱਤੇ ਕੰਮ ਕਰ ਰਹੇ ਹੋ ਅਤੇ ਟਾਈਮਰ ਸ਼ੁਰੂ ਕਰੋ, ਜਾਂ ਇਹਨਾਂ ਵਿੱਚੋਂ ਕਿਸੇ ਇੱਕ ਨਾਲ ਸ਼ੁਰੂਆਤ ਕਰੋ।',
+  'Open time tracker': 'ਸਮਾਂ ਟਰੈਕਰ ਖੋਲ੍ਹੋ',
+  Recent: 'ਹਾਲੀਆ',
+  'Record this as': 'ਇਸ ਵਜੋਂ ਦਰਜ ਕਰੋ',
+  'Record what happens': 'ਜੋ ਹੁੰਦਾ ਹੈ ਦਰਜ ਕਰੋ',
+  Reports: 'ਰਿਪੋਰਟਾਂ',
+  'Since {time}': '{time} ਤੋਂ',
+  Study: 'ਪੜ੍ਹਾਈ',
+  'What are you working on?': 'ਤੁਸੀਂ ਕਿਸ ਉੱਤੇ ਕੰਮ ਕਰ ਰਹੇ ਹੋ?',
+  'You said': 'ਤੁਸੀਂ ਦੱਸਿਆ',
 }

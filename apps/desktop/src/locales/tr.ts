@@ -3487,4 +3487,25 @@ export const tr: Dictionary = {
   'Can edit': 'Düzenleyebilir',
   'Can manage': 'Yönetebilir',
   '{from} invited you: {role}': '{from} sizi davet etti: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Bir zamanlayıcı ekler; öndeki uygulamayı, siteyi, sekmeyi ve bilgisayarın ne kadar meşgul olduğunu kaydeder.',
+  Apps: 'Uygulamalar',
+  Battery: 'Pil',
+  Break: 'Mola',
+  'Daily average': 'Günlük ortalama',
+  'Drag across the day to see what happened in that time.':
+    'O sürede ne olduğunu görmek için gün boyunca sürükleyin.',
+  'Not said': 'Belirtilmemiş',
+  'Nothing recorded yet.': 'Henüz bir şey kaydedilmedi.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Henüz bir şey kaydedilmedi. Ne üzerinde çalıştığınızı yazıp zamanlayıcıyı başlatın ya da bunlardan biriyle başlayın.',
+  'Open time tracker': 'Zaman takibini aç',
+  Recent: 'Son kullanılanlar',
+  'Record this as': 'Şu olarak kaydet',
+  'Record what happens': 'Olanları kaydet',
+  Reports: 'Raporlar',
+  'Since {time}': 'Başlangıç: {time}',
+  Study: 'Ders',
+  'What are you working on?': 'Ne üzerinde çalışıyorsunuz?',
+  'You said': 'Belirttiğiniz',
 }

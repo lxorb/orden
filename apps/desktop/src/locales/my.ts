@@ -3396,4 +3396,25 @@ export const my: Dictionary = {
   'Can edit': 'ပြင်နိုင်သည်',
   'Can manage': 'စီမံနိုင်သည်',
   '{from} invited you: {role}': '{from} က သင့်ကို ဖိတ်ထားသည်: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'အချိန်တိုင်းကိရိယာ ထည့်ပေးပြီး ရှေ့ရှိ အက်ပ်၊ ဆိုက်၊ တဘ် နှင့် ကွန်ပျူတာ မည်မျှ အလုပ်များသည်ကို မှတ်တမ်းတင်သည်။',
+  Apps: 'အက်ပ်များ',
+  Battery: 'ဘက်ထရီ',
+  Break: 'အနားယူ',
+  'Daily average': 'နေ့စဉ် ပျမ်းမျှ',
+  'Drag across the day to see what happened in that time.':
+    'ထိုအချိန်အတွင်း ဘာဖြစ်ခဲ့သည်ကို ကြည့်ရန် နေ့တစ်လျှောက် ဆွဲပါ။',
+  'Not said': 'မပြောထား',
+  'Nothing recorded yet.': 'မှတ်တမ်း မရှိသေးပါ။',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'မှတ်တမ်း မရှိသေးပါ။ သင် ဘာလုပ်နေသည်ကို ပြောပြီး အချိန်တိုင်းကိရိယာကို စတင်ပါ၊ သို့မဟုတ် ဤအရာများထဲမှ တစ်ခုဖြင့် စပါ။',
+  'Open time tracker': 'အချိန် မှတ်တမ်း ဖွင့်ရန်',
+  Recent: 'မကြာသေးမီက',
+  'Record this as': 'အဖြစ် မှတ်တမ်းတင်ရန်',
+  'Record what happens': 'ဖြစ်ပျက်သည်ကို မှတ်တမ်းတင်ရန်',
+  Reports: 'အစီရင်ခံစာများ',
+  'Since {time}': '{time} မှစ၍',
+  Study: 'စာလေ့လာ',
+  'What are you working on?': 'ဘာလုပ်နေပါသလဲ?',
+  'You said': 'သင်ပြောထားသည်',
 }

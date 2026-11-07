@@ -3451,4 +3451,25 @@ export const gu: Dictionary = {
   'Can edit': 'સંપાદિત કરી શકે',
   'Can manage': 'સંચાલન કરી શકે',
   '{from} invited you: {role}': '{from} એ તમને આમંત્ર્યા: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'એક ટાઇમર ઉમેરે છે અને આગળની ઍપ, સાઇટ અને ટૅબ તેમજ કમ્પ્યુટર કેટલું વ્યસ્ત છે તે નોંધે છે.',
+  Apps: 'ઍપ્સ',
+  Battery: 'બૅટરી',
+  Break: 'વિરામ',
+  'Daily average': 'દૈનિક સરેરાશ',
+  'Drag across the day to see what happened in that time.':
+    'તે સમયમાં શું થયું તે જોવા દિવસ પર ખેંચો.',
+  'Not said': 'કહ્યું નથી',
+  'Nothing recorded yet.': 'હજુ કંઈ નોંધાયું નથી.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'હજુ કંઈ નોંધાયું નથી. તમે શેના પર કામ કરો છો તે કહો અને ટાઇમર શરૂ કરો, અથવા આમાંથી એકથી શરૂઆત કરો.',
+  'Open time tracker': 'સમય ટ્રૅકર ખોલો',
+  Recent: 'તાજેતરના',
+  'Record this as': 'આ રીતે નોંધો',
+  'Record what happens': 'જે થાય તે નોંધો',
+  Reports: 'રિપોર્ટ',
+  'Since {time}': '{time}થી',
+  Study: 'અભ્યાસ',
+  'What are you working on?': 'તમે શેના પર કામ કરો છો?',
+  'You said': 'તમે કહ્યું',
 }

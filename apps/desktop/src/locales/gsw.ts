@@ -3490,4 +3490,25 @@ export const gsw: Dictionary = {
   'Can edit': 'Chan bearbeite',
   'Can manage': 'Chan verwalte',
   '{from} invited you: {role}': '{from} hät di iiglade: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Füegt en Timer dezue und erfasst App, Websiite und Tab im Vordergrund und wie fescht de Computer usglaschtet isch.',
+  Apps: 'Apps',
+  Battery: 'Akku',
+  Break: 'Pause',
+  'Daily average': 'Tagesschnitt',
+  'Drag across the day to see what happened in that time.':
+    'Zieh über de Tag, zum gseh, was i dere Ziit passiert isch.',
+  'Not said': 'Nöd aagä',
+  'Nothing recorded yet.': 'No nüt erfasst.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'No nüt erfasst. Säg, wora du schaffsch, und start de Timer, oder fang mit eim vo dene aa.',
+  'Open time tracker': 'Ziiterfassig ufmache',
+  Recent: 'Zletscht',
+  'Record this as': 'Erfasse als',
+  'Record what happens': 'Erfasse, was passiert',
+  Reports: 'Bricht',
+  'Since {time}': 'Sit {time}',
+  Study: 'Lerne',
+  'What are you working on?': 'Wora schaffsch du?',
+  'You said': 'Dini Aagabe',
 }

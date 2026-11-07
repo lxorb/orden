@@ -3466,4 +3466,25 @@ export const ps: Dictionary = {
   'Can edit': 'سمولای شي',
   'Can manage': 'اداره کولای شي',
   '{from} invited you: {role}': '{from} تاسو وبللئ: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'یو ټایمر زیاتوي او مخکې پروت اپلیکیشن، سایټ او ټب او د کمپیوټر بوختیا ثبتوي.',
+  Apps: 'اپلیکیشنونه',
+  Battery: 'بیټري',
+  Break: 'دمه',
+  'Daily average': 'ورځنی اوسط',
+  'Drag across the day to see what happened in that time.':
+    'پر ورځ کش کړئ ترڅو وګورئ چې په هغه وخت کې څه وشول.',
+  'Not said': 'نه دي ویل شوي',
+  'Nothing recorded yet.': 'تر اوسه هیڅ نه دي ثبت شوي.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'تر اوسه هیڅ نه دي ثبت شوي. ووایاست چې پر څه کار کوئ او ټایمر پیل کړئ، یا له دې څخه په یوه پیل وکړئ.',
+  'Open time tracker': 'د وخت څارونکی پرانيستل',
+  Recent: 'وروستي',
+  'Record this as': 'په دې نوم یې ثبت کړئ',
+  'Record what happens': 'څه چې کېږي ثبت کړئ',
+  Reports: 'راپورونه',
+  'Since {time}': 'له {time} راهیسې',
+  Study: 'زده کړه',
+  'What are you working on?': 'پر څه کار کوئ؟',
+  'You said': 'ستاسو ویلي',
 }

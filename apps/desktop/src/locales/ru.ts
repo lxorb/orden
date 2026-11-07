@@ -3609,4 +3609,25 @@ export const ru: Dictionary = {
   'Can edit': 'Может редактировать',
   'Can manage': 'Может управлять',
   '{from} invited you: {role}': '{from} приглашает вас: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Добавляет таймер и записывает приложение, сайт и вкладку на переднем плане, а также загруженность компьютера.',
+  Apps: 'Приложения',
+  Battery: 'Батарея',
+  Break: 'Перерыв',
+  'Daily average': 'В среднем за день',
+  'Drag across the day to see what happened in that time.':
+    'Проведите по дню, чтобы увидеть, что происходило в это время.',
+  'Not said': 'Не указано',
+  'Nothing recorded yet.': 'Пока ничего не записано.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Пока ничего не записано. Напишите, чем вы заняты, и запустите таймер или начните с одного из этих занятий.',
+  'Open time tracker': 'Открыть учёт времени',
+  Recent: 'Недавние',
+  'Record this as': 'Записать как',
+  'Record what happens': 'Записывать происходящее',
+  Reports: 'Отчёты',
+  'Since {time}': 'С {time}',
+  Study: 'Учёба',
+  'What are you working on?': 'Чем вы заняты?',
+  'You said': 'Указано вами',
 }

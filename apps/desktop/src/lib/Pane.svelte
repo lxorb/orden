@@ -54,6 +54,7 @@
     emptySurface,
     explorerSurface,
     passSurface,
+    timeSurface,
     findBar,
     graphSurface,
     lockScreen,
@@ -508,6 +509,14 @@
     {#key tab.id}
       {#await passSurface() then PassTab}
         <PassTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'time'}
+    {#key tab.id}
+      {#await timeSurface() then TimeTab}
+        <TimeTab {tab} />
       {:catch}
         {@render unreachable()}
       {/await}

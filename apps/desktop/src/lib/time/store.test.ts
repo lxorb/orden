@@ -100,26 +100,26 @@ describe('the time a person records', () => {
     const sport = store.addActivity('Sport')
     store.countAs('space', 'space-1', uni.id)
     store.countAs('space', 'space-1', sport.id)
-    expect(store.rules.map((one) => [one.space, one.activity])).toEqual([['space-1', sport.id]])
+    expect(store.rules.map((one) => [one.place, one.activity])).toEqual([['space-1', sport.id]])
     store.countAs('site', 'moodle.ethz.ch', uni.id)
     store.removeActivity(sport.id)
-    expect(store.rules.map((one) => one.site)).toEqual(['moodle.ethz.ch'])
+    expect(store.rules.map((one) => one.place)).toEqual(['moodle.ethz.ch'])
     store.countAs('site', 'moodle.ethz.ch', null)
     expect(store.rules).toEqual([])
   })
 
-  test('tracks spaces and sites until switched off, on every device of the account', async () => {
+  test('records what happens until paused, on every device of the account', async () => {
     const server = new FakeTimeServer()
     const who = owner()
     const one = await opened(who, server)
-    expect(one.tracking).toEqual({ spaces: true, sites: true })
-    one.track({ sites: false })
+    expect(one.recording).toBe(true)
+    one.record(false)
     await one.exchange()
 
     const other = new TimeStore((name) => openTimeDisk(name === null ? null : `${name}-far`))
     await other.opened({ owner: who, server, device: 'there' })
     await other.exchange()
-    expect(other.tracking).toEqual({ spaces: true, sites: false })
+    expect(other.recording).toBe(false)
   })
 
   test('keeps one goal of each length for an activity, the same on every device', async () => {
@@ -136,6 +136,42 @@ describe('the time a person records', () => {
     expect(store.goalFor(uni.id, 'week')).toBeNull()
     store.removeActivity(uni.id)
     expect(store.goals).toEqual([])
+  })
+
+  test('starts a timer by name, finding the activity whatever its case, or making it', async () => {
+    const store = await opened(owner(), null)
+    const uni = store.addActivity('Uni')
+    store.startNamed('  uni ', 1000)
+    store.startNamed('Reading', 2000)
+    store.startNamed('   ', 3000)
+    expect(store.activities.map((one) => one.name)).toEqual(['Uni', 'Reading'])
+    expect(store.spans.map((one) => [one.activity, one.start, one.end])).toEqual([
+      [uni.id, 1000, 2000],
+      [store.named('reading')?.id, 2000, null],
+    ])
+    expect(new Set(store.activities.map((one) => one.tint)).size).toBe(2)
+  })
+
+  test('keeps the minutes on the device, and only the last ninety days of them', async () => {
+    const store = await opened(owner(), null)
+    const day = 24 * 3_600_000
+    const minute = (at: number) => ({
+      at,
+      active: 30,
+      samples: 12,
+      cpu: 0.2,
+      memory: 0.5,
+      battery: null,
+      charging: null,
+      lid: true,
+      locked: false,
+    })
+    store.keepMinutes([minute(0), minute(60_000)], 10 * day)
+    await new Promise((go) => setTimeout(go, 20))
+    expect((await store.minutes(0, day)).map((one) => one.at)).toEqual([0, 60_000])
+    store.keepMinutes([minute(100 * day)], 100 * day)
+    await new Promise((go) => setTimeout(go, 20))
+    expect((await store.minutes(0, 101 * day)).map((one) => one.at)).toEqual([100 * day])
   })
 
   test('brings in what another export holds, and nothing it has already', async () => {

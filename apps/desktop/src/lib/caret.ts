@@ -13,6 +13,7 @@ export interface Showing {
     | 'application'
     | 'explorer'
     | 'pass'
+    | 'time'
   reading: boolean
 }
 

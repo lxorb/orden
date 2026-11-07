@@ -1,6 +1,4 @@
-import type { Lanes } from './records'
-
-export type Lane = 'space' | 'site'
+import { type Lane, LANES } from './records'
 
 export interface Place {
   key: string
@@ -9,9 +7,7 @@ export interface Place {
 
 export interface Seen {
   at: number
-  active: boolean
-  space: Place | null
-  site: Place | null
+  places: Partial<Record<Lane, Place | null>>
 }
 
 export interface Writer {
@@ -32,13 +28,17 @@ export const GAP = 90_000
 export const WRITE_EVERY = 60_000
 
 export class Tracker {
-  private readonly open: Record<Lane, Open | null> = { space: null, site: null }
+  private readonly open: Record<Lane, Open | null> = {
+    app: null,
+    site: null,
+    space: null,
+    tab: null,
+  }
 
   constructor(private readonly writer: Writer) {}
 
-  seen(seen: Seen, lanes: Lanes): void {
-    this.lane('space', seen.active && lanes.spaces ? seen.space : null, seen.at)
-    this.lane('site', seen.active && lanes.sites ? seen.site : null, seen.at)
+  seen(seen: Seen): void {
+    for (const lane of LANES) this.lane(lane, seen.places[lane] ?? null, seen.at)
   }
 
   private lane(lane: Lane, place: Place | null, at: number): void {
@@ -68,7 +68,7 @@ export class Tracker {
   }
 
   flush(): void {
-    for (const lane of ['space', 'site'] as const) {
+    for (const lane of LANES) {
       const open = this.open[lane]
       if (open && open.end !== open.written) this.written(lane)
     }

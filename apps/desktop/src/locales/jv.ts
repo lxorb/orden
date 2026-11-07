@@ -3388,4 +3388,25 @@ export const jv: Dictionary = {
   'Can edit': 'Bisa nyunting',
   'Can manage': 'Bisa ngurus',
   '{from} invited you: {role}': '{from} ngundang sampeyan: {role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    'Nambahake timer lan nyathet aplikasi, situs lan tab sing ana ing ngarep sarta sepira sibuke komputer.',
+  Apps: 'Aplikasi',
+  Battery: 'Baterai',
+  Break: 'Ngaso',
+  'Daily average': 'Rata-rata saben dina',
+  'Drag across the day to see what happened in that time.':
+    'Seret ing sadawane dina kanggo ndeleng apa sing kedadeyan ing wektu kuwi.',
+  'Not said': 'Ora disebutake',
+  'Nothing recorded yet.': 'Durung ana sing kacathet.',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    'Durung ana sing kacathet. Tulis apa sing lagi sampeyan garap lan wiwiti timer, utawa wiwiti nganggo salah siji iki.',
+  'Open time tracker': 'Bukak pelacak wektu',
+  Recent: 'Paling anyar',
+  'Record this as': 'Cathet minangka',
+  'Record what happens': 'Cathet apa sing kedadeyan',
+  Reports: 'Laporan',
+  'Since {time}': 'Wiwit {time}',
+  Study: 'Sinau',
+  'What are you working on?': 'Lagi nggarap apa?',
+  'You said': 'Miturut sampeyan',
 }

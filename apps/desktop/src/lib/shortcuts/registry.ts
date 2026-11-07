@@ -14,7 +14,7 @@ import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
-import { hiddenKinds, settings } from '../settings.svelte'
+import { hiddenKinds, settings, timeOn } from '../settings.svelte'
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
 import { picks } from '../tab-strip/drag.svelte'
@@ -83,6 +83,7 @@ export interface Shortcut {
   why?: () => string
   run?: (context: AppContext) => void
   desktop?: boolean
+  shown?: () => boolean
 }
 
 const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
@@ -720,7 +721,17 @@ const APP_ENTRIES: Shortcut[] = [
           category: 'view',
           scope: 'app',
           key: null,
+          shown: () => timeOn(),
           run: () => revealPanel('time'),
+        } satisfies Shortcut,
+        {
+          id: 'time.tab',
+          label: () => t('Open time tracker'),
+          category: 'view',
+          scope: 'app',
+          key: null,
+          shown: () => timeOn(),
+          run: () => void import('../time/open').then(({ openTime }) => openTime()),
         } satisfies Shortcut,
         {
           id: 'time.start',
@@ -728,6 +739,7 @@ const APP_ENTRIES: Shortcut[] = [
           category: 'view',
           scope: 'app',
           key: null,
+          shown: () => timeOn(),
           run: () => void import('../time/commands').then(({ startTimer }) => startTimer()),
         } satisfies Shortcut,
         {
@@ -736,6 +748,7 @@ const APP_ENTRIES: Shortcut[] = [
           category: 'view',
           scope: 'app',
           key: null,
+          shown: () => timeOn(),
           run: () => void import('../time/commands').then(({ stopTimer }) => stopTimer()),
         } satisfies Shortcut,
         {
@@ -1522,7 +1535,7 @@ export function runEntry(id: string, context: AppContext): boolean {
   }
 
   const entry = BY_ID.get(id)
-  if (entry?.scope !== 'app' || !entry.run) return false
+  if (entry?.scope !== 'app' || !entry.run || entry.shown?.() === false) return false
 
   entry.run(context)
   return true
@@ -1532,7 +1545,13 @@ export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
 
   const entry = BY_ID.get(id)
-  return !!entry && entry.scope === 'app' && !!entry.run && (isDesktop || !entry.desktop)
+  return (
+    !!entry &&
+    entry.scope === 'app' &&
+    !!entry.run &&
+    (isDesktop || !entry.desktop) &&
+    entry.shown?.() !== false
+  )
 }
 
 export const SYSTEM_KEYS: Record<Platform, string[]> = {

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 const { time } = await import('./time.svelte')
 const TimePanel = (await import('./TimePanel.svelte')).default
+const TimeTab = (await import('./TimeTab.svelte')).default
 
 let target: HTMLElement
 let close: (() => void) | undefined
@@ -12,20 +13,20 @@ beforeEach(async () => {
   await time.opened({ owner: null, server: null, device: 'here' })
   for (const one of time.spans) time.removeSpan(one.id)
   for (const one of time.activities) time.removeActivity(one.id)
-  for (const one of time.rules) {
-    time.countAs(one.space ? 'space' : 'site', one.space ?? one.site ?? '', null)
-  }
   target = document.createElement('div')
   document.body.append(target)
-  const shown = mount(TimePanel, { target, intro: false })
-  close = () => void unmount(shown)
-  flushSync()
 })
 
 afterEach(() => {
   close?.()
   target.remove()
 })
+
+function shown(component: unknown, props: Record<string, unknown> = {}) {
+  const made = mount(component as typeof TimePanel, { target, props: props as never, intro: false })
+  close = () => void unmount(made)
+  flushSync()
+}
 
 const button = (label: string): HTMLButtonElement => {
   const found = [...target.querySelectorAll('button')].find(
@@ -35,73 +36,85 @@ const button = (label: string): HTMLButtonElement => {
   return found
 }
 
-describe('the time tracker', () => {
-  test('starts a timer for an activity named there, and stops it', () => {
-    button('New activity').click()
-    flushSync()
-    const field = target.querySelector<HTMLInputElement>('input.naming')
-    if (!field) throw new Error('no field to name it in')
-    field.value = 'Uni'
-    field.dispatchEvent(new Event('input', { bubbles: true }))
-    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    flushSync()
+function typed(text: string) {
+  const field = target.querySelector<HTMLInputElement>(
+    'input[placeholder="What are you working on?"]',
+  )
+  if (!field) throw new Error('no field to say it in')
+  field.value = text
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  flushSync()
+}
 
-    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Uni'])
-    expect(target.querySelector('.running')?.textContent).toContain('Uni')
+describe('the time tracker beside the notes', () => {
+  test('opens on what to do: a field to say it in, and a few to begin with', () => {
+    shown(TimePanel)
+    expect(target.textContent).toContain('Nothing recorded yet')
+    expect(target.querySelector('input[placeholder="What are you working on?"]')).not.toBeNull()
+    for (const name of ['Work', 'Study', 'Reading', 'Break']) expect(button(name)).toBeTruthy()
+    expect(target.querySelector('.days, .strip')).toBeNull()
+
+    button('Study').click()
+    flushSync()
+    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Study'])
+    expect(target.querySelector('[role="timer"]')).not.toBeNull()
+  })
+
+  test('starts what was typed, then lists it to start again, and stops', () => {
+    shown(TimePanel)
+    typed('Analysis')
+    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Analysis'])
+    expect(target.textContent).toContain('Since')
 
     button('Stop timer').click()
     flushSync()
     expect(time.running).toEqual([])
-    expect(target.querySelector('.running')).toBeNull()
-  })
+    expect(target.textContent).toContain('Recent')
+    expect(target.textContent).toContain('Today')
+    expect(target.textContent).not.toContain('Nothing recorded yet')
 
-  test('shows the day’s spans, each one opening its editor', () => {
-    const uni = time.addActivity('Uni', 'teal')
+    const row = [...target.querySelectorAll('button.nib-row')].find((one) =>
+      one.textContent.includes('Analysis'),
+    )
+    row?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    flushSync()
+    expect(time.running).toHaveLength(1)
+  })
+})
+
+describe('the time tracker as a tab', () => {
+  const tab = (doc = '') => ({ doc, note: { replace: () => undefined } })
+
+  test('lays the day out as what was said over what happened', () => {
     const now = Date.now()
+    const study = time.addActivity('Study')
+    time.addSpan({ start: now - 3_600_000, end: now - 600_000, activity: study.id })
     time.addSpan({
-      start: Math.max(now - 60_000, new Date(now).setHours(0, 0, 0, 0)),
-      end: now,
-      activity: uni.id,
+      start: now - 3_000_000,
+      end: now - 900_000,
+      source: 'site',
+      place: 'moodle.ethz.ch',
+      label: 'moodle.ethz.ch',
     })
-    flushSync()
+    shown(TimeTab, { tab: tab() })
 
-    const rows = target.querySelectorAll('.spans li button')
-    expect(rows).toHaveLength(1)
-    ;(rows[0] as HTMLButtonElement).click()
-    flushSync()
-    expect(target.querySelector('select[aria-label="Activity"]')).not.toBeNull()
-    expect(target.querySelector('.totals')?.textContent).toContain('Uni')
+    expect(target.querySelector('[role="radio"][aria-checked="true"]')?.textContent).toBe('Day')
+    expect(target.querySelector('.said .block')?.getAttribute('title')).toContain('Study')
+    expect(
+      [...target.querySelectorAll('.lane .band')].map((one) => one.getAttribute('title') ?? ''),
+    ).toContainEqual(expect.stringContaining('moodle.ethz.ch'))
+    expect(target.textContent).toContain('Drag across the day')
   })
 
-  test('lists time found in a space apart, and counts it once a rule says what it is', () => {
-    const uni = time.addActivity('Uni')
-    const now = Date.now()
-    const from = Math.max(now - 120_000, new Date(now).setHours(0, 0, 0, 0))
-    time.addSpan({ start: from, end: now, source: 'space', space: 'k', label: 'Uni space' })
-    flushSync()
+  test('shows the week and the reports, and comes back to the view it was left on', () => {
+    time.addActivity('Study')
+    shown(TimeTab, { tab: tab('{"view":"reports","day":null}') })
+    expect(target.querySelector('[role="radio"][aria-checked="true"]')?.textContent).toBe('Reports')
+    expect(target.textContent).toContain('Daily average')
 
-    expect(target.querySelectorAll('.spans li')).toHaveLength(0)
-    expect(target.textContent).toContain('Uni space')
-    const sections = () =>
-      [...target.querySelectorAll('.nib-section')].map((one) => one.firstChild?.textContent)
-    expect(sections()).toEqual(['Spaces'])
-
-    time.countAs('space', 'k', uni.id)
-    flushSync()
-    expect(sections()).toEqual(['Activity', 'Spaces'])
-    expect(target.querySelector('.totals li')?.textContent).toContain('Uni')
-  })
-
-  test('adds up a week by day', () => {
-    time.addActivity('Uni')
     button('Week').click()
     flushSync()
-    expect(target.querySelectorAll('.days li')).toHaveLength(7)
-    button('Month').click()
-    flushSync()
-    expect(target.querySelectorAll('.days li').length).toBeGreaterThanOrEqual(28)
-    button('Day').click()
-    flushSync()
-    expect(target.querySelector('.title')?.hasAttribute('disabled')).toBe(true)
+    expect(target.querySelectorAll('.week .column')).toHaveLength(7)
   })
 })

@@ -187,6 +187,8 @@ mod tasks;
 mod terminal;
 mod themes;
 #[cfg(desktop)]
+mod time_sense;
+#[cfg(desktop)]
 mod top_edge;
 #[cfg(desktop)]
 mod touchpad;
@@ -593,6 +595,7 @@ macro_rules! desktop_commands {
             web_state::web_copy,
             presence::input_idle,
             presence::device_name,
+            time_sense::time_sense,
         ]
     };
 }

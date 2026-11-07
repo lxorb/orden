@@ -3301,4 +3301,25 @@ export const zhHans: Dictionary = {
   'Can edit': '可编辑',
   'Can manage': '可管理',
   '{from} invited you: {role}': '{from} 邀请了你：{role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    '添加计时器，并记录前台的应用、网站和标签页，以及电脑的繁忙程度。',
+  Apps: '应用',
+  Battery: '电池',
+  Break: '休息',
+  'Daily average': '日均',
+  'Drag across the day to see what happened in that time.':
+    '在一天中拖动，查看那段时间发生了什么。',
+  'Not said': '未说明',
+  'Nothing recorded yet.': '尚无记录。',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    '尚无记录。说说你在做什么，然后开始计时，或从以下其中一项开始。',
+  'Open time tracker': '打开时间记录',
+  Recent: '最近',
+  'Record this as': '记为',
+  'Record what happens': '记录实际情况',
+  Reports: '报告',
+  'Since {time}': '自 {time} 起',
+  Study: '学习',
+  'What are you working on?': '你在做什么？',
+  'You said': '自述',
 }

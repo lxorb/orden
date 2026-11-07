@@ -3294,4 +3294,25 @@ export const yue: Dictionary = {
   'Can edit': '可以改',
   'Can manage': '可以管理',
   '{from} invited you: {role}': '{from} 邀請咗你：{role}',
+  'Adds a timer and records the app, site and tab in front and how busy the computer is.':
+    '加一個計時器，記錄前景嘅應用程式、網站同標籤頁，同埋部電腦有幾忙。',
+  Apps: '應用程式',
+  Battery: '電池',
+  Break: '休息',
+  'Daily average': '每日平均',
+  'Drag across the day to see what happened in that time.':
+    '喺一日上面拖過去，睇吓嗰段時間發生咗乜嘢。',
+  'Not said': '冇講',
+  'Nothing recorded yet.': '仲未有記錄。',
+  'Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.':
+    '仲未有記錄。講低你做緊乜，然後開始計時，或者由下面其中一樣開始。',
+  'Open time tracker': '開啟時間記錄',
+  Recent: '最近',
+  'Record this as': '記做',
+  'Record what happens': '記錄實際發生嘅嘢',
+  Reports: '報告',
+  'Since {time}': '由 {time} 開始',
+  Study: '溫書',
+  'What are you working on?': '你做緊乜？',
+  'You said': '你講嘅',
 }
