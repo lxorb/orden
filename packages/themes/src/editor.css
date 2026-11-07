@@ -2236,3 +2236,12 @@
   font-size: var(--text-sm);
   mask-image: none;
 }
+
+@media (forced-colors: active) {
+  .cm-line.nib-code-open,
+  .cm-line.nib-code-close,
+  .cm-line.nib-frontmatter,
+  .nib-page-break {
+    border-color: Canvas;
+  }
+}

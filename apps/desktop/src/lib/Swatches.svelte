@@ -143,6 +143,17 @@
     cursor: pointer;
   }
 
+  @media (forced-colors: active) {
+    .swatch {
+      forced-color-adjust: none;
+    }
+
+    .swatch.active {
+      outline: 2px solid Highlight;
+      outline-offset: 5px;
+    }
+  }
+
   :global([data-touch]) .swatches {
     --swatch-size: var(--touch-target);
     gap: 12px;
