@@ -282,7 +282,7 @@ windows_com = { package = "windows", version = "0.61", features = [
 [dev-dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "2", features = ["full", "visit"] }
+syn = { version = "2", features = ["full", "visit", "visit-mut"] }
 tempfile = "3"
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]

@@ -68,12 +68,14 @@ pub fn write(app: &AppHandle) {
         let _ = fs::remove_file(&path);
     }
 
-    let Ok(marks) = MARKS.lock() else { return };
+    let written = {
+        let Ok(marks) = MARKS.lock() else { return };
+        format!("{}{}", page(&marks), line(&marks))
+    };
     let Ok(mut out) = fs::OpenOptions::new().create(true).append(true).open(&path) else {
         return;
     };
-    let _ = out.write_all(page(&marks).as_bytes());
-    let _ = out.write_all(line(&marks).as_bytes());
+    let _ = out.write_all(written.as_bytes());
 }
 
 fn file(app: &AppHandle) -> Result<std::path::PathBuf, String> {
@@ -169,8 +171,12 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>, facts: Optio
         push_said(&format!("window: {}", said.step), at);
     }
 
-    if let Ok(marks) = MARKS.lock() {
-        crate::logs::say(&app, "info", &said(&marks, facts.as_deref()));
+    let told = MARKS
+        .lock()
+        .ok()
+        .map(|marks| said(&marks, facts.as_deref()));
+    if let Some(told) = told {
+        crate::logs::say(&app, "info", &told);
     }
     write(&app);
 }

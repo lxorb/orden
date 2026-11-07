@@ -569,7 +569,6 @@ fn end(running: &Arc<Running>, grace: std::time::Duration) {
     let pid = running.pid;
     signal(pid, Signal::End);
     let making = move || {
-        std::thread::sleep(grace);
         if signal(pid, Signal::Ask) {
             signal(pid, Signal::Kill);
         }
@@ -577,7 +576,10 @@ fn end(running: &Arc<Running>, grace: std::time::Duration) {
     if grace.is_zero() {
         making();
     } else {
-        std::thread::spawn(making);
+        std::thread::spawn(move || {
+            std::thread::sleep(grace);
+            making();
+        });
     }
 }
 
