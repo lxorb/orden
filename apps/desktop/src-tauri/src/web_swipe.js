@@ -71,10 +71,15 @@
   )
 
   let heard = null
-  let waiting = 0
+  const LATE = 50
+  let waiting = false
+  let frame = 0
+  let late = 0
 
   function flush() {
-    waiting = 0
+    waiting = false
+    cancelAnimationFrame(frame)
+    clearTimeout(late)
     const one = heard
     if (!one) return
     one.kept =
@@ -129,7 +134,11 @@
       heard.l = heard.l || free[0]
       heard.r = heard.r || free[1]
       heard.events.push(event)
-      if (!waiting) waiting = requestAnimationFrame(flush)
+      if (!waiting) {
+        waiting = true
+        frame = requestAnimationFrame(flush)
+        late = setTimeout(flush, LATE)
+      }
     },
     { capture: true, passive: true },
   )
