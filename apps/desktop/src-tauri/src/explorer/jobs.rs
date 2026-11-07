@@ -447,7 +447,7 @@ fn copied(
         .file_name()
         .map(|one| one.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let mut source = fs::File::open(from).map_err(fail)?;
+    let mut source = super::opened_file(from).map_err(fail)?;
     let mut target = fs::File::create_new(to).map_err(fail)?;
     *made = true;
     let mut buffer = vec![0; CHUNK];
@@ -839,6 +839,31 @@ mod tests {
         assert!(!copy.exists());
         assert!(moved.join("b.txt").is_file());
         assert!(from.join("b.txt").is_file());
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn a_folder_with_a_pipe_in_it_is_refused_at_once_and_nothing_is_left_half_copied() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let from = dir.path().join("from");
+        fs::create_dir_all(&from).expect("a folder");
+        fs::write(from.join("a.txt"), "a").expect("a file");
+        crate::explorer::tests::pipe_in(&from);
+        let to = dir.path().join("to");
+        let (said, heard) = std::sync::mpsc::channel();
+        let (source, target) = (from.clone(), to.clone());
+        std::thread::spawn(move || {
+            let running = Job::begin("test-pipe");
+            let copied = carried(&source, &target, How::Copy, &running, &mut meter());
+            let _ = said.send(matches!(copied, Err(Stop::Failed(_))));
+        });
+        let failed = heard
+            .recv_timeout(std::time::Duration::from_secs(10))
+            .expect("a pipe never holds the copy");
+        assert!(failed);
+        assert!(!to.exists());
+        assert!(from.join("a.txt").is_file());
+        assert!(from.join("pipe.txt").exists());
     }
 
     #[test]

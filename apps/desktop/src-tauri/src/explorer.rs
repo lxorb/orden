@@ -5,6 +5,22 @@ pub mod listing;
 pub mod reach;
 pub mod watch;
 
+pub(crate) fn opened_file(path: &std::path::Path) -> std::io::Result<std::fs::File> {
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = options.open(path)?;
+    if file.metadata()?.is_file() {
+        Ok(file)
+    } else {
+        Err(std::io::Error::other("not a file that can be read"))
+    }
+}
+
 pub fn shown(app: &tauri::AppHandle, path: &str) -> Result<std::path::PathBuf, String> {
     listing::asked(app, path, reach::Use::Look)
 }
@@ -21,6 +37,38 @@ mod tests {
     ];
 
     const QUICK: [&str; 1] = ["explorer_cancel"];
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(crate) fn pipe_in(folder: &std::path::Path) -> std::path::PathBuf {
+        let pipe = folder.join("pipe.txt");
+        let made = std::process::Command::new("mkfifo")
+            .arg(&pipe)
+            .status()
+            .expect("mkfifo ran");
+        assert!(made.success());
+        pipe
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn a_pipe_or_a_device_is_refused_at_once_and_a_file_is_opened() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let pipe = pipe_in(dir.path());
+        let file = dir.path().join("a.txt");
+        std::fs::write(&file, "a").expect("a file");
+        let (said, heard) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = said.send((
+                super::opened_file(&pipe).is_err(),
+                super::opened_file(std::path::Path::new("/dev/zero")).is_err(),
+                super::opened_file(&file).is_ok(),
+            ));
+        });
+        let answer = heard
+            .recv_timeout(std::time::Duration::from_secs(10))
+            .expect("opening a pipe never waits for a writer");
+        assert_eq!(answer, (true, true, true));
+    }
 
     #[test]
     fn no_file_explorer_command_waits_on_a_disk_on_the_runtime_or_the_window_s_thread() {

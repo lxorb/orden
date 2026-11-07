@@ -312,7 +312,7 @@ pub async fn explorer_peek(app: AppHandle, path: String, most: u64) -> Result<Re
     crate::lane::off_the_runtime(move || -> Result<Response, String> {
         use std::io::Read as _;
         let path = asked(&app, &path, Use::Look)?;
-        let file = fs::File::open(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+        let file = super::opened_file(&path).map_err(|why| format!("{}: {why}", path.display()))?;
         let mut bytes = Vec::new();
         file.take(most.min(MOST_PEEKED) + 1)
             .read_to_end(&mut bytes)
