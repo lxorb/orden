@@ -337,7 +337,7 @@ export function headingCandidates(
   headings: readonly { line: number; text: string; level: number }[],
   nested: boolean,
 ): Candidate<Row>[] {
-  const top = Math.min(...headings.map((one) => one.level))
+  const top = headings.reduce((least, one) => Math.min(least, one.level), Infinity)
 
   return headings.map((one) => ({
     key: null,

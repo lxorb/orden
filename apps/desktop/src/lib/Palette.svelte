@@ -25,7 +25,7 @@
   import { choose, type Hands } from './palette/choose'
   import { makeable, typedAddress, withOffers } from './palette/offers'
   import { pieces } from './palette/pieces'
-  import { ranked } from './palette/rank'
+  import { MOST_PLACES, ranked } from './palette/rank'
   import type { OpenTab, Row } from './palette/rows'
   import UnsavedDot from './UnsavedDot.svelte'
   import { isDraft } from './workspace/drafts'
@@ -229,7 +229,7 @@
     if (mode === 'commands') return commandRows()
     if (mode === 'hosts') return hostRows()
 
-    if (mode === 'headings') return ranked(term, headingRows, headingRows.length)
+    if (mode === 'headings') return ranked(term, headingRows, MOST_PLACES)
 
     if (mode === 'line') {
       const line = writing ? lineAsked(term, writing.state.doc.lines) : null

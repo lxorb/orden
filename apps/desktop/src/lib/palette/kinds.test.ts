@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { hostsOf, NOTHING_KEPT } from '../remote/hosts'
 import { candidates, headingCandidates, resting, rowKey } from './kinds'
-import { ranked } from './rank'
+import { MOST_PLACES, ranked } from './rank'
 import { command, file, named, NOW, ROOT, setting, tab, visit, world } from './world.fixture'
 
 const FILES = [
@@ -236,6 +236,18 @@ describe('the headings of the note in front', () => {
     const all = [...everything(), ...headingCandidates(HEADINGS, false)]
     expect(ranked('introduction', all).map(named)).toContain('# Introduction')
     expect(ranked('ion', all).map(named)).not.toContain('# Introduction')
+  })
+
+  test('of a very long note are listed a screenful at a time, and never overflow the stack', () => {
+    const many = Array.from({ length: 200_000 }, (_, at) => ({
+      line: at * 2,
+      text: `Day ${String(at)}`,
+      level: 2 + (at % 2),
+    }))
+    const rows = headingCandidates(many, true)
+    expect(rows[1]?.item).toMatchObject({ depth: 1 })
+    expect(ranked('', rows, MOST_PLACES)).toHaveLength(MOST_PLACES)
+    expect(ranked('day 7', rows, MOST_PLACES).length).toBeLessThanOrEqual(MOST_PLACES)
   })
 
   test('sit under one another behind `#`', () => {

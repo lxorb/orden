@@ -51,6 +51,8 @@ export const MOST = 50
 
 export const LONGEST = 256
 
+export const MOST_PLACES = 200
+
 interface Typed {
   words: readonly string[]
   typed: string
