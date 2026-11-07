@@ -1795,6 +1795,10 @@ select:focus-visible,
   list-style: none;
 }
 
+#write ul > li {
+  position: relative;
+}
+
 #write ul > li::before {
   content: '';
   position: absolute;
