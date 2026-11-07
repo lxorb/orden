@@ -10,7 +10,7 @@ import {
   type Thing,
 } from '@orden/markdown/canvas'
 import { extrasRead, extrasText, holdsExtras } from '@orden/markdown/canvas-extras'
-import { standing } from '@orden/markdown/canvas-merge'
+import { type Hunk, hunksOf, standing } from '@orden/markdown/canvas-merge'
 import * as Y from 'yjs'
 import { fold } from './fold'
 
@@ -134,95 +134,10 @@ function under(one: Placing, other: Placing): boolean {
   return one.id < other.id
 }
 
-interface Hunk {
-  at: number
-  was: readonly Thing[]
-  is: readonly Thing[]
-}
-
-const REACH = 48
-const HUNKS = 64
-
-function resync(
-  before: readonly Thing[],
-  from: number,
-  after: readonly Thing[],
-  to: number,
-): [number, number] | null {
-  const left = before.length - from
-  const right = after.length - to
-
-  for (let reach = 1; reach <= REACH; reach++) {
-    for (let dropped = 0; dropped <= reach; dropped++) {
-      const added = reach - dropped
-      if (dropped > left || added > right) continue
-      if (dropped === left && added === right) return [dropped, added]
-      if (dropped < left && added < right && before[from + dropped] === after[to + added]) {
-        return [dropped, added]
-      }
-    }
-  }
-
-  return null
-}
-
-function walked(before: readonly Thing[], after: readonly Thing[]): Hunk[] | null {
-  const hunks: Hunk[] = []
-  let from = 0
-  let to = 0
-
-  while (from < before.length || to < after.length) {
-    if (from < before.length && to < after.length && before[from] === after[to]) {
-      from++
-      to++
-      continue
-    }
-
-    const step = resync(before, from, after, to)
-    if (!step || hunks.length === HUNKS) return null
-    const [dropped, added] = step
-    hunks.push({
-      at: to,
-      was: before.slice(from, from + dropped),
-      is: after.slice(to, to + added),
-    })
-    from += dropped
-    to += added
-  }
-
-  return hunks
-}
-
-function hunksOf(before: readonly Thing[], after: readonly Thing[]): Hunk[] {
-  if (before === after) return []
-  const hunks = walked(before, after)
-  if (hunks) return hunks
-
-  let head = 0
-  const shortest = Math.min(before.length, after.length)
-  while (head < shortest && before[head] === after[head]) head++
-
-  let tail = 0
-  while (
-    tail < shortest - head &&
-    before[before.length - 1 - tail] === after[after.length - 1 - tail]
-  ) {
-    tail++
-  }
-
-  return [
-    {
-      at: head,
-      was: before.slice(head, before.length - tail),
-      is: after.slice(head, after.length - tail),
-    },
-  ]
-}
-
 function slotted(
   plane: Y.Map<Y.Map<unknown>>,
   after: readonly Thing[],
-  hunk: Hunk,
+  hunk: Hunk<Thing>,
   fresh: ReadonlySet<string>,
 ): boolean {
   const near = (thing: Thing | undefined): Placing | null | undefined => {
@@ -259,7 +174,7 @@ function slotted(
 function restack(
   plane: Y.Map<Y.Map<unknown>>,
   after: readonly Thing[],
-  hunks: readonly Hunk[],
+  hunks: readonly Hunk<Thing>[],
   fresh: ReadonlySet<string>,
 ) {
   const first = hunks[0]
