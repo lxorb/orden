@@ -43,6 +43,11 @@ async function untouchedDefault(): Promise<string | null> {
   )
 }
 
+async function orderOwed(token: string, who: string): Promise<boolean> {
+  const { orderSent } = await import('./space-owed')
+  return await orderSent(token, who)
+}
+
 async function endsNow(who: string): Promise<Set<string>> {
   const { endsOwed } = await import('./space-owed')
   return endsOwed(who)
@@ -177,6 +182,7 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     )
   }
 
+  if (who !== null && (await orderOwed(token, who))) return
   const order = paired()
   workspace.applySpaceOrder(
     account.spaces.flatMap((space) => {

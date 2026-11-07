@@ -437,7 +437,8 @@ class Sync {
 
   async pushSpaceOrder() {
     const token = account.token
-    if (!token) return
+    const accountId = account.user?.id
+    if (!token || !accountId) return
 
     const order = workspace.spaces
       .map((space) => this.remoteIdFor(space.root))
@@ -445,12 +446,9 @@ class Sync {
 
     if (!order.length) return
 
-    try {
-      await api.reorderSpaces(token, order)
-      await account.loadSpaces()
-    } catch {
-      // The next reconcile will notice; an order is not worth an error banner.
-    }
+    const { sendOrder } = await import('./space-owed')
+    await sendOrder(token, accountId, order)
+    await account.loadSpaces().catch(() => undefined)
   }
 
   remoteIdFor(root: string): string | null {

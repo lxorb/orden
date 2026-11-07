@@ -38,6 +38,11 @@ vi.mock('./api', async (importOriginal) => ({
       return Promise.resolve({ ok: true })
     },
     saveBookmarks: () => Promise.resolve(),
+    reorderSpaces: (_token: string, order: string[]) => {
+      if (!world.online) return Promise.reject(new TypeError('Failed to fetch'))
+      world.ended.push(`order ${order.join(' ')}`)
+      return Promise.resolve({ ok: true })
+    },
   },
 }))
 
@@ -83,7 +88,7 @@ vi.mock('./workspace.svelte', () => ({
 const { account } = await import('./account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('./left-spaces')
-const { endSpace, endsOwed, iconOwed, sendIcon } = await import('./space-owed')
+const { endSpace, endsOwed, iconOwed, sendIcon, sendOrder } = await import('./space-owed')
 
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []
@@ -257,4 +262,28 @@ test('a space deleted while the device pairs is not brought back by that same pa
 
   expect(world.made).toEqual(['Fresh'])
   expect(world.adopted).toEqual([])
+})
+
+test('an order chosen while the account could not be reached is not undone by it', async () => {
+  world.spaces = [
+    { id: '1', name: 'Work', root: '/Work' },
+    { id: '2', name: 'Home', root: '/Home' },
+  ]
+  signedIn('a', ['Work', 'Home'])
+  const { pairs, pairing: held } = pairing()
+  pairs.push({ root: '/Work', spaceId: 'a-Work', shared: false })
+  pairs.push({ root: '/Home', spaceId: 'a-Home', shared: false })
+  world.online = false
+  await sendOrder('token-a', 'a', ['a-Home', 'a-Work'])
+
+  await pairSpaces('token-a', held)
+  expect(world.order).toEqual([])
+
+  world.online = true
+  await pairSpaces('token-a', held)
+  expect(world.ended).toEqual(['order a-Home a-Work'])
+  expect(world.order).toEqual([])
+
+  await pairSpaces('token-a', held)
+  expect(world.order).toEqual(['/Work', '/Home'])
 })

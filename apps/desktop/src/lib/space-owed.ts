@@ -73,6 +73,14 @@ const names = new Shelf<string>(
   (value): value is string => typeof value === 'string',
 )
 
+const orders = new Shelf<string[]>(
+  'orden:space-order-owed',
+  (value): value is string[] =>
+    Array.isArray(value) && value.every((one) => typeof one === 'string'),
+)
+
+const ORDER = 'order'
+
 function unreachable(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 429 || error.status >= 500
   return true
@@ -140,4 +148,16 @@ export async function settleNames(token: string, accountId: string): Promise<voi
   for (const [spaceId, name] of Object.entries(names.of(accountId))) {
     await sendName(token, accountId, spaceId, name)
   }
+}
+
+export async function sendOrder(token: string, accountId: string, order: string[]): Promise<void> {
+  orders.put(accountId, ORDER, order)
+  if (await settled(api.reorderSpaces(token, order))) orders.paid(accountId, ORDER, order)
+}
+
+export async function orderSent(token: string, accountId: string): Promise<boolean> {
+  const owed = orders.of(accountId)[ORDER]
+  if (!owed) return false
+  await sendOrder(token, accountId, owed)
+  return true
 }
