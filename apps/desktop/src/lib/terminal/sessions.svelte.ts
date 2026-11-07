@@ -1033,8 +1033,12 @@ class Session {
 
     while (this.outgoing.length && this.pty !== null && this.source && !this.relinking) {
       const binary = this.outgoing[0]?.binary ?? false
-      let data = ''
-      while (this.outgoing[0]?.binary === binary) data += this.outgoing.shift()?.data ?? ''
+      let end = 1
+      while (this.outgoing[end]?.binary === binary) end++
+      const data = this.outgoing
+        .splice(0, end)
+        .map((one) => one.data)
+        .join('')
 
       await this.source.write(data, binary)
     }
