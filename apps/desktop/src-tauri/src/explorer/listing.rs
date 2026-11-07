@@ -339,6 +339,11 @@ pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn explorer_icon(ending: String) -> Option<String> {
+    crate::lane::off_the_runtime(move || crate::apps_host::kinds::icon(&ending)).await
+}
+
+#[tauri::command]
 pub async fn explorer_reveal(app: AppHandle, path: String) -> Result<(), String> {
     crate::lane::off_the_runtime(move || -> Result<(), String> {
         let path = asked(&app, &path, Use::Look)?;

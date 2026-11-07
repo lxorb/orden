@@ -1,8 +1,6 @@
 <script lang="ts">
   import { dropOver } from '../drag-paths'
   import { tick, untrack } from 'svelte'
-  import { fileMark } from '../file-mark'
-  import FileMark from '../FileMark.svelte'
   import { t } from '../i18n.svelte'
   import { spelled, type Spelling } from '../list-keys'
   import { shortcuts } from '../shortcuts.svelte'
@@ -13,6 +11,7 @@
   import { when } from '../when'
   import { renamePath } from './changes'
   import { dropInto, endDrag, over, startDrag } from './drag'
+  import EntryMark from './EntryMark.svelte'
   import type { Entry } from './commands'
   import { stepped } from './keys'
   import { roomMenu, rowMenu } from './menu'
@@ -444,13 +443,13 @@
                 {#if thumbs.shown.has(view.pathOf(entry.name))}
                   <img src={thumbs.shown.get(view.pathOf(entry.name))} alt="" draggable="false" />
                 {:else}
-                  <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+                  <EntryMark name={entry.name} folder={entry.folder} />
                 {/if}
               </span>
             {/if}
             <span class="name">
               {#if !grid}
-                <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
+                <EntryMark name={entry.name} folder={entry.folder} />
               {/if}
               {#if view.renaming === entry.name}
                 <input

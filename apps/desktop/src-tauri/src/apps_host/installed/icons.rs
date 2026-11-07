@@ -2,6 +2,8 @@ use base64::Engine;
 
 pub const SIDE: u32 = 32;
 
+pub const KIND_SIDE: u32 = 64;
+
 #[cfg(any(target_os = "linux", test))]
 pub const MOST_FILE: u64 = 4 * 1024 * 1024;
 
@@ -15,14 +17,22 @@ pub fn data_url(kind: &str, bytes: &[u8]) -> String {
     )
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos", test))]
+#[cfg(any(target_os = "macos", test))]
 pub fn png_url(bytes: &[u8]) -> Option<String> {
+    png_url_within(bytes, SIDE)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos", test))]
+pub fn png_url_within(bytes: &[u8], side: u32) -> Option<String> {
     let (width, height) = png_size(bytes)?;
-    if width <= SIDE && height <= SIDE {
+    if width <= side && height <= side {
         return Some(data_url("image/png", bytes));
     }
     let (rgba, width, height) = read_png(bytes)?;
-    Some(data_url("image/png", &rgba_png(&rgba, width, height)?))
+    Some(data_url(
+        "image/png",
+        &rgba_png_within(&rgba, width, height, side)?,
+    ))
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
@@ -84,12 +94,17 @@ fn read_png(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     (rgba.len() == count * 4).then_some((rgba, width, height))
 }
 
+#[cfg(any(target_os = "windows", test))]
 pub fn rgba_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
+    rgba_png_within(rgba, width, height, SIDE)
+}
+
+pub fn rgba_png_within(rgba: &[u8], width: u32, height: u32, side: u32) -> Option<Vec<u8>> {
     let (w, h) = (usize::try_from(width).ok()?, usize::try_from(height).ok()?);
     if w == 0 || h == 0 || rgba.len() < w * h * 4 {
         return None;
     }
-    let scale = (f64::from(SIDE) / f64::from(width.max(height))).min(1.0);
+    let scale = (f64::from(side) / f64::from(width.max(height))).min(1.0);
     let out_w = side_of(f64::from(width) * scale);
     let out_h = side_of(f64::from(height) * scale);
     let mut out = Vec::with_capacity(out_w * out_h * 4);
@@ -140,7 +155,7 @@ pub fn rgba_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
-    reason = "a side of at most SIDE pixels, rounded"
+    reason = "a side of at most a few hundred pixels, rounded"
 )]
 fn side_of(value: f64) -> usize {
     (value.round() as usize).max(1)
@@ -185,6 +200,18 @@ mod tests {
         let (rgba, width, _) = read_png(&one).unwrap();
         assert_eq!(width, 32);
         assert_eq!(&rgba[..4], &[255, 255, 255, 127]);
+    }
+
+    #[test]
+    fn a_kind_s_icon_is_kept_larger_than_an_application_s() {
+        let large = png_of(&[0, 255, 0, 255].repeat(256 * 256), 256, 256);
+        let url = png_url_within(&large, KIND_SIDE).unwrap();
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(url.trim_start_matches("data:image/png;base64,"))
+            .unwrap();
+        assert_eq!(png_size(&bytes), Some((KIND_SIDE, KIND_SIDE)));
+        let shrunk = rgba_png_within(&[0, 255, 0, 255].repeat(48 * 48), 48, 48, KIND_SIDE).unwrap();
+        assert_eq!(png_size(&shrunk), Some((48, 48)));
     }
 
     #[test]

@@ -319,6 +319,7 @@ windows = { version = "0.58", features = [
   "Win32_System_Com",
   "Win32_Storage_FileSystem",
   "Win32_UI_Shell_PropertiesSystem",
+  "Win32_UI_Controls",
   "Foundation",
   "Foundation_Collections",
   "Data_Xml_Dom",
