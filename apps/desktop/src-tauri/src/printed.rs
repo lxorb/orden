@@ -24,6 +24,12 @@ pub fn chunks(mut from: impl Read + Send + 'static) -> Receiver<Vec<u8>> {
     heard
 }
 
+pub fn left_running(mut child: Child) {
+    std::thread::spawn(move || {
+        let _ = child.wait();
+    });
+}
+
 pub fn output(command: &mut Command, patience: Duration) -> io::Result<Output> {
     let child = command
         .stdin(Stdio::null())
@@ -160,6 +166,19 @@ impl<F: FnMut() -> bool> Read for Lapsing<F> {
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_program_left_running_is_reaped_once_it_ends() {
+        let child = Command::new("true").spawn().expect("a program");
+        let pid = child.id();
+        left_running(child);
+        let until = Instant::now() + Duration::from_secs(5);
+        while std::path::Path::new(&format!("/proc/{pid}")).exists() {
+            assert!(Instant::now() < until, "{pid} is still a zombie");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
 
     fn sh(script: &str) -> Command {
         let mut command = Command::new("/bin/sh");
