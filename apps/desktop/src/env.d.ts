@@ -18,6 +18,9 @@ interface ImportMetaEnv {
   readonly VITE_NIB_WEB?: string
   readonly VITE_NIB_LEGACY_WEB?: string
   readonly VITE_ORDEN_CHANNEL?: string
+  readonly VITE_ORDEN_GOOGLE_CLIENT_ID?: string
+  readonly VITE_ORDEN_GOOGLE_CLIENT_SECRET?: string
+  readonly VITE_ORDEN_MICROSOFT_CLIENT_ID?: string
 }
 
 declare module 'virtual:noto-outlines' {

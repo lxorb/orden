@@ -1,12 +1,13 @@
 import type { ChatProvider, Host } from '@orden/chats/provider'
 import { secretName } from '@orden/chats/provider'
 import { mailProvider } from '@orden/chats/mail'
+import { gmailProvider, microsoftProvider } from '@orden/chats/mail-oauth'
 import { keepJson, stored, isRecord, isString } from '../stored'
 import { connected, type Connected } from './connected.svelte'
 
 const KEY = 'nib:chat-accounts'
 
-export const PROVIDERS: readonly ChatProvider[] = [mailProvider]
+export const PROVIDERS: readonly ChatProvider[] = [mailProvider, gmailProvider, microsoftProvider]
 
 export interface Saved {
   provider: string
@@ -91,7 +92,7 @@ export class Accounts {
     try {
       const linked = await this.hub.link(provider, values, this.host)
       const account = linked.account.id
-      const config: Record<string, string> = {}
+      const config: Record<string, string> = { ...linked.account.keep }
       for (const field of provider.fields) {
         const value = values[field.key]
         if (value === undefined || value === '') continue
@@ -114,6 +115,9 @@ export class Accounts {
     const provider = this.providerOf(providerId)
     for (const field of provider?.fields ?? []) {
       if (field.secret) await this.host.keepSecret(secretName(providerId, account, field.key), null)
+    }
+    for (const kept of provider?.kept ?? []) {
+      await this.host.keepSecret(secretName(providerId, account, kept), null)
     }
     this.failed = this.failed.filter((it) => it.provider !== providerId || it.account !== account)
     this.keepSaved(

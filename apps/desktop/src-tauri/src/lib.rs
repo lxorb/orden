@@ -114,6 +114,8 @@ mod notes;
 #[cfg(desktop)]
 mod notices;
 #[cfg(desktop)]
+mod oauth_loopback;
+#[cfg(desktop)]
 mod obsidian_vaults;
 #[cfg(desktop)]
 mod outside;
@@ -500,6 +502,10 @@ macro_rules! desktop_commands {
             mail_socket::mail_socket_write,
             mail_socket::mail_socket_tls,
             mail_socket::mail_socket_close,
+            oauth_loopback::oauth_loopback_open,
+            oauth_loopback::oauth_loopback_wait,
+            oauth_loopback::oauth_loopback_close,
+            oauth_loopback::oauth_post,
             terminal::terminal_shells,
             terminal::pty_spawn,
             terminal::pty_write,
@@ -728,6 +734,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 
     #[cfg(desktop)]
     let builder = builder.manage(mail_socket::MailSockets::default());
+
+    #[cfg(desktop)]
+    let builder = builder.manage(oauth_loopback::Loopbacks::default());
 
     #[cfg(desktop)]
     let builder = builder
