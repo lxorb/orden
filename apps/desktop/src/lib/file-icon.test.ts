@@ -3,7 +3,7 @@ import { readCanvas } from '@orden/markdown/canvas'
 
 const BOARD = `${JSON.stringify({ nodes: [], edges: [] }, null, '\t')}\n`
 const MARKED_BOARD = `${JSON.stringify(
-  { nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } },
+  { nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } },
   null,
   '\t',
 )}\n`
@@ -18,7 +18,7 @@ const SPACE: Record<string, string> = {
   '/space/Board.canvas': BOARD,
   '/space/Marked.canvas': MARKED_BOARD,
   '/space/Docs.url':
-    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Added=2026-01-01T00:00:00.000Z\r\nNib-Icon=data:image/png;base64,AA\r\n',
+    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nOrden-Added=2026-01-01T00:00:00.000Z\r\nOrden-Icon=data:image/png;base64,AA\r\n',
   '/space/Team.chat': `{"v":1,"chat":"${CHAT}"}\n`,
   '/space/Server.term': '{"v":1,"machine":"m_1","session":"s_1"}\n',
   '/space/Damaged.chat': 'Team\n',
@@ -118,9 +118,9 @@ describe('the icon a web note is given', () => {
     fresh()
     await setFileIcon('/space/Docs.url', 'rocket', 'violet')
     const chosen = written('/space/Docs.url') ?? ''
-    expect(chosen).toContain('Nib-Chosen-Icon=rocket\r\n')
-    expect(chosen).toContain('Nib-Chosen-Color=violet\r\n')
-    expect(chosen).toContain('Nib-Icon=data:image/png;base64,AA\r\n')
+    expect(chosen).toContain('Orden-Chosen-Icon=rocket\r\n')
+    expect(chosen).toContain('Orden-Chosen-Color=violet\r\n')
+    expect(chosen).toContain('Orden-Icon=data:image/png;base64,AA\r\n')
 
     notes['/space/Docs.url'] = chosen
     sent.length = 0
@@ -138,7 +138,7 @@ describe('the icon an open web note is given', () => {
     await setFileIcon('/space/Docs.url', 'rocket')
 
     const file = written('/space/Docs.url') ?? ''
-    expect(file).toBe(`${SPACE['/space/Docs.url'] ?? ''}Nib-Chosen-Icon=rocket\r\n`)
+    expect(file).toBe(`${SPACE['/space/Docs.url'] ?? ''}Orden-Chosen-Icon=rocket\r\n`)
     expect(workspace.tabs.find((one) => one.path === '/space/Docs.url')?.doc).toBe(
       file.replace(/\r\n/g, '\n'),
     )
@@ -226,7 +226,7 @@ describe('the icon a canvas is given', () => {
     await setFileIcon('/space/Board.canvas', 'rocket')
 
     const parsed = JSON.parse(written('/space/Board.canvas') ?? '') as Record<string, unknown>
-    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'nib'])
+    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'orden'])
     expect(parsed.nodes).toEqual([])
   })
 

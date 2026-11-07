@@ -621,7 +621,7 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const where = rowPlace(base, words(args, 'view'))
   const folder = where.folder ?? basePath.slice(0, Math.max(0, basePath.lastIndexOf('/')))
 
-  const link = base.nib.template
+  const link = base.orden.template
     ?.replace(/^\[\[|\]\]$/g, '')
     .split('|')[0]
     ?.trim()

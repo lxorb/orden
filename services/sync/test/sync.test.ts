@@ -590,7 +590,7 @@ describe('notes', () => {
     const card = (id: string, at: number) => ({
       nodes: [{ id, type: 'text', x: 0, y: 0, width: 100, height: 50, text: id }],
       edges: [],
-      nib: { version: 1, at: { [id]: at } },
+      orden: { version: 1, at: { [id]: at } },
     })
 
     async function drawn(id: string, at: number, base: number) {

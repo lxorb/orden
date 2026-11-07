@@ -14,13 +14,13 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  const written = $derived(view?.nib.colour)
+  const written = $derived(view?.orden.colour)
   const rules = $derived(colourRules(written))
   const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
   const shownRules = $derived(
     (rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when, holds) })),
   )
-  const kinds = $derived(view?.nib.rows ?? 'notes')
+  const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
   const OPERATOR_NAMES: Record<Operator, string> = {

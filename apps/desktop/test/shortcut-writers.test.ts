@@ -29,8 +29,8 @@ const FRESH: Record<string, string> = {
 
 describe('a shortcut written again', () => {
   const chosen =
-    '[InternetShortcut]\r\nURL=https://svelte.dev/\r\nTitle=Svelte\r\nNib-Added=2026-01-01T00:00:00.000Z\r\n' +
-    'Nib-Icon=data:image/png;base64,AA\r\nNib-Chosen-Icon=rocket\r\nNib-Chosen-Color=violet\r\n'
+    '[InternetShortcut]\r\nURL=https://svelte.dev/\r\nTitle=Svelte\r\nOrden-Added=2026-01-01T00:00:00.000Z\r\n' +
+    'Orden-Icon=data:image/png;base64,AA\r\nOrden-Chosen-Icon=rocket\r\nOrden-Chosen-Color=violet\r\n'
 
   test('keeps the icon the reader chose, and everything else it said', () => {
     const was = readShortcut(chosen)!

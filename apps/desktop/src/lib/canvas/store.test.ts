@@ -58,7 +58,7 @@ const ids = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 describe('a plane arriving from a room', () => {
   test('says nothing about the icon, so the file keeps it and its colour', () => {
     const { store } = opened(
-      JSON.stringify({ nodes: [], edges: [], nib: { icon: 'star', iconColor: 'red' } }),
+      JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
     )
     store.arrived({ ...blank(), nodes: [card('a')] })
     expect(store.canvas.icon).toBe('star')
@@ -71,13 +71,13 @@ describe('a plane written down after a room spoke', () => {
     vi.useFakeTimers()
     try {
       const { store, note } = opened(
-        JSON.stringify({ nodes: [], edges: [], nib: { icon: 'star', iconColor: 'red' } }),
+        JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
       )
       store.arrived({ ...blank(), nodes: [card('a')] })
       vi.runOnlyPendingTimers()
       const revision = note.revision
       const text = note.text
-      expect(JSON.parse(text).nib.iconColor).toBe('red')
+      expect(JSON.parse(text).orden.iconColor).toBe('red')
 
       expect(store.follow()).toBe(false)
       vi.runOnlyPendingTimers()

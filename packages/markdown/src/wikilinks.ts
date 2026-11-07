@@ -31,7 +31,7 @@ export interface Embeds {
 
 export function embedSink(): Embeds {
   const stamp = Math.random().toString(36).slice(2, 10)
-  return { sections: [], marker: (at) => `<!--nib:embed:${stamp}:${at}-->` }
+  return { sections: [], marker: (at) => `<!--orden:embed:${stamp}:${at}-->` }
 }
 
 const EMBED_LINE = new RegExp(`^!\\[\\[(${INNER})\\]\\][ \\t]*(?:\\r?\\n+|$)`)

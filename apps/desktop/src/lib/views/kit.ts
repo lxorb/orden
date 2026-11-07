@@ -42,7 +42,7 @@ export function notePath(row: Row): string | null {
 function walkOf(live: LiveView): string[] {
   const seen = new Set<string>()
   const layout = layoutOf(live.view?.type ?? 'table')
-  const hidden = layout === 'kanban' || layout === 'list' ? (live.view?.nib.hidden ?? []) : []
+  const hidden = layout === 'kanban' || layout === 'list' ? (live.view?.orden.hidden ?? []) : []
   for (const group of live.answer?.groups ?? []) {
     if (hidden.includes(groupName(group.key))) continue
     for (const row of group.rows) {
@@ -73,7 +73,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
     get adds() {
       if (!reachable()) return false
-      const notes = (live.view?.nib.rows ?? 'notes') === 'notes'
+      const notes = (live.view?.orden.rows ?? 'notes') === 'notes'
       if (notes) {
         const to = file ?? workspace.activeSpace?.root
         return to === undefined || canWriteAt(to)
@@ -125,7 +125,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
     add(group, template) {
       const base = live.base
-      const kinds = live.view?.nib.rows ?? 'notes'
+      const kinds = live.view?.orden.rows ?? 'notes'
       if (base && kinds === 'notes') {
         if (reachable()) {
           void addNote(base, live.at, file, group, template === undefined ? {} : { template })

@@ -5,12 +5,13 @@ const SECTION = 'internetshortcut'
 const URL_KEY = 'url'
 
 const TITLE_KEY = 'title'
-const ADDED_KEY = 'nib-added'
-const HOME_KEY = 'nib-home'
-const ICON_KEY = 'nib-icon'
-const DATA_KEY = 'nib-data'
-const CHOSEN_KEY = 'nib-chosen-icon'
-const CHOSEN_COLOUR_KEY = 'nib-chosen-color'
+const ADDED_KEY = 'orden-added'
+const HOME_KEY = 'orden-home'
+const ICON_KEY = 'orden-icon'
+const DATA_KEY = 'orden-data'
+const CHOSEN_KEY = 'orden-chosen-icon'
+const CHOSEN_COLOUR_KEY = 'orden-chosen-color'
+const FORMER = /^nib-(?=[a-z])/
 
 const OWN = /^[0-9a-f]{16}$/
 
@@ -71,14 +72,14 @@ function shortcutText(parts: {
   const rows = [
     `URL=${oneLine(url)}`,
     `Title=${oneLine(title.trim() || url)}`,
-    `Nib-Added=${when.toISOString()}`,
+    `Orden-Added=${when.toISOString()}`,
   ]
 
-  if (home && home !== url) rows.push(`Nib-Home=${oneLine(home)}`)
-  if (icon) rows.push(`Nib-Icon=${oneLine(icon)}`)
-  if (own && OWN.test(own)) rows.push(`Nib-Data=${own}`)
-  if (chosen) rows.push(`Nib-Chosen-Icon=${oneLine(chosen)}`)
-  if (chosen && chosenColour) rows.push(`Nib-Chosen-Color=${oneLine(chosenColour)}`)
+  if (home && home !== url) rows.push(`Orden-Home=${oneLine(home)}`)
+  if (icon) rows.push(`Orden-Icon=${oneLine(icon)}`)
+  if (own && OWN.test(own)) rows.push(`Orden-Data=${own}`)
+  if (chosen) rows.push(`Orden-Chosen-Icon=${oneLine(chosen)}`)
+  if (chosen && chosenColour) rows.push(`Orden-Chosen-Color=${oneLine(chosenColour)}`)
 
   return `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 }
@@ -92,6 +93,7 @@ export function readShortcut(text: string | null | undefined): Shortcut | null {
 
   let section = ''
   const said = new Map<string, string>()
+  const fresh = new Set<string>()
 
   for (const row of text.split('\n')) {
     const line = row.trim()
@@ -108,8 +110,12 @@ export function readShortcut(text: string | null | undefined): Shortcut | null {
     const at = line.indexOf('=')
     if (at < 1) continue
 
-    const key = line.slice(0, at).trim().toLowerCase()
-    if (!said.has(key)) said.set(key, line.slice(at + 1).trim())
+    const written = line.slice(0, at).trim().toLowerCase()
+    const key = written.replace(FORMER, 'orden-')
+    const former = key !== written
+    if (said.has(key) && (former || fresh.has(key))) continue
+    said.set(key, line.slice(at + 1).trim())
+    if (!former) fresh.add(key)
   }
 
   const url = said.get(URL_KEY) ?? ''

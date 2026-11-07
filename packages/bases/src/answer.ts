@@ -89,7 +89,7 @@ function byNoteName(a: string, b: string): number {
 function optionOrder(base: Base, property: string | undefined): string[] {
   if (!property) return []
   const key = property.replace(/^note\./, '')
-  return base.nib.properties[key]?.options?.map((option) => option.value) ?? []
+  return base.orden.properties[key]?.options?.map((option) => option.value) ?? []
 }
 
 export interface CompiledView {
@@ -103,7 +103,7 @@ const DEFAULT_VIEW: View = {
   order: [],
   sort: [],
   summaries: {},
-  nib: { kept: {} },
+  orden: { kept: {} },
   options: {},
 }
 
@@ -115,7 +115,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     descending: sort.direction === 'DESC',
   }))
   const group = view.groupBy ? getter(view.groupBy.property) : NONE
-  const sub = view.nib.subGroupBy ? getter(view.nib.subGroupBy.property) : NONE
+  const sub = view.orden.subGroupBy ? getter(view.orden.subGroupBy.property) : NONE
   const shown = view.order.map(getter)
   const formulas = Object.values(base.formulas).flatMap((source) => {
     try {
@@ -128,10 +128,10 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const local = filter.local && [...formulas, ...getters].every((one) => one.local)
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
 
-  const kinds = view.nib.rows ?? 'notes'
+  const kinds = view.orden.rows ?? 'notes'
   const fanOut =
     view.type === 'kanban' || view.type === 'board' || view.groupBy?.property === 'task.tags'
-  const showCompleted = view.nib.showCompleted ?? false
+  const showCompleted = view.orden.showCompleted ?? false
   let facts = new WeakMap<Row, RowFacts>()
   let factsFor = ''
 
@@ -212,7 +212,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       return a.at - b.at
     })
     const manySpaces =
-      [view.groupBy, view.nib.subGroupBy].some((by) => by?.property === 'file.path') &&
+      [view.groupBy, view.orden.subGroupBy].some((by) => by?.property === 'file.path') &&
       spaces.size > 1
     const limit = view.limit && view.limit > 0 ? view.limit : null
     const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
@@ -264,7 +264,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         } else into(key, one)
       }
       const keys = [...groups.values()]
-      const placed = view.nib.groups ?? []
+      const placed = view.orden.groups ?? []
       const rank = (key: Value): number => {
         const name = groupName(key)
         const own = placed.indexOf(name)
@@ -272,8 +272,8 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         const option = options.indexOf(name)
         return placed.length + (option === -1 ? options.length : option)
       }
-      const noneFirst = view.nib.noneFirst === true
-      if (view.nib.groupOrder !== 'rows')
+      const noneFirst = view.orden.noneFirst === true
+      if (view.orden.groupOrder !== 'rows')
         keys.sort((a, b) => {
           if (a.key === null || b.key === null)
             return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
@@ -298,7 +298,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     }
 
     const ordered = <T extends { row: Row }>(members: T[], name: string): T[] => {
-      const manual = view.nib.order?.[name]
+      const manual = view.orden.order?.[name]
       if (!manual?.length) return members
       const place = new Map(manual.map((id, at) => [id, at]))
       const rank = (one: T) =>
@@ -306,7 +306,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       return [...members].sort((a, b) => rank(a) - rank(b))
     }
 
-    const subBy = view.nib.subGroupBy
+    const subBy = view.orden.subGroupBy
     const groups = grouped(
       kept,
       (one) => one.group,

@@ -26,7 +26,7 @@ function note(path: string): Entry {
 const BASE = `views:
   - type: kanban
     name: Board
-    nib:
+    orden:
       order:
         Doing:
           - Plans/Ship.md
@@ -36,7 +36,7 @@ const BASE = `views:
 describe('a board following its cards', () => {
   test('renames a card in a .base file', () => {
     const after = movedWords(BASE, false, 'Plans/Ship.md', 'Plans/Launch.md')
-    expect(readBase(after ?? '').views[0]?.nib.order?.Doing).toEqual([
+    expect(readBase(after ?? '').views[0]?.orden.order?.Doing).toEqual([
       'Plans/Launch.md',
       'Plans/Write.md',
     ])
@@ -48,7 +48,7 @@ describe('a board following its cards', () => {
     expect(after.startsWith('# Plans\n\n```base\n')).toBe(true)
     expect(after.endsWith('```\n\nAfter.\n')).toBe(true)
     const body = after.split('```base\n')[1]?.split('```')[0] ?? ''
-    expect(readBase(body).views[0]?.nib.order?.Doing).toEqual([
+    expect(readBase(body).views[0]?.orden.order?.Doing).toEqual([
       'Projects/Ship.md',
       'Projects/Write.md',
     ])

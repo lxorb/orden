@@ -23,7 +23,7 @@ function board(adds: boolean) {
   - type: kanban
     name: Board
     groupBy: { property: task.status, direction: ASC }
-    nib: { rows: tasks }
+    orden: { rows: tasks }
 `)
   const rows = [taskRow('Plan.md', '- [ ] water the plants', 3)]
   const context = contextFor({ rows, today: '2026-10-24', now: '2026-10-24T12:00' })

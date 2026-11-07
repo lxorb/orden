@@ -19,7 +19,7 @@ function kitOf(fixed: boolean, path: string | null, rows = 'notes') {
     at: 0,
     today: '2026-10-24',
     context: contextFor({ rows: [], today: '2026-10-24', now: '2026-10-24T12:00' }),
-    view: { ...base.views[0], nib: { rows } },
+    view: { ...base.views[0], orden: { rows } },
     rows: [],
     writtenAt: path,
     fixed,

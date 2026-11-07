@@ -59,7 +59,7 @@ const BESIDE = JSON.stringify({
     },
   ],
   edges: [],
-  nib: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'blank' }] },
+  orden: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'blank' }] },
 })
 
 describe('a PDF whose move happened and then failed (#537)', () => {
@@ -112,7 +112,7 @@ describe('a PDF, as the page note that holds it', () => {
     const blank = JSON.stringify({
       nodes: [{ id: 'a', type: 'group', x: 0, y: 0, width: 794, height: 1123, label: 'Page 1' }],
       edges: [],
-      nib: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'blank' }] },
+      orden: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'blank' }] },
     })
     const { files, how } = disk({
       '/s/Lecture.pdf': '%PDF',

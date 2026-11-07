@@ -26,7 +26,7 @@ export const BUTTON = 'button.'
 export const isButton = (column: string): boolean => column.startsWith(BUTTON)
 
 export function readButtons(base: Base): Button[] {
-  const raw = base.nib.kept.buttons
+  const raw = base.orden.kept.buttons
   if (!isPlain(raw)) return []
   return Object.entries(raw).map(([name, one]): Button => {
     const plain = isPlain(one) ? one : {}
@@ -50,7 +50,7 @@ export function readButtons(base: Base): Button[] {
 }
 
 export function withButton(base: Base, name: string, button: Button | null): Base {
-  const kept = { ...base.nib.kept }
+  const kept = { ...base.orden.kept }
   const all: Plain = isPlain(kept.buttons) ? { ...kept.buttons } : {}
   if (button === null) Reflect.deleteProperty(all, name)
   else {
@@ -64,7 +64,7 @@ export function withButton(base: Base, name: string, button: Button | null): Bas
   }
   if (Object.keys(all).length) kept.buttons = all
   else Reflect.deleteProperty(kept, 'buttons')
-  return { ...base, nib: { ...base.nib, kept } }
+  return { ...base, orden: { ...base.orden, kept } }
 }
 
 export interface Press {

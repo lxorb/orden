@@ -27,7 +27,9 @@ const { kitFor } = await import('../../src/lib/views/kit')
 const TableLayout = (await import('../../src/lib/views/TableLayout.svelte')).default
 
 const TODAY = '2026-10-04'
-const BASE = readBase('views:\n  - type: table\n    order: [task.text]\n    nib: { rows: tasks }\n')
+const BASE = readBase(
+  'views:\n  - type: table\n    order: [task.text]\n    orden: { rows: tasks }\n',
+)
 
 let shown: ReturnType<typeof mount> | null = null
 

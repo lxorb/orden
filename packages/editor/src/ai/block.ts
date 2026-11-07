@@ -4,8 +4,10 @@ export function isAiLanguage(language: string): boolean {
   return language.trim().toLowerCase() === AI_LANGUAGE
 }
 
-export const ANSWER_OPEN = '<!--nib:ai-->'
-export const ANSWER_CLOSE = '<!--/nib:ai-->'
+export const ANSWER_OPEN = '<!--orden:ai-->'
+export const ANSWER_CLOSE = '<!--/orden:ai-->'
+const OPENS = new Set([ANSWER_OPEN, '<!--nib:ai-->'])
+const CLOSES = new Set([ANSWER_CLOSE, '<!--/nib:ai-->'])
 
 const NOTE_MENTION = /@note\b/i
 
@@ -20,10 +22,10 @@ export function answerSpan(
   let at = closeLine + 1
   while (at < lines.length && lines[at]?.trim() === '') at++
 
-  if (lines[at]?.trim() !== ANSWER_OPEN) return null
+  if (!OPENS.has(lines[at]?.trim() ?? '')) return null
   const opened = at
 
-  while (at < lines.length && lines[at]?.trim() !== ANSWER_CLOSE) at++
+  while (at < lines.length && !CLOSES.has(lines[at]?.trim() ?? '')) at++
   const closed = Math.min(at, lines.length - 1)
 
   return {

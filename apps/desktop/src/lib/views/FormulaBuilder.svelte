@@ -39,7 +39,7 @@
   const offers = $derived.by(() => {
     if (!base || word.length < 1) return []
     const known = [
-      ...knownProperties(base, live.view?.nib.rows ?? 'notes', live.rows),
+      ...knownProperties(base, live.view?.orden.rows ?? 'notes', live.rows),
       ...[...GLOBALS].map((one) => `${one}()`),
     ]
     const lower = word.toLowerCase()

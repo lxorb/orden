@@ -38,7 +38,7 @@ export function optionsFor(values: readonly string[]): SelectOption[] {
 }
 
 export function optionsAt(base: Base, property: string): SelectOption[] {
-  return base.nib.properties[bare(property)]?.options ?? []
+  return base.orden.properties[bare(property)]?.options ?? []
 }
 
 export function renamedIn(row: Row, property: string, from: string, to: string): RowChange | null {

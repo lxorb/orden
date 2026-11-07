@@ -31,7 +31,7 @@
   let field = $state<HTMLInputElement>()
 
   const property = $derived(kit.live.view?.groupBy?.property)
-  const notes = $derived((kit.live.view?.nib.rows ?? 'notes') === 'notes')
+  const notes = $derived((kit.live.view?.orden.rows ?? 'notes') === 'notes')
   const label = $derived(notes ? t('New note') : t('Add task'))
 
   function quick(prefill: Prefill): QuickPrefill {

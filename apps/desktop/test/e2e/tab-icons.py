@@ -21,9 +21,9 @@ DRESSED = "---\nicon: rocket\n---\n\n# Plan\n\nA note that chose an icon.\n"
 
 def shortcut(url: str, title: str, icon: str | None) -> str:
 
-    rows = [f"URL={url}", f"Title={title}", "Nib-Added=2026-09-13T08:00:00.000Z"]
+    rows = [f"URL={url}", f"Title={title}", "Orden-Added=2026-09-13T08:00:00.000Z"]
     if icon:
-        rows.append(f"Nib-Icon={icon}")
+        rows.append(f"Orden-Icon={icon}")
 
     return "[InternetShortcut]\r\n" + "\r\n".join(rows) + "\r\n"
 

@@ -85,7 +85,7 @@
 
   function add() {
     if (!kit.adds) return
-    if (layout === 'kanban' && (live.view?.nib.rows ?? 'notes') === 'notes') {
+    if (layout === 'kanban' && (live.view?.orden.rows ?? 'notes') === 'notes') {
       boardAdding++
       return
     }

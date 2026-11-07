@@ -171,7 +171,7 @@ describe('a replacement across the space', () => {
   })
 
   test('writes no file that is not a note, unless the caller says it may', async () => {
-    const shortcut = '[InternetShortcut]\r\nNib-Icon=star\r\n'
+    const shortcut = '[InternetShortcut]\r\nOrden-Icon=star\r\n'
     const { ws } = space({ [`${SPACE}/Docs.url`]: shortcut })
     const change = {
       path: `${SPACE}/Docs.url`,
@@ -578,8 +578,8 @@ describe('a replacement while the reader types', () => {
 describe('an open file with Windows line endings', () => {
   const URL_FILE = `${SPACE}/Site.url`
   const SHORTCUT =
-    '[InternetShortcut]\r\nURL=https://example.com/\r\nTitle=Site\r\nNib-Added=2026-09-13T08:00:00.000Z\r\n'
-  const CHOSEN = `${SHORTCUT}Nib-Chosen-Icon=rocket\r\n`
+    '[InternetShortcut]\r\nURL=https://example.com/\r\nTitle=Site\r\nOrden-Added=2026-09-13T08:00:00.000Z\r\n'
+  const CHOSEN = `${SHORTCUT}Orden-Chosen-Icon=rocket\r\n`
 
   test('takes an edit where it was worked out, on the disk and in the editor', async () => {
     const { ws, note, live } = typedIn(URL_FILE, SHORTCUT)
@@ -592,7 +592,7 @@ describe('an open file with Windows line endings', () => {
           before: SHORTCUT,
           after: CHOSEN,
           edits: [
-            { from: SHORTCUT.length, to: SHORTCUT.length, insert: 'Nib-Chosen-Icon=rocket\r\n' },
+            { from: SHORTCUT.length, to: SHORTCUT.length, insert: 'Orden-Chosen-Icon=rocket\r\n' },
           ],
           back: [{ from: SHORTCUT.length, to: CHOSEN.length, insert: '' }],
         },

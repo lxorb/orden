@@ -108,7 +108,7 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
 }
 
 async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
-  const waiting = (path: string) => (path.split('/').pop() ?? '').startsWith('.nib-moving-')
+  const waiting = (path: string) => /^\.(orden|nib)-moving-/.test(path.split('/').pop() ?? '')
   if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
   const { asidesBack } = await import('../sync/pass')
   return {

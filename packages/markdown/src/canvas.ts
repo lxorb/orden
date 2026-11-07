@@ -1,4 +1,4 @@
-import { type Extras, extrasFrom, holdsExtras, withExtras } from './canvas-extras'
+import { type Extras, extrasFrom, holdsExtras, ownOf, withExtras } from './canvas-extras'
 import { oneEdit, type TextEdit } from './edits'
 import { isPaper, type Paper, PAPERS } from './papers'
 
@@ -526,17 +526,17 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  const nib = isRecord(parsed.nib) ? parsed.nib : {}
+  const own = ownOf(parsed) ?? {}
 
-  if (Array.isArray(nib.words)) {
-    const bare = new Set(nib.words.filter(isString))
+  if (Array.isArray(own.words)) {
+    const bare = new Set(own.words.filter(isString))
     for (const [at, node] of nodes.entries()) {
       if (node.type === 'text' && bare.has(node.id)) nodes[at] = { ...node, bare: true }
     }
   }
 
-  if (Array.isArray(nib.shapes)) {
-    for (const entry of nib.shapes) {
+  if (Array.isArray(own.shapes)) {
+    for (const entry of own.shapes) {
       const shape = readShape(entry)
       if (!shape || ids.has(shape.id)) continue
 
@@ -548,8 +548,8 @@ export function canvasIn(text: string): Canvas | null {
   const ink: InkStroke[] = []
   const inked = new Set<string>()
 
-  if (Array.isArray(nib.ink)) {
-    for (const entry of nib.ink) {
+  if (Array.isArray(own.ink)) {
+    for (const entry of own.ink) {
       const stroke = strokeOf(entry)
       if (!stroke || inked.has(stroke.id)) continue
 
@@ -571,13 +571,13 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  const order = Array.isArray(nib.order)
-    ? nib.order.filter((id): id is string => isString(id) && !!id)
+  const order = Array.isArray(own.order)
+    ? own.order.filter((id): id is string => isString(id) && !!id)
     : []
 
-  if (Array.isArray(nib.pages)) {
+  if (Array.isArray(own.pages)) {
     const paged = new Map<string, { paper: Paper; pattern: Pattern }>()
-    for (const entry of nib.pages) {
+    for (const entry of own.pages) {
       const record = readPageRecord(entry)
       if (record && !paged.has(record.id)) paged.set(record.id, record)
     }
@@ -589,8 +589,8 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  if (Array.isArray(nib.locked)) {
-    const held = new Set(nib.locked.filter(isString))
+  if (Array.isArray(own.locked)) {
+    const held = new Set(own.locked.filter(isString))
     for (const [at, node] of nodes.entries()) {
       if (held.has(node.id)) nodes[at] = { ...node, locked: true }
     }
@@ -601,11 +601,11 @@ export function canvasIn(text: string): Canvas | null {
     nodes: inOrder(nodes, order),
     edges,
     ink,
-    at: readTimes(nib.at),
-    gone: readTimes(nib.gone),
-    ...movesIn(nib.moved),
-    icon: iconWritten(nib.icon),
-    iconColor: iconWritten(nib.iconColor),
+    at: readTimes(own.at),
+    gone: readTimes(own.gone),
+    ...movesIn(own.moved),
+    icon: iconWritten(own.icon),
+    iconColor: iconWritten(own.iconColor),
     ...(holdsExtras(extras) ? { extras } : {}),
   }
 }
@@ -784,7 +784,7 @@ function ownRuns(canvas: Canvas): string[][] {
   const icon = canvas.icon ? `,\n\t\t"icon": ${JSON.stringify(canvas.icon)}` : ''
   const tint =
     canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
-  const nib =
+  const owned =
     icon !== '' ||
     [pages, canvas.ink, shapes, order, words, locked].some((list) => list.length > 0) ||
     at !== null ||
@@ -802,7 +802,7 @@ function ownRuns(canvas: Canvas): string[][] {
     listed(edges, 1),
     [
       closes(1, edges.length) +
-        (nib ? `,\n\t"nib": {\n\t\t"version": ${ORDEN_VERSION}${icon}${tint}` : '') +
+        (owned ? `,\n\t"orden": {\n\t\t"version": ${ORDEN_VERSION}${icon}${tint}` : '') +
         opens('pages', 2, pages.length),
     ],
     listed(pages.map(pageText), 2),
@@ -820,7 +820,7 @@ function ownRuns(canvas: Canvas): string[][] {
     at ?? [],
     [gone ? ',\n\t\t"gone": ' : ''],
     [...(gone ?? []), ...(moved ? [',\n\t\t"moved": ', ...moved] : [])],
-    [nib ? '\n\t}\n}\n' : '\n}\n'],
+    [owned ? '\n\t}\n}\n' : '\n}\n'],
   ]
 }
 
@@ -848,19 +848,20 @@ export function canvasIconEdit(
   if (!text.trim()) return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
 
   const file = JSON.parse(text) as Record<string, unknown>
-  const rest: Record<string, unknown> = { ...(isRecord(file.nib) ? file.nib : {}) }
+  const rest: Record<string, unknown> = { ...ownOf(file) }
   const version = rest.version ?? ORDEN_VERSION
   delete rest.version
   delete rest.icon
   delete rest.iconColor
-  const nib: Record<string, unknown> = {
+  const own: Record<string, unknown> = {
     version,
     ...(name ? { icon: name } : {}),
     ...(name && wanted ? { iconColor: wanted } : {}),
     ...rest,
   }
-  if (Object.keys(nib).length > 1) file.nib = nib
-  else delete file.nib
+  delete file.nib
+  if (Object.keys(own).length > 1) file.orden = own
+  else delete file.orden
 
   return oneEdit(text, `${JSON.stringify(file, null, '\t')}\n`)
 }

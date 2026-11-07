@@ -58,9 +58,9 @@ function kitOf(base: Base, rows: readonly Row[], spec = {}) {
     reload: () => Promise.resolve(),
     builder: null,
     refused: 0,
-    locked: base.nib.locked === true || base.views[0]?.nib.locked === true,
+    locked: base.orden.locked === true || base.views[0]?.orden.locked === true,
     colourOf: (row: Row) => {
-      const expression = base.views[0]?.nib.colour
+      const expression = base.views[0]?.orden.colour
       const tone = expression ? cellValue(base, expression, row, context) : null
       return typeof tone === 'string' ? toneColour(tone) : null
     },
@@ -77,7 +77,7 @@ const TASKS = [
   taskRow('Thesis.md', '- [/] Draft the talk [duration:: 2h] 📅 2026-10-08', 1),
 ]
 
-const BUGS = readBase(`nib:
+const BUGS = readBase(`orden:
   properties:
     status:
       options:
@@ -137,7 +137,7 @@ describe('the table', () => {
 })
 
 describe('the table, as lane 7 left it', () => {
-  const base = readBase(`nib:
+  const base = readBase(`orden:
   buttons:
     Ship:
       set: { status: Done }
@@ -151,7 +151,7 @@ describe('the table, as lane 7 left it', () => {
 views:
   - type: table
     order: [file.name, note.status, note.points, button.Ship]
-    nib:
+    orden:
       lines: 2
       freeze: 1
       colour: 'if(status == "Doing", "4", null)'
@@ -177,7 +177,7 @@ views:
 })
 
 describe('a cell being edited', () => {
-  const TAGGED = readBase(`nib:
+  const TAGGED = readBase(`orden:
   properties:
     tags:
       options:
@@ -223,7 +223,7 @@ describe('the form', () => {
     const base = readBase(`views:
   - type: form
     order: [file.name, note.status, note.due]
-    nib:
+    orden:
       required: [status]
 `)
     const html = render(FormLayout, { props: { kit: kitOf(base, NOTES) } }).body
@@ -263,7 +263,7 @@ describe('the board', () => {
 
   test('groups task lines by their box', () => {
     const base = readBase(
-      'views:\n  - type: kanban\n    groupBy: { property: task.status, direction: ASC }\n    nib: { rows: tasks }\n',
+      'views:\n  - type: kanban\n    groupBy: { property: task.status, direction: ASC }\n    orden: { rows: tasks }\n',
     )
     const html = render(BoardLayout, { props: { kit: kitOf(base, TASKS) } }).body
     expect(html).toContain('To do')
@@ -273,7 +273,7 @@ describe('the board', () => {
 
 describe('the calendar', () => {
   test('is a month of days with the rows on theirs', () => {
-    const base = readBase('views:\n  - type: calendar\n    nib: { rows: tasks }\n')
+    const base = readBase('views:\n  - type: calendar\n    orden: { rows: tasks }\n')
     const html = render(CalendarLayout, { props: { kit: kitOf(base, TASKS) } }).body
     expect(html).toContain('Milk')
     expect(html).toContain('Draft the talk')
@@ -294,7 +294,7 @@ describe('Upcoming', () => {
 
 describe('the timeline', () => {
   test('is a bar per dated row beside its name', () => {
-    const base = readBase('views:\n  - type: timeline\n    nib: { rows: tasks }\n')
+    const base = readBase('views:\n  - type: timeline\n    orden: { rows: tasks }\n')
     const html = render(TimelineLayout, { props: { kit: kitOf(base, TASKS) } }).body
     expect(html.match(/class="span/g)).toHaveLength(3)
     expect(html).toContain('Draft the talk')
@@ -313,7 +313,7 @@ describe('the chart', () => {
 
 describe('on a phone', () => {
   test('the calendar is an agenda and the table rows with their properties', () => {
-    const base = readBase('views:\n  - type: calendar\n    nib: { rows: tasks }\n')
+    const base = readBase('views:\n  - type: calendar\n    orden: { rows: tasks }\n')
     const agenda = render(AgendaLayout, { props: { kit: kitOf(base, TASKS) } }).body
     expect(agenda).toContain('Today')
     expect(agenda).toContain('Milk')

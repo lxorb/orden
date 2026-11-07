@@ -64,7 +64,7 @@ describe('the Display menu', () => {
   test('a note grouped by its headings keeps them in the order they are written', () => {
     const view = withGrouping(today, 0, 'section', original).views[0]
     expect(view?.groupBy?.property).toBe('task.section')
-    expect(view?.nib.groupOrder).toBe('rows')
+    expect(view?.orden.groupOrder).toBe('rows')
   })
 
   test('done tasks stay in the view, or go', () => {
@@ -89,7 +89,7 @@ describe('the Display menu', () => {
     expect(words(withOnly(today, 0, { project: 'Errands.md' }))).toHaveLength(3)
     expect(words(withOnly(today, 0, { project: 'Elsewhere.md' }))).toEqual([])
     expect(notesIn(ROWS)).toEqual([{ path: 'Errands.md', name: 'Errands' }])
-    expect(withOnly(narrowed, 0, {}).views[0]?.nib.kept.only).toBeUndefined()
+    expect(withOnly(narrowed, 0, {}).views[0]?.orden.kept.only).toBeUndefined()
   })
 
   test('narrowed to a note of one space, leaves out the note of that path in another', () => {
@@ -272,7 +272,7 @@ describe('the Display menu over Todos', () => {
     if (!view) throw new Error('no view')
     expect(changedFrom(view, original)).toEqual({ sort: 1, filter: 0, total: 1 })
     const back = withGrouping(byLabel, 0, 'default', original)
-    expect(back.views[0]?.nib.groups).toEqual(original?.nib.groups)
+    expect(back.views[0]?.orden.groups).toEqual(original?.orden.groups)
   })
 
   test('a view of another kind grouped by date gets the formula it groups by', () => {

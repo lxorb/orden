@@ -10,7 +10,7 @@ describe('the file a website is written as', () => {
       '[InternetShortcut]\r\n' +
         'URL=https://svelte.dev/docs\r\n' +
         'Title=Svelte docs\r\n' +
-        'Nib-Added=2026-09-12T08:30:00.000Z\r\n',
+        'Orden-Added=2026-09-12T08:30:00.000Z\r\n',
     )
   })
 
@@ -45,9 +45,9 @@ describe('the file a website is written as', () => {
 
   test('says a note keeps its own web data, and reads it back', () => {
     const written = writeShortcut('https://a.example', 'A', WHEN, null, null, '3f9a0c17e2b4d685')
-    expect(written).toContain('Nib-Data=3f9a0c17e2b4d685\r\n')
+    expect(written).toContain('Orden-Data=3f9a0c17e2b4d685\r\n')
     expect(readShortcut(written)?.own).toBe('3f9a0c17e2b4d685')
-    expect(writeShortcut('https://a.example', 'A', WHEN)).not.toContain('Nib-Data')
+    expect(writeShortcut('https://a.example', 'A', WHEN)).not.toContain('Orden-Data')
   })
 
   test('a tab is on its file’s web data, and one with no file on what it took along', () => {
@@ -65,13 +65,13 @@ describe('the file a website is written as', () => {
 
   test('and reads anything else in that key as a note that shares the one store', () => {
     for (const value of ['', 'yes', '3F9A0C17E2B4D68', '../web', '3f9a0c17e2b4d685x']) {
-      const text = `[InternetShortcut]\r\nURL=https://a.example\r\nNib-Data=${value}\r\n`
+      const text = `[InternetShortcut]\r\nURL=https://a.example\r\nOrden-Data=${value}\r\n`
       expect(readShortcut(text)?.own, value).toBeNull()
     }
     const loose = '[InternetShortcut]\nURL=https://a.example\nnib-data= 3F9A0C17E2B4D685 '
     expect(readShortcut(loose)?.own).toBe('3f9a0c17e2b4d685')
     expect(writeShortcut('https://a.example', 'A', WHEN, null, null, 'not an id')).not.toContain(
-      'Nib-Data',
+      'Orden-Data',
     )
   })
 
@@ -85,8 +85,8 @@ describe('the file a website is written as', () => {
     )
 
     expect(written).toContain('URL=https://svelte.dev/docs/svelte/what-are-runes')
-    expect(written).toContain('Nib-Home=https://svelte.dev/docs')
-    expect(written).toContain('Nib-Icon=https://svelte.dev/favicon.png')
+    expect(written).toContain('Orden-Home=https://svelte.dev/docs')
+    expect(written).toContain('Orden-Icon=https://svelte.dev/favicon.png')
 
     const said = readShortcut(written)
     expect(said?.url).toBe('https://svelte.dev/docs/svelte/what-are-runes')
@@ -96,8 +96,8 @@ describe('the file a website is written as', () => {
 
   test('says nothing about home when the reading is where the note points', () => {
     const written = writeShortcut('https://a.example/', 'A', WHEN, 'https://a.example/', null)
-    expect(written).not.toContain('Nib-Home')
-    expect(written).not.toContain('Nib-Icon')
+    expect(written).not.toContain('Orden-Home')
+    expect(written).not.toContain('Orden-Icon')
     expect(written.split('\r\n')).toHaveLength(5)
   })
 })

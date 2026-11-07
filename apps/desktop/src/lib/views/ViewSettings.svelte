@@ -23,7 +23,7 @@
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const layout = $derived(layoutOf(view?.type ?? 'table'))
-  const kinds = $derived(view?.nib.rows ?? 'notes')
+  const kinds = $derived(view?.orden.rows ?? 'notes')
   const offered = $derived(
     LAYOUTS.filter(
       (one) =>
@@ -129,20 +129,26 @@
   {/if}
 
   {#if board}
-    {@render setting(t('Colour columns'), view?.nib.colourColumns !== false, () =>
+    {@render setting(t('Colour columns'), view?.orden.colourColumns !== false, () =>
       kit.change((one, at) =>
-        setViewNib(one, at, 'colourColumns', view?.nib.colourColumns === false ? undefined : false),
+        setViewNib(
+          one,
+          at,
+          'colourColumns',
+          view?.orden.colourColumns === false ? undefined : false,
+        ),
       ),
     )}
-    {@render setting(t('Hide empty groups'), view?.nib.hideEmpty === true, () =>
+    {@render setting(t('Hide empty groups'), view?.orden.hideEmpty === true, () =>
       kit.change((one, at) =>
-        setViewNib(one, at, 'hideEmpty', view?.nib.hideEmpty ? undefined : true),
+        setViewNib(one, at, 'hideEmpty', view?.orden.hideEmpty ? undefined : true),
       ),
     )}
     <p class="orden-section">{t('Card size')}</p>
     <div class="orden-segmented" role="radiogroup" aria-label={t('Card size')} use:segmented>
       {#each CARD_SIZES as size (size)}
-        {@const on = sizeOf(view?.nib.cardSize, (view?.nib.rows ?? 'notes') === 'notes') === size}
+        {@const on =
+          sizeOf(view?.orden.cardSize, (view?.orden.rows ?? 'notes') === 'notes') === size}
         <button
           type="button"
           role="radio"

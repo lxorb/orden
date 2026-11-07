@@ -71,14 +71,14 @@ describe('a page note as a file', () => {
   test('writes each page as a spec node, so the file is JSON Canvas', () => {
     const written = JSON.parse(blankPages()) as {
       nodes: { id: string; type: string; label?: string }[]
-      nib: { pages: { id: string }[] }
+      orden: { pages: { id: string }[] }
     }
 
     expect(written.nodes).toHaveLength(1)
     expect(written.nodes[0]?.type).toBe('group')
     expect(written.nodes[0]?.label).toBe('Page 1')
-    expect(written.nib.pages).toHaveLength(1)
-    expect(written.nib.pages[0]?.id).toBe(written.nodes[0]?.id)
+    expect(written.orden.pages).toHaveLength(1)
+    expect(written.orden.pages[0]?.id).toBe(written.nodes[0]?.id)
   })
 
   test('a page with a PDF behind it is a file node with the page in its subpath', () => {
@@ -120,7 +120,7 @@ describe('a page note as a file', () => {
     const file = JSON.stringify({
       nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 100, height: 40, text: 'hello' }],
       edges: [],
-      nib: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'lines' }] },
+      orden: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'lines' }] },
     })
 
     const canvas = readCanvas(file)

@@ -58,7 +58,7 @@
     LAYOUTS.filter(
       (one) =>
         (one !== 'timeline' || (!kit.compact && viewport.device !== 'phone')) &&
-        (one !== 'form' || (view?.nib.rows ?? 'notes') === 'notes'),
+        (one !== 'form' || (view?.orden.rows ?? 'notes') === 'notes'),
     ),
   )
 
@@ -71,7 +71,7 @@
 
   let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
   const project = $derived(projectOf(kit))
-  const tasky = $derived(kit.spec.builtin !== undefined || view?.nib.rows === 'tasks')
+  const tasky = $derived(kit.spec.builtin !== undefined || view?.orden.rows === 'tasks')
   const tabbed = $derived(kit.spec.builtin === undefined)
   const displayChanged = $derived.by(() => {
     if (!view) return 0
@@ -79,7 +79,7 @@
       kit.spec.builtin === undefined ? null : (shippedBase(kit.spec).views[0] ?? null)
     return changedFrom(view, original).total
   })
-  const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
+  const notes = $derived((view?.orden.rows ?? 'notes') === 'notes')
 
   const BUILDERS: Record<Builder['kind'], string> = {
     colour: t('Colour'),
@@ -208,7 +208,7 @@
     return [
       {
         label: t('Colour'),
-        checked: view?.nib.colour !== undefined,
+        checked: view?.orden.colour !== undefined,
         run: () => (live.builder = { kind: 'colour' }),
       },
       ...(layout === 'table'
@@ -217,7 +217,7 @@
               Promise.resolve(
                 HEIGHTS.map((one) => ({
                   label: one.label,
-                  checked: (view?.nib.lines ?? 1) === one.lines,
+                  checked: (view?.orden.lines ?? 1) === one.lines,
                   run: () =>
                     kit.change((b, at) =>
                       setViewNib(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
@@ -231,7 +231,7 @@
         ? [
             {
               label: t('Automations'),
-              checked: Array.isArray(base.nib.kept.automations),
+              checked: Array.isArray(base.orden.kept.automations),
               run: () => (live.builder = { kind: 'automations' }),
             },
           ]
@@ -239,7 +239,7 @@
       ...(notes
         ? [
             grouped(event, t('Default template'), () =>
-              templateRows(view?.nib.template ?? base.nib.template, (link) =>
+              templateRows(view?.orden.template ?? base.orden.template, (link) =>
                 kit.change((b, at) => setViewNib(b, at, 'template', link ?? undefined)),
               ),
             ),
@@ -249,20 +249,20 @@
       ...csvRows(),
       DIVIDER,
       {
-        label: view?.nib.locked ? t('Unlock view') : t('Lock view'),
+        label: view?.orden.locked ? t('Unlock view') : t('Lock view'),
         run: () =>
           kit.change(
-            (b, at) => setViewNib(b, at, 'locked', view?.nib.locked ? undefined : true),
+            (b, at) => setViewNib(b, at, 'locked', view?.orden.locked ? undefined : true),
             true,
           ),
       },
       ...(kit.file !== null
         ? [
             {
-              label: base.nib.locked ? t('Unlock base') : t('Lock base'),
+              label: base.orden.locked ? t('Unlock base') : t('Lock base'),
               run: () =>
                 kit.change(
-                  (b) => setBaseNib(b, 'locked', base.nib.locked ? undefined : true),
+                  (b) => setBaseNib(b, 'locked', base.orden.locked ? undefined : true),
                   true,
                 ),
             },
@@ -295,7 +295,7 @@
         run: () =>
           void kit
             .changed((b) => {
-              const rows = b.views[live.at]?.nib.rows
+              const rows = b.views[live.at]?.orden.rows
               const fresh: Base = {
                 ...b,
                 views: [
@@ -306,7 +306,7 @@
                     order: [],
                     sort: [],
                     summaries: {},
-                    nib: {
+                    orden: {
                       kept: {},
                       ...(rows ? { rows } : {}),
                     },

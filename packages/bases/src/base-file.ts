@@ -1,12 +1,12 @@
-import { isMap, isScalar, isSeq, type Document, parseDocument } from 'yaml'
+import { isMap, isScalar, isSeq, type Document, parseDocument, type YAMLMap } from 'yaml'
 import { BasesError } from './errors'
 import { readFilter } from './filter'
 import type {
   Base,
   CardSize,
-  NibBase,
-  NibProperty,
-  NibView,
+  OrdenBase,
+  OrdenProperty,
+  OrdenView,
   PropertyConfig,
   RowKinds,
   SelectOption,
@@ -81,38 +81,38 @@ const ORDEN_VIEW_KEYS = [
 
 const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
 
-function readNibView(raw: unknown): NibView {
-  const nib: NibView = { kept: {} }
-  if (!isPlain(raw)) return nib
-  if (ROW_KINDS.includes(raw.rows as RowKinds)) nib.rows = raw.rows as RowKinds
+function readOrdenView(raw: unknown): OrdenView {
+  const orden: OrdenView = { kept: {} }
+  if (!isPlain(raw)) return orden
+  if (ROW_KINDS.includes(raw.rows as RowKinds)) orden.rows = raw.rows as RowKinds
   const sub = readSort(raw.subGroupBy)
-  if (sub) nib.subGroupBy = sub
+  if (sub) orden.subGroupBy = sub
   if (isPlain(raw.order)) {
-    nib.order = Object.fromEntries(
+    orden.order = Object.fromEntries(
       Object.entries(raw.order).map(([key, list]) => [
         key,
         Array.isArray(list) ? list.map(String) : [],
       ]),
     )
   }
-  if (typeof raw.date === 'string') nib.date = raw.date
-  if (typeof raw.end === 'string') nib.end = raw.end
-  if (typeof raw.colour === 'string') nib.colour = raw.colour
-  if (typeof raw.showCompleted === 'boolean') nib.showCompleted = raw.showCompleted
-  if (raw.groupOrder === 'rows' || raw.groupOrder === 'value') nib.groupOrder = raw.groupOrder
-  if (Array.isArray(raw.hidden)) nib.hidden = raw.hidden.map(String)
-  if (typeof raw.locked === 'boolean') nib.locked = raw.locked
-  if (typeof raw.lines === 'number' && raw.lines >= 1) nib.lines = Math.floor(raw.lines)
-  if (typeof raw.freeze === 'number' && raw.freeze >= 0) nib.freeze = Math.floor(raw.freeze)
-  if (typeof raw.template === 'string') nib.template = raw.template
-  if (Array.isArray(raw.required)) nib.required = raw.required.map(String)
-  if (CARD_SIZES.includes(raw.cardSize as CardSize)) nib.cardSize = raw.cardSize as CardSize
-  if (Array.isArray(raw.groups)) nib.groups = raw.groups.map(String)
-  if (typeof raw.noneFirst === 'boolean') nib.noneFirst = raw.noneFirst
-  if (typeof raw.hideEmpty === 'boolean') nib.hideEmpty = raw.hideEmpty
-  if (typeof raw.colourColumns === 'boolean') nib.colourColumns = raw.colourColumns
-  nib.kept = rest(raw, ORDEN_VIEW_KEYS)
-  return nib
+  if (typeof raw.date === 'string') orden.date = raw.date
+  if (typeof raw.end === 'string') orden.end = raw.end
+  if (typeof raw.colour === 'string') orden.colour = raw.colour
+  if (typeof raw.showCompleted === 'boolean') orden.showCompleted = raw.showCompleted
+  if (raw.groupOrder === 'rows' || raw.groupOrder === 'value') orden.groupOrder = raw.groupOrder
+  if (Array.isArray(raw.hidden)) orden.hidden = raw.hidden.map(String)
+  if (typeof raw.locked === 'boolean') orden.locked = raw.locked
+  if (typeof raw.lines === 'number' && raw.lines >= 1) orden.lines = Math.floor(raw.lines)
+  if (typeof raw.freeze === 'number' && raw.freeze >= 0) orden.freeze = Math.floor(raw.freeze)
+  if (typeof raw.template === 'string') orden.template = raw.template
+  if (Array.isArray(raw.required)) orden.required = raw.required.map(String)
+  if (CARD_SIZES.includes(raw.cardSize as CardSize)) orden.cardSize = raw.cardSize as CardSize
+  if (Array.isArray(raw.groups)) orden.groups = raw.groups.map(String)
+  if (typeof raw.noneFirst === 'boolean') orden.noneFirst = raw.noneFirst
+  if (typeof raw.hideEmpty === 'boolean') orden.hideEmpty = raw.hideEmpty
+  if (typeof raw.colourColumns === 'boolean') orden.colourColumns = raw.colourColumns
+  orden.kept = rest(raw, ORDEN_VIEW_KEYS)
+  return orden
 }
 
 const VIEW_KEYS = [
@@ -124,6 +124,7 @@ const VIEW_KEYS = [
   'groupBy',
   'limit',
   'summaries',
+  'orden',
   'nib',
 ]
 
@@ -135,7 +136,7 @@ function readView(raw: unknown, at: number): View {
     order: Array.isArray(plain.order) ? plain.order.map(String) : [],
     sort: Array.isArray(plain.sort) ? plain.sort.map(readSort).filter((one) => one !== null) : [],
     summaries: stringsOf(plain.summaries),
-    nib: readNibView(plain.nib),
+    orden: readOrdenView(plain.orden ?? plain.nib),
     options: rest(plain, VIEW_KEYS),
   }
   const filters = readFilter(plain.filters)
@@ -148,9 +149,9 @@ function readView(raw: unknown, at: number): View {
   return view
 }
 
-function readNibProperty(raw: unknown): NibProperty {
+function readOrdenProperty(raw: unknown): OrdenProperty {
   const plain = isPlain(raw) ? raw : {}
-  const property: NibProperty = { kept: rest(plain, ['options', 'format', 'one']) }
+  const property: OrdenProperty = { kept: rest(plain, ['options', 'format', 'one']) }
   const options = readOptions(plain.options)
   if (options) property.options = options
   if (typeof plain.format === 'string') property.format = plain.format
@@ -158,28 +159,28 @@ function readNibProperty(raw: unknown): NibProperty {
   return property
 }
 
-function readNibBase(raw: unknown): NibBase {
+function readOrdenBase(raw: unknown): OrdenBase {
   const plain = isPlain(raw) ? raw : {}
-  const nib: NibBase = {
+  const orden: OrdenBase = {
     properties: isPlain(plain.properties)
       ? Object.fromEntries(
-          Object.entries(plain.properties).map(([key, one]) => [key, readNibProperty(one)]),
+          Object.entries(plain.properties).map(([key, one]) => [key, readOrdenProperty(one)]),
         )
       : {},
     kept: rest(plain, ['template', 'id', 'properties', 'locked']),
   }
-  if (typeof plain.template === 'string') nib.template = plain.template
+  if (typeof plain.template === 'string') orden.template = plain.template
   if (isPlain(plain.id) && typeof plain.id.property === 'string') {
-    nib.id = {
+    orden.id = {
       property: plain.id.property,
       prefix: scalar(plain.id.prefix),
     }
   }
-  if (typeof plain.locked === 'boolean') nib.locked = plain.locked
-  return nib
+  if (typeof plain.locked === 'boolean') orden.locked = plain.locked
+  return orden
 }
 
-const BASE_KEYS = ['filters', 'formulas', 'properties', 'summaries', 'views', 'nib']
+const BASE_KEYS = ['filters', 'formulas', 'properties', 'summaries', 'views', 'orden', 'nib']
 
 function documentOf(yaml: string): Document {
   const document = parseDocument(yaml)
@@ -206,7 +207,7 @@ export function readBase(yaml: string): Base {
       : {},
     summaries: stringsOf(plain.summaries),
     views: Array.isArray(plain.views) ? plain.views.map(readView) : [],
-    nib: readNibBase(plain.nib),
+    orden: readOrdenBase(plain.orden ?? plain.nib),
     kept: rest(plain, BASE_KEYS),
   }
   const filters = readFilter(plain.filters)
@@ -228,28 +229,28 @@ function present(entries: [string, unknown][]): Plain {
 
 const sortPlain = (sort: Sort): Plain => ({ property: sort.property, direction: sort.direction })
 
-function nibViewPlain(nib: NibView): Plain {
+function ordenViewPlain(orden: OrdenView): Plain {
   return present([
-    ['rows', nib.rows],
-    ['subGroupBy', nib.subGroupBy && sortPlain(nib.subGroupBy)],
-    ['order', nib.order],
-    ['date', nib.date],
-    ['end', nib.end],
-    ['colour', nib.colour],
-    ['showCompleted', nib.showCompleted],
-    ['groupOrder', nib.groupOrder],
-    ['hidden', nib.hidden],
-    ['locked', nib.locked],
-    ['lines', nib.lines],
-    ['freeze', nib.freeze],
-    ['template', nib.template],
-    ['required', nib.required],
-    ['cardSize', nib.cardSize],
-    ['groups', nib.groups],
-    ['noneFirst', nib.noneFirst],
-    ['hideEmpty', nib.hideEmpty],
-    ['colourColumns', nib.colourColumns],
-    ...Object.entries(nib.kept),
+    ['rows', orden.rows],
+    ['subGroupBy', orden.subGroupBy && sortPlain(orden.subGroupBy)],
+    ['order', orden.order],
+    ['date', orden.date],
+    ['end', orden.end],
+    ['colour', orden.colour],
+    ['showCompleted', orden.showCompleted],
+    ['groupOrder', orden.groupOrder],
+    ['hidden', orden.hidden],
+    ['locked', orden.locked],
+    ['lines', orden.lines],
+    ['freeze', orden.freeze],
+    ['template', orden.template],
+    ['required', orden.required],
+    ['cardSize', orden.cardSize],
+    ['groups', orden.groups],
+    ['noneFirst', orden.noneFirst],
+    ['hideEmpty', orden.hideEmpty],
+    ['colourColumns', orden.colourColumns],
+    ...Object.entries(orden.kept),
   ])
 }
 
@@ -264,18 +265,18 @@ function viewPlain(view: View): Plain {
     ['limit', view.limit ?? view.options.limit],
     ['summaries', view.summaries],
     ...Object.entries(rest(view.options, ['filters', 'limit'])),
-    ['nib', nibViewPlain(view.nib)],
+    ['orden', ordenViewPlain(view.orden)],
   ])
 }
 
-function nibBasePlain(nib: NibBase): Plain {
+function ordenBasePlain(orden: OrdenBase): Plain {
   return present([
-    ['template', nib.template],
-    ['id', nib.id && { property: nib.id.property, prefix: nib.id.prefix }],
+    ['template', orden.template],
+    ['id', orden.id && { property: orden.id.property, prefix: orden.id.prefix }],
     [
       'properties',
       Object.fromEntries(
-        Object.entries(nib.properties).map(([key, one]) => [
+        Object.entries(orden.properties).map(([key, one]) => [
           key,
           present([
             ['options', one.options?.map((option) => present(Object.entries(option)))],
@@ -286,8 +287,8 @@ function nibBasePlain(nib: NibBase): Plain {
         ]),
       ),
     ],
-    ['locked', nib.locked],
-    ...Object.entries(nib.kept),
+    ['locked', orden.locked],
+    ...Object.entries(orden.kept),
   ])
 }
 
@@ -307,7 +308,7 @@ function basePlain(base: Base): Plain {
     ['summaries', base.summaries],
     ['views', base.views.map(viewPlain)],
     ...Object.entries(rest(base.kept, ['filters'])),
-    ['nib', nibBasePlain(base.nib)],
+    ['orden', ordenBasePlain(base.orden)],
   ])
 }
 
@@ -315,8 +316,18 @@ function keyText(key: unknown): string {
   return isScalar(key) ? String(key.value) : String(key)
 }
 
+function renamed(node: YAMLMap, value: Plain): void {
+  if (!('orden' in value) || 'nib' in value) return
+  if (node.items.some((item) => keyText(item.key) === 'orden')) return
+  const old = node.items.find((item) => keyText(item.key) === 'nib')
+  if (!old) return
+  if (isScalar(old.key)) old.key.value = 'orden'
+  else old.key = 'orden'
+}
+
 function merged(document: Document, node: unknown, value: unknown): unknown {
   if (isPlain(value) && isMap(node)) {
+    renamed(node, value)
     for (const [key, one] of Object.entries(value)) {
       const pair = node.items.find((item) => keyText(item.key) === key)
       if (pair) pair.value = merged(document, pair.value, one)

@@ -51,7 +51,7 @@ views:
     groupBy:
       property: note.status
       direction: ASC
-    nib:
+    orden:
       order:
         Doing: [Books/Beloved.md]
   - type: table
@@ -67,7 +67,7 @@ views:
     name: Custom
     summaries:
       pages: doubled
-nib:
+orden:
   properties:
     status:
       options:
@@ -141,7 +141,7 @@ describe('the limit', () => {
     sort:
       - property: pages
         direction: DESC
-    nib:
+    orden:
       order:
         Doing: [Books/Beloved.md]
 `)
@@ -191,7 +191,7 @@ describe('groups', () => {
       direction: ASC
     summaries:
       size: Sum
-    nib:
+    orden:
       subGroupBy:
         property: size
         direction: ASC
@@ -213,7 +213,7 @@ describe('groups', () => {
     groupBy:
       property: status
       direction: ASC
-    nib:
+    orden:
       subGroupBy:
         property: priority
         direction: ASC
@@ -238,7 +238,7 @@ describe('groups', () => {
     groupBy:
       property: task.section
       direction: ASC
-    nib:
+    orden:
       rows: tasks
       groupOrder: rows
 `)
@@ -263,11 +263,11 @@ describe('a view of tasks', () => {
     sort:
       - property: task.priority
         direction: ASC
-    nib:
+    orden:
       rows: tasks
   - type: list
     name: All
-    nib:
+    orden:
       rows: both
       showCompleted: true
 `)
@@ -378,7 +378,7 @@ describe('a board', () => {
   ]
   const board = (extra = '') =>
     readBase(
-      `nib:\n  properties:\n    tags:\n      options:\n        - value: Sync\n        - value: iOS\nviews:\n  - type: kanban\n    name: B\n    groupBy:\n      property: note.tags\n      direction: ASC\n${extra}`,
+      `orden:\n  properties:\n    tags:\n      options:\n        - value: Sync\n        - value: iOS\nviews:\n  - type: kanban\n    name: B\n    groupBy:\n      property: note.tags\n      direction: ASC\n${extra}`,
     )
 
   test('puts a card of a list in the column of each of its members', () => {
@@ -399,7 +399,7 @@ describe('a board', () => {
   })
 
   test("keeps the view's own column order, the group of no value first where it says", () => {
-    const own = board('    nib:\n      groups: [iOS]\n      noneFirst: true\n')
+    const own = board('    orden:\n      groups: [iOS]\n      noneFirst: true\n')
     expect(groups(answer(own, 'B', tagged, context)).map(([key]) => key)).toEqual([
       null,
       'iOS',
@@ -412,11 +412,11 @@ describe('a board', () => {
     const hashed = orderId(tasks[1]!)
     expect(hashed).toMatch(/^n\.md#\^/)
     const one = readBase(
-      `views:\n  - type: kanban\n    name: B\n    nib:\n      rows: tasks\n      order:\n        "": ["${hashed}"]\n`,
+      `views:\n  - type: kanban\n    name: B\n    orden:\n      rows: tasks\n      order:\n        "": ["${hashed}"]\n`,
     )
     expect(names(answer(one, 'B', tasks, context).groups[0]?.rows ?? [])).toEqual(['two', 'one'])
     const old = readBase(
-      'views:\n  - type: kanban\n    name: B\n    nib:\n      rows: tasks\n      order:\n        "": ["n.md#1"]\n',
+      'views:\n  - type: kanban\n    name: B\n    orden:\n      rows: tasks\n      order:\n        "": ["n.md#1"]\n',
     )
     expect(names(answer(old, 'B', tasks, context).groups[0]?.rows ?? [])).toEqual(['two', 'one'])
   })

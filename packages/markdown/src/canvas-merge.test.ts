@@ -519,12 +519,12 @@ describe('merging two canvas files somebody else wrote in too', () => {
     nodes: [drawing, { ...card('c', 'hello'), styleAttributes: { shape: 'pill' } }],
     edges: [{ id: 'e', fromNode: 'x', toNode: 'c' }],
     metadata: { version: '1.0-1.0' },
-    nib: { version: 1, at: { c: 100 } },
+    orden: { version: 1, at: { c: 100 } },
   })
   const theirs = JSON.stringify({
     nodes: [card('c', 'hello'), card('d', 'from the other side')],
     edges: [],
-    nib: { version: 1, at: { c: 100, d: 200 }, later: true },
+    orden: { version: 1, at: { c: 100, d: 200 }, later: true },
   })
 
   test('keeps them, from whichever side held them', () => {
@@ -532,7 +532,7 @@ describe('merging two canvas files somebody else wrote in too', () => {
       nodes: { id: string; styleAttributes?: unknown }[]
       edges: { id: string }[]
       metadata?: unknown
-      nib: Record<string, unknown>
+      orden: Record<string, unknown>
     }
 
     expect(file.nodes.map((node) => node.id).sort()).toEqual(['c', 'd', 'x'])
@@ -540,7 +540,7 @@ describe('merging two canvas files somebody else wrote in too', () => {
     expect(file.nodes.find((node) => node.id === 'c')?.styleAttributes).toEqual({ shape: 'pill' })
     expect(file.edges.map((edge) => edge.id)).toEqual(['e'])
     expect(file.metadata).toEqual({ version: '1.0-1.0' })
-    expect(file.nib.later).toBe(true)
+    expect(file.orden.later).toBe(true)
   })
 
   test('is the same file whichever side asks', () => {
@@ -551,7 +551,7 @@ describe('merging two canvas files somebody else wrote in too', () => {
     const deleted = JSON.stringify({
       nodes: [drawing],
       edges: [],
-      nib: { version: 1, gone: { c: 250 } },
+      orden: { version: 1, gone: { c: 250 } },
     })
     const file = JSON.parse(mergeCanvasFiles(ours, deleted, 300)) as {
       nodes: { id: string }[]
@@ -590,14 +590,14 @@ describe('merging two copies after another app changed one of them', () => {
       JSON.stringify({
         nodes: [drawing, { ...card, styleAttributes: { shape: 'pill' } }],
         edges: [{ id: 'e', fromNode: 'x', toNode: 'c' }],
-        nib: { version: 1, at: { c: 100 } },
+        orden: { version: 1, at: { c: 100 } },
       }),
     ),
   )
   interface File {
     nodes: { id: string; x: number; styleAttributes?: { shape: string } }[]
     edges: { id: string }[]
-    nib: Record<string, unknown>
+    orden: Record<string, unknown>
   }
   const parse = (text: string) => JSON.parse(text) as File
   const outside = (text: string, edit: (file: File) => void) => {
@@ -615,7 +615,7 @@ describe('merging two copies after another app changed one of them', () => {
   }
 
   test('records what it wrote, and counts nothing changed in its own file', () => {
-    expect(parse(written).nib.outside).toBeDefined()
+    expect(parse(written).orden.outside).toBeDefined()
     const extras = readCanvas(written).extras
     expect([...(extras?.generations ?? [])].sort()).toEqual([
       ['edge:e', 0],
@@ -872,7 +872,7 @@ describe('the order of the stack', () => {
   describe('in the file', () => {
     test('a plane nothing was moved on writes nothing new', () => {
       const file = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))
-      expect(JSON.parse(file).nib.moved).toBeUndefined()
+      expect(JSON.parse(file).orden.moved).toBeUndefined()
     })
 
     test('comes back as it went, and is the printer’s own JSON', () => {
@@ -886,10 +886,10 @@ describe('the order of the stack', () => {
     test('leaves everything an older reader looks at as it was', () => {
       const before = base('a', 'b')
       const file = JSON.parse(writeCanvas(stamped(before, moved(before, 'b', 'a'), 200))) as {
-        nib: { at: unknown }
+        orden: { at: unknown }
         nodes: CanvasNode[]
       }
-      expect(file.nib.at).toEqual({ a: 100, b: 100 })
+      expect(file.orden.at).toEqual({ a: 100, b: 100 })
       expect(file.nodes.map((node) => node.id)).toEqual(['b', 'a'])
     })
 
@@ -911,7 +911,7 @@ describe('the order of the stack', () => {
         JSON.stringify({
           nodes: ids.map((id) => card(id)),
           edges: [],
-          nib: { version: 1, at: Object.fromEntries(ids.map((id) => [id, 100])) },
+          orden: { version: 1, at: Object.fromEntries(ids.map((id) => [id, 100])) },
         })
       const both = readCanvas(mergeCanvasFiles(old('a', 'b'), old('a', 'b', 'c'), 300))
       expect(order(both)).toEqual(['a', 'b', 'c'])

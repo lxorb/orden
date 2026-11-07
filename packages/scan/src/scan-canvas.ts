@@ -2,19 +2,19 @@ import { readCanvas } from '@orden/markdown/canvas'
 import { skim } from './json-skim'
 import type { ScannedNote } from './scan-note'
 
-const ORDEN_LAST = { last: 'nib' }
+const ORDEN_LAST = { last: 'orden' }
 const ICON_FIRST = { ahead: ['version', 'icon', 'iconColor'] }
 
 function indexed(content: string): string {
-  const top = skim(content, ['nodes', 'nib'], undefined, ORDEN_LAST)
+  const top = skim(content, ['nodes', 'orden'], undefined, ORDEN_LAST)
   if (!top) return ''
 
   const nodes = top.get('nodes')
-  const nib = top.get('nib')
-  const marks = nib ? skim(content, ['icon', 'iconColor'], nib, ICON_FIRST) : null
+  const own = top.get('orden') ?? skim(content, ['nib'])?.get('nib')
+  const marks = own ? skim(content, ['icon', 'iconColor'], own, ICON_FIRST) : null
   const worn = [...(marks ?? [])].map(([key, at]) => `"${key}":${content.slice(at.from, at.to)}`)
 
-  return `{"nodes":${nodes ? content.slice(nodes.from, nodes.to) : '[]'},"nib":{${worn.join(',')}}}`
+  return `{"nodes":${nodes ? content.slice(nodes.from, nodes.to) : '[]'},"orden":{${worn.join(',')}}}`
 }
 
 export type PlaneMarks = Pick<ScannedNote, 'icon' | 'iconColor' | 'links'>

@@ -40,7 +40,7 @@ function readTrigger(raw: unknown): Trigger | null {
 }
 
 export function readAutomations(base: Base): Automation[] {
-  const raw = base.nib.kept.automations
+  const raw = base.orden.kept.automations
   if (!Array.isArray(raw)) return []
   return raw.flatMap((one): Automation[] => {
     if (!isPlain(one)) return []
@@ -77,10 +77,10 @@ function plainOf(automation: Automation): Plain {
 }
 
 export function withAutomations(base: Base, automations: readonly Automation[]): Base {
-  const kept = { ...base.nib.kept }
+  const kept = { ...base.orden.kept }
   if (automations.length) kept.automations = automations.map(plainOf)
   else Reflect.deleteProperty(kept, 'automations')
-  return { ...base, nib: { ...base.nib, kept } }
+  return { ...base, orden: { ...base.orden, kept } }
 }
 
 export interface Effect {

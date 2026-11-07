@@ -34,7 +34,7 @@ def typed(page: Page, label: str, surface: str, settle: str) -> None:
     page.wait_for_timeout(2500)
 
     written = page.evaluate(FILE)
-    words = written.get("nib", {}).get("words", [])
+    words = written.get("orden", {}).get("words", [])
     nodes = [one for one in written.get("nodes", []) if one.get("id") in words]
     if not nodes or "Words on the paper" not in nodes[0].get("text", ""):
         wrong(f"[{label}] no words were written: {json.dumps(written)[:300]}")

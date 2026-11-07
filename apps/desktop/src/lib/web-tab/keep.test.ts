@@ -37,7 +37,7 @@ const { settleUp, written: landed } = await import('../parting')
 const PATH = '/Notes/Svelte docs.url'
 const FILE =
   '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\n' +
-  'Title=Svelte docs\r\nNib-Added=2026-09-12T08:30:00.000Z\r\n'
+  'Title=Svelte docs\r\nOrden-Added=2026-09-12T08:30:00.000Z\r\n'
 
 function said(): string {
   return written.at(-1)?.content ?? ''
@@ -69,10 +69,10 @@ test('writes the page the reading got to, and keeps where the note points', asyn
 
   expect(written).toHaveLength(1)
   expect(said()).toContain('URL=https://svelte.dev/docs/svelte/what-are-runes')
-  expect(said()).toContain('Nib-Home=https://svelte.dev/docs')
-  expect(said()).toContain('Nib-Icon=https://svelte.dev/favicon.png')
+  expect(said()).toContain('Orden-Home=https://svelte.dev/docs')
+  expect(said()).toContain('Orden-Icon=https://svelte.dev/favicon.png')
   expect(said()).toContain('Title=Svelte docs')
-  expect(said()).toContain('Nib-Added=2026-09-12T08:30:00.000Z')
+  expect(said()).toContain('Orden-Added=2026-09-12T08:30:00.000Z')
   expect(text).toBe(said())
 })
 
@@ -101,8 +101,8 @@ test('a page that moves twice in a moment is one write', async () => {
 test('the home already in the file is the home that stays', async () => {
   const moved =
     '[InternetShortcut]\r\nURL=https://svelte.dev/docs/one\r\n' +
-    'Title=Svelte docs\r\nNib-Added=2026-09-12T08:30:00.000Z\r\n' +
-    'Nib-Home=https://svelte.dev/docs\r\n'
+    'Title=Svelte docs\r\nOrden-Added=2026-09-12T08:30:00.000Z\r\n' +
+    'Orden-Home=https://svelte.dev/docs\r\n'
 
   keepPage({
     path: PATH,
@@ -114,7 +114,7 @@ test('the home already in the file is the home that stays', async () => {
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(said()).toContain('URL=https://svelte.dev/docs/two')
-  expect(said()).toContain('Nib-Home=https://svelte.dev/docs')
+  expect(said()).toContain('Orden-Home=https://svelte.dev/docs')
 })
 
 test('a page that has not moved is not written', async () => {
@@ -156,7 +156,7 @@ test('tells the index what the file now says, so the row can wear the favicon', 
   expect(told).toHaveLength(1)
   expect(told[0]?.path).toBe(PATH)
   expect(told[0]?.content).toBe(said())
-  expect(told[0]?.content).toContain('Nib-Icon=https://svelte.dev/favicon.png')
+  expect(told[0]?.content).toContain('Orden-Icon=https://svelte.dev/favicon.png')
 })
 
 test('says nothing to the index when there was nothing to write', async () => {
@@ -183,17 +183,17 @@ test('a choice made while a write is waiting is in the file the write makes', as
     wrote: (next) => (text = next),
   })
 
-  text = `${FILE}Nib-Data=0123456789abcdef\r\n`
+  text = `${FILE}Orden-Data=0123456789abcdef\r\n`
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(1)
-  expect(said()).toContain('Nib-Data=0123456789abcdef')
+  expect(said()).toContain('Orden-Data=0123456789abcdef')
   expect(said()).toContain('URL=https://svelte.dev/docs/svelte/runes')
   expect(text).toBe(said())
 })
 
 test('a mark already held as a picture is not written over on its own', async () => {
-  const held = `${FILE}Nib-Icon=data:image/png;base64,AAAA\r\n`
+  const held = `${FILE}Orden-Icon=data:image/png;base64,AAAA\r\n`
   keepPage({
     path: PATH,
     text: () => held,
@@ -212,7 +212,7 @@ test('a mark already held as a picture is not written over on its own', async ()
     wrote: () => undefined,
   })
   await vi.advanceTimersByTimeAsync(2500)
-  expect(said()).toContain('Nib-Icon=data:image/png;base64,BBBB')
+  expect(said()).toContain('Orden-Icon=data:image/png;base64,BBBB')
 })
 
 test('a reading that never settles is written at the longest wait a note has', async () => {

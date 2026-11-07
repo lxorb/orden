@@ -102,17 +102,17 @@ export function unnarrowed(words: string, space: string): string {
     return words
   }
   const views = base.views.map((view) => {
-    const only = view.nib.kept.only
+    const only = view.orden.kept.only
     if (!isRecord(only)) return view
     const project = typeof only.project === 'string' ? placeOfKey(only.project).space : null
     const gone = (key: string) =>
       (key === 'space' && only.space === space) || (key === 'project' && project === space)
     if (!Object.keys(only).some(gone)) return view
     const rest = without(only, gone)
-    const kept = without(view.nib.kept, (key) => key === 'only')
+    const kept = without(view.orden.kept, (key) => key === 'only')
     return {
       ...view,
-      nib: { ...view.nib, kept: Object.keys(rest).length ? { ...kept, only: rest } : kept },
+      orden: { ...view.orden, kept: Object.keys(rest).length ? { ...kept, only: rest } : kept },
     }
   })
   return views.some((view, at) => view !== base.views[at]) ? writeBase({ ...base, views }) : words

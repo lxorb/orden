@@ -158,7 +158,7 @@ describe('automations', () => {
   const base = readBase(`filters:
   and:
     - file.inFolder("Bugs")
-nib:
+orden:
   automations:
     - when: { property: status, is: Done }
       set: { finished: "{{date}}", owner: "" }
@@ -228,7 +228,7 @@ nib:
     const next = withAutomations(base, automations.slice(0, 1))
     const written = writeBase(next, '')
     expect(readAutomations(readBase(written))).toEqual(automations.slice(0, 1))
-    expect(withAutomations(base, []).nib.kept.automations).toBeUndefined()
+    expect(withAutomations(base, []).orden.kept.automations).toBeUndefined()
   })
 })
 
@@ -292,7 +292,7 @@ describe('conditional colour', () => {
 })
 
 describe('buttons', () => {
-  const base = readBase(`nib:
+  const base = readBase(`orden:
   buttons:
     Done:
       set: { status: Done, finished: "{{date}}", owner: "" }
@@ -348,7 +348,7 @@ describe('the view keys lane 7 adds', () => {
     const yaml = `views:
   - type: table
     name: All
-    nib:
+    orden:
       lines: 2
       freeze: 1
       template: "[[Templates/Bug]]"
@@ -357,7 +357,7 @@ describe('the view keys lane 7 adds', () => {
       colour: 'if(status == "Done", "success", null)'
 `
     const base = readBase(yaml)
-    expect(base.views[0]?.nib).toMatchObject({
+    expect(base.views[0]?.orden).toMatchObject({
       lines: 2,
       freeze: 1,
       template: '[[Templates/Bug]]',

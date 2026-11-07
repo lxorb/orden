@@ -10,13 +10,13 @@ vi.mock('../tauri', async (importOriginal) => ({
       ? `filters:
   and:
     - file.inFolder("Bugs")
-nib:
+orden:
   id: { property: id, prefix: BUG }
 `
       : `filters:
   and:
     - file.inFolder("Lit")
-nib:
+orden:
   id: { property: id, prefix: "" }
 `,
 }))

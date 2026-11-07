@@ -16,7 +16,7 @@
   const live = $derived(kit.live)
   const key = $derived(bare(column))
   const options = $derived(live.base ? optionsAt(live.base, column) : [])
-  const id = $derived(live.base?.nib.id?.property === key ? live.base.nib.id : null)
+  const id = $derived(live.base?.orden.id?.property === key ? live.base.orden.id : null)
 
   const GROUPS = [
     { value: '', label: t('None') },

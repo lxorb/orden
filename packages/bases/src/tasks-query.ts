@@ -305,13 +305,13 @@ export function readTasksQuery(source: string): TasksQuery {
     order: [],
     sort,
     summaries: {},
-    nib: { rows: 'tasks', showCompleted: true, kept: {} },
+    orden: { rows: 'tasks', showCompleted: true, kept: {} },
     options: {},
   }
   if (filters.length === 1 && filters[0] !== undefined) view.filters = filters[0]
   else if (filters.length) view.filters = { and: filters }
   if (groups[0]) view.groupBy = groups[0]
-  if (groups[1]) view.nib.subGroupBy = groups[1]
+  if (groups[1]) view.orden.subGroupBy = groups[1]
   if (limit) view.limit = limit
 
   return {
@@ -320,7 +320,7 @@ export function readTasksQuery(source: string): TasksQuery {
       properties: {},
       summaries: {},
       views: [view],
-      nib: { properties: {}, kept: {} },
+      orden: { properties: {}, kept: {} },
       kept: {},
     },
     unsupported,

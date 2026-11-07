@@ -36,15 +36,15 @@ const inNote = (space: string, path: string) =>
   `file.space == ${quote(space)} && file.path == ${quote(path)}`
 
 function base(
-  view: Omit<View, 'nib' | 'options' | 'order' | 'summaries'> & Partial<View>,
+  view: Omit<View, 'orden' | 'options' | 'order' | 'summaries'> & Partial<View>,
   formulas: Record<string, string> = {},
 ): Base {
   return {
     formulas,
     properties: {},
     summaries: {},
-    views: [{ order: [], summaries: {}, options: {}, nib: { rows: 'tasks', kept: {} }, ...view }],
-    nib: { properties: {}, kept: {} },
+    views: [{ order: [], summaries: {}, options: {}, orden: { rows: 'tasks', kept: {} }, ...view }],
+    orden: { properties: {}, kept: {} },
     kept: {},
   }
 }
@@ -62,7 +62,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
               : { and: ['task.started', `file.space == ${quote(params.space)}`] },
           sort: SMART_SORT,
           groupBy: { property: 'formula.when', direction: 'ASC' },
-          nib: { rows: 'tasks', groups: [...WHEN_GROUPS], kept: {} },
+          orden: { rows: 'tasks', groups: [...WHEN_GROUPS], kept: {} },
         },
         { when: WHEN },
       )
@@ -107,7 +107,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
             { property: 'task.priority', direction: 'ASC' },
           ],
           groupBy: { property: 'formula.day', direction: 'ASC' },
-          nib: { rows: 'tasks', groups: ['overdue'], kept: {} },
+          orden: { rows: 'tasks', groups: ['overdue'], kept: {} },
         },
         {
           day: 'if(task.deadline < today(), "overdue", if(task.date < today(), today(), task.date))',
@@ -121,7 +121,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
           filters: 'task.done || task.cancelled',
           sort: [],
           groupBy: { property: 'formula.day', direction: 'DESC' },
-          nib: { rows: 'tasks', showCompleted: true, kept: {} },
+          orden: { rows: 'tasks', showCompleted: true, kept: {} },
         },
         { day: 'if(task.completed, task.completed, task.cancelledOn)' },
       )
@@ -133,7 +133,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         filters: note ? inNote(note.space, note.path) : 'false',
         sort: [],
         groupBy: { property: 'task.section', direction: 'ASC' },
-        nib: { rows: 'tasks', groupOrder: 'rows', kept: {} },
+        orden: { rows: 'tasks', groupOrder: 'rows', kept: {} },
       })
     }
     case 'label': {
@@ -148,7 +148,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
             : { and: [`file.space == ${quote(params.space)}`, tagged] },
         sort: [],
         groupBy: { property: 'file.path', direction: 'ASC' },
-        nib: { rows: 'both', kept: {} },
+        orden: { rows: 'both', kept: {} },
       })
     }
     case 'assigned':

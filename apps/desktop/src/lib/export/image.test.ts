@@ -17,7 +17,7 @@ const PAGE = `<!doctype html>
 <p>Guard: a &lt; b &amp;&amp; c &gt; d</p>
 <p><input checked disabled type="checkbox"> done</p>
 <p><img src="data:image/png;base64,iVBORw0KGgo=" alt="One"></p>
-<!--nib:toc-->
+<!--orden:toc-->
 </div>
 </body>
 </html>
@@ -205,7 +205,7 @@ describe('the SVG the browser is handed', () => {
     expect(svg).toContain('<input checked="checked" disabled="disabled" type="checkbox" />')
     expect(svg).toContain('<img src="data:image/png;base64,iVBORw0KGgo=" alt="One" />')
     expect(svg).toContain('Guard: a &lt; b &amp;&amp; c &gt; d')
-    expect(svg).toContain('<!--nib:toc-->')
+    expect(svg).toContain('<!--orden:toc-->')
     expect(svg).toContain('#write &gt; p { margin: 0 0 1em; }')
   })
 

@@ -130,7 +130,7 @@ function filterOf(value: unknown): Filter {
 }
 
 function viewWith(view: View, said: Args): View {
-  const next: View = { ...view, nib: { ...view.nib }, options: { ...view.options } }
+  const next: View = { ...view, orden: { ...view.orden }, options: { ...view.options } }
   if (said.type !== undefined) next.type = words(said.type, 'type')
   if (said.name !== undefined) next.name = words(said.name, 'name')
   if (said.filters !== undefined) {
@@ -162,7 +162,7 @@ function viewWith(view: View, said: Args): View {
     if (said.rows !== 'notes' && said.rows !== 'tasks' && said.rows !== 'both') {
       throw new AgentError('bad_arguments', 'rows is notes, tasks or both')
     }
-    next.nib.rows = said.rows
+    next.orden.rows = said.rows
   }
   return next
 }
@@ -195,7 +195,7 @@ export function editedBase(base: Base, ops: unknown): Base {
           order: [],
           sort: [],
           summaries: {},
-          nib: { kept: {} },
+          orden: { kept: {} },
           options: {},
         }
         const view = viewWith(blank, raw)

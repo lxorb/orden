@@ -581,7 +581,7 @@ describe('the transformer', () => {
   })
 
   test('keeps a comment, and drops one XML could not hold', () => {
-    expect(toXhtml('<!--nib:toc-->')).toBe('<!--nib:toc-->')
+    expect(toXhtml('<!--orden:toc-->')).toBe('<!--orden:toc-->')
     expect(toXhtml('a<!-- one -- two -->b')).toBe('ab')
     expect(toXhtml('a<!-- ends in a dash -->b')).toBe('a<!-- ends in a dash -->b')
     expect(toXhtml('a<!-- dash -->b')).toBe('a<!-- dash -->b')

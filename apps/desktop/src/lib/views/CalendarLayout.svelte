@@ -42,7 +42,7 @@
   })
 
   const days = $derived(daysShown(mode, anchor, first))
-  const dateProperty = $derived(view?.nib.date ?? 'task.date')
+  const dateProperty = $derived(view?.orden.date ?? 'task.date')
   const rows = $derived(everyRow(live.answer?.groups ?? []))
   const placed = $derived(
     placedByDay(rows, days, (row) => {

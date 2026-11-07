@@ -92,15 +92,15 @@
   const view = $derived(live.view)
   const base = $derived(live.base)
   const property = $derived(view?.groupBy?.property)
-  const sub = $derived(view?.nib.subGroupBy?.property)
-  const hidden = $derived(view?.nib.hidden ?? [])
-  const kinds = $derived(view?.nib.rows ?? 'notes')
+  const sub = $derived(view?.orden.subGroupBy?.property)
+  const hidden = $derived(view?.orden.hidden ?? [])
+  const kinds = $derived(view?.orden.rows ?? 'notes')
   const notes = $derived(kinds === 'notes')
   const pages = $derived(kit.adds)
   const grows = $derived(!kit.compact && kit.writable)
   const sorted = $derived((view?.sort.length ?? 0) > 0)
   const carries = $derived(droppableBy(property, kinds))
-  const coloured = $derived(view?.nib.colourColumns !== false)
+  const coloured = $derived(view?.orden.colourColumns !== false)
   const phone = $derived(viewport.device === 'phone')
   const project = $derived(property === 'task.section' ? projectOf(kit) : null)
   const options = $derived(base && property ? optionsAt(base, property) : [])
@@ -127,7 +127,8 @@
   const shownGroups = $derived(
     groups.filter(
       (group) =>
-        !hidden.includes(groupName(group.key)) && !(view?.nib.hideEmpty && group.rows.length === 0),
+        !hidden.includes(groupName(group.key)) &&
+        !(view?.orden.hideEmpty && group.rows.length === 0),
     ),
   )
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
@@ -166,7 +167,11 @@
     shownGroups.some((group) => group.rows.some((row) => checked.has(noteKey(row)))),
   )
   const lines = $derived(
-    cardLines(sizeOf(view?.nib.cardSize, notes), notes ? shown.length : 0, !notes || anyChecklist),
+    cardLines(
+      sizeOf(view?.orden.cardSize, notes),
+      notes ? shown.length : 0,
+      !notes || anyChecklist,
+    ),
   )
   const height = $derived(cardHeight(lines, viewport.touch))
 
@@ -429,7 +434,7 @@
     pending = [...pending.filter((one) => one.card !== card), moving]
     announce(t('{card} moved to {group}', { card: titleOf(row), group: columnName(group) }))
     const others = ids.filter((one) => one !== id).length
-    const stored = (view?.nib.order?.[name]?.length ?? 0) > 0
+    const stored = (view?.orden.order?.[name]?.length ?? 0) > 0
     const keepOrder = !sorted && (stored || index < others)
 
     const write = async () => {

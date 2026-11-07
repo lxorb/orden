@@ -52,7 +52,7 @@ const BESIDE = JSON.stringify({
     },
   ],
   edges: [],
-  nib: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
+  orden: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
 })
 
 function current(): import('../../../test/disk').Disk {

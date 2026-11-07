@@ -31,7 +31,7 @@ SOLO = "Solo"
 ITEM = "one.md"
 ITEM_OPENING = "# One note\n\nshared on its own\n"
 ITEM_CANVAS = "board.canvas"
-ITEM_CANVAS_FILE = '{"nib":{"version":1},"nodes":[],"edges":[]}'
+ITEM_CANVAS_FILE = '{"orden":{"version":1},"nodes":[],"edges":[]}'
 
 PHONE = {"width": 390, "height": 844}
 THUMB = {

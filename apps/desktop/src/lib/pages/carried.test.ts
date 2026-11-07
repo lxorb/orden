@@ -23,13 +23,13 @@ const WITH_PAPER = JSON.stringify({
     },
   ],
   edges: [],
-  nib: { pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
+  orden: { pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
 })
 
 const BLANK = JSON.stringify({
   nodes: [{ id: 'p1', type: 'group', label: 'Page 1', x: 0, y: 0, width: 595, height: 842 }],
   edges: [],
-  nib: { pages: [{ id: 'p1', paper: 'a4', pattern: 'lines' }] },
+  orden: { pages: [{ id: 'p1', paper: 'a4', pattern: 'lines' }] },
 })
 
 const PDF = new TextEncoder().encode('%PDF-1.4\n%%EOF\n')

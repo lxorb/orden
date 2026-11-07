@@ -128,8 +128,8 @@ describe('what a wikilink cannot do to the page', () => {
   })
 
   test('a note cannot write the marker an embed is put in place of', () => {
-    const html = renderMarkdown('<!--nib:embed:0-->\n\n![[plan]]', { resolveEmbed })
-    expect(html).not.toContain('nib:embed:0')
+    const html = renderMarkdown('<!--orden:embed:0-->\n\n![[plan]]', { resolveEmbed })
+    expect(html).not.toContain('orden:embed:0')
     expect(html).toContain('The plan')
   })
 })

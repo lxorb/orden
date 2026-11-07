@@ -16,7 +16,7 @@ views:
       - file.name
       - note.priority
       - formula.age
-    nib:
+    orden:
       subGroupBy: note.assignee
       order:
         To do: [Bugs/Sync loses a rename.md, Bugs/Glass on Linux.md]
@@ -26,16 +26,16 @@ views:
       formula.age: Average
   - type: calendar
     name: Due
-    nib:
+    orden:
       date: note.due
   - type: list
     name: Open tasks
-    nib:
+    orden:
       rows: tasks
     filters:
       and:
         - '!task.done'
-nib:
+orden:
   template: "[[Templates/Bug]]"
   id:
     property: id

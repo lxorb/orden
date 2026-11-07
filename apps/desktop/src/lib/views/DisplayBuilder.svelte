@@ -211,16 +211,16 @@
     class="orden-setting pressable"
     role="switch"
     tabindex="0"
-    aria-checked={view?.nib.showCompleted === true}
-    onclick={() => kit.change((base, at) => withCompleted(base, at, !view?.nib.showCompleted))}
+    aria-checked={view?.orden.showCompleted === true}
+    onclick={() => kit.change((base, at) => withCompleted(base, at, !view?.orden.showCompleted))}
     onkeydown={(event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return
       event.preventDefault()
-      kit.change((base, at) => withCompleted(base, at, !view?.nib.showCompleted))
+      kit.change((base, at) => withCompleted(base, at, !view?.orden.showCompleted))
     }}
   >
     <span class="name">{t('Completed tasks')}</span>
-    <span class="orden-switch" class:on={view?.nib.showCompleted === true} aria-hidden="true"
+    <span class="orden-switch" class:on={view?.orden.showCompleted === true} aria-hidden="true"
     ></span>
   </div>
 

@@ -7,9 +7,9 @@ const FILES: Record<string, string> = {
     '{"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e","icon":"rocket","iconColor":"violet"}\n',
   '/Home/Plain.chat': '{"v":1,"chat":"c_0f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}\n',
   '/Home/Docs.url':
-    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Icon=data:image/png;base64,AA\r\n',
+    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nOrden-Icon=data:image/png;base64,AA\r\n',
   '/Home/Chosen.url':
-    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nNib-Icon=data:image/png;base64,AA\r\nNib-Chosen-Icon=rocket\r\n',
+    '[InternetShortcut]\r\nURL=https://docs.dev/\r\nOrden-Icon=data:image/png;base64,AA\r\nOrden-Chosen-Icon=rocket\r\n',
   '/Home/Lecture.pages': '{"nodes":[],"edges":[]}',
   '/Home/Sketch.pages': '{"nodes":[],"edges":[]}',
   '/Home/Blank.md': '# Blank\n\n',

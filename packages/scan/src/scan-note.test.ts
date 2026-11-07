@@ -99,24 +99,24 @@ describe('reading a canvas for the index', () => {
   })
 
   test('wears what its own file says, under the key that carries the ink', () => {
-    const marked = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } })
+    const marked = JSON.stringify({ nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } })
     expect(scanCanvas('Board.canvas', marked).icon).toBe('rocket')
   })
 
   test('and an emoji a vault brought in from Iconize, as written', () => {
-    const marked = JSON.stringify({ nodes: [], edges: [], nib: { icon: '🚀' } })
+    const marked = JSON.stringify({ nodes: [], edges: [], orden: { icon: '🚀' } })
     expect(scanCanvas('Board.canvas', marked).icon).toBe('🚀')
   })
 
   test('nothing where it says nothing, or says something that is not a name', () => {
     expect(scanCanvas('Board.canvas', canvas).icon).toBeNull()
-    expect(scanCanvas('Board.canvas', '{"nib":{"icon":"  "}}').icon).toBeNull()
-    expect(scanCanvas('Board.canvas', '{"nib":{"icon":7}}').icon).toBeNull()
+    expect(scanCanvas('Board.canvas', '{"orden":{"icon":"  "}}').icon).toBeNull()
+    expect(scanCanvas('Board.canvas', '{"orden":{"icon":7}}').icon).toBeNull()
     expect(scanCanvas('Board.canvas', 'not json').icon).toBeNull()
   })
 
   test('and never an alias', () => {
-    expect(scanCanvas('Board.canvas', '{"nib":{"icon":"rocket"}}').aliases).toEqual([])
+    expect(scanCanvas('Board.canvas', '{"orden":{"icon":"rocket"}}').aliases).toEqual([])
   })
 
   test('reads the cards and the icon of a plane without reading its ink', () => {
@@ -142,7 +142,7 @@ describe('reading a canvas for the index', () => {
         { id: 'b', type: 'text', x: 0, y: 0, width: 1, height: 1, text: 'a card with [[words]]' },
       ],
       edges: [],
-      nib: { version: 1, icon: 'rocket', iconColor: 'violet', ink },
+      orden: { version: 1, icon: 'rocket', iconColor: 'violet', ink },
     })
 
     const parse = vi.spyOn(JSON, 'parse')
@@ -161,7 +161,7 @@ describe('reading a canvas for the index', () => {
   test('stops at the icon of a plane in the order this app writes one', () => {
     const cards =
       '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
-    const nib = '"nib":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
+    const nib = '"orden":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
     const read = scanCanvas('Board.canvas', `{${cards},"edges":[],${nib}`)
 
     expect(read.icon).toBe('rocket')
@@ -170,7 +170,7 @@ describe('reading a canvas for the index', () => {
   })
 
   test('and walks the whole of one in any other order', () => {
-    const plane = JSON.stringify({ nib: { ink: [[1]], version: 1, icon: 'rocket' }, nodes: [] })
+    const plane = JSON.stringify({ orden: { ink: [[1]], version: 1, icon: 'rocket' }, nodes: [] })
 
     expect(scanCanvas('Board.canvas', plane).icon).toBe('rocket')
     expect(scanCanvas('Board.canvas', plane.replace('[[1]]', '[[1]')).icon).toBeNull()
@@ -179,9 +179,9 @@ describe('reading a canvas for the index', () => {
 
 describe('reading a website for the index', () => {
   const url =
-    '[InternetShortcut]\nURL=https://svelte.dev/docs\nNib-Icon=https://svelte.dev/favicon.png\n'
+    '[InternetShortcut]\nURL=https://svelte.dev/docs\nOrden-Icon=https://svelte.dev/favicon.png\n'
 
-  test('carries the favicon out of its Nib-Icon key', () => {
+  test('carries the favicon out of its Orden-Icon key', () => {
     const site = scanShortcut('Reading/Svelte docs.url', url)
     expect(site.name).toBe('Svelte docs.url')
     expect(site.favicon).toBe('https://svelte.dev/favicon.png')

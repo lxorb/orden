@@ -1164,7 +1164,7 @@ describe('a note both sides changed, when somebody chose to be asked', () => {
 
 describe('a canvas both sides drew on', () => {
   const plane = (id: string) =>
-    `{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${id}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${id}": 1000 }\n\t}\n}\n`
+    `{\n\t"nodes": [],\n\t"edges": [],\n\t"orden": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${id}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${id}": 1000 }\n\t}\n}\n`
 
   test('is merged rather than copied when it is in no room', async () => {
     const { mirror, id } = await paired('Board.canvas', plane('base'))
@@ -1215,7 +1215,7 @@ describe('a page note', () => {
     `{
 	"nodes": [{ "id": "p1", "type": "page", "x": 0, "y": 0, "width": 794, "height": 1123 }],
 	"edges": [],
-	"nib": {
+	"orden": {
 		"version": 1,
 		"ink": [{ "id": "${id}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],
 		"at": { "${id}": 1000 }
@@ -1365,7 +1365,7 @@ describe('words arriving from the account', () => {
 
   test('keep a version when a canvas is merged into the file', async () => {
     const drawn = (mark: string) =>
-      `{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${mark}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${mark}": 1000 }\n\t}\n}\n`
+      `{\n\t"nodes": [],\n\t"edges": [],\n\t"orden": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${mark}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${mark}": 1000 }\n\t}\n}\n`
 
     const { mirror, id } = await paired('Board.canvas', drawn('base'))
     fake.disk.set(`${ROOT}/Board.canvas`, drawn('here'))
@@ -2038,9 +2038,9 @@ describe('a note renamed on another device', () => {
 
 describe('a web note both sides changed', () => {
   const site = (url: string, extra = '') =>
-    `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nNib-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
+    `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nOrden-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
   const BASE = site('https://docs.dev/')
-  const HOME = 'Nib-Home=https://docs.dev/\r\n'
+  const HOME = 'Orden-Home=https://docs.dev/\r\n'
 
   for (const rule of ['both', 'ask', 'newest'] as const) {
     test(`settles into one file with no copy and nothing held, under ${rule}`, async () => {
@@ -2049,7 +2049,7 @@ describe('a web note both sides changed', () => {
       fake.modified.set(`${ROOT}/Docs.url`, 1_000)
       fake.editRemote(
         id,
-        site('https://docs.dev/b', `${HOME}Nib-Icon=data:image/png;base64,AA\r\n`),
+        site('https://docs.dev/b', `${HOME}Orden-Icon=data:image/png;base64,AA\r\n`),
         2_000,
       )
       const clashes: Clash[] = []
@@ -2060,14 +2060,14 @@ describe('a web note both sides changed', () => {
       expect(clashes).toEqual([])
       const settled = fake.disk.get(`${ROOT}/Docs.url`) ?? ''
       expect(settled).toContain('URL=https://docs.dev/b')
-      expect(settled).toContain('Nib-Icon=data:image/png;base64,AA')
+      expect(settled).toContain('Orden-Icon=data:image/png;base64,AA')
       expect(versions('Docs.url')).toEqual([site('https://docs.dev/a', HOME)])
     })
   }
 
   test('keeps what only the older copy said, and the newer reading', async () => {
     const { mirror, id } = await paired('Docs.url', BASE)
-    fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/a', `${HOME}Nib-Icon=data:mine\r\n`))
+    fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/a', `${HOME}Orden-Icon=data:mine\r\n`))
     fake.modified.set(`${ROOT}/Docs.url`, 3_000)
     fake.editRemote(id, site('https://docs.dev/b', HOME), 2_000)
 
@@ -2076,14 +2076,14 @@ describe('a web note both sides changed', () => {
 
     const settled = fake.disk.get(`${ROOT}/Docs.url`) ?? ''
     expect(settled).toContain('URL=https://docs.dev/a')
-    expect(settled).toContain('Nib-Icon=data:mine')
+    expect(settled).toContain('Orden-Icon=data:mine')
     expect(conflicts()).toEqual([])
     expect(fake.remote.get(id)?.content).toBe(settled)
   })
 
   test('made on two devices at one name is one note, not a copy', async () => {
     const id = fake.addRemote('Docs.url', site('https://docs.dev/there'))
-    fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/here', 'Nib-Icon=data:here\r\n'))
+    fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/here', 'Orden-Icon=data:here\r\n'))
     const mirror = newMirror('s-one', ROOT)
 
     await push(mirror, 'token', NOBODY)
@@ -2097,12 +2097,12 @@ describe('a web note both sides changed', () => {
 
 describe('a web note’s old copies', () => {
   const site = (url: string, extra = '') =>
-    `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nNib-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
+    `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nOrden-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
   const COPY = 'Docs (from another device 2026-10-01).url'
 
   test('are folded into the note when they point where it points', async () => {
     const { mirror } = await paired('Docs.url', site('https://docs.dev/'))
-    const copy = fake.addRemote(COPY, site('https://docs.dev/', 'Nib-Icon=data:theirs\r\n'))
+    const copy = fake.addRemote(COPY, site('https://docs.dev/', 'Orden-Icon=data:theirs\r\n'))
     await pull(mirror, 'token', NOBODY)
     const second = `${ROOT}/Docs (from another device 2026-10-01) 2.url`
     fake.disk.set(second, site('https://docs.dev/'))
@@ -2110,7 +2110,7 @@ describe('a web note’s old copies', () => {
     await push(mirror, 'token', NOBODY)
 
     expect(conflicts()).toEqual([])
-    expect(fake.disk.get(`${ROOT}/Docs.url`)).toContain('Nib-Icon=data:theirs')
+    expect(fake.disk.get(`${ROOT}/Docs.url`)).toContain('Orden-Icon=data:theirs')
     expect([...fake.trash.values()].map((one) => one.path).sort()).toEqual(
       [`${ROOT}/${COPY}`, second].sort(),
     )

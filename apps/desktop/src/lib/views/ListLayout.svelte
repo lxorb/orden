@@ -98,7 +98,7 @@
         ...(project ? { title: project.name } : {}),
         folded,
         shut,
-        hidden: view?.nib.hidden ?? [],
+        hidden: view?.orden.hidden ?? [],
         adding: kit.adds,
         parentOf: (row) => parentOf(row, live.context),
       },

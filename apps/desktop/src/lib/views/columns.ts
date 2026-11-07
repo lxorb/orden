@@ -70,7 +70,7 @@ export function defaultColumns(kinds: RowKinds, rows: readonly Row[]): string[] 
 export function columnsOf(base: Base, at: number, rows: readonly Row[]): string[] {
   const view = base.views[at]
   if (view?.order.length) return [...new Set(view.order)]
-  return defaultColumns(view?.nib.rows ?? 'notes', rows)
+  return defaultColumns(view?.orden.rows ?? 'notes', rows)
 }
 
 export function displayName(base: Base, property: string): string | undefined {
@@ -78,11 +78,11 @@ export function displayName(base: Base, property: string): string | undefined {
 }
 
 export function optionsOf(base: Base, property: string): string[] {
-  return base.nib.properties[bare(property)]?.options?.map((one) => one.value) ?? []
+  return base.orden.properties[bare(property)]?.options?.map((one) => one.value) ?? []
 }
 
 export function toneOf(base: Base, property: string, value: string): string | undefined {
-  return base.nib.properties[bare(property)]?.options?.find((one) => one.value === value)?.tone
+  return base.orden.properties[bare(property)]?.options?.find((one) => one.value === value)?.tone
 }
 
 function noteKind(key: string, rows: readonly Row[]): Editor {
@@ -136,7 +136,7 @@ const FIELD_HOLDS: Partial<Record<string, Holds>> = Object.fromEntries([
 ] satisfies [string, Holds][])
 
 function noteHolds(base: Base, key: string, rows: readonly Row[]): Holds | undefined {
-  const format = base.nib.properties[key]?.format ?? ''
+  const format = base.orden.properties[key]?.format ?? ''
   if (/^(number|percent|progress|currency)/.test(format)) return 'number'
   let link = false
   let other = false
@@ -177,7 +177,7 @@ export function editorOf(base: Base, property: string, rows: readonly Row[]): Ed
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'
   if (isButton(property)) return 'button'
   if (!isNoteProperty(property)) return 'none'
-  if (base.nib.id?.property === bare(property)) return 'none'
+  if (base.orden.id?.property === bare(property)) return 'none'
   if (optionsOf(base, property).length) return 'select'
   return noteKind(bare(property), rows)
 }
@@ -247,7 +247,7 @@ export function knownProperties(base: Base, kinds: RowKinds, rows: readonly Row[
 
 export function formatOf(base: Base, property: string): string | undefined {
   const key = property.startsWith('formula.') ? property.slice(8) : bare(property)
-  return base.nib.properties[key]?.format
+  return base.orden.properties[key]?.format
 }
 
 function holdsLink(value: Value | undefined): boolean {

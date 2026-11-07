@@ -32,9 +32,9 @@ its lock and the fetched builds - once the window is up. Chromium's profiles in
 [InternetShortcut]
 URL=https://svelte.dev/docs/svelte/what-are-runes
 Title=Svelte docs
-Nib-Added=2026-09-12T08:30:00.000Z
-Nib-Home=https://svelte.dev/docs
-Nib-Icon=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0...
+Orden-Added=2026-09-12T08:30:00.000Z
+Orden-Home=https://svelte.dev/docs
+Orden-Icon=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0...
 ```
 
 The format is nobody's invention. `.url` is the Windows Internet Shortcut, which is
@@ -46,7 +46,7 @@ own two keys sit in the same block rather than in a section of their own.
 
 `URL` is the format's own key and the only one it requires. `Title` is here rather
 than taken from the file name because a name on disk cannot hold `?`, `:` or `/` and
-a page's title often does. `Nib-Added` is the day, which is what `date:` was. The
+a page's title often does. `Orden-Added` is the day, which is what `date:` was. The
 last two are what makes a web note a browser tab, and a file with nothing to say in
 them does not carry them at all - a note nobody has followed a link out of is the
 three lines it always was.
@@ -62,13 +62,13 @@ file is what syncs - opens the page that was open. Double-clicking the file in
 Explorer lands there too, which is the behaviour anybody would expect of a shortcut
 to a page they were reading.
 
-**`Nib-Home` is where the note points**: the address somebody typed into the bar, or
+**`Orden-Home` is where the note points**: the address somebody typed into the bar, or
 the one the note was made with. It is kept because a note whose address had quietly
 become the eighth page of somebody's browsing is a note no link could point at, and
 because "take me back to the site" is worth being able to answer. Absent means it is
 the same as `URL`.
 
-**`Nib-Icon` is the site's own mark, as the picture itself**: a `data:` address
+**`Orden-Icon` is the site's own mark, as the picture itself**: a `data:` address
 holding the PNG the page arrived with the last time it was open. An address to fetch
 it from was what this used to hold, and it failed exactly where it mattered. WhatsApp
 adds its mark with a script a second after the page has loaded and serves it with
@@ -100,7 +100,7 @@ field's rows and the palette's all wear the site before any page loads. One cach
 `favicons` in `web-tab/pages.svelte.ts`, and one door to it, `siteMark`: the live
 page's mark, else the last one this device saw at that page (or, where that page showed
 none, at its origin - Chrome's host fallback, Firefox's root icon), else the file's
-`Nib-Icon`. It holds only what pages showed, never fetches anything to fill itself,
+`Orden-Icon`. It holds only what pages showed, never fetches anything to fill itself,
 keeps one mark per page so an unread count replaces rather than piles up (Firefox bug
 1598371 stored 207,000 of those), is capped at 500 pages and half a megabyte with the
 least recently used going first, and forgets a page when its history row is removed.
@@ -210,7 +210,7 @@ goes **in** the note being written: every row of it puts a block on the page, an
 website is a file beside the note rather than something in it. The two menus that
 make files - the file list's and the tab strip's - are where it belongs.
 
-**Following a link inside the page moves `URL`, and `Nib-Home` keeps where the note
+**Following a link inside the page moves `URL`, and `Orden-Home` keeps where the note
 points.** A web note is a browser tab, so the file says where the reading has got to
 and opening the note again opens that page; see "The file" above. An address typed
 into the bar moves both, because that is somebody saying where the document itself
@@ -1964,8 +1964,8 @@ keep a profile per space, which is what Orden had and what #239 took away.
   deleted: the page is built again in the shared store, and the note's own is cleared with
   the call Delete browsing data makes. A store nobody names is a login nobody can see.
 
-**The note's file is the choice.** `Nib-Data=<sixteen hex digits>` beside `Nib-Home` and
-`Nib-Icon` (`@orden/scan/shortcut`), an id made when it is turned on, and the store is
+**The note's file is the choice.** `Orden-Data=<sixteen hex digits>` beside `Orden-Home` and
+`Orden-Icon` (`@orden/scan/shortcut`), an id made when it is turned on, and the store is
 `note_<id>`. In the file, so it moves and is renamed with the note, syncs with it, and opens
 in a store of the same name on another computer, empty there: a computer's web logins stay
 on it (#393, docs/sync-v2.md section 6). Every

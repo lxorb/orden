@@ -9,7 +9,7 @@ const NOTES: Record<string, string> = {
   '/space/Work/One.md': 'alpha here\nbeta there\nalpha again\n',
   '/space/Two.md': 'alpha only\n',
   '/space/Three.md': 'Doe, John\nRoe, Jane\n',
-  '/space/Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev\r\nNib-Icon=star\r\n',
+  '/space/Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev\r\nOrden-Icon=star\r\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)

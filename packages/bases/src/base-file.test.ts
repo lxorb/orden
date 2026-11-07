@@ -11,7 +11,7 @@ const FILES = [
     .filter((name) => name.endsWith('.base'))
     .map((name) => `kepano/${name}`),
   'obsidian-help.base',
-  'nib-example.base',
+  'orden-example.base',
 ]
 
 describe('a base read and written unchanged', () => {
@@ -68,30 +68,30 @@ describe('reading', () => {
     ])
   })
 
-  test("nib's key, at the top and in a view", () => {
-    const base = readBase(fixture('nib-example.base'))
-    expect(base.nib.template).toBe('[[Templates/Bug]]')
-    expect(base.nib.id).toEqual({ property: 'id', prefix: 'BUG' })
-    expect(base.nib.properties.status?.options).toEqual([
+  test("Orden's key, at the top and in a view", () => {
+    const base = readBase(fixture('orden-example.base'))
+    expect(base.orden.template).toBe('[[Templates/Bug]]')
+    expect(base.orden.id).toEqual({ property: 'id', prefix: 'BUG' })
+    expect(base.orden.properties.status?.options).toEqual([
       { value: 'To do', group: 'todo', tone: 'neutral' },
       { value: 'Doing', group: 'doing', tone: 'info' },
       { value: 'Review', group: 'doing', tone: 'warning' },
       { value: 'Done', group: 'done', tone: 'success' },
     ])
-    expect(base.views[0]?.nib).toMatchObject({
+    expect(base.views[0]?.orden).toMatchObject({
       subGroupBy: { property: 'note.assignee', direction: 'ASC' },
       order: { 'To do': ['Bugs/Sync loses a rename.md', 'Bugs/Glass on Linux.md'] },
     })
-    expect(base.views[2]?.nib.date).toBe('note.due')
-    expect(base.views[3]?.nib.rows).toBe('tasks')
+    expect(base.views[2]?.orden.date).toBe('note.due')
+    expect(base.views[3]?.orden.rows).toBe('tasks')
     expect(base.views[3]?.filters).toEqual({ and: ['!task.done'] })
   })
 
   test("a board's own keys, and a card size Orden does not know left as written", () => {
     const source =
-      'views:\n  - type: kanban\n    name: B\n    cardSize: 180\n    nib:\n      cardSize: large\n      groups: [Done, To do]\n      noneFirst: true\n      hideEmpty: true\n      colourColumns: false\n'
+      'views:\n  - type: kanban\n    name: B\n    cardSize: 180\n    orden:\n      cardSize: large\n      groups: [Done, To do]\n      noneFirst: true\n      hideEmpty: true\n      colourColumns: false\n'
     const base = readBase(source)
-    expect(base.views[0]?.nib).toMatchObject({
+    expect(base.views[0]?.orden).toMatchObject({
       cardSize: 'large',
       groups: ['Done', 'To do'],
       noneFirst: true,
@@ -100,7 +100,7 @@ describe('reading', () => {
     })
     expect(base.views[0]?.options.cardSize).toBe(180)
     expect(writeBase(base, source)).toBe(source)
-    expect(readBase(source.replace('large', 'huge')).views[0]?.nib.cardSize).toBeUndefined()
+    expect(readBase(source.replace('large', 'huge')).views[0]?.orden.cardSize).toBeUndefined()
   })
 
   test('an empty file is an empty base, and a broken one an error', () => {
@@ -110,11 +110,11 @@ describe('reading', () => {
 
   test('keys nobody knows are kept, at every level', () => {
     const base = readBase(
-      'plugin: 1\nviews:\n  - type: chart\n    name: C\n    nib:\n      bars: 3\nnib:\n  later: true\n',
+      'plugin: 1\nviews:\n  - type: chart\n    name: C\n    orden:\n      bars: 3\norden:\n  later: true\n',
     )
     expect(base.kept).toEqual({ plugin: 1 })
-    expect(base.views[0]?.nib.kept).toEqual({ bars: 3 })
-    expect(base.nib.kept).toEqual({ later: true })
+    expect(base.views[0]?.orden.kept).toEqual({ bars: 3 })
+    expect(base.orden.kept).toEqual({ later: true })
   })
 })
 
@@ -141,15 +141,15 @@ describe('writing a change', () => {
       order: ['file.name'],
       sort: [],
       summaries: {},
-      nib: { date: 'note.last', kept: {} },
+      orden: { date: 'note.last', kept: {} },
       options: {},
     })
     const written = writeBase(base, source)
     expect(written.startsWith(source.trimEnd())).toBe(true)
     expect(written.slice(source.trimEnd().length)).toBe(
-      '\n  - type: calendar\n    name: Visits\n    order:\n      - file.name\n    nib:\n      date: note.last\n',
+      '\n  - type: calendar\n    name: Visits\n    order:\n      - file.name\n    orden:\n      date: note.last\n',
     )
-    expect(readBase(written).views.at(-1)?.nib.date).toBe('note.last')
+    expect(readBase(written).views.at(-1)?.orden.date).toBe('note.last')
   })
 
   test('a quoted filter keeps its quotes when another one changes', () => {
@@ -197,22 +197,22 @@ describe('writing a change', () => {
     expect(readBase(written).views.map((view) => view.name)).toEqual(['Books', 'Author', 'Genre'])
   })
 
-  test("nib's key is written where Obsidian leaves it alone", () => {
+  test("Orden's key is written where Obsidian leaves it alone", () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
-    base.nib.template = '[[Templates/Bug]]'
+    base.orden.template = '[[Templates/Bug]]'
     const first = base.views[0]
     if (!first) throw new Error('no view')
-    first.nib.rows = 'tasks'
-    first.nib.showCompleted = true
+    first.orden.rows = 'tasks'
+    first.orden.showCompleted = true
     expect(writeBase(base, 'views:\n  - type: table\n    name: All\n')).toBe(
       [
         'views:',
         '  - type: table',
         '    name: All',
-        '    nib:',
+        '    orden:',
         '      rows: tasks',
         '      showCompleted: true',
-        'nib:',
+        'orden:',
         "  template: '[[Templates/Bug]]'",
         '',
       ].join('\n'),
@@ -228,7 +228,7 @@ describe('writing a change', () => {
       order: [],
       sort: [{ property: 'file.name', direction: 'ASC' }],
       summaries: {},
-      nib: { kept: {} },
+      orden: { kept: {} },
       options: {},
     })
     const written = writeBase(base)

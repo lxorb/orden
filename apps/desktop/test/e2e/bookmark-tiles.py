@@ -19,7 +19,7 @@ FILES = {
     "Rocket.md": "---\nicon: 🚀\n---\n# Rocket\n\nLaunch day.\n",
     "Inbox.md": "# Inbox\n\nLoose ends.\n",
     "Board.canvas": '{"nodes":[],"edges":[]}',
-    "Svelte docs.url": f"[InternetShortcut]\nURL=https://svelte.dev/\nNib-Icon={FAVICON}\n",
+    "Svelte docs.url": f"[InternetShortcut]\nURL=https://svelte.dev/\nOrden-Icon={FAVICON}\n",
     "Loose.md": "# Loose\n\nNot bookmarked yet.\n",
 }
 

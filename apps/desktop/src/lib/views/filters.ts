@@ -29,14 +29,14 @@ export function filterBase(name: string, query: string, reading: Reading): Base 
     order: [],
     summaries: {},
     options: {},
-    nib: { rows: 'tasks', kept: { todoist: lists[at] ?? query } },
+    orden: { rows: 'tasks', kept: { todoist: lists[at] ?? query } },
   }))
   return {
     formulas: {},
     properties: {},
     summaries: {},
     views,
-    nib: { properties: {}, kept: { todoist: query } },
+    orden: { properties: {}, kept: { todoist: query } },
     kept: {},
   }
 }
@@ -57,7 +57,7 @@ function splitLists(query: string): string[] {
 }
 
 export function queryOf(base: Base): string | null {
-  const kept = base.nib.kept.todoist
+  const kept = base.orden.kept.todoist
   return typeof kept === 'string' && kept.trim() ? kept : null
 }
 

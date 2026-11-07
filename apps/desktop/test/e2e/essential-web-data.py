@@ -133,7 +133,7 @@ def drive(_browser: object) -> None:
     switch.wipe(identifier)
     space = native.spaces / SPACE
     space.mkdir(parents=True, exist_ok=True)
-    (space / "Apart.url").write_text(switch.shortcut(home, "Apart") + f"Nib-Data={OWN}\r\n", encoding="utf-8")
+    (space / "Apart.url").write_text(switch.shortcut(home, "Apart") + f"Orden-Data={OWN}\r\n", encoding="utf-8")
     (space / "Shared.url").write_text(switch.shortcut(home, "Shared"), encoding="utf-8")
 
     app = native.start()

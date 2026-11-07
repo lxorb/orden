@@ -68,6 +68,13 @@ describe('finding the answer a fence already has', () => {
     expect(note.slice(span?.from, span?.to)).toBe(answerText('said', 'The answer.'))
   })
 
+  test('is found under the marks an older version wrote', () => {
+    const old = '<!--nib:ai-->\n*said*\n\nThe answer.\n<!--/nib:ai-->'
+    const note = `${fence}\n\n${old}\n\nAfter.`
+    const span = answerSpan(lines(note), 2)
+    expect(note.slice(span?.from, span?.to)).toBe(old)
+  })
+
   test('reaches over the blank line the answer is separated by', () => {
     const note = `${fence}\n\n\n\n${answerText('said', 'Late.')}`
     expect(answerSpan(lines(note), 2)).not.toBeNull()

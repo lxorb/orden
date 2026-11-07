@@ -22,7 +22,7 @@ export interface Point {
 }
 
 export function settingsOf(view: View): ChartSettings {
-  const kept = view.nib.kept
+  const kept = view.orden.kept
   const kind = CHART_KINDS.find((one) => one === kept.chart) ?? 'bar'
   const measure = MEASURES.find((one) => one === kept.measure) ?? 'count'
   const settings: ChartSettings = { kind, measure, cumulative: kept.cumulative === true }

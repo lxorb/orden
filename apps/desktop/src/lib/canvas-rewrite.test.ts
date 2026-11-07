@@ -74,9 +74,9 @@ describe('a plane that keeps times, linking a renamed note', () => {
     `{"nodes":[{"id":"a","type":"file","file":"Old.md","x":0,"y":0,"width":1,"height":1},` +
     `{"id":"b","type":"text","text":"see [[Old]]","x":0,"y":0,"width":1,"height":1},` +
     `{"id":"c","type":"text","text":"hi","x":0,"y":0,"width":1,"height":1}],` +
-    `"edges":[],"nib":{"version":1,"at":${at}}}`
+    `"edges":[],"orden":{"version":1,"at":${at}}}`
   const times = (text: string | null) =>
-    (JSON.parse(text ?? '{}') as { nib: { at: Record<string, number> } }).nib.at
+    (JSON.parse(text ?? '{}') as { orden: { at: Record<string, number> } }).orden.at
   const rewrite = (text: string) =>
     retargetCanvas(
       text,

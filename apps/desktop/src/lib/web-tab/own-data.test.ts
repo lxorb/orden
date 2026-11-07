@@ -62,12 +62,12 @@ vi.mock('../workspace.svelte', () => ({
 const { showWebData } = await import('./own-data')
 
 const SEPARATE =
-  '[InternetShortcut]\r\nURL=https://mail.example/\r\nTitle=Mail\r\nNib-Data=0123456789abcdef\r\n'
+  '[InternetShortcut]\r\nURL=https://mail.example/\r\nTitle=Mail\r\nOrden-Data=0123456789abcdef\r\n'
 
 async function setGlobal(path: string) {
   await showWebData(path)
   rows.find((one) => one.label === 'Global')!.run()
-  await vi.waitFor(() => expect(files.get(path)).not.toContain('Nib-Data'))
+  await vi.waitFor(() => expect(files.get(path)).not.toContain('Orden-Data'))
   await new Promise((done) => setTimeout(done, 0))
 }
 

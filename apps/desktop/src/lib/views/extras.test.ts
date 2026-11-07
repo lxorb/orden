@@ -17,7 +17,7 @@ const day = (iso: string) => new Date(`${iso}T09:00:00`).getTime()
 const base = readBase(`filters:
   and:
     - file.inFolder("Bugs")
-nib:
+orden:
   id: { property: id, prefix: BUG }
   automations:
     - when: { property: status, is: Done }
@@ -39,7 +39,7 @@ describe('a guarded base that could not read all of its rows', () => {
     for (let at = 0; at < 7; at++) deep = `${list}.map(${deep})`
     const guarded = {
       ...readBase(`filters: 'if(note.heavy, (${deep}) != 1, true)'
-nib:
+orden:
   id: { property: id, prefix: BUG }
 `),
       guarded: true,
@@ -110,7 +110,7 @@ describe('a base at work on a change', () => {
     const doneBase = readBase(`filters:
   and:
     - note.status == "Done"
-nib:
+orden:
   automations:
     - when: { property: status, is: Done }
       set: { finished: "{{date}}" }
@@ -137,7 +137,7 @@ nib:
     const live = readBase(`filters:
   and:
     - note.status != "Archived"
-nib:
+orden:
   automations:
     - when: added
       set: { status: Not started }

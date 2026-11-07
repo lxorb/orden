@@ -180,11 +180,11 @@ export function baseBlock(database: Database, keyOf: (column: string) => string)
         order: ['file.name', ...keys.map((one) => `note.${one}`)],
         sort: [],
         summaries: {},
-        nib: { kept: {} },
+        orden: { kept: {} },
         options: {},
       },
     ],
-    nib: { properties: {}, kept: {} },
+    orden: { properties: {}, kept: {} },
     kept: {},
   }
 

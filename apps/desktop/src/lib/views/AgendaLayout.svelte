@@ -12,7 +12,7 @@
   const { kit }: { kit: Kit } = $props()
 
   const live = $derived(kit.live)
-  const property = $derived(live.view?.nib.date ?? 'task.date')
+  const property = $derived(live.view?.orden.date ?? 'task.date')
 
   const days = $derived.by(() => {
     const base = live.base

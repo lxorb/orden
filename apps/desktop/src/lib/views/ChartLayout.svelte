@@ -67,7 +67,7 @@
     kit.change((base, at) => setNibOption(base, at, key, value))
 
   const numeric = $derived(
-    live.base ? knownProperties(live.base, view?.nib.rows ?? 'notes', live.rows) : [],
+    live.base ? knownProperties(live.base, view?.orden.rows ?? 'notes', live.rows) : [],
   )
 
   const W = 640

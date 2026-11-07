@@ -412,7 +412,7 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
 }
 
 async function templateOf(place: Place, base: Base, rows: readonly Row[]): Promise<string> {
-  const link = base.nib.template
+  const link = base.orden.template
     ?.replace(/^\[\[|\]\]$/g, '')
     .split('|')[0]
     ?.trim()

@@ -27,7 +27,7 @@ views:
   - type: timeline
     name: Time
     order: [file.name, note.status]
-    nib: { date: note.start, end: note.end }
+    orden: { date: note.start, end: note.end }
 """
 
 WRITE = """async ([files]) => {
