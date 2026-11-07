@@ -503,6 +503,38 @@ describe("a space written out keeps each note's own metadata (#1210)", () => {
   })
 })
 
+describe('a space written out keeps which notes are todo lists (#1344)', () => {
+  test("writes a list's mark and its todos' done days, and a stopped list's mark", async () => {
+    const { exportSpaceTo } = await import('./export')
+    const { taskHash } = await import('@orden/bases')
+    const { datesText, DONE_KEY } = await import('@orden/bases/todo-lists')
+    disk.dirs.add('/spaces/Disk')
+    disk.dirs.add('/spaces/Disk/Projects')
+    disk.files.set('/spaces/Disk/Projects/Errands.md', '- [x] Post it\n')
+    disk.files.set('/spaces/Disk/Old.md', '- [ ] Call Sam\n')
+    disk.files.set('/spaces/Disk/Bare.md', '- [x] Read\n')
+    const meta: Record<string, Record<string, string>> = {
+      'Old.md': { 'todo-list': 'no' },
+      'Bare.md': { [DONE_KEY]: datesText(new Map([[taskHash('Read'), '2026-11-02']])) ?? '' },
+    }
+    const listed = new Map([
+      ['Projects/Errands.md', datesText(new Map([[taskHash('Post it'), '2026-11-01']])) ?? ''],
+    ])
+    const metaOf = (path: string) => {
+      const done = listed.get(path)
+      return done === undefined ? (meta[path] ?? null) : { [DONE_KEY]: done }
+    }
+
+    await exportSpaceTo('/spaces/Disk', 'Disk', '/picked', metaOf, (path) => listed.has(path))
+    const read = (path: string) => new TextDecoder().decode(disk.files.get(path) as Uint8Array)
+    expect(read('/picked/Disk/Projects/Errands.md')).toBe(
+      '---\ntodo-list: yes\n---\n- [x] Post it ✅ 2026-11-01\n',
+    )
+    expect(read('/picked/Disk/Old.md')).toBe('---\ntodo-list: no\n---\n- [ ] Call Sam\n')
+    expect(read('/picked/Disk/Bare.md')).toBe('- [x] Read\n')
+  })
+})
+
 describe("a space written out for an agent's command (#1078)", () => {
   test('goes into the folder its path names, and the dialog is never shown', async () => {
     const { answerNextDialog } = await import('../dialog-answer')

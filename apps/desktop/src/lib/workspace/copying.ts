@@ -13,7 +13,7 @@ import { copyPath, writeBytes, writeFile } from './write-file'
 
 export interface Copies {
   readonly undone: FileActions
-  readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved'>
+  readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved' | 'set'>
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
@@ -143,7 +143,7 @@ export async function bringIn(
 
       const path = rest.length ? joinPath(at.path, rest.join('/')) : at.path
       const bytes = new Uint8Array(await file.arrayBuffer())
-      if (readsWords(path)) await writeFile(path, new TextDecoder().decode(bytes))
+      if (readsWords(path)) await wordsIn(ws, path, new TextDecoder().decode(bytes))
       else await writeBytes(path, bytes)
 
       if (!rest.length && isPdfTarget(path)) {
@@ -155,4 +155,10 @@ export async function bringIn(
   }
 
   return [...landed.values()].map((one) => one.path)
+}
+
+async function wordsIn(ws: Copies, path: string, words: string): Promise<void> {
+  const taken = isMarkdownPath(path) ? (await import('../import/listed')).listKeyTaken(words) : null
+  await writeFile(path, taken?.text ?? words)
+  if (taken) ws.itemMeta.set(path, taken.meta)
 }
