@@ -302,8 +302,10 @@ fn with_chats(grant: &mut Grant) {
     }
 }
 
+const BUSY: &str = "the agents cannot be read just now";
+
 #[derive(Default)]
-pub struct Grants(Mutex<Option<Vec<Kept>>>);
+pub struct Grants(Mutex<Option<Vec<Kept>>>, Mutex<()>);
 
 impl Grants {
     fn with<T>(
@@ -311,15 +313,32 @@ impl Grants {
         app: &AppHandle,
         with: impl FnOnce(&mut Vec<Kept>) -> T,
     ) -> Result<T, String> {
-        let mut held = self
-            .0
-            .lock()
-            .map_err(|_| "the agents cannot be read just now".to_string())?;
+        let loaded = self.0.lock().map_err(|_| BUSY.to_string())?.is_some();
+        let fresh = if loaded {
+            None
+        } else {
+            Some(read(&file(app)?))
+        };
+        let mut held = self.0.lock().map_err(|_| BUSY.to_string())?;
         if held.is_none() {
-            *held = Some(read(&file(app)?));
+            *held = fresh;
         }
-        let kept = held.as_mut().ok_or("the agents cannot be read just now")?;
+        let kept = held.as_mut().ok_or(BUSY)?;
         Ok(with(kept))
+    }
+
+    fn changed<T>(
+        &self,
+        app: &AppHandle,
+        change: impl FnOnce(&mut Vec<Kept>) -> Result<T, String>,
+    ) -> Result<T, String> {
+        let path = file(app)?;
+        let writing = self.1.lock().map_err(|_| BUSY.to_string())?;
+        let (made, now) =
+            self.with(app, |kept| change(kept).map(|made| (made, kept.clone())))??;
+        write(&path, &now)?;
+        drop(writing);
+        Ok(made)
     }
 
     pub fn by_token(&self, app: &AppHandle, token: &str) -> Option<Grant> {
@@ -360,21 +379,19 @@ impl Grants {
         make: impl FnOnce(String, &str) -> Grant,
     ) -> Result<(Grant, String), String> {
         let token = fresh_token()?;
-        let path = file(app)?;
-        self.with(app, |kept| {
+        self.changed(app, |kept| {
             let ids: Vec<&str> = kept.iter().map(|one| one.grant.id.as_str()).collect();
             let grant = make(free_id(client, &ids), client);
             kept.push(Kept {
                 grant: grant.clone(),
                 token: hashed(&token),
             });
-            write(&path, kept).map(|()| (grant, token))
-        })?
+            Ok((grant, token))
+        })
     }
 
     pub fn replace(&self, app: &AppHandle, grants: Vec<Grant>) -> Result<Vec<Grant>, String> {
-        let path = file(app)?;
-        self.with(app, |kept| {
+        self.changed(app, |kept| {
             let mut next = Vec::with_capacity(kept.len());
             for grant in grants {
                 if let Some(one) = kept.iter().find(|one| one.grant.id == grant.id) {
@@ -395,8 +412,8 @@ impl Grants {
                 }
             }
             *kept = next;
-            write(&path, kept).map(|()| kept.iter().map(|one| one.grant.clone()).collect())
-        })?
+            Ok(kept.iter().map(|one| one.grant.clone()).collect())
+        })
     }
 
     pub fn change(
@@ -405,14 +422,13 @@ impl Grants {
         id: &str,
         change: impl FnOnce(&mut Grant),
     ) -> Result<(), String> {
-        let path = file(app)?;
-        self.with(app, |kept| {
+        self.changed(app, |kept| {
             let Some(one) = kept.iter_mut().find(|one| one.grant.id == id) else {
                 return Err("there is no such agent".to_string());
             };
             change(&mut one.grant);
-            write(&path, kept)
-        })?
+            Ok(())
+        })
     }
 }
 
@@ -579,7 +595,7 @@ pub struct Minted {
 #[cfg(test)]
 impl Grants {
     fn from(kept: Vec<Kept>) -> Self {
-        Grants(Mutex::new(Some(kept)))
+        Grants(Mutex::new(Some(kept)), Mutex::default())
     }
 }
 
