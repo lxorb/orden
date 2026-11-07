@@ -102,6 +102,7 @@ export class TableView {
 
   private model: TableModel
   private source: string
+  private from: number
 
   private pending: { at: CellAddress; value: string } | null = null
   private idle: number | undefined
@@ -147,6 +148,7 @@ export class TableView {
   ) {
     this.model = model
     this.source = text.source
+    this.from = text.from
     this.widths = model.header.map(() => null)
     this.editable = !editor.state.readOnly
 
@@ -188,6 +190,7 @@ export class TableView {
   adopt(text: TableSource, model: TableModel) {
     const shown = serializeTable(model) === serializeTable(this.current())
     this.source = text.source
+    this.from = text.from
     this.model = model
 
     if (shown && this.editable === !this.editor.state.readOnly) {
@@ -200,9 +203,12 @@ export class TableView {
   }
 
   destroy() {
+    const left = this.pending ? serializeTable(this.current()) : null
+    const { editor, from, source } = this
     this.clearPending()
     this.dragging?.()
     this.unfollow()
+    if (left !== null && left !== source) queueMicrotask(() => keepEdit(editor, from, source, left))
   }
 
   flush() {
@@ -1011,4 +1017,10 @@ function around(row: number, rows: number): { from: number; to: number } {
     from: Math.max(0, Math.floor((row - AROUND) / STEP) * STEP),
     to: Math.min(rows, Math.ceil((row + 1 + AROUND) / STEP) * STEP),
   }
+}
+
+function keepEdit(editor: EditorView, from: number, source: string, text: string) {
+  const { state } = editor
+  if (state.readOnly || state.doc.sliceString(from, from + source.length) !== source) return
+  editor.dispatch({ changes: { from, to: from + source.length, insert: text } })
 }
