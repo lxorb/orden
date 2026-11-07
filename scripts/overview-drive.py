@@ -118,9 +118,10 @@ if sys.platform == "win32":
             user32.mouse_event(WHEEL, 0, 0, ctypes.c_uint32((120 * notches) & 0xFFFFFFFF).value, 0)
 
         @staticmethod
-        def drag(start: tuple[int, int], end: tuple[int, int]) -> None:
+        def drag(start: tuple[int, int], end: tuple[int, int], pressed: list[tuple[float, str]]) -> None:
             user32.SetCursorPos(*start)
             time.sleep(0.1)
+            pressed.append((time.time() * 1000, "pan"))
             user32.mouse_event(LEFTDOWN, 0, 0, 0, 0)
             for step in range(1, 21):
                 user32.SetCursorPos(start[0] + (end[0] - start[0]) * step // 20, start[1] + (end[1] - start[1]) * step // 20)
@@ -186,8 +187,10 @@ else:
             xdo("click", "4" if notches > 0 else "5")
 
         @staticmethod
-        def drag(start: tuple[int, int], end: tuple[int, int]) -> None:
+        def drag(start: tuple[int, int], end: tuple[int, int], pressed: list[tuple[float, str]]) -> None:
             xdo("mousemove", str(start[0]), str(start[1]))
+            time.sleep(0.1)
+            pressed.append((time.time() * 1000, "pan"))
             xdo("mousedown", "1")
             for step in range(1, 21):
                 xdo("mousemove", str(start[0] + (end[0] - start[0]) * step // 20), str(start[1] + (end[1] - start[1]) * step // 20))
@@ -423,9 +426,8 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
     how = toggled(app, desk, True, pressed)
     time.sleep(1.6)
     bar = float(app.eval("document.querySelector('header[data-chrome=\"top\"]')?.getBoundingClientRect().bottom ?? 0") or 0)
-    pressed.append((time.time() * 1000, "pan"))
     floor = (box[0] + round(28 * scale), round(box[1] + (bar + 160) * scale))
-    desk.drag(floor, (floor[0], floor[1] - round(320 * scale)))
+    desk.drag(floor, (floor[0], floor[1] - round(320 * scale)), pressed)
     time.sleep(0.5)
     for notches in (1, 1, 1, -1, -1, -1):
         pressed.append((time.time() * 1000, "wheel"))
