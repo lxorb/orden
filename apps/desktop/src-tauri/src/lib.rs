@@ -1130,6 +1130,70 @@ mod tests {
     }
 
     #[test]
+    fn a_method_is_followed_through_what_its_receiver_is() {
+        let source = concat!(
+            "pub struct Gemini;\n\nimpl Gemini {\n    pub fn stop(&self) {\n        fs::write(one, two);\n    }\n}\n\n",
+            "pub struct Quiet;\n\nimpl Quiet {\n    pub fn stop(&self) {}\n}\n\n",
+            "enum On {\n    Loud(Box<Gemini>),\n    Calm(Quiet),\n}\n\n",
+            "pub struct Asks {\n    on: Mutex<HashMap<String, On>>,\n    kept: Arc<Gemini>,\n    calm: Quiet,\n}\n\n",
+            "#[tauri::command]\npub fn by_field(asks: State<'_, Asks>) {\n    asks.kept.stop();\n}\n\n",
+            "#[tauri::command]\npub fn by_state(app: AppHandle) {\n    if let Some(asks) = app.try_state::<Asks>() {\n        asks.kept.stop();\n    }\n}\n\n",
+            "#[tauri::command]\npub fn by_variant(on: &On) {\n    match on {\n        On::Loud(gemini) => gemini.stop(),\n        On::Calm(quiet) => quiet.stop(),\n    }\n}\n\n",
+            "#[tauri::command]\npub fn by_loop(asks: &Asks) {\n    for one in asks.on.lock().unwrap().values() {\n        if let On::Loud(gemini) = one {\n            gemini.stop();\n        }\n    }\n}\n\n",
+            "#[tauri::command]\npub fn calm(asks: &Asks) {\n    asks.calm.stop();\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        for loud in [
+            "crate::by_field",
+            "crate::by_state",
+            "crate::by_variant",
+            "crate::by_loop",
+        ] {
+            assert!(waits.contains(loud), "{loud} was not followed");
+        }
+        assert!(!waits.contains("crate::calm"));
+    }
+
+    #[test]
+    fn a_lock_is_known_by_whose_it_is() {
+        let source = concat!(
+            "pub struct One {\n    held: Mutex<u8>,\n}\n\npub struct Two {\n    held: Mutex<u8>,\n}\n\n",
+            "pub struct Inner {\n    shared: Mutex<u8>,\n}\n\n",
+            "impl Inner {\n    fn lock(&self) -> MutexGuard<'_, u8> {\n        self.shared.lock().unwrap()\n    }\n}\n\n",
+            "pub struct Peer {\n    inner: Arc<Inner>,\n}\n\n",
+            "#[tauri::command(async)]\npub fn slow(one: &One, peer: &Peer) {\n    let held = one.held.lock().unwrap();\n    let shared = peer.inner.lock();\n    fs::write(a, b);\n    drop(held);\n}\n\n",
+            "#[tauri::command]\npub fn other(two: &Two) -> u8 {\n    *two.held.lock().unwrap()\n}\n\n",
+            "#[tauri::command]\npub fn same(one: &One) -> u8 {\n    *one.held.lock().unwrap()\n}\n\n",
+            "#[tauri::command]\npub fn inside(inner: &Inner) -> u8 {\n    *inner.shared.lock().unwrap()\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        let waits = own.waiting(&WAITS, &[]);
+        assert!(waits.contains("crate::same"));
+        assert!(
+            waits.contains("crate::inside"),
+            "a type's own lock is the lock it hands out"
+        );
+        assert!(
+            !waits.contains("crate::other"),
+            "another type's lock of the same name was taken for it"
+        );
+    }
+
+    #[test]
+    fn a_guard_given_up_is_not_held() {
+        let source = concat!(
+            "static SAID: Mutex<u8> = Mutex::new(0);\n\nstatic HEARD: Condvar = Condvar::new();\n\n",
+            "#[tauri::command(async)]\npub fn waiting() {\n    let mut said = SAID.lock().unwrap();\n    while *said == 0 {\n        said = HEARD.wait(said).unwrap();\n    }\n}\n\n",
+            "#[tauri::command(async)]\npub fn handed() -> u8 {\n    *HEARD.wait_while(SAID.lock().unwrap(), |one| *one == 0).unwrap()\n}\n\n",
+            "#[tauri::command(async)]\npub fn branching(gone: bool) {\n    let said = SAID.lock().unwrap();\n    if gone {\n        drop(said);\n        fs::write(one, two);\n        return;\n    }\n    drop(said);\n}\n\n",
+            "#[tauri::command]\npub fn quick() -> u8 {\n    *SAID.lock().unwrap()\n}\n",
+        );
+        let own = calls::of(&[("crate", source)]);
+        assert!(!own.waiting(&WAITS, &[]).contains("crate::quick"));
+    }
+
+    #[test]
     fn what_the_window_s_thread_runs_is_followed_and_a_thread_s_is_not() {
         let source = concat!(
             "#[tauri::command]\npub fn away() {\n    std::thread::spawn(move || fs::write(one, two));\n}\n\n",
