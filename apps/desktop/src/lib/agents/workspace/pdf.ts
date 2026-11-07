@@ -2,6 +2,7 @@ import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
 import { COLOURS, type Highlight, type Quad } from '../../pdf/highlights'
+import { marksWritten } from '../../pdf/sheets.svelte'
 import { editHighlights, loadHighlights } from '../../pdf/sidecar'
 import { canWriteAt } from '../../sharing.svelte'
 import { asked } from './asks'
@@ -114,6 +115,7 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
       if (!written) {
         throw new Refused('failed', 'the highlights beside that PDF were written by a newer nib')
       }
+      marksWritten(path)
       const comment = maybe(call, 'comment') === null ? {} : { comment: 'not kept' }
       return done({ id: mark.id, page: mark.page, text: mark.text, ...comment })
     }

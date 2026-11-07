@@ -14,6 +14,7 @@ import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '
 import { strokeBox } from '../canvas/ink'
 import type { KeptView } from '../canvas/place'
 import { CanvasStore } from '../canvas/store.svelte'
+import type { Highlight } from '../pdf/highlights'
 import type { PdfHeading } from '../pdf/outline'
 import { stillness } from '../motion'
 import type { Tab } from '../workspace/documents.svelte'
@@ -33,6 +34,8 @@ export class PagesStore extends CanvasStore {
   pane = $state.raw<{ width: number; height: number }>({ width: 0, height: 0 })
 
   outline = $state.raw<readonly PdfHeading[]>([])
+
+  marks = $state.raw<readonly Highlight[]>([])
 
   private get chose(): boolean {
     return this.tab.zoomChosen

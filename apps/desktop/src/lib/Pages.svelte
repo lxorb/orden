@@ -49,7 +49,10 @@
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
-  import { forgetPaper, outlineOf, paperAhead } from './pages/paper'
+  import { forgetPaper, outlineOf, paperAhead, paperPathOf } from './pages/paper'
+  import type { Highlight } from './pdf/highlights'
+  import { marksFromOutside } from './pdf/sheets.svelte'
+  import { loadHighlights } from './pdf/sidecar'
   import {
     began,
     dragged,
@@ -243,11 +246,46 @@
     void outlineOf(at).then((rows) => {
       if (mine) store.outline = rows
     })
+    void paperPathOf(at).then((path) => {
+      if (mine) paperPath = path
+    })
 
     return () => {
       mine = false
       store.outline = []
+      paperPath = null
     }
+  })
+
+  let paperPath = $state<string | null>(null)
+
+  $effect(() => {
+    const path = paperPath
+    if (!path) return
+    follows(marksFromOutside(path))
+
+    let mine = true
+    void loadHighlights(path).then((sheet) => {
+      if (mine) store.marks = sheet.highlights
+    })
+
+    return () => {
+      mine = false
+      store.marks = []
+    }
+  })
+
+  const NO_MARKS: readonly Highlight[] = []
+
+  const marksOn = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const out = new Map<number, Highlight[]>()
+    for (const mark of store.marks) {
+      const held = out.get(mark.page)
+      if (held) held.push(mark)
+      else out.set(mark.page, [mark])
+    }
+    return out
   })
 
   $effect(() => {
@@ -1008,6 +1046,7 @@
         root={workspace.rootHolding(tab.note.path)}
         shared={tab.note.shared}
         {seen}
+        marks={page.file === backing && page.page ? (marksOn.get(page.page) ?? NO_MARKS) : NO_MARKS}
       />
     {/each}
 
