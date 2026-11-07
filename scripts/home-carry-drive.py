@@ -135,6 +135,34 @@ META = """
 """
 
 
+DIAGNOSE = """
+(async () => {
+  const keys = Object.keys(localStorage).sort()
+  const meta = localStorage.getItem('orden:item-meta')
+  const former = await orden.invoke('former_homes').catch((error) => 'error: ' + String(error))
+  return {
+    keys,
+    carried: localStorage.getItem('orden:home-carried'),
+    metaRoots: meta ? Object.keys(JSON.parse(meta)) : null,
+    spaces: orden.workspace.spaces.map((one) => [one.name, one.root]),
+    former,
+  }
+})()
+"""
+
+
+def listing(name: str) -> None:
+    for identifier in (OLD, NEW):
+        for base in (roaming(identifier), local(identifier)):
+            if not base.exists():
+                print(f"{name}: {base} is not there", flush=True)
+                continue
+            found = sorted(
+                str(one.relative_to(base)) for one in base.rglob("*") if len(one.relative_to(base).parts) <= 4
+            )
+            print(f"{name}: {base} holds {found[:60]}", flush=True)
+
+
 class Run:
     def __init__(self, exe: pathlib.Path, identifier: str, out: pathlib.Path, name: str) -> None:
         self.exe, self.identifier, self.out, self.name = exe, identifier, out, name
@@ -225,6 +253,7 @@ def old_profile(exe: pathlib.Path, out: pathlib.Path, wrong: list[str]) -> None:
         wrong.append(f"the old build never showed its own todos: {text}")
     print(f"old: the meta {json.dumps(app.eval(META % {'space': json.dumps(SPACE)}))}", flush=True)
     run.stop()
+    listing("old stopped")
 
 
 def upgraded(exe: pathlib.Path, out: pathlib.Path, name: str, wrong: list[str], more: list[str]) -> App:
@@ -234,6 +263,8 @@ def upgraded(exe: pathlib.Path, out: pathlib.Path, name: str, wrong: list[str], 
     print(f"{name}: the space is at {root}", flush=True)
     if not isinstance(root, str) or NEW not in root:
         wrong.append(f"{name}: the space is not under {NEW}: {root}")
+    print(f"{name}: inside {json.dumps(app.eval(DIAGNOSE))}", flush=True)
+    listing(name)
     words = ["ship the carry", "buy oat milk", *more]
     text = wait_for(app, words)
     print(f"{name}: the todos {text}", flush=True)
@@ -247,6 +278,7 @@ def upgraded(exe: pathlib.Path, out: pathlib.Path, name: str, wrong: list[str], 
     if not isinstance(meta, dict) or (meta.get(GROCERIES) or {}).get("inbox") != "yes":
         wrong.append(f"{name}: the chosen inbox is not marked any more: {meta}")
     run.stop()
+    shutil.copytree(local(NEW) / "logs", out / f"{name}-logs", dirs_exist_ok=True)
     return app
 
 
