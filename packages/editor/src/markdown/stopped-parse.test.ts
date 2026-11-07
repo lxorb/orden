@@ -76,6 +76,7 @@ const cases = {
   'in the middle, with tags': (body: string) =>
     '```js\nlet first = 1\n```\n\n' + body + '\n\n```js\nlet second = 2\n```\n\nend\n',
   'at the end': (body: string) => '```js\nlet first = 1\n```\n\n' + body + '\n',
+  'at the end, with tags': (body: string) => '```js\nlet first = 1\n```\n\n' + body + '\n',
 }
 
 describe('a long paragraph typed into', () => {
@@ -99,6 +100,10 @@ describe('a long paragraph typed into', () => {
         .configure(nibMarkdownExtensions)
         .parse(state.doc.toString())
       expect(shape(tree)).toBe(shape(fresh))
+      const text = state.doc.toString()
+      for (let at = text.indexOf('<b>'); at >= 0; at = text.indexOf('<b>', at + 1)) {
+        expect(tree.resolveInner(at + 1, 1).name, `tag at ${at}`).toBe('TagName')
+      }
       expect(innerAt(state, tree, 'first')).toBe('VariableDefinition')
       if (doc.includes('second')) expect(innerAt(state, tree, 'second')).toBe('VariableDefinition')
       if (doc.includes('<b>')) expect(innerAt(state, tree, '<b>t1457')).toBe('TagName')
@@ -124,4 +129,26 @@ describe('a long paragraph parsed again after an edit', () => {
   test('takes time in proportion to its length', () => {
     expect(measuredGrowth(reparse, 1500, 8)).toBeLessThan(14)
   }, 60_000)
+})
+
+describe('a parse whose inner parses were stopped', () => {
+  test('is read on from the outer tree it kept whole, and ends as a fresh parse does', () => {
+    const parser = extensions.language.parser
+    const rows = Array.from({ length: 400 }, (_, i) => `<p class="r${i}">row ${i} <i>x</i></p>`)
+    const doc = `# P\n\n<div>\n${rows.join('\n')}\n</div>\n`
+    const parse = parser.startParse(doc) as ReturnType<typeof parser.startParse> & {
+      baseParse?: unknown
+    }
+    while (parse.baseParse !== null) expect(parse.advance()).toBeNull()
+    parse.stopAt(doc.indexOf('row 200'))
+    let kept: Tree | null
+    do kept = parse.advance()
+    while (!kept)
+
+    const tree = parser.parse(doc, TreeFragment.addTree(kept, [], false))
+    const fresh = parser.parse(doc)
+    for (let at = 0; at < doc.length; at += 7) {
+      expect(tree.resolveInner(at, 1).name, `at ${at}`).toBe(fresh.resolveInner(at, 1).name)
+    }
+  })
 })

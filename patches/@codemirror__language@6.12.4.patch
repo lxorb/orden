@@ -1,8 +1,8 @@
 diff --git a/dist/index.cjs b/dist/index.cjs
-index 68d14f396f563ca15f51a55eec3c943b64ca14c0..a6469c3aaadf49158760efb4d469c8c5f37166dd 100644
+index 68d14f396f563ca15f51a55eec3c943b64ca14c0..e0661b2a93f5e341cdc72462d16010002074857a 100644
 --- a/dist/index.cjs
 +++ b/dist/index.cjs
-@@ -382,6 +382,23 @@ class ParseContext {
+@@ -382,13 +382,35 @@ class ParseContext {
      */
      takeTree() {
          let pos, tree;
@@ -24,9 +24,22 @@ index 68d14f396f563ca15f51a55eec3c943b64ca14c0..a6469c3aaadf49158760efb4d469c8c5
 +            }
 +        }
          if (this.parse && (pos = this.parse.parsedPos) >= this.treeLen) {
++            // Patched (pnpm patch, see docs/patches.md): a mixed parse whose outer language read
++            // the whole document keeps that tree whole for the next parse, which reads no block
++            // of it again; only the inner parses past `pos` are open.
++            let whole = this.parse.baseParse === null &&
++                (this.parse.stoppedAt == null || this.parse.stoppedAt >= this.state.doc.length);
              if (this.parse.stoppedAt == null || this.parse.stoppedAt > pos)
                  this.parse.stopAt(pos);
-@@ -518,23 +535,65 @@ class ParseContext {
+             this.withContext(() => { while (!(tree = this.parse.advance())) { } });
+             this.treeLen = pos;
+             this.tree = tree;
+-            this.fragments = this.withoutTempSkipped(common.TreeFragment.addTree(this.tree, this.fragments, true));
++            this.fragments = this.withoutTempSkipped(common.TreeFragment.addTree(this.tree, this.fragments, !whole));
+             this.parse = null;
+         }
+     }
+@@ -518,23 +540,65 @@ class ParseContext {
  function cutFragments(fragments, from, to) {
      return common.TreeFragment.applyChanges(fragments, [{ fromA: from, toA: to, fromB: from, toB: to }]);
  }
@@ -99,7 +112,7 @@ index 68d14f396f563ca15f51a55eec3c943b64ca14c0..a6469c3aaadf49158760efb4d469c8c5
          if (!newCx.work(20 /* Work.Apply */, upto))
              newCx.takeTree();
          return new LanguageState(newCx);
-@@ -2737,6 +2796,7 @@ exports.indentUnit = indentUnit;
+@@ -2737,6 +2801,7 @@ exports.indentUnit = indentUnit;
  exports.language = language;
  exports.languageDataProp = languageDataProp;
  exports.matchBrackets = matchBrackets;
@@ -124,7 +137,7 @@ index f13ef6eea775d6c23d537ce4846e92ddd5837f11..e39b87ffdceb9be014821c6130e7db30
 +
 +export { type Config, DocInput, HighlightStyle, IndentContext, LRLanguage, Language, LanguageDescription, LanguageSupport, type MatchResult, ParseContext, StreamLanguage, type StreamParser, StringStream, type Sublanguage, type TagStyle, TreeIndentContext, bidiIsolates, bracketMatching, bracketMatchingHandle, codeFolding, continuedIndent, defaultHighlightStyle, defineLanguageFacet, delimitedIndent, ensureSyntaxTree, flatIndent, foldAll, foldCode, foldEffect, foldGutter, foldInside, foldKeymap, foldNodeProp, foldService, foldState, foldable, foldedRanges, forceParsing, getIndentUnit, getIndentation, highlightingFor, indentNodeProp, indentOnInput, indentRange, indentService, indentString, indentUnit, language, languageDataProp, matchBrackets, parseLater, sublanguageProp, syntaxHighlighting, syntaxParserRunning, syntaxTree, syntaxTreeAvailable, toggleFold, unfoldAll, unfoldCode, unfoldEffect };
 diff --git a/dist/index.js b/dist/index.js
-index 1873fde2b33afaf2e35c88a0098cc46ad167a949..3e08a521f4a6a53b953fb6819557544f43e09a56 100644
+index 1873fde2b33afaf2e35c88a0098cc46ad167a949..821e4c41e8d57137fd5b7da0e6c4ea43284ffafd 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -1,5 +1,5 @@
@@ -134,7 +147,7 @@ index 1873fde2b33afaf2e35c88a0098cc46ad167a949..3e08a521f4a6a53b953fb6819557544f
  import { ViewPlugin, logException, EditorView, Decoration, WidgetType, gutter, GutterMarker, Direction } from '@codemirror/view';
  import { tags, tagHighlighter, highlightTree, styleTags } from '@lezer/highlight';
  import { StyleModule } from 'style-mod';
-@@ -380,6 +380,23 @@ class ParseContext {
+@@ -380,13 +380,35 @@ class ParseContext {
      */
      takeTree() {
          let pos, tree;
@@ -156,9 +169,22 @@ index 1873fde2b33afaf2e35c88a0098cc46ad167a949..3e08a521f4a6a53b953fb6819557544f
 +            }
 +        }
          if (this.parse && (pos = this.parse.parsedPos) >= this.treeLen) {
++            // Patched (pnpm patch, see docs/patches.md): a mixed parse whose outer language read
++            // the whole document keeps that tree whole for the next parse, which reads no block
++            // of it again; only the inner parses past `pos` are open.
++            let whole = this.parse.baseParse === null &&
++                (this.parse.stoppedAt == null || this.parse.stoppedAt >= this.state.doc.length);
              if (this.parse.stoppedAt == null || this.parse.stoppedAt > pos)
                  this.parse.stopAt(pos);
-@@ -516,23 +533,65 @@ class ParseContext {
+             this.withContext(() => { while (!(tree = this.parse.advance())) { } });
+             this.treeLen = pos;
+             this.tree = tree;
+-            this.fragments = this.withoutTempSkipped(TreeFragment.addTree(this.tree, this.fragments, true));
++            this.fragments = this.withoutTempSkipped(TreeFragment.addTree(this.tree, this.fragments, !whole));
+             this.parse = null;
+         }
+     }
+@@ -516,23 +538,65 @@ class ParseContext {
  function cutFragments(fragments, from, to) {
      return TreeFragment.applyChanges(fragments, [{ fromA: from, toA: to, fromB: from, toB: to }]);
  }
@@ -231,7 +257,7 @@ index 1873fde2b33afaf2e35c88a0098cc46ad167a949..3e08a521f4a6a53b953fb6819557544f
          if (!newCx.work(20 /* Work.Apply */, upto))
              newCx.takeTree();
          return new LanguageState(newCx);
-@@ -2690,4 +2749,4 @@ const marks = {
+@@ -2690,4 +2754,4 @@ const marks = {
      auto: /*@__PURE__*/Decoration.mark({ class: "cm-iso", inclusive: true, attributes: { dir: "auto" }, bidiIsolate: null })
  };
  

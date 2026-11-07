@@ -1,8 +1,46 @@
 diff --git a/dist/index.cjs b/dist/index.cjs
-index e9a36ce6254bda9de2311ee582d53370c7afc879..2ca65298a07101e6c4e613b87a5a45cfb62189ae 100644
+index e9a36ce6254bda9de2311ee582d53370c7afc879..cbf1a17c15a11658f831d0d4ab4c0100bcf2a1a5 100644
 --- a/dist/index.cjs
 +++ b/dist/index.cjs
-@@ -2037,8 +2037,12 @@ class StructureCursor {
+@@ -1832,8 +1832,10 @@ class MixedParse {
+             this.baseTree = done;
+             this.startInner();
+             if (this.stoppedAt != null)
+-                for (let inner of this.inner)
++                for (let inner of this.inner) {
+                     inner.parse.stopAt(this.stoppedAt);
++                    inner.stopped = true;
++                }
+         }
+         if (this.innerDone == this.inner.length) {
+             let result = this.baseTree;
+@@ -1849,7 +1851,12 @@ class MixedParse {
+             // presumably not aliased anywhere else) to hold the information
+             // about the inner parse.
+             let props = Object.assign(Object.create(null), inner.target.props);
+-            props[NodeProp.mounted.id] = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
++            let mount = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
++            // Patched (pnpm patch, see docs/patches.md): an inner parse that was stopped may end
++            // before its node does, so a later parse never takes its last node as finished.
++            if (inner.stopped)
++                mount.stopped = true;
++            props[NodeProp.mounted.id] = mount;
+             inner.target.props = props;
+         }
+         return null;
+@@ -1869,8 +1876,10 @@ class MixedParse {
+         if (this.baseParse)
+             this.baseParse.stopAt(pos);
+         else
+-            for (let i = this.innerDone; i < this.inner.length; i++)
++            for (let i = this.innerDone; i < this.inner.length; i++) {
+                 this.inner[i].parse.stopAt(pos);
++                this.inner[i].stopped = true;
++            }
+     }
+     startInner() {
+         let fragmentCursor = new FragmentCursor(this.fragments);
+@@ -2037,8 +2046,12 @@ class StructureCursor {
                      this.done = true;
                  // Moved to next node
              }
@@ -17,11 +55,66 @@ index e9a36ce6254bda9de2311ee582d53370c7afc879..2ca65298a07101e6c4e613b87a5a45cf
              }
          }
      }
+@@ -2188,14 +2201,14 @@ function enterFragments(mounts, ranges) {
+             for (let i = 0, pos = from;; i++) {
+                 let last = i == changes.length, end = last ? to : changes[i].from;
+                 if (end > pos)
+-                    result.push(new TreeFragment(pos, end, mount.tree, -startPos, frag.from >= pos || frag.openStart, frag.to <= end || frag.openEnd));
++                    result.push(new TreeFragment(pos, end, mount.tree, -startPos, frag.from >= pos || frag.openStart, frag.to <= end || frag.openEnd || !!mount.stopped));
+                 if (last)
+                     break;
+                 pos = changes[i].to;
+             }
+         }
+         else {
+-            result.push(new TreeFragment(from, to, mount.tree, -startPos, frag.from >= startPos || frag.openStart, frag.to <= endPos || frag.openEnd));
++            result.push(new TreeFragment(from, to, mount.tree, -startPos, frag.from >= startPos || frag.openStart, frag.to <= endPos || frag.openEnd || !!mount.stopped));
+         }
+     }
+     return result;
 diff --git a/dist/index.js b/dist/index.js
-index 8b29bb351cae09b8f8a594858e4ed12f877fd4f3..de87ce2941ff7ffe5860bc096501de7b48f4b7bd 100644
+index 8b29bb351cae09b8f8a594858e4ed12f877fd4f3..481196e6e15df89a5b9d0562ada2e6f2dfe0fc0f 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -2035,8 +2035,12 @@ class StructureCursor {
+@@ -1830,8 +1830,10 @@ class MixedParse {
+             this.baseTree = done;
+             this.startInner();
+             if (this.stoppedAt != null)
+-                for (let inner of this.inner)
++                for (let inner of this.inner) {
+                     inner.parse.stopAt(this.stoppedAt);
++                    inner.stopped = true;
++                }
+         }
+         if (this.innerDone == this.inner.length) {
+             let result = this.baseTree;
+@@ -1847,7 +1849,12 @@ class MixedParse {
+             // presumably not aliased anywhere else) to hold the information
+             // about the inner parse.
+             let props = Object.assign(Object.create(null), inner.target.props);
+-            props[NodeProp.mounted.id] = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
++            let mount = new MountedTree(done, inner.overlay, inner.parser, inner.bracketed);
++            // Patched (pnpm patch, see docs/patches.md): an inner parse that was stopped may end
++            // before its node does, so a later parse never takes its last node as finished.
++            if (inner.stopped)
++                mount.stopped = true;
++            props[NodeProp.mounted.id] = mount;
+             inner.target.props = props;
+         }
+         return null;
+@@ -1867,8 +1874,10 @@ class MixedParse {
+         if (this.baseParse)
+             this.baseParse.stopAt(pos);
+         else
+-            for (let i = this.innerDone; i < this.inner.length; i++)
++            for (let i = this.innerDone; i < this.inner.length; i++) {
+                 this.inner[i].parse.stopAt(pos);
++                this.inner[i].stopped = true;
++            }
+     }
+     startInner() {
+         let fragmentCursor = new FragmentCursor(this.fragments);
+@@ -2035,8 +2044,12 @@ class StructureCursor {
                      this.done = true;
                  // Moved to next node
              }
@@ -36,3 +129,20 @@ index 8b29bb351cae09b8f8a594858e4ed12f877fd4f3..de87ce2941ff7ffe5860bc096501de7b
              }
          }
      }
+@@ -2186,14 +2199,14 @@ function enterFragments(mounts, ranges) {
+             for (let i = 0, pos = from;; i++) {
+                 let last = i == changes.length, end = last ? to : changes[i].from;
+                 if (end > pos)
+-                    result.push(new TreeFragment(pos, end, mount.tree, -startPos, frag.from >= pos || frag.openStart, frag.to <= end || frag.openEnd));
++                    result.push(new TreeFragment(pos, end, mount.tree, -startPos, frag.from >= pos || frag.openStart, frag.to <= end || frag.openEnd || !!mount.stopped));
+                 if (last)
+                     break;
+                 pos = changes[i].to;
+             }
+         }
+         else {
+-            result.push(new TreeFragment(from, to, mount.tree, -startPos, frag.from >= startPos || frag.openStart, frag.to <= endPos || frag.openEnd));
++            result.push(new TreeFragment(from, to, mount.tree, -startPos, frag.from >= startPos || frag.openStart, frag.to <= endPos || frag.openEnd || !!mount.stopped));
+         }
+     }
+     return result;
