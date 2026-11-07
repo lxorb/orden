@@ -9,6 +9,12 @@ vi.mock('../../src/lib/ai/keys', () => ({
   forgetKey: (name: string) => Promise.resolve(void vault.delete(name)),
 }))
 
+const opened: string[] = []
+vi.mock('../../src/lib/tauri', async (original) => ({
+  ...(await original<typeof import('../../src/lib/tauri')>()),
+  openExternal: (url: string) => Promise.resolve(void opened.push(url)),
+}))
+
 const { fakeProvider } = await import('@orden/chats/fake-provider')
 const { connected } = await import('../../src/lib/chats/connected.svelte')
 const { accounts } = await import('../../src/lib/chats/linked')
@@ -101,5 +107,38 @@ test('a QR code is drawn while the service waits to be paired', async () => {
   await vi.waitFor(() => expect(finished).toBe(true))
   expect(target.querySelector('.square')).toBeNull()
   expect(vault.size).toBeGreaterThan(0)
+  void unmount(drawn)
+})
+
+test('a field that needs something made elsewhere says how, in steps and a link that opens outside', () => {
+  const plain = fakeProvider({ id: 'helped', name: 'Helped' })
+  const helped = {
+    ...plain,
+    fields: [
+      {
+        key: 'clientId',
+        label: 'Client ID',
+        kind: 'text' as const,
+        help: {
+          url: 'https://example.org/apps',
+          label: 'How to get one',
+          steps: ['Make an app', 'Copy its ID'],
+        },
+      },
+    ],
+  }
+  const target = document.body.appendChild(document.createElement('div'))
+  const drawn = mount(ConnectForm, {
+    target,
+    props: { providers: [helped], done: () => undefined },
+  })
+  const help = target.querySelector('details.help')
+  expect(help?.querySelector('summary')?.textContent).toBe('How to get one')
+  expect([...(help?.querySelectorAll('li') ?? [])].map((one) => one.textContent)).toEqual([
+    'Make an app',
+    'Copy its ID',
+  ])
+  help?.querySelector<HTMLButtonElement>('button.link')?.click()
+  expect(opened).toEqual(['https://example.org/apps'])
   void unmount(drawn)
 })

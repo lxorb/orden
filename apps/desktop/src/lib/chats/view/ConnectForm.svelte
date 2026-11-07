@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ChatProvider, ConnectField } from '@orden/chats/provider'
   import { t } from '../../i18n.svelte'
+  import { openExternal } from '../../tauri'
   import { accounts } from '../linked'
   import { screens } from '../providers/screens.svelte'
   import SignIn from './SignIn.svelte'
@@ -160,6 +161,21 @@
         {/if}
         {#if field.note}<span class="note">{t(field.note)}</span>{/if}
       </label>
+      {#if field.help}
+        <details class="help">
+          <summary>{t(field.help.label)}</summary>
+          {#if field.help.steps?.length}
+            <ol>
+              {#each field.help.steps as step (step)}<li>{t(step)}</li>{/each}
+            </ol>
+          {/if}
+          <button
+            type="button"
+            class="link"
+            onclick={() => field.help && void openExternal(field.help.url)}>{field.help.url}</button
+          >
+        </details>
+      {/if}
     {/each}
     {#if provider.warning}
       <div class="warning" role="note">
@@ -223,6 +239,32 @@
   .note {
     color: var(--muted);
     font-size: var(--text-xs);
+  }
+
+  .help {
+    color: var(--muted);
+    font-size: var(--text-xs);
+  }
+
+  .help summary {
+    cursor: pointer;
+  }
+
+  .help ol {
+    margin: var(--space-1) 0;
+    padding-left: var(--space-4);
+  }
+
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    text-align: start;
   }
 
   .warning {

@@ -12,6 +12,13 @@ export interface ConnectField {
   initial?: string
   placeholder?: string
   options?: readonly { value: string; label: string }[]
+  help?: ConnectHelp
+}
+
+export interface ConnectHelp {
+  url: string
+  label: string
+  steps?: readonly string[]
 }
 
 export interface Person {
