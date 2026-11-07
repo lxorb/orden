@@ -298,7 +298,6 @@ describe('what hides a web page', () => {
 
   const LAYERS: Record<string, string> = {
     'App.svelte': 'a panel slid over the note as a drawer',
-    'lib/AppMenuPanel.svelte': 'menu',
     'lib/CanvasBar.svelte': 'dropdown',
     'lib/CanvasPicked.svelte': "the colours of what is picked, over the plane's own bar",
     'lib/ContextMenu.svelte': 'menu',
