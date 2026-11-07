@@ -1,4 +1,4 @@
-import type { EditorView } from '@orden/editor'
+import { documentOf, type EditorView, type SharedDoc } from '@orden/editor'
 import { i18n, message, t } from '../i18n.svelte'
 import { complete, wasStopped } from './complete'
 import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
@@ -15,6 +15,7 @@ class Rewriting {
   trouble = $state<string | null>(null)
 
   private view: EditorView | null = null
+  private shows: SharedDoc | null = null
   private place: { from: number; to: number } | null = null
   private stopper: AbortController | null = null
 
@@ -25,6 +26,7 @@ class Rewriting {
     void rewriteSheet.ask()
 
     this.view = view
+    this.shows = documentOf(view)
     this.place = { from: range.from, to: range.to }
     this.before = view.state.doc.sliceString(range.from, range.to)
     this.after = ''
@@ -75,7 +77,7 @@ class Rewriting {
     const text = this.after.trim()
     if (!view || !place || !text) return
     const now =
-      view.dom.isConnected && !view.state.readOnly
+      view.dom.isConnected && !view.state.readOnly && documentOf(view) === this.shows
         ? stillThere(view.state.doc.toString(), place, this.before)
         : null
     if (!now) {
@@ -96,6 +98,7 @@ class Rewriting {
     this.stopper = null
     this.open = false
     this.view = null
+    this.shows = null
     this.place = null
     this.before = ''
     this.after = ''
