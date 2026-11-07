@@ -39,7 +39,6 @@
   import { arrive, leave, segmented } from './slide'
   import { splitTabs, tabsShown } from './workspace/panels'
   import { headingAt, lineOf } from './outline'
-  import { pdfOutlines } from './pdf/outline.svelte'
   import { pages } from './pages/showing.svelte'
   import {
     archiveSection,
@@ -386,18 +385,6 @@
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
-  }
-
-  const contents = $derived.by(() => {
-    const tab = workspace.panelTab
-    return tab?.kind === 'pdf' ? (pdfOutlines.get(tab.id) ?? []) : []
-  })
-
-  function toPage(page: number) {
-    const tab = workspace.panelTab
-    if (!tab?.path) return
-    if (tab.id !== workspace.activeTabId) workspace.activate(tab.id)
-    workspace.gotoPage = { path: tab.path, page }
   }
 
   const shallowest = $derived(
@@ -875,21 +862,6 @@
                       ondrop={(event) => dropSection(event, index)}
                     >
                       <span class="nib-row-label"><bdi>{heading.text}</bdi></span>
-                    </button>
-                  </li>
-                {/each}
-              </ul>
-            {:else if contents.length}
-              <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
-                {#each contents as part, index (index)}
-                  <li>
-                    <button
-                      class="nib-row is-short row heading"
-                      style:--level={part.level}
-                      onclick={() => toPage(part.page)}
-                    >
-                      <span class="nib-row-label"><bdi>{part.title}</bdi></span>
-                      <span class="nib-row-meta">{part.page}</span>
                     </button>
                   </li>
                 {/each}

@@ -1,5 +1,6 @@
 import type { OpenPdf } from '../pdf/document'
 import { openBytes, openDocument } from '../pdf/document'
+import { type PdfHeading, readOutline } from '../pdf/outline'
 import { PDF_TO_CSS } from '../pdf/pages'
 import { isPagesTarget } from '@orden/markdown/links'
 import { paperPlaces } from './held'
@@ -154,6 +155,11 @@ async function pump() {
 
 export function paperAhead(at: PaperAt): void {
   heldOf(at)
+}
+
+export async function outlineOf(at: PaperAt): Promise<PdfHeading[]> {
+  const opened = await heldOf(at)?.open.catch(() => null)
+  return opened ? await readOutline(opened.doc) : []
 }
 
 export async function paperIsLocked(at: PaperAt): Promise<boolean> {

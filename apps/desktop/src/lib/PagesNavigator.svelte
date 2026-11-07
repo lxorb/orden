@@ -12,6 +12,7 @@
   import { shelvesOf, shownOf } from './pages/thumbs'
   import { pages as showing } from './pages/showing.svelte'
   import { ListView } from './row-window.svelte'
+  import { roving } from './roving'
   import { workspace } from './workspace.svelte'
 
   const WIDE = 104
@@ -326,7 +327,24 @@
 
 {#if store}
   <div class="navigator" bind:this={host}>
+    {#if store.outline.length}
+      <ul class="contents" use:roving={{ rows: '.row', open: (row) => row.click() }}>
+        {#each store.outline as part, index (index)}
+          <li>
+            <button
+              class="nib-row is-short row"
+              style:--level={part.level}
+              onclick={() => store.turnToPaper(part.page)}
+            >
+              <span class="nib-row-label"><bdi>{part.title}</bdi></span>
+              <span class="nib-row-meta">{part.page}</span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
     <ul
+      class="sheets"
       bind:this={list}
       style:padding-block="{view.above}px {view.below}px"
       onfocusin={held}
@@ -390,7 +408,18 @@
     padding: var(--space-2);
   }
 
-  .navigator ul {
+  .contents {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contents .row {
+    padding-inline-start: calc(var(--row-pad) + var(--level) * var(--row-indent));
+    opacity: calc(1 - min(var(--level), 4) * 0.09);
+  }
+
+  .navigator ul.sheets {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
     gap: var(--space-2);

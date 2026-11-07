@@ -49,7 +49,7 @@
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
-  import { forgetPaper, paperAhead } from './pages/paper'
+  import { forgetPaper, outlineOf, paperAhead } from './pages/paper'
   import {
     began,
     dragged,
@@ -155,20 +155,14 @@
     untrack(() => {
       if (first !== undefined) {
         tab.page = undefined
-        landOn(first)
+        store.turnToPaper(first)
       }
       if (asked && tab.path && samePath(asked.path, tab.path)) {
         workspace.gotoPage = null
-        landOn(asked.page)
+        store.turnToPaper(asked.page)
       }
     })
   })
-
-  function landOn(paper: number) {
-    const at = pages.findIndex((one) => one.page === paper)
-    store.halt()
-    store.turnTo(at >= 0 ? at + 1 : paper)
-  }
 
   $effect(() => {
     const id = tab.id
@@ -234,6 +228,26 @@
 
   $effect(() => {
     store.shared?.hand(pointing, live)
+  })
+
+  const backing = $derived(pages.find((one) => one.file)?.file ?? null)
+
+  $effect(() => {
+    const file = backing
+    const note = tab.note.path
+    const shared = tab.note.shared
+    if (!file) return
+
+    let mine = true
+    const at = { file, note, root: workspace.rootHolding(note), shared }
+    void outlineOf(at).then((rows) => {
+      if (mine) store.outline = rows
+    })
+
+    return () => {
+      mine = false
+      store.outline = []
+    }
   })
 
   $effect(() => {

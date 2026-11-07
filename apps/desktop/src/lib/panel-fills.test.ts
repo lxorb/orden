@@ -7,7 +7,6 @@ const tab = (kind: TabKind, more: Partial<Filling> = {}): Filling => ({
   markdown: kind === 'note',
   headings: 0,
   footnotes: 0,
-  contents: 0,
   ...more,
 })
 
@@ -35,15 +34,14 @@ describe('the panels a tab fills', () => {
     expect(fills('outline', tab('note', { markdown: false, headings: 3 }))).toBe(false)
   })
 
-  test('take it beside a page note, and a PDF that wrote its contents', () => {
+  test('take it beside a page note and a PDF, whose pages it shows', () => {
     expect(fills('outline', tab('pages'))).toBe(true)
-    expect(fills('outline', tab('pdf', { contents: 4 }))).toBe(true)
-    expect(fills('outline', tab('pdf'))).toBe(false)
+    expect(fills('outline', tab('pdf'))).toBe(true)
   })
 
   test('never beside a terminal, a web page, a canvas or an application', () => {
     for (const kind of ['terminal', 'web', 'canvas', 'application', 'graph', 'chat'] as const) {
-      expect(fills('outline', tab(kind, { headings: 5, contents: 5 }))).toBe(false)
+      expect(fills('outline', tab(kind, { headings: 5 }))).toBe(false)
     }
   })
 
