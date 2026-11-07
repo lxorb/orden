@@ -20,7 +20,7 @@ import { toMarkdown } from './markdown'
 import { fileNameFor } from './naming'
 import { writtenPdf } from './print'
 import { type Picture, readPictures, sourcesIn } from './pictures'
-import { printWithPictures, wholeSheet } from './sheet'
+import { pageWith, printWithPictures, wholeSheet } from './sheet'
 import { chooseTarget, deliver, type Payload } from './save'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'
@@ -188,8 +188,7 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
 
     case 'html':
       return {
-        text: await pageOf(note, options, await picturesFor(note, options, true)),
-        mime: 'text/html',
+        pieces: pageWith(await pageOf(note, options, []), await picturesFor(note, options, true)),
       }
 
     case 'html-bare':
