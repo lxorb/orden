@@ -95,6 +95,11 @@ describe('the estimate', () => {
     expect(estimateText('日本語の文章')).toBe(6)
   })
 
+  test('takes a letter outside the first plane as one wide letter', () => {
+    expect(estimateText('😀😀')).toBe(3)
+    expect(estimateText('ab😀日')).toBe(3)
+  })
+
   test('counts the chips and a picture', () => {
     const plain = estimate({ text: 'a'.repeat(40), attachments: [] })
     const with_ = estimate({

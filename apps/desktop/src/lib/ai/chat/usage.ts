@@ -87,7 +87,10 @@ const PICTURE = 1_600
 
 export function estimateText(words: string): number {
   let wide = 0
-  for (const one of words) if (one.charCodeAt(0) > 0x2fff) wide++
+  for (let at = 0; at < words.length; at++) {
+    const one = words.charCodeAt(at)
+    if (one > 0x2fff && (one < 0xdc00 || one > 0xdfff)) wide++
+  }
   return Math.ceil((words.length - wide) / 4 + wide)
 }
 
