@@ -120,6 +120,9 @@ jobs:
           ROLLING: ${{ needs.version.outputs.rolling }}
         run: |
           source scripts/edge-profile.sh
+          if [ "$RUNNER_OS" = Windows ]; then
+            export CARGO_PROFILE_RELEASE_STRIP=none CARGO_PROFILE_RELEASE_DEBUG=line-tables-only
+          fi
           if [ "$RUNNER_OS" = Linux ]; then
             bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} \
               --ignore-version-mismatches \
@@ -144,6 +147,14 @@ jobs:
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.sig
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.sig
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: runner.os == 'Windows'
+        with:
+          name: symbols-${{ matrix.label }}-${{ needs.version.outputs.version }}
+          if-no-files-found: warn
+          retention-days: 90
+          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib.pdb
 
   mac:
     needs: [version, settle]
