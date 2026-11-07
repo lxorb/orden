@@ -172,6 +172,7 @@ pub struct Capture {
     display: CGDirectDisplayID,
     asked: (usize, usize),
     current: Vec<u8>,
+    current_size: (u16, u16),
 }
 
 pub fn parse(name: &str) -> Option<(CGDirectDisplayID, i32)> {
@@ -200,6 +201,7 @@ impl Capture {
             display,
             asked,
             current: Vec::new(),
+            current_size: (0, 0),
         })
     }
 
@@ -232,21 +234,12 @@ impl Capture {
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .0;
         }
-        let size = if let Some(frame) = last.take() {
+        if let Some(frame) = last.take() {
             self.current = frame.bytes;
-            frame.size
-        } else {
-            self.size_of_current()
-        };
+            self.current_size = frame.size;
+        }
         drop(last);
-        Ok((&self.current, size))
-    }
-
-    fn size_of_current(&self) -> (u16, u16) {
-        let width = u16::try_from(self.asked.0).unwrap_or(u16::MAX);
-        let height =
-            u16::try_from(self.current.len() / 4 / usize::from(width.max(1))).unwrap_or(u16::MAX);
-        (width, height)
+        Ok((&self.current, self.current_size))
     }
 }
 
