@@ -15,6 +15,8 @@ import {
 } from './find'
 import { quickEnough, scanPattern, TRIAL_SCRIPT } from './find-trial'
 
+let posted: ((asked: { text: string }) => void) | null = null
+
 class ThreadWorker {
   onmessage: ((event: { data: unknown }) => void) | null = null
   onerror: ((event: { preventDefault: () => void }) => void) | null = null
@@ -33,6 +35,7 @@ ${TRIAL_SCRIPT}`,
 
   postMessage(data: unknown) {
     this.thread.postMessage(data)
+    posted?.(data as { text: string })
   }
 
   terminate() {
@@ -152,17 +155,17 @@ describe('finding with a pattern that would hang the page', () => {
 
 describe('finding in a note that is being written into', () => {
   async function whileWriting(view: EditorView, run: () => Promise<unknown>): Promise<boolean> {
-    let writing = true
-    const pen = setInterval(() => {
+    let left = 40
+    posted = ({ text }) => {
+      if (text.length < view.state.doc.length / 2 || left === 0) return
+      left--
       view.dispatch({ changes: { from: view.state.doc.length, insert: 'and a little more\n' } })
-    }, 2)
-    const stop = setTimeout(() => (writing = false), 10_000)
+    }
     try {
       await run()
-      return writing
+      return left > 0
     } finally {
-      clearInterval(pen)
-      clearTimeout(stop)
+      posted = null
     }
   }
 
