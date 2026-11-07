@@ -3502,4 +3502,29 @@ export const my: Dictionary = {
   'Remove from chat': 'ချတ်မှ ဖယ်ရှားမည်',
   'Sign in again': 'ပြန်ဝင်ပါ',
   'Finish signing in in your browser': 'သင့်ဘရောက်ဇာတွင် ဝင်ရောက်ခြင်းကို ပြီးဆုံးပါ',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp သည် အခြားအက်ပ်များကို ခွင့်မပြုပါ။ Orden သည် တရားဝင်မဟုတ်သော ချိတ်ဆက်ထားသည့်စက်အဖြစ် ချိတ်ဆက်သဖြင့် WhatsApp ၏ စည်းမျဉ်းများကို ချိုးဖောက်ပြီး WhatsApp က သင့်နံပါတ်ကို ပိတ်ပင်နိုင်သည်၊ Orden မှ မက်ဆေ့ချ်ပို့ပါက ပိုဖြစ်နိုင်သည်။ Orden ချိတ်ဆက်ထားရန် သင့်ဖုန်းသည် အနည်းဆုံး 14 ရက်တစ်ကြိမ် WhatsApp ကို ဖွင့်ရမည်။',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp မှ ထွက်သွားပြီ။ ပြန်ချိတ်ဆက်ပါ။',
+  'Scan with WhatsApp on your phone': 'သင့်ဖုန်းရှိ WhatsApp ဖြင့် စကင်ဖတ်ပါ',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > ဆက်တင်များ > ချိတ်ဆက်ထားသော စက်များ > စက်ကို ချိတ်ဆက်ရန်',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'သင့်ဖုန်းရှိ WhatsApp တွင် ဆက်တင်များ > ချိတ်ဆက်ထားသော စက်များ > စက်ကို ချိတ်ဆက်ရန် > ဖုန်းနံပါတ်ဖြင့် ချိတ်ဆက်ရန် ကိုဖွင့်ပြီး ဤကုဒ်ကို ထည့်ပါ',
+  'The QR code expired. Try again.': 'QR ကုဒ် သက်တမ်းကုန်သွားပြီ။ ထပ်စမ်းကြည့်ပါ။',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp ကို ဤချိတ်ဆက်မှုဖြင့် အခြားနေရာတွင် ဖွင့်ထားသည်။ ပြန်ချိတ်ဆက်ပါ။',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp သည် Orden ၏ ဤဗားရှင်းကို လက်မခံတော့ပါ။ Orden ကို အပ်ဒိတ်လုပ်ပါ။',
+  'WhatsApp refused this connection': 'WhatsApp က ဤချိတ်ဆက်မှုကို ငြင်းပယ်ခဲ့သည်',
+  'WhatsApp needs the Orden app': 'WhatsApp အတွက် Orden အက်ပ် လိုအပ်သည်',
+  'That number is not on WhatsApp': 'ထိုနံပါတ်သည် WhatsApp တွင် မရှိပါ',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp သည် ဤစကားဝိုင်းတွင် ထိုအရာကို မလုပ်နိုင်ပါ',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp သည် အဖွဲ့ပိုင်ရှင်အသစ်ကို ၎င်း၏ကိုယ်ပိုင်အက်ပ်မှသာ သတ်မှတ်သည်',
+  'That message is no longer here': 'ထိုမက်ဆေ့ချ် မရှိတော့ပါ',
+  'That file is no longer on WhatsApp': 'ထိုဖိုင် WhatsApp တွင် မရှိတော့ပါ',
+  'The file is damaged': 'ဖိုင် ပျက်စီးနေသည်',
+  'WhatsApp is not connected right now': 'WhatsApp ယခု ချိတ်ဆက်မထားပါ',
+  'That poll no longer takes votes': 'ထိုစစ်တမ်းသည် မဲများကို လက်မခံတော့ပါ',
 }

@@ -49,20 +49,20 @@ impl MailSockets {
     }
 }
 
-enum Stream {
+pub(crate) enum Stream {
     Plain(TcpStream),
     Tls(Box<StreamOwned<ClientConnection, TcpStream>>),
 }
 
 impl Stream {
-    fn read(&mut self, into: &mut [u8]) -> std::io::Result<usize> {
+    pub(crate) fn read(&mut self, into: &mut [u8]) -> std::io::Result<usize> {
         match self {
             Self::Plain(socket) => socket.read(into),
             Self::Tls(stream) => stream.read(into),
         }
     }
 
-    fn write(&mut self, bytes: &[u8]) -> std::io::Result<()> {
+    pub(crate) fn write(&mut self, bytes: &[u8]) -> std::io::Result<()> {
         match self {
             Self::Plain(socket) => socket.write_all(bytes).and_then(|()| socket.flush()),
             Self::Tls(stream) => stream.write_all(bytes).and_then(|()| stream.flush()),
@@ -91,7 +91,7 @@ fn allowed(port: u16, tls: &str, loopback: bool) -> Result<(), String> {
     }
 }
 
-fn wrapped(host: &str, socket: TcpStream) -> Result<Stream, String> {
+pub(crate) fn wrapped(host: &str, socket: TcpStream) -> Result<Stream, String> {
     let provider = Arc::new(rustls::crypto::ring::default_provider());
     let config = ClientConfig::builder_with_provider(provider)
         .with_safe_default_protocol_versions()

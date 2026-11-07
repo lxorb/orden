@@ -3592,4 +3592,28 @@ export const tr: Dictionary = {
   'Remove from chat': 'Sohbetten çıkar',
   'Sign in again': 'Yeniden oturum aç',
   'Finish signing in in your browser': 'Oturum açmayı tarayıcında tamamla',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp başka uygulamalara izin vermez. Orden resmi olmayan bir bağlı cihaz olarak bağlanır; bu, WhatsApp’ın koşullarını ihlal eder ve WhatsApp numaranızı yasaklayabilir, özellikle Orden’dan mesaj gönderdiğinizde. Orden’ın bağlı kalması için telefonunuzun WhatsApp’ı en az 14 günde bir açması gerekir.',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp oturumu kapandı. Yeniden bağlanın.',
+  'Scan with WhatsApp on your phone': 'Telefonunuzdaki WhatsApp ile tarayın',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Ayarlar > Bağlı cihazlar > Cihaz bağla',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Telefonunuzdaki WhatsApp’ta Ayarlar > Bağlı cihazlar > Cihaz bağla > Bunun yerine telefon numarasıyla bağla yolunu izleyin ve bu kodu girin',
+  'The QR code expired. Try again.': 'QR kodunun süresi doldu. Tekrar deneyin.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp bu bağlantıyla başka bir yerde açıldı. Yeniden bağlanın.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp, Orden’ın bu sürümünü artık kabul etmiyor. Orden’ı güncelleyin.',
+  'WhatsApp refused this connection': 'WhatsApp bu bağlantıyı reddetti',
+  'WhatsApp needs the Orden app': 'WhatsApp, Orden uygulamasını gerektiriyor',
+  'That number is not on WhatsApp': 'Bu numara WhatsApp’ta yok',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp bunu bu sohbette yapamaz',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp yeni grup sahibini yalnızca kendi uygulamasından atar',
+  'That message is no longer here': 'O mesaj artık burada değil',
+  'That file is no longer on WhatsApp': 'O dosya artık WhatsApp’ta yok',
+  'The file is damaged': 'Dosya bozuk',
+  'WhatsApp is not connected right now': 'WhatsApp şu anda bağlı değil',
+  'That poll no longer takes votes': 'O anket artık oy kabul etmiyor',
 }

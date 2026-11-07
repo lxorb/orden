@@ -3715,4 +3715,28 @@ export const ru: Dictionary = {
   'Remove from chat': 'Удалить из чата',
   'Sign in again': 'Войти снова',
   'Finish signing in in your browser': 'Завершите вход в браузере',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp не разрешает другие приложения. Orden подключается как неофициальное связанное устройство, что нарушает условия WhatsApp, и WhatsApp может заблокировать ваш номер, особенно если вы отправляете сообщения из Orden. Телефон должен открывать WhatsApp хотя бы раз в 14 дней, чтобы Orden оставался связан.',
+  'Signed out of WhatsApp. Connect again.': 'Вы вышли из WhatsApp. Подключитесь снова.',
+  'Scan with WhatsApp on your phone': 'Отсканируйте в WhatsApp на телефоне',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Настройки > Связанные устройства > Привязка устройства',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'В WhatsApp на телефоне откройте Настройки > Связанные устройства > Привязка устройства > Привязать по номеру телефона и введите этот код',
+  'The QR code expired. Try again.': 'Срок действия QR-кода истёк. Попробуйте снова.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp открыли с этой привязкой в другом месте. Подключитесь снова.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp больше не принимает эту версию Orden. Обновите Orden.',
+  'WhatsApp refused this connection': 'WhatsApp отклонил это подключение',
+  'WhatsApp needs the Orden app': 'WhatsApp требует приложение Orden',
+  'That number is not on WhatsApp': 'Этого номера нет в WhatsApp',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp не может сделать это в этом разговоре',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp назначает нового владельца группы только в своём приложении',
+  'That message is no longer here': 'Этого сообщения больше нет',
+  'That file is no longer on WhatsApp': 'Этого файла больше нет в WhatsApp',
+  'The file is damaged': 'Файл повреждён',
+  'WhatsApp is not connected right now': 'WhatsApp сейчас не подключён',
+  'That poll no longer takes votes': 'В этом опросе больше нельзя голосовать',
 }

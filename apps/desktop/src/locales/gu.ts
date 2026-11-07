@@ -3556,4 +3556,28 @@ export const gu: Dictionary = {
   'Remove from chat': 'ચેટમાંથી દૂર કરો',
   'Sign in again': 'ફરી સાઇન ઇન કરો',
   'Finish signing in in your browser': 'તમારા બ્રાઉઝરમાં સાઇન ઇન પૂર્ણ કરો',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp બીજી ઍપ્સને મંજૂરી આપતું નથી. Orden એક બિનસત્તાવાર લિંક કરેલા ડિવાઇસ તરીકે કનેક્ટ થાય છે, જે WhatsApp ની શરતોનો ભંગ કરે છે, અને WhatsApp તમારો નંબર બૅન કરી શકે છે, ખાસ કરીને જ્યારે તમે Orden માંથી મેસેજ મોકલો. Orden ને લિંક રાખવા તમારા ફોને ઓછામાં ઓછું દર 14 દિવસે WhatsApp ખોલવું પડશે.',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp માંથી સાઇન આઉટ થયા. ફરી કનેક્ટ કરો.',
+  'Scan with WhatsApp on your phone': 'તમારા ફોન પરના WhatsApp થી સ્કેન કરો',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'તમારા ફોન પરના WhatsApp માં Settings > Linked devices > Link a device > Link with phone number instead ખોલો અને આ કોડ દાખલ કરો',
+  'The QR code expired. Try again.': 'QR કોડની મુદત પૂરી થઈ ગઈ. ફરી પ્રયાસ કરો.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp આ લિંક સાથે બીજે ક્યાંક ખોલાયું. ફરી કનેક્ટ કરો.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp હવે Orden નું આ વર્ઝન સ્વીકારતું નથી. Orden અપડેટ કરો.',
+  'WhatsApp refused this connection': 'WhatsApp એ આ કનેક્શન નકાર્યું',
+  'WhatsApp needs the Orden app': 'WhatsApp ને Orden ઍપ જોઈએ',
+  'That number is not on WhatsApp': 'તે નંબર WhatsApp પર નથી',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp આ વાતચીતમાં તે કરી શકતું નથી',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp નવા ગ્રુપ માલિક ફક્ત પોતાની ઍપમાંથી જ બનાવે છે',
+  'That message is no longer here': 'તે મેસેજ હવે અહીં નથી',
+  'That file is no longer on WhatsApp': 'તે ફાઇલ હવે WhatsApp પર નથી',
+  'The file is damaged': 'ફાઇલ ખરાબ થઈ ગઈ છે',
+  'WhatsApp is not connected right now': 'WhatsApp હાલમાં કનેક્ટ નથી',
+  'That poll no longer takes votes': 'તે પોલ હવે મત સ્વીકારતો નથી',
 }

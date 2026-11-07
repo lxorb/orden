@@ -3503,4 +3503,28 @@ export const am: Dictionary = {
   'Remove from chat': 'ከውይይቱ አስወግድ',
   'Sign in again': 'እንደገና ግባ',
   'Finish signing in in your browser': 'መግባቱን በአሳሽህ ጨርስ',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp ሌሎች መተግበሪያዎችን አይፈቅድም። Orden ይፋዊ ያልሆነ የተገናኘ መሣሪያ ሆኖ ይገናኛል፤ ይህም የWhatsApp ውሎችን ይጥሳል፣ እና WhatsApp ቁጥርዎን ሊያግድ ይችላል፤ በተለይ ከOrden መልዕክት ሲልኩ። Orden ተገናኝቶ እንዲቆይ ስልክዎ ቢያንስ በየ፲፬ ቀኑ WhatsAppን መክፈት አለበት።',
+  'Signed out of WhatsApp. Connect again.': 'ከWhatsApp ወጥተዋል። እንደገና ይገናኙ።',
+  'Scan with WhatsApp on your phone': 'በስልክዎ ላይ ባለው WhatsApp ይቃኙ',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'በስልክዎ ላይ ባለው WhatsApp ውስጥ Settings > Linked devices > Link a device > Link with phone number instead ይክፈቱ፣ እና ይህን ኮድ ያስገቡ',
+  'The QR code expired. Try again.': 'የQR ኮዱ ጊዜው አልፎበታል። እንደገና ይሞክሩ።',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp በዚህ ግንኙነት ሌላ ቦታ ተከፍቷል። እንደገና ይገናኙ።',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ይህን የOrden ስሪት ከእንግዲህ አይቀበልም። Ordenን ያዘምኑ።',
+  'WhatsApp refused this connection': 'WhatsApp ይህን ግንኙነት አልተቀበለም',
+  'WhatsApp needs the Orden app': 'WhatsApp የOrden መተግበሪያ ያስፈልገዋል',
+  'That number is not on WhatsApp': 'ያ ቁጥር WhatsApp ላይ የለም',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp በዚህ ውይይት ይህን ማድረግ አይችልም',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp አዲስ የቡድን ባለቤት የሚሰይመው ከራሱ መተግበሪያ ብቻ ነው',
+  'That message is no longer here': 'ያ መልዕክት ከእንግዲህ እዚህ የለም',
+  'That file is no longer on WhatsApp': 'ያ ፋይል ከእንግዲህ WhatsApp ላይ የለም',
+  'The file is damaged': 'ፋይሉ ተበላሽቷል',
+  'WhatsApp is not connected right now': 'WhatsApp አሁን አልተገናኘም',
+  'That poll no longer takes votes': 'ያ የሕዝብ አስተያየት ከእንግዲህ ድምጽ አይቀበልም',
 }

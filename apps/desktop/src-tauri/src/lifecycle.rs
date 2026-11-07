@@ -180,6 +180,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(sockets) = app.try_state::<crate::mail_socket::MailSockets>() {
                 sockets.end_where(&label);
             }
+            if let Some(sockets) = app.try_state::<crate::wire_socket::WireSockets>() {
+                sockets.end_where(&label);
+            }
             crate::ai_cli::window_gone(app, &label);
             let now = state(app).now();
             if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {

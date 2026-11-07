@@ -3508,4 +3508,29 @@ export const ms: Dictionary = {
   'Remove from chat': 'Keluarkan daripada sembang',
   'Sign in again': 'Log masuk semula',
   'Finish signing in in your browser': 'Selesaikan log masuk dalam pelayar anda',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp tidak membenarkan aplikasi lain. Orden bersambung sebagai peranti dipaut tidak rasmi, yang melanggar terma WhatsApp, dan WhatsApp mungkin menyekat nombor anda, lebih-lebih lagi jika anda menghantar mesej daripada Orden. Telefon anda perlu membuka WhatsApp sekurang-kurangnya setiap 14 hari supaya Orden kekal dipaut.',
+  'Signed out of WhatsApp. Connect again.': 'Dilog keluar daripada WhatsApp. Sambung semula.',
+  'Scan with WhatsApp on your phone': 'Imbas dengan WhatsApp pada telefon anda',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Tetapan > Peranti dipaut > Pautkan peranti',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Dalam WhatsApp pada telefon anda, buka Tetapan > Peranti dipaut > Pautkan peranti > Pautkan dengan nombor telefon, dan masukkan kod ini',
+  'The QR code expired. Try again.': 'Kod QR telah tamat tempoh. Cuba lagi.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp telah dibuka dengan pautan ini di tempat lain. Sambung semula.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp tidak lagi menerima versi Orden ini. Kemas kini Orden.',
+  'WhatsApp refused this connection': 'WhatsApp menolak sambungan ini',
+  'WhatsApp needs the Orden app': 'WhatsApp memerlukan aplikasi Orden',
+  'That number is not on WhatsApp': 'Nombor itu tiada di WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp tidak dapat melakukannya dalam perbualan ini',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp hanya melantik pemilik kumpulan baharu daripada aplikasinya sendiri',
+  'That message is no longer here': 'Mesej itu sudah tiada',
+  'That file is no longer on WhatsApp': 'Fail itu sudah tiada di WhatsApp',
+  'The file is damaged': 'Fail itu rosak',
+  'WhatsApp is not connected right now': 'WhatsApp tidak bersambung sekarang',
+  'That poll no longer takes votes': 'Undian itu tidak lagi menerima undi',
 }

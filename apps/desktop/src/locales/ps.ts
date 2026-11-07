@@ -3570,4 +3570,28 @@ export const ps: Dictionary = {
   'Remove from chat': 'له چټ څخه لرې کړئ',
   'Sign in again': 'بیا ننوځئ',
   'Finish signing in in your browser': 'په خپل براوزر کې ننوتل بشپړ کړئ',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp نورو اپونو ته اجازه نه ورکوي. Orden د یوې غیررسمي تړل شوې وسیلې په توګه وصلېږي، چې د WhatsApp شرطونه ماتوي، او WhatsApp ښايي ستاسو شمېره بنده کړي، په ځانګړي ډول کله چې تاسو له Orden څخه پیغامونه لېږئ. ستاسو تلیفون باید لږ تر لږه هرو ۱۴ ورځو کې یو ځل WhatsApp پرانیزي ترڅو Orden تړلی پاتې شي.',
+  'Signed out of WhatsApp. Connect again.': 'له WhatsApp څخه ووتلئ. بیا وصل شئ.',
+  'Scan with WhatsApp on your phone': 'په خپل تلیفون کې د WhatsApp سره یې سکن کړئ',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'په خپل تلیفون کې په WhatsApp کې Settings > Linked devices > Link a device > Link with phone number instead پرانیزئ، او دا کوډ ولیکئ',
+  'The QR code expired. Try again.': 'د QR کوډ موده پای ته ورسېده. بیا هڅه وکړئ.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp په دې تړنې سره بل ځای پرانیستل شو. بیا وصل شئ.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp نور د Orden دا نسخه نه مني. Orden تازه کړئ.',
+  'WhatsApp refused this connection': 'WhatsApp دا اتصال رد کړ',
+  'WhatsApp needs the Orden app': 'WhatsApp د Orden اپ ته اړتیا لري',
+  'That number is not on WhatsApp': 'دا شمېره په WhatsApp کې نشته',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp په دې خبرو اترو کې دا کار نشي کولی',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp نوی د ډلې مالک یوازې له خپل اپ څخه ټاکي',
+  'That message is no longer here': 'هغه پیغام نور دلته نشته',
+  'That file is no longer on WhatsApp': 'هغه فایل نور په WhatsApp کې نشته',
+  'The file is damaged': 'فایل خراب دی',
+  'WhatsApp is not connected right now': 'WhatsApp اوس وصل نه دی',
+  'That poll no longer takes votes': 'هغه نظرپوښتنه نور رایې نه مني',
 }

@@ -3400,4 +3400,27 @@ export const zhHans: Dictionary = {
   'Remove from chat': '移出聊天',
   'Sign in again': '重新登录',
   'Finish signing in in your browser': '在浏览器中完成登录',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp 不允许其他应用。Orden 以非官方关联设备的方式连接，这违反 WhatsApp 的条款，WhatsApp 可能封禁你的号码；从 Orden 发送消息时风险更高。你的手机至少每 14 天要打开一次 WhatsApp，Orden 才能保持关联。',
+  'Signed out of WhatsApp. Connect again.': '已退出 WhatsApp，请重新连接。',
+  'Scan with WhatsApp on your phone': '用手机上的 WhatsApp 扫描',
+  'WhatsApp > Settings > Linked devices > Link a device': 'WhatsApp > 设置 > 关联设备 > 关联新设备',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    '在手机上的 WhatsApp 中打开“设置 > 关联设备 > 关联新设备 > 改用电话号码关联”，然后输入此代码',
+  'The QR code expired. Try again.': '二维码已过期，请重试。',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp 已在别处用此关联打开，请重新连接。',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp 不再接受此版本的 Orden，请更新 Orden。',
+  'WhatsApp refused this connection': 'WhatsApp 拒绝了此连接',
+  'WhatsApp needs the Orden app': 'WhatsApp 需要 Orden 应用',
+  'That number is not on WhatsApp': '该号码未使用 WhatsApp',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp 无法在此对话中执行该操作',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp 只能在自己的应用中指定新的群主',
+  'That message is no longer here': '该消息已不存在',
+  'That file is no longer on WhatsApp': '该文件已不在 WhatsApp 上',
+  'The file is damaged': '文件已损坏',
+  'WhatsApp is not connected right now': 'WhatsApp 当前未连接',
+  'That poll no longer takes votes': '该投票已停止接受投票',
 }

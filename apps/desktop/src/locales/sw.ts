@@ -3617,4 +3617,29 @@ export const sw: Dictionary = {
   'Remove from chat': 'Ondoa kwenye gumzo',
   'Sign in again': 'Ingia tena',
   'Finish signing in in your browser': 'Maliza kuingia kwenye kivinjari chako',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp hairuhusu programu nyingine. Orden huunganishwa kama kifaa kilichounganishwa kisicho rasmi, jambo linalokiuka masharti ya WhatsApp, na WhatsApp inaweza kuifungia namba yako, hasa unapotuma ujumbe kutoka Orden. Simu yako lazima ifungue WhatsApp angalau kila siku 14 ili Orden ibaki imeunganishwa.',
+  'Signed out of WhatsApp. Connect again.': 'Umetoka kwenye WhatsApp. Unganisha tena.',
+  'Scan with WhatsApp on your phone': 'Changanua kwa WhatsApp kwenye simu yako',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Katika WhatsApp kwenye simu yako, fungua Settings > Linked devices > Link a device > Link with phone number instead, kisha weka msimbo huu',
+  'The QR code expired. Try again.': 'Msimbo wa QR umeisha muda. Jaribu tena.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp ilifunguliwa kwa kiungo hiki mahali pengine. Unganisha tena.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp haikubali tena toleo hili la Orden. Sasisha Orden.',
+  'WhatsApp refused this connection': 'WhatsApp imekataa muunganisho huu',
+  'WhatsApp needs the Orden app': 'WhatsApp inahitaji programu ya Orden',
+  'That number is not on WhatsApp': 'Namba hiyo haipo kwenye WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp haiwezi kufanya hivyo katika mazungumzo haya',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp huteua mmiliki mpya wa kikundi kutoka kwenye programu yake pekee',
+  'That message is no longer here': 'Ujumbe huo haupo tena',
+  'That file is no longer on WhatsApp': 'Faili hilo halipo tena kwenye WhatsApp',
+  'The file is damaged': 'Faili limeharibika',
+  'WhatsApp is not connected right now': 'WhatsApp haijaunganishwa kwa sasa',
+  'That poll no longer takes votes': 'Kura ya maoni hiyo haipokei tena kura',
 }

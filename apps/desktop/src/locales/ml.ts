@@ -3623,4 +3623,29 @@ export const ml: Dictionary = {
   'Remove from chat': 'ചാറ്റിൽനിന്ന് നീക്കുക',
   'Sign in again': 'വീണ്ടും സൈൻ ഇൻ ചെയ്യുക',
   'Finish signing in in your browser': 'നിങ്ങളുടെ ബ്രൗസറിൽ സൈൻ ഇൻ പൂർത്തിയാക്കുക',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp മറ്റ് ആപ്പുകൾ അനുവദിക്കുന്നില്ല. Orden ഒരു അനൗദ്യോഗിക ലിങ്ക് ചെയ്ത ഉപകരണമായി കണക്റ്റ് ചെയ്യുന്നു, ഇത് WhatsApp-ന്റെ നിബന്ധനകൾ ലംഘിക്കുന്നു, WhatsApp നിങ്ങളുടെ നമ്പർ നിരോധിച്ചേക്കാം, പ്രത്യേകിച്ച് Orden-ൽ നിന്ന് സന്ദേശങ്ങൾ അയയ്ക്കുമ്പോൾ. Orden ലിങ്ക് ചെയ്തുനിൽക്കാൻ നിങ്ങളുടെ ഫോൺ കുറഞ്ഞത് 14 ദിവസത്തിലൊരിക്കൽ WhatsApp തുറക്കണം.',
+  'Signed out of WhatsApp. Connect again.':
+    'WhatsApp-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്തു. വീണ്ടും കണക്റ്റ് ചെയ്യുക.',
+  'Scan with WhatsApp on your phone': 'നിങ്ങളുടെ ഫോണിലെ WhatsApp കൊണ്ട് സ്കാൻ ചെയ്യുക',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'നിങ്ങളുടെ ഫോണിലെ WhatsApp-ൽ Settings > Linked devices > Link a device > Link with phone number instead തുറന്ന് ഈ കോഡ് നൽകുക',
+  'The QR code expired. Try again.': 'QR കോഡിന്റെ കാലാവധി കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കുക.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'ഈ ലിങ്ക് ഉപയോഗിച്ച് WhatsApp മറ്റെവിടെയോ തുറന്നു. വീണ്ടും കണക്റ്റ് ചെയ്യുക.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ഇനി Orden-ന്റെ ഈ പതിപ്പ് സ്വീകരിക്കില്ല. Orden അപ്ഡേറ്റ് ചെയ്യുക.',
+  'WhatsApp refused this connection': 'WhatsApp ഈ കണക്ഷൻ നിരസിച്ചു',
+  'WhatsApp needs the Orden app': 'WhatsApp-ന് Orden ആപ്പ് വേണം',
+  'That number is not on WhatsApp': 'ആ നമ്പർ WhatsApp-ൽ ഇല്ല',
+  'WhatsApp cannot do that in this conversation': 'ഈ സംഭാഷണത്തിൽ WhatsApp-ന് അത് ചെയ്യാനാകില്ല',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp പുതിയ ഗ്രൂപ്പ് ഉടമയെ സ്വന്തം ആപ്പിൽ നിന്ന് മാത്രമേ നിയമിക്കൂ',
+  'That message is no longer here': 'ആ സന്ദേശം ഇപ്പോൾ ഇവിടെ ഇല്ല',
+  'That file is no longer on WhatsApp': 'ആ ഫയൽ ഇപ്പോൾ WhatsApp-ൽ ഇല്ല',
+  'The file is damaged': 'ഫയൽ കേടായി',
+  'WhatsApp is not connected right now': 'WhatsApp ഇപ്പോൾ കണക്റ്റ് ചെയ്തിട്ടില്ല',
+  'That poll no longer takes votes': 'ആ പോൾ ഇനി വോട്ടുകൾ സ്വീകരിക്കില്ല',
 }

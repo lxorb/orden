@@ -3573,4 +3573,28 @@ export const hi: Dictionary = {
   'Remove from chat': 'चैट से हटाएँ',
   'Sign in again': 'फिर से साइन इन करें',
   'Finish signing in in your browser': 'अपने ब्राउज़र में साइन इन पूरा करें',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp दूसरे ऐप्स की अनुमति नहीं देता। Orden एक अनौपचारिक लिंक्ड डिवाइस के रूप में जुड़ता है, जो WhatsApp की शर्तों का उल्लंघन है, और WhatsApp आपका नंबर बैन कर सकता है, खासकर जब आप Orden से मैसेज भेजते हैं। Orden को लिंक्ड रखने के लिए आपके फ़ोन को कम से कम हर 14 दिन में WhatsApp खोलना होगा।',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp से साइन आउट हो गए। फिर से कनेक्ट करें।',
+  'Scan with WhatsApp on your phone': 'अपने फ़ोन पर WhatsApp से स्कैन करें',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'अपने फ़ोन पर WhatsApp में Settings > Linked devices > Link a device > Link with phone number instead खोलें, और यह कोड डालें',
+  'The QR code expired. Try again.': 'QR कोड की समय-सीमा खत्म हो गई। फिर से कोशिश करें।',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp इस लिंक के साथ कहीं और खोला गया। फिर से कनेक्ट करें।',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp अब Orden का यह वर्शन स्वीकार नहीं करता। Orden अपडेट करें।',
+  'WhatsApp refused this connection': 'WhatsApp ने यह कनेक्शन अस्वीकार कर दिया',
+  'WhatsApp needs the Orden app': 'WhatsApp को Orden ऐप चाहिए',
+  'That number is not on WhatsApp': 'वह नंबर WhatsApp पर नहीं है',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp इस बातचीत में ऐसा नहीं कर सकता',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp नया ग्रुप ओनर सिर्फ़ अपने ऐप से बनाता है',
+  'That message is no longer here': 'वह मैसेज अब यहाँ नहीं है',
+  'That file is no longer on WhatsApp': 'वह फ़ाइल अब WhatsApp पर नहीं है',
+  'The file is damaged': 'फ़ाइल खराब है',
+  'WhatsApp is not connected right now': 'WhatsApp अभी कनेक्ट नहीं है',
+  'That poll no longer takes votes': 'वह पोल अब वोट नहीं लेता',
 }

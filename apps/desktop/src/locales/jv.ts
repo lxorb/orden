@@ -3493,4 +3493,29 @@ export const jv: Dictionary = {
   'Remove from chat': 'Copot saka obrolan',
   'Sign in again': 'Mlebu maneh',
   'Finish signing in in your browser': 'Rampungna mlebu ing browser sampeyan',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp ora ngidini aplikasi liya. Orden nyambung minangka piranti sing disambungaké ora resmi, sing nglanggar katentuan WhatsApp, lan WhatsApp bisa mblokir nomermu, luwih-luwih yèn kowé ngirim pesen saka Orden. Hapému kudu mbukak WhatsApp paling ora saben 14 dina supaya Orden tetep kesambung.',
+  'Signed out of WhatsApp. Connect again.': 'Metu saka WhatsApp. Sambungaké manèh.',
+  'Scan with WhatsApp on your phone': 'Pindai nganggo WhatsApp ing hapé',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Setelan > Piranti sing disambungaké > Sambungaké piranti',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'Ing WhatsApp ing hapé, bukak Setelan > Piranti sing disambungaké > Sambungaké piranti > Sambungaké nganggo nomer telpon, banjur lebokna kode iki',
+  'The QR code expired. Try again.': 'Kode QR wis kedaluwarsa. Coba manèh.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'WhatsApp dibukak nganggo sambungan iki ing panggonan liya. Sambungaké manèh.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp wis ora nampa versi Orden iki. Anyarana Orden.',
+  'WhatsApp refused this connection': 'WhatsApp nolak sambungan iki',
+  'WhatsApp needs the Orden app': 'WhatsApp butuh aplikasi Orden',
+  'That number is not on WhatsApp': 'Nomer kuwi ora ana ing WhatsApp',
+  'WhatsApp cannot do that in this conversation':
+    'WhatsApp ora bisa nindakaké kuwi ing obrolan iki',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp mung netepaké pamilik grup anyar saka aplikasiné dhéwé',
+  'That message is no longer here': 'Pesen kuwi wis ora ana',
+  'That file is no longer on WhatsApp': 'Berkas kuwi wis ora ana ing WhatsApp',
+  'The file is damaged': 'Berkasé rusak',
+  'WhatsApp is not connected right now': 'WhatsApp saiki ora kesambung',
+  'That poll no longer takes votes': 'Polling kuwi wis ora nampa swara',
 }

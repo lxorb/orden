@@ -3633,4 +3633,29 @@ export const ta: Dictionary = {
   'Remove from chat': 'அரட்டையிலிருந்து நீக்கு',
   'Sign in again': 'மீண்டும் உள்நுழைக',
   'Finish signing in in your browser': 'உங்கள் உலாவியில் உள்நுழைவை முடிக்கவும்',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp மற்ற ஆப்களை அனுமதிப்பதில்லை. Orden அதிகாரப்பூர்வமற்ற இணைக்கப்பட்ட சாதனமாக இணைகிறது, இது WhatsApp-இன் விதிமுறைகளை மீறுகிறது, மேலும் WhatsApp உங்கள் எண்ணைத் தடைசெய்யலாம், குறிப்பாக Orden-இலிருந்து மெசேஜ் அனுப்பும்போது. Orden இணைப்பில் இருக்க, உங்கள் ஃபோன் குறைந்தது 14 நாட்களுக்கு ஒருமுறை WhatsApp-ஐத் திறக்க வேண்டும்.',
+  'Signed out of WhatsApp. Connect again.':
+    'WhatsApp-இலிருந்து வெளியேறிவிட்டீர்கள். மீண்டும் இணைக்கவும்.',
+  'Scan with WhatsApp on your phone': 'உங்கள் தொலைபேசியிலுள்ள WhatsApp-ஆல் ஸ்கேன் செய்யவும்',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'உங்கள் தொலைபேசியிலுள்ள WhatsApp-இல் Settings > Linked devices > Link a device > Link with phone number instead என்பதைத் திறந்து, இந்தக் குறியீட்டை உள்ளிடவும்',
+  'The QR code expired. Try again.': 'QR குறியீடு காலாவதியானது. மீண்டும் முயலவும்.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'இந்த இணைப்புடன் WhatsApp வேறு எங்கோ திறக்கப்பட்டது. மீண்டும் இணைக்கவும்.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp இனி Orden-இன் இந்தப் பதிப்பை ஏற்காது. Orden-ஐப் புதுப்பிக்கவும்.',
+  'WhatsApp refused this connection': 'WhatsApp இந்த இணைப்பை மறுத்தது',
+  'WhatsApp needs the Orden app': 'WhatsApp-க்கு Orden ஆப் தேவை',
+  'That number is not on WhatsApp': 'அந்த எண் WhatsApp-இல் இல்லை',
+  'WhatsApp cannot do that in this conversation': 'இந்த உரையாடலில் WhatsApp அதைச் செய்ய முடியாது',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp புதிய குழு உரிமையாளரைத் தனது சொந்த ஆப்பிலிருந்து மட்டுமே நியமிக்கும்',
+  'That message is no longer here': 'அந்த மெசேஜ் இப்போது இங்கு இல்லை',
+  'That file is no longer on WhatsApp': 'அந்தக் கோப்பு இப்போது WhatsApp-இல் இல்லை',
+  'The file is damaged': 'கோப்பு சேதமடைந்துள்ளது',
+  'WhatsApp is not connected right now': 'WhatsApp இப்போது இணைக்கப்படவில்லை',
+  'That poll no longer takes votes': 'அந்த வாக்கெடுப்பு இனி வாக்குகளை ஏற்காது',
 }

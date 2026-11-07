@@ -3467,4 +3467,28 @@ export const ko: Dictionary = {
   'Remove from chat': '채팅에서 내보내기',
   'Sign in again': '다시 로그인',
   'Finish signing in in your browser': '브라우저에서 로그인을 마치세요',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp은 다른 앱을 허용하지 않습니다. Orden은 비공식 연결된 기기로 연결되어 WhatsApp 약관을 위반하며, WhatsApp이 회원님의 번호를 차단할 수 있습니다. Orden에서 메시지를 보내면 가능성이 더 높아집니다. Orden 연결을 유지하려면 휴대폰에서 최소 14일마다 WhatsApp을 열어야 합니다.',
+  'Signed out of WhatsApp. Connect again.': 'WhatsApp에서 로그아웃되었습니다. 다시 연결하세요.',
+  'Scan with WhatsApp on your phone': '휴대폰의 WhatsApp으로 스캔하세요',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > 설정 > 연결된 기기 > 기기 연결',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    '휴대폰의 WhatsApp에서 설정 > 연결된 기기 > 기기 연결 > 전화번호로 연결하기를 열고 이 코드를 입력하세요',
+  'The QR code expired. Try again.': 'QR 코드가 만료되었습니다. 다시 시도하세요.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    '이 연결로 다른 곳에서 WhatsApp이 열렸습니다. 다시 연결하세요.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp이 더 이상 이 버전의 Orden을 받지 않습니다. Orden을 업데이트하세요.',
+  'WhatsApp refused this connection': 'WhatsApp이 이 연결을 거부했습니다',
+  'WhatsApp needs the Orden app': 'WhatsApp에는 Orden 앱이 필요합니다',
+  'That number is not on WhatsApp': '그 번호는 WhatsApp을 사용하지 않습니다',
+  'WhatsApp cannot do that in this conversation': 'WhatsApp은 이 대화에서 그렇게 할 수 없습니다',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp은 자체 앱에서만 새 그룹 소유자를 지정합니다',
+  'That message is no longer here': '그 메시지는 더 이상 없습니다',
+  'That file is no longer on WhatsApp': '그 파일은 더 이상 WhatsApp에 없습니다',
+  'The file is damaged': '파일이 손상되었습니다',
+  'WhatsApp is not connected right now': 'WhatsApp이 현재 연결되어 있지 않습니다',
+  'That poll no longer takes votes': '그 투표는 더 이상 투표를 받지 않습니다',
 }

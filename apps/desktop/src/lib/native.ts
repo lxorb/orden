@@ -11,6 +11,7 @@ const RAW = new Set([
   'local_image',
   'remote_image',
   'mail_socket_write',
+  'wire_socket_send',
   'print_page',
   'print_pdf',
   'chat_request',

@@ -3588,4 +3588,29 @@ export const te: Dictionary = {
   'Remove from chat': 'చాట్ నుండి తొలగించు',
   'Sign in again': 'మళ్లీ సైన్ ఇన్ చేయండి',
   'Finish signing in in your browser': 'మీ బ్రౌజర్‌లో సైన్ ఇన్ పూర్తి చేయండి',
+  'WhatsApp does not allow other apps. Orden connects as an unofficial linked device, which breaks WhatsApp’s terms, and WhatsApp may ban your number, more likely when you send messages from Orden. Your phone has to open WhatsApp at least every 14 days to keep Orden linked.':
+    'WhatsApp ఇతర యాప్‌లను అనుమతించదు. Orden అనధికారిక లింక్ చేసిన పరికరంగా కనెక్ట్ అవుతుంది, ఇది WhatsApp నిబంధనలను ఉల్లంఘిస్తుంది, మరియు WhatsApp మీ నంబర్‌ను నిషేధించవచ్చు, ముఖ్యంగా మీరు Orden నుండి సందేశాలు పంపినప్పుడు. Orden లింక్‌లో ఉండాలంటే మీ ఫోన్ కనీసం ప్రతి 14 రోజులకు ఒకసారి WhatsApp తెరవాలి.',
+  'Signed out of WhatsApp. Connect again.':
+    'WhatsApp నుండి సైన్ అవుట్ అయ్యారు. మళ్లీ కనెక్ట్ చేయండి.',
+  'Scan with WhatsApp on your phone': 'మీ ఫోన్‌లోని WhatsApp‌తో స్కాన్ చేయండి',
+  'WhatsApp > Settings > Linked devices > Link a device':
+    'WhatsApp > Settings > Linked devices > Link a device',
+  'In WhatsApp on your phone, open Settings > Linked devices > Link a device > Link with phone number instead, and enter this code':
+    'మీ ఫోన్‌లోని WhatsApp‌లో Settings > Linked devices > Link a device > Link with phone number instead తెరిచి, ఈ కోడ్‌ను నమోదు చేయండి',
+  'The QR code expired. Try again.': 'QR కోడ్ గడువు ముగిసింది. మళ్లీ ప్రయత్నించండి.',
+  'WhatsApp was opened with this link somewhere else. Connect again.':
+    'ఈ లింక్‌తో WhatsApp వేరే చోట తెరవబడింది. మళ్లీ కనెక్ట్ చేయండి.',
+  'WhatsApp no longer accepts this version of Orden. Update Orden.':
+    'WhatsApp ఇకపై Orden యొక్క ఈ వెర్షన్‌ను అంగీకరించదు. Orden‌ను అప్‌డేట్ చేయండి.',
+  'WhatsApp refused this connection': 'WhatsApp ఈ కనెక్షన్‌ను తిరస్కరించింది',
+  'WhatsApp needs the Orden app': 'WhatsApp‌కు Orden యాప్ కావాలి',
+  'That number is not on WhatsApp': 'ఆ నంబర్ WhatsApp‌లో లేదు',
+  'WhatsApp cannot do that in this conversation': 'ఈ సంభాషణలో WhatsApp అది చేయలేదు',
+  'WhatsApp makes a new group owner only from its own app':
+    'WhatsApp కొత్త గ్రూప్ యజమానిని తన సొంత యాప్ నుండి మాత్రమే నియమిస్తుంది',
+  'That message is no longer here': 'ఆ సందేశం ఇప్పుడు ఇక్కడ లేదు',
+  'That file is no longer on WhatsApp': 'ఆ ఫైల్ ఇప్పుడు WhatsApp‌లో లేదు',
+  'The file is damaged': 'ఫైల్ పాడైంది',
+  'WhatsApp is not connected right now': 'WhatsApp ప్రస్తుతం కనెక్ట్ అవ్వలేదు',
+  'That poll no longer takes votes': 'ఆ పోల్ ఇక ఓట్లను స్వీకరించదు',
 }
