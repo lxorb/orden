@@ -244,6 +244,16 @@ fn moment(message: u32, wparam: usize) -> Moment {
     }
 }
 
+#[cfg_attr(
+    not(windows),
+    allow(dead_code, reason = "a window's messages are Windows' own")
+)]
+fn menu_by_a_key_alone(message: u32, wparam: usize, lparam: isize) -> bool {
+    const SYS_COMMAND: u32 = 0x0112;
+    const KEY_MENU: usize = 0xF100;
+    message == SYS_COMMAND && wparam & 0xFFF0 == KEY_MENU && lparam == 0
+}
+
 #[cfg(windows)]
 mod watching {
     use std::cell::RefCell;
@@ -255,7 +265,7 @@ mod watching {
     use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
     use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, IsChild, WM_NCDESTROY};
 
-    use super::{left, moment, returned, Moment};
+    use super::{left, menu_by_a_key_alone, moment, returned, Moment};
 
     const OURS: usize = 0x6b65_7973;
 
@@ -314,6 +324,9 @@ mod watching {
         _id: usize,
         _data: usize,
     ) -> LRESULT {
+        if menu_by_a_key_alone(message, wparam.0, lparam.0) {
+            return LRESULT(0);
+        }
         let now = moment(message, wparam.0);
         let window = match now {
             Moment::Nothing => None,
@@ -613,7 +626,7 @@ pub use native::x11_took;
 
 #[cfg(test)]
 mod tests {
-    use super::{moment, Back, Homes, Moment, OWED_MS};
+    use super::{menu_by_a_key_alone, moment, Back, Homes, Moment, OWED_MS};
 
     fn typing_in(window: &str, page: &str) -> Homes {
         let mut homes = Homes::default();
@@ -764,5 +777,16 @@ mod tests {
         assert_eq!(moment(0x0232, 0), Moment::Back);
         assert_eq!(moment(0x0008, 0), Moment::Nothing);
         assert_eq!(moment(0x0231, 0), Moment::Nothing);
+    }
+
+    #[test]
+    fn alt_or_f10_alone_opens_no_menu_loop_and_alt_space_still_opens_the_window_menu() {
+        assert!(menu_by_a_key_alone(0x0112, 0xF100, 0));
+        assert!(menu_by_a_key_alone(0x0112, 0xF102, 0));
+        assert!(!menu_by_a_key_alone(0x0112, 0xF100, 0x20));
+        assert!(!menu_by_a_key_alone(0x0112, 0xF100, 0x66));
+        assert!(!menu_by_a_key_alone(0x0112, 0xF060, 0));
+        assert!(!menu_by_a_key_alone(0x0112, 0xF020, 0));
+        assert!(!menu_by_a_key_alone(0x0105, 0x12, 0));
     }
 }
