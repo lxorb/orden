@@ -307,6 +307,23 @@ describe('restoring a session', () => {
     }
   }
 
+  test('has looked for the session once its token is read, before the account answers', async () => {
+    localStorage.setItem('nib:session', 'session')
+    server.meFails = Infinity
+
+    vi.useFakeTimers()
+    try {
+      const restoring = account.restore()
+      await account.looked
+      expect(account.token).toBe('session')
+      expect(account.signedIn).toBe(false)
+      await vi.advanceTimersByTimeAsync(10_000)
+      await restoring
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('keeps a token the account could not be asked about', async () => {
     localStorage.setItem('nib:session', 'session')
     server.meFails = Infinity

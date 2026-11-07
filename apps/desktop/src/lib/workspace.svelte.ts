@@ -2115,18 +2115,22 @@ class Workspace {
       void startup.turn('index').then(() =>
         import('./workspace/setext').then(
           ({ dropSetext }) =>
-            dropSetext(this, root, () => account.signedIn).catch((error: unknown) => {
+            dropSetext(this, root, () => !!account.token).catch((error: unknown) => {
               log('error', `setext headings in ${root} not rewritten - ${String(error)}`)
             }),
           unfetched,
         ),
       )
-      void import('./workspace/own-keys-moved').then(
-        ({ moveOwnKeysSoon }) => moveOwnKeysSoon(root, this, account.signedIn),
+      void Promise.all([import('./workspace/own-keys-moved'), account.looked]).then(
+        ([{ moveOwnKeysSoon }]) => moveOwnKeysSoon(root, this, !!account.token),
         unfetched,
       )
-      void import('./rows/old-lists').then(
-        ({ markOldListsSoon }) => markOldListsSoon(root, !account.signedIn, this),
+      void Promise.all([import('./rows/old-lists'), account.looked]).then(
+        ([{ markOldListsSoon }]) => {
+          for (const one of [root, ...this.shownSpaces.map((space) => space.root)]) {
+            markOldListsSoon(one, !account.token, this)
+          }
+        },
         unfetched,
       )
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
