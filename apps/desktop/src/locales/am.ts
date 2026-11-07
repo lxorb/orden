@@ -2857,6 +2857,8 @@ export const am: Dictionary = {
   'That could not be protected: {reason}': 'ሊጠበቅ አልቻለም፦ {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} አልታከለም፦ ውይይት ምስሎችን እና እስከ 2 MB የሆኑ የጽሑፍ ፋይሎችን ይቀበላል።',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} አልታከለም፦ አንድ መልእክት እስከ 20 ምስሎች ይቀበላል።',
   'Time tracker': 'የጊዜ መከታተያ',
   'Start timer': 'ሰዓት ቆጣሪ ጀምር',
   'Stop timer': 'ሰዓት ቆጣሪ አቁም',

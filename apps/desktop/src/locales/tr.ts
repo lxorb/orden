@@ -2937,6 +2937,8 @@ export const tr: Dictionary = {
   'That could not be protected: {reason}': 'Korunamadı: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} eklenmedi: sohbet resimleri ve en fazla 2 MB metin dosyalarını kabul eder.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} eklenmedi: bir mesaj en fazla 20 resim kabul eder.',
   'Time tracker': 'Zaman takibi',
   'Start timer': 'Zamanlayıcıyı başlat',
   'Stop timer': 'Zamanlayıcıyı durdur',

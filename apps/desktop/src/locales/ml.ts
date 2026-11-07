@@ -2963,6 +2963,8 @@ export const ml: Dictionary = {
   'That could not be protected: {reason}': 'സംരക്ഷിക്കാനായില്ല: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ചേർത്തില്ല: ചാറ്റിൽ ചിത്രങ്ങളും 2 MB വരെയുള്ള ടെക്സ്റ്റ് ഫയലുകളും മാത്രമേ ചേർക്കാനാകൂ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ചേർത്തില്ല: ഒരു സന്ദേശത്തിൽ പരമാവധി 20 ചിത്രങ്ങൾ മാത്രമേ ചേർക്കാനാകൂ.',
   'Time tracker': 'സമയ ട്രാക്കർ',
   'Start timer': 'ടൈമർ ആരംഭിക്കുക',
   'Stop timer': 'ടൈമർ നിർത്തുക',

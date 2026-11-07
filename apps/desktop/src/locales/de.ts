@@ -2980,6 +2980,8 @@ export const de: Dictionary = {
   'That could not be protected: {reason}': 'Das konnte nicht geschützt werden: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} wurde nicht hinzugefügt: Ein Chat nimmt Bilder und Textdateien bis 2 MB.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} wurde nicht hinzugefügt: Eine Nachricht nimmt höchstens 20 Bilder.',
   'Time tracker': 'Zeiterfassung',
   'Start timer': 'Timer starten',
   'Stop timer': 'Timer anhalten',

@@ -2926,6 +2926,8 @@ export const pa: Dictionary = {
   'That could not be protected: {reason}': 'ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਚੈਟ ਵਿੱਚ ਤਸਵੀਰਾਂ ਅਤੇ 2 MB ਤੱਕ ਦੀਆਂ ਟੈਕਸਟ ਫ਼ਾਈਲਾਂ ਹੀ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਇੱਕ ਸੁਨੇਹੇ ਵਿੱਚ ਵੱਧ ਤੋਂ ਵੱਧ 20 ਤਸਵੀਰਾਂ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
   'Time tracker': 'ਸਮਾਂ ਟਰੈਕਰ',
   'Start timer': 'ਟਾਈਮਰ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop timer': 'ਟਾਈਮਰ ਰੋਕੋ',

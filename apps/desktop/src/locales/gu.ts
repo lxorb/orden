@@ -2903,6 +2903,8 @@ export const gu: Dictionary = {
   'That could not be protected: {reason}': 'સુરક્ષિત કરી શકાયું નહીં: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ઉમેરાયું નહીં: ચેટ ચિત્રો અને 2 MB સુધીની ટેક્સ્ટ ફાઇલો લે છે.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ઉમેરાયું નહીં: એક સંદેશ વધુમાં વધુ 20 ચિત્રો લે છે.',
   'Time tracker': 'સમય ટ્રૅકર',
   'Start timer': 'ટાઇમર શરૂ કરો',
   'Stop timer': 'ટાઇમર બંધ કરો',

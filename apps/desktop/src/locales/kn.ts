@@ -2951,6 +2951,8 @@ export const kn: Dictionary = {
   'That could not be protected: {reason}': 'ರಕ್ಷಿಸಲಾಗಲಿಲ್ಲ: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಚಾಟ್ ಚಿತ್ರಗಳನ್ನು ಮತ್ತು 2 MB ವರೆಗಿನ ಪಠ್ಯ ಫೈಲ್‌ಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಒಂದು ಸಂದೇಶ ಗರಿಷ್ಠ 20 ಚಿತ್ರಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
   'Time tracker': 'ಸಮಯ ಟ್ರ್ಯಾಕರ್',
   'Start timer': 'ಟೈಮರ್ ಆರಂಭಿಸಿ',
   'Stop timer': 'ಟೈಮರ್ ನಿಲ್ಲಿಸಿ',

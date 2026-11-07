@@ -2969,6 +2969,8 @@ export const ta: Dictionary = {
   'That could not be protected: {reason}': 'பாதுகாக்க முடியவில்லை: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} சேர்க்கப்படவில்லை: அரட்டை படங்களையும் 2 MB வரையிலான உரைக் கோப்புகளையும் ஏற்கும்.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} சேர்க்கப்படவில்லை: ஒரு செய்தி அதிகபட்சம் 20 படங்களை ஏற்கும்.',
   'Time tracker': 'நேரக் கண்காணிப்பு',
   'Start timer': 'டைமரைத் தொடங்கு',
   'Stop timer': 'டைமரை நிறுத்து',

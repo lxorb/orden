@@ -3028,6 +3028,8 @@ export const ru: Dictionary = {
   'That could not be protected: {reason}': 'Не удалось защитить: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не добавлен: чат принимает изображения и текстовые файлы до 2 МБ.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} не добавлен: сообщение принимает не больше 20 изображений.',
   'Time tracker': 'Учёт времени',
   'Start timer': 'Запустить таймер',
   'Stop timer': 'Остановить таймер',

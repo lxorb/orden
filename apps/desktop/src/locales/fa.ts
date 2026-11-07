@@ -2921,6 +2921,8 @@ export const fa: Dictionary = {
   'That could not be protected: {reason}': 'محافظت نشد: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} افزوده نشد: گفتگو تصویر و پرونده‌های متنی تا 2 MB را می‌پذیرد.',
+  '{name} was not added: a message takes up to 20 pictures.':
+    '{name} افزوده نشد: هر پیام حداکثر 20 تصویر می‌پذیرد.',
   'Time tracker': 'ثبت زمان',
   'Start timer': 'شروع زمان‌سنج',
   'Stop timer': 'توقف زمان‌سنج',
