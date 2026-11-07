@@ -2244,4 +2244,10 @@
   .nib-page-break {
     border-color: Canvas;
   }
+
+  .cm-content span.nib-highlight,
+  .cm-content span.nib-highlight[class*='tone-'] {
+    background: Mark;
+    color: MarkText;
+  }
 }

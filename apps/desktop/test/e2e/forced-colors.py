@@ -13,7 +13,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 NOTE = """# Plan
 
-Before the code.
+Before the code, ==a plain mark== and ==🔴 a red one==.
 
 ```js
 const hello = 'world'
@@ -27,7 +27,7 @@ SYSTEM = """
   const probe = document.createElement('div')
   document.body.append(probe)
   const read = (name) => { probe.style.color = name; return getComputedStyle(probe).color }
-  const out = { canvas: read('Canvas'), text: read('CanvasText'), highlight: read('Highlight'), gray: read('GrayText') }
+  const out = { canvas: read('Canvas'), text: read('CanvasText'), highlight: read('Highlight'), gray: read('GrayText'), mark: read('Mark') }
   probe.remove()
   return out
 }
@@ -117,6 +117,15 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     colours = system(page)
     say(f"[{scheme}] system colours {json.dumps(colours)}")
     DRIVE.shot(page, f"{scheme}-note")
+
+    page.evaluate("() => window.nib.dispatch({ selection: { anchor: window.nib.state.doc.length } })")
+    page.wait_for_timeout(300)
+    marks = page.evaluate("() => [...document.querySelectorAll('.cm-content .nib-highlight')].map((one) => [one.textContent, getComputedStyle(one).backgroundColor])")
+    if len(marks) != 2:
+        wrong(f"[{scheme}] the note's two highlights are not both marked: {marks}")
+    for words, colour in marks:
+        if colour != colours["mark"]:
+            wrong(f"[{scheme}] the highlight {words!r} is painted {colour}, not the system's mark {colours['mark']}")
 
     for one in page.evaluate(SPACERS):
         for side, colour in one["sides"]:

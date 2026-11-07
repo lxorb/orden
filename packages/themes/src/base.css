@@ -2268,6 +2268,12 @@ figure.query {
     outline-offset: -2px;
   }
 
+  #write mark,
+  #write mark[class] {
+    background: Mark;
+    color: MarkText;
+  }
+
   .nib-badge.is-on {
     forced-color-adjust: none;
     background: Highlight;
