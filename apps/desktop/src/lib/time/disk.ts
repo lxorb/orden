@@ -1,3 +1,4 @@
+import { heldDatabase } from '../held-database'
 import type { Row } from './ledger'
 import { type Minute, minuteValue } from './minutes'
 
@@ -34,20 +35,6 @@ function finished(tx: IDBTransaction): Promise<void> {
   })
 }
 
-function opened(name: string): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(name, 2)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(ROWS)) db.createObjectStore(ROWS, { keyPath: 'key' })
-      if (!db.objectStoreNames.contains(META)) db.createObjectStore(META)
-      if (!db.objectStoreNames.contains(MINUTES)) db.createObjectStore(MINUTES, { keyPath: 'at' })
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error ?? new Error('the time store did not open'))
-  })
-}
-
 const rowOf = (value: unknown): Row | null => {
   if (typeof value !== 'object' || value === null) return null
   const { kind, id, value: held, dirty, at } = value as Record<string, unknown>
@@ -62,44 +49,52 @@ const rowOf = (value: unknown): Row | null => {
 }
 
 export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
-  const db = await opened(nameFor(owner))
-  db.onversionchange = () => db.close()
+  const held = heldDatabase(nameFor(owner), 2, (request) => {
+    const db = request.result
+    if (!db.objectStoreNames.contains(ROWS)) db.createObjectStore(ROWS, { keyPath: 'key' })
+    if (!db.objectStoreNames.contains(META)) db.createObjectStore(META)
+    if (!db.objectStoreNames.contains(MINUTES)) db.createObjectStore(MINUTES, { keyPath: 'at' })
+  })
+  await held.transaction(META)
   return {
     rows: async () => {
-      const all = await settled(db.transaction(ROWS).objectStore(ROWS).getAll())
+      const all = await settled((await held.transaction(ROWS)).objectStore(ROWS).getAll())
       return all.map(rowOf).filter((one): one is Row => one !== null)
     },
     put: async (rows) => {
       if (!rows.length) return
-      const tx = db.transaction(ROWS, 'readwrite')
+      const tx = await held.transaction(ROWS, 'readwrite')
       const store = tx.objectStore(ROWS)
       for (const row of rows) store.put({ ...row, key: `${row.kind}\u0000${row.id}` })
       await finished(tx)
     },
-    read: (key) => settled(db.transaction(META).objectStore(META).get(key)),
+    read: async (key) =>
+      settled<unknown>((await held.transaction(META)).objectStore(META).get(key)),
     keep: async (key, value) => {
-      const tx = db.transaction(META, 'readwrite')
+      const tx = await held.transaction(META, 'readwrite')
       tx.objectStore(META).put(value, key)
       await finished(tx)
     },
     clear: async () => {
-      const tx = db.transaction([ROWS, META], 'readwrite')
+      const tx = await held.transaction([ROWS, META], 'readwrite')
       tx.objectStore(ROWS).clear()
       tx.objectStore(META).clear()
       await finished(tx)
     },
     minutes: async (from, to) => {
       const range = IDBKeyRange.bound(from, to, false, true)
-      const all = await settled(db.transaction(MINUTES).objectStore(MINUTES).getAll(range))
+      const all = await settled(
+        (await held.transaction(MINUTES)).objectStore(MINUTES).getAll(range),
+      )
       return all.map(minuteValue).filter((one): one is Minute => one !== null)
     },
     keepMinutes: async (minutes, before) => {
-      const tx = db.transaction(MINUTES, 'readwrite')
+      const tx = await held.transaction(MINUTES, 'readwrite')
       const store = tx.objectStore(MINUTES)
       for (const minute of minutes) store.put(minute)
       store.delete(IDBKeyRange.upperBound(before, true))
       await finished(tx)
     },
-    close: () => db.close(),
+    close: () => held.close(),
   }
 }

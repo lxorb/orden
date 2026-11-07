@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { heldDatabase } from './held-database'
 import { readFaces, writeFace } from './overview/faces'
 import { padDisk } from './scratchpad/disk'
+import { openTimeDisk } from './time/disk'
 
 function deletedElsewhere(name: string): Promise<'gone' | 'stuck'> {
   return Promise.race([
@@ -38,6 +39,17 @@ describe('a store of the browser that another tab deletes', () => {
     expect(await deletedElsewhere('nib-pad')).toBe('gone')
     await disk.keep('b', 2)
     expect(await disk.read('b')).toBe(2)
+  })
+
+  test('is the time records’ own, which still keep and read', async () => {
+    const disk = await openTimeDisk('held-time')
+    await disk.keep('cursor', 1)
+    expect(await deletedElsewhere('nib-time:held-time')).toBe('gone')
+    await disk.keep('cursor', 2)
+    await disk.put([{ kind: 'span', id: 'a', value: { start: 1 }, dirty: 0, at: 1 }])
+    expect(await disk.read('cursor')).toBe(2)
+    expect((await disk.rows()).map((row) => row.id)).toEqual(['a'])
+    disk.close()
   })
 
   test('is the overview’s pictures, which another tab is not kept waiting on', async () => {
