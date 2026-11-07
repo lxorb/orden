@@ -1524,6 +1524,8 @@ export const mr: Dictionary = {
   Shorter: 'लहान',
   Longer: 'मोठे',
   'Fix grammar': 'व्याकरण सुधारा',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'निवडलेले शब्द आता टिपेत नाहीत, म्हणून काहीही बदलले नाही.',
   'A cited report': 'उद्धृत अहवाल',
   'A helper in the background': 'पार्श्वभूमीत मदतनीस',
   'A side question': 'उपप्रश्न',

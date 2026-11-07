@@ -1529,6 +1529,8 @@ export const tr: Dictionary = {
   Shorter: 'Daha kısa',
   Longer: 'Daha uzun',
   'Fix grammar': 'Dil bilgisini düzelt',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Seçilen sözcükler artık notta değil, bu yüzden hiçbir şey değiştirilmedi.',
   'A cited report': 'Alıntılı bir rapor',
   'A helper in the background': 'Arka planda bir yardımcı',
   'A side question': 'Yan bir soru',

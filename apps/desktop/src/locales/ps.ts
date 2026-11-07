@@ -1526,6 +1526,8 @@ export const ps: Dictionary = {
   Shorter: 'لنډ',
   Longer: 'اوږد',
   'Fix grammar': 'ګرامر سمول',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'غوره شوي ټکي نور په یادښت کې نشته، نو هېڅ ونه بدل شو.',
   'A cited report': 'یو حواله شوی راپور',
   'A helper in the background': 'په شالید کې یو مرسته کوونکی',
   'A side question': 'یو اړخیزه پوښتنه',

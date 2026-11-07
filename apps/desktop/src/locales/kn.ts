@@ -1539,6 +1539,8 @@ export const kn: Dictionary = {
   Shorter: 'ಚಿಕ್ಕದಾಗಿ',
   Longer: 'ದೊಡ್ಡದಾಗಿ',
   'Fix grammar': 'ವ್ಯಾಕರಣ ಸರಿಪಡಿಸಿ',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ಆಯ್ಕೆ ಮಾಡಿದ ಪದಗಳು ಇನ್ನು ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಏನನ್ನೂ ಬದಲಾಯಿಸಲಿಲ್ಲ.',
   'A cited report': 'ಉಲ್ಲೇಖಿತ ವರದಿ',
   'A helper in the background': 'ಹಿನ್ನೆಲೆಯ ಸಹಾಯಕ',
   'A side question': 'ಪಕ್ಕದ ಪ್ರಶ್ನೆ',

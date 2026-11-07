@@ -1507,6 +1507,8 @@ export const ja: Dictionary = {
   Shorter: '短く',
   Longer: '長く',
   'Fix grammar': '文法を直す',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '選んだ言葉がもうノートにないため、何も置き換えませんでした。',
   'A cited report': '出典付きレポート',
   'A helper in the background': '裏で動くヘルパー',
   'A side question': '補助質問',

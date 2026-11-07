@@ -1568,6 +1568,8 @@ export const ptPT: Dictionary = {
   Shorter: 'Mais curto',
   Longer: 'Mais longo',
   'Fix grammar': 'Corrigir a gramática',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'As palavras escolhidas já não estão na nota, por isso nada foi substituído.',
   'A cited report': 'Um relatório citado',
   'A helper in the background': 'Um assistente em segundo plano',
   'A side question': 'Uma pergunta lateral',

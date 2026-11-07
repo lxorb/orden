@@ -1547,6 +1547,8 @@ export const ha: Dictionary = {
   Shorter: 'Gajarta',
   Longer: 'Tsawaita',
   'Fix grammar': 'Gyara nahawu',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Kalmomin da aka zaɓa ba sa cikin bayanin kuma, don haka ba a maye gurbin komai ba.',
   'A cited report': 'Rahoto mai ambato',
   'A helper in the background': 'Mataimaki a bango',
   'A side question': 'Tambaya ta gefe',

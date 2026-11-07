@@ -1506,6 +1506,8 @@ export const jv: Dictionary = {
   Shorter: 'Luwih cendhek',
   Longer: 'Luwih dawa',
   'Fix grammar': 'Ndandani paramasastra',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Tembung sing dipilih wis ora ana ing cathetan, mula ora ana sing diganti.',
   'A cited report': 'Laporan kanthi sitiran',
   'A helper in the background': 'Pitulung ing latar mburi',
   'A side question': 'Pitakon sisih',

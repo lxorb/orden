@@ -1476,6 +1476,8 @@ export const yue: Dictionary = {
   Shorter: '更短',
   Longer: '更長',
   'Fix grammar': '修正語法',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '揀咗嘅字已經唔喺筆記度，所以冇換到嘢。',
   'A cited report': '有引文嘅報告',
   'A helper in the background': '背景助手',
   'A side question': '旁枝問題',

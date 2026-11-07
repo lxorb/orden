@@ -1532,6 +1532,8 @@ export const gsw: Dictionary = {
   Shorter: 'Chürzer',
   Longer: 'Länger',
   'Fix grammar': 'Grammatik korrigiere',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Di gwählte Wörter staand nüme i de Notiz, drum isch nüt ersetzt worde.',
   'A cited report': 'E zitierte Bericht',
   'A helper in the background': 'E Helfer im Hintergrund',
   'A side question': 'E Nebenfrage',

@@ -51,3 +51,16 @@ export function defaultLanguage(appLanguage: string): string {
 export function nameOfLanguage(id: string): string {
   return languageNames().find((one) => one.id === id)?.name ?? 'English'
 }
+
+export function stillThere(
+  text: string,
+  place: { from: number; to: number },
+  before: string,
+): { from: number; to: number } | null {
+  if (text.slice(place.from, place.to) === before) return place
+  let best: number | null = null
+  for (let at = text.indexOf(before); at !== -1; at = text.indexOf(before, at + 1)) {
+    if (best === null || Math.abs(at - place.from) < Math.abs(best - place.from)) best = at
+  }
+  return best === null ? null : { from: best, to: best + before.length }
+}

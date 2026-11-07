@@ -1545,6 +1545,8 @@ export const ml: Dictionary = {
   Shorter: 'ചെറുതായി',
   Longer: 'നീട്ടി',
   'Fix grammar': 'വ്യാകരണം ശരിയാക്കുക',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'തിരഞ്ഞെടുത്ത വാക്കുകൾ ഇനി കുറിപ്പിൽ ഇല്ല, അതിനാൽ ഒന്നും മാറ്റിയില്ല.',
   'A cited report': 'ഉദ്ധൃതമായ റിപ്പോർട്ട്',
   'A helper in the background': 'പശ്ചാത്തലത്തിലെ ഒരു സഹായകൻ',
   'A side question': 'ഒരു അനുബന്ധ ചോദ്യം',

@@ -1500,6 +1500,8 @@ export const ko: Dictionary = {
   Shorter: '더 짧게',
   Longer: '더 길게',
   'Fix grammar': '문법 고치기',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    '선택한 단어가 더 이상 노트에 없어 아무것도 바꾸지 않았습니다.',
   'A cited report': '인용된 보고서',
   'A helper in the background': '백그라운드의 도우미',
   'A side question': '곁가지 질문',

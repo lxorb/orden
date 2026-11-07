@@ -1523,6 +1523,8 @@ export const bn: Dictionary = {
   Shorter: 'ছোট',
   Longer: 'বড়',
   'Fix grammar': 'ব্যাকরণ ঠিক করুন',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'বেছে নেওয়া শব্দগুলো আর নোটে নেই, তাই কিছুই বদলানো হয়নি।',
   'A cited report': 'উদ্ধৃত প্রতিবেদন',
   'A helper in the background': 'পেছনে চলা সহকারী',
   'A side question': 'পার্শ্ব প্রশ্ন',

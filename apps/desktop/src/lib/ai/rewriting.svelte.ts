@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { i18n, message, t } from '../i18n.svelte'
 import { complete, wasStopped } from './complete'
-import { defaultLanguage, nameOfLanguage, rewriteMessages, type Verb } from './rewrite'
+import { defaultLanguage, nameOfLanguage, rewriteMessages, stillThere, type Verb } from './rewrite'
 import { rewriteSheet } from '../surfaces.svelte'
 import { ai } from './store.svelte'
 
@@ -74,10 +74,18 @@ class Rewriting {
     const place = this.place
     const text = this.after.trim()
     if (!view || !place || !text) return
+    const now =
+      view.dom.isConnected && !view.state.readOnly
+        ? stillThere(view.state.doc.toString(), place, this.before)
+        : null
+    if (!now) {
+      this.trouble = t('The words chosen are no longer in the note, so nothing was replaced.')
+      return
+    }
 
     view.dispatch({
-      changes: { from: place.from, to: place.to, insert: text },
-      selection: { anchor: place.from, head: place.from + text.length },
+      changes: { from: now.from, to: now.to, insert: text },
+      selection: { anchor: now.from, head: now.from + text.length },
     })
     view.focus()
     this.close()

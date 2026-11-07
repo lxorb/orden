@@ -1526,6 +1526,8 @@ export const fa: Dictionary = {
   Shorter: 'کوتاه‌تر',
   Longer: 'بلندتر',
   'Fix grammar': 'اصلاح دستور',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'واژه‌های برگزیده دیگر در یادداشت نیستند، پس چیزی جایگزین نشد.',
   'A cited report': 'گزارش با ارجاع',
   'A helper in the background': 'کمک‌یار در پس‌زمینه',
   'A side question': 'پرسش جانبی',

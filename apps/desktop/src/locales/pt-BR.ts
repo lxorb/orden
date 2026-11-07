@@ -1555,6 +1555,8 @@ export const ptBR: Dictionary = {
   Shorter: 'Mais curto',
   Longer: 'Mais longo',
   'Fix grammar': 'Corrigir a gramática',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'As palavras escolhidas não estão mais na nota, então nada foi substituído.',
   'A cited report': 'Um relatório com citações',
   'A helper in the background': 'Um ajudante em segundo plano',
   'A side question': 'Uma pergunta lateral',

@@ -1574,6 +1574,8 @@ export const it: Dictionary = {
   Shorter: 'Più corto',
   Longer: 'Più lungo',
   'Fix grammar': 'Correggi la grammatica',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'Le parole scelte non sono più nella nota, quindi non è stato sostituito nulla.',
   'A cited report': 'Un rapporto con le fonti',
   'A helper in the background': 'Un aiutante in background',
   'A side question': 'Una domanda a margine',

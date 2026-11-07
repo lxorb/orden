@@ -1525,6 +1525,8 @@ export const ur: Dictionary = {
   Shorter: 'مختصر',
   Longer: 'طویل',
   'Fix grammar': 'قواعد درست کریں',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'چنے گئے الفاظ اب نوٹ میں نہیں ہیں، اس لیے کچھ نہیں بدلا گیا۔',
   'A cited report': 'ماخذ کے ساتھ رپورٹ',
   'A helper in the background': 'پس منظر میں مددگار',
   'A side question': 'ضمنی سوال',

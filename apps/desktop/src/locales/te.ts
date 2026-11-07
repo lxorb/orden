@@ -1532,6 +1532,8 @@ export const te: Dictionary = {
   Shorter: 'చిన్నగా',
   Longer: 'పెద్దగా',
   'Fix grammar': 'వ్యాకరణం సరిచేయి',
+  'The words chosen are no longer in the note, so nothing was replaced.':
+    'ఎంచుకున్న పదాలు ఇక గమనికలో లేవు, కాబట్టి ఏదీ మార్చలేదు.',
   'A cited report': 'ఉల్లేఖిత నివేదిక',
   'A helper in the background': 'నేపథ్యంలో సహాయకుడు',
   'A side question': 'పక్క ప్రశ్న',
