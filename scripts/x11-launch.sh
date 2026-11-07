@@ -67,6 +67,7 @@ done
 if [ "$status" = 0 ]; then
   echo "the window mapped under X11:"
   xwininfo -root -tree 2>/dev/null | grep -iE 'orden|nib|read me' | head || true
+  [ -n "${config:-}" ] && { python3 "$here/crash_told.py" "$config" || true; }
   sleep 10
   strangers=$(xwininfo -root -children 2>/dev/null | python3 -c '
 import re, subprocess, sys
@@ -97,6 +98,9 @@ if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
 fi
 if [ "$status" = 0 ] && [ "${TREE:-0}" = 1 ]; then
   python3 "$here/page-drive.py" tree "$out" || status=1
+fi
+if [ "$status" = 0 ] && [ "${BACK:-0}" = 1 ]; then
+  python3 "$here/page-drive.py" back "$out" || status=1
 fi
 if [ "$status" = 0 ] && [ "${ZOOM:-0}" = 1 ]; then
   python3 "$here/page-drive.py" zoom "$out" || status=1
