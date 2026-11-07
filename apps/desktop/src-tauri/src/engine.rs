@@ -541,6 +541,34 @@ mod tests {
     }
 
     #[test]
+    fn the_windows_engine_gives_up_every_wait_for_webview2_in_time() {
+        let folder = crate::app_dir().join("windows/wry/src/webview2");
+        let mut unbounded = Vec::new();
+        for entry in std::fs::read_dir(&folder)
+            .expect("the engine's source")
+            .flatten()
+        {
+            let text = std::fs::read_to_string(entry.path()).unwrap_or_default();
+            for wait in ["wait_with_pump(", "::wait_for_async_operation("] {
+                let calls = text
+                    .match_indices(wait)
+                    .filter(|&(at, _)| {
+                        let line = text[..at].rsplit('\n').next().unwrap_or_default();
+                        !line.trim_start().starts_with("//")
+                    })
+                    .count();
+                if calls > 0 {
+                    unbounded.push(format!("{} {wait} x{calls}", entry.path().display()));
+                }
+            }
+        }
+        assert!(
+            unbounded.is_empty(),
+            "a wait for WebView2 that holds the window until it answers: {unbounded:?}"
+        );
+    }
+
+    #[test]
     fn nothing_pumps_inside_with_webview() {
         let root = crate::app_dir().join("src");
         let mut sources = vec![root];
