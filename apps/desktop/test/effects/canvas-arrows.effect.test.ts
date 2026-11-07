@@ -2,7 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { blankPages } from '@orden/markdown/pages'
 import CanvasBar from '../../src/lib/CanvasBar.svelte'
-import { blankCanvas, type CanvasNode } from '../../src/lib/canvas/format'
+import { blankCanvas, type CanvasNode, readCanvas, writeCanvas } from '../../src/lib/canvas/format'
 import { CanvasStore } from '../../src/lib/canvas/store.svelte'
 import { PagesStore } from '../../src/lib/pages/store.svelte'
 import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
@@ -127,7 +127,8 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     expect(lit('Undo')).toBe(true)
     expect(lit('Redo')).toBe(true)
 
-    note.replace(blank())
+    const outside = readCanvas(blank())
+    note.replace(writeCanvas({ ...outside, nodes: [...outside.nodes, card('z')] }))
     store.follow()
     flushSync()
     expect(lit('Undo')).toBe(false)

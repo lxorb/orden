@@ -173,7 +173,7 @@ export class CanvasStore implements PlaneSurface {
 
     this.canvas = stamped(this.canvas, before, Date.now())
     this.keepPicked()
-    this.commit()
+    this.soon()
   }
 
   redo() {
@@ -188,7 +188,7 @@ export class CanvasStore implements PlaneSurface {
 
     this.canvas = stamped(this.canvas, after, Date.now())
     this.keepPicked()
-    this.commit()
+    this.soon()
   }
 
   arrived(canvas: Canvas) {
