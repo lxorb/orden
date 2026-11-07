@@ -282,13 +282,12 @@ async function renameNote(from: string, to: string, hold = false, alone = false,
     throw new Error(NOT_HERE)
   }
 
-  const pictures = await moveAssets(source, target)
-
   if (await occupied(target, raw)) throw new Error('something already lives there')
 
-  const rows = (await files.all()).filter(
-    (row) => row.path === source || row.path.startsWith(`${source}/`),
-  )
+  const pictures = await moveAssets(source, target)
+
+  const under = (one: string) => one === source || one.startsWith(`${source}/`)
+  const rows = await rowsOf((await files.paths()).filter(under), files.get)
 
   if (!rows.length && pictures) {
     if (isPdf(source) && !alone) await moveHighlights(source, target)
@@ -450,9 +449,8 @@ async function removeEmptyFolder(path: string) {
 }
 
 async function moveAssets(source: string, target: string): Promise<number> {
-  const rows = (await assets.all()).filter(
-    (row) => row.path === source || row.path.startsWith(`${source}/`),
-  )
+  const under = (one: string) => one === source || one.startsWith(`${source}/`)
+  const rows = await rowsOf((await assets.paths()).filter(under), assets.get)
 
   for (const row of rows) {
     await assets.put({ ...row, path: target + row.path.slice(source.length), modified: now() })

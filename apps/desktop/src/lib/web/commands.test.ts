@@ -271,6 +271,45 @@ describe('renaming', () => {
     expect(paths()).toEqual(['/Notes/Work/b.md', '/Notes/a.md'])
   })
 
+  test('reads only what it moves, never every note and picture held', async () => {
+    await write('/Notes/a.md', 'a')
+    await write('/Other/big.md', 'x'.repeat(1000))
+    disk.assets.set('/Other/huge.png', {
+      path: '/Other/huge.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+    const { files, assets } = await import('./store')
+    const wholeFiles = vi.spyOn(files, 'all')
+    const wholeAssets = vi.spyOn(assets, 'all')
+
+    await webInvoke('rename_note', { from: '/Notes/a.md', to: '/Notes/b.md' })
+
+    expect(paths()).toContain('/Notes/b.md')
+    expect(wholeFiles).not.toHaveBeenCalled()
+    expect(wholeAssets).not.toHaveBeenCalled()
+    wholeFiles.mockRestore()
+    wholeAssets.mockRestore()
+  })
+
+  test('refused, moves none of the pictures along', async () => {
+    await write('/Notes/Trip/a.md', 'a')
+    disk.assets.set('/Notes/Trip/map.png', {
+      path: '/Notes/Trip/map.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+    await write('/Notes/Done/b.md', 'b')
+
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/Trip', to: '/Notes/Done' }),
+    ).rejects.toThrow()
+
+    expect([...disk.assets.keys()]).toContain('/Notes/Trip/map.png')
+  })
+
   test('refuses to rename something that is not there', async () => {
     await expect(
       webInvoke('rename_note', { from: '/Notes/gone.md', to: '/Notes/here.md' }),
