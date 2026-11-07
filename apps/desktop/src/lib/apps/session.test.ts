@@ -1,10 +1,11 @@
 import { UNKNOWN_APP, type View } from '@orden/online/apps'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { Tab } from '../workspace/documents.svelte'
 import type { AppHeard } from './link'
 import {
   ANSWER_WITHIN,
   AppSession,
+  find,
   type Found,
   type Linked,
   type Look,
@@ -12,6 +13,25 @@ import {
   OPEN_DEADLINE,
   type SessionWorld,
 } from './session.svelte'
+
+const server = vi.hoisted(() => ({ version: 1, asked: 0 }))
+
+vi.mock('../api', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../api')>()
+  const me = () => {
+    server.asked += 1
+    return Promise.resolve({
+      user: { id: 'u1', email: 'me@example.com', name: null, syncVersion: server.version },
+    })
+  }
+  return {
+    ...original,
+    api: new Proxy(original.api, {
+      get: (target, name, receiver) =>
+        name === 'me' ? me : (Reflect.get(target, name, receiver) as unknown),
+    }),
+  }
+})
 
 const FILE = JSON.stringify({
   v: 1,
@@ -154,13 +174,15 @@ describe('an application tab connecting', () => {
     expect(links).toHaveLength(1)
   })
 
-  test('an account still on the old sync says so, and is not asked again by itself', async () => {
+  test('an account still on the old sync says so, looks again by itself, and opens once it has moved', async () => {
     const { session, links, state, pass } = world({ found: { none: 'old-sync' } })
     await session.start(VIEW)
     expect(session.status).toEqual({ is: 'old-sync' })
-    await pass(120_000)
-    expect(state.finds).toBe(1)
     expect(links).toEqual([])
+    state.found = { id: 'app-1', own: true }
+    await pass(3_000)
+    expect(state.finds).toBe(2)
+    expect(links).toHaveLength(1)
   })
 
   test('a file in a space shared with the reader says it runs only from their own', async () => {
@@ -228,5 +250,47 @@ describe('an application tab connecting', () => {
     expect(session.status).toMatchObject({ is: 'here', unanswered: true })
     link?.heard({ t: 'state', state: 'running' })
     expect(session.status).toMatchObject({ is: 'here', state: 'running', unanswered: false })
+  })
+})
+
+describe('finding an application on an account that started on the old sync', () => {
+  async function onOldSync(now: number) {
+    const { account } = await import('../account.svelte')
+    server.version = now
+    server.asked = 0
+    vi.doMock('../sync2/runner.svelte', () => ({
+      runner: { idAt: () => Promise.resolve({ id: 'app-1', own: true }) },
+    }))
+    account.token = 'tok'
+    account.user = { id: 'u1', email: 'me@example.com', name: null, syncVersion: 1 }
+    return {
+      account,
+      done: () => {
+        vi.doUnmock('../sync2/runner.svelte')
+        account.token = null
+        account.user = null
+      },
+    }
+  }
+
+  test('asks the account again, and finds the file once the account has moved', async () => {
+    const { account, done } = await onOldSync(2)
+    try {
+      expect(await find('/Apps/GIMP.app', Date.now())).toEqual({ id: 'app-1', own: true })
+      expect(server.asked).toBe(1)
+      expect(account.user?.syncVersion).toBe(2)
+    } finally {
+      done()
+    }
+  })
+
+  test('still says old sync while the account has not moved', async () => {
+    const { done } = await onOldSync(1)
+    try {
+      expect(await find('/Apps/GIMP.app', Date.now())).toEqual({ none: 'old-sync' })
+      expect(server.asked).toBe(1)
+    } finally {
+      done()
+    }
   })
 })

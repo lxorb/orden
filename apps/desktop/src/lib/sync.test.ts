@@ -1746,6 +1746,59 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
   })
 })
 
+describe('an account moved to v2 while this device runs v1', () => {
+  test('leaves no v1 pass behind once v2 takes over', async () => {
+    const runner = {
+      status: 'idle',
+      lastError: null,
+      lastSyncedAt: null,
+      start: vi.fn(() => Promise.resolve()),
+      stop: vi.fn(() => Promise.resolve()),
+      passNow: vi.fn(() => Promise.resolve(false)),
+    }
+    standInForTheWindow()
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    const passes = vi.spyOn(sync, 'pass')
+    const { setTimeout: sleep } = await import('node:timers/promises')
+    const until = async (done: () => boolean) => {
+      for (let at = 0; at < 400 && !done(); at++) {
+        await vi.advanceTimersByTimeAsync(100)
+        await sleep(5)
+      }
+    }
+
+    vi.useFakeTimers()
+    try {
+      sync.start()
+      await until(() => passes.mock.calls.length > 1)
+      expect(passes.mock.calls.length).toBeGreaterThan(1)
+      await until(() => !sync.passing)
+      const before = passes.mock.calls.length
+      vi.doMock('./sync2/runner.svelte', () => ({ runner }))
+
+      account.user = { ...account.user!, syncVersion: 2 }
+      sync.start()
+      const { startup } = await import('./startup.svelte')
+      void startup.shown()
+      await until(() => runner.start.mock.calls.length > 0)
+      expect(runner.start).toHaveBeenCalledTimes(1)
+      expect(sync.version).toBe(2)
+
+      await vi.advanceTimersByTimeAsync(300_000)
+      expect(passes).toHaveBeenCalledTimes(before)
+      expect(runner.passNow).not.toHaveBeenCalled()
+    } finally {
+      sync.stop()
+      vi.useRealTimers()
+      vi.doUnmock('./sync2/runner.svelte')
+      vi.unstubAllGlobals()
+    }
+  })
+})
+
 describe('what the account holds of a file', () => {
   async function mirrored(
     files: Record<string, string>,

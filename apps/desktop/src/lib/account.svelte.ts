@@ -101,6 +101,14 @@ class Session {
     return true
   }
 
+  async reread(): Promise<void> {
+    const token = this.token
+    if (!token || !this.user) return
+    const who = await api.me(token).catch(() => null)
+    if (this.token !== token || !who?.user) return
+    this.user = who.user
+  }
+
   async requestCode() {
     const address = this.email.trim()
     if (!address || this.busy) return
