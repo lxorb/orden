@@ -101,6 +101,8 @@ export function drawn(
   }
 }
 
+export type Corners = readonly [number, number, number, number]
+
 export function paneDrawn(
   pose: Pose,
   camera: { x: number; y: number; zoom: number },
@@ -108,7 +110,7 @@ export function paneDrawn(
   head: number,
   corner: number,
   open: number,
-  floor = Number.NEGATIVE_INFINITY,
+  home: Corners = [corner, corner, corner, corner],
 ) {
   const x = camera.x + pose.x * camera.zoom
   const y = camera.y + pose.y * camera.zoom
@@ -116,11 +118,13 @@ export function paneDrawn(
   const h = Math.max(pose.h * camera.zoom, 1)
   const scale = w / Math.max(box.width, 1)
   const shown = Math.max(box.height - head, 1)
-  const cut = Math.max(head * clamp(open), head + (floor - y) / scale, 0)
+  const out = clamp(open)
+  const cut = head * out
   const below = Math.max(0, shown - h / scale)
+  const round = home.map((one) => `${one + (corner / scale - one) * out}px`).join(' ')
   return {
     transform: `translate(${x - box.x}px, ${y - box.y - scale * head}px) scale(${scale})`,
-    clipPath: `inset(${cut}px 0 ${below}px 0 round ${corner / scale}px)`,
+    clipPath: `inset(${cut}px 0 ${below}px 0 round ${round})`,
     opacity: String(clamp(pose.alpha)),
   }
 }

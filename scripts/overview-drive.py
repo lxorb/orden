@@ -426,6 +426,7 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
     how = toggled(app, desk, True, pressed)
     time.sleep(1.6)
     bar = float(app.eval("document.querySelector('header[data-chrome=\"top\"]')?.getBoundingClientRect().bottom ?? 0") or 0)
+    ground = str(app.eval(SEE_THROUGH))
     floor = (box[0] + round(28 * scale), round(box[1] + (bar + 160) * scale))
     desk.drag(floor, (floor[0], floor[1] - round(320 * scale)), pressed)
     time.sleep(0.5)
@@ -434,7 +435,6 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
         desk.wheel(*middle, notches)
         time.sleep(0.35)
     time.sleep(1.2)
-    log_bar = round(bar * scale)
     how += " " + toggled(app, desk, False, pressed)
     time.sleep(1.8)
     frames = film.stop()
@@ -442,26 +442,23 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
     if not isinstance(log, dict) or "frames" not in log:
         log = {"frames": [], "puts": [], "said": log}
     print(f"[{name}] opened and closed by {how}", flush=True)
-    return judged(name, frames, log, pressed, hole, out, scale) + barred(name, frames, pressed, log_bar)
+    return judged(name, frames, log, pressed, hole, out, scale) + barred(name, ground)
 
 
-def barred(name: str, frames: list[tuple[float, Image.Image]], pressed: list[tuple[float, str]], bar: int) -> list[str]:
-    start = next((at for at, what in pressed if what == "pan"), None)
-    end = next((at for at, what in pressed if what == "close"), None)
-    if start is None or end is None or bar < 8:
-        return [f"[{name}] the bar was not measured: {bar}"]
-    band = lambda image: numpy.asarray(image.crop((0, 0, image.width, bar - 2)).convert("L").resize((image.width // 8, max(1, (bar - 2) // 4))), dtype=numpy.float32)  # noqa: E731
-    during = [(at, band(one)) for at, one in frames if start - 60 <= at <= end]
-    if len(during) < 2:
-        return [f"[{name}] no frames of the bar while the canvas moved"]
-    first = during[0][1]
-    worst = 0.0
-    for _, one in during[1:]:
-        columns = numpy.abs(one - first).mean(axis=0)
-        wide = columns[: len(columns) // 5 * 5].reshape(-1, 5).mean(axis=1) if len(columns) >= 5 else columns
-        worst = max(worst, float(wide.max()))
-    print(f"[{name}] the bar changed by at most {worst:.1f} while the canvas was panned and zoomed under it", flush=True)
-    return [f"[{name}] a window was drawn over the bar: {worst:.1f}"] if worst > 12 else []
+SEE_THROUGH = """(() => {
+  const bar = document.querySelector('header[data-chrome="top"]')
+  if (!bar) return 'no bar'
+  const ground = getComputedStyle(bar).backgroundColor
+  const parts = (/\\(([^)]*)\\)/.exec(ground)?.[1] ?? '').split(/[ ,\\/]+/).filter(Boolean)
+  const alpha = ground === 'transparent' ? 0 : ground.includes('/') || ground.startsWith('rgba') ? Number(parts[parts.length - 1]) : 1
+  const blurred = [...document.querySelectorAll('.canvas *')].some((one) => (getComputedStyle(one).backdropFilter || 'none') !== 'none')
+  return alpha <= 0.01 && !blurred ? 'clear' : ground + (blurred ? ' blurred' : '')
+})()"""
+
+
+def barred(name: str, ground: str) -> list[str]:
+    print(f"[{name}] the bar over the overview: {ground}", flush=True)
+    return [] if ground == "clear" else [f"[{name}] the bar over the overview is not see-through: {ground}"]
 
 def main() -> int:
     parser = argparse.ArgumentParser()

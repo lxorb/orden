@@ -51,6 +51,11 @@ test('a pinch brings it nearer about the pointer, which stays put', () => {
   expect(under.y).toBeCloseTo(200)
 })
 
+test('zooms out about a third further than a fifth', () => {
+  expect(FARTHEST).toBeLessThanOrEqual(0.2 / 1.3 + 0.001)
+  expect(FARTHEST).toBeGreaterThan(0.1)
+})
+
 test('never nearer or further than it can be read', () => {
   expect(zoomedAt(still, { x: 0, y: 0 }, 100).zoom).toBe(NEAREST)
   expect(zoomedAt(still, { x: 0, y: 0 }, 0.001).zoom).toBe(FARTHEST)

@@ -50,7 +50,62 @@ export function settled<T extends Box & { id: string }>(
     }
     if (!moved) break
   }
-  return out
+  return apart(out, still, under, keepTogether)
+}
+
+function spotFor(one: Box, placed: readonly Box[], under: number): { x: number; y: number } {
+  const free = (x: number, y: number) =>
+    placed.every((other) => clearOf({ ...one, x, y }, other, under) === null)
+  if (free(one.x, one.y)) return { x: one.x, y: one.y }
+  let best = { x: one.x, y: one.y }
+  let far = Number.POSITIVE_INFINITY
+  for (const other of placed) {
+    const right = other.x + other.w + APART_X
+    const left = other.x - APART_X - one.w
+    const below = other.y + other.h + under
+    const above = other.y - under - one.h
+    for (const [x, y] of [
+      [right, one.y],
+      [left, one.y],
+      [one.x, below],
+      [one.x, above],
+      [right, other.y],
+      [left, other.y],
+      [other.x, below],
+      [other.x, above],
+    ] as const) {
+      const off = Math.hypot(x - one.x, y - one.y)
+      if (off < far && free(x, y)) {
+        far = off
+        best = { x, y }
+      }
+    }
+  }
+  return best
+}
+
+function apart<T extends Box & { id: string }>(
+  windows: T[],
+  still: ReadonlySet<string>,
+  under: number,
+  keepTogether: boolean,
+): T[] {
+  const fixed = (one: T) => keepTogether && still.has(one.id)
+  const touching = windows.some((a, i) =>
+    windows.some((b, j) => j > i && !(fixed(a) && fixed(b)) && clearOf(a, b, under) !== null),
+  )
+  if (!touching) return windows
+  const order = [
+    ...windows.filter(fixed),
+    ...windows.filter((one) => !fixed(one) && still.has(one.id)),
+    ...windows.filter((one) => !still.has(one.id)),
+  ]
+  const placed: Box[] = []
+  for (const one of order) {
+    if (!fixed(one)) Object.assign(one, spotFor(one, placed, under))
+    placed.push(one)
+  }
+  return windows
 }
 
 export function roomFor<T extends Box & { id: string }>(
@@ -103,4 +158,8 @@ export function stripLanding(
 
 export function overlaps(a: Box, b: Box, named = 0): boolean {
   return clearOf(a, b, Math.max(APART_Y, named)) !== null
+}
+
+export function keptAt<T extends Box>(slot: T, box: Box): T {
+  return { ...slot, x: box.x, y: box.y, w: box.w, h: (box.w * slot.h) / Math.max(slot.w, 1) }
 }

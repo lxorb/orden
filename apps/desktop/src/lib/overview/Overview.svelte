@@ -43,9 +43,9 @@
   import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
   import { faces } from './faces.svelte'
-  import { drawn, Flight, paneDrawn, type Pose } from './flight'
+  import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { readsBefore, roomFor, settled, stripLanding } from './free'
+  import { keptAt, readsBefore, roomFor, settled, stripLanding } from './free'
   import { meets, packed, pushedAside } from './pack'
   import {
     around,
@@ -77,11 +77,14 @@
     return bar && bar.height > 0 ? Math.max(0, bar.bottom) : 0
   }
 
-  const roomTop = $derived(barBottom + ROW)
+  const roomTop = $derived((barBottom > 0 ? barBottom : ROW) + MARGIN / 2)
 
   let panes = $state<Record<string, { w: number; h: number }>>({})
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
-  const panesAsWindows = new Map<string, { node: HTMLElement; box: DOMRect; head: number }>()
+  const panesAsWindows = new Map<
+    string,
+    { node: HTMLElement; box: DOMRect; head: number; corners: Corners }
+  >()
   let asPanes = $state<Record<string, true>>({})
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
   let ridersDrawn = $state<Record<string, HTMLElement>>({})
@@ -351,7 +354,7 @@
     const all = gridCells.flatMap((one) => one.slots)
     const lying = all.map((slot) => {
       const box = put[slot.id]
-      return box ? { ...slot, x: box.x, y: box.y, w: box.w, h: box.h } : slot
+      return box ? keptAt(slot, box) : slot
     })
     return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), 0, false)
   })
@@ -503,12 +506,12 @@
   }
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
-  const riders = new Map<string, { dx: number; dy: number; width: number; tall: number }>()
+  const riders = new Map<string, { dx: number; dy: number; width: number }>()
 
   function rides(id: string, box: DOMRect) {
     const chip = marked('box', id)?.getBoundingClientRect()
     if (!chip || chip.width <= 0) return void riders.delete(id)
-    riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width, tall: chip.height })
+    riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width })
   }
 
   function onCanvas(box: DOMRect, tab: number): Pose {
@@ -590,6 +593,8 @@
     awayFromStrip()
     if (moving) fly()
     else {
+      landSpring(opening)
+      opened(opening.at)
       landed()
       if (!out) gone()
     }
@@ -619,32 +624,12 @@
     return id === workspace.activeTabId ? 'var(--z-float)' : 'var(--z-popover)'
   }
 
-  function underBar(bottom: number): boolean {
-    return bottom <= barBottom + 0.5
-  }
-
-  function tabUnderBar(id: string): boolean {
-    const pose = flights.get(id)?.pose
-    if (!pose) return false
-    const at = riders.get(id)
-    if (at && movesAsWindow(id)) {
-      const scale = (pose.w * camera.zoom) / Math.max(at.width, 1)
-      return underBar(camera.y + pose.y * camera.zoom + (at.dy + at.tall) * scale)
-    }
-    return underBar(camera.y + (pose.y + pose.h) * camera.zoom)
-  }
-
-  function cutAtBar(top: number, scale: number): string {
-    const cut = (barBottom - top) / Math.max(scale, 1e-6)
-    return cut > 0 ? `inset(${cut}px -400px -400px -400px)` : 'none'
-  }
-
   const opening = spring(0, SHARE)
   let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
   let top = $state<HTMLElement>()
-  let band = $state<HTMLElement>()
   let under = $state<HTMLElement>()
+  let bar: HTMLElement | null = null
 
   let opens: HTMLElement[] = []
   let slides: HTMLElement[] = []
@@ -658,12 +643,14 @@
     slides = [
       ...document.querySelectorAll<HTMLElement>("[data-chrome='start'], [data-chrome='end']"),
     ]
+    bar = document.querySelector<HTMLElement>("header[data-chrome='top']")
   }
 
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
-    for (const one of [...opens, under, band, top]) one?.style.setProperty('--overview-open', value)
+    for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
     for (const one of slides) one.style.setProperty('--overview-slide', value)
+    bar?.style.setProperty('--overview-bar', value)
     if (ground) {
       ground.style.opacity = value
       ground.style.visibility = at < 0.01 ? 'hidden' : ''
@@ -696,7 +683,7 @@
     for (const id of flights.keys()) {
       const home = homes.get(id)
       const off = out ? null : fromHome(id)
-      const gone = (off === null || off >= NEAR) && !tabUnderBar(id)
+      const gone = off === null || off >= NEAR
       if (home && home.alpha > 0.5 && home.tab < 0.5) {
         const pane = byId.get(id)?.paneId
         if (gone && pane && !movesAsWindow(id)) lifted.push(pane)
@@ -725,9 +712,7 @@
     const home = started ? (out ? null : fromHome(id)) : 0
     if (home !== null && home < NEAR)
       styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
-    Object.assign(parts.window.style, styles.window, {
-      clipPath: cutAtBar(camera.y + pose.y * camera.zoom, (pose.h / slot.h) * camera.zoom),
-    })
+    Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
     parts.window.style.setProperty('--overview-lift', String(opening.at))
@@ -772,7 +757,6 @@
     if (near !== null && near < NEAR) alpha *= near / NEAR
     node.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
     node.style.opacity = String(alpha)
-    node.style.clipPath = cutAtBar(y, scale)
   }
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -799,7 +783,7 @@
     const one = panesAsWindows.get(id)
     if (!one) return
     if (!movesAsWindow(id)) return putBack(one.node)
-    const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at, barBottom)
+    const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at, one.corners)
     Object.assign(one.node.style, styles, {
       transformOrigin: '0 0',
       zIndex: stackOf(id),
@@ -866,6 +850,17 @@
     )
   }
 
+  function cornersOf(node: HTMLElement): Corners {
+    const style = getComputedStyle(node)
+    const of = (one: string) => parseFloat(one) || 0
+    return [
+      of(style.borderTopLeftRadius),
+      of(style.borderTopRightRadius),
+      of(style.borderBottomRightRadius),
+      of(style.borderBottomLeftRadius),
+    ]
+  }
+
   function enter() {
     const again = shown
     if (!again) {
@@ -899,7 +894,7 @@
         const box = node?.getBoundingClientRect()
         if (!node || !box || box.width <= 0 || box.height <= 0) continue
         const head = node.querySelector(':scope > .head')?.getBoundingClientRect().height ?? 0
-        panesAsWindows.set(tab.id, { node, box, head })
+        panesAsWindows.set(tab.id, { node, box, head, corners: cornersOf(node) })
         asWindows[tab.id] = true
         faces.take(pane.id, tab)
       }
@@ -972,6 +967,8 @@
     void pages.letGo()
     for (const one of opens) one.style.removeProperty('--overview-open')
     for (const one of slides) one.style.removeProperty('--overview-slide')
+    bar?.style.removeProperty('--overview-bar')
+    bar = null
     opens = []
     slides = []
   }
@@ -1580,17 +1577,11 @@
 
 {#if shown}
   {#if modes.overviewBlur}
-    <div
-      class="orden-scrim ground is-blurred"
-      style:top="{barBottom}px"
-      aria-hidden="true"
-      bind:this={ground}
-    ></div>
+    <div class="orden-scrim ground is-blurred" aria-hidden="true" bind:this={ground}></div>
   {/if}
 
   <div
     class="under"
-    style:--overview-top="{barBottom}px"
     aria-hidden="true"
     bind:this={under}
     onselectstart={(event) => event.preventDefault()}
@@ -1643,15 +1634,7 @@
   >
     <div class="floor" style:top="{barBottom}px" aria-hidden="true"></div>
 
-    <div
-      class="band"
-      style:--overview-top="{barBottom}px"
-      style:--overview-row="{ROW}px"
-      aria-hidden="true"
-      bind:this={band}
-    ></div>
-
-    <div class="top" style:--overview-top="{barBottom}px" bind:this={top}>
+    <div class="top" style:--overview-top="{barBottom > 0 ? barBottom : ROW}px" bind:this={top}>
       {#if spaces.length > 1}
         <Select
           value={all ? 'all' : 'this'}
@@ -1755,6 +1738,12 @@
     initial-value: 0;
   }
 
+  @property --overview-bar {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+  }
+
   @property --overview-lift {
     syntax: '<number>';
     inherits: false;
@@ -1810,27 +1799,13 @@
   .top {
     position: fixed;
     z-index: var(--z-bar);
-    top: calc(var(--overview-top, 0px) + var(--space-3));
+    top: calc(var(--overview-top, 0px) / 2);
     left: 50%;
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    translate: -50% calc((1 - var(--overview-open, 0)) * -8px);
+    translate: -50% calc(-50% + (1 - var(--overview-open, 0)) * -8px);
     opacity: var(--overview-open, 0);
-  }
-
-  .band {
-    position: fixed;
-    z-index: var(--z-bar);
-    top: var(--overview-top, 0px);
-    inset-inline: 0;
-    height: var(--overview-row);
-    opacity: var(--overview-open, 0);
-    background: color-mix(in srgb, var(--bg) 70%, transparent);
-    -webkit-backdrop-filter: blur(28px);
-    backdrop-filter: blur(28px);
-    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent);
-    mask-image: linear-gradient(to bottom, black 80%, transparent);
   }
 
   .tidy {
@@ -1844,7 +1819,6 @@
     inset: 0;
     z-index: var(--z-raised);
     overflow: hidden;
-    clip-path: inset(var(--overview-top, 0) 0 0 0);
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;

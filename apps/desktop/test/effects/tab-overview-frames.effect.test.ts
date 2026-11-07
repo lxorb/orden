@@ -115,7 +115,7 @@ test('the first frame that moves moves by one frame, however long the frame befo
   expect(open).toBeLessThan(0.3)
 })
 
-const OWN = new Set(['--overview-slide', '--overview-lift'])
+const OWN = new Set(['--overview-slide', '--overview-lift', '--overview-bar'])
 
 test('no frame sets a value that the panes, the sidebars or the windows’ pictures inherit', async () => {
   tabOverview.open = true
@@ -277,7 +277,7 @@ function rung(value: string): number {
   return value.includes('- 1') ? at - 1 : at
 }
 
-test('the bar is over every window on every frame, and a window under it is cut at its edge', async () => {
+test('the one bar is over every window on every frame, and a window under it shows through it whole', async () => {
   const bar = app[0]!
   bar.getBoundingClientRect = () => new DOMRect(0, 0, 900, 40)
   Element.prototype.setPointerCapture = () => undefined
@@ -328,15 +328,16 @@ test('the bar is over every window on every frame, and a window under it is cut 
   })
   expect(under.length).toBeGreaterThan(0)
   for (const one of under) {
-    const [y, sy] = (
-      /translate\([-\d.]+px, ([-\d.]+)px\) scale\([-\d.]+, ([-\d.]+)\)/.exec(one.style.transform) ??
-      []
-    )
-      .slice(1)
-      .map(Number)
-    const cut = Number(/inset\(([-\d.]+)px/.exec(one.style.clipPath)?.[1] ?? 0)
-    expect(cut * (sy ?? 1)).toBeCloseTo(40 - (y ?? 0), 3)
+    expect(one.style.clipPath).toBe('')
     expect((one.nextElementSibling as HTMLElement | null)?.style.visibility).toBe('hidden')
   }
   expect(pane?.style.clipPath).toMatch(/^inset\(/)
+  expect(document.querySelector('.band')).toBe(null)
+  expect(bar.style.getPropertyValue('--overview-bar')).toBe('1')
+  const top = document.querySelector<HTMLElement>('.top')
+  expect(top?.style.getPropertyValue('--overview-top')).toBe('40px')
+  tabOverview.open = false
+  flushSync()
+  for (let i = 0; i < 400 && waiting.size; i++) frame()
+  expect(bar.style.getPropertyValue('--overview-bar')).toBe('')
 })

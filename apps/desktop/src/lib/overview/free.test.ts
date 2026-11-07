@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { overlaps, roomFor, settled, stripLanding } from './free'
+import { keptAt, overlaps, roomFor, settled, stripLanding } from './free'
 import { cellAt } from './cells'
 import { around } from './layout'
 import type { Slot } from './layout'
@@ -113,4 +113,41 @@ test('windows each kept where they were put are moved apart where they lie on ea
   expect(clear(after)).toBe(true)
   expect(after[0]).toEqual(windows[0])
   expect(after[2]).toEqual(windows[2])
+})
+
+test('new windows opened among windows kept where they were let go never lie on any of them', () => {
+  const kept: Slot[] = []
+  for (let row = 0; row < 3; row++)
+    for (let column = 0; column < 4; column++)
+      kept.push(at(`k${row}${column}`, column * 228, row * 180))
+  const still = new Set(kept.map((one) => one.id))
+  const fresh = [at('n0', 120, 90), at('n1', 330, 100), at('n2', 560, 250), at('n3', 100, 20)]
+  const after = settled([...kept, ...fresh], still, 0, false)
+  expect(clear(after)).toBe(true)
+  for (const one of kept) expect(after.find((other) => other.id === one.id)).toEqual(one)
+})
+
+test('whatever is kept and whatever is new, nothing lies on anything after', () => {
+  let seed = 7
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+  for (let run = 0; run < 60; run++) {
+    const windows = Array.from({ length: 4 + Math.floor(random() * 20) }, (_, i) => ({
+      ...at(`w${i}`, random() * 900, random() * 600),
+      w: 80 + random() * 200,
+      h: 60 + random() * 160,
+    }))
+    const still = new Set(windows.filter(() => random() < 0.6).map((one) => one.id))
+    expect(clear(settled(windows, still, 0, false))).toBe(true)
+  }
+})
+
+test('a window kept where it was let go takes the shape its pane has now', () => {
+  const slot = { ...at('a', 0, 0), w: 300, h: 150 }
+  expect(keptAt(slot, { x: 40, y: 50, w: 200, h: 200 })).toEqual({
+    ...slot,
+    x: 40,
+    y: 50,
+    w: 200,
+    h: 100,
+  })
 })

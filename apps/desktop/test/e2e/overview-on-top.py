@@ -58,7 +58,7 @@ CLEAR_TOP = """
   const through = []
   for (const x of [left / 2, left - 12, ...buttons.map((b) => b.left + b.width / 2), right + 12, (right + innerWidth) / 2]) {
     const hit = document.elementFromPoint(x, y)
-    if (!hit || !hit.closest('.canvas .band, .canvas .top')) through.push(Math.round(x) + ': ' + (hit ? hit.tagName.toLowerCase() + '.' + String(hit.className).split(' ')[0] : 'nothing'))
+    if (!hit || !hit.closest('header[data-chrome="top"], .canvas .top')) through.push(Math.round(x) + ': ' + (hit ? hit.tagName.toLowerCase() + '.' + String(hit.className).split(' ')[0] : 'nothing'))
   }
   return { crossing, through }
 }

@@ -305,8 +305,10 @@
     padding-inline-start: var(--space-1);
     user-select: none;
     -webkit-user-select: none;
-    background: var(--tab-frame);
-    box-shadow: inset 0 -1px var(--chrome-seam);
+    --overview-solid: calc(100% - 100% * var(--overview-bar, 0));
+    background: color-mix(in srgb, var(--tab-frame) var(--overview-solid), transparent);
+    box-shadow: inset 0 -1px
+      color-mix(in srgb, var(--chrome-seam) var(--overview-solid), transparent);
   }
 
   header:has(:global([data-region='tabs'])) {

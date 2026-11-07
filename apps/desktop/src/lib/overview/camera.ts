@@ -7,7 +7,7 @@ export interface Camera {
 }
 
 export const NEAREST = 2.5
-export const FARTHEST = 0.2
+export const FARTHEST = 0.15
 
 export interface Point {
   x: number
@@ -33,6 +33,7 @@ export function lookingAt(what: Box, room: Box): Camera {
 }
 
 const READABLE = 240
+const OPENS_FARTHEST = 0.2
 
 type Span = readonly [start: number, size: number]
 
@@ -47,7 +48,7 @@ function along(here: Span, whole: Span, room: Span, zoom: number): number {
 export function overlooking(here: Box, whole: Box, room: Box, window: number): Camera {
   const near = lookingAt(here, room).zoom
   const far = Math.min(near, lookingAt(whole, room).zoom)
-  const most = Math.max(far, FARTHEST, READABLE / Math.max(window, 1), Math.sqrt(near * far))
+  const most = Math.max(far, OPENS_FARTHEST, READABLE / Math.max(window, 1), Math.sqrt(near * far))
   const zoom = Math.min(near, most)
   return {
     x: along([here.x, here.w], [whole.x, whole.w], [room.x, room.w], zoom),

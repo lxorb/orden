@@ -184,7 +184,7 @@
     <div
       class="kept"
       style:width="{kept.w}px"
-      style:height="{kept.h}px"
+      style:height="{Math.max(kept.h, (kept.w * height) / Math.max(width, 1))}px"
       style:scale={width / Math.max(kept.w, 1)}
       in:fade={arrive}
       use:drawn={kept}
