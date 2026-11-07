@@ -71,7 +71,7 @@ async ([paint, side]) => {
   const c = canvas.getContext('2d')
   new Function('c', 'w', 'h', paint)(c, w, h)
   const blob = await new Promise((done) => canvas.toBlob(done, 'image/png'))
-  return window.nibApp.wallpaper.take(blob, side ?? 'light')
+  return window.ordenApp.wallpaper.take(blob, side ?? 'light')
 }
 """
 
@@ -192,7 +192,7 @@ def measure(page: Any, name: str, frame: float = 4.5, opaque: bool = False) -> N
         (say if colours == {bg} else wrong)(f"{name}: Opaque is the paper as it was {bg}: {sorted(colours)[:3]}")
 
 def dial(page: Any, id: str, value: Any) -> None:
-    page.evaluate(f"() => window.nibApp.theme.set({json.dumps(id)}, {json.dumps(value)})")
+    page.evaluate(f"() => window.ordenApp.theme.set({json.dumps(id)}, {json.dumps(value)})")
     page.wait_for_timeout(700)
 
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
@@ -201,15 +201,15 @@ def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a pict
     DRIVE.open(page)
     DRIVE.seed(page, note)
     DRIVE.open_note(page, name)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     return page
 
 def wallpaper(browser: Any, scheme: str) -> None:
     page = fresh(browser, scheme)
-    wait_for(page, "window.nibApp.wallpaper", "the wallpaper store on the handle")
-    page.evaluate("() => window.nibApp.theme.select('wallpaper')")
-    wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "the wallpaper's dials")
+    wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
+    page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
+    wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "the wallpaper's dials")
 
     for picture, paint in PICTURES.items():
         if not page.evaluate(TAKE, [paint, "light"]):
@@ -245,14 +245,14 @@ def wallpaper(browser: Any, scheme: str) -> None:
         dial(page, "fit", "fill")
 
     before = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
-    page.evaluate("() => window.nibApp.theme.try('dim', 70)")
+    page.evaluate("() => window.ordenApp.theme.try('dim', 70)")
     page.wait_for_timeout(200)
     shown = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--orden-dim').trim()")
     after = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     (say if shown == "70%" and before == after else wrong)(
         f"wallpaper {scheme}: a dial being dragged shows {shown} and keeps nothing ({before == after})"
     )
-    page.evaluate("() => window.nibApp.theme.set('dim', 10)")
+    page.evaluate("() => window.ordenApp.theme.set('dim', 10)")
 
     page.evaluate(TAKE, [PICTURES["dark"], "dark"])
     page.wait_for_timeout(600)
@@ -260,7 +260,7 @@ def wallpaper(browser: Any, scheme: str) -> None:
     (say if ":root[data-theme='dark']" in sheet else wrong)(f"wallpaper {scheme}: the dark side has a picture of its own")
     keep_shot(page, f"wallpaper-{scheme}-own-dark")
 
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     page.evaluate("() => document.querySelector('.sheet .pictures')?.scrollIntoView({ block: 'start' })")
     page.wait_for_timeout(300)
@@ -276,14 +276,14 @@ def wallpaper(browser: Any, scheme: str) -> None:
         page.mouse.move(left + width * 0.15, top + height * 0.85, steps=6)
         page.mouse.up()
         page.wait_for_timeout(500)
-        focus = page.evaluate("() => window.nibApp.wallpaper.held.main?.focus")
+        focus = page.evaluate("() => window.ordenApp.wallpaper.held.main?.focus")
         kept = page.evaluate("() => JSON.parse(localStorage.getItem('orden:wallpaper') || '{}').focus")
         near = focus and abs(focus[0] - 0.15) < 0.05 and abs(focus[1] - 0.85) < 0.05
         (say if near and kept == focus else wrong)(f"wallpaper {scheme}: a drag on the thumbnail moved the focal point to {focus}, kept {kept}")
     else:
         wrong(f"wallpaper {scheme}: no thumbnail to drag")
     keep_shot(page, f"wallpaper-{scheme}-settings")
-    page.evaluate("() => { window.nibApp.settings.open = false }")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_timeout(300)
 
     filters = page.evaluate(FILTERS)
@@ -292,14 +292,14 @@ def wallpaper(browser: Any, scheme: str) -> None:
 
 def glass(browser: Any, scheme: str) -> None:
     page = fresh(browser, scheme)
-    page.evaluate("() => window.nibApp.theme.select('glass')")
+    page.evaluate("() => window.ordenApp.theme.select('glass')")
     wait_for(page, "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')", "glass's sheet")
 
     for material in ("mica", "acrylic", "clear"):
         desks = {"band": MICA[scheme]} if material == "mica" else DESKS
         for desk, paint in desks.items():
             page.evaluate(STAND_ON, [paint, material])
-            wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "glass's dials")
+            wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "glass's dials")
             for level in ("tinted", "opaque", "clear"):
                 dial(page, "content", level)
                 keep_shot(page, f"glass-{scheme}-{material}-{desk}-{level}")
@@ -319,7 +319,7 @@ def glass(browser: Any, scheme: str) -> None:
     for id, value in (("opacity", 50), ("tint", 100), ("follow", True), ("tab", True)):
         dial(page, id, value)
 
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     floored = page.evaluate(
         "() => { const one = document.querySelector('.sheet input.slider.floored'); "
@@ -329,7 +329,7 @@ def glass(browser: Any, scheme: str) -> None:
     (say if floored else wrong)(f"glass {scheme}: the Opacity dial says its floor: {floored}")
     page.wait_for_timeout(300)
     keep_shot(page, f"glass-{scheme}-settings")
-    page.evaluate("() => { window.nibApp.settings.open = false }")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
 
     filters = page.evaluate(FILTERS)
     (wrong if filters else say)(f"glass {scheme}: filters on a frame: {filters[:5]}")
@@ -364,13 +364,13 @@ def cost(browser: Any) -> None:
     for look in ("default", "glass-clear", "wallpaper-clear"):
         page = fresh(browser, "dark", LONG, "A long note")
         if look.startswith("glass"):
-            page.evaluate("() => window.nibApp.theme.select('glass')")
+            page.evaluate("() => window.ordenApp.theme.select('glass')")
             page.evaluate(STAND_ON, [DESKS["busy"], "mica"])
-            wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "glass's dials")
+            wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "glass's dials")
             dial(page, "content", "clear")
         elif look.startswith("wallpaper"):
-            page.evaluate("() => window.nibApp.theme.select('wallpaper')")
-            wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "the wallpaper's dials")
+            page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
+            wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "the wallpaper's dials")
             page.evaluate(TAKE, [PICTURES["dark"], "light"])
             dial(page, "content", "clear")
         page.wait_for_timeout(600)

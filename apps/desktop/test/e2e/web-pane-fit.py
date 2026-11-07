@@ -12,7 +12,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 ARRANGE = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Beside\\n\\nA note beside a page.\\n', root)
   await ws.loadTree()
@@ -102,7 +102,7 @@ def drive(browser: Browser) -> None:
     checked(page, "one pane")
     DRIVE.steady(page, "01-one-pane")
 
-    page.evaluate("() => window.nibApp.workspace.showRight('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showRight('outline')")
     wait_for(page, "!!document.querySelector('.panels.right.open')", "the right side")
     quiet(page)
     checked(page, "beside the right side")
@@ -115,17 +115,17 @@ def drive(browser: Browser) -> None:
     DRIVE.steady(page, "02-narrow-beside-the-right-side")
     page.set_viewport_size({"width": 1180, "height": 820})
 
-    page.evaluate("() => window.nibApp.workspace.closePanel('right')")
+    page.evaluate("() => window.ordenApp.workspace.closePanel('right')")
     quiet(page)
     checked(page, "right side shut")
 
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "two panes")
     quiet(page)
     checked(page, "two panes")
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.openPage('https://example.org/')
           ws.split('column')
         }"""
@@ -141,10 +141,10 @@ def drive(browser: Browser) -> None:
     DRIVE.steady(page, "04-three-narrow-panes")
     page.set_viewport_size({"width": 1180, "height": 820})
 
-    page.evaluate("() => window.nibApp.modes.setZoom(1.4)")
+    page.evaluate("() => window.ordenApp.modes.setZoom(1.4)")
     quiet(page)
     checked(page, "the words larger")
-    page.evaluate("() => window.nibApp.modes.setZoom(1)")
+    page.evaluate("() => window.ordenApp.modes.setZoom(1)")
 
     page.locator("[data-pane] .web .webbar .field input").first.click()
     page.keyboard.press("Shift+F11")

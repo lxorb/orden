@@ -17,7 +17,7 @@ HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'pal
 
 RIGHT_TABS = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   ws.showPanel('outline')
   for (let i = 0; i < 40; i += 1) {
     const tabs = [...document.querySelectorAll('aside[data-region="right"] [role="tab"]')]
@@ -53,7 +53,7 @@ def one(browser: Browser, device: str) -> None:
     page.on("pageerror", lambda error: wrong(f"[{device}] page error: {error}"))
     try:
         DRIVE.open(page)
-        said = page.evaluate("() => window.nibApp.workspace && document.documentElement.hasAttribute('data-touch')")
+        said = page.evaluate("() => window.ordenApp.workspace && document.documentElement.hasAttribute('data-touch')")
         say(f"[{device}] touch: {said}")
         if device != "desktop" and not said:
             wrong(f"[{device}] the page did not take itself for a touch screen")
@@ -76,10 +76,10 @@ def one(browser: Browser, device: str) -> None:
 
         if device != "desktop":
             page.keyboard.press("Control+Shift+KeyA")
-            page.evaluate("() => { window.nibApp.workspace.rightPanel = 'ask' }")
+            page.evaluate("() => { window.ordenApp.workspace.rightPanel = 'ask' }")
             page.wait_for_timeout(500)
             shown = page.evaluate(
-                "() => ({ open: window.nibApp.workspace.openOn('right'),"
+                "() => ({ open: window.ordenApp.workspace.openOn('right'),"
                 " body: !!document.querySelector('.body[data-panel=\"ask\"]') })"
             )
             say(f"[{device}] after the key and a panel left open: {shown}")

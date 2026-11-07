@@ -31,7 +31,7 @@ KNOWN = {
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Plan\\n\\nWe meet at noon on Friday, at the old station.\\n', root)
   await ws.loadTree()
@@ -44,7 +44,7 @@ async () => {
 
 CANVAS = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   // Made and opened in front, the way the New canvas row makes one.
   await ws.createCanvas(ws.activeSpace.root, 'Launch')
   return ws.active.path
@@ -84,7 +84,7 @@ HOLD = """
       ? { plane: card(who === 'mine' ? 'Ship on Friday, with the new prices.' : 'Ship next week; the prices stay.', who === 'mine' ? '4' : '5') }
       : {}),
   })
-  window.__held = window.nibApp.sync2.connectFake([
+  window.__held = window.ordenApp.sync2.connectFake([
     { id: 'held', path, name, mine: side('mine', 2), theirs: side('theirs', 1) },
   ])
 }
@@ -140,9 +140,9 @@ def window(browser: Browser, scheme: str, size: dict, phone: bool = False, langu
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded", timeout=60000)
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "the app", 40)
-    wait_for(page, "window.nibApp.sync2", "the fake engine")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "the app", 40)
+    wait_for(page, "window.ordenApp.sync2", "the fake engine")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     return page
 
 def held_up(page: Page, path: str, name: str, kind: str = "note", rtl: bool = False) -> None:
@@ -152,7 +152,7 @@ def held_up(page: Page, path: str, name: str, kind: str = "note", rtl: bool = Fa
 def sheet(page: Page, name: str, phone: bool = False) -> None:
     path = page.evaluate(SEED)
     if phone:
-        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.evaluate("() => window.ordenApp.workspace.closePanel()")
     held_up(page, path, "Plan")
     shot(page, name)
     axe(page, name)

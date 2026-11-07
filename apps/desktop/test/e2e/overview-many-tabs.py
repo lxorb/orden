@@ -23,7 +23,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     page.evaluate(
         f"""async () => {{
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (let i = 0; i < {TABS}; i++) ws.openBlank('T' + i, '# T' + i + '\\n\\nwords')
           await new Promise((done) => setTimeout(done, 50))
           ws.split('row')

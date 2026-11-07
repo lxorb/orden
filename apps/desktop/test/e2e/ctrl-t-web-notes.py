@@ -15,10 +15,10 @@ FILES = {
 
 SEED = """
 async (files) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/\\/+$/, '')
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -40,7 +40,7 @@ async (files) => {
 
 STATE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     tabs: ws.tabs.length,
     active: ws.active?.path?.split('/').pop() ?? null,
@@ -51,7 +51,7 @@ STATE = """
 
 SPY = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   window.__asked = []
   ws.chosenOn = (id) => window.__asked.push(`chosen on ${id}`)
   ws.openEntry = (path) => { window.__asked.push(path); return Promise.resolve() }

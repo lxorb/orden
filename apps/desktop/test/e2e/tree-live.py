@@ -38,7 +38,7 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
 
 LISTED = """(path) => {
   const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : [])
-  return walk(window.nibApp.workspace.tree).includes(path)
+  return walk(window.ordenApp.workspace.tree).includes(path)
 }"""
 
 ROW = """(path) => document.querySelector(`.row[data-path="${CSS.escape(path)}"]`)"""
@@ -80,29 +80,29 @@ def window_for(context, label: str, paths: list[str] | None = None) -> Page:
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: failed(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp?.account.user", f"[{label}] the account")
+    wait_for(page, "() => !!window.ordenApp?.account.user", f"[{label}] the account")
     wait_for(
         page,
-        "(name) => window.nibApp.workspace.spaces.some((one) => one.name === name)",
+        "(name) => window.ordenApp.workspace.spaces.some((one) => one.name === name)",
         f"[{label}] the space",
         SPACE,
     )
     page.evaluate(
-        "(name) => { const ws = window.nibApp.workspace;"
+        "(name) => { const ws = window.ordenApp.workspace;"
         " ws.showSpace(ws.spaces.find((one) => one.name === name).id) }",
         SPACE,
     )
     wait_for(
         page,
         """(paths) => {
-          const ws = window.nibApp.workspace
-          return window.nibApp.arriving.coming.size === 0 && paths.every((one) => ws.entryAt(one))
+          const ws = window.ordenApp.workspace
+          return window.ordenApp.arriving.coming.size === 0 && paths.every((one) => ws.entryAt(one))
         }""",
         f"[{label}] every note listed",
         paths or [f"{ROOT}/{name}" for name in NOTES],
     )
-    wait_for(page, "() => !!window.nibApp.sync.engine?.engine", f"[{label}] the engine")
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
+    wait_for(page, "() => !!window.ordenApp.sync.engine?.engine", f"[{label}] the engine")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     wait_for(page, "() => !!document.querySelector('[role=tree] .row')", f"[{label}] the file list")
     return page
 
@@ -128,9 +128,9 @@ def scroll_to(page: Page, path: str) -> None:
 def state(page: Page) -> dict:
     return page.evaluate(
         """() => ({
-          picked: window.nibApp.workspace.selection,
+          picked: window.ordenApp.workspace.selection,
           focused: document.activeElement?.dataset?.path ?? null,
-          open: window.nibApp.workspace.active?.path ?? null,
+          open: window.ordenApp.workspace.active?.path ?? null,
         })"""
     )
 
@@ -181,7 +181,7 @@ def main() -> int:
 
         scroll_to(a, f"{ROOT}/Note 30.md")
         reading = f"{ROOT}/Note 35.md"
-        a.evaluate("(p) => window.nibApp.workspace.select(p)", reading)
+        a.evaluate("(p) => window.ordenApp.workspace.select(p)", reading)
         a.locator(f'.row[data-path="{reading}"]').focus()
         height = a.evaluate(f"() => ({ROW})({json.dumps(reading)}).getBoundingClientRect().height")
         before = state(a)
@@ -193,7 +193,7 @@ def main() -> int:
         if not a.evaluate(WATCH, watched):
             failed("the rows to watch are not drawn")
         started = time.monotonic()
-        b.evaluate("(p) => window.nibApp.workspace.rename(p, 'Zed 05.md')", f"{ROOT}/Note 05.md")
+        b.evaluate("(p) => window.ordenApp.workspace.rename(p, 'Zed 05.md')", f"{ROOT}/Note 05.md")
         took = heard(a, f"{ROOT}/Zed 05.md", "[A] Note 05 renamed in B", started)
         frames = a.evaluate(FRAMES)
         say(f"a rename above the view reached A in {took:.1f}s")
@@ -208,7 +208,7 @@ def main() -> int:
             failed("the rows to watch are not drawn")
         started = time.monotonic()
         b.evaluate(
-            "(p) => window.nibApp.workspace.move(p, p.slice(0, p.lastIndexOf('/')) + '/Archive')",
+            "(p) => window.ordenApp.workspace.move(p, p.slice(0, p.lastIndexOf('/')) + '/Archive')",
             f"{ROOT}/Note 33.md",
         )
         took = heard(a, f"{ROOT}/Archive/Note 33.md", "[A] Note 33 moved in B", started)
@@ -234,7 +234,7 @@ def main() -> int:
         if not a.evaluate(WATCH, watched):
             failed("the rows to watch are not drawn")
         started = time.monotonic()
-        b.evaluate("(p) => window.nibApp.workspace.rename(p, 'Note 35b.md')", reading)
+        b.evaluate("(p) => window.ordenApp.workspace.rename(p, 'Note 35b.md')", reading)
         took = heard(a, renamed, "[A] the note A reads renamed in B", started)
         frames = a.evaluate(FRAMES)
         say(f"a rename of the note A reads reached A in {took:.1f}s")
@@ -247,15 +247,15 @@ def main() -> int:
             failed(one)
 
         for page in (a, b):
-            page.evaluate("() => window.nibApp.workspace.setSort('manual')")
-        wait_for(b, "() => !!window.nibApp.sync.engine?.engine?.core", "[B] the engine")
+            page.evaluate("() => window.ordenApp.workspace.setSort('manual')")
+        wait_for(b, "() => !!window.ordenApp.sync.engine?.engine?.core", "[B] the engine")
         a.wait_for_timeout(500)
         if not a.evaluate(WATCH, [renamed, f"{ROOT}/Note 31.md", f"{ROOT}/Note 40.md"]):
             failed("the rows to watch are not drawn")
         started = time.monotonic()
         order = b.evaluate(
             """(root) => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const names = ws.shownTree.children.map((one) => one.name).filter((one) => one !== 'Note 40.md')
               names.splice(names.indexOf('Note 31.md') + 1, 0, 'Note 40.md')
               ws.arranged.set(root, names)
@@ -267,7 +267,7 @@ def main() -> int:
         wait_for(
             a,
             """() => {
-              const names = window.nibApp.workspace.shownTree.children.map((one) => one.name)
+              const names = window.ordenApp.workspace.shownTree.children.map((one) => one.name)
               return names.indexOf('Note 40.md') === names.indexOf('Note 31.md') + 1
             }""",
             "[A] B's order",
@@ -288,14 +288,14 @@ def main() -> int:
             failed(f"B's drag changed what A had: {now}")
 
         listed = a.evaluate(
-            "() => window.nibApp.workspace.tree.children.filter((one) => !one.is_dir).map((one) => one.path)"
+            "() => window.ordenApp.workspace.tree.children.filter((one) => !one.is_dir).map((one) => one.path)"
         )
         still = window_for(device("reduce"), "C", listed)
         still.bring_to_front()
         scroll_to(still, f"{ROOT}/Note 30.md")
         if not still.evaluate(WATCH, [f"{ROOT}/Note 38.md", f"{ROOT}/Note 31.md", f"{ROOT}/Note 39.md"]):
             failed("[C] the rows to watch are not drawn")
-        b.evaluate("(p) => window.nibApp.workspace.rename(p, 'Note 39b.md')", f"{ROOT}/Note 37.md")
+        b.evaluate("(p) => window.ordenApp.workspace.rename(p, 'Note 39b.md')", f"{ROOT}/Note 37.md")
         wait_for(still, LISTED, "[C] Note 37 renamed in B", f"{ROOT}/Note 39b.md")
         still.wait_for_timeout(500)
         frames = still.evaluate(FRAMES)

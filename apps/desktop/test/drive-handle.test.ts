@@ -7,9 +7,9 @@ const APP = readFileSync(join(import.meta.dirname, '../src/App.svelte'), 'utf8')
 const CONFIG = readFileSync(join(import.meta.dirname, '../vite.config.ts'), 'utf8')
 
 function handle(): string {
-  const opening = 'nibApp: {'
+  const opening = 'ordenApp: {'
   const from = APP.indexOf(opening)
-  expect(from, 'no nibApp on the window').toBeGreaterThanOrEqual(0)
+  expect(from, 'no ordenApp on the window').toBeGreaterThanOrEqual(0)
 
   let depth = 1
   let at = from + opening.length
@@ -28,7 +28,7 @@ describe('the handle a drive reads the app through', () => {
 
   test('it is behind the constant that says a build may be driven', () => {
     expect(APP).toContain('if (__DRIVEABLE__)')
-    expect(APP.indexOf('if (__DRIVEABLE__)')).toBeLessThan(APP.indexOf('nibApp: {'))
+    expect(APP.indexOf('if (__DRIVEABLE__)')).toBeLessThan(APP.indexOf('ordenApp: {'))
     expect(APP).not.toContain('if (import.meta.env.DEV)')
   })
 
@@ -74,9 +74,16 @@ describe('the handle a drive reads the app through', () => {
   test.each(['ai', 'importing', 'publish', 'rewriting', 'themeStore'])(
     '%s arrives on it later',
     (name) => {
-      const later = APP.slice(APP.indexOf('nibApp: {') + listed.length)
-      expect(later).toContain(`Object.assign((window as unknown as { nibApp: object }).nibApp`)
+      const later = APP.slice(APP.indexOf('ordenApp: {') + listed.length)
+      expect(later).toContain(`Object.assign((window as unknown as { ordenApp: object }).ordenApp`)
       expect(later).toMatch(new RegExp(`${name}[,:]`))
     },
   )
+
+  test('a drive written before the rename still finds the app and the editor by their old names', () => {
+    expect(APP).toContain('nibApp: (window as unknown as { ordenApp: object }).ordenApp')
+    const editor = readFileSync(join(import.meta.dirname, '../src/lib/Editor.svelte'), 'utf8')
+    expect(editor).toContain('Object.assign(window, { orden: created, [FORMER_HANDLE]: created })')
+    expect(editor).toContain("const FORMER_HANDLE = 'nib'")
+  })
 })

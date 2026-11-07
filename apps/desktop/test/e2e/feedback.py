@@ -32,7 +32,7 @@ def fresh(browser: Browser, finger: bool, scheme: str) -> Page:
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")
     DRIVE.ready(page)
-    page.evaluate("() => { window.nibApp.workspace.panel = 'tree' }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'tree' }")
     where = YOU if finger else BUG
     wait_for(page, f"!!document.querySelector({where!r})", "the way to send feedback")
     return page

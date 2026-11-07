@@ -49,18 +49,18 @@ def device(browser: Browser, label: str, at: str, token: str | None = None, phon
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(at, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app")
     return page
 
 SURFACE = """() => {
-  const key = window.nibApp.workspace.active?.note.key
-  return key ? window.nibApp.rooms.planes.get(key) ?? null : null
+  const key = window.ordenApp.workspace.active?.note.key
+  return key ? window.ordenApp.rooms.planes.get(key) ?? null : null
 }"""
 
 def in_its_room(page: Page, label: str) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.workspace.active?.kind === 'canvas' && !!({SURFACE})()",
+        f"() => window.ordenApp.workspace.active?.kind === 'canvas' && !!({SURFACE})()",
         f"[{label}] the canvas",
     )
     try:
@@ -71,11 +71,11 @@ def in_its_room(page: Page, label: str) -> None:
 def from_the_tree(page: Page, label: str) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+        f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space",
     )
     page.evaluate(
-        "async (name) => { const ws = window.nibApp.workspace;"
+        "async (name) => { const ws = window.ordenApp.workspace;"
         " const space = ws.spaces.find((one) => one.name === name); await ws.showSpace(space.id) }",
         SPACE,
     )
@@ -83,10 +83,10 @@ def from_the_tree(page: Page, label: str) -> None:
     wait_for(
         page,
         "() => { const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []);"
-        f" return walk(window.nibApp.workspace.tree).includes({json.dumps(path)}) }}",
+        f" return walk(window.ordenApp.workspace.tree).includes({json.dumps(path)}) }}",
         f"[{label}] the canvas in the tree",
     )
-    page.evaluate(f"async () => {{ await window.nibApp.workspace.openCanvas({json.dumps(path)}) }}")
+    page.evaluate(f"async () => {{ await window.ordenApp.workspace.openCanvas({json.dumps(path)}) }}")
     in_its_room(page, label)
 
 def put_down(page: Page, label: str, x: int, y: int) -> str:
@@ -162,7 +162,7 @@ def main() -> int:
         joining = f"{ORIGIN}/join/{found.group(1)}"
 
         guest = device(browser, "guest", joining)
-        wait_for(guest, "() => !!window.nibApp.workspace.active?.note.shared", "[guest] the shared tab")
+        wait_for(guest, "() => !!window.ordenApp.workspace.active?.note.shared", "[guest] the shared tab")
         in_its_room(guest, "guest")
 
         phone = device(browser, "phone", ORIGIN, token, phone=True)
@@ -170,7 +170,7 @@ def main() -> int:
 
         linked = device(browser, "linked", joining, token, phone=True)
         in_its_room(linked, "linked")
-        if linked.evaluate("() => window.nibApp.workspace.active?.note.shared"):
+        if linked.evaluate("() => window.ordenApp.workspace.active?.note.shared"):
             failed("the owner's own link opened their canvas as somebody else's")
         say("four devices are on the plane: a desktop, a guest's browser and two phones")
 

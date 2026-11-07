@@ -31,7 +31,7 @@ views:
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -41,7 +41,7 @@ WRITE = """async ([files]) => {
 }"""
 
 OPEN_VIEW = """async (view) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   for (const tab of ws.tabs.filter((one) => one.kind === 'view' && one.path)) await ws.closeAsking(tab.id)
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   window.tasks.openBaseFile(`${root}/Items.base`, {}, view)
@@ -91,7 +91,7 @@ def setup(browser, width, height):
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     today = datetime.date.today()
     day = lambda n: (today + datetime.timedelta(days=n)).isoformat()
     files = [
@@ -193,13 +193,13 @@ def board_on(browser, width, height, name):
             page.wait_for_timeout(16)
         touch(cdp, "touchEnd", [])
         page.wait_for_timeout(600)
-        panel = page.evaluate("() => window.nibApp.workspace.panel")
+        panel = page.evaluate("() => window.ordenApp.workspace.panel")
         say(f"[{name}] from the edge strip: panel {panel}")
         if not panel:
             wrong(f"[{name}] a swipe from the edge did not open the drawer over a board")
         if page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent") != column:
             wrong(f"[{name}] a swipe from the edge turned the board's page too")
-        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.evaluate("() => window.ordenApp.workspace.closePanel()")
         page.wait_for_timeout(400)
 
         touch(cdp, "touchStart", [(384, y0)])
@@ -208,7 +208,7 @@ def board_on(browser, width, height, name):
             page.wait_for_timeout(16)
         touch(cdp, "touchEnd", [])
         page.wait_for_timeout(600)
-        if page.evaluate("() => window.nibApp.workspace.rightShows"):
+        if page.evaluate("() => window.ordenApp.workspace.rightShows"):
             wrong(f"[{name}] a swipe from the right edge opened an empty drawer")
         page.locator('.strip [role="tab"]', has_text="To do").click()
         page.wait_for_timeout(300)
@@ -221,7 +221,7 @@ def board_on(browser, width, height, name):
         for step in range(1, 10):
             touch(cdp, "touchMove", [(x1 + 9 + 22 * step, a["y"] + step)])
             page.wait_for_timeout(16)
-        panel = page.evaluate("() => window.nibApp.workspace.panel")
+        panel = page.evaluate("() => window.ordenApp.workspace.panel")
         touch(cdp, "touchEnd", [])
         page.wait_for_timeout(500)
         say(f"[{name}] held in the strip: lifted {lifted}, panel {panel}")

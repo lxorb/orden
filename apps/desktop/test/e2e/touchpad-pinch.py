@@ -19,16 +19,16 @@ WINDOW = (
 
 SURFACES = {
     "canvas": {
-        "make": "() => window.nibApp.workspace.createCanvas()",
+        "make": "() => window.ordenApp.workspace.createCanvas()",
         "element": '[role="application"][aria-roledescription]',
-        "scale": "() => window.nibApp.workspace.active?.camera?.scale ?? 1",
-        "camera": "() => window.nibApp.workspace.active?.camera ?? { x: 0, y: 0, scale: 1 }",
+        "scale": "() => window.ordenApp.workspace.active?.camera?.scale ?? 1",
+        "camera": "() => window.ordenApp.workspace.active?.camera ?? { x: 0, y: 0, scale: 1 }",
     },
     "page note": {
-        "make": "() => window.nibApp.workspace.createPages()",
+        "make": "() => window.ordenApp.workspace.createPages()",
         "element": ".pages",
-        "scale": "() => window.nibApp.pages.current.store.camera.scale",
-        "camera": "() => window.nibApp.pages.current.store.camera",
+        "scale": "() => window.ordenApp.pages.current.store.camera.scale",
+        "camera": "() => window.ordenApp.pages.current.store.camera",
     },
 }
 

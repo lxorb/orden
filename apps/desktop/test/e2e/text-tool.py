@@ -11,7 +11,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 BUTTON = '.cluster button[aria-label="Text"]'
 
-FILE = """() => JSON.parse(window.nibApp.workspace.active.doc)"""
+FILE = """() => JSON.parse(window.ordenApp.workspace.active.doc)"""
 
 def typed(page: Page, label: str, surface: str, settle: str) -> None:
     button = page.locator(BUTTON).first
@@ -56,7 +56,7 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
 
-    page.evaluate("async () => { const ws = window.nibApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
+    page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
     wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
     page.wait_for_timeout(600)
     typed(page, "canvas", ".canvas", "() => null")
@@ -74,13 +74,13 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("v")
 
     for _ in range(4):
-        page.evaluate("() => window.nibApp.workspace.createPages()")
+        page.evaluate("() => window.ordenApp.workspace.createPages()")
         page.wait_for_timeout(700)
-        if page.evaluate("() => !!window.nibApp.workspace.active?.path?.endsWith('.pages')"):
+        if page.evaluate("() => !!window.ordenApp.workspace.active?.path?.endsWith('.pages')"):
             break
     wait_for(page, "!!document.querySelector('.pages .cluster')", "the page note")
     page.wait_for_timeout(600)
-    typed(page, "page note", ".pages", "() => window.nibApp.pages.current?.store.part()")
+    typed(page, "page note", ".pages", "() => window.ordenApp.pages.current?.store.part()")
     page.close()
 
 if __name__ == "__main__":

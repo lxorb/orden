@@ -27,13 +27,13 @@ if hasattr(sys.stdout, "reconfigure"):
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   if (ws.panel !== 'tree') ws.showPanel('tree')
   await ws.noteFrom('# Marked\\n\\nnothing yet\\n', root)
   await ws.loadTree()
   const note = ws.files.find((one) => one.name.startsWith('Marked'))
-  window.nibApp.iconChoice.file(note.path)
+  window.ordenApp.iconChoice.file(note.path)
   return note.path
 }
 """

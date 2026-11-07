@@ -18,7 +18,7 @@ DRIVE = Drive(__file__, served=False, fresh=False)
 
 PROBE = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const out = {}
   const path = '/Big/long.md'
 

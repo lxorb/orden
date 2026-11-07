@@ -15,11 +15,12 @@ function surface(): Record<string, unknown> {
 }
 
 export async function evaluate(code: string): Promise<unknown> {
-  const answer = await compiled(code)(surface())
+  const given = surface()
+  const answer = await compiled(code)(given, given)
   return plain(answer)
 }
 
-type Script = (nib: Record<string, unknown>) => Promise<unknown>
+type Script = (orden: Record<string, unknown>, nib: Record<string, unknown>) => Promise<unknown>
 
 function compiled(code: string): Script {
   try {
@@ -31,7 +32,7 @@ function compiled(code: string): Script {
 
 function made(body: string): Script {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- turning a string into code is the whole verb
-  return new Function('nib', body) as Script
+  return new Function('orden', 'nib', body) as Script
 }
 
 function plain(value: unknown): unknown {

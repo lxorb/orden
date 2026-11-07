@@ -18,7 +18,7 @@ WHOLE = "Kannst du bitte den Pull Request reviewen?"
 
 OWN_TRANSCRIBER = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'On this machine', baseUrl: base, model: 'llama' })
@@ -96,7 +96,7 @@ def opened(browser: Browser, dark: bool = False) -> tuple[Page, Transcriber]:
     heard = Transcriber()
     page.route("**/v1/audio/transcriptions", heard.listen)
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.ai", "the AI providers")
+    wait_for(page, "window.ordenApp.ai", "the AI providers")
     made = page.evaluate(OWN_TRANSCRIBER, "http://127.0.0.1:23317/v1")
     if not made["transcriber"]:
         wrong("a compatible provider is not read as a transcriber")
@@ -187,7 +187,7 @@ def dark(browser: Browser) -> None:
     page.evaluate("() => localStorage.setItem('orden:dictation-engine', 'provider')")
     page.reload()
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.ai?.transcriber", "the provider again")
+    wait_for(page, "window.ordenApp.ai?.transcriber", "the provider again")
     page.keyboard.press("Control+Shift+A")
     wait_for(page, f"document.activeElement === document.querySelector('{COMPOSER}')", "the composer")
     page.click(".foot button.mic")
@@ -203,7 +203,7 @@ def quick_add(browser: Browser) -> None:
     page.evaluate("() => localStorage.setItem('orden:dictation-engine', 'provider')")
     page.reload()
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.ai?.transcriber", "the provider again")
+    wait_for(page, "window.ordenApp.ai?.transcriber", "the provider again")
     page.keyboard.press("Control+Alt+Space")
     wait_for(page, "document.querySelector('.quick input.field')", "quick add")
     if not page.query_selector(".quick button.mic"):

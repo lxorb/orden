@@ -25,7 +25,7 @@ read rather than glanced at.
 
 SEED = """
 async ([note, name]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const first = ws.notes.find((one) => one.name.startsWith(name))
@@ -246,22 +246,22 @@ def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    if not page.evaluate("() => !!window.nibApp"):
+    if not page.evaluate("() => !!window.ordenApp"):
         page.wait_for_timeout(1500)
-        if not page.evaluate("() => !!window.nibApp"):
+        if not page.evaluate("() => !!window.ordenApp"):
             page.reload(wait_until="domcontentloaded")
 
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.ordenApp", "the app")
+    wait_for(page, "window.ordenApp.workspace.activeSpace", "a space")
     page.evaluate(SEED, [note, name])
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(400)
     return page
 
 def choose(page: Page, theme: str) -> None:
-    page.evaluate(f"() => window.nibApp.theme.select('{theme}')")
+    page.evaluate(f"() => window.ordenApp.theme.select('{theme}')")
     if theme == "glass":
         wait_for(
             page,
@@ -274,8 +274,8 @@ def stand(page: Page, desk: str, material: str | None) -> None:
     page.evaluate(STAND_ON, [desk, material])
     page.wait_for_timeout(300)
     page.evaluate(
-        "() => window.nibApp.theme.settings.some((one) => one.id === 'content')"
-        " && window.nibApp.theme.set('content', 'opaque')"
+        "() => window.ordenApp.theme.settings.some((one) => one.id === 'content')"
+        " && window.ordenApp.theme.set('content', 'opaque')"
     )
     page.wait_for_timeout(100)
 
@@ -310,15 +310,15 @@ def first_look(browser: Browser, scheme: str) -> None:
     )
     page = context.new_page()
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
     wait_for(
         page,
         "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')",
         "glass's sheet",
     )
     look = page.evaluate(
-        "() => ({ id: window.nibApp.theme.id, accent: window.nibApp.theme.accent,"
-        " scheme: window.nibApp.theme.scheme, current: window.nibApp.theme.current,"
+        "() => ({ id: window.ordenApp.theme.id, accent: window.ordenApp.theme.accent,"
+        " scheme: window.ordenApp.theme.scheme, current: window.ordenApp.theme.current,"
         " kept: localStorage.getItem('orden:theme') })"
     )
     shows(f"[{scheme}] a first launch is glass", look["id"], "glass")
@@ -339,12 +339,12 @@ def first_look(browser: Browser, scheme: str) -> None:
     )
     page = context.new_page()
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
-    read = "() => [window.nibApp.theme.id, window.nibApp.theme.accent]"
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
+    read = "() => [window.ordenApp.theme.id, window.ordenApp.theme.accent]"
     shows(f"[{scheme}] an older install on the built-in moves to glass", page.evaluate(read), ["glass", "teal"])
-    page.evaluate("() => window.nibApp.theme.select('default')")
+    page.evaluate("() => window.ordenApp.theme.select('default')")
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
     shows(f"[{scheme}] and Classic chosen again stays", page.evaluate(read), ["default", "teal"])
     done_with(page)
 
@@ -357,11 +357,11 @@ def first_look(browser: Browser, scheme: str) -> None:
     )
     page = context.new_page()
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
     shows(f"[{scheme}] the first look's yellow turns green", page.evaluate(read), ["glass", "green"])
-    page.evaluate("() => window.nibApp.theme.setAccent('yellow')")
+    page.evaluate("() => window.ordenApp.theme.setAccent('yellow')")
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
     shows(f"[{scheme}] and a yellow picked after stays", page.evaluate(read), ["glass", "yellow"])
     done_with(page)
 
@@ -371,10 +371,10 @@ def drive(browser: Browser, scheme: str) -> None:
     shot(page, f"{scheme}-default")
 
     choose(page, "glass")
-    shows(f"[{scheme}] glass is worn", page.evaluate("() => window.nibApp.theme.id"), "glass")
+    shows(f"[{scheme}] glass is worn", page.evaluate("() => window.ordenApp.theme.id"), "glass")
     shows(
         f"[{scheme}] the accent is still the reader's to choose",
-        page.evaluate("() => window.nibApp.theme.accentIsTheme"),
+        page.evaluate("() => window.ordenApp.theme.accentIsTheme"),
         False,
     )
 
@@ -412,7 +412,7 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shows(f"[{scheme}] nothing repaints what is behind it on every frame", page.evaluate(FILTERS), [])
 
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     rows = page.evaluate(
         "() => [...document.querySelectorAll('.orden-setting')].map((one) => one.textContent.trim())"
@@ -432,7 +432,7 @@ def drive(browser: Browser, scheme: str) -> None:
         "(one) => { one.value = '#ffd6a5'; one.dispatchEvent(new Event('change', { bubbles: true })) }"
     )
     page.wait_for_timeout(300)
-    kept = page.evaluate("() => window.nibApp.theme.values.pair")
+    kept = page.evaluate("() => window.ordenApp.theme.values.pair")
     shows(f"[{scheme}] a colour picked is kept with the other", bool(re.fullmatch(r"#ffd6a5 #[0-9a-f]{6}", str(kept))), True)
     shows(
         f"[{scheme}] and both of them are worn as one's own",
@@ -448,7 +448,7 @@ def drive(browser: Browser, scheme: str) -> None:
         True,
     )
     shot(page, f"{scheme}-glass-own-pair")
-    page.evaluate("() => window.nibApp.theme.set('pair', 'dawn')")
+    page.evaluate("() => window.ordenApp.theme.set('pair', 'dawn')")
 
     page.add_init_script(FIRST_FRAME)
     page.reload(wait_until="domcontentloaded")

@@ -41,16 +41,16 @@ setInterval(() => {
 
 SAYS = """
 () => ({
-  notes: window.nibApp?.workspace?.notes?.length ?? null,
-  spaces: window.nibApp?.workspace?.spaces?.length ?? null,
-  panel: window.nibApp?.workspace?.panel ?? null,
-  signed: !!window.nibApp?.account?.signedIn,
-  running: !!window.nibApp?.sync?.running,
-  reconciledAt: window.nibApp?.sync?.reconciledAt ?? null,
-  pushed: window.nibApp?.sync?.pushed ?? null,
-  pulled: window.nibApp?.sync?.pulled ?? null,
-  clashed: window.nibApp?.sync?.clashed ?? null,
-  coming: window.nibApp?.arriving?.coming?.size ?? null,
+  notes: window.ordenApp?.workspace?.notes?.length ?? null,
+  spaces: window.ordenApp?.workspace?.spaces?.length ?? null,
+  panel: window.ordenApp?.workspace?.panel ?? null,
+  signed: !!window.ordenApp?.account?.signedIn,
+  running: !!window.ordenApp?.sync?.running,
+  reconciledAt: window.ordenApp?.sync?.reconciledAt ?? null,
+  pushed: window.ordenApp?.sync?.pushed ?? null,
+  pulled: window.ordenApp?.sync?.pulled ?? null,
+  clashed: window.ordenApp?.sync?.clashed ?? null,
+  coming: window.ordenApp?.arriving?.coming?.size ?? null,
 })
 """
 
@@ -72,12 +72,12 @@ def drive(browser, token: str) -> dict[str, object]:
 
     DRIVE.open(page, origin=ORIGIN, patience=60)
     page.evaluate(
-        "() => { const ws = window.nibApp.workspace;"
+        "() => { const ws = window.ordenApp.workspace;"
         " if (ws.panel !== 'tree') ws.showPanel('tree') }"
     )
     page.wait_for_selector("aside .row", timeout=60000)
     page.wait_for_function(
-        "() => !!window.nibApp && !window.nibApp.links.scanning && !!window.nibApp.links.rootOf()",
+        "() => !!window.ordenApp && !window.ordenApp.links.scanning && !!window.ordenApp.links.rootOf()",
         timeout=180000,
     )
     page.wait_for_timeout(2500)
@@ -87,10 +87,10 @@ def drive(browser, token: str) -> dict[str, object]:
     page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     page.reload(wait_until="commit")
 
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=120000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=120000)
     page.wait_for_function(
-        "() => { const ws = window.nibApp.workspace;"
+        "() => { const ws = window.ordenApp.workspace;"
         " if (ws.panel !== 'tree') { ws.showPanel('tree'); return false }"
         " return true }",
         timeout=60000,
@@ -108,11 +108,11 @@ def drive(browser, token: str) -> dict[str, object]:
         return at
 
     tree = when(
-        f"() => (window.nibApp.workspace.notes?.length ?? 0) >= {NOTES}",
+        f"() => (window.ordenApp.workspace.notes?.length ?? 0) >= {NOTES}",
         "the space still holds every note",
     )
     first_pass = when(
-        "() => { const s = window.nibApp?.sync;"
+        "() => { const s = window.ordenApp?.sync;"
         " return !!s && !s.running && (s.reconciledAt ?? 0) > 0 }",
         "the first pass has come back",
         patience=900_000 if harness.WEBKIT else 420_000,
@@ -121,7 +121,7 @@ def drive(browser, token: str) -> dict[str, object]:
     seen = -1
     still = 0
     while still < 20:
-        now = page.evaluate("() => window.nibApp?.sync?.pushed ?? 0")
+        now = page.evaluate("() => window.ordenApp?.sync?.pushed ?? 0")
         if now != seen:
             if now and (seen < 0 or now // 500 != seen // 500):
                 say(f"pushed {now} of {NOTES} at {round(page.evaluate('() => performance.now()'))}ms")
@@ -135,7 +135,7 @@ def drive(browser, token: str) -> dict[str, object]:
 
         page.wait_for_timeout(500)
 
-    uploaded = page.evaluate("() => window.nibApp?.sync?.pushed ?? 0")
+    uploaded = page.evaluate("() => window.ordenApp?.sync?.pushed ?? 0")
     say(f"the pass in flight has sent {uploaded} of {NOTES}; see the note in this file")
 
     told = page.evaluate(SAYS)

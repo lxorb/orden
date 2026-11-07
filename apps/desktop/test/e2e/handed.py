@@ -164,7 +164,7 @@ SHARE_WORDS = {
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Handed'))
@@ -180,7 +180,7 @@ Words already here.
 
 STATE = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     open: ws.active?.path ?? null,
     name: ws.active?.name ?? null,
@@ -193,9 +193,9 @@ STATE = """
 """
 
 def started(page: Page) -> None:
-    wait_for(page, "window.nibApp", "the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.ordenApp", "the app")
+    wait_for(page, "window.ordenApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
 
 def fresh(
     browser: Browser,
@@ -272,7 +272,7 @@ def shared_at_a_cold_start(page: Page) -> str:
 
     wait_for(
         page,
-        "window.nibApp.workspace.notes.some((one) => one.name.startsWith('A page worth keeping'))",
+        "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('A page worth keeping'))",
         "the shared note to land",
         patience=30,
     )
@@ -301,7 +301,7 @@ def shared_at_a_cold_start(page: Page) -> str:
     wait_for(page, "navigator.serviceWorker.controller", "the worker to take the page over")
     page.evaluate(
         """() => {
-             const ws = window.nibApp.workspace
+             const ws = window.ordenApp.workspace
              const found = ws.notes.find((one) => one.name.startsWith('A page worth keeping'))
              return ws.openEntry(found.path, { activate: true })
            }"""
@@ -341,11 +341,11 @@ def shared_at_a_cold_start(page: Page) -> str:
 
 def shared_while_it_is_open(page: Page) -> None:
     page.evaluate(SEED, NOTE)
-    wait_for(page, "window.nib", "the editor")
+    wait_for(page, "window.orden", "the editor")
     page.wait_for_timeout(500)
 
     page.evaluate(
-        "() => { const view = window.nib; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
 
     hand(page, SHARE_WORDS)
@@ -481,7 +481,7 @@ def what_the_widget_draws(page: Page) -> None:
 
     page.evaluate(
         """(row) => {
-             const ws = window.nibApp.workspace
+             const ws = window.ordenApp.workspace
              const last = ws.notes.find((one) => one.path.endsWith(row))
              return ws.openEntry(last.path, { activate: true }).then(() =>
                ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: last.path, is_dir: false })),
@@ -492,7 +492,7 @@ def what_the_widget_draws(page: Page) -> None:
     page.wait_for_timeout(900)
 
     listed = json.loads(page.evaluate("() => window.__android.said.widgets.at(-1)"))
-    kept = page.evaluate("() => window.nibApp.workspace.active.name")
+    kept = page.evaluate("() => window.ordenApp.workspace.active.name")
     say(f"[widget] with {kept!r} kept open: {json.dumps(listed)}")
     first = (listed.get("notes") or [{}])[0].get("name")
     if first != kept.replace(".md", ""):
@@ -501,14 +501,14 @@ def what_the_widget_draws(page: Page) -> None:
 def the_camera_row(page: Page) -> None:
     page.evaluate(
         """() => {
-             const ws = window.nibApp.workspace
+             const ws = window.ordenApp.workspace
              const found = ws.notes.find((one) => one.name.startsWith('Handed'))
              return ws.openEntry(found.path, { activate: true })
            }"""
     )
     page.wait_for_timeout(700)
     page.evaluate(
-        "() => { const view = window.nib; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
 
     palette(page, "Photo")
@@ -663,7 +663,7 @@ def on_a_desktop(browser: Browser) -> None:
         wrong("the drive left an activity behind on a desktop")
 
     page.evaluate(
-        "() => { const view = window.nib; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
     dictation(page, phone=False)
 

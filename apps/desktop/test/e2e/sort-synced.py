@@ -31,9 +31,9 @@ def device(browser: Browser, label: str, token: str, before: str | None = None) 
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait(page, "() => window.nibApp?.workspace?.spaces?.some((s) => s.name === 'Home')", f"[{label}] Home")
+    wait(page, "() => window.ordenApp?.workspace?.spaces?.some((s) => s.name === 'Home')", f"[{label}] Home")
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace; const s = ws.spaces.find((o) => o.name === 'Home');"
+        "async () => { const ws = window.ordenApp.workspace; const s = ws.spaces.find((o) => o.name === 'Home');"
         " if (ws.activeSpace?.id !== s.id) await ws.showSpace(s.id) }"
     )
     return page
@@ -46,11 +46,11 @@ def on_account(worker: harness.Worker, space: str) -> str:
 
 def drive(browser: Browser, worker: harness.Worker, token: str, space: str) -> None:
     probe = device(browser, "probe", token)
-    root = probe.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = probe.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     probe.context.close()
 
     desk = device(browser, "desk", token, json.dumps({root: "created-desc"}))
-    wait(desk, "() => window.nibApp.workspace.sortMode === 'created-desc'", "[desk] the order it had chosen")
+    wait(desk, "() => window.ordenApp.workspace.sortMode === 'created-desc'", "[desk] the order it had chosen")
     until = time.monotonic() + PATIENCE
     while on_account(worker, space) != "created-desc" and time.monotonic() < until:
         desk.wait_for_timeout(500)
@@ -59,7 +59,7 @@ def drive(browser: Browser, worker: harness.Worker, token: str, space: str) -> N
     else:
         say("ok   [desk] the order chosen before is carried to the account, once")
 
-    desk.evaluate("() => window.nibApp.workspace.setSort('manual')")
+    desk.evaluate("() => window.ordenApp.workspace.setSort('manual')")
     until = time.monotonic() + PATIENCE
     while on_account(worker, space) != "manual" and time.monotonic() < until:
         desk.wait_for_timeout(500)
@@ -70,10 +70,10 @@ def drive(browser: Browser, worker: harness.Worker, token: str, space: str) -> N
 
     other = device(browser, "other", token)
     try:
-        wait(other, "() => window.nibApp.workspace.sortMode === 'manual'", "[other] Manual")
+        wait(other, "() => window.ordenApp.workspace.sortMode === 'manual'", "[other] Manual")
         say("ok   [other] the space is read in Manual on another device")
     except SystemExit as gave_up:
-        wrong(f"[other] {gave_up}: {other.evaluate('() => window.nibApp.workspace.sortMode')}")
+        wrong(f"[other] {gave_up}: {other.evaluate('() => window.ordenApp.workspace.sortMode')}")
 
 def main() -> int:
     worker = harness.Worker(DRIVE)

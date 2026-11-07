@@ -57,15 +57,15 @@ def signed_in(browser: Browser, token: str, label: str) -> tuple[BrowserContext,
     )
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait(page, "() => !!window.nibApp && window.nibApp.account.signedIn", f"[{label}] the session", patience=40)
+    wait(page, "() => !!window.ordenApp && window.ordenApp.account.signedIn", f"[{label}] the session", patience=40)
     return context, page
 
 def show_space(page: Page, label: str, space_id: str) -> str:
     name = wait(
         page,
-        "(id) => { const space = window.nibApp.workspace.spaces.find("
-        "  (one) => window.nibApp.sync.remoteIdFor(one.root) === id);"
-        " if (!space) return null; window.nibApp.workspace.showSpace(space.id); return space.name }",
+        "(id) => { const space = window.ordenApp.workspace.spaces.find("
+        "  (one) => window.ordenApp.sync.remoteIdFor(one.root) === id);"
+        " if (!space) return null; window.ordenApp.workspace.showSpace(space.id); return space.name }",
         f"[{label}] the shared space",
         space_id,
         patience=SYNCED,
@@ -74,29 +74,29 @@ def show_space(page: Page, label: str, space_id: str) -> str:
 
 CHAT_PATH = """
 async (name) => {
-  const { chats } = await window.nibApp.chats()
+  const { chats } = await window.ordenApp.chats()
   const entry = chats.list.find((one) => one.name === name && one.path)
   return entry ? { id: entry.id, path: entry.path } : null
 }
 """
 
-OPEN = "async (path) => { const one = await window.nibApp.chats(); one.openChat(path) }"
+OPEN = "async (path) => { const one = await window.ordenApp.chats(); one.openChat(path) }"
 
 def open_chat(page: Page, label: str, name: str) -> dict[str, str]:
     try:
         found = wait(page, CHAT_PATH, f"[{label}] the chat's pointer", name, patience=SYNCED)
     except SystemExit:
         said = page.evaluate(
-            "async () => { const { chats } = await window.nibApp.chats();"
+            "async () => { const { chats } = await window.ordenApp.chats();"
             " const walk = (e) => e ? [e.path, ...(e.children ?? []).flatMap(walk)] : [];"
             " return { list: chats.list.map((e) => [e.id, e.root, e.path, e.name]), ready: chats.ready,"
-            " tree: walk(window.nibApp.workspace.tree), spaces: window.nibApp.workspace.spaces.map((s) => s.root) } }"
+            " tree: walk(window.ordenApp.workspace.tree), spaces: window.ordenApp.workspace.spaces.map((s) => s.root) } }"
         )
         say(f"[{label}] holds {json.dumps(said)}")
         again = page.evaluate(
-            "async () => { const { chats } = await window.nibApp.chats(); await chats.lookAgain();"
+            "async () => { const { chats } = await window.ordenApp.chats(); await chats.lookAgain();"
             " const one = chats.list.map((e) => [e.id, e.path]); await chats.reconnected();"
-            " return [one, chats.list.map((e) => [e.id, e.path]), window.nibApp.account.user?.email] }"
+            " return [one, chats.list.map((e) => [e.id, e.path]), window.ordenApp.account.user?.email] }"
         )
         say(f"[{label}] looked again: {json.dumps(again)}")
         raise
@@ -169,7 +169,7 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.keyboard.press("Enter")
     inbox = wait(
         owner,
-        "async () => { const text = await window.nibApp.workspace.noteText('/Team/.Inbox.md');"
+        "async () => { const text = await window.ordenApp.workspace.noteText('/Team/.Inbox.md');"
         " return text && text.includes('orden://chat/') ? text : null }",
         "[Emil] the task in the inbox, with its link",
     )
@@ -177,23 +177,23 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     say(f"the task landed in the inbox: {inbox.strip().splitlines()[-2:]}")
     owner.keyboard.press("Escape")
     came(owner, "() => !document.querySelector('.orden-scrim')", "[Emil] quick add put away")
-    owner.evaluate("() => window.nibApp.workspace.closeActive()")
-    owner.evaluate("async (link) => (await window.nibApp.chats()).openChatLink(link)", link)
+    owner.evaluate("() => window.ordenApp.workspace.closeActive()")
+    owner.evaluate("async (link) => (await window.ordenApp.chats()).openChatLink(link)", link)
     came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the task's link, opening the message")
 
     owner.evaluate(
-        "async () => { const { writeFile } = await window.nibApp.tasks();"
+        "async () => { const { writeFile } = await window.ordenApp.tasks();"
         " await writeFile('/Team/Plan.md', '# Plan\\n\\nThe figures go in on Friday.\\n');"
-        " await window.nibApp.workspace.fileCame('/Team/Plan.md', 'file');"
-        " await window.nibApp.workspace.loadTree() }"
+        " await window.ordenApp.workspace.fileCame('/Team/Plan.md', 'file');"
+        " await window.ordenApp.workspace.loadTree() }"
     )
-    tree = "() => { const walk = (e) => e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []; return walk(window.nibApp.workspace.tree) }"
+    tree = "() => { const walk = (e) => e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []; return walk(window.ordenApp.workspace.tree) }"
     try:
         wait(owner, f"() => ({tree})().some((one) => one.endsWith('/Plan.md'))", "[Emil] the note Plan")
     except SystemExit:
         say(f"[Emil] the tree: {owner.evaluate(tree)}")
         raise
-    owner.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    owner.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     plan = owner.locator(".row[data-path$='Plan.md']").first
     plan.wait_for(timeout=10_000)
     plan.click()
@@ -220,7 +220,7 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
 
 LISTED = """
 async (id) => {
-  const { chats } = await window.nibApp.chats()
+  const { chats } = await window.ordenApp.chats()
   return { has: chats.list.some((one) => one.id === id), nameless: chats.list.filter((one) => !one.name).length }
 }
 """
@@ -231,14 +231,14 @@ BLANK_ROWS = """
 """
 
 def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> None:
-    owner.evaluate("async () => (await window.nibApp.chats()).makeChat()")
+    owner.evaluate("async () => (await window.ordenApp.chats()).makeChat()")
     field = owner.locator("input[aria-label='Name']")
     field.fill("Doomed")
     field.press("Enter")
     doomed = wait(owner, CHAT_PATH, "[Emil] the second chat's pointer", "Doomed", patience=SYNCED)
     wait(member, CHAT_PATH, "[Lucile] the second chat's pointer", "Doomed", patience=SYNCED)
 
-    owner.evaluate("(path) => window.nibApp.workspace.remove(path, false)", doomed["path"])
+    owner.evaluate("(path) => window.ordenApp.workspace.remove(path, false)", doomed["path"])
     took = came(owner, f"async () => !(await ({LISTED})({json.dumps(doomed['id'])})).has", "[Emil] the deleted chat gone")
     if took is not None:
         say(f"Emil's list let the deleted chat go after {took:.2f}s")
@@ -255,8 +255,8 @@ def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> N
     if doomed["id"] in listed:
         wrong("the account still lists the deleted chat to Lucile")
     member.reload(wait_until="domcontentloaded")
-    wait(member, "() => !!window.nibApp && window.nibApp.account.signedIn", "[Lucile] the session again", patience=40)
-    wait(member, "async () => (await window.nibApp.chats()).chats.ready", "[Lucile] the chats' store again", patience=40)
+    wait(member, "() => !!window.ordenApp && window.ordenApp.account.signedIn", "[Lucile] the session again", patience=40)
+    wait(member, "async () => (await window.ordenApp.chats()).chats.ready", "[Lucile] the chats' store again", patience=40)
     member.wait_for_timeout(2000)
     for page, label in ((owner, "Emil"), (member, "Lucile")):
         said = page.evaluate(LISTED, doomed["id"])
@@ -264,7 +264,7 @@ def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> N
             wrong(f"[{label}] still lists the deleted chat")
         if said["nameless"]:
             wrong(f"[{label}] lists {said['nameless']} chats with no name")
-        page.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
         page.wait_for_timeout(300)
         blank = page.evaluate(BLANK_ROWS)
         if blank:
@@ -300,8 +300,8 @@ def main() -> int:
         _, reader = signed_in(browser, tokens[READER], "Mia")
 
         show_space(owner, "Emil", space["id"])
-        wait(owner, "async () => (await window.nibApp.chats()).chats.ready", "[Emil] the chats' store", patience=40)
-        owner.evaluate("async () => (await window.nibApp.chats()).makeChat()")
+        wait(owner, "async () => (await window.ordenApp.chats()).chats.ready", "[Emil] the chats' store", patience=40)
+        owner.evaluate("async () => (await window.ordenApp.chats()).makeChat()")
         field = owner.locator("input[aria-label='Name']")
         field.fill("Chat")
         field.press("Enter")
@@ -381,8 +381,8 @@ def main() -> int:
         DRIVE.shot(owner, "emil-chat")
         DRIVE.shot(member, "lucile-chat")
 
-        member.evaluate("() => window.nibApp.workspace.closeActive()")
-        member.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+        member.evaluate("() => window.ordenApp.workspace.closeActive()")
+        member.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
         wait(member, "() => !!document.querySelector('.chats .entry')", "[Lucile] the Chats panel")
         type_in(owner, "@Lucile could you look at the figures")
         took = came(

@@ -21,8 +21,8 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(a, "Alpha")
     b = ctx.new_page(); b.goto(a.url); DRIVE.ready(b)
     DRIVE.open_note(b, "Beta")
-    a.evaluate("() => window.nibApp.present.start()"); a.wait_for_selector(".stage")
-    b.evaluate("() => window.nibApp.present.start()"); b.wait_for_selector(".stage")
+    a.evaluate("() => window.ordenApp.present.start()"); a.wait_for_selector(".stage")
+    b.evaluate("() => window.ordenApp.present.start()"); b.wait_for_selector(".stage")
     a.wait_for_timeout(300)
     with b.expect_popup() as told:
         b.keyboard.press("p")
@@ -45,7 +45,7 @@ def drive(browser: Browser) -> None:
         wrong(f"Alpha's own move took the presenter: {p.evaluate(HEAD)!r}")
     b.keyboard.press("Escape"); b.wait_for_timeout(300); b.keyboard.press("Escape")
     b.wait_for_timeout(1500)
-    say(f"Beta stopped: presenter {'closed' if p.is_closed() else repr(p.evaluate(HEAD))}; B on {b.evaluate('() => window.nibApp.present.on')}")
+    say(f"Beta stopped: presenter {'closed' if p.is_closed() else repr(p.evaluate(HEAD))}; B on {b.evaluate('() => window.ordenApp.present.on')}")
     if not p.is_closed() and not p.evaluate(HEAD).startswith("Alpha 2"):
         wrong(f"after Beta stopped the presenter shows {p.evaluate(HEAD)!r}, not Alpha 2")
     a.keyboard.press("Escape"); a.wait_for_timeout(300); a.keyboard.press("Escape")

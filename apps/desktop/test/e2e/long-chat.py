@@ -12,7 +12,7 @@ N = int(os.environ.get("TURNS", "400"))
 
 SETUP = """
 async () => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: 'http://127.0.0.1:9', model: 'fake-small' })
@@ -22,7 +22,7 @@ async () => {
 """
 
 SEED = """async ([n, provider]) => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   const { writeThread } = await import('/src/lib/ai/chat/threads.ts')
   const space = chat.space || (chat.spaces && chat.spaces[0])
   const now = Date.now()
@@ -40,7 +40,7 @@ SEED = """async ([n, provider]) => {
 }"""
 
 OPEN = """async () => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   await chat.refresh?.()
   const t0 = performance.now()
   await chat.openThread('long')

@@ -141,7 +141,7 @@ def check(page: Page, where: str, kinds: tuple[str, ...] = ("?",)) -> int:
 def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ...] = ()) -> None:
     counted = 0
     for section in sections:
-        page.evaluate("(id) => window.nibApp.settings.show(id)", section)
+        page.evaluate("(id) => window.ordenApp.settings.show(id)", section)
         page.wait_for_timeout(500)
         kinds = ("?", "arrow") if section in arrows else ("?",)
         for size, face in LOOKS:
@@ -157,7 +157,7 @@ def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ..
 WIDTHS = (60, 80, 110, 144, 177, 210, 250, 300)
 
 def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
-    page.evaluate("(id) => window.nibApp.settings.show(id)", section)
+    page.evaluate("(id) => window.ordenApp.settings.show(id)", section)
     page.wait_for_timeout(500)
     for width in WIDTHS:
         tall = page.evaluate(
@@ -186,10 +186,10 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
         f"localStorage.setItem('orden:language', {language!r}); localStorage.setItem('orden:access-choice', 'claude')"
     )
     DRIVE.open(page)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     if touch:
         page.evaluate("() => document.documentElement.toggleAttribute('data-touch', true)")
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] .explain')", "the settings")
     direction = page.evaluate("() => getComputedStyle(document.querySelector('[role=\"dialog\"] .explain')).direction")
     say(f"[{tag}] direction {direction}")
@@ -198,7 +198,7 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
     machine = language in ("ar", "es")
     panes(page, tag, PANES, ("general",) if machine else ())
     wrapped(page, tag, "general", ("?", "arrow") if machine else ("?",))
-    page.evaluate("() => { window.nibApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
+    page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
     panes(page, tag, SIGNED_IN, ("ai",))
     wrapped(page, tag, "ai", ("?", "arrow"))
     page.context.close()

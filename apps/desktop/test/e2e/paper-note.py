@@ -39,20 +39,20 @@ async ({ base64, name }) => {
 
   // The store alone, without the sheet: a sheet that mounts mid-read can be closed by
   // the focus moving, and a sheet closed while reading starts over.
-  const importing = window.nibApp.importing
-  importing.root = window.nibApp.workspace.activeSpace.root
+  const importing = window.ordenApp.importing
+  importing.root = window.ordenApp.workspace.activeSpace.root
   await importing.take([new File([bytes], name, { type: 'application/pdf' })])
   if (importing.format !== 'pdf-pages') return { format: importing.format, error: importing.error }
 
   await importing.run()
-  await window.nibApp.workspace.loadTree()
+  await window.ordenApp.workspace.loadTree()
   return { format: importing.format, error: importing.error, folder: importing.folder }
 }
 """
 
 SEED_PDF = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -65,13 +65,13 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
 LISTED = """
-(under) => window.nibApp.workspace.files
+(under) => window.ordenApp.workspace.files
   .map((one) => one.path)
   .filter((path) => !under || path.includes('/' + under + '/'))
   .map((path) => path.split('/').pop())
@@ -95,17 +95,17 @@ DARK_ON_SHEET = """
 
 def drawn(page: Page, label: str, pages: int) -> None:
     page.wait_for_selector(".pages", timeout=15000)
-    DRIVE.waited(page, f"window.nibApp.pages.current?.store.count === {pages}", f"[{label}] the page note")
+    DRIVE.waited(page, f"window.ordenApp.pages.current?.store.count === {pages}", f"[{label}] the page note")
     dark: list[int] = []
     for number in range(1, pages + 1):
-        page.evaluate("(number) => window.nibApp.pages.current?.store.turnTo(number)", number)
+        page.evaluate("(number) => window.ordenApp.pages.current?.store.turnTo(number)", number)
         DRIVE.waited(
             page,
             f"({DARK_ON_SHEET.strip()})({number}) >= 100",
             f"[{label}] page {number} of the paper to be drawn",
         )
         dark.append(page.evaluate(DARK_ON_SHEET, number))
-    page.evaluate("() => window.nibApp.pages.current?.store.turnTo(1)")
+    page.evaluate("() => window.ordenApp.pages.current?.store.turnTo(1)")
     say(f"[{label}] dark pixels per sheet: {dark}")
     for at, count in enumerate(dark):
         if count < 0:
@@ -124,7 +124,7 @@ def only_the_note(page: Page, label: str, under: str, note: str) -> None:
 
 def imported(page: Page) -> None:
     say("--- a PDF through the Import door ---")
-    wait_for(page, "!!window.nibApp.importing", "the import sheet's store")
+    wait_for(page, "!!window.ordenApp.importing", "the import sheet's store")
     made = page.evaluate(IMPORT, {"base64": PAPER, "name": "Lecture 4.pdf"})
     if made.get("format") != "pdf-pages" or made.get("error"):
         wrong(f"the import read the paper as {made.get('format')!r}: {made.get('error')!r}")
@@ -134,15 +134,15 @@ def imported(page: Page) -> None:
     only_the_note(page, "import", folder, "Lecture 4.pages")
 
     path = page.evaluate(
-        "() => window.nibApp.workspace.files.find((one) => one.name === 'Lecture 4.pages')?.path ?? null"
+        "() => window.ordenApp.workspace.files.find((one) => one.name === 'Lecture 4.pages')?.path ?? null"
     )
     if not path:
         return
-    page.evaluate("async (path) => window.nibApp.workspace.openEntry(path)", path)
+    page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path)", path)
     drawn(page, "import", 2)
 
     files = page.evaluate(
-        "() => window.nibApp.pages.current.store.pages.map((one) => one.file ?? null)"
+        "() => window.ordenApp.pages.current.store.pages.map((one) => one.file ?? null)"
     )
     if files != ["Lecture 4.pages.pdf", "Lecture 4.pages.pdf"]:
         wrong(f"[import] the pages name {files}")
@@ -150,23 +150,23 @@ def imported(page: Page) -> None:
 
 def opened_in_place(page: Page) -> str | None:
     say("--- a PDF already in the space, opened ---")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     pdf = f"{root}/Reading/Optics.pdf"
     if not page.evaluate(SEED_PDF, {"path": pdf, "data": PAPER}):
         wrong("the seeded PDF is not in the list")
         return None
     shot(page, "02-a-pdf-in-the-space")
 
-    page.evaluate("async (path) => window.nibApp.workspace.openEntry(path)", pdf)
+    page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path)", pdf)
     wait_for(
         page,
-        "window.nibApp.workspace.active?.path?.endsWith('/Reading/Optics.pages')",
+        "window.ordenApp.workspace.active?.path?.endsWith('/Reading/Optics.pages')",
         "the PDF to open as its page note",
     )
     only_the_note(page, "in place", "Reading", "Optics.pages")
     drawn(page, "in place", 2)
     shot(page, "03-replaced-by-its-page-note")
-    return page.evaluate("() => window.nibApp.workspace.active.path")
+    return page.evaluate("() => window.ordenApp.workspace.active.path")
 
 def stroke(page: Page, cdp) -> None:
     page.keyboard.press("Escape")
@@ -203,18 +203,18 @@ def stroke(page: Page, cdp) -> None:
 
 def ink_kept(page: Page, cdp, path: str) -> None:
     say("--- ink on it, kept ---")
-    ink = "window.nibApp.pages.current?.store.canvas.ink.length ?? -1"
+    ink = "window.ordenApp.pages.current?.store.canvas.ink.length ?? -1"
     before = page.evaluate(f"() => {ink}")
     stroke(page, cdp)
     if page.evaluate(f"() => {ink}") != before + 1:
         wrong("a pen stroke on the page note left no ink")
         return
 
-    page.evaluate("() => window.nibApp.pages.current?.store.part()")
+    page.evaluate("() => window.ordenApp.pages.current?.store.part()")
     page.wait_for_timeout(600)
     page.evaluate(
         """async (path) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const tab of ws.tabs.filter((one) => one.path === path)) ws.close(tab.id)
           await ws.openEntry(path)
         }""",
@@ -243,13 +243,13 @@ def exported(page: Page) -> None:
         wrong("Export as PDF handed back something that is not a PDF")
         return
 
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     back = f"{root}/Exported.pdf"
     page.evaluate(SEED_PDF, {"path": back, "data": base64.b64encode(body).decode("ascii")})
-    page.evaluate("async (path) => window.nibApp.workspace.openEntry(path)", back)
+    page.evaluate("async (path) => window.ordenApp.workspace.openEntry(path)", back)
     wait_for(
         page,
-        "window.nibApp.workspace.active?.path?.endsWith('/Exported.pages')",
+        "window.ordenApp.workspace.active?.path?.endsWith('/Exported.pages')",
         "the exported PDF to open as a page note",
     )
     drawn(page, "exported", 2)

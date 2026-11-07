@@ -36,7 +36,7 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = 'phone'
   app.viewport.portrait = true
   app.viewport.narrow = true
@@ -51,7 +51,7 @@ AS_PHONE = """
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -93,14 +93,14 @@ def relist(page: Page, where: str) -> None:
     if where != "phone":
         return
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(350)
 
 def unlist(page: Page, where: str) -> None:
     if where != "phone":
         return
 
-    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    page.evaluate("() => { window.ordenApp.workspace.panel = null }")
     page.wait_for_timeout(350)
 
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
@@ -112,7 +112,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         if where == "phone":
             page.evaluate(AS_PHONE)
             page.evaluate(
-                "() => { const ws = window.nibApp.workspace;"
+                "() => { const ws = window.ordenApp.workspace;"
                 " if (!ws.panel) ws.showPanel('tree') }"
             )
             page.wait_for_timeout(350)
@@ -157,16 +157,16 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         quiet.click()
         wait_for(
             page,
-            "() => window.nibApp.workspace.active?.path?.endsWith('Projects/Projects.md')",
+            "() => window.ordenApp.workspace.active?.path?.endsWith('Projects/Projects.md')",
             f"[{label}] the folder note to open",
         )
         check(
-            page.evaluate("() => window.nibApp.workspace.active.doc === ''"),
+            page.evaluate("() => window.ordenApp.workspace.active.doc === ''"),
             f"[{label}] as an empty page",
         )
         check(
             page.evaluate(
-                "() => !window.nibApp.workspace.notes.some((one) =>"
+                "() => !window.ordenApp.workspace.notes.some((one) =>"
                 " one.path.endsWith('Projects/Projects.md'))"
             ),
             f"[{label}] and nothing was written into the vault by looking",
@@ -180,7 +180,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.keyboard.type("The two of them")
         wait_for(
             page,
-            "() => window.nibApp.workspace.notes.some((one) =>"
+            "() => window.ordenApp.workspace.notes.some((one) =>"
             " one.path.endsWith('Projects/Projects.md'))",
             f"[{label}] the note to be written",
         )
@@ -197,7 +197,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         row(page, "Loft.md").click()
         wait_for(
             page,
-            "() => window.nibApp.workspace.active?.path?.endsWith('Projects/Loft.md')",
+            "() => window.ordenApp.workspace.active?.path?.endsWith('Projects/Loft.md')",
             f"[{label}] the note to open",
         )
         page.keyboard.press("Control+Shift+KeyP")

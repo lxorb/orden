@@ -40,7 +40,7 @@ def clipboard(page: Page) -> str:
     return str(page.evaluate("() => navigator.clipboard.readText()"))
 
 def settings(page: Page, label: str, version: str) -> None:
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, f"!!document.querySelector({ROW!r})", f"[{label}] the Version row")
     row = page.locator(ROW).filter(has_text="Version").last
     row.scroll_into_view_if_needed()
@@ -58,7 +58,7 @@ def settings(page: Page, label: str, version: str) -> None:
     if row.locator(".said").inner_text().strip() != "Copied":
         wrong(f"[{label}] the row does not say it copied")
     shot(page, f"{label}-copied")
-    page.evaluate("() => (window.nibApp.settings.open = false)")
+    page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(1800)
 
 def searched(page: Page, label: str, version: str) -> None:

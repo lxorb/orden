@@ -11,7 +11,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -24,8 +24,8 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
@@ -40,9 +40,9 @@ SHOWN = """
 }
 """
 
-ZOOM = "(scale) => { const store = window.nibApp.pages.current.store; store.camera = { ...store.camera, scale } }"
+ZOOM = "(scale) => { const store = window.ordenApp.pages.current.store; store.camera = { ...store.camera, scale } }"
 
-PAN = "(by) => { const store = window.nibApp.pages.current.store; store.camera = { ...store.camera, x: store.camera.x + by, y: store.camera.y + by } }"
+PAN = "(by) => { const store = window.ordenApp.pages.current.store; store.camera = { ...store.camera, x: store.camera.x + by, y: store.camera.y + by } }"
 
 
 def paper() -> bytes:
@@ -73,14 +73,14 @@ def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 412, "height": 860}, device_scale_factor=3)
     page = context.new_page()
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     pdf = f"{root}/Close.pdf"
     if not page.evaluate(SEED, {"path": pdf, "data": base64.b64encode(paper()).decode("ascii")}):
         wrong("the PDF never reached the space")
         return
-    page.evaluate("(path) => window.nibApp.workspace.openPdf(path, 1)", pdf)
-    wait_for(page, "window.nibApp.pages.current?.store.count === 1", "the page note")
+    page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
+    wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
     page.wait_for_timeout(1500)
 
     page.evaluate(ZOOM, 4)
@@ -101,7 +101,7 @@ def drive(browser: Browser) -> None:
     if moved is None:
         wrong("after a pan, the close-up is gone")
 
-    page.evaluate("() => window.nibApp.pages.current.store.fitAgain()")
+    page.evaluate("() => window.ordenApp.pages.current.store.fitAgain()")
     page.wait_for_timeout(1500)
     if page.evaluate(SHOWN) is not None:
         wrong("fitted again, the page still holds a close-up it does not need")

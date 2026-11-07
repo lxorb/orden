@@ -101,7 +101,7 @@ MODEL_ORIGIN = DRIVE.side(Model)
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
@@ -119,7 +119,7 @@ async ([provider, quote, replace]) => {
 }
 """
 
-NOTE_TEXT = "() => window.nibApp.workspace.active?.note?.latest ?? ''"
+NOTE_TEXT = "() => window.ordenApp.workspace.active?.note?.latest ?? ''"
 
 WHERE = """
 () => {
@@ -161,7 +161,7 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.open_note(page, "Herons")
     tag = f"{scheme}/"
 
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
     page.wait_for_timeout(300)
@@ -420,7 +420,7 @@ def flow(browser: Browser) -> None:
     DRIVE.seed(page, HERONS)
     provider = page.evaluate(SETUP, MODEL_ORIGIN)
     DRIVE.open_note(page, "Herons")
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
 
@@ -551,7 +551,7 @@ def shape(browser: Browser, scheme: str) -> None:
     DRIVE.seed(page, HERONS, HOVERING)
     provider = page.evaluate(SETUP, MODEL_ORIGIN)
     DRIVE.open_note(page, "Herons")
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     waited(page, f"document.querySelector('{FIELD}')", "the field")
     tag = f"shape/{scheme}/"
@@ -684,7 +684,7 @@ def shape(browser: Browser, scheme: str) -> None:
     menu_row(page, "Open in new tab").click()
     waited(page, "document.querySelector('.ask.wide .shelf .threads')", "the conversation in a tab")
     page.wait_for_timeout(500)
-    if page.evaluate("() => window.nibApp.workspace.openOn('right')") == "ask":
+    if page.evaluate("() => window.ordenApp.workspace.openOn('right')") == "ask":
         wrong("the side stayed open beside the tab")
     column = page.evaluate(BOX, ".ask.wide .composer")
     if not column or (column["right"] - column["left"]) > 48 * 16 + 40:

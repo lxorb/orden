@@ -62,11 +62,11 @@ def both_builds(worker: harness.Worker) -> Path:
 
 def settled(page: Page) -> None:
     page.wait_for_load_state("domcontentloaded")
-    wait(page, "() => !!window.nibApp?.workspace", "the app")
+    wait(page, "() => !!window.ordenApp?.workspace", "the app")
     page.wait_for_timeout(800)
 
 def row(page: Page) -> str:
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     found = page.locator(ROW)
     try:
         found.wait_for(timeout=PATIENCE * 1000)
@@ -109,7 +109,7 @@ def drive(page: Page) -> None:
         wrong(f"on the edge the row says {said!r}")
     shot(page, "3-edge-settings")
 
-    page.evaluate("() => (window.nibApp.settings.open = false)")
+    page.evaluate("() => (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)
     row(page)
     choose(page, "Stable")

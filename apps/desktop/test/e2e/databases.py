@@ -51,7 +51,7 @@ views:
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
   await ws.loadTree()
@@ -63,8 +63,8 @@ def note(page: Page, path: str) -> dict[str, object]:
     return page.evaluate(f"({ROW})({json.dumps(path)})?.note ?? null")  # type: ignore[no-any-return]
 
 def seed(page: Page) -> None:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     files = [
         ["Projects/Thesis.md", THESIS],
         ["Projects/Garden.md", GARDEN],
@@ -83,7 +83,7 @@ def seed(page: Page) -> None:
 def open_view(page: Page, view: str) -> None:
     page.evaluate(
         """async (view) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const tab of ws.tabs.filter((one) => one.kind === 'view' && one.path)) await ws.closeAsking(tab.id)
           const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
           window.tasks.openBaseFile(`${root}/Projects.base`, {}, view)

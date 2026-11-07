@@ -171,7 +171,7 @@ async ([notePath, note]) => {
   // and asking for a version behind the one it made is an error rather than an
   // upgrade. So this is a row in a store that is there.
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -195,7 +195,7 @@ async ([notePath, note]) => {
 STORED = """
 async () => {
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open('nib')
+    const request = indexedDB.open('orden')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })

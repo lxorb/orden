@@ -46,12 +46,12 @@ def signed_in(
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait(page, "() => !!window.nibApp && window.nibApp.account.signedIn", f"[{label}] the session", 40)
-    wait(page, "() => !!window.nibApp.aiVault", f"[{label}] the AI vault handle", 40)
+    wait(page, "() => !!window.ordenApp && window.ordenApp.account.signedIn", f"[{label}] the session", 40)
+    wait(page, "() => !!window.ordenApp.aiVault", f"[{label}] the AI vault handle", 40)
     return context, page
 
 def standing(word: str) -> str:
-    return f"async () => (await window.nibApp.aiVault()).vault.standing === {json.dumps(word)}"
+    return f"async () => (await window.ordenApp.aiVault()).vault.standing === {json.dumps(word)}"
 
 def main() -> int:
     worker = harness.Worker(DRIVE)
@@ -73,9 +73,9 @@ def main() -> int:
         _, laptop = signed_in(browser, tokens[0], "laptop")
         laptop.evaluate(
             """async (key) => {
-              const { writeKey } = await window.nibApp.aiVault()
-              const made = window.nibApp.ai.add('anthropic')
-              window.nibApp.ai.update(made.id, { model: 'claude-opus-5-5' })
+              const { writeKey } = await window.ordenApp.aiVault()
+              const made = window.ordenApp.ai.add('anthropic')
+              window.ordenApp.ai.update(made.id, { model: 'claude-opus-5-5' })
               await writeKey(made.id, key)
             }""",
             KEY,
@@ -94,11 +94,11 @@ def main() -> int:
         wait(phone, standing("waiting"), "the phone waiting", 40)
         digits = wait(
             phone,
-            "async () => (await window.nibApp.aiVault()).vault.digits",
+            "async () => (await window.ordenApp.aiVault()).vault.digits",
             "the phone's six digits, once the laptop answered",
             40,
         )
-        phone.evaluate("window.nibApp.settings.show('ai')")
+        phone.evaluate("window.ordenApp.settings.show('ai')")
         phone.wait_for_selector(f"text={digits}")
         shot(phone, "01-phone-waiting")
         check("the phone waits, its six digits in Settings > AI", bool(digits))
@@ -111,7 +111,7 @@ def main() -> int:
 
         wait(phone, standing("offered"), "the phone offered the vault", LIVE)
         phone.wait_for_selector("text=offers this device your AI vault")
-        before = phone.evaluate("() => window.nibApp.ai.accounts.map((one) => one.id)")
+        before = phone.evaluate("() => window.ordenApp.ai.accounts.map((one) => one.id)")
         shot(phone, "03-phone-offered")
         check("the phone, offered the vault, takes nothing until Join", before == [])
         phone.get_by_role("button", name="Join", exact=True).click()
@@ -119,9 +119,9 @@ def main() -> int:
         wait(phone, standing("open"), "the phone open", LIVE)
         have = phone.evaluate(
             """async () => {
-              const { readSecret } = await window.nibApp.aiVault()
+              const { readSecret } = await window.ordenApp.aiVault()
               return { key: await readSecret('anthropic'),
-                       ids: window.nibApp.ai.accounts.map((one) => one.id) }
+                       ids: window.ordenApp.ai.accounts.map((one) => one.id) }
             }"""
         )
         check("the phone has the account", have["ids"] == ["anthropic"])
@@ -134,14 +134,14 @@ def main() -> int:
         check("the account holds the vault sealed", len(rows) == 1 and KEY not in stored)
         check("both devices are allowed", len(wraps) == 2 and all(one["wrapped"] for one in wraps))
 
-        phone.evaluate("window.nibApp.ai.update('anthropic', { name: 'Work' })")
+        phone.evaluate("window.ordenApp.ai.update('anthropic', { name: 'Work' })")
         start = time.monotonic()
-        wait(laptop, "() => window.nibApp.ai.accounts[0]?.name === 'Work'", "the change on the laptop", LIVE)
+        wait(laptop, "() => window.ordenApp.ai.accounts[0]?.name === 'Work'", "the change on the laptop", LIVE)
         say(f"     a change on the phone reached the laptop in {time.monotonic() - start:.1f} s")
         check("a change on the phone reaches the laptop", True)
 
         phone.reload(wait_until="domcontentloaded")
-        wait(phone, "() => !!window.nibApp && !!window.nibApp.aiVault", "the phone again", 40)
+        wait(phone, "() => !!window.ordenApp && !!window.ordenApp.aiVault", "the phone again", 40)
         wait(phone, standing("open"), "the phone open after a reload", 40)
         check("the phone, reloaded, opens without asking", True)
 
@@ -154,12 +154,12 @@ def main() -> int:
         shot(phone, "05-phone-signing-out")
         check("signing out asks whether the phone leaves the vault too", True)
         phone.locator('.sheet:has(p.title)').get_by_role("button", name="Sign out", exact=True).click()
-        wait(phone, "() => !window.nibApp.account.signedIn", "the phone signed out", LIVE)
+        wait(phone, "() => !window.ordenApp.account.signedIn", "the phone signed out", LIVE)
         approved = worker.query("select id from ai_devices where approved_at is not null")
         check("Sign out alone keeps the phone in the vault", len(approved) == 2)
 
         held = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
-        laptop.evaluate("window.nibApp.settings.show('ai')")
+        laptop.evaluate("window.ordenApp.settings.show('ai')")
         laptop.wait_for_selector("text=Devices with your AI vault")
         rows = laptop.locator('.card[data-device]:not(:has-text("This device"))')
         shot(laptop, "06-laptop-devices")
@@ -168,7 +168,7 @@ def main() -> int:
         laptop.locator('.sheet:has(p.title:has-text("Remove "))').get_by_role("button", name="Remove", exact=True).click()
         wait(
             laptop,
-            "async () => (await window.nibApp.aiVault()).vault.allowed.length === 1",
+            "async () => (await window.ordenApp.aiVault()).vault.allowed.length === 1",
             "the phone let go of",
             LIVE,
         )
@@ -177,7 +177,7 @@ def main() -> int:
         check("the vault is sealed again under a new key", after["blob"] != held["blob"] and after["rev"] > held["rev"])
         check("the account holds the new token's hash", after["auth_hash"] != held["auth_hash"])
         check("the phone's place and its wrap are gone", len(devices) == 1 and devices[0]["wrapped"])
-        laptop.evaluate("window.nibApp.ai.update('anthropic', { name: 'After' })")
+        laptop.evaluate("window.ordenApp.ai.update('anthropic', { name: 'After' })")
         wait(laptop, standing("open"), "the laptop still open", LIVE)
         shot(laptop, "07-laptop-alone")
     return DRIVE.verdict("the AI accounts carried from one device to another, end to end")

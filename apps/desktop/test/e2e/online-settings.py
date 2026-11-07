@@ -146,7 +146,7 @@ LOOKS = [
 
 SIGNED_IN = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.account.token = 'a-drive-session'
   app.account.user = { id: 'drive', email: 'drive@example.com', name: 'Drive' }
   app.account.settling = false
@@ -248,8 +248,8 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
             DRIVE.open(page)
             DRIVE.wait_for(page, SIGNED_IN, "the account")
         name = f"{kind}-{width}-{scheme}-{machine}"
-        page.evaluate("() => window.nibApp.settings.show('general')")
-        page.evaluate("() => window.nibApp.settings.show('online')")
+        page.evaluate("() => window.ordenApp.settings.show('general')")
+        page.evaluate("() => window.ordenApp.settings.show('online')")
         DRIVE.wait_for(page, "document.querySelector('.online .meter')", f"[{name}] the meters")
         quiet(page)
         shot(page, name)

@@ -60,12 +60,12 @@ async ({ base64, name, root }) => {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
-  const importing = window.nibApp.importing
+  const importing = window.ordenApp.importing
   importing.root = root
   await importing.take([new File([bytes], name, { type: 'application/pdf' })])
   if (importing.format !== 'pdf-pages') return { format: importing.format, error: importing.error }
   await importing.run()
-  await window.nibApp.workspace.loadTree()
+  await window.ordenApp.workspace.loadTree()
   return { format: importing.format, error: importing.error }
 }
 """
@@ -85,7 +85,7 @@ DARK_ON_SHEETS = """
 
 KEPT = """
 async (path) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -101,7 +101,7 @@ async (path) => {
 """
 
 ENGINE = """() => {
-  const engine = window.nibApp.sync.engine?.engine
+  const engine = window.ordenApp.sync.engine?.engine
   if (!engine) return 'no engine'
   return [...engine.core.spaces.values()].map((space) => ({
     root: space.row.root,
@@ -117,15 +117,15 @@ def device(browser: Browser, label: str, at: str, token: str | None = None) -> P
     page = context.new_page()
     page.on("pageerror", lambda error: failed(f"[{label}] page error: {error}"))
     page.goto(at, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app")
     return page
 
 def space_root(page: Page, label: str, space: str) -> str:
     return wait_for(
         page,
-        "(id) => { const space = window.nibApp.workspace.spaces.find("
-        "  (one) => window.nibApp.sync.remoteIdFor(one.root) === id);"
-        " if (!space) return null; window.nibApp.workspace.showSpace(space.id); return space.root }",
+        "(id) => { const space = window.ordenApp.workspace.spaces.find("
+        "  (one) => window.ordenApp.sync.remoteIdFor(one.root) === id);"
+        " if (!space) return null; window.ordenApp.workspace.showSpace(space.id); return space.root }",
         f"[{label}] the space",
         space,
         patience=SYNCED,
@@ -166,8 +166,8 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     space = worker.request("/v1/spaces", token=token, body={"name": f"Papers {version}"})["space"]
 
     owner = device(browser, f"v{version}-owner", ORIGIN, token)
-    wait_for(owner, "() => !!window.nibApp?.account.user", f"[v{version}-owner] the account")
-    if owner.evaluate("() => window.nibApp.sync.version") != version:
+    wait_for(owner, "() => !!window.ordenApp?.account.user", f"[v{version}-owner] the account")
+    if owner.evaluate("() => window.ordenApp.sync.version") != version:
         failed(f"[v{version}] the owner is not on sync v{version}")
     root = space_root(owner, f"v{version}-owner", space["id"])
     made = owner.evaluate(IMPORT, {"base64": PAPER, "name": "Lecture.pdf", "root": root})
@@ -175,17 +175,17 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
         raise SystemExit(f"[v{version}] the import did not make a page note: {made}")
     path = wait_for(
         owner,
-        "(name) => window.nibApp.workspace.files.find((one) => one.path.endsWith('/' + name))?.path",
+        "(name) => window.ordenApp.workspace.files.find((one) => one.path.endsWith('/' + name))?.path",
         f"[v{version}-owner] the page note in the list",
         NOTE,
     )
     inside = path[len(root) :]
-    owner.evaluate("(path) => window.nibApp.workspace.openEntry(path)", path)
+    owner.evaluate("(path) => window.ordenApp.workspace.openEntry(path)", path)
     drawn(owner, f"v{version}-owner", 2)
     try:
         note = wait_for(
             owner,
-            "(path) => window.nibApp.sync.tracked(path)?.id ?? null",
+            "(path) => window.ordenApp.sync.tracked(path)?.id ?? null",
             f"[v{version}-owner] the page note on the account",
             path,
             patience=SYNCED,
@@ -209,12 +209,12 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
     there = space_root(second, f"v{version}-second", space["id"])
     wait_for(
         second,
-        "(path) => window.nibApp.workspace.files.some((one) => one.path === path)",
+        "(path) => window.ordenApp.workspace.files.some((one) => one.path === path)",
         f"[v{version}-second] the page note in the list",
         there + inside,
         patience=SYNCED,
     )
-    second.evaluate("(path) => window.nibApp.workspace.openEntry(path)", there + inside)
+    second.evaluate("(path) => window.ordenApp.workspace.openEntry(path)", there + inside)
     drawn(second, f"v{version}-second", 2)
     try:
         wait_for(
@@ -229,7 +229,7 @@ def one_version(browser: Browser, worker: harness.Worker, version: int) -> None:
 
     guest = device(browser, f"v{version}-guest", link_to(worker, token, space["id"], note))
     try:
-        wait_for(guest, "() => !!window.nibApp.workspace.active?.note.shared", f"[v{version}-guest] the shared tab")
+        wait_for(guest, "() => !!window.ordenApp.workspace.active?.note.shared", f"[v{version}-guest] the shared tab")
         drawn(guest, f"v{version}-guest", 2)
     except SystemExit as gave_up:
         failed(str(gave_up))

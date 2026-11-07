@@ -190,7 +190,7 @@ def main() -> int:
         said["webviews up with the page alone"] = alone = pages_up(hwnd)
         overlays.shoot(hwnd, "page-alone")
 
-        app.ask("(() => { window.nibApp.updates.ready = '0.9.1'; return 'null' })()")
+        app.ask("(() => { window.ordenApp.updates.ready = '0.9.1'; return 'null' })()")
         time.sleep(1.5)
         notice = app.ask(WHERE % ".notice")
         page = app.ask(WHERE % ".hole")
@@ -215,7 +215,7 @@ def main() -> int:
         if sum(mine) > 0.1:
             failures.append("the notice is behind the page")
 
-        app.ask("(() => { window.nibApp.updates.dismiss(); return 'null' })()")
+        app.ask("(() => { window.ordenApp.updates.dismiss(); return 'null' })()")
         time.sleep(1)
         said["the page after Later"] = app.ask(WHERE % ".hole")
 

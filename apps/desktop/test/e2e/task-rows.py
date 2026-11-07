@@ -40,7 +40,7 @@ ERRANDS = """# Errands
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -55,8 +55,8 @@ def task(page: Page, words: str) -> dict[str, object] | None:
     return page.evaluate(TASK, words)  # type: ignore[no-any-return]
 
 def seed(page: Page) -> dict[str, str]:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     page.evaluate(WRITE, [[["Errands.md", ERRANDS.format(**days)]]])
     wait_for(

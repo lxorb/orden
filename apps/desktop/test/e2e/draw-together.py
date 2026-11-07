@@ -89,27 +89,27 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
 
 def listed(path: str) -> str:
     return (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        f"  return walk(window.nibApp.workspace.tree).includes('/{SPACE}/{path}')"
+        f"  return walk(window.ordenApp.workspace.tree).includes('/{SPACE}/{path}')"
         "}"
     )
 
 def opened(page: Page, label: str, name: str, note_id: str) -> None:
     wait_for(
         page,
-        f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+        f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
     page.evaluate(
         "async () => {"
-        f"  const space = window.nibApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)});"
-        "  if (space) await window.nibApp.workspace.showSpace(space.id)"
+        f"  const space = window.ordenApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)});"
+        "  if (space) await window.ordenApp.workspace.showSpace(space.id)"
         "}"
     )
     try:
@@ -120,20 +120,20 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
             + json.dumps(
                 page.evaluate(
                     "() => { const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []);"
-                    "  return { tree: walk(window.nibApp.workspace.tree),"
-                    "    spaces: window.nibApp.workspace.spaces,"
-                    "    active: window.nibApp.workspace.activeSpaceId,"
+                    "  return { tree: walk(window.ordenApp.workspace.tree),"
+                    "    spaces: window.ordenApp.workspace.spaces,"
+                    "    active: window.ordenApp.workspace.activeSpaceId,"
                     "    mirrors: JSON.parse(localStorage.getItem('orden:mirrors') ?? 'null') } }"
                 )
             )[:2000]
         )
         raise
 
-    page.evaluate(f"async () => {{ await window.nibApp.workspace.openCanvas('/{SPACE}/{name}') }}")
+    page.evaluate(f"async () => {{ await window.ordenApp.workspace.openCanvas('/{SPACE}/{name}') }}")
     wait_for(page, "() => !!document.querySelector('canvas.ink.settled')", f"[{label}] the plane")
     wait_for(
         page,
-        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+        f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the plane to join its room",
     )
 
@@ -149,7 +149,7 @@ def plane(page: Page) -> dict:
 def strokes(page: Page) -> int:
     return page.evaluate(
         """() => {
-            const text = window.nibApp.workspace.active?.doc ?? ''
+            const text = window.ordenApp.workspace.active?.doc ?? ''
             try {
                 return (JSON.parse(text).orden?.ink ?? []).length
             } catch {
@@ -159,14 +159,14 @@ def strokes(page: Page) -> int:
     )
 
 def file_of(page: Page) -> str:
-    return page.evaluate("() => window.nibApp.workspace.active?.doc ?? ''")
+    return page.evaluate("() => window.ordenApp.workspace.active?.doc ?? ''")
 
 PHONE = {"width": 390, "height": 844}
 
 def held_at_edge(page: Page, failures: list[str], label: str) -> None:
-    before = page.evaluate("() => window.nibApp.workspace.active.camera ?? null")
+    before = page.evaluate("() => window.ordenApp.workspace.active.camera ?? null")
     page.evaluate(
-        "() => { const tab = window.nibApp.workspace.active;"
+        "() => { const tab = window.ordenApp.workspace.active;"
         " tab.camera = { x: 40000, y: 0, scale: 0.5 } }"
     )
     try:
@@ -217,7 +217,7 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
         except SystemExit as gave_up:
             failures.append(str(gave_up))
 
-    page.evaluate("(camera) => { window.nibApp.workspace.active.camera = camera ?? undefined }", before)
+    page.evaluate("(camera) => { window.ordenApp.workspace.active.camera = camera ?? undefined }", before)
     page.wait_for_timeout(200)
 
 def pen(page: Page):
@@ -345,7 +345,7 @@ def main() -> int:
         for page, label in ((one, "one"), (two, "two")):
             wait_for(
                 page,
-                "() => Object.values(window.nibApp.rooms.present).some((n) => n > 0)",
+                "() => Object.values(window.ordenApp.rooms.present).some((n) => n > 0)",
                 f"[{label}] the other device to appear",
             )
         say("each browser can see that the other is there")
@@ -507,13 +507,13 @@ def main() -> int:
         joining = signed_in(browser, token, "three")
         wait_for(
             joining,
-            f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+            f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
             "[three] the space to arrive",
         )
         joining.evaluate(
             "async () => {"
-            f"  const space = window.nibApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)});"
-            "  if (space) await window.nibApp.workspace.showSpace(space.id)"
+            f"  const space = window.ordenApp.workspace.spaces.find((one) => one.name === {json.dumps(SPACE)});"
+            "  if (space) await window.ordenApp.workspace.showSpace(space.id)"
             "}"
         )
         for name, count, note_id in joins:
@@ -522,11 +522,11 @@ def main() -> int:
             before = heap(joining)
             started = time.perf_counter()
             joining.evaluate(
-                f"async () => {{ await window.nibApp.workspace.openCanvas('/{SPACE}/{name}') }}"
+                f"async () => {{ await window.ordenApp.workspace.openCanvas('/{SPACE}/{name}') }}"
             )
             wait_for(
                 joining,
-                f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
+                f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
                 f"[three] {name} to join its room",
                 90,
             )
@@ -545,7 +545,7 @@ def main() -> int:
 
             held = joining.evaluate(
                 """() => {
-                    const text = window.nibApp.workspace.active?.doc ?? ''
+                    const text = window.ordenApp.workspace.active?.doc ?? ''
                     try { return (JSON.parse(text).orden?.ink ?? []).length } catch { return 0 }
                 }"""
             )

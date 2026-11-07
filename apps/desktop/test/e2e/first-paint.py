@@ -24,7 +24,7 @@ ROUNDS = 9
 SEED = """
 async (count) => {
   const open = () => new Promise((go, no) => {
-    const ask = indexedDB.open('nib')
+    const ask = indexedDB.open('orden')
     ask.onupgradeneeded = () => {
       const db = ask.result
       for (const name of ['files', 'assets', 'stats']) {
@@ -164,7 +164,7 @@ WATCHING = 4000
 
 LISTING = """
 async (rounds) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const taken = []
 
   for (let round = 0; round < rounds; round++) {
@@ -180,8 +180,8 @@ async (rounds) => {
 
 SCAN = """
 async (rounds) => {
-  const links = window.nibApp.links
-  const ws = window.nibApp.workspace
+  const links = window.ordenApp.links
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const taken = []
   let worst = 0
@@ -252,9 +252,9 @@ def numbers(page: Page) -> dict[str, float]:
 
 def warm(page: Page, origin: str) -> None:
     page.goto(origin, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.wait_for_function("() => !!window.ordenApp", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=60000)
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_function(
         "() => !!document.querySelector('aside .row') && !!document.querySelector('.cm-content')",
         timeout=60000,
@@ -267,7 +267,7 @@ def launch(page: Page, origin: str) -> dict[str, float]:
     page.wait_for_function("() => window.__marks.note !== null", timeout=60000)
 
     page.wait_for_function(
-        "() => window.nibApp && window.nibApp.links.rootOf() && !window.nibApp.links.scanning",
+        "() => window.ordenApp && window.ordenApp.links.rootOf() && !window.ordenApp.links.scanning",
         timeout=120000,
     )
     index = page.evaluate("() => performance.now()")

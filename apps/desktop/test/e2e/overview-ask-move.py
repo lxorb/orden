@@ -9,7 +9,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   await ws.addSpace('Work')
   const work = ws.spaces.find((one) => one.name === 'Work')
@@ -27,16 +27,16 @@ async () => {
 """
 
 HOME_OF = """(name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => one.shown === name || one.kind === name)
   if (!tab) return null
   const root = tab.path && ws.spaces.find((space) => tab.path.startsWith(space.root.replace(/\\/+$/, '') + '/'))
   return root ? root.id : tab.note.home
 }"""
 
-ORDER = "() => window.nibApp.workspace.tabs.filter((one) => one.paneId).map((one) => one.shown)"
+ORDER = "() => window.ordenApp.workspace.tabs.filter((one) => one.paneId).map((one) => one.shown)"
 
-STATE = "() => window.nibApp.workspace.tabs.map((one) => [one.shown, one.kind, one.note.home, one.path, !!window.nibApp.workspace.panes.at(one.paneId)])"
+STATE = "() => window.ordenApp.workspace.tabs.map((one) => [one.shown, one.kind, one.note.home, one.path, !!window.ordenApp.workspace.panes.at(one.paneId)])"
 
 SHEET = "!!document.querySelector('.sheet form')"
 
@@ -62,7 +62,7 @@ def resting(page: Page, label: str) -> dict | None:
     return last
 
 def web_label(page: Page) -> str:
-    return page.evaluate("() => window.nibApp.workspace.tabs.find((one) => one.kind === 'web').shown")
+    return page.evaluate("() => window.ordenApp.workspace.tabs.find((one) => one.kind === 'web').shown")
 
 def drag(page: Page, start: dict, end: dict) -> None:
     page.mouse.move(start["x"], start["y"])

@@ -138,13 +138,13 @@ def corner(app: Any, hwnd: int, page: int, opening: str, closing: str, shoot: An
     time.sleep(0.8)
     return {"said": said, "page or its still in the free corner": f"{sum(seen)}/{len(seen)}"}
 
-UPDATE = "nibApp.updates.ready = '99.9.9', 'ok'"
-UPDATE_GONE = "nibApp.updates.dismiss(), 'ok'"
+UPDATE = "ordenApp.updates.ready = '99.9.9', 'ok'"
+UPDATE_GONE = "ordenApp.updates.dismiss(), 'ok'"
 
 TOAST = """(() => {
-  const one = nibApp.workspace.tree.children.find((entry) => entry.name.startsWith('Idea'))
+  const one = ordenApp.workspace.tree.children.find((entry) => entry.name.startsWith('Idea'))
   if (!one) return 'no note'
-  void nibApp.workspace.remove(one.path, false)
+  void ordenApp.workspace.remove(one.path, false)
   return 'ok'
 })()"""
 
@@ -154,7 +154,7 @@ CARD = """(() => {
   tab.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
   return 'ok'
 })()"""
-CARD_GONE = "nibApp.overlays.escape(), 'ok'"
+CARD_GONE = "ordenApp.overlays.escape(), 'ok'"
 
 SUGGEST = """(() => {
   const field = document.querySelector('.webbar input')
@@ -172,7 +172,7 @@ MENU = """(() => {
   more.click()
   return 'ok'
 })()"""
-MENU_GONE = "nibApp.overlays.escape(), 'ok'"
+MENU_GONE = "ordenApp.overlays.escape(), 'ok'"
 
 STRANGER = """(() => {
   const hole = document.querySelector('[data-pane] .hole')
@@ -187,8 +187,8 @@ STRANGER = """(() => {
 })()"""
 STRANGER_GONE = "document.querySelector('.probe-layer')?.remove(), 'ok'"
 
-SETTINGS = "nibApp.settings.show(), 'ok'"
-SETTINGS_GONE = "nibApp.settings.open = false, 'ok'"
+SETTINGS = "ordenApp.settings.show(), 'ok'"
+SETTINGS_GONE = "ordenApp.settings.open = false, 'ok'"
 
 def main() -> int:
     if sys.platform != "win32":

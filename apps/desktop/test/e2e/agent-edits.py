@@ -48,7 +48,7 @@ async ([edits, agent]) => {
 }
 """
 
-VIEW = "window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)"
+VIEW = "window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)"
 
 def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> None:
     until = time.monotonic() + patience
@@ -92,11 +92,11 @@ def one_step(before: str, after: str) -> tuple[str, list[str]]:
 
 def drive(page: Page) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space", 120)
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 120)
 
     page.evaluate(
         """async (note) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.noteFrom(note, ws.activeSpace.root)
           await ws.loadTree()
           const found = ws.notes.find((one) => one.name.startsWith('Drive'))

@@ -58,11 +58,11 @@ def fake(page: Page, call: str) -> object:
 
 def drive(page: Page, scheme: str) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space", 120)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 120)
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
 
     tab = page.evaluate(
-        "() => window.nibApp.workspace.openPage('https://shop.example/checkout', 'front')"
+        "() => window.ordenApp.workspace.openPage('https://shop.example/checkout', 'front')"
     )
     wait_for(page, "document.querySelector('.web .card')", "the web tab's card")
     page.evaluate(START)
@@ -95,7 +95,7 @@ def drive(page: Page, scheme: str) -> None:
         page,
         f"ask('{AGENT}', 'paying', 'Place order on shop.example', 'shop.example', '{tab}')",
     )
-    page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('ask')")
     page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
     wait_for(page, f"document.querySelector('.orden-row.agent[data-agent=\"{AGENT}\"]')", "the agent's row")
     row = page.evaluate(

@@ -64,7 +64,7 @@ ACCOUNT: dict[str, Any] = {
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Plan\\n\\nWe meet at noon on Friday, at the old station.\\n\\n- [ ] Book the room\\n- [ ] Write to everybody\\n', root)
   await ws.noteFrom('# A note with a name long enough to be cut somewhere in a narrow list\\n\\nWords.\\n', root)
@@ -409,15 +409,15 @@ class Browser:
         page.on("pageerror", self.threw)
         await page.goto(DRIVE.origin, wait_until="domcontentloaded")
         for expression in (
-            "window.nibApp",
-            "window.nibApp.workspace.activeSpace",
+            "window.ordenApp",
+            "window.ordenApp.workspace.activeSpace",
             f"performance.getEntriesByName({json.dumps(LAUNCHED)}).length > 0",
-            "window.nibApp.themeStore",
-            "window.nibApp.workspace.active",
+            "window.ordenApp.themeStore",
+            "window.ordenApp.workspace.active",
         ):
             await page.wait_for_function(expression, polling=50)
         if self.signed_in:
-            await page.wait_for_function("window.nibApp.account.user", polling=50)
+            await page.wait_for_function("window.ordenApp.account.user", polling=50)
         self.path = await page.evaluate(SEED)
         await settle(page)
         return page
@@ -485,23 +485,23 @@ async def settle(page: Any) -> None:
     )
 
 async def scheme_of(page: Any, scheme: str) -> None:
-    await page.evaluate("(scheme) => window.nibApp.theme.setScheme(scheme)", scheme)
+    await page.evaluate("(scheme) => window.ordenApp.theme.setScheme(scheme)", scheme)
     await settle(page)
 
 async def settings(one: Browser, page: Any, width: int, scheme: str) -> None:
     phone = one.kind == "phone"
-    await page.evaluate("() => window.nibApp.settings.show('general')")
+    await page.evaluate("() => window.ordenApp.settings.show('general')")
     await page.wait_for_selector(SETTINGS)
     if phone:
-        await page.evaluate("() => { window.nibApp.settings.listing = true }")
+        await page.evaluate("() => { window.ordenApp.settings.listing = true }")
         await one.check(page, "settings", width, scheme, SETTINGS)
     for pane in await page.evaluate(PANES):
         if phone:
-            await page.evaluate("() => { window.nibApp.settings.listing = true }")
+            await page.evaluate("() => { window.ordenApp.settings.listing = true }")
             await settle(page)
         await page.locator(f"{SETTINGS} nav .item", has_text=pane).first.click()
         await one.through(page, f"settings/{pane}", width, scheme, SETTINGS, f"{SETTINGS} .body")
-    await page.evaluate("() => { window.nibApp.settings.open = false }")
+    await page.evaluate("() => { window.ordenApp.settings.open = false }")
     await page.wait_for_selector(SETTINGS, state="detached")
 
 async def layer(one: Browser, page: Any, surface: str, width: int, scheme: str, opened: str, selector: str, closed: str) -> None:
@@ -556,12 +556,12 @@ PANELS = ("tree", "outline", "search", "tasks", "chats", "links", "ask")
 async def panels(one: Browser, page: Any, width: int, scheme: str) -> None:
     for panel in PANELS:
         try:
-            await page.evaluate("(panel) => window.nibApp.workspace.showPanel(panel)", panel)
+            await page.evaluate("(panel) => window.ordenApp.workspace.showPanel(panel)", panel)
         except Exception:  # noqa: BLE001 - a panel this build does not have
             continue
         await page.wait_for_timeout(60)
         await one.check(page, f"panel/{panel}", width, scheme)
-    await page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    await page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
 MENU = """
 (selector) => {
@@ -589,7 +589,7 @@ HOLD = """
 (path) => {
   const now = Date.now()
   const side = (who, at, text) => ({ device: who === 'mine' ? 'Laptop' : 'Pixel 9', at: now - at * 3600000, excerpt: { text, marks: [] } })
-  window.__held = window.nibApp.sync2.connectFake([{
+  window.__held = window.ordenApp.sync2.connectFake([{
     id: 'held', path, name: 'Plan.md',
     mine: side('mine', 2, 'We meet at noon on Friday, at the old station.'),
     theirs: side('theirs', 1, 'We meet at one on Saturday, at the new station by the river.'),
@@ -609,18 +609,18 @@ async def step(one: Browser, page: Any, name: str, width: int, scheme: str, work
         for _ in range(3):
             await page.keyboard.press("Escape")
         await page.evaluate(
-            "() => { const app = window.nibApp; app.settings.open = false; app.account.open = false;"
+            "() => { const app = window.ordenApp; app.settings.open = false; app.account.open = false;"
             " if (app.themeStore) app.themeStore.open = false; app.iconChoice.close?.() }"
         )
         await settle(page)
 
 async def new_tab(one: Browser, page: Any, width: int, scheme: str) -> None:
-    before = await page.evaluate("() => { const ws = window.nibApp.workspace; const was = ws.active?.id; ws.newTab(); return was }")
+    before = await page.evaluate("() => { const ws = window.ordenApp.workspace; const was = ws.active?.id; ws.newTab(); return was }")
     await page.wait_for_timeout(120)
     await one.check(page, "new tab", width, scheme)
     await page.evaluate(
         """(before) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const made = ws.active?.id
           if (made && made !== before) ws.close(made, false)
           if (before) ws.activate(before)
@@ -632,9 +632,9 @@ async def new_tab(one: Browser, page: Any, width: int, scheme: str) -> None:
 
 async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> None:
     if one.kind == "phone":
-        await page.evaluate("() => window.nibApp.workspace.closePanel('left')")
+        await page.evaluate("() => window.ordenApp.workspace.closePanel('left')")
         await given_back(page)
-        await page.evaluate("() => window.nibApp.workspace.closePanel('right')")
+        await page.evaluate("() => window.ordenApp.workspace.closePanel('right')")
         await given_back(page)
     await layer(
         one, page, "sync question", width, scheme,
@@ -645,7 +645,7 @@ async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> Non
 
 PROVIDER = """
 () => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   if (ai.providers.some((one) => one.name === 'Sweep')) return
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Sweep', baseUrl: 'http://layout-sweep.localhost:9', model: 'sweep' })
@@ -673,7 +673,7 @@ async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> No
 
 SIDES = """
 (want) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   for (const side of ['left', 'right']) if (!!ws.openOn(side) !== want) ws.toggleSidebar(side)
 }
 """
@@ -681,14 +681,14 @@ SIDES = """
 async def both_sides(one: Browser, page: Any, width: int, scheme: str) -> None:
     if one.kind == "phone":
         return
-    was = await page.evaluate("() => ({ left: window.nibApp.workspace.openOn('left'), right: window.nibApp.workspace.openOn('right') })")
+    was = await page.evaluate("() => ({ left: window.ordenApp.workspace.openOn('left'), right: window.ordenApp.workspace.openOn('right') })")
     await page.evaluate(SIDES, True)
     await page.wait_for_timeout(400)
     try:
         await one.check(page, "both sidebars", width, scheme, "header")
     finally:
         await page.evaluate(
-            """(was) => { const ws = window.nibApp.workspace
+            """(was) => { const ws = window.ordenApp.workspace
               for (const side of ['left', 'right']) if (!!ws.openOn(side) !== was[side]) ws.toggleSidebar(side) }""",
             was,
         )
@@ -706,24 +706,24 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
         ("question", through_palette(one, page, "Convert syntax", "question", '[role="dialog"]:has(form)', width, scheme)),
         ("theme store", layer(
             one, page, "theme store", width, scheme,
-            "() => { window.nibApp.settings.show('appearance'); window.nibApp.themeStore.open = true }",
+            "() => { window.ordenApp.settings.show('appearance'); window.ordenApp.themeStore.open = true }",
             '[role="dialog"][aria-label="Themes"]',
-            "() => { window.nibApp.themeStore.open = false; window.nibApp.settings.open = false }",
+            "() => { window.ordenApp.themeStore.open = false; window.ordenApp.settings.open = false }",
         )),
         ("icon picker", layer(
             one, page, "icon picker", width, scheme,
-            f"() => {{ window.nibApp.iconChoice.file({json.dumps(one.path)}) }}",
+            f"() => {{ window.ordenApp.iconChoice.file({json.dumps(one.path)}) }}",
             '[role="dialog"][aria-label="Choose an icon"]',
-            "() => { window.nibApp.iconChoice.close() }",
+            "() => { window.ordenApp.iconChoice.close() }",
         )),
         ("sync question", sync_question(one, page, width, scheme)),
         ("terminal question", layer(
             one, page, "terminal question", width, scheme,
-            "() => { void window.nibApp.prompt.chooseTicking({ title: 'Ctrl+N in a terminal',"
+            "() => { void window.ordenApp.prompt.chooseTicking({ title: 'Ctrl+N in a terminal',"
             " options: [{ id: 'shell', label: 'Terminal' }, { id: 'app', label: 'Scratchpad', primary: true }],"
             " tick: 'Always ask' }) }",
             '[role="dialog"]:has(.tick)',
-            "() => { window.nibApp.prompt.dismiss() }",
+            "() => { window.ordenApp.prompt.dismiss() }",
         )),
         ("quick question", quick_question(one, page, width, scheme)),
         ("new tab", new_tab(one, page, width, scheme)),
@@ -731,9 +731,9 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
     if not one.signed_in:
         walks.append(("sign in", layer(
             one, page, "sign in", width, scheme,
-            "() => { window.nibApp.account.open = true }",
+            "() => { window.ordenApp.account.open = true }",
             '[role="dialog"]:has(input[type="email"])',
-            "() => { window.nibApp.account.open = false }",
+            "() => { window.ordenApp.account.open = false }",
         )))
     for name, work in walks:
         await step(one, page, name, width, scheme, work)
@@ -741,7 +741,7 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
 async def empty(one: Browser, page: Any, width: int, scheme: str) -> None:
     made = await page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           try { await ws.addSpace('Empty') } catch { return false }
           await ws.loadTree()
           return ws.activeSpace?.name === 'Empty'

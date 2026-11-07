@@ -34,12 +34,12 @@ def opened(context: BrowserContext, label: str) -> Page:
     page = context.pages[0] if context.pages else context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     DRIVE.open(page)
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     return page
 
 SEED = """
 async (many) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -66,7 +66,7 @@ async (many) => {
 
 TOUCH = """
 async (names) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
   const done = []
@@ -91,7 +91,7 @@ async (names) => {
 
 TOP_NAMES = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.shownTree
   return root ? root.children.map((one) => one.name) : []
 }
@@ -104,7 +104,7 @@ DRAWN = """
 
 WHAT_IS_KEPT = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     mode: ws.sortMode,
     arranged: ws.arranged.of(ws.activeSpace.root),
@@ -124,7 +124,7 @@ def chosen(page: Page, label: str, mode: str) -> None:
     page.locator("[role=menu] [role=menuitem]", has_text=label).first.click()
     page.wait_for_timeout(250)
 
-    now = page.evaluate("() => window.nibApp.workspace.sortMode")
+    now = page.evaluate("() => window.ordenApp.workspace.sortMode")
     if now != mode:
         wrong(f"pressing {label!r} left the order as {now!r} rather than {mode!r}")
 
@@ -264,10 +264,10 @@ def relaunched(playwright, profile: Path, want: list[str]) -> None:
     )
     try:
         page = opened(context, "relaunch")
-        wait_for(page, "() => window.nibApp.workspace.files.length > 10", "the space to be read")
+        wait_for(page, "() => window.ordenApp.workspace.files.length > 10", "the space to be read")
         page.wait_for_timeout(400)
 
-        mode = page.evaluate("() => window.nibApp.workspace.sortMode")
+        mode = page.evaluate("() => window.ordenApp.workspace.sortMode")
         names = page.evaluate(TOP_NAMES)
         say(f"after a relaunch the order is {mode!r}: {' | '.join(names)}")
 
@@ -299,7 +299,7 @@ def phone(playwright, profile: Path) -> None:
         say(f"[phone] the space holds {held} files")
 
         page.evaluate(
-            "() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }"
+            "() => { const ws = window.ordenApp.workspace; if (!ws.panel) ws.showPanel('tree') }"
         )
         page.wait_for_timeout(400)
         page.locator("aside .row[data-path]").first.wait_for(state="visible", timeout=10000)

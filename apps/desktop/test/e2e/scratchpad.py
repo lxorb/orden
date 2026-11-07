@@ -32,7 +32,7 @@ STATE = """() => ({
   card: !!document.querySelector('[data-scratchpad-card] .cm-content'),
   inCard: !!document.activeElement?.closest('[data-scratchpad-card]'),
   inNote: !!document.activeElement?.closest('[data-panes]'),
-  tabs: window.nibApp.workspace.tabs.map((one) => one.name),
+  tabs: window.ordenApp.workspace.tabs.map((one) => one.name),
   words: document.querySelector('[data-scratchpad-card] .cm-content')?.textContent ?? null,
 })"""
 
@@ -59,14 +59,14 @@ def show_pad(page: Page) -> None:
 
 def pad_on_phone(page: Page) -> None:
     if not page.locator(YOU).is_visible():
-        page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
+        page.evaluate("() => window.ordenApp.workspace.toggleSidebar('left')")
         page.locator(YOU).wait_for(state="visible", timeout=5000)
         page.wait_for_timeout(400)
     page.locator(YOU).tap()
     page.locator(PAD_ITEM).wait_for(state="visible", timeout=5000)
     page.locator(PAD_ITEM).tap()
     page.wait_for_timeout(300)
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel) ws.closePanel() }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel) ws.closePanel() }")
 
 def gone(page: Page) -> None:
     try:
@@ -189,7 +189,7 @@ def over_a_drawing(browser: Browser) -> None:
     note = page.evaluate(COLUMN, "[data-panes]")
     say(f"[phone] a note's column: {note}")
     for kind, make in (("canvas", "createCanvas"), ("page note", "createPages")):
-        page.evaluate(f"() => window.nibApp.workspace.{make}()")
+        page.evaluate(f"() => window.ordenApp.workspace.{make}()")
         wait_for(page, "document.querySelector('.cluster')", f"the {kind}'s bar")
         page.wait_for_timeout(400)
         pad_on_phone(page)
@@ -210,7 +210,7 @@ def over_a_drawing(browser: Browser) -> None:
             wrong(f"[phone] the scratchpad's words are not in a note's column ({column}, not {note})")
 
         page.locator(CARD).tap()
-        page.evaluate("() => { window.nibApp.viewport.keyboard = 300; window.nibApp.viewport.typing = true }")
+        page.evaluate("() => { window.ordenApp.viewport.keyboard = 300; window.ordenApp.viewport.typing = true }")
         wait_for(page, "document.querySelector('.orden-bar.docked')", f"the strip over the keyboard on a {kind}")
         page.keyboard.type("Pad words")
         page.keyboard.press("Home")
@@ -222,13 +222,13 @@ def over_a_drawing(browser: Browser) -> None:
             if "**Pad words**" not in (page.evaluate(STATE)["words"] or ""):
                 wrong(f"[phone] Bold on the strip did not format the scratchpad over a {kind}")
         shot(page, f"light/06-over-a-{kind.replace(' ', '-')}")
-        page.evaluate("() => { window.nibApp.viewport.keyboard = 0; window.nibApp.viewport.typing = false }")
+        page.evaluate("() => { window.ordenApp.viewport.keyboard = 0; window.ordenApp.viewport.typing = false }")
 
         pad_on_phone(page)
         page.wait_for_timeout(600)
         back = page.evaluate(UNDER)
         kinds = {"canvas": "canvas", "page note": "pages"}
-        if page.evaluate("() => window.nibApp.workspace.active?.kind") != kinds[kind] or not back["barSeen"]:
+        if page.evaluate("() => window.ordenApp.workspace.active?.kind") != kinds[kind] or not back["barSeen"]:
             wrong(f"[phone] putting the scratchpad away did not give the {kind} back: {back}")
         shot(page, f"light/07-the-{kind.replace(' ', '-')}-again")
         say(f"[phone] the scratchpad over a {kind} is a note like any other, and the {kind} comes back")

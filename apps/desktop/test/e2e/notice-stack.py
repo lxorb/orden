@@ -43,11 +43,11 @@ def drive(browser: Browser, kind: str) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{kind}] page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
 
     if kind == "narrow":
-        page.evaluate("() => { window.nibApp.workspace.showPanel('tree'); window.nibApp.workspace.showPanel('outline') }")
-    page.evaluate("() => { window.nibApp.settings.setup = 0; window.nibApp.updates.ready = '9.9.9' }")
+        page.evaluate("() => { window.ordenApp.workspace.showPanel('tree'); window.ordenApp.workspace.showPanel('outline') }")
+    page.evaluate("() => { window.ordenApp.settings.setup = 0; window.ordenApp.updates.ready = '9.9.9' }")
     wait_for(
         page,
         "document.querySelector('[role=\"dialog\"][aria-label=\"Personalize\"]')",
@@ -74,8 +74,8 @@ def drive(browser: Browser, kind: str) -> None:
     context.close()
 
 def peek(page) -> None:
-    page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('tree'); ws.showPanel('tree'); ws.panel = null }")
-    wait_for(page, "window.nibApp.workspace.panel === null", "the list shut")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('tree'); ws.showPanel('tree'); ws.panel = null }")
+    wait_for(page, "window.ordenApp.workspace.panel === null", "the list shut")
     page.mouse.move(640, 400)
     page.wait_for_timeout(200)
     page.mouse.move(0, 400)

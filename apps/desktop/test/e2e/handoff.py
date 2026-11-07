@@ -76,12 +76,12 @@ def opened(made: Any, origin: str) -> Page:
     return page
 
 def import_pane(page: Page) -> None:
-    page.evaluate("window.nibApp.settings.show('import')")
+    page.evaluate("window.ordenApp.settings.show('import')")
     wait_for(page, "!!document.querySelector('[role=dialog]')", "Settings > Import")
 
 def files(page: Page) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
-        "async () => { await window.nibApp.workspace.loadTree(); return window.nibApp.workspace.notes.map((one) => one.name) }"
+        "async () => { await window.ordenApp.workspace.loadTree(); return window.ordenApp.workspace.notes.map((one) => one.name) }"
     )
 
 def brought(browser: Browser) -> None:

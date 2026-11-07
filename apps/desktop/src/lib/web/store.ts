@@ -1,7 +1,9 @@
 import { breathe } from '../breathe'
+import { carryDatabase } from './carry-database'
 import type { PlaneMarks } from '@orden/scan/canvas'
 
-const NAME = 'nib'
+const NAME = 'orden'
+const FORMER_NAME = 'nib'
 const VERSION = 2
 
 export interface FileRow {
@@ -36,11 +38,19 @@ interface StatRow {
 }
 
 let open: Promise<IDBDatabase> | null = null
+let carried: Promise<void> | null = null
 
 function database(): Promise<IDBDatabase> {
   if (open) return open
 
-  const opening = new Promise<IDBDatabase>((resolve, reject) => {
+  carried ??= carryDatabase(FORMER_NAME, NAME).catch(() => undefined)
+  const opening: Promise<IDBDatabase> = carried.then(() => opened(opening))
+  open = opening
+  return opening
+}
+
+function opened(opening: Promise<IDBDatabase>): Promise<IDBDatabase> {
+  return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(NAME, VERSION)
 
     request.onupgradeneeded = () => {
@@ -75,9 +85,6 @@ function database(): Promise<IDBDatabase> {
       reject(request.error ?? new Error('could not open the database'))
     }
   })
-
-  open = opening
-  return opening
 }
 
 function lost(was: Promise<IDBDatabase>) {

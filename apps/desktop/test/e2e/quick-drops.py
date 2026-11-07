@@ -11,7 +11,7 @@ PATIENCE = 15
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Plan\\n\\nThe plan.\\n', root)
   await ws.noteFrom('# Spare\\n\\nA spare.\\n', root)
@@ -28,7 +28,7 @@ async () => {
 
 TREE = """
 () => {
-  const root = window.nibApp.workspace.activeSpace.root
+  const root = window.ordenApp.workspace.activeSpace.root
   return [...document.querySelectorAll('aside .row[data-path]')].map((row) =>
     row.getAttribute('data-path').slice(root.length + 1)).sort()
 }
@@ -80,7 +80,7 @@ def rooted(page: Page) -> None:
     )
 
 def sections(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     second = page.locator("aside .row.heading", has_text="Second").first
     second.wait_for(state="visible", timeout=PATIENCE * 1000)
     page.wait_for_timeout(300)
@@ -93,7 +93,7 @@ def sections(page: Page) -> None:
         }""",
         "a section let go of on another heading at once moves there",
     )
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
 def drive(browser: Browser) -> None:
     context = browser.new_context(

@@ -28,7 +28,7 @@ import { answeringAt, onSend, onSent } from '../chat/sends'
 import type { Thread, Turn } from '../chat/types'
 import { cutForEdit } from './branches'
 import {
-  agentOf,
+  agentsOf,
   type Change,
   byNote,
   changesOf,
@@ -147,7 +147,7 @@ class Review {
   }
 
   changes(thread: Reviewed, deleted = true): Change[] {
-    const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
+    const agents = thread.helpers?.length ? undefined : providersOf(thread).flatMap(agentsOf)
     return changesOf(thread, this.edits(agents, deleted), answeringAt, this.kept)
   }
 

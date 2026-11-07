@@ -45,7 +45,7 @@ def device(browser: Browser, label: str, at: str, token: str | None = None) -> P
     page = context.new_page()
     page.on("pageerror", lambda error: failed(f"[{label}] page error: {error}"))
     page.goto(at, wait_until="domcontentloaded")
-    wait_for(page, "() => !!window.nibApp", f"[{label}] the app")
+    wait_for(page, "() => !!window.ordenApp", f"[{label}] the app")
     return page
 
 def link_to(worker: harness.Worker, token: str, space: str, note: str) -> str:
@@ -70,8 +70,8 @@ def alone(page: Page, label: str) -> None:
         failed(f"[{label}] a guest with one file still sees the app round it: {chrome}")
 
 SURFACE = """() => {
-  const key = window.nibApp.workspace.active?.note.key
-  return key ? window.nibApp.rooms.planes.get(key) ?? null : null
+  const key = window.ordenApp.workspace.active?.note.key
+  return key ? window.ordenApp.rooms.planes.get(key) ?? null : null
 }"""
 
 def card_on(page: Page, card: str) -> bool:
@@ -115,7 +115,7 @@ def held_and_gone_to(owner: Page, guest: Page) -> None:
     try:
         wait_for(guest, "() => !!document.querySelector('svg.hands')", "[guest] the owner's hand")
         guest.evaluate(
-            "() => { const tab = window.nibApp.workspace.active;"
+            "() => { const tab = window.ordenApp.workspace.active;"
             " tab.camera = { ...(tab.camera ?? { x: 0, y: 0, scale: 1 }), y: 40000 } }"
         )
         wait_for(guest, "() => !!document.querySelector('svg.hands .held')", "[guest] the hand held at the edge")
@@ -165,33 +165,33 @@ def main() -> int:
         owner = device(browser, "owner", ORIGIN, token)
         root = wait_for(
             owner,
-            "(id) => { const space = window.nibApp.workspace.spaces.find("
-            "  (one) => window.nibApp.sync.remoteIdFor(one.root) === id);"
-            " if (!space) return null; window.nibApp.workspace.showSpace(space.id); return space.root }",
+            "(id) => { const space = window.ordenApp.workspace.spaces.find("
+            "  (one) => window.ordenApp.sync.remoteIdFor(one.root) === id);"
+            " if (!space) return null; window.ordenApp.workspace.showSpace(space.id); return space.root }",
             "[owner] the space",
             space["id"],
             patience=SYNCED,
         )
 
         owner.evaluate(
-            "async ([root, name]) => { await window.nibApp.workspace.createPages(root, name) }",
+            "async ([root, name]) => { await window.ordenApp.workspace.createPages(root, name) }",
             [root, DECK],
         )
-        wait_for(owner, "() => window.nibApp.workspace.active?.kind === 'pages'", "[owner] the page note")
-        deck_path = owner.evaluate("() => window.nibApp.workspace.active.path")
+        wait_for(owner, "() => window.ordenApp.workspace.active?.kind === 'pages'", "[owner] the page note")
+        deck_path = owner.evaluate("() => window.ordenApp.workspace.active.path")
         try:
             deck = wait_for(
                 owner,
-                "(path) => window.nibApp.sync.tracked(path)?.id ?? null",
+                "(path) => window.ordenApp.sync.tracked(path)?.id ?? null",
                 "[owner] the page note on the account",
                 deck_path,
                 patience=SYNCED,
             )
         except SystemExit:
             said = owner.evaluate(
-                "() => ({ version: window.nibApp.sync.version, dirty: window.nibApp.workspace.active?.dirty,"
-                " roots: window.nibApp.workspace.spaces.map((one) => one.root),"
-                " mirrors: Object.keys(window.nibApp.sync.mirrors ?? {}) })"
+                "() => ({ version: window.ordenApp.sync.version, dirty: window.ordenApp.workspace.active?.dirty,"
+                " roots: window.ordenApp.workspace.spaces.map((one) => one.root),"
+                " mirrors: Object.keys(window.ordenApp.sync.mirrors ?? {}) })"
             )
             say(f"[owner] {deck_path} is not on the account: {json.dumps(said)}")
             raise
@@ -199,8 +199,8 @@ def main() -> int:
         say(f"the owner holds {deck_path} as {deck}")
 
         guest = device(browser, "guest", link_to(worker, token, space["id"], deck))
-        wait_for(guest, "() => !!window.nibApp.workspace.active?.note.shared", "[guest] the shared tab")
-        kind = guest.evaluate("() => window.nibApp.workspace.active.kind")
+        wait_for(guest, "() => !!window.ordenApp.workspace.active?.note.shared", "[guest] the shared tab")
+        kind = guest.evaluate("() => window.ordenApp.workspace.active.kind")
         if kind != "pages":
             failed(f"a page note shared on its own opened as a {kind}")
         else:
@@ -215,14 +215,14 @@ def main() -> int:
         alone(guest, "guest")
         guest.screenshot(path=str(SHOTS / "shared-pages.png"))
 
-        wait_for(owner, "async () => (await window.nibApp.chats()).chats.ready", "[owner] the chats")
+        wait_for(owner, "async () => (await window.ordenApp.chats()).chats.ready", "[owner] the chats")
         owner.evaluate(
-            "async ([root, name]) => { const one = await window.nibApp.chats(); await one.makeChat(root, name) }",
+            "async ([root, name]) => { const one = await window.ordenApp.chats(); await one.makeChat(root, name) }",
             [root, CHAT],
         )
         talk = wait_for(
             owner,
-            "async (name) => { const { chats } = await window.nibApp.chats();"
+            "async (name) => { const { chats } = await window.ordenApp.chats();"
             " const entry = chats.list.find((one) => one.name === name && one.path);"
             " return entry ? { id: entry.id, path: entry.path } : null }",
             "[owner] the chat",
@@ -243,8 +243,8 @@ def main() -> int:
         say(f"the owner made {talk['id']} at {talk['path']}")
 
         chatter = device(browser, "chatter", link_to(worker, token, space["id"], pointer))
-        wait_for(chatter, "() => !!window.nibApp.workspace.active?.note.shared", "[chatter] the shared tab")
-        kind = chatter.evaluate("() => window.nibApp.workspace.active.kind")
+        wait_for(chatter, "() => !!window.ordenApp.workspace.active?.note.shared", "[chatter] the shared tab")
+        kind = chatter.evaluate("() => window.ordenApp.workspace.active.kind")
         if kind != "channel":
             failed(f"a chat shared on its own opened as a {kind}")
         else:

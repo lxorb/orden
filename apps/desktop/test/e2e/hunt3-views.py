@@ -32,7 +32,7 @@ FILLER = "\n\n".join(f"Filler paragraph {at}, long enough to take a line." for a
 
 def shared(page: Page, name: str, text: str) -> None:
     page.evaluate(
-        "([id, name, text]) => window.nibApp.workspace.openShared({ id, name, path: name }, text)",
+        "([id, name, text]) => window.ordenApp.workspace.openShared({ id, name, path: name }, text)",
         [name, name, text],
     )
     page.wait_for_timeout(900)
@@ -62,7 +62,7 @@ def drive_shared(page: Page) -> None:
     say(f"[own, reading] {json.dumps(own)}")
     if not own or own["rows"] == 0:
         wrong(f"the reader's own base with that pattern draws no table: {own}")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
 
     shared(page, "Base.md", f"# Shared base\n\n{RISKY_BASE}")
@@ -75,7 +75,7 @@ def drive_shared(page: Page) -> None:
     say(f"[shared, reading] {json.dumps(read)}")
     if read and read["rows"] > 0:
         wrong(f"a file shared on its own ran the pattern in the reading view: {read}")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
 
     shared(page, "Tasks.md", f"# Shared tasks\n\n{RISKY_TASKS}")
     DRIVE.reading(page)
@@ -84,7 +84,7 @@ def drive_shared(page: Page) -> None:
     say(f"[shared tasks, reading] {said!r}")
     if "(a+)+" not in said:
         wrong(f"a tasks fence in a file shared on its own was not refused: {said!r}")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
 
 def scroll_of(page: Page) -> dict:
     return page.evaluate(
@@ -118,14 +118,14 @@ def drive_block_links(page: Page) -> None:
     page.wait_for_timeout(1200)
     shown = page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const far = document.getElementById('^far')
           const line = document.querySelector('.cm-activeLine')?.innerText ?? null
           return { name: ws.active?.name, reading: ws.active?.reading, top: far ? far.getBoundingClientRect().top : null, line, height: innerHeight }
         }"""
     )
     say(f"[other note] {shown}")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(600)
     near = page.evaluate(
         """() => {
@@ -136,7 +136,7 @@ def drive_block_links(page: Page) -> None:
     say(f"[other note, reading, before] {near}")
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Own block')).path, { activate: true })
         }"""
     )
@@ -145,7 +145,7 @@ def drive_block_links(page: Page) -> None:
     page.wait_for_timeout(1200)
     near = page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const far = document.getElementById('^far')
           return { name: ws.active?.name, reading: ws.active?.reading, top: far ? far.getBoundingClientRect().top : null, height: innerHeight }
         }"""
@@ -154,7 +154,7 @@ def drive_block_links(page: Page) -> None:
     if near["reading"] and (near["top"] is None or not 0 <= near["top"] <= near["height"]):
         wrong(f"a link to a block of a note in its reading view did not land on it: {near}")
     if near["reading"]:
-        page.evaluate("() => window.nibApp.workspace.toggleReading()")
+        page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     if not str(shown["name"]).startswith("Other block"):
         wrong(f"the link to a block of another note opened {shown['name']}")
     if "far one" not in str(shown["line"]):
@@ -181,9 +181,9 @@ def drive_ticks(page: Page) -> None:
     )
     say(f"[hashes] {done}")
     page.wait_for_timeout(1200)
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     DRIVE.open_note(page, "Y note")
-    words = page.evaluate("() => window.nibApp.workspace.active.doc")
+    words = page.evaluate("() => window.ordenApp.workspace.active.doc")
     say(f"[Y note] {words!r}")
     if words is not None:
         lines = words.split("\n")
@@ -202,7 +202,7 @@ def drive_fixed(page: Page) -> None:
     DRIVE.open_note(page, "Free fence")
     DRIVE.reading(page)
     free = base_block(page)
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     DRIVE.open_note(page, "Quoted fence")
     DRIVE.reading(page)
     held = base_block(page)
@@ -215,7 +215,7 @@ def drive_fixed(page: Page) -> None:
             wrong(f"a fence in a quote offers {offered}, which it cannot keep: {labels}")
     if "New note" not in labels:
         wrong(f"a fence in a quote can no longer add a note: {labels}")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
 
 def drive(browser: Browser) -> None:
     page = browser.new_context(viewport={"width": 1180, "height": 900}).new_page()

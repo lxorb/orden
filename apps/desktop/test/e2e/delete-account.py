@@ -40,7 +40,7 @@ class Authenticator:
         return totp(self.secret, step)
 
 def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
-    page.evaluate("() => (window.nibApp.account.open = true)")
+    page.evaluate("() => (window.ordenApp.account.open = true)")
     page.locator("input[type=email]").fill(PERSON)
     already = len(worker.written())
     page.get_by_role("button", name="Continue").click()
@@ -51,7 +51,7 @@ def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
 
     page.get_by_text("Now the code from your authenticator app").wait_for(timeout=20_000)
     page.locator(".digits input").first.fill(phone.code())
-    DRIVE.wait_for(page, "() => !!window.nibApp.account.accountToken", "the session")
+    DRIVE.wait_for(page, "() => !!window.ordenApp.account.accountToken", "the session")
 
     keep = page.get_by_role("button", name="Keep them")
     try:
@@ -74,10 +74,10 @@ def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 820}, color_scheme=scheme)
         page.goto(ORIGIN, wait_until="domcontentloaded")
-        DRIVE.wait_for(page, "() => !!window.nibApp", "the app")
+        DRIVE.wait_for(page, "() => !!window.ordenApp", "the app")
         sign_in(page, worker, phone)
 
-        page.evaluate("() => window.nibApp.settings.show('account')")
+        page.evaluate("() => window.ordenApp.settings.show('account')")
         page.get_by_role("button", name="Delete account").click()
         already = len(worker.written())
         mailed = worker.waits_for_mail(
@@ -104,7 +104,7 @@ def drive(browser: Browser) -> None:
         delete.fill(phone.code())
         page.get_by_role("button", name="Continue").click()
         page.get_by_role("button", name="Delete now").click()
-        DRIVE.wait_for(page, "() => !window.nibApp.account.accountToken", "signed out")
+        DRIVE.wait_for(page, "() => !window.ordenApp.account.accountToken", "signed out")
         say("deleted, and signed out")
         shot(page, "gone")
 

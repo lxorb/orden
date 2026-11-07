@@ -50,7 +50,7 @@ async ([paint]) => {
   new Function('c', 'w', 'h', paint)(c, w, h)
   const blob = await new Promise((done) => canvas.toBlob(done, 'image/png'))
   const started = performance.now()
-  const taken = await window.nibApp.wallpaper.take(blob)
+  const taken = await window.ordenApp.wallpaper.take(blob)
   return { taken, ms: Math.round(performance.now() - started), stored: localStorage.getItem('orden:wallpaper')?.length ?? 0 }
 }
 """
@@ -162,14 +162,14 @@ def drive(browser: Any) -> None:
         DRIVE.open(page)
         DRIVE.seed(page, NOTE)
         DRIVE.open_note(page, "Under a picture")
-        page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
-        wait_for(page, "window.nibApp.wallpaper", "the wallpaper store on the handle")
+        page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
+        wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
 
-        page.evaluate("() => window.nibApp.theme.select('wallpaper')")
+        page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
         wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
-        wait_for(page, "window.nibApp.theme.settings.some((one) => one.id === 'content')", "the theme's dials")
-        page.evaluate("() => window.nibApp.theme.set('content', 'opaque')")
+        wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "the theme's dials")
+        page.evaluate("() => window.ordenApp.theme.set('content', 'opaque')")
         page.wait_for_timeout(300)
         keep_shot(page, f"field-{scheme}")
         measure(page, f"{scheme}, the accent field")
@@ -185,7 +185,7 @@ def drive(browser: Any) -> None:
             keep_shot(page, f"{picture}-{scheme}")
             measure(page, f"{scheme}, {picture}")
 
-        page.evaluate("() => window.nibApp.workspace.closeMany(window.nibApp.workspace.tabs.map((tab) => tab.id))")
+        page.evaluate("() => window.ordenApp.workspace.closeMany(window.ordenApp.workspace.tabs.map((tab) => tab.id))")
         page.wait_for_timeout(500)
         keep_shot(page, f"empty-{scheme}")
         DRIVE.open_note(page, "Under a picture")
@@ -197,15 +197,15 @@ def drive(browser: Any) -> None:
             say(f"{scheme}: nothing filters anything on a frame")
 
         if scheme == "dark":
-            before = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")
-            page.evaluate("() => window.nibApp.theme.set('blur', 56)")
-            wait_for(page, "window.nibApp.wallpaper.held.main?.blur === 56", "the picture made at the new blur")
+            before = page.evaluate("() => window.ordenApp.wallpaper.held.main.picture.length")
+            page.evaluate("() => window.ordenApp.theme.set('blur', 56)")
+            wait_for(page, "window.ordenApp.wallpaper.held.main?.blur === 56", "the picture made at the new blur")
             wait_for(
                 page,
                 "JSON.parse(localStorage.getItem('orden:wallpaper')).blur === 56",
                 "the new blur kept once the dial rests",
             )
-            after = page.evaluate("() => window.nibApp.wallpaper.held.main.picture.length")
+            after = page.evaluate("() => window.ordenApp.wallpaper.held.main.picture.length")
             say(f"blur 28 -> 56: the kept picture went from {before} to {after} characters")
             keep_shot(page, "dark-blur-56")
             measure(page, "dark, dark picture at blur 56")

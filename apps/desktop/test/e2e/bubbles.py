@@ -81,7 +81,7 @@ DRIVE_WIDTH = 1280
 def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
     counted = 0
     for section in sections:
-        page.evaluate("(id) => window.nibApp.settings.show(id)", section)
+        page.evaluate("(id) => window.ordenApp.settings.show(id)", section)
         page.wait_for_timeout(500)
         for index in range(page.evaluate(GLYPHS)):
             one = sentence_of(page, index)
@@ -108,7 +108,7 @@ def every_sentence(page: Page, tag: str, sections: tuple[str, ...]) -> int:
     return counted
 
 def the_vault_row(page: Page, tag: str) -> None:
-    page.evaluate("() => window.nibApp.settings.show('ai')")
+    page.evaluate("() => window.ordenApp.settings.show('ai')")
     page.wait_for_timeout(500)
     glyph = page.locator("[role=switch]", has_text="vault").first.locator(".explain button")
     glyph.hover()
@@ -122,7 +122,7 @@ def the_vault_row(page: Page, tag: str) -> None:
     page.mouse.move(5, 5)
 
 def at_the_foot(page: Page, tag: str) -> None:
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     page.wait_for_timeout(500)
     one = page.evaluate(
         """async (whole) => {
@@ -160,10 +160,10 @@ def at_the_foot(page: Page, tag: str) -> None:
 
 def names(page: Page, tag: str) -> None:
     DRIVE.seed(page, *[f"# Note {one}\n" for one in range(1, 4)])
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
     page.wait_for_timeout(400)
     page.evaluate(
-        """() => { const ws = window.nibApp.workspace
+        """() => { const ws = window.ordenApp.workspace
           const last = document.querySelector("aside .row[data-path$='/Note 3.md']").dataset.path
           ws.startRenaming(last) }"""
     )
@@ -202,11 +202,11 @@ def look(browser: Browser, tag: str, language: str = "en") -> None:
     DRIVE.open(page)
     page.evaluate(f"() => {{ window.__whole = {WHOLE} }}")
     names(page, tag)
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] .explain')", "the settings")
     counted = every_sentence(page, tag, ("general", "editor", "markdown", "appearance", "ai", "spelling"))
     at_the_foot(page, tag)
-    page.evaluate("() => { window.nibApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
+    page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
     counted += every_sentence(page, tag, ("sync", "account", "ai"))
     if tag == "light":
         the_vault_row(page, tag)

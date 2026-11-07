@@ -15,14 +15,14 @@ def delete_after_typing(page: Page) -> None:
     page.keyboard.type(" last words", delay=1)
     path = page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const path = ws.active.path
           await ws.remove(path, false)
           await ws.undoFileAction()
           return path
         }"""
     )
-    text = page.evaluate("(path) => window.nibApp.workspace.noteText(path)", path)
+    text = page.evaluate("(path) => window.ordenApp.workspace.noteText(path)", path)
     if "last words" not in (text or ""):
         wrong(f"undo put the note back as {text!r}")
 
@@ -63,7 +63,7 @@ def enter_as_a_key(page: Page) -> None:
     for key, taken in (("Enter", False), ("Tab", False), ("ArrowLeft", False), ("Control+F9", True)):
         page.evaluate(press_row)
         page.keyboard.press(key)
-        said = page.evaluate("() => window.nibApp.shortcuts.overrides['app.scratchpad'] ?? null")
+        said = page.evaluate("() => window.ordenApp.shortcuts.overrides['app.scratchpad'] ?? null")
         say(f"  {key}: {said}")
         if bool(said) != taken:
             wrong(f"{key} {'was' if said else 'was not'} taken as an app key: {said!r}")

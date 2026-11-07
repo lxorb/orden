@@ -37,7 +37,7 @@ def wait_for(page: Page, script: str, what: str, arg: object = None):
 
 OPEN = """
 async (text) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const name = text.match(/^# (.*)$/m)?.[1] ?? ''
   let mine = ws.tabs.find((one) => (one.path ?? '').endsWith(name + '.md'))
   if (!mine) {
@@ -51,13 +51,13 @@ async (text) => {
   }
   for (const other of [...ws.tabs]) if (other.id !== mine.id) ws.close(other.id)
   if (ws.panel) ws.showPanel(null)
-  return document.querySelectorAll('.cm-content').length === 1 && !!window.nib
+  return document.querySelectorAll('.cm-content').length === 1 && !!window.orden
 }
 """
 
 MARKED = """
 () => {
-  const view = window.nib
+  const view = window.orden
   const text = view.state.doc.toString()
   const { from, to } = view.state.selection.main
   const marked = from === to
@@ -69,7 +69,7 @@ MARKED = """
 
 SELECT = """
 ([from, to]) => {
-  const view = window.nib
+  const view = window.orden
   view.focus()
   view.dispatch({ selection: { anchor: from, head: to } })
 }
@@ -83,7 +83,7 @@ PASTE = """
   // The editor the selection was made in, not the first one in the page: a tab keeps
   // its editor while another is in front, so the first `.cm-content` can be a note
   // nobody is looking at.
-  window.nib.contentDOM.dispatchEvent(event)
+  window.orden.contentDOM.dispatchEvent(event)
 }
 """
 
@@ -109,7 +109,7 @@ def palette(page: Page, label: str) -> None:
 def landed(page: Page, address: str) -> None:
     wait_for(
         page,
-        "(address) => window.nib.state.doc.toString().includes(address)",
+        "(address) => window.orden.state.doc.toString().includes(address)",
         f"the pasted {address} to land",
         address,
     )
@@ -127,7 +127,7 @@ def pasting(page: Page) -> None:
         marked(page),
     )
 
-    now = page.evaluate("() => window.nib.state.doc.toString()")
+    now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "npm test")
     page.evaluate(PASTE, "https://example.com/npm")
     landed(page, "https://example.com/npm")
@@ -170,13 +170,13 @@ def tasks_and_lines(page: Page) -> None:
     page.wait_for_timeout(60)
     check("- [x] " in marked(page), "and ticks it on the next press", marked(page))
 
-    now = page.evaluate("() => window.nib.state.doc.toString()")
+    now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "two", caret_only=True)
     page.keyboard.press("Control+Shift+Enter")
     page.wait_for_timeout(60)
     check("cheese\n  |\n  two" in marked(page), "Ctrl+Shift+Enter opens a line above", marked(page))
 
-    now = page.evaluate("() => window.nib.state.doc.toString()")
+    now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "first", caret_only=True)
     page.keyboard.press("Control+j")
     page.wait_for_timeout(60)
@@ -194,12 +194,12 @@ def from_the_palette(page: Page) -> None:
         marked(page),
     )
 
-    now = page.evaluate("() => window.nib.state.doc.toString()")
+    now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "shout this")
     palette(page, "Upper case")
     check("«SHOUT THIS»" in marked(page), "Upper case, from the palette", marked(page))
 
-    now = page.evaluate("() => window.nib.state.doc.toString()")
+    now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "gone", caret_only=True)
     palette(page, "Delete the line")
     check("\n|stays" in marked(page) and "gone" not in marked(page), "Delete the line", marked(page))
@@ -243,7 +243,7 @@ def hidden_front_matter(page: Page) -> None:
     page.keyboard.press("Alt+ArrowUp")
     page.wait_for_timeout(60)
     palette(page, "Delete the line")
-    text = page.evaluate("() => window.nib.state.doc.toString()")
+    text = page.evaluate("() => window.orden.state.doc.toString()")
     check(text.startswith("---\nicon: list-checks\n---\n"), "hidden front matter stays whole", text)
 
 def main() -> int:
@@ -252,8 +252,8 @@ def main() -> int:
         page = context.new_page()
         page.on("pageerror", lambda error: say(f"page error: {error}"))
         page.goto(ORIGIN, wait_until="domcontentloaded")
-        wait_for(page, "() => !!window.nibApp?.workspace?.activeSpace", "a space")
-        wait_for(page, "() => window.nibApp.workspace.tabs.length > 0", "the launch")
+        wait_for(page, "() => !!window.ordenApp?.workspace?.activeSpace", "a space")
+        wait_for(page, "() => window.ordenApp.workspace.tabs.length > 0", "the launch")
 
         pasting(page)
         growing(page)

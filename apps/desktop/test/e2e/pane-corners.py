@@ -15,7 +15,7 @@ LOOK = """
     if (!r.width || !r.height) return null
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
   }
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const bar = document.querySelector('footer[data-region="status"]')
   return {
     focused: ws.panes.focusedId,
@@ -63,9 +63,9 @@ def checked(page: Page, label: str, what: str = "counter") -> dict:
     return said
 
 def page_note(page: Page) -> None:
-    there = "window.nibApp.workspace.active?.path?.endsWith('.pages')"
+    there = "window.ordenApp.workspace.active?.path?.endsWith('.pages')"
     for _try in range(4):
-        page.evaluate("() => window.nibApp.workspace.createPages()")
+        page.evaluate("() => window.ordenApp.workspace.createPages()")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({there})"):
             break
@@ -77,7 +77,7 @@ def page_note(page: Page) -> None:
 def right_open(page: Page) -> None:
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.movePanel('outline', 'right')
           ws.showPanel('outline')
         }"""
@@ -89,13 +89,13 @@ def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 800}, reduced_motion="reduce")
     page = context.new_page()
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.spaces.length > 0", "a space")
+    wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "a space")
 
     page_note(page)
     right_open(page)
     checked(page, "the right side open")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     checked(page, "both sides open")
 
@@ -105,18 +105,18 @@ def drive(browser: Browser) -> None:
     page.set_viewport_size({"width": 1280, "height": 800})
     page.wait_for_timeout(400)
 
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "the split")
     for at in (0, 1):
         page.evaluate(
-            f"() => {{ const ws = window.nibApp.workspace; ws.focusPane(ws.panes.all[{at}].id) }}"
+            f"() => {{ const ws = window.ordenApp.workspace; ws.focusPane(ws.panes.all[{at}].id) }}"
         )
         page.wait_for_timeout(400)
         checked(page, f"split, pane {at + 1} focused")
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.noteFrom('# Words\\n\\nSome words to count.\\n', ws.activeSpace.root)
           await ws.loadTree()
           const note = ws.notes.find((one) => one.name.startsWith('Words'))

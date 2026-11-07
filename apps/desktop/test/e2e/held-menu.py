@@ -10,7 +10,7 @@ DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 MENU = ".orden-layer.menu[role=menu]"
-OPEN = f"!!document.querySelector('{MENU}') && window.nibApp.overlays.depth > 0"
+OPEN = f"!!document.querySelector('{MENU}') && window.ordenApp.overlays.depth > 0"
 
 LISTEN = """() => {
   window.__heard = []
@@ -107,15 +107,15 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nThe plan, and its words.\n")
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     plan = f".row[data-path={json.dumps(root.rstrip('/') + '/Plan.md')}]"
     wait_for(page, f"document.querySelector({json.dumps(plan)})", "Plan's row")
     DRIVE.settled(page)
     page.evaluate(LISTEN)
 
     clicked(page, "file list", centre(page, plan))
-    held(page, "file list", centre(page, plan), "Rename", "() => !!window.nibApp.workspace.naming")
+    held(page, "file list", centre(page, plan), "Rename", "() => !!window.ordenApp.workspace.naming")
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     held_past(page, "file list", centre(page, plan))
@@ -137,10 +137,10 @@ def drive(browser: Browser) -> None:
     held_past(page, "note", at)
     shot(page, "note")
 
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
     page.evaluate(
-        "async (root) => { const ws = window.nibApp.workspace;"
-        " await window.nibApp.tasks().then((t) => t.writeFile(`${root.replace(/\\/+$/, '')}/Board.canvas`,"
+        "async (root) => { const ws = window.ordenApp.workspace;"
+        " await window.ordenApp.tasks().then((t) => t.writeFile(`${root.replace(/\\/+$/, '')}/Board.canvas`,"
         " JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: 'A card', x: 0, y: 0, width: 240, height: 120 }], edges: [] })));"
         " await ws.loadTree(); await ws.openEntry(`${root.replace(/\\/+$/, '')}/Board.canvas`, { activate: true }) }",
         root,

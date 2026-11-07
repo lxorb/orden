@@ -27,7 +27,7 @@ def check(fine: bool, what: str) -> None:
         failures.append(what)
         say(f"WRONG {what}")
 
-LAUNCHED = "() => window.nibApp.workspace.tabs.length > 0"
+LAUNCHED = "() => window.ordenApp.workspace.tabs.length > 0"
 
 def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme=scheme)
@@ -45,7 +45,7 @@ turned once. wind, Wind, windward.
 
 SEED = """
 async (text) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const path = await ws.noteFrom(text, ws.activeSpace.root)
   // Activated, not merely opened - and see `SHOWING`, which is what makes it stay
   // activated through the sitting being read back.
@@ -75,14 +75,14 @@ BAR = """
 """
 
 WHERE = "() => document.activeElement?.className ?? document.activeElement?.tagName ?? ''"
-DOC = "() => window.nibApp.workspace.active.doc"
-GALE = "(window.nibApp.workspace.active.doc.match(/gale/g) || []).length"
+DOC = "() => window.ordenApp.workspace.active.doc"
+GALE = "(window.ordenApp.workspace.active.doc.match(/gale/g) || []).length"
 CARET = """
 () => ({
-  active: window.nibApp.workspace.active?.path ?? null,
-  tabs: window.nibApp.workspace.tabs.length,
+  active: window.ordenApp.workspace.active?.path ?? null,
+  tabs: window.ordenApp.workspace.tabs.length,
   editors: document.querySelectorAll('.cm-content').length,
-  windmill: (window.nibApp.workspace.active?.doc ?? '').includes('windmill'),
+  windmill: (window.ordenApp.workspace.active?.doc ?? '').includes('windmill'),
   picked: (getSelection()?.toString() ?? '').slice(0, 24),
   focused: document.activeElement?.className?.slice?.(0, 40) ?? '',
 })
@@ -90,7 +90,7 @@ CARET = """
 
 SHOWING = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const mine = ws.tabs.find((one) => (one.path ?? '').endsWith('The wind.md'))
   if (!mine) return false
 
@@ -109,7 +109,7 @@ PANEL = "() => document.querySelectorAll('.cm-panel, .cm-panels').length"
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = 'phone'
   app.viewport.portrait = true
   app.viewport.narrow = true
@@ -319,10 +319,10 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
             f"[{label}] and the matches go with it",
         )
 
-        page.evaluate("() => window.nibApp.workspace.toggleReading?.()")
+        page.evaluate("() => window.ordenApp.workspace.toggleReading?.()")
         page.wait_for_timeout(200)
         reading = page.evaluate(
-            "() => { const ws = window.nibApp.workspace; const tab = ws.active;"
+            "() => { const ws = window.ordenApp.workspace; const tab = ws.active;"
             " if (tab) tab.reading = true; return !!tab?.reading }"
         )
         page.wait_for_timeout(600)

@@ -57,7 +57,7 @@ second section
 
 WRITE = """
 async (text) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const made = await ws.noteFrom(text, ws.activeSpace.root)
   if (!made) throw new Error('nothing written')
   await ws.loadTree()
@@ -68,7 +68,7 @@ async (text) => {
 
 SPANS = """
 () => {
-  const doc = window.nib.state.doc
+  const doc = window.orden.state.doc
   const lines = []
   for (let at = 1; at <= doc.lines; at++) lines.push(doc.line(at))
 
@@ -90,7 +90,7 @@ SPANS = """
 
 STATE = """
 () => ({
-  head: window.nib.state.selection.main.head,
+  head: window.orden.state.selection.main.head,
   widgets: {
     formula: document.querySelectorAll('.orden-math-block').length,
     diagram: document.querySelectorAll('.orden-diagram').length,
@@ -110,19 +110,19 @@ PRESSES = [
 
 def caret_at(page: Page, at: int) -> None:
     page.evaluate(
-        "(at) => window.nib.dispatch({ selection: { anchor: at }, scrollIntoView: true })", at
+        "(at) => window.orden.dispatch({ selection: { anchor: at }, scrollIntoView: true })", at
     )
     page.wait_for_timeout(120)
 
 def start_of(page: Page, span: dict, where: str) -> int:
-    doc_end = page.evaluate("() => window.nib.state.doc.length")
+    doc_end = page.evaluate("() => window.orden.state.doc.length")
     if where == "from above":
         return page.evaluate(
-            "(at) => window.nib.state.doc.lineAt(Math.max(0, at - 1)).to", span["from"]
+            "(at) => window.orden.state.doc.lineAt(Math.max(0, at - 1)).to", span["from"]
         )
     if where == "from below":
         return page.evaluate(
-            "(at) => window.nib.state.doc.lineAt(Math.min(window.nib.state.doc.length, at + 1)).from",
+            "(at) => window.orden.state.doc.lineAt(Math.min(window.orden.state.doc.length, at + 1)).from",
             span["to"],
         )
     if where == "from in front":
@@ -142,7 +142,7 @@ def drive(playwright, profile: Path) -> None:
         made = page.evaluate(WRITE, NOTE)
         say(f"wrote {made}")
 
-        wait_for(page, "() => !!window.nib", "the editor")
+        wait_for(page, "() => !!window.orden", "the editor")
         wait_for(
             page,
             "() => document.querySelectorAll('.orden-math-block').length === 1"

@@ -11,8 +11,8 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SEED = """async () => {
-  window.tasks = await window.nibApp.tasks()
-  const ws = window.nibApp.workspace
+  window.tasks = await window.ordenApp.tasks()
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   await window.tasks.writeFile(`${root}/Errands.md`, '# Errands\\n\\n- [ ] Post the letter\\n')
   window.tasks.makeList(`${root}/Errands.md`)
@@ -22,14 +22,14 @@ SEED = """async () => {
   return root
 }"""
 
-TEXT = "async (path) => await window.nibApp.workspace.noteText(path)"
+TEXT = "async (path) => await window.ordenApp.workspace.noteText(path)"
 
 WORDS = "() => [...document.querySelectorAll('.view-tab .task .words')].map((one) => one.textContent.trim())"
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
     root: str = page.evaluate(SEED)
     wait_for(page, f"() => !!({TASK})('Post the letter')", "the list's todo")
     page.wait_for_timeout(500)
@@ -46,9 +46,9 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Meeting")
     wait_for(page, "!!document.querySelector('.orden-checkbox')", "the note's checkbox")
     page.locator(".orden-checkbox").first.dispatch_event("mousedown")
-    wait_for(page, f"() => window.nib.state.doc.toString().includes('- [x] Ask')", "the box ticked")
+    wait_for(page, f"() => window.orden.state.doc.toString().includes('- [x] Ask')", "the box ticked")
     page.wait_for_timeout(800)
-    text = page.evaluate("() => window.nib.state.doc.toString()")
+    text = page.evaluate("() => window.orden.state.doc.toString()")
     say(f"[meeting] {text!r}")
     if "- [x] Ask about the budget\n" not in text or "✅" in text:
         wrong(f"ticking the note's checkbox changed more than its box: {text!r}")

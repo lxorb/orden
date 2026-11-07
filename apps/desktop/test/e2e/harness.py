@@ -51,8 +51,8 @@ BUILT_IN = (
 )
 
 ANSWERED = (
-    "Object.defineProperty(window, 'nibApp', { configurable: true, set(app) {"
-    " Object.defineProperty(window, 'nibApp', { value: app, writable: true, configurable: true, enumerable: true });"
+    "Object.defineProperty(window, 'ordenApp', { configurable: true, set(app) {"
+    " Object.defineProperty(window, 'ordenApp', { value: app, writable: true, configurable: true, enumerable: true });"
     " const held = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(app.settings), 'setup');"
     " Object.defineProperty(app.settings, 'setup', { configurable: true, get: () => held.get.call(app.settings),"
     " set: (at) => { if (at !== -1) held.set.call(app.settings, at) } }) } })"
@@ -802,8 +802,8 @@ class Drive:
         self.ready(page, patience)
 
     def ready(self, page: Any, patience: float = PATIENCE) -> None:
-        self.wait_for(page, "window.nibApp", "the app", patience)
-        self.wait_for(page, "window.nibApp.workspace.activeSpace", "a space", patience)
+        self.wait_for(page, "window.ordenApp", "the app", patience)
+        self.wait_for(page, "window.ordenApp.workspace.activeSpace", "a space", patience)
         self.wait_for(
             page,
             f"performance.getEntriesByName({json.dumps(LAUNCHED)}).length > 0",
@@ -839,7 +839,7 @@ class Drive:
         return len(chunks) + len(sheets)
 
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
-        page.evaluate("() => window.nibApp.workspace.toggleReading()")
+        page.evaluate("() => window.ordenApp.workspace.toggleReading()")
         self.wait_for(
             page, "document.querySelector('article.orden-write')?.childElementCount", "the reading view", patience
         )
@@ -856,10 +856,10 @@ class Drive:
         return page.evaluate(  # type: ignore[no-any-return]
             """
             async ([texts, folder, lists]) => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const root = ws.activeSpace.root
               const into = folder ? `${root.replace(/\\/+$/, '')}/${folder}` : root
-              const tasks = lists ? await window.nibApp.tasks() : null
+              const tasks = lists ? await window.ordenApp.tasks() : null
               for (const text of texts) {
                 const path = await ws.noteFrom(text, into)
                 if (path && tasks) tasks.makeList(path)
@@ -874,7 +874,7 @@ class Drive:
     def open_note(self, page: Any, starts: str, patience: float = PATIENCE) -> None:
         page.evaluate(
             """async (starts) => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const note = ws.notes.find((one) => one.name.startsWith(starts))
               if (!note) throw new Error(`no note starts with ${starts}`)
               await ws.openEntry(note.path, { activate: true })
@@ -883,7 +883,7 @@ class Drive:
         )
         self.wait_for(
             page,
-            f"window.nibApp.workspace.active?.note?.name?.startsWith({json.dumps(starts)})"
+            f"window.ordenApp.workspace.active?.note?.name?.startsWith({json.dumps(starts)})"
             " && document.querySelector('.cm-content')",
             f"the {starts} note",
             patience,

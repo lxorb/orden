@@ -134,7 +134,7 @@ class Worker(harness.Worker):
         return token
 
 ERASE = """async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   for (const one of [...ws.spaces]) await ws.deleteSpace(one.id)
 }"""
 
@@ -151,15 +151,15 @@ def opened(browser, name: str, width: int, height: int, agent: str, finger: bool
     page.set_default_timeout(20000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=60000)
 
     page.evaluate(ERASE)
-    page.wait_for_function("() => window.nibApp.workspace.spaces.length === 0", timeout=60000)
+    page.wait_for_function("() => window.ordenApp.workspace.spaces.length === 0", timeout=60000)
     page.evaluate("(token) => localStorage.setItem('orden:session', token)", token)
     page.reload(wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.account.user", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp.account.user", timeout=60000)
 
     return context, page
 
@@ -172,29 +172,29 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
 
     try:
         page.wait_for_function(
-            f"() => window.nibApp.workspace.notes.length >= {len(NOTES)}", timeout=60000
+            f"() => window.ordenApp.workspace.notes.length >= {len(NOTES)}", timeout=60000
         )
     except Exception:
         say(f"[{name}] still waiting: {page.evaluate('''() => ({
-          spaces: window.nibApp.workspace.spaces.map((one) => one.name),
-          notes: window.nibApp.workspace.notes.length,
-          sync: window.nibApp.sync.status,
-          error: window.nibApp.sync.lastError,
+          spaces: window.ordenApp.workspace.spaces.map((one) => one.name),
+          notes: window.ordenApp.workspace.notes.length,
+          sync: window.ordenApp.sync.status,
+          error: window.ordenApp.sync.lastError,
         })''')}")
         raise
-    space = page.evaluate("() => window.nibApp.workspace.spaces[0]")
+    space = page.evaluate("() => window.ordenApp.workspace.spaces[0]")
     say(f"[{name}] the device holds {space['name']} with its notes")
 
-    page.evaluate("() => window.nibApp.publish.show(window.nibApp.workspace.spaces[0])")
+    page.evaluate("() => window.ordenApp.publish.show(window.ordenApp.workspace.spaces[0])")
     page.wait_for_timeout(600)
-    page.evaluate("() => (window.nibApp.publish.confirmed = true)")
-    page.evaluate("() => window.nibApp.publish.typeSubdomain('field')")
+    page.evaluate("() => (window.ordenApp.publish.confirmed = true)")
+    page.evaluate("() => window.ordenApp.publish.typeSubdomain('field')")
 
-    page.evaluate("() => window.nibApp.publish.rule('exclude', 'Drafts', true)")
-    page.evaluate("async () => await window.nibApp.publish.askChanges()")
+    page.evaluate("() => window.ordenApp.publish.rule('exclude', 'Drafts', true)")
+    page.evaluate("async () => await window.ordenApp.publish.askChanges()")
     page.wait_for_timeout(500)
 
-    changes = page.evaluate("() => window.nibApp.publish.changes")
+    changes = page.evaluate("() => window.ordenApp.publish.changes")
     say(f"[{name}] the sheet says: {changes}")
 
     rows = page.evaluate(
@@ -224,11 +224,11 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     if not where or not where["inSheet"] or not where["inWindow"] or where["height"] < 20:
         say(f"FAILED: [{name}] the Publish button is not in view: {where}")
 
-    page.evaluate("() => window.nibApp.publish.description = 'Notes from the field.'")
+    page.evaluate("() => window.ordenApp.publish.description = 'Notes from the field.'")
     page.click("button.go")
     page.wait_for_timeout(2500)
 
-    live = page.evaluate("() => window.nibApp.publish.blog")
+    live = page.evaluate("() => window.ordenApp.publish.blog")
     say(f"[{name}] published: enabled={live['enabled']} at {live['subdomain']} rules={live['site']['rules']}")
     shot("published")
 
@@ -237,7 +237,7 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     while time.monotonic() < until:
         drawn = page.evaluate(
             """() => {
-              const id = window.nibApp.publish.spaceId
+              const id = window.ordenApp.publish.spaceId
               try { return JSON.parse(localStorage.getItem(`orden:diagrams:${id}`) ?? '[]') } catch { return [] }
             }"""
         )
@@ -248,8 +248,8 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
     say(f"[{name}] the app drew and sent {len(drawn)} pictures for its one diagram")
 
     for section in ["sync", "account"]:
-        page.evaluate("() => window.nibApp.publish.close()")
-        page.evaluate(f"() => window.nibApp.settings.show('{section}')")
+        page.evaluate("() => window.ordenApp.publish.close()")
+        page.evaluate(f"() => window.ordenApp.settings.show('{section}')")
         page.wait_for_selector(".orden-screen.sheet", timeout=15000)
         page.wait_for_timeout(900)
         shot(section)

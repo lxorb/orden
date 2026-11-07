@@ -37,7 +37,7 @@ JOURNAL = "# Monday\n\nA passage worth lifting out into a note of its own.\n\nAn
 
 SEED = """
 async (notes) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   for (const one of notes) await ws.noteFrom(one, root)
   await ws.loadTree()
@@ -98,17 +98,17 @@ def fresh(browser: Browser, scheme: str) -> Page:
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith(starts))
           await ws.openEntry(note.path, { activate: true })
         }""",
         starts,
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
 
 def at(page: Page, words: str, offset: int = 0) -> int:
-    found = page.evaluate("(words) => window.nib.state.doc.toString().indexOf(words)", words)
+    found = page.evaluate("(words) => window.orden.state.doc.toString().indexOf(words)", words)
     if found < 0:
         raise SystemExit(f"the note does not say {words!r}")
 
@@ -117,8 +117,8 @@ def at(page: Page, words: str, offset: int = 0) -> int:
 def select(page: Page, anchor: int, head: int) -> None:
     page.evaluate(
         "([anchor, head]) => {"
-        "  window.nib.focus();"
-        "  window.nib.dispatch({ selection: { anchor, head }, scrollIntoView: true })"
+        "  window.orden.focus();"
+        "  window.orden.dispatch({ selection: { anchor, head }, scrollIntoView: true })"
         "}",
         [anchor, head],
     )
@@ -168,8 +168,8 @@ def in_the_editor(page: Page) -> None:
     page.wait_for_timeout(400)
     line = page.evaluate(
         """() => {
-          const at = window.nib.state.selection.main.head
-          const line = window.nib.domAtPos(at).node
+          const at = window.orden.state.selection.main.head
+          const line = window.orden.domAtPos(at).node
           const row = line.nodeType === 1 ? line.closest('.cm-line') : line.parentElement.closest('.cm-line')
           return row ? row.textContent : ''
         }"""
@@ -191,8 +191,8 @@ def in_the_editor(page: Page) -> None:
     page.wait_for_timeout(400)
     landed = page.evaluate(
         """() => {
-          const at = window.nib.state.selection.main.head
-          return window.nib.state.doc.sliceString(at, at + 6)
+          const at = window.orden.state.selection.main.head
+          return window.orden.state.doc.sliceString(at, at + 6)
         }"""
     )
     is_true(
@@ -201,7 +201,7 @@ def in_the_editor(page: Page) -> None:
     )
 
 def in_the_reading_view(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     wait_for(page, "document.querySelector('#write mark')", "the note read")
     page.wait_for_timeout(500)
 
@@ -221,12 +221,12 @@ def in_the_reading_view(page: Page) -> None:
     )
     shot(page, "reading-six-tones")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
 def the_bar(page: Page) -> None:
     open_note(page, "Marking up")
-    before = page.evaluate("() => window.nibApp.modes.highlightTone")
+    before = page.evaluate("() => window.ordenApp.modes.highlightTone")
     is_true(before is None, f"nothing is chosen to begin with, so the plain one: {before}")
 
     select(page, at(page, "A last paragraph"), at(page, "A last paragraph", 6))
@@ -256,13 +256,13 @@ def the_bar(page: Page) -> None:
 
     opened.nth(1).click()
     page.wait_for_timeout(500)
-    text = page.evaluate("() => window.nib.state.doc.toString()")
+    text = page.evaluate("() => window.orden.state.doc.toString()")
     is_true(
         "==\U0001F534 A last==" in text,
         f"picking red wrote the markup Obsidian writes: {text[text.index('A last') - 20 :][:40]!r}",
     )
     is_true(
-        page.evaluate("() => window.nibApp.modes.highlightTone") == 1,
+        page.evaluate("() => window.ordenApp.modes.highlightTone") == 1,
         "and the colour stuck",
     )
 
@@ -270,10 +270,10 @@ def the_bar(page: Page) -> None:
     page.wait_for_timeout(300)
     page.locator('.orden-bar-at button[aria-label="Highlight"]').click()
     page.wait_for_timeout(400)
-    text = page.evaluate("() => window.nib.state.doc.toString()")
+    text = page.evaluate("() => window.orden.state.doc.toString()")
     is_true("==\U0001F534 A plain==" in text, "the button writes the colour that stuck")
 
-    page.evaluate("() => window.nibApp.modes.setHighlightTone(null)")
+    page.evaluate("() => window.ordenApp.modes.setHighlightTone(null)")
     select(page, at(page, "A closing"), at(page, "A closing", 9))
     page.wait_for_timeout(300)
     page.locator(".orden-bar-at button.swatch").first.focus()
@@ -305,19 +305,19 @@ def the_bar(page: Page) -> None:
 
     page.keyboard.press("Enter")
     page.wait_for_timeout(500)
-    text = page.evaluate("() => window.nib.state.doc.toString()")
+    text = page.evaluate("() => window.orden.state.doc.toString()")
     is_true("==\U0001F534 A closing==" in text, "and Enter on a colour highlights in it")
 
-    page.evaluate("() => window.nibApp.modes.setHighlightTone(null)")
+    page.evaluate("() => window.ordenApp.modes.setHighlightTone(null)")
     page.wait_for_timeout(200)
     is_true(
-        page.evaluate("() => window.nibApp.modes.highlightTone") is None,
+        page.evaluate("() => window.ordenApp.modes.highlightTone") is None,
         "the plain highlight is one of the six answers",
     )
 
 def the_newline(page: Page) -> None:
     open_note(page, "Wrapped")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     wait_for(page, "document.querySelector('#write p')", "the note read")
     page.wait_for_timeout(500)
 
@@ -327,16 +327,16 @@ def the_newline(page: Page) -> None:
     is_true(breaks() == 0, f"CommonMark to begin with, so no break: {breaks()}")
     shot(page, "reading-commonmark")
 
-    page.evaluate("() => window.nibApp.modes.toggleHardBreaks()")
+    page.evaluate("() => window.ordenApp.modes.toggleHardBreaks()")
     page.wait_for_timeout(900)
     is_true(breaks() == 2, f"the switch breaks the wrapped paragraph: {breaks()}")
     shot(page, "reading-hard-breaks")
 
-    page.evaluate("() => window.nibApp.modes.toggleHardBreaks()")
+    page.evaluate("() => window.ordenApp.modes.toggleHardBreaks()")
     page.wait_for_timeout(900)
     is_true(breaks() == 0, "and puts it back")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(400)
 
 def the_link(page: Page) -> None:
@@ -348,27 +348,27 @@ def the_link(page: Page) -> None:
         ("wikilink", "[[A passage worth lifting out into a note of its own]]"),
         ("shortest", "](A%20passage%20worth%20lifting%20out%20into%20a%20note%20of%20its%20own.md)"),
     ):
-        page.evaluate("(one) => window.nibApp.modes.setLinkFormat(one)", spelling)
+        page.evaluate("(one) => window.ordenApp.modes.setLinkFormat(one)", spelling)
         page.wait_for_timeout(200)
         page.evaluate(
-            "([from, to]) => window.nibApp.workspace.extractSelection(from, to)",
+            "([from, to]) => window.ordenApp.workspace.extractSelection(from, to)",
             [start, end],
         )
         page.wait_for_timeout(900)
 
-        text = page.evaluate("() => window.nib.state.doc.toString()")
+        text = page.evaluate("() => window.orden.state.doc.toString()")
         is_true(wanted in text, f"{spelling} wrote {wanted!r}")
 
-        page.evaluate("() => window.nibApp.workspace.undoFileAction()")
+        page.evaluate("() => window.ordenApp.workspace.undoFileAction()")
         page.wait_for_timeout(700)
 
-    page.evaluate("() => window.nibApp.modes.setLinkFormat('wikilink')")
+    page.evaluate("() => window.ordenApp.modes.setLinkFormat('wikilink')")
     page.wait_for_timeout(200)
 
     resolved = page.evaluate(
         """() => {
-          const links = window.nibApp.links
-          const from = window.nibApp.workspace.active.path
+          const links = window.ordenApp.links
+          const from = window.ordenApp.workspace.active.path
           return [
             links.targetOf(from, { kind: 'wikilink', target: 'The plan' }),
             links.targetOf(from, { kind: 'markdown', target: 'The plan.md' }),

@@ -443,7 +443,7 @@ async ([rows]) => {
   // measures nothing. Only a database this script somehow met first is created here,
   // and then at the version it is opened at.
   const open = (version) => new Promise((resolve, reject) => {
-    const request = version === undefined ? indexedDB.open('nib') : indexedDB.open('nib', version)
+    const request = version === undefined ? indexedDB.open('orden') : indexedDB.open('orden', version)
     request.onupgradeneeded = () => {
       const made = request.result
       if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })

@@ -12,7 +12,7 @@ say, wrong, shot, wait_for, waited = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.w
 
 SEED = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -25,8 +25,8 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
@@ -78,7 +78,7 @@ SHARPNESS = """
 
 def looked(page, scale: float, what: str) -> None:
     page.evaluate(
-        "(scale) => { const tab = window.nibApp.workspace.active;"
+        "(scale) => { const tab = window.ordenApp.workspace.active;"
         " tab.camera = { x: 150, y: 120, scale } }",
         scale,
     )
@@ -96,15 +96,15 @@ def drive(browser: Browser) -> None:
         page = context.new_page()
         page.on("pageerror", lambda error: wrong(f"page error: {error}"))
         DRIVE.open(page)
-        wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-        root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+        wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+        root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
         if not page.evaluate(SEED, {"path": f"{root}/Paper.pdf", "data": base64.b64encode(paper()).decode("ascii")}):
             wrong("the PDF never reached the space")
             return
         board = {"nodes": [{"id": "p", "type": "file", "file": "Paper.pdf", "x": 0, "y": 0, "width": 300, "height": 420}], "edges": []}
         page.evaluate(
-            "async ([path, text]) => { const ws = window.nibApp.workspace;"
-            " await window.nibApp.tasks().then((t) => t.writeFile(path, text));"
+            "async ([path, text]) => { const ws = window.ordenApp.workspace;"
+            " await window.ordenApp.tasks().then((t) => t.writeFile(path, text));"
             " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
             [f"{root}/Board.canvas", json.dumps(board)],
         )

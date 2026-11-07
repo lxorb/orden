@@ -37,14 +37,14 @@ def main() -> int:
         DRIVE.open(page)
         page.evaluate(
             """() => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               if (ws.panel !== 'tree') ws.showPanel('tree')
             }"""
         )
         page.wait_for_timeout(1000)
         say(f"switcher before: {page.locator('aside .name').count()}")
 
-        page.evaluate("() => (window.nibApp.sync.status = 'syncing')")
+        page.evaluate("() => (window.ordenApp.sync.status = 'syncing')")
         page.wait_for_timeout(1500)
         say(f"said: {page.evaluate('''() => document.querySelector('p[role=status]')?.textContent''')!r}")
 
@@ -60,15 +60,15 @@ def main() -> int:
 
         page.evaluate(
             """() => {
-              const sync = window.nibApp.sync
+              const sync = window.ordenApp.sync
               sync.lastError = 'the account refused that'
               sync.status = 'error'
             }"""
         )
         page.wait_for_timeout(600)
-        page.evaluate("() => (window.nibApp.sync.status = 'idle')")
+        page.evaluate("() => (window.ordenApp.sync.status = 'idle')")
         page.wait_for_timeout(200)
-        page.evaluate("() => (window.nibApp.sync.status = 'error')")
+        page.evaluate("() => (window.ordenApp.sync.status = 'error')")
         page.wait_for_timeout(1200)
 
         rows = page.locator("aside .orden-row.row[data-path]")

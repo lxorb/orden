@@ -36,7 +36,7 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = 'phone'
   app.viewport.portrait = true
   app.viewport.narrow = true
@@ -51,7 +51,7 @@ AS_PHONE = """
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -92,9 +92,9 @@ ROWS = """
 
 CANVAS_ICON = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const canvas = ws.files.find((one) => one.name === 'Roadmap.canvas')
-  window.nibApp.iconChoice.file(canvas.path)
+  window.ordenApp.iconChoice.file(canvas.path)
   return canvas.path
 }
 """
@@ -204,9 +204,9 @@ def aligned(page: Page, label: str) -> None:
     field.fill("")
 
 CANVAS_WORN = (
-    "() => { const ws = window.nibApp.workspace;"
+    "() => { const ws = window.ordenApp.workspace;"
     " const c = ws.files.find((one) => one.name === 'Roadmap.canvas');"
-    " return c ? [window.nibApp.links.iconOf(c.path), window.nibApp.links.tintOf(c.path)] : null }"
+    " return c ? [window.ordenApp.links.iconOf(c.path), window.ordenApp.links.tintOf(c.path)] : null }"
 )
 
 def outline(page: Page, label: str, where: str) -> None:
@@ -273,7 +273,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         if where == "phone":
             page.evaluate(AS_PHONE)
             page.evaluate(
-                "() => { const ws = window.nibApp.workspace;"
+                "() => { const ws = window.ordenApp.workspace;"
                 " if (!ws.panel) ws.showPanel('tree') }"
             )
             page.wait_for_timeout(350)
@@ -314,9 +314,9 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
 
         worn = wait_for(
             page,
-            "() => { const ws = window.nibApp.workspace;"
+            "() => { const ws = window.ordenApp.workspace;"
             " const c = ws.files.find((one) => one.name === 'Roadmap.canvas');"
-            " return c ? window.nibApp.links.iconOf(c.path) : null }",
+            " return c ? window.ordenApp.links.iconOf(c.path) : null }",
             f"[{label}] the canvas to wear what was picked",
         )
         check(worn == "rocket", f"[{label}] the canvas kept `{worn}` in its own file")

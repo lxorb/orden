@@ -18,7 +18,7 @@ INSTALL = ["github", "rose", "solar", "graphite", "newsprint", "mono"]
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind, and [a link](https://example.com) says where.\\n\\n- One thing\\n- Another\\n\\n```js\\nconst ink = "on glass"\\n```\\n')
   await ws.noteFrom('# Reading list\\n\\nA paper about ink.')
   await ws.noteFrom('# Journal\\n\\nThe morning.')
@@ -31,13 +31,13 @@ async () => {
 
 INSTALLING = """
 async (ids) => {
-  const store = window.nibApp.themeStore
+  const store = window.ordenApp.themeStore
   await store.load(true)
   for (const id of ids) {
     const one = store.themes.find((theme) => theme.id === id)
     if (one) await store.install(one)
   }
-  const theme = window.nibApp.theme
+  const theme = window.ordenApp.theme
   theme.select('default')
   theme.setScheme('dark')
   theme.setAccent('violet')
@@ -47,7 +47,7 @@ async (ids) => {
 
 STATE = """
 () => ({
-  id: window.nibApp.theme.id,
+  id: window.ordenApp.theme.id,
   scheme: document.documentElement.dataset.theme,
   kept: localStorage.getItem('orden:theme'),
   keptScheme: localStorage.getItem('orden:theme-scheme'),
@@ -67,7 +67,7 @@ async (name) => {
   await new Promise((done) => {
     const frame = () => {
       frames++
-      const on = window.nibApp.theme.id === `file:${name.toLowerCase()}`
+      const on = window.ordenApp.theme.id === `file:${name.toLowerCase()}`
       if ((on && getComputedStyle(document.body).backgroundColor !== before) || frames > 60) done()
       else requestAnimationFrame(frame)
     }
@@ -107,7 +107,7 @@ def main() -> int:
 
         DRIVE.open(page)
         page.evaluate(SEED)
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         installed = page.evaluate(INSTALLING, INSTALL)
         say(f"installed {', '.join(installed)}")
         check("the store installed the six themes", {f"file:{one}" for one in INSTALL} <= set(installed))
@@ -221,7 +221,7 @@ def main() -> int:
         check("and Enter keeps it", state()["kept"] == "file:graphite")
 
         page.evaluate(
-            "() => { window.nibApp.theme.select('default'); window.nibApp.theme.setScheme('light') }"
+            "() => { window.ordenApp.theme.select('default'); window.ordenApp.theme.setScheme('light') }"
         )
         switch.click(button="right")
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')

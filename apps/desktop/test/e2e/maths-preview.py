@@ -34,7 +34,7 @@ the end
 
 PREVIEW = """
 () => {
-  const view = window.nib
+  const view = window.orden
   const dom = view.dom.querySelector('.orden-maths-preview')
   if (!dom || dom.hidden) return null
   const box = dom.getBoundingClientRect()
@@ -62,7 +62,7 @@ LINES = "() => [...document.querySelectorAll('.cm-line')].map((l) => Math.round(
 def caret_after(page: Page, needle: str, offset: int = 0) -> None:
     page.evaluate(
         """([needle, offset]) => {
-          const view = window.nib
+          const view = window.orden
           const at = view.state.doc.toString().indexOf(needle)
           if (at < 0) throw new Error(`no ${needle} in the note`)
           view.focus()
@@ -147,7 +147,7 @@ def desktop(page: Page, scheme: str) -> None:
     caret_after(page, "$\\sqrt{x", 0)
     page.evaluate(
         """() => {
-          const view = window.nib
+          const view = window.orden
           const head = view.state.selection.main.head
           const row = view.coordsAtPos(head, -1)
           view.scrollDOM.scrollTop += row.top - view.scrollDOM.getBoundingClientRect().top - 4
@@ -211,14 +211,14 @@ def desktop(page: Page, scheme: str) -> None:
     if not seen or "α" not in seen["text"]:
         wrong(f"[{scheme}] the preview did not follow a composed character: {seen}")
 
-    page.evaluate("() => window.nibApp.modes.toggleSource()")
+    page.evaluate("() => window.ordenApp.modes.toggleSource()")
     page.wait_for_timeout(300)
     caret_after(page, "$\\sqrt{x", 0)
     seen = shown(page, "the preview in source mode")
     if not seen or not seen["katex"]:
         wrong(f"[{scheme}] no preview in source mode: {seen}")
     shot(page, f"{scheme}-source")
-    page.evaluate("() => window.nibApp.modes.toggleSource()")
+    page.evaluate("() => window.ordenApp.modes.toggleSource()")
 
 def phone(page: Page) -> None:
     open_note(page)

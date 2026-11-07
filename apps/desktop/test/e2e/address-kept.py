@@ -11,7 +11,7 @@ STATE = """
 () => {
   const field = [...document.querySelectorAll('input[role="combobox"][aria-label="Address"]')].find((one) => one.checkVisibility())
   return {
-    front: window.nibApp.workspace.active?.id ?? null,
+    front: window.ordenApp.workspace.active?.id ?? null,
     value: field?.value ?? null,
     focused: !!field && document.activeElement === field,
     caret: field ? [field.selectionStart, field.selectionEnd] : null,
@@ -33,11 +33,11 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, "# Trips\n\nWhere we went.\n")
     DRIVE.open_note(page, "Trips")
-    note = page.evaluate("() => window.nibApp.workspace.active.id")
+    note = page.evaluate("() => window.ordenApp.workspace.active.id")
 
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     DRIVE.wait_for(page, "document.activeElement?.getAttribute('aria-label') === 'Address'", "the new tab's field")
-    web = page.evaluate("() => window.nibApp.workspace.active.id")
+    web = page.evaluate("() => window.ordenApp.workspace.active.id")
     page.keyboard.type("weather in zurich")
     for _ in range(7):
         page.keyboard.press("ArrowLeft")
@@ -45,10 +45,10 @@ def drive(browser: Browser, scheme: str) -> None:
     shot(page, f"{scheme}-1-typed")
 
     tab_of(page, note).click()
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {note!r}", "the note in front")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id === {note!r}", "the note in front")
     page.wait_for_timeout(300)
     tab_of(page, web).click()
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {web!r}", "the new tab again")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id === {web!r}", "the new tab again")
     page.wait_for_timeout(400)
     after = page.evaluate(STATE)
     shot(page, f"{scheme}-2-back")
@@ -61,10 +61,10 @@ def drive(browser: Browser, scheme: str) -> None:
     check(f"[{scheme}] and typing goes on from there: {on['value']!r}", on["value"] == "weather ina zurich")
 
     page.keyboard.press("Control+Tab")
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id !== {web!r}", "the next tab")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id !== {web!r}", "the next tab")
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Shift+Tab")
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {web!r}", "the new tab again")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id === {web!r}", "the new tab again")
     page.wait_for_timeout(400)
     back = page.evaluate(STATE)
     check(f"[{scheme}] Ctrl+Tab and back: {back['value']!r} at {back['caret']}", back["value"] == "weather ina zurich" and back["caret"] == [11, 11] and back["focused"])
@@ -76,21 +76,21 @@ def drive(browser: Browser, scheme: str) -> None:
     left = page.evaluate(STATE)
     check(f"[{scheme}] a press past the field takes the keyboard from it", not left["focused"])
     tab_of(page, note).click()
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {note!r}", "the note in front")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id === {note!r}", "the note in front")
     page.wait_for_timeout(300)
     tab_of(page, web).click()
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {web!r}", "the new tab again")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id === {web!r}", "the new tab again")
     page.wait_for_timeout(500)
     unasked = page.evaluate(STATE)
     shot(page, f"{scheme}-3-left")
     check(f"[{scheme}] back, the field it was left by does not take the keyboard", not unasked["focused"])
     check(f"[{scheme}] and its words are still in it: {unasked['value']!r}", unasked["value"] == "weather ina zurich")
 
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     DRIVE.wait_for(page, "document.activeElement?.getAttribute('aria-label') === 'Address'", "another new tab's field")
-    fresh = page.evaluate("() => window.nibApp.workspace.active.id")
+    fresh = page.evaluate("() => window.ordenApp.workspace.active.id")
     tab_of(page, note).click()
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {note!r}", "the note in front")
+    DRIVE.wait_for(page, f"window.ordenApp.workspace.active?.id === {note!r}", "the note in front")
     page.wait_for_timeout(300)
     check(f"[{scheme}] a new tab nothing was done with goes once it is left", tab_of(page, fresh).count() == 0)
     check(f"[{scheme}] and the one with words in it stays", tab_of(page, web).count() == 1)

@@ -46,7 +46,7 @@ Scratch.
 
 SEED = """
 async ([plan, ideas, scratch]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const paths = []
   for (const text of [plan, ideas, scratch]) paths.push(await ws.noteFrom(text, root))
@@ -65,8 +65,8 @@ ROWS = """
 
 ANOTHER_SPACE = """
 async () => {
-  const ws = window.nibApp.workspace
-  const links = window.nibApp.links
+  const ws = window.ordenApp.workspace
+  const links = window.ordenApp.links
   await ws.addSpace('Elsewhere')
 
   const at_once = {
@@ -86,17 +86,17 @@ async () => {
 """
 
 TAGS = """
-() => (window.nibApp.links.index(null).tags ?? []).map((one) => `${one.tag} ${one.notes}`)
+() => (window.ordenApp.links.index(null).tags ?? []).map((one) => `${one.tag} ${one.notes}`)
 """
 
 FRESH_LINE = """
 () => {
-  const doc = window.nib.state.doc
-  window.nib.dispatch({
+  const doc = window.orden.state.doc
+  window.orden.dispatch({
     changes: { from: doc.length, insert: '\\n\\n' },
     selection: { anchor: doc.length + 2 },
   })
-  window.nib.focus()
+  window.orden.focus()
 }
 """
 
@@ -115,7 +115,7 @@ def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
         if not found and not again and time.monotonic() > until - patience + 4:
             say("[asked again] the popup came back empty; asking the space once more")
             last = page.evaluate(
-                "() => { const s = window.nib.state, at = s.selection.main.head;"
+                "() => { const s = window.orden.state, at = s.selection.main.head;"
                 " return s.doc.sliceString(at - 1, at) }"
             )
             page.keyboard.press("Backspace")
@@ -127,10 +127,10 @@ def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
     return rows(page)
 
 def doc(page: Page) -> str:
-    return page.evaluate("() => window.nib.state.doc.toString()")
+    return page.evaluate("() => window.orden.state.doc.toString()")
 
 def note_text(page: Page, path: str) -> str:
-    return page.evaluate("(path) => window.nibApp.workspace.noteText(path)", path)
+    return page.evaluate("(path) => window.ordenApp.workspace.noteText(path)", path)
 
 def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
     context = browser.new_context(
@@ -158,7 +158,7 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
     DRIVE.open(page)
     paths = page.evaluate(SEED, [PLAN, IDEAS, SCRATCH])
     say(f"the space holds {json.dumps([one.split('/')[-1] for one in paths])}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
 
     open_note(page, paths[2])
@@ -166,7 +166,7 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, list[str]]:
 
 def open_note(page: Page, path: str) -> None:
     page.evaluate(
-        "(path) => window.nibApp.workspace.openEntry(path, { activate: true })",
+        "(path) => window.ordenApp.workspace.openEntry(path, { activate: true })",
         path,
     )
     page.wait_for_timeout(800)
@@ -249,7 +249,7 @@ def drive_blocks(page: Page, names: list[str]) -> None:
         return
 
     id = link[0].split("#^")[1].rstrip("]")
-    body = note_text(page, page.evaluate("() => window.nibApp.workspace.notes.map((o) => o.path)")[1])
+    body = note_text(page, page.evaluate("() => window.ordenApp.workspace.notes.map((o) => o.path)")[1])
     say(f"[the other note] {json.dumps(body)}")
     if f"^{id}" not in (body or ""):
         wrong(f"the block was never given the name the link points at: ^{id}")
@@ -327,10 +327,10 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
 
     page.evaluate(
         """() => {
-          const doc = window.nib.state.doc
+          const doc = window.orden.state.doc
           const at = doc.toString().indexOf('tags: work') + 'tags: work'.length
-          window.nib.dispatch({ selection: { anchor: at } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: at } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(400)

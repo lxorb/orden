@@ -34,7 +34,7 @@ def every_pane(page: Page) -> None:
            "ai", "glasses", "export", "sync", "account", "trash", "import"]
     counted = 0
     for section in ids:
-        page.evaluate("(id) => window.nibApp.settings.show(id)", section)
+        page.evaluate("(id) => window.ordenApp.settings.show(id)", section)
         page.wait_for_timeout(600)
         found = page.evaluate(UNEXPLAINED)
         counted += found["rows"]
@@ -46,7 +46,7 @@ def every_pane(page: Page) -> None:
         wrong(f"only {counted} settings were found across the panes")
 
 def the_sentence(page: Page) -> None:
-    page.evaluate("() => window.nibApp.settings.show('markdown')")
+    page.evaluate("() => window.ordenApp.settings.show('markdown')")
     row = page.locator(".orden-setting", has_text="Strict CommonMark").first
     glyph = row.locator(".explain button")
     label = glyph.get_attribute("aria-label")
@@ -67,7 +67,7 @@ def the_sentence(page: Page) -> None:
     page.mouse.move(5, 5)
     wait_for(page, "() => !document.querySelector('.orden-bubble.sentence')", "the sentence gone again")
 
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     smart = page.locator(".orden-setting", has_text="Smart dates").first
     before = smart.locator("[role=switch]").get_attribute("aria-checked")
     smart.locator(".explain button").focus()
@@ -82,7 +82,7 @@ def the_sentence(page: Page) -> None:
         wrong("Enter on the ? turned the setting over")
     page.keyboard.press("Escape")
 
-    page.evaluate("() => window.nibApp.settings.show('ai')")
+    page.evaluate("() => window.ordenApp.settings.show('ai')")
     vault = page.locator("[role=switch]", has_text="vault").first
     page.evaluate(
         "() => { window.__taken = []; window.addEventListener('keydown', (event) =>"
@@ -101,7 +101,7 @@ def the_sentence(page: Page) -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Settings\"]')",
              "the settings")
     every_pane(page)
@@ -109,8 +109,8 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          window.nibApp.modes.glassesSeen = true
-          window.nibApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' }
+          window.ordenApp.modes.glassesSeen = true
+          window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' }
         }"""
     )
     every_pane(page)

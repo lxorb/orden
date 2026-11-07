@@ -25,7 +25,7 @@ The flat, and the garden.
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -35,20 +35,20 @@ WRITE = """async ([files]) => {
 }"""
 
 READ = """async (name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const found = ws.notes.find((one) => one.name === name)
   return found ? await ws.noteText(found.path) : null
 }"""
 
 OPEN = """([path, layout]) => window.tasks.openProject(
-  window.nibApp.workspace.activeSpace.name, path, layout ?? undefined)"""
+  window.ordenApp.workspace.activeSpace.name, path, layout ?? undefined)"""
 
 def note(page: Page, name: str = "Home.md") -> str:
     return page.evaluate(READ, name) or ""
 
 def seed(page: Page) -> None:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     page.evaluate(WRITE, [[["Projects/Home.md", HOME]]])
     wait_for(
         page,
@@ -132,7 +132,7 @@ def sections(page: Page) -> None:
 def folds(page: Page) -> None:
     page.locator(".view-tab .head .fold", has_text="Galley").click()
     wait_for(page, "!document.querySelector('.view-tab .task:has(.words)') || ![...document.querySelectorAll('.view-tab .task .words')].some((one) => one.textContent.trim() === 'Fix the tap')", "Galley folded")
-    page.evaluate("() => { const ws = window.nibApp.workspace; ws.close(ws.activeTabId) }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.close(ws.activeTabId) }")
     open_home(page)
     folded = page.evaluate(
         "() => document.querySelector('.view-tab .head .fold[aria-expanded=false]')?.textContent ?? ''"
@@ -171,7 +171,7 @@ def board(page: Page) -> None:
         )
         names = [one.lower() for one in page.locator(".view-tab .board .column .head .name").all_inner_texts()]
         say(f"[columns after] {names}")
-    page.evaluate("() => { const ws = window.nibApp.workspace; ws.close(ws.activeTabId) }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.close(ws.activeTabId) }")
     open_home(page)
     if not page.locator(".view-tab .board").count():
         wrong("the project did not open as the board it was left as")

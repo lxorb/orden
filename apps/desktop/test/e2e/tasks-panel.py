@@ -18,7 +18,7 @@ ERRANDS = """# Errands
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -27,7 +27,7 @@ WRITE = """async ([files]) => {
   await ws.loadTree()
 }"""
 
-TABS = "() => window.nibApp.workspace.tabs.length"
+TABS = "() => window.ordenApp.workspace.tabs.length"
 
 def shot(page: Page, name: str) -> None:
     quiet(page)
@@ -49,12 +49,12 @@ def row(page: Page, name: str):  # type: ignore[no-untyped-def]
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     page.evaluate(WRITE, [[["Errands.md", ERRANDS]]])
     wait_for(page, "() => window.tasks.rows.of().some((one) => one.task?.text === 'Read a book')", "the rows")
-    page.evaluate("window.nibApp.workspace.bookmarks.toggle({ kind: 'note', path: 'Errands.md', text: '' })")
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.bookmarks.toggle({ kind: 'note', path: 'Errands.md', text: '' })")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .chosen .task')", "the chosen list in the panel")
     tabs = page.evaluate(TABS)
     say(f"[tabs at the start] {tabs}")
@@ -102,7 +102,7 @@ def drive(browser: Browser) -> None:
 
     row(page, "admin").click(modifiers=["Control"])
     if DRIVE.waited(page, f"() => ({TABS})() === {tabs + 1}", "Ctrl and a press opening a tab"):
-        if page.evaluate("() => window.nibApp.workspace.active?.preview === true"):
+        if page.evaluate("() => window.ordenApp.workspace.active?.preview === true"):
             wrong("the tab Ctrl and a press opened is a preview")
     row(page, "home").click(button="middle")
     DRIVE.waited(page, f"() => ({TABS})() === {tabs + 2}", "the middle button opening a tab")

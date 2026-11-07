@@ -17,7 +17,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, DECK)
     DRIVE.open_note(page, "First")
-    page.evaluate("() => window.nibApp.present.start()")
+    page.evaluate("() => window.ordenApp.present.start()")
     page.wait_for_selector(".stage")
     page.wait_for_timeout(300)
     page.keyboard.press("Home")
@@ -26,10 +26,10 @@ def drive(browser: Browser) -> None:
     page.wait_for_selector(".notes")
     page.keyboard.press("Escape")
     page.wait_for_selector(".notes", state="detached")
-    if not page.evaluate("() => window.nibApp.present.on"):
+    if not page.evaluate("() => window.ordenApp.present.on"):
         wrong("Escape with the notes sheet up left the deck")
     page.keyboard.press("Escape")
-    wait_for(page, "!window.nibApp.present.on", "Escape to leave the deck")
+    wait_for(page, "!window.ordenApp.present.on", "Escape to leave the deck")
 
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector(".palette input")

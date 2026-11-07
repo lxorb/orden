@@ -42,7 +42,7 @@ delete PointerEvent.prototype.getPredictedEvents;
 
 AS_TABLET = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'tablet';
   app.viewport.portrait = false;
   const root = document.documentElement;
@@ -54,15 +54,15 @@ AS_TABLET = """
 """
 
 def opened(page: Page, label: str, tablet: bool = False) -> None:
-    wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
+    wait_for(page, "!!window.ordenApp", f"[{label}] the app to start")
+    wait_for(page, "window.ordenApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     if tablet:
         page.evaluate(AS_TABLET)
 
-    opened_it = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
+    opened_it = "window.ordenApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
-        page.evaluate("() => window.nibApp.workspace.createCanvas()")
+        page.evaluate("() => window.ordenApp.workspace.createCanvas()")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({opened_it})"):
             break
@@ -78,7 +78,7 @@ def plane(page: Page) -> dict:
     return box
 
 def ink_of(page: Page) -> list[dict]:
-    return page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc).nib?.ink ?? []")
+    return page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc).nib?.ink ?? []")
 
 def points_of(stroke: dict) -> list[dict]:
     flat = stroke["points"]
@@ -97,7 +97,7 @@ def points_of(stroke: dict) -> list[dict]:
 
 def camera_of(page: Page) -> dict:
     return page.evaluate(
-        "() => ({ x: 0, y: 0, scale: 1, ...(window.nibApp.workspace.active.camera ?? {}) })"
+        "() => ({ x: 0, y: 0, scale: 1, ...(window.ordenApp.workspace.active.camera ?? {}) })"
     )
 
 def profile_of(page: Page) -> str:

@@ -8,7 +8,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 KEEP = """async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   if (ws.panel !== 'tree') ws.showPanel('tree')
   ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: `${root}/Slack.md`, is_dir: false }))

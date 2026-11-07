@@ -21,7 +21,7 @@ NOTE = (
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   return ws.notes.map((one) => one.name)
@@ -30,13 +30,13 @@ async (note) => {
 
 STATE = """
 () => ({
-  ranges: window.nib.state.selection.ranges.map((one) => [one.from, one.to]),
-  text: window.nib.state.selection.ranges.map((one) =>
-    window.nib.state.doc.sliceString(one.from, one.to),
+  ranges: window.orden.state.selection.ranges.map((one) => [one.from, one.to]),
+  text: window.orden.state.selection.ranges.map((one) =>
+    window.orden.state.doc.sliceString(one.from, one.to),
   ),
   carets: document.querySelectorAll('.cm-cursorLayer .cm-cursor').length,
   blocks: document.querySelectorAll('.cm-nib-selection-block').length,
-  doc: window.nib.state.doc.toString(),
+  doc: window.orden.state.doc.toString(),
 })
 """
 
@@ -57,24 +57,24 @@ def fresh(browser: Browser) -> Page:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Cursors'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
     return page
 
 def at(page: Page, offset: int) -> tuple[float, float]:
-    box = page.evaluate("(at) => window.nib.coordsAtPos(at)", offset)
+    box = page.evaluate("(at) => window.orden.coordsAtPos(at)", offset)
     return (box["left"] + 1, (box["top"] + box["bottom"]) / 2)
 
 def place(page: Page, offset: int) -> None:
     page.evaluate(
         """(at) => {
-          window.nib.dispatch({ selection: { anchor: at } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: at } })
+          window.orden.focus()
         }""",
         offset,
     )
@@ -84,7 +84,7 @@ def state(page: Page) -> dict:
 
 def drive(browser: Browser) -> None:
     page = fresh(browser)
-    doc = page.evaluate("() => window.nib.state.doc.toString()")
+    doc = page.evaluate("() => window.orden.state.doc.toString()")
 
     place(page, doc.index("alpha one"))
     page.wait_for_timeout(200)

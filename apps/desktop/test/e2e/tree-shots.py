@@ -24,7 +24,7 @@ def fresh(browser: Browser, label: str, scheme: str) -> Page:
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -56,7 +56,7 @@ ROWS = """
 
 UNLISTED = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
   const entry = (name) => ({

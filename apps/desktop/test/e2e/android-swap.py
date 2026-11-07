@@ -17,7 +17,7 @@ CONTEXT = """() => {
   const { text, selectionStart, selectionEnd } = document.querySelector('.cm-content').editContext
   return { text, selectionStart, selectionEnd }
 }"""
-WORDS = "() => window.nibApp.workspace.active.note.latest"
+WORDS = "() => window.ordenApp.workspace.active.note.latest"
 
 def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
     phone = browser.new_context(
@@ -38,13 +38,13 @@ def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
         if step[0] == "open":
             page.evaluate(
                 """async (name) => {
-                  const ws = window.nibApp.workspace
+                  const ws = window.ordenApp.workspace
                   await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true })
                 }""",
                 step[1],
             )
         elif step[0] == "blank":
-            page.evaluate("() => window.nibApp.workspace.openBlank()")
+            page.evaluate("() => window.ordenApp.workspace.openBlank()")
         elif step[0] == "keys":
             page.locator(".cm-content").first.tap()
             page.keyboard.type(step[1])
@@ -75,7 +75,7 @@ def composing(browser: Browser) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, "# Aaa\n\nfirst\n", "# Bbb\n\nshort\n")
     opening = """async (name) => {
-      const ws = window.nibApp.workspace
+      const ws = window.ordenApp.workspace
       await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true })
     }"""
     page.evaluate(opening, "Aaa")

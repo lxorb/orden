@@ -23,7 +23,7 @@ NOTE = (
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   return ws.notes.map((one) => one.name)
@@ -35,7 +35,7 @@ WRITTEN = """
   shown: [...document.querySelectorAll('.cm-content .cm-line')]
     .map((line) => line.textContent)
     .join('\\n'),
-  doc: window.nib.state.doc.toString(),
+  doc: window.orden.state.doc.toString(),
 })
 """
 
@@ -55,12 +55,12 @@ def fresh(browser: Browser) -> Page:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Comments'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
     return page
 
@@ -92,8 +92,8 @@ def drive(browser: Browser) -> None:
     at = written["doc"].index("a note to myself") + 4
     page.evaluate(
         """(at) => {
-          window.nib.dispatch({ selection: { anchor: at } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: at } })
+          window.orden.focus()
         }""",
         at,
     )
@@ -105,8 +105,8 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const end = window.nib.state.doc.length
-          window.nib.dispatch({ changes: { from: end, insert: 'TYPED' }, selection: { anchor: end + 5 } })
+          const end = window.orden.state.doc.length
+          window.orden.dispatch({ changes: { from: end, insert: 'TYPED' }, selection: { anchor: end + 5 } })
         }"""
     )
     page.wait_for_timeout(300)
@@ -116,7 +116,7 @@ def drive(browser: Browser) -> None:
     if "TYPED" not in typed["shown"]:
         wrong("what was typed is not on the page")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, "03-reading")
     read = page.evaluate("() => document.querySelector('#write')?.textContent ?? ''")

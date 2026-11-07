@@ -20,7 +20,7 @@ NOTE = """# Errands
 """
 
 WRITE = """async ([path, text]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   await window.tasks.writeFile(`${root}/${path}`, text)
   window.tasks.makeList(`${root}/${path}`)
@@ -36,15 +36,15 @@ TODAY = """() => {
 TAGS = "() => window.tasks.rows.of().find((one) => one.task?.text.startsWith('Alpha'))?.task.tags ?? null"
 
 LAID_OUT = """(type) => {
-  const tab = window.nibApp.workspace.tabs.find((one) => one.kind === 'view')
+  const tab = window.ordenApp.workspace.tabs.find((one) => one.kind === 'view')
   const spec = JSON.parse(tab.doc)
   spec.yaml = spec.yaml.replace(/type: \\w+/, `type: ${type}`)
   tab.note.replace(JSON.stringify(spec), false)
 }"""
 
 def handles(page: Page) -> None:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
 
 def texts(page: Page, selector: str) -> list[str]:
     return page.evaluate(  # type: ignore[no-any-return]
@@ -84,7 +84,7 @@ def carry(page: Page, source, target) -> None:  # type: ignore[no-untyped-def]
     quiet(page)
 
 def the_grouping(page: Page) -> None:
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
     page.locator(".tasks .orden-row", has_text="Tasks").first.click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab .task')", "Todos")
@@ -102,9 +102,9 @@ def the_grouping(page: Page) -> None:
 
 def after_a_reload(page: Page) -> None:
     page.reload()
-    wait_for(page, "window.nibApp?.workspace?.activeSpace", "the app again")
+    wait_for(page, "window.ordenApp?.workspace?.activeSpace", "the app again")
     handles(page)
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.view-tab .task')", "the tab, reloaded")
     wait_for(page, "document.querySelector('.tasks .chosen .task')", "the panel, reloaded")
     under_both(page, ".view-tab")
@@ -146,17 +146,17 @@ def renamed(page: Page) -> None:
     before = len(texts(page, ".view-tab .task .words"))
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           await ws.renameSpace(ws.activeSpace.id, 'Renamed here')
         }"""
     )
-    wait_for(page, "window.nibApp.workspace.activeSpace.name.startsWith('Renamed here')", "the new name")
+    wait_for(page, "window.ordenApp.workspace.activeSpace.name.startsWith('Renamed here')", "the new name")
     wait_for(page, "document.querySelector('.view-tab .task')", "the tab's rows under the new name")
     quiet(page)
     spec = page.evaluate(
-        "() => JSON.parse(window.nibApp.workspace.tabs.find((one) => one.kind === 'view').doc)"
+        "() => JSON.parse(window.ordenApp.workspace.tabs.find((one) => one.kind === 'view').doc)"
     )
-    name = page.evaluate("window.nibApp.workspace.activeSpace.name")
+    name = page.evaluate("window.ordenApp.workspace.activeSpace.name")
     after = len(texts(page, ".view-tab .task .words"))
     say(f"[renamed] {spec.get('space')} {before} -> {after}")
     if "space" in spec or "file.space" in spec["yaml"]:

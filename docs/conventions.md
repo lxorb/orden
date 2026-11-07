@@ -335,7 +335,7 @@ holds today's caches and not yesterday's beside them.
 ## Drives
 
 `apps/desktop/test/e2e/*.py` is a drive each: it opens the built web app in
-Chromium, seeds a space through `window.nibApp`, walks the app and photographs what
+Chromium, seeds a space through `window.ordenApp`, walks the app and photographs what
 it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exits
 non-zero when it does not find it; the rest print what they saw. They are not in
 `pnpm test`, because each one is a build and a browser. They run every night
@@ -516,7 +516,7 @@ A drive that checks rather than photographs settles the same way, and for the
 same reason: `find-bar.py` failed about one run in three, and all three causes
 were the drive believing something without asking. It opened its note without
 activating it, so the pane went on showing whichever note the space opened on; it
-read the document through `window.nib`, which is whichever editor was made last
+read the document through `window.orden`, which is whichever editor was made last
 rather than the focused one; and it left other tabs open, so `.cm-content` picked
 by document order was another pane's editor. The keys then walked a note nobody
 was looking at and every check after that read as a bug in the find bar.

@@ -63,7 +63,7 @@ def opened(browser, name: str, missing: bool = False) -> Page:
             ),
         )
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp?.workspace.activeSpace", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp?.workspace.activeSpace", timeout=60000)
     return page
 
 
@@ -91,7 +91,7 @@ def typed(page: Page, text: str, at_start: bool = False) -> None:
 def signed_in(page: Page, token: str) -> None:
     page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     page.reload(wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp?.account.user", timeout=60000)
+    page.wait_for_function("() => !!window.ordenApp?.account.user", timeout=60000)
     show_pad(page)
 
 
@@ -164,7 +164,7 @@ def main() -> int:
         shot(phone, "03-phone-after-offline")
 
         desk.reload(wait_until="domcontentloaded")
-        desk.wait_for_function("() => !!window.nibApp?.account.user", timeout=60000)
+        desk.wait_for_function("() => !!window.ordenApp?.account.user", timeout=60000)
         show_pad(desk)
         desk.wait_for_timeout(3000)
         same(desk, phone, "after a reload")
@@ -183,7 +183,7 @@ def main() -> int:
         if "Only on this device still" not in kept or "Desk before" in kept:
             wrong(f"against a Worker without the route the scratchpad changed: {kept!r}")
         old.reload(wait_until="domcontentloaded")
-        old.wait_for_function("() => !!window.nibApp?.account.user", timeout=60000)
+        old.wait_for_function("() => !!window.ordenApp?.account.user", timeout=60000)
         show_pad(old)
         if "Only on this device still" not in words(old):
             wrong(f"against a Worker without the route a reload lost words: {words(old)!r}")

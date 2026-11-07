@@ -25,7 +25,7 @@ DEVICES = [
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const note = (text) => ws.noteFrom(text, undefined)
 
   await note('# Plan\\n\\n#work\\n\\nThe centre of it: [[Ink]], [[Wind]], [[Paper]] and [[Nothing here]].')
@@ -49,7 +49,7 @@ async () => {
   const day = 24 * 60 * 60 * 1000
   // No version asked for: the page's own store decides which it is on, and
   // asking for an older one is an error rather than a database.
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -70,15 +70,15 @@ async () => {
     write.onerror = () => reject(write.error)
   })
 
-  await window.nibApp.workspace.loadTree()
+  await window.ordenApp.workspace.loadTree()
   return rows.length
 }
 """
 
 SEED_MANY = """
 async (count) => {
-  const links = window.nibApp.links
-  const root = window.nibApp.workspace.activeSpace.root
+  const links = window.ordenApp.links
+  const root = window.ordenApp.workspace.activeSpace.root
   const began = performance.now()
 
   for (let one = 0; one < count; one++) {
@@ -162,7 +162,7 @@ async ({ steps }) => {
 
 RASTER = """
 async ({ ratio, width, height }) => {
-  const graph = window.nibApp.links.graph
+  const graph = window.ordenApp.links.graph
   const canvas = document.createElement('canvas')
   canvas.style.position = 'fixed'
   canvas.style.inset = '0'
@@ -323,7 +323,7 @@ async ({ orphans }) => {
     new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
 
   const began = performance.now()
-  window.nibApp.workspace.graphSettings.set({ orphans })
+  window.ordenApp.workspace.graphSettings.set({ orphans })
   await painted()
   return Math.round((performance.now() - began) * 100) / 100
 }
@@ -341,7 +341,7 @@ async () => {
     + PAINTED
     + """
   const began = performance.now()
-  window.nibApp.workspace.graphSettings.set({ groups: [{ query: 'path:Note 1', colour: 5 }] })
+  window.ordenApp.workspace.graphSettings.set({ groups: [{ query: 'path:Note 1', colour: 5 }] })
   await painted()
   return Math.round((performance.now() - began) * 100) / 100
 }
@@ -355,7 +355,7 @@ async () => {
     + PAINTED
     + """
   const began = performance.now()
-  window.nibApp.workspace.graphSettings.set({ filter: 'path:Note 4' })
+  window.ordenApp.workspace.graphSettings.set({ filter: 'path:Note 4' })
   await painted()
   return Math.round((performance.now() - began) * 100) / 100
 }
@@ -364,21 +364,21 @@ async () => {
 
 VIEW = """
 () => {
-  const one = window.nibApp.workspace.graphSettings.here
+  const one = window.ordenApp.workspace.graphSettings.here
   return { filter: one.filter, arrows: one.arrows, depth: one.depth, lines: one.lines }
 }
 """
 
 KEEP_VIEW = """
 (name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   ws.bookmarks.toggle(ws.bookmarks.forGraph(name, ws.graphSettings.here))
   return ws.bookmarks.list.map((one) => `${one.kind}:${one.text}`)
 }
 """
 
 TAB = """
-() => window.nibApp.workspace.active?.note?.kind ?? 'none'
+() => window.ordenApp.workspace.active?.note?.kind ?? 'none'
 """
 
 def opened(browser, width, height, agent, finger, scheme, name):
@@ -401,7 +401,7 @@ def opened(browser, width, height, agent, finger, scheme, name):
     )
     DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
 
@@ -418,14 +418,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     say(f"[{name}] dates spread over {page.evaluate(SPREAD_DATES)} files")
     page.wait_for_timeout(500)
 
-    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    page.evaluate("() => window.ordenApp.workspace.openGraph()")
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(1400)
     shot("arrived")
 
     counts = page.evaluate(
-        "() => ({ nodes: window.nibApp.links.graph.nodes.length,"
-        " edges: window.nibApp.links.graph.edges.length })"
+        "() => ({ nodes: window.ordenApp.links.graph.nodes.length,"
+        " edges: window.ordenApp.links.graph.edges.length })"
     )
     say(f"[{name}] {counts['nodes']} nodes and {counts['edges']} edges")
 
@@ -450,22 +450,22 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         say(f"[{name}] no Forces row on the card")
 
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set({"
+        "() => window.ordenApp.workspace.graphSettings.set({"
         " groups: [{ query: 'tag:work', colour: 4 }, { query: 'tag:later', colour: 6 }] })"
     )
     page.wait_for_timeout(700)
     shot("groups")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ attachments: true })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ attachments: true })")
     page.wait_for_timeout(1600)
     shot("attachments")
     files = page.evaluate(
         """() => {
-          const nodes = window.nibApp.links.graphWithFiles.nodes
+          const nodes = window.ordenApp.links.graphWithFiles.nodes
           return {
             all: nodes.length,
             files: nodes.filter((one) => one.attachment).map((one) => one.name).sort(),
-            without: window.nibApp.links.graph.nodes.length,
+            without: window.ordenApp.links.graph.nodes.length,
           }
         }"""
     )
@@ -473,46 +473,46 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f"[{name}] {files['without']} nodes without the attachments and {files['all']} with:"
         f" {files['files']}"
     )
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ attachments: false })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ attachments: false })")
     page.wait_for_timeout(1400)
 
     for step, what in ((1, "thin"), (3, "thick")):
         page.evaluate(
-            f"() => window.nibApp.workspace.graphSettings.set({{ lines: {step} }})"
+            f"() => window.ordenApp.workspace.graphSettings.set({{ lines: {step} }})"
         )
         page.wait_for_timeout(500)
         shot(f"lines-{what}")
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ lines: 2 })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ lines: 2 })")
     page.wait_for_timeout(400)
 
     for fade, what in ((0.25, "soon"), (4, "late")):
         page.evaluate(
-            f"() => window.nibApp.workspace.graphSettings.set({{ fade: {fade} }})"
+            f"() => window.ordenApp.workspace.graphSettings.set({{ fade: {fade} }})"
         )
         page.wait_for_timeout(600)
         shot(f"fade-{what}")
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ fade: 1 })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ fade: 1 })")
     page.wait_for_timeout(400)
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: true })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ arrows: true })")
     page.wait_for_timeout(600)
     shot("arrows")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ filter: 'tag:later' })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ filter: 'tag:later' })")
     page.wait_for_timeout(800)
     shot("filtered")
     shown = page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.here.filter"
+        "() => window.ordenApp.workspace.graphSettings.here.filter"
     )
     say(f"[{name}] the filter reads {shown!r}")
 
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set({ filter: '', orphans: false })"
+        "() => window.ordenApp.workspace.graphSettings.set({ filter: '', orphans: false })"
     )
     page.wait_for_timeout(800)
     shot("no-orphans")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ orphans: true })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ orphans: true })")
     page.wait_for_timeout(400)
     played = page.locator(".graph .corner .time button")
     if played.count():
@@ -525,37 +525,37 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         say(f"[{name}] no time row, so no dates to play")
 
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set({ spread: 3, gather: false })"
+        "() => window.ordenApp.workspace.graphSettings.set({ spread: 3, gather: false })"
     )
     page.wait_for_timeout(2000)
     shot("spread")
 
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set("
+        "() => window.ordenApp.workspace.graphSettings.set("
         " { spread: 1, gather: true, distance: 96, push: 40 })"
     )
     page.wait_for_timeout(2200)
     shot("forces-long-links")
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set({ distance: 12, push: 400 })"
+        "() => window.ordenApp.workspace.graphSettings.set({ distance: 12, push: 400 })"
     )
     page.wait_for_timeout(2200)
     shot("forces-hard-push")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.reset()")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(1600)
     shot("reset")
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const ink = ws.notes.find((one) => one.name.startsWith('Ink'))
           if (ink) void ws.openEntry(ink.path, { activate: true })
         }"""
     )
-    DRIVE.wait_for(page, "window.nibApp.workspace.active?.shown?.startsWith('Ink')", "the Ink note")
+    DRIVE.wait_for(page, "window.ordenApp.workspace.active?.shown?.startsWith('Ink')", "the Ink note")
     page.evaluate(
-        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'links') ws.showPanel('links') }"
+        "() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'links') ws.showPanel('links') }"
     )
     page.wait_for_timeout(700)
     picture = page.locator("aside .tools button").last
@@ -573,17 +573,17 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             shot("panel-depth-3")
             say(
                 f"[{name}] the stepper reads "
-                f"{page.evaluate('() => window.nibApp.workspace.graphSettings.here.depth')}"
+                f"{page.evaluate('() => window.ordenApp.workspace.graphSettings.here.depth')}"
             )
 
-            page.evaluate("() => window.nibApp.workspace.graphSettings.set({ depth: 5 })")
+            page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ depth: 5 })")
             page.wait_for_timeout(1600)
             shot("panel-depth-5")
             say(
                 f"[{name}] and at the far end of the slider it reads "
-                f"{page.evaluate('() => window.nibApp.workspace.graphSettings.here.depth')}"
+                f"{page.evaluate('() => window.ordenApp.workspace.graphSettings.here.depth')}"
             )
-            page.evaluate("() => window.nibApp.workspace.graphSettings.set({ depth: 1 })")
+            page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ depth: 1 })")
             page.wait_for_timeout(1000)
         else:
             say(f"[{name}] no depth stepper")
@@ -591,10 +591,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         say(f"[{name}] no picture switch in the panel")
 
     say(f"[{name}] --- a bookmarked view ---")
-    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    page.evaluate("() => window.ordenApp.workspace.openGraph()")
     page.wait_for_timeout(800)
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set("
+        "() => window.ordenApp.workspace.graphSettings.set("
         " { filter: 'ink', arrows: true, lines: 3 })"
     )
     page.wait_for_timeout(600)
@@ -603,11 +603,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     kept = page.evaluate(KEEP_VIEW, "Ink and arrows")
     say(f"[{name}] the bookmarks hold: {kept}")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.reset()")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(600)
     say(f"[{name}] after a reset: {page.evaluate(VIEW)}")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
 
     row = page.locator('aside .row:has-text("Ink and arrows")').first
@@ -634,7 +634,7 @@ def measure(browser, out: Path, count: int) -> None:
     for line in page.evaluate(RASTER, {"ratio": 2, "width": 1440, "height": 860}):
         say(f"[{name}] {line}")
 
-    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    page.evaluate("() => window.ordenApp.workspace.openGraph()")
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(10000)
 
@@ -662,24 +662,24 @@ def measure(browser, out: Path, count: int) -> None:
     say(f"[{name}] a filter over the lot in {page.evaluate(FILTER)} ms")
     pan("panned while filtered")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ filter: '', arrows: true })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ filter: '', arrows: true })")
     page.wait_for_timeout(1200)
     pan("panned with arrowheads")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: false })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ arrows: false })")
     for step, what in ((1, "thin"), (2, "normal"), (3, "thick")):
         page.evaluate(
-            f"() => window.nibApp.workspace.graphSettings.set({{ lines: {step} }})"
+            f"() => window.ordenApp.workspace.graphSettings.set({{ lines: {step} }})"
         )
         page.wait_for_timeout(600)
         pan(f"panned with lines {what}")
 
-    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ lines: 2 })")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ lines: 2 })")
     page.wait_for_timeout(400)
 
     page.screenshot(path=str(shots / f"{name}-arrows.png"))
     say(f"shot {name}-arrows.png")
-    page.evaluate("() => window.nibApp.workspace.graphSettings.reset()")
+    page.evaluate("() => window.ordenApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(10000)
     page.screenshot(path=str(shots / f"{name}-settled.png"))
     say(f"shot {name}-settled.png")

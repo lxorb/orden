@@ -11,7 +11,7 @@ NOTE = "# Flying\n\nA note that leaves as a file.\n"
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const written = ws.notes.find((one) => one.name.startsWith('Flying'))
@@ -65,12 +65,12 @@ def opened(browser: Browser, reduced: bool) -> tuple[object, Page]:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     wait_for(
         page,
-        "window.nib && document.querySelector('.cm-content')"
-        " && window.nibApp.workspace.active?.note?.name?.startsWith('Flying')",
+        "window.orden && document.querySelector('.cm-content')"
+        " && window.ordenApp.workspace.active?.note?.name?.startsWith('Flying')",
         "the note to be the one open",
     )
     page.evaluate(WATCH)

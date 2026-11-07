@@ -88,7 +88,7 @@
       }
     },
     {
-      "reader_eval": "nib.workspace.openPage('{site}/shop'); await new Promise((go) => setTimeout(go, 2000)); return nib.workspace.activeTabId",
+      "reader_eval": "orden.workspace.openPage('{site}/shop'); await new Promise((go) => setTimeout(go, 2000)); return orden.workspace.activeTabId",
       "save": {
         "reader": "result"
       }
@@ -128,7 +128,7 @@
       "at_least": 5
     },
     {
-      "reader_eval": "nib.workspace.close('{reader}'); return true"
+      "reader_eval": "orden.workspace.close('{reader}'); return true"
     }
   ]
 }

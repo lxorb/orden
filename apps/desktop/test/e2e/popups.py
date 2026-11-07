@@ -55,7 +55,7 @@ def check(
         close()
         if not gone(page, popup, f"{name} to close on {how}"):
             said = page.evaluate(
-                "() => ({ depth: window.nibApp.overlays.depth, pressed: window.__pressed ?? [],"
+                "() => ({ depth: window.ordenApp.overlays.depth, pressed: window.__pressed ?? [],"
                 " layers: [...document.querySelectorAll('.orden-layer, .orden-bubble, .orden-scrim')]"
                 ".map((one) => one.className) })"
             )
@@ -115,7 +115,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Plan")
     page.wait_for_timeout(300)
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     row = page.locator('.row[data-path$="/Other.md"]').first
     row.wait_for(state="visible", timeout=10_000)
     check(
@@ -137,7 +137,7 @@ def drive(browser: Browser) -> None:
         toggles=lambda: empty_spot(page, '[data-space-drop="switcher"]')(),
     )
 
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     DRIVE.wait_for(page, "!!document.querySelector('.sheet button[role=combobox]')", "a dropdown in the settings")
     dropdown = page.locator(".sheet button[role=combobox]").first
     check(
@@ -152,7 +152,7 @@ def drive(browser: Browser) -> None:
     DRIVE.wait_for(page, "!document.querySelector('.sheet')", "the settings to close")
 
     page.evaluate(
-        "async () => { const ws = window.nibApp.workspace;"
+        "async () => { const ws = window.ordenApp.workspace;"
         " await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
     )
     DRIVE.wait_for(page, "!!document.querySelector('.cluster button.swatch')", "the canvas bar")
@@ -195,12 +195,12 @@ def drive(browser: Browser) -> None:
     else:
         wrong("no card was picked to open its colours on")
 
-    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    page.evaluate("() => window.ordenApp.workspace.openGraph()")
     DRIVE.wait_for(page, "!!document.querySelector('.graph .corner > button')", "the graph")
     controls = page.locator(".graph .corner > button").last
     check(page, "the graph controls", lambda: controls.click(), ".graph .corner .card", ".graph")
 
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     DRIVE.wait_for(page, "!!document.querySelector('.web')", "a web tab")
     field = page.locator(".web input").first
     field.fill("https://example.com/")
@@ -212,7 +212,7 @@ def drive(browser: Browser) -> None:
     else:
         say("a site's information: this build has no page to say anything about")
     page.evaluate(
-        "async () => (await window.nibApp.downloads()).heard({ id: 1, tab: '', url:"
+        "async () => (await window.ordenApp.downloads()).heard({ id: 1, tab: '', url:"
         " 'https://example.com/a.pdf', name: 'a.pdf', state: 'done', received: 9, total: 9 })"
     )
     page.wait_for_timeout(300)
@@ -224,8 +224,8 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          window.nibApp.account.guest = { id: 'g1', name: 'Chromium wren' }
-          window.nibApp.workspace.openShared(
+          window.ordenApp.account.guest = { id: 'g1', name: 'Chromium wren' }
+          window.ordenApp.workspace.openShared(
             { id: 'shared-1', name: 'board.canvas', path: '/Boards/board.canvas' },
             '{"orden":{"version":1},"nodes":[],"edges":[]}',
           )

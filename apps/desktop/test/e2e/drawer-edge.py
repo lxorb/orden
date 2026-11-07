@@ -69,11 +69,11 @@ def main() -> int:
             )
             say(f"{tag}: {page.evaluate(CORNER)}")
 
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
         corner("01-open")
 
-        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.evaluate("() => window.ordenApp.workspace.closePanel()")
         page.wait_for_timeout(90)
         corner("02-going")
 
@@ -82,7 +82,7 @@ def main() -> int:
 
         page.evaluate(SWIPE)
         page.wait_for_timeout(800)
-        say(f"dragged open: panel is {page.evaluate('() => window.nibApp.workspace.panel')}")
+        say(f"dragged open: panel is {page.evaluate('() => window.ordenApp.workspace.panel')}")
         corner("04-dragged-back")
 
         context.close()

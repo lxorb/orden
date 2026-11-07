@@ -14,7 +14,7 @@ say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 FIELD = ".ask textarea"
 SETUP = """(base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
@@ -94,7 +94,7 @@ def drive(browser: Browser) -> None:
     DRIVE.seed(page, "# Herons\n\nA heron stands still.\n")
     page.evaluate(SETUP, origin)
     DRIVE.open_note(page, "Herons")
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     page.wait_for_selector(FIELD)
 
@@ -125,7 +125,7 @@ def drive(browser: Browser) -> None:
     say("a second window sees the answer going on, and no Stopped row with an Ask again")
     other = page.context.new_page()
     DRIVE.open(other)
-    other.evaluate("() => window.nib?.focus()")
+    other.evaluate("() => window.orden?.focus()")
     other.keyboard.press("Control+Shift+A")
     panel_says(other, "a long one")
     if "Stopped" in other.evaluate(f"() => {PANEL}"):
@@ -135,7 +135,7 @@ def drive(browser: Browser) -> None:
     page.reload()
     DRIVE.ready(page)
     Model.gate.set()
-    page.evaluate("() => window.nib?.focus()")
+    page.evaluate("() => window.orden?.focus()")
     page.keyboard.press("Control+Shift+A")
     panel_says(page, "a long one", "Kept these words.", "Stopped")
     shot(page, "after-reload")

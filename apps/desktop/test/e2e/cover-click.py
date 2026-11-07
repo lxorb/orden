@@ -55,8 +55,8 @@ NOTE = (
 
 WHERE = """
 (word) => {
-  const scroller = window.nib.scrollDOM
-  const content = window.nib.contentDOM
+  const scroller = window.orden.scrollDOM
+  const content = window.orden.contentDOM
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT)
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const at = node.data.indexOf(word)
@@ -75,7 +75,7 @@ WHERE = """
 
 CARET = """
 (word) => {
-  const view = window.nib
+  const view = window.orden
   const from = view.state.doc.toString().indexOf(word)
   return { head: view.state.selection.main.head, from, to: from + word.length }
 }
@@ -83,7 +83,7 @@ CARET = """
 
 AGREES = """
 (word) => {
-  const view = window.nib
+  const view = window.orden
   const at = view.state.doc.toString().indexOf(word)
   const found = view.domAtPos(at).node
   const line = (found.nodeType === Node.TEXT_NODE ? found.parentElement : found).closest('.cm-line')
@@ -94,7 +94,7 @@ AGREES = """
 
 AWAY = """
 (word) => {
-  const view = window.nib
+  const view = window.orden
   const line = view.state.doc.lineAt(view.state.doc.toString().indexOf(word))
   view.dispatch({ selection: { anchor: line.to } })
 }
@@ -102,8 +102,8 @@ AWAY = """
 
 SCROLL = """
 (top) => new Promise((done) => {
-  window.nib.scrollDOM.scrollTop = top
-  requestAnimationFrame(() => requestAnimationFrame(() => done(window.nib.scrollDOM.scrollTop)))
+  window.orden.scrollDOM.scrollTop = top
+  requestAnimationFrame(() => requestAnimationFrame(() => done(window.orden.scrollDOM.scrollTop)))
 })
 """
 
@@ -120,7 +120,7 @@ def click(page: Page, word: str, where: str, name: str = "middle", share: float 
     DRIVE.settled(page)
     caret = page.evaluate(CARET, word)
     if not caret["from"] <= caret["head"] <= caret["to"]:
-        line = page.evaluate("(at) => window.nib.state.doc.lineAt(at).text", caret["head"])
+        line = page.evaluate("(at) => window.orden.state.doc.lineAt(at).text", caret["head"])
         wrong(
             f"[{where}] a click on the {name} of {word} put the caret at {caret['head']},"
             f" not in {caret['from']}-{caret['to']}: on {line!r}"
@@ -205,11 +205,11 @@ def drive(browser: Browser) -> None:
     click_round(page, "03-band-height", near)
     scrolled_round(page, "04-scrolled")
 
-    page.evaluate("() => window.nibApp.modes.setZoom(1.5)")
+    page.evaluate("() => window.ordenApp.modes.setZoom(1.5)")
     DRIVE.settled(page)
     click_round(page, "07-text-larger", near[:2])
     scrolled_round(page, "08-text-larger-scrolled")
-    page.evaluate("() => window.nibApp.modes.resetZoom()")
+    page.evaluate("() => window.ordenApp.modes.resetZoom()")
 
     page.set_viewport_size({"width": 560, "height": 1000})
     DRIVE.settled(page)

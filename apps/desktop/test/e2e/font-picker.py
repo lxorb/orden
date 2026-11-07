@@ -16,7 +16,7 @@ def drive(browser: Browser) -> None:
         context.grant_permissions(["local-fonts"])
     page = context.new_page()
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     field = row_input(page, "Note font")
     field.scroll_into_view_if_needed()
     if not WEBKIT:

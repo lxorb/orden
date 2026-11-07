@@ -19,11 +19,11 @@ def fresh(browser: Browser) -> Page:
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   if (ws.panel !== 'tree') ws.showPanel('tree')
   // As an agent or a sync writes them: past the app's own naming.
-  const { writeFile } = await window.nibApp.tasks()
+  const { writeFile } = await window.ordenApp.tasks()
   await ws.noteFrom('# Plain\\n', root)
   await ws.noteFrom('# Kept\\n', root + '/Folder')
   await writeFile(root + '/AGENTS.md', '# Rules\\n')
@@ -35,7 +35,7 @@ async () => {
 
 def new_row(page: Page, name: str) -> None:
     page.evaluate(
-        "() => { const ws = window.nibApp.workspace; ws.startNaming('note', ws.activeSpace.root) }"
+        "() => { const ws = window.ordenApp.workspace; ws.startNaming('note', ws.activeSpace.root) }"
     )
     page.wait_for_selector(".naming input")
     page.fill(".naming input", name)
@@ -49,7 +49,7 @@ def drive(browser: Browser) -> None:
         wait_for(
             page,
             """() => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               return ws.tree.children.some((one) => one.name === 'AGENTS.md')
                 && !ws.shownTree.children.some((one) => one.name === 'AGENTS.md')
                 && !ws.notes.some((one) => one.name === 'AGENTS.md' && !one.path.includes('Folder'))
@@ -95,12 +95,12 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Escape")
         wait_for(
             page,
-            f"async () => (await window.nibApp.workspace.noteText({agents!r})) === '# Rules\\n- tea\\n'",
+            f"async () => (await window.ordenApp.workspace.noteText({agents!r})) === '# Rules\\n- tea\\n'",
             "the words on the disk after a quick close",
         )
         say("a quick close keeps the words")
         names = page.evaluate(
-            "() => { const walk = (e) => e.children.flatMap((c) => c.is_dir ? walk(c) : [c.name]); return walk(window.nibApp.workspace.tree) }"
+            "() => { const walk = (e) => e.children.flatMap((c) => c.is_dir ? walk(c) : [c.name]); return walk(window.ordenApp.workspace.tree) }"
         )
         if names.count("AGENTS.md") != 2 or any(n.lower().startswith("agents ") for n in names):
             raise SystemExit(f"the refused name wrote something: {names}")
@@ -150,17 +150,17 @@ def drive(browser: Browser) -> None:
         say("the palette's row goes to the field")
 
         nested = f"{root}/Folder/AGENTS.md"
-        page.evaluate("(path) => window.nibApp.workspace.open(path)", nested)
+        page.evaluate("(path) => window.ordenApp.workspace.open(path)", nested)
         wait_for(
             page,
-            f"() => window.nibApp.workspace.active?.path === {nested!r}",
+            f"() => window.ordenApp.workspace.active?.path === {nested!r}",
             "the nested note in a tab",
         )
 
-        page.evaluate("(path) => window.nibApp.workspace.open(path)", agents)
+        page.evaluate("(path) => window.ordenApp.workspace.open(path)", agents)
         page.locator(".orden-setting textarea").wait_for()
         if page.evaluate(
-            f"() => window.nibApp.workspace.tabs.some((tab) => tab.path === {agents!r})"
+            f"() => window.ordenApp.workspace.tabs.some((tab) => tab.path === {agents!r})"
         ):
             raise SystemExit("the root AGENTS.md opened as a tab")
         say("the root file opens as the field, and a nested one as a note")

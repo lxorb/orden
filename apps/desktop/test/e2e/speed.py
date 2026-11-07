@@ -141,7 +141,7 @@ async (plan) => {
   const { notes, lines, strokes, points, space } = plan
 
   const open = () => new Promise((go, no) => {
-    const ask = indexedDB.open('nib')
+    const ask = indexedDB.open('orden')
     ask.onupgradeneeded = () => {
       const db = ask.result
       for (const name of ['files', 'assets', 'stats']) {
@@ -404,7 +404,7 @@ window.__painted = () => new Promise((go) => requestAnimationFrame(() => request
 SETTLED_WITHIN = 8000
 QUIET = 500
 
-LAUNCHED = "() => !!window.nibApp && !!window.nibApp.workspace.activeSpace"
+LAUNCHED = "() => !!window.ordenApp && !!window.ordenApp.workspace.activeSpace"
 
 FIRST = "first.md"
 SECOND = "second.md"
@@ -443,7 +443,7 @@ LAUNCH = r"""
 
 OPEN_NOTE = r"""
 async (path) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const started = window.__since()
   await ws.open(path)
   // The editor catches up on the frame after the tab does.
@@ -458,7 +458,7 @@ async (path) => {
 
 SWITCH = r"""
 async (id) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const started = window.__since()
   ws.activeTabId = id
   const painted = await window.__painted()
@@ -469,7 +469,7 @@ async (id) => {
 SHEET = r"""
 async () => {
   const started = window.__since()
-  window.nibApp.settings.open = true
+  window.ordenApp.settings.open = true
   for (let spin = 0; spin < 120; spin++) {
     await window.__painted()
     if (document.querySelector('.sheet, .settings, dialog[open]')) break
@@ -479,12 +479,12 @@ async () => {
 }
 """
 
-SHUT_SHEET = "() => { window.nibApp.settings.open = false }"
+SHUT_SHEET = "() => { window.ordenApp.settings.open = false }"
 
 QUERY = r"""
 async (plan) => {
   const { text, wait } = plan
-  const search = window.nibApp.search
+  const search = window.ordenApp.search
   const held = () => document.querySelector('[data-search]')?.dataset.search ?? ''
   const readOf = (line) => Number(/read=(\d+)/.exec(line)?.[1] ?? -1)
 
@@ -611,7 +611,7 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
 
     reading = page.evaluate(READING)
     lane.profile("reading the big note", reading.pop("loaf"))
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(300)
 
     return {"note-open": opened["ms"], **latency, **reading}
@@ -680,7 +680,7 @@ TYPING = r"""
 
 READING = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   performance.clearMeasures('orden:reading')
   const started = window.__since()
   ws.toggleReading()
@@ -709,7 +709,7 @@ def part_shell(lane: Lane, page: Page) -> dict[str, object]:
 
     page.evaluate(OPEN_NOTE, f"{lane.root}/{FIRST}")
     page.evaluate(OPEN_NOTE, f"{lane.root}/{SECOND}")
-    tabs = page.evaluate("() => window.nibApp.workspace.tabs.map((one) => one.id)")
+    tabs = page.evaluate("() => window.ordenApp.workspace.tabs.map((one) => one.id)")
     switched = page.evaluate(SWITCH, tabs[0])
     lane.profile("tab switch", switched["loaf"])
     back = page.evaluate(SWITCH, tabs[-1])
@@ -760,7 +760,7 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
     found: dict[str, object] = dict(panel)
     for name, text in QUERIES:
         one = page.evaluate(QUERY, {"text": text, "wait": 140})
-        page.evaluate("() => window.nibApp.search.clear()")
+        page.evaluate("() => window.ordenApp.search.clear()")
         page.wait_for_timeout(80)
         found[f"q-{name}"] = one["ms"]
         found[f"q-{name}-read"] = one["read"]
@@ -770,19 +770,19 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
 
 SIDEBAR = r"""
 () => ({
-  panel: window.nibApp?.workspace?.panel ?? null,
+  panel: window.ordenApp?.workspace?.panel ?? null,
   aside: !!document.querySelector('aside'),
   rows: document.querySelectorAll('aside .row').length,
   find: !!document.querySelector('.find'),
   sheet: !!document.querySelector('.orden-screen.sheet'),
   palette: !!document.querySelector('.palette'),
-  space: window.nibApp?.workspace?.activeSpace?.root ?? null,
+  space: window.ordenApp?.workspace?.activeSpace?.root ?? null,
 })
 """
 
 PANEL = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const started = window.__since()
   ws.showPanel('search')
 
@@ -849,7 +849,7 @@ def part_graph(lane: Lane, page: Page) -> dict[str, object]:
 
 OPEN_GRAPH = r"""
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const started = window.__since()
   ws.openGraph()
   for (let spin = 0; spin < 900; spin++) {
@@ -925,7 +925,7 @@ def rub(lane: Lane, page: Page, box: dict) -> dict:
 
 OPEN_CANVAS = r"""
 async (path) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const started = window.__since()
   await ws.openCanvas(path)
   for (let spin = 0; spin < 900; spin++) {
@@ -996,7 +996,7 @@ def part_scan(lane: Lane, page: Page) -> dict[str, object]:
     page.goto(lane.origin, wait_until="commit")
     page.wait_for_function("() => window.__marks.tree !== null", timeout=120000)
     page.wait_for_function(
-        "() => !!window.nibApp && !window.nibApp.links.scanning && !!window.nibApp.links.rootOf()",
+        "() => !!window.ordenApp && !window.ordenApp.links.scanning && !!window.ordenApp.links.rootOf()",
         timeout=180000,
     )
     found = page.evaluate(SCAN)
@@ -1029,13 +1029,13 @@ def part_links(lane: Lane, page: Page) -> dict[str, object]:
     lane.profile("the links panel on a note a thousand notes point at", found.pop("loaf"))
     lane.note(f"hub: {found['links-rows']} rows over {found.pop('sections')} sections")
 
-    page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('tree') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('tree') }")
     page.wait_for_timeout(200)
     return found
 
 LINKS = r"""
 async (path) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.open(path)
   for (let spin = 0; spin < 240; spin++) {
     await window.__painted()
@@ -1075,18 +1075,18 @@ PARTS = {
 
 def settled(page: Page) -> None:
     page.wait_for_function(
-        "() => !!window.nibApp && !window.nibApp.links.scanning && !!window.nibApp.links.rootOf()",
+        "() => !!window.ordenApp && !window.ordenApp.links.scanning && !!window.ordenApp.links.rootOf()",
         timeout=180000,
     )
     page.wait_for_timeout(2500)
 
 def ready(page: Page, lane: Lane) -> None:
-    if not page.evaluate("() => !!window.nibApp"):
+    if not page.evaluate("() => !!window.ordenApp"):
         page.goto(lane.origin, wait_until="domcontentloaded")
 
     page.wait_for_function(LAUNCHED, timeout=120000)
     page.wait_for_timeout(600)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
 
 class Lane:
@@ -1151,7 +1151,7 @@ class Lane:
         for _ in range(WARMING):
             page.goto(self.origin, wait_until="domcontentloaded")
             page.wait_for_function(LAUNCHED, timeout=180000)
-            page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+            page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
             page.wait_for_selector("aside .row", timeout=60000)
 
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")

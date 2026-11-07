@@ -215,7 +215,7 @@ class Probe:
 
 def tabs(app: Any) -> list[list[Any]]:
     said = app.ask(
-        "JSON.stringify(nibApp.workspace.tabs.map((one) => [one.id, one.name, one.paneId]))"
+        "JSON.stringify(ordenApp.workspace.tabs.map((one) => [one.id, one.name, one.paneId]))"
     )
     return said if isinstance(said, list) else []
 
@@ -333,8 +333,8 @@ def main() -> int:
 
         app.open("Idea.md", SPACE)
         time.sleep(1.5)
-        app.ask("nibApp.workspace.keep(nibApp.workspace.activeTabId), 'ok'")
-        app.ask("nibApp.workspace.closePanel(), 'ok'")
+        app.ask("ordenApp.workspace.keep(ordenApp.workspace.activeTabId), 'ok'")
+        app.ask("ordenApp.workspace.closePanel(), 'ok'")
         app.open("Flat.url")
         smooth.page_view(hwnd)
         time.sleep(1.5)
@@ -345,13 +345,13 @@ def main() -> int:
         sized(hwnd, 1300, 860)
         probe.check("narrower")
 
-        app.ask("nibApp.workspace.showPanel('tree'), 'ok'")
+        app.ask("ordenApp.workspace.showPanel('tree'), 'ok'")
         probe.check("sidebar open")
-        app.ask("nibApp.workspace.movePanel('tree', 'right'), 'ok'")
+        app.ask("ordenApp.workspace.movePanel('tree', 'right'), 'ok'")
         probe.check("sidebar to the other side")
-        app.ask("nibApp.workspace.movePanel('tree', 'left'), 'ok'")
+        app.ask("ordenApp.workspace.movePanel('tree', 'left'), 'ok'")
         probe.check("sidebar back")
-        app.ask("nibApp.workspace.closePanel(), 'ok'")
+        app.ask("ordenApp.workspace.closePanel(), 'ok'")
         probe.check("sidebar shut")
 
         for step in range(1, 31):
@@ -359,56 +359,56 @@ def main() -> int:
             time.sleep(0.016)
         probe.check("resized a frame at a time")
         for _ in range(3):
-            app.ask("nibApp.workspace.showPanel('tree'), 'ok'")
+            app.ask("ordenApp.workspace.showPanel('tree'), 'ok'")
             time.sleep(0.05)
-            app.ask("nibApp.workspace.closePanel(), 'ok'")
+            app.ask("ordenApp.workspace.closePanel(), 'ok'")
             time.sleep(0.05)
-        app.ask("nibApp.workspace.showPanel('tree'), 'ok'")
+        app.ask("ordenApp.workspace.showPanel('tree'), 'ok'")
         probe.check("sidebar pressed over and over")
         for step in range(1, 21):
             sized(hwnd, 1810 - step * 20, 1130 - step * 10)
             if step == 8:
-                app.ask("nibApp.workspace.closePanel(), 'ok'")
+                app.ask("ordenApp.workspace.closePanel(), 'ok'")
             time.sleep(0.016)
         probe.check("resized while the sidebar shut")
 
         flat = tab_id(app, "Flat")
-        app.ask(f"nibApp.workspace.keep('{flat}'), 'ok'")
+        app.ask(f"ordenApp.workspace.keep('{flat}'), 'ok'")
         if not any(str(one[1]).startswith("Idea") for one in tabs(app)):
             app.open("Idea.md")
             time.sleep(0.8)
-            app.ask(f"nibApp.workspace.activate('{flat}'), 'ok'")
+            app.ask(f"ordenApp.workspace.activate('{flat}'), 'ok'")
         idea = tab_id(app, "Idea")
-        app.ask(f"nibApp.workspace.split('row', '{idea}'), 'ok'")
+        app.ask(f"ordenApp.workspace.split('row', '{idea}'), 'ok'")
         time.sleep(0.5)
         pane = app.ask(
             "JSON.stringify([...document.querySelectorAll('[data-pane]')].map((one) => one.dataset.pane))"
         )
         panes = pane if isinstance(pane, list) else []
         if len(panes) >= 2:
-            app.ask(f"nibApp.workspace.moveTab('{flat}', '{panes[-1]}'), nibApp.workspace.activate('{flat}'), 'ok'")
+            app.ask(f"ordenApp.workspace.moveTab('{flat}', '{panes[-1]}'), ordenApp.workspace.activate('{flat}'), 'ok'")
         probe.check("split", {"panes": len(panes)})
 
         split = app.ask(
-            "JSON.stringify(nibApp.workspace.panes.frame.kind === 'split' ? nibApp.workspace.panes.frame.id : null)"
+            "JSON.stringify(ordenApp.workspace.panes.frame.kind === 'split' ? ordenApp.workspace.panes.frame.id : null)"
         )
         if isinstance(split, str):
             room = app.ask("JSON.stringify(document.querySelector('[data-panes]').getBoundingClientRect().width)")
-            app.ask(f"nibApp.workspace.panes.resize('{split}', 0.3, {room}), nibApp.workspace.panes.settle(), 'ok'")
+            app.ask(f"ordenApp.workspace.panes.resize('{split}', 0.3, {room}), ordenApp.workspace.panes.settle(), 'ok'")
         probe.check("divider")
 
         if len(panes) >= 2:
-            app.ask(f"nibApp.workspace.panes.fills = '{panes[-1]}', 'ok'")
+            app.ask(f"ordenApp.workspace.panes.fills = '{panes[-1]}', 'ok'")
             probe.check("pane fills the window")
-            app.ask("nibApp.workspace.panes.fills = null, 'ok'")
+            app.ask("ordenApp.workspace.panes.fills = null, 'ok'")
             probe.check("and gives it back")
-            app.ask(f"nibApp.workspace.deselect('{panes[-1]}'), 'ok'")
+            app.ask(f"ordenApp.workspace.deselect('{panes[-1]}'), 'ok'")
             probe.check("pane shows nothing")
-            app.ask(f"nibApp.workspace.activate('{flat}'), 'ok'")
+            app.ask(f"ordenApp.workspace.activate('{flat}'), 'ok'")
             probe.check("and the page again")
 
         if len(panes) >= 2:
-            app.ask(f"nibApp.workspace.panes.close('{panes[0]}'), 'ok'")
+            app.ask(f"ordenApp.workspace.panes.close('{panes[0]}'), 'ok'")
         probe.check("unsplit")
 
         app.open("Idea.md")

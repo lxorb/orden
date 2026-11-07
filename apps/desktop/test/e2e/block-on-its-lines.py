@@ -47,7 +47,7 @@ def run_row(page: Page, row: str) -> None:
 def put(page: Page, anchor: int, head: int) -> None:
     page.evaluate(
         """([doc, anchor, head]) => {
-          const view = window.nib
+          const view = window.orden
           view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: doc }, selection: { anchor, head } })
           view.focus()
         }""",
@@ -64,13 +64,13 @@ def drive(browser: Browser) -> None:
         say(row)
         put(page, MIDDLE, MIDDLE)
         run_row(page, row)
-        text = page.evaluate("() => window.nib.state.doc.toString()")
+        text = page.evaluate("() => window.orden.state.doc.toString()")
         if inside not in text:
             wrong(f"{row} inside a line: {text!r}")
 
         put(page, *LINES)
         run_row(page, row)
-        text = page.evaluate("() => window.nib.state.doc.toString()")
+        text = page.evaluate("() => window.orden.state.doc.toString()")
         if selected not in text:
             wrong(f"{row} over two lines: {text!r}")
 
@@ -78,17 +78,17 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Words")
     page.evaluate(
         """(head) => {
-          window.nib.dispatch({ selection: { anchor: 0, head } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: 0, head } })
+          window.orden.focus()
         }""",
         len(WORDS),
     )
     run_row(page, "Code block")
-    if "```" not in page.evaluate("() => window.nib.state.doc.toString()"):
+    if "```" not in page.evaluate("() => window.orden.state.doc.toString()"):
         wrong("the selection was not wrapped")
-    page.wait_for_function("() => window.nib.hasFocus")
+    page.wait_for_function("() => window.orden.hasFocus")
     page.keyboard.press("Control+z")
-    DRIVE.wait_for(page, f"() => window.nib.state.doc.toString() === {WORDS!r}", "the words as they were")
+    DRIVE.wait_for(page, f"() => window.orden.state.doc.toString() === {WORDS!r}", "the words as they were")
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive))

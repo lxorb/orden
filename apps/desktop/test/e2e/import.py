@@ -117,25 +117,25 @@ def opened(browser, width, height, agent, finger, scheme, name):
         else None,
     )
     DRIVE.open(page)
-    page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.wait_for_function("() => !!window.ordenApp.importing", timeout=20000)
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
 
 NAMES = """
-() => window.nibApp.workspace.files.map((one) => one.path.split('/').slice(-2).join('/'))
+() => window.ordenApp.workspace.files.map((one) => one.path.split('/').slice(-2).join('/'))
 """
 
 TEXT_OF = """
 async (ending) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const found = ws.notes.find((one) => one.path.endsWith(ending))
   return found ? await ws.noteText(found.path) : null
 }
 """
 
 def bring_in(page, shot, tag: str, path: Path) -> dict:
-    page.evaluate("() => window.nibApp.importing.show()")
+    page.evaluate("() => window.ordenApp.importing.show()")
     page.wait_for_selector("button.drop")
     page.wait_for_timeout(450)
     shot(f"{tag}-waiting")
@@ -145,22 +145,22 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
     chooser.value.set_files(str(path))
 
     page.wait_for_selector("button.orden-button", timeout=20000)
-    page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
+    page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=30000)
     said = page.evaluate(
         """() => ({
-          format: window.nibApp.importing.format,
-          counts: window.nibApp.importing.counts,
-          folder: window.nibApp.importing.folder,
-          lost: (window.nibApp.importing.plan?.lost ?? []).map((one) => one.text),
+          format: window.ordenApp.importing.format,
+          counts: window.ordenApp.importing.counts,
+          folder: window.ordenApp.importing.folder,
+          lost: (window.ordenApp.importing.plan?.lost ?? []).map((one) => one.text),
         })"""
     )
     shot(f"{tag}-preview")
 
     page.click("button.orden-button")
-    page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
+    page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=60000)
     shot(f"{tag}-done")
 
-    page.evaluate("() => window.nibApp.importing.close()")
+    page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(300)
     return said
 
@@ -178,7 +178,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     for line in said["lost"]:
         say(f"[{name}] worth knowing: {line}")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     shot("notion-tree")
 
@@ -205,7 +205,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.path.endsWith('Trip to Iceland.md'))
           if (note) await ws.open(note.path)
         }"""
@@ -217,7 +217,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
         """async () => {
           // No version asked for: the page's own store decides which it is on, and
           // asking for an older one is an error that never resolves.
-          const open = indexedDB.open('nib')
+          const open = indexedDB.open('orden')
           const db = await new Promise((resolve, reject) => {
             open.onsuccess = () => resolve(open.result)
             open.onerror = () => reject(open.error)
@@ -240,37 +240,37 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
         encoding="utf-8",
     )
 
-    page.evaluate("() => window.nibApp.importing.show()")
+    page.evaluate("() => window.ordenApp.importing.show()")
     page.wait_for_selector("button.drop")
     with page.expect_file_chooser() as chooser:
         page.click("button.drop")
     chooser.value.set_files(str(books))
-    page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=20000)
+    page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=20000)
     page.wait_for_timeout(300)
     shot("table-preview")
 
-    say(f"[{name}] as a table: {page.evaluate('() => window.nibApp.importing.counts')}")
+    say(f"[{name}] as a table: {page.evaluate('() => window.ordenApp.importing.counts')}")
     choices = page.locator('[role="dialog"] .orden-segmented button')
     say(f"[{name}] the groove has {choices.count()} choices")
     choices.nth(1).click()
     page.wait_for_function(
-        "() => window.nibApp.importing.rows === 'notes' && window.nibApp.importing.stage === 'ready'"
+        "() => window.ordenApp.importing.rows === 'notes' && window.ordenApp.importing.stage === 'ready'"
     )
     page.wait_for_timeout(300)
     shot("table-rows")
-    say(f"[{name}] one note per row: {page.evaluate('() => window.nibApp.importing.counts')}")
+    say(f"[{name}] one note per row: {page.evaluate('() => window.ordenApp.importing.counts')}")
 
     page.click("button.orden-button")
-    page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=30000)
-    page.evaluate("() => window.nibApp.importing.close()")
+    page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=30000)
+    page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(300)
 
     row = page.evaluate(TEXT_OF, "Dune.md")
     say(f"[{name}] a row reads: {[line for line in (row or '').splitlines() if line][:6]}")
 
     before = len(page.evaluate(NAMES))
-    label = page.evaluate("() => window.nibApp.workspace.undoLabel")
-    page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
+    label = page.evaluate("() => window.ordenApp.workspace.undoLabel")
+    page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
     page.wait_for_timeout(900)
     after = len(page.evaluate(NAMES))
     say(f"[{name}] undo said {label!r}: {before} files became {after}")

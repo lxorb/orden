@@ -9,7 +9,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   for (const name of ['Medizin', 'Work']) {
     await ws.addSpace(name)
@@ -86,7 +86,7 @@ def drive(browser: Browser) -> None:
         DRIVE.open(page)
         page.evaluate(SEED)
         if side:
-            page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
+            page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
         page.wait_for_timeout(500)
         page.locator(".cm-content").first.click()
         page.keyboard.type("x")

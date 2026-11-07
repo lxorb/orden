@@ -67,7 +67,7 @@ COLOUR_ROWS = """
 
 AS_TABLET = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'tablet';
   app.viewport.portrait = false;
   const root = document.documentElement;
@@ -80,7 +80,7 @@ AS_TABLET = """
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'phone';
   const root = document.documentElement;
   root.dataset.device = 'phone';
@@ -91,14 +91,14 @@ AS_PHONE = """
 """
 
 def opened(page: Page, label: str, device: str) -> None:
-    wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
+    wait_for(page, "!!window.ordenApp", f"[{label}] the app to start")
+    wait_for(page, "window.ordenApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     page.evaluate(AS_TABLET if device == "tablet" else AS_PHONE)
 
-    opened_it = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
+    opened_it = "window.ordenApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
-        page.evaluate("() => window.nibApp.workspace.createCanvas()")
+        page.evaluate("() => window.ordenApp.workspace.createCanvas()")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({opened_it})"):
             break
@@ -158,7 +158,7 @@ def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
     send("mouseReleased", last[0], last[1], 0, 0)
     page.wait_for_timeout(250)
 
-INK = "() => JSON.parse(window.nibApp.workspace.active.note.latest).nib?.ink ?? []"
+INK = "() => JSON.parse(window.ordenApp.workspace.active.note.latest).nib?.ink ?? []"
 
 def ink_of(page: Page) -> list[dict]:
     try:
@@ -241,7 +241,7 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(300)
         shot(page, f"pen-settings-set-{device}-{theme}")
 
-        set_to = page.evaluate("() => window.nibApp && localStorage.getItem('orden:pens')")
+        set_to = page.evaluate("() => window.ordenApp && localStorage.getItem('orden:pens')")
         if '"opacity":0.2' not in (set_to or ""):
             failures.append(f"{label}: the pen did not remember its alpha ({set_to})")
 

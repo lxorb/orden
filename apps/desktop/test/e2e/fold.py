@@ -46,7 +46,7 @@ OTHER = "# Elsewhere\n\nA second note, to come back from.\n"
 
 SEED = """
 async ([first, second]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom(first, root)
   await ws.noteFrom(second, root)
@@ -131,7 +131,7 @@ def state(page: Page) -> dict:
     return page.evaluate(STATE)
 
 def folds(page: Page) -> list[list[int]]:
-    return page.evaluate("() => window.nibApp.workspace.active?.folds ?? []")
+    return page.evaluate("() => window.ordenApp.workspace.active?.folds ?? []")
 
 def audit_placement(page: Page, label: str, what: str) -> None:
     rows = page.evaluate(PLACEMENT)
@@ -247,12 +247,12 @@ def fresh(browser: Browser, label: str, finger: bool, still: bool = False) -> Pa
 def open_chapter(page: Page, label: str) -> None:
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Chapter'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
 
 def drive_pointer(browser: Browser) -> None:
@@ -297,8 +297,8 @@ def drive_pointer(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          window.nib.dispatch({ selection: { anchor: 2 } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: 2 } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(500)
@@ -318,9 +318,9 @@ def drive_pointer(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const at = window.nib.state.doc.toString().indexOf('Something nested here')
-          window.nib.dispatch({ selection: { anchor: at + 4 } })
-          window.nib.focus()
+          const at = window.orden.state.doc.toString().indexOf('Something nested here')
+          window.orden.dispatch({ selection: { anchor: at + 4 } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(300)
@@ -331,8 +331,8 @@ def drive_pointer(browser: Browser) -> None:
         pass
     caret = page.evaluate(
         """() => {
-          const head = window.nib.state.selection.main.head
-          const line = window.nib.state.doc.lineAt(head)
+          const head = window.orden.state.selection.main.head
+          const line = window.orden.state.doc.lineAt(head)
           return { line: line.number, text: line.text, marks: document.querySelectorAll('.orden-folded').length }
         }"""
     )
@@ -374,7 +374,7 @@ def drive_pointer(browser: Browser) -> None:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const other = ws.notes.find((one) => one.name.startsWith('Elsewhere'))
           await ws.openEntry(other.path, { activate: true })
         }"""
@@ -389,7 +389,7 @@ def drive_pointer(browser: Browser) -> None:
         wrong(f"the folds did not come back with the note: {back['marks']} marks")
 
     page.reload(wait_until="domcontentloaded")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "[desktop] the reload")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "[desktop] the reload")
     page.wait_for_timeout(1200)
     restarted = state(page)
     say(f"[desktop] after a reload: {restarted['marks']} marks")
@@ -414,8 +414,8 @@ def drive_pointer(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          window.nib.dispatch({ selection: { anchor: 2 } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: 2 } })
+          window.orden.focus()
         }"""
     )
     page.keyboard.press("Control+Alt+BracketLeft")
@@ -433,11 +433,11 @@ def drive_pointer(browser: Browser) -> None:
     page.wait_for_timeout(300)
     shot(page, "14-chevron-beside-a-fence")
 
-    page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
+    page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(500)
     audit_placement(page, "desktop", "with line numbers on")
     shot(page, "15-chevron-with-line-numbers")
-    page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
+    page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(400)
 
     drive_motion(page, "desktop", ".cm-line.orden-code-open", 16)

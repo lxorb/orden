@@ -25,7 +25,7 @@ DEVICES = [
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const note = (text) => ws.noteFrom(text, undefined)
 
   await note('# This week\\n\\n#work\\n\\n- [ ] write the plan\\n- [x] read the paper\\n- [ ] send the ledger\\n\\nThe plan is the plan.')
@@ -54,7 +54,7 @@ SEED_MANY = """
 async ({ count, root }) => {
   // No version: the app has already opened the database at whichever one it is at,
   // and asking for an older one is a VersionError rather than a seed.
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -106,7 +106,7 @@ async ({ count, root }) => {
     })
   }
 
-  await window.nibApp.workspace.loadTree()
+  await window.ordenApp.workspace.loadTree()
 
   // The rows went in behind the app's back, so they are called out the way the
   // store would have called them out: the search worker holds the space between
@@ -124,7 +124,7 @@ async ({ count, root }) => {
 
 SEED_PAPERS = """
 async ({ root, papers }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -146,14 +146,14 @@ async ({ root, papers }) => {
     write.onerror = () => reject(write.error)
   })
 
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.filter((one) => one.name.endsWith('.pdf')).length
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.filter((one) => one.name.endsWith('.pdf')).length
 }
 """
 
 TIMED = """
 async ({ source, wait }) => {
-  const search = window.nibApp.search
+  const search = window.ordenApp.search
   const began = performance.now()
   search.ask(source)
 
@@ -173,7 +173,7 @@ async ({ source, wait }) => {
 """
 
 def searching(page) -> None:
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
 
 def held_text(page) -> str:
     return str(
@@ -200,7 +200,7 @@ def opened(browser, width, height, agent, finger, scheme, name):
     )
     DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
 
@@ -220,7 +220,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.wait_for_timeout(pause)
 
     say(f"[{name}] the space holds {page.evaluate(SEED)} notes")
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(500)
     shot("panel")
 
@@ -238,24 +238,24 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     if boxes.count():
         before = page.evaluate(
-            "() => window.nibApp.workspace.notes.length && window.nibApp.search.hits.length"
+            "() => window.ordenApp.workspace.notes.length && window.ordenApp.search.hits.length"
         )
         boxes.first.click(force=True)
         page.wait_for_timeout(1200)
         say(
             f"[{name}] a box ticked: {before} rows became"
-            f" {page.evaluate('() => window.nibApp.search.hits.length')}"
+            f" {page.evaluate('() => window.ordenApp.search.hits.length')}"
         )
         shot("ticked")
 
     ask("[pages:>200]")
     shot("pages")
-    say(f"[{name}] [pages:>200] found {page.evaluate('() => window.nibApp.search.hits.length')}")
+    say(f"[{name}] [pages:>200] found {page.evaluate('() => window.ordenApp.search.hits.length')}")
 
     ask("[due:<2026-10-01]")
     say(
         f"[{name}] [due:<2026-10-01] found"
-        f" {page.evaluate('() => window.nibApp.search.hits.length')}"
+        f" {page.evaluate('() => window.ordenApp.search.hits.length')}"
     )
 
     ask("plan")
@@ -269,22 +269,22 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.excluded.toggle(ws.activeSpace.root + '/Archive')
         }"""
     )
     ask("kestrel")
     say(
         f"[{name}] with the archive left out, kestrel finds"
-        f" {page.evaluate('() => window.nibApp.search.hits.map((one) => one.name)')}"
+        f" {page.evaluate('() => window.ordenApp.search.hits.map((one) => one.name)')}"
     )
     shot("excluded")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.device.expand(ws.activeSpace.root + '/Archive')
           return ws.loadTree()
         }"""
@@ -302,14 +302,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.excluded.toggle(ws.activeSpace.root + '/Archive')
         }"""
     )
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Everything open'))
           if (note) await ws.openEntry(note.path, { activate: true })
           ws.closePanel()
@@ -323,7 +323,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
 
     page.evaluate(
-        "() => window.nibApp.workspace.toggleReading(window.nibApp.workspace.active?.id)"
+        "() => window.ordenApp.workspace.toggleReading(window.ordenApp.workspace.active?.id)"
     )
     page.wait_for_timeout(1800)
     shot("fence-reading")
@@ -353,15 +353,15 @@ def measure(browser, out: Path, count: int) -> None:
     name = "many"
     context, page = opened(browser, 1440, 900, DESKTOP_AGENT, False, "dark", name)
 
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     seeded = page.evaluate(SEED_MANY, {"count": count, "root": root})
-    held = page.evaluate("() => window.nibApp.workspace.notes.length")
+    held = page.evaluate("() => window.ordenApp.workspace.notes.length")
     say(
         f"[{name}] {held} notes, {round(seeded['bytes'] / 1_000_000, 1)} MB,"
         f" written in {seeded['ms']} ms"
     )
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
 
     wait = 140
@@ -396,13 +396,13 @@ def measure(browser, out: Path, count: int) -> None:
 
     page.evaluate(
         """({ root }) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (let one = 0; one < 1700; one++) ws.excluded.toggle(root + '/Note ' + one + '.md')
         }""",
         {"root": root},
     )
     page.wait_for_timeout(400)
-    left = page.evaluate("() => window.nibApp.workspace.excluded.here.length")
+    left = page.evaluate("() => window.ordenApp.workspace.excluded.here.length")
     held = [page.evaluate(TIMED, {"source": "quarter", "wait": wait}) for _ in range(5)]
     quickest = min(held, key=lambda one: one["ms"])
     say(f"[{name}] with {left} notes left out: {quickest['ms']} ms, {quickest['hits']} rows")
@@ -435,7 +435,7 @@ def paper(words: str) -> str:
 def kept_papers(page) -> int:
     return page.evaluate(
         """async () => {
-          const open = indexedDB.open('nib')
+          const open = indexedDB.open('orden')
           const db = await new Promise((resolve, reject) => {
             open.onsuccess = () => resolve(open.result)
             open.onerror = () => reject(open.error)
@@ -457,7 +457,7 @@ def papers(browser, out: Path) -> None:
     name = "papers"
     context, page = opened(browser, 1440, 900, DESKTOP_AGENT, False, "dark", name)
 
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     listed = page.evaluate(
         SEED_PAPERS,
         {
@@ -471,7 +471,7 @@ def papers(browser, out: Path) -> None:
     say(f"[{name}] the space holds {listed} papers")
 
     page.evaluate(
-        "(path) => window.nibApp.workspace.openPdf(path, 1)",
+        "(path) => window.ordenApp.workspace.openPdf(path, 1)",
         f"{root}/Kestrel study.pdf",
     )
     page.wait_for_selector(".pages", timeout=20000)
@@ -488,14 +488,14 @@ def papers(browser, out: Path) -> None:
         field.fill(source)
         page.wait_for_timeout(pause)
         return page.evaluate(
-            "() => window.nibApp.search.hits.map((one) => one.name + ' p' + (one.page ?? 0))"
+            "() => window.ordenApp.search.hits.map((one) => one.name + ' p' + (one.page ?? 0))"
         )
 
     say(f"[{name}] 'kestrel' finds {ask('kestrel')}")
 
     page.reload(wait_until="domcontentloaded")
-    page.wait_for_function("() => !!window.nibApp", timeout=20000)
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    page.wait_for_function("() => !!window.ordenApp", timeout=20000)
+    page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=20000)
     searching(page)
     page.wait_for_timeout(1500)
 

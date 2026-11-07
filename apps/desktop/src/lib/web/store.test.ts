@@ -117,7 +117,7 @@ describe('the notes kept in this browser', () => {
   test('let another tab delete or upgrade their store, and carry on with it afterwards', async () => {
     await files.write('/t/kept.md', '# kept', 1)
     await new Promise<void>((done, failed) => {
-      const request = indexedDB.deleteDatabase('nib')
+      const request = indexedDB.deleteDatabase('orden')
       request.onsuccess = () => done()
       request.onerror = () => failed(request.error ?? new Error('not deleted'))
     })

@@ -24,7 +24,7 @@ class TakingOver {
 
     const popup = window.open(
       `${LEGACY_WEB}${HANDOFF_PATH}`,
-      'nib-handoff',
+      'orden-handoff',
       'popup,width=420,height=320',
     )
     if (!popup) return

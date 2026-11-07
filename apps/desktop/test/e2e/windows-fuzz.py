@@ -11,11 +11,11 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-WS = "window.nibApp.workspace"
+WS = "window.ordenApp.workspace"
 SEED = int(os.environ.get("FUZZ_SEED", "4"))
 OPS = int(os.environ.get("FUZZ_OPS", "30"))
 TYPE = """([word, where]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const tab = ws.tabs.find(t => t.path && t.path.endsWith('Fz.md')) ?? ws.tabs.find(t=>t.note.latest.includes('Fz'))
   if (!tab) return false
   const live = tab.note.live

@@ -34,12 +34,12 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "() => !!window.nibApp.workspace.active", f"[{label}] the app's own note")
+    wait_for(page, "() => !!window.ordenApp.workspace.active", f"[{label}] the app's own note")
     return page
 
 SEED = """
 async () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   const ws = app.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
@@ -60,7 +60,7 @@ async () => {
 
 MORE_SPACES = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   const ws = app.workspace
   const here = ws.activeSpace
 
@@ -308,15 +308,15 @@ FORMAT_BAR = """
     left: Math.round(box.left),
     right: Math.round(box.right),
     page: window.innerHeight,
-    keyboard: window.nibApp.viewport.keyboard,
-    typing: window.nibApp.viewport.typing,
+    keyboard: window.ordenApp.viewport.keyboard,
+    typing: window.ordenApp.viewport.typing,
   }
 }
 """
 
 KEYS = """
 (pixels) => {
-  const seen = window.nibApp.viewport
+  const seen = window.ordenApp.viewport
   seen.keyboard = pixels
   seen.typing = pixels > 0
   return { keyboard: seen.keyboard, typing: seen.typing }
@@ -325,7 +325,7 @@ KEYS = """
 
 SELECT = """
 () => {
-  const view = window.nib
+  const view = window.orden
   if (!view) return null
 
   const to = Math.min(12, view.state.doc.length)
@@ -360,7 +360,7 @@ SHARED = """
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = 'phone'
   app.viewport.portrait = true
   app.viewport.narrow = true
@@ -375,7 +375,7 @@ AS_PHONE = """
 
 WITH_SOMEBODY = """
 () => {
-  const app = window.nibApp
+  const app = window.ordenApp
   const tab = app.workspace.tabs.find((one) => one.path && one.path.endsWith('.md'))
   if (!tab) return null
 
@@ -616,7 +616,7 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         page.wait_for_timeout(200)
         say(f"[{label}] {page.evaluate(SEED)}")
         say(f"[{label}] {page.evaluate(MORE_SPACES)}")
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
 
         page.locator("header").first.screenshot(path=str(SHOTS / f"bar-phone-{scheme}.png"))
@@ -628,13 +628,13 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
 
         opened_button = page.evaluate(TOGGLE)
         say(f"[{label}] the drawer's own button, open: {opened_button}")
-        page.evaluate("() => window.nibApp.workspace.showPanel(null)")
+        page.evaluate("() => window.ordenApp.workspace.showPanel(null)")
         page.wait_for_timeout(600)
         shut_button = page.evaluate(TOGGLE)
         say(f"[{label}] the drawer's own button, shut: {shut_button}")
         same_glyph(label, shut_button, opened_button)
 
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
 
         panel_ends(page, label, phone=True)
@@ -642,7 +642,7 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         page.locator("[data-phone-tabs]").first.screenshot(path=str(SHOTS / f"foot-phone-{scheme}.png"))
         say(f"[{label}] wrote head-phone-{scheme}.png and foot-phone-{scheme}.png")
 
-        page.evaluate("() => window.nibApp.workspace.showPanel(null)")
+        page.evaluate("() => window.ordenApp.workspace.showPanel(null)")
         page.wait_for_timeout(400)
         say(f"[{label}] holding {page.evaluate(SELECT)!r}")
 
@@ -705,7 +705,7 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             f"[{label}] nothing of the bar is left once the keyboard goes ({down})",
         )
 
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(500)
 
         page.evaluate("() => document.querySelector('aside .name')?.click()")
@@ -738,7 +738,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         say(f"[{label}] {page.evaluate(MORE_SPACES)}")
         page.wait_for_timeout(400)
 
-        page.evaluate("() => window.nibApp.workspace.showPanel(null)")
+        page.evaluate("() => window.ordenApp.workspace.showPanel(null)")
         page.wait_for_timeout(400)
 
         bar = page.evaluate(BAR)
@@ -765,7 +765,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         say(f"[{label}] the sidebar button shut: {shut}")
         page.locator(".toggle").first.screenshot(path=str(SHOTS / f"toggle-shut-{label}.png"))
 
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(500)
         opened = page.evaluate(TOGGLE)
         say(f"[{label}] the sidebar button open: {opened}")
@@ -822,11 +822,11 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 f"[{label}] and says it in a word too ({one['label']!r})",
             )
 
-        page.evaluate("() => window.nibApp.settings.show()")
+        page.evaluate("() => window.ordenApp.settings.show()")
         page.wait_for_timeout(600)
         page.evaluate(
-            "() => { window.nibApp.settings.section = 'appearance';"
-            " window.nibApp.settings.listing = false }"
+            "() => { window.ordenApp.settings.section = 'appearance';"
+            " window.ordenApp.settings.listing = false }"
         )
         page.wait_for_timeout(700)
         segment = page.evaluate(SEGMENTED)
@@ -848,7 +848,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
             )
             check(segment["shadow"], f"[{label}] and casts the shadow that says so")
         page.evaluate(
-            "() => window.nibApp.settings.hide?.() ?? (window.nibApp.settings.open = false)"
+            "() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)"
         )
         page.wait_for_timeout(300)
     finally:

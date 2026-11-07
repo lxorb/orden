@@ -270,6 +270,10 @@ pub(crate) const SIDEBAR: &str = "Orden · ";
 
 const SIDEBAR_BEFORE: &str = "nib · ";
 
+pub(crate) const BUILT_IN: &str = "orden-";
+
+pub(crate) const BUILT_IN_BEFORE: &str = "nib-";
+
 fn as_orden(grant: &mut Grant) {
     for label in [&mut grant.client, &mut grant.name] {
         if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
@@ -279,7 +283,13 @@ fn as_orden(grant: &mut Grant) {
 }
 
 fn was_built_in(grant: &Grant) -> bool {
-    grant.id.starts_with("nib-") && grant.client.starts_with(SIDEBAR)
+    grant.id.starts_with(BUILT_IN_BEFORE) && grant.client.starts_with(SIDEBAR)
+}
+
+fn built_in_id(grant: &Grant, taken: &[String]) -> Option<String> {
+    let rest = grant.id.strip_prefix(BUILT_IN_BEFORE)?;
+    let id = format!("{BUILT_IN}{rest}");
+    (grant.built_in && !taken.contains(&id)).then_some(id)
 }
 
 fn with_helpers(grant: &mut Grant) {
@@ -473,6 +483,12 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
             for one in &mut agents {
                 one.grant.built_in |= was_built_in(&one.grant);
             }
+            let taken: Vec<String> = agents.iter().map(|one| one.grant.id.clone()).collect();
+            for one in &mut agents {
+                if let Some(id) = built_in_id(&one.grant, &taken) {
+                    one.grant.id = id;
+                }
+            }
             agents
         })
         .unwrap_or_default()
@@ -507,7 +523,8 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     let stem = stem.trim_end_matches('-');
     let stem = if stem.is_empty() { "agent" } else { stem };
     let kept = format!("agent-{stem}");
-    let stem = if stem == "nib" || stem.starts_with("nib-") {
+    let built_in = |prefix: &str| stem == prefix.trim_end_matches('-') || stem.starts_with(prefix);
+    let stem = if built_in(BUILT_IN) || built_in(BUILT_IN_BEFORE) {
         kept.as_str()
     } else {
         stem
@@ -688,7 +705,9 @@ mod tests {
                 ("nibbler · X", "nib ·X"),
             ]
         );
-        assert_eq!(read[0].grant.id, "nib-anthropic");
+        assert_eq!(read[0].grant.id, "orden-anthropic");
+        assert_eq!(read[1].grant.id, "orden-openai");
+        assert_eq!(read[3].grant.id, "x");
 
         let mut named = read.clone();
         named[2].grant.name = "nib · mine".into();
@@ -829,6 +848,28 @@ mod tests {
     }
 
     #[test]
+    fn a_built_in_grant_from_before_the_rename_goes_by_orden_unless_that_id_is_taken() {
+        let built = |id: &str| {
+            let mut grant = Grant::own(id.into(), "Orden \u{b7} Claude");
+            grant.built_in = true;
+            grant
+        };
+        let none: Vec<String> = Vec::new();
+        assert_eq!(
+            built_in_id(&built("nib-anthropic"), &none).as_deref(),
+            Some("orden-anthropic")
+        );
+        assert_eq!(
+            built_in_id(&built("nib-anthropic"), &["orden-anthropic".to_string()]),
+            None
+        );
+        assert_eq!(built_in_id(&built("orden-anthropic"), &none), None);
+        let mut mine = built("nib-anthropic");
+        mine.built_in = false;
+        assert_eq!(built_in_id(&mine, &none), None);
+    }
+
+    #[test]
     fn only_the_apps_label_makes_a_kept_grant_built_in() {
         let kept = |id: &str, client: &str| Grant::own(id.into(), client);
         assert!(was_built_in(&kept("nib-anthropic", "Orden \u{b7} Claude")));
@@ -850,6 +891,9 @@ mod tests {
         assert_eq!(free_id("nib", &[]), "agent-nib");
         assert_eq!(free_id("nib", &["agent-nib"]), "agent-nib-2");
         assert_eq!(free_id("NIB ", &["nib"]), "agent-nib");
+        assert_eq!(free_id("Orden · Claude", &[]), "agent-orden-claude");
+        assert_eq!(free_id("orden", &[]), "agent-orden");
+        assert_eq!(free_id("ordentlich", &[]), "ordentlich");
         assert_eq!(free_id("Codex (CLI)", &[]), "codex-cli");
         assert_eq!(free_id("日本", &[]), "agent");
     }

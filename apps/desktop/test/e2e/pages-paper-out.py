@@ -122,14 +122,14 @@ async ({ base64, name }) => {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
-  const importing = window.nibApp.importing
-  importing.root = window.nibApp.workspace.activeSpace.root
+  const importing = window.ordenApp.importing
+  importing.root = window.ordenApp.workspace.activeSpace.root
   await importing.take([new File([bytes], name, { type: 'application/pdf' })])
   await importing.run()
-  await window.nibApp.workspace.loadTree()
+  await window.ordenApp.workspace.loadTree()
   const stem = name.replace('.pdf', '')
-  const path = window.nibApp.workspace.files.find((one) => one.name === stem + '.pages').path
-  await window.nibApp.workspace.openEntry(path)
+  const path = window.ordenApp.workspace.files.find((one) => one.name === stem + '.pages').path
+  await window.ordenApp.workspace.openEntry(path)
 }
 """
 
@@ -188,7 +188,7 @@ def looked_at(page: Page, name: str, mime: str, body: bytes) -> int:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
-    wait_for(page, "!!window.nibApp.importing", "the import store")
+    wait_for(page, "!!window.ordenApp.importing", "the import store")
 
     opened_with_ink(page, "Real.pdf", PLAIN)
     for row, kind, mime in (

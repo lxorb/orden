@@ -21,7 +21,7 @@ SHOTS_TOO = "--shots" in sys.argv
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Plan\\n\\nWe meet at noon on Friday, at the old station.\\n', ws.activeSpace.root)
   await ws.loadTree()
   const note = ws.notes.find((one) => one.name === 'Plan.md')
@@ -176,7 +176,7 @@ def unwrapped(page, name: str, selector: str) -> None:
     check(f"{name}: no control's words wrap{': ' + '; '.join(said['wrapped']) if said['wrapped'] else ''}", not said["wrapped"])
 
 def settings(page, label: str) -> None:
-    page.evaluate("() => window.nibApp.settings.show('general')")
+    page.evaluate("() => window.ordenApp.settings.show('general')")
     page.wait_for_selector(SETTINGS)
     quiet(page)
 
@@ -263,7 +263,7 @@ def question(page, label: str, photograph: str | None) -> None:
     page.wait_for_selector(selector, state="detached")
 
 def store(page, label: str, photograph: str | None) -> None:
-    page.evaluate("() => { window.nibApp.settings.show('appearance'); window.nibApp.themeStore.open = true }")
+    page.evaluate("() => { window.ordenApp.settings.show('appearance'); window.ordenApp.themeStore.open = true }")
     selector = '[role="dialog"][aria-label="Themes"]'
     page.wait_for_selector(selector)
     quiet(page)
@@ -280,11 +280,11 @@ def store(page, label: str, photograph: str | None) -> None:
         )
     if photograph:
         shot(page, f"{photograph}-store")
-    page.evaluate("() => { window.nibApp.themeStore.open = false; window.nibApp.settings.open = false }")
+    page.evaluate("() => { window.ordenApp.themeStore.open = false; window.ordenApp.settings.open = false }")
     page.wait_for_selector(SETTINGS, state="detached")
 
 def icons(page, path: str, label: str, photograph: str | None) -> None:
-    page.evaluate("(path) => window.nibApp.iconChoice.file(path)", path)
+    page.evaluate("(path) => window.ordenApp.iconChoice.file(path)", path)
     selector = '[role="dialog"][aria-label="Choose an icon"]'
     page.wait_for_selector(selector)
     quiet(page)
@@ -292,7 +292,7 @@ def icons(page, path: str, label: str, photograph: str | None) -> None:
     unwrapped(page, f"[{label}] icon picker", selector)
     if photograph:
         shot(page, f"{photograph}-icons")
-    page.evaluate("() => window.nibApp.iconChoice.close()")
+    page.evaluate("() => window.ordenApp.iconChoice.close()")
     page.wait_for_selector(selector, state="detached")
 
 HOLD = """
@@ -304,7 +304,7 @@ HOLD = """
     marks: words.map((word) => [text.indexOf(word), text.indexOf(word) + word.length]),
   })
   const side = (who, at, excerpt) => ({ device: who === 'mine' ? 'Laptop' : 'iPhone', at: now - at * hour, excerpt })
-  window.__held = window.nibApp.sync2.connectFake([
+  window.__held = window.ordenApp.sync2.connectFake([
     {
       id: 'held',
       path,
@@ -345,7 +345,7 @@ def drive(browser) -> None:
         )
         page.set_default_timeout(10000)
         DRIVE.open(page)
-        DRIVE.wait_for(page, "window.nibApp.sync2", "the sync question's store")
+        DRIVE.wait_for(page, "window.ordenApp.sync2", "the sync question's store")
         path = page.evaluate(SEED)
         quiet(page)
 
@@ -366,15 +366,15 @@ def drive(browser) -> None:
             for width, height in PHOTOGRAPHED:
                 page.set_viewport_size({"width": width, "height": height})
                 for scheme in ("light", "dark"):
-                    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+                    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
                     name = f"{width}x{height}-{scheme}"
-                    page.evaluate("() => window.nibApp.settings.show('appearance')")
+                    page.evaluate("() => window.ordenApp.settings.show('appearance')")
                     page.wait_for_selector(SETTINGS)
                     quiet(page)
                     page.evaluate(FRAME)
                     quiet(page)
                     shot(page, f"{name}-settings")
-                    page.evaluate("() => window.nibApp.settings.show('general')")
+                    page.evaluate("() => window.ordenApp.settings.show('general')")
                     quiet(page)
                     shot(page, f"{name}-settings-general")
                     page.keyboard.press("Escape")
@@ -385,7 +385,7 @@ def drive(browser) -> None:
                     diverged(page, path, name, name)
                     store(page, name, name)
                     icons(page, path, name, name)
-            page.evaluate("() => window.nibApp.theme.setScheme('light')")
+            page.evaluate("() => window.ordenApp.theme.setScheme('light')")
 
         page.context.close()
 

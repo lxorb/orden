@@ -11,7 +11,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const home = ws.activeSpace
   for (const [name, notes] of [['Work', ['Work one', 'Work two']], ['Ideas', ['Ideas one']], ['Empty A', []], ['Empty B', []]]) {
     if (!ws.spaces.some((one) => one.name === name)) await ws.addSpace(name)

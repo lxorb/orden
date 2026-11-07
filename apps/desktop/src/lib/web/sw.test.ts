@@ -29,9 +29,9 @@ interface Worker {
 
 function load(
   rows: readonly Row[],
-  options: { store?: boolean; broken?: boolean; windows?: OpenWindow[] } = {},
+  options: { store?: boolean; broken?: boolean; windows?: OpenWindow[]; under?: string } = {},
 ): Worker {
-  const { store = true, broken = false, windows = [] } = options
+  const { store = true, broken = false, windows = [], under } = options
   const opened: string[] = []
   const client = (one: OpenWindow) => ({
     focus: () => {
@@ -61,7 +61,7 @@ function load(
   const by = new Map(rows.map((row) => [row.path, row]))
 
   const indexedDB = {
-    open: () => {
+    open: (name: string) => {
       const request: Record<string, unknown> = {}
 
       queueMicrotask(() => {
@@ -78,7 +78,7 @@ function load(
               get: (path: string) => {
                 const read: Record<string, unknown> = {}
                 queueMicrotask(() => {
-                  read.result = by.get(path)
+                  read.result = under === undefined || under === name ? by.get(path) : undefined
                   ;(read.onsuccess as (() => void) | undefined)?.()
                 })
                 return read
@@ -276,6 +276,13 @@ describe('the asset worker', () => {
       { path: '/Work/a.png', type: 'image/png', data: 'not base64!!', modified: 1 },
     ])
     expect((await odd.fetch(`${ORIGIN}/asset/Work/a.png`))?.status).toBe(404)
+  })
+
+  test('a row an older version kept under its own name is still found', async () => {
+    const old = load([pixel('/Work/old.png')], { under: 'nib' })
+    expect((await old.fetch(`${ORIGIN}/asset/Work/old.png`))?.status).toBe(200)
+    const now = load([pixel('/Work/new.png')], { under: 'orden' })
+    expect((await now.fetch(`${ORIGIN}/asset/Work/new.png`))?.status).toBe(200)
   })
 
   test('a browser that has never opened the app gets a miss, not an error', async () => {

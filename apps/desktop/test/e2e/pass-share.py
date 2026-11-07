@@ -58,7 +58,7 @@ def signed_in(browser: Browser, token: str, label: str) -> Page:
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "!!window.nibApp?.account.user", f"[{label}] the account")
+    wait_for(page, "!!window.ordenApp?.account.user", f"[{label}] the account")
     return page
 
 

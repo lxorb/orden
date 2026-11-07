@@ -22,7 +22,7 @@ PLAIN = "---\ntitle: Plain\n---\n\n# Plain\n\nWords with nothing over them.\n"
 
 SEED = """
 async ([covered, plain]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(covered, ws.activeSpace.root)
   await ws.noteFrom(plain, ws.activeSpace.root)
   await ws.loadTree()
@@ -32,7 +32,7 @@ async ([covered, plain]) => {
 
 OPEN = """
 async (starts) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const found = ws.notes.find((one) => one.name.startsWith(starts))
   await ws.openEntry(found.path, { activate: true })
   return found.path
@@ -63,7 +63,7 @@ BANNER = """
 }
 """
 
-SAID = "() => window.nibApp.workspace.active?.doc ?? ''"
+SAID = "() => window.ordenApp.workspace.active?.doc ?? ''"
 
 def is_true(claim: bool, what: str) -> None:
     if not claim:
@@ -88,7 +88,7 @@ def open_note(page: Page, starts: str) -> None:
     page.evaluate(OPEN, starts)
     wait_for(
         page,
-        "window.nibApp.workspace.active?.name?.startsWith("
+        "window.ordenApp.workspace.active?.name?.startsWith("
         f"{json.dumps(starts)}) && document.querySelector('#write')",
         f"the {starts} note to be open",
     )
@@ -112,8 +112,8 @@ def the_editor(page: Page) -> None:
     shot(page, "01-editor")
 
     page.evaluate(
-        "() => { const at = window.nib.state.doc.toString().indexOf('cover:') + 3;"
-        " window.nib.dispatch({ selection: { anchor: at } }); window.nib.focus() }"
+        "() => { const at = window.orden.state.doc.toString().indexOf('cover:') + 3;"
+        " window.orden.dispatch({ selection: { anchor: at } }); window.orden.focus() }"
     )
     quiet(page)
     inside = page.evaluate(BANNER)
@@ -156,7 +156,7 @@ def the_drag(page: Page) -> None:
 
 def the_reading_view(page: Page) -> None:
     open_note(page, "Covered")
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     wait_for(page, "document.querySelector('article#write')", "the reading view")
     quiet(page)
 
@@ -169,7 +169,7 @@ def the_reading_view(page: Page) -> None:
     is_true(not banner["handle"], "the reading view offers a drag handle it cannot honour")
     shot(page, "04-reading")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     quiet(page)
 
 def a_note_with_no_cover(page: Page, round_: str) -> tuple[bytes, bytes]:
@@ -178,7 +178,7 @@ def a_note_with_no_cover(page: Page, round_: str) -> tuple[bytes, bytes]:
     is_true(not banner["there"], "a note with no cover was given a banner anyway")
     written = note_shot(page, f"{round_}-plain-editor")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     wait_for(page, "document.querySelector('article#write')", "the reading view")
     quiet(page)
     is_true(
@@ -187,7 +187,7 @@ def a_note_with_no_cover(page: Page, round_: str) -> tuple[bytes, bytes]:
     )
     read = note_shot(page, f"{round_}-plain-reading")
 
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     quiet(page)
     return written, read
 
@@ -201,7 +201,7 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [COVERED, PLAIN])}")
 
     before = a_note_with_no_cover(page, "05")

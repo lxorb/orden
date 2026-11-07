@@ -44,7 +44,7 @@ def clips() -> dict[str, bytes]:
 PUT = """
 async (rows) => {
   const db = await new Promise((done, failed) => {
-    const asked = indexedDB.open('nib')
+    const asked = indexedDB.open('orden')
     asked.onsuccess = () => done(asked.result)
     asked.onerror = () => failed(asked.error)
   })
@@ -93,7 +93,7 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp && window.nibApp.workspace.active", "the app")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.active", "the app")
     wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
 
     files = clips()

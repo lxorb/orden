@@ -38,7 +38,7 @@ The second part.
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('A plan') || one.name.startsWith('One'))
@@ -66,7 +66,7 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
 
@@ -74,10 +74,10 @@ def fresh(browser: Browser, finger: bool) -> Page:
 def selection(page: Page) -> None:
     page.evaluate(
         """() => {
-          const doc = window.nib.state.doc
+          const doc = window.orden.state.doc
           const at = doc.toString().indexOf('The first part')
-          window.nib.dispatch({ selection: { anchor: at, head: at + 14 } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: at, head: at + 14 } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(400)
@@ -95,7 +95,7 @@ def selection(page: Page) -> None:
         wrong(f"the selected words are not counted first: {said!r}")
 
 def outline(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(600)
 
     rows = page.evaluate("() => [...document.querySelectorAll('.heading')].map((one) => one.textContent.trim())")
@@ -111,15 +111,15 @@ def outline(page: Page) -> None:
 
     page.click(".note")
     page.wait_for_timeout(400)
-    line = page.evaluate("() => window.nib.state.doc.lineAt(window.nib.state.selection.main.head).text")
+    line = page.evaluate("() => window.orden.state.doc.lineAt(window.orden.state.selection.main.head).text")
     say(f"[footnote click] {json.dumps(line)}")
     if "The first part" not in line:
         wrong(f"a footnote row did not go to its mark: {line!r}")
 
-    before = page.evaluate("() => window.nib.state.doc.toString()")
+    before = page.evaluate("() => window.orden.state.doc.toString()")
     page.locator(".heading").nth(2).drag_to(page.locator(".heading").first)
     page.wait_for_timeout(700)
-    after = page.evaluate("() => window.nib.state.doc.toString()")
+    after = page.evaluate("() => window.orden.state.doc.toString()")
     order = page.evaluate("() => [...document.querySelectorAll('.heading')].map((one) => one.textContent.trim())")
     say(f"[dragged] {json.dumps(order)}")
     shot(page, "05-dragged")
@@ -132,13 +132,13 @@ def outline(page: Page) -> None:
         wrong("the nested heading was copied rather than moved")
 
 def dictionary(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.closePanel()")
+    page.evaluate("() => window.ordenApp.workspace.closePanel()")
     page.wait_for_timeout(400)
 
     place = page.evaluate(
         """() => {
-          const at = window.nib.state.doc.toString().indexOf('nib and Zug')
-          const box = window.nib.coordsAtPos(at + 1)
+          const at = window.orden.state.doc.toString().indexOf('nib and Zug')
+          const box = window.orden.coordsAtPos(at + 1)
           return box && { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 }
         }"""
     )
@@ -166,7 +166,7 @@ def dictionary(page: Page) -> None:
     )
     page.wait_for_timeout(700)
 
-    words = page.evaluate("() => window.nibApp.modes.spellWords")
+    words = page.evaluate("() => window.ordenApp.modes.spellWords")
     quiet = page.evaluate(
         """() => [...document.querySelectorAll('.orden-known-word')].map((one) => ({
           word: one.textContent,
@@ -193,7 +193,7 @@ def drive(browser: Browser) -> None:
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(700)
     shot(page, "11-phone-outline")
 

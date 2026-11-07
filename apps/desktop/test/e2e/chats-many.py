@@ -12,7 +12,7 @@ N = int(os.environ.get("CHATS", "1000"))
 
 SETUP = """
 async () => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: 'http://127.0.0.1:9', model: 'fake-small' })
@@ -21,7 +21,7 @@ async () => {
 """
 
 SEED = """async (n) => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   const now = Date.now()
   const states = ['done']
   chat.every = Array.from({ length: n }, (_, at) => ({
@@ -39,7 +39,7 @@ TIMED = """async ([selector, act]) => {
 }"""
 
 BUMP = """async () => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   const t0 = performance.now()
   const every = [...chat.every]
   every[every.length - 1] = { ...every[every.length - 1], updated: Date.now() + 1000 }

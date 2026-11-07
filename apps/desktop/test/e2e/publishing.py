@@ -219,22 +219,22 @@ def main() -> int:
         say(f"the space is published at {BLOG}")
 
         app = fresh(browser, "app", ORIGIN, token=token)
-        wait_for(app, "() => !!window.nibApp", "the app to start")
-        app.evaluate("() => window.nibApp.theme.setScheme('light')")
+        wait_for(app, "() => !!window.ordenApp", "the app to start")
+        app.evaluate("() => window.ordenApp.theme.setScheme('light')")
 
         folder = wait_for(
             app,
             "() => {"
-            "  const found = window.nibApp.workspace.spaces.find("
-            f"    (one) => window.nibApp.sync.remoteIdFor(one.root) === {json.dumps(space['id'])});"
+            "  const found = window.ordenApp.workspace.spaces.find("
+            f"    (one) => window.ordenApp.sync.remoteIdFor(one.root) === {json.dumps(space['id'])});"
             "  return found ? found.name : null"
             "}",
             "the space to arrive in the app",
         )
         app.evaluate(
             "(name) => {"
-            "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-            "  if (space) window.nibApp.workspace.showSpace(space.id)"
+            "  const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
+            "  if (space) window.ordenApp.workspace.showSpace(space.id)"
             "}",
             folder,
         )
@@ -242,7 +242,7 @@ def main() -> int:
         listed = (
             "() => {"
             "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-            "  const paths = walk(window.nibApp.workspace.tree);"
+            "  const paths = walk(window.ordenApp.workspace.tree);"
             f"  return paths.includes('/{folder}/{NOTE}') && paths.includes('/{folder}/{OTHER}')"
             "}"
         )
@@ -250,23 +250,23 @@ def main() -> int:
 
         app.evaluate(
             "(name) => {"
-            "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-            "  return space ? window.nibApp.links.build(space.root) : null"
+            "  const space = window.ordenApp.workspace.spaces.find((one) => one.name === name);"
+            "  return space ? window.ordenApp.links.build(space.root) : null"
             "}",
             folder,
         )
         wait_for(
             app,
-            "() => window.nibApp.links"
+            "() => window.ordenApp.links"
             f"  .index('/{folder}/{NOTE}').notes"
             f"  .some((one) => one.name === {json.dumps(OTHER.replace('.md', ''))})",
             "the space to be read through",
         )
 
-        app.evaluate(f"() => window.nibApp.workspace.open('/{folder}/{NOTE}')")
+        app.evaluate(f"() => window.ordenApp.workspace.open('/{folder}/{NOTE}')")
         wait_for(app, "() => !!document.querySelector('.cm-content')", "the editor")
 
-        app.evaluate("() => window.nibApp.workspace.toggleReading()")
+        app.evaluate("() => window.ordenApp.workspace.toggleReading()")
         wait_for(app, "() => !!document.querySelector('#write .callout')", "the reading view")
         app.wait_for_timeout(1500)
 

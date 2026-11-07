@@ -76,12 +76,12 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(500)
     looked(page, "a long list")
 
-    page.evaluate("() => window.nibApp.workspace.createCanvas()")
+    page.evaluate("() => window.ordenApp.workspace.createCanvas()")
     wait_for(page, "document.querySelector('.canvas, [data-canvas], .orden-canvas')", "the canvas", 20)
     page.wait_for_timeout(600)
     looked(page, "a canvas")
 
-    page.evaluate("() => window.nibApp.workspace.createPages()")
+    page.evaluate("() => window.ordenApp.workspace.createPages()")
     page.wait_for_timeout(1500)
     looked(page, "a page note")
 
@@ -93,14 +93,14 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(300)
 
     for section in ("general", "editor", "shortcuts", "appearance", "ai", "agents", "account", "sync", "import"):
-        page.evaluate(f"() => window.nibApp.settings.show('{section}')")
+        page.evaluate(f"() => window.ordenApp.settings.show('{section}')")
         page.wait_for_timeout(500)
         looked(page, f"settings {section}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
     DRIVE.open_note(page, "Long")
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
     page.wait_for_timeout(800)
     looked(page, "the ask panel")

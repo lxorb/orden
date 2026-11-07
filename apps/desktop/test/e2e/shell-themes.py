@@ -24,7 +24,7 @@ DESKTOP_AGENT = (
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind.\\n\\n| Platform | Sync |\\n| --- | --- |\\n| Desktop | yes |\\n| Phone | yes |\\n')
   await ws.noteFrom('# Reading list\\n\\nA paper about ink.')
   await ws.loadTree()
@@ -66,9 +66,9 @@ def main() -> int:
                 page = context.new_page()
                 page.on("pageerror", lambda error: say(f"page error: {error}"))
                 DRIVE.open(page)
-                page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+                page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
                 page.evaluate(SEED)
-                page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+                page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
 
                 page.add_style_tag(content=sheet)
                 page.wait_for_timeout(900)

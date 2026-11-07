@@ -38,7 +38,7 @@ WINDOWS = [
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
   const folder = join(root, 'Field notes')
@@ -291,14 +291,14 @@ class Window:
         self.page.add_init_script(HIDE_CARET)
         self.listen()
         self.page.goto(ORIGIN, wait_until="domcontentloaded", timeout=60000)
-        self.page.wait_for_function("() => !!window.nibApp", timeout=25000)
+        self.page.wait_for_function("() => !!window.ordenApp", timeout=25000)
         self.page.wait_for_function(
-            "() => !!window.nibApp.workspace.activeSpace", timeout=25000
+            "() => !!window.ordenApp.workspace.activeSpace", timeout=25000
         )
         self.page.evaluate(
             "() => { for (let i = 0; i < 24; i++) history.pushState({ spare: i }, '') }"
         )
-        self.page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+        self.page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
         self.page.wait_for_timeout(200)
         say(f"[{name}] the space holds {len(self.page.evaluate(SEED))} files")
         self.page.wait_for_timeout(700)
@@ -401,7 +401,7 @@ def region(window: Window) -> str:
     )
 
 def open_panel(window: Window) -> None:
-    if not window.page.evaluate("() => !!window.nibApp.workspace.panel"):
+    if not window.page.evaluate("() => !!window.ordenApp.workspace.panel"):
         window.page.keyboard.press("Control+Shift+L")
         window.page.wait_for_timeout(450)
 
@@ -487,7 +487,7 @@ def drive(browser: Browser, name: str, width: int, height: int,
             page.keyboard.press(chord)
             page.wait_for_timeout(600)
             showing = page.evaluate(
-                "(one) => window.nibApp.workspace.openOn(window.nibApp.workspace.sideOf(one))",
+                "(one) => window.ordenApp.workspace.openOn(window.ordenApp.workspace.sideOf(one))",
                 "tree" if panel == "files" else panel,
             )
             if showing is None:
@@ -522,43 +522,43 @@ def drive(browser: Browser, name: str, width: int, height: int,
             window.look("spaces")
         shut(window)
 
-        layer(window, "settings", "() => window.nibApp.settings.show()")
-        layer(window, "shortcuts", "() => window.nibApp.settings.show('shortcuts')")
-        layer(window, "appearance", "() => window.nibApp.settings.show('appearance')")
+        layer(window, "settings", "() => window.ordenApp.settings.show()")
+        layer(window, "shortcuts", "() => window.ordenApp.settings.show('shortcuts')")
+        layer(window, "appearance", "() => window.ordenApp.settings.show('appearance')")
         layer(
             window,
             "themes",
-            "() => { window.nibApp.settings.show('appearance'); window.nibApp.themeStore.open = true }",
+            "() => { window.ordenApp.settings.show('appearance'); window.ordenApp.themeStore.open = true }",
             900,
         )
         layer(
             window,
             "icons",
             """() => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const note = ws.notes.find((one) => one.name.startsWith('Kestrel'))
-              window.nibApp.iconChoice.file(note?.path ?? ws.notes[0].path)
+              window.ordenApp.iconChoice.file(note?.path ?? ws.notes[0].path)
             }""",
         )
-        layer(window, "import", "() => (window.nibApp.importing.open = true)")
+        layer(window, "import", "() => (window.ordenApp.importing.open = true)")
         layer(
             window,
             "share",
             """async () => {
-              const ws = window.nibApp.workspace
-              await window.nibApp.share.show(ws.activeSpaceId, null)
+              const ws = window.ordenApp.workspace
+              await window.ordenApp.share.show(ws.activeSpaceId, null)
             }""",
             900,
         )
 
         say(f"[{name}] --- what is read ---")
-        if opens(window, "() => window.nibApp.workspace.toggleReading()", 900):
+        if opens(window, "() => window.ordenApp.workspace.toggleReading()", 900):
             window.look("reading")
             say(f"[{name}] reading headings: {page.evaluate(HEADINGS)}")
             say(f"[{name}] reading landmarks: {page.evaluate(LANDMARKS)}")
-            opens(window, "() => window.nibApp.workspace.toggleReading()", 600)
+            opens(window, "() => window.ordenApp.workspace.toggleReading()", 600)
 
-        if opens(window, "() => void window.nibApp.workspace.createCanvas()", 1400):
+        if opens(window, "() => void window.ordenApp.workspace.createCanvas()", 1400):
             page.keyboard.press("Escape")
             try:
                 page.wait_for_selector("[role=application]", state="visible", timeout=20000)
@@ -587,7 +587,7 @@ def walk(browser: Browser) -> None:
     try:
         open_panel(window)
         page.evaluate(
-            "() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()"
+            "() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()"
         )
         page.wait_for_timeout(250)
 
@@ -652,7 +652,7 @@ def walk(browser: Browser) -> None:
             page.keyboard.press(chord)
             page.wait_for_timeout(700)
             inside = page.evaluate(WHERE)
-            depth = page.evaluate("() => window.nibApp.overlays?.depth ?? -1")
+            depth = page.evaluate("() => window.ordenApp.overlays?.depth ?? -1")
 
             page.keyboard.press("Tab")
             page.wait_for_timeout(250)

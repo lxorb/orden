@@ -13,7 +13,7 @@ NOTE = "# Slash\n\nSomething already written.\n"
 
 SEED = """
 async (note) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   const found = ws.notes.find((one) => one.name.startsWith('Slash'))
@@ -47,19 +47,19 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
     return page
 
 def caret_at_end(page: Page) -> None:
     page.evaluate(
         """() => {
-          const doc = window.nib.state.doc
-          window.nib.dispatch({
+          const doc = window.orden.state.doc
+          window.orden.dispatch({
             changes: { from: doc.length, insert: '\\n\\n' },
             selection: { anchor: doc.length + 2 },
           })
-          window.nib.focus()
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(300)
@@ -88,7 +88,7 @@ def drive(browser: Browser) -> None:
 
     page.keyboard.press("Enter")
     page.wait_for_timeout(700)
-    doc = page.evaluate("() => window.nib.state.doc.toString()")
+    doc = page.evaluate("() => window.orden.state.doc.toString()")
     say(f"[after] {json.dumps(doc[-60:])}")
     shot(page, "03-inserted")
     if "/tab" in doc:
@@ -96,14 +96,14 @@ def drive(browser: Browser) -> None:
     if "|" not in doc:
         wrong(f"no table was written: {json.dumps(doc[-60:])}")
 
-    page.evaluate("() => window.nib.focus()")
+    page.evaluate("() => window.orden.focus()")
     caret_at_end(page)
     page.keyboard.type("/quo", delay=40)
     page.wait_for_timeout(500)
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
     shut = page.evaluate(ROWS)
-    kept = page.evaluate("() => window.nib.state.doc.toString()")
+    kept = page.evaluate("() => window.orden.state.doc.toString()")
     shot(page, "04-escaped")
     if shut:
         wrong("Escape left the menu open")

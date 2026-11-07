@@ -27,7 +27,7 @@ window.__ORDEN_SYSTEM__ = {
 
 AS_DEVICE = """
 ([device, portrait, narrow]) => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.viewport.device = device
   app.viewport.portrait = portrait
   app.viewport.narrow = narrow
@@ -43,7 +43,7 @@ AS_DEVICE = """
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
@@ -187,12 +187,12 @@ def measure(page: Page, specs) -> dict:
     return dict(page.evaluate(MEASURE, specs))
 
 def open_drawer(page: Page) -> None:
-    page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(350)
 
 def shut_drawer(page: Page) -> None:
     page.evaluate(
-        "() => { const ws = window.nibApp.workspace; ws.closePanel(); ws.closePanel('right') }"
+        "() => { const ws = window.ordenApp.workspace; ws.closePanel(); ws.closePanel('right') }"
     )
     page.wait_for_timeout(400)
 
@@ -270,17 +270,17 @@ def one(
     shot(page, f"{label}-{name}-tree-{scheme}")
 
     for panel, specs in PANELS.items():
-        page.evaluate("(p) => window.nibApp.workspace.showPanel(p)", panel)
+        page.evaluate("(p) => window.ordenApp.workspace.showPanel(p)", panel)
         page.wait_for_timeout(500)
         if panel == "search":
             rows.update(measure(page, TAGS))
-            page.evaluate("() => { window.nibApp.search.replacing = true }")
-            page.evaluate("() => window.nibApp.search.ask('the')")
+            page.evaluate("() => { window.ordenApp.search.replacing = true }")
+            page.evaluate("() => window.ordenApp.search.ask('the')")
             page.wait_for_timeout(900)
         rows.update(measure(page, specs))
         if panel == "search":
             shot(page, f"{label}-{name}-search-{scheme}")
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
 
     page.keyboard.press("Control+o")
@@ -318,7 +318,7 @@ def one(
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    page.evaluate("() => window.nibApp.settings.show()")
+    page.evaluate("() => window.ordenApp.settings.show()")
     page.wait_for_selector(".orden-screen.sheet", timeout=15000)
     page.wait_for_timeout(900)
     rows.update(measure(page, SETTINGS))

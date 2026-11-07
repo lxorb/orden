@@ -99,16 +99,16 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+    wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
 
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     wait_for(page, "document.querySelector('.web')", "a web tab")
     page.wait_for_timeout(250)
     shot(page, "01-page")
 
     clear = clear_over_the_page(page, "with nothing up")
 
-    page.evaluate("() => { window.nibApp.updates.ready = '9.9.9' }")
+    page.evaluate("() => { window.ordenApp.updates.ready = '9.9.9' }")
     wait_for(page, "document.querySelector('.notice')", "the update notice")
     page.wait_for_timeout(500)
     shot(page, "02-notice")
@@ -134,7 +134,7 @@ def drive(browser: Browser) -> None:
     else:
         say("the page kept its height under the notice")
 
-    page.evaluate("() => window.nibApp.updates.dismiss()")
+    page.evaluate("() => window.ordenApp.updates.dismiss()")
     page.wait_for_timeout(500)
     back = page.evaluate(PAGE_RECT)
     if abs(back["height"] - clear["height"]) > 1:
@@ -145,7 +145,7 @@ def drive(browser: Browser) -> None:
     else:
         say("the page has its room back")
 
-    page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
+    page.evaluate("() => window.ordenApp.fullscreen.enter(window.ordenApp.workspace.panes)")
     page.wait_for_timeout(500)
     shot(page, "03-fullscreen")
 
@@ -165,9 +165,9 @@ def drive(browser: Browser) -> None:
 
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
-    if page.evaluate("() => window.nibApp.fullscreen.on"):
+    if page.evaluate("() => window.ordenApp.fullscreen.on"):
         wrong("Escape does not give the screen back from a web page")
-        page.evaluate("() => window.nibApp.fullscreen.leave()")
+        page.evaluate("() => window.ordenApp.fullscreen.leave()")
     else:
         say("Escape gives the screen back")
 

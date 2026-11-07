@@ -64,7 +64,7 @@ async ([path, text, language]) => {
   // Whatever version the app itself has made, rather than a number written down
   // here: naming one that has fallen behind is a VersionError and no note.
   const open = (version) => new Promise((resolve, reject) => {
-    const request = version ? indexedDB.open('nib', version) : indexedDB.open('nib')
+    const request = version ? indexedDB.open('orden', version) : indexedDB.open('orden')
     request.onupgradeneeded = () => {
       const made = request.result
       if (!made.objectStoreNames.contains('files')) made.createObjectStore('files', { keyPath: 'path' })
@@ -102,13 +102,13 @@ async ([path, text, language]) => {
 HOLD = """
 () => {
   // Only a build a drive may steer carries it (`--mode drive`); a release has none.
-  if (!window.nibApp?.sync2) throw new Error('not a drivable build')
+  if (!window.ordenApp?.sync2) throw new Error('not a drivable build')
   const side = (device, at, text, word) => ({
     device, at: Date.now() - at * 3600000,
     excerpt: { text, marks: [[text.indexOf(word), text.indexOf(word) + word.length]] },
   })
-  window.__held = window.nibApp.sync2.connectFake([{
-    id: 'held', path: window.nibApp.workspace.active.path, name: 'Plan',
+  window.__held = window.ordenApp.sync2.connectFake([{
+    id: 'held', path: window.ordenApp.workspace.active.path, name: 'Plan',
     mine: side('Laptop', 2, 'We meet at noon on Friday.', 'noon'),
     theirs: side('iPhone', 1, 'We meet at one on Saturday.', 'one'),
   }])

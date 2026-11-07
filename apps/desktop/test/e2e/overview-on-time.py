@@ -15,7 +15,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const body = Array.from({ length: 120 }, (_, i) =>
     `Line ${i} with some **words**, a [link](https://example.com) and more to fill it.`).join('\\n\\n')
   for (let i = 0; i < 10; i++) ws.openBlank(`Note ${i}`, `# Note ${i}\\n\\n${body}`)
@@ -38,7 +38,7 @@ SAMPLE = """
   const look = (at) => {
     if (!going) return
     const now = [...document.querySelectorAll('.window')].map((one) => one.style.transform).join('|')
-    const ws = window.nibApp.workspace
+    const ws = window.ordenApp.workspace
     const pane = document.querySelector(`[data-pane="${ws.panes.at(ws.tabs.find((one) => one.id === ws.activeTabId)?.paneId)?.id}"]`)
     const active = ws.tabs.find((one) => one.id === ws.activeTabId)?.shown
     const others = [...document.querySelectorAll('.window')]

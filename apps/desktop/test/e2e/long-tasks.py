@@ -45,7 +45,7 @@ new PerformanceObserver((list) => {
 
 SEED = """
 async (count) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const tags = ['#wind', '#ink', '#paper', '#kestrel', '#plan']
   for (let at = 0; at < count; at++) {
@@ -84,8 +84,8 @@ def main() -> int:
         context.add_init_script(OBSERVE)
         page = context.new_page()
         page.goto(ORIGIN, wait_until="domcontentloaded")
-        wait_for(page, "window.nibApp?.workspace?.activeSpace", "a space")
-        wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
+        wait_for(page, "window.ordenApp?.workspace?.activeSpace", "a space")
+        wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
         say(f"the space holds {page.evaluate(SEED, NOTES)} notes")
         page.wait_for_timeout(1500)
         bench = min(page.evaluate(BENCH) for _ in range(7))

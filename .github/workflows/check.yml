@@ -132,8 +132,8 @@ jobs:
       - name: A release carries no handle
         run: |
           pnpm --filter @orden/desktop build
-          if grep -rq nibApp apps/desktop/dist/assets; then
-            echo "a release bundle carries window.nibApp" >&2
+          if grep -rqE "ordenApp|nibApp" apps/desktop/dist/assets; then
+            echo "a release bundle carries window.ordenApp" >&2
             exit 1
           fi
           echo "no handle in the release bundle"

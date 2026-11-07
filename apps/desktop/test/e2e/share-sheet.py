@@ -71,7 +71,7 @@ STATES = [
 
 SHOW = """
 (who) => {
-  const app = window.nibApp
+  const app = window.ordenApp
   app.share.space = app.workspace.activeSpace
   app.share.spaceId = app.workspace.activeSpaceId
   app.share.error = null
@@ -99,11 +99,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
-    page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+    page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           ws.setIcon(ws.activeSpaceId, 'notebook-pen', 'teal')
         }"""
     )
@@ -133,7 +133,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
 
     page.evaluate(
         """() => {
-          const app = window.nibApp
+          const app = window.ordenApp
           app.share.space = app.workspace.activeSpace
           app.share.spaceId = app.workspace.activeSpaceId
           app.share.who = null
@@ -178,7 +178,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
 
-    page.evaluate("() => window.nibApp.share.close()")
+    page.evaluate("() => window.ordenApp.share.close()")
     context.close()
 
 def main() -> int:

@@ -39,7 +39,7 @@ window.__TAURI_OS_PLUGIN_INTERNALS__ = {
 
 AS_TABLET = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'tablet';
   app.viewport.portrait = false;
   const root = document.documentElement;
@@ -51,15 +51,15 @@ AS_TABLET = """
 """
 
 def opened(page: Page, label: str, tablet: bool = False) -> None:
-    wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
-    wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
+    wait_for(page, "!!window.ordenApp", f"[{label}] the app to start")
+    wait_for(page, "window.ordenApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     if tablet:
         page.evaluate(AS_TABLET)
 
-    opened_it = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
+    opened_it = "window.ordenApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
-        page.evaluate("() => window.nibApp.workspace.createCanvas()")
+        page.evaluate("() => window.ordenApp.workspace.createCanvas()")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({opened_it})"):
             break
@@ -75,12 +75,12 @@ def plane(page: Page) -> dict:
     return box
 
 def canvas_of(page: Page) -> dict:
-    return page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
+    return page.evaluate("() => JSON.parse(window.ordenApp.workspace.active.doc)")
 
 def written(page: Page, holds: str, patience: int = 8000) -> None:
     try:
         page.wait_for_function(
-            "() => { const doc = window.nibApp.workspace.active?.doc;"
+            "() => { const doc = window.ordenApp.workspace.active?.doc;"
             " if (!doc) return false;"
             " let plane; try { plane = JSON.parse(doc) } catch { return false }"
             f" return {holds} }}",
@@ -211,7 +211,7 @@ def check_pattern(page: Page) -> None:
 
     for name, scale in (("in", 2.0), ("one", 1.0), ("out", 0.2), ("far", 0.03)):
         page.evaluate(
-            "(scale) => { const tab = window.nibApp.workspace.active;"
+            "(scale) => { const tab = window.ordenApp.workspace.active;"
             " tab.camera = { ...(tab.camera ?? { x: 0, y: 0 }), scale } }",
             scale,
         )
@@ -233,7 +233,7 @@ def check_pattern(page: Page) -> None:
         shot(page, f"canvas-pattern-{name}")
 
     page.evaluate(
-        "() => { const tab = window.nibApp.workspace.active;"
+        "() => { const tab = window.ordenApp.workspace.active;"
         " tab.camera = { x: 0, y: 0, scale: 1 } }"
     )
     page.wait_for_timeout(200)
@@ -309,7 +309,7 @@ def check_shape_text(page: Page) -> None:
     fresh(page)
     page.evaluate(
         """() => {
-          const tab = window.nibApp.workspace.active
+          const tab = window.ordenApp.workspace.active
           tab.note.replace(JSON.stringify({
             nodes: [],
             edges: [],
@@ -458,7 +458,7 @@ def check_picked_inside(page: Page) -> None:
     for side, push in (("left", 520), ("right", -520)):
         fresh(page)
         page.evaluate(
-            """() => window.nibApp.workspace.active.note.replace(JSON.stringify({
+            """() => window.ordenApp.workspace.active.note.replace(JSON.stringify({
               nodes: [{ id: 'aa', type: 'text', x: 0, y: 0, width: 70, height: 60, text: 'edge' }],
               edges: [],
             }, null, '\\t') + '\\n')"""
@@ -531,7 +531,7 @@ def check_broken_picture(page: Page) -> None:
     fresh(page)
     page.evaluate(
         """() => {
-          const tab = window.nibApp.workspace.active
+          const tab = window.ordenApp.workspace.active
           tab.note.replace(JSON.stringify({
             nodes: [
               { id: 'ff', type: 'file', x: -120, y: -80, width: 240, height: 160,
@@ -551,7 +551,7 @@ def check_broken_picture(page: Page) -> None:
     shot(page, "canvas-picture-gone")
 
 def fresh(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.createCanvas()")
+    page.evaluate("() => window.ordenApp.workspace.createCanvas()")
     page.wait_for_timeout(800)
     page.wait_for_selector(".canvas", timeout=15000)
 
@@ -559,7 +559,7 @@ def three_cards(page: Page) -> None:
     fresh(page)
     page.evaluate(
         """() => {
-          const tab = window.nibApp.workspace.active
+          const tab = window.ordenApp.workspace.active
           tab.note.replace(JSON.stringify({
             nodes: [
               { id: 'aa', type: 'text', x: -300, y: -60, width: 200, height: 80, text: 'one' },
@@ -837,7 +837,7 @@ def check_sharp_stroke(page: Page, cdp) -> None:
     box = plane(page)
     tool(page, "d")
     page.evaluate(
-        "() => { const tab = window.nibApp.workspace.active;"
+        "() => { const tab = window.ordenApp.workspace.active;"
         " tab.note.replace('{\\n\\t\"nodes\": [],\\n\\t\"edges\": []\\n}\\n') }"
     )
     page.wait_for_timeout(400)
@@ -1022,7 +1022,7 @@ def drive(browser, theme: str) -> None:
 
 AS_PHONE = """
 () => {
-  const app = window.nibApp;
+  const app = window.ordenApp;
   app.viewport.device = 'phone';
   app.viewport.portrait = true;
   const root = document.documentElement;
@@ -1064,8 +1064,8 @@ def drive_phone(browser, theme: str) -> None:
 
     try:
         page.goto(ORIGIN, wait_until="domcontentloaded")
-        wait_for(page, "!!window.nibApp", "[phone] the app to start")
-        wait_for(page, "window.nibApp.workspace.spaces.length > 0", "[phone] a space to exist")
+        wait_for(page, "!!window.ordenApp", "[phone] the app to start")
+        wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "[phone] a space to exist")
         page.evaluate(AS_PHONE)
         opened(page, "phone")
         page.wait_for_timeout(400)
@@ -1101,7 +1101,7 @@ CARD_AT = """
 
 TO_SCREEN = """
 (point) => {
-  const camera = window.nibApp.workspace.active.camera
+  const camera = window.ordenApp.workspace.active.camera
   const rect = document.querySelector('.canvas').getBoundingClientRect()
   const turn = camera.turn ?? 0
   const dx = (point.x - camera.x) * camera.scale
@@ -1142,7 +1142,7 @@ def drive_turning(browser) -> None:
     cdp = context.new_cdp_session(page)
     cdp.send("Input.setIgnoreInputEvents", {"ignore": False})
 
-    turn = "() => window.nibApp.workspace.active.camera?.turn ?? 0"
+    turn = "() => window.ordenApp.workspace.active.camera?.turn ?? 0"
     try:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         opened(page, "turning")
@@ -1151,7 +1151,7 @@ def drive_turning(browser) -> None:
         box = plane(page)
         middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
 
-        page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+        page.evaluate("() => window.ordenApp.modes.setCanvasTurns(false)")
         two_fingers(cdp, middle, 40)
         page.wait_for_timeout(300)
         if abs(page.evaluate(turn)) > 1e-6:
@@ -1159,7 +1159,7 @@ def drive_turning(browser) -> None:
         else:
             say("with the setting off, two fingers turned do not turn the canvas")
 
-        page.evaluate("() => window.nibApp.modes.setCanvasTurns(true)")
+        page.evaluate("() => window.ordenApp.modes.setCanvasTurns(true)")
         two_fingers(cdp, middle, 40)
         page.wait_for_timeout(400)
         got = page.evaluate(turn)
@@ -1244,7 +1244,7 @@ def drive_turning(browser) -> None:
         else:
             say("Ctrl+Alt+R stands the canvas upright")
         shot(page, "canvas-upright-again")
-        page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+        page.evaluate("() => window.ordenApp.modes.setCanvasTurns(false)")
     finally:
         context.close()
 

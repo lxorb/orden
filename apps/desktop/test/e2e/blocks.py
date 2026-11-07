@@ -25,7 +25,7 @@ The last paragraph of the note.
 
 SEED = """
 async ([note]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   return ws.notes.map((one) => one.path)
@@ -83,17 +83,17 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('A note'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
     return page
 
 def source(page: Page) -> str:
-    return page.evaluate("() => window.nib.state.doc.toString()")
+    return page.evaluate("() => window.orden.state.doc.toString()")
 
 def line_of(page: Page, words: str):
     return page.locator(".cm-line", has_text=words).first
@@ -201,11 +201,11 @@ def drive_selection(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const text = window.nib.state.doc.toString()
+          const text = window.orden.state.doc.toString()
           const from = text.indexOf('The first paragraph')
           const to = text.indexOf('shorter.') + 4
-          window.nib.dispatch({ selection: { anchor: from, head: to } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: from, head: to } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(300)

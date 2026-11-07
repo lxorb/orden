@@ -13,7 +13,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -26,14 +26,14 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
 INK = """
 () => {
-  const store = window.nibApp.pages.current.store
+  const store = window.ordenApp.pages.current.store
   const page = store.pages[0]
   const ink = []
   for (let i = 0; i < 12; i++) {
@@ -47,11 +47,11 @@ INK = """
 }
 """
 
-INKED = "() => { const ink = window.nibApp.pages.current.store.canvas.ink; return [ink.length, ink.reduce((sum, one) => sum + one.points.length, 0)] }"
+INKED = "() => { const ink = window.ordenApp.pages.current.store.canvas.ink; return [ink.length, ink.reduce((sum, one) => sum + one.points.length, 0)] }"
 
 AT = """
 () => {
-  const store = window.nibApp.pages.current.store
+  const store = window.ordenApp.pages.current.store
   const page = store.pages[0]
   const host = document.querySelector('.pages').getBoundingClientRect()
   const c = store.camera
@@ -96,14 +96,14 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     pdf = f"{root}/Ink.pdf"
     if not page.evaluate(SEED, {"path": pdf, "data": base64.b64encode(paper()).decode("ascii")}):
         wrong("the PDF never reached the space")
         return
-    page.evaluate("(path) => window.nibApp.workspace.openPdf(path, 1)", pdf)
-    wait_for(page, "window.nibApp.pages.current?.store.count === 2", "the page note", patience=60)
+    page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
+    wait_for(page, "window.ordenApp.pages.current?.store.count === 2", "the page note", patience=60)
     page.wait_for_timeout(800)
     page.evaluate(INK)
     page.wait_for_timeout(300)
@@ -122,7 +122,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(500)
 
     after = page.evaluate(INKED)
-    scale = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
+    scale = page.evaluate("() => window.ordenApp.pages.current.store.camera.scale")
     if abs(scale - 1) < 0.05:
         wrong(f"the two fingers did not zoom: {scale}")
     if after != before:
@@ -130,7 +130,7 @@ def drive(browser: Browser) -> None:
     else:
         say(f"ok   the pinch zoomed to {scale:.2f} and left the ink as it was {after}")
 
-    page.evaluate("() => { window.nibApp.pages.current.store.camera = { x: 0, y: 360, scale: 1 } }")
+    page.evaluate("() => { window.ordenApp.pages.current.store.camera = { x: 0, y: 360, scale: 1 } }")
     page.wait_for_timeout(300)
     x, y = page.evaluate(AT)
     touch(cdp, "touchStart", [(x - 30, y)])

@@ -34,7 +34,7 @@ INBOX = """- [ ] Inbox now
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -73,8 +73,8 @@ def meta_of(page: Page, words: str) -> list[str]:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     days: dict[str, str] = page.evaluate(DAYS)
     page.evaluate(
         WRITE, [[["Errands.md", ERRANDS.format(**days)], ["Inbox.md", INBOX.format(**days)]]]
@@ -129,15 +129,15 @@ def drive(browser: Browser) -> None:
     if "Inbox now" not in inbox or "Inbox later" in inbox:
         wrong(f"the Inbox is {inbox}: a start date to come should keep a task out of it")
 
-    page.evaluate("window.nibApp.workspace.showPanel('tasks')")
+    page.evaluate("window.ordenApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .orden-row')", "the Tasks panel")
     if not page.evaluate("!!document.querySelector('.tasks .orden-row-meta.late')"):
         wrong("the Tasks count is not in the danger tone while a deadline has passed")
 
     open_builtin(page, "today")
-    if page.evaluate("window.nibApp.modes.undatedInToday"):
+    if page.evaluate("window.ordenApp.modes.undatedInToday"):
         wrong("Today starts out holding the tasks with no start date")
-    page.evaluate("window.nibApp.modes.setUndatedInToday(true)")
+    page.evaluate("window.ordenApp.modes.setUndatedInToday(true)")
     DRIVE.waited(
         page,
         "() => [...document.querySelectorAll('.view-tab .task .words')]"
@@ -155,7 +155,7 @@ def drive(browser: Browser) -> None:
         if unwanted in undated:
             wrong(f"Today with the setting on holds {unwanted!r}, whose start is still to come")
     DRIVE.shot(page, "03-today-undated")
-    page.evaluate("window.nibApp.modes.setUndatedInToday(false)")
+    page.evaluate("window.ordenApp.modes.setUndatedInToday(false)")
     DRIVE.waited(
         page,
         "() => ![...document.querySelectorAll('.view-tab .task .words')]"

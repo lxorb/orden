@@ -29,7 +29,7 @@ async () => {
   }
 
   seen.push(look())
-  window.nibApp.workspace.showPanel('links')
+  window.ordenApp.workspace.showPanel('links')
   for (let frame = 0; frame < 14; frame++) {
     await new Promise((go) => requestAnimationFrame(go))
     seen.push(look())
@@ -52,7 +52,7 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool,
     DRIVE.open(page)
     page.evaluate(SEED)
     page.wait_for_timeout(700)
-    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
 
     frames = page.evaluate(FRAMES)

@@ -19,7 +19,7 @@ HOME = """- [ ] Fix the tap
 """
 
 WRITE = """async ([files]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   for (const [path, text] of files) {
     await window.tasks.writeFile(`${root}/${path}`, text)
@@ -37,11 +37,11 @@ def day(task: dict) -> object:
     return task.get("start") or task.get("scheduled") or task.get("due")
 
 def seed(page: Page) -> None:
-    wait_for(page, "window.nibApp.tasks", "the views on the handle")
-    page.evaluate("async () => { window.tasks = await window.nibApp.tasks() }")
+    wait_for(page, "window.ordenApp.tasks", "the views on the handle")
+    page.evaluate("async () => { window.tasks = await window.ordenApp.tasks() }")
     page.evaluate(WRITE, [[["Projects/Home.md", HOME]]])
     wait_for(page, f"() => !!({TASK})('Mow the lawn')", "the seeded rows")
-    page.evaluate("window.tasks.openProject(window.nibApp.workspace.activeSpace.name, 'Projects/Home.md')")
+    page.evaluate("window.tasks.openProject(window.ordenApp.workspace.activeSpace.name, 'Projects/Home.md')")
     wait_for(page, "document.querySelector('.view-tab .task')", "the project's tasks")
     quiet(page)
 

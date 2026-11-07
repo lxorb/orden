@@ -28,7 +28,7 @@ print('nothing to say')
 
 SEED = """
 async ([note]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   return ws.notes.map((one) => one.path)
@@ -90,17 +90,17 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Blocks'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
     return page
 
 def source(page: Page) -> str:
-    return page.evaluate("() => window.nib.state.doc.toString()")
+    return page.evaluate("() => window.orden.state.doc.toString()")
 
 def drive_editor(browser: Browser) -> None:
     page = fresh(browser, "desktop")
@@ -132,9 +132,9 @@ def drive_editor(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const at = window.nib.state.doc.toString().indexOf('const answer')
-          window.nib.dispatch({ selection: { anchor: at + 3 } })
-          window.nib.focus()
+          const at = window.orden.state.doc.toString().indexOf('const answer')
+          window.orden.dispatch({ selection: { anchor: at + 3 } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(400)
@@ -150,8 +150,8 @@ def drive_editor(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          window.nib.dispatch({ selection: { anchor: 0 } })
-          window.nib.focus()
+          window.orden.dispatch({ selection: { anchor: 0 } })
+          window.orden.focus()
         }"""
     )
     page.wait_for_timeout(400)
@@ -160,7 +160,7 @@ def drive_editor(browser: Browser) -> None:
         wrong(f"the caption did not come back: {back[0]['text']!r}")
     shot(page, "03-caret-away-again")
 
-    page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
+    page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(500)
     numbered = page.evaluate(CAPTIONS)
     say(f"[desktop] with line numbers: {json.dumps(numbered, ensure_ascii=False)}")
@@ -168,7 +168,7 @@ def drive_editor(browser: Browser) -> None:
     for one in numbered[:2]:
         if one["inset"] not in (0, 1, -1):
             wrong(f"a caption is not level with the numbered code: {one['inset']}px off")
-    page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
+    page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(300)
 
     page.locator(".orden-fence-language").first.click()

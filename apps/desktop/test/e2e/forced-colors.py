@@ -106,9 +106,9 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{scheme}] page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "window.nibApp && window.nibApp.workspace.active", "the app")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.active", "the app")
     page.evaluate(
-        "async (note) => { const ws = window.nibApp.workspace; await ws.noteFrom(note, ws.activeSpace.root); await ws.loadTree();"
+        "async (note) => { const ws = window.ordenApp.workspace; await ws.noteFrom(note, ws.activeSpace.root); await ws.loadTree();"
         " const found = ws.notes.find((one) => one.name.startsWith('Plan')); await ws.openEntry(found.path, { activate: true }) }",
         NOTE,
     )
@@ -118,7 +118,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     say(f"[{scheme}] system colours {json.dumps(colours)}")
     DRIVE.shot(page, f"{scheme}-note")
 
-    page.evaluate("() => window.nib.dispatch({ selection: { anchor: window.nib.state.doc.length } })")
+    page.evaluate("() => window.orden.dispatch({ selection: { anchor: window.orden.state.doc.length } })")
     page.wait_for_timeout(300)
     marks = page.evaluate("() => [...document.querySelectorAll('.cm-content .orden-highlight')].map((one) => [one.textContent, getComputedStyle(one).backgroundColor])")
     if len(marks) != 2:
@@ -138,7 +138,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
             if colour != colours["canvas"]:
                 wrong(f"[{scheme}] {one['line']}: the room on its {side.lower()} is drawn as a bar of {colour}, not the window's {colours['canvas']}")
 
-    page.evaluate("() => window.nibApp.settings.show('appearance')")
+    page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(400)
     field = page.locator("[role=dialog] input[type=search], [role=dialog] input").first
     field.focus()
@@ -151,7 +151,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Backspace")
 
     for pane in ("appearance", "editor"):
-        page.evaluate("(pane) => window.nibApp.settings.show(pane)", pane)
+        page.evaluate("(pane) => window.ordenApp.settings.show(pane)", pane)
         page.wait_for_timeout(500)
         DRIVE.shot(page, f"{scheme}-{pane}")
         found = page.evaluate(CONTROLS)
@@ -174,7 +174,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
         for one in track_ends(page, colours["canvas"]):
             wrong(f"[{scheme}] {pane}: {one}")
 
-    page.evaluate("() => { window.nibApp.settings.open = false }")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Shift+P")
     wait_for(page, "document.querySelector('.palette .orden-row.is-on')", "the palette's current row")

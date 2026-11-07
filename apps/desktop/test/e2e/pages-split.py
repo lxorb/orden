@@ -11,7 +11,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async ({ path, data }) => {
-  const open = indexedDB.open('nib')
+  const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -24,8 +24,8 @@ async ({ path, data }) => {
     write.oncomplete = () => resolve()
     write.onerror = () => reject(write.error)
   })
-  await window.nibApp.workspace.loadTree()
-  return window.nibApp.workspace.files.some((one) => one.path === path)
+  await window.ordenApp.workspace.loadTree()
+  return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
 
@@ -57,7 +57,7 @@ def paper(count: int) -> bytes:
 
 STATE = """
 () => ({
-  active: window.nibApp.workspace.active?.kind ?? null,
+  active: window.ordenApp.workspace.active?.kind ?? null,
   navigator: !!document.querySelector('.navigator'),
   headings: [...(document.querySelector('.heading')?.closest('ul')?.querySelectorAll('.heading .orden-row-label') ?? [])].map((one) => one.textContent.trim()),
   counter: document.querySelector('footer .page')?.textContent?.trim() ?? null,
@@ -70,21 +70,21 @@ def drive(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     page.evaluate(SEED, {"path": f"{root}/Six.pdf", "data": base64.b64encode(paper(6)).decode("ascii")})
     page.evaluate(
-        "async (path) => { await window.nibApp.tasks().then((t) => t.writeFile(path, '# Alpha\\n\\ntext\\n\\n## Beta\\n'));"
-        " await window.nibApp.workspace.loadTree() }",
+        "async (path) => { await window.ordenApp.tasks().then((t) => t.writeFile(path, '# Alpha\\n\\ntext\\n\\n## Beta\\n'));"
+        " await window.ordenApp.workspace.loadTree() }",
         f"{root}/Heads.md",
     )
-    page.evaluate("(path) => window.nibApp.workspace.openPdf(path, 1)", f"{root}/Six.pdf")
-    wait_for(page, "window.nibApp.pages.current?.store.count === 6", "the page note")
-    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", f"{root}/Six.pdf")
+    wait_for(page, "window.ordenApp.pages.current?.store.count === 6", "the page note")
+    page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
 
-    page.evaluate("() => window.nibApp.workspace.split('row')")
+    page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('.pages').length === 2", "the page note in two panes")
-    page.evaluate("(path) => window.nibApp.workspace.openEntry(path, { activate: true })", f"{root}/Heads.md")
+    page.evaluate("(path) => window.ordenApp.workspace.openEntry(path, { activate: true })", f"{root}/Heads.md")
     page.wait_for_timeout(800)
     state = page.evaluate(STATE)
     if state["navigator"] or state["counter"] or state["headings"] != ["Alpha", "Beta"]:

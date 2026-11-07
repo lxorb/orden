@@ -21,7 +21,7 @@ NOTES = {
 
 SEED = """
 async (notes) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   for (const text of notes) await ws.noteFrom(text, root)
   await ws.loadTree()
@@ -35,9 +35,9 @@ STRIP = """
     name: tab.querySelector('.label')?.textContent ?? null,
   })),
   steps: [...document.querySelectorAll('.step')].map((one) => one.disabled),
-  showing: window.nibApp.workspace.active?.name ?? null,
-  trail: (window.nibApp.workspace.active?.trail ?? []).map((one) => one.split(/[\\\\/]/).pop()),
-  at: window.nibApp.workspace.active?.at ?? null,
+  showing: window.ordenApp.workspace.active?.name ?? null,
+  trail: (window.ordenApp.workspace.active?.trail ?? []).map((one) => one.split(/[\\\\/]/).pop()),
+  at: window.ordenApp.workspace.active?.at ?? null,
 })
 """
 
@@ -59,7 +59,7 @@ def fresh(browser: Browser, label: str) -> Page:
 def peek(page: Page, name: str) -> None:
     page.evaluate(
         """async (starts) => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith(starts))
           await ws.openEntry(note.path, { preview: true })
         }""",
@@ -116,7 +116,7 @@ def drive_trail(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const one of [...ws.tabs]) if (one.id !== ws.activeTabId) ws.close(one.id)
         }"""
     )

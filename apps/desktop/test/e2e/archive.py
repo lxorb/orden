@@ -11,7 +11,7 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Plan\\n\\nThe plan.\\n', root)
   await ws.noteFrom('# Keep\\n\\nSee [[Plan]] and [[Taxes]].\\n', root)
@@ -50,14 +50,14 @@ def fresh(browser: Browser) -> Page:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name === 'Keep.md')
           await ws.openEntry(note.path, {})
           if (ws.panel !== 'tree') ws.showPanel('tree')
           for (const path of ws.visibleRows()) if (!path.endsWith('.md')) ws.device.expand(path)
         }"""
     )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(600)
     return page
 
@@ -131,14 +131,14 @@ def drive(browser: Browser) -> None:
 
     page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           for (const path of ws.visibleRows()) if (!path.endsWith('.md')) ws.device.expand(path)
         }"""
     )
     page.wait_for_timeout(300)
     kept = page.evaluate(
         """() => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           return { map: ws.archive.of(ws.activeSpace.root), open: ws.active?.path ?? null }
         }"""
     )
@@ -167,7 +167,7 @@ def drive(browser: Browser) -> None:
 
     found = page.evaluate(
         """async () => {
-          const { search, workspace } = window.nibApp
+          const { search, workspace } = window.ordenApp
           workspace.showPanel('search')
           search.ask('lighthouse')
           await new Promise((done) => setTimeout(done, 900))

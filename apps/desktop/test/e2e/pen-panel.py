@@ -19,7 +19,7 @@ def box(page: Page, selector: str) -> dict:
     return found
 
 def shown(page: Page) -> bool:
-    return bool(page.evaluate(f"() => !!document.querySelector('{PANEL}') && window.nibApp.overlays.depth > 0"))
+    return bool(page.evaluate(f"() => !!document.querySelector('{PANEL}') && window.ordenApp.overlays.depth > 0"))
 
 def ink(page: Page, x: float, y: float) -> bytes:
     return page.screenshot(clip={"x": x - 4, "y": y - 12, "width": 64, "height": 28})
@@ -89,11 +89,11 @@ def check(page: Page, label: str, along: str = "x") -> None:
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles")
-    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     page.evaluate(
-        "async ([path, text]) => { const ws = window.nibApp.workspace;"
-        " await window.nibApp.tasks().then((t) => t.writeFile(path, text));"
+        "async ([path, text]) => { const ws = window.ordenApp.workspace;"
+        " await window.ordenApp.tasks().then((t) => t.writeFile(path, text));"
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         [f"{root}/Board.canvas", json.dumps(BOARD)],
     )
@@ -108,9 +108,9 @@ def drive(browser: Browser) -> None:
     )
     page.reload()
     DRIVE.open(page)
-    wait_for(page, "typeof window.nibApp.tasks === 'function'", "the app's handles again")
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles again")
     page.evaluate(
-        "async (path) => { const ws = window.nibApp.workspace; await ws.loadTree();"
+        "async (path) => { const ws = window.ordenApp.workspace; await ws.loadTree();"
         " await ws.openEntry(path, { activate: true }) }",
         f"{root}/Board.canvas",
     )

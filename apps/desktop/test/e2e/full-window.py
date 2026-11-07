@@ -14,7 +14,7 @@ SIZE = {"width": 1280, "height": 800}
 
 ARRANGE = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom('# Plan\\n\\nWhat we are doing, and why it matters.\\n', root)
   await ws.noteFrom('# Other\\n\\nA note beside it.\\n', root)
@@ -43,7 +43,7 @@ LOOK = """
   }
   const bar = document.querySelector('.bar')
   return {
-    fills: window.nibApp.workspace.panes.fills,
+    fills: window.ordenApp.workspace.panes.fills,
     sidebar: !!document.querySelector('aside'),
     panes: [...document.querySelectorAll('[data-pane]')].map((one) => one.dataset.pane),
     // A pane's own, or its strip in the window's top row (#1037), but not the one in the
@@ -56,15 +56,15 @@ LOOK = """
     bar: bar ? { shown: bar.classList.contains('shown'), inert: bar.inert,
       tabs: [...bar.querySelectorAll('.tab .label')].map((one) => one.textContent.trim()) } : null,
     typing: !!document.activeElement?.closest('.cm-content'),
-    active: window.nibApp.workspace.active?.shown ?? null,
+    active: window.ordenApp.workspace.active?.shown ?? null,
   }
 }
 """
 
 LAYOUT = """
 () => JSON.stringify({
-  frame: window.nibApp.workspace.panes.frame,
-  panel: window.nibApp.workspace.panel,
+  frame: window.ordenApp.workspace.panes.frame,
+  panel: window.ordenApp.workspace.panel,
   aside: (() => {
     const list = document.querySelector('aside')
     if (!list) return null
@@ -92,8 +92,8 @@ FLUSH = """
 }
 """
 
-FILLED = "window.nibApp.workspace.panes.fills !== null && !document.querySelector('aside')"
-BACK = "window.nibApp.workspace.panes.fills === null && !!document.querySelector('aside')"
+FILLED = "window.ordenApp.workspace.panes.fills !== null && !document.querySelector('aside')"
+BACK = "window.ordenApp.workspace.panes.fills === null && !!document.querySelector('aside')"
 
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
@@ -194,7 +194,7 @@ def key_out(page: Page, scheme: str, before: str) -> None:
     shot(page, f"{scheme}-04-back")
 
 def web_tab(page: Page, scheme: str) -> None:
-    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     wait_for(page, "document.querySelector('.web .webbar')", "the web tab's bar")
     quiet(page)
     page.keyboard.press("Shift+F11")
@@ -246,22 +246,22 @@ def flush(page: Page, scheme: str, mode: str) -> None:
 def every_full_mode(page: Page, scheme: str) -> None:
     for kind in ("note", "web tab"):
         if kind == "web tab":
-            page.evaluate("() => window.nibApp.workspace.openWebsite()")
+            page.evaluate("() => window.ordenApp.workspace.openWebsite()")
             wait_for(page, "document.querySelector('.web .webbar')", "the web tab's bar")
         quiet(page)
-        page.evaluate("() => window.nibApp.workspace.panes.fills = window.nibApp.workspace.panes.focusedId")
+        page.evaluate("() => window.ordenApp.workspace.panes.fills = window.ordenApp.workspace.panes.focusedId")
         wait_for(page, FILLED, f"the {kind} filling the window")
         quiet(page)
         flush(page, scheme, f"{kind}, filling the window")
-        page.evaluate("() => window.nibApp.workspace.panes.fills = null")
+        page.evaluate("() => window.ordenApp.workspace.panes.fills = null")
         wait_for(page, BACK, f"the {kind} back")
 
-        page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
-        wait_for(page, "window.nibApp.fullscreen.on", f"full screen over the {kind}")
+        page.evaluate("() => window.ordenApp.fullscreen.enter(window.ordenApp.workspace.panes)")
+        wait_for(page, "window.ordenApp.fullscreen.on", f"full screen over the {kind}")
         quiet(page)
         flush(page, scheme, f"{kind}, full screen")
-        page.evaluate("() => window.nibApp.fullscreen.leave()")
-        wait_for(page, "!window.nibApp.fullscreen.on && !!document.querySelector('aside')", "full screen left")
+        page.evaluate("() => window.ordenApp.fullscreen.leave()")
+        wait_for(page, "!window.ordenApp.fullscreen.on && !!document.querySelector('aside')", "full screen left")
 
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):

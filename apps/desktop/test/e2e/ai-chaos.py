@@ -60,7 +60,7 @@ ORIGIN = DRIVE.side(Model)
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: 'fake-small' })
@@ -69,7 +69,7 @@ async (base) => {
 """
 
 STATE = """async () => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   return { running: [...chat.running], open: chat.head?.id ?? null, ids: chat.every.map((one) => one.id),
     archived: chat.every.filter((one) => one.archived).map((one) => one.id),
     stop: !!document.querySelector('.ask .go[aria-label="Stop"]'), trouble: chat.trouble }
@@ -94,14 +94,14 @@ def drive(browser: Browser) -> None:
     send(page, "first question")
     wait_for(page, "document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the first answer")
     first = page.evaluate(STATE)["open"]
-    page.evaluate("async () => (await window.nibApp.aiChats()).newThread()")
+    page.evaluate("async () => (await window.ordenApp.aiChats()).newThread()")
     page.wait_for_timeout(100)
     send(page, "second question")
     page.wait_for_timeout(200)
     if page.evaluate(STATE)["open"] == first:
         wrong("New chat right after the first question kept the first chat open")
     second = page.evaluate(STATE)["open"]
-    page.evaluate("async () => (await window.nibApp.aiChats()).newThread()")
+    page.evaluate("async () => (await window.ordenApp.aiChats()).newThread()")
     send(page, "third question")
     page.wait_for_timeout(200)
     third = page.evaluate(STATE)["open"]
@@ -109,16 +109,16 @@ def drive(browser: Browser) -> None:
 
     for at in range(30):
         target = [first, second, third][at % 3]
-        page.evaluate("async (id) => { const chat = await window.nibApp.aiChats(); void chat.openThread(id, false) }", target)
+        page.evaluate("async (id) => { const chat = await window.ordenApp.aiChats(); void chat.openThread(id, false) }", target)
         page.wait_for_timeout(15)
-    page.evaluate("async (id) => (await window.nibApp.aiChats()).archive(id)", first)
-    page.evaluate("async (id) => { void (await window.nibApp.aiChats()).remove(id) }", second)
+    page.evaluate("async (id) => (await window.ordenApp.aiChats()).archive(id)", first)
+    page.evaluate("async (id) => { void (await window.ordenApp.aiChats()).remove(id) }", second)
     page.get_by_role("button", name="Delete").last.click(timeout=5000)
     page.keyboard.press("Escape")
     send(page, "again while the others go")
     page.wait_for_timeout(200)
     for at in range(10):
-        page.evaluate("async () => { const chat = await window.nibApp.aiChats(); chat.stop() }")
+        page.evaluate("async () => { const chat = await window.ordenApp.aiChats(); chat.stop() }")
         send(page, f"once more {at}")
         page.wait_for_timeout(30)
 
@@ -137,7 +137,7 @@ def drive(browser: Browser) -> None:
     if first not in state["archived"]:
         wrong("the archived chat is not archived")
     page.wait_for_timeout(1500)
-    again = page.evaluate("async () => { const chat = await window.nibApp.aiChats(); await chat.refresh?.(); return chat.every.map((one) => one.id) }")
+    again = page.evaluate("async () => { const chat = await window.ordenApp.aiChats(); await chat.refresh?.(); return chat.every.map((one) => one.id) }")
     if second in again:
         wrong("the deleted chat came back from storage")
     if errors:

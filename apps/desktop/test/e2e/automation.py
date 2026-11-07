@@ -26,7 +26,7 @@ OTHER = "# Other\n\nA second note, which nothing links to.\n"
 
 SEED = """
 async ([plan, other]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   await ws.noteFrom(plan, root)
   await ws.noteFrom(other, root)
@@ -38,12 +38,12 @@ async ([plan, other]) => {
 STATE = """
 () => {
   const caretLine = () => {
-    const view = window.nib
+    const view = window.orden
     if (!view) return null
     return view.state.doc.lineAt(view.state.selection.main.head).number - 1
   }
 
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return {
     active: ws.active?.name ?? null,
     text: ws.active?.doc ?? null,
@@ -51,9 +51,9 @@ STATE = """
     panel: ws.panel,
     tabs: ws.tabs.length,
     names: ws.notes.map((one) => one.name),
-    trouble: window.nibApp.busy.trouble,
-    query: window.nibApp.search.text,
-    hits: window.nibApp.search.hits.length,
+    trouble: window.ordenApp.busy.trouble,
+    query: window.ordenApp.search.text,
+    hits: window.ordenApp.search.hits.length,
     address: window.location.search,
   }
 }
@@ -70,8 +70,8 @@ def heard(kind: str, text: str) -> None:
     wrong(f"console error: {text}")
 
 def ready(page: Page, label: str) -> None:
-    wait_for(page, "window.nibApp", f"[{label}] the app")
-    wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
+    wait_for(page, "window.ordenApp", f"[{label}] the app")
+    wait_for(page, "window.ordenApp.workspace.activeSpace", f"[{label}] a space")
 
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(
@@ -187,7 +187,7 @@ def drive_searching(page: Page) -> None:
         wrong("the search found nothing in a space that says the word")
 
 def drive_refusals(page: Page) -> None:
-    before = page.evaluate("() => window.nibApp.workspace.notes.length")
+    before = page.evaluate("() => window.ordenApp.workspace.notes.length")
 
     outside = follow(page, "orden://open?path=../../secrets.md", "outside")
     shot(page, "06-refused-path")
@@ -215,7 +215,7 @@ def drive_refusals(page: Page) -> None:
     if not again["trouble"]:
         wrong("`new` on a note that exists said nothing at all")
 
-    after = page.evaluate("() => window.nibApp.workspace.notes.length")
+    after = page.evaluate("() => window.ordenApp.workspace.notes.length")
     if after != before:
         wrong(f"the refusals changed how many notes there are: {before} became {after}")
 
@@ -223,7 +223,7 @@ def drive_refusals(page: Page) -> None:
 
 READ_OTHER = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const found = ws.notes.find((one) => one.name === 'Other.md')
   return found ? await ws.noteText(found.path) : null
 }

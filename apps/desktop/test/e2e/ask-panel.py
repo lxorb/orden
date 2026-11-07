@@ -39,7 +39,7 @@ CARD = "---\nstatus: draft\ntags: [birds, notes]\ndone: false\n---\n# Card\n\nWo
 
 SEED = """
 async (notes) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   for (const text of notes) await ws.noteFrom(text, root)
   await ws.loadTree()
@@ -51,7 +51,7 @@ async (notes) => {
 
 OPEN = """
 async (name) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const note = ws.notes.find((one) => one.name.startsWith(name))
   await ws.openEntry(note.path, { activate: true })
 }
@@ -59,7 +59,7 @@ async (name) => {
 
 SETUP = """
 async (base) => {
-  const ai = window.nibApp.ai
+  const ai = window.ordenApp.ai
   for (const one of [...ai.providers]) ai.remove(one.id)
   const made = ai.add('compatible')
   ai.update(made.id, { name: 'Fake', baseUrl: base, model: '%s' })
@@ -70,7 +70,7 @@ async (base) => {
 
 SIDES = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   return { right: [...ws.right], left: ws.panel, open: ws.rightPanel }
 }
 """
@@ -86,11 +86,11 @@ WHERE = """
 }
 """
 
-TEXT = "() => window.nib?.state.doc.toString() ?? ''"
+TEXT = "() => window.orden?.state.doc.toString() ?? ''"
 
 LINE = """
 () => {
-  const state = window.nib.state
+  const state = window.orden.state
   return state.doc.lineAt(state.selection.main.head).number - 1
 }
 """
@@ -159,8 +159,8 @@ def fresh(browser: Browser) -> Page:
         lambda message: say(f"console: {message.text[:200]}") if message.type == "error" else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
-    wait_for(page, "window.nibApp.ai", "the providers")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
+    wait_for(page, "window.ordenApp.ai", "the providers")
     say(f"the space holds {page.evaluate(SEED, [HERONS, HOVERING, ARCHIVED, CARD])}")
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
@@ -174,7 +174,7 @@ def the_sides(page: Page) -> None:
     if page.locator("button.toggle.right").count() != 1:
         wrong("the right side's button is not in the bar")
 
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Alt+b")
     page.wait_for_timeout(400)
     if page.evaluate(SIDES)["open"] != "outline":
@@ -197,7 +197,7 @@ def the_sides(page: Page) -> None:
         wrong(f"the Outline's key did not give the note the keyboard back: {page.evaluate(WHERE)}")
 
 def nothing_set_up(page: Page) -> None:
-    page.evaluate("() => { for (const one of [...window.nibApp.ai.providers]) window.nibApp.ai.remove(one.id) }")
+    page.evaluate("() => { for (const one of [...window.ordenApp.ai.providers]) window.ordenApp.ai.remove(one.id) }")
     page.keyboard.press("Control+Shift+A")
     wait_for(page, "document.querySelector('.ask')", "the Ask panel")
     page.wait_for_timeout(300)
@@ -213,19 +213,19 @@ def nothing_set_up(page: Page) -> None:
         wrong(f"the keyboard did not land on the way to Settings: {where}")
     page.locator(".ask .empty-text .link").click()
     page.wait_for_timeout(400)
-    opened = page.evaluate("() => [window.nibApp.settings.open, window.nibApp.settings.section]")
+    opened = page.evaluate("() => [window.ordenApp.settings.open, window.ordenApp.settings.section]")
     if opened != [True, "ai"]:
         wrong(f"the link did not open Settings > AI: {opened}")
-    page.evaluate("() => { window.nibApp.settings.open = false }")
+    page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_timeout(300)
 
 def asked(page: Page) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(300)
-    page.evaluate("() => window.nibApp.workspace.closePanel('right')")
+    page.evaluate("() => window.ordenApp.workspace.closePanel('right')")
     page.wait_for_timeout(300)
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Shift+A")
     wait_for(page, "document.querySelector('.ask textarea')", "the field")
     if not landed(page, "document.activeElement?.matches('.ask textarea')"):
@@ -256,7 +256,7 @@ def asked(page: Page) -> None:
 
     page.locator('.ask .answer a[href="#cite-2"]').click()
     page.wait_for_timeout(700)
-    active = page.evaluate("() => window.nibApp.workspace.active?.path ?? ''")
+    active = page.evaluate("() => window.ordenApp.workspace.active?.path ?? ''")
     line = page.evaluate(LINE)
     say(f"the citation opened {active} at line {line}")
     shot(page, "04-citation-opened")
@@ -286,7 +286,7 @@ def asked(page: Page) -> None:
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(300)
     page.evaluate(
-        "() => { const view = window.nib; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
+        "() => { const view = window.orden; view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus() }"
     )
     page.locator(".ask .answer").first.hover()
     page.locator(".ask .answer").first.locator('.act[aria-label="Insert at the caret"]').click()
@@ -318,13 +318,13 @@ def on_a_phone(browser: Browser) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[phone] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace && window.nibApp.ai", "a space")
+    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace && window.ordenApp.ai", "a space")
     page.evaluate(SEED, [HERONS, HOVERING, ARCHIVED, CARD])
     page.evaluate(SETUP, MODEL_ORIGIN)
     page.evaluate(OPEN, "Herons")
     page.wait_for_timeout(500)
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     wait_for(page, "document.querySelector('aside[data-region=\"right\"] [role=\"tab\"]')", "[phone] the right drawer's tabs")
     tabs = page.evaluate(
         "() => [...document.querySelectorAll('aside[data-region=\"right\"] [role=\"tab\"]')]"
@@ -334,7 +334,7 @@ def on_a_phone(browser: Browser) -> None:
     if "Ask" in tabs:
         wrong(f"[phone] the right drawer offers the AI panel: {tabs}")
 
-    page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('ask')")
     page.wait_for_timeout(500)
     shot(page, "08-phone-right")
     if page.evaluate("() => !!document.querySelector('.ask textarea')"):

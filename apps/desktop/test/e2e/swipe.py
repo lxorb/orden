@@ -16,7 +16,7 @@ SCRIPT = (Path(__file__).resolve().parents[2] / "src-tauri" / "src" / "web_swipe
 )
 
 TRAIL = """async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const path = (starts) => ws.notes.find((one) => one.name.startsWith(starts)).path
   await ws.open(path('Alpha'), { preview: true })
   await ws.open(path('Beta'), { preview: true })
@@ -30,10 +30,10 @@ HOLD = """(across) => {
 }"""
 
 def front(page: Page) -> str:
-    return str(page.evaluate("window.nibApp.workspace.active?.note?.name ?? ''"))
+    return str(page.evaluate("window.ordenApp.workspace.active?.note?.name ?? ''"))
 
 def on(page: Page, starts: str, what: str) -> None:
-    wait_for(page, f"window.nibApp.workspace.active?.note?.name.startsWith({json.dumps(starts)})", what)
+    wait_for(page, f"window.ordenApp.workspace.active?.note?.name.startsWith({json.dumps(starts)})", what)
 
 def sweep(page: Page, x: float, y: float, across: float, down: float = 0) -> None:
     tools = page.context.new_cdp_session(page)
@@ -70,7 +70,7 @@ def opened(
     DRIVE.open(page)
     DRIVE.seed(page, "# Alpha\n\nThe first note.\n", "# Beta\n\nThe second note.\n")
     page.evaluate(TRAIL)
-    wait_for(page, "window.nibApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
+    wait_for(page, "window.ordenApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
     wait_for(
         page,
         "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",
@@ -96,7 +96,7 @@ def notes(browser: Browser, scheme: str) -> None:
         page.evaluate("clearInterval(window.__holding)")
         lifted(page)
         if front(page).startswith("Alpha"):
-            page.evaluate("window.nibApp.workspace.goForward()")
+            page.evaluate("window.ordenApp.workspace.goForward()")
         on(page, "Beta", "Beta again")
 
     sweep(page, x, y, 120)
@@ -162,7 +162,7 @@ def close_up(browser: Browser, scale: float) -> None:
         page.evaluate("clearInterval(window.__holding)")
         lifted(page)
         if front(page).startswith("Alpha"):
-            page.evaluate("window.nibApp.workspace.goForward()")
+            page.evaluate("window.ordenApp.workspace.goForward()")
         on(page, "Beta", "Beta again")
     page.close()
 
@@ -309,7 +309,7 @@ def latched(browser: Browser) -> None:
     wide = "| a | b |\n|---|---|\n| " + "longword" * 60 + " | y |\n"
     DRIVE.seed(page, "# Alpha\n\nThe first note.\n", f"# Beta\n\nThe second note.\n\n{wide}")
     page.evaluate(TRAIL)
-    wait_for(page, "window.nibApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
+    wait_for(page, "window.ordenApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
     wait_for(
         page,
         "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",

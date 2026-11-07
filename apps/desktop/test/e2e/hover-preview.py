@@ -58,7 +58,7 @@ A link to [[Everything]] and one to [[Everything#Later]].
 
 SEED = """
 async ([target, source]) => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   await ws.noteFrom(target, ws.activeSpace.root)
   await ws.noteFrom(source, ws.activeSpace.root)
   await ws.loadTree()
@@ -176,11 +176,11 @@ PANE = """
   const content = document.querySelector('.cm-content')
   const box = content?.getBoundingClientRect()
   return {
-    doc: window.nib ? window.nib.state.doc.toString().slice(0, 70) : null,
+    doc: window.orden ? window.orden.state.doc.toString().slice(0, 70) : null,
     height: box ? Math.round(box.height) : null,
     width: box ? Math.round(box.width) : null,
     panes: document.querySelectorAll('.cm-content').length,
-    visible: window.nib ? window.nib.visibleRanges.map((one) => [one.from, one.to]) : null,
+    visible: window.orden ? window.orden.visibleRanges.map((one) => [one.from, one.to]) : null,
     html: content ? content.innerHTML.slice(0, 400) : null,
   }
 }
@@ -227,21 +227,21 @@ def fresh(
     DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [TARGET, SOURCE])}")
 
-    wait_for(page, "window.nibApp.workspace.notes.length > 1", f"[{label}] the notes")
+    wait_for(page, "window.ordenApp.workspace.notes.length > 1", f"[{label}] the notes")
     for _ in range(6):
         page.evaluate(
             """async (wanted) => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const note = ws.notes.find((one) => one.name.startsWith(wanted))
               await ws.openEntry(note.path, { activate: true })
             }""",
             open_note,
         )
         wait_for(
-            page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor"
+            page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor"
         )
         page.wait_for_timeout(700)
-        if page.evaluate("() => window.nib.state.doc.toString().startsWith('# Glance')"):
+        if page.evaluate("() => window.orden.state.doc.toString().startsWith('# Glance')"):
             return page
 
         say(f"[{label}] the pane holds another note; asking again")
@@ -356,12 +356,12 @@ def drive_desktop(browser: Browser) -> None:
 
     page.evaluate(
         """async () => {
-          const ws = window.nibApp.workspace
+          const ws = window.ordenApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('Everything'))
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    wait_for(page, "window.nib.state.doc.toString().includes('pipeline.ts')", "the note in a pane")
+    wait_for(page, "window.orden.state.doc.toString().includes('pipeline.ts')", "the note in a pane")
     page.wait_for_timeout(900)
     pane = page.evaluate(asking(PANE_BLOCKS))
     say(f"[desktop] the same note in a pane: {json.dumps(pane, ensure_ascii=False)}")

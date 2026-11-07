@@ -174,7 +174,7 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bo
 
 def opened(page: Page, full: bool) -> dict[str, object]:
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
     page.evaluate(LINK, [FAKE, full])
     wait_for(page, "document.querySelectorAll('.chat-tab .message').length > 2", "the conversation's rows")
     DRIVE.settled(page)
@@ -286,7 +286,7 @@ def bare(page: Page) -> None:
 
 def telegram(page: Page) -> None:
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
     page.evaluate(TELEGRAM_LINK, TELEGRAM)
     if not wait_for(page, "document.querySelectorAll('.chat-tab .message').length > 2", "Telegram's rows"):
         return
@@ -344,7 +344,7 @@ def telegram(page: Page) -> None:
 
 def signed_out(page: Page) -> None:
     DRIVE.open(page)
-    page.evaluate("() => window.nibApp.workspace.showPanel('chats')")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
     page.evaluate(SIGNED_OUT, FAKE)
     if not wait_for(page, "!!document.querySelector('.chats [aria-label=\"Sign in again\"]')", "Sign in again"):
         return

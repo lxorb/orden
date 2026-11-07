@@ -8,7 +8,7 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 SEED = """async () => {
-  const chat = await window.nibApp.aiChats()
+  const chat = await window.ordenApp.aiChats()
   const now = Date.now()
   const head = (id, title, state, mins, more = {}) => ({
     id, title, state, provider: 'x', model: 'claude-sonnet', updated: now - mins * 60000,

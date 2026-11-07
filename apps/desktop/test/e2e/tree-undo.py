@@ -14,7 +14,7 @@ PATIENCE = 40
 
 SEED = """
 async () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
   if (ws.panel !== 'tree') ws.showPanel('tree')
@@ -28,7 +28,7 @@ async () => {
 
 FILES = """
 () => {
-  const ws = window.nibApp.workspace
+  const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/\\/$/, '')
   const walk = (entry) => entry.children.flatMap((one) => {
     const at = one.path.slice(root.length + 1)
@@ -71,8 +71,8 @@ def keys(page: Page, chord: str, what: str) -> None:
     say(f"{what}: {chord} with the keyboard on {held}")
     page.keyboard.press(chord)
 
-MARK = "() => { window.__undoMark = window.nibApp.workspace.undone.last }"
-MOVED = "() => window.nibApp.workspace.undone.last !== window.__undoMark"
+MARK = "() => { window.__undoMark = window.ordenApp.workspace.undone.last }"
+MOVED = "() => window.ordenApp.workspace.undone.last !== window.__undoMark"
 
 def marked(page: Page) -> None:
     page.evaluate(MARK)
@@ -115,7 +115,7 @@ def drive(browser: Browser) -> None:
         back_and_forth(page, START, gone, "a note deleted")
         words = page.evaluate(
             """async () => {
-              const ws = window.nibApp.workspace
+              const ws = window.ordenApp.workspace
               const at = ws.tree.children.find((one) => one.name === 'Work')
                 ?.children.find((one) => one.name === 'Goal.md')?.path
               return at ? await ws.readNoteText?.(at) ?? at : null
@@ -144,7 +144,7 @@ def drive(browser: Browser) -> None:
 
         marked(page)
         row(page, "Plan.md").click()
-        wait_for(page, "() => !!window.nibApp.workspace.active?.path?.endsWith('/Plan.md')", "Plan open")
+        wait_for(page, "() => !!window.ordenApp.workspace.active?.path?.endsWith('/Plan.md')", "Plan open")
         row(page, "Plan.md").focus()
         page.keyboard.press("Control+Shift+KeyP")
         page.wait_for_selector(".palette input")
@@ -162,7 +162,7 @@ def drive(browser: Browser) -> None:
 
         marked(page)
         row(page, "Plan.md").click()
-        page.evaluate("() => window.nibApp.workspace.device.expand(window.nibApp.workspace.activeSpace.root.replace(/\\/$/, '') + '/Work')")
+        page.evaluate("() => window.ordenApp.workspace.device.expand(window.ordenApp.workspace.activeSpace.root.replace(/\\/$/, '') + '/Work')")
         row(page, "Work/Ideas.md").click(modifiers=["Alt"])
         row(page, "Work/Ideas.md").focus()
         page.keyboard.press("Meta+Backspace" if WEBKIT else "Delete")
@@ -195,7 +195,7 @@ def drive(browser: Browser) -> None:
             "() => document.querySelector('.cm-content')?.textContent.includes('and more')",
             "the typed words",
         )
-        steps = page.evaluate("() => window.nibApp.workspace.undone.stack.length")
+        steps = page.evaluate("() => window.ordenApp.workspace.undone.stack.length")
         keys(page, "Control+z", "words typed in the note, undone")
         try:
             wait_for(
@@ -206,7 +206,7 @@ def drive(browser: Browser) -> None:
         except BaseException:
             wrong("Ctrl+Z in the note did not take its typed words back")
         page.wait_for_timeout(300)
-        if page.evaluate("() => window.nibApp.workspace.undone.stack.length") != steps:
+        if page.evaluate("() => window.ordenApp.workspace.undone.stack.length") != steps:
             wrong("Ctrl+Z in the note took a file action back as well")
         until(page, START, "the tree after the note's own undo")
         DRIVE.shot(page, "tree-undo")
