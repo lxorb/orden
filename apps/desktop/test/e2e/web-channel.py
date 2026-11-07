@@ -19,7 +19,7 @@ ORIGIN = harness.worker_origin()
 PATIENCE = 60
 ROOT = harness.APP.parent.parent
 
-MARK = "header .channel"
+MARK = "header :text-is('Unstable')"
 ROW = ".sheet .orden-segmented[aria-label='Web version']"
 
 def wait(page: Page, script: str, what: str) -> object:
@@ -100,10 +100,9 @@ def drive(page: Page) -> None:
         wrong(f"choosing Unstable left no cookie for it: {cookies}")
     if "channel=" in page.url:
         wrong(f"the page came back with the parameter still on it: {page.url}")
-    if not page.locator(MARK).count():
-        wrong("the edge shows no Unstable mark")
-    else:
-        shot(page, "2-edge-mark")
+    if page.locator(MARK).count():
+        wrong("the edge shows an Unstable mark in the title bar")
+    shot(page, "2-edge-bar")
     said = row(page)
     say(f"[edge] the row says {said!r}")
     if said != "Unstable":
@@ -112,11 +111,6 @@ def drive(page: Page) -> None:
 
     page.evaluate("() => (window.nibApp.settings.open = false)")
     page.wait_for_timeout(400)
-    if page.locator(MARK).count():
-        page.locator(MARK).click()
-        page.wait_for_timeout(400)
-        if not page.evaluate("() => window.nibApp.settings.open"):
-            wrong("the Unstable mark did not open Settings")
     row(page)
     choose(page, "Stable")
     cookies = {one["name"]: one["value"] for one in page.context.cookies()}

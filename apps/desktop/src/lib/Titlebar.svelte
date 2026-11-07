@@ -16,11 +16,9 @@
   import { isDraft } from './workspace/drafts'
   import TopStrips from './TopStrips.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
-  import { settings } from './settings.svelte'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { startup } from './startup.svelte'
-  import { webChannel } from './updater'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { topRow } from './workspace/pane-tree'
@@ -107,19 +105,6 @@
     await shape.toggle(await currentWindow())
   }
 </script>
-
-{#snippet edgeMark()}
-  {#if !__EVEN_PLUGIN__ && webChannel === 'unstable'}
-    <button
-      class="channel"
-      data-overview-keeps
-      title={t('Web version')}
-      onclick={() => settings.show('general')}
-    >
-      {t('Unstable')}
-    </button>
-  {/if}
-{/snippet}
 
 {#snippet searchGlyph()}
   <button
@@ -274,7 +259,6 @@
       {/if}
     </h1>
 
-    {@render edgeMark()}
     {#if phone}
       {#if showing}
         <button
@@ -305,7 +289,6 @@
     </div>
 
     <div class="end" class:bare bind:clientWidth={endWide}>
-      {@render edgeMark()}
       {@render rightToggle()}
       {@render windowButtons()}
     </div>
@@ -374,28 +357,6 @@
   .overview,
   .search {
     align-self: center;
-  }
-
-  .channel {
-    flex: none;
-    align-self: center;
-    margin-inline-end: var(--space-1);
-    padding: 1px 6px;
-    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    border-radius: 999px;
-    background: none;
-    color: var(--accent);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    line-height: 1.4;
-    white-space: nowrap;
-    cursor: default;
-  }
-
-  @media (hover: hover) {
-    .channel:hover {
-      background: var(--accent-soft);
-    }
   }
 
   .drag {
