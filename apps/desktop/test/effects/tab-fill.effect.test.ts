@@ -104,11 +104,12 @@ beforeEach(() => {
   document.body.append(target)
 })
 
-afterEach(() => {
+afterEach(async () => {
   if (shown) void unmount(shown, { outro: false })
   shown = null
   target.remove()
   workspace.panes.fills = null
+  await vi.dynamicImportSettled()
 })
 
 async function press(key: string, held: KeyboardEventInit = {}): Promise<KeyboardEvent> {
