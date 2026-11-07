@@ -1535,7 +1535,7 @@ describe('a note kept away', () => {
     )
     const stamp = { size: 12, mtime: 5, ctime: 5 }
     const said = indexed('Plan.md', '# Plan\n\n- [ ] ship #work\n', stamp)
-    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve())
+    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve(true))
 
     const found = await webInvoke<SpaceLinks>('scan_links', { root: '/Notes' })
     const plan = found.notes.find((one) => one.path === 'Work/Plan.md')
@@ -1558,7 +1558,7 @@ describe('a note kept away', () => {
     away()
     const stamp = { size: 12, mtime: 5, ctime: 5 }
     const said = indexed('Plan.md', '# Plan\n\nkept away #work\n', stamp)
-    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve())
+    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve(true))
     await write('/Notes/a.md', 'one #work')
     await write('/Notes/Deep/b.md', 'two #work #home')
     await write('/Other/c.md', 'three #home')

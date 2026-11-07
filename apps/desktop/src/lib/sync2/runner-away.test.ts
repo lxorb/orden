@@ -223,7 +223,7 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     )
     keptAway.answeredBy(new Map(), (_root, _query, _terms, _limit, onFound) => {
       onFound({ hits: [{ path: `${ROOT}/a.md` }], loose: [] } as never)
-      return Promise.resolve()
+      return Promise.resolve(true)
     })
     const before = open.taking
     open.taking = new Promise(() => undefined)

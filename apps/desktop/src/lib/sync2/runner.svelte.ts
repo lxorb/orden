@@ -1535,7 +1535,9 @@ class Runner {
           onFound(one as Found)
         },
       )
-      if (Array.isArray(found)) for (const one of found.slice(told)) onFound(one as Found)
+      if (!Array.isArray(found)) return false
+      for (const one of found.slice(told)) onFound(one as Found)
+      return true
     })
     if (back.length || files.length !== had) this.treeStale()
     for (const path of back) void workspace.arrived(path)
@@ -1750,7 +1752,7 @@ const SENDING_ROUNDS = 4
 
 const SETTLING = 1_500
 
-async function searchedAway(args: unknown, part: (found: Found) => void): Promise<Found[]> {
+async function searchedAway(args: unknown, part: (found: Found) => void): Promise<Found[] | null> {
   const asked = (args ?? {}) as {
     root?: string
     query?: Query
@@ -1760,7 +1762,7 @@ async function searchedAway(args: unknown, part: (found: Found) => void): Promis
   }
   if (!asked.query || typeof asked.root !== 'string') return []
   const found: Found[] = []
-  await keptAway.search(
+  const whole = await keptAway.search(
     asked.root,
     asked.query,
     asked.terms ?? [],
@@ -1771,7 +1773,7 @@ async function searchedAway(args: unknown, part: (found: Found) => void): Promis
     },
     asked.excluded ?? [],
   )
-  return found
+  return whole ? found : null
 }
 
 function isAway(
