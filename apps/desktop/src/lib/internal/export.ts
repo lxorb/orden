@@ -1,5 +1,4 @@
 import type { ItemMeta } from '@orden/sync-core/meta'
-import { toBase64 } from '../bytes'
 import { invoke as crate } from '../native'
 import { joinPath } from '../tauri'
 import { mountOf } from './roots'
@@ -89,7 +88,7 @@ export async function exportSpaceTo(
   const into = await freeFolder(picked, name)
   for (const file of await filesOf(root)) {
     const path = joinPath(into, file.path)
-    await crate('write_bytes', { path, base64: toBase64(await bytesOut(file, metaOf)) })
+    await crate('write_bytes', { path, bytes: await bytesOut(file, metaOf) })
   }
   return into
 }

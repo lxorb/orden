@@ -61,7 +61,7 @@ describe('where no folder watcher hears what the app writes', () => {
 
   test('a file written new by any other part of the app says it was made', async () => {
     await writeFile(`${ROOT}/Work/Split.md`, '# Split\n')
-    await writeBytes(`${ROOT}/Work/picture.png`, 'AAAA')
+    await writeBytes(`${ROOT}/Work/picture.png`, new Uint8Array([0, 0, 0]))
     expect(made).toEqual([`${ROOT}/Work/Split.md`, `${ROOT}/Work/picture.png`])
   })
 

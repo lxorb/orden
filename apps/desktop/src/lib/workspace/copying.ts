@@ -1,5 +1,4 @@
 import { isPdfTarget } from '@orden/markdown/links'
-import { toBase64 } from '../bytes'
 import { folderNote, isFolderNote } from '../folder-notes'
 import type { Picked } from '../import/sources'
 import { readsWords } from '../link-index.svelte'
@@ -145,7 +144,7 @@ export async function bringIn(
       const path = rest.length ? joinPath(at.path, rest.join('/')) : at.path
       const bytes = new Uint8Array(await file.arrayBuffer())
       if (readsWords(path)) await writeFile(path, new TextDecoder().decode(bytes))
-      else await writeBytes(path, toBase64(bytes))
+      else await writeBytes(path, bytes)
 
       if (!rest.length && isPdfTarget(path)) {
         at.path = (await ws.pageNoteForPdf(path)) ?? path

@@ -1,4 +1,3 @@
-import { toBase64 } from '../bytes'
 import { invoke } from '../native'
 import { joinPath } from '../tauri'
 import type { InternalBytes } from './folder'
@@ -14,8 +13,7 @@ export function folderBytes(folder: string): InternalBytes {
         (bytes) => new Uint8Array(bytes),
         () => null,
       ),
-    write: (key, bytes) =>
-      invoke<undefined>('write_bytes', { path: at(key), base64: toBase64(bytes) }),
+    write: (key, bytes) => invoke<undefined>('write_bytes', { path: at(key), bytes }),
     remove: (key) => invoke<undefined>('delete_note', { path: at(key) }),
     slot: (one) => invoke<string>('read_note', { path: slot(one) }).catch(() => null),
     async writeSlot(one, text) {

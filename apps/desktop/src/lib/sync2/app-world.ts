@@ -1,6 +1,6 @@
 import { INBOX_PATH } from '@orden/bases/inbox'
 import { api, BASE, BYTES_WITHIN, fetchInTime } from '../api'
-import { fileBytes, sha256, toBase64 } from '../bytes'
+import { fileBytes, sha256 } from '../bytes'
 import { deviceName } from '../device'
 import { keptShaped, mountOf } from '../internal/roots'
 import { mountedFor } from '../internal/watch'
@@ -207,7 +207,7 @@ export function appWorld(token: () => string | null, telling: Telling): World {
         await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(
           () => undefined,
         )
-        await invoke('write_bytes', { path, base64: toBase64(bytes) })
+        await invoke('write_bytes', { path, bytes })
         telling.written(path, fresh)
       },
       hash: (bytes) => sha256(bytes),

@@ -6,7 +6,7 @@ import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { holderOf, pairOf, paperOf } from '../pages/held'
 import { joinPath } from '../tauri'
-import { sha256, toBase64 } from '../bytes'
+import { sha256 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 
@@ -51,7 +51,7 @@ export async function applyImport(
       if (file.kind === 'note') {
         await writeFile(path, file.text)
         wrote[path] = await sha256(file.text)
-      } else await writeBytes(path, toBase64(file.bytes))
+      } else await writeBytes(path, file.bytes)
 
       paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1

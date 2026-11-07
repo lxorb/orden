@@ -1,8 +1,10 @@
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use std::borrow::Cow;
 use std::fs;
 use std::io::Read as _;
 use std::path::Path;
+use tauri::ipc::{InvokeBody, Request};
 use tauri::AppHandle;
 
 #[cfg(any(target_os = "macos", test))]
@@ -109,9 +111,48 @@ fn crlf(target: &Path) -> bool {
 
 const HEAD: usize = 8192;
 
+pub const PATH_HEADER: &str = "orden-path";
+
 #[tauri::command(async)]
-pub fn write_bytes(app: AppHandle, path: String, base64: String) -> Result<(), String> {
-    bytes_written(&chosen(&app, &path)?, &path, &base64)
+pub fn write_bytes(app: AppHandle, request: Request<'_>) -> Result<(), String> {
+    if let InvokeBody::Json(serde_json::Value::Object(args)) = request.body() {
+        let path = args
+            .get("path")
+            .and_then(serde_json::Value::as_str)
+            .ok_or("a write needs the path it goes to")?;
+        let base64 = args
+            .get("base64")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| format!("{path} was handed nothing to write"))?;
+        return bytes_written(&chosen(&app, path)?, path, base64);
+    }
+    let path = path_sent(request.headers())?;
+    let bytes = bytes_sent(request.body())
+        .ok_or_else(|| format!("{path} was handed something that is not bytes"))?;
+    write_file(&chosen(&app, &path)?, &path, &bytes)
+}
+
+fn path_sent(headers: &tauri::http::HeaderMap) -> Result<String, String> {
+    let sent = headers
+        .get(PATH_HEADER)
+        .and_then(|value| value.to_str().ok())
+        .ok_or("a write needs the path it goes to")?;
+    percent_encoding::percent_decode_str(sent)
+        .decode_utf8()
+        .map(Cow::into_owned)
+        .map_err(|_| "the path of a write is not words".to_owned())
+}
+
+pub fn bytes_sent(body: &InvokeBody) -> Option<Cow<'_, [u8]>> {
+    match body {
+        InvokeBody::Raw(bytes) => Some(Cow::Borrowed(bytes)),
+        InvokeBody::Json(serde_json::Value::Array(numbers)) => numbers
+            .iter()
+            .map(|one| one.as_u64().and_then(|number| u8::try_from(number).ok()))
+            .collect::<Option<Vec<u8>>>()
+            .map(Cow::Owned),
+        InvokeBody::Json(_) => None,
+    }
 }
 
 fn bytes_written(target: &Path, shown: &str, base64: &str) -> Result<(), String> {
@@ -392,6 +433,38 @@ mod tests {
 
     fn write_note(path: String, content: String) -> Result<(), String> {
         super::note_written(Path::new(&path), &path, &content)
+    }
+
+    #[test]
+    fn a_path_sent_beside_raw_bytes_is_read_back_whole() {
+        let mut headers = tauri::http::HeaderMap::new();
+        headers.insert(
+            super::PATH_HEADER,
+            "C%3A%2FNotes%2F%C3%BCber%20uns.png"
+                .parse()
+                .expect("a header"),
+        );
+        assert_eq!(
+            super::path_sent(&headers).as_deref(),
+            Ok("C:/Notes/über uns.png")
+        );
+        assert!(super::path_sent(&tauri::http::HeaderMap::new()).is_err());
+        headers.insert(super::PATH_HEADER, "%FF".parse().expect("a header"));
+        assert!(super::path_sent(&headers).is_err());
+    }
+
+    #[test]
+    fn bytes_arrive_raw_or_as_numbers_and_nothing_else() {
+        use tauri::ipc::InvokeBody;
+        let raw = InvokeBody::Raw(PNG.to_vec());
+        assert_eq!(super::bytes_sent(&raw).as_deref(), Some(PNG));
+        let numbers = InvokeBody::Json(serde_json::json!([1, 2, 255]));
+        assert_eq!(
+            super::bytes_sent(&numbers).as_deref(),
+            Some(&[1_u8, 2, 255][..])
+        );
+        assert!(super::bytes_sent(&InvokeBody::Json(serde_json::json!([256]))).is_none());
+        assert!(super::bytes_sent(&InvokeBody::Json(serde_json::json!({ "0": 1 }))).is_none());
     }
 
     #[test]

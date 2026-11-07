@@ -58,6 +58,7 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 notify = "8"
 getrandom = "0.3"
 icu_properties = "2"
+percent-encoding = "2"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 fontdb = "0.24"

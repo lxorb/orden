@@ -1,6 +1,6 @@
 import { account } from '../account.svelte'
 import { api } from '../api'
-import { fileBytes, sha256, toBase64 } from '../bytes'
+import { fileBytes, sha256 } from '../bytes'
 import { keepJson, recordOf, stored, isString } from '../stored'
 import { invoke, isNative, joinPath } from '../tauri'
 import { isPagesTarget } from '@orden/markdown/links'
@@ -38,7 +38,7 @@ function how(token: string, whose: string, said: Carrying['said'] = () => undefi
       return await fileBytes(path).catch(() => null)
     },
     async write(path, bytes) {
-      await invoke('write_bytes', { path, base64: toBase64(bytes) })
+      await invoke('write_bytes', { path, bytes })
     },
     text: (path) => invoke<string>('read_note', { path }).catch(() => null),
     hash: (bytes) => sha256(bytes),

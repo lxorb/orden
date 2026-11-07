@@ -1,4 +1,3 @@
-import { toBase64 } from '../bytes'
 import { heldForLife, ifFree, locksHere, locksWork } from '../locks'
 import { log } from '../log'
 import { invoke as crate } from '../native'
@@ -414,7 +413,7 @@ function crateDisk(folder: string): WorkDisk {
         () => null,
       ),
     async write(rel, bytes) {
-      await crate('write_bytes', { path: at(rel), base64: toBase64(bytes) })
+      await crate('write_bytes', { path: at(rel), bytes })
       return stamp(rel)
     },
     stamp,
@@ -440,7 +439,7 @@ function crateDisk(folder: string): WorkDisk {
     saveSeen: (text) =>
       crate<undefined>('write_bytes', {
         path: joinPath(folder, WORK_KEPT),
-        base64: toBase64(encoder.encode(text)),
+        bytes: encoder.encode(text),
       }),
   }
 }

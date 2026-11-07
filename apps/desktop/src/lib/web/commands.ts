@@ -1,3 +1,4 @@
+import { toBase64 } from '../bytes'
 import { holderOf, paperOf } from '../pages/held'
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
@@ -961,7 +962,11 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'write_bytes':
-      await writeBytes(path, args.base64 as string, assetType(path))
+      await writeBytes(
+        path,
+        args.bytes instanceof Uint8Array ? toBase64(args.bytes) : (args.base64 as string),
+        assetType(path),
+      )
       return undefined as T
 
     case 'delete_note':

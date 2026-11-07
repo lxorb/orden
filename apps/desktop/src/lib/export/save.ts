@@ -1,4 +1,3 @@
-import { toBase64 } from '../bytes'
 import { downloadStarted } from '../downloads/started'
 import { keep, storedText } from '../stored'
 import { folderOf, nameOf } from '../space-paths'
@@ -73,7 +72,7 @@ export function handOver(name: string, blob: Blob) {
 export async function writeFile(path: string, body: string | Uint8Array): Promise<void> {
   if (typeof body === 'string') return writeText(path, body)
 
-  return writeBytes(path, toBase64(body))
+  return writeBytes(path, body)
 }
 
 export function insideFolder(path: string): boolean {

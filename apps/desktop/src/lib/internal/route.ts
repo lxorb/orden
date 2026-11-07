@@ -1,4 +1,3 @@
-import { toBase64 } from '../bytes'
 import { joinPath } from '../tauri'
 import { normalise } from '../web/paths'
 import type { Trashed } from '../web/store'
@@ -158,7 +157,7 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     const bytes = source.kept
       ? await keptBytes(from, one.rest)
       : new Uint8Array(await crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }))
-    await (target.kept ? web : crate)('write_bytes', { path: into, base64: toBase64(bytes) })
+    await (target.kept ? web : crate)('write_bytes', { path: into, bytes })
   }
   if (command === 'copy_path') return undefined as T
 
