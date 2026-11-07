@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { taskHash } from '@orden/bases'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -213,6 +214,89 @@ describe('the to-dos, with Orden closed', () => {
       .prepare("update folders set meta = ? where space_id = ? and name = 'Projects'")
       .run('{"todo-lists":"marked"}', space)
     expect(await texts()).not.toContain('Plant the tulips')
+  })
+
+  test('a Projects folder chosen in Settings, marked at any depth, marks the space and holds new lists', async () => {
+    const key = await connector()
+    for (const [path, content] of [
+      ['Projects/Garden.md', '- [ ] Plant the tulips\n'],
+      ['Areas/Plans/Trip.md', '- [ ] Book the train\n'],
+    ]) {
+      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+    }
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    env.db
+      .prepare("update notes set meta = ? where space_id = ? and path = 'Areas/Plans/Trip.md'")
+      .run('{"todo-list":"yes"}', space)
+    env.db
+      .prepare("update folders set meta = ? where space_id = ? and name = 'Plans'")
+      .run('{"todo-lists":"marked"}', space)
+
+    const texts = (await json(key, 'list_tasks', { space: 'Work' })).tasks.map((one) => one.text)
+    expect(texts).toContain('Book the train')
+    expect(texts).not.toContain('Plant the tulips')
+    const made = await json(key, 'add_task', { space: 'Work', note: 'Errands', text: 'Post it' })
+    expect(made.path).toBe('Areas/Plans/Errands.md')
+    const again = await json(key, 'list_tasks', { space: 'Work' })
+    expect(again.tasks.map((one) => one.text)).toContain('Post it')
+  })
+
+  test('a note made a to-do list by its path and a note again, as a device hears it', async () => {
+    const key = await connector()
+    await call(env, '/v2/push/targets', {
+      token,
+      body: { kind: 'fcm', token: 'phone-token', zone: 'Europe/Zurich' },
+    })
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: {
+        path: 'Meeting.md',
+        content: '- [ ] Ask about the budget [remind:: 2099-01-05 09:00]\n- [ ] Book a room\n',
+      },
+    })
+    const id = (
+      env.db.prepare("select id from notes where path = 'Meeting.md'").get() as { id: string }
+    ).id
+    const texts = async () =>
+      (await json(key, 'list_tasks', { space: 'Work' })).tasks.map((one) => one.text)
+    const heard = async () => {
+      const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
+      const items = (page.json as unknown as { items: { id: string; meta?: object }[] }).items
+      return items.find((one) => one.id === id)?.meta
+    }
+    const reminders = () => env.db.prepare('select id from push_reminders').all().length
+
+    expect(await texts()).not.toContain('Ask about the budget')
+    expect(reminders()).toBe(0)
+    const room = `Meeting.md#1:${taskHash('Book a room')}`
+    expect(
+      await json(key, 'update_task', { space: 'Work', at: room, done: true, todo_list: true }),
+    ).toMatchObject({ at: room, path: 'Meeting.md', todo_list: true, space: 'Work' })
+    expect(await read(key, 'Meeting.md')).toContain('- [x] Book a room')
+    expect(await texts()).toContain('Ask about the budget')
+    expect(await heard()).toEqual({ 'todo-list': 'yes' })
+    expect(reminders()).toBe(1)
+
+    expect(
+      await json(key, 'update_task', { space: 'Work', at: 'Meeting', todo_list: false }),
+    ).toEqual({ path: 'Meeting.md', todo_list: false, space: 'Work' })
+    expect(await texts()).not.toContain('Ask about the budget')
+    expect(await heard()).toEqual({ 'todo-list': 'no' })
+    expect(reminders()).toBe(0)
+
+    expect(
+      await tool(key, 'update_task', { space: 'Work', at: '.Inbox.md', todo_list: false }),
+    ).toContain('always a to-do list')
+    expect(
+      await tool(key, 'update_task', { space: 'Work', at: 'Nowhere', todo_list: true }),
+    ).toContain('No note at Nowhere.md')
+    expect(
+      await tool(await connector(true), 'update_task', {
+        space: 'Work',
+        at: 'Shop',
+        todo_list: false,
+      }),
+    ).toContain('only read')
   })
 
   test('a space shared to read is listed and never written', async () => {
