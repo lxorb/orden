@@ -64,7 +64,8 @@
     const wanted = drawn.flatMap((index) => {
       const entry = rows[index]
       if (!entry || entry.folder || entry.size > THUMB_MOST || !isPicturePath(entry.name)) return []
-      return [{ path: view.pathOf(entry.name), name: entry.name }]
+      const stamp = `${entry.size}:${entry.modified}`
+      return [{ path: view.pathOf(entry.name), name: entry.name, stamp }]
     })
     const folder = view.listing?.path ?? null
     untrack(() => thumbs.want(folder, wanted))

@@ -75,3 +75,33 @@ test('only so many small pictures are kept, never those still drawn', async () =
   expect(thumbs.shown.size).toBeLessThanOrEqual(400)
   for (const one of pictures(950, 1000)) expect(thumbs.shown.has(one.path)).toBe(true)
 })
+
+test('a picture changed on disk is drawn again, its old small picture let go once the new one is in', async () => {
+  const asked: string[] = []
+  let made = 0
+  const thumbs = new Thumbs(
+    (path) => {
+      asked.push(path)
+      return Promise.resolve({ bytes: new Uint8Array([1]), cut: false })
+    },
+    () => Promise.resolve(`small:${++made}`),
+  )
+  const settle = async () => {
+    for (let turn = 0; turn < 10; turn++) await Promise.resolve()
+  }
+  const one = (stamp: string) => [{ path: '/f/a.jpg', name: 'a.jpg', stamp }]
+
+  thumbs.want('/f', one('1:1'))
+  await settle()
+  thumbs.want('/f', one('1:1'))
+  await settle()
+  expect(asked).toHaveLength(1)
+  expect(thumbs.shown.get('/f/a.jpg')).toBe('small:1')
+
+  thumbs.want('/f', one('2:5'))
+  expect(thumbs.shown.get('/f/a.jpg')).toBe('small:1')
+  await settle()
+  expect(asked).toHaveLength(2)
+  expect(thumbs.shown.get('/f/a.jpg')).toBe('small:2')
+  expect(revoked).toEqual(['small:1'])
+})
