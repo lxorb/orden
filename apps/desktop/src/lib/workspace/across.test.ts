@@ -336,6 +336,49 @@ function random(seed: number) {
 
 const count = (text: string, token: string) => text.split(token).length - 1
 
+describe('a whole file written by the app in this window', () => {
+  test('reaches the note open on it, which stays clean', async () => {
+    const disk = new Map([[PATH, BASE]])
+    const one = aWindow(channel().end(), disk)
+    const note = one.open(BASE)
+
+    disk.set(PATH, `${BASE}- [ ] added by the app\n`)
+    one.across.wroteHere(PATH)
+    await one.across.heardSoFar()
+
+    expect(note.latest).toBe(`${BASE}- [ ] added by the app\n`)
+    expect(note.dirty).toBe(false)
+  })
+
+  test('merges with words typed there and not yet written, and owes them to the file', async () => {
+    const disk = new Map([[PATH, BASE]])
+    const one = aWindow(channel().end(), disk)
+    const note = one.open(BASE)
+    one.type(note, 'typed ')
+
+    disk.set(PATH, `top\n${BASE}`)
+    one.across.wroteHere(PATH)
+    await one.across.heardSoFar()
+
+    expect(note.latest).toBe(`top\n${BASE}typed `)
+    expect(note.dirty).toBe(true)
+    await one.save(note)
+    expect(disk.get(PATH)).toBe(`top\n${BASE}typed `)
+  })
+
+  test('leaves a note on another path alone', async () => {
+    const disk = new Map([[PATH, BASE]])
+    const one = aWindow(channel().end(), disk)
+    const note = one.open(BASE)
+
+    disk.set('/Notes/Other.md', 'other')
+    one.across.wroteHere('/Notes/Other.md')
+    await one.across.heardSoFar()
+
+    expect(note.latest).toBe(BASE)
+  })
+})
+
 describe('whatever order the news arrives in', () => {
   test('a write that met the disk and then hears of it does not bring it in twice', async () => {
     const { wires, disk, a, b } = twoWindows()

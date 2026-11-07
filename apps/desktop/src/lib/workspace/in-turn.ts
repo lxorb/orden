@@ -32,6 +32,17 @@ export function fetchAcross(fetch: () => Promise<Across>) {
   acrossSoon = fetch
 }
 
+export function wroteHere(path: string): void {
+  if (across) {
+    across.wroteHere(path)
+    return
+  }
+  void acrossSoon?.().then(
+    (one) => one.wroteHere(path),
+    () => undefined,
+  )
+}
+
 export function writeEdited(
   note: NoteDoc,
   path: string,
