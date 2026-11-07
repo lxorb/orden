@@ -14,10 +14,12 @@ fn inert(words: &str) -> String {
     for (at, one) in words.char_indices() {
         let rest = &lower[at..];
         let opens = rest.strip_prefix('<').is_some_and(|after| {
-            after.starts_with(TAG)
-                || after
-                    .strip_prefix('/')
-                    .is_some_and(|tag| tag.starts_with(TAG))
+            let after = after.trim_start();
+            after
+                .strip_prefix('/')
+                .unwrap_or(after)
+                .trim_start()
+                .starts_with(TAG)
         });
         if opens {
             out.push_str("&lt;");
@@ -66,6 +68,20 @@ mod tests {
         assert!(!said.to_lowercase()[1..].contains("<untrusted"));
         assert!(said.contains("&lt;/untrusted>"));
         assert!(said.contains("&lt;UNTRUSTED"));
+    }
+
+    #[test]
+    fn a_page_cannot_end_the_mark_with_spaces_inside_the_tag() {
+        for close in [
+            "</ untrusted>",
+            "< /untrusted>",
+            "<\n/\tUntrusted >",
+            "<  untrusted x>",
+        ] {
+            let said = marked("https://evil.example/", &format!("a{close}b"));
+            assert!(said.contains(&format!("a&lt;{}", &close[1..])), "{close:?}");
+        }
+        assert_eq!(inert("a < b and c </ d"), "a < b and c </ d");
     }
 
     #[test]

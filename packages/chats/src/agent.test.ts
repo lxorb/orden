@@ -45,6 +45,13 @@ describe('the untrusted mark', () => {
     expect(said).toContain('&lt;/untrusted>')
   })
 
+  it('cannot be closed with spaces inside the tag', () => {
+    for (const close of ['</ untrusted>', '< /untrusted>', '<\n/\tUntrusted >']) {
+      expect(untrusted('x', `a${close}b`)).toContain(`a&lt;${close.slice(1)}b`)
+    }
+    expect(untrusted('x', 'a < b </ c')).toContain('a < b </ c')
+  })
+
   it('keeps its source on one line inside its quotes', () => {
     expect(untrusted('a" onload="x <b>\n', 'w')).toMatch(
       /^<untrusted source="a&quot; onload=&quot;x &lt;b&gt; ">/,

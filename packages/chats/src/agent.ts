@@ -7,7 +7,7 @@ export function untrusted(source: string, words: string): string {
 }
 
 function inert(words: string): string {
-  return words.replace(/<(?=\/?untrusted)/gi, '&lt;')
+  return words.replace(/<(?=\s*\/?\s*untrusted)/gi, '&lt;')
 }
 
 function attribute(source: string): string {
