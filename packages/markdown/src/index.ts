@@ -25,7 +25,7 @@ import {
   withoutBlockIds,
 } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
-import { hashtags, type TagHref } from './tags'
+import { hashtags, type TagHref, WORTH_REMEMBERING } from './tags'
 import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
   type EmbedResolver,
@@ -158,7 +158,9 @@ function mailAhead(src: string, tokens: Token[] | undefined): boolean {
   if (known && src.length <= known.from && src.length > known.to) end = src.length - known.to
   else {
     while (end < src.length && inMail(src.charCodeAt(end))) end++
-    if (tokens) MAIL_RUNS.set(tokens, { from: src.length, to: src.length - end })
+    if (tokens && src.length >= WORTH_REMEMBERING) {
+      MAIL_RUNS.set(tokens, { from: src.length, to: src.length - end })
+    }
   }
   return src.charCodeAt(end) === 64
 }

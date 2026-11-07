@@ -160,8 +160,20 @@ function nextTag(src: string): number | undefined {
 
 export type TagHref = (tag: string) => string | null
 
+type Holding = Record<symbol, unknown>
+
+function heldOn<T>(list: object, slot: symbol): T | undefined {
+  return (list as Holding)[slot] as T | undefined
+}
+
+function holdOn(list: object, slot: symbol, value: unknown): void {
+  const holder = list as Holding
+  if (slot in holder) holder[slot] = value
+  else Object.defineProperty(holder, slot, { value, writable: true })
+}
+
 export function hashtags(href?: TagHref): MarkedExtension {
-  const seen = new WeakMap<Token[], string>()
+  const seen = Symbol('seen')
 
   return remembering({
     extensions: [
@@ -170,8 +182,8 @@ export function hashtags(href?: TagHref): MarkedExtension {
         level: 'inline',
         start: nextTag,
         tokenizer(src: string, tokens: Token[]) {
-          const before = seen.get(tokens)
-          seen.set(tokens, src)
+          const before = heldOn<string>(tokens, seen)
+          holdOn(tokens, seen, src)
           if (this.lexer.state.inLink || !src.startsWith(HASH)) return undefined
 
           const name =
@@ -198,6 +210,8 @@ export function hashtags(href?: TagHref): MarkedExtension {
   })
 }
 
+export const WORTH_REMEMBERING = 256
+
 export function remembering(extension: MarkedExtension): MarkedExtension {
   return { ...extension, extensions: extension.extensions?.map(remembered) ?? null }
 }
@@ -207,7 +221,7 @@ function remembered(extension: TokenizerAndRendererExtension): TokenizerAndRende
   const { start, tokenizer } = extension
   if (!start) return extension
 
-  const answers = new WeakMap<object, number>()
+  const answer = Symbol('start')
   let tokens: object | null = null
   let length = -1
 
@@ -220,13 +234,13 @@ function remembered(extension: TokenizerAndRendererExtension): TokenizerAndRende
     start(src) {
       if (tokens === null || src.length !== length - 1) return start.call(this, src)
 
-      const known = answers.get(tokens)
+      const known = heldOn<number>(tokens, answer)
       if (known === -1) return undefined
       if (known !== undefined && src.length >= known) return src.length - known
 
       const at = start.call(this, src)
       const found = typeof at === 'number' && at >= 0
-      answers.set(tokens, found ? src.length - at : -1)
+      holdOn(tokens, answer, found ? src.length - at : -1)
       return found ? at : undefined
     },
   }

@@ -6,7 +6,7 @@ import { CodeBlocks, WORDS } from './fences'
 import { highlightTone, readHighlight } from './highlights'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
-import { remembering } from './tags'
+import { remembering, WORTH_REMEMBERING } from './tags'
 
 const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
 
@@ -40,7 +40,9 @@ function highlightEnd(src: string, tokens: Token[] | undefined): number {
 
   let at = src.indexOf('==', 3)
   while (at !== -1 && !/\S/.test(src.charAt(at - 1))) at = src.indexOf('==', at + 1)
-  if (tokens) CLOSERS.set(tokens, at === -1 ? -1 : src.length - at)
+  if (tokens && src.length >= WORTH_REMEMBERING) {
+    CLOSERS.set(tokens, at === -1 ? -1 : src.length - at)
+  }
   return at
 }
 
@@ -313,7 +315,7 @@ function footnoteRefEnd(src: string, tokens: Token[]): number {
 
   A_REF_STOP.lastIndex = 2
   const at = A_REF_STOP.exec(src)?.index ?? src.length
-  REF_STOPS.set(tokens, src.length - at)
+  if (src.length >= WORTH_REMEMBERING) REF_STOPS.set(tokens, src.length - at)
   return at
 }
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { linearly } from '../../../scripts/growth'
 import { renderMarkdown } from './index'
 import { deckOf } from './slides'
@@ -24,6 +24,36 @@ describe('emphasis nothing closes', () => {
   test('in a deck, too', () => {
     linearly((n) => deckOf(`+ ${'*a '.repeat(n)}\n\n---\n\n+ b`), 8_000)
   }, 60_000)
+})
+
+describe('emphasis that closes, again and again', () => {
+  test('renders in linear time, each emphasis holding nothing for the rest of the paragraph', () => {
+    expect(linearly((n) => renderMarkdown('a *b* '.repeat(n)), 8_000)).toContain('<em>b</em>')
+    linearly((n) => renderMarkdown('a **b** ==c== d@e.fg #h '.repeat(n)), 2_000)
+  }, 120_000)
+
+  test('holds nothing aside in a weak map for each emphasis it reads', () => {
+    const set = WeakMap.prototype.set
+    const keys = new Map<object, Set<object>>()
+    let kept = 0
+    const spy = vi.spyOn(WeakMap.prototype, 'set').mockImplementation(function (
+      this: WeakMap<object, unknown>,
+      key: object,
+      value: unknown,
+    ) {
+      const mine = keys.get(this) ?? new Set<object>()
+      keys.set(this, mine)
+      if (!mine.has(key)) kept++
+      mine.add(key)
+      return set.call(this, key, value)
+    })
+    try {
+      renderMarkdown('a *b* ==c== '.repeat(1_000))
+    } finally {
+      spy.mockRestore()
+    }
+    expect(kept).toBeLessThan(100)
+  })
 })
 
 describe('emphasis that closes', () => {
