@@ -10,7 +10,7 @@ function compiled(...parts: string[]): (...args: unknown[]) => unknown {
 function runs(code: string, rounds = 5): number {
   let asked = 0
   const spin = () => ++asked > rounds
-  compiled('__nibSpin', guarded(code))(spin)
+  compiled('__nibSpin', guarded(code) ?? '')(spin)
   return asked
 }
 
@@ -31,12 +31,16 @@ describe('a loop in a block', () => {
   test('that ends by itself does what it did', () => {
     let total = 0
     const add = (n: number) => (total += n)
-    compiled('__nibSpin', 'add', guarded('for (let i = 1; i <= 4; i++) add(i)'))(() => false, add)
+    compiled(
+      '__nibSpin',
+      'add',
+      guarded('for (let i = 1; i <= 4; i++) add(i)') ?? '',
+    )(() => false, add)
     expect(total).toBe(10)
   })
 
-  test('is left as written where the code does not parse, or holds none', () => {
-    expect(guarded('while (')).toBe('while (')
+  test('cannot be guarded where the code does not parse, and is left as written where it holds none', () => {
+    expect(guarded('while (')).toBeNull()
     expect(guarded('const a = 1')).toBe('const a = 1')
   })
 
@@ -71,6 +75,46 @@ describe('a block of a note’s own HTML', () => {
     )
     expect(out).toContain('<script type="module">for (;;) {if(__nibSpin())break;}</script>')
     expect(out).toContain('<script type="text/template">for (;;) {}</script>')
+  })
+})
+
+describe('what a block holds that cannot be guarded', () => {
+  const scriptsOf = (html: string) => {
+    const holder = document.createElement('template')
+    holder.innerHTML = guardedBlock(html)
+    return holder.content
+  }
+
+  test('a script from elsewhere is not run but says why', () => {
+    const out = scriptsOf('<script src="https://example.com/a.js"></script><script>1</script>')
+    const scripts = [...out.querySelectorAll('script')]
+    expect(scripts.some((one) => one.hasAttribute('src'))).toBe(false)
+    expect(scripts[1]?.textContent).toContain('console.error(')
+    expect(scripts[1]?.textContent).toContain('from elsewhere')
+    expect(scripts[2]?.textContent).toBe('1')
+  })
+
+  test('nor is one that does not parse, even if a browser would read it', () => {
+    const scripts = [...scriptsOf('<script>while (true) { </script>').querySelectorAll('script')]
+    expect(scripts[1]?.textContent).toContain('could not read')
+    expect(scripts[1]?.textContent).not.toContain('while')
+  })
+
+  test('a handler written into an element or a javascript: address is taken out', () => {
+    const out = scriptsOf(
+      '<button onclick="while (true) {}" title="t">b</button><a href=" JaVa\tscript:for(;;){}">a</a><svg><a xlink:href="javascript:1"></a></svg><img src="x.png" onerror="for(;;){}">',
+    )
+    expect(out.querySelector('button')?.getAttribute('onclick')).toBeNull()
+    expect(out.querySelector('button')?.getAttribute('title')).toBe('t')
+    expect(out.querySelector('a')?.hasAttribute('href')).toBe(false)
+    expect(out.querySelector('svg a')?.attributes).toHaveLength(0)
+    expect(out.querySelector('img')?.getAttribute('src')).toBe('x.png')
+    expect(out.querySelector('img')?.hasAttribute('onerror')).toBe(false)
+  })
+
+  test('an address that only mentions javascript is kept', () => {
+    const html = '<a href="https://example.com/javascript:guide">a</a>'
+    expect(guardedBlock(html)).toBe(html)
   })
 })
 

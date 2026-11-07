@@ -33,6 +33,27 @@ document.body.style.height = '120px'
 while (true) {}
 </script>
 
+A block whose loops are made from text, or wait in a handler:
+
+<div id="made">nothing yet</div>
+<button id="press" onclick="while (true) {}">press</button>
+<script>
+const said = []
+for (const run of [
+  () => eval('while (true) {}'),
+  () => new Function('for (;;) {}')(),
+  () => setTimeout('while (true) {}'),
+]) {
+  try {
+    run()
+    said.push('ran')
+  } catch (error) {
+    said.push(error.name)
+  }
+}
+document.getElementById('made').textContent = said.join(' ')
+</script>
+
 The end.
 """
 
@@ -146,6 +167,37 @@ def block(page: Page) -> None:
         wrong(f"the block did not run up to its loop: the dial says {said!r}")
     DRIVE.shot(page, f"{engine}/02-block", caret="initial")
 
+def made_frame(page: Page) -> Frame | None:
+    for frame in page.frames:
+        if frame is page.main_frame:
+            continue
+        try:
+            if frame.evaluate("() => !!document.getElementById('made')"):
+                return frame
+        except Error:
+            continue
+    return None
+
+def made(page: Page) -> None:
+    card = page.locator(".embed-html").nth(1)
+    card.scroll_into_view_if_needed()
+    page.wait_for_timeout(400)
+    card.click()
+    page.wait_for_timeout(2000)
+    if not answers(page, "once the block of made code was pressed"):
+        return
+    frame = made_frame(page)
+    said = frame.evaluate("() => document.getElementById('made')?.textContent") if frame else None
+    say(f"[made] the block says {said!r}")
+    if said != "EvalError EvalError EvalError":
+        wrong(f"code made from text was not refused: the block says {said!r}")
+    if frame:
+        frame.click("button")
+        page.wait_for_timeout(1500)
+        if answers(page, "once the button with a looping handler was pressed"):
+            typed_lands(page, " typed after the press")
+    DRIVE.shot(page, f"{engine}/03-made", caret="initial")
+
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="light")
     page = context.new_page()
@@ -157,6 +209,7 @@ def drive(browser: Browser) -> None:
 
     fence(page)
     block(page)
+    made(page)
     context.close()
 
 def main() -> int:

@@ -96,4 +96,64 @@ describe('the frame script', () => {
     expect(window.document.getElementById('dial')).toBeNull()
     expect(window.said).toBeUndefined()
   })
+
+  test('refuses a loop in code a block makes from text, and runs the rest of it', async () => {
+    const window = framed(`<script>
+      const refused = []
+      const tried = (run) => {
+        try {
+          run()
+        } catch (error) {
+          refused.push(error.name)
+        }
+      }
+      tried(() => eval('while (true) {}'))
+      tried(() => new Function('for (;;) {}'))
+      tried(() => Function('do {} while (true)'))
+      tried(() => (async function () {}).constructor('while (true) {}'))
+      tried(() => (function* () {}).constructor('for (;;) yield 1'))
+      tried(() => setTimeout('while (true) {}'))
+      tried(() => setInterval('for (;;) {}', 10))
+      window.refused = refused
+      window.sum = eval('1 + 1') + new Function('a', 'return a * 2')(20)
+      let rounds = 0
+      for (let i = 0; i < 3; i++) rounds++
+      window.rounds = rounds
+    </script>`)
+    await settled()
+
+    expect(window.refused).toEqual(Array(7).fill('EvalError'))
+    expect(window.sum).toBe(42)
+    expect(window.rounds).toBe(3)
+  })
+
+  test('leaves a block no WebAssembly and no request it would wait on', async () => {
+    const window = framed(`<script>
+      window.assembly = typeof WebAssembly
+      const request = new XMLHttpRequest()
+      try {
+        request.open('GET', 'https://example.com/', false)
+      } catch (error) {
+        window.waited = error.name
+      }
+      new XMLHttpRequest().open('GET', 'https://example.com/')
+      window.asked = true
+    </script>`)
+    await settled()
+
+    expect(window.assembly).toBe('undefined')
+    expect(window.waited).toBe('InvalidAccessError')
+    expect(window.asked).toBe(true)
+  })
+
+  test('leaves code made from text alone in a frame that runs no block', () => {
+    const dom = new JSDOM(
+      '<!doctype html><body><script type="text/plain" id="nib-frame">window.made = eval("for (;;) { break }; 5")</script>',
+      { url: 'about:blank', runScripts: 'outside-only' },
+    )
+    const window = dom.window as DOMWindow & Record<string, unknown>
+    window.eval(SCRIPT)
+
+    expect(window.made).toBe(5)
+  })
 })
