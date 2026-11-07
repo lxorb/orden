@@ -83,6 +83,7 @@ export class Session {
   private passing = false
   private liveOn = true
   private over = false
+  private dropped = false
   private shown = 0
 
   constructor(
@@ -190,21 +191,24 @@ export class Session {
       for (const piece of span ? this.ear.piecesOf(span.from, span.to, PIECE) : []) {
         const before = [this.spot.before(), ...said].join(' ')
         const words = await this.hear(samples, piece.from, piece.to, FINAL_TRIES, before)
+        if (this.dropped) return
         if (words) said.push(words)
       }
       this.spot.show(said.join(' '), false)
     } catch (error) {
+      if (this.dropped) return
       this.spot.show(this.saidNow(), false)
       this.hooks.trouble(message(error, key('That recording could not be turned into words.')))
     } finally {
-      this.spot.release()
+      if (!this.dropped) this.spot.release()
     }
   }
 
   cancel(): void {
-    if (this.over) return
+    if (this.dropped) return
+    this.dropped = true
+    if (!this.over) this.microphone?.stop()
     this.over = true
-    this.microphone?.stop()
     this.spot.restore()
     this.spot.release()
   }

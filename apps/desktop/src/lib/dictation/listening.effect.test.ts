@@ -103,6 +103,25 @@ describe('a dictation', () => {
     expect(box.querySelector('[data-heard]')).toBeNull()
   })
 
+  test('cancelled while its words are written down, leaves the field as it was and writes nothing later', async () => {
+    const one = session()
+    await one.open()
+    feeding?.(joined(room(0.5), voice(3), room(0.5)))
+    await settled()
+    let answered: (said: string) => void = () => undefined
+    answer = () => new Promise<string>((done) => (answered = done))
+    const finished = one.finish()
+    await settled()
+
+    one.cancel()
+    expect(field.value).toBe('Notiz: ')
+    answered('Too late.')
+    await finished
+
+    expect(field.value).toBe('Notiz: ')
+    expect(trouble).toEqual([])
+  })
+
   test('sends nothing for silence, and leaves the field as it was', async () => {
     const one = session()
     await one.open()

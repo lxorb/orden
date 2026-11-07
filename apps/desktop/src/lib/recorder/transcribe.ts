@@ -13,6 +13,8 @@ const MOST_DECODED = 12 * 1024 * 1024
 
 const TRIES = 3
 
+const HEARD_WITHIN = 120_000
+
 export interface Words {
   text: string
   language: string
@@ -67,6 +69,7 @@ async function heardByProvider(
       method: 'POST',
       headers: headersWithoutType(provider, apiKey),
       body: form,
+      signal: AbortSignal.timeout(HEARD_WITHIN),
     }).catch(() => null)
 
     if (!response) throw new Error(t('Could not reach {url}', { url: heardUrl(provider) }))
