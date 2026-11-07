@@ -178,6 +178,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             app.state::<Installer>().gone(&label);
             crate::crashes::window_gone(&label);
             crate::terminal::window_gone(app, &label);
+            crate::explorer::watch::window_gone(app, &label);
             if let Some(sockets) = app.try_state::<crate::mail_socket::MailSockets>() {
                 sockets.end_where(&label);
             }

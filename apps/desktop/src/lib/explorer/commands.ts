@@ -49,12 +49,28 @@ export function openWithSystem(path: string): Promise<void> {
   return invoke<undefined>('explorer_open', { path })
 }
 
+const watchTurns = new Map<string, Promise<void>>()
+
+function inTurn(folder: string, command: string): Promise<void> {
+  const before = watchTurns.get(folder) ?? Promise.resolve()
+  const turn = before.then(() => invoke<undefined>(command, { folder }))
+  const settled = turn.then(
+    () => undefined,
+    () => undefined,
+  )
+  watchTurns.set(folder, settled)
+  void settled.then(() => {
+    if (watchTurns.get(folder) === settled) watchTurns.delete(folder)
+  })
+  return turn
+}
+
 export function watchFolder(folder: string): Promise<void> {
-  return invoke<undefined>('explorer_watch', { folder })
+  return inTurn(folder, 'explorer_watch')
 }
 
 export function unwatchFolder(folder: string): Promise<void> {
-  return invoke<undefined>('explorer_unwatch', { folder })
+  return inTurn(folder, 'explorer_unwatch')
 }
 
 export const CHANGED = 'explorer://changed'

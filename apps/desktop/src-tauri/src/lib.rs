@@ -851,6 +851,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     let builder = builder.on_page_load(|webview, payload| {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
             terminal::page_started(webview);
+            explorer::watch::window_gone(webview.app_handle(), webview.label());
             if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
                 waiting.forget(webview.label());
             }

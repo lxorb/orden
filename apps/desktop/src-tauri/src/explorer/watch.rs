@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode, Watcher as _};
 use serde::Serialize;
-use tauri::{AppHandle, Emitter as _, Manager as _};
+use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
 
 use super::listing::asked;
 use super::reach::Use;
@@ -51,7 +51,10 @@ fn heard(app: &AppHandle, folders: Vec<String>) {
 }
 
 #[derive(Default)]
-pub struct Watching(Mutex<Option<(RecommendedWatcher, HashMap<PathBuf, usize>)>>);
+pub struct Watching(
+    Mutex<Option<(RecommendedWatcher, HashMap<PathBuf, usize>)>>,
+    Mutex<HashMap<String, Vec<PathBuf>>>,
+);
 
 #[derive(Serialize, Clone)]
 struct Changed {
@@ -71,8 +74,13 @@ fn folders_of(paths: &[PathBuf]) -> Vec<String> {
 }
 
 impl Watching {
+    fn owned(&self) -> std::sync::MutexGuard<'_, HashMap<String, Vec<PathBuf>>> {
+        self.1.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
     fn add(
         &self,
+        owner: &str,
         folder: PathBuf,
         hear: impl Fn(Vec<String>) + Send + 'static,
     ) -> Result<(), String> {
@@ -100,44 +108,85 @@ impl Watching {
                 .map_err(|why| why.to_string())?;
         }
         *count += 1;
+        self.owned()
+            .entry(owner.to_owned())
+            .or_default()
+            .push(folder);
         Ok(())
     }
 
-    fn remove(&self, folder: &Path) {
+    fn remove(&self, owner: &str, folder: &Path) {
         let folder = crate::paths::folded(folder);
         let Ok(mut held) = self.0.lock() else {
             return;
         };
-        let Some((watcher, counts)) = held.as_mut() else {
+        let mine = {
+            let mut ledger = self.owned();
+            let mine = ledger.get_mut(owner).and_then(|folders| {
+                let at = folders.iter().position(|one| *one == folder)?;
+                Some(folders.swap_remove(at))
+            });
+            if ledger.get(owner).is_some_and(Vec::is_empty) {
+                ledger.remove(owner);
+            }
+            mine
+        };
+        if let (Some((watcher, counts)), Some(folder)) = (held.as_mut(), mine) {
+            let_go(watcher, counts, &folder);
+        }
+    }
+
+    pub fn end_where(&self, owner: &str) {
+        let Ok(mut held) = self.0.lock() else {
             return;
         };
-        if let Some(count) = counts.get_mut(&folder) {
-            *count -= 1;
-            if *count == 0 {
-                counts.remove(&folder);
-                let _ = watcher.unwatch(&folder);
+        let folders = self.owned().remove(owner).unwrap_or_default();
+        if let Some((watcher, counts)) = held.as_mut() {
+            for folder in &folders {
+                let_go(watcher, counts, folder);
             }
         }
     }
 }
 
+fn let_go(watcher: &mut RecommendedWatcher, counts: &mut HashMap<PathBuf, usize>, folder: &Path) {
+    if let Some(count) = counts.get_mut(folder) {
+        *count -= 1;
+        if *count == 0 {
+            counts.remove(folder);
+            let _ = watcher.unwatch(folder);
+        }
+    }
+}
+
 #[tauri::command]
-pub async fn explorer_watch(app: AppHandle, folder: String) -> Result<(), String> {
+pub async fn explorer_watch(webview: Webview, folder: String) -> Result<(), String> {
     crate::lane::off_the_runtime(move || -> Result<(), String> {
+        let app = webview.app_handle().clone();
         let folder = asked(&app, &folder, Use::Look)?;
         let hearing = app.clone();
         app.state::<Watching>()
-            .add(folder, move |folders| heard(&hearing, folders))
+            .add(webview.label(), folder, move |folders| {
+                heard(&hearing, folders);
+            })
     })
     .await
 }
 
 #[tauri::command]
-pub async fn explorer_unwatch(app: AppHandle, folder: String) {
+pub async fn explorer_unwatch(webview: Webview, folder: String) {
     crate::lane::off_the_runtime(move || {
-        app.state::<Watching>().remove(Path::new(&folder));
+        webview
+            .state::<Watching>()
+            .remove(webview.label(), Path::new(&folder));
     })
     .await;
+}
+
+pub fn window_gone(app: &AppHandle, label: &str) {
+    if let Some(watching) = app.try_state::<Watching>() {
+        watching.end_where(label);
+    }
 }
 
 #[cfg(test)]
@@ -179,11 +228,13 @@ mod tests {
         std::thread::spawn(move || {
             let watching = Watching::default();
             let mut shown = going[0].clone();
-            watching.add(shown.clone(), |_| {}).expect("watched");
+            watching
+                .add("main", shown.clone(), |_| {})
+                .expect("watched");
             for at in 1..400 {
                 let next = going[at % going.len()].clone();
-                watching.add(next.clone(), |_| {}).expect("watched");
-                watching.remove(&shown);
+                watching.add("main", next.clone(), |_| {}).expect("watched");
+                watching.remove("main", &shown);
                 let (listed, _) = entries(&next, 100_000).expect("listed");
                 assert!(!listed.is_empty());
                 shown = next;
@@ -194,6 +245,38 @@ mod tests {
         writing.store(false, Ordering::Relaxed);
         writer.join().expect("the writer");
         assert!(answered.is_ok(), "going between folders stuck");
+    }
+
+    #[test]
+    fn a_window_reloaded_or_closed_lets_go_of_every_folder_it_watched() {
+        let root = tempfile::tempdir().expect("a folder");
+        let one = crate::paths::folded(root.path());
+        let two = one.join("two");
+        std::fs::create_dir(&two).expect("a folder");
+        let watching = Watching::default();
+        let counted = |folder: &PathBuf| {
+            watching
+                .0
+                .lock()
+                .expect("held")
+                .as_ref()
+                .and_then(|(_, counts)| counts.get(folder).copied())
+        };
+        watching.add("a", one.clone(), |_| {}).expect("watched");
+        watching.add("a", one.clone(), |_| {}).expect("watched");
+        watching.add("a", two.clone(), |_| {}).expect("watched");
+        watching.add("b", one.clone(), |_| {}).expect("watched");
+        assert_eq!(counted(&one), Some(3));
+        watching.remove("b", &two);
+        assert_eq!(counted(&two), Some(1));
+        watching.end_where("a");
+        assert_eq!(counted(&one), Some(1));
+        assert_eq!(counted(&two), None);
+        watching.remove("a", &one);
+        assert_eq!(counted(&one), Some(1));
+        watching.remove("b", &one);
+        assert_eq!(counted(&one), None);
+        assert!(watching.owned().is_empty());
     }
 
     #[test]
