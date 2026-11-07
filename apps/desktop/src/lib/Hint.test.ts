@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 import Hint from './Hint.svelte'
@@ -55,7 +56,7 @@ describe('the labels it follows', () => {
 })
 
 describe('where the panel draws it', () => {
-  const panel = readFileSync(fileURLToPath(new URL('./SettingsPanel.svelte', import.meta.url)), {
+  const panel = readFileSync(join(import.meta.dirname, './SettingsPanel.svelte'), {
     encoding: 'utf8',
   })
 

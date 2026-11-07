@@ -1,7 +1,7 @@
 import { currentWindow, whenScreenGivenBack } from './tauri'
 import { afterQuiet } from './timing'
 
-export interface Panes {
+interface Panes {
   fills: string | null
   readonly focusedId: string
   readonly focused: { readonly activeTabId: string | null }

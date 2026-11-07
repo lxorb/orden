@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
-const APP = readFileSync(fileURLToPath(new URL('../src/App.svelte', import.meta.url)), 'utf8')
+const APP = readFileSync(join(import.meta.dirname, '../src/App.svelte'), 'utf8')
 
-const CONFIG = readFileSync(fileURLToPath(new URL('../vite.config.ts', import.meta.url)), 'utf8')
+const CONFIG = readFileSync(join(import.meta.dirname, '../vite.config.ts'), 'utf8')
 
 function handle(): string {
   const opening = 'nibApp: {'

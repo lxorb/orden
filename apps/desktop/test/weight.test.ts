@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
-const ENTRY = fileURLToPath(new URL('../src/main.ts', import.meta.url))
+const ENTRY = join(import.meta.dirname, '../src/main.ts')
 
 const WORKSPACE = [
   '@orden/editor',
@@ -426,12 +426,10 @@ describe('what the app evaluates before it draws anything', () => {
 })
 
 describe('what reading a note fetches', () => {
-  const READING = fileURLToPath(new URL('../src/lib/reading/render.ts', import.meta.url))
-  const SLIDES = fileURLToPath(new URL('../src/lib/slides/render.ts', import.meta.url))
-  const EXPORTER = fileURLToPath(new URL('../src/lib/export.ts', import.meta.url))
-  const RENDERER = fileURLToPath(
-    new URL('../../../packages/markdown/src/index.ts', import.meta.url),
-  )
+  const READING = join(import.meta.dirname, '../src/lib/reading/render.ts')
+  const SLIDES = join(import.meta.dirname, '../src/lib/slides/render.ts')
+  const EXPORTER = join(import.meta.dirname, '../src/lib/export.ts')
+  const RENDERER = join(import.meta.dirname, '../../../packages/markdown/src/index.ts')
 
   function waitedFor(surface: string): string {
     const source = readFileSync(surface, 'utf8')

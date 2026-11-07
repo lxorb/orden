@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { AA, ratio, rgbOf } from '../legibility'
 import { FIXED_PALETTE, terminalGround, terminalPalette, type TerminalTokens } from './look'
@@ -149,7 +150,7 @@ describe("the ground a terminal's open tab stands on", () => {
   })
 
   test("is what the strip wears on a terminal's open tab", () => {
-    const tabs = readFileSync(fileURLToPath(new URL('../Tabs.svelte', import.meta.url)), 'utf8')
+    const tabs = readFileSync(join(import.meta.dirname, '../Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/\.tab\.onterminal \{\s*--tab-ground: var\(--terminal-paper,/)
     expect(tabs).toContain(
       "style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}",

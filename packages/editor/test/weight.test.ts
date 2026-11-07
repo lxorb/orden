@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 const MARKDOWN = fileURLToPath(new URL('../../markdown/src/', import.meta.url))
 
-const DOOR = fileURLToPath(new URL('../../lang-html/src/index.ts', import.meta.url))
+const DOOR = join(import.meta.dirname, '../../lang-html/src/index.ts')
 
 function graphOf(entry: string): { files: string[]; packages: Set<string> } {
   const files: string[] = []

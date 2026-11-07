@@ -1,8 +1,12 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
 import { expect, test } from 'vitest'
 
-const script = readFileSync(new URL('../../../src-tauri/src/web_media.js', import.meta.url), 'utf8')
+const script = readFileSync(
+  join(import.meta.dirname, '../../../src-tauri/src/web_media.js'),
+  'utf8',
+)
 
 const NO_SOURCE = 3
 

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import * as lucide from 'lucide'
 import { fileMark, type FileMark as Mark, MARKS } from './file-mark'
@@ -198,7 +198,7 @@ describe('the marks a row wears', () => {
 })
 
 describe('the mark a file or folder chose for itself', () => {
-  const source = readFileSync(fileURLToPath(new URL('./FileMark.svelte', import.meta.url)), 'utf8')
+  const source = readFileSync(join(import.meta.dirname, './FileMark.svelte'), 'utf8')
 
   test('comes from the path the row already knows, through the one reader of all three', () => {
     expect(source).toContain('chosenIcon(path)')

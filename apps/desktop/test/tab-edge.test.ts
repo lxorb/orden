@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { contrastCss } from '@orden/themes/contrast'
 import { glassCss } from '@orden/themes/glass'
 import { wallpaperCss } from '@orden/themes/wallpaper'
@@ -15,7 +16,7 @@ const TOKENS = readFileSync(
   fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)),
   'utf8',
 )
-const TABS = readFileSync(fileURLToPath(new URL('../src/lib/Tabs.svelte', import.meta.url)), 'utf8')
+const TABS = readFileSync(join(import.meta.dirname, '../src/lib/Tabs.svelte'), 'utf8')
 
 const SCHEMES: Scheme[] = ['dark', 'light']
 
@@ -200,10 +201,7 @@ describe('the open tab', () => {
     expect(TABS).toMatch(
       /:global\(:root:not\(\[dir='rtl'\]\)\) \.tabs\.flush \.tab\.first\.active \.fill::before,\s+:global\(:root\[dir='rtl'\]\) \.tabs\.flush \.tab\.first\.active \.fill::after \{\s+display: none;/,
     )
-    const pane = readFileSync(
-      fileURLToPath(new URL('../src/lib/Pane.svelte', import.meta.url)),
-      'utf8',
-    )
+    const pane = readFileSync(join(import.meta.dirname, '../src/lib/Pane.svelte'), 'utf8')
     expect(pane).toContain('class:straight={!stripped && flushFirst(pane.id)}')
     expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)
   })

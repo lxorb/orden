@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { type DOMWindow, JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 import { htmlFrameDocument } from '@orden/editor'
 
 const SCRIPT = readFileSync(
-  new URL('../../../packages/editor/src/frame-script.js', import.meta.url),
+  join(import.meta.dirname, '../../../packages/editor/src/frame-script.js'),
   'utf8',
 )
 

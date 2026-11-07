@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { cutAt } from './whole-rows'
 
@@ -34,7 +35,7 @@ describe('a list cut between two rows', () => {
   })
 
   test('is measured in the palette against a field that keeps its height, so the room it finds is the room it gets', () => {
-    const palette = readFileSync(new URL('./Palette.svelte', import.meta.url), 'utf8')
+    const palette = readFileSync(join(import.meta.dirname, './Palette.svelte'), 'utf8')
     expect(palette).toMatch(/\n {2}\.field \{\n(?: {4}[^\n]*\n)*? {4}flex: none;\n/)
   })
 })

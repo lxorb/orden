@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EDGE, EdgePeek, GRACE, type Room } from './edge-peek.svelte'
 
@@ -205,7 +206,7 @@ describe('the right side, at the other edge (#1038)', () => {
 })
 
 describe('each side', () => {
-  const sidebar = readFileSync(new URL('./Sidebar.svelte', import.meta.url), 'utf8')
+  const sidebar = readFileSync(join(import.meta.dirname, './Sidebar.svelte'), 'utf8')
 
   test('lets it out only shut, as a column, outside full screen and under nothing', () => {
     for (const rule of [
@@ -282,7 +283,7 @@ describe('each side', () => {
   })
 
   test("a filled window's top bar comes at once too, and goes after the same grace", () => {
-    const bar = readFileSync(new URL('./tab-fill/FillBar.svelte', import.meta.url), 'utf8')
+    const bar = readFileSync(join(import.meta.dirname, './tab-fill/FillBar.svelte'), 'utf8')
     expect(bar).toContain('const GOES_AFTER = GRACE')
     const moved = bar.slice(bar.indexOf('function moved('), bar.indexOf('function letGo('))
     expect(moved).not.toContain('setTimeout')

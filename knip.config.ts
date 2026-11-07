@@ -20,10 +20,13 @@ function svelte(text: string): string {
 export default {
   compilers: { svelte },
   ignore: [
+    'apps/desktop/public/sw.js',
     'apps/desktop/src-tauri/src/web_state/scripts/*.js',
     'apps/desktop/src-tauri/src/web_tabs/*.js',
     'apps/desktop/src-tauri/src/web_swipe.js',
+    'apps/desktop/src-tauri/src/web_media.js',
     'apps/desktop/src-tauri/src/window_drag.js',
+    'apps/desktop/src-tauri/src/page_drag.js',
     'apps/desktop/src-tauri/src/gpu.js',
     'apps/desktop/src-tauri/src/page_scale.js',
     'apps/desktop/src-tauri/src/keyboard_press.js',
@@ -40,7 +43,7 @@ export default {
     },
     'packages/bases': {},
     'packages/chats': {},
-    'packages/editor': {},
+    'packages/editor': { ignoreDependencies: ['turndown'] },
     'packages/glasses': {},
     'packages/markdown': {},
     'packages/online': {},
