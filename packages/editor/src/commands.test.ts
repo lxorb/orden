@@ -267,6 +267,14 @@ describe('blocks', () => {
     expect(runSelection(insertCodeFence, '|')).toEqual([3, 3])
   })
 
+  test('fences a selection of three hundred thousand lines, one fence longer than any inside', () => {
+    const lines = Array.from({ length: 300_000 }, (_, at) => (at === 7 ? '````' : 'x'))
+    const doc = lines.join('\n')
+    const fenced = apply(insertCodeFence, doc, 0, doc.length).doc
+    expect(fenced).toContain('`````\nx\nx')
+    expect(fenced.trimEnd().endsWith('x\n`````')).toBe(true)
+  })
+
   test('inserts a math block', () => {
     expect(run(insertMathBlock, '|')).toBe('$$\n\n$$')
   })

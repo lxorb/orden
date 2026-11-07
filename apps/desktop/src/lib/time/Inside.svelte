@@ -32,7 +32,7 @@
   const lasted = $derived(picked.to - picked.from)
   const share = (ms: number) => (lasted > 0 ? Math.min(1, ms / lasted) : 0)
   const part = (ms: number, list: readonly { ms: number }[]) =>
-    whole ? ms / Math.max(1, ...list.map((one) => one.ms)) : share(ms)
+    whole ? ms / list.map((one) => one.ms).reduce((high, one) => Math.max(high, one), 1) : share(ms)
   const groups = $derived(
     (
       [

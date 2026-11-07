@@ -18,7 +18,9 @@ export function boxOutline(box: Box): Outline {
 function joined(...all: readonly (Outline | null)[]): Outline | null {
   const some = all.filter((one): one is Outline => one !== null)
   if (!some.length) return null
-  return Float64Array.from({ length: N }, (_, i) => Math.max(...some.map((one) => at(one, i))))
+  return Float64Array.from({ length: N }, (_, i) =>
+    some.map((one) => at(one, i)).reduce((high, one) => Math.max(high, one), -Infinity),
+  )
 }
 
 export function outlineOf(boxes: readonly Box[], above = 0, wide = 0): Outline | null {

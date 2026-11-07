@@ -302,9 +302,9 @@ function dictionariesOf(): Dictionaries {
   dictionaries ??= {
     common: new Map(COMMON_PASSWORDS.map((one, at) => [one, Math.log2(at + 2)])),
     words: new Set(WORDS.filter((one) => one.length >= 3)),
-    longest: Math.max(
-      ...COMMON_PASSWORDS.map((one) => one.length),
-      ...WORDS.map((one) => one.length),
+    longest: [...COMMON_PASSWORDS, ...WORDS].reduce(
+      (high, one) => Math.max(high, one.length),
+      -Infinity,
     ),
   }
   return dictionaries

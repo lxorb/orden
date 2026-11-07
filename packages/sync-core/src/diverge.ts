@@ -118,8 +118,8 @@ function rewrittenBlocks(base: string, analysis: Analysis): Span[] {
 
       const all = [deletion, ...writing]
       out.push({
-        from: Math.min(block.from, ...all.map((edit) => edit.from)),
-        to: Math.max(block.to, ...all.map((edit) => edit.to)),
+        from: all.map((edit) => edit.from).reduce((low, one) => Math.min(low, one), block.from),
+        to: all.map((edit) => edit.to).reduce((high, one) => Math.max(high, one), block.to),
       })
     }
   }
@@ -228,7 +228,11 @@ function excess(references: readonly string[], merge: string): number {
   let over = 0
   for (const [run, count] of runsByLine(merge)) {
     if (count < 2) continue
-    over += Math.max(0, count - Math.max(...known.map((one) => one.get(run) ?? 0)))
+    over += Math.max(
+      0,
+      count -
+        known.map((one) => one.get(run) ?? 0).reduce((high, one) => Math.max(high, one), -Infinity),
+    )
   }
   return over
 }
@@ -446,7 +450,9 @@ function divergeOnce(
     }
     const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
     const novel = (texts: readonly string[]) =>
-      Math.max(...texts.map((text) => text.split('\n').filter((line) => !lines.has(line)).length))
+      texts
+        .map((text) => text.split('\n').filter((line) => !lines.has(line)).length)
+        .reduce((high, one) => Math.max(high, one), -Infinity)
     if (checked.some((text) => repeats([local, remote, ...kept], text))) {
       if (novel(kept) <= novel(checked)) {
         checked = kept

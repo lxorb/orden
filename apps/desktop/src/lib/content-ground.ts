@@ -50,7 +50,9 @@ export function paperFloor(inks: PaperInks, span: Span, terminal = false): numbe
     [inks.link, AA],
     ...(terminal ? [[terminalInk(inks.bg), AA] as [Rgb, number]] : []),
   ]
-  return Math.max(...aims.map(([ink, aim]) => scrimFloor(ink, inks.bg, span, [], aim + HAIR)))
+  return aims
+    .map(([ink, aim]) => scrimFloor(ink, inks.bg, span, [], aim + HAIR))
+    .reduce((high, one) => Math.max(high, one), -Infinity)
 }
 
 export function alphaFor(level: ContentLevel, floor: number): number {

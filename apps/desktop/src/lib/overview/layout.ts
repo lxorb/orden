@@ -87,10 +87,14 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
 
 export function around(slots: readonly Box[]): Box | null {
   if (!slots.length) return null
-  const x = Math.min(...slots.map((one) => one.x))
-  const y = Math.min(...slots.map((one) => one.y))
-  const right = Math.max(...slots.map((one) => one.x + one.w))
-  const bottom = Math.max(...slots.map((one) => one.y + one.h))
+  const x = slots.map((one) => one.x).reduce((low, one) => Math.min(low, one), Infinity)
+  const y = slots.map((one) => one.y).reduce((low, one) => Math.min(low, one), Infinity)
+  const right = slots
+    .map((one) => one.x + one.w)
+    .reduce((high, one) => Math.max(high, one), -Infinity)
+  const bottom = slots
+    .map((one) => one.y + one.h)
+    .reduce((high, one) => Math.max(high, one), -Infinity)
   return { x, y, w: right - x, h: bottom - y }
 }
 

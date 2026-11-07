@@ -58,7 +58,7 @@ export function paletteOf(
 }
 
 export function floorFor(palette: Palette, span: Span, aim = AA): number {
-  return Math.max(
-    ...stacks(palette).map((lifts) => scrimFloor(palette.ink, palette.scrim, span, lifts, aim)),
-  )
+  return stacks(palette)
+    .map((lifts) => scrimFloor(palette.ink, palette.scrim, span, lifts, aim))
+    .reduce((high, one) => Math.max(high, one), -Infinity)
 }

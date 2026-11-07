@@ -183,8 +183,8 @@ export function hoursShown(
   least: readonly [number, number] = [8, 18],
 ): [number, number] {
   const inside = moments.filter((one) => one >= from && one <= to)
-  const early = Math.min(from + least[0] * HOUR, ...inside)
-  const late = Math.max(from + least[1] * HOUR, ...inside)
+  const early = inside.reduce((low, one) => Math.min(low, one), from + least[0] * HOUR)
+  const late = inside.reduce((high, one) => Math.max(high, one), from + least[1] * HOUR)
   const start = Math.max(from, from + Math.floor((early - from) / HOUR) * HOUR)
   const end = Math.min(to, from + Math.ceil((late - from) / HOUR) * HOUR)
   return [start, Math.max(end, start + HOUR)]

@@ -31,6 +31,26 @@ const noComments = {
   },
 }
 
+const noSpreadMath = {
+  meta: {
+    type: 'problem',
+    schema: [],
+    messages: {
+      spread:
+        'Math.min and Math.max over a spread throw past some 65,000 values in WebKit: reduce the array instead.',
+    },
+  },
+  create(context) {
+    return {
+      "CallExpression[callee.object.name='Math'][callee.property.name=/^(min|max)$/] > SpreadElement"(
+        node,
+      ) {
+        context.report({ node, messageId: 'spread' })
+      },
+    }
+  },
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -202,8 +222,18 @@ export default tseslint.config(
     },
   },
   {
-    plugins: { orden: { rules: { 'no-comments': noComments } } },
+    plugins: { orden: { rules: { 'no-comments': noComments, 'no-spread-math': noSpreadMath } } },
     rules: { 'orden/no-comments': 'error' },
+  },
+  {
+    ignores: [
+      '**/*.test.ts',
+      '**/test/**',
+      'apps/desktop/src/lib/chats/**',
+      'packages/chats/**',
+      'services/sync/src/chats/**',
+    ],
+    rules: { 'orden/no-spread-math': 'error' },
   },
   {
     files: [

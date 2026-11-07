@@ -130,7 +130,8 @@ async function socket(session, since) {
         .filter((one) => one.t === 'screen')
         .map((one) => one.data)
         .join('') + heard.out.map((one) => one.data).join(''),
-    end: () => Math.max(0, ...heard.out.map((one) => one.seq + one.length)),
+    end: () =>
+      heard.out.map((one) => one.seq + one.length).reduce((high, one) => Math.max(high, one), 0),
     type: (data) => ws.send(JSON.stringify({ t: 'in', data })),
     send: (frame) => ws.send(JSON.stringify(frame)),
     typeBytes: (data) => ws.send(new TextEncoder().encode(data)),

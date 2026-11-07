@@ -40,7 +40,9 @@ function firstAdded(one: Shortcut, other: Shortcut): Date {
     .map((said) => (said ? new Date(said).getTime() : Number.NaN))
     .filter((time) => !Number.isNaN(time))
 
-  return new Date(times.length ? Math.min(...times) : Date.now())
+  return new Date(
+    times.length ? times.reduce((low, one) => Math.min(low, one), Infinity) : Date.now(),
+  )
 }
 
 function sameShortcut(one: Shortcut | null, other: Shortcut): boolean {

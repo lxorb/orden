@@ -28,7 +28,9 @@ export function issueTitle(group) {
 }
 
 export function fenced(text, language = 'text') {
-  const longest = Math.max(2, ...[...text.matchAll(/`+/g)].map((run) => run[0].length))
+  const longest = [...text.matchAll(/`+/g)]
+    .map((run) => run[0].length)
+    .reduce((high, one) => Math.max(high, one), 2)
   const fence = '`'.repeat(longest + 1)
   return `${fence}${language}\n${text}\n${fence}`
 }

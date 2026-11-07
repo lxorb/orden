@@ -99,7 +99,7 @@ export class Predictor {
   }
 
   private patience(): number {
-    return Math.max(PATIENCE, Math.max(0, ...this.latencies) * 1.5)
+    return Math.max(PATIENCE, this.latencies.reduce((high, one) => Math.max(high, one), 0) * 1.5)
   }
 
   private right(latency: number): void {

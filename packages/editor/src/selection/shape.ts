@@ -143,14 +143,15 @@ function snapped(band: Band, above: Band): Band {
 function boxOf(bands: readonly Band[]): Omit<SelectionBlock, 'path'> {
   const lefts = bands.map((band) => band.left)
   const rights = bands.map((band) => band.right)
-  const left = Math.min(...lefts)
-  const top = Math.min(...bands.map((band) => band.top))
+  const left = lefts.reduce((low, one) => Math.min(low, one), Infinity)
+  const top = bands.map((band) => band.top).reduce((low, one) => Math.min(low, one), Infinity)
 
   return {
     left,
     top,
-    width: Math.max(...rights) - left,
-    height: Math.max(...bands.map((band) => band.bottom)) - top,
+    width: rights.reduce((high, one) => Math.max(high, one), -Infinity) - left,
+    height:
+      bands.map((band) => band.bottom).reduce((high, one) => Math.max(high, one), -Infinity) - top,
   }
 }
 

@@ -84,8 +84,8 @@ export function totalOf(
 export function heights(points: readonly Point[]): number[] {
   const dated = points.some((one) => one.day !== undefined)
   const values = points.map((one) => one.value)
-  const floor = dated ? Math.min(...values) - 1 : 0
-  const top = Math.max(...values.map((one) => one - floor), 0)
+  const floor = dated ? values.reduce((low, one) => Math.min(low, one), Infinity) - 1 : 0
+  const top = values.map((one) => one - floor).reduce((high, one) => Math.max(high, one), 0)
   return values.map((one) => (top > 0 ? (one - floor) / top : 0))
 }
 

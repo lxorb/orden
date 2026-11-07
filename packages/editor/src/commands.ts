@@ -386,10 +386,10 @@ function insertBlock(build: () => Block, room: Room = {}): StateCommand {
 }
 
 function fenceFor(words: string): string {
-  const longest = Math.max(
-    2,
-    ...words.split('\n').map((line) => /^ {0,3}(`+)/.exec(line)?.[1]?.length ?? 0),
-  )
+  const longest = words
+    .split('\n')
+    .map((line) => /^ {0,3}(`+)/.exec(line)?.[1]?.length ?? 0)
+    .reduce((high, one) => Math.max(high, one), 2)
   return '`'.repeat(longest + 1)
 }
 

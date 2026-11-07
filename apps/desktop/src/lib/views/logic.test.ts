@@ -719,6 +719,18 @@ describe('the chart', () => {
     expect(donutPaths([1, 1], 10, 5)).toHaveLength(2)
     expect(donutPaths([0], 10, 5)).toEqual([])
   })
+
+  test('sizes a chart of a million dated points without running out of arguments', () => {
+    const points = Array.from({ length: 1_000_000 }, (_, at) => ({
+      key: String(at),
+      value: at % 7,
+      day: '2026-01-01',
+    }))
+    const drawn = heights(points)
+    expect(drawn).toHaveLength(1_000_000)
+    expect(drawn[0]).toBeCloseTo(1 / 7)
+    expect(drawn[6]).toBe(1)
+  })
 })
 
 describe('the list', () => {

@@ -316,14 +316,18 @@ function tableLines(
   align: readonly Align[],
   inner: number,
 ): string[] {
-  const columns = Math.max(head.length, ...rows.map((row) => row.length), 1)
+  const columns = rows
+    .map((row) => row.length)
+    .reduce((high, one) => Math.max(high, one), Math.max(head.length, 1))
   const gap = width(GUTTER)
   const at = (row: readonly string[], column: number) => row[column] ?? ''
   const spread = (row: readonly string[]) =>
     Array.from({ length: columns }, (_one, column) => at(row, column))
 
   const natural = Array.from({ length: columns }, (_one, column) =>
-    Math.max(width(at(head, column)), ...rows.map((row) => width(at(row, column))), 0),
+    rows
+      .map((row) => width(at(row, column)))
+      .reduce((high, one) => Math.max(high, one), Math.max(width(at(head, column)), 0)),
   )
 
   const room = Math.max(width('…') * columns, inner - gap * (columns - 1))

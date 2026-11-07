@@ -116,12 +116,14 @@ export function patternJudge() {
             branches.map((one) => one.lead),
             fold,
           ))
-      const open = Math.max(...branches.map((one) => one.open))
+      const open = branches
+        .map((one) => one.open)
+        .reduce((high, one) => Math.max(high, one), -Infinity)
       return {
         ...PLAIN,
         open,
         ways: told
-          ? Math.max(...branches.map((one) => one.ways))
+          ? branches.map((one) => one.ways).reduce((high, one) => Math.max(high, one), -Infinity)
           : branches.reduce((sum, one) => sum + one.ways, 0),
         head: same(branches.map((one) => one.head)),
         tail: same(branches.map((one) => one.tail)),

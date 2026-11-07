@@ -58,7 +58,7 @@ export function rest(
     saving ? saving.after - away : null,
   ].filter((wait) => wait !== null)
 
-  const soonest = waits.length ? Math.min(...waits) : null
+  const soonest = waits.length ? waits.reduce((low, one) => Math.min(low, one), Infinity) : null
   return {
     act: freezing ? 'freeze' : null,
     again: soonest === null ? null : soonest > 0 ? soonest : FROZEN_AFTER,

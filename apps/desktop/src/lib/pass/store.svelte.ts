@@ -570,7 +570,9 @@ export class PassStore {
     return activeLogins(this.items)
       .map((item) => ({
         item,
-        best: Math.max(0, ...item.content.websites.map((website) => rank(website, url))),
+        best: item.content.websites
+          .map((website) => rank(website, url))
+          .reduce((high, one) => Math.max(high, one), 0),
       }))
       .filter((one) => one.best > 0)
       .sort((a, b) => b.best - a.best || (b.item.used ?? 0) - (a.item.used ?? 0))

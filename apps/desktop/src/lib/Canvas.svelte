@@ -172,10 +172,10 @@
     const xs = corners.map((one) => one.x)
     const ys = corners.map((one) => one.y)
     return {
-      left: Math.min(...xs),
-      right: Math.max(...xs),
-      top: Math.min(...ys),
-      bottom: Math.max(...ys),
+      left: xs.reduce((low, one) => Math.min(low, one), Infinity),
+      right: xs.reduce((high, one) => Math.max(high, one), -Infinity),
+      top: ys.reduce((low, one) => Math.min(low, one), Infinity),
+      bottom: ys.reduce((high, one) => Math.max(high, one), -Infinity),
     }
   }
 

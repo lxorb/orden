@@ -113,7 +113,9 @@ export class Session {
     if (this.over) return
     this.ear.hear(samples)
     const recent = this.ear.levels.slice(-4)
-    const level = meter(recent.length ? Math.max(...recent) : 0)
+    const level = meter(
+      recent.length ? recent.reduce((high, one) => Math.max(high, one), -Infinity) : 0,
+    )
     this.shown = level > this.shown ? level : this.shown * 0.6 + level * 0.4
     this.hooks.level(this.shown)
     this.tick(samples)

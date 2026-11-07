@@ -149,10 +149,15 @@ export function boxOf(quad: Quad, toViewport: Point): Box {
     ys.push(y)
   }
 
-  const left = Math.min(...xs)
-  const top = Math.min(...ys)
+  const left = xs.reduce((low, one) => Math.min(low, one), Infinity)
+  const top = ys.reduce((low, one) => Math.min(low, one), Infinity)
 
-  return { left, top, width: Math.max(...xs) - left, height: Math.max(...ys) - top }
+  return {
+    left,
+    top,
+    width: xs.reduce((high, one) => Math.max(high, one), -Infinity) - left,
+    height: ys.reduce((high, one) => Math.max(high, one), -Infinity) - top,
+  }
 }
 
 export function quadOf(box: Box, toPdf: Point): Quad {

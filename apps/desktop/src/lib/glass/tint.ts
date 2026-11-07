@@ -86,9 +86,9 @@ function other(scheme: Scheme): Scheme {
 const AIM = AA + 0.1
 
 function floorOf(side: Palette, scrim: Rgb, span: Span, aim = AIM, grain = 0): number {
-  return Math.max(
-    ...stacks(side, grain).map((lifts) => scrimFloor(side.ink, scrim, span, lifts, aim)),
-  )
+  return stacks(side, grain)
+    .map((lifts) => scrimFloor(side.ink, scrim, span, lifts, aim))
+    .reduce((high, one) => Math.max(high, one), -Infinity)
 }
 
 export function barFor(page: Rgb, app: Scheme, sides: Sides): Bar {
@@ -181,17 +181,17 @@ export function pairFor(
   const side = sides[app]
 
   const toned = stops.map((one) => written(over(one, strength, side.scrim)))
-  const lift = Math.max(
-    ...along([toned[0] ?? side.scrim, toned[1] ?? side.scrim]).map((one) =>
-      floorOf(side, side.scrim, { least: one, most: one }, aim, GRAIN),
-    ),
-  )
+  const lift = along([toned[0] ?? side.scrim, toned[1] ?? side.scrim])
+    .map((one) => floorOf(side, side.scrim, { least: one, most: one }, aim, GRAIN))
+    .reduce((high, one) => Math.max(high, one), -Infinity)
   const [first, second] = toned.map((one) =>
     lift > 0 ? written(over(side.scrim, lift, one)) : one,
   ) as [Rgb, Rgb]
 
   const blend = along([first, second])
-  const floor = Math.max(...blend.map((one) => floorOf(side, one, span, aim, GRAIN)))
+  const floor = blend
+    .map((one) => floorOf(side, one, span, aim, GRAIN))
+    .reduce((high, one) => Math.max(high, one), -Infinity)
   const wash = Math.max(Math.min(1, material ? dials.opacity : 1), floor)
 
   const box = boxOf([

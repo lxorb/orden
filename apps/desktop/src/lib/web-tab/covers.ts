@@ -76,7 +76,7 @@ export function clearOf(hole: Rect, layers: readonly Layer[]): { box: Rect; laye
   )
   if (notices.length === 0) return { box: hole, layers: [...layers] }
 
-  const top = Math.min(...notices.map((one) => one.box.y))
+  const top = notices.map((one) => one.box.y).reduce((low, one) => Math.min(low, one), Infinity)
   const height = Math.floor(top - hole.y)
   if (height < hole.height * LEFT) return { box: hole, layers: [...layers] }
   return {

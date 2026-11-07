@@ -402,7 +402,9 @@
     }),
     create: promised(async ({ name, color, icon }) => {
       const all = await identities()
-      const top = Math.max(0, ...all.map((one) => Number(one.cookieStoreId.split('-').pop()) || 0))
+      const top = all
+        .map((one) => Number(one.cookieStoreId.split('-').pop()) || 0)
+        .reduce((high, one) => Math.max(high, one), 0)
       const one = { cookieStoreId: `firefox-container-${top + 1}`, name, color, icon }
       await local.set(IDENTITIES, [...all, one])
       return identity(one)

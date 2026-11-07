@@ -1070,12 +1070,10 @@ export async function webInvoke<T>(
       if (from !== target) {
         await renameNote(args.from as string, target)
         const entries = await trashEntries()
-        const gone = Math.max(
-          -Infinity,
-          ...entries
-            .filter((one) => one.kind === 'space' && one.from === from)
-            .map((one) => one.trashedAt),
-        )
+        const gone = entries
+          .filter((one) => one.kind === 'space' && one.from === from)
+          .map((one) => one.trashedAt)
+          .reduce((high, one) => Math.max(high, one), -Infinity)
         const follows = (one: TrashEntry) => one.from.startsWith(`${from}/`) && one.trashedAt > gone
         if (entries.some(follows)) {
           await saveTrash(

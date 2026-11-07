@@ -137,10 +137,10 @@ const WHOLE: Patch = { left: 0, top: 0, right: TILE, bottom: TILE }
 
 function bounds(patches: readonly Patch[]): Patch {
   return {
-    left: Math.min(...patches.map((one) => one.left)),
-    top: Math.min(...patches.map((one) => one.top)),
-    right: Math.max(...patches.map((one) => one.right)),
-    bottom: Math.max(...patches.map((one) => one.bottom)),
+    left: patches.map((one) => one.left).reduce((low, one) => Math.min(low, one), Infinity),
+    top: patches.map((one) => one.top).reduce((low, one) => Math.min(low, one), Infinity),
+    right: patches.map((one) => one.right).reduce((high, one) => Math.max(high, one), -Infinity),
+    bottom: patches.map((one) => one.bottom).reduce((high, one) => Math.max(high, one), -Infinity),
   }
 }
 

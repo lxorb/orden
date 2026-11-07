@@ -43,7 +43,9 @@
     return out
   })
   const passed = $derived(Math.max(1, days.filter((one) => one.whole > 0).length))
-  const longest = $derived(Math.max(1, ...days.map((one) => one.whole)))
+  const longest = $derived(
+    days.map((one) => one.whole).reduce((high, one) => Math.max(high, one), 1),
+  )
   const seen = $derived(piecesIn(spans, from, to, now))
   const groups = $derived(
     (
@@ -56,7 +58,8 @@
       .map(([lane, label]) => ({ lane, label, list: placesOf(seen, lane).slice(0, 8) }))
       .filter((one) => one.list.length),
   )
-  const most = (list: readonly Place[]) => Math.max(1, ...list.map((one) => one.ms))
+  const most = (list: readonly Place[]) =>
+    list.map((one) => one.ms).reduce((high, one) => Math.max(high, one), 1)
 
   const madeOfText = (activity: string | null): string =>
     (['site', 'app'] as const)

@@ -252,7 +252,9 @@ function unescaped(words: string): string {
 }
 
 function code(words: string): string {
-  const longest = Math.max(0, ...(words.match(/`+/g) ?? []).map((run) => run.length))
+  const longest = (words.match(/`+/g) ?? [])
+    .map((run) => run.length)
+    .reduce((high, one) => Math.max(high, one), 0)
   const fence = '`'.repeat(longest + 1)
   const pad = words.startsWith('`') || words.endsWith('`') ? ' ' : ''
   return `${fence}${pad}${words}${pad}${fence}`

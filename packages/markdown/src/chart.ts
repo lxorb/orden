@@ -234,8 +234,8 @@ const EDGE = Number.MAX_VALUE / SHRUNK
 
 function span(chart: Chart): { low: number; high: number; step: number } {
   const every = chart.series.flatMap((one) => one.data)
-  const top = Math.max(0, ...every)
-  const bottom = Math.min(0, ...every)
+  const top = every.reduce((high, one) => Math.max(high, one), 0)
+  const bottom = every.reduce((low, one) => Math.min(low, one), 0)
   if (top - bottom < SMALLEST) return { low: 0, high: 1, step: 0.25 }
   const reach = top - bottom
 
@@ -282,7 +282,7 @@ function frame(chart: Chart, low: number, high: number, step: number, said: Said
 }
 
 function longest(chart: Chart): number {
-  return Math.max(1, ...chart.series.map((one) => one.data.length))
+  return chart.series.map((one) => one.data.length).reduce((high, one) => Math.max(high, one), 1)
 }
 
 function bars(chart: Chart, low: number, high: number, said: Said): string {

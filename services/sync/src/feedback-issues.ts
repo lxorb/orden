@@ -46,7 +46,9 @@ export function platformLabel(platform: string): string | null {
 }
 
 function longestTicks(text: string): number {
-  return Math.max(0, ...[...text.matchAll(/`+/g)].map((run) => run[0].length))
+  return [...text.matchAll(/`+/g)]
+    .map((run) => run[0].length)
+    .reduce((high, one) => Math.max(high, one), 0)
 }
 
 function cell(text: string): string {

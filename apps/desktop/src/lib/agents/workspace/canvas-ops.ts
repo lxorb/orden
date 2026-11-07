@@ -39,8 +39,10 @@ function nodeIn(canvas: Canvas, id: string | null): CanvasNode {
 function freePlace(canvas: Canvas): { x: number; y: number } {
   if (!canvas.nodes.length) return { x: 0, y: 0 }
 
-  const left = Math.min(...canvas.nodes.map((node) => node.x))
-  const bottom = Math.max(...canvas.nodes.map((node) => node.y + node.height))
+  const left = canvas.nodes.map((node) => node.x).reduce((low, one) => Math.min(low, one), Infinity)
+  const bottom = canvas.nodes
+    .map((node) => node.y + node.height)
+    .reduce((high, one) => Math.max(high, one), -Infinity)
   return { x: left, y: bottom + DEFAULT_HEIGHT }
 }
 

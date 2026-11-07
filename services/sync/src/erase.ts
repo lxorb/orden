@@ -178,7 +178,9 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
 }
 
 function bound(env: Env, sql: string, values: readonly unknown[]): D1PreparedStatement {
-  const most = Math.max(0, ...[...sql.matchAll(/\?(\d+)/g)].map((one) => Number(one[1])))
+  const most = [...sql.matchAll(/\?(\d+)/g)]
+    .map((one) => Number(one[1]))
+    .reduce((high, one) => Math.max(high, one), 0)
   return env.DB.prepare(sql).bind(...values.slice(0, most))
 }
 

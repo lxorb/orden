@@ -300,8 +300,8 @@ function grouped(base: string, local: readonly Edit[], remote: readonly Edit[]):
   const meetings: Meeting[] = []
   for (const group of groups.values()) {
     const all = [...group.local, ...group.remote]
-    const from = Math.min(...all.map((edit) => edit.from))
-    const to = Math.max(...all.map((edit) => edit.to))
+    const from = all.map((edit) => edit.from).reduce((low, one) => Math.min(low, one), Infinity)
+    const to = all.map((edit) => edit.to).reduce((high, one) => Math.max(high, one), -Infinity)
     const written = all.reduce((sum, edit) => sum + edit.insert.length, 0)
 
     meetings.push({ base: { from, to }, ...group, size: written + (to - from) })

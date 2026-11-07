@@ -249,7 +249,9 @@ async function versionOf(
 }
 
 function nextRevOf(rev: number, ...bodies: string[]): number {
-  return Math.max(rev, ...bodies.map((one) => (sealedRevOf(one) ?? 0) + 1))
+  return bodies
+    .map((one) => (sealedRevOf(one) ?? 0) + 1)
+    .reduce((high, one) => Math.max(high, one), rev)
 }
 
 async function mergedItem(

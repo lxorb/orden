@@ -46,7 +46,7 @@ function scoreOf(mention: Mention, query: string): number | null {
       return found.score + starts
     })
     .filter((one): one is number => one !== null)
-  return scores.length ? Math.max(...scores) : null
+  return scores.length ? scores.reduce((high, one) => Math.max(high, one), -Infinity) : null
 }
 
 export function ranked(candidates: readonly Mention[], query: string, most = MOST): Mention[] {

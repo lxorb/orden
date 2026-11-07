@@ -58,7 +58,7 @@ function folderOrder(held: Branch): number | undefined {
     ...[...held.folders.values()].map((one) => folderOrder(one)),
   ].filter((one): one is number => one !== undefined)
 
-  return said.length ? Math.min(...said) : undefined
+  return said.length ? said.reduce((low, one) => Math.min(low, one), Infinity) : undefined
 }
 
 function branches(held: Branch): Branch[] {

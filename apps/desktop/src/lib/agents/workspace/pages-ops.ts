@@ -70,7 +70,9 @@ export function placeOnPage(
   const on = canvas.nodes.filter(
     (node: CanvasNode) => node.type !== 'page' && pageNumberOf([page], node) !== null,
   )
-  const lowest = Math.max(page.y + MARGIN, ...on.map((node) => node.y + node.height + MARGIN))
+  const lowest = on
+    .map((node) => node.y + node.height + MARGIN)
+    .reduce((high, one) => Math.max(high, one), page.y + MARGIN)
   return { x: page.x + MARGIN, y: Math.min(lowest, page.y + page.height - MARGIN) }
 }
 
