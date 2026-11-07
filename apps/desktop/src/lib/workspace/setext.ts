@@ -94,3 +94,12 @@ export async function dropSetext(
   markDone(root)
   return written
 }
+
+export function keepSetextMarked(ws: HoldsNotes & MarksNotes, root: string): void {
+  if (!spacesDone().some((one) => samePath(one, root))) return
+  if (!samePath(ws.activeSpace?.root, root) || !ws.itemMeta.describes(root)) return
+  if (rewrittenBefore(ws, root)) return
+  const first = ws.notes[0]
+  if (!first) return
+  ws.itemMeta.setMany(root, { [relativeTo(root, first.path)]: { [SETEXT_KEY]: REWRITTEN } })
+}

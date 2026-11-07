@@ -28,7 +28,7 @@ vi.mock('../stored', () => ({
   },
 }))
 
-const { dropSetext, SETEXT_GONE, SETEXT_KEY } = await import('./setext')
+const { dropSetext, keepSetextMarked, SETEXT_GONE, SETEXT_KEY } = await import('./setext')
 const { FileActions } = await import('./undo.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes & import('./setext').MarksNotes
 type ItemMeta = import('@orden/sync-core/meta').ItemMeta
@@ -148,6 +148,52 @@ describe('a space written with underlined headings', () => {
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
     expect(kept.get(SETEXT_GONE)).toBeUndefined()
+    expect(marked).toEqual([])
+  })
+})
+
+describe('the mark a rewritten space carries', () => {
+  test('is put back on a note when every note that held it has been deleted', () => {
+    kept.set(SETEXT_GONE, [SPACE])
+    const ws = space({ [`${SPACE}/new.md`]: 'A rule since\n---\n' })
+
+    keepSetextMarked(ws, SPACE)
+
+    expect(marked).toEqual([{ 'new.md': { [SETEXT_KEY]: 'gone' } }])
+  })
+
+  test('so a device that comes late after the deletion leaves the rules written since alone', async () => {
+    kept.set(SETEXT_GONE, [SPACE])
+    const items: Record<string, ItemMeta> = {}
+    const ws = space({ [`${SPACE}/new.md`]: 'A rule since\n---\n' }, items)
+    ;(ws.itemMeta as { setMany: unknown }).setMany = (
+      _: string,
+      patches: Record<string, MetaPatch>,
+    ) => {
+      for (const [at, patch] of Object.entries(patches)) items[at] = patch as ItemMeta
+    }
+    keepSetextMarked(ws, SPACE)
+
+    kept.clear()
+    expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
+    expect(disk.get(`${SPACE}/new.md`)).toBe('A rule since\n---\n')
+  })
+
+  test('is left as it is where a note still holds it', () => {
+    kept.set(SETEXT_GONE, [SPACE])
+    keepSetextMarked(
+      space({ [`${SPACE}/a.md`]: 'x\n' }, { 'b.md': { [SETEXT_KEY]: 'gone' } }),
+      SPACE,
+    )
+
+    expect(marked).toEqual([])
+  })
+
+  test('is not put on a space this device never rewrote, or one the account keeps no marks for', () => {
+    keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }), SPACE)
+    kept.set(SETEXT_GONE, [SPACE])
+    keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }, {}, false), SPACE)
+
     expect(marked).toEqual([])
   })
 })
