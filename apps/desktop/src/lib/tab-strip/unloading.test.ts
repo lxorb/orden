@@ -173,6 +173,20 @@ describe('a tab unloaded', () => {
     expect(three_.unloaded).toBe(true)
   })
 
+  test('in front with nothing used before it hands the pane to its neighbour, past tabs unloaded before', async () => {
+    const one = add('note', 'One')
+    const two = add('note', 'Two')
+    const three_ = add('note', 'Three')
+    add('note', 'Four')
+    one.unloaded = true
+    workspace.activate(two.id)
+    workspace.panes.used = []
+
+    await unload(two, 'tab')
+
+    expect(workspace.active).toBe(three_)
+  })
+
   test('alone in its pane leaves the pane showing nothing, and stays in the strip', async () => {
     const only = add('note', 'Only')
     workspace.activate(only.id)

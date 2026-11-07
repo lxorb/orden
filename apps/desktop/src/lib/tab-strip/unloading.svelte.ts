@@ -77,9 +77,9 @@ function stepAside(tab: Tab, which: Unloading, going: readonly Tab[]) {
     workspace.activate(tab.id)
     return
   }
-  const strip = workspace.tabsIn(pane.id)
-  const at = strip.findIndex((one) => one.id === tab.id)
-  const left = strip.filter((one) => one.id !== tab.id && !one.unloaded).map((one) => one.id)
+  const loaded = workspace.tabsIn(pane.id).filter((one) => one.id === tab.id || !one.unloaded)
+  const at = loaded.findIndex((one) => one.id === tab.id)
+  const left = loaded.filter((one) => one.id !== tab.id).map((one) => one.id)
   const next = workspace.panes.successorOf(left, at < 0 ? undefined : at)
   if (next === null) workspace.deselect(pane.id)
   else workspace.activate(next)
