@@ -1,8 +1,9 @@
 import { escapeAll } from '@orden/markdown/html'
+import { pageBytes } from '../bytes'
 import { assetsOf, inlineImages, localSources, SHEET_POLICY } from '../export'
 import { writtenPdf } from '../export/print'
 import { printWithPictures, wholeSheet } from '../export/sheet'
-import { chooseTarget, download, handOver } from '../export/save'
+import { chooseTarget, download, handOver, writeFile } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
 import {
   arrowAt,
@@ -307,13 +308,16 @@ export function canvasSvg(
 const PNG_SCALE = 2
 const PNG_MOST = 8000
 
-async function svgToPng(svg: string): Promise<Blob | null> {
+function sizeOf(svg: string): { width: number; height: number } {
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
-  const width = Number(size?.[3] ?? 800)
-  const height = Number(size?.[4] ?? 600)
+  return { width: Number(size?.[3] ?? 800), height: Number(size?.[4] ?? 600) }
+}
+
+async function svgToPng(svg: string, whole: string | Blob): Promise<Blob | null> {
+  const { width, height } = sizeOf(svg)
   const scale = Math.min(PNG_SCALE, PNG_MOST / Math.max(width, height, 1))
 
-  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
+  const url = URL.createObjectURL(new Blob([whole], { type: 'image/svg+xml' }))
 
   try {
     const image = new Image()
@@ -353,10 +357,13 @@ export interface Drawing {
   trusted: boolean
 }
 
-async function readySvg(drawing: Drawing, palette: Palette, plain = false): Promise<string> {
-  return inlinedSvg(
-    canvasSvg(drawing.canvas, palette, drawing.path, drawing.root, plain, drawing.trusted),
-  )
+async function readySvg(
+  drawing: Drawing,
+  palette: Palette,
+  plain = false,
+): Promise<{ svg: string; whole: string | Blob }> {
+  const svg = canvasSvg(drawing.canvas, palette, drawing.path, drawing.root, plain, drawing.trusted)
+  return { svg, whole: await wholeSheet(svg, fromAsset) }
 }
 
 function chosenPalette(drawing: Drawing): Palette {
@@ -386,25 +393,24 @@ export async function inlinedSvg(svg: string): Promise<string> {
 }
 
 export async function exportCanvasSvg(drawing: Drawing) {
-  const svg = await readySvg(drawing, chosenPalette(drawing))
+  const { whole } = await readySvg(drawing, chosenPalette(drawing))
   const file = `${stem(drawing.name)}.svg`
 
   if (!isDesktop) {
-    download(file, { text: svg, mime: 'image/svg+xml' })
+    download(file, { pieces: new Blob([whole], { type: 'image/svg+xml' }) })
     return file
   }
 
   const target = await chooseTarget(drawing.name, 'svg', 'SVG')
   if (!target) return
 
-  await invoke('write_note', { path: target, content: svg })
+  await writeFile(target, await pageBytes(whole))
   return target
 }
 
 export async function exportCanvasPng(drawing: Drawing) {
-  const blob = await svgToPng(await readySvg(drawing, chosenPalette(drawing), true)).catch(
-    () => null,
-  )
+  const { svg, whole } = await readySvg(drawing, chosenPalette(drawing), true)
+  const blob = await svgToPng(svg, whole).catch(() => null)
   if (!blob) {
     message(new Error('that drawing could not be turned into a picture'), t('Nothing here'))
     return
@@ -424,9 +430,7 @@ function sheetOf(drawing: Drawing) {
     false,
     drawing.trusted,
   )
-  const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
-  const width = Number(size?.[3] ?? 800)
-  const height = Number(size?.[4] ?? 600)
+  const { width, height } = sizeOf(svg)
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${SHEET_POLICY}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
