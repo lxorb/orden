@@ -122,19 +122,61 @@ export class DiagramWidget extends PictureWidget {
     const host = document.createElement('div')
     host.className = 'orden-diagram'
     host.dataset.language = this.language
-    void this.draw(host)
+    const key = drawnKey(this.code, this.language)
+    const known = drawnDiagrams.get(key)
+    if (known === undefined) void this.draw(host, key)
+    else {
+      drawnDiagrams.delete(key)
+      drawnDiagrams.set(key, known)
+      keepStylesShared()
+      host.innerHTML = known
+    }
     return host
   }
 
-  private async draw(host: HTMLElement) {
+  private async draw(host: HTMLElement, key: string) {
     try {
       if (this.language === 'flow') await drawFlowchart(host, this.code)
-      else if (this.language === 'sequence') await drawMermaid(host, sequenceToMermaid(this.code))
-      else await drawMermaid(host, this.code)
+      else if (this.language === 'sequence') {
+        await drawMermaid(host, sequenceToMermaid(this.code), true)
+      } else await drawMermaid(host, this.code, true)
+      keepDrawn(key, host.innerHTML)
     } catch (error) {
       host.classList.add('orden-diagram-error')
       host.textContent = error instanceof Error ? error.message : String(error)
     }
+  }
+}
+
+const drawnDiagrams = new Map<string, string>()
+
+const MOST_DRAWN = 100
+
+const MOST_DRAWN_LENGTH = 16_000_000
+
+let drawnLength = 0
+
+const DRAWN_WITH = ['--font-ui', '--surface-2', '--muted', '--line-strong', '--text']
+
+function drawnKey(code: string, language: string): string {
+  const root = document.documentElement
+  const style = getComputedStyle(root)
+  const said = DRAWN_WITH.map((name) => style.getPropertyValue(name).trim())
+  return [language, root.dataset.theme ?? '', ...said, code].join('\n')
+}
+
+function keepDrawn(key: string, svg: string) {
+  const before = drawnDiagrams.get(key)
+  if (before !== undefined) drawnLength -= before.length
+  drawnDiagrams.delete(key)
+  if (svg.length > MOST_DRAWN_LENGTH / 4) return
+
+  drawnDiagrams.set(key, svg)
+  drawnLength += svg.length
+  for (const [oldest, one] of drawnDiagrams) {
+    if (drawnDiagrams.size <= MOST_DRAWN && drawnLength <= MOST_DRAWN_LENGTH) break
+    drawnDiagrams.delete(oldest)
+    drawnLength -= one.length
   }
 }
 
@@ -232,7 +274,7 @@ function themeColour(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-async function drawMermaid(host: HTMLElement, code: string) {
+async function drawMermaid(host: HTMLElement, code: string, shared = false) {
   const { default: mermaid } = await import('mermaid')
 
   mermaid.initialize({
@@ -242,8 +284,42 @@ async function drawMermaid(host: HTMLElement, code: string) {
     fontFamily: themeColour('--font-ui'),
   })
 
-  const { svg } = await mermaid.render(`orden-diagram-${diagramSeq++}`, code)
+  const id = `orden-diagram-${diagramSeq++}`
+  const { svg } = await mermaid.render(id, code)
   host.innerHTML = svg
+  if (shared) shareStyle(host.querySelector('svg'), id)
+}
+
+const sharedStyles = new Map<string, { name: string; style: HTMLStyleElement }>()
+
+const MOST_SHARED_STYLES = 64
+
+const OWN_ID = '\u0000'
+
+function keepStylesShared() {
+  for (const { style } of sharedStyles.values()) {
+    if (!style.isConnected) document.head.append(style)
+  }
+}
+
+function shareStyle(svg: SVGSVGElement | null, id: string) {
+  const style = svg?.querySelector(':scope > style')
+  if (!svg || !style) return
+
+  const said = style.textContent.replace(new RegExp(`#${id}(?![\\w-])`, 'g'), OWN_ID)
+  let shared = sharedStyles.get(said)
+  if (shared === undefined) {
+    if (sharedStyles.size >= MOST_SHARED_STYLES) return
+    const name = `orden-diagram-style-${sharedStyles.size}`
+    const made = document.createElement('style')
+    made.textContent = said.split(OWN_ID).join(`:is(.${name}, #${name})`)
+    shared = { name, style: made }
+    sharedStyles.set(said, shared)
+  }
+  if (!shared.style.isConnected) document.head.append(shared.style)
+
+  style.remove()
+  svg.classList.add(shared.name)
 }
 
 async function drawFlowchart(host: HTMLElement, code: string) {
