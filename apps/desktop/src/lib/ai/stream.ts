@@ -1,9 +1,11 @@
 export const SSE_DONE = '[DONE]'
 
 export function sseLines(held: string, chunk: string): { payloads: string[]; rest: string } {
-  const text = held + chunk
-  const lines = text.split('\n')
-  const rest = lines.pop() ?? ''
+  const last = chunk.lastIndexOf('\n')
+  if (last < 0) return { payloads: [], rest: held + chunk }
+
+  const lines = (held + chunk.slice(0, last)).split('\n')
+  const rest = chunk.slice(last + 1)
   const payloads: string[] = []
 
   for (const line of lines) {
