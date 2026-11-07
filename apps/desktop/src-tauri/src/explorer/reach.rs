@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, VecDeque};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
 
@@ -14,20 +14,53 @@ pub enum Use {
     Into,
 }
 
+const MOST_EXPLORED: usize = 50_000;
+
 #[derive(Default)]
-pub struct Explored(Mutex<HashSet<String>>);
+struct Seen {
+    last: HashMap<String, u64>,
+    order: VecDeque<(u64, String)>,
+    count: u64,
+}
+
+impl Seen {
+    fn saw(&mut self, key: String, most: usize) {
+        self.count += 1;
+        self.last.insert(key.clone(), self.count);
+        self.order.push_back((self.count, key));
+        while self.last.len() > most {
+            let Some((at, key)) = self.order.pop_front() else {
+                break;
+            };
+            if self.last.get(&key) == Some(&at) {
+                self.last.remove(&key);
+            }
+        }
+        if self.order.len() > 2 * self.last.len() + 64 {
+            let last = &self.last;
+            self.order.retain(|(at, key)| last.get(key) == Some(at));
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct Explored(Mutex<Seen>);
 
 impl Explored {
     pub fn saw(&self, folder: &Path) {
+        self.saw_within(folder, MOST_EXPLORED);
+    }
+
+    fn saw_within(&self, folder: &Path, most: usize) {
+        let key = path_key(folder);
         if let Ok(mut seen) = self.0.lock() {
-            seen.insert(path_key(folder));
+            seen.saw(key, most);
         }
     }
 
     pub fn seen(&self, folder: &Path) -> bool {
-        self.0
-            .lock()
-            .is_ok_and(|seen| seen.contains(&path_key(folder)))
+        let key = path_key(folder);
+        self.0.lock().is_ok_and(|seen| seen.last.contains_key(&key))
     }
 }
 
@@ -331,5 +364,34 @@ mod tests {
         assert!(judge(&seen, "/home/me", Use::Change).is_err());
         assert!(judge(&seen, "/media", Use::Change).is_err());
         assert!(judge(&seen, "/media/me/Stick", Use::Change).is_ok());
+    }
+
+    #[test]
+    fn only_so_many_folders_are_kept_as_explored_the_longest_unseen_let_go_first() {
+        let seen = Explored::default();
+        let folder = |at: usize| PathBuf::from(format!("/home/me/f{at}"));
+        for at in 0..10 {
+            seen.saw_within(&folder(at), 4);
+            seen.saw_within(&folder(0), 4);
+        }
+        assert!(seen.seen(&folder(0)));
+        assert!(seen.seen(&folder(9)));
+        assert!(seen.seen(&folder(7)));
+        assert!(!seen.seen(&folder(6)));
+        assert!(!seen.seen(&folder(1)));
+        let kept = seen.0.lock().expect("kept");
+        assert_eq!(kept.last.len(), 4);
+        assert!(kept.order.len() <= 2 * kept.last.len() + 64);
+    }
+
+    #[test]
+    fn a_folder_seen_again_and_again_keeps_no_more_than_once_its_room() {
+        let seen = Explored::default();
+        for _ in 0..10_000 {
+            seen.saw(Path::new("/home/me/Downloads"));
+        }
+        let kept = seen.0.lock().expect("kept");
+        assert_eq!(kept.last.len(), 1);
+        assert!(kept.order.len() <= 66, "{} kept", kept.order.len());
     }
 }
