@@ -296,6 +296,13 @@ jobs:
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
+      - name: Latency, alone
+        if: runner.os == 'Linux'
+        timeout-minutes: 10
+        run: |
+          export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --lib -- --ignored --exact apps_host::stream::tests::latency_benchmark
+
   apps-windows:
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: windows-latest

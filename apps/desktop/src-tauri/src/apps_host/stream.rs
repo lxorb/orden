@@ -1730,12 +1730,24 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
+    fn a_change_on_the_display_reaches_the_viewer_without_waiting_for_another() {
+        drawn_and_arrived(false);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    #[ignore = "a measurement: run alone, as CI does, since a loaded machine makes its times say nothing"]
+    fn latency_benchmark() {
+        drawn_and_arrived(true);
+    }
+
+    #[cfg(target_os = "linux")]
     #[allow(
         clippy::too_many_lines,
         reason = "one benchmark, its two halves told in order"
     )]
-    fn latency_benchmark() {
-        super::super::in_time(|| {
+    fn drawn_and_arrived(measured: bool) {
+        super::super::in_time(move || {
             use x11rb::connection::Connection as _;
             use x11rb::protocol::xproto::{
                 ChangeGCAux, ConnectionExt as _, CreateGCAux, Rectangle,
@@ -1799,8 +1811,10 @@ mod tests {
             let median = latencies[latencies.len() / 2];
             let worst = latencies[latencies.len() * 9 / 10];
             eprintln!("drawn to arrived: median {median:?}, 90th {worst:?}");
-            assert!(median < Duration::from_millis(50), "median {median:?}");
-            assert!(worst < Duration::from_millis(120), "90th {worst:?}");
+            if measured {
+                assert!(median < Duration::from_millis(50), "median {median:?}");
+                assert!(worst < Duration::from_millis(120), "90th {worst:?}");
+            }
 
             arrived.borrow_mut().clear();
             let began = Instant::now();
@@ -1822,11 +1836,14 @@ mod tests {
                 "{drawn} drawn, {} arrived, longest gap {longest:?}",
                 times.len()
             );
-            assert!(times.len() * 10 >= drawn * 8, "{} of {drawn}", times.len());
-            assert!(
-                longest < Duration::from_millis(250),
-                "longest gap {longest:?}"
-            );
+            assert!(!times.is_empty(), "nothing arrived of {drawn} drawn");
+            if measured {
+                assert!(times.len() * 10 >= drawn * 8, "{} of {drawn}", times.len());
+                assert!(
+                    longest < Duration::from_millis(250),
+                    "longest gap {longest:?}"
+                );
+            }
             drop(times);
             drop(peer);
         });
