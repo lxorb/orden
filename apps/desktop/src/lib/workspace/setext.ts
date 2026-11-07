@@ -13,6 +13,11 @@ function spacesDone(): string[] {
   return Array.isArray(said) ? said.filter((one): one is string => typeof one === 'string') : []
 }
 
+function beingWritten(ws: HoldsNotes, path: string): boolean {
+  const open = ws.documentAt(path)
+  return open !== null && (open.dirty || open.revision > 0 || open.shared !== null)
+}
+
 export async function dropSetext(
   ws: HoldsNotes,
   root: string,
@@ -29,6 +34,7 @@ export async function dropSetext(
   for (const note of ws.notes) {
     if (!samePath(ws.activeSpace?.root, root)) return 0
 
+    if (beingWritten(ws, note.path)) continue
     const before = await noteText(ws, note.path)
     if (before === null) continue
 
@@ -36,7 +42,8 @@ export async function dropSetext(
     if (edits.length) changes.push(changeOf(note.path, before, edits))
   }
 
-  const written = changes.length ? await replaceInNotes(ws, changes, { undoable: false }) : 0
+  const untouched = changes.filter((change) => !beingWritten(ws, change.path))
+  const written = untouched.length ? await replaceInNotes(ws, untouched, { undoable: false }) : 0
   keepJson(SETEXT_GONE, [...spacesDone(), root])
   return written
 }

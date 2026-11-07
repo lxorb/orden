@@ -881,3 +881,13 @@ describe('words typed in front of a word the other side wrote around', () => {
     ])
   })
 })
+
+describe('the same rewrite made on two devices at once', () => {
+  test('is kept once', () => {
+    const base = 'Title\n=====\n\nwords\n\nPart\n----\n\nmore\n'
+    const both = '# Title\n\nwords\n\n## Part\n\nmore\n'
+    const judged = diverge(base, both, both, LOCAL_NEWER)
+    expect(judged.verdict).toBe('clean')
+    expect(judged.resolution).toBe(both)
+  })
+})
