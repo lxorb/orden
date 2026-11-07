@@ -23,6 +23,11 @@ export interface RowWindow {
   pinned: number[]
 }
 
+export interface Place {
+  at: number
+  away: number | undefined
+}
+
 export function scrollerOf(from: HTMLElement): HTMLElement | null {
   for (let box = from.parentElement; box; box = box.parentElement) {
     const flow = getComputedStyle(box).overflowY

@@ -6,11 +6,14 @@
   import { copyText } from '../../clipboard'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
+  import type { Place } from '../../row-window'
   import { scrollbar } from '../../scrollbar'
   import { settings } from '../../settings.svelte'
+  import type { ThreadHead } from '../chat/types'
   import { beside, ordered, stateOf } from '../session-state'
   import { chat } from './chat.svelte'
   import ChatRow from './ChatRow.svelte'
+  import ChatWindow from './ChatWindow.svelte'
   import { sourcesFor } from './citations'
   import { hostHere } from './host'
   import { slides } from './slide'
@@ -136,18 +139,21 @@
       <div class="home" in:fade={{ duration: dur(150) }}>
         <h2 class="heading">{t('Chats')}</h2>
         <ul class="recent" onpointerleave={() => (pointed = -1)}>
-          {#each recent as one, index (one.id)}
-            <ChatRow
-              lit={index === pointed}
-              onpoint={() => (pointed = index)}
-              head={one}
-              state={chat.states.get(one.id) ?? stateOf(one)}
-              unread={chat.unread.has(one.id)}
-              onopen={() => void chat.openThread(one.id)}
-              onpin={() => void chat.pin(one.id, !one.pinned)}
-              onarchive={() => chat.archive(one.id)}
-            />
-          {/each}
+          <ChatWindow heads={recent}>
+            {#snippet row(one: ThreadHead, index: number, place: Place)}
+              <ChatRow
+                {place}
+                lit={index === pointed}
+                onpoint={() => (pointed = index)}
+                head={one}
+                state={chat.states.get(one.id) ?? stateOf(one)}
+                unread={chat.unread.has(one.id)}
+                onopen={() => void chat.openThread(one.id)}
+                onpin={() => void chat.pin(one.id, !one.pinned)}
+                onarchive={() => chat.archive(one.id)}
+              />
+            {/snippet}
+          </ChatWindow>
           {#if here === 'side' && !all && chats.length > recent.length}
             <li>
               <button class="nib-row is-short all" onclick={() => (all = true)}>

@@ -7,12 +7,14 @@
   import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { dur } from '../../motion'
+  import type { Place } from '../../row-window'
   import { scrollbar } from '../../scrollbar'
   import { shortcuts } from '../../shortcuts.svelte'
   import type { ThreadHead } from '../chat/types'
   import { ordered, stateOf } from '../session-state'
   import { chat } from './chat.svelte'
   import ChatRow from './ChatRow.svelte'
+  import ChatWindow from './ChatWindow.svelte'
 
   const { rail = false }: { rail?: boolean } = $props()
 
@@ -37,12 +39,17 @@
   const archived = $derived(
     found.filter((one) => stateIn(one) === 'archived').sort((a, b) => b.updated - a.updated),
   )
-  const rows = $derived([
-    ...ordered(found, chat.states, chat.unread),
-    ...(archivedShown ? archived : []),
-  ])
+  const active = $derived(ordered(found, chat.states, chat.unread))
+  const shownArchived = $derived(archivedShown ? archived : [])
+  const rows = $derived([...active, ...shownArchived])
 
-  const archivedFrom = $derived(rows.findIndex((one) => stateIn(one) === 'archived'))
+  let upper = $state<{ reach: (index: number) => void }>()
+  let lower = $state<{ reach: (index: number) => void }>()
+
+  function reach(index: number) {
+    if (index < active.length) upper?.reach(index)
+    else lower?.reach(index - active.length)
+  }
 
   $effect(() => {
     const last = Math.max(0, rows.length - 1)
@@ -77,6 +84,7 @@
       event.preventDefault()
       const step = event.key === 'ArrowDown' ? 1 : -1
       lit = (lit + step + rows.length) % Math.max(1, rows.length)
+      reach(lit)
     } else if (event.key === 'Enter') {
       event.preventDefault()
       if (one) void chat.openThread(one.id)
@@ -92,6 +100,27 @@
     }
   }
 </script>
+
+{#snippet chatRow(one: ThreadHead, index: number, place: Place)}
+  <ChatRow
+    {place}
+    head={one}
+    state={stateIn(one)}
+    unread={chat.unread.has(one.id)}
+    open={one.id === chat.head?.id}
+    lit={index === lit}
+    role="option"
+    onpoint={() => (lit = index)}
+    onopen={() => void chat.openThread(one.id)}
+    onpin={() => void chat.pin(one.id, !one.pinned)}
+    onarchive={() => toggleArchived(one)}
+    onmenu={(event: MouseEvent) => rowMenu(event, one)}
+  />
+{/snippet}
+
+{#snippet archivedRow(one: ThreadHead, index: number, place: Place)}
+  {@render chatRow(one, active.length + index, place)}
+{/snippet}
 
 <div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
   <div class="top">
@@ -130,28 +159,19 @@
         <AgentRows />
       {/await}
     {/if}
-    {#each rows as one, index (one.id)}
-      {#if index === archivedFrom}
-        <li class="group archived" role="presentation">{t('Archived')}</li>
+    {#if rows.length}
+      {#if active.length}
+        <ChatWindow bind:this={upper} heads={active} role="group" row={chatRow} />
       {/if}
-      <ChatRow
-        head={one}
-        state={stateIn(one)}
-        unread={chat.unread.has(one.id)}
-        open={one.id === chat.head?.id}
-        lit={index === lit}
-        role="option"
-        onpoint={() => (lit = index)}
-        onopen={() => void chat.openThread(one.id)}
-        onpin={() => void chat.pin(one.id, !one.pinned)}
-        onarchive={() => toggleArchived(one)}
-        onmenu={(event: MouseEvent) => rowMenu(event, one)}
-      />
+      {#if shownArchived.length}
+        <li class="group archived" role="presentation">{t('Archived')}</li>
+        <ChatWindow bind:this={lower} heads={shownArchived} role="group" row={archivedRow} />
+      {/if}
     {:else}
       <li class="empty" role="presentation">
         {chat.listQuery ? t('No matches') : t('No chats yet')}
       </li>
-    {/each}
+    {/if}
     {#if archived.length && !archivedShown}
       <li role="presentation">
         <button class="nib-row is-short shown-archived" onclick={() => (archivedShown = true)}>
