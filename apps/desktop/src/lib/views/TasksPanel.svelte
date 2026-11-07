@@ -10,7 +10,7 @@
   import { workspace } from '../workspace.svelte'
   import { addTyped, openQuickAdd } from './add'
   import { contextFor } from './context'
-  import { todayHere } from './days'
+  import { day } from './day.svelte'
   import { kitFor } from './kit'
   import ListLayout from './ListLayout.svelte'
   import { LiveView } from './live.svelte'
@@ -28,12 +28,12 @@
   const { side = 'left' }: { side?: 'left' | 'right' } = $props()
 
   let all = $state.raw<readonly Row[]>(untrack(() => rows.shown()))
-  let today = $state(todayHere())
+  const today = $derived(day.today)
   $effect(() =>
     untrack(() =>
       rows.settled(() => {
         all = rows.shown()
-        today = todayHere()
+        day.again()
       }),
     ),
   )

@@ -15,7 +15,8 @@ import { columnsOf } from './columns'
 import { contextFor } from './context'
 import { displayed } from './display'
 import { guardedAt } from './guard'
-import { nowHere, todayHere, untilMidnightHere } from './days'
+import { day } from './day.svelte'
+import { nowHere, todayHere } from './days'
 
 export interface Source {
   scope: string | null
@@ -113,11 +114,14 @@ export class LiveView {
   }
 
   private daily() {
-    const timer = setTimeout(() => {
-      this.today = todayHere()
-      this.daily()
-    }, untilMidnightHere() + 1000)
-    this.stops.push(() => clearTimeout(timer))
+    this.stops.push(
+      $effect.root(() => {
+        $effect(() => {
+          const today = day.today
+          untrack(() => (this.today = today))
+        })
+      }),
+    )
   }
 
   async reload() {
