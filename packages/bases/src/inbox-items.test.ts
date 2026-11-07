@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { changesTo, type Item, readInbox, rendered } from './items'
+import { changesTo, type Item, readInbox, rendered } from './inbox-items'
 
 let next = 0
 const newId = () => `n${(next += 1)}`

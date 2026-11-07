@@ -1,7 +1,7 @@
 import { log } from '../log'
 import { afterQuiet } from '../timing'
 import { type ClosingDisk, openInboxDisk } from './disk'
-import type { Item } from './items'
+import type { Item } from '@orden/bases/inbox-items'
 import { InboxRecords, type InboxServer } from './store'
 
 const SEND_AFTER = 1500

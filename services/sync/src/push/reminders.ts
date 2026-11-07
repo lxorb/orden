@@ -198,9 +198,9 @@ export async function sendDue(
     `select r.note_id, r.id, r.user_id, r.space_id, r.at, r.title, r.body, r.path, r.hash, r.line,
             r.tries, s.name as space
        from push_reminders r
-       join notes n on n.id = r.note_id and n.deleted = 0
+       left join notes n on n.id = r.note_id
        join spaces s on s.id = r.space_id and s.deleted = 0
-      where r.sent_at is null and r.at <= ?1 and coalesce(r.retry_at, 0) <= ?1
+      where (n.deleted = 0 or r.note_id = 'inbox:' || r.user_id) and r.sent_at is null and r.at <= ?1 and coalesce(r.retry_at, 0) <= ?1
       order by r.retry_at is not null, r.at limit ?2`,
   )
     .bind(now, AT_ONCE)

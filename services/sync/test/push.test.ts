@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@orden/markdown/task-reminders'
+import { inboxStamp } from '@orden/sync-core/inbox'
 import { base64url, fromBase64url } from '../src/push/keys'
 import {
   MOST_TRIES,
@@ -355,6 +356,42 @@ describe('sending', () => {
     expect(await sendDue(env, AT + 60_000, fcm.send)).toBe(0)
     await save('Plan 2.md', '')
     expect(kept().filter((one) => one.sent_at !== null)).toHaveLength(1)
+  })
+
+  test('a reminder of a to-do in the account inbox is kept and sent, with no note behind it (#1576)', async () => {
+    env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    const stamp = inboxStamp(1, 0, 'one')
+    await call(env, '/v2/inbox', {
+      token,
+      body: {
+        changes: [
+          {
+            id: 'a',
+            fields: { text: 'Call the bank', status: ' ', remind: '2099-01-05 09:00', order: 0 },
+            stamps: { text: stamp, status: stamp, remind: stamp, order: stamp },
+          },
+        ],
+      },
+    })
+    expect(kept().map((one) => [one.at, one.title])).toEqual([[AT, 'Call the bank']])
+
+    const fcm = recorded(
+      () => Response.json({ access_token: 'access', expires_in: 3600 }),
+      () => Response.json({ name: 'projects/orden-test/messages/1' }),
+    )
+    expect(await sendDue(env, AT, fcm.send)).toBe(1)
+    const sent = JSON.parse(fcm.asked[1]?.init?.body as string) as {
+      message: { data: Record<string, string> }
+    }
+    expect(sent.message.data).toMatchObject({ title: 'Call the bank', path: '.orden-inbox.md' })
+
+    const later = inboxStamp(2, 0, 'one')
+    await call(env, '/v2/inbox', {
+      token,
+      body: { changes: [{ id: 'a', fields: { gone: true }, stamps: { gone: later } }] },
+    })
+    expect(kept()).toEqual([])
   })
 
   test('a reminder in a protected note pushes no word of it', async () => {

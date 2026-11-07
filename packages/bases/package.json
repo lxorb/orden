@@ -9,6 +9,7 @@
     "./agent": "./src/agent/index.ts",
     "./answer": "./src/answer.ts",
     "./inbox": "./src/inbox.ts",
+    "./inbox-items": "./src/inbox-items.ts",
     "./language": "./src/language/index.ts",
     "./occurrence": "./src/occurrence.ts",
     "./rows": "./src/note-rows.ts",

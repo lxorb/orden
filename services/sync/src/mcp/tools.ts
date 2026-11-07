@@ -1,9 +1,11 @@
 import { clockOf } from '@orden/bases/agent'
 import { untrusted } from '@orden/chats/agent'
+import { isAccountInbox } from '@orden/bases/inbox'
 import { findLinks } from '@orden/markdown'
 import type { ItemMeta } from '@orden/sync-core/meta'
 import { byteLength } from '../crypto'
 import { pokeNow } from '../hub/poke'
+import { inboxText } from '../inbox-text'
 import {
   addNote,
   cleanPath,
@@ -457,9 +459,9 @@ export async function callTool(
 
     case 'read_note': {
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string'
-        ? space
-        : readNote(env, space, args, await shutFor(env, userId))
+      if (typeof space === 'string') return space
+      if (isAccountInbox(text(args, 'path') ?? '')) return inboxText(env, userId)
+      return readNote(env, space, args, await shutFor(env, userId))
     }
 
     case 'search_notes': {

@@ -15,6 +15,7 @@ import { now } from './crypto'
 import { mayChangeTree } from './limits'
 import { NOT_AN_OBJECT, TOO_MANY_CHANGES } from './refused'
 import { deviceOf } from './sync2/device'
+import { keepInboxReminders } from './inbox-text'
 import type { Env, Variables } from './types'
 
 const NOT_AN_INBOX_CHANGE = 'that is not a change to the inbox'
@@ -39,7 +40,7 @@ const itemOf = (row: Stored): InboxItem => ({
   at: row.at,
 })
 
-async function inboxSince(env: Env, userId: string, since: number): Promise<InboxPage> {
+export async function inboxSince(env: Env, userId: string, since: number): Promise<InboxPage> {
   const { results } = await env.DB.prepare(
     `select id, fields, stamps, seq, at from inbox_items
       where user_id = ? and seq > ? order by seq limit ?`,
@@ -141,7 +142,7 @@ async function written(
   return { last: row?.last ?? many, lost: JSON.parse(row?.lost ?? '[]') as string[] }
 }
 
-async function writeInbox(
+export async function writeInbox(
   env: Env,
   userId: string,
   sent: readonly InboxChange[],
@@ -204,5 +205,6 @@ inbox.post('/', async (context) => {
   }
   const cursor = await writeInbox(context.env, user, changes, await deviceOf(context))
   if (cursor === 'full') return context.json({ error: TOO_MANY_ITEMS }, 413)
+  await keepInboxReminders(context.env, user).catch(() => undefined)
   return context.json({ cursor })
 })

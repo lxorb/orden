@@ -2,7 +2,7 @@ import { taskHash } from '@orden/bases'
 import { type Meta, writtenDates } from '@orden/bases/todo-lists'
 import { readTask } from '@orden/markdown/task-line'
 import { taskAt } from '@orden/markdown/tasks'
-import { fieldsOfTask, type Item, readInbox } from './items'
+import { fieldsOfTask, type Item, readInbox } from '@orden/bases/inbox-items'
 
 const FENCE = /^\s{0,3}(```|~~~)/
 

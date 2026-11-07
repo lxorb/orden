@@ -10,7 +10,7 @@ import {
   type InboxPage,
   type InboxStamps,
 } from '@orden/sync-core/inbox'
-import { changesTo, HEAD, type Item, rendered } from './items'
+import { changesTo, datedChanges, HEAD, type Item, rendered } from '@orden/bases/inbox-items'
 
 export interface InboxServer {
   pull(since: number): Promise<InboxPage | null>
@@ -44,8 +44,6 @@ export function keptOver(was: Kept | undefined, item: Kept): Kept {
 const MOST_PAGES = 50
 
 const CARRIED_STAMP = inboxStamp(0, 0, 'carried')
-
-const DONE = new Set(['x', 'X'])
 
 export class InboxRecords {
   private held = new Map<string, Kept>()
@@ -180,28 +178,11 @@ export class InboxRecords {
     ])
   }
 
-  private dated(changes: { id: string; fields: InboxFields }[]): typeof changes {
-    const today = todayOf(new Date(this.now()))
-    return changes.map((change) => {
-      const was = this.held.get(change.id)?.fields ?? {}
-      const status = change.fields.status ?? was.status
-      const fields = { ...change.fields }
-      const has = (key: string) => (key in fields ? fields[key] : was[key])
-      if (typeof status === 'string' && DONE.has(status) && !has('completed')) {
-        fields.completed = today
-      }
-      if (status === '-' && !has('cancelledOn')) fields.cancelledOn = today
-      if (status === ' ' && 'status' in change.fields) {
-        if (was.completed && !('completed' in change.fields)) fields.completed = null
-        if (was.cancelledOn && !('cancelledOn' in change.fields)) fields.cancelledOn = null
-      }
-      return { id: change.id, fields }
-    })
-  }
-
   async write(markdown: string): Promise<void> {
     const changes = changesTo(this.items(), markdown, this.newId, (id) => this.seen.has(id))
-    await this.change(this.dated(changes))
+    await this.change(
+      datedChanges((id) => this.held.get(id)?.fields, changes, todayOf(new Date(this.now()))),
+    )
   }
 
   private sending(): InboxChange[] {

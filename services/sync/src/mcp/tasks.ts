@@ -21,8 +21,8 @@ import {
   withProperties,
 } from '@orden/bases/agent'
 import { rowsOfText } from '@orden/bases/rows'
-import { INBOX_PATH, taskHash } from '@orden/bases'
-import { carriedOwn, INBOX_KEY, markedInbox, meansInbox } from '@orden/bases/inbox'
+import { taskHash } from '@orden/bases'
+import { ACCOUNT_INBOX, isAccountInbox, isInboxPath, meansInbox } from '@orden/bases/inbox'
 import {
   CANCELLED_KEY,
   DONE_KEY,
@@ -37,6 +37,7 @@ import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { taskLine } from '@orden/markdown/task-edits'
 import { objectIn } from '../body'
 import { pokeNow } from '../hub/poke'
+import { homeSpace, inboxText, writeInboxText } from '../inbox-text'
 import { cleanPath, MOVED } from '../notes'
 import { remindRelisted } from '../push/relisted'
 import { blobKey } from '../sync2/files'
@@ -172,12 +173,24 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
   return results
 }
 
+async function inboxRows(env: Env, userId: string): Promise<Row[]> {
+  const home = homeSpace(await spacesFor(env, userId))
+  if (!home) return []
+  return rowsOfText(home.name, ACCOUNT_INBOX, await inboxText(env, userId))
+}
+
+async function inboxesFor(env: Env, userId: string): Promise<{ space: string; path: string }[]> {
+  const home = homeSpace(await spacesFor(env, userId))
+  return home ? [{ space: home.name, path: ACCOUNT_INBOX }] : []
+}
+
 async function rowsOf(
   env: Env,
   spaces: readonly Space[],
   shut: Shut,
+  userId: string,
 ): Promise<{ rows: Row[]; partial: boolean }> {
-  const rows: Row[] = []
+  const rows: Row[] = await inboxRows(env, userId)
   let left = MOST_READ
   let partial = false
   for (const space of spaces) {
@@ -213,18 +226,8 @@ const STOPPED: MetaPatch = { [LIST_KEY]: STOPPED_VALUE, [DONE_KEY]: null, [CANCE
 
 const keyOf = (path: string) => path.normalize('NFC').toLowerCase()
 
-async function inboxIn(env: Env, spaceId: string): Promise<string> {
-  const { results } = await env.DB.prepare(
-    `select path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
-      and meta like ?`,
-  )
-    .bind(spaceId, `%"${INBOX_KEY}"%`)
-    .all<{ path: string; meta: string | null }>()
-  return markedInbox(results.map((one) => [one.path, metaFromText(one.meta)])) ?? INBOX_PATH
-}
-
 async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<Place> {
-  if (named === undefined) return { path: await inboxIn(env, space.id) }
+  if (named === undefined) return { path: ACCOUNT_INBOX }
   const path = notePath(named)
   const { results } = await env.DB.prepare(
     `select path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
@@ -233,7 +236,7 @@ async function placeNamed(env: Env, space: Writable, named: string | undefined):
     .bind(space.id, MOST_READ)
     .all<{ path: string; meta: string | null }>()
   const there = results.find((one) => keyOf(one.path) === keyOf(path))
-  if (there === undefined && meansInbox(named)) return { path: await inboxIn(env, space.id) }
+  if (there === undefined && meansInbox(named)) return { path: ACCOUNT_INBOX }
   const lists = await listsBy(env, space.id)
   const listed = (one: { path: string; meta: string | null }) =>
     lists.listed(one.path, metaFromText(one.meta))
@@ -274,7 +277,8 @@ async function readOf(
   env: Env,
   space: Writable,
   path: string,
-): Promise<{ note: Note; words: string } | null> {
+): Promise<{ note: Note | null; words: string } | null> {
+  if (isAccountInbox(path)) return { note: null, words: await inboxText(env, space.me) }
   mayReach(space, path)
   const read = await noteRead(env, space.id, path)
   if (read === MOVED) throw new Moved(path)
@@ -316,6 +320,11 @@ async function written(
   read: Note | null,
   made?: ItemMeta,
 ): Promise<string> {
+  if (isAccountInbox(path)) {
+    const put = await writeInboxText(env, space.me, words, contextNow(space.zone).today)
+    if (put === null) throw new Said('The inbox holds as many to-dos as it can.')
+    return ACCOUNT_INBOX
+  }
   mayReach(space, path)
   const put = await putNote(env, space, path, words, undefined, read, made)
   if (put === MOVED) throw new Moved(path)
@@ -368,7 +377,12 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   seen.push(...spaces)
   const view = words(args, 'view')
   const filter = words(args, 'filter')
-  const { rows, partial } = await rowsOf(env, spaces, await shutFor(env, token.user_id))
+  const { rows, partial } = await rowsOf(
+    env,
+    spaces,
+    await shutFor(env, token.user_id),
+    token.user_id,
+  )
   const base =
     view && /\.base$/i.test(view)
       ? await readBaseAt(env, await spaceOf(env, token, args, seen), view)
@@ -385,9 +399,7 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
       ...(base ? { base: { base: base.base } } : view ? { view } : {}),
       ...(filter ? { filter } : {}),
       ...(typeof args.limit === 'number' ? { limit: args.limit } : {}),
-      inboxes: await Promise.all(
-        spaces.map(async (space) => ({ space: space.name, path: await inboxIn(env, space.id) })),
-      ),
+      inboxes: await inboxesFor(env, token.user_id),
       ...(view?.trim().toLowerCase() === 'today' && (await undatedInToday(env, token.user_id))
         ? { undated: true }
         : {}),
@@ -403,11 +415,11 @@ async function spaceOf(
   token: TokenRow,
   args: Args,
   seen: Space[],
-): Promise<Space & { shut: Shut; zone: string }> {
+): Promise<Space & { shut: Shut; zone: string; me: string }> {
   const asked = await askedSpace(env, token.user_id, args)
   if (typeof asked === 'string') throw new Said(asked)
   const [shut, zone] = await Promise.all([shutFor(env, token.user_id), zoneOf(env, token.user_id)])
-  const space = { ...asked, shut, zone }
+  const space = { ...asked, shut, zone, me: token.user_id }
   seen.push(space)
   return space
 }
@@ -417,7 +429,7 @@ async function writableSpace(
   token: TokenRow,
   args: Args,
   seen: Space[],
-): Promise<Space & { shut: Shut; zone: string }> {
+): Promise<Space & { shut: Shut; zone: string; me: string }> {
   if (token.read_only)
     throw new Said('This token may only read. Allow writing in Orden’s settings first.')
   const space = await spaceOf(env, token, args, seen)
@@ -430,7 +442,7 @@ async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promis
   return addTaskTo(env, await writableSpace(env, token, args, seen), args)
 }
 
-type Writable = Pick<Space, 'id' | 'name' | 'user_id'> & { shut?: Shut; zone?: string }
+type Writable = Pick<Space, 'id' | 'name' | 'user_id'> & { shut?: Shut; zone?: string; me: string }
 
 async function addTaskTo(
   env: Env,
@@ -471,8 +483,7 @@ async function listNote(
 ): Promise<{ path: string; todo_list: boolean; space: string }> {
   const path = notePath(asked)
   mayReach(space, path)
-  if (!listing && (carriedOwn(path) || path === (await inboxIn(env, space.id))))
-    throw new Said(`${path} is the inbox, always a to-do list.`)
+  if (!listing && isInboxPath(path)) throw new Said(`${path} is the inbox, always a to-do list.`)
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
   )
@@ -535,7 +546,7 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
       const { held, edited, said } = await editing()
       if (edited.text === held.words) return said
       await written(env, space, path, edited.text, held.note)
-      await dated(env, space, path, held.words, edited.text, held.note, today)
+      if (held.note) await dated(env, space, path, held.words, edited.text, held.note, today)
       return said
     })
   }
@@ -579,7 +590,7 @@ async function changed(env: Env, space: Writable, args: Args): Promise<Args> {
     }
     const rest = taken(read.edited).source
     await written(env, space, path, rest, read.held.note)
-    await dated(env, space, path, read.held.words, rest, read.held.note, today)
+    if (read.held.note) await dated(env, space, path, read.held.words, rest, read.held.note, today)
     return null
   }).catch((error: unknown) => {
     if (!(error instanceof Said)) throw error
@@ -606,7 +617,7 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
   } else {
     throw new Said('Say the path of a .base file, or the base as yaml.')
   }
-  const { rows, partial } = await rowsOf(env, [space], space.shut)
+  const { rows, partial } = await rowsOf(env, [space], space.shut, space.me)
   const answer = queryBase(base, words(args, 'view'), rows, contextNow(space.zone))
   return partial ? { ...answer, partial } : answer
 }

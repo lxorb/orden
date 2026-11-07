@@ -161,7 +161,7 @@ describe('the to-dos, with Orden closed', () => {
     }
   })
 
-  test('a task with no note goes to the inbox the space chose, and Inbox lists it (#1469)', async () => {
+  test('a task with no note goes to the account inbox, not a note once picked for it, and Inbox lists it (#1576)', async () => {
     const key = await connector()
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -172,13 +172,18 @@ describe('the to-dos, with Orden closed', () => {
       .run('{"todo-list":"yes","inbox":"yes"}', space)
 
     const added = await json(key, 'add_task', { space: 'Work', text: 'Water the plants' })
-    expect(added.at).toMatch(/^Inbox\.md#/)
-    expect(await read(key, 'Inbox.md')).toContain('- [ ] Water the plants')
+    expect(added.at).toMatch(/^\.orden-inbox\.md#/)
+    expect(await read(key, 'Inbox.md')).not.toContain('Water the plants')
+    expect(await read(key, '.orden-inbox.md')).toContain('- [ ] Water the plants')
     const inbox = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
-    expect(inbox.tasks.map((one) => one.text).sort()).toEqual(['Call the bank', 'Water the plants'])
+    expect(inbox.tasks.map((one) => one.text)).toEqual(['Water the plants'])
     expect(
-      await tool(key, 'update_task', { space: 'Work', at: 'Inbox.md', todo_list: false }),
+      await tool(key, 'update_task', { space: 'Work', at: '.orden-inbox.md', todo_list: false }),
     ).toContain('is the inbox')
+    const items = env.db.prepare('select count(*) as many from inbox_items').get() as {
+      many: number
+    }
+    expect(items.many).toBe(1)
   })
 
   test('a limit is a whole number of tasks, one or more', async () => {
@@ -222,20 +227,20 @@ describe('the to-dos, with Orden closed', () => {
     ])
   })
 
-  test("a task added to the space's inbox, Orden's own, made the first time", async () => {
+  test("a task added to the account's inbox, kept as records and read back as lines", async () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
       space: 'Work',
       text: 'Call the bank 📅 2026-10-06',
     })
-    expect(added.at).toMatch(/^\.Inbox\.md#0:/)
-    expect(await read(key, '.Inbox.md')).toBe('- [ ] Call the bank 📅 2026-10-06\n')
+    expect(added.at).toMatch(/^\.orden-inbox\.md#0:/)
+    expect(await read(key, '.orden-inbox.md')).toBe('- [ ] Call the bank 📅 2026-10-06\n')
     expect(await read(key, 'Inbox.md')).not.toContain('Call the bank')
     const { tasks } = await json(key, 'list_tasks', { space: 'Work', view: 'inbox' })
     expect(tasks.map((one) => one.text)).toEqual(['Call the bank'])
 
     await json(key, 'add_task', { space: 'Work', text: 'Post the letter', note: 'Inbox' })
-    expect(await read(key, '.Inbox.md')).toBe(
+    expect(await read(key, '.orden-inbox.md')).toBe(
       '- [ ] Call the bank 📅 2026-10-06\n- [ ] Post the letter\n',
     )
     expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
@@ -248,9 +253,9 @@ describe('the to-dos, with Orden closed', () => {
       move_to: { note: 'Shop' },
     })
     expect(await read(key, 'Shop.md')).toContain('- [ ] Post the letter')
-    expect(await read(key, '.Inbox.md')).not.toContain('Post the letter')
+    expect(await read(key, '.orden-inbox.md')).not.toContain('Post the letter')
     await json(key, 'update_task', { space: 'Work', at: moved.at, move_to: { note: 'Inbox' } })
-    expect(await read(key, '.Inbox.md')).toContain('- [ ] Post the letter')
+    expect(await read(key, '.orden-inbox.md')).toContain('- [ ] Post the letter')
     expect(await read(key, 'Shop.md')).not.toContain('Post the letter')
     expect(await read(key, 'Inbox.md')).not.toContain('Post the letter')
 

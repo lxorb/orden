@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Carrying, carriedFrom, carriedItems, madeByOrden, todosOut } from './carrying'
-import type { Item } from './items'
+import type { Item } from '@orden/bases/inbox-items'
 
 function world(files: Record<string, string>, kept = true) {
   const disk = new Map(Object.entries(files))

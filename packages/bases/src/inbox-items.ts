@@ -1,4 +1,3 @@
-import type { InboxFields, InboxValue } from '@orden/sync-core/inbox'
 import { taskLine } from '@orden/markdown/task-edits'
 import {
   NO_PRIORITY,
@@ -9,6 +8,10 @@ import {
   writeRemind,
 } from '@orden/markdown/task-line'
 import { taskAt } from '@orden/markdown/tasks'
+
+export type InboxValue = string | number | boolean | null | readonly string[]
+
+export type InboxFields = Record<string, InboxValue>
 
 export const HEAD = 'head'
 
@@ -240,4 +243,28 @@ export function changesTo(
     if (!kept.has(id) && shown(id)) out.push({ id, fields: { gone: true } })
   }
   return out
+}
+
+const DONE = new Set(['x', 'X'])
+
+export function datedChanges(
+  held: (id: string) => InboxFields | undefined,
+  changes: readonly Changed[],
+  today: string,
+): Changed[] {
+  return changes.map((change) => {
+    const was = held(change.id) ?? {}
+    const status = change.fields.status ?? was.status
+    const fields = { ...change.fields }
+    const has = (key: string) => (key in fields ? fields[key] : was[key])
+    if (typeof status === 'string' && DONE.has(status) && !has('completed')) {
+      fields.completed = today
+    }
+    if (status === '-' && !has('cancelledOn')) fields.cancelledOn = today
+    if (status === ' ' && 'status' in change.fields) {
+      if (was.completed && !('completed' in change.fields)) fields.completed = null
+      if (was.cancelledOn && !('cancelledOn' in change.fields)) fields.cancelledOn = null
+    }
+    return { id: change.id, fields }
+  })
 }

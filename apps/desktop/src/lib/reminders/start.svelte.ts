@@ -1,3 +1,4 @@
+import { isAccountInbox } from '@orden/bases/inbox'
 import { untrack } from 'svelte'
 import type { Row } from '@orden/bases'
 import { t } from '../i18n.svelte'
@@ -39,6 +40,11 @@ const pressHost: PressHost = {
   tick: (row) => rows.write(row, { task: { done: true } }),
   inside: insideSpace,
   async open(root, path, line) {
+    if (isAccountInbox(path)) {
+      const { openBuiltin } = await import('../views/open')
+      openBuiltin('inbox')
+      return
+    }
     const space = workspace.spaces.find((one) => one.root === root)
     if (space && workspace.activeSpace?.root !== root) await workspace.selectSpace(space.id)
     await workspace.open(path)
