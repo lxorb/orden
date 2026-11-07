@@ -33,15 +33,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   invoke: (command: string, args?: unknown) => {
     asked.push({ command, args })
-    if (command === 'former_homes') {
-      if (homes.said === null) return Promise.reject(new Error('no such command'))
-      return Promise.resolve({
-        homes: homes.said,
-        waiting: homes.waiting,
-        dumped: homes.dumped !== null,
-        after: homes.waiting ? null : homes.dumped,
-      })
-    }
     if (command === 'keep_after_move') {
       homes.dumped = (args as { text: string }).text
       return Promise.resolve()
@@ -54,7 +45,23 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-const { carryFormerHome, HOME_CARRIED } = await import('./former-home')
+const { carryFormerNow, finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
+
+function said() {
+  if (homes.said === null) return null
+  return {
+    homes: homes.said,
+    waiting: homes.waiting,
+    dumped: homes.dumped !== null,
+    after: homes.waiting ? null : homes.dumped,
+  }
+}
+
+async function start(): Promise<boolean> {
+  const former = said()
+  carryFormerNow(former)
+  return finishFormerHome(former)
+}
 const { ItemMetaStore } = await import('./item-meta.svelte')
 const { chosenInbox } = await import('../rows/inbox')
 const { projectsOf } = await import('../rows/projects')
@@ -149,7 +156,7 @@ describe.each([
     oldProfile(profile)
     homes.said = [profile.base]
 
-    expect(await carryFormerHome()).toBe(true)
+    expect(await start()).toBe(false)
 
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md']) {
@@ -172,7 +179,7 @@ describe.each([
     startedAfterTheMove(profile)
     homes.said = [profile.base]
 
-    expect(await carryFormerHome()).toBe(true)
+    expect(await start()).toBe(false)
 
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
@@ -195,7 +202,7 @@ describe('a browser profile an early start made beside the old one', () => {
     homes.said = [mac.base]
     homes.waiting = true
 
-    expect(await carryFormerHome()).toBe(true)
+    expect(await start()).toBe(true)
     expect(relaunched.count).toBe(1)
     expect(homes.dumped).not.toBeNull()
 
@@ -204,7 +211,7 @@ describe('a browser profile an early start made beside the old one', () => {
     localStorage.setItem('orden:font', 'Inter')
     homes.waiting = false
 
-    expect(await carryFormerHome()).toBe(true)
+    expect(await start()).toBe(false)
     expect(homes.dumped).toBeNull()
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
@@ -220,7 +227,7 @@ describe('a browser profile an early start made beside the old one', () => {
     homes.dumped = '{}'
     localStorage.setItem('orden:font', 'Lato')
 
-    expect(await carryFormerHome()).toBe(false)
+    expect(await start()).toBe(false)
     expect(relaunched.count).toBe(0)
     expect(JSON.parse(homes.dumped)).toEqual({ 'orden:font': 'Lato' })
   })
@@ -231,16 +238,29 @@ describe('carrying the former home', () => {
     homes.said = [mac.base]
     localStorage.setItem('orden:theme', 'dark')
 
-    expect(await carryFormerHome()).toBe(false)
+    expect(await start()).toBe(false)
     expect(localStorage.getItem(HOME_CARRIED)).toBe('1')
     asked.length = 0
-    expect(await carryFormerHome()).toBe(false)
-    expect(asked.map((one) => one.command)).toEqual(['former_homes'])
+    expect(await start()).toBe(false)
+    expect(asked).toEqual([])
+  })
+
+  test('is done before anything reads the storage, from what the window was given', () => {
+    const now = mac.join(mac.base.to, 'Spaces', 'Work')
+    oldProfile(mac)
+    homes.said = [mac.base]
+    vi.stubGlobal('__ORDEN_FORMER__', said())
+
+    expect(formerSaid()).toEqual(said())
+    carryFormerNow()
+    expect(chosenInbox(now)).toBe('Lists/Groceries.md')
+    vi.stubGlobal('__ORDEN_FORMER__', undefined)
+    expect(formerSaid()).toBeNull()
   })
 
   test('waits for a later start when the app cannot say where the old home was', async () => {
     homes.said = null
-    expect(await carryFormerHome()).toBe(false)
+    expect(await start()).toBe(false)
     expect(localStorage.getItem(HOME_CARRIED)).toBeNull()
   })
 })

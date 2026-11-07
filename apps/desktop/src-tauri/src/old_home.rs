@@ -47,6 +47,14 @@ fn after_move() -> Option<PathBuf> {
     dirs::config_dir().map(|dir| dir.join(NEW).join(AFTER_MOVE))
 }
 
+pub(crate) fn script() -> String {
+    let said = serde_json::to_string(&former_homes()).unwrap_or_else(|_| "null".into());
+    format!(
+        "window.__ORDEN_FORMER__ = {};",
+        said.replace('<', "\\u003c")
+    )
+}
+
 #[tauri::command(async)]
 pub(crate) fn former_homes() -> Former {
     if env!("ORDEN_IDENTIFIER") != NEW {

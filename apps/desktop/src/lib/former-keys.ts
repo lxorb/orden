@@ -1,3 +1,5 @@
+import { carryFormerNow } from './workspace/former-home'
+
 const OLD = 'nib:'
 const NEW = 'orden:'
 
@@ -24,4 +26,10 @@ try {
   carryKeys(localStorage)
 } catch {
   // A window told to keep no site data refuses the getter, and holds nothing to carry.
+}
+
+try {
+  carryFormerNow()
+} catch {
+  // Nothing stored can be read here, so nothing kept under the old home is either.
 }
