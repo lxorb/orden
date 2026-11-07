@@ -61,6 +61,14 @@ export type Landing = 'start' | 'end' | { x: number }
 
 const IDLE_COMMIT = 700
 
+const WINDOWED = 150
+
+const AROUND = 40
+
+const STEP = 20
+
+const GUESSED_ROW = 32
+
 let active: TableView | null = null
 
 export function flushTableEdits() {
@@ -111,6 +119,26 @@ export class TableView {
   private dragging: (() => void) | null = null
 
   private editable: boolean
+
+  private body: HTMLTableSectionElement | null = null
+
+  private readonly drawn = new Map<number, HTMLTableRowElement>()
+
+  private readonly heights = new Map<number, number>()
+
+  private shown = { from: 0, to: 0 }
+
+  private guess = GUESSED_ROW
+
+  private drawnFor = -1
+
+  private fitted: number[] | null = null
+
+  private frame = 0
+
+  private gaps: IntersectionObserver | null = null
+
+  private following = false
 
   constructor(
     readonly editor: EditorView,
@@ -174,6 +202,7 @@ export class TableView {
   destroy() {
     this.clearPending()
     this.dragging?.()
+    this.unfollow()
   }
 
   flush() {
@@ -196,10 +225,9 @@ export class TableView {
     if (this.editor.state.readOnly) return false
 
     const { model } = this
-    const cell = this.cellAt({
-      row: Math.min(at.row, model.rows.length - 1),
-      column: Math.min(at.column, model.header.length - 1),
-    })
+    const row = Math.min(at.row, model.rows.length - 1)
+    this.reach(row)
+    const cell = this.cellAt({ row, column: Math.min(at.column, model.header.length - 1) })
     if (!cell) return false
 
     cell.focus()
@@ -284,11 +312,13 @@ export class TableView {
     const { model } = this
     const focus = this.focusAfter ?? this.focusedCell()
     this.focusAfter = null
+    const windowed = this.windowed()
 
     const head = element('thead')
     const headRow = element('tr')
     head.append(headRow)
 
+    if (this.fitted?.length !== model.header.length) this.fitted = null
     model.header.forEach((text, column) => {
       const at = { row: -1, column }
       const th = this.cell(text, at, 'th', sameCell(at, focus?.at))
@@ -299,23 +329,25 @@ export class TableView {
       grip.addEventListener('mousedown', (event) => this.startResize(event, th, column))
       th.append(grip)
 
-      const width = this.widths[column]
+      const width = this.widths[column] ?? (windowed ? this.fitted?.[column] : undefined)
       if (width != null) th.style.width = `${width}px`
       headRow.append(th)
     })
 
-    const body = element('tbody')
-    model.rows.forEach((row, index) => {
-      const tr = element('tr')
-      const cells = row.map((text, column) => {
-        const at = { row: index, column }
-        return this.cell(text, at, 'td', sameCell(at, focus?.at))
-      })
-      tr.append(...cells)
-      body.append(tr)
-    })
+    const rows = model.rows.length
+    if (rows !== this.drawnFor) this.heights.clear()
+    this.drawnFor = rows
+    this.body = element('tbody')
+    this.drawn.clear()
+    if (!windowed) this.shown = { from: 0, to: rows }
+    else if (focus && focus.at.row >= 0) this.shown = around(focus.at.row, rows)
+    else if (this.shown.from >= rows || this.shown.to - this.shown.from < 2 * AROUND)
+      this.shown = { from: 0, to: Math.min(rows, 2 * AROUND) }
+    else this.shown = { from: this.shown.from, to: Math.min(rows, this.shown.to) }
+    this.fill(focus?.at)
 
-    this.table.replaceChildren(head, body)
+    this.table.replaceChildren(head, this.body)
+    this.fitWidth()
 
     if (this.rowBar.classList.contains('is-shown')) {
       const tr = this.bodyRow(this.barRow)
@@ -323,12 +355,193 @@ export class TableView {
       else this.hideRowBar()
     }
 
+    if (windowed) this.follow()
+    else this.unfollow()
+
     if (focus) {
       queueMicrotask(() => {
         if (document.activeElement === this.editor.contentDOM) return
         this.focusCell(focus.at, focus.offset)
       })
     }
+  }
+
+  private fitWidth() {
+    const { fitted } = this
+    const fixed = this.windowed() && fitted !== null
+    this.table.classList.toggle('nib-table-windowed', fixed)
+    this.table.style.width = fixed
+      ? `${fitted.reduce((sum, one, column) => sum + (this.widths[column] ?? one), 0)}px`
+      : ''
+  }
+
+  private fit() {
+    const heads = [...this.table.querySelectorAll<HTMLElement>('thead th')]
+    const widths = heads.map((th) => th.getBoundingClientRect().width)
+    if (!widths.length || widths.some((one) => one <= 0)) return
+
+    this.fitted = widths
+    heads.forEach((th, column) => {
+      th.style.width = `${this.widths[column] ?? widths[column]}px`
+    })
+    this.fitWidth()
+  }
+
+  private windowed(): boolean {
+    return this.model.rows.length > WINDOWED
+  }
+
+  private row(index: number, editing?: CellAddress): HTMLTableRowElement {
+    const held = this.drawn.get(index)
+    if (held) return held
+
+    const tr = element('tr')
+    tr.dataset.row = String(index)
+    const cells = (this.model.rows[index] ?? []).map((text, column) => {
+      const at = { row: index, column }
+      return this.cell(text, at, 'td', sameCell(at, editing))
+    })
+    tr.append(...cells)
+    this.drawn.set(index, tr)
+    return tr
+  }
+
+  private gap(from: number, to: number): HTMLTableRowElement {
+    const tr = element('tr', 'nib-table-gap')
+    tr.setAttribute('aria-hidden', 'true')
+    const td = element('td')
+    td.colSpan = Math.max(1, this.model.header.length)
+    let height = 0
+    for (let row = from; row < to; row++) height += this.heights.get(row) ?? this.guess
+    td.style.height = `${height}px`
+    tr.append(td)
+    return tr
+  }
+
+  private fill(editing?: CellAddress) {
+    const { body } = this
+    if (!body) return
+
+    const rows = this.model.rows.length
+    const { from, to } = this.shown
+    const kept = this.focusedCell()?.at.row ?? -1
+    const spans: [number, number][] = [[from, to]]
+    if (kept >= 0 && kept < rows && (kept < from || kept >= to)) {
+      spans.push([kept, kept + 1])
+      spans.sort((one, other) => one[0] - other[0])
+    }
+
+    const wanted: HTMLTableRowElement[] = []
+    const showing = new Set<number>()
+    let at = 0
+    for (const [start, end] of spans) {
+      if (start > at) wanted.push(this.gap(at, start))
+      for (let index = start; index < end; index++) {
+        wanted.push(this.row(index, editing))
+        showing.add(index)
+      }
+      at = end
+    }
+    if (at < rows) wanted.push(this.gap(at, rows))
+
+    for (const index of this.drawn.keys()) if (!showing.has(index)) this.drawn.delete(index)
+
+    const held = kept >= 0 ? this.drawn.get(kept) : undefined
+    for (const child of [...body.children]) if (child !== held) child.remove()
+    if (!held?.isConnected) body.append(...wanted)
+    else {
+      const place = wanted.indexOf(held)
+      held.before(...wanted.slice(0, place))
+      held.after(...wanted.slice(place + 1))
+    }
+
+    if (this.gaps) {
+      this.gaps.disconnect()
+      for (const one of wanted) if (one.classList.contains('nib-table-gap')) this.gaps.observe(one)
+    }
+  }
+
+  private reach(row: number) {
+    if (!this.windowed() || row < 0 || this.drawn.has(row)) return
+    this.shown = around(row, this.model.rows.length)
+    this.fill()
+  }
+
+  private follow() {
+    if (this.following) {
+      this.schedule()
+      return
+    }
+    this.following = true
+    document.addEventListener('scroll', this.schedule, { capture: true, passive: true })
+    window.addEventListener('resize', this.schedule, { passive: true })
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.gaps = new IntersectionObserver(this.schedule, { rootMargin: '50%' })
+      for (const one of this.body?.querySelectorAll('.nib-table-gap') ?? []) this.gaps.observe(one)
+    }
+    this.schedule()
+  }
+
+  private unfollow() {
+    if (!this.following) return
+    this.following = false
+    document.removeEventListener('scroll', this.schedule, { capture: true })
+    window.removeEventListener('resize', this.schedule)
+    this.gaps?.disconnect()
+    this.gaps = null
+    cancelAnimationFrame(this.frame)
+    this.frame = 0
+  }
+
+  private readonly schedule = () => {
+    if (this.frame) return
+    this.frame = requestAnimationFrame(() => {
+      this.frame = 0
+      this.look()
+    })
+  }
+
+  private look() {
+    const { body } = this
+    if (!body?.isConnected || !this.windowed()) return
+    if (!this.fitted) this.fit()
+
+    for (const [index, tr] of this.drawn) {
+      const height = tr.getBoundingClientRect().height
+      if (height > 0) this.heights.set(index, height)
+    }
+    if (this.heights.size > 0) {
+      let sum = 0
+      for (const one of this.heights.values()) sum += one
+      this.guess = sum / this.heights.size
+    }
+
+    const box = body.getBoundingClientRect()
+    if (box.height === 0) return
+    const frame = this.editor.scrollDOM.getBoundingClientRect()
+    const top = Math.max(frame.top, 0) - box.top
+    const bottom = Math.min(frame.bottom, window.innerHeight) - box.top
+    if (bottom < 0 || top > box.height) return
+
+    const rows = this.model.rows.length
+    const first = this.rowAtY(top)
+    const last = this.rowAtY(bottom)
+    const from = Math.max(0, Math.floor((first - AROUND) / STEP) * STEP)
+    const to = Math.min(rows, Math.ceil((last + 1 + AROUND) / STEP) * STEP)
+    if (from === this.shown.from && to === this.shown.to) return
+
+    this.shown = { from, to }
+    this.fill()
+  }
+
+  private rowAtY(y: number): number {
+    const rows = this.model.rows.length
+    let at = 0
+    for (let row = 0; row < rows; row++) {
+      at += this.heights.get(row) ?? this.guess
+      if (at > y) return row
+    }
+    return rows - 1
   }
 
   private cell(text: string, at: CellAddress, tag: 'th' | 'td', editing: boolean) {
@@ -666,7 +879,7 @@ export class TableView {
       if (event.pointerType !== 'mouse') return
       const target = event.target as Element
       const tr = target.closest('tr')
-      if (tr && this.table.tBodies[0]?.contains(tr)) this.showRowBar(tr)
+      if (tr?.dataset.row !== undefined && this.table.tBodies[0]?.contains(tr)) this.showRowBar(tr)
       else if (!this.rowBar.contains(target)) this.hideRowBar()
     })
     this.dom.addEventListener('pointerleave', (event) => {
@@ -692,11 +905,11 @@ export class TableView {
   }
 
   private bodyRow(row: number): HTMLTableRowElement | undefined {
-    return this.table.tBodies[0]?.rows[row]
+    return this.drawn.get(row)
   }
 
   private showRowBar(tr: HTMLTableRowElement) {
-    this.barRow = tr.sectionRowIndex
+    this.barRow = Number(tr.dataset.row)
 
     const bar = this.rowBar
     bar.classList.add('is-shown')
@@ -744,6 +957,7 @@ export class TableView {
       const width = Math.max(48, startWidth + (moved.clientX - startX) * factor)
       this.widths[column] = width
       header.style.width = `${width}px`
+      this.fitWidth()
     }
     const finish = () => {
       document.removeEventListener('mousemove', move)
@@ -777,6 +991,7 @@ export class TableView {
   }
 
   private columnAt(row: number, x: number): number {
+    this.reach(row)
     const columns = this.model.header.length
     for (let column = 0; column < columns; column++) {
       const cell = this.cellAt({ row, column })
@@ -788,5 +1003,12 @@ export class TableView {
   private textOf(at: CellAddress): string {
     const { model } = this
     return (at.row < 0 ? model.header[at.column] : model.rows[at.row]?.[at.column]) ?? ''
+  }
+}
+
+function around(row: number, rows: number): { from: number; to: number } {
+  return {
+    from: Math.max(0, Math.floor((row - AROUND) / STEP) * STEP),
+    to: Math.min(rows, Math.ceil((row + 1 + AROUND) / STEP) * STEP),
   }
 }

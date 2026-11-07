@@ -823,6 +823,16 @@
   background: color-mix(in srgb, var(--surface) 55%, var(--bg));
 }
 
+#write .nib-table.nib-table-windowed {
+  table-layout: fixed;
+}
+
+#write .nib-table tr.nib-table-gap td {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
 .nib-table th:focus,
 .nib-table td:focus {
   box-shadow: inset 0 0 0 2px var(--accent);
