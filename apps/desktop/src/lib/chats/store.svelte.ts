@@ -318,7 +318,7 @@ class ChatsStore implements Chats {
       const own = ownPointer(chat)
       if (own !== null && unread.some((root) => within(root, own) !== null)) continue
       const ranks = [...(ranked.get(chat)?.values() ?? [])]
-      const top = Math.max(...ranks)
+      const top = ranks.reduce((high, one) => Math.max(high, one), -Infinity)
       keepOwnPointer(chat, ranks.filter((one) => one === top).length > 1 ? null : place.path)
     }
     for (const [chat, path] of ownPointers()) {

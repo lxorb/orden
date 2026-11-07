@@ -103,7 +103,7 @@ function largest(
           ? size.size
           : size._ === 'photoCachedSize'
             ? size.bytes.length
-            : Math.max(0, ...size.sizes)
+            : size.sizes.reduce((high, one) => Math.max(high, one), 0)
       if (!best || size.w * size.h > best.w * best.h)
         best = { type: size.type, w: size.w, h: size.h, size: bytes }
     }

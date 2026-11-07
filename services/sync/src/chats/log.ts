@@ -988,7 +988,8 @@ export class ChatLog implements DurableObject {
       await this.ctx.storage.deleteAlarm()
       return
     }
-    await this.ctx.storage.setAlarm(Math.max(Math.min(...times), Date.now()))
+    const soonest = times.reduce((low, one) => Math.min(low, one), Infinity)
+    await this.ctx.storage.setAlarm(Math.max(soonest, Date.now()))
   }
 
   private async askSignIns(): Promise<Set<WebSocket>> {

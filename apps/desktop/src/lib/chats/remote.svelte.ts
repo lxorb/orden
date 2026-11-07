@@ -1070,7 +1070,7 @@ export class RemoteView extends RemoteList implements ChatView {
       reads: new Map(this.reads),
     }
     clearTimeout(this.typingTimer)
-    const next = Math.min(...[...this.typists.values()].map((one) => one.until))
+    const next = [...this.typists.values()].reduce((low, one) => Math.min(low, one.until), Infinity)
     if (Number.isFinite(next))
       this.typingTimer = setTimeout(() => this.drawPresence(), Math.max(0, next - now))
   }

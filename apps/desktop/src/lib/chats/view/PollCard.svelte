@@ -22,7 +22,7 @@
     (poll?.answers ?? []).map((_, index) => voters.filter(([, chose]) => chose.includes(index))),
   )
   const tally = $derived(message.tally ? [...message.tally] : counts.map((one) => one.length))
-  const most = $derived(Math.max(1, ...tally))
+  const most = $derived(tally.reduce((high, one) => Math.max(high, one), 1))
 
   function choose(index: number) {
     if (!poll || ended || !canVote) return

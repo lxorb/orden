@@ -63,7 +63,7 @@ export function barsOf(samples: Float32Array, bars = WAVE_BARS): number[] {
     for (let i = from; i < to && i < samples.length; i++) sum += (samples[i] ?? 0) ** 2
     out.push(Math.sqrt(sum / (to - from)))
   }
-  const loudest = Math.max(...out)
+  const loudest = out.reduce((high, one) => Math.max(high, one), -Infinity)
   return out.map((one) => (loudest > 0 ? Math.round((one / loudest) * 255) : 0))
 }
 

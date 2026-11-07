@@ -428,7 +428,7 @@ export class View extends Listing implements ChatView {
       reads: shown ? new Map(this.reads) : new Map<Who, number>(),
     }
     clearTimeout(this.typingTimer)
-    const next = Math.min(...[...this.typists.values()].map((one) => one.until))
+    const next = [...this.typists.values()].reduce((low, one) => Math.min(low, one.until), Infinity)
     if (Number.isFinite(next)) {
       this.typingTimer = setTimeout(() => this.drawPresence(), Math.max(0, next - now))
     }

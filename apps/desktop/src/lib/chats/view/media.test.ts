@@ -58,6 +58,14 @@ describe('pictures', () => {
 })
 
 describe('sound', () => {
+  test('bars for more stretches than a call takes arguments come out whole', () => {
+    const samples = new Float32Array(200_000).map((_, at) => (at % 7) / 7)
+    const bars = barsOf(samples, 100_000)
+    expect(bars).toHaveLength(100_000)
+    expect(Math.max(bars[0] ?? 0, bars[1] ?? 0, bars[2] ?? 0)).toBeLessThanOrEqual(255)
+    expect(bars.some((one) => one === 255)).toBe(true)
+  })
+
   test('bars are each stretch’s loudness, the loudest 255', () => {
     const samples = new Float32Array(64 * 10)
     for (let i = 0; i < samples.length; i++) samples[i] = i < 320 ? 0.1 : 0.4
