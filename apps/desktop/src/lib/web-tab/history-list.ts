@@ -18,18 +18,22 @@ export function hostOf(url: string): string {
   }
 }
 
-export function answers(visit: Visit, typed: string): boolean {
-  const words = typed.toLowerCase().split(/\s+/).filter(Boolean)
+const wordsOf = (typed: string) => typed.toLowerCase().split(/\s+/).filter(Boolean)
+
+function holds(visit: Visit, words: readonly string[]): boolean {
   if (!words.length) return true
 
   const said = `${visit.title} ${visit.url}`.toLowerCase()
   return words.every((word) => said.includes(word))
 }
 
+export function answers(visit: Visit, typed: string): boolean {
+  return holds(visit, wordsOf(typed))
+}
+
 export function historyRows(list: readonly Visit[], typed: string): HistoryRow[] {
-  const found = list
-    .filter((one) => answers(one, typed))
-    .sort((one, other) => other.last - one.last)
+  const words = wordsOf(typed)
+  const found = list.filter((one) => holds(one, words)).sort((one, other) => other.last - one.last)
 
   const rows: HistoryRow[] = []
   let day = Number.NaN

@@ -1,4 +1,5 @@
 import { fuzzyPlaces } from './match'
+import { LONGEST } from './rank'
 
 export interface Piece {
   text: string
@@ -7,7 +8,7 @@ export interface Piece {
 
 export function pieces(name: string, term: string): Piece[] {
   const hits = new Set<number>()
-  for (const word of term.split(/\s+/).filter(Boolean)) {
+  for (const word of term.slice(0, LONGEST).split(/\s+/).filter(Boolean)) {
     const at = fuzzyPlaces(word, name)
     if (!at) return [{ text: name, hit: false }]
     for (const one of at) hits.add(one)
