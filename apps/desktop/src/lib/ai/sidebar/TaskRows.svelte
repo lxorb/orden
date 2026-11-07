@@ -4,6 +4,7 @@
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { insideSpace } from '../../space-paths'
+  import { TaskTurns } from '../../task-turns'
   import { workspace } from '../../workspace.svelte'
   import type { Listed } from '../commands/todos'
 
@@ -42,12 +43,18 @@
   const placeOf = (one: Task) => `${one.space}\n${one.at}`
   const isDone = (one: Task) => ticked[placeOf(one)] ?? (one.status === 'x' || one.status === 'X')
 
-  async function tick(one: Task) {
+  const turns: Record<string, TaskTurns> = {}
+
+  function tick(one: Task) {
     const done = !isDone(one)
     const place = placeOf(one)
     ticked = { ...ticked, [place]: done }
-    const { tickTask } = await import('../../task-actions')
-    if (!(await tickTask(one.at, one.space, done))) ticked = { ...ticked, [place]: !done }
+    const held = (turns[place] ??= new TaskTurns(one.at, async (at, now) =>
+      (await import('../../task-actions')).tickTask(at, one.space, now),
+    ))
+    void held.turn(done).then((landed) => {
+      if (!landed && ticked[place] === done) ticked = { ...ticked, [place]: !done }
+    })
   }
 
   function open(one: Task) {
@@ -74,7 +81,7 @@
           role="checkbox"
           aria-checked={isDone(one)}
           aria-label={t('Done')}
-          onclick={() => void tick(one)}
+          onclick={() => tick(one)}
         ></button>
         <button class="words" title={one.space} onclick={() => open(one)}>{one.text}</button>
         {#if when(one)}

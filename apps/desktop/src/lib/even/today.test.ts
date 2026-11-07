@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { spokenTask, Today, type TodayHost } from './today'
 
-function host(found = true) {
+function host(found = true, moves: Record<string, string> = {}, takesBack = false) {
   const ticked: [string, string, boolean][] = []
+  const backs: string[] = []
   let drawn = 0
   const answer: TodayHost = {
     load: () =>
@@ -13,13 +14,17 @@ function host(found = true) {
       ]),
     tick: (at, space, done) => {
       ticked.push([at, space, done])
-      return Promise.resolve(found)
+      const back = () => {
+        backs.push(at)
+        return Promise.resolve(takesBack)
+      }
+      return Promise.resolve(found ? { at: (done ? moves[at] : undefined) ?? at, back } : null)
     },
     redraw: () => {
       drawn += 1
     },
   }
-  return { answer, ticked, drawn: () => drawn }
+  return { answer, ticked, backs, drawn: () => drawn }
 }
 
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -53,6 +58,43 @@ describe('today on the glasses', () => {
       ['Work.md#3:b2', 'Work', false],
     ])
     expect(today.rows()[1]?.label).toBe('□ Send the slides')
+  })
+
+  test('a second tap unticks the task where the tick left it, not the repeat it made', async () => {
+    const { answer, ticked } = host(true, { 'Work.md#3:b2': 'Work.md#4:b2' })
+    const today = new Today(answer)
+    today.fresh()
+    await settled()
+    const id = today.rows()[1]?.id ?? ''
+    today.tick(id)
+    today.tick(id)
+    await settled()
+    today.tick(id)
+    await settled()
+    expect(ticked).toEqual([
+      ['Work.md#3:b2', 'Work', true],
+      ['Work.md#4:b2', 'Work', false],
+      ['Work.md#4:b2', 'Work', true],
+    ])
+    expect(today.rows()[1]?.label).toBe('■ Send the slides')
+  })
+
+  test('a second tap takes the tick back whole when the note is as the tick left it', async () => {
+    const { answer, ticked, backs } = host(true, { 'Work.md#3:b2': 'Work.md#4:b2' }, true)
+    const today = new Today(answer)
+    today.fresh()
+    await settled()
+    const id = today.rows()[1]?.id ?? ''
+    today.tick(id)
+    today.tick(id)
+    await settled()
+    today.tick(id)
+    await settled()
+    expect(backs).toEqual(['Work.md#3:b2'])
+    expect(ticked).toEqual([
+      ['Work.md#3:b2', 'Work', true],
+      ['Work.md#3:b2', 'Work', true],
+    ])
   })
 
   test('a task the note no longer has is put back', async () => {
