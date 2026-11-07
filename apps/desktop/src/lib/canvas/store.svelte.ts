@@ -342,6 +342,7 @@ export class CanvasStore implements PlaneSurface {
   }
 
   private keepPicked() {
+    if (!this.picked.length && this.editing === null) return
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
     const held = new Set([
       ...this.canvas.nodes.filter((node) => !node.locked).map((node) => node.id),
