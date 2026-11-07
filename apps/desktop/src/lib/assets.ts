@@ -70,6 +70,6 @@ export function storeBeside(
     notePath,
     folder,
     name,
-    bytes: [...new Uint8Array(bytes)],
+    bytes: new Uint8Array(bytes),
   }).catch(() => null)
 }

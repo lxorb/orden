@@ -111,7 +111,12 @@ fn crlf(target: &Path) -> bool {
 
 const HEAD: usize = 8192;
 
-pub const PATH_HEADER: &str = "orden-path";
+pub const ARGS_HEADER: &str = "orden-args";
+
+#[derive(serde::Deserialize)]
+struct Written {
+    path: String,
+}
 
 #[tauri::command(async)]
 pub fn write_bytes(app: AppHandle, request: Request<'_>) -> Result<(), String> {
@@ -126,21 +131,25 @@ pub fn write_bytes(app: AppHandle, request: Request<'_>) -> Result<(), String> {
             .ok_or_else(|| format!("{path} was handed nothing to write"))?;
         return bytes_written(&chosen(&app, path)?, path, base64);
     }
-    let path = path_sent(request.headers())?;
-    let bytes = bytes_sent(request.body())
-        .ok_or_else(|| format!("{path} was handed something that is not bytes"))?;
+    let (Written { path }, bytes) = raw_sent(request.headers(), request.body())?;
     write_file(&chosen(&app, &path)?, &path, &bytes)
 }
 
-fn path_sent(headers: &tauri::http::HeaderMap) -> Result<String, String> {
+pub fn raw_sent<'a, T: serde::de::DeserializeOwned>(
+    headers: &tauri::http::HeaderMap,
+    body: &'a InvokeBody,
+) -> Result<(T, Cow<'a, [u8]>), String> {
     let sent = headers
-        .get(PATH_HEADER)
+        .get(ARGS_HEADER)
         .and_then(|value| value.to_str().ok())
-        .ok_or("a write needs the path it goes to")?;
-    percent_encoding::percent_decode_str(sent)
+        .ok_or("bytes came without what to do with them")?;
+    let words = percent_encoding::percent_decode_str(sent)
         .decode_utf8()
-        .map(Cow::into_owned)
-        .map_err(|_| "the path of a write is not words".to_owned())
+        .map_err(|_| "what came with the bytes is not words".to_owned())?;
+    let args = serde_json::from_str(&words)
+        .map_err(|error| format!("what came with the bytes is not understood: {error}"))?;
+    let bytes = bytes_sent(body).ok_or("what came is not bytes")?;
+    Ok((args, bytes))
 }
 
 pub fn bytes_sent(body: &InvokeBody) -> Option<Cow<'_, [u8]>> {
@@ -436,21 +445,39 @@ mod tests {
     }
 
     #[test]
-    fn a_path_sent_beside_raw_bytes_is_read_back_whole() {
-        let mut headers = tauri::http::HeaderMap::new();
-        headers.insert(
-            super::PATH_HEADER,
-            "C%3A%2FNotes%2F%C3%BCber%20uns.png"
-                .parse()
-                .expect("a header"),
-        );
+    fn what_is_sent_beside_raw_bytes_is_read_back_whole() {
+        #[derive(serde::Deserialize, Debug, PartialEq)]
+        struct Asked {
+            path: String,
+        }
+        let header = |value: &str| {
+            let mut headers = tauri::http::HeaderMap::new();
+            headers.insert(super::ARGS_HEADER, value.parse().expect("a header"));
+            headers
+        };
+        let read = |headers: tauri::http::HeaderMap, body: tauri::ipc::InvokeBody| {
+            super::raw_sent::<Asked>(&headers, &body)
+                .map(|(asked, bytes)| (asked, bytes.into_owned()))
+        };
         assert_eq!(
-            super::path_sent(&headers).as_deref(),
-            Ok("C:/Notes/über uns.png")
+            read(
+                header("%7B%22path%22%3A%22C%3A%2FNotes%2F%C3%BCber%20uns.png%22%7D"),
+                tauri::ipc::InvokeBody::Raw(PNG.to_vec())
+            ),
+            Ok((
+                Asked {
+                    path: "C:/Notes/über uns.png".to_owned()
+                },
+                PNG.to_vec()
+            ))
         );
-        assert!(super::path_sent(&tauri::http::HeaderMap::new()).is_err());
-        headers.insert(super::PATH_HEADER, "%FF".parse().expect("a header"));
-        assert!(super::path_sent(&headers).is_err());
+        assert!(read(
+            tauri::http::HeaderMap::new(),
+            tauri::ipc::InvokeBody::Raw(PNG.to_vec())
+        )
+        .is_err());
+        assert!(read(header("%FF"), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err());
+        assert!(read(header("%7B%7D"), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err());
     }
 
     #[test]

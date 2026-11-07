@@ -25,7 +25,7 @@ describe('bytes on their way to a file', () => {
     expect(handed[0]?.command).toBe('write_bytes')
     expect(handed[0]?.args).toBe(bytes)
     expect(handed[0]?.options).toEqual({
-      headers: { 'Orden-Path': 'C%3A%2FNotes%2F%C3%BCber%20uns.png' },
+      headers: { 'Orden-Args': encodeURIComponent('{"path":"C:/Notes/über uns.png"}') },
     })
   })
 
@@ -34,6 +34,18 @@ describe('bytes on their way to a file', () => {
     await invoke('write_bytes', { path: '/a.bin', bytes: whole.subarray(1, 3) })
 
     expect([...(handed[0]?.args as Uint8Array)]).toEqual([2, 3])
+  })
+
+  test('a file kept beside a note goes the same way, with where it goes beside it', async () => {
+    const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
+    await invoke('save_asset', { notePath: '/s/a.md', folder: 'assets', name: 'p.png', bytes })
+
+    expect(handed[0]?.args).toBe(bytes)
+    expect(handed[0]?.options).toEqual({
+      headers: {
+        'Orden-Args': encodeURIComponent('{"notePath":"/s/a.md","folder":"assets","name":"p.png"}'),
+      },
+    })
   })
 
   test('base64 and every other command go on unchanged', async () => {
