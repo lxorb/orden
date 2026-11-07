@@ -59,6 +59,10 @@ pub fn halt(app: &AppHandle, agent: &str) {
     }
 }
 
+pub fn quitting() {
+    super::process::end_for_good();
+}
+
 pub fn stop(app: &AppHandle) -> bool {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     let again = STOPPED.swap(true, Ordering::SeqCst);

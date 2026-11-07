@@ -31,6 +31,8 @@ static NEXT: AtomicU64 = AtomicU64::new(1);
 
 static STARTED: Mutex<Vec<Arc<Started>>> = Mutex::new(Vec::new());
 
+static CLOSING: AtomicBool = AtomicBool::new(false);
+
 fn started() -> MutexGuard<'static, Vec<Arc<Started>>> {
     STARTED.lock().unwrap_or_else(PoisonError::into_inner)
 }
@@ -585,7 +587,14 @@ fn spawned(
         }),
         heard: Condvar::new(),
     });
-    started().push(Arc::clone(&one));
+    let closing = {
+        let mut all = started();
+        let closing = CLOSING.load(Ordering::SeqCst);
+        if !closing {
+            all.push(Arc::clone(&one));
+        }
+        closing
+    };
     match (kept, input) {
         (true, input) => {
             *one.input.lock().unwrap_or_else(PoisonError::into_inner) = input.map(Feed::new);
@@ -606,6 +615,10 @@ fn spawned(
     }
     let waiting = Arc::clone(&one);
     std::thread::spawn(move || reap(&waiting));
+    if closing {
+        one.end();
+        return Err("Orden is quitting".to_owned());
+    }
     Ok(one)
 }
 
@@ -680,6 +693,17 @@ pub(super) fn end_all(agent: Option<&str>) {
             .partition(|one| agent.is_none_or(|agent| one.agent == agent));
         *all = kept;
         gone
+    };
+    for one in ending {
+        one.end();
+    }
+}
+
+pub(super) fn end_for_good() {
+    let ending: Vec<Arc<Started>> = {
+        let mut all = started();
+        CLOSING.store(true, Ordering::SeqCst);
+        all.drain(..).collect()
     };
     for one in ending {
         one.end();
@@ -872,6 +896,37 @@ mod tests {
         assert!(started().iter().all(|one| one.agent != "tester"));
         assert!(!other.said().ended);
         end_all(Some("someone-else"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_started_program_ends_with_orden_and_none_starts_after() {
+        const CHILD: &str = "ORDEN_AGENT_QUIT_TEST";
+        if std::env::var_os(CHILD).is_none() {
+            let status = std::process::Command::new(std::env::current_exe().expect("the tests"))
+                .args([
+                    "--exact",
+                    "agents::process::tests::a_started_program_ends_with_orden_and_none_starts_after",
+                    "--test-threads=1",
+                ])
+                .env(CHILD, "1")
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+                .expect("the child ran");
+            assert!(status.success(), "a program outlived the quit");
+            return;
+        }
+        let cwd = std::env::temp_dir();
+        let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
+        let mut start = process(ProcessOp::Start, "sh");
+        start.args = vec!["-c".into(), "sleep 30".into()];
+        let kept = spawned("quitting", &found, &start, &cwd, true).expect("started");
+        end_for_good();
+        assert!(!kept.wait(Duration::from_secs(10), None, |said| said.ended));
+        assert!(kept.killed.load(Ordering::SeqCst));
+        assert!(spawned("quitting", &found, &start, &cwd, true).is_err());
+        assert!(started().is_empty());
     }
 
     #[cfg(unix)]

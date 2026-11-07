@@ -145,6 +145,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             crate::terminal::end_all(app);
             crate::apps_host::end_all(app);
             crate::ai_cli::end_all(app);
+            crate::agents::stop::quitting();
             crate::notices::clear_all(app);
         }
 
